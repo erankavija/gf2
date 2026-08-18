@@ -1,560 +1,567 @@
 {
- "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
- "epic_short_id": "b8206228",
- "current_wave": 5,
- "waves": [
-  {
-   "wave_number": 1,
-   "issues": [
+  "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
+  "epic_short_id": "b8206228",
+  "current_wave": 5,
+  "waves": [
     {
-     "id": "047b62ed-5184-4295-b4bd-d31263411b53",
-     "short_id": "047b62ed",
-     "title": "F_3 preregistered receipt campaign",
-     "classification": "research",
-     "status": "done"
+      "wave_number": 1,
+      "issues": [
+        {
+          "id": "047b62ed-5184-4295-b4bd-d31263411b53",
+          "short_id": "047b62ed",
+          "title": "F_3 preregistered receipt campaign",
+          "classification": "research",
+          "status": "done"
+        },
+        {
+          "id": "22c7a3cd-b231-424e-86e5-2a0ad47aeacc",
+          "short_id": "22c7a3cd",
+          "title": "Checkpointable streaming shard accumulator",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "6c7fcb38-559e-4c52-8104-d9d3758ad40b",
+          "short_id": "6c7fcb38",
+          "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
+          "classification": "research",
+          "status": "done"
+        },
+        {
+          "id": "91605d4d-8c30-43d6-b1bd-26f277b31120",
+          "short_id": "91605d4d",
+          "title": "F_5 preregistered receipt campaign",
+          "classification": "research",
+          "status": "done"
+        },
+        {
+          "id": "e0251af3-25c3-4914-8018-c3b66dd9561a",
+          "short_id": "e0251af3",
+          "title": "Observable-event rate estimates for permanental rank deficiency",
+          "classification": "research",
+          "status": "done"
+        }
+      ]
     },
     {
-     "id": "22c7a3cd-b231-424e-86e5-2a0ad47aeacc",
-     "short_id": "22c7a3cd",
-     "title": "Checkpointable streaming shard accumulator",
-     "classification": "implementation",
-     "status": "done"
+      "wave_number": 2,
+      "issues": [
+        {
+          "id": "41c3d91d-5eeb-4173-9fb9-fe7a3e3bb39d",
+          "short_id": "41c3d91d",
+          "title": "Campaign driver scheduling and shard emission",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "a9284086-fbf3-4dad-975d-bcc74024e031",
+          "short_id": "a9284086",
+          "title": "Runtime qualification of wave utilization and launch duration",
+          "classification": "research",
+          "status": "done"
+        }
+      ]
     },
     {
-     "id": "6c7fcb38-559e-4c52-8104-d9d3758ad40b",
-     "short_id": "6c7fcb38",
-     "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
-     "classification": "research",
-     "status": "done"
+      "wave_number": 3,
+      "issues": [
+        {
+          "id": "0dffa759-8ff3-4198-a901-23bedf6667e0",
+          "short_id": "0dffa759",
+          "title": "Field-by-field go/no-go synthesis with production design",
+          "classification": "design",
+          "status": "done: all gates passed at 85269c1c after the session-10 rework (RNG registry derivation, figure removal, F.13 closure); lead six-tier review PASS"
+        },
+        {
+          "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
+          "short_id": "51498b90",
+          "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
+          "classification": "implementation",
+          "status": "done: cargo-ci + code-review + doc-review passed at 85269c1c under the owner-approved quarantine reconciliation and REQ-02 amendment; lead six-tier review PASS"
+        }
+      ]
     },
     {
-     "id": "91605d4d-8c30-43d6-b1bd-26f277b31120",
-     "short_id": "91605d4d",
-     "title": "F_5 preregistered receipt campaign",
-     "classification": "research",
-     "status": "done"
+      "wave_number": 4,
+      "issues": [
+        {
+          "id": "0de41c82-fb20-4adb-ba6e-30061a83c301",
+          "short_id": "0de41c82",
+          "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
+          "classification": "implementation",
+          "status": "done: all four gates passed (repo-validate, doc-review, research-review R2 after the owner-approved manifest-exclusion decision and citation clarification, holistic-review R2); lead six-tier review PASS; closed 2026-08-17"
+        },
+        {
+          "id": "4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b",
+          "short_id": "4a6bdcff",
+          "title": "Determinant companion evaluated on the campaign's matrices",
+          "classification": "implementation",
+          "status": "done: rework-1 closed all three findings (estimate+verdict fill with canonical round-trip test, operand-level one-draw test via observer seam, README timing wording); cargo-ci + code-review passed round 2; lead six-tier review PASS"
+        }
+      ]
     },
     {
-     "id": "e0251af3-25c3-4914-8018-c3b66dd9561a",
-     "short_id": "e0251af3",
-     "title": "Observable-event rate estimates for permanental rank deficiency",
-     "classification": "research",
-     "status": "done"
+      "wave_number": 5,
+      "issues": [
+        {
+          "id": "7a816262-1eed-492c-a58b-6752fdf50636",
+          "short_id": "7a816262",
+          "title": "Frozen root manifest for the campaign",
+          "classification": "implementation",
+          "status": "phase 1 done (rework-1 PASS, committed 776858ed/b6bdb10f: 3 dischargeable cells, 60 gaps, top-2 premeasurement preregistered per owner decisions); phase 2a done (abcb5438: premeasure-plan-v1 CSV+MD, runner premeasure/premeasure-collect modes, opt-in harness --batch-size, 5/5 shell tests, 67 crate tests, prepare run and binary manifest pinned at 0695438d); gf2-premeasure.timer armed (owner-approved) for 2026-08-18 02:00 EEST, session cap 19800 s; next: premeasure-collect, then freeze finalization with selection receipts and doc-review + research-review; phase 2b (overnight premeasure, 2026-08-18 02:00-03:30) RAN BUT FAILED: 216/1440 processes ok, 1224 exit 101 (`--only ... matched no cell in the grid`); 18/120 configurations complete, premeasure-collect refuses to aggregate 102 empty configurations. Root cause: harness grid is fixed at NS=[12,16,20,24,28] (dev/research/permanent-sampling-feas/src/main.rs:46) while the plan nominates 60 gap cells over n=4..27 \u2014 51 of 60 cells are unreachable via --only. Blocked pending an owner decision on extending the harness grid vs. re-scoping the premeasurement."
+        },
+        {
+          "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
+          "short_id": "eb8825c8",
+          "title": "Batch-parallel processor path for campaign shards",
+          "classification": "implementation",
+          "status": "done: rework-1 (--workers flag + recorded configuration header) closed the single R1 finding; cargo-ci re-passed after the transient GPU page fault (filed as 10071e51), code-review passed R2; lead six-tier review PASS"
+        }
+      ],
+      "note": "serialized: eb8825c8 first (5a), then 7a816262 (5b) behind the new dependency edge"
+    },
+    {
+      "wave_number": 6,
+      "issues": [
+        {
+          "id": "032cc754-c88c-4e1b-b56d-6511d0a70c3c",
+          "short_id": "032cc754",
+          "title": "Processor backend selection for campaign cells",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
+          "short_id": "3f664839",
+          "title": "Preregistered rare-event estimator design",
+          "classification": "design",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 7,
+      "issues": [
+        {
+          "id": "a39bb161-0746-4f24-9057-32c9c2fa09fd",
+          "short_id": "a39bb161",
+          "title": "Accelerator execution for campaign cells",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 8,
+      "issues": [
+        {
+          "id": "1947125e-33eb-4442-b717-24442cc35ca1",
+          "short_id": "1947125e",
+          "title": "Shared behavioural conformance suite across campaign backends",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 9,
+      "issues": [
+        {
+          "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
+          "short_id": "73317b2e",
+          "title": "Standing acceptance tests for campaign cells",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 10,
+      "issues": [
+        {
+          "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
+          "short_id": "1d0b3ec4",
+          "title": "Campaign arm for $q = 5$",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "90a61cd4-c48d-4097-ae2c-e628163a754a",
+          "short_id": "90a61cd4",
+          "title": "Campaign arm for $q = 3$ as reproduction",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "ed494117-4245-4e92-855b-3c54e207697d",
+          "short_id": "ed494117",
+          "title": "Campaign arm for $q = 7$",
+          "classification": "research",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 11,
+      "issues": [
+        {
+          "id": "f27150a5-8713-4bce-b404-9e477937d498",
+          "short_id": "f27150a5",
+          "title": "Deterministic finalization of a completed campaign dataset",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 12,
+      "issues": [
+        {
+          "id": "53d8e438-7bbe-4397-b43c-c9e100e145b1",
+          "short_id": "53d8e438",
+          "title": "Convergence-shape model comparison for the deviation term",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "6639435f-8be8-4408-b6ab-759fe0099bd2",
+          "short_id": "6639435f",
+          "title": "Rare-event estimator with demonstrated unbiasedness and coverage",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "f74e327d-688d-4ffe-880f-a01b471e33d8",
+          "short_id": "f74e327d",
+          "title": "Published zero-fraction curves and tables for the three fields",
+          "classification": "documentation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 13,
+      "issues": [
+        {
+          "id": "0665e7be-6150-45a0-94bc-1ce11c61bd2b",
+          "short_id": "0665e7be",
+          "title": "Permanental against determinantal zero-fraction comparison figure",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "b05c908b-690d-4caa-9e2d-46d0f9ae0acc",
+          "short_id": "b05c908b",
+          "title": "Preregistered rare-event estimate beyond direct sampling",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "b5d45bcd-05b8-42cd-a418-b73b47a15dac",
+          "short_id": "b5d45bcd",
+          "title": "Analysis report on the measured zero-fraction curves",
+          "classification": "documentation",
+          "status": "pending"
+        }
+      ]
     }
-   ]
-  },
-  {
-   "wave_number": 2,
-   "issues": [
+  ],
+  "created_during_execution": [
     {
-     "id": "41c3d91d-5eeb-4173-9fb9-fe7a3e3bb39d",
-     "short_id": "41c3d91d",
-     "title": "Campaign driver scheduling and shard emission",
-     "classification": "implementation",
-     "status": "done"
+      "short_id": "2ddf2f4b",
+      "title": "Deterministic overnight runner for the receipt campaigns",
+      "reason": "Owner directive 2026-08-13: campaigns execute overnight via a deterministic AI-free runner; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
+      "wave": "1.5",
+      "status": "done"
     },
     {
-     "id": "a9284086-fbf3-4dad-975d-bcc74024e031",
-     "short_id": "a9284086",
-     "title": "Runtime qualification of wave utilization and launch duration",
-     "classification": "research",
-     "status": "done"
-    }
-   ]
-  },
-  {
-   "wave_number": 3,
-   "issues": [
-    {
-     "id": "0dffa759-8ff3-4198-a901-23bedf6667e0",
-     "short_id": "0dffa759",
-     "title": "Field-by-field go/no-go synthesis with production design",
-     "classification": "design",
-     "status": "done: all gates passed at 85269c1c after the session-10 rework (RNG registry derivation, figure removal, F.13 closure); lead six-tier review PASS"
+      "short_id": "e31b1918",
+      "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
+      "reason": "Owner-approved wire-and-rerun resolution of the 2026-08-14 escalation; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
+      "wave": "0.9",
+      "status": "done",
+      "note": "Closed 2026-08-14 (session 6). Implementation 3933338a; budget fix de5f7414 (per-cell 240 s rule, q=5,n=28 count 4->2); full-order host equivalence validation 0c0f525f (234 rows, 0 mismatches, 5690 s wall); smoke evidence 7174718d. All three gates passed with persisted records; lead review PASS."
     },
     {
-     "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
-     "short_id": "51498b90",
-     "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
-     "classification": "implementation",
-     "status": "done: cargo-ci + code-review + doc-review passed at 85269c1c under the owner-approved quarantine reconciliation and REQ-02 amendment; lead six-tier review PASS"
-    }
-   ]
-  },
-  {
-   "wave_number": 4,
-   "issues": [
-    {
-     "id": "0de41c82-fb20-4adb-ba6e-30061a83c301",
-     "short_id": "0de41c82",
-     "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
-     "classification": "implementation",
-     "status": "done: all four gates passed (repo-validate, doc-review, research-review R2 after the owner-approved manifest-exclusion decision and citation clarification, holistic-review R2); lead six-tier review PASS; closed 2026-08-17"
+      "short_id": "a2c0db52",
+      "title": "Feasibility study table cells disagree with their own committed CSV",
+      "reason": "Found by the F_3 receipts (one cell) and this issue's recorded check (second cell); owner-approved scope amendment covered both plus the dependent receipts 11.1 correction.",
+      "wave": "1 (interleaved)",
+      "status": "done",
+      "note": "Closed 2026-08-15: both cells fixed, recorded check committed (verify-published-table.py), F_3 receipts 11.1 corrected; doc-review passed with persisted record at 71db423f."
     },
     {
-     "id": "4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b",
-     "short_id": "4a6bdcff",
-     "title": "Determinant companion evaluated on the campaign's matrices",
-     "classification": "implementation",
-     "status": "done: rework-1 closed all three findings (estimate+verdict fill with canonical round-trip test, operand-level one-draw test via observer seam, README timing wording); cargo-ci + code-review passed round 2; lead six-tier review PASS"
-    }
-   ]
-  },
-  {
-   "wave_number": 5,
-   "issues": [
-    {
-     "id": "7a816262-1eed-492c-a58b-6752fdf50636",
-     "short_id": "7a816262",
-     "title": "Frozen root manifest for the campaign",
-     "classification": "implementation",
-     "status": "phase 1 done (rework-1 PASS, committed 776858ed/b6bdb10f: 3 dischargeable cells, 60 gaps, top-2 premeasurement preregistered per owner decisions); phase 2a done (abcb5438: premeasure-plan-v1 CSV+MD, runner premeasure/premeasure-collect modes, opt-in harness --batch-size, 5/5 shell tests, 67 crate tests, prepare run and binary manifest pinned at 0695438d); gf2-premeasure.timer armed (owner-approved) for 2026-08-18 02:00 EEST, session cap 19800 s; next: premeasure-collect, then freeze finalization with selection receipts and doc-review + research-review"
+      "short_id": "0b66973a",
+      "title": "F_5 receipts deny committed per-lane register models their kernel source states",
+      "reason": "The 6c7fcb38 code-review finding (receipts deny the wave_gf7_equivalence.hip:8-18 per-lane lower bounds) generalises to the closed F_5 receipts, which deny the f5_wave_equivalence.hip:9-15 models; filed per the a2c0db52 interleaved-bug precedent.",
+      "wave": "1 (interleaved)",
+      "status": "done",
+      "note": "Closed 2026-08-16: pairing corrected at 682d5942, doc-review passed first round with persisted record, lead six-tier review PASS."
     },
     {
-     "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
-     "short_id": "eb8825c8",
-     "title": "Batch-parallel processor path for campaign shards",
-     "classification": "implementation",
-     "status": "done: rework-1 (--workers flag + recorded configuration header) closed the single R1 finding; cargo-ci re-passed after the transient GPU page fault (filed as 10071e51), code-review passed R2; lead six-tier review PASS"
-    }
-   ],
-   "note": "serialized: eb8825c8 first (5a), then 7a816262 (5b) behind the new dependency edge"
-  },
-  {
-   "wave_number": 6,
-   "issues": [
-    {
-     "id": "032cc754-c88c-4e1b-b56d-6511d0a70c3c",
-     "short_id": "032cc754",
-     "title": "Processor backend selection for campaign cells",
-     "classification": "implementation",
-     "status": "pending"
+      "short_id": "4fdd781a",
+      "title": "Prior throughput grid publishes rates its stated stopping rule forbids",
+      "reason": "Found by the F_5 receipts; rendering correction with recorded check.",
+      "wave": "1 (interleaved)",
+      "status": "done",
+      "note": "Closed 2026-08-15: R1 7a0af9ab daggered the two source cells; R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; R3 c315fe2b (luna, rework count 2 = MAX, passed) verifies both stopping-rule minima: five-second half from the pinned harness source's loop-exit structure plus direct total_s>=5 proof, cap-path evidence total_s>=120 for reps<5 rows. total_s undercounts the stopping clock (12 conforming rows at 4.4-4.99 s), so a naive total_s>=5 test falsely flags conforming cells. doc-review passed R3 with persisted record at c315fe2b, 0 findings; lead six-tier review PASS."
     },
     {
-     "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
-     "short_id": "3f664839",
-     "title": "Preregistered rare-event estimator design",
-     "classification": "design",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 7,
-   "issues": [
-    {
-     "id": "a39bb161-0746-4f24-9057-32c9c2fa09fd",
-     "short_id": "a39bb161",
-     "title": "Accelerator execution for campaign cells",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 8,
-   "issues": [
-    {
-     "id": "1947125e-33eb-4442-b717-24442cc35ca1",
-     "short_id": "1947125e",
-     "title": "Shared behavioural conformance suite across campaign backends",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 9,
-   "issues": [
-    {
-     "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
-     "short_id": "73317b2e",
-     "title": "Standing acceptance tests for campaign cells",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 10,
-   "issues": [
-    {
-     "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
-     "short_id": "1d0b3ec4",
-     "title": "Campaign arm for $q = 5$",
-     "classification": "research",
-     "status": "pending"
+      "short_id": "63d931a9",
+      "title": "Bipedal3 doc comments deny the alternative zero their own circuits produce",
+      "reason": "Found by the 0dffa759 synthesis (finding F.13) during rework-1; filed per the a2c0db52 interleaved-bug precedent.",
+      "wave": "3 (interleaved)",
+      "status": "done: closed 2026-08-17 session 10; cargo-ci + code-review passed at ab311654, findings.md F.13 narrative closed under 0dffa759, sibling SIMD miscitation filed as 59024f1a (tech-debt umbrella); lead six-tier review PASS"
     },
     {
-     "id": "90a61cd4-c48d-4097-ae2c-e628163a754a",
-     "short_id": "90a61cd4",
-     "title": "Campaign arm for $q = 3$ as reproduction",
-     "classification": "research",
-     "status": "pending"
+      "short_id": "d2fb76b9",
+      "title": "Converge the F_7 permanent kernel's internal three-plane state with the public Packed7 representation",
+      "reason": "Carries the tracked convergence condition the 0dffa759 exception permanent-f7-internal-three-plane names; filed under the tech-debt umbrella 86b9c719 per the 023233c5 precedent.",
+      "wave": "n/a (tech-debt umbrella)",
+      "status": "filed"
     },
     {
-     "id": "ed494117-4245-4e92-855b-3c54e207697d",
-     "short_id": "ed494117",
-     "title": "Campaign arm for $q = 7$",
-     "classification": "research",
-     "status": "pending"
+      "short_id": "59024f1a",
+      "title": "SIMD bipedal3 comments cite Scheinerman Algorithm 2, an object the paper does not carry",
+      "reason": "Lead Tier 2.5 sweep for 63d931a9 found the corrected miscitation surviving in crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:119,288; filed under the tech-debt umbrella 86b9c719 per the 023233c5 precedent.",
+      "wave": "n/a (tech-debt umbrella)",
+      "status": "filed"
     }
-   ]
-  },
-  {
-   "wave_number": 11,
-   "issues": [
+  ],
+  "escalations": [
     {
-     "id": "f27150a5-8713-4bce-b404-9e477937d498",
-     "short_id": "f27150a5",
-     "title": "Deterministic finalization of a completed campaign dataset",
-     "classification": "implementation",
-     "status": "pending"
+      "issue": "9c5b26fb",
+      "reason": "The final research gate found a halted-cell schema contradiction and missing Monte Carlo confidence intervals after the protocol exhausted its two allowed rework cycles.",
+      "status": "approved",
+      "requested_at": "2026-08-09T16:21:42Z",
+      "resolved_at": "2026-08-09T16:59:46Z",
+      "decision": "Owner approved one additional bounded protocol rework; the rework counter resets under the escalation policy."
+    },
+    {
+      "issue": "9c5b26fb",
+      "reason": "The final post-reset research review found that fitted parameters and delta-AIC values derived from Monte Carlo counts still lack calibrated uncertainty intervals.",
+      "status": "approved",
+      "requested_at": "2026-08-09T19:22:02Z",
+      "resolved_at": "2026-08-09T19:31:03Z",
+      "decision": "Owner approved one additional protocol-only rework to preregister deterministic binomial-bootstrap 95% intervals and interval-aware distinguishability; no campaign draws, code, or receipt changes."
+    },
+    {
+      "issue": "9c5b26fb",
+      "reason": "The bootstrap research review accepted the uncertainty method but found that the future analysis receipt omits host hardware identity; it also advised a fixed-address deterministic bootstrap rerun check.",
+      "status": "approved",
+      "requested_at": "2026-08-09T19:55:35Z",
+      "resolved_at": "2026-08-09T19:58:15Z",
+      "decision": "Owner approved one provenance-only protocol correction requiring analysis-host hardware fields and an exact fixed-address bootstrap regeneration check; no methodology, code, campaign draws, or current receipts change."
+    },
+    {
+      "issue": "240b7618",
+      "reason": "REQ-05 failed code-review for a third consecutive round on one root cause, hitting both MAX_REWORK_ATTEMPTS and MAX_SAME_FINDING_REPEATS. The criterion permits excluding only archived material from the recorded audit, and the owner-approved manifest freeze excludes dev/active/b8206228-permanent-statistics/breakdown.json by assertion instead. The two reviewers disagree: doc-review passed the identical tree with zero findings.",
+      "status": "approved",
+      "requested_at": "2026-08-09T22:12:00Z",
+      "resolved_at": "2026-08-09T22:31:00Z",
+      "decision": "Owner approved amending REQ-05 on the grounds that the breakdown manifest is a historical artefact. REQ-05 now excludes historical material, defined as the development archive together with the frozen manifest, and requires the recorded search to state that exclusion. The Notes section carries the justification: the manifest is a verbatim copy of the .jit/ issue descriptions, so editing an entry would make the copy disagree with the issue it produced.",
+      "options": [
+        "Move the frozen manifest under dev/archive so the exclusion is literally what REQ-05 allows.",
+        "Amend REQ-05 to name the frozen-manifest exclusion.",
+        "Revert to editing manifest entries to past tense, abandoning the freeze.",
+        "Delete breakdown.json, since all 43 entries are verified byte-identical to the authoritative .jit/ store."
+      ],
+      "lead_recommendation": "Move it under dev/archive: satisfies the criterion literally, preserves the freeze decision, needs no amendment."
+    },
+    {
+      "issue": "240b7618",
+      "reason": "The approved REQ-05 amendment did not settle the criterion. Five rounds have now objected to excluding breakdown.json on five different grounds, each created by fixing the previous one: framing live in the manifest; a second occurrence; the exclusion is not archived material; the README's fidelity check reports DIVERGED after the amendment changed this issue's own description; resynchronising means the manifest is not frozen; and finally the README's cited revision 89531d65 does not match the file. The last is factually correct - the file differs from 89531d65 in eight entries (protocol-draft, dataset-schema, acceptance-checks, arm-q3-reproduction, arm-q5, arm-q7, curve-generation, campaign-finalization), all from 9c5b26fb's protocol-bracket resyncs in 7901430a and 95e16b81, none from 240b7618. The manifest is therefore neither the snapshot at its claimed revision nor a mirror of the store, and any prose describing it becomes the next round's target. The root cause is the file's location under dev/active, not the criterion's wording.",
+      "status": "approved",
+      "requested_at": "2026-08-09T22:58:00Z",
+      "options": [
+        "Move the manifest to dev/archive/b8206228-permanent-statistics/ so exclusion follows from the criterion's plain 'archived material' with no assertion to falsify.",
+        "Delete the manifest: all 43 entries were verified byte-identical to the .jit/ store, which is authoritative, and the snapshot already fails its own provenance claim.",
+        "Keep iterating in place against successive objections."
+      ],
+      "lead_recommendation": "Move it to dev/archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement.",
+      "resolved_at": "2026-08-09T23:05:00Z",
+      "decision": "Owner ruled that the project does not yet perform manual archival and the manifest is simply excluded. The exclusion is recorded as a binding decision in issue 240b7618's description under \"Decision \u2014 the breakdown manifest is excluded\", explicitly not contingent on the file being frozen, matching any revision, or agreeing with the .jit/ store. Both READMEs were swept in the same change to drop every checkable claim about the file."
+    },
+    {
+      "issue": "047b62ed",
+      "reason": "The three receipt campaigns' REQ-01/REQ-04/REQ-14 require prototype timing, but the prototype registry's batch dispatch is a skeleton stub and no issue in the graph delivers the harness batch evaluator; the component isolates and equivalence run also cover fewer orders than the grid, and REQ-01's identical-corpus clause contradicts the harness's deliberate disjoint per-cell stream design.",
+      "status": "approved",
+      "requested_at": "2026-08-14T05:20:00Z",
+      "resolved_at": "2026-08-14T05:24:00Z",
+      "decision": "Owner chose wire-and-rerun: new prerequisite task e31b1918 wires prototype batch evaluators, de-aliases the Gray-update rows, extends isolates and equivalence to the grid's order set; the runner then re-arms and all three fields' evidence regenerates. Owner also approved amending REQ-01's corpus clause on all three campaigns (identical sampler on preregistered disjoint streams for timing; literally identical corpus for equivalence) and correcting 047b62ed's Background zero-fast-path ordering sentence."
+    },
+    {
+      "issue": "047b62ed",
+      "reason": "The F_3 receipts, complete and honest, exposed REQ-04's 'matching orders and batch sizes' clause as structurally unsatisfiable: the harness fixes gpu_hip at M in {256,1024} and probe-calibrates every prototype cell (M 2..448), so no matched-batch pair exists; the same clause binds 91605d4d and 6c7fcb38. Separately, the lead's evidence-supersession commits made the harness's equivalence-budget citation of run 20260813T230032Z-1321576's grid CSVs false against the tree.",
+      "status": "approved",
+      "requested_at": "2026-08-15T07:20:00Z",
+      "resolved_at": "2026-08-15T07:24:00Z",
+      "decision": "Owner approved amending REQ-04 on all three campaigns: comparison at matching orders with the control's fixed and the prototypes' probe-calibrated batch sizes recorded beside their throughputs and the batch-size confound quantified; mappings comparable on the order axis. Owner chose a docs-only repair of the harness citation now (name the superseded run as historical, note the counts reproduce against the committed 20260814 run) over wire-and-rerun or leaving it, accepting the post-run docs-edit review risk."
+    },
+    {
+      "issue": "047b62ed",
+      "reason": "REQ-03's 'for every representation that executes' clause collides with structurally non-isolable components: the prototypes' Gray update runs fused inside the wave kernel and the halving reduction has no observable branch boundary, a record-the-reason design earlier review rounds endorsed.",
+      "status": "approved",
+      "requested_at": "2026-08-15T07:35:00Z",
+      "resolved_at": "2026-08-15T07:37:00Z",
+      "decision": "Owner approved amending REQ-03 on all three campaigns: a representation whose component admits no distinct isolate (fused or branchless circuit) is recorded with that structural reason in place of a duration, and a censored isolate carries its censoring reason."
+    },
+    {
+      "issue": "047b62ed",
+      "reason": "doc-review round 1 finding F1: REQ-07 requires measured resource figures beside the budget 'that kernel's design predicted', but no committed design states a per-lane register budget for permanent_bipedal3_kernel, gray_update_micro_kernel, or horizontal_product_micro_kernel; a post-measurement prediction would be post-hoc. Same wording on 91605d4d and 6c7fcb38.",
+      "status": "approved",
+      "requested_at": "2026-08-15T07:55:00Z",
+      "resolved_at": "2026-08-15T07:57:00Z",
+      "decision": "Owner approved amending REQ-07 on all three campaigns: the prediction-beside-measurement pairing applies where a committed design states such a prediction; a measured kernel without one is recorded as such, and the absence is not filled with a post-hoc figure. Finding F2 (REQ-08 occupancy limiter naming) is being fixed in-artifact, not amended."
+    },
+    {
+      "issue": "a2c0db52",
+      "reason": "The recorded check found a second feasibility-table cell (q=3, n=16, GPU M=256: published 30210, CSV 30209.4610) disagreeing with the committed artifact under the table's own integer-precision convention, contradicting the closed F_3 receipts' section 11.1 one-cell claim.",
+      "status": "approved",
+      "requested_at": "2026-08-15T09:05:00Z",
+      "resolved_at": "2026-08-15T09:08:00Z",
+      "decision": "Owner approved amending a2c0db52 to cover both cells plus the dependent F_3 receipts section 11.1 correction, all gated under a2c0db52's doc-review; 047b62ed stays closed."
+    },
+    {
+      "issue": "6c7fcb38",
+      "reason": "F_7 evidence audit: REQ-17's profiler counters were never collected (the AI-free runner invokes no profiler) and its escape clause's precondition is factually false (rocprof/v2/v3 installed); REQ-16's preparation-vs-Gray-walk separation has no committed measurement (one event span brackets both launches).",
+      "status": "approved",
+      "requested_at": "2026-08-15T09:55:00Z",
+      "resolved_at": "2026-08-15T09:58:00Z",
+      "decision": "Owner approved the paired-profiled-run resolution: REQ-16/REQ-17 amended to accept a committed paired profiled evidence run over the same hash-pinned binaries and cells, separate from the timing run with the perturbation rationale stated; the lead runs the profile on the host and commits the artifact."
+    },
+    {
+      "issue": "0dffa759",
+      "reason": "REQ-08 requires amending the archived F_7 encoding decision under dev/archive/ (permanent content; owner approval required per the issue Notes). The synthesis determined the receipts support the three-plane candidate and drafted a purely additive amendment.",
+      "status": "approved",
+      "requested_at": "2026-08-17",
+      "resolved_at": "2026-08-17",
+      "decision": "Owner approved the drafted amendment verbatim; the lead applied the note and pointer stubs to the archived file and updated the study documents' pending-approval framing."
+    },
+    {
+      "issue": "0dffa759",
+      "reason": "Research-review rejected a third candidate for 'the documented safe launch-duration bound' on the same root cause in three consecutive rounds (none exists; envelope promotion; archived-calibration promotion), reaching MAX_SAME_FINDING_REPEATS and MAX_REWORK_ATTEMPTS: no committed evidence locates a fault boundary, so the criterion's presupposed object does not exist in the tree.",
+      "status": "approved",
+      "requested_at": "2026-08-17",
+      "resolved_at": "2026-08-17",
+      "decision": "Owner approved amending REQ-11: the safe-launch-duration condition is discharged by the operating point's own receipted clean completions at its declared configuration, with the envelope and the archived calibration cited as reference limits carrying their evidentiary status, no located fault boundary claimed, and locating one an open deliverable. The rework counter reset with the guidance. Owner also approved the two lead fixes for the round's other findings: a dated RNG provenance addendum in the study recording ChaCha20/rand_chacha 0.9 as read from the pinned revisions, and removal of the republished archived CPU speedup figures in favour of a qualitative description with citation."
+    },
+    {
+      "issue": "51498b90",
+      "reason": "doc-review at the post-reword HEAD failed with a new blocking finding while the rework counter stood at MAX (2): the issue's REQ-04 requires the quarantined item visible in the dataset and the worker delivered FieldSummary.quarantined, but the controlling preregistered protocol excludes quarantined shards from the raw dataset and names a committed campaign execution receipt as the retained evidence; the reviewer requires the two prose bodies reconciled with the authoritative evidence location named.",
+      "status": "approved",
+      "requested_at": "2026-08-17",
+      "resolved_at": "2026-08-17",
+      "decision": "Owner approved the protocol reconciliation: the field summary's quarantined list is a diagnostic index (identity plus mechanical error) discharging REQ-04's visibility; the committed campaign execution receipt remains the sole authoritative quarantine evidence; exclusion from the raw shard set and pooling is unchanged; README and the FieldSummary rustdoc are reworded to name the receipt authoritative. No statistical protocol content changes. The rework counter reset with the guidance."
+    },
+    {
+      "issue": "51498b90",
+      "reason": "code-review at the reconciliation HEAD produced a confirmed new finding: the driver evaluates work items serially and worker_count keys only checkpoint bookkeeping, so REQ-02's cross-worker-count byte-identity clause is vacuous and its test non-discriminating; real multi-threaded execution is deliberately owned by wave-5 leaf eb8825c8.",
+      "status": "approved",
+      "requested_at": "2026-08-17",
+      "resolved_at": "2026-08-17",
+      "decision": "Owner approved amending REQ-02 to the leaf's real deliverable: identical shard contents across a checkpoint boundary including a resume under a different worker count, with the checkpoint's per-worker generator-word-position contract stated as the forward interface. The cross-thread-count execution determinism obligation moved to eb8825c8 as its new REQ-04 (thread-count-varying test), where the thread pool makes it discriminating."
+    },
+    {
+      "issue": "4a6bdcff",
+      "reason": "code-review F1 confirmed: summarize emitted Completed rows pairing Evaluated determinant counts with a NotEvaluated estimate, which the canonical validator rejects; the issue Notes forbade computing the estimate/verdict while the protocol fully specifies the exact rule and mandates the estimate in completed cells.",
+      "status": "approved",
+      "requested_at": "2026-08-17",
+      "resolved_at": "2026-08-17",
+      "decision": "Owner approved amending the Notes: summarize fills the determinant estimate (Wilson) and the exact two-sided binomial verdict at the protocol level (bonferroni 0.025 over the family, 1/2520 on the 63-cell grid), mirroring the inline permanent verdict; 73317b2e keeps the halt-and-preserve wiring, retry policy, and global-budget reconciliation."
+    },
+    {
+      "issue": "7a816262",
+      "reason": "Whether the synthesis-retained F_5/F_7 three-plane prototype configurations (go verdicts, study-cohort composite receipts) may discharge q5/q7 cells at freeze time although the production accelerator path lands only in wave-7 a39bb161.",
+      "status": "resolved",
+      "requested_at": "2026-08-17T22:55:00Z",
+      "resolved_at": "2026-08-17T22:57:00Z",
+      "decision": "Owner: defer to premeasurement. Retained prototype receipts do not discharge cells at freeze; those cells stay gaps and are settled empirically by the preregistered premeasurement."
+    },
+    {
+      "issue": "7a816262",
+      "reason": "Scale of the preregistered same-cohort premeasurement needed for the ~60 gap cells (full candidate grid vs a nominated subset), a multi-night bench-time trade-off.",
+      "status": "resolved",
+      "requested_at": "2026-08-17T22:55:00Z",
+      "resolved_at": "2026-08-17T22:57:00Z",
+      "decision": "Owner: top-2 per cell. Nominate two candidates per gap cell from existing non-cohort evidence with recorded per-cell basis, measure those in 296a41c9-pattern cohorts, rule-3-exclude the rest with recorded exclusions."
     }
-   ]
+  ],
+  "rework_counts": {
+    "6c7fcb38": 1,
+    "175972df": 2,
+    "18dec119": 2,
+    "240b7618": 5,
+    "d36810e7": 2,
+    "296a41c9": 2,
+    "531695da": 1,
+    "5758790d": 2,
+    "6ae9f4ac": 1,
+    "9c5b26fb": 4,
+    "2ddf2f4b": 5,
+    "e0251af3": 1,
+    "047b62ed": 2,
+    "4fdd781a": 2,
+    "41c3d91d": 2,
+    "a9284086": 1,
+    "51498b90": 1,
+    "51498b90_note": "reset to 0 by the 2026-08-17 quarantine-reconciliation escalation guidance, then 1 on the luna rework dispatch",
+    "0dffa759": 1,
+    "0dffa759_note": "reset to 0 by the 2026-08-17 REQ-11 escalation guidance, then 1 on the rework-3 dispatch (redispatched in session 10 after the session-9 crash)",
+    "e1c96c9c": 1,
+    "63d931a9": 1,
+    "4a6bdcff": 1,
+    "eb8825c8": 1,
+    "7a816262": 1
   },
-  {
-   "wave_number": 12,
-   "issues": [
+  "surfaced_pitfalls": [
+    "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
+    "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
+    "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf.",
+    "A cold optimized rebuild after SIMD source changes can exceed the cargo-ci gate's fixed 300-second wrapper timeout even when the identical CI script is healthy. Run the identical script once to complete cold artefacts, then rerun the unchanged registered gate; never substitute the warm-up result for gate evidence.",
+    "The more common cause of that same 300-second signature is not a cold rebuild: scripts/cargo-ci.sh re-execs itself under a blocking host-wide flock (XDG_RUNTIME_DIR/gf2-cargo-ci.lock), so a gate run started while any other cargo-ci is in flight spends its entire wrapper budget queued and is recorded as status error with no output and no check lines. Distinguish the two by the run record: a lock wait produces an empty stdout at almost exactly 300000ms. Workers in separate worktrees share this lock, so drain the queue before evaluating the gate rather than warming artefacts.",
+    "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
+    "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible.",
+    "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it \u2014 frozen, historical, faithful to the store, snapshotted at a revision \u2014 became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
+    "A recorded audit command is only as good as its pattern breadth. The round-one 240b7618 audit required the words public and dispatcher to be adjacent and searched two paths, so it returned a false all-clear over bare-symbol occurrences of the same claim living in dev/studies. When a criterion asks for a recorded repository search, run the recorded command against the known-bad text before accepting it, and escape a literal token in the pattern so the command text cannot match itself.",
+    "Prose the lead writes about a stale-framing sweep is itself swept. Two surfaced-pitfall entries in this file quoted the superseded claims verbatim and turned up as live occurrences in 240b7618's own audit. Describe a retired claim rather than reproducing it.",
+    "A cargo-ci gate run reported 'Passed gate cargo-ci for issue 175972df' while persisting no record under .jit/gate-runs/, on a tree that the next identical invocation failed on clippy and that a direct cargo clippy run independently failed. Treat a gate pass with no corresponding run record as no evidence at all: after every jit gate evaluate, confirm the recorded status with jit gate status before acting on the verdict. The repository has a prior false-pass incident of a different mechanism recorded in scripts/cargo-ci.sh (jit issue 941d1528).",
+    "jit keeps authoritative state in the shared .git/jit/ store and materialises it into whichever checkout a jit command runs from, so a worker's .jit/*.json and .jit/events.jsonl acquire modifications carrying other issues' gate transitions. A worker committing with git add -A sweeps the lead's state into its branch; one worker caught and reverted exactly that. Brief workers to stage explicit paths, and check every worker commit for .jit/ paths before merging.",
+    "A worker's own worktree cargo-ci is not the gate. 175972df passed its worktree checks and failed clippy::assign_op_pattern on the merged tree, because clippy --workspace --all-targets with -D warnings over the combination is the only run that sees it. Gate after the merge, never instead of it.",
+    "Requiring a worker to falsify its tests \u2014 reinstate the defect and show the test turns red \u2014 is worth doing, but a falsification that does not reproduce the original defect byte-for-byte can go red for an unrelated reason and read as proof. On d36810e7 the reinstated code built the exemption prefix as components.join('/') plus a trailing slash, yielding '/', which no path matches, so everything refused; the real defect yielded '', which every path matches, so everything was exempt. The test failed for the opposite reason to the bug. Require the reinstated body to be diffed against the real pre-fix code, and ask which red was observed.",
+    "A test can be excused by a rule unrelated to its subject and pass with the behaviour it protects completely broken. d36810e7's derived-artefact exemption test wrote its file untracked, and the untracked rule excuses those regardless, so the test could not have detected a broken subtree exemption. When a test asserts an exemption, confirm the fixture actually reaches the code path being exempted.",
     {
-     "id": "53d8e438-7bbe-4397-b43c-c9e100e145b1",
-     "short_id": "53d8e438",
-     "title": "Convergence-shape model comparison for the deviation term",
-     "classification": "implementation",
-     "status": "pending"
+      "issue": "e0251af3",
+      "source": "research-review round 2 F3 (advisory)",
+      "finding": "No committed artifact predating the results establishes the claimed preregistered cells, sample sizes, and stopping rule; the harness constants were committed together with the receipt.",
+      "disposition": "advisory; epic REQ-06 (preregistered rare-event estimator) names preregistration for the ASPIRATIONAL estimator issues 3f664839/6639435f/b05c908b \u2014 for those, require the design/constants commit to land and be linked BEFORE any estimating run, so this finding does not recur as a blocking one."
     },
+    "The v1 F_3 receipts (dev/studies/047b62ed/receipts.md, commit 6eb364e9) and all campaign run 20260813T230032Z-1321576 raw evidence come from the pre-e31b1918 harness. After the rerun, supersede them per the standing rule: git rm superseded run evidence and re-point links in the same commit; reviewers reject evidence from a non-final tool revision.",
+    "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream.",
+    "RESOLVED 2026-08-14 (de5f7414): equivalence counts are now budgeted per (q,n) cell against the summed committed probe costs of that cell's measured CPU backends (240 s per-cell budget; only q=5,n=28 halves to 2). Full-order host validation at the final revision: 234 rows, 0 mismatches, 5690 s wall (dev/active/b8206228-permanent-statistics/e31b1918-equiv-host-full.csv). The general lesson stands: never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured costs.",
+    "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b \u2014 git rm the superseded evidence and re-point the jit doc links in the same commit.",
+    "The Ryser work-model projection is conservative (lands low) only on fixed-batch GPU chains; on probe-calibrated prototype chains it lands HIGH by up to ~680% at large orders because batch size moves up to 20x between adjacent orders (F_3 receipts section 5). Never treat a censored prototype cell's projection as a lower bound.",
+    "Harness defects surfaced by the F_3 receipts and filed under the tech-debt umbrella 86b9c719: 3ea21d74 (grid CSV emits unquoted note columns; 25 malformed rows per field-grid) and 79c5ace7 (host_submission_s carries two semantics across backend rows). Receipt tooling for F_5/F_7 must reuse the seed_root-anchored CSV split and the device-clock launch column, as the F_3 analysis.py does.",
+    "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + 62c061c7). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task.",
     {
-     "id": "6639435f-8be8-4408-b6ab-759fe0099bd2",
-     "short_id": "6639435f",
-     "title": "Rare-event estimator with demonstrated unbiasedness and coverage",
-     "classification": "implementation",
-     "status": "pending"
+      "issue": "91605d4d",
+      "source": "code-review round 1 (advisory, pre-existing)",
+      "finding": "The measurement harness embeds historical receipt figures and narrative instead of an identity-based derivation reference (main.rs:64), cited against @/inv/runtime-observed-provenance.",
+      "disposition": "Owned by retrofit task 0ba493e1 REQ-03 (preamble/tool-prose audit) under the tech-debt umbrella; no campaign issue owns harness changes."
     },
+    "Code-review enforces the AGENTS.md 72-character commit-subject limit on the lead's own commits: 63d931a9 round 1 failed solely on an 89-character lead subject. Fixed by reset-amend-cherry-pick over the unpushed chain; gate records citing the rewritten hashes were re-run at the new HEAD. Check subject lengths before committing.",
+    "Naming any committed object 'the documented safe launch-duration bound' invites the reviewer to falsify the promotion: three rounds rejected in turn no-bound, the observed clean-completion envelope, and the archived calibration. Same lesson as the breakdown.json exclusion saga: a checkable claim defending a framing becomes the next round's target. Resolution was amending the criterion to name the discharge the evidence supports (direct receipted clean completions at the operating point).",
+    "Session-10 worktree loss: the dispatch script's worktree under .agents/worktrees/ vanished from the real filesystem between creation and worker completion (sandbox overlay suspected); the codex worker's writes were lost with it and were recovered by replaying the 19 patch_apply_end unified diffs from the codex session transcript (~/.codex/sessions/...) onto main, then re-verifying fmt/clippy/nextest from scratch. Until root-caused, treat worktree isolation as unavailable on this host: dispatch single workers on the primary checkout with disjoint-file discipline, and always run check-leak-into-main.sh whose 'leak' report may actually be the only surviving copy of the work.",
+    "Forward sweep 2026-08-17 over waves 5-13 found the pending criteria self-consistent with the hardened contracts (protocol, schema validator, byte-determinism, evidence locations): the objects they presuppose exist (296a41c9 backend re-measurement, 8cb4def5 determinant timing receipt, b488f02c literature search, all five Backend variants, ccx1-bench-flock.sh). Two dispatch-time notes: f74e327d REQ-05 needs deterministic figure regeneration (pin plotting toolchain, no embedded timestamps); 73317b2e REQ-04 refactors summarize's inline estimate/verdict computation into the acceptance layer rather than duplicating it.",
     {
-     "id": "f74e327d-688d-4ffe-880f-a01b471e33d8",
-     "short_id": "f74e327d",
-     "title": "Published zero-fraction curves and tables for the three fields",
-     "classification": "documentation",
-     "status": "pending"
+      "id": "premeasure-v1-grid-mismatch",
+      "surfaced_at": "2026-08-18",
+      "issue": "7a816262",
+      "summary": "premeasure-plan-v1 nominates 60 gap cells over n=4..27 but the permanent_sampling_feas grid is fixed at NS=[12,16,20,24,28]; 51/60 cells cannot be selected by --only. The 5/5 shell tests and validation.md did not exercise the real harness grid, so the mismatch survived to the overnight run.",
+      "status": "open"
     }
-   ]
-  },
-  {
-   "wave_number": 13,
-   "issues": [
-    {
-     "id": "0665e7be-6150-45a0-94bc-1ce11c61bd2b",
-     "short_id": "0665e7be",
-     "title": "Permanental against determinantal zero-fraction comparison figure",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "b05c908b-690d-4caa-9e2d-46d0f9ae0acc",
-     "short_id": "b05c908b",
-     "title": "Preregistered rare-event estimate beyond direct sampling",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "b5d45bcd-05b8-42cd-a418-b73b47a15dac",
-     "short_id": "b5d45bcd",
-     "title": "Analysis report on the measured zero-fraction curves",
-     "classification": "documentation",
-     "status": "pending"
-    }
-   ]
-  }
- ],
- "created_during_execution": [
-  {
-   "short_id": "2ddf2f4b",
-   "title": "Deterministic overnight runner for the receipt campaigns",
-   "reason": "Owner directive 2026-08-13: campaigns execute overnight via a deterministic AI-free runner; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
-   "wave": "1.5",
-   "status": "done"
-  },
-  {
-   "short_id": "e31b1918",
-   "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
-   "reason": "Owner-approved wire-and-rerun resolution of the 2026-08-14 escalation; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
-   "wave": "0.9",
-   "status": "done",
-   "note": "Closed 2026-08-14 (session 6). Implementation 3933338a; budget fix de5f7414 (per-cell 240 s rule, q=5,n=28 count 4->2); full-order host equivalence validation 0c0f525f (234 rows, 0 mismatches, 5690 s wall); smoke evidence 7174718d. All three gates passed with persisted records; lead review PASS."
-  },
-  {
-   "short_id": "a2c0db52",
-   "title": "Feasibility study table cells disagree with their own committed CSV",
-   "reason": "Found by the F_3 receipts (one cell) and this issue's recorded check (second cell); owner-approved scope amendment covered both plus the dependent receipts 11.1 correction.",
-   "wave": "1 (interleaved)",
-   "status": "done",
-   "note": "Closed 2026-08-15: both cells fixed, recorded check committed (verify-published-table.py), F_3 receipts 11.1 corrected; doc-review passed with persisted record at 71db423f."
-  },
-  {
-   "short_id": "0b66973a",
-   "title": "F_5 receipts deny committed per-lane register models their kernel source states",
-   "reason": "The 6c7fcb38 code-review finding (receipts deny the wave_gf7_equivalence.hip:8-18 per-lane lower bounds) generalises to the closed F_5 receipts, which deny the f5_wave_equivalence.hip:9-15 models; filed per the a2c0db52 interleaved-bug precedent.",
-   "wave": "1 (interleaved)",
-   "status": "done",
-   "note": "Closed 2026-08-16: pairing corrected at 682d5942, doc-review passed first round with persisted record, lead six-tier review PASS."
-  },
-  {
-   "short_id": "4fdd781a",
-   "title": "Prior throughput grid publishes rates its stated stopping rule forbids",
-   "reason": "Found by the F_5 receipts; rendering correction with recorded check.",
-   "wave": "1 (interleaved)",
-   "status": "done",
-   "note": "Closed 2026-08-15: R1 7a0af9ab daggered the two source cells; R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; R3 c315fe2b (luna, rework count 2 = MAX, passed) verifies both stopping-rule minima: five-second half from the pinned harness source's loop-exit structure plus direct total_s>=5 proof, cap-path evidence total_s>=120 for reps<5 rows. total_s undercounts the stopping clock (12 conforming rows at 4.4-4.99 s), so a naive total_s>=5 test falsely flags conforming cells. doc-review passed R3 with persisted record at c315fe2b, 0 findings; lead six-tier review PASS."
-  },
-  {
-   "short_id": "63d931a9",
-   "title": "Bipedal3 doc comments deny the alternative zero their own circuits produce",
-   "reason": "Found by the 0dffa759 synthesis (finding F.13) during rework-1; filed per the a2c0db52 interleaved-bug precedent.",
-   "wave": "3 (interleaved)",
-   "status": "done: closed 2026-08-17 session 10; cargo-ci + code-review passed at ab311654, findings.md F.13 narrative closed under 0dffa759, sibling SIMD miscitation filed as 59024f1a (tech-debt umbrella); lead six-tier review PASS"
-  },
-  {
-   "short_id": "d2fb76b9",
-   "title": "Converge the F_7 permanent kernel's internal three-plane state with the public Packed7 representation",
-   "reason": "Carries the tracked convergence condition the 0dffa759 exception permanent-f7-internal-three-plane names; filed under the tech-debt umbrella 86b9c719 per the 023233c5 precedent.",
-   "wave": "n/a (tech-debt umbrella)",
-   "status": "filed"
-  },
-  {
-   "short_id": "59024f1a",
-   "title": "SIMD bipedal3 comments cite Scheinerman Algorithm 2, an object the paper does not carry",
-   "reason": "Lead Tier 2.5 sweep for 63d931a9 found the corrected miscitation surviving in crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:119,288; filed under the tech-debt umbrella 86b9c719 per the 023233c5 precedent.",
-   "wave": "n/a (tech-debt umbrella)",
-   "status": "filed"
-  }
- ],
- "escalations": [
-  {
-   "issue": "9c5b26fb",
-   "reason": "The final research gate found a halted-cell schema contradiction and missing Monte Carlo confidence intervals after the protocol exhausted its two allowed rework cycles.",
-   "status": "approved",
-   "requested_at": "2026-08-09T16:21:42Z",
-   "resolved_at": "2026-08-09T16:59:46Z",
-   "decision": "Owner approved one additional bounded protocol rework; the rework counter resets under the escalation policy."
-  },
-  {
-   "issue": "9c5b26fb",
-   "reason": "The final post-reset research review found that fitted parameters and delta-AIC values derived from Monte Carlo counts still lack calibrated uncertainty intervals.",
-   "status": "approved",
-   "requested_at": "2026-08-09T19:22:02Z",
-   "resolved_at": "2026-08-09T19:31:03Z",
-   "decision": "Owner approved one additional protocol-only rework to preregister deterministic binomial-bootstrap 95% intervals and interval-aware distinguishability; no campaign draws, code, or receipt changes."
-  },
-  {
-   "issue": "9c5b26fb",
-   "reason": "The bootstrap research review accepted the uncertainty method but found that the future analysis receipt omits host hardware identity; it also advised a fixed-address deterministic bootstrap rerun check.",
-   "status": "approved",
-   "requested_at": "2026-08-09T19:55:35Z",
-   "resolved_at": "2026-08-09T19:58:15Z",
-   "decision": "Owner approved one provenance-only protocol correction requiring analysis-host hardware fields and an exact fixed-address bootstrap regeneration check; no methodology, code, campaign draws, or current receipts change."
-  },
-  {
-   "issue": "240b7618",
-   "reason": "REQ-05 failed code-review for a third consecutive round on one root cause, hitting both MAX_REWORK_ATTEMPTS and MAX_SAME_FINDING_REPEATS. The criterion permits excluding only archived material from the recorded audit, and the owner-approved manifest freeze excludes dev/active/b8206228-permanent-statistics/breakdown.json by assertion instead. The two reviewers disagree: doc-review passed the identical tree with zero findings.",
-   "status": "approved",
-   "requested_at": "2026-08-09T22:12:00Z",
-   "resolved_at": "2026-08-09T22:31:00Z",
-   "decision": "Owner approved amending REQ-05 on the grounds that the breakdown manifest is a historical artefact. REQ-05 now excludes historical material, defined as the development archive together with the frozen manifest, and requires the recorded search to state that exclusion. The Notes section carries the justification: the manifest is a verbatim copy of the .jit/ issue descriptions, so editing an entry would make the copy disagree with the issue it produced.",
-   "options": [
-    "Move the frozen manifest under dev/archive so the exclusion is literally what REQ-05 allows.",
-    "Amend REQ-05 to name the frozen-manifest exclusion.",
-    "Revert to editing manifest entries to past tense, abandoning the freeze.",
-    "Delete breakdown.json, since all 43 entries are verified byte-identical to the authoritative .jit/ store."
-   ],
-   "lead_recommendation": "Move it under dev/archive: satisfies the criterion literally, preserves the freeze decision, needs no amendment."
-  },
-  {
-   "issue": "240b7618",
-   "reason": "The approved REQ-05 amendment did not settle the criterion. Five rounds have now objected to excluding breakdown.json on five different grounds, each created by fixing the previous one: framing live in the manifest; a second occurrence; the exclusion is not archived material; the README's fidelity check reports DIVERGED after the amendment changed this issue's own description; resynchronising means the manifest is not frozen; and finally the README's cited revision 89531d65 does not match the file. The last is factually correct - the file differs from 89531d65 in eight entries (protocol-draft, dataset-schema, acceptance-checks, arm-q3-reproduction, arm-q5, arm-q7, curve-generation, campaign-finalization), all from 9c5b26fb's protocol-bracket resyncs in 7901430a and 95e16b81, none from 240b7618. The manifest is therefore neither the snapshot at its claimed revision nor a mirror of the store, and any prose describing it becomes the next round's target. The root cause is the file's location under dev/active, not the criterion's wording.",
-   "status": "approved",
-   "requested_at": "2026-08-09T22:58:00Z",
-   "options": [
-    "Move the manifest to dev/archive/b8206228-permanent-statistics/ so exclusion follows from the criterion's plain 'archived material' with no assertion to falsify.",
-    "Delete the manifest: all 43 entries were verified byte-identical to the .jit/ store, which is authoritative, and the snapshot already fails its own provenance claim.",
-    "Keep iterating in place against successive objections."
-   ],
-   "lead_recommendation": "Move it to dev/archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement.",
-   "resolved_at": "2026-08-09T23:05:00Z",
-   "decision": "Owner ruled that the project does not yet perform manual archival and the manifest is simply excluded. The exclusion is recorded as a binding decision in issue 240b7618's description under \"Decision \u2014 the breakdown manifest is excluded\", explicitly not contingent on the file being frozen, matching any revision, or agreeing with the .jit/ store. Both READMEs were swept in the same change to drop every checkable claim about the file."
-  },
-  {
-   "issue": "047b62ed",
-   "reason": "The three receipt campaigns' REQ-01/REQ-04/REQ-14 require prototype timing, but the prototype registry's batch dispatch is a skeleton stub and no issue in the graph delivers the harness batch evaluator; the component isolates and equivalence run also cover fewer orders than the grid, and REQ-01's identical-corpus clause contradicts the harness's deliberate disjoint per-cell stream design.",
-   "status": "approved",
-   "requested_at": "2026-08-14T05:20:00Z",
-   "resolved_at": "2026-08-14T05:24:00Z",
-   "decision": "Owner chose wire-and-rerun: new prerequisite task e31b1918 wires prototype batch evaluators, de-aliases the Gray-update rows, extends isolates and equivalence to the grid's order set; the runner then re-arms and all three fields' evidence regenerates. Owner also approved amending REQ-01's corpus clause on all three campaigns (identical sampler on preregistered disjoint streams for timing; literally identical corpus for equivalence) and correcting 047b62ed's Background zero-fast-path ordering sentence."
-  },
-  {
-   "issue": "047b62ed",
-   "reason": "The F_3 receipts, complete and honest, exposed REQ-04's 'matching orders and batch sizes' clause as structurally unsatisfiable: the harness fixes gpu_hip at M in {256,1024} and probe-calibrates every prototype cell (M 2..448), so no matched-batch pair exists; the same clause binds 91605d4d and 6c7fcb38. Separately, the lead's evidence-supersession commits made the harness's equivalence-budget citation of run 20260813T230032Z-1321576's grid CSVs false against the tree.",
-   "status": "approved",
-   "requested_at": "2026-08-15T07:20:00Z",
-   "resolved_at": "2026-08-15T07:24:00Z",
-   "decision": "Owner approved amending REQ-04 on all three campaigns: comparison at matching orders with the control's fixed and the prototypes' probe-calibrated batch sizes recorded beside their throughputs and the batch-size confound quantified; mappings comparable on the order axis. Owner chose a docs-only repair of the harness citation now (name the superseded run as historical, note the counts reproduce against the committed 20260814 run) over wire-and-rerun or leaving it, accepting the post-run docs-edit review risk."
-  },
-  {
-   "issue": "047b62ed",
-   "reason": "REQ-03's 'for every representation that executes' clause collides with structurally non-isolable components: the prototypes' Gray update runs fused inside the wave kernel and the halving reduction has no observable branch boundary, a record-the-reason design earlier review rounds endorsed.",
-   "status": "approved",
-   "requested_at": "2026-08-15T07:35:00Z",
-   "resolved_at": "2026-08-15T07:37:00Z",
-   "decision": "Owner approved amending REQ-03 on all three campaigns: a representation whose component admits no distinct isolate (fused or branchless circuit) is recorded with that structural reason in place of a duration, and a censored isolate carries its censoring reason."
-  },
-  {
-   "issue": "047b62ed",
-   "reason": "doc-review round 1 finding F1: REQ-07 requires measured resource figures beside the budget 'that kernel's design predicted', but no committed design states a per-lane register budget for permanent_bipedal3_kernel, gray_update_micro_kernel, or horizontal_product_micro_kernel; a post-measurement prediction would be post-hoc. Same wording on 91605d4d and 6c7fcb38.",
-   "status": "approved",
-   "requested_at": "2026-08-15T07:55:00Z",
-   "resolved_at": "2026-08-15T07:57:00Z",
-   "decision": "Owner approved amending REQ-07 on all three campaigns: the prediction-beside-measurement pairing applies where a committed design states such a prediction; a measured kernel without one is recorded as such, and the absence is not filled with a post-hoc figure. Finding F2 (REQ-08 occupancy limiter naming) is being fixed in-artifact, not amended."
-  },
-  {
-   "issue": "a2c0db52",
-   "reason": "The recorded check found a second feasibility-table cell (q=3, n=16, GPU M=256: published 30210, CSV 30209.4610) disagreeing with the committed artifact under the table's own integer-precision convention, contradicting the closed F_3 receipts' section 11.1 one-cell claim.",
-   "status": "approved",
-   "requested_at": "2026-08-15T09:05:00Z",
-   "resolved_at": "2026-08-15T09:08:00Z",
-   "decision": "Owner approved amending a2c0db52 to cover both cells plus the dependent F_3 receipts section 11.1 correction, all gated under a2c0db52's doc-review; 047b62ed stays closed."
-  },
-  {
-   "issue": "6c7fcb38",
-   "reason": "F_7 evidence audit: REQ-17's profiler counters were never collected (the AI-free runner invokes no profiler) and its escape clause's precondition is factually false (rocprof/v2/v3 installed); REQ-16's preparation-vs-Gray-walk separation has no committed measurement (one event span brackets both launches).",
-   "status": "approved",
-   "requested_at": "2026-08-15T09:55:00Z",
-   "resolved_at": "2026-08-15T09:58:00Z",
-   "decision": "Owner approved the paired-profiled-run resolution: REQ-16/REQ-17 amended to accept a committed paired profiled evidence run over the same hash-pinned binaries and cells, separate from the timing run with the perturbation rationale stated; the lead runs the profile on the host and commits the artifact."
-  },
-  {
-   "issue": "0dffa759",
-   "reason": "REQ-08 requires amending the archived F_7 encoding decision under dev/archive/ (permanent content; owner approval required per the issue Notes). The synthesis determined the receipts support the three-plane candidate and drafted a purely additive amendment.",
-   "status": "approved",
-   "requested_at": "2026-08-17",
-   "resolved_at": "2026-08-17",
-   "decision": "Owner approved the drafted amendment verbatim; the lead applied the note and pointer stubs to the archived file and updated the study documents' pending-approval framing."
-  },
-  {
-   "issue": "0dffa759",
-   "reason": "Research-review rejected a third candidate for 'the documented safe launch-duration bound' on the same root cause in three consecutive rounds (none exists; envelope promotion; archived-calibration promotion), reaching MAX_SAME_FINDING_REPEATS and MAX_REWORK_ATTEMPTS: no committed evidence locates a fault boundary, so the criterion's presupposed object does not exist in the tree.",
-   "status": "approved",
-   "requested_at": "2026-08-17",
-   "resolved_at": "2026-08-17",
-   "decision": "Owner approved amending REQ-11: the safe-launch-duration condition is discharged by the operating point's own receipted clean completions at its declared configuration, with the envelope and the archived calibration cited as reference limits carrying their evidentiary status, no located fault boundary claimed, and locating one an open deliverable. The rework counter reset with the guidance. Owner also approved the two lead fixes for the round's other findings: a dated RNG provenance addendum in the study recording ChaCha20/rand_chacha 0.9 as read from the pinned revisions, and removal of the republished archived CPU speedup figures in favour of a qualitative description with citation."
-  },
-  {
-   "issue": "51498b90",
-   "reason": "doc-review at the post-reword HEAD failed with a new blocking finding while the rework counter stood at MAX (2): the issue's REQ-04 requires the quarantined item visible in the dataset and the worker delivered FieldSummary.quarantined, but the controlling preregistered protocol excludes quarantined shards from the raw dataset and names a committed campaign execution receipt as the retained evidence; the reviewer requires the two prose bodies reconciled with the authoritative evidence location named.",
-   "status": "approved",
-   "requested_at": "2026-08-17",
-   "resolved_at": "2026-08-17",
-   "decision": "Owner approved the protocol reconciliation: the field summary's quarantined list is a diagnostic index (identity plus mechanical error) discharging REQ-04's visibility; the committed campaign execution receipt remains the sole authoritative quarantine evidence; exclusion from the raw shard set and pooling is unchanged; README and the FieldSummary rustdoc are reworded to name the receipt authoritative. No statistical protocol content changes. The rework counter reset with the guidance."
-  },
-  {
-   "issue": "51498b90",
-   "reason": "code-review at the reconciliation HEAD produced a confirmed new finding: the driver evaluates work items serially and worker_count keys only checkpoint bookkeeping, so REQ-02's cross-worker-count byte-identity clause is vacuous and its test non-discriminating; real multi-threaded execution is deliberately owned by wave-5 leaf eb8825c8.",
-   "status": "approved",
-   "requested_at": "2026-08-17",
-   "resolved_at": "2026-08-17",
-   "decision": "Owner approved amending REQ-02 to the leaf's real deliverable: identical shard contents across a checkpoint boundary including a resume under a different worker count, with the checkpoint's per-worker generator-word-position contract stated as the forward interface. The cross-thread-count execution determinism obligation moved to eb8825c8 as its new REQ-04 (thread-count-varying test), where the thread pool makes it discriminating."
-  },
-  {
-   "issue": "4a6bdcff",
-   "reason": "code-review F1 confirmed: summarize emitted Completed rows pairing Evaluated determinant counts with a NotEvaluated estimate, which the canonical validator rejects; the issue Notes forbade computing the estimate/verdict while the protocol fully specifies the exact rule and mandates the estimate in completed cells.",
-   "status": "approved",
-   "requested_at": "2026-08-17",
-   "resolved_at": "2026-08-17",
-   "decision": "Owner approved amending the Notes: summarize fills the determinant estimate (Wilson) and the exact two-sided binomial verdict at the protocol level (bonferroni 0.025 over the family, 1/2520 on the 63-cell grid), mirroring the inline permanent verdict; 73317b2e keeps the halt-and-preserve wiring, retry policy, and global-budget reconciliation."
-  },
-  {
-   "issue": "7a816262",
-   "reason": "Whether the synthesis-retained F_5/F_7 three-plane prototype configurations (go verdicts, study-cohort composite receipts) may discharge q5/q7 cells at freeze time although the production accelerator path lands only in wave-7 a39bb161.",
-   "status": "resolved",
-   "requested_at": "2026-08-17T22:55:00Z",
-   "resolved_at": "2026-08-17T22:57:00Z",
-   "decision": "Owner: defer to premeasurement. Retained prototype receipts do not discharge cells at freeze; those cells stay gaps and are settled empirically by the preregistered premeasurement."
-  },
-  {
-   "issue": "7a816262",
-   "reason": "Scale of the preregistered same-cohort premeasurement needed for the ~60 gap cells (full candidate grid vs a nominated subset), a multi-night bench-time trade-off.",
-   "status": "resolved",
-   "requested_at": "2026-08-17T22:55:00Z",
-   "resolved_at": "2026-08-17T22:57:00Z",
-   "decision": "Owner: top-2 per cell. Nominate two candidates per gap cell from existing non-cohort evidence with recorded per-cell basis, measure those in 296a41c9-pattern cohorts, rule-3-exclude the rest with recorded exclusions."
-  }
- ],
- "rework_counts": {
-  "6c7fcb38": 1,
-  "175972df": 2,
-  "18dec119": 2,
-  "240b7618": 5,
-  "d36810e7": 2,
-  "296a41c9": 2,
-  "531695da": 1,
-  "5758790d": 2,
-  "6ae9f4ac": 1,
-  "9c5b26fb": 4,
-  "2ddf2f4b": 5,
-  "e0251af3": 1,
-  "047b62ed": 2,
-  "4fdd781a": 2,
-  "41c3d91d": 2,
-  "a9284086": 1,
-  "51498b90": 1,
-  "51498b90_note": "reset to 0 by the 2026-08-17 quarantine-reconciliation escalation guidance, then 1 on the luna rework dispatch",
-  "0dffa759": 1,
-  "0dffa759_note": "reset to 0 by the 2026-08-17 REQ-11 escalation guidance, then 1 on the rework-3 dispatch (redispatched in session 10 after the session-9 crash)",
-  "e1c96c9c": 1,
-  "63d931a9": 1,
-  "4a6bdcff": 1,
-  "eb8825c8": 1,
-  "7a816262": 1
- },
- "surfaced_pitfalls": [
-  "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
-  "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
-  "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf.",
-  "A cold optimized rebuild after SIMD source changes can exceed the cargo-ci gate's fixed 300-second wrapper timeout even when the identical CI script is healthy. Run the identical script once to complete cold artefacts, then rerun the unchanged registered gate; never substitute the warm-up result for gate evidence.",
-  "The more common cause of that same 300-second signature is not a cold rebuild: scripts/cargo-ci.sh re-execs itself under a blocking host-wide flock (XDG_RUNTIME_DIR/gf2-cargo-ci.lock), so a gate run started while any other cargo-ci is in flight spends its entire wrapper budget queued and is recorded as status error with no output and no check lines. Distinguish the two by the run record: a lock wait produces an empty stdout at almost exactly 300000ms. Workers in separate worktrees share this lock, so drain the queue before evaluating the gate rather than warming artefacts.",
-  "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
-  "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible.",
-  "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it \u2014 frozen, historical, faithful to the store, snapshotted at a revision \u2014 became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
-  "A recorded audit command is only as good as its pattern breadth. The round-one 240b7618 audit required the words public and dispatcher to be adjacent and searched two paths, so it returned a false all-clear over bare-symbol occurrences of the same claim living in dev/studies. When a criterion asks for a recorded repository search, run the recorded command against the known-bad text before accepting it, and escape a literal token in the pattern so the command text cannot match itself.",
-  "Prose the lead writes about a stale-framing sweep is itself swept. Two surfaced-pitfall entries in this file quoted the superseded claims verbatim and turned up as live occurrences in 240b7618's own audit. Describe a retired claim rather than reproducing it.",
-  "A cargo-ci gate run reported 'Passed gate cargo-ci for issue 175972df' while persisting no record under .jit/gate-runs/, on a tree that the next identical invocation failed on clippy and that a direct cargo clippy run independently failed. Treat a gate pass with no corresponding run record as no evidence at all: after every jit gate evaluate, confirm the recorded status with jit gate status before acting on the verdict. The repository has a prior false-pass incident of a different mechanism recorded in scripts/cargo-ci.sh (jit issue 941d1528).",
-  "jit keeps authoritative state in the shared .git/jit/ store and materialises it into whichever checkout a jit command runs from, so a worker's .jit/*.json and .jit/events.jsonl acquire modifications carrying other issues' gate transitions. A worker committing with git add -A sweeps the lead's state into its branch; one worker caught and reverted exactly that. Brief workers to stage explicit paths, and check every worker commit for .jit/ paths before merging.",
-  "A worker's own worktree cargo-ci is not the gate. 175972df passed its worktree checks and failed clippy::assign_op_pattern on the merged tree, because clippy --workspace --all-targets with -D warnings over the combination is the only run that sees it. Gate after the merge, never instead of it.",
-  "Requiring a worker to falsify its tests \u2014 reinstate the defect and show the test turns red \u2014 is worth doing, but a falsification that does not reproduce the original defect byte-for-byte can go red for an unrelated reason and read as proof. On d36810e7 the reinstated code built the exemption prefix as components.join('/') plus a trailing slash, yielding '/', which no path matches, so everything refused; the real defect yielded '', which every path matches, so everything was exempt. The test failed for the opposite reason to the bug. Require the reinstated body to be diffed against the real pre-fix code, and ask which red was observed.",
-  "A test can be excused by a rule unrelated to its subject and pass with the behaviour it protects completely broken. d36810e7's derived-artefact exemption test wrote its file untracked, and the untracked rule excuses those regardless, so the test could not have detected a broken subtree exemption. When a test asserts an exemption, confirm the fixture actually reaches the code path being exempted.",
-  {
-   "issue": "e0251af3",
-   "source": "research-review round 2 F3 (advisory)",
-   "finding": "No committed artifact predating the results establishes the claimed preregistered cells, sample sizes, and stopping rule; the harness constants were committed together with the receipt.",
-   "disposition": "advisory; epic REQ-06 (preregistered rare-event estimator) names preregistration for the ASPIRATIONAL estimator issues 3f664839/6639435f/b05c908b \u2014 for those, require the design/constants commit to land and be linked BEFORE any estimating run, so this finding does not recur as a blocking one."
-  },
-  "The v1 F_3 receipts (dev/studies/047b62ed/receipts.md, commit 6eb364e9) and all campaign run 20260813T230032Z-1321576 raw evidence come from the pre-e31b1918 harness. After the rerun, supersede them per the standing rule: git rm superseded run evidence and re-point links in the same commit; reviewers reject evidence from a non-final tool revision.",
-  "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream.",
-  "RESOLVED 2026-08-14 (de5f7414): equivalence counts are now budgeted per (q,n) cell against the summed committed probe costs of that cell's measured CPU backends (240 s per-cell budget; only q=5,n=28 halves to 2). Full-order host validation at the final revision: 234 rows, 0 mismatches, 5690 s wall (dev/active/b8206228-permanent-statistics/e31b1918-equiv-host-full.csv). The general lesson stands: never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured costs.",
-  "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b \u2014 git rm the superseded evidence and re-point the jit doc links in the same commit.",
-  "The Ryser work-model projection is conservative (lands low) only on fixed-batch GPU chains; on probe-calibrated prototype chains it lands HIGH by up to ~680% at large orders because batch size moves up to 20x between adjacent orders (F_3 receipts section 5). Never treat a censored prototype cell's projection as a lower bound.",
-  "Harness defects surfaced by the F_3 receipts and filed under the tech-debt umbrella 86b9c719: 3ea21d74 (grid CSV emits unquoted note columns; 25 malformed rows per field-grid) and 79c5ace7 (host_submission_s carries two semantics across backend rows). Receipt tooling for F_5/F_7 must reuse the seed_root-anchored CSV split and the device-clock launch column, as the F_3 analysis.py does.",
-  "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + 62c061c7). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task.",
-  {
-   "issue": "91605d4d",
-   "source": "code-review round 1 (advisory, pre-existing)",
-   "finding": "The measurement harness embeds historical receipt figures and narrative instead of an identity-based derivation reference (main.rs:64), cited against @/inv/runtime-observed-provenance.",
-   "disposition": "Owned by retrofit task 0ba493e1 REQ-03 (preamble/tool-prose audit) under the tech-debt umbrella; no campaign issue owns harness changes."
-  },
-  "Code-review enforces the AGENTS.md 72-character commit-subject limit on the lead's own commits: 63d931a9 round 1 failed solely on an 89-character lead subject. Fixed by reset-amend-cherry-pick over the unpushed chain; gate records citing the rewritten hashes were re-run at the new HEAD. Check subject lengths before committing.",
-  "Naming any committed object 'the documented safe launch-duration bound' invites the reviewer to falsify the promotion: three rounds rejected in turn no-bound, the observed clean-completion envelope, and the archived calibration. Same lesson as the breakdown.json exclusion saga: a checkable claim defending a framing becomes the next round's target. Resolution was amending the criterion to name the discharge the evidence supports (direct receipted clean completions at the operating point).",
-  "Session-10 worktree loss: the dispatch script's worktree under .agents/worktrees/ vanished from the real filesystem between creation and worker completion (sandbox overlay suspected); the codex worker's writes were lost with it and were recovered by replaying the 19 patch_apply_end unified diffs from the codex session transcript (~/.codex/sessions/...) onto main, then re-verifying fmt/clippy/nextest from scratch. Until root-caused, treat worktree isolation as unavailable on this host: dispatch single workers on the primary checkout with disjoint-file discipline, and always run check-leak-into-main.sh whose 'leak' report may actually be the only surviving copy of the work.",
-  "Forward sweep 2026-08-17 over waves 5-13 found the pending criteria self-consistent with the hardened contracts (protocol, schema validator, byte-determinism, evidence locations): the objects they presuppose exist (296a41c9 backend re-measurement, 8cb4def5 determinant timing receipt, b488f02c literature search, all five Backend variants, ccx1-bench-flock.sh). Two dispatch-time notes: f74e327d REQ-05 needs deterministic figure regeneration (pin plotting toolchain, no embedded timestamps); 73317b2e REQ-04 refactors summarize's inline estimate/verdict computation into the acceptance layer rather than duplicating it."
- ],
- "started_at": "2026-08-09T12:20:30Z",
- "rederived_at": "2026-08-13T15:55:00Z",
- "rederivation_note": "Waves recomputed 2026-08-13 from live jit graph deps over the 28 open issues (session-4 resume); prior 20-wave plan retained in git history. Wave numbers restart at 1."
+  ],
+  "started_at": "2026-08-09T12:20:30Z",
+  "rederived_at": "2026-08-13T15:55:00Z",
+  "rederivation_note": "Waves recomputed 2026-08-13 from live jit graph deps over the 28 open issues (session-4 resume); prior 20-wave plan retained in git history. Wave numbers restart at 1."
 }
