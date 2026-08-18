@@ -1,0 +1,31 @@
+# A11 (pinned leg) error/sorry accounting.
+# Sources: dev/active/34d85cb9/logs-trimmed/A11.log
+#          dev/active/34d85cb9/extraction/A11_lean/Funs.lean
+# Reproduce: dev/active/34d85cb9/extraction/a11-accounting.sh
+
+## [Error] lines in the log, by class
+       20 [Error] Could not find: type_var_id: 2 from ExtractBase.Item
+       20 [Error] Could not find: type_var_id: 1 from ExtractBase.Item
+       11 [Error] Internal error, please file an issue
+        2 [Error] Region ids should not be visited directly; the visitor should catch cases that contain region ids earlier.
+        2 [Error] Could not lookup the translated function, probably because of an error which happened before
+        1 [Error] Unreachable
+        1 [Error] Unimplemented
+        1 [Error] Unexpected
+  ---
+      58 TOTAL [Error] lines
+
+## sorry occurrences in the generated Funs.lean
+      40 carrying a 'Could not find: type_var_id' comment
+      13 plain (no attributing comment)
+  ---
+      53 TOTAL sorry occurrences
+
+## Mapping
+  The 40 type_var_id sorrys map 1:1 onto the 40 type_var_id [Error] lines
+  (each sorry embeds the error text verbatim).
+  The remaining 13 plain sorrys do NOT map 1:1 onto the remaining 18
+  [Error] lines, and the log does not carry enough information to derive
+  such a mapping: two of those errors are explicitly cascades ('probably
+  because of an error which happened before'), and a single failed body
+  yields one sorry regardless of how many errors were reported for it.

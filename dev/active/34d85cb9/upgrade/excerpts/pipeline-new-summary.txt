@@ -1,0 +1,9 @@
+=== running /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/verify-lean-new.sh ===
+RUSTUP_TOOLCHAIN=1.95.0  cargo: cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+verify-lean extraction stages exit=1
+=== diff regenerated Lean vs committed proofs/ ===
+IDENTICAL Gf2Core/Types.lean
+DIFFERS   Gf2Core/Funs.lean (313 changed lines)
+DIFFERS   Gf2Algebra/Types.lean (38 changed lines)
+DIFFERS   Gf2Algebra/Funs.lean (848 changed lines)
+=== regeneration status: 1 (0 = byte-identical to committed) ===
