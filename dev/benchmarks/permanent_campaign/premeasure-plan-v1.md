@@ -11,12 +11,13 @@ tokens are carried over from
 The per-cell balanced block is `A B B A`, repeated six times to produce 12
 processes for each arm. The schedule is fixed before timing: cells are ordered
 by numeric q and n, each cell's two CSV rows are A then B, and no process is
-replaced or extended based on its result.
+replaced or extended based on its measurement result.
 
 The default run ID is the stable `premeasure-v1`; set `CAMPAIGN_RUN_ID` to
-start a separately named campaign. Thus a later `premeasure` invocation finds
-the same durable process receipts unless the operator explicitly selects a new
-run ID.
+start a separately named campaign. A later `premeasure` invocation skips every
+receipt with a final status. A receipt recording a grid-admission refusal is
+not a measurement: it is preserved byte-for-byte under the run's `superseded/`
+directory and its schedule position runs fresh.
 
 ## Fixed protocol
 
@@ -28,8 +29,10 @@ run ID.
   records the session warm-up state.
 - Every process fixes 3 seconds of configuration warm-up, at least 5 timed
   repetitions, at least 5 timed seconds, and a 120-second per-process cap.
-- There is no result-dependent extension, early stop, replacement, or
-  discarded failure. A failed process remains in the durable record.
+- There is no result-dependent extension, early stop, or replacement: a failed
+  measurement process remains in the durable record. A process the harness
+  refuses at grid admission — before any sampling or timing — is preserved
+  under `superseded/`, and a resumed session runs its schedule position fresh.
 - `premeasure-collect` emits completed per-process rows only. It reports
   completeness and failures; pooled means are computed by downstream analysis.
 

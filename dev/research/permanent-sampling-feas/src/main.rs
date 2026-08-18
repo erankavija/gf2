@@ -2,7 +2,7 @@
 //!
 //! ```text
 //! permanent_sampling_feas equivalence --out PATH [--n 8,12,...] [--matrices N]
-//! permanent_sampling_feas grid        --out PATH [--only q=3,n=28,...]
+//! permanent_sampling_feas grid        --out PATH [--only q=3,n=28,...] [--orders 12,16,...] [--admit-only]
 //! permanent_sampling_feas sustained   --out PATH [--seconds 300]
 //! permanent_sampling_feas gray-update --out PATH [--q 3] [--n 12,16,20,24,28] [--steps 1000001]
 //! permanent_sampling_feas horizontal-product --out PATH [--q 3] [--n 12,16,20,24,28] [--samples 4096]
@@ -285,8 +285,12 @@ fn flag<'a>(args: &'a [String], name: &str) -> Option<&'a str> {
 struct GridOptions {
     only: Option<String>,
     batch_size: Option<usize>,
+    /// Opt-in order grid. Without this flag, the probe-calibrated default
+    /// path and grid remain the behavioral identity behind committed receipts.
+    orders: Option<Vec<usize>>,
     execution_id: u64,
     skip_machine_warmup: bool,
+    admit_only: bool,
 }
 
 impl GridOptions {
@@ -305,19 +309,52 @@ impl GridOptions {
                     .ok_or_else(|| "--batch-size must be nonzero".to_string())
             })
             .transpose()?;
+        let orders = match args.iter().position(|arg| arg == "--orders") {
+            Some(index) => {
+                let value = args
+                    .get(index + 1)
+                    .ok_or_else(|| "--orders requires a comma-separated list".to_string())?;
+                Some(parse_grid_orders(value)?)
+            }
+            None => None,
+        };
         Ok(Self {
             only: flag(args, "--only").map(str::to_string),
             batch_size,
+            orders,
             execution_id,
             skip_machine_warmup: args.iter().any(|arg| arg == "--skip-machine-warmup"),
+            admit_only: args.iter().any(|arg| arg == "--admit-only"),
         })
     }
 }
 
-fn grid_specs() -> Vec<CellSpec> {
-    let mut specs = Vec::with_capacity(GRID_SPECS_PER_EXECUTION);
+fn parse_grid_orders(value: &str) -> Result<Vec<usize>, String> {
+    if value.is_empty() {
+        return Err("--orders must name at least one order".to_string());
+    }
+    let mut parsed = Vec::new();
+    for item in value.split(',') {
+        let item = item.trim();
+        let order = item
+            .parse::<usize>()
+            .map_err(|error| format!("invalid --orders order `{item}`: {error}"))?;
+        if order == 0 {
+            return Err("--orders values must be strictly positive".to_string());
+        }
+        if parsed.contains(&order) {
+            return Err(format!("--orders contains duplicate order `{order}`"));
+        }
+        parsed.push(order);
+    }
+    Ok(parsed)
+}
+
+fn grid_specs(orders: &[usize]) -> Vec<CellSpec> {
+    let grid_specs_per_execution = orders.len() * QS.len() * (Backend::ALL.len() + 1);
+    let mut specs = Vec::with_capacity(grid_specs_per_execution);
     for q in QS {
-        for n in NS {
+        for n in orders.iter().copied() {
             for backend in Backend::ALL.into_iter().filter(|b| *b != Backend::Gpu) {
                 specs.push(CellSpec {
                     q,
@@ -342,8 +379,35 @@ fn grid_specs() -> Vec<CellSpec> {
             }
         }
     }
-    debug_assert_eq!(specs.len(), GRID_SPECS_PER_EXECUTION);
+    debug_assert_eq!(specs.len(), grid_specs_per_execution);
     specs
+}
+
+fn configured_grid_specs(options: &GridOptions) -> Result<(Vec<CellSpec>, usize), String> {
+    let orders = options.orders.as_deref().unwrap_or(NS.as_slice());
+    let mut specs = grid_specs(orders);
+    let active_grid_size = specs.len();
+    if options.orders.is_none() {
+        debug_assert_eq!(active_grid_size, GRID_SPECS_PER_EXECUTION);
+        debug_assert_eq!(
+            active_grid_size as u64 * INDICES_PER_CELL,
+            INDICES_PER_EXECUTION
+        );
+    }
+    if let Some(batch_size) = options.batch_size {
+        // A pre-registered measurement can pin M for either an adaptive CPU
+        // backend or a fixed-batch GPU backend. Without this flag, the
+        // historical probe-calibrated behavior remains unchanged.
+        for spec in &mut specs {
+            spec.batch_size = Some(batch_size);
+        }
+    }
+    if let Some(filter) = &options.only {
+        // Clauses combine with AND. In particular, `batch_size=1024` selects
+        // one GPU launch shape rather than both configured GPU batches.
+        filter_specs(&mut specs, filter)?;
+    }
+    Ok((specs, active_grid_size))
 }
 
 fn filter_specs(specs: &mut Vec<CellSpec>, filter: &str) -> Result<(), String> {
@@ -380,14 +444,21 @@ fn filter_specs(specs: &mut Vec<CellSpec>, filter: &str) -> Result<(), String> {
 /// Return the first stream index reserved to `order_index` in one fresh grid
 /// process. Each execution owns a full unfiltered-grid block, so filtering
 /// cannot make two execution ids reuse an address.
-fn execution_index_base(execution_id: u64, order_index: usize) -> Result<u64, String> {
-    if order_index >= GRID_SPECS_PER_EXECUTION {
+fn execution_index_base(
+    execution_id: u64,
+    order_index: usize,
+    grid_specs_per_execution: usize,
+) -> Result<u64, String> {
+    if order_index >= grid_specs_per_execution {
         return Err(format!(
-            "order index {order_index} is outside the {GRID_SPECS_PER_EXECUTION}-cell grid"
+            "order index {order_index} is outside the {grid_specs_per_execution}-cell grid"
         ));
     }
+    let indices_per_execution = (grid_specs_per_execution as u64)
+        .checked_mul(INDICES_PER_CELL)
+        .ok_or_else(|| "grid index range overflows u64".to_string())?;
     let execution_offset = execution_id
-        .checked_mul(INDICES_PER_EXECUTION)
+        .checked_mul(indices_per_execution)
         .ok_or_else(|| format!("execution {execution_id} index range overflows u64"))?;
     let cell_offset = (order_index as u64)
         .checked_mul(INDICES_PER_CELL)
@@ -577,24 +648,15 @@ identical corpus"
 // ---------------------------------------------------------------------------
 
 fn cmd_grid(args: &[String]) {
-    let host = HostInfo::probe();
-    let path = out_path(args, "throughput.csv");
     let options = GridOptions::parse(args).unwrap_or_else(|message| panic!("{message}"));
 
-    let mut specs = grid_specs();
-    if let Some(batch_size) = options.batch_size {
-        // A pre-registered measurement can pin M for either an adaptive CPU
-        // backend or a fixed-batch GPU backend. Without this flag, the
-        // historical probe-calibrated behavior remains unchanged.
-        for spec in &mut specs {
-            spec.batch_size = Some(batch_size);
-        }
+    let (mut specs, active_grid_size) =
+        configured_grid_specs(&options).unwrap_or_else(|message| panic!("{message}"));
+    if options.admit_only {
+        return;
     }
-    if let Some(filter) = &options.only {
-        // Clauses combine with AND. In particular, `batch_size=1024` selects
-        // one GPU launch shape rather than both configured GPU batches.
-        filter_specs(&mut specs, filter).unwrap_or_else(|message| panic!("{message}"));
-    }
+    let host = HostInfo::probe();
+    let path = out_path(args, "throughput.csv");
 
     // Randomise execution order so boost and thermal drift decorrelate from the
     // grid axes, then restore ascending n as the outer key.
@@ -614,14 +676,14 @@ fn cmd_grid(args: &[String]) {
     specs.sort_by_key(|s| s.n);
     for (i, spec) in specs.iter_mut().enumerate() {
         spec.order_index = i;
-        spec.seed_index = execution_index_base(options.execution_id, i)
+        spec.seed_index = execution_index_base(options.execution_id, i, active_grid_size)
             .unwrap_or_else(|message| panic!("{message}"));
     }
 
-    let execution_index_first =
-        execution_index_base(options.execution_id, 0).unwrap_or_else(|message| panic!("{message}"));
+    let execution_index_first = execution_index_base(options.execution_id, 0, active_grid_size)
+        .unwrap_or_else(|message| panic!("{message}"));
     let execution_index_last =
-        execution_index_base(options.execution_id, GRID_SPECS_PER_EXECUTION - 1)
+        execution_index_base(options.execution_id, active_grid_size - 1, active_grid_size)
             .and_then(|first| {
                 first
                     .checked_add(INDICES_PER_CELL - 1)
@@ -629,7 +691,7 @@ fn cmd_grid(args: &[String]) {
             })
             .unwrap_or_else(|message| panic!("{message}"));
 
-    let notes = vec![
+    let mut notes = vec![
         format!(
             "protocol: warmup >= {WARMUP_SECONDS:.0} s, then >= {MIN_REPS} reps and \
 >= {MIN_TIMED_SECONDS:.0} s timed, cap {MAX_CELL_SECONDS:.0} s per cell"
@@ -700,6 +762,11 @@ note names the unavailable instrumented boundary"
             "single-thread cells pinned to core {PINNED_CORE}; rayon cells use all logical CPUs"
         ),
     ];
+    if options.orders.is_some() {
+        notes.push(format!(
+            "active_grid_specs_per_execution: {active_grid_size}; orders are supplied by the recorded command line"
+        ));
+    }
     let resume = args.iter().any(|a| a == "--resume") && path.exists();
     let done = if resume {
         completed_cells(&path)
@@ -1204,7 +1271,9 @@ mod cli_tests {
 
         assert_eq!(parsed.execution_id, 47);
         assert_eq!(parsed.batch_size, Some(1024));
+        assert_eq!(parsed.orders, None);
         assert!(parsed.skip_machine_warmup);
+        assert!(!parsed.admit_only);
         assert_eq!(
             parsed.only.as_deref(),
             Some("q=3,n=28,backend=gpu_hip,batch_size=1024")
@@ -1213,7 +1282,7 @@ mod cli_tests {
 
     #[test]
     fn exact_gpu_batch_filter_selects_only_m1024() {
-        let mut specs = grid_specs();
+        let mut specs = grid_specs(&NS);
         filter_specs(&mut specs, "q=3,n=28,backend=gpu_hip,batch_size=1024")
             .expect("valid exact filter");
 
@@ -1227,7 +1296,7 @@ mod cli_tests {
     #[cfg(feature = "prototype-registry")]
     #[test]
     fn timing_grid_includes_every_registered_prototype_path() {
-        let specs = grid_specs();
+        let specs = grid_specs(&NS);
         for path in MeasurementPath::ALL {
             assert!(
                 specs
@@ -1264,12 +1333,122 @@ mod cli_tests {
 
     #[test]
     fn execution_index_ranges_are_disjoint_and_checked() {
-        let execution_0_last = execution_index_base(0, GRID_SPECS_PER_EXECUTION - 1)
-            .expect("last cell in execution zero");
-        let execution_1_first = execution_index_base(1, 0).expect("first cell in execution one");
+        let execution_0_last =
+            execution_index_base(0, GRID_SPECS_PER_EXECUTION - 1, GRID_SPECS_PER_EXECUTION)
+                .expect("last cell in execution zero");
+        let execution_1_first = execution_index_base(1, 0, GRID_SPECS_PER_EXECUTION)
+            .expect("first cell in execution one");
 
         assert_eq!(execution_0_last + INDICES_PER_CELL, execution_1_first);
-        assert!(execution_index_base(0, GRID_SPECS_PER_EXECUTION).is_err());
-        assert!(execution_index_base(u64::MAX, 0).is_err());
+        assert!(
+            execution_index_base(0, GRID_SPECS_PER_EXECUTION, GRID_SPECS_PER_EXECUTION).is_err()
+        );
+        assert!(execution_index_base(u64::MAX, 0, GRID_SPECS_PER_EXECUTION).is_err());
+    }
+
+    #[test]
+    fn test_orders_parsing_valid_custom_list() {
+        let parsed = GridOptions::parse(&args(&[
+            "permanent_sampling_feas",
+            "grid",
+            "--orders",
+            "4, 19,27",
+        ]))
+        .expect("valid custom orders");
+
+        assert_eq!(parsed.orders, Some(vec![4, 19, 27]));
+    }
+
+    #[test]
+    fn test_orders_parsing_rejects_malformed_zero_and_duplicate_values() {
+        for value in ["", "4,,19", "0,19", "4,19,4"] {
+            let result = GridOptions::parse(&args(&[
+                "permanent_sampling_feas",
+                "grid",
+                "--orders",
+                value,
+            ]));
+            assert!(result.is_err(), "orders value `{value}` was accepted");
+        }
+    }
+
+    #[test]
+    fn test_grid_construction_uses_custom_orders_in_declared_order() {
+        let specs = grid_specs(&[4, 19]);
+        assert_eq!(specs.len(), QS.len() * 2 * (Backend::ALL.len() + 1));
+        assert_eq!(specs[0].q, 3);
+        assert_eq!(specs[0].n, 4);
+        assert_eq!(specs[Backend::ALL.len()].n, 4);
+        assert_eq!(specs[Backend::ALL.len() + 1].q, 3);
+        assert_eq!(specs[Backend::ALL.len() + 1].n, 19);
+    }
+
+    #[test]
+    fn test_admission_rejects_off_default_order_and_accepts_with_orders() {
+        let without_orders = GridOptions::parse(&args(&[
+            "permanent_sampling_feas",
+            "grid",
+            "--admit-only",
+            "--only",
+            "q=3,n=4,backend=cpu_rayon_batch_scalar",
+            "--batch-size",
+            "96",
+        ]))
+        .expect("admission options");
+        assert!(configured_grid_specs(&without_orders).is_err());
+
+        let with_orders = GridOptions::parse(&args(&[
+            "permanent_sampling_feas",
+            "grid",
+            "--admit-only",
+            "--orders",
+            "4",
+            "--only",
+            "q=3,n=4,backend=cpu_rayon_batch_scalar",
+            "--batch-size",
+            "96",
+        ]))
+        .expect("custom admission options");
+        let (specs, active_grid_size) = configured_grid_specs(&with_orders).expect("admitted cell");
+        assert_eq!(specs.len(), 1);
+        assert_eq!(active_grid_size, QS.len() * (Backend::ALL.len() + 1));
+    }
+
+    #[test]
+    fn test_default_grid_and_stream_offsets_match_committed_constants() {
+        let specs = grid_specs(NS.as_slice());
+        assert_eq!(specs.len(), GRID_SPECS_PER_EXECUTION);
+        let expected =
+            QS.into_iter()
+                .flat_map(|q| {
+                    NS.into_iter().flat_map(move |n| {
+                        Backend::ALL
+                            .into_iter()
+                            .filter(|backend| *backend != Backend::Gpu)
+                            .map(move |backend| (q, n, backend.name(), None))
+                            .chain(GPU_BATCHES.into_iter().map(move |batch_size| {
+                                (q, n, Backend::Gpu.name(), Some(batch_size))
+                            }))
+                    })
+                })
+                .collect::<Vec<_>>();
+        let actual = specs
+            .iter()
+            .map(|spec| (spec.q, spec.n, spec.backend.name(), spec.batch_size))
+            .collect::<Vec<_>>();
+        assert_eq!(actual, expected);
+
+        let order_index = 123;
+        let execution_id = 47;
+        let expected_first =
+            execution_id * INDICES_PER_EXECUTION + order_index as u64 * INDICES_PER_CELL + 1;
+        assert_eq!(
+            execution_index_base(execution_id, order_index, specs.len()),
+            Ok(expected_first)
+        );
+        assert_eq!(
+            execution_index_base(0, specs.len() - 1, specs.len()),
+            Ok(INDICES_PER_EXECUTION - INDICES_PER_CELL + 1)
+        );
     }
 }

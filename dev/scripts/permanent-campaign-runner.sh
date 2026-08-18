@@ -687,15 +687,78 @@ load_premeasure_schedule() {
         done
     done
     [[ "${#PREMEASURE_SCHEDULE[@]}" -eq 1440 ]] || die "premeasurement schedule has ${#PREMEASURE_SCHEDULE[@]} processes; expected 1440"
+    validate_premeasure_admission
+}
+
+validate_premeasure_admission() {
+    local q n _token backend batch _rest message
+    local -a inadmissible=()
+    while IFS=, read -r q n _token backend batch _rest; do
+        if ! message=$(
+            "$HARNESS_BIN" grid --admit-only \
+                --only "q=$q,n=$n,backend=$backend" \
+                --orders "$n" --batch-size "$batch" 2>&1
+        ); then
+            inadmissible+=("q=$q,n=$n,backend=$backend,batch_size=$batch: ${message:-no diagnostic output}")
+        fi
+    done < <(tail -n +2 "$PREMEASURE_PLAN" | sort -t, -k1,1n -k2,2n -k3,3)
+    if [[ "${#inadmissible[@]}" -ne 0 ]]; then
+        echo "ERROR: premeasurement plan has ${#inadmissible[@]} inadmissible rows:" >&2
+        printf '  %s\n' "${inadmissible[@]}" >&2
+        exit 2
+    fi
 }
 
 premeasure_run_dir() {
     printf '%s\n' "$TARGET_ROOT/premeasure-$RUN_ID"
 }
 
+write_gpu_health_snapshot_body() {
+    local phase="$1"
+    echo "phase: $phase"
+    echo "observed_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    capture_block \
+        "rocm_smi_health_command: $ROCM_PATH/bin/rocm-smi --showuse --showpower --showmeminfo vram" \
+        "$ROCM_PATH/bin/rocm-smi" --showuse --showpower --showmeminfo vram
+    echo "kfd_process_query_command: fuser -v /dev/kfd"
+    if [[ ! -e /dev/kfd ]]; then
+        echo "kfd_process_exists: unavailable: /dev/kfd does not exist"
+        return 0
+    fi
+    if ! command -v fuser >/dev/null 2>&1; then
+        echo "kfd_process_exists: unavailable: command not found: fuser"
+        return 0
+    fi
+    local output rc
+    set +e
+    output=$(fuser -v /dev/kfd 2>&1)
+    rc=$?
+    set -e
+    case "$rc" in
+        0) echo "kfd_process_exists: true" ;;
+        1) echo "kfd_process_exists: false" ;;
+        *)
+            echo "kfd_process_exists: unavailable"
+            echo "command_exit_status: $rc"
+            ;;
+    esac
+    if [[ -n "$output" ]]; then
+        printf '%s\n' "$output"
+    fi
+}
+
+write_gpu_health_snapshot() {
+    local path="$1" phase="$2"
+    {
+        echo "schema_version: 1"
+        write_gpu_health_snapshot_body "$phase"
+    } > "$path"
+}
+
 write_premeasure_provenance() {
     local run_dir="$1" session_id="$2" warmup_state="$3" cap="$4"
     local provenance="$run_dir/sessions/session-$session_id.provenance.txt"
+    local end_snapshot="$run_dir/sessions/session-$session_id.gpu-health.txt"
     mkdir -p "$run_dir/sessions"
     {
         echo "schema_version: 1"
@@ -715,6 +778,9 @@ write_premeasure_provenance() {
         capture_block "gpu_model_uuid_command: $ROCM_PATH/bin/rocm-smi --showproductname --showuniqueid" "$ROCM_PATH/bin/rocm-smi" --showproductname --showuniqueid
         capture_block "rocm_hipcc_version_command: $ROCM_PATH/bin/hipcc --version" "$ROCM_PATH/bin/hipcc" --version
         capture_block "kernel_version_command: uname -r" uname -r
+        echo "gpu_health_end_snapshot: $end_snapshot"
+        echo "gpu_health_snapshot_start:"
+        write_gpu_health_snapshot_body start
         echo "wrapper_invocation: $FLOCK_WRAPPER --full-host $BASH $SCRIPT_PATH __locked-premeasure $cap"
         echo "exact_plan: $PREMEASURE_PLAN"
         echo "plan_sha256: $(hash_file "$PREMEASURE_PLAN")"
@@ -736,6 +802,26 @@ premeasure_process_is_final() {
     [[ -f "$1/exit.status" ]] && grep -q '^status: \(completed\|failed\)$' "$1/receipt.txt"
 }
 
+# A grid-admission refusal is the harness rejecting the cell before any
+# sampling or timing, so superseding it replaces no measurement outcome.
+# Every other failed receipt is final: the preregistered schedule forbids
+# replacing a process based on its measurement result.
+premeasure_process_is_admission_refusal() {
+    [[ -f "$1/exit.status" ]] \
+        && grep -q '^status: failed$' "$1/receipt.txt" \
+        && [[ -f "$1/harness.log" ]] \
+        && grep -q 'matched no cell in the grid' "$1/harness.log"
+}
+
+premeasure_archive_refused_receipt() {
+    local run_dir="$1" receipt="$2" process_index="$3" q="$4" n="$5" code="$6"
+    local old_session_id
+    old_session_id=$(sed -n 's/^session_id: //p' "$receipt/receipt.txt" | tail -n 1)
+    [[ -n "$old_session_id" ]] || old_session_id=unknown
+    mkdir -p "$run_dir/superseded"
+    mv "$receipt" "$run_dir/superseded/process-$(printf '%04d' "$process_index")-$q-$n-$code-$old_session_id"
+}
+
 run_premeasure_process() {
     local run_dir="$1" session_id="$2" process_index="$3" q="$4" n="$5" code="$6" token="$7" backend="$8" batch="$9" warmup="${10}"
     local receipt
@@ -744,7 +830,7 @@ run_premeasure_process() {
     mkdir -p "$receipt"
     PREMEASURE_CURRENT_RECEIPT="$receipt"
     if [[ "$warmup" == skipped ]]; then skip=true; fi
-    local -a command=("$HARNESS_BIN" grid --out "$csv" --only "q=$q,n=$n,backend=$backend" --batch-size "$batch" --execution-id "$process_index")
+    local -a command=("$HARNESS_BIN" grid --out "$csv" --only "q=$q,n=$n,backend=$backend" --orders "$n" --batch-size "$batch" --execution-id "$process_index")
     [[ "$skip" == true ]] && command+=(--skip-machine-warmup)
     local rendered
     printf -v rendered '%q ' "${command[@]}"
@@ -794,7 +880,10 @@ run_locked_premeasure() {
         IFS=, read -r q n code token backend batch process_index <<< "$row"
         local receipt
         receipt="$run_dir/processes/process-$(printf '%04d' "$process_index")-$q-$n-$code"
-        if premeasure_process_is_final "$receipt"; then
+        if premeasure_process_is_admission_refusal "$receipt"; then
+            premeasure_archive_refused_receipt "$run_dir" "$receipt" "$process_index" "$q" "$n" "$code"
+            echo "premeasure supersede: process=$process_index config=$q,$n,$code"
+        elif premeasure_process_is_final "$receipt"; then
             if [[ "$process_index" -eq 0 && ! -f "$warmup_state" ]]; then
                 printf 'state: resumed; first process already has a durable receipt\nutc: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$warmup_state"
             fi
@@ -824,6 +913,7 @@ run_locked_premeasure() {
         run_premeasure_process "$run_dir" "$session_id" "$process_index" "$q" "$n" "$code" "$token" "$backend" "$batch" "$warmup"
     done
     trap - INT TERM HUP
+    write_gpu_health_snapshot "$run_dir/sessions/session-$session_id.gpu-health.txt" end
     if [[ "$stopped_by_cap" == true ]]; then
         echo "premeasure session stopped cleanly at session cap ${cap}s"
         printf 'status: stopped_by_session_cap\nfinished_utc: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$run_dir/sessions/session-$session_id.status"

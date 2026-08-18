@@ -26,8 +26,12 @@ SUBCOMMANDS
                  --out PATH        output CSV (default throughput.csv)
                  --only CLAUSES    comma-separated q=,n=,backend=,batch_size=
                                    filter; clauses combine with AND
+                 --orders LIST     opt-in comma-separated order grid; the
+                                   default probe-calibrated grid is unchanged
                  --batch-size M   pin M before timing; without this flag the
                                    documented probe-calibrated adaptive M applies
+                 --admit-only     validate --only against the active grid and
+                                   exit without measurement or output files
                  --execution-id N  reserve a disjoint stream-index block for
                                    this fresh process (default 0)
                  --skip-machine-warmup

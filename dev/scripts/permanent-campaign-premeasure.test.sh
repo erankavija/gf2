@@ -22,11 +22,22 @@ cat > "$HARNESS" <<'STUB'
 set -euo pipefail
 out=''
 execution_id=''
+orders=''
+admit_only=false
 for ((i=1; i<=$#; i++)); do
     [[ "${!i}" == --out ]] && { j=$((i + 1)); out="${!j}"; }
     [[ "${!i}" == --execution-id ]] && { j=$((i + 1)); execution_id="${!j}"; }
+    [[ "${!i}" == --orders ]] && { j=$((i + 1)); orders="${!j}"; }
+    [[ "${!i}" == --admit-only ]] && admit_only=true
 done
 printf '%s\n' "$execution_id" >> "$CAMPAIGN_TEST_LOG"
+if [[ "$admit_only" == true ]]; then
+    if [[ "${CAMPAIGN_TEST_ADMISSION_FAIL_N:-}" == "$orders" ]]; then
+        echo "stub admission rejected n=$orders" >&2
+        exit 43
+    fi
+    exit 0
+fi
 if [[ "${CAMPAIGN_TEST_FAIL_EXEC_ID:-}" == "$execution_id" ]]; then
     exit 42
 fi
@@ -49,14 +60,17 @@ MANIFEST="$WORK/manifest"
 printf 'manifest_version=1\nharness|%s|\nbinary|%s|%s\n' "$HARNESS" "$HARNESS" "$(sha256sum "$HARNESS" | awk '{print $1}')" > "$MANIFEST"
 BASE=(env
     CAMPAIGN_REPO_ROOT="$REPO"
-    CAMPAIGN_PREMEASURE_PLAN="$PLAN"
     CAMPAIGN_MANIFEST="$MANIFEST"
     CAMPAIGN_FLOCK_WRAPPER="$FLOCK"
     CAMPAIGN_HARNESS_BIN="$HARNESS"
     CAMPAIGN_TEST_LOG="$LOG")
 run_pre() {
     local target="$1" run_id="$2" cap="$3"
-    CAMPAIGN_TARGET_ROOT="$target" CAMPAIGN_RUN_ID="$run_id" CAMPAIGN_TEST_SLEEP=0.03         "${BASE[@]}" "$SCRIPT" premeasure --session-cap "$cap"
+    CAMPAIGN_TARGET_ROOT="$target" CAMPAIGN_RUN_ID="$run_id" CAMPAIGN_PREMEASURE_PLAN="$PLAN" CAMPAIGN_TEST_SLEEP=0.03         "${BASE[@]}" "$SCRIPT" premeasure --session-cap "$cap"
+}
+run_pre_plan() {
+    local target="$1" run_id="$2" cap="$3" plan="$4" fail_n="$5"
+    CAMPAIGN_TARGET_ROOT="$target" CAMPAIGN_RUN_ID="$run_id" CAMPAIGN_PREMEASURE_PLAN="$plan" CAMPAIGN_TEST_ADMISSION_FAIL_N="$fail_n" CAMPAIGN_TEST_SLEEP=0.03         "${BASE[@]}" "$SCRIPT" premeasure --session-cap "$cap"
 }
 assert_has() { [[ "$1" == *"$2"* ]] || { echo "FAIL: $3 (missing $2)"; return 1; }; }
 PASS=0
@@ -75,9 +89,14 @@ t1() {
 t2() {
     local target="$WORK/resume"
     local r0="$target/premeasure-resume/processes/process-0000-3-4-A" r1="$target/premeasure-resume/processes/process-0001-3-4-B"
-    mkdir -p "$r0" "$r1"
-    printf 'status: completed\n' > "$r0/receipt.txt"; printf '0\n' > "$r0/exit.status"; : > "$r0/scratch.csv"
-    printf 'status: failed\n' > "$r1/receipt.txt"; printf '42\n' > "$r1/exit.status"
+    local r2="$target/premeasure-resume/processes/process-0002-3-4-B"
+    mkdir -p "$r0" "$r1" "$r2"
+    printf 'status: completed\nsession_id: old-completed\n' > "$r0/receipt.txt"; printf '0\n' > "$r0/exit.status"; : > "$r0/scratch.csv"
+    printf 'status: failed\nsession_id: old-failed\nold-byte: preserve-me\n' > "$r1/receipt.txt"; printf '101\n' > "$r1/exit.status"
+    printf -- '--only q=3,n=4,backend=stub matched no cell in the grid\n' > "$r1/harness.log"
+    printf 'failed receipt bytes\n' > "$r1/falsification.bin"
+    printf 'status: failed\nsession_id: old-measure-failed\n' > "$r2/receipt.txt"; printf '42\n' > "$r2/exit.status"
+    printf 'harness died mid-measurement\n' > "$r2/harness.log"
     set +e
     local o
     o=$(run_pre "$target" resume 1 2>&1)
@@ -85,11 +104,20 @@ t2() {
     set -e
     [[ "$rc" -eq 0 || "$rc" -eq 7 ]]
     assert_has "$o" 'premeasure skip: process=0' t2
-    assert_has "$o" 'premeasure skip: process=1' t2
+    assert_has "$o" 'premeasure supersede: process=1' t2
+    [[ "$o" != *'premeasure skip: process=1'* ]]
+    assert_has "$o" 'premeasure skip: process=2' t2
+    [[ "$o" != *'premeasure supersede: process=2'* ]]
     grep -qx '0' "$LOG" && return 1
-    grep -qx '1' "$LOG" && return 1
-    grep -qx '2' "$LOG"
-    echo 'PASS: completed receipt skipped and failed receipt not repeated'
+    grep -qx '2' "$LOG" && return 1
+    grep -qx '1' "$LOG"
+    local superseded="$target/premeasure-resume/superseded/process-0001-3-4-B-old-failed"
+    [[ -f "$superseded/falsification.bin" ]] && grep -qx 'failed receipt bytes' "$superseded/falsification.bin"
+    grep -q -- '--orders 4' "$target/premeasure-resume/processes/process-0001-3-4-B/receipt.txt"
+    grep -q '^status: completed$' "$target/premeasure-resume/processes/process-0001-3-4-B/receipt.txt"
+    grep -q '^session_id: old-measure-failed$' "$r2/receipt.txt"
+    grep -q '^session_id: old-completed$' "$r0/receipt.txt"
+    echo 'PASS: refusal receipt superseded and rerun with --orders; completed and measurement-failed receipts stay final'
     PASS=$((PASS + 1))
 }
 
@@ -147,19 +175,49 @@ t5() {
     local target="$WORK/collect" run_id=collect
     make_one_receipt_per_config "$target" "$run_id"
     local o
-    o=$(CAMPAIGN_TARGET_ROOT="$target" CAMPAIGN_RUN_ID="$run_id" "${BASE[@]}" "$SCRIPT" premeasure-collect 2>&1)
+    o=$(CAMPAIGN_TARGET_ROOT="$target" CAMPAIGN_RUN_ID="$run_id" CAMPAIGN_PREMEASURE_PLAN="$PLAN" "${BASE[@]}" "$SCRIPT" premeasure-collect 2>&1)
     assert_has "$o" 'completeness 3:4:A: 1/12' t5
     assert_has "$o" 'completeness 7:19:B: 1/12' t5
     [[ "$(tail -n +2 "$target/premeasure-$run_id/premeasure-candidates.csv" | wc -l)" -eq 120 ]]
     local zero_target="$WORK/zero" zero_run=zero
     mkdir -p "$zero_target/premeasure-$zero_run/processes"
     set +e
-    o=$(CAMPAIGN_TARGET_ROOT="$zero_target" CAMPAIGN_RUN_ID="$zero_run" "${BASE[@]}" "$SCRIPT" premeasure-collect 2>&1)
+    o=$(CAMPAIGN_TARGET_ROOT="$zero_target" CAMPAIGN_RUN_ID="$zero_run" CAMPAIGN_PREMEASURE_PLAN="$PLAN" "${BASE[@]}" "$SCRIPT" premeasure-collect 2>&1)
     local rc=$?
     set -e
     [[ "$rc" -eq 2 ]]
     assert_has "$o" 'zero completed processes' t5
     echo 'PASS: collector reports 1/12 completeness and refuses zero-complete configurations'
+    PASS=$((PASS + 1))
+}
+
+t6() {
+    local bad_plan="$WORK/bad-plan.csv"
+    cp "$PLAN" "$bad_plan"
+    set +e
+    local o
+    o=$(run_pre_plan "$WORK/admission" admission 1 "$bad_plan" 4 2>&1)
+    local rc=$?
+    set -e
+    [[ "$rc" -eq 2 ]]
+    assert_has "$o" 'inadmissible rows' t6
+    assert_has "$o" 'q=3,n=4' t6
+    [[ ! -d "$WORK/admission/premeasure-admission/processes" ]]
+    echo 'PASS: pre-flight uses binary admission and rejects an inadmissible plan row'
+    PASS=$((PASS + 1))
+}
+
+t7() {
+    local target="$WORK/health"
+    run_pre "$target" health 1 >/dev/null 2>&1 || true
+    local prov health
+    prov=$(find "$target/premeasure-health/sessions" -name '*.provenance.txt' -print -quit)
+    health=$(find "$target/premeasure-health/sessions" -name '*.gpu-health.txt' -print -quit)
+    [[ -n "$prov" && -n "$health" ]]
+    assert_has "$(cat "$prov")" 'gpu_health_snapshot_start:' t7
+    assert_has "$(cat "$prov")" 'rocm_smi_health_command:' t7
+    assert_has "$(cat "$health")" 'kfd_process_exists:' t7
+    echo 'PASS: provenance and session-end receipt carry GPU health observations'
     PASS=$((PASS + 1))
 }
 
@@ -169,4 +227,6 @@ t2
 t3
 t4
 t5
-echo "PASS: $PASS/5 premeasure tests"
+t6
+t7
+echo "PASS: $PASS/7 premeasure tests"
