@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-18T15:43:47.301300386Z",
+  "dependencies": [],
+  "description": "After the 2026-08-18 premeasure session (premeasure-v1, session 20260817T230006Z-1543143, 02:00-03:30 EEST), the owner found the GPU monitor reporting 100% utilisation with high power draw; the condition persisted until a reboot at ~18:16 EEST. High power draw distinguishes this from the 10071e51 post-fault state, which was diagnosed as a stuck telemetry counter on an idle, healthy device.\n\nEvidence trail from the session: all 1440 scheduled processes recorded exits (216 exit 0 including 96 clean gpu_hip runs, 1224 exit 101 from the premeasure-v1 grid mismatch, no hangs, no kills); the kernel log records no amdgpu/kfd message between 2026-08-17 23:10 EEST and shutdown - no page fault, no ring timeout, no reset. The prior boot carried days of accumulating 'Runlist is getting oversubscribed' warnings (Aug 16-17) and the 22:05 EEST gfxhub page fault filed as 10071e51. The wedge signature is therefore a device left busy and drawing power with no kernel-visible fault and no surviving KFD process - consistent with a leaked or non-terminating kernel dispatch surviving process exit, cause not established.\n\nThis is a new member of the fault family the permanent-statistics synthesis records (locating a fault boundary is an open deliverable there); see 10071e51 for the queue-oversubscription member.\n\n## Success Criteria\n\n- [hard] REQ-01: The overnight campaign runner records a runtime-observed GPU health snapshot (utilisation, power, VRAM, KFD process presence) at session start and session end in the session provenance, so a recurrence carries before/after evidence instead of an unwitnessed monitor reading.\n- [hard] REQ-02: On the next recurrence with that instrumentation (or a recorded reproduction attempt under comparable gpu_hip process churn), the wedge is attributed to a leaked kernel dispatch, driver state, or telemetry artefact, and fixed, bounded out, or filed upstream with the isolation evidence; if it does not recur across the instrumented premeasure completion, the observation and its evidence trail are recorded in a committed note linked here and the issue closes on that record.",
+  "documents": [],
+  "first_ready_at": "2026-08-18T15:43:47.301300386Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "cb494ea4-761b-4b52-84c7-d4a786beace9",
+  "labels": [
+    "component:gf2-kernels-hip",
+    "epic:quality-documentation-tech-debt",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Overnight premeasure session left the GPU pinned at full utilisation and power until reboot",
+  "updated_at": "2026-08-18T15:43:47.301300386Z"
+}
