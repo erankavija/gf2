@@ -1,15 +1,63 @@
 {
-  "assignee": null,
+  "assignee": "agent:claude",
+  "claimed_at": "2026-08-18T19:26:46.195099481Z",
   "context": {},
   "created_at": "2026-08-18T18:50:24.093554835Z",
   "dependencies": [],
   "description": "Plan Reconcile field capability traits and profile-driven kernel dispatch (6dc81018) against every hard success criterion, write the concise design at dev/active/6dc81018-field-capability-dispatch/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The concise plan at dev/active/6dc81018-field-capability-dispatch/plan.md and its authoritative sibling breakdown manifest exist, are linked to this issue, and pass the manifest validation, render check, and batch-create dry run.\n- [hard] REQ-02: The plan-review gate passes on this issue.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Investigation: field capability reconciliation (6dc81018)",
+      "path": "dev/active/6dc81018-field-capability-dispatch/investigation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "661e61c7edd5fd2ea03abda215aab79cbe167cb797c648f064eed4ab2f73d513",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "55c4bc3b4ed927f813e6b283b8fee8fdeb3cdd5c2be10ce6471a85af6a4f4f83",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/investigation.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Plan: field capability reconciliation (6dc81018)",
+      "path": "dev/active/6dc81018-field-capability-dispatch/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Breakdown manifest: field capability reconciliation (6dc81018)",
+      "path": "dev/active/6dc81018-field-capability-dispatch/breakdown.json"
+    }
+  ],
+  "done_at": "2026-08-18T19:57:18.558951365Z",
   "first_ready_at": "2026-08-18T18:50:24.093554835Z",
   "gates_required": [
     "plan-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "plan-review": {
+      "status": "passed",
+      "updated_at": "2026-08-18T19:57:06.426189076Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "663965f6-83c1-4cef-baa1-6a6ac2651a3d",
   "labels": [
     "epic:field-capability-dispatch",
@@ -18,7 +66,7 @@
     "type:planning"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "done",
   "title": "Plan the field-capability reconciliation breakdown",
-  "updated_at": "2026-08-18T19:03:27.190361407Z"
+  "updated_at": "2026-08-18T19:57:18.558951365Z"
 }

@@ -22,7 +22,7 @@
     "type:breakdown"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "breakdown: Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-08-18T19:03:27.190361407Z"
+  "updated_at": "2026-08-18T19:57:24.362854966Z"
 }
