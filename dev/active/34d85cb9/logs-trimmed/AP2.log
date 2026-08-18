@@ -1,4 +1,4 @@
-=== AP2 === 2026-08-18T23:44:53+03:00
+=== AP2 === 2026-08-19T00:40:32+03:00
 --- command ---
 aeneas \
   -backend lean \
@@ -9,8 +9,7 @@ aeneas \
 --- output ---
 [Info ] Imported: dev/active/34d85cb9/extraction/P2_probe.llbc
 
-[Info ] Creating missing directory: dev/active/34d85cb9/extraction/P2_lean
 [Info ] Generated: dev/active/34d85cb9/extraction/P2_lean/Types.lean
 [Info ] Generated: dev/active/34d85cb9/extraction/P2_lean/Funs.lean
-[Info ] Total execution time: 0.300397 seconds
---- exit=0 elapsed=1s ---
+[Info ] Total execution time: 0.296801 seconds
+--- exit=0 elapsed=0s ---

@@ -1,6 +1,6 @@
-=== R4 === 2026-08-18T23:40:18+03:00
+=== R4 === 2026-08-19T00:39:55+03:00
 --- command ---
-charon cargo \
+RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
   --start-from 'gf2_core::field::batch_ops' \
@@ -24,7 +24,8 @@ charon cargo \
 --- output ---
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
    Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
+
  52 | impl BitMatrix {
 
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.76s
---- exit=0 elapsed=1s ---
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.74s
+--- exit=0 elapsed=2s ---

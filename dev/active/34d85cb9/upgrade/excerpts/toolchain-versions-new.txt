@@ -1,27 +1,45 @@
-# Newest-upstream toolchain built for the 34d85cb9 upgrade leg, 2026-08-19.
-# Built from fresh clones under /data/aeneas-upgrade-34d85cb9; NOT installed
-# into ~/.cargo/bin (see findings.md).
+# Newest-upstream toolchain built for the 34d85cb9 upgrade leg.
+# Built from fresh clones under /data/aeneas-upgrade-34d85cb9; NOT installed into ~/.cargo/bin.
+# Reproduce with: dev/active/34d85cb9/upgrade/versions-new.sh
+# Captured: 2026-08-19T00:43:54+03:00
 
+## Newest-upstream pair
 $ /data/aeneas-upgrade-34d85cb9/aeneas/charon/bin/charon version
 0.1.232
-
 $ .../charon toolchain-version
 nightly-2026-06-01
-
 $ git -C /data/aeneas-upgrade-34d85cb9/aeneas/charon rev-parse HEAD
 340b1af4df92608d0911fc2ba26eef3fd3a30ab4
-
 $ /data/aeneas-upgrade-34d85cb9/aeneas/src/_build/default/main.exe -version
 aeneas c10cc99
-
 $ git -C /data/aeneas-upgrade-34d85cb9/aeneas rev-parse HEAD
 c10cc997a2cc885f5b2c9ef3929cc05632cb106c
-
 $ tail -1 /data/aeneas-upgrade-34d85cb9/aeneas/charon-pin
 340b1af4df92608d0911fc2ba26eef3fd3a30ab4
 
-$ charon version   # still on PATH, unchanged
-0.1.217
+## Workspace toolchain used by the upgrade leg's runs (same MSRV pin)
+$ RUSTUP_TOOLCHAIN=1.95.0 cargo --version
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+$ RUSTUP_TOOLCHAIN=1.95.0 rustc --version
+rustc 1.95.0 (59807616e 2026-04-14)
 
-$ aeneas -version  # still on PATH, unchanged
+## OCaml toolchain that built Aeneas
+$ dune --version
+3.21.1
+$ ocaml -version
+The OCaml toplevel, version 5.4.1
+$ opam switch show
+default
+
+## Host installation — left on the pinned pair
+$ charon version
+0.1.217
+$ aeneas -version
 aeneas 5220259c
+$ sha256sum ~/.cargo/bin/{charon,charon-driver,aeneas} and their .bak-2026-08-19 copies
+a4d76c8e1b70e0c8eb5b884e4ccd3ccf882340a90c05344e9065c6675c837eb7  /home/vkaskivuo/.cargo/bin/charon
+a4d76c8e1b70e0c8eb5b884e4ccd3ccf882340a90c05344e9065c6675c837eb7  /home/vkaskivuo/.cargo/bin/charon.bak-2026-08-19
+bf348bc831094df45e4175bc9b2bcb6dae9223e45e69c2d50eb3628842d80b69  /home/vkaskivuo/.cargo/bin/charon-driver
+bf348bc831094df45e4175bc9b2bcb6dae9223e45e69c2d50eb3628842d80b69  /home/vkaskivuo/.cargo/bin/charon-driver.bak-2026-08-19
+081799b92ff69689afe1fac5137c6cf1a846971ead08e1102cdeba5fe44532cc  /home/vkaskivuo/.cargo/bin/aeneas
+081799b92ff69689afe1fac5137c6cf1a846971ead08e1102cdeba5fe44532cc  /home/vkaskivuo/.cargo/bin/aeneas.bak-2026-08-19

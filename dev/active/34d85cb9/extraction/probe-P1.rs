@@ -1,0 +1,81 @@
+//! Standalone Charon/Aeneas probe for JIT issue 34d85cb9.
+//!
+//! Three copies of the same square-and-multiply loop taken from
+//! `gf2_core::field::traits::FiniteFieldExt::pow`, differing only in how the
+//! element type is abstracted:
+//!
+//! * `pow_concrete` — no genericity at all (`u64`).
+//! * `pow_simple`   — generic over a trait with no associated types.
+//! * `pow_assoc`    — generic over a trait with two associated types, i.e. the
+//!   shape of `FiniteField { type Characteristic; type Wide; }`.
+//!
+//! Extracted with `charon rustc` so the probe is independent of the workspace.
+
+pub trait Simple: Clone {
+    fn mul_ref(&self, other: &Self) -> Self;
+    fn one_like(&self) -> Self;
+}
+
+pub trait WithAssoc: Clone {
+    type Ch;
+    type Wide;
+    fn mul_ref(&self, other: &Self) -> Self;
+    fn one_like(&self) -> Self;
+}
+
+pub fn pow_concrete(x: u64, exp: u64) -> u64 {
+    if exp == 0 {
+        return 1;
+    }
+    let mut result = 1u64;
+    let mut base = x;
+    let mut e = exp;
+    while e > 0 {
+        if e & 1 == 1 {
+            result = result.wrapping_mul(base);
+        }
+        e >>= 1;
+        if e > 0 {
+            base = base.wrapping_mul(base);
+        }
+    }
+    result
+}
+
+pub fn pow_simple<F: Simple>(x: &F, exp: u64) -> F {
+    if exp == 0 {
+        return x.one_like();
+    }
+    let mut result = x.one_like();
+    let mut base = x.clone();
+    let mut e = exp;
+    while e > 0 {
+        if e & 1 == 1 {
+            result = result.mul_ref(&base);
+        }
+        e >>= 1;
+        if e > 0 {
+            base = base.mul_ref(&base);
+        }
+    }
+    result
+}
+
+pub fn pow_assoc<F: WithAssoc>(x: &F, exp: u64) -> F {
+    if exp == 0 {
+        return x.one_like();
+    }
+    let mut result = x.one_like();
+    let mut base = x.clone();
+    let mut e = exp;
+    while e > 0 {
+        if e & 1 == 1 {
+            result = result.mul_ref(&base);
+        }
+        e >>= 1;
+        if e > 0 {
+            base = base.mul_ref(&base);
+        }
+    }
+    result
+}

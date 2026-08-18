@@ -1,4 +1,4 @@
-=== A2 === 2026-08-19T00:13:18+03:00
+=== A2 === 2026-08-19T00:41:03+03:00
 --- command ---
 /data/aeneas-upgrade-34d85cb9/aeneas/src/_build/default/main.exe \
   -backend lean \
@@ -35,9 +35,8 @@ Compiler source: extract/Extract.ml, line 2868
 Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
 Compiler source: extract/Extract.ml, line 2868
 
-[Info ] Creating missing directory: dev/active/34d85cb9/upgrade/extraction/A2_lean
 [Info ] Generated the partial file (because of 2 errors, including 2 unique errors): dev/active/34d85cb9/upgrade/extraction/A2_lean/Types.lean
 [Info ] Generated the partial file (because of 2 errors, including 2 unique errors): dev/active/34d85cb9/upgrade/extraction/A2_lean/FunsExternal_Template.lean
 [Info ] Generated the partial file (because of 2 errors, including 2 unique errors): dev/active/34d85cb9/upgrade/extraction/A2_lean/Funs.lean
-[Info ] Total execution time: 0.618836 seconds
+[Info ] Total execution time: 0.647880 seconds
 --- exit=1 elapsed=1s ---

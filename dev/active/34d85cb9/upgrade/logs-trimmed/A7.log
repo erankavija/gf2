@@ -1,4 +1,4 @@
-=== A7 === 2026-08-19T00:13:21+03:00
+=== A7 === 2026-08-19T00:41:06+03:00
 --- command ---
 /data/aeneas-upgrade-34d85cb9/aeneas/src/_build/default/main.exe \
   -backend lean \
@@ -44,7 +44,6 @@ Compiler source: extract/Extract.ml, line 2868
 Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
 Compiler source: extract/Extract.ml, line 2868
 
-[Info ] Creating missing directory: dev/active/34d85cb9/upgrade/extraction/A7_lean
 [Warn ] Mutually recursive trait declarations are not supported; the following group of mutually recursive traits is going to be extracted but their model will not type-check:
 'gf2_core::field::matrix::BasisReducer', source: 'crates/gf2-core/src/field/matrix.rs', lines 59:0-94:1
 'gf2_core::field::matrix::PackedMatvec', source: 'crates/gf2-core/src/field/matrix.rs', lines 108:0-113:1
@@ -73,5 +72,5 @@ Compiler source: extract/ExtractTypes.ml, line 524
 Source: 'crates/gf2-core/src/field/traits.rs', lines 614:4-621:5
 Compiler source: extract/ExtractTypes.ml, line 524
 [Info ] Generated the partial file (because of 9 errors, including 4 unique errors): dev/active/34d85cb9/upgrade/extraction/A7_lean/Funs.lean
-[Info ] Total execution time: 0.724963 seconds
+[Info ] Total execution time: 0.758567 seconds
 --- exit=1 elapsed=1s ---

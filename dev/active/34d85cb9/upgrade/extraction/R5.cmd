@@ -1,4 +1,4 @@
-/data/aeneas-upgrade-34d85cb9/aeneas/charon/bin/charon cargo \
+RUSTUP_TOOLCHAIN=1.95.0 /data/aeneas-upgrade-34d85cb9/aeneas/charon/bin/charon cargo \
   --preset aeneas \
   --monomorphize \
   --rustc-arg=--cfg=verify_lean \

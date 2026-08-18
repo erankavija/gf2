@@ -1,4 +1,4 @@
-=== A11 === 2026-08-19T00:13:22+03:00
+=== A11 === 2026-08-19T00:41:08+03:00
 --- command ---
 /data/aeneas-upgrade-34d85cb9/aeneas/src/_build/default/main.exe \
   -backend lean \
@@ -80,7 +80,6 @@ Compiler source: extract/Extract.ml, line 2868
 Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
 Compiler source: extract/Extract.ml, line 2868
 
-[Info ] Creating missing directory: dev/active/34d85cb9/upgrade/extraction/A11_lean
 [Info ] Generated the partial file (because of 5 errors, including 3 unique errors): dev/active/34d85cb9/upgrade/extraction/A11_lean/TypesExternal_Template.lean
 [Error] Unexpected
 Source: 'crates/gf2-core/src/matrix_like.rs', lines 83:4-83:39
@@ -220,5 +219,5 @@ Compiler source: extract/ExtractBase.ml, line 484
 Source: 'crates/gf2-core/src/field/poly.rs', lines 3022:12-3025:13
 Compiler source: extract/ExtractBase.ml, line 484
 [Info ] Generated the partial file (because of 50 errors, including 5 unique errors): dev/active/34d85cb9/upgrade/extraction/A11_lean/Funs.lean
-[Info ] Total execution time: 7.135746 seconds
---- exit=1 elapsed=8s ---
+[Info ] Total execution time: 7.436245 seconds
+--- exit=1 elapsed=7s ---

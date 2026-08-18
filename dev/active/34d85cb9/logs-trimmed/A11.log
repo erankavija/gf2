@@ -1,4 +1,4 @@
-=== A11 === 2026-08-18T23:50:12+03:00
+=== A11 === 2026-08-19T00:40:25+03:00
 --- command ---
 aeneas \
   -backend lean \
@@ -101,13 +101,13 @@ Compiler source: interp/Interp.ml, line 609
 
 [Error] Region ids should not be visited directly; the visitor should catch cases that contain region ids earlier.
 Compiler source: interp/InterpUtils.ml, line 877
-[Error] Region ids should not be visited directly; the visitor should catch cases that contain region ids earlier.
-Compiler source: interp/InterpUtils.ml, line 877
 [Warn ] Could not translate the body of function 'gf2_core::field::poly::batch_evaluate_subproduct_auto because of previous error
 Name pattern: 'gf2_core::field::poly::batch_evaluate_subproduct_auto'
 Definition span: 'crates/gf2-core/src/field/poly.rs', lines 2393:0-2398:1
 Compiler source: interp/Interp.ml, line 609
 
+[Error] Region ids should not be visited directly; the visitor should catch cases that contain region ids earlier.
+Compiler source: interp/InterpUtils.ml, line 877
 [Warn ] Could not translate the body of function 'gf2_core::field::poly::batch_evaluate_subproduct because of previous error
 Name pattern: 'gf2_core::field::poly::batch_evaluate_subproduct'
 Definition span: 'crates/gf2-core/src/field/poly.rs', lines 2343:0-2345:1
@@ -165,7 +165,6 @@ Compiler source: extract/Extract.ml, line 2851
 Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
 Compiler source: extract/Extract.ml, line 2851
 
-[Info ] Creating missing directory: dev/active/34d85cb9/extraction/A11_lean
 [Info ] Generated the partial file (because of 15 errors, including 6 unique errors): dev/active/34d85cb9/extraction/A11_lean/TypesExternal_Template.lean
 [Error] Unexpected
 Source: 'crates/gf2-core/src/matrix_like.rs', lines 83:4-83:39
@@ -299,5 +298,5 @@ Compiler source: extract/ExtractBase.ml, line 484
 Source: 'crates/gf2-core/src/field/poly.rs', lines 1970:4-1992:5
 Compiler source: extract/ExtractBase.ml, line 484
 [Info ] Generated the partial file (because of 58 errors, including 9 unique errors): dev/active/34d85cb9/extraction/A11_lean/Funs.lean
-[Info ] Total execution time: 6.043634 seconds
---- exit=1 elapsed=6s ---
+[Info ] Total execution time: 6.127563 seconds
+--- exit=1 elapsed=7s ---

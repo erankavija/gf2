@@ -1,6 +1,6 @@
-=== R8 === 2026-08-19T00:12:15+03:00
+=== R8 === 2026-08-19T00:40:52+03:00
 --- command ---
-/data/aeneas-upgrade-34d85cb9/aeneas/charon/bin/charon cargo \
+RUSTUP_TOOLCHAIN=1.95.0 /data/aeneas-upgrade-34d85cb9/aeneas/charon/bin/charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
   --translate-all-methods \
@@ -25,8 +25,7 @@
 --- output ---
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
    Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
-
  52 | impl BitMatrix {
 
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.74s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.72s
 --- exit=0 elapsed=2s ---
