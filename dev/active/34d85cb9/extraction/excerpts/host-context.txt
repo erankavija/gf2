@@ -2,7 +2,7 @@
 # Reproduce with: dev/active/34d85cb9/extraction/host.sh
 
 $ git rev-parse HEAD
-2f2cbb3780876eb022cde7c9c2879b8ed7f1656b
+d29b6c0c6ced623e9b41d5d0c786344d149dbc34
 
 $ uname -srm
 Linux 7.1.8-arch1-3 x86_64
@@ -15,5 +15,5 @@ $ nproc
 
 $ free -h
                total        used        free      shared  buff/cache   available
-Mem:            31Gi       3.5Gi        23Gi       4.4Mi       5.2Gi        27Gi
+Mem:            31Gi       3.6Gi        13Gi       5.8Mi        14Gi        27Gi
 Swap:          4.0Gi          0B       4.0Gi

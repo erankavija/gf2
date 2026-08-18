@@ -4,4 +4,3 @@ where
     TraitClause0: (F: FiniteField<Clause0_Characteristic, Clause0_Wide>),
 = <opaque>
 
-// Full name: gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD

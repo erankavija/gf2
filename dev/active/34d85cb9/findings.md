@@ -30,40 +30,54 @@ were added once the first outcomes motivated them (§ Methodology, axes D and E)
 ## Toolchain and host
 
 This is the **pinned pair** the baseline leg ran on; the newest-upstream pair is
-recorded under *Upgrade leg* below. Recorded at run time in
-`dev/active/34d85cb9/extraction/excerpts/toolchain-versions.txt`
-(regenerate with `dev/active/34d85cb9/extraction/versions.sh`):
+recorded under *Upgrade leg* below. Two toolchains are in play and the criterion
+turns on the first. All of it is captured at run time in
+`dev/active/34d85cb9/extraction/excerpts/toolchain-versions.txt` (regenerate
+with `dev/active/34d85cb9/extraction/versions.sh`):
 
-| Component | Version |
-|---|---|
-| `charon version` | `0.1.217` |
-| `charon toolchain-version` | `nightly-2026-06-01` |
-| `charon toolchain-path` | `~/.rustup/toolchains/nightly-2026-06-01-x86_64-unknown-linux-gnu` |
-| `aeneas -version` | `5220259c` |
-| `rustc --version` | `1.97.0 (2d8144b78 2026-07-07)` |
-| `cargo --version` | `1.97.0 (c980f4866 2026-06-30)` |
+| Component | Version | Role |
+|---|---|---|
+| `RUSTUP_TOOLCHAIN=1.95.0 cargo --version` | `1.95.0 (f2d3ce0bd 2026-03-21)` | builds `gf2-core` |
+| `RUSTUP_TOOLCHAIN=1.95.0 rustc --version` | `1.95.0 (59807616e 2026-04-14)` | builds `gf2-core` |
+| `charon version` | `0.1.217` | |
+| `charon toolchain-version` | `nightly-2026-06-01` | rustc that produces MIR |
+| `charon toolchain-path` | `~/.rustup/toolchains/nightly-2026-06-01-x86_64-unknown-linux-gnu` | |
+| `aeneas -version` | `5220259c` | |
 
-The workspace MSRV is `rust-version = "1.95"`
-(`crates/gf2-core/Cargo.toml:10`); the host default toolchain is 1.97.0, which
-satisfies it. Charon runs its own pinned `nightly-2026-06-01` driver, exactly as
-`scripts/verify-lean.sh` relies on (`scripts/verify-lean.sh:8-9`), so "the
-workspace MSRV toolchain" is the same two-toolchain arrangement the existing
-extraction already uses.
+**Every run in both legs executed on the workspace MSRV.** The workspace MSRV is
+`rust-version = "1.95"` (`crates/gf2-core/Cargo.toml:10`), and each Charon
+command file begins with `RUSTUP_TOOLCHAIN=1.95.0`, so the pin is part of the
+`.cmd` contract rather than an ambient property of the shell — for example
+`extraction/R2.cmd:1`:
+
+```
+RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
+```
+
+Charon still drives its own pinned `nightly-2026-06-01` rustc for the MIR it
+consumes; that is a property of how Charon was built, not selectable per run,
+and it is exactly the arrangement `scripts/verify-lean.sh:8-9` already relies
+on. This host's *default* toolchain is 1.97.0, recorded in the receipt only to
+show what the runs did **not** use.
 
 Host context (`dev/active/34d85cb9/extraction/excerpts/host-context.txt`,
 regenerate with `dev/active/34d85cb9/extraction/host.sh`): AMD Ryzen 9 5900X,
-24 hardware threads, 31 GiB RAM, Linux 7.1.8-arch1-3 x86_64. No run in the
-matrix exceeded 6 s of wall time, so the 20-minute per-invocation timebox was
-never reached; the `elapsed=` footer of every trimmed log records the measured
-time.
+24 hardware threads, 31 GiB RAM, Linux 7.1.8-arch1-3 x86_64.
+
+**Stopping rule, declared before any run:** the dispatch instructions for this
+issue set a 20-minute per-invocation timebox — kill the invocation and record
+the timeout as its outcome. It was never triggered. The slowest invocation
+across both legs took 7 s; the `elapsed=` footer of every trimmed log records
+the measured time, so the whole distribution is checkable, not just the
+maximum.
 
 ---
 
 ## Methodology
 
 All Charon invocations start from the `scripts/verify-lean.sh:103-131` gf2-core
-invocation and change one thing at a time: `--preset aeneas`,
-`--rustc-arg=--cfg=verify_lean`, and cargo args
+invocation and change one thing at a time: the `RUSTUP_TOOLCHAIN=1.95.0` MSRV
+pin, `--preset aeneas`, `--rustc-arg=--cfg=verify_lean`, and cargo args
 `-- --manifest-path crates/gf2-core/Cargo.toml --no-default-features` are held
 fixed throughout, and the `--opaque` list is the script's list narrowed to the
 modules the target needs.
@@ -86,29 +100,58 @@ Axes varied:
   (`crates/gf2-core/src/field/poly.rs:1130`), an inherent generic method whose
   loop carries an `F`-typed accumulator, chosen once axis D localised the
   failure to lifted loop functions.
-- **F — standalone probes.** `dev/active/34d85cb9/extraction/probe.rs`, a
-  single file extracted with `charon rustc`, replaying the same
+- **F — standalone probes.** `dev/active/34d85cb9/extraction/probe-P1.rs`
+  through `probe-P4.rs`, extracted with `charon rustc`, replaying the same
   square-and-multiply loop over four trait shapes plus a concrete `u64`
-  baseline. Used to test whether the axis-D/E failure reproduces outside
-  `gf2-core`. The probe is a scratch file under `dev/active/34d85cb9/`; it is
-  not wired into any crate.
+  baseline. The probe grew across runs, so each run has its own committed
+  source and `P{N}.cmd` names `probe-P{N}.rs` exactly; every probe result below
+  is therefore regenerable from the command that produced it. The probes are
+  scratch files under `dev/active/34d85cb9/`; none is wired into any crate.
 
 Aeneas was run on every Charon output that produced a `.llbc`, with
 `-backend lean -split-files` as in `scripts/verify-lean.sh:220-224`, plus
 `-print-error-emitters` from A2b onwards so each diagnostic names the Aeneas
 source that emitted it.
 
-`.llbc` files (0.8–2.0 MB each) and their `charon pretty-print` renderings are
-not committed; `dev/active/34d85cb9/extraction/.gitignore` excludes them and
-they are regenerable from the committed `.cmd` files. Their item counts are
-committed in
-`dev/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt` (regenerate with
+`.llbc` files and their `charon pretty-print` renderings are not committed:
+across both legs the 27 of them total 49.6 MB, ranging from 31,190 bytes (R5,
+which emits nothing) to 14,426,493 bytes. `.gitignore` excludes them and they
+are regenerable from the committed `.cmd` files. Their **per-file byte sizes and
+item counts** are committed instead, in
+`dev/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt` and
+`dev/active/34d85cb9/upgrade/excerpts/llbc-item-counts.txt` (regenerate with
 `dev/active/34d85cb9/extraction/llbc-summary.sh`), and the three load-bearing
 fragments are committed under `dev/active/34d85cb9/extraction/excerpts/`.
 
 ---
 
 ## Findings
+
+### MSRV execution
+
+Both legs were executed end to end with the workspace toolchain pinned to the
+MSRV (`RUSTUP_TOOLCHAIN=1.95.0`, carried in every Charon `.cmd` file). **No
+outcome anywhere in this record depends on the toolchain choice.** The evidence
+that this is so, rather than an assertion:
+
+- Every exit code is unchanged — the same five Charon runs panic on the pinned
+  pair (R6, R7, R7b, R8, R10 → 101), the same runs succeed, and the same Aeneas
+  legs exit 1.
+- Every generated `Funs.lean` and `Types.lean` in `extraction/A*_lean/` and
+  `upgrade/extraction/A*_lean/` is **byte-identical** to the version produced
+  before the pin, so the diff of this rework touches no Aeneas output.
+- Every LLBC item count and byte size is unchanged
+  (`extraction/excerpts/llbc-item-counts.txt`,
+  `upgrade/excerpts/llbc-item-counts.txt`).
+- Both pipeline-regression legs reproduce their earlier verdicts exactly,
+  including the 311/428 non-comment line counts
+  (`upgrade/excerpts/pipeline-regen-diff.txt`), and each summary records the
+  `cargo 1.95.0` banner it ran under
+  (`upgrade/logs/pipeline-{baseline,new}-summary.txt`).
+
+The only artefact that changed is the probe Lean, and only in its crate name
+(`namespace probe` → `namespace probe_P1`), a mechanical consequence of splitting
+`probe.rs` into one source per run for F4 below.
 
 Trimmed logs for every run are under `dev/active/34d85cb9/logs-trimmed/`
 (produced from the raw logs by `dev/active/34d85cb9/extraction/trim-logs.sh`,
@@ -139,7 +182,7 @@ blocks). Each trimmed log opens with the exact command and closes with
 R2's exact command, as executed:
 
 ```
-charon cargo \
+RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
   --start-from 'gf2_core::field::batch_ops::batch_inverse' \
@@ -331,7 +374,8 @@ The failure is selective in a way that identifies it precisely:
   A11 `FieldPoly.eval` at line 1288).
 
 **F5 — the failure does not reproduce outside `gf2-core`.** The standalone
-probe `extraction/probe.rs` replays the same square-and-multiply loop across a
+probes `extraction/probe-P1.rs` … `probe-P4.rs` replay the same
+square-and-multiply loop across a
 concrete `u64` baseline, a trait with no associated types, a trait with two
 associated types, a trait whose associated types appear in its own method
 signatures with bounds, a trait *default* method over such a trait, a loop that
@@ -354,11 +398,17 @@ each individually exonerated. The trigger requires something further in the real
 isolate it. **This is left unverified**: a minimal upstream reproducer does not
 exist yet.
 
-**Not tested:** whether any generated `Funs.lean` in this spike elaborates under
-`lake build`. The worktree has no built `proofs/.lake`, and seeding one requires
-a Mathlib `v4.30.0-rc2` toolchain fetch that is out of proportion to the spike.
-The claims above rest on Aeneas's own exit codes and its `Generated the partial
-file (because of N errors...)` reports, not on Lean elaboration.
+**Not tested, and deliberately out of scope:** whether any generated
+`Funs.lean` in this spike elaborates under `lake build`. The worktree has no
+built `proofs/.lake` and seeding one needs a Mathlib `v4.30.0-rc2` toolchain
+fetch. This is scoped out against the issue's criteria rather than deferred
+work: REQ-01 asks for the Charon/Aeneas invocations and their outcomes, and
+REQ-02 asks that the generated Lean be preserved on success or the falsifying
+evidence recorded on failure — neither requires Lean elaboration, and this issue
+explicitly authors no proofs. Every claim above rests on Aeneas's own exit codes
+and its `Generated the partial file (because of N errors...)` reports. The
+follow-up proof round is where elaboration must be verified, and it is named as
+a required step there.
 
 ---
 
@@ -392,16 +442,24 @@ host, not just this spike — the new pair was built from **fresh clones** under
 
 ### Target selection
 
-| | Commit | Note |
-|---|---|---|
-| Aeneas | `c10cc997` (`main` HEAD) | 2 commits ahead of the newest tag `nightly-2026.08.18-daa85d7` (`daa85d7e`) |
-| Charon | `340b1af4` | what **both** `c10cc997` and `daa85d7e` name in `charon-pin` |
+Every claim in this subsection is captured at run time in
+`upgrade/excerpts/upstream-topology.txt` (regenerate with
+`upgrade/topology.sh`, which is read-only network access: `git ls-remote` plus
+raw-file fetches, touching no local repository).
 
-Charon `main` is at `4c346c14`, ahead of the pin. It was deliberately not used:
+| | Commit | Receipt |
+|---|---|---|
+| Aeneas | `c10cc997` (`main` HEAD) | `git ls-remote … aeneas HEAD refs/heads/main` |
+| Newest Aeneas tag | `daa85d7e` (`nightly-2026.08.18-daa85d7`) | `git ls-remote --tags … aeneas \| tail -5` |
+| main vs newest tag | `status=ahead ahead_by=2 behind_by=0` | GitHub compare API |
+| Charon | `340b1af4` | the `charon-pin` of **both** `c10cc997` and `daa85d7e` |
+| Charon `main` | `4c346c14` | `git ls-remote … charon HEAD refs/heads/main` |
+
+Charon `main` (`4c346c14`) is ahead of the pin and was deliberately not used:
 `dev/active/150d7d79/150d7d79-toolchain-upgrade.md:12` records the rule that the
-two halves move together to the pinned commit. `charon/rust-toolchain` at
-`340b1af4` requires `nightly-2026-06-01`, already installed with all four
-components, so no new toolchain was downloaded.
+two halves move together to the pinned commit. The same receipt shows
+`charon/rust-toolchain` at `340b1af4` requires `nightly-2026-06-01`, already
+installed with all four components, so no new toolchain was downloaded.
 
 ### Exact upgrade commands
 
@@ -433,12 +491,20 @@ git reset --hard FETCH_HEAD
 mv /data/aeneas-upgrade-34d85cb9/charon /data/aeneas-upgrade-34d85cb9/aeneas/charon
 
 cd /data/aeneas-upgrade-34d85cb9/aeneas/charon/charon
-CARGO_PROFILE_RELEASE_DEBUG=true cargo build --release      # 59 s
+CARGO_PROFILE_RELEASE_DEBUG=true cargo build --release
 mkdir -p ../bin && cp -f target/release/charon target/release/charon-driver ../bin/
 
 cd /data/aeneas-upgrade-34d85cb9/aeneas/src
-eval $(opam env) && dune build                              # dune 3.21.1, OCaml 5.4.1
+eval $(opam env) && dune build
 ```
+
+The Charon build log is committed at `upgrade/logs-trimmed/charon-build.log`;
+its final line is cargo's own measurement, `Finished \`release\` profile
+[optimized + debuginfo] target(s) in 59.25s`, and is the sole source for any
+build-duration statement here. The OCaml toolchain that built Aeneas — `dune
+--version` `3.21.1`, `ocaml -version` `5.4.1`, opam switch `default` — is
+recorded in `upgrade/excerpts/toolchain-versions-new.txt` alongside the pair
+versions.
 
 `cargo build --release` is invoked directly rather than through Charon's
 `make build-charon-rust`, because that target runs `cargo fmt` first and would
@@ -453,6 +519,7 @@ Resulting versions, recorded at run time in
 | Charon commit | `487f0320` + 1 local patch | `340b1af4`, unpatched |
 | `charon toolchain-version` | `nightly-2026-06-01` | `nightly-2026-06-01` |
 | `aeneas -version` | `5220259c` | `c10cc99` |
+| workspace `cargo`/`rustc` | `1.95.0` (MSRV) | `1.95.0` (MSRV) |
 
 ### The new binaries were NOT installed into `~/.cargo/bin`
 
@@ -560,11 +627,12 @@ committed `scripts/verify-lean.sh` by four `sed` substitutions — redirect
 Step 4 — then diffs the regenerated Lean against committed `proofs/`. Running
 it on **both** pairs gives a control, which turns out to be essential.
 
-**Step 4 (`lake build`) was not run.** This worktree has no built `proofs/.lake`
-and seeding one needs a Mathlib `v4.30.0-rc2` fetch, out of proportion to the
-spike. So this check answers whether extraction still reproduces the committed
-generated Lean; it does **not** answer whether the hand-written proofs still
-elaborate.
+**Step 4 (`lake build`) was not run**, for the same reason and with the same
+scoping: no built `proofs/.lake`, and neither REQ-01 nor REQ-02 turns on
+elaboration. So this check answers whether extraction still reproduces the
+committed generated Lean; it does **not** answer whether the hand-written proofs
+still elaborate. That question belongs to the upgrade-migration issue proposed
+below, which lists it as required work.
 
 Results (`upgrade/excerpts/pipeline-regen-diff.txt`):
 
@@ -736,7 +804,7 @@ All paths relative to the repository root.
 |---|---|
 | `dev/active/34d85cb9/extraction/run.sh` | Runner: executes one `.cmd` file, tees to `logs/<run>.log` |
 | `dev/active/34d85cb9/extraction/*.cmd` | The 29 exact invocations, one per run |
-| `dev/active/34d85cb9/extraction/probe.rs` | Standalone probe for axis F |
+| `dev/active/34d85cb9/extraction/probe-P{1,2,3,4}.rs` | Standalone probe sources, one per probe run |
 | `dev/active/34d85cb9/extraction/A2_lean/` | **Preserved Lean for the primary generic target** (REQ-02) |
 | `dev/active/34d85cb9/extraction/A8b_lean/` | Lean for `FiniteFieldExt::{square,pow,frobenius}` |
 | `dev/active/34d85cb9/extraction/A11_lean/` | Lean for `gf2_core::field::poly` (F4 at scale) |
@@ -750,3 +818,7 @@ All paths relative to the repository root.
 | `dev/active/34d85cb9/upgrade/excerpts/` | New-pair versions, LLBC counts, F4 signature, pipeline diff and breakage tables |
 | `dev/active/34d85cb9/upgrade/pipeline-regression.sh` | Runs the committed verify-lean.sh extraction stages on either pair and diffs against `proofs/` |
 | `dev/active/34d85cb9/upgrade/charon-local-patch-487f0320.patch` | The project-local Charon patch as found in `/data/aeneas-build/charon` |
+| `dev/active/34d85cb9/upgrade/excerpts/upstream-topology.txt` | Branch/tag topology receipt for the "newest upstream" claim |
+| `dev/active/34d85cb9/upgrade/topology.sh` | Regenerates the topology receipt (read-only network) |
+| `dev/active/34d85cb9/upgrade/versions-new.sh` | Regenerates the new-pair, OCaml and host-install receipts |
+| `dev/active/34d85cb9/upgrade/logs-trimmed/charon-build.log` | Charon release build log; its `Finished` line is the build-duration receipt |
