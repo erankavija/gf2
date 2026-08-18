@@ -21,7 +21,7 @@
           "title": "Spike Charon extraction of a trait-generic field algorithm",
           "classification": "research",
           "model": "opus",
-          "status": "rework-1"
+          "status": "rework-2"
         }
       ]
     },
@@ -166,7 +166,7 @@
     }
   ],
   "rework_counts": {
-    "34d85cb9": 1
+    "34d85cb9": 2
   },
   "surfaced_pitfalls": [],
   "started_at": "2026-08-18T00:00:00Z"

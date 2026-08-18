@@ -8514,3 +8514,4 @@
 {"gate_key":"research-review","id":"4cb8cbee-fbda-498a-9b85-31cbb55ee9f2","issue_id":"34d85cb9-1ff4-4adb-a09e-7305dee0b0dc","timestamp":"2026-08-18T21:36:16.046963630Z","type":"gate_failed","updated_by":"auto:executor"}
 {"id":"4e373c3e-4ad7-4479-ac35-2e1356d94689","issue_id":"4dd5372a-4b02-4186-83f6-97548b560b05","priority":"normal","timestamp":"2026-08-18T21:49:34.959855871Z","title":"Migrate Charon/Aeneas toolchain to newest upstream","type":"issue_created"}
 {"fields":["description"],"id":"dff2d5c5-c1d3-4813-9bce-7c9d34c34482","issue_id":"6dc81018-9a8e-4318-9572-148670d1c272","timestamp":"2026-08-18T21:49:55.156193901Z","type":"issue_updated","updated_by":"issue-update"}
+{"gate_key":"research-review","id":"fc0d5023-c169-42ca-af54-5093ded358e0","issue_id":"34d85cb9-1ff4-4adb-a09e-7305dee0b0dc","timestamp":"2026-08-18T21:59:15.726402369Z","type":"gate_failed","updated_by":"auto:executor"}
