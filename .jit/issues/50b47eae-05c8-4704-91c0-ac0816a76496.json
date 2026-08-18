@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-18T19:57:57.977309087Z",
+  "dependencies": [
+    "0d819b62-f6ad-49e0-add7-fd9f3486fe42",
+    "697fc55b-4b36-4cb5-8106-a811b1772e44"
+  ],
+  "description": "Run the pinned non-regression procedure after the pilot cutover and commit the receipt showing the tolerance holds.\n\n## Background\n\nThe pinned procedure and its predeclared tolerance exist before the cutover; this issue executes it on the prepared benchmark host after the pilot cutover lands and commits the receipt comparing against the baseline. The issue completes only once a receipt shows the tolerance holds. An excursion encountered on the way is preserved in the committed record together with its tracked rework, never overwritten.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt compares post-cutover measurements against the baseline with full provenance and shows the predeclared tolerance holds for the pinned set.\n- [hard] REQ-02: Any tolerance excursion encountered before the passing run is preserved in the committed record with its contradiction and tracked rework.",
+  "documents": [],
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
+  "labels": [
+    "type:task",
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Record the post-cutover non-regression receipt",
+  "updated_at": "2026-08-18T19:57:57.977309087Z"
+}

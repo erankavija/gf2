@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-18T19:57:57.977309087Z",
+  "dependencies": [
+    "e8fe47f5-5098-4500-b8ce-8e4a062a7787"
+  ],
+  "description": "Execute the pinned non-regression procedure before the pilot cutover and commit the baseline receipt.\n\n## Background\n\nThe pinned procedure and its predeclared tolerance are already committed; this issue runs the procedure unmodified on the prepared benchmark host while the pilot selectors still read their pre-cutover constants, and commits the baseline receipt the later comparison is measured against.\n\n## Success Criteria\n\n- [hard] REQ-01: A baseline receipt from the prepared benchmark host is committed with full provenance, produced by the pinned procedure unmodified.\n- [hard] REQ-02: The receipt is consistent with the pinned procedure's protocol and reproducible from the procedure alone.",
+  "documents": [],
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "278acf3a-3a49-4c79-8d54-8eb6c934c834",
+  "labels": [
+    "type:task",
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Record the pre-cutover baseline receipt",
+  "updated_at": "2026-08-18T19:57:57.977309087Z"
+}
