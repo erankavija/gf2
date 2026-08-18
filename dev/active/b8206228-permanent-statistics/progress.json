@@ -108,7 +108,7 @@
           "short_id": "7a816262",
           "title": "Frozen root manifest for the campaign",
           "classification": "implementation",
-          "status": "phase 1 done (rework-1 PASS, committed 776858ed/b6bdb10f: 3 dischargeable cells, 60 gaps, top-2 premeasurement preregistered per owner decisions); phase 2a done (abcb5438: premeasure-plan-v1 CSV+MD, runner premeasure/premeasure-collect modes, opt-in harness --batch-size, 5/5 shell tests, 67 crate tests, prepare run and binary manifest pinned at 0695438d); gf2-premeasure.timer armed (owner-approved) for 2026-08-18 02:00 EEST, session cap 19800 s; next: premeasure-collect, then freeze finalization with selection receipts and doc-review + research-review; phase 2b (overnight premeasure, 2026-08-18 02:00-03:30) RAN BUT FAILED: 216/1440 processes ok, 1224 exit 101 (`--only ... matched no cell in the grid`); 18/120 configurations complete, premeasure-collect refuses to aggregate 102 empty configurations. Root cause: harness grid is fixed at NS=[12,16,20,24,28] (dev/research/permanent-sampling-feas/src/main.rs:46) while the plan nominates 60 gap cells over n=4..27 \u2014 51 of 60 cells are unreachable via --only. Blocked pending an owner decision on extending the harness grid vs. re-scoping the premeasurement."
+          "status": "phase 1 done (rework-1 PASS, committed 776858ed/b6bdb10f: 3 dischargeable cells, 60 gaps, top-2 premeasurement preregistered per owner decisions); phase 2a done (abcb5438: premeasure-plan-v1 CSV+MD, runner premeasure/premeasure-collect modes, opt-in harness --batch-size, 5/5 shell tests, 67 crate tests, prepare run and binary manifest pinned at 0695438d); gf2-premeasure.timer armed (owner-approved) for 2026-08-18 02:00 EEST, session cap 19800 s; next: premeasure-collect, then freeze finalization with selection receipts and doc-review + research-review; phase 2b (overnight premeasure, 2026-08-18 02:00-03:30) RAN BUT FAILED: 216/1440 processes ok, 1224 exit 101 (`--only ... matched no cell in the grid`); 18/120 configurations complete, premeasure-collect refuses to aggregate 102 empty configurations. Root cause: harness grid is fixed at NS=[12,16,20,24,28] (dev/research/permanent-sampling-feas/src/main.rs:46) while the plan nominates 60 gap cells over n=4..27 \u2014 51 of 60 cells are unreachable via --only. Owner decision 2026-08-18: opt-in orders flag. Rework-2 dispatched: opt-in harness orders extension (default grid untouched), runner passes it per premeasure process, failed receipts archived aside for re-run, plan-vs-real-grid validation test, GPU health snapshots in session provenance. The 9 completed cells (18 configurations, cohort 0695438d) are kept; the 51 remaining cells re-run wholly under the rebuilt binary so within-cell rankings stay single-cohort."
         },
         {
           "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
@@ -480,6 +480,14 @@
     },
     {
       "issue": "7a816262",
+      "reason": "The overnight premeasure failed on the premeasure-v1 grid mismatch: the harness grid is compile-time NS=[12,16,20,24,28] while the plan nominates 60 gap cells over n=4..27, leaving 51 cells unreachable via --only. Choice between an opt-in orders-extension flag, widening the NS constant (changes the default measurement path pinning committed evidence identity), or re-scoping to a nearest-order transfer rule (contradicts the D1/D2 empirical-settlement ruling).",
+      "status": "resolved",
+      "requested_at": "2026-08-18T18:40:00+03:00",
+      "resolved_at": "2026-08-18T18:45:00+03:00",
+      "decision": "Owner: opt-in orders flag, mirroring the --batch-size precedent. Default grid untouched so committed evidence identity is preserved; the rebuilt binary is a new cohort and each cell's two candidates are measured under one binary, so within-cell ranking stays cohort-clean; the 9 completed cells keep their receipts; rework dispatch on 7a816262 (count 2 = MAX), then re-arm. Owner also reported the GPU wedge symptom for the record: monitor at 100% utilisation with high power draw until reboot (~18:16 EEST); filed as cb494ea4 under the tech-debt umbrella."
+    },
+    {
+      "issue": "7a816262",
       "reason": "Scale of the preregistered same-cohort premeasurement needed for the ~60 gap cells (full candidate grid vs a nominated subset), a multi-night bench-time trade-off.",
       "status": "resolved",
       "requested_at": "2026-08-17T22:55:00Z",
@@ -512,7 +520,8 @@
     "63d931a9": 1,
     "4a6bdcff": 1,
     "eb8825c8": 1,
-    "7a816262": 1
+    "7a816262": 2,
+    "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached, any further failure escalates"
   },
   "surfaced_pitfalls": [
     "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
@@ -558,6 +567,13 @@
       "surfaced_at": "2026-08-18",
       "issue": "7a816262",
       "summary": "premeasure-plan-v1 nominates 60 gap cells over n=4..27 but the permanent_sampling_feas grid is fixed at NS=[12,16,20,24,28]; 51/60 cells cannot be selected by --only. The 5/5 shell tests and validation.md did not exercise the real harness grid, so the mismatch survived to the overnight run.",
+      "status": "resolution in flight: owner chose the opt-in orders flag 2026-08-18; rework-2 on 7a816262 adds the flag plus a plan-vs-real-grid validation test so a plan row the shipped binary cannot admit fails before any overnight run"
+    },
+    {
+      "id": "gpu-wedge-2026-08-18",
+      "surfaced_at": "2026-08-18",
+      "issue": "7a816262",
+      "summary": "After the premeasure session the GPU sat at 100% utilisation with high power draw until the owner rebooted (~18:16 EEST); no kernel-visible fault, all 1440 processes had recorded exits. Distinct from the 10071e51 stuck-telemetry state (that one drew no power). Filed as cb494ea4 (tech-debt umbrella) with provenance-recorded GPU health snapshots as its first deliverable; until it is bounded, treat every overnight gpu_hip session as capable of requiring a reboot and check GPU health before trusting same-day device work.",
       "status": "open"
     }
   ],
