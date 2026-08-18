@@ -138,6 +138,11 @@
       "id": "a6636671",
       "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
       "reason": "classification \u00a75 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope"
+    },
+    {
+      "id": "4dd5372a",
+      "title": "Migrate Charon/Aeneas toolchain to newest upstream",
+      "reason": "owner-approved follow-on from spike 34d85cb9 upgrade leg; standalone, outside the epic"
     }
   ],
   "escalations": [
@@ -146,6 +151,18 @@
       "issue": "34d85cb9",
       "date": "2026-08-18",
       "text": "Owner directed: update local Charon/Aeneas to newest upstream as part of the spike. Worker instructed to baseline on pinned versions, back up binaries, upgrade, re-run key matrix legs, and regression-check scripts/verify-lean.sh; restore backups if the committed pipeline breaks."
+    },
+    {
+      "kind": "criterion-decision",
+      "issue": "6dc81018/REQ-05",
+      "date": "2026-08-19",
+      "decision": "DEC-A approved by owner via AskUserQuestion: REQ-05 narrowed to loop-free generic extraction (square/frobenius class); F4 filed upstream as non-blocking follow-up (tracked in 4dd5372a REQ-04). Epic description amended."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "toolchain-upgrade",
+      "date": "2026-08-19",
+      "decision": "Charon/Aeneas upstream migration tracked as standalone task 4dd5372a; this epic stays on the pinned pair; host binaries not swapped."
     }
   ],
   "rework_counts": {
