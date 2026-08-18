@@ -13,7 +13,7 @@
           "title": "Author the field-capability classification",
           "classification": "design",
           "model": "opus",
-          "status": "dispatched"
+          "status": "done"
         },
         {
           "id": "34d85cb9-1ff4-4adb-a09e-7305dee0b0dc",
@@ -133,7 +133,13 @@
       ]
     }
   ],
-  "created_during_execution": [],
+  "created_during_execution": [
+    {
+      "id": "a6636671",
+      "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
+      "reason": "classification \u00a75 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope"
+    }
+  ],
   "escalations": [],
   "rework_counts": {},
   "surfaced_pitfalls": [],
