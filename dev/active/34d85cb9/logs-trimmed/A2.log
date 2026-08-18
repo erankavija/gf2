@@ -1,0 +1,38 @@
+=== A2 === 2026-08-18T23:39:07+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/34d85cb9/extraction/A2_lean \
+  -split-files \
+  dev/active/34d85cb9/extraction/R2_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/34d85cb9/extraction/R2_gf2_core.llbc
+
+[Error] Region ids should not be visited directly; the visitor should catch cases that contain region ids earlier.
+[Warn ] Could not translate the body of function 'gf2_core::field::batch_ops::batch_inverse_with_scratch because of previous error
+Name pattern: 'gf2_core::field::batch_ops::batch_inverse_with_scratch'
+Definition span: 'crates/gf2-core/src/field/batch_ops.rs', lines 210:0-230:1
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Unimplemented
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 394:4-400:5
+[Warn ] Could not translate the body of function 'gf2_core::field::batch_ops::batch_inverse_core because of previous error
+Name pattern: 'gf2_core::field::batch_ops::batch_inverse_core'
+Definition span: 'crates/gf2-core/src/field/batch_ops.rs', lines 363:0-403:1
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 394:4-400:5
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'any'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2851
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'rev'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2851
+
+[Info ] Creating missing directory: dev/active/34d85cb9/extraction/A2_lean
+[Info ] Generated the partial file (because of 2 errors, including 2 unique errors): dev/active/34d85cb9/extraction/A2_lean/Types.lean
+[Info ] Generated the partial file (because of 2 errors, including 2 unique errors): dev/active/34d85cb9/extraction/A2_lean/FunsExternal_Template.lean
+[Info ] Generated the partial file (because of 2 errors, including 2 unique errors): dev/active/34d85cb9/extraction/A2_lean/Funs.lean
+[Info ] Total execution time: 0.494077 seconds
+--- exit=1 elapsed=1s ---

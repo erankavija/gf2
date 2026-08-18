@@ -1,0 +1,29 @@
+=== A8b === 2026-08-18T23:43:08+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/34d85cb9/extraction/A8b_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/34d85cb9/extraction/R8b_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/34d85cb9/extraction/R8b_gf2_core.llbc
+
+[Info ] Creating missing directory: dev/active/34d85cb9/extraction/A8b_lean
+[Info ] Generated: dev/active/34d85cb9/extraction/A8b_lean/Types.lean
+[Info ] Generated: dev/active/34d85cb9/extraction/A8b_lean/FunsExternal_Template.lean
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1083:8-1091:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1083:8-1091:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1083:8-1091:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1083:8-1091:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Info ] Generated the partial file (because of 4 errors, including 1 unique errors): dev/active/34d85cb9/extraction/A8b_lean/Funs.lean
+[Info ] Total execution time: 0.279857 seconds
+--- exit=1 elapsed=1s ---

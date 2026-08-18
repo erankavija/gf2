@@ -1,0 +1,5 @@
+def field.traits.FiniteFieldExt.pow.default_loop
+  {Self : Type} (FiniteFieldExtInst : field.traits.FiniteFieldExt Self
+  sorry /- Could not find: type_var_id: 1 from ExtractBase.Item-/
+  sorry /- Could not find: type_var_id: 2 from ExtractBase.Item-/)
+  (result : Self) (base : Self) (e : Std.U64) :

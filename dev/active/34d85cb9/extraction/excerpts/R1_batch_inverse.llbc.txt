@@ -1,0 +1,7 @@
+// Full name: gf2_core::field::batch_ops::batch_inverse
+pub fn batch_inverse<'_0, F, Clause0_Characteristic, Clause0_Wide>(_1: &'_0 [F]) -> Option<Vec<F>>
+where
+    TraitClause0: (F: FiniteField<Clause0_Characteristic, Clause0_Wide>),
+= <opaque>
+
+// Full name: gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD

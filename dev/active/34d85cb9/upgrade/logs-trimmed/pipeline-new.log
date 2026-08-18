@@ -1,0 +1,255 @@
+=== Step 1: Charon extraction (gf2-core) ===
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
+ 52 | impl BitMatrix {
+
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.87s
+Charon extraction succeeded: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/gf2_core.llbc
+
+=== Step 1b: Charon extraction (gf2-algebra) ===
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
+ 52 | impl BitMatrix {
+
+   Compiling gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-algebra)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.19s
+Charon extraction succeeded: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/gf2_algebra.llbc
+
+=== Step 2: Aeneas translation (gf2-core) ===
+[Info ] Imported: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/gf2_core.llbc
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 152:4-157:5
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::fmt::Debug for gf2_core::gfpn::quadratic::QuadraticExtWide<W>}::fmt because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{core::fmt::Debug<gf2_core::gfpn::quadratic::QuadraticExtWide<@W>>}::fmt'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 152:4-157:5
+Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 152:4-157:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 168:4-174:5
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl core::fmt::Debug for gf2_core::gfpn::cubic::CubicExtWide<W>}::fmt because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{core::fmt::Debug<gf2_core::gfpn::cubic::CubicExtWide<@W>>}::fmt'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 168:4-174:5
+Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 168:4-174:5
+Compiler source: interp/Interp.ml, line 609
+
+[Info ] Generated the partial file (because of 2 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/proofs/Gf2Core/TypesExternal_Template.lean
+[Info ] Generated the partial file (because of 2 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/proofs/Gf2Core/Types.lean
+[Info ] Generated the partial file (because of 2 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/proofs/Gf2Core/FunsExternal_Template.lean
+[Info ] Generated the partial file (because of 2 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/proofs/Gf2Core/Funs.lean
+[Info ] Total execution time: 2.303591 seconds
+WARNING: Aeneas exited with code 1 (partial files generated — some function bodies are opaque)
+Aeneas translation completed
+
+=== Step 3: Post-processing ===
+Patched 0 sorry(s), opaqued 15 unsupported def(s), patched 10 trait default field(s), 17 remain (expected for opaque gfpn functions)
+NOTE: FunsExternal.lean seeded from template — fill in concrete defs
+Post-processing done
+
+=== Step 2b: Aeneas translation (gf2-algebra) ===
+[Info ] Imported: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/gf2_algebra.llbc
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1448:4-1468:5
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3047:4-3068:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1448:4-1468:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1448:4-1468:5
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major because of previous error
+Name pattern: 'gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major'
+Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3047:4-3068:5
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3047:4-3068:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1505:4-1525:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1505:4-1525:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1505:4-1525:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3227:4-3236:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row because of previous error
+Name pattern: 'gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row'
+Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3227:4-3236:5
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3227:4-3236:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1397:17-1401:13
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt::{impl core::ops::function::FnMut<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::packed7::{impl core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt::closure<'_0>}::call_mut because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{core::fmt::Debug<gf2_algebra::packed::packed7::Packed7Matrix>}::fmt::{core::ops::function::FnMut<gf2_algebra::packed::packed7::{core::fmt::Debug<gf2_algebra::packed::packed7::Packed7Matrix>}::fmt::closure<'0>, (usize), alloc::vec::Vec<u64>>}::call_mut'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1397:17-1401:13
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1397:17-1401:13
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1447:17-1451:13
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::{impl core::ops::function::FnMut<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure<'_0>}::call_mut because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5Matrix>}::fmt::{core::ops::function::FnMut<gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5Matrix>}::fmt::closure<'0>, (usize), alloc::vec::Vec<u64>>}::call_mut'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1447:17-1451:13
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1447:17-1451:13
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2987:17-2991:13
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::{impl core::ops::function::FnMut<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure<'_0>}::call_mut because of previous error
+Name pattern: 'gf2_algebra::packed::bipedal3::{core::fmt::Debug<gf2_algebra::packed::bipedal3::Bipedal3Matrix>}::fmt::{core::ops::function::FnMut<gf2_algebra::packed::bipedal3::{core::fmt::Debug<gf2_algebra::packed::bipedal3::Bipedal3Matrix>}::fmt::closure<'0>, (usize), alloc::vec::Vec<u64>>}::call_mut'
+Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2987:17-2991:13
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2987:17-2991:13
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1230:4-1240:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::sub_assign because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed7::Packed7Vec, gf2_core::gfp::Fp<7>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128>}::sub_assign'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1230:4-1240:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1230:4-1240:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::add_assign because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed7::Packed7Vec, gf2_core::gfp::Fp<7>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128>}::add_assign'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::mul_assign because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed7::Packed7Vec, gf2_core::gfp::Fp<7>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128>}::mul_assign'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1040:4-1049:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Vec}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{core::fmt::Debug<gf2_algebra::packed::packed7::Packed7Vec>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1040:4-1049:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1040:4-1049:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13
+
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_mut because of previous error
+Name pattern: 'gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::{core::ops::function::FnMut<gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure<'0, '1, '2>, (usize), gf2_algebra::packed::bipedal3::Bipedal3Vec>}::call_mut'
+Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::bipedal3::{core::fmt::Debug<gf2_algebra::packed::bipedal3::Bipedal3Vec>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_mut because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{core::ops::function::FnMut<gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'0, '1, '2>, (usize), gf2_algebra::packed::packed5::Packed5Vec>}::call_mut'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 979:4-982:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5Vec>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 979:4-982:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 979:4-982:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1458:17-1461:13
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::packed7::Packed7Vec> for gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_mut because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major::{core::ops::function::FnMut<gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major::closure<'0, '1, '2>, (usize), gf2_algebra::packed::packed7::Packed7Vec>}::call_mut'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1458:17-1461:13
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1458:17-1461:13
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5Matrix>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2984:4-2998:5
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::bipedal3::{core::fmt::Debug<gf2_algebra::packed::bipedal3::Bipedal3Matrix>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2984:4-2998:5
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2984:4-2998:5
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed5::Packed5Vec, gf2_core::gfp::Fp<5>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128>}::all_zero'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1395:4-1408:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{core::fmt::Debug<gf2_algebra::packed::packed7::Packed7Matrix>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1395:4-1408:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1395:4-1408:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 168:4-185:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::bipedal3::{core::fmt::Debug<gf2_algebra::packed::bipedal3::Bipedal3>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 168:4-185:5
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 168:4-185:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'zip'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'map'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'collect'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'all'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Info ] Generated the partial file (because of 22 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/proofs/Gf2Algebra/TypesExternal_Template.lean
+[Info ] Generated the partial file (because of 22 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/proofs/Gf2Algebra/Types.lean
+[Info ] Generated the partial file (because of 22 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/proofs/Gf2Algebra/FunsExternal_Template.lean
+[Info ] Generated the partial file (because of 22 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-new/proofs/Gf2Algebra/Funs.lean
+[Info ] Total execution time: 4.154261 seconds
+WARNING: Aeneas exited with code 1 on gf2-algebra (partial files generated — Debug::fmt impls are opaque)
+Aeneas translation (gf2-algebra) completed
+
+=== Step 3b: Post-processing (gf2-algebra) ===
+fix-aeneas-gf2algebra: expected exactly one Zip Iterator instance, got 0
