@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-18T18:49:31.148297451Z",
+  "dependencies": [],
+  "description": "Factor the workspace's trellis decoders onto one shared engine: trellis topology and schedule separated from the message reducer, with the reducer expressed as a semiring plus explicit decoder capabilities.\n\n## Background\n\nTrellis decoding exists in several concrete forms in gf2-coding: a hard-decision Viterbi decoder, a forward–backward (BCJR) SISO decoder producing per-bit APP LLRs, and a planned soft-output Viterbi (SOVA) path. These share trellis topology and scheduling but differ in the reduction algebra: the hard-decision Viterbi decoder contracts accumulated Hamming distance in the min-plus tropical semiring with survivor traceback, BCJR in the log-probability semiring with posterior extraction. A shared engine expresses each decoder as a semiring plus explicit capabilities — survivor traceback, deterministic tie-breaking, renormalization, posterior extraction — instead of duplicated control flow. Variants such as max-log-MAP become capability recombinations where the algebra genuinely supports them; the factoring does not promise them for free.\n\n## Success Criteria\n\n- [hard] REQ-01: One trellis engine owns topology and schedule; the reducer is a semiring parameter with explicit capabilities for survivor traceback, deterministic tie-breaking, renormalization, and posterior extraction.\n- [hard] REQ-02: The existing hard-decision Viterbi and BCJR decoders are expressed on the shared engine and pass their current behavioral suites unchanged; no second decoder stack remains after cutover.\n- [hard] REQ-03: Decoder benchmarks show no regression beyond a predeclared tolerance against the pre-refactor implementations, from committed receipts.\n\n## Notes\n\n- Soft-output Viterbi (SOVA) is tracked as its own story. It may reuse the engine's topology, schedule, deterministic tie-breaking, and traceback; its soft-output capability — survivor-competition reliability tracking — is distinct from BCJR posterior extraction and is designed separately.\n- Reconciliation targets: the production BCJR SISO decoder (issue 3e136982) and the hard-decision Viterbi decoder in `convolutional.rs`.",
+  "documents": [],
+  "first_ready_at": "2026-08-18T18:49:31.148297451Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "9d67f21d-fc8d-4dc1-ad39-b09d0b10c68e",
+  "labels": [
+    "story:trellis-decoding-algebra",
+    "component:gf2-coding",
+    "type:story"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Trellis decoding over a shared decoding algebra",
+  "updated_at": "2026-08-18T18:53:50.150444062Z"
+}

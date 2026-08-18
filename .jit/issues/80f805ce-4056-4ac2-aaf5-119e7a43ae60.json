@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-18T18:50:33.361051159Z",
+  "dependencies": [
+    "663965f6-83c1-4cef-baa1-6a6ac2651a3d"
+  ],
+  "description": "After the plan-review checkpoint passes, decompose the plan for Reconcile field capability traits and profile-driven kernel dispatch (6dc81018) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, external re-homed edges recorded in the plan are attached, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
+  "documents": [],
+  "first_ready_at": "2026-08-18T18:50:33.361051159Z",
+  "gates_required": [
+    "coverage-preview",
+    "breakdown-review"
+  ],
+  "gates_status": {},
+  "id": "80f805ce-4056-4ac2-aaf5-119e7a43ae60",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "component:gf2-algebra",
+    "brackets:6dc81018",
+    "type:breakdown"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "breakdown: Reconcile field capability traits and profile-driven kernel dispatch",
+  "updated_at": "2026-08-18T18:50:41.321987666Z"
+}

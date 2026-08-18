@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-18T18:50:24.093554835Z",
+  "dependencies": [],
+  "description": "Author and review the plan and authoritative breakdown manifest for epic 6dc81018 (field-capability reconciliation and profile-driven kernel dispatch).\n\n## Success Criteria\n\n- [hard] REQ-01: A concise plan at dev/active/6dc81018-field-capability-dispatch/plan.md and its sibling manifest breakdown.json are linked to this issue, cover every hard container criterion, and pass deterministic manifest validation with warnings denied.\n- [hard] REQ-02: The configured plan review passes on the linked artifacts.",
+  "documents": [],
+  "first_ready_at": "2026-08-18T18:50:24.093554835Z",
+  "gates_required": [
+    "plan-review"
+  ],
+  "gates_status": {},
+  "id": "663965f6-83c1-4cef-baa1-6a6ac2651a3d",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "component:gf2-algebra",
+    "type:planning"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Plan the field-capability reconciliation breakdown",
+  "updated_at": "2026-08-18T18:50:24.093554835Z"
+}

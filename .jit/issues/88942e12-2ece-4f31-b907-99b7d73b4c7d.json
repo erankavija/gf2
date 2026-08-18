@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-18T18:53:59.954486413Z",
+  "dependencies": [
+    "24701af9-138e-4c45-85a9-60debe9458d0"
+  ],
+  "description": "Author and review the plan and authoritative breakdown manifest for epic c7cfd37e (additive NTT over GF($2^m$) for Reed–Solomon, proof-system, and PQC workloads).\n\n## Success Criteria\n\n- [hard] REQ-01: A concise plan at dev/active/c7cfd37e-additive-ntt/plan.md and its sibling manifest breakdown.json are linked to this issue, cover every hard container criterion, and pass deterministic manifest validation with warnings denied.\n- [hard] REQ-02: The configured plan review passes on the linked artifacts.",
+  "documents": [],
+  "first_ready_at": "2026-08-18T18:53:59.954486413Z",
+  "gates_required": [
+    "plan-review"
+  ],
+  "gates_status": {},
+  "id": "88942e12-2ece-4f31-b907-99b7d73b4c7d",
+  "labels": [
+    "epic:additive-ntt",
+    "component:gf2-core",
+    "component:gf2-coding",
+    "cites:Lch2014",
+    "cites:DiamondPosen2023",
+    "type:planning"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Plan the additive-NTT breakdown",
+  "updated_at": "2026-08-18T18:56:10.249469521Z"
+}
