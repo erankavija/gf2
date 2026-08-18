@@ -1,0 +1,15 @@
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/34d85cb9/extraction/P2_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/34d85cb9/extraction/P2_probe.llbc
+--- output ---
+[Info ] Imported: dev/active/34d85cb9/extraction/P2_probe.llbc
+
+[Info ] Creating missing directory: dev/active/34d85cb9/extraction/P2_lean
+[Info ] Generated: dev/active/34d85cb9/extraction/P2_lean/Types.lean
+[Info ] Generated: dev/active/34d85cb9/extraction/P2_lean/Funs.lean
+[Info ] Total execution time: 0.300397 seconds
+--- exit=0 elapsed=1s ---

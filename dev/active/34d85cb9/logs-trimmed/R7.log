@@ -1,0 +1,33 @@
+--- command ---
+charon cargo \
+  --preset aeneas \
+  --rustc-arg=--cfg=verify_lean \
+  --start-from 'gf2_core::field::batch_ops::batch_inverse' \
+  --opaque 'gf2_core::gf2m' \
+  --opaque 'gf2_core::gfpn' \
+  --opaque 'gf2_core::gfp::simd_ops' \
+  --opaque 'gf2_core::bitvec' \
+  --opaque 'gf2_core::bitslice' \
+  --opaque 'gf2_core::matrix' \
+  --opaque 'gf2_core::sparse' \
+  --opaque 'gf2_core::alg' \
+  --opaque 'gf2_core::compute' \
+  --opaque 'gf2_core::kernels' \
+  --opaque 'gf2_core::primitive_polys' \
+  --opaque 'gf2_core::io' \
+  --opaque 'gf2_core::macros' \
+  --dest-file dev/active/34d85cb9/extraction/R7_gf2_core.llbc \
+  -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features
+--- output ---
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
+
+thread 'main' (304396) panicked at /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/index_vec-0.1.4/src/lib.rs:774:5:
+index_vec index overflow: 18446744073709551615 is outside the range [0, 4294967295)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+ERROR Compilation panicked
+error: could not compile `gf2-core` (lib); 18 warnings emitted
+
+Caused by:
+  process didn't exit successfully: `/home/vkaskivuo/.cargo/bin/charon-driver charon-dont-cache-this-304294-1787085694523436595 /home/vkaskivuo/.rustup/toolchains/nightly-2026-06-01-x86_64-unknown-linux-gnu/bin/rustc --crate-name gf2_core --edition=2021 crates/gf2-core/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --warn=unexpected_cfgs --check-cfg 'cfg(kani)' --check-cfg 'cfg(verify_lean)' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("default", "image", "io", "parallel", "rand", "simd", "test-support", "visualization"))' -C metadata=c3e1217d0b5ae6d0 -C extra-filename=-fa6d98fe62bb9e59 --out-dir /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps --target x86_64-unknown-linux-gnu -C incremental=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/incremental -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/debug/deps --extern gf2_kernels_simd=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps/libgf2_kernels_simd-dcce0fc99359784f.rmeta` (exit status: 101)
+--- exit=101 elapsed=2s ---

@@ -1,0 +1,8 @@
+// Full name: gf2_core::field::traits::FiniteFieldExt::pow
+pub fn pow<'_0, Self, Clause0_Clause0_Characteristic, Clause0_Clause0_Wide>(self_1: &'_0 Self, exp_2: u64) -> Self
+where
+    TraitClause0: (Self: FiniteFieldExt<Clause0_Clause0_Characteristic, Clause0_Clause0_Wide>),
+{
+    let _0: Self; // return
+    let self_1: &'1 Self; // arg #1
+    let exp_2: u64; // arg #2

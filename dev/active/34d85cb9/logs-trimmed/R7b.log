@@ -1,0 +1,50 @@
+--- command ---
+RUST_BACKTRACE=1 charon cargo \
+  --preset aeneas \
+  --rustc-arg=--cfg=verify_lean \
+  --start-from 'gf2_core::field::batch_ops::batch_inverse' \
+  --opaque 'gf2_core::gf2m' \
+  --opaque 'gf2_core::gfpn' \
+  --opaque 'gf2_core::gfp::simd_ops' \
+  --opaque 'gf2_core::bitvec' \
+  --opaque 'gf2_core::bitslice' \
+  --opaque 'gf2_core::matrix' \
+  --opaque 'gf2_core::sparse' \
+  --opaque 'gf2_core::alg' \
+  --opaque 'gf2_core::compute' \
+  --opaque 'gf2_core::kernels' \
+  --opaque 'gf2_core::primitive_polys' \
+  --opaque 'gf2_core::io' \
+  --opaque 'gf2_core::macros' \
+  --dest-file dev/active/34d85cb9/extraction/R7b_gf2_core.llbc \
+  -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features
+--- output ---
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
+
+thread 'main' (304862) panicked at /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/index_vec-0.1.4/src/lib.rs:774:5:
+index_vec index overflow: 18446744073709551615 is outside the range [0, 4294967295)
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: index_vec::__max_check_fail
+   3: <charon_lib::ast::types::vars::TraitParam as derive_generic_visitor::DriveMut<charon_lib::ast::visitor::AstVisitableWrapper<charon_lib::ast::visitor::DynVisitor<<charon_lib::ast::visitor::DynVisitor<()>>::new_mut<charon_lib::ast::types::vars::TraitClauseId, <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx::{closure#6}>::{closure#0}>>>>::drive_inner_mut
+   4: <charon_lib::ast::types::GenericParams as derive_generic_visitor::DriveMut<charon_lib::ast::visitor::AstVisitableWrapper<charon_lib::ast::visitor::DynVisitor<<charon_lib::ast::visitor::DynVisitor<()>>::new_mut<charon_lib::ast::types::vars::TraitClauseId, <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx::{closure#6}>::{closure#0}>>>>::drive_inner_mut
+   5: <charon_lib::ast::types::TyKind as derive_generic_visitor::DriveMut<charon_lib::ast::visitor::AstVisitableWrapper<charon_lib::ast::visitor::DynVisitor<<charon_lib::ast::visitor::DynVisitor<()>>::new_mut<charon_lib::ast::types::vars::TraitClauseId, <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx::{closure#6}>::{closure#0}>>>>::drive_inner_mut
+   6: <charon_lib::ast::hash_cons::HashConsed<charon_lib::ast::types::TyKind> as derive_generic_visitor::DriveMut<charon_lib::ast::visitor::AstVisitableWrapper<charon_lib::ast::visitor::DynVisitor<<charon_lib::ast::visitor::DynVisitor<()>>::new_mut<charon_lib::ast::types::vars::TraitClauseId, <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx::{closure#6}>::{closure#0}>>>>::drive_inner_mut
+   7: <charon_lib::ast::types::TyKind as derive_generic_visitor::DriveMut<charon_lib::ast::visitor::AstVisitableWrapper<charon_lib::ast::visitor::DynVisitor<<charon_lib::ast::visitor::DynVisitor<()>>::new_mut<charon_lib::ast::types::vars::TraitClauseId, <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx::{closure#6}>::{closure#0}>>>>::drive_inner_mut
+   8: <charon_lib::ast::hash_cons::HashConsed<charon_lib::ast::types::TyKind> as derive_generic_visitor::DriveMut<charon_lib::ast::visitor::AstVisitableWrapper<charon_lib::ast::visitor::DynVisitor<<charon_lib::ast::visitor::DynVisitor<()>>::new_mut<charon_lib::ast::types::vars::TraitClauseId, <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx::{closure#6}>::{closure#0}>>>>::drive_inner_mut
+   9: <charon_lib::ast::types::TyKind as derive_generic_visitor::DriveMut<charon_lib::ast::visitor::AstVisitableWrapper<charon_lib::ast::visitor::DynVisitor<<charon_lib::ast::visitor::DynVisitor<()>>::new_mut<charon_lib::ast::types::vars::TraitClauseId, <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx::{closure#6}>::{closure#0}>>>>::drive_inner_mut
+  10: <charon_lib::ast::hash_cons::HashConsed<charon_lib::ast::types::TyKind> as derive_generic_visitor::DriveMut<charon_lib::ast::visitor::AstVisitableWrapper<charon_lib::ast::visitor::DynVisitor<<charon_lib::ast::visitor::DynVisitor<()>>::new_mut<charon_lib::ast::types::vars::TraitClauseId, <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx::{closure#6}>::{closure#0}>>>>::drive_inner_mut
+  11: <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx
+  12: <charon_lib::transform::ctx::TransformCtx>::run_pass
+  13: <charon_lib::transform::ctx::TransformCtx>::run_passes::<[charon_lib::transform::Pass; 9]>
+  14: charon_lib::transform::run_transformation_passes
+  15: charon_driver::main
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+ERROR Compilation panicked
+error: could not compile `gf2-core` (lib); 18 warnings emitted
+
+Caused by:
+  process didn't exit successfully: `/home/vkaskivuo/.cargo/bin/charon-driver charon-dont-cache-this-304760-1787085704718601065 /home/vkaskivuo/.rustup/toolchains/nightly-2026-06-01-x86_64-unknown-linux-gnu/bin/rustc --crate-name gf2_core --edition=2021 crates/gf2-core/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --warn=unexpected_cfgs --check-cfg 'cfg(kani)' --check-cfg 'cfg(verify_lean)' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("default", "image", "io", "parallel", "rand", "simd", "test-support", "visualization"))' -C metadata=bf043e62d75c4a7f -C extra-filename=-ac668b0b4f82414b --out-dir /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps --target x86_64-unknown-linux-gnu -C incremental=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/incremental -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/debug/deps --extern gf2_kernels_simd=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps/libgf2_kernels_simd-766102515cdd9a1e.rmeta` (exit status: 101)
+--- exit=101 elapsed=2s ---

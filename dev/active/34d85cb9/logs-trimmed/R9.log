@@ -1,0 +1,26 @@
+--- command ---
+charon cargo \
+  --preset fast \
+  --rustc-arg=--cfg=verify_lean \
+  --start-from 'gf2_core::field::batch_ops::batch_inverse' \
+  --opaque 'gf2_core::gf2m' \
+  --opaque 'gf2_core::gfpn' \
+  --opaque 'gf2_core::gfp::simd_ops' \
+  --opaque 'gf2_core::bitvec' \
+  --opaque 'gf2_core::bitslice' \
+  --opaque 'gf2_core::matrix' \
+  --opaque 'gf2_core::sparse' \
+  --opaque 'gf2_core::alg' \
+  --opaque 'gf2_core::compute' \
+  --opaque 'gf2_core::kernels' \
+  --opaque 'gf2_core::primitive_polys' \
+  --opaque 'gf2_core::io' \
+  --opaque 'gf2_core::macros' \
+  --dest-file dev/active/34d85cb9/extraction/R9_gf2_core.llbc \
+  -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features
+--- output ---
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
+
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.72s
+--- exit=0 elapsed=1s ---

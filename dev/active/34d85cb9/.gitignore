@@ -1,0 +1,4 @@
+# Raw run logs: ANSI escapes, progress-bar redraws and rustc warning blocks.
+# The committed evidence is logs-trimmed/, produced by
+# extraction/trim-logs.sh from these.
+logs/
