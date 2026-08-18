@@ -1,4 +1,4 @@
-/data/aeneas-upgrade-34d85cb9/aeneas/charon/bin/charon cargo \
+RUSTUP_TOOLCHAIN=1.95.0 /data/aeneas-upgrade-34d85cb9/aeneas/charon/bin/charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
   --start-from 'gf2_core::field::traits::FiniteFieldExt::pow' \

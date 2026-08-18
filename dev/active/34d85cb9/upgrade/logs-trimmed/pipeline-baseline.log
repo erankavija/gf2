@@ -1,7 +1,6 @@
 === Step 1: Charon extraction (gf2-core) ===
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
    Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
-
  52 | impl BitMatrix {
 
            - Self::Type0 = TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::Characteristic
@@ -50,7 +49,7 @@
            - Self::Clause21::Type0 = impl_Add_QuadraticExtWide_for_QuadraticExtWide<TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::Wide>[TraitClauseBound(0, 0)::ImpliedClause0::ImpliedClause0::ImpliedClause21]::Output
 ...   |
 
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.81s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.82s
 Charon extraction succeeded: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-baseline/gf2_core.llbc
 
 === Step 1b: Charon extraction (gf2-algebra) ===
@@ -59,7 +58,7 @@ Charon extraction succeeded: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agen
  52 | impl BitMatrix {
 
    Compiling gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-algebra)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.14s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.31s
 Charon extraction succeeded: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-baseline/gf2_algebra.llbc
 
 === Step 2: Aeneas translation (gf2-core) ===
@@ -75,6 +74,14 @@ Compiler source: interp/Interp.ml, line 609
 
 [Error] Assertion failed: new value doesn't have the same type as its destination
 Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul because of previous error
+Name pattern: 'gf2_core::gfpn::cubic::{core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::mul'
+Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 497:4-517:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Assertion failed: new value doesn't have the same type as its destination
+Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
 [Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::norm because of previous error
 Name pattern: 'gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>}::norm'
 Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 352:4-362:5
@@ -83,17 +90,9 @@ Compiler source: interp/Interp.ml, line 609
 
 [Error] Assertion failed: new value doesn't have the same type as its destination
 Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
-[Error] Assertion failed: new value doesn't have the same type as its destination
-Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
 [Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv because of previous error
 Name pattern: 'gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, @Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<@Clause0_Clause0_Clause0_Wide>>}::inv'
 Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 662:4-675:5
-Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
-Compiler source: interp/Interp.ml, line 609
-
-[Warn ] Could not translate the body of function 'gf2_core::gfpn::cubic::{impl core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul because of previous error
-Name pattern: 'gf2_core::gfpn::cubic::{core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::mul'
-Definition span: 'crates/gf2-core/src/gfpn/cubic.rs', lines 497:4-517:5
 Source: '/rustc/library/core/src/ops/arith.rs', lines 337:4-337:43
 Compiler source: interp/Interp.ml, line 609
 
@@ -155,18 +154,18 @@ Compiler source: interp/Interp.ml, line 609
 
 [Error] Assertion failed: new value doesn't have the same type as its destination
 Source: '/rustc/library/core/src/ops/arith.rs', lines 91:4-91:43
-[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add because of previous error
-Name pattern: 'gf2_core::gfpn::quadratic::{core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::add'
-Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 418:4-420:5
-Source: '/rustc/library/core/src/ops/arith.rs', lines 91:4-91:43
-Compiler source: interp/Interp.ml, line 609
-
 [Error] Assertion failed: new value doesn't have the same type as its destination
 Source: '/rustc/library/core/src/ops/arith.rs', lines 203:4-203:43
 [Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::ops::arith::Sub<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::sub because of previous error
 Name pattern: 'gf2_core::gfpn::quadratic::{core::ops::arith::Sub<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::sub'
 Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 432:4-434:5
 Source: '/rustc/library/core/src/ops/arith.rs', lines 203:4-203:43
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] Could not translate the body of function 'gf2_core::gfpn::quadratic::{impl core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add because of previous error
+Name pattern: 'gf2_core::gfpn::quadratic::{core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<@C, @Clause0_BaseField, @Clause0_Clause0_Clause0_Characteristic, @Clause0_Clause0_Clause0_Wide>>}::add'
+Definition span: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 418:4-420:5
+Source: '/rustc/library/core/src/ops/arith.rs', lines 91:4-91:43
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Assertion failed: new value doesn't have the same type as its destination
@@ -235,7 +234,7 @@ Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 757:0-778:1
 [Error] Could not find: trait_impl_id: 127
 Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 702:0-718:1
 [Info ] Generated the partial file (because of 24 errors, including 5 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-baseline/proofs/Gf2Core/Funs.lean
-[Info ] Total execution time: 2.031588 seconds
+[Info ] Total execution time: 2.019678 seconds
 WARNING: Aeneas exited with code 1 (partial files generated — some function bodies are opaque)
 Aeneas translation completed
 
@@ -304,11 +303,11 @@ Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3227:4-3236:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
-Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
-[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::mul_assign because of previous error
-Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed7::Packed7Vec, gf2_core::gfp::Fp<7>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128>}::mul_assign'
-Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
-Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::add_assign because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed7::Packed7Vec, gf2_core::gfp::Fp<7>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128>}::add_assign'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
@@ -320,19 +319,27 @@ Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1230:4-1240:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
-Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
-[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::add_assign because of previous error
-Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed7::Packed7Vec, gf2_core::gfp::Fp<7>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128>}::add_assign'
-Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
-Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1196:4-1206:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::mul_assign because of previous error
+Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed7::Packed7Vec, gf2_core::gfp::Fp<7>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128>}::mul_assign'
+Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
+Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1264:4-1274:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
 Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2984:4-2998:5
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
 [Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt because of previous error
 Name pattern: 'gf2_algebra::packed::bipedal3::{core::fmt::Debug<gf2_algebra::packed::bipedal3::Bipedal3Matrix>}::fmt'
 Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2984:4-2998:5
 Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2984:4-2998:5
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5Matrix>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
@@ -344,11 +351,11 @@ Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1395:4-1408:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
-Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
-[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt because of previous error
-Name pattern: 'gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5Matrix>}::fmt'
-Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
-Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::bipedal3::{core::fmt::Debug<gf2_algebra::packed::bipedal3::Bipedal3Vec>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
+Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
@@ -360,14 +367,6 @@ Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 979:4-982:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
-Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
-[Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt because of previous error
-Name pattern: 'gf2_algebra::packed::bipedal3::{core::fmt::Debug<gf2_algebra::packed::bipedal3::Bipedal3Vec>}::fmt'
-Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
-Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
-Compiler source: interp/Interp.ml, line 609
-
-[Error] Internal error, please file an issue
 Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1040:4-1049:5
 [Warn ] Could not translate the body of function 'gf2_algebra::packed::packed7::{impl core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Vec}::fmt because of previous error
 Name pattern: 'gf2_algebra::packed::packed7::{core::fmt::Debug<gf2_algebra::packed::packed7::Packed7Vec>}::fmt'
@@ -376,27 +375,11 @@ Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1040:4-1049:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
-Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
-[Error] Internal error, please file an issue
 Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13
-[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_mut because of previous error
-Name pattern: 'gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{core::ops::function::FnMut<gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'0, '1, '2>, (usize), gf2_algebra::packed::packed5::Packed5Vec>}::call_mut'
-Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
-Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
-Compiler source: interp/Interp.ml, line 609
-
 [Warn ] Could not translate the body of function 'gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_mut because of previous error
 Name pattern: 'gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::{core::ops::function::FnMut<gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure<'0, '1, '2>, (usize), gf2_algebra::packed::bipedal3::Bipedal3Vec>}::call_mut'
 Definition span: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13
 Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13
-Compiler source: interp/Interp.ml, line 609
-
-[Error] Internal error, please file an issue
-Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
-[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5}::fmt because of previous error
-Name pattern: 'gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5>}::fmt'
-Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
-Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
@@ -408,11 +391,19 @@ Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 168:4-185:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
-Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
-[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero because of previous error
-Name pattern: 'gf2_algebra::packed::packed5::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed5::Packed5Vec, gf2_core::gfp::Fp<5>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128>}::all_zero'
-Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
-Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_mut because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{core::ops::function::FnMut<gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'0, '1, '2>, (usize), gf2_algebra::packed::packed5::Packed5Vec>}::call_mut'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5}::fmt because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{core::fmt::Debug<gf2_algebra::packed::packed5::Packed5>}::fmt'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 304:4-307:5
 Compiler source: interp/Interp.ml, line 609
 
 [Error] Internal error, please file an issue
@@ -421,6 +412,14 @@ Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1458:17-1461:13
 Name pattern: 'gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major::{core::ops::function::FnMut<gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major::closure<'0, '1, '2>, (usize), gf2_algebra::packed::packed7::Packed7Vec>}::call_mut'
 Definition span: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1458:17-1461:13
 Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1458:17-1461:13
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
+[Warn ] Could not translate the body of function 'gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero because of previous error
+Name pattern: 'gf2_algebra::packed::packed5::{gf2_algebra::packed::PackedFieldVec<gf2_algebra::packed::packed5::Packed5Vec, gf2_core::gfp::Fp<5>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128>}::all_zero'
+Definition span: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
+Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
 Compiler source: interp/Interp.ml, line 609
 
 [Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'zip'. The model defined in the Lean library seems to be missing the corresponding field.
@@ -443,7 +442,7 @@ Compiler source: extract/Extract.ml, line 2851
 [Info ] Generated the partial file (because of 22 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-baseline/proofs/Gf2Algebra/Types.lean
 [Info ] Generated the partial file (because of 22 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-baseline/proofs/Gf2Algebra/FunsExternal_Template.lean
 [Info ] Generated the partial file (because of 22 errors, including 1 unique errors): /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/dev/active/34d85cb9/upgrade/pipeline-baseline/proofs/Gf2Algebra/Funs.lean
-[Info ] Total execution time: 3.820605 seconds
+[Info ] Total execution time: 3.828681 seconds
 WARNING: Aeneas exited with code 1 on gf2-algebra (partial files generated — Debug::fmt impls are opaque)
 Aeneas translation (gf2-algebra) completed
 

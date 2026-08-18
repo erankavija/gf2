@@ -1,6 +1,6 @@
-=== R7b === 2026-08-18T23:41:44+03:00
+=== R7b === 2026-08-19T00:40:02+03:00
 --- command ---
-RUST_BACKTRACE=1 charon cargo \
+RUSTUP_TOOLCHAIN=1.95.0 RUST_BACKTRACE=1 charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
   --start-from 'gf2_core::field::batch_ops::batch_inverse' \
@@ -22,7 +22,6 @@ RUST_BACKTRACE=1 charon cargo \
 --- output ---
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
    Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
-
  52 | impl BitMatrix {
 
 ...   |
@@ -37,7 +36,7 @@ RUST_BACKTRACE=1 charon cargo \
 
 ...   |
 
-thread 'main' (304862) panicked at /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/index_vec-0.1.4/src/lib.rs:774:5:
+thread 'main' (360559) panicked at /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/index_vec-0.1.4/src/lib.rs:774:5:
 index_vec index overflow: 18446744073709551615 is outside the range [0, 4294967295)
 stack backtrace:
    0: __rustc::rust_begin_unwind
@@ -61,5 +60,5 @@ ERROR Compilation panicked
 error: could not compile `gf2-core` (lib); 18 warnings emitted
 
 Caused by:
-  process didn't exit successfully: `/home/vkaskivuo/.cargo/bin/charon-driver charon-dont-cache-this-304760-1787085704718601065 /home/vkaskivuo/.rustup/toolchains/nightly-2026-06-01-x86_64-unknown-linux-gnu/bin/rustc --crate-name gf2_core --edition=2021 crates/gf2-core/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --warn=unexpected_cfgs --check-cfg 'cfg(kani)' --check-cfg 'cfg(verify_lean)' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("default", "image", "io", "parallel", "rand", "simd", "test-support", "visualization"))' -C metadata=bf043e62d75c4a7f -C extra-filename=-ac668b0b4f82414b --out-dir /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps --target x86_64-unknown-linux-gnu -C incremental=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/incremental -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/debug/deps --extern gf2_kernels_simd=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps/libgf2_kernels_simd-766102515cdd9a1e.rmeta` (exit status: 101)
+  process didn't exit successfully: `/home/vkaskivuo/.cargo/bin/charon-driver charon-dont-cache-this-360457-1787089202980717692 /home/vkaskivuo/.rustup/toolchains/nightly-2026-06-01-x86_64-unknown-linux-gnu/bin/rustc --crate-name gf2_core --edition=2021 crates/gf2-core/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --warn=unexpected_cfgs --check-cfg 'cfg(kani)' --check-cfg 'cfg(verify_lean)' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("default", "image", "io", "parallel", "rand", "simd", "test-support", "visualization"))' -C metadata=339c965c390b1b62 -C extra-filename=-040a8996ca619db7 --out-dir /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps --target x86_64-unknown-linux-gnu -C incremental=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/incremental -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/debug/deps --extern gf2_kernels_simd=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/target/x86_64-unknown-linux-gnu/debug/deps/libgf2_kernels_simd-d69e530d793778a1.rmeta` (exit status: 101)
 --- exit=101 elapsed=2s ---

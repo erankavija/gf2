@@ -1,6 +1,6 @@
-=== R3 === 2026-08-18T23:40:16+03:00
+=== R3 === 2026-08-19T00:39:54+03:00
 --- command ---
-charon cargo \
+RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
   --preset aeneas \
   --monomorphize-mut=all \
   --rustc-arg=--cfg=verify_lean \
@@ -28,5 +28,5 @@ charon cargo \
 
  52 | impl BitMatrix {
 
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.72s
---- exit=0 elapsed=2s ---
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.73s
+--- exit=0 elapsed=1s ---

@@ -1,8 +1,8 @@
-=== P2 === 2026-08-18T23:44:53+03:00
+=== P2 === 2026-08-19T00:40:15+03:00
 --- command ---
-charon rustc \
+RUSTUP_TOOLCHAIN=1.95.0 charon rustc \
   --preset aeneas \
   --dest-file dev/active/34d85cb9/extraction/P2_probe.llbc \
-  -- --crate-type lib --edition 2021 dev/active/34d85cb9/extraction/probe.rs
+  -- --crate-type lib --edition 2021 dev/active/34d85cb9/extraction/probe-P2.rs
 --- output ---
 --- exit=0 elapsed=0s ---

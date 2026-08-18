@@ -1,5 +1,6 @@
 # Committed-pipeline behaviour under both toolchain pairs.
 # Sources: dev/active/34d85cb9/upgrade/logs-trimmed/pipeline-{baseline,new}.log
+# Both legs ran with RUSTUP_TOOLCHAIN=1.95.0 (workspace MSRV).
 
 ## baseline  (exit=0)
   Aeneas [Error] lines, by class:

@@ -1,0 +1,16 @@
+=== AP1 === 2026-08-19T00:41:15+03:00
+--- command ---
+/data/aeneas-upgrade-34d85cb9/aeneas/src/_build/default/main.exe \
+  -backend lean \
+  -dest dev/active/34d85cb9/upgrade/extraction/P1_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/34d85cb9/upgrade/extraction/P1_probe.llbc
+--- output ---
+[Info ] Imported: dev/active/34d85cb9/upgrade/extraction/P1_probe.llbc
+
+[Info ] Creating missing directory: dev/active/34d85cb9/upgrade/extraction/P1_lean
+[Info ] Generated: dev/active/34d85cb9/upgrade/extraction/P1_lean/Types.lean
+[Info ] Generated: dev/active/34d85cb9/upgrade/extraction/P1_lean/Funs.lean
+[Info ] Total execution time: 0.367546 seconds
+--- exit=0 elapsed=1s ---
