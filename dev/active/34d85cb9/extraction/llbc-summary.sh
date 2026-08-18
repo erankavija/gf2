@@ -4,8 +4,10 @@
 # the R*/P* commands again to regenerate them.
 set -euo pipefail
 
-HERE="$(cd "$(dirname "$0")" && pwd)"
-OUT="$HERE/excerpts/llbc-item-counts.txt"
+# With no arguments this summarises the baseline leg; the upgrade leg passes
+# its own extraction directory and output file.
+HERE="${1:-$(cd "$(dirname "$0")" && pwd)}"
+OUT="${2:-$HERE/excerpts/llbc-item-counts.txt}"
 mkdir -p "$HERE/excerpts"
 
 {
