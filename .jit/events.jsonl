@@ -8502,3 +8502,5 @@
 {"assignee":"agent:worker","id":"83dc567c-a368-4d31-97eb-0301736c8fcb","issue_id":"265997f9-a947-4fbc-9161-a9f3a252bd01","timestamp":"2026-08-18T20:34:52.316681666Z","type":"issue_claimed"}
 {"from":"ready","id":"44f8b0ea-9406-45cf-a9f3-aa3fc9a7cb99","issue_id":"34d85cb9-1ff4-4adb-a09e-7305dee0b0dc","timestamp":"2026-08-18T20:34:58.160194990Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"bac517bd-6f75-4f59-b5b5-9cca9507f1da","issue_id":"34d85cb9-1ff4-4adb-a09e-7305dee0b0dc","timestamp":"2026-08-18T20:34:58.160194990Z","type":"issue_claimed"}
+{"id":"8bf64a0e-1cba-49b5-8946-17fde23604bc","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","priority":"normal","timestamp":"2026-08-18T20:51:51.692768931Z","title":"Remove the deprecated bit-buffer Kernel compatibility surface","type":"issue_created"}
+{"fields":["documents"],"id":"47007cad-6074-4e25-ade4-21bf5ffd30cb","issue_id":"265997f9-a947-4fbc-9161-a9f3a252bd01","timestamp":"2026-08-18T20:52:05.535077776Z","type":"issue_updated","updated_by":"doc-add"}

@@ -7,7 +7,33 @@
     "80f805ce-4056-4ac2-aaf5-119e7a43ae60"
   ],
   "description": "Author the classification document that assigns each field-capability surface to exactly one of four classes — algebraic law, algorithm, representation refinement, or kernel strategy — and names the canonical abstraction and cutover disposition for each.\n\n## Background\n\ngf2-core carries the FiniteField/ConstField hierarchy with the `Wide` delayed-reduction type and `#[doc(hidden)]` kernel hooks; gf2-algebra owns the frozen PackedField/PackedFieldVec lane abstraction; generic batch operations live in `crates/gf2-core/src/field/batch_ops.rs`; and selection state is spread across OnceLock function tables, per-field cached strategy pointers, the bit-buffer backend selector, and trait-associated threshold constants. The investigation linked from the epic's plan inventories these surfaces and their threshold constants with file:line citations. The classification decides, per capability: its class, its single canonical abstraction, which variants are superseded (with a cutover action or a named tracked exception), and which selection constants are tuning-profile-scoped versus algorithm-domain limits. The packed lane abstraction's gf2-algebra ownership is recorded with its boundary rationale rather than reopened.\n\n## Success Criteria\n\n- [hard] REQ-01: A classification document in the epic's dev/active directory assigns each capability surface and each selection constant from the linked investigation to exactly one class, citing the defining code, and marks each constant profile-scoped or out of scope with a one-line reason.\n- [hard] REQ-02: Each superseded or parallel variant carries an explicit cutover action or a named tracked exception, and the packed lane abstraction's ownership decision is recorded with rationale.\n\n## Notes\n\n- Grounding: dev/active/6dc81018-field-capability-dispatch/investigation.md (claim classifications, threshold inventory, consumer sweep).",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "55c4bc3b4ed927f813e6b283b8fee8fdeb3cdd5c2be10ce6471a85af6a4f4f83",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0c494a07d3a9e11504eddf0104ab8658398cd6af39f529b278bbc9c1296fbbd3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Field-capability classification",
+      "path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
+    }
+  ],
   "first_ready_at": "2026-08-18T19:57:57.977309087Z",
   "gates_required": [
     "doc-review"
@@ -25,5 +51,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Author the field-capability classification",
-  "updated_at": "2026-08-18T20:34:52.316681666Z"
+  "updated_at": "2026-08-18T20:52:05.535077776Z"
 }
