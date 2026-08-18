@@ -2,57 +2,134 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 1,
-  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them.",
+  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend.",
   "waves": [
     {
       "wave_number": 1,
       "issues": [
-        {"id": "265997f9-3d62-408e-0000-000000000000", "short_id": "265997f9", "title": "Author the field-capability classification", "classification": "design", "model": "opus", "status": "pending"},
-        {"id": "34d85cb9-1ff4-4adb-a09e-7305dee0b0dc", "short_id": "34d85cb9", "title": "Spike Charon extraction of a trait-generic field algorithm", "classification": "research", "model": "opus", "status": "pending"}
+        {
+          "id": "265997f9-a947-4fbc-9161-a9f3a252bd01",
+          "short_id": "265997f9",
+          "title": "Author the field-capability classification",
+          "classification": "design",
+          "model": "opus",
+          "status": "dispatched"
+        },
+        {
+          "id": "34d85cb9-1ff4-4adb-a09e-7305dee0b0dc",
+          "short_id": "34d85cb9",
+          "title": "Spike Charon extraction of a trait-generic field algorithm",
+          "classification": "research",
+          "model": "opus",
+          "status": "dispatched"
+        }
       ]
     },
     {
       "wave_number": 2,
       "issues": [
-        {"id": "220cab0b", "short_id": "220cab0b", "title": "Design the versioned tuning-profile format and selection integration", "classification": "design", "model": "opus", "status": "pending"},
-        {"id": "7f818151-9268-4f6d-b29e-508eb95ba12c", "short_id": "7f818151", "title": "Retire the packed-trait parallel declarations in the research stub", "classification": "implementation", "model": "sonnet", "status": "pending"}
+        {
+          "id": "220cab0b",
+          "short_id": "220cab0b",
+          "title": "Design the versioned tuning-profile format and selection integration",
+          "classification": "design",
+          "model": "opus",
+          "status": "pending"
+        },
+        {
+          "id": "7f818151-9268-4f6d-b29e-508eb95ba12c",
+          "short_id": "7f818151",
+          "title": "Retire the packed-trait parallel declarations in the research stub",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "pending"
+        }
       ]
     },
     {
       "wave_number": 3,
       "issues": [
-        {"id": "e8fe47f5", "short_id": "e8fe47f5", "title": "Pin the non-regression benchmark set and tolerance", "classification": "implementation", "model": "sonnet", "status": "pending"}
+        {
+          "id": "e8fe47f5",
+          "short_id": "e8fe47f5",
+          "title": "Pin the non-regression benchmark set and tolerance",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "pending"
+        }
       ]
     },
     {
       "wave_number": 4,
       "issues": [
-        {"id": "f35daec0", "short_id": "f35daec0", "title": "Implement the tuning-profile type, loader, and conservative defaults", "classification": "implementation", "model": "sonnet", "status": "pending"}
+        {
+          "id": "f35daec0",
+          "short_id": "f35daec0",
+          "title": "Implement the tuning-profile type, loader, and conservative defaults",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "pending"
+        }
       ]
     },
     {
       "wave_number": 5,
       "issues": [
-        {"id": "278acf3a", "short_id": "278acf3a", "title": "Record the pre-cutover baseline receipt", "classification": "implementation", "model": "sonnet", "status": "pending"}
+        {
+          "id": "278acf3a",
+          "short_id": "278acf3a",
+          "title": "Record the pre-cutover baseline receipt",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "pending"
+        }
       ]
     },
     {
       "wave_number": 6,
       "issues": [
-        {"id": "0d819b62", "short_id": "0d819b62", "title": "Cut the bit-backend selector over to profile-driven selection", "classification": "implementation", "model": "sonnet", "status": "pending"},
-        {"id": "697fc55b", "short_id": "697fc55b", "title": "Cut the polynomial crossover selectors over to profile-driven selection", "classification": "implementation", "model": "sonnet", "status": "pending"}
+        {
+          "id": "0d819b62",
+          "short_id": "0d819b62",
+          "title": "Cut the bit-backend selector over to profile-driven selection",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "pending"
+        },
+        {
+          "id": "697fc55b",
+          "short_id": "697fc55b",
+          "title": "Cut the polynomial crossover selectors over to profile-driven selection",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "pending"
+        }
       ]
     },
     {
       "wave_number": 7,
       "issues": [
-        {"id": "5ecc9bf8-3d62-408e-aba8-53ad2790a49d", "short_id": "5ecc9bf8", "title": "Implement the explicit host-calibration benchmark action", "classification": "implementation", "model": "sonnet", "status": "pending"}
+        {
+          "id": "5ecc9bf8-3d62-408e-aba8-53ad2790a49d",
+          "short_id": "5ecc9bf8",
+          "title": "Implement the explicit host-calibration benchmark action",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "pending"
+        }
       ]
     },
     {
       "wave_number": 8,
       "issues": [
-        {"id": "50b47eae-05c8-4704-91c0-ac0816a76496", "short_id": "50b47eae", "title": "Record the post-cutover non-regression receipt", "classification": "implementation", "model": "sonnet", "status": "pending"}
+        {
+          "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
+          "short_id": "50b47eae",
+          "title": "Record the post-cutover non-regression receipt",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "pending"
+        }
       ]
     }
   ],
