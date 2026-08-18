@@ -1,0 +1,465 @@
+[
+  {
+    "key": "capability-inventory",
+    "title": "Author the field-capability classification",
+    "description": "Author the classification document that assigns each field-capability surface to exactly one of four classes — algebraic law, algorithm, representation refinement, or kernel strategy — and names the canonical abstraction and cutover disposition for each.\n\n## Background\n\ngf2-core carries the FiniteField/ConstField hierarchy with the `Wide` delayed-reduction type and `#[doc(hidden)]` kernel hooks; gf2-algebra owns the frozen PackedField/PackedFieldVec lane abstraction; generic batch operations live in `crates/gf2-core/src/field/batch_ops.rs`; and selection state is spread across OnceLock function tables, per-field cached strategy pointers, the bit-buffer backend selector, and trait-associated threshold constants. The investigation linked from the epic's plan inventories these surfaces and their threshold constants with file:line citations. The classification decides, per capability: its class, its single canonical abstraction, which variants are superseded (with a cutover action or a named tracked exception), and which selection constants are tuning-profile-scoped versus algorithm-domain limits. The packed lane abstraction's gf2-algebra ownership is recorded with its boundary rationale rather than reopened.\n\n## Success Criteria\n\n- [hard] REQ-01: A classification document in the epic's dev/active directory assigns each capability surface and each selection constant from the linked investigation to exactly one class, citing the defining code, and marks each constant profile-scoped or out of scope with a one-line reason.\n- [hard] REQ-02: Each superseded or parallel variant carries an explicit cutover action or a named tracked exception, and the packed lane abstraction's ownership decision is recorded with rationale.\n\n## Notes\n\n- Grounding: dev/active/6dc81018-field-capability-dispatch/investigation.md (claim classifications, threshold inventory, consumer sweep).",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "component:gf2-algebra",
+      "satisfies:REQ-01",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Capability surfaces and selection constants classified; canonical abstraction and cutover named per capability",
+      "contract_refs": [],
+      "produces_contracts": [
+        "capability-classification"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-02",
+        "INV-CLAIM-1",
+        "INV-CLAIM-2",
+        "INV-CLAIM-3",
+        "INV-CLAIM-4",
+        "INV-CLAIM-6",
+        "INV-CLAIM-8",
+        "INV-ARCH"
+      ],
+      "terminal": {
+        "consumer_family": "Epic tasks that consume the classification document",
+        "test_boundary": "Documentation review against the linked investigation",
+        "worker_sized_reason": "Single design document synthesizing an already-cited investigation; no code changes",
+        "footprint": {
+          "creates": [
+            "dev/active/6dc81018-field-capability-dispatch/capability-classification.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "stub-cutover",
+    "title": "Retire the packed-trait parallel declarations in the research stub",
+    "description": "Retire the research stub's parallel PackedField/PackedFieldVec trait declarations so the production traits in gf2-algebra are the only live declaration in the tree.\n\n## Background\n\n`dev/research/packed_field_stub/` is the historical demonstration crate that proved the packed trait surface before production adoption; it still redeclares `PackedField` and `PackedFieldVec` and carries stub `fold_mul` bodies that return zero. The production surface lives in `crates/gf2-algebra/src/packed/mod.rs`. The capability classification document records the cutover disposition for this variant; the default action is archival under dev/archive with a pointer to the production home, preserving the original design-record linkage.\n\n## Success Criteria\n\n- [hard] REQ-01: The tree outside dev/archive contains exactly one declaration of the packed lane traits, in gf2-algebra.\n- [hard] REQ-02: The stub's historical role and its design-record linkage remain discoverable from the archived location, and no document outside dev/archive refers to the stub as a live artifact.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-algebra",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "code-review"
+    ],
+    "depends_on": [
+      "capability-inventory"
+    ],
+    "planning": {
+      "outcome": "Research stub's parallel packed-trait declarations retired; production declaration unique outside dev/archive",
+      "contract_refs": [
+        "capability-classification"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "INV-CLAIM-2",
+        "INV-PRIMITIVES"
+      ],
+      "terminal": {
+        "consumer_family": "Tree-wide resolution of the packed trait declaration",
+        "test_boundary": "Tree search showing a single non-archive packed-trait declaration",
+        "worker_sized_reason": "One bounded relocation plus a reference sweep bounded by the investigation's consumer list",
+        "footprint": {
+          "touches": [
+            "dev/research/packed_field_stub/",
+            "dev/archive/"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "profile-format-design",
+    "title": "Design the versioned tuning-profile format and selection integration",
+    "description": "Design the versioned tuning-profile artifact and how existing selection boundaries consume it.\n\n## Background\n\nBackend and crossover selection currently reads source constants, compile-time field shape, and runtime CPU features; no committed profile exists. The design fixes: the profile schema and its version field, the committed storage location, the loader API shape in gf2-core, the conservative default table and unknown-host fallback policy, and the calibration workflow as an explicit benchmark action under the repository's benchmark-lock conventions. The profile is data consumed at existing safe selection boundaries (OnceLock function tables, field constructors, algorithm-selector constants); it introduces no new crate dependency edges. Integration points are named for the pilot selector families designated by the classification; the schema carries an explicit extensibility rule for admitting further families in follow-on migrations.\n\n## Success Criteria\n\n- [hard] REQ-01: A design document specifies the profile schema, versioning rule, committed storage location, and loader API, weighing at least two serialization/placement options before the recommendation.\n- [hard] REQ-02: The document names the integration point for each pilot selector family designated by the classification, the conservative default and unknown-host fallback policy, and the explicit calibration workflow with its provenance fields.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "doc-review"
+    ],
+    "depends_on": [
+      "capability-inventory"
+    ],
+    "planning": {
+      "outcome": "Tuning-profile schema, storage, loader API, defaults policy, and calibration workflow fixed by design",
+      "contract_refs": [
+        "capability-classification",
+        "dispatch-authority"
+      ],
+      "produces_contracts": [
+        "tuning-profile-format"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-CLAIM-4",
+        "INV-CLAIM-6",
+        "INV-ARCH"
+      ],
+      "terminal": {
+        "consumer_family": "Profile-mechanism implementation tasks",
+        "test_boundary": "Documentation review of the design against the classification's profile-scoped selector families",
+        "worker_sized_reason": "Single design document over an already-classified selector inventory; no code changes",
+        "footprint": {
+          "creates": [
+            "dev/active/6dc81018-field-capability-dispatch/tuning-profile-design.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "profile-loader",
+    "title": "Implement the tuning-profile type, loader, and conservative defaults",
+    "description": "Implement the tuning-profile data type, parser, and conservative default table in gf2-core per the profile design linked from the epic's plan.\n\n## Background\n\nThe profile is a versioned, committed artifact; builds consume it deterministically. Unknown hosts and absent profiles select an embedded conservative default table backed by the tested scalar fallback paths. This issue delivers the mechanism only; existing selectors keep their current behavior until the cutover issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The loader parses the committed versioned profile and rejects malformed or unsupported-version input with explicit errors, with unit tests for both.\n- [hard] REQ-02: An embedded conservative default profile is selected for unknown hosts or absent profiles, selection is deterministic for a fixed profile, and no existing selector changes behavior in this issue.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "profile-format-design"
+    ],
+    "planning": {
+      "outcome": "Profile type, parser, and embedded conservative defaults land in gf2-core without selector behavior change",
+      "contract_refs": [
+        "tuning-profile-format"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-CLAIM-6"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-core profile consumers",
+        "test_boundary": "Unit tests over the loader's input-handling paths",
+        "worker_sized_reason": "One new self-contained module against a fixed design; no consumer migration included",
+        "footprint": {
+          "creates": [
+            "crates/gf2-core/src/profile/"
+          ],
+          "touches": [
+            "crates/gf2-core/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "calibration-harness",
+    "title": "Implement the explicit host-calibration benchmark action",
+    "description": "Implement the calibration action that measures the pilot selector families on the current host and emits a versioned profile artifact.\n\n## Background\n\nCalibration is an explicit benchmark action under the repository's benchmark-mode and lock-wrapper conventions, never a build side effect. The emitted artifact records provenance — host, toolchain, git revision, and seeds — following the committed-receipt conventions, and must round-trip through the profile loader.\n\nThe harness lives as a benchmark target at `crates/gf2-core/benches/profile_calibration.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration action runs only when explicitly invoked in benchmark mode and emits a profile artifact the loader accepts, with provenance fields populated.\n- [hard] REQ-02: The calibration workflow is documented from invocation to committing the emitted profile, and a non-benchmark build shows no calibration side effect.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "profile-loader"
+    ],
+    "planning": {
+      "outcome": "Explicit calibration action emits a loader-valid, provenance-stamped host profile",
+      "contract_refs": [
+        "tuning-profile-format"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-CLAIM-6"
+      ],
+      "terminal": {
+        "consumer_family": "Benchmark operators producing committed host profiles",
+        "test_boundary": "Round-trip test: emitted artifact parses through the loader; explicit-invocation guard tested",
+        "worker_sized_reason": "One harness over the already-implemented loader and a fixed measurement list",
+        "footprint": {
+          "creates": [
+            "crates/gf2-core/benches/profile_calibration.rs"
+          ],
+          "touches": [
+            "crates/gf2-core/Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "benchmark-pinning",
+    "title": "Pin the non-regression benchmark set and tolerance",
+    "description": "Pin the benchmark set, predeclared tolerance, and runnable procedure that gate the selector cutover.\n\n## Background\n\nA reconciled capability trait or migrated selector goes public only after a pinned benchmark set passes within a predeclared non-regression tolerance. The set covers the selector families marked profile-scoped for the pilot cutover; the tolerance is declared before any cutover measurement exists. This issue delivers the protocol and the runnable procedure only; baseline measurement is a separate issue.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed procedure names the pinned benchmarks covering the pilot selector families and states the non-regression tolerance, declared before any cutover measurement.\n- [hard] REQ-02: The procedure executes end to end in benchmark mode on a prepared host, and is reproducible from its committed description alone.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "capability-inventory"
+    ],
+    "planning": {
+      "outcome": "Pinned benchmark procedure and predeclared tolerance committed before any cutover measurement",
+      "contract_refs": [
+        "capability-classification"
+      ],
+      "produces_contracts": [
+        "nonregression-procedure"
+      ],
+      "source_refs": [
+        "REQ-04",
+        "INV-CLAIM-6",
+        "INV-PRIOR-ART"
+      ],
+      "terminal": {
+        "consumer_family": "Tasks executing the pinned procedure",
+        "test_boundary": "Procedure executes end to end in benchmark mode",
+        "worker_sized_reason": "Selecting an existing benchmark subset and declaring its tolerance; no measurement receipts",
+        "footprint": {
+          "creates": [
+            "dev/benchmarks/6dc81018-field-capability-dispatch/"
+          ],
+          "touches": [
+            "dev/scripts/"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "baseline-receipt",
+    "title": "Record the pre-cutover baseline receipt",
+    "description": "Execute the pinned non-regression procedure before the pilot cutover and commit the baseline receipt.\n\n## Background\n\nThe pinned procedure and its predeclared tolerance are already committed; this issue runs the procedure unmodified on the prepared benchmark host while the pilot selectors still read their pre-cutover constants, and commits the baseline receipt the later comparison is measured against.\n\n## Success Criteria\n\n- [hard] REQ-01: A baseline receipt from the prepared benchmark host is committed with full provenance, produced by the pinned procedure unmodified.\n- [hard] REQ-02: The receipt is consistent with the pinned procedure's protocol and reproducible from the procedure alone.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "doc-review"
+    ],
+    "depends_on": [
+      "benchmark-pinning"
+    ],
+    "planning": {
+      "outcome": "Committed pre-cutover baseline receipt from the pinned procedure",
+      "contract_refs": [
+        "nonregression-procedure"
+      ],
+      "produces_contracts": [
+        "nonregression-benchmarks"
+      ],
+      "source_refs": [
+        "REQ-04",
+        "INV-PRIOR-ART"
+      ],
+      "terminal": {
+        "consumer_family": "Tasks comparing measurements against the pinned baseline",
+        "test_boundary": "Receipt conformance to the pinned procedure",
+        "worker_sized_reason": "One benchmark execution and one receipt against an existing procedure",
+        "footprint": {
+          "creates": [
+            "dev/benchmarks/6dc81018-field-capability-dispatch/baseline-receipt.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "pilot-backend-cutover",
+    "title": "Cut the bit-backend selector over to profile-driven selection",
+    "description": "Migrate the generic bit-buffer backend selector to read the tuning profile, with the current constant values as the embedded defaults.\n\n## Background\n\nThe migrated selector family is `select_backend_for_size` and its threshold in `crates/gf2-core/src/kernels/backend.rs`, as marked profile-scoped by the capability classification. Under the default profile the selected values equal the current constants, so behavior is unchanged by construction; the scalar fallback paths stay reachable. Remaining profile-scoped constants migrate in follow-on work once the pilot receipt is recorded.\n\n## Success Criteria\n\n- [hard] REQ-01: The selectors read their values from the loaded profile, and tests show selection equals the pre-cutover constants under the default profile.\n- [hard] REQ-02: A non-default profile measurably changes the selected route in a test, and the scalar fallback path remains reachable and tested.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "profile-loader",
+      "baseline-receipt"
+    ],
+    "planning": {
+      "outcome": "Bit-backend selector consumes the profile; default-profile behavior identical by construction",
+      "contract_refs": [
+        "tuning-profile-format",
+        "nonregression-benchmarks",
+        "dispatch-authority"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-CLAIM-4",
+        "INV-CLAIM-6"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-core bit-buffer kernel callers",
+        "test_boundary": "Equivalence tests under the default profile; route-change test under a non-default profile; workspace CI",
+        "worker_sized_reason": "One selector family in one crate with defaults preserving behavior",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/kernels/backend.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "pilot-poly-cutover",
+    "title": "Cut the polynomial crossover selectors over to profile-driven selection",
+    "description": "Migrate the polynomial crossover selector family to read the tuning profile, with the current constant values as the embedded defaults.\n\n## Background\n\nThe migrated selector family is the Karatsuba, subproduct-tree, NTT, and division crossover constants in `crates/gf2-core/src/field/poly.rs`, as marked profile-scoped by the capability classification. Under the default profile the selected values equal the current constants, so behavior is unchanged by construction; the scalar fallback paths stay reachable. Remaining profile-scoped constants migrate in follow-on work once the pilot receipt is recorded.\n\n## Success Criteria\n\n- [hard] REQ-01: The selectors read their values from the loaded profile, and tests show selection equals the pre-cutover constants under the default profile.\n- [hard] REQ-02: A non-default profile measurably changes the selected route in a test, and the scalar fallback path remains reachable and tested.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "profile-loader",
+      "baseline-receipt"
+    ],
+    "planning": {
+      "outcome": "Polynomial crossover selectors consume the profile; default-profile behavior identical by construction",
+      "contract_refs": [
+        "tuning-profile-format",
+        "nonregression-benchmarks",
+        "dispatch-authority"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-CLAIM-4",
+        "INV-CLAIM-6"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-core polynomial algorithm callers",
+        "test_boundary": "Equivalence tests under the default profile; route-change test under a non-default profile; workspace CI",
+        "worker_sized_reason": "One selector family in one crate with defaults preserving behavior",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/field/poly.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "nonregression-receipt",
+    "title": "Record the post-cutover non-regression receipt",
+    "description": "Run the pinned non-regression procedure after the pilot cutover and commit the receipt showing the tolerance holds.\n\n## Background\n\nThe pinned procedure and its predeclared tolerance exist before the cutover; this issue executes it on the prepared benchmark host after the pilot cutover lands and commits the receipt comparing against the baseline. The issue completes only once a receipt shows the tolerance holds. An excursion encountered on the way is preserved in the committed record together with its tracked rework, never overwritten.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt compares post-cutover measurements against the baseline with full provenance and shows the predeclared tolerance holds for the pinned set.\n- [hard] REQ-02: Any tolerance excursion encountered before the passing run is preserved in the committed record with its contradiction and tracked rework.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "doc-review"
+    ],
+    "depends_on": [
+      "pilot-backend-cutover",
+      "pilot-poly-cutover"
+    ],
+    "planning": {
+      "outcome": "Committed post-cutover receipt against the pinned baseline within the predeclared tolerance",
+      "contract_refs": [
+        "nonregression-benchmarks"
+      ],
+      "source_refs": [
+        "REQ-04",
+        "INV-PRIOR-ART"
+      ],
+      "terminal": {
+        "consumer_family": "Work citing the pilot-cutover receipt",
+        "test_boundary": "Receipt conformance to the pinned procedure",
+        "worker_sized_reason": "One benchmark execution and one receipt against an existing procedure",
+        "footprint": {
+          "creates": [
+            "dev/benchmarks/6dc81018-field-capability-dispatch/pilot-cutover-receipt.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "lean-extraction-spike",
+    "title": "Spike Charon extraction of a trait-generic field algorithm",
+    "description": "Determine empirically whether Charon/Aeneas can extract a trait-generic gf2-core algorithm on the workspace MSRV, and record the outcome either way.\n\n## Background\n\nThe current extraction covers concrete arithmetic only: the core invocation opaques `gf2_core::field`, and the prior attempt to extract generic `permanent_ryser<F>` was falsified — Charon did not monomorphise from a non-generic start root, and the direct extracted binding was descoped in favor of an abstract proof. The spike target is `batch_inverse<F: FiniteField>` (or a comparably small self-contained trait-generic gf2-core function). Vary the start roots and opaque list, including a generic start root and un-opaquing the field module for the target, and record every invocation and outcome. No proofs are authored in this issue; the proof sketch and proof implementation are planned in a follow-up round once this spike's outcome exists.\n\n## Success Criteria\n\n- [hard] REQ-01: A spike record documents the exact Charon/Aeneas invocations attempted and their outcomes on the workspace MSRV toolchain.\n- [hard] REQ-02: On success, the generated Lean for the generic target is preserved under the spike's extraction directory named in the record; on failure, the falsifying evidence is recorded and the required decision on the epic's extraction criterion is named for escalation.\n\n## Notes\n\n- Follow-on: a successful record triggers a follow-up planning round adding the approved-sketch and proof-implementation issues (sketch approved before proof code); a falsification escalates the epic's extraction criterion to the owner.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:field-capability-dispatch",
+      "component:gf2-core",
+      "satisfies:REQ-05"
+    ],
+    "gates": [
+      "research-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Extraction feasibility of a trait-generic algorithm established with recorded evidence either way",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-05",
+        "INV-CLAIM-7",
+        "INV-PRIOR-ART"
+      ],
+      "terminal": {
+        "consumer_family": "Consumers of the extraction-feasibility verdict",
+        "test_boundary": "Research review of the spike record; invocations reproducible from the record",
+        "worker_sized_reason": "Bounded toolchain experiment on one small named target; no proof authoring",
+        "footprint": {
+          "creates": [
+            "dev/active/6dc81018-field-capability-dispatch/lean-extraction-spike.md",
+            "dev/active/6dc81018-field-capability-dispatch/spike-extraction/"
+          ],
+          "uncertainty": "Local Charon invocation variants may be exercised outside scripts/verify-lean.sh without committing script changes"
+        }
+      }
+    }
+  }
+]
