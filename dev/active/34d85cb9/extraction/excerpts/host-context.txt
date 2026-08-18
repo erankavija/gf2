@@ -1,0 +1,19 @@
+# Host and revision context for the 34d85cb9 spike runs.
+# Reproduce with: dev/active/34d85cb9/extraction/host.sh
+
+$ git rev-parse HEAD
+2f2cbb3780876eb022cde7c9c2879b8ed7f1656b
+
+$ uname -srm
+Linux 7.1.8-arch1-3 x86_64
+
+$ grep -m1 'model name' /proc/cpuinfo
+model name	: AMD Ryzen 9 5900X 12-Core Processor
+
+$ nproc
+24
+
+$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:            31Gi       3.5Gi        23Gi       4.4Mi       5.2Gi        27Gi
+Swap:          4.0Gi          0B       4.0Gi

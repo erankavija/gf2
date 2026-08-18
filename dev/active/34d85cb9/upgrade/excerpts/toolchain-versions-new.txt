@@ -1,0 +1,27 @@
+# Newest-upstream toolchain built for the 34d85cb9 upgrade leg, 2026-08-19.
+# Built from fresh clones under /data/aeneas-upgrade-34d85cb9; NOT installed
+# into ~/.cargo/bin (see findings.md).
+
+$ /data/aeneas-upgrade-34d85cb9/aeneas/charon/bin/charon version
+0.1.232
+
+$ .../charon toolchain-version
+nightly-2026-06-01
+
+$ git -C /data/aeneas-upgrade-34d85cb9/aeneas/charon rev-parse HEAD
+340b1af4df92608d0911fc2ba26eef3fd3a30ab4
+
+$ /data/aeneas-upgrade-34d85cb9/aeneas/src/_build/default/main.exe -version
+aeneas c10cc99
+
+$ git -C /data/aeneas-upgrade-34d85cb9/aeneas rev-parse HEAD
+c10cc997a2cc885f5b2c9ef3929cc05632cb106c
+
+$ tail -1 /data/aeneas-upgrade-34d85cb9/aeneas/charon-pin
+340b1af4df92608d0911fc2ba26eef3fd3a30ab4
+
+$ charon version   # still on PATH, unchanged
+0.1.217
+
+$ aeneas -version  # still on PATH, unchanged
+aeneas 5220259c
