@@ -34,11 +34,18 @@
       "path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
     }
   ],
+  "done_at": "2026-08-18T20:54:10.044592120Z",
   "first_ready_at": "2026-08-18T19:57:57.977309087Z",
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-18T20:53:52.951803149Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "265997f9-a947-4fbc-9161-a9f3a252bd01",
   "labels": [
     "type:task",
@@ -49,7 +56,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Author the field-capability classification",
-  "updated_at": "2026-08-18T20:52:05.535077776Z"
+  "updated_at": "2026-08-18T20:54:10.044592120Z"
 }

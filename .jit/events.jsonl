@@ -8504,3 +8504,9 @@
 {"assignee":"agent:worker","id":"bac517bd-6f75-4f59-b5b5-9cca9507f1da","issue_id":"34d85cb9-1ff4-4adb-a09e-7305dee0b0dc","timestamp":"2026-08-18T20:34:58.160194990Z","type":"issue_claimed"}
 {"id":"8bf64a0e-1cba-49b5-8946-17fde23604bc","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","priority":"normal","timestamp":"2026-08-18T20:51:51.692768931Z","title":"Remove the deprecated bit-buffer Kernel compatibility surface","type":"issue_created"}
 {"fields":["documents"],"id":"47007cad-6074-4e25-ade4-21bf5ffd30cb","issue_id":"265997f9-a947-4fbc-9161-a9f3a252bd01","timestamp":"2026-08-18T20:52:05.535077776Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"769c950c-264f-440a-98cd-08bd36c81788","issue_id":"265997f9-a947-4fbc-9161-a9f3a252bd01","timestamp":"2026-08-18T20:53:52.951803149Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"aeccda4a-e445-42b9-be6e-be1a607fe4f7","issue_id":"265997f9-a947-4fbc-9161-a9f3a252bd01","timestamp":"2026-08-18T20:54:10.044592120Z","to":"done","type":"issue_state_changed"}
+{"id":"72a12110-f21d-4c94-bacb-882bcb6d0c24","issue_id":"265997f9-a947-4fbc-9161-a9f3a252bd01","timestamp":"2026-08-18T20:54:10.044592120Z","type":"issue_completed"}
+{"from":"backlog","id":"ee1c3adf-7012-479b-b0b5-4527831dec2a","issue_id":"220cab0b-2197-4d43-a1c9-a46ebe7d6706","timestamp":"2026-08-18T20:54:15.918734150Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"cf2cd15d-057a-440e-8d1e-f01be5408f27","issue_id":"7f818151-9268-4f6d-b29e-508eb95ba12c","timestamp":"2026-08-18T20:54:21.749177316Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"8eb14d35-5a7f-454f-aa67-4d85c2a7bfd7","issue_id":"e8fe47f5-5098-4500-b8ce-8e4a062a7787","timestamp":"2026-08-18T20:54:27.576207343Z","to":"ready","type":"issue_state_changed"}

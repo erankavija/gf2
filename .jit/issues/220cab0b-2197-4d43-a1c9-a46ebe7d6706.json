@@ -7,6 +7,7 @@
   ],
   "description": "Design the versioned tuning-profile artifact and how existing selection boundaries consume it.\n\n## Background\n\nBackend and crossover selection currently reads source constants, compile-time field shape, and runtime CPU features; no committed profile exists. The design fixes: the profile schema and its version field, the committed storage location, the loader API shape in gf2-core, the conservative default table and unknown-host fallback policy, and the calibration workflow as an explicit benchmark action under the repository's benchmark-lock conventions. The profile is data consumed at existing safe selection boundaries (OnceLock function tables, field constructors, algorithm-selector constants); it introduces no new crate dependency edges. Integration points are named for the pilot selector families designated by the classification; the schema carries an explicit extensibility rule for admitting further families in follow-on migrations.\n\n## Success Criteria\n\n- [hard] REQ-01: A design document specifies the profile schema, versioning rule, committed storage location, and loader API, weighing at least two serialization/placement options before the recommendation.\n- [hard] REQ-02: The document names the integration point for each pilot selector family designated by the classification, the conservative default and unknown-host fallback policy, and the explicit calibration workflow with its provenance fields.",
   "documents": [],
+  "first_ready_at": "2026-08-18T20:54:15.918734150Z",
   "gates_required": [
     "doc-review"
   ],
@@ -19,7 +20,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Design the versioned tuning-profile format and selection integration",
-  "updated_at": "2026-08-18T19:57:57.977309087Z"
+  "updated_at": "2026-08-18T20:54:15.918734150Z"
 }
