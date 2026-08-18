@@ -1,0 +1,32 @@
+# Upstream topology receipt for the 34d85cb9 upgrade leg.
+# Captured: 2026-08-19T00:43:17+03:00
+# Reproduce with: dev/active/34d85cb9/upgrade/topology.sh
+
+## $ git ls-remote https://github.com/AeneasVerif/aeneas HEAD refs/heads/main
+c10cc997a2cc885f5b2c9ef3929cc05632cb106c	HEAD
+c10cc997a2cc885f5b2c9ef3929cc05632cb106c	refs/heads/main
+
+## $ git ls-remote --tags https://github.com/AeneasVerif/aeneas | tail -5   (newest nightly tags)
+daa85d7e89400fa978be83fedbc7e475a83f0889	refs/tags/nightly-2026.08.14-daa85d7
+daa85d7e89400fa978be83fedbc7e475a83f0889	refs/tags/nightly-2026.08.15-daa85d7
+daa85d7e89400fa978be83fedbc7e475a83f0889	refs/tags/nightly-2026.08.16-daa85d7
+daa85d7e89400fa978be83fedbc7e475a83f0889	refs/tags/nightly-2026.08.17-daa85d7
+daa85d7e89400fa978be83fedbc7e475a83f0889	refs/tags/nightly-2026.08.18-daa85d7
+
+## $ git ls-remote https://github.com/AeneasVerif/charon HEAD refs/heads/main
+4c346c1484e645fd79c076e940524a27bd8f5e7f	HEAD
+4c346c1484e645fd79c076e940524a27bd8f5e7f	refs/heads/main
+
+## charon-pin declared by aeneas main HEAD (c10cc997)
+340b1af4df92608d0911fc2ba26eef3fd3a30ab4
+
+## charon-pin declared by the newest aeneas tag (daa85d7e)
+340b1af4df92608d0911fc2ba26eef3fd3a30ab4
+
+## aeneas main HEAD relative to the newest tag (GitHub compare API)
+status=ahead ahead_by=2 behind_by=0
+
+## rust toolchain required by charon 340b1af4
+[toolchain]
+channel = "nightly-2026-06-01"
+components = [ "rustc-dev", "llvm-tools-preview", "rust-src", "miri" ]

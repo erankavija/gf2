@@ -1,4 +1,4 @@
-charon cargo \
+RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
   --preset aeneas \
   --monomorphize \
   --rustc-arg=--cfg=verify_lean \

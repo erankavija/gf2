@@ -50,7 +50,13 @@ chmod +x "$GEN"
 
 exec > >(tee "$HERE/logs/pipeline-$WHICH-summary.txt") 2>&1
 
+# Pin the workspace toolchain to the MSRV, matching the .cmd contract of both
+# legs. Charon still drives its own `charon toolchain-version` nightly for the
+# rustc that produces MIR; this only fixes the cargo/rustc that builds the crate.
+export RUSTUP_TOOLCHAIN=1.95.0
+
 echo "=== running $GEN ==="
+echo "RUSTUP_TOOLCHAIN=$RUSTUP_TOOLCHAIN  cargo: $(cargo --version)"
 "$GEN" >"$HERE/logs/pipeline-$WHICH.log" 2>&1
 RC=$?
 echo "verify-lean extraction stages exit=$RC"

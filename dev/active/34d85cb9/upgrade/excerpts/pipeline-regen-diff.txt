@@ -2,6 +2,7 @@
 # the extraction reproduces the committed file exactly.
 # baseline = charon 0.1.217 (patched) + aeneas 5220259c  [the pinned pair]
 # new      = charon 0.1.232 (unpatched) + aeneas c10cc997 [newest upstream]
+# Both legs ran with RUSTUP_TOOLCHAIN=1.95.0 (workspace MSRV).
 
 ## baseline  (verify-lean.sh extraction stages exit=0)
   Gf2Core/Types.lean       changed=0     non-comment=0
