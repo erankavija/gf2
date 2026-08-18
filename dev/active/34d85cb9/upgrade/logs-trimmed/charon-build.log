@@ -1,5 +1,6 @@
 # Charon release-build log receipt for the 34d85cb9 upgrade leg.
-# Command (from /data/aeneas-upgrade-34d85cb9/aeneas/charon/charon):
+# Command, run from /data/aeneas-upgrade-34d85cb9/charon/charon -- the clone's
+# original path, before it was moved to .../aeneas/charon for the Aeneas build:
 #   CARGO_PROFILE_RELEASE_DEBUG=true cargo build --release
 # The final 'Finished' line is cargo's own wall-clock measurement and is
 # the sole source for the build duration quoted in findings.md.
