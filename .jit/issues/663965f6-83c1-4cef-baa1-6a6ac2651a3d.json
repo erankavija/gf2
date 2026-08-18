@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-08-18T18:50:24.093554835Z",
   "dependencies": [],
-  "description": "Author and review the plan and authoritative breakdown manifest for epic 6dc81018 (field-capability reconciliation and profile-driven kernel dispatch).\n\n## Success Criteria\n\n- [hard] REQ-01: A concise plan at dev/active/6dc81018-field-capability-dispatch/plan.md and its sibling manifest breakdown.json are linked to this issue, cover every hard container criterion, and pass deterministic manifest validation with warnings denied.\n- [hard] REQ-02: The configured plan review passes on the linked artifacts.",
+  "description": "Plan Reconcile field capability traits and profile-driven kernel dispatch (6dc81018) against every hard success criterion, write the concise design at dev/active/6dc81018-field-capability-dispatch/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The concise plan at dev/active/6dc81018-field-capability-dispatch/plan.md and its authoritative sibling breakdown manifest exist, are linked to this issue, and pass the manifest validation, render check, and batch-create dry run.\n- [hard] REQ-02: The plan-review gate passes on this issue.",
   "documents": [],
   "first_ready_at": "2026-08-18T18:50:24.093554835Z",
   "gates_required": [
@@ -20,5 +20,5 @@
   "priority": "normal",
   "state": "ready",
   "title": "Plan the field-capability reconciliation breakdown",
-  "updated_at": "2026-08-18T18:50:24.093554835Z"
+  "updated_at": "2026-08-18T19:03:27.190361407Z"
 }
