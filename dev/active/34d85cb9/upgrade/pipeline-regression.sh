@@ -48,7 +48,10 @@ sed -n '1,374p' "$ROOT/scripts/verify-lean.sh" \
   >"$GEN"
 chmod +x "$GEN"
 
-exec > >(tee "$HERE/logs/pipeline-$WHICH-summary.txt") 2>&1
+# The summary lands in excerpts/ (committed) rather than logs/ (gitignored),
+# so the record can cite it.
+mkdir -p "$HERE/excerpts"
+exec > >(tee "$HERE/excerpts/pipeline-$WHICH-summary.txt") 2>&1
 
 # Pin the workspace toolchain to the MSRV, matching the .cmd contract of both
 # legs. Charon still drives its own `charon toolchain-version` nightly for the

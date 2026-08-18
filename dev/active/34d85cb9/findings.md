@@ -64,12 +64,14 @@ Host context (`dev/active/34d85cb9/extraction/excerpts/host-context.txt`,
 regenerate with `dev/active/34d85cb9/extraction/host.sh`): AMD Ryzen 9 5900X,
 24 hardware threads, 31 GiB RAM, Linux 7.1.8-arch1-3 x86_64.
 
-**Stopping rule, declared before any run:** the dispatch instructions for this
-issue set a 20-minute per-invocation timebox — kill the invocation and record
-the timeout as its outcome. It was never triggered. The slowest invocation
-across both legs took 7 s; the `elapsed=` footer of every trimmed log records
-the measured time, so the whole distribution is checkable, not just the
-maximum.
+**Stopping rule, declared before any run:** the lead's dispatch instructions
+for this issue set a 20-minute per-invocation timebox — kill the invocation and
+record the timeout as its outcome. Those instructions are session artefacts, not
+committed files, so this pre-declaration is **attested rather than receipted**;
+no backdated artefact is offered in its place. The rule was never triggered, and
+that part *is* receipted: the slowest invocation across both legs took 7 s, and
+the `elapsed=` footer of every trimmed log records the measured time, so the
+whole distribution is checkable, not just the maximum.
 
 ---
 
@@ -114,8 +116,8 @@ Aeneas was run on every Charon output that produced a `.llbc`, with
 source that emitted it.
 
 `.llbc` files and their `charon pretty-print` renderings are not committed:
-across both legs the 27 of them total 49.6 MB, ranging from 31,190 bytes (R5,
-which emits nothing) to 14,426,493 bytes. `.gitignore` excludes them and they
+across both legs the 27 of them total 51,971,305 bytes (49.6 MiB / 52.0 MB),
+ranging from 31,190 bytes (R5, which emits nothing) to 14,426,493 bytes. `.gitignore` excludes them and they
 are regenerable from the committed `.cmd` files. Their **per-file byte sizes and
 item counts** are committed instead, in
 `dev/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt` and
@@ -139,15 +141,26 @@ that this is so, rather than an assertion:
   legs exit 1.
 - Every generated `Funs.lean` and `Types.lean` in `extraction/A*_lean/` and
   `upgrade/extraction/A*_lean/` is **byte-identical** to the version produced
-  before the pin, so the diff of this rework touches no Aeneas output.
-- Every LLBC item count and byte size is unchanged
-  (`extraction/excerpts/llbc-item-counts.txt`,
-  `upgrade/excerpts/llbc-item-counts.txt`).
+  before the pin. This is checkable from git history rather than asserted:
+  `git diff --name-only d29b6c0c..947f0569 -- 'dev/active/34d85cb9/**/*_lean/*.lean'`
+  lists exactly ten paths, all of them probe trees (`extraction/P{1,2,3,4}_lean`
+  and `upgrade/extraction/P1_lean`, `Funs.lean` and `Types.lean` each), and no
+  `A*_lean` file at all.
+- Every LLBC **item count** is unchanged, receipted on both sides: the
+  pre-rerun counts are `git show d29b6c0c:dev/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt`,
+  the post-rerun counts are the working-tree file at the same path.
+- **The LLBC byte sizes are not part of this comparison.** The pre-rerun
+  receipts recorded item counts only — byte sizes were added to
+  `llbc-summary.sh` during this rework — and the `.llbc` files themselves are
+  gitignored and were overwritten by the re-run. No pre-rerun size receipt
+  exists, so no claim is made about size stability across the toolchain change;
+  the committed sizes describe the current (1.95) artefacts only.
 - Both pipeline-regression legs reproduce their earlier verdicts exactly,
   including the 311/428 non-comment line counts
   (`upgrade/excerpts/pipeline-regen-diff.txt`), and each summary records the
   `cargo 1.95.0` banner it ran under
-  (`upgrade/logs/pipeline-{baseline,new}-summary.txt`).
+  (`upgrade/excerpts/pipeline-baseline-summary.txt`,
+  `upgrade/excerpts/pipeline-new-summary.txt`).
 
 The only artefact that changed is the probe Lean, and only in its crate name
 (`namespace probe` → `namespace probe_P1`), a mechanical consequence of splitting
@@ -359,11 +372,30 @@ occupies their argument positions. The scale of the problem shows in A11: the
 `Could not find: type_var_id: 1` and `... : 2`, hitting 20 lifted loop
 definitions that cover 10 distinct loops — `FieldPoly.eval`, `FieldPoly.scale`,
 `FieldPoly.div_rem`, `add_impl`, `slice_add` and five `mul_karatsuba_raw` loops,
-each contributing a `_loop` and a `_loop.body`. Those account for 40 of the 53
-`sorry` occurrences in `extraction/A11_lean/Funs.lean`; the remaining 13 come
-from the four other error classes the log reports (`Internal error, please file
-an issue` ×11, plus `Region ids ...`, `Unimplemented`, `Unreachable`,
-`Unexpected` and two `Could not lookup the translated function`).
+each contributing a `_loop` and a `_loop.body`. Those 40 `[Error]` lines account for exactly 40 of the 53 `sorry` occurrences
+in `extraction/A11_lean/Funs.lean` — each such `sorry` embeds the error text
+verbatim, so the correspondence is checkable line by line.
+
+The run reports 58 `[Error]` lines in eight classes
+(`extraction/excerpts/A11-accounting.txt`, regenerate with
+`extraction/a11-accounting.sh`):
+
+| Count | Class |
+|---|---|
+| 20 | `Could not find: type_var_id: 2 from ExtractBase.Item` |
+| 20 | `Could not find: type_var_id: 1 from ExtractBase.Item` |
+| 11 | `Internal error, please file an issue` |
+| 2 | `Region ids should not be visited directly; …` |
+| 2 | `Could not lookup the translated function, probably because of an error which happened before` |
+| 1 | `Unreachable` |
+| 1 | `Unimplemented` |
+| 1 | `Unexpected` |
+
+The other 13 `sorry` occurrences carry no attributing comment, and **they cannot
+be mapped onto the remaining 18 `[Error]` lines**: the counts do not match, two
+of those errors are self-declared cascades of an earlier failure, and one failed
+body yields one `sorry` however many errors were reported against it. The class
+counts above are therefore given without any per-class-to-per-`sorry` claim.
 
 The failure is selective in a way that identifies it precisely:
 
@@ -481,18 +513,22 @@ git init && git remote add origin https://github.com/AeneasVerif/charon
 git fetch --depth 1 origin 340b1af4df92608d0911fc2ba26eef3fd3a30ab4
 git reset --hard FETCH_HEAD
 
+# Charon is built here, at its original clone path, BEFORE the move below.
+cd /data/aeneas-upgrade-34d85cb9/charon/charon
+CARGO_PROFILE_RELEASE_DEBUG=true cargo build --release
+
 mkdir -p /data/aeneas-upgrade-34d85cb9/aeneas
 cd /data/aeneas-upgrade-34d85cb9/aeneas
 git init && git remote add origin https://github.com/AeneasVerif/aeneas
 git fetch --depth 1 origin c10cc997a2cc885f5b2c9ef3929cc05632cb106c
 git reset --hard FETCH_HEAD
 
-# aeneas expects the charon clone at ./charon (src/charon is a symlink to ../charon)
+# aeneas expects the charon clone at ./charon (src/charon is a symlink to
+# ../charon), so the built tree is moved into place afterwards. Every path in
+# this record from here on refers to the post-move location.
 mv /data/aeneas-upgrade-34d85cb9/charon /data/aeneas-upgrade-34d85cb9/aeneas/charon
-
-cd /data/aeneas-upgrade-34d85cb9/aeneas/charon/charon
-CARGO_PROFILE_RELEASE_DEBUG=true cargo build --release
-mkdir -p ../bin && cp -f target/release/charon target/release/charon-driver ../bin/
+cd /data/aeneas-upgrade-34d85cb9/aeneas/charon
+mkdir -p bin && cp -f charon/target/release/charon charon/target/release/charon-driver bin/
 
 cd /data/aeneas-upgrade-34d85cb9/aeneas/src
 eval $(opam env) && dune build
@@ -501,7 +537,10 @@ eval $(opam env) && dune build
 The Charon build log is committed at `upgrade/logs-trimmed/charon-build.log`;
 its final line is cargo's own measurement, `Finished \`release\` profile
 [optimized + debuginfo] target(s) in 59.25s`, and is the sole source for any
-build-duration statement here. The OCaml toolchain that built Aeneas — `dune
+build-duration statement here. The crate paths inside that log read
+`/data/aeneas-upgrade-34d85cb9/charon/charon` — the pre-move location, which is
+where the build actually ran — and that is why the `cargo build` step above sits
+before the `mv` rather than after it. The OCaml toolchain that built Aeneas — `dune
 --version` `3.21.1`, `ocaml -version` `5.4.1`, opam switch `default` — is
 recorded in `upgrade/excerpts/toolchain-versions-new.txt` alongside the pair
 versions.
@@ -822,3 +861,6 @@ All paths relative to the repository root.
 | `dev/active/34d85cb9/upgrade/topology.sh` | Regenerates the topology receipt (read-only network) |
 | `dev/active/34d85cb9/upgrade/versions-new.sh` | Regenerates the new-pair, OCaml and host-install receipts |
 | `dev/active/34d85cb9/upgrade/logs-trimmed/charon-build.log` | Charon release build log; its `Finished` line is the build-duration receipt |
+| `dev/active/34d85cb9/upgrade/excerpts/pipeline-{baseline,new}-summary.txt` | Each pipeline leg's exit code and per-file diff verdict, with the `cargo 1.95.0` banner it ran under |
+| `dev/active/34d85cb9/extraction/excerpts/A11-accounting.txt` | A11 error classes and `sorry` tally, kept separate because they do not map 1:1 |
+| `dev/active/34d85cb9/extraction/a11-accounting.sh` | Regenerates the A11 accounting receipt |
