@@ -140,7 +140,14 @@
       "reason": "classification \u00a75 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope"
     }
   ],
-  "escalations": [],
+  "escalations": [
+    {
+      "kind": "invoker-directive",
+      "issue": "34d85cb9",
+      "date": "2026-08-18",
+      "text": "Owner directed: update local Charon/Aeneas to newest upstream as part of the spike. Worker instructed to baseline on pinned versions, back up binaries, upgrade, re-run key matrix legs, and regression-check scripts/verify-lean.sh; restore backups if the committed pipeline breaks."
+    }
+  ],
   "rework_counts": {},
   "surfaced_pitfalls": [],
   "started_at": "2026-08-18T00:00:00Z"
