@@ -21,7 +21,7 @@
           "title": "Spike Charon extraction of a trait-generic field algorithm",
           "classification": "research",
           "model": "opus",
-          "status": "dispatched"
+          "status": "rework-1"
         }
       ]
     },
@@ -148,7 +148,9 @@
       "text": "Owner directed: update local Charon/Aeneas to newest upstream as part of the spike. Worker instructed to baseline on pinned versions, back up binaries, upgrade, re-run key matrix legs, and regression-check scripts/verify-lean.sh; restore backups if the committed pipeline breaks."
     }
   ],
-  "rework_counts": {},
+  "rework_counts": {
+    "34d85cb9": 1
+  },
   "surfaced_pitfalls": [],
   "started_at": "2026-08-18T00:00:00Z"
 }
