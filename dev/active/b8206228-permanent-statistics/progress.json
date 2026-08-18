@@ -503,6 +503,9 @@
       "decision": "Owner: top-2 per cell. Nominate two candidates per gap cell from existing non-cohort evidence with recorded per-cell basis, measure those in 296a41c9-pattern cohorts, rule-3-exclude the rest with recorded exclusions."
     }
   ],
+  "standing_rules": [
+    "Owner directive 2026-08-18: within this epic, codex Luna may be used for at most one rework round per issue; any subsequent rework round is dispatched to an Opus subagent (Agent tool, model opus)."
+  ],
   "rework_counts": {
     "6c7fcb38": 1,
     "175972df": 2,
