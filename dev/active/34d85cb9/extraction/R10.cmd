@@ -1,0 +1,22 @@
+charon cargo \
+  --preset aeneas \
+  --rustc-arg=--cfg=verify_lean \
+  --start-from 'gf2_core::field::batch_ops::batch_inverse' \
+  --opaque 'gf2_core::field' \
+  --include 'gf2_core::field::batch_ops' \
+  --include 'gf2_core::field::traits::FiniteField' \
+  --opaque 'gf2_core::gf2m' \
+  --opaque 'gf2_core::gfpn' \
+  --opaque 'gf2_core::gfp::simd_ops' \
+  --opaque 'gf2_core::bitvec' \
+  --opaque 'gf2_core::bitslice' \
+  --opaque 'gf2_core::matrix' \
+  --opaque 'gf2_core::sparse' \
+  --opaque 'gf2_core::alg' \
+  --opaque 'gf2_core::compute' \
+  --opaque 'gf2_core::kernels' \
+  --opaque 'gf2_core::primitive_polys' \
+  --opaque 'gf2_core::io' \
+  --opaque 'gf2_core::macros' \
+  --dest-file dev/active/34d85cb9/extraction/R10_gf2_core.llbc \
+  -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features

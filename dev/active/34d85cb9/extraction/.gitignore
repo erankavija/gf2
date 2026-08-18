@@ -1,0 +1,5 @@
+# Charon output and its pretty-printed form: 0.8-2.0 MB per run, regenerable by
+# re-running the committed *.cmd files through run.sh. The trimmed fragments
+# quoted by findings.md live in excerpts/ and are committed.
+/*.llbc
+/*.llbc.txt
