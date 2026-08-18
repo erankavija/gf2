@@ -1,3 +1,4 @@
+=== R8 === 2026-08-18T23:42:25+03:00
 --- command ---
 charon cargo \
   --preset aeneas \
@@ -24,6 +25,7 @@ charon cargo \
 --- output ---
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
    Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
+ 52 | impl BitMatrix {
 
 thread 'main' (305551) panicked at src/ast/types_utils.rs:1254:59:
 called `Result::unwrap()` on an `Err` value: GenericsMismatch

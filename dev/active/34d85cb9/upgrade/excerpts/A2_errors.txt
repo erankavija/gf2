@@ -1,0 +1,18 @@
+[Error] Unimplemented
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 222:7-222:38
+Compiler source: llbc/RegionsHierarchy.ml, line 180
+Name pattern: 'gf2_core::field::batch_ops::batch_inverse_with_scratch'
+Definition span: 'crates/gf2-core/src/field/batch_ops.rs', lines 210:0-230:1
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 222:7-222:38
+Compiler source: interp/Interp.ml, line 609
+[Error] Unimplemented
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 394:4-400:5
+Compiler source: interp/InterpMatchCtxs.ml, line 419
+Name pattern: 'gf2_core::field::batch_ops::batch_inverse_core'
+Definition span: 'crates/gf2-core/src/field/batch_ops.rs', lines 363:0-403:1
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 394:4-400:5
+Compiler source: interp/Interp.ml, line 609
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868

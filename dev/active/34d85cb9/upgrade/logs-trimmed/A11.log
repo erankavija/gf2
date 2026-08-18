@@ -1,0 +1,224 @@
+=== A11 === 2026-08-19T00:13:22+03:00
+--- command ---
+/data/aeneas-upgrade-34d85cb9/aeneas/src/_build/default/main.exe \
+  -backend lean \
+  -dest dev/active/34d85cb9/upgrade/extraction/A11_lean \
+  -split-files \
+  -print-error-emitters \
+  -print-error-emitters \
+  dev/active/34d85cb9/upgrade/extraction/R11_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/34d85cb9/upgrade/extraction/R11_gf2_core.llbc
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1441:4-1453:5
+Compiler source: interp/InterpBorrowsCore.ml, line 1498
+[Warn ] Could not translate the body of function 'gf2_core::field::poly::{gf2_core::field::poly::FieldPoly<F, Clause0_Characteristic, Clause0_Wide>}::from_roots because of previous error
+Name pattern: 'gf2_core::field::poly::{gf2_core::field::poly::FieldPoly<@F, @Clause0_Characteristic, @Clause0_Wide>}::from_roots'
+Definition span: 'crates/gf2-core/src/field/poly.rs', lines 1441:4-1453:5
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1441:4-1453:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1878:4-1878:5
+Compiler source: interp/InterpBorrowsCore.ml, line 1498
+[Warn ] Could not translate the body of function 'gf2_core::field::poly::{gf2_core::field::poly::FieldPoly<F, Clause0_Characteristic, Clause0_Wide>}::gcd because of previous error
+Name pattern: 'gf2_core::field::poly::{gf2_core::field::poly::FieldPoly<@F, @Clause0_Characteristic, @Clause0_Wide>}::gcd'
+Definition span: 'crates/gf2-core/src/field/poly.rs', lines 1858:4-1878:5
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1878:4-1878:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Unreachable
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2795:20-2795:26
+Compiler source: interp/InterpExpansion.ml, line 125
+[Warn ] Could not translate the body of function 'gf2_core::field::poly::{gf2_core::field::poly::FieldPoly<F, Clause0_Clause0_Characteristic, Clause0_Clause0_Wide>}::mul_ntt because of previous error
+Name pattern: 'gf2_core::field::poly::{gf2_core::field::poly::FieldPoly<@F, @Clause0_Clause0_Characteristic, @Clause0_Clause0_Wide>}::mul_ntt'
+Definition span: 'crates/gf2-core/src/field/poly.rs', lines 2767:4-2817:5
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2795:20-2795:26
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Unimplemented
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1224:4-1291:5
+Compiler source: symbolic/SymbolicToPureTypes.ml, line 426
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2242:0-2271:1
+Compiler source: interp/InterpBorrowsCore.ml, line 1498
+[Warn ] Could not translate the body of function 'gf2_core::field::poly::build_subproduct_tree because of previous error
+Name pattern: 'gf2_core::field::poly::build_subproduct_tree'
+Definition span: 'crates/gf2-core/src/field/poly.rs', lines 2242:0-2271:1
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2242:0-2271:1
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] Found an associated type in a trait declaration; trait associated types are usually lifted to become parameters of the trait definition, but this can fail with mutually-recursive traits as well as GATs. Aeneas cannot handle such types today, and the generated code will likely be incorrect.
+Trait declaration: gf2_core::matrix_like::MatrixLike
+Source: Source: 'crates/gf2-core/src/matrix_like.rs', lines 58:0-102:1
+Source: 'crates/gf2-core/src/matrix_like.rs', lines 58:0-102:1
+Compiler source: symbolic/SymbolicToPure.ml, line 222
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'zip'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'map'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'skip'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'collect'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'fold'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'rev'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Info ] Creating missing directory: dev/active/34d85cb9/upgrade/extraction/A11_lean
+[Info ] Generated the partial file (because of 5 errors, including 3 unique errors): dev/active/34d85cb9/upgrade/extraction/A11_lean/TypesExternal_Template.lean
+[Error] Unexpected
+Source: 'crates/gf2-core/src/matrix_like.rs', lines 83:4-83:39
+Compiler source: extract/ExtractTypes.ml, line 731
+[Info ] Generated the partial file (because of 6 errors, including 4 unique errors): dev/active/34d85cb9/upgrade/extraction/A11_lean/Types.lean
+[Info ] Generated the partial file (because of 6 errors, including 4 unique errors): dev/active/34d85cb9/upgrade/extraction/A11_lean/FunsExternal_Template.lean
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2515:4-2522:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2515:4-2522:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2515:4-2522:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2515:4-2522:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2588:4-2594:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2588:4-2594:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2588:4-2594:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2588:4-2594:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2595:4-2601:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2595:4-2601:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2595:4-2601:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2595:4-2601:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2607:4-2609:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2607:4-2609:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2607:4-2609:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2607:4-2609:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2610:4-2615:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2610:4-2615:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2610:4-2615:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2610:4-2615:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2616:4-2621:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2616:4-2621:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2616:4-2621:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 2616:4-2621:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1084:8-1086:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1084:8-1086:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1084:8-1086:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1084:8-1086:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1140:8-1142:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1140:8-1142:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1140:8-1142:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1140:8-1142:9
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1807:12-1812:13
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1807:12-1812:13
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1807:12-1812:13
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1807:12-1812:13
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1970:4-1992:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1970:4-1992:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1970:4-1992:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 1970:4-1992:5
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 3022:12-3025:13
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 3022:12-3025:13
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 1 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 3022:12-3025:13
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: type_var_id: 2 from ExtractBase.Item
+Source: 'crates/gf2-core/src/field/poly.rs', lines 3022:12-3025:13
+Compiler source: extract/ExtractBase.ml, line 484
+[Info ] Generated the partial file (because of 50 errors, including 5 unique errors): dev/active/34d85cb9/upgrade/extraction/A11_lean/Funs.lean
+[Info ] Total execution time: 7.135746 seconds
+--- exit=1 elapsed=8s ---

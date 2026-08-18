@@ -6,9 +6,11 @@
 # header, Charon/Aeneas diagnostics, panics and the exit/elapsed footer.
 set -euo pipefail
 
+# With no arguments this trims the baseline leg's logs; the upgrade leg passes
+# its own log directories.
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SRC="$HERE/../logs"
-DST="$HERE/../logs-trimmed"
+SRC="${1:-$HERE/../logs}"
+DST="${2:-$HERE/../logs-trimmed}"
 mkdir -p "$DST"
 
 for f in "$SRC"/*.log; do
@@ -17,7 +19,9 @@ for f in "$SRC"/*.log; do
     | sed -e 's/\x1b\[[0-9;]*[A-Za-z]//g' -e 's/\x1b\[?25[lh]//g' \
     | grep -vE '^(Translated|Applied prepasses|Post-processed|Extracted)' \
     | grep -vE '^warning: ' \
-    | grep -vE '^\s*(\||[0-9]+ \||-->|=|\^|\.\.\.)' \
+    | grep -vE '^[0-9]+ \|' \
+    | grep -vE '^\.\.\.$' \
+    | grep -vE '^[[:space:]]+(\||-->|=|\^)' \
     | grep -vE '^\s+\^+' \
     | grep -vE '^\s+--> ' \
     | grep -vE '^\s*Constraints in scope:' \

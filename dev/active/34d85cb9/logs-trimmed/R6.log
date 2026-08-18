@@ -1,3 +1,4 @@
+=== R6 === 2026-08-18T23:41:16+03:00
 --- command ---
 charon cargo \
   --preset aeneas \
@@ -24,6 +25,7 @@ charon cargo \
 --- output ---
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-kernels-simd)
    Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-34d85cb9/crates/gf2-core)
+ 52 | impl BitMatrix {
 
 thread 'main' (303927) panicked at /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/index_vec-0.1.4/src/lib.rs:774:5:
 index_vec index overflow: 18446744073709551615 is outside the range [0, 4294967295)

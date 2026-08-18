@@ -1,3 +1,4 @@
+=== P1 === 2026-08-18T23:44:23+03:00
 --- command ---
 charon rustc \
   --preset aeneas \

@@ -1,0 +1,77 @@
+=== A7 === 2026-08-19T00:13:21+03:00
+--- command ---
+/data/aeneas-upgrade-34d85cb9/aeneas/src/_build/default/main.exe \
+  -backend lean \
+  -dest dev/active/34d85cb9/upgrade/extraction/A7_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/34d85cb9/upgrade/extraction/R7_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/34d85cb9/upgrade/extraction/R7_gf2_core.llbc
+
+[Error] Internal error, please file an issue
+Source: 'crates/gf2-core/src/field/traits.rs', lines 614:4-621:5
+Compiler source: interp/InterpProjectors.ml, line 110
+[Warn ] Could not translate the body of function 'gf2_core::field::traits::FiniteField::try_prepack_matvec because of previous error
+Name pattern: 'gf2_core::field::traits::FiniteField::try_prepack_matvec'
+Definition span: 'crates/gf2-core/src/field/traits.rs', lines 614:4-621:5
+Source: 'crates/gf2-core/src/field/traits.rs', lines 614:4-621:5
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Unimplemented
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 222:7-222:38
+Compiler source: llbc/RegionsHierarchy.ml, line 180
+[Warn ] Could not translate the body of function 'gf2_core::field::batch_ops::batch_inverse_with_scratch because of previous error
+Name pattern: 'gf2_core::field::batch_ops::batch_inverse_with_scratch'
+Definition span: 'crates/gf2-core/src/field/batch_ops.rs', lines 210:0-230:1
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 222:7-222:38
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Unimplemented
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 394:4-400:5
+Compiler source: interp/InterpMatchCtxs.ml, line 419
+[Warn ] Could not translate the body of function 'gf2_core::field::batch_ops::batch_inverse_core because of previous error
+Name pattern: 'gf2_core::field::batch_ops::batch_inverse_core'
+Definition span: 'crates/gf2-core/src/field/batch_ops.rs', lines 363:0-403:1
+Source: 'crates/gf2-core/src/field/batch_ops.rs', lines 394:4-400:5
+Compiler source: interp/Interp.ml, line 609
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'any'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Warn ] When retrieving the builtin information for trait decl 'core::iter::traits::iterator::Iterator', could not find the information for item 'rev'. The model defined in the Lean library seems to be missing the corresponding field.
+Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 42:0-42:24
+Compiler source: extract/Extract.ml, line 2868
+
+[Info ] Creating missing directory: dev/active/34d85cb9/upgrade/extraction/A7_lean
+[Warn ] Mutually recursive trait declarations are not supported; the following group of mutually recursive traits is going to be extracted but their model will not type-check:
+'gf2_core::field::matrix::BasisReducer', source: 'crates/gf2-core/src/field/matrix.rs', lines 59:0-94:1
+'gf2_core::field::matrix::PackedMatvec', source: 'crates/gf2-core/src/field/matrix.rs', lines 108:0-113:1
+'gf2_core::field::matrix::ChainPolyArith', source: 'crates/gf2-core/src/field/matrix.rs', lines 136:0-181:1
+'gf2_core::field::traits::FiniteField', source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-989:1
+Compiler source: Translate.ml, line 1203
+
+[Error] Unsupported use of dyn traits
+Source: 'crates/gf2-core/src/field/traits.rs', lines 536:4-541:5
+Compiler source: extract/ExtractTypes.ml, line 524
+[Error] Unsupported use of dyn traits
+Source: 'crates/gf2-core/src/field/traits.rs', lines 556:4-561:5
+Compiler source: extract/ExtractTypes.ml, line 524
+[Error] Unsupported use of dyn traits
+Source: 'crates/gf2-core/src/field/traits.rs', lines 614:4-621:5
+Compiler source: extract/ExtractTypes.ml, line 524
+[Info ] Generated the partial file (because of 6 errors, including 4 unique errors): dev/active/34d85cb9/upgrade/extraction/A7_lean/Types.lean
+[Info ] Generated the partial file (because of 6 errors, including 4 unique errors): dev/active/34d85cb9/upgrade/extraction/A7_lean/FunsExternal_Template.lean
+[Error] Unsupported use of dyn traits
+Source: 'crates/gf2-core/src/field/traits.rs', lines 536:4-541:5
+Compiler source: extract/ExtractTypes.ml, line 524
+[Error] Unsupported use of dyn traits
+Source: 'crates/gf2-core/src/field/traits.rs', lines 556:4-561:5
+Compiler source: extract/ExtractTypes.ml, line 524
+[Error] Unsupported use of dyn traits
+Source: 'crates/gf2-core/src/field/traits.rs', lines 614:4-621:5
+Compiler source: extract/ExtractTypes.ml, line 524
+[Info ] Generated the partial file (because of 9 errors, including 4 unique errors): dev/active/34d85cb9/upgrade/extraction/A7_lean/Funs.lean
+[Info ] Total execution time: 0.724963 seconds
+--- exit=1 elapsed=1s ---
