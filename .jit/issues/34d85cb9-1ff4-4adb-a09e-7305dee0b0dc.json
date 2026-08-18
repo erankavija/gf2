@@ -7,7 +7,15 @@
     "80f805ce-4056-4ac2-aaf5-119e7a43ae60"
   ],
   "description": "Determine empirically whether Charon/Aeneas can extract a trait-generic gf2-core algorithm on the workspace MSRV, and record the outcome either way.\n\n## Background\n\nThe current extraction covers concrete arithmetic only: the core invocation opaques `gf2_core::field`, and the prior attempt to extract generic `permanent_ryser<F>` was falsified — Charon did not monomorphise from a non-generic start root, and the direct extracted binding was descoped in favor of an abstract proof. The spike target is `batch_inverse<F: FiniteField>` (or a comparably small self-contained trait-generic gf2-core function). Vary the start roots and opaque list, including a generic start root and un-opaquing the field module for the target, and record every invocation and outcome. No proofs are authored in this issue; the proof sketch and proof implementation are planned in a follow-up round once this spike's outcome exists.\n\n## Success Criteria\n\n- [hard] REQ-01: A spike record documents the exact Charon/Aeneas invocations attempted and their outcomes on the workspace MSRV toolchain.\n- [hard] REQ-02: On success, the generated Lean for the generic target is preserved under the spike's extraction directory named in the record; on failure, the falsifying evidence is recorded and the required decision on the epic's extraction criterion is named for escalation.\n\n## Notes\n\n- Follow-on: a successful record triggers a follow-up planning round adding the approved-sketch and proof-implementation issues (sketch approved before proof code); a falsification escalates the epic's extraction criterion to the owner.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Charon generic-extraction spike record",
+      "path": "dev/active/34d85cb9/findings.md"
+    }
+  ],
   "first_ready_at": "2026-08-18T19:57:57.977309087Z",
   "gates_required": [
     "research-review"
@@ -23,5 +31,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Spike Charon extraction of a trait-generic field algorithm",
-  "updated_at": "2026-08-18T20:34:58.160194990Z"
+  "updated_at": "2026-08-18T21:28:45.479637636Z"
 }
