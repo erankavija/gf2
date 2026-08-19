@@ -51,6 +51,8 @@ parallel = ["dep:rayon"]
 visualization = ["image"]
 # File I/O support
 io = ["dep:serde", "dep:serde_json"]
+# Versioned tuning-profile parsing and serialization.
+tuning-profile = ["dep:serde", "dep:serde_json"]
 # Exposes the canonical field axiom test harness (`field::axiom_tests`) to
 # integration tests, benchmarks, and downstream crates. Off by default; gets
 # auto-enabled under `cargo test` via the self-dev-dependency above.
@@ -348,3 +350,11 @@ required-features = ["simd"]
 [[test]]
 name = "selector_non_regression_harness"
 required-features = ["simd"]
+
+[[test]]
+name = "tuning_profile_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_committed"
+required-features = ["tuning-profile"]
