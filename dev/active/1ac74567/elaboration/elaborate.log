@@ -1,6 +1,6 @@
 repo-root  = /home/vkaskivuo/Projects/gf2
 generated  = /home/vkaskivuo/Projects/gf2/dev/active/34d85cb9/extraction/A8b_lean
-scratch    = /tmp/tmp.tjdiIPeTJa
+scratch    = /tmp/tmp.T1gUOwrgrw
 toolchain  = leanprover/lean4:v4.30.0-rc2
 lean       = Lean (version 4.30.0-rc2, x86_64-unknown-linux-gnu, commit 3dc1a088b6d2d8eafe25a7cd7ec7b58d731bd7cc, Release)
 lake       = Lake version 5.0.0-src+3dc1a08 (Lean version 4.30.0-rc2)
@@ -9,15 +9,15 @@ lake       = Lake version 5.0.0-src+3dc1a08 (Lean version 4.30.0-rc2)
 R8bGf2Core/Types.lean:94:2: error: Field `corecloneCloneInst` has already been declared
 R8bGf2Core/Types.lean:119:20: error(lean.unknownIdentifier): Unknown identifier `field.traits.FiniteField`
 exit=1  R8bGf2Core/Types.lean
-R8bGf2Core/FunsExternal.lean:11:0: error: object file '/tmp/tmp.tjdiIPeTJa/s1/R8bGf2Core/Types.olean' of module R8bGf2Core.Types does not exist
+R8bGf2Core/FunsExternal.lean:11:0: error: object file '/tmp/tmp.T1gUOwrgrw/s1/R8bGf2Core/Types.olean' of module R8bGf2Core.Types does not exist
 exit=1  R8bGf2Core/FunsExternal.lean
-R8bGf2Core/Funs.lean:3:0: error: object file '/tmp/tmp.tjdiIPeTJa/s1/R8bGf2Core/Types.olean' of module R8bGf2Core.Types does not exist
+R8bGf2Core/Funs.lean:3:0: error: object file '/tmp/tmp.T1gUOwrgrw/s1/R8bGf2Core/Types.olean' of module R8bGf2Core.Types does not exist
 exit=1  R8bGf2Core/Funs.lean
 
 === Stage 2: after scripts/fix-aeneas-dupes.py ===
 --- what the pass changed in Types.lean ---
 --- /home/vkaskivuo/Projects/gf2/dev/active/34d85cb9/extraction/A8b_lean/Types.lean	2026-08-19 00:28:37.833211741 +0300
-+++ /tmp/tmp.tjdiIPeTJa/s2/R8bGf2Core/Types.lean	2026-08-19 20:24:30.126761527 +0300
++++ /tmp/tmp.T1gUOwrgrw/s2/R8bGf2Core/Types.lean	2026-08-19 20:54:22.626197740 +0300
 @@ -91,14 +91,14 @@
    coreopsarithNegInst : core.ops.arith.Neg Self Self
    coreopsarithAddAssignInst : core.ops.arith.AddAssign Self Self
@@ -42,7 +42,7 @@ exit=1  R8bGf2Core/Funs.lean
    is_zero : Self → Result Bool
 --- what the pass changed in Funs.lean ---
 --- /home/vkaskivuo/Projects/gf2/dev/active/34d85cb9/extraction/A8b_lean/Funs.lean	2026-08-19 00:28:37.833007781 +0300
-+++ /tmp/tmp.tjdiIPeTJa/s2/R8bGf2Core/Funs.lean	2026-08-19 20:24:30.127257767 +0300
++++ /tmp/tmp.T1gUOwrgrw/s2/R8bGf2Core/Funs.lean	2026-08-19 20:54:22.626630460 +0300
 @@ -7,6 +7,12 @@
  set_option linter.dupNamespace false
  set_option linter.hashCommand false
@@ -107,13 +107,13 @@ axiom gf2_core.field.traits.FiniteFieldExt.frobenius.default_loop.body._native.d
 exit=0  Axioms.lean
 
 === Stage 4: the sketch's lemma statements against the stage-3 tree ===
-Statements.lean:65:8: warning: declaration uses `sorry`
-Statements.lean:72:8: warning: declaration uses `sorry`
-Statements.lean:84:8: warning: declaration uses `sorry`
-Statements.lean:94:8: warning: declaration uses `sorry`
-Statements.lean:103:8: warning: declaration uses `sorry`
-Statements.lean:114:8: warning: declaration uses `sorry`
-Statements.lean:125:8: warning: declaration uses `sorry`
-Statements.lean:137:8: warning: declaration uses `sorry`
-Statements.lean:147:8: warning: declaration uses `sorry`
+Statements.lean:68:8: warning: declaration uses `sorry`
+Statements.lean:77:8: warning: declaration uses `sorry`
+Statements.lean:92:8: warning: declaration uses `sorry`
+Statements.lean:102:8: warning: declaration uses `sorry`
+Statements.lean:111:8: warning: declaration uses `sorry`
+Statements.lean:123:8: warning: declaration uses `sorry`
+Statements.lean:135:8: warning: declaration uses `sorry`
+Statements.lean:148:8: warning: declaration uses `sorry`
+Statements.lean:159:8: warning: declaration uses `sorry`
 exit=0  Statements.lean
