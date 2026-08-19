@@ -111,7 +111,8 @@
           "title": "Cut the bit-backend selector over to profile-driven selection",
           "classification": "implementation",
           "model": "codex-luna",
-          "status": "pending"
+          "status": "done",
+          "notes": "Closed at 671c6271 after 1 rework. cargo-ci and code-review both passed. The cutover was right first time; the rework was scope and record-keeping. R1 findings, both lead-raised: it edited f35daec0's committed tuning_profile_install.rs (installed value 16->4, added assertions, added simd to its required-features, narrowing a feature-independent test), and it reworded the docs' 8-word 'validated as optimal' claim without recording the host-calibration receipt that selects 4. Both fixed: the test file is byte-identical to 871f9189, evidence moved to the new backend_selection_profile binary, and the docs now cite the receipt AND state that the two measurements are not directly interchangeable (the receipt measures the backends directly, the older validation measured the ops.rs dispatcher)."
         },
         {
           "id": "697fc55b",
@@ -280,7 +281,8 @@
     "f35daec0": 2,
     "1ac74567": 1,
     "278acf3a": 1,
-    "5ecc9bf8": 0
+    "5ecc9bf8": 0,
+    "0d819b62": 1
   },
   "surfaced_pitfalls": [
     {
