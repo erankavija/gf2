@@ -190,6 +190,12 @@
       "title": "Predeclare the across-build control arm for the post-cutover comparison",
       "reason": "doc-review F2 on 278acf3a: the receipt deferred the invalidated comparison methodology to an untracked 'lead decision'. no-deferred-defects requires a tracked owner before 50b47eae's gate relies on the tolerance.",
       "parented": "50b47eae -> 51058f8e (transitively reduced; inside epic 6dc81018 via 50b47eae)"
+    },
+    {
+      "id": "389aa4de",
+      "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
+      "reason": "DEC-B6: the field is unsweepable until poly.rs reads tuning::active(). After 697fc55b, a child process installing a minimal threshold takes the Karatsuba arm and one installing a maximal threshold takes the schoolbook arm, so both arms come off the same public FieldPoly::mul with no new public API.",
+      "parented": "86b9c719 (quality-documentation-tech-debt), depends on 697fc55b; outside epic 6dc81018"
     }
   ],
   "escalations": [
@@ -258,6 +264,12 @@
       "issue": "697fc55b",
       "date": "2026-08-20",
       "decision": "DEC-B5: NTT_THRESHOLD's rustdoc at crates/gf2-core/src/field/poly.rs:2711 asserts the value is tuned from the ntt arm of benches/field_poly.rs, and that claim is contradicted by 2026-08-19-procedure-verification.md §Falsification record (out_len 127 at 3,793 ns on the mul arm against out_len 129 at 12,057 ns on the NTT arm, a 3.18x step into the arm the threshold selects for being cheaper). 697fc55b is the change that rewrites those four constants' rustdoc, so AGENTS.md's same-change stale-text rule attaches there, exactly as DEC-B4 attached the 512-bytes error to f35daec0. The rewrite must record the contradiction and cite the receipt rather than silently dropping or restating the tuning claim; the constant's value does not move."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "5ecc9bf8",
+      "date": "2026-08-20",
+      "decision": "DEC-B6: karatsuba_min_degree is not sweepable from a bench target. A bench links gf2-core as an external crate, so it can name only pub items, and both arms are private (mul_schoolbook_impl at crates/gf2-core/src/field/poly.rs:2484, mul_karatsuba_raw at :2531); the only public entry is the threshold-driven dispatcher FieldPoly::mul, and poly.rs:72 documents the omission deliberately. Resolution per design §5 condition 5: the emitted profile OMITS the field so it inherits the default at load — emitting it carrying 32 would be a @/inv/benchmark-backed-performance defect, since a profile must not claim an unmeasured value. Verified the loader supports omission: JsonPolynomial fields are Option<Option<usize>> (tuning/mod.rs:903-907) and from_json falls back to CONSERVATIVE. TuningProfile::to_json cannot express omission, so the harness constructs the emitted document with only the four swept fields and validates it through from_json, which is what §2.7's output discipline asks. Rejected: adding pub forcing entry points (public API against the poly.rs:72 decision, outside this issue) and reordering 5ecc9bf8 behind 697fc55b (rejected for scope, not ordering — 5ecc9bf8 is not upstream of 50b47eae, so that sequencing would not have inverted the DAG). Tracked forward as 389aa4de."
     }
   ],
   "rework_counts": {
@@ -314,6 +326,11 @@
       "issue": "5ecc9bf8",
       "finding": "Issue Background named crates/gf2-core/benches/profile_calibration.rs while reviewed design 220cab0b §2.7/§6 and the shipped loader (crates/gf2-core/src/tuning/mod.rs:1021, :193) name tuning_calibration.rs with schema token tuning-calibration-v1.",
       "disposition": "CLOSED. Owner approved amending the issue Background to tuning_calibration.rs; success criteria untouched, since neither REQ-01 nor REQ-02 names a path."
+    },
+    {
+      "issue": "5ecc9bf8",
+      "finding": "The v1 profile's karatsuba_min_degree cannot be calibrated by the action this epic ships: no grid point offers both arms through public API, so design §2.7 rule 2 is undecidable for that field.",
+      "disposition": "Tracked as 389aa4de and recorded in 5ecc9bf8's calibration receipt. Not an epic criterion violation: REQ-03 requires selection to consume a versioned committed profile with calibration as an explicit benchmark action, and does not require every v1 field to be swept. Re-check against REQ-03's wording at epic completion before the holistic gate."
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
