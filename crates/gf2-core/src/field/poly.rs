@@ -352,12 +352,13 @@
 //! |  1024 |   1.25 ms | 284.09 µs |  320.04 µs |   4.40× |
 //!
 //! NTT ties Karatsuba at `n = 64` and wins decisively from `n = 128`
-//! onwards. The historical claim that the conservative default of 128 was
-//! tuned from exactly this measurement is contradicted by the committed
-//! `2026-08-19-procedure-verification.md` §Falsification record: the
-//! `mul_fast` step moves from 3,793 ns at `out_len = 127` to 12,057 ns at
-//! `out_len = 129`. See the [`crate::field::ntt`] module docs for the
-//! underlying primitive and its algorithmic shape.
+//! onwards. The conservative default of 128 does not sit at the measured
+//! crossover: the committed
+//! `dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification.md`
+//! §Falsification record reports `mul_fast` at 3,793 ns for `out_len` 127
+//! on the `FieldPoly::mul` arm and 12,057 ns for `out_len` 129 on the NTT
+//! arm. See the [`crate::field::ntt`] module docs for the underlying
+//! primitive and its algorithmic shape.
 //!
 //! ## `interpolate` — quadratic Lagrange vs. `interpolate_fast`
 //!
@@ -1411,12 +1412,10 @@ impl<F: FiniteField> FieldPoly<F> {
         // matches the bench harness's `make_poly(n)` convention.
         // Zero / constant polynomials are length 0/1, well below the
         // threshold, and short-circuit to the naive path.
-        let threshold = tuning::active().polynomial().subproduct_min_len();
-        if points.len() < threshold || self.coeffs.len() < threshold {
-            return self.eval_batch(points);
+        match batch_evaluate_route(self.coeffs.len(), points.len()) {
+            BatchEvaluateRoute::Horner => self.eval_batch(points),
+            BatchEvaluateRoute::SubproductTree => batch_evaluate_subproduct(self, points),
         }
-
-        batch_evaluate_subproduct(self, points)
     }
 
     // -----------------------------------------------------------------
@@ -2159,6 +2158,31 @@ impl<'a, F: FiniteField> SubAssign<&'a FieldPoly<F>> for FieldPoly<F> {
 /// consumed by [`crate::tuning::TuningProfile::CONSERVATIVE`].
 pub const KARATSUBA_THRESHOLD: usize = 32;
 
+/// The selected arm of the [`FieldPoly::mul`] schoolbook/Karatsuba
+/// dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MulRoute {
+    /// Use schoolbook multiplication.
+    Schoolbook,
+    /// Use recursive Karatsuba multiplication.
+    Karatsuba,
+}
+
+/// Reports the [`FieldPoly::mul`] arm for two operand degrees.
+///
+/// The comparison uses the active
+/// `polynomial.karatsuba_min_degree()` profile value. Empty operands are
+/// handled by the dispatcher before this selector is called.
+#[must_use]
+pub fn mul_route(lhs_degree: usize, rhs_degree: usize) -> MulRoute {
+    let karatsuba_min_degree = tuning::active().polynomial().karatsuba_min_degree();
+    if lhs_degree < karatsuba_min_degree || rhs_degree < karatsuba_min_degree {
+        MulRoute::Schoolbook
+    } else {
+        MulRoute::Karatsuba
+    }
+}
+
 /// Conservative default for `polynomial.subproduct_min_len()` in the active
 /// [`crate::tuning::TuningProfile`] for [`FieldPoly::batch_evaluate`] (generic,
 /// schoolbook [`FieldPoly::div_rem`]) and
@@ -2195,15 +2219,53 @@ pub const KARATSUBA_THRESHOLD: usize = 32;
 /// expensive scalar arithmetic (large-prime Montgomery, tower
 /// extensions) invert the comparison at smaller sizes.
 ///
-/// The integration landed in two passes: the Newton-iteration fast
-/// division primitive itself in issue `ae0c7e1f`; the subproduct-tree
-/// wiring plus this threshold tuning in issue `046f95c1`.
+/// The Newton-iteration fast division primitive is tracked by issue
+/// `ae0c7e1f`; the subproduct-tree wiring and this threshold tuning are
+/// tracked by issue `046f95c1`.
 ///
 /// Callers who want the subproduct path unconditionally can call
 /// [`batch_evaluate_subproduct`] (generic, [`FieldPoly::div_rem`]) or
 /// [`batch_evaluate_subproduct_auto`] ([`TwoAdicField`],
 /// [`FieldPoly::div_rem_auto`]) directly, bypassing this threshold.
 pub const SUBPRODUCT_THRESHOLD: usize = 4096;
+
+/// The selected arm of batch evaluation dispatch.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BatchEvaluateRoute {
+    /// Use per-point Horner evaluation.
+    Horner,
+    /// Use the subproduct-tree algorithm.
+    SubproductTree,
+}
+
+/// Reports the arm selected by [`FieldPoly::batch_evaluate`].
+///
+/// The comparison uses the active `polynomial.subproduct_min_len()` profile
+/// value and applies to both the polynomial coefficient count and the point
+/// count.
+#[must_use]
+pub fn batch_evaluate_route(poly_len: usize, points_len: usize) -> BatchEvaluateRoute {
+    let subproduct_min_len = tuning::active().polynomial().subproduct_min_len();
+    if points_len < subproduct_min_len || poly_len < subproduct_min_len {
+        BatchEvaluateRoute::Horner
+    } else {
+        BatchEvaluateRoute::SubproductTree
+    }
+}
+
+/// Reports the arm selected by [`FieldPoly::batch_evaluate_auto`].
+///
+/// This has the same size policy as [`batch_evaluate_route`], while naming
+/// the `TwoAdicField`-specialised dispatcher explicitly.
+#[must_use]
+pub fn batch_evaluate_auto_route(poly_len: usize, points_len: usize) -> BatchEvaluateRoute {
+    let subproduct_min_len = tuning::active().polynomial().subproduct_min_len();
+    if points_len < subproduct_min_len || poly_len < subproduct_min_len {
+        BatchEvaluateRoute::Horner
+    } else {
+        BatchEvaluateRoute::SubproductTree
+    }
+}
 
 /// Builds the subproduct tree for a slice of evaluation points.
 ///
@@ -2648,13 +2710,14 @@ fn mul_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
 
     let deg_lhs = lhs.len() - 1;
     let deg_rhs = rhs.len() - 1;
-    let karatsuba_min_degree = tuning::active().polynomial().karatsuba_min_degree();
-    if deg_lhs < karatsuba_min_degree || deg_rhs < karatsuba_min_degree {
-        return mul_schoolbook_impl(lhs, rhs);
+    match mul_route(deg_lhs, deg_rhs) {
+        MulRoute::Schoolbook => mul_schoolbook_impl(lhs, rhs),
+        MulRoute::Karatsuba => {
+            let karatsuba_min_degree = tuning::active().polynomial().karatsuba_min_degree();
+            let coeffs = mul_karatsuba_raw(lhs, rhs, karatsuba_min_degree);
+            FieldPoly::new(coeffs)
+        }
     }
-
-    let coeffs = mul_karatsuba_raw(lhs, rhs, karatsuba_min_degree);
-    FieldPoly::new(coeffs)
 }
 
 impl<F: FiniteField> Mul<FieldPoly<F>> for FieldPoly<F> {
@@ -2721,16 +2784,39 @@ impl<'b, F: FiniteField> Mul<&'b FieldPoly<F>> for &FieldPoly<F> {
 /// [`FieldPoly::mul_ntt`]. At or below it, the caller is routed through the
 /// existing schoolbook / Karatsuba dispatch.
 ///
-/// The historical claim that this value was tuned from the `ntt` benchmark
-/// arm is contradicted by the `2026-08-19-procedure-verification.md`
-/// §Falsification record in `dev/benchmarks/tuning_profiles/`: at
-/// `out_len = 127`, `mul_fast` takes the `FieldPoly::mul` arm at 3,793 ns,
-/// while at `out_len = 129` it takes the NTT arm at 12,057 ns. This constant
+/// The conservative default of 128 does not sit at the measured crossover.
+/// The committed
+/// `dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification.md`
+/// §Falsification record reports `mul_fast` at 3,793 ns for `out_len` 127 on
+/// the `FieldPoly::mul` arm and 12,057 ns for `out_len` 129 on the NTT arm.
+/// This constant
 /// remains the compiled-in conservative default consumed by
 /// [`crate::tuning::TuningProfile::CONSERVATIVE`]. Callers that want
 /// deterministic behaviour can bypass the gate by calling
 /// [`FieldPoly::mul_ntt`] directly.
 pub const NTT_THRESHOLD: usize = 128;
+
+/// The selected arm of the [`mul_fast`] Karatsuba/NTT dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MulFastRoute {
+    /// Use the schoolbook/Karatsuba multiplication dispatcher.
+    Karatsuba,
+    /// Use NTT multiplication.
+    Ntt,
+}
+
+/// Reports the arm selected by [`mul_fast`] for a product output length.
+///
+/// The comparison uses the active `polynomial.karatsuba_max_out_len()`
+/// profile value.
+#[must_use]
+pub fn mul_fast_route(out_len: usize) -> MulFastRoute {
+    if out_len <= tuning::active().polynomial().karatsuba_max_out_len() {
+        MulFastRoute::Karatsuba
+    } else {
+        MulFastRoute::Ntt
+    }
+}
 
 impl<F: TwoAdicField> FieldPoly<F> {
     /// Multiplies two polynomials over a [`TwoAdicField`] via a radix-2
@@ -2893,10 +2979,10 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
         return FieldPoly { coeffs: Vec::new() };
     }
     let out_len = a.coeffs.len() + b.coeffs.len() - 1;
-    if out_len <= tuning::active().polynomial().karatsuba_max_out_len() {
-        return a.mul(b);
+    match mul_fast_route(out_len) {
+        MulFastRoute::Karatsuba => a.mul(b),
+        MulFastRoute::Ntt => a.mul_ntt(b),
     }
-    a.mul_ntt(b)
 }
 
 // ---------------------------------------------------------------------
@@ -2932,6 +3018,30 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
 /// The schoolbook path remains the only implementation for non-`TwoAdicField`
 /// element types; [`FieldPoly::div_rem`] is unchanged.
 pub const DIV_REM_THRESHOLD: usize = 2048;
+
+/// The selected arm of the [`FieldPoly::div_rem_auto`] dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DivRemAutoRoute {
+    /// Use schoolbook long division.
+    Schoolbook,
+    /// Use Newton-iteration fast division.
+    Fast,
+}
+
+/// Reports the arm selected by [`FieldPoly::div_rem_auto`] for two operand
+/// coefficient counts.
+///
+/// The comparison uses the active `polynomial.div_rem_fast_min_len()` profile
+/// value and applies to both the dividend and divisor.
+#[must_use]
+pub fn div_rem_auto_route(dividend_len: usize, divisor_len: usize) -> DivRemAutoRoute {
+    let div_rem_fast_min_len = tuning::active().polynomial().div_rem_fast_min_len();
+    if dividend_len < div_rem_fast_min_len || divisor_len < div_rem_fast_min_len {
+        DivRemAutoRoute::Schoolbook
+    } else {
+        DivRemAutoRoute::Fast
+    }
+}
 
 impl<F: TwoAdicField> FieldPoly<F> {
     /// Formal-power-series inverse `g` of `self` modulo `x^k`, so that
@@ -3232,11 +3342,9 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// Matches the dispatched arm: `O((n − m) · m)` in the schoolbook
     /// regime and `O(M(n))` in the fast-division regime.
     pub fn div_rem_auto(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>) {
-        let threshold = tuning::active().polynomial().div_rem_fast_min_len();
-        if self.coeffs.len() < threshold || divisor.coeffs.len() < threshold {
-            self.div_rem(divisor)
-        } else {
-            self.div_rem_fast(divisor)
+        match div_rem_auto_route(self.coeffs.len(), divisor.coeffs.len()) {
+            DivRemAutoRoute::Schoolbook => self.div_rem(divisor),
+            DivRemAutoRoute::Fast => self.div_rem_fast(divisor),
         }
     }
 
@@ -3278,15 +3386,10 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// `M(n) = O(n log n)` through the NTT-backed fast multiplication
     /// / fast division primitives.
     pub fn batch_evaluate_auto(&self, points: &[F]) -> Vec<F> {
-        // Compare on `self.coeffs.len()` (coefficient count) so a
-        // polynomial of length equal to the active subproduct selector crosses the
-        // gate. Zero / constant polynomials have length 0 / 1, well
-        // below the threshold, and short-circuit to the naive path.
-        let threshold = tuning::active().polynomial().subproduct_min_len();
-        if points.len() < threshold || self.coeffs.len() < threshold {
-            return self.eval_batch(points);
+        match batch_evaluate_auto_route(self.coeffs.len(), points.len()) {
+            BatchEvaluateRoute::Horner => self.eval_batch(points),
+            BatchEvaluateRoute::SubproductTree => batch_evaluate_subproduct_auto(self, points),
         }
-        batch_evaluate_subproduct_auto(self, points)
     }
 }
 
