@@ -303,6 +303,12 @@ name = "sparse_rref_scorecard"
 harness = false
 required-features = ["rand"]
 
+# ── Issue `e8fe47f5` (epic `6dc81018`) — pinned selector non-regression set ──
+[[bench]]
+name = "selector_non_regression"
+harness = false
+required-features = ["simd"]
+
 # Hand-rolled CSV emitter that writes T1-compatible rows; sister of the
 # criterion suite above. Lives under `examples/` so it builds with
 # `cargo build --release --example bench_csv_emitter`.
@@ -333,4 +339,12 @@ required-features = ["simd"]
 # multiply/square via VPCLMULQDQ-on-YMM.
 [[test]]
 name = "simd_equiv_gf2m_batch"
+required-features = ["simd"]
+
+# ── Issue `e8fe47f5` (epic `6dc81018`) — runs the pinned selector
+# non-regression harness's own `#[cfg(test)]` module, which a
+# `harness = false` bench target does not otherwise execute. Gated on the same
+# feature as the bench: the bit-backend family has two arms only under `simd`.
+[[test]]
+name = "selector_non_regression_harness"
 required-features = ["simd"]
