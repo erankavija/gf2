@@ -1,7 +1,7 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 4.5,
+  "current_wave": 5,
   "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec — its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it — budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' — it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS.",
   "waves": [
     {
@@ -82,8 +82,8 @@
           "title": "Author the loop-free extraction proof-obligation factoring sketch",
           "classification": "design",
           "model": "claude-opus",
-          "status": "rework",
-          "notes": "doc-review blocking F1 at 05bfb244: REQ-01 says the lemma statements take the FiniteField dictionary as a parameter; they take FiniteFieldExt and project FiniteFieldInst. Rework restates every law to bind the FiniteField dictionary explicitly with a tie hypothesis. The sketch's own argument that projection satisfies REQ-01 is withdrawn per the no-argue discipline."
+          "status": "done",
+          "notes": "Closed at a3e58994 after 1 rework. doc-review passed, clean tree. REQ-05's second clause is now delivered: §3 states the trait-level laws as Lean statements binding the extracted FiniteField dictionary, §4 gives per-backend refinement for all six production carriers with scope and reasons, §5 the production path and strategy, §6 a four-stage elaboration receipt. Open obligations recorded in §7 are permitted by the issue's own criteria, not punts."
         }
       ],
       "note": "Own wave: created during execution to close REQ-05's second clause. Runs alone because Charon/Aeneas extraction plus a lake build is heavy CPU work and must not overlap the benchmark-mode waves 5, 7, 8."
@@ -96,8 +96,9 @@
           "short_id": "278acf3a",
           "title": "Record the pre-cutover baseline receipt",
           "classification": "implementation",
-          "model": "codex-luna",
-          "status": "pending"
+          "model": "claude-opus",
+          "status": "dispatched",
+          "notes": "Benchmark mode: dispatched to a Claude opus agent in the main checkout, not codex — codex's sandbox blocks the bench wrapper's privileged nice/affinity."
         }
       ]
     },
@@ -263,6 +264,11 @@
       "issue": "6dc81018",
       "finding": "dev/active/6dc81018-field-capability-dispatch/investigation.md states no citation anchor, unlike classification.md (2f2cbb37) and 220cab0b/design.md (05bc9c14). Its file:line citations describe the pre-epic tree with nothing saying so, so a reader cannot tell whether they are current.",
       "disposition": "open — resolve at epic completion by adding an anchor statement to investigation.md; do not rewrite its citations."
+    },
+    {
+      "issue": "1ac74567",
+      "finding": "proof-sketch §7.1/§7.2: the frobenius laws L5-L8b are conditional on LawfulPow and CharIs, neither of which the committed extraction can discharge for any concrete backend — LawfulPow because FiniteFieldExt is blanket-implemented so every carrier's pow field is the F4-poisoned default body, CharIs because fix-aeneas-sorrys.py rewrites every characteristic body to sorry. square's L1/L2 carry neither dependency.",
+      "disposition": "recorded, not a criterion violation: REQ-05 as narrowed by DEC-A asks for the obligations to be factored, and an obligation the extraction cannot yet discharge is exactly what a sketch records. Reconcile again at epic completion against REQ-05's wording before the holistic gate."
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
