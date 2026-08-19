@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 5,
-  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec — its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it — budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' — it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS.",
+  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec — its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it — budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' — it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex — same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run.",
   "waves": [
     {
       "wave_number": 1,
@@ -97,8 +97,8 @@
           "title": "Record the pre-cutover baseline receipt",
           "classification": "implementation",
           "model": "claude-opus",
-          "status": "dispatched",
-          "notes": "Benchmark mode: dispatched to a Claude opus agent in the main checkout, not codex — codex's sandbox blocks the bench wrapper's privileged nice/affinity."
+          "status": "rework-1",
+          "notes": "Benchmark mode: dispatched to a Claude opus agent in the main checkout, not codex — codex's sandbox blocks the bench wrapper's privileged nice/affinity. Run landed at 86a45d2e (850 rows, rev 0c072d73, binary SHA-256 recorded); the measurement is accepted. doc-review FAILED with two blocking findings, both documentation-only: F1 the pinned plan §4 still asserts a noise rationale the receipt falsifies for the across-build case; F2 the receipt defers the invalidated comparison methodology to an untracked 'lead decision'. Rework 1 dispatched to a Claude opus agent, doc edits only, no re-run."
         }
       ]
     },
@@ -120,6 +120,15 @@
           "classification": "implementation",
           "model": "codex-luna",
           "status": "pending"
+        },
+        {
+          "id": "51058f8e-6bad-443c-aa5b-14d430bcd0c7",
+          "short_id": "51058f8e",
+          "title": "Predeclare the across-build control arm for the post-cutover comparison",
+          "classification": "documentation",
+          "model": "claude-opus",
+          "status": "pending",
+          "notes": "Filed to close doc-review F2 on 278acf3a. Writes dev/benchmarks/tuning_profiles/ only, so it never conflicts with the two codex worktrees cutting selectors over in this wave. Must NOT be dispatched until 278acf3a's rework is committed: both touch selector-non-regression-plan-v1.md."
         }
       ]
     },
@@ -174,6 +183,12 @@
       "title": "Document the Frobenius exponent-overflow panic in FiniteFieldExt rustdoc",
       "reason": "proof-sketch §7.4 and doc-review advisory F2 both surfaced an undocumented panic path at crates/gf2-core/src/field/traits.rs:1128; 1ac74567 changes nothing under crates/, so it is filed rather than fixed in place (no-deferred-defects)",
       "parented": "86b9c719 (quality-documentation-tech-debt); outside epic 6dc81018"
+    },
+    {
+      "id": "51058f8e",
+      "title": "Predeclare the across-build control arm for the post-cutover comparison",
+      "reason": "doc-review F2 on 278acf3a: the receipt deferred the invalidated comparison methodology to an untracked 'lead decision'. no-deferred-defects requires a tracked owner before 50b47eae's gate relies on the tolerance.",
+      "parented": "50b47eae -> 51058f8e (transitively reduced; inside epic 6dc81018 via 50b47eae)"
     }
   ],
   "escalations": [
@@ -224,6 +239,18 @@
       "issue": "f35daec0",
       "date": "2026-08-19",
       "decision": "DEC-B3: the stateful active()/install() tests live in separate integration-test binaries with one #[test] fn each, because the OnceLock resolves once per process and the default-path and install-path assertions are mutually exclusive within one binary. DEC-B4: the pre-existing 'eight u64 words are 512 bytes' rustdoc error, previously routed to 0d819b62, was folded into f35daec0 instead — this is the change that moves the constant, so AGENTS.md's same-change stale-text rule attaches here."
+    },
+    {
+      "kind": "criterion-decision",
+      "issue": "6dc81018/REQ-04",
+      "date": "2026-08-19",
+      "decision": "DEC-C approved by owner via AskUserQuestion (option B). The pre-cutover baseline falsified plan §4's noise rationale: across two builds of behaviourally unchanged selector code, 9 of 34 cells fall outside ±5 %, worst 18.1 % = 3.6 × τ_cell, and the comparison τ_cell gates is necessarily across builds. Resolution: plan v1 stays FROZEN and unmodified — §2 cell set, §3 protocol, §4 tolerance values, §5 comparison rule all stand, no schema token bump, the pre-cutover baseline stays valid. 50b47eae's session additionally measures a control rebuild of the pre-cutover baseline revision under the same wrapper, protocol, and schema token. The control arm enters NO verdict; it is evidence for the tracked rework 50b47eae REQ-02 already requires when an excursion occurs. Predeclared before any post-cutover number exists by issue 51058f8e. Options A (literal, no evidence to adjudicate a spurious trip) and C (re-pin to v2, which would discard the baseline) were declined."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "5ecc9bf8",
+      "date": "2026-08-20",
+      "decision": "DEC-B2 resolved against 5ecc9bf8's own criteria: REQ-01 asks for an emitted profile artifact the loader accepts, REQ-02 for the workflow documented from invocation to committing the emitted profile. Neither requires a canonical committed calibrated profile for the project bench host, so this issue emits and documents but commits no canonical host profile."
     }
   ],
   "rework_counts": {
@@ -232,7 +259,8 @@
     "220cab0b": 1,
     "e8fe47f5": 1,
     "f35daec0": 2,
-    "1ac74567": 1
+    "1ac74567": 1,
+    "278acf3a": 1
   },
   "surfaced_pitfalls": [
     {
@@ -269,6 +297,11 @@
       "issue": "1ac74567",
       "finding": "proof-sketch §7.1/§7.2: the frobenius laws L5-L8b are conditional on LawfulPow and CharIs, neither of which the committed extraction can discharge for any concrete backend — LawfulPow because FiniteFieldExt is blanket-implemented so every carrier's pow field is the F4-poisoned default body, CharIs because fix-aeneas-sorrys.py rewrites every characteristic body to sorry. square's L1/L2 carry neither dependency.",
       "disposition": "recorded, not a criterion violation: REQ-05 as narrowed by DEC-A asks for the obligations to be factored, and an obligation the extraction cannot yet discharge is exactly what a sketch records. Reconcile again at epic completion against REQ-05's wording before the holistic gate."
+    },
+    {
+      "issue": "278acf3a",
+      "finding": "Across-build variation reaches 18.1 % at small-buffer cells, 3.6 × τ_cell, while plan §4 justifies τ_cell from within-build dispersion only. The gated comparison is across builds, so a zero-cost cutover can trip a cell and a real cost can be masked.",
+      "disposition": "CLOSED by DEC-C: recorded in plan §4 as a falsification record (278acf3a rework F1, tolerance unchanged) and owned by tracked issue 51058f8e, which predeclares the control arm before any post-cutover measurement exists."
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
