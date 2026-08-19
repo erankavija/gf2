@@ -1,5 +1,7 @@
 use gf2_core::field::poly::{
-    DIV_REM_THRESHOLD, KARATSUBA_THRESHOLD, NTT_THRESHOLD, SUBPRODUCT_THRESHOLD,
+    batch_evaluate_auto_route, batch_evaluate_route, div_rem_auto_route, mul_fast_route, mul_route,
+    BatchEvaluateRoute, DivRemAutoRoute, MulFastRoute, MulRoute, DIV_REM_THRESHOLD,
+    KARATSUBA_THRESHOLD, NTT_THRESHOLD, SUBPRODUCT_THRESHOLD,
 };
 use gf2_core::tuning::{self, AlreadyResolved, TuningProfile};
 
@@ -27,6 +29,42 @@ fn conservative_profile_resolves_once_and_rejects_late_install() {
         SUBPRODUCT_THRESHOLD,
         "subproduct_min_len uses the conservative default"
     );
+
+    assert_eq!(
+        mul_route(KARATSUBA_THRESHOLD - 1, KARATSUBA_THRESHOLD - 1),
+        MulRoute::Schoolbook
+    );
+    assert_eq!(
+        mul_route(KARATSUBA_THRESHOLD, KARATSUBA_THRESHOLD),
+        MulRoute::Karatsuba
+    );
+    assert_eq!(mul_fast_route(NTT_THRESHOLD), MulFastRoute::Karatsuba);
+    assert_eq!(mul_fast_route(NTT_THRESHOLD + 1), MulFastRoute::Ntt);
+    assert_eq!(
+        div_rem_auto_route(DIV_REM_THRESHOLD - 1, DIV_REM_THRESHOLD - 1),
+        DivRemAutoRoute::Schoolbook
+    );
+    assert_eq!(
+        div_rem_auto_route(DIV_REM_THRESHOLD, DIV_REM_THRESHOLD),
+        DivRemAutoRoute::Fast
+    );
+    assert_eq!(
+        batch_evaluate_route(SUBPRODUCT_THRESHOLD - 1, SUBPRODUCT_THRESHOLD - 1),
+        BatchEvaluateRoute::Horner
+    );
+    assert_eq!(
+        batch_evaluate_route(SUBPRODUCT_THRESHOLD, SUBPRODUCT_THRESHOLD),
+        BatchEvaluateRoute::SubproductTree
+    );
+    assert_eq!(
+        batch_evaluate_auto_route(SUBPRODUCT_THRESHOLD - 1, SUBPRODUCT_THRESHOLD - 1),
+        BatchEvaluateRoute::Horner
+    );
+    assert_eq!(
+        batch_evaluate_auto_route(SUBPRODUCT_THRESHOLD, SUBPRODUCT_THRESHOLD),
+        BatchEvaluateRoute::SubproductTree
+    );
+
     let first = tuning::active();
     let second = tuning::active();
     assert_eq!(first, second);
