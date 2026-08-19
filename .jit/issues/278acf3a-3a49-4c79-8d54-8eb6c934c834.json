@@ -44,7 +44,13 @@
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-19T18:19:38.309492341Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "278acf3a-3a49-4c79-8d54-8eb6c934c834",
   "labels": [
     "type:task",
@@ -55,5 +61,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the pre-cutover baseline receipt",
-  "updated_at": "2026-08-19T18:13:21.347093470Z"
+  "updated_at": "2026-08-19T18:19:38.309492341Z"
 }
