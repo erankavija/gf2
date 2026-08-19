@@ -55,12 +55,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-19T15:33:00.046491593Z",
+      "updated_at": "2026-08-19T16:13:56.323486198Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "passed",
-      "updated_at": "2026-08-19T15:40:15.755972330Z",
+      "status": "failed",
+      "updated_at": "2026-08-19T16:16:55.176187031Z",
       "updated_by": "auto:executor"
     }
   },
@@ -74,5 +74,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Implement the tuning-profile type, loader, and conservative defaults",
-  "updated_at": "2026-08-19T15:40:15.755972330Z"
+  "updated_at": "2026-08-19T16:16:55.176187031Z"
 }
