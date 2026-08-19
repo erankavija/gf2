@@ -16,10 +16,10 @@
 //!   "provenance": {"kind": "inherited"},
 //!   "selectors": {"bit_backend": {"simd_min_words": 16}}
 //! }
-//! "#)?;
-//! tuning::install(profile)?;
+//! "#)
+//!     .expect("example profile is valid");
+//! tuning::install(profile).expect("profile has not been resolved");
 //! assert_eq!(tuning::active().bit_backend().simd_min_words(), 16);
-//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! # }
 //! ```
 //!
@@ -406,6 +406,15 @@ pub struct BitBackendSelectors {
 }
 
 impl BitBackendSelectors {
+    /// Builds a validated bit-backend selector family.
+    ///
+    /// Every `usize` word count is admissible, including zero, because zero
+    /// means that SIMD is eligible for every buffer when the feature is
+    /// available.
+    pub fn try_new(simd_min_words: usize) -> Result<Self, ProfileError> {
+        Ok(Self { simd_min_words })
+    }
+
     /// Returns the minimum word count for the SIMD backend.
     pub fn simd_min_words(&self) -> usize {
         self.simd_min_words
@@ -422,6 +431,48 @@ pub struct PolynomialSelectors {
 }
 
 impl PolynomialSelectors {
+    /// Builds a validated polynomial selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when a bounded threshold
+    /// that must be positive is zero. The Karatsuba output-length ceiling may
+    /// be zero.
+    pub fn try_new(
+        karatsuba_min_degree: usize,
+        karatsuba_max_out_len: usize,
+        div_rem_fast_min_len: usize,
+        subproduct_min_len: usize,
+    ) -> Result<Self, ProfileError> {
+        if karatsuba_min_degree == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Polynomial,
+                ProfileField::KaratsubaMinDegree,
+                karatsuba_min_degree as u64,
+            ));
+        }
+        if div_rem_fast_min_len == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Polynomial,
+                ProfileField::DivRemFastMinLen,
+                div_rem_fast_min_len as u64,
+            ));
+        }
+        if subproduct_min_len == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Polynomial,
+                ProfileField::SubproductMinLen,
+                subproduct_min_len as u64,
+            ));
+        }
+        Ok(Self {
+            karatsuba_min_degree,
+            karatsuba_max_out_len,
+            div_rem_fast_min_len,
+            subproduct_min_len,
+        })
+    }
+
     /// Returns the minimum operand degree for Karatsuba multiplication.
     pub fn karatsuba_min_degree(&self) -> usize {
         self.karatsuba_min_degree
@@ -499,36 +550,22 @@ impl TuningProfile {
     ///
     /// # Errors
     ///
-    /// Returns [`ProfileError::SelectorOutOfRange`] for a zero-valued bounded
-    /// threshold or calibrated protocol count.
+    /// Returns [`ProfileError::SelectorOutOfRange`] for a zero-valued
+    /// calibrated protocol count. Selector-family ranges are validated by
+    /// their respective constructors before this method receives them.
     pub fn try_new(
         id: ProfileId,
         provenance: Provenance,
-        simd_min_words: usize,
-        karatsuba_min_degree: usize,
-        karatsuba_max_out_len: usize,
-        div_rem_fast_min_len: usize,
-        subproduct_min_len: usize,
+        bit_backend: BitBackendSelectors,
+        polynomial: PolynomialSelectors,
     ) -> Result<Self, ProfileError> {
-        validate_selectors(
-            simd_min_words,
-            karatsuba_min_degree,
-            karatsuba_max_out_len,
-            div_rem_fast_min_len,
-            subproduct_min_len,
-        )?;
         validate_provenance(&provenance)?;
         Ok(Self {
             schema_version: SchemaVersion(SchemaVersion::SUPPORTED),
             id,
             provenance,
-            bit_backend: BitBackendSelectors { simd_min_words },
-            polynomial: PolynomialSelectors {
-                karatsuba_min_degree,
-                karatsuba_max_out_len,
-                div_rem_fast_min_len,
-                subproduct_min_len,
-            },
+            bit_backend,
+            polynomial,
         })
     }
 
@@ -558,11 +595,11 @@ impl TuningProfile {
             Some(Some(polynomial)) => polynomial,
             Some(None) => return Err(ProfileError::Malformed),
         };
-        Self::try_new(
-            id,
-            provenance,
+        let bit_backend = BitBackendSelectors::try_new(
             optional(bit_backend.simd_min_words)?
                 .unwrap_or(Self::CONSERVATIVE.bit_backend.simd_min_words),
+        )?;
+        let polynomial = PolynomialSelectors::try_new(
             optional(polynomial.karatsuba_min_degree)?
                 .unwrap_or(Self::CONSERVATIVE.polynomial.karatsuba_min_degree),
             optional(polynomial.karatsuba_max_out_len)?
@@ -571,8 +608,8 @@ impl TuningProfile {
                 .unwrap_or(Self::CONSERVATIVE.polynomial.div_rem_fast_min_len),
             optional(polynomial.subproduct_min_len)?
                 .unwrap_or(Self::CONSERVATIVE.polynomial.subproduct_min_len),
-        )
-        .map(|mut profile| {
+        )?;
+        Self::try_new(id, provenance, bit_backend, polynomial).map(|mut profile| {
             profile.schema_version = schema_version;
             profile
         })
@@ -587,7 +624,7 @@ impl TuningProfile {
         let output = JsonProfileOut {
             schema_version: self.schema_version.value(),
             profile_id: self.id.as_str().to_owned(),
-            provenance: JsonProvenanceOut::from(&self.provenance),
+            provenance: JsonProvenance::from(&self.provenance),
             selectors: JsonSelectorsOut {
                 bit_backend: JsonBitBackendOut {
                     simd_min_words: self.bit_backend.simd_min_words,
@@ -711,39 +748,6 @@ fn is_rfc3339_utc(value: &str) -> bool {
         && second <= 60
 }
 
-fn validate_selectors(
-    simd_min_words: usize,
-    karatsuba_min_degree: usize,
-    karatsuba_max_out_len: usize,
-    div_rem_fast_min_len: usize,
-    subproduct_min_len: usize,
-) -> Result<(), ProfileError> {
-    let _ = simd_min_words;
-    let _ = karatsuba_max_out_len;
-    if karatsuba_min_degree == 0 {
-        return Err(out_of_range(
-            ProfileFamily::Polynomial,
-            ProfileField::KaratsubaMinDegree,
-            karatsuba_min_degree as u64,
-        ));
-    }
-    if div_rem_fast_min_len == 0 {
-        return Err(out_of_range(
-            ProfileFamily::Polynomial,
-            ProfileField::DivRemFastMinLen,
-            div_rem_fast_min_len as u64,
-        ));
-    }
-    if subproduct_min_len == 0 {
-        return Err(out_of_range(
-            ProfileFamily::Polynomial,
-            ProfileField::SubproductMinLen,
-            subproduct_min_len as u64,
-        ));
-    }
-    Ok(())
-}
-
 fn validate_provenance(provenance: &Provenance) -> Result<(), ProfileError> {
     if let Provenance::Calibrated {
         executions,
@@ -784,85 +788,85 @@ struct JsonProfile {
 }
 
 #[cfg(feature = "tuning-profile")]
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct JsonProvenance {
-    kind: String,
-    measured_at: Option<String>,
-    source_revision: Option<String>,
-    source_dirty: Option<bool>,
-    harness: Option<String>,
-    harness_schema: Option<String>,
-    binary_sha256: Option<String>,
-    toolchain: Option<String>,
-    host: Option<String>,
-    cpu_model: Option<String>,
-    cpu_features: Option<Vec<String>>,
-    os_kernel: Option<String>,
-    governor: Option<String>,
-    lock_wrapper: Option<String>,
-    lock_file: Option<String>,
-    cpu_affinity: Option<String>,
-    executions: Option<u64>,
-    repetitions: Option<u64>,
-    target_ms: Option<u64>,
-    receipt: Option<String>,
+#[allow(clippy::large_enum_variant)]
+#[derive(Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "lowercase", deny_unknown_fields)]
+enum JsonProvenance {
+    Inherited {},
+    Calibrated {
+        measured_at: Option<String>,
+        source_revision: Option<String>,
+        source_dirty: Option<bool>,
+        harness: Option<String>,
+        harness_schema: Option<String>,
+        binary_sha256: Option<String>,
+        toolchain: Option<String>,
+        host: Option<String>,
+        cpu_model: Option<String>,
+        cpu_features: Option<Vec<String>>,
+        os_kernel: Option<String>,
+        governor: Option<String>,
+        lock_wrapper: Option<String>,
+        lock_file: Option<String>,
+        cpu_affinity: Option<String>,
+        executions: Option<u64>,
+        repetitions: Option<u64>,
+        target_ms: Option<u64>,
+        receipt: Option<String>,
+    },
 }
 
 #[cfg(feature = "tuning-profile")]
 impl JsonProvenance {
     fn into_provenance(self) -> Result<Provenance, ProfileError> {
-        if self.kind == "inherited" {
-            if self.measured_at.is_some()
-                || self.source_revision.is_some()
-                || self.source_dirty.is_some()
-                || self.harness.is_some()
-                || self.harness_schema.is_some()
-                || self.binary_sha256.is_some()
-                || self.toolchain.is_some()
-                || self.host.is_some()
-                || self.cpu_model.is_some()
-                || self.cpu_features.is_some()
-                || self.os_kernel.is_some()
-                || self.governor.is_some()
-                || self.lock_wrapper.is_some()
-                || self.lock_file.is_some()
-                || self.cpu_affinity.is_some()
-                || self.executions.is_some()
-                || self.repetitions.is_some()
-                || self.target_ms.is_some()
-                || self.receipt.is_some()
-            {
-                return Err(ProfileError::Malformed);
+        match self {
+            Self::Inherited {} => Ok(Provenance::Inherited),
+            Self::Calibrated {
+                measured_at,
+                source_revision,
+                source_dirty,
+                harness,
+                harness_schema,
+                binary_sha256,
+                toolchain,
+                host,
+                cpu_model,
+                cpu_features,
+                os_kernel,
+                governor,
+                lock_wrapper,
+                lock_file,
+                cpu_affinity,
+                executions,
+                repetitions,
+                target_ms,
+                receipt,
+            } => {
+                let provenance = Provenance::Calibrated {
+                    measured_at: Rfc3339Utc::parse(&required(measured_at)?)?,
+                    source_revision: GitRevision::parse(&required(source_revision)?)?,
+                    source_dirty: required(source_dirty)?,
+                    harness: RepoRelPath::parse(&required(harness)?)?,
+                    harness_schema: HarnessSchema::parse(&required(harness_schema)?)?,
+                    binary_sha256: Sha256::parse(&required(binary_sha256)?)?,
+                    toolchain: required(toolchain)?,
+                    host: required(host)?,
+                    cpu_model: required(cpu_model)?,
+                    cpu_features: required(cpu_features)?,
+                    os_kernel: required(os_kernel)?,
+                    governor: required(governor)?,
+                    lock_wrapper: RepoRelPath::parse(&required(lock_wrapper)?)?,
+                    lock_file: required(lock_file)?,
+                    cpu_affinity: required(cpu_affinity)?,
+                    executions: required(executions)?,
+                    repetitions: required(repetitions)?,
+                    target_ms: required(target_ms)?,
+                    receipt: RepoRelPath::parse(&required(receipt)?)?,
+                };
+                validate_provenance(&provenance)?;
+                Ok(provenance)
             }
-            return Ok(Provenance::Inherited);
         }
-        if self.kind != "calibrated" {
-            return Err(ProfileError::Malformed);
-        }
-        let provenance = Provenance::Calibrated {
-            measured_at: Rfc3339Utc::parse(&required(self.measured_at)?)?,
-            source_revision: GitRevision::parse(&required(self.source_revision)?)?,
-            source_dirty: required(self.source_dirty)?,
-            harness: RepoRelPath::parse(&required(self.harness)?)?,
-            harness_schema: HarnessSchema::parse(&required(self.harness_schema)?)?,
-            binary_sha256: Sha256::parse(&required(self.binary_sha256)?)?,
-            toolchain: required(self.toolchain)?,
-            host: required(self.host)?,
-            cpu_model: required(self.cpu_model)?,
-            cpu_features: required(self.cpu_features)?,
-            os_kernel: required(self.os_kernel)?,
-            governor: required(self.governor)?,
-            lock_wrapper: RepoRelPath::parse(&required(self.lock_wrapper)?)?,
-            lock_file: required(self.lock_file)?,
-            cpu_affinity: required(self.cpu_affinity)?,
-            executions: required(self.executions)?,
-            repetitions: required(self.repetitions)?,
-            target_ms: required(self.target_ms)?,
-            receipt: RepoRelPath::parse(&required(self.receipt)?)?,
-        };
-        validate_provenance(&provenance)?;
-        Ok(provenance)
     }
 }
 
@@ -910,44 +914,15 @@ fn optional<T>(value: Option<Option<T>>) -> Result<Option<T>, ProfileError> {
 struct JsonProfileOut {
     schema_version: u32,
     profile_id: String,
-    provenance: JsonProvenanceOut,
+    provenance: JsonProvenance,
     selectors: JsonSelectorsOut,
 }
 
 #[cfg(feature = "tuning-profile")]
-#[allow(clippy::large_enum_variant)]
-#[derive(Serialize)]
-#[serde(tag = "kind", rename_all = "lowercase")]
-enum JsonProvenanceOut {
-    Inherited,
-    Calibrated {
-        measured_at: String,
-        source_revision: String,
-        source_dirty: bool,
-        harness: String,
-        harness_schema: String,
-        binary_sha256: String,
-        toolchain: String,
-        host: String,
-        cpu_model: String,
-        cpu_features: Vec<String>,
-        os_kernel: String,
-        governor: String,
-        lock_wrapper: String,
-        lock_file: String,
-        cpu_affinity: String,
-        executions: u64,
-        repetitions: u64,
-        target_ms: u64,
-        receipt: String,
-    },
-}
-
-#[cfg(feature = "tuning-profile")]
-impl From<&Provenance> for JsonProvenanceOut {
+impl From<&Provenance> for JsonProvenance {
     fn from(provenance: &Provenance) -> Self {
         match provenance {
-            Provenance::Inherited => Self::Inherited,
+            Provenance::Inherited => Self::Inherited {},
             Provenance::Calibrated {
                 measured_at,
                 source_revision,
@@ -969,25 +944,25 @@ impl From<&Provenance> for JsonProvenanceOut {
                 target_ms,
                 receipt,
             } => Self::Calibrated {
-                measured_at: measured_at.as_str().to_owned(),
-                source_revision: source_revision.as_str().to_owned(),
-                source_dirty: *source_dirty,
-                harness: harness.as_str().to_owned(),
-                harness_schema: harness_schema.as_str().to_owned(),
-                binary_sha256: binary_sha256.as_str().to_owned(),
-                toolchain: toolchain.clone(),
-                host: host.clone(),
-                cpu_model: cpu_model.clone(),
-                cpu_features: cpu_features.clone(),
-                os_kernel: os_kernel.clone(),
-                governor: governor.clone(),
-                lock_wrapper: lock_wrapper.as_str().to_owned(),
-                lock_file: lock_file.clone(),
-                cpu_affinity: cpu_affinity.clone(),
-                executions: *executions,
-                repetitions: *repetitions,
-                target_ms: *target_ms,
-                receipt: receipt.as_str().to_owned(),
+                measured_at: Some(measured_at.as_str().to_owned()),
+                source_revision: Some(source_revision.as_str().to_owned()),
+                source_dirty: Some(*source_dirty),
+                harness: Some(harness.as_str().to_owned()),
+                harness_schema: Some(harness_schema.as_str().to_owned()),
+                binary_sha256: Some(binary_sha256.as_str().to_owned()),
+                toolchain: Some(toolchain.clone()),
+                host: Some(host.clone()),
+                cpu_model: Some(cpu_model.clone()),
+                cpu_features: Some(cpu_features.clone()),
+                os_kernel: Some(os_kernel.clone()),
+                governor: Some(governor.clone()),
+                lock_wrapper: Some(lock_wrapper.as_str().to_owned()),
+                lock_file: Some(lock_file.clone()),
+                cpu_affinity: Some(cpu_affinity.clone()),
+                executions: Some(*executions),
+                repetitions: Some(*repetitions),
+                target_ms: Some(*target_ms),
+                receipt: Some(receipt.as_str().to_owned()),
             },
         }
     }
@@ -1121,6 +1096,18 @@ mod tests {
         for text in cases {
             assert!(TuningProfile::from_json(&text).is_err(), "{text}");
         }
+    }
+
+    #[test]
+    fn inherited_provenance_rejects_calibrated_fields() {
+        let text = inherited_document("{}").replace(
+            "\"provenance\":{\"kind\":\"inherited\"}",
+            "\"provenance\":{\"kind\":\"inherited\",\"executions\":1}",
+        );
+        assert_eq!(
+            TuningProfile::from_json(&text).unwrap_err(),
+            ProfileError::Malformed
+        );
     }
 
     #[test]
