@@ -21,7 +21,7 @@
           "title": "Spike Charon extraction of a trait-generic field algorithm",
           "classification": "research",
           "model": "opus",
-          "status": "rework-2"
+          "status": "rework-3-approved"
         }
       ]
     },
@@ -163,10 +163,16 @@
       "issue": "toolchain-upgrade",
       "date": "2026-08-19",
       "decision": "Charon/Aeneas upstream migration tracked as standalone task 4dd5372a; this epic stays on the pinned pair; host binaries not swapped."
+    },
+    {
+      "kind": "rework-exhausted",
+      "issue": "34d85cb9",
+      "date": "2026-08-19",
+      "decision": "Owner approved one more rework round via AskUserQuestion (counter reset). Scope: fix blocking F1/F2 from research-review round 3 plus a full sweep verifying every quantitative claim in the spike record against its committed receipt. Advisories not required (owner declined the 'also fix advisories' option)."
     }
   ],
   "rework_counts": {
-    "34d85cb9": 2
+    "34d85cb9": 0
   },
   "surfaced_pitfalls": [],
   "started_at": "2026-08-18T00:00:00Z"
