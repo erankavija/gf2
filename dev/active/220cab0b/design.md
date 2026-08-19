@@ -268,21 +268,40 @@ literal. There is then one definition site per value, which is what
 
 | Family | Field | Value | Defining constant |
 |---|---|---|---|
-| `bit_backend` | `simd_min_words` | 8 | `_SIMD_THRESHOLD`, `crates/gf2-core/src/kernels/backend.rs:96` |
+| `bit_backend` | `simd_min_words` | 8 | `SIMD_MIN_WORDS_DEFAULT`, hoisted in `crates/gf2-core/src/kernels/backend.rs` from `_SIMD_THRESHOLD` at `:96` |
 | `polynomial` | `karatsuba_min_degree` | 32 | `KARATSUBA_THRESHOLD`, `crates/gf2-core/src/field/poly.rs:2147` |
 | `polynomial` | `karatsuba_max_out_len` | 128 | `NTT_THRESHOLD`, `crates/gf2-core/src/field/poly.rs:2711` |
 | `polynomial` | `div_rem_fast_min_len` | 2048 | `DIV_REM_THRESHOLD`, `crates/gf2-core/src/field/poly.rs:2909` |
 | `polynomial` | `subproduct_min_len` | 4096 | `SUBPRODUCT_THRESHOLD`, `crates/gf2-core/src/field/poly.rs:2192` |
 
-The four `poly.rs` constants stay `pub` and keep their names. The module's own
-dispatch and complexity tables link them throughout
-`crates/gf2-core/src/field/poly.rs:63-412`, and tests size operands relative to
-them at `:4433`, `:4555`, `:4629`, and `:4936`. Their role is default-value
-definition, so their rustdoc is rewritten in the poly cutover to say so and to
-name the profile field that holds the live value — the stale-text sweep
-AGENTS.md requires of a change that invalidates a doc comment.
-`_SIMD_THRESHOLD` is function-local and private; it moves to a module-level
-private `const` so the default table can name it.
+A default's definition site is the selector's own module, and its visibility is
+the narrowest that lets `crate::tuning` name it. `CONSERVATIVE` is a `const` in
+`crate::tuning`, which is not a descendant of any selector module, so an item
+private to a selector module is out of scope for it. The visibility of each
+default is therefore part of this design rather than an implementation detail.
+
+The four `poly.rs` constants stay `pub` and keep their names, so they need no
+visibility change. The module's own dispatch and complexity tables link them
+throughout `crates/gf2-core/src/field/poly.rs:63-412`, and tests size operands
+relative to them at `:4433`, `:4555`, `:4629`, and `:4936`. Their role is
+default-value definition, so their rustdoc is rewritten in the poly cutover to
+say so and to name the profile field that holds the live value — the stale-text
+sweep AGENTS.md requires of a change that invalidates a doc comment.
+
+The bit-backend constant needs both a hoist and a visibility widening.
+`_SIMD_THRESHOLD` is declared inside the body of `select_backend_for_size` at
+`crates/gf2-core/src/kernels/backend.rs:96`, so today it is nameable only
+within that function. It becomes a module-level
+`pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize` in the same file, which
+`CONSERVATIVE` names as `crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT`.
+`pub(crate)` is the narrowest visibility that makes that path resolve; `pub`
+would add public API with no external consumer, since the constant is
+function-local today and nothing outside the crate can name it. The rename
+drops the leading underscore, which marks an item that may go unused and is
+accurate only while the constant is read solely inside the
+`#[cfg(feature = "simd")]` arm at `:98-99`; once `CONSERVATIVE` names it
+unconditionally the marker is wrong. The new name matches the profile field
+`simd_min_words`.
 
 `conservative.json` is a projection of `CONSERVATIVE`, not a second source. A
 test under the `tuning-profile` feature asserts
@@ -513,16 +532,28 @@ environment read; today the crate's only `std::env::var` call is inside a test
 at `crates/gf2-core/src/field/ple.rs:3307`. Harnesses and binaries that want
 env-driven selection read the variable themselves and call `install`.
 
-### D3 — The threshold constants stay public and become the default definitions
+### D3 — Each default is defined at its selector's own module
 
-The rejected alternative is to make the four `poly.rs` constants private and
-expose the defaults only through the profile type. It is rejected because it
-breaks the public API for no behavioural gain and churns the roughly forty
-rustdoc links across `crates/gf2-core/src/field/poly.rs:63-412` that resolve to
-them. Keeping them, with each named exactly once by `CONSERVATIVE`, gives one
-definition per value and satisfies `@/inv/convention-convergence`: the constant
-is the default's single definition site, and the profile accessor is the single
-selection authority.
+Two alternatives were rejected.
+
+**Making the four `poly.rs` constants private** and exposing the defaults only
+through the profile type breaks the public API for no behavioural gain, and
+churns the rustdoc links across `crates/gf2-core/src/field/poly.rs:63-412` that
+resolve to them.
+
+**Moving the bit-backend default into `crate::tuning`** avoids widening any
+visibility, since `CONSERVATIVE` would then hold the literal directly. It is
+rejected because it splits the rule: the polynomial defaults must stay at their
+family site, so a bit-backend default living in `crate::tuning` would give two
+conventions for where a default is defined, and a reader of
+`select_backend_for_size` would find no statement of its default in the file
+that implements it. `pub(crate)` on a hoisted constant costs one visibility
+keyword and keeps one convention.
+
+Keeping each default at its selector's module, named exactly once by
+`CONSERVATIVE`, gives one definition per value and satisfies
+`@/inv/convention-convergence`: the constant is the default's single definition
+site, and the profile accessor is the single selection authority.
 
 ## 4. Integration points
 
@@ -539,6 +570,11 @@ The classification's pilot bit-backend constant is `_SIMD_THRESHOLD` = 8 at
 | Constant it replaces | `_SIMD_THRESHOLD`, `crates/gf2-core/src/kernels/backend.rs:96` |
 | Profile field | `bit_backend.simd_min_words` |
 | Comparison to preserve | `_size >= threshold`, `crates/gf2-core/src/kernels/backend.rs:99` |
+
+The constant is not deleted: §2.5 hoists it out of the function body to a
+module-level `pub(crate) const SIMD_MIN_WORDS_DEFAULT`, where it defines the
+conservative default and nothing else. That hoist lands in step 1 of §6, before
+this cutover, so this issue changes only the comparison's right-hand side.
 
 The profile read goes **inside** the `#[cfg(feature = "simd")]` arm at
 `crates/gf2-core/src/kernels/backend.rs:98`, so a build without the `simd`
@@ -609,7 +645,10 @@ hold.
    admissible range** (§2.1), so its cutover stays a substitution with the
    comparison operator untouched.
 4. **Every new default is defined by naming the existing in-source constant**,
-   never by restating its literal (§2.5).
+   never by restating its literal, at that constant's own module and with the
+   narrowest visibility that lets `crate::tuning` name it — `pub(crate)` for a
+   crate-internal constant, unchanged for one already `pub` for independent
+   reasons (§2.5).
 5. **The calibration sweep is extended before any committed profile claims the
    new field.** Until the sweep covers it, a committed profile omits the field
    and inherits the default; a profile that carries an uncalibrated value is a
@@ -627,8 +666,12 @@ matches the epic plan's dependency graph.
 1. **`f35daec0` — profile type, loader, conservative defaults.** Add
    `crates/gf2-core/src/tuning/` with the types and API of §2.4, the semantic
    types, the §2.1 validation, and `CONSERVATIVE` defined by naming the
-   constants of §2.5 (moving `_SIMD_THRESHOLD` from function-local to
-   module-level private). Add the `tuning-profile` feature. Commit
+   constants of §2.5. This includes hoisting `_SIMD_THRESHOLD` out of the body
+   of `select_backend_for_size` to a module-level
+   `pub(crate) const SIMD_MIN_WORDS_DEFAULT` in
+   `crates/gf2-core/src/kernels/backend.rs`, so `CONSERVATIVE` can name it;
+   `select_backend_for_size` reads the hoisted constant and its selection
+   behaviour is unchanged by this step. Add the `tuning-profile` feature. Commit
    `crates/gf2-core/data/tuning-profiles/conservative.json` and the
    round-trip test that ties it to `CONSERVATIVE`, plus the directory-glob
    validation test. **No selector site changes in this issue** — the crate's
@@ -691,7 +734,3 @@ Open questions for the epic lead:
    wants a default calibrated profile for the project's own benchmark host,
    that is a policy decision about which host is canonical, and it belongs to
    the lead rather than to this design.
-3. **`_SIMD_THRESHOLD` visibility.** Step 1 promotes it from function-local to
-   module-level private so `CONSERVATIVE` can name it. If the epic prefers it
-   public for symmetry with the four `poly.rs` constants, that is a public-API
-   addition and wants an explicit decision.
