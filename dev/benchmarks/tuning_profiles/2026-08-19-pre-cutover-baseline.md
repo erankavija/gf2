@@ -363,5 +363,12 @@ that adds a real cost can be masked at them.
 Per §7 and `@/inv/falsification-preserved` this is recorded rather than
 accommodated: the tolerance stays at its predeclared values, the pinned set
 keeps all thirty-four cells, and this run stands as taken rather than being
-repeated until it agrees. The finding bears on how `50b47eae`'s comparison is
-read, which is a lead decision rather than one this receipt takes.
+repeated until it agrees. How `50b47eae`'s comparison is read is tracked by
+issue `51058f8e`, which predeclares that reading before any post-cutover number
+exists. Owner decision DEC-C of 2026-08-19 settles its shape: plan v1 stays
+frozen and unmodified, its §4 tolerance and §5 comparison rule authoritative at
+their predeclared values, and `50b47eae`'s session additionally measures a
+control rebuild of this baseline's revision under the same wrapper, protocol and
+schema token, so a per-cell excursion carries concurrent across-build evidence
+into the tracked rework `50b47eae` REQ-02 already requires. The control arm
+enters no verdict.

@@ -188,7 +188,8 @@ Both must hold; either alone failing fails the comparison.
 five-repetition, 250 ms protocol. Its two well-behaved backends record
 across-execution coefficients of variation of 0.045 %–0.5 %. τ_cell at 5 % is an
 order of magnitude above the top of that band, so a single cell trips it only on
-a real cost rather than on process-to-process noise.
+a real cost rather than on process-to-process noise. (Falsified across builds;
+see the falsification record below.)
 
 τ_set is deliberately much tighter than τ_cell because the two rules catch
 different failures. The cutover adds a fixed per-call cost at every selection
@@ -204,7 +205,39 @@ independent cohorts of identical pre-cutover code, where the true ratio is 1, an
 reports the noise the tolerance has to absorb: the widest per-cell deviation is
 1.91 % and the geometric mean sits at 1.000810. τ_cell therefore carries a
 factor of 2.6 over the worst observed cell and τ_set a factor of 25 over the
-observed set statistic, so neither rule is marginal at its declared value.
+observed set statistic, so neither rule is marginal at its declared value. (Both
+cohorts are one build; see the falsification record below.)
+
+**Falsification record: the grounding is a within-build measurement.** The
+provenance dispersion above is the spread of five executions of one bench
+binary, and the two verification cohorts run one bench binary back to back
+inside a single lock session, so 0.045 %–0.5 % and 1.91 % each bound the spread
+of a single build. The pre-cutover baseline of `278acf3a`,
+[`2026-08-19-pre-cutover-baseline.md`](2026-08-19-pre-cutover-baseline.md)
+§Falsification record, measures the spread across two builds of behaviourally
+unchanged selector code, taken on this host under this wrapper, affinity,
+governor, toolchain and protocol: nine of the thirty-four pinned cells fall
+outside ±5 %, the widest `bit_backend/or_inplace/words=1` at 18.1 %, which is
+3.6 × τ_cell. Both verification cohorts reproduce the per-cell split, seven of
+the nine cells to within 0.1 %, so the effect tracks the binary rather than
+run-time host state.
+
+The comparison τ_cell gates — that baseline against `50b47eae`'s post-cutover
+receipt — is necessarily across two builds, so the inference from within-build
+dispersion does not carry to it. At those cells a cutover that adds no cost can
+trip the per-cell rule, and one that adds a real cost can be masked.
+
+Nothing predeclared here moves for it. τ_cell stays 5 %, τ_set stays 2 %, the
+pinned set keeps all thirty-four cells of §2, the run protocol of §3 and the
+comparison rule of §5 stand as written, and the `selector-non-regression-v1`
+schema token is not bumped, so the pre-cutover baseline stays valid and
+comparable against a receipt taken under this procedure. Per §7 and
+`@/inv/falsification-preserved` the measurement is recorded rather than
+accommodated.
+
+Issue `51058f8e` owns the consequence: it predeclares, before any post-cutover
+measurement exists, the rule under which a per-cell excursion in that
+comparison is adjudicated, per owner decision DEC-C of 2026-08-19.
 
 **The small-buffer cells are expected to be the binding constraint.** A
 `OnceLock` read is a fixed cost of roughly a nanosecond against operations that
