@@ -51,9 +51,11 @@ One precision the spike's record does not make.
 `FiniteField` dictionary as a parameter". The parameter is the
 **`FiniteFieldExt`** dictionary; the `FiniteField` dictionary is reached
 through its first field, `FiniteFieldInst`
-(`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:119-120`). REQ-01's
-phrasing is satisfied in that sense and the lemma statements in §3 project
-`FiniteFieldInst` explicitly, which is why they mention both structures.
+(`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:119-120`). The lemma
+statements in §3 therefore bind both structures: the `FiniteFieldExt`
+dictionary because the extracted definitions are applied to it, and the
+`FiniteField` dictionary as a parameter in its own right, tied to the first by
+the hypothesis `dict.FiniteFieldInst = ff`.
 
 **`frobenius.default_loop` is complete, and its loop state carries no `Self`.**
 `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:123-125` gives the loop the
@@ -109,13 +111,14 @@ flowchart TD
 ```
 
 The laws in §3 quantify over an abstract carrier `Self` equipped with a Mathlib
-`Field` structure and an extracted `FiniteFieldExt` dictionary over it. Machine
-layout appears nowhere in them. Everything layout-dependent — Montgomery form,
-packed limbs, coefficient vectors — enters only in §4, as the obligation to
-discharge the dictionary hypotheses for one concrete carrier. This is the
-`ExtDefs`/`ExtAlgebra` split the repository already uses: `ValidExtConfig` at
-`proofs/Gf2Core/Proofs/ExtDefs.lean:65-87` bundles exactly this kind of
-dictionary hypothesis, and the algebra above it never mentions storage.
+`Field` structure and the extracted `FiniteField` and `FiniteFieldExt`
+dictionaries over it. Machine layout appears nowhere in them. Everything
+layout-dependent — Montgomery form, packed limbs, coefficient vectors — enters
+only in §4, as the obligation to discharge the dictionary hypotheses for one
+concrete carrier. This is the `ExtDefs`/`ExtAlgebra` split the repository
+already uses: `ValidExtConfig` at `proofs/Gf2Core/Proofs/ExtDefs.lean:65-87`
+bundles exactly this kind of dictionary hypothesis, and the algebra above it
+never mentions storage.
 
 ---
 
@@ -133,25 +136,31 @@ code.
 
 ### 3.1 Setting and dictionary hypotheses
 
+Two dictionaries are in play, and §1.1 says why. `ff` is the extracted
+`FiniteField` dictionary, the one the laws are stated over; `dict` is the
+extracted `FiniteFieldExt` dictionary, the one the extracted definitions are
+applied to. `hff : dict.FiniteFieldInst = ff` ties them.
+
 ```lean
 abbrev FFExt (Self Char Wide : Type) := field.traits.FiniteFieldExt Self Char Wide
 
 variable {Self Char Wide : Type}
 
-abbrev dictClone (dict : FFExt Self Char Wide) :=
-  dict.FiniteFieldInst.corecloneCloneInst.clone
+abbrev dictClone (ff : field.traits.FiniteField Self Char Wide) :=
+  ff.corecloneCloneInst.clone
 
-abbrev dictMul (dict : FFExt Self Char Wide) :=
-  dict.FiniteFieldInst.coreopsarithMulInst.mul
+abbrev dictMul (ff : field.traits.FiniteField Self Char Wide) :=
+  ff.coreopsarithMulInst.mul
 
-abbrev dictChar (dict : FFExt Self Char Wide) :=
-  dict.FiniteFieldInst.characteristic
+abbrev dictChar (ff : field.traits.FiniteField Self Char Wide) :=
+  ff.characteristic
 
 /-- The extracted `FiniteField` dictionary refines the abstract field `Self`:
     `Clone` is the identity and `Mul` is the field multiplication, both total. -/
-structure LawfulDict [Field Self] (dict : FFExt Self Char Wide) : Prop where
-  clone_ok : ∀ a : Self, dictClone dict a = ok a
-  mul_ok : ∀ a b : Self, dictMul dict a b = ok (a * b)
+structure LawfulDict [Field Self]
+    (ff : field.traits.FiniteField Self Char Wide) : Prop where
+  clone_ok : ∀ a : Self, dictClone ff a = ok a
+  mul_ok : ∀ a b : Self, dictMul ff a b = ok (a * b)
 
 /-- The dictionary's own `pow` method is the field power map. -/
 structure LawfulPow [Field Self] (dict : FFExt Self Char Wide) : Prop where
@@ -159,10 +168,18 @@ structure LawfulPow [Field Self] (dict : FFExt Self Char Wide) : Prop where
 
 /-- The dictionary reports characteristic `p`, and the `Into` dictionary the
     extraction demands converts it to the same `U64` for every element. -/
-structure CharIs [Field Self] (dict : FFExt Self Char Wide)
+structure CharIs [Field Self] (ff : field.traits.FiniteField Self Char Wide)
     (intoU64 : core.convert.Into Char Std.U64) (p : Std.U64) : Prop where
-  char_ok : ∀ a : Self, ∃ c, dictChar dict a = ok c ∧ intoU64.into c = ok p
+  char_ok : ∀ a : Self, ∃ c, dictChar ff a = ok c ∧ intoU64.into c = ok p
 ```
+
+`LawfulDict` and `CharIs` are stated over `ff` because every field they
+mention is a `FiniteField` field: `corecloneCloneInst`, `coreopsarithMulInst`
+and `characteristic` are declared at
+`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112`. `LawfulPow` takes
+the `FiniteFieldExt` dictionary instead, because `pow` is a field of
+`FiniteFieldExt` (`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:122`) and
+of nothing below it — the split is forced by the extraction, not chosen.
 
 `CharIs` carries the `core.convert.Into Char Std.U64` dictionary because
 `frobenius.default` takes it as an explicit parameter
@@ -176,29 +193,35 @@ extraction of the Rust `where Self::Characteristic: Into<u64>` bound at
 /-- L1. `square.default` is total and equals multiplication of the element by
     itself. -/
 theorem square_default_eq_mul_self [Field Self]
-    (dict : FFExt Self Char Wide) (hd : LawfulDict dict) (a : Self) :
+    (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
+    (hd : LawfulDict ff) (a : Self) :
     field.traits.FiniteFieldExt.square.default dict a = ok (a * a)
 
 /-- L2. `square.default` is multiplicative, stated conditionally on
     `Result`-monad success at all three arguments. -/
 theorem square_default_mul_hom [Field Self]
-    (dict : FFExt Self Char Wide) (hd : LawfulDict dict) (a b sa sb sab : Self)
+    (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
+    (hd : LawfulDict ff) (a b sa sb sab : Self)
     (ha : field.traits.FiniteFieldExt.square.default dict a = ok sa)
     (hb : field.traits.FiniteFieldExt.square.default dict b = ok sb)
     (hab : field.traits.FiniteFieldExt.square.default dict (a * b) = ok sab) :
     sab = sa * sb
 ```
 
-L1's hypothesis set closes: `LawfulDict` is the whole of it, and the body at
-`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:31-32` is a two-step monadic
-chain through `clone` and `mul`. L2 is stated in success-conditional form on
+L1's hypothesis set closes: `LawfulDict` and the `hff` tie are the whole of it,
+and the body at `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:31-32` is a
+two-step monadic chain through `clone` and `mul`. L2 is stated in success-conditional form on
 purpose — it is then true of any dictionary satisfying `LawfulDict`, and it
 stays true if a future dictionary makes `mul` partial.
 
 ### 3.3 Laws for the exponent loop
 
 ```lean
-/-- L3. Below the `U64` ceiling the exponent loop is total and computes p^k. -/
+/-- L3. Below the `U64` ceiling the exponent loop is total and computes p^k.
+    The extracted loop takes neither dictionary and no type parameter, so no
+    dictionary is bound here. -/
 theorem frobenius_default_loop_eq_pow
     (p : Std.U64) (k : Std.Usize) (hnof : p.val ^ k.val ≤ Std.U64.max) :
     ∃ e : Std.U64,
@@ -211,6 +234,14 @@ theorem frobenius_default_loop_overflow
     ∃ e, field.traits.FiniteFieldExt.frobenius.default_loop
       { start := 0#usize, «end» := k } p 1#u64 = fail e
 ```
+
+L3 and L4 are the two laws that bind no dictionary and carry no `hff` tie.
+`frobenius.default_loop` has the signature `(iter : core.ops.range.Range
+Std.Usize) (p : Std.U64) (exp : Std.U64) : Result Std.U64`
+(`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:123-125`): no type
+parameter, no `FiniteFieldExt` dictionary, and so no `FiniteField` dictionary
+to state anything over. Their content is arithmetic on `U64`, and §1.1 records
+that this is what makes the loop separable from the field.
 
 L3's hypothesis is forced by the extraction, not by the mathematics: the loop
 computes the exponent by repeated `U64.checked_mul`
@@ -225,9 +256,10 @@ in L3's antecedent.
 ```lean
 /-- L5. `frobenius.default` at k is the p^k-power map. -/
 theorem frobenius_default_eq_pow_char [Field Self]
-    (p : Std.U64) (dict : FFExt Self Char Wide)
+    (p : Std.U64) (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p)
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p)
     (a : Self) (k : Std.Usize) (hnof : p.val ^ k.val ≤ Std.U64.max) :
     field.traits.FiniteFieldExt.frobenius.default dict intoU64 a k
       = ok (a ^ (p.val ^ k.val))
@@ -235,18 +267,20 @@ theorem frobenius_default_eq_pow_char [Field Self]
 /-- L6. `frobenius.default` at k is Mathlib's k-fold Frobenius, given that
     `Self` has exponential characteristic p. -/
 theorem frobenius_default_eq_iterateFrobenius [Field Self]
-    (p : Std.U64) [ExpChar Self p.val] (dict : FFExt Self Char Wide)
+    (p : Std.U64) [ExpChar Self p.val] (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p)
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p)
     (a : Self) (k : Std.Usize) (hnof : p.val ^ k.val ≤ Std.U64.max) :
     field.traits.FiniteFieldExt.frobenius.default dict intoU64 a k
       = ok (iterateFrobenius Self p.val k.val a)
 
 /-- L7. `frobenius.default` is additive. -/
 theorem frobenius_default_add [Field Self]
-    (p : Std.U64) [ExpChar Self p.val] (dict : FFExt Self Char Wide)
+    (p : Std.U64) [ExpChar Self p.val] (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p)
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p)
     (a b ra rb rab : Self) (k : Std.Usize)
     (ha : field.traits.FiniteFieldExt.frobenius.default dict intoU64 a k = ok ra)
     (hb : field.traits.FiniteFieldExt.frobenius.default dict intoU64 b k = ok rb)
@@ -255,16 +289,18 @@ theorem frobenius_default_add [Field Self]
 
 /-- L8a. k = 0 is the identity. -/
 theorem frobenius_default_zero [Field Self]
-    (p : Std.U64) (dict : FFExt Self Char Wide)
+    (p : Std.U64) (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p) (a : Self) :
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p) (a : Self) :
     field.traits.FiniteFieldExt.frobenius.default dict intoU64 a 0#usize = ok a
 
 /-- L8b. Composition: φ^j ∘ φ^k = φ^(j+k). -/
 theorem frobenius_default_comp [Field Self]
-    (p : Std.U64) [ExpChar Self p.val] (dict : FFExt Self Char Wide)
+    (p : Std.U64) [ExpChar Self p.val] (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p)
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p)
     (a x : Self) (j k jk : Std.Usize) (hjk : jk.val = j.val + k.val)
     (hnof : p.val ^ jk.val ≤ Std.U64.max)
     (hx : field.traits.FiniteFieldExt.frobenius.default dict intoU64 a k = ok x) :
@@ -274,6 +310,11 @@ theorem frobenius_default_comp [Field Self]
 
 Hypotheses, stated explicitly rather than assumed:
 
+- **`hff : dict.FiniteFieldInst = ff`.** The tie of §3.1. It is what lets
+  `CharIs`, stated over the `FiniteField` dictionary, discharge the
+  `characteristic` bind that the extracted body reaches through
+  `FiniteFieldExtInst.FiniteFieldInst`
+  (`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:143`).
 - **`LawfulPow`.** `frobenius.default` delegates the arithmetic entirely to
   `dict.pow` (`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:148`), so no
   law about it is stronger than what that field satisfies. §7.1 records why
@@ -495,9 +536,9 @@ flowchart LR
 
 | Lemma | Rust item | Extraction invocation | Generated Lean |
 |---|---|---|---|
-| L1, L2 | `FiniteFieldExt::square`, `crates/gf2-core/src/field/traits.rs:1053-1055` | `dev/active/34d85cb9/extraction/R8b.cmd` then `dev/active/34d85cb9/extraction/A8b.cmd` | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:25-32`; dictionary in `dev/active/34d85cb9/extraction/A8b_lean/Types.lean:117-124` |
+| L1, L2 | `FiniteFieldExt::square`, `crates/gf2-core/src/field/traits.rs:1053-1055` | `dev/active/34d85cb9/extraction/R8b.cmd` then `dev/active/34d85cb9/extraction/A8b.cmd` | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:25-32`; dictionaries in `dev/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112` and `:117-124` |
 | L3, L4 | the `for _ in 0..k` loop of `FiniteFieldExt::frobenius`, `crates/gf2-core/src/field/traits.rs:1127-1129` | same | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:105-117` and `:123-130` |
-| L5–L8b | `FiniteFieldExt::frobenius`, `crates/gf2-core/src/field/traits.rs:1120-1131` | same | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:135-148` |
+| L5–L8b | `FiniteFieldExt::frobenius`, `crates/gf2-core/src/field/traits.rs:1120-1131` | same | `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:135-148`; dictionaries in `dev/active/34d85cb9/extraction/A8b_lean/Types.lean:72-112` and `:117-124` |
 
 `R8b.cmd` starts from `gf2_core::field::traits::FiniteFieldExt::pow`, keeps
 `--opaque 'gf2_core::field'` and re-narrows it with `--include
@@ -513,8 +554,9 @@ regenerable and deliberately uncommitted
 
 **L1 — `square_default_eq_mul_self`.** Unfold the definition and step the
 two-element monadic chain. `progress`/`step` from `Aeneas.Std.WP` is the tactic
-family; `LawfulDict.clone_ok` rewrites the first bind and `LawfulDict.mul_ok`
-the second. Modelled on the shape of `FpProgress.wrapping_neg_spec`
+family; `hff` rewrites the body's `FiniteFieldInst` projection to `ff`, then
+`LawfulDict.clone_ok` rewrites the first bind and `LawfulDict.mul_ok` the
+second. Modelled on the shape of `FpProgress.wrapping_neg_spec`
 (`proofs/Gf2Core/Proofs/Progress.lean:33-37`), which is the same "unfold, then
 discharge by the dictionary's own spec" move. Expected difficulty: low. This is
 the lemma to prove first, because it validates the whole `LawfulDict`
@@ -542,10 +584,12 @@ find the least $i$ with $p^i > $ `U64.max`, show `checked_mul` returns `none`
 there, and step `core.option.Option.expect` to `fail`. Expected difficulty:
 medium, and it shares its induction skeleton with L3, so prove them together.
 
-**L5 — `frobenius_default_eq_pow_char`.** Compose: `CharIs.char_ok` discharges
-the two binds at `dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:143-144`,
-L3 discharges the loop, and `LawfulPow.pow_ok` discharges the tail call at
-`:148`. Expected difficulty: low, conditional on L3.
+**L5 — `frobenius_default_eq_pow_char`.** Compose: `hff` rewrites the
+`FiniteFieldInst` projection at
+`dev/active/34d85cb9/extraction/A8b_lean/Funs.lean:143` so `CharIs.char_ok`
+discharges the two binds at `:143-144`, L3 discharges the loop, and
+`LawfulPow.pow_ok` discharges the tail call at `:148`. Expected difficulty:
+low, conditional on L3.
 
 **L6 — `frobenius_default_eq_iterateFrobenius`.** L5 followed by
 `iterateFrobenius_def` (Mathlib `v4.30.0-rc2`,
@@ -829,7 +873,8 @@ Frobenius law that the code does not satisfy.
 `expect("Frobenius exponent overflow")` at `:1128` is a second cause and is not
 documented. This contradicts nothing in the spike or the classification, but it
 is a defect the proof work surfaces, and §7.3 is the mathematical reason it
-matters. It is not fixed here: this issue changes nothing under `crates/`.
+matters. It is not fixed here: this issue changes nothing under `crates/`. It
+is tracked as issue `99c92597`.
 
 ### 7.5 Corrections to the spike record
 
@@ -837,7 +882,8 @@ matters. It is not fixed here: this issue changes nothing under `crates/`.
   the `FiniteField` dictionary as a parameter. They take the `FiniteFieldExt`
   dictionary; `FiniteField` is reached through its `FiniteFieldInst` field
   (`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:119-120`). The
-  distinction matters for the lemma statements, which must project.
+  distinction matters for the lemma statements, which bind both dictionaries
+  and tie them.
 - `dev/active/34d85cb9/findings.md:434-445` scopes elaboration out and names it
   as the follow-up's required step. It does not anticipate that the generated
   `Types.lean` fails before any target is reached, nor that the repository's

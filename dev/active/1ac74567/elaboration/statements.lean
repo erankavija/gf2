@@ -23,54 +23,61 @@ open gf2_core
 
 namespace ExtSketch
 
-/-! ## Abbreviations for the extracted dictionary and its projections -/
+/-! ## Abbreviations for the two extracted dictionaries -/
 
 abbrev FFExt (Self Char Wide : Type) := field.traits.FiniteFieldExt Self Char Wide
 
 variable {Self Char Wide : Type}
 
-abbrev dictClone (dict : FFExt Self Char Wide) :=
-  dict.FiniteFieldInst.corecloneCloneInst.clone
+abbrev dictClone (ff : field.traits.FiniteField Self Char Wide) :=
+  ff.corecloneCloneInst.clone
 
-abbrev dictMul (dict : FFExt Self Char Wide) :=
-  dict.FiniteFieldInst.coreopsarithMulInst.mul
+abbrev dictMul (ff : field.traits.FiniteField Self Char Wide) :=
+  ff.coreopsarithMulInst.mul
 
-abbrev dictChar (dict : FFExt Self Char Wide) :=
-  dict.FiniteFieldInst.characteristic
+abbrev dictChar (ff : field.traits.FiniteField Self Char Wide) :=
+  ff.characteristic
 
 /-! ## Dictionary hypotheses -/
 
 /-- The extracted `FiniteField` dictionary refines the abstract field `Self`:
     `Clone` is the identity and `Mul` is the field multiplication, both total. -/
-structure LawfulDict [Field Self] (dict : FFExt Self Char Wide) : Prop where
-  clone_ok : ∀ a : Self, dictClone dict a = ok a
-  mul_ok : ∀ a b : Self, dictMul dict a b = ok (a * b)
+structure LawfulDict [Field Self]
+    (ff : field.traits.FiniteField Self Char Wide) : Prop where
+  clone_ok : ∀ a : Self, dictClone ff a = ok a
+  mul_ok : ∀ a b : Self, dictMul ff a b = ok (a * b)
 
-/-- The dictionary's own `pow` method is the field power map. `frobenius.default`
-    calls this field, never `pow.default`, so this hypothesis is what carries
+/-- The dictionary's own `pow` method is the field power map. `pow` is a field
+    of `FiniteFieldExt`, not of `FiniteField`, so this is the one hypothesis
+    stated over the extracted `FiniteFieldExt` dictionary. `frobenius.default`
+    calls that field, never `pow.default`, so this hypothesis is what carries
     the `pow` obligation and it is discharged per backend. -/
 structure LawfulPow [Field Self] (dict : FFExt Self Char Wide) : Prop where
   pow_ok : ∀ (a : Self) (e : Std.U64), dict.pow a e = ok (a ^ e.val)
 
 /-- The dictionary reports characteristic `p`, and the `Into` dictionary the
     extraction demands converts it to the same `U64` for every element. -/
-structure CharIs [Field Self] (dict : FFExt Self Char Wide)
+structure CharIs [Field Self] (ff : field.traits.FiniteField Self Char Wide)
     (intoU64 : core.convert.Into Char Std.U64) (p : Std.U64) : Prop where
-  char_ok : ∀ a : Self, ∃ c, dictChar dict a = ok c ∧ intoU64.into c = ok p
+  char_ok : ∀ a : Self, ∃ c, dictChar ff a = ok c ∧ intoU64.into c = ok p
 
 /-! ## L1–L2 — trait-level laws for `square.default` -/
 
 /-- L1. `square.default` is total and equals multiplication of the element by
     itself. -/
 theorem square_default_eq_mul_self [Field Self]
-    (dict : FFExt Self Char Wide) (hd : LawfulDict dict) (a : Self) :
+    (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
+    (hd : LawfulDict ff) (a : Self) :
     field.traits.FiniteFieldExt.square.default dict a = ok (a * a) := by
   sorry
 
 /-- L2. `square.default` is multiplicative, stated conditionally on
     `Result`-monad success at all three arguments. -/
 theorem square_default_mul_hom [Field Self]
-    (dict : FFExt Self Char Wide) (hd : LawfulDict dict) (a b sa sb sab : Self)
+    (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
+    (hd : LawfulDict ff) (a b sa sb sab : Self)
     (ha : field.traits.FiniteFieldExt.square.default dict a = ok sa)
     (hb : field.traits.FiniteFieldExt.square.default dict b = ok sb)
     (hab : field.traits.FiniteFieldExt.square.default dict (a * b) = ok sab) :
@@ -80,7 +87,8 @@ theorem square_default_mul_hom [Field Self]
 /-! ## L3–L4 — the extracted exponent loop -/
 
 /-- L3. Below the `U64` ceiling the exponent loop is total and computes
-    $p^k$. -/
+    $p^k$. The extracted loop takes neither dictionary and no type parameter,
+    so no dictionary is bound here. -/
 theorem frobenius_default_loop_eq_pow
     (p : Std.U64) (k : Std.Usize) (hnof : p.val ^ k.val ≤ Std.U64.max) :
     ∃ e : Std.U64,
@@ -101,9 +109,10 @@ theorem frobenius_default_loop_overflow
 
 /-- L5. `frobenius.default` at $k$ is the $p^k$-power map. -/
 theorem frobenius_default_eq_pow_char [Field Self]
-    (p : Std.U64) (dict : FFExt Self Char Wide)
+    (p : Std.U64) (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p)
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p)
     (a : Self) (k : Std.Usize) (hnof : p.val ^ k.val ≤ Std.U64.max) :
     field.traits.FiniteFieldExt.frobenius.default dict intoU64 a k
       = ok (a ^ (p.val ^ k.val)) := by
@@ -112,9 +121,10 @@ theorem frobenius_default_eq_pow_char [Field Self]
 /-- L6. `frobenius.default` at $k$ is Mathlib's $k$-fold Frobenius, given that
     `Self` has exponential characteristic `p`. -/
 theorem frobenius_default_eq_iterateFrobenius [Field Self]
-    (p : Std.U64) [ExpChar Self p.val] (dict : FFExt Self Char Wide)
+    (p : Std.U64) [ExpChar Self p.val] (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p)
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p)
     (a : Self) (k : Std.Usize) (hnof : p.val ^ k.val ≤ Std.U64.max) :
     field.traits.FiniteFieldExt.frobenius.default dict intoU64 a k
       = ok (iterateFrobenius Self p.val k.val a) := by
@@ -123,9 +133,10 @@ theorem frobenius_default_eq_iterateFrobenius [Field Self]
 /-- L7. `frobenius.default` is additive. No overflow hypothesis is needed: the
     three calls share one $k$, so success at all three is what the law assumes. -/
 theorem frobenius_default_add [Field Self]
-    (p : Std.U64) [ExpChar Self p.val] (dict : FFExt Self Char Wide)
+    (p : Std.U64) [ExpChar Self p.val] (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p)
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p)
     (a b ra rb rab : Self) (k : Std.Usize)
     (ha : field.traits.FiniteFieldExt.frobenius.default dict intoU64 a k = ok ra)
     (hb : field.traits.FiniteFieldExt.frobenius.default dict intoU64 b k = ok rb)
@@ -135,9 +146,10 @@ theorem frobenius_default_add [Field Self]
 
 /-- L8a. $k = 0$ is the identity. -/
 theorem frobenius_default_zero [Field Self]
-    (p : Std.U64) (dict : FFExt Self Char Wide)
+    (p : Std.U64) (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p) (a : Self) :
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p) (a : Self) :
     field.traits.FiniteFieldExt.frobenius.default dict intoU64 a 0#usize = ok a := by
   sorry
 
@@ -145,9 +157,10 @@ theorem frobenius_default_zero [Field Self]
     `Usize` addition discharged outside the statement so no `Usize` overflow
     hypothesis leaks into the law. -/
 theorem frobenius_default_comp [Field Self]
-    (p : Std.U64) [ExpChar Self p.val] (dict : FFExt Self Char Wide)
+    (p : Std.U64) [ExpChar Self p.val] (ff : field.traits.FiniteField Self Char Wide)
+    (dict : FFExt Self Char Wide) (hff : dict.FiniteFieldInst = ff)
     (intoU64 : core.convert.Into Char Std.U64)
-    (hp : LawfulPow dict) (hc : CharIs dict intoU64 p)
+    (hp : LawfulPow dict) (hc : CharIs ff intoU64 p)
     (a x : Self) (j k jk : Std.Usize) (hjk : jk.val = j.val + k.val)
     (hnof : p.val ^ jk.val ≤ Std.U64.max)
     (hx : field.traits.FiniteFieldExt.frobenius.default dict intoU64 a k = ok x) :
