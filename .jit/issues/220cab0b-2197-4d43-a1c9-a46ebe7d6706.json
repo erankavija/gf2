@@ -7,7 +7,33 @@
     "265997f9-a947-4fbc-9161-a9f3a252bd01"
   ],
   "description": "Design the versioned tuning-profile artifact and how existing selection boundaries consume it.\n\n## Background\n\nBackend and crossover selection currently reads source constants, compile-time field shape, and runtime CPU features; no committed profile exists. The design fixes: the profile schema and its version field, the committed storage location, the loader API shape in gf2-core, the conservative default table and unknown-host fallback policy, and the calibration workflow as an explicit benchmark action under the repository's benchmark-lock conventions. The profile is data consumed at existing safe selection boundaries (OnceLock function tables, field constructors, algorithm-selector constants); it introduces no new crate dependency edges. Integration points are named for the pilot selector families designated by the classification; the schema carries an explicit extensibility rule for admitting further families in follow-on migrations.\n\n## Success Criteria\n\n- [hard] REQ-01: A design document specifies the profile schema, versioning rule, committed storage location, and loader API, weighing at least two serialization/placement options before the recommendation.\n- [hard] REQ-02: The document names the integration point for each pilot selector family designated by the classification, the conservative default and unknown-host fallback policy, and the explicit calibration workflow with its provenance fields.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "0c494a07d3a9e11504eddf0104ab8658398cd6af39f529b278bbc9c1296fbbd3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/plan.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ae4f9246f1714c3955986882e889ea3ffa91a6e8435b864daebb70cced67ac4b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Design Document",
+      "path": "dev/active/220cab0b/design.md"
+    }
+  ],
   "first_ready_at": "2026-08-18T20:54:15.918734150Z",
   "gates_required": [
     "doc-review"
@@ -23,5 +49,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design the versioned tuning-profile format and selection integration",
-  "updated_at": "2026-08-19T04:45:58.200672576Z"
+  "updated_at": "2026-08-19T05:11:09.809052409Z"
 }
