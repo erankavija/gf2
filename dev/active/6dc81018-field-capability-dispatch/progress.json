@@ -34,7 +34,7 @@
           "title": "Design the versioned tuning-profile format and selection integration",
           "classification": "design",
           "model": "opus",
-          "status": "dispatched"
+          "status": "rework-1"
         },
         {
           "id": "7f818151-9268-4f6d-b29e-508eb95ba12c",
@@ -42,7 +42,7 @@
           "title": "Retire the packed-trait parallel declarations in the research stub",
           "classification": "implementation",
           "model": "codex-luna",
-          "status": "dispatched"
+          "status": "done"
         }
       ]
     },
@@ -172,7 +172,9 @@
     }
   ],
   "rework_counts": {
-    "34d85cb9": 0
+    "34d85cb9": 0,
+    "7f818151": 1,
+    "220cab0b": 1
   },
   "surfaced_pitfalls": [
     {
@@ -184,6 +186,11 @@
       "issue": "6dc81018/REQ-05",
       "finding": "REQ-05 requires proof obligations factored as trait-level algebraic laws plus per-backend representation refinement; no wave-plan child delivers a proof-sketch \u2014 spike record names follow-up targets (dev/active/34d85cb9/findings.md:817). Must be reconciled at epic completion: remediation task or escalation.",
       "disposition": "open"
+    },
+    {
+      "issue": "220cab0b",
+      "finding": "doc-review F2 (advisory, pre-existing): crates/gf2-core/src/kernels/backend.rs:93 rustdoc says eight u64 words are 512 bytes; correct is 64 bytes",
+      "disposition": "fold into 0d819b62 (bit-backend cutover) dispatch"
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
