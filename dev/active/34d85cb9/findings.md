@@ -116,10 +116,11 @@ Aeneas was run on every Charon output that produced a `.llbc`, with
 source that emitted it.
 
 `.llbc` files and their `charon pretty-print` renderings are not committed:
-across both legs the 27 of them total 51,971,305 bytes (49.6 MiB / 52.0 MB),
-ranging from 31,190 bytes (R5, which emits nothing) to 14,426,493 bytes. `.gitignore` excludes them and they
-are regenerable from the committed `.cmd` files. Their **per-file byte sizes and
-item counts** are committed instead, in
+`.gitignore` excludes them and they are regenerable from the committed `.cmd`
+files. Across both legs the 27 `.llbc` files total 51,971,305 bytes
+(49.6 MiB / 52.0 MB), ranging from 31,190 bytes (R5, which emits nothing) to
+14,426,493 bytes; the sized artefacts are the `.llbc` files alone. Their
+**per-file byte sizes and item counts** are committed instead, in
 `dev/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt` and
 `dev/active/34d85cb9/upgrade/excerpts/llbc-item-counts.txt` (regenerate with
 `dev/active/34d85cb9/extraction/llbc-summary.sh`), and the three load-bearing
@@ -317,7 +318,7 @@ the driver. Verbatim from
 `logs-trimmed/R7b.log`:
 
 ```
-thread 'main' (304862) panicked at .../index_vec-0.1.4/src/lib.rs:774:5:
+thread 'main' (360559) panicked at .../index_vec-0.1.4/src/lib.rs:774:5:
 index_vec index overflow: 18446744073709551615 is outside the range [0, 4294967295)
 ...
   11: <charon_lib::transform::simplify_output::remove_unused_self_clause::Transform as charon_lib::transform::ctx::TransformPass>::transform_ctx
@@ -342,9 +343,9 @@ opaque and reason about it as an abstract field, exactly as the epic's
 blocker.
 
 **F3 — `--monomorphize` produces nothing.** R5 exits 0 and writes a `.llbc`
-with zero items of every kind
-(`extraction/excerpts/llbc-item-counts.txt`: `R5_gf2_core.llbc has_errors=False
-type_decls= 0 fun_decls= 0 trait_decls= 0 trait_impls= 0`). This matches
+with zero items of every kind: the `R5_gf2_core.llbc` row of
+`extraction/excerpts/llbc-item-counts.txt` records `has_errors=False` and zero
+`type_decls`, `fun_decls`, `trait_decls` and `trait_impls`. This matches
 `charon cargo --help` on 0.1.217 — "Generic items found in the crate are
 skipped" — and independently reconfirms the finding already recorded at
 `proofs/Gf2Algebra/Proofs/RyserBounded.lean:62-70`, on a fresh target and a
@@ -461,7 +462,7 @@ Aeneas clone whose nested `./charon` is a Charon clone at the commit named in
 
 - `/data/aeneas-build/charon` carried an **uncommitted** working-tree patch
   (`git status --short` → ` M charon/src/transform/normalize/expand_associated_types.rs`,
-  18 insertions), the implied-clause propagation `scripts/verify-lean.sh:18-28`
+  18 insertions, 1 deletion), the implied-clause propagation `scripts/verify-lean.sh:18-28`
   calls load-bearing. It is preserved here as
   `upgrade/charon-local-patch-487f0320.patch`.
 - `proofs/lakefile.lean:5` requires the Lean backend from that same tree
@@ -580,7 +581,8 @@ binaries needs the user's approval.
 ### The project-local Charon patch is now obsolete
 
 `git apply --check upgrade/charon-local-patch-487f0320.patch` against `340b1af4`
-fails:
+fails at the patch's single hunk, whose header declares line 827
+(`upgrade/charon-local-patch-487f0320.patch:5`):
 
 ```
 error: patch failed: charon/src/transform/normalize/expand_associated_types.rs:827
@@ -588,12 +590,13 @@ error: charon/src/transform/normalize/expand_associated_types.rs: patch does not
 ```
 
 That is not a blocker but a fix: the patch existed to remove
-"Could not compute the value of …" warnings, and the **unpatched** new Charon
-emits *fewer* of them than the patched old one on the committed gf2-core
-extraction — 0 versus 2 (counted in
-`upgrade/logs-trimmed/pipeline-{new,baseline}.log`). Upstream has subsumed the
-patch. This also removes the obvious confound from the regression check below:
-the new-pair results are not an artefact of a missing local patch.
+"Could not compute the value of …" warnings (`scripts/verify-lean.sh:17-22`),
+and the **unpatched** new Charon does not reintroduce them on the committed
+pipeline extraction: neither `upgrade/logs-trimmed/pipeline-new.log` nor
+`upgrade/logs-trimmed/pipeline-baseline.log` contains such a warning. Upstream
+has subsumed the patch. This also removes the obvious confound from the
+regression check below: the new-pair results are not an artefact of a missing
+local patch.
 
 ### Matrix outcomes, per version
 
@@ -612,6 +615,7 @@ per-run logs in `upgrade/logs-trimmed/`.
 | R7 | **exit 101, panic** | **exit 0**, 227 `fun_decls`, `has_errors=true` | **F2 fixed** |
 | R8 | **exit 101, `GenericsMismatch`** | **exit 0**, 186 `fun_decls` | **fixed** |
 | R8b | exit 0, 186 `fun_decls` | exit 0, 186 `fun_decls` | — |
+| R8c | exit 0, 51 `fun_decls` | exit 0, 51 `fun_decls` | — |
 | R9 | exit 0 | exit 0 | — |
 | R10 | **exit 101, panic** | **exit 0**, 227 `fun_decls` | **F2 fixed** |
 | R11 | exit 0, 548 `fun_decls` | exit 0, 488 `fun_decls` | — |
@@ -622,7 +626,7 @@ Aeneas:
 |---|---|---|---|
 | A2 | exit 1; `Region ids …` + `Unimplemented`; 2 `sorry` | exit 1; 2× `Unimplemented`; 2 `sorry` | **F1 persists**, better diagnostics |
 | A4 | exit 1; 4 `sorry` of 7 defs | exit 1 | F1 persists |
-| A6/A7 | not reachable (Charon panicked) | exit 1; 15 defs incl. `FiniteField::*.default`; 6× `Unsupported use of dyn traits` | **newly reachable** |
+| A6/A7 | not reachable (Charon panicked) | exit 1; 15 (A6) and 18 (A7) defs incl. `FiniteField::*.default`; 6× `Unsupported use of dyn traits` each | **newly reachable** |
 | A8b | exit 1; 4 `sorry`, type-var binders lost | exit 1; 4 `sorry`, **byte-identical failure** | **F4 persists** |
 | A11 | exit 1; 20+20 `type_var_id`, 53 `sorry` | exit 1; 22+22 `type_var_id`, 48 `sorry` | **F4 persists** |
 
@@ -631,17 +635,18 @@ Two findings deserve emphasis.
 **F2 is fixed upstream.** All four baseline Charon panics — the
 `index_vec index overflow` in `remove_unused_self_clause` (R6/R7/R10) and the
 `GenericsMismatch` under `--translate-all-methods` (R8) — are gone. Making the
-`FiniteField` trait module transparent now works, and A6/A7 translate 15
-definitions including `FiniteField` default methods that were previously
-unreachable. The proof-facing constraint recorded under F2 above ("any proof
-over generic gf2-core code must keep `FiniteField` opaque") **no longer holds on
-newest upstream**.
+`FiniteField` trait module transparent now works, and A6/A7 translate 15 and
+18 definitions respectively (`upgrade/extraction/A6_lean/Funs.lean`,
+`upgrade/extraction/A7_lean/Funs.lean`), including `FiniteField` default
+methods that were previously unreachable. The proof-facing constraint recorded
+under F2 above ("any proof over generic gf2-core code must keep `FiniteField`
+opaque") **no longer holds on newest upstream**.
 
 **F4 is not fixed, and it is the one that matters.** The lifted loop function
 still drops the two associated-type binders its parent binds. On the new pair
 the emitted text is character-for-character what the baseline produced
 (`upgrade/excerpts/A8b_pow_loop_signature.txt` versus
-`extraction/A8b_lean/Funs.lean:70-73`):
+`extraction/A8b_lean/Funs.lean:70-74`):
 
 ```lean
 def field.traits.FiniteFieldExt.pow.default_loop

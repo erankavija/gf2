@@ -2,7 +2,7 @@
 # ../extraction/trim-logs.sh.
 logs/
 # Scratch trees written by pipeline-regression.sh: full regenerated proofs/
-# copies plus the .llbc files, ~25 MB. The diffs that matter are summarised in
+# copies plus the .llbc files. The diffs that matter are summarised in
 # excerpts/pipeline-regen-diff.txt; rerun the harness to reproduce.
 pipeline-baseline/
 pipeline-new/

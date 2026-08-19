@@ -1,5 +1,7 @@
-# Charon output and its pretty-printed form: 0.8-2.0 MB per run, regenerable by
-# re-running the committed *.cmd files through run.sh. The trimmed fragments
-# quoted by findings.md live in excerpts/ and are committed.
+# Charon output (*.llbc) and its pretty-printed form (*.llbc.txt), regenerable
+# by re-running the committed *.cmd files through run.sh. The .llbc byte sizes
+# of record are committed in excerpts/llbc-item-counts.txt: 31,190 to
+# 5,231,591 bytes per run in this leg. The trimmed fragments quoted by
+# findings.md live in excerpts/ and are committed.
 /*.llbc
 /*.llbc.txt
