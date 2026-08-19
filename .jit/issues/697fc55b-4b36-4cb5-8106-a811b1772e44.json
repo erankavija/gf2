@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-19T22:37:48.934158456Z",
   "context": {},
   "created_at": "2026-08-18T19:57:57.977309087Z",
   "dependencies": [
@@ -22,7 +23,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Cut the polynomial crossover selectors over to profile-driven selection",
-  "updated_at": "2026-08-19T21:13:21.117743657Z"
+  "updated_at": "2026-08-19T22:37:48.934158456Z"
 }
