@@ -20,7 +20,7 @@
     "epic:quality-documentation-tech-debt"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
-  "updated_at": "2026-08-19T21:23:32.265434776Z"
+  "updated_at": "2026-08-19T23:43:41.743930561Z"
 }

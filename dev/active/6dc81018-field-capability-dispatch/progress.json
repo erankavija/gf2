@@ -1,7 +1,7 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 6,
+  "current_wave": 8,
   "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec — its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it — budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' — it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex — same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run. AGENT-LIVENESS TRAP (2026-08-20, cost ~15 min and one wasted dispatch pair): ListAgents reported 'No reachable agents' while two dispatched agents were provably alive and mid-task, and a clean `git status` 80 seconds before an agent's first write looked identical to a dead agent. Acting on those two signals, the lead re-dispatched duplicates over live workers; only the duplicate doc agent's own refusal to write on a mismatched premise prevented two agents racing on the same two paths. Do NOT treat ListAgents emptiness or a quiet tree as death. A dispatched agent's first write can lag its spawn by many minutes while it reads the spec and the design. Probe artifacts and .jit/events.jsonl over a window before concluding anything, and if duplicates are ever spawned, TaskStop them immediately and verify no leakage before continuing. The lead's initial theory that ScheduleWakeup tore the agents down was WRONG and was retracted.",
   "waves": [
     {
@@ -120,7 +120,8 @@
           "title": "Cut the polynomial crossover selectors over to profile-driven selection",
           "classification": "implementation",
           "model": "codex-luna",
-          "status": "pending"
+          "status": "done",
+          "notes": "Closed after 1 rework; merged at the worktree-agent-697fc55b merge. cargo-ci and code-review both pass. The cutover was right first time — six read sites, DEC-B1 honoured, recursion threaded. code-review then failed on two blocking findings the lead accepted: F1 the tests compared mathematically equivalent algorithms, so they passed even if the dispatchers ignored the profile, and they sized operands from the constants although design §2.5 requires an installing test to size from the installed accessors; F2 the DEC-B5 falsification used 'historical claim' narration, which @/inv/present-tense-prose forbids in permanent artifacts. Resolution: a route-observation API (mul_route, mul_fast_route, div_rem_auto_route, batch_evaluate_route, batch_evaluate_auto_route) that all five dispatchers consume, so the tests observe the production decision rather than a copy; and present-tense phrasing that keeps the citation and both figures. mul_karatsuba_raw keeps its threaded parameter, so no per-node profile read was reintroduced — checked explicitly."
         },
         {
           "id": "51058f8e-6bad-443c-aa5b-14d430bcd0c7",
@@ -156,7 +157,7 @@
           "title": "Record the post-cutover non-regression receipt",
           "classification": "implementation",
           "model": "codex-luna",
-          "status": "pending"
+          "status": "ready"
         }
       ]
     }
@@ -271,6 +272,12 @@
       "issue": "5ecc9bf8",
       "date": "2026-08-20",
       "decision": "DEC-B6: karatsuba_min_degree is not sweepable from a bench target. A bench links gf2-core as an external crate, so it can name only pub items, and both arms are private (mul_schoolbook_impl at crates/gf2-core/src/field/poly.rs:2484, mul_karatsuba_raw at :2531); the only public entry is the threshold-driven dispatcher FieldPoly::mul, and poly.rs:72 documents the omission deliberately. Resolution per design §5 condition 5: the emitted profile OMITS the field so it inherits the default at load — emitting it carrying 32 would be a @/inv/benchmark-backed-performance defect, since a profile must not claim an unmeasured value. Verified the loader supports omission: JsonPolynomial fields are Option<Option<usize>> (tuning/mod.rs:903-907) and from_json falls back to CONSERVATIVE. TuningProfile::to_json cannot express omission, so the harness constructs the emitted document with only the four swept fields and validates it through from_json, which is what §2.7's output discipline asks. Rejected: adding pub forcing entry points (public API against the poly.rs:72 decision, outside this issue) and reordering 5ecc9bf8 behind 697fc55b (rejected for scope, not ordering — 5ecc9bf8 is not upstream of 50b47eae, so that sequencing would not have inverted the DAG). Tracked forward as 389aa4de."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "697fc55b",
+      "date": "2026-08-20",
+      "decision": "DEC-B7: @/inv/present-tense-prose and @/inv/falsification-preserved both bind the same rustdoc. They are satisfied together by stating the measurement as a present fact about the system ('the conservative default of 128 does not sit at the measured crossover') with the receipt citation and both figures retained, rather than by narrating a change to a claim. Neither invariant is traded against the other."
     }
   ],
   "rework_counts": {
@@ -282,7 +289,8 @@
     "1ac74567": 1,
     "278acf3a": 1,
     "5ecc9bf8": 0,
-    "0d819b62": 1
+    "0d819b62": 1,
+    "697fc55b": 1
   },
   "surfaced_pitfalls": [
     {
