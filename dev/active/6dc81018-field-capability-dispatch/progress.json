@@ -82,7 +82,8 @@
           "title": "Author the loop-free extraction proof-obligation factoring sketch",
           "classification": "design",
           "model": "claude-opus",
-          "status": "dispatched"
+          "status": "rework",
+          "notes": "doc-review blocking F1 at 05bfb244: REQ-01 says the lemma statements take the FiniteField dictionary as a parameter; they take FiniteFieldExt and project FiniteFieldInst. Rework restates every law to bind the FiniteField dictionary explicitly with a tie hypothesis. The sketch's own argument that projection satisfies REQ-01 is withdrawn per the no-argue discipline."
         }
       ],
       "note": "Own wave: created during execution to close REQ-05's second clause. Runs alone because Charon/Aeneas extraction plus a lake build is heavy CPU work and must not overlap the benchmark-mode waves 5, 7, 8."
@@ -166,6 +167,12 @@
       "title": "Author the loop-free extraction proof-obligation factoring sketch",
       "reason": "REQ-05's second clause (proof obligations factored as trait-level algebraic laws plus per-backend representation refinement) had no delivering child. Owner approved closing it in-epic with an approved-sketch document.",
       "parented": "epic 6dc81018 directly (6dc81018 -> 1ac74567); runs as wave 4.5"
+    },
+    {
+      "id": "99c92597",
+      "title": "Document the Frobenius exponent-overflow panic in FiniteFieldExt rustdoc",
+      "reason": "proof-sketch §7.4 and doc-review advisory F2 both surfaced an undocumented panic path at crates/gf2-core/src/field/traits.rs:1128; 1ac74567 changes nothing under crates/, so it is filed rather than fixed in place (no-deferred-defects)",
+      "parented": "86b9c719 (quality-documentation-tech-debt); outside epic 6dc81018"
     }
   ],
   "escalations": [
@@ -223,7 +230,8 @@
     "7f818151": 1,
     "220cab0b": 1,
     "e8fe47f5": 1,
-    "f35daec0": 2
+    "f35daec0": 2,
+    "1ac74567": 1
   },
   "surfaced_pitfalls": [
     {
