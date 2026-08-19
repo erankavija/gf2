@@ -30,6 +30,47 @@
       "format": "markdown",
       "label": "Pre-cutover baseline receipt (the falsifying measurement)",
       "path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c90ccbe4a77a4e08d7412b0fcc1983257127f627eaa52461b32dbf7c03453bf5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-19-pre-cutover-baseline.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2672a911d99339648dda42abe91d7ec080c35981af164b31ccee275a5ed705cb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-19-pre-cutover-baseline.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bc9d351a9b86fb9976d5e3f9a273bd518c8cb1f974d5f2da83d7e1fbc4473a42",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "selector-non-regression-plan-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec8795cff768ebe753dcac134672a8983da3906f37cf3ff357637fe1802cc720",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md",
+          "resolved_path": "dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "plan",
+      "format": "markdown",
+      "label": "Predeclared across-build control arm (DEC-C)",
+      "path": "dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md"
     }
   ],
   "first_ready_at": "2026-08-19T20:59:22.703885957Z",
@@ -47,5 +88,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Predeclare the across-build control arm for the post-cutover comparison",
-  "updated_at": "2026-08-19T21:14:16.320620252Z"
+  "updated_at": "2026-08-19T21:19:01.477720970Z"
 }

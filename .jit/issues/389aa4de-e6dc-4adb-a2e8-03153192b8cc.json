@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-19T21:22:50.424356970Z",
+  "dependencies": [
+    "697fc55b-4b36-4cb5-8106-a811b1772e44"
+  ],
+  "description": "Extend the calibration sweep to `polynomial.karatsuba_min_degree` once the polynomial selectors read the tuning profile.\n\n## Background\n\nThe calibration action of issue `5ecc9bf8` sweeps four of the five v1 profile fields. `karatsuba_min_degree` is not sweepable from a bench target in the tree that issue lands against: a bench links `gf2-core` as an external crate, so it can name only `pub` items, and both arms of this crossover are private — `mul_schoolbook_impl` at `crates/gf2-core/src/field/poly.rs:2484` and `mul_karatsuba_raw` at `:2531`. The only public entry is `FieldPoly::mul`, which picks one arm from the compiled-in `KARATSUBA_THRESHOLD`. The module documents the omission deliberately at `crates/gf2-core/src/field/poly.rs:72`: \"There is no standalone `pub fn mul_karatsuba`: the schoolbook <-> Karatsuba crossover is internal\". No grid point therefore offers both arms, and the design's §2.7 rule 2 is undecidable for this field.\n\nPer design `dev/active/220cab0b/design.md` §5 condition 5, `5ecc9bf8`'s emitted profile omits the field, so it inherits the conservative default at load rather than claiming an unmeasured value. That is a tracked limitation, recorded with its numbers in that issue's calibration receipt, not a defect in the emitted artifact.\n\nIssue `697fc55b` makes `mul_impl` resolve the threshold from `tuning::active()`. After it lands, both arms become reachable without new public API: a child process that installs a profile with a minimal `karatsuba_min_degree` takes the Karatsuba arm at every grid point, and one that installs a maximal value takes the schoolbook arm, so the same public `FieldPoly::mul` yields both arms on one grid.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration harness sweeps `karatsuba_min_degree` across a grid straddling `KARATSUBA_THRESHOLD`, obtaining both arms at each grid point by forcing the selection through an installed profile rather than by adding public API to `crates/gf2-core/src/field/poly.rs`.\n- [hard] REQ-02: The emitted profile carries a calibrated `karatsuba_min_degree` selected by the design's §2.7 rule, and the receipt records the sweep including any tie or non-monotone case and the default it fell back to.\n- [hard] REQ-03: The limitation recorded in `5ecc9bf8`'s receipt is updated or superseded so no committed record still states the field is unsweepable.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-19T21:22:50.424356970Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "389aa4de-e6dc-4adb-a2e8-03153192b8cc",
+  "labels": [
+    "component:gf2-core",
+    "type:task",
+    "epic:quality-documentation-tech-debt"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
+  "updated_at": "2026-08-19T21:23:32.265434776Z"
+}

@@ -8601,3 +8601,9 @@
 {"assignee":"agent:worker","id":"887dfb2e-35e0-4aa6-86cf-b523ad5a3a47","issue_id":"5ecc9bf8-3d62-408e-aba8-53ad2790a49d","timestamp":"2026-08-19T21:14:10.141254729Z","type":"issue_claimed"}
 {"from":"ready","id":"8702b204-5f52-4f44-899f-d81ea963ba74","issue_id":"51058f8e-6bad-443c-aa5b-14d430bcd0c7","timestamp":"2026-08-19T21:14:16.320620252Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"3600d7be-3b87-4ea5-ae92-4e825c82dc64","issue_id":"51058f8e-6bad-443c-aa5b-14d430bcd0c7","timestamp":"2026-08-19T21:14:16.320620252Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"3a1ad50f-0825-4d1f-9f8d-d50b9477bc35","issue_id":"51058f8e-6bad-443c-aa5b-14d430bcd0c7","timestamp":"2026-08-19T21:19:01.477720970Z","type":"issue_updated","updated_by":"doc-add"}
+{"id":"74cbee20-6ce6-44cb-bfde-ebec9a688023","issue_id":"389aa4de-e6dc-4adb-a2e8-03153192b8cc","priority":"normal","timestamp":"2026-08-19T21:22:50.424356970Z","title":"Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover","type":"issue_created"}
+{"fields":["dependencies"],"id":"7bfbe7e5-15e7-4c22-8f17-8afe85912fe6","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-19T21:23:03.866651317Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"184fdd3f-85df-4315-b4c6-57874a10d391","issue_id":"389aa4de-e6dc-4adb-a2e8-03153192b8cc","timestamp":"2026-08-19T21:23:09.978393450Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"c2185513-4f08-4f80-9b6c-02abf43193e2","issue_id":"389aa4de-e6dc-4adb-a2e8-03153192b8cc","timestamp":"2026-08-19T21:23:09.978393450Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["labels"],"id":"4e3f3829-79f2-4d55-aa3b-891f8307532a","issue_id":"389aa4de-e6dc-4adb-a2e8-03153192b8cc","timestamp":"2026-08-19T21:23:32.265434776Z","type":"issue_updated","updated_by":"issue-update"}
