@@ -5,7 +5,41 @@
   "created_at": "2026-08-19T15:32:44.309136942Z",
   "dependencies": [],
   "description": "Author the approved proof sketch that factors the proof obligations for the\nCharon/Aeneas-extracted loop-free generic field operations into trait-level\nalgebraic laws over the abstract field plus per-backend representation\nrefinement.\n\n## Background\n\nSpike `34d85cb9` established that Charon/Aeneas extraction of\n`FiniteFieldExt::square` and `FiniteFieldExt::frobenius` succeeds on the\nworkspace MSRV toolchain with the pinned toolchain pair, and recorded the R8b\ninvocation that produces them together with the targets a follow-up\nproof-sketch round should take (`dev/active/34d85cb9/findings.md`). Epic\n`6dc81018` REQ-05, as narrowed by owner decision DEC-A, additionally requires\nthe proof obligations to be factored as trait-level algebraic laws plus\nper-backend representation refinement, keeping machine layout out of the\nmathematical specification. No other child of the epic delivers that factoring.\n\nThe repository's proof discipline requires an approved sketch — lemma\nstatements, proof strategy, and the exact production path — before any proof\ncode is written. This issue delivers that sketch. Discharging the stated lemmas\nin Lean is follow-on work outside this epic.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed sketch document states, for the extracted\n  `field.traits.FiniteFieldExt.square.default` and\n  `field.traits.FiniteFieldExt.frobenius.default`, the trait-level algebraic\n  laws they satisfy over an abstract field, written as Lean lemma statements\n  that name the extracted definitions and take the `FiniteField` dictionary as\n  a parameter.\n- [hard] REQ-02: The sketch states the per-backend representation-refinement\n  obligations in a section separate from the trait-level laws, naming each\n  concrete backend it covers and the refinement relation tying that backend's\n  representation to the abstract field.\n- [hard] REQ-03: The sketch names the exact production path for every stated\n  lemma — the Rust items, the extraction invocation that generates them, and\n  the generated Lean files — and gives the proof strategy for each.\n- [hard] REQ-04: The sketch records whether the extracted Lean elaborates,\n  citing the exact command, its exit status, and committed output; a failure to\n  elaborate is recorded as a finding rather than worked around.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "REQ-05 loop-free extraction proof-obligation factoring sketch",
+      "path": "dev/active/1ac74567/proof-sketch.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "harness",
+      "format": "markdown",
+      "label": "A8b_lean elaboration harness (four stages)",
+      "path": "dev/active/1ac74567/elaboration/elaborate.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "A8b_lean elaboration receipt: commands, exit statuses, output",
+      "path": "dev/active/1ac74567/elaboration/elaborate.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "harness",
+      "format": "markdown",
+      "label": "Sketch lemma statements, statement-elaboration input",
+      "path": "dev/active/1ac74567/elaboration/statements.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "harness",
+      "label": "Empty stand-in for the missing R8bGf2Core.FunsExternal module",
+      "path": "dev/active/1ac74567/elaboration/FunsExternal.lean"
+    }
+  ],
   "first_ready_at": "2026-08-19T15:32:44.309136942Z",
   "gates_required": [
     "doc-review"
@@ -21,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Author the loop-free extraction proof-obligation factoring sketch",
-  "updated_at": "2026-08-19T17:11:34.989407022Z"
+  "updated_at": "2026-08-19T17:39:12.187156392Z"
 }

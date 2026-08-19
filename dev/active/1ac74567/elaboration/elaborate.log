@@ -1,0 +1,119 @@
+repo-root  = /home/vkaskivuo/Projects/gf2
+generated  = /home/vkaskivuo/Projects/gf2/dev/active/34d85cb9/extraction/A8b_lean
+scratch    = /tmp/tmp.tjdiIPeTJa
+toolchain  = leanprover/lean4:v4.30.0-rc2
+lean       = Lean (version 4.30.0-rc2, x86_64-unknown-linux-gnu, commit 3dc1a088b6d2d8eafe25a7cd7ec7b58d731bd7cc, Release)
+lake       = Lake version 5.0.0-src+3dc1a08 (Lean version 4.30.0-rc2)
+
+=== Stage 1: generated files verbatim ===
+R8bGf2Core/Types.lean:94:2: error: Field `corecloneCloneInst` has already been declared
+R8bGf2Core/Types.lean:119:20: error(lean.unknownIdentifier): Unknown identifier `field.traits.FiniteField`
+exit=1  R8bGf2Core/Types.lean
+R8bGf2Core/FunsExternal.lean:11:0: error: object file '/tmp/tmp.tjdiIPeTJa/s1/R8bGf2Core/Types.olean' of module R8bGf2Core.Types does not exist
+exit=1  R8bGf2Core/FunsExternal.lean
+R8bGf2Core/Funs.lean:3:0: error: object file '/tmp/tmp.tjdiIPeTJa/s1/R8bGf2Core/Types.olean' of module R8bGf2Core.Types does not exist
+exit=1  R8bGf2Core/Funs.lean
+
+=== Stage 2: after scripts/fix-aeneas-dupes.py ===
+--- what the pass changed in Types.lean ---
+--- /home/vkaskivuo/Projects/gf2/dev/active/34d85cb9/extraction/A8b_lean/Types.lean	2026-08-19 00:28:37.833211741 +0300
++++ /tmp/tmp.tjdiIPeTJa/s2/R8bGf2Core/Types.lean	2026-08-19 20:24:30.126761527 +0300
+@@ -91,14 +91,14 @@
+   coreopsarithNegInst : core.ops.arith.Neg Self Self
+   coreopsarithAddAssignInst : core.ops.arith.AddAssign Self Self
+   coreopsarithAddAssignSelfSharedSelfInst : core.ops.arith.AddAssign Self Self
+-  corecloneCloneInst : core.clone.Clone Self_Characteristic
+-  corefmtDebugInst : core.fmt.Debug Self_Characteristic
+-  corecmpPartialEqInst : core.cmp.PartialEq Self_Characteristic
++  corecloneCloneCharacteristicInst : core.clone.Clone Self_Characteristic
++  corefmtDebugCharacteristicInst : core.fmt.Debug Self_Characteristic
++  corecmpPartialEqCharacteristicInst : core.cmp.PartialEq Self_Characteristic
+     Self_Characteristic
+-  corecmpEqInst : core.cmp.Eq Self_Characteristic
+-  corecloneCloneInst : core.clone.Clone Self_Wide
+-  coreopsarithAddInst : core.ops.arith.Add Self_Wide Self_Wide Self_Wide
+-  coreopsarithAddAssignInst : core.ops.arith.AddAssign Self_Wide Self_Wide
++  corecmpEqCharacteristicInst : core.cmp.Eq Self_Characteristic
++  corecloneCloneWideInst : core.clone.Clone Self_Wide
++  coreopsarithAddWideInst : core.ops.arith.Add Self_Wide Self_Wide Self_Wide
++  coreopsarithAddAssignWideInst : core.ops.arith.AddAssign Self_Wide Self_Wide
+   characteristic : Self → Result Self_Characteristic
+   extension_degree : Self → Result Std.Usize
+   is_zero : Self → Result Bool
+--- what the pass changed in Funs.lean ---
+--- /home/vkaskivuo/Projects/gf2/dev/active/34d85cb9/extraction/A8b_lean/Funs.lean	2026-08-19 00:28:37.833007781 +0300
++++ /tmp/tmp.tjdiIPeTJa/s2/R8bGf2Core/Funs.lean	2026-08-19 20:24:30.127257767 +0300
+@@ -7,6 +7,12 @@
+ set_option linter.dupNamespace false
+ set_option linter.hashCommand false
+ set_option linter.unusedVariables false
++-- Strict-build carve-out (issue 2e544a34): Aeneas extraction
++-- artefacts may carry `sorry` placeholders for items the
++-- translator could not handle. Silence the elaborator warning
++-- at file scope so the project lakefile's warningAsError=true
++-- fires only on hand-written Proofs/ files.
++set_option warn.sorry false
+ 
+ /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
+ set_option maxHeartbeats 1000000
+--- elaboration ---
+exit=0  R8bGf2Core/Types.lean
+exit=0  R8bGf2Core/FunsExternal.lean
+R8bGf2Core/Funs.lean:85:56: error: Application type mismatch: The argument
+  FiniteFieldExtInst
+has type
+  FiniteFieldExt Self (sorry `«R8bGf2Core.Funs:78:2») sorry
+but is expected to have type
+  FiniteFieldExt Self (sorry `«R8bGf2Core.Funs:46:2») sorry
+in the application
+  default_loop.body FiniteFieldExtInst
+R8bGf2Core/Funs.lean:104:49: error: Application type mismatch: The argument
+  FiniteFieldExtInst
+has type
+  FiniteFieldExt Self Clause0_Clause0_Characteristic Clause0_Clause0_Wide
+but is expected to have type
+  FiniteFieldExt Self sorry sorry
+in the application
+  default_loop FiniteFieldExtInst
+exit=1  R8bGf2Core/Funs.lean
+
+=== Stage 3: stage 2 with the pow chain deleted ===
+--- definitions kept ---
+31:def field.traits.FiniteFieldExt.square.default
+44:def field.traits.FiniteFieldExt.frobenius.default_loop.body
+62:def field.traits.FiniteFieldExt.frobenius.default_loop
+74:def field.traits.FiniteFieldExt.frobenius.default
+--- elaboration ---
+exit=0  R8bGf2Core/Types.lean
+exit=0  R8bGf2Core/FunsExternal.lean
+exit=0  R8bGf2Core/Funs.lean
+--- axiom dependencies of the two targets ---
+'gf2_core.field.traits.FiniteFieldExt.square.default' does not depend on any axioms
+'gf2_core.field.traits.FiniteFieldExt.frobenius.default' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound,
+ gf2_core.field.traits.FiniteFieldExt.frobenius.default_loop.body._native.decide.ax_3]
+'gf2_core.field.traits.FiniteFieldExt.frobenius.default_loop' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound,
+ gf2_core.field.traits.FiniteFieldExt.frobenius.default_loop.body._native.decide.ax_3]
+'gf2_core.field.traits.FiniteFieldExt.frobenius.default_loop.body' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound,
+ gf2_core.field.traits.FiniteFieldExt.frobenius.default_loop.body._native.decide.ax_3]
+axiom gf2_core.field.traits.FiniteFieldExt.frobenius.default_loop.body._native.decide.ax_3 : decide
+    ("Frobenius exponent overflow".toByteArray.size ≤ Aeneas.Std.U32.max) =
+  true
+exit=0  Axioms.lean
+
+=== Stage 4: the sketch's lemma statements against the stage-3 tree ===
+Statements.lean:65:8: warning: declaration uses `sorry`
+Statements.lean:72:8: warning: declaration uses `sorry`
+Statements.lean:84:8: warning: declaration uses `sorry`
+Statements.lean:94:8: warning: declaration uses `sorry`
+Statements.lean:103:8: warning: declaration uses `sorry`
+Statements.lean:114:8: warning: declaration uses `sorry`
+Statements.lean:125:8: warning: declaration uses `sorry`
+Statements.lean:137:8: warning: declaration uses `sorry`
+Statements.lean:147:8: warning: declaration uses `sorry`
+exit=0  Statements.lean
