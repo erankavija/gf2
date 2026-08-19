@@ -73,11 +73,18 @@
       "path": "dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md"
     }
   ],
+  "done_at": "2026-08-19T21:27:32.212957671Z",
   "first_ready_at": "2026-08-19T20:59:22.703885957Z",
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-19T21:27:11.904453548Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "51058f8e-6bad-443c-aa5b-14d430bcd0c7",
   "labels": [
     "epic:field-capability-dispatch",
@@ -86,7 +93,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Predeclare the across-build control arm for the post-cutover comparison",
-  "updated_at": "2026-08-19T21:19:01.477720970Z"
+  "updated_at": "2026-08-19T21:27:32.212957671Z"
 }
