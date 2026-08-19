@@ -25,6 +25,7 @@
 
 use std::collections::BTreeMap;
 use std::env;
+use std::fmt;
 use std::fs::{self, File, OpenOptions};
 use std::hint::black_box;
 use std::io::{self, Write};
@@ -200,8 +201,84 @@ struct CellStat {
     cell: String,
     family: String,
     arm: String,
+    size_a: String,
+    size_b: String,
     calls: u128,
     elapsed_ns: u128,
+}
+
+/// One cell's identity fields disagreeing between two receipts.
+#[derive(Debug, PartialEq, Eq)]
+struct IdentityMismatch {
+    cell: String,
+    field: &'static str,
+    baseline: String,
+    candidate: String,
+}
+
+/// Why two receipts cannot be compared at all.
+///
+/// This is a different outcome from a cell exceeding its tolerance: a tolerance
+/// failure is a measured regression, while every variant here means the two
+/// receipts do not describe the same measurement and no ratio between them
+/// carries meaning.
+#[derive(Debug, PartialEq, Eq)]
+enum Incomparable {
+    Schema { baseline: String, candidate: String },
+    CellSet { difference: Vec<String> },
+    NotPinnedSet,
+    Identity { cells: Vec<IdentityMismatch> },
+    Degenerate { cell: String, reason: &'static str },
+}
+
+impl Incomparable {
+    /// Short token naming the failure class, printed on the `RESULT:` line.
+    fn class(&self) -> &'static str {
+        match self {
+            Self::Schema { .. } => "schema mismatch",
+            Self::CellSet { .. } => "cell-set mismatch",
+            Self::NotPinnedSet => "not the pinned set",
+            Self::Identity { .. } => "selector identity mismatch",
+            Self::Degenerate { .. } => "degenerate cell",
+        }
+    }
+}
+
+impl fmt::Display for Incomparable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Schema {
+                baseline,
+                candidate,
+            } => write!(
+                f,
+                "schema mismatch: baseline={baseline} candidate={candidate} expected={SCHEMA_VERSION}"
+            ),
+            Self::CellSet { difference } => {
+                write!(f, "cell symmetric difference: {}", difference.join(", "))
+            }
+            Self::NotPinnedSet => write!(
+                f,
+                "receipt cell set does not match the {SCHEMA_VERSION} pinned set"
+            ),
+            Self::Identity { cells } => {
+                writeln!(
+                    f,
+                    "selector identity mismatch: {} cell(s) resolve differently in the two receipts",
+                    cells.len()
+                )?;
+                for mismatch in cells {
+                    writeln!(
+                        f,
+                        "  {}: {} baseline={} candidate={}",
+                        mismatch.cell, mismatch.field, mismatch.baseline, mismatch.candidate
+                    )?;
+                }
+                Ok(())
+            }
+            Self::Degenerate { cell, reason } => write!(f, "{reason}: {cell}"),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -243,12 +320,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("parse_args validates --compare/--against pairing");
         let baseline = load_receipt(baseline_path)?;
         let candidate = load_receipt(candidate_path)?;
-        let comparison = compare(&baseline, &candidate)?;
-        print_comparison(baseline_path, candidate_path, &comparison);
-        if !comparison.passed {
-            return Err("comparison failed".into());
-        }
-        return Ok(());
+        return match compare(&baseline, &candidate) {
+            Ok(comparison) => {
+                print_comparison(baseline_path, candidate_path, &comparison);
+                if comparison.passed {
+                    Ok(())
+                } else {
+                    Err("comparison failed".into())
+                }
+            }
+            Err(reason) => {
+                print_incomparable(baseline_path, candidate_path, &reason);
+                Err(format!("receipts are not comparable: {}", reason.class()).into())
+            }
+        };
     }
 
     let mut output = open_output(&args.output, args.append)?;
@@ -370,7 +455,7 @@ fn next_value(iter: &mut impl Iterator<Item = String>, flag: &str) -> Result<Str
 }
 
 fn open_output(path: &Path, append: bool) -> io::Result<File> {
-    let path = resolve_output_path(path);
+    let path = resolve_repository_path(path);
     if !append && path.exists() {
         return Err(io::Error::new(
             io::ErrorKind::AlreadyExists,
@@ -394,7 +479,15 @@ fn open_output(path: &Path, append: bool) -> io::Result<File> {
         .open(path)
 }
 
-fn resolve_output_path(path: &Path) -> PathBuf {
+/// Resolves a path the caller gave on the command line.
+///
+/// An absolute path is used as given. A relative path is taken as
+/// repository-relative, because `cargo bench` runs this binary with its working
+/// directory at the package root while the committed receipts and the procedure
+/// that names them are written relative to the repository root. Every path
+/// argument resolves this way, inputs and output alike, so one command works
+/// from where the procedure says to run it.
+fn resolve_repository_path(path: &Path) -> PathBuf {
     if path.is_absolute() {
         path.to_owned()
     } else {
@@ -953,7 +1046,9 @@ fn csv_value<'a>(
 }
 
 fn load_receipt(path: &Path) -> Result<Receipt, String> {
-    let data = fs::read_to_string(path).map_err(|error| format!("{}: {error}", path.display()))?;
+    let resolved = resolve_repository_path(path);
+    let data = fs::read_to_string(&resolved)
+        .map_err(|error| format!("{}: {error}", resolved.display()))?;
     let rows = parse_csv(&data)?;
     let header = rows.first().ok_or_else(|| "receipt is empty".to_owned())?;
     let mut columns = BTreeMap::new();
@@ -965,6 +1060,8 @@ fn load_receipt(path: &Path) -> Result<Receipt, String> {
         "family",
         "cell",
         "arm",
+        "size_a",
+        "size_b",
         "calls",
         "elapsed_ns",
     ] {
@@ -991,6 +1088,8 @@ fn load_receipt(path: &Path) -> Result<Receipt, String> {
             cell: cell.clone(),
             family: csv_value(row, &columns, "family")?.to_owned(),
             arm: csv_value(row, &columns, "arm")?.to_owned(),
+            size_a: csv_value(row, &columns, "size_a")?.to_owned(),
+            size_b: csv_value(row, &columns, "size_b")?.to_owned(),
             calls: csv_value(row, &columns, "calls")?
                 .parse()
                 .map_err(|_| format!("invalid calls for {cell}"))?,
@@ -1003,7 +1102,11 @@ fn load_receipt(path: &Path) -> Result<Receipt, String> {
             elapsed_ns: 0,
             ..stat.clone()
         });
-        if existing.family != stat.family || existing.arm != stat.arm {
+        if existing.family != stat.family
+            || existing.arm != stat.arm
+            || existing.size_a != stat.size_a
+            || existing.size_b != stat.size_b
+        {
             return Err(format!(
                 "cell metadata changes across rows: {}",
                 existing.cell
@@ -1022,15 +1125,15 @@ fn pooled_ns_per_call(stat: &CellStat) -> f64 {
     stat.elapsed_ns as f64 / stat.calls as f64
 }
 
-fn compare(baseline: &Receipt, candidate: &Receipt) -> Result<Comparison, String> {
+fn compare(baseline: &Receipt, candidate: &Receipt) -> Result<Comparison, Incomparable> {
     if baseline.schema_version != SCHEMA_VERSION
         || candidate.schema_version != SCHEMA_VERSION
         || baseline.schema_version != candidate.schema_version
     {
-        return Err(format!(
-            "schema mismatch: baseline={} candidate={} expected={SCHEMA_VERSION}",
-            baseline.schema_version, candidate.schema_version
-        ));
+        return Err(Incomparable::Schema {
+            baseline: baseline.schema_version.clone(),
+            candidate: candidate.schema_version.clone(),
+        });
     }
     if baseline.stats.keys().ne(candidate.stats.keys()) {
         let mut difference = Vec::new();
@@ -1041,30 +1144,59 @@ fn compare(baseline: &Receipt, candidate: &Receipt) -> Result<Comparison, String
         }
         difference.sort();
         difference.dedup();
-        return Err(format!(
-            "cell symmetric difference: {}",
-            difference.join(", ")
-        ));
+        return Err(Incomparable::CellSet { difference });
     }
     // The schema token names one pinned set, so a receipt carrying that token
     // and a different set of cells was produced by a different protocol and is
     // not comparable, however well its two files agree with each other.
     if !baseline.stats.keys().eq(pinned_cell_ids().iter()) {
-        return Err(format!(
-            "receipt cell set does not match the {SCHEMA_VERSION} pinned set"
-        ));
+        return Err(Incomparable::NotPinnedSet);
+    }
+    // Default behaviour identical by construction is the cutover's whole
+    // contract, and both receipts are taken with no profile installed, so every
+    // cell resolves to the same arm on both sides. A cell whose recorded arm,
+    // family, or operand sizes moved is two different code paths, and a ratio
+    // between them measures no regression at all. It fails here as its own
+    // class rather than passing on a tolerance.
+    let mut identity = Vec::new();
+    for (cell, baseline_stat) in &baseline.stats {
+        let candidate_stat = &candidate.stats[cell];
+        for (field, left, right) in [
+            ("arm", &baseline_stat.arm, &candidate_stat.arm),
+            ("family", &baseline_stat.family, &candidate_stat.family),
+            ("size_a", &baseline_stat.size_a, &candidate_stat.size_a),
+            ("size_b", &baseline_stat.size_b, &candidate_stat.size_b),
+        ] {
+            if left != right {
+                identity.push(IdentityMismatch {
+                    cell: cell.clone(),
+                    field,
+                    baseline: left.clone(),
+                    candidate: right.clone(),
+                });
+            }
+        }
+    }
+    if !identity.is_empty() {
+        return Err(Incomparable::Identity { cells: identity });
     }
     let mut cells = Vec::with_capacity(baseline.stats.len());
     let mut log_sum = 0.0;
     for (cell, baseline_stat) in &baseline.stats {
         let candidate_stat = &candidate.stats[cell];
         if baseline_stat.calls == 0 || candidate_stat.calls == 0 {
-            return Err(format!("cell has zero calls: {cell}"));
+            return Err(Incomparable::Degenerate {
+                cell: cell.clone(),
+                reason: "cell has zero calls",
+            });
         }
         let baseline_rate = pooled_ns_per_call(baseline_stat);
         let candidate_rate = pooled_ns_per_call(candidate_stat);
         if baseline_rate <= 0.0 || candidate_rate <= 0.0 {
-            return Err(format!("cell has non-positive elapsed time: {cell}"));
+            return Err(Incomparable::Degenerate {
+                cell: cell.clone(),
+                reason: "cell has non-positive elapsed time",
+            });
         }
         let ratio = candidate_rate / baseline_rate;
         log_sum += ratio.ln();
@@ -1132,6 +1264,20 @@ fn list_cells() {
             expected_arm(cell)
         );
     }
+}
+
+/// Reports two receipts that cannot be compared at all.
+///
+/// No per-cell verdict and no geometric mean is printed, because neither is
+/// meaningful once the receipts are known to describe different measurements.
+fn print_incomparable(baseline: &Path, candidate: &Path, reason: &Incomparable) {
+    println!(
+        "comparison: baseline={} candidate={}",
+        baseline.display(),
+        candidate.display()
+    );
+    println!("{reason}");
+    println!("RESULT: FAIL ({})", reason.class());
 }
 
 fn self_check() -> Result<(), Box<dyn std::error::Error>> {
@@ -1207,12 +1353,15 @@ mod tests {
             .into_iter()
             .map(|cell| {
                 let id = cell_id(cell);
+                let (size_a, size_b) = cell_sizes(cell);
                 (
                     id.clone(),
                     CellStat {
                         cell: id,
                         family: family(cell).to_owned(),
                         arm: expected_arm(cell).to_owned(),
+                        size_a: size_a.to_string(),
+                        size_b: size_b.to_string(),
                         calls: 1_000,
                         elapsed_ns: (1_000_000.0 * ratio).round() as u128,
                     },
@@ -1236,6 +1385,28 @@ mod tests {
     }
 
     /// Arms present among the pinned cells that `keep` selects.
+    /// One row per pinned cell, as a receipt this harness could have written.
+    /// `arm_override` replaces the recorded arm of the named cell.
+    #[allow(dead_code)]
+    fn pinned_receipt_csv(arm_override: Option<(&str, &str)>) -> String {
+        let mut text = String::from(CSV_HEADER);
+        text.push('\n');
+        for cell in pinned_cells() {
+            let id = cell_id(cell);
+            let (size_a, size_b) = cell_sizes(cell);
+            let arm = match arm_override {
+                Some((target, replacement)) if target == id => replacement,
+                _ => expected_arm(cell),
+            };
+            text.push_str(&format!(
+                "{SCHEMA_VERSION},1,1,{},{id},{arm},{size_a},{size_b},{},0,1000,1000000,1000.0,250,0,rev,false,rustc,host,cpu,kernel,gov\n",
+                family(cell),
+                fixture_count(cell)
+            ));
+        }
+        text
+    }
+
     #[allow(dead_code)]
     fn arms_of(keep: impl Fn(&Cell) -> bool) -> Vec<&'static str> {
         pinned_cells()
@@ -1581,6 +1752,8 @@ mod tests {
             cell: "cell".into(),
             family: "family".into(),
             arm: "arm".into(),
+            size_a: "1".into(),
+            size_b: "0".into(),
             calls: 1 + 3,
             elapsed_ns: 10 + 90,
         };
@@ -1637,8 +1810,10 @@ mod tests {
         let baseline = receipt_with_ratio(1.0);
         let mut candidate = receipt_with_ratio(1.0);
         candidate.stats.pop_first();
-        let error = compare(&baseline, &candidate).unwrap_err();
-        assert!(error.contains("symmetric difference"));
+        assert!(matches!(
+            compare(&baseline, &candidate).unwrap_err(),
+            Incomparable::CellSet { .. }
+        ));
     }
 
     #[test]
@@ -1646,8 +1821,10 @@ mod tests {
         let baseline = receipt_with_ratio(1.0);
         let mut candidate = receipt_with_ratio(1.0);
         candidate.schema_version = "other-schema".into();
-        let error = compare(&baseline, &candidate).unwrap_err();
-        assert!(error.contains("schema mismatch"));
+        assert!(matches!(
+            compare(&baseline, &candidate).unwrap_err(),
+            Incomparable::Schema { .. }
+        ));
     }
 
     /// `load_receipt` pools every recorded window of a cell by summing totals,
@@ -1677,6 +1854,102 @@ mod tests {
     }
 
     #[test]
+    fn repository_relative_paths_resolve_from_the_repository_root() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        assert_eq!(
+            resolve_repository_path(Path::new("dev/benchmarks/tuning_profiles/receipt.csv")),
+            root.join("dev/benchmarks/tuning_profiles/receipt.csv")
+        );
+        let absolute = Path::new("/tmp/gf2-selector-non-regression-absolute.csv");
+        assert_eq!(resolve_repository_path(absolute), absolute);
+    }
+
+    /// A receipt named relative to the repository root loads, which is the form
+    /// the committed procedure uses. `cargo bench` runs this binary with its
+    /// working directory at the package root, so the path resolves only because
+    /// `load_receipt` goes through the resolver.
+    #[test]
+    fn load_receipt_accepts_a_repository_relative_path() {
+        let relative = PathBuf::from(format!(
+            "target/gf2-{SCHEMA_VERSION}-relative-{}.csv",
+            std::process::id()
+        ));
+        let absolute = resolve_repository_path(&relative);
+        assert!(absolute.is_absolute());
+        fs::create_dir_all(absolute.parent().expect("the path has a parent"))
+            .expect("create the target directory");
+        fs::write(&absolute, pinned_receipt_csv(None)).expect("write the fixture receipt");
+
+        // Discriminating precondition: the same relative path does not resolve
+        // against the working directory, so a pass below is the resolver's work.
+        assert!(
+            fs::read_to_string(&relative).is_err(),
+            "the fixture must not be reachable from the working directory"
+        );
+
+        let receipt = load_receipt(&relative).expect("repository-relative receipt loads");
+        fs::remove_file(&absolute).expect("remove the fixture receipt");
+        assert_eq!(receipt.stats.len(), pinned_cells().len());
+    }
+
+    /// Two receipts that agree on every timing still fail when a cell resolves
+    /// to a different arm, because the ratio would then compare two different
+    /// code paths rather than measure a regression.
+    #[test]
+    fn comparison_rejects_a_cell_whose_selector_arm_changed() {
+        let baseline = receipt_with_ratio(1.0);
+        let mut candidate = receipt_with_ratio(1.0);
+        let flipped = cell_id(Cell::BitLogical {
+            op: BitOp::Xor,
+            words: 8,
+        });
+        // Identical timings: without the identity precondition this comparison
+        // reports every ratio as 1.0 and passes.
+        assert!(compare(&baseline, &candidate).unwrap().passed);
+        "scalar".clone_into(&mut candidate.stats.get_mut(&flipped).expect("pinned cell").arm);
+
+        let error = compare(&baseline, &candidate).unwrap_err();
+        assert_eq!(error.class(), "selector identity mismatch");
+        let Incomparable::Identity { cells } = &error else {
+            panic!("expected an identity mismatch, got {error:?}");
+        };
+        assert_eq!(cells.len(), 1);
+        assert_eq!(cells[0].cell, flipped);
+        assert_eq!(cells[0].field, "arm");
+        assert_eq!(cells[0].baseline, "simd");
+        assert_eq!(cells[0].candidate, "scalar");
+    }
+
+    /// The same rejection reached through the CSV, proving the receipt's `arm`
+    /// column is what the identity precondition reads.
+    #[test]
+    fn arm_column_of_a_receipt_reaches_the_identity_check() {
+        let dir = std::env::temp_dir();
+        let stamp = std::process::id();
+        let baseline_path = dir.join(format!("gf2-{SCHEMA_VERSION}-arm-base-{stamp}.csv"));
+        let candidate_path = dir.join(format!("gf2-{SCHEMA_VERSION}-arm-cand-{stamp}.csv"));
+        let flipped = cell_id(Cell::PolyMul { len: 33 });
+        fs::write(&baseline_path, pinned_receipt_csv(None)).expect("write baseline");
+        fs::write(
+            &candidate_path,
+            pinned_receipt_csv(Some((flipped.as_str(), "schoolbook"))),
+        )
+        .expect("write candidate");
+
+        let baseline = load_receipt(&baseline_path).expect("baseline loads");
+        let candidate = load_receipt(&candidate_path).expect("candidate loads");
+        fs::remove_file(&baseline_path).expect("remove baseline");
+        fs::remove_file(&candidate_path).expect("remove candidate");
+
+        let error = compare(&baseline, &candidate).unwrap_err();
+        assert_eq!(error.class(), "selector identity mismatch");
+        let rendered = error.to_string();
+        assert!(rendered.contains(&flipped), "{rendered}");
+        assert!(rendered.contains("baseline=karatsuba"), "{rendered}");
+        assert!(rendered.contains("candidate=schoolbook"), "{rendered}");
+    }
+
+    #[test]
     fn comparison_rejects_a_receipt_whose_cell_set_is_not_the_pinned_set() {
         let mut baseline = receipt_with_ratio(1.0);
         let mut candidate = receipt_with_ratio(1.0);
@@ -1688,13 +1961,17 @@ mod tests {
                     cell: extra.clone(),
                     family: "polynomial".into(),
                     arm: "karatsuba".into(),
+                    size_a: "99".into(),
+                    size_b: "0".into(),
                     calls: 1_000,
                     elapsed_ns: 1_000_000,
                 },
             );
         }
-        let error = compare(&baseline, &candidate).unwrap_err();
-        assert!(error.contains("pinned set"), "{error}");
+        assert_eq!(
+            compare(&baseline, &candidate).unwrap_err(),
+            Incomparable::NotPinnedSet
+        );
     }
 
     #[test]
