@@ -7,7 +7,15 @@
     "f35daec0-f729-48f7-8c06-2180d815a222"
   ],
   "description": "Implement the calibration action that measures the pilot selector families on the current host and emits a versioned profile artifact.\n\n## Background\n\nCalibration is an explicit benchmark action under the repository's benchmark-mode and lock-wrapper conventions, never a build side effect. The emitted artifact records provenance — host, toolchain, git revision, and seeds — following the committed-receipt conventions, and must round-trip through the profile loader.\n\nThe harness lives as a benchmark target at `crates/gf2-core/benches/tuning_calibration.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration action runs only when explicitly invoked in benchmark mode and emits a profile artifact the loader accepts, with provenance fields populated.\n- [hard] REQ-02: The calibration workflow is documented from invocation to committing the emitted profile, and a non-benchmark build shows no calibration side effect.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Host-calibration receipt",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md"
+    }
+  ],
   "first_ready_at": "2026-08-19T17:11:09.803846955Z",
   "gates_required": [
     "cargo-ci",
@@ -24,5 +32,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Implement the explicit host-calibration benchmark action",
-  "updated_at": "2026-08-19T21:14:10.141254729Z"
+  "updated_at": "2026-08-19T21:54:50.959471511Z"
 }

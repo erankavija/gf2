@@ -1,0 +1,2386 @@
+//! Host calibration for the tuning-profile selector families.
+//!
+//! This target is an explicit benchmark **action**, not a build step. It
+//! measures both arms of each selector crossover on the current host, picks a
+//! threshold per field, and emits a [`TuningProfile`] JSON document that
+//! [`TuningProfile::from_json`] accepts. Nothing about a `cargo build`,
+//! `cargo test`, or `cargo clippy` invokes it: `cargo` only runs a
+//! `harness = false` bench target under `cargo bench`, and even then the
+//! target refuses to measure or emit unless the prepared-host marker
+//! `GF2_BENCH=1` is set and it observes the repository lock wrapper's mutex on
+//! one of its inherited descriptors.
+//!
+//! # Workflow
+//!
+//! ## 1. Prepare the host
+//!
+//! Calibrate on an uncontended host, as `@/inv/benchmark-backed-performance`
+//! requires of any crossover claim. `GF2_BENCH=1` is the repository's
+//! prepared-host marker, and the lock wrapper serialises the run against every
+//! sibling benchmark on the machine.
+//!
+//! `dev/scripts/ccx1-bench-flock.sh` takes `flock -x` on the mutex named by
+//! `GF2_CCX1_LOCK` (default `/tmp/gf2-ccx1.lock`), creating the file when it is
+//! absent, and holds it for the child command's whole lifetime. It passes
+//! neither `-n` nor a timeout, so a second caller blocks until the first
+//! finishes rather than failing. It then runs the child under
+//! `taskset -c 6-11 nice -n -5`; the niceness is best-effort and a non-root
+//! caller sees `nice` report a permission denial and continue at niceness 0,
+//! while the lock and the affinity stay in force. Its `--full-host` form takes
+//! the same mutex and omits `taskset`, for a benchmark whose named
+//! configuration needs the whole processor.
+//!
+//! ## 2. Run the action
+//!
+//! ```sh
+//! GF2_BENCH=1 ./dev/scripts/ccx1-bench-flock.sh \
+//!   cargo bench -p gf2-core --features tuning-profile \
+//!   --bench tuning_calibration -- \
+//!   --executions 5 --repetitions 5 --target-ms 250 \
+//!   --out /tmp/<unique-absent-path>.json \
+//!   --lock-wrapper dev/scripts/ccx1-bench-flock.sh \
+//!   --receipt dev/benchmarks/tuning_profiles/<date>-<name>.md
+//! ```
+//!
+//! `--lock-wrapper` and `--receipt` name the wrapper that was invoked and the
+//! receipt this run will be committed as; both are validated as
+//! repository-relative paths and land in the emitted provenance. The wrapper
+//! must exist at run time. The receipt is written after the run, so its path is
+//! recorded rather than checked. `--profile-id` overrides the profile
+//! identifier, which otherwise comes from the emitted file's own basename and
+//! must be kebab-case.
+//!
+//! Add `simd` to the feature list to calibrate `bit_backend.simd_min_words`
+//! against a real SIMD arm. Without that feature `SelectedBackend::Simd` does
+//! not exist, the scalar arm is the only reachable one, and a profile's
+//! `simd_min_words` is inert on the resulting build — the documented
+//! `@/inv/accelerator-safe-fallback` behaviour. The sweep then reports the
+//! field as having no comparable grid point and keeps the conservative default.
+//!
+//! `--self-check` prints the protocol constants and the observed host facts
+//! without measuring or emitting; `--list-grid` prints the grid and the
+//! conservative defaults it straddles. Neither needs `GF2_BENCH=1`.
+//!
+//! ## 3. Commit the emitted profile
+//!
+//! The action writes to the `--out` path, refusing a path that already exists,
+//! then reads the file back through [`TuningProfile::from_json`] and compares
+//! the parsed value against the one it serialised. Only a document that
+//! survives that round trip is reported as an artifact. Write to a unique
+//! absent `/tmp` path so a partial or rejected run leaves nothing behind and
+//! nothing under version control is overwritten.
+//!
+//! Committing an emitted profile means copying that validated file
+//! byte-for-byte to `crates/gf2-core/data/tuning-profiles/<profile_id>.json`,
+//! where the directory-glob test loads and validates every committed file, and
+//! committing the receipt named by `--receipt` in the same commit. The receipt
+//! carries the provenance table, the protocol, the per-field grid with the
+//! selecting margin, and every tie or non-monotone case, following the
+//! committed-receipt conventions of the sibling receipts under
+//! `dev/benchmarks/tuning_profiles/`. A profile whose provenance records
+//! `source_dirty: true` is not committable: the revision it names does not
+//! reproduce the binary that produced the numbers.
+//!
+//! Nothing in the library reads a profile from the filesystem. A committed
+//! profile reaches a process only when a caller parses it and calls
+//! `gf2_core::tuning::install` before the first selection boundary runs.
+//!
+//! # Sweep and selection rule
+//!
+//! Per selector field, both arms of the crossover are measured across a size
+//! grid straddling the conservative default, with one fixture per grid point
+//! shared by both arms so operand construction is identical on them. The two
+//! arms alternate at execution granularity, each execution recalibrating its
+//! own call count, so a frequency or thermal drift across a grid point is
+//! spread over both arms instead of biasing the one measured second. The
+//! alternation stays outside the timed windows: each window is a monomorphic
+//! loop over one entry point, which matters for the bit-logical arms whose
+//! per-call cost is a few nanoseconds.
+//!
+//! An arm's rate at a grid point is the median of its `executions ×
+//! repetitions` windows; its spread is the interquartile range of those windows
+//! divided by that median. The noise band at a grid point is the larger of the
+//! two arms' spreads, and the asymptotic arm wins there when its median beats
+//! the other arm's by a relative margin exceeding that band.
+//!
+//! The field's value is the smallest grid point at which the asymptotic arm
+//! wins, provided it also wins at every larger grid point. **On a tie, on a
+//! non-monotone crossover, or where no grid point offers both arms, the
+//! conservative default is kept**, so the action's output is never worse than
+//! the default by construction. The measured grid is reported either way, and a
+//! non-monotone sweep belongs in the receipt with its numbers rather than
+//! smoothed away, per `@/inv/falsification-preserved`.
+//!
+//! For a `_max_` field the same crossover search runs and the value is the
+//! largest grid point below the crossover, since the comparison the field feeds
+//! selects the conservative arm at or below its value.
+//!
+//! # Measured against uncalibrated
+//!
+//! The three ways a field keeps its default are not the same claim, and the
+//! emitted document distinguishes two of them from the third.
+//!
+//! A tie and a non-monotone crossover are **calibration outcomes**: both arms
+//! were measured across the grid, and the rule concluded that the default
+//! stands. Such a field states its value in the document like any other.
+//!
+//! A field with **no comparable grid point** was never calibrated at all. Design
+//! §5 condition 5 governs it: "Until the sweep covers it, a committed profile
+//! omits the field and inherits the default; a profile that carries an
+//! uncalibrated value is a `@/inv/benchmark-backed-performance` defect." The
+//! emitted document therefore has no key for such a field. An absent field is a
+//! supported state of the schema — `from_json` resolves it to the conservative
+//! default — so the document still loads and still selects the same threshold,
+//! and it stops claiming a value nothing measured.
+//!
+//! # Arm reachability
+//!
+//! Each arm has to be callable on its own for a grid point to yield a
+//! comparison. Four of the five fields have both arms in the public API:
+//! `ScalarBackend` against `SimdBackend`, [`FieldPoly::mul`] against
+//! [`FieldPoly::mul_ntt`], [`FieldPoly::div_rem`] against
+//! [`FieldPoly::div_rem_fast`], and [`FieldPoly::eval_batch`] against
+//! [`batch_evaluate_subproduct_auto`].
+//!
+//! `polynomial.karatsuba_min_degree` has no such pair. Its two arms are the
+//! private `mul_schoolbook_impl` and `mul_karatsuba_raw`, reachable only
+//! through [`FieldPoly::mul`], which picks one of them from the compiled-in
+//! threshold — schoolbook below it, Karatsuba at or above it. No grid point
+//! therefore offers both arms, so the field is uncalibrated and the emitted
+//! document omits it. The dispatcher is still measured across the grid so the
+//! receipt records the curve.
+//!
+//! Issue `389aa4de` owns closing that gap. Once the polynomial cutover has
+//! `mul_impl` read `tuning::active()`, one child process installing a minimal
+//! threshold takes the Karatsuba arm and another installing a maximal one takes
+//! the schoolbook arm, so both arms come off the same public
+//! [`FieldPoly::mul`] on one grid without any new public API.
+
+use std::env;
+use std::fmt;
+use std::fs;
+use std::hint::black_box;
+use std::io;
+use std::os::unix::fs::MetadataExt;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+use gf2_core::field::poly::{batch_evaluate_subproduct_auto, FieldPoly};
+use gf2_core::gfp::Fp;
+use gf2_core::kernels::{Backend, ScalarBackend};
+use gf2_core::rng::Lcg;
+use gf2_core::tuning::{
+    BitBackendSelectors, GitRevision, HarnessSchema, PolynomialSelectors, ProfileError, ProfileId,
+    Provenance, RepoRelPath, Rfc3339Utc, Sha256, TuningProfile,
+};
+
+/// Prepared-host marker required before this action measures or emits.
+const BENCH_MODE_VAR: &str = "GF2_BENCH";
+/// Wrapper-overridable mutex path, read only to explain a failed lock probe.
+const LOCK_PATH_VAR: &str = "GF2_CCX1_LOCK";
+const DEFAULT_EXECUTIONS: u64 = 5;
+const DEFAULT_REPETITIONS: u64 = 5;
+const DEFAULT_TARGET_MS: u64 = 250;
+/// Upper bound on the calibrated call count of one timed window.
+const MAX_CALLS: u64 = 1 << 32;
+/// Fixture bank depth for the bit-backend arms, matching the sibling harness.
+const BIT_FIXTURES: usize = 8;
+/// `u64` words per 64-byte cache line on the supported targets.
+const WORDS_PER_LINE: usize = 8;
+const SEED_ROOT: u64 = 0x5ecc_9bf8_0000_0000;
+const GIT_STATUS_ARGS: &[&str] = &["status", "--porcelain", "--untracked-files=all"];
+
+/// The prime field every polynomial arm is measured over.
+///
+/// `Fp<65537>` is `TwoAdicField`, which the NTT, Newton-iteration division and
+/// subproduct-tree arms all require, and it is the field the pinned selector
+/// non-regression set already measures, so the two receipts describe the same
+/// arithmetic.
+type F = Fp<65537>;
+
+// ---------------------------------------------------------------------
+// Calibrated fields and their grids
+// ---------------------------------------------------------------------
+
+/// The five selector fields a calibrated profile carries.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum CalibratedField {
+    SimdMinWords,
+    KaratsubaMinDegree,
+    KaratsubaMaxOutLen,
+    DivRemFastMinLen,
+    SubproductMinLen,
+}
+
+impl CalibratedField {
+    const ALL: [Self; 5] = [
+        Self::SimdMinWords,
+        Self::KaratsubaMinDegree,
+        Self::KaratsubaMaxOutLen,
+        Self::DivRemFastMinLen,
+        Self::SubproductMinLen,
+    ];
+
+    fn family(self) -> &'static str {
+        match self {
+            Self::SimdMinWords => "bit_backend",
+            _ => "polynomial",
+        }
+    }
+
+    /// Whether the field bounds its conservative arm from above.
+    ///
+    /// `karatsuba_max_out_len` gates `out_len <= t` to the Karatsuba arm, so
+    /// its value is the largest grid point below the crossover. Every other
+    /// field gates `size >= t` to the asymptotic arm, so its value is the
+    /// crossover itself.
+    fn is_upper_bound(self) -> bool {
+        matches!(self, Self::KaratsubaMaxOutLen)
+    }
+
+    /// The conservative table's value for this field.
+    fn conservative_default(self) -> usize {
+        let profile = &TuningProfile::CONSERVATIVE;
+        match self {
+            Self::SimdMinWords => profile.bit_backend().simd_min_words(),
+            Self::KaratsubaMinDegree => profile.polynomial().karatsuba_min_degree(),
+            Self::KaratsubaMaxOutLen => profile.polynomial().karatsuba_max_out_len(),
+            Self::DivRemFastMinLen => profile.polynomial().div_rem_fast_min_len(),
+            Self::SubproductMinLen => profile.polynomial().subproduct_min_len(),
+        }
+    }
+
+    fn conservative_arm(self) -> &'static str {
+        match self {
+            Self::SimdMinWords => "scalar",
+            Self::KaratsubaMinDegree => "schoolbook",
+            Self::KaratsubaMaxOutLen => "karatsuba",
+            Self::DivRemFastMinLen => "div_rem",
+            Self::SubproductMinLen => "eval_batch",
+        }
+    }
+
+    fn asymptotic_arm(self) -> &'static str {
+        match self {
+            Self::SimdMinWords => "simd",
+            Self::KaratsubaMinDegree => "karatsuba",
+            Self::KaratsubaMaxOutLen => "mul_ntt",
+            Self::DivRemFastMinLen => "div_rem_fast",
+            Self::SubproductMinLen => "subproduct_auto",
+        }
+    }
+
+    /// The unit the grid points are measured in.
+    fn grid_unit(self) -> &'static str {
+        match self {
+            Self::SimdMinWords => "buffer words",
+            Self::KaratsubaMinDegree => "operand degree",
+            Self::KaratsubaMaxOutLen => "product length",
+            Self::DivRemFastMinLen => "divisor length",
+            Self::SubproductMinLen => "coefficients = points",
+        }
+    }
+
+    /// The size grid this field is swept over.
+    ///
+    /// Every grid is written around `conservative_default`, so it straddles the
+    /// default wherever that default sits, and each is capped where the slower
+    /// arm's cost per call would dominate the run without adding evidence about
+    /// the crossover.
+    ///
+    /// `karatsuba_max_out_len` counts product lengths, and a product of two
+    /// equal-length operands has odd length `2n - 1`; its grid therefore uses
+    /// the odd lengths bracketing the default. It reaches 511 so the sweep
+    /// spans the region where `mul_fast`'s two arms are recorded as converging,
+    /// and it carries both 127 and 129 so the step across the default's own
+    /// boundary is measured directly.
+    ///
+    /// The two large-operand fields reach two octaves further below their
+    /// default than the small-operand ones, because their conservative arms are
+    /// quadratic and a crossover several octaves below the default is the
+    /// ordinary case for them rather than a surprise.
+    fn grid(self) -> Vec<usize> {
+        let default = self.conservative_default();
+        match self {
+            Self::SimdMinWords | Self::KaratsubaMinDegree => vec![
+                default / 8,
+                default / 4,
+                default / 2,
+                default - 1,
+                default,
+                default + 1,
+                default * 2,
+                default * 4,
+                default * 8,
+            ],
+            Self::KaratsubaMaxOutLen => vec![
+                default / 8 - 1,
+                default / 4 - 1,
+                default / 2 - 1,
+                default - 1,
+                default + 1,
+                default + default / 2 - 1,
+                default * 2 - 1,
+                default * 3 - 1,
+                default * 4 - 1,
+            ],
+            Self::DivRemFastMinLen | Self::SubproductMinLen => vec![
+                default / 32,
+                default / 16,
+                default / 8,
+                default / 4,
+                default / 2,
+                default - 1,
+                default,
+                default + 1,
+                default * 2,
+            ],
+        }
+    }
+}
+
+impl fmt::Display for CalibratedField {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::SimdMinWords => "simd_min_words",
+            Self::KaratsubaMinDegree => "karatsuba_min_degree",
+            Self::KaratsubaMaxOutLen => "karatsuba_max_out_len",
+            Self::DivRemFastMinLen => "div_rem_fast_min_len",
+            Self::SubproductMinLen => "subproduct_min_len",
+        })
+    }
+}
+
+/// Which side of a crossover an arm sits on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Arm {
+    /// The arm the comparison selects below the threshold.
+    Conservative,
+    /// The arm the comparison selects above the threshold.
+    Asymptotic,
+}
+
+// ---------------------------------------------------------------------
+// Command line
+// ---------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Protocol {
+    executions: u64,
+    repetitions: u64,
+    target_ms: u64,
+}
+
+impl Protocol {
+    fn target(&self) -> Duration {
+        Duration::from_millis(self.target_ms)
+    }
+
+    /// Timed windows recorded per arm at one grid point.
+    fn windows(&self) -> usize {
+        (self.executions * self.repetitions) as usize
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Mode {
+    Calibrate {
+        out: PathBuf,
+        profile_id: Option<String>,
+        lock_wrapper: String,
+        receipt: String,
+    },
+    SelfCheck,
+    ListGrid,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Args {
+    protocol: Protocol,
+    mode: Mode,
+}
+
+fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
+    let mut executions = DEFAULT_EXECUTIONS;
+    let mut repetitions = DEFAULT_REPETITIONS;
+    let mut target_ms = DEFAULT_TARGET_MS;
+    let mut out: Option<PathBuf> = None;
+    let mut profile_id: Option<String> = None;
+    let mut lock_wrapper: Option<String> = None;
+    let mut receipt: Option<String> = None;
+    let mut self_check = false;
+    let mut list_grid = false;
+    let mut iter = args;
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--executions" => executions = parse_value(&mut iter, &arg)?,
+            "--repetitions" => repetitions = parse_value(&mut iter, &arg)?,
+            "--target-ms" => target_ms = parse_value(&mut iter, &arg)?,
+            "--out" => out = Some(PathBuf::from(next_value(&mut iter, &arg)?)),
+            "--profile-id" => profile_id = Some(next_value(&mut iter, &arg)?),
+            "--lock-wrapper" => lock_wrapper = Some(next_value(&mut iter, &arg)?),
+            "--receipt" => receipt = Some(next_value(&mut iter, &arg)?),
+            "--self-check" => self_check = true,
+            "--list-grid" => list_grid = true,
+            "--bench" => {}
+            _ => return Err(format!("unknown argument: {arg}")),
+        }
+    }
+    for (flag, value) in [
+        ("--executions", executions),
+        ("--repetitions", repetitions),
+        ("--target-ms", target_ms),
+    ] {
+        if value == 0 {
+            return Err(format!("{flag} must be positive"));
+        }
+    }
+    if self_check && list_grid {
+        return Err("--self-check and --list-grid are separate modes".into());
+    }
+    let protocol = Protocol {
+        executions,
+        repetitions,
+        target_ms,
+    };
+    let mode = if self_check {
+        Mode::SelfCheck
+    } else if list_grid {
+        Mode::ListGrid
+    } else {
+        Mode::Calibrate {
+            out: out.ok_or("--out is required; name a unique absent path under /tmp")?,
+            profile_id,
+            lock_wrapper: lock_wrapper.ok_or(
+                "--lock-wrapper is required; name the wrapper this run was invoked through",
+            )?,
+            receipt: receipt
+                .ok_or("--receipt is required; name the receipt this run will be committed as")?,
+        }
+    };
+    Ok(Args { protocol, mode })
+}
+
+fn parse_value<T: std::str::FromStr>(
+    iter: &mut impl Iterator<Item = String>,
+    flag: &str,
+) -> Result<T, String> {
+    next_value(iter, flag)?
+        .parse()
+        .map_err(|_| format!("invalid value for {flag}"))
+}
+
+fn next_value(iter: &mut impl Iterator<Item = String>, flag: &str) -> Result<String, String> {
+    iter.next()
+        .ok_or_else(|| format!("missing value for {flag}"))
+}
+
+/// Resolves a path the caller gave on the command line.
+///
+/// An absolute path is used as given; a relative one is taken as
+/// repository-relative, because `cargo bench` runs this binary with its working
+/// directory at the package root while the receipts and profiles it names are
+/// written relative to the repository root. This matches the resolution the
+/// sibling receipt harness uses, so one command works from where the procedure
+/// says to run it.
+fn resolve_repository_path(path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        path.to_owned()
+    } else {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join(path)
+    }
+}
+
+// ---------------------------------------------------------------------
+// Observed host facts
+// ---------------------------------------------------------------------
+
+/// Everything the emitted provenance records that this run observes rather than
+/// takes from its own protocol constants.
+#[derive(Clone, Debug)]
+struct HostFacts {
+    source_revision: GitRevision,
+    source_dirty: bool,
+    harness: RepoRelPath,
+    binary_sha256: Sha256,
+    toolchain: String,
+    host: String,
+    cpu_model: String,
+    cpu_features: Vec<String>,
+    os_kernel: String,
+    governor: String,
+    lock_file: String,
+    cpu_affinity: String,
+}
+
+fn command_output(program: &str, args: &[&str]) -> io::Result<String> {
+    let output = Command::new(program).args(args).output()?;
+    if !output.status.success() {
+        return Err(io::Error::other(format!(
+            "{program} {} failed with {}",
+            args.join(" "),
+            output.status
+        )));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+}
+
+/// Repository-relative path of this source file.
+///
+/// Derived from the compiler's own path for this file and the repository root
+/// `git` reports, so the recorded harness identity follows the file if it moves
+/// instead of restating a path written into the tool. The compiler's path is
+/// relative to whichever directory `cargo` invoked it from, so both the
+/// repository root and this package's directory are tried and the candidate
+/// that names a real file wins; a path that names neither is an error rather
+/// than a provenance claim nobody checked.
+fn harness_path(repo_root: &Path) -> io::Result<String> {
+    let package = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .strip_prefix(repo_root)
+        .unwrap_or(Path::new(""));
+    let candidates = [
+        normalize_relative(Path::new(file!())),
+        normalize_relative(&package.join(file!())),
+    ];
+    candidates
+        .iter()
+        .find(|candidate| repo_root.join(candidate).is_file())
+        .cloned()
+        .ok_or_else(|| {
+            io::Error::other(format!(
+                "no candidate harness path among {candidates:?} names a file under {}",
+                repo_root.display()
+            ))
+        })
+}
+
+/// Collapses `a/b/../c` to `a/c` so the result passes `RepoRelPath::parse`.
+///
+/// The compiler's path for this file gains a parent segment when the
+/// `#[cfg(test)]` module below is compiled through the integration-test wrapper
+/// that includes this file from `tests/`.
+fn normalize_relative(path: &Path) -> String {
+    let mut parts: Vec<&str> = Vec::new();
+    for part in path.iter().filter_map(|part| part.to_str()) {
+        match part {
+            "." => {}
+            ".." => {
+                parts.pop();
+            }
+            other => parts.push(other),
+        }
+    }
+    parts.join("/")
+}
+
+/// Runtime-detected CPU feature tokens that gate the accelerated kernels.
+///
+/// The token list is the set `gf2-kernels-simd` probes; membership of the
+/// returned vector is decided by this host's own detection at run time.
+fn cpu_features() -> Vec<String> {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        let detected = [
+            ("avx2", std::arch::is_x86_feature_detected!("avx2")),
+            ("avx512vl", std::arch::is_x86_feature_detected!("avx512vl")),
+            ("fma", std::arch::is_x86_feature_detected!("fma")),
+            (
+                "pclmulqdq",
+                std::arch::is_x86_feature_detected!("pclmulqdq"),
+            ),
+            ("sse4.1", std::arch::is_x86_feature_detected!("sse4.1")),
+            (
+                "vpclmulqdq",
+                std::arch::is_x86_feature_detected!("vpclmulqdq"),
+            ),
+        ];
+        detected
+            .into_iter()
+            .filter(|(_, present)| *present)
+            .map(|(token, _)| token.to_owned())
+            .collect()
+    }
+    #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+    {
+        Vec::new()
+    }
+}
+
+/// The CPU list this process is allowed to run on, as `taskset` left it.
+fn cpu_affinity() -> io::Result<String> {
+    let status = fs::read_to_string("/proc/self/status")?;
+    status
+        .lines()
+        .find_map(|line| line.strip_prefix("Cpus_allowed_list:"))
+        .map(|value| value.trim().to_owned())
+        .ok_or_else(|| io::Error::other("/proc/self/status has no Cpus_allowed_list"))
+}
+
+/// The scaling governor of the first CPU this process is pinned to.
+fn governor(affinity: &str) -> io::Result<String> {
+    let first = affinity
+        .split(',')
+        .next()
+        .and_then(|range| range.split('-').next())
+        .and_then(|cpu| cpu.trim().parse::<u32>().ok())
+        .ok_or_else(|| io::Error::other(format!("cannot read a CPU number from `{affinity}`")))?;
+    Ok(fs::read_to_string(format!(
+        "/sys/devices/system/cpu/cpu{first}/cpufreq/scaling_governor"
+    ))?
+    .trim()
+    .to_owned())
+}
+
+/// The mutex path of the exclusive `flock` this process inherited, if any.
+///
+/// `dev/scripts/ccx1-bench-flock.sh` takes the lock with `flock -x` and does
+/// not pass `-o`, so the locked descriptor stays open across the exec chain and
+/// is inherited by every descendant, this binary included. Matching an open
+/// descriptor of ours against the kernel's lock table therefore establishes
+/// that the run really is serialised, and yields the mutex path as an observed
+/// fact rather than a claim. The lock's owning PID is the wrapper's, not ours,
+/// so the match is on the locked file's device and inode.
+fn observed_lock_file() -> io::Result<Option<String>> {
+    let mut locked: Vec<(u64, u64)> = Vec::new();
+    for line in fs::read_to_string("/proc/locks")?.lines() {
+        let fields: Vec<&str> = line.split_whitespace().collect();
+        // `1: FLOCK  ADVISORY  WRITE 4711 00:2d:112936 0 EOF`
+        if fields.len() < 6 || fields[1] != "FLOCK" || fields[3] != "WRITE" {
+            continue;
+        }
+        let mut parts = fields[5].split(':');
+        let major = parts.next().and_then(|v| u64::from_str_radix(v, 16).ok());
+        let minor = parts.next().and_then(|v| u64::from_str_radix(v, 16).ok());
+        let inode = parts.next().and_then(|v| v.parse::<u64>().ok());
+        if let (Some(major), Some(minor), Some(inode)) = (major, minor, inode) {
+            locked.push((makedev(major, minor), inode));
+        }
+    }
+    for entry in fs::read_dir("/proc/self/fd")? {
+        let Ok(target) = fs::read_link(entry?.path()) else {
+            continue;
+        };
+        let Ok(metadata) = fs::metadata(&target) else {
+            continue;
+        };
+        if metadata.is_file() && locked.contains(&(metadata.dev(), metadata.ino())) {
+            return Ok(Some(target.to_string_lossy().into_owned()));
+        }
+    }
+    Ok(None)
+}
+
+/// Linux `makedev` encoding, matching the `MAJOR:MINOR` pair `/proc/locks`
+/// prints against the device id `stat` reports.
+fn makedev(major: u64, minor: u64) -> u64 {
+    ((major & 0xfff) << 8) | (minor & 0xff) | ((major & !0xfff) << 32) | ((minor & !0xff) << 12)
+}
+
+fn collect_host_facts() -> io::Result<HostFacts> {
+    let repo_root = PathBuf::from(command_output("git", &["rev-parse", "--show-toplevel"])?);
+    let revision = command_output("git", &["rev-parse", "HEAD"])?;
+    let binary = env::current_exe()?;
+    let digest = command_output("sha256sum", &[binary.to_string_lossy().as_ref()])?;
+    let digest = digest
+        .split_whitespace()
+        .next()
+        .ok_or_else(|| io::Error::other("sha256sum printed no digest"))?;
+    let affinity = cpu_affinity()?;
+    let cpuinfo = fs::read_to_string("/proc/cpuinfo")?;
+    let lock_file = observed_lock_file()?.ok_or_else(|| {
+        let expected = env::var(LOCK_PATH_VAR).unwrap_or_else(|_| "the wrapper's mutex".to_owned());
+        io::Error::other(format!(
+            "no inherited exclusive flock: run this action through the repository lock wrapper, \
+             which holds {expected} for the whole run"
+        ))
+    })?;
+    Ok(HostFacts {
+        source_revision: GitRevision::parse(&revision).map_err(io::Error::other)?,
+        source_dirty: !command_output("git", GIT_STATUS_ARGS)?.is_empty(),
+        harness: RepoRelPath::parse(&harness_path(&repo_root)?).map_err(io::Error::other)?,
+        binary_sha256: Sha256::parse(digest).map_err(io::Error::other)?,
+        toolchain: command_output("rustc", &["--version"])?,
+        host: command_output("hostname", &[])?,
+        cpu_model: cpuinfo
+            .lines()
+            .find_map(|line| line.strip_prefix("model name\t: "))
+            .unwrap_or("unknown")
+            .to_owned(),
+        cpu_features: cpu_features(),
+        os_kernel: command_output("uname", &["-srvmo"])?,
+        governor: governor(&affinity)?,
+        lock_file,
+        cpu_affinity: affinity,
+    })
+}
+
+/// Formats a UTC instant in the RFC 3339 form `Rfc3339Utc::parse` accepts.
+fn rfc3339_utc(instant: SystemTime) -> io::Result<String> {
+    let seconds = instant
+        .duration_since(UNIX_EPOCH)
+        .map_err(io::Error::other)?
+        .as_secs();
+    let (year, month, day) = civil_from_days((seconds / 86_400) as i64);
+    let time = seconds % 86_400;
+    Ok(format!(
+        "{year:04}-{month:02}-{day:02}T{:02}:{:02}:{:02}Z",
+        time / 3600,
+        (time / 60) % 60,
+        time % 60
+    ))
+}
+
+/// Civil date of the day `days` after 1970-01-01, by the shift-to-March
+/// era arithmetic that avoids a month-length table.
+fn civil_from_days(days: i64) -> (i64, i64, i64) {
+    let shifted = days + 719_468;
+    let era = if shifted >= 0 {
+        shifted
+    } else {
+        shifted - 146_096
+    } / 146_097;
+    let day_of_era = shifted - era * 146_097;
+    let year_of_era =
+        (day_of_era - day_of_era / 1460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+    let year = year_of_era + era * 400;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let shifted_month = (5 * day_of_year + 2) / 153;
+    let day = day_of_year - (153 * shifted_month + 2) / 5 + 1;
+    let month = if shifted_month < 10 {
+        shifted_month + 3
+    } else {
+        shifted_month - 9
+    };
+    (if month <= 2 { year + 1 } else { year }, month, day)
+}
+
+// ---------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------
+
+/// `BIT_FIXTURES` buffers of `len` words laid out contiguously, each starting
+/// on a 64-byte boundary.
+///
+/// The alignment is controlled rather than left to the allocator: a 64-byte
+/// cache line holds eight `u64`, a wide load that straddles two lines costs
+/// materially more than one that does not, and the allocator's address phase
+/// differs between processes. An uncontrolled bank would make the two arms of
+/// this family measure a property of the heap.
+struct BitBank {
+    storage: Vec<u64>,
+    offset: usize,
+    stride: usize,
+    len: usize,
+}
+
+impl BitBank {
+    fn new(len: usize, mut word: impl FnMut(usize, usize) -> u64) -> Self {
+        let stride = len.next_multiple_of(WORDS_PER_LINE).max(WORDS_PER_LINE);
+        let mut storage = vec![0_u64; BIT_FIXTURES * stride + WORDS_PER_LINE];
+        let misalignment = (storage.as_ptr() as usize) % (WORDS_PER_LINE * 8);
+        let offset = (WORDS_PER_LINE * 8 - misalignment) % (WORDS_PER_LINE * 8) / 8;
+        for bank in 0..BIT_FIXTURES {
+            for index in 0..len {
+                storage[offset + bank * stride + index] = word(bank, index);
+            }
+        }
+        let bank = Self {
+            storage,
+            offset,
+            stride,
+            len,
+        };
+        assert!(
+            bank.is_line_aligned(),
+            "bit fixture bank did not land on a cache-line boundary"
+        );
+        bank
+    }
+
+    fn is_line_aligned(&self) -> bool {
+        let base = self.storage.as_ptr() as usize + self.offset * 8;
+        base.is_multiple_of(WORDS_PER_LINE * 8) && self.stride.is_multiple_of(WORDS_PER_LINE)
+    }
+
+    fn start(&self, bank: usize) -> usize {
+        self.offset + bank * self.stride
+    }
+
+    fn get(&self, bank: usize) -> &[u64] {
+        let start = self.start(bank);
+        &self.storage[start..start + self.len]
+    }
+
+    fn get_mut(&mut self, bank: usize) -> &mut [u64] {
+        let start = self.start(bank);
+        &mut self.storage[start..start + self.len]
+    }
+}
+
+/// One grid point's operands, built once and shared by both arms.
+enum Fixture {
+    Bit {
+        dst: BitBank,
+        src: BitBank,
+    },
+    Mul {
+        a: FieldPoly<F>,
+        b: FieldPoly<F>,
+    },
+    DivRem {
+        dividend: FieldPoly<F>,
+        divisor: FieldPoly<F>,
+    },
+    BatchEval {
+        poly: FieldPoly<F>,
+        points: Vec<F>,
+    },
+}
+
+fn seed_for(field: CalibratedField, size: usize, role: u64) -> u64 {
+    let mut value = SEED_ROOT ^ role.wrapping_mul(0x9e37_79b9_7f4a_7c15);
+    for word in [field as usize, size] {
+        value ^= word as u64;
+        value = value
+            .wrapping_mul(0xbf58_476d_1ce4_e5b9)
+            .rotate_left(27)
+            .wrapping_add(0x94d0_49bb_1331_11eb);
+    }
+    value ^ (value >> 31)
+}
+
+/// Builds a deterministic polynomial holding exactly `len` coefficients.
+///
+/// Coefficients are drawn from `1..=65536`, so none of them is the zero element
+/// of `Fp<65537>` and `FieldPoly::new`'s trailing-zero normalisation cannot
+/// shorten the operand. The grid points select their arm from exact
+/// coefficient counts, so the assertion is a precondition rather than a
+/// diagnostic.
+fn make_poly(len: usize, seed: u64) -> FieldPoly<F> {
+    let mut rng = Lcg::new(seed);
+    let coeffs: Vec<F> = (0..len)
+        .map(|_| F::new((rng.next_u64() % 65_536) + 1))
+        .collect();
+    let poly = FieldPoly::new(coeffs);
+    assert_eq!(poly.len(), len, "fixture polynomial lost coefficients");
+    poly
+}
+
+/// Builds `len` distinct non-zero evaluation points.
+fn make_points(len: usize, seed: u64) -> Vec<F> {
+    let stride = 1_000_003_u64;
+    let modulus_minus_one = 65_536_u64;
+    let offset = Lcg::new(seed).next_u64() % modulus_minus_one;
+    (0..len)
+        .map(|index| F::new((offset + (index as u64).wrapping_mul(stride)) % modulus_minus_one + 1))
+        .collect()
+}
+
+/// Operand length whose product has length `out_len`, for equal-length
+/// operands.
+fn operand_len_for_product(out_len: usize) -> usize {
+    out_len.div_ceil(2)
+}
+
+fn build_fixture(field: CalibratedField, size: usize) -> Fixture {
+    match field {
+        CalibratedField::SimdMinWords => {
+            let fill = |role: u64| {
+                let mut rngs: Vec<Lcg> = (0..BIT_FIXTURES)
+                    .map(|bank| Lcg::new(seed_for(field, size, role + bank as u64)))
+                    .collect();
+                BitBank::new(size, move |bank, _| rngs[bank].next_u64())
+            };
+            Fixture::Bit {
+                dst: fill(0xD000_0000),
+                src: fill(0xA000_0000),
+            }
+        }
+        CalibratedField::KaratsubaMinDegree => Fixture::Mul {
+            a: make_poly(size + 1, seed_for(field, size, 0xA)),
+            b: make_poly(size + 1, seed_for(field, size, 0xB)),
+        },
+        CalibratedField::KaratsubaMaxOutLen => {
+            let len = operand_len_for_product(size);
+            Fixture::Mul {
+                a: make_poly(len, seed_for(field, size, 0xA)),
+                b: make_poly(len, seed_for(field, size, 0xB)),
+            }
+        }
+        CalibratedField::DivRemFastMinLen => Fixture::DivRem {
+            dividend: make_poly(2 * size, seed_for(field, size, 0xD)),
+            divisor: make_poly(size, seed_for(field, size, 0xE)),
+        },
+        CalibratedField::SubproductMinLen => Fixture::BatchEval {
+            poly: make_poly(size, seed_for(field, size, 0xC)),
+            points: make_points(size, seed_for(field, size, 0xF)),
+        },
+    }
+}
+
+/// Asserts that the two arms of `field` agree at `size` before either is timed.
+///
+/// A crossover between arms that compute different results is not a crossover,
+/// so this runs at every grid point where both arms exist.
+fn equivalence_probe(field: CalibratedField, size: usize, fixture: &Fixture) {
+    match (field, fixture) {
+        (CalibratedField::SimdMinWords, Fixture::Bit { dst, src }) => {
+            assert!(dst.is_line_aligned() && src.is_line_aligned());
+            let Some(simd) = simd_backend() else {
+                return;
+            };
+            let mut scalar_out = dst.get(0).to_vec();
+            let mut simd_out = scalar_out.clone();
+            ScalarBackend.xor(&mut scalar_out, src.get(1));
+            simd.xor(&mut simd_out, src.get(1));
+            assert_eq!(
+                scalar_out, simd_out,
+                "bit-backend arms disagree at {size} words"
+            );
+        }
+        (CalibratedField::KaratsubaMinDegree, Fixture::Mul { a, b }) => {
+            assert_eq!(a.len(), size + 1);
+            assert_eq!(b.len(), size + 1);
+        }
+        (CalibratedField::KaratsubaMaxOutLen, Fixture::Mul { a, b }) => {
+            assert_eq!(
+                a.len() + b.len() - 1,
+                size,
+                "fixture product length is not the grid point"
+            );
+            assert_eq!(
+                a.mul(b),
+                a.mul_ntt(b),
+                "multiplication arms disagree at product length {size}"
+            );
+        }
+        (CalibratedField::DivRemFastMinLen, Fixture::DivRem { dividend, divisor }) => {
+            assert_eq!(divisor.len(), size);
+            assert_eq!(
+                dividend.div_rem(divisor),
+                dividend.div_rem_fast(divisor),
+                "division arms disagree at divisor length {size}"
+            );
+        }
+        (CalibratedField::SubproductMinLen, Fixture::BatchEval { poly, points }) => {
+            assert_eq!(poly.len(), size);
+            assert_eq!(points.len(), size);
+            assert_eq!(
+                poly.eval_batch(points),
+                batch_evaluate_subproduct_auto(poly, points),
+                "batch-evaluation arms disagree at {size} points"
+            );
+        }
+        _ => panic!("fixture shape does not match {field} at {size}"),
+    }
+}
+
+/// The detected SIMD logical backend, or `None` when the build or the host has
+/// no second arm for the bit-backend family.
+fn simd_backend() -> Option<&'static dyn Backend> {
+    #[cfg(feature = "simd")]
+    {
+        gf2_core::kernels::simd::maybe_simd().map(|backend| backend as &'static dyn Backend)
+    }
+    #[cfg(not(feature = "simd"))]
+    {
+        None
+    }
+}
+
+// ---------------------------------------------------------------------
+// Timing
+// ---------------------------------------------------------------------
+
+/// Destination and source bank indices for call number `index`, offset so a
+/// call never reads and writes the same buffer.
+fn bank_indices(index: usize) -> (usize, usize) {
+    (
+        index & (BIT_FIXTURES - 1),
+        index.wrapping_add(3) & (BIT_FIXTURES - 1),
+    )
+}
+
+/// Runs one execution of `arm` at one grid point, returning each timed
+/// window's nanoseconds per call.
+///
+/// Returns `None` when the arm has no entry point at this grid point on this
+/// build: the bit-backend family without a detected SIMD backend, and the
+/// Karatsuba degree family at every grid point, where the only public entry
+/// resolves the arm itself.
+fn measure_arm_execution(
+    field: CalibratedField,
+    size: usize,
+    arm: Arm,
+    fixture: &mut Fixture,
+    protocol: &Protocol,
+    execution: u64,
+) -> Option<Vec<f64>> {
+    match (field, arm, fixture) {
+        (CalibratedField::SimdMinWords, Arm::Conservative, Fixture::Bit { dst, src }) => {
+            Some(execution_windows(protocol, execution, |index| {
+                let (i, j) = bank_indices(index);
+                let src_bank: &[u64] = black_box(src.get(j));
+                let dst_bank: &mut [u64] = black_box(dst.get_mut(i));
+                ScalarBackend.xor(dst_bank, src_bank);
+                black_box(dst_bank);
+            }))
+        }
+        (CalibratedField::SimdMinWords, Arm::Asymptotic, Fixture::Bit { dst, src }) => {
+            // The concrete backend keeps the timed loop's call shape the same
+            // as production's, which resolves a function pointer rather than a
+            // trait object.
+            #[cfg(feature = "simd")]
+            {
+                let simd = gf2_core::kernels::simd::maybe_simd()?;
+                Some(execution_windows(protocol, execution, |index| {
+                    let (i, j) = bank_indices(index);
+                    let src_bank: &[u64] = black_box(src.get(j));
+                    let dst_bank: &mut [u64] = black_box(dst.get_mut(i));
+                    simd.xor(dst_bank, src_bank);
+                    black_box(dst_bank);
+                }))
+            }
+            #[cfg(not(feature = "simd"))]
+            {
+                let _ = (dst, src, protocol, execution);
+                None
+            }
+        }
+        (CalibratedField::KaratsubaMinDegree, _, Fixture::Mul { a, b }) => {
+            // `FieldPoly::mul` is the only public entry to this crossover and
+            // resolves the arm itself from the compiled-in threshold, so each
+            // grid point reaches exactly one of the two arms.
+            let reached = if size >= field.conservative_default() {
+                Arm::Asymptotic
+            } else {
+                Arm::Conservative
+            };
+            if arm != reached {
+                return None;
+            }
+            Some(execution_windows(protocol, execution, |_| {
+                black_box(black_box(&*a).mul(black_box(&*b)));
+            }))
+        }
+        (CalibratedField::KaratsubaMaxOutLen, Arm::Conservative, Fixture::Mul { a, b }) => {
+            Some(execution_windows(protocol, execution, |_| {
+                black_box(black_box(&*a).mul(black_box(&*b)));
+            }))
+        }
+        (CalibratedField::KaratsubaMaxOutLen, Arm::Asymptotic, Fixture::Mul { a, b }) => {
+            Some(execution_windows(protocol, execution, |_| {
+                black_box(black_box(&*a).mul_ntt(black_box(&*b)));
+            }))
+        }
+        (
+            CalibratedField::DivRemFastMinLen,
+            Arm::Conservative,
+            Fixture::DivRem { dividend, divisor },
+        ) => Some(execution_windows(protocol, execution, |_| {
+            black_box(black_box(&*dividend).div_rem(black_box(&*divisor)));
+        })),
+        (
+            CalibratedField::DivRemFastMinLen,
+            Arm::Asymptotic,
+            Fixture::DivRem { dividend, divisor },
+        ) => Some(execution_windows(protocol, execution, |_| {
+            black_box(black_box(&*dividend).div_rem_fast(black_box(&*divisor)));
+        })),
+        (
+            CalibratedField::SubproductMinLen,
+            Arm::Conservative,
+            Fixture::BatchEval { poly, points },
+        ) => Some(execution_windows(protocol, execution, |_| {
+            black_box(black_box(&*poly).eval_batch(black_box(&points[..])));
+        })),
+        (
+            CalibratedField::SubproductMinLen,
+            Arm::Asymptotic,
+            Fixture::BatchEval { poly, points },
+        ) => Some(execution_windows(protocol, execution, |_| {
+            black_box(batch_evaluate_subproduct_auto(
+                black_box(&*poly),
+                black_box(&points[..]),
+            ));
+        })),
+        _ => panic!("fixture shape does not match {field} at {size}"),
+    }
+}
+
+/// Calibrates one call count against the target duration, then records
+/// `repetitions` timed windows of exactly that many calls.
+fn execution_windows(protocol: &Protocol, execution: u64, mut body: impl FnMut(usize)) -> Vec<f64> {
+    let calls = calibrated_calls(protocol.target(), &mut body);
+    let mut rates = Vec::with_capacity(protocol.repetitions as usize);
+    for repetition in 0..protocol.repetitions {
+        let start_index =
+            ((execution * protocol.repetitions + repetition) as usize) & (BIT_FIXTURES - 1);
+        let elapsed = time_calls(calls, start_index, &mut body);
+        rates.push(elapsed.as_nanos() as f64 / calls as f64);
+    }
+    rates
+}
+
+fn time_calls(calls: u64, start_index: usize, mut body: impl FnMut(usize)) -> Duration {
+    let start = Instant::now();
+    for call in 0..calls {
+        body(start_index.wrapping_add(call as usize));
+    }
+    start.elapsed()
+}
+
+fn calibrated_calls(target: Duration, mut call: impl FnMut(usize)) -> u64 {
+    let probe_target = target.min(Duration::from_millis(20));
+    let mut calls = 1_u64;
+    loop {
+        let start = Instant::now();
+        for index in 0..calls {
+            call((index as usize) & (BIT_FIXTURES - 1));
+        }
+        let elapsed = start.elapsed();
+        if elapsed >= probe_target || calls >= MAX_CALLS {
+            let elapsed_ns = elapsed.as_nanos().max(1);
+            let wanted = target.as_nanos().saturating_mul(calls as u128) / elapsed_ns;
+            return wanted.clamp(1, MAX_CALLS as u128) as u64;
+        }
+        calls = calls.saturating_mul(2).min(MAX_CALLS);
+    }
+}
+
+// ---------------------------------------------------------------------
+// Statistics and the selection rule
+// ---------------------------------------------------------------------
+
+/// One arm's timed windows at one grid point, reduced to the statistics the
+/// selection rule reads.
+#[derive(Clone, Debug, PartialEq)]
+struct ArmStat {
+    median: f64,
+    /// Interquartile range relative to the median.
+    spread: f64,
+    windows: usize,
+}
+
+impl ArmStat {
+    fn from_rates(rates: &[f64]) -> Self {
+        let mut sorted = rates.to_vec();
+        sorted.sort_by(f64::total_cmp);
+        let median = quantile(&sorted, 0.5);
+        let spread = if median > 0.0 {
+            (quantile(&sorted, 0.75) - quantile(&sorted, 0.25)) / median
+        } else {
+            0.0
+        };
+        Self {
+            median,
+            spread,
+            windows: sorted.len(),
+        }
+    }
+}
+
+/// Nearest-rank quantile of an ascending slice, averaging the two central
+/// samples at the median of an even-length sample.
+fn quantile(sorted: &[f64], fraction: f64) -> f64 {
+    assert!(!sorted.is_empty(), "quantile of an empty sample");
+    if fraction == 0.5 && sorted.len().is_multiple_of(2) {
+        let upper = sorted.len() / 2;
+        return (sorted[upper - 1] + sorted[upper]) / 2.0;
+    }
+    let rank = (fraction * sorted.len() as f64).ceil() as usize;
+    sorted[rank.clamp(1, sorted.len()) - 1]
+}
+
+/// One grid point of one field's sweep.
+#[derive(Clone, Debug, PartialEq)]
+struct GridPoint {
+    size: usize,
+    conservative: Option<ArmStat>,
+    asymptotic: Option<ArmStat>,
+}
+
+impl GridPoint {
+    /// The noise band and the asymptotic arm's relative margin over the other,
+    /// or `None` when the point does not offer both arms.
+    fn comparison(&self) -> Option<(f64, f64)> {
+        let (conservative, asymptotic) = (self.conservative.as_ref()?, self.asymptotic.as_ref()?);
+        let band = conservative.spread.max(asymptotic.spread);
+        let margin = (conservative.median - asymptotic.median) / conservative.median;
+        Some((band, margin))
+    }
+
+    /// Whether the asymptotic arm beats the other by more than the noise band.
+    fn asymptotic_wins(&self) -> Option<bool> {
+        self.comparison().map(|(band, margin)| margin > band)
+    }
+}
+
+/// Why a field kept its conservative default.
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Fallback {
+    /// No grid point offered both arms.
+    NoComparableGridPoint,
+    /// Both arms were measured, and the asymptotic one never won.
+    NoGridPointWins,
+    /// The asymptotic arm won at `first_win` and lost again at `later_loss`.
+    NonMonotone { first_win: usize, later_loss: usize },
+}
+
+impl fmt::Display for Fallback {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NoComparableGridPoint => {
+                formatter.write_str("no grid point offers both arms on this build")
+            }
+            Self::NoGridPointWins => {
+                formatter.write_str("the asymptotic arm never beats the noise band")
+            }
+            Self::NonMonotone {
+                first_win,
+                later_loss,
+            } => write!(
+                formatter,
+                "non-monotone: the asymptotic arm wins at {first_win} and loses again at {later_loss}"
+            ),
+        }
+    }
+}
+
+/// What the sweep concluded for one field.
+#[derive(Clone, Debug, PartialEq)]
+enum Selection {
+    /// A monotone crossover was measured.
+    Crossover {
+        value: usize,
+        crossover: usize,
+        band: f64,
+        margin: f64,
+    },
+    /// The conservative default stands.
+    KeptDefault { value: usize, reason: Fallback },
+}
+
+impl Selection {
+    fn value(&self) -> usize {
+        match self {
+            Self::Crossover { value, .. } | Self::KeptDefault { value, .. } => *value,
+        }
+    }
+}
+
+/// One field's whole sweep.
+#[derive(Clone, Debug, PartialEq)]
+struct FieldSweep {
+    field: CalibratedField,
+    points: Vec<GridPoint>,
+    selection: Selection,
+}
+
+/// Applies the selection rule to a measured grid.
+///
+/// The crossover is the smallest grid point at which the asymptotic arm wins,
+/// and it counts only when the asymptotic arm also wins at every larger grid
+/// point. A grid point that offers only one arm can neither establish nor
+/// continue a crossover, so it breaks monotonicity exactly as a loss does.
+fn select(field: CalibratedField, points: &[GridPoint]) -> Selection {
+    let default = field.conservative_default();
+    if points.iter().all(|point| point.comparison().is_none()) {
+        return Selection::KeptDefault {
+            value: default,
+            reason: Fallback::NoComparableGridPoint,
+        };
+    }
+    let Some(first) = points
+        .iter()
+        .position(|point| point.asymptotic_wins() == Some(true))
+    else {
+        return Selection::KeptDefault {
+            value: default,
+            reason: Fallback::NoGridPointWins,
+        };
+    };
+    if let Some(later) = points[first + 1..]
+        .iter()
+        .find(|point| point.asymptotic_wins() != Some(true))
+    {
+        return Selection::KeptDefault {
+            value: default,
+            reason: Fallback::NonMonotone {
+                first_win: points[first].size,
+                later_loss: later.size,
+            },
+        };
+    }
+    let (band, margin) = points[first]
+        .comparison()
+        .expect("a winning grid point has both arms");
+    let crossover = points[first].size;
+    // A `_max_` field bounds the conservative arm from above, so its value is
+    // the largest measured grid point that still belongs to that arm. Below the
+    // first grid point there is none, and zero is admissible for the one field
+    // this branch serves.
+    let value = if field.is_upper_bound() {
+        if first == 0 {
+            0
+        } else {
+            points[first - 1].size
+        }
+    } else {
+        crossover
+    };
+    Selection::Crossover {
+        value,
+        crossover,
+        band,
+        margin,
+    }
+}
+
+/// The five swept values, named one per field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct SelectedValues {
+    simd_min_words: usize,
+    karatsuba_min_degree: usize,
+    karatsuba_max_out_len: usize,
+    div_rem_fast_min_len: usize,
+    subproduct_min_len: usize,
+}
+
+impl SelectedValues {
+    fn from_sweeps(sweeps: &[FieldSweep]) -> Self {
+        let value_of = |field: CalibratedField| {
+            sweeps
+                .iter()
+                .find(|sweep| sweep.field == field)
+                .map(|sweep| sweep.selection.value())
+                .unwrap_or_else(|| field.conservative_default())
+        };
+        Self {
+            simd_min_words: value_of(CalibratedField::SimdMinWords),
+            karatsuba_min_degree: value_of(CalibratedField::KaratsubaMinDegree),
+            karatsuba_max_out_len: value_of(CalibratedField::KaratsubaMaxOutLen),
+            div_rem_fast_min_len: value_of(CalibratedField::DivRemFastMinLen),
+            subproduct_min_len: value_of(CalibratedField::SubproductMinLen),
+        }
+    }
+}
+
+/// Builds the profile from the swept values.
+///
+/// `PolynomialSelectors::try_new` takes four consecutive `usize` parameters, so
+/// a transposition among the polynomial thresholds would compile. Each value is
+/// bound to a local named for its own field immediately before the call, which
+/// puts the argument order and the field names on one screen.
+fn build_profile(
+    id: ProfileId,
+    provenance: Provenance,
+    selected: &SelectedValues,
+) -> Result<TuningProfile, ProfileError> {
+    let simd_min_words: usize = selected.simd_min_words;
+    let karatsuba_min_degree: usize = selected.karatsuba_min_degree;
+    let karatsuba_max_out_len: usize = selected.karatsuba_max_out_len;
+    let div_rem_fast_min_len: usize = selected.div_rem_fast_min_len;
+    let subproduct_min_len: usize = selected.subproduct_min_len;
+
+    let bit_backend = BitBackendSelectors::try_new(simd_min_words)?;
+    let polynomial = PolynomialSelectors::try_new(
+        karatsuba_min_degree,
+        karatsuba_max_out_len,
+        div_rem_fast_min_len,
+        subproduct_min_len,
+    )?;
+    TuningProfile::try_new(id, provenance, bit_backend, polynomial)
+}
+
+// ---------------------------------------------------------------------
+// Reporting and output
+// ---------------------------------------------------------------------
+
+fn print_grid() {
+    println!("field\tfamily\tdefault\tunit\tconservative_arm\tasymptotic_arm\tgrid");
+    for field in CalibratedField::ALL {
+        let grid: Vec<String> = field.grid().iter().map(usize::to_string).collect();
+        println!(
+            "{field}\t{}\t{}\t{}\t{}\t{}\t{}",
+            field.family(),
+            field.conservative_default(),
+            field.grid_unit(),
+            field.conservative_arm(),
+            field.asymptotic_arm(),
+            grid.join(",")
+        );
+    }
+}
+
+fn print_protocol(protocol: &Protocol) {
+    println!(
+        "protocol: harness_schema={} executions={} repetitions={} target_ms={} windows_per_arm={}",
+        HarnessSchema::SUPPORTED,
+        protocol.executions,
+        protocol.repetitions,
+        protocol.target_ms,
+        protocol.windows()
+    );
+}
+
+fn print_host_facts(facts: &HostFacts) {
+    println!("host: {}", facts.host);
+    println!("cpu_model: {}", facts.cpu_model);
+    println!("cpu_features: {}", facts.cpu_features.join(","));
+    println!("os_kernel: {}", facts.os_kernel);
+    println!("governor: {}", facts.governor);
+    println!("cpu_affinity: {}", facts.cpu_affinity);
+    println!(
+        "lock_file: {} (observed on an inherited descriptor)",
+        facts.lock_file
+    );
+    println!(
+        "source_revision: {} source_dirty={}",
+        facts.source_revision.as_str(),
+        facts.source_dirty
+    );
+    println!("harness: {}", facts.harness.as_str());
+    println!("binary_sha256: {}", facts.binary_sha256.as_str());
+    println!("toolchain: {}", facts.toolchain);
+    println!(
+        "simd_backend: {}",
+        simd_backend().map_or("none", Backend::name)
+    );
+}
+
+fn print_sweep(sweep: &FieldSweep) {
+    let field = sweep.field;
+    println!(
+        "\n{field} ({}): default {} in {}; arms {} vs {}",
+        field.family(),
+        field.conservative_default(),
+        field.grid_unit(),
+        field.conservative_arm(),
+        field.asymptotic_arm()
+    );
+    println!(
+        "size\t{}_ns\tspread\t{}_ns\tspread\twindows\tmargin\tband\tverdict",
+        field.conservative_arm(),
+        field.asymptotic_arm()
+    );
+    for point in &sweep.points {
+        let render = |stat: &Option<ArmStat>| match stat {
+            Some(stat) => (format!("{:.3}", stat.median), format!("{:.4}", stat.spread)),
+            None => ("-".to_owned(), "-".to_owned()),
+        };
+        let (conservative_ns, conservative_spread) = render(&point.conservative);
+        let (asymptotic_ns, asymptotic_spread) = render(&point.asymptotic);
+        let windows = point
+            .conservative
+            .as_ref()
+            .or(point.asymptotic.as_ref())
+            .map_or(0, |stat| stat.windows);
+        let (margin, band, verdict) = match point.comparison() {
+            Some((band, margin)) => (
+                format!("{margin:.4}"),
+                format!("{band:.4}"),
+                if margin > band {
+                    field.asymptotic_arm()
+                } else {
+                    field.conservative_arm()
+                },
+            ),
+            None => ("-".to_owned(), "-".to_owned(), "no comparison"),
+        };
+        println!(
+            "{}\t{conservative_ns}\t{conservative_spread}\t{asymptotic_ns}\t{asymptotic_spread}\t{windows}\t{margin}\t{band}\t{verdict}",
+            point.size
+        );
+    }
+    match &sweep.selection {
+        Selection::Crossover {
+            value,
+            crossover,
+            band,
+            margin,
+        } => println!(
+            "selected: {field}={value} from crossover at {crossover} (margin {margin:.4} > band {band:.4})"
+        ),
+        Selection::KeptDefault { value, reason } => {
+            println!("selected: {field}={value} (conservative default kept: {reason})");
+        }
+    }
+}
+
+/// The fields whose value the sweep could not measure at any grid point.
+///
+/// A field that keeps its default after a comparison — no grid point beat the
+/// noise band, or the crossover was non-monotone — is a calibration outcome and
+/// stays in the document. A field with no comparable grid point at all was
+/// never calibrated, and design §5 condition 5 requires the document to omit it
+/// rather than state a value: "a profile that carries an uncalibrated value is a
+/// `@/inv/benchmark-backed-performance` defect".
+fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
+    sweeps
+        .iter()
+        .filter(|sweep| {
+            matches!(
+                sweep.selection,
+                Selection::KeptDefault {
+                    reason: Fallback::NoComparableGridPoint,
+                    ..
+                }
+            )
+        })
+        .map(|sweep| sweep.field)
+        .collect()
+}
+
+/// Serializes `profile` and drops the fields the sweep could not measure.
+///
+/// `TuningProfile::to_json` states all five fields, so omission is expressed
+/// here rather than there. An absent field is a supported state of the schema:
+/// `from_json` resolves it to the conservative default, so the document still
+/// loads and still selects the same threshold — what it stops doing is claiming
+/// a value nothing measured.
+///
+/// The removal edits the serialized text, so every surviving key keeps the
+/// order `to_json` writes it in and an emitted document sits next to the
+/// committed `conservative.json` in the same shape. Reserializing a parsed
+/// value would reorder the whole document alphabetically for the sake of one
+/// deleted key. The edit is then checked against the same removal performed
+/// structurally on the parsed value, so a text edit that disturbed anything
+/// else is caught here rather than in a committed artifact.
+fn calibrated_document(
+    profile: &TuningProfile,
+    omitted: &[CalibratedField],
+) -> Result<String, String> {
+    let serialized = profile.to_json();
+    let mut document = serialized.clone();
+    for field in omitted {
+        document = remove_selector_key(&document, *field)?;
+    }
+
+    let mut expected: serde_json::Value = serde_json::from_str(&serialized)
+        .map_err(|error| format!("the serialized profile is not JSON: {error}"))?;
+    for field in omitted {
+        let family = expected
+            .pointer_mut(&format!("/selectors/{}", field.family()))
+            .and_then(serde_json::Value::as_object_mut)
+            .ok_or_else(|| {
+                format!(
+                    "the serialized profile has no `{}` selector family",
+                    field.family()
+                )
+            })?;
+        if family.remove(&field.to_string()).is_none() {
+            return Err(format!(
+                "the serialized profile has no `{field}` field to omit"
+            ));
+        }
+    }
+    let actual: serde_json::Value = serde_json::from_str(&document)
+        .map_err(|error| format!("the omitted-field document is not JSON: {error}"))?;
+    if actual != expected {
+        return Err(
+            "omitting a field changed something else in the document; this is a harness defect"
+                .to_owned(),
+        );
+    }
+    Ok(document)
+}
+
+/// Deletes `field`'s `"name":<digits>` entry, and one adjacent comma, from the
+/// selector family object it belongs to.
+///
+/// The search is scoped to that family's braces so a provenance string can
+/// never be mistaken for a selector key. Every selector value is an unsigned
+/// integer and `to_json` writes compact JSON, so the entry ends at the first
+/// non-digit after the colon.
+fn remove_selector_key(text: &str, field: CalibratedField) -> Result<String, String> {
+    let opening = format!("\"{}\":{{", field.family());
+    let body_start = text
+        .find(&opening)
+        .ok_or_else(|| format!("no `{}` selector family in the document", field.family()))?
+        + opening.len();
+    let body_len = text[body_start..]
+        .find('}')
+        .ok_or_else(|| format!("the `{}` selector family is unterminated", field.family()))?;
+    let body = &text[body_start..body_start + body_len];
+
+    let key = format!("\"{field}\":");
+    let key_at = body
+        .find(&key)
+        .ok_or_else(|| format!("no `{field}` field in the document to omit"))?;
+    let value_at = key_at + key.len();
+    let digits = body[value_at..]
+        .find(|character: char| !character.is_ascii_digit())
+        .unwrap_or(body.len() - value_at);
+    if digits == 0 {
+        return Err(format!("`{field}` does not hold an unsigned integer"));
+    }
+    let value_end = value_at + digits;
+
+    let (cut_start, cut_end) = if body[value_end..].starts_with(',') {
+        (key_at, value_end + 1)
+    } else if body[..key_at].ends_with(',') {
+        (key_at - 1, value_end)
+    } else {
+        (key_at, value_end)
+    };
+    Ok(format!(
+        "{}{}{}{}",
+        &text[..body_start],
+        &body[..cut_start],
+        &body[cut_end..],
+        &text[body_start + body_len..]
+    ))
+}
+
+/// Writes the emitted document, then reads it back and reparses it.
+///
+/// Only a document the loader accepts is an artifact, so a document this
+/// harness could not have loaded never reaches a receipt. The comparison is
+/// against the measured profile: an omitted field resolves back to the
+/// conservative default, which is the value the sweep left it at.
+fn emit_profile(path: &Path, json: &str, profile: &TuningProfile) -> io::Result<String> {
+    let path = resolve_repository_path(path);
+    if path.exists() {
+        return Err(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            format!(
+                "refusing to overwrite an existing path: {}; name a unique absent path",
+                path.display()
+            ),
+        ));
+    }
+    if let Some(parent) = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(&path, json)?;
+    let written = fs::read_to_string(&path)?;
+    let reparsed = TuningProfile::from_json(&written).map_err(|error| {
+        io::Error::other(format!(
+            "the emitted document does not load back: {error}; this is a harness defect"
+        ))
+    })?;
+    if &reparsed != profile {
+        return Err(io::Error::other(
+            "the emitted document does not load back to the profile that was measured",
+        ));
+    }
+    Ok(written)
+}
+
+/// The profile identifier, taken from `--profile-id` or the emitted file's own
+/// basename, which is what a committed profile is named by.
+fn profile_id_for(out: &Path, explicit: Option<&str>) -> Result<ProfileId, String> {
+    let candidate = match explicit {
+        Some(value) => value.to_owned(),
+        None => out
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+            .ok_or("--out has no file name to take a profile id from")?
+            .to_owned(),
+    };
+    ProfileId::parse(&candidate).map_err(|_| {
+        format!("`{candidate}` is not a kebab-case profile id; pass --profile-id with one")
+    })
+}
+
+// ---------------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------------
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = parse_args(env::args().skip(1))?;
+    let (out, profile_id, lock_wrapper, receipt) = match &args.mode {
+        Mode::ListGrid => {
+            print_protocol(&args.protocol);
+            print_grid();
+            return Ok(());
+        }
+        Mode::SelfCheck => {
+            print_protocol(&args.protocol);
+            match collect_host_facts() {
+                Ok(facts) => print_host_facts(&facts),
+                Err(error) => println!("host facts unavailable: {error}"),
+            }
+            return Ok(());
+        }
+        Mode::Calibrate {
+            out,
+            profile_id,
+            lock_wrapper,
+            receipt,
+        } => (out, profile_id, lock_wrapper, receipt),
+    };
+
+    if env::var(BENCH_MODE_VAR).as_deref() != Ok("1") {
+        eprintln!(
+            "calibration is an explicit benchmark action and did not run: set {BENCH_MODE_VAR}=1 \
+             on a prepared uncontended host and invoke through the repository lock wrapper. \
+             Nothing was measured and nothing was written."
+        );
+        return Ok(());
+    }
+
+    let id = profile_id_for(out, profile_id.as_deref())?;
+    let lock_wrapper_path = RepoRelPath::parse(lock_wrapper).map_err(|_| {
+        format!("--lock-wrapper `{lock_wrapper}` is not a repository-relative path")
+    })?;
+    let receipt_path = RepoRelPath::parse(receipt)
+        .map_err(|_| format!("--receipt `{receipt}` is not a repository-relative path"))?;
+    let repo_root = PathBuf::from(command_output("git", &["rev-parse", "--show-toplevel"])?);
+    if !repo_root.join(lock_wrapper_path.as_str()).is_file() {
+        return Err(format!(
+            "--lock-wrapper {} does not name a file in this repository",
+            lock_wrapper_path.as_str()
+        )
+        .into());
+    }
+    let facts = collect_host_facts()?;
+
+    print_protocol(&args.protocol);
+    print_host_facts(&facts);
+    print_grid();
+
+    let measured_at = rfc3339_utc(SystemTime::now())?;
+    let started = Instant::now();
+    let mut sweeps = Vec::with_capacity(CalibratedField::ALL.len());
+    for field in CalibratedField::ALL {
+        let mut points = Vec::new();
+        for size in field.grid() {
+            let mut fixture = build_fixture(field, size);
+            equivalence_probe(field, size, &fixture);
+            let mut conservative_rates: Option<Vec<f64>> = None;
+            let mut asymptotic_rates: Option<Vec<f64>> = None;
+            for execution in 0..args.protocol.executions {
+                for (arm, rates) in [
+                    (Arm::Conservative, &mut conservative_rates),
+                    (Arm::Asymptotic, &mut asymptotic_rates),
+                ] {
+                    if let Some(window) = measure_arm_execution(
+                        field,
+                        size,
+                        arm,
+                        &mut fixture,
+                        &args.protocol,
+                        execution,
+                    ) {
+                        rates.get_or_insert_with(Vec::new).extend(window);
+                    }
+                }
+            }
+            points.push(GridPoint {
+                size,
+                conservative: conservative_rates.as_deref().map(ArmStat::from_rates),
+                asymptotic: asymptotic_rates.as_deref().map(ArmStat::from_rates),
+            });
+        }
+        let selection = select(field, &points);
+        let sweep = FieldSweep {
+            field,
+            points,
+            selection,
+        };
+        print_sweep(&sweep);
+        sweeps.push(sweep);
+    }
+    println!("\ntimed work: {:.1} s", started.elapsed().as_secs_f64());
+
+    let selected = SelectedValues::from_sweeps(&sweeps);
+    let provenance = Provenance::Calibrated {
+        measured_at: Rfc3339Utc::parse(&measured_at)?,
+        source_revision: facts.source_revision.clone(),
+        source_dirty: facts.source_dirty,
+        harness: facts.harness.clone(),
+        harness_schema: HarnessSchema::parse(HarnessSchema::SUPPORTED)?,
+        binary_sha256: facts.binary_sha256.clone(),
+        toolchain: facts.toolchain.clone(),
+        host: facts.host.clone(),
+        cpu_model: facts.cpu_model.clone(),
+        cpu_features: facts.cpu_features.clone(),
+        os_kernel: facts.os_kernel.clone(),
+        governor: facts.governor.clone(),
+        lock_wrapper: lock_wrapper_path,
+        lock_file: facts.lock_file.clone(),
+        cpu_affinity: facts.cpu_affinity.clone(),
+        executions: args.protocol.executions,
+        repetitions: args.protocol.repetitions,
+        target_ms: args.protocol.target_ms,
+        receipt: receipt_path,
+    };
+    let profile = build_profile(id, provenance, &selected)?;
+    let omitted = uncalibrated_fields(&sweeps);
+    for field in &omitted {
+        println!(
+            "\nomitted: {field} carries no value in the emitted document, because no grid point \
+             offered both arms. The loader resolves the absent field to the conservative default \
+             {}.",
+            field.conservative_default()
+        );
+    }
+    let document = calibrated_document(&profile, &omitted)?;
+    let json = emit_profile(out, &document, &profile)?;
+
+    println!("\nemitted and re-loaded {}", out.display());
+    println!("{json}");
+    if facts.source_dirty {
+        println!(
+            "\nthe source tree is dirty, so this profile is not committable: the revision it \
+             names does not reproduce the binary that produced these numbers"
+        );
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Five distinct values, so a transposition among the four polynomial
+    /// thresholds cannot satisfy the per-field assertions below.
+    #[allow(dead_code)]
+    const DISTINCT: SelectedValues = SelectedValues {
+        simd_min_words: 11,
+        karatsuba_min_degree: 22,
+        karatsuba_max_out_len: 33,
+        div_rem_fast_min_len: 44,
+        subproduct_min_len: 55,
+    };
+
+    #[allow(dead_code)]
+    fn calibrated_provenance() -> Provenance {
+        Provenance::Calibrated {
+            measured_at: Rfc3339Utc::parse("2026-08-20T00:00:00Z").unwrap(),
+            source_revision: GitRevision::parse(&"a".repeat(40)).unwrap(),
+            source_dirty: false,
+            harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs").unwrap(),
+            harness_schema: HarnessSchema::parse(HarnessSchema::SUPPORTED).unwrap(),
+            binary_sha256: Sha256::parse(&"b".repeat(64)).unwrap(),
+            toolchain: "rustc 1.95.0".to_owned(),
+            host: "test-host".to_owned(),
+            cpu_model: "test-cpu".to_owned(),
+            cpu_features: vec!["avx2".to_owned()],
+            os_kernel: "Linux".to_owned(),
+            governor: "performance".to_owned(),
+            lock_wrapper: RepoRelPath::parse("dev/scripts/ccx1-bench-flock.sh").unwrap(),
+            lock_file: "/tmp/gf2-ccx1.lock".to_owned(),
+            cpu_affinity: "6-11".to_owned(),
+            executions: 5,
+            repetitions: 5,
+            target_ms: 250,
+            receipt: RepoRelPath::parse("dev/benchmarks/tuning_profiles/receipt.md").unwrap(),
+        }
+    }
+
+    #[allow(dead_code)]
+    fn profile_from(selected: &SelectedValues) -> TuningProfile {
+        build_profile(
+            ProfileId::parse("test-profile").unwrap(),
+            calibrated_provenance(),
+            selected,
+        )
+        .expect("the swept values are in range")
+    }
+
+    /// A grid point with both arms, stated as medians and spreads directly.
+    #[allow(dead_code)]
+    fn point(size: usize, conservative: f64, asymptotic: f64, spread: f64) -> GridPoint {
+        GridPoint {
+            size,
+            conservative: Some(ArmStat {
+                median: conservative,
+                spread,
+                windows: 25,
+            }),
+            asymptotic: Some(ArmStat {
+                median: asymptotic,
+                spread,
+                windows: 25,
+            }),
+        }
+    }
+
+    #[test]
+    fn emitted_profile_carries_the_swept_simd_min_words() {
+        assert_eq!(
+            profile_from(&DISTINCT).bit_backend().simd_min_words(),
+            DISTINCT.simd_min_words
+        );
+    }
+
+    #[test]
+    fn emitted_profile_carries_the_swept_karatsuba_min_degree() {
+        assert_eq!(
+            profile_from(&DISTINCT).polynomial().karatsuba_min_degree(),
+            DISTINCT.karatsuba_min_degree
+        );
+    }
+
+    #[test]
+    fn emitted_profile_carries_the_swept_karatsuba_max_out_len() {
+        assert_eq!(
+            profile_from(&DISTINCT).polynomial().karatsuba_max_out_len(),
+            DISTINCT.karatsuba_max_out_len
+        );
+    }
+
+    #[test]
+    fn emitted_profile_carries_the_swept_div_rem_fast_min_len() {
+        assert_eq!(
+            profile_from(&DISTINCT).polynomial().div_rem_fast_min_len(),
+            DISTINCT.div_rem_fast_min_len
+        );
+    }
+
+    #[test]
+    fn emitted_profile_carries_the_swept_subproduct_min_len() {
+        assert_eq!(
+            profile_from(&DISTINCT).polynomial().subproduct_min_len(),
+            DISTINCT.subproduct_min_len
+        );
+    }
+
+    /// A sweep of `field` that concluded with `selection`, carrying no grid.
+    #[allow(dead_code)]
+    fn concluded(field: CalibratedField, reason: Fallback) -> FieldSweep {
+        FieldSweep {
+            field,
+            points: Vec::new(),
+            selection: Selection::KeptDefault {
+                value: field.conservative_default(),
+                reason,
+            },
+        }
+    }
+
+    #[test]
+    fn the_emitted_document_omits_the_field_the_sweep_could_not_compare() {
+        let profile = profile_from(&DISTINCT);
+        let document =
+            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        assert!(
+            !document.contains("karatsuba_min_degree"),
+            "the uncalibrated field is still stated: {document}"
+        );
+        let loaded = TuningProfile::from_json(&document)
+            .expect("an omitted field is a supported state of the schema");
+        assert_eq!(
+            loaded.polynomial().karatsuba_min_degree(),
+            TuningProfile::CONSERVATIVE
+                .polynomial()
+                .karatsuba_min_degree(),
+            "the loader resolves the absent field to the conservative default"
+        );
+    }
+
+    #[test]
+    fn omitting_one_field_leaves_the_other_four_stated() {
+        let profile = profile_from(&DISTINCT);
+        let document =
+            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let loaded = TuningProfile::from_json(&document).unwrap();
+        assert_eq!(
+            loaded.bit_backend().simd_min_words(),
+            DISTINCT.simd_min_words
+        );
+        assert_eq!(
+            loaded.polynomial().karatsuba_max_out_len(),
+            DISTINCT.karatsuba_max_out_len
+        );
+        assert_eq!(
+            loaded.polynomial().div_rem_fast_min_len(),
+            DISTINCT.div_rem_fast_min_len
+        );
+        assert_eq!(
+            loaded.polynomial().subproduct_min_len(),
+            DISTINCT.subproduct_min_len
+        );
+    }
+
+    #[test]
+    fn a_document_with_nothing_omitted_is_the_serialized_profile_verbatim() {
+        let profile = profile_from(&DISTINCT);
+        assert_eq!(
+            calibrated_document(&profile, &[]).unwrap(),
+            profile.to_json()
+        );
+    }
+
+    #[test]
+    fn omission_removes_exactly_the_field_and_leaves_the_key_order_alone() {
+        let profile = profile_from(&DISTINCT);
+        let document =
+            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let entry = format!(
+            "\"karatsuba_min_degree\":{},",
+            DISTINCT.karatsuba_min_degree
+        );
+        assert_eq!(document, profile.to_json().replace(&entry, ""));
+    }
+
+    #[test]
+    fn omitting_the_last_field_of_a_family_leaves_an_empty_object() {
+        let profile = profile_from(&DISTINCT);
+        let document = calibrated_document(&profile, &[CalibratedField::SimdMinWords]).unwrap();
+        assert!(document.contains(r#""bit_backend":{}"#), "{document}");
+        let loaded = TuningProfile::from_json(&document).unwrap();
+        assert_eq!(
+            loaded.bit_backend().simd_min_words(),
+            TuningProfile::CONSERVATIVE.bit_backend().simd_min_words()
+        );
+    }
+
+    #[test]
+    fn a_provenance_string_is_never_mistaken_for_a_selector_key() {
+        // The receipt path names the field, so a document-wide search would cut
+        // the wrong bytes.
+        let mut provenance = calibrated_provenance();
+        if let Provenance::Calibrated { receipt, .. } = &mut provenance {
+            *receipt =
+                RepoRelPath::parse("dev/benchmarks/tuning_profiles/karatsuba_min_degree-notes.md")
+                    .unwrap();
+        }
+        let profile = build_profile(
+            ProfileId::parse("test-profile").unwrap(),
+            provenance,
+            &DISTINCT,
+        )
+        .unwrap();
+        let document =
+            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let loaded = TuningProfile::from_json(&document).unwrap();
+        let Provenance::Calibrated { receipt, .. } = loaded.provenance() else {
+            panic!("the document stays calibrated");
+        };
+        assert_eq!(
+            receipt.as_str(),
+            "dev/benchmarks/tuning_profiles/karatsuba_min_degree-notes.md"
+        );
+        assert_eq!(
+            loaded.polynomial().karatsuba_min_degree(),
+            TuningProfile::CONSERVATIVE
+                .polynomial()
+                .karatsuba_min_degree()
+        );
+    }
+
+    #[test]
+    fn only_an_uncomparable_field_is_omitted() {
+        let sweeps = [
+            concluded(
+                CalibratedField::KaratsubaMinDegree,
+                Fallback::NoComparableGridPoint,
+            ),
+            concluded(
+                CalibratedField::KaratsubaMaxOutLen,
+                Fallback::NonMonotone {
+                    first_win: 255,
+                    later_loss: 383,
+                },
+            ),
+            concluded(CalibratedField::SimdMinWords, Fallback::NoGridPointWins),
+        ];
+        assert_eq!(
+            uncalibrated_fields(&sweeps),
+            vec![CalibratedField::KaratsubaMinDegree],
+            "a tie and a non-monotone crossover are calibration outcomes, not absent measurements"
+        );
+    }
+
+    #[test]
+    fn a_measured_field_is_never_omitted() {
+        let points = vec![point(16, 100.0, 50.0, 0.01)];
+        let sweep = FieldSweep {
+            field: CalibratedField::DivRemFastMinLen,
+            points: points.clone(),
+            selection: select(CalibratedField::DivRemFastMinLen, &points),
+        };
+        assert!(uncalibrated_fields(&[sweep]).is_empty());
+    }
+
+    #[test]
+    fn emitted_profile_round_trips_through_the_loader() {
+        let profile = profile_from(&DISTINCT);
+        let reparsed = TuningProfile::from_json(&profile.to_json())
+            .expect("the harness emits a document the loader accepts");
+        assert_eq!(reparsed, profile);
+    }
+
+    #[test]
+    fn emitted_provenance_is_calibrated_and_populated() {
+        let profile = profile_from(&DISTINCT);
+        let Provenance::Calibrated {
+            harness_schema,
+            executions,
+            repetitions,
+            target_ms,
+            ..
+        } = profile.provenance()
+        else {
+            panic!("the calibration action emits calibrated provenance");
+        };
+        assert_eq!(harness_schema.as_str(), HarnessSchema::SUPPORTED);
+        assert_eq!((*executions, *repetitions, *target_ms), (5, 5, 250));
+    }
+
+    #[test]
+    fn every_grid_straddles_its_conservative_default() {
+        for field in CalibratedField::ALL {
+            let grid = field.grid();
+            let default = field.conservative_default();
+            assert!(
+                grid.iter().any(|&size| size < default),
+                "{field} has no grid point below {default}"
+            );
+            assert!(
+                grid.iter().any(|&size| size > default),
+                "{field} has no grid point above {default}"
+            );
+            assert!(
+                grid.windows(2).all(|pair| pair[0] < pair[1]),
+                "{field} grid is not strictly ascending: {grid:?}"
+            );
+            assert!(grid.iter().all(|&size| size > 0), "{field} grid has a zero");
+        }
+    }
+
+    #[test]
+    fn karatsuba_out_len_grid_spans_the_recorded_mul_fast_step() {
+        let grid = CalibratedField::KaratsubaMaxOutLen.grid();
+        assert!(grid.contains(&127) && grid.contains(&129));
+        assert!(grid.iter().any(|&size| size >= 255));
+        assert!(
+            grid.iter().all(|&size| !size.is_multiple_of(2)),
+            "equal-length operands give an odd product length: {grid:?}"
+        );
+    }
+
+    #[test]
+    fn a_monotone_crossover_selects_its_smallest_winning_grid_point() {
+        let points = vec![
+            point(16, 100.0, 120.0, 0.01),
+            point(32, 100.0, 90.0, 0.01),
+            point(64, 100.0, 50.0, 0.01),
+        ];
+        let selection = select(CalibratedField::DivRemFastMinLen, &points);
+        assert!(matches!(
+            selection,
+            Selection::Crossover {
+                value: 32,
+                crossover: 32,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn an_upper_bound_field_selects_the_grid_point_below_the_crossover() {
+        let points = vec![
+            point(63, 100.0, 120.0, 0.01),
+            point(127, 100.0, 110.0, 0.01),
+            point(255, 100.0, 50.0, 0.01),
+        ];
+        let selection = select(CalibratedField::KaratsubaMaxOutLen, &points);
+        assert!(matches!(
+            selection,
+            Selection::Crossover {
+                value: 127,
+                crossover: 255,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn a_margin_inside_the_noise_band_does_not_win() {
+        let points = vec![point(32, 100.0, 97.0, 0.05)];
+        assert_eq!(
+            select(CalibratedField::DivRemFastMinLen, &points),
+            Selection::KeptDefault {
+                value: CalibratedField::DivRemFastMinLen.conservative_default(),
+                reason: Fallback::NoGridPointWins,
+            }
+        );
+    }
+
+    #[test]
+    fn a_non_monotone_crossover_keeps_the_conservative_default() {
+        let points = vec![
+            point(16, 100.0, 120.0, 0.01),
+            point(32, 100.0, 50.0, 0.01),
+            point(64, 100.0, 130.0, 0.01),
+        ];
+        assert_eq!(
+            select(CalibratedField::SubproductMinLen, &points),
+            Selection::KeptDefault {
+                value: CalibratedField::SubproductMinLen.conservative_default(),
+                reason: Fallback::NonMonotone {
+                    first_win: 32,
+                    later_loss: 64,
+                },
+            }
+        );
+    }
+
+    #[test]
+    fn a_grid_with_one_arm_everywhere_keeps_the_conservative_default() {
+        let points: Vec<GridPoint> = [16_usize, 32, 64]
+            .into_iter()
+            .map(|size| GridPoint {
+                size,
+                conservative: Some(ArmStat {
+                    median: 100.0,
+                    spread: 0.01,
+                    windows: 25,
+                }),
+                asymptotic: None,
+            })
+            .collect();
+        assert_eq!(
+            select(CalibratedField::KaratsubaMinDegree, &points),
+            Selection::KeptDefault {
+                value: CalibratedField::KaratsubaMinDegree.conservative_default(),
+                reason: Fallback::NoComparableGridPoint,
+            }
+        );
+    }
+
+    #[test]
+    fn selected_values_fall_back_to_the_defaults_of_unswept_fields() {
+        let selected = SelectedValues::from_sweeps(&[]);
+        assert_eq!(
+            selected,
+            SelectedValues {
+                simd_min_words: CalibratedField::SimdMinWords.conservative_default(),
+                karatsuba_min_degree: CalibratedField::KaratsubaMinDegree.conservative_default(),
+                karatsuba_max_out_len: CalibratedField::KaratsubaMaxOutLen.conservative_default(),
+                div_rem_fast_min_len: CalibratedField::DivRemFastMinLen.conservative_default(),
+                subproduct_min_len: CalibratedField::SubproductMinLen.conservative_default(),
+            }
+        );
+    }
+
+    #[test]
+    fn a_default_valued_sweep_reproduces_the_conservative_selectors() {
+        let selected = SelectedValues::from_sweeps(&[]);
+        let profile = profile_from(&selected);
+        let conservative = &TuningProfile::CONSERVATIVE;
+        assert_eq!(profile.bit_backend(), conservative.bit_backend());
+        assert_eq!(profile.polynomial(), conservative.polynomial());
+    }
+
+    #[test]
+    fn statistics_summarise_a_window_sample() {
+        let stat = ArmStat::from_rates(&[10.0, 12.0, 8.0, 11.0, 9.0]);
+        assert_eq!(stat.median, 10.0);
+        assert_eq!(stat.windows, 5);
+        // Nearest-rank quartiles of the five windows are 9 and 11.
+        assert!((stat.spread - 0.2).abs() < 1e-12);
+    }
+
+    #[test]
+    fn an_even_sample_medians_between_its_central_windows() {
+        assert_eq!(ArmStat::from_rates(&[10.0, 20.0]).median, 15.0);
+    }
+
+    #[test]
+    fn the_calibrate_mode_requires_its_output_and_provenance_paths() {
+        for missing in ["--lock-wrapper", "--receipt", "--out"] {
+            let args: Vec<String> = [
+                "--out",
+                "/tmp/x.json",
+                "--lock-wrapper",
+                "w",
+                "--receipt",
+                "r",
+            ]
+            .chunks(2)
+            .filter(|pair| pair[0] != missing)
+            .flat_map(|pair| pair.iter().map(|value| (*value).to_owned()))
+            .collect();
+            assert!(
+                parse_args(args.into_iter()).is_err(),
+                "{missing} is required"
+            );
+        }
+    }
+
+    #[test]
+    fn a_zero_protocol_constant_is_rejected() {
+        for flag in ["--executions", "--repetitions", "--target-ms"] {
+            let args = [flag, "0", "--self-check"].map(str::to_owned);
+            assert!(
+                parse_args(args.into_iter()).is_err(),
+                "{flag} accepted zero"
+            );
+        }
+    }
+
+    #[test]
+    fn the_reporting_modes_need_no_output_path() {
+        let self_check = parse_args(["--self-check".to_owned()].into_iter()).unwrap();
+        assert_eq!(self_check.mode, Mode::SelfCheck);
+        let list_grid = parse_args(["--list-grid".to_owned()].into_iter()).unwrap();
+        assert_eq!(list_grid.mode, Mode::ListGrid);
+    }
+
+    #[test]
+    fn cargo_bench_passes_a_bench_flag_the_parser_ignores() {
+        let args = ["--bench", "--list-grid"].map(str::to_owned);
+        assert_eq!(parse_args(args.into_iter()).unwrap().mode, Mode::ListGrid);
+    }
+
+    #[test]
+    fn a_profile_id_comes_from_the_emitted_file_name() {
+        let id = profile_id_for(Path::new("/tmp/gf2-calibration-fraktaali.json"), None).unwrap();
+        assert_eq!(id.as_str(), "gf2-calibration-fraktaali");
+    }
+
+    #[test]
+    fn a_non_kebab_case_file_name_is_rejected_rather_than_mangled() {
+        assert!(profile_id_for(Path::new("/tmp/Gf2_Calibration.json"), None).is_err());
+        let explicit = profile_id_for(Path::new("/tmp/Gf2_Calibration.json"), Some("host-avx2"));
+        assert_eq!(explicit.unwrap().as_str(), "host-avx2");
+    }
+
+    #[test]
+    fn a_parent_segment_is_collapsed_out_of_the_harness_path() {
+        assert_eq!(
+            normalize_relative(Path::new("crates/gf2-core/tests/../benches/x.rs")),
+            "crates/gf2-core/benches/x.rs"
+        );
+        assert!(RepoRelPath::parse(&normalize_relative(Path::new(
+            "crates/gf2-core/tests/../benches/x.rs"
+        )))
+        .is_ok());
+    }
+
+    #[test]
+    fn timestamps_are_formatted_in_the_form_the_loader_accepts() {
+        let epoch = rfc3339_utc(UNIX_EPOCH).unwrap();
+        assert_eq!(epoch, "1970-01-01T00:00:00Z");
+        assert!(Rfc3339Utc::parse(&epoch).is_ok());
+        let leap_day = rfc3339_utc(UNIX_EPOCH + Duration::from_secs(1_772_323_200)).unwrap();
+        assert_eq!(leap_day, "2026-03-01T00:00:00Z");
+        assert!(Rfc3339Utc::parse(&rfc3339_utc(SystemTime::now()).unwrap()).is_ok());
+    }
+
+    #[test]
+    fn the_device_encoding_matches_the_kernel_lock_table() {
+        assert_eq!(makedev(0x00, 0x2d), 45);
+        assert_eq!(makedev(0x08, 0x02), 2050);
+    }
+
+    #[test]
+    fn a_product_length_maps_back_to_equal_operand_lengths() {
+        for out_len in CalibratedField::KaratsubaMaxOutLen.grid() {
+            let len = operand_len_for_product(out_len);
+            assert_eq!(2 * len - 1, out_len);
+        }
+    }
+}
