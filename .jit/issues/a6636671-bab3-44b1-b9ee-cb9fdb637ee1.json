@@ -11,10 +11,11 @@
   "id": "a6636671-bab3-44b1-b9ee-cb9fdb637ee1",
   "labels": [
     "component:gf2-core",
-    "type:task"
+    "type:task",
+    "epic:quality-documentation-tech-debt"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
-  "updated_at": "2026-08-18T20:51:51.692768931Z"
+  "updated_at": "2026-08-19T05:22:06.640497778Z"
 }

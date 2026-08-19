@@ -11,10 +11,11 @@
   "id": "4dd5372a-4b02-4186-83f6-97548b560b05",
   "labels": [
     "component:proofs",
-    "type:task"
+    "type:task",
+    "epic:quality-documentation-tech-debt"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Migrate Charon/Aeneas toolchain to newest upstream",
-  "updated_at": "2026-08-18T21:49:34.959855871Z"
+  "updated_at": "2026-08-19T05:22:12.498326820Z"
 }

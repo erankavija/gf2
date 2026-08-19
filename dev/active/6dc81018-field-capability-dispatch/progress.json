@@ -1,7 +1,7 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 2,
+  "current_wave": 3,
   "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend.",
   "waves": [
     {
@@ -34,7 +34,7 @@
           "title": "Design the versioned tuning-profile format and selection integration",
           "classification": "design",
           "model": "opus",
-          "status": "rework-1"
+          "status": "done"
         },
         {
           "id": "7f818151-9268-4f6d-b29e-508eb95ba12c",
@@ -137,12 +137,14 @@
     {
       "id": "a6636671",
       "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
-      "reason": "classification \u00a75 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope"
+      "reason": "classification \u00a75 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope",
+      "parented": "86b9c719 (quality-documentation-tech-debt) to satisfy repo DAG-integrity validation; still outside epic 6dc81018"
     },
     {
       "id": "4dd5372a",
       "title": "Migrate Charon/Aeneas toolchain to newest upstream",
-      "reason": "owner-approved follow-on from spike 34d85cb9 upgrade leg; standalone, outside the epic"
+      "reason": "owner-approved follow-on from spike 34d85cb9 upgrade leg; standalone, outside the epic",
+      "parented": "86b9c719 (quality-documentation-tech-debt) to satisfy repo DAG-integrity validation; still outside epic 6dc81018"
     }
   ],
   "escalations": [
@@ -169,6 +171,18 @@
       "issue": "34d85cb9",
       "date": "2026-08-19",
       "decision": "Owner approved one more rework round via AskUserQuestion (counter reset). Scope: fix blocking F1/F2 from research-review round 3 plus a full sweep verifying every quantitative claim in the spike record against its committed receipt. Advisories not required (owner declined the 'also fix advisories' option)."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "697fc55b",
+      "date": "2026-08-19",
+      "decision": "DEC-B1: polynomial cutover covers BOTH SUBPRODUCT_THRESHOLD read sites (poly.rs batch_evaluate and batch_evaluate_auto), per design 220cab0b open question 1."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "5ecc9bf8",
+      "date": "2026-08-19",
+      "decision": "DEC-B2 deferred to wave-7 dispatch: whether the project bench host gets a canonical committed calibrated profile is decided against 5ecc9bf8's own criteria."
     }
   ],
   "rework_counts": {
