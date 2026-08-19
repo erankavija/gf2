@@ -34,7 +34,7 @@
           "title": "Design the versioned tuning-profile format and selection integration",
           "classification": "design",
           "model": "opus",
-          "status": "pending"
+          "status": "dispatched"
         },
         {
           "id": "7f818151-9268-4f6d-b29e-508eb95ba12c",
@@ -42,7 +42,7 @@
           "title": "Retire the packed-trait parallel declarations in the research stub",
           "classification": "implementation",
           "model": "codex-luna",
-          "status": "pending"
+          "status": "dispatched"
         }
       ]
     },
