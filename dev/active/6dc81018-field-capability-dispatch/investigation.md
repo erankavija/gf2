@@ -65,10 +65,11 @@ Production implementations are:
 - `Packed7` / `Packed7Vec` —
   `crates/gf2-algebra/src/packed/packed7.rs:581` and `:1056`.
 
-The research stub still exists at `dev/research/packed_field_stub/src/lib.rs`:
+The archived research stub is at `dev/archive/packed_field_stub/src/lib.rs`:
 it redeclares both traits at `:80` and `:331`, and has stub implementations at
 `:774` and `:968`. Its `fold_mul` still returns zero at `:1389-1392` and
-`:1619-1624`; it is not the production implementation.
+`:1619-1624`; it is a historical demonstration, not the production
+implementation.
 
 The approved D1b decisions are reflected in the shipped trait surface:
 
@@ -452,8 +453,9 @@ Production algorithm consumers are `crates/gf2-algebra/src/permanent/bipedal3.rs
 `crates/gf2-kernels-simd/src/bipedal/packed5.rs:1189` and
 `src/bipedal/packed7.rs:864`.
 
-Research consumers are `dev/research/packed_field_stub/src/lib.rs:80` and
-`:331`, `dev/research/permanent-sampling-feas/src/gray_update.rs`,
+The archived research stub records declarations at
+`dev/archive/packed_field_stub/src/lib.rs:80` and `:331`; production research
+consumers are `dev/research/permanent-sampling-feas/src/gray_update.rs`,
 `dev/research/permanent-sampling-feas/src/backend.rs`,
 `dev/research/permanent_wave_gpu/src/f5_candidates.rs`, and
 `dev/research/permanent_wave_gpu/src/wave.rs`.
@@ -630,9 +632,10 @@ and says the checkpoint is approved at `:124-133`. The shipped module carries
 the same trait definitions at `crates/gf2-algebra/src/packed/mod.rs:88-107` and
 `:374-385`, and the production implementations match the frozen type list.
 The freeze explicitly says there is no automated checker at `:135-142`; the
-research stub’s parallel declarations at `dev/research/packed_field_stub/src/lib.rs:80-331`
-also demonstrate that the repository contains an unfrozen research copy. The
-accurate primitive claim is “production API matches a documentation freeze,” not
+archived research stub’s parallel declarations at
+`dev/archive/packed_field_stub/src/lib.rs:80-331` preserve the historical
+evidence that the repository had an unfrozen research copy. The accurate
+primitive claim is “production API matches a documentation freeze,” not
 “the repository contains only one enforced declaration.”
 
 ## 5. Architecture fit
