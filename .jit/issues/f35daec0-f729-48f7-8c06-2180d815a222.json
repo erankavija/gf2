@@ -7,6 +7,7 @@
   ],
   "description": "Implement the tuning-profile data type, parser, and conservative default table in gf2-core per the profile design linked from the epic's plan.\n\n## Background\n\nThe profile is a versioned, committed artifact; builds consume it deterministically. Unknown hosts and absent profiles select an embedded conservative default table backed by the tested scalar fallback paths. This issue delivers the mechanism only; existing selectors keep their current behavior until the cutover issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The loader parses the committed versioned profile and rejects malformed or unsupported-version input with explicit errors, with unit tests for both.\n- [hard] REQ-02: An embedded conservative default profile is selected for unknown hosts or absent profiles, selection is deterministic for a fixed profile, and no existing selector changes behavior in this issue.",
   "documents": [],
+  "first_ready_at": "2026-08-19T05:20:37.775043840Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -20,7 +21,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Implement the tuning-profile type, loader, and conservative defaults",
-  "updated_at": "2026-08-18T19:57:57.977309087Z"
+  "updated_at": "2026-08-19T05:20:37.775043840Z"
 }

@@ -34,14 +34,15 @@
       "path": "dev/active/220cab0b/design.md"
     }
   ],
+  "done_at": "2026-08-19T05:20:31.946750773Z",
   "first_ready_at": "2026-08-18T20:54:15.918734150Z",
   "gates_required": [
     "doc-review"
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-19T05:14:24.829977886Z",
+      "status": "passed",
+      "updated_at": "2026-08-19T05:20:03.997572404Z",
       "updated_by": "auto:executor"
     }
   },
@@ -53,7 +54,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Design the versioned tuning-profile format and selection integration",
-  "updated_at": "2026-08-19T05:14:24.829977886Z"
+  "updated_at": "2026-08-19T05:20:31.946750773Z"
 }
