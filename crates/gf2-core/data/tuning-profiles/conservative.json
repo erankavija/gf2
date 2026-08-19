@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "profile_id": "conservative",
+  "provenance": { "kind": "inherited" },
+  "selectors": {
+    "bit_backend": {
+      "simd_min_words": 8
+    },
+    "polynomial": {
+      "karatsuba_min_degree": 32,
+      "karatsuba_max_out_len": 128,
+      "div_rem_fast_min_len": 2048,
+      "subproduct_min_len": 4096
+    }
+  }
+}

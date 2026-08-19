@@ -79,6 +79,9 @@ impl SelectedBackend {
     }
 }
 
+/// Definition site for the profile field `bit_backend.simd_min_words`.
+pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;
+
 /// Selects the best backend for operations on buffers of the given size.
 ///
 /// Uses heuristics to determine whether SIMD acceleration is beneficial.
@@ -90,13 +93,11 @@ impl SelectedBackend {
 ///
 /// # Heuristics
 ///
-/// - Size < 8 words (512 bytes): Always use scalar
+/// - Size < 8 words (64 bytes): Always use scalar
 /// - Size >= 8 words: Use SIMD if available
 pub fn select_backend_for_size(_size: usize) -> SelectedBackend {
-    const _SIMD_THRESHOLD: usize = 8; // 512 bytes
-
     #[cfg(feature = "simd")]
-    if _size >= _SIMD_THRESHOLD {
+    if _size >= SIMD_MIN_WORDS_DEFAULT {
         // SIMD backend will be initialized on first use
         return SelectedBackend::Simd;
     }

@@ -54,6 +54,7 @@ pub mod matrix;
 pub mod matrix_like;
 pub mod primitive_polys;
 pub mod sparse;
+pub mod tuning;
 
 pub mod rng;
 
