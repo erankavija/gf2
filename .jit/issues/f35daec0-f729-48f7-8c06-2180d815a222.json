@@ -47,6 +47,7 @@
       "path": "dev/active/220cab0b/design.md"
     }
   ],
+  "done_at": "2026-08-19T17:11:03.866929905Z",
   "first_ready_at": "2026-08-19T05:20:37.775043840Z",
   "gates_required": [
     "cargo-ci",
@@ -55,12 +56,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-19T16:13:56.323486198Z",
+      "updated_at": "2026-08-19T17:08:28.586676329Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-19T16:16:55.176187031Z",
+      "status": "passed",
+      "updated_at": "2026-08-19T17:10:48.860882690Z",
       "updated_by": "auto:executor"
     }
   },
@@ -72,7 +73,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Implement the tuning-profile type, loader, and conservative defaults",
-  "updated_at": "2026-08-19T16:16:55.176187031Z"
+  "updated_at": "2026-08-19T17:11:03.866929905Z"
 }
