@@ -60,18 +60,19 @@
 //! |-----------|----------|-----------:|-------------------|
 //! | `Add` / `Sub` / `Neg` / `AddAssign` / `SubAssign` (owned + `&_` RHS) | Elementwise | `O(max(n, m))` | — |
 //! | [`FieldPoly::mul_scalar`] / [`FieldPoly::scale`] | Elementwise scale | `O(n)` | Skips trailing zeros after trim. |
-//! | [`FieldPoly::mul`] and `impl Mul` (four owned/borrowed variants) | Schoolbook ⇄ Karatsuba dispatch | `O(n · m)` schoolbook, `O(n^{log₂ 3})` Karatsuba | [`KARATSUBA_THRESHOLD`] = 32 |
+//! | [`FieldPoly::mul`] and `impl Mul` (four owned/borrowed variants) | Schoolbook ⇄ Karatsuba dispatch | `O(n · m)` schoolbook, `O(n^{log₂ 3})` Karatsuba | `polynomial.karatsuba_min_degree()` (conservative default [`KARATSUBA_THRESHOLD`] = 32) |
 //! | [`FieldPoly::mul_ntt`] (for `F: TwoAdicField`) | Radix-2 NTT convolution | `O(N log N)` with `N = next_pow2(n + m − 1)` | Detailed doc in [`crate::field::ntt`] |
-//! | Free function [`mul_fast`] (for `F: TwoAdicField`) | Tuned dispatcher: Karatsuba ⇄ NTT | matches the winning path for each size | [`NTT_THRESHOLD`] = 128 |
+//! | Free function [`mul_fast`] (for `F: TwoAdicField`) | Profile-driven dispatcher: Karatsuba ⇄ NTT | follows `polynomial.karatsuba_max_out_len()` | conservative default [`NTT_THRESHOLD`] = 128 |
 //! | [`FieldPoly::div_rem`] | Schoolbook long division | `O(n · m)` field ops | Total; panics only on division by zero. |
 //! | [`FieldPoly::invert_series`] (for `F: TwoAdicField`) | Newton iteration on the reciprocal | `O(M(k))` field ops | Powers the `div_rem_fast` path. |
 //! | [`FieldPoly::div_rem_fast`] (for `F: TwoAdicField`) | Newton iteration via reversed-divisor inverse | `O(M(n))` field ops | Dispatches via [`mul_fast`]. |
-//! | [`FieldPoly::div_rem_auto`] (for `F: TwoAdicField`) | Dispatcher: schoolbook ⇄ Newton fast division | picks the winning path for each size | [`DIV_REM_THRESHOLD`] = 2048 |
+//! | [`FieldPoly::div_rem_auto`] (for `F: TwoAdicField`) | Profile-driven dispatcher: schoolbook ⇄ Newton fast division | follows `polynomial.div_rem_fast_min_len()` | conservative default [`DIV_REM_THRESHOLD`] = 2048 |
 //! | [`FieldPoly::gcd`] | Euclidean algorithm over `div_rem` | `O(n · m · log(min(n, m)))` field ops | Monic-normalised result. |
 //!
 //! There is no standalone `pub fn mul_karatsuba`: the schoolbook ⇄
 //! Karatsuba crossover is internal and selected by the `Mul` operator
-//! and [`FieldPoly::mul`] at [`KARATSUBA_THRESHOLD`]. Callers that want
+//! and [`FieldPoly::mul`] at the active `polynomial.karatsuba_min_degree()`.
+//! Callers that want
 //! to force the `O(N log N)` path use [`FieldPoly::mul_ntt`] or
 //! [`mul_fast`] directly.
 //!
@@ -81,13 +82,13 @@
 //! |-----------|----------|-----------:|-------------------|
 //! | [`FieldPoly::eval`] | Horner | `O(n)` | — |
 //! | [`FieldPoly::eval_batch`] | `k` independent Horner folds | `O(n · k)` | — |
-//! | [`FieldPoly::batch_evaluate`] | Auto-dispatch: naive Horner ⇄ subproduct tree (schoolbook [`FieldPoly::div_rem`]) | `O(n · k)` below threshold, `O(n · k + k² log k)` above | [`SUBPRODUCT_THRESHOLD`] = 4096 |
-//! | [`FieldPoly::batch_evaluate_auto`] (for `F: TwoAdicField`) | Auto-dispatch: naive Horner ⇄ subproduct tree (Newton-iteration [`FieldPoly::div_rem_auto`]) | `O(n · k)` below threshold, `O(M(n) · log k + k² log k)` above | [`SUBPRODUCT_THRESHOLD`] = 4096 |
+//! | [`FieldPoly::batch_evaluate`] | Auto-dispatch: naive Horner ⇄ subproduct tree (schoolbook [`FieldPoly::div_rem`]) | `O(n · k)` below the active `polynomial.subproduct_min_len()`, `O(n · k + k² log k)` above | conservative default [`SUBPRODUCT_THRESHOLD`] = 4096 |
+//! | [`FieldPoly::batch_evaluate_auto`] (for `F: TwoAdicField`) | Auto-dispatch: naive Horner ⇄ subproduct tree (Newton-iteration [`FieldPoly::div_rem_auto`]) | `O(n · k)` below the active `polynomial.subproduct_min_len()`, `O(M(n) · log k + k² log k)` above | conservative default [`SUBPRODUCT_THRESHOLD`] = 4096 |
 //! | [`batch_evaluate_subproduct`] (free fn) | Unconditional subproduct tree, schoolbook [`FieldPoly::div_rem`] | `O(n · k + k² log k)` | Bypasses the threshold gate. |
-//! | [`batch_evaluate_subproduct_auto`] (free fn, `F: TwoAdicField`) | Unconditional subproduct tree, Newton-iteration [`FieldPoly::div_rem_auto`] | `O(M(n) · log k + k² log k)` above [`DIV_REM_THRESHOLD`] | Bypasses the threshold gate. |
+//! | [`batch_evaluate_subproduct_auto`] (free fn, `F: TwoAdicField`) | Unconditional subproduct tree, Newton-iteration [`FieldPoly::div_rem_auto`] | `O(M(n) · log k + k² log k)` above the active division selector | Bypasses the threshold gate. |
 //! | [`build_subproduct_tree`] (free fn) | Balanced pair-merge | `O(k · M(k))` polynomial mults | Single source of truth shared by `batch_evaluate` and `interpolate_fast`. |
 //! | [`interpolate`] (see [`crate::field::poly_interpolate`]) | Barycentric Lagrange + `batch_inverse` | `O(n²)` field ops | — |
-//! | [`interpolate_fast`] (see [`crate::field::poly_interpolate`]) | Subproduct-tree Lagrange over [`FieldPoly::batch_evaluate`] | `O(n² log n)` with the generic substrate; [`TwoAdicField`] callers routing through [`FieldPoly::batch_evaluate_auto`] reach `O(n log² n)` above [`SUBPRODUCT_THRESHOLD`] | — |
+//! | [`interpolate_fast`] (see [`crate::field::poly_interpolate`]) | Subproduct-tree Lagrange over [`FieldPoly::batch_evaluate`] | `O(n² log n)` with the generic substrate; [`TwoAdicField`] callers routing through [`FieldPoly::batch_evaluate_auto`] reach `O(n log² n)` above the active subproduct selector | — |
 //! | [`interpolate_auto`] (see [`crate::field::poly_interpolate`]) | Dispatcher over the two above | picks the right asymptotic | [`INTERPOLATE_THRESHOLD`] = 16 |
 //! | [`formal_derivative`] (see [`crate::field::poly_interpolate`]) | Elementwise `i · coeffs[i]` | `O(n)` | — |
 //!
@@ -134,15 +135,16 @@
 //!
 //! - Fast polynomial division — [`FieldPoly::div_rem_fast`] (Newton
 //!   iteration on the reversed-divisor series inverse) and the
-//!   [`FieldPoly::div_rem_auto`] dispatcher tuned via
-//!   [`DIV_REM_THRESHOLD`] (issue `ae0c7e1f`).
+//!   [`FieldPoly::div_rem_auto`] dispatcher using
+//!   `polynomial.div_rem_fast_min_len()` (issue `ae0c7e1f`).
 //! - NTT-backed polynomial multiplication — [`FieldPoly::mul_ntt`]
-//!   and the [`mul_fast`] dispatcher tuned via [`NTT_THRESHOLD`]
+//!   and the [`mul_fast`] dispatcher using
+//!   `polynomial.karatsuba_max_out_len()`
 //!   (task `e0b6f940`).
 //! - Subproduct-tree batch evaluation wired through
 //!   [`FieldPoly::div_rem_auto`] — [`batch_evaluate_subproduct_auto`]
-//!   and the [`FieldPoly::batch_evaluate_auto`] dispatcher tuned via
-//!   [`SUBPRODUCT_THRESHOLD`] (issue `046f95c1`, this task).
+//!   and the [`FieldPoly::batch_evaluate_auto`] dispatcher using
+//!   `polynomial.subproduct_min_len()` (issue `046f95c1`, this task).
 //!
 //! [`FieldPoly::batch_evaluate`] (the generic dispatcher on
 //! `F: FiniteField`) keeps schoolbook [`FieldPoly::div_rem`] for the
@@ -151,8 +153,8 @@
 //! [`TwoAdicField`] operands. Callers on [`TwoAdicField`] should
 //! prefer [`FieldPoly::batch_evaluate_auto`] (or the
 //! [`batch_evaluate_subproduct_auto`] free function) to pick up the
-//! Newton-iteration fast-division primitive automatically above
-//! [`DIV_REM_THRESHOLD`].
+//! Newton-iteration fast-division primitive automatically above the active
+//! `polynomial.div_rem_fast_min_len()` value.
 //!
 //! # Scope covered here
 //!
@@ -172,8 +174,9 @@
 //!   in both owned and borrowed RHS forms.
 //! - Scalar multiplication: [`FieldPoly::mul_scalar`],
 //!   [`FieldPoly::scale`].
-//! - Multiplication through the `Mul` operator: dispatches to
-//!   schoolbook below [`KARATSUBA_THRESHOLD`] and to Karatsuba above.
+//! - Multiplication through the `Mul` operator: dispatches according to
+//!   `polynomial.karatsuba_min_degree()` (whose conservative default is
+//!   [`KARATSUBA_THRESHOLD`]).
 //! - NTT convolution for `F: TwoAdicField` via [`FieldPoly::mul_ntt`]
 //!   and the free-function tuned dispatcher [`mul_fast`].
 //! - Euclidean division [`FieldPoly::div_rem`] and GCD
@@ -181,12 +184,12 @@
 //! - Evaluation: [`FieldPoly::eval`] (Horner),
 //!   [`FieldPoly::eval_batch`] (naive per-point loop),
 //!   [`FieldPoly::batch_evaluate`] (generic auto-dispatcher,
-//!   schoolbook-backed subproduct tree above
-//!   [`SUBPRODUCT_THRESHOLD`]), and — for `F: TwoAdicField` —
+//!   schoolbook-backed subproduct tree above the active
+//!   `polynomial.subproduct_min_len()` value), and — for `F: TwoAdicField` —
 //!   [`FieldPoly::batch_evaluate_auto`] (same dispatcher with the
 //!   Newton-iteration fast-division primitive
 //!   [`FieldPoly::div_rem_auto`] wired into the reduction phase, so
-//!   above [`DIV_REM_THRESHOLD`] the tree reaches
+//!   above the active `polynomial.div_rem_fast_min_len()` value the tree reaches
 //!   `O(M(n) log k + k² log k)`).
 //!
 //! Lagrange interpolation (task `3cff65f7`) and the radix-2 NTT
@@ -202,7 +205,8 @@
 //! ```
 //!
 //! on the reference host (AMD Ryzen 9 5900X, "Zen 3", x86-64) after
-//! [`SUBPRODUCT_THRESHOLD`] was tuned in issue `046f95c1`. Numbers are
+//! the conservative `polynomial.subproduct_min_len()` default was recorded in
+//! issue `046f95c1`. Numbers are
 //! median total wall-clock time per call reported by criterion's point
 //! estimate; `--quick` reduces measurement iterations but keeps the
 //! arms comparable within a single run. Regenerate with the same
@@ -212,12 +216,14 @@
 //!
 //! The bench at `benches/field_poly.rs` runs four arms for each
 //! `(n, k)` cell: the public [`FieldPoly::batch_evaluate`] dispatcher
-//! (schoolbook-backed subproduct above [`SUBPRODUCT_THRESHOLD`]), the
+//! (schoolbook-backed subproduct above the active
+//! `polynomial.subproduct_min_len()` value), the
 //! raw subproduct path [`batch_evaluate_subproduct`] bypassing the
 //! threshold gate (always schoolbook [`FieldPoly::div_rem`]), the
 //! [`TwoAdicField`]-specialised [`batch_evaluate_subproduct_auto`]
 //! bypass (routes reductions through [`FieldPoly::div_rem_auto`] —
-//! Newton-iteration fast division above [`DIV_REM_THRESHOLD`] = 2048),
+//! Newton-iteration fast division above the active
+//! `polynomial.div_rem_fast_min_len()` value (conservative default 2048),
 //! and the naive per-point Horner baseline
 //! (`points.iter().map(|x| poly.eval(x)).collect()`).
 //!
@@ -225,8 +231,8 @@
 //! arms on a polynomial of length `n` evaluated at `k` points over
 //! `Fp<65537>`. The only cell where the subproduct tree wins is the
 //! (`n = 4096`, `k = 4096`) corner through the `subproduct_auto`
-//! arm — that is the measured crossover that pins
-//! [`SUBPRODUCT_THRESHOLD`] at `4096`. The `dispatcher` arm routes
+//! arm — that is the measured cell supporting the conservative default
+//! `SUBPRODUCT_THRESHOLD` of `4096`. The `dispatcher` arm routes
 //! through `batch_evaluate_subproduct` (schoolbook
 //! [`FieldPoly::div_rem`]) above the threshold and through naive
 //! Horner below; at the `(4096, 4096)` cell the dispatcher tracks
@@ -269,16 +275,16 @@
 //! | 8192 | 4096 |   121.50 ms  |  151.11 ms |  149.62 ms |    **62.92 ms** |
 //! | 8192 | 8192 |   243.52 ms  |  309.59 ms |  309.77 ms |   **136.83 ms** |
 //!
-//! **At and above `(n, k) = (2·SUBPRODUCT_THRESHOLD, 2·SUBPRODUCT_THRESHOLD)
-//! = (8192, 8192)` the `subproduct_auto` arm wins decisively**:
+//! **At and above `(n, k) = (8192, 8192)` the `subproduct_auto` arm wins
+//! decisively**:
 //! 136.83 ms vs 243.52 ms naive on `Fp<65537>` — a `0.56×` wall-clock
 //! ratio (`~1.78×` speedup) that confirms the `O(M(n) log k)` asymptotic
 //! of the Newton-iteration-backed subproduct tree. The
-//! (`n = 4096`, `k = 4096`) corner was the first crossover where
+//! (`n = 4096`, `k = 4096`) corner was the first measured cell where
 //! `subproduct_auto` first pulls ahead at `0.89×` of naive
 //! (54.29 ms vs 60.89 ms). This is the crossover that fixes
-//! [`SUBPRODUCT_THRESHOLD`] at `4096`; the `8192` rows above provide
-//! the `n, k ≥ 2·SUBPRODUCT_THRESHOLD` evidence that the asymptotic
+//! the conservative default `SUBPRODUCT_THRESHOLD` of `4096`; the `8192`
+//! rows above provide large-input evidence that the asymptotic
 //! win materialises at scale. The `dispatcher` arm at those corners
 //! routes through the schoolbook `subproduct` path (both land within
 //! ~1% of each other), which is ~1.27× slower than naive — the
@@ -288,7 +294,7 @@
 //! `subproduct_auto` path automatically. The raw
 //! `subproduct` arm (schoolbook [`FieldPoly::div_rem`]) stays close
 //! to `subproduct_auto` whenever both inputs remain below
-//! [`DIV_REM_THRESHOLD`] = 2048 because
+//! the conservative division default of `2048` because
 //! [`FieldPoly::div_rem_auto`] delegates to [`FieldPoly::div_rem`];
 //! above the `div_rem_auto` crossover the two arms diverge as the
 //! Newton-iteration primitive kicks in.
@@ -307,7 +313,7 @@
 //!
 //! The fast polynomial-division primitive (`div_rem_fast` /
 //! `div_rem_auto`) landed in issue `ae0c7e1f`; the subproduct-tree
-//! integration plus [`SUBPRODUCT_THRESHOLD`] tuning landed in issue
+//! integration plus the conservative subproduct default landed in issue
 //! `046f95c1`.
 //!
 //! ## `batch_mul` — left-fold vs. balanced tree
@@ -324,7 +330,8 @@
 //!
 //! At `k = 128` the balanced tree is **2.3× faster** than a schoolbook
 //! left-fold. At `k = 8` the advantage is marginal because the
-//! degree-8 operands are well below `KARATSUBA_THRESHOLD = 32`, so both
+//! degree-8 operands are well below the conservative Karatsuba default of
+//! 32, so both
 //! paths use the schoolbook kernel and only the merge-order differs.
 //!
 //! ## `mul_ntt` vs. Karatsuba
@@ -333,7 +340,7 @@
 //! polynomials of length `n` over `Fp<65537>`, so the output length is
 //! `2n − 1`. `speedup = karatsuba / ntt`; values above 1 mean NTT wins.
 //! The `mul_fast` dispatcher column shows the tuned free-function
-//! entry point (Karatsuba below [`NTT_THRESHOLD`] = 128, NTT above) and
+//! entry point (the active `polynomial.karatsuba_max_out_len()` gate) and
 //! should track the winning arm on every row.
 //!
 //! | `n`   | Karatsuba | `mul_ntt` | `mul_fast` | speedup |
@@ -345,8 +352,11 @@
 //! |  1024 |   1.25 ms | 284.09 µs |  320.04 µs |   4.40× |
 //!
 //! NTT ties Karatsuba at `n = 64` and wins decisively from `n = 128`
-//! onwards — `mul_fast`'s [`NTT_THRESHOLD`] = 128 is tuned from exactly
-//! this measurement. See the [`crate::field::ntt`] module docs for the
+//! onwards. The historical claim that the conservative default of 128 was
+//! tuned from exactly this measurement is contradicted by the committed
+//! `2026-08-19-procedure-verification.md` §Falsification record: the
+//! `mul_fast` step moves from 3,793 ns at `out_len = 127` to 12,057 ns at
+//! `out_len = 129`. See the [`crate::field::ntt`] module docs for the
 //! underlying primitive and its algorithmic shape.
 //!
 //! ## `interpolate` — quadratic Lagrange vs. `interpolate_fast`
@@ -395,9 +405,9 @@
 //! The schoolbook path is faster on every row up to and including
 //! `n = 1024`, then the fast path pulls ahead decisively at `n = 2048`
 //! as the `(n − m) · m` term overtakes the `n log n` cost of the
-//! Newton-iteration products. The tuned [`DIV_REM_THRESHOLD`] is pinned
-//! at `2048` — the smallest power of two at which `div_rem_fast` beats
-//! `div_rem` on `Fp<65537>`. Below it, [`FieldPoly::div_rem_auto`]
+//! Newton-iteration products. The conservative division default is `2048`.
+//! Below the active `polynomial.div_rem_fast_min_len()` value,
+//! [`FieldPoly::div_rem_auto`]
 //! delegates to [`FieldPoly::div_rem`]; above it, the fast path takes
 //! over.
 //!
@@ -407,11 +417,11 @@
 //! per-node `self mod M_node` reductions route through
 //! [`FieldPoly::div_rem_auto`], so on [`TwoAdicField`] the
 //! subproduct-tree path inherits the `O(M(n))` fast-division
-//! asymptotic above [`DIV_REM_THRESHOLD`]. That pushes the
-//! subproduct / naive crossover down to `n = k = 4096` on `Fp<65537>`
-//! — the tuned [`SUBPRODUCT_THRESHOLD`].
+//! asymptotic above the active division selector. That is the measured cell
+//! supporting the conservative subproduct default of `4096` on `Fp<65537>`.
 
 use crate::field::{FiniteField, TwoAdicField};
+use crate::tuning;
 use std::fmt;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
@@ -968,8 +978,9 @@ impl<F: FiniteField> FieldPoly<F> {
 
     /// Polynomial multiplication with schoolbook/Karatsuba dispatch.
     ///
-    /// Below [`KARATSUBA_THRESHOLD`] coefficients this routes through the
-    /// schoolbook kernel; above it, recursive Karatsuba. Callers observe
+    /// Below the active `polynomial.karatsuba_min_degree()` value this routes
+    /// through the schoolbook kernel; at or above it, recursive Karatsuba.
+    /// Callers observe
     /// a single, normalised `FieldPoly<F>` and do not need to choose
     /// between the two.
     ///
@@ -1292,7 +1303,8 @@ impl<F: FiniteField> FieldPoly<F> {
 
     /// Evaluates the polynomial at every point in `points` using a
     /// subproduct-tree algorithm, or the naive per-point Horner fallback
-    /// when the inputs are below the [`SUBPRODUCT_THRESHOLD`] crossover.
+    /// when the inputs are below the active `polynomial.subproduct_min_len()`
+    /// value.
     ///
     /// With schoolbook polynomial arithmetic this routine costs
     /// `O(n · k + k² log k)` field operations for
@@ -1305,11 +1317,11 @@ impl<F: FiniteField> FieldPoly<F> {
     /// task `e0b6f940`; the Newton-iteration fast division primitive
     /// ([`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`])
     /// landed in issue `ae0c7e1f`; the subproduct-tree wiring plus
-    /// [`SUBPRODUCT_THRESHOLD`] tuning landed in issue `046f95c1`. On
+    /// the conservative subproduct default landed in issue `046f95c1`. On
     /// fields with cheap scalar arithmetic such as `Fp<65537>` the
     /// naive Horner baseline dominates at small and medium sizes —
     /// see the benchmark table in the module docstring — which is
-    /// why [`SUBPRODUCT_THRESHOLD`] is set conservatively at the
+    /// why the conservative subproduct default is set at the
     /// measured crossover.
     ///
     /// # Algorithm
@@ -1317,7 +1329,7 @@ impl<F: FiniteField> FieldPoly<F> {
     /// 1. **Leaves**: build `M_i = x - points[i]` for every point.
     /// 2. **Subproduct tree** (bottom-up): pair-merge siblings through
     ///    [`FieldPoly::Mul`] (which in turn dispatches schoolbook /
-    ///    Karatsuba above [`KARATSUBA_THRESHOLD`]), recording every
+    ///    Karatsuba according to `polynomial.karatsuba_min_degree()`), recording every
     ///    internal node.
     /// 3. **Reduction** (top-down): starting from `self mod root`,
     ///    reduce modulo each internal node via [`FieldPoly::div_rem`]
@@ -1368,7 +1380,7 @@ impl<F: FiniteField> FieldPoly<F> {
     /// With the current schoolbook-backed [`FieldPoly::mul`] and
     /// [`FieldPoly::div_rem`] primitives the subproduct path runs in
     /// `O(n · k + k² log k)` field operations for `n = self.degree() + 1`
-    /// and `k = points.len()`. Below [`SUBPRODUCT_THRESHOLD`] in either
+    /// and `k = points.len()`. Below the active `polynomial.subproduct_min_len()` in either
     /// dimension it falls back to the `O(n · k)` per-point Horner loop,
     /// which wins on `Fp<65537>` on every benchmarked cell (see the
     /// module docstring for the measured table).
@@ -1382,8 +1394,8 @@ impl<F: FiniteField> FieldPoly<F> {
         // Small-input fallback: below the threshold, the overhead of
         // building the subproduct tree (O(k) polynomial multiplications
         // plus O(k) Euclidean divisions) exceeds the savings compared to
-        // k Horner folds of length n. The tuned `SUBPRODUCT_THRESHOLD`
-        // (4096) sits at the empirical crossover measured on Fp<65537>
+        // k Horner folds of length n. The conservative subproduct selector
+        // default (4096) sits at the empirical crossover measured on Fp<65537>
         // for the [`FieldPoly::batch_evaluate_auto`] dispatcher (see
         // the benchmark table in the module docstring); this generic
         // entry point uses the same threshold and calls
@@ -1395,11 +1407,12 @@ impl<F: FiniteField> FieldPoly<F> {
         // [`FieldPoly::div_rem_auto`] (issue `ae0c7e1f`) into the
         // reduction phase. Compares against `self.len()` (coefficient
         // count) rather than `degree()` so that a polynomial of
-        // length `SUBPRODUCT_THRESHOLD` crosses the threshold — this
+        // length equal to the active subproduct selector crosses the gate — this
         // matches the bench harness's `make_poly(n)` convention.
         // Zero / constant polynomials are length 0/1, well below the
         // threshold, and short-circuit to the naive path.
-        if points.len() < SUBPRODUCT_THRESHOLD || self.coeffs.len() < SUBPRODUCT_THRESHOLD {
+        let threshold = tuning::active().polynomial().subproduct_min_len();
+        if points.len() < threshold || self.coeffs.len() < threshold {
             return self.eval_batch(points);
         }
 
@@ -2137,23 +2150,24 @@ impl<'a, F: FiniteField> SubAssign<&'a FieldPoly<F>> for FieldPoly<F> {
 // Multiplication — schoolbook / Karatsuba dispatch
 // ---------------------------------------------------------------------
 
-/// Crossover threshold between schoolbook and Karatsuba multiplication.
+/// Conservative default for `polynomial.karatsuba_min_degree()` in the active
+/// [`crate::tuning::TuningProfile`].
 ///
-/// Operand degrees strictly less than [`KARATSUBA_THRESHOLD`] use the
-/// schoolbook algorithm; above that threshold both operands recurse
-/// through Karatsuba. A quick microbenchmark on `Gf2mElement<u64>` at
-/// GF(2^14) places the crossover near 32; smaller prime fields benefit
-/// from the same value.
+/// Operand degrees strictly less than the active profile value use the
+/// schoolbook algorithm; at or above it both operands recurse through
+/// Karatsuba. This constant remains the compiled-in conservative default
+/// consumed by [`crate::tuning::TuningProfile::CONSERVATIVE`].
 pub const KARATSUBA_THRESHOLD: usize = 32;
 
-/// Crossover threshold for [`FieldPoly::batch_evaluate`] (generic,
+/// Conservative default for `polynomial.subproduct_min_len()` in the active
+/// [`crate::tuning::TuningProfile`] for [`FieldPoly::batch_evaluate`] (generic,
 /// schoolbook [`FieldPoly::div_rem`]) and
 /// [`FieldPoly::batch_evaluate_auto`] ([`TwoAdicField`], Newton-iteration
 /// [`FieldPoly::div_rem_auto`]) between the subproduct-tree algorithm
 /// and the naive per-point Horner fallback.
 ///
-/// When `points.len()` or `self.coeffs.len()` is strictly less than
-/// this value, the corresponding dispatcher falls through to
+/// When `points.len()` or `self.coeffs.len()` is strictly less than the active
+/// profile value, the corresponding dispatcher falls through to
 /// [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner); at or above
 /// the threshold it pays for the subproduct tree build and top-down
 /// reduction.
@@ -2169,7 +2183,7 @@ pub const KARATSUBA_THRESHOLD: usize = 32;
 /// [`FieldPoly::batch_evaluate_auto`] dispatcher — which routes the
 /// per-node reductions through the Newton-iteration
 /// [`FieldPoly::div_rem_auto`] primitive (issue `ae0c7e1f`,
-/// [`DIV_REM_THRESHOLD`] = 2048) — sits at `n = k = 4096` on the
+/// the conservative division default of 2048) — sits at `n = k = 4096` on the
 /// reference Zen 3 host (54.29 ms `subproduct_auto` vs 60.89 ms
 /// naive, a `0.89×` win). The generic [`FieldPoly::batch_evaluate`]
 /// never strictly beats naive at any measured cell on `Fp<65537>`,
@@ -2273,7 +2287,7 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 /// Canonical subproduct-tree batch evaluation entry point, shared
 /// between the benchmark harness (`benches/field_poly.rs`) and
 /// [`crate::field::poly_interpolate::interpolate_fast`]. Callers bypass
-/// the [`SUBPRODUCT_THRESHOLD`] performance gate and pay the full tree
+/// the profile's `polynomial.subproduct_min_len()` performance gate and pay the full tree
 /// cost unconditionally. Callers who want the threshold-gated default
 /// should use [`FieldPoly::batch_evaluate`] instead; callers on a
 /// [`TwoAdicField`] who want the Newton-iteration fast division
@@ -2332,14 +2346,15 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 /// available on [`TwoAdicField`] and wired into the sibling entry
 /// point [`batch_evaluate_subproduct_auto`]; that variant reaches
 /// `O(M(n) log k + k log² k)` whenever the per-level reductions cross
-/// [`DIV_REM_THRESHOLD`].
+/// the active `polynomial.div_rem_fast_min_len()` value.
 ///
 /// This function is `pub` so both the benchmark harness
 /// (`benches/field_poly.rs`) and [`crate::field::poly_interpolate::interpolate_fast`]
 /// can invoke the tree path directly. Callers who simply want to
 /// evaluate a polynomial at many points and are happy with the
 /// threshold-gated dispatch should use [`FieldPoly::batch_evaluate`]
-/// instead, which guards this path behind [`SUBPRODUCT_THRESHOLD`].
+/// instead, which guards this path behind the active
+/// `polynomial.subproduct_min_len()` value.
 pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[F]) -> Vec<F> {
     batch_evaluate_subproduct_with_reduce(poly, points, |a, b| a.div_rem(b).1)
 }
@@ -2350,9 +2365,9 @@ pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[
 /// top-down `self mod M_node` reduction flows through
 /// [`FieldPoly::div_rem_auto`] instead of [`FieldPoly::div_rem`], so the
 /// Newton-iteration fast-division primitive (issue `ae0c7e1f`,
-/// [`DIV_REM_THRESHOLD`]) fires automatically at the sizes where it
+/// the active `polynomial.div_rem_fast_min_len()` value) fires automatically at the sizes where it
 /// beats schoolbook long division. Small intermediate divisions (below
-/// [`DIV_REM_THRESHOLD`]) still fall through to the schoolbook path via
+/// the active division selector) still fall through to the schoolbook path via
 /// the dispatcher, so there is no penalty at the leaves.
 ///
 /// Both the SSOT traversal and the remainder-extraction phase are
@@ -2528,13 +2543,13 @@ fn slice_add<F: FiniteField>(a: &[F], b: &[F]) -> Vec<F> {
 /// coefficients of length `lhs.len() + rhs.len() - 1` **without**
 /// normalising — the top-level `FieldPoly::new` at the entry point does
 /// the final trim.
-fn mul_karatsuba_raw<F: FiniteField>(lhs: &[F], rhs: &[F]) -> Vec<F> {
+fn mul_karatsuba_raw<F: FiniteField>(lhs: &[F], rhs: &[F], karatsuba_min_degree: usize) -> Vec<F> {
     debug_assert!(!lhs.is_empty() && !rhs.is_empty());
 
     let deg_lhs = lhs.len() - 1;
     let deg_rhs = rhs.len() - 1;
 
-    if deg_lhs < KARATSUBA_THRESHOLD || deg_rhs < KARATSUBA_THRESHOLD {
+    if deg_lhs < karatsuba_min_degree || deg_rhs < karatsuba_min_degree {
         let out = mul_schoolbook_impl(lhs, rhs);
         // Rehydrate to an unnormalised-length Vec for caller's combine
         // step: pad to (lhs.len() + rhs.len() - 1) with zeros.
@@ -2565,13 +2580,13 @@ fn mul_karatsuba_raw<F: FiniteField>(lhs: &[F], rhs: &[F]) -> Vec<F> {
     let z0 = if p_lo_slice.is_empty() || q_lo_slice.is_empty() {
         Vec::new()
     } else {
-        mul_karatsuba_raw(p_lo_slice, q_lo_slice)
+        mul_karatsuba_raw(p_lo_slice, q_lo_slice, karatsuba_min_degree)
     };
     // z2 = p_hi · q_hi
     let z2 = if p_hi_slice.is_empty() || q_hi_slice.is_empty() {
         Vec::new()
     } else {
-        mul_karatsuba_raw(p_hi_slice, q_hi_slice)
+        mul_karatsuba_raw(p_hi_slice, q_hi_slice, karatsuba_min_degree)
     };
     // (p_lo + p_hi) · (q_lo + q_hi)
     let p_sum = slice_add(p_lo_slice, p_hi_slice);
@@ -2579,7 +2594,7 @@ fn mul_karatsuba_raw<F: FiniteField>(lhs: &[F], rhs: &[F]) -> Vec<F> {
     let z1_full = if p_sum.is_empty() || q_sum.is_empty() {
         Vec::new()
     } else {
-        mul_karatsuba_raw(&p_sum, &q_sum)
+        mul_karatsuba_raw(&p_sum, &q_sum, karatsuba_min_degree)
     };
 
     // z1 = z1_full - z0 - z2  (over a field, subtraction is addition of
@@ -2633,11 +2648,12 @@ fn mul_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
 
     let deg_lhs = lhs.len() - 1;
     let deg_rhs = rhs.len() - 1;
-    if deg_lhs < KARATSUBA_THRESHOLD || deg_rhs < KARATSUBA_THRESHOLD {
+    let karatsuba_min_degree = tuning::active().polynomial().karatsuba_min_degree();
+    if deg_lhs < karatsuba_min_degree || deg_rhs < karatsuba_min_degree {
         return mul_schoolbook_impl(lhs, rhs);
     }
 
-    let coeffs = mul_karatsuba_raw(lhs, rhs);
+    let coeffs = mul_karatsuba_raw(lhs, rhs, karatsuba_min_degree);
     FieldPoly::new(coeffs)
 }
 
@@ -2646,8 +2662,9 @@ impl<F: FiniteField> Mul<FieldPoly<F>> for FieldPoly<F> {
 
     /// Polynomial multiplication with schoolbook/Karatsuba dispatch.
     ///
-    /// Below [`KARATSUBA_THRESHOLD`] coefficients the schoolbook
-    /// implementation is used; above it, recursive Karatsuba. The
+    /// Below the active `polynomial.karatsuba_min_degree()` value the
+    /// schoolbook implementation is used; at or above it, recursive
+    /// Karatsuba. The
     /// dispatch is transparent to callers — the operator always yields a
     /// normalised `FieldPoly<F>`.
     ///
@@ -2696,17 +2713,22 @@ impl<'b, F: FiniteField> Mul<&'b FieldPoly<F>> for &FieldPoly<F> {
 // NTT-based multiplication (TwoAdicField-specialised)
 // ---------------------------------------------------------------------
 
-/// Crossover threshold between Karatsuba and NTT-based multiplication.
+/// Conservative default for `polynomial.karatsuba_max_out_len()` in the active
+/// [`crate::tuning::TuningProfile`].
 ///
-/// When the *output* length `lhs.len() + rhs.len() - 1` strictly exceeds
-/// [`NTT_THRESHOLD`], the free function [`mul_fast`] routes through
-/// [`FieldPoly::mul_ntt`]. Below it, the caller is better served by the
+/// When the *output* length `lhs.len() + rhs.len() - 1` strictly exceeds the
+/// active profile value, the free function [`mul_fast`] routes through
+/// [`FieldPoly::mul_ntt`]. At or below it, the caller is routed through the
 /// existing schoolbook / Karatsuba dispatch.
 ///
-/// The value is tuned from the `ntt` arm of
-/// `crates/gf2-core/benches/field_poly.rs` on `Fp<65537>` — see the
-/// table in the [`ntt`](crate::field::ntt) module docstring. Callers
-/// that want deterministic behaviour can bypass the gate by calling
+/// The historical claim that this value was tuned from the `ntt` benchmark
+/// arm is contradicted by the `2026-08-19-procedure-verification.md`
+/// §Falsification record in `dev/benchmarks/tuning_profiles/`: at
+/// `out_len = 127`, `mul_fast` takes the `FieldPoly::mul` arm at 3,793 ns,
+/// while at `out_len = 129` it takes the NTT arm at 12,057 ns. This constant
+/// remains the compiled-in conservative default consumed by
+/// [`crate::tuning::TuningProfile::CONSERVATIVE`]. Callers that want
+/// deterministic behaviour can bypass the gate by calling
 /// [`FieldPoly::mul_ntt`] directly.
 pub const NTT_THRESHOLD: usize = 128;
 
@@ -2760,10 +2782,10 @@ impl<F: TwoAdicField> FieldPoly<F> {
     ///
     /// `O(N log N)` field multiplications and additions, where
     /// `N = next_power_of_two(self.len() + other.len() - 1)`. The
-    /// constant factors make this path slower than Karatsuba below
-    /// [`NTT_THRESHOLD`]; see the benchmark table in the
-    /// [`ntt`](crate::field::ntt) module docstring for the tuned
-    /// crossover on `Fp<65537>`.
+    /// constant factors make this path slower than Karatsuba at some sizes;
+    /// the active `polynomial.karatsuba_max_out_len()` profile value controls
+    /// the dispatcher gate. See the benchmark table in the
+    /// [`ntt`](crate::field::ntt) module docstring for the measured arms.
     pub fn mul_ntt(&self, other: &Self) -> Self {
         use crate::field::ntt::ntt_inplace;
 
@@ -2832,10 +2854,10 @@ impl<F: TwoAdicField> FieldPoly<F> {
 /// (notably `Gf2mElement`, which does not implement [`TwoAdicField`])
 /// are unaffected.
 ///
-/// The output-length threshold [`NTT_THRESHOLD`] is tuned from the
-/// benchmark harness (see the [`ntt`](crate::field::ntt) module
-/// docstring). Below it, this function delegates to [`FieldPoly::mul`];
-/// above, it delegates to [`FieldPoly::mul_ntt`].
+/// The output-length gate uses the active
+/// `polynomial.karatsuba_max_out_len()` profile value. At or below it,
+/// this function delegates to [`FieldPoly::mul`]; above, it delegates to
+/// [`FieldPoly::mul_ntt`].
 ///
 /// # Arguments
 ///
@@ -2864,14 +2886,14 @@ impl<F: TwoAdicField> FieldPoly<F> {
 ///
 /// # Complexity
 ///
-/// `O(n · m)` field multiplications below [`NTT_THRESHOLD`] and
-/// `O(N log N)` above, where `N = next_power_of_two(n + m - 1)`.
+/// `O(n · m)` field multiplications at or below the active profile value
+/// and `O(N log N)` above, where `N = next_power_of_two(n + m - 1)`.
 pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPoly<F> {
     if a.is_zero() || b.is_zero() {
         return FieldPoly { coeffs: Vec::new() };
     }
     let out_len = a.coeffs.len() + b.coeffs.len() - 1;
-    if out_len <= NTT_THRESHOLD {
+    if out_len <= tuning::active().polynomial().karatsuba_max_out_len() {
         return a.mul(b);
     }
     a.mul_ntt(b)
@@ -2881,17 +2903,19 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
 // Newton-iteration fast division (TwoAdicField-specialised)
 // ---------------------------------------------------------------------
 
-/// Crossover threshold between schoolbook [`FieldPoly::div_rem`] and
-/// Newton-iteration [`FieldPoly::div_rem_fast`] on a [`TwoAdicField`].
+/// Conservative default for `polynomial.div_rem_fast_min_len()` in the active
+/// [`crate::tuning::TuningProfile`] between schoolbook
+/// [`FieldPoly::div_rem`] and Newton-iteration [`FieldPoly::div_rem_fast`] on
+/// a [`TwoAdicField`].
 ///
-/// When either operand is strictly shorter than this threshold,
+/// When either operand is strictly shorter than the active profile value,
 /// [`FieldPoly::div_rem_auto`] falls back to the schoolbook implementation;
 /// above it, the Newton-iteration path takes over. Values are in number
 /// of coefficients (i.e. `len()`, which is `degree + 1`).
 ///
 /// # Tuning
 ///
-/// Tuned from the `bench_div_rem` group in
+/// The conservative default is informed by the `bench_div_rem` group in
 /// `crates/gf2-core/benches/field_poly.rs` on `Fp<65537>`. The fast path
 /// has larger constant factors (Newton iteration plus a coefficient-reverse
 /// and an NTT-backed convolution), so it only pays off once the schoolbook
@@ -2899,9 +2923,10 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
 /// enough to amortise the overhead. On the Zen 3 reference host the
 /// schoolbook path still wins at `n = 1024, m = 512` (1.07 ms schoolbook
 /// vs 1.12 ms fast), and the fast path wins decisively at `n = 2048,
-/// m = 1024` (4.25 ms schoolbook vs 2.49 ms fast) — so the threshold is
-/// pinned at `2048`, the smallest power of two above the measured
-/// crossover. See the benchmark snapshot in the
+/// m = 1024` (4.25 ms schoolbook vs 2.49 ms fast), which supports the
+/// conservative default of `2048`. The active selection authority is the
+/// profile's `polynomial.div_rem_fast_min_len()` field. See the benchmark
+/// snapshot in the
 /// module docstring for the full table.
 ///
 /// The schoolbook path remains the only implementation for non-`TwoAdicField`
@@ -2922,9 +2947,9 @@ impl<F: TwoAdicField> FieldPoly<F> {
     ///
     /// so after `⌈log₂ k⌉` steps the precision reaches `k`. Multiplications
     /// inside the loop are truncated to the current precision and routed
-    /// through [`mul_fast`], which picks Karatsuba below [`NTT_THRESHOLD`]
-    /// and NTT above so every iteration runs at its asymptotically best
-    /// cost.
+    /// through [`mul_fast`], which uses the active
+    /// `polynomial.karatsuba_max_out_len()` profile value so every iteration
+    /// follows the configured dispatch.
     ///
     /// # Arguments
     ///
@@ -3097,7 +3122,7 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// of the underlying [`mul_fast`] call at NTT-regime sizes. The
     /// schoolbook [`FieldPoly::div_rem`] is `O((n − m) · m)`, so the fast
     /// path wins decisively once both operand lengths exceed
-    /// [`DIV_REM_THRESHOLD`]; below that the dispatcher
+    /// the active `polynomial.div_rem_fast_min_len()` value; below that the dispatcher
     /// [`FieldPoly::div_rem_auto`] routes through the schoolbook
     /// implementation.
     pub fn div_rem_fast(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>) {
@@ -3164,12 +3189,12 @@ impl<F: TwoAdicField> FieldPoly<F> {
     }
 
     /// Dispatches between the schoolbook [`FieldPoly::div_rem`] and the
-    /// Newton-iteration [`FieldPoly::div_rem_fast`] based on
-    /// [`DIV_REM_THRESHOLD`].
+    /// Newton-iteration [`FieldPoly::div_rem_fast`] based on the active
+    /// `polynomial.div_rem_fast_min_len()` profile value.
     ///
     /// When either operand has strictly fewer than
-    /// [`DIV_REM_THRESHOLD`] coefficients, the schoolbook path wins on
-    /// constant factors and is selected. Above that threshold the fast
+    /// the active `polynomial.div_rem_fast_min_len()` value, the schoolbook
+    /// path is selected. At or above that value the fast
     /// path's `O(M(n))` asymptotic amortises its NTT / Newton overhead.
     /// Both arms return the same `(quotient, remainder)` pair satisfying
     /// `self = quotient · divisor + remainder` with
@@ -3207,7 +3232,8 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// Matches the dispatched arm: `O((n − m) · m)` in the schoolbook
     /// regime and `O(M(n))` in the fast-division regime.
     pub fn div_rem_auto(&self, divisor: &FieldPoly<F>) -> (FieldPoly<F>, FieldPoly<F>) {
-        if self.coeffs.len() < DIV_REM_THRESHOLD || divisor.coeffs.len() < DIV_REM_THRESHOLD {
+        let threshold = tuning::active().polynomial().div_rem_fast_min_len();
+        if self.coeffs.len() < threshold || divisor.coeffs.len() < threshold {
             self.div_rem(divisor)
         } else {
             self.div_rem_fast(divisor)
@@ -3218,14 +3244,14 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// subproduct-tree reductions through [`FieldPoly::div_rem_auto`]
     /// so the Newton-iteration fast-division primitive fires at sizes
     /// where it beats schoolbook long division
-    /// ([`DIV_REM_THRESHOLD`]).
+    /// (the active `polynomial.div_rem_fast_min_len()` profile value).
     ///
     /// Semantically identical to the generic
     /// [`FieldPoly::batch_evaluate`]: returns the same `Vec<F>` of
     /// evaluations in the same order. The only difference is the
-    /// internal choice of division primitive. Dispatches through
-    /// [`SUBPRODUCT_THRESHOLD`]: below it the call falls back to
-    /// [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner); above it
+    /// internal choice of division primitive. Dispatches through the active
+    /// `polynomial.subproduct_min_len()` value: below it the call falls back
+    /// to [`FieldPoly::eval_batch`] (`O(n · k)` naive Horner); above it
     /// [`batch_evaluate_subproduct_auto`] takes over.
     ///
     /// # Arguments
@@ -3247,16 +3273,17 @@ impl<F: TwoAdicField> FieldPoly<F> {
     ///
     /// # Complexity
     ///
-    /// Below [`SUBPRODUCT_THRESHOLD`]: `O(n · k)` naive Horner. Above
+    /// Below the active `polynomial.subproduct_min_len()`: `O(n · k)` naive Horner. Above
     /// it: `O(M(n) log k + k² log k)` field operations with
     /// `M(n) = O(n log n)` through the NTT-backed fast multiplication
     /// / fast division primitives.
     pub fn batch_evaluate_auto(&self, points: &[F]) -> Vec<F> {
         // Compare on `self.coeffs.len()` (coefficient count) so a
-        // polynomial of length == `SUBPRODUCT_THRESHOLD` crosses the
+        // polynomial of length equal to the active subproduct selector crosses the
         // gate. Zero / constant polynomials have length 0 / 1, well
         // below the threshold, and short-circuit to the naive path.
-        if points.len() < SUBPRODUCT_THRESHOLD || self.coeffs.len() < SUBPRODUCT_THRESHOLD {
+        let threshold = tuning::active().polynomial().subproduct_min_len();
+        if points.len() < threshold || self.coeffs.len() < threshold {
             return self.eval_batch(points);
         }
         batch_evaluate_subproduct_auto(self, points)
