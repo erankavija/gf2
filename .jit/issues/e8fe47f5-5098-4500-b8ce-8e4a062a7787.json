@@ -107,7 +107,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-19T06:34:23.587341972Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-19T06:37:55.086227466Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "e8fe47f5-5098-4500-b8ce-8e4a062a7787",
   "labels": [
     "type:task",
@@ -118,5 +129,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Pin the non-regression benchmark set and tolerance",
-  "updated_at": "2026-08-19T06:30:02.896772052Z"
+  "updated_at": "2026-08-19T06:37:55.086227466Z"
 }

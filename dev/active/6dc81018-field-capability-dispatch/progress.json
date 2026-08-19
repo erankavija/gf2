@@ -55,7 +55,7 @@
           "title": "Pin the non-regression benchmark set and tolerance",
           "classification": "implementation",
           "model": "claude-opus",
-          "status": "dispatched"
+          "status": "rework-1"
         }
       ]
     },
@@ -188,7 +188,8 @@
   "rework_counts": {
     "34d85cb9": 0,
     "7f818151": 1,
-    "220cab0b": 1
+    "220cab0b": 1,
+    "e8fe47f5": 1
   },
   "surfaced_pitfalls": [
     {
@@ -205,6 +206,11 @@
       "issue": "220cab0b",
       "finding": "doc-review F2 (advisory, pre-existing): crates/gf2-core/src/kernels/backend.rs:93 rustdoc says eight u64 words are 512 bytes; correct is 64 bytes",
       "disposition": "fold into 0d819b62 (bit-backend cutover) dispatch"
+    },
+    {
+      "issue": "e8fe47f5",
+      "finding": "NTT_THRESHOLD=128 appears mis-tuned: out_len 127 dispatcher arm 3,793 ns vs out_len 129 NTT arm 12,057 ns (3.18x step up); arms converge near out_len 255. Contradicts tuning claim in rustdoc at crates/gf2-core/src/field/poly.rs:2711.",
+      "disposition": "route to 5ecc9bf8 calibration sweep; recorded in 2026-08-19-procedure-verification.md falsification section"
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
