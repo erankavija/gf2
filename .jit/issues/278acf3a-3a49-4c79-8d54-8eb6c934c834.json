@@ -40,14 +40,15 @@
       "path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.csv"
     }
   ],
+  "done_at": "2026-08-19T21:13:08.954074342Z",
   "first_ready_at": "2026-08-19T06:51:22.293436461Z",
   "gates_required": [
     "doc-review"
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-19T18:19:38.309492341Z",
+      "status": "passed",
+      "updated_at": "2026-08-19T21:12:37.653345852Z",
       "updated_by": "auto:executor"
     }
   },
@@ -59,7 +60,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Record the pre-cutover baseline receipt",
-  "updated_at": "2026-08-19T18:19:38.309492341Z"
+  "updated_at": "2026-08-19T21:13:08.954074342Z"
 }

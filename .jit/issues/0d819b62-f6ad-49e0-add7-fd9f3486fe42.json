@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the generic bit-buffer backend selector to read the tuning profile, with the current constant values as the embedded defaults.\n\n## Background\n\nThe migrated selector family is `select_backend_for_size` and its threshold in `crates/gf2-core/src/kernels/backend.rs`, as marked profile-scoped by the capability classification. Under the default profile the selected values equal the current constants, so behavior is unchanged by construction; the scalar fallback paths stay reachable. Remaining profile-scoped constants migrate in follow-on work once the pilot receipt is recorded.\n\n## Success Criteria\n\n- [hard] REQ-01: The selectors read their values from the loaded profile, and tests show selection equals the pre-cutover constants under the default profile.\n- [hard] REQ-02: A non-default profile measurably changes the selected route in a test, and the scalar fallback path remains reachable and tested.",
   "documents": [],
+  "first_ready_at": "2026-08-19T21:13:15.034577089Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -21,7 +22,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the bit-backend selector over to profile-driven selection",
-  "updated_at": "2026-08-18T19:57:57.977309087Z"
+  "updated_at": "2026-08-19T21:13:15.034577089Z"
 }
