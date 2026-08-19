@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-19T23:45:32.837256465Z",
   "context": {},
   "created_at": "2026-08-18T19:57:57.977309087Z",
   "dependencies": [
@@ -22,7 +23,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-19T23:43:47.707665037Z"
+  "updated_at": "2026-08-19T23:45:32.837256465Z"
 }
