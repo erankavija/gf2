@@ -8553,3 +8553,10 @@
 {"from":"backlog","id":"7a84752c-079d-4d03-bd2b-8d92d600868b","issue_id":"278acf3a-3a49-4c79-8d54-8eb6c934c834","timestamp":"2026-08-19T06:51:22.293436461Z","to":"ready","type":"issue_state_changed"}
 {"from":"ready","id":"f6288a7f-4559-4ff1-8841-16c88761d21a","issue_id":"f35daec0-f729-48f7-8c06-2180d815a222","timestamp":"2026-08-19T06:52:25.136770932Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"89d2ae43-fe36-4090-ab38-83af24098df9","issue_id":"f35daec0-f729-48f7-8c06-2180d815a222","timestamp":"2026-08-19T06:52:25.136770932Z","type":"issue_claimed"}
+{"id":"a024ffa6-18d7-4e5a-8018-8ba36812d234","issue_id":"1ac74567-fa48-405a-a35a-a4f2bcb16fe5","priority":"normal","timestamp":"2026-08-19T15:32:44.309136942Z","title":"Author the loop-free extraction proof-obligation factoring sketch","type":"issue_created"}
+{"fields":["dependencies"],"id":"ce4a1073-a164-49f7-bdb6-5cfba4665c74","issue_id":"6dc81018-9a8e-4318-9572-148670d1c272","timestamp":"2026-08-19T15:32:57.937854130Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"336cf9a6-5684-451c-bf32-f3f2f5793da3","issue_id":"f35daec0-f729-48f7-8c06-2180d815a222","timestamp":"2026-08-19T15:33:00.046491593Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"ea6b3b85-6487-4f49-bdba-17a25c09fb97","issue_id":"f35daec0-f729-48f7-8c06-2180d815a222","timestamp":"2026-08-19T15:34:41.095736603Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"7ba8c20a-f9b8-4679-b45c-52bbb0dd1972","issue_id":"f35daec0-f729-48f7-8c06-2180d815a222","timestamp":"2026-08-19T15:34:41.274980255Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"be80023d-4873-4da5-bac4-adf5b6182445","issue_id":"f35daec0-f729-48f7-8c06-2180d815a222","timestamp":"2026-08-19T15:34:41.459361927Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"code-review","id":"94b629bd-3861-4023-b901-a915cc59079e","issue_id":"f35daec0-f729-48f7-8c06-2180d815a222","timestamp":"2026-08-19T15:40:15.755972330Z","type":"gate_passed","updated_by":"auto:executor"}

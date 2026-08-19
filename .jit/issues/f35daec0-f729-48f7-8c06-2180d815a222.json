@@ -7,13 +7,63 @@
     "220cab0b-2197-4d43-a1c9-a46ebe7d6706"
   ],
   "description": "Implement the tuning-profile data type, parser, and conservative default table in gf2-core per the profile design linked from the epic's plan.\n\n## Background\n\nThe profile is a versioned, committed artifact; builds consume it deterministically. Unknown hosts and absent profiles select an embedded conservative default table backed by the tested scalar fallback paths. This issue delivers the mechanism only; existing selectors keep their current behavior until the cutover issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The loader parses the committed versioned profile and rejects malformed or unsupported-version input with explicit errors, with unit tests for both.\n- [hard] REQ-02: An embedded conservative default profile is selected for unknown hosts or absent profiles, selection is deterministic for a fixed profile, and no existing selector changes behavior in this issue.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Tuning-profile type, loader, and conservative table",
+      "path": "crates/gf2-core/src/tuning/mod.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Committed conservative tuning profile",
+      "path": "crates/gf2-core/data/tuning-profiles/conservative.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ae4f9246f1714c3955986882e889ea3ffa91a6e8435b864daebb70cced67ac4b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0c494a07d3a9e11504eddf0104ab8658398cd6af39f529b278bbc9c1296fbbd3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/plan.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Tuning-profile format and selection design (spec)",
+      "path": "dev/active/220cab0b/design.md"
+    }
+  ],
   "first_ready_at": "2026-08-19T05:20:37.775043840Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-19T15:33:00.046491593Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-19T15:40:15.755972330Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "f35daec0-f729-48f7-8c06-2180d815a222",
   "labels": [
     "type:task",
@@ -24,5 +74,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Implement the tuning-profile type, loader, and conservative defaults",
-  "updated_at": "2026-08-19T06:52:25.136770932Z"
+  "updated_at": "2026-08-19T15:40:15.755972330Z"
 }
