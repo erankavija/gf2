@@ -225,14 +225,28 @@ The comparison is:
 ```sh
 cargo +1.95.0 bench -p gf2-core --features simd \
   --bench selector_non_regression -- \
-  --compare <baseline.csv> --against <candidate.csv>
+  --compare dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification-cohort-a.csv \
+  --against dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification-cohort-b.csv
 ```
 
+Every path argument, `--output` included, is taken as repository-relative unless
+it is absolute, so the command above runs from the repository root even though
+`cargo bench` gives the binary a working directory at the package root.
+
 It refuses to compare unless both receipts carry schema
-`selector-non-regression-v1`, their cell sets are identical, and that set is the
-pinned set of §2. It prints one line per cell with both pooled rates, the ratio,
-and a verdict, then the geometric mean and a final `RESULT: PASS` or
-`RESULT: FAIL`, and exits non-zero on failure.
+`selector-non-regression-v1`, their cell sets are identical, that set is the
+pinned set of §2, and every cell's recorded identity — arm, family, and operand
+sizes — is equal in the two receipts. The arm precondition follows from the
+cutover's contract of default behaviour identical by construction: both receipts
+are taken with no profile installed, so a cell that resolves to a different arm
+is two different code paths, and a ratio between them measures no regression at
+all. That is a distinct failure class from a tolerance failure, and the run
+reports it as `RESULT: FAIL (selector identity mismatch)`, naming each disagreeing
+cell with both arms, without printing any per-cell verdict or geometric mean.
+
+Otherwise it prints one line per cell with both pooled rates, the ratio, and a
+verdict, then the geometric mean and a final `RESULT: PASS` or `RESULT: FAIL`.
+It exits non-zero on every failure, of either class.
 
 ## 6. What a receipt records
 
