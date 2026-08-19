@@ -38,7 +38,13 @@
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-19T05:14:24.829977886Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "220cab0b-2197-4d43-a1c9-a46ebe7d6706",
   "labels": [
     "type:task",
@@ -49,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design the versioned tuning-profile format and selection integration",
-  "updated_at": "2026-08-19T05:11:09.809052409Z"
+  "updated_at": "2026-08-19T05:14:24.829977886Z"
 }
