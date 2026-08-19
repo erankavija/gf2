@@ -39,7 +39,8 @@ This document describes the kernel architecture in gf2-core and tracks optimizat
   - May be added to trait in future with default implementations
 
 **Backend Selection** (`src/kernels/backend.rs`)
-- Size-based heuristics: Small (<64 bytes) → Scalar, Large → SIMD
+- Profile-driven size heuristic: below `bit_backend.simd_min_words` → Scalar,
+  at or above it → SIMD when available
 - Runtime CPU feature detection
 - Graceful fallback if SIMD unavailable
 
@@ -187,10 +188,19 @@ pub fn next_power_of_2(v: u64) -> u64 {
 - ✅ Tested 12 different buffer sizes: 1, 2, 4, 7, 8, 16, 32, 64, 128, 256, 1024, 4096 words
 - ✅ **8-word threshold VALIDATED** as optimal crossover point
 - ✅ Measured actual speedups: 3.4-3.6x for large buffers (≥64 words)
-- ✅ Confirmed scalar faster for small buffers (<8 words) due to dispatch overhead
+- ✅ Confirmed scalar faster below the conservative default due to dispatch overhead
 - ✅ Peak SIMD throughput: 97 GiB/s vs 28 GiB/s scalar
 - ✅ Results documented in BENCHMARKS.md (Phase 3 section)
 - ✅ Benchmark suite: `benches/simd_vs_scalar.rs`
+
+The committed host-calibration receipt at
+[`dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`](../../../dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md)
+records a contradictory selected value of **4** for
+`bit_backend.simd_min_words`. These measurements are not directly
+interchangeable: the receipt measures `gf2_core::kernels::ScalarBackend`
+against the detected SIMD backend directly, whereas this earlier validation
+measured the `ops.rs` dispatcher, which resolves a backend per call. The
+receipt records this limitation under **“What this receipt does not claim”**.
 
 **Phase 5 Completed:**
 - ✅ Migrated 5 core operations in `bitvec.rs` to use `kernels::ops`
@@ -222,10 +232,11 @@ pub fn next_power_of_2(v: u64) -> u64 {
 **Implementation Details:**
 
 Backend selection is implemented by `select_backend_for_size` in
-`crates/gf2-core/src/kernels/backend.rs`; its conservative threshold is defined
-by `SIMD_MIN_WORDS_DEFAULT` in that same module. The selector compares the
-buffer's `u64` word count with that definition, uses SIMD when the feature is
-available, and otherwise falls back to the scalar backend.
+`crates/gf2-core/src/kernels/backend.rs`. The live threshold is the active
+profile field `bit_backend.simd_min_words`; `SIMD_MIN_WORDS_DEFAULT` in that
+same module defines the conservative profile's default. The selector compares
+the buffer's `u64` word count with the active profile value, uses SIMD when the
+feature is available, and otherwise falls back to the scalar backend.
 
 **Operations Updated:**
 - `xor_inplace(dst, src)` - XOR with dispatch
@@ -234,10 +245,11 @@ available, and otherwise falls back to the scalar backend.
 - `not_inplace(buf)` - NOT with dispatch
 - `popcount(buf)` - Population count with dispatch
 
-**Heuristics (Validated):**
-- Size < 8 words (64 bytes): Always scalar (dispatch overhead dominates)
-- Size ≥ 8 words: Use SIMD if available (2-4x speedup expected)
-- Single-word operations: Always scalar (no SIMD benefit)
+**Heuristics (Validated for the conservative profile):**
+- Size below `bit_backend.simd_min_words`: Always scalar (dispatch overhead dominates)
+- Size at or above `bit_backend.simd_min_words`: Use SIMD if available (2-4x speedup expected)
+- Single-word operations: Scalar under the conservative default; the active
+  profile remains authoritative
 - Runtime fallback: If SIMD selected but unavailable, falls back to scalar
 
 ### Phase 3 - Comprehensive Testing ✅ COMPLETE
@@ -291,7 +303,7 @@ All equivalence tests added to `src/kernels/simd/mod.rs` tests module:
 | Size (words) | Scalar | SIMD | Speedup | Winner |
 |--------------|--------|------|---------|--------|
 | 1-7          | 1.4-2.7ns | 2.3-3.5ns | 0.64-0.91x | Scalar faster |
-| 8 (threshold)| 4.0ns | 2.7ns | **1.49x** | SIMD starts winning |
+| 8 (conservative default)| 4.0ns | 2.7ns | **1.49x** | SIMD starts winning |
 | 16-32        | 5.2-9.3ns | 2.9-6.5ns | 1.42-1.80x | SIMD faster |
 | 64-256       | 17.6-71.6ns | 5.1-20.1ns | **3.27-3.56x** | SIMD much faster |
 | 1024+        | 270ns+ | 79ns+ | **3.43x** | SIMD much faster |
@@ -302,9 +314,9 @@ All equivalence tests added to `src/kernels/simd/mod.rs` tests module:
 
 **Validation:**
 - ✅ **8-word threshold confirmed optimal**
-- ✅ Scalar faster below threshold (dispatch overhead ~0.8ns)
+- ✅ Scalar faster below the conservative default (dispatch overhead ~0.8ns)
 - ✅ SIMD 3.4-3.6x faster for large buffers
-- ✅ Predictions matched: threshold accurate, speedups as expected
+- ✅ Predictions matched: conservative default accurate, speedups as expected
 
 **Results:** See `BENCHMARKS.md` (Phase 3: SIMD Backend Performance) for detailed analysis
 
@@ -467,8 +479,8 @@ pub trait Backend: Send + Sync {
 
 4. **Integration Tests** (`tests/backend_selection.rs`)
    - Backend selection logic verification
-   - Small buffers use scalar (< 8 words)
-   - Large buffers use SIMD when available (≥ 8 words)
+   - Small buffers use scalar below the active `bit_backend.simd_min_words`
+   - Large buffers use SIMD when available at or above the active `bit_backend.simd_min_words`
    - Operations work correctly with selected backend
    - SIMD availability detection
    - Graceful fallback validation
@@ -533,13 +545,13 @@ fn test_new_backend() {
 ### When to Use Each Backend
 
 **Scalar Backend:**
-- Small operations (< 64 bytes)
+- Small operations below `bit_backend.simd_min_words` (64 bytes in the conservative profile)
 - Single-word operations
 - When SIMD unavailable
 - Cold code paths
 
 **SIMD Backend:**
-- Large bulk operations (≥ 64 bytes)
+- Large bulk operations at or above `bit_backend.simd_min_words` (64 bytes in the conservative profile)
 - Hot loops over vectors
 - Matrix operations
 - Algorithm inner loops (M4RM, Gauss-Jordan)
@@ -628,7 +640,7 @@ When optimizing an operation:
 - ✅ Tested 12 buffer sizes from 1 to 4096 words
 - ✅ **8-word threshold VALIDATED** - optimal crossover confirmed
 - ✅ Measured 3.4-3.6x SIMD speedup for large buffers (≥64 words)
-- ✅ Confirmed scalar faster for small buffers (<8 words, 0.64-0.91x)
+- ✅ Confirmed scalar faster below the conservative default (0.64-0.91x)
 - ✅ Peak throughput: SIMD 97 GiB/s vs Scalar 28 GiB/s
 - ✅ Dispatch overhead measured: ~0.8ns
 - Results: `BENCHMARKS.md` (Phase 3: SIMD Backend Performance)
@@ -644,7 +656,7 @@ When optimizing an operation:
 - Validated: SIMD produces bit-identical results to scalar
 
 **Phase 2 Complete** - Backend Selection & Dispatch
-- ✅ Implemented smart backend selection with 8-word threshold
+- ✅ Implemented smart backend selection with the profile-driven threshold
 - ✅ Added 5 kernel operations with automatic dispatch: XOR, AND, OR, NOT, popcount
 - ✅ Comprehensive backend selection tests (empty, small, threshold, large)
 - ✅ Integration tests verify SIMD detection and graceful fallback
