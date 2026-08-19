@@ -738,11 +738,18 @@ fn is_rfc3339_utc(value: &str) -> bool {
     };
     let month = number(5, 7);
     let day = number(8, 10);
+    let year = number(0, 4);
     let hour = number(11, 13);
     let minute = number(14, 16);
     let second = number(17, 19);
+    let days_in_month = match month {
+        2 if year % 4 == 0 && (year % 100 != 0 || year % 400 == 0) => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    };
     (1..=12).contains(&month)
-        && (1..=31).contains(&day)
+        && (1..=days_in_month).contains(&day)
         && hour <= 23
         && minute <= 59
         && second <= 60
@@ -1054,6 +1061,30 @@ mod tests {
         assert_eq!(
             TuningProfile::from_json(&profile.to_json()).unwrap(),
             profile
+        );
+    }
+
+    #[test]
+    fn rfc3339_utc_validates_gregorian_calendar_dates() {
+        for (value, valid) in [
+            ("2026-02-31T00:00:00Z", false),
+            ("2026-02-29T00:00:00Z", false),
+            ("2024-02-29T00:00:00Z", true),
+            ("2000-02-29T00:00:00Z", true),
+            ("1900-02-29T00:00:00Z", false),
+            ("2026-04-31T00:00:00Z", false),
+            ("2026-04-30T00:00:00Z", true),
+            ("2026-13-01T00:00:00Z", false),
+            ("2026-01-00T00:00:00Z", false),
+        ] {
+            assert_eq!(Rfc3339Utc::parse(value).is_ok(), valid, "{value}");
+        }
+
+        let malformed =
+            calibrated_document().replace("2026-08-19T12:34:56.123Z", "2026-02-31T00:00:00Z");
+        assert_eq!(
+            TuningProfile::from_json(&malformed).unwrap_err(),
+            ProfileError::Malformed
         );
     }
 
