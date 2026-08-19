@@ -252,6 +252,12 @@
       "issue": "5ecc9bf8",
       "date": "2026-08-20",
       "decision": "DEC-B2 resolved against 5ecc9bf8's own criteria: REQ-01 asks for an emitted profile artifact the loader accepts, REQ-02 for the workflow documented from invocation to committing the emitted profile. Neither requires a canonical committed calibrated profile for the project bench host, so this issue emits and documents but commits no canonical host profile."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "697fc55b",
+      "date": "2026-08-20",
+      "decision": "DEC-B5: NTT_THRESHOLD's rustdoc at crates/gf2-core/src/field/poly.rs:2711 asserts the value is tuned from the ntt arm of benches/field_poly.rs, and that claim is contradicted by 2026-08-19-procedure-verification.md §Falsification record (out_len 127 at 3,793 ns on the mul arm against out_len 129 at 12,057 ns on the NTT arm, a 3.18x step into the arm the threshold selects for being cheaper). 697fc55b is the change that rewrites those four constants' rustdoc, so AGENTS.md's same-change stale-text rule attaches there, exactly as DEC-B4 attached the 512-bytes error to f35daec0. The rewrite must record the contradiction and cite the receipt rather than silently dropping or restating the tuning claim; the constant's value does not move."
     }
   ],
   "rework_counts": {
