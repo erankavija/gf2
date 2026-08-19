@@ -10,13 +10,13 @@
 //! |----------|-----------|---------------------:|----------------------------:|
 //! | [`interpolate`] | Lagrange barycentric | `O(n²)` field ops | `O(n²)` |
 //! | [`interpolate_fast`] | Subproduct-tree, generic [`FieldPoly::batch_evaluate`] | `O(n² log n)` field ops | `O(n² log n)` |
-//! | [`interpolate_fast_auto`] | Subproduct-tree, [`FieldPoly::batch_evaluate_auto`]¹ | — (bound requires `TwoAdicField`) | `O(n log² n)` above [`crate::field::poly::SUBPRODUCT_THRESHOLD`] |
-//! | [`interpolate_auto_two_adic`] | Threshold-tuned dispatcher over [`interpolate`] + [`interpolate_fast_auto`] | — | `O(n²)` below, `O(n log² n)` above both [`INTERPOLATE_THRESHOLD`] and [`crate::field::poly::SUBPRODUCT_THRESHOLD`] |
+//! | [`interpolate_fast_auto`] | Subproduct-tree, [`FieldPoly::batch_evaluate_auto`]¹ | — (bound requires `TwoAdicField`) | `O(n log² n)` above the active `polynomial.subproduct_min_len()` |
+//! | [`interpolate_auto_two_adic`] | Profile-driven dispatcher over [`interpolate`] + [`interpolate_fast_auto`] | — | `O(n²)` below, `O(n log² n)` above both [`INTERPOLATE_THRESHOLD`] and the active subproduct selector |
 //!
 //! ¹ The `_auto` suffix threads the Newton-iteration
 //! [`FieldPoly::div_rem_auto`] primitive (issue `ae0c7e1f`,
-//! [`DIV_REM_THRESHOLD`](crate::field::poly::DIV_REM_THRESHOLD) `= 2048`
-//! on `Fp<65537>`) through the subproduct-tree reductions behind
+//! the active `polynomial.div_rem_fast_min_len()` value (whose conservative
+//! default is `2048` on `Fp<65537>`) through the subproduct-tree reductions behind
 //! [`FieldPoly::batch_evaluate_auto`]. Integration landed under issue
 //! `046f95c1`; see
 //! [`crate::field::poly::batch_evaluate_subproduct_auto`] for the
@@ -27,7 +27,7 @@
 //! [`INTERPOLATE_THRESHOLD`] (currently 16). [`TwoAdicField`]
 //! call-sites should prefer [`interpolate_auto_two_adic`] so the
 //! `O(n log² n)` middle-step asymptotic fires automatically above
-//! [`crate::field::poly::SUBPRODUCT_THRESHOLD`]. Rust coherence
+//! the active `polynomial.subproduct_min_len()` value. Rust coherence
 //! forbids a
 //! second `pub fn interpolate_auto` specialised to [`TwoAdicField`],
 //! so the two sibling dispatchers live under different names. All
@@ -66,17 +66,17 @@
 //! path issues `n` full-degree `div_rem`s on `M(x)`; the `fast` path does
 //! one `from_roots` + one [`FieldPoly::batch_evaluate`] + one
 //! `O(n log n)` upward merge. [`FieldPoly::batch_evaluate`] routes to
-//! naive Horner below [`crate::field::poly::SUBPRODUCT_THRESHOLD`] =
-//! 4096, so for the measured `n ≤ 2048` the middle step is still
+//! naive Horner below the active subproduct selector (conservative default
+//! 4096), so for the measured `n ≤ 2048` the middle step is still
 //! `O(n²)` in field operations. Even at this schoolbook substrate the
 //! merge savings alone push `fast` below `0.63×` of `naive` at
 //! `n = 4`. Callers on [`TwoAdicField`] who want the `O(n log² n)`
-//! asymptotic at `n ≥ SUBPRODUCT_THRESHOLD` can call
+//! asymptotic at sizes above the active subproduct selector can call
 //! [`crate::field::poly::batch_evaluate_subproduct_auto`] directly
 //! before the merge pass, or reach for
 //! [`FieldPoly::batch_evaluate_auto`] in the
 //! [`interpolate_fast`]-style recipe; the fast-division primitive
-//! lands from [`crate::field::poly::DIV_REM_THRESHOLD`] = 2048 upwards.
+//! lands from the active division selector (conservative default 2048) upwards.
 //!
 //! `INTERPOLATE_THRESHOLD = 16` is kept as a conservative safety margin
 //! for callers on fields with very expensive Karatsuba (where the
@@ -152,7 +152,7 @@ pub const INTERPOLATE_THRESHOLD: usize = 16;
 /// should reach for [`interpolate_auto_two_adic`] to pick up the
 /// `O(n log² n)` middle-step asymptotic at
 /// `n ≥ INTERPOLATE_THRESHOLD` and
-/// `n ≥ SUBPRODUCT_THRESHOLD` (Newton-iteration fast-division
+/// sizes above the active subproduct selector (Newton-iteration fast-division
 /// substrate from issue `ae0c7e1f`, subproduct-tree integration from
 /// issue `046f95c1`). Rust coherence forbids a second
 /// `pub fn interpolate_auto` specialised to [`TwoAdicField`], so the
@@ -174,7 +174,7 @@ pub fn interpolate_auto<F: FiniteField>(
 /// middle-step `M'(x_i)` batch evaluation uses
 /// [`FieldPoly::batch_evaluate_auto`] and picks up the Newton-iteration
 /// fast-division primitive [`FieldPoly::div_rem_auto`] above
-/// [`crate::field::poly::SUBPRODUCT_THRESHOLD`]. This is the
+/// the active `polynomial.subproduct_min_len()` value. This is the
 /// trait-bounded sibling dispatcher: Rust coherence
 /// prevents `interpolate_auto` itself from specialising on
 /// [`TwoAdicField`], so [`TwoAdicField`] call-sites should prefer this
@@ -213,7 +213,7 @@ pub fn interpolate_auto<F: FiniteField>(
 ///
 /// Below [`INTERPOLATE_THRESHOLD`]: `O(n²)` field operations (via
 /// [`interpolate`]). Above the threshold: `O(n log² n)` field
-/// operations on [`TwoAdicField`] at `n ≥ SUBPRODUCT_THRESHOLD` (via
+/// operations on [`TwoAdicField`] above the active subproduct selector (via
 /// [`interpolate_fast_auto`]'s [`FieldPoly::batch_evaluate_auto`]
 /// middle step), falling back to `O(n²)` for the middle step at small
 /// sizes where the subproduct-tree dispatch prefers naive Horner.
@@ -522,14 +522,14 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 /// 2. Compute `M'(x)` (formal derivative) via [`formal_derivative`].
 /// 3. Evaluate `M'` at all `x_i` via [`FieldPoly::batch_evaluate`] — the
 ///    public batch-evaluation API named by the issue contract. Below
-///    [`crate::field::poly::SUBPRODUCT_THRESHOLD`] the dispatcher
+///    the active `polynomial.subproduct_min_len()` value the dispatcher
 ///    routes through the naive per-point Horner fallback; above it,
 ///    the schoolbook-[`FieldPoly::div_rem`] subproduct tree takes
 ///    over. On [`TwoAdicField`] callers who want the Newton-iteration
 ///    fast-division primitive
 ///    [`crate::field::poly::batch_evaluate_subproduct_auto`] or
 ///    [`FieldPoly::batch_evaluate_auto`] reach the `O(M(n) log k)`
-///    path above [`crate::field::poly::DIV_REM_THRESHOLD`]; both
+///    path above the active `polynomial.div_rem_fast_min_len()` value; both
 ///    primitives landed under issues `ae0c7e1f` + `046f95c1`. By the
 ///    product rule, `M'(x_i) = Π_{j ≠ i} (x_i − x_j)`.
 /// 4. Compute barycentric weights `w_i = y_i / M'(x_i)` using
@@ -582,11 +582,11 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 /// With the schoolbook-backed call through the generic
 /// [`FieldPoly::batch_evaluate`] this path costs `O(n² log n)` field
 /// operations; the `O(n log² n)` optimum is reached on
-/// [`TwoAdicField`] callers at `n ≥ SUBPRODUCT_THRESHOLD` when the
+/// [`TwoAdicField`] callers above the active subproduct selector when the
 /// middle step routes through
 /// [`crate::field::poly::batch_evaluate_subproduct_auto`], which wires
 /// the Newton-iteration [`FieldPoly::div_rem_auto`] primitive
-/// (`ae0c7e1f`, `DIV_REM_THRESHOLD = 2048` on `Fp<65537>`) into the
+/// (`ae0c7e1f`, conservative division default 2048 on `Fp<65537>`) into the
 /// subproduct-tree reductions (integration landed under issue
 /// `046f95c1`). Empirically this path already beats the `O(n²)`
 /// [`interpolate`] at every measured `n ≥ 4` on `Fp<65537>` — see the
@@ -596,11 +596,11 @@ pub fn interpolate_fast<F: FiniteField>(
 ) -> Result<FieldPoly<F>, InterpolationError> {
     // Generic substrate: route the middle step through the generic
     // [`FieldPoly::batch_evaluate`] dispatcher (schoolbook `div_rem`
-    // above [`crate::field::poly::SUBPRODUCT_THRESHOLD`], naive Horner
+    // above the active subproduct selector, naive Horner
     // below). Callers on [`TwoAdicField`] should reach for
     // [`interpolate_fast_auto`] / [`interpolate_auto_two_adic`] instead
     // to pick up the Newton-iteration fast-division primitive above
-    // [`crate::field::poly::DIV_REM_THRESHOLD`].
+    // the active division selector.
     interpolate_fast_with_batch_eval(points, |poly, xs| poly.batch_evaluate(xs))
 }
 
@@ -612,14 +612,14 @@ pub fn interpolate_fast<F: FiniteField>(
 /// [`FieldPoly::batch_evaluate`]. On [`TwoAdicField`] this wires the
 /// Newton-iteration fast-division primitive
 /// [`FieldPoly::div_rem_auto`] (issue `ae0c7e1f`,
-/// [`DIV_REM_THRESHOLD`](crate::field::poly::DIV_REM_THRESHOLD) on
-/// `Fp<65537>`) into the subproduct-tree reductions that back
+/// the active `polynomial.div_rem_fast_min_len()` selector on `Fp<65537>`)
+/// into the subproduct-tree reductions that back
 /// [`FieldPoly::batch_evaluate_auto`] above
-/// [`SUBPRODUCT_THRESHOLD`](crate::field::poly::SUBPRODUCT_THRESHOLD),
+/// the active `polynomial.subproduct_min_len()` selector,
 /// unlocking the `O(n log² n)` asymptotic for Lagrange interpolation
 /// on [`TwoAdicField`] callers (issue `046f95c1`).
 ///
-/// Below [`crate::field::poly::SUBPRODUCT_THRESHOLD`] the middle step
+/// Below the active `polynomial.subproduct_min_len()` selector the middle step
 /// falls back to the same naive per-point Horner loop used by the
 /// generic dispatcher, so behaviour matches [`interpolate_fast`]
 /// exactly at small sizes — the two agree on their outputs at all
@@ -660,10 +660,10 @@ pub fn interpolate_fast<F: FiniteField>(
 ///
 /// Matches [`interpolate_fast`] generically at `O(n² log n)`, but
 /// reaches `O(n log² n)` field operations on [`TwoAdicField`] above
-/// [`crate::field::poly::SUBPRODUCT_THRESHOLD`] because the middle
+/// the active `polynomial.subproduct_min_len()` selector because the middle
 /// step's subproduct-tree reductions use the Newton-iteration
 /// [`FieldPoly::div_rem_auto`] primitive (tuned at
-/// [`DIV_REM_THRESHOLD`](crate::field::poly::DIV_REM_THRESHOLD)).
+/// active `polynomial.div_rem_fast_min_len()` selector).
 pub fn interpolate_fast_auto<F: TwoAdicField>(
     points: &[(F, F)],
 ) -> Result<FieldPoly<F>, InterpolationError> {
@@ -718,13 +718,13 @@ where
     // Step 3: Evaluate M'(x) at all x_i via the injected batch-evaluation
     // primitive. The generic wrapper [`interpolate_fast`] passes the
     // [`FieldPoly::batch_evaluate`] dispatcher (schoolbook
-    // [`FieldPoly::div_rem`] above [`SUBPRODUCT_THRESHOLD`], naive Horner
+    // [`FieldPoly::div_rem`] above the active subproduct selector, naive Horner
     // below); the [`TwoAdicField`]-specialised wrapper
     // [`interpolate_fast_auto`] passes
     // [`FieldPoly::batch_evaluate_auto`], which routes above-threshold
     // cases through [`FieldPoly::div_rem_auto`] (issue `ae0c7e1f`), so
     // the Newton-iteration fast-division primitive fires automatically
-    // when `n ≥ DIV_REM_THRESHOLD` inside the subproduct-tree
+    // when `n` exceeds the active division selector inside the subproduct-tree
     // reductions (issue `046f95c1`). By the product rule:
     // M'(x_i) = Π_{j≠i}(x_i − x_j).
     let m_prime_vals: Vec<F> = batch_eval(&m_deriv, &xs);
@@ -1123,7 +1123,7 @@ mod tests {
         }
 
         /// Agreement: `interpolate_fast_auto` matches [`interpolate_fast`]
-        /// on `Fp<65537>` for sizes below [`SUBPRODUCT_THRESHOLD`]. Both
+        /// on `Fp<65537>` for sizes below the active subproduct selector. Both
         /// wrappers drive the same SSOT body, so they must return
         /// identical polynomials — only the middle-step division
         /// primitive differs, and below the threshold the `_auto`
@@ -1148,7 +1148,7 @@ mod tests {
 
         /// Agreement: `interpolate_auto_two_adic` matches
         /// [`interpolate_auto`] on `Fp<65537>` for sizes below
-        /// [`SUBPRODUCT_THRESHOLD`] — both dispatchers pick the
+        /// the active subproduct selector — both dispatchers pick the
         /// quadratic path below `INTERPOLATE_THRESHOLD` and the fast
         /// path above it, and below the subproduct gate the `_auto`
         /// middle step routes through the same naive Horner fallback.
