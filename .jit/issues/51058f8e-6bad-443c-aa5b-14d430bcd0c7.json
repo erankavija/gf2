@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-19T20:59:22.703885957Z",
+  "dependencies": [],
+  "description": "Predeclare, before any post-cutover measurement exists, how a per-cell excursion in the post-cutover receipt is adjudicated against the across-build variation the pre-cutover baseline measured.\n\n## Background\n\nThe pre-cutover baseline receipt of `278acf3a` records a measurement that contradicts the noise assumption `selector-non-regression-plan-v1.md` §4 rests its tolerance on: across two builds of behaviourally unchanged selector code, nine of the thirty-four pinned cells sit outside the +/-5 % band and the across-build component reaches 18.1 %, which is 3.6 times tau_cell. The comparison tau_cell gates -- this baseline against `50b47eae`'s post-cutover receipt -- is necessarily across two builds, so a cutover that adds no cost can trip the per-cell rule and one that adds a real cost can be masked at those cells.\n\nOwner decision DEC-C (2026-08-19, option B) settles how this is handled: plan v1 stays frozen and unmodified, its §5 comparison rule and §4 tolerance stay authoritative and unchanged at their predeclared values, and `50b47eae`'s session additionally measures a control build so an excursion has concurrent evidence to be adjudicated against. The control arm is evidence for the tracked rework `50b47eae` REQ-02 already requires; it is not a term in the verdict.\n\nThis issue writes that rule down before any post-cutover number exists. Declaring it after the post-cutover run would make it a post-hoc accommodation of the data, which `@/inv/falsification-preserved` and plan §7 both forbid.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed predeclaration document states the falsified assumption with the baseline receipt's own numbers and its consequence for the gated comparison, and predeclares the control-arm rule: `50b47eae`'s session measures, under the same wrapper, protocol, and `selector-non-regression-v1` schema token, a rebuild of the pre-cutover baseline revision alongside the post-cutover build, and records that arm's per-cell ratios against the baseline receipt.\n- [hard] REQ-02: The document states explicitly that plan v1 is unmodified: the pinned cell set of §2, the run protocol of §3, the tolerance values of §4, and the comparison rule of §5 all stand as `e8fe47f5` pins them, no schema token is bumped, the pre-cutover baseline stays valid, and the control arm enters no verdict.\n- [hard] REQ-03: The document states how the control arm is read when the post-cutover comparison trips: the excursion is recorded with its contradiction and tracked rework per `50b47eae` REQ-02, and the control arm's same-cell ratio is the evidence that rework weighs. It states that a trip is never dismissed by the control arm alone and that re-running until the comparison agrees stays forbidden by plan §7.\n- [hard] REQ-04: The document is committed before any post-cutover measurement exists, it is linked to this issue and reachable from `selector-non-regression-plan-v1.md`, and `50b47eae` depends on this issue.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-19T20:59:22.703885957Z",
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "51058f8e-6bad-443c-aa5b-14d430bcd0c7",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-04",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Predeclare the across-build control arm for the post-cutover comparison",
+  "updated_at": "2026-08-19T20:59:22.703885957Z"
+}
