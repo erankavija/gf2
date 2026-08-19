@@ -358,3 +358,21 @@ required-features = ["tuning-profile"]
 [[test]]
 name = "tuning_profile_committed"
 required-features = ["tuning-profile"]
+
+# ── Issue `5ecc9bf8` (epic `6dc81018`) — explicit host-calibration action ──
+#
+# `harness = false` is the shape every bench target above uses. The
+# `tuning-profile` requirement is real rather than defensive: without the
+# feature the target has no `TuningProfile::to_json`/`from_json` and so cannot
+# emit or validate the profile it exists to produce.
+[[bench]]
+name = "tuning_calibration"
+harness = false
+required-features = ["tuning-profile"]
+
+# Runs the calibration harness's own `#[cfg(test)]` module, which a
+# `harness = false` bench target does not otherwise execute. Gated on the same
+# feature as the bench.
+[[test]]
+name = "tuning_calibration_harness"
+required-features = ["tuning-profile"]
