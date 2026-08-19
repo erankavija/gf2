@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-19T06:52:25.136770932Z",
   "context": {},
   "created_at": "2026-08-18T19:57:57.977309087Z",
   "dependencies": [
@@ -21,7 +22,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Implement the tuning-profile type, loader, and conservative defaults",
-  "updated_at": "2026-08-19T05:20:37.775043840Z"
+  "updated_at": "2026-08-19T06:52:25.136770932Z"
 }
