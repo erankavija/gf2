@@ -8590,3 +8590,5 @@
 {"fields":["dependencies"],"id":"2c902eb8-dddf-4ff5-a1d5-17acb449467d","issue_id":"6dc81018-9a8e-4318-9572-148670d1c272","timestamp":"2026-08-19T20:59:35.530181390Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["dependencies"],"id":"e992f7dc-afd9-4503-99a2-ef4b1aa1266b","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-19T20:59:55.718829061Z","type":"issue_updated","updated_by":"dependency-add"}
 {"id":"d11e3abd-b621-4061-acc1-ac75624a3455","issue_id":"6dc81018-9a8e-4318-9572-148670d1c272","new_count":5,"old_count":6,"removed_deps":["51058f8e-6bad-443c-aa5b-14d430bcd0c7"],"timestamp":"2026-08-19T20:59:55.718829061Z","type":"dependency_reduced"}
+{"fields":["documents"],"id":"aaf620d3-b674-456c-a386-4ccc4f425615","issue_id":"51058f8e-6bad-443c-aa5b-14d430bcd0c7","timestamp":"2026-08-19T21:06:40.237681882Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["description"],"id":"fc489484-0d92-4cfa-9cc6-fee64af5645a","issue_id":"5ecc9bf8-3d62-408e-aba8-53ad2790a49d","timestamp":"2026-08-19T21:07:56.154742197Z","type":"issue_updated","updated_by":"issue-update"}
