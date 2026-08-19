@@ -39,7 +39,7 @@ This document describes the kernel architecture in gf2-core and tracks optimizat
   - May be added to trait in future with default implementations
 
 **Backend Selection** (`src/kernels/backend.rs`)
-- Size-based heuristics: Small (<512 bytes) → Scalar, Large → SIMD
+- Size-based heuristics: Small (<64 bytes) → Scalar, Large → SIMD
 - Runtime CPU feature detection
 - Graceful fallback if SIMD unavailable
 
@@ -221,25 +221,11 @@ pub fn next_power_of_2(v: u64) -> u64 {
 
 **Implementation Details:**
 
-Backend selection is implemented via `SelectedBackend` enum pattern:
-```rust
-pub enum SelectedBackend {
-    Scalar,
-    #[cfg(feature = "simd")]
-    Simd,
-}
-
-pub fn select_backend_for_size(size: usize) -> SelectedBackend {
-    const SIMD_THRESHOLD: usize = 8; // 512 bytes
-    
-    #[cfg(feature = "simd")]
-    if size >= SIMD_THRESHOLD {
-        return SelectedBackend::Simd;
-    }
-    
-    SelectedBackend::Scalar
-}
-```
+Backend selection is implemented by `select_backend_for_size` in
+`crates/gf2-core/src/kernels/backend.rs`; its conservative threshold is defined
+by `SIMD_MIN_WORDS_DEFAULT` in that same module. The selector compares the
+buffer's `u64` word count with that definition, uses SIMD when the feature is
+available, and otherwise falls back to the scalar backend.
 
 **Operations Updated:**
 - `xor_inplace(dst, src)` - XOR with dispatch
@@ -249,7 +235,7 @@ pub fn select_backend_for_size(size: usize) -> SelectedBackend {
 - `popcount(buf)` - Population count with dispatch
 
 **Heuristics (Validated):**
-- Size < 8 words (512 bytes): Always scalar (dispatch overhead dominates)
+- Size < 8 words (64 bytes): Always scalar (dispatch overhead dominates)
 - Size ≥ 8 words: Use SIMD if available (2-4x speedup expected)
 - Single-word operations: Always scalar (no SIMD benefit)
 - Runtime fallback: If SIMD selected but unavailable, falls back to scalar
@@ -547,13 +533,13 @@ fn test_new_backend() {
 ### When to Use Each Backend
 
 **Scalar Backend:**
-- Small operations (< 512 bytes)
+- Small operations (< 64 bytes)
 - Single-word operations
 - When SIMD unavailable
 - Cold code paths
 
 **SIMD Backend:**
-- Large bulk operations (≥ 512 bytes)
+- Large bulk operations (≥ 64 bytes)
 - Hot loops over vectors
 - Matrix operations
 - Algorithm inner loops (M4RM, Gauss-Jordan)
