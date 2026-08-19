@@ -295,8 +295,8 @@ Tests performed:
 
 **SIMD Validation**: ✅ **CONFIRMED**
 - Benchmarks completed for XOR operations across buffer sizes
-- **Measured speedups (8+ words threshold)**:
-  - 8 words: 1.51× (below threshold, as expected)
+- **Measured speedups at and above the conservative 8-word default**:
+  - 8 words: 1.51× (at the default boundary, as expected)
   - 16 words: 2.10×
   - 256 words: 3.49× ✅
   - 1024 words: 3.43× ✅
@@ -401,6 +401,15 @@ Tests performed:
    - ✅ SIMD benchmarks validated (2.57× avg, 3.4-3.5× peak)
    - ✅ BitVec operations: 8-17 GiB/s throughput
    - ✅ 8-word SIMD threshold confirmed appropriate
+
+   The committed host-calibration receipt at
+   [`dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`](../../../dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md)
+   records a contradictory selected value of **4** for
+   `bit_backend.simd_min_words`. These measurements are not directly
+   interchangeable: the receipt measures `gf2_core::kernels::ScalarBackend`
+   against the detected SIMD backend directly, whereas this earlier validation
+   measured the `ops.rs` dispatcher, which resolves a backend per call. The
+   receipt records this limitation under **“What this receipt does not claim”**.
    - ⏸️ Full benchmark baseline (deferred - optional)
 
 6. **Complete Manual Code Review**
