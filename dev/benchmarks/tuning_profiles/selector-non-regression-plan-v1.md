@@ -237,7 +237,8 @@ accommodated.
 
 Issue `51058f8e` owns the consequence: it predeclares, before any post-cutover
 measurement exists, the rule under which a per-cell excursion in that
-comparison is adjudicated, per owner decision DEC-C of 2026-08-19.
+comparison is adjudicated, per owner decision DEC-C of 2026-08-19. That rule is
+[`across-build-control-arm-v1.md`](across-build-control-arm-v1.md).
 
 **The small-buffer cells are expected to be the binding constraint.** A
 `OnceLock` read is a fixed cost of roughly a nanosecond against operations that
