@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-19T17:44:18.515291680Z",
+  "dependencies": [],
+  "description": "`FiniteFieldExt::frobenius` panics on two distinct paths and its rustdoc\ndocuments one.\n\n## Background\n\n`crates/gf2-core/src/field/traits.rs:1105-1107` states a single panic cause:\nthe characteristic failing to convert to `u64`. The exponent computation at\n`:1126-1129` carries a second, `exp.checked_mul(p).expect(\"Frobenius exponent\noverflow\")`, which fires whenever $p^k$ exceeds `u64::MAX` — at $k \\ge 64$ for\nthe binary carriers and at $k \\ge 2$ for `Fp<P>` with $P > 2^{32}$, which\nincludes `GoldilocksFp`. AGENTS.md requires public-API rustdoc to state its\npanics.\n\nSurfaced twice while authoring the REQ-05 proof sketch of epic `6dc81018`:\nby the sketch itself (`dev/active/1ac74567/proof-sketch.md` §7.4, with §7.3\ngiving the mathematical reason the restriction matters) and independently by\nthat issue's doc-review gate as advisory finding F2. Filed rather than fixed\nin place because issue `1ac74567` changes nothing under `crates/`.\n\n## Success Criteria\n\n- [hard] REQ-01: `FiniteFieldExt::frobenius`'s `# Panics` section states both\n  panic causes, naming the exponent-overflow condition in terms of the\n  characteristic and the iteration count.\n- [hard] REQ-02: The `cargo-ci` gate passes.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-19T17:44:18.515291680Z",
+  "gates_required": [
+    "cargo-ci"
+  ],
+  "gates_status": {},
+  "id": "99c92597-15ee-4102-9e7c-c6ba7c8a3e59",
+  "labels": [
+    "component:gf2-core",
+    "type:task",
+    "epic:quality-documentation-tech-debt"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Document the Frobenius exponent-overflow panic in FiniteFieldExt rustdoc",
+  "updated_at": "2026-08-19T17:44:37.397274744Z"
+}

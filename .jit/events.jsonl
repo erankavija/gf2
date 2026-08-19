@@ -8574,3 +8574,7 @@
 {"fields":["documents"],"id":"49778559-11f4-4276-a3b8-c6def7824360","issue_id":"1ac74567-fa48-405a-a35a-a4f2bcb16fe5","timestamp":"2026-08-19T17:39:11.955425108Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"b23be54e-6850-45b7-9659-cf56f22c80c1","issue_id":"1ac74567-fa48-405a-a35a-a4f2bcb16fe5","timestamp":"2026-08-19T17:39:12.073659730Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"493e3565-6e08-458d-b6ee-b684d3a10e7a","issue_id":"1ac74567-fa48-405a-a35a-a4f2bcb16fe5","timestamp":"2026-08-19T17:39:12.187156392Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"32b70b4a-da8f-41db-ab89-88a80b5a5cfd","issue_id":"1ac74567-fa48-405a-a35a-a4f2bcb16fe5","timestamp":"2026-08-19T17:43:03.038041507Z","type":"gate_failed","updated_by":"auto:executor"}
+{"id":"0a33612c-8687-445c-a75d-f8aad3996dc8","issue_id":"99c92597-15ee-4102-9e7c-c6ba7c8a3e59","priority":"normal","timestamp":"2026-08-19T17:44:18.515291680Z","title":"Document the Frobenius exponent-overflow panic in FiniteFieldExt rustdoc","type":"issue_created"}
+{"fields":["dependencies"],"id":"4fbc8f90-27d2-4ebf-9b9d-37a76db19851","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-19T17:44:31.264061354Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["labels"],"id":"d1f162e0-d3fd-4082-ad2a-ae4eb2e75cfb","issue_id":"99c92597-15ee-4102-9e7c-c6ba7c8a3e59","timestamp":"2026-08-19T17:44:37.397274744Z","type":"issue_updated","updated_by":"issue-update"}
