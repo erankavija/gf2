@@ -266,7 +266,8 @@ mod tests {
 
     #[test]
     fn test_xor_inplace_at_threshold() {
-        // Exactly 8 words - should potentially use SIMD
+        // Exactly 8 words - the conservative default boundary; a profile may
+        // move the SIMD route.
         let mut dst = vec![0xFFFFFFFFFFFFFFFFu64; 8];
         let src = vec![0x0F0F0F0F0F0F0F0Fu64; 8];
         xor_inplace(&mut dst, &src);

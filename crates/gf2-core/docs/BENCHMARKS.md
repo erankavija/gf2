@@ -545,7 +545,10 @@ These are the actual use case matrices that motivated this optimization:
 | 256 | 71.60 | 20.10 | **3.56×** |
 | 1024 | 270.42 | 78.82 | **3.43×** |
 
-**Key Finding**: 8-word threshold is optimal - SIMD slower for <8 words (dispatch overhead), 3-4× faster for larger buffers.
+**Key Finding**: The conservative profile's 8-word default is effective for
+this host: SIMD is slower below the default because of dispatch overhead and
+3-4× faster for larger buffers. Calibrated profiles may select another
+boundary.
 
 **Peak Throughput**: Scalar ~28 GiB/s, SIMD ~97 GiB/s (3.46× improvement)
 
@@ -569,7 +572,7 @@ These are the actual use case matrices that motivated this optimization:
 - ✅ **Matrix-Vector**: Beat M4RI by 2.7-23.6×
 - ✅ **RREF**: 304× speedup over naive, practical for DVB-T2 LDPC
 - ✅ **Rank/Select**: 58-2,040× speedup, enables succinct data structures
-- ✅ **SIMD**: 3.4× speedup with AVX2, optimal threshold validated
+- ✅ **SIMD**: 3.4× speedup with AVX2, conservative default validated
 - ✅ **GF(2^m)**: 13-18× faster than NTL for small fields, 100-1000× faster than SageMath
 
 ---

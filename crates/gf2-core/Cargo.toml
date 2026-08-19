@@ -360,6 +360,10 @@ name = "tuning_profile_polynomial_install"
 required-features = ["tuning-profile"]
 
 [[test]]
+name = "backend_selection_profile"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
 name = "tuning_profile_committed"
 required-features = ["tuning-profile"]
 
