@@ -102,6 +102,7 @@
       "path": "crates/gf2-core/benches/selector_non_regression.rs"
     }
   ],
+  "done_at": "2026-08-19T06:51:16.406385034Z",
   "first_ready_at": "2026-08-18T20:54:27.576207343Z",
   "gates_required": [
     "cargo-ci",
@@ -110,12 +111,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-19T06:34:23.587341972Z",
+      "updated_at": "2026-08-19T06:50:49.413050977Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-19T06:37:55.086227466Z",
+      "status": "passed",
+      "updated_at": "2026-08-19T06:50:14.066611695Z",
       "updated_by": "auto:executor"
     }
   },
@@ -127,7 +128,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Pin the non-regression benchmark set and tolerance",
-  "updated_at": "2026-08-19T06:37:55.086227466Z"
+  "updated_at": "2026-08-19T06:51:16.406385034Z"
 }
