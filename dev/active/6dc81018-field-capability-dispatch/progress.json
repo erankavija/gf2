@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 4,
-  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec \u2014 its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8).",
+  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec — its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it — budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' — it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS.",
   "waves": [
     {
       "wave_number": 1,
@@ -68,9 +68,24 @@
           "title": "Implement the tuning-profile type, loader, and conservative defaults",
           "classification": "implementation",
           "model": "codex-luna",
-          "status": "dispatched"
+          "status": "in_review",
+          "notes": "rework 2 of 2 dispatched: code-review blocking F1 at b41f9d8a — is_rfc3339_utc accepts impossible calendar dates (2026-02-31). cargo-ci passes at b41f9d8a. If rework 2 fails review, escalate per policy entry 5."
         }
       ]
+    },
+    {
+      "wave_number": 4.5,
+      "issues": [
+        {
+          "id": "1ac74567-fa48-405a-a35a-a4f2bcb16fe5",
+          "short_id": "1ac74567",
+          "title": "Author the loop-free extraction proof-obligation factoring sketch",
+          "classification": "design",
+          "model": "claude-opus",
+          "status": "pending"
+        }
+      ],
+      "note": "Own wave: created during execution to close REQ-05's second clause. Runs alone because Charon/Aeneas extraction plus a lake build is heavy CPU work and must not overlap the benchmark-mode waves 5, 7, 8."
     },
     {
       "wave_number": 5,
@@ -137,7 +152,7 @@
     {
       "id": "a6636671",
       "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
-      "reason": "classification \u00a75 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope",
+      "reason": "classification §5 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope",
       "parented": "86b9c719 (quality-documentation-tech-debt) to satisfy repo DAG-integrity validation; still outside epic 6dc81018"
     },
     {
@@ -145,6 +160,12 @@
       "title": "Migrate Charon/Aeneas toolchain to newest upstream",
       "reason": "owner-approved follow-on from spike 34d85cb9 upgrade leg; standalone, outside the epic",
       "parented": "86b9c719 (quality-documentation-tech-debt) to satisfy repo DAG-integrity validation; still outside epic 6dc81018"
+    },
+    {
+      "id": "1ac74567",
+      "title": "Author the loop-free extraction proof-obligation factoring sketch",
+      "reason": "REQ-05's second clause (proof obligations factored as trait-level algebraic laws plus per-backend representation refinement) had no delivering child. Owner approved closing it in-epic with an approved-sketch document.",
+      "parented": "epic 6dc81018 directly (6dc81018 -> 1ac74567); runs as wave 4.5"
     }
   ],
   "escalations": [
@@ -183,13 +204,26 @@
       "issue": "5ecc9bf8",
       "date": "2026-08-19",
       "decision": "DEC-B2 deferred to wave-7 dispatch: whether the project bench host gets a canonical committed calibrated profile is decided against 5ecc9bf8's own criteria."
+    },
+    {
+      "kind": "criterion-decision",
+      "issue": "6dc81018/REQ-05",
+      "date": "2026-08-19",
+      "decision": "Owner chose scope option A via AskUserQuestion: REQ-05's second clause ('proof obligations factored as trait-level algebraic laws plus per-backend representation refinement') is closed in-epic by an approved-sketch document (task 1ac74567), not by discharged Lean proofs. Proof bodies are follow-on work outside the epic."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "f35daec0",
+      "date": "2026-08-19",
+      "decision": "DEC-B3: the stateful active()/install() tests live in separate integration-test binaries with one #[test] fn each, because the OnceLock resolves once per process and the default-path and install-path assertions are mutually exclusive within one binary. DEC-B4: the pre-existing 'eight u64 words are 512 bytes' rustdoc error, previously routed to 0d819b62, was folded into f35daec0 instead — this is the change that moves the constant, so AGENTS.md's same-change stale-text rule attaches here."
     }
   ],
   "rework_counts": {
     "34d85cb9": 0,
     "7f818151": 1,
     "220cab0b": 1,
-    "e8fe47f5": 1
+    "e8fe47f5": 1,
+    "f35daec0": 2
   },
   "surfaced_pitfalls": [
     {
@@ -199,18 +233,28 @@
     },
     {
       "issue": "6dc81018/REQ-05",
-      "finding": "REQ-05 requires proof obligations factored as trait-level algebraic laws plus per-backend representation refinement; no wave-plan child delivers a proof-sketch \u2014 spike record names follow-up targets (dev/active/34d85cb9/findings.md:817). Must be reconciled at epic completion: remediation task or escalation.",
+      "finding": "REQ-05 requires proof obligations factored as trait-level algebraic laws plus per-backend representation refinement; no wave-plan child delivers a proof-sketch — spike record names follow-up targets (dev/active/34d85cb9/findings.md:817). Must be reconciled at epic completion: remediation task or escalation.",
       "disposition": "open"
-    },
-    {
-      "issue": "220cab0b",
-      "finding": "doc-review F2 (advisory, pre-existing): crates/gf2-core/src/kernels/backend.rs:93 rustdoc says eight u64 words are 512 bytes; correct is 64 bytes",
-      "disposition": "fold into 0d819b62 (bit-backend cutover) dispatch"
     },
     {
       "issue": "e8fe47f5",
       "finding": "NTT_THRESHOLD=128 appears mis-tuned: out_len 127 dispatcher arm 3,793 ns vs out_len 129 NTT arm 12,057 ns (3.18x step up); arms converge near out_len 255. Contradicts tuning claim in rustdoc at crates/gf2-core/src/field/poly.rs:2711.",
       "disposition": "route to 5ecc9bf8 calibration sweep; recorded in 2026-08-19-procedure-verification.md falsification section"
+    },
+    {
+      "issue": "220cab0b",
+      "finding": "doc-review F2 (advisory, pre-existing): rustdoc said eight u64 words are 512 bytes; correct is 64 bytes",
+      "disposition": "CLOSED in f35daec0 (commit b41f9d8a). The source rustdoc, the five restatements in crates/gf2-core/docs/KERNEL_OPTIMIZATION.md and docs/README.md, and the comment in crates/gf2-core/tests/backend_selection.rs all now read 64 bytes. crates/gf2-core/README.md:125 keeps '>512 bytes': BENCHMARKS.md records those speedups at 64/256/1024 words, so it states a measured operand regime, not the dispatch threshold."
+    },
+    {
+      "issue": "f35daec0",
+      "finding": "PolynomialSelectors::try_new still takes four consecutive usize positional parameters, so a transposition among the four polynomial thresholds compiles. The lead accepted this: it is the shape the rework instruction named, and the cross-family hazard is gone.",
+      "disposition": "Control at 5ecc9bf8 dispatch: the calibration harness must name each threshold at its construction site and its own test must assert the emitted profile's per-field values equal the swept values field by field."
+    },
+    {
+      "issue": "6dc81018",
+      "finding": "dev/active/6dc81018-field-capability-dispatch/investigation.md states no citation anchor, unlike classification.md (2f2cbb37) and 220cab0b/design.md (05bc9c14). Its file:line citations describe the pre-epic tree with nothing saying so, so a reader cannot tell whether they are current.",
+      "disposition": "open — resolve at epic completion by adding an anchor statement to investigation.md; do not rewrite its citations."
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
