@@ -141,8 +141,8 @@
           "title": "Implement the explicit host-calibration benchmark action",
           "classification": "implementation",
           "model": "claude-opus",
-          "status": "dispatched",
-          "notes": "Reordered ahead of wave 6 and dispatched at 8c021500 while the bench host is uncontended. Claude opus in the main checkout, not codex: it must execute the calibration under dev/scripts/ccx1-bench-flock.sh, and codex's sandbox blocks the wrapper's privileged nice/affinity. Dispatch carries DEC-B2 (emit and document, commit no canonical host profile), the named-binding control inherited from f35daec0's four-positional-usize constructor, and the NTT_THRESHOLD non-monotonicity from e8fe47f5 as a region the karatsuba_max_out_len grid must span. In-source default constants are frozen: moving one would re-pin the non-regression set per plan §7 and invalidate the baseline."
+          "status": "done",
+          "notes": "Closed at cfb588f6 after 1 lead-directed correction round (no formal rework counter: the finding was DEC-B6 compliance, caught before the worker reported). cargo-ci and code-review both passed. Calibration moved three fields on this host — simd_min_words 8->4, div_rem_fast_min_len 2048->1024, subproduct_min_len 4096->512 — and kept two for recorded reasons. The receipt carries six falsification records: F1 the Karatsuba/NTT crossover is not expressible as one threshold, F2 the unmeasurable field, F3 the e8fe47f5 NTT_THRESHOLD step reproduced exactly, F4 and F5 the DIV_REM and SUBPRODUCT tuning notes contradicted by this run, F6 source_dirty makes the artifact non-committable. Correction round: the first two emissions carried karatsuba_min_degree inside a kind:calibrated document while F2 called it unmeasured; the third omits it. The lead scoped the omission to that one field — karatsuba_max_out_len kept its default under a MEASURED non-monotone sweep, so it is a calibration outcome and stays stated."
         }
       ]
     },
@@ -279,7 +279,8 @@
     "e8fe47f5": 1,
     "f35daec0": 2,
     "1ac74567": 1,
-    "278acf3a": 1
+    "278acf3a": 1,
+    "5ecc9bf8": 0
   },
   "surfaced_pitfalls": [
     {
