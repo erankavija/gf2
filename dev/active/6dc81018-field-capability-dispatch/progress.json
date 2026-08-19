@@ -1,7 +1,7 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 1,
+  "current_wave": 2,
   "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend.",
   "waves": [
     {
@@ -21,7 +21,7 @@
           "title": "Spike Charon extraction of a trait-generic field algorithm",
           "classification": "research",
           "model": "opus",
-          "status": "rework-3-approved"
+          "status": "done"
         }
       ]
     },
@@ -174,6 +174,17 @@
   "rework_counts": {
     "34d85cb9": 0
   },
-  "surfaced_pitfalls": [],
+  "surfaced_pitfalls": [
+    {
+      "issue": "34d85cb9",
+      "finding": "research-review advisories (4, low): stopping-rule pre-declaration unattested; LLBC datasets lack checksums; 311/428 non-comment-line counts lack a committed regeneration command; upgrade matrix omits P1/AP1/A9 rows",
+      "disposition": "accepted residue per owner decision (advisories not required)"
+    },
+    {
+      "issue": "6dc81018/REQ-05",
+      "finding": "REQ-05 requires proof obligations factored as trait-level algebraic laws plus per-backend representation refinement; no wave-plan child delivers a proof-sketch \u2014 spike record names follow-up targets (dev/active/34d85cb9/findings.md:817). Must be reconciled at epic completion: remediation task or escalation.",
+      "disposition": "open"
+    }
+  ],
   "started_at": "2026-08-18T00:00:00Z"
 }
