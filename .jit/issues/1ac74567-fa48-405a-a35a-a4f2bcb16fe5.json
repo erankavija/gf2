@@ -40,14 +40,15 @@
       "path": "dev/active/1ac74567/elaboration/FunsExternal.lean"
     }
   ],
+  "done_at": "2026-08-19T17:59:16.815300969Z",
   "first_ready_at": "2026-08-19T15:32:44.309136942Z",
   "gates_required": [
     "doc-review"
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-19T17:43:03.038041507Z",
+      "status": "passed",
+      "updated_at": "2026-08-19T17:58:46.421152569Z",
       "updated_by": "auto:executor"
     }
   },
@@ -59,7 +60,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Author the loop-free extraction proof-obligation factoring sketch",
-  "updated_at": "2026-08-19T17:43:03.038041507Z"
+  "updated_at": "2026-08-19T17:59:16.815300969Z"
 }
