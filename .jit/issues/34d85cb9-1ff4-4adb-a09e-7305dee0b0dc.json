@@ -16,14 +16,15 @@
       "path": "dev/active/34d85cb9/findings.md"
     }
   ],
+  "done_at": "2026-08-19T04:45:28.735182572Z",
   "first_ready_at": "2026-08-18T19:57:57.977309087Z",
   "gates_required": [
     "research-review"
   ],
   "gates_status": {
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-08-18T22:14:09.294151220Z",
+      "status": "passed",
+      "updated_at": "2026-08-19T04:44:39.491898344Z",
       "updated_by": "auto:executor"
     }
   },
@@ -35,7 +36,7 @@
     "satisfies:REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Spike Charon extraction of a trait-generic field algorithm",
-  "updated_at": "2026-08-18T22:14:09.294151220Z"
+  "updated_at": "2026-08-19T04:45:28.735182572Z"
 }
