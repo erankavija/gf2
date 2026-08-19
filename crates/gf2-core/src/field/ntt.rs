@@ -49,11 +49,13 @@
 //! |  1024 |               1.22 ms |       279.85 µs |   4.37× |
 //!
 //! Crossover is effectively at `n = 64` — NTT already ties Karatsuba
-//! on that size and wins decisively from `n = 128` onwards. The tuned
-//! [`NTT_THRESHOLD`](crate::field::poly::NTT_THRESHOLD) is therefore
-//! `128`, and [`mul_fast`](crate::field::poly::mul_fast) routes
-//! operands whose output length exceeds that constant through
-//! [`FieldPoly::mul_ntt`]. Regenerate the table with
+//! on that size and wins decisively from `n = 128` onwards. The historical
+//! claim that the conservative default of `128` was tuned from this table is
+//! contradicted by the committed `2026-08-19-procedure-verification.md`
+//! §Falsification record: the `mul_fast` step moves from 3,793 ns at
+//! `out_len = 127` to 12,057 ns at `out_len = 129`. The active
+//! `polynomial.karatsuba_max_out_len()` profile value controls whether
+//! [`FieldPoly::mul_ntt`] is selected. Regenerate the table with
 //! `cargo bench -p gf2-core --bench field_poly -- --quick`.
 
 use crate::field::TwoAdicField;

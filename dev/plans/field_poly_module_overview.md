@@ -50,24 +50,26 @@ for authoritative location.
 | `FieldPoly::gcd` | Euclidean algorithm over `div_rem` | `poly.rs` : 1457 – 1550 | `O(n · m · log min(n, m))` |
 | `FieldPoly::eval` | Horner | `poly.rs` : 857 – 900 | `O(n)` |
 | `FieldPoly::eval_batch` | `k` Horner folds | `poly.rs` : 902 – 985 | `O(n · k)` |
-| `FieldPoly::batch_evaluate` | Auto-dispatch: naive Horner ⇄ schoolbook-`div_rem` subproduct tree | `poly.rs` : 988 – 1040 | `O(n · k)` below `SUBPRODUCT_THRESHOLD`, `O(n · k + k² log k)` above |
-| `FieldPoly::batch_evaluate_auto` (for `F: TwoAdicField`) | Auto-dispatch: naive Horner ⇄ `div_rem_auto`-backed subproduct tree | `poly.rs` : in the `impl<F: TwoAdicField>` block | `O(n · k)` below `SUBPRODUCT_THRESHOLD`, `O(M(n) · log k + k² log k)` above |
+| `FieldPoly::batch_evaluate` | Auto-dispatch: naive Horner ⇄ schoolbook-`div_rem` subproduct tree | `poly.rs` : 988 – 1040 | `O(n · k)` below `polynomial.subproduct_min_len()`, `O(n · k + k² log k)` above |
+| `FieldPoly::batch_evaluate_auto` (for `F: TwoAdicField`) | Auto-dispatch: naive Horner ⇄ `div_rem_auto`-backed subproduct tree | `poly.rs` : in the `impl<F: TwoAdicField>` block | `O(n · k)` below `polynomial.subproduct_min_len()`, `O(M(n) · log k + k² log k)` above |
 | Free fn `batch_evaluate_subproduct` | Unconditional subproduct tree (schoolbook `div_rem`) | `poly.rs` : 1920 – 2034 | `O(n · k + k² log k)` |
-| Free fn `batch_evaluate_subproduct_auto` (for `F: TwoAdicField`) | Unconditional subproduct tree (`div_rem_auto`) | `poly.rs` : same block as `batch_evaluate_subproduct` | `O(M(n) · log k + k² log k)` above `DIV_REM_THRESHOLD` |
+| Free fn `batch_evaluate_subproduct_auto` (for `F: TwoAdicField`) | Unconditional subproduct tree (`div_rem_auto`) | `poly.rs` : same block as `batch_evaluate_subproduct` | `O(M(n) · log k + k² log k)` above `polynomial.div_rem_fast_min_len()` |
 | Free fn `build_subproduct_tree` | Balanced pair-merge | `poly.rs` : 1826 – 1918 | `O(k · M(k))` polynomial multiplications |
 | `FieldPoly::batch_mul` / `batch_mul_with_field` | Balanced binary merge | `poly.rs` : 1159 – 1305 | `O(K · M(K) · log k)` |
 | `FieldPoly::batch_gcd` | Repeated Euclidean reductions | `poly.rs` : 1305 – 1364 | `O(k · n · m · log min(n, m))` |
 | `interpolate` | Barycentric Lagrange + `batch_inverse` | `poly_interpolate.rs` : 348 – 495 | `O(n²)` |
 | `interpolate_fast` | Subproduct-tree Lagrange (uses generic `batch_evaluate`) | `poly_interpolate.rs` : 495 – 680 | `O(n² log n)` generic |
-| `interpolate_fast_auto` (for `F: TwoAdicField`) | Subproduct-tree Lagrange (uses `batch_evaluate_auto`) | `poly_interpolate.rs` : sibling of `interpolate_fast` | `O(n log² n)` above `SUBPRODUCT_THRESHOLD`; matches `interpolate_fast` below |
+| `interpolate_fast_auto` (for `F: TwoAdicField`) | Subproduct-tree Lagrange (uses `batch_evaluate_auto`) | `poly_interpolate.rs` : sibling of `interpolate_fast` | `O(n log² n)` above `polynomial.subproduct_min_len()`; matches `interpolate_fast` below |
 | `interpolate_auto` | Threshold-tuned dispatcher over `interpolate` + `interpolate_fast` | `poly_interpolate.rs` : 130 – 230 | picks the right asymptotic (generic substrate) |
-| `interpolate_auto_two_adic` (for `F: TwoAdicField`) | Threshold-tuned dispatcher over `interpolate` + `interpolate_fast_auto` | `poly_interpolate.rs` : sibling of `interpolate_auto` | picks the right asymptotic; reaches `O(n log² n)` above `SUBPRODUCT_THRESHOLD` |
+| `interpolate_auto_two_adic` (for `F: TwoAdicField`) | Profile-driven dispatcher over `interpolate` + `interpolate_fast_auto` | `poly_interpolate.rs` : sibling of `interpolate_auto` | picks the right asymptotic; reaches `O(n log² n)` above `polynomial.subproduct_min_len()` |
 | `formal_derivative` | Elementwise `i · coeffs[i]` | `poly_interpolate.rs` : 233 – 347 | `O(n)` |
 | `ntt_inplace` | Radix-2 DIT NTT | `ntt.rs` : 112 – 360 | `O(N log N)` field multiplications |
 | `batch_inverse` / `batch_inverse_in_place` / skip-zero variants | Montgomery trick | `batch_ops.rs` : 70 – 840 | one `inv` + `3(N − 1)` multiplications |
 
-The tuning constants live in `poly.rs` (`KARATSUBA_THRESHOLD`,
-`NTT_THRESHOLD`, `DIV_REM_THRESHOLD`, `SUBPRODUCT_THRESHOLD`) and
+The conservative defaults live in `poly.rs` (`KARATSUBA_THRESHOLD`,
+`NTT_THRESHOLD`, `DIV_REM_THRESHOLD`, `SUBPRODUCT_THRESHOLD`); active
+selection comes from the corresponding `tuning::active().polynomial()`
+accessors, and
 `poly_interpolate.rs` (`INTERPOLATE_THRESHOLD`). See the **Threshold
 summary** section below for the tuned values and the benchmark story
 behind each. `cargo doc --no-deps -p gf2-core` produces the
@@ -80,10 +82,11 @@ holds the complexity-reference table and the most recent `cargo bench
 - **Polynomial multiplication.** Reach for the `Mul` operator (or the
   `FieldPoly::mul` method) when the operands are under a thousand
   coefficients and the field is arbitrary: it dispatches to schoolbook or
-  Karatsuba through `KARATSUBA_THRESHOLD = 32`. If your field implements
+  Karatsuba through the active `karatsuba_min_degree()` (conservative default
+  `KARATSUBA_THRESHOLD = 32`). If your field implements
   `TwoAdicField` *and* the output length is large enough that the NTT's
   butterfly cost wins out, call the free function `mul_fast` — it applies
-  the tuned `NTT_THRESHOLD = 128` and falls through to the Karatsuba path
+  the active `karatsuba_max_out_len()` (conservative default 128) and falls through to the Karatsuba path
   otherwise. For benchmarking the underlying NTT path unconditionally, call
   `FieldPoly::mul_ntt` directly.
 
@@ -101,7 +104,8 @@ holds the complexity-reference table and the most recent `cargo bench
   `eval_batch` for `k` independent Horner folds, `batch_evaluate` for the
   generic auto-dispatched public entry point, and
   `FieldPoly::batch_evaluate_auto` for the `TwoAdicField`-specialised
-  dispatcher. Both share `SUBPRODUCT_THRESHOLD = 4096` on `Fp<65537>`:
+  dispatcher. Both share the conservative `subproduct_min_len()` default of
+  4096 on `Fp<65537>`:
   below it they fall back to naive Horner; at or above it
   `batch_evaluate` uses the schoolbook-`div_rem` subproduct tree and
   `batch_evaluate_auto` uses the Newton-iteration-`div_rem_auto`
@@ -131,8 +135,8 @@ holds the complexity-reference table and the most recent `cargo bench
   `interpolate_auto_two_adic` instead: same threshold dispatch but the
   fast path routes through `interpolate_fast_auto`, whose middle step
   uses `FieldPoly::batch_evaluate_auto` and picks up the
-  Newton-iteration `FieldPoly::div_rem_auto` primitive above
-  `SUBPRODUCT_THRESHOLD` — unlocking the `O(n log² n)` asymptotic on
+  Newton-iteration `FieldPoly::div_rem_auto` primitive above the active
+  `polynomial.subproduct_min_len()` selector — unlocking the `O(n log² n)` asymptotic on
   large inputs (issue `046f95c1`). Callers who want a specific variant
   can call `interpolate`, `interpolate_fast`, or `interpolate_fast_auto`
   directly.
@@ -145,23 +149,22 @@ holds the complexity-reference table and the most recent `cargo bench
 
 ## Threshold summary
 
-The fast-path dispatchers in this module all share the same tuning
-pattern: a single `usize` constant, tuned from criterion benchmarks on
-the Zen 3 reference host, that gates the crossover between a
-constant-factor-cheap schoolbook path and an asymptotically-better
-fast path.
+The fast-path dispatchers in this module all share the same profile-driven
+pattern: each active selector is a `usize` field, with a conservative default
+retained as a named constant in `poly.rs`.
 
 | Constant | Location | Tuned value | Crossover story |
 |----------|----------|------------:|-----------------|
-| `KARATSUBA_THRESHOLD` | `poly.rs` | 32 | Karatsuba fires above this, schoolbook below. Tuned from early GF(2^14) measurements. |
-| `NTT_THRESHOLD` | `poly.rs` | 128 | `mul_fast` dispatches to NTT at or above this, Karatsuba below. Tuned from `field_poly_mul_fp65537` (n = 128 ties, n = 256 NTT wins 2×). |
-| `DIV_REM_THRESHOLD` | `poly.rs` | 2048 | `div_rem_auto` dispatches to `div_rem_fast` at or above this, schoolbook below. Tuned from `field_poly_div_rem_fp65537` (n = 2048 fast wins 1.7×). Landed in issue `ae0c7e1f`. |
-| `SUBPRODUCT_THRESHOLD` | `poly.rs` | 4096 | `batch_evaluate` / `batch_evaluate_auto` dispatch to the subproduct tree at or above this, naive Horner below. Tuned from `field_poly_batch_evaluate_fp65537` — the only winning cell for `subproduct_auto` vs naive on `Fp<65537>` is `(n = 4096, k = 4096)` at `0.89×` (54.29 ms vs 60.89 ms on the latest rerun). The generic `batch_evaluate` dispatcher at that cell lands at ~80 ms because it routes through the schoolbook `subproduct` arm; `TwoAdicField` callers should reach for `batch_evaluate_auto`. Landed in issue `046f95c1` on top of the `ae0c7e1f` `div_rem_fast` substrate. |
+| `KARATSUBA_THRESHOLD` | `poly.rs` | 32 | Conservative default for `polynomial.karatsuba_min_degree()`; the active selector chooses schoolbook below and Karatsuba at or above. |
+| `NTT_THRESHOLD` | `poly.rs` | 128 | Conservative default for `polynomial.karatsuba_max_out_len()`; the active selector chooses NTT above its profile value. The historical tuning claim is contradicted by the committed procedure-verification falsification record. |
+| `DIV_REM_THRESHOLD` | `poly.rs` | 2048 | Conservative default for `polynomial.div_rem_fast_min_len()`; the active selector chooses fast division at or above and schoolbook below. |
+| `SUBPRODUCT_THRESHOLD` | `poly.rs` | 4096 | Conservative default for `polynomial.subproduct_min_len()`; the active selector chooses the subproduct tree at or above and naive Horner below. |
 | `INTERPOLATE_THRESHOLD` | `poly_interpolate.rs` | 16 | `interpolate_auto` dispatches to `interpolate_fast` at or above this, quadratic barycentric below. `fast` already wins from `n = 4` on `Fp<65537>` so the threshold is a conservative safety margin for fields with expensive polynomial multiplication. Re-verified under issue `046f95c1`; no retuning needed. |
 
 ## Known gaps and future work
 
-- **`SUBPRODUCT_THRESHOLD = 4096` is narrow on `Fp<65537>`.** The
+- **The conservative `subproduct_min_len()` default of 4096 is narrow on
+  `Fp<65537>`.** The
   crossover cell is `(n = 4096, k = 4096)` at `0.89×` of naive Horner
   (`subproduct_auto`: 54.29 ms vs 60.89 ms on the latest rerun), and
   every smaller cell still favours naive. The generic `batch_evaluate`
@@ -174,7 +177,7 @@ fast path.
   callers on those fields who want to force the subproduct-tree path
   should call `batch_evaluate_subproduct` (generic) or
   `batch_evaluate_subproduct_auto` (`TwoAdicField`) directly. A
-  future refinement could specialise `SUBPRODUCT_THRESHOLD` per-field
+  future refinement could specialise `subproduct_min_len()` per-field
   (e.g. via an associated constant on a hypothetical `FieldCost`
   trait), but the single-constant tuning is sufficient for the
   benchmarked workload.
@@ -202,8 +205,8 @@ fast path.
   `interpolate_fast`, differing only in the injected middle-step
   primitive — it wires `FieldPoly::batch_evaluate_auto` in, which
   routes above-threshold cases through `FieldPoly::div_rem_auto` and
-  unlocks the `O(n log² n)` asymptotic above `SUBPRODUCT_THRESHOLD`).
-  `TwoAdicField` call-sites that want the threshold-tuned dispatch
+  unlocks the `O(n log² n)` asymptotic above the active subproduct selector).
+  `TwoAdicField` call-sites that want the profile-driven dispatch
   should use `interpolate_auto_two_adic`, the sibling dispatcher over
   `interpolate` + `interpolate_fast_auto`. Rust coherence
   forbids a second `pub fn interpolate_auto` specialised on
