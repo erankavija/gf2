@@ -14,7 +14,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-19T23:12:47.676773900Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-19T23:17:36.535650555Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "697fc55b-4b36-4cb5-8106-a811b1772e44",
   "labels": [
     "type:task",
@@ -25,5 +36,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut the polynomial crossover selectors over to profile-driven selection",
-  "updated_at": "2026-08-19T22:37:48.934158456Z"
+  "updated_at": "2026-08-19T23:17:36.535650555Z"
 }
