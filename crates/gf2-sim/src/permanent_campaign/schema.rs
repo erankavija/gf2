@@ -552,6 +552,20 @@ pub enum Backend {
     Accelerator,
 }
 
+impl Backend {
+    /// Returns the canonical serialized backend token.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Scalar => "scalar",
+            Self::BatchParallel => "batch_parallel",
+            Self::IntraMatrixParallel => "intra_matrix_parallel",
+            Self::GenericRyser => "generic_ryser",
+            Self::Accelerator => "accelerator",
+        }
+    }
+}
+
 /// Frozen determinant-companion plan for a cell.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

@@ -3,7 +3,9 @@
 //! A campaign invocation owns one field arm. Work is ordered by `(q, n,
 //! shard_id)`, each shard opens the stream address recorded by its manifest,
 //! and every matrix passes through draw, pack, evaluate, determinant, and count
-//! phases when the cell requests the determinant companion.
+//! phases when the cell requests the determinant companion. Generic Ryser
+//! cells omit the pack phase because their row-major operands are evaluated
+//! directly.
 //! Timings remain in [`ShardRun`] for progress reporting; only schema records
 //! and summaries are written to disk, so wall-clock variation cannot alter
 //! emitted bytes.
@@ -33,8 +35,10 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use gf2_algebra::packed::{Bipedal3Matrix, Packed5Matrix, Packed7Matrix};
+use gf2_algebra::permanent::bipedal5::permanent_bipedal5_singleword;
+use gf2_algebra::permanent::bipedal7::permanent_bipedal7_singleword;
 use gf2_algebra::permanent::{
-    permanent_bipedal3, permanent_bipedal5, permanent_bipedal7, permanent_ryser,
+    permanent_bipedal3_parallel, permanent_bipedal3_singleword, permanent_ryser,
 };
 use gf2_core::field::{matrix::FieldMatrix, FieldVec};
 use gf2_core::gfp::Fp;
@@ -89,6 +93,21 @@ pub struct WorkItem {
     pub determinant_companion: DeterminantPlan,
 }
 
+/// Concrete processor kernel selected for one frozen campaign cell.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ProcessorPath {
+    /// F_3 single-word scalar kernel.
+    Bipedal3SingleWord,
+    /// F_5 single-word scalar kernel.
+    Bipedal5SingleWord,
+    /// F_7 single-word scalar kernel.
+    Bipedal7SingleWord,
+    /// F_3 intra-matrix Rayon kernel.
+    Bipedal3IntraMatrixParallel,
+    /// Generic finite-field Ryser kernel.
+    GenericRyser,
+}
+
 impl WorkItem {
     /// Returns the deterministic ordering key `(q, n, shard_id)`.
     #[must_use]
@@ -104,6 +123,8 @@ pub struct PhaseDurations {
     pub draw: Duration,
     /// Time spent constructing the packed representation, including each
     /// batch's wall-clock packing section when `BatchParallel` is selected.
+    /// This is zero for a `GenericRyser` cell, which does not construct a
+    /// packed representation.
     pub pack: Duration,
     /// Time spent evaluating permanents, as serial per-matrix time or the
     /// wall-clock duration of each batch's parallel permanent section.
@@ -180,6 +201,15 @@ pub enum ScheduleError {
     MissingCampaignPurpose,
     /// A manifest value cannot be represented by the execution API.
     InvalidWorkItem(String),
+    /// The frozen cell backend has no implementation in this build.
+    BackendUnavailable {
+        /// Prime field order of the cell.
+        q: u8,
+        /// Square matrix dimension of the cell.
+        n: u16,
+        /// Backend named by the cell.
+        backend: Backend,
+    },
     /// A filesystem or serialization operation failed.
     Io {
         /// Path involved in the filesystem operation.
@@ -200,9 +230,45 @@ impl fmt::Display for ScheduleError {
                 "manifest stream_purposes has no campaign-cell purpose tag {CAMPAIGN_CELL_PURPOSE_TAG}"
             ),
             Self::InvalidWorkItem(message) => formatter.write_str(message),
+            Self::BackendUnavailable { q, n, backend } => write!(
+                formatter,
+                "cell q={q} n={n} names backend {}, which this build does not provide",
+                backend.name()
+            ),
             Self::Io { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::Serialization(source) => source.fmt(formatter),
         }
+    }
+}
+
+fn backend_unavailable(q: u8, n: u16, backend: Backend) -> Result<ProcessorPath, ScheduleError> {
+    Err(ScheduleError::BackendUnavailable { q, n, backend })
+}
+
+/// Resolves a frozen cell triple to the concrete processor kernel it names.
+///
+/// This is a pure function of the manifest's `(q, n, backend)` values. It
+/// does not inspect host capabilities, timing, sampled matrices, or any
+/// measurement result. Matrix distribution for `BatchParallel` remains a
+/// separate scheduling concern.
+pub(crate) fn resolve_processor_path(
+    q: u8,
+    n: u16,
+    backend: Backend,
+) -> Result<ProcessorPath, ScheduleError> {
+    match backend {
+        Backend::Scalar | Backend::BatchParallel => match q {
+            3 if n <= 63 => Ok(ProcessorPath::Bipedal3SingleWord),
+            5 if n <= 63 => Ok(ProcessorPath::Bipedal5SingleWord),
+            7 if n <= 16 => Ok(ProcessorPath::Bipedal7SingleWord),
+            _ => backend_unavailable(q, n, backend),
+        },
+        Backend::IntraMatrixParallel => match q {
+            3 if n <= 63 => Ok(ProcessorPath::Bipedal3IntraMatrixParallel),
+            _ => backend_unavailable(q, n, backend),
+        },
+        Backend::GenericRyser if n <= 63 => Ok(ProcessorPath::GenericRyser),
+        Backend::GenericRyser | Backend::Accelerator => backend_unavailable(q, n, backend),
     }
 }
 
@@ -263,6 +329,8 @@ pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Sch
 /// rejected before any sampler is opened; positive counts build a local Rayon
 /// pool for each batch-parallel shard. Scalar, generic-Ryser, and
 /// intra-matrix-parallel cells retain their existing per-matrix dispatch.
+/// `BatchParallel` controls how matrices are distributed, while the resolved
+/// `ProcessorPath` controls which kernel evaluates each matrix.
 ///
 /// # Errors
 ///
@@ -506,6 +574,7 @@ where
     O: FnMut(&[Fp<Q>], u64, Option<u64>),
 {
     validate_worker_count(worker_count)?;
+    let processor_path = resolve_processor_path(item.q, item.n, item.backend)?;
     if item.backend == Backend::BatchParallel {
         return run_shard_for_batch(
             root_seed,
@@ -513,10 +582,18 @@ where
             item,
             field_order,
             worker_count,
+            processor_path,
             observer,
         );
     }
-    run_shard_for_serial(root_seed, purpose_tag, item, field_order, observer)
+    run_shard_for_serial(
+        root_seed,
+        purpose_tag,
+        item,
+        field_order,
+        processor_path,
+        observer,
+    )
 }
 
 fn run_shard_for_serial<const Q: u64, O>(
@@ -524,6 +601,7 @@ fn run_shard_for_serial<const Q: u64, O>(
     purpose_tag: u8,
     item: &WorkItem,
     field_order: FieldOrder,
+    processor_path: ProcessorPath,
     observer: &mut O,
 ) -> Result<EvaluatedShard, ScheduleError>
 where
@@ -558,12 +636,17 @@ where
         sampler.fill_next_matrix(&mut row_major);
         draw += started.elapsed();
 
-        let started = Instant::now();
-        let packed = PackedMatrix::new(&row_major, n);
-        pack += started.elapsed();
+        let packed = if processor_path == ProcessorPath::GenericRyser {
+            None
+        } else {
+            let started = Instant::now();
+            let packed = PackedMatrix::new(&row_major, n);
+            pack += started.elapsed();
+            Some(packed)
+        };
 
         let started = Instant::now();
-        let value = evaluate_permanent(item.backend, &row_major, &packed, n)?;
+        let value = evaluate_permanent(processor_path, &row_major, packed.as_ref(), n)?;
         evaluate += started.elapsed();
 
         let determinant_value = if item.determinant_companion == DeterminantPlan::Evaluate {
@@ -629,6 +712,7 @@ fn run_shard_for_batch<const Q: u64, O>(
     item: &WorkItem,
     field_order: FieldOrder,
     worker_count: usize,
+    processor_path: ProcessorPath,
     observer: &mut O,
 ) -> Result<EvaluatedShard, ScheduleError>
 where
@@ -681,22 +765,36 @@ where
         }
         draw += started.elapsed();
 
-        let started = Instant::now();
-        let packed: Vec<_> = pool.install(|| {
-            matrices
-                .par_iter()
-                .map(|entries| PackedMatrix::new(entries, n))
-                .collect()
-        });
-        pack += started.elapsed();
+        let packed = if processor_path == ProcessorPath::GenericRyser {
+            None
+        } else {
+            let started = Instant::now();
+            let packed: Vec<_> = pool.install(|| {
+                matrices
+                    .par_iter()
+                    .map(|entries| PackedMatrix::new(entries, n))
+                    .collect()
+            });
+            pack += started.elapsed();
+            Some(packed)
+        };
 
         let started = Instant::now();
         let permanent_values: Vec<Result<u64, ScheduleError>> = pool.install(|| {
-            packed
-                .par_iter()
-                .zip(matrices.par_iter())
-                .map(|(packed, entries)| evaluate_permanent(Backend::Scalar, entries, packed, n))
-                .collect()
+            if let Some(packed) = packed.as_ref() {
+                packed
+                    .par_iter()
+                    .zip(matrices.par_iter())
+                    .map(|(packed, entries)| {
+                        evaluate_permanent(processor_path, entries, Some(packed), n)
+                    })
+                    .collect()
+            } else {
+                matrices
+                    .par_iter()
+                    .map(|entries| evaluate_permanent(processor_path, entries, None, n))
+                    .collect()
+            }
         });
         evaluate += started.elapsed();
         let permanent_values: Vec<u64> = permanent_values.into_iter().collect::<Result<_, _>>()?;
@@ -807,35 +905,45 @@ impl PackedMatrix {
 }
 
 fn evaluate_permanent<const Q: u64>(
-    backend: Backend,
+    processor_path: ProcessorPath,
     row_major: &[Fp<Q>],
-    packed: &PackedMatrix,
+    packed: Option<&PackedMatrix>,
     n: usize,
 ) -> Result<u64, ScheduleError> {
-    let value = match (Q, backend, packed) {
-        (3, Backend::Scalar, PackedMatrix::F3(matrix))
-        | (3, Backend::IntraMatrixParallel, PackedMatrix::F3(matrix)) => {
-            permanent_bipedal3(matrix).value()
-        }
-        (5, Backend::Scalar, PackedMatrix::F5(matrix))
-        | (5, Backend::IntraMatrixParallel, PackedMatrix::F5(matrix)) => {
-            permanent_bipedal5(matrix).value()
-        }
-        (7, Backend::Scalar, PackedMatrix::F7(matrix))
-        | (7, Backend::IntraMatrixParallel, PackedMatrix::F7(matrix)) => {
-            permanent_bipedal7(matrix).value()
-        }
-        (_, Backend::GenericRyser, _) => permanent_ryser(row_major, n).value(),
-        (_, Backend::Accelerator, _) => {
-            return Err(ScheduleError::InvalidWorkItem(
-                "accelerator backend is layered above the scheduler".to_owned(),
-            ));
-        }
-        _ => {
-            return Err(ScheduleError::InvalidWorkItem(
-                "packed matrix and field order do not agree".to_owned(),
-            ));
-        }
+    let value = match processor_path {
+        ProcessorPath::Bipedal3SingleWord => match packed {
+            Some(PackedMatrix::F3(matrix)) => permanent_bipedal3_singleword(matrix).value(),
+            _ => {
+                return Err(ScheduleError::InvalidWorkItem(
+                    "packed matrix and F_3 processor path do not agree".to_owned(),
+                ));
+            }
+        },
+        ProcessorPath::Bipedal5SingleWord => match packed {
+            Some(PackedMatrix::F5(matrix)) => permanent_bipedal5_singleword(matrix).value(),
+            _ => {
+                return Err(ScheduleError::InvalidWorkItem(
+                    "packed matrix and F_5 processor path do not agree".to_owned(),
+                ));
+            }
+        },
+        ProcessorPath::Bipedal7SingleWord => match packed {
+            Some(PackedMatrix::F7(matrix)) => permanent_bipedal7_singleword(matrix).value(),
+            _ => {
+                return Err(ScheduleError::InvalidWorkItem(
+                    "packed matrix and F_7 processor path do not agree".to_owned(),
+                ));
+            }
+        },
+        ProcessorPath::Bipedal3IntraMatrixParallel => match packed {
+            Some(PackedMatrix::F3(matrix)) => permanent_bipedal3_parallel(matrix).value(),
+            _ => {
+                return Err(ScheduleError::InvalidWorkItem(
+                    "packed matrix and F_3 processor path do not agree".to_owned(),
+                ));
+            }
+        },
+        ProcessorPath::GenericRyser => permanent_ryser(row_major, n).value(),
     };
     Ok(value)
 }
@@ -1143,6 +1251,119 @@ mod tests {
     use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test, two_sided_test};
     use std::collections::BTreeSet;
 
+    #[test]
+    fn test_resolve_processor_path_reads_scalar_for_each_field() {
+        assert_eq!(
+            resolve_processor_path(3, 20, Backend::Scalar).unwrap(),
+            ProcessorPath::Bipedal3SingleWord
+        );
+        assert_eq!(
+            resolve_processor_path(5, 20, Backend::Scalar).unwrap(),
+            ProcessorPath::Bipedal5SingleWord
+        );
+        assert_eq!(
+            resolve_processor_path(7, 12, Backend::Scalar).unwrap(),
+            ProcessorPath::Bipedal7SingleWord
+        );
+    }
+
+    #[test]
+    fn test_resolve_processor_path_reads_batch_parallel_for_each_field() {
+        assert_eq!(
+            resolve_processor_path(3, 20, Backend::BatchParallel).unwrap(),
+            ProcessorPath::Bipedal3SingleWord
+        );
+        assert_eq!(
+            resolve_processor_path(5, 20, Backend::BatchParallel).unwrap(),
+            ProcessorPath::Bipedal5SingleWord
+        );
+        assert_eq!(
+            resolve_processor_path(7, 12, Backend::BatchParallel).unwrap(),
+            ProcessorPath::Bipedal7SingleWord
+        );
+    }
+
+    #[test]
+    fn test_resolve_processor_path_reads_intra_matrix_parallel_for_f3() {
+        let parallel = resolve_processor_path(3, 20, Backend::IntraMatrixParallel).unwrap();
+        let scalar = resolve_processor_path(3, 20, Backend::Scalar).unwrap();
+        assert_eq!(parallel, ProcessorPath::Bipedal3IntraMatrixParallel);
+        assert_ne!(parallel, scalar);
+    }
+
+    #[test]
+    fn test_resolve_processor_path_reads_generic_ryser_above_the_f7_ceiling() {
+        assert_eq!(
+            resolve_processor_path(7, 24, Backend::GenericRyser).unwrap(),
+            ProcessorPath::GenericRyser
+        );
+    }
+
+    #[test]
+    fn test_resolve_processor_path_halts_for_intra_matrix_parallel_on_f5_and_f7() {
+        for (q, n) in [(5, 20), (7, 12)] {
+            let error = resolve_processor_path(q, n, Backend::IntraMatrixParallel).unwrap_err();
+            assert!(matches!(
+                error,
+                ScheduleError::BackendUnavailable {
+                    q: error_q,
+                    n: error_n,
+                    backend: Backend::IntraMatrixParallel,
+                } if error_q == q && error_n == n
+            ));
+            let rendered = error.to_string();
+            assert!(rendered.contains(&format!("q={q}")));
+            assert!(rendered.contains(&format!("n={n}")));
+            assert!(rendered.contains("intra_matrix_parallel"));
+        }
+    }
+
+    #[test]
+    fn test_resolve_processor_path_halts_above_the_packed_f7_ceiling() {
+        for backend in [Backend::Scalar, Backend::BatchParallel] {
+            let error = resolve_processor_path(7, 24, backend).unwrap_err();
+            assert!(matches!(
+                error,
+                ScheduleError::BackendUnavailable {
+                    q: 7,
+                    n: 24,
+                    backend: error_backend,
+                } if error_backend == backend
+            ));
+        }
+    }
+
+    #[test]
+    fn test_resolve_processor_path_halts_for_accelerator() {
+        let error = resolve_processor_path(3, 20, Backend::Accelerator).unwrap_err();
+        assert!(matches!(
+            error,
+            ScheduleError::BackendUnavailable {
+                q: 3,
+                n: 20,
+                backend: Backend::Accelerator,
+            }
+        ));
+        let rendered = error.to_string();
+        assert!(rendered.contains("q=3"));
+        assert!(rendered.contains("n=20"));
+        assert!(rendered.contains("accelerator"));
+    }
+
+    #[test]
+    fn test_backend_name_agrees_with_serialized_token() {
+        for backend in [
+            Backend::Scalar,
+            Backend::BatchParallel,
+            Backend::IntraMatrixParallel,
+            Backend::GenericRyser,
+            Backend::Accelerator,
+        ] {
+            let serialized = serde_json::to_value(backend).unwrap();
+            assert_eq!(serialized.as_str(), Some(backend.name()));
+        }
+    }
+
     fn manifest(cells: Vec<CellSpec>) -> CampaignManifest {
         CampaignManifest {
             schema_version: SCHEMA_VERSION,
@@ -1200,6 +1421,54 @@ mod tests {
                     .unwrap(),
             },
             determinant_companion: DeterminantPlan::NotEvaluated,
+        }
+    }
+
+    #[test]
+    fn test_work_item_backend_is_copied_from_the_manifest_cell() {
+        let mut scalar_cell = cell(3, 2, 1, &[(0, 20)]);
+        scalar_cell.backend = Backend::Scalar;
+        let mut batch_cell = cell(5, 2, 1, &[(1, 21)]);
+        batch_cell.backend = Backend::BatchParallel;
+        let campaign = manifest(vec![scalar_cell, batch_cell]);
+        let items = enumerate_work_items(&campaign, None).unwrap();
+        let manifest_backends: Vec<_> = campaign.cells.iter().map(|cell| cell.backend).collect();
+
+        assert_eq!(items.len(), 2);
+        for item in &items {
+            let cell = campaign
+                .cells
+                .iter()
+                .find(|cell| cell.q == item.q && cell.n == item.n)
+                .unwrap();
+            assert_eq!(item.backend, cell.backend);
+            assert!(manifest_backends.contains(&item.backend));
+        }
+    }
+
+    #[test]
+    fn test_run_shard_evaluates_generic_ryser_above_the_f7_ceiling() {
+        for n in 17..=18 {
+            let mut campaign = manifest(vec![cell(7, n, 4, &[(0, 23)])]);
+            campaign.cells[0].backend = Backend::GenericRyser;
+            let item = enumerate_work_items(&campaign, Some(7)).unwrap().remove(0);
+            let mut observed = Vec::new();
+            let evaluated = run_shard_for_with_observer(
+                campaign.root_seed,
+                CAMPAIGN_CELL_PURPOSE_TAG,
+                &item,
+                FieldOrder::F7,
+                &mut |entries: &[Fp<7>], permanent, _| {
+                    observed.push((entries.to_vec(), permanent));
+                },
+            )
+            .unwrap();
+
+            assert_eq!(observed.len(), 4);
+            assert_eq!(evaluated.run.timing.pack, Duration::ZERO);
+            for (entries, permanent) in observed {
+                assert_eq!(permanent, permanent_ryser(&entries, usize::from(n)).value());
+            }
         }
     }
 
@@ -1404,6 +1673,44 @@ mod tests {
                 shard_record_bytes(&one.shards()[0].record).unwrap(),
                 shard_record_bytes(&four.shards()[0].record).unwrap()
             );
+
+            let mut scalar = campaign.clone();
+            scalar.cells[0].backend = Backend::Scalar;
+            let scalar_run = run_field(&scalar, q).unwrap();
+            assert_eq!(
+                scalar_run.shards()[0].record.permanent_histogram,
+                one.shards()[0].record.permanent_histogram
+            );
+            assert_eq!(
+                scalar_run.shards()[0].record.permanent_zero_count,
+                one.shards()[0].record.permanent_zero_count
+            );
+
+            if q == 3 {
+                let scalar_item = enumerate_work_items(&scalar, Some(q)).unwrap().remove(0);
+                let batch_item = enumerate_work_items(&campaign, Some(q)).unwrap().remove(0);
+                let mut scalar_values = Vec::new();
+                let mut batch_values = Vec::new();
+                run_shard_for_with_observer_with_worker_count(
+                    scalar.root_seed,
+                    CAMPAIGN_CELL_PURPOSE_TAG,
+                    &scalar_item,
+                    FieldOrder::F3,
+                    1,
+                    &mut |_: &[Fp<3>], value, _| scalar_values.push(value),
+                )
+                .unwrap();
+                run_shard_for_with_observer_with_worker_count(
+                    campaign.root_seed,
+                    CAMPAIGN_CELL_PURPOSE_TAG,
+                    &batch_item,
+                    FieldOrder::F3,
+                    4,
+                    &mut |_: &[Fp<3>], value, _| batch_values.push(value),
+                )
+                .unwrap();
+                assert_eq!(scalar_values, batch_values);
+            }
         }
     }
 
