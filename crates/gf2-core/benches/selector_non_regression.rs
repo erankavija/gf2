@@ -57,6 +57,9 @@ const SET_TOLERANCE: f64 = 0.02;
 /// verdict computed under it attributes movement to behaviour rather than to
 /// across-build code layout.
 const ATTRIBUTION_MARGIN: f64 = 3.0;
+/// Ensemble sizes the predeclared enumeration provides: its first rung and the
+/// second rung of the ladder a failed precondition climbs.
+const ENSEMBLE_SIZES: [usize; 2] = [128, 256];
 
 type F = Fp<65537>;
 
@@ -328,7 +331,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let candidate = load_ensemble(candidate_path)?;
         // Under `--layout-audit` the receipt pair names the two committed
         // receipts whose ratios record what one natural rebuild moves, which is
-        // the floor the ensemble's own dispersion is held against.
+        // the floor the ensemble's own dispersion is held against. The audit
+        // requires it: without the pair the coverage precondition has nothing
+        // to hold the ensemble against, and it refuses rather than reporting a
+        // verdict that skipped one of its own preconditions.
         let natural = match (args.compare.as_deref(), args.against.as_deref()) {
             (Some(baseline), Some(rebuild)) => {
                 Some((load_receipt(baseline)?, load_receipt(rebuild)?))
@@ -1320,7 +1326,23 @@ struct EnsembleArm {
     schema_version: String,
     revisions: BTreeSet<String>,
     dirty_builds: BTreeSet<u32>,
+    zero_execution: bool,
     builds: BTreeMap<u32, BTreeMap<String, CellStat>>,
+}
+
+/// The ensemble member a recorded execution index names.
+///
+/// Member `j` of the enumeration records `--execution j+1`, so every split and
+/// balance the procedure states over members runs over `execution - 1` rather
+/// than over the execution index itself.
+fn member_index(execution: u32) -> u32 {
+    execution.saturating_sub(1)
+}
+
+/// Whether a build falls in the even half of the member-index parity split,
+/// which is the balanced bipartition the enumeration provides.
+fn even_member(execution: u32) -> bool {
+    member_index(execution).is_multiple_of(2)
 }
 
 impl EnsembleArm {
@@ -1348,6 +1370,17 @@ impl EnsembleArm {
         elapsed as f64 / calls as f64
     }
 
+    /// How many builds fall on each side of the member-index parity split the
+    /// half-split null reads, even members first.
+    fn halves(&self) -> (usize, usize) {
+        let even = self
+            .builds
+            .keys()
+            .filter(|execution| even_member(**execution))
+            .count();
+        (even, self.builds.len() - even)
+    }
+
     /// Natural logarithm of every build's pooled ns/call for `cell`, in build
     /// index order, which is the order both arms of a paired ensemble share.
     fn log_rates(&self, cell: &str) -> Vec<f64> {
@@ -1365,33 +1398,18 @@ impl EnsembleArm {
 /// pinned set, so no dispersion computed from them carries meaning.
 #[derive(Debug, PartialEq, Eq)]
 enum AuditError {
-    Schema {
-        found: String,
-    },
-    Dirty {
-        build: u32,
-    },
-    Revision {
-        first: String,
-        second: String,
-    },
-    CellSet {
-        build: u32,
-    },
+    Schema { found: String },
+    Dirty { build: u32 },
+    Revision { first: String, second: String },
+    CellSet { build: u32 },
     Identity(IdentityMismatch),
-    Degenerate {
-        cell: String,
-        build: u32,
-    },
-    BuildCount {
-        builds: usize,
-        halves: (usize, usize),
-    },
-    ArmBuilds {
-        reference: usize,
-        candidate: usize,
-    },
+    Degenerate { cell: String, build: u32 },
+    EnsembleSize { builds: usize },
+    Unbalanced { halves: (usize, usize) },
+    ExecutionIndex,
+    ArmBuilds { reference: usize, candidate: usize },
     NaturalPair,
+    NaturalPairMissing,
 }
 
 impl AuditError {
@@ -1404,9 +1422,12 @@ impl AuditError {
             Self::CellSet { .. } => "not the pinned set",
             Self::Identity(_) => "selector identity mismatch",
             Self::Degenerate { .. } => "degenerate cell",
-            Self::BuildCount { .. } => "unusable build count",
+            Self::EnsembleSize { .. } => "not a predeclared ensemble size",
+            Self::Unbalanced { .. } => "ensemble halves are unbalanced",
+            Self::ExecutionIndex => "execution index below one",
             Self::ArmBuilds { .. } => "arms carry different builds",
             Self::NaturalPair => "natural pair is not the pinned set",
+            Self::NaturalPairMissing => "natural pair missing",
         }
     }
 }
@@ -1437,10 +1458,18 @@ impl fmt::Display for AuditError {
             Self::Degenerate { cell, build } => {
                 write!(f, "cell has zero calls or non-positive time: {cell} in build {build}")
             }
-            Self::BuildCount { builds, halves } => write!(
+            Self::EnsembleSize { builds } => write!(
                 f,
-                "ensemble has {builds} build(s) split {}/{} by execution index parity; the audit needs at least four builds in two equal halves",
+                "ensemble has {builds} build(s); the predeclared enumeration provides {ENSEMBLE_SIZES:?} members, and a member dropped for a build failure is replaced from the enumeration rather than left out"
+            ),
+            Self::Unbalanced { halves } => write!(
+                f,
+                "ensemble splits {}/{} on member-index parity; the predeclared enumeration balances its halves, so an unbalanced split is a different ensemble",
                 halves.0, halves.1
+            ),
+            Self::ExecutionIndex => write!(
+                f,
+                "a row records execution 0; member j records execution j+1, so every recorded execution index is at least one"
             ),
             Self::ArmBuilds {
                 reference,
@@ -1452,6 +1481,10 @@ impl fmt::Display for AuditError {
             Self::NaturalPair => write!(
                 f,
                 "the receipts naming the natural across-build pair do not both carry the {SCHEMA_VERSION} pinned set"
+            ),
+            Self::NaturalPairMissing => write!(
+                f,
+                "no natural across-build pair was named; the coverage precondition holds the ensemble's dispersion against what one natural rebuild records, so the audit does not run without it"
             ),
         }
     }
@@ -1469,7 +1502,7 @@ struct CellAudit {
     layout_se: f64,
     margin: f64,
     null_ratio: f64,
-    natural_sigma: Option<f64>,
+    natural_sigma: f64,
     passed: bool,
 }
 
@@ -1500,7 +1533,7 @@ struct LayoutAudit {
     set_layout_se: f64,
     set_margin: f64,
     null_geomean: f64,
-    coverage: Option<Coverage>,
+    coverage: Coverage,
     decorrelation: Decorrelation,
     passed: bool,
 }
@@ -1556,6 +1589,7 @@ fn load_ensemble(path: &Path) -> Result<EnsembleArm, String> {
     let mut schema_version = None;
     let mut revisions = BTreeSet::new();
     let mut dirty_builds = BTreeSet::new();
+    let mut zero_execution = false;
     let mut builds: BTreeMap<u32, BTreeMap<String, CellStat>> = BTreeMap::new();
     for row in rows.iter().skip(1) {
         if row.iter().all(String::is_empty) {
@@ -1569,6 +1603,9 @@ fn load_ensemble(path: &Path) -> Result<EnsembleArm, String> {
         let execution: u32 = csv_value(row, &columns, "execution")?
             .parse()
             .map_err(|_| "invalid execution index".to_owned())?;
+        if execution == 0 {
+            zero_execution = true;
+        }
         if csv_value(row, &columns, "source_dirty")? != "false" {
             dirty_builds.insert(execution);
         }
@@ -1609,6 +1646,7 @@ fn load_ensemble(path: &Path) -> Result<EnsembleArm, String> {
         schema_version: schema_version.ok_or_else(|| "receipt has no data rows".to_owned())?,
         revisions,
         dirty_builds,
+        zero_execution,
         builds,
     })
 }
@@ -1620,6 +1658,9 @@ fn check_arm(arm: &EnsembleArm) -> Result<(), AuditError> {
         return Err(AuditError::Schema {
             found: arm.schema_version.clone(),
         });
+    }
+    if arm.zero_execution {
+        return Err(AuditError::ExecutionIndex);
     }
     if let Some(build) = arm.dirty_builds.iter().next() {
         return Err(AuditError::Dirty { build: *build });
@@ -1675,15 +1716,19 @@ fn check_arm(arm: &EnsembleArm) -> Result<(), AuditError> {
             first = Some(stats);
         }
     }
-    let halves = (
-        arm.builds.keys().filter(|index| *index % 2 == 0).count(),
-        arm.builds.keys().filter(|index| *index % 2 == 1).count(),
-    );
-    if arm.builds.len() < 4 || halves.0 != halves.1 {
-        return Err(AuditError::BuildCount {
+    // The verdict is decidable at the tolerance because the ensemble is the
+    // predeclared one: its size sets the layout standard error the attribution
+    // margin is measured against, and its balanced halves are what make the
+    // half-split a dispersion measurement rather than a comparison of two
+    // unlike halves. An arm of some other size is a different ensemble.
+    if !ENSEMBLE_SIZES.contains(&arm.builds.len()) {
+        return Err(AuditError::EnsembleSize {
             builds: arm.builds.len(),
-            halves,
         });
+    }
+    let halves = arm.halves();
+    if halves.0 != halves.1 {
+        return Err(AuditError::Unbalanced { halves });
     }
     Ok(())
 }
@@ -1695,6 +1740,11 @@ fn audit_layout(
     candidate: &EnsembleArm,
     natural: Option<(&Receipt, &Receipt)>,
 ) -> Result<LayoutAudit, AuditError> {
+    // Coverage is a precondition of the verdict rather than an option, so a
+    // missing pair is refused before anything is computed from the arms.
+    let Some((natural_baseline, natural_rebuild)) = natural else {
+        return Err(AuditError::NaturalPairMissing);
+    };
     check_arm(reference)?;
     check_arm(candidate)?;
     if !reference.builds.keys().eq(candidate.builds.keys()) {
@@ -1704,8 +1754,9 @@ fn audit_layout(
         });
     }
     let pinned = pinned_cell_ids();
-    let natural_sigma = match natural {
-        Some((baseline, rebuild)) => {
+    let natural_sigma = {
+        let (baseline, rebuild) = (natural_baseline, natural_rebuild);
+        {
             if baseline.schema_version != SCHEMA_VERSION
                 || rebuild.schema_version != SCHEMA_VERSION
                 || !baseline.stats.keys().eq(pinned.iter())
@@ -1715,18 +1766,15 @@ fn audit_layout(
             }
             // One pair of builds of one revision estimates that revision's
             // across-build dispersion as the pair's log ratio over root two.
-            Some(
-                pinned
-                    .iter()
-                    .map(|cell| {
-                        let ratio = pooled_ns_per_call(&rebuild.stats[cell])
-                            / pooled_ns_per_call(&baseline.stats[cell]);
-                        (ratio.ln().abs() / f64::sqrt(2.0)).max(0.0)
-                    })
-                    .collect::<Vec<_>>(),
-            )
+            pinned
+                .iter()
+                .map(|cell| {
+                    let ratio = pooled_ns_per_call(&rebuild.stats[cell])
+                        / pooled_ns_per_call(&baseline.stats[cell]);
+                    (ratio.ln().abs() / f64::sqrt(2.0)).max(0.0)
+                })
+                .collect::<Vec<_>>()
         }
-        None => None,
     };
     let builds = reference.builds.len();
     let cell_tolerance = (1.0 + PER_CELL_TOLERANCE).ln();
@@ -1756,10 +1804,12 @@ fn audit_layout(
         } else {
             f64::INFINITY
         };
-        let null_ratio = reference.pooled(cell, |index| index % 2 == 0)
-            / reference.pooled(cell, |index| index % 2 == 1);
-        let sigma = natural_sigma.as_ref().map(|values| values[position]);
-        let covered = sigma.is_none_or(|sigma| reference_log_sd >= sigma / 2.0);
+        // Member j records execution j+1, so the halves the enumeration
+        // balances are the parities of j rather than of the execution index.
+        let null_ratio = reference.pooled(cell, even_member)
+            / reference.pooled(cell, |execution| !even_member(execution));
+        let sigma = natural_sigma[position];
+        let covered = reference_log_sd >= sigma / 2.0;
         null_log_sum += null_ratio.ln();
         cells.push(CellAudit {
             cell: cell.clone(),
@@ -1795,14 +1845,12 @@ fn audit_layout(
             .map(|cell| cell.reference_log_sd)
             .collect::<Vec<_>>(),
     );
-    let coverage = natural_sigma.as_ref().map(|sigma| {
-        let natural_rms = root_mean_square(sigma);
-        Coverage {
-            ensemble_rms: reference_rms,
-            natural_rms,
-            passed: reference_rms >= natural_rms,
-        }
-    });
+    let natural_rms = root_mean_square(&natural_sigma);
+    let coverage = Coverage {
+        ensemble_rms: reference_rms,
+        natural_rms,
+        passed: reference_rms >= natural_rms,
+    };
     let paired_rms = root_mean_square(
         &cells
             .iter()
@@ -1817,7 +1865,7 @@ fn audit_layout(
     let passed = cells.iter().all(|cell| cell.passed)
         && set_margin >= ATTRIBUTION_MARGIN
         && null_geomean.ln().abs() <= set_tolerance
-        && coverage.as_ref().is_none_or(|coverage| coverage.passed)
+        && coverage.passed
         && decorrelation.passed;
     Ok(LayoutAudit {
         builds,
@@ -1868,12 +1916,8 @@ fn print_layout_audit(reference: &Path, candidate: &Path, audit: &LayoutAudit) {
         "cell arm reference_spread reference_log_sd candidate_log_sd paired_log_sd layout_se margin null_ratio natural_sigma verdict"
     );
     for cell in &audit.cells {
-        let natural = match cell.natural_sigma {
-            Some(sigma) => format!("{sigma:.6}"),
-            None => "-".to_owned(),
-        };
         println!(
-            "{} {} {:.6} {:.6} {:.6} {:.6} {:.6} {:.3} {:.6} {natural} {}",
+            "{} {} {:.6} {:.6} {:.6} {:.6} {:.6} {:.3} {:.6} {:.6} {}",
             cell.cell,
             cell.arm,
             cell.reference_spread,
@@ -1883,6 +1927,7 @@ fn print_layout_audit(reference: &Path, candidate: &Path, audit: &LayoutAudit) {
             cell.layout_se,
             cell.margin,
             cell.null_ratio,
+            cell.natural_sigma,
             if cell.passed { "PASS" } else { "FAIL" }
         );
     }
@@ -1899,15 +1944,16 @@ fn print_layout_audit(reference: &Path, candidate: &Path, audit: &LayoutAudit) {
             "FAIL"
         }
     );
-    match &audit.coverage {
-        Some(coverage) => println!(
-            "coverage ensemble_rms={:.6} natural_rms={:.6} {}",
-            coverage.ensemble_rms,
-            coverage.natural_rms,
-            if coverage.passed { "PASS" } else { "FAIL" }
-        ),
-        None => println!("coverage unmeasured (no natural pair supplied)"),
-    }
+    println!(
+        "coverage ensemble_rms={:.6} natural_rms={:.6} {}",
+        audit.coverage.ensemble_rms,
+        audit.coverage.natural_rms,
+        if audit.coverage.passed {
+            "PASS"
+        } else {
+            "FAIL"
+        }
+    );
     println!(
         "decorrelation paired_rms={:.6} reference_rms={:.6} {}",
         audit.decorrelation.paired_rms,
@@ -2715,11 +2761,11 @@ mod tests {
     }
 
     /// One ensemble arm as this harness would have written it: one row per
-    /// pinned cell per build, every build under one execution index, with
-    /// `rate` giving the build's ns/call for a cell.
+    /// pinned cell per member, member `j` recording execution `j+1`, with
+    /// `rate` giving that member's ns/call for a cell.
     #[allow(dead_code)]
     fn ensemble_csv(
-        builds: &[u32],
+        members: &[u32],
         revision: &str,
         dirty: bool,
         rate: impl Fn(u32, &str) -> f64,
@@ -2727,14 +2773,15 @@ mod tests {
         const CALLS: u64 = 1_000_000;
         let mut text = String::from(CSV_HEADER);
         text.push('\n');
-        for build in builds {
+        for member in members {
             for cell in pinned_cells() {
                 let id = cell_id(cell);
                 let (size_a, size_b) = cell_sizes(cell);
-                let ns_per_call = rate(*build, &id);
+                let ns_per_call = rate(*member, &id);
                 let elapsed = (ns_per_call * CALLS as f64).round() as u128;
                 text.push_str(&format!(
-                    "{SCHEMA_VERSION},{build},1,{},{id},{},{size_a},{size_b},{},0,{CALLS},{elapsed},{ns_per_call:.6},250,0,{revision},{dirty},rustc,host,cpu,kernel,gov\n",
+                    "{SCHEMA_VERSION},{},1,{},{id},{},{size_a},{size_b},{},0,{CALLS},{elapsed},{ns_per_call:.6},250,0,{revision},{dirty},rustc,host,cpu,kernel,gov\n",
+                    member + 1,
                     family(cell),
                     expected_arm(cell),
                     fixture_count(cell)
@@ -2742,18 +2789,6 @@ mod tests {
             }
         }
         text
-    }
-
-    /// A four-build ensemble whose per-build displacement does not line up with
-    /// the parity of the build index, so its halves agree while its builds do
-    /// not.
-    #[allow(dead_code)]
-    fn balanced_arm(revision: &str, tilt: f64) -> EnsembleArm {
-        let text = ensemble_csv(&[1, 2, 3, 4], revision, false, |build, _| {
-            let sign = if build == 1 || build == 4 { 1.0 } else { -1.0 };
-            1_000.0 * (1.0 + sign * tilt)
-        });
-        parse_ensemble(&text)
     }
 
     #[allow(dead_code)]
@@ -2772,35 +2807,199 @@ mod tests {
         arm.expect("ensemble parses")
     }
 
+    /// The members of the predeclared first rung, 0 to 127.
+    #[allow(dead_code)]
+    fn first_rung() -> Vec<u32> {
+        (0..ENSEMBLE_SIZES[0] as u32).collect()
+    }
+
+    /// A displacement that alternates every two members, so it is balanced
+    /// across member-index parity while every member differs from its
+    /// neighbour.
+    #[allow(dead_code)]
+    fn reference_tilt(member: u32, tilt: f64) -> f64 {
+        1_000.0
+            * (1.0
+                + if (member / 2).is_multiple_of(2) {
+                    tilt
+                } else {
+                    -tilt
+                })
+    }
+
+    /// A displacement alternating every four members, which scatters against
+    /// `reference_tilt` rather than tracking it.
+    #[allow(dead_code)]
+    fn candidate_tilt(member: u32, tilt: f64) -> f64 {
+        1_000.0
+            * (1.0
+                + if (member / 4).is_multiple_of(2) {
+                    tilt
+                } else {
+                    -tilt
+                })
+    }
+
+    #[allow(dead_code)]
+    fn reference_arm(tilt: f64) -> EnsembleArm {
+        parse_ensemble(&ensemble_csv(
+            &first_rung(),
+            "reference",
+            false,
+            |member, _| reference_tilt(member, tilt),
+        ))
+    }
+
+    #[allow(dead_code)]
+    fn candidate_arm(tilt: f64) -> EnsembleArm {
+        parse_ensemble(&ensemble_csv(
+            &first_rung(),
+            "candidate",
+            false,
+            |member, _| candidate_tilt(member, tilt),
+        ))
+    }
+
+    /// The natural across-build pair the coverage precondition reads, at a
+    /// per-cell ratio of `ratio`.
+    #[allow(dead_code)]
+    fn natural_pair(ratio: f64) -> (Receipt, Receipt) {
+        (receipt_with_ratio(1.0), receipt_with_ratio(ratio))
+    }
+
     #[test]
     fn sample_sd_uses_the_unbiased_denominator() {
         assert_eq!(sample_sd(&[1.0]), 0.0);
         assert!((sample_sd(&[1.0, 3.0]) - f64::sqrt(2.0)).abs() < 1e-12);
     }
 
-    /// A build occupies one execution index, so an arm's rows separate into one
-    /// pooled statistic per build rather than one per arm.
+    /// Member `j` records execution `j+1`, so every member statement of the
+    /// procedure reads one below the recorded index.
     #[test]
-    fn load_ensemble_pools_each_build_separately() {
-        let arm = balanced_arm("rev", 0.01);
-        assert_eq!(arm.builds.len(), 4);
+    fn member_index_is_one_below_the_execution_index() {
+        assert_eq!(member_index(1), 0);
+        assert_eq!(member_index(128), 127);
+    }
+
+    /// The enumeration the predeclaration fixes — `layout-attribution-verdict-v1.md`
+    /// §3.1 — gives distinct members whose level sum has the parity of the
+    /// member index, which is what makes §3.2's half-split balanced on every
+    /// axis. Both rungs of §6.6's ladder are checked.
+    #[test]
+    fn the_predeclared_enumeration_balances_its_halves() {
+        for size in ENSEMBLE_SIZES {
+            let members: Vec<(usize, usize, usize, usize)> = (0..size)
+                .map(|j| {
+                    let d = if size > 128 { j / 128 } else { 0 };
+                    let within = j % 128;
+                    let a = within / 16;
+                    let b = (within % 16) / 4;
+                    (a, b, ((within % 4) + a + b + d) % 4, d)
+                })
+                .collect();
+            let mut distinct = members.clone();
+            distinct.sort_unstable();
+            distinct.dedup();
+            assert_eq!(distinct.len(), size, "members repeat at K={size}");
+            for (j, member) in members.iter().enumerate() {
+                let levels = member.0 + member.1 + member.2 + member.3;
+                assert_eq!(levels % 2, j % 2, "member {j} breaks the parity property");
+            }
+            for axis in 0..4 {
+                let level = |member: &(usize, usize, usize, usize)| match axis {
+                    0 => member.0,
+                    1 => member.1,
+                    2 => member.2,
+                    _ => member.3,
+                };
+                let mut even = BTreeMap::new();
+                let mut odd = BTreeMap::new();
+                for (j, member) in members.iter().enumerate() {
+                    let side = if j % 2 == 0 { &mut even } else { &mut odd };
+                    *side.entry(level(member)).or_insert(0_usize) += 1;
+                }
+                assert_eq!(even, odd, "axis {axis} is unbalanced at K={size}");
+            }
+        }
+    }
+
+    /// A member occupies one execution index, so an arm's rows separate into
+    /// one pooled statistic per member rather than one per arm.
+    #[test]
+    fn load_ensemble_pools_each_member_separately() {
+        let arm = reference_arm(0.01);
+        assert_eq!(arm.builds.len(), ENSEMBLE_SIZES[0]);
         let cell = cell_id(Cell::BitLogical {
             op: BitOp::Popcount,
             words: 1,
         });
-        assert!((arm.pooled(&cell, |index| index == 1) - 1_010.0).abs() < 1e-6);
-        assert!((arm.pooled(&cell, |index| index == 2) - 990.0).abs() < 1e-6);
-        // Pooling both builds sums totals rather than averaging their rates.
-        assert!((arm.pooled(&cell, |index| index <= 2) - 1_000.0).abs() < 1e-6);
+        assert!((arm.pooled(&cell, |execution| execution == 1) - 1_010.0).abs() < 1e-6);
+        assert!((arm.pooled(&cell, |execution| execution == 3) - 990.0).abs() < 1e-6);
+        // Pooling two members sums totals rather than averaging their rates.
+        assert!(
+            (arm.pooled(&cell, |execution| execution == 1 || execution == 3) - 1_000.0).abs()
+                < 1e-6
+        );
     }
 
-    /// The half-split null divides the arm by the parity of the build index,
-    /// which is the balanced split of the predeclared enumeration.
+    /// The half-split runs on member-index parity, so the ratio it reports puts
+    /// the even members over the odd ones.
     #[test]
-    fn layout_audit_splits_the_reference_arm_by_build_parity() {
-        let reference = balanced_arm("rev", 0.01);
-        let candidate = balanced_arm("rev2", 0.01);
-        let audit = audit_layout(&reference, &candidate, None).expect("arms are auditable");
+    fn layout_audit_splits_the_reference_arm_on_member_index_parity() {
+        // Even members are slow, odd members fast, so a split on member parity
+        // separates them and a split on the recorded execution index would
+        // report the reciprocal.
+        let arm = |revision: &str| {
+            parse_ensemble(&ensemble_csv(
+                &first_rung(),
+                revision,
+                false,
+                |member, _| {
+                    if member % 2 == 0 {
+                        1_080.0
+                    } else {
+                        920.0
+                    }
+                },
+            ))
+        };
+        let (baseline, rebuild) = natural_pair(1.0);
+        let audit = audit_layout(
+            &arm("reference"),
+            &arm("candidate"),
+            Some((&baseline, &rebuild)),
+        )
+        .expect("arms are auditable");
+        assert_eq!(audit.builds, ENSEMBLE_SIZES[0]);
+        for cell in &audit.cells {
+            assert!(
+                (cell.null_ratio - 1_080.0 / 920.0).abs() < 1e-9,
+                "{} split the wrong way: {}",
+                cell.cell,
+                cell.null_ratio
+            );
+            // The margin holds at this dispersion, so the cell fails on the
+            // null alone rather than on precision.
+            assert!(cell.margin >= ATTRIBUTION_MARGIN, "{}", cell.cell);
+            assert!(
+                !cell.passed,
+                "{} passes a null outside the tolerance",
+                cell.cell
+            );
+        }
+    }
+
+    /// A displacement balanced across member parity leaves the halves agreeing
+    /// while the members themselves scatter.
+    #[test]
+    fn a_balanced_ensemble_leaves_its_halves_agreeing() {
+        let (baseline, rebuild) = natural_pair(1.0);
+        let audit = audit_layout(
+            &reference_arm(0.01),
+            &candidate_arm(0.01),
+            Some((&baseline, &rebuild)),
+        )
+        .expect("arms are auditable");
         for cell in &audit.cells {
             assert!((cell.null_ratio - 1.0).abs() < 1e-9, "{}", cell.cell);
             assert!((cell.reference_spread - 1_010.0 / 990.0).abs() < 1e-9);
@@ -2808,7 +3007,7 @@ mod tests {
         assert!((audit.null_geomean - 1.0).abs() < 1e-9);
     }
 
-    /// A cell whose builds scatter widely leaves the verdict statistic too
+    /// A cell whose members scatter widely leaves the verdict statistic too
     /// little room under the tolerance to attribute movement to behaviour.
     #[test]
     fn layout_audit_flags_a_cell_without_an_attribution_margin() {
@@ -2816,15 +3015,22 @@ mod tests {
             op: BitOp::Or,
             words: 1,
         });
-        let arm = |revision: &str| {
-            let text = ensemble_csv(&[1, 2, 3, 4], revision, false, |build, cell| {
-                let sign = if build == 1 || build == 4 { 1.0 } else { -1.0 };
-                let tilt = if cell == noisy { 0.15 } else { 0.0001 };
-                1_000.0 * (1.0 + sign * tilt)
-            });
-            parse_ensemble(&text)
-        };
-        let audit = audit_layout(&arm("rev"), &arm("rev2"), None).expect("arms are auditable");
+        let tilt = |cell: &str| if cell == noisy { 0.15 } else { 0.0001 };
+        let reference = parse_ensemble(&ensemble_csv(
+            &first_rung(),
+            "reference",
+            false,
+            |member, cell| reference_tilt(member, tilt(cell)),
+        ));
+        let candidate = parse_ensemble(&ensemble_csv(
+            &first_rung(),
+            "candidate",
+            false,
+            |member, cell| candidate_tilt(member, tilt(cell)),
+        ));
+        let (baseline, rebuild) = natural_pair(1.0);
+        let audit = audit_layout(&reference, &candidate, Some((&baseline, &rebuild)))
+            .expect("arms are auditable");
         let failing: Vec<_> = audit
             .cells
             .iter()
@@ -2842,16 +3048,22 @@ mod tests {
     }
 
     /// An ensemble whose arms move together carries one fixed layout difference
-    /// rather than a sampled one, and no averaging over its builds removes it.
+    /// rather than a sampled one, and no averaging over its members removes it.
     #[test]
     fn layout_audit_flags_arms_that_do_not_scatter_against_each_other() {
-        let reference = balanced_arm("rev", 0.001);
-        let text = ensemble_csv(&[1, 2, 3, 4], "rev2", false, |build, _| {
-            let sign = if build == 1 || build == 4 { 1.0 } else { -1.0 };
-            1_060.0 * (1.0 + sign * 0.001)
-        });
-        let candidate = parse_ensemble(&text);
-        let audit = audit_layout(&reference, &candidate, None).expect("arms are auditable");
+        let candidate = parse_ensemble(&ensemble_csv(
+            &first_rung(),
+            "candidate",
+            false,
+            |member, _| 1.06 * reference_tilt(member, 0.001),
+        ));
+        let (baseline, rebuild) = natural_pair(1.0);
+        let audit = audit_layout(
+            &reference_arm(0.001),
+            &candidate,
+            Some((&baseline, &rebuild)),
+        )
+        .expect("arms are auditable");
         assert!(audit.decorrelation.paired_rms < 1e-12);
         assert!(!audit.decorrelation.passed);
         assert!(!audit.passed);
@@ -2861,18 +3073,15 @@ mod tests {
     /// understates the variance the verdict has to survive.
     #[test]
     fn layout_audit_flags_an_ensemble_tamer_than_a_natural_rebuild() {
-        let reference = balanced_arm("rev", 0.0005);
-        let candidate = balanced_arm("rev2", 0.0007);
-        let baseline = receipt_with_ratio(1.0);
-        let rebuild = receipt_with_ratio(1.2);
-        let audit = audit_layout(&reference, &candidate, Some((&baseline, &rebuild)))
-            .expect("arms are auditable");
-        let coverage = audit
-            .coverage
-            .as_ref()
-            .expect("a natural pair was supplied");
-        assert!(coverage.natural_rms > coverage.ensemble_rms);
-        assert!(!coverage.passed);
+        let (baseline, rebuild) = natural_pair(1.2);
+        let audit = audit_layout(
+            &reference_arm(0.0005),
+            &candidate_arm(0.0007),
+            Some((&baseline, &rebuild)),
+        )
+        .expect("arms are auditable");
+        assert!(audit.coverage.natural_rms > audit.coverage.ensemble_rms);
+        assert!(!audit.coverage.passed);
         assert!(audit.cells.iter().all(|cell| !cell.passed));
         assert!(!audit.passed);
     }
@@ -2881,85 +3090,173 @@ mod tests {
     /// any ensemble and the remaining preconditions decide.
     #[test]
     fn layout_audit_passes_a_well_separated_ensemble() {
-        let reference = balanced_arm("rev", 0.0005);
-        let text = ensemble_csv(&[1, 2, 3, 4], "rev2", false, |build, _| {
-            let sign = if build <= 2 { 1.0 } else { -1.0 };
-            1_000.0 * (1.0 + sign * 0.0005)
-        });
-        let candidate = parse_ensemble(&text);
-        let baseline = receipt_with_ratio(1.0);
-        let rebuild = receipt_with_ratio(1.0);
-        let audit = audit_layout(&reference, &candidate, Some((&baseline, &rebuild)))
-            .expect("arms are auditable");
+        let (baseline, rebuild) = natural_pair(1.0);
+        let audit = audit_layout(
+            &reference_arm(0.0005),
+            &candidate_arm(0.0005),
+            Some((&baseline, &rebuild)),
+        )
+        .expect("arms are auditable");
         assert!(audit.cells.iter().all(|cell| cell.passed));
         assert!(audit.set_margin >= ATTRIBUTION_MARGIN);
         assert!(audit.decorrelation.passed);
-        assert!(
-            audit
-                .coverage
-                .as_ref()
-                .expect("a natural pair was supplied")
-                .passed
-        );
+        assert!(audit.coverage.passed);
         assert!(audit.passed);
     }
 
+    /// Coverage is a precondition of the verdict, so the audit refuses to run
+    /// without the receipts that measure what one natural rebuild moves.
     #[test]
-    fn layout_audit_rejects_an_unbalanced_build_count() {
-        let text = ensemble_csv(&[1, 2, 3], "rev", false, |_, _| 1_000.0);
-        let arm = parse_ensemble(&text);
+    fn layout_audit_requires_the_natural_pair() {
         assert_eq!(
-            audit_layout(&arm, &arm, None).unwrap_err().class(),
-            "unusable build count"
+            audit_layout(&reference_arm(0.001), &candidate_arm(0.001), None)
+                .unwrap_err()
+                .class(),
+            "natural pair missing"
+        );
+    }
+
+    /// The ensemble's size sets the layout standard error the margin is
+    /// measured against, so an arm of some other size is a different ensemble.
+    #[test]
+    fn layout_audit_rejects_an_ensemble_that_is_not_a_predeclared_size() {
+        for size in [4_u32, 64, 127] {
+            let members: Vec<u32> = (0..size).collect();
+            let arm = parse_ensemble(&ensemble_csv(&members, "reference", false, |_, _| 1_000.0));
+            let (baseline, rebuild) = natural_pair(1.0);
+            assert_eq!(
+                audit_layout(&arm, &arm, Some((&baseline, &rebuild)))
+                    .unwrap_err()
+                    .class(),
+                "not a predeclared ensemble size",
+                "K={size} was accepted"
+            );
+        }
+    }
+
+    /// The ladder's second rung is a predeclared size and is audited like the
+    /// first.
+    #[test]
+    fn layout_audit_accepts_the_ladder_rung() {
+        let members: Vec<u32> = (0..ENSEMBLE_SIZES[1] as u32).collect();
+        let arm = |revision: &str, tilt: fn(u32, f64) -> f64| {
+            parse_ensemble(&ensemble_csv(
+                &members,
+                revision,
+                false,
+                move |member, _| tilt(member, 0.0005),
+            ))
+        };
+        let (baseline, rebuild) = natural_pair(1.0);
+        let audit = audit_layout(
+            &arm("reference", reference_tilt),
+            &arm("candidate", candidate_tilt),
+            Some((&baseline, &rebuild)),
+        )
+        .expect("the second rung is a predeclared size");
+        assert_eq!(audit.builds, ENSEMBLE_SIZES[1]);
+        assert!(audit.passed);
+    }
+
+    /// A dropped member is replaced from the enumeration at its own parity, so
+    /// an arm whose halves are unequal is not the predeclared ensemble.
+    #[test]
+    fn layout_audit_rejects_unbalanced_halves() {
+        let mut members: Vec<u32> = (0..ENSEMBLE_SIZES[0] as u32).collect();
+        members.pop(); // drops member 127, an odd member
+        members.push(ENSEMBLE_SIZES[0] as u32); // replaces it with an even one
+        let arm = parse_ensemble(&ensemble_csv(&members, "reference", false, |_, _| 1_000.0));
+        assert_eq!(arm.builds.len(), ENSEMBLE_SIZES[0]);
+        let (baseline, rebuild) = natural_pair(1.0);
+        assert_eq!(
+            audit_layout(&arm, &arm, Some((&baseline, &rebuild)))
+                .unwrap_err()
+                .class(),
+            "ensemble halves are unbalanced"
         );
     }
 
     #[test]
     fn layout_audit_rejects_a_dirty_arm() {
-        let text = ensemble_csv(&[1, 2, 3, 4], "rev", true, |_, _| 1_000.0);
-        let arm = parse_ensemble(&text);
+        let arm = parse_ensemble(&ensemble_csv(&first_rung(), "reference", true, |_, _| {
+            1_000.0
+        }));
+        let (baseline, rebuild) = natural_pair(1.0);
         assert_eq!(
-            audit_layout(&arm, &arm, None).unwrap_err().class(),
+            audit_layout(&arm, &arm, Some((&baseline, &rebuild)))
+                .unwrap_err()
+                .class(),
             "dirty source row"
         );
     }
 
     #[test]
     fn layout_audit_rejects_an_arm_spanning_two_revisions() {
-        let mut text = ensemble_csv(&[1, 2], "rev", false, |_, _| 1_000.0);
-        let second = ensemble_csv(&[3, 4], "other", false, |_, _| 1_000.0);
+        let mut text = ensemble_csv(&first_rung()[..64], "reference", false, |_, _| 1_000.0);
+        let second = ensemble_csv(&first_rung()[64..], "other", false, |_, _| 1_000.0);
         text.push_str(second.split_once('\n').expect("header is present").1);
         let arm = parse_ensemble(&text);
+        let (baseline, rebuild) = natural_pair(1.0);
         assert_eq!(
-            audit_layout(&arm, &arm, None).unwrap_err().class(),
+            audit_layout(&arm, &arm, Some((&baseline, &rebuild)))
+                .unwrap_err()
+                .class(),
             "arm spans several revisions"
+        );
+    }
+
+    /// Member `j` records execution `j+1`, so a row at execution 0 names no
+    /// member and its parity would read one side short.
+    #[test]
+    fn layout_audit_rejects_a_zero_execution_index() {
+        let mut text = ensemble_csv(&first_rung(), "reference", false, |_, _| 1_000.0);
+        text = text.replace(
+            &format!("{SCHEMA_VERSION},1,1,"),
+            &format!("{SCHEMA_VERSION},0,1,"),
+        );
+        let arm = parse_ensemble(&text);
+        let (baseline, rebuild) = natural_pair(1.0);
+        assert_eq!(
+            audit_layout(&arm, &arm, Some((&baseline, &rebuild)))
+                .unwrap_err()
+                .class(),
+            "execution index below one"
         );
     }
 
     #[test]
     fn layout_audit_rejects_arms_built_from_different_ensembles() {
-        let reference = balanced_arm("rev", 0.001);
-        let text = ensemble_csv(&[1, 2, 3, 4, 5, 6], "rev2", false, |_, _| 1_000.0);
-        let candidate = parse_ensemble(&text);
+        let candidate = parse_ensemble(&ensemble_csv(
+            &(1..=ENSEMBLE_SIZES[0] as u32).collect::<Vec<_>>(),
+            "candidate",
+            false,
+            |_, _| 1_000.0,
+        ));
+        let (baseline, rebuild) = natural_pair(1.0);
         assert_eq!(
-            audit_layout(&reference, &candidate, None)
-                .unwrap_err()
-                .class(),
+            audit_layout(
+                &reference_arm(0.001),
+                &candidate,
+                Some((&baseline, &rebuild))
+            )
+            .unwrap_err()
+            .class(),
             "arms carry different builds"
         );
     }
 
     #[test]
     fn layout_audit_rejects_a_natural_pair_outside_the_pinned_set() {
-        let reference = balanced_arm("rev", 0.001);
-        let candidate = balanced_arm("rev2", 0.001);
-        let mut baseline = receipt_with_ratio(1.0);
+        let (mut baseline, rebuild) = natural_pair(1.0);
         baseline.stats.pop_first();
-        let rebuild = receipt_with_ratio(1.0);
         assert_eq!(
-            audit_layout(&reference, &candidate, Some((&baseline, &rebuild)))
-                .unwrap_err()
-                .class(),
+            audit_layout(
+                &reference_arm(0.001),
+                &candidate_arm(0.001),
+                Some((&baseline, &rebuild))
+            )
+            .unwrap_err()
+            .class(),
             "natural pair is not the pinned set"
         );
     }
