@@ -38,6 +38,8 @@ CAMPAIGN_SIM_MANIFEST="${CAMPAIGN_SIM_MANIFEST:-}"
 CAMPAIGN_SIM_OUTPUT="${CAMPAIGN_SIM_OUTPUT:-}"
 CAMPAIGN_SIM_FIELD="${CAMPAIGN_SIM_FIELD:-}"
 CAMPAIGN_SIM_WORKERS="${CAMPAIGN_SIM_WORKERS:-1}"
+CAMPAIGN_SIM_ACCELERATOR_COSTS="${CAMPAIGN_SIM_ACCELERATOR_COSTS:-}"
+CAMPAIGN_SIM_ACCELERATOR_CAP_MS="${CAMPAIGN_SIM_ACCELERATOR_CAP_MS:-}"
 ROCM_PATH="${ROCM_PATH:-/opt/rocm}"
 ARCH="${PERMANENT_CAMPAIGN_ARCH:-gfx1030}"
 if [[ "${1:-}" == premeasure || "${1:-}" == premeasure-collect || "${1:-}" == __locked-premeasure ]]; then
@@ -642,11 +644,24 @@ run_simulation_campaign() {
     [[ -n "$CAMPAIGN_SIM_MANIFEST" ]] || die "CAMPAIGN_SIM_MANIFEST is required with CAMPAIGN_SIM_BINARY"
     [[ -n "$CAMPAIGN_SIM_OUTPUT" ]] || die "CAMPAIGN_SIM_OUTPUT is required with CAMPAIGN_SIM_BINARY"
     [[ -n "$CAMPAIGN_SIM_FIELD" ]] || die "CAMPAIGN_SIM_FIELD is required with CAMPAIGN_SIM_BINARY"
+    # An accelerator cell is sized from its own measured per-matrix cost, so the
+    # cost table travels with the manifest. The binary refuses an accelerator
+    # manifest without it; passing it here is what lets the lock-held path run
+    # accelerator work at all.
+    local -a accelerator=()
+    if [[ -n "$CAMPAIGN_SIM_ACCELERATOR_COSTS" ]]; then
+        [[ -f "$CAMPAIGN_SIM_ACCELERATOR_COSTS" ]] \
+            || die "CAMPAIGN_SIM_ACCELERATOR_COSTS not found: $CAMPAIGN_SIM_ACCELERATOR_COSTS"
+        accelerator+=(--accelerator-cost-table "$CAMPAIGN_SIM_ACCELERATOR_COSTS")
+        [[ -n "$CAMPAIGN_SIM_ACCELERATOR_CAP_MS" ]] \
+            && accelerator+=(--accelerator-launch-cap-ms "$CAMPAIGN_SIM_ACCELERATOR_CAP_MS")
+    fi
     "$FLOCK_WRAPPER" --full-host "$CAMPAIGN_SIM_BINARY" \
         --manifest "$CAMPAIGN_SIM_MANIFEST" \
         --output "$CAMPAIGN_SIM_OUTPUT" \
         --q "$CAMPAIGN_SIM_FIELD" \
-        --workers "$CAMPAIGN_SIM_WORKERS"
+        --workers "$CAMPAIGN_SIM_WORKERS" \
+        "${accelerator[@]}"
 }
 
 validate_premeasure_plan() {

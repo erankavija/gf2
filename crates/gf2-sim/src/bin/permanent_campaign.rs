@@ -11,7 +11,9 @@
 //! `permanent_dataset conform` after all field arms and campaign finalization
 //! files are present.
 
-use std::path::PathBuf;
+use std::collections::BTreeMap;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 
@@ -19,16 +21,74 @@ use gf2_sim::permanent_campaign::driver::{
     field_checkpoint_path, run_field_checkpointed_with_accelerator_config,
 };
 use gf2_sim::permanent_campaign::provenance::approve_emission;
-use gf2_sim::permanent_campaign::schedule::{AcceleratorConfig, DEFAULT_ACCELERATOR_LAUNCH_CAP};
+use gf2_sim::permanent_campaign::schedule::{AcceleratorCostTable, DEFAULT_ACCELERATOR_LAUNCH_CAP};
 use gf2_sim::permanent_campaign::schema::{read_manifest, Backend};
 
-const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N] [--accelerator-launch-cap-ms MS] [--accelerator-per-matrix-us US]
+const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N] [--accelerator-launch-cap-ms MS] [--accelerator-cost-table PATH]
 
 Accelerator options:
   --accelerator-launch-cap-ms MS     target cap per launch (default: 500 ms)
-  --accelerator-per-matrix-us US     required for accelerator cells; measured per-matrix
-                                     cost in microseconds from the committed measurement receipt
+  --accelerator-cost-table PATH      required for accelerator cells; CSV of measured
+                                     per-matrix costs with header q,n,per_matrix_us,
+                                     one row per accelerator cell, each value taken
+                                     from that cell's committed measurement receipt
 ";
+
+/// Reads measured per-matrix accelerator costs from a CSV.
+///
+/// The file carries the header `q,n,per_matrix_us` and one row per accelerator
+/// cell. Each value is that cell's own measured cost, so a launch at one size
+/// is never sized by a number measured at another. A malformed or duplicated
+/// row is refused rather than skipped: a silently dropped row would leave its
+/// cell to fail later as a missing entry, naming the wrong cause.
+fn read_accelerator_cost_table(
+    path: &Path,
+    launch_cap: Duration,
+) -> Result<AcceleratorCostTable, String> {
+    let text = fs::read_to_string(path).map_err(|error| error.to_string())?;
+    let mut lines = text.lines().enumerate();
+    let (_, header) = lines.next().ok_or_else(|| "file is empty".to_owned())?;
+    if header.trim() != "q,n,per_matrix_us" {
+        return Err(format!(
+            "header is {:?}, expected \"q,n,per_matrix_us\"",
+            header.trim()
+        ));
+    }
+    let mut costs = BTreeMap::new();
+    for (index, line) in lines {
+        let row = line.trim();
+        if row.is_empty() {
+            continue;
+        }
+        let number = index + 1;
+        let fields: Vec<&str> = row.split(',').map(str::trim).collect();
+        let [q, n, per_matrix_us] = fields.as_slice() else {
+            return Err(format!(
+                "line {number}: expected 3 fields, found {}",
+                fields.len()
+            ));
+        };
+        let q: u8 = q
+            .parse()
+            .map_err(|_| format!("line {number}: q {q:?} is not an integer"))?;
+        let n: u16 = n
+            .parse()
+            .map_err(|_| format!("line {number}: n {n:?} is not an integer"))?;
+        let microseconds: u64 = per_matrix_us.parse().map_err(|_| {
+            format!("line {number}: per_matrix_us {per_matrix_us:?} is not an integer")
+        })?;
+        if microseconds == 0 {
+            return Err(format!("line {number}: per_matrix_us must be positive"));
+        }
+        if costs
+            .insert((q, n), Duration::from_micros(microseconds))
+            .is_some()
+        {
+            return Err(format!("line {number}: duplicate entry for q={q} n={n}"));
+        }
+    }
+    Ok(AcceleratorCostTable::new(costs, launch_cap))
+}
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -37,7 +97,7 @@ fn main() -> ExitCode {
     let mut field = None;
     let mut workers = 1usize;
     let mut accelerator_launch_cap = DEFAULT_ACCELERATOR_LAUNCH_CAP;
-    let mut accelerator_per_matrix = None;
+    let mut accelerator_cost_table: Option<PathBuf> = None;
     let mut index = 0;
     while index < arguments.len() {
         let name = arguments[index].as_str();
@@ -72,13 +132,10 @@ fn main() -> ExitCode {
                 }
                 _ => return usage("--accelerator-launch-cap-ms must be a positive integer"),
             },
-            ("--accelerator-per-matrix-us", Some(value)) => match value.parse::<u64>() {
-                Ok(microseconds) if microseconds > 0 => {
-                    accelerator_per_matrix = Some(Duration::from_micros(microseconds));
-                    index += 2;
-                }
-                _ => return usage("--accelerator-per-matrix-us must be a positive integer"),
-            },
+            ("--accelerator-cost-table", Some(value)) => {
+                accelerator_cost_table = Some(PathBuf::from(value));
+                index += 2;
+            }
             _ => return usage("unrecognized or incomplete argument"),
         }
     }
@@ -94,10 +151,10 @@ fn main() -> ExitCode {
         .cells
         .iter()
         .any(|cell| cell.backend == Backend::Accelerator)
-        && accelerator_per_matrix.is_none()
+        && accelerator_cost_table.is_none()
     {
         return usage(
-            "--accelerator-per-matrix-us is required for accelerator cells; use the cell's committed measurement receipt",
+            "--accelerator-cost-table is required for accelerator cells; supply each cell's measured per-matrix cost from its committed measurement receipt",
         );
     }
     if let Err(refusal) = approve_emission(&output) {
@@ -105,9 +162,15 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
     let checkpoint = field_checkpoint_path(&output, field);
-    let accelerator = AcceleratorConfig {
-        per_matrix_cost: accelerator_per_matrix.unwrap_or_else(|| Duration::from_micros(1)),
-        launch_cap: accelerator_launch_cap,
+    let accelerator = match accelerator_cost_table {
+        Some(path) => match read_accelerator_cost_table(&path, accelerator_launch_cap) {
+            Ok(table) => table,
+            Err(error) => {
+                eprintln!("accelerator cost table {}: {error}", path.display());
+                return ExitCode::FAILURE;
+            }
+        },
+        None => AcceleratorCostTable::default(),
     };
     let run = match run_field_checkpointed_with_accelerator_config(
         &output,
@@ -115,7 +178,7 @@ fn main() -> ExitCode {
         field,
         &checkpoint,
         workers,
-        accelerator,
+        &accelerator,
     ) {
         Ok(run) => run,
         Err(error) => return failure(error),

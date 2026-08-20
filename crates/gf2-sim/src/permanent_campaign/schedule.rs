@@ -28,6 +28,7 @@
 //! assert_eq!(written.len(), work.len() + 1);
 //! ```
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
@@ -88,6 +89,67 @@ pub struct AcceleratorConfig {
     pub per_matrix_cost: Duration,
     /// Maximum target wall-clock duration for one accelerator launch.
     pub launch_cap: Duration,
+}
+
+/// Per-cell measured accelerator costs, keyed by the frozen `(q, n)` cell.
+///
+/// REQ-01 sizes launches from each cell's *measured* per-matrix cost. Permanent
+/// evaluation costs about `M · n · 2^n / W`, so one cost applied across a field
+/// reproduces, one level up, the fixed-batch-size error the criterion rules
+/// out: the configured cap would hold at the size the value was measured at and
+/// nowhere else. Every accelerator cell therefore carries its own entry, and a
+/// cell with no entry is refused rather than defaulted — a default would be an
+/// unmeasured cost wearing a measured cost's clothes.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AcceleratorCostTable {
+    costs: BTreeMap<(u8, u16), Duration>,
+    launch_cap: Duration,
+}
+
+impl Default for AcceleratorCostTable {
+    /// An empty table at the default launch cap.
+    ///
+    /// Every accelerator cell resolves to
+    /// [`ScheduleError::AcceleratorCostMissing`] against it, which is what a
+    /// caller that supplied no measured costs should get.
+    fn default() -> Self {
+        Self {
+            costs: BTreeMap::new(),
+            launch_cap: DEFAULT_ACCELERATOR_LAUNCH_CAP,
+        }
+    }
+}
+
+impl AcceleratorCostTable {
+    /// Builds a table from measured `(q, n) -> per-matrix cost` entries.
+    #[must_use]
+    pub fn new(costs: BTreeMap<(u8, u16), Duration>, launch_cap: Duration) -> Self {
+        Self { costs, launch_cap }
+    }
+
+    /// Resolves the launch-sizing configuration for one cell.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ScheduleError::AcceleratorCostMissing`] when the cell has no
+    /// measured entry.
+    pub fn config_for(&self, q: u8, n: u16) -> Result<AcceleratorConfig, ScheduleError> {
+        let per_matrix_cost = self
+            .costs
+            .get(&(q, n))
+            .copied()
+            .ok_or(ScheduleError::AcceleratorCostMissing { q, n })?;
+        Ok(AcceleratorConfig {
+            per_matrix_cost,
+            launch_cap: self.launch_cap,
+        })
+    }
+
+    /// Whether the table has a measured entry for one cell.
+    #[must_use]
+    pub fn contains(&self, q: u8, n: u16) -> bool {
+        self.costs.contains_key(&(q, n))
+    }
 }
 
 impl Default for AcceleratorConfig {
@@ -262,6 +324,13 @@ pub enum ScheduleError {
         /// Backend named by the cell.
         backend: Backend,
     },
+    /// An accelerator cell has no measured per-matrix cost entry.
+    AcceleratorCostMissing {
+        /// Prime field order of the cell.
+        q: u8,
+        /// Square matrix dimension of the cell.
+        n: u16,
+    },
     /// The manifest selected an accelerator, but this host has no usable one.
     AcceleratorDeviceUnavailable {
         /// Prime field order of the cell.
@@ -295,6 +364,11 @@ impl fmt::Display for ScheduleError {
                 formatter,
                 "cell q={q} n={n} names backend {}, which this build does not provide",
                 backend.name()
+            ),
+            Self::AcceleratorCostMissing { q, n } => write!(
+                formatter,
+                "accelerator cell q={q} n={n} has no measured per-matrix cost entry; \
+                 supply one from that cell's committed measurement receipt"
             ),
             Self::AcceleratorDeviceUnavailable { q, n, device } => write!(
                 formatter,
@@ -1801,6 +1875,55 @@ mod tests {
         assert_eq!(cheap, 2_000);
         assert_eq!(costly, 100);
         assert!(costly < cheap);
+    }
+
+    #[test]
+    fn test_accelerator_cost_table_resolves_each_cell_from_its_own_measurement() {
+        let mut costs = BTreeMap::new();
+        costs.insert((3, 20), Duration::from_micros(40));
+        costs.insert((3, 24), Duration::from_micros(770));
+        let table = AcceleratorCostTable::new(costs, Duration::from_millis(500));
+
+        let small = table.config_for(3, 20).unwrap();
+        let large = table.config_for(3, 24).unwrap();
+        assert_eq!(small.per_matrix_cost, Duration::from_micros(40));
+        assert_eq!(large.per_matrix_cost, Duration::from_micros(770));
+
+        // The point of a per-cell table: one cap yields different launch sizes
+        // at different sizes. A single field-wide cost cannot do this.
+        let small_launch = launch_size(small.per_matrix_cost, small.launch_cap, u64::MAX);
+        let large_launch = launch_size(large.per_matrix_cost, large.launch_cap, u64::MAX);
+        assert!(
+            small_launch > large_launch,
+            "cheaper cell must take the larger launch: {small_launch} vs {large_launch}"
+        );
+    }
+
+    #[test]
+    fn test_accelerator_cost_table_refuses_a_cell_with_no_measurement() {
+        let mut costs = BTreeMap::new();
+        costs.insert((3, 20), Duration::from_micros(40));
+        let table = AcceleratorCostTable::new(costs, Duration::from_millis(500));
+
+        assert!(table.contains(3, 20));
+        assert!(!table.contains(3, 24));
+        let error = table.config_for(3, 24).unwrap_err();
+        assert!(matches!(
+            error,
+            ScheduleError::AcceleratorCostMissing { q: 3, n: 24 }
+        ));
+        let rendered = error.to_string();
+        assert!(rendered.contains("q=3"), "{rendered}");
+        assert!(rendered.contains("n=24"), "{rendered}");
+    }
+
+    #[test]
+    fn test_accelerator_cost_table_default_measures_nothing() {
+        let table = AcceleratorCostTable::default();
+        assert!(matches!(
+            table.config_for(3, 20).unwrap_err(),
+            ScheduleError::AcceleratorCostMissing { q: 3, n: 20 }
+        ));
     }
 
     #[test]
