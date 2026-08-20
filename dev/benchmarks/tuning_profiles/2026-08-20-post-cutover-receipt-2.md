@@ -794,3 +794,33 @@ not to this receipt.
   This receipt does not modify, supersede or re-run it; its excursion and its
   contradiction remain preserved in the record, as REQ-02 requires.
 - **This run.** It stands as taken.
+
+## Tracked rework — amendment (2026-08-20)
+
+This section is appended after the receipt was taken; it changes no line above
+it. Per control-arm §4.2 and `@/inv/falsification-preserved`, the rework this
+second excursion triggers is tracked rather than deferred.
+
+**The owner's resolution.** Owner decision DEC-E of 2026-08-20 answers the
+question the Disposition poses: the eleven-cell, two-rule failure is two
+questions, and the rework is two tracks inside epic `6dc81018`, both of which
+`50b47eae` now depends on. τ_cell stays 5 % and τ_set stays 2 %, and no
+predeclared value of this receipt moves.
+
+- Issue `2a85f728`, "Eliminate the per-call cost of the bit-backend selection
+  boundary", owns the real cost signal: against the same-session control build,
+  the bit-backend `words=1` cells pay 0.4–0.7 ns/call in the post-cutover
+  binary, and the two cells the first excursion named rise further under
+  `c42720ce`'s cache.
+- Issue `972e2b88`, "Predeclare the layout-attribution amendment to the
+  selector non-regression verdict", owns the attribution gap: five tripping
+  cells lie on paths the cutover never touches, the across-build spread of
+  behaviourally identical code reaches ±15 % at single cells while a fixed
+  binary reproduces across sessions to 0.07 %, so the verdict procedure must
+  separate cutover-attributable movement from across-build layout variance
+  before the next measured run, by predeclared, additive amendment.
+
+**What decides sufficiency.** Neither issue settles whether the comparison
+comes inside the tolerance: that is decided by the next measured run under
+`50b47eae`, taken after both tracks land, under the procedure as amended by
+`972e2b88`'s predeclaration.
