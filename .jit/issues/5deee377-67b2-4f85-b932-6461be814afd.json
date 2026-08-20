@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-20T14:22:17.996567903Z",
+  "dependencies": [],
+  "description": "The `# Forcing a specific CPU path` section of the feasibility harness backend module states that `permanent_bipedal3` dispatches internally to `permanent_bipedal3_singleword_simd` when the `simd` feature is active and AVX2 is detected at runtime, and justifies calling the single-word entry points directly on that basis.\n\nThat is false at HEAD. `permanent_bipedal3` (crates/gf2-algebra/src/permanent/bipedal3.rs:178-197) branches only on `n`: `n <= 63` selects `permanent_bipedal3_singleword`, otherwise the multiword path. `permanent_bipedal3_singleword` performs no SIMD dispatch of its own, and `permanent_bipedal3_singleword_simd` takes an explicit `fns` argument rather than being reached by runtime detection.\n\nThe harness code is correct — it imports `permanent_bipedal3_singleword` directly. Only the prose justifying that choice is wrong, which makes it a staleness defect under `@/inv/single-source-prose`. A reader trusting it would believe the study measured a runtime-dispatched path.\n\n## Success Criteria\n\n- [hard] REQ-01: The module documentation at dev/research/permanent-sampling-feas/src/backend.rs states what `permanent_bipedal3` actually does at the revision the text describes, and the stated reason for calling the single-word entry points directly is one that holds.\n\n## Notes\n\nSurfaced by the epic-b8206228 execution lead while tracing kernel selection for 032cc754.",
+  "documents": [],
+  "first_ready_at": "2026-08-20T14:22:17.996567903Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "5deee377-67b2-4f85-b932-6461be814afd",
+  "labels": [
+    "type:bug",
+    "epic:quality-documentation-tech-debt",
+    "component:gf2-algebra"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Feasibility harness backend docs claim a SIMD dispatch permanent_bipedal3 does not do",
+  "updated_at": "2026-08-20T14:23:00.012741981Z"
+}

@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-20T14:23:35.873592304Z",
+  "dependencies": [],
+  "description": "Four assertions in the campaign schedule tests compare a `Duration` against `Duration::ZERO` with `>=`:\n\n```\nassert!(shard.timing.draw >= Duration::ZERO);\nassert!(shard.timing.pack >= Duration::ZERO);\nassert!(shard.timing.evaluate >= Duration::ZERO);\nassert!(shard.timing.count >= Duration::ZERO);\n```\n\n`Duration` is unsigned, so every one of these holds for any value including zero. They assert nothing, and would keep passing if a phase stopped being measured entirely — which is the exact defect class found in the accelerator path under a39bb161, where `pack` was reported as zero while packing happened.\n\n`@/inv/semantic-test-assertions` requires tests to assert observable semantic properties. A test that cannot fail is not coverage.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the four assertions either states a property that can fail for a wrong implementation — for example that a phase a backend genuinely performs records a non-zero span, and that a phase it genuinely skips records zero — or is removed as coverage that was never there.\n\n## Notes\n\nPre-existing in crates/gf2-sim/src/permanent_campaign/schedule.rs; confirmed absent from the a39bb161 diff. Surfaced by the epic-b8206228 execution lead during the a39bb161 phase-attribution review.",
+  "documents": [],
+  "first_ready_at": "2026-08-20T14:23:35.873592304Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "dc744095-0573-4f40-8513-f7e90f269dec",
+  "labels": [
+    "type:bug",
+    "epic:quality-documentation-tech-debt",
+    "component:gf2-sim"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Campaign shard timing assertions are vacuous against unsigned Duration",
+  "updated_at": "2026-08-20T14:23:56.334150603Z"
+}

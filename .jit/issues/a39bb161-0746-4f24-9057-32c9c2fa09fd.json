@@ -13,7 +13,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-20T14:21:55.655739285Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-20T14:25:41.580829893Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "a39bb161-0746-4f24-9057-32c9c2fa09fd",
   "labels": [
     "type:task",
@@ -24,5 +35,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Accelerator execution for campaign cells",
-  "updated_at": "2026-08-20T12:52:35.389326157Z"
+  "updated_at": "2026-08-20T14:25:41.580829893Z"
 }

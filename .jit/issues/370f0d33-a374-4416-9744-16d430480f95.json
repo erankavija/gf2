@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-20T14:23:04.241151826Z",
+  "dependencies": [],
+  "description": "On this host, `test_permanent_batch_bipedal5_matches_cpu_n24` and `test_permanent_batch_bipedal7_matches_cpu_n24` in crates/gf2-algebra/tests/gpu_dispatcher.rs both time out at the `slow` profile's 600 s budget:\n\n```\ncargo nextest run -p gf2-algebra --features hip --release --profile slow \\\n  --run-ignored all -E 'binary(gpu_dispatcher)'\nSummary [600.002s] 6 tests run: 4 passed, 2 timed out\n```\n\nThe other four, including `test_permanent_batch_bipedal3_matches_cpu_n24`, pass. The cost sits on the CPU reference side rather than the device: the F_5 and F_7 scalar kernels are orders slower than the packed F_3 scalar at the same order, so 1000 CPU reference permanents at n = 24 do not fit the tier. The same asymmetry is recorded in the epic-b8206228 session-5 handoff, where a q=5 n=28 equivalence cell ran past twelve minutes without completing.\n\n`@/inv/test-tier-budgets` requires a test too heavy for the nightly tier to self-gate on required host data or benchmark mode, or to use the configured slow-serial group. These two do neither: they carry only `#[ignore = \"external: gfx1030 device required\"]`, so a nightly slow run on a device host fails rather than skipping or completing.\n\n## Success Criteria\n\n- [hard] REQ-01: A nightly slow-tier run of the gpu_dispatcher binary on a device host completes without a timeout, with the F_5 and F_7 n = 24 comparisons either fitting the tier, reduced to a size that fits, or gated out of it by an explicit host-data or benchmark-mode condition.\n- [hard] REQ-02: Whatever coverage the F_5 and F_7 dispatchers retain at their reduced or gated size is stated in the test file, so the narrowing is visible rather than silent.\n\n## Notes\n\nPre-existing; gpu_dispatcher.rs is untouched by the change that surfaced this. Surfaced by the epic-b8206228 execution lead while verifying a39bb161 device paths.",
+  "documents": [],
+  "first_ready_at": "2026-08-20T14:23:04.241151826Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "370f0d33-a374-4416-9744-16d430480f95",
+  "labels": [
+    "type:bug",
+    "epic:quality-documentation-tech-debt",
+    "component:gf2-algebra"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "F_5 and F_7 n=24 GPU dispatcher tests exceed the nightly slow-tier budget",
+  "updated_at": "2026-08-20T14:23:31.670093695Z"
+}
