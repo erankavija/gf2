@@ -272,12 +272,73 @@ STUB
     assert_rc 0 "$r" t11
     assert_has "$(cat "$log")" "$campaign" t11
     assert_has "$(cat "$WORK/binary.log")" '--manifest' t11
+    # shellcheck disable=SC2016  # the literal $NAME is the pattern being matched
     if grep -En '^[[:space:]]*"\$CAMPAIGN_SIM_BINARY"' "$SCRIPT" >/dev/null; then
         echo 'FAIL: t11 campaign binary is invoked directly'; return 1
     fi
+    # shellcheck disable=SC2016  # the literal $NAME is the pattern being matched
     assert_has "$(sed -n '/run_simulation_campaign()/,/^}/p' "$SCRIPT")" \
         '"$FLOCK_WRAPPER" --full-host "$CAMPAIGN_SIM_BINARY"' t11
     echo 'PASS: campaign binary is invoked through the full-host flock wrapper'; PASS=$((PASS + 1))
+}
+
+
+# The lock-wrapped path must be able to run accelerator work, not merely be the
+# path an accelerator run would take. The binary refuses an accelerator manifest
+# without its measured cost table, so a runner that omits the flag rejects every
+# accelerator campaign before dispatch while still passing a wrapper-usage check.
+t12() {
+    local d="$WORK/t12" h="$WORK/h12" f="$WORK/f12" campaign="$WORK/campaign12"
+    local log="$WORK/flock12.log" costs="$d/costs.csv"
+    mkdir -p "$d"
+    stub_harness "$h"
+    cat > "$campaign" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'campaign %s\n' "$*" >> "$CAMPAIGN_TEST_BINARY_LOG"
+STUB
+    chmod +x "$campaign"
+    cat > "$f" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$1" == --full-host ]] || exit 91
+shift
+printf '%s\n' "$1" >> "$CAMPAIGN_TEST_FLOCK_LOG"
+exec "$@"
+STUB
+    chmod +x "$f"
+    printf 'q,n,per_matrix_us\n3,24,180\n' > "$costs"
+    manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
+    set +e
+    local o r
+    o=$(CAMPAIGN_TEST_FLOCK_LOG="$log" CAMPAIGN_TEST_BINARY_LOG="$WORK/binary12.log" \
+        CAMPAIGN_SIM_BINARY="$campaign" CAMPAIGN_SIM_MANIFEST="$d/frozen.json" \
+        CAMPAIGN_SIM_OUTPUT="$d/output" CAMPAIGN_SIM_FIELD=3 \
+        CAMPAIGN_SIM_ACCELERATOR_COSTS="$costs" CAMPAIGN_SIM_ACCELERATOR_CAP_MS=250 \
+        CAMPAIGN_REPO_ROOT="$TEST_REPO" CAMPAIGN_MANIFEST="$d/m" \
+        CAMPAIGN_HARNESS_BIN="$h" CAMPAIGN_FLOCK_WRAPPER="$f" \
+        CAMPAIGN_STUDY_ROOT="$d/s" CAMPAIGN_RUN_ID=campaign-accel "$SCRIPT" smoke 2>&1)
+    r=$?
+    set -e
+    assert_rc 0 "$r" t12
+    assert_has "$(cat "$WORK/binary12.log")" "--accelerator-cost-table $costs" t12
+    assert_has "$(cat "$WORK/binary12.log")" '--accelerator-launch-cap-ms 250' t12
+    assert_has "$(cat "$log")" "$campaign" t12
+
+    # A named cost table that does not exist is refused, not silently dropped.
+    set +e
+    o=$(CAMPAIGN_TEST_FLOCK_LOG="$log" CAMPAIGN_TEST_BINARY_LOG="$WORK/binary12.log" \
+        CAMPAIGN_SIM_BINARY="$campaign" CAMPAIGN_SIM_MANIFEST="$d/frozen.json" \
+        CAMPAIGN_SIM_OUTPUT="$d/output" CAMPAIGN_SIM_FIELD=3 \
+        CAMPAIGN_SIM_ACCELERATOR_COSTS="$d/absent.csv" \
+        CAMPAIGN_REPO_ROOT="$TEST_REPO" CAMPAIGN_MANIFEST="$d/m" \
+        CAMPAIGN_HARNESS_BIN="$h" CAMPAIGN_FLOCK_WRAPPER="$f" \
+        CAMPAIGN_STUDY_ROOT="$d/s" CAMPAIGN_RUN_ID=campaign-accel-missing "$SCRIPT" smoke 2>&1)
+    r=$?
+    set -e
+    [[ "$r" -ne 0 ]] || { echo 'FAIL: t12 absent cost table was not refused'; return 1; }
+    assert_has "$o" 'CAMPAIGN_SIM_ACCELERATOR_COSTS not found' t12
+    echo 'PASS: accelerator cost table reaches the lock-wrapped campaign binary'; PASS=$((PASS + 1))
 }
 
 t1
@@ -291,4 +352,5 @@ t8
 t9
 t10
 t11
-echo "PASS: $PASS/11 permanent-campaign-runner tests"
+t12
+echo "PASS: $PASS/12 permanent-campaign-runner tests"

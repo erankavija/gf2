@@ -32,11 +32,11 @@ use crate::checkpoint::{
 use crate::permanent_campaign::schedule::{
     emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_work_items,
     evaluate_work_item_with_worker_count_and_accelerator, resolve_processor_path,
-    shard_record_bytes, summarize_with_quarantine, AcceleratorConfig, EvaluatedShard, FieldRun,
-    PhaseDurations, ScheduleError, ShardRun, WorkItem,
+    shard_record_bytes, summarize_with_quarantine, AcceleratorConfig, AcceleratorCostTable,
+    EvaluatedShard, FieldRun, PhaseDurations, ScheduleError, ShardRun, WorkItem,
 };
 use crate::permanent_campaign::schema::{
-    field_summary_file, shard_record_file, CampaignManifest, QuarantinedShard, ShardRecord,
+    field_summary_file, shard_record_file, Backend, CampaignManifest, QuarantinedShard, ShardRecord,
 };
 use crate::snr_checkpoint::is_interrupted;
 
@@ -245,23 +245,34 @@ pub fn run_field_checkpointed(
         field,
         checkpoint_path,
         worker_count,
-        AcceleratorConfig::default(),
+        &AcceleratorCostTable::default(),
     )
 }
 
-/// Runs one field arm with explicit accelerator launch-sizing configuration.
+/// Runs one field arm, sizing each accelerator cell's launches from its own
+/// measured per-matrix cost.
 ///
-/// The per-matrix cost and launch cap are runtime inputs. They are not manifest
-/// fields and must be supplied from the selected cell's committed measurement
-/// receipt by a campaign caller.
+/// The costs and launch cap are runtime inputs. They are not manifest fields
+/// and must be supplied from each selected cell's committed measurement
+/// receipt by a campaign caller. Every accelerator cell in the field is
+/// required to have an entry before any work runs: the pre-flight refuses a
+/// missing one rather than substituting a default, because a default cost
+/// would size that cell's launches from a number nobody measured.
 pub fn run_field_checkpointed_with_accelerator_config(
     root: &Path,
     manifest: &CampaignManifest,
     field: u8,
     checkpoint_path: &Path,
     worker_count: usize,
-    accelerator: AcceleratorConfig,
+    accelerator: &AcceleratorCostTable,
 ) -> Result<FieldRun, CampaignDriverError> {
+    for item in enumerate_work_items(manifest, Some(field))? {
+        if item.backend == Backend::Accelerator {
+            accelerator
+                .config_for(item.q, item.n)
+                .map_err(CampaignDriverError::Schedule)?;
+        }
+    }
     run_field_checkpointed_inner(
         root,
         manifest,
@@ -269,12 +280,12 @@ pub fn run_field_checkpointed_with_accelerator_config(
         checkpoint_path,
         worker_count,
         |item| {
-            evaluate_work_item_with_worker_count_and_accelerator(
-                manifest,
-                item,
-                worker_count,
-                accelerator,
-            )
+            let cell = if item.backend == Backend::Accelerator {
+                accelerator.config_for(item.q, item.n)?
+            } else {
+                AcceleratorConfig::default()
+            };
+            evaluate_work_item_with_worker_count_and_accelerator(manifest, item, worker_count, cell)
         },
         DurabilityHooks {
             on_shard_durable: ignore_durable_path,
