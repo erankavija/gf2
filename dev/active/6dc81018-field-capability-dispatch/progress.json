@@ -406,7 +406,7 @@
   {
    "issue": "e8fe47f5",
    "finding": "NTT_THRESHOLD=128 appears mis-tuned: out_len 127 dispatcher arm 3,793 ns vs out_len 129 NTT arm 12,057 ns (3.18x step up); arms converge near out_len 255. Contradicts tuning claim in rustdoc at crates/gf2-core/src/field/poly.rs:2711.",
-   "disposition": "route to 5ecc9bf8 calibration sweep; recorded in 2026-08-19-procedure-verification.md falsification section"
+   "disposition": "CLOSED. 5ecc9bf8's calibration receipt F1 records that the Karatsuba/NTT crossover is not expressible as one scalar threshold (NTT cost steps per power-of-two band, one crossing per band), keeps the default per design \u00a72.7 rule 3, and the NTT_THRESHOLD rustdoc (poly.rs) now states the default does not sit at the measured crossover, citing the procedure-verification falsification record."
   },
   {
    "issue": "220cab0b",
@@ -421,7 +421,7 @@
   {
    "issue": "6dc81018",
    "finding": "dev/active/6dc81018-field-capability-dispatch/investigation.md states no citation anchor, unlike classification.md (2f2cbb37) and 220cab0b/design.md (05bc9c14). Its file:line citations describe the pre-epic tree with nothing saying so, so a reader cannot tell whether they are current.",
-   "disposition": "open \u2014 resolve at epic completion by adding an anchor statement to investigation.md; do not rewrite its citations."
+   "disposition": "CLOSED at epic completion sweep 2026-08-20: citation-anchor statement inserted into investigation.md (anchor d8a97466; 68dba33d's packed-stub citation move noted). Pure insertion, no pre-existing line changed."
   },
   {
    "issue": "1ac74567",
@@ -446,7 +446,7 @@
   {
    "issue": "50b47eae",
    "finding": "The pinned non-regression comparison fails at bit_backend/popcount/words=1 (+18.2%) and words=8 (+6.4%), attributable to the cutover by the predeclared control-arm reading. Epic REQ-04 is unmet until a fresh receipt shows the tolerance holds.",
-   "disposition": "OPEN, tracked as c42720ce under DEC-D. This is a criterion violation, not a follow-up: REQ-04 names the pinned benchmark set and its predeclared tolerance directly. The epic CANNOT close until a passing receipt exists. Reconcile at the holistic gate."
+   "disposition": "OPEN \u2014 reconcile at the holistic gate. c42720ce's reduction was measured insufficient (receipt-2, RESULT: FAIL, 11 cells + tau_set). DEC-E two-track rework landed in wave 10 (2a85f728 elimination + 972e2b88 amended verdict, both done); the third measured attempt under layout-attribution-verdict-v1 is wave 11, in flight. REQ-04 stays unmet until that receipt shows the tolerance holds attributably."
   },
   {
    "issue": "50b47eae",
