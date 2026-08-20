@@ -79,8 +79,8 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-20T00:16:48.506583848Z",
+      "status": "passed",
+      "updated_at": "2026-08-20T05:37:11.009629167Z",
       "updated_by": "auto:executor"
     }
   },
@@ -94,5 +94,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-20T05:32:49.989168208Z"
+  "updated_at": "2026-08-20T05:37:11.009629167Z"
 }
