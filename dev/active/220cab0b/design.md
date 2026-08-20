@@ -600,14 +600,15 @@ at `bit_backend/popcount/words=1` and 0.224830 ns/call at
 See [`2026-08-20-post-cutover-receipt.md`](../../benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md).
 
 Issue `c42720ce` reduces that hot-path cost by publishing the active profile's
-`simd_min_words` into a dedicated `AtomicUsize` when `active()` resolves or a
-profile is successfully installed. `select_backend_for_size` is inlineable
-and reads that cached threshold with `Ordering::Relaxed`, so the selection
-boundary performs one relaxed cell load and the unchanged `_size >= threshold`
-comparison instead of walking the process-wide profile and its selector
-accessors. The cache starts at `SIMD_MIN_WORDS_DEFAULT` = 8, and a successful
-installation publishes its supplied value, so the profile continues to govern
-the boundary at every size, including the calibrated value 4.
+`simd_min_words` into one `AtomicUsize`, seeded with the unresolved sentinel
+`usize::MAX`, when the cache resolves or a profile is successfully installed.
+`select_backend_for_size` is inlineable and reads that single cell with one
+`Ordering::Relaxed` load, then compares the result with the sentinel; after the
+first call that comparison is perfectly predicted and the cold resolution path
+is taken at most once per process. The cache starts unresolved rather than at
+`SIMD_MIN_WORDS_DEFAULT` = 8, and a successful installation publishes its
+supplied value, so the profile continues to govern the boundary at every size,
+including the calibrated value 4.
 
 ### 4.2 Polynomial-crossover family
 
