@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-20T05:30:39.476004114Z",
+  "dependencies": [],
+  "description": "Reduce the per-call cost of the bit-backend threshold read so the pinned non-regression comparison passes without changing the predeclared tolerance.\n\n## Background\n\nThe post-cutover receipt of `50b47eae`, `dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md`, records `RESULT: FAIL` against the baseline at two of the thirty-four pinned cells: `bit_backend/popcount/words=1` rises from 1.853240 to 2.191107 ns/call, a ratio of 1.182311, and `bit_backend/popcount/words=8` rises from 3.501248 to 3.726078 ns/call, a ratio of 1.064214. Both exceed the predeclared `tau_cell` of 5 %. The whole-set `tau_set` holds at 0.998853.\n\nThe across-build control arm predeclared by `51058f8e` sits at 0.972476 and 1.002702 at those two cells, so the reading fixed in `across-build-control-arm-v1.md` section 4.3 before any of these numbers existed attributes the excursion to the cutover rather than to the across-build component. The excursion is not noise: every execution of the post-cutover arm stands above every execution of the baseline at `words=1`, and no cell's own dispersion reaches `tau_cell`.\n\nThe mechanism is the one `dev/active/220cab0b/design.md` section 8 describes — `select_backend_for_size` performs a `OnceLock` resolution per call at the selection boundary, and at the cheapest bit-logical operations that cost is a material fraction of the whole operation. What the measurement contradicts is that design's assessment of the cost as thin, not its account of where the cost is paid.\n\nOwner decision DEC-D (2026-08-20) resolves this by removing the cost rather than by widening the tolerance or amending the epic's criterion.\n\n**A compiled-in floor below which the profile is not consulted does not solve it.** Such a floor removes the read only below itself, so fixing `words=8` would require a floor above 8. The conservative default is 8 and the committed host calibration of `5ecc9bf8` selects 4 for this field, so any floor high enough to fix `words=8` would put the boundary beyond the profile's reach and make the calibration inert. The cost must therefore be reduced while the profile keeps governing the boundary at every pinned size.\n\n## Success Criteria\n\n- [hard] REQ-01: The per-call cost of resolving `bit_backend.simd_min_words` at the selection boundary is reduced, and the profile still governs the boundary at every size in the pinned set, including a calibrated value of 4 below the conservative default of 8.\n- [hard] REQ-02: `select_backend_for_size` keeps its current selection semantics exactly: the same comparison operator and sense, the same conservative default when no profile is installed, and the same behaviour in a build without the `simd` feature.\n- [hard] REQ-03: A test observes that an installed profile whose `simd_min_words` differs from the default still moves the selected route, including a value below the conservative default, so the reduction does not come at the cost of tunability.\n- [hard] REQ-04: `dev/active/220cab0b/design.md` section 4.1 records the mechanism and the measurement that motivates it, added without rewriting the document's existing citations, which are anchored at commit `05bc9c14`.\n- [hard] REQ-05: The change is confined to the resolution mechanism. No in-source default value moves, no pinned cell changes, the `selector-non-regression-v1` schema token is not bumped, and `crates/gf2-core/src/field/poly.rs` is untouched.\n\n## Notes\n\nWhether the reduction is sufficient is decided by a fresh run of the pinned procedure under `50b47eae`, not by this issue. This issue delivers the mechanism; `50b47eae` re-measures it.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-20T05:30:39.476004114Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "c42720ce-1f7b-4058-97bf-de165786b8a0",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-04",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Reduce the per-call cost of the bit-backend threshold read",
+  "updated_at": "2026-08-20T05:30:39.476004114Z"
+}
