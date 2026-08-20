@@ -8680,3 +8680,4 @@
 {"gate_key":"code-review","id":"87e6dbea-988a-41c9-8d76-ba738aded3f6","issue_id":"a39bb161-0746-4f24-9057-32c9c2fa09fd","timestamp":"2026-08-20T14:44:44.562764593Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"cargo-ci","id":"f1706add-f7cf-475a-9e41-b71a1ffd247c","issue_id":"a39bb161-0746-4f24-9057-32c9c2fa09fd","timestamp":"2026-08-20T14:52:47.114486581Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"4181f763-af9e-403e-b966-87c66d37f18c","issue_id":"a39bb161-0746-4f24-9057-32c9c2fa09fd","timestamp":"2026-08-20T14:55:38.610832553Z","type":"gate_failed","updated_by":"auto:executor"}
+{"assignee":"agent:jit-execution-lead","id":"f5e8fa48-6c49-4f9d-88c9-30d36dfabfda","issue_id":"6dc81018-9a8e-4318-9572-148670d1c272","timestamp":"2026-08-20T15:11:51.988286667Z","type":"issue_claimed"}
