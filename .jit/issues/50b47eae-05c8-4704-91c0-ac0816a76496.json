@@ -9,7 +9,69 @@
     "697fc55b-4b36-4cb5-8106-a811b1772e44"
   ],
   "description": "Run the pinned non-regression procedure after the pilot cutover and commit the receipt showing the tolerance holds.\n\n## Background\n\nThe pinned procedure and its predeclared tolerance exist before the cutover; this issue executes it on the prepared benchmark host after the pilot cutover lands and commits the receipt comparing against the baseline. The issue completes only once a receipt shows the tolerance holds. An excursion encountered on the way is preserved in the committed record together with its tracked rework, never overwritten.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt compares post-cutover measurements against the baseline with full provenance and shows the predeclared tolerance holds for the pinned set.\n- [hard] REQ-02: Any tolerance excursion encountered before the passing run is preserved in the committed record with its contradiction and tracked rework.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9c38f552b59e07af06e1c313baf80892e96c979c341fd9aeacb623fef8661f51",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-20-post-cutover-receipt.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5b8e7083896f57d9e8027332431fdcd8dcc110f429c6dc03b62a6676326d4194",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "across-build-control-arm-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c90ccbe4a77a4e08d7412b0fcc1983257127f627eaa52461b32dbf7c03453bf5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-19-pre-cutover-baseline.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bc9d351a9b86fb9976d5e3f9a273bd518c8cb1f974d5f2da83d7e1fbc4473a42",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "selector-non-regression-plan-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "612ff0318dcdd855feefced4419d0b14219438e4a672235b9df243d943ba2405",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-20-post-cutover-control-arm.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-control-arm.csv"
+        }
+      ],
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Post-cutover receipt (RESULT: FAIL at two popcount cells)",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Post-cutover arm raw windows",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Across-build control arm raw windows",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-control-arm.csv"
+    }
+  ],
   "first_ready_at": "2026-08-19T23:43:47.707665037Z",
   "gates_required": [
     "doc-review"
@@ -25,5 +87,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-19T23:45:32.837256465Z"
+  "updated_at": "2026-08-20T00:11:39.292643538Z"
 }
