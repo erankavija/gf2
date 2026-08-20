@@ -54,6 +54,23 @@
       "format": "markdown",
       "label": "Predeclared layout-attribution verdict (DEC-E track 2)",
       "path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "1b8a91bd65ff6792ebc7b5caca2d5a67eff149b3f72b447ddd42d86cfe4a8c17",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Ensemble axis verification receipt",
+      "path": "dev/active/972e2b88/ensemble-axis-verification.md"
     }
   ],
   "first_ready_at": "2026-08-20T19:01:16.912666008Z",
@@ -89,5 +106,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
-  "updated_at": "2026-08-20T20:14:23.416914982Z"
+  "updated_at": "2026-08-20T20:41:43.940512937Z"
 }
