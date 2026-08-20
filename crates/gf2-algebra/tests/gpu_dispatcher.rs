@@ -328,3 +328,26 @@ fn test_permanent_batch_bipedal7_smoke_n16() {
         );
     }
 }
+
+// ---------------------------------------------------------------------------
+
+/// Device probe reports a usable accelerator on a gating-satisfying host.
+///
+/// The probe backs the campaign's refusal of a frozen accelerator selection on
+/// a host that cannot serve it, so the branch that matters for a dataset is the
+/// one asserted here: where the batch dispatchers above run, the probe agrees
+/// that they can. Its `false` branch is only reachable on a host without a
+/// usable device, which by this file's gating is never the host running it.
+///
+/// timing: one `hipMemGetInfo` query, microseconds. It carries the same ignore
+/// tier as its neighbours because it requires the same device, not because it
+/// is slow.
+#[test]
+#[ignore = "external: gfx1030 device required"]
+fn test_has_usable_device_reports_true_on_a_device_host() {
+    assert!(
+        gf2_algebra::gpu::has_usable_device(),
+        "probe reported no usable device on a host where the gated batch \
+         dispatcher tests in this file run"
+    );
+}

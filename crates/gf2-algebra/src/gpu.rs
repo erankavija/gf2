@@ -79,6 +79,18 @@ use crate::packed::packed7::{ADD_LUT, MUL_LUT, SUB_LUT};
 
 use gf2_kernels_hip::permanent::permanent_gf3_batch_dispatch;
 
+/// Reports whether the HIP runtime can query a usable current accelerator.
+///
+/// The condition is exactly whether `hipMemGetInfo` succeeds for the current
+/// device through the kernel crate's safe host wrapper. A missing device,
+/// unavailable runtime, or other failed HIP query reports `false`. This probe
+/// never panics; it is intended for callers that must refuse a frozen
+/// accelerator selection before invoking a panic-on-dispatch batch entry point.
+#[must_use]
+pub fn has_usable_device() -> bool {
+    gf2_kernels_hip::host::device_mem_info().is_ok()
+}
+
 #[cfg(feature = "f5")]
 use gf2_kernels_hip::permanent::permanent_gf5_batch_dispatch;
 
