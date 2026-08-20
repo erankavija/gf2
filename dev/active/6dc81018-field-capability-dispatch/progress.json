@@ -186,7 +186,7 @@
      "title": "Eliminate the per-call cost of the bit-backend selection boundary",
      "classification": "implementation",
      "model": "codex-luna",
-     "status": "pending"
+     "status": "rework-1"
     },
     {
      "id": "972e2b88-d75c-411b-a6b5-06318fa84305",
@@ -194,7 +194,7 @@
      "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
      "classification": "design",
      "model": "claude-opus",
-     "status": "pending"
+     "status": "rework-1"
     }
    ],
    "note": "Created during execution per owner decision DEC-E: the second post-cutover receipt records RESULT: FAIL at eleven cells and on tau_set; the rework is two tracks (cost elimination + attribution amendment), tolerances unchanged. Both tasks block 50b47eae. Parallel dispatch in worktrees; neither runs a benchmark-mode session."
@@ -381,8 +381,8 @@
   "0d819b62": 1,
   "697fc55b": 1,
   "c42720ce": 3,
-  "2a85f728": 0,
-  "972e2b88": 0
+  "2a85f728": 1,
+  "972e2b88": 1
  },
  "surfaced_pitfalls": [
   {
