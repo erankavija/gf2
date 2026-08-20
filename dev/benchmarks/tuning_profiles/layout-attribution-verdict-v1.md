@@ -115,22 +115,34 @@ than a difference between two unlike halves of the ensemble.
 
 ### 3.3 What is verified before this document is committed
 
-Observed at this revision on `fraktaali` under `rustc 1.95.0 (59807616e
-2026-04-14)`, building `--bench selector_non_regression -p gf2-core --features
-simd`:
+[`ensemble-axis-verification.md`](/dev/active/972e2b88/ensemble-axis-verification.md)
+is the committed receipt: fourteen builds of the bench target at revision
+`183379074223f96215276ab3e26b7c2cbb1e8c82` on `fraktaali` under `rustc 1.95.0
+(59807616e 2026-04-14)`, each recorded with its `RUSTFLAGS`, byte size,
+SHA-256, build wall-clock, and how many of the 805 text symbols it moves
+against the ordinary build. It takes no timed measurement and holds no bench
+lock.
 
-- Every axis is accepted at the MSRV and moves the binary. The levels sampled
-  build distinct bench binaries at distinct sizes, growing the ordinary build
-  by at most 6.7 % at A = 7, 2.3 % at B = 3 and 9.2 % at C = 3. Levels past the
-  table's bounds stay outside the ensemble because they bloat the binary rather
-  than move it: `-align-all-nofallthru-blocks=7` grows it by 73.2 %. A member
-  that turns out to leave this crate's placement alone shows up as reduced
-  dispersion, which §6.4's coverage precondition reads.
-- The member that perturbs most, A = 7, B = 3, C = 3, builds and reports
-  `self-check PASS` with `simd_min_words=8`, so the harness's straddle
+- **Every axis is accepted at the MSRV and moves code.** At every sampled level
+  A, B and C re-place 97 % to 100 % of the common text symbols, so a member is
+  a different placement of the same program rather than the same placement with
+  different bytes.
+- **The admitted levels stay close to the ordinary build**: at most +6.46 % at
+  A = 7, +2.40 % at B = 3 and +9.31 % at C = 3, and +15.61 % at the member that
+  perturbs most. The levels past the table's bounds bloat rather than move,
+  which is why B stops at 3: `-align-all-nofallthru-blocks=5` grows the binary
+  by 13.52 % and `=7` by 74.74 %.
+- **The worst member keeps the protocol.** Built at A = 7, B = 3, C = 3, the
+  harness reports `self-check PASS` with `simd_min_words=8`, so its straddle
   properties and the pinned set survive the perturbation.
-- One member's build costs 14 s to 15 s of wall clock on this host, which §5.3
-  budgets from.
+- **A member's build costs 5 s to 16 s** across the receipt's captured builds,
+  with one 32 s observation while other work shared the host. §5.3 budgets from
+  the upper end.
+
+A member that turns out to leave this crate's placement alone would show up as
+reduced dispersion, which §6.4's coverage precondition reads. The receipt
+measures placement rather than assuming it for exactly that reason, and it
+rejects one candidate axis on that measurement (§6.6).
 
 ### 3.4 Why K is 128
 
@@ -222,8 +234,9 @@ arms is equal and no warm-up or thermal trend over the session lands on one arm.
 
 At K = 128: 256 builds and 256 timed executions.
 
-- **Builds** happen before the lock is taken, at 14 s to 15 s each (§3.3), so
-  about 64 minutes, and no compilation happens under the lock. Each binary is
+- **Builds** happen before the lock is taken, at 5 s to 16 s each in the
+  verification receipt's captured builds (§3.3); budgeting its upper end gives
+  about 68 minutes, and no compilation happens under the lock. Each binary is
   copied out of the target directory to a staging path outside the repository
   before the next member overwrites it, and its SHA-256 is recorded.
 - **Timed work** is 34 × 250 ms per execution. The second receipt's slot table
@@ -232,9 +245,9 @@ At K = 128: 256 builds and 256 timed executions.
   timed windows and an amended execution costs about 11 s. 256 executions is
   about 47 minutes, inside one lock session.
 
-The ladder of §6.6 doubles K to 256, which is 512 builds (about 2 h 8 min) and
-512 executions (about 94 minutes under the lock). Both rungs are one lock
-session.
+The ladder of §6.6 doubles K to 256, which is 512 builds (about 2 h 16 min at
+the same upper end) and 512 executions (about 94 minutes under the lock). Both
+rungs are one lock session.
 
 ### 5.4 Recording
 
@@ -400,12 +413,18 @@ no passing comparison is claimed from that session. It can only withhold a
 verdict; it can never turn a failing comparison into a passing one.
 
 - **Precision or the half-split null fails.** K doubles to 256 by extending the
-  enumeration with a fourth axis, `-C link-arg=-Wl,--sort-section=name` at two
-  levels D. Member `j` from 0 to 255 then takes `D(j) = ⌊j / 128⌋`, takes A and
-  B from `j mod 128` by §3.1's formulas, and takes
-  `C(j) = ((j mod 4) + A(j) + B(j) + D(j)) mod 4`, which keeps the level sum
-  congruent to `j` modulo 2 and so keeps the parity property of §3.2. Beyond
-  K = 256 the run reports that the per-cell rule
+  enumeration with a fourth axis,
+  `-C llvm-args=-x86-branches-within-32B-boundaries` at two levels D, passed at
+  D = 1 and omitted at D = 0. Member `j` from 0 to 255 then takes
+  `D(j) = ⌊j / 128⌋`, takes A and B from `j mod 128` by §3.1's formulas, and
+  takes `C(j) = ((j mod 4) + A(j) + B(j) + D(j)) mod 4`, which keeps the level
+  sum congruent to `j` modulo 2 and so keeps the parity property of §3.2. The
+  verification receipt measures that axis moving all 805 text symbols at
+  +2.32 % growth, and it rejects the candidate this rung first named:
+  `-C link-arg=-Wl,--sort-section=name` produces a different binary of
+  identical size that moves no symbol at all, so doubling along it would hold
+  each of the 128 placements twice rather than 256 placements. Beyond K = 256
+  the run reports that the per-cell rule
   is not decidable at τ_cell against this host's across-build dispersion, and
   that demonstration goes to the owner of epic `6dc81018`.
 - **Coverage or decorrelation fails.** The ensemble is not a model of the
