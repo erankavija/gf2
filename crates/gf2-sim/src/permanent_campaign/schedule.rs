@@ -152,15 +152,6 @@ impl AcceleratorCostTable {
     }
 }
 
-impl Default for AcceleratorConfig {
-    fn default() -> Self {
-        Self {
-            per_matrix_cost: Duration::from_micros(1),
-            launch_cap: DEFAULT_ACCELERATOR_LAUNCH_CAP,
-        }
-    }
-}
-
 /// Chooses the number of matrices for the next accelerator launch.
 ///
 /// The rule is `clamp(floor(cap / per_matrix), 1, remaining)`. Permanent
@@ -500,12 +491,7 @@ pub fn run_field_with_worker_count(
     field: u8,
     worker_count: usize,
 ) -> Result<FieldRun, ScheduleError> {
-    run_field_with_worker_count_and_accelerator(
-        manifest,
-        field,
-        worker_count,
-        AcceleratorConfig::default(),
-    )
+    run_field_with_worker_count_and_accelerator(manifest, field, worker_count, None)
 }
 
 /// Executes one field with explicit accelerator launch-sizing configuration.
@@ -517,7 +503,7 @@ pub fn run_field_with_worker_count_and_accelerator(
     manifest: &CampaignManifest,
     field: u8,
     worker_count: usize,
-    accelerator: AcceleratorConfig,
+    accelerator: Option<AcceleratorConfig>,
 ) -> Result<FieldRun, ScheduleError> {
     validate_worker_count(worker_count)?;
     let purpose = manifest
@@ -634,7 +620,7 @@ fn run_shard(
     purpose_tag: u8,
     item: &WorkItem,
     worker_count: usize,
-    accelerator: AcceleratorConfig,
+    accelerator: Option<AcceleratorConfig>,
 ) -> Result<ShardRun, ScheduleError> {
     Ok(run_shard_with_position(root_seed, purpose_tag, item, worker_count, accelerator)?.run)
 }
@@ -664,12 +650,7 @@ pub fn evaluate_work_item_with_worker_count(
     item: &WorkItem,
     worker_count: usize,
 ) -> Result<EvaluatedShard, ScheduleError> {
-    evaluate_work_item_with_worker_count_and_accelerator(
-        manifest,
-        item,
-        worker_count,
-        AcceleratorConfig::default(),
-    )
+    evaluate_work_item_with_worker_count_and_accelerator(manifest, item, worker_count, None)
 }
 
 /// Evaluates one work item with explicit accelerator launch-sizing input.
@@ -706,7 +687,7 @@ pub fn evaluate_work_item_with_worker_count_and_accelerator(
     manifest: &CampaignManifest,
     item: &WorkItem,
     worker_count: usize,
-    accelerator: AcceleratorConfig,
+    accelerator: Option<AcceleratorConfig>,
 ) -> Result<EvaluatedShard, ScheduleError> {
     validate_worker_count(worker_count)?;
     let purpose = manifest
@@ -728,7 +709,7 @@ fn run_shard_with_position(
     purpose_tag: u8,
     item: &WorkItem,
     worker_count: usize,
-    accelerator: AcceleratorConfig,
+    accelerator: Option<AcceleratorConfig>,
 ) -> Result<EvaluatedShard, ScheduleError> {
     match item.q {
         3 => run_shard_for::<3>(
@@ -767,7 +748,7 @@ fn run_shard_for<const Q: u64>(
     item: &WorkItem,
     field_order: FieldOrder,
     worker_count: usize,
-    accelerator: AcceleratorConfig,
+    accelerator: Option<AcceleratorConfig>,
 ) -> Result<EvaluatedShard, ScheduleError> {
     let mut observer = |_: &[Fp<Q>], _: u64, _: Option<u64>| {};
     run_shard_for_with_observer_with_worker_count(
@@ -805,7 +786,7 @@ where
         item,
         field_order,
         1,
-        AcceleratorConfig::default(),
+        None,
         observer,
     )
 }
@@ -816,7 +797,7 @@ fn run_shard_for_accelerator<const Q: u64, O>(
     purpose_tag: u8,
     item: &WorkItem,
     field_order: FieldOrder,
-    accelerator: AcceleratorConfig,
+    accelerator: Option<AcceleratorConfig>,
     observer: &mut O,
 ) -> Result<EvaluatedShard, ScheduleError>
 where
@@ -841,7 +822,7 @@ fn run_shard_for_accelerator_with_dispatch<const Q: u64, P, D, O>(
     purpose_tag: u8,
     item: &WorkItem,
     field_order: FieldOrder,
-    accelerator: AcceleratorConfig,
+    accelerator: Option<AcceleratorConfig>,
     probe: P,
     mut dispatch: D,
     observer: &mut O,
@@ -851,6 +832,13 @@ where
     D: FnMut(&[Vec<Fp<Q>>], usize) -> Result<(Vec<u64>, Duration), ScheduleError>,
     O: FnMut(&[Fp<Q>], u64, Option<u64>),
 {
+    // No measured cost, no accelerator run. A placeholder here would size this
+    // cell's launches from a number nobody measured, which is the same defect
+    // as a fixed batch size and harder to see.
+    let accelerator = accelerator.ok_or(ScheduleError::AcceleratorCostMissing {
+        q: item.q,
+        n: item.n,
+    })?;
     if !probe() {
         return Err(ScheduleError::AcceleratorDeviceUnavailable {
             q: item.q,
@@ -1084,7 +1072,7 @@ fn run_shard_for_with_observer_with_worker_count<const Q: u64, O>(
     item: &WorkItem,
     field_order: FieldOrder,
     worker_count: usize,
-    accelerator: AcceleratorConfig,
+    accelerator: Option<AcceleratorConfig>,
     observer: &mut O,
 ) -> Result<EvaluatedShard, ScheduleError>
 where
@@ -1982,7 +1970,13 @@ mod tests {
             CAMPAIGN_CELL_PURPOSE_TAG,
             &item,
             FieldOrder::F3,
-            AcceleratorConfig::default(),
+            // A measured cost is supplied, so this cell is refused for the
+            // reason REQ-04 names — the absent device — and not for a missing
+            // cost it does have.
+            Some(AcceleratorConfig {
+                per_matrix_cost: Duration::from_micros(40),
+                launch_cap: Duration::from_millis(500),
+            }),
             || false,
             |_matrices, _n| -> Result<(Vec<u64>, Duration), ScheduleError> {
                 panic!("accelerator dispatch must not run without a device")
@@ -2007,6 +2001,37 @@ mod tests {
 
     #[cfg(feature = "hip")]
     #[test]
+    fn test_accelerator_refuses_a_cell_with_no_measured_cost_supplied() {
+        // The default scheduler entry points supply no cost. An accelerator
+        // cell reached through them must refuse rather than run against a
+        // placeholder: a fabricated per-matrix cost sizes launches from a
+        // number nobody measured, which is the defect REQ-01 rules out wearing
+        // a measured cost's clothes.
+        let campaign = manifest(vec![cell(3, 2, 4, &[(0, 29)])]);
+        let item = enumerate_work_items(&campaign, Some(3)).unwrap().remove(0);
+        let mut observed = 0;
+        let error = run_shard_for_accelerator_with_dispatch(
+            campaign.root_seed,
+            CAMPAIGN_CELL_PURPOSE_TAG,
+            &item,
+            FieldOrder::F3,
+            None,
+            || true,
+            |_matrices, _n| -> Result<(Vec<u64>, Duration), ScheduleError> {
+                panic!("dispatch must not run without a measured per-matrix cost")
+            },
+            &mut |_: &[Fp<3>], _: u64, _: Option<u64>| observed += 1,
+        )
+        .unwrap_err();
+        assert!(matches!(
+            error,
+            ScheduleError::AcceleratorCostMissing { q: 3, n: 2 }
+        ));
+        assert_eq!(observed, 0, "no matrix may be evaluated");
+    }
+
+    #[cfg(feature = "hip")]
+    #[test]
     fn test_accelerator_launch_split_preserves_input_order_and_values() {
         let campaign = manifest(vec![cell(3, 2, 9, &[(0, 23)])]);
         let item = enumerate_work_items(&campaign, Some(3)).unwrap().remove(0);
@@ -2017,10 +2042,10 @@ mod tests {
             CAMPAIGN_CELL_PURPOSE_TAG,
             &item,
             FieldOrder::F3,
-            AcceleratorConfig {
+            Some(AcceleratorConfig {
                 per_matrix_cost: Duration::from_millis(1),
                 launch_cap: Duration::from_millis(2),
-            },
+            }),
             || true,
             |matrices, n| {
                 first_launches += 1;
@@ -2043,10 +2068,10 @@ mod tests {
             CAMPAIGN_CELL_PURPOSE_TAG,
             &item,
             FieldOrder::F3,
-            AcceleratorConfig {
+            Some(AcceleratorConfig {
                 per_matrix_cost: Duration::from_millis(1),
                 launch_cap: Duration::from_millis(3),
-            },
+            }),
             || true,
             |matrices, n| {
                 second_launches += 1;
@@ -2350,7 +2375,7 @@ mod tests {
             &item,
             field_order,
             4,
-            AcceleratorConfig::default(),
+            None,
             &mut |entries: &[Fp<Q>], permanent, _| {
                 observed.push((entries.to_vec(), permanent));
             },
@@ -2416,7 +2441,7 @@ mod tests {
                     &scalar_item,
                     FieldOrder::F3,
                     1,
-                    AcceleratorConfig::default(),
+                    None,
                     &mut |_: &[Fp<3>], value, _| scalar_values.push(value),
                 )
                 .unwrap();
@@ -2426,7 +2451,7 @@ mod tests {
                     &batch_item,
                     FieldOrder::F3,
                     4,
-                    AcceleratorConfig::default(),
+                    None,
                     &mut |_: &[Fp<3>], value, _| batch_values.push(value),
                 )
                 .unwrap();
