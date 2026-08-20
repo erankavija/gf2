@@ -646,6 +646,12 @@ tests cover installed thresholds both below and above the conservative default.
 No threshold value is reserved, so `usize::MAX` remains admissible, and no
 pre-existing design line is rewritten by this amendment.
 
+The install publication is ordered by the same `OnceLock` initialization: its
+`get_or_init` closure stores the profile's threshold before returning the
+profile, and `OnceLock` makes the completed initialization visible only after
+that closure returns. Therefore a reader that can observe the installed value
+through `active()` cannot observe the threshold cache lagging that install.
+
 ### 4.2 Polynomial-crossover family
 
 Four constants, six read sites — `SUBPRODUCT_THRESHOLD` is read at two entry
