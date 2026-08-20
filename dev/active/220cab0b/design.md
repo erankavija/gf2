@@ -618,6 +618,34 @@ publishes the same threshold, so the cold path is idempotent rather than
 one-shot. The steady-state selection boundary remains one load, a predicted
 branch, and one load, including the calibrated value 4.
 
+#### Amendment — issue `2a85f728` (2026-08-20)
+
+The second post-cutover receipt records `RESULT: FAIL` at eleven of the
+thirty-four pinned cells and for the set statistic. It records the threshold
+cache's remaining cost at the two first-excursion cells as
+`bit_backend/popcount/words=1` ratio 1.294670 and
+`bit_backend/popcount/words=8` ratio 1.123171, with the words=1 cells paying
+0.4--0.7 ns/call against the same-session control. See
+[`2026-08-20-post-cutover-receipt-2.md`](../../benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md).
+
+Issue `2a85f728` amends this boundary additively: `ACTIVE_SIMD_MIN_WORDS` is
+initialized to `SIMD_MIN_WORDS_DEFAULT`, and `active_simd_min_words` reads it
+with one `Ordering::Relaxed` load. `active()` and a successful `install()`
+continue to publish their selected threshold into that same atomic before the
+caller can use a subsequent selection. The resolved selection path therefore
+contains no resolved-flag load and no resolution branch; the selector retains
+the existing `_size >= threshold` comparison and the `#[cfg(feature =
+"simd")]` boundary.
+
+This changes one observable tuning contract: a bit-backend selection alone no
+longer calls `active()` and therefore does not make a later `install()` return
+`AlreadyResolved`. `active()` still resolves the conservative profile when no
+profile is installed, and `install()` still rejects a profile after `active()`
+has resolved or after another profile has been installed. The route-observation
+tests cover installed thresholds both below and above the conservative default.
+No threshold value is reserved, so `usize::MAX` remains admissible, and no
+pre-existing design line is rewritten by this amendment.
+
 ### 4.2 Polynomial-crossover family
 
 Four constants, six read sites — `SUBPRODUCT_THRESHOLD` is read at two entry

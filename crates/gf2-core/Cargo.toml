@@ -364,6 +364,10 @@ name = "backend_selection_profile"
 required-features = ["simd", "tuning-profile"]
 
 [[test]]
+name = "backend_selection_profile_above"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
 name = "backend_selection_tunable"
 required-features = ["simd", "tuning-profile"]
 
