@@ -8639,3 +8639,4 @@
 {"gate_key":"doc-review","id":"2c922a04-130c-438e-a93a-f042263dc208","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T00:16:48.506583848Z","type":"gate_failed","updated_by":"auto:executor"}
 {"id":"6ec9786a-db8e-4592-8084-99dc50a8db02","issue_id":"c42720ce-1f7b-4058-97bf-de165786b8a0","priority":"normal","timestamp":"2026-08-20T05:30:39.476004114Z","title":"Reduce the per-call cost of the bit-backend threshold read","type":"issue_created"}
 {"fields":["dependencies"],"id":"beb24db3-ab43-4c44-986c-43fc290a7fd4","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T05:30:50.345599529Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["documents"],"id":"653703c8-0439-47ca-921e-e8a5d93d0c37","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T05:32:49.989168208Z","type":"issue_updated","updated_by":"doc-update"}

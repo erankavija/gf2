@@ -15,22 +15,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "9c38f552b59e07af06e1c313baf80892e96c979c341fd9aeacb623fef8661f51",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-08-20-post-cutover-receipt.csv",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "5b8e7083896f57d9e8027332431fdcd8dcc110f429c6dc03b62a6676326d4194",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "across-build-control-arm-v1.md",
-          "resolved_path": "dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "c90ccbe4a77a4e08d7412b0fcc1983257127f627eaa52461b32dbf7c03453bf5",
           "is_shared": false,
           "mime_type": "text/markdown",
@@ -52,6 +36,22 @@
           "mime_type": null,
           "original_path": "2026-08-20-post-cutover-control-arm.csv",
           "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-control-arm.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9c38f552b59e07af06e1c313baf80892e96c979c341fd9aeacb623fef8661f51",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-20-post-cutover-receipt.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5b8e7083896f57d9e8027332431fdcd8dcc110f429c6dc03b62a6676326d4194",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "across-build-control-arm-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md"
         }
       ],
       "commit": null,
@@ -94,5 +94,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-20T05:30:50.345599529Z"
+  "updated_at": "2026-08-20T05:32:49.989168208Z"
 }

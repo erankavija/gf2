@@ -650,13 +650,32 @@ cutover's cost is visible against a same-session pre-cutover build.
 ## Tracked rework
 
 Per control-arm §4.2 and `@/inv/falsification-preserved`, the rework this
-excursion triggers is tracked rather than deferred. The work the measurement
-calls for is to remove the per-call profile read from the bit-backend selection
-boundary at the small-buffer sizes, or to establish that the epic accepts the
-measured cost, and then to take a fresh receipt under this same unmodified
-procedure. Filing that issue belongs to the epic lead of `6dc81018`; this
-receipt records the measurement, its contradiction and the control-arm evidence
-that the tracked work weighs.
+excursion triggers is tracked rather than deferred. Issue `c42720ce`, "Reduce
+the per-call cost of the bit-backend threshold read", owns it inside epic
+`6dc81018`, and `50b47eae` depends on it.
+
+**The resolution is to remove the cost.** Owner decision DEC-D of 2026-08-20
+settles it that way rather than by widening τ_cell or τ_set or by amending the
+epic's criterion, and that is why the `RESULT: FAIL` this receipt records does
+not end the epic: the tolerance stands where it was predeclared, and the work
+moves to the cost the measurement found.
+
+**What `c42720ce` delivers, and what it does not.** It reduces the per-call cost
+of resolving `bit_backend.simd_min_words` at the selection boundary while the
+profile keeps governing that boundary at every size in the pinned set. It does
+not settle whether the reduction suffices: that is decided by a fresh run of
+this same unmodified procedure under `50b47eae`, against this same baseline and
+the same predeclared tolerance.
+
+**A compiled-in floor below which the profile is not consulted is not the
+mechanism.** Such a floor removes the read only below itself, so fixing
+`bit_backend/popcount/words=8` would need a floor above 8. The conservative
+default is 8, and the committed host calibration of `5ecc9bf8`,
+[`2026-08-20-host-calibration.md`](2026-08-20-host-calibration.md), selects 4
+for this field. Any floor high enough to fix that cell would therefore put the
+boundary beyond the profile's reach and make the calibration inert. The cost has
+to come down while the profile still governs the boundary at every pinned size,
+which is what constrains the fix.
 
 ## What stands unchanged
 
