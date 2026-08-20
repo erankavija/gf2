@@ -22,9 +22,20 @@ fn installed_profile_above_default_moves_production_route() {
     tuning::install(profile).expect("profile has not been resolved");
 
     assert_eq!(
+        tuning::active().bit_backend().simd_min_words(),
+        16,
+        "the installed profile is observable after install returns"
+    );
+
+    assert_eq!(
         select_backend_for_size(conservative_threshold).name(),
         "scalar",
         "the installed higher threshold moves the default boundary to scalar"
+    );
+    assert_eq!(
+        select_backend_for_size(8).name(),
+        "scalar",
+        "the installed threshold is published before the next selection"
     );
     assert_eq!(select_backend_for_size(16).name(), "simd");
 }

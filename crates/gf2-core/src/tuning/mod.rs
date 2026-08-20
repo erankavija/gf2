@@ -674,18 +674,28 @@ pub fn active() -> &'static TuningProfile {
 
 /// Installs the profile before [`active`] resolves.
 ///
+/// A successful installation resolves the same [`OnceLock`] used by [`active`]
+/// and publishes the SIMD threshold during that initialization, before the
+/// installed profile can become observable through [`active`].
+///
 /// # Errors
 ///
 /// Returns [`AlreadyResolved`] if this process has already called [`active`] or
 /// successfully installed another profile. A prior bit-backend selection does
 /// not resolve the profile and therefore does not cause this error.
 pub fn install(profile: TuningProfile) -> Result<(), AlreadyResolved> {
-    #[cfg(feature = "simd")]
-    let simd_min_words = profile.bit_backend().simd_min_words();
-    ACTIVE.set(profile).map_err(|_| AlreadyResolved)?;
-    #[cfg(feature = "simd")]
-    ACTIVE_SIMD_MIN_WORDS.store(simd_min_words, Ordering::Relaxed);
-    Ok(())
+    let mut installed = false;
+    ACTIVE.get_or_init(|| {
+        installed = true;
+        #[cfg(feature = "simd")]
+        ACTIVE_SIMD_MIN_WORDS.store(profile.bit_backend().simd_min_words(), Ordering::Relaxed);
+        profile
+    });
+    if installed {
+        Ok(())
+    } else {
+        Err(AlreadyResolved)
+    }
 }
 
 #[derive(Clone, Debug)]
