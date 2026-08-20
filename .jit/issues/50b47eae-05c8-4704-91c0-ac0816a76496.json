@@ -71,6 +71,75 @@
       "doc_type": "data",
       "label": "Across-build control arm raw windows",
       "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-control-arm.csv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "bc9d351a9b86fb9976d5e3f9a273bd518c8cb1f974d5f2da83d7e1fbc4473a42",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "selector-non-regression-plan-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5b8e7083896f57d9e8027332431fdcd8dcc110f429c6dc03b62a6676326d4194",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "across-build-control-arm-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c90ccbe4a77a4e08d7412b0fcc1983257127f627eaa52461b32dbf7c03453bf5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-19-pre-cutover-baseline.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88ec7e40f84a5332733ab23427249f2ba63d7ed16e42b88c6288d46841bf8266",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "447dda463a51db8c7ac8f4037d1c21f98f4f2491aef94b56db995c529e09a532",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-20-post-cutover-receipt-2.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c0412967797c6cdde58ebd8938b343659924c2956af4552e7ab80ea75f9fa7c0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-20-post-cutover-control-arm-2.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-control-arm-2.csv"
+        }
+      ],
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Second post-cutover receipt (RESULT: FAIL at eleven cells and on tau_set)",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Second post-cutover arm raw windows",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Second across-build control arm raw windows",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-control-arm-2.csv"
     }
   ],
   "first_ready_at": "2026-08-19T23:43:47.707665037Z",
@@ -94,5 +163,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-20T05:37:11.009629167Z"
+  "updated_at": "2026-08-20T15:34:08.924465709Z"
 }
