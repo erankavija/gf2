@@ -175,3 +175,23 @@ session runs after this document is committed.
 The document is registered against `51058f8e` and is reachable from the plan:
 §4's falsification record, which names `51058f8e` as the owner of the
 consequence, links here.
+
+## Amendment — issue `972e2b88` (2026-08-20)
+
+This section is appended after §5 and changes no line above it.
+
+The control arm of §2 measures the across-build component at one rebuild and
+enters no verdict. Two post-cutover receipts have now recorded it landing
+outside ±5 % at five cells, in the same cells and directions in both sessions.
+
+Owner decision DEC-E of 2026-08-20 carries the consequence into the verdict
+itself, by the predeclared amendment
+[`layout-attribution-verdict-v1.md`](layout-attribution-verdict-v1.md) that
+issue `972e2b88` files. Its reference arm is this document's control arm
+generalised from one rebuild to an ensemble of builds, and its readings keep
+§4.4's asymmetry: nothing recorded beside the verdict converts a `FAIL` into a
+`PASS`.
+
+Nothing here moves for it. §2's control arm, §3's list of what plan v1 keeps
+and §4's reading of a tripping comparison stand as written, and τ_cell and
+τ_set stay at 5 % and 2 %.
