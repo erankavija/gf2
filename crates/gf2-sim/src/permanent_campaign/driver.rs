@@ -16,7 +16,8 @@
 //! deterministic byte comparison, and remaining work continues. A changed
 //! manifest configuration is refused with named component differences. These
 //! are the operational contracts of `@/inv/campaign-resumability` and
-//! `@/inv/deterministic-seeded-execution`.
+//! `@/inv/deterministic-seeded-execution`. Manifest-selected unavailable
+//! backends are refused during pre-flight and never enter quarantine.
 
 use std::collections::BTreeSet;
 use std::fmt;
@@ -30,8 +31,9 @@ use crate::checkpoint::{
 };
 use crate::permanent_campaign::schedule::{
     emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_work_items,
-    evaluate_work_item_with_worker_count, shard_record_bytes, summarize_with_quarantine,
-    EvaluatedShard, FieldRun, PhaseDurations, ShardRun, WorkItem,
+    evaluate_work_item_with_worker_count, resolve_processor_path, shard_record_bytes,
+    summarize_with_quarantine, EvaluatedShard, FieldRun, PhaseDurations, ScheduleError, ShardRun,
+    WorkItem,
 };
 use crate::permanent_campaign::schema::{
     field_summary_file, shard_record_file, CampaignManifest, QuarantinedShard, ShardRecord,
@@ -223,8 +225,10 @@ pub fn field_checkpoint_path(root: &Path, field: u8) -> PathBuf {
 /// mismatch names the existing path and refuses to overwrite it. Checkpointed
 /// shard and summary bytes are durable before their completion state is
 /// persisted. An interrupt is observed at a work-item boundary after the
-/// preceding checkpoint write, and an evaluator error quarantines that item in
-/// the field summary while remaining work continues. These contracts enforce
+/// preceding checkpoint write, and a caller callback error quarantines that
+/// item in the field summary while remaining work continues. Production
+/// schedule errors, including manifest-selected unavailable backends, are
+/// returned before they can enter quarantine. These contracts enforce
 /// `@/inv/campaign-resumability` and `@/inv/deterministic-seeded-execution`.
 /// `worker_count` must be non-zero; zero is refused with
 /// [`CampaignDriverError::ResumeRefused`].
@@ -235,15 +239,17 @@ pub fn run_field_checkpointed(
     checkpoint_path: &Path,
     worker_count: usize,
 ) -> Result<FieldRun, CampaignDriverError> {
-    run_field_checkpointed_with_evaluator(
+    run_field_checkpointed_inner(
         root,
         manifest,
         field,
         checkpoint_path,
         worker_count,
-        |item| {
-            evaluate_work_item_with_worker_count(manifest, item, worker_count)
-                .map_err(|error| error.to_string())
+        |item| evaluate_work_item_with_worker_count(manifest, item, worker_count),
+        DurabilityHooks {
+            on_shard_durable: ignore_durable_path,
+            on_summary_durable: ignore_durable_path,
+            on_checkpoint_fsync: ignore_checkpoint_fsync,
         },
     )
 }
@@ -251,19 +257,20 @@ pub fn run_field_checkpointed(
 /// Runs one field arm with a caller-supplied evaluator seam.
 ///
 /// A callback error quarantines that work item and does not stop remaining
-/// work. Successful callbacks must return the production [`EvaluatedShard`]
-/// result; this seam lets conformance tests exercise quarantine without
-/// replacing the scheduler or its sampler. The resume, interruption, adoption,
-/// durability, and quarantine contracts are the same as
-/// [`run_field_checkpointed`]. `worker_count` must be non-zero; zero is refused
-/// with [`CampaignDriverError::ResumeRefused`].
+/// work. A manifest-selected unavailable backend is refused during pre-flight
+/// instead of reaching the callback quarantine branch. Successful callbacks
+/// must return the production [`EvaluatedShard`] result; this seam lets
+/// conformance tests exercise quarantine without replacing the scheduler or
+/// its sampler. The resume, interruption, adoption, durability, and quarantine
+/// contracts are the same as [`run_field_checkpointed`]. `worker_count` must
+/// be non-zero; zero is refused with [`CampaignDriverError::ResumeRefused`].
 pub fn run_field_checkpointed_with_evaluator<E>(
     root: &Path,
     manifest: &CampaignManifest,
     field: u8,
     checkpoint_path: &Path,
     worker_count: usize,
-    evaluator: E,
+    mut evaluator: E,
 ) -> Result<FieldRun, CampaignDriverError>
 where
     E: FnMut(&WorkItem) -> Result<EvaluatedShard, String>,
@@ -274,13 +281,29 @@ where
         field,
         checkpoint_path,
         worker_count,
-        evaluator,
+        |item| evaluator(item),
         DurabilityHooks {
             on_shard_durable: ignore_durable_path,
             on_summary_durable: ignore_durable_path,
             on_checkpoint_fsync: ignore_checkpoint_fsync,
         },
     )
+}
+
+trait EvaluationErrorDisposition {
+    fn into_driver_result(self) -> Result<String, CampaignDriverError>;
+}
+
+impl EvaluationErrorDisposition for String {
+    fn into_driver_result(self) -> Result<String, CampaignDriverError> {
+        Ok(self)
+    }
+}
+
+impl EvaluationErrorDisposition for ScheduleError {
+    fn into_driver_result(self) -> Result<String, CampaignDriverError> {
+        Err(CampaignDriverError::Schedule(self))
+    }
 }
 
 struct DurabilityHooks<S, M, C> {
@@ -293,7 +316,7 @@ fn ignore_durable_path(_: &Path) {}
 
 fn ignore_checkpoint_fsync() {}
 
-fn run_field_checkpointed_inner<E, S, M, C>(
+fn run_field_checkpointed_inner<E, EError, S, M, C>(
     root: &Path,
     manifest: &CampaignManifest,
     field: u8,
@@ -303,7 +326,8 @@ fn run_field_checkpointed_inner<E, S, M, C>(
     hooks: DurabilityHooks<S, M, C>,
 ) -> Result<FieldRun, CampaignDriverError>
 where
-    E: FnMut(&WorkItem) -> Result<EvaluatedShard, String>,
+    E: FnMut(&WorkItem) -> Result<EvaluatedShard, EError>,
+    EError: EvaluationErrorDisposition,
     S: FnMut(&Path),
     M: FnMut(&Path),
     C: FnMut(),
@@ -319,6 +343,11 @@ where
         ));
     }
     let items = enumerate_work_items(manifest, Some(field))?;
+    for item in &items {
+        resolve_processor_path(item.q, item.n, item.backend)
+            .map(|_| ())
+            .map_err(CampaignDriverError::Schedule)?;
+    }
     let configuration = campaign_configuration(manifest, field);
     let hash = campaign_config_hash(manifest, field);
     let reader =
@@ -397,6 +426,7 @@ where
         let evaluated = match evaluator(item) {
             Ok(evaluated) => evaluated,
             Err(error) => {
+                let error = error.into_driver_result()?;
                 quarantined.push(QuarantinedShard {
                     q: item.q,
                     n: item.n,
@@ -654,7 +684,7 @@ mod tests {
             3,
             &checkpoint,
             1,
-            |item| evaluate_work_item(&campaign, item).map_err(|error| error.to_string()),
+            |item| evaluate_work_item(&campaign, item),
             DurabilityHooks {
                 on_shard_durable: move |path: &Path| {
                     shard_events

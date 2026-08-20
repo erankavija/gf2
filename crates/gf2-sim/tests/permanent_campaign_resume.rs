@@ -11,6 +11,7 @@ use gf2_sim::permanent_campaign::driver::{
     run_field_checkpointed_with_evaluator, CampaignCheckpoint, CampaignDriverError,
 };
 use gf2_sim::permanent_campaign::schedule::evaluate_work_item;
+use gf2_sim::permanent_campaign::schedule::ScheduleError;
 use gf2_sim::permanent_campaign::schema::{
     read_field_summary, ArtifactIdentity, Availability, Backend, CampaignManifest, CellSpec,
     DeterminantPlan, FieldSummary, GitRevision, Provenance, RngAlgorithm, ShardSpec, StreamPurpose,
@@ -80,6 +81,71 @@ fn manifest(root_seed: u64) -> CampaignManifest {
 
 fn checkpoint(root: &Path) -> PathBuf {
     field_checkpoint_path(root, 3)
+}
+
+fn unavailable_backend_manifest(root_seed: u64) -> CampaignManifest {
+    let mut campaign = manifest(root_seed);
+    let cell = &mut campaign.cells[0];
+    cell.q = 5;
+    cell.n = 20;
+    cell.backend = Backend::IntraMatrixParallel;
+    campaign
+}
+
+#[test]
+fn test_run_field_checkpointed_refuses_an_unavailable_backend() {
+    clear_interrupt();
+    let root = temp_root("unavailable-backend");
+    let manifest = unavailable_backend_manifest(0x5a17);
+    let checkpoint = field_checkpoint_path(&root, 5);
+
+    let error = run_field_checkpointed(&root, &manifest, 5, &checkpoint, 1).unwrap_err();
+    assert!(matches!(
+        &error,
+        CampaignDriverError::Schedule(ScheduleError::BackendUnavailable {
+            q: 5,
+            n: 20,
+            backend: Backend::IntraMatrixParallel,
+        })
+    ));
+    let rendered = error.to_string();
+    assert!(rendered.contains("q=5"), "error: {rendered}");
+    assert!(rendered.contains("n=20"), "error: {rendered}");
+    assert!(
+        rendered.contains("intra_matrix_parallel"),
+        "error: {rendered}"
+    );
+}
+
+#[test]
+fn test_run_field_checkpointed_refuses_before_writing_any_artifact() {
+    clear_interrupt();
+    let root = temp_root("unavailable-before-artifacts");
+    let manifest = unavailable_backend_manifest(0x5a18);
+    let checkpoint = field_checkpoint_path(&root, 5);
+
+    let _ = run_field_checkpointed(&root, &manifest, 5, &checkpoint, 1).unwrap_err();
+
+    assert!(!root.join("shards/q5/n20/shard-000000.json").exists());
+    assert!(!root.join("summaries/q5.json").exists());
+    assert!(!checkpoint.exists());
+}
+
+#[test]
+fn test_run_field_checkpointed_does_not_quarantine_an_unavailable_backend() {
+    clear_interrupt();
+    let root = temp_root("unavailable-no-quarantine");
+    let manifest = unavailable_backend_manifest(0x5a19);
+    let checkpoint = field_checkpoint_path(&root, 5);
+
+    let error = run_field_checkpointed(&root, &manifest, 5, &checkpoint, 1).unwrap_err();
+
+    assert!(matches!(
+        &error,
+        CampaignDriverError::Schedule(ScheduleError::BackendUnavailable { .. })
+    ));
+    assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
+    assert!(!root.join("summaries/q5.json").exists());
 }
 
 fn dataset_bytes(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
