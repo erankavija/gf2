@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-20T19:01:21.081824732Z",
+  "dependencies": [],
+  "description": "During epic 6dc81018 wave work on 2026-08-19, a cargo-ci run on gf2-sim recorded `gpu::awgn` failures that vanished on immediate re-run of the identical tree: `test_gpu_awgn_matches_cpu_within_1_ulp` died with SIGABRT and `test_gpu_box_muller_within_1_ulp_over_1024_frames` timed out. Both passed on the re-run, with the GPU observed at 0 % use. The occurrence cost one false-red CI cycle; the session's operating rule became \"re-run once before treating a red `gpu::awgn` as a regression\", which contains the cost but leaves the defect unexplained.\n\nIssue `10071e51` records the adjacent family member: a SIGABRT on `test_gpu_chacha_raw_words_full_range_byte_identical` plus the same box-muller timeout under parallel gate load, with an amdgpu gfxhub page fault and runlist-oversubscription warnings in the kernel log. This observation differs in the failing test (`test_gpu_awgn_matches_cpu_within_1_ulp`) and carries no recorded load coupling; whether it is the same underlying defect is undetermined.\n\n## Success Criteria\n\n- [hard] REQ-01: The failure mode is reproduced under a recorded procedure, or a bounded number of recorded attempts falsifies easy reproduction; either way the attempt names the tree, the test invocation, and the concurrent load observed.\n- [hard] REQ-02: The relation to `10071e51`'s fault family is adjudicated in the record: the same underlying defect consolidates the two issues, a distinct one keeps both with the distinction stated.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-20T19:01:21.081824732Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "76665001-c26a-4951-b2b7-039c442d9e7d",
+  "labels": [
+    "epic:quality-documentation-tech-debt",
+    "component:gf2-sim",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "gf2-sim gpu::awgn tests fail transiently on a quiet host and pass on identical re-run",
+  "updated_at": "2026-08-20T19:01:21.081824732Z"
+}

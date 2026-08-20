@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-20T19:01:12.716033798Z",
+  "dependencies": [],
+  "description": "Eliminate the remaining per-call cost of profile-driven selection at the five pinned bit-backend entry points, keeping the profile in charge of the boundary at every pinned size.\n\n## Background\n\nThe second post-cutover receipt, `dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md`, records `RESULT: FAIL` at eleven of the thirty-four pinned cells and on the set statistic. At the two cells the first excursion named, the ratio rises further under `c42720ce`'s threshold cache: `bit_backend/popcount/words=1` from 1.182311 to 1.294670 and `bit_backend/popcount/words=8` from 1.064214 to 1.123171. Measured against the same-session control build, the bit-backend `words=1` cells pay 0.4–0.7 ns/call in the post-cutover binary. The measurement decides against the reduction: `c42720ce` left the fast path an `Acquire` flag load, a branch, and a `Relaxed` value load, and that path still pays a material fraction of the cheapest pinned operations.\n\nOwner decision DEC-E (2026-08-20) scopes the rework of the second excursion as two tracks. This issue is track 1: eliminate the real per-call cost at the selection boundary. Sibling track 2 predeclares the attribution amendment to the verdict procedure; whether this issue's mechanism suffices at the pinned cells is decided there, under `50b47eae`, not here. τ_cell stays 5 % and τ_set stays 2 %.\n\nConstraints carried forward from `dev/active/220cab0b/design.md` §4 and `c42720ce`:\n\n- The profile keeps governing the boundary at every pinned size, including the calibrated `simd_min_words` = 4 below the conservative default of 8. A compiled-in floor is rejected in `c42720ce`'s Background: any floor high enough to fix `words=8` makes the calibration inert.\n- Selection semantics are preserved exactly: the same comparison operator and sense, the same conservative default with no profile installed, the same code in a build without the `simd` feature.\n- No build script, no environment reads in library code, no new crate dependency edges.\n- `usize::MAX` stays an admissible threshold per design §2.1; no value is reserved as a sentinel.\n- No in-source default moves, no pinned cell changes, the `selector-non-regression-v1` schema token is not bumped, `crates/gf2-core/src/field/poly.rs` is untouched.\n- Committed tests of other issues are not edited: adding assertions to a default-profile binary is acceptable; changing existing assertions or `required-features` is not.\n\n## Success Criteria\n\n- [hard] REQ-01: On the resolved fast path, each pinned bit-backend entry point pays at most one `Relaxed` atomic load plus the existing comparison per call — no flag load and no resolution branch — and the mechanism is recorded as an additive amendment to design §4.1 that changes no pre-existing line.\n- [hard] REQ-02: `select_backend_for_size` keeps its current selection semantics exactly: the same comparison operator and sense, the same conservative default when no profile is installed, and the same behaviour in a build without the `simd` feature.\n- [hard] REQ-03: A test observes through the production route-observation API (from `697fc55b`) that an installed profile whose `simd_min_words` differs from the default, including a value below it, still moves the selected route. Equivalence assertions between routes prove nothing here and do not satisfy this.\n- [hard] REQ-04: A committed artefact records the selection boundary's instruction sequence at the pinned entry points before and after the change and states the delta; the elimination is visible in the instructions, not inferred.\n- [hard] REQ-05: If REQ-01 cannot hold together with REQ-02 and profile governance at every pinned size, the issue delivers the demonstration of that impossibility and stops for escalation instead of shipping a further reduction.\n\n## Notes\n\nWhether the elimination brings the pinned comparison inside the predeclared tolerance is decided by the amended verdict procedure under `50b47eae`. This issue delivers the mechanism and its instruction-level evidence; it runs no benchmark-mode session.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-20T19:01:12.716033798Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "2a85f728-4f9f-40f3-a9ee-ab7655d83b9f",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-04",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Eliminate the per-call cost of the bit-backend selection boundary",
+  "updated_at": "2026-08-20T19:01:12.716033798Z"
+}
