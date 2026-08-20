@@ -609,10 +609,14 @@ threshold with `Ordering::Relaxed` and then publishes the flag with
 after `ACTIVE.set` succeeds. `active_simd_min_words` reads the flag with
 `Ordering::Acquire`, takes the `#[cold]` `#[inline(never)]` resolution path
 when it is false, and otherwise loads the threshold with `Ordering::Relaxed`.
-The `OnceLock` resolution is one-shot per process, so the cold resolution path
-is taken at most once per process, while the steady-state selection boundary
-remains one load, a predicted branch, and one load, including the calibrated
-value 4.
+The cold path leaves the process in the resolved state, so it stops being
+taken once any selection has completed. It is not mutually excluded: two
+threads whose first selections race can both observe the flag unset and both
+enter it. That is harmless and needs no lock, because `active()` resolves the
+profile exactly once through its own `OnceLock` and every caller therefore
+publishes the same threshold, so the cold path is idempotent rather than
+one-shot. The steady-state selection boundary remains one load, a predicted
+branch, and one load, including the calibrated value 4.
 
 ### 4.2 Polynomial-crossover family
 
