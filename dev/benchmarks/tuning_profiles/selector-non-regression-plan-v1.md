@@ -310,3 +310,24 @@ harness's `pinned_sizes_bracket_each_default_at_adjacent_guard_values` test fail
 in that case, and the set is re-pinned and the schema token bumped rather than
 compared across the change. Receipts taken under different schema tokens do not
 compare, and the comparison mode refuses them.
+
+## Amendment — issue `972e2b88` (2026-08-20)
+
+This section is appended after §7 and changes no line above it.
+
+The falsification record of §4 states that the comparison τ_cell gates is
+necessarily across two builds, and that at the cells §4 names a cutover which
+adds no cost can trip the per-cell rule. Both post-cutover receipts of
+`50b47eae` observe it doing so.
+
+Owner decision DEC-E of 2026-08-20 answers it with a predeclared, additive
+amendment to what stands on each side of §5's comparison:
+[`layout-attribution-verdict-v1.md`](layout-attribution-verdict-v1.md), filed
+by issue `972e2b88`. Each side of the next post-cutover comparison becomes an
+ensemble of builds of one revision, so across-build layout enters the statistic
+as a sampled quantity whose dispersion the procedure measures.
+
+Nothing here moves for it. τ_cell stays 5 %, τ_set stays 2 %, the pinned set
+keeps all thirty-four cells of §2, the protocol of §3 governs the run, the
+statistic and preconditions of §5 are unchanged, §7 stands, and the
+`selector-non-regression-v1` schema token is not bumped.
