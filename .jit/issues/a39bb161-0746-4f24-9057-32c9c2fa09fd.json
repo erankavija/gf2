@@ -16,12 +16,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-20T14:21:55.655739285Z",
+      "updated_at": "2026-08-20T14:52:47.114486581Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-20T14:25:41.580829893Z",
+      "updated_at": "2026-08-20T14:55:38.610832553Z",
       "updated_by": "auto:executor"
     }
   },
@@ -35,5 +35,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Accelerator execution for campaign cells",
-  "updated_at": "2026-08-20T14:25:41.580829893Z"
+  "updated_at": "2026-08-20T14:55:38.610832553Z"
 }

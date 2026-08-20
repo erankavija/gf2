@@ -147,7 +147,7 @@
           "short_id": "a39bb161",
           "title": "Accelerator execution for campaign cells",
           "classification": "implementation",
-          "status": "pending"
+          "status": "in review round 2: cargo-ci PASS at d05dd763. Round-1 code-review FAILED with two blocking findings, both traceable to lead decision D1 rather than the worker: D1 said the measured per-matrix cost is \"supplied by configuration\" without saying PER CELL, so the natural reading became a single --accelerator-per-matrix-us scalar. F1: the lock-wrapped runner never passed that flag, so the binary refused every accelerator manifest before dispatch and REQ-03's wrapper path could not run accelerator work at all; the shell test passed anyway because it only asserted the wrapper appeared on the command line. F2: one field-wide cost sized every cell, reproducing the fixed-batch-size error REQ-01 rules out. Fix (lead-direct after the luna rework round wedged): AcceleratorCostTable keyed by the frozen (q,n) cell, per-cell resolution with a pre-flight refusing a missing entry by name before any work runs, --accelerator-cost-table CSV replacing the scalar flag, runner passes it via CAMPAIGN_SIM_ACCELERATOR_COSTS, shell test t12 drives an accelerator manifest end to end. Lead host verification: accelerator histogram [83,92,81] matches the generic-Ryser CPU reference at q=3 n=8 over 256 matrices, identical at one launch of 256 and at 64 launches of 4; missing-entry refusal exits 1 writing no artifacts."
         }
       ]
     },
@@ -504,7 +504,8 @@
     }
   ],
   "standing_rules": [
-    "Owner directive 2026-08-18: within this epic, codex Luna may be used for at most one rework round per issue; any subsequent rework round is dispatched to an Opus subagent (Agent tool, model opus)."
+    "Owner directive 2026-08-18: within this epic, codex Luna may be used for at most one rework round per issue; any subsequent rework round is dispatched to an Opus subagent (Agent tool, model opus).",
+    "codex luna dispatches can wedge before doing any work: a stalled worker shows a live process with 00:00:00 CPU time and no ~/.codex/sessions rollout file for that run. Diagnose with `ps -o etime,time` plus the session-log listing before concluding it is merely slow, then TaskStop rather than waiting. Observed session 13: a39bb161 rework-1 held 47 minutes at zero CPU and produced nothing."
   ],
   "rework_counts": {
     "6c7fcb38": 1,
@@ -533,7 +534,8 @@
     "eb8825c8": 1,
     "7a816262": 2,
     "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached, any further failure escalates",
-    "032cc754": 1
+    "032cc754": 1,
+    "a39bb161": 1
   },
   "surfaced_pitfalls": [
     "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
@@ -593,7 +595,25 @@
       "surfaced": "2026-08-20",
       "finding": "dev/research/permanent-sampling-feas/src/backend.rs:9-17 states that permanent_bipedal3 dispatches internally to permanent_bipedal3_singleword_simd when the simd feature is active and AVX2 is detected. That is false at HEAD: permanent_bipedal3 (bipedal3.rs:178-197) branches only on n (<=63 singleword, else multiword), and permanent_bipedal3_singleword performs no SIMD dispatch — permanent_bipedal3_singleword_simd takes an explicit fns argument. The harness's own code is correct (it imports permanent_bipedal3_singleword directly); only the justifying prose is stale. Not filed as an issue per the owner's session-13 choice to hand off rather than run a defect-filing sweep; one jit issue create closes it.",
       "classification": "stale prose, no behavioural impact",
-      "status": "recorded, unfiled"
+      "status": "FILED as 5deee377"
+    },
+    {
+      "issue": "a39bb161",
+      "source": "lead host verification, session 13",
+      "finding": "crates/gf2-algebra/tests/gpu_dispatcher.rs test_permanent_batch_bipedal5_matches_cpu_n24 and the _bipedal7_ equivalent time out at the slow profile's 600 s budget on this host; 4 of 6 pass. The cost is on the CPU reference side, not the device.",
+      "disposition": "@/inv/test-tier-budgets violation, pre-existing (gpu_dispatcher.rs untouched by a39bb161). FILED as 370f0d33."
+    },
+    {
+      "issue": "a39bb161",
+      "source": "lead review, session 13",
+      "finding": "Four campaign shard timing assertions compare an unsigned Duration >= Duration::ZERO and therefore cannot fail; they would have passed through the exact F1 phase-attribution defect fixed in this issue.",
+      "disposition": "@/inv/semantic-test-assertions violation, pre-existing. FILED as dc744095."
+    },
+    {
+      "issue": "a39bb161",
+      "source": "lead self-audit, session 13",
+      "finding": "The lead ran device work during the day — the gpu_dispatcher slow-profile suite and three short campaign hostcheck runs — before reading this file's owner directive of 2026-08-16 that simulations and bench/device measurement runs execute only after 02:00 local.",
+      "disposition": "Disclosed to the owner. All runs were correctness verification under ccx1-bench-flock.sh --full-host; no timing from them was committed or cited as a performance claim, and every artifact was deleted. The process miss is reading standing directives in progress.json BEFORE scheduling any device work, not after."
     }
   ],
   "started_at": "2026-08-09T12:20:30Z",
