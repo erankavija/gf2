@@ -186,7 +186,8 @@
      "title": "Eliminate the per-call cost of the bit-backend selection boundary",
      "classification": "implementation",
      "model": "codex-luna",
-     "status": "rework-1"
+     "status": "done",
+     "notes": "Closed after 1 rework. Review verdict PASS: gates cargo-ci + code-review passed; REQ-01 one Relaxed load + compare on the fast path (asm receipt, all five entry points); REQ-02 semantics preserved; REQ-03 route observation below (4) and above (16) default; REQ-04 asm-delta.md; REQ-05 not triggered. R1 findings both closed at HEAD: F1 install publication window closed by storing the threshold inside ACTIVE.get_or_init's closure (mirrors active()'s pattern); F2 asm receipt extended to all five entry points. DEC-B8 (lead): the declared contract change \u2014 a bit-backend selection no longer resolves the profile, so a later install() succeeds \u2014 is accepted as forced by DEC-E track 1 (any resolve-on-selection needs a resolved-check branch); the worker's rewrite of c42720ce's committed test first_backend_selection_resolves_tuning_profile is accepted under the same forcing: the test asserted the exact contract DEC-E's goal removes, and the inverted assertion now witnesses the new contract. Documented in design \u00a74.1 amendment and install()'s rustdoc."
     },
     {
      "id": "972e2b88-d75c-411b-a6b5-06318fa84305",
@@ -367,6 +368,12 @@
    "issue": "gpu-awgn-flake",
    "date": "2026-08-20",
    "decision": "DEC-F via AskUserQuestion: the transient gf2-sim gpu::awgn failure from the session-4 handoff's open question is filed as bug 76665001 under 86b9c719, outside the epic, cross-referencing fault-family member 10071e51."
+  },
+  {
+   "kind": "lead-decision",
+   "issue": "2a85f728",
+   "date": "2026-08-20",
+   "decision": "DEC-B8: accepted the install-after-selection loosening and the necessary inversion of c42720ce's one-shot witness test, both forced by DEC-E track 1's elimination goal; recorded in design \u00a74.1 and rustdoc, single-thread observability asserted in the route test."
   }
  ],
  "rework_counts": {
