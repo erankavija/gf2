@@ -55,6 +55,7 @@
       "path": "dev/active/220cab0b/design.md"
     }
   ],
+  "done_at": "2026-08-20T20:38:36.898033463Z",
   "first_ready_at": "2026-08-20T19:01:12.716033798Z",
   "gates_required": [
     "cargo-ci",
@@ -67,8 +68,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-20T20:05:54.938248592Z",
+      "status": "passed",
+      "updated_at": "2026-08-20T20:38:08.426406005Z",
       "updated_by": "auto:executor"
     }
   },
@@ -80,7 +81,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Eliminate the per-call cost of the bit-backend selection boundary",
-  "updated_at": "2026-08-20T20:14:23.658575565Z"
+  "updated_at": "2026-08-20T20:38:36.898033463Z"
 }
