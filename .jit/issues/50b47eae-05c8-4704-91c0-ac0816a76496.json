@@ -142,6 +142,83 @@
       "doc_type": "data",
       "label": "Second across-build control arm raw windows",
       "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-control-arm-2.csv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d610eded43af330056e654d5937e20eeaa985173c3645ba30ff5c7fb11b5a59c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-20-ensemble-reference-arm.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-ensemble-reference-arm.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b8a91bd65ff6792ebc7b5caca2d5a67eff149b3f72b447ddd42d86cfe4a8c17",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "layout-attribution-verdict-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e5fad14e8784087abd17443fe29e36037df5817cfd4b1b6bff80d073588dfeb1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt-2.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b2e06da9e9ccba74863a4de975c79d4e8b7709a893c60fb3595b9244fc250dc0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-20-ensemble-candidate-arm.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-ensemble-candidate-arm.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88ec7e40f84a5332733ab23427249f2ba63d7ed16e42b88c6288d46841bf8266",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c90ccbe4a77a4e08d7412b0fcc1983257127f627eaa52461b32dbf7c03453bf5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-19-pre-cutover-baseline.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2c662d233a0e8e36d4cae080c8ed241ed716192cda99d6b2c0fb35de833fb86f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "selector-non-regression-plan-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Third post-cutover receipt (ensemble; FAIL, no attributable verdict — coverage)",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Ensemble reference arm raw windows",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-ensemble-reference-arm.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Ensemble candidate arm raw windows",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-20-ensemble-candidate-arm.csv"
     }
   ],
   "first_ready_at": "2026-08-19T23:43:47.707665037Z",
@@ -165,5 +242,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-20T19:05:55.573852423Z"
+  "updated_at": "2026-08-20T23:13:04.469415858Z"
 }

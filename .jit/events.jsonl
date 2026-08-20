@@ -8713,3 +8713,6 @@
 {"gate_key":"doc-review","id":"1fd6b3a8-6cbe-4e37-8db9-4d4a691410e2","issue_id":"972e2b88-d75c-411b-a6b5-06318fa84305","timestamp":"2026-08-20T20:47:14.537893303Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"bf5921f6-8e72-40b1-b125-624a9bdc9bda","issue_id":"972e2b88-d75c-411b-a6b5-06318fa84305","timestamp":"2026-08-20T20:47:49.554249607Z","to":"done","type":"issue_state_changed"}
 {"id":"0083fbc2-1285-4c86-8385-dd34b5709160","issue_id":"972e2b88-d75c-411b-a6b5-06318fa84305","timestamp":"2026-08-20T20:47:49.554249607Z","type":"issue_completed"}
+{"fields":["documents"],"id":"0c7bcf02-081f-40df-9e23-7020baaaef66","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T23:13:04.041521804Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"a0fc714e-3656-4c65-b193-46aa6728722f","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T23:13:04.263287130Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"bfb094ac-e8ec-49ea-907b-03cb340a1be4","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T23:13:04.469415858Z","type":"issue_updated","updated_by":"doc-add"}
