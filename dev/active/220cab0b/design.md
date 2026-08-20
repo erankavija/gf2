@@ -591,6 +591,24 @@ The deprecated `select_kernel()` at `crates/gf2-core/src/kernels/mod.rs:83` is
 **not** a profile consumer. It returns the scalar backend unconditionally and
 its removal is the separate cutover the classification records in §5.
 
+#### Amendment — issue `c42720ce` (2026-08-20)
+
+The post-cutover receipt's Falsification record reports that resolving
+`bit_backend.simd_min_words` through `tuning::active()` adds 0.337867 ns/call
+at `bit_backend/popcount/words=1` and 0.224830 ns/call at
+`bit_backend/popcount/words=8`; both exceed the predeclared 5% cell tolerance.
+See [`2026-08-20-post-cutover-receipt.md`](../../benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md).
+
+Issue `c42720ce` reduces that hot-path cost by publishing the active profile's
+`simd_min_words` into a dedicated `AtomicUsize` when `active()` resolves or a
+profile is successfully installed. `select_backend_for_size` is inlineable
+and reads that cached threshold with `Ordering::Relaxed`, so the selection
+boundary performs one relaxed cell load and the unchanged `_size >= threshold`
+comparison instead of walking the process-wide profile and its selector
+accessors. The cache starts at `SIMD_MIN_WORDS_DEFAULT` = 8, and a successful
+installation publishes its supplied value, so the profile continues to govern
+the boundary at every size, including the calibrated value 4.
+
 ### 4.2 Polynomial-crossover family
 
 Four constants, six read sites — `SUBPRODUCT_THRESHOLD` is read at two entry

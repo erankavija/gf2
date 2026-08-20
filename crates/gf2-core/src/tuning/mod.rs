@@ -27,6 +27,8 @@
 //! `Vec<String>` because they are runtime-observed free text or opaque tokens.
 
 use std::fmt;
+#[cfg(feature = "simd")]
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::OnceLock;
 
 #[cfg(feature = "tuning-profile")]
@@ -642,11 +644,43 @@ impl TuningProfile {
 }
 
 static ACTIVE: OnceLock<TuningProfile> = OnceLock::new();
+#[cfg(feature = "simd")]
+static ACTIVE_SIMD_MIN_WORDS_RESOLVED: AtomicBool = AtomicBool::new(false);
+#[cfg(feature = "simd")]
+static ACTIVE_SIMD_MIN_WORDS: AtomicUsize =
+    AtomicUsize::new(crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT);
+
+/// Returns the cached bit-backend threshold for the hot selection boundary.
+#[cfg(feature = "simd")]
+#[inline]
+pub(crate) fn active_simd_min_words() -> usize {
+    if !ACTIVE_SIMD_MIN_WORDS_RESOLVED.load(Ordering::Relaxed) {
+        return resolve_active_simd_min_words();
+    }
+    ACTIVE_SIMD_MIN_WORDS.load(Ordering::Relaxed)
+}
+
+#[cfg(feature = "simd")]
+#[cold]
+#[inline(never)]
+fn resolve_active_simd_min_words() -> usize {
+    let threshold = active().bit_backend().simd_min_words();
+    ACTIVE_SIMD_MIN_WORDS.store(threshold, Ordering::Relaxed);
+    ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Relaxed);
+    threshold
+}
 
 /// Returns the process-wide profile, resolving to [`TuningProfile::CONSERVATIVE`]
 /// when no caller installs one first.
 pub fn active() -> &'static TuningProfile {
-    ACTIVE.get_or_init(|| TuningProfile::CONSERVATIVE.clone())
+    ACTIVE.get_or_init(|| {
+        let profile = TuningProfile::CONSERVATIVE.clone();
+        #[cfg(feature = "simd")]
+        ACTIVE_SIMD_MIN_WORDS.store(profile.bit_backend().simd_min_words(), Ordering::Relaxed);
+        #[cfg(feature = "simd")]
+        ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Relaxed);
+        profile
+    })
 }
 
 /// Installs the profile before [`active`] resolves.
@@ -656,7 +690,14 @@ pub fn active() -> &'static TuningProfile {
 /// Returns [`AlreadyResolved`] if this process has already called [`active`] or
 /// successfully installed another profile.
 pub fn install(profile: TuningProfile) -> Result<(), AlreadyResolved> {
-    ACTIVE.set(profile).map_err(|_| AlreadyResolved)
+    #[cfg(feature = "simd")]
+    let simd_min_words = profile.bit_backend().simd_min_words();
+    ACTIVE.set(profile).map_err(|_| AlreadyResolved)?;
+    #[cfg(feature = "simd")]
+    ACTIVE_SIMD_MIN_WORDS.store(simd_min_words, Ordering::Relaxed);
+    #[cfg(feature = "simd")]
+    ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Relaxed);
+    Ok(())
 }
 
 #[derive(Clone, Debug)]

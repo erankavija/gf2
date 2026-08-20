@@ -100,9 +100,10 @@ pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;
 ///   scalar
 /// - Size at or above the active profile's `bit_backend.simd_min_words`: Use
 ///   SIMD if available
+#[inline]
 pub fn select_backend_for_size(_size: usize) -> SelectedBackend {
     #[cfg(feature = "simd")]
-    if _size >= crate::tuning::active().bit_backend().simd_min_words() {
+    if _size >= crate::tuning::active_simd_min_words() {
         // SIMD backend will be initialized on first use
         return SelectedBackend::Simd;
     }
