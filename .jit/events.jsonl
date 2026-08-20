@@ -8661,3 +8661,5 @@
 {"from":"in_progress","id":"f0779195-1cf3-4414-b317-bcc0b890d145","issue_id":"032cc754-c88c-4e1b-b56d-6511d0a70c3c","timestamp":"2026-08-20T12:45:10.694948202Z","to":"done","type":"issue_state_changed"}
 {"id":"7e890668-4d1d-4a26-a952-58f16e0a9b7c","issue_id":"032cc754-c88c-4e1b-b56d-6511d0a70c3c","timestamp":"2026-08-20T12:45:10.694948202Z","type":"issue_completed"}
 {"from":"backlog","id":"a75f041c-6fbb-47e6-9327-035922091aaa","issue_id":"a39bb161-0746-4f24-9057-32c9c2fa09fd","timestamp":"2026-08-20T12:45:16.820596343Z","to":"ready","type":"issue_state_changed"}
+{"from":"ready","id":"7f5ed0d3-1886-4a9b-8538-3514628b2781","issue_id":"a39bb161-0746-4f24-9057-32c9c2fa09fd","timestamp":"2026-08-20T12:52:35.389326157Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-luna","id":"5e96f8cb-96e2-4608-91c7-10ab9cf4651c","issue_id":"a39bb161-0746-4f24-9057-32c9c2fa09fd","timestamp":"2026-08-20T12:52:35.389326157Z","type":"issue_claimed"}
