@@ -195,10 +195,11 @@
      "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
      "classification": "design",
      "model": "claude-opus",
-     "status": "rework-1"
+     "status": "done",
+     "notes": "Closed after 1 rework. Review verdict PASS: cargo-ci, code-review, doc-review all pass. Delivered layout-attribution-verdict-v1.md (128-member alignment-flag ensemble on both arms, verdict on plan \u00a75's unmodified rule, four attribution preconditions: coverage vs sigma-hat, decorrelation, 3-se precision, half-split null; all readings predeclared; K=256 ladder), --layout-audit harness mode (+~1600 lines with tests, 50 passing), additive pointer amendments to plan v1 and control-arm v1, and the ensemble-axis-verification receipt. R1 findings closed: F1 sigma-hat pair now mandatory (typed non-Option coverage), F2 K enforced at exactly {128,256} with parity balance and parity-preserving dropped-member rule, F3 docs linked by lead, F4 receipted at dev/active/972e2b88/ensemble-axis-verification.md (worker re-ran the whole verification; also falsified its own predeclared ladder axis \u2014 linker section sort moved 0/805 text symbols \u2014 and replaced it with -x86-branches-within-32B-boundaries, 805/805 moved, recorded with evidence), F5 parity defined over member index j = execution - 1 in doc and code with a direction-pinning test."
     }
    ],
-   "note": "Created during execution per owner decision DEC-E: the second post-cutover receipt records RESULT: FAIL at eleven cells and on tau_set; the rework is two tracks (cost elimination + attribution amendment), tolerances unchanged. Both tasks block 50b47eae. Parallel dispatch in worktrees; neither runs a benchmark-mode session."
+   "note": "Created during execution per owner decision DEC-E: the second post-cutover receipt records RESULT: FAIL at eleven cells and on tau_set; the rework is two tracks (cost elimination + attribution amendment), tolerances unchanged. Both tasks block 50b47eae. Parallel dispatch in worktrees; neither runs a benchmark-mode session. Wave complete: both issues closed after one rework round each."
   },
   {
    "wave_number": 11,

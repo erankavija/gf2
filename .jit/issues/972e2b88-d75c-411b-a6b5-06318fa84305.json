@@ -73,6 +73,7 @@
       "path": "dev/active/972e2b88/ensemble-axis-verification.md"
     }
   ],
+  "done_at": "2026-08-20T20:47:49.554249607Z",
   "first_ready_at": "2026-08-20T19:01:16.912666008Z",
   "gates_required": [
     "doc-review",
@@ -86,13 +87,13 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-20T20:10:08.010822153Z",
+      "status": "passed",
+      "updated_at": "2026-08-20T20:44:47.931364753Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-20T20:12:32.078881956Z",
+      "status": "passed",
+      "updated_at": "2026-08-20T20:47:14.537893303Z",
       "updated_by": "auto:executor"
     }
   },
@@ -104,7 +105,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
-  "updated_at": "2026-08-20T20:41:43.940512937Z"
+  "updated_at": "2026-08-20T20:47:49.554249607Z"
 }
