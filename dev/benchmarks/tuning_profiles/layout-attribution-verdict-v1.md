@@ -101,12 +101,17 @@ K = 8 × 4 × 4 = 128 members, all distinct.
 
 ### 3.2 Why the enumeration is written this way
 
-The rotation in C(j) makes A(j) + B(j) + C(j) congruent to `j` modulo 2, so the
-parity of a member's execution index is the parity of its level sum. Splitting
-the ensemble on that parity therefore splits it evenly on every axis: each half
-holds eight members at each level of A and sixteen at each level of B and of C.
-§6.4's half-split reads that split, so it measures across-build dispersion
-rather than a difference between two unlike halves of the ensemble.
+The rotation in C(j) makes A(j) + B(j) + C(j) congruent to `j` modulo 2, so a
+member's level sum has the parity of its **member index** `j`. Splitting the
+ensemble on that parity splits it evenly on every axis: each half holds eight
+members at each level of A and sixteen at each level of B and of C.
+
+Every split and balance this document states runs over `j`, never over the
+recorded execution index. Member `j` records `--execution j+1`, so the two
+parities are opposite, and reading a half off the execution column means
+reading `j = execution − 1` first. §6.4's half-split is defined that way and
+the harness computes it that way, so it measures across-build dispersion rather
+than a difference between two unlike halves of the ensemble.
 
 ### 3.3 What is verified before this document is committed
 
@@ -146,10 +151,18 @@ that size sufficed.
 ### 3.5 A member that fails to build
 
 If a member fails to build in either checkout, it is dropped from the ensemble
-in **both** arms, the ensemble is completed by continuing the enumeration past
-K, and the receipt records the dropped member, its flags and the failure. The
-rule is mechanical, so a build failure cannot become a choice about which
-layouts the verdict sees.
+in **both** arms and replaced by continuing the enumeration past K to the next
+member **of the dropped member's index parity**, so the ensemble keeps exactly
+K members and keeps the balanced halves of §3.2. The receipt records the
+dropped member, its flags, the failure, and its replacement. The rule is
+mechanical, so a build failure cannot become a choice about which layouts the
+verdict sees.
+
+The count and the balance are what §6.5's audit enforces: it accepts an arm of
+exactly K = 128 or exactly K = 256 members whose halves are equal on member
+parity, and it requires both arms to carry the same member indices. An arm of
+any other shape is a different ensemble, so the audit refuses it by name
+instead of computing a margin whose K it does not know.
 
 ## 4. The two arms
 
@@ -200,8 +213,8 @@ right answers, and a failed probe aborts the run.
 
 ### 5.2 Order
 
-Member `i` runs its two arms adjacently, reference first when `i` is odd and
-candidate first when `i` is even. Each arm therefore holds exactly K/2 of the
+Member `j` runs its two arms adjacently, reference first when `j` is even and
+candidate first when `j` is odd. Each arm therefore holds exactly K/2 of the
 first positions and K/2 of the second, so the mean slot position of the two
 arms is equal and no warm-up or thermal trend over the session lands on one arm.
 
@@ -355,18 +368,23 @@ cargo +1.95.0 bench -p gf2-core --features simd --bench selector_non_regression 
 ```
 
 Under `--layout-audit` the receipt pair names the two committed receipts whose
-ratio defines `σ̂`. The mode prints one line per cell carrying the reference
+ratio defines `σ̂`, and it is **required**: coverage is a precondition of the
+verdict, so without the pair the audit refuses by name —
+`RESULT: FAIL (natural pair missing)` — rather than reporting a result that
+skipped one of its own preconditions. The mode prints one line per cell carrying the reference
 arm's across-build spread, `s_R`, `s_C`, `p`, `se`, the achieved margin
 `ln(1.05) / se`, the half-split null ratio, `σ̂`, and a per-cell verdict; then
 the set-level margin and null, the coverage comparison, the decorrelation
 comparison, and `RESULT: PASS` or `RESULT: FAIL`. It exits non-zero on failure.
 
-It refuses to audit files that do not describe an ensemble of the pinned set,
-naming the class on the `RESULT:` line as the §5 mode does: a schema mismatch,
-a row recording `source_dirty=true`, an arm spanning two revisions, a build
-that is not the pinned set, a cell whose recorded identity moves across builds,
-a degenerate cell, a build count below four or unbalanced on index parity, arms
-carrying different build indices, or a receipt pair that is not the pinned set.
+It refuses to audit files that do not describe the predeclared ensemble of the
+pinned set, naming the class on the `RESULT:` line as the §5 mode does: a
+schema mismatch, a row recording `source_dirty=true` or an execution index
+below one, an arm spanning two revisions, a member that is not the pinned set,
+a cell whose recorded identity moves across members, a degenerate cell, a
+member count that is neither 128 nor 256, halves unbalanced on member parity,
+arms carrying different member indices, a missing receipt pair, or a receipt
+pair that is not the pinned set.
 
 The mode reads committed CSVs and writes none. It adds no measurement behaviour
 and changes none: the recording path, the emitted columns, the timing, the
