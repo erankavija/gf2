@@ -5,14 +5,80 @@
   "created_at": "2026-08-20T19:01:16.912666008Z",
   "dependencies": [],
   "description": "Author the predeclared, additive amendment to the pinned non-regression procedure so that its verdict attributes movement to the cutover's behaviour rather than to across-build code layout, with the tolerances and the pinned set unchanged.\n\n## Background\n\nThe second post-cutover receipt's Falsification record establishes three bounds. Session-to-session variation of one fixed binary is small: the bit-identical control binary reproduces across two sessions at a geometric mean of 0.999314 with every cell inside ±1.9 %. Across-build variation of behaviourally identical code is large: the control arm lands outside ±5 % of the baseline at five cells, spanning 0.846 to 1.059, reproducing the effect in the same cells and directions across two sessions. And the effect reaches verdict-tripping cells: five polynomial cells move 6.6–7.8 % although no polynomial code changes between the compared revisions. Plan v1 §4's falsification record predicts that at such cells a cost-free cutover can trip the per-cell rule; the second receipt observes it doing so. Under a per-cell null that wide, the current across-build comparison cannot attribute a 5 % cell excursion to the cutover.\n\nOwner decision DEC-E (2026-08-20) scopes the rework of the second excursion as two tracks and directs this issue as track 2: a predeclared, owner-approved, additive amendment to the verdict procedure — a same-session two-arm comparison was the direction's example — so that layout movement on untouched paths stops deciding the verdict. τ_cell stays 5 % and τ_set stays 2 %. Sibling track 1 eliminates the per-call bit-backend threshold cost; the next measured run under `50b47eae` takes both as input.\n\nThe amendment's design is this issue's decision within that direction: a same-session two-arm verdict, layout variance sampled over multiple builds per arm, a directly measured bound on the selector's cost, or another mechanism the record supports. If the chosen design needs harness support, the harness changes land with this issue; `crates/gf2-core/benches/selector_non_regression.rs` already carries the comparison modes.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed predeclaration document under `dev/benchmarks/tuning_profiles/` defines, before any further measured run, the verdict comparison for the next post-cutover receipt such that across-build layout variance of behaviourally identical code is measured, bounded, or sampled inside the procedure itself, and states how a pinned cell's verdict separates cutover-attributable movement from that variance.\n- [hard] REQ-02: τ_cell = 5 %, τ_set = 2 %, and the pinned thirty-four-cell set stand unchanged, and the document declares every alternative reading in advance the way `across-build-control-arm-v1.md` §2 does, so any outcome of the next run is adjudicable without a post-hoc choice.\n- [hard] REQ-03: The document states which measurements constitute the baseline side of the comparison under `50b47eae` REQ-01's wording and why that wording is satisfied, and records the disposition of the 2026-08-19 baseline receipt and both failing post-cutover receipts: all stand as taken, none re-run, superseded, or adjusted.\n- [hard] REQ-04: Every change to standing documents is an additive amendment: no pre-existing line of `selector-non-regression-plan-v1.md`, `across-build-control-arm-v1.md`, the baseline receipt, or either post-cutover receipt changes, and the new document cites the second receipt's Falsification record for its motivating bounds.\n- [hard] REQ-05: Any harness change keeps the recorded row schema valid or bumps the schema token with the bump's consequences stated; existing comparison modes keep their behaviour, and committed tests of other issues are not edited.\n\n## Notes\n\nIf the design concludes that no verdict procedure satisfies `50b47eae` REQ-01's wording while excluding the across-build component, the issue records that demonstration and stops for escalation; amending `50b47eae`'s criteria is the owner's decision, not this issue's.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c90ccbe4a77a4e08d7412b0fcc1983257127f627eaa52461b32dbf7c03453bf5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-19-pre-cutover-baseline.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88ec7e40f84a5332733ab23427249f2ba63d7ed16e42b88c6288d46841bf8266",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2c662d233a0e8e36d4cae080c8ed241ed716192cda99d6b2c0fb35de833fb86f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "selector-non-regression-plan-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "07b21f5cfc71c4c04f19ed2af4d4e562f2c89ca9dba22066c9315eb4256507aa",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "across-build-control-arm-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e5fad14e8784087abd17443fe29e36037df5817cfd4b1b6bff80d073588dfeb1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt-2.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "plan",
+      "format": "markdown",
+      "label": "Predeclared layout-attribution verdict (DEC-E track 2)",
+      "path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+    }
+  ],
   "first_ready_at": "2026-08-20T19:01:16.912666008Z",
   "gates_required": [
     "doc-review",
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-20T20:02:23.103986870Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-20T20:10:08.010822153Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-20T20:12:32.078881956Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "972e2b88-d75c-411b-a6b5-06318fa84305",
   "labels": [
     "epic:field-capability-dispatch",
@@ -23,5 +89,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
-  "updated_at": "2026-08-20T19:07:20.209853347Z"
+  "updated_at": "2026-08-20T20:14:23.416914982Z"
 }
