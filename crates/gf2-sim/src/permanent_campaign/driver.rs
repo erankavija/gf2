@@ -258,6 +258,28 @@ pub fn run_field_checkpointed(
 /// required to have an entry before any work runs: the pre-flight refuses a
 /// missing one rather than substituting a default, because a default cost
 /// would size that cell's launches from a number nobody measured.
+///
+/// # Errors
+///
+/// Returns [`CampaignDriverError::Schedule`] when an accelerator cell has no
+/// measured cost entry, when the manifest does not resolve for this field, or
+/// when a work item cannot be executed; [`CampaignDriverError::Checkpoint`] and
+/// [`CampaignDriverError::ResumeRefused`] when a present checkpoint cannot be
+/// loaded or disagrees with the live campaign configuration;
+/// [`CampaignDriverError::InvalidExistingShard`] when an already-emitted record
+/// is not a valid shard or does not match its deterministic re-evaluation;
+/// [`CampaignDriverError::Io`] for a dataset or checkpoint filesystem failure;
+/// and [`CampaignDriverError::Interrupted`] when a graceful interruption was
+/// requested at a work-item boundary.
+///
+/// # Panics
+///
+/// Does not intentionally panic.
+///
+/// # Complexity
+///
+/// Linear in the field's work items, each costing its cell's evaluation; one
+/// checkpoint write per completed item.
 pub fn run_field_checkpointed_with_accelerator_config(
     root: &Path,
     manifest: &CampaignManifest,

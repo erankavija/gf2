@@ -673,6 +673,35 @@ pub fn evaluate_work_item_with_worker_count(
 }
 
 /// Evaluates one work item with explicit accelerator launch-sizing input.
+///
+/// The cell's frozen backend decides which kernel runs; `accelerator` supplies
+/// only the launch sizing an accelerator cell needs, and is ignored by every
+/// processor path. Callers resolve it per cell from
+/// [`AcceleratorCostTable::config_for`] so each size is sized by its own
+/// measured cost.
+///
+/// # Errors
+///
+/// Returns [`ScheduleError::MissingCampaignPurpose`] when the manifest declares
+/// no campaign-cell stream purpose, [`ScheduleError::InvalidWorkItem`] for a
+/// zero or unrepresentable worker count, an unusable stream index, a sampler
+/// that cannot be opened, or a dispatch that returns the wrong number of
+/// values, [`ScheduleError::BackendUnavailable`] when the cell names a backend
+/// this build does not provide, and — for an accelerator cell —
+/// [`ScheduleError::AcceleratorDeviceUnavailable`] when no usable device is
+/// present.
+///
+/// # Panics
+///
+/// Does not intentionally panic. Invalid execution configuration and
+/// pool-construction failures are returned as schedule errors.
+///
+/// # Complexity
+///
+/// `O(matrix_count · n · 2^n)` field operations for the Gray-code kernels, plus
+/// `O(n^3)` per matrix when the determinant companion is enabled. An
+/// accelerator cell issues `ceil(matrix_count / launch)` device launches, where
+/// `launch` comes from the measured per-matrix cost and the configured cap.
 pub fn evaluate_work_item_with_worker_count_and_accelerator(
     manifest: &CampaignManifest,
     item: &WorkItem,
