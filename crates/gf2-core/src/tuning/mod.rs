@@ -28,7 +28,7 @@
 
 use std::fmt;
 #[cfg(feature = "simd")]
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::OnceLock;
 
 #[cfg(feature = "tuning-profile")]
@@ -410,23 +410,10 @@ pub struct BitBackendSelectors {
 impl BitBackendSelectors {
     /// Builds a validated bit-backend selector family.
     ///
-    /// Every word count below `usize::MAX` is admissible, including zero,
-    /// because zero means that SIMD is eligible for every buffer when the
-    /// feature is available. `usize::MAX` is reserved as the unresolved
-    /// sentinel for the SIMD selection cache.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`ProfileError::SelectorOutOfRange`] when `simd_min_words` is
-    /// `usize::MAX`, which is reserved for the unresolved cache state.
+    /// Every `usize` word count is admissible, including zero, because zero
+    /// means that SIMD is eligible for every buffer when the feature is
+    /// available.
     pub fn try_new(simd_min_words: usize) -> Result<Self, ProfileError> {
-        if simd_min_words == usize::MAX {
-            return Err(out_of_range(
-                ProfileFamily::BitBackend,
-                ProfileField::SimdMinWords,
-                simd_min_words as u64,
-            ));
-        }
         Ok(Self { simd_min_words })
     }
 
@@ -658,25 +645,19 @@ impl TuningProfile {
 
 static ACTIVE: OnceLock<TuningProfile> = OnceLock::new();
 #[cfg(feature = "simd")]
-/// Sentinel for [`ACTIVE_SIMD_MIN_WORDS`]; `BitBackendSelectors::try_new`
-/// rejects this value, so it cannot be a selectable threshold.
-/// A non-sentinel value is published only after `active()` has resolved or a
-/// profile has been successfully installed. Once `active()` is resolved,
-/// every later `install` returns [`AlreadyResolved`], so no later successful
-/// install can make this cached threshold stale.
-const ACTIVE_SIMD_MIN_WORDS_UNRESOLVED: usize = usize::MAX;
+static ACTIVE_SIMD_MIN_WORDS_RESOLVED: AtomicBool = AtomicBool::new(false);
 #[cfg(feature = "simd")]
-static ACTIVE_SIMD_MIN_WORDS: AtomicUsize = AtomicUsize::new(ACTIVE_SIMD_MIN_WORDS_UNRESOLVED);
+static ACTIVE_SIMD_MIN_WORDS: AtomicUsize =
+    AtomicUsize::new(crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT);
 
 /// Returns the cached bit-backend threshold for the hot selection boundary.
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn active_simd_min_words() -> usize {
-    let threshold = ACTIVE_SIMD_MIN_WORDS.load(Ordering::Relaxed);
-    if threshold == ACTIVE_SIMD_MIN_WORDS_UNRESOLVED {
+    if !ACTIVE_SIMD_MIN_WORDS_RESOLVED.load(Ordering::Acquire) {
         return resolve_active_simd_min_words();
     }
-    threshold
+    ACTIVE_SIMD_MIN_WORDS.load(Ordering::Relaxed)
 }
 
 #[cfg(feature = "simd")]
@@ -685,13 +666,21 @@ pub(crate) fn active_simd_min_words() -> usize {
 fn resolve_active_simd_min_words() -> usize {
     let threshold = active().bit_backend().simd_min_words();
     ACTIVE_SIMD_MIN_WORDS.store(threshold, Ordering::Relaxed);
+    ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Release);
     threshold
 }
 
 /// Returns the process-wide profile, resolving to [`TuningProfile::CONSERVATIVE`]
 /// when no caller installs one first.
 pub fn active() -> &'static TuningProfile {
-    ACTIVE.get_or_init(|| TuningProfile::CONSERVATIVE.clone())
+    ACTIVE.get_or_init(|| {
+        let profile = TuningProfile::CONSERVATIVE.clone();
+        #[cfg(feature = "simd")]
+        ACTIVE_SIMD_MIN_WORDS.store(profile.bit_backend().simd_min_words(), Ordering::Relaxed);
+        #[cfg(feature = "simd")]
+        ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Release);
+        profile
+    })
 }
 
 /// Installs the profile before [`active`] resolves.
@@ -706,6 +695,8 @@ pub fn install(profile: TuningProfile) -> Result<(), AlreadyResolved> {
     ACTIVE.set(profile).map_err(|_| AlreadyResolved)?;
     #[cfg(feature = "simd")]
     ACTIVE_SIMD_MIN_WORDS.store(simd_min_words, Ordering::Relaxed);
+    #[cfg(feature = "simd")]
+    ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Release);
     Ok(())
 }
 
@@ -1223,28 +1214,12 @@ mod tests {
     fn endpoint_values_are_admissible() {
         let max = usize::MAX.to_string();
         let text = inherited_document(&format!(
-            r#"{{"bit_backend":{{"simd_min_words":0}},"polynomial":{{"karatsuba_min_degree":{max},"karatsuba_max_out_len":0,"div_rem_fast_min_len":{max},"subproduct_min_len":{max}}}}}"#
+            r#"{{"bit_backend":{{"simd_min_words":{max}}},"polynomial":{{"karatsuba_min_degree":{max},"karatsuba_max_out_len":0,"div_rem_fast_min_len":{max},"subproduct_min_len":{max}}}}}"#
         ));
         let profile = TuningProfile::from_json(&text).unwrap();
-        assert_eq!(profile.bit_backend().simd_min_words(), 0);
+        assert_eq!(profile.bit_backend().simd_min_words(), usize::MAX);
         assert_eq!(profile.polynomial().karatsuba_max_out_len(), 0);
         assert_eq!(profile.polynomial().karatsuba_min_degree(), usize::MAX);
-    }
-
-    #[test]
-    fn unresolved_cache_sentinel_is_not_a_bit_backend_threshold() {
-        let text = inherited_document(&format!(
-            r#"{{"bit_backend":{{"simd_min_words":{}}}}}"#,
-            usize::MAX
-        ));
-        assert_eq!(
-            TuningProfile::from_json(&text).unwrap_err(),
-            ProfileError::SelectorOutOfRange {
-                family: ProfileFamily::BitBackend,
-                field: ProfileField::SimdMinWords,
-                value: usize::MAX as u64,
-            }
-        );
     }
 
     #[test]

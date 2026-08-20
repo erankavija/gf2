@@ -600,15 +600,19 @@ at `bit_backend/popcount/words=1` and 0.224830 ns/call at
 See [`2026-08-20-post-cutover-receipt.md`](../../benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md).
 
 Issue `c42720ce` reduces that hot-path cost by publishing the active profile's
-`simd_min_words` into one `AtomicUsize`, seeded with the unresolved sentinel
-`usize::MAX`, when the cache resolves or a profile is successfully installed.
-`select_backend_for_size` is inlineable and reads that single cell with one
-`Ordering::Relaxed` load, then compares the result with the sentinel; after the
-first call that comparison is perfectly predicted and the cold resolution path
-is taken at most once per process. The cache starts unresolved rather than at
-`SIMD_MIN_WORDS_DEFAULT` = 8, and a successful installation publishes its
-supplied value, so the profile continues to govern the boundary at every size,
-including the calibrated value 4.
+`simd_min_words` into an `AtomicUsize` threshold beside an `AtomicBool`
+resolved flag. The threshold is seeded with `SIMD_MIN_WORDS_DEFAULT` = 8 as a
+placeholder; no threshold value is reserved, so `usize::MAX` remains
+admissible as specified by §2.1. The cold resolution path stores the resolved
+threshold with `Ordering::Relaxed` and then publishes the flag with
+`Ordering::Release`; `install` performs the same ordered publication only
+after `ACTIVE.set` succeeds. `active_simd_min_words` reads the flag with
+`Ordering::Acquire`, takes the `#[cold]` `#[inline(never)]` resolution path
+when it is false, and otherwise loads the threshold with `Ordering::Relaxed`.
+The `OnceLock` resolution is one-shot per process, so the cold resolution path
+is taken at most once per process, while the steady-state selection boundary
+remains one load, a predicted branch, and one load, including the calibrated
+value 4.
 
 ### 4.2 Polynomial-crossover family
 
