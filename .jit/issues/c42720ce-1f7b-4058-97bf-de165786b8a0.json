@@ -11,7 +11,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-20T08:14:48.202211746Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-20T08:17:34.679496836Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c42720ce-1f7b-4058-97bf-de165786b8a0",
   "labels": [
     "epic:field-capability-dispatch",
@@ -22,5 +33,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reduce the per-call cost of the bit-backend threshold read",
-  "updated_at": "2026-08-20T05:38:19.863601576Z"
+  "updated_at": "2026-08-20T08:17:34.679496836Z"
 }
