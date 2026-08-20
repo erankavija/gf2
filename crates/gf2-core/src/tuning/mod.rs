@@ -1,8 +1,8 @@
 //! Versioned execution-tuning profiles for the `gf2-core` crate.
 //!
 //! A profile is validated before it can be installed, and the installed value
-//! is resolved once for the process. A caller that has profile text can parse
-//! and install it before any selection boundary is used:
+//! is fixed once for the process. A caller that has profile text can parse and
+//! install it before any selection boundary is used:
 //!
 //! ```
 //! # #[cfg(feature = "tuning-profile")]
@@ -28,7 +28,7 @@
 
 use std::fmt;
 #[cfg(feature = "simd")]
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::OnceLock;
 
 #[cfg(feature = "tuning-profile")]
@@ -645,40 +645,29 @@ impl TuningProfile {
 
 static ACTIVE: OnceLock<TuningProfile> = OnceLock::new();
 #[cfg(feature = "simd")]
-static ACTIVE_SIMD_MIN_WORDS_RESOLVED: AtomicBool = AtomicBool::new(false);
-#[cfg(feature = "simd")]
 static ACTIVE_SIMD_MIN_WORDS: AtomicUsize =
     AtomicUsize::new(crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT);
 
 /// Returns the cached bit-backend threshold for the hot selection boundary.
+///
+/// The cache starts at the conservative default, so this resolved fast path
+/// performs only one relaxed load. A selection does not call [`active`]; a
+/// caller that relies on [`install`] returning [`AlreadyResolved`] must resolve
+/// the profile explicitly first.
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn active_simd_min_words() -> usize {
-    if !ACTIVE_SIMD_MIN_WORDS_RESOLVED.load(Ordering::Acquire) {
-        return resolve_active_simd_min_words();
-    }
     ACTIVE_SIMD_MIN_WORDS.load(Ordering::Relaxed)
 }
 
-#[cfg(feature = "simd")]
-#[cold]
-#[inline(never)]
-fn resolve_active_simd_min_words() -> usize {
-    let threshold = active().bit_backend().simd_min_words();
-    ACTIVE_SIMD_MIN_WORDS.store(threshold, Ordering::Relaxed);
-    ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Release);
-    threshold
-}
-
 /// Returns the process-wide profile, resolving to [`TuningProfile::CONSERVATIVE`]
-/// when no caller installs one first.
+/// when no caller installs one first. Calling this function marks the profile
+/// resolved for [`install`]; a bit-backend selection alone does not.
 pub fn active() -> &'static TuningProfile {
     ACTIVE.get_or_init(|| {
         let profile = TuningProfile::CONSERVATIVE.clone();
         #[cfg(feature = "simd")]
         ACTIVE_SIMD_MIN_WORDS.store(profile.bit_backend().simd_min_words(), Ordering::Relaxed);
-        #[cfg(feature = "simd")]
-        ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Release);
         profile
     })
 }
@@ -688,15 +677,14 @@ pub fn active() -> &'static TuningProfile {
 /// # Errors
 ///
 /// Returns [`AlreadyResolved`] if this process has already called [`active`] or
-/// successfully installed another profile.
+/// successfully installed another profile. A prior bit-backend selection does
+/// not resolve the profile and therefore does not cause this error.
 pub fn install(profile: TuningProfile) -> Result<(), AlreadyResolved> {
     #[cfg(feature = "simd")]
     let simd_min_words = profile.bit_backend().simd_min_words();
     ACTIVE.set(profile).map_err(|_| AlreadyResolved)?;
     #[cfg(feature = "simd")]
     ACTIVE_SIMD_MIN_WORDS.store(simd_min_words, Ordering::Relaxed);
-    #[cfg(feature = "simd")]
-    ACTIVE_SIMD_MIN_WORDS_RESOLVED.store(true, Ordering::Release);
     Ok(())
 }
 
