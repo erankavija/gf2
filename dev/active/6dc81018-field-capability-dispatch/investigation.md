@@ -5,6 +5,16 @@ report separates shipped production code, proof/extraction artifacts, research
 stubs, and historical decisions. No code or `.jit/` state was changed for this
 investigation.
 
+**Citation anchor (added 2026-08-20, epic completion sweep).** Every file:line
+citation in this report was taken from the tree at commit `d8a97466`, the
+2026-08-18 planning commit that added this file — before any of the epic's
+cutovers landed. The citations describe that pre-epic tree and are not updated
+as the epic's implementation moves code; `classification.md` (anchor
+`2f2cbb37`) and `220cab0b/design.md` (anchor `05bc9c14`) carry the same
+discipline with explicit anchors. The one later edit, `68dba33d`, updated the
+packed-stub citations to the stub's archived location when `7f818151` moved it;
+every other citation is as taken at `d8a97466`.
+
 ## 1. Claim classification
 
 ### Claim 1 — already-done
