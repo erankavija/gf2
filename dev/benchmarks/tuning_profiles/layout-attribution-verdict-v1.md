@@ -101,31 +101,48 @@ K = 8 × 4 × 4 = 128 members, all distinct.
 
 ### 3.2 Why the enumeration is written this way
 
-The rotation in C(j) makes A(j) + B(j) + C(j) congruent to `j` modulo 2, so the
-parity of a member's execution index is the parity of its level sum. Splitting
-the ensemble on that parity therefore splits it evenly on every axis: each half
-holds eight members at each level of A and sixteen at each level of B and of C.
-§6.4's half-split reads that split, so it measures across-build dispersion
-rather than a difference between two unlike halves of the ensemble.
+The rotation in C(j) makes A(j) + B(j) + C(j) congruent to `j` modulo 2, so a
+member's level sum has the parity of its **member index** `j`. Splitting the
+ensemble on that parity splits it evenly on every axis: each half holds eight
+members at each level of A and sixteen at each level of B and of C.
+
+Every split and balance this document states runs over `j`, never over the
+recorded execution index. Member `j` records `--execution j+1`, so the two
+parities are opposite, and reading a half off the execution column means
+reading `j = execution − 1` first. §6.4's half-split is defined that way and
+the harness computes it that way, so it measures across-build dispersion rather
+than a difference between two unlike halves of the ensemble.
 
 ### 3.3 What is verified before this document is committed
 
-Observed at this revision on `fraktaali` under `rustc 1.95.0 (59807616e
-2026-04-14)`, building `--bench selector_non_regression -p gf2-core --features
-simd`:
+[`ensemble-axis-verification.md`](/dev/active/972e2b88/ensemble-axis-verification.md)
+is the committed receipt: fourteen builds of the bench target at revision
+`183379074223f96215276ab3e26b7c2cbb1e8c82` on `fraktaali` under `rustc 1.95.0
+(59807616e 2026-04-14)`, each recorded with its `RUSTFLAGS`, byte size,
+SHA-256, build wall-clock, and how many of the 805 text symbols it moves
+against the ordinary build. It takes no timed measurement and holds no bench
+lock.
 
-- Every axis is accepted at the MSRV and moves the binary. The levels sampled
-  build distinct bench binaries at distinct sizes, growing the ordinary build
-  by at most 6.7 % at A = 7, 2.3 % at B = 3 and 9.2 % at C = 3. Levels past the
-  table's bounds stay outside the ensemble because they bloat the binary rather
-  than move it: `-align-all-nofallthru-blocks=7` grows it by 73.2 %. A member
-  that turns out to leave this crate's placement alone shows up as reduced
-  dispersion, which §6.4's coverage precondition reads.
-- The member that perturbs most, A = 7, B = 3, C = 3, builds and reports
-  `self-check PASS` with `simd_min_words=8`, so the harness's straddle
+- **Every axis is accepted at the MSRV and moves code.** At every sampled level
+  A, B and C re-place 97 % to 100 % of the common text symbols, so a member is
+  a different placement of the same program rather than the same placement with
+  different bytes.
+- **The admitted levels stay close to the ordinary build**: at most +6.46 % at
+  A = 7, +2.40 % at B = 3 and +9.31 % at C = 3, and +15.61 % at the member that
+  perturbs most. The levels past the table's bounds bloat rather than move,
+  which is why B stops at 3: `-align-all-nofallthru-blocks=5` grows the binary
+  by 13.52 % and `=7` by 74.74 %.
+- **The worst member keeps the protocol.** Built at A = 7, B = 3, C = 3, the
+  harness reports `self-check PASS` with `simd_min_words=8`, so its straddle
   properties and the pinned set survive the perturbation.
-- One member's build costs 14 s to 15 s of wall clock on this host, which §5.3
-  budgets from.
+- **A member's build costs 5 s to 16 s** across the receipt's captured builds,
+  with one 32 s observation while other work shared the host. §5.3 budgets from
+  the upper end.
+
+A member that turns out to leave this crate's placement alone would show up as
+reduced dispersion, which §6.4's coverage precondition reads. The receipt
+measures placement rather than assuming it for exactly that reason, and it
+rejects one candidate axis on that measurement (§6.6).
 
 ### 3.4 Why K is 128
 
@@ -146,10 +163,18 @@ that size sufficed.
 ### 3.5 A member that fails to build
 
 If a member fails to build in either checkout, it is dropped from the ensemble
-in **both** arms, the ensemble is completed by continuing the enumeration past
-K, and the receipt records the dropped member, its flags and the failure. The
-rule is mechanical, so a build failure cannot become a choice about which
-layouts the verdict sees.
+in **both** arms and replaced by continuing the enumeration past K to the next
+member **of the dropped member's index parity**, so the ensemble keeps exactly
+K members and keeps the balanced halves of §3.2. The receipt records the
+dropped member, its flags, the failure, and its replacement. The rule is
+mechanical, so a build failure cannot become a choice about which layouts the
+verdict sees.
+
+The count and the balance are what §6.5's audit enforces: it accepts an arm of
+exactly K = 128 or exactly K = 256 members whose halves are equal on member
+parity, and it requires both arms to carry the same member indices. An arm of
+any other shape is a different ensemble, so the audit refuses it by name
+instead of computing a margin whose K it does not know.
 
 ## 4. The two arms
 
@@ -200,8 +225,8 @@ right answers, and a failed probe aborts the run.
 
 ### 5.2 Order
 
-Member `i` runs its two arms adjacently, reference first when `i` is odd and
-candidate first when `i` is even. Each arm therefore holds exactly K/2 of the
+Member `j` runs its two arms adjacently, reference first when `j` is even and
+candidate first when `j` is odd. Each arm therefore holds exactly K/2 of the
 first positions and K/2 of the second, so the mean slot position of the two
 arms is equal and no warm-up or thermal trend over the session lands on one arm.
 
@@ -209,8 +234,9 @@ arms is equal and no warm-up or thermal trend over the session lands on one arm.
 
 At K = 128: 256 builds and 256 timed executions.
 
-- **Builds** happen before the lock is taken, at 14 s to 15 s each (§3.3), so
-  about 64 minutes, and no compilation happens under the lock. Each binary is
+- **Builds** happen before the lock is taken, at 5 s to 16 s each in the
+  verification receipt's captured builds (§3.3); budgeting its upper end gives
+  about 68 minutes, and no compilation happens under the lock. Each binary is
   copied out of the target directory to a staging path outside the repository
   before the next member overwrites it, and its SHA-256 is recorded.
 - **Timed work** is 34 × 250 ms per execution. The second receipt's slot table
@@ -219,9 +245,9 @@ At K = 128: 256 builds and 256 timed executions.
   timed windows and an amended execution costs about 11 s. 256 executions is
   about 47 minutes, inside one lock session.
 
-The ladder of §6.6 doubles K to 256, which is 512 builds (about 2 h 8 min) and
-512 executions (about 94 minutes under the lock). Both rungs are one lock
-session.
+The ladder of §6.6 doubles K to 256, which is 512 builds (about 2 h 16 min at
+the same upper end) and 512 executions (about 94 minutes under the lock). Both
+rungs are one lock session.
 
 ### 5.4 Recording
 
@@ -355,18 +381,23 @@ cargo +1.95.0 bench -p gf2-core --features simd --bench selector_non_regression 
 ```
 
 Under `--layout-audit` the receipt pair names the two committed receipts whose
-ratio defines `σ̂`. The mode prints one line per cell carrying the reference
+ratio defines `σ̂`, and it is **required**: coverage is a precondition of the
+verdict, so without the pair the audit refuses by name —
+`RESULT: FAIL (natural pair missing)` — rather than reporting a result that
+skipped one of its own preconditions. The mode prints one line per cell carrying the reference
 arm's across-build spread, `s_R`, `s_C`, `p`, `se`, the achieved margin
 `ln(1.05) / se`, the half-split null ratio, `σ̂`, and a per-cell verdict; then
 the set-level margin and null, the coverage comparison, the decorrelation
 comparison, and `RESULT: PASS` or `RESULT: FAIL`. It exits non-zero on failure.
 
-It refuses to audit files that do not describe an ensemble of the pinned set,
-naming the class on the `RESULT:` line as the §5 mode does: a schema mismatch,
-a row recording `source_dirty=true`, an arm spanning two revisions, a build
-that is not the pinned set, a cell whose recorded identity moves across builds,
-a degenerate cell, a build count below four or unbalanced on index parity, arms
-carrying different build indices, or a receipt pair that is not the pinned set.
+It refuses to audit files that do not describe the predeclared ensemble of the
+pinned set, naming the class on the `RESULT:` line as the §5 mode does: a
+schema mismatch, a row recording `source_dirty=true` or an execution index
+below one, an arm spanning two revisions, a member that is not the pinned set,
+a cell whose recorded identity moves across members, a degenerate cell, a
+member count that is neither 128 nor 256, halves unbalanced on member parity,
+arms carrying different member indices, a missing receipt pair, or a receipt
+pair that is not the pinned set.
 
 The mode reads committed CSVs and writes none. It adds no measurement behaviour
 and changes none: the recording path, the emitted columns, the timing, the
@@ -382,12 +413,18 @@ no passing comparison is claimed from that session. It can only withhold a
 verdict; it can never turn a failing comparison into a passing one.
 
 - **Precision or the half-split null fails.** K doubles to 256 by extending the
-  enumeration with a fourth axis, `-C link-arg=-Wl,--sort-section=name` at two
-  levels D. Member `j` from 0 to 255 then takes `D(j) = ⌊j / 128⌋`, takes A and
-  B from `j mod 128` by §3.1's formulas, and takes
-  `C(j) = ((j mod 4) + A(j) + B(j) + D(j)) mod 4`, which keeps the level sum
-  congruent to `j` modulo 2 and so keeps the parity property of §3.2. Beyond
-  K = 256 the run reports that the per-cell rule
+  enumeration with a fourth axis,
+  `-C llvm-args=-x86-branches-within-32B-boundaries` at two levels D, passed at
+  D = 1 and omitted at D = 0. Member `j` from 0 to 255 then takes
+  `D(j) = ⌊j / 128⌋`, takes A and B from `j mod 128` by §3.1's formulas, and
+  takes `C(j) = ((j mod 4) + A(j) + B(j) + D(j)) mod 4`, which keeps the level
+  sum congruent to `j` modulo 2 and so keeps the parity property of §3.2. The
+  verification receipt measures that axis moving all 805 text symbols at
+  +2.32 % growth, and it rejects the candidate this rung first named:
+  `-C link-arg=-Wl,--sort-section=name` produces a different binary of
+  identical size that moves no symbol at all, so doubling along it would hold
+  each of the 128 placements twice rather than 256 placements. Beyond K = 256
+  the run reports that the per-cell rule
   is not decidable at τ_cell against this host's across-build dispersion, and
   that demonstration goes to the owner of epic `6dc81018`.
 - **Coverage or decorrelation fails.** The ensemble is not a model of the
