@@ -32,8 +32,8 @@ use crate::checkpoint::{
 use crate::permanent_campaign::schedule::{
     emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_work_items,
     evaluate_work_item_with_worker_count_and_accelerator, resolve_processor_path,
-    shard_record_bytes, summarize_with_quarantine, AcceleratorConfig, AcceleratorCostTable,
-    EvaluatedShard, FieldRun, PhaseDurations, ScheduleError, ShardRun, WorkItem,
+    shard_record_bytes, summarize_with_quarantine, AcceleratorCostTable, EvaluatedShard, FieldRun,
+    PhaseDurations, ScheduleError, ShardRun, WorkItem,
 };
 use crate::permanent_campaign::schema::{
     field_summary_file, shard_record_file, Backend, CampaignManifest, QuarantinedShard, ShardRecord,
@@ -303,9 +303,9 @@ pub fn run_field_checkpointed_with_accelerator_config(
         worker_count,
         |item| {
             let cell = if item.backend == Backend::Accelerator {
-                accelerator.config_for(item.q, item.n)?
+                Some(accelerator.config_for(item.q, item.n)?)
             } else {
-                AcceleratorConfig::default()
+                None
             };
             evaluate_work_item_with_worker_count_and_accelerator(manifest, item, worker_count, cell)
         },
