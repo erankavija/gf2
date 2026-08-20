@@ -1740,6 +1740,11 @@ fn audit_layout(
     candidate: &EnsembleArm,
     natural: Option<(&Receipt, &Receipt)>,
 ) -> Result<LayoutAudit, AuditError> {
+    // Coverage is a precondition of the verdict rather than an option, so a
+    // missing pair is refused before anything is computed from the arms.
+    let Some((natural_baseline, natural_rebuild)) = natural else {
+        return Err(AuditError::NaturalPairMissing);
+    };
     check_arm(reference)?;
     check_arm(candidate)?;
     if !reference.builds.keys().eq(candidate.builds.keys()) {
@@ -1749,9 +1754,9 @@ fn audit_layout(
         });
     }
     let pinned = pinned_cell_ids();
-    let natural_sigma = match natural {
-        None => return Err(AuditError::NaturalPairMissing),
-        Some((baseline, rebuild)) => {
+    let natural_sigma = {
+        let (baseline, rebuild) = (natural_baseline, natural_rebuild);
+        {
             if baseline.schema_version != SCHEMA_VERSION
                 || rebuild.schema_version != SCHEMA_VERSION
                 || !baseline.stats.keys().eq(pinned.iter())
