@@ -31,9 +31,9 @@ use crate::checkpoint::{
 };
 use crate::permanent_campaign::schedule::{
     emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_work_items,
-    evaluate_work_item_with_worker_count, resolve_processor_path, shard_record_bytes,
-    summarize_with_quarantine, EvaluatedShard, FieldRun, PhaseDurations, ScheduleError, ShardRun,
-    WorkItem,
+    evaluate_work_item_with_worker_count_and_accelerator, resolve_processor_path,
+    shard_record_bytes, summarize_with_quarantine, AcceleratorConfig, EvaluatedShard, FieldRun,
+    PhaseDurations, ScheduleError, ShardRun, WorkItem,
 };
 use crate::permanent_campaign::schema::{
     field_summary_file, shard_record_file, CampaignManifest, QuarantinedShard, ShardRecord,
@@ -239,13 +239,43 @@ pub fn run_field_checkpointed(
     checkpoint_path: &Path,
     worker_count: usize,
 ) -> Result<FieldRun, CampaignDriverError> {
+    run_field_checkpointed_with_accelerator_config(
+        root,
+        manifest,
+        field,
+        checkpoint_path,
+        worker_count,
+        AcceleratorConfig::default(),
+    )
+}
+
+/// Runs one field arm with explicit accelerator launch-sizing configuration.
+///
+/// The per-matrix cost and launch cap are runtime inputs. They are not manifest
+/// fields and must be supplied from the selected cell's committed measurement
+/// receipt by a campaign caller.
+pub fn run_field_checkpointed_with_accelerator_config(
+    root: &Path,
+    manifest: &CampaignManifest,
+    field: u8,
+    checkpoint_path: &Path,
+    worker_count: usize,
+    accelerator: AcceleratorConfig,
+) -> Result<FieldRun, CampaignDriverError> {
     run_field_checkpointed_inner(
         root,
         manifest,
         field,
         checkpoint_path,
         worker_count,
-        |item| evaluate_work_item_with_worker_count(manifest, item, worker_count),
+        |item| {
+            evaluate_work_item_with_worker_count_and_accelerator(
+                manifest,
+                item,
+                worker_count,
+                accelerator,
+            )
+        },
         DurabilityHooks {
             on_shard_durable: ignore_durable_path,
             on_summary_durable: ignore_durable_path,

@@ -45,7 +45,7 @@ gf2-sim = { path = ".", features = ["test-support"] }
 
 [features]
 default = []
-hip = ["dep:gf2-kernels-hip", "gf2-coding/hip"]
+hip = ["dep:gf2-kernels-hip", "gf2-coding/hip", "gf2-algebra/hip"]
 llr-f64 = ["gf2-coding/llr-f64"]
 
 # Exposes the canonical test/bench-only deterministic AWGN channel-LLR source

@@ -33,6 +33,11 @@ MANIFEST_PATH="${CAMPAIGN_MANIFEST:-$TARGET_ROOT/manifest-v1.txt}"
 HARNESS_BIN="${CAMPAIGN_HARNESS_BIN:-$SAMPLING_TARGET_DIR/release/permanent_sampling_feas}"
 FLOCK_WRAPPER="${CAMPAIGN_FLOCK_WRAPPER:-$SCRIPT_DIR/ccx1-bench-flock.sh}"
 STUDY_ROOT="${CAMPAIGN_STUDY_ROOT:-$REPO_ROOT/dev/studies}"
+CAMPAIGN_SIM_BINARY="${CAMPAIGN_SIM_BINARY:-}"
+CAMPAIGN_SIM_MANIFEST="${CAMPAIGN_SIM_MANIFEST:-}"
+CAMPAIGN_SIM_OUTPUT="${CAMPAIGN_SIM_OUTPUT:-}"
+CAMPAIGN_SIM_FIELD="${CAMPAIGN_SIM_FIELD:-}"
+CAMPAIGN_SIM_WORKERS="${CAMPAIGN_SIM_WORKERS:-1}"
 ROCM_PATH="${ROCM_PATH:-/opt/rocm}"
 ARCH="${PERMANENT_CAMPAIGN_ARCH:-gfx1030}"
 if [[ "${1:-}" == premeasure || "${1:-}" == premeasure-collect || "${1:-}" == __locked-premeasure ]]; then
@@ -625,6 +630,23 @@ run_campaign() {
     # holds it around this entire internal invocation, not once per step.
     CAMPAIGN_HARNESS_BIN="$HARNESS_BIN" \
         "$FLOCK_WRAPPER" --full-host "$BASH" "$SCRIPT_PATH" __locked-pipeline "$smoke"
+    run_simulation_campaign
+}
+
+run_simulation_campaign() {
+    # The feasibility runner's manifest is a harness manifest. A caller that
+    # also supplies the frozen JSON campaign manifest opts into the production
+    # gf2-sim campaign binary. Keep this invocation in the same canonical lock
+    # domain as the timed host work above.
+    [[ -n "$CAMPAIGN_SIM_BINARY" ]] || return 0
+    [[ -n "$CAMPAIGN_SIM_MANIFEST" ]] || die "CAMPAIGN_SIM_MANIFEST is required with CAMPAIGN_SIM_BINARY"
+    [[ -n "$CAMPAIGN_SIM_OUTPUT" ]] || die "CAMPAIGN_SIM_OUTPUT is required with CAMPAIGN_SIM_BINARY"
+    [[ -n "$CAMPAIGN_SIM_FIELD" ]] || die "CAMPAIGN_SIM_FIELD is required with CAMPAIGN_SIM_BINARY"
+    "$FLOCK_WRAPPER" --full-host "$CAMPAIGN_SIM_BINARY" \
+        --manifest "$CAMPAIGN_SIM_MANIFEST" \
+        --output "$CAMPAIGN_SIM_OUTPUT" \
+        --q "$CAMPAIGN_SIM_FIELD" \
+        --workers "$CAMPAIGN_SIM_WORKERS"
 }
 
 validate_premeasure_plan() {

@@ -74,6 +74,54 @@ const BATCH_CHUNK_MAX_MATRIX_ENTRIES: usize = 16 * 1024;
 /// Maximum number of matrices evaluated by one batch for small matrices.
 const BATCH_CHUNK_MAX_MATRICES: usize = 64;
 
+/// Default wall-clock cap for one accelerator launch.
+pub const DEFAULT_ACCELERATOR_LAUNCH_CAP: Duration = Duration::from_millis(500);
+
+/// Configuration used to size accelerator launches.
+///
+/// `per_matrix_cost` is measured configuration supplied by the caller; it is
+/// not part of the frozen campaign manifest. The campaign binary's value must
+/// be derived from the committed measurement receipt for the selected cell.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AcceleratorConfig {
+    /// Measured wall-clock cost of one matrix on the selected accelerator.
+    pub per_matrix_cost: Duration,
+    /// Maximum target wall-clock duration for one accelerator launch.
+    pub launch_cap: Duration,
+}
+
+impl Default for AcceleratorConfig {
+    fn default() -> Self {
+        Self {
+            per_matrix_cost: Duration::from_micros(1),
+            launch_cap: DEFAULT_ACCELERATOR_LAUNCH_CAP,
+        }
+    }
+}
+
+/// Chooses the number of matrices for the next accelerator launch.
+///
+/// The rule is `clamp(floor(cap / per_matrix), 1, remaining)`. Permanent
+/// evaluation costs approximately `M · n · 2^n / W`, so holding `M` fixed
+/// while `n` rises from 20 to 24 multiplies per-launch occupancy by about
+/// 19.2; each further four-order increase costs about another factor of 19.
+/// The measured per-matrix input therefore sizes each successive launch rather
+/// than reusing one batch size across the grid. A zero measured cost is treated
+/// as an unbounded rate and selects all remaining matrices.
+#[must_use]
+pub fn launch_size(per_matrix: Duration, cap: Duration, remaining: u64) -> usize {
+    if remaining == 0 {
+        return 1;
+    }
+    let remaining_as_usize = remaining.min(usize::MAX as u64) as usize;
+    if per_matrix.is_zero() {
+        return remaining_as_usize.max(1);
+    }
+    let quotient = cap.as_nanos() / per_matrix.as_nanos();
+    let requested = quotient.min(usize::MAX as u128) as usize;
+    requested.clamp(1, remaining_as_usize.max(1))
+}
+
 /// One manifest shard expanded into executable scheduling data.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct WorkItem {
@@ -106,6 +154,9 @@ pub(crate) enum ProcessorPath {
     Bipedal3IntraMatrixParallel,
     /// Generic finite-field Ryser kernel.
     GenericRyser,
+    /// HIP permanent batch entry point selected by the frozen manifest.
+    #[cfg(feature = "hip")]
+    Accelerator,
 }
 
 impl WorkItem {
@@ -121,8 +172,9 @@ impl WorkItem {
 pub struct PhaseDurations {
     /// Time spent drawing row-major field entries.
     pub draw: Duration,
-    /// Time spent constructing the packed representation, including each
-    /// batch's wall-clock packing section when `BatchParallel` is selected.
+    /// Time spent constructing the packed representation: each batch's
+    /// wall-clock packing section when `BatchParallel` is selected, and each
+    /// launch's packing span when the accelerator is selected.
     /// This is zero for a `GenericRyser` cell, which does not construct a
     /// packed representation.
     pub pack: Duration,
@@ -210,6 +262,15 @@ pub enum ScheduleError {
         /// Backend named by the cell.
         backend: Backend,
     },
+    /// The manifest selected an accelerator, but this host has no usable one.
+    AcceleratorDeviceUnavailable {
+        /// Prime field order of the cell.
+        q: u8,
+        /// Square matrix dimension of the cell.
+        n: u16,
+        /// Device required by the selected backend.
+        device: &'static str,
+    },
     /// A filesystem or serialization operation failed.
     Io {
         /// Path involved in the filesystem operation.
@@ -234,6 +295,10 @@ impl fmt::Display for ScheduleError {
                 formatter,
                 "cell q={q} n={n} names backend {}, which this build does not provide",
                 backend.name()
+            ),
+            Self::AcceleratorDeviceUnavailable { q, n, device } => write!(
+                formatter,
+                "cell q={q} n={n} requires {device}, but no usable device is present"
             ),
             Self::Io { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::Serialization(source) => source.fmt(formatter),
@@ -268,7 +333,20 @@ pub(crate) fn resolve_processor_path(
             _ => backend_unavailable(q, n, backend),
         },
         Backend::GenericRyser if n <= 63 => Ok(ProcessorPath::GenericRyser),
-        Backend::GenericRyser | Backend::Accelerator => backend_unavailable(q, n, backend),
+        Backend::Accelerator => {
+            #[cfg(feature = "hip")]
+            {
+                match q {
+                    3 | 5 | 7 if n <= 63 => Ok(ProcessorPath::Accelerator),
+                    _ => backend_unavailable(q, n, backend),
+                }
+            }
+            #[cfg(not(feature = "hip"))]
+            {
+                backend_unavailable(q, n, backend)
+            }
+        }
+        Backend::GenericRyser => backend_unavailable(q, n, backend),
     }
 }
 
@@ -348,6 +426,25 @@ pub fn run_field_with_worker_count(
     field: u8,
     worker_count: usize,
 ) -> Result<FieldRun, ScheduleError> {
+    run_field_with_worker_count_and_accelerator(
+        manifest,
+        field,
+        worker_count,
+        AcceleratorConfig::default(),
+    )
+}
+
+/// Executes one field with explicit accelerator launch-sizing configuration.
+///
+/// The configuration is runtime input and is intentionally not read from or
+/// written to the frozen manifest. Processor-only cells follow the same paths
+/// as [`run_field_with_worker_count`].
+pub fn run_field_with_worker_count_and_accelerator(
+    manifest: &CampaignManifest,
+    field: u8,
+    worker_count: usize,
+    accelerator: AcceleratorConfig,
+) -> Result<FieldRun, ScheduleError> {
     validate_worker_count(worker_count)?;
     let purpose = manifest
         .stream_purposes
@@ -362,6 +459,7 @@ pub fn run_field_with_worker_count(
             purpose.tag,
             item,
             worker_count,
+            accelerator,
         )?);
     }
     let summary = summarize(field, &shards, manifest.cells.len() as u64);
@@ -462,8 +560,9 @@ fn run_shard(
     purpose_tag: u8,
     item: &WorkItem,
     worker_count: usize,
+    accelerator: AcceleratorConfig,
 ) -> Result<ShardRun, ScheduleError> {
-    Ok(run_shard_with_position(root_seed, purpose_tag, item, worker_count)?.run)
+    Ok(run_shard_with_position(root_seed, purpose_tag, item, worker_count, accelerator)?.run)
 }
 
 /// Evaluates one manifest work item and returns its continuation position.
@@ -491,13 +590,34 @@ pub fn evaluate_work_item_with_worker_count(
     item: &WorkItem,
     worker_count: usize,
 ) -> Result<EvaluatedShard, ScheduleError> {
+    evaluate_work_item_with_worker_count_and_accelerator(
+        manifest,
+        item,
+        worker_count,
+        AcceleratorConfig::default(),
+    )
+}
+
+/// Evaluates one work item with explicit accelerator launch-sizing input.
+pub fn evaluate_work_item_with_worker_count_and_accelerator(
+    manifest: &CampaignManifest,
+    item: &WorkItem,
+    worker_count: usize,
+    accelerator: AcceleratorConfig,
+) -> Result<EvaluatedShard, ScheduleError> {
     validate_worker_count(worker_count)?;
     let purpose = manifest
         .stream_purposes
         .iter()
         .find(|purpose| purpose.tag == CAMPAIGN_CELL_PURPOSE_TAG)
         .ok_or(ScheduleError::MissingCampaignPurpose)?;
-    run_shard_with_position(manifest.root_seed, purpose.tag, item, worker_count)
+    run_shard_with_position(
+        manifest.root_seed,
+        purpose.tag,
+        item,
+        worker_count,
+        accelerator,
+    )
 }
 
 fn run_shard_with_position(
@@ -505,11 +625,33 @@ fn run_shard_with_position(
     purpose_tag: u8,
     item: &WorkItem,
     worker_count: usize,
+    accelerator: AcceleratorConfig,
 ) -> Result<EvaluatedShard, ScheduleError> {
     match item.q {
-        3 => run_shard_for::<3>(root_seed, purpose_tag, item, FieldOrder::F3, worker_count),
-        5 => run_shard_for::<5>(root_seed, purpose_tag, item, FieldOrder::F5, worker_count),
-        7 => run_shard_for::<7>(root_seed, purpose_tag, item, FieldOrder::F7, worker_count),
+        3 => run_shard_for::<3>(
+            root_seed,
+            purpose_tag,
+            item,
+            FieldOrder::F3,
+            worker_count,
+            accelerator,
+        ),
+        5 => run_shard_for::<5>(
+            root_seed,
+            purpose_tag,
+            item,
+            FieldOrder::F5,
+            worker_count,
+            accelerator,
+        ),
+        7 => run_shard_for::<7>(
+            root_seed,
+            purpose_tag,
+            item,
+            FieldOrder::F7,
+            worker_count,
+            accelerator,
+        ),
         q => Err(ScheduleError::InvalidWorkItem(format!(
             "unsupported campaign field q={q}"
         ))),
@@ -522,6 +664,7 @@ fn run_shard_for<const Q: u64>(
     item: &WorkItem,
     field_order: FieldOrder,
     worker_count: usize,
+    accelerator: AcceleratorConfig,
 ) -> Result<EvaluatedShard, ScheduleError> {
     let mut observer = |_: &[Fp<Q>], _: u64, _: Option<u64>| {};
     run_shard_for_with_observer_with_worker_count(
@@ -530,6 +673,7 @@ fn run_shard_for<const Q: u64>(
         item,
         field_order,
         worker_count,
+        accelerator,
         &mut observer,
     )
 }
@@ -558,8 +702,277 @@ where
         item,
         field_order,
         1,
+        AcceleratorConfig::default(),
         observer,
     )
+}
+
+#[cfg(feature = "hip")]
+fn run_shard_for_accelerator<const Q: u64, O>(
+    root_seed: u64,
+    purpose_tag: u8,
+    item: &WorkItem,
+    field_order: FieldOrder,
+    accelerator: AcceleratorConfig,
+    observer: &mut O,
+) -> Result<EvaluatedShard, ScheduleError>
+where
+    O: FnMut(&[Fp<Q>], u64, Option<u64>),
+{
+    run_shard_for_accelerator_with_dispatch(
+        root_seed,
+        purpose_tag,
+        item,
+        field_order,
+        accelerator,
+        gf2_algebra::gpu::has_usable_device,
+        dispatch_accelerator::<Q>,
+        observer,
+    )
+}
+
+#[cfg(feature = "hip")]
+#[allow(clippy::too_many_arguments)]
+fn run_shard_for_accelerator_with_dispatch<const Q: u64, P, D, O>(
+    root_seed: u64,
+    purpose_tag: u8,
+    item: &WorkItem,
+    field_order: FieldOrder,
+    accelerator: AcceleratorConfig,
+    probe: P,
+    mut dispatch: D,
+    observer: &mut O,
+) -> Result<EvaluatedShard, ScheduleError>
+where
+    P: Fn() -> bool,
+    D: FnMut(&[Vec<Fp<Q>>], usize) -> Result<(Vec<u64>, Duration), ScheduleError>,
+    O: FnMut(&[Fp<Q>], u64, Option<u64>),
+{
+    if !probe() {
+        return Err(ScheduleError::AcceleratorDeviceUnavailable {
+            q: item.q,
+            n: item.n,
+            device: "a usable HIP accelerator device",
+        });
+    }
+    let stream = StreamIndex::new(item.stream_index).map_err(|error| {
+        ScheduleError::InvalidWorkItem(format!("invalid stream index: {error}"))
+    })?;
+    let address = MatrixAddress::new(
+        root_seed,
+        field_order,
+        usize::from(item.n),
+        SamplerPurpose::CampaignCell,
+        stream,
+    );
+    let mut sampler = MatrixSampler::<Q>::new(address).map_err(|error| {
+        ScheduleError::InvalidWorkItem(format!("cannot open matrix sampler: {error}"))
+    })?;
+    let n = usize::from(item.n);
+    let matrix_entries = n.checked_mul(n).ok_or_else(|| {
+        ScheduleError::InvalidWorkItem("matrix dimension overflows entry count".to_owned())
+    })?;
+    let mut histogram = vec![0_u64; Q as usize];
+    let mut permanent_zero_count = 0_u64;
+    let mut draw = Duration::ZERO;
+    let mut pack = Duration::ZERO;
+    let mut evaluate = Duration::ZERO;
+    let mut determinant = Duration::ZERO;
+    let mut count = Duration::ZERO;
+    let mut determinant_zero_count = 0_u64;
+    let mut remaining = item.matrix_count;
+
+    while remaining != 0 {
+        let batch_len = launch_size(
+            accelerator.per_matrix_cost,
+            accelerator.launch_cap,
+            remaining,
+        );
+        let started = Instant::now();
+        let mut matrices = Vec::with_capacity(batch_len);
+        for _ in 0..batch_len {
+            let mut entries = vec![Fp::<Q>::new(0); matrix_entries];
+            sampler.fill_next_matrix(&mut entries);
+            matrices.push(entries);
+        }
+        draw += started.elapsed();
+
+        let started = Instant::now();
+        let (permanent_values, pack_span) = dispatch(&matrices, n)?;
+        // The dispatch reports the packing it performed so `pack` measures
+        // packing and `evaluate` measures the device launch alone, matching
+        // the processor paths' phase attribution.
+        pack += pack_span;
+        evaluate += started.elapsed().saturating_sub(pack_span);
+        if permanent_values.len() != matrices.len() {
+            return Err(ScheduleError::InvalidWorkItem(format!(
+                "accelerator dispatch returned {} values for {} matrices",
+                permanent_values.len(),
+                matrices.len()
+            )));
+        }
+
+        let determinant_values = if item.determinant_companion == DeterminantPlan::Evaluate {
+            let started = Instant::now();
+            let values: Vec<u64> = matrices
+                .iter()
+                .map(|entries| evaluate_determinant(entries, n))
+                .collect();
+            determinant += started.elapsed();
+            Some(values)
+        } else {
+            None
+        };
+
+        for index in 0..batch_len {
+            let value = permanent_values[index];
+            let determinant_value = determinant_values.as_ref().map(|values| values[index]);
+            if determinant_value == Some(0) {
+                determinant_zero_count += 1;
+            }
+            observer(&matrices[index], value, determinant_value);
+
+            let started = Instant::now();
+            histogram[value as usize] += 1;
+            if value == 0 {
+                permanent_zero_count += 1;
+            }
+            count += started.elapsed();
+        }
+        remaining -= batch_len as u64;
+    }
+
+    Ok(EvaluatedShard {
+        run: ShardRun {
+            record: ShardRecord {
+                schema_version: SCHEMA_VERSION,
+                shard_id: item.shard_id,
+                stream_address: StreamAddress {
+                    root_seed,
+                    q: item.q,
+                    n: item.n,
+                    purpose_tag,
+                    stream_index: item.stream_index,
+                },
+                matrix_count: item.matrix_count,
+                permanent_zero_count,
+                permanent_histogram: histogram,
+                determinant: match item.determinant_companion {
+                    DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
+                        sample_count: item.matrix_count,
+                        zero_count: determinant_zero_count,
+                    },
+                    DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
+                },
+            },
+            timing: PhaseDurations {
+                draw,
+                pack,
+                evaluate,
+                determinant,
+                count,
+            },
+        },
+        generator_word_position: sampler.generator_word_position(),
+    })
+}
+
+#[cfg(feature = "hip")]
+/// Packs one launch and evaluates it on the accelerator.
+///
+/// `n` is the cell's frozen dimension, passed in rather than recovered from the
+/// operand length: the manifest already fixes it, and a second derivation would
+/// be a competing source of truth for it.
+///
+/// Returns the permanent values in input order together with the wall-clock
+/// span spent packing, so the caller can charge packing to the `pack` phase and
+/// leave `evaluate` measuring the device launch alone.
+fn dispatch_accelerator<const Q: u64>(
+    matrices: &[Vec<Fp<Q>>],
+    n: usize,
+) -> Result<(Vec<u64>, Duration), ScheduleError> {
+    if matrices.is_empty() {
+        return Err(ScheduleError::InvalidWorkItem(
+            "accelerator launch is empty".to_owned(),
+        ));
+    }
+    let entry_count = n.checked_mul(n).ok_or_else(|| {
+        ScheduleError::InvalidWorkItem("matrix dimension overflows entry count".to_owned())
+    })?;
+    if let Some(position) = matrices
+        .iter()
+        .position(|entries| entries.len() != entry_count)
+    {
+        return Err(ScheduleError::InvalidWorkItem(format!(
+            "accelerator launch matrix {position} has {} entries, expected {entry_count} for n={n}",
+            matrices[position].len()
+        )));
+    }
+    let pack_started = Instant::now();
+    let packed: Vec<PackedMatrix> = matrices
+        .iter()
+        .map(|entries| PackedMatrix::new(entries, n))
+        .collect();
+    let pack_span = pack_started.elapsed();
+    match Q {
+        3 => {
+            let matrices: Vec<_> = packed
+                .into_iter()
+                .map(|matrix| match matrix {
+                    PackedMatrix::F3(matrix) => Ok(matrix),
+                    _ => Err(ScheduleError::InvalidWorkItem(
+                        "packed matrix and F_3 accelerator path do not agree".to_owned(),
+                    )),
+                })
+                .collect::<Result<_, _>>()?;
+            Ok((
+                gf2_algebra::gpu::permanent_batch_bipedal3(&matrices)
+                    .into_iter()
+                    .map(|value| value.value())
+                    .collect(),
+                pack_span,
+            ))
+        }
+        5 => {
+            let matrices: Vec<_> = packed
+                .into_iter()
+                .map(|matrix| match matrix {
+                    PackedMatrix::F5(matrix) => Ok(matrix),
+                    _ => Err(ScheduleError::InvalidWorkItem(
+                        "packed matrix and F_5 accelerator path do not agree".to_owned(),
+                    )),
+                })
+                .collect::<Result<_, _>>()?;
+            Ok((
+                gf2_algebra::gpu::permanent_batch_bipedal5(&matrices)
+                    .into_iter()
+                    .map(|value| value.value())
+                    .collect(),
+                pack_span,
+            ))
+        }
+        7 => {
+            let matrices: Vec<_> = packed
+                .into_iter()
+                .map(|matrix| match matrix {
+                    PackedMatrix::F7(matrix) => Ok(matrix),
+                    _ => Err(ScheduleError::InvalidWorkItem(
+                        "packed matrix and F_7 accelerator path do not agree".to_owned(),
+                    )),
+                })
+                .collect::<Result<_, _>>()?;
+            Ok((
+                gf2_algebra::gpu::permanent_batch_bipedal7(&matrices)
+                    .into_iter()
+                    .map(|value| value.value())
+                    .collect(),
+                pack_span,
+            ))
+        }
+        _ => Err(ScheduleError::InvalidWorkItem(format!(
+            "unsupported accelerator field q={Q}"
+        ))),
+    }
 }
 
 fn run_shard_for_with_observer_with_worker_count<const Q: u64, O>(
@@ -568,13 +981,27 @@ fn run_shard_for_with_observer_with_worker_count<const Q: u64, O>(
     item: &WorkItem,
     field_order: FieldOrder,
     worker_count: usize,
+    accelerator: AcceleratorConfig,
     observer: &mut O,
 ) -> Result<EvaluatedShard, ScheduleError>
 where
     O: FnMut(&[Fp<Q>], u64, Option<u64>),
 {
     validate_worker_count(worker_count)?;
+    #[cfg(not(feature = "hip"))]
+    let _ = accelerator;
     let processor_path = resolve_processor_path(item.q, item.n, item.backend)?;
+    #[cfg(feature = "hip")]
+    if processor_path == ProcessorPath::Accelerator {
+        return run_shard_for_accelerator(
+            root_seed,
+            purpose_tag,
+            item,
+            field_order,
+            accelerator,
+            observer,
+        );
+    }
     if item.backend == Backend::BatchParallel {
         return run_shard_for_batch(
             root_seed,
@@ -944,6 +1371,12 @@ fn evaluate_permanent<const Q: u64>(
             }
         },
         ProcessorPath::GenericRyser => permanent_ryser(row_major, n).value(),
+        #[cfg(feature = "hip")]
+        ProcessorPath::Accelerator => {
+            return Err(ScheduleError::InvalidWorkItem(
+                "accelerator path must use batched dispatch".to_owned(),
+            ));
+        }
     };
     Ok(value)
 }
@@ -1333,8 +1766,9 @@ mod tests {
         }
     }
 
+    #[cfg(not(feature = "hip"))]
     #[test]
-    fn test_resolve_processor_path_halts_for_accelerator() {
+    fn test_resolve_processor_path_refuses_accelerator_without_the_hip_feature() {
         let error = resolve_processor_path(3, 20, Backend::Accelerator).unwrap_err();
         assert!(matches!(
             error,
@@ -1348,6 +1782,138 @@ mod tests {
         assert!(rendered.contains("q=3"));
         assert!(rendered.contains("n=20"));
         assert!(rendered.contains("accelerator"));
+    }
+
+    #[cfg(feature = "hip")]
+    #[test]
+    fn test_resolve_processor_path_reads_accelerator_with_the_hip_feature() {
+        assert_eq!(
+            resolve_processor_path(3, 20, Backend::Accelerator).unwrap(),
+            ProcessorPath::Accelerator
+        );
+    }
+
+    #[test]
+    fn test_launch_size_scales_inversely_with_per_matrix_cost() {
+        let cap = Duration::from_millis(100);
+        let cheap = launch_size(Duration::from_micros(50), cap, 10_000);
+        let costly = launch_size(Duration::from_millis(1), cap, 10_000);
+        assert_eq!(cheap, 2_000);
+        assert_eq!(costly, 100);
+        assert!(costly < cheap);
+    }
+
+    #[test]
+    fn test_launch_size_never_returns_zero() {
+        assert_eq!(
+            launch_size(Duration::from_secs(2), Duration::from_millis(1), 10),
+            1
+        );
+    }
+
+    #[test]
+    fn test_launch_size_is_capped_by_remaining_matrices() {
+        assert_eq!(
+            launch_size(Duration::from_micros(1), Duration::from_secs(1), 7),
+            7
+        );
+    }
+
+    #[cfg(feature = "hip")]
+    #[test]
+    fn test_accelerator_device_absence_halts_named_cell_without_dispatch() {
+        let campaign = manifest(vec![cell(3, 2, 4, &[(0, 17)])]);
+        let item = enumerate_work_items(&campaign, Some(3)).unwrap().remove(0);
+        let mut observed = 0;
+        let error = run_shard_for_accelerator_with_dispatch(
+            campaign.root_seed,
+            CAMPAIGN_CELL_PURPOSE_TAG,
+            &item,
+            FieldOrder::F3,
+            AcceleratorConfig::default(),
+            || false,
+            |_matrices, _n| -> Result<(Vec<u64>, Duration), ScheduleError> {
+                panic!("accelerator dispatch must not run without a device")
+            },
+            &mut |_: &[Fp<3>], _: u64, _: Option<u64>| observed += 1,
+        )
+        .unwrap_err();
+        assert!(matches!(
+            error,
+            ScheduleError::AcceleratorDeviceUnavailable {
+                q: 3,
+                n: 2,
+                device: "a usable HIP accelerator device",
+            }
+        ));
+        let rendered = error.to_string();
+        assert!(rendered.contains("q=3"));
+        assert!(rendered.contains("n=2"));
+        assert!(rendered.contains("usable HIP accelerator device"));
+        assert_eq!(observed, 0);
+    }
+
+    #[cfg(feature = "hip")]
+    #[test]
+    fn test_accelerator_launch_split_preserves_input_order_and_values() {
+        let campaign = manifest(vec![cell(3, 2, 9, &[(0, 23)])]);
+        let item = enumerate_work_items(&campaign, Some(3)).unwrap().remove(0);
+        let mut first_values = Vec::new();
+        let mut first_launches = 0;
+        let first = run_shard_for_accelerator_with_dispatch(
+            campaign.root_seed,
+            CAMPAIGN_CELL_PURPOSE_TAG,
+            &item,
+            FieldOrder::F3,
+            AcceleratorConfig {
+                per_matrix_cost: Duration::from_millis(1),
+                launch_cap: Duration::from_millis(2),
+            },
+            || true,
+            |matrices, n| {
+                first_launches += 1;
+                Ok((
+                    matrices
+                        .iter()
+                        .map(|entries| permanent_ryser(entries, n).value())
+                        .collect(),
+                    Duration::ZERO,
+                ))
+            },
+            &mut |_: &[Fp<3>], value, _: Option<u64>| first_values.push(value),
+        )
+        .unwrap();
+
+        let mut second_values = Vec::new();
+        let mut second_launches = 0;
+        let second = run_shard_for_accelerator_with_dispatch(
+            campaign.root_seed,
+            CAMPAIGN_CELL_PURPOSE_TAG,
+            &item,
+            FieldOrder::F3,
+            AcceleratorConfig {
+                per_matrix_cost: Duration::from_millis(1),
+                launch_cap: Duration::from_millis(3),
+            },
+            || true,
+            |matrices, n| {
+                second_launches += 1;
+                Ok((
+                    matrices
+                        .iter()
+                        .map(|entries| permanent_ryser(entries, n).value())
+                        .collect(),
+                    Duration::ZERO,
+                ))
+            },
+            &mut |_: &[Fp<3>], value, _: Option<u64>| second_values.push(value),
+        )
+        .unwrap();
+
+        assert_eq!(first_launches, 5);
+        assert_eq!(second_launches, 3);
+        assert_eq!(first_values, second_values);
+        assert_eq!(first.run.record, second.run.record);
     }
 
     #[test]
@@ -1632,6 +2198,7 @@ mod tests {
             &item,
             field_order,
             4,
+            AcceleratorConfig::default(),
             &mut |entries: &[Fp<Q>], permanent, _| {
                 observed.push((entries.to_vec(), permanent));
             },
@@ -1697,6 +2264,7 @@ mod tests {
                     &scalar_item,
                     FieldOrder::F3,
                     1,
+                    AcceleratorConfig::default(),
                     &mut |_: &[Fp<3>], value, _| scalar_values.push(value),
                 )
                 .unwrap();
@@ -1706,6 +2274,7 @@ mod tests {
                     &batch_item,
                     FieldOrder::F3,
                     4,
+                    AcceleratorConfig::default(),
                     &mut |_: &[Fp<3>], value, _| batch_values.push(value),
                 )
                 .unwrap();
