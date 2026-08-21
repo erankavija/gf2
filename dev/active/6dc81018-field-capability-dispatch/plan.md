@@ -122,3 +122,16 @@ Manifest source-ID universe (validation runs with exactly these IDs):
 | INV-CONSUMERS | Investigation §3 (consumer sweep) |
 | INV-PRIMITIVES | Investigation §4 (primitive verification) |
 | INV-ARCH | Investigation §5–§6 (architecture fit and invariant check) |
+
+## Amendment — DEC-G (2026-08-21)
+
+The `pilot-backend-cutover` row above records the delivery it planned: the
+bit-backend selector consuming the runtime profile. Owner decision DEC-G,
+taken after three post-cutover sessions attributed a residual per-call cost to
+that boundary, supersedes the runtime mechanism for this one family: the
+bit-backend threshold is a compile-time constant — the conservative table's
+value in the default build, the committed calibrated profile's value under
+the declared cfg `gf2_tuning_baked` — and `TuningProfile::install()` governs
+the polynomial family only. The full record is the DEC-G amendment in
+`dev/active/220cab0b/design.md` and task `676f55a2`. This amendment is
+additive and changes no preceding line.

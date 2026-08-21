@@ -302,9 +302,8 @@ table; below that value, use scalar; at or above it, use SIMD when available.
 A build with `RUSTFLAGS="--cfg gf2_tuning_baked"` takes the committed
 calibrated profile's four-word boundary instead.
 
-For LDPC matrices, rows are typically 100-1000 words and therefore usually
-reach SIMD under the conservative profile; the active profile remains the
-selection authority.
+For LDPC matrices, rows are typically 100-1000 words and therefore reach
+SIMD under either compile-time threshold.
 
 ---
 
