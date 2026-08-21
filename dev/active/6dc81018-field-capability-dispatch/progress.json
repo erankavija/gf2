@@ -255,8 +255,8 @@
      "title": "Record the post-cutover non-regression receipt",
      "classification": "implementation",
      "model": "claude-opus",
-     "status": "in_progress",
-     "notes": "Fourth measured attempt under plan v1 + amendment v2, only after 676f55a2 and 9162956b are done and the owner has approved the v2 text. Three failing receipts preserved."
+     "status": "dispatched-detached",
+     "notes": "Fourth measured attempt under plan v1 + amendment v2, only after 676f55a2 and 9162956b are done and the owner has approved the v2 text. Three failing receipts preserved. SESSION-6 (2026-08-21/22): fourth measured session running as a DETACHED pipeline under /tmp/gf2-ens4 (build chain PID 326324, continuation driver PID 754889; terminal line 'DRIVER: COMPLETE/ABORTED' in logs/continue-driver.log). Worker was killed after partial compliance with the detach directive; its build scripts and run-ensemble.sh/verify-construction.py were lead-verified and reused. Ref arm: 256/256 built, 0 failed, 256 distinct sha and page offsets. Candidate binaries built at ec857d2f; rows record run-time HEAD (harness reads rev-parse at execution) -> receipt-4 must carry the escalation-#18-style build-input-diff ruling. Outputs land untracked in dev/benchmarks/tuning_profiles (2026-08-22-*-4.*) and dev/active/50b47eae/s4-session/. See handoff-2.md."
     }
    ],
    "note": "50b47eae completes only when a receipt shows the tolerance holds under the amended, predeclared verdict procedure with all preconditions met."
