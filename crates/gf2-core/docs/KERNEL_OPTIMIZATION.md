@@ -664,8 +664,7 @@ When optimizing an operation:
 - Validated: SIMD produces bit-identical results to scalar
 
 **Phase 2 Complete** - Backend Selection & Dispatch
-- ✅ Implemented smart backend selection with the size threshold (runtime
-  profile-driven when this phase landed; compile-time since DEC-G)
+- ✅ Implemented smart backend selection with a compile-time size threshold
 - ✅ Added 5 kernel operations with automatic dispatch: XOR, AND, OR, NOT, popcount
 - ✅ Comprehensive backend selection tests (empty, small, threshold, large)
 - ✅ Integration tests verify SIMD detection and graceful fallback
