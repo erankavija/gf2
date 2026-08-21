@@ -8729,3 +8729,4 @@
 {"fields":["dependencies"],"id":"30440da9-fde9-476c-9a77-5b331245da09","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-21T07:36:16.119915724Z","type":"issue_updated","updated_by":"dependency-add"}
 {"from":"ready","id":"e2436cda-80dc-4984-abe4-b4df30e62bd3","issue_id":"676f55a2-ae5e-45c6-b1ab-db2dee71770b","timestamp":"2026-08-21T07:37:13.382950720Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"fc59c125-55d5-49e8-b750-6802e7ba3112","issue_id":"676f55a2-ae5e-45c6-b1ab-db2dee71770b","timestamp":"2026-08-21T07:37:13.382950720Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"3b6e6715-2a16-49a5-a546-a992afc010b2","issue_id":"676f55a2-ae5e-45c6-b1ab-db2dee71770b","timestamp":"2026-08-21T08:30:47.698992471Z","type":"issue_updated","updated_by":"doc-add"}
