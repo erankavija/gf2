@@ -5,7 +5,283 @@
   "created_at": "2026-08-21T07:35:56.619518437Z",
   "dependencies": [],
   "description": "Design, verify, and predeclare the coverage-repairing amendment to the layout-attribution ensemble's axes, per amendment section 6.6's coverage branch and owner decision DEC-G (2026-08-21, delegation arm).\n\n## Background\n\nThe third post-cutover session (`dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md`) reports the attribution audit RESULT: FAIL on the coverage precondition: at `bit_backend/or_inplace/words=1` the ensemble's reference-arm dispersion s_R = 0.047448 falls below the sigma-hat/2 floor of 0.059077 (80.3 %), and at `bit_backend/xor_inplace/words=1` s_R = 0.038850 falls below 0.049556 (78.4 %). Per `layout-attribution-verdict-v1.md` section 6.6, the three alignment axes are not a model of natural-rebuild layout variation at those cells, no larger K repairs that, and the axes are the subject of a tracked amendment before the next measured run.\n\nThe owner delegated the design and approves the final amendment text before any measured run. Section 6.6 already rejected `-C link-arg=-Wl,--sort-section=name` for moving no symbol; the axis this task finds must demonstrably move code placement in a way that reaches the coverage floor at both failing cells.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed verification receipt demonstrates, by building and measuring an ensemble (or a predeclared subset sufficient to estimate s_R at the two failing cells), that the amended axis set reaches the sigma-hat/2 coverage floor at `bit_backend/or_inplace/words=1` and `bit_backend/xor_inplace/words=1`, while preserving the parity/balance construction of sections 3.1-3.2 and leaving the precision, half-split-null, and decorrelation machinery computable unchanged.\n- [hard] REQ-02: An additive amendment document (v2, referencing v1 and changing none of its text) predeclares the amended enumeration, its member formula, K, and the unchanged verdict rules before any measured run; no predeclared value moves — not tau_cell, tau_set, the pinned set, the schema token, or the three-standard-error margin.\n- [hard] REQ-03: The amendment text is presented to the epic's owner and carries the owner's recorded approval before the next measured session is dispatched.\n\n## Constraints\n\n- Benchmark-mode work: uncontended host per repository benchmark policy; verify the host is idle first.\n- Standing receipts and the v1 amendment are not modified.\n- No `.jit/` writes; no issue state transitions; link durable artifacts with `jit doc add`.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "1b8a91bd65ff6792ebc7b5caca2d5a67eff149b3f72b447ddd42d86cfe4a8c17",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "395275eb9fc8e466168e810034889f40ba33374787b1daf87386218f11db19ab",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d610eded43af330056e654d5937e20eeaa985173c3645ba30ff5c7fb11b5a59c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "/dev/benchmarks/tuning_profiles/2026-08-20-ensemble-reference-arm.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-ensemble-reference-arm.csv"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/9162956b/ensemble-axes-pilot-protocol.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d610eded43af330056e654d5937e20eeaa985173c3645ba30ff5c7fb11b5a59c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "/dev/benchmarks/tuning_profiles/2026-08-20-ensemble-reference-arm.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-ensemble-reference-arm.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f2d4359c515d5c2f277f952ae4d59e92f1ece274418d89564a5392d34b8a7fe0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "ensemble-axes-pilot-protocol.md",
+          "resolved_path": "dev/active/9162956b/ensemble-axes-pilot-protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/9162956b/ensemble-axes-pilot-2-protocol.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5ed1aadd37c2fbbfbbe0dab76902df0016abacc94ee61edfb8fc1e4acbc43c7b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "ensemble-axes-pilot-2-protocol.md",
+          "resolved_path": "dev/active/9162956b/ensemble-axes-pilot-2-protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/9162956b/ensemble-axes-pilot-3-protocol.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "f2d4359c515d5c2f277f952ae4d59e92f1ece274418d89564a5392d34b8a7fe0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "ensemble-axes-pilot-protocol.md",
+          "resolved_path": "dev/active/9162956b/ensemble-axes-pilot-protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b3e2107411f2c42fdef475e57c4dcd623e1d3a7042cb8f2e56bcda623a2e5238",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-2-ens.csv",
+          "resolved_path": "dev/active/9162956b/pilot-2-ens.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4dc5c75ceedf955238ed782ac3eefe7e351c5cef85ae6e5e89714e2fb5ccf1fb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-3-member-provenance.tsv",
+          "resolved_path": "dev/active/9162956b/pilot-3-member-provenance.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f99364f3ba0e56a3eaf98e4255f4439c073101e2ab8d9635e27d4efe59e39fb7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-3-ctl.csv",
+          "resolved_path": "dev/active/9162956b/pilot-3-ctl.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5357515af05aec22b48798e7a555f15add6e4fbc049d5ea14b16213ad8cafa7b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/benchmarks/tuning_profiles/layout-attribution-verdict-v2.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b9dd7cfbad1a1a226c71f3f58ed8c0efa0009490f74bec5acd57582616c72d01",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-1-v2.csv",
+          "resolved_path": "dev/active/9162956b/pilot-1-v2.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f6eb11e5261f2c3b9836c7ce927fbf8f25688c200c09ea3cf9954310465cc96a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-2-ctl.csv",
+          "resolved_path": "dev/active/9162956b/pilot-2-ctl.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8e4d43019bf06a68cc829b400878c62f7014544462ae69b839e31dec4ac82428",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-2-fix.csv",
+          "resolved_path": "dev/active/9162956b/pilot-2-fix.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b8a91bd65ff6792ebc7b5caca2d5a67eff149b3f72b447ddd42d86cfe4a8c17",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a270034944479a5f3bc7ea0710c8b623d9583ff8b632d05830cbd41382c194ca",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-1-v1.csv",
+          "resolved_path": "dev/active/9162956b/pilot-1-v1.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d610eded43af330056e654d5937e20eeaa985173c3645ba30ff5c7fb11b5a59c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "/dev/benchmarks/tuning_profiles/2026-08-20-ensemble-reference-arm.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-ensemble-reference-arm.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "70271ab3145ae79c21790a627b0d1767382040c5ab06c22fbd562d090c968972",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-3-fix.csv",
+          "resolved_path": "dev/active/9162956b/pilot-3-fix.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5fb4aeaa3a3dbb77a2a5eec1a945df7b2128dbe7169bb1c215c9feae412f0889",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-1-sh.csv",
+          "resolved_path": "dev/active/9162956b/pilot-1-sh.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fd1ea024ecc1bf225133000d162d315a97c012a8d9447cb9d86b7d958a1da7f5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-3-ens.csv",
+          "resolved_path": "dev/active/9162956b/pilot-3-ens.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5ed1aadd37c2fbbfbbe0dab76902df0016abacc94ee61edfb8fc1e4acbc43c7b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "ensemble-axes-pilot-2-protocol.md",
+          "resolved_path": "dev/active/9162956b/ensemble-axes-pilot-2-protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "86747559b4f1c924e4e7dc7e087f423e43158916ea26a23ab64f02c75b9156cf",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "ensemble-axes-pilot-3-protocol.md",
+          "resolved_path": "dev/active/9162956b/ensemble-axes-pilot-3-protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9e90418a47312e7ee4a2f8e4b9d5dc3ae6a824e3afd48e8f95c4bad3d192c313",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/active/972e2b88/ensemble-axis-verification.md",
+          "resolved_path": "dev/active/972e2b88/ensemble-axis-verification.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/9162956b/ensemble-axes-pilot-receipt.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-3-member-provenance.tsv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "395275eb9fc8e466168e810034889f40ba33374787b1daf87386218f11db19ab",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt-3.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2c662d233a0e8e36d4cae080c8ed241ed716192cda99d6b2c0fb35de833fb86f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "selector-non-regression-plan-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b8a91bd65ff6792ebc7b5caca2d5a67eff149b3f72b447ddd42d86cfe4a8c17",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "layout-attribution-verdict-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "07b21f5cfc71c4c04f19ed2af4d4e562f2c89ca9dba22066c9315eb4256507aa",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "across-build-control-arm-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "169af9853040675dd46def21cc234346d5e0406ef66dff38e4e1b312d260c53f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/active/9162956b/ensemble-axes-pilot-receipt.md",
+          "resolved_path": "dev/active/9162956b/ensemble-axes-pilot-receipt.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v2.md"
+    }
+  ],
   "first_ready_at": "2026-08-21T07:35:56.619518437Z",
   "gates_required": [
     "doc-review",
@@ -39,5 +315,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
-  "updated_at": "2026-08-21T09:19:25.503120723Z"
+  "updated_at": "2026-08-21T14:07:54.588592187Z"
 }
