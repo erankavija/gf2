@@ -344,9 +344,9 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-21T07:36:05.316416739Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-21T19:47:43.134996742Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "pending",
@@ -354,9 +354,9 @@
       "updated_by": null
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-21T07:36:05.198223127Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-21T19:54:27.224864499Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "9162956b-9891-49c8-81f5-80ba066ba532",
@@ -369,5 +369,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
-  "updated_at": "2026-08-21T14:08:03.967353664Z"
+  "updated_at": "2026-08-21T19:54:27.224864499Z"
 }
