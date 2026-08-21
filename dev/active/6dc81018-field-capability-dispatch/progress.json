@@ -432,6 +432,12 @@
    "issue": "50b47eae",
    "date": "2026-08-21",
    "decision": "Session-5 revision-recording ruling confirmed on resume: the candidate arm records the revision the main checkout stood at during the build phase (46d21d6d), not the revision the session was dispatched against (c3eb5d01); receipt-3's uncommitted statement of this ruling was verified (two-file diff, empty build-input diff, disk figure) and committed at 94e05d5e."
+  },
+  {
+   "kind": "owner-decision",
+   "issue": "676f55a2",
+   "date": "2026-08-21",
+   "decision": "DEC-H via AskUserQuestion (escalation category 8, shared infrastructure): scripts/cargo-ci.sh gains a required scoped 'baked' step executing the gf2_tuning_baked routing witnesses and drift tests, closing code-review round-3 F1 on REQ-02. The frozen selector non-regression harness is excluded from that step deliberately; its self-tests bracket the default configuration and are expected to report a re-pinning need under the baked cfg. Context: the lead converted the opt-in from a Cargo feature to the declared cfg because --all-features CI otherwise moves the observed threshold and trips the frozen harness's bracket guard (DEC-C keeps plan v1 unmodified) \u2014 recorded as lead decision DEC-B9."
   }
  ],
  "rework_counts": {
