@@ -578,24 +578,3 @@ document is committed. Sibling issue `2a85f728` eliminates the per-call cost of
 the bit-backend selection boundary; whether that mechanism brings the pinned
 comparison inside the tolerance is decided by that session, under the procedure
 as this document amends it, and not by either issue.
-
-## Amendment — issue `9162956b` (2026-08-21)
-
-This section is appended after §10 and changes no line above it. It states no
-rule. [`layout-attribution-verdict-v2.md`](layout-attribution-verdict-v2.md)
-§A10 leaves as the owner's call whether this document gains a pointer to it;
-owner decision DEC-I of 2026-08-21, which approves that amendment's text,
-directs this pointer.
-
-Receipt 3 records §6.4's coverage precondition failing at
-`bit_backend/or_inplace/words=1` and `bit_backend/xor_inplace/words=1`, and
-§6.6 makes the axes the subject of a tracked amendment before the next measured
-run. That amendment is
-[`layout-attribution-verdict-v2.md`](layout-attribution-verdict-v2.md), filed
-by issue `9162956b` under owner decision DEC-G. Read through it, §3.1's axis
-table, §3.4's choice of K, and §6.6's fourth-axis option are amended;
-everything else here governs the next measured session as written.
-
-Nothing here moves for it. τ_cell stays 5 %, τ_set stays 2 %, the pinned set
-keeps all thirty-four cells, the schema token `selector-non-regression-v1` is
-not bumped, and §7's readings stand.
