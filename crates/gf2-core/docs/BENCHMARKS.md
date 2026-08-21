@@ -545,10 +545,10 @@ These are the actual use case matrices that motivated this optimization:
 | 256 | 71.60 | 20.10 | **3.56×** |
 | 1024 | 270.42 | 78.82 | **3.43×** |
 
-**Key Finding**: The conservative profile's 8-word default is effective for
+**Key Finding**: The conservative table's 8-word default is effective for
 this host: SIMD is slower below the default because of dispatch overhead and
-3-4× faster for larger buffers. Calibrated profiles may select another
-boundary.
+3-4× faster for larger buffers. A `--cfg gf2_tuning_baked` build takes the
+committed calibrated four-word boundary instead.
 
 **Peak Throughput**: Scalar ~28 GiB/s, SIMD ~97 GiB/s (3.46× improvement)
 

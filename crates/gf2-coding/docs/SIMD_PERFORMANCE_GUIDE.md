@@ -296,11 +296,11 @@ match select_backend_for_size(dst.len()) {
 
 ### Size Threshold
 
-SIMD is beneficial for large arrays. gf2-core uses the active profile field
-`bit_backend.simd_min_words` as its size threshold. The conservative profile
-defaults to eight words (64 bytes): below that value, use scalar; at or above
-it, use SIMD when available. A calibrated profile may select a different
-boundary.
+SIMD is beneficial for large arrays. gf2-core uses a compile-time size
+threshold: eight words (64 bytes) in the default build, from the conservative
+table; below that value, use scalar; at or above it, use SIMD when available.
+A build with `RUSTFLAGS="--cfg gf2_tuning_baked"` takes the committed
+calibrated profile's four-word boundary instead.
 
 For LDPC matrices, rows are typically 100-1000 words and therefore usually
 reach SIMD under the conservative profile; the active profile remains the
