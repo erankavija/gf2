@@ -280,6 +280,60 @@
       "format": "markdown",
       "label": null,
       "path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-1-sh.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-1-v1.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-1-v2.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-2-ctl.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-2-ens.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-2-fix.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-3-ctl.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-3-ens.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/9162956b/pilot-3-fix.csv"
     }
   ],
   "first_ready_at": "2026-08-21T07:35:56.619518437Z",
@@ -315,5 +369,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
-  "updated_at": "2026-08-21T14:07:54.588592187Z"
+  "updated_at": "2026-08-21T14:08:03.967353664Z"
 }
