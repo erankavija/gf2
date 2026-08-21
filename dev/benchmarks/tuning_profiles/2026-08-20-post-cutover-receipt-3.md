@@ -99,7 +99,7 @@ differ between them are marked.
 | Harness and checker | `crates/gf2-core/benches/selector_non_regression.rs`; schema `selector-non-regression-v1`; full-worktree `git status --porcelain --untracked-files=all` |
 | Procedure | [`selector-non-regression-plan-v1.md`](selector-non-regression-plan-v1.md) as amended by [`layout-attribution-verdict-v1.md`](layout-attribution-verdict-v1.md), executed unmodified |
 | Ensemble | K = 128 members per amendment §3.1; `--execution j+1` names member `j`; no member failed to build, so §3.5's replacement rule was not exercised |
-| Source revision, candidate arm | `46d21d6dcfd85b24fff938606dde73844f12546e`; every row records `source_dirty=false`; HEAD and the full-worktree status are recorded unchanged at the session's start and end |
+| Source revision, candidate arm | `46d21d6dcfd85b24fff938606dde73844f12546e`; every row records `source_dirty=false`; HEAD and the full-worktree status are recorded unchanged at the session's start and end. The session was dispatched against `c3eb5d013e9164257780d4272395959bfc5eb6b3`; the identity of the compiled source at the two revisions is stated below rather than assumed |
 | Source revision, reference arm | `0c072d73ca65cf50af98b8c4b61ed876f8218df6`, the revision every row of the baseline receipt records; every row records `source_dirty=false` |
 | Harness file SHA-256, candidate checkout | `1d5f4414e3f091bc03784c856d7818163e167ac23ad493c6d957019708a218e7` |
 | Harness file SHA-256, reference checkout | `ca605cc35adb2047110010905a502d075c40839d69ad8b065d71c3b3667f7f84` |
@@ -118,6 +118,34 @@ differ between them are marked.
 | Measured duration | 2026-08-20 22:12:19--22:58:39 UTC (46 min 20 s), the wrapper's whole child lifetime, covering both arms |
 | Raw file, reference arm | [`2026-08-20-ensemble-reference-arm.csv`](2026-08-20-ensemble-reference-arm.csv), SHA-256 `d610eded43af330056e654d5937e20eeaa985173c3645ba30ff5c7fb11b5a59c` |
 | Raw file, candidate arm | [`2026-08-20-ensemble-candidate-arm.csv`](2026-08-20-ensemble-candidate-arm.csv), SHA-256 `b2e06da9e9ccba74863a4de975c79d4e8b7709a893c60fb3595b9244fc250dc0` |
+
+### The candidate revision
+
+This session was dispatched against `c3eb5d013e9164257780d4272395959bfc5eb6b3`
+and its candidate arm records
+`46d21d6dcfd85b24fff938606dde73844f12546e`, which is `c3eb5d01` followed by two
+commits, `dc8df30c` and `46d21d6d`, that landed between the dispatch and the
+build phase.
+
+**The compiled source is identical at the two revisions**, and this is stated
+from the diff rather than assumed. The complete list of files
+`git diff --name-only c3eb5d01..46d21d6d` reports is two:
+
+```
+dev/active/6dc81018-field-capability-dispatch/investigation.md
+dev/active/6dc81018-field-capability-dispatch/progress.json
+```
+
+Restricting the same diff to each build input in turn reports no changed file
+for any of them: `crates/`, `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`,
+`.cargo/`, `build.rs` and `scripts/`. Both commits change documentation and a
+progress ledger under `dev/active/`, neither of which any build reads. The 128
+candidate binaries are therefore compiled from the crate sources `c3eb5d01`
+carries, including `2a85f728`'s elimination of the per-call cost at the
+bit-backend selection boundary, which is the property for which the dispatch
+pinned that revision. What the substitution changes is the revision string every
+candidate row records, and the epic's owner ruled that the arm records the
+revision the checkout stood at.
 
 Dates in this receipt are UTC. The session runs on the evening of 2026-08-20
 UTC, which is the small hours of 2026-08-21 in the host's local `EEST` zone.
@@ -1055,13 +1083,9 @@ Every departure from the procedure as written, however small, and what each one
 does or does not touch.
 
 - **The candidate revision is `46d21d6d`, not the `c3eb5d01` this session was
-  dispatched against.** The main checkout advanced by two commits, `dc8df30c`
-  and `46d21d6d`, between the dispatch and the build phase. Both change only
-  files under `dev/active/6dc81018-field-capability-dispatch/`:
-  `git diff c3eb5d01..46d21d6d -- crates Cargo.toml Cargo.lock rust-toolchain.toml`
-  is empty, so the candidate binaries are compiled from the same crate sources
-  `c3eb5d01` carries, including `2a85f728`'s selection-boundary fix. What the
-  substitution changes is the revision string every candidate row records.
+  dispatched against.** The diff establishing that the compiled source is
+  identical at the two revisions is recorded under
+  [The candidate revision](#the-candidate-revision) above.
 - **The session driver guards the candidate checkout.** Before every candidate
   execution the driver re-reads the main checkout's `HEAD` and its full-worktree
   porcelain status and aborts the run if either has moved, because a commit or a
@@ -1076,6 +1100,17 @@ does or does not touch.
   no competing work during the timed phase, and both arms run at the same
   niceness inside one session, so the verdict ratio carries none of it. The
   cross-session comparison of §7.1 is against a baseline taken at niceness 0.
+- **The build phase consumed 54 GiB of disk and nothing was pruned.** Cargo
+  keeps a separate set of artifacts per `RUSTFLAGS` fingerprint and prunes none
+  of them, so the two target directories grew from 81 GiB free to 27 GiB free
+  across the 256 builds, about 420 MiB per member pair. No `cargo clean` ran
+  between members. The build driver carried a hard floor of 10 GiB free and
+  would have aborted below it; it never approached the floor, and free space
+  stood at 27 GiB when the last binary was staged and still stands there. A
+  prune would in any case not have reached the measurement: each binary is
+  copied out of its target directory and hashed before the next member is built,
+  and the recorded SHA-256 is the binary's identity.
+
 - **Two members were already built when the build phase started.** Member 0 of
   each arm was built during the smoke test that verified the staged-binary
   recipe, so the build phase recorded 0 s for those two and reused the binaries.
