@@ -4,7 +4,7 @@ use gf2_core::{
 };
 
 #[test]
-fn installed_profile_above_default_moves_production_route() {
+fn installed_profile_above_default_does_not_move_production_route() {
     let conservative_threshold = TuningProfile::CONSERVATIVE.bit_backend().simd_min_words();
     let profile = TuningProfile::from_json(
         r#"
@@ -29,13 +29,13 @@ fn installed_profile_above_default_moves_production_route() {
 
     assert_eq!(
         select_backend_for_size(conservative_threshold).name(),
-        "scalar",
-        "the installed higher threshold moves the default boundary to scalar"
+        "simd",
+        "DEC-G keeps the compile-time default boundary at the conservative value"
     );
     assert_eq!(
         select_backend_for_size(8).name(),
-        "scalar",
-        "the installed threshold is published before the next selection"
+        "simd",
+        "the installed threshold does not govern bit-backend selection"
     );
     assert_eq!(select_backend_for_size(16).name(), "simd");
 }

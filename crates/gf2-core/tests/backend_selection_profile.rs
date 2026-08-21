@@ -4,7 +4,7 @@ use gf2_core::{
 };
 
 #[test]
-fn installed_profile_changes_backend_selection_and_preserves_scalar_fallback() {
+fn install_does_not_govern_bit_backend_selection() {
     let conservative_threshold = TuningProfile::CONSERVATIVE.bit_backend().simd_min_words();
     let profile = TuningProfile::from_json(
         r#"
@@ -24,14 +24,23 @@ fn installed_profile_changes_backend_selection_and_preserves_scalar_fallback() {
         "{profile_words} words select Scalar under the conservative profile"
     );
     assert_eq!(tuning::install(profile), Ok(()));
+    // DEC-G makes the bit-backend threshold compile-time; installing a
+    // runtime profile with threshold 4 does not move the selected boundary.
+    #[cfg(not(gf2_tuning_baked))]
+    assert_eq!(
+        select_backend_for_size(profile_words).name(),
+        "scalar",
+        "{profile_words} words remain scalar under the conservative threshold"
+    );
+    #[cfg(gf2_tuning_baked)]
     assert_eq!(
         select_backend_for_size(profile_words).name(),
         "simd",
-        "{profile_words} words select Simd under the installed profile"
+        "{profile_words} words remain SIMD under the baked threshold"
     );
     assert_eq!(
         select_backend_for_size(3).name(),
         "scalar",
-        "3 words remain Scalar below the installed profile threshold"
+        "3 words remain scalar below the baked/default threshold"
     );
 }
