@@ -795,3 +795,37 @@ Open questions for the epic lead:
    wants a default calibrated profile for the project's own benchmark host,
    that is a policy decision about which host is canonical, and it belongs to
    the lead rather than to this design.
+
+## Amendment — DEC-G (2026-08-21)
+
+Owner decision DEC-G applies a narrowly scoped exception to D1 for the
+bit-backend family. The selection boundary in §4.1 uses a compile-time
+constant: the default build takes the conservative table's value, and a
+build with the declared cfg `gf2_tuning_baked` (passed as
+`RUSTFLAGS="--cfg gf2_tuning_baked"`, deliberately not a Cargo feature so
+that `--all-features` CI keeps the conservative threshold and the frozen
+selector non-regression harness's bracket guard) takes the committed
+calibrated value `simd_min_words = 4` from profile
+`gf2-5ecc9bf8-calibration-e202c080`. The value is held in a committed module
+and regenerated only by an explicit repository change; calibration is not a
+build step and the process environment is not consulted at runtime. The
+selector non-regression harness of plan v1 stays unmodified per DEC-C: its
+self-tests bracket the default configuration's threshold, so under the baked
+cfg they report that the pinned set does not straddle the moved boundary,
+which enforces that the pinned procedure is only ever run on a default build.
+The baked routing witnesses run scoped to their own binaries instead.
+
+This decision records the residual boundary cost in
+[`2026-08-20-post-cutover-receipt-3.md`](../../benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md): the `words=1` cell is 0.395 ns/call
+(ratio 1.206586 against `tau_cell = 1.05`) and the `words=8` cell is
+0.210 ns/call (ratio 1.057456). The compile-time constant removes the
+runtime-profile read from every bit-backend call path. A fresh calibrated
+profile requires a rebuild for this family, which is the accepted D1 trade.
+
+DEC-G changes §4.1's authority: `TuningProfile::install()` and `active()`
+continue to govern the polynomial family and continue to expose and validate
+the schema's `bit_backend.simd_min_words` field, but that runtime field is
+inert at the bit-backend selection boundary. D2 remains unchanged: no ambient
+runtime environment lookup selects a profile. The route-observation and
+inversion tests record that installing a profile no longer changes
+bit-backend routing. This amendment is additive and changes no preceding line.

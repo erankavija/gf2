@@ -79,16 +79,24 @@ impl SelectedBackend {
     }
 }
 
-/// Definition site for the profile field `bit_backend.simd_min_words`.
+/// Conservative-table value for `bit_backend.simd_min_words`.
 pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;
+
+#[cfg(gf2_tuning_baked)]
+const SIMD_MIN_WORDS: usize = crate::tuning::baked::SIMD_MIN_WORDS;
+
+#[cfg(not(gf2_tuning_baked))]
+const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;
 
 /// Selects the best backend for operations on buffers of the given size.
 ///
-/// Uses the active profile's `bit_backend.simd_min_words` heuristic to
-/// determine whether SIMD acceleration is beneficial. For small buffers,
-/// dispatch overhead may exceed SIMD gains. The conservative profile uses
-/// eight words (64 bytes); calibrated profiles may choose a different
-/// boundary.
+/// Uses a compile-time threshold to determine whether SIMD acceleration is
+/// beneficial. The default build uses the conservative table's eight-word
+/// (64-byte) value. Building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
+/// selects the committed calibrated profile's four-word value; the flag is a
+/// declared cfg, not a Cargo feature, so `--all-features` builds keep the
+/// conservative threshold. Runtime profile installation does not govern this
+/// boundary; see `dev/active/220cab0b/design.md` (DEC-G).
 ///
 /// # Arguments
 ///
@@ -96,14 +104,12 @@ pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;
 ///
 /// # Heuristics
 ///
-/// - Size below the active profile's `bit_backend.simd_min_words`: Always use
-///   scalar
-/// - Size at or above the active profile's `bit_backend.simd_min_words`: Use
-///   SIMD if available
+/// - Size below the compile-time threshold: Always use scalar
+/// - Size at or above the compile-time threshold: Use SIMD if available
 #[inline]
 pub fn select_backend_for_size(_size: usize) -> SelectedBackend {
     #[cfg(feature = "simd")]
-    if _size >= crate::tuning::active_simd_min_words() {
+    if _size >= SIMD_MIN_WORDS {
         // SIMD backend will be initialized on first use
         return SelectedBackend::Simd;
     }
@@ -228,14 +234,14 @@ mod tests {
         let backend = select_backend_for_size(1);
         assert_eq!(backend.name(), "scalar");
 
-        let backend = select_backend_for_size(7);
+        let backend = select_backend_for_size(SIMD_MIN_WORDS - 1);
         assert_eq!(backend.name(), "scalar");
     }
 
     #[test]
     fn test_select_backend_at_threshold() {
-        // At exactly 8 words (threshold), should use SIMD if available
-        let backend = select_backend_for_size(8);
+        // At exactly the compile-time threshold, should use SIMD if available.
+        let backend = select_backend_for_size(SIMD_MIN_WORDS);
         #[cfg(feature = "simd")]
         assert_eq!(backend.name(), "simd");
         #[cfg(not(feature = "simd"))]
