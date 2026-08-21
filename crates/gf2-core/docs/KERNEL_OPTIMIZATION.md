@@ -553,13 +553,13 @@ fn test_new_backend() {
 ### When to Use Each Backend
 
 **Scalar Backend:**
-- Small operations below `bit_backend.simd_min_words` (64 bytes in the conservative profile)
+- Small operations below the compile-time threshold (64 bytes under the conservative default)
 - Single-word operations
 - When SIMD unavailable
 - Cold code paths
 
 **SIMD Backend:**
-- Large bulk operations at or above `bit_backend.simd_min_words` (64 bytes in the conservative profile)
+- Large bulk operations at or above the compile-time threshold (64 bytes under the conservative default)
 - Hot loops over vectors
 - Matrix operations
 - Algorithm inner loops (M4RM, Gauss-Jordan)
@@ -664,7 +664,8 @@ When optimizing an operation:
 - Validated: SIMD produces bit-identical results to scalar
 
 **Phase 2 Complete** - Backend Selection & Dispatch
-- ✅ Implemented smart backend selection with the profile-driven threshold
+- ✅ Implemented smart backend selection with the size threshold (runtime
+  profile-driven when this phase landed; compile-time since DEC-G)
 - ✅ Added 5 kernel operations with automatic dispatch: XOR, AND, OR, NOT, popcount
 - ✅ Comprehensive backend selection tests (empty, small, threshold, large)
 - ✅ Integration tests verify SIMD detection and graceful fallback
