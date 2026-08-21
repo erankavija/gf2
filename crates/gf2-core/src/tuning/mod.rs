@@ -2,7 +2,10 @@
 //!
 //! A profile is validated before it can be installed, and the installed value
 //! is fixed once for the process. A caller that has profile text can parse and
-//! install it before any selection boundary is used:
+//! install it before profile-governed selection boundaries are used. The
+//! bit-backend boundary is compile-time selected and its runtime profile field
+//! is retained for schema compatibility but does not govern routing; see
+//! `dev/active/220cab0b/design.md` (DEC-G).
 //!
 //! ```
 //! # #[cfg(feature = "tuning-profile")]
@@ -27,9 +30,9 @@
 //! `Vec<String>` because they are runtime-observed free text or opaque tokens.
 
 use std::fmt;
-#[cfg(feature = "simd")]
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::OnceLock;
+
+pub(crate) mod baked;
 
 #[cfg(feature = "tuning-profile")]
 use serde::{Deserialize, Serialize};
@@ -417,7 +420,12 @@ impl BitBackendSelectors {
         Ok(Self { simd_min_words })
     }
 
-    /// Returns the minimum word count for the SIMD backend.
+    /// Returns the profile's minimum word count for the SIMD backend.
+    ///
+    /// The field remains part of the runtime profile schema and is observable
+    /// through [`TuningProfile`] and [`active`]. The bit-backend routing
+    /// boundary uses a compile-time constant instead, per DEC-G in
+    /// `dev/active/220cab0b/design.md`.
     pub fn simd_min_words(&self) -> usize {
         self.simd_min_words
     }
@@ -644,39 +652,25 @@ impl TuningProfile {
 }
 
 static ACTIVE: OnceLock<TuningProfile> = OnceLock::new();
-#[cfg(feature = "simd")]
-static ACTIVE_SIMD_MIN_WORDS: AtomicUsize =
-    AtomicUsize::new(crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT);
-
-/// Returns the cached bit-backend threshold for the hot selection boundary.
-///
-/// The cache starts at the conservative default, so this resolved fast path
-/// performs only one relaxed load. A selection does not call [`active`]; a
-/// caller that relies on [`install`] returning [`AlreadyResolved`] must resolve
-/// the profile explicitly first.
-#[cfg(feature = "simd")]
-#[inline]
-pub(crate) fn active_simd_min_words() -> usize {
-    ACTIVE_SIMD_MIN_WORDS.load(Ordering::Relaxed)
-}
 
 /// Returns the process-wide profile, resolving to [`TuningProfile::CONSERVATIVE`]
 /// when no caller installs one first. Calling this function marks the profile
-/// resolved for [`install`]; a bit-backend selection alone does not.
+/// resolved for [`install`]; a bit-backend selection alone does not. The
+/// installed bit-backend field remains observable here but does not alter the
+/// compile-time bit-backend selection boundary; see DEC-G in
+/// `dev/active/220cab0b/design.md`.
 pub fn active() -> &'static TuningProfile {
-    ACTIVE.get_or_init(|| {
-        let profile = TuningProfile::CONSERVATIVE.clone();
-        #[cfg(feature = "simd")]
-        ACTIVE_SIMD_MIN_WORDS.store(profile.bit_backend().simd_min_words(), Ordering::Relaxed);
-        profile
-    })
+    ACTIVE.get_or_init(|| TuningProfile::CONSERVATIVE.clone())
 }
 
 /// Installs the profile before [`active`] resolves.
 ///
-/// A successful installation resolves the same [`OnceLock`] used by [`active`]
-/// and publishes the SIMD threshold during that initialization, before the
-/// installed profile can become observable through [`active`].
+/// A successful installation resolves the same [`OnceLock`] used by [`active`].
+/// It does not publish `bit_backend.simd_min_words` to the hot selection
+/// boundary: that boundary is a compile-time constant under DEC-G in
+/// `dev/active/220cab0b/design.md`. The field remains observable through
+/// [`active`] and continues to participate in profile validation and JSON
+/// round trips.
 ///
 /// # Errors
 ///
@@ -687,8 +681,6 @@ pub fn install(profile: TuningProfile) -> Result<(), AlreadyResolved> {
     let mut installed = false;
     ACTIVE.get_or_init(|| {
         installed = true;
-        #[cfg(feature = "simd")]
-        ACTIVE_SIMD_MIN_WORDS.store(profile.bit_backend().simd_min_words(), Ordering::Relaxed);
         profile
     });
     if installed {

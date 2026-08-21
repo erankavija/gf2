@@ -39,8 +39,15 @@ This document describes the kernel architecture in gf2-core and tracks optimizat
   - May be added to trait in future with default implementations
 
 **Backend Selection** (`src/kernels/backend.rs`)
-- Profile-driven size heuristic: below `bit_backend.simd_min_words` → Scalar,
-  at or above it → SIMD when available
+- Compile-time size heuristic: below the selected threshold → Scalar, at or
+  above it → SIMD when available. The default build uses the conservative
+  eight-word threshold; a build with `RUSTFLAGS="--cfg gf2_tuning_baked"`
+  uses the committed calibrated value of four words. Runtime profile
+  installation does not govern this boundary. The baked routing witnesses run
+  with `RUSTFLAGS="--cfg gf2_tuning_baked" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable`;
+  the frozen selector non-regression harness's self-tests assert the default
+  configuration's threshold bracket, so they report a re-pinning need under
+  the baked cfg — the pinned procedure runs on default builds only.
 - Runtime CPU feature detection
 - Graceful fallback if SIMD unavailable
 
@@ -232,11 +239,12 @@ receipt records this limitation under **“What this receipt does not claim”**
 **Implementation Details:**
 
 Backend selection is implemented by `select_backend_for_size` in
-`crates/gf2-core/src/kernels/backend.rs`. The live threshold is the active
-profile field `bit_backend.simd_min_words`; `SIMD_MIN_WORDS_DEFAULT` in that
-same module defines the conservative profile's default. The selector compares
-the buffer's `u64` word count with the active profile value, uses SIMD when the
-feature is available, and otherwise falls back to the scalar backend.
+`crates/gf2-core/src/kernels/backend.rs`. The default build compares the
+buffer's `u64` word count with the conservative compile-time threshold
+`SIMD_MIN_WORDS_DEFAULT`; building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
+substitutes the committed calibrated threshold. The selector uses SIMD when the feature is available and
+otherwise falls back to the scalar backend. The runtime profile field remains
+part of the schema but does not govern this boundary (DEC-G).
 
 **Operations Updated:**
 - `xor_inplace(dst, src)` - XOR with dispatch
@@ -246,10 +254,10 @@ feature is available, and otherwise falls back to the scalar backend.
 - `popcount(buf)` - Population count with dispatch
 
 **Heuristics (Validated for the conservative profile):**
-- Size below `bit_backend.simd_min_words`: Always scalar (dispatch overhead dominates)
-- Size at or above `bit_backend.simd_min_words`: Use SIMD if available (2-4x speedup expected)
-- Single-word operations: Scalar under the conservative default; the active
-  profile remains authoritative
+- Size below the selected compile-time threshold: Always scalar (dispatch overhead dominates)
+- Size at or above the selected compile-time threshold: Use SIMD if available (2-4x speedup expected)
+- Single-word operations: Scalar under both compile-time thresholds (the
+  conservative eight words and the baked four words)
 - Runtime fallback: If SIMD selected but unavailable, falls back to scalar
 
 ### Phase 3 - Comprehensive Testing ✅ COMPLETE
@@ -479,8 +487,8 @@ pub trait Backend: Send + Sync {
 
 4. **Integration Tests** (`tests/backend_selection.rs`)
    - Backend selection logic verification
-   - Small buffers use scalar below the active `bit_backend.simd_min_words`
-   - Large buffers use SIMD when available at or above the active `bit_backend.simd_min_words`
+   - Small buffers use scalar below the selected compile-time threshold
+   - Large buffers use SIMD when available at or above the selected compile-time threshold
    - Operations work correctly with selected backend
    - SIMD availability detection
    - Graceful fallback validation

@@ -31,7 +31,8 @@ fn row_xor_fallback_inputs() -> (BitMatrix, BitMatrix) {
     // - choose_k_block(k=1, n=8192) must return 1 because the M4RM selector
     //   cannot choose any k_block > k.
     // - n=8192 is 128 words, well above the conservative profile's 8-word
-    //   default SIMD dispatch threshold (the active profile may tune it).
+    //   default SIMD dispatch threshold (a `--cfg gf2_tuning_baked` build
+    //   selects the committed calibrated threshold at compile time).
     assert_eq!(FALLBACK_INNER, 1);
     assert!(
         FALLBACK_COLS.div_ceil(64) >= TuningProfile::CONSERVATIVE.bit_backend().simd_min_words()

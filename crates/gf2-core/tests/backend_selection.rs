@@ -10,12 +10,16 @@ fn test_backend_selection_small_buffers() {
     // Small buffers should always use scalar backend
     assert_eq!(select_backend_for_size(0).name(), "scalar");
     assert_eq!(select_backend_for_size(1).name(), "scalar");
+    #[cfg(not(gf2_tuning_baked))]
     assert_eq!(select_backend_for_size(7).name(), "scalar");
+    #[cfg(gf2_tuning_baked)]
+    assert_eq!(select_backend_for_size(3).name(), "scalar");
 }
 
 #[test]
 fn test_backend_selection_threshold() {
-    // At threshold (8 words = 64 bytes), should use SIMD if available
+    // At the conservative threshold (8 words = 64 bytes), should use SIMD if
+    // available; the baked threshold is lower and therefore also selects SIMD.
     let backend = select_backend_for_size(8);
 
     #[cfg(feature = "simd")]
