@@ -1,7 +1,7 @@
 {
  "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
  "epic_short_id": "6dc81018",
- "current_wave": 10,
+ "current_wave": 12,
  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec \u2014 its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it \u2014 budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' \u2014 it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex \u2014 same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run. AGENT-LIVENESS TRAP (2026-08-20, cost ~15 min and one wasted dispatch pair): ListAgents reported 'No reachable agents' while two dispatched agents were provably alive and mid-task, and a clean `git status` 80 seconds before an agent's first write looked identical to a dead agent. Acting on those two signals, the lead re-dispatched duplicates over live workers; only the duplicate doc agent's own refusal to write on a mismatched premise prevented two agents racing on the same two paths. Do NOT treat ListAgents emptiness or a quiet tree as death. A dispatched agent's first write can lag its spawn by many minutes while it reads the spec and the design. Probe artifacts and .jit/events.jsonl over a window before concluding anything, and if duplicates are ever spawned, TaskStop them immediately and verify no leakage before continuing. The lead's initial theory that ScheduleWakeup tore the agents down was WRONG and was retracted.",
  "waves": [
   {
@@ -215,6 +215,51 @@
     }
    ],
    "note": "50b47eae completes only when a receipt shows the tolerance holds under the predeclared, amended verdict procedure."
+  },
+  {
+   "wave_number": 12,
+   "issues": [
+    {
+     "id": "676f55a2-ae5e-45c6-b1ab-db2dee71770b",
+     "short_id": "676f55a2",
+     "title": "Bake the bit-backend threshold as a compile-time constant from the committed profile",
+     "classification": "implementation",
+     "model": "codex gpt-5.6-luna",
+     "status": "pending",
+     "notes": "DEC-G track 1. Codex-eligible (not benchmark-mode). Gates: cargo-ci, code-review, doc-review."
+    }
+   ],
+   "note": "Serialized before wave 13 so its builds do not contend with 9162956b's benchmark-mode verification."
+  },
+  {
+   "wave_number": 13,
+   "issues": [
+    {
+     "id": "9162956b-9891-49c8-81f5-80ba066ba532",
+     "short_id": "9162956b",
+     "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
+     "classification": "research",
+     "model": "claude-opus",
+     "status": "pending",
+     "notes": "DEC-G track 2, amendment \u00a76.6 coverage branch. Benchmark-mode verification: Claude opus agent, main checkout, uncontended host, never codex. Owner approves the amendment text before wave 14 dispatches (REQ-03)."
+    }
+   ],
+   "note": "Uncontended host required for the axis-verification measurements."
+  },
+  {
+   "wave_number": 14,
+   "issues": [
+    {
+     "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
+     "short_id": "50b47eae",
+     "title": "Record the post-cutover non-regression receipt",
+     "classification": "implementation",
+     "model": "claude-opus",
+     "status": "in_progress",
+     "notes": "Fourth measured attempt under plan v1 + amendment v2, only after 676f55a2 and 9162956b are done and the owner has approved the v2 text. Three failing receipts preserved."
+    }
+   ],
+   "note": "50b47eae completes only when a receipt shows the tolerance holds under the amended, predeclared verdict procedure with all preconditions met."
   }
  ],
  "created_during_execution": [
@@ -375,6 +420,18 @@
    "issue": "2a85f728",
    "date": "2026-08-20",
    "decision": "DEC-B8: accepted the install-after-selection loosening and the necessary inversion of c42720ce's one-shot witness test, both forced by DEC-E track 1's elimination goal; recorded in design \u00a74.1 and rustdoc, single-thread observability asserted in the route test."
+  },
+  {
+   "kind": "owner-decision",
+   "issue": "50b47eae",
+   "date": "2026-08-21",
+   "decision": "DEC-G via AskUserQuestion after the third measured session (verdict FAIL at four cells, audit FAIL on coverage at two, amendment \u00a77 row 4: no attributable verdict). REQ-04 path: the owner redirected to the compile-time-constants mechanism the DEC-D escalation had offered, in the committed-profile variant: bit_backend's words-threshold becomes a const; the default build compiles the conservative table's value; an explicit build-time opt-in bakes the committed calibrated profile's value (4). Runtime install() stops governing the bit-backend family; design 220cab0b D1's rejection of build-time embedding is additively amended to admit it for this family, accepting D1's named cost (fresh profile requires a rebuild, this family only); D2 stands. Filed as 676f55a2. The \u00a76.6-mandated ensemble-axes amendment is delegated: a research task designs and verifies the coverage-repairing axis, the owner approves the amendment text before any measured run. Filed as 9162956b. 50b47eae's fourth session depends on both. tau_cell, tau_set, the pinned set, and the schema token unchanged."
+  },
+  {
+   "kind": "owner-decision",
+   "issue": "50b47eae",
+   "date": "2026-08-21",
+   "decision": "Session-5 revision-recording ruling confirmed on resume: the candidate arm records the revision the main checkout stood at during the build phase (46d21d6d), not the revision the session was dispatched against (c3eb5d01); receipt-3's uncommitted statement of this ruling was verified (two-file diff, empty build-input diff, disk figure) and committed at 94e05d5e."
   }
  ],
  "rework_counts": {
@@ -390,7 +447,9 @@
   "697fc55b": 1,
   "c42720ce": 3,
   "2a85f728": 1,
-  "972e2b88": 1
+  "972e2b88": 1,
+  "676f55a2": 0,
+  "9162956b": 0
  },
  "surfaced_pitfalls": [
   {
