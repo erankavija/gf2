@@ -813,7 +813,9 @@ selector non-regression harness of plan v1 stays unmodified per DEC-C: its
 self-tests bracket the default configuration's threshold, so under the baked
 cfg they report that the pinned set does not straddle the moved boundary,
 which enforces that the pinned procedure is only ever run on a default build.
-The baked routing witnesses run scoped to their own binaries instead.
+The baked routing witnesses run scoped to their own binaries instead, and per
+owner approval (2026-08-21) the repository CI script executes them as a
+required scoped step.
 
 This decision records the residual boundary cost in
 [`2026-08-20-post-cutover-receipt-3.md`](../../benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md): the `words=1` cell is 0.395 ns/call
