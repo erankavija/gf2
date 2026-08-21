@@ -336,6 +336,7 @@
       "path": "dev/active/9162956b/pilot-3-fix.csv"
     }
   ],
+  "done_at": "2026-08-21T20:01:22.318519931Z",
   "first_ready_at": "2026-08-21T07:35:56.619518437Z",
   "gates_required": [
     "doc-review",
@@ -349,9 +350,9 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-21T07:36:05.436078320Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-21T20:00:59.235326998Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
@@ -367,7 +368,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
-  "updated_at": "2026-08-21T19:54:27.224864499Z"
+  "updated_at": "2026-08-21T20:01:22.318519931Z"
 }
