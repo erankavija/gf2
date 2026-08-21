@@ -65,7 +65,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-21T08:37:00.600717442Z",
+      "updated_at": "2026-08-21T09:08:44.718467827Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -89,5 +89,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Bake the bit-backend threshold as a compile-time constant from the committed profile",
-  "updated_at": "2026-08-21T09:07:45.428370255Z"
+  "updated_at": "2026-08-21T09:08:44.718467827Z"
 }
