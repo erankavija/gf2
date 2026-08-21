@@ -10,7 +10,7 @@ categories = ["algorithms", "data-structures", "mathematics", "no-std"]
 rust-version = "1.95"
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(verify_lean)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(verify_lean)', 'cfg(gf2_tuning_baked)'] }
 
 [dependencies]
 # Non-optional: hosts the SSOT scalar `clmul_u64_scalar` that
@@ -30,6 +30,7 @@ criterion = { workspace = true }
 gf2-core = { path = ".", features = ["test-support"] }
 proptest = { workspace = true }
 rand = { workspace = true }
+serde_json = { workspace = true }
 # Test-only: applies `#[serial]` to the `field::{inverse,triangular,ple}`
 # allocation-counter tests. Those tests read the thread-local
 # `field::matrix::fieldmatrix_new_count`, so the serialisation is defensive
@@ -373,6 +374,10 @@ required-features = ["simd", "tuning-profile"]
 
 [[test]]
 name = "backend_selection_resolution"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
+name = "backend_selection_baked"
 required-features = ["simd", "tuning-profile"]
 
 [[test]]
