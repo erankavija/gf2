@@ -438,6 +438,12 @@
    "issue": "676f55a2",
    "date": "2026-08-21",
    "decision": "DEC-H via AskUserQuestion (escalation category 8, shared infrastructure): scripts/cargo-ci.sh gains a required scoped 'baked' step executing the gf2_tuning_baked routing witnesses and drift tests, closing code-review round-3 F1 on REQ-02. The frozen selector non-regression harness is excluded from that step deliberately; its self-tests bracket the default configuration and are expected to report a re-pinning need under the baked cfg. Context: the lead converted the opt-in from a Cargo feature to the declared cfg because --all-features CI otherwise moves the observed threshold and trips the frozen harness's bracket guard (DEC-C keeps plan v1 unmodified) \u2014 recorded as lead decision DEC-B9."
+  },
+  {
+   "kind": "owner-decision",
+   "issue": "9162956b",
+   "date": "2026-08-21",
+   "decision": "DEC-I via AskUserQuestion (9162956b REQ-03): the owner approves the amendment v2 text (layout-attribution-verdict-v2.md \u2014 axes E build-id-length translation x G link-dead-code, K=256, pilot 3 ADOPT) as the predeclared verdict procedure for 50b47eae's fourth measured session; no predeclared value moves. The one open editorial question (v2 SA10) is resolved: v1 gains an additive pointer section naming v2, appended after S10 with no pre-existing line changed, in the same convention as the two standing plans' pointer sections. Lead review and 9162956b's gates still precede wave-14 dispatch; any review-forced text change returns for re-approval before a measured run."
   }
  ],
  "rework_counts": {
