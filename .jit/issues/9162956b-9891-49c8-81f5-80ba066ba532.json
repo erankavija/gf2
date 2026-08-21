@@ -1,0 +1,42 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-21T07:35:56.619518437Z",
+  "dependencies": [],
+  "description": "Design, verify, and predeclare the coverage-repairing amendment to the layout-attribution ensemble's axes, per amendment section 6.6's coverage branch and owner decision DEC-G (2026-08-21, delegation arm).\n\n## Background\n\nThe third post-cutover session (`dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md`) reports the attribution audit RESULT: FAIL on the coverage precondition: at `bit_backend/or_inplace/words=1` the ensemble's reference-arm dispersion s_R = 0.047448 falls below the sigma-hat/2 floor of 0.059077 (80.3 %), and at `bit_backend/xor_inplace/words=1` s_R = 0.038850 falls below 0.049556 (78.4 %). Per `layout-attribution-verdict-v1.md` section 6.6, the three alignment axes are not a model of natural-rebuild layout variation at those cells, no larger K repairs that, and the axes are the subject of a tracked amendment before the next measured run.\n\nThe owner delegated the design and approves the final amendment text before any measured run. Section 6.6 already rejected `-C link-arg=-Wl,--sort-section=name` for moving no symbol; the axis this task finds must demonstrably move code placement in a way that reaches the coverage floor at both failing cells.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed verification receipt demonstrates, by building and measuring an ensemble (or a predeclared subset sufficient to estimate s_R at the two failing cells), that the amended axis set reaches the sigma-hat/2 coverage floor at `bit_backend/or_inplace/words=1` and `bit_backend/xor_inplace/words=1`, while preserving the parity/balance construction of sections 3.1-3.2 and leaving the precision, half-split-null, and decorrelation machinery computable unchanged.\n- [hard] REQ-02: An additive amendment document (v2, referencing v1 and changing none of its text) predeclares the amended enumeration, its member formula, K, and the unchanged verdict rules before any measured run; no predeclared value moves — not tau_cell, tau_set, the pinned set, the schema token, or the three-standard-error margin.\n- [hard] REQ-03: The amendment text is presented to the epic's owner and carries the owner's recorded approval before the next measured session is dispatched.\n\n## Constraints\n\n- Benchmark-mode work: uncontended host per repository benchmark policy; verify the host is idle first.\n- Standing receipts and the v1 amendment are not modified.\n- No `.jit/` writes; no issue state transitions; link durable artifacts with `jit doc add`.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-21T07:35:56.619518437Z",
+  "gates_required": [
+    "doc-review",
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-21T07:36:05.316416739Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-21T07:36:05.436078320Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-21T07:36:05.198223127Z",
+      "updated_by": null
+    }
+  },
+  "id": "9162956b-9891-49c8-81f5-80ba066ba532",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-04",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
+  "updated_at": "2026-08-21T07:36:05.436078320Z"
+}

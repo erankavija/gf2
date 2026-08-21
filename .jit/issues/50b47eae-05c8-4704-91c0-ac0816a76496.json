@@ -7,7 +7,9 @@
     "0d819b62-f6ad-49e0-add7-fd9f3486fe42",
     "2a85f728-4f9f-40f3-a9ee-ab7655d83b9f",
     "51058f8e-6bad-443c-aa5b-14d430bcd0c7",
+    "676f55a2-ae5e-45c6-b1ab-db2dee71770b",
     "697fc55b-4b36-4cb5-8106-a811b1772e44",
+    "9162956b-9891-49c8-81f5-80ba066ba532",
     "972e2b88-d75c-411b-a6b5-06318fa84305",
     "c42720ce-1f7b-4058-97bf-de165786b8a0"
   ],
@@ -242,5 +244,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-20T23:13:04.469415858Z"
+  "updated_at": "2026-08-21T07:36:16.119915724Z"
 }

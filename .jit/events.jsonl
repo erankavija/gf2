@@ -8716,3 +8716,14 @@
 {"fields":["documents"],"id":"0c7bcf02-081f-40df-9e23-7020baaaef66","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T23:13:04.041521804Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"a0fc714e-3656-4c65-b193-46aa6728722f","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T23:13:04.263287130Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"bfb094ac-e8ec-49ea-907b-03cb340a1be4","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-20T23:13:04.469415858Z","type":"issue_updated","updated_by":"doc-add"}
+{"from":"backlog","id":"3e78b6f1-e231-4f4f-9498-c097f745f9e3","issue_id":"6dc81018-9a8e-4318-9572-148670d1c272","timestamp":"2026-08-21T07:35:06.064486431Z","to":"in_progress","type":"issue_state_changed"}
+{"id":"075f3517-0b5f-4bb7-a678-38d5c833e50c","issue_id":"676f55a2-ae5e-45c6-b1ab-db2dee71770b","priority":"normal","timestamp":"2026-08-21T07:35:34.748952026Z","title":"Bake the bit-backend threshold as a compile-time constant from the committed profile","type":"issue_created"}
+{"id":"9778d364-3561-4daa-bdc2-19fd961e21bb","issue_id":"9162956b-9891-49c8-81f5-80ba066ba532","priority":"normal","timestamp":"2026-08-21T07:35:56.619518437Z","title":"Predeclare the coverage-repairing ensemble-axes amendment v2","type":"issue_created"}
+{"gate_key":"cargo-ci","id":"0e6093d5-224d-4c63-b222-fedde6494165","issue_id":"676f55a2-ae5e-45c6-b1ab-db2dee71770b","timestamp":"2026-08-21T07:36:04.835363943Z","type":"gate_added"}
+{"gate_key":"code-review","id":"04d4830a-4cf9-4600-812c-0928264f9682","issue_id":"676f55a2-ae5e-45c6-b1ab-db2dee71770b","timestamp":"2026-08-21T07:36:04.956916414Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"68779fc4-80d3-40fe-9f73-2a9a21b8ad7f","issue_id":"676f55a2-ae5e-45c6-b1ab-db2dee71770b","timestamp":"2026-08-21T07:36:05.081159035Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"ed442b93-262f-45e0-b48c-5055ceeb9e7b","issue_id":"9162956b-9891-49c8-81f5-80ba066ba532","timestamp":"2026-08-21T07:36:05.198223127Z","type":"gate_added"}
+{"gate_key":"cargo-ci","id":"d861126c-1eee-4d04-971c-88eb4c0130c4","issue_id":"9162956b-9891-49c8-81f5-80ba066ba532","timestamp":"2026-08-21T07:36:05.316416739Z","type":"gate_added"}
+{"gate_key":"code-review","id":"541e897b-9e60-4ffe-8f23-3395d733eaab","issue_id":"9162956b-9891-49c8-81f5-80ba066ba532","timestamp":"2026-08-21T07:36:05.436078320Z","type":"gate_added"}
+{"fields":["dependencies"],"id":"759af6df-a41d-4d4c-9ac9-87c890d6b3da","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-21T07:36:09.664254845Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"30440da9-fde9-476c-9a77-5b331245da09","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-21T07:36:16.119915724Z","type":"issue_updated","updated_by":"dependency-add"}

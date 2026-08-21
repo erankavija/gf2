@@ -1,0 +1,42 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-21T07:35:34.748952026Z",
+  "dependencies": [],
+  "description": "Make the bit-backend words-threshold a compile-time constant so the selection boundary carries zero per-call cost, per owner decision DEC-G (2026-08-21).\n\n## Background\n\nThree post-cutover sessions attribute a residual per-call cost at the bit-backend selection boundary after c42720ce and 2a85f728: 0.395 ns/call at `bit_backend/popcount/words=1` (ratio 1.206586 against tau_cell = 1.05) and 0.210 ns/call at `words=8` (1.057456), recorded in `dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md`, where both cells pass every attribution precondition locally. The owner directed compile-time constants as the mechanism, in the variant where the committed profile still governs: the default build compiles the conservative table's value as a `const`, and an explicit build-time opt-in bakes the committed calibrated profile's value instead.\n\nDesign `dev/active/220cab0b/design.md` D1 rejected build-time embedding (its option C) generally; DEC-G admits it for the bit-backend family only, accepting D1's named cost — a fresh profile requires a rebuild for this family. Design D2 (no ambient runtime env lookup) stands untouched: the opt-in is resolved at compile time, never by the running process's environment.\n\nConsequences to implement, not avoid: runtime `TuningProfile::install()` stops governing bit-backend selection; the route-observation and witness tests that assert install() reaches this family invert to assert it does not (DEC-B8 precedent for such an inversion). Polynomial and all other families keep their runtime-profile governance unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: In the default build, bit-backend words-threshold selection compiles against a `const` with no read of runtime profile state (no atomic or memory load of installed-profile data) on any bit_backend call path; a route-observation test through production API confirms conservative-table routing, and an inverted witness test confirms `install()` no longer affects bit-backend selection.\n- [hard] REQ-02: An explicit, documented build-time opt-in bakes the committed calibrated profile's bit-backend value (`simd_min_words = 4` from the committed host profile) as the const instead; the mechanism is deterministic, performs no calibration at build time, does not consult the process environment at runtime, and a test or CI check exercises the opt-in configuration compiling and routing per the baked value.\n- [hard] REQ-03: `dev/active/220cab0b/design.md` D1 and section 4.1 are amended additively (appended, changing no pre-existing line) recording DEC-G, its scope (bit-backend family only), and its trade; every rustdoc, doc, or test comment that states runtime-profile governance of the bit backend is swept in the same change.\n\n## Constraints\n\n- Do not modify other issues' committed tests' existing assertions or feature gates; adding new assertions or new test binaries is fine.\n- Closed-issue records under dev/active/ may only be amended additively.\n- No `.jit/` writes; no issue state transitions; link durable artifacts with `jit doc add`.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-21T07:35:34.748952026Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-21T07:36:04.835363943Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-21T07:36:04.956916414Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-21T07:36:05.081159035Z",
+      "updated_by": null
+    }
+  },
+  "id": "676f55a2-ae5e-45c6-b1ab-db2dee71770b",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-04",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Bake the bit-backend threshold as a compile-time constant from the committed profile",
+  "updated_at": "2026-08-21T07:36:05.081159035Z"
+}

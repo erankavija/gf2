@@ -27,7 +27,7 @@
     "type:epic"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "in_progress",
   "title": "Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-08-20T19:01:57.433405788Z"
+  "updated_at": "2026-08-21T07:35:06.064486431Z"
 }
