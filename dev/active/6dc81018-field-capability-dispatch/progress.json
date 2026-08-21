@@ -444,6 +444,12 @@
    "issue": "9162956b",
    "date": "2026-08-21",
    "decision": "DEC-I via AskUserQuestion (9162956b REQ-03): the owner approves the amendment v2 text (layout-attribution-verdict-v2.md \u2014 axes E build-id-length translation x G link-dead-code, K=256, pilot 3 ADOPT) as the predeclared verdict procedure for 50b47eae's fourth measured session; no predeclared value moves. The one open editorial question (v2 SA10) is resolved: v1 gains an additive pointer section naming v2, appended after S10 with no pre-existing line changed, in the same convention as the two standing plans' pointer sections. Lead review and 9162956b's gates still precede wave-14 dispatch; any review-forced text change returns for re-approval before a measured run."
+  },
+  {
+   "kind": "owner-decision",
+   "issue": "9162956b",
+   "date": "2026-08-21",
+   "decision": "DEC-I pointer half reversed by owner on doc-review F1: the v1 pointer append violated 9162956b REQ-02 ('v2 ... changing none of its text') and contradicted v2 SA10 ('v1 gains no pointer to this document'). Owner chose contract-literal compliance: v1 restored byte-identical to its anchored form (SHA-256 1b8a91bd..., matching the doc-link content hash). DEC-I's approval of the v2 text stands unchanged and is recorded in this log; the reading path for a v1-only reader is v1 S6.6 -> receipt 3 -> 9162956b -> v2. No pointer lands later; the v2-appendix variant was offered and declined."
   }
  ],
  "rework_counts": {
