@@ -69,9 +69,9 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-21T07:36:04.956916414Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-21T08:40:29.214447642Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "pending",
@@ -89,5 +89,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Bake the bit-backend threshold as a compile-time constant from the committed profile",
-  "updated_at": "2026-08-21T08:37:00.600717442Z"
+  "updated_at": "2026-08-21T08:40:29.214447642Z"
 }

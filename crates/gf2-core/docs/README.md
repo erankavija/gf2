@@ -26,8 +26,9 @@ Documentation for users of the library:
 ### Architecture & Design
 - **[KERNEL_OPTIMIZATION.md](KERNEL_OPTIMIZATION.md)** - Kernel architecture guide
   - Three-layer design: Public API → Kernel Ops → Backends
-  - Profile-driven smart dispatch using `bit_backend.simd_min_words` (the
-    conservative default is 64 bytes)
+  - Compile-time smart dispatch on the `bit_backend.simd_min_words`
+    threshold (conservative default 64 bytes; a `--cfg gf2_tuning_baked`
+    build takes the committed calibrated value)
   - Backend implementation details (Scalar, SIMD, future GPU/FPGA)
   - Performance optimization guidelines
 
