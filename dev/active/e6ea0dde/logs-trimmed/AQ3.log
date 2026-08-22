@@ -1,0 +1,17 @@
+=== AQ3 === 2026-08-22T23:33:03+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/e6ea0dde/extraction/AQ3_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/e6ea0dde/extraction/Q3_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/e6ea0dde/extraction/Q3_gf2_core.llbc
+
+[Info ] Creating missing directory: dev/active/e6ea0dde/extraction/AQ3_lean
+[Info ] Generated: dev/active/e6ea0dde/extraction/AQ3_lean/Types.lean
+[Info ] Generated: dev/active/e6ea0dde/extraction/AQ3_lean/FunsExternal_Template.lean
+[Info ] Generated: dev/active/e6ea0dde/extraction/AQ3_lean/Funs.lean
+[Info ] Total execution time: 0.312727 seconds
+--- exit=0 elapsed=0s ---
