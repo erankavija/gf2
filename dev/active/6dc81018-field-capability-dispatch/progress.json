@@ -1,7 +1,7 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 20,
+  "current_wave": 21,
   "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec \u2014 its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it \u2014 budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' \u2014 it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex \u2014 same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run. AGENT-LIVENESS TRAP (2026-08-20, cost ~15 min and one wasted dispatch pair): ListAgents reported 'No reachable agents' while two dispatched agents were provably alive and mid-task, and a clean `git status` 80 seconds before an agent's first write looked identical to a dead agent. Acting on those two signals, the lead re-dispatched duplicates over live workers; only the duplicate doc agent's own refusal to write on a mismatched premise prevented two agents racing on the same two paths. Do NOT treat ListAgents emptiness or a quiet tree as death. A dispatched agent's first write can lag its spawn by many minutes while it reads the spec and the design. Probe artifacts and .jit/events.jsonl over a window before concluding anything, and if duplicates are ever spawned, TaskStop them immediately and verify no leakage before continuing. The lead's initial theory that ScheduleWakeup tore the agents down was WRONG and was retracted.",
   "waves": [
     {
@@ -358,8 +358,8 @@
           "title": "Extend the tuning schema with the follow-on selector families",
           "classification": "implementation",
           "model": "opus",
-          "status": "dispatched",
-          "notes": "Design \u00a73/\u00a73.13. No selector-site change. Dispatched 2026-08-23 in worktree (base 9ebcb29f), background."
+          "status": "merged-gates-running",
+          "notes": "Design \u00a73/\u00a73.13. No selector-site change. Dispatched 2026-08-23 in worktree (base 9ebcb29f), background. Report received: 28 fields/11 families, 9 tests, calibrated profile loads. Five design defects \u2192 DEC-B10. Merged d9f72fab; cargo-ci gate PASSED; code-review/doc-review were running at session-9 handoff \u2014 check status, evaluate if incomplete, then close."
         },
         {
           "id": "389aa4de",
@@ -471,8 +471,8 @@
           "title": "Name the panel blocking factors in the kernel crate",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "dispatched",
-          "notes": "Seam U1. gf2-kernels-simd only. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1."
+          "status": "worker-done-unmerged",
+          "notes": "Seam U1. gf2-kernels-simd only. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1. Complete at fbdd5b8a (kernel crate only, CI green, cfg-gated re-exports). Lead review PASS pending gates. Merge after t1 closes. Flag: fp_small_ple.rs:184 informal 'KC = 256' prose \u2192 fold into U9 sweep."
         },
         {
           "id": "687c694d",
@@ -480,8 +480,8 @@
           "title": "Hoist the uniform trait-selector defaults",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "dispatched",
-          "notes": "Seam U2. winograd/triangular/ple modules \u2014 CONFLICTS with t7/t8/u6/u7 files: schedule in a sub-wave apart from those. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1."
+          "status": "worker-dead-uncommitted",
+          "notes": "Seam U2. winograd/triangular/ple modules \u2014 CONFLICTS with t7/t8/u6/u7 files: schedule in a sub-wave apart from those. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1. Implementation complete UNCOMMITTED (4 files; also fixed seam-design \u00a74.4 citation misattribution, paths verified on disk); its CI was queued when the session ended and the worker died with it. Lead-preserve, review, CI, merge."
         },
         {
           "id": "03594635",
@@ -489,8 +489,8 @@
           "title": "Introduce the PLE panel lane hook",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "dispatched",
-          "notes": "Seam U4. traits.rs + gfp/mod.rs. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1."
+          "status": "worker-dead-uncommitted",
+          "notes": "Seam U4. traits.rs + gfp/mod.rs. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1. In flight, 5 files dirty, no commit, no report at session end. Inspect/preserve, then re-dispatch into the existing worktree."
         }
       ]
     },
