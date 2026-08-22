@@ -869,3 +869,37 @@ All paths relative to the repository root.
 | `dev/active/34d85cb9/upgrade/excerpts/pipeline-{baseline,new}-summary.txt` | Each pipeline leg's exit code and per-file diff verdict, with the `cargo 1.95.0` banner it ran under |
 | `dev/active/34d85cb9/extraction/excerpts/A11-accounting.txt` | A11 error classes and `sorry` tally, kept separate because they do not map 1:1 |
 | `dev/active/34d85cb9/extraction/a11-accounting.sh` | Regenerates the A11 accounting receipt |
+
+---
+
+## Amendment — clean-exit extraction of the loop-free class (issue e6ea0dde)
+
+Appended 2026-08-22. Additive: nothing above this heading changes.
+
+`dev/active/e6ea0dde/record.md` records the DEC-A class extracted with both
+Charon and Aeneas exiting 0 on this same pinned pair and the same MSRV. It
+reaches that by two changes to R8b: the start roots become
+`FiniteFieldExt::square` and `FiniteFieldExt::frobenius`, and
+`--exclude 'gf2_core::field::traits::FiniteFieldExt::pow'` keeps the item F4
+falsifies out of the translation. The resulting `Funs.lean` carries
+`square.default`, `frobenius.default` and the two `frobenius` loop items with
+zero `sorry` occurrences, and `pow` survives as a field of the extracted
+`FiniteFieldExt` structure, which is where the per-backend obligation belongs.
+The A8b run reproduces there unchanged as that record's control AX1, whose
+`Types.lean` is byte-identical to `extraction/A8b_lean/Types.lean`.
+
+Two findings of this record are extended rather than revised:
+
+- **F4 stands.** The exclusion is an accommodation of F4, not a refutation of
+  it. `pow`'s loop items still lose their associated-type binders whenever they
+  are translated.
+- **A defect this record does not reach is now measured.** The line at
+  "Not tested, and deliberately out of scope" scopes elaboration out. It is now
+  tested, and the generated `Types.lean` does not elaborate: Aeneas emits the
+  `FiniteField` trait as a Lean `structure` in which six clause-field names
+  repeat, because the name it derives from a trait reference ignores
+  type-variable arguments, so the bounds on `Self`, on `Self_Characteristic`
+  and on `Self_Wide` collide. The emission is invariant under every
+  invocation-boundary option the pinned pair offers, and the newest-upstream
+  pair `charon 0.1.232` + `aeneas c10cc99` reproduces it unchanged, so the
+  migration tracked as issue `4dd5372a` does not resolve it.

@@ -1,0 +1,133 @@
+# Generated-tree summary for JIT issue e6ea0dde.
+# Reproduce with: dev/active/e6ea0dde/extraction/tree-summary.sh
+# Captured: 2026-08-22T23:34:48+03:00
+
+## AQ1_lean
+- structures emitted in Types.lean: 8
+- Funs.lean definitions:
+    field.traits.FiniteFieldExt.square.default
+    field.traits.FiniteFieldExt.frobenius.default_loop.body
+    field.traits.FiniteFieldExt.frobenius.default_loop
+    field.traits.FiniteFieldExt.frobenius.default
+- sorry occurrences: Funs.lean 0
+0, Types.lean 0
+0
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+
+## AQ3_lean
+- structures emitted in Types.lean: 8
+- Funs.lean definitions:
+    field.traits.FiniteFieldExt.square.default
+    field.traits.FiniteFieldExt.frobenius.default_loop.body
+    field.traits.FiniteFieldExt.frobenius.default_loop
+    field.traits.FiniteFieldExt.frobenius.default
+- sorry occurrences: Funs.lean 0
+0, Types.lean 0
+0
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+
+## AQ4_lean
+- Funs.lean: not written (Aeneas exited first)
+- FunsExternal_Template.lean: not written (Aeneas exited first)
+- structures emitted in Types.lean: 2
+- Funs.lean definitions:
+- sorry occurrences: Funs.lean 0, Types.lean 1
+- repeated structure field names in Types.lean:
+    (none)
+
+## AQ5_lean
+- structures emitted in Types.lean: 7
+- Funs.lean definitions:
+    field.traits.FiniteFieldExt.square.default
+    field.traits.FiniteFieldExt.frobenius.default_loop.body
+    field.traits.FiniteFieldExt.frobenius.default_loop
+    field.traits.FiniteFieldExt.frobenius.default
+- sorry occurrences: Funs.lean 2, Types.lean 1
+- repeated structure field names in Types.lean:
+    (none)
+
+## AQ6_lean
+- structures emitted in Types.lean: 8
+- Funs.lean definitions:
+    field.traits.FiniteFieldExt.square.default
+    field.traits.FiniteFieldExt.frobenius.default_loop.body
+    field.traits.FiniteFieldExt.frobenius.default_loop
+    field.traits.FiniteFieldExt.frobenius.default
+- sorry occurrences: Funs.lean 0
+0, Types.lean 0
+0
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+
+## AX1_lean
+- structures emitted in Types.lean: 8
+- Funs.lean definitions:
+    field.traits.FiniteFieldExt.square.default
+    field.traits.FiniteFieldExt.pow.default_loop.body
+    field.traits.FiniteFieldExt.pow.default_loop
+    field.traits.FiniteFieldExt.pow.default
+    field.traits.FiniteFieldExt.frobenius.default_loop.body
+    field.traits.FiniteFieldExt.frobenius.default_loop
+    field.traits.FiniteFieldExt.frobenius.default
+- sorry occurrences: Funs.lean 4, Types.lean 0
+0
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+
+## AX2_lean
+- structures emitted in Types.lean: 8
+- Funs.lean definitions:
+    field.traits.FiniteFieldExt.square.default
+    field.traits.FiniteFieldExt.frobenius.default_loop.body
+    field.traits.FiniteFieldExt.frobenius.default_loop
+    field.traits.FiniteFieldExt.frobenius.default
+- sorry occurrences: Funs.lean 0
+0, Types.lean 0
+0
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+
+## AX3_lean
+- structures emitted in Types.lean: 8
+- Funs.lean definitions:
+    field.traits.FiniteFieldExt.square.default
+    field.traits.FiniteFieldExt.frobenius.default_loop.body
+    field.traits.FiniteFieldExt.frobenius.default_loop
+    field.traits.FiniteFieldExt.frobenius.default
+- sorry occurrences: Funs.lean 0
+0, Types.lean 0
+0
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
