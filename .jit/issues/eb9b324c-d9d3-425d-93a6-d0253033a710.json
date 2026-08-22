@@ -14,6 +14,170 @@
       "format": "markdown",
       "label": "Two-site diagnosis brainstorm (lead + codex, 2026-08-22)",
       "path": "dev/active/eb9b324c/diagnosis-brainstorm.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "280d5133d9ea4c9745e3846f40ab5af6c75d12f78cb5d9b817f27b87b180cf87",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "perf/e2-perf.sh",
+          "resolved_path": "dev/active/eb9b324c/perf/e2-perf.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "94919c3b2beec752822f5433b50196f7f8808f8c9e5ed85e81cef84ad0231930",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "perf/symbol-cycles.tsv",
+          "resolved_path": "dev/active/eb9b324c/perf/symbol-cycles.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f51c4dd73175c88966baffb428c209dfc009e51da0b1ca63dd7c94a595f5c6c1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot/pilot-comparison.tsv",
+          "resolved_path": "dev/active/eb9b324c/pilot/pilot-comparison.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "66bb3696cde2b2eef1164681bab5105223c313a3c8dfdc985746a7d775d2675f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "perf/reproduced-cell-rates.tsv",
+          "resolved_path": "dev/active/eb9b324c/perf/reproduced-cell-rates.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7a20334b1e6de8570a05dcc1d66556a4cb31b6a6b3dbb50535645c54398b6746",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "perf/whole-suite-counters.tsv",
+          "resolved_path": "dev/active/eb9b324c/perf/whole-suite-counters.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ef42c75f49470c01aa68a43552e163db474f2509d2f2db3461d1a0c9b38fdfe",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-5.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-5.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fb7893ba63cd7d70dbf2477c6ab4ac40d058197f69c0109e6ee73c1ac5b3f4e8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "diagnosis-brainstorm.md",
+          "resolved_path": "dev/active/eb9b324c/diagnosis-brainstorm.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cdc59d64045d91d49d2e717c110d2959675c4d663105f8ac971949c24c3aac57",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "perf/static-dispatch-disasm.txt",
+          "resolved_path": "dev/active/eb9b324c/perf/static-dispatch-disasm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b0a2133d74134b50e284fa5d1adf41ae49f832dcbc0137f0f3187e256664050b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot/ledger-cand-fixed.tsv",
+          "resolved_path": "dev/active/eb9b324c/pilot/ledger-cand-fixed.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7d8b6224eda78539914ee694d922afddd57ce3cb9df69187b1ba37c67abc0984",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot/timed.log",
+          "resolved_path": "dev/active/eb9b324c/pilot/timed.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c61b31df9efe08834167b76c53a9206e6bd4ea1e6db247c6b8872dc2181333be",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "perf/e2-run.log",
+          "resolved_path": "dev/active/eb9b324c/perf/e2-run.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4edfa715dfb30eda43685af09d7d2d986d9f413d2b755f1025d93354d7ffc444",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot/pilot-cand-fixed.csv",
+          "resolved_path": "dev/active/eb9b324c/pilot/pilot-cand-fixed.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5cc886153507b7bff4e9b23ef341ab918abc06c6701ab7d2dfbe0565e27fe87d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "perf/session5-dispatch-decomposition.tsv",
+          "resolved_path": "dev/active/eb9b324c/perf/session5-dispatch-decomposition.tsv"
+        }
+      ],
+      "commit": null,
+      "doc_type": "findings",
+      "format": "markdown",
+      "label": "Findings: the receipt-5 mul_fast dispatch-cell excursion, diagnosis and fix",
+      "path": "dev/active/eb9b324c/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "measurement",
+      "format": "markdown",
+      "label": "Pilot comparison: fixed candidate vs session-5 arms at matched page offsets",
+      "path": "dev/active/eb9b324c/pilot/pilot-comparison.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "measurement",
+      "label": "Pilot raw rows: 16 members of the fixed candidate, one execution each",
+      "path": "dev/active/eb9b324c/pilot/pilot-cand-fixed.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "measurement",
+      "label": "Pilot build ledger: E, RUSTFLAGS, sha256, .text vaddr, page offset, bit5",
+      "path": "dev/active/eb9b324c/pilot/ledger-cand-fixed.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "analysis",
+      "format": "markdown",
+      "label": "Session-5 dispatch decomposition: per-phase rates and the wrapper isolation",
+      "path": "dev/active/eb9b324c/perf/session5-dispatch-decomposition.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "analysis",
+      "label": "E2 symbol-level cycles for the dispatch chain, four members",
+      "path": "dev/active/eb9b324c/perf/symbol-cycles.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "analysis",
+      "label": "E2 whole-suite perf counters (null by construction under the time budget)",
+      "path": "dev/active/eb9b324c/perf/whole-suite-counters.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "analysis",
+      "label": "E2 per-cell rates: the parity split reproduced under perf",
+      "path": "dev/active/eb9b324c/perf/reproduced-cell-rates.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "analysis",
+      "format": "markdown",
+      "label": "Static dispatch-path disassembly, reference vs candidate ordinary members",
+      "path": "dev/active/eb9b324c/perf/static-dispatch-disasm.txt"
     }
   ],
   "first_ready_at": "2026-08-22T14:14:02.435231272Z",
@@ -33,5 +197,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-  "updated_at": "2026-08-22T14:47:13.293975034Z"
+  "updated_at": "2026-08-22T15:49:35.419767399Z"
 }
