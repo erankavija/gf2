@@ -30,7 +30,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-  "updated_at": "2026-08-22T14:31:02.357781532Z"
+  "updated_at": "2026-08-22T14:46:38.865160460Z"
 }

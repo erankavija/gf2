@@ -4,7 +4,7 @@
   "context": {},
   "created_at": "2026-08-22T10:22:23.398982225Z",
   "dependencies": [],
-  "description": "Session 4 (receipt: dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md) establishes the first attributable verdict of the pinned selector non-regression procedure, and it is FAIL at exactly one cell: bit_backend/not_inplace/words=1 (scalar) at ratio 1.100028 against tau_cell = 1.05 — +0.243682 ns/call over the reference arm's 2.436132 — with every attribution precondition passing (precision margin 5.604, half-split null 1.001808; the cell's natural sigma is 0.000222 so its coverage floor is trivially cleared). The other thirty-three cells pass, the set geomean is 1.002950, and the two popcount cells that tripped all three prior sessions read 0.996574 and 1.002381 after the DEC-G bake (676f55a2).\n\nDiagnose and remove the regression, or establish with owner sign-off that it is not the reconciliation's cost to remove. Context the receipt records: the cell's layout sensitivity is the largest in the pinned set (s_R = 0.093325, s_C = 0.103409, natural sigma 0.000222 — one natural rebuild barely moves it, layout moves it +/-10 %); every single-build comparison in the record reads this cell near 0.85 against the committed baseline (0.851509, 0.853275, 0.851143, 0.849929 across four independent candidate builds), so single-build comparisons cannot see this excursion in either direction. The compiled candidate source is ec857d2f, whose diff from receipt-3's candidate (46d21d6d) in crates/ is exactly the 676f55a2 DEC-G bake chain.\n\n## Success Criteria\n\n- [hard] REQ-01: The cause of the +10 % pooled-ensemble excursion at bit_backend/not_inplace/words=1 is identified and stated with evidence tying it to a specific code or codegen property of the candidate revision (not to a layout draw — the ensemble already averages 256 draws per arm).\n- [hard] REQ-02: Either a fix lands in crates/ such that the cell's regression is credibly removed (bench evidence on at least a pilot-scale ensemble), or the owner explicitly accepts the excursion and amends the epic's REQ-04 disposition, or an owner-approved procedure amendment (DEC-K: layout-attribution-verdict-v4.md) routes the arbitration to the next measured session; no predeclared value of the frozen procedure moves in any case.\n- [hard] REQ-03: The change (if any) leaves the other thirty-three pinned cells' behavior intact under cargo-ci, and the next measured session (session 5) is the arbiter of the pinned set under the standing procedure.",
+  "description": "Session 4 (receipt: dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md) establishes the first attributable verdict of the pinned selector non-regression procedure, and it is FAIL at exactly one cell: bit_backend/not_inplace/words=1 (scalar) at ratio 1.100028 against tau_cell = 1.05 — +0.243682 ns/call over the reference arm's 2.436132 — with every attribution precondition passing (precision margin 5.604, half-split null 1.001808; the cell's natural sigma is 0.000222 so its coverage floor is trivially cleared). The other thirty-three cells pass, the set geomean is 1.002950, and the two popcount cells that tripped all three prior sessions read 0.996574 and 1.002381 after the DEC-G bake (676f55a2).\n\nDiagnose and remove the regression, or establish with owner sign-off that it is not the reconciliation's cost to remove. Context the receipt records: the cell's layout sensitivity is the largest in the pinned set (s_R = 0.093325, s_C = 0.103409, natural sigma 0.000222 — one natural rebuild barely moves it, layout moves it +/-10 %); every single-build comparison in the record reads this cell near 0.85 against the committed baseline (0.851509, 0.853275, 0.851143, 0.849929 across four independent candidate builds), so single-build comparisons cannot see this excursion in either direction. The compiled candidate source is ec857d2f, whose diff from receipt-3's candidate (46d21d6d) in crates/ is exactly the 676f55a2 DEC-G bake chain.\n\n## Success Criteria\n\n- [hard] REQ-01: The cause of the +10 % pooled-ensemble excursion at bit_backend/not_inplace/words=1 is identified and stated with evidence tying it either to a specific code or codegen property of the candidate revision, or to a specific, measured property of the ensemble construction, with matched-stratum evidence that no code cost exists to remove and confirmation by the next measured session's arbitration. (Amended by owner decision DEC-M, 2026-08-22, resolving doc-review finding F1: the original wording required a code or codegen property; the diagnosis falsified that premise with matched-stratum evidence and session 5 confirmed the arbitration.)\n- [hard] REQ-02: Either a fix lands in crates/ such that the cell's regression is credibly removed (bench evidence on at least a pilot-scale ensemble), or the owner explicitly accepts the excursion and amends the epic's REQ-04 disposition, or an owner-approved procedure amendment (DEC-K: layout-attribution-verdict-v4.md) routes the arbitration to the next measured session; no predeclared value of the frozen procedure moves in any case.\n- [hard] REQ-03: The change (if any) leaves the other thirty-three pinned cells' behavior intact under cargo-ci, and the next measured session (session 5) is the arbiter of the pinned set under the standing procedure.",
   "documents": [
     {
       "assets": [
@@ -24,6 +24,7 @@
       "path": "dev/active/fc976a80/findings.md"
     }
   ],
+  "done_at": "2026-08-22T14:46:31.660667866Z",
   "first_ready_at": "2026-08-22T10:22:23.398982225Z",
   "gates_required": [
     "cargo-ci",
@@ -37,13 +38,13 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T10:22:34.774122012Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-22T14:38:17.754230278Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-22T14:34:45.091128925Z",
+      "status": "passed",
+      "updated_at": "2026-08-22T14:46:04.372180895Z",
       "updated_by": "auto:executor"
     }
   },
@@ -55,7 +56,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Resolve the attributable regression at bit_backend/not_inplace/words=1 before the next measured session",
-  "updated_at": "2026-08-22T14:34:45.091128925Z"
+  "updated_at": "2026-08-22T14:46:31.660667866Z"
 }

@@ -270,8 +270,8 @@
      "title": "Resolve the attributable regression at bit_backend/not_inplace/words=1 before the next measured session",
      "classification": "implementation",
      "model": "claude-opus",
-     "status": "diagnosed-resolved-by-DEC-K",
-     "notes": "Created by the lead per receipt-4 disposition (v1 s7 row 2: rework tracked). Diagnosis is perf forensics over the staged 512-member ensemble at /tmp/gf2-ens4; benchmark-mode probes stay off codex per standing deviation. Wired: 50b47eae depends on fc976a80. Wave 16 = measured session 5 under 50b47eae once the fix lands. SESSION-7: diagnosis complete (findings.md, commit ab925b51): construction artifact, matched strata agree to 0.01%; no crates/ fix. DEC-K resolves via amendment v4; REQ-02 amended with the amendment branch. Close after session 5 confirms dispatch (REQ-03) and gates evaluate."
+     "status": "done",
+     "notes": "Created by the lead per receipt-4 disposition (v1 s7 row 2: rework tracked). Diagnosis is perf forensics over the staged 512-member ensemble at /tmp/gf2-ens4; benchmark-mode probes stay off codex per standing deviation. Wired: 50b47eae depends on fc976a80. Wave 16 = measured session 5 under 50b47eae once the fix lands. SESSION-7: diagnosis complete (findings.md, commit ab925b51): construction artifact, matched strata agree to 0.01%; no crates/ fix. DEC-K resolves via amendment v4; REQ-02 amended with the amendment branch. Close after session 5 confirms dispatch (REQ-03) and gates evaluate. CLOSED 2026-08-22 session 8: REQ-01 met under DEC-M amendment (construction cause, matched-stratum evidence, session-5 confirmation 1.000593); REQ-02 via DEC-K branch; REQ-03 arbitrated. Gates: cargo-ci/code-review/doc-review all passed (doc-review after DEC-M)."
     }
    ]
   },
@@ -516,6 +516,12 @@
    "issue": "50b47eae",
    "date": "2026-08-22",
    "decision": "DEC-L: session-5 verdict is an attributable FAIL at the two mul_fast dispatch cells (len=32 1.058269, len=64 1.050254; audit PASS on all preconditions; receipt-4's excursion cell arbitrated clean at 1.000593). Owner chose 'track rework (diagnose first)': no acceptance, no fix mandate, no new measured session until the cause is identified. Tracked as eb9b324c (gates cargo-ci/code-review/doc-review; 50b47eae -> eb9b324c -> fc976a80 wired, DAG transitively reduced). Receipt-5 stands as taken; no predeclared value moves."
+  },
+  {
+   "kind": "owner-decision",
+   "issue": "fc976a80",
+   "date": "2026-08-22",
+   "decision": "DEC-M: doc-review F1 found findings.md declaring REQ-01 met while the diagnosed cause is explicitly not a code/codegen property \u2014 REQ-01's premise was falsified by the diagnosis itself. Owner amended REQ-01 to admit the construction-property branch (either a code/codegen property of the candidate, or a measured property of the ensemble construction with matched-stratum evidence and arbitration confirmation); amendment text recorded in the criterion. doc-review re-run: PASS (0 findings). cargo-ci PASS, code-review PASS (0 findings). fc976a80 closed done."
   }
  ],
  "rework_counts": {
