@@ -298,8 +298,8 @@
      "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
      "classification": "implementation",
      "model": "opus (general-purpose worker)",
-     "status": "dispatched",
-     "notes": "DEC-L task. Depends on fc976a80 (closes first). Head start committed: dev/active/eb9b324c/diagnosis-brainstorm.md (lead + codex, 2026-08-22) \u2014 two-site diagnosis: Site A fixed per-call double dispatch (mul_fast wrapper -> mul_impl re-checks, ~85 ns at bit5=0, +2.4% at bit5=1), Site B multiplicative ~6% in parameterized mul_karatsuba_raw layout; response is 2-periodic in E (VA bit 5); E2 perf-counter discriminator and its protocol gap recorded; fix candidate (i) collapse double dispatch via one inner dispatcher taking resolved selectors. DISPATCHED 2026-08-22 session 8 after fc976a80 closed (DEC-M). Scope: E2 perf within protocol gap, Site-A fix (single inner dispatcher, resolved-selectors parameter), pilot 16-member translation ensemble of the fixed candidate, findings.md in fc976a80's register. No pinned-set measured session (owner approval required). Lead commit freeze on main while the worker's pilot lock session may be running."
+     "status": "done",
+     "notes": "DEC-L task. Depends on fc976a80 (closes first). Head start committed: dev/active/eb9b324c/diagnosis-brainstorm.md (lead + codex, 2026-08-22) \u2014 two-site diagnosis: Site A fixed per-call double dispatch (mul_fast wrapper -> mul_impl re-checks, ~85 ns at bit5=0, +2.4% at bit5=1), Site B multiplicative ~6% in parameterized mul_karatsuba_raw layout; response is 2-periodic in E (VA bit 5); E2 perf-counter discriminator and its protocol gap recorded; fix candidate (i) collapse double dispatch via one inner dispatcher taking resolved selectors. DISPATCHED 2026-08-22 session 8 after fc976a80 closed (DEC-M). Scope: E2 perf within protocol gap, Site-A fix (single inner dispatcher, resolved-selectors parameter), pilot 16-member translation ensemble of the fixed candidate, findings.md in fc976a80's register. No pinned-set measured session (owner approval required). Lead commit freeze on main while the worker's pilot lock session may be running. Review round 1: cargo-ci PASS, doc-review PASS, code-review FAIL (F1 blocking: dangling @/inv/canonical-abstraction citation, correct id convention-convergence; F2 advisory: mul_fast rustdoc opening still names FieldPoly::mul; F3 advisory: pilot parity table labels b0/b1 as slower/faster). Rework dispatched to the same worker via message 2026-08-22. Review round 2 (post-rework 619a9666): F1-F3 verified closed at HEAD by the lead; cargo-ci, code-review and doc-review all PASS at 619a9666 with 0 findings. Verdict PASS. REQ-01: four-region dispatch chain, +93.42 ns/call phase-averaged wrapper term (static + session-5 timing decomposition + symbol-level perf; front-end structure explicitly unresolved). REQ-02: fix dd3eee59 + 16-member pilot 0.997219/1.000586 at matched offsets, parity split 1.0800->0.9994. REQ-03: CI green, no measured session, tuning_profiles untouched. Closed done 2026-08-22."
     }
    ]
   }
@@ -542,7 +542,7 @@
   "9162956b": 0,
   "50b47eae": 0,
   "fc976a80": 0,
-  "eb9b324c": 0
+  "eb9b324c": 1
  },
  "surfaced_pitfalls": [
   {
