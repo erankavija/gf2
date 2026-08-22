@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Elaboration harness for JIT issue e6ea0dde.
 #
-# Answers "does the Lean that Aeneas run AX3 generated elaborate as generated?"
-# for dev/active/e6ea0dde/extraction/AX3_lean/. Regenerate the committed
-# receipt with:
+# Answers "does the Lean that Aeneas run AX3 generated elaborate, and what does
+# it take to get there?" for dev/active/e6ea0dde/extraction/AX3_lean/.
+# Regenerate the committed receipt with:
 #
 #   ./dev/active/e6ea0dde/elaboration/elaborate.sh \
 #     > dev/active/e6ea0dde/elaboration/elaborate.log 2>&1
@@ -16,18 +16,20 @@
 #
 # Three stages, each independently exit-coded:
 #
-#   1. THE DELIVERABLE. The generated files exactly as Aeneas wrote them. The
-#      only filesystem operation is the rename `FunsExternal_Template.lean` ->
+#   1. The generated files exactly as Aeneas wrote them. The only filesystem
+#      operation is the rename `FunsExternal_Template.lean` ->
 #      `FunsExternal.lean` that the template's own generated header instructs;
-#      the stage asserts byte-identity across that rename with `cmp`.
-#   2. DIAGNOSTIC ONLY, and outside this issue's contract. Stage 1 with
-#      scripts/fix-aeneas-dupes.py applied, to localise what stage 1 hits and
-#      to read off the axiom dependencies of the two target definitions. A tree
-#      repaired by a script is not an answer to "elaborates as generated"; this
-#      stage exists so the blocking defect is bounded, not to substitute for
-#      stage 1.
-#   3. DIAGNOSTIC ONLY. The proof sketch's lemma statements against the stage-2
-#      tree.
+#      the stage asserts byte-identity across that rename with `cmp`. It fails
+#      on the upstream duplicate clause-field emission, and that failure is
+#      evidence the record keeps.
+#   2. Stage 1 with scripts/fix-aeneas-dupes.py applied and nothing else — the
+#      repository's named, tracked repair for that emission (carve-out issue
+#      2e544a34), sanctioned for this extraction by owner decision DEC-R. This
+#      is the tree the issue's criteria are read against, and the tree whose
+#      axiom dependencies the stage prints. Its contrast against stage 1 is
+#      also what isolates the upstream defect, which is what the stage banner
+#      below means by "DIAGNOSTIC".
+#   3. The proof sketch's lemma statements against the stage-2 tree.
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
