@@ -32,9 +32,9 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-22T10:22:34.622487656Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-22T14:32:19.352345540Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "pending",
@@ -42,9 +42,9 @@
       "updated_by": null
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T10:22:34.891190824Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-22T14:34:45.091128925Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "fc976a80-d046-41ca-b97e-766bdf8c37ce",
@@ -57,5 +57,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Resolve the attributable regression at bit_backend/not_inplace/words=1 before the next measured session",
-  "updated_at": "2026-08-22T10:59:25.647719238Z"
+  "updated_at": "2026-08-22T14:34:45.091128925Z"
 }

@@ -1,0 +1,36 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T14:14:02.435231272Z",
+  "dependencies": [
+    "fc976a80-d046-41ca-b97e-766bdf8c37ce"
+  ],
+  "description": "Session 5 (receipt: dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-5.md) establishes the record's second attributable verdict under the pinned selector non-regression procedure, and it is FAIL at exactly two cells, both on the mul_fast dispatch path below the NTT threshold: polynomial/mul_fast/len=32 (mul_dispatch) at ratio 1.058269 and polynomial/mul_fast/len=64 (mul_dispatch) at 1.050254 against tau_cell = 1.05, with every attribution precondition passing and — new under amendment v4 (DEC-K) — the two arms' placement distributions verified equal before the timed window, so receipt-4's construction failure mode is excluded. The set geomean is 1.001087, the closest to 1 of the five sessions; receipt-4's excursion cell bit_backend/not_inplace/words=1 reads 1.000593, confirming fc976a80's construction-artifact diagnosis.\n\nOwner decision DEC-L (2026-08-22, epic escalation #26): diagnose first — no acceptance, no fix mandate, no new measured session until the cause is identified.\n\nContext the receipt records: the cutover multiplied the two cells' translation sensitivity — s_C/s_R = 6.514 at len=32 and 9.049 at len=64, candidate-side dispersion ~4 % where the reference reads ~0.5 % — so the excursion is a mean over 128 translations of the candidate's ordinary arrangement (15.9 and 13.5 layout standard errors from 1), not a tail draw. The direct schoolbook cell polynomial/mul/len=32 reads 0.981939 while mul_fast/len=32 (which dispatches to the same schoolbook path) reads 1.058269; the Karatsuba neighbours mul/len=64 (1.046118), mul/len=256 (1.046692) and mul/len=33 (1.019216) sit just under the bar with elevated s_C/s_R (1.7/3.7/4.0). Receipt-4's E+G ensemble (K=256) read the same two cells inside tolerance (1.031653, 1.024143) over bit-identical compiled source — the two ensembles average over different layout populations, and the 2.6 % gap is recorded in receipt 5 as arrangement dependence at these cells. Single-build draws read them anywhere from 0.997 to 1.077 across the record (receipt-2 failed both at ~1.075, unattributably). len=64 clears the bar by 0.066 of its own layout standard error; len=32 by 2.20.\n\n## Success Criteria\n\n- [hard] REQ-01: The cause of the pooled-ensemble excursion at polynomial/mul_fast/len=32 and len=64 is identified and stated with evidence tying it to a specific property of the candidate revision — code, codegen, or a measured code-placement interaction on the mul_fast dispatch path — distinguishing the mean-cost excursion from the 6.5x/9x translation-sensitivity increase, and explaining why the direct mul cells at the same lengths do not carry the same mean excursion.\n- [hard] REQ-02: Either a fix lands in crates/ such that the two cells' regression is credibly removed (bench evidence on at least a pilot-scale translation ensemble under the standing lock discipline), or the owner explicitly accepts the excursion and amends the epic's REQ-04 disposition, or an owner-approved decision routes arbitration to a next measured session under the standing procedure; no predeclared value of the frozen procedure moves in any case.\n- [hard] REQ-03: Any change leaves the other thirty-two pinned cells' behavior intact under cargo-ci, and no measured session of the pinned set runs without owner approval (v1 §7.5: re-running until the comparison agrees is forbidden).\n",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Two-site diagnosis brainstorm (lead + codex, 2026-08-22)",
+      "path": "dev/active/eb9b324c/diagnosis-brainstorm.md"
+    }
+  ],
+  "first_ready_at": "2026-08-22T14:14:02.435231272Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "eb9b324c-d9d3-425d-93a6-d0253033a710",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-04",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
+  "updated_at": "2026-08-22T14:31:02.357781532Z"
+}
