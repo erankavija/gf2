@@ -1,7 +1,7 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 18,
+  "current_wave": 19,
   "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec \u2014 its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it \u2014 budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' \u2014 it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex \u2014 same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run. AGENT-LIVENESS TRAP (2026-08-20, cost ~15 min and one wasted dispatch pair): ListAgents reported 'No reachable agents' while two dispatched agents were provably alive and mid-task, and a clean `git status` 80 seconds before an agent's first write looked identical to a dead agent. Acting on those two signals, the lead re-dispatched duplicates over live workers; only the duplicate doc agent's own refusal to write on a mismatched premise prevented two agents racing on the same two paths. Do NOT treat ListAgents emptiness or a quiet tree as death. A dispatched agent's first write can lag its spawn by many minutes while it reads the spec and the design. Probe artifacts and .jit/events.jsonl over a window before concluding anything, and if duplicates are ever spawned, TaskStop them immediately and verify no leakage before continuing. The lead's initial theory that ScheduleWakeup tore the agents down was WRONG and was retracted.",
   "waves": [
     {
@@ -316,6 +316,38 @@
           "notes": "Session 6 read DRIVER: COMPLETE at 18:30:06Z. Comparison RESULT: PASS (geomean 0.994048, all 34 cells inside tau_cell; session-5 verdict cells read 1.000966/0.999108) and layout-audit RESULT: PASS on all preconditions. Receipt-6 committed at 3a6a0b09 with CSVs, TSVs and s6-session record, all jit-doc-linked. doc-review re-run PASS (prior F1 answered by the passing receipt, F2 chain complete: fc976a80 and eb9b324c done). 50b47eae closed 2026-08-22; lead review PASS, 0 rework this wave."
         }
       ]
+    },
+    {
+      "wave_number": 19,
+      "issues": [
+        {
+          "id": "a6636671",
+          "short_id": "a6636671",
+          "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "DEC-P. No consumer remains (lead grep). Gates cargo-ci/code-review/doc-review."
+        },
+        {
+          "id": "e6ea0dde",
+          "short_id": "e6ea0dde",
+          "title": "Record a clean-exit extraction of the loop-free generic operations",
+          "classification": "research",
+          "model": "opus",
+          "status": "planned",
+          "notes": "DEC-Q. Pinned Charon/Aeneas pair, MSRV; exclude pow at invocation boundary; verbatim elaboration. Gates cargo-ci/research-review/doc-review."
+        },
+        {
+          "id": "7d824b2f",
+          "short_id": "7d824b2f",
+          "title": "Design the follow-on selector migration to the tuning profile",
+          "classification": "design",
+          "model": "opus",
+          "status": "planned",
+          "notes": "DEC-O. Additive amendment to 220cab0b design + implementation breakdown for waves 20+. Gate doc-review."
+        }
+      ]
     }
   ],
   "created_during_execution": [
@@ -542,6 +574,24 @@
       "issue": "50b47eae",
       "date": "2026-08-22",
       "decision": "DEC-N: owner approves measured session 6 under the standing v4 procedure on the fixed revision (eb9b324c's dd3eee59+619a9666 chain), and directs the session handoff be written. Session-6 pipeline authored under /tmp/gf2-ens6 from the committed session-5 scripts (byte-equivalent modulo path/name swaps, verified by round-trip diff); launched detached 2026-08-22T16:39:44Z, driver PID 2036725 (PPID 1, own SID). Verdict routing per v1 \u00a77 as written; watch items: relocated phase sensitivity at mul/len=16 and mul/len=32, Karatsuba-family cells."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "6dc81018/REQ-03",
+      "date": "2026-08-22",
+      "decision": "DEC-O via AskUserQuestion (holistic-review F1): REQ-03 stands as written \u2014 scope EXPANDS. Every classification \u00a74.2 profile-scoped follow-on selector (matrix/transpose, M4RM, SoA, inversion, PLE/triangular, GEMM, FieldVec chunk) migrates to the versioned tuning profile inside this epic. Design task 7d824b2f produces the additive design amendment and the implementation breakdown; implementation waves follow it."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "a6636671",
+      "date": "2026-08-22",
+      "decision": "DEC-P via AskUserQuestion (holistic-review F2): a6636671 (removal of the deprecated Kernel trait, ScalarBackend bridge impl and select_kernel()) executes NOW, pulled into this epic's delivery (cross-epic approval; it stays a child of 86b9c719 too \u2014 closing it satisfies both). Lead verified no consumer remains. Gates cargo-ci/code-review/doc-review added; edge 6dc81018 \u2192 a6636671 wired."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "6dc81018/REQ-05",
+      "date": "2026-08-22",
+      "decision": "DEC-Q via AskUserQuestion (holistic-review F3): REQ-05 is read strictly \u2014 the recorded Charon/Aeneas invocation must exit 0 on the MSRV pinned pair and its verbatim generated output must elaborate; post-hoc deletion of the poisoned pow chain does not demonstrate success. The falsified pow item is excluded at the invocation boundary instead. New task e6ea0dde delivers the clean-exit record; 34d85cb9/1ac74567 records gain additive amendments."
     }
   ],
   "rework_counts": {
@@ -573,7 +623,7 @@
     {
       "issue": "6dc81018/REQ-05",
       "finding": "REQ-05 requires proof obligations factored as trait-level algebraic laws plus per-backend representation refinement; no wave-plan child delivers a proof-sketch \u2014 spike record names follow-up targets (dev/active/34d85cb9/findings.md:817). Must be reconciled at epic completion: remediation task or escalation.",
-      "disposition": "CLOSED at epic completion 2026-08-22: REQ-05 as amended by DEC-A maps to 34d85cb9 (extraction of the loop-free FiniteFieldExt::square/frobenius class succeeds on the MSRV toolchain; R8b invocation recorded) plus 1ac74567 (proof-sketch.md factors the obligations as trait-level Lean lemma statements over the FiniteField dictionary plus a separate per-backend representation-refinement section, with elaboration evidence; doc-review passed). Discharge of the lemmas is follow-on outside the epic per the approved issue scope."
+      "disposition": "CLOSED at epic completion 2026-08-22: REQ-05 as amended by DEC-A maps to 34d85cb9 (extraction of the loop-free FiniteFieldExt::square/frobenius class succeeds on the MSRV toolchain; R8b invocation recorded) plus 1ac74567 (proof-sketch.md factors the obligations as trait-level Lean lemma statements over the FiniteField dictionary plus a separate per-backend representation-refinement section, with elaboration evidence; doc-review passed). Discharge of the lemmas is follow-on outside the epic per the approved issue scope. REOPENED 2026-08-22 by holistic-review F3 + DEC-Q: the mapping was rejected \u2014 the recorded invocation exits 1 and only a manually reduced tree elaborates. Delivery moves to task e6ea0dde."
     },
     {
       "issue": "e8fe47f5",
@@ -624,6 +674,11 @@
       "issue": "50b47eae",
       "finding": "Against the control build rather than the baseline, six further cells exceed 1.05 \u2014 five bit-backend and one polynomial \u2014 all of which PASS against the baseline because the baseline binary is itself slower there. This is the masking effect plan \u00a74's falsification record predicted for exactly this comparison.",
       "disposition": "Recorded in the receipt's falsification section. No predeclared rule reads the post-against-control pair, so it changes no verdict, but c42720ce's rework weighs it: the two failing cells are not the only cells where the cutover's cost is visible."
+    },
+    {
+      "issue": "6dc81018",
+      "finding": "holistic-review round 1 (2026-08-22, commit 45708fe4) FAILED with three blocking findings: F1 REQ-03 pilot-only cutover without a recorded narrowing; F2 deprecated Kernel surface live with its cutover parked out-of-epic (a6636671); F3 REQ-05 extraction record shows exit 1 + manual reduction.",
+      "disposition": "All three escalated same session \u2192 DEC-O (scope expansion, task 7d824b2f + follow-on waves), DEC-P (a6636671 pulled in, wave 19), DEC-Q (task e6ea0dde, wave 19). Re-run holistic-review after all waves complete."
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
