@@ -5,7 +5,16 @@
   "created_at": "2026-08-22T20:16:02.657925063Z",
   "dependencies": [],
   "description": "Produce a committed extraction record in which the Charon/Aeneas toolchain run for the loop-free generic field operations completes cleanly and its generated output elaborates verbatim.\n\n## Background\n\nThe spike record for trait-generic extraction (dev/active/34d85cb9/) documents an Aeneas invocation that exits 1: a blanket-default pow item the translator cannot handle poisons the run, and the generated Funs.lean elaborates only after the pow chain is deleted by hand. The proof-obligation sketch (dev/active/1ac74567/) elaborates its lemma statements against that manually reduced tree. The epic owner ruled that this does not demonstrate a successful extraction: the invocation itself must exit 0 and the output must elaborate as generated. The falsified pow item must therefore be excluded at the invocation boundary — for example by marking it opaque to the translation — not by editing generated output afterwards. The toolchain stays on the pinned Charon/Aeneas pair and the workspace MSRV; upstream migration is tracked separately.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed extraction record shows the Charon and Aeneas invocations for the FiniteFieldExt::square / frobenius class each completing with exit code 0 on the workspace MSRV toolchain with the pinned toolchain pair, with the falsified pow default excluded at the invocation boundary rather than by edits to generated output.\n- [hard] REQ-02: The generated Lean output elaborates with exit code 0 after at most the committed fix-aeneas-dupes.py normalization — the named, tracked repair for the upstream duplicate clause-field emission (carve-out issue 2e544a34), sanctioned for this class by owner decision DEC-R (2026-08-23) — with no manual and no other post-generation edits, and the axiom dependencies of the extracted square and frobenius definitions are recorded.\n- [hard] REQ-03: The proof-obligation sketch's lemma statements elaborate against the newly generated tree, and the prior spike and sketch records gain additive amendments citing the new record, changing no pre-existing line.\n\n## Notes\n\n- The duplicate-record-field emission is adjudicated: DEC-R sanctions the committed fix-aeneas-dupes.py normalization for it. Any OTHER criterion-blocking upstream defect: preserve the blocking evidence in the record and report it as a blocker instead of substituting a workaround.\n- All extraction inputs, flags, logs, and generated files belong in the issue's dev/active area with a reproducible driver script.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Clean-exit extraction record (DEC-R)",
+      "path": "dev/active/e6ea0dde/record.md"
+    }
+  ],
+  "done_at": "2026-08-22T21:49:37.987142334Z",
   "first_ready_at": "2026-08-22T20:16:02.657925063Z",
   "gates_required": [
     "cargo-ci",
@@ -19,13 +28,13 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T20:16:32.326742826Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-22T21:49:12.766685993Z",
+      "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-08-22T21:12:51.791085893Z",
+      "status": "passed",
+      "updated_at": "2026-08-22T21:44:34.026334650Z",
       "updated_by": "auto:executor"
     }
   },
@@ -37,7 +46,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Record a clean-exit extraction of the loop-free generic operations",
-  "updated_at": "2026-08-22T21:23:10.992546044Z"
+  "updated_at": "2026-08-22T21:49:37.987142334Z"
 }

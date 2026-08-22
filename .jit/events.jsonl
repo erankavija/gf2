@@ -8958,3 +8958,10 @@
 {"assignee":"agent:worker","id":"2ed916e3-ed3b-4928-aa65-db87746f35af","issue_id":"856f1b48-e518-4329-889f-e2589629622d","timestamp":"2026-08-22T21:31:13.012516344Z","type":"issue_claimed"}
 {"from":"ready","id":"bde68518-664d-4be7-b0aa-61db7d60448c","issue_id":"7d7c647c-bcf4-4333-bffb-8b92f515d544","timestamp":"2026-08-22T21:31:20.701191083Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"f7ae2168-9a58-4c63-ab67-ce67ea17709b","issue_id":"7d7c647c-bcf4-4333-bffb-8b92f515d544","timestamp":"2026-08-22T21:31:20.701191083Z","type":"issue_claimed"}
+{"gate_key":"research-review","id":"ab143347-1dc0-4444-82a7-04547c2cb721","issue_id":"e6ea0dde-185f-4a0f-91fe-13cc6ac32648","timestamp":"2026-08-22T21:39:17.383173120Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"8f4d5f05-cfdb-497c-8be9-e53587cf5200","issue_id":"e6ea0dde-185f-4a0f-91fe-13cc6ac32648","timestamp":"2026-08-22T21:44:34.026334650Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"663f8aaa-c86f-4b4e-818c-9cd5d528ab26","issue_id":"e6ea0dde-185f-4a0f-91fe-13cc6ac32648","timestamp":"2026-08-22T21:47:15.747990357Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"2055b339-1cc3-4994-bfb6-89e3e2a9eabc","issue_id":"e6ea0dde-185f-4a0f-91fe-13cc6ac32648","timestamp":"2026-08-22T21:47:28.094426404Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"e5bd8814-8568-40c4-859a-302ba35d0ce4","issue_id":"e6ea0dde-185f-4a0f-91fe-13cc6ac32648","timestamp":"2026-08-22T21:49:12.766685993Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"b26bcc04-4f71-4f45-be9b-51e2899742ec","issue_id":"e6ea0dde-185f-4a0f-91fe-13cc6ac32648","timestamp":"2026-08-22T21:49:37.987142334Z","to":"done","type":"issue_state_changed"}
+{"id":"2efbcc9b-f018-40ba-b19f-b3cac30394bc","issue_id":"e6ea0dde-185f-4a0f-91fe-13cc6ac32648","timestamp":"2026-08-22T21:49:37.987142334Z","type":"issue_completed"}
