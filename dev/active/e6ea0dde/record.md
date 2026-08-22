@@ -285,7 +285,10 @@ whose result type is the `Characteristic` parameter. Both the `Clone Self`
 clause and the `Characteristic` parameter are therefore load-bearing, and they
 are two of the three occurrences of the colliding name.
 
-The probe set is chosen by enumeration rather than by search. On the pinned
+The probe set is chosen by enumeration rather than by search, and the
+enumeration is stated here retrospectively: it was assembled while probing,
+not predeclared before Q1's result was observed. What bounds it is the option
+space itself, which is closed and inspectable. On the pinned
 build, `charon cargo --help` exposes four classes of option that could reach a
 trait declaration's clause list: item selection (`--include`, `--opaque`,
 `--exclude`), clause-stripping passes (`--remove-adt-clauses`,
@@ -369,7 +372,7 @@ else: no manual edit, no second post-generation pass, no deletion of any
 generated item. Their contrast against stage 1 is also what isolates the
 upstream defect, which is why the harness prints them as its diagnostic stages.
 
-The pass rewrites eight field names in `Types.lean` and changes `Funs.lean` not
+The pass rewrites seven field names in `Types.lean` and changes `Funs.lean` not
 at all; the full diff is in `elaboration/elaborate.log`. On that tree:
 
 - `Types.lean`, `FunsExternal.lean` and `Funs.lean` each elaborate with exit 0.
@@ -397,11 +400,14 @@ at all; the full diff is in `elaboration/elaborate.log`. On that tree:
 - The proof sketch's lemma statements elaborate against this tree with exit 0,
   the nine `declaration uses 'sorry'` warnings being the deliberately unproved
   bodies. `elaboration/Statements.lean` differs from
-  `dev/active/1ac74567/elaboration/statements.lean` in exactly two respects: the
-  generated module prefix, which follows the LLBC file name and is `X3Gf2Core`
-  here rather than `R8bGf2Core`; and one docstring citation in L4, readdressed
+  `dev/active/1ac74567/elaboration/statements.lean` in two respects that touch
+  elaborated content: the generated module prefix, which follows the LLBC file
+  name and is `X3Gf2Core` here rather than `R8bGf2Core`; and one docstring
+  citation in L4, readdressed
   from `A8b_lean/Funs.lean:114` to `AX3_lean/Funs.lean:47`, the line of the
-  `checked_mul` it describes in the tree it now elaborates against. Every lemma
+  `checked_mul` it describes in the tree it now elaborates against. The file's
+  leading comment block is additionally rewritten to describe this record's
+  tree and staging; it elaborates to nothing. Every lemma
   statement is byte-identical, and every dictionary field the statements project
   (`corecloneCloneInst`, `coreopsarithMulInst`, `characteristic`, `pow`) keeps
   its name.
