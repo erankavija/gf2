@@ -88,7 +88,7 @@ for c in CELLS:
           f"\t{cp / rp:.6f}\t{pp / rp:.6f}")
 
 print()
-print("### B. Parity split (slower phase / faster phase), same window")
+print("### B. Fetch-block phase ratio (bit5=0 over bit5=1), same window")
 print()
 print("cell\tref5 b0/b1\tcand5 b0/b1\tpilot b0/b1")
 for c in CELLS:
