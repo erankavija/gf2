@@ -335,8 +335,8 @@
           "title": "Record a clean-exit extraction of the loop-free generic operations",
           "classification": "research",
           "model": "opus",
-          "status": "rework-1",
-          "notes": "DEC-Q. Pinned Charon/Aeneas pair, MSRV; exclude pow at invocation boundary; verbatim elaboration. Gates cargo-ci/research-review/doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-e6ea0dde (base f9befb21), background. 2026-08-23: worker achieved REQ-01 (exit-0 chain, --exclude pow) but verbatim elaboration BLOCKED upstream (six duplicate clause-field names; probes Q1-Q6 + Aeneas source prove no invocation-boundary option avoids it, upgrade included). DEC-R sanctions fix-aeneas-dupes.py; criteria amended; rework-1 dispatched to worker (reframe + research-review F3 citekeys/F4 host/F5 probe-plan). research-review currently FAIL (F1-F5); re-run after rework."
+          "status": "done",
+          "notes": "DEC-Q. Pinned Charon/Aeneas pair, MSRV; exclude pow at invocation boundary; verbatim elaboration. Gates cargo-ci/research-review/doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-e6ea0dde (base f9befb21), background. 2026-08-23: worker achieved REQ-01 (exit-0 chain, --exclude pow) but verbatim elaboration BLOCKED upstream (six duplicate clause-field names; probes Q1-Q6 + Aeneas source prove no invocation-boundary option avoids it, upgrade included). DEC-R sanctions fix-aeneas-dupes.py; criteria amended; rework-1 dispatched to worker (reframe + research-review F3 citekeys/F4 host/F5 probe-plan). research-review currently FAIL (F1-F5); re-run after rework. DONE 2026-08-23: rework-1 (b437e755) merged; DEC-R framing, six registry-citation occurrences, live host provenance, retrospective probe-plan label, seven-rename trace. cargo-ci/research-review/doc-review all PASS. Lead review PASS; worker rework 1. REQ-05's clean-exit extraction chain of record is dev/active/e6ea0dde/record.md (AX3 tree)."
         },
         {
           "id": "7d824b2f",
