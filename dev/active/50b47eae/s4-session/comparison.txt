@@ -1,0 +1,38 @@
+comparison: baseline=/home/vkaskivuo/Projects/gf2/dev/benchmarks/tuning_profiles/2026-08-22-ensemble-reference-arm-4.csv candidate=/home/vkaskivuo/Projects/gf2/dev/benchmarks/tuning_profiles/2026-08-22-ensemble-candidate-arm-4.csv per_cell_tolerance=0.050000 set_tolerance=0.020000
+cell arm baseline_ns_per_call candidate_ns_per_call ratio verdict
+bit_backend/and_inplace/words=1 scalar 3.696886 3.732036 1.009508 PASS
+bit_backend/and_inplace/words=8 simd 4.631015 4.630038 0.999789 PASS
+bit_backend/not_inplace/words=1 scalar 2.436132 2.679814 1.100028 FAIL
+bit_backend/not_inplace/words=8 simd 4.002874 4.000715 0.999461 PASS
+bit_backend/or_inplace/words=1 scalar 3.842730 3.783325 0.984541 PASS
+bit_backend/or_inplace/words=8 simd 4.822250 4.859593 1.007744 PASS
+bit_backend/popcount/words=1 scalar 1.855660 1.849301 0.996574 PASS
+bit_backend/popcount/words=8 simd 3.546258 3.554702 1.002381 PASS
+bit_backend/xor_inplace/words=1 scalar 3.092973 3.005022 0.971564 PASS
+bit_backend/xor_inplace/words=16 simd 4.296439 4.271128 0.994109 PASS
+bit_backend/xor_inplace/words=4 scalar 3.933939 3.797599 0.965342 PASS
+bit_backend/xor_inplace/words=64 simd 7.713593 7.735955 1.002899 PASS
+bit_backend/xor_inplace/words=7 scalar 4.614865 4.550588 0.986072 PASS
+bit_backend/xor_inplace/words=8 simd 3.798054 3.780797 0.995456 PASS
+polynomial/batch_evaluate/coeffs=2048/points=2048 horner 14420575.943002 14432268.054011 1.000811 PASS
+polynomial/batch_evaluate/coeffs=4095/points=4095 horner 57724859.243164 57717377.566406 0.999870 PASS
+polynomial/batch_evaluate/coeffs=4096/points=4096 subproduct 27199987.327069 27060636.084649 0.994877 PASS
+polynomial/batch_evaluate_auto/coeffs=2048/points=2048 horner 14422312.593980 14431288.076074 1.000622 PASS
+polynomial/batch_evaluate_auto/coeffs=4095/points=4095 horner 57619219.050781 57636073.267578 1.000293 PASS
+polynomial/batch_evaluate_auto/coeffs=4096/points=4096 subproduct 19397940.383540 19195561.301464 0.989567 PASS
+polynomial/div_rem_auto/dividend=4096/divisor=1024 schoolbook 3986938.215122 3933380.484513 0.986567 PASS
+polynomial/div_rem_auto/dividend=4096/divisor=2047 schoolbook 5303824.199079 5332465.676879 1.005400 PASS
+polynomial/div_rem_auto/dividend=4096/divisor=2048 newton 2340557.005219 2330134.306679 0.995547 PASS
+polynomial/div_rem_auto/dividend=8192/divisor=4096 newton 5164814.022583 5145958.670558 0.996349 PASS
+polynomial/mul/len=16 schoolbook 317.800785 326.001257 1.025804 PASS
+polynomial/mul/len=256 karatsuba 37837.699052 38580.799476 1.019639 PASS
+polynomial/mul/len=32 schoolbook 1222.377493 1240.247612 1.014619 PASS
+polynomial/mul/len=33 karatsuba 1170.060773 1185.485372 1.013183 PASS
+polynomial/mul/len=64 karatsuba 3964.058033 4029.729110 1.016567 PASS
+polynomial/mul_fast/len=128 ntt 12117.924247 12022.967145 0.992164 PASS
+polynomial/mul_fast/len=32 mul_dispatch 1230.476360 1269.424263 1.031653 PASS
+polynomial/mul_fast/len=512 ntt 54526.927182 54104.609497 0.992255 PASS
+polynomial/mul_fast/len=64 mul_dispatch 3917.148760 4011.720142 1.024143 PASS
+polynomial/mul_fast/len=65 ntt 12120.819842 12032.416184 0.992706 PASS
+geometric_mean 1.002950 PASS
+RESULT: FAIL

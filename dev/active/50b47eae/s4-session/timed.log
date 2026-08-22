@@ -1,0 +1,14 @@
+2026-08-22T08:41:29Z timed phase start
+2026-08-22T08:41:29Z pwd=/home/vkaskivuo/Projects/gf2
+2026-08-22T08:41:29Z affinity=Cpus_allowed_list:6-11
+2026-08-22T08:41:29Z niceness=5
+2026-08-22T08:41:29Z loadavg=0.08 0.12 0.10 1/524 1097138
+2026-08-22T08:41:29Z locks=
+2026-08-22T08:41:29Z lockfile_stat=dev=2d inode=39210
+2026-08-22T08:41:29Z main_head=26df493968883d6dbf653d2e2fc73ef3bc0f3074 main_status_lines=0
+2026-08-22T08:41:29Z ctrl_head=0c072d73ca65cf50af98b8c4b61ed876f8218df6 ctrl_status_lines=0
+2026-08-22T08:41:29Z governor=powersave,powersave,powersave,powersave,powersave,powersave,
+2026-08-22T10:15:39Z timed phase end
+2026-08-22T10:15:39Z loadavg=1.00 1.02 1.00 1/921 1126302
+2026-08-22T10:15:39Z main_head=26df493968883d6dbf653d2e2fc73ef3bc0f3074 main_status_lines=0
+2026-08-22T10:15:39Z ctrl_head=0c072d73ca65cf50af98b8c4b61ed876f8218df6 ctrl_status_lines=0

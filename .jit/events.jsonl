@@ -8764,3 +8764,9 @@
 {"gate_key":"code-review","id":"a2d2ecac-7887-4f18-be21-bcea2a23c021","issue_id":"9162956b-9891-49c8-81f5-80ba066ba532","timestamp":"2026-08-21T20:00:59.235326998Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"b5f90c8b-7d7d-4bc3-b497-2d89194362d4","issue_id":"9162956b-9891-49c8-81f5-80ba066ba532","timestamp":"2026-08-21T20:01:22.318519931Z","to":"done","type":"issue_state_changed"}
 {"id":"7d21b56a-f805-45b5-b7ea-393e150eb5f0","issue_id":"9162956b-9891-49c8-81f5-80ba066ba532","timestamp":"2026-08-21T20:01:22.318519931Z","type":"issue_completed"}
+{"id":"a1713bfb-ea2b-4fd5-9003-de44df81f374","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","priority":"normal","timestamp":"2026-08-22T10:22:23.398982225Z","title":"Resolve the attributable regression at bit_backend/not_inplace/words=1 before the next measured session","type":"issue_created"}
+{"gate_key":"cargo-ci","id":"14fba0ed-e2fd-484c-9ff1-4969b61b1f22","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","timestamp":"2026-08-22T10:22:34.622487656Z","type":"gate_added"}
+{"gate_key":"code-review","id":"9dcad3c5-fa83-419c-8bec-b82014de91e8","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","timestamp":"2026-08-22T10:22:34.774122012Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"9c798e5b-7c58-4860-a0e6-f4278f85c05f","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","timestamp":"2026-08-22T10:22:34.891190824Z","type":"gate_added"}
+{"fields":["dependencies"],"id":"defa51fd-6db7-4ef7-9999-63ffc156a97d","issue_id":"50b47eae-05c8-4704-91c0-ac0816a76496","timestamp":"2026-08-22T10:22:39.292671602Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["description"],"id":"c2215e56-e781-4eb1-b1e5-a50b2d620623","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","timestamp":"2026-08-22T10:27:11.586071284Z","type":"issue_updated","updated_by":"issue-update"}

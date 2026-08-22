@@ -1,0 +1,105 @@
+2026-08-21T21:12:05Z continue-driver start pid=754889
+2026-08-21T22:04:05Z build phase end marker: 2026-08-21T22:03:51Z
+== arm ref: 256 ledger rows ==
+[ok] no member failed to build twice
+[ok] 256 members: 256
+[ok] member indices 0..255 exactly once
+[ok] E(j)=floor(j/2) and G(j)=(floor(j/4)+j) mod 2 at every member: []
+[ok] 256 distinct binaries: 256 distinct
+[ok] 256 distinct .text page offsets: 256 distinct
+[ok] realized .text address is base(G) + 32*E at every member: base(0)=0x1cbc0 base(1)=0x1f5d0
+[ok] halves hold 128 members each
+[ok] each half holds exactly 32 members at each of the 4 realized cache-line offsets: offsets=[0, 16, 32, 48] even={0: 32, 16: 32, 32: 32, 48: 32} odd={0: 32, 16: 32, 32: 32, 48: 32}
+[ok] the two multisets of (address>>6) mod 64 are equal
+[ok] each half covers all 64 L1i sets exactly twice: distinct sets even=64 counts=[2]
+[ok] one member per half at each of the 128 levels of E
+[ok] 64 members per half at each of the 2 levels of G: even={0: 64, 1: 64} odd={1: 64, 0: 64}
+   binary sizes 726808..798536 bytes (+9.87 %)
+   build wall-clock 13..15 s, total 3553 s
+   members needing a retry: none
+RESULT: PASS
+== arm cand: 256 ledger rows ==
+[ok] no member failed to build twice
+[ok] 256 members: 256
+[ok] member indices 0..255 exactly once
+[ok] E(j)=floor(j/2) and G(j)=(floor(j/4)+j) mod 2 at every member: []
+[ok] 256 distinct binaries: 256 distinct
+[FAIL] 256 distinct .text page offsets: 128 distinct
+[FAIL] realized .text address is base(G) + 32*E at every member: base(0)=0x1e8a0 base(1)=0x211e0
+[ok] halves hold 128 members each
+[ok] each half holds exactly 64 members at each of the 2 realized cache-line offsets: offsets=[0, 32] even={0: 64, 32: 64} odd={0: 64, 32: 64}
+[ok] the two multisets of (address>>6) mod 64 are equal
+[ok] each half covers all 64 L1i sets exactly twice: distinct sets even=64 counts=[2]
+[ok] one member per half at each of the 128 levels of E
+[ok] 64 members per half at each of the 2 levels of G: even={0: 64, 1: 64} odd={1: 64, 0: 64}
+   binary sizes 793248..897120 bytes (+13.09 %)
+   build wall-clock 12..14 s, total 3391 s
+   members needing a retry: none
+RESULT: FAIL ['256 distinct .text page offsets', 'realized .text address is base(G) + 32*E at every member']
+2026-08-21T22:04:05Z DRIVER: ABORTED construction verification FAILED for arm cand (see log above)
+2026-08-22T08:41:29Z continue-driver start pid=1097090
+2026-08-22T08:41:29Z build phase end marker: 2026-08-21T22:03:51Z
+== arm ref: 256 ledger rows ==
+[ok] no member failed to build twice
+[ok] 256 members: 256
+[ok] member indices 0..255 exactly once
+[ok] E(j)=floor(j/2) and G(j)=(floor(j/4)+j) mod 2 at every member: []
+[ok] 256 distinct binaries: 256 distinct
+   G=0: 128 distinct page offsets
+   G=1: 128 distinct page offsets
+[ok] 128 distinct .text page offsets within each level of G
+[ok] 256 distinct (page offset, G) placements: 256 distinct
+[ok] page offset is (P(G) + 32*E) mod 4096 at every member: P(0)=3008 P(1)=1488
+   whole-page displacements (member, pages): none
+[ok] halves hold 128 members each
+[ok] each half holds exactly 32 members at each of the 4 realized cache-line offsets: offsets=[0, 16, 32, 48] even={0: 32, 16: 32, 32: 32, 48: 32} odd={0: 32, 16: 32, 32: 32, 48: 32}
+[ok] the two multisets of (address>>6) mod 64 are equal
+[ok] each half covers all 64 L1i sets exactly twice: distinct sets even=64 counts=[2]
+[ok] one member per half at each of the 128 levels of E
+[ok] 64 members per half at each of the 2 levels of G: even={0: 64, 1: 64} odd={1: 64, 0: 64}
+   binary sizes 726808..798536 bytes (+9.87 %)
+   build wall-clock 13..15 s, total 3553 s
+   members needing a retry: none
+RESULT: PASS
+== arm cand: 256 ledger rows ==
+[ok] no member failed to build twice
+[ok] 256 members: 256
+[ok] member indices 0..255 exactly once
+[ok] E(j)=floor(j/2) and G(j)=(floor(j/4)+j) mod 2 at every member: []
+[ok] 256 distinct binaries: 256 distinct
+   G=0: 128 distinct page offsets
+   G=1: 128 distinct page offsets
+[ok] 128 distinct .text page offsets within each level of G
+[ok] 256 distinct (page offset, G) placements: 256 distinct
+[ok] page offset is (P(G) + 32*E) mod 4096 at every member: P(0)=2208 P(1)=480
+   whole-page displacements (member, pages): [(227, -1)]
+[ok] halves hold 128 members each
+[ok] each half holds exactly 64 members at each of the 2 realized cache-line offsets: offsets=[0, 32] even={0: 64, 32: 64} odd={0: 64, 32: 64}
+[ok] the two multisets of (address>>6) mod 64 are equal
+[ok] each half covers all 64 L1i sets exactly twice: distinct sets even=64 counts=[2]
+[ok] one member per half at each of the 128 levels of E
+[ok] 64 members per half at each of the 2 levels of G: even={0: 64, 1: 64} odd={1: 64, 0: 64}
+   binary sizes 793248..897120 bytes (+13.09 %)
+   build wall-clock 12..14 s, total 3391 s
+   members needing a retry: none
+RESULT: PASS
+2026-08-22T08:41:29Z construction verified for both arms
+2026-08-22T08:41:29Z host idle, load=0.08
+2026-08-22T08:41:29Z preflight: main_head=26df493968883d6dbf653d2e2fc73ef3bc0f3074 ctrl_head=0c072d73ca65cf50af98b8c4b61ed876f8218df6 both clean
+nice: cannot set niceness: Permission denied
+2026-08-22T10:15:39Z timed phase complete
+2026-08-22T10:15:39Z outputs copied; manifest at /home/vkaskivuo/Projects/gf2/dev/active/50b47eae/s4-session/sha256-manifest.txt
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-core)
+    Finished `bench` profile [optimized] target(s) in 6.70s
+     Running benches/selector_non_regression.rs (target/release/deps/selector_non_regression-29aa14ae36599828)
+Error: "comparison failed"
+error: bench failed, to rerun pass `-p gf2-core --bench selector_non_regression`
+
+Caused by:
+  process didn't exit successfully: `/home/vkaskivuo/Projects/gf2/target/release/deps/selector_non_regression-29aa14ae36599828 --compare /home/vkaskivuo/Projects/gf2/dev/benchmarks/tuning_profiles/2026-08-22-ensemble-reference-arm-4.csv --against /home/vkaskivuo/Projects/gf2/dev/benchmarks/tuning_profiles/2026-08-22-ensemble-candidate-arm-4.csv --bench` (exit status: 1)
+2026-08-22T10:15:46Z comparison rc=1 (output: /home/vkaskivuo/Projects/gf2/dev/active/50b47eae/s4-session/comparison.txt)
+    Finished `bench` profile [optimized] target(s) in 0.04s
+     Running benches/selector_non_regression.rs (target/release/deps/selector_non_regression-29aa14ae36599828)
+2026-08-22T10:15:46Z layout-audit rc=0 (output: /home/vkaskivuo/Projects/gf2/dev/active/50b47eae/s4-session/layout-audit.txt)
+2026-08-22T10:15:46Z DRIVER: COMPLETE
