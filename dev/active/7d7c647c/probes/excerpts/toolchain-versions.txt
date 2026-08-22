@@ -1,0 +1,12 @@
+# Toolchain identities for JIT issue 7d7c647c, captured at run time.
+# Reproduce with: dev/active/7d7c647c/probes/versions.sh
+# Captured: 2026-08-23T00:56:18+03:00
+
+RUSTUP_TOOLCHAIN=1.95.0 cargo --version: cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+RUSTUP_TOOLCHAIN=1.95.0 rustc --version: rustc 1.95.0 (59807616e 2026-04-14)
+charon version:                         0.1.217
+charon toolchain-version:               nightly-2026-06-01
+aeneas -version:                        aeneas 5220259c
+proofs/lean-toolchain:                  leanprover/lean4:v4.30.0-rc2
+crates/gf2-core rust-version:           rust-version = "1.95"
+worktree HEAD:                          9ebcb29ff1ff583a77fa587c1fe0b83a65ca8249
