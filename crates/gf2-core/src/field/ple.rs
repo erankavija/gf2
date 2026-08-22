@@ -545,6 +545,17 @@ fn ple_in_place<F: FiniteField>(
     ple_in_place_window(a.reborrow(), 0, n, perm, pivot_cols)
 }
 
+/// Widest column window the panel base handles directly before
+/// [`ple_in_place_window`] splits it into recursive sub-panels.
+///
+/// Chosen so the panel kernel still amortises its packing overhead
+/// (canonical-byte scratch pack + outside-window row permutation) over a
+/// useful number of pivots, while each panel handles few enough columns that
+/// the wide GEMM dominates the work between panels. 128 was empirically
+/// selected from a tuning sweep over {32, 48, 64, 96, 128} — see
+/// `dev/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
+pub(crate) const PLE_PANEL_RECURSIVE_BASE: usize = 128;
+
 /// Inner driver — see [`ple_in_place`]. The window `[col_lo, col_hi)`
 /// is the column range to process; cells outside this window are not
 /// modified by the elimination but DO get permuted by `swap_rows`.
@@ -631,15 +642,6 @@ fn ple_in_place_window<F: FiniteField>(
     // path. The wide gemm inherits the small-prime whole-GEMM fast path
     // from issue 40195c09 (lift), which hits the kernel's u8 byte-lane
     // throughput on the bulk of the operations.
-    //
-    // The threshold below is chosen so the panel kernel still
-    // amortises its packing overhead (canonical-byte scratch pack +
-    // outside-window row permutation) over a useful number of pivots,
-    // but each panel handles few enough columns that the wide GEMM
-    // dominates the work between panels. 128 was empirically selected
-    // from a tuning sweep over {32, 48, 64, 96, 128} — see
-    // `dev/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
-    const PLE_PANEL_RECURSIVE_BASE: usize = 128;
     if F::has_simd_ple_panel_base() && win > PLE_PANEL_RECURSIVE_BASE {
         return ple_panel_recursive_window::<F>(
             a,
