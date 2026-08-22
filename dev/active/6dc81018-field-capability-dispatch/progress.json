@@ -326,8 +326,8 @@
           "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "dispatched",
-          "notes": "DEC-P. No consumer remains (lead grep). Gates cargo-ci/code-review/doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-a6636671 (base f9befb21), background."
+          "status": "done",
+          "notes": "DEC-P. No consumer remains (lead grep). Gates cargo-ci/code-review/doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-a6636671 (base f9befb21), background. DONE 2026-08-22: worker commit a8d07ab2 (66 deletions, mod.rs only), merged 967ce152, CI 5/5 on merged tree. code-review F1 + doc-review F1/F2 were stale record sites (classification \u00a75 row, 220cab0b design select_kernel prose); lead updated both state cells with citations kept at anchor commits. All gates PASS. Worker rework 0."
         },
         {
           "id": "e6ea0dde",
