@@ -832,3 +832,23 @@ inert at the bit-backend selection boundary. D2 remains unchanged: no ambient
 runtime environment lookup selects a profile. The route-observation and
 inversion tests record that installing a profile no longer changes
 bit-backend routing. This amendment is additive and changes no preceding line.
+
+## Amendment — issue `7d824b2f` (2026-08-22)
+
+§5 condition 3 names the `_min_`/`_max_` operator suffix as the naming rule
+for new profile fields. The follow-on migration design
+(`dev/active/7d824b2f/design.md` §2.1) generalises the rule to two field
+kinds, and this amendment restates the generalisation at the convention's
+source so it keeps one form:
+
+- A **threshold field** carries the comparison operator as a `_min_`/`_max_`
+  suffix; its cutover substitutes the constant with the operator untouched.
+- An **extent field** — a loop step, chunk length, byte budget, tile width,
+  or panel cap — carries a unit suffix (`_words`, `_bytes`, `_blocks`,
+  `_len`, `_cols`, `_rows`, `_tile`, `_k`, `_subsets`); its cutover
+  substitutes the constant with the surrounding arithmetic untouched, and its
+  admissible range is derived from that arithmetic.
+
+Every field this document already defines is a threshold field and keeps its
+name and operator unchanged. This amendment is additive and changes no
+preceding line.

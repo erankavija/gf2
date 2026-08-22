@@ -180,10 +180,8 @@ under the schema's extensibility rule.
 | `MACRO_TILE_BLOCKS` = 8 | `crates/gf2-core/src/matrix.rs:1115` | Macro-tile extent of that schedule, sized to the cache. |
 | `SOA_PARALLEL_CHUNK_LEN` = 16 KiB | `crates/gf2-core/src/compute/field.rs:23` | Parallel chunk length for SoA batch arithmetic. |
 | `SOA_PARALLEL_MIN_LEN` = $2 \times$ chunk | `crates/gf2-core/src/compute/field.rs:29` | Length below which the parallel schedule loses to serial execution. |
-| `B2_GRAY_TILE_WORDS` = 8 | `crates/gf2-core/src/alg/m4rm.rs:25` | Gray-walk tile width for the narrow-stride M4RM path. |
-| `B2_GRAY_MAX_TILES` = 4 | `crates/gf2-core/src/alg/m4rm.rs:26` | Upper stride, in tiles, for that path. |
 | `M4RM_DEFAULT_TABLE_BYTES` = 64 KiB | `crates/gf2-core/src/alg/m4rm.rs:27` | Gray-table budget for the default tier, a cache-residency figure. |
-| `M4RM_DEFAULT_MAX_K` = 8 | `crates/gf2-core/src/alg/m4rm.rs:33` | Panel width cap for that tier. |
+| `M4RM_SMALL_N_MAX_K` = 8 | `crates/gf2-core/src/alg/m4rm.rs:65` | Panel width cap of the sub-wide production tier (`choose_k_block_small_n`); admitted in place of `M4RM_DEFAULT_MAX_K`, re-derived at `f9befb21` by design `7d824b2f` §7.1. |
 | `M4RM_MID_TABLE_BYTES` = 128 KiB | `crates/gf2-core/src/alg/m4rm.rs:34` | Table budget for the mid tier. |
 | `M4RM_WIDE_TABLE_BYTES` = 256 KiB | `crates/gf2-core/src/alg/m4rm.rs:42` | Table budget for the wide tier. |
 | `M4RM_WIDE_MAX_K` = 9 | `crates/gf2-core/src/alg/m4rm.rs:43` | Panel width cap for the wide tier. |
@@ -203,8 +201,6 @@ under the schema's extensibility rule.
 | `N_THRESH_PRIME` = 251 | `crates/gf2-core/src/gfp/simd_ops.rs:537` | Prime bound admitting the packed f32 route. |
 | $n \ge 512$ guard in `select_f32_path` | `crates/gf2-core/src/gfp/simd_ops.rs:571` | Size at which f32 pack cost amortises. |
 | $n \ge 512$ guard in `select_f64_path` | `crates/gf2-core/src/gfp/simd_ops.rs:1628` | Same crossover for the f64 cascade. |
-| `L1D_BYTES` = 32 KiB | `crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:73` | Assumed L1d capacity; a property of the host. |
-| `MAX_MATRIX_BYTES_FOR_L1` | `crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:85` | Residency budget derived from `L1D_BYTES`; it follows that value. |
 | `CHUNK_SUBSETS` = $2^{16}$ | `crates/gf2-algebra/src/permanent/parallel_bipedal3.rs:49` | Gray-walk chunk size for the parallel permanent, chosen by sweep. |
 
 ### 4.3 Profile-scoped — deferred
@@ -249,6 +245,11 @@ values stay where they are defined.
 | `N_MAX_MULTIWORD` = 255 | `crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:64` | Algorithm-domain limit of the `[u64; 4]` Gray counter. |
 | `gf2-coding` decoder and simulation thresholds | `crates/gf2-coding/src/product/mod.rs:710-765` | Protocol and configuration parameters of the coding domain; no finite-field backend crossover exists in that crate. |
 | `gf2-coding` GPU demapper controls | `crates/gf2-coding/src/modem/gpu_demapper.rs:1-26` | A prototype supporting a separately tracked measurement; not a field-kernel selector. |
+| `B2_GRAY_TILE_WORDS` = 8 | `crates/gf2-core/src/alg/m4rm.rs:25` | Kernel shape, not a selection input: an accumulator array dimension, the literal match arms choosing the tiled builders, and the kernel-crate builder ABI stride. Re-derived at `f9befb21` by design `7d824b2f` §7.1. |
+| `B2_GRAY_MAX_TILES` = 4 | `crates/gf2-core/src/alg/m4rm.rs:26` | Kernel shape: it bounds the register-accumulator array and is enumerated by the same match arms; its one comparison is derived from that shape. Re-derived at `f9befb21` by design `7d824b2f` §7.1. |
+| `M4RM_DEFAULT_MAX_K` = 8 | `crates/gf2-core/src/alg/m4rm.rs:33` | Test fixture: `#[cfg_attr(not(test), allow(dead_code))]`, read only by the legacy-schedule comparison test; its §4.2 role is served by `M4RM_SMALL_N_MAX_K`. Re-derived at `f9befb21` by design `7d824b2f` §7.1. |
+| `L1D_BYTES` = 32 KiB | `crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:73` | Documented host assumption read by no execution path; its only use derives `MAX_MATRIX_BYTES_FOR_L1`. Re-derived at `f9befb21` by design `7d824b2f` §7.1. |
+| `MAX_MATRIX_BYTES_FOR_L1` | `crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:85` | Compile-time static assertion over the fixed algorithm domain `N_MAX_MULTIWORD`; changing it changes no selection. Re-derived at `f9befb21` by design `7d824b2f` §7.1. |
 
 ## 5. Cutover dispositions
 
