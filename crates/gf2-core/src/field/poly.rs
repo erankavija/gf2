@@ -2175,7 +2175,20 @@ pub enum MulRoute {
 /// handled by the dispatcher before this selector is called.
 #[must_use]
 pub fn mul_route(lhs_degree: usize, rhs_degree: usize) -> MulRoute {
-    let karatsuba_min_degree = tuning::active().polynomial().karatsuba_min_degree();
+    mul_route_resolved(
+        tuning::active().polynomial().karatsuba_min_degree(),
+        lhs_degree,
+        rhs_degree,
+    )
+}
+
+/// Reports the [`FieldPoly::mul`] arm for two operand degrees against an
+/// already-resolved `karatsuba_min_degree`.
+fn mul_route_resolved(
+    karatsuba_min_degree: usize,
+    lhs_degree: usize,
+    rhs_degree: usize,
+) -> MulRoute {
     if lhs_degree < karatsuba_min_degree || rhs_degree < karatsuba_min_degree {
         MulRoute::Schoolbook
     } else {
@@ -2601,7 +2614,7 @@ fn slice_add<F: FiniteField>(a: &[F], b: &[F]) -> Vec<F> {
 }
 
 /// Karatsuba multiplication. `lhs` and `rhs` must be non-empty and
-/// normalised; the caller (`mul_impl`) guarantees that. Returns raw
+/// normalised; the caller (`mul_dispatch`) guarantees that. Returns raw
 /// coefficients of length `lhs.len() + rhs.len() - 1` **without**
 /// normalising — the top-level `FieldPoly::new` at the entry point does
 /// the final trim.
@@ -2699,25 +2712,39 @@ fn mul_karatsuba_raw<F: FiniteField>(lhs: &[F], rhs: &[F], karatsuba_min_degree:
     result
 }
 
+/// Schoolbook/Karatsuba dispatch over an already-resolved
+/// `karatsuba_min_degree`. `lhs` and `rhs` must be non-empty; every caller
+/// short-circuits the empty operands before reaching here, exactly as
+/// `mul_karatsuba_raw` requires of its own caller.
+///
+/// This is the single dispatch body: [`FieldPoly::mul`] (through `mul_impl`)
+/// and [`mul_fast`] both resolve the active profile exactly once and then
+/// call it, so no call path reads `tuning::active()` twice.
+fn mul_dispatch<F: FiniteField>(lhs: &[F], rhs: &[F], karatsuba_min_degree: usize) -> FieldPoly<F> {
+    debug_assert!(!lhs.is_empty() && !rhs.is_empty());
+
+    let deg_lhs = lhs.len() - 1;
+    let deg_rhs = rhs.len() - 1;
+    match mul_route_resolved(karatsuba_min_degree, deg_lhs, deg_rhs) {
+        MulRoute::Schoolbook => mul_schoolbook_impl(lhs, rhs),
+        MulRoute::Karatsuba => FieldPoly::new(mul_karatsuba_raw(lhs, rhs, karatsuba_min_degree)),
+    }
+}
+
 /// Top-level multiplication dispatcher used by the `Mul` operator and
 /// the inherent [`FieldPoly::mul`] method. Handles zero-polynomial
-/// short-circuits, then routes to schoolbook or Karatsuba based on
-/// operand degrees.
+/// short-circuits, resolves the active profile once, and delegates to
+/// [`mul_dispatch`].
 fn mul_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
     if lhs.is_empty() || rhs.is_empty() {
         return FieldPoly { coeffs: Vec::new() };
     }
 
-    let deg_lhs = lhs.len() - 1;
-    let deg_rhs = rhs.len() - 1;
-    match mul_route(deg_lhs, deg_rhs) {
-        MulRoute::Schoolbook => mul_schoolbook_impl(lhs, rhs),
-        MulRoute::Karatsuba => {
-            let karatsuba_min_degree = tuning::active().polynomial().karatsuba_min_degree();
-            let coeffs = mul_karatsuba_raw(lhs, rhs, karatsuba_min_degree);
-            FieldPoly::new(coeffs)
-        }
-    }
+    mul_dispatch(
+        lhs,
+        rhs,
+        tuning::active().polynomial().karatsuba_min_degree(),
+    )
 }
 
 impl<F: FiniteField> Mul<FieldPoly<F>> for FieldPoly<F> {
@@ -2811,7 +2838,16 @@ pub enum MulFastRoute {
 /// profile value.
 #[must_use]
 pub fn mul_fast_route(out_len: usize) -> MulFastRoute {
-    if out_len <= tuning::active().polynomial().karatsuba_max_out_len() {
+    mul_fast_route_resolved(
+        tuning::active().polynomial().karatsuba_max_out_len(),
+        out_len,
+    )
+}
+
+/// Reports the [`mul_fast`] arm for a product output length against an
+/// already-resolved `karatsuba_max_out_len`.
+fn mul_fast_route_resolved(karatsuba_max_out_len: usize, out_len: usize) -> MulFastRoute {
+    if out_len <= karatsuba_max_out_len {
         MulFastRoute::Karatsuba
     } else {
         MulFastRoute::Ntt
@@ -2942,8 +2978,8 @@ impl<F: TwoAdicField> FieldPoly<F> {
 ///
 /// The output-length gate uses the active
 /// `polynomial.karatsuba_max_out_len()` profile value. At or below it,
-/// this function delegates to [`FieldPoly::mul`]; above, it delegates to
-/// [`FieldPoly::mul_ntt`].
+/// this function routes through the same schoolbook/Karatsuba dispatcher
+/// used by [`FieldPoly::mul`]; above, it delegates to [`FieldPoly::mul_ntt`].
 ///
 /// # Arguments
 ///
@@ -2978,9 +3014,12 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
     if a.is_zero() || b.is_zero() {
         return FieldPoly { coeffs: Vec::new() };
     }
+    let polynomial = tuning::active().polynomial();
     let out_len = a.coeffs.len() + b.coeffs.len() - 1;
-    match mul_fast_route(out_len) {
-        MulFastRoute::Karatsuba => a.mul(b),
+    match mul_fast_route_resolved(polynomial.karatsuba_max_out_len(), out_len) {
+        MulFastRoute::Karatsuba => {
+            mul_dispatch(&a.coeffs, &b.coeffs, polynomial.karatsuba_min_degree())
+        }
         MulFastRoute::Ntt => a.mul_ntt(b),
     }
 }
