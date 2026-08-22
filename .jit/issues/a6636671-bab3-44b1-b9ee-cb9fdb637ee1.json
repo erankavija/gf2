@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "Remove the deprecated bit-buffer kernel compatibility surface — the `Kernel` trait, its `ScalarBackend` bridge impl, and `select_kernel()` in `crates/gf2-core/src/kernels/mod.rs` — once no consumer remains.\n\n## Background\n\nThe field-capability classification (dev/active/6dc81018-field-capability-dispatch/classification.md §5) records this surface as superseded by `Backend` and `select_backend_for_size`; `canonical-cutover` is unsatisfied while the deprecated aliases remain.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-core/src/kernels/mod.rs` contains no `Kernel` trait, no `ScalarBackend` bridge impl, and no `select_kernel()`, and no workspace consumer references them.\n- [hard] REQ-02: The workspace CI contract passes after the removal.",
   "documents": [],
+  "done_at": "2026-08-22T20:46:47.578043292Z",
   "first_ready_at": "2026-08-18T20:51:51.692768931Z",
   "gates_required": [
     "cargo-ci",
@@ -14,19 +15,19 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-22T20:16:32.563063159Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-22T20:37:21.700494508Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T20:16:32.681637521Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-22T20:41:58.654458887Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T20:16:32.801389672Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-22T20:46:25.033974276Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "a6636671-bab3-44b1-b9ee-cb9fdb637ee1",
@@ -37,7 +38,7 @@
     "epic:field-capability-dispatch"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
-  "updated_at": "2026-08-22T20:17:49.545878869Z"
+  "updated_at": "2026-08-22T20:46:47.578043292Z"
 }

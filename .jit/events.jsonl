@@ -8847,3 +8847,10 @@
 {"assignee":"agent:worker","id":"ba4e1afb-d4d5-40ba-968e-6749fafaa1bb","issue_id":"e6ea0dde-185f-4a0f-91fe-13cc6ac32648","timestamp":"2026-08-22T20:17:57.150613050Z","type":"issue_claimed"}
 {"from":"ready","id":"09308b51-e706-42ee-b506-e6cee37ca886","issue_id":"7d824b2f-13a6-4d19-a8bc-5581a42e7a76","timestamp":"2026-08-22T20:18:04.761978701Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"60d7e63a-9d67-44e7-a8f0-845ace1adbab","issue_id":"7d824b2f-13a6-4d19-a8bc-5581a42e7a76","timestamp":"2026-08-22T20:18:04.761978701Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"1313f05c-cd8a-479c-b57e-1cf3cba71ff0","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","timestamp":"2026-08-22T20:37:21.700494508Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"4933d86f-6a47-4852-b0e5-150ca04ece2b","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","timestamp":"2026-08-22T20:39:44.169635079Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"7aa10c38-cc48-4646-956a-d1ffa1777eed","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","timestamp":"2026-08-22T20:41:58.654458887Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"7e1e5931-0c59-44fb-96e1-b3213abdd3b4","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","timestamp":"2026-08-22T20:44:15.549325433Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"cbbe1400-538f-4020-9bd9-385ce5f97205","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","timestamp":"2026-08-22T20:46:25.033974276Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"278e8663-a2c9-4cf9-8d9a-a96563d613b8","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","timestamp":"2026-08-22T20:46:47.578043292Z","to":"done","type":"issue_state_changed"}
+{"id":"b4522103-bdc2-4e6a-a4dc-8e99a6bd61ea","issue_id":"a6636671-bab3-44b1-b9ee-cb9fdb637ee1","timestamp":"2026-08-22T20:46:47.578043292Z","type":"issue_completed"}
