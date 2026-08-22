@@ -358,8 +358,8 @@
           "title": "Extend the tuning schema with the follow-on selector families",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
-          "notes": "Design \u00a73/\u00a73.13. No selector-site change."
+          "status": "dispatched",
+          "notes": "Design \u00a73/\u00a73.13. No selector-site change. Dispatched 2026-08-23 in worktree (base 9ebcb29f), background."
         },
         {
           "id": "389aa4de",
@@ -368,7 +368,7 @@
           "classification": "implementation",
           "model": "opus",
           "status": "planned",
-          "notes": "DEC-U pull-in. Touches tuning_calibration bench; may need tuning test-support \u2014 watch overlap with t1 (tuning/mod.rs)."
+          "notes": "DEC-U pull-in. Touches tuning_calibration bench; may need tuning test-support \u2014 watch overlap with t1 (tuning/mod.rs). Deferred to a solo slot: REQ-02 needs a measured calibration run owning the host; runs serialized after t1/seam."
         },
         {
           "id": "7d7c647c",
@@ -376,8 +376,8 @@
           "title": "Design the proof-surface seam for the trait-associated selectors",
           "classification": "design",
           "model": "opus",
-          "status": "planned",
-          "notes": "DEC-T. Docs only. Verify extraction claims against the pinned pair."
+          "status": "dispatched",
+          "notes": "DEC-T. Docs only. Verify extraction claims against the pinned pair. Dispatched 2026-08-23 in worktree (base 9ebcb29f), background."
         }
       ]
     },
