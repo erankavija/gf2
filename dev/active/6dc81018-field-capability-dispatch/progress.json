@@ -1,7 +1,7 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 19,
+  "current_wave": 20,
   "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec \u2014 its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it \u2014 budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' \u2014 it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex \u2014 same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run. AGENT-LIVENESS TRAP (2026-08-20, cost ~15 min and one wasted dispatch pair): ListAgents reported 'No reachable agents' while two dispatched agents were provably alive and mid-task, and a clean `git status` 80 seconds before an agent's first write looked identical to a dead agent. Acting on those two signals, the lead re-dispatched duplicates over live workers; only the duplicate doc agent's own refusal to write on a mismatched premise prevented two agents racing on the same two paths. Do NOT treat ListAgents emptiness or a quiet tree as death. A dispatched agent's first write can lag its spawn by many minutes while it reads the spec and the design. Probe artifacts and .jit/events.jsonl over a window before concluding anything, and if duplicates are ever spawned, TaskStop them immediately and verify no leakage before continuing. The lead's initial theory that ScheduleWakeup tore the agents down was WRONG and was retracted.",
   "waves": [
     {
@@ -335,8 +335,8 @@
           "title": "Record a clean-exit extraction of the loop-free generic operations",
           "classification": "research",
           "model": "opus",
-          "status": "dispatched",
-          "notes": "DEC-Q. Pinned Charon/Aeneas pair, MSRV; exclude pow at invocation boundary; verbatim elaboration. Gates cargo-ci/research-review/doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-e6ea0dde (base f9befb21), background."
+          "status": "rework-1",
+          "notes": "DEC-Q. Pinned Charon/Aeneas pair, MSRV; exclude pow at invocation boundary; verbatim elaboration. Gates cargo-ci/research-review/doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-e6ea0dde (base f9befb21), background. 2026-08-23: worker achieved REQ-01 (exit-0 chain, --exclude pow) but verbatim elaboration BLOCKED upstream (six duplicate clause-field names; probes Q1-Q6 + Aeneas source prove no invocation-boundary option avoids it, upgrade included). DEC-R sanctions fix-aeneas-dupes.py; criteria amended; rework-1 dispatched to worker (reframe + research-review F3 citekeys/F4 host/F5 probe-plan). research-review currently FAIL (F1-F5); re-run after rework."
         },
         {
           "id": "7d824b2f",
@@ -344,8 +344,181 @@
           "title": "Design the follow-on selector migration to the tuning profile",
           "classification": "design",
           "model": "opus",
-          "status": "dispatched",
-          "notes": "DEC-O. Additive amendment to 220cab0b design + implementation breakdown for waves 20+. Gate doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-7d824b2f (base f9befb21), background."
+          "status": "done",
+          "notes": "DEC-O. Additive amendment to 220cab0b design + implementation breakdown for waves 20+. Gate doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-7d824b2f (base f9befb21), background. DONE 2026-08-23: design merged 994d0468; four doc-review rounds (F: doc link, five-row reclassification, extent-kind restatement at 220cab0b source, per-task doc-review gates, T2/T15 boundary) all lead-fixed; doc-review PASS. Lead review PASS; worker rework 0. Open questions resolved by DEC-S/T/U + lead confirmation of D4 (permanent family in gf2-core schema)."
+        }
+      ]
+    },
+    {
+      "wave_number": 20,
+      "issues": [
+        {
+          "id": "856f1b48",
+          "short_id": "856f1b48",
+          "title": "Extend the tuning schema with the follow-on selector families",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "Design \u00a73/\u00a73.13. No selector-site change."
+        },
+        {
+          "id": "389aa4de",
+          "short_id": "389aa4de",
+          "title": "Profile-steered calibration for karatsuba_min_degree",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "DEC-U pull-in. Touches tuning_calibration bench; may need tuning test-support \u2014 watch overlap with t1 (tuning/mod.rs)."
+        },
+        {
+          "id": "7d7c647c",
+          "short_id": "7d7c647c",
+          "title": "Design the proof-surface seam for the trait-associated selectors",
+          "classification": "design",
+          "model": "opus",
+          "status": "planned",
+          "notes": "DEC-T. Docs only. Verify extraction claims against the pinned pair."
+        }
+      ]
+    },
+    {
+      "wave_number": 21,
+      "issues": [
+        {
+          "id": "8dbb27e9",
+          "short_id": "8dbb27e9",
+          "title": "Extend the baked tuning module with the follow-on constants",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "Baked module + literal hoists only."
+        },
+        {
+          "id": "fa92608b",
+          "short_id": "fa92608b",
+          "title": "Cut the SoA batch selectors over",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "compute/field.rs"
+        },
+        {
+          "id": "aa904331",
+          "short_id": "aa904331",
+          "title": "Cut the M4RM schedule selectors over",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "alg/m4rm.rs; 7 fields"
+        },
+        {
+          "id": "aec4b6c8",
+          "short_id": "aec4b6c8",
+          "title": "Cut the dense-inversion selectors over",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "alg/gauss.rs + field/inverse.rs \u2014 SERIALIZE with t7 (same file): t6 in sub-wave 21a"
+        },
+        {
+          "id": "fbe66a7a",
+          "short_id": "fbe66a7a",
+          "title": "Cut the triangular-solve selectors over",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "field/inverse.rs guards \u2014 sub-wave 21b after t6"
+        },
+        {
+          "id": "df385aa7",
+          "short_id": "df385aa7",
+          "title": "Cut the PLE selectors over",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "threaded recursion"
+        },
+        {
+          "id": "395fc8e1",
+          "short_id": "395fc8e1",
+          "title": "Cut the charpoly and interpolation selectors over",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "charpoly.rs + poly_interpolate.rs"
+        },
+        {
+          "id": "ef18c60b",
+          "short_id": "ef18c60b",
+          "title": "Cut the parallel-permanent chunk length over",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "gf2-algebra"
+        },
+        {
+          "id": "a83583e0",
+          "short_id": "a83583e0",
+          "title": "Design and implement the extent-sweep protocol",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "tuning_calibration.rs \u2014 schedule after 389aa4de lands (same bench file)"
+        }
+      ]
+    },
+    {
+      "wave_number": 22,
+      "issues": [
+        {
+          "id": "d0365895",
+          "short_id": "d0365895",
+          "title": "Cut the bit-matrix selectors over",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "matrix.rs; touches cargo-ci baked step (merge conflicts expected with t9/t15 \u2014 lead resolves at merge)"
+        },
+        {
+          "id": "26ae7d6b",
+          "short_id": "26ae7d6b",
+          "title": "Cut the GEMM selectors over",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "matrix.rs/expr.rs tiles + axpy; cargo-ci baked step"
+        },
+        {
+          "id": "19424a0f",
+          "short_id": "19424a0f",
+          "title": "Cut the prime-route and FieldVec selectors over",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "const fn predicates must stay const fn; cargo-ci baked step"
+        }
+      ]
+    },
+    {
+      "wave_number": 23,
+      "issues": [
+        {
+          "id": "eaae1b56",
+          "short_id": "eaae1b56",
+          "title": "Extend the calibration sweep to the follow-on threshold fields",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "after 389aa4de + t3-t11"
+        },
+        {
+          "id": "tbd",
+          "short_id": "tbd",
+          "title": "Seam cutover tasks from 7d7c647c's breakdown",
+          "classification": "implementation",
+          "model": "tbd",
+          "status": "not-created",
+          "notes": "Create after the seam design (7d7c647c) is reviewed; then \u00a74.3 constants migrate (DEC-T)."
         }
       ]
     }
@@ -592,6 +765,30 @@
       "issue": "6dc81018/REQ-05",
       "date": "2026-08-22",
       "decision": "DEC-Q via AskUserQuestion (holistic-review F3): REQ-05 is read strictly \u2014 the recorded Charon/Aeneas invocation must exit 0 on the MSRV pinned pair and its verbatim generated output must elaborate; post-hoc deletion of the poisoned pow chain does not demonstrate success. The falsified pow item is excluded at the invocation boundary instead. New task e6ea0dde delivers the clean-exit record; 34d85cb9/1ac74567 records gain additive amendments."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "e6ea0dde",
+      "date": "2026-08-23",
+      "decision": "DEC-R via AskUserQuestion: REQ-05's 'output elaborates' is read modulo the committed, tracked repair scripts/fix-aeneas-dupes.py (carve-out 2e544a34), the repository's named migration boundary for the upstream Aeneas duplicate clause-field emission \u2014 proven invariant across six probes, the Aeneas source, and the newest-upstream pair. e6ea0dde REQ-02/REQ-03 amended accordingly; zero manual edits allowed; blocking evidence preserved; the naming defect joins the tracked upstream report 4dd5372a."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "6dc81018/REQ-03",
+      "date": "2026-08-23",
+      "decision": "DEC-S via AskUserQuestion: the amortisation screening rule (7d824b2f design \u00a75.3) is RATIFIED as the predeclared rule under which the follow-on runtime cutovers proceed without a new pinned receipt. T14 is not required; a site that cannot show the floor at review takes the bake mechanism."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "6dc81018/REQ-03",
+      "date": "2026-08-23",
+      "decision": "DEC-T via AskUserQuestion: the four classification \u00a74.3 trait-associated constants (WINOGRAD_THRESHOLD, TRI_BASE_THRESHOLD, PLE_BASE_COLS, PLE_PANEL_COLS) MIGRATE inside this epic. A proof-surface seam (non-extracted read indirection) is designed first, then the cutover; the seam design is a new design task in the implementation waves."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "389aa4de",
+      "date": "2026-08-23",
+      "decision": "DEC-U via AskUserQuestion: 389aa4de (profile-steered calibration mechanism) is pulled into this epic's delivery, DEC-P-style: edge wired, gates added, executed before the calibration task T12."
     }
   ],
   "rework_counts": {
@@ -612,7 +809,8 @@
     "9162956b": 0,
     "50b47eae": 0,
     "fc976a80": 0,
-    "eb9b324c": 1
+    "eb9b324c": 1,
+    "e6ea0dde": 1
   },
   "surfaced_pitfalls": [
     {
