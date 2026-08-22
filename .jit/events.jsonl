@@ -8779,3 +8779,4 @@
 {"from":"ready","id":"9f3cd1b5-a9c2-4c88-ae22-9dffe12b4185","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","timestamp":"2026-08-22T10:29:26.958543255Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"f0269a0d-5f9b-4499-b2db-9855cc7e34f2","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","timestamp":"2026-08-22T10:29:26.958543255Z","type":"issue_claimed"}
 {"fields":["documents"],"id":"99196fb0-89c6-45c3-84b9-b7bd52613170","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","timestamp":"2026-08-22T10:34:47.865972383Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["description"],"id":"4ac52501-e6b4-4061-ada0-971186129c41","issue_id":"fc976a80-d046-41ca-b97e-766bdf8c37ce","timestamp":"2026-08-22T10:59:25.647719238Z","type":"issue_updated","updated_by":"issue-update"}
