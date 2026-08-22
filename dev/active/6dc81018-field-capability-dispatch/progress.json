@@ -1,630 +1,630 @@
 {
- "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
- "epic_short_id": "6dc81018",
- "current_wave": 18,
- "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec \u2014 its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it \u2014 budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' \u2014 it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex \u2014 same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run. AGENT-LIVENESS TRAP (2026-08-20, cost ~15 min and one wasted dispatch pair): ListAgents reported 'No reachable agents' while two dispatched agents were provably alive and mid-task, and a clean `git status` 80 seconds before an agent's first write looked identical to a dead agent. Acting on those two signals, the lead re-dispatched duplicates over live workers; only the duplicate doc agent's own refusal to write on a mismatched premise prevented two agents racing on the same two paths. Do NOT treat ListAgents emptiness or a quiet tree as death. A dispatched agent's first write can lag its spawn by many minutes while it reads the spec and the design. Probe artifacts and .jit/events.jsonl over a window before concluding anything, and if duplicates are ever spawned, TaskStop them immediately and verify no leakage before continuing. The lead's initial theory that ScheduleWakeup tore the agents down was WRONG and was retracted.",
- "waves": [
-  {
-   "wave_number": 1,
-   "issues": [
+  "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
+  "epic_short_id": "6dc81018",
+  "current_wave": 18,
+  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec \u2014 its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it \u2014 budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' \u2014 it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex \u2014 same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run. AGENT-LIVENESS TRAP (2026-08-20, cost ~15 min and one wasted dispatch pair): ListAgents reported 'No reachable agents' while two dispatched agents were provably alive and mid-task, and a clean `git status` 80 seconds before an agent's first write looked identical to a dead agent. Acting on those two signals, the lead re-dispatched duplicates over live workers; only the duplicate doc agent's own refusal to write on a mismatched premise prevented two agents racing on the same two paths. Do NOT treat ListAgents emptiness or a quiet tree as death. A dispatched agent's first write can lag its spawn by many minutes while it reads the spec and the design. Probe artifacts and .jit/events.jsonl over a window before concluding anything, and if duplicates are ever spawned, TaskStop them immediately and verify no leakage before continuing. The lead's initial theory that ScheduleWakeup tore the agents down was WRONG and was retracted.",
+  "waves": [
     {
-     "id": "265997f9-a947-4fbc-9161-a9f3a252bd01",
-     "short_id": "265997f9",
-     "title": "Author the field-capability classification",
-     "classification": "design",
-     "model": "opus",
-     "status": "done"
+      "wave_number": 1,
+      "issues": [
+        {
+          "id": "265997f9-a947-4fbc-9161-a9f3a252bd01",
+          "short_id": "265997f9",
+          "title": "Author the field-capability classification",
+          "classification": "design",
+          "model": "opus",
+          "status": "done"
+        },
+        {
+          "id": "34d85cb9-1ff4-4adb-a09e-7305dee0b0dc",
+          "short_id": "34d85cb9",
+          "title": "Spike Charon extraction of a trait-generic field algorithm",
+          "classification": "research",
+          "model": "opus",
+          "status": "done"
+        }
+      ]
     },
     {
-     "id": "34d85cb9-1ff4-4adb-a09e-7305dee0b0dc",
-     "short_id": "34d85cb9",
-     "title": "Spike Charon extraction of a trait-generic field algorithm",
-     "classification": "research",
-     "model": "opus",
-     "status": "done"
-    }
-   ]
-  },
-  {
-   "wave_number": 2,
-   "issues": [
-    {
-     "id": "220cab0b",
-     "short_id": "220cab0b",
-     "title": "Design the versioned tuning-profile format and selection integration",
-     "classification": "design",
-     "model": "opus",
-     "status": "done"
+      "wave_number": 2,
+      "issues": [
+        {
+          "id": "220cab0b",
+          "short_id": "220cab0b",
+          "title": "Design the versioned tuning-profile format and selection integration",
+          "classification": "design",
+          "model": "opus",
+          "status": "done"
+        },
+        {
+          "id": "7f818151-9268-4f6d-b29e-508eb95ba12c",
+          "short_id": "7f818151",
+          "title": "Retire the packed-trait parallel declarations in the research stub",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "done"
+        }
+      ]
     },
     {
-     "id": "7f818151-9268-4f6d-b29e-508eb95ba12c",
-     "short_id": "7f818151",
-     "title": "Retire the packed-trait parallel declarations in the research stub",
-     "classification": "implementation",
-     "model": "codex-luna",
-     "status": "done"
-    }
-   ]
-  },
-  {
-   "wave_number": 3,
-   "issues": [
-    {
-     "id": "e8fe47f5",
-     "short_id": "e8fe47f5",
-     "title": "Pin the non-regression benchmark set and tolerance",
-     "classification": "implementation",
-     "model": "claude-opus",
-     "status": "done"
-    }
-   ]
-  },
-  {
-   "wave_number": 4,
-   "issues": [
-    {
-     "id": "f35daec0",
-     "short_id": "f35daec0",
-     "title": "Implement the tuning-profile type, loader, and conservative defaults",
-     "classification": "implementation",
-     "model": "codex-luna",
-     "status": "done",
-     "notes": "Closed at c3b080eb after 2 rework rounds. Gates: cargo-ci passed (clean tree), code-review passed with 0 findings. Round 1 was the lead's own review (stale selector docs, five-positional-usize constructor, doubly-declared wire schema); round 2 was the code-review gate's blocking RFC 3339 calendar finding."
-    }
-   ]
-  },
-  {
-   "wave_number": 4.5,
-   "issues": [
-    {
-     "id": "1ac74567-fa48-405a-a35a-a4f2bcb16fe5",
-     "short_id": "1ac74567",
-     "title": "Author the loop-free extraction proof-obligation factoring sketch",
-     "classification": "design",
-     "model": "claude-opus",
-     "status": "done",
-     "notes": "Closed at a3e58994 after 1 rework. doc-review passed, clean tree. REQ-05's second clause is now delivered: \u00a73 states the trait-level laws as Lean statements binding the extracted FiniteField dictionary, \u00a74 gives per-backend refinement for all six production carriers with scope and reasons, \u00a75 the production path and strategy, \u00a76 a four-stage elaboration receipt. Open obligations recorded in \u00a77 are permitted by the issue's own criteria, not punts."
-    }
-   ],
-   "note": "Own wave: created during execution to close REQ-05's second clause. Runs alone because Charon/Aeneas extraction plus a lake build is heavy CPU work and must not overlap the benchmark-mode waves 5, 7, 8."
-  },
-  {
-   "wave_number": 5,
-   "issues": [
-    {
-     "id": "278acf3a",
-     "short_id": "278acf3a",
-     "title": "Record the pre-cutover baseline receipt",
-     "classification": "implementation",
-     "model": "claude-opus",
-     "status": "done",
-     "notes": "Closed at 8c021500 after 1 rework. doc-review passed (clean tree, commit c125952a). The measurement itself landed first time at 86a45d2e; the rework was documentation only. F1 closed by a falsification record appended to plan \u00a74 that states the grounding is within-build, restates the baseline's across-build numbers with citations, names the limitation, and itemises what does not move \u2014 the falsified sentences at :190-191 and :205-207 are left standing with a parenthetical pointer, never rewritten. F2 closed by naming 51058f8e as the tracked owner. Lead independently verified every restated number against the receipt: 18.1 % at bit_backend/or_inplace/words=1 (4.157592 vs 3.520309), 9 of 34 outside \u00b15 %, 3.6 \u00d7 \u03c4_cell, and the single-binary cohort claim against procedure-verification.md:39,47."
-    }
-   ]
-  },
-  {
-   "wave_number": 6,
-   "issues": [
-    {
-     "id": "0d819b62",
-     "short_id": "0d819b62",
-     "title": "Cut the bit-backend selector over to profile-driven selection",
-     "classification": "implementation",
-     "model": "codex-luna",
-     "status": "done",
-     "notes": "Closed at 671c6271 after 1 rework. cargo-ci and code-review both passed. The cutover was right first time; the rework was scope and record-keeping. R1 findings, both lead-raised: it edited f35daec0's committed tuning_profile_install.rs (installed value 16->4, added assertions, added simd to its required-features, narrowing a feature-independent test), and it reworded the docs' 8-word 'validated as optimal' claim without recording the host-calibration receipt that selects 4. Both fixed: the test file is byte-identical to 871f9189, evidence moved to the new backend_selection_profile binary, and the docs now cite the receipt AND state that the two measurements are not directly interchangeable (the receipt measures the backends directly, the older validation measured the ops.rs dispatcher)."
+      "wave_number": 3,
+      "issues": [
+        {
+          "id": "e8fe47f5",
+          "short_id": "e8fe47f5",
+          "title": "Pin the non-regression benchmark set and tolerance",
+          "classification": "implementation",
+          "model": "claude-opus",
+          "status": "done"
+        }
+      ]
     },
     {
-     "id": "697fc55b",
-     "short_id": "697fc55b",
-     "title": "Cut the polynomial crossover selectors over to profile-driven selection",
-     "classification": "implementation",
-     "model": "codex-luna",
-     "status": "done",
-     "notes": "Closed after 1 rework; merged at the worktree-agent-697fc55b merge. cargo-ci and code-review both pass. The cutover was right first time \u2014 six read sites, DEC-B1 honoured, recursion threaded. code-review then failed on two blocking findings the lead accepted: F1 the tests compared mathematically equivalent algorithms, so they passed even if the dispatchers ignored the profile, and they sized operands from the constants although design \u00a72.5 requires an installing test to size from the installed accessors; F2 the DEC-B5 falsification used 'historical claim' narration, which @/inv/present-tense-prose forbids in permanent artifacts. Resolution: a route-observation API (mul_route, mul_fast_route, div_rem_auto_route, batch_evaluate_route, batch_evaluate_auto_route) that all five dispatchers consume, so the tests observe the production decision rather than a copy; and present-tense phrasing that keeps the citation and both figures. mul_karatsuba_raw keeps its threaded parameter, so no per-node profile read was reintroduced \u2014 checked explicitly."
+      "wave_number": 4,
+      "issues": [
+        {
+          "id": "f35daec0",
+          "short_id": "f35daec0",
+          "title": "Implement the tuning-profile type, loader, and conservative defaults",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "done",
+          "notes": "Closed at c3b080eb after 2 rework rounds. Gates: cargo-ci passed (clean tree), code-review passed with 0 findings. Round 1 was the lead's own review (stale selector docs, five-positional-usize constructor, doubly-declared wire schema); round 2 was the code-review gate's blocking RFC 3339 calendar finding."
+        }
+      ]
     },
     {
-     "id": "51058f8e-6bad-443c-aa5b-14d430bcd0c7",
-     "short_id": "51058f8e",
-     "title": "Predeclare the across-build control arm for the post-cutover comparison",
-     "classification": "documentation",
-     "model": "claude-opus",
-     "status": "done",
-     "notes": "Closed at 9e403499, zero rework. doc-review passed first try. Delivers all four criteria: \u00a71 the falsified within-build grounding with the baseline's numbers, \u00a72 the predeclared control arm (rebuild of 0c072d73, plan \u00a73 protocol unmodified, same schema token, ratios against the baseline CSV, both hash-outcome readings declared in advance), \u00a73 the itemised statement that plan v1 is unmodified, \u00a74 the five-part reading rule, \u00a75 the standing argument. Lead verified every checkable claim independently: 14 bit-backend + 20 polynomial = 34 cells counted from the baseline CSV, the cited permanent_campaign provenance doc, the receipt's 'Comparison eligibility' section, the two-receipts-under-the-token claim, the binary SHA and both revisions, and the single @/inv address resolves."
-    }
-   ]
-  },
-  {
-   "wave_number": 7,
-   "issues": [
-    {
-     "id": "5ecc9bf8-3d62-408e-aba8-53ad2790a49d",
-     "short_id": "5ecc9bf8",
-     "title": "Implement the explicit host-calibration benchmark action",
-     "classification": "implementation",
-     "model": "claude-opus",
-     "status": "done",
-     "notes": "Closed at cfb588f6 after 1 lead-directed correction round (no formal rework counter: the finding was DEC-B6 compliance, caught before the worker reported). cargo-ci and code-review both passed. Calibration moved three fields on this host \u2014 simd_min_words 8->4, div_rem_fast_min_len 2048->1024, subproduct_min_len 4096->512 \u2014 and kept two for recorded reasons. The receipt carries six falsification records: F1 the Karatsuba/NTT crossover is not expressible as one threshold, F2 the unmeasurable field, F3 the e8fe47f5 NTT_THRESHOLD step reproduced exactly, F4 and F5 the DIV_REM and SUBPRODUCT tuning notes contradicted by this run, F6 source_dirty makes the artifact non-committable. Correction round: the first two emissions carried karatsuba_min_degree inside a kind:calibrated document while F2 called it unmeasured; the third omits it. The lead scoped the omission to that one field \u2014 karatsuba_max_out_len kept its default under a MEASURED non-monotone sweep, so it is a calibration outcome and stays stated."
-    }
-   ]
-  },
-  {
-   "wave_number": 8,
-   "issues": [
-    {
-     "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
-     "short_id": "50b47eae",
-     "title": "Record the post-cutover non-regression receipt",
-     "classification": "implementation",
-     "model": "codex-luna",
-     "status": "ready-for-rerun",
-     "notes": "First session produced 2026-08-20-post-cutover-receipt.md recording RESULT: FAIL at two popcount cells; that receipt is committed, doc-review-passed, and MUST NOT be modified or superseded \u2014 REQ-02 is satisfied by it. REQ-01 remains unmet. All four dependencies are now done, so the re-measurement can be dispatched. Spec is written and ready at scratchpad/dispatch-50b47eae-rerun.md (reproduce it from the handoff if the scratchpad is gone)."
-    }
-   ]
-  },
-  {
-   "wave_number": 9,
-   "issues": [
-    {
-     "id": "c42720ce-1f7b-4058-97bf-de165786b8a0",
-     "short_id": "c42720ce",
-     "title": "Reduce the per-call cost of the bit-backend threshold read",
-     "classification": "implementation",
-     "model": "codex-luna",
-     "status": "done",
-     "notes": "Closed at c596d6a6 after 3 rework rounds plus one owner-granted counter reset. cargo-ci and code-review both pass. Mechanism: the bit-backend threshold is published into an AtomicUsize beside an AtomicBool resolved flag; each publication site stores the threshold Relaxed then the flag Release, and active_simd_min_words loads the flag Acquire before loading the threshold Relaxed. One-shot resolution preserved (a selection resolves active(), so a later install returns AlreadyResolved) and install publishes only after ACTIVE.set succeeds. Round history: R1 missed REQ-03's test entirely and silently regressed one-shot resolution by removing the only active() call from the selection path; R2 fixed both but published through two relaxed stores with no happens-before, which code-review caught as a real race; R3 followed the lead's own WRONG instruction to use a usize::MAX sentinel, which broke v1 schema semantics because design \u00a72.1 documents usize::MAX as a meaningful simd_min_words; R4 (after owner reset) restored try_new and closed the race with Release/Acquire. The lead then corrected the amendment's inaccurate 'at most once per process' claim about the cold path directly."
-    }
-   ],
-   "note": "Created during execution. The post-cutover receipt of 50b47eae records RESULT: FAIL at two popcount cells, attributable to the cutover by the predeclared control-arm reading. Wave 9 removes the cost; wave 10 is 50b47eae's fresh receipt."
-  },
-  {
-   "wave_number": 10,
-   "issues": [
-    {
-     "id": "2a85f728-4f9f-40f3-a9ee-ab7655d83b9f",
-     "short_id": "2a85f728",
-     "title": "Eliminate the per-call cost of the bit-backend selection boundary",
-     "classification": "implementation",
-     "model": "codex-luna",
-     "status": "done",
-     "notes": "Closed after 1 rework. Review verdict PASS: gates cargo-ci + code-review passed; REQ-01 one Relaxed load + compare on the fast path (asm receipt, all five entry points); REQ-02 semantics preserved; REQ-03 route observation below (4) and above (16) default; REQ-04 asm-delta.md; REQ-05 not triggered. R1 findings both closed at HEAD: F1 install publication window closed by storing the threshold inside ACTIVE.get_or_init's closure (mirrors active()'s pattern); F2 asm receipt extended to all five entry points. DEC-B8 (lead): the declared contract change \u2014 a bit-backend selection no longer resolves the profile, so a later install() succeeds \u2014 is accepted as forced by DEC-E track 1 (any resolve-on-selection needs a resolved-check branch); the worker's rewrite of c42720ce's committed test first_backend_selection_resolves_tuning_profile is accepted under the same forcing: the test asserted the exact contract DEC-E's goal removes, and the inverted assertion now witnesses the new contract. Documented in design \u00a74.1 amendment and install()'s rustdoc."
+      "wave_number": 4.5,
+      "issues": [
+        {
+          "id": "1ac74567-fa48-405a-a35a-a4f2bcb16fe5",
+          "short_id": "1ac74567",
+          "title": "Author the loop-free extraction proof-obligation factoring sketch",
+          "classification": "design",
+          "model": "claude-opus",
+          "status": "done",
+          "notes": "Closed at a3e58994 after 1 rework. doc-review passed, clean tree. REQ-05's second clause is now delivered: \u00a73 states the trait-level laws as Lean statements binding the extracted FiniteField dictionary, \u00a74 gives per-backend refinement for all six production carriers with scope and reasons, \u00a75 the production path and strategy, \u00a76 a four-stage elaboration receipt. Open obligations recorded in \u00a77 are permitted by the issue's own criteria, not punts."
+        }
+      ],
+      "note": "Own wave: created during execution to close REQ-05's second clause. Runs alone because Charon/Aeneas extraction plus a lake build is heavy CPU work and must not overlap the benchmark-mode waves 5, 7, 8."
     },
     {
-     "id": "972e2b88-d75c-411b-a6b5-06318fa84305",
-     "short_id": "972e2b88",
-     "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
-     "classification": "design",
-     "model": "claude-opus",
-     "status": "done",
-     "notes": "Closed after 1 rework. Review verdict PASS: cargo-ci, code-review, doc-review all pass. Delivered layout-attribution-verdict-v1.md (128-member alignment-flag ensemble on both arms, verdict on plan \u00a75's unmodified rule, four attribution preconditions: coverage vs sigma-hat, decorrelation, 3-se precision, half-split null; all readings predeclared; K=256 ladder), --layout-audit harness mode (+~1600 lines with tests, 50 passing), additive pointer amendments to plan v1 and control-arm v1, and the ensemble-axis-verification receipt. R1 findings closed: F1 sigma-hat pair now mandatory (typed non-Option coverage), F2 K enforced at exactly {128,256} with parity balance and parity-preserving dropped-member rule, F3 docs linked by lead, F4 receipted at dev/active/972e2b88/ensemble-axis-verification.md (worker re-ran the whole verification; also falsified its own predeclared ladder axis \u2014 linker section sort moved 0/805 text symbols \u2014 and replaced it with -x86-branches-within-32B-boundaries, 805/805 moved, recorded with evidence), F5 parity defined over member index j = execution - 1 in doc and code with a direction-pinning test."
-    }
-   ],
-   "note": "Created during execution per owner decision DEC-E: the second post-cutover receipt records RESULT: FAIL at eleven cells and on tau_set; the rework is two tracks (cost elimination + attribution amendment), tolerances unchanged. Both tasks block 50b47eae. Parallel dispatch in worktrees; neither runs a benchmark-mode session. Wave complete: both issues closed after one rework round each."
-  },
-  {
-   "wave_number": 11,
-   "issues": [
+      "wave_number": 5,
+      "issues": [
+        {
+          "id": "278acf3a",
+          "short_id": "278acf3a",
+          "title": "Record the pre-cutover baseline receipt",
+          "classification": "implementation",
+          "model": "claude-opus",
+          "status": "done",
+          "notes": "Closed at 8c021500 after 1 rework. doc-review passed (clean tree, commit c125952a). The measurement itself landed first time at 86a45d2e; the rework was documentation only. F1 closed by a falsification record appended to plan \u00a74 that states the grounding is within-build, restates the baseline's across-build numbers with citations, names the limitation, and itemises what does not move \u2014 the falsified sentences at :190-191 and :205-207 are left standing with a parenthetical pointer, never rewritten. F2 closed by naming 51058f8e as the tracked owner. Lead independently verified every restated number against the receipt: 18.1 % at bit_backend/or_inplace/words=1 (4.157592 vs 3.520309), 9 of 34 outside \u00b15 %, 3.6 \u00d7 \u03c4_cell, and the single-binary cohort claim against procedure-verification.md:39,47."
+        }
+      ]
+    },
     {
-     "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
-     "short_id": "50b47eae",
-     "title": "Record the post-cutover non-regression receipt",
-     "classification": "implementation",
-     "model": "claude-opus",
-     "status": "in_progress",
-     "notes": "Third measured attempt, taken only after wave 10 lands, under the procedure as amended by 972e2b88. Benchmark-mode: Claude opus agent in the main checkout, uncontended host, never codex. Two failing receipts preserved (2026-08-20-post-cutover-receipt.md, -receipt-2.md); doc-review failed on the second at 1b90e95c pending tracked rework, re-evaluated after the amendment naming 2a85f728/972e2b88."
-    }
-   ],
-   "note": "50b47eae completes only when a receipt shows the tolerance holds under the predeclared, amended verdict procedure."
-  },
-  {
-   "wave_number": 12,
-   "issues": [
+      "wave_number": 6,
+      "issues": [
+        {
+          "id": "0d819b62",
+          "short_id": "0d819b62",
+          "title": "Cut the bit-backend selector over to profile-driven selection",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "done",
+          "notes": "Closed at 671c6271 after 1 rework. cargo-ci and code-review both passed. The cutover was right first time; the rework was scope and record-keeping. R1 findings, both lead-raised: it edited f35daec0's committed tuning_profile_install.rs (installed value 16->4, added assertions, added simd to its required-features, narrowing a feature-independent test), and it reworded the docs' 8-word 'validated as optimal' claim without recording the host-calibration receipt that selects 4. Both fixed: the test file is byte-identical to 871f9189, evidence moved to the new backend_selection_profile binary, and the docs now cite the receipt AND state that the two measurements are not directly interchangeable (the receipt measures the backends directly, the older validation measured the ops.rs dispatcher)."
+        },
+        {
+          "id": "697fc55b",
+          "short_id": "697fc55b",
+          "title": "Cut the polynomial crossover selectors over to profile-driven selection",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "done",
+          "notes": "Closed after 1 rework; merged at the worktree-agent-697fc55b merge. cargo-ci and code-review both pass. The cutover was right first time \u2014 six read sites, DEC-B1 honoured, recursion threaded. code-review then failed on two blocking findings the lead accepted: F1 the tests compared mathematically equivalent algorithms, so they passed even if the dispatchers ignored the profile, and they sized operands from the constants although design \u00a72.5 requires an installing test to size from the installed accessors; F2 the DEC-B5 falsification used 'historical claim' narration, which @/inv/present-tense-prose forbids in permanent artifacts. Resolution: a route-observation API (mul_route, mul_fast_route, div_rem_auto_route, batch_evaluate_route, batch_evaluate_auto_route) that all five dispatchers consume, so the tests observe the production decision rather than a copy; and present-tense phrasing that keeps the citation and both figures. mul_karatsuba_raw keeps its threaded parameter, so no per-node profile read was reintroduced \u2014 checked explicitly."
+        },
+        {
+          "id": "51058f8e-6bad-443c-aa5b-14d430bcd0c7",
+          "short_id": "51058f8e",
+          "title": "Predeclare the across-build control arm for the post-cutover comparison",
+          "classification": "documentation",
+          "model": "claude-opus",
+          "status": "done",
+          "notes": "Closed at 9e403499, zero rework. doc-review passed first try. Delivers all four criteria: \u00a71 the falsified within-build grounding with the baseline's numbers, \u00a72 the predeclared control arm (rebuild of 0c072d73, plan \u00a73 protocol unmodified, same schema token, ratios against the baseline CSV, both hash-outcome readings declared in advance), \u00a73 the itemised statement that plan v1 is unmodified, \u00a74 the five-part reading rule, \u00a75 the standing argument. Lead verified every checkable claim independently: 14 bit-backend + 20 polynomial = 34 cells counted from the baseline CSV, the cited permanent_campaign provenance doc, the receipt's 'Comparison eligibility' section, the two-receipts-under-the-token claim, the binary SHA and both revisions, and the single @/inv address resolves."
+        }
+      ]
+    },
     {
-     "id": "676f55a2-ae5e-45c6-b1ab-db2dee71770b",
-     "short_id": "676f55a2",
-     "title": "Bake the bit-backend threshold as a compile-time constant from the committed profile",
-     "classification": "implementation",
-     "model": "codex gpt-5.6-luna",
-     "status": "done",
-     "notes": "DEC-G track 1. Codex-eligible (not benchmark-mode). Gates: cargo-ci, code-review, doc-review. CLOSED 2026-08-21: all three gates pass. Mechanism corrected mid-review to a declared cfg (DEC-B9) after the cargo-feature variant tripped the frozen harness's bracket guard under --all-features; DEC-H added the required baked CI step. code-review 4 rounds (3 lead micro-fixes), doc-review 3 rounds."
-    }
-   ],
-   "note": "Serialized before wave 13 so its builds do not contend with 9162956b's benchmark-mode verification."
-  },
-  {
-   "wave_number": 13,
-   "issues": [
+      "wave_number": 7,
+      "issues": [
+        {
+          "id": "5ecc9bf8-3d62-408e-aba8-53ad2790a49d",
+          "short_id": "5ecc9bf8",
+          "title": "Implement the explicit host-calibration benchmark action",
+          "classification": "implementation",
+          "model": "claude-opus",
+          "status": "done",
+          "notes": "Closed at cfb588f6 after 1 lead-directed correction round (no formal rework counter: the finding was DEC-B6 compliance, caught before the worker reported). cargo-ci and code-review both passed. Calibration moved three fields on this host \u2014 simd_min_words 8->4, div_rem_fast_min_len 2048->1024, subproduct_min_len 4096->512 \u2014 and kept two for recorded reasons. The receipt carries six falsification records: F1 the Karatsuba/NTT crossover is not expressible as one threshold, F2 the unmeasurable field, F3 the e8fe47f5 NTT_THRESHOLD step reproduced exactly, F4 and F5 the DIV_REM and SUBPRODUCT tuning notes contradicted by this run, F6 source_dirty makes the artifact non-committable. Correction round: the first two emissions carried karatsuba_min_degree inside a kind:calibrated document while F2 called it unmeasured; the third omits it. The lead scoped the omission to that one field \u2014 karatsuba_max_out_len kept its default under a MEASURED non-monotone sweep, so it is a calibration outcome and stays stated."
+        }
+      ]
+    },
     {
-     "id": "9162956b-9891-49c8-81f5-80ba066ba532",
-     "short_id": "9162956b",
-     "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
-     "classification": "research",
-     "model": "claude-opus",
-     "status": "done",
-     "notes": "DEC-G track 2, amendment \u00a76.6 coverage branch. Benchmark-mode verification: Claude opus agent, main checkout, uncontended host, never codex. Owner approves the amendment text before wave 14 dispatches (REQ-03). CLOSED 2026-08-21: all three gates pass. Lead review: REQ-01 verified against raw data (s_R and half-split nulls recomputed from pilot-3-ens.csv, match to six decimals; RMS 0.046937 matches), REQ-02 verified additive with nothing predeclared moving, REQ-03 = DEC-I. One doc-review round failed on the LEAD'S OWN DEC-I pointer append to v1 (not worker output; rework count stays 0); owner reversed the pointer, v1 restored byte-identical (sha 1b8a91bd), re-run passed."
-    }
-   ],
-   "note": "Uncontended host required for the axis-verification measurements."
-  },
-  {
-   "wave_number": 14,
-   "issues": [
+      "wave_number": 8,
+      "issues": [
+        {
+          "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
+          "short_id": "50b47eae",
+          "title": "Record the post-cutover non-regression receipt",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "ready-for-rerun",
+          "notes": "First session produced 2026-08-20-post-cutover-receipt.md recording RESULT: FAIL at two popcount cells; that receipt is committed, doc-review-passed, and MUST NOT be modified or superseded \u2014 REQ-02 is satisfied by it. REQ-01 remains unmet. All four dependencies are now done, so the re-measurement can be dispatched. Spec is written and ready at scratchpad/dispatch-50b47eae-rerun.md (reproduce it from the handoff if the scratchpad is gone)."
+        }
+      ]
+    },
     {
-     "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
-     "short_id": "50b47eae",
-     "title": "Record the post-cutover non-regression receipt",
-     "classification": "implementation",
-     "model": "claude-opus",
-     "status": "blocked-on-rework",
-     "notes": "Fourth measured attempt under plan v1 + amendment v2, only after 676f55a2 and 9162956b are done and the owner has approved the v2 text. Three failing receipts preserved. SESSION-6 (2026-08-21/22): fourth measured session running as a DETACHED pipeline under /tmp/gf2-ens4 (build chain PID 326324, continuation driver PID 754889; terminal line 'DRIVER: COMPLETE/ABORTED' in logs/continue-driver.log). Worker was killed after partial compliance with the detach directive; its build scripts and run-ensemble.sh/verify-construction.py were lead-verified and reused. Ref arm: 256/256 built, 0 failed, 256 distinct sha and page offsets. Candidate binaries built at ec857d2f; rows record run-time HEAD (harness reads rev-parse at execution) -> receipt-4 must carry the escalation-#18-style build-input-diff ruling. Outputs land untracked in dev/benchmarks/tuning_profiles (2026-08-22-*-4.*) and dev/active/50b47eae/s4-session/. See handoff-2.md. SESSION-7 (2026-08-22): DEC-J v3 amendment after candidate-arm construction FAIL (base separation 0 mod 32; probes proved 16-mod-32 unreachable); pipeline resumed, DRIVER: COMPLETE. Receipt-4 committed (8e44620c): FIRST ATTRIBUTABLE VERDICT \u2014 audit PASS all four preconditions, comparison FAIL at exactly one cell, bit_backend/not_inplace/words=1 at 1.100028; set geomean 1.002950; popcount cells clean after DEC-G bake. Per v1 s7 row 2 the verdict stands; REQ-01 still unmet; excursion + tracked rework fc976a80 satisfy REQ-02. 50b47eae now depends on fc976a80; session 5 after the fix is the arbiter. Session record: dev/active/50b47eae/s4-session/. Staged ensemble binaries kept at /tmp/gf2-ens4/{ref,cand} for fc976a80 forensics; control-0c072d73 worktree preserved for session 5's reference arm."
-    }
-   ],
-   "note": "50b47eae completes only when a receipt shows the tolerance holds under the amended, predeclared verdict procedure with all preconditions met."
-  },
-  {
-   "wave_number": 15,
-   "issues": [
+      "wave_number": 9,
+      "issues": [
+        {
+          "id": "c42720ce-1f7b-4058-97bf-de165786b8a0",
+          "short_id": "c42720ce",
+          "title": "Reduce the per-call cost of the bit-backend threshold read",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "done",
+          "notes": "Closed at c596d6a6 after 3 rework rounds plus one owner-granted counter reset. cargo-ci and code-review both pass. Mechanism: the bit-backend threshold is published into an AtomicUsize beside an AtomicBool resolved flag; each publication site stores the threshold Relaxed then the flag Release, and active_simd_min_words loads the flag Acquire before loading the threshold Relaxed. One-shot resolution preserved (a selection resolves active(), so a later install returns AlreadyResolved) and install publishes only after ACTIVE.set succeeds. Round history: R1 missed REQ-03's test entirely and silently regressed one-shot resolution by removing the only active() call from the selection path; R2 fixed both but published through two relaxed stores with no happens-before, which code-review caught as a real race; R3 followed the lead's own WRONG instruction to use a usize::MAX sentinel, which broke v1 schema semantics because design \u00a72.1 documents usize::MAX as a meaningful simd_min_words; R4 (after owner reset) restored try_new and closed the race with Release/Acquire. The lead then corrected the amendment's inaccurate 'at most once per process' claim about the cold path directly."
+        }
+      ],
+      "note": "Created during execution. The post-cutover receipt of 50b47eae records RESULT: FAIL at two popcount cells, attributable to the cutover by the predeclared control-arm reading. Wave 9 removes the cost; wave 10 is 50b47eae's fresh receipt."
+    },
     {
-     "id": "fc976a80-d046-41ca-b97e-766bdf8c37ce",
-     "short_id": "fc976a80",
-     "title": "Resolve the attributable regression at bit_backend/not_inplace/words=1 before the next measured session",
-     "classification": "implementation",
-     "model": "claude-opus",
-     "status": "done",
-     "notes": "Created by the lead per receipt-4 disposition (v1 s7 row 2: rework tracked). Diagnosis is perf forensics over the staged 512-member ensemble at /tmp/gf2-ens4; benchmark-mode probes stay off codex per standing deviation. Wired: 50b47eae depends on fc976a80. Wave 16 = measured session 5 under 50b47eae once the fix lands. SESSION-7: diagnosis complete (findings.md, commit ab925b51): construction artifact, matched strata agree to 0.01%; no crates/ fix. DEC-K resolves via amendment v4; REQ-02 amended with the amendment branch. Close after session 5 confirms dispatch (REQ-03) and gates evaluate. CLOSED 2026-08-22 session 8: REQ-01 met under DEC-M amendment (construction cause, matched-stratum evidence, session-5 confirmation 1.000593); REQ-02 via DEC-K branch; REQ-03 arbitrated. Gates: cargo-ci/code-review/doc-review all passed (doc-review after DEC-M)."
-    }
-   ]
-  },
-  {
-   "wave_number": 16,
-   "issues": [
+      "wave_number": 10,
+      "issues": [
+        {
+          "id": "2a85f728-4f9f-40f3-a9ee-ab7655d83b9f",
+          "short_id": "2a85f728",
+          "title": "Eliminate the per-call cost of the bit-backend selection boundary",
+          "classification": "implementation",
+          "model": "codex-luna",
+          "status": "done",
+          "notes": "Closed after 1 rework. Review verdict PASS: gates cargo-ci + code-review passed; REQ-01 one Relaxed load + compare on the fast path (asm receipt, all five entry points); REQ-02 semantics preserved; REQ-03 route observation below (4) and above (16) default; REQ-04 asm-delta.md; REQ-05 not triggered. R1 findings both closed at HEAD: F1 install publication window closed by storing the threshold inside ACTIVE.get_or_init's closure (mirrors active()'s pattern); F2 asm receipt extended to all five entry points. DEC-B8 (lead): the declared contract change \u2014 a bit-backend selection no longer resolves the profile, so a later install() succeeds \u2014 is accepted as forced by DEC-E track 1 (any resolve-on-selection needs a resolved-check branch); the worker's rewrite of c42720ce's committed test first_backend_selection_resolves_tuning_profile is accepted under the same forcing: the test asserted the exact contract DEC-E's goal removes, and the inverted assertion now witnesses the new contract. Documented in design \u00a74.1 amendment and install()'s rustdoc."
+        },
+        {
+          "id": "972e2b88-d75c-411b-a6b5-06318fa84305",
+          "short_id": "972e2b88",
+          "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
+          "classification": "design",
+          "model": "claude-opus",
+          "status": "done",
+          "notes": "Closed after 1 rework. Review verdict PASS: cargo-ci, code-review, doc-review all pass. Delivered layout-attribution-verdict-v1.md (128-member alignment-flag ensemble on both arms, verdict on plan \u00a75's unmodified rule, four attribution preconditions: coverage vs sigma-hat, decorrelation, 3-se precision, half-split null; all readings predeclared; K=256 ladder), --layout-audit harness mode (+~1600 lines with tests, 50 passing), additive pointer amendments to plan v1 and control-arm v1, and the ensemble-axis-verification receipt. R1 findings closed: F1 sigma-hat pair now mandatory (typed non-Option coverage), F2 K enforced at exactly {128,256} with parity balance and parity-preserving dropped-member rule, F3 docs linked by lead, F4 receipted at dev/active/972e2b88/ensemble-axis-verification.md (worker re-ran the whole verification; also falsified its own predeclared ladder axis \u2014 linker section sort moved 0/805 text symbols \u2014 and replaced it with -x86-branches-within-32B-boundaries, 805/805 moved, recorded with evidence), F5 parity defined over member index j = execution - 1 in doc and code with a direction-pinning test."
+        }
+      ],
+      "note": "Created during execution per owner decision DEC-E: the second post-cutover receipt records RESULT: FAIL at eleven cells and on tau_set; the rework is two tracks (cost elimination + attribution amendment), tolerances unchanged. Both tasks block 50b47eae. Parallel dispatch in worktrees; neither runs a benchmark-mode session. Wave complete: both issues closed after one rework round each."
+    },
     {
-     "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
-     "short_id": "50b47eae",
-     "title": "Record the post-cutover non-regression receipt",
-     "classification": "implementation",
-     "model": "lead-direct",
-     "status": "session-complete",
-     "notes": "Session 5 COMPLETE (driver PID 1157173, DRIVER: COMPLETE 12:52:30Z). Audit PASS all preconditions; comparison FAIL at polynomial/mul_fast/len=32 (1.058269) and len=64 (1.050254), set geomean 1.001087. Receipt-5 committed (1d7a1f58) with CSVs, TSVs, s5-session record; durables linked. Receipt-4's cell reads 1.000593 \u2014 fc976a80 construction-artifact diagnosis confirmed. 50b47eae REQ-01 still unmet; DEC-L routes rework to eb9b324c (50b47eae now depends on it)."
-    }
-   ]
-  },
-  {
-   "wave_number": 17,
-   "issues": [
+      "wave_number": 11,
+      "issues": [
+        {
+          "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
+          "short_id": "50b47eae",
+          "title": "Record the post-cutover non-regression receipt",
+          "classification": "implementation",
+          "model": "claude-opus",
+          "status": "in_progress",
+          "notes": "Third measured attempt, taken only after wave 10 lands, under the procedure as amended by 972e2b88. Benchmark-mode: Claude opus agent in the main checkout, uncontended host, never codex. Two failing receipts preserved (2026-08-20-post-cutover-receipt.md, -receipt-2.md); doc-review failed on the second at 1b90e95c pending tracked rework, re-evaluated after the amendment naming 2a85f728/972e2b88."
+        }
+      ],
+      "note": "50b47eae completes only when a receipt shows the tolerance holds under the predeclared, amended verdict procedure."
+    },
     {
-     "id": "eb9b324c-d9d3-425d-93a6-d0253033a710",
-     "short_id": "eb9b324c",
-     "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-     "classification": "implementation",
-     "model": "opus (general-purpose worker)",
-     "status": "done",
-     "notes": "DEC-L task. Depends on fc976a80 (closes first). Head start committed: dev/active/eb9b324c/diagnosis-brainstorm.md (lead + codex, 2026-08-22) \u2014 two-site diagnosis: Site A fixed per-call double dispatch (mul_fast wrapper -> mul_impl re-checks, ~85 ns at bit5=0, +2.4% at bit5=1), Site B multiplicative ~6% in parameterized mul_karatsuba_raw layout; response is 2-periodic in E (VA bit 5); E2 perf-counter discriminator and its protocol gap recorded; fix candidate (i) collapse double dispatch via one inner dispatcher taking resolved selectors. DISPATCHED 2026-08-22 session 8 after fc976a80 closed (DEC-M). Scope: E2 perf within protocol gap, Site-A fix (single inner dispatcher, resolved-selectors parameter), pilot 16-member translation ensemble of the fixed candidate, findings.md in fc976a80's register. No pinned-set measured session (owner approval required). Lead commit freeze on main while the worker's pilot lock session may be running. Review round 1: cargo-ci PASS, doc-review PASS, code-review FAIL (F1 blocking: dangling @/inv/canonical-abstraction citation, correct id convention-convergence; F2 advisory: mul_fast rustdoc opening still names FieldPoly::mul; F3 advisory: pilot parity table labels b0/b1 as slower/faster). Rework dispatched to the same worker via message 2026-08-22. Review round 2 (post-rework 619a9666): F1-F3 verified closed at HEAD by the lead; cargo-ci, code-review and doc-review all PASS at 619a9666 with 0 findings. Verdict PASS. REQ-01: four-region dispatch chain, +93.42 ns/call phase-averaged wrapper term (static + session-5 timing decomposition + symbol-level perf; front-end structure explicitly unresolved). REQ-02: fix dd3eee59 + 16-member pilot 0.997219/1.000586 at matched offsets, parity split 1.0800->0.9994. REQ-03: CI green, no measured session, tuning_profiles untouched. Closed done 2026-08-22."
-    }
-   ]
-  },
-  {
-   "wave_number": 18,
-   "issues": [
+      "wave_number": 12,
+      "issues": [
+        {
+          "id": "676f55a2-ae5e-45c6-b1ab-db2dee71770b",
+          "short_id": "676f55a2",
+          "title": "Bake the bit-backend threshold as a compile-time constant from the committed profile",
+          "classification": "implementation",
+          "model": "codex gpt-5.6-luna",
+          "status": "done",
+          "notes": "DEC-G track 1. Codex-eligible (not benchmark-mode). Gates: cargo-ci, code-review, doc-review. CLOSED 2026-08-21: all three gates pass. Mechanism corrected mid-review to a declared cfg (DEC-B9) after the cargo-feature variant tripped the frozen harness's bracket guard under --all-features; DEC-H added the required baked CI step. code-review 4 rounds (3 lead micro-fixes), doc-review 3 rounds."
+        }
+      ],
+      "note": "Serialized before wave 13 so its builds do not contend with 9162956b's benchmark-mode verification."
+    },
     {
-     "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
-     "short_id": "50b47eae",
-     "title": "Record the post-cutover non-regression receipt",
-     "classification": "implementation",
-     "model": "lead-direct",
-     "status": "dispatched-detached",
-     "notes": "Session 6 (v4, fixed revision) runs detached: driver PID 2036725, log /tmp/gf2-ens6/logs/continue-driver.log (baseline 1 line at launch), terminal line DRIVER: COMPLETE/ABORTED. Launched 16:39:44Z; expected COMPLETE ~18:35Z. Outputs: dev/benchmarks/tuning_profiles/2026-08-22-ensemble-{reference,candidate}-arm-6.csv, 2026-08-22-member-provenance-{ref,cand}-6.tsv, dev/active/50b47eae/s6-session/. Next steps and routing in handoff-4.md."
+      "wave_number": 13,
+      "issues": [
+        {
+          "id": "9162956b-9891-49c8-81f5-80ba066ba532",
+          "short_id": "9162956b",
+          "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
+          "classification": "research",
+          "model": "claude-opus",
+          "status": "done",
+          "notes": "DEC-G track 2, amendment \u00a76.6 coverage branch. Benchmark-mode verification: Claude opus agent, main checkout, uncontended host, never codex. Owner approves the amendment text before wave 14 dispatches (REQ-03). CLOSED 2026-08-21: all three gates pass. Lead review: REQ-01 verified against raw data (s_R and half-split nulls recomputed from pilot-3-ens.csv, match to six decimals; RMS 0.046937 matches), REQ-02 verified additive with nothing predeclared moving, REQ-03 = DEC-I. One doc-review round failed on the LEAD'S OWN DEC-I pointer append to v1 (not worker output; rework count stays 0); owner reversed the pointer, v1 restored byte-identical (sha 1b8a91bd), re-run passed."
+        }
+      ],
+      "note": "Uncontended host required for the axis-verification measurements."
+    },
+    {
+      "wave_number": 14,
+      "issues": [
+        {
+          "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
+          "short_id": "50b47eae",
+          "title": "Record the post-cutover non-regression receipt",
+          "classification": "implementation",
+          "model": "claude-opus",
+          "status": "blocked-on-rework",
+          "notes": "Fourth measured attempt under plan v1 + amendment v2, only after 676f55a2 and 9162956b are done and the owner has approved the v2 text. Three failing receipts preserved. SESSION-6 (2026-08-21/22): fourth measured session running as a DETACHED pipeline under /tmp/gf2-ens4 (build chain PID 326324, continuation driver PID 754889; terminal line 'DRIVER: COMPLETE/ABORTED' in logs/continue-driver.log). Worker was killed after partial compliance with the detach directive; its build scripts and run-ensemble.sh/verify-construction.py were lead-verified and reused. Ref arm: 256/256 built, 0 failed, 256 distinct sha and page offsets. Candidate binaries built at ec857d2f; rows record run-time HEAD (harness reads rev-parse at execution) -> receipt-4 must carry the escalation-#18-style build-input-diff ruling. Outputs land untracked in dev/benchmarks/tuning_profiles (2026-08-22-*-4.*) and dev/active/50b47eae/s4-session/. See handoff-2.md. SESSION-7 (2026-08-22): DEC-J v3 amendment after candidate-arm construction FAIL (base separation 0 mod 32; probes proved 16-mod-32 unreachable); pipeline resumed, DRIVER: COMPLETE. Receipt-4 committed (8e44620c): FIRST ATTRIBUTABLE VERDICT \u2014 audit PASS all four preconditions, comparison FAIL at exactly one cell, bit_backend/not_inplace/words=1 at 1.100028; set geomean 1.002950; popcount cells clean after DEC-G bake. Per v1 s7 row 2 the verdict stands; REQ-01 still unmet; excursion + tracked rework fc976a80 satisfy REQ-02. 50b47eae now depends on fc976a80; session 5 after the fix is the arbiter. Session record: dev/active/50b47eae/s4-session/. Staged ensemble binaries kept at /tmp/gf2-ens4/{ref,cand} for fc976a80 forensics; control-0c072d73 worktree preserved for session 5's reference arm."
+        }
+      ],
+      "note": "50b47eae completes only when a receipt shows the tolerance holds under the amended, predeclared verdict procedure with all preconditions met."
+    },
+    {
+      "wave_number": 15,
+      "issues": [
+        {
+          "id": "fc976a80-d046-41ca-b97e-766bdf8c37ce",
+          "short_id": "fc976a80",
+          "title": "Resolve the attributable regression at bit_backend/not_inplace/words=1 before the next measured session",
+          "classification": "implementation",
+          "model": "claude-opus",
+          "status": "done",
+          "notes": "Created by the lead per receipt-4 disposition (v1 s7 row 2: rework tracked). Diagnosis is perf forensics over the staged 512-member ensemble at /tmp/gf2-ens4; benchmark-mode probes stay off codex per standing deviation. Wired: 50b47eae depends on fc976a80. Wave 16 = measured session 5 under 50b47eae once the fix lands. SESSION-7: diagnosis complete (findings.md, commit ab925b51): construction artifact, matched strata agree to 0.01%; no crates/ fix. DEC-K resolves via amendment v4; REQ-02 amended with the amendment branch. Close after session 5 confirms dispatch (REQ-03) and gates evaluate. CLOSED 2026-08-22 session 8: REQ-01 met under DEC-M amendment (construction cause, matched-stratum evidence, session-5 confirmation 1.000593); REQ-02 via DEC-K branch; REQ-03 arbitrated. Gates: cargo-ci/code-review/doc-review all passed (doc-review after DEC-M)."
+        }
+      ]
+    },
+    {
+      "wave_number": 16,
+      "issues": [
+        {
+          "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
+          "short_id": "50b47eae",
+          "title": "Record the post-cutover non-regression receipt",
+          "classification": "implementation",
+          "model": "lead-direct",
+          "status": "session-complete",
+          "notes": "Session 5 COMPLETE (driver PID 1157173, DRIVER: COMPLETE 12:52:30Z). Audit PASS all preconditions; comparison FAIL at polynomial/mul_fast/len=32 (1.058269) and len=64 (1.050254), set geomean 1.001087. Receipt-5 committed (1d7a1f58) with CSVs, TSVs, s5-session record; durables linked. Receipt-4's cell reads 1.000593 \u2014 fc976a80 construction-artifact diagnosis confirmed. 50b47eae REQ-01 still unmet; DEC-L routes rework to eb9b324c (50b47eae now depends on it)."
+        }
+      ]
+    },
+    {
+      "wave_number": 17,
+      "issues": [
+        {
+          "id": "eb9b324c-d9d3-425d-93a6-d0253033a710",
+          "short_id": "eb9b324c",
+          "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
+          "classification": "implementation",
+          "model": "opus (general-purpose worker)",
+          "status": "done",
+          "notes": "DEC-L task. Depends on fc976a80 (closes first). Head start committed: dev/active/eb9b324c/diagnosis-brainstorm.md (lead + codex, 2026-08-22) \u2014 two-site diagnosis: Site A fixed per-call double dispatch (mul_fast wrapper -> mul_impl re-checks, ~85 ns at bit5=0, +2.4% at bit5=1), Site B multiplicative ~6% in parameterized mul_karatsuba_raw layout; response is 2-periodic in E (VA bit 5); E2 perf-counter discriminator and its protocol gap recorded; fix candidate (i) collapse double dispatch via one inner dispatcher taking resolved selectors. DISPATCHED 2026-08-22 session 8 after fc976a80 closed (DEC-M). Scope: E2 perf within protocol gap, Site-A fix (single inner dispatcher, resolved-selectors parameter), pilot 16-member translation ensemble of the fixed candidate, findings.md in fc976a80's register. No pinned-set measured session (owner approval required). Lead commit freeze on main while the worker's pilot lock session may be running. Review round 1: cargo-ci PASS, doc-review PASS, code-review FAIL (F1 blocking: dangling @/inv/canonical-abstraction citation, correct id convention-convergence; F2 advisory: mul_fast rustdoc opening still names FieldPoly::mul; F3 advisory: pilot parity table labels b0/b1 as slower/faster). Rework dispatched to the same worker via message 2026-08-22. Review round 2 (post-rework 619a9666): F1-F3 verified closed at HEAD by the lead; cargo-ci, code-review and doc-review all PASS at 619a9666 with 0 findings. Verdict PASS. REQ-01: four-region dispatch chain, +93.42 ns/call phase-averaged wrapper term (static + session-5 timing decomposition + symbol-level perf; front-end structure explicitly unresolved). REQ-02: fix dd3eee59 + 16-member pilot 0.997219/1.000586 at matched offsets, parity split 1.0800->0.9994. REQ-03: CI green, no measured session, tuning_profiles untouched. Closed done 2026-08-22."
+        }
+      ]
+    },
+    {
+      "wave_number": 18,
+      "issues": [
+        {
+          "id": "50b47eae-05c8-4704-91c0-ac0816a76496",
+          "short_id": "50b47eae",
+          "title": "Record the post-cutover non-regression receipt",
+          "classification": "implementation",
+          "model": "lead-direct",
+          "status": "done",
+          "notes": "Session 6 read DRIVER: COMPLETE at 18:30:06Z. Comparison RESULT: PASS (geomean 0.994048, all 34 cells inside tau_cell; session-5 verdict cells read 1.000966/0.999108) and layout-audit RESULT: PASS on all preconditions. Receipt-6 committed at 3a6a0b09 with CSVs, TSVs and s6-session record, all jit-doc-linked. doc-review re-run PASS (prior F1 answered by the passing receipt, F2 chain complete: fc976a80 and eb9b324c done). 50b47eae closed 2026-08-22; lead review PASS, 0 rework this wave."
+        }
+      ]
     }
-   ]
-  }
- ],
- "created_during_execution": [
-  {
-   "id": "a6636671",
-   "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
-   "reason": "classification \u00a75 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope",
-   "parented": "86b9c719 (quality-documentation-tech-debt) to satisfy repo DAG-integrity validation; still outside epic 6dc81018"
+  ],
+  "created_during_execution": [
+    {
+      "id": "a6636671",
+      "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
+      "reason": "classification \u00a75 cutover disposition needed a tracked issue (no-deferred-defects); standalone backlog task, outside the epic per plan scope",
+      "parented": "86b9c719 (quality-documentation-tech-debt) to satisfy repo DAG-integrity validation; still outside epic 6dc81018"
+    },
+    {
+      "id": "4dd5372a",
+      "title": "Migrate Charon/Aeneas toolchain to newest upstream",
+      "reason": "owner-approved follow-on from spike 34d85cb9 upgrade leg; standalone, outside the epic",
+      "parented": "86b9c719 (quality-documentation-tech-debt) to satisfy repo DAG-integrity validation; still outside epic 6dc81018"
+    },
+    {
+      "id": "1ac74567",
+      "title": "Author the loop-free extraction proof-obligation factoring sketch",
+      "reason": "REQ-05's second clause (proof obligations factored as trait-level algebraic laws plus per-backend representation refinement) had no delivering child. Owner approved closing it in-epic with an approved-sketch document.",
+      "parented": "epic 6dc81018 directly (6dc81018 -> 1ac74567); runs as wave 4.5"
+    },
+    {
+      "id": "99c92597",
+      "title": "Document the Frobenius exponent-overflow panic in FiniteFieldExt rustdoc",
+      "reason": "proof-sketch \u00a77.4 and doc-review advisory F2 both surfaced an undocumented panic path at crates/gf2-core/src/field/traits.rs:1128; 1ac74567 changes nothing under crates/, so it is filed rather than fixed in place (no-deferred-defects)",
+      "parented": "86b9c719 (quality-documentation-tech-debt); outside epic 6dc81018"
+    },
+    {
+      "id": "51058f8e",
+      "title": "Predeclare the across-build control arm for the post-cutover comparison",
+      "reason": "doc-review F2 on 278acf3a: the receipt deferred the invalidated comparison methodology to an untracked 'lead decision'. no-deferred-defects requires a tracked owner before 50b47eae's gate relies on the tolerance.",
+      "parented": "50b47eae -> 51058f8e (transitively reduced; inside epic 6dc81018 via 50b47eae)"
+    },
+    {
+      "id": "389aa4de",
+      "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
+      "reason": "DEC-B6: the field is unsweepable until poly.rs reads tuning::active(). After 697fc55b, a child process installing a minimal threshold takes the Karatsuba arm and one installing a maximal threshold takes the schoolbook arm, so both arms come off the same public FieldPoly::mul with no new public API.",
+      "parented": "86b9c719 (quality-documentation-tech-debt), depends on 697fc55b; outside epic 6dc81018"
+    },
+    {
+      "id": "2a85f728",
+      "title": "Eliminate the per-call cost of the bit-backend selection boundary",
+      "reason": "DEC-E track 1: the second excursion's real cost signal needs a tracked owner (control-arm \u00a74.2, no-deferred-defects); doc-review on 50b47eae blocked until the rework is tracked",
+      "parented": "50b47eae -> 2a85f728 (transitively reduced; inside epic 6dc81018)"
+    },
+    {
+      "id": "972e2b88",
+      "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
+      "reason": "DEC-E track 2: five tripping cells lie on untouched paths and the across-build layout spread exceeds tau_cell, so the verdict procedure needs a predeclared attribution amendment before the next measured run",
+      "parented": "50b47eae -> 972e2b88 (transitively reduced; inside epic 6dc81018)"
+    },
+    {
+      "id": "76665001",
+      "title": "gf2-sim gpu::awgn tests fail transiently on a quiet host and pass on identical re-run",
+      "reason": "DEC-F: session-4 handoff open question resolved by the owner as file-it; one false-red CI cycle recorded",
+      "parented": "86b9c719 (quality-documentation-tech-debt); outside epic 6dc81018"
+    },
+    {
+      "id": "eb9b324c",
+      "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
+      "reason": "DEC-L (escalation #26): second attributable excursion needs a tracked owner in fc976a80's mould before any acceptance, fix, or next measured session",
+      "parented": "50b47eae -> eb9b324c (inside epic 6dc81018)"
+    }
+  ],
+  "escalations": [
+    {
+      "kind": "invoker-directive",
+      "issue": "34d85cb9",
+      "date": "2026-08-18",
+      "text": "Owner directed: update local Charon/Aeneas to newest upstream as part of the spike. Worker instructed to baseline on pinned versions, back up binaries, upgrade, re-run key matrix legs, and regression-check scripts/verify-lean.sh; restore backups if the committed pipeline breaks."
+    },
+    {
+      "kind": "criterion-decision",
+      "issue": "6dc81018/REQ-05",
+      "date": "2026-08-19",
+      "decision": "DEC-A approved by owner via AskUserQuestion: REQ-05 narrowed to loop-free generic extraction (square/frobenius class); F4 filed upstream as non-blocking follow-up (tracked in 4dd5372a REQ-04). Epic description amended."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "toolchain-upgrade",
+      "date": "2026-08-19",
+      "decision": "Charon/Aeneas upstream migration tracked as standalone task 4dd5372a; this epic stays on the pinned pair; host binaries not swapped."
+    },
+    {
+      "kind": "rework-exhausted",
+      "issue": "34d85cb9",
+      "date": "2026-08-19",
+      "decision": "Owner approved one more rework round via AskUserQuestion (counter reset). Scope: fix blocking F1/F2 from research-review round 3 plus a full sweep verifying every quantitative claim in the spike record against its committed receipt. Advisories not required (owner declined the 'also fix advisories' option)."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "697fc55b",
+      "date": "2026-08-19",
+      "decision": "DEC-B1: polynomial cutover covers BOTH SUBPRODUCT_THRESHOLD read sites (poly.rs batch_evaluate and batch_evaluate_auto), per design 220cab0b open question 1."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "5ecc9bf8",
+      "date": "2026-08-19",
+      "decision": "DEC-B2 deferred to wave-7 dispatch: whether the project bench host gets a canonical committed calibrated profile is decided against 5ecc9bf8's own criteria."
+    },
+    {
+      "kind": "criterion-decision",
+      "issue": "6dc81018/REQ-05",
+      "date": "2026-08-19",
+      "decision": "Owner chose scope option A via AskUserQuestion: REQ-05's second clause ('proof obligations factored as trait-level algebraic laws plus per-backend representation refinement') is closed in-epic by an approved-sketch document (task 1ac74567), not by discharged Lean proofs. Proof bodies are follow-on work outside the epic."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "f35daec0",
+      "date": "2026-08-19",
+      "decision": "DEC-B3: the stateful active()/install() tests live in separate integration-test binaries with one #[test] fn each, because the OnceLock resolves once per process and the default-path and install-path assertions are mutually exclusive within one binary. DEC-B4: the pre-existing 'eight u64 words are 512 bytes' rustdoc error, previously routed to 0d819b62, was folded into f35daec0 instead \u2014 this is the change that moves the constant, so AGENTS.md's same-change stale-text rule attaches here."
+    },
+    {
+      "kind": "criterion-decision",
+      "issue": "6dc81018/REQ-04",
+      "date": "2026-08-19",
+      "decision": "DEC-C approved by owner via AskUserQuestion (option B). The pre-cutover baseline falsified plan \u00a74's noise rationale: across two builds of behaviourally unchanged selector code, 9 of 34 cells fall outside \u00b15 %, worst 18.1 % = 3.6 \u00d7 \u03c4_cell, and the comparison \u03c4_cell gates is necessarily across builds. Resolution: plan v1 stays FROZEN and unmodified \u2014 \u00a72 cell set, \u00a73 protocol, \u00a74 tolerance values, \u00a75 comparison rule all stand, no schema token bump, the pre-cutover baseline stays valid. 50b47eae's session additionally measures a control rebuild of the pre-cutover baseline revision under the same wrapper, protocol, and schema token. The control arm enters NO verdict; it is evidence for the tracked rework 50b47eae REQ-02 already requires when an excursion occurs. Predeclared before any post-cutover number exists by issue 51058f8e. Options A (literal, no evidence to adjudicate a spurious trip) and C (re-pin to v2, which would discard the baseline) were declined."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "5ecc9bf8",
+      "date": "2026-08-20",
+      "decision": "DEC-B2 resolved against 5ecc9bf8's own criteria: REQ-01 asks for an emitted profile artifact the loader accepts, REQ-02 for the workflow documented from invocation to committing the emitted profile. Neither requires a canonical committed calibrated profile for the project bench host, so this issue emits and documents but commits no canonical host profile."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "697fc55b",
+      "date": "2026-08-20",
+      "decision": "DEC-B5: NTT_THRESHOLD's rustdoc at crates/gf2-core/src/field/poly.rs:2711 asserts the value is tuned from the ntt arm of benches/field_poly.rs, and that claim is contradicted by 2026-08-19-procedure-verification.md \u00a7Falsification record (out_len 127 at 3,793 ns on the mul arm against out_len 129 at 12,057 ns on the NTT arm, a 3.18x step into the arm the threshold selects for being cheaper). 697fc55b is the change that rewrites those four constants' rustdoc, so AGENTS.md's same-change stale-text rule attaches there, exactly as DEC-B4 attached the 512-bytes error to f35daec0. The rewrite must record the contradiction and cite the receipt rather than silently dropping or restating the tuning claim; the constant's value does not move."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "5ecc9bf8",
+      "date": "2026-08-20",
+      "decision": "DEC-B6: karatsuba_min_degree is not sweepable from a bench target. A bench links gf2-core as an external crate, so it can name only pub items, and both arms are private (mul_schoolbook_impl at crates/gf2-core/src/field/poly.rs:2484, mul_karatsuba_raw at :2531); the only public entry is the threshold-driven dispatcher FieldPoly::mul, and poly.rs:72 documents the omission deliberately. Resolution per design \u00a75 condition 5: the emitted profile OMITS the field so it inherits the default at load \u2014 emitting it carrying 32 would be a @/inv/benchmark-backed-performance defect, since a profile must not claim an unmeasured value. Verified the loader supports omission: JsonPolynomial fields are Option<Option<usize>> (tuning/mod.rs:903-907) and from_json falls back to CONSERVATIVE. TuningProfile::to_json cannot express omission, so the harness constructs the emitted document with only the four swept fields and validates it through from_json, which is what \u00a72.7's output discipline asks. Rejected: adding pub forcing entry points (public API against the poly.rs:72 decision, outside this issue) and reordering 5ecc9bf8 behind 697fc55b (rejected for scope, not ordering \u2014 5ecc9bf8 is not upstream of 50b47eae, so that sequencing would not have inverted the DAG). Tracked forward as 389aa4de."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "697fc55b",
+      "date": "2026-08-20",
+      "decision": "DEC-B7: @/inv/present-tense-prose and @/inv/falsification-preserved both bind the same rustdoc. They are satisfied together by stating the measurement as a present fact about the system ('the conservative default of 128 does not sit at the measured crossover') with the receipt citation and both figures retained, rather than by narrating a change to a claim. Neither invariant is traded against the other."
+    },
+    {
+      "kind": "criterion-decision",
+      "issue": "6dc81018/REQ-04",
+      "date": "2026-08-20",
+      "decision": "DEC-D approved by owner via AskUserQuestion. The post-cutover comparison FAILS: bit_backend/popcount/words=1 at ratio 1.182311 and words=8 at 1.064214, both above tau_cell=5%; tau_set holds at 0.998853. The control arm sits at 0.972476 and 1.002702 at those cells, so the reading predeclared in across-build-control-arm-v1.md \u00a74.3 attributes the excursion to the cutover. Resolution: remove the cost, do NOT widen the tolerance and do NOT amend REQ-04. Filed c42720ce inside the epic; 50b47eae depends on it and re-runs the unmodified procedure afterwards. LEAD CORRECTION TO THE CHOSEN MECHANISM: the option text said 'compiled-in floor below which the profile is not consulted'. That cannot fix the words=8 cell \u2014 a floor removes the read only below itself, so fixing words=8 needs a floor above 8, while SIMD_MIN_WORDS_DEFAULT is 8 and 5ecc9bf8's committed calibration selects 4 for this field; any such floor would put the boundary beyond the profile's reach and make the calibration inert. c42720ce therefore requires the read to be made cheap while the profile keeps governing every pinned size. The owner's intent (make REQ-04 pass without touching the tolerance) is preserved; only the mechanism differs, and the correction was reported."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "50b47eae",
+      "date": "2026-08-20",
+      "decision": "DEC-E via AskUserQuestion after the second RESULT: FAIL (11/34 cells over tau_cell, geomean 1.027550 > tau_set; c42720ce rework counter exhausted at 3): rework scoped as two tracks \u2014 2a85f728 eliminates the real per-call bit-backend cost, 972e2b88 predeclares an additive, owner-approved layout-attribution amendment to the verdict procedure (same-session two-arm comparison named as the direction's example). tau_cell 5% and tau_set 2% unchanged; both failing receipts stand as taken."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "gpu-awgn-flake",
+      "date": "2026-08-20",
+      "decision": "DEC-F via AskUserQuestion: the transient gf2-sim gpu::awgn failure from the session-4 handoff's open question is filed as bug 76665001 under 86b9c719, outside the epic, cross-referencing fault-family member 10071e51."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "2a85f728",
+      "date": "2026-08-20",
+      "decision": "DEC-B8: accepted the install-after-selection loosening and the necessary inversion of c42720ce's one-shot witness test, both forced by DEC-E track 1's elimination goal; recorded in design \u00a74.1 and rustdoc, single-thread observability asserted in the route test."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "50b47eae",
+      "date": "2026-08-21",
+      "decision": "DEC-G via AskUserQuestion after the third measured session (verdict FAIL at four cells, audit FAIL on coverage at two, amendment \u00a77 row 4: no attributable verdict). REQ-04 path: the owner redirected to the compile-time-constants mechanism the DEC-D escalation had offered, in the committed-profile variant: bit_backend's words-threshold becomes a const; the default build compiles the conservative table's value; an explicit build-time opt-in bakes the committed calibrated profile's value (4). Runtime install() stops governing the bit-backend family; design 220cab0b D1's rejection of build-time embedding is additively amended to admit it for this family, accepting D1's named cost (fresh profile requires a rebuild, this family only); D2 stands. Filed as 676f55a2. The \u00a76.6-mandated ensemble-axes amendment is delegated: a research task designs and verifies the coverage-repairing axis, the owner approves the amendment text before any measured run. Filed as 9162956b. 50b47eae's fourth session depends on both. tau_cell, tau_set, the pinned set, and the schema token unchanged."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "50b47eae",
+      "date": "2026-08-21",
+      "decision": "Session-5 revision-recording ruling confirmed on resume: the candidate arm records the revision the main checkout stood at during the build phase (46d21d6d), not the revision the session was dispatched against (c3eb5d01); receipt-3's uncommitted statement of this ruling was verified (two-file diff, empty build-input diff, disk figure) and committed at 94e05d5e."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "676f55a2",
+      "date": "2026-08-21",
+      "decision": "DEC-H via AskUserQuestion (escalation category 8, shared infrastructure): scripts/cargo-ci.sh gains a required scoped 'baked' step executing the gf2_tuning_baked routing witnesses and drift tests, closing code-review round-3 F1 on REQ-02. The frozen selector non-regression harness is excluded from that step deliberately; its self-tests bracket the default configuration and are expected to report a re-pinning need under the baked cfg. Context: the lead converted the opt-in from a Cargo feature to the declared cfg because --all-features CI otherwise moves the observed threshold and trips the frozen harness's bracket guard (DEC-C keeps plan v1 unmodified) \u2014 recorded as lead decision DEC-B9."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "9162956b",
+      "date": "2026-08-21",
+      "decision": "DEC-I via AskUserQuestion (9162956b REQ-03): the owner approves the amendment v2 text (layout-attribution-verdict-v2.md \u2014 axes E build-id-length translation x G link-dead-code, K=256, pilot 3 ADOPT) as the predeclared verdict procedure for 50b47eae's fourth measured session; no predeclared value moves. The one open editorial question (v2 SA10) is resolved: v1 gains an additive pointer section naming v2, appended after S10 with no pre-existing line changed, in the same convention as the two standing plans' pointer sections. Lead review and 9162956b's gates still precede wave-14 dispatch; any review-forced text change returns for re-approval before a measured run."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "9162956b",
+      "date": "2026-08-21",
+      "decision": "DEC-I pointer half reversed by owner on doc-review F1: the v1 pointer append violated 9162956b REQ-02 ('v2 ... changing none of its text') and contradicted v2 SA10 ('v1 gains no pointer to this document'). Owner chose contract-literal compliance: v1 restored byte-identical to its anchored form (SHA-256 1b8a91bd..., matching the doc-link content hash). DEC-I's approval of the v2 text stands unchanged and is recorded in this log; the reading path for a v1-only reader is v1 S6.6 -> receipt 3 -> 9162956b -> v2. No pointer lands later; the v2-appendix variant was offered and declined."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "50b47eae",
+      "date": "2026-08-22",
+      "decision": "DEC-J: session-4 candidate-arm construction verification FAILED under v2 SA4 as written (base separation == 0 mod 32 -> 128 distinct page offsets, 2 cache-line offsets; one whole-page displacement, member j=227). Abort landed before any timed window; all 512 built binaries stand. Probes proved a 16-mod-32 separation unreachable on the candidate revision (.rodata Align=32 rounds translation; content knobs immobile). Owner chose the SA7 tracked-axes-amendment branch and approved amendment v3 (layout-attribution-verdict-v3.md): SA4 read on page offsets mod 4096 with one constant P per G level, 256 distinct (page offset, G) placements with 128 distinct offsets per level, whole-page displacements recorded; v1+v2 untouched, no rebuilds, audit remains arbiter, SA7 routing unchanged. Verifier amended (v2 text preserved as verify-construction-v2.py; both texts+hashes in the session record); amended verifier: ref PASS P(0)=3008 P(1)=1488, cand PASS P(0)=2208 P(1)=480 displacement [(227,-1)]. Owner also confirmed resume after clarification that no timed run existed and nothing measured is discarded."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "fc976a80",
+      "date": "2026-08-22",
+      "decision": "DEC-K: owner approves amendment v4 (layout-attribution-verdict-v4.md) \u2014 content-independent translation-only ensemble at K=128 with the phase-shifted bit-parity half assignment and the new cross-arm distributional-equality precondition (P_ref == P_cand mod 32; equal offset and L1i multisets), after fc976a80's diagnosis showed receipt-4's attributable FAIL to be a construction artifact of unlike arm lattices (matched strata agree to 0.01%). Owner framing: 'a proper run instead of thrashing' \u2014 one clean session under a construction that cannot depend on revision content. fc976a80 REQ-02 gains the third branch: an owner-approved procedure amendment routes the arbitration to the next measured session. Session 5 launches detached; handoff and session close directly after launch per owner instruction."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "50b47eae",
+      "date": "2026-08-22",
+      "decision": "DEC-L: session-5 verdict is an attributable FAIL at the two mul_fast dispatch cells (len=32 1.058269, len=64 1.050254; audit PASS on all preconditions; receipt-4's excursion cell arbitrated clean at 1.000593). Owner chose 'track rework (diagnose first)': no acceptance, no fix mandate, no new measured session until the cause is identified. Tracked as eb9b324c (gates cargo-ci/code-review/doc-review; 50b47eae -> eb9b324c -> fc976a80 wired, DAG transitively reduced). Receipt-5 stands as taken; no predeclared value moves."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "fc976a80",
+      "date": "2026-08-22",
+      "decision": "DEC-M: doc-review F1 found findings.md declaring REQ-01 met while the diagnosed cause is explicitly not a code/codegen property \u2014 REQ-01's premise was falsified by the diagnosis itself. Owner amended REQ-01 to admit the construction-property branch (either a code/codegen property of the candidate, or a measured property of the ensemble construction with matched-stratum evidence and arbitration confirmation); amendment text recorded in the criterion. doc-review re-run: PASS (0 findings). cargo-ci PASS, code-review PASS (0 findings). fc976a80 closed done."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "50b47eae",
+      "date": "2026-08-22",
+      "decision": "DEC-N: owner approves measured session 6 under the standing v4 procedure on the fixed revision (eb9b324c's dd3eee59+619a9666 chain), and directs the session handoff be written. Session-6 pipeline authored under /tmp/gf2-ens6 from the committed session-5 scripts (byte-equivalent modulo path/name swaps, verified by round-trip diff); launched detached 2026-08-22T16:39:44Z, driver PID 2036725 (PPID 1, own SID). Verdict routing per v1 \u00a77 as written; watch items: relocated phase sensitivity at mul/len=16 and mul/len=32, Karatsuba-family cells."
+    }
+  ],
+  "rework_counts": {
+    "34d85cb9": 0,
+    "7f818151": 1,
+    "220cab0b": 1,
+    "e8fe47f5": 1,
+    "f35daec0": 2,
+    "1ac74567": 1,
+    "278acf3a": 1,
+    "5ecc9bf8": 0,
+    "0d819b62": 1,
+    "697fc55b": 1,
+    "c42720ce": 3,
+    "2a85f728": 1,
+    "972e2b88": 1,
+    "676f55a2": 0,
+    "9162956b": 0,
+    "50b47eae": 0,
+    "fc976a80": 0,
+    "eb9b324c": 1
   },
-  {
-   "id": "4dd5372a",
-   "title": "Migrate Charon/Aeneas toolchain to newest upstream",
-   "reason": "owner-approved follow-on from spike 34d85cb9 upgrade leg; standalone, outside the epic",
-   "parented": "86b9c719 (quality-documentation-tech-debt) to satisfy repo DAG-integrity validation; still outside epic 6dc81018"
-  },
-  {
-   "id": "1ac74567",
-   "title": "Author the loop-free extraction proof-obligation factoring sketch",
-   "reason": "REQ-05's second clause (proof obligations factored as trait-level algebraic laws plus per-backend representation refinement) had no delivering child. Owner approved closing it in-epic with an approved-sketch document.",
-   "parented": "epic 6dc81018 directly (6dc81018 -> 1ac74567); runs as wave 4.5"
-  },
-  {
-   "id": "99c92597",
-   "title": "Document the Frobenius exponent-overflow panic in FiniteFieldExt rustdoc",
-   "reason": "proof-sketch \u00a77.4 and doc-review advisory F2 both surfaced an undocumented panic path at crates/gf2-core/src/field/traits.rs:1128; 1ac74567 changes nothing under crates/, so it is filed rather than fixed in place (no-deferred-defects)",
-   "parented": "86b9c719 (quality-documentation-tech-debt); outside epic 6dc81018"
-  },
-  {
-   "id": "51058f8e",
-   "title": "Predeclare the across-build control arm for the post-cutover comparison",
-   "reason": "doc-review F2 on 278acf3a: the receipt deferred the invalidated comparison methodology to an untracked 'lead decision'. no-deferred-defects requires a tracked owner before 50b47eae's gate relies on the tolerance.",
-   "parented": "50b47eae -> 51058f8e (transitively reduced; inside epic 6dc81018 via 50b47eae)"
-  },
-  {
-   "id": "389aa4de",
-   "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
-   "reason": "DEC-B6: the field is unsweepable until poly.rs reads tuning::active(). After 697fc55b, a child process installing a minimal threshold takes the Karatsuba arm and one installing a maximal threshold takes the schoolbook arm, so both arms come off the same public FieldPoly::mul with no new public API.",
-   "parented": "86b9c719 (quality-documentation-tech-debt), depends on 697fc55b; outside epic 6dc81018"
-  },
-  {
-   "id": "2a85f728",
-   "title": "Eliminate the per-call cost of the bit-backend selection boundary",
-   "reason": "DEC-E track 1: the second excursion's real cost signal needs a tracked owner (control-arm \u00a74.2, no-deferred-defects); doc-review on 50b47eae blocked until the rework is tracked",
-   "parented": "50b47eae -> 2a85f728 (transitively reduced; inside epic 6dc81018)"
-  },
-  {
-   "id": "972e2b88",
-   "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
-   "reason": "DEC-E track 2: five tripping cells lie on untouched paths and the across-build layout spread exceeds tau_cell, so the verdict procedure needs a predeclared attribution amendment before the next measured run",
-   "parented": "50b47eae -> 972e2b88 (transitively reduced; inside epic 6dc81018)"
-  },
-  {
-   "id": "76665001",
-   "title": "gf2-sim gpu::awgn tests fail transiently on a quiet host and pass on identical re-run",
-   "reason": "DEC-F: session-4 handoff open question resolved by the owner as file-it; one false-red CI cycle recorded",
-   "parented": "86b9c719 (quality-documentation-tech-debt); outside epic 6dc81018"
-  },
-  {
-   "id": "eb9b324c",
-   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-   "reason": "DEC-L (escalation #26): second attributable excursion needs a tracked owner in fc976a80's mould before any acceptance, fix, or next measured session",
-   "parented": "50b47eae -> eb9b324c (inside epic 6dc81018)"
-  }
- ],
- "escalations": [
-  {
-   "kind": "invoker-directive",
-   "issue": "34d85cb9",
-   "date": "2026-08-18",
-   "text": "Owner directed: update local Charon/Aeneas to newest upstream as part of the spike. Worker instructed to baseline on pinned versions, back up binaries, upgrade, re-run key matrix legs, and regression-check scripts/verify-lean.sh; restore backups if the committed pipeline breaks."
-  },
-  {
-   "kind": "criterion-decision",
-   "issue": "6dc81018/REQ-05",
-   "date": "2026-08-19",
-   "decision": "DEC-A approved by owner via AskUserQuestion: REQ-05 narrowed to loop-free generic extraction (square/frobenius class); F4 filed upstream as non-blocking follow-up (tracked in 4dd5372a REQ-04). Epic description amended."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "toolchain-upgrade",
-   "date": "2026-08-19",
-   "decision": "Charon/Aeneas upstream migration tracked as standalone task 4dd5372a; this epic stays on the pinned pair; host binaries not swapped."
-  },
-  {
-   "kind": "rework-exhausted",
-   "issue": "34d85cb9",
-   "date": "2026-08-19",
-   "decision": "Owner approved one more rework round via AskUserQuestion (counter reset). Scope: fix blocking F1/F2 from research-review round 3 plus a full sweep verifying every quantitative claim in the spike record against its committed receipt. Advisories not required (owner declined the 'also fix advisories' option)."
-  },
-  {
-   "kind": "lead-decision",
-   "issue": "697fc55b",
-   "date": "2026-08-19",
-   "decision": "DEC-B1: polynomial cutover covers BOTH SUBPRODUCT_THRESHOLD read sites (poly.rs batch_evaluate and batch_evaluate_auto), per design 220cab0b open question 1."
-  },
-  {
-   "kind": "lead-decision",
-   "issue": "5ecc9bf8",
-   "date": "2026-08-19",
-   "decision": "DEC-B2 deferred to wave-7 dispatch: whether the project bench host gets a canonical committed calibrated profile is decided against 5ecc9bf8's own criteria."
-  },
-  {
-   "kind": "criterion-decision",
-   "issue": "6dc81018/REQ-05",
-   "date": "2026-08-19",
-   "decision": "Owner chose scope option A via AskUserQuestion: REQ-05's second clause ('proof obligations factored as trait-level algebraic laws plus per-backend representation refinement') is closed in-epic by an approved-sketch document (task 1ac74567), not by discharged Lean proofs. Proof bodies are follow-on work outside the epic."
-  },
-  {
-   "kind": "lead-decision",
-   "issue": "f35daec0",
-   "date": "2026-08-19",
-   "decision": "DEC-B3: the stateful active()/install() tests live in separate integration-test binaries with one #[test] fn each, because the OnceLock resolves once per process and the default-path and install-path assertions are mutually exclusive within one binary. DEC-B4: the pre-existing 'eight u64 words are 512 bytes' rustdoc error, previously routed to 0d819b62, was folded into f35daec0 instead \u2014 this is the change that moves the constant, so AGENTS.md's same-change stale-text rule attaches here."
-  },
-  {
-   "kind": "criterion-decision",
-   "issue": "6dc81018/REQ-04",
-   "date": "2026-08-19",
-   "decision": "DEC-C approved by owner via AskUserQuestion (option B). The pre-cutover baseline falsified plan \u00a74's noise rationale: across two builds of behaviourally unchanged selector code, 9 of 34 cells fall outside \u00b15 %, worst 18.1 % = 3.6 \u00d7 \u03c4_cell, and the comparison \u03c4_cell gates is necessarily across builds. Resolution: plan v1 stays FROZEN and unmodified \u2014 \u00a72 cell set, \u00a73 protocol, \u00a74 tolerance values, \u00a75 comparison rule all stand, no schema token bump, the pre-cutover baseline stays valid. 50b47eae's session additionally measures a control rebuild of the pre-cutover baseline revision under the same wrapper, protocol, and schema token. The control arm enters NO verdict; it is evidence for the tracked rework 50b47eae REQ-02 already requires when an excursion occurs. Predeclared before any post-cutover number exists by issue 51058f8e. Options A (literal, no evidence to adjudicate a spurious trip) and C (re-pin to v2, which would discard the baseline) were declined."
-  },
-  {
-   "kind": "lead-decision",
-   "issue": "5ecc9bf8",
-   "date": "2026-08-20",
-   "decision": "DEC-B2 resolved against 5ecc9bf8's own criteria: REQ-01 asks for an emitted profile artifact the loader accepts, REQ-02 for the workflow documented from invocation to committing the emitted profile. Neither requires a canonical committed calibrated profile for the project bench host, so this issue emits and documents but commits no canonical host profile."
-  },
-  {
-   "kind": "lead-decision",
-   "issue": "697fc55b",
-   "date": "2026-08-20",
-   "decision": "DEC-B5: NTT_THRESHOLD's rustdoc at crates/gf2-core/src/field/poly.rs:2711 asserts the value is tuned from the ntt arm of benches/field_poly.rs, and that claim is contradicted by 2026-08-19-procedure-verification.md \u00a7Falsification record (out_len 127 at 3,793 ns on the mul arm against out_len 129 at 12,057 ns on the NTT arm, a 3.18x step into the arm the threshold selects for being cheaper). 697fc55b is the change that rewrites those four constants' rustdoc, so AGENTS.md's same-change stale-text rule attaches there, exactly as DEC-B4 attached the 512-bytes error to f35daec0. The rewrite must record the contradiction and cite the receipt rather than silently dropping or restating the tuning claim; the constant's value does not move."
-  },
-  {
-   "kind": "lead-decision",
-   "issue": "5ecc9bf8",
-   "date": "2026-08-20",
-   "decision": "DEC-B6: karatsuba_min_degree is not sweepable from a bench target. A bench links gf2-core as an external crate, so it can name only pub items, and both arms are private (mul_schoolbook_impl at crates/gf2-core/src/field/poly.rs:2484, mul_karatsuba_raw at :2531); the only public entry is the threshold-driven dispatcher FieldPoly::mul, and poly.rs:72 documents the omission deliberately. Resolution per design \u00a75 condition 5: the emitted profile OMITS the field so it inherits the default at load \u2014 emitting it carrying 32 would be a @/inv/benchmark-backed-performance defect, since a profile must not claim an unmeasured value. Verified the loader supports omission: JsonPolynomial fields are Option<Option<usize>> (tuning/mod.rs:903-907) and from_json falls back to CONSERVATIVE. TuningProfile::to_json cannot express omission, so the harness constructs the emitted document with only the four swept fields and validates it through from_json, which is what \u00a72.7's output discipline asks. Rejected: adding pub forcing entry points (public API against the poly.rs:72 decision, outside this issue) and reordering 5ecc9bf8 behind 697fc55b (rejected for scope, not ordering \u2014 5ecc9bf8 is not upstream of 50b47eae, so that sequencing would not have inverted the DAG). Tracked forward as 389aa4de."
-  },
-  {
-   "kind": "lead-decision",
-   "issue": "697fc55b",
-   "date": "2026-08-20",
-   "decision": "DEC-B7: @/inv/present-tense-prose and @/inv/falsification-preserved both bind the same rustdoc. They are satisfied together by stating the measurement as a present fact about the system ('the conservative default of 128 does not sit at the measured crossover') with the receipt citation and both figures retained, rather than by narrating a change to a claim. Neither invariant is traded against the other."
-  },
-  {
-   "kind": "criterion-decision",
-   "issue": "6dc81018/REQ-04",
-   "date": "2026-08-20",
-   "decision": "DEC-D approved by owner via AskUserQuestion. The post-cutover comparison FAILS: bit_backend/popcount/words=1 at ratio 1.182311 and words=8 at 1.064214, both above tau_cell=5%; tau_set holds at 0.998853. The control arm sits at 0.972476 and 1.002702 at those cells, so the reading predeclared in across-build-control-arm-v1.md \u00a74.3 attributes the excursion to the cutover. Resolution: remove the cost, do NOT widen the tolerance and do NOT amend REQ-04. Filed c42720ce inside the epic; 50b47eae depends on it and re-runs the unmodified procedure afterwards. LEAD CORRECTION TO THE CHOSEN MECHANISM: the option text said 'compiled-in floor below which the profile is not consulted'. That cannot fix the words=8 cell \u2014 a floor removes the read only below itself, so fixing words=8 needs a floor above 8, while SIMD_MIN_WORDS_DEFAULT is 8 and 5ecc9bf8's committed calibration selects 4 for this field; any such floor would put the boundary beyond the profile's reach and make the calibration inert. c42720ce therefore requires the read to be made cheap while the profile keeps governing every pinned size. The owner's intent (make REQ-04 pass without touching the tolerance) is preserved; only the mechanism differs, and the correction was reported."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "50b47eae",
-   "date": "2026-08-20",
-   "decision": "DEC-E via AskUserQuestion after the second RESULT: FAIL (11/34 cells over tau_cell, geomean 1.027550 > tau_set; c42720ce rework counter exhausted at 3): rework scoped as two tracks \u2014 2a85f728 eliminates the real per-call bit-backend cost, 972e2b88 predeclares an additive, owner-approved layout-attribution amendment to the verdict procedure (same-session two-arm comparison named as the direction's example). tau_cell 5% and tau_set 2% unchanged; both failing receipts stand as taken."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "gpu-awgn-flake",
-   "date": "2026-08-20",
-   "decision": "DEC-F via AskUserQuestion: the transient gf2-sim gpu::awgn failure from the session-4 handoff's open question is filed as bug 76665001 under 86b9c719, outside the epic, cross-referencing fault-family member 10071e51."
-  },
-  {
-   "kind": "lead-decision",
-   "issue": "2a85f728",
-   "date": "2026-08-20",
-   "decision": "DEC-B8: accepted the install-after-selection loosening and the necessary inversion of c42720ce's one-shot witness test, both forced by DEC-E track 1's elimination goal; recorded in design \u00a74.1 and rustdoc, single-thread observability asserted in the route test."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "50b47eae",
-   "date": "2026-08-21",
-   "decision": "DEC-G via AskUserQuestion after the third measured session (verdict FAIL at four cells, audit FAIL on coverage at two, amendment \u00a77 row 4: no attributable verdict). REQ-04 path: the owner redirected to the compile-time-constants mechanism the DEC-D escalation had offered, in the committed-profile variant: bit_backend's words-threshold becomes a const; the default build compiles the conservative table's value; an explicit build-time opt-in bakes the committed calibrated profile's value (4). Runtime install() stops governing the bit-backend family; design 220cab0b D1's rejection of build-time embedding is additively amended to admit it for this family, accepting D1's named cost (fresh profile requires a rebuild, this family only); D2 stands. Filed as 676f55a2. The \u00a76.6-mandated ensemble-axes amendment is delegated: a research task designs and verifies the coverage-repairing axis, the owner approves the amendment text before any measured run. Filed as 9162956b. 50b47eae's fourth session depends on both. tau_cell, tau_set, the pinned set, and the schema token unchanged."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "50b47eae",
-   "date": "2026-08-21",
-   "decision": "Session-5 revision-recording ruling confirmed on resume: the candidate arm records the revision the main checkout stood at during the build phase (46d21d6d), not the revision the session was dispatched against (c3eb5d01); receipt-3's uncommitted statement of this ruling was verified (two-file diff, empty build-input diff, disk figure) and committed at 94e05d5e."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "676f55a2",
-   "date": "2026-08-21",
-   "decision": "DEC-H via AskUserQuestion (escalation category 8, shared infrastructure): scripts/cargo-ci.sh gains a required scoped 'baked' step executing the gf2_tuning_baked routing witnesses and drift tests, closing code-review round-3 F1 on REQ-02. The frozen selector non-regression harness is excluded from that step deliberately; its self-tests bracket the default configuration and are expected to report a re-pinning need under the baked cfg. Context: the lead converted the opt-in from a Cargo feature to the declared cfg because --all-features CI otherwise moves the observed threshold and trips the frozen harness's bracket guard (DEC-C keeps plan v1 unmodified) \u2014 recorded as lead decision DEC-B9."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "9162956b",
-   "date": "2026-08-21",
-   "decision": "DEC-I via AskUserQuestion (9162956b REQ-03): the owner approves the amendment v2 text (layout-attribution-verdict-v2.md \u2014 axes E build-id-length translation x G link-dead-code, K=256, pilot 3 ADOPT) as the predeclared verdict procedure for 50b47eae's fourth measured session; no predeclared value moves. The one open editorial question (v2 SA10) is resolved: v1 gains an additive pointer section naming v2, appended after S10 with no pre-existing line changed, in the same convention as the two standing plans' pointer sections. Lead review and 9162956b's gates still precede wave-14 dispatch; any review-forced text change returns for re-approval before a measured run."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "9162956b",
-   "date": "2026-08-21",
-   "decision": "DEC-I pointer half reversed by owner on doc-review F1: the v1 pointer append violated 9162956b REQ-02 ('v2 ... changing none of its text') and contradicted v2 SA10 ('v1 gains no pointer to this document'). Owner chose contract-literal compliance: v1 restored byte-identical to its anchored form (SHA-256 1b8a91bd..., matching the doc-link content hash). DEC-I's approval of the v2 text stands unchanged and is recorded in this log; the reading path for a v1-only reader is v1 S6.6 -> receipt 3 -> 9162956b -> v2. No pointer lands later; the v2-appendix variant was offered and declined."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "50b47eae",
-   "date": "2026-08-22",
-   "decision": "DEC-J: session-4 candidate-arm construction verification FAILED under v2 SA4 as written (base separation == 0 mod 32 -> 128 distinct page offsets, 2 cache-line offsets; one whole-page displacement, member j=227). Abort landed before any timed window; all 512 built binaries stand. Probes proved a 16-mod-32 separation unreachable on the candidate revision (.rodata Align=32 rounds translation; content knobs immobile). Owner chose the SA7 tracked-axes-amendment branch and approved amendment v3 (layout-attribution-verdict-v3.md): SA4 read on page offsets mod 4096 with one constant P per G level, 256 distinct (page offset, G) placements with 128 distinct offsets per level, whole-page displacements recorded; v1+v2 untouched, no rebuilds, audit remains arbiter, SA7 routing unchanged. Verifier amended (v2 text preserved as verify-construction-v2.py; both texts+hashes in the session record); amended verifier: ref PASS P(0)=3008 P(1)=1488, cand PASS P(0)=2208 P(1)=480 displacement [(227,-1)]. Owner also confirmed resume after clarification that no timed run existed and nothing measured is discarded."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "fc976a80",
-   "date": "2026-08-22",
-   "decision": "DEC-K: owner approves amendment v4 (layout-attribution-verdict-v4.md) \u2014 content-independent translation-only ensemble at K=128 with the phase-shifted bit-parity half assignment and the new cross-arm distributional-equality precondition (P_ref == P_cand mod 32; equal offset and L1i multisets), after fc976a80's diagnosis showed receipt-4's attributable FAIL to be a construction artifact of unlike arm lattices (matched strata agree to 0.01%). Owner framing: 'a proper run instead of thrashing' \u2014 one clean session under a construction that cannot depend on revision content. fc976a80 REQ-02 gains the third branch: an owner-approved procedure amendment routes the arbitration to the next measured session. Session 5 launches detached; handoff and session close directly after launch per owner instruction."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "50b47eae",
-   "date": "2026-08-22",
-   "decision": "DEC-L: session-5 verdict is an attributable FAIL at the two mul_fast dispatch cells (len=32 1.058269, len=64 1.050254; audit PASS on all preconditions; receipt-4's excursion cell arbitrated clean at 1.000593). Owner chose 'track rework (diagnose first)': no acceptance, no fix mandate, no new measured session until the cause is identified. Tracked as eb9b324c (gates cargo-ci/code-review/doc-review; 50b47eae -> eb9b324c -> fc976a80 wired, DAG transitively reduced). Receipt-5 stands as taken; no predeclared value moves."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "fc976a80",
-   "date": "2026-08-22",
-   "decision": "DEC-M: doc-review F1 found findings.md declaring REQ-01 met while the diagnosed cause is explicitly not a code/codegen property \u2014 REQ-01's premise was falsified by the diagnosis itself. Owner amended REQ-01 to admit the construction-property branch (either a code/codegen property of the candidate, or a measured property of the ensemble construction with matched-stratum evidence and arbitration confirmation); amendment text recorded in the criterion. doc-review re-run: PASS (0 findings). cargo-ci PASS, code-review PASS (0 findings). fc976a80 closed done."
-  },
-  {
-   "kind": "owner-decision",
-   "issue": "50b47eae",
-   "date": "2026-08-22",
-   "decision": "DEC-N: owner approves measured session 6 under the standing v4 procedure on the fixed revision (eb9b324c's dd3eee59+619a9666 chain), and directs the session handoff be written. Session-6 pipeline authored under /tmp/gf2-ens6 from the committed session-5 scripts (byte-equivalent modulo path/name swaps, verified by round-trip diff); launched detached 2026-08-22T16:39:44Z, driver PID 2036725 (PPID 1, own SID). Verdict routing per v1 \u00a77 as written; watch items: relocated phase sensitivity at mul/len=16 and mul/len=32, Karatsuba-family cells."
-  }
- ],
- "rework_counts": {
-  "34d85cb9": 0,
-  "7f818151": 1,
-  "220cab0b": 1,
-  "e8fe47f5": 1,
-  "f35daec0": 2,
-  "1ac74567": 1,
-  "278acf3a": 1,
-  "5ecc9bf8": 0,
-  "0d819b62": 1,
-  "697fc55b": 1,
-  "c42720ce": 3,
-  "2a85f728": 1,
-  "972e2b88": 1,
-  "676f55a2": 0,
-  "9162956b": 0,
-  "50b47eae": 0,
-  "fc976a80": 0,
-  "eb9b324c": 1
- },
- "surfaced_pitfalls": [
-  {
-   "issue": "34d85cb9",
-   "finding": "research-review advisories (4, low): stopping-rule pre-declaration unattested; LLBC datasets lack checksums; 311/428 non-comment-line counts lack a committed regeneration command; upgrade matrix omits P1/AP1/A9 rows",
-   "disposition": "accepted residue per owner decision (advisories not required)"
-  },
-  {
-   "issue": "6dc81018/REQ-05",
-   "finding": "REQ-05 requires proof obligations factored as trait-level algebraic laws plus per-backend representation refinement; no wave-plan child delivers a proof-sketch \u2014 spike record names follow-up targets (dev/active/34d85cb9/findings.md:817). Must be reconciled at epic completion: remediation task or escalation.",
-   "disposition": "open"
-  },
-  {
-   "issue": "e8fe47f5",
-   "finding": "NTT_THRESHOLD=128 appears mis-tuned: out_len 127 dispatcher arm 3,793 ns vs out_len 129 NTT arm 12,057 ns (3.18x step up); arms converge near out_len 255. Contradicts tuning claim in rustdoc at crates/gf2-core/src/field/poly.rs:2711.",
-   "disposition": "CLOSED. 5ecc9bf8's calibration receipt F1 records that the Karatsuba/NTT crossover is not expressible as one scalar threshold (NTT cost steps per power-of-two band, one crossing per band), keeps the default per design \u00a72.7 rule 3, and the NTT_THRESHOLD rustdoc (poly.rs) now states the default does not sit at the measured crossover, citing the procedure-verification falsification record."
-  },
-  {
-   "issue": "220cab0b",
-   "finding": "doc-review F2 (advisory, pre-existing): rustdoc said eight u64 words are 512 bytes; correct is 64 bytes",
-   "disposition": "CLOSED in f35daec0 (commit b41f9d8a). The source rustdoc, the five restatements in crates/gf2-core/docs/KERNEL_OPTIMIZATION.md and docs/README.md, and the comment in crates/gf2-core/tests/backend_selection.rs all now read 64 bytes. crates/gf2-core/README.md:125 keeps '>512 bytes': BENCHMARKS.md records those speedups at 64/256/1024 words, so it states a measured operand regime, not the dispatch threshold."
-  },
-  {
-   "issue": "f35daec0",
-   "finding": "PolynomialSelectors::try_new still takes four consecutive usize positional parameters, so a transposition among the four polynomial thresholds compiles. The lead accepted this: it is the shape the rework instruction named, and the cross-family hazard is gone.",
-   "disposition": "Control at 5ecc9bf8 dispatch: the calibration harness must name each threshold at its construction site and its own test must assert the emitted profile's per-field values equal the swept values field by field."
-  },
-  {
-   "issue": "6dc81018",
-   "finding": "dev/active/6dc81018-field-capability-dispatch/investigation.md states no citation anchor, unlike classification.md (2f2cbb37) and 220cab0b/design.md (05bc9c14). Its file:line citations describe the pre-epic tree with nothing saying so, so a reader cannot tell whether they are current.",
-   "disposition": "CLOSED at epic completion sweep 2026-08-20: citation-anchor statement inserted into investigation.md (anchor d8a97466; 68dba33d's packed-stub citation move noted). Pure insertion, no pre-existing line changed."
-  },
-  {
-   "issue": "1ac74567",
-   "finding": "proof-sketch \u00a77.1/\u00a77.2: the frobenius laws L5-L8b are conditional on LawfulPow and CharIs, neither of which the committed extraction can discharge for any concrete backend \u2014 LawfulPow because FiniteFieldExt is blanket-implemented so every carrier's pow field is the F4-poisoned default body, CharIs because fix-aeneas-sorrys.py rewrites every characteristic body to sorry. square's L1/L2 carry neither dependency.",
-   "disposition": "recorded, not a criterion violation: REQ-05 as narrowed by DEC-A asks for the obligations to be factored, and an obligation the extraction cannot yet discharge is exactly what a sketch records. Reconcile again at epic completion against REQ-05's wording before the holistic gate."
-  },
-  {
-   "issue": "278acf3a",
-   "finding": "Across-build variation reaches 18.1 % at small-buffer cells, 3.6 \u00d7 \u03c4_cell, while plan \u00a74 justifies \u03c4_cell from within-build dispersion only. The gated comparison is across builds, so a zero-cost cutover can trip a cell and a real cost can be masked.",
-   "disposition": "CLOSED by DEC-C: recorded in plan \u00a74 as a falsification record (278acf3a rework F1, tolerance unchanged) and owned by tracked issue 51058f8e, which predeclares the control arm before any post-cutover measurement exists."
-  },
-  {
-   "issue": "5ecc9bf8",
-   "finding": "Issue Background named crates/gf2-core/benches/profile_calibration.rs while reviewed design 220cab0b \u00a72.7/\u00a76 and the shipped loader (crates/gf2-core/src/tuning/mod.rs:1021, :193) name tuning_calibration.rs with schema token tuning-calibration-v1.",
-   "disposition": "CLOSED. Owner approved amending the issue Background to tuning_calibration.rs; success criteria untouched, since neither REQ-01 nor REQ-02 names a path."
-  },
-  {
-   "issue": "5ecc9bf8",
-   "finding": "The v1 profile's karatsuba_min_degree cannot be calibrated by the action this epic ships: no grid point offers both arms through public API, so design \u00a72.7 rule 2 is undecidable for that field.",
-   "disposition": "Tracked as 389aa4de and recorded in 5ecc9bf8's calibration receipt. Not an epic criterion violation: REQ-03 requires selection to consume a versioned committed profile with calibration as an explicit benchmark action, and does not require every v1 field to be swept. Re-check against REQ-03's wording at epic completion before the holistic gate."
-  },
-  {
-   "issue": "50b47eae",
-   "finding": "The pinned non-regression comparison fails at bit_backend/popcount/words=1 (+18.2%) and words=8 (+6.4%), attributable to the cutover by the predeclared control-arm reading. Epic REQ-04 is unmet until a fresh receipt shows the tolerance holds.",
-   "disposition": "OPEN \u2014 reconcile at the holistic gate. c42720ce's reduction was measured insufficient (receipt-2, RESULT: FAIL, 11 cells + tau_set). DEC-E two-track rework landed in wave 10 (2a85f728 elimination + 972e2b88 amended verdict, both done); the third measured attempt under layout-attribution-verdict-v1 is wave 11, in flight. REQ-04 stays unmet until that receipt shows the tolerance holds attributably."
-  },
-  {
-   "issue": "50b47eae",
-   "finding": "Against the control build rather than the baseline, six further cells exceed 1.05 \u2014 five bit-backend and one polynomial \u2014 all of which PASS against the baseline because the baseline binary is itself slower there. This is the masking effect plan \u00a74's falsification record predicted for exactly this comparison.",
-   "disposition": "Recorded in the receipt's falsification section. No predeclared rule reads the post-against-control pair, so it changes no verdict, but c42720ce's rework weighs it: the two failing cells are not the only cells where the cutover's cost is visible."
-  }
- ],
- "started_at": "2026-08-18T00:00:00Z"
+  "surfaced_pitfalls": [
+    {
+      "issue": "34d85cb9",
+      "finding": "research-review advisories (4, low): stopping-rule pre-declaration unattested; LLBC datasets lack checksums; 311/428 non-comment-line counts lack a committed regeneration command; upgrade matrix omits P1/AP1/A9 rows",
+      "disposition": "accepted residue per owner decision (advisories not required)"
+    },
+    {
+      "issue": "6dc81018/REQ-05",
+      "finding": "REQ-05 requires proof obligations factored as trait-level algebraic laws plus per-backend representation refinement; no wave-plan child delivers a proof-sketch \u2014 spike record names follow-up targets (dev/active/34d85cb9/findings.md:817). Must be reconciled at epic completion: remediation task or escalation.",
+      "disposition": "CLOSED at epic completion 2026-08-22: REQ-05 as amended by DEC-A maps to 34d85cb9 (extraction of the loop-free FiniteFieldExt::square/frobenius class succeeds on the MSRV toolchain; R8b invocation recorded) plus 1ac74567 (proof-sketch.md factors the obligations as trait-level Lean lemma statements over the FiniteField dictionary plus a separate per-backend representation-refinement section, with elaboration evidence; doc-review passed). Discharge of the lemmas is follow-on outside the epic per the approved issue scope."
+    },
+    {
+      "issue": "e8fe47f5",
+      "finding": "NTT_THRESHOLD=128 appears mis-tuned: out_len 127 dispatcher arm 3,793 ns vs out_len 129 NTT arm 12,057 ns (3.18x step up); arms converge near out_len 255. Contradicts tuning claim in rustdoc at crates/gf2-core/src/field/poly.rs:2711.",
+      "disposition": "CLOSED. 5ecc9bf8's calibration receipt F1 records that the Karatsuba/NTT crossover is not expressible as one scalar threshold (NTT cost steps per power-of-two band, one crossing per band), keeps the default per design \u00a72.7 rule 3, and the NTT_THRESHOLD rustdoc (poly.rs) now states the default does not sit at the measured crossover, citing the procedure-verification falsification record."
+    },
+    {
+      "issue": "220cab0b",
+      "finding": "doc-review F2 (advisory, pre-existing): rustdoc said eight u64 words are 512 bytes; correct is 64 bytes",
+      "disposition": "CLOSED in f35daec0 (commit b41f9d8a). The source rustdoc, the five restatements in crates/gf2-core/docs/KERNEL_OPTIMIZATION.md and docs/README.md, and the comment in crates/gf2-core/tests/backend_selection.rs all now read 64 bytes. crates/gf2-core/README.md:125 keeps '>512 bytes': BENCHMARKS.md records those speedups at 64/256/1024 words, so it states a measured operand regime, not the dispatch threshold."
+    },
+    {
+      "issue": "f35daec0",
+      "finding": "PolynomialSelectors::try_new still takes four consecutive usize positional parameters, so a transposition among the four polynomial thresholds compiles. The lead accepted this: it is the shape the rework instruction named, and the cross-family hazard is gone.",
+      "disposition": "Control at 5ecc9bf8 dispatch: the calibration harness must name each threshold at its construction site and its own test must assert the emitted profile's per-field values equal the swept values field by field."
+    },
+    {
+      "issue": "6dc81018",
+      "finding": "dev/active/6dc81018-field-capability-dispatch/investigation.md states no citation anchor, unlike classification.md (2f2cbb37) and 220cab0b/design.md (05bc9c14). Its file:line citations describe the pre-epic tree with nothing saying so, so a reader cannot tell whether they are current.",
+      "disposition": "CLOSED at epic completion sweep 2026-08-20: citation-anchor statement inserted into investigation.md (anchor d8a97466; 68dba33d's packed-stub citation move noted). Pure insertion, no pre-existing line changed."
+    },
+    {
+      "issue": "1ac74567",
+      "finding": "proof-sketch \u00a77.1/\u00a77.2: the frobenius laws L5-L8b are conditional on LawfulPow and CharIs, neither of which the committed extraction can discharge for any concrete backend \u2014 LawfulPow because FiniteFieldExt is blanket-implemented so every carrier's pow field is the F4-poisoned default body, CharIs because fix-aeneas-sorrys.py rewrites every characteristic body to sorry. square's L1/L2 carry neither dependency.",
+      "disposition": "recorded, not a criterion violation \u2014 reconciled at epic completion 2026-08-22: REQ-05 requires the obligations to be FACTORED, not discharged; the sketch records the undischargeable side conditions (LawfulPow, CharIs) as exactly the per-backend obligations the factoring names, preserving the falsification. Upstream limitation tracked as 4dd5372a under 86b9c719."
+    },
+    {
+      "issue": "278acf3a",
+      "finding": "Across-build variation reaches 18.1 % at small-buffer cells, 3.6 \u00d7 \u03c4_cell, while plan \u00a74 justifies \u03c4_cell from within-build dispersion only. The gated comparison is across builds, so a zero-cost cutover can trip a cell and a real cost can be masked.",
+      "disposition": "CLOSED by DEC-C: recorded in plan \u00a74 as a falsification record (278acf3a rework F1, tolerance unchanged) and owned by tracked issue 51058f8e, which predeclares the control arm before any post-cutover measurement exists."
+    },
+    {
+      "issue": "5ecc9bf8",
+      "finding": "Issue Background named crates/gf2-core/benches/profile_calibration.rs while reviewed design 220cab0b \u00a72.7/\u00a76 and the shipped loader (crates/gf2-core/src/tuning/mod.rs:1021, :193) name tuning_calibration.rs with schema token tuning-calibration-v1.",
+      "disposition": "CLOSED. Owner approved amending the issue Background to tuning_calibration.rs; success criteria untouched, since neither REQ-01 nor REQ-02 names a path."
+    },
+    {
+      "issue": "5ecc9bf8",
+      "finding": "The v1 profile's karatsuba_min_degree cannot be calibrated by the action this epic ships: no grid point offers both arms through public API, so design \u00a72.7 rule 2 is undecidable for that field.",
+      "disposition": "Tracked as 389aa4de and recorded in 5ecc9bf8's calibration receipt. Not an epic criterion violation: REQ-03 requires selection to consume a versioned committed profile with calibration as an explicit benchmark action, and does not require every v1 field to be swept. Re-check against REQ-03's wording at epic completion before the holistic gate."
+    },
+    {
+      "issue": "50b47eae",
+      "finding": "The pinned non-regression comparison fails at bit_backend/popcount/words=1 (+18.2%) and words=8 (+6.4%), attributable to the cutover by the predeclared control-arm reading. Epic REQ-04 is unmet until a fresh receipt shows the tolerance holds.",
+      "disposition": "CLOSED by receipt-6 (2026-08-22-post-cutover-receipt-6.md, commit 3a6a0b09): after the DEC-G bake, fc976a80 construction diagnosis and the eb9b324c mul_fast dispatch rework, the session-6 translation ensemble reads every pinned cell inside tau_cell (popcount cells 1.002843/1.000426) and the set geomean 0.994048, attributably (audit PASS). Epic REQ-04 is met. Receipts 1-5 preserved as taken with tracked, closed rework."
+    },
+    {
+      "issue": "50b47eae",
+      "finding": "Against the control build rather than the baseline, six further cells exceed 1.05 \u2014 five bit-backend and one polynomial \u2014 all of which PASS against the baseline because the baseline binary is itself slower there. This is the masking effect plan \u00a74's falsification record predicted for exactly this comparison.",
+      "disposition": "Recorded in the receipt's falsification section. No predeclared rule reads the post-against-control pair, so it changes no verdict, but c42720ce's rework weighs it: the two failing cells are not the only cells where the cutover's cost is visible."
+    }
+  ],
+  "started_at": "2026-08-18T00:00:00Z"
 }
