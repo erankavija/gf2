@@ -326,8 +326,8 @@
           "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "DEC-P. No consumer remains (lead grep). Gates cargo-ci/code-review/doc-review."
+          "status": "dispatched",
+          "notes": "DEC-P. No consumer remains (lead grep). Gates cargo-ci/code-review/doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-a6636671 (base f9befb21), background."
         },
         {
           "id": "e6ea0dde",
@@ -335,8 +335,8 @@
           "title": "Record a clean-exit extraction of the loop-free generic operations",
           "classification": "research",
           "model": "opus",
-          "status": "planned",
-          "notes": "DEC-Q. Pinned Charon/Aeneas pair, MSRV; exclude pow at invocation boundary; verbatim elaboration. Gates cargo-ci/research-review/doc-review."
+          "status": "dispatched",
+          "notes": "DEC-Q. Pinned Charon/Aeneas pair, MSRV; exclude pow at invocation boundary; verbatim elaboration. Gates cargo-ci/research-review/doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-e6ea0dde (base f9befb21), background."
         },
         {
           "id": "7d824b2f",
@@ -344,8 +344,8 @@
           "title": "Design the follow-on selector migration to the tuning profile",
           "classification": "design",
           "model": "opus",
-          "status": "planned",
-          "notes": "DEC-O. Additive amendment to 220cab0b design + implementation breakdown for waves 20+. Gate doc-review."
+          "status": "dispatched",
+          "notes": "DEC-O. Additive amendment to 220cab0b design + implementation breakdown for waves 20+. Gate doc-review. Dispatched 2026-08-22 ~20:20Z in worktree agent-7d824b2f (base f9befb21), background."
         }
       ]
     }
