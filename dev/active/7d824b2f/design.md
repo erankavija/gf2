@@ -677,7 +677,7 @@ tasks that write or rewrite prose. Dependencies are stated as task keys, and
 | Key | Scope (one line) | Depends on | Gates |
 |---|---|---|---|
 | T1 | Extend the tuning schema with the eleven follow-on family objects, the `polynomial` field, their ranges, vocabulary entries, `CONSERVATIVE` entries naming each in-source constant, JSON round trip, and the regenerated `conservative.json`; no selector site changes and no visibility changes outside what `CONSERVATIVE` needs. | — | cargo-ci, code-review, doc-review |
-| T2 | Extend `crate::tuning::baked` with the seven baked follow-on constants and their drift tests, and wire the `#[cfg(gf2_tuning_baked)]` selection at the `gemm`, `field_vec`, and `prime_route` sites, including hoisting and naming the `512` literals and the `CHUNK` scratch length. | T1 | cargo-ci, code-review |
+| T2 | Extend `crate::tuning::baked` with the seven baked follow-on constants, their rustdoc, and their drift tests, and hoist and name the `512` literals and the `CHUNK` scratch length as module-level constants; no selection-site wiring — each family's cutover task wires its own sites. | T1 | cargo-ci, code-review, doc-review |
 | T3 | Cut `bit_matrix` over: bake `matvec_simd_min_words` behind the cfg, move `transpose_simple_max_blocks` and `transpose_macro_tile_blocks` to runtime resolved reads, add both route reporters and their tests, and add the baked matvec witness to the CI baked step. | T1, T2 | cargo-ci, code-review, doc-review |
 | T4 | Cut `soa_batch` over: resolved read at `should_parallelize_soa_batch`, chunk length threaded into the four parallel entry points, route reporter, boundary route files, and the chunk-length determinism witness. | T1 | cargo-ci, code-review, doc-review |
 | T5 | Cut `m4rm` over: five resolved reads reaching `choose_k_block` and `use_register_tiled_schedule`, the schedule route reporter, tier-boundary route files, and the rustdoc sweep across `alg/m4rm.rs:20-106`. | T1 | cargo-ci, code-review, doc-review |
@@ -690,10 +690,11 @@ tasks that write or rewrite prose. Dependencies are stated as task keys, and
 | T12 | Extend the calibration action's sweep to the eleven sweepable follow-on fields, reusing `389aa4de`'s profile-steering mechanism, and record each field's outcome — measured, tie, non-monotone, or uncalibrated — in the calibration receipt. | `389aa4de`, T3–T11 | cargo-ci, code-review, doc-review |
 | T13 | Design and implement a predeclared **extent-sweep protocol**: an argmin search over a parameter grid at fixed operand sizes, with the default kept on a tie or a non-monotone curve, the full grid recorded in the receipt, and the twelve extent fields as its scope. | T1 | cargo-ci, code-review, doc-review |
 | T14 | *Conditional on open question 1.* Predeclare a follow-on non-regression protocol — pinned cells covering the runtime-read families at sizes straddling each default, tolerance fixed before any measurement — and record its baseline and post-cutover receipts. It neither modifies nor re-runs the pilot's frozen procedure. | T1 | cargo-ci, doc-review |
+| T15 | Cut `prime_route` and `field_vec` over: wire the `#[cfg(gf2_tuning_baked)]` selection inside `select_f32_path`/`select_f64_path` and at the dot-product scratch length, add the `prime_gemm_route::<P>` reporter, and add both baked witnesses to the CI baked step. | T1, T2 | cargo-ci, code-review, doc-review |
 
-T3 through T11 are mutually independent and form one implementation wave behind
-T1 and T2. T12 and T13 are measurement work and land after the cutovers they
-describe. T14 exists only if the owner declines the screening rule; if it is
+T3 through T11 and T15 are mutually independent and form one implementation
+wave behind T1 and T2. T12 and T13 are measurement work and land after the
+cutovers they describe. T14 exists only if the owner declines the screening rule; if it is
 directed, it precedes T3–T11 rather than following them, because a
 non-regression baseline is taken before the change it measures.
 
@@ -714,4 +715,4 @@ section that meets it.
 | REQ-01 | §3, §7.1 | Twelve family subsections give every admitted field its name, type, admissible range with its derivation, conservative default named at its in-source constant, read site, frequency, and mechanism; §7.1 records the re-derivation behind the classification's five §4.4 dispositions. |
 | REQ-02 | §2.2, §2.3, §4 | The mechanism rule assigns each field a compile-time bake or a resolved read at a non-recursive entry; four structural obligations keep the read out of loops and recursion; the per-family table names the route reporter and the test obligation. |
 | REQ-03 | §5 | A three-condition sweepability test splits the twenty-eight fields into eleven sweepable and seventeen recorded under the standing omission rule, and the behaviour-preservation argument rests on defaults naming the source constants, nothing installed by default, and a per-mechanism cost bound. |
-| REQ-04 | §8 | Fourteen worker-sized tasks with one-line scopes, dependencies, and gates, ordered into a schema step, a bake step, nine independent family cutovers, and the measurement work. |
+| REQ-04 | §8 | Fifteen worker-sized tasks with one-line scopes, dependencies, and gates, ordered into a schema step, a bake step, ten independent family cutovers, and the measurement work. |
