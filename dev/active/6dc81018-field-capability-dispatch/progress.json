@@ -391,7 +391,7 @@
           "classification": "implementation",
           "model": "sonnet",
           "status": "planned",
-          "notes": "Baked module + literal hoists only."
+          "notes": "Baked module + literal hoists only. t1 already landed the literal hoists (DEC-B10 #5): scope is the baked module + drift tests only."
         },
         {
           "id": "fa92608b",
@@ -545,7 +545,7 @@
           "classification": "implementation",
           "model": "opus",
           "status": "planned",
-          "notes": "after 389aa4de + t3-t11"
+          "notes": "after 389aa4de + t3-t11 t1 consequence: to_json now states all 33 fields; the calibration emission's omission set must extend to every unswept follow-on field before any profile is committed (220cab0b \u00a75 cond 5). Applies to 389aa4de's harness work too."
         },
         {
           "id": "e2744fcf",
@@ -886,6 +886,12 @@
       "issue": "7d7c647c",
       "date": "2026-08-23",
       "decision": "DEC-B9 (lead, within DEC-T's mandate): the seam design's four open questions resolved \u2014 (1) PLE_PANEL_COLS migrates as the two lane fields (the kernels' L1d ceilings are real host properties; \u00a77.2's inertness holds only at the conservative recursive-base width; falsification recorded); (2) 7d824b2f T1 lands before the seam schema task U3 (edge wired); (3) the four associated constants are removed directly with no deprecation cycle \u2014 DEC-T's seam requires the declarations gone (design D1), pre-1.0 crate, no external implementor; (4) the ple.panel_base_max_cols / ple.panel_{byte,u16}_lane_max_cols name pair stands as designed."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "856f1b48",
+      "date": "2026-08-23",
+      "decision": "DEC-B10 (lead): t1's five reported design defects ratified as resolved \u2014 (1) SOA constants declared in compute and re-exported (feature-gate fix); (2) PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT holds the permanent chunk value in gf2_core::tuning with gf2-algebra's CHUNK_SUBSETS naming it (the naming direction inverts to keep the dependency inward; single source of truth preserved; composes with DEC-B9's D4 confirmation); (3) cfg gates come off nameable constants, staying on selections; (4) M4RM_TILE_WORDS widened pub(crate) for the loader's floor citation; (5) the literal hoists land in t1 \u2014 t2 shrinks to the baked module and drift tests. SelectorFamilies accepted as the constructor aggregate."
     }
   ],
   "rework_counts": {
