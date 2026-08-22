@@ -1,0 +1,7 @@
+region	cand_j1_E0_bit5_1	cand_j3_E1_bit5_0	ref_j0_E0_bit5_0	ref_j1_E1_bit5_1
+mul_fast/entry-dispatch	1814858	0	910228	1365711
+mul_fast/sub-ntt-tail	909626	455933	n/a	n/a
+mul_fast/whole-symbol	380525430	388624859	383431775	394574050
+mul_impl/whole-symbol	1805470	3180585	n/a	n/a
+mul_schoolbook_impl/whole-symbol	6987179903	6799439702	6960694141	6994552145
+mul_karatsuba_raw/whole-symbol	452978917	390817328	443008175	404217031
