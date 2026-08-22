@@ -36,6 +36,9 @@
 //! ([`crate::fp_small_ple`]) is used. For `P ≥ 65536` the generic
 //! 64-bit Montgomery path remains.
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub use crate::x86::fp_medium_ple::KC_U16;
+
 /// Whole panelized PLE base-case signature (u16-lane variant).
 ///
 /// `window` is the canonical u16 panel storage (row-major,

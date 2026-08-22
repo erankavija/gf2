@@ -95,11 +95,14 @@ pub(crate) const MR: usize = 4;
 /// Inner register tile: columns of output (3 × 8-lane i32 sub-tiles).
 pub(crate) const NR: usize = 24;
 
-/// Cache-blocking factor along the k-axis. See module docs and
-/// `dev/active/fc182ed5/fc182ed5-route-c-design.md` § 2.2 for the L1d-fit
-/// derivation; the u32 overflow bound (`KC ≤ 68 719` at p = 251) is
-/// orders of magnitude larger and not binding.
-pub(crate) const KC: usize = 256;
+/// Cache-blocking factor along the k-axis: the byte-lane panel
+/// kernel's L1d-fit blocking factor. See module docs and
+/// `dev/active/fc182ed5/fc182ed5-route-c-design.md` § 2.2 for the
+/// derivation and the route-C measurement
+/// `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel-aggregate.csv`;
+/// the u32 overflow bound (`KC ≤ 68 719` at p = 251) is orders of
+/// magnitude larger and not binding.
+pub const KC: usize = 256;
 
 /// Whole-GEMM panelized integer kernel for canonical-byte `Fp<P>`
 /// operands with `P <= 251` (route C, issue fc182ed5).
