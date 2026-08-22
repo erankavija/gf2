@@ -1,0 +1,53 @@
+2026-08-22T11:02:14Z continue-driver start pid=1157173
+2026-08-22T11:33:10Z reference arm built
+2026-08-22T12:02:52Z candidate arm built
+== arm ref: 128 ledger rows ==
+[ok] no member failed to build twice
+[ok] 128 members: 128
+[ok] member indices 0..127 exactly once
+[ok] E levels 0..127 exactly once
+[ok] 128 distinct binaries: 128 distinct
+[ok] page offset is (P + 32*E) mod 4096 at every member: P=3008
+[ok] 128 distinct page offsets: 128 distinct
+   whole-page displacements (member, pages): none
+[ok] halves hold 64 members each
+[ok] halves hold 32 members at each of the 2 realized cache-line offsets: even={0: 32, 32: 32} odd={0: 32, 32: 32}
+[ok] halves hold 32 members at each parity of E: even={0: 32, 1: 32} odd={1: 32, 0: 32}
+[ok] each half covers all 64 L1i sets exactly once
+[ok] the two halves' (address>>6) mod 64 multisets are equal
+   binary sizes 726808..730872 bytes
+   build wall-clock 14..15 s, total 1839 s
+   members needing a retry: none
+RESULT: PASS
+== arm cand: 128 ledger rows ==
+[ok] no member failed to build twice
+[ok] 128 members: 128
+[ok] member indices 0..127 exactly once
+[ok] E levels 0..127 exactly once
+[ok] 128 distinct binaries: 128 distinct
+[ok] page offset is (P + 32*E) mod 4096 at every member: P=2208
+[ok] 128 distinct page offsets: 128 distinct
+   whole-page displacements (member, pages): none
+[ok] halves hold 64 members each
+[ok] halves hold 32 members at each of the 2 realized cache-line offsets: even={0: 32, 32: 32} odd={0: 32, 32: 32}
+[ok] halves hold 32 members at each parity of E: even={0: 32, 1: 32} odd={0: 32, 1: 32}
+[ok] each half covers all 64 L1i sets exactly once
+[ok] the two halves' (address>>6) mod 64 multisets are equal
+   binary sizes 793248..797312 bytes
+   build wall-clock 13..14 s, total 1764 s
+   members needing a retry: none
+RESULT: PASS
+== cross-arm (v4 C3) ==
+[ok] P_ref == P_cand (mod 32): ref%32=0 cand%32=0
+[ok] page-offset sets equal
+[ok] cache-line offset multisets equal: ref={0: 64, 32: 64} cand={0: 64, 32: 64}
+[ok] L1i set-index multisets equal
+RESULT: PASS
+2026-08-22T12:02:52Z construction verified: both arms and cross-arm
+2026-08-22T12:02:52Z waiting for idle host, load=3.90
+2026-08-22T12:03:52Z waiting for idle host, load=1.43
+2026-08-22T12:04:52Z waiting for idle host, load=0.52
+2026-08-22T12:05:52Z host idle, load=0.19
+2026-08-22T12:05:52Z preflight: main_head=1a5812c269124128f64a4f9b5efc0f1e96f19894 ctrl_head=0c072d73ca65cf50af98b8c4b61ed876f8218df6 both clean
+nice: cannot set niceness: Permission denied
+2026-08-22T12:52:30Z timed phase complete

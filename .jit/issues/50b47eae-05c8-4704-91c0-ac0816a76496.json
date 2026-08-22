@@ -392,6 +392,200 @@
       "format": "markdown",
       "label": null,
       "path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v3.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "034b8d7f9f7eb7ee24e45be2424030d9954ef6536a36a959d1addde0ef579610",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-22-member-provenance-ref-5.tsv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-22-member-provenance-ref-5.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "91a2b893025e6ecf165f64d24afe289d0db51bf674297f2241791675aca035f8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-22-ensemble-candidate-arm-5.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-22-ensemble-candidate-arm-5.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88ec7e40f84a5332733ab23427249f2ba63d7ed16e42b88c6288d46841bf8266",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b8a91bd65ff6792ebc7b5caca2d5a67eff149b3f72b447ddd42d86cfe4a8c17",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "layout-attribution-verdict-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "998646e7a7c4a7306925e2157149c19afb1aa38e39b81b27026a8ce99f119987",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "layout-attribution-verdict-v4.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "395275eb9fc8e466168e810034889f40ba33374787b1daf87386218f11db19ab",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt-3.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c90ccbe4a77a4e08d7412b0fcc1983257127f627eaa52461b32dbf7c03453bf5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-19-pre-cutover-baseline.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "11eaa0260126a73633e35cac76a4c3fcced01b865fd85a04a104b4610c01aebf",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-22-post-cutover-receipt-4.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f8ac30e9d0f9c8d05a0a4ac235dc1c57ed0f6346350235e509dc4e0e5ef57dd5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-22-ensemble-reference-arm-5.csv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-22-ensemble-reference-arm-5.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "48a4fd6a0164b4cc19df02ec6061465a5f3e369e1e1d1805a4beccf1a8c5e287",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-08-22-member-provenance-cand-5.tsv",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-22-member-provenance-cand-5.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ecd990139107806112691d2b964c3ef6713228006d489d9eee9a10ae0619135f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "/dev/active/50b47eae/s5-session/comparison.txt",
+          "resolved_path": "dev/active/50b47eae/s5-session/comparison.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bd4bc398132bb51a3b7648e18ca2d9cc65bac17305ce934c675c37094cd4840b",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "/dev/active/50b47eae/s5-session/layout-audit.txt",
+          "resolved_path": "dev/active/50b47eae/s5-session/layout-audit.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2c662d233a0e8e36d4cae080c8ed241ed716192cda99d6b2c0fb35de833fb86f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "selector-non-regression-plan-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e5fad14e8784087abd17443fe29e36037df5817cfd4b1b6bff80d073588dfeb1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-20-post-cutover-receipt-2.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Fifth post-cutover receipt (attributable FAIL at two mul_fast dispatch cells)",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-5.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Session-5 ensemble reference arm raw windows (K=128, translation-only)",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-22-ensemble-reference-arm-5.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Session-5 ensemble candidate arm raw windows (K=128, translation-only)",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-22-ensemble-candidate-arm-5.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Session-5 reference-arm member provenance",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-22-member-provenance-ref-5.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "Session-5 candidate-arm member provenance",
+      "path": "dev/benchmarks/tuning_profiles/2026-08-22-member-provenance-cand-5.tsv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5357515af05aec22b48798e7a555f15add6e4fbc049d5ea14b16213ad8cafa7b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "layout-attribution-verdict-v2.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b8a91bd65ff6792ebc7b5caca2d5a67eff149b3f72b447ddd42d86cfe4a8c17",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "layout-attribution-verdict-v1.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0495fb7ff391c8d43ab36697fdea7d0884de058b9aab7d16f7192f2b40424d04",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/active/fc976a80/findings.md",
+          "resolved_path": "dev/active/fc976a80/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "11eaa0260126a73633e35cac76a4c3fcced01b865fd85a04a104b4610c01aebf",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-08-22-post-cutover-receipt-4.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6bd47a4adba9f5299e54766545c6bac56368dd3eba9bfad215776ad018824be8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "layout-attribution-verdict-v3.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v3.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Amendment v4 (DEC-K): content-independent translation ensemble",
+      "path": "dev/benchmarks/tuning_profiles/layout-attribution-verdict-v4.md"
     }
   ],
   "first_ready_at": "2026-08-19T23:43:47.707665037Z",
@@ -415,5 +609,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-22T10:28:29.292853192Z"
+  "updated_at": "2026-08-22T14:06:30.009602765Z"
 }
