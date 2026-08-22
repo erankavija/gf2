@@ -533,8 +533,14 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
 /// `N_THRESH_PRIME = 11` would route GF(7) to C and GF(11)+ to F). The
 /// dispatch wiring is forward-compatible; amending this constant is the
 /// only code change needed when fresh data supports a lower threshold.
-#[cfg(feature = "simd")]
-const N_THRESH_PRIME: u64 = 251;
+pub(crate) const N_THRESH_PRIME: u64 = 251;
+
+/// Minimum output width, in columns, at which `select_f32_path` prefers the
+/// f32-FMA cascade.
+///
+/// The pack-cost overhead amortises at this size (≈ 7 % at `n = 1024` against
+/// ≈ 28 % at `n = 256`); below it Candidate C wins.
+pub(crate) const F32_MIN_COLS: usize = 512;
 
 /// Per-(P, m, k, n) Candidate-F / route-A selector.
 ///
@@ -568,7 +574,7 @@ const fn select_f32_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
     // GF(251)/n ≥ 512: ratio 0.683 vs fflas-ffpack on Zen 3, PASS.
     // GF(251)/n < 512: pack cost dominates; Candidate C wins.
     // See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`.
-    P >= N_THRESH_PRIME && P <= 251 && n >= 512
+    P >= N_THRESH_PRIME && P <= 251 && n >= F32_MIN_COLS
 }
 
 // ---------------------------------------------------------------------------
@@ -1601,6 +1607,14 @@ pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
     None
 }
 
+/// Minimum output width, in columns, at which `select_f64_path` prefers the
+/// f64-FMA cascade.
+///
+/// The f64 pack cost is ~3-4× the u16 pack cost (REDC against truncation), and
+/// the panel kernel's inner-loop throughput advantage (~70 Gop/s against
+/// ~40 Gop/s on Zen 3) only amortises that overhead from this width up.
+pub(crate) const F64_MIN_COLS: usize = 512;
+
 /// Per-(P, m, k, n) f64-cascade selector for medium primes (issue `0749dbad`,
 /// Phase 6e).
 ///
@@ -1625,7 +1639,7 @@ const fn select_f64_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
     // (still amortised); at n=256 the pack approaches 25 % and the u16
     // kernel's lighter pack wins. The threshold mirrors Route A's
     // `select_f32_path` n ≥ 512 calibration for fp_small.
-    P > 251 && P < 65536 && n >= 512
+    P > 251 && P < 65536 && n >= F64_MIN_COLS
 }
 
 /// GEMM helper: whole-GEMM panelized AVX2 kernel for medium-prime

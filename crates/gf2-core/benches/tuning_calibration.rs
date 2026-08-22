@@ -172,7 +172,7 @@ use gf2_core::kernels::{Backend, ScalarBackend};
 use gf2_core::rng::Lcg;
 use gf2_core::tuning::{
     BitBackendSelectors, GitRevision, HarnessSchema, PolynomialSelectors, ProfileError, ProfileId,
-    Provenance, RepoRelPath, Rfc3339Utc, Sha256, TuningProfile,
+    Provenance, RepoRelPath, Rfc3339Utc, SelectorFamilies, Sha256, TuningProfile,
 };
 
 /// Prepared-host marker required before this action measures or emits.
@@ -203,7 +203,7 @@ type F = Fp<65537>;
 // Calibrated fields and their grids
 // ---------------------------------------------------------------------
 
-/// The five selector fields a calibrated profile carries.
+/// The five selector fields this sweep measures.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum CalibratedField {
     SimdMinWords,
@@ -1371,7 +1371,7 @@ impl SelectedValues {
 
 /// Builds the profile from the swept values.
 ///
-/// `PolynomialSelectors::try_new` takes four consecutive `usize` parameters, so
+/// `PolynomialSelectors::try_new` takes five consecutive `usize` parameters, so
 /// a transposition among the polynomial thresholds would compile. Each value is
 /// bound to a local named for its own field immediately before the call, which
 /// puts the argument order and the field names on one screen.
@@ -1385,6 +1385,9 @@ fn build_profile(
     let karatsuba_max_out_len: usize = selected.karatsuba_max_out_len;
     let div_rem_fast_min_len: usize = selected.div_rem_fast_min_len;
     let subproduct_min_len: usize = selected.subproduct_min_len;
+    let interpolate_fast_min_points: usize = TuningProfile::CONSERVATIVE
+        .polynomial()
+        .interpolate_fast_min_points();
 
     let bit_backend = BitBackendSelectors::try_new(simd_min_words)?;
     let polynomial = PolynomialSelectors::try_new(
@@ -1392,8 +1395,17 @@ fn build_profile(
         karatsuba_max_out_len,
         div_rem_fast_min_len,
         subproduct_min_len,
+        interpolate_fast_min_points,
     )?;
-    TuningProfile::try_new(id, provenance, bit_backend, polynomial)
+    TuningProfile::try_new(
+        id,
+        provenance,
+        SelectorFamilies {
+            bit_backend,
+            polynomial,
+            ..SelectorFamilies::CONSERVATIVE
+        },
+    )
 }
 
 // ---------------------------------------------------------------------
@@ -1537,7 +1549,7 @@ fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
 
 /// Serializes `profile` and drops the fields the sweep could not measure.
 ///
-/// `TuningProfile::to_json` states all five fields, so omission is expressed
+/// `TuningProfile::to_json` states every schema field, so omission is expressed
 /// here rather than there. An absent field is a supported state of the schema:
 /// `from_json` resolves it to the conservative default, so the document still
 /// loads and still selects the same threshold — what it stops doing is claiming
