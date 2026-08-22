@@ -19,9 +19,9 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:03.290238093Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-22T22:43:46.082488480Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "pending",
@@ -39,5 +39,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the tuning schema with the follow-on selector families",
-  "updated_at": "2026-08-22T22:39:29.195281860Z"
+  "updated_at": "2026-08-22T22:43:46.082488480Z"
 }
