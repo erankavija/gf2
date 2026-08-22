@@ -1,7 +1,7 @@
 {
  "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
  "epic_short_id": "6dc81018",
- "current_wave": 16,
+ "current_wave": 17,
  "wave_notes": "Waves 3, 5, 7, 8 are singleton waves because their issues execute benchmark-mode runs that need the uncontended host (repository benchmark policy); no builds run concurrently with them. HOST CONSTRAINT: an epic-b8206228 simulation run starts 2026-08-19 02:00 on this host, sharing the ccx1-bench-flock mutex. Before dispatching any benchmark-mode execution (waves 3/5/7/8) or heavy build work after 02:00, verify the campaign is not active (pgrep -f permanent-campaign-runner; /tmp/gf2-ccx1.lock free) and do not start a bench run that cannot finish before 02:00. DISPATCH BACKEND: implementation-classified issues dispatch to codex exec -m gpt-5.6-luna (model_reasoning_effort=high, -s workspace-write, approval_policy=never, -C <worktree>) per the user's delegation rule; design/research issues stay on Claude opus agents. Lead composes the full spec, names the CI commands and expected tests, and reviews per the lead-review protocol regardless of backend. WAVE-3 BACKEND DEVIATION (2026-08-19): benchmark-mode issues cannot go to codex exec \u2014 its workspace-write sandbox blocks sccache (EPERM) and the bench wrapper's privileged nice/affinity; wave 3 dispatched to a Claude opus agent in the main checkout, worker commits nothing. Same applies to any future benchmark-mode wave (5, 7, 8). SESSION-3 RESUME (2026-08-19): the session-2 cut left f35daec0 claimed and 'dispatched' with zero work landed (no worktree, no branch, no commits); it was re-dispatched from scratch. CODEX COMMIT LIMITATION: codex exec's workspace-write sandbox cannot write .git/index.lock, so it leaves work uncommitted in the tree and the lead commits it \u2014 budget for that on every codex dispatch. CODEX SCOPE TRAP: given a repository-wide sweep instruction, codex edited three closed-issue records under dev/active/ (220cab0b/design.md, and the epic's classification.md and investigation.md) without listing the edits in its resolution table. Those documents pin citation anchors (design.md at 05bc9c14, classification.md at 2f2cbb37), so rewriting their citations to the post-change tree made them self-contradictory. The lead reverted all three. Every future sweep instruction must name dev/active/ closed-issue records as out of scope alongside docs/archive/. CODEX DISPATCH TRAP (2026-08-19, cost 37 min): `codex exec ... \"$(cat prompt)\"` launched without an explicit stdin redirect hangs forever printing 'Reading additional input from stdin...' \u2014 it treats a non-tty stdin as more prompt text and never sees EOF. It produces no work and no error, so it looks identical to a slow worker. Always append `< /dev/null` to the codex exec invocation, and write the prompt file in a separate shell call from the dispatch. The rework-2 attempt that hung this way did not run at all and does not count against MAX_REWORK_ATTEMPTS. SESSION-4 RESUME (2026-08-20): session 3 was cut immediately after 278acf3a's doc-review gate failed; the receipt work itself had landed at 86a45d2e and the gate-fail record was uncommitted. Recovered, committed at 9bda623e, rework dispatched. HOST: the epic-b8206228 campaign is not running (no runner process, /tmp/gf2-ccx1.lock unheld, load 0.10), so the bench host is free. WAVE REORDER: 5ecc9bf8 (wave 7) has all its dependency edges satisfied and is independent of the wave-6 cutover in the DAG; it is dispatched as soon as 278acf3a's rework is committed, ahead of wave 6, because it is benchmark-mode work that wants the uncontended host and the wave-6 codex builds would contend with it. BENCHMARK-MODE BACKEND: 5ecc9bf8 goes to a Claude opus agent in the main checkout, not codex \u2014 same reason as waves 3 and 5. CLEAN-TREE COUPLING: 5ecc9bf8 carries cargo-ci, which requires a clean tree, so no other main-checkout writer may hold uncommitted edits while its gates run. AGENT-LIVENESS TRAP (2026-08-20, cost ~15 min and one wasted dispatch pair): ListAgents reported 'No reachable agents' while two dispatched agents were provably alive and mid-task, and a clean `git status` 80 seconds before an agent's first write looked identical to a dead agent. Acting on those two signals, the lead re-dispatched duplicates over live workers; only the duplicate doc agent's own refusal to write on a mismatched premise prevented two agents racing on the same two paths. Do NOT treat ListAgents emptiness or a quiet tree as death. A dispatched agent's first write can lag its spawn by many minutes while it reads the spec and the design. Probe artifacts and .jit/events.jsonl over a window before concluding anything, and if duplicates are ever spawned, TaskStop them immediately and verify no leakage before continuing. The lead's initial theory that ScheduleWakeup tore the agents down was WRONG and was retracted.",
  "waves": [
   {
@@ -284,8 +284,22 @@
      "title": "Record the post-cutover non-regression receipt",
      "classification": "implementation",
      "model": "lead-direct",
-     "status": "dispatched-detached",
-     "notes": "Session 5 under verdict v4 (DEC-K): translation-only K=128, cross-arm precondition. Detached driver PID 1157173, /tmp/gf2-ens5/logs/continue-driver.log, terminal line DRIVER: COMPLETE/ABORTED. Expected ~13:15Z 2026-08-22. Next-session steps and verdict routing in handoff-3.md."
+     "status": "session-complete",
+     "notes": "Session 5 COMPLETE (driver PID 1157173, DRIVER: COMPLETE 12:52:30Z). Audit PASS all preconditions; comparison FAIL at polynomial/mul_fast/len=32 (1.058269) and len=64 (1.050254), set geomean 1.001087. Receipt-5 committed (1d7a1f58) with CSVs, TSVs, s5-session record; durables linked. Receipt-4's cell reads 1.000593 \u2014 fc976a80 construction-artifact diagnosis confirmed. 50b47eae REQ-01 still unmet; DEC-L routes rework to eb9b324c (50b47eae now depends on it)."
+    }
+   ]
+  },
+  {
+   "wave_number": 17,
+   "issues": [
+    {
+     "id": "eb9b324c-d9d3-425d-93a6-d0253033a710",
+     "short_id": "eb9b324c",
+     "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
+     "classification": "implementation",
+     "model": null,
+     "status": "planned",
+     "notes": "DEC-L task. Depends on fc976a80 (closes first). Head start committed: dev/active/eb9b324c/diagnosis-brainstorm.md (lead + codex, 2026-08-22) \u2014 two-site diagnosis: Site A fixed per-call double dispatch (mul_fast wrapper -> mul_impl re-checks, ~85 ns at bit5=0, +2.4% at bit5=1), Site B multiplicative ~6% in parameterized mul_karatsuba_raw layout; response is 2-periodic in E (VA bit 5); E2 perf-counter discriminator and its protocol gap recorded; fix candidate (i) collapse double dispatch via one inner dispatcher taking resolved selectors."
     }
    ]
   }
@@ -344,6 +358,12 @@
    "title": "gf2-sim gpu::awgn tests fail transiently on a quiet host and pass on identical re-run",
    "reason": "DEC-F: session-4 handoff open question resolved by the owner as file-it; one false-red CI cycle recorded",
    "parented": "86b9c719 (quality-documentation-tech-debt); outside epic 6dc81018"
+  },
+  {
+   "id": "eb9b324c",
+   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
+   "reason": "DEC-L (escalation #26): second attributable excursion needs a tracked owner in fc976a80's mould before any acceptance, fix, or next measured session",
+   "parented": "50b47eae -> eb9b324c (inside epic 6dc81018)"
   }
  ],
  "escalations": [
@@ -490,6 +510,12 @@
    "issue": "fc976a80",
    "date": "2026-08-22",
    "decision": "DEC-K: owner approves amendment v4 (layout-attribution-verdict-v4.md) \u2014 content-independent translation-only ensemble at K=128 with the phase-shifted bit-parity half assignment and the new cross-arm distributional-equality precondition (P_ref == P_cand mod 32; equal offset and L1i multisets), after fc976a80's diagnosis showed receipt-4's attributable FAIL to be a construction artifact of unlike arm lattices (matched strata agree to 0.01%). Owner framing: 'a proper run instead of thrashing' \u2014 one clean session under a construction that cannot depend on revision content. fc976a80 REQ-02 gains the third branch: an owner-approved procedure amendment routes the arbitration to the next measured session. Session 5 launches detached; handoff and session close directly after launch per owner instruction."
+  },
+  {
+   "kind": "owner-decision",
+   "issue": "50b47eae",
+   "date": "2026-08-22",
+   "decision": "DEC-L: session-5 verdict is an attributable FAIL at the two mul_fast dispatch cells (len=32 1.058269, len=64 1.050254; audit PASS on all preconditions; receipt-4's excursion cell arbitrated clean at 1.000593). Owner chose 'track rework (diagnose first)': no acceptance, no fix mandate, no new measured session until the cause is identified. Tracked as eb9b324c (gates cargo-ci/code-review/doc-review; 50b47eae -> eb9b324c -> fc976a80 wired, DAG transitively reduced). Receipt-5 stands as taken; no predeclared value moves."
   }
  ],
  "rework_counts": {
@@ -509,7 +535,8 @@
   "676f55a2": 0,
   "9162956b": 0,
   "50b47eae": 0,
-  "fc976a80": 0
+  "fc976a80": 0,
+  "eb9b324c": 0
  },
  "surfaced_pitfalls": [
   {
