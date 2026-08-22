@@ -1,0 +1,114 @@
+=== Types.lean ===
+71c71
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-989:1
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-868:1
+75,78d74
+<   WINOGRAD_THRESHOLD : Result Std.Usize
+<   TRI_BASE_THRESHOLD : Result Std.Usize
+<   PLE_BASE_COLS : Result Std.Usize
+<   PLE_PANEL_COLS : Result Std.Usize
+121c117
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 995:0-1034:1
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 874:0-913:1
+=== Funs.lean ===
+1197,1208d1196
+< /-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::PLE_PANEL_COLS]
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 903:4-918:6
+<     Visibility: public -/
+< @[global_simps, irreducible]
+< def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.PLE_PANEL_COLS (P :
+<   Std.U64) : Std.Usize :=
+<   if P <= 251#u64
+<   then 256#usize
+<   else if P < 65536#u64
+<        then 128#usize
+<        else 1#usize
+< 
+1367c1355
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-966:1 -/
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-931:1 -/
+1369c1357
+< impl_def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
+---
+> def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
+1371,1378d1358
+<   WINOGRAD_THRESHOLD := field.traits.FiniteField.WINOGRAD_THRESHOLD.default
+<     (gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 P)
+<   TRI_BASE_THRESHOLD := field.traits.FiniteField.TRI_BASE_THRESHOLD.default
+<     (gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 P)
+<   PLE_BASE_COLS := field.traits.FiniteField.PLE_BASE_COLS.default
+<     (gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 P)
+<   PLE_PANEL_COLS := ok
+<     (gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.PLE_PANEL_COLS P)
+1437c1417
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 992:4-994:5
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 957:4-959:5
+1444c1424
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 981:4-989:5
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 946:4-954:5
+1459c1439
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 974:4-978:5
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 939:4-943:5
+1467c1447
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 972:0-995:1 -/
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 937:0-960:1 -/
+2333,2334c2313
+< impl_def
+<   gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 :
+---
+> def gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 :
+2336,2343d2314
+<   WINOGRAD_THRESHOLD := field.traits.FiniteField.WINOGRAD_THRESHOLD.default
+<     gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128
+<   TRI_BASE_THRESHOLD := field.traits.FiniteField.TRI_BASE_THRESHOLD.default
+<     gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128
+<   PLE_BASE_COLS := field.traits.FiniteField.PLE_BASE_COLS.default
+<     gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128
+<   PLE_PANEL_COLS := field.traits.FiniteField.PLE_PANEL_COLS.default
+<     gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128
+=== FunsExternal_Template.lean ===
+213,248d212
+< /-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 825:4-825:42
+<     Visibility: public -/
+< @[trait_default]
+< axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self : Type}
+<   {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
+<   field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
+<   : Result Std.Usize
+< 
+< /-- [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 858:4-858:40
+<     Visibility: public -/
+< @[trait_default]
+< axiom field.traits.FiniteField.TRI_BASE_THRESHOLD.default {Self : Type}
+<   {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
+<   field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
+<   : Result Std.Usize
+< 
+< /-- [gf2_core::field::traits::FiniteField::PLE_BASE_COLS]
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 892:4-892:35
+<     Visibility: public -/
+< @[trait_default]
+< axiom field.traits.FiniteField.PLE_BASE_COLS.default {Self : Type}
+<   {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
+<   field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
+<   : Result Std.Usize
+< 
+< /-- [gf2_core::field::traits::FiniteField::PLE_PANEL_COLS]
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 926:4-926:54
+<     Visibility: public -/
+< @[trait_default]
+< axiom field.traits.FiniteField.PLE_PANEL_COLS.default {Self : Type}
+<   {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
+<   field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
+<   : Result Std.Usize
+< 
+=== TypesExternal_Template.lean ===

@@ -1,0 +1,180 @@
+# Generated-tree summary for JIT issue 7d7c647c.
+# Reproduce with: dev/active/7d7c647c/probes/tree-summary.sh
+# Captured: 2026-08-23T01:07:56+03:00
+
+## AM1_lean
+- files: Funs.lean Types.lean 
+- structures in Types.lean: 1
+- defs in Funs.lean: 3
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 0
+- sorry in Funs.lean: 0
+- repeated structure field names in Types.lean:
+    (none)
+- tuning-constant occurrences: (none)
+
+## AM2_lean
+- files: FunsExternal_Template.lean Funs.lean Types.lean 
+- structures in Types.lean: 1
+- defs in Funs.lean: 3
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 1
+- sorry in Funs.lean: 0
+- repeated structure field names in Types.lean:
+    (none)
+- tuning-constant occurrences: (none)
+
+## AM3_lean
+- files: Funs.lean Types.lean 
+- structures in Types.lean: 1
+- defs in Funs.lean: 4
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 0
+- sorry in Funs.lean: 0
+- repeated structure field names in Types.lean:
+    (none)
+- tuning-constant occurrences: (none)
+
+## AM4_lean
+- files: Funs.lean Types.lean 
+- structures in Types.lean: 1
+- defs in Funs.lean: 3
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 0
+- sorry in Funs.lean: 0
+- repeated structure field names in Types.lean:
+    (none)
+- tuning-constant occurrences: (none)
+
+## AM5_lean
+- files: FunsExternal_Template.lean Funs.lean TypesExternal_Template.lean Types.lean 
+- structures in Types.lean: 0
+- defs in Funs.lean: 1
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 1
+- sorry in Funs.lean: 0
+- repeated structure field names in Types.lean:
+    (none)
+- tuning-constant occurrences: (none)
+
+## AS1_lean
+- files: FunsExternal_Template.lean Funs.lean TypesExternal_Template.lean Types.lean 
+- structures in Types.lean: 13
+- defs in Funs.lean: 277
+- impl_def in Funs.lean: 2
+- axioms in FunsExternal_Template.lean: 31
+- sorry in Funs.lean: 20
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+- tuning-constant occurrences:       7 PLE_BASE_COLS       9 PLE_PANEL_COLS       7 TRI_BASE_THRESHOLD       7 WINOGRAD_THRESHOLD 
+- committed post-processing: Patched 16 sorry(s), opaqued 19 unsupported def(s), patched 6 trait default field(s), 21 remain (expected for opaque gfpn functions) 
+- hand-carried literals it writes:
+      WINOGRAD_THRESHOLD := ok 32#usize
+      TRI_BASE_THRESHOLD := ok 8#usize
+      PLE_BASE_COLS := ok 1#usize
+      PLE_PANEL_COLS := ok
+      WINOGRAD_THRESHOLD := ok 32#usize
+      TRI_BASE_THRESHOLD := ok 8#usize
+      PLE_BASE_COLS := ok 1#usize
+      PLE_PANEL_COLS := ok 1#usize
+
+## AS2_lean
+- files: FunsExternal_Template.lean Funs.lean TypesExternal_Template.lean Types.lean 
+- structures in Types.lean: 13
+- defs in Funs.lean: 278
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 27
+- sorry in Funs.lean: 20
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+- tuning-constant occurrences: (none)
+- committed post-processing: Patched 16 sorry(s), opaqued 19 unsupported def(s), patched 2 trait default field(s), 21 remain (expected for opaque gfpn functions) 
+- hand-carried literals it writes:
+    (none)
+
+## AS3_lean
+- files: FunsExternal_Template.lean Funs.lean TypesExternal_Template.lean Types.lean 
+- structures in Types.lean: 13
+- defs in Funs.lean: 278
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 27
+- sorry in Funs.lean: 20
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+- tuning-constant occurrences: (none)
+- committed post-processing: Patched 16 sorry(s), opaqued 19 unsupported def(s), patched 2 trait default field(s), 21 remain (expected for opaque gfpn functions) 
+- hand-carried literals it writes:
+    (none)
+
+## AS4_lean
+- files: FunsExternal_Template.lean Funs.lean TypesExternal_Template.lean Types.lean 
+- structures in Types.lean: 13
+- defs in Funs.lean: 277
+- impl_def in Funs.lean: 2
+- axioms in FunsExternal_Template.lean: 31
+- sorry in Funs.lean: 20
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+- tuning-constant occurrences:       7 PLE_BASE_COLS       9 PLE_PANEL_COLS       7 TRI_BASE_THRESHOLD       7 WINOGRAD_THRESHOLD 
+- committed post-processing: Patched 16 sorry(s), opaqued 19 unsupported def(s), patched 6 trait default field(s), 21 remain (expected for opaque gfpn functions) 
+- hand-carried literals it writes:
+      WINOGRAD_THRESHOLD := ok 32#usize
+      TRI_BASE_THRESHOLD := ok 8#usize
+      PLE_BASE_COLS := ok 1#usize
+      PLE_PANEL_COLS := ok
+      WINOGRAD_THRESHOLD := ok 32#usize
+      TRI_BASE_THRESHOLD := ok 8#usize
+      PLE_BASE_COLS := ok 1#usize
+      PLE_PANEL_COLS := ok 1#usize
+
+## AX1_lean
+- files: FunsExternal_Template.lean Funs.lean Types.lean 
+- structures in Types.lean: 8
+- defs in Funs.lean: 4
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 4
+- sorry in Funs.lean: 0
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+- tuning-constant occurrences:       3 PLE_BASE_COLS       3 PLE_PANEL_COLS       3 TRI_BASE_THRESHOLD       3 WINOGRAD_THRESHOLD 
+
+## AX2_lean
+- files: Funs.lean Types.lean 
+- structures in Types.lean: 8
+- defs in Funs.lean: 4
+- impl_def in Funs.lean: 0
+- axioms in FunsExternal_Template.lean: 0
+- sorry in Funs.lean: 0
+- repeated structure field names in Types.lean:
+    corecloneCloneInst
+    corecmpEqInst
+    corecmpPartialEqInst
+    corefmtDebugInst
+    coreopsarithAddAssignInst
+    coreopsarithAddInst
+- tuning-constant occurrences: (none)

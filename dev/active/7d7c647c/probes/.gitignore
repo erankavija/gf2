@@ -1,0 +1,13 @@
+# Raw run logs: ANSI escapes, progress-bar redraws and rustc warning blocks.
+# The committed evidence is logs-trimmed/, produced by probes/trim-logs.sh.
+logs/
+*.llbc
+seam-shape/target/
+seam-shape/Cargo.lock
+
+# The three post-change gf2-core trees are 99% identical to the committed
+# AS1_lean baseline; excerpts/AS1-to-*.diff and AS2-to-AS3.diff carry the
+# deltas and run.sh regenerates the trees.
+AS2_lean/
+AS3_lean/
+AS4_lean/
