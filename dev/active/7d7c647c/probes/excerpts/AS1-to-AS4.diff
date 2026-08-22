@@ -1,0 +1,16 @@
+=== Types.lean ===
+=== Funs.lean ===
+=== FunsExternal_Template.lean ===
+214c214
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 825:4-825:42
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 825:4-825:87
+223c223
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 858:4-858:40
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 858:4-858:89
+232c232
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 892:4-892:35
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 892:4-892:85
+=== TypesExternal_Template.lean ===
