@@ -587,9 +587,10 @@ Evidence that default behaviour is unchanged: the existing assertions at
 `crates/gf2-core/tests/backend_selection.rs:11`, `:19`, `:35` and
 `crates/gf2-core/src/kernels/backend.rs:220-258` pass without modification.
 
-The deprecated `select_kernel()` at `crates/gf2-core/src/kernels/mod.rs:83` is
-**not** a profile consumer. It returns the scalar backend unconditionally and
-its removal is the separate cutover the classification records in §5.
+The deprecated `select_kernel()` (`crates/gf2-core/src/kernels/mod.rs:83` in
+this design's anchor-commit tree) is **not** a profile consumer. It returns
+the scalar backend unconditionally; issue `a6636671` executes the separate
+cutover the classification records in §5, removing it.
 
 #### Amendment — issue `c42720ce` (2026-08-20)
 

@@ -255,7 +255,7 @@ values stay where they are defined.
 | Variant | Defining code | Disposition | Action or tracked exception |
 |---|---|---|---|
 | Research-stub declarations of `PackedField` and `PackedFieldVec`, with stub implementations and zero-returning `fold_mul` | `dev/archive/packed_field_stub/src/lib.rs:80`, `:331`, `:774`, `:968`, `:938` | Superseded by the production traits at `crates/gf2-algebra/src/packed/mod.rs:88` and `:374`. | Executed: archived at `dev/archive/packed_field_stub` with a pointer to the production home; its D1b design-record linkage is preserved. Issue `7f818151`. |
-| Deprecated bit-buffer kernel surface: the `Kernel` trait, its `ScalarBackend` bridge, and `select_kernel()` | `crates/gf2-core/src/kernels/mod.rs:41`, `:57`, `:81` | Superseded by `Backend` and `select_backend_for_size`; the deprecation attributes name the replacement. | Cutover: remove all three once no consumer remains, tracked as issue `a6636671`; `canonical-cutover` is unsatisfied until it lands. |
+| Deprecated bit-buffer kernel surface: the `Kernel` trait, its `ScalarBackend` bridge, and `select_kernel()` | `crates/gf2-core/src/kernels/mod.rs:41`, `:57`, `:81` (anchor-commit tree) | Superseded by `Backend` and `select_backend_for_size`. | Executed: all three removed by issue `a6636671` (commit `a8d07ab2`), no consumer remaining; `canonical-cutover` is satisfied for this surface. |
 | Inherent arithmetic wrappers `add_inherent`, `sub_inherent`, `mul_inherent`, `neg_inherent` on the three packed element types | `crates/gf2-algebra/src/packed/bipedal3.rs:417`, `:436`, `:455`, `:473`; `packed5.rs:363`, `:382`, `:401`, `:419`; `packed7.rs:516`, `:535`, `:554`, `:572` | Retained parallel surface over the trait methods, each a verbatim tail call with no algorithmic divergence (`crates/gf2-algebra/src/packed/bipedal3.rs:387-405`). | Named tracked exception `packed-inherent-proof-targets`: the wrappers exist so Charon extraction has a fixed surface free of trait-dispatch indirection, per `dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md:1-20`. Convergence condition: extraction of a trait-generic algorithm succeeds, which issue `34d85cb9` establishes or falsifies. |
 | Legacy SIMD multiply tier inside the GF($2^m$) ladder | `crates/gf2-core/src/gf2m/field.rs:1155` | Retained tier below the combined and split CLMUL-with-Barrett tiers; it is a strategy alternative under the one canonical ladder, not a second abstraction. | No cutover. Its position becomes profile data when the trait-adjacent selection families migrate (§4.2); the tier order stays a single ordering in one place. |
 | Wide-kernel compatibility detectors `detect()` and `detect_571()` alongside `detect_wide()` | `crates/gf2-kernels-simd/src/gf2m_wide.rs:98` and `:104` against `:85` | Retained projections: both are `detect_wide().map(...)` with no independent detection logic, and both have live callers in the crate's tests and in `crates/gf2-core/benches/gf2m_wide_mul.rs:115`. | Named tracked exception `wide-kernel-detect-projections`: they remain pure projections of `detect_wide`. Acquiring independent feature-detection logic in either is a defect, since `crates/gf2-core/src/lib.rs:369` caches only `detect_wide`. |
@@ -281,13 +281,3 @@ recorded here so the two documents can be reconciled.
 | `splat` | `packed/mod.rs:155-158` | The method signature is at `crates/gf2-algebra/src/packed/mod.rs:162`. |
 | `SelectedBackend` | `kernels/backend.rs:82-102` | The enum is at `crates/gf2-core/src/kernels/backend.rs:63`; `select_backend_for_size` is at `:95`. |
 | Wide scalar fallback | `gf2m/wide.rs:2064-2113` | `clmul_wide_slice` is defined at `crates/gf2-core/src/gf2m/wide.rs:2052`. |
-
-## 7. Post-anchor cutover executions
-
-Appended addendum; every section above stands as written at the anchor
-commit. This section records cutovers from §5 that have since executed, so
-the disposition table and the tree agree.
-
-| §5 row | Execution |
-|---|---|
-| Deprecated bit-buffer kernel surface (`Kernel` trait, `ScalarBackend` bridge impl, `select_kernel()`) | Executed: all three removed from `crates/gf2-core/src/kernels/mod.rs` by issue `a6636671` (commit `a8d07ab2`), no consumer remaining and the workspace CI contract passing. The §5 row's `:41`/`:57`/`:81` cites describe the anchor-commit tree; `canonical-cutover` is satisfied for this surface. |
