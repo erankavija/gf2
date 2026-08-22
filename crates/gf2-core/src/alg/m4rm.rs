@@ -24,14 +24,14 @@ use crate::matrix::BitMatrix;
 /// when LLVM batches the XOR/store loops.
 const B2_GRAY_TILE_WORDS: usize = 8;
 const B2_GRAY_MAX_TILES: usize = 4;
-const M4RM_DEFAULT_TABLE_BYTES: usize = 64 * 1024;
+pub(crate) const M4RM_DEFAULT_TABLE_BYTES: usize = 64 * 1024;
 /// Legacy narrow-tier panel-width cap (pre-jit:bdf60780). Retained as the
 /// reference schedule that `test_production_multiply_matches_legacy_schedule_*`
 /// compares against; the production small-n path now uses
 /// [`choose_k_block_small_n`] instead.
 #[cfg_attr(not(test), allow(dead_code))]
 const M4RM_DEFAULT_MAX_K: usize = 8;
-const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
+pub(crate) const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
 /// Wider schedule budget for LLC-streaming M4RM rows.
 ///
 /// The production policy keeps rows narrower than the register-tiled threshold
@@ -39,13 +39,13 @@ const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
 /// same-session measurements for jit:8e305c21 show fewer, wider Gray panels
 /// recover the table-build and row-update overhead without letting the table
 /// grow beyond the 256 KiB L2 size class that regressed at small widths.
-const M4RM_WIDE_TABLE_BYTES: usize = 256 * 1024;
-const M4RM_WIDE_MAX_K: usize = 9;
+pub(crate) const M4RM_WIDE_TABLE_BYTES: usize = 256 * 1024;
+pub(crate) const M4RM_WIDE_MAX_K: usize = 9;
 
 /// Row accumulators held by the M4RM C-tile update.
 const M4RM_TILE_ROWS: usize = 8;
 /// Column words per register tile: four u64 lanes fit exactly in one YMM.
-const M4RM_TILE_WORDS: usize = 4;
+pub(crate) const M4RM_TILE_WORDS: usize = 4;
 /// Minimum row stride (in u64 words) for the register-tiled M4RM C-update.
 ///
 /// The 8×4 YMM tile processes four output words per lane, so it needs at least
@@ -55,14 +55,14 @@ const M4RM_TILE_WORDS: usize = 4;
 /// by ~1.7× (measured `2026-05-28-bdf60780-matmul-gf2-smalln.md`), closing the
 /// M4RI parity gap. Narrower strides (1..=3) still fall through to the row-XOR
 /// path because there is no full 4-word tile.
-const M4RM_TILED_MIN_STRIDE_WORDS: usize = M4RM_TILE_WORDS;
+pub(crate) const M4RM_TILED_MIN_STRIDE_WORDS: usize = M4RM_TILE_WORDS;
 /// Upper bound on the small-`n` (sub-wide-tier) Gray-code panel width.
 ///
 /// Below the wide-row tier (`stride_words < 16`) the table is L1-resident and
 /// the cost-balanced optimum is `~0.8·log2(min(K, n))` panels, not the maximum
 /// width the byte budget allows. Capping at 8 keeps the `k=8` panel that wins
 /// at `n=256` while the heuristic still selects `k=4..5` at `n=64`.
-const M4RM_SMALL_N_MAX_K: usize = 8;
+pub(crate) const M4RM_SMALL_N_MAX_K: usize = 8;
 type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
 
 /// Chooses an appropriate block size k for M4RM based on matrix dimensions.
@@ -93,7 +93,7 @@ fn choose_k_block(k: usize, n: usize) -> usize {
 /// At and above 16 words (`n >= 1024`) the production policy keeps the
 /// register-tiled wide schedule (`8e305c21`/`974a85bd`); below it, the small-`n`
 /// L1-resident heuristic in [`choose_k_block_small_n`] selects the panel width.
-const M4RM_WIDE_TIER_MIN_STRIDE_WORDS: usize = 16;
+pub(crate) const M4RM_WIDE_TIER_MIN_STRIDE_WORDS: usize = 16;
 
 /// Selects the Gray-code panel width for the small-`n` (L1-resident) regime.
 ///

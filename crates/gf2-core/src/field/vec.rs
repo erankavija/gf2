@@ -7,6 +7,14 @@
 use crate::field::{ConstField, FiniteField};
 use std::ops::Index;
 
+/// Elements per chunk of the SIMD dot-product walk.
+///
+/// The chunk is the length of the three stack scratch buffers the walk fills,
+/// so it must stay a compile-time constant: 256 elements are
+/// `256 · 8` (a) + `256 · 8` (b) + `256 · 16` (products) = 8 KiB of stack, which
+/// keeps the scratch off the heap.
+pub(crate) const DOT_CHUNK_LEN: usize = 256;
+
 // ── FieldVec ─────────────────────────────────────────────────────────────────
 
 /// A dense vector of finite field elements.
@@ -1017,19 +1025,18 @@ impl FieldVec<Gf2mElement> {
         let clmul_fn = sample.clmul_fn()?;
         let reducer = sample.barrett_reducer()?;
 
-        // Process in chunks that fit comfortably on the stack.
-        // 256 elements = 256*8 (a) + 256*8 (b) + 256*16 (products) = 8 KiB.
-        const CHUNK: usize = 256;
-        let mut a_buf = [0u64; CHUNK];
-        let mut b_buf = [0u64; CHUNK];
-        let mut p_buf = [0u128; CHUNK];
+        // Process in chunks that fit comfortably on the stack; see
+        // `DOT_CHUNK_LEN`.
+        let mut a_buf = [0u64; DOT_CHUNK_LEN];
+        let mut b_buf = [0u64; DOT_CHUNK_LEN];
+        let mut p_buf = [0u128; DOT_CHUNK_LEN];
 
         let mut acc: u128 = 0;
         let mut offset = 0;
         let n = self.len();
 
         while offset < n {
-            let end = (offset + CHUNK).min(n);
+            let end = (offset + DOT_CHUNK_LEN).min(n);
             let chunk_len = end - offset;
 
             // Extract raw u64 values into stack buffers.

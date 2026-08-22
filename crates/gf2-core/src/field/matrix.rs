@@ -2507,6 +2507,19 @@ pub(crate) const GEMM_ROW_TILE: usize = 32;
 // for the tuning rationale.
 pub(crate) const GEMM_COL_TILE: usize = 64;
 
+/// Smallest work volume `m · k · n` at which [`gemm_axpy_into_view`] takes the
+/// whole-GEMM fast path.
+///
+/// Below this volume the per-cell SIMD dot path is competitive (the
+/// small-prime `fp_small_try_dot_vec` already packs and runs an AVX2 batch dot
+/// per cell), and the contiguous-A + scratch-output allocations dominate the
+/// inner work. Tuned empirically against the trsm recursion shape (which
+/// decomposes an n×n trsm into many tiny `gemm_axpy_into_view` calls down to
+/// `TRI_BASE_THRESHOLD = 8`): at `m, k, n ≤ 32` the per-cell SIMD dot wins; at
+/// `m · k · n ≥ 4096` (≈ a 16³ cube) the whole-GEMM kernel wins on every cell
+/// measured in `2026-05-26-40195c09-gemm-axpy-lift`.
+pub(crate) const GEMM_AXPY_FAST_PATH_THRESHOLD: usize = 16 * 16 * 16;
+
 /// Classical blocked gemm over `F: FiniteField` with delayed reduction.
 ///
 /// Implements the §1.2 Dumas–Pernet pattern: transpose `B` once so the inner
@@ -2961,20 +2974,8 @@ pub(crate) fn gemm_axpy_into_view<F>(
     // `a_flat` / `scratch` buffers below are paid only when the
     // kernel will actually execute. The default trait impl returns
     // `false`, so non-`Fp<P>` fields (Mersenne31, GF(2^m), etc.) skip
-    // this block entirely.
-    // Threshold for taking the whole-GEMM fast path. Below this
-    // the per-cell SIMD dot path is competitive (the small-prime
-    // `fp_small_try_dot_vec` already packs and runs an AVX2 batch
-    // dot per cell), and the contiguous-A + scratch-output
-    // allocations dominate the inner work. Tuned empirically against
-    // the trsm recursion shape (which decomposes a n×n trsm into
-    // many tiny `gemm_axpy_into_view` calls down to
-    // `TRI_BASE_THRESHOLD = 8`): at `m, k, n ≤ 32` the per-cell
-    // SIMD dot wins; at `m * k * n ≥ 4096` (≈ a 16³ cube) the
-    // whole-GEMM kernel wins on every cell measured in
-    // `2026-05-26-40195c09-gemm-axpy-lift`.
-    const GEMM_AXPY_FAST_PATH_THRESHOLD: usize = 16 * 16 * 16;
-
+    // this block entirely. The volume gate is
+    // `GEMM_AXPY_FAST_PATH_THRESHOLD`.
     if F::has_simd_gemm_classical() && m * k * n >= GEMM_AXPY_FAST_PATH_THRESHOLD {
         // Pack `A` (which may be a strided sub-view of a parent
         // buffer) into a contiguous row-major `m × k` slice. Walks
