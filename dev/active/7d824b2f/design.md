@@ -17,9 +17,11 @@ convention the classification uses for the same purpose in its own §6.
 
 Two selector families take their values from the tuning profile: the bit
 backend and the polynomial crossovers, which 220cab0b §4.1 and §4.2
-integrate. The classification's §4.2 inventory holds 31 further constants
-that select between behaviourally equivalent execution paths or size a schedule
-to the host's cache and register file. Each is compiled into the library, so a
+integrate. The classification's §4.2 inventory holds twenty-seven further
+selection rows that select between behaviourally equivalent execution paths or
+size a schedule to the host's cache and register file — the inventory as
+re-derived by this design's §7.1, whose five reclassified rows the
+classification's §4.4 now records. Each is compiled into the library, so a
 host whose cache hierarchy, vector width, or core count moves a crossover has no
 way to say so short of editing and rebuilding.
 
@@ -80,8 +82,9 @@ field.
 
 This generalises 220cab0b §5 condition 3, which names only the `_min_`/`_max_`
 suffix. The generalisation is additive: every existing field keeps its name and
-its operator, and every new threshold field still carries the suffix. §7.2
-records the convergence question the generalisation raises for the owner.
+its operator, and every new threshold field still carries the suffix. The
+convention's source restates the two-kind rule in 220cab0b's appended
+amendment for issue `7d824b2f`, so it keeps one form.
 
 ### 2.2 The mechanism rule (REQ-02)
 
@@ -148,12 +151,11 @@ test-local copy of the comparison, and it is the shape
 ## 3. Schema extension (REQ-01)
 
 Eleven new family objects join `selectors`, and the existing `polynomial`
-family gains one field. Twenty-eight fields carry the twenty-six §4.2 rows that
-are host-tuning crossovers, one of those rows splitting into a threshold and an
-extent field (D3), plus the live constant that serves the role of a
-twenty-seventh row. §7.1 records the five §4.2 rows that inspection shows are
-not host-tuning crossovers, one of which is the row whose role that live
-constant serves.
+family gains one field. Twenty-eight fields carry the twenty-seven §4.2 rows,
+one of those rows splitting into a threshold and an extent field (D3). §7.1
+records the re-derivation that moved five rows of the classification's
+original follow-on inventory to its §4.4, one of them replaced in §4.2 by the
+live constant that serves its role.
 
 Every field is `usize` in the schema and in the accessor, following 220cab0b
 §2.1. Every conservative default is **defined by naming the existing in-source
@@ -550,8 +552,8 @@ exists to end.
 
 The cost is that the standing extensibility rule's condition 3 names only the
 operator suffix, so this design generalises it. The generalisation adds a kind;
-it changes no existing field. §7.2 asks the owner where the generalisation
-should be restated so the convention keeps one form.
+it changes no existing field, and 220cab0b's appended amendment for issue
+`7d824b2f` restates it at the convention's source.
 
 ### D3 — `TRSM_BLOCKED_PANEL_SIZE` splits into a threshold and an extent
 
@@ -619,12 +621,13 @@ tables from restating threshold values (`@/inv/single-source-prose`).
 
 ## 7. Risks, classification findings, and open questions
 
-### 7.1 §4.2 rows that inspection shows are not host-tuning crossovers
+### 7.1 Rows re-derived out of the follow-on inventory
 
-Five of the thirty-one rows do not survive inspection at their cited code. Each
-is recorded here with its evidence rather than dropped, and none is migrated.
+Five rows of the classification's original §4.2 inventory do not survive
+inspection at their cited code. Each is recorded here with its evidence, none
+is migrated, and the classification's §4.4 carries each disposition.
 
-| §4.2 row | Evidence at the anchor | Disposition |
+| Original §4.2 row | Evidence at the anchor | Disposition |
 |---|---|---|
 | `B2_GRAY_TILE_WORDS` = 8, `alg/m4rm.rs:25` | The value is an array dimension and a match pattern, not a selection input: accumulators are typed `[[0u64; B2_GRAY_TILE_WORDS]; TILES]` at `:350`, `:383`, `:433`, and the tiled builders are chosen by the literal match arms `(1, B2_GRAY_TILE_WORDS)` … `(4, B2_GRAY_TILE_WORDS)` at `:311-320`. The eight-word tile is also the kernel crate's builder ABI: `:283-289` dispatches `m4rm_gray_build4_fn` at stride 4 and its eight-word sibling at stride 8. | Kernel shape, the class classification §4.4 assigns `M4RM_TILE_WORDS` and `M4RM_TILE_ROWS`. Stays in source. |
 | `B2_GRAY_MAX_TILES` = 4, `alg/m4rm.rs:26` | It bounds the register-accumulator array `[[0u64; B2_GRAY_TILE_WORDS]; B2_GRAY_MAX_TILES]` at `:433` and is enumerated by the same four match arms. Its one comparison, `stride_words <= B2_GRAY_MAX_TILES * B2_GRAY_TILE_WORDS` at `:306`, is derived from that shape. | Kernel shape. Stays in source. |
@@ -644,11 +647,11 @@ host-tuning value and §3.8 admits it under the bake mechanism.
 |---|---|
 | The amortisation screening rule (§5.3) admits twenty-one runtime reads on an argument from a measured numerator, not on a fresh measurement. The pilot's history shows a sub-nanosecond boundary cost defeating three successive arguments. | The pilot's excursion cell pays 0.395 ns at ratio 1.206586, so the operation it burdens is about 2 ns; every site admitted here allocates an output buffer or performs at least $t$ word operations before returning, so the two are two orders of magnitude apart. The rule is predeclared before any cutover and is falsifiable: a cutover whose review cannot show the floor takes the bake mechanism. Open question 1 asks the owner to ratify it, and §8 T14 is the protocol to run instead. |
 | Adjacent literals in migrated code stay in source, so a family is half-described by its profile. `production_table_budget` selects its tier on the unclassified bounds `stride_words >= 64` and `>= 32` (`alg/m4rm.rs:122-128`), `choose_k_block_with_limit` caps the panel at `usize::BITS - 1` (`:145`), and `build_gray_table_flat` gates its SIMD builders on `stride_words == 4` and `== 8` (`:283`, `:288`). | Classification §4.2 does not mark them, and 220cab0b §5 condition 1 admits only what the classification marks profile-scoped. They stay in source, and open question 2 asks whether the classification is amended to cover them. |
-| The extent-field kind generalises 220cab0b §5 condition 3, which names only the operator suffix, so the shared convention has two statements. | The generalisation is additive and changes no existing field, and it is stated once, here. `@/inv/convention-convergence` asks for a source-level change or a reported mismatch; this is the report. Open question 3 puts the source-level restatement to the owner, since 220cab0b's record belongs to a closed issue. |
+| The extent-field kind generalises 220cab0b §5 condition 3, which names only the operator suffix. | The generalisation is additive and changes no existing field, and `@/inv/convention-convergence`'s source-level change is executed: 220cab0b carries an appended amendment for issue `7d824b2f` restating the two-kind rule, so the convention keeps one form at its source. |
 | A profile can set `trsm_blocked_min_dim` and `trsm_panel_rows` inconsistently, or `soa_batch.parallel_min_len` below `parallel_chunk_len`. | Both are performance choices with no correctness consequence; the callees accept any admissible value. The loader validates per-field ranges and does not invent cross-field relations, so no clamping or partial application enters (220cab0b §2.1). |
 | Baking seven fields means a fresh calibration requires a rebuild before they take effect. | The accepted D1 trade, already taken for `bit_backend.simd_min_words` by DEC-G. The affected families are the ones whose values cannot be runtime at all or whose read sites cannot absorb a load. |
 | Installing `soa_batch.parallel_chunk_len` or `permanent.gray_chunk_subsets` changes a parallel work partition, which `@/inv/deterministic-seeded-execution` constrains. | Both partitions carry exact integer arithmetic and both modules state schedule-only equivalence (`compute/field.rs:46-50`, `permanent/parallel_bipedal3.rs:3-22`). §4's test obligations add a determinism witness for each: results are identical across installed chunk lengths. |
-| `gf2-core`'s schema names a family owned by a higher crate. | D4 records the alternatives. No dependency edge moves; open question 4 puts the layering question to the owner. |
+| `gf2-core`'s schema names a family owned by a higher crate. | D4 records the alternatives. No dependency edge moves; open question 3 puts the layering question to the owner. |
 | A follow-on family lands its schema field but its cutover slips, leaving a field nothing reads. | 220cab0b §8 already answers this: an absent field resolves to the default and is inert. §8 keeps schema and cutover in separate tasks deliberately, and T1 changes no selector site, so the intermediate state is a validated, unread field. |
 
 Open questions for the epic lead:
@@ -656,13 +659,11 @@ Open questions for the epic lead:
 1. **Ratify the amortisation screening rule of §5.3**, which admits the
    twenty-one runtime cutovers without a new pinned receipt — or direct T14,
    the new predeclared non-regression protocol, to run first.
-2. **Amend the classification** for the five §4.2 rows of §7.1 and, separately,
-   for the unclassified sibling literals named in §7.2. The classification is
-   the closed record of another issue, so the amendment is the lead's to place.
-3. **Decide where the extent-field kind is restated** so the schema convention
-   keeps one form: here alone, or back-annotated at 220cab0b §5's source.
-4. **Confirm the `permanent` family's placement** in `gf2-core`'s schema (D4).
-5. **Confirm the sweep-extension sequencing**: every sweepable follow-on field
+2. **Amend the classification** for the unclassified sibling literals named in
+   §7.2. (The five-row reclassification of §7.1 is executed: the
+   classification's §4.2 and §4.4 carry it.)
+3. **Confirm the `permanent` family's placement** in `gf2-core`'s schema (D4).
+4. **Confirm the sweep-extension sequencing**: every sweepable follow-on field
    depends on `389aa4de`, which is `Ready` and not yet done, so T12 cannot
    start before it lands.
 
@@ -710,7 +711,7 @@ section that meets it.
 
 | Criterion | Where it is met | What meets it |
 |---|---|---|
-| REQ-01 | §3, §7.1 | Twelve family subsections give every admitted field its name, type, admissible range with its derivation, conservative default named at its in-source constant, read site, frequency, and mechanism; §7.1 disposes of the five §4.2 rows that inspection shows are not host-tuning crossovers. |
+| REQ-01 | §3, §7.1 | Twelve family subsections give every admitted field its name, type, admissible range with its derivation, conservative default named at its in-source constant, read site, frequency, and mechanism; §7.1 records the re-derivation behind the classification's five §4.4 dispositions. |
 | REQ-02 | §2.2, §2.3, §4 | The mechanism rule assigns each field a compile-time bake or a resolved read at a non-recursive entry; four structural obligations keep the read out of loops and recursion; the per-family table names the route reporter and the test obligation. |
 | REQ-03 | §5 | A three-condition sweepability test splits the twenty-eight fields into eleven sweepable and seventeen recorded under the standing omission rule, and the behaviour-preservation argument rests on defaults naming the source constants, nothing installed by default, and a per-mechanism cost bound. |
 | REQ-04 | §8 | Fourteen worker-sized tasks with one-line scopes, dependencies, and gates, ordered into a schema step, a bake step, nine independent family cutovers, and the measurement work. |
