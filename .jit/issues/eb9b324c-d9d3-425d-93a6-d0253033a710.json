@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-22T14:47:13.293975034Z",
   "context": {},
   "created_at": "2026-08-22T14:14:02.435231272Z",
   "dependencies": [
@@ -30,7 +31,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-  "updated_at": "2026-08-22T14:46:38.865160460Z"
+  "updated_at": "2026-08-22T14:47:13.293975034Z"
 }
