@@ -1,0 +1,73 @@
+=== AQ5 === 2026-08-22T23:33:04+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/e6ea0dde/extraction/AQ5_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/e6ea0dde/extraction/Q5_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/e6ea0dde/extraction/Q5_gf2_core.llbc
+
+[Warn ] Found an associated type in a trait declaration; trait associated types are usually lifted to become parameters of the trait definition, but this can fail with mutually-recursive traits as well as GATs. Aeneas cannot handle such types today, and the generated code will likely be incorrect.
+Trait declaration: gf2_core::field::traits::FiniteField
+Source: Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-989:1
+Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-989:1
+Compiler source: symbolic/SymbolicToPure.ml, line 222
+
+[Error] Can not extract trait associated types with parameters
+Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-989:1
+Compiler source: symbolic/SymbolicToPure.ml, line 234
+[Warn ] Could not translate the trait declaration 'gf2_core::field::traits::FiniteField because of previous error
+Name pattern: 'gf2_core::field::traits::FiniteField'
+Definition span: 'crates/gf2-core/src/field/traits.rs', lines 44:0-989:1
+Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-989:1
+Compiler source: Translate.ml, line 555
+
+[Info ] Creating missing directory: dev/active/e6ea0dde/extraction/AQ5_lean
+[Error] Internal error: please file an issue
+Compiler source: Translate.ml, line 1069
+[Error] Could not find: trait_decl_id: 2
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1039:0-1132:1
+Compiler source: extract/ExtractBase.ml, line 484
+[Info ] Generated the partial file (because of 3 errors, including 3 unique errors): dev/active/e6ea0dde/extraction/AQ5_lean/Types.lean
+[Error] Could not find: trait_decl_id: 2
+Source: 'crates/gf2-core/src/field/traits.rs', lines 825:4-825:42
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: trait_decl_id: 2
+Source: 'crates/gf2-core/src/field/traits.rs', lines 858:4-858:40
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: trait_decl_id: 2
+Source: 'crates/gf2-core/src/field/traits.rs', lines 892:4-892:35
+Compiler source: extract/ExtractBase.ml, line 484
+[Error] Could not find: trait_decl_id: 2
+Source: 'crates/gf2-core/src/field/traits.rs', lines 926:4-926:54
+Compiler source: extract/ExtractBase.ml, line 484
+[Info ] Generated the partial file (because of 7 errors, including 3 unique errors): dev/active/e6ea0dde/extraction/AQ5_lean/FunsExternal_Template.lean
+[Error] Could not find: trait_parent_clause_id: trait_decl: gf2_core::field::traits::FiniteField (id: 2), clause_id: 0
+Source: '/rustc/library/core/src/clone.rs', lines 194:0-194:28
+Compiler source: extract/ExtractBase.ml, line 473
+[Error] Could not find: trait_parent_clause_id: trait_decl: gf2_core::field::traits::FiniteField (id: 2), clause_id: 9
+Source: '/rustc/library/core/src/ops/arith.rs', lines 322:0-322:31
+Compiler source: extract/ExtractBase.ml, line 473
+Uncaught exception:
+
+  Not_found
+
+Raised at Stdlib__Map.Make.find in file "map.ml", line 141, characters 10-25
+Called from Aeneas__Extract.extract_function_call in file "extract/Extract.ml", line 971, characters 12-68
+Called from Aeneas__Extract.extract_lets.extract_let in file "extract/Extract.ml", line 1388, characters 8-76
+Called from Stdlib__List.fold_left in file "list.ml", line 125, characters 24-34
+Called from Aeneas__Extract.extract_lets in file "extract/Extract.ml", lines 1426-1428, characters 4-14
+Called from Aeneas__Extract.extract_fun_decl_gen in file "extract/Extract.ml", lines 2271-2272, characters 8-52
+Called from Aeneas__Translate.export_functions_group_scc.(fun) in file "Translate.ml", line 931, characters 14-71
+Called from Stdlib__List.iter in file "list.ml", line 114, characters 12-15
+Called from Aeneas__Translate.export_functions_group_scc in file "Translate.ml", line 945, characters 4-42
+Called from Stdlib__List.iter in file "list.ml", line 114, characters 12-15
+Called from Aeneas__Translate.export_functions_group in file "Translate.ml", line 1027, characters 7-80
+Called from Aeneas__Translate.extract_definitions.(fun) in file "Translate.ml", line 1251, characters 10-29
+Called from Stdlib__List.iter in file "list.ml", line 114, characters 12-15
+Called from Aeneas__Translate.extract_file in file "Translate.ml", line 1404, characters 2-36
+Called from Aeneas__Translate.extract_translated_crate in file "Translate.ml", line 2069, characters 5-42
+Called from Dune__exe__Main in file "Main.ml", lines 743-744, characters 8-37
+--- exit=2 elapsed=0s ---

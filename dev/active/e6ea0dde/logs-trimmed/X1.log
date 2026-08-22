@@ -1,0 +1,45 @@
+=== X1 === 2026-08-22T23:23:24+03:00
+--- command ---
+RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
+  --preset aeneas \
+  --rustc-arg=--cfg=verify_lean \
+  --start-from 'gf2_core::field::traits::FiniteFieldExt::pow' \
+  --opaque 'gf2_core::field' \
+  --include 'gf2_core::field::traits::FiniteFieldExt' \
+  --opaque 'gf2_core::gf2m' \
+  --opaque 'gf2_core::gfpn' \
+  --opaque 'gf2_core::gfp' \
+  --opaque 'gf2_core::bitvec' \
+  --opaque 'gf2_core::bitslice' \
+  --opaque 'gf2_core::matrix' \
+  --opaque 'gf2_core::sparse' \
+  --opaque 'gf2_core::alg' \
+  --opaque 'gf2_core::compute' \
+  --opaque 'gf2_core::kernels' \
+  --opaque 'gf2_core::primitive_polys' \
+  --opaque 'gf2_core::io' \
+  --opaque 'gf2_core::macros' \
+  --dest-file dev/active/e6ea0dde/extraction/X1_gf2_core.llbc \
+  -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features
+--- output ---
+    Updating crates.io index
+     Locking 180 packages to latest compatible versions
+      Adding criterion v0.5.1 (available: v0.8.2)
+      Adding generic-array v0.14.7 (available: v0.14.9)
+      Adding rand v0.8.7 (available: v0.10.2)
+      Adding rand v0.9.5 (available: v0.10.2)
+      Adding rand_chacha v0.3.1 (available: v0.10.0)
+      Adding rand_chacha v0.9.0 (available: v0.10.0)
+      Adding rand_core v0.9.5 (available: v0.10.1)
+      Adding rand_distr v0.4.3 (available: v0.6.0)
+      Adding serial_test v3.5.0 (available: v4.0.1)
+      Adding sha2 v0.10.9 (available: v0.11.0)
+      Adding thiserror v1.0.69 (available: v2.0.20)
+      Adding toml v0.8.23 (available: v1.1.4+spec-1.1.0)
+   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-e6ea0dde/crates/gf2-kernels-simd)
+   Compiling gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-e6ea0dde/crates/gf2-core)
+
+ 52 | impl BitMatrix {
+
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.29s
+--- exit=0 elapsed=8s ---

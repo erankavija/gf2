@@ -917,3 +917,34 @@ no lemma in §3.
 | `dev/active/1ac74567/elaboration/elaborate.log` | its committed output |
 | `dev/active/1ac74567/elaboration/statements.lean` | the §3 lemma statements, `sorry` bodies, stage-4 input |
 | `dev/active/1ac74567/elaboration/FunsExternal.lean` | the empty stand-in module of §6.1 D2 |
+
+---
+
+## 9. Amendment — the statements against the e6ea0dde extraction (issue e6ea0dde)
+
+Appended 2026-08-22. Additive: nothing above this heading changes.
+
+`dev/active/e6ea0dde/record.md` extracts the same two targets with both Charon
+and Aeneas exiting 0, keeping the `pow` default out at the invocation boundary
+with a Charon `--exclude` pattern instead of deleting the `pow` chain from
+generated output. §3's lemma statements elaborate against that extraction with
+exit 0 and the same nine deliberately unproved bodies
+(`dev/active/e6ea0dde/elaboration/elaborate.log`). `elaboration/statements.lean`
+carries over unchanged apart from two addresses: the generated module prefix,
+which follows the LLBC file name and is `X3Gf2Core` there, and L4's docstring
+citation of the `checked_mul` line, readdressed to the tree it elaborates
+against. Every lemma statement is byte-identical, and every dictionary field
+§3 projects keeps its name.
+
+The axiom dependencies §6.3 records carry over unchanged as well:
+`square.default` depends on no axiom, and the `frobenius` chain depends on
+`propext`, `Classical.choice`, `Quot.sound` and Lean's native-decide
+certificate for the panic string's length. Excluding `pow` at the invocation
+boundary changes neither.
+
+§6.1's D1 — the duplicate record fields in the generated `Types.lean` — is
+unchanged by that extraction and is its blocking finding. That record measures
+the emission against every invocation-boundary option the pinned pair offers
+and against the newest-upstream pair, and it is invariant, so §3's statements
+still elaborate only against a tree carrying the `scripts/fix-aeneas-dupes.py`
+repair.
