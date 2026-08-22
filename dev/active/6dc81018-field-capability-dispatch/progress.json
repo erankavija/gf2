@@ -450,6 +450,12 @@
    "issue": "9162956b",
    "date": "2026-08-21",
    "decision": "DEC-I pointer half reversed by owner on doc-review F1: the v1 pointer append violated 9162956b REQ-02 ('v2 ... changing none of its text') and contradicted v2 SA10 ('v1 gains no pointer to this document'). Owner chose contract-literal compliance: v1 restored byte-identical to its anchored form (SHA-256 1b8a91bd..., matching the doc-link content hash). DEC-I's approval of the v2 text stands unchanged and is recorded in this log; the reading path for a v1-only reader is v1 S6.6 -> receipt 3 -> 9162956b -> v2. No pointer lands later; the v2-appendix variant was offered and declined."
+  },
+  {
+   "kind": "owner-decision",
+   "issue": "50b47eae",
+   "date": "2026-08-22",
+   "decision": "DEC-J: session-4 candidate-arm construction verification FAILED under v2 SA4 as written (base separation == 0 mod 32 -> 128 distinct page offsets, 2 cache-line offsets; one whole-page displacement, member j=227). Abort landed before any timed window; all 512 built binaries stand. Probes proved a 16-mod-32 separation unreachable on the candidate revision (.rodata Align=32 rounds translation; content knobs immobile). Owner chose the SA7 tracked-axes-amendment branch and approved amendment v3 (layout-attribution-verdict-v3.md): SA4 read on page offsets mod 4096 with one constant P per G level, 256 distinct (page offset, G) placements with 128 distinct offsets per level, whole-page displacements recorded; v1+v2 untouched, no rebuilds, audit remains arbiter, SA7 routing unchanged. Verifier amended (v2 text preserved as verify-construction-v2.py; both texts+hashes in the session record); amended verifier: ref PASS P(0)=3008 P(1)=1488, cand PASS P(0)=2208 P(1)=480 displacement [(227,-1)]. Owner also confirmed resume after clarification that no timed run existed and nothing measured is discarded."
   }
  ],
  "rework_counts": {
