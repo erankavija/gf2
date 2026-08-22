@@ -1,0 +1,52 @@
+=== Types.lean ===
+71c71
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-868:1
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 56:0-889:1
+117c117
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 874:0-913:1
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 895:0-934:1
+=== Funs.lean ===
+1355c1355
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-931:1 -/
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-944:1 -/
+1417c1417
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 957:4-959:5
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 970:4-972:5
+1424c1424
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 946:4-954:5
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 959:4-967:5
+1439c1439
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 939:4-943:5
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 952:4-956:5
+1447c1447
+<     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 937:0-960:1 -/
+---
+>     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 950:0-973:1 -/
+=== FunsExternal_Template.lean ===
+169c169
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 147:4-149:5
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 159:4-161:5
+178c178
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 180:4-182:5
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 192:4-194:5
+187c187
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 270:4-272:5
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 282:4-284:5
+196c196
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 320:4-322:5
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 332:4-334:5
+205c205
+<     Source: 'crates/gf2-core/src/field/traits.rs', lines 803:4-805:5
+---
+>     Source: 'crates/gf2-core/src/field/traits.rs', lines 815:4-817:5
+=== TypesExternal_Template.lean ===

@@ -1,0 +1,15 @@
+# Minimal extraction-shape probe for JIT issue 7d7c647c. Probe material, not a
+# production crate: it reproduces the trait-associated-constant read and the
+# two candidate seam shapes in isolation so Charon and Aeneas can be run on
+# each. Its own `[workspace]` table keeps it out of the gf2 workspace, the same
+# way `dev/research/f3_bipedal` stands alone.
+[workspace]
+
+[package]
+name = "seam-shape"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/lib.rs"
