@@ -180,13 +180,30 @@
       "path": "dev/active/eb9b324c/perf/static-dispatch-disasm.txt"
     }
   ],
+  "done_at": "2026-08-22T16:24:32.105750922Z",
   "first_ready_at": "2026-08-22T14:14:02.435231272Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-22T16:16:37.369878892Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-22T16:23:36.737180832Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-22T16:19:14.171780492Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "eb9b324c-d9d3-425d-93a6-d0253033a710",
   "labels": [
     "epic:field-capability-dispatch",
@@ -195,7 +212,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-  "updated_at": "2026-08-22T15:49:35.419767399Z"
+  "updated_at": "2026-08-22T16:24:32.105750922Z"
 }
