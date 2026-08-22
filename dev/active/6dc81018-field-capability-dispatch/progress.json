@@ -471,8 +471,8 @@
           "title": "Name the panel blocking factors in the kernel crate",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "Seam U1. gf2-kernels-simd only."
+          "status": "dispatched",
+          "notes": "Seam U1. gf2-kernels-simd only. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1."
         },
         {
           "id": "687c694d",
@@ -480,8 +480,8 @@
           "title": "Hoist the uniform trait-selector defaults",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "Seam U2. winograd/triangular/ple modules \u2014 CONFLICTS with t7/t8/u6/u7 files: schedule in a sub-wave apart from those."
+          "status": "dispatched",
+          "notes": "Seam U2. winograd/triangular/ple modules \u2014 CONFLICTS with t7/t8/u6/u7 files: schedule in a sub-wave apart from those. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1."
         },
         {
           "id": "03594635",
@@ -489,8 +489,8 @@
           "title": "Introduce the PLE panel lane hook",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "Seam U4. traits.rs + gfp/mod.rs."
+          "status": "dispatched",
+          "notes": "Seam U4. traits.rs + gfp/mod.rs. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1."
         }
       ]
     },
