@@ -376,8 +376,8 @@
           "title": "Design the proof-surface seam for the trait-associated selectors",
           "classification": "design",
           "model": "opus",
-          "status": "dispatched",
-          "notes": "DEC-T. Docs only. Verify extraction claims against the pinned pair. Dispatched 2026-08-23 in worktree (base 9ebcb29f), background."
+          "status": "done",
+          "notes": "DEC-T. Docs only. Verify extraction claims against the pinned pair. Dispatched 2026-08-23 in worktree (base 9ebcb29f), background. DONE 2026-08-23: 690-line probe-verified design merged (37ba9098); doc-review PASS first run; lead review PASS, worker rework 0. Found live sync defect (WINOGRAD 128 vs generated 32) \u2014 owned by U8. Breakdown U1-U10 replaces the wave-23 seam placeholder."
         }
       ]
     },
@@ -464,6 +464,33 @@
           "model": "opus",
           "status": "planned",
           "notes": "tuning_calibration.rs \u2014 schedule after 389aa4de lands (same bench file)"
+        },
+        {
+          "id": "c41d7e80",
+          "short_id": "c41d7e80",
+          "title": "Name the panel blocking factors in the kernel crate",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "Seam U1. gf2-kernels-simd only."
+        },
+        {
+          "id": "687c694d",
+          "short_id": "687c694d",
+          "title": "Hoist the uniform trait-selector defaults",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "Seam U2. winograd/triangular/ple modules \u2014 CONFLICTS with t7/t8/u6/u7 files: schedule in a sub-wave apart from those."
+        },
+        {
+          "id": "03594635",
+          "short_id": "03594635",
+          "title": "Introduce the PLE panel lane hook",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "Seam U4. traits.rs + gfp/mod.rs."
         }
       ]
     },
@@ -496,6 +523,15 @@
           "model": "opus",
           "status": "planned",
           "notes": "const fn predicates must stay const fn; cargo-ci baked step"
+        },
+        {
+          "id": "f048383f",
+          "short_id": "f048383f",
+          "title": "Extend the tuning schema with the seam fields",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "Seam U3, after t1+u1+u2; serialize with any other tuning/mod.rs work."
         }
       ]
     },
@@ -512,13 +548,68 @@
           "notes": "after 389aa4de + t3-t11"
         },
         {
-          "id": "tbd",
-          "short_id": "tbd",
-          "title": "Seam cutover tasks from 7d7c647c's breakdown",
+          "id": "e2744fcf",
+          "short_id": "e2744fcf",
+          "title": "Cut the Winograd threshold over",
           "classification": "implementation",
-          "model": "tbd",
-          "status": "not-created",
-          "notes": "Create after the seam design (7d7c647c) is reviewed; then \u00a74.3 constants migrate (DEC-T)."
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "Seam U5."
+        },
+        {
+          "id": "88441adb",
+          "short_id": "88441adb",
+          "title": "Cut the triangular base-case threshold over",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "Seam U6. Nine entries, seven inner splits. Same files as t7 \u2014 t7 must be merged first."
+        },
+        {
+          "id": "e8a727ff",
+          "short_id": "e8a727ff",
+          "title": "Cut the PLE selectors over",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "Seam U7. Same file as t8 \u2014 t8 merged first."
+        }
+      ]
+    },
+    {
+      "wave_number": 24,
+      "issues": [
+        {
+          "id": "5bdc9552",
+          "short_id": "5bdc9552",
+          "title": "Remove the trait selectors and regenerate the proof surface",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "Seam U8. The one surface-moving task; gates include verify-lean and lake-build. Solo."
+        },
+        {
+          "id": "dbd8787d",
+          "short_id": "dbd8787d",
+          "title": "Extend the calibration sweep to the seam threshold fields",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "planned",
+          "notes": "Seam U10. Benchmark-mode measured run \u2014 serialized, quiet host."
+        }
+      ]
+    },
+    {
+      "wave_number": 25,
+      "issues": [
+        {
+          "id": "06ba0418",
+          "short_id": "06ba0418",
+          "title": "Record the executed seam at the convention sources",
+          "classification": "implementation",
+          "model": "sonnet",
+          "status": "planned",
+          "notes": "Seam U9. Docs-only, after u8."
         }
       ]
     }
@@ -789,6 +880,12 @@
       "issue": "389aa4de",
       "date": "2026-08-23",
       "decision": "DEC-U via AskUserQuestion: 389aa4de (profile-steered calibration mechanism) is pulled into this epic's delivery, DEC-P-style: edge wired, gates added, executed before the calibration task T12."
+    },
+    {
+      "kind": "lead-decision",
+      "issue": "7d7c647c",
+      "date": "2026-08-23",
+      "decision": "DEC-B9 (lead, within DEC-T's mandate): the seam design's four open questions resolved \u2014 (1) PLE_PANEL_COLS migrates as the two lane fields (the kernels' L1d ceilings are real host properties; \u00a77.2's inertness holds only at the conservative recursive-base width; falsification recorded); (2) 7d824b2f T1 lands before the seam schema task U3 (edge wired); (3) the four associated constants are removed directly with no deprecation cycle \u2014 DEC-T's seam requires the declarations gone (design D1), pre-1.0 crate, no external implementor; (4) the ple.panel_base_max_cols / ple.panel_{byte,u16}_lane_max_cols name pair stands as designed."
     }
   ],
   "rework_counts": {
