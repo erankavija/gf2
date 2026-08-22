@@ -1,0 +1,44 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T21:26:22.979387941Z",
+  "dependencies": [
+    "856f1b48-e518-4329-889f-e2589629622d"
+  ],
+  "description": "Migrate the seven M4RM schedule fields to runtime resolved reads reaching choose_k_block and use_register_tiled_schedule.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.3 and the m4rm row of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: The seven m4rm fields are runtime resolved reads reaching choose_k_block and use_register_tiled_schedule once per multiplication, satisfying design §2.3, with the tiled_min_stride_words floor citing M4RM_TILE_WORDS.\n- [hard] REQ-02: m4rm_schedule_route reports tier and panel width, the dispatcher calls it, tier-boundary route files pass, and the retained legacy-schedule comparison still runs on the conservative table.\n- [hard] REQ-03: The rustdoc sweep across the m4rm constant block states default-definition roles and profile fields; existing tests pass unchanged.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T21:26:22.979387941Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:25.993029584Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:26.146527751Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:26.267197422Z",
+      "updated_by": null
+    }
+  },
+  "id": "aa904331-5c13-4d99-b2e2-590c7db7918a",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Cut the M4RM schedule selectors over to the tuning profile",
+  "updated_at": "2026-08-22T21:28:09.553319155Z"
+}

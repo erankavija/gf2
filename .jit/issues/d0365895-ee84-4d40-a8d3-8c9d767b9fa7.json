@@ -1,0 +1,44 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T21:26:11.569365360Z",
+  "dependencies": [
+    "8dbb27e9-e1d9-4d14-9d40-babec27d1216"
+  ],
+  "description": "Migrate the matvec SIMD threshold (baked) and the two transpose selectors (runtime resolved reads) to the tuning profile.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.1 and the bit_matrix row of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: matvec_simd_min_words is baked behind the gf2_tuning_baked cfg and transpose_simple_max_blocks / transpose_macro_tile_blocks are runtime resolved reads satisfying design §2.3's four obligations, operators and arithmetic byte-for-byte unchanged.\n- [hard] REQ-02: matvec_route and transpose_route reporters exist, the dispatchers themselves call them, boundary route-observation tests and the baked matvec witness (wired into the CI baked step) pass.\n- [hard] REQ-03: Migrated constants' rustdoc states the default-definition role and names the profile field; existing behaviour tests pass unchanged with no profile installed.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T21:26:11.569365360Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:14.589929992Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:14.710004973Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:14.832419444Z",
+      "updated_by": null
+    }
+  },
+  "id": "d0365895-ee84-4d40-a8d3-8c9d767b9fa7",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Cut the bit-matrix selectors over to the tuning profile",
+  "updated_at": "2026-08-22T21:27:54.278951293Z"
+}

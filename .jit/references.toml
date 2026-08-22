@@ -179,3 +179,13 @@ arxiv = "1908.06371"
 key = "RustRandom2025"
 citation = "rust-random project — rand_chacha 0.9.0 (ChaCha-based CSPRNGs for Rust). crates.io registry release, published 2025-01-27, checksum d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb."
 url = "https://crates.io/crates/rand_chacha/0.9.0"
+
+[[references]]
+key = "HoProtzenko2022"
+citation = "Ho, Protzenko — Aeneas: Rust Verification by Functional Translation. Proc. ACM Program. Lang. 6, ICFP (2022)."
+url = "https://github.com/AeneasVerif/aeneas"
+
+[[references]]
+key = "AeneasVerif2026"
+citation = "AeneasVerif project — aeneas (Lean backend, host build at commit 5220259c) with charon 0.1.217 (rustc nightly-2026-06-01): the pinned Charon/Aeneas extraction pair used by this repository's proof pipeline; newest-upstream comparison pair charon 0.1.232 with aeneas c10cc99."
+url = "https://github.com/AeneasVerif/charon"

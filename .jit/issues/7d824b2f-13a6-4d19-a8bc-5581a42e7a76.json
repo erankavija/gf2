@@ -32,14 +32,15 @@
       "path": "dev/active/7d824b2f/design.md"
     }
   ],
+  "done_at": "2026-08-22T21:22:10.717231775Z",
   "first_ready_at": "2026-08-22T20:16:23.441510963Z",
   "gates_required": [
     "doc-review"
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-22T20:57:00.904541284Z",
+      "status": "passed",
+      "updated_at": "2026-08-22T21:06:22.353805155Z",
       "updated_by": "auto:executor"
     }
   },
@@ -51,7 +52,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Design the follow-on selector migration to the tuning profile",
-  "updated_at": "2026-08-22T20:57:00.904541284Z"
+  "updated_at": "2026-08-22T21:22:10.717231775Z"
 }

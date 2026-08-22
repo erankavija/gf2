@@ -1,0 +1,53 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T21:29:27.371031186Z",
+  "dependencies": [
+    "26ae7d6b-e526-41cd-b0d6-3dac68d362e0",
+    "389aa4de-e6dc-4adb-a2e8-03153192b8cc",
+    "395fc8e1-2ad6-4100-a578-f14398268fdf",
+    "aa904331-5c13-4d99-b2e2-590c7db7918a",
+    "aec4b6c8-d66d-45f2-ae53-211cff95c5e6",
+    "d0365895-ee84-4d40-a8d3-8c9d767b9fa7",
+    "df385aa7-89e0-4684-8cbf-3ce782a26694",
+    "ef18c60b-a984-45f1-b00d-afd0c84b0091",
+    "fa92608b-5f8a-47c3-ae35-a6a70a85db7a",
+    "fbe66a7a-454c-459a-a231-63f4adcf3dcb"
+  ],
+  "description": "Extend the explicit calibration action's sweep to the sweepable follow-on threshold fields.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §5.1-§5.2 fix the sweepability test and the split: eleven sweepable threshold fields, every one except the interpolation crossover depending on the profile-steered two-process technique that the karatsuba_min_degree steering mechanism provides. This design adds no second steering mechanism.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration action sweeps the eleven sweepable follow-on threshold fields through the standing crossover rule, reusing the existing profile-steering mechanism for fields whose arms need steering.\n- [hard] REQ-02: Each field's outcome - measured, tie, non-monotone, or uncalibrated - is recorded in the calibration receipt, and non-sweepable fields stay omitted from committed profiles under the standing omission rule.\n- [hard] REQ-03: Calibration remains an explicit benchmark action with no build side effect, and committed profiles regenerated from a sweep carry provenance per the standing design.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T21:29:27.371031186Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:29:30.453119768Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:29:30.632360930Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:29:30.813520652Z",
+      "updated_by": null
+    }
+  },
+  "id": "eaae1b56-e58c-408e-969e-9f407bf8120f",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Extend the calibration sweep to the follow-on threshold fields",
+  "updated_at": "2026-08-22T21:29:35.698437815Z"
+}

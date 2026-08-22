@@ -10,17 +10,25 @@
   "first_ready_at": "2026-08-19T21:22:50.424356970Z",
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:29:38.794332686Z",
+      "updated_by": null
+    }
+  },
   "id": "389aa4de-e6dc-4adb-a2e8-03153192b8cc",
   "labels": [
     "component:gf2-core",
     "type:task",
-    "epic:quality-documentation-tech-debt"
+    "epic:quality-documentation-tech-debt",
+    "epic:field-capability-dispatch"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
-  "updated_at": "2026-08-19T23:43:41.743930561Z"
+  "updated_at": "2026-08-22T21:29:43.650780373Z"
 }

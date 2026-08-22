@@ -1,0 +1,44 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T21:26:28.708075034Z",
+  "dependencies": [
+    "856f1b48-e518-4329-889f-e2589629622d"
+  ],
+  "description": "Migrate the two inversion thresholds to runtime resolved reads.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.4 and the dense_inverse row of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: m4ri_min_dim and blocked_min_dim are runtime resolved reads satisfying design §2.3, operators unchanged.\n- [hard] REQ-02: invert_route reporter called by the dispatcher and route files on both sides of each threshold pass.\n- [hard] REQ-03: Rustdoc names the profile fields; existing tests pass unchanged.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T21:26:28.708075034Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:31.715429748Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:31.836892489Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:31.958901750Z",
+      "updated_by": null
+    }
+  },
+  "id": "aec4b6c8-d66d-45f2-ae53-211cff95c5e6",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Cut the dense-inversion selectors over to the tuning profile",
+  "updated_at": "2026-08-22T21:28:17.135427140Z"
+}

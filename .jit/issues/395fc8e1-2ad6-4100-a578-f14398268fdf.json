@@ -1,0 +1,44 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T21:26:51.394051208Z",
+  "dependencies": [
+    "856f1b48-e518-4329-889f-e2589629622d"
+  ],
+  "description": "Migrate the Keller-Gehrig dispatch threshold and the interpolation crossover to runtime resolved reads.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.9, §3.10 and the charpoly and polynomial rows of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: keller_gehrig_min_dim and interpolate_fast_min_points are runtime resolved reads at their three sites, satisfying design §2.3; both usize endpoints stay admissible with no sentinel reserved.\n- [hard] REQ-02: charpoly_route and interpolate_route reporters called by the dispatchers pass their route files, including a Keller-Gehrig-enabled arm asserting result equality with the cubic arm.\n- [hard] REQ-03: The dispatch-table rustdoc sweeps in the interpolation and poly modules name the profile fields; existing tests pass unchanged.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T21:26:51.394051208Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:54.423839398Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:54.545218020Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T21:26:54.667567271Z",
+      "updated_by": null
+    }
+  },
+  "id": "395fc8e1-2ad6-4100-a578-f14398268fdf",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Cut the charpoly and interpolation selectors over to the tuning profile",
+  "updated_at": "2026-08-22T21:28:47.396410851Z"
+}
