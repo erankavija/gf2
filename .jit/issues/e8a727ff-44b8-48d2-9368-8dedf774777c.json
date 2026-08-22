@@ -1,0 +1,45 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T22:17:08.163634073Z",
+  "dependencies": [
+    "03594635-8397-43a0-b0e8-e1ae1113ef08",
+    "f048383f-8a85-4ef6-849e-f75b628e9450"
+  ],
+  "description": "Migrate the PLE scalar base and the two panel lane widths to resolved-once reads threaded through the recursion.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: ple_in_place resolves ple.scalar_base_max_cols and the lane width for F::simd_ple_panel_lane() once and threads both through ple_in_place_window and ple_in_place_window_no_panel by parameter; the debug assertion relating panel width to scalar base moves to the resolve point over resolved values.\n- [hard] REQ-02: ple_base_route and ple_panel_route(lane, win) are public and called by the dispatchers; per-lane installed-profile route files pass; the width assertions at the old sites are rewritten as route observations.\n- [hard] REQ-03: The module walkthrough prose is updated; behaviour with no profile installed is unchanged.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T22:17:08.163634073Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:11.231281317Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:11.411909349Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:11.602659270Z",
+      "updated_by": null
+    }
+  },
+  "id": "e8a727ff-44b8-48d2-9368-8dedf774777c",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Cut the PLE selectors over to the tuning profile",
+  "updated_at": "2026-08-22T22:17:56.815541453Z"
+}

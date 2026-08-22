@@ -1,0 +1,58 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T22:17:14.094352974Z",
+  "dependencies": [
+    "88441adb-3956-4bf2-bfe9-284e7dcc5c10",
+    "e2744fcf-470b-45d6-8750-0413620eb151",
+    "e8a727ff-44b8-48d2-9368-8dedf774777c"
+  ],
+  "description": "Remove the four associated constants and the per-prime override, delete their hand-carried proof literals, pin the tuning module opaque, and regenerate the committed proof trees.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: FiniteField declares none of the four constants, Fp<P> carries no PLE_PANEL_COLS override, and no workspace consumer references them.\n- [hard] REQ-02: The four literal substitutions in scripts/fix-aeneas-sorrys.py and scripts/fix-aeneas-dupes.py, the two orphan axioms in proofs/Gf2Core/FunsExternal.lean, and the verify-lean workaround note are deleted; both verify-lean invocations carry --opaque gf2_core::tuning.\n- [hard] REQ-03: The regenerated proofs/Gf2Core/ and proofs/Gf2Algebra/ trees are committed, ./scripts/verify-lean.sh passes, and (cd proofs && lake build) passes; the surface delta equals what the seam design §3.3 verifies (four structure fields, four axioms, the dictionary entries and the override gone; nothing else).",
+  "documents": [],
+  "first_ready_at": "2026-08-22T22:17:14.094352974Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "verify-lean",
+    "lake-build"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:17.166563738Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:17.344796900Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:17.525378902Z",
+      "updated_by": null
+    },
+    "lake-build": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:17.873331028Z",
+      "updated_by": null
+    },
+    "verify-lean": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:17.700847355Z",
+      "updated_by": null
+    }
+  },
+  "id": "5bdc9552-0290-4dca-b0a6-bc7009837875",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Remove the trait selectors and regenerate the proof surface",
+  "updated_at": "2026-08-22T22:18:04.375840221Z"
+}

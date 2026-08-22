@@ -5,16 +5,51 @@
   "created_at": "2026-08-22T21:27:14.132136884Z",
   "dependencies": [],
   "description": "Design how the four trait-associated tuning constants migrate to the profile without churning the Lean extraction surface.\n\n## Background\n\nClassification §4.3 defers WINOGRAD_THRESHOLD, TRI_BASE_THRESHOLD, PLE_BASE_COLS and PLE_PANEL_COLS because they are associated constants on FiniteField, the extraction root, with recorded past sync defects between Rust and generated proofs and measured provenance behind the current values. Owner decision DEC-T (2026-08-23) rules that they migrate inside this epic through a non-extracted read seam designed first. The extraction chain of record is dev/active/e6ea0dde/record.md; the follow-on migration design (dev/active/7d824b2f/design.md) fixes the field-kind, mechanism, and test conventions the seam's cutover must reuse.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed design fixes the seam: how each of the four constants is read through a non-extracted indirection, what the extraction surface sees afterwards, and why the extraction chain of record is unaffected, with the design verified against the pinned Charon/Aeneas pair's actual behaviour where it makes an extraction claim.\n- [hard] REQ-02: The design assigns each constant its profile field (name, kind, range, default naming the source constant), mechanism per the follow-on design's rule, and route-observation obligation, and preserves the values' measured provenance citations.\n- [hard] REQ-03: A worker-sized implementation breakdown for the seam and cutover lists tasks with dependencies and gates.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "32aa7f3a66dab64059293124ffb34401b7b55f95b26f0437a537945db69e4b17",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "884694b3390bb0bee3ad05e3f8a99e8ee78c66ed435e0b490e55c5d2f2582cec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../7d824b2f/design.md",
+          "resolved_path": "dev/active/7d824b2f/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d85dd195fb3e10487b9c966ac37e2e90cac6a9ef5dc2e65bdf99631b20c98d0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../220cab0b/design.md",
+          "resolved_path": "dev/active/220cab0b/design.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Proof-surface seam design (DEC-T)",
+      "path": "dev/active/7d7c647c/design.md"
+    }
+  ],
+  "done_at": "2026-08-22T22:15:41.572669142Z",
   "first_ready_at": "2026-08-22T21:27:14.132136884Z",
   "gates_required": [
     "doc-review"
   ],
   "gates_status": {
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:27:17.139103788Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-22T22:15:19.915501028Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "7d7c647c-bcf4-4333-bffb-8b92f515d544",
@@ -25,7 +60,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Design the proof-surface seam for the trait-associated selectors",
-  "updated_at": "2026-08-22T21:31:20.701191083Z"
+  "updated_at": "2026-08-22T22:15:41.572669142Z"
 }

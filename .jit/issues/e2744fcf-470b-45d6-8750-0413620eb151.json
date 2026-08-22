@@ -1,0 +1,44 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T22:16:56.294317472Z",
+  "dependencies": [
+    "f048383f-8a85-4ef6-849e-f75b628e9450"
+  ],
+  "description": "Migrate the Winograd crossover to a resolved-once runtime read.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: gemm_winograd resolves gemm.winograd_min_dim once through tuning::active() and threads it into gemm_winograd_with_threshold; the comparison is unchanged and the read-pattern obligations hold.\n- [hard] REQ-02: winograd_route is public, #[must_use], called by the dispatcher; installed-profile route files above and below the boundary pass, and the existing bit-exactness property tests pass on the conservative table.\n- [hard] REQ-03: Rustdoc names the profile field; behaviour with no profile installed is unchanged.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T22:16:56.294317472Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:16:59.358368627Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:16:59.581118113Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:16:59.767460574Z",
+      "updated_by": null
+    }
+  },
+  "id": "e2744fcf-470b-45d6-8750-0413620eb151",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Cut the Winograd threshold over to the tuning profile",
+  "updated_at": "2026-08-22T22:17:41.735863320Z"
+}

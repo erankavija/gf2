@@ -1,0 +1,42 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T22:16:32.788203525Z",
+  "dependencies": [],
+  "description": "Give the two PLE panel kernels' L1d blocking factors single canonical names in gf2-kernels-simd.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: fp_small_panel::KC is pub and re-exported from the kernel crate root, and fp_medium_ple::KC_U16 = 128 exists with rustdoc stating the derivation the module currently gives in prose, each pointing at its receipt (seam design §4.4).\n- [hard] REQ-02: No behaviour changes; the workspace CI contract passes.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T22:16:32.788203525Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:16:35.832396323Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:16:36.014486555Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:16:36.192386887Z",
+      "updated_by": null
+    }
+  },
+  "id": "c41d7e80-24dc-4c82-af4c-64674ad65a2a",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Name the panel blocking factors in the kernel crate",
+  "updated_at": "2026-08-22T22:16:36.192386887Z"
+}

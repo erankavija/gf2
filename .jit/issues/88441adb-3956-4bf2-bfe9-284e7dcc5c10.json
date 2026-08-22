@@ -1,0 +1,44 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T22:17:02.265120077Z",
+  "dependencies": [
+    "f048383f-8a85-4ef6-849e-f75b628e9450"
+  ],
+  "description": "Migrate the triangular base-case crossover to resolve-once reads at the nine public entries.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the seven *_inner drivers takes the resolved threshold by parameter, each of the nine public entries resolves triangular.base_case_max_dim exactly once, and tuning::active() never appears inside a recursion.\n- [hard] REQ-02: triangular_route is public and called by the dispatchers; installed-profile route files on both sides of the boundary for one trsm, one trmm and one trtri entry pass.\n- [hard] REQ-03: The module dispatch tables the seam design §8 U6 names are rewritten to name the profile field; behaviour with no profile installed is unchanged.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T22:17:02.265120077Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:05.334873591Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:05.520219392Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:05.691798766Z",
+      "updated_by": null
+    }
+  },
+  "id": "88441adb-3956-4bf2-bfe9-284e7dcc5c10",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Cut the triangular base-case threshold over to the tuning profile",
+  "updated_at": "2026-08-22T22:17:49.279569141Z"
+}

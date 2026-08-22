@@ -1,0 +1,47 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T22:17:25.982526991Z",
+  "dependencies": [
+    "389aa4de-e6dc-4adb-a2e8-03153192b8cc",
+    "88441adb-3956-4bf2-bfe9-284e7dcc5c10",
+    "e2744fcf-470b-45d6-8750-0413620eb151",
+    "e8a727ff-44b8-48d2-9368-8dedf774777c"
+  ],
+  "description": "Sweep the three sweepable seam fields through the standing crossover rule.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration action sweeps gemm.winograd_min_dim, triangular.base_case_max_dim and ple.scalar_base_max_cols, reusing the existing profile-steering mechanism.\n- [hard] REQ-02: Each outcome is recorded in the calibration receipt; the two panel-lane fields stay omitted from committed profiles under the standing omission rule until a steering mechanism reaches the non-panel arm.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T22:17:25.982526991Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:29.075528082Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:29.256198604Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T22:17:29.436712476Z",
+      "updated_by": null
+    }
+  },
+  "id": "dbd8787d-fee6-49db-be64-b055796f8756",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Extend the calibration sweep to the seam threshold fields",
+  "updated_at": "2026-08-22T22:18:19.462455633Z"
+}

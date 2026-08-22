@@ -4,6 +4,7 @@
   "context": {},
   "created_at": "2026-08-18T18:49:20.500605671Z",
   "dependencies": [
+    "06ba0418-f933-4037-b3d2-bd2b6dc6a1d5",
     "19424a0f-38d5-4578-bde6-0e18e18abccd",
     "1ac74567-fa48-405a-a35a-a4f2bcb16fe5",
     "34d85cb9-1ff4-4adb-a09e-7305dee0b0dc",
@@ -14,6 +15,7 @@
     "7f818151-9268-4f6d-b29e-508eb95ba12c",
     "a6636671-bab3-44b1-b9ee-cb9fdb637ee1",
     "a83583e0-7cfb-4e65-9273-69631929e297",
+    "dbd8787d-fee6-49db-be64-b055796f8756",
     "e6ea0dde-185f-4a0f-91fe-13cc6ac32648",
     "eaae1b56-e58c-408e-969e-9f407bf8120f"
   ],
@@ -52,5 +54,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-08-22T21:29:51.361236648Z"
+  "updated_at": "2026-08-22T22:18:27.016605293Z"
 }
