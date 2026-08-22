@@ -1,0 +1,40 @@
+layout-audit: reference=/home/vkaskivuo/Projects/gf2/dev/benchmarks/tuning_profiles/2026-08-22-ensemble-reference-arm-5.csv candidate=/home/vkaskivuo/Projects/gf2/dev/benchmarks/tuning_profiles/2026-08-22-ensemble-candidate-arm-5.csv reference_revision=0c072d73ca65cf50af98b8c4b61ed876f8218df6 candidate_revision=1a5812c269124128f64a4f9b5efc0f1e96f19894 builds=128 per_cell_tolerance=0.050000 set_tolerance=0.020000 attribution_margin=3.000000
+cell arm reference_spread reference_log_sd candidate_log_sd paired_log_sd layout_se margin null_ratio natural_sigma verdict
+bit_backend/and_inplace/words=1 scalar 1.078995 0.029250 0.058790 0.074051 0.005804 8.406 1.000479 0.040952 PASS
+bit_backend/and_inplace/words=8 simd 1.159562 0.047988 0.035410 0.060403 0.005271 9.256 1.000673 0.033324 PASS
+bit_backend/not_inplace/words=1 scalar 1.194938 0.082078 0.081689 0.094643 0.010235 4.767 1.000230 0.000222 PASS
+bit_backend/not_inplace/words=8 simd 1.107685 0.029059 0.077815 0.087367 0.007342 6.645 0.996638 0.006726 PASS
+bit_backend/or_inplace/words=1 scalar 1.196048 0.083359 0.029744 0.078159 0.007823 6.237 1.000619 0.118154 PASS
+bit_backend/or_inplace/words=8 simd 1.105811 0.022341 0.047314 0.056290 0.004625 10.550 1.002367 0.026910 PASS
+bit_backend/popcount/words=1 scalar 1.106638 0.025196 0.021595 0.038253 0.002933 16.635 1.000550 0.032932 PASS
+bit_backend/popcount/words=8 simd 1.166852 0.013957 0.005994 0.014977 0.001343 36.340 1.002185 0.000442 PASS
+bit_backend/xor_inplace/words=1 scalar 1.167530 0.069585 0.003192 0.069595 0.006157 7.924 1.000926 0.099112 PASS
+bit_backend/xor_inplace/words=16 simd 1.592528 0.058732 0.104575 0.121887 0.010601 4.602 0.993591 0.007439 PASS
+bit_backend/xor_inplace/words=4 scalar 1.141127 0.028896 0.066977 0.070872 0.006447 7.567 1.000459 0.037917 PASS
+bit_backend/xor_inplace/words=64 simd 1.518209 0.057883 0.064247 0.085985 0.007643 6.383 0.993501 0.004897 PASS
+bit_backend/xor_inplace/words=7 scalar 1.724960 0.048184 0.042516 0.065307 0.005680 8.590 1.003837 0.015778 PASS
+bit_backend/xor_inplace/words=8 simd 1.058955 0.006380 0.091913 0.091970 0.008144 5.991 1.000449 0.007810 PASS
+polynomial/batch_evaluate/coeffs=2048/points=2048 horner 1.028981 0.004335 0.004595 0.003987 0.000558 87.377 0.999837 0.001034 PASS
+polynomial/batch_evaluate/coeffs=4095/points=4095 horner 1.031544 0.004929 0.005606 0.004936 0.000660 73.948 0.998626 0.002585 PASS
+polynomial/batch_evaluate/coeffs=4096/points=4096 subproduct 1.082693 0.026203 0.005654 0.027935 0.002369 20.592 0.999496 0.027133 PASS
+polynomial/batch_evaluate_auto/coeffs=2048/points=2048 horner 1.022884 0.004138 0.004922 0.003754 0.000568 85.840 0.999503 0.000433 PASS
+polynomial/batch_evaluate_auto/coeffs=4095/points=4095 horner 1.027730 0.005216 0.005255 0.004555 0.000654 74.552 0.999528 0.002449 PASS
+polynomial/batch_evaluate_auto/coeffs=4096/points=4096 subproduct 1.079320 0.022589 0.004048 0.023432 0.002028 24.053 0.999296 0.012806 PASS
+polynomial/div_rem_auto/dividend=4096/divisor=1024 schoolbook 1.141746 0.058827 0.030503 0.056974 0.005857 8.330 1.000338 0.083921 PASS
+polynomial/div_rem_auto/dividend=4096/divisor=2047 schoolbook 1.173687 0.019207 0.015703 0.025925 0.002193 22.249 1.002254 0.002770 PASS
+polynomial/div_rem_auto/dividend=4096/divisor=2048 newton 1.036805 0.006988 0.005217 0.008001 0.000771 63.298 1.000355 0.007581 PASS
+polynomial/div_rem_auto/dividend=8192/divisor=4096 newton 1.045511 0.006190 0.004520 0.006965 0.000677 72.015 0.999782 0.003686 PASS
+polynomial/mul/len=16 schoolbook 1.049006 0.011343 0.016249 0.017556 0.001752 27.855 1.001410 0.012652 PASS
+polynomial/mul/len=256 karatsuba 1.062675 0.009783 0.035827 0.038524 0.003283 14.863 1.002289 0.009322 PASS
+polynomial/mul/len=32 schoolbook 1.053553 0.010788 0.009537 0.012868 0.001273 38.336 1.000666 0.012820 PASS
+polynomial/mul/len=33 karatsuba 1.057685 0.007863 0.031755 0.033050 0.002892 16.873 0.999685 0.001730 PASS
+polynomial/mul/len=64 karatsuba 1.072205 0.021239 0.035986 0.040420 0.003693 13.210 0.999705 0.008774 PASS
+polynomial/mul_fast/len=128 ntt 1.037286 0.007209 0.006745 0.010254 0.000873 55.912 1.000552 0.008404 PASS
+polynomial/mul_fast/len=32 mul_dispatch 1.057487 0.006131 0.039938 0.039960 0.003571 13.661 1.000330 0.001877 PASS
+polynomial/mul_fast/len=512 ntt 1.038601 0.008102 0.005701 0.010224 0.000876 55.721 1.000639 0.008442 PASS
+polynomial/mul_fast/len=64 mul_dispatch 1.023062 0.004524 0.040936 0.042575 0.003640 13.403 1.000316 0.003848 PASS
+polynomial/mul_fast/len=65 ntt 1.037684 0.007217 0.006675 0.010363 0.000869 56.150 1.000976 0.009129 PASS
+set layout_se=0.001044 margin=18.971 null_geomean=1.000059 PASS
+coverage ensemble_rms=0.034359 natural_rms=0.033878 PASS
+decorrelation paired_rms=0.052963 reference_rms=0.034359 PASS
+RESULT: PASS
