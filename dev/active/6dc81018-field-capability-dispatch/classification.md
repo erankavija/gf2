@@ -281,3 +281,13 @@ recorded here so the two documents can be reconciled.
 | `splat` | `packed/mod.rs:155-158` | The method signature is at `crates/gf2-algebra/src/packed/mod.rs:162`. |
 | `SelectedBackend` | `kernels/backend.rs:82-102` | The enum is at `crates/gf2-core/src/kernels/backend.rs:63`; `select_backend_for_size` is at `:95`. |
 | Wide scalar fallback | `gf2m/wide.rs:2064-2113` | `clmul_wide_slice` is defined at `crates/gf2-core/src/gf2m/wide.rs:2052`. |
+
+## 7. Post-anchor cutover executions
+
+Appended addendum; every section above stands as written at the anchor
+commit. This section records cutovers from §5 that have since executed, so
+the disposition table and the tree agree.
+
+| §5 row | Execution |
+|---|---|
+| Deprecated bit-buffer kernel surface (`Kernel` trait, `ScalarBackend` bridge impl, `select_kernel()`) | Executed: all three removed from `crates/gf2-core/src/kernels/mod.rs` by issue `a6636671` (commit `a8d07ab2`), no consumer remaining and the workspace CI contract passing. The §5 row's `:41`/`:57`/`:81` cites describe the anchor-commit tree; `canonical-cutover` is satisfied for this surface. |
