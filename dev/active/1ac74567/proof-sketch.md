@@ -943,8 +943,9 @@ certificate for the panic string's length. Excluding `pow` at the invocation
 boundary changes neither.
 
 §6.1's D1 — the duplicate record fields in the generated `Types.lean` — is
-unchanged by that extraction and is its blocking finding. That record measures
-the emission against every invocation-boundary option the pinned pair offers
-and against the newest-upstream pair, and it is invariant, so §3's statements
-still elaborate only against a tree carrying the `scripts/fix-aeneas-dupes.py`
-repair.
+unchanged by that extraction. That record measures the emission against every
+invocation-boundary option the pinned pair offers and against the
+newest-upstream pair, and it is invariant, so §3's statements elaborate
+against a tree carrying the `scripts/fix-aeneas-dupes.py` repair — the named,
+tracked normalization owner decision DEC-R (2026-08-23) sanctions for this
+extraction class.
