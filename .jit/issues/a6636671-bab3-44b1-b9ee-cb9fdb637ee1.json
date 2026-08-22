@@ -6,16 +6,37 @@
   "description": "Remove the deprecated bit-buffer kernel compatibility surface — the `Kernel` trait, its `ScalarBackend` bridge impl, and `select_kernel()` in `crates/gf2-core/src/kernels/mod.rs` — once no consumer remains.\n\n## Background\n\nThe field-capability classification (dev/active/6dc81018-field-capability-dispatch/classification.md §5) records this surface as superseded by `Backend` and `select_backend_for_size`; `canonical-cutover` is unsatisfied while the deprecated aliases remain.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-core/src/kernels/mod.rs` contains no `Kernel` trait, no `ScalarBackend` bridge impl, and no `select_kernel()`, and no workspace consumer references them.\n- [hard] REQ-02: The workspace CI contract passes after the removal.",
   "documents": [],
   "first_ready_at": "2026-08-18T20:51:51.692768931Z",
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-22T20:16:32.563063159Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T20:16:32.681637521Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T20:16:32.801389672Z",
+      "updated_by": null
+    }
+  },
   "id": "a6636671-bab3-44b1-b9ee-cb9fdb637ee1",
   "labels": [
     "component:gf2-core",
     "type:task",
-    "epic:quality-documentation-tech-debt"
+    "epic:quality-documentation-tech-debt",
+    "epic:field-capability-dispatch"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Remove the deprecated bit-buffer Kernel compatibility surface",
-  "updated_at": "2026-08-19T05:22:06.640497778Z"
+  "updated_at": "2026-08-22T20:16:37.543743097Z"
 }

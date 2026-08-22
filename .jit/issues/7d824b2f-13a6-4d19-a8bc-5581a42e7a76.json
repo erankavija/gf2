@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-22T20:16:23.441510963Z",
+  "dependencies": [],
+  "description": "Design how every remaining profile-scoped host-tuning selector migrates from a source constant to the versioned, committed tuning profile, extending the standing tuning-profile design under its own extensibility rule.\n\n## Background\n\nThe field-capability classification (dev/active/6dc81018-field-capability-dispatch/classification.md §4.2) inventories the profile-scoped follow-on constants — matrix/transpose, M4RM, SoA batch arithmetic, inversion, triangular/PLE, GEMM, and FieldVec chunking — that remain source constants after the pilot cutover of the bit-backend and polynomial families. The epic owner ruled that these migrate inside this epic. The standing design (dev/active/220cab0b/design.md) fixes the profile format, its versioning and extensibility rule (§5), the conservative-default policy, and the calibration action; the pilot's measured record established the selection-read patterns that survive benchmarking: per-call profile reads regressed hot cells and were replaced by a compile-time baked constant for the bit backend and a resolved-threshold inner dispatcher for the polynomial family. Some fields are not sweepable through public API; the standing design's omission rule covers that case.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed design amendment enumerates every classification §4.2 profile-scoped follow-on constant with, for each, its profile field (name, type, admissible range, conservative default equal to the current source constant), its defining read site, and its cutover mechanism, following the standing design's versioned-schema extensibility rule.\n- [hard] REQ-02: The design fixes the per-family selection-read pattern so that no per-call profile read enters a hot path — resolved-threshold caching or compile-time bake, per the patterns the pilot's measured record established — and names the route-observation test obligation for each family.\n- [hard] REQ-03: The design states, for every field, whether the explicit calibration benchmark action can sweep it; a non-sweepable field is recorded with the standing omission rule, and the migration's behavior-preservation argument is stated: defaults equal the current source constants, and observable behavior is unchanged when no profile is installed.\n- [hard] REQ-04: A worker-sized implementation breakdown lists the follow-on migration tasks per family with their dependencies, sufficient to wire the implementation waves.\n\n## Notes\n\n- The standing design is amended additively: cite it, do not rewrite it.\n- The pinned selector non-regression procedure and its receipts are pilot-scoped and stand as taken; state explicitly whether any follow-on family needs new measurement evidence and under what predeclared rule.",
+  "documents": [],
+  "first_ready_at": "2026-08-22T20:16:23.441510963Z",
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-22T20:16:32.443738808Z",
+      "updated_by": null
+    }
+  },
+  "id": "7d824b2f-13a6-4d19-a8bc-5581a42e7a76",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Design the follow-on selector migration to the tuning profile",
+  "updated_at": "2026-08-22T20:16:32.443738808Z"
+}
