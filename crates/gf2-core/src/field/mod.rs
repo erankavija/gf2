@@ -72,6 +72,6 @@ pub use poly_interpolate::{
     formal_derivative, interpolate, interpolate_auto, interpolate_fast, InterpolationError,
     INTERPOLATE_THRESHOLD,
 };
-pub use traits::{ConstField, FiniteField, FiniteFieldExt};
+pub use traits::{ConstField, FiniteField, FiniteFieldExt, PlePanelLane};
 pub use two_adic::TwoAdicField;
 pub use vec::{FieldVec, StridedIter};

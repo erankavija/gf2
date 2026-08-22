@@ -23,6 +23,7 @@ use super::Fp;
 use super::{montgomery::MontConsts, use_specialized_storage};
 #[cfg(feature = "simd")]
 use crate::field::FiniteField;
+use crate::field::PlePanelLane;
 
 // ---------------------------------------------------------------------------
 // SimdVecOps trait
@@ -2944,21 +2945,24 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
     None
 }
 
-/// Non-allocating availability probe for [`fp_try_ple_panel_base`]
+/// Non-allocating lane-class probe for [`fp_try_ple_panel_base`]
 /// (issue `6823c8a0`).
 #[cfg(feature = "simd")]
 #[inline]
-pub(crate) fn fp_ple_panel_base_available<const P: u64>() -> bool {
+pub(crate) fn fp_ple_panel_lane<const P: u64>() -> Option<PlePanelLane> {
     if fp_medium_eligible::<P>() {
-        return crate::simd::maybe_fp_medium_ple().is_some();
+        return crate::simd::maybe_fp_medium_ple()
+            .is_some()
+            .then_some(PlePanelLane::U16);
     }
-    fp_small_enabled::<P>() && crate::simd::maybe_fp_small_ple().is_some()
+    (fp_small_enabled::<P>() && crate::simd::maybe_fp_small_ple().is_some())
+        .then_some(PlePanelLane::Byte)
 }
 
 #[cfg(not(feature = "simd"))]
 #[inline]
-pub(crate) fn fp_ple_panel_base_available<const P: u64>() -> bool {
-    false
+pub(crate) fn fp_ple_panel_lane<const P: u64>() -> Option<PlePanelLane> {
+    None
 }
 
 // ---------------------------------------------------------------------------
