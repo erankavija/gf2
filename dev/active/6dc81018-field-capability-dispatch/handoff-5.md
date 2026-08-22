@@ -32,7 +32,7 @@
 
 ## What to do next
 
-- [ ] Commit any `.jit` gate-run files the dead background chain left; check `jit gate status-all 856f1b48`. If code-review/doc-review did not complete, evaluate them now (tree at `d9f72fab`+ is what they judge; nothing merged since). On PASS → close t1 per Workflow E.
+- [ ] t1's gate chain finished AFTER this handoff's first commit: cargo-ci PASS, **code-review FAIL** (F1: the permanent conservative default "reverses the required source-constant dependency" — it contests DEC-B10 #2's naming inversion), doc-review NOT run. This is a criterion-vs-invariant conflict (REQ-01's "name the in-source constant" vs `@/inv/crate-dependency-direction`); resolve via the open question below FIRST, then rework or criterion amendment, re-run code-review + doc-review, close t1.
 - [ ] Probe `agent-687c694d` and `agent-03594635` worktrees. The workers are dead with this session. If U2's work is complete but uncommitted: lead-preserve commit on the branch, review the diff against its dispatch (hoists + 4 citation repairs; probe-S4-neutral), run CI once from ITS worktree, then merge after t1 closes. U4 (`03594635`, PlePanelLane hook): if incomplete, re-dispatch a fresh worker with the same prompt (in progress.json wave-21 notes) into the EXISTING worktree after inspecting/preserving partial work.
 - [ ] Merge U1 (`worktree-agent-c41d7e80`, `fbdd5b8a`) after t1 closes; CI on merged tree; gates cargo-ci/code-review/doc-review; close. Lead review already PASS pending gates.
 - [ ] Then wave 21 remainder per progress.json: t4, t5, t6 (sub-wave a), t7 (sub-wave b, same file as t6), t8, t10, t11 in parallel worktrees; t13 AFTER 389aa4de (same bench file).
@@ -58,7 +58,12 @@
 
 ## Open questions needing invoker input
 
-None. DEC-O…DEC-U, DEC-B9 and DEC-B10 settled every open decision point this session. The next likely decision points: (a) any attributable surprise from `389aa4de`'s or U10's measured runs; (b) holistic re-run findings after the waves complete.
+- Question: how is `856f1b48` REQ-01 satisfied for the `permanent` family, whose in-source constant lives in `gf2-algebra`?
+  - Context: code-review F1 (post-handoff) contests DEC-B10 #2 — CONSERVATIVE cannot name `gf2_algebra::…::CHUNK_SUBSETS` without the reverse dependency `@/inv/crate-dependency-direction` forbids, so t1 made `gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT` the value's single definition and the gf2-algebra selector names it; the reviewer reads that as "a new tuning literal rather than the required source constant".
+  - Options: (A) amend REQ-01 to record the permanent-family exception (the source of truth re-homes to `gf2_core::tuning`; the selector names it; single source and inward dependency both hold) and re-run the gate; (B) direct a different mechanism (e.g. drop the `permanent` family from gf2-core's schema, reversing design D4 — contradicts DEC-B9/D4); (C) other.
+  - Recommendation: (A). The inversion is forced by the crate DAG, preserves one definition, and D4's placement was already confirmed twice (design + DEC-B9); only the criterion's wording lags.
+
+Everything else: none. The next likely decision points: (a) any attributable surprise from `389aa4de`'s or U10's measured runs; (b) holistic re-run findings after the waves complete.
 
 ## Reference artefacts
 

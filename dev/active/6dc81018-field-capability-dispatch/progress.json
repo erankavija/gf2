@@ -358,8 +358,8 @@
           "title": "Extend the tuning schema with the follow-on selector families",
           "classification": "implementation",
           "model": "opus",
-          "status": "merged-gates-running",
-          "notes": "Design \u00a73/\u00a73.13. No selector-site change. Dispatched 2026-08-23 in worktree (base 9ebcb29f), background. Report received: 28 fields/11 families, 9 tests, calibrated profile loads. Five design defects \u2192 DEC-B10. Merged d9f72fab; cargo-ci gate PASSED; code-review/doc-review were running at session-9 handoff \u2014 check status, evaluate if incomplete, then close."
+          "status": "code-review-failed",
+          "notes": "Design \u00a73/\u00a73.13. No selector-site change. Dispatched 2026-08-23 in worktree (base 9ebcb29f), background. Report received: 28 fields/11 families, 9 tests, calibrated profile loads. Five design defects \u2192 DEC-B10. Merged d9f72fab; cargo-ci gate PASSED; code-review/doc-review were running at session-9 handoff \u2014 check status, evaluate if incomplete, then close. POST-HANDOFF: code-review FAIL F1 contesting DEC-B10 #2 (permanent default naming direction); doc-review not run. Criterion-vs-invariant conflict \u2192 owner question in handoff-5. Do not rework before the answer."
         },
         {
           "id": "389aa4de",
