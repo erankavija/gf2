@@ -5,13 +5,13 @@ Pooling is the harness's own: sum(elapsed_ns) / sum(calls).
 """
 import csv
 import collections
-import sys
 
 REPO = "/home/vkaskivuo/Projects/gf2"
 S5 = f"{REPO}/dev/benchmarks/tuning_profiles"
 LED = f"{REPO}/dev/active/50b47eae/s5-session"
-PILOT_CSV = "/tmp/gf2-eb9b324c-pilot.csv"
-PILOT_LED = "/tmp/gf2-pilot-eb9b324c/ledger-cand-fixed.tsv"
+PILOT = f"{REPO}/dev/active/eb9b324c/pilot"
+PILOT_CSV = f"{PILOT}/pilot-cand-fixed.csv"
+PILOT_LED = f"{PILOT}/ledger-cand-fixed.tsv"
 
 CELLS = [
     "polynomial/mul_fast/len=32",
