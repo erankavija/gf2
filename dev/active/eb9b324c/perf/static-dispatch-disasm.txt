@@ -1,0 +1,116 @@
+# Static dispatch-path disassembly, session-5 ordinary members (E=0)
+# reference: /tmp/gf2-ens5/ref/member-0.bin (0c072d73), candidate: /tmp/gf2-ens5/cand/member-1.bin (1a5812c2)
+
+== reference mul_fast 0x512c0 (sub-NTT path complete, calls schoolbook directly) ==
+00000000000512c0 <gf2_core::field::poly::mul_fast>:
+   512c0:	55                   	push   %rbp
+   512c1:	41 57                	push   %r15
+   512c3:	41 56                	push   %r14
+   512c5:	41 55                	push   %r13
+   512c7:	41 54                	push   %r12
+   512c9:	53                   	push   %rbx
+   512ca:	48 83 ec 58          	sub    $0x58,%rsp
+   512ce:	48 85 d2             	test   %rdx,%rdx
+   512d1:	74 3c                	je     5130f <gf2_core::field::poly::mul_fast+0x4f>
+   512d3:	4d 89 c5             	mov    %r8,%r13
+   512d6:	4d 85 c0             	test   %r8,%r8
+   512d9:	74 34                	je     5130f <gf2_core::field::poly::mul_fast+0x4f>
+   512db:	4a 8d 04 2a          	lea    (%rdx,%r13,1),%rax
+   512df:	48 3d 82 00 00 00    	cmp    $0x82,%rax
+   512e5:	73 4e                	jae    51335 <gf2_core::field::poly::mul_fast+0x75>
+   512e7:	48 89 fb             	mov    %rdi,%rbx
+   512ea:	48 83 fa 21          	cmp    $0x21,%rdx
+   512ee:	0f 93 c0             	setae  %al
+   512f1:	49 83 fd 21          	cmp    $0x21,%r13
+   512f5:	40 0f 93 c7          	setae  %dil
+   512f9:	40 84 f8             	test   %dil,%al
+   512fc:	0f 85 51 02 00 00    	jne    51553 <gf2_core::field::poly::mul_fast+0x293>
+   51302:	48 89 df             	mov    %rbx,%rdi
+   51305:	4d 89 e8             	mov    %r13,%r8
+   51308:	e8 a3 f3 ff ff       	call   506b0 <gf2_core::field::poly::mul_schoolbook_impl>
+   5130d:	eb 17                	jmp    51326 <gf2_core::field::poly::mul_fast+0x66>
+   5130f:	48                   	rex.W
+
+== candidate mul_fast 0x5f8f0 (entry; sub-NTT arm branches to +0x49f) ==
+000000000005f8f0 <gf2_core::field::poly::mul_fast>:
+   5f8f0:	55                   	push   %rbp
+   5f8f1:	41 57                	push   %r15
+   5f8f3:	41 56                	push   %r14
+   5f8f5:	41 55                	push   %r13
+   5f8f7:	41 54                	push   %r12
+   5f8f9:	53                   	push   %rbx
+   5f8fa:	48 83 ec 58          	sub    $0x58,%rsp
+   5f8fe:	48 85 d2             	test   %rdx,%rdx
+   5f901:	0f 84 60 02 00 00    	je     5fb67 <gf2_core::field::poly::mul_fast+0x277>
+   5f907:	4d 89 c5             	mov    %r8,%r13
+   5f90a:	4d 85 c0             	test   %r8,%r8
+   5f90d:	0f 84 54 02 00 00    	je     5fb67 <gf2_core::field::poly::mul_fast+0x277>
+   5f913:	4e 8d 04 2a          	lea    (%rdx,%r13,1),%r8
+   5f917:	49 ff c8             	dec    %r8
+   5f91a:	8b 05 b0 1d 04 00    	mov    0x41db0(%rip),%eax        # a16d0 <gf2_core::tuning::ACTIVE+0x1d0>
+   5f920:	85 c0                	test   %eax,%eax
+   5f922:	0f 85 37 04 00 00    	jne    5fd5f <gf2_core::field::poly::mul_fast+0x46f>
+   5f928:	4c 3b 05 81 1d 04 00 	cmp    0x41d81(%rip),%r8        # a16b0 <gf2_core::tuning::ACTIVE+0x1b0>
+   5f92f:	0f 86 5a 04 00 00    	jbe    5fd8f <gf2_core::field::poly::mul_fast+0x49f>
+
+== candidate mul_fast+0x49f (0x5fd8f): epilogue then tail-jump to mul_impl ==
+Disassembly of section .text:
+
+000000000005fd8f <gf2_core::field::poly::mul_fast+0x49f>:
+   5fd8f:	4d 89 e8             	mov    %r13,%r8
+   5fd92:	48 83 c4 58          	add    $0x58,%rsp
+   5fd96:	5b                   	pop    %rbx
+   5fd97:	41 5c                	pop    %r12
+   5fd99:	41 5d                	pop    %r13
+   5fd9b:	41 5e                	pop    %r14
+   5fd9d:	41 5f                	pop    %r15
+   5fd9f:	5d                   	pop    %rbp
+   5fda0:	e9 8b 00 00 00       	jmp    5fe30 <gf2_core::field::poly::mul_impl>
+
+== candidate mul_impl 0x5fe30 (repeats the empty checks, reloads ACTIVE twice) ==
+Disassembly of section .text:
+
+000000000005fe30 <gf2_core::field::poly::mul_impl>:
+   5fe30:	55                   	push   %rbp
+   5fe31:	41 57                	push   %r15
+   5fe33:	41 56                	push   %r14
+   5fe35:	41 55                	push   %r13
+   5fe37:	41 54                	push   %r12
+   5fe39:	53                   	push   %rbx
+   5fe3a:	48 83 ec 28          	sub    $0x28,%rsp
+   5fe3e:	48 85 d2             	test   %rdx,%rdx
+   5fe41:	0f 84 95 00 00 00    	je     5fedc <gf2_core::field::poly::mul_impl+0xac>
+   5fe47:	4d 85 c0             	test   %r8,%r8
+   5fe4a:	0f 84 8c 00 00 00    	je     5fedc <gf2_core::field::poly::mul_impl+0xac>
+   5fe50:	4c 8d 72 ff          	lea    -0x1(%rdx),%r14
+   5fe54:	49 8d 58 ff          	lea    -0x1(%r8),%rbx
+   5fe58:	8b 05 72 18 04 00    	mov    0x41872(%rip),%eax        # a16d0 <gf2_core::tuning::ACTIVE+0x1d0>
+   5fe5e:	85 c0                	test   %eax,%eax
+   5fe60:	0f 85 af 00 00 00    	jne    5ff15 <gf2_core::field::poly::mul_impl+0xe5>
+   5fe66:	48 8b 05 3b 18 04 00 	mov    0x4183b(%rip),%rax        # a16a8 <gf2_core::tuning::ACTIVE+0x1a8>
+   5fe6d:	49 39 c6             	cmp    %rax,%r14
+   5fe70:	41 0f 93 c1          	setae  %r9b
+   5fe74:	48 39 c3             	cmp    %rax,%rbx
+   5fe77:	0f 93 c0             	setae  %al
+   5fe7a:	41 84 c1             	test   %al,%r9b
+   5fe7d:	0f 84 7f 00 00 00    	je     5ff02 <gf2_core::field::poly::mul_impl+0xd2>
+   5fe83:	48 89 fb             	mov    %rdi,%rbx
+   5fe86:	8b 05 44 18 04 00    	mov    0x41844(%rip),%eax        # a16d0 <gf2_core::tuning::ACTIVE+0x1d0>
+   5fe8c:	85 c0                	test   %eax,%eax
+   5fe8e:	0f 85 ad 00 00 00    	jne    5ff41 <gf2_core::field::poly::mul_impl+0x111>
+   5fe94:	4c 8b 0d 0d 18 04 00 	mov    0x4180d(%rip),%r9        # a16a8 <gf2_core::tuning::ACTIVE+0x1a8>
+   5fe9b:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   5fea0:	e8 6b b7 ff ff       	call   5b610 <gf2_core::field::poly::mul_karatsuba_raw>
+
+== candidate mul_impl+0xd2 (0x5ff02): schoolbook arm epilogue + tail-jump ==
+Disassembly of section .text:
+
+000000000005ff02 <gf2_core::field::poly::mul_impl+0xd2>:
+   5ff02:	48 83 c4 28          	add    $0x28,%rsp
+   5ff06:	5b                   	pop    %rbx
+   5ff07:	41 5c                	pop    %r12
+   5ff09:	41 5d                	pop    %r13
+   5ff0b:	41 5e                	pop    %r14
+   5ff0d:	41 5f                	pop    %r15
+   5ff0f:	5d                   	pop    %rbp
+   5ff10:	e9 4b ed ff ff       	jmp    5ec60 <gf2_core::field::poly::mul_schoolbook_impl>
