@@ -37,6 +37,16 @@ pub(crate) mod baked;
 #[cfg(feature = "tuning-profile")]
 use serde::{Deserialize, Serialize};
 
+/// Conservative default for the `permanent.gray_chunk_subsets` field.
+///
+/// Every other conservative default is defined at its selector's own module,
+/// which `dev/active/220cab0b/design.md` D3 fixes as the convention. This
+/// field's selector lives in `gf2-algebra`, whose dependency on `gf2-core`
+/// points inward, so the value's single definition site is here and the
+/// selector's own `CHUNK_SUBSETS` names it; defining it at the selector would
+/// need a reverse edge, which `@/inv/crate-dependency-direction` forbids.
+pub const PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT: usize = 1 << 16;
+
 /// The only schema version understood by this loader.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SchemaVersion(u32);
@@ -249,8 +259,30 @@ impl RepoRelPath {
 pub enum ProfileFamily {
     /// The bit-backend selector family.
     BitBackend,
+    /// The bit-matrix selector family.
+    BitMatrix,
+    /// The structure-of-arrays batch selector family.
+    SoaBatch,
+    /// The M4RM selector family.
+    M4rm,
+    /// The dense-inverse selector family.
+    DenseInverse,
+    /// The triangular-solve selector family.
+    Triangular,
+    /// The PLE selector family.
+    Ple,
+    /// The GEMM selector family.
+    Gemm,
+    /// The field-vector selector family.
+    FieldVec,
+    /// The characteristic-polynomial selector family.
+    Charpoly,
     /// The polynomial selector family.
     Polynomial,
+    /// The prime-route selector family.
+    PrimeRoute,
+    /// The permanent selector family.
+    Permanent,
     /// The calibrated provenance record.
     Provenance,
 }
@@ -259,7 +291,18 @@ impl fmt::Display for ProfileFamily {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(match self {
             Self::BitBackend => "bit_backend",
+            Self::BitMatrix => "bit_matrix",
+            Self::SoaBatch => "soa_batch",
+            Self::M4rm => "m4rm",
+            Self::DenseInverse => "dense_inverse",
+            Self::Triangular => "triangular",
+            Self::Ple => "ple",
+            Self::Gemm => "gemm",
+            Self::FieldVec => "field_vec",
+            Self::Charpoly => "charpoly",
             Self::Polynomial => "polynomial",
+            Self::PrimeRoute => "prime_route",
+            Self::Permanent => "permanent",
             Self::Provenance => "provenance",
         })
     }
@@ -278,6 +321,62 @@ pub enum ProfileField {
     DivRemFastMinLen,
     /// The subproduct-tree length threshold.
     SubproductMinLen,
+    /// The fast interpolation point-count threshold.
+    InterpolateFastMinPoints,
+    /// The matrix-vector SIMD word-count threshold.
+    MatvecSimdMinWords,
+    /// The simple-transpose block-count ceiling.
+    TransposeSimpleMaxBlocks,
+    /// The transpose macro-tile block extent.
+    TransposeMacroTileBlocks,
+    /// The structure-of-arrays parallelization length threshold.
+    ParallelMinLen,
+    /// The structure-of-arrays parallel chunk length.
+    ParallelChunkLen,
+    /// The M4RM wide-tier stride threshold.
+    WideTierMinStrideWords,
+    /// The M4RM tiled-schedule stride threshold.
+    TiledMinStrideWords,
+    /// The default M4RM table byte budget.
+    DefaultTableBytes,
+    /// The middle M4RM table byte budget.
+    MidTableBytes,
+    /// The wide M4RM table byte budget.
+    WideTableBytes,
+    /// The wide M4RM panel-width ceiling.
+    WideMaxK,
+    /// The small-N M4RM panel-width ceiling.
+    SmallNMaxK,
+    /// The M4RI inversion dimension threshold.
+    M4riMinDim,
+    /// The blocked inversion dimension threshold.
+    BlockedMinDim,
+    /// The blocked triangular-solve dimension threshold.
+    TrsmBlockedMinDim,
+    /// The blocked triangular-solve panel-row extent.
+    TrsmPanelRows,
+    /// The recursive PLE panel-width ceiling.
+    PanelBaseMaxCols,
+    /// The blocked PLE back-substitution dimension threshold.
+    BlockedBackSubMinDim,
+    /// The GEMM row-tile extent.
+    RowTile,
+    /// The GEMM column-tile extent.
+    ColTile,
+    /// The GEMM AXPY fast-path volume threshold.
+    AxpyFastPathMinVolume,
+    /// The field-vector dot-product chunk extent.
+    DotChunkLen,
+    /// The Keller-Gehrig dimension threshold.
+    KellerGehrigMinDim,
+    /// The F32 prime-route threshold.
+    F32MinPrime,
+    /// The F32 column-count threshold.
+    F32MinCols,
+    /// The F64 column-count threshold.
+    F64MinCols,
+    /// The permanent Gray-code chunk subset extent.
+    GrayChunkSubsets,
     /// The number of benchmark executions.
     Executions,
     /// The repetitions per benchmark execution.
@@ -294,6 +393,34 @@ impl fmt::Display for ProfileField {
             Self::KaratsubaMaxOutLen => "karatsuba_max_out_len",
             Self::DivRemFastMinLen => "div_rem_fast_min_len",
             Self::SubproductMinLen => "subproduct_min_len",
+            Self::InterpolateFastMinPoints => "interpolate_fast_min_points",
+            Self::MatvecSimdMinWords => "matvec_simd_min_words",
+            Self::TransposeSimpleMaxBlocks => "transpose_simple_max_blocks",
+            Self::TransposeMacroTileBlocks => "transpose_macro_tile_blocks",
+            Self::ParallelMinLen => "parallel_min_len",
+            Self::ParallelChunkLen => "parallel_chunk_len",
+            Self::WideTierMinStrideWords => "wide_tier_min_stride_words",
+            Self::TiledMinStrideWords => "tiled_min_stride_words",
+            Self::DefaultTableBytes => "default_table_bytes",
+            Self::MidTableBytes => "mid_table_bytes",
+            Self::WideTableBytes => "wide_table_bytes",
+            Self::WideMaxK => "wide_max_k",
+            Self::SmallNMaxK => "small_n_max_k",
+            Self::M4riMinDim => "m4ri_min_dim",
+            Self::BlockedMinDim => "blocked_min_dim",
+            Self::TrsmBlockedMinDim => "trsm_blocked_min_dim",
+            Self::TrsmPanelRows => "trsm_panel_rows",
+            Self::PanelBaseMaxCols => "panel_base_max_cols",
+            Self::BlockedBackSubMinDim => "blocked_back_sub_min_dim",
+            Self::RowTile => "row_tile",
+            Self::ColTile => "col_tile",
+            Self::AxpyFastPathMinVolume => "axpy_fast_path_min_volume",
+            Self::DotChunkLen => "dot_chunk_len",
+            Self::KellerGehrigMinDim => "keller_gehrig_min_dim",
+            Self::F32MinPrime => "f32_min_prime",
+            Self::F32MinCols => "f32_min_cols",
+            Self::F64MinCols => "f64_min_cols",
+            Self::GrayChunkSubsets => "gray_chunk_subsets",
             Self::Executions => "executions",
             Self::Repetitions => "repetitions",
             Self::TargetMs => "target_ms",
@@ -438,6 +565,7 @@ pub struct PolynomialSelectors {
     karatsuba_max_out_len: usize,
     div_rem_fast_min_len: usize,
     subproduct_min_len: usize,
+    interpolate_fast_min_points: usize,
 }
 
 impl PolynomialSelectors {
@@ -453,6 +581,7 @@ impl PolynomialSelectors {
         karatsuba_max_out_len: usize,
         div_rem_fast_min_len: usize,
         subproduct_min_len: usize,
+        interpolate_fast_min_points: usize,
     ) -> Result<Self, ProfileError> {
         if karatsuba_min_degree == 0 {
             return Err(out_of_range(
@@ -475,11 +604,19 @@ impl PolynomialSelectors {
                 subproduct_min_len as u64,
             ));
         }
+        if interpolate_fast_min_points == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Polynomial,
+                ProfileField::InterpolateFastMinPoints,
+                interpolate_fast_min_points as u64,
+            ));
+        }
         Ok(Self {
             karatsuba_min_degree,
             karatsuba_max_out_len,
             div_rem_fast_min_len,
             subproduct_min_len,
+            interpolate_fast_min_points,
         })
     }
 
@@ -502,6 +639,605 @@ impl PolynomialSelectors {
     pub fn subproduct_min_len(&self) -> usize {
         self.subproduct_min_len
     }
+
+    /// Returns the minimum point count for fast interpolation.
+    pub fn interpolate_fast_min_points(&self) -> usize {
+        self.interpolate_fast_min_points
+    }
+}
+
+/// Selector values for bit-matrix algorithms.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BitMatrixSelectors {
+    matvec_simd_min_words: usize,
+    transpose_simple_max_blocks: usize,
+    transpose_macro_tile_blocks: usize,
+}
+
+impl BitMatrixSelectors {
+    /// Builds a validated bit-matrix selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when
+    /// `transpose_macro_tile_blocks` is zero because the macro-tile walk must
+    /// advance by at least one block.
+    pub fn try_new(
+        matvec_simd_min_words: usize,
+        transpose_simple_max_blocks: usize,
+        transpose_macro_tile_blocks: usize,
+    ) -> Result<Self, ProfileError> {
+        if transpose_macro_tile_blocks == 0 {
+            return Err(out_of_range(
+                ProfileFamily::BitMatrix,
+                ProfileField::TransposeMacroTileBlocks,
+                transpose_macro_tile_blocks as u64,
+            ));
+        }
+        Ok(Self {
+            matvec_simd_min_words,
+            transpose_simple_max_blocks,
+            transpose_macro_tile_blocks,
+        })
+    }
+
+    /// Returns the minimum word count for matrix-vector SIMD.
+    pub fn matvec_simd_min_words(&self) -> usize {
+        self.matvec_simd_min_words
+    }
+
+    /// Returns the maximum block count for simple transpose.
+    pub fn transpose_simple_max_blocks(&self) -> usize {
+        self.transpose_simple_max_blocks
+    }
+
+    /// Returns the macro-tile block extent for transpose.
+    pub fn transpose_macro_tile_blocks(&self) -> usize {
+        self.transpose_macro_tile_blocks
+    }
+}
+
+/// Selector values for structure-of-arrays batch algorithms.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SoaBatchSelectors {
+    parallel_min_len: usize,
+    parallel_chunk_len: usize,
+}
+
+impl SoaBatchSelectors {
+    /// Builds a validated structure-of-arrays batch selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when
+    /// `parallel_chunk_len` is zero because parallel chunks must advance.
+    pub fn try_new(
+        parallel_min_len: usize,
+        parallel_chunk_len: usize,
+    ) -> Result<Self, ProfileError> {
+        if parallel_chunk_len == 0 {
+            return Err(out_of_range(
+                ProfileFamily::SoaBatch,
+                ProfileField::ParallelChunkLen,
+                parallel_chunk_len as u64,
+            ));
+        }
+        Ok(Self {
+            parallel_min_len,
+            parallel_chunk_len,
+        })
+    }
+
+    /// Returns the minimum batch length for parallel execution.
+    pub fn parallel_min_len(&self) -> usize {
+        self.parallel_min_len
+    }
+
+    /// Returns the parallel batch chunk length.
+    pub fn parallel_chunk_len(&self) -> usize {
+        self.parallel_chunk_len
+    }
+}
+
+/// Selector values for M4RM algorithms.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct M4rmSelectors {
+    wide_tier_min_stride_words: usize,
+    tiled_min_stride_words: usize,
+    default_table_bytes: usize,
+    mid_table_bytes: usize,
+    wide_table_bytes: usize,
+    wide_max_k: usize,
+    small_n_max_k: usize,
+}
+
+impl M4rmSelectors {
+    /// Builds a validated M4RM selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when
+    /// `tiled_min_stride_words` is below `M4RM_TILE_WORDS`, when `wide_max_k`
+    /// is zero, or when `small_n_max_k` is below two. The bounds preserve a
+    /// complete tile and valid panel widths.
+    pub fn try_new(
+        wide_tier_min_stride_words: usize,
+        tiled_min_stride_words: usize,
+        default_table_bytes: usize,
+        mid_table_bytes: usize,
+        wide_table_bytes: usize,
+        wide_max_k: usize,
+        small_n_max_k: usize,
+    ) -> Result<Self, ProfileError> {
+        if tiled_min_stride_words < crate::alg::m4rm::M4RM_TILE_WORDS {
+            return Err(out_of_range(
+                ProfileFamily::M4rm,
+                ProfileField::TiledMinStrideWords,
+                tiled_min_stride_words as u64,
+            ));
+        }
+        if wide_max_k == 0 {
+            return Err(out_of_range(
+                ProfileFamily::M4rm,
+                ProfileField::WideMaxK,
+                wide_max_k as u64,
+            ));
+        }
+        if small_n_max_k < 2 {
+            return Err(out_of_range(
+                ProfileFamily::M4rm,
+                ProfileField::SmallNMaxK,
+                small_n_max_k as u64,
+            ));
+        }
+        Ok(Self {
+            wide_tier_min_stride_words,
+            tiled_min_stride_words,
+            default_table_bytes,
+            mid_table_bytes,
+            wide_table_bytes,
+            wide_max_k,
+            small_n_max_k,
+        })
+    }
+
+    /// Returns the minimum stride for the wide tier.
+    pub fn wide_tier_min_stride_words(&self) -> usize {
+        self.wide_tier_min_stride_words
+    }
+
+    /// Returns the minimum stride for tiled M4RM updates.
+    pub fn tiled_min_stride_words(&self) -> usize {
+        self.tiled_min_stride_words
+    }
+
+    /// Returns the default M4RM table byte budget.
+    pub fn default_table_bytes(&self) -> usize {
+        self.default_table_bytes
+    }
+
+    /// Returns the middle-tier M4RM table byte budget.
+    pub fn mid_table_bytes(&self) -> usize {
+        self.mid_table_bytes
+    }
+
+    /// Returns the wide-tier M4RM table byte budget.
+    pub fn wide_table_bytes(&self) -> usize {
+        self.wide_table_bytes
+    }
+
+    /// Returns the maximum panel width for the wide tier.
+    pub fn wide_max_k(&self) -> usize {
+        self.wide_max_k
+    }
+
+    /// Returns the maximum panel width for the small-N tier.
+    pub fn small_n_max_k(&self) -> usize {
+        self.small_n_max_k
+    }
+}
+
+/// Selector values for dense matrix inversion.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DenseInverseSelectors {
+    m4ri_min_dim: usize,
+    blocked_min_dim: usize,
+}
+
+impl DenseInverseSelectors {
+    /// Builds a validated dense-inverse selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when `blocked_min_dim` is
+    /// zero because blocked inversion requires a positive dimension.
+    pub fn try_new(m4ri_min_dim: usize, blocked_min_dim: usize) -> Result<Self, ProfileError> {
+        if blocked_min_dim == 0 {
+            return Err(out_of_range(
+                ProfileFamily::DenseInverse,
+                ProfileField::BlockedMinDim,
+                blocked_min_dim as u64,
+            ));
+        }
+        Ok(Self {
+            m4ri_min_dim,
+            blocked_min_dim,
+        })
+    }
+
+    /// Returns the minimum dimension for M4RI inversion.
+    pub fn m4ri_min_dim(&self) -> usize {
+        self.m4ri_min_dim
+    }
+
+    /// Returns the minimum dimension for blocked inversion.
+    pub fn blocked_min_dim(&self) -> usize {
+        self.blocked_min_dim
+    }
+}
+
+/// Selector values for triangular solves.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TriangularSelectors {
+    trsm_blocked_min_dim: usize,
+    trsm_panel_rows: usize,
+}
+
+impl TriangularSelectors {
+    /// Builds a validated triangular selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when `trsm_panel_rows` is
+    /// zero because a blocked panel must contain at least one row.
+    pub fn try_new(
+        trsm_blocked_min_dim: usize,
+        trsm_panel_rows: usize,
+    ) -> Result<Self, ProfileError> {
+        if trsm_panel_rows == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Triangular,
+                ProfileField::TrsmPanelRows,
+                trsm_panel_rows as u64,
+            ));
+        }
+        Ok(Self {
+            trsm_blocked_min_dim,
+            trsm_panel_rows,
+        })
+    }
+
+    /// Returns the minimum dimension for blocked triangular solves.
+    pub fn trsm_blocked_min_dim(&self) -> usize {
+        self.trsm_blocked_min_dim
+    }
+
+    /// Returns the row extent of a blocked triangular panel.
+    pub fn trsm_panel_rows(&self) -> usize {
+        self.trsm_panel_rows
+    }
+}
+
+/// Selector values for PLE decomposition.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PleSelectors {
+    panel_base_max_cols: usize,
+    blocked_back_sub_min_dim: usize,
+}
+
+impl PleSelectors {
+    /// Builds a validated PLE selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when `panel_base_max_cols`
+    /// is zero because the recursive panel must make progress.
+    pub fn try_new(
+        panel_base_max_cols: usize,
+        blocked_back_sub_min_dim: usize,
+    ) -> Result<Self, ProfileError> {
+        if panel_base_max_cols == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Ple,
+                ProfileField::PanelBaseMaxCols,
+                panel_base_max_cols as u64,
+            ));
+        }
+        Ok(Self {
+            panel_base_max_cols,
+            blocked_back_sub_min_dim,
+        })
+    }
+
+    /// Returns the maximum recursive PLE panel width.
+    pub fn panel_base_max_cols(&self) -> usize {
+        self.panel_base_max_cols
+    }
+
+    /// Returns the minimum dimension for blocked back substitution.
+    pub fn blocked_back_sub_min_dim(&self) -> usize {
+        self.blocked_back_sub_min_dim
+    }
+}
+
+/// Selector values for finite-field GEMM.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GemmSelectors {
+    row_tile: usize,
+    col_tile: usize,
+    axpy_fast_path_min_volume: usize,
+}
+
+impl GemmSelectors {
+    /// Builds a validated GEMM selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when `row_tile` or
+    /// `col_tile` is zero because blocked loop steps must be positive.
+    pub fn try_new(
+        row_tile: usize,
+        col_tile: usize,
+        axpy_fast_path_min_volume: usize,
+    ) -> Result<Self, ProfileError> {
+        if row_tile == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Gemm,
+                ProfileField::RowTile,
+                row_tile as u64,
+            ));
+        }
+        if col_tile == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Gemm,
+                ProfileField::ColTile,
+                col_tile as u64,
+            ));
+        }
+        Ok(Self {
+            row_tile,
+            col_tile,
+            axpy_fast_path_min_volume,
+        })
+    }
+
+    /// Returns the GEMM row-tile extent.
+    pub fn row_tile(&self) -> usize {
+        self.row_tile
+    }
+
+    /// Returns the GEMM column-tile extent.
+    pub fn col_tile(&self) -> usize {
+        self.col_tile
+    }
+
+    /// Returns the minimum volume for the GEMM AXPY fast path.
+    pub fn axpy_fast_path_min_volume(&self) -> usize {
+        self.axpy_fast_path_min_volume
+    }
+}
+
+/// Selector values for field-vector operations.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FieldVecSelectors {
+    dot_chunk_len: usize,
+}
+
+impl FieldVecSelectors {
+    /// Builds a validated field-vector selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when `dot_chunk_len` is
+    /// zero because the vector walk must advance.
+    pub fn try_new(dot_chunk_len: usize) -> Result<Self, ProfileError> {
+        if dot_chunk_len == 0 {
+            return Err(out_of_range(
+                ProfileFamily::FieldVec,
+                ProfileField::DotChunkLen,
+                dot_chunk_len as u64,
+            ));
+        }
+        Ok(Self { dot_chunk_len })
+    }
+
+    /// Returns the field-vector dot-product chunk length.
+    pub fn dot_chunk_len(&self) -> usize {
+        self.dot_chunk_len
+    }
+}
+
+/// Selector values for characteristic-polynomial algorithms.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CharpolySelectors {
+    keller_gehrig_min_dim: usize,
+}
+
+impl CharpolySelectors {
+    /// Builds a validated characteristic-polynomial selector family.
+    ///
+    /// Every `usize` dimension is admissible: zero takes the Keller-Gehrig arm
+    /// at every dimension and `usize::MAX` disables it, which is the value the
+    /// conservative table carries.
+    pub fn try_new(keller_gehrig_min_dim: usize) -> Result<Self, ProfileError> {
+        Ok(Self {
+            keller_gehrig_min_dim,
+        })
+    }
+
+    /// Returns the minimum dimension for Keller-Gehrig dispatch.
+    pub fn keller_gehrig_min_dim(&self) -> usize {
+        self.keller_gehrig_min_dim
+    }
+}
+
+/// Selector values for prime-field routes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PrimeRouteSelectors {
+    f32_min_prime: usize,
+    f32_min_cols: usize,
+    f64_min_cols: usize,
+}
+
+impl PrimeRouteSelectors {
+    /// Builds a validated prime-route selector family.
+    ///
+    /// Every `usize` bound is admissible: zero opens the floating-point route
+    /// to every prime or output width, and a bound above the largest supported
+    /// prime or width closes it.
+    pub fn try_new(
+        f32_min_prime: usize,
+        f32_min_cols: usize,
+        f64_min_cols: usize,
+    ) -> Result<Self, ProfileError> {
+        Ok(Self {
+            f32_min_prime,
+            f32_min_cols,
+            f64_min_cols,
+        })
+    }
+
+    /// Returns the minimum prime for the F32 route.
+    pub fn f32_min_prime(&self) -> usize {
+        self.f32_min_prime
+    }
+
+    /// Returns the minimum F32 route column count.
+    pub fn f32_min_cols(&self) -> usize {
+        self.f32_min_cols
+    }
+
+    /// Returns the minimum F64 route column count.
+    pub fn f64_min_cols(&self) -> usize {
+        self.f64_min_cols
+    }
+}
+
+/// Selector values for permanent algorithms.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PermanentSelectors {
+    gray_chunk_subsets: usize,
+}
+
+impl PermanentSelectors {
+    /// Builds a validated permanent selector family.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileError::SelectorOutOfRange`] when `gray_chunk_subsets`
+    /// is zero because a Gray-code chunk must contain a subset.
+    pub fn try_new(gray_chunk_subsets: usize) -> Result<Self, ProfileError> {
+        if gray_chunk_subsets == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Permanent,
+                ProfileField::GrayChunkSubsets,
+                gray_chunk_subsets as u64,
+            ));
+        }
+        Ok(Self { gray_chunk_subsets })
+    }
+
+    /// Returns the Gray-code chunk subset extent.
+    pub fn gray_chunk_subsets(&self) -> usize {
+        self.gray_chunk_subsets
+    }
+}
+
+/// The complete set of selector families carried by a profile.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SelectorFamilies {
+    /// Bit-buffer backend selectors.
+    pub bit_backend: BitBackendSelectors,
+    /// Bit-matrix algorithm selectors.
+    pub bit_matrix: BitMatrixSelectors,
+    /// Structure-of-arrays batch selectors.
+    pub soa_batch: SoaBatchSelectors,
+    /// M4RM algorithm selectors.
+    pub m4rm: M4rmSelectors,
+    /// Dense-inverse algorithm selectors.
+    pub dense_inverse: DenseInverseSelectors,
+    /// Triangular-solve selectors.
+    pub triangular: TriangularSelectors,
+    /// PLE algorithm selectors.
+    pub ple: PleSelectors,
+    /// GEMM algorithm selectors.
+    pub gemm: GemmSelectors,
+    /// Field-vector selectors.
+    pub field_vec: FieldVecSelectors,
+    /// Characteristic-polynomial selectors.
+    pub charpoly: CharpolySelectors,
+    /// Polynomial algorithm selectors.
+    pub polynomial: PolynomialSelectors,
+    /// Prime-field route selectors.
+    pub prime_route: PrimeRouteSelectors,
+    /// Permanent algorithm selectors.
+    pub permanent: PermanentSelectors,
+}
+
+impl SelectorFamilies {
+    /// The parser-free conservative selector families.
+    pub const CONSERVATIVE: Self = Self {
+        bit_backend: BitBackendSelectors {
+            simd_min_words: crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT,
+        },
+        bit_matrix: BitMatrixSelectors {
+            matvec_simd_min_words: crate::matrix::MATVEC_SIMD_MIN_WORDS,
+            transpose_simple_max_blocks:
+                crate::matrix::BitMatrix::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS,
+            transpose_macro_tile_blocks: crate::matrix::MACRO_TILE_BLOCKS,
+        },
+        soa_batch: SoaBatchSelectors {
+            parallel_min_len: crate::compute::SOA_PARALLEL_MIN_LEN,
+            parallel_chunk_len: crate::compute::SOA_PARALLEL_CHUNK_LEN,
+        },
+        m4rm: M4rmSelectors {
+            wide_tier_min_stride_words: crate::alg::m4rm::M4RM_WIDE_TIER_MIN_STRIDE_WORDS,
+            tiled_min_stride_words: crate::alg::m4rm::M4RM_TILED_MIN_STRIDE_WORDS,
+            default_table_bytes: crate::alg::m4rm::M4RM_DEFAULT_TABLE_BYTES,
+            mid_table_bytes: crate::alg::m4rm::M4RM_MID_TABLE_BYTES,
+            wide_table_bytes: crate::alg::m4rm::M4RM_WIDE_TABLE_BYTES,
+            wide_max_k: crate::alg::m4rm::M4RM_WIDE_MAX_K,
+            small_n_max_k: crate::alg::m4rm::M4RM_SMALL_N_MAX_K,
+        },
+        dense_inverse: DenseInverseSelectors {
+            m4ri_min_dim: crate::alg::gauss::INVERT_M4RI_THRESHOLD,
+            blocked_min_dim: crate::field::inverse::BLOCKED_INVERT_THRESHOLD,
+        },
+        triangular: TriangularSelectors {
+            trsm_blocked_min_dim: crate::field::triangular::TRSM_BLOCKED_PANEL_SIZE,
+            trsm_panel_rows: crate::field::triangular::TRSM_BLOCKED_PANEL_SIZE,
+        },
+        ple: PleSelectors {
+            panel_base_max_cols: crate::field::ple::PLE_PANEL_RECURSIVE_BASE,
+            blocked_back_sub_min_dim: crate::field::ple::BLOCKED_BACK_SUB_MIN_DIM,
+        },
+        gemm: GemmSelectors {
+            row_tile: crate::field::matrix::GEMM_ROW_TILE,
+            col_tile: crate::field::matrix::GEMM_COL_TILE,
+            axpy_fast_path_min_volume: crate::field::matrix::GEMM_AXPY_FAST_PATH_THRESHOLD,
+        },
+        field_vec: FieldVecSelectors {
+            dot_chunk_len: crate::field::vec::DOT_CHUNK_LEN,
+        },
+        charpoly: CharpolySelectors {
+            keller_gehrig_min_dim: crate::field::charpoly::KG_DISPATCH_MIN_N,
+        },
+        polynomial: PolynomialSelectors {
+            karatsuba_min_degree: crate::field::poly::KARATSUBA_THRESHOLD,
+            karatsuba_max_out_len: crate::field::poly::NTT_THRESHOLD,
+            div_rem_fast_min_len: crate::field::poly::DIV_REM_THRESHOLD,
+            subproduct_min_len: crate::field::poly::SUBPRODUCT_THRESHOLD,
+            interpolate_fast_min_points: crate::field::poly_interpolate::INTERPOLATE_THRESHOLD,
+        },
+        prime_route: PrimeRouteSelectors {
+            f32_min_prime: crate::gfp::simd_ops::N_THRESH_PRIME as usize,
+            f32_min_cols: crate::gfp::simd_ops::F32_MIN_COLS,
+            f64_min_cols: crate::gfp::simd_ops::F64_MIN_COLS,
+        },
+        permanent: PermanentSelectors {
+            gray_chunk_subsets: PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT,
+        },
+    };
 }
 
 /// A validated, versioned table of algorithm-selection thresholds.
@@ -510,8 +1246,7 @@ pub struct TuningProfile {
     schema_version: SchemaVersion,
     id: ProfileId,
     provenance: Provenance,
-    bit_backend: BitBackendSelectors,
-    polynomial: PolynomialSelectors,
+    selectors: SelectorFamilies,
 }
 
 impl TuningProfile {
@@ -520,15 +1255,7 @@ impl TuningProfile {
         schema_version: SchemaVersion(SchemaVersion::SUPPORTED),
         id: ProfileId::from_static("conservative"),
         provenance: Provenance::Inherited,
-        bit_backend: BitBackendSelectors {
-            simd_min_words: crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT,
-        },
-        polynomial: PolynomialSelectors {
-            karatsuba_min_degree: crate::field::poly::KARATSUBA_THRESHOLD,
-            karatsuba_max_out_len: crate::field::poly::NTT_THRESHOLD,
-            div_rem_fast_min_len: crate::field::poly::DIV_REM_THRESHOLD,
-            subproduct_min_len: crate::field::poly::SUBPRODUCT_THRESHOLD,
-        },
+        selectors: SelectorFamilies::CONSERVATIVE,
     };
 
     /// Returns this profile's schema version.
@@ -548,12 +1275,67 @@ impl TuningProfile {
 
     /// Returns the bit-backend selector family.
     pub fn bit_backend(&self) -> &BitBackendSelectors {
-        &self.bit_backend
+        &self.selectors.bit_backend
+    }
+
+    /// Returns the bit-matrix selector family.
+    pub fn bit_matrix(&self) -> &BitMatrixSelectors {
+        &self.selectors.bit_matrix
+    }
+
+    /// Returns the structure-of-arrays batch selector family.
+    pub fn soa_batch(&self) -> &SoaBatchSelectors {
+        &self.selectors.soa_batch
+    }
+
+    /// Returns the M4RM selector family.
+    pub fn m4rm(&self) -> &M4rmSelectors {
+        &self.selectors.m4rm
+    }
+
+    /// Returns the dense-inverse selector family.
+    pub fn dense_inverse(&self) -> &DenseInverseSelectors {
+        &self.selectors.dense_inverse
+    }
+
+    /// Returns the triangular-solve selector family.
+    pub fn triangular(&self) -> &TriangularSelectors {
+        &self.selectors.triangular
+    }
+
+    /// Returns the PLE selector family.
+    pub fn ple(&self) -> &PleSelectors {
+        &self.selectors.ple
+    }
+
+    /// Returns the GEMM selector family.
+    pub fn gemm(&self) -> &GemmSelectors {
+        &self.selectors.gemm
+    }
+
+    /// Returns the field-vector selector family.
+    pub fn field_vec(&self) -> &FieldVecSelectors {
+        &self.selectors.field_vec
+    }
+
+    /// Returns the characteristic-polynomial selector family.
+    pub fn charpoly(&self) -> &CharpolySelectors {
+        &self.selectors.charpoly
     }
 
     /// Returns the polynomial selector family.
     pub fn polynomial(&self) -> &PolynomialSelectors {
-        &self.polynomial
+        &self.selectors.polynomial
+    }
+
+    /// Returns the prime-field route selector family.
+    pub fn prime_route(&self) -> &PrimeRouteSelectors {
+        &self.selectors.prime_route
+    }
+
+    /// Returns the permanent selector family.
+    pub fn permanent(&self) -> &PermanentSelectors {
+        &self.selectors.permanent
     }
 
     /// Builds a profile after validating all selector and calibrated-count ranges.
@@ -566,16 +1348,14 @@ impl TuningProfile {
     pub fn try_new(
         id: ProfileId,
         provenance: Provenance,
-        bit_backend: BitBackendSelectors,
-        polynomial: PolynomialSelectors,
+        selectors: SelectorFamilies,
     ) -> Result<Self, ProfileError> {
         validate_provenance(&provenance)?;
         Ok(Self {
             schema_version: SchemaVersion(SchemaVersion::SUPPORTED),
             id,
             provenance,
-            bit_backend,
-            polynomial,
+            selectors,
         })
     }
 
@@ -600,26 +1380,191 @@ impl TuningProfile {
             Some(Some(bit_backend)) => bit_backend,
             Some(None) => return Err(ProfileError::Malformed),
         };
+        let bit_matrix = match selectors.bit_matrix {
+            None => JsonBitMatrix::default(),
+            Some(Some(bit_matrix)) => bit_matrix,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let soa_batch = match selectors.soa_batch {
+            None => JsonSoaBatch::default(),
+            Some(Some(soa_batch)) => soa_batch,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let m4rm = match selectors.m4rm {
+            None => JsonM4rm::default(),
+            Some(Some(m4rm)) => m4rm,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let dense_inverse = match selectors.dense_inverse {
+            None => JsonDenseInverse::default(),
+            Some(Some(dense_inverse)) => dense_inverse,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let triangular = match selectors.triangular {
+            None => JsonTriangular::default(),
+            Some(Some(triangular)) => triangular,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let ple = match selectors.ple {
+            None => JsonPle::default(),
+            Some(Some(ple)) => ple,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let gemm = match selectors.gemm {
+            None => JsonGemm::default(),
+            Some(Some(gemm)) => gemm,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let field_vec = match selectors.field_vec {
+            None => JsonFieldVec::default(),
+            Some(Some(field_vec)) => field_vec,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let charpoly = match selectors.charpoly {
+            None => JsonCharpoly::default(),
+            Some(Some(charpoly)) => charpoly,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
         let polynomial = match selectors.polynomial {
             None => JsonPolynomial::default(),
             Some(Some(polynomial)) => polynomial,
             Some(None) => return Err(ProfileError::Malformed),
         };
+        let prime_route = match selectors.prime_route {
+            None => JsonPrimeRoute::default(),
+            Some(Some(prime_route)) => prime_route,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
+        let permanent = match selectors.permanent {
+            None => JsonPermanent::default(),
+            Some(Some(permanent)) => permanent,
+            Some(None) => return Err(ProfileError::Malformed),
+        };
         let bit_backend = BitBackendSelectors::try_new(
             optional(bit_backend.simd_min_words)?
-                .unwrap_or(Self::CONSERVATIVE.bit_backend.simd_min_words),
+                .unwrap_or(Self::CONSERVATIVE.selectors.bit_backend.simd_min_words),
+        )?;
+        let bit_matrix = BitMatrixSelectors::try_new(
+            optional(bit_matrix.matvec_simd_min_words)?.unwrap_or(
+                Self::CONSERVATIVE
+                    .selectors
+                    .bit_matrix
+                    .matvec_simd_min_words,
+            ),
+            optional(bit_matrix.transpose_simple_max_blocks)?.unwrap_or(
+                Self::CONSERVATIVE
+                    .selectors
+                    .bit_matrix
+                    .transpose_simple_max_blocks,
+            ),
+            optional(bit_matrix.transpose_macro_tile_blocks)?.unwrap_or(
+                Self::CONSERVATIVE
+                    .selectors
+                    .bit_matrix
+                    .transpose_macro_tile_blocks,
+            ),
+        )?;
+        let soa_batch = SoaBatchSelectors::try_new(
+            optional(soa_batch.parallel_min_len)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.soa_batch.parallel_min_len),
+            optional(soa_batch.parallel_chunk_len)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.soa_batch.parallel_chunk_len),
+        )?;
+        let m4rm = M4rmSelectors::try_new(
+            optional(m4rm.wide_tier_min_stride_words)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.m4rm.wide_tier_min_stride_words),
+            optional(m4rm.tiled_min_stride_words)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.m4rm.tiled_min_stride_words),
+            optional(m4rm.default_table_bytes)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.m4rm.default_table_bytes),
+            optional(m4rm.mid_table_bytes)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.m4rm.mid_table_bytes),
+            optional(m4rm.wide_table_bytes)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.m4rm.wide_table_bytes),
+            optional(m4rm.wide_max_k)?.unwrap_or(Self::CONSERVATIVE.selectors.m4rm.wide_max_k),
+            optional(m4rm.small_n_max_k)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.m4rm.small_n_max_k),
+        )?;
+        let dense_inverse = DenseInverseSelectors::try_new(
+            optional(dense_inverse.m4ri_min_dim)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.dense_inverse.m4ri_min_dim),
+            optional(dense_inverse.blocked_min_dim)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.dense_inverse.blocked_min_dim),
+        )?;
+        let triangular = TriangularSelectors::try_new(
+            optional(triangular.trsm_blocked_min_dim)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.triangular.trsm_blocked_min_dim),
+            optional(triangular.trsm_panel_rows)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.triangular.trsm_panel_rows),
+        )?;
+        let ple = PleSelectors::try_new(
+            optional(ple.panel_base_max_cols)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.ple.panel_base_max_cols),
+            optional(ple.blocked_back_sub_min_dim)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.ple.blocked_back_sub_min_dim),
+        )?;
+        let gemm = GemmSelectors::try_new(
+            optional(gemm.row_tile)?.unwrap_or(Self::CONSERVATIVE.selectors.gemm.row_tile),
+            optional(gemm.col_tile)?.unwrap_or(Self::CONSERVATIVE.selectors.gemm.col_tile),
+            optional(gemm.axpy_fast_path_min_volume)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.gemm.axpy_fast_path_min_volume),
+        )?;
+        let field_vec = FieldVecSelectors::try_new(
+            optional(field_vec.dot_chunk_len)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.field_vec.dot_chunk_len),
+        )?;
+        let charpoly = CharpolySelectors::try_new(
+            optional(charpoly.keller_gehrig_min_dim)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.charpoly.keller_gehrig_min_dim),
         )?;
         let polynomial = PolynomialSelectors::try_new(
             optional(polynomial.karatsuba_min_degree)?
-                .unwrap_or(Self::CONSERVATIVE.polynomial.karatsuba_min_degree),
-            optional(polynomial.karatsuba_max_out_len)?
-                .unwrap_or(Self::CONSERVATIVE.polynomial.karatsuba_max_out_len),
+                .unwrap_or(Self::CONSERVATIVE.selectors.polynomial.karatsuba_min_degree),
+            optional(polynomial.karatsuba_max_out_len)?.unwrap_or(
+                Self::CONSERVATIVE
+                    .selectors
+                    .polynomial
+                    .karatsuba_max_out_len,
+            ),
             optional(polynomial.div_rem_fast_min_len)?
-                .unwrap_or(Self::CONSERVATIVE.polynomial.div_rem_fast_min_len),
+                .unwrap_or(Self::CONSERVATIVE.selectors.polynomial.div_rem_fast_min_len),
             optional(polynomial.subproduct_min_len)?
-                .unwrap_or(Self::CONSERVATIVE.polynomial.subproduct_min_len),
+                .unwrap_or(Self::CONSERVATIVE.selectors.polynomial.subproduct_min_len),
+            optional(polynomial.interpolate_fast_min_points)?.unwrap_or(
+                Self::CONSERVATIVE
+                    .selectors
+                    .polynomial
+                    .interpolate_fast_min_points,
+            ),
         )?;
-        Self::try_new(id, provenance, bit_backend, polynomial).map(|mut profile| {
+        let prime_route = PrimeRouteSelectors::try_new(
+            optional(prime_route.f32_min_prime)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.prime_route.f32_min_prime),
+            optional(prime_route.f32_min_cols)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.prime_route.f32_min_cols),
+            optional(prime_route.f64_min_cols)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.prime_route.f64_min_cols),
+        )?;
+        let permanent = PermanentSelectors::try_new(
+            optional(permanent.gray_chunk_subsets)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.permanent.gray_chunk_subsets),
+        )?;
+        let selectors = SelectorFamilies {
+            bit_backend,
+            bit_matrix,
+            soa_batch,
+            m4rm,
+            dense_inverse,
+            triangular,
+            ple,
+            gemm,
+            field_vec,
+            charpoly,
+            polynomial,
+            prime_route,
+            permanent,
+        };
+        Self::try_new(id, provenance, selectors).map(|mut profile| {
             profile.schema_version = schema_version;
             profile
         })
@@ -637,13 +1582,72 @@ impl TuningProfile {
             provenance: JsonProvenance::from(&self.provenance),
             selectors: JsonSelectorsOut {
                 bit_backend: JsonBitBackendOut {
-                    simd_min_words: self.bit_backend.simd_min_words,
+                    simd_min_words: self.selectors.bit_backend.simd_min_words,
+                },
+                bit_matrix: JsonBitMatrixOut {
+                    matvec_simd_min_words: self.selectors.bit_matrix.matvec_simd_min_words,
+                    transpose_simple_max_blocks: self
+                        .selectors
+                        .bit_matrix
+                        .transpose_simple_max_blocks,
+                    transpose_macro_tile_blocks: self
+                        .selectors
+                        .bit_matrix
+                        .transpose_macro_tile_blocks,
+                },
+                soa_batch: JsonSoaBatchOut {
+                    parallel_min_len: self.selectors.soa_batch.parallel_min_len,
+                    parallel_chunk_len: self.selectors.soa_batch.parallel_chunk_len,
+                },
+                m4rm: JsonM4rmOut {
+                    wide_tier_min_stride_words: self.selectors.m4rm.wide_tier_min_stride_words,
+                    tiled_min_stride_words: self.selectors.m4rm.tiled_min_stride_words,
+                    default_table_bytes: self.selectors.m4rm.default_table_bytes,
+                    mid_table_bytes: self.selectors.m4rm.mid_table_bytes,
+                    wide_table_bytes: self.selectors.m4rm.wide_table_bytes,
+                    wide_max_k: self.selectors.m4rm.wide_max_k,
+                    small_n_max_k: self.selectors.m4rm.small_n_max_k,
+                },
+                dense_inverse: JsonDenseInverseOut {
+                    m4ri_min_dim: self.selectors.dense_inverse.m4ri_min_dim,
+                    blocked_min_dim: self.selectors.dense_inverse.blocked_min_dim,
+                },
+                triangular: JsonTriangularOut {
+                    trsm_blocked_min_dim: self.selectors.triangular.trsm_blocked_min_dim,
+                    trsm_panel_rows: self.selectors.triangular.trsm_panel_rows,
+                },
+                ple: JsonPleOut {
+                    panel_base_max_cols: self.selectors.ple.panel_base_max_cols,
+                    blocked_back_sub_min_dim: self.selectors.ple.blocked_back_sub_min_dim,
+                },
+                gemm: JsonGemmOut {
+                    row_tile: self.selectors.gemm.row_tile,
+                    col_tile: self.selectors.gemm.col_tile,
+                    axpy_fast_path_min_volume: self.selectors.gemm.axpy_fast_path_min_volume,
+                },
+                field_vec: JsonFieldVecOut {
+                    dot_chunk_len: self.selectors.field_vec.dot_chunk_len,
+                },
+                charpoly: JsonCharpolyOut {
+                    keller_gehrig_min_dim: self.selectors.charpoly.keller_gehrig_min_dim,
                 },
                 polynomial: JsonPolynomialOut {
-                    karatsuba_min_degree: self.polynomial.karatsuba_min_degree,
-                    karatsuba_max_out_len: self.polynomial.karatsuba_max_out_len,
-                    div_rem_fast_min_len: self.polynomial.div_rem_fast_min_len,
-                    subproduct_min_len: self.polynomial.subproduct_min_len,
+                    karatsuba_min_degree: self.selectors.polynomial.karatsuba_min_degree,
+                    karatsuba_max_out_len: self.selectors.polynomial.karatsuba_max_out_len,
+                    div_rem_fast_min_len: self.selectors.polynomial.div_rem_fast_min_len,
+                    subproduct_min_len: self.selectors.polynomial.subproduct_min_len,
+                    interpolate_fast_min_points: self
+                        .selectors
+                        .polynomial
+                        .interpolate_fast_min_points,
+                },
+                prime_route: JsonPrimeRouteOut {
+                    f32_min_prime: self.selectors.prime_route.f32_min_prime,
+                    f32_min_cols: self.selectors.prime_route.f32_min_cols,
+                    f64_min_cols: self.selectors.prime_route.f64_min_cols,
+                },
+                permanent: JsonPermanentOut {
+                    gray_chunk_subsets: self.selectors.permanent.gray_chunk_subsets,
                 },
             },
         };
@@ -918,7 +1922,18 @@ fn required<T>(value: Option<T>) -> Result<T, ProfileError> {
 #[serde(deny_unknown_fields)]
 struct JsonSelectors {
     bit_backend: Option<Option<JsonBitBackend>>,
+    bit_matrix: Option<Option<JsonBitMatrix>>,
+    soa_batch: Option<Option<JsonSoaBatch>>,
+    m4rm: Option<Option<JsonM4rm>>,
+    dense_inverse: Option<Option<JsonDenseInverse>>,
+    triangular: Option<Option<JsonTriangular>>,
+    ple: Option<Option<JsonPle>>,
+    gemm: Option<Option<JsonGemm>>,
+    field_vec: Option<Option<JsonFieldVec>>,
+    charpoly: Option<Option<JsonCharpoly>>,
     polynomial: Option<Option<JsonPolynomial>>,
+    prime_route: Option<Option<JsonPrimeRoute>>,
+    permanent: Option<Option<JsonPermanent>>,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -931,11 +1946,105 @@ struct JsonBitBackend {
 #[cfg(feature = "tuning-profile")]
 #[derive(Default, Deserialize)]
 #[serde(deny_unknown_fields)]
+struct JsonBitMatrix {
+    matvec_simd_min_words: Option<Option<usize>>,
+    transpose_simple_max_blocks: Option<Option<usize>>,
+    transpose_macro_tile_blocks: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonSoaBatch {
+    parallel_min_len: Option<Option<usize>>,
+    parallel_chunk_len: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonM4rm {
+    wide_tier_min_stride_words: Option<Option<usize>>,
+    tiled_min_stride_words: Option<Option<usize>>,
+    default_table_bytes: Option<Option<usize>>,
+    mid_table_bytes: Option<Option<usize>>,
+    wide_table_bytes: Option<Option<usize>>,
+    wide_max_k: Option<Option<usize>>,
+    small_n_max_k: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonDenseInverse {
+    m4ri_min_dim: Option<Option<usize>>,
+    blocked_min_dim: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonTriangular {
+    trsm_blocked_min_dim: Option<Option<usize>>,
+    trsm_panel_rows: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonPle {
+    panel_base_max_cols: Option<Option<usize>>,
+    blocked_back_sub_min_dim: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonGemm {
+    row_tile: Option<Option<usize>>,
+    col_tile: Option<Option<usize>>,
+    axpy_fast_path_min_volume: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonFieldVec {
+    dot_chunk_len: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonCharpoly {
+    keller_gehrig_min_dim: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct JsonPolynomial {
     karatsuba_min_degree: Option<Option<usize>>,
     karatsuba_max_out_len: Option<Option<usize>>,
     div_rem_fast_min_len: Option<Option<usize>>,
     subproduct_min_len: Option<Option<usize>>,
+    interpolate_fast_min_points: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonPrimeRoute {
+    f32_min_prime: Option<Option<usize>>,
+    f32_min_cols: Option<Option<usize>>,
+    f64_min_cols: Option<Option<usize>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonPermanent {
+    gray_chunk_subsets: Option<Option<usize>>,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -1010,7 +2119,18 @@ impl From<&Provenance> for JsonProvenance {
 #[derive(Serialize)]
 struct JsonSelectorsOut {
     bit_backend: JsonBitBackendOut,
+    bit_matrix: JsonBitMatrixOut,
+    soa_batch: JsonSoaBatchOut,
+    m4rm: JsonM4rmOut,
+    dense_inverse: JsonDenseInverseOut,
+    triangular: JsonTriangularOut,
+    ple: JsonPleOut,
+    gemm: JsonGemmOut,
+    field_vec: JsonFieldVecOut,
+    charpoly: JsonCharpolyOut,
     polynomial: JsonPolynomialOut,
+    prime_route: JsonPrimeRouteOut,
+    permanent: JsonPermanentOut,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -1021,11 +2141,94 @@ struct JsonBitBackendOut {
 
 #[cfg(feature = "tuning-profile")]
 #[derive(Serialize)]
+struct JsonBitMatrixOut {
+    matvec_simd_min_words: usize,
+    transpose_simple_max_blocks: usize,
+    transpose_macro_tile_blocks: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonSoaBatchOut {
+    parallel_min_len: usize,
+    parallel_chunk_len: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonM4rmOut {
+    wide_tier_min_stride_words: usize,
+    tiled_min_stride_words: usize,
+    default_table_bytes: usize,
+    mid_table_bytes: usize,
+    wide_table_bytes: usize,
+    wide_max_k: usize,
+    small_n_max_k: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonDenseInverseOut {
+    m4ri_min_dim: usize,
+    blocked_min_dim: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonTriangularOut {
+    trsm_blocked_min_dim: usize,
+    trsm_panel_rows: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonPleOut {
+    panel_base_max_cols: usize,
+    blocked_back_sub_min_dim: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonGemmOut {
+    row_tile: usize,
+    col_tile: usize,
+    axpy_fast_path_min_volume: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonFieldVecOut {
+    dot_chunk_len: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonCharpolyOut {
+    keller_gehrig_min_dim: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
 struct JsonPolynomialOut {
     karatsuba_min_degree: usize,
     karatsuba_max_out_len: usize,
     div_rem_fast_min_len: usize,
     subproduct_min_len: usize,
+    interpolate_fast_min_points: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonPrimeRouteOut {
+    f32_min_prime: usize,
+    f32_min_cols: usize,
+    f64_min_cols: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(Serialize)]
+struct JsonPermanentOut {
+    gray_chunk_subsets: usize,
 }
 
 #[cfg(all(test, feature = "tuning-profile"))]
@@ -1288,5 +2491,431 @@ mod tests {
                 .subproduct_min_len(),
             crate::field::poly::SUBPRODUCT_THRESHOLD
         );
+    }
+
+    #[test]
+    fn conservative_values_name_the_follow_on_source_constants() {
+        let profile = &TuningProfile::CONSERVATIVE;
+        assert_eq!(
+            profile.bit_matrix().matvec_simd_min_words(),
+            crate::matrix::MATVEC_SIMD_MIN_WORDS
+        );
+        assert_eq!(
+            profile.bit_matrix().transpose_simple_max_blocks(),
+            crate::matrix::BitMatrix::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS
+        );
+        assert_eq!(
+            profile.bit_matrix().transpose_macro_tile_blocks(),
+            crate::matrix::MACRO_TILE_BLOCKS
+        );
+        assert_eq!(
+            profile.soa_batch().parallel_min_len(),
+            crate::compute::SOA_PARALLEL_MIN_LEN
+        );
+        assert_eq!(
+            profile.soa_batch().parallel_chunk_len(),
+            crate::compute::SOA_PARALLEL_CHUNK_LEN
+        );
+        assert_eq!(
+            profile.m4rm().wide_tier_min_stride_words(),
+            crate::alg::m4rm::M4RM_WIDE_TIER_MIN_STRIDE_WORDS
+        );
+        assert_eq!(
+            profile.m4rm().tiled_min_stride_words(),
+            crate::alg::m4rm::M4RM_TILED_MIN_STRIDE_WORDS
+        );
+        assert_eq!(
+            profile.m4rm().default_table_bytes(),
+            crate::alg::m4rm::M4RM_DEFAULT_TABLE_BYTES
+        );
+        assert_eq!(
+            profile.m4rm().mid_table_bytes(),
+            crate::alg::m4rm::M4RM_MID_TABLE_BYTES
+        );
+        assert_eq!(
+            profile.m4rm().wide_table_bytes(),
+            crate::alg::m4rm::M4RM_WIDE_TABLE_BYTES
+        );
+        assert_eq!(
+            profile.m4rm().wide_max_k(),
+            crate::alg::m4rm::M4RM_WIDE_MAX_K
+        );
+        assert_eq!(
+            profile.m4rm().small_n_max_k(),
+            crate::alg::m4rm::M4RM_SMALL_N_MAX_K
+        );
+        assert_eq!(
+            profile.dense_inverse().m4ri_min_dim(),
+            crate::alg::gauss::INVERT_M4RI_THRESHOLD
+        );
+        assert_eq!(
+            profile.dense_inverse().blocked_min_dim(),
+            crate::field::inverse::BLOCKED_INVERT_THRESHOLD
+        );
+        assert_eq!(
+            profile.triangular().trsm_blocked_min_dim(),
+            crate::field::triangular::TRSM_BLOCKED_PANEL_SIZE
+        );
+        assert_eq!(
+            profile.triangular().trsm_panel_rows(),
+            crate::field::triangular::TRSM_BLOCKED_PANEL_SIZE
+        );
+        assert_eq!(
+            profile.ple().panel_base_max_cols(),
+            crate::field::ple::PLE_PANEL_RECURSIVE_BASE
+        );
+        assert_eq!(
+            profile.ple().blocked_back_sub_min_dim(),
+            crate::field::ple::BLOCKED_BACK_SUB_MIN_DIM
+        );
+        assert_eq!(
+            profile.gemm().row_tile(),
+            crate::field::matrix::GEMM_ROW_TILE
+        );
+        assert_eq!(
+            profile.gemm().col_tile(),
+            crate::field::matrix::GEMM_COL_TILE
+        );
+        assert_eq!(
+            profile.gemm().axpy_fast_path_min_volume(),
+            crate::field::matrix::GEMM_AXPY_FAST_PATH_THRESHOLD
+        );
+        assert_eq!(
+            profile.field_vec().dot_chunk_len(),
+            crate::field::vec::DOT_CHUNK_LEN
+        );
+        assert_eq!(
+            profile.charpoly().keller_gehrig_min_dim(),
+            crate::field::charpoly::KG_DISPATCH_MIN_N
+        );
+        assert_eq!(
+            profile.polynomial().interpolate_fast_min_points(),
+            crate::field::poly_interpolate::INTERPOLATE_THRESHOLD
+        );
+        assert_eq!(
+            profile.prime_route().f32_min_prime(),
+            crate::gfp::simd_ops::N_THRESH_PRIME as usize
+        );
+        assert_eq!(
+            profile.prime_route().f32_min_cols(),
+            crate::gfp::simd_ops::F32_MIN_COLS
+        );
+        assert_eq!(
+            profile.prime_route().f64_min_cols(),
+            crate::gfp::simd_ops::F64_MIN_COLS
+        );
+        assert_eq!(
+            profile.permanent().gray_chunk_subsets(),
+            PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT
+        );
+    }
+
+    #[test]
+    fn follow_on_bounded_fields_report_their_family_and_field() {
+        let cases = [
+            (
+                ProfileFamily::BitMatrix,
+                ProfileField::TransposeMacroTileBlocks,
+                "bit_matrix",
+                "transpose_macro_tile_blocks",
+                0,
+            ),
+            (
+                ProfileFamily::SoaBatch,
+                ProfileField::ParallelChunkLen,
+                "soa_batch",
+                "parallel_chunk_len",
+                0,
+            ),
+            (
+                ProfileFamily::M4rm,
+                ProfileField::TiledMinStrideWords,
+                "m4rm",
+                "tiled_min_stride_words",
+                crate::alg::m4rm::M4RM_TILE_WORDS - 1,
+            ),
+            (
+                ProfileFamily::M4rm,
+                ProfileField::WideMaxK,
+                "m4rm",
+                "wide_max_k",
+                0,
+            ),
+            (
+                ProfileFamily::M4rm,
+                ProfileField::SmallNMaxK,
+                "m4rm",
+                "small_n_max_k",
+                1,
+            ),
+            (
+                ProfileFamily::DenseInverse,
+                ProfileField::BlockedMinDim,
+                "dense_inverse",
+                "blocked_min_dim",
+                0,
+            ),
+            (
+                ProfileFamily::Triangular,
+                ProfileField::TrsmPanelRows,
+                "triangular",
+                "trsm_panel_rows",
+                0,
+            ),
+            (
+                ProfileFamily::Ple,
+                ProfileField::PanelBaseMaxCols,
+                "ple",
+                "panel_base_max_cols",
+                0,
+            ),
+            (
+                ProfileFamily::Gemm,
+                ProfileField::RowTile,
+                "gemm",
+                "row_tile",
+                0,
+            ),
+            (
+                ProfileFamily::Gemm,
+                ProfileField::ColTile,
+                "gemm",
+                "col_tile",
+                0,
+            ),
+            (
+                ProfileFamily::FieldVec,
+                ProfileField::DotChunkLen,
+                "field_vec",
+                "dot_chunk_len",
+                0,
+            ),
+            (
+                ProfileFamily::Polynomial,
+                ProfileField::InterpolateFastMinPoints,
+                "polynomial",
+                "interpolate_fast_min_points",
+                0,
+            ),
+            (
+                ProfileFamily::Permanent,
+                ProfileField::GrayChunkSubsets,
+                "permanent",
+                "gray_chunk_subsets",
+                0,
+            ),
+        ];
+        for (family, field, family_name, field_name, value) in cases {
+            let text = inherited_document(&format!(
+                r#"{{"{family_name}":{{"{field_name}":{value}}}}}"#
+            ));
+            assert_eq!(
+                TuningProfile::from_json(&text).unwrap_err(),
+                ProfileError::SelectorOutOfRange {
+                    family,
+                    field,
+                    value: value as u64,
+                }
+            );
+        }
+    }
+
+    #[test]
+    fn follow_on_range_floors_are_admissible() {
+        let cases = [
+            ("bit_matrix", "transpose_macro_tile_blocks", 1),
+            ("soa_batch", "parallel_chunk_len", 1),
+            (
+                "m4rm",
+                "tiled_min_stride_words",
+                crate::alg::m4rm::M4RM_TILE_WORDS,
+            ),
+            ("m4rm", "wide_max_k", 1),
+            ("m4rm", "small_n_max_k", 2),
+            ("dense_inverse", "blocked_min_dim", 1),
+            ("triangular", "trsm_panel_rows", 1),
+            ("ple", "panel_base_max_cols", 1),
+            ("gemm", "row_tile", 1),
+            ("gemm", "col_tile", 1),
+            ("field_vec", "dot_chunk_len", 1),
+            ("polynomial", "interpolate_fast_min_points", 1),
+            ("permanent", "gray_chunk_subsets", 1),
+        ];
+        for (family, field, floor) in cases {
+            let text = inherited_document(&format!(r#"{{"{family}":{{"{field}":{floor}}}}}"#));
+            let profile = TuningProfile::from_json(&text)
+                .unwrap_or_else(|error| panic!("{family}.{field} rejects its floor: {error}"));
+            let read_back = match (family, field) {
+                ("bit_matrix", _) => profile.bit_matrix().transpose_macro_tile_blocks(),
+                ("soa_batch", _) => profile.soa_batch().parallel_chunk_len(),
+                ("m4rm", "tiled_min_stride_words") => profile.m4rm().tiled_min_stride_words(),
+                ("m4rm", "wide_max_k") => profile.m4rm().wide_max_k(),
+                ("m4rm", _) => profile.m4rm().small_n_max_k(),
+                ("dense_inverse", _) => profile.dense_inverse().blocked_min_dim(),
+                ("triangular", _) => profile.triangular().trsm_panel_rows(),
+                ("ple", _) => profile.ple().panel_base_max_cols(),
+                ("gemm", "row_tile") => profile.gemm().row_tile(),
+                ("gemm", _) => profile.gemm().col_tile(),
+                ("field_vec", _) => profile.field_vec().dot_chunk_len(),
+                ("polynomial", _) => profile.polynomial().interpolate_fast_min_points(),
+                _ => profile.permanent().gray_chunk_subsets(),
+            };
+            assert_eq!(read_back, floor, "{family}.{field}");
+        }
+    }
+
+    #[test]
+    fn unbounded_follow_on_fields_admit_both_endpoints() {
+        let zero = TuningProfile::from_json(&inherited_document(
+            r#"{"bit_matrix":{"matvec_simd_min_words":0,"transpose_simple_max_blocks":0},"soa_batch":{"parallel_min_len":0},"m4rm":{"wide_tier_min_stride_words":0,"default_table_bytes":0,"mid_table_bytes":0,"wide_table_bytes":0},"dense_inverse":{"m4ri_min_dim":0},"triangular":{"trsm_blocked_min_dim":0},"ple":{"blocked_back_sub_min_dim":0},"gemm":{"axpy_fast_path_min_volume":0},"field_vec":{},"prime_route":{"f32_min_prime":0,"f32_min_cols":0,"f64_min_cols":0}}"#,
+        )).unwrap();
+        assert_eq!(zero.bit_matrix().matvec_simd_min_words(), 0);
+        assert_eq!(zero.bit_matrix().transpose_simple_max_blocks(), 0);
+        assert_eq!(zero.soa_batch().parallel_min_len(), 0);
+        assert_eq!(zero.m4rm().wide_tier_min_stride_words(), 0);
+        assert_eq!(zero.m4rm().default_table_bytes(), 0);
+        assert_eq!(zero.m4rm().mid_table_bytes(), 0);
+        assert_eq!(zero.m4rm().wide_table_bytes(), 0);
+        assert_eq!(zero.dense_inverse().m4ri_min_dim(), 0);
+        assert_eq!(zero.triangular().trsm_blocked_min_dim(), 0);
+        assert_eq!(zero.ple().blocked_back_sub_min_dim(), 0);
+        assert_eq!(zero.gemm().axpy_fast_path_min_volume(), 0);
+        assert_eq!(zero.prime_route().f32_min_prime(), 0);
+        assert_eq!(zero.prime_route().f32_min_cols(), 0);
+        assert_eq!(zero.prime_route().f64_min_cols(), 0);
+
+        let max = inherited_document(&format!(
+            r#"{{"charpoly":{{"keller_gehrig_min_dim":{}}}}}"#,
+            usize::MAX
+        ));
+        let profile = TuningProfile::from_json(&max).unwrap();
+        assert_eq!(profile.charpoly().keller_gehrig_min_dim(), usize::MAX);
+    }
+
+    #[test]
+    fn absent_follow_on_families_inherit_defaults() {
+        let profile = TuningProfile::from_json(
+            r#"{"schema_version":1,"profile_id":"example","provenance":{"kind":"inherited"}}"#,
+        )
+        .unwrap();
+        let conservative = &TuningProfile::CONSERVATIVE;
+        assert_eq!(profile.bit_matrix(), conservative.bit_matrix());
+        assert_eq!(profile.soa_batch(), conservative.soa_batch());
+        assert_eq!(profile.m4rm(), conservative.m4rm());
+        assert_eq!(profile.dense_inverse(), conservative.dense_inverse());
+        assert_eq!(profile.triangular(), conservative.triangular());
+        assert_eq!(profile.ple(), conservative.ple());
+        assert_eq!(profile.gemm(), conservative.gemm());
+        assert_eq!(profile.field_vec(), conservative.field_vec());
+        assert_eq!(profile.charpoly(), conservative.charpoly());
+        assert_eq!(profile.prime_route(), conservative.prime_route());
+        assert_eq!(profile.permanent(), conservative.permanent());
+        assert_eq!(
+            profile.polynomial().interpolate_fast_min_points(),
+            conservative.polynomial().interpolate_fast_min_points()
+        );
+    }
+
+    #[test]
+    fn partially_specified_follow_on_family_inherits_sibling_defaults() {
+        let profile =
+            TuningProfile::from_json(&inherited_document(r#"{"m4rm":{"wide_max_k":10}}"#)).unwrap();
+        let conservative = &TuningProfile::CONSERVATIVE;
+        assert_eq!(profile.m4rm().wide_max_k(), 10);
+        assert_eq!(
+            profile.m4rm().wide_tier_min_stride_words(),
+            conservative.m4rm().wide_tier_min_stride_words()
+        );
+        assert_eq!(
+            profile.m4rm().tiled_min_stride_words(),
+            conservative.m4rm().tiled_min_stride_words()
+        );
+        assert_eq!(
+            profile.m4rm().default_table_bytes(),
+            conservative.m4rm().default_table_bytes()
+        );
+        assert_eq!(
+            profile.m4rm().mid_table_bytes(),
+            conservative.m4rm().mid_table_bytes()
+        );
+        assert_eq!(
+            profile.m4rm().wide_table_bytes(),
+            conservative.m4rm().wide_table_bytes()
+        );
+        assert_eq!(
+            profile.m4rm().small_n_max_k(),
+            conservative.m4rm().small_n_max_k()
+        );
+        assert_eq!(profile.bit_matrix(), conservative.bit_matrix());
+        assert_eq!(profile.soa_batch(), conservative.soa_batch());
+        assert_eq!(profile.dense_inverse(), conservative.dense_inverse());
+        assert_eq!(profile.triangular(), conservative.triangular());
+        assert_eq!(profile.ple(), conservative.ple());
+        assert_eq!(profile.gemm(), conservative.gemm());
+        assert_eq!(profile.field_vec(), conservative.field_vec());
+        assert_eq!(profile.charpoly(), conservative.charpoly());
+        assert_eq!(profile.polynomial(), conservative.polynomial());
+        assert_eq!(profile.prime_route(), conservative.prime_route());
+        assert_eq!(profile.permanent(), conservative.permanent());
+    }
+
+    #[test]
+    fn unknown_keys_in_follow_on_families_are_rejected() {
+        for family in [
+            "bit_matrix",
+            "soa_batch",
+            "m4rm",
+            "dense_inverse",
+            "triangular",
+            "ple",
+            "gemm",
+            "field_vec",
+            "charpoly",
+            "prime_route",
+            "permanent",
+        ] {
+            let text = inherited_document(&format!(r#"{{"{family}":{{"unknown":0}}}}"#));
+            assert!(TuningProfile::from_json(&text).is_err(), "{family}");
+        }
+        let text = inherited_document(r#"{"unknown_family":{}}"#);
+        assert!(TuningProfile::from_json(&text).is_err());
+    }
+
+    #[test]
+    fn follow_on_profile_round_trips() {
+        let text = inherited_document(
+            r#"{
+                "bit_backend":{"simd_min_words":9},
+                "bit_matrix":{"matvec_simd_min_words":9,"transpose_simple_max_blocks":17,"transpose_macro_tile_blocks":9},
+                "soa_batch":{"parallel_min_len":32769,"parallel_chunk_len":16385},
+                "m4rm":{"wide_tier_min_stride_words":17,"tiled_min_stride_words":5,"default_table_bytes":65537,"mid_table_bytes":131073,"wide_table_bytes":262145,"wide_max_k":10,"small_n_max_k":9},
+                "dense_inverse":{"m4ri_min_dim":9,"blocked_min_dim":17},
+                "triangular":{"trsm_blocked_min_dim":65,"trsm_panel_rows":65},
+                "ple":{"panel_base_max_cols":129,"blocked_back_sub_min_dim":129},
+                "gemm":{"row_tile":33,"col_tile":65,"axpy_fast_path_min_volume":4097},
+                "field_vec":{"dot_chunk_len":257},
+                "charpoly":{"keller_gehrig_min_dim":18446744073709551614},
+                "polynomial":{"karatsuba_min_degree":33,"karatsuba_max_out_len":129,"div_rem_fast_min_len":2049,"subproduct_min_len":4097,"interpolate_fast_min_points":17},
+                "prime_route":{"f32_min_prime":252,"f32_min_cols":513,"f64_min_cols":513},
+                "permanent":{"gray_chunk_subsets":65537}
+            }"#,
+        );
+        let profile = TuningProfile::from_json(&text).unwrap();
+        assert_eq!(
+            TuningProfile::from_json(&profile.to_json()).unwrap(),
+            profile
+        );
+        assert_eq!(profile.bit_matrix().matvec_simd_min_words(), 9);
+        assert_eq!(profile.soa_batch().parallel_min_len(), 32769);
+        assert_eq!(profile.m4rm().wide_tier_min_stride_words(), 17);
+        assert_eq!(profile.dense_inverse().m4ri_min_dim(), 9);
+        assert_eq!(profile.triangular().trsm_blocked_min_dim(), 65);
+        assert_eq!(profile.ple().panel_base_max_cols(), 129);
+        assert_eq!(profile.gemm().row_tile(), 33);
+        assert_eq!(profile.field_vec().dot_chunk_len(), 257);
+        assert_eq!(profile.charpoly().keller_gehrig_min_dim(), usize::MAX - 1);
+        assert_eq!(profile.polynomial().interpolate_fast_min_points(), 17);
+        assert_eq!(profile.prime_route().f32_min_prime(), 252);
+        assert_eq!(profile.permanent().gray_chunk_subsets(), 65_537);
     }
 }

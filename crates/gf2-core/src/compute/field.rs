@@ -14,19 +14,7 @@
 use crate::field::ConstField;
 use crate::gfpn::{BatchExtField, ExtConfig, SimdKaratsubaHook};
 
-/// Number of extension elements processed by one rayon task.
-///
-/// The chunk is large enough to amortise rayon scheduling overhead while still
-/// keeping the six coefficient input lanes plus three output lanes for cubic
-/// multiplication in the private-cache working set. Inner chunk arithmetic is
-/// delegated to the existing SIMD Karatsuba hooks.
-pub const SOA_PARALLEL_CHUNK_LEN: usize = 16 * 1024;
-
-/// Minimum batch size that enables rayon fan-out.
-///
-/// Smaller batches keep the exact single-thread path to avoid losing the Tier-C
-/// micro-benchmark shape to scheduling overhead.
-pub const SOA_PARALLEL_MIN_LEN: usize = 2 * SOA_PARALLEL_CHUNK_LEN;
+pub use super::{SOA_PARALLEL_CHUNK_LEN, SOA_PARALLEL_MIN_LEN};
 
 /// Returns whether a SoA batch of `len` elements should use rayon.
 #[inline]

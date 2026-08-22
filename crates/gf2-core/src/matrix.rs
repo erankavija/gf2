@@ -9,8 +9,15 @@ use std::ops::Mul;
 // Route the PPC A1 design sizes (512 and 1024 columns, i.e. 8 and 16 words)
 // through the AVX2-dispatched AND+popcount kernel when available. Benchmarked
 // vs ppc-v0-2026-04-27: 512 cols 2.356x, 1024 cols 2.949x, geomean 2.636x.
-#[cfg(feature = "simd")]
-const MATVEC_SIMD_MIN_WORDS: usize = 8;
+pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
+
+/// Outer macro-tile edge, in 64×64 bit-blocks, used by the cache-tiled
+/// transpose driver.
+///
+/// Sized so that the (input row-strip) × (output column-strip) working set of
+/// one macro-tile stays L1-resident on a Zen 3 core; the value is empirical
+/// for the B1 recovery measurements.
+pub(crate) const MACRO_TILE_BLOCKS: usize = 8;
 
 /// A row-major, bit-packed boolean matrix.
 ///
@@ -1109,11 +1116,8 @@ impl BitMatrix {
 
         // V7: pick a macro-tile once either dimension spans enough
         // 64×64 blocks that the simple 2-level loop starts losing
-        // cache locality. The threshold below is empirical for the B1
-        // recovery measurements; small and medium matrices stay on the
+        // cache locality; small and medium matrices stay on the
         // simpler path.
-        const MACRO_TILE_BLOCKS: usize = 8;
-
         if n_row_blocks <= Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS
             && n_col_blocks <= Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS
         {
@@ -1174,7 +1178,7 @@ impl BitMatrix {
     /// Tuned from the recovered B1 benchmark sweep: matrices up to
     /// 16 blocks (= 1024 rows/cols) in both dimensions use the simple
     /// loop, while larger matrices use the macro-tiled driver.
-    const TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS: usize = 16;
+    pub(crate) const TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS: usize = 16;
 
     /// Inner loop over a (br, bc) range of 64×64 bit-blocks.
     ///

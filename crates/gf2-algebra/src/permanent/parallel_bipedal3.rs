@@ -46,7 +46,12 @@ use crate::packed::PackedFieldVec;
 /// measures within 0.6% (~1 σ) of the empirical best at `2^14`, and well
 /// outside the rolloff at `2^7` (-91%) and `2^22` (-10%). See the CSV
 /// for the full sweep.
-pub const CHUNK_SUBSETS: usize = 1 << 16;
+///
+/// The value is the conservative default of the tuning profile's
+/// `permanent.gray_chunk_subsets` field, defined at
+/// [`gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT`] because a
+/// `gf2-core` constant cannot name one declared here.
+pub const CHUNK_SUBSETS: usize = gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT;
 
 /// Compute the permanent of an `n × n` matrix over `F_3` using rayon-parallel
 /// Ryser's formula, splitting the Gray-code subset enumeration across worker

@@ -82,7 +82,7 @@ use crate::field::FiniteField;
 /// GF(7), GF(251), and GF(65521) (see `dev/bench_results/
 /// 2026-05-26-8df0c501-blocked-invert.md` § 2 for the sweep).
 /// For n ≥ 16 the panelized path is equal-or-faster on every prime tested.
-const BLOCKED_INVERT_THRESHOLD: usize = 16;
+pub(crate) const BLOCKED_INVERT_THRESHOLD: usize = 16;
 
 // ─── Public methods on FieldMatrix ───────────────────────────────────────────
 
