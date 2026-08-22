@@ -489,8 +489,8 @@
           "title": "Introduce the PLE panel lane hook",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "worker-dead-uncommitted",
-          "notes": "Seam U4. traits.rs + gfp/mod.rs. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1. In flight, 5 files dirty, no commit, no report at session end. Inspect/preserve, then re-dispatch into the existing worktree."
+          "status": "worker-committed-ci-running",
+          "notes": "Seam U4. traits.rs + gfp/mod.rs. Dispatched 2026-08-23 (base a80e92bc), background, parallel with t1. POST-HANDOFF: nudge worked \u2014 committed da9dea72 (clean tree), its CI queued on the shared lock, report pending. If the report never arrives: review the diff against the dispatch, run CI if its run did not complete, merge after t1/U1/U2."
         }
       ]
     },
