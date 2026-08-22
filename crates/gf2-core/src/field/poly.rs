@@ -2962,8 +2962,8 @@ impl<F: TwoAdicField> FieldPoly<F> {
 }
 
 /// Multiplies two polynomials over a [`TwoAdicField`] with dispatch
-/// between Karatsuba / schoolbook (via [`FieldPoly::mul`]) and NTT
-/// (via [`FieldPoly::mul_ntt`]).
+/// between Karatsuba / schoolbook (the same dispatcher [`FieldPoly::mul`]
+/// uses) and NTT (via [`FieldPoly::mul_ntt`]).
 ///
 /// Rust coherence prevents us from specialising the blanket
 /// `impl Mul for FieldPoly<F>` on the stable toolchain: we

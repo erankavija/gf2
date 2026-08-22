@@ -27,7 +27,8 @@ three between the two phases and why the cell's translation sensitivity rose
 6.5×. Collapsing the chain removes both the mean excursion and the sensitivity:
 in a sixteen-member pilot ensemble of the fixed revision the cell reads
 **0.9972** against the session-5 reference arm at matched page offsets, with a
-parity split of **0.9994** against the pre-fix **1.0800**.
+bit5 = 0 over bit5 = 1 phase ratio of **0.9994** against the pre-fix
+**1.0800**.
 
 ## 1. The property: what the cutover did to the dispatch path
 
@@ -216,7 +217,9 @@ eight members per phase everywhere
 Against the **full 128-member** reference arm the same pilot values read
 1.001235, 0.999631, 0.995315 and 1.000313.
 
-Parity split, slower phase over faster phase, same window:
+Ratio of the two 64-byte fetch-block phases, bit5 = 0 over bit5 = 1, same
+window; a value above 1 means the bit5 = 0 phase is the slower one, and every
+"parity split" named elsewhere in this document is this ratio:
 
 | Cell | reference | candidate (pre-fix) | **pilot (fixed)** |
 |---|---:|---:|---:|
@@ -299,12 +302,13 @@ installed-profile semantics for a layout outcome that a relink already changes.
 The minimal change, if the owner ever wants it, is a `const`-generic or
 compile-time-baked threshold on the recursion body with the profile-driven body
 retained for installed profiles — a second dispatch path, which
-`@/inv/canonical-abstraction` disallows without a named, tracked exception. This
-document does not propose it. What Site A's fix cannot explain is stated
-plainly in §2: at len=64 the wrapper term is only 15.4 of the 191.1 ns pooled
-excursion. The pilot nonetheless reads 1.000586 there, because the remaining
-Karatsuba term is arrangement-borne and this arrangement does not carry it.
-That relief is the least durable claim in this document.
+`@/inv/convention-convergence` makes a defect without a named, cited exception
+and a tracked convergence condition. This document does not propose it. What
+Site A's fix cannot explain is stated plainly in §2: at len=64 the wrapper term
+is only 15.4 of the 191.1 ns pooled excursion. The pilot nonetheless reads
+1.000586 there, because the remaining Karatsuba term is arrangement-borne and
+this arrangement does not carry it. That relief is the least durable claim in
+this document.
 
 ## 8. Disposition under the issue's criteria
 

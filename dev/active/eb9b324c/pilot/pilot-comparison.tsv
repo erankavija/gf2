@@ -12,7 +12,7 @@ polynomial/mul_fast/len=65	12040.5	11902.5	11971.1	11892.0	12039.3	11885.0	11961
 polynomial/mul_fast/len=128	12032.3	11896.5	11964.0	11887.2	12035.6	11885.4	11960.0	0.993580	0.999672
 polynomial/mul_fast/len=512	54267.1	53570.6	53916.5	53497.7	54289.1	53554.1	53919.1	0.992233	1.000049
 
-### B. Parity split (slower phase / faster phase), same window
+### B. Fetch-block phase ratio (bit5=0 over bit5=1), same window
 
 cell	ref5 b0/b1	cand5 b0/b1	pilot b0/b1
 polynomial/mul_fast/len=32	1.0087	1.0800	0.9994
