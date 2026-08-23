@@ -13,9 +13,20 @@
 //! optimized path tiles each table row into 8-word chunks and keeps one running
 //! accumulator per chunk, exposing independent XOR chains while preserving the
 //! hoisted `XorInplaceFn` dispatch used by the surrounding M4RM row updates.
+//!
+//! # Schedule selection
+//!
+//! [`multiply`] resolves the `m4rm` selector family of the active
+//! [`crate::tuning::TuningProfile`] once per multiplication and threads the
+//! resolved values into the schedule route and the register-tiled C-update
+//! gate, so no per-panel or per-row helper reads the profile.
+//! [`m4rm_schedule_route`] reports the tier and Gray-code panel width the
+//! dispatcher uses. With no profile installed each field resolves to the
+//! conservative default this module's constants define.
 
 use crate::kernels::ops::{resolve_xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
+use crate::tuning::M4rmSelectors;
 
 /// Column-word tile width for the V2 ILP Gray-table builder.
 ///
@@ -24,15 +35,30 @@ use crate::matrix::BitMatrix;
 /// when LLVM batches the XOR/store loops.
 const B2_GRAY_TILE_WORDS: usize = 8;
 const B2_GRAY_MAX_TILES: usize = 4;
+
+/// Conservative default for `m4rm.default_table_bytes()` in the active
+/// [`crate::tuning::TuningProfile`].
+///
+/// It is the Gray-table byte budget [`production_table_budget`] applies to the
+/// narrowest wide-tier strides, where the table stays L1-resident.
 pub(crate) const M4RM_DEFAULT_TABLE_BYTES: usize = 64 * 1024;
 /// Legacy narrow-tier panel-width cap (pre-jit:bdf60780). Retained as the
 /// reference schedule that `test_production_multiply_matches_legacy_schedule_*`
-/// compares against; the production small-n path now uses
-/// [`choose_k_block_small_n`] instead.
+/// compares against on the conservative table; the production small-n path uses
+/// [`choose_k_block_small_n`] under `m4rm.small_n_max_k()` instead. No profile
+/// field carries it: it is a test fixture, so an installed profile does not
+/// move it.
 #[cfg_attr(not(test), allow(dead_code))]
 const M4RM_DEFAULT_MAX_K: usize = 8;
+/// Conservative default for `m4rm.mid_table_bytes()` in the active
+/// [`crate::tuning::TuningProfile`].
+///
+/// It is the Gray-table byte budget [`production_table_budget`] applies to the
+/// mid-width band between the default and wide budgets.
 pub(crate) const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
-/// Wider schedule budget for LLC-streaming M4RM rows.
+/// Conservative default for `m4rm.wide_table_bytes()` in the active
+/// [`crate::tuning::TuningProfile`]: the wider schedule budget for
+/// LLC-streaming M4RM rows.
 ///
 /// The production policy keeps rows narrower than the register-tiled threshold
 /// on the historical 64 KiB / k≤8 schedule.  At measured 1024+ column rows,
@@ -40,71 +66,181 @@ pub(crate) const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
 /// recover the table-build and row-update overhead without letting the table
 /// grow beyond the 256 KiB L2 size class that regressed at small widths.
 pub(crate) const M4RM_WIDE_TABLE_BYTES: usize = 256 * 1024;
+/// Conservative default for `m4rm.wide_max_k()` in the active
+/// [`crate::tuning::TuningProfile`].
+///
+/// It caps the Gray-code panel width the wide tier selects once the byte budget
+/// admits a wider one.
 pub(crate) const M4RM_WIDE_MAX_K: usize = 9;
 
 /// Row accumulators held by the M4RM C-tile update.
+///
+/// Kernel shape rather than a host-tuning value — it is the row count of the
+/// 8×4 register tile and of `M4rmTile8xNFn`'s index array — so no profile field
+/// carries it.
 const M4RM_TILE_ROWS: usize = 8;
 /// Column words per register tile: four u64 lanes fit exactly in one YMM.
+///
+/// Kernel shape rather than a host-tuning value, and the floor
+/// [`crate::tuning::M4rmSelectors::try_new`] validates
+/// `m4rm.tiled_min_stride_words()` against: a narrower stride cannot fire the
+/// tile even once.
 pub(crate) const M4RM_TILE_WORDS: usize = 4;
-/// Minimum row stride (in u64 words) for the register-tiled M4RM C-update.
+/// Conservative default for `m4rm.tiled_min_stride_words()` in the active
+/// [`crate::tuning::TuningProfile`]: the minimum row stride (in u64 words) for
+/// the register-tiled M4RM C-update.
 ///
 /// The 8×4 YMM tile processes four output words per lane, so it needs at least
-/// `M4RM_TILE_WORDS` (= 4) full words to fire even once. Lowered from the
-/// original 16-word threshold to 4 for jit:bdf60780: at `n=256` (stride 4) the
-/// SIMD tile plus the SIMD Gray-table builder beat the scalar row-XOR schedule
-/// by ~1.7× (measured `2026-05-28-bdf60780-matmul-gf2-smalln.md`), closing the
-/// M4RI parity gap. Narrower strides (1..=3) still fall through to the row-XOR
-/// path because there is no full 4-word tile.
+/// [`M4RM_TILE_WORDS`] full words to fire even once. The default is defined by
+/// naming that constant rather than by restating its value, and the profile
+/// field carries the same floor. The four-word gate is measured for
+/// jit:bdf60780: at `n=256` (stride 4) the SIMD tile plus the SIMD Gray-table
+/// builder beat the scalar row-XOR schedule by ~1.7×
+/// (`2026-05-28-bdf60780-matmul-gf2-smalln.md`), closing the M4RI parity gap.
+/// Narrower strides (1..=3) fall through to the row-XOR path because there is
+/// no full 4-word tile.
 pub(crate) const M4RM_TILED_MIN_STRIDE_WORDS: usize = M4RM_TILE_WORDS;
-/// Upper bound on the small-`n` (sub-wide-tier) Gray-code panel width.
+/// Conservative default for `m4rm.small_n_max_k()` in the active
+/// [`crate::tuning::TuningProfile`]: the upper bound on the small-`n`
+/// (sub-wide-tier) Gray-code panel width.
 ///
-/// Below the wide-row tier (`stride_words < 16`) the table is L1-resident and
-/// the cost-balanced optimum is `~0.8·log2(min(K, n))` panels, not the maximum
-/// width the byte budget allows. Capping at 8 keeps the `k=8` panel that wins
-/// at `n=256` while the heuristic still selects `k=4..5` at `n=64`.
+/// Below the wide-row tier the table is L1-resident and the cost-balanced
+/// optimum is `~0.8·log2(min(K, n))` panels, not the maximum width the byte
+/// budget allows. Capping at 8 keeps the `k=8` panel that wins at `n=256` while
+/// the heuristic still selects `k=4..5` at `n=64`.
 pub(crate) const M4RM_SMALL_N_MAX_K: usize = 8;
 type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
 
-/// Chooses an appropriate block size k for M4RM based on matrix dimensions.
+/// The Gray-code schedule tier [`multiply`] selects for an output width.
 ///
-/// The block size determines the size of the Gray code table (2^k entries).
-/// We keep each Gray table cache-sized: 64 KiB for narrow rows, 128 KiB for
-/// mid-width rows, and 256 KiB for the measured wide-row M4RM target.
+/// The tier comparison reads `m4rm.wide_tier_min_stride_words()` from the
+/// active [`crate::tuning::TuningProfile`]: a row stride at or above that value
+/// takes the byte-budgeted wide schedule, anything narrower the L1-resident
+/// small-`n` heuristic.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M4rmScheduleTier {
+    /// The L1-resident small-`n` cost-balance heuristic.
+    SmallN,
+    /// The byte-budgeted wide-row schedule.
+    Wide,
+}
+
+/// The tier and Gray-code panel width selected for one M4RM multiplication.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M4rmScheduleRoute {
+    tier: M4rmScheduleTier,
+    panel_width: usize,
+}
+
+impl M4rmScheduleRoute {
+    /// Returns the selected schedule tier.
+    #[must_use]
+    pub fn tier(&self) -> M4rmScheduleTier {
+        self.tier
+    }
+
+    /// Returns the selected Gray-code panel width in bits (`k_block`).
+    ///
+    /// Zero reports a degenerate operand (`k == 0` or `n == 0`); one routes the
+    /// multiplication to the row-XOR path instead of a Gray-code panel.
+    #[must_use]
+    pub fn panel_width(&self) -> usize {
+        self.panel_width
+    }
+}
+
+/// Reports the M4RM schedule [`multiply`] selects for an inner dimension and an
+/// output width.
+///
+/// The tier comparison reads `m4rm.wide_tier_min_stride_words()` and the panel
+/// width reads the three table byte budgets and both panel-width ceilings, all
+/// from the active [`crate::tuning::TuningProfile`]. [`multiply`] resolves the
+/// same family once per call and selects through the same resolved selector, so
+/// this reporter and the dispatcher cannot disagree.
+#[must_use]
+pub fn m4rm_schedule_route(k: usize, n: usize) -> M4rmScheduleRoute {
+    m4rm_schedule_route_resolved(crate::tuning::active().m4rm(), k, n)
+}
+
+/// Reports the M4RM schedule against an already-resolved selector family.
+fn m4rm_schedule_route_resolved(m4rm: &M4rmSelectors, k: usize, n: usize) -> M4rmScheduleRoute {
+    M4rmScheduleRoute {
+        tier: schedule_tier(m4rm.wide_tier_min_stride_words(), row_stride_words(n)),
+        panel_width: choose_k_block(m4rm, k, n),
+    }
+}
+
+/// Row stride in u64 words for an output width.
+#[inline]
+fn row_stride_words(n: usize) -> usize {
+    if n == 0 {
+        0
+    } else {
+        n.div_ceil(64)
+    }
+}
+
+/// Selects the schedule tier for a row stride against an already-resolved
+/// `wide_tier_min_stride_words`.
+#[inline]
+fn schedule_tier(wide_tier_min_stride_words: usize, stride_words: usize) -> M4rmScheduleTier {
+    if stride_words >= wide_tier_min_stride_words {
+        M4rmScheduleTier::Wide
+    } else {
+        M4rmScheduleTier::SmallN
+    }
+}
+
+/// Chooses the Gray-code panel width for one multiplication against an
+/// already-resolved selector family.
+///
+/// The panel width determines the size of the Gray code table (2^k entries).
+/// Each table is kept cache-sized by `m4rm.default_table_bytes()`,
+/// `m4rm.mid_table_bytes()`, and `m4rm.wide_table_bytes()`, capped by
+/// `m4rm.wide_max_k()` in the wide tier and by `m4rm.small_n_max_k()` below it.
 ///
 /// # Arguments
 ///
+/// * `m4rm` - Selector family resolved once by the caller
 /// * `k` - Inner dimension (A is m×k, B is k×n)
 /// * `n` - Output width (number of columns in result)
 ///
 /// # Returns
 ///
-/// Block size k_block (typically 6-9)
-fn choose_k_block(k: usize, n: usize) -> usize {
-    let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
-    if stride_words >= M4RM_WIDE_TIER_MIN_STRIDE_WORDS {
-        choose_k_block_with_limit(k, n, production_table_budget(stride_words), M4RM_WIDE_MAX_K)
-    } else {
-        choose_k_block_small_n(k, n)
+/// Block size k_block (typically 6-9 on the conservative table)
+fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    let stride_words = row_stride_words(n);
+    match schedule_tier(m4rm.wide_tier_min_stride_words(), stride_words) {
+        M4rmScheduleTier::Wide => choose_k_block_with_limit(
+            k,
+            n,
+            production_table_budget(m4rm, stride_words),
+            m4rm.wide_max_k(),
+        ),
+        M4rmScheduleTier::SmallN => choose_k_block_small_n(m4rm.small_n_max_k(), k, n),
     }
 }
 
-/// Stride threshold (in u64 words) at which the wide-row M4RM schedule applies.
+/// Conservative default for `m4rm.wide_tier_min_stride_words()` in the active
+/// [`crate::tuning::TuningProfile`]: the stride threshold (in u64 words) at
+/// which the wide-row M4RM schedule applies.
 ///
 /// At and above 16 words (`n >= 1024`) the production policy keeps the
 /// register-tiled wide schedule (`8e305c21`/`974a85bd`); below it, the small-`n`
 /// L1-resident heuristic in [`choose_k_block_small_n`] selects the panel width.
 pub(crate) const M4RM_WIDE_TIER_MIN_STRIDE_WORDS: usize = 16;
 
-/// Selects the Gray-code panel width for the small-`n` (L1-resident) regime.
+/// Selects the Gray-code panel width for the small-`n` (L1-resident) regime
+/// against an already-resolved `small_n_max_k`.
 ///
-/// For `stride_words < 16` the whole Gray table fits in L1, so the cost-balanced
+/// Below the wide tier the whole Gray table fits in L1, so the cost-balanced
 /// optimum is governed by the panel count rather than the table byte budget. We
-/// use the M4RI cost-balance heuristic `round(0.8 · log2(min(k, n)))`, clamped to
-/// `[2, M4RM_SMALL_N_MAX_K]` and never above the inner dimension `k`. This reproduces
-/// the measured per-size optima (`2026-05-28-bdf60780-matmul-gf2-smalln.md`): `k≈5`
-/// at `n=64`, `k≈7` at `n=256` — both comfortably inside the 1.5× M4RI target,
-/// whereas the previous fixed `k=8` schedule was the *worst* choice at `n=64`.
-fn choose_k_block_small_n(k: usize, n: usize) -> usize {
+/// use the M4RI cost-balance heuristic `round(0.8 · log2(min(k, n)))`, clamped
+/// to `[2, small_n_max_k]` and never above the inner dimension `k`. On the
+/// conservative table this reproduces the measured per-size optima
+/// (`2026-05-28-bdf60780-matmul-gf2-smalln.md`): `k≈5` at `n=64`, `k≈7` at
+/// `n=256`, both comfortably inside the 1.5× M4RI target.
+fn choose_k_block_small_n(small_n_max_k: usize, k: usize, n: usize) -> usize {
     if k == 0 || n == 0 {
         return 0;
     }
@@ -114,17 +250,23 @@ fn choose_k_block_small_n(k: usize, n: usize) -> usize {
     // Balance point: ~0.8 * log2(min(k, n)) bits per panel.
     let span = k.min(n) as f64;
     let target = (0.8_f64 * span.log2()).round() as usize;
-    target.clamp(2, M4RM_SMALL_N_MAX_K).min(k)
+    target.clamp(2, small_n_max_k).min(k)
 }
 
+/// Selects the wide tier's Gray-table byte budget for a row stride against an
+/// already-resolved selector family.
+///
+/// The two band bounds are kernel-adjacent constants that no profile field
+/// carries; the budget each band selects is `m4rm.wide_table_bytes()`,
+/// `m4rm.mid_table_bytes()`, or `m4rm.default_table_bytes()`.
 #[inline]
-fn production_table_budget(stride_words: usize) -> usize {
+fn production_table_budget(m4rm: &M4rmSelectors, stride_words: usize) -> usize {
     if stride_words >= 64 {
-        M4RM_WIDE_TABLE_BYTES
+        m4rm.wide_table_bytes()
     } else if stride_words >= 32 {
-        M4RM_MID_TABLE_BYTES
+        m4rm.mid_table_bytes()
     } else {
-        M4RM_DEFAULT_TABLE_BYTES
+        m4rm.default_table_bytes()
     }
 }
 
@@ -582,11 +724,19 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
         return BitMatrix::zeros(m, n);
     }
 
-    let k_block = choose_k_block(k, n);
-    multiply_with_k_block(a, b, k_block)
+    // The one profile read of a multiplication: the resolved family feeds both
+    // the schedule route and the register-tiled C-update gate below.
+    let m4rm = crate::tuning::active().m4rm();
+    let route = m4rm_schedule_route_resolved(m4rm, k, n);
+    multiply_with_k_block(a, b, route.panel_width(), m4rm.tiled_min_stride_words())
 }
 
-fn multiply_with_k_block(a: &BitMatrix, b: &BitMatrix, k_block: usize) -> BitMatrix {
+fn multiply_with_k_block(
+    a: &BitMatrix,
+    b: &BitMatrix,
+    k_block: usize,
+    tiled_min_stride_words: usize,
+) -> BitMatrix {
     let m = a.rows();
     let k = a.cols();
     let n = b.cols();
@@ -602,7 +752,7 @@ fn multiply_with_k_block(a: &BitMatrix, b: &BitMatrix, k_block: usize) -> BitMat
         return a.mul_row_xor_dispatch(b);
     }
 
-    if use_register_tiled_schedule(m, stride_words) {
+    if use_register_tiled_schedule(tiled_min_stride_words, m, stride_words) {
         if let Some(tile8xn) = resolve_m4rm_tile8xn() {
             return multiply_register_tiled(a, b, k_block, stride_words, xor, tile8xn);
         }
@@ -625,6 +775,11 @@ fn multiply_with_k_block(a: &BitMatrix, b: &BitMatrix, k_block: usize) -> BitMat
 ///   if no nonzero panel width fits, the helper falls back to `k_block = 1`.
 /// * `max_k_block` - Maximum candidate panel width in bits. Oversized values
 ///   are safely ignored when the implied table would exceed the byte budget.
+///
+/// The two arguments replace the profile's table budgets and panel-width
+/// ceilings for this call; the register-tiled C-update gate still follows
+/// `m4rm.tiled_min_stride_words()` in the active
+/// [`crate::tuning::TuningProfile`], resolved once here.
 ///
 /// # Panics
 ///
@@ -658,7 +813,12 @@ pub fn multiply_with_table_schedule_for_test(
     assert!(max_k_block > 0, "max_k_block must be positive");
 
     let k_block = choose_k_block_with_limit(k, n, target_table_bytes, max_k_block);
-    multiply_with_k_block(a, b, k_block)
+    multiply_with_k_block(
+        a,
+        b,
+        k_block,
+        crate::tuning::active().m4rm().tiled_min_stride_words(),
+    )
 }
 #[doc(hidden)]
 #[cfg(any(test, feature = "test-support"))]
@@ -679,7 +839,7 @@ pub fn multiply_rowwise_for_test(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
         return BitMatrix::zeros(a.rows(), n);
     }
 
-    let k_block = choose_k_block(k, n);
+    let k_block = choose_k_block(crate::tuning::active().m4rm(), k, n);
     if k_block == 1 {
         return a.mul_row_xor_dispatch(b);
     }
@@ -689,9 +849,20 @@ pub fn multiply_rowwise_for_test(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     multiply_rowwise_panels(a, b, k_block, stride_words, xor)
 }
 
+/// Reports whether the register-tiled C-update schedule applies, against an
+/// already-resolved `tiled_min_stride_words`.
+///
+/// The row count is kernel shape ([`M4RM_TILE_ROWS`] full rows per tile); the
+/// stride bound is `m4rm.tiled_min_stride_words()` from the active
+/// [`crate::tuning::TuningProfile`], resolved once per multiplication by
+/// [`multiply`].
 #[inline]
-fn use_register_tiled_schedule(m: usize, stride_words: usize) -> bool {
-    m >= M4RM_TILE_ROWS && stride_words >= M4RM_TILED_MIN_STRIDE_WORDS
+fn use_register_tiled_schedule(
+    tiled_min_stride_words: usize,
+    m: usize,
+    stride_words: usize,
+) -> bool {
+    m >= M4RM_TILE_ROWS && stride_words >= tiled_min_stride_words
 }
 
 #[inline]
@@ -990,15 +1161,21 @@ mod tests {
     use super::*;
     use crate::kernels::ops::xor_inplace;
 
+    /// The M4RM selector family of the active profile. No lib test installs a
+    /// profile, so every case below runs on the conservative table.
+    fn conservative_m4rm() -> &'static M4rmSelectors {
+        crate::tuning::active().m4rm()
+    }
+
     #[test]
     fn test_choose_k_block() {
         // Small dimensions use the L1-resident cost-balance heuristic
         // (~0.8·log2(min(k, n))): n=100 → round(0.8·6.64) = 5.
-        let k1 = choose_k_block(100, 100);
+        let k1 = choose_k_block(conservative_m4rm(), 100, 100);
         assert!((4..=6).contains(&k1));
 
         // Very large output width still resolves to a valid panel.
-        let k2 = choose_k_block(100, 10000);
+        let k2 = choose_k_block(conservative_m4rm(), 100, 10000);
         assert!(k2 >= 1);
     }
 
@@ -1007,17 +1184,18 @@ mod tests {
         // Reproduces the measured per-size optima from
         // 2026-05-28-bdf60780-matmul-gf2-smalln.md: small k at n=64,
         // wider panels at n=256, none above the small-n cap.
-        assert_eq!(choose_k_block(64, 64), 5);
-        assert_eq!(choose_k_block(128, 128), 6);
-        assert_eq!(choose_k_block(256, 256), 6);
-        assert_eq!(choose_k_block(512, 512), 7);
+        let small_n_max_k = conservative_m4rm().small_n_max_k();
+        assert_eq!(choose_k_block(conservative_m4rm(), 64, 64), 5);
+        assert_eq!(choose_k_block(conservative_m4rm(), 128, 128), 6);
+        assert_eq!(choose_k_block(conservative_m4rm(), 256, 256), 6);
+        assert_eq!(choose_k_block(conservative_m4rm(), 512, 512), 7);
         // Lower clamp keeps the panel width at >= 2 (k=1 degenerates to row-XOR).
-        assert_eq!(choose_k_block_small_n(3, 256), 2);
+        assert_eq!(choose_k_block_small_n(small_n_max_k, 3, 256), 2);
         // k=1 inner dim maps to the row-XOR path (k_block == 1).
-        assert_eq!(choose_k_block_small_n(1, 256), 1);
-        assert_eq!(choose_k_block_small_n(0, 256), 0);
+        assert_eq!(choose_k_block_small_n(small_n_max_k, 1, 256), 1);
+        assert_eq!(choose_k_block_small_n(small_n_max_k, 0, 256), 0);
         // Never exceeds the small-n cap even for very wide inner dims.
-        assert!(choose_k_block_small_n(100_000, 512) <= M4RM_SMALL_N_MAX_K);
+        assert!(choose_k_block_small_n(small_n_max_k, 100_000, 512) <= M4RM_SMALL_N_MAX_K);
     }
 
     #[test]
@@ -1025,10 +1203,11 @@ mod tests {
         // Below the wide tier (stride_words < 16, i.e. n < 1024) the small-n
         // L1-resident heuristic governs; it routes through choose_k_block_small_n.
         // n <= 960 bits is at most 15 words (stride_words < 16) → small-n tier.
+        let m4rm = conservative_m4rm();
         for n in [1, 63, 64, 65, 128, 129, 512, 960] {
             assert_eq!(
-                choose_k_block(4096, n),
-                choose_k_block_small_n(4096, n),
+                choose_k_block(m4rm, 4096, n),
+                choose_k_block_small_n(m4rm.small_n_max_k(), 4096, n),
                 "n={n} should use the small-n heuristic"
             );
         }
@@ -1036,16 +1215,55 @@ mod tests {
         assert!(961usize.div_ceil(64) >= M4RM_WIDE_TIER_MIN_STRIDE_WORDS);
 
         // The n=0 degenerate case still resolves to 0.
-        assert_eq!(choose_k_block(4096, 0), 0);
+        assert_eq!(choose_k_block(m4rm, 4096, 0), 0);
 
         // The wide tier (n >= 1024) is unchanged from the 8e305c21 / 974a85bd
         // production policy — these are the [hard] non-regression cells.
-        assert_eq!(choose_k_block(4096, 1024), 9);
-        assert_eq!(choose_k_block(4096, 2048), 9);
-        assert_eq!(choose_k_block(4096, 4096), 9);
-        assert_eq!(production_table_budget(16), M4RM_DEFAULT_TABLE_BYTES);
-        assert_eq!(production_table_budget(32), M4RM_MID_TABLE_BYTES);
-        assert_eq!(production_table_budget(64), M4RM_WIDE_TABLE_BYTES);
+        assert_eq!(choose_k_block(m4rm, 4096, 1024), 9);
+        assert_eq!(choose_k_block(m4rm, 4096, 2048), 9);
+        assert_eq!(choose_k_block(m4rm, 4096, 4096), 9);
+        assert_eq!(production_table_budget(m4rm, 16), M4RM_DEFAULT_TABLE_BYTES);
+        assert_eq!(production_table_budget(m4rm, 32), M4RM_MID_TABLE_BYTES);
+        assert_eq!(production_table_budget(m4rm, 64), M4RM_WIDE_TABLE_BYTES);
+    }
+
+    #[test]
+    fn test_m4rm_schedule_route_reports_the_conservative_tier_boundary() {
+        let m4rm = conservative_m4rm();
+        let boundary = m4rm.wide_tier_min_stride_words();
+        let n_below = (boundary - 1) * 64;
+        let n_at = n_below + 1;
+
+        assert_eq!(
+            m4rm_schedule_route(4096, n_below).tier(),
+            M4rmScheduleTier::SmallN
+        );
+        assert_eq!(
+            m4rm_schedule_route(4096, n_at).tier(),
+            M4rmScheduleTier::Wide
+        );
+        // The tier does not turn over again above the boundary.
+        assert_eq!(
+            m4rm_schedule_route(4096, boundary * 64 * 4).tier(),
+            M4rmScheduleTier::Wide
+        );
+    }
+
+    #[test]
+    fn test_m4rm_schedule_route_reports_the_dispatched_panel_width() {
+        let m4rm = conservative_m4rm();
+        for (k, n) in [(4096, 64), (4096, 512), (4096, 1024), (4096, 4096), (1, 1)] {
+            let route = m4rm_schedule_route(k, n);
+            assert_eq!(
+                route.panel_width(),
+                choose_k_block(m4rm, k, n),
+                "route and dispatcher disagree at k={k}, n={n}"
+            );
+            match route.tier() {
+                M4rmScheduleTier::SmallN => assert!(route.panel_width() <= m4rm.small_n_max_k()),
+                M4rmScheduleTier::Wide => assert!(route.panel_width() <= m4rm.wide_max_k()),
+            }
+        }
     }
 
     #[test]
@@ -1201,19 +1419,20 @@ mod tests {
 
     #[test]
     fn test_register_tiled_schedule_threshold_preserves_small_sizes() {
+        let tiled_min = conservative_m4rm().tiled_min_stride_words();
         // Fewer than 8 rows: no full row tile, stay on row-XOR.
-        assert!(!use_register_tiled_schedule(7, 16));
-        assert!(!use_register_tiled_schedule(7, 4));
+        assert!(!use_register_tiled_schedule(tiled_min, 7, 16));
+        assert!(!use_register_tiled_schedule(tiled_min, 7, 4));
         // Strides 1..=3 have no full 4-word tile → row-XOR.
-        assert!(!use_register_tiled_schedule(64, 1));
-        assert!(!use_register_tiled_schedule(64, 2));
-        assert!(!use_register_tiled_schedule(64, 3));
+        assert!(!use_register_tiled_schedule(tiled_min, 64, 1));
+        assert!(!use_register_tiled_schedule(tiled_min, 64, 2));
+        assert!(!use_register_tiled_schedule(tiled_min, 64, 3));
         // jit:bdf60780: the tile gate is lowered to stride_words >= 4 so that
         // n=256 (stride 4) and n=512 (stride 8) reach the SIMD 8×4 tile.
-        assert!(use_register_tiled_schedule(64, 4));
-        assert!(use_register_tiled_schedule(64, 8));
-        assert!(use_register_tiled_schedule(8, 16));
-        assert!(use_register_tiled_schedule(8, 32));
+        assert!(use_register_tiled_schedule(tiled_min, 64, 4));
+        assert!(use_register_tiled_schedule(tiled_min, 64, 8));
+        assert!(use_register_tiled_schedule(tiled_min, 8, 16));
+        assert!(use_register_tiled_schedule(tiled_min, 8, 32));
     }
 
     #[test]
@@ -1241,7 +1460,7 @@ mod tests {
             }
         }
 
-        let k_block = choose_k_block(k, n);
+        let k_block = choose_k_block(conservative_m4rm(), k, n);
         let stride_words = n.div_ceil(64);
         let xor = resolve_xor_inplace(stride_words);
         let tiled =
