@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the Winograd crossover to a resolved-once runtime read.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: gemm_winograd resolves gemm.winograd_min_dim once through tuning::active() and threads it into gemm_winograd_with_threshold; the comparison is unchanged and the read-pattern obligations hold.\n- [hard] REQ-02: winograd_route is public, #[must_use], called by the dispatcher; installed-profile route files above and below the boundary pass, and the existing bit-exactness property tests pass on the conservative table.\n- [hard] REQ-03: Rustdoc names the profile field; behaviour with no profile installed is unchanged.",
   "documents": [],
+  "done_at": "2026-08-23T17:14:34.236703796Z",
   "first_ready_at": "2026-08-22T22:16:56.294317472Z",
   "gates_required": [
     "cargo-ci",
@@ -26,8 +27,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-23T17:12:06.045662761Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T17:14:15.034649351Z",
       "updated_by": "auto:executor"
     }
   },
@@ -39,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cut the Winograd threshold over to the tuning profile",
-  "updated_at": "2026-08-23T17:12:06.045662761Z"
+  "updated_at": "2026-08-23T17:14:34.236703796Z"
 }
