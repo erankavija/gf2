@@ -52,7 +52,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Remove the trait selectors and regenerate the proof surface",
-  "updated_at": "2026-08-22T22:18:04.375840221Z"
+  "updated_at": "2026-08-23T18:08:54.484970688Z"
 }
