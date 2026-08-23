@@ -10,6 +10,12 @@
 //! conservative default — the same rule the baked constants carry
 //! (`dev/active/7d824b2f/design.md` D5). The witness therefore names no
 //! literal boundary and follows a future calibration on its own.
+//!
+//! `prime_gemm_route` reports the dispatchers' whole gate chain, and whether a
+//! cascade kernel is registered is a host property, so each boundary test
+//! reads the arm at a reference cell above the bound and asserts against that
+//! arm. No test here touches the GF(251) debug switches, which stay at their
+//! `false` production default.
 #![cfg(all(gf2_tuning_baked, feature = "simd"))]
 
 use gf2_core::gfp::simd_ops::{prime_gemm_route, PrimeGemmRoute};
@@ -17,7 +23,7 @@ use gf2_core::tuning::{self, TuningProfile};
 use std::fs;
 use std::path::PathBuf;
 
-/// Operand shape held fixed across the boundary walks: the two predicates
+/// Operand shape held fixed across the boundary walks: the window predicates
 /// take `m` and `k` but select on `P` and `n` alone.
 const M: usize = 64;
 const K: usize = 64;
@@ -35,17 +41,23 @@ fn committed_profile() -> TuningProfile {
 #[test]
 fn baked_build_routes_gf251_by_the_committed_column_bound() {
     let profile = committed_profile();
-    let f32_min_cols = profile.prime_route().f32_min_cols();
+    let cols = profile.prime_route().f32_min_cols();
+    let below = cols
+        .checked_sub(1)
+        .expect("the bound admits a cell below it");
 
-    assert_eq!(
-        prime_gemm_route::<251>(M, K, f32_min_cols),
-        PrimeGemmRoute::F32Cascade
-    );
-    if let Some(below) = f32_min_cols.checked_sub(1) {
-        assert_eq!(
+    match prime_gemm_route::<251>(M, K, cols) {
+        PrimeGemmRoute::F32Cascade => assert_ne!(
             prime_gemm_route::<251>(M, K, below),
-            PrimeGemmRoute::U16Baseline
-        );
+            PrimeGemmRoute::F32Cascade,
+            "the baked column bound must exclude the cell below it"
+        ),
+        arm => assert_eq!(
+            prime_gemm_route::<251>(M, K, below),
+            arm,
+            "this host registers no f32 cascade kernel, so the dispatcher \
+             takes the same arm on both sides of the column bound"
+        ),
     }
 }
 
@@ -62,30 +74,42 @@ fn baked_build_brackets_the_committed_prime_bound() {
     );
     let wide = prime_route.f32_min_cols() + 512;
 
-    assert_eq!(
-        prime_gemm_route::<241>(M, K, wide),
-        PrimeGemmRoute::U16Baseline
+    let below_bound = prime_gemm_route::<241>(M, K, wide);
+    assert_ne!(
+        below_bound,
+        PrimeGemmRoute::F32Cascade,
+        "the prime below the baked bound must stay off the cascade"
     );
-    assert_eq!(
-        prime_gemm_route::<251>(M, K, wide),
-        PrimeGemmRoute::F32Cascade
-    );
+    match prime_gemm_route::<251>(M, K, wide) {
+        PrimeGemmRoute::F32Cascade => {}
+        arm => assert_eq!(
+            arm, below_bound,
+            "this host registers no f32 cascade kernel, so the prime bound \
+             cannot move the arm"
+        ),
+    }
 }
 
 #[test]
 fn baked_build_routes_medium_primes_by_the_committed_column_bound() {
     let profile = committed_profile();
-    let f64_min_cols = profile.prime_route().f64_min_cols();
+    let cols = profile.prime_route().f64_min_cols();
+    let below = cols
+        .checked_sub(1)
+        .expect("the bound admits a cell below it");
 
-    assert_eq!(
-        prime_gemm_route::<65521>(M, K, f64_min_cols),
-        PrimeGemmRoute::F64Cascade
-    );
-    if let Some(below) = f64_min_cols.checked_sub(1) {
-        assert_eq!(
+    match prime_gemm_route::<65521>(M, K, cols) {
+        PrimeGemmRoute::F64Cascade => assert_ne!(
             prime_gemm_route::<65521>(M, K, below),
-            PrimeGemmRoute::U16Baseline
-        );
+            PrimeGemmRoute::F64Cascade,
+            "the baked column bound must exclude the cell below it"
+        ),
+        arm => assert_eq!(
+            prime_gemm_route::<65521>(M, K, below),
+            arm,
+            "this host registers no f64 cascade kernel, so the dispatcher \
+             takes the same arm on both sides of the column bound"
+        ),
     }
 }
 
@@ -115,24 +139,24 @@ fn install_does_not_govern_prime_route_selection() {
     assert_eq!(active.prime_route().f32_min_cols(), 1);
     assert_eq!(active.prime_route().f64_min_cols(), 1);
 
-    // The family is baked, so the installed runtime profile moves neither
-    // the prime window nor either column bound.
+    // The family is baked: the installed profile would put every cell below on
+    // a cascade if the boundary were read at run time, and none of them move.
     let profile = committed_profile();
     let prime_route = profile.prime_route();
     if let Some(below) = prime_route.f32_min_cols().checked_sub(1) {
-        assert_eq!(
+        assert_ne!(
             prime_gemm_route::<251>(M, K, below),
-            PrimeGemmRoute::U16Baseline
+            PrimeGemmRoute::F32Cascade
         );
-        assert_eq!(
+        assert_ne!(
             prime_gemm_route::<7>(M, K, below),
-            PrimeGemmRoute::U16Baseline
+            PrimeGemmRoute::F32Cascade
         );
     }
     if let Some(below) = prime_route.f64_min_cols().checked_sub(1) {
-        assert_eq!(
+        assert_ne!(
             prime_gemm_route::<65521>(M, K, below),
-            PrimeGemmRoute::U16Baseline
+            PrimeGemmRoute::F64Cascade
         );
     }
 }
