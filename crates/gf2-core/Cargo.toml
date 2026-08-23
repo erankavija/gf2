@@ -445,6 +445,18 @@ name = "tuning_profile_triangular_install_above"
 
 required-features = ["tuning-profile"]
 
+# ── Issue `88441adb` (seam U6) — triangular base-case route observation ──
+#
+# One installed profile per binary. Each file observes both sides of its
+# installed base-case boundary through TRSM, TRMM, and TRTRI production entries.
+[[test]]
+name = "tuning_profile_triangular_base_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_triangular_base_install_above"
+required-features = ["tuning-profile"]
+
 # ── Issue `26ae7d6b` (epic `6dc81018`) — GEMM route observation ───────────
 #
 # One installed profile per binary: the first target moves the AXPY volume
