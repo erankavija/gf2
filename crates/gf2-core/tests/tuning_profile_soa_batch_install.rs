@@ -1,5 +1,5 @@
 //! Installed-profile witness for `soa_batch.parallel_min_len` and
-//! `soa_batch.parallel_chunk_len` (jit:fa92608b, rework round 1).
+//! `soa_batch.parallel_chunk_len` (jit:fa92608b, rework round 2).
 //!
 //! `tuning::install` resolves the process-wide profile once, so this binary
 //! installs exactly one profile, per `dev/active/7d824b2f/design.md` §4's
@@ -7,8 +7,22 @@
 //! same installed profile so one process can assert the
 //! `soa_parallel_route` boundary and the chunk-length determinism witness
 //! together, through the public [`BatchExtField`] dispatch entry points.
+//!
+//! The parallel and scalar arms are bit-exact for every valid chunk length
+//! (`crates/gf2-core/src/compute/field.rs` module docs, "V10 execution
+//! policy"), so an output-equality comparison alone is not evidence that the
+//! resolved `parallel_chunk_len` reached the parallel arm — every valid
+//! chunk length produces the same output, and a build that silently took the
+//! scalar arm (e.g. a single-threaded rayon pool) would pass an
+//! equality-only check too. This binary instead reads
+//! [`last_effective_soa_chunk`], a `test-support` hook the parallel arm of
+//! each entry point records itself, directly off production code, and also
+//! confirms a scalar-arm call (below `parallel_min_len`) records nothing.
 
-use gf2_core::compute::field::{soa_parallel_route, SoaParallelRoute};
+use gf2_core::compute::field::{
+    last_effective_soa_chunk, reset_last_effective_soa_chunk, soa_parallel_pool_is_multi_threaded,
+    soa_parallel_route, SoaParallelRoute,
+};
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig, QuadraticExt};
 use gf2_core::tuning::{self, TuningProfile};
@@ -80,12 +94,47 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
         SoaParallelRoute::Parallel
     );
 
+    // The scalar arm (below parallel_min_len) records nothing: proves the
+    // hook only fires on the parallel path, so a `Some` result below can't
+    // be a stale value from an earlier call.
+    reset_last_effective_soa_chunk();
+    assert_eq!(last_effective_soa_chunk(), None);
+    let scalar_len = INSTALLED_MIN_LEN - 1;
+    let scalar_a: Vec<Fq2Big> = (0..scalar_len)
+        .map(|i| {
+            Fq2Big::new(
+                Fp::new((17 * i as u64 + 3) % 65537),
+                Fp::new((29 * i as u64 + 5) % 65537),
+            )
+        })
+        .collect();
+    let scalar_ba = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&scalar_a);
+    let _ = scalar_ba.batch_square_quadratic::<CfgBeta3>();
+    assert_eq!(
+        last_effective_soa_chunk(),
+        None,
+        "a scalar-arm call (len {scalar_len} < parallel_min_len {INSTALLED_MIN_LEN}) must not record a chunk"
+    );
+
+    // The dispatcher's gate is `route == Parallel && pool has > 1 thread`;
+    // the expected observation follows that same gate, so the witness holds
+    // on every supported configuration (a single-threaded pool takes the
+    // scalar arm and records nothing).
+    let expected_parallel_observation = if soa_parallel_pool_is_multi_threaded() {
+        Some(INSTALLED_CHUNK_LEN)
+    } else {
+        None
+    };
+
     // Chunk-length determinism witness: lengths at/above the installed
     // parallel_min_len (so the public dispatcher's route is Parallel),
     // including lengths that do not evenly divide the installed
     // parallel_chunk_len = 7, still match direct scalar arithmetic. The
     // chunk length only repartitions the rayon work; it carries no
-    // correctness meaning, per `@/inv/deterministic-seeded-execution`.
+    // correctness meaning, per `@/inv/deterministic-seeded-execution`. Each
+    // call is bracketed by a reset and a `last_effective_soa_chunk` check
+    // proving that call's own parallel arm actually consumed the installed
+    // chunk length, not just that its output happens to be correct.
     for &len in &[
         INSTALLED_MIN_LEN,
         INSTALLED_MIN_LEN + 3,
@@ -112,16 +161,32 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
         let bb2 = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&b2);
         let expected_mul2: Vec<Fq2Big> = a2.iter().zip(b2.iter()).map(|(x, y)| *x * *y).collect();
         let expected_square2: Vec<Fq2Big> = a2.iter().map(|x| *x * *x).collect();
+
+        reset_last_effective_soa_chunk();
+        let got_mul2 = ba2
+            .batch_mul_quadratic::<CfgBeta3>(&bb2)
+            .to_quadratic::<CfgBeta3>();
         assert_eq!(
-            ba2.batch_mul_quadratic::<CfgBeta3>(&bb2)
-                .to_quadratic::<CfgBeta3>(),
-            expected_mul2,
-            "installed chunk_len={INSTALLED_CHUNK_LEN} quadratic mul len {len}"
+            last_effective_soa_chunk(),
+            expected_parallel_observation,
+            "quadratic mul len {len} must run its parallel arm and consume the installed chunk length"
         );
         assert_eq!(
-            ba2.batch_square_quadratic::<CfgBeta3>()
-                .to_quadratic::<CfgBeta3>(),
-            expected_square2,
+            got_mul2, expected_mul2,
+            "installed chunk_len={INSTALLED_CHUNK_LEN} quadratic mul len {len}"
+        );
+
+        reset_last_effective_soa_chunk();
+        let got_square2 = ba2
+            .batch_square_quadratic::<CfgBeta3>()
+            .to_quadratic::<CfgBeta3>();
+        assert_eq!(
+            last_effective_soa_chunk(),
+            expected_parallel_observation,
+            "quadratic square len {len} must run its parallel arm and consume the installed chunk length"
+        );
+        assert_eq!(
+            got_square2, expected_square2,
             "installed chunk_len={INSTALLED_CHUNK_LEN} quadratic square len {len}"
         );
 
@@ -147,16 +212,32 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
         let bb3 = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&b3);
         let expected_mul3: Vec<Fq3Big> = a3.iter().zip(b3.iter()).map(|(x, y)| *x * *y).collect();
         let expected_square3: Vec<Fq3Big> = a3.iter().map(|x| *x * *x).collect();
+
+        reset_last_effective_soa_chunk();
+        let got_mul3 = ba3
+            .batch_mul_cubic::<CfgCubicBeta3>(&bb3)
+            .to_cubic::<CfgCubicBeta3>();
         assert_eq!(
-            ba3.batch_mul_cubic::<CfgCubicBeta3>(&bb3)
-                .to_cubic::<CfgCubicBeta3>(),
-            expected_mul3,
-            "installed chunk_len={INSTALLED_CHUNK_LEN} cubic mul len {len}"
+            last_effective_soa_chunk(),
+            expected_parallel_observation,
+            "cubic mul len {len} must run its parallel arm and consume the installed chunk length"
         );
         assert_eq!(
-            ba3.batch_square_cubic::<CfgCubicBeta3>()
-                .to_cubic::<CfgCubicBeta3>(),
-            expected_square3,
+            got_mul3, expected_mul3,
+            "installed chunk_len={INSTALLED_CHUNK_LEN} cubic mul len {len}"
+        );
+
+        reset_last_effective_soa_chunk();
+        let got_square3 = ba3
+            .batch_square_cubic::<CfgCubicBeta3>()
+            .to_cubic::<CfgCubicBeta3>();
+        assert_eq!(
+            last_effective_soa_chunk(),
+            expected_parallel_observation,
+            "cubic square len {len} must run its parallel arm and consume the installed chunk length"
+        );
+        assert_eq!(
+            got_square3, expected_square3,
             "installed chunk_len={INSTALLED_CHUNK_LEN} cubic square len {len}"
         );
     }
