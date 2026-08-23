@@ -147,7 +147,7 @@
           "short_id": "a39bb161",
           "title": "Accelerator execution for campaign cells",
           "classification": "implementation",
-          "status": "blocked pending owner escalation after rework-2 reached MAX. Commit 7316c062 (merged by f077c380) converged the public field API on AcceleratorCostTable and added the multi-cell behavioural test, but independent review found the binary's --accelerator-cost-table requirement is manifest-global while execution is field-scoped: selecting a processor-only field from a mixed manifest refuses solely because another field contains accelerator cells. The recommended bounded lead-direct repair makes the CLI check field-scoped, adds a real-binary mixed-manifest regression, and reruns the registered gates."
+          "status": "owner-approved bounded lead-direct repair merged at d7f1b428. The binary's accelerator-cost-table admission check is field-scoped and the real-binary mixed-manifest regression proves a selected processor field runs without a table while the selected accelerator field still refuses. Focused red/green evidence, all three permanent_campaign_bin tests, fmt, focused clippy, merged-tree binary tests, and independent re-review pass. Registered cargo-ci and code-review remain to run at or after the 02:00 safe window."
         }
       ]
     },
@@ -505,14 +505,25 @@
     {
       "issue": "a39bb161",
       "reason": "Independent review after rework-2 found a new field-scope defect with the rework counter at MAX: permanent_campaign requires --accelerator-cost-table when any manifest field contains an accelerator cell, even when --q selects a processor-only field. The driver itself correctly preflights only the selected field, so the binary rejects a valid processor-only execution before reaching that path.",
-      "status": "pending",
+      "status": "approved",
       "requested_at": "2026-08-24T01:13:13+03:00",
+      "resolved_at": "2026-08-24T01:18:00+03:00",
+      "decision": "Owner approved the recommended bounded lead-direct repair. The lead applied the field-scoped predicate and real-binary mixed-manifest regression, obtained an independent PASS, and merged it at d7f1b428; registered gates remain required.",
       "options": [
         "Approve one bounded lead-direct repair: scope the CLI requirement to the selected field, add a real-binary mixed-manifest regression, and rerun the registered gates.",
         "Take over the issue manually.",
         "Reject the issue, leaving accelerator execution and every dependent campaign task blocked."
       ],
       "lead_recommendation": "Approve the bounded lead-direct repair. It is local, preserves the reviewed per-cell scheduler contract, and directly tests the only remaining failure."
+    },
+    {
+      "issue": "53d8e438",
+      "reason": "Forward audit found REQ-03's unspecified |delta(n)|/standard-error multiple conflicts with the authoritative protocol's preregistered interval-aware delta-AIC rule, while REQ-02 forbids choosing a threshold after campaign data are available.",
+      "status": "approved",
+      "requested_at": "2026-08-24T01:13:13+03:00",
+      "resolved_at": "2026-08-24T01:20:00+03:00",
+      "decision": "Owner approved the recommended criterion amendment: REQ-03 uses the protocol's complete nested-prefix delta-AIC table and calls candidates distinguishable only when the nominal 95% bootstrap interval is non-fallback and lies wholly above +2 or below -2; every other prefix is indistinguishable regardless of point estimate.",
+      "lead_recommendation": "Amend the criterion rather than add a second decision rule, preserving the protocol as the single preregistered source of truth."
     }
   ],
   "standing_rules": [
@@ -640,7 +651,7 @@
       "issue": "53d8e438",
       "source": "forward decision audit, session 14",
       "finding": "REQ-03 requires a preregistered specified multiple of standard error for |delta(n)|, while the authoritative protocol defines interval-aware delta-AIC without that multiple and REQ-02 forbids selecting a threshold after seeing campaign data.",
-      "disposition": "Resolve before dispatch. Recommended: amend REQ-03 to the protocol's preregistered interval-aware delta-AIC decision rule; alternatively preregister a concrete standard-error multiple before campaign data exist."
+      "disposition": "Owner approved the recommended amendment on 2026-08-24. Replace the issue's stale standard-error framing with the protocol's complete nested-prefix delta-AIC table, nominal 95% bootstrap interval, fallback status, and fixed +/-2 distinguishability rule before dispatch."
     }
   ],
   "started_at": "2026-08-09T12:20:30Z",
