@@ -882,24 +882,13 @@ impl<const P: u64> FiniteField for Fp<P> {
         crate::field::extension_wiedemann::try_extension_wiedemann_fp::<P>(a)
     }
 
-    /// Panelized PLE base-case threshold for `Fp<P>` (issues `6823c8a0`,
+    /// Panelized PLE base-case width declared by `Fp<P>` (issues `6823c8a0`,
     /// `68db401b`, design `2e8c5a29`).
     ///
-    /// * For `P <= 251` we override to `KC = 256` (the route-C panel
-    ///   kernel's k-axis cache-blocking factor,
-    ///   `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:102`), so
-    ///   the byte-lane SIMD panel-base path activates on every column
-    ///   window up to 256.
-    /// * For `252 <= P < 65536` (medium primes — reference GF(65521))
-    ///   we override to `128` (issue `68db401b`). The u16-lane panel-
-    ///   base kernel has half the lane density (16 → 8 u16 per AVX2
-    ///   tile compared to 16 u8 for byte lanes) and a smaller pivot-
-    ///   row stack scratch budget, so `KC_U16 = 128` keeps the panel
-    ///   L1d-resident while still amortising the per-pivot fixed
-    ///   overheads.
-    /// * For `P >= 65536` we keep the default `PLE_BASE_COLS` (= 1) —
-    ///   the generic 64-bit Montgomery path drives these fields with
-    ///   no specialised panel kernel.
+    /// `FieldMatrix::ple` takes the live width from the active tuning
+    /// profile's per-lane fields, selected by the lane class
+    /// [`simd_ple_panel_lane`](FiniteField::simd_ple_panel_lane) reports, so
+    /// this override carries no dispatch. Issue `7d7c647c` task U8 removes it.
     const PLE_PANEL_COLS: usize = {
         if P <= 251 {
             // KC = 256 (byte-lane panel kernel L1d-fit blocking

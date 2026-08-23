@@ -886,72 +886,23 @@ pub trait FiniteField:
     /// agreement with the classical `gemm`-of-dense expansion.
     const TRI_BASE_THRESHOLD: usize = crate::field::triangular::TRI_BASE_MAX_DIM_DEFAULT;
 
-    /// Column-window width at which [`FieldMatrix::ple`]'s block-recursive
-    /// driver switches from the recursive trsm+gemm strategy to a direct
-    /// column-by-column Gaussian elimination base case.
+    /// Carrier-declared column-window width for [`FieldMatrix::ple`]'s
+    /// direct base case.
     ///
-    /// Increasing this threshold reduces the overhead of the trsm and
-    /// matrix-materialisation calls at deep recursion levels, at the cost
-    /// of using a simpler O(m · win²) schoolbook loop instead of a cache-
-    /// friendly blocked GEMM. The optimal value depends on the field's
-    /// per-element arithmetic cost relative to GEMM dispatch overhead.
-    ///
-    /// `PLE_BASE_COLS = 1` was selected by same-session Criterion sweep
-    /// over GF(2^31-1) at n ∈ {64, 256, 1024}, uniform and deficient
-    /// regimes (see `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md`):
-    /// values 1, 4, 8, and 16 were tried; 1 (current baseline — pure
-    /// block-recursive trsm+gemm at all levels) gave the best combined
-    /// result for Mersenne-31 because the blocked GEMM uses delayed u128
-    /// reduction that outperforms the schoolbook scalar loop.
-    ///
-    /// This knob is **soft** — correctness is independent of it. The PLE
-    /// property tests in `src/field/ple.rs` exercise correctness at all
-    /// input sizes regardless of threshold.
-    ///
-    /// # Override guidance
-    ///
-    /// - Large-prime fields with fast GEMM (e.g. Mersenne-31 with delayed
-    ///   reduction) prefer the default 1 — the blocked GEMM is faster than
-    ///   any scalar schoolbook loop.
-    /// - Small-prime fields (`p ≤ 251`) with AVX2 acceleration may benefit
-    ///   from larger values (up to 32) if profiling confirms the schoolbook
-    ///   base case beats the recursive dispatch overhead.
-    /// - GF(2^m) fields (XOR arithmetic) may prefer larger values since
-    ///   element ops are near-free compared to function call overhead.
+    /// The driver takes the live width from the active tuning profile's
+    /// `ple.scalar_base_max_cols()`, so this constant carries no dispatch.
+    /// Issue `7d7c647c` task U8 removes it from the trait.
     const PLE_BASE_COLS: usize = crate::field::ple::PLE_SCALAR_BASE_MAX_COLS_DEFAULT;
 
-    /// Column-window width at which [`FieldMatrix::ple`]'s block-recursive
-    /// driver switches from the recursive trsm+gemm strategy to the
-    /// **panelized** SIMD base case (issue `6823c8a0`, design `2e8c5a29`).
+    /// Carrier-declared column-window width for [`FieldMatrix::ple`]'s
+    /// panelized SIMD base case (issue `6823c8a0`, design `2e8c5a29`).
     ///
-    /// This threshold dispatches the AVX2 panel-base kernel
-    /// ([`crate::field::ple::ple_in_place_window`] → SIMD panel-base path)
-    /// when the column window `win <= PLE_PANEL_COLS`, AVX2 is available,
-    /// and the field has registered a panel-base kernel via
-    /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base).
-    ///
-    /// # Default and override
-    ///
-    /// The default value equals [`PLE_BASE_COLS`](Self::PLE_BASE_COLS),
-    /// which disables the panel dispatch: `win <= PLE_PANEL_COLS` is then
-    /// equivalent to `win <= PLE_BASE_COLS`, and the existing scalar
-    /// `ple_base_direct` handles it. Fields with a panel-base AVX2 kernel
-    /// (currently `Fp<P>` for `P <= 251`) override this to a larger value
-    /// (e.g. `KC = 256` from the route-C panel kernel) so the panel path
-    /// activates for moderate window widths.
-    ///
-    /// # Invariant
-    ///
-    /// `PLE_PANEL_COLS >= PLE_BASE_COLS` must hold. When the panel path
-    /// is unavailable (no AVX2 host or field declines), the recursive
-    /// driver still hits the scalar single-column base case at
-    /// `PLE_BASE_COLS` regardless of the panel threshold.
-    ///
-    /// # Soft contract
-    ///
-    /// This knob is **soft** — correctness is independent of it. The PLE
-    /// property tests in `src/field/ple.rs` exercise correctness at all
-    /// input sizes across all field flavours.
+    /// The driver takes the live width from the active tuning profile's
+    /// `ple.panel_byte_lane_max_cols()` or `ple.panel_u16_lane_max_cols()`,
+    /// selected by the lane class
+    /// [`simd_ple_panel_lane`](Self::simd_ple_panel_lane) reports, so this
+    /// constant carries no dispatch. Issue `7d7c647c` task U8 removes it
+    /// from the trait.
     const PLE_PANEL_COLS: usize = Self::PLE_BASE_COLS;
 
     /// Optional panelized PLE base-case fast path for small windows
