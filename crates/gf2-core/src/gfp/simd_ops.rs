@@ -622,6 +622,8 @@ const fn select_f32_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
 // Route-A dispatch toggle (AtomicBool, issue 68cdf4c8)
 // ---------------------------------------------------------------------------
 
+#[cfg(all(feature = "simd", any(test, feature = "test-support")))]
+use std::sync::atomic::AtomicUsize;
 #[cfg(feature = "simd")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -819,55 +821,37 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     n: usize,
     out: &mut [Fp<P>],
 ) -> bool {
-    if !fp_small_enabled::<P>() {
-        return false;
-    }
-
     debug_assert_eq!(a.len(), m * k, "fp_small_try_gemm_classical: a shape");
     debug_assert_eq!(b_t.len(), n * k, "fp_small_try_gemm_classical: b_t shape");
     debug_assert_eq!(out.len(), m * n, "fp_small_try_gemm_classical: out shape");
 
-    if k == 0 || m == 0 || n == 0 {
-        // The caller already handled the `k == 0` (output is the m×n zero
-        // matrix) and the `m == 0 || n == 0` (empty output) shapes; this
-        // is a defensive early-exit in case it ever doesn't.
-        return false;
-    }
-
     let p_u8 = P as u8;
 
-    // Resolve the small-prime SIMD fns once. The selection F-path uses
-    // its own canonical-f32 pack/run/unpack, so it can short-circuit
-    // before we touch the byte-lane scratches below; otherwise we walk
-    // straight into Candidate C using cached lookup tables and thread-
-    // local scratch buffers (issue 27bb2f75).
-    let f32_selected = select_f32_path::<P>(m, k, n);
-    let route_a_selected = route_a_gf251_enabled::<P>();
-    let route_c_selected = route_c_gf251_enabled::<P>();
-
-    if route_a_selected || (f32_selected && P == 251) {
-        // Route A (issues 68cdf4c8 + 41096af5): reworked Candidate F for
-        // GF(251) with vectorized output reduction and lookup-table pack/unpack.
-        //
-        // Two entry paths:
-        //   (a) `route_a_selected`: explicit AtomicBool toggle via
-        //       `set_route_a_gf251_enabled(true)` — opt-in for any n.
-        //   (b) `f32_selected && P == 251`: production default; `f32_selected`
-        //       is `true` only when `select_f32_path` returns `true`, which
-        //       at the conservative `prime_route` defaults means
-        //       `P == 251 && n >= 512`.
-        //       The `&& P == 251` guard is belt-and-suspenders (compile-time
-        //       const-generic comparison, optimised out by the compiler) and
-        //       preserves local readability. GF(7)/GF(31)/GF(127)/GF(241)
-        //       and GF(251)/n<512 use Candidate C.
-        //
-        // See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
-        // for the Phase 1 decision table and wire-in rationale.
-        if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
+    // Arm selection belongs to `prime_gemm_select` alone: it holds the
+    // eligibility window, the degenerate-shape guard, the window predicate,
+    // the GF(251) switches and the kernel-registration lookups, in the order
+    // the arms appear below. Each arm here only runs the kernel it names, so
+    // the reporter and this dispatcher cannot disagree.
+    match prime_gemm_select::<P>(m, k, n) {
+        PrimeGemmRoute::F32CascadeTabled => {
+            // Route A (issues 68cdf4c8 + 41096af5): reworked Candidate F for
+            // GF(251) with vectorized output reduction and lookup-table
+            // pack/unpack. Selection reaches it through the
+            // `set_route_a_gf251_enabled` switch (opt-in at any n) or through
+            // the window predicate at `P == 251`, which at the conservative
+            // `prime_route` defaults means `P == 251 && n >= 512`.
+            //
+            // See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
+            // for the Phase 1 decision table and wire-in rationale.
+            #[cfg(any(test, feature = "test-support"))]
+            record_executed_prime_gemm_route(PrimeGemmRoute::F32CascadeTabled);
+            let Some(fns_f32) = crate::simd::maybe_fp_small_f32() else {
+                return false;
+            };
             let tables = build_small_prime_tables::<P>();
             let from_mont_f32 = tables.from_mont_f32.as_slice();
             let to_mont = tables.to_mont.as_slice();
-            return GEMM_SMALL_F32_A_SCRATCH.with_borrow_mut(|a_f32_scratch| {
+            GEMM_SMALL_F32_A_SCRATCH.with_borrow_mut(|a_f32_scratch| {
                 GEMM_SMALL_F32_BT_SCRATCH.with_borrow_mut(|bt_f32_scratch| {
                     GEMM_SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8_scratch| {
                         a_f32_scratch.resize(m * k, 0.0);
@@ -911,26 +895,26 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                         true
                     })
                 })
-            });
+            })
         }
-        // Route-A requested but kernel detection failed (no FMA3); fall
-        // through to Candidate C — the byte-lane kernel is the documented
-        // AVX2-only-no-FMA3 fallback.
-    }
 
-    if route_c_selected {
-        // Route C (issue fc182ed5): pure-integer Goto/BLIS-style
-        // panelized micro-kernel for GF(251) with explicit A/B panel
-        // packing + KC blocking. The toggle is opt-in via
-        // `set_route_c_gf251_enabled(true)`; default production
-        // dispatch is unaffected (Candidate C continues to own all
-        // `p ≤ 251` cells). See `dev/active/fc182ed5/fc182ed5-route-c-design.md`
-        // for the panel-dimension derivation (MR × NR × KC = 4 × 24 × 256).
-        if let Some(fns_panel) = crate::simd::maybe_fp_small_panel() {
+        PrimeGemmRoute::U8Panel => {
+            // Route C (issue fc182ed5): pure-integer Goto/BLIS-style
+            // panelized micro-kernel for GF(251) with explicit A/B panel
+            // packing + KC blocking. Selection reaches it only through
+            // `set_route_c_gf251_enabled(true)`; production dispatch is
+            // unaffected (Candidate C continues to own all `p ≤ 251` cells).
+            // See `dev/active/fc182ed5/fc182ed5-route-c-design.md` for the
+            // panel-dimension derivation (MR × NR × KC = 4 × 24 × 256).
+            #[cfg(any(test, feature = "test-support"))]
+            record_executed_prime_gemm_route(PrimeGemmRoute::U8Panel);
+            let Some(fns_panel) = crate::simd::maybe_fp_small_panel() else {
+                return false;
+            };
             let tables = build_small_prime_tables::<P>();
             let from_mont = tables.from_mont.as_slice();
             let to_mont = tables.to_mont.as_slice();
-            return GEMM_SMALL_A_SCRATCH.with_borrow_mut(|a_u8| {
+            GEMM_SMALL_A_SCRATCH.with_borrow_mut(|a_u8| {
                 GEMM_SMALL_BT_SCRATCH.with_borrow_mut(|bt_u8| {
                     GEMM_SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8| {
                         a_u8.resize(m * k, 0u8);
@@ -965,27 +949,19 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                         true
                     })
                 })
-            });
+            })
         }
-        // Route-C requested but kernel detection failed (no AVX2); fall
-        // through to Candidate C below — Candidate C requires AVX2 too,
-        // so it will also fall back to scalar dispatch via the
-        // `maybe_fp_small` `None` arm. Behaviour is therefore identical
-        // to the production no-AVX2 fallback path.
-    }
 
-    if f32_selected {
-        // Legacy Candidate F (AVX2 + FMA3 f32-cascade) — this block is
-        // only reachable when `select_f32_path` returns `true` but the
-        // route-A block above was not taken (i.e. `route_a_selected` was
-        // false and the `maybe_fp_small_f32()` lookup returned `None` for
-        // the route-A path). In practice at the conservative `prime_route`
-        // defaults the only cell that sets `f32_selected` is `P == 251 &&
-        // n >= 512`, which is also covered by route A above. This block
-        // therefore acts as a fallback for the no-FMA3 edge case. Allocation
-        // pattern is unchanged; the F-path body is kept verbatim as the
-        // upgrade path.
-        if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
+        PrimeGemmRoute::F32CascadeDirect => {
+            // Candidate F's original f32-FMA cascade. Selection reaches it
+            // when the window predicate admits a prime other than 251, which
+            // a `prime_route.f32_min_prime` below 251 does; the allocation
+            // pattern is the one this kernel entry point has always used.
+            #[cfg(any(test, feature = "test-support"))]
+            record_executed_prime_gemm_route(PrimeGemmRoute::F32CascadeDirect);
+            let Some(fns_f32) = crate::simd::maybe_fp_small_f32() else {
+                return false;
+            };
             let mut out_u8 = vec![0u8; m * n];
             let a_f32: Vec<f32> = a.iter().map(|x| x.value() as f32).collect();
             let bt_f32: Vec<f32> = b_t.iter().map(|x| x.value() as f32).collect();
@@ -993,70 +969,73 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
             for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
                 *slot = Fp::<P>::new(byte as u64);
             }
-            return true;
+            true
         }
-        // F-path selected but kernel detection failed (no FMA3); fall
-        // through to Candidate C — the byte-lane kernel is the documented
-        // AVX2-only-no-FMA3 fallback.
-    }
 
-    // Candidate C (AVX2 16-bit-integer Barrett kernel) — primary path
-    // for all `p ≤ 251` cells except `P == 251 && n >= 512` which is
-    // handled by route A above (the conservative `prime_route` defaults).
-    let Some(fns) = crate::simd::maybe_fp_small() else {
-        return false;
-    };
-    // Per-prime lookup tables. Built at most once per (prime, process);
-    // the OnceLock cost is paid the first time a process touches any
-    // GEMM for this prime and is amortised forever afterwards.
-    let tables = build_small_prime_tables::<P>();
+        PrimeGemmRoute::ByteLaneBaseline => {
+            // Candidate C (AVX2 16-bit-integer Barrett kernel) — the arm for
+            // every `p ≤ 251` cell the cascades and route C leave.
+            #[cfg(any(test, feature = "test-support"))]
+            record_executed_prime_gemm_route(PrimeGemmRoute::ByteLaneBaseline);
+            let Some(fns) = crate::simd::maybe_fp_small() else {
+                return false;
+            };
+            // Per-prime lookup tables. Built at most once per (prime,
+            // process); the OnceLock cost is paid the first time a process
+            // touches any GEMM for this prime and is amortised forever
+            // afterwards.
+            let tables = build_small_prime_tables::<P>();
 
-    GEMM_SMALL_A_SCRATCH.with_borrow_mut(|a_u8| {
-        GEMM_SMALL_BT_SCRATCH.with_borrow_mut(|bt_u8| {
-            GEMM_SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8| {
-                let a_len = m * k;
-                let bt_len = n * k;
-                let out_len = m * n;
-                a_u8.resize(a_len, 0u8);
-                bt_u8.resize(bt_len, 0u8);
-                out_u8.resize(out_len, 0u8);
+            GEMM_SMALL_A_SCRATCH.with_borrow_mut(|a_u8| {
+                GEMM_SMALL_BT_SCRATCH.with_borrow_mut(|bt_u8| {
+                    GEMM_SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8| {
+                        let a_len = m * k;
+                        let bt_len = n * k;
+                        let out_len = m * n;
+                        a_u8.resize(a_len, 0u8);
+                        bt_u8.resize(bt_len, 0u8);
+                        out_u8.resize(out_len, 0u8);
 
-                // Pack A and B^T via the from_mont table. Each entry is
-                // one byte read indexed by the Montgomery storage word
-                // (in `[0, P)`) — replacing what used to be a `Fp::value()`
-                // REDC call per element.
-                let from_mont = tables.from_mont.as_slice();
-                for (dst, src) in a_u8.iter_mut().zip(a.iter()) {
-                    let raw = src.raw_storage() as usize;
-                    debug_assert!(raw < from_mont.len());
-                    *dst = from_mont[raw];
-                }
-                for (dst, src) in bt_u8.iter_mut().zip(b_t.iter()) {
-                    let raw = src.raw_storage() as usize;
-                    debug_assert!(raw < from_mont.len());
-                    *dst = from_mont[raw];
-                }
+                        // Pack A and B^T via the from_mont table. Each entry is
+                        // one byte read indexed by the Montgomery storage word
+                        // (in `[0, P)`) — replacing what used to be a `Fp::value()`
+                        // REDC call per element.
+                        let from_mont = tables.from_mont.as_slice();
+                        for (dst, src) in a_u8.iter_mut().zip(a.iter()) {
+                            let raw = src.raw_storage() as usize;
+                            debug_assert!(raw < from_mont.len());
+                            *dst = from_mont[raw];
+                        }
+                        for (dst, src) in bt_u8.iter_mut().zip(b_t.iter()) {
+                            let raw = src.raw_storage() as usize;
+                            debug_assert!(raw < from_mont.len());
+                            *dst = from_mont[raw];
+                        }
 
-                // Run the row-panel kernel for each row of A.
-                for i in 0..m {
-                    let a_row = &a_u8[i * k..(i + 1) * k];
-                    let out_row = &mut out_u8[i * n..(i + 1) * n];
-                    (fns.gemm_row_panel_fn)(a_row, bt_u8, k, n, p_u8, out_row);
-                }
+                        // Run the row-panel kernel for each row of A.
+                        for i in 0..m {
+                            let a_row = &a_u8[i * k..(i + 1) * k];
+                            let out_row = &mut out_u8[i * n..(i + 1) * n];
+                            (fns.gemm_row_panel_fn)(a_row, bt_u8, k, n, p_u8, out_row);
+                        }
 
-                // Unpack canonical bytes → Montgomery storage via the
-                // to_mont table — replacing what used to be a
-                // `Fp::new(byte as u64)` REDC call per element.
-                let to_mont = tables.to_mont.as_slice();
-                for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
-                    let canon = byte as usize;
-                    debug_assert!(canon < to_mont.len());
-                    *slot = Fp::<P>::from_raw_storage(to_mont[canon]);
-                }
+                        // Unpack canonical bytes → Montgomery storage via the
+                        // to_mont table — replacing what used to be a
+                        // `Fp::new(byte as u64)` REDC call per element.
+                        let to_mont = tables.to_mont.as_slice();
+                        for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
+                            let canon = byte as usize;
+                            debug_assert!(canon < to_mont.len());
+                            *slot = Fp::<P>::from_raw_storage(to_mont[canon]);
+                        }
+                    });
+                });
             });
-        });
-    });
-    true
+            true
+        }
+
+        PrimeGemmRoute::F64Cascade | PrimeGemmRoute::U16Panel | PrimeGemmRoute::Deferred => false,
+    }
 }
 
 #[cfg(not(feature = "simd"))]
@@ -1701,23 +1680,31 @@ const fn select_f64_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
 
 /// The arm the prime-field GEMM dispatchers run for one cell.
 ///
-/// The two cascades cover disjoint prime windows, so one enum reports both
-/// boundaries: [`PrimeGemmRoute::F32Cascade`] is reachable only for small
-/// primes and [`PrimeGemmRoute::F64Cascade`] only for medium ones.
+/// Each variant names one kernel invocation site: [`prime_gemm_select`]
+/// chooses the variant and the dispatcher's `match` runs the site it names, so
+/// the enum is the whole vocabulary of prime-field GEMM arms. The two cascades
+/// cover disjoint prime windows — the f32 variants are reachable only for
+/// small primes and [`PrimeGemmRoute::F64Cascade`] only for medium ones.
 #[cfg(feature = "simd")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PrimeGemmRoute {
-    /// The f32-FMA cascade (Candidate F, "route A") in
-    /// `fp_small_try_gemm_classical`.
-    F32Cascade,
-    /// The f64-FMA cascade in `fp_medium_try_gemm_panel`.
+    /// The f32-FMA cascade through route A's `batch_gemm_route_a_fn`: lookup-
+    /// table pack and unpack around a vectorized Barrett output reduction.
+    F32CascadeTabled,
+    /// The f32-FMA cascade through Candidate F's original `batch_gemm_fn`,
+    /// which converts each element directly and allocates its own scratch.
+    /// Reachable when the window predicate admits a prime other than 251,
+    /// which a `prime_route.f32_min_prime` below 251 does.
+    F32CascadeDirect,
+    /// The f64-FMA cascade in `fp_medium_f64_try_gemm`.
     F64Cascade,
     /// Route C's pure-integer panelized micro-kernel for GF(251), reachable
     /// only through [`set_route_c_gf251_enabled`].
     U8Panel,
-    /// The integer baseline: Candidate C's byte-lane kernel for small primes,
-    /// the u16 panel kernel for medium ones.
-    U16Baseline,
+    /// Candidate C's byte-lane row-panel kernel, the small-prime baseline.
+    ByteLaneBaseline,
+    /// The u16 panel kernel, the medium-prime baseline.
+    U16Panel,
     /// Neither dispatcher runs a SIMD arm: the prime falls outside both
     /// windows, the shape is degenerate, or no kernel is registered on this
     /// host. The caller's own fallback computes the product — its scalar loop
@@ -1726,70 +1713,151 @@ pub enum PrimeGemmRoute {
     Deferred,
 }
 
-/// Reports the prime-field GEMM arm for the field `Fp<P>` at output shape
-/// `m × n` with inner dimension `k`.
+#[cfg(feature = "simd")]
+impl PrimeGemmRoute {
+    /// Returns `true` for either f32-FMA cascade arm.
+    ///
+    /// The two differ in pack strategy and kernel entry point, not in the
+    /// selection question "does this cell take the f32 cascade", so callers
+    /// asking that question ask it here.
+    #[must_use]
+    pub fn is_f32_cascade(self) -> bool {
+        matches!(
+            self,
+            PrimeGemmRoute::F32CascadeTabled | PrimeGemmRoute::F32CascadeDirect
+        )
+    }
+}
+
+/// Selects the prime-field GEMM arm for `Fp<P>` at output shape `m × n` with
+/// inner dimension `k`.
 ///
-/// The reporter walks the same gate chain as the dispatchers, in their order,
-/// calling the same functions they call: the eligibility window
-/// (`fp_small_enabled`, `fp_medium_eligible`), the degenerate-shape guard, the
-/// [`select_f32_path`] / [`select_f64_path`] window predicates, the GF(251)
-/// debug toggles, and the kernel-registration lookups in [`crate::simd`] that
-/// decide whether the selected arm can actually run. A cell whose window
-/// predicate holds but whose kernel is absent therefore reports the arm the
-/// dispatcher falls back to, not the arm the predicate alone would suggest.
+/// This is the single selection authority for prime-field GEMM: both
+/// dispatchers `match` on its result to choose which kernel to invoke, and
+/// [`prime_gemm_route`] exposes it unchanged, so a reported route and an
+/// executed arm cannot drift apart. The chain runs in dispatch order:
 ///
-/// The window predicates take their bounds from the tuning profile's
-/// `prime_route.f32_min_prime`, `prime_route.f32_min_cols` and
-/// `prime_route.f64_min_cols` fields, baked at compile time
-/// (`dev/active/7d824b2f/design.md` §3.11); the rest of the chain is runtime
-/// state, so the reported route depends on the host's detected kernels and on
-/// the current setting of [`set_route_a_gf251_enabled`] and
-/// [`set_route_c_gf251_enabled`].
+/// 1. the degenerate-shape guard both dispatchers apply before selecting;
+/// 2. the eligibility windows `fp_small_enabled` and `fp_medium_eligible`;
+/// 3. within the small window — route A's guard (the
+///    [`set_route_a_gf251_enabled`] switch or the window predicate at
+///    `P == 251`), then route C's switch, then Candidate F's window predicate,
+///    then Candidate C;
+/// 4. within the medium window — [`select_f64_path`], then the u16 panel.
+///
+/// Every step that names a kernel also consults that kernel's registration in
+/// [`crate::simd`], because a dispatcher whose kernel is absent falls through
+/// to the next arm rather than running the one its predicate named.
+///
+/// The window predicates [`select_f32_path`] and [`select_f64_path`] take
+/// their bounds from the tuning profile's `prime_route.f32_min_prime`,
+/// `prime_route.f32_min_cols` and `prime_route.f64_min_cols` fields, baked at
+/// compile time (`dev/active/7d824b2f/design.md` §3.11); the rest of the chain
+/// is runtime state, so the selected arm depends on the host's detected
+/// kernels and on the current switch settings.
 #[cfg(feature = "simd")]
 #[must_use]
-pub fn prime_gemm_route<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
-    // Both dispatchers reject a degenerate shape before selecting an arm.
+pub(crate) fn prime_gemm_select<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
     if m == 0 || k == 0 || n == 0 {
         return PrimeGemmRoute::Deferred;
     }
 
     if fp_small_enabled::<P>() {
-        // `fp_small_try_gemm_classical`, in block order: route A, route C,
-        // legacy Candidate F, Candidate C.
         let f32_selected = select_f32_path::<P>(m, k, n);
         if (route_a_gf251_enabled::<P>() || (f32_selected && P == 251))
             && crate::simd::maybe_fp_small_f32().is_some()
         {
-            return PrimeGemmRoute::F32Cascade;
+            return PrimeGemmRoute::F32CascadeTabled;
         }
         if route_c_gf251_enabled::<P>() && crate::simd::maybe_fp_small_panel().is_some() {
             return PrimeGemmRoute::U8Panel;
         }
         if f32_selected && crate::simd::maybe_fp_small_f32().is_some() {
-            return PrimeGemmRoute::F32Cascade;
+            return PrimeGemmRoute::F32CascadeDirect;
         }
         return if crate::simd::maybe_fp_small().is_some() {
-            PrimeGemmRoute::U16Baseline
+            PrimeGemmRoute::ByteLaneBaseline
         } else {
             PrimeGemmRoute::Deferred
         };
     }
 
     if fp_medium_eligible::<P>() {
-        // `fp_medium_try_gemm_panel`: the f64 cascade first, then the u16
-        // panel kernel. `fp_medium_f64_try_gemm` reports `false` when the f64
-        // kernel is absent, which is the lookup mirrored here.
         if select_f64_path::<P>(m, k, n) && crate::simd::maybe_fp_medium_f64().is_some() {
             return PrimeGemmRoute::F64Cascade;
         }
         return if crate::simd::maybe_fp_medium().is_some() {
-            PrimeGemmRoute::U16Baseline
+            PrimeGemmRoute::U16Panel
         } else {
             PrimeGemmRoute::Deferred
         };
     }
 
     PrimeGemmRoute::Deferred
+}
+
+/// Reports the prime-field GEMM arm for the field `Fp<P>` at output shape
+/// `m × n` with inner dimension `k`.
+///
+/// The reporter is [`prime_gemm_select`], the function the dispatchers
+/// themselves select on, so what this reports is what the dispatcher runs.
+/// See that function for the gate chain and for which parts of it are baked
+/// and which are runtime state.
+#[cfg(feature = "simd")]
+#[must_use]
+pub fn prime_gemm_route<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
+    prime_gemm_select::<P>(m, k, n)
+}
+
+/// Records the arm a dispatcher executed, for the production-dispatch witness.
+///
+/// The dispatchers store their arm at its kernel-invocation site, so a test
+/// can compare the executed arm against [`prime_gemm_route`]'s report for the
+/// same cell rather than trusting that the two agree.
+#[cfg(all(feature = "simd", any(test, feature = "test-support")))]
+static LAST_EXECUTED_PRIME_GEMM_ROUTE: AtomicUsize = AtomicUsize::new(usize::MAX);
+
+/// Records `route` as the arm the running dispatcher chose.
+#[cfg(all(feature = "simd", any(test, feature = "test-support")))]
+#[inline]
+fn record_executed_prime_gemm_route(route: PrimeGemmRoute) {
+    let encoded = match route {
+        PrimeGemmRoute::F32CascadeTabled => 0,
+        PrimeGemmRoute::F32CascadeDirect => 1,
+        PrimeGemmRoute::F64Cascade => 2,
+        PrimeGemmRoute::U8Panel => 3,
+        PrimeGemmRoute::ByteLaneBaseline => 4,
+        PrimeGemmRoute::U16Panel => 5,
+        PrimeGemmRoute::Deferred => 6,
+    };
+    LAST_EXECUTED_PRIME_GEMM_ROUTE.store(encoded, Ordering::Relaxed);
+}
+
+/// Clears the test-support observation of the last executed GEMM arm.
+#[cfg(all(feature = "simd", any(test, feature = "test-support")))]
+pub fn reset_last_executed_prime_gemm_route() {
+    LAST_EXECUTED_PRIME_GEMM_ROUTE.store(usize::MAX, Ordering::Relaxed);
+}
+
+/// Returns the arm the last prime-field GEMM dispatch executed, or `None` when
+/// no dispatch has run since the last reset.
+///
+/// This observation is available in tests and `test-support` builds so the
+/// production-dispatch witness can assert that the executed arm is the one
+/// [`prime_gemm_route`] reports.
+#[cfg(all(feature = "simd", any(test, feature = "test-support")))]
+#[must_use]
+pub fn last_executed_prime_gemm_route() -> Option<PrimeGemmRoute> {
+    match LAST_EXECUTED_PRIME_GEMM_ROUTE.load(Ordering::Relaxed) {
+        0 => Some(PrimeGemmRoute::F32CascadeTabled),
+        1 => Some(PrimeGemmRoute::F32CascadeDirect),
+        2 => Some(PrimeGemmRoute::F64Cascade),
+        3 => Some(PrimeGemmRoute::U8Panel),
+        4 => Some(PrimeGemmRoute::ByteLaneBaseline),
+        5 => Some(PrimeGemmRoute::U16Panel),
+        6 => Some(PrimeGemmRoute::Deferred),
+        _ => None,
+    }
 }
 
 /// GEMM helper: whole-GEMM panelized AVX2 kernel for medium-prime
@@ -1833,59 +1901,69 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     n: usize,
     out: &mut [Fp<P>],
 ) -> bool {
-    if !fp_medium_eligible::<P>() {
-        return false;
-    }
-    if m == 0 || k == 0 || n == 0 {
-        return false;
-    }
     debug_assert_eq!(a.len(), m * k, "fp_medium_try_gemm_panel: a shape");
     debug_assert_eq!(b_t.len(), n * k, "fp_medium_try_gemm_panel: b_t shape");
     debug_assert_eq!(out.len(), m * n, "fp_medium_try_gemm_panel: out shape");
 
-    // f64 cascade override (issue 0749dbad, Phase 6e). Selected when the
-    // (prime, size) cell sits above the pack-amortisation threshold AND
-    // the AVX2 + FMA3 kernel is available. The cascade reaches Zen 3's
-    // f64 FMA back-end (~70 Gop/s); the u16 panel kernel sits at
-    // ~40 Gop/s (695350fd R0 post-mortem § 4-5).
-    if select_f64_path::<P>(m, k, n) && fp_medium_f64_try_gemm::<P>(a, b_t, m, k, n, out) {
-        return true;
-    }
+    // Arm selection belongs to `prime_gemm_select` alone; see the small-prime
+    // dispatcher for the shape of this match.
+    match prime_gemm_select::<P>(m, k, n) {
+        PrimeGemmRoute::F64Cascade => {
+            // f64 cascade override (issue 0749dbad, Phase 6e). Selection
+            // reaches it when the cell sits above the pack-amortisation
+            // threshold and the AVX2 + FMA3 kernel is registered. The cascade
+            // reaches Zen 3's f64 FMA back-end (~70 Gop/s); the u16 panel
+            // kernel sits at ~40 Gop/s (695350fd R0 post-mortem § 4-5).
+            #[cfg(any(test, feature = "test-support"))]
+            record_executed_prime_gemm_route(PrimeGemmRoute::F64Cascade);
+            fp_medium_f64_try_gemm::<P>(a, b_t, m, k, n, out)
+        }
 
-    let Some(fns) = crate::simd::maybe_fp_medium() else {
-        return false;
-    };
+        PrimeGemmRoute::U16Panel => {
+            #[cfg(any(test, feature = "test-support"))]
+            record_executed_prime_gemm_route(PrimeGemmRoute::U16Panel);
+            let Some(fns) = crate::simd::maybe_fp_medium() else {
+                return false;
+            };
 
-    // Pack A and B^T as Montgomery raw u16 (pure u64 → u16 truncation,
-    // no REDC per element — same trick `fp_medium_try_dot_packed` uses).
-    GEMM_MEDIUM_A_SCRATCH.with_borrow_mut(|a_u16| {
-        GEMM_MEDIUM_BT_SCRATCH.with_borrow_mut(|bt_u16| {
-            GEMM_MEDIUM_OUT_SCRATCH.with_borrow_mut(|out_u16| {
-                a_u16.resize(m * k, 0u16);
-                bt_u16.resize(n * k, 0u16);
-                out_u16.resize(m * n, 0u16);
-                for (dst, src) in a_u16.iter_mut().zip(a.iter()) {
-                    *dst = src.raw_storage() as u16;
-                }
-                for (dst, src) in bt_u16.iter_mut().zip(b_t.iter()) {
-                    *dst = src.raw_storage() as u16;
-                }
+            // Pack A and B^T as Montgomery raw u16 (pure u64 → u16 truncation,
+            // no REDC per element — same trick `fp_medium_try_dot_packed` uses).
+            GEMM_MEDIUM_A_SCRATCH.with_borrow_mut(|a_u16| {
+                GEMM_MEDIUM_BT_SCRATCH.with_borrow_mut(|bt_u16| {
+                    GEMM_MEDIUM_OUT_SCRATCH.with_borrow_mut(|out_u16| {
+                        a_u16.resize(m * k, 0u16);
+                        bt_u16.resize(n * k, 0u16);
+                        out_u16.resize(m * n, 0u16);
+                        for (dst, src) in a_u16.iter_mut().zip(a.iter()) {
+                            *dst = src.raw_storage() as u16;
+                        }
+                        for (dst, src) in bt_u16.iter_mut().zip(b_t.iter()) {
+                            *dst = src.raw_storage() as u16;
+                        }
 
-                (fns.gemm_panel_fn)(a_u16, bt_u16, m, k, n, P as u16, out_u16);
+                        (fns.gemm_panel_fn)(a_u16, bt_u16, m, k, n, P as u16, out_u16);
 
-                // Each `out_u16[i*n + j]` holds `(R² · Σ a_canon · b_canon) mod P`.
-                // One Montgomery REDC maps that to the canonical Montgomery
-                // storage `R · Σ a · b mod P`, matching the storage domain
-                // the caller expects.
-                for (slot, &word) in out.iter_mut().zip(out_u16.iter()) {
-                    let r2_sum = word as u128;
-                    let r_sum = super::montgomery::redc::<P>(r2_sum);
-                    *slot = Fp::<P>::from_raw_storage(r_sum);
-                }
-                true
+                        // Each `out_u16[i*n + j]` holds `(R² · Σ a_canon · b_canon) mod P`.
+                        // One Montgomery REDC maps that to the canonical Montgomery
+                        // storage `R · Σ a · b mod P`, matching the storage domain
+                        // the caller expects.
+                        for (slot, &word) in out.iter_mut().zip(out_u16.iter()) {
+                            let r2_sum = word as u128;
+                            let r_sum = super::montgomery::redc::<P>(r2_sum);
+                            *slot = Fp::<P>::from_raw_storage(r_sum);
+                        }
+                        true
+                    })
+                })
             })
-        })
-    })
+        }
+
+        PrimeGemmRoute::F32CascadeTabled
+        | PrimeGemmRoute::F32CascadeDirect
+        | PrimeGemmRoute::U8Panel
+        | PrimeGemmRoute::ByteLaneBaseline
+        | PrimeGemmRoute::Deferred => false,
+    }
 }
 
 /// f64-cascade GEMM helper for medium primes (issue `0749dbad`,

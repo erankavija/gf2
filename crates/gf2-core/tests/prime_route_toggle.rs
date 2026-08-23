@@ -24,9 +24,8 @@ fn the_route_a_switch_moves_gf251_below_the_column_bound() {
         .expect("the bound admits a cell below it");
 
     let untoggled = prime_gemm_route::<251>(M, K, below);
-    assert_ne!(
-        untoggled,
-        PrimeGemmRoute::F32Cascade,
+    assert!(
+        !untoggled.is_f32_cascade(),
         "below the column bound the production default is not the cascade"
     );
 
@@ -34,16 +33,17 @@ fn the_route_a_switch_moves_gf251_below_the_column_bound() {
     let toggled = prime_gemm_route::<251>(M, K, below);
     set_route_a_gf251_enabled(false);
 
-    match toggled {
+    if toggled.is_f32_cascade() {
         // The switch forces route A at any width when the kernel is present.
-        PrimeGemmRoute::F32Cascade => {}
+        assert_eq!(toggled, PrimeGemmRoute::F32CascadeTabled);
+    } else {
         // Without the f32 kernel the dispatcher falls through the route-A
-        // block exactly as it does untoggled.
-        arm => assert_eq!(
-            arm, untoggled,
+        // arm exactly as it does untoggled.
+        assert_eq!(
+            toggled, untoggled,
             "this host registers no f32 cascade kernel, so the switch cannot \
              move the arm"
-        ),
+        );
     }
 
     assert_eq!(

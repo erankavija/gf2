@@ -46,18 +46,19 @@ fn baked_build_routes_gf251_by_the_committed_column_bound() {
         .checked_sub(1)
         .expect("the bound admits a cell below it");
 
-    match prime_gemm_route::<251>(M, K, cols) {
-        PrimeGemmRoute::F32Cascade => assert_ne!(
-            prime_gemm_route::<251>(M, K, below),
-            PrimeGemmRoute::F32Cascade,
+    let at_bound = prime_gemm_route::<251>(M, K, cols);
+    if at_bound.is_f32_cascade() {
+        assert!(
+            !prime_gemm_route::<251>(M, K, below).is_f32_cascade(),
             "the baked column bound must exclude the cell below it"
-        ),
-        arm => assert_eq!(
+        );
+    } else {
+        assert_eq!(
             prime_gemm_route::<251>(M, K, below),
-            arm,
+            at_bound,
             "this host registers no f32 cascade kernel, so the dispatcher \
              takes the same arm on both sides of the column bound"
-        ),
+        );
     }
 }
 
@@ -75,18 +76,17 @@ fn baked_build_brackets_the_committed_prime_bound() {
     let wide = prime_route.f32_min_cols() + 512;
 
     let below_bound = prime_gemm_route::<241>(M, K, wide);
-    assert_ne!(
-        below_bound,
-        PrimeGemmRoute::F32Cascade,
+    assert!(
+        !below_bound.is_f32_cascade(),
         "the prime below the baked bound must stay off the cascade"
     );
-    match prime_gemm_route::<251>(M, K, wide) {
-        PrimeGemmRoute::F32Cascade => {}
-        arm => assert_eq!(
-            arm, below_bound,
+    let at_bound = prime_gemm_route::<251>(M, K, wide);
+    if !at_bound.is_f32_cascade() {
+        assert_eq!(
+            at_bound, below_bound,
             "this host registers no f32 cascade kernel, so the prime bound \
              cannot move the arm"
-        ),
+        );
     }
 }
 
@@ -144,14 +144,8 @@ fn install_does_not_govern_prime_route_selection() {
     let profile = committed_profile();
     let prime_route = profile.prime_route();
     if let Some(below) = prime_route.f32_min_cols().checked_sub(1) {
-        assert_ne!(
-            prime_gemm_route::<251>(M, K, below),
-            PrimeGemmRoute::F32Cascade
-        );
-        assert_ne!(
-            prime_gemm_route::<7>(M, K, below),
-            PrimeGemmRoute::F32Cascade
-        );
+        assert!(!prime_gemm_route::<251>(M, K, below).is_f32_cascade());
+        assert!(!prime_gemm_route::<7>(M, K, below).is_f32_cascade());
     }
     if let Some(below) = prime_route.f64_min_cols().checked_sub(1) {
         assert_ne!(
