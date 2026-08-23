@@ -822,7 +822,7 @@ pub trait FiniteField:
     /// Winograd implementation is bit-exact equal to the classical
     /// `gemm` at every threshold value, as asserted by the property
     /// tests in `src/field/winograd.rs`.
-    const WINOGRAD_THRESHOLD: usize = 128;
+    const WINOGRAD_THRESHOLD: usize = crate::field::winograd::WINOGRAD_MIN_DIM_DEFAULT;
 
     /// Base-case threshold for the block-recursive triangular primitives
     /// in [`crate::field::triangular`] (`trsm`, `trmm`, `trtri`, `trtrm`,
@@ -833,7 +833,7 @@ pub trait FiniteField:
     /// The default `8` was selected by Criterion sweep over candidate
     /// values `{4, 8, 16, 32, 64}` on `Fp<MERSENNE_31>` at `n ∈ {256,
     /// 1024}` for `trsm_upper` / `trsm_lower` / `pluq` (see
-    /// `dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md`):
+    /// `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md`):
     /// `8` minimises `trsm_lower/256` and matches the optimum to
     /// within sub-percent noise at every other measured cell. Values
     /// `16` and `32` (the previous default) were 1–8% slower; value
@@ -855,7 +855,7 @@ pub trait FiniteField:
     /// `src/field/triangular.rs` exercise `trsm`/`trmm`/`trtri`/`trtrm`
     /// at sizes that straddle the threshold and assert bit-exact
     /// agreement with the classical `gemm`-of-dense expansion.
-    const TRI_BASE_THRESHOLD: usize = 8;
+    const TRI_BASE_THRESHOLD: usize = crate::field::triangular::TRI_BASE_MAX_DIM_DEFAULT;
 
     /// Column-window width at which [`FieldMatrix::ple`]'s block-recursive
     /// driver switches from the recursive trsm+gemm strategy to a direct
@@ -869,7 +869,7 @@ pub trait FiniteField:
     ///
     /// `PLE_BASE_COLS = 1` was selected by same-session Criterion sweep
     /// over GF(2^31-1) at n ∈ {64, 256, 1024}, uniform and deficient
-    /// regimes (see `dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md`):
+    /// regimes (see `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md`):
     /// values 1, 4, 8, and 16 were tried; 1 (current baseline — pure
     /// block-recursive trsm+gemm at all levels) gave the best combined
     /// result for Mersenne-31 because the blocked GEMM uses delayed u128
@@ -889,7 +889,7 @@ pub trait FiniteField:
     ///   base case beats the recursive dispatch overhead.
     /// - GF(2^m) fields (XOR arithmetic) may prefer larger values since
     ///   element ops are near-free compared to function call overhead.
-    const PLE_BASE_COLS: usize = 1;
+    const PLE_BASE_COLS: usize = crate::field::ple::PLE_SCALAR_BASE_MAX_COLS_DEFAULT;
 
     /// Column-window width at which [`FieldMatrix::ple`]'s block-recursive
     /// driver switches from the recursive trsm+gemm strategy to the
