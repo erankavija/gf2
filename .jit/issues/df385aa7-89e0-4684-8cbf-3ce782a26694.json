@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the PLE panel base width (resolved once and threaded through the recursion) and the blocked back-substitution threshold.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.6 and the ple row of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: panel_base_max_cols is hoisted, resolved once at the panel entry and threaded through ple_in_place_window's recursion by parameter; blocked_back_sub_min_dim is a resolved read; both satisfy design §2.3 with operators unchanged.\n- [hard] REQ-02: ple_panel_route and back_sub_route reporters called by the dispatchers and their route files pass; review confirms the recursion takes the threshold by parameter.\n- [hard] REQ-03: Rustdoc names the profile fields; existing tests pass unchanged.",
   "documents": [],
+  "done_at": "2026-08-23T10:17:14.044428337Z",
   "first_ready_at": "2026-08-22T21:26:40.059032605Z",
   "gates_required": [
     "cargo-ci",
@@ -16,19 +17,19 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:43.058451730Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T10:11:36.381571655Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:43.180936111Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T10:14:22.919890746Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:43.298114613Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T10:16:32.090913718Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "df385aa7-89e0-4684-8cbf-3ce782a26694",
@@ -39,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cut the PLE selectors over to the tuning profile",
-  "updated_at": "2026-08-23T08:01:37.125877672Z"
+  "updated_at": "2026-08-23T10:17:14.044428337Z"
 }
