@@ -423,6 +423,22 @@ required-features = ["tuning-profile"]
 name = "tuning_profile_ple_install_above"
 required-features = ["tuning-profile"]
 
+# ── Issue `e8a727ff` (epic `6dc81018`) — PLE scalar-base and per-lane panel
+# width route observation, one installed profile per binary for the same
+# reason: the scalar base case, the byte-lane panel width, and the u16-lane
+# panel width each need their own install.
+[[test]]
+name = "tuning_profile_ple_scalar_base_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_ple_byte_lane_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_ple_u16_lane_install"
+required-features = ["tuning-profile"]
+
 # ── Issue `aa904331` (epic `6dc81018`) — M4RM schedule route observation ──
 #
 # One installed profile per binary, because `tuning::install` is one-shot per
