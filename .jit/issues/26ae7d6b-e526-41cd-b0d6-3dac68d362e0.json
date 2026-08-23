@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-23T11:54:44.611693952Z",
   "context": {},
   "created_at": "2026-08-22T21:26:45.712918688Z",
   "dependencies": [
@@ -38,7 +39,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Cut the GEMM selectors over to the tuning profile",
-  "updated_at": "2026-08-23T11:03:07.570678937Z"
+  "updated_at": "2026-08-23T11:54:44.611693952Z"
 }
