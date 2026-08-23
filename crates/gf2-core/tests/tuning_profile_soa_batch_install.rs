@@ -78,8 +78,10 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
     assert_eq!(soa_batch.parallel_min_len(), INSTALLED_MIN_LEN);
     assert_eq!(soa_batch.parallel_chunk_len(), INSTALLED_CHUNK_LEN);
 
-    // Route boundary: soa_parallel_route is production dispatch code
-    // (should_parallelize_soa_batch calls it), not a test-local comparison.
+    // Route boundary: soa_parallel_route delegates to the same private
+    // resolved reporter the dispatcher
+    // (should_parallelize_soa_batch_resolved) consumes, so this asserts
+    // production dispatch code, not a test-local comparison.
     assert_eq!(
         soa_parallel_route(INSTALLED_MIN_LEN - 1),
         SoaParallelRoute::Sequential
