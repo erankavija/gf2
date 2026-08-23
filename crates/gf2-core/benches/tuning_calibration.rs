@@ -58,8 +58,14 @@
 //! field as having no comparable grid point and keeps the conservative default.
 //!
 //! `--self-check` prints the protocol constants and the observed host facts
-//! without measuring or emitting; `--list-grid` prints the grid and the
-//! conservative defaults it straddles. Neither needs `GF2_BENCH=1`.
+//! without measuring or emitting; `--list-grid` prints the grid, the
+//! conservative defaults it straddles, and which arms are measured in a child
+//! process. Neither needs `GF2_BENCH=1`.
+//!
+//! `--child-arm` is how a run measures one arm of one grid point of a
+//! child-process family; the calibrating process passes it to a copy of itself
+//! and reads the report back. Running it by hand measures that one arm and
+//! emits nothing.
 //!
 //! ## 3. Commit the emitted profile
 //!
@@ -89,10 +95,14 @@
 //!
 //! Per selector field, both arms of the crossover are measured across a size
 //! grid straddling the conservative default, with one fixture per grid point
-//! shared by both arms so operand construction is identical on them. The two
-//! arms alternate at execution granularity, each execution recalibrating its
-//! own call count, so a frequency or thermal drift across a grid point is
-//! spread over both arms instead of biasing the one measured second. The
+//! shared by both arms so operand construction is identical on them. Where the
+//! two arms run in separate processes the fixture is rebuilt from the same
+//! deterministic seed and the parent checks that the digests agree, which
+//! carries the same guarantee across the process boundary. The two arms
+//! alternate at execution granularity, each execution recalibrating its own
+//! call count, so a frequency or thermal drift across a grid point is spread
+//! over both arms instead of biasing the one measured second; a child-process
+//! arm alternates the same way, one process per arm per execution. The
 //! alternation stays outside the timed windows: each window is a monomorphic
 //! loop over one entry point, which matters for the bit-logical arms whose
 //! per-call cost is a few nanoseconds.
@@ -117,21 +127,29 @@
 //!
 //! # Measured against uncalibrated
 //!
-//! The three ways a field keeps its default are not the same claim, and the
-//! emitted document distinguishes two of them from the third.
+//! Design §5 condition 5 governs every field this sweep does not cover: "Until
+//! the sweep covers it, a committed profile omits the field and inherits the
+//! default; a profile that carries an uncalibrated value is a
+//! `@/inv/benchmark-backed-performance` defect."
+//!
+//! The emitted document therefore states a field only when this run measured
+//! it, and the omission set is the complement: every
+//! `selectors.<family>.<field>` key [`TuningProfile::to_json`] writes, read off
+//! that output at run time, minus the fields whose sweep reached a comparison.
+//! A schema field this harness has never heard of is omitted by construction,
+//! so a follow-on selector family landing its fields cannot leak an unmeasured
+//! value into an emitted profile, and no field inventory is maintained here to
+//! go stale against the schema.
 //!
 //! A tie and a non-monotone crossover are **calibration outcomes**: both arms
 //! were measured across the grid, and the rule concluded that the default
 //! stands. Such a field states its value in the document like any other.
 //!
-//! A field with **no comparable grid point** was never calibrated at all. Design
-//! §5 condition 5 governs it: "Until the sweep covers it, a committed profile
-//! omits the field and inherits the default; a profile that carries an
-//! uncalibrated value is a `@/inv/benchmark-backed-performance` defect." The
-//! emitted document therefore has no key for such a field. An absent field is a
-//! supported state of the schema — `from_json` resolves it to the conservative
-//! default — so the document still loads and still selects the same threshold,
-//! and it stops claiming a value nothing measured.
+//! A field with **no comparable grid point**, and a field no sweep covers at
+//! all, were never calibrated. An absent field is a supported state of the
+//! schema — `from_json` resolves it to the conservative default — so the
+//! document still loads and still selects the same threshold, and it stops
+//! claiming a value nothing measured.
 //!
 //! # Arm reachability
 //!
@@ -142,19 +160,38 @@
 //! [`FieldPoly::div_rem_fast`], and [`FieldPoly::eval_batch`] against
 //! [`batch_evaluate_subproduct_auto`].
 //!
-//! `polynomial.karatsuba_min_degree` has no such pair. Its two arms are the
-//! private `mul_schoolbook_impl` and `mul_karatsuba_raw`, reachable only
-//! through [`FieldPoly::mul`], which picks one of them from the compiled-in
-//! threshold — schoolbook below it, Karatsuba at or above it. No grid point
-//! therefore offers both arms, so the field is uncalibrated and the emitted
-//! document omits it. The dispatcher is still measured across the grid so the
-//! receipt records the curve.
+//! `polynomial.karatsuba_min_degree` has no such pair and gains none here. Its
+//! two arms are the private `mul_schoolbook_impl` and `mul_karatsuba_raw`,
+//! reachable only through [`FieldPoly::mul`], which picks one of them from the
+//! active profile — schoolbook below `karatsuba_min_degree`, Karatsuba at or
+//! above it. The sweep reaches both by installing a profile that forces the
+//! arm, as [`forced_karatsuba_min_degree`] states: the grid point itself takes
+//! the Karatsuba arm there, and [`FORCED_SCHOOLBOOK_MIN_DEGREE`] takes the
+//! schoolbook arm.
 //!
-//! Issue `389aa4de` owns closing that gap. Once the polynomial cutover has
-//! `mul_impl` read `tuning::active()`, one child process installing a minimal
-//! threshold takes the Karatsuba arm and another installing a maximal one takes
-//! the schoolbook arm, so both arms come off the same public
-//! [`FieldPoly::mul`] on one grid without any new public API.
+//! `gf2_core::tuning::install` resolves the process-wide profile once, so one
+//! process offers one arm. Each arm at each grid point is therefore measured in
+//! a **child process**: this binary re-executes itself with `--child-arm`, and
+//! the child installs the forcing profile before any selection boundary runs
+//! and reports back
+//!
+//! - the arm the production selector [`mul_route`] picks under that profile,
+//!   which the parent checks against the arm it asked for, so "both arms were
+//!   measured" is an observation rather than an assumption;
+//! - a digest of the operands it built, which the parent checks against its own
+//!   fixture, so the two arms are compared on identical operands although
+//!   neither process built the other's;
+//! - a digest of the product, which the parent compares across the two arms as
+//!   this field's equivalence probe.
+//!
+//! `mul_karatsuba_raw` recurses on the same profile value, so the value forced
+//! for the Karatsuba arm decides which algorithm is timed. Forcing the grid
+//! point makes the recursion split once at that degree and hand every
+//! sub-operand, whose degree is about half of it, to the schoolbook base case —
+//! exactly what the dispatcher runs when `karatsuba_min_degree` is set to that
+//! grid point. Each grid point therefore compares the two arms the selection
+//! rule chooses between at that point, rather than the cost of a Karatsuba
+//! recursion carried to a base case no threshold would produce.
 
 use std::env;
 use std::fmt;
@@ -166,10 +203,11 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use gf2_core::field::poly::{batch_evaluate_subproduct_auto, FieldPoly};
+use gf2_core::field::poly::{batch_evaluate_subproduct_auto, mul_route, FieldPoly, MulRoute};
 use gf2_core::gfp::Fp;
 use gf2_core::kernels::{Backend, ScalarBackend};
 use gf2_core::rng::Lcg;
+use gf2_core::tuning;
 use gf2_core::tuning::{
     BitBackendSelectors, GitRevision, HarnessSchema, PolynomialSelectors, ProfileError, ProfileId,
     Provenance, RepoRelPath, Rfc3339Utc, SelectorFamilies, Sha256, TuningProfile,
@@ -190,6 +228,16 @@ const BIT_FIXTURES: usize = 8;
 const WORDS_PER_LINE: usize = 8;
 const SEED_ROOT: u64 = 0x5ecc_9bf8_0000_0000;
 const GIT_STATUS_ARGS: &[&str] = &["status", "--porcelain", "--untracked-files=all"];
+/// `polynomial.karatsuba_min_degree` a child installs to force the schoolbook
+/// arm.
+///
+/// `usize::MAX` is the top of the field's admissible range and means "never
+/// take the named path"; no operand degree reaches it, so every product on the
+/// grid runs schoolbook. It is an ordinary admissible value rather than a
+/// reserved sentinel.
+const FORCED_SCHOOLBOOK_MIN_DEGREE: usize = usize::MAX;
+/// Profile identifier a child installs, recorded nowhere but its own process.
+const FORCED_ARM_PROFILE_ID: &str = "calibration-forced-arm";
 
 /// The prime field every polynomial arm is measured over.
 ///
@@ -226,6 +274,14 @@ impl CalibratedField {
         match self {
             Self::SimdMinWords => "bit_backend",
             _ => "polynomial",
+        }
+    }
+
+    /// The schema key this field's measured value is stated under.
+    fn schema_field(self) -> SchemaField {
+        SchemaField {
+            family: self.family().to_owned(),
+            name: self.to_string(),
         }
     }
 
@@ -269,6 +325,34 @@ impl CalibratedField {
             Self::DivRemFastMinLen => "div_rem_fast",
             Self::SubproductMinLen => "subproduct_auto",
         }
+    }
+
+    fn arm_name(self, arm: Arm) -> &'static str {
+        match arm {
+            Arm::Conservative => self.conservative_arm(),
+            Arm::Asymptotic => self.asymptotic_arm(),
+        }
+    }
+
+    /// The process each of this field's arms is measured in.
+    ///
+    /// Every field but `karatsuba_min_degree` reaches both arms through their
+    /// own entry points, so both are timed here. That one selects its arm from
+    /// the active profile, which resolves once per process, so each of its arms
+    /// is timed in a child that installed the profile forcing it.
+    fn arm_source(self) -> ArmSource {
+        match self {
+            Self::KaratsubaMinDegree => ArmSource::ChildProcess,
+            _ => ArmSource::InProcess,
+        }
+    }
+
+    /// The field named by its schema key, for a child process's command line.
+    fn parse(token: &str) -> Result<Self, String> {
+        Self::ALL
+            .into_iter()
+            .find(|field| field.to_string() == token)
+            .ok_or_else(|| format!("`{token}` names no swept field"))
     }
 
     /// The unit the grid points are measured in.
@@ -352,6 +436,23 @@ impl fmt::Display for CalibratedField {
     }
 }
 
+/// One `selectors.<family>.<field>` key of the emitted schema.
+///
+/// The schema carries many more of these than this sweep measures, and the two
+/// sets are compared by value rather than by a maintained list, so a field the
+/// sweep does not name is omitted from the emitted document whatever it is.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct SchemaField {
+    family: String,
+    name: String,
+}
+
+impl fmt::Display for SchemaField {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{}.{}", self.family, self.name)
+    }
+}
+
 /// Which side of a crossover an arm sits on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Arm {
@@ -359,6 +460,45 @@ enum Arm {
     Conservative,
     /// The arm the comparison selects above the threshold.
     Asymptotic,
+}
+
+impl Arm {
+    const BOTH: [Self; 2] = [Self::Conservative, Self::Asymptotic];
+
+    fn parse(token: &str) -> Result<Self, String> {
+        Self::BOTH
+            .into_iter()
+            .find(|arm| arm.to_string() == token)
+            .ok_or_else(|| format!("`{token}` names no arm"))
+    }
+}
+
+impl fmt::Display for Arm {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::Conservative => "conservative",
+            Self::Asymptotic => "asymptotic",
+        })
+    }
+}
+
+/// Where a field's two arms are timed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ArmSource {
+    /// Both arms have their own entry point and are timed in this process.
+    InProcess,
+    /// The arm is selected from the active profile, so each is timed in a
+    /// child process that installed the profile forcing it.
+    ChildProcess,
+}
+
+impl fmt::Display for ArmSource {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::InProcess => "in-process",
+            Self::ChildProcess => "child-process",
+        })
+    }
 }
 
 // ---------------------------------------------------------------------
@@ -393,6 +533,9 @@ enum Mode {
     },
     SelfCheck,
     ListGrid,
+    /// One arm of one grid point, measured in this process because the parent
+    /// spawned it with the arm it wants forced.
+    ArmChild(ChildSpec),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -411,6 +554,7 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
     let mut receipt: Option<String> = None;
     let mut self_check = false;
     let mut list_grid = false;
+    let mut child_arm: Option<ChildSpec> = None;
     let mut iter = args;
     while let Some(arg) = iter.next() {
         match arg.as_str() {
@@ -423,6 +567,7 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
             "--receipt" => receipt = Some(next_value(&mut iter, &arg)?),
             "--self-check" => self_check = true,
             "--list-grid" => list_grid = true,
+            "--child-arm" => child_arm = Some(ChildSpec::parse(&next_value(&mut iter, &arg)?)?),
             "--bench" => {}
             _ => return Err(format!("unknown argument: {arg}")),
         }
@@ -436,8 +581,13 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
             return Err(format!("{flag} must be positive"));
         }
     }
-    if self_check && list_grid {
-        return Err("--self-check and --list-grid are separate modes".into());
+    if [self_check, list_grid, child_arm.is_some()]
+        .into_iter()
+        .filter(|selected| *selected)
+        .count()
+        > 1
+    {
+        return Err("--self-check, --list-grid and --child-arm are separate modes".into());
     }
     let protocol = Protocol {
         executions,
@@ -448,6 +598,8 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
         Mode::SelfCheck
     } else if list_grid {
         Mode::ListGrid
+    } else if let Some(spec) = child_arm {
+        Mode::ArmChild(spec)
     } else {
         Mode::Calibrate {
             out: out.ok_or("--out is required; name a unique absent path under /tmp")?,
@@ -491,6 +643,77 @@ fn resolve_repository_path(path: &Path) -> PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
             .join(path)
+    }
+}
+
+// ---------------------------------------------------------------------
+// Child-process arms
+// ---------------------------------------------------------------------
+
+/// What a child process is asked to do with the arm it forces.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ChildTask {
+    /// Report the arm and the digests, and time nothing.
+    Probe,
+    /// Time one execution's windows as well.
+    Measure { execution: u64 },
+}
+
+impl fmt::Display for ChildTask {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Probe => formatter.write_str("probe"),
+            Self::Measure { execution } => write!(formatter, "{execution}"),
+        }
+    }
+}
+
+/// One arm of one grid point, as a child process's command line carries it.
+///
+/// The rendered form is `<field>:<size>:<arm>:<probe|execution>`, which is one
+/// argument value and round-trips through [`ChildSpec::parse`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct ChildSpec {
+    field: CalibratedField,
+    size: usize,
+    arm: Arm,
+    task: ChildTask,
+}
+
+impl ChildSpec {
+    fn parse(text: &str) -> Result<Self, String> {
+        let parts: Vec<&str> = text.split(':').collect();
+        let [field, size, arm, task] = parts.as_slice() else {
+            return Err(format!(
+                "`{text}` is not a `<field>:<size>:<arm>:<probe|execution>` child specification"
+            ));
+        };
+        Ok(Self {
+            field: CalibratedField::parse(field)?,
+            size: size
+                .parse()
+                .map_err(|_| format!("`{size}` is not a grid point"))?,
+            arm: Arm::parse(arm)?,
+            task: if *task == "probe" {
+                ChildTask::Probe
+            } else {
+                ChildTask::Measure {
+                    execution: task
+                        .parse()
+                        .map_err(|_| format!("`{task}` is neither `probe` nor an execution"))?,
+                }
+            },
+        })
+    }
+}
+
+impl fmt::Display for ChildSpec {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "{}:{}:{}:{}",
+            self.field, self.size, self.arm, self.task
+        )
     }
 }
 
@@ -921,11 +1144,41 @@ fn build_fixture(field: CalibratedField, size: usize) -> Fixture {
     }
 }
 
+/// FNV-1a over the little-endian bytes of each word.
+fn digest_words(words: impl Iterator<Item = u64>) -> u64 {
+    let mut hash = 0xcbf2_9ce4_8422_2325_u64;
+    for word in words {
+        for byte in word.to_le_bytes() {
+            hash ^= u64::from(byte);
+            hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+        }
+    }
+    hash
+}
+
+/// Length-sensitive digest of a polynomial's coefficients.
+///
+/// The parent and its children build their fixtures separately from the same
+/// deterministic seed and compute their products on different arms. Comparing
+/// digests establishes that they hold the same operands and reached the same
+/// product without either process shipping a coefficient vector to the other.
+fn poly_digest(poly: &FieldPoly<F>) -> u64 {
+    digest_words(
+        std::iter::once(poly.len() as u64)
+            .chain(poly.iter().map(|coefficient| coefficient.value())),
+    )
+}
+
+/// Digest of an ordered operand pair.
+fn operand_digest(lhs: &FieldPoly<F>, rhs: &FieldPoly<F>) -> u64 {
+    digest_words([poly_digest(lhs), poly_digest(rhs)].into_iter())
+}
+
 /// Asserts that the two arms of `field` agree at `size` before either is timed.
 ///
 /// A crossover between arms that compute different results is not a crossover,
 /// so this runs at every grid point where both arms exist.
-fn equivalence_probe(field: CalibratedField, size: usize, fixture: &Fixture) {
+fn equivalence_probe(field: CalibratedField, size: usize, fixture: &Fixture, protocol: &Protocol) {
     match (field, fixture) {
         (CalibratedField::SimdMinWords, Fixture::Bit { dst, src }) => {
             assert!(dst.is_line_aligned() && src.is_line_aligned());
@@ -944,6 +1197,28 @@ fn equivalence_probe(field: CalibratedField, size: usize, fixture: &Fixture) {
         (CalibratedField::KaratsubaMinDegree, Fixture::Mul { a, b }) => {
             assert_eq!(a.len(), size + 1);
             assert_eq!(b.len(), size + 1);
+            // Neither arm is callable here, so the probe runs one child per
+            // arm. Each reports the arm the production selector picks under
+            // the profile it installed and a digest of the operands it built
+            // from the same seed; the two products are then compared across
+            // processes.
+            let operands = operand_digest(a, b);
+            let products: Vec<u64> = Arm::BOTH
+                .into_iter()
+                .map(|arm| {
+                    let spec = ChildSpec {
+                        field,
+                        size,
+                        arm,
+                        task: ChildTask::Probe,
+                    };
+                    checked_child_report(spec, operands, protocol).product
+                })
+                .collect();
+            assert_eq!(
+                products[0], products[1],
+                "multiplication arms disagree at operand degree {size}"
+            );
         }
         (CalibratedField::KaratsubaMaxOutLen, Fixture::Mul { a, b }) => {
             assert_eq!(
@@ -1008,9 +1283,7 @@ fn bank_indices(index: usize) -> (usize, usize) {
 /// window's nanoseconds per call.
 ///
 /// Returns `None` when the arm has no entry point at this grid point on this
-/// build: the bit-backend family without a detected SIMD backend, and the
-/// Karatsuba degree family at every grid point, where the only public entry
-/// resolves the arm itself.
+/// build, which is the bit-backend family without a detected SIMD backend.
 fn measure_arm_execution(
     field: CalibratedField,
     size: usize,
@@ -1050,21 +1323,18 @@ fn measure_arm_execution(
                 None
             }
         }
-        (CalibratedField::KaratsubaMinDegree, _, Fixture::Mul { a, b }) => {
-            // `FieldPoly::mul` is the only public entry to this crossover and
-            // resolves the arm itself from the compiled-in threshold, so each
-            // grid point reaches exactly one of the two arms.
-            let reached = if size >= field.conservative_default() {
-                Arm::Asymptotic
-            } else {
-                Arm::Conservative
+        (CalibratedField::KaratsubaMinDegree, arm, Fixture::Mul { a, b }) => {
+            // `FieldPoly::mul` is the only entry to this crossover and resolves
+            // the arm from the active profile, which resolves once per process.
+            // A child installs the profile forcing `arm` and times the same
+            // public entry there.
+            let spec = ChildSpec {
+                field,
+                size,
+                arm,
+                task: ChildTask::Measure { execution },
             };
-            if arm != reached {
-                return None;
-            }
-            Some(execution_windows(protocol, execution, |_| {
-                black_box(black_box(&*a).mul(black_box(&*b)));
-            }))
+            Some(checked_child_report(spec, operand_digest(a, b), protocol).rates)
         }
         (CalibratedField::KaratsubaMaxOutLen, Arm::Conservative, Fixture::Mul { a, b }) => {
             Some(execution_windows(protocol, execution, |_| {
@@ -1149,6 +1419,231 @@ fn calibrated_calls(target: Duration, mut call: impl FnMut(usize)) -> u64 {
         }
         calls = calls.saturating_mul(2).min(MAX_CALLS);
     }
+}
+
+// ---------------------------------------------------------------------
+// Forcing an arm in a child process
+// ---------------------------------------------------------------------
+
+/// What a child process reports back on its standard output.
+#[derive(Clone, Debug, PartialEq)]
+struct ChildReport {
+    /// Arm the production selector picked under the installed profile.
+    route: String,
+    /// Digest of the operands the child built.
+    operands: u64,
+    /// Digest of the product the child's arm computed.
+    product: u64,
+    /// Nanoseconds per call of each timed window, empty for a probe.
+    rates: Vec<f64>,
+}
+
+/// The `karatsuba_min_degree` a child installs to reach `arm` at `size`.
+///
+/// The Karatsuba arm forces the grid point itself, which is the smallest value
+/// that still routes operands of that degree to Karatsuba. `mul_karatsuba_raw`
+/// recurses on the same value, so the recursion splits once and its
+/// sub-operands, at about half the degree, fall to the schoolbook base case —
+/// the algorithm the dispatcher runs when `karatsuba_min_degree` is set to this
+/// grid point. Forcing the bottom of the admissible range instead would time a
+/// recursion carried to degree 0, which no threshold produces.
+///
+/// The schoolbook arm forces the top of the range, where no grid point routes
+/// to Karatsuba at all.
+fn forced_karatsuba_min_degree(arm: Arm, size: usize) -> usize {
+    match arm {
+        Arm::Conservative => FORCED_SCHOOLBOOK_MIN_DEGREE,
+        Arm::Asymptotic => size,
+    }
+}
+
+/// Installs the profile that forces one arm of the multiplication dispatcher.
+///
+/// Only `karatsuba_min_degree` moves; every other selector keeps its
+/// conservative value, so the child differs from an ordinary process in exactly
+/// the one comparison under study. The installed value is read back through
+/// `tuning::active`, because an install that silently lost a race would leave
+/// the child measuring the conservative default and reporting it as an arm.
+fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
+    let inherited = &TuningProfile::CONSERVATIVE;
+    let conservative = inherited.polynomial();
+    let polynomial = PolynomialSelectors::try_new(
+        karatsuba_min_degree,
+        conservative.karatsuba_max_out_len(),
+        conservative.div_rem_fast_min_len(),
+        conservative.subproduct_min_len(),
+        conservative.interpolate_fast_min_points(),
+    )
+    .map_err(|error| {
+        format!("karatsuba_min_degree {karatsuba_min_degree} is inadmissible: {error}")
+    })?;
+    let profile = TuningProfile::try_new(
+        ProfileId::parse(FORCED_ARM_PROFILE_ID)
+            .map_err(|error| format!("`{FORCED_ARM_PROFILE_ID}` is not a profile id: {error}"))?,
+        Provenance::Inherited,
+        SelectorFamilies {
+            polynomial,
+            ..SelectorFamilies::CONSERVATIVE
+        },
+    )
+    .map_err(|error| format!("the arm-forcing profile does not validate: {error}"))?;
+    tuning::install(profile)
+        .map_err(|error| format!("the arm-forcing profile was not installed: {error}"))?;
+    let active = tuning::active().polynomial().karatsuba_min_degree();
+    if active != karatsuba_min_degree {
+        return Err(format!(
+            "the active karatsuba_min_degree is {active}, not the forced {karatsuba_min_degree}"
+        ));
+    }
+    Ok(())
+}
+
+/// Runs one child task and writes its report to standard output.
+///
+/// The profile is installed before anything else touches a selection boundary,
+/// so `tuning::install` cannot fail on an already-resolved profile. The arm is
+/// then read back from the production selector rather than assumed from the
+/// value installed.
+fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<(), String> {
+    if spec.field.arm_source() != ArmSource::ChildProcess {
+        return Err(format!(
+            "{} reaches both arms in one process and needs no child",
+            spec.field
+        ));
+    }
+    install_forced_profile(forced_karatsuba_min_degree(spec.arm, spec.size))?;
+
+    let degree = spec.size;
+    println!(
+        "route\t{}",
+        match mul_route(degree, degree) {
+            MulRoute::Schoolbook => "schoolbook",
+            MulRoute::Karatsuba => "karatsuba",
+        }
+    );
+    let Fixture::Mul { a, b } = build_fixture(spec.field, spec.size) else {
+        return Err(format!("{} has no multiplication fixture", spec.field));
+    };
+    println!("operands\t{}", operand_digest(&a, &b));
+    println!("product\t{}", poly_digest(&a.mul(&b)));
+    if let ChildTask::Measure { execution } = spec.task {
+        for rate in execution_windows(protocol, execution, |_| {
+            black_box(black_box(&a).mul(black_box(&b)));
+        }) {
+            println!("rate\t{rate}");
+        }
+    }
+    Ok(())
+}
+
+/// Re-executes this binary for one arm of one grid point and returns its
+/// standard output.
+fn spawn_child(spec: ChildSpec, protocol: &Protocol) -> Result<String, String> {
+    let executable =
+        env::current_exe().map_err(|error| format!("this binary has no path: {error}"))?;
+    let output = Command::new(&executable)
+        .arg("--child-arm")
+        .arg(spec.to_string())
+        .arg("--executions")
+        .arg(protocol.executions.to_string())
+        .arg("--repetitions")
+        .arg(protocol.repetitions.to_string())
+        .arg("--target-ms")
+        .arg(protocol.target_ms.to_string())
+        .output()
+        .map_err(|error| format!("cannot run {} for {spec}: {error}", executable.display()))?;
+    if !output.status.success() {
+        return Err(format!(
+            "the child for {spec} exited with {}: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+/// Reads a child's report off its standard output.
+fn parse_child_report(text: &str) -> Result<ChildReport, String> {
+    let mut route: Option<String> = None;
+    let mut operands: Option<u64> = None;
+    let mut product: Option<u64> = None;
+    let mut rates = Vec::new();
+    for line in text.lines() {
+        let Some((key, value)) = line.split_once('\t') else {
+            return Err(format!("the child printed an unkeyed line: {line}"));
+        };
+        match key {
+            "route" => route = Some(value.to_owned()),
+            "operands" => operands = Some(parse_report_value(key, value)?),
+            "product" => product = Some(parse_report_value(key, value)?),
+            "rate" => rates.push(parse_report_value(key, value)?),
+            _ => return Err(format!("the child printed an unknown key: {key}")),
+        }
+    }
+    Ok(ChildReport {
+        route: route.ok_or("the child reported no arm")?,
+        operands: operands.ok_or("the child reported no operand digest")?,
+        product: product.ok_or("the child reported no product digest")?,
+        rates,
+    })
+}
+
+fn parse_report_value<T: std::str::FromStr>(key: &str, value: &str) -> Result<T, String> {
+    value
+        .parse()
+        .map_err(|_| format!("the child reported `{value}` for {key}"))
+}
+
+/// Checks a child's report against what the parent asked for and holds.
+fn verify_child_report(
+    spec: ChildSpec,
+    operands: u64,
+    protocol: &Protocol,
+    report: &ChildReport,
+) -> Result<(), String> {
+    let expected_arm = spec.field.arm_name(spec.arm);
+    if report.route != expected_arm {
+        return Err(format!(
+            "the child for {spec} forced karatsuba_min_degree={} and the production selector then \
+             picked the `{}` arm rather than `{expected_arm}`",
+            forced_karatsuba_min_degree(spec.arm, spec.size),
+            report.route
+        ));
+    }
+    if report.operands != operands {
+        return Err(format!(
+            "the child for {spec} built operands digesting to {} against this process's {operands}",
+            report.operands
+        ));
+    }
+    let expected_windows = match spec.task {
+        ChildTask::Probe => 0,
+        ChildTask::Measure { .. } => protocol.repetitions as usize,
+    };
+    if report.rates.len() != expected_windows {
+        return Err(format!(
+            "the child for {spec} timed {} windows rather than {expected_windows}",
+            report.rates.len()
+        ));
+    }
+    Ok(())
+}
+
+/// One child's verified report, or an abort.
+///
+/// A child that took the other arm, built other operands, or timed the wrong
+/// number of windows has not measured what the sweep asked for, and a sweep
+/// that proceeded past it would report a crossover between two runs of the same
+/// arm. That is the same abort discipline [`equivalence_probe`] applies to the
+/// in-process families.
+fn checked_child_report(spec: ChildSpec, operands: u64, protocol: &Protocol) -> ChildReport {
+    let report = spawn_child(spec, protocol)
+        .and_then(|text| parse_child_report(&text))
+        .and_then(|report| {
+            verify_child_report(spec, operands, protocol, &report)?;
+            Ok(report)
+        });
+    report.unwrap_or_else(|error| panic!("{error}"))
 }
 
 // ---------------------------------------------------------------------
@@ -1413,16 +1908,17 @@ fn build_profile(
 // ---------------------------------------------------------------------
 
 fn print_grid() {
-    println!("field\tfamily\tdefault\tunit\tconservative_arm\tasymptotic_arm\tgrid");
+    println!("field\tfamily\tdefault\tunit\tconservative_arm\tasymptotic_arm\tarm_source\tgrid");
     for field in CalibratedField::ALL {
         let grid: Vec<String> = field.grid().iter().map(usize::to_string).collect();
         println!(
-            "{field}\t{}\t{}\t{}\t{}\t{}\t{}",
+            "{field}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
             field.family(),
             field.conservative_default(),
             field.grid_unit(),
             field.conservative_arm(),
             field.asymptotic_arm(),
+            field.arm_source(),
             grid.join(",")
         );
     }
@@ -1474,6 +1970,17 @@ fn print_sweep(sweep: &FieldSweep) {
         field.conservative_arm(),
         field.asymptotic_arm()
     );
+    if field.arm_source() == ArmSource::ChildProcess {
+        println!(
+            "each arm measured in a child process installing \
+             polynomial.karatsuba_min_degree={} for {}, and the grid point itself for {}, so the \
+             {} arm splits once at that degree over schoolbook base cases",
+            FORCED_SCHOOLBOOK_MIN_DEGREE,
+            field.conservative_arm(),
+            field.asymptotic_arm(),
+            field.asymptotic_arm()
+        );
+    }
     println!(
         "size\t{}_ns\tspread\t{}_ns\tspread\twindows\tmargin\tband\tverdict",
         field.conservative_arm(),
@@ -1523,7 +2030,42 @@ fn print_sweep(sweep: &FieldSweep) {
     }
 }
 
-/// The fields whose value the sweep could not measure at any grid point.
+/// Prints the omission set with each field's inherited value and why it is
+/// omitted, which is the inventory the receipt records.
+///
+/// The inherited values are read out of the conservative table's own
+/// serialization, so the report states what the loader will resolve an absent
+/// key to rather than a figure written into this tool.
+fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), String> {
+    let conservative: serde_json::Value =
+        serde_json::from_str(&TuningProfile::CONSERVATIVE.to_json())
+            .map_err(|error| format!("the conservative profile is not JSON: {error}"))?;
+    let uncomparable: Vec<SchemaField> = uncalibrated_fields(sweeps)
+        .into_iter()
+        .map(CalibratedField::schema_field)
+        .collect();
+    println!(
+        "\nomitted ({}): the emitted document states no value for these schema fields, and the \
+         loader resolves each absent key to the inherited conservative default",
+        omitted.len()
+    );
+    println!("family\tfield\tinherited\treason");
+    for field in omitted {
+        let inherited = conservative
+            .pointer(&format!("/selectors/{}/{}", field.family, field.name))
+            .and_then(serde_json::Value::as_u64)
+            .ok_or_else(|| format!("the conservative table states no `{field}`"))?;
+        let reason = if uncomparable.contains(field) {
+            "no grid point offers both arms"
+        } else {
+            "no sweep covers this field"
+        };
+        println!("{}\t{}\t{inherited}\t{reason}", field.family, field.name);
+    }
+    Ok(())
+}
+
+/// The swept fields whose value the sweep could not measure at any grid point.
 ///
 /// A field that keeps its default after a comparison — no grid point beat the
 /// noise band, or the crossover was non-monotone — is a calibration outcome and
@@ -1531,6 +2073,9 @@ fn print_sweep(sweep: &FieldSweep) {
 /// never calibrated, and design §5 condition 5 requires the document to omit it
 /// rather than state a value: "a profile that carries an uncalibrated value is a
 /// `@/inv/benchmark-backed-performance` defect".
+///
+/// These are not the whole omission set: [`omitted_fields`] adds every schema
+/// field no sweep covers, which the same rule governs for the same reason.
 fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
     sweeps
         .iter()
@@ -1547,7 +2092,65 @@ fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
         .collect()
 }
 
-/// Serializes `profile` and drops the fields the sweep could not measure.
+/// The schema fields whose value this run measured.
+///
+/// A field the sweep covered and concluded on — including one that kept its
+/// default on a tie or a non-monotone crossover — is measured. A field with no
+/// comparable grid point is not, and neither is any schema field no sweep
+/// names.
+fn measured_fields(sweeps: &[FieldSweep]) -> Vec<SchemaField> {
+    let uncalibrated = uncalibrated_fields(sweeps);
+    sweeps
+        .iter()
+        .map(|sweep| sweep.field)
+        .filter(|field| !uncalibrated.contains(field))
+        .map(CalibratedField::schema_field)
+        .collect()
+}
+
+/// Every `selectors.<family>.<field>` key `document` states.
+///
+/// The inventory is read off the serialized profile at run time rather than
+/// listed in this tool. A list here would be a hand-maintained copy of the
+/// schema — the staleness defect `@/inv/runtime-observed-provenance` names —
+/// and the moment it fell behind, an unswept field would be emitted with a
+/// value nothing measured.
+fn schema_fields(document: &str) -> Result<Vec<SchemaField>, String> {
+    let parsed: serde_json::Value = serde_json::from_str(document)
+        .map_err(|error| format!("the profile document is not JSON: {error}"))?;
+    let families = parsed
+        .pointer("/selectors")
+        .and_then(serde_json::Value::as_object)
+        .ok_or("the profile document has no `selectors` object")?;
+    let mut fields = Vec::new();
+    for (family, members) in families {
+        let members = members
+            .as_object()
+            .ok_or_else(|| format!("the `{family}` selector family is not an object"))?;
+        fields.extend(members.keys().map(|name| SchemaField {
+            family: family.clone(),
+            name: name.clone(),
+        }));
+    }
+    Ok(fields)
+}
+
+/// Every schema field the emitted document omits.
+///
+/// The set is the complement of what this run measured, so it covers both a
+/// swept field with no comparable grid point and every schema field outside the
+/// sweep, whatever the schema has grown since. Design §5 condition 5 admits an
+/// omitted field and forbids an unmeasured stated one, so the complement is the
+/// rule rather than a conservative approximation of it.
+fn omitted_fields(document: &str, sweeps: &[FieldSweep]) -> Result<Vec<SchemaField>, String> {
+    let measured = measured_fields(sweeps);
+    Ok(schema_fields(document)?
+        .into_iter()
+        .filter(|field| !measured.contains(field))
+        .collect())
+}
+
+/// Serializes `profile` and drops the fields this run did not measure.
 ///
 /// `TuningProfile::to_json` states every schema field, so omission is expressed
 /// here rather than there. An absent field is a supported state of the schema:
@@ -1562,29 +2165,26 @@ fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
 /// deleted key. The edit is then checked against the same removal performed
 /// structurally on the parsed value, so a text edit that disturbed anything
 /// else is caught here rather than in a committed artifact.
-fn calibrated_document(
-    profile: &TuningProfile,
-    omitted: &[CalibratedField],
-) -> Result<String, String> {
+fn calibrated_document(profile: &TuningProfile, omitted: &[SchemaField]) -> Result<String, String> {
     let serialized = profile.to_json();
     let mut document = serialized.clone();
     for field in omitted {
-        document = remove_selector_key(&document, *field)?;
+        document = remove_selector_key(&document, field)?;
     }
 
     let mut expected: serde_json::Value = serde_json::from_str(&serialized)
         .map_err(|error| format!("the serialized profile is not JSON: {error}"))?;
     for field in omitted {
         let family = expected
-            .pointer_mut(&format!("/selectors/{}", field.family()))
+            .pointer_mut(&format!("/selectors/{}", field.family))
             .and_then(serde_json::Value::as_object_mut)
             .ok_or_else(|| {
                 format!(
                     "the serialized profile has no `{}` selector family",
-                    field.family()
+                    field.family
                 )
             })?;
-        if family.remove(&field.to_string()).is_none() {
+        if family.remove(&field.name).is_none() {
             return Err(format!(
                 "the serialized profile has no `{field}` field to omit"
             ));
@@ -1604,22 +2204,29 @@ fn calibrated_document(
 /// Deletes `field`'s `"name":<digits>` entry, and one adjacent comma, from the
 /// selector family object it belongs to.
 ///
-/// The search is scoped to that family's braces so a provenance string can
-/// never be mistaken for a selector key. Every selector value is an unsigned
-/// integer and `to_json` writes compact JSON, so the entry ends at the first
-/// non-digit after the colon.
-fn remove_selector_key(text: &str, field: CalibratedField) -> Result<String, String> {
-    let opening = format!("\"{}\":{{", field.family());
-    let body_start = text
+/// The search starts at the `selectors` object and is then scoped to that
+/// family's braces, so neither a provenance string nor a same-named field of
+/// another family can be mistaken for the key. Every selector value is an
+/// unsigned integer and `to_json` writes compact JSON, so the entry ends at the
+/// first non-digit after the colon.
+fn remove_selector_key(text: &str, field: &SchemaField) -> Result<String, String> {
+    const SELECTORS: &str = "\"selectors\":{";
+    let selectors_at = text
+        .find(SELECTORS)
+        .ok_or("no `selectors` object in the document")?
+        + SELECTORS.len();
+    let opening = format!("\"{}\":{{", field.family);
+    let body_start = text[selectors_at..]
         .find(&opening)
-        .ok_or_else(|| format!("no `{}` selector family in the document", field.family()))?
+        .ok_or_else(|| format!("no `{}` selector family in the document", field.family))?
+        + selectors_at
         + opening.len();
     let body_len = text[body_start..]
         .find('}')
-        .ok_or_else(|| format!("the `{}` selector family is unterminated", field.family()))?;
+        .ok_or_else(|| format!("the `{}` selector family is unterminated", field.family))?;
     let body = &text[body_start..body_start + body_len];
 
-    let key = format!("\"{field}\":");
+    let key = format!("\"{}\":", field.name);
     let key_at = body
         .find(&key)
         .ok_or_else(|| format!("no `{field}` field in the document to omit"))?;
@@ -1722,6 +2329,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             return Ok(());
         }
+        // The parent this was spawned by is already behind the prepared-host
+        // gate and the lock probe, so the child repeats neither.
+        Mode::ArmChild(spec) => {
+            run_child(*spec, &args.protocol)?;
+            return Ok(());
+        }
         Mode::Calibrate {
             out,
             profile_id,
@@ -1766,7 +2379,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut points = Vec::new();
         for size in field.grid() {
             let mut fixture = build_fixture(field, size);
-            equivalence_probe(field, size, &fixture);
+            equivalence_probe(field, size, &fixture, &args.protocol);
             let mut conservative_rates: Option<Vec<f64>> = None;
             let mut asymptotic_rates: Option<Vec<f64>> = None;
             for execution in 0..args.protocol.executions {
@@ -1826,15 +2439,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         receipt: receipt_path,
     };
     let profile = build_profile(id, provenance, &selected)?;
-    let omitted = uncalibrated_fields(&sweeps);
-    for field in &omitted {
-        println!(
-            "\nomitted: {field} carries no value in the emitted document, because no grid point \
-             offered both arms. The loader resolves the absent field to the conservative default \
-             {}.",
-            field.conservative_default()
-        );
-    }
+    let omitted = omitted_fields(&profile.to_json(), &sweeps)?;
+    print_omitted(&omitted, &sweeps)?;
     let document = calibrated_document(&profile, &omitted)?;
     let json = emit_profile(out, &document, &profile)?;
 
@@ -1973,8 +2579,11 @@ mod tests {
     #[test]
     fn the_emitted_document_omits_the_field_the_sweep_could_not_compare() {
         let profile = profile_from(&DISTINCT);
-        let document =
-            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[CalibratedField::KaratsubaMinDegree.schema_field()],
+        )
+        .unwrap();
         assert!(
             !document.contains("karatsuba_min_degree"),
             "the uncalibrated field is still stated: {document}"
@@ -1993,8 +2602,11 @@ mod tests {
     #[test]
     fn omitting_one_field_leaves_the_other_four_stated() {
         let profile = profile_from(&DISTINCT);
-        let document =
-            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[CalibratedField::KaratsubaMinDegree.schema_field()],
+        )
+        .unwrap();
         let loaded = TuningProfile::from_json(&document).unwrap();
         assert_eq!(
             loaded.bit_backend().simd_min_words(),
@@ -2026,8 +2638,11 @@ mod tests {
     #[test]
     fn omission_removes_exactly_the_field_and_leaves_the_key_order_alone() {
         let profile = profile_from(&DISTINCT);
-        let document =
-            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[CalibratedField::KaratsubaMinDegree.schema_field()],
+        )
+        .unwrap();
         let entry = format!(
             "\"karatsuba_min_degree\":{},",
             DISTINCT.karatsuba_min_degree
@@ -2038,7 +2653,8 @@ mod tests {
     #[test]
     fn omitting_the_last_field_of_a_family_leaves_an_empty_object() {
         let profile = profile_from(&DISTINCT);
-        let document = calibrated_document(&profile, &[CalibratedField::SimdMinWords]).unwrap();
+        let document =
+            calibrated_document(&profile, &[CalibratedField::SimdMinWords.schema_field()]).unwrap();
         assert!(document.contains(r#""bit_backend":{}"#), "{document}");
         let loaded = TuningProfile::from_json(&document).unwrap();
         assert_eq!(
@@ -2063,8 +2679,11 @@ mod tests {
             &DISTINCT,
         )
         .unwrap();
-        let document =
-            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[CalibratedField::KaratsubaMinDegree.schema_field()],
+        )
+        .unwrap();
         let loaded = TuningProfile::from_json(&document).unwrap();
         let Provenance::Calibrated { receipt, .. } = loaded.provenance() else {
             panic!("the document stays calibrated");
@@ -2102,6 +2721,150 @@ mod tests {
             vec![CalibratedField::KaratsubaMinDegree],
             "a tie and a non-monotone crossover are calibration outcomes, not absent measurements"
         );
+    }
+
+    /// A sweep for every field, each concluding on a comparison, so nothing is
+    /// omitted for want of a grid point and the omission set is exactly the
+    /// schema fields outside the sweep.
+    #[allow(dead_code)]
+    fn measured_sweeps() -> Vec<FieldSweep> {
+        CalibratedField::ALL
+            .into_iter()
+            .map(|field| {
+                let points = vec![point(field.conservative_default(), 100.0, 50.0, 0.01)];
+                FieldSweep {
+                    field,
+                    selection: select(field, &points),
+                    points,
+                }
+            })
+            .collect()
+    }
+
+    #[test]
+    fn every_swept_field_names_a_key_the_schema_states() {
+        let schema = schema_fields(&profile_from(&DISTINCT).to_json()).unwrap();
+        for field in CalibratedField::ALL {
+            let key = field.schema_field();
+            assert!(
+                schema.contains(&key),
+                "the sweep states {key}, which the schema does not carry; a renamed schema field \
+                 would leave the measured value silently omitted"
+            );
+        }
+    }
+
+    #[test]
+    fn the_schema_carries_fields_no_sweep_covers() {
+        let schema = schema_fields(&profile_from(&DISTINCT).to_json()).unwrap();
+        assert!(
+            schema.len() > CalibratedField::ALL.len(),
+            "the schema states {} fields against {} swept ones; the omission-set tests below are \
+             vacuous once the two coincide",
+            schema.len(),
+            CalibratedField::ALL.len()
+        );
+    }
+
+    #[test]
+    fn an_emitted_document_states_only_the_fields_the_run_measured() {
+        let profile = profile_from(&DISTINCT);
+        let sweeps = measured_sweeps();
+        let omitted = omitted_fields(&profile.to_json(), &sweeps).unwrap();
+        let document = calibrated_document(&profile, &omitted).unwrap();
+        let mut stated = schema_fields(&document).unwrap();
+        let mut swept: Vec<SchemaField> = CalibratedField::ALL
+            .into_iter()
+            .map(CalibratedField::schema_field)
+            .collect();
+        stated.sort();
+        swept.sort();
+        assert_eq!(
+            stated, swept,
+            "the emitted document states a field this run did not measure"
+        );
+    }
+
+    #[test]
+    fn an_unswept_schema_field_is_omitted_and_resolves_to_its_inherited_value() {
+        let profile = profile_from(&DISTINCT);
+        let sweeps = measured_sweeps();
+        let omitted = omitted_fields(&profile.to_json(), &sweeps).unwrap();
+        let document = calibrated_document(&profile, &omitted).unwrap();
+        let stated = schema_fields(&document).unwrap();
+        let loaded: serde_json::Value = serde_json::from_str(
+            &TuningProfile::from_json(&document)
+                .expect("an omitted field is a supported state of the schema")
+                .to_json(),
+        )
+        .unwrap();
+        let inherited: serde_json::Value =
+            serde_json::from_str(&TuningProfile::CONSERVATIVE.to_json()).unwrap();
+        assert!(!omitted.is_empty());
+        for field in &omitted {
+            let pointer = format!("/selectors/{}/{}", field.family, field.name);
+            assert!(!stated.contains(field), "{field} is still stated");
+            assert_eq!(
+                loaded.pointer(&pointer),
+                inherited.pointer(&pointer),
+                "the loader does not resolve the absent {field} to its inherited value"
+            );
+        }
+    }
+
+    #[test]
+    fn the_omission_set_is_the_complement_of_what_the_run_measured() {
+        let document = profile_from(&DISTINCT).to_json();
+        let sweeps = measured_sweeps();
+        let measured = measured_fields(&sweeps);
+        let omitted = omitted_fields(&document, &sweeps).unwrap();
+        for field in &measured {
+            assert!(
+                !omitted.contains(field),
+                "{field} is both measured and omitted"
+            );
+        }
+        let mut union: Vec<SchemaField> = measured.into_iter().chain(omitted).collect();
+        union.sort();
+        let mut schema = schema_fields(&document).unwrap();
+        schema.sort();
+        assert_eq!(union, schema, "the two sets do not partition the schema");
+    }
+
+    #[test]
+    fn a_swept_field_without_a_comparison_joins_the_unswept_fields_in_the_omission_set() {
+        let profile = profile_from(&DISTINCT);
+        let mut sweeps = measured_sweeps();
+        sweeps.retain(|sweep| sweep.field != CalibratedField::SubproductMinLen);
+        sweeps.push(concluded(
+            CalibratedField::SubproductMinLen,
+            Fallback::NoComparableGridPoint,
+        ));
+        let omitted = omitted_fields(&profile.to_json(), &sweeps).unwrap();
+        assert!(omitted.contains(&CalibratedField::SubproductMinLen.schema_field()));
+        let document = calibrated_document(&profile, &omitted).unwrap();
+        assert_eq!(
+            TuningProfile::from_json(&document)
+                .unwrap()
+                .polynomial()
+                .subproduct_min_len(),
+            TuningProfile::CONSERVATIVE
+                .polynomial()
+                .subproduct_min_len()
+        );
+    }
+
+    #[test]
+    fn a_family_scoped_removal_leaves_a_similarly_named_field_of_another_family() {
+        let profile = profile_from(&DISTINCT);
+        let document =
+            calibrated_document(&profile, &[CalibratedField::SimdMinWords.schema_field()]).unwrap();
+        let stated = schema_fields(&document).unwrap();
+        assert!(!stated.contains(&CalibratedField::SimdMinWords.schema_field()));
+        assert!(stated.contains(&SchemaField {
+            family: "bit_matrix".to_owned(),
+            name: "matvec_simd_min_words".to_owned(),
+        }));
     }
 
     #[test]
@@ -2339,6 +3102,260 @@ mod tests {
         assert_eq!(self_check.mode, Mode::SelfCheck);
         let list_grid = parse_args(["--list-grid".to_owned()].into_iter()).unwrap();
         assert_eq!(list_grid.mode, Mode::ListGrid);
+    }
+
+    /// A spec whose four components are pairwise distinguishable, so a
+    /// transposition in the rendered form cannot round-trip.
+    #[allow(dead_code)]
+    const CHILD_SPEC: ChildSpec = ChildSpec {
+        field: CalibratedField::KaratsubaMinDegree,
+        size: 31,
+        arm: Arm::Asymptotic,
+        task: ChildTask::Measure { execution: 2 },
+    };
+
+    #[allow(dead_code)]
+    fn child_report(rates: usize) -> ChildReport {
+        ChildReport {
+            route: "karatsuba".to_owned(),
+            operands: 0x1111,
+            product: 0x2222,
+            rates: vec![10.0; rates],
+        }
+    }
+
+    #[allow(dead_code)]
+    fn child_protocol(repetitions: u64) -> Protocol {
+        Protocol {
+            executions: 1,
+            repetitions,
+            target_ms: 1,
+        }
+    }
+
+    #[test]
+    fn a_child_specification_round_trips_through_its_rendered_form() {
+        for spec in [
+            CHILD_SPEC,
+            ChildSpec {
+                arm: Arm::Conservative,
+                task: ChildTask::Probe,
+                ..CHILD_SPEC
+            },
+        ] {
+            assert_eq!(ChildSpec::parse(&spec.to_string()), Ok(spec));
+        }
+    }
+
+    #[test]
+    fn a_malformed_child_specification_is_rejected() {
+        for text in [
+            "karatsuba_min_degree:31:asymptotic",
+            "karatsuba_min_degree:31:asymptotic:2:3",
+            "no_such_field:31:asymptotic:2",
+            "karatsuba_min_degree:thirty:asymptotic:2",
+            "karatsuba_min_degree:31:sideways:2",
+            "karatsuba_min_degree:31:asymptotic:later",
+        ] {
+            assert!(ChildSpec::parse(text).is_err(), "{text} was accepted");
+        }
+    }
+
+    #[test]
+    fn the_child_mode_carries_its_specification_and_protocol() {
+        let args =
+            ["--child-arm", &CHILD_SPEC.to_string(), "--repetitions", "3"].map(str::to_owned);
+        let parsed = parse_args(args.into_iter()).unwrap();
+        assert_eq!(parsed.mode, Mode::ArmChild(CHILD_SPEC));
+        assert_eq!(parsed.protocol.repetitions, 3);
+    }
+
+    #[test]
+    fn the_child_mode_excludes_the_reporting_modes() {
+        let args = ["--child-arm", &CHILD_SPEC.to_string(), "--list-grid"].map(str::to_owned);
+        assert!(parse_args(args.into_iter()).is_err());
+    }
+
+    #[test]
+    fn a_child_report_is_read_back_off_its_keyed_lines() {
+        let text = "route\tkaratsuba\noperands\t4369\nproduct\t8738\nrate\t10\nrate\t12.5\n";
+        assert_eq!(
+            parse_child_report(text),
+            Ok(ChildReport {
+                route: "karatsuba".to_owned(),
+                operands: 4369,
+                product: 8738,
+                rates: vec![10.0, 12.5],
+            })
+        );
+    }
+
+    #[test]
+    fn an_incomplete_or_unkeyed_child_report_is_rejected() {
+        for text in [
+            "operands\t1\nproduct\t2\n",
+            "route\tkaratsuba\nproduct\t2\n",
+            "route\tkaratsuba\noperands\t1\n",
+            "route\tkaratsuba\noperands\tnot-a-digest\nproduct\t2\n",
+            "route karatsuba\n",
+            "arm\tkaratsuba\n",
+        ] {
+            assert!(
+                parse_child_report(text).is_err(),
+                "{text:?} was read as a report"
+            );
+        }
+    }
+
+    #[test]
+    fn a_child_that_took_the_other_arm_is_rejected() {
+        let mut report = child_report(1);
+        report.route = "schoolbook".to_owned();
+        let error = verify_child_report(
+            ChildSpec {
+                task: ChildTask::Measure { execution: 0 },
+                ..CHILD_SPEC
+            },
+            report.operands,
+            &child_protocol(1),
+            &report,
+        )
+        .unwrap_err();
+        assert!(error.contains("schoolbook"), "{error}");
+    }
+
+    #[test]
+    fn a_child_that_built_other_operands_is_rejected() {
+        let report = child_report(1);
+        assert!(verify_child_report(
+            ChildSpec {
+                task: ChildTask::Measure { execution: 0 },
+                ..CHILD_SPEC
+            },
+            report.operands ^ 1,
+            &child_protocol(1),
+            &report,
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn a_child_that_timed_the_wrong_number_of_windows_is_rejected() {
+        let report = child_report(2);
+        let spec = ChildSpec {
+            task: ChildTask::Measure { execution: 0 },
+            ..CHILD_SPEC
+        };
+        assert!(verify_child_report(spec, report.operands, &child_protocol(3), &report).is_err());
+        assert!(verify_child_report(spec, report.operands, &child_protocol(2), &report).is_ok());
+    }
+
+    #[test]
+    fn a_probe_child_times_nothing() {
+        let spec = ChildSpec {
+            task: ChildTask::Probe,
+            ..CHILD_SPEC
+        };
+        let report = child_report(0);
+        assert!(verify_child_report(spec, report.operands, &child_protocol(5), &report).is_ok());
+        assert!(
+            verify_child_report(spec, report.operands, &child_protocol(5), &child_report(5))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn the_karatsuba_arm_forces_the_grid_point_and_the_schoolbook_arm_the_range_top() {
+        let inherited = &TuningProfile::CONSERVATIVE;
+        for size in CalibratedField::KaratsubaMinDegree.grid() {
+            assert_eq!(
+                forced_karatsuba_min_degree(Arm::Asymptotic, size),
+                size,
+                "the Karatsuba arm times the recursion a threshold of {size} produces"
+            );
+            assert_eq!(
+                forced_karatsuba_min_degree(Arm::Conservative, size),
+                FORCED_SCHOOLBOOK_MIN_DEGREE
+            );
+            // Both forced values are ordinary admissible values, so forcing an
+            // arm reserves no sentinel and installs no profile the loader would
+            // reject.
+            for arm in Arm::BOTH {
+                let conservative = inherited.polynomial();
+                assert!(
+                    PolynomialSelectors::try_new(
+                        forced_karatsuba_min_degree(arm, size),
+                        conservative.karatsuba_max_out_len(),
+                        conservative.div_rem_fast_min_len(),
+                        conservative.subproduct_min_len(),
+                        conservative.interpolate_fast_min_points(),
+                    )
+                    .is_ok(),
+                    "{arm} at {size} forces an inadmissible threshold"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn the_forced_thresholds_route_every_grid_point_to_their_own_arm() {
+        // `mul_route_resolved` is private, so the rule is exercised through the
+        // same comparison the dispatcher applies: schoolbook strictly below the
+        // threshold, Karatsuba at or above it.
+        for size in CalibratedField::KaratsubaMinDegree.grid() {
+            assert!(
+                size >= forced_karatsuba_min_degree(Arm::Asymptotic, size),
+                "{size} does not reach the threshold forced for the Karatsuba arm"
+            );
+            assert!(
+                size < forced_karatsuba_min_degree(Arm::Conservative, size),
+                "{size} reaches the threshold forced for the schoolbook arm"
+            );
+        }
+    }
+
+    #[test]
+    fn the_karatsuba_arm_hands_its_sub_operands_to_the_schoolbook_base_case() {
+        // A split at degree `size` produces sub-operands of about half that
+        // degree, which fall below the same threshold and take the schoolbook
+        // arm. That is the recursion shape a chosen threshold produces, and it
+        // is what distinguishes this forcing from one at the bottom of the
+        // range, where the recursion would reach degree 0.
+        for size in CalibratedField::KaratsubaMinDegree.grid() {
+            let forced = forced_karatsuba_min_degree(Arm::Asymptotic, size);
+            assert!(
+                size.div_ceil(2) < forced,
+                "a split at {size} recurses again"
+            );
+        }
+    }
+
+    #[test]
+    fn only_the_karatsuba_degree_field_needs_a_child_process() {
+        for field in CalibratedField::ALL {
+            let expected = if field == CalibratedField::KaratsubaMinDegree {
+                ArmSource::ChildProcess
+            } else {
+                ArmSource::InProcess
+            };
+            assert_eq!(field.arm_source(), expected, "{field}");
+        }
+    }
+
+    #[test]
+    fn identical_operands_digest_alike_and_a_changed_one_does_not() {
+        let field = CalibratedField::KaratsubaMinDegree;
+        let digest_at = |size: usize| {
+            let Fixture::Mul { a, b } = build_fixture(field, size) else {
+                panic!("the multiplication field builds a multiplication fixture");
+            };
+            (operand_digest(&a, &b), operand_digest(&b, &a))
+        };
+        // A child rebuilds the fixture from the same seed, so the parent's
+        // digest identifies the operands rather than the process.
+        assert_eq!(digest_at(16).0, digest_at(16).0);
+        assert_ne!(digest_at(16).0, digest_at(16).1);
+        assert_ne!(digest_at(16).0, digest_at(8).0);
     }
 
     #[test]
