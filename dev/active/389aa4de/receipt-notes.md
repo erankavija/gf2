@@ -6,8 +6,12 @@ text for every such record, unapplied. Nothing here is committed to the
 documents it names.
 
 Apply after the measured calibration run of this issue exists and its receipt is
-committed: three of the four blocks cite that receipt by path, written below as
+committed: three of the blocks cite that receipt by path, written below as
 `<new receipt>`.
+
+Block E is not part of REQ-03. It records what the DEC-B17 harness-schema bump
+must carry when it lands with that run, and it is the one block whose scope is
+larger than the records above.
 
 ## Rule the blocks follow
 
@@ -187,3 +191,141 @@ cost 1248.166 ns at degree 31 on the schoolbook arm and 1135.357 ns at degree
 32 on the Karatsuba arm, a step **down** for one more coefficient, which that
 receipt noted as consistent with the crossover lying below 32 while claiming
 no crossover from it. The measured run decides the value.
+
+## Block E — what the DEC-B17 harness-schema bump must carry
+
+DEC-B17 raises `HarnessSchema::SUPPORTED` to `tuning-calibration-v2` and has
+`HarnessSchema::parse` accept exactly that token, because this issue changed the
+harness's timing path for one field and the emitted document's field set —
+the behavioural identity `@/inv/behavioral-evidence-validity` has that token
+pin. DEC-B17 as amended lands the bump in the same change that commits the
+measured run's v2 profile, so no committed artifact is left unloadable between
+the two.
+
+The bump was applied as a probe on this branch, verified, and reverted. What it
+breaks is wider than the loader, because
+`crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`
+is not only a committed record: it is the **drift anchor of the whole baked
+follow-on mechanism** of `dev/active/7d824b2f/design.md`, and four test binaries
+plus the library's own unit tests read it. Its `harness_schema` is
+`tuning-calibration-v1`, so a loader that rejects that token rejects the file.
+
+### Every reader of the committed calibrated profile
+
+| Reader | How it reads the file | Effect of the bump |
+|---|---|---|
+| `crates/gf2-core/tests/tuning_profile_committed.rs:21` `every_committed_tuning_profile_is_valid` | directory glob, `from_json().unwrap()` | fails, `Malformed` |
+| `crates/gf2-core/tests/tuning_profile_committed.rs:32` `committed_calibrated_profile_inherits_follow_on_defaults` | `from_json().unwrap()` | fails, `Malformed` |
+| `crates/gf2-core/src/tuning/mod.rs:2426` `calibrated_profile_round_trips` | fixture document embedding the v1 token | fails, `Malformed` |
+| `crates/gf2-core/src/tuning/mod.rs:2528` `bounded_fields_report_their_family_and_field` | fixture document embedding the v1 token | fails, `Malformed` |
+| `crates/gf2-core/src/tuning/baked.rs:110` `baked_constant_matches_committed_profile_file` | `include_str!`, parsed as raw JSON | survives the bump; see the re-pinning hazard below |
+| `crates/gf2-core/src/tuning/baked.rs:120` `committed_profile()`, feeding eight `assert_matches_profile_or_default` call sites | `include_str!`, parsed as raw JSON | same |
+| `crates/gf2-core/tests/gemm_tiles_baked.rs:50` | `include_str!` | same |
+| `crates/gf2-core/tests/prime_route_baked.rs:36` | reads the file at run time | same |
+| `crates/gf2-core/tests/field_vec_baked.rs:31` | reads the file at run time | same |
+
+The last five parse the document as raw `serde_json`, not through
+`TuningProfile::from_json`, so the token bump alone does not fail them. They are
+listed because the *file replacement* reaches them and the loader change does
+not. The two `baked.rs` entries run under `--lib` and the three test binaries
+run by name, all inside `scripts/cargo-ci.sh`'s required `baked` step (`:236`).
+
+### The re-pinning hazard, which is the part to decide before running
+
+`baked.rs:15` states `SIMD_MIN_WORDS = 4` as the calibrated value "from profile
+`gf2-5ecc9bf8-calibration-e202c080`", and
+`baked_constant_matches_committed_profile_file` asserts the constant equals that
+file's `bit_backend.simd_min_words`. Every other baked follow-on constant is
+anchored the same way through `assert_matches_profile_or_default`: the baked
+value must equal the profile's field when the profile carries it, and the
+conservative default when it omits it — the D5 contract.
+
+Replacing the file with the measured run's profile therefore re-pins DEC-G. If
+the new run measures `simd_min_words != 4`, the drift test fails until
+`baked::SIMD_MIN_WORDS` moves with it, and moving it moves the baked
+bit-backend selection boundary — the value DEC-G ratified on
+`2026-08-20-post-cutover-receipt-3.md`'s residual-cost numbers, guarded by the
+frozen selector non-regression bracket. That is a performance re-pin with its
+own evidence obligation, not a side effect of a token bump. An unpinned smoke
+run of this harness emitted `simd_min_words = 2`, so the two values differing is
+the expected case rather than the unlikely one.
+
+The same replacement also interacts with this issue's omission set: an emitted
+v2 profile states only the swept fields, so every baked follow-on constant whose
+field the sweep does not cover moves from "profile omits it, inherits the
+default" to the same state under a different file — which the D5 contract
+already admits, but which the change must assert rather than assume.
+
+Two shapes are available, and the choice belongs to the owner:
+
+1. **Replace** `gf2-5ecc9bf8-calibration-e202c080.json` with the v2 profile.
+   One committed calibrated profile, no stale token anywhere, and DEC-G is
+   re-pinned to the new measurement with the evidence that requires.
+2. **Add** the v2 profile beside it under a new `profile_id` and keep the v1
+   file as DEC-G's anchor. DEC-G is untouched — but the v1 file no longer loads
+   under a v2-only loader, so this shape needs the v1 file regenerated with the
+   v2 token from its own recorded numbers, or it reintroduces exactly the
+   orphaned artifact DEC-B17 was amended to avoid.
+
+### Checklist for the change that lands the bump
+
+- [ ] `crates/gf2-core/src/tuning/mod.rs`: `HarnessSchema::SUPPORTED` to
+      `tuning-calibration-v2`; `parse` still accepts exactly `SUPPORTED`; the
+      type's rustdoc at `:202` names the new token.
+- [ ] `crates/gf2-core/src/tuning/mod.rs:2426` and `:2528`: update the v1 token
+      in both f35daec0 fixture documents.
+- [ ] `crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`:
+      replaced by, or joined by, the measured v2 profile per the shape chosen
+      above.
+- [ ] `crates/gf2-core/tests/tuning_profile_committed.rs`: both tests point at
+      whichever committed calibrated profile survives.
+- [ ] `crates/gf2-core/src/tuning/baked.rs`: the `include_str!` at `:110` and
+      `:120`, the profile id in the rustdoc at `:15`, and `SIMD_MIN_WORDS`
+      itself if the new measurement moves it.
+- [ ] `crates/gf2-core/tests/gemm_tiles_baked.rs:50`,
+      `prime_route_baked.rs:36`, `field_vec_baked.rs:31`: same path update.
+- [ ] `scripts/cargo-ci.sh`'s `baked` step (`:236`) passes — it is the gate that
+      catches a half-applied re-pin.
+- [ ] If `simd_min_words` moves: a DEC-G re-pin record, since the baked
+      bit-backend boundary is a performance claim under
+      `@/inv/benchmark-backed-performance`.
+- [ ] `dev/active/7d824b2f/design.md:372` states that
+      `gf2-5ecc9bf8-calibration-e202c080.json` "keeps loading unchanged". The
+      bump falsifies that sentence; it needs an appended amendment under the
+      same append-only rule as Blocks A to C.
+
+### Emitted-artifact supersession for `2026-08-20-host-calibration.md`
+
+The receipt's §Emitted profile quotes the document byte-for-byte at `:293` and
+identifies it at `:93` by the `/tmp` path and SHA-256
+`f0c3100ddd23fe3bbaadb5bf3b7fde51af78fc6e9929bb76886b1b032a165635`. Both
+describe the file that run wrote, not a path under version control, so neither
+is invalidated by anything the bump does — and neither may be edited. The
+receipt does carry one sentence that the intervening history already overtook:
+at `:15`–`:18` it states no calibrated profile is committed under
+`crates/gf2-core/data/tuning-profiles/`, which was true when written and stopped
+being true at `7163e2a9` (`676f55a2`, DEC-G).
+
+Append this to Block A, or as its own appended section if Block A has already
+landed:
+
+```markdown
+### Emitted artifact — later history
+
+The paragraph above §Result records that no calibrated profile is committed
+under `crates/gf2-core/data/tuning-profiles/`. That was the state at this
+receipt's revision. Commit `7163e2a9` (issue `676f55a2`, DEC-G) later committed
+this run's emitted document there as
+`gf2-5ecc9bf8-calibration-e202c080.json`, where it became the drift anchor for
+the baked selector constants of `dev/active/7d824b2f/design.md`.
+
+Under owner decision DEC-B17 the calibration harness's schema token moves to
+`tuning-calibration-v2`, because the harness's timing path and emitted field
+set changed — the behavioural identity `@/inv/behavioral-evidence-validity` has
+that token pin. The committed file carrying this run's `tuning-calibration-v1`
+provenance is superseded by `<new receipt>`'s profile in that same change.
+
+The document quoted at §Emitted profile, its SHA-256 in the provenance table,
+and every measured figure in this receipt stand as taken. They record what one
+identified binary measured on one host, which no later change re-measures.
+```
