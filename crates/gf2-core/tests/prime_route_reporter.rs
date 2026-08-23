@@ -33,24 +33,20 @@ fn gf251_takes_the_f32_cascade_from_the_conservative_column_bound() {
         .checked_sub(1)
         .expect("the bound admits a cell below it");
 
-    match prime_gemm_route::<251>(M, K, cols) {
-        PrimeGemmRoute::F32Cascade => {
-            assert_eq!(
-                prime_gemm_route::<251>(M, K, cols + 1),
-                PrimeGemmRoute::F32Cascade
-            );
-            assert_ne!(
-                prime_gemm_route::<251>(M, K, below),
-                PrimeGemmRoute::F32Cascade,
-                "the column bound must exclude the cell below it"
-            );
-        }
-        arm => assert_eq!(
+    let at_bound = prime_gemm_route::<251>(M, K, cols);
+    if at_bound.is_f32_cascade() {
+        assert!(prime_gemm_route::<251>(M, K, cols + 1).is_f32_cascade());
+        assert!(
+            !prime_gemm_route::<251>(M, K, below).is_f32_cascade(),
+            "the column bound must exclude the cell below it"
+        );
+    } else {
+        assert_eq!(
             prime_gemm_route::<251>(M, K, below),
-            arm,
+            at_bound,
             "this host registers no f32 cascade kernel, so the dispatcher \
              takes the same arm on both sides of the column bound"
-        ),
+        );
     }
 }
 
@@ -73,7 +69,7 @@ fn small_primes_below_the_conservative_prime_bound_never_take_the_cascade() {
         prime_gemm_route::<127>(M, K, wide),
         prime_gemm_route::<241>(M, K, wide),
     ] {
-        assert_ne!(route, PrimeGemmRoute::F32Cascade);
+        assert!(!route.is_f32_cascade());
     }
 }
 
