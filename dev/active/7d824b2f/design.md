@@ -796,8 +796,17 @@ crossing over near degree 32–64. The amended mechanism forces
 runs when that threshold is chosen. REQ-01's contract — both arms via an
 installed profile, no new public API — is unchanged.
 
-DEC-B17: the harness's behavioural identity token bumps to
-`tuning-calibration-v2` (child-process timing for the karatsuba field;
-omission set computed as the schema complement, 33 unswept keys), per
-`@/inv/behavioral-evidence-validity`. No committed profile carries a
-`harness_schema`, so no committed artifact is invalidated.
+DEC-B17 (as amended after the harness phase): the harness's behavioural
+identity token bumps to `tuning-calibration-v2` (child-process timing
+for the karatsuba field; omission set computed as the schema complement,
+33 unswept keys), per `@/inv/behavioral-evidence-validity`. One
+committed profile DOES carry the v1 token
+(`crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`,
+committed at 7163e2a9), so an immediate bump would orphan a committed
+artifact; the bump therefore lands in the same change that commits the
+next measured run's v2 profile, superseding the v1 artifact, updating
+the two committed-profile tests and the two f35daec0 fixture tests
+under that change's authority, and amending the host-calibration
+receipt's emitted-artifact citation (receipt-notes.md Block E). The
+bump still precedes any committed v2 evidence, which is the timeline
+`@/inv/behavioral-evidence-validity` requires.
