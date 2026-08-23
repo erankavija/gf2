@@ -77,6 +77,30 @@ pub fn permanent_chunk_len() -> usize {
     gf2_core::tuning::active().permanent().gray_chunk_subsets()
 }
 
+/// Records the `chunk_subsets` value most recently received by
+/// [`permanent_bipedal3_parallel_with_chunk`]. Read through
+/// [`last_effective_chunk`].
+#[cfg(any(test, feature = "test-support"))]
+static LAST_EFFECTIVE_CHUNK: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
+/// Route-observation hook: returns the `chunk_subsets` value most recently
+/// received by [`permanent_bipedal3_parallel_with_chunk`].
+///
+/// Exists only under `cfg(test)` or the `test-support` feature. Chunk
+/// partitioning does not change the permanent's value (`# Determinism`
+/// above), so comparing [`permanent_bipedal3_parallel`]'s output against a
+/// forced-chunk call is not evidence that the resolved
+/// [`permanent_chunk_len`] actually reached the callee — every valid chunk
+/// length produces the same output. This hook lets a route-observation test
+/// read the value production code received, directly, instead of inferring
+/// it from output equality.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn last_effective_chunk() -> usize {
+    LAST_EFFECTIVE_CHUNK.load(std::sync::atomic::Ordering::SeqCst)
+}
+
 /// Compute the permanent of an `n × n` matrix over `F_3` using rayon-parallel
 /// Ryser's formula, splitting the Gray-code subset enumeration across worker
 /// threads.
@@ -128,8 +152,9 @@ pub fn permanent_chunk_len() -> usize {
 /// # Complexity
 ///
 /// `O(n · 2^n / T)` field operations per thread for `T` rayon threads, plus
-/// `O(n · C)` per chunk start to reconstruct the initial `col_sum` (where
-/// `C = `[`permanent_chunk_len`]`()`). Matrix prep is `O(n^2)` one-time.
+/// `O(n · C)` per chunk start to reconstruct the initial `col_sum`, where `C`
+/// is the value [`permanent_chunk_len`] returns. Matrix prep is `O(n^2)`
+/// one-time.
 pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
     permanent_bipedal3_parallel_with_chunk(mat, permanent_chunk_len())
 }
@@ -195,6 +220,9 @@ pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subset
         chunk_subsets >= 1,
         "permanent_bipedal3_parallel_with_chunk: chunk_subsets must be >= 1; got {chunk_subsets}"
     );
+
+    #[cfg(any(test, feature = "test-support"))]
+    LAST_EFFECTIVE_CHUNK.store(chunk_subsets, std::sync::atomic::Ordering::SeqCst);
 
     // Edge case: 0×0 matrix has exactly one permutation (empty), product = 1.
     if n == 0 {
