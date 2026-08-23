@@ -503,8 +503,8 @@
           "title": "Cut the bit-matrix selectors over",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "matrix.rs; touches cargo-ci baked step (merge conflicts expected with t9/t15 \u2014 lead resolves at merge)"
+          "status": "done",
+          "notes": "matrix.rs; touches cargo-ci baked step (merge conflicts expected with t9/t15 \u2014 lead resolves at merge) SESSION-10: done. Codex luna direct exec; all gates PASS first run on merged tree; CLOSED rework 0."
         },
         {
           "id": "26ae7d6b",
@@ -512,8 +512,8 @@
           "title": "Cut the GEMM selectors over",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
-          "notes": "matrix.rs/expr.rs tiles + axpy; cargo-ci baked step"
+          "status": "done",
+          "notes": "matrix.rs/expr.rs tiles + axpy; cargo-ci baked step SESSION-10: done. Codex sol direct exec; code-review 0 findings; 3 doc-review rounds of stale/unconditional narration lead-fixed; CLOSED rework 0."
         },
         {
           "id": "19424a0f",
@@ -521,8 +521,8 @@
           "title": "Cut the prime-route and FieldVec selectors over",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
-          "notes": "const fn predicates must stay const fn; cargo-ci baked step"
+          "status": "done",
+          "notes": "const fn predicates must stay const fn; cargo-ci baked step SESSION-10: done. Native opus; 3 review rounds (reporter authority -> single-authority refactor with executed==reported witness that caught a real variant-overlap bug -> doc regression); CLOSED rework 2."
         },
         {
           "id": "f048383f",
@@ -636,8 +636,8 @@
           "title": "Cut the bit-matrix selectors over",
           "classification": "implementation",
           "model": "codex gpt-5.6-luna (direct exec)",
-          "status": "worker-done-unmerged",
-          "notes": "Committed on branch; worktree CI 5/5 green. Merge next."
+          "status": "done",
+          "notes": "Committed on branch; worktree CI 5/5 green. Merge next. SESSION-10: done. Codex luna direct exec; all gates PASS first run on merged tree; CLOSED rework 0."
         },
         {
           "id": "26ae7d6b",
@@ -645,8 +645,8 @@
           "title": "Cut the GEMM selectors over",
           "classification": "implementation",
           "model": "codex gpt-5.6-sol (direct exec)",
-          "status": "worker-done-unmerged",
-          "notes": "Committed on branch; worktree CI 5/5 green. Merge after t3 (cargo-ci.sh baked-step conflict expected)."
+          "status": "done",
+          "notes": "Committed on branch; worktree CI 5/5 green. Merge after t3 (cargo-ci.sh baked-step conflict expected). SESSION-10: done. Codex sol direct exec; code-review 0 findings; 3 doc-review rounds of stale/unconditional narration lead-fixed; CLOSED rework 0."
         },
         {
           "id": "19424a0f",
@@ -654,8 +654,54 @@
           "title": "Cut the prime-route and FieldVec selectors over",
           "classification": "implementation",
           "model": "opus (native worker)",
-          "status": "in-progress",
-          "notes": "Committed 40da2e1e; worktree CI + report pending (sequenced behind main gate chains)."
+          "status": "done",
+          "notes": "Committed 40da2e1e; worktree CI + report pending (sequenced behind main gate chains). SESSION-10: done. Native opus; 3 review rounds (reporter authority -> single-authority refactor with executed==reported witness that caught a real variant-overlap bug -> doc regression); CLOSED rework 2."
+        }
+      ]
+    },
+    {
+      "wave_number": 22.5,
+      "issues": [
+        {
+          "id": "f048383f",
+          "short_id": "f048383f",
+          "title": "Extend the tuning schema with the seam fields",
+          "classification": "implementation",
+          "model": "codex gpt-5.6-luna (direct exec)",
+          "status": "done",
+          "notes": "3 rounds: asserted-bounds caps (codex rework 1), non-x86 portability (lead: arch-independent constant homes in kernel wrapper modules), seam-design Amendment A1. CLOSED. Also: rustc ICE on stale incremental cache during round 1 cargo-ci \u2014 cleared target/*/incremental, clean re-run; cwd-trap recurrence cost two junk gate rounds (see handoff traps)."
+        }
+      ]
+    },
+    {
+      "wave_number": 22.9,
+      "issues": [
+        {
+          "id": "e2744fcf",
+          "short_id": "e2744fcf",
+          "title": "Cut the Winograd threshold over",
+          "classification": "implementation",
+          "model": "codex gpt-5.6-luna (direct exec)",
+          "status": "dispatching",
+          "notes": "U5."
+        },
+        {
+          "id": "88441adb",
+          "short_id": "88441adb",
+          "title": "Cut the triangular base-case threshold over",
+          "classification": "implementation",
+          "model": "codex gpt-5.6-sol (direct exec)",
+          "status": "dispatching",
+          "notes": "U6, hard (7 inner drivers, 9 entries)."
+        },
+        {
+          "id": "e8a727ff",
+          "short_id": "e8a727ff",
+          "title": "Cut the PLE selectors over (seam)",
+          "classification": "implementation",
+          "model": "opus (native worker)",
+          "status": "dispatching",
+          "notes": "U7, hard (lane-width threading + t8 reporter signature evolution)."
         }
       ]
     }
@@ -976,7 +1022,11 @@
     "fa92608b": 2,
     "ef18c60b": 1,
     "fbe66a7a": 1,
-    "856f1b48": 0
+    "856f1b48": 0,
+    "19424a0f": 2,
+    "f048383f": 1,
+    "26ae7d6b": 0,
+    "d0365895": 0
   },
   "surfaced_pitfalls": [
     {
