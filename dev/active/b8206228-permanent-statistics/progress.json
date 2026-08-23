@@ -147,7 +147,7 @@
           "short_id": "a39bb161",
           "title": "Accelerator execution for campaign cells",
           "classification": "implementation",
-          "status": "in review round 2: cargo-ci PASS at d05dd763. Round-1 code-review FAILED with two blocking findings, both traceable to lead decision D1 rather than the worker: D1 said the measured per-matrix cost is \"supplied by configuration\" without saying PER CELL, so the natural reading became a single --accelerator-per-matrix-us scalar. F1: the lock-wrapped runner never passed that flag, so the binary refused every accelerator manifest before dispatch and REQ-03's wrapper path could not run accelerator work at all; the shell test passed anyway because it only asserted the wrapper appeared on the command line. F2: one field-wide cost sized every cell, reproducing the fixed-batch-size error REQ-01 rules out. Fix (lead-direct after the luna rework round wedged): AcceleratorCostTable keyed by the frozen (q,n) cell, per-cell resolution with a pre-flight refusing a missing entry by name before any work runs, --accelerator-cost-table CSV replacing the scalar flag, runner passes it via CAMPAIGN_SIM_ACCELERATOR_COSTS, shell test t12 drives an accelerator manifest end to end. Lead host verification: accelerator histogram [83,92,81] matches the generic-Ryser CPU reference at q=3 n=8 over 256 matrices, identical at one launch of 256 and at 64 launches of 4; missing-entry refusal exits 1 writing no artifacts."
+          "status": "rework-2 dispatched after the 2026-08-24 crash recovery. Lead review at f55cf2fe found the production driver path per-cell, but the public run_field_with_worker_count_and_accelerator API still applies one AcceleratorConfig to every cell in a field and its Rustdoc remains incomplete. Attempt 2 must converge the field API on AcceleratorCostTable, add a multi-cell behavioural test, and complete all public contracts. GPU/device work is forbidden while the owner's Baldur's Gate 3 process is live."
         }
       ]
     },
@@ -535,7 +535,8 @@
     "7a816262": 2,
     "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached, any further failure escalates",
     "032cc754": 1,
-    "a39bb161": 1
+    "a39bb161": 2,
+    "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates"
   },
   "surfaced_pitfalls": [
     "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
@@ -614,6 +615,12 @@
       "source": "lead self-audit, session 13",
       "finding": "The lead ran device work during the day — the gpu_dispatcher slow-profile suite and three short campaign hostcheck runs — before reading this file's owner directive of 2026-08-16 that simulations and bench/device measurement runs execute only after 02:00 local.",
       "disposition": "Disclosed to the owner. All runs were correctness verification under ccx1-bench-flock.sh --full-host; no timing from them was committed or cited as a performance claim, and every artifact was deleted. The process miss is reading standing directives in progress.json BEFORE scheduling any device work, not after."
+    },
+    {
+      "issue": "7a816262",
+      "source": "2026-08-24 host-crash recovery",
+      "finding": "The transient target/permanent-campaign tree and premeasure-v1 process receipts are absent after the host crash. No durable artifact proves that the re-armed 2026-08-19 run completed, so none of its intended measurements can be credited.",
+      "disposition": "Rebuild the pinned preparation state and rerun the resumable premeasurement only after 02:00 local and only while the owner's /data/SteamLibrary/steamapps/common/Baldurs Gate 3/bin/bg3 process is absent. Persist completed evidence outside target before relying on it across another crash."
     }
   ],
   "started_at": "2026-08-09T12:20:30Z",
