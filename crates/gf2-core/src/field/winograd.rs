@@ -95,10 +95,16 @@
 
 use crate::field::matrix::{gemm, FieldMatrix};
 use crate::field::{FieldVec, FiniteField};
+use crate::tuning;
 
-/// Default for [`FiniteField::WINOGRAD_THRESHOLD`]: square-matrix size at
-/// or below which [`gemm_winograd`] falls back to the classical blocked
-/// [`gemm`].
+#[cfg(any(test, feature = "test-support"))]
+use std::sync::atomic::{AtomicU8, Ordering};
+
+/// Conservative default for `gemm.winograd_min_dim` in the active
+/// [`crate::tuning::TuningProfile`]: square-matrix size below which
+/// [`gemm_winograd`] falls back to the classical blocked [`gemm`]. The live
+/// value comes from the active profile; this constant is the value used by
+/// [`crate::tuning::TuningProfile::CONSERVATIVE`].
 ///
 /// Selected by a sweep over `{32, 64, 128, 256, 512, 1024}` against a
 /// classical baseline at `n = 2048` on Mersenne-31
@@ -110,12 +116,71 @@ use crate::field::{FieldVec, FiniteField};
 /// by `66c4759b`.
 pub(crate) const WINOGRAD_MIN_DIM_DEFAULT: usize = 128;
 
+/// The selected arm of the [`gemm_winograd`] dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum WinogradRoute {
+    /// Use the classical blocked [`gemm`] base case.
+    Classical,
+    /// Peel a Winograd level and continue through the recursive kernel.
+    Winograd,
+}
+
+/// Reports the [`gemm_winograd`] arm for an `m × k` by `k × n` product.
+///
+/// The comparison uses the active `gemm.winograd_min_dim` profile field. The
+/// conservative default comes from [`WINOGRAD_MIN_DIM_DEFAULT`] through
+/// [`crate::tuning::TuningProfile::CONSERVATIVE`]. The effective threshold is
+/// floored at two, matching the recursive dispatcher's progress guard.
+#[must_use]
+pub fn winograd_route(m: usize, k: usize, n: usize) -> WinogradRoute {
+    winograd_route_resolved(tuning::active().gemm().winograd_min_dim(), m, k, n)
+}
+
+/// Reports the Winograd arm against an already-resolved
+/// `gemm.winograd_min_dim`.
+fn winograd_route_resolved(winograd_min_dim: usize, m: usize, k: usize, n: usize) -> WinogradRoute {
+    if m.min(k).min(n) < winograd_min_dim.max(2) {
+        WinogradRoute::Classical
+    } else {
+        WinogradRoute::Winograd
+    }
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static LAST_WINOGRAD_DISPATCH_ROUTE: AtomicU8 = AtomicU8::new(0);
+
+#[cfg(any(test, feature = "test-support"))]
+fn record_winograd_dispatch_route(route: WinogradRoute) {
+    let value = match route {
+        WinogradRoute::Classical => 1,
+        WinogradRoute::Winograd => 2,
+    };
+    LAST_WINOGRAD_DISPATCH_ROUTE.store(value, Ordering::Relaxed);
+}
+
+/// Clears the test-support observation of the last production Winograd route.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_last_winograd_dispatch_route() {
+    LAST_WINOGRAD_DISPATCH_ROUTE.store(0, Ordering::Relaxed);
+}
+
+/// Returns the route consumed by the last [`gemm_winograd`] dispatch.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn last_winograd_dispatch_route() -> Option<WinogradRoute> {
+    match LAST_WINOGRAD_DISPATCH_ROUTE.load(Ordering::Relaxed) {
+        1 => Some(WinogradRoute::Classical),
+        2 => Some(WinogradRoute::Winograd),
+        _ => None,
+    }
+}
+
 /// Strassen–Winograd matrix multiplication over an arbitrary
 /// [`FiniteField`](crate::field::FiniteField).
 ///
-/// Below [`FiniteField::WINOGRAD_THRESHOLD`] the implementation dispatches
-/// directly to the classical blocked [`gemm`] — that path already carries
-/// T1's cache tiling and SIMD-accelerated dot products. Above the
+/// Below the active `gemm.winograd_min_dim` profile field the implementation
+/// dispatches directly to the classical blocked [`gemm`] — that path already
+/// carries T1's cache tiling and SIMD-accelerated dot products. Above the
 /// threshold one level of Winograd's 7-multiply split is peeled and the
 /// seven half-size products are computed by recursive calls into this
 /// same function.
@@ -174,7 +239,13 @@ pub(crate) const WINOGRAD_MIN_DIM_DEFAULT: usize = 128;
 /// assert_eq!(got, expected);
 /// ```
 pub fn gemm_winograd<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
-    gemm_winograd_with_threshold(a, b, F::WINOGRAD_THRESHOLD)
+    let winograd_min_dim = tuning::active().gemm().winograd_min_dim();
+    let (m, k) = a.shape();
+    let n = b.cols();
+    let _route = winograd_route_resolved(winograd_min_dim, m, k, n);
+    #[cfg(any(test, feature = "test-support"))]
+    record_winograd_dispatch_route(_route);
+    gemm_winograd_with_threshold(a, b, winograd_min_dim)
 }
 
 /// Strassen–Winograd gemm with an explicit base-case threshold. Intended
@@ -182,8 +253,8 @@ pub fn gemm_winograd<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> 
 /// `benches/strassen_threshold.rs`.
 ///
 /// The recursion is bit-identical to [`gemm_winograd`] except the base
-/// case fires at `min(m, k, n) < max(threshold, 2)` instead of
-/// `< F::WINOGRAD_THRESHOLD`. Correctness is independent of the
+/// case fires at `min(m, k, n) < max(threshold, 2)` instead of the active
+/// `gemm.winograd_min_dim` profile field. Correctness is independent of the
 /// threshold (any positive value yields the same output as classical
 /// `gemm`); the floor at `2` guards against the degenerate 1×1 half-dim
 /// case where a Winograd peel cannot make progress. Pass `usize::MAX`
