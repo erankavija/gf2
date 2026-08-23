@@ -752,10 +752,12 @@ pub enum PlePanelRoute {
 /// `lane` is the carrier's own [`FiniteField::simd_ple_panel_lane`]; the
 /// dispatcher passes `F::simd_ple_panel_lane()`. Two active profile values carry
 /// the comparison: `ple.panel_base_max_cols()`, above which a window takes the
-/// sub-panel walk, and the lane's own width — `ple.panel_byte_lane_max_cols()`
-/// for [`crate::field::PlePanelLane::Byte`] and
-/// `ple.panel_u16_lane_max_cols()` for [`crate::field::PlePanelLane::U16`] —
-/// above which the window takes the recursive split instead of the kernel.
+/// sub-panel walk (each sub-panel capped at the lane's own width), and the
+/// lane's own width — `ple.panel_byte_lane_max_cols()` for
+/// [`crate::field::PlePanelLane::Byte`] and `ple.panel_u16_lane_max_cols()`
+/// for [`crate::field::PlePanelLane::U16`] — above which a window that does
+/// not exceed the panel base width takes the recursive split instead of the
+/// kernel.
 #[must_use]
 pub fn ple_panel_route(lane: Option<PlePanelLane>, win: usize) -> PlePanelRoute {
     let ple = tuning::active().ple();
@@ -859,9 +861,11 @@ fn ple_in_place_window<F: FiniteField>(
     // kernel's u8 byte-lane throughput on the bulk of the operations.
     //
     // A window that fits both that width and the carrier lane's own width
-    // goes to the kernel directly. A carrier with no lane, or a window
-    // wider than its lane's width, falls through to the halving split
-    // below; so does a kernel that declines at run time.
+    // goes to the kernel directly. A window above the panel base width
+    // takes the sub-panel walk (lane-capped). A carrier with no lane, or
+    // a window between the lane's width and the panel base width, falls
+    // through to the halving split below; so does a kernel that declines
+    // at run time.
     match ple_panel_route_resolved(widths.panel_base_max_cols, widths.panel_lane_max_cols, win) {
         PlePanelRoute::SubPanelRecursion => {
             return ple_panel_recursive_window::<F>(a, col_lo, col_hi, perm, pivot_cols, widths);
