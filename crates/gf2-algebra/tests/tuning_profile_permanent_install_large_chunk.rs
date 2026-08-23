@@ -7,11 +7,16 @@
 //! the same serial [`permanent_bipedal3`] reference for the identical matrix,
 //! which is the "results are identical across installed chunk lengths"
 //! determinism witness `dev/active/7d824b2f/design.md` §7.2 requires.
+//!
+//! Each binary also reads back [`last_effective_chunk`], a `test-support`
+//! hook [`permanent_bipedal3_parallel_with_chunk`] records itself, so the
+//! "reaches `_with_chunk`" witness observes production code's received value
+//! rather than inferring it from output equality (chunk-partitioned output is
+//! bit-identical for every valid chunk length, so equal output alone is not
+//! evidence of reaching).
 
 use gf2_algebra::packed::Bipedal3Matrix;
-use gf2_algebra::permanent::parallel_bipedal3::{
-    permanent_bipedal3_parallel_with_chunk, permanent_chunk_len,
-};
+use gf2_algebra::permanent::parallel_bipedal3::{last_effective_chunk, permanent_chunk_len};
 use gf2_algebra::permanent::{permanent_bipedal3, permanent_bipedal3_parallel};
 use gf2_core::gfp::Fp;
 use gf2_core::tuning::{
@@ -50,13 +55,11 @@ fn installed_permanent_profile_large_chunk_matches_small_chunk_determinism() {
     let mat = test_matrix();
     let reference = permanent_bipedal3(&mat);
 
-    assert_eq!(
-        permanent_bipedal3_parallel(&mat),
-        permanent_bipedal3_parallel_with_chunk(&mat, permanent_chunk_len())
-    );
+    let result = permanent_bipedal3_parallel(&mat);
+    assert_eq!(last_effective_chunk(), LARGE_CHUNK);
 
     // Same matrix, same serial reference as the small-chunk binary: proves
     // the installed chunk length (large here, small there) does not move the
     // observable result.
-    assert_eq!(permanent_bipedal3_parallel(&mat), reference);
+    assert_eq!(result, reference);
 }
