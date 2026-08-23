@@ -7,10 +7,10 @@
 
 | Criterion | Approach | Evidence / open gap |
 |---|---|---|
-| REQ-01 | Compose core ordered-column elimination, canonical LLR reliability, bounded Hamming-weight patterns, and separate generator-domain OSD behind `GeneratorMatrixAccess` and `SoftDecoder`. | [Investigation: primitive verification](investigation.md#primitive-verification); Fossorier1995 and Yue2022 resolve in the [citation registry](../../../.jit/references.toml). |
+| REQ-01 | Compose core ordered-column elimination, canonical LLR reliability, bounded Hamming-weight patterns, and separate generator-domain OSD behind `GeneratorMatrixAccess` and `SoftDecoder`. | [Investigation: primitive verification](investigation.md#primitive-verification); Fossorier1995 and Yue2022 resolve in the citation registry. |
 | REQ-02 | Pin the exact published eBCH $(128,64)$ target before adding its named factory, then run a seeded resumable BI-AWGN/BPSK order-2 campaign with order 1 as control and compare BLER confidence intervals. | [Investigation: BCH and campaign findings](investigation.md#claim-classification); [external review, OSD paragraph](../aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md). The exact published figure remains an output of the reference-data task. |
-| REQ-03 | Reuse the OSD engine through an arbitrary-syndrome parity-check adapter, expose final BP posterior LLRs, and compose BP-first fallback with stage-specific metadata and a bounded LDPC test. | [Investigation: BP and syndrome facts](investigation.md#bp-and-syndrome-facts); Roffe2020 resolves in the [citation registry](../../../.jit/references.toml). |
-| REQ-04 | Add optional pattern segmentation and discarding thresholds over the engine budget model, with deterministic elimination and pattern counters. | [Investigation: convention-convergence analysis](investigation.md#convention-convergence-inventory); Yue2022 resolves in the [citation registry](../../../.jit/references.toml). |
+| REQ-03 | Reuse the OSD engine through an arbitrary-syndrome parity-check adapter, expose final BP posterior LLRs, and compose BP-first fallback with stage-specific metadata and a bounded LDPC test. | [Investigation: BP and syndrome facts](investigation.md#bp-and-syndrome-facts); Roffe2020 resolves in the citation registry. |
+| REQ-04 | Add optional pattern segmentation and discarding thresholds over the engine budget model, with deterministic elimination and pattern counters. | [Investigation: convention-convergence analysis](investigation.md#convention-convergence-inventory); Yue2022 resolves in the citation registry. |
 
 ## Shared architectural contracts
 
