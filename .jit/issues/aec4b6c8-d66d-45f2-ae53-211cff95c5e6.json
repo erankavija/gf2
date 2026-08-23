@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the two inversion thresholds to runtime resolved reads.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.4 and the dense_inverse row of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: m4ri_min_dim and blocked_min_dim are runtime resolved reads satisfying design §2.3, operators unchanged.\n- [hard] REQ-02: invert_route reporter called by the dispatcher and route files on both sides of each threshold pass.\n- [hard] REQ-03: Rustdoc names the profile fields; existing tests pass unchanged.",
   "documents": [],
+  "done_at": "2026-08-23T09:48:19.892242012Z",
   "first_ready_at": "2026-08-22T21:26:28.708075034Z",
   "gates_required": [
     "cargo-ci",
@@ -16,19 +17,19 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:31.715429748Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T09:42:39.945794974Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:31.836892489Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T09:46:03.240440639Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:31.958901750Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T09:47:51.067397179Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "aec4b6c8-d66d-45f2-ae53-211cff95c5e6",
@@ -39,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cut the dense-inversion selectors over to the tuning profile",
-  "updated_at": "2026-08-23T08:01:29.373302603Z"
+  "updated_at": "2026-08-23T09:48:19.892242012Z"
 }
