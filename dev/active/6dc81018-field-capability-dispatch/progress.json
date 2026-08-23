@@ -1043,6 +1043,11 @@
       "issue": "6dc81018",
       "finding": "holistic-review round 1 (2026-08-22, commit 45708fe4) FAILED with three blocking findings: F1 REQ-03 pilot-only cutover without a recorded narrowing; F2 deprecated Kernel surface live with its cutover parked out-of-epic (a6636671); F3 REQ-05 extraction record shows exit 1 + manual reduction.",
       "disposition": "All three escalated same session \u2192 DEC-O (scope expansion, task 7d824b2f + follow-on waves), DEC-P (a6636671 pulled in, wave 19), DEC-Q (task e6ea0dde, wave 19). Re-run holistic-review after all waves complete."
+    },
+    {
+      "issue": "19424a0f",
+      "date": "2026-08-23",
+      "pitfall": "D5 blind spot: baked constants all equal conservative defaults, so wiring errors (conservative vs baked constant at a selection site) are undetectable until a calibrated value diverges. Recorded in 7d824b2f Amendment A3."
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
