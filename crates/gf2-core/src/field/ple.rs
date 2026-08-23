@@ -35,11 +35,13 @@
 //! - [`row_echelon`](FieldMatrix::row_echelon)`(m × n)`: PLE + the inverted
 //!   `L_full` block + `Pᵀ` + the assembled `E_full`.
 //! - [`rref`](FieldMatrix::rref)`(m × n)`: row_echelon + panelized
-//!   back-substitution (Stage 3a/3b) when `max(m, n) >= BLOCKED_BACK_SUB_MIN_DIM`
-//!   (= 128), allocating 8 scratch `FieldMatrix` instances (`e_piv_piv`,
-//!   `e_piv_free`, `x_piv`, `e_nonpiv_piv`, `e_piv_free_post`, `e_nonpiv_free`,
-//!   `x_piv_post`, `x_nonpiv`); falls through to the scalar loop below the
-//!   threshold. At n=64 uses the scalar loop: total count = `EXPECTED_RREF_N64`
+//!   back-substitution (Stage 3a/3b) when `max(m, n)` reaches the active
+//!   profile's `ple.blocked_back_sub_min_dim()` (conservative default
+//!   `BLOCKED_BACK_SUB_MIN_DIM` = 128), allocating 8 scratch `FieldMatrix`
+//!   instances (`e_piv_piv`, `e_piv_free`, `x_piv`, `e_nonpiv_piv`,
+//!   `e_piv_free_post`, `e_nonpiv_free`, `x_piv_post`, `x_nonpiv`); falls
+//!   through to the scalar loop below the threshold. Under the conservative
+//!   default at n=64 the scalar loop runs: total count = `EXPECTED_RREF_N64`
 //!   = 280. At n >= 128 the blocked path adds 8 scratch matrices + trsm
 //!   B-transposes.
 //! - [`lu`](FieldMatrix::lu)`(m × n)`: PLE + 0 (just repackages PLE's
@@ -135,6 +137,7 @@ use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
 #[cfg(test)]
 use crate::field::PlePanelLane;
+use crate::tuning;
 
 /// Default for [`FiniteField::PLE_BASE_COLS`]: column-window width at or
 /// below which [`FieldMatrix::ple`]'s block-recursive driver switches to
@@ -550,17 +553,25 @@ fn try_panel_base_dispatch<F: FiniteField>(
 ///
 /// Returns the rank of the column window (i.e., the number of pivots
 /// found in those columns).
+///
+/// This is the panel entry: it resolves `ple.panel_base_max_cols()` from the
+/// active [`crate::tuning::TuningProfile`] exactly once and threads the value
+/// through [`ple_in_place_window`]'s recursion by parameter, so no recursion
+/// node reads the profile.
 fn ple_in_place<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
 ) -> usize {
     let n = a.cols();
-    ple_in_place_window(a.reborrow(), 0, n, perm, pivot_cols)
+    let panel_base_max_cols = tuning::active().ple().panel_base_max_cols();
+    ple_in_place_window(a.reborrow(), 0, n, perm, pivot_cols, panel_base_max_cols)
 }
 
-/// Widest column window the panel base handles directly before
-/// [`ple_in_place_window`] splits it into recursive sub-panels.
+/// Conservative default for `ple.panel_base_max_cols()` in the active
+/// [`crate::tuning::TuningProfile`]: the widest column window the panel base
+/// handles directly before [`ple_in_place_window`] splits it into recursive
+/// sub-panels.
 ///
 /// Chosen so the panel kernel still amortises its packing overhead
 /// (canonical-byte scratch pack + outside-window row permutation) over a
@@ -568,7 +579,49 @@ fn ple_in_place<F: FiniteField>(
 /// the wide GEMM dominates the work between panels. 128 was empirically
 /// selected from a tuning sweep over {32, 48, 64, 96, 128} — see
 /// `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
+/// This constant remains the compiled-in conservative default consumed by
+/// [`crate::tuning::TuningProfile::CONSERVATIVE`]; the live value comes from
+/// the active profile and is reported by [`ple_panel_route`].
 pub(crate) const PLE_PANEL_RECURSIVE_BASE: usize = 128;
+
+/// The selected arm of the [`FieldMatrix::ple`] panel dispatcher for one
+/// column window.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PlePanelRoute {
+    /// The column window is handled without a sub-panel walk: through the
+    /// SIMD panel kernel when the field exposes a
+    /// [`crate::field::PlePanelLane`] and the window fits
+    /// [`FiniteField::PLE_PANEL_COLS`], through the binary-halving recursive
+    /// split otherwise.
+    PanelBase,
+    /// The column window is walked in narrow sub-panels, each dispatched to
+    /// the panel base and followed by a wide trsm + gemm update of the right
+    /// tail.
+    SubPanelRecursion,
+}
+
+/// Reports the [`FieldMatrix::ple`] panel arm for a column-window width.
+///
+/// The comparison uses the active `ple.panel_base_max_cols()` profile value:
+/// a window strictly above it takes the sub-panel recursion. Which kernel
+/// each arm then reaches depends on the field's own
+/// [`crate::field::PlePanelLane`] and [`FiniteField::PLE_PANEL_COLS`] rather
+/// than on the profile, so a field without a panel kernel runs the
+/// binary-halving split at every width.
+#[must_use]
+pub fn ple_panel_route(win: usize) -> PlePanelRoute {
+    ple_panel_route_resolved(tuning::active().ple().panel_base_max_cols(), win)
+}
+
+/// Reports the panel arm for a column-window width against an
+/// already-resolved `panel_base_max_cols`.
+fn ple_panel_route_resolved(panel_base_max_cols: usize, win: usize) -> PlePanelRoute {
+    if win > panel_base_max_cols {
+        PlePanelRoute::SubPanelRecursion
+    } else {
+        PlePanelRoute::PanelBase
+    }
+}
 
 /// Inner driver — see [`ple_in_place`]. The window `[col_lo, col_hi)`
 /// is the column range to process; cells outside this window are not
@@ -594,12 +647,19 @@ pub(crate) const PLE_PANEL_RECURSIVE_BASE: usize = 128;
 /// which silently used wrong multipliers when pivots were non-contiguous
 /// — corrupting the Schur complement update and dropping otherwise-
 /// valid pivots in the right-half recursion.
+///
+/// # Panel width
+///
+/// `panel_base_max_cols` is the active profile's `ple.panel_base_max_cols()`,
+/// resolved once by [`ple_in_place`] and forwarded unchanged to every
+/// recursive call and to [`ple_panel_recursive_window`].
 fn ple_in_place_window<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
+    panel_base_max_cols: usize,
 ) -> usize {
     let m = a.rows();
     let win = col_hi.saturating_sub(col_lo);
@@ -651,19 +711,21 @@ fn ple_in_place_window<F: FiniteField>(
     // lanes its throughput at large win is roughly 8 Gop/s — far below
     // fflas-ffpack's ~30 Gop/s sgemm-cascade PLUQ. To close the gap we
     // dispatch the panel kernel only on a narrow leftmost sub-panel
-    // (`PLE_PANEL_RECURSIVE_BASE` columns wide), then update the wide
+    // (`panel_base_max_cols` columns wide), then update the wide
     // right tail via the existing `trsm_lower` + `gemm_axpy_into_view`
     // path. The wide gemm inherits the small-prime whole-GEMM fast path
     // from issue 40195c09 (lift), which hits the kernel's u8 byte-lane
     // throughput on the bulk of the operations.
-    if F::simd_ple_panel_lane().is_some() && win > PLE_PANEL_RECURSIVE_BASE {
+    if F::simd_ple_panel_lane().is_some()
+        && ple_panel_route_resolved(panel_base_max_cols, win) == PlePanelRoute::SubPanelRecursion
+    {
         return ple_panel_recursive_window::<F>(
             a,
             col_lo,
             col_hi,
             perm,
             pivot_cols,
-            PLE_PANEL_RECURSIVE_BASE,
+            panel_base_max_cols,
         );
     }
     if win <= F::PLE_PANEL_COLS && F::simd_ple_panel_lane().is_some() {
@@ -682,7 +744,14 @@ fn ple_in_place_window<F: FiniteField>(
     // left-half pivots after the recursion returns (they sit at
     // `pivot_cols[pivot_cols_start..pivot_cols_start + r1]`).
     let pivot_cols_start = pivot_cols.len();
-    let r1 = ple_in_place_window(a.reborrow(), col_lo, mid, perm, pivot_cols);
+    let r1 = ple_in_place_window(
+        a.reborrow(),
+        col_lo,
+        mid,
+        perm,
+        pivot_cols,
+        panel_base_max_cols,
+    );
 
     // Steps 2 & 3 — trsm and gemm on the right half.
     //
@@ -736,7 +805,14 @@ fn ple_in_place_window<F: FiniteField>(
     // inputs that exhibit early-termination rank-deficiency).
     let r2 = if r1 < m && mid < col_hi {
         let (_top, a4) = a.split_rows_mut(r1);
-        ple_in_place_window(a4, mid, col_hi, &mut perm[r1..], pivot_cols)
+        ple_in_place_window(
+            a4,
+            mid,
+            col_hi,
+            &mut perm[r1..],
+            pivot_cols,
+            panel_base_max_cols,
+        )
     } else {
         0
     };
@@ -794,8 +870,10 @@ fn ple_in_place_window<F: FiniteField>(
 ///   in place for every row swap performed by the kernel.
 /// * `pivot_cols` — absolute pivot-column accumulator. New pivots are
 ///   appended in left-to-right order.
-/// * `base_cols` — width of each sub-panel. Empirically tuned; see the
-///   constant in `ple_in_place_window`.
+/// * `base_cols` — width of each sub-panel: the active profile's
+///   `ple.panel_base_max_cols()`, resolved by [`ple_in_place`] and forwarded
+///   through [`ple_in_place_window`]. Its conservative default is
+///   [`PLE_PANEL_RECURSIVE_BASE`].
 fn ple_panel_recursive_window<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
@@ -1384,8 +1462,8 @@ impl<F: FiniteField> FieldMatrix<F> {
         }
 
         // Fast path: blocked back-substitution via gemm_axpy_into_view (Stage 3a)
-        // and trsm_upper (Stage 3b). Falls back to the scalar loop when the
-        // blocked path is unavailable (e.g., the inner dims are zero).
+        // and trsm_upper (Stage 3b). Falls back to the scalar loop below the
+        // shape reported by `back_sub_route`.
         if try_blocked_back_sub(&mut x, &mut e, &pivots, m, n) {
             return (x, e);
         }
@@ -1666,6 +1744,52 @@ fn pad_l_to_full<F: FiniteField>(
 
 // ─── Blocked back-substitution (Stage 3a + 3b) ───────────────────────────────
 
+/// Conservative default for `ple.blocked_back_sub_min_dim()` in the active
+/// [`crate::tuning::TuningProfile`]: the minimum matrix dimension
+/// (max(m, n)) below which `try_blocked_back_sub` returns `false` and lets
+/// `rref` fall through to the scalar loop.
+///
+/// Below this threshold the scatter/gather overhead of allocating 8 scratch
+/// `FieldMatrix` instances dominates the back-sub work, regressing `rref`
+/// by up to ~20% vs the scalar loop (observed at GF(M31)/n=64/deficient).
+/// The crossover based on CCX1 measurements (2026-05-27) is between 64 and
+/// 256; a threshold of 128 leaves a ≥5% safety margin in both directions.
+/// This constant remains the compiled-in conservative default consumed by
+/// [`crate::tuning::TuningProfile::CONSERVATIVE`]; the live value comes from
+/// the active profile and is reported by [`back_sub_route`].
+pub(crate) const BLOCKED_BACK_SUB_MIN_DIM: usize = 128;
+
+/// The selected arm of [`FieldMatrix::rref`]'s back-substitution.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BackSubRoute {
+    /// Eliminate the pivot columns with the row-by-row scalar loop.
+    Scalar,
+    /// Eliminate the pivot columns with the panelized trsm + gemm stages.
+    Blocked,
+}
+
+/// Reports the [`FieldMatrix::rref`] back-substitution arm for a matrix
+/// shape.
+///
+/// The comparison uses the active `ple.blocked_back_sub_min_dim()` profile
+/// value against `max(m, n)`: a shape below it takes the scalar loop. A
+/// pivot-free matrix is handled by the dispatcher before this selector is
+/// called.
+#[must_use]
+pub fn back_sub_route(m: usize, n: usize) -> BackSubRoute {
+    back_sub_route_resolved(tuning::active().ple().blocked_back_sub_min_dim(), m, n)
+}
+
+/// Reports the back-substitution arm for a matrix shape against an
+/// already-resolved `blocked_back_sub_min_dim`.
+fn back_sub_route_resolved(blocked_back_sub_min_dim: usize, m: usize, n: usize) -> BackSubRoute {
+    if m.max(n) < blocked_back_sub_min_dim {
+        BackSubRoute::Scalar
+    } else {
+        BackSubRoute::Blocked
+    }
+}
+
 /// Blocked back-substitution for [`FieldMatrix::rref`] (design `24a93e4e`).
 ///
 /// Given the echelon form `(x, e)` from [`FieldMatrix::row_echelon`] and the
@@ -1687,18 +1811,10 @@ fn pad_l_to_full<F: FiniteField>(
 ///
 /// Finally, zero the pivot columns of `e` (set to identity columns).
 ///
-/// Returns `true` always (no fallback needed); `r == 0` is handled as
-/// an immediate no-op returning `true`.
-/// Minimum matrix dimension (max(m, n)) below which `try_blocked_back_sub`
-/// returns `false` and lets `rref` fall through to the scalar loop.
-///
-/// Below this threshold the scatter/gather overhead of allocating 8 scratch
-/// `FieldMatrix` instances dominates the back-sub work, regressing `rref`
-/// by up to ~20% vs the scalar loop (observed at GF(M31)/n=64/deficient).
-/// The crossover based on CCX1 measurements (2026-05-27) is between 64 and
-/// 256; a threshold of 128 leaves a ≥5% safety margin in both directions.
-pub(crate) const BLOCKED_BACK_SUB_MIN_DIM: usize = 128;
-
+/// Returns `false` without touching `x` or `e` when [`back_sub_route`]
+/// reports [`BackSubRoute::Scalar`] for `(m, n)`, leaving `rref` to run its
+/// scalar loop; otherwise runs the three stages and returns `true`. A
+/// pivot-free input is an immediate no-op returning `true`.
 pub(crate) fn try_blocked_back_sub<F: FiniteField>(
     x: &mut FieldMatrix<F>,
     e: &mut FieldMatrix<F>,
@@ -1714,7 +1830,7 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
 
     // For small matrices the scatter/gather overhead exceeds the scalar loop
     // cost.  Let the caller fall through to the scalar path.
-    if m.max(n) < BLOCKED_BACK_SUB_MIN_DIM {
+    if back_sub_route(m, n) == BackSubRoute::Scalar {
         return false;
     }
 
@@ -2932,10 +3048,12 @@ mod tests {
     const EXPECTED_PLE_N64: u64 = 264;
     const EXPECTED_PLE_N1024: u64 = 4736;
     const EXPECTED_ROW_ECHELON_N64: u64 = 280;
-    // At n=64, try_blocked_back_sub returns false (n < BLOCKED_BACK_SUB_MIN_DIM
-    // = 128) so rref falls through to the scalar loop — no extra allocations
-    // vs row_echelon. For n >= 128 the blocked path adds 8 scratch matrices +
-    // trsm B-transposes; see BLOCKED_BACK_SUB_MIN_DIM doc comment.
+    // This binary installs no tuning profile, so `blocked_back_sub_min_dim`
+    // resolves to its conservative default BLOCKED_BACK_SUB_MIN_DIM = 128. At
+    // n=64 try_blocked_back_sub returns false (n < 128) so rref falls through
+    // to the scalar loop — no extra allocations vs row_echelon. For n >= 128
+    // the blocked path adds 8 scratch matrices + trsm B-transposes; see the
+    // BLOCKED_BACK_SUB_MIN_DIM doc comment.
     const EXPECTED_RREF_N64: u64 = 280;
     const EXPECTED_LU_N64: u64 = 264;
 
@@ -4366,11 +4484,13 @@ mod tests {
         }
     }
 
-    // ─── Coverage: try_blocked_back_sub (BLOCKED_BACK_SUB_MIN_DIM = 128) ────────
+    // ─── Coverage: try_blocked_back_sub at the conservative default ─────────────
     //
-    // `try_blocked_back_sub` fires only when max(m, n) >= BLOCKED_BACK_SUB_MIN_DIM.
-    // The proptest sweep stays at PANEL_BOUNDARY_LENS (max = 65) and never reaches
-    // the threshold.  These four deterministic tests close the gap.
+    // `try_blocked_back_sub` fires only when max(m, n) reaches
+    // `blocked_back_sub_min_dim`, which resolves to BLOCKED_BACK_SUB_MIN_DIM =
+    // 128 in this binary (no profile is installed). The proptest sweep stays at
+    // PANEL_BOUNDARY_LENS (max = 65) and never reaches the threshold. These
+    // four deterministic tests close the gap.
 
     #[test]
     fn test_rref_128x128_fp7_blocked_back_sub() {
@@ -4410,5 +4530,43 @@ mod tests {
         let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
         assert_eq!(r_blocked, r_scalar);
         assert_eq!(x_blocked, x_scalar);
+    }
+
+    // ─── Route reporters under the conservative profile ─────────────────────
+    //
+    // No test in this binary installs a tuning profile, so `tuning::active()`
+    // resolves to `TuningProfile::CONSERVATIVE`, whose PLE entries are defined
+    // by naming the two constants below. The installed-profile halves of both
+    // boundaries live in `tests/tuning_profile_ple_install.rs` and
+    // `tests/tuning_profile_ple_install_above.rs`.
+
+    #[test]
+    fn test_ple_panel_route_boundary_is_the_conservative_panel_width() {
+        assert_eq!(
+            ple_panel_route(PLE_PANEL_RECURSIVE_BASE),
+            PlePanelRoute::PanelBase
+        );
+        assert_eq!(
+            ple_panel_route(PLE_PANEL_RECURSIVE_BASE + 1),
+            PlePanelRoute::SubPanelRecursion
+        );
+    }
+
+    #[test]
+    fn test_back_sub_route_boundary_is_the_conservative_dimension() {
+        assert_eq!(
+            back_sub_route(BLOCKED_BACK_SUB_MIN_DIM - 1, BLOCKED_BACK_SUB_MIN_DIM - 1),
+            BackSubRoute::Scalar
+        );
+        // `max(m, n)` carries the comparison, so either dimension alone
+        // reaching the threshold selects the blocked arm.
+        assert_eq!(
+            back_sub_route(BLOCKED_BACK_SUB_MIN_DIM, 1),
+            BackSubRoute::Blocked
+        );
+        assert_eq!(
+            back_sub_route(1, BLOCKED_BACK_SUB_MIN_DIM),
+            BackSubRoute::Blocked
+        );
     }
 }
