@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 21,
-  "wave_notes": "Session 10: worktree REUSE policy active (owner directive) \u2014 merged worker worktrees are moved+re-anchored to main HEAD keeping target/ caches, via scratchpad reuse-worker-worktree.sh.",
+  "wave_notes": "Session 10: worktree REUSE policy active (owner directive) \u2014 merged worker worktrees are moved+re-anchored to main HEAD keeping target/ caches, via scratchpad reuse-worker-worktree.sh. Wave 21a complete session 10. Gate-vs-lock sequencing rule: never queue worker worktree CI while a main gate chain needs the lock (gate runner budget 900s < flock patience 1800s).",
   "waves": [
     {
       "wave_number": 1,
@@ -390,8 +390,8 @@
           "title": "Extend the baked tuning module with the follow-on constants",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "Baked module + literal hoists only. t1 already landed the literal hoists (DEC-B10 #5): scope is the baked module + drift tests only."
+          "status": "done",
+          "notes": "Baked module + literal hoists only. t1 already landed the literal hoists (DEC-B10 #5): scope is the baked module + drift tests only. SESSION-10: done. CI flake (gf2-sim contention, bug 76665001) on R1, clean re-run; merged b1332e00; all gates PASS; CLOSED rework 0."
         },
         {
           "id": "fa92608b",
@@ -399,8 +399,8 @@
           "title": "Cut the SoA batch selectors over",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "compute/field.rs"
+          "status": "done",
+          "notes": "compute/field.rs SESSION-10: done after 6 gate rounds (2 worker rework + lead integration rounds R3-R6: pool tolerance reversed, single-read threading takeover, panic doc, stale comment); merged; all gates PASS; CLOSED rework 2."
         },
         {
           "id": "aa904331",
@@ -408,8 +408,8 @@
           "title": "Cut the M4RM schedule selectors over",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
-          "notes": "alg/m4rm.rs; 7 fields"
+          "status": "done",
+          "notes": "alg/m4rm.rs; 7 fields SESSION-10: done. DEC-B13 call-site deviation + DEC-B14 stride-gate reporter (Amendment A2); merged 74ac02a5; all gates PASS first run; CLOSED rework 0."
         },
         {
           "id": "aec4b6c8",
@@ -417,8 +417,8 @@
           "title": "Cut the dense-inversion selectors over",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "alg/gauss.rs + field/inverse.rs \u2014 SERIALIZE with t7 (same file): t6 in sub-wave 21a"
+          "status": "done",
+          "notes": "alg/gauss.rs + field/inverse.rs \u2014 SERIALIZE with t7 (same file): t6 in sub-wave 21a SESSION-10: done. DEC-B12 second reporter inv_route (Amendment A1); merged f3b17606; all gates PASS first run; CLOSED rework 0."
         },
         {
           "id": "fbe66a7a",
@@ -426,8 +426,8 @@
           "title": "Cut the triangular-solve selectors over",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "field/inverse.rs guards \u2014 sub-wave 21b after t6"
+          "status": "done",
+          "notes": "field/inverse.rs guards \u2014 sub-wave 21b after t6 SESSION-10 (t7, added to wave 21b): done. Direct codex gpt-5.6-luna exec under lead; R1 SIMD-unconditional witness lead-fixed d5919b77; all gates PASS; CLOSED rework 1."
         },
         {
           "id": "df385aa7",
@@ -435,8 +435,8 @@
           "title": "Cut the PLE selectors over",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
-          "notes": "threaded recursion"
+          "status": "done",
+          "notes": "threaded recursion SESSION-10: done. Once-at-entry threading verified; merged d63e0ca0; all gates PASS first run; CLOSED rework 0."
         },
         {
           "id": "395fc8e1",
@@ -444,8 +444,8 @@
           "title": "Cut the charpoly and interpolation selectors over",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "charpoly.rs + poly_interpolate.rs"
+          "status": "done",
+          "notes": "charpoly.rs + poly_interpolate.rs SESSION-10: done. Codex-luna-assisted worker; KG arm genuinely executes; adjacent stale-prose sweep ratified; merged 677b1ad2; all gates PASS first run; CLOSED rework 0."
         },
         {
           "id": "ef18c60b",
@@ -453,8 +453,8 @@
           "title": "Cut the parallel-permanent chunk length over",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "gf2-algebra"
+          "status": "done",
+          "notes": "gf2-algebra SESSION-10: done. R1 equivalence-only witness -> callee-entry observation (test-support pattern); merged; all gates PASS on rework; CLOSED rework 1."
         },
         {
           "id": "a83583e0",
@@ -610,6 +610,52 @@
           "model": "sonnet",
           "status": "planned",
           "notes": "Seam U9. Docs-only, after u8."
+        }
+      ]
+    },
+    {
+      "wave_number": 21.5,
+      "issues": [
+        {
+          "id": "fbe66a7a",
+          "short_id": "fbe66a7a",
+          "title": "Cut the triangular-solve selectors over",
+          "classification": "implementation",
+          "model": "codex gpt-5.6-luna (direct exec)",
+          "status": "done",
+          "notes": "see wave-21 entry"
+        }
+      ]
+    },
+    {
+      "wave_number": 21.9,
+      "issues": [
+        {
+          "id": "d0365895",
+          "short_id": "d0365895",
+          "title": "Cut the bit-matrix selectors over",
+          "classification": "implementation",
+          "model": "codex gpt-5.6-luna (direct exec)",
+          "status": "worker-done-unmerged",
+          "notes": "Committed on branch; worktree CI 5/5 green. Merge next."
+        },
+        {
+          "id": "26ae7d6b",
+          "short_id": "26ae7d6b",
+          "title": "Cut the GEMM selectors over",
+          "classification": "implementation",
+          "model": "codex gpt-5.6-sol (direct exec)",
+          "status": "worker-done-unmerged",
+          "notes": "Committed on branch; worktree CI 5/5 green. Merge after t3 (cargo-ci.sh baked-step conflict expected)."
+        },
+        {
+          "id": "19424a0f",
+          "short_id": "19424a0f",
+          "title": "Cut the prime-route and FieldVec selectors over",
+          "classification": "implementation",
+          "model": "opus (native worker)",
+          "status": "in-progress",
+          "notes": "Committed 40da2e1e; worktree CI + report pending (sequenced behind main gate chains)."
         }
       ]
     }
@@ -898,6 +944,12 @@
       "issue": "856f1b48/REQ-01",
       "date": "2026-08-23",
       "decision": "DEC-B11 approved by owner via AskUserQuestion: permanent-family exception \u2014 source of truth re-homes to gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT, the gf2-algebra selector names it; single definition and inward dependency both hold. t1 REQ-01 amended; code-review re-run PASS."
+    },
+    {
+      "kind": "lead-decisions",
+      "issue": "wave-21/22",
+      "date": "2026-08-23",
+      "decision": "DEC-B12 (inv_route second reporter, Amendment A1), DEC-B13 (m4rm call-site deviation), DEC-B14 (stride-gate reporter, Amendment A2). Owner directives: codex subagents via DIRECT codex exec only (no wrapper agents); hard tasks alternate gpt-5.6-sol and native Opus."
     }
   ],
   "rework_counts": {
@@ -920,7 +972,11 @@
     "fc976a80": 0,
     "eb9b324c": 1,
     "e6ea0dde": 1,
-    "c41d7e80": 1
+    "c41d7e80": 1,
+    "fa92608b": 2,
+    "ef18c60b": 1,
+    "fbe66a7a": 1,
+    "856f1b48": 0
   },
   "surfaced_pitfalls": [
     {
