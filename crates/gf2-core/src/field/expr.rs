@@ -95,6 +95,8 @@
 use std::cell::Cell;
 use std::ops::{Add, Mul, Neg, Sub};
 
+#[cfg(any(test, feature = "test-support"))]
+use crate::field::matrix::{record_gemm_tiles, GemmTileSite};
 use crate::field::matrix::{FieldMatrix, Transposed, GEMM_COL_TILE, GEMM_ROW_TILE};
 use crate::field::vec::dot_product_slices;
 use crate::field::{ConstField, FieldVec, FiniteField};
@@ -502,6 +504,8 @@ fn gemm_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
     // inner write folds β · c[i, j] so the eager two-step (gemm + axpy)
     // is collapsed into one pass. `c.get(i, j)` is one extra clone per
     // cell, amortised over the k field multiplies in the dot product.
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_tiles(GemmTileSite::ExprGemmWithBeta, GEMM_ROW_TILE, GEMM_COL_TILE);
     for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
         let i_end = (i_blk + GEMM_ROW_TILE).min(m);
         for j_blk in (0..n).step_by(GEMM_COL_TILE) {
@@ -561,6 +565,8 @@ fn gemm_trans_a_concrete<F: FiniteField>(
     let a_t = a.transpose();
     let b_t = b.transpose();
     let out_cols = n;
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_tiles(GemmTileSite::ExprGemmTransA, GEMM_ROW_TILE, GEMM_COL_TILE);
     for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
         let i_end = (i_blk + GEMM_ROW_TILE).min(m);
         for j_blk in (0..n).step_by(GEMM_COL_TILE) {
@@ -635,6 +641,12 @@ fn gemm_trans_a_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
     let a_t = a.transpose();
     let b_t = b.transpose();
     let out_cols = n;
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_tiles(
+        GemmTileSite::ExprGemmTransAWithBeta,
+        GEMM_ROW_TILE,
+        GEMM_COL_TILE,
+    );
     for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
         let i_end = (i_blk + GEMM_ROW_TILE).min(m);
         for j_blk in (0..n).step_by(GEMM_COL_TILE) {
