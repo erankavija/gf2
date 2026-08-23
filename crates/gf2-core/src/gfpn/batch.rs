@@ -2102,4 +2102,124 @@ mod tests {
             assert_eq!(got_square, expected_square, "parallel Fq3 square len {len}");
         }
     }
+
+    /// Determinism witness (issue `fa92608b`): an installed
+    /// `soa_batch.parallel_chunk_len` that differs from the conservative
+    /// [`crate::compute::field::SOA_PARALLEL_CHUNK_LEN`] default, including
+    /// values that do not evenly divide the batch length, leaves every
+    /// parallel entry point's result identical to direct scalar arithmetic.
+    /// The chunk length only repartitions the rayon work; it carries no
+    /// correctness meaning, per `@/inv/deterministic-seeded-execution`.
+    #[test]
+    #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
+    fn parallel_chunk_length_from_installed_profile_leaves_results_identical() {
+        use crate::tuning::{self, TuningProfile};
+
+        let profile = TuningProfile::from_json(
+            r#"
+            {
+              "schema_version": 1,
+              "profile_id": "soa-batch-chunk-length-determinism-test",
+              "provenance": {"kind": "inherited"},
+              "selectors": {
+                "soa_batch": {"parallel_min_len": 1, "parallel_chunk_len": 7}
+              }
+            }
+            "#,
+        )
+        .expect("test profile is valid");
+        assert_eq!(tuning::install(profile), Ok(()));
+
+        let installed_chunk_len = tuning::active().soa_batch().parallel_chunk_len();
+        assert_eq!(installed_chunk_len, 7);
+        assert_ne!(
+            installed_chunk_len,
+            crate::compute::field::SOA_PARALLEL_CHUNK_LEN,
+            "the witness needs a chunk length that differs from the conservative default"
+        );
+
+        for &len in &[0usize, 1, 6, 7, 8, 13, 14, 50] {
+            let a2: Vec<Fq2Big> = (0..len)
+                .map(|i| {
+                    Fq2Big::new(
+                        Fp::new((17 * i as u64 + 3) % 65537),
+                        Fp::new((29 * i as u64 + 5) % 65537),
+                    )
+                })
+                .collect();
+            let b2: Vec<Fq2Big> = (0..len)
+                .map(|i| {
+                    Fq2Big::new(
+                        Fp::new((31 * i as u64 + 7) % 65537),
+                        Fp::new((43 * i as u64 + 11) % 65537),
+                    )
+                })
+                .collect();
+            let ba2 = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&a2);
+            let bb2 = BatchExtField::<Fp<65537>, 2>::from_quadratic::<CfgBeta3>(&b2);
+            let expected_mul2: Vec<Fq2Big> =
+                a2.iter().zip(b2.iter()).map(|(x, y)| *x * *y).collect();
+            let expected_square2: Vec<Fq2Big> = a2.iter().map(|x| *x * *x).collect();
+            let got_mul2 =
+                crate::compute::field::batch_mul_quadratic_parallel::<Fp<65537>, CfgBeta3>(
+                    &ba2, &bb2,
+                )
+                .to_quadratic::<CfgBeta3>();
+            let got_square2 =
+                crate::compute::field::batch_square_quadratic_parallel::<Fp<65537>, CfgBeta3>(
+                    &ba2,
+                )
+                .to_quadratic::<CfgBeta3>();
+            assert_eq!(
+                got_mul2, expected_mul2,
+                "installed chunk_len={installed_chunk_len} quadratic mul len {len}"
+            );
+            assert_eq!(
+                got_square2, expected_square2,
+                "installed chunk_len={installed_chunk_len} quadratic square len {len}"
+            );
+
+            let a3: Vec<Fq3Big> = (0..len)
+                .map(|i| {
+                    Fq3Big::new(
+                        Fp::new((17 * i as u64 + 3) % 65537),
+                        Fp::new((29 * i as u64 + 5) % 65537),
+                        Fp::new((37 * i as u64 + 13) % 65537),
+                    )
+                })
+                .collect();
+            let b3: Vec<Fq3Big> = (0..len)
+                .map(|i| {
+                    Fq3Big::new(
+                        Fp::new((31 * i as u64 + 7) % 65537),
+                        Fp::new((43 * i as u64 + 11) % 65537),
+                        Fp::new((47 * i as u64 + 19) % 65537),
+                    )
+                })
+                .collect();
+            let ba3 = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&a3);
+            let bb3 = BatchExtField::<Fp<65537>, 3>::from_cubic::<CfgCubicBeta3>(&b3);
+            let expected_mul3: Vec<Fq3Big> =
+                a3.iter().zip(b3.iter()).map(|(x, y)| *x * *y).collect();
+            let expected_square3: Vec<Fq3Big> = a3.iter().map(|x| *x * *x).collect();
+            let got_mul3 =
+                crate::compute::field::batch_mul_cubic_parallel::<Fp<65537>, CfgCubicBeta3>(
+                    &ba3, &bb3,
+                )
+                .to_cubic::<CfgCubicBeta3>();
+            let got_square3 =
+                crate::compute::field::batch_square_cubic_parallel::<Fp<65537>, CfgCubicBeta3>(
+                    &ba3,
+                )
+                .to_cubic::<CfgCubicBeta3>();
+            assert_eq!(
+                got_mul3, expected_mul3,
+                "installed chunk_len={installed_chunk_len} cubic mul len {len}"
+            );
+            assert_eq!(
+                got_square3, expected_square3,
+                "installed chunk_len={installed_chunk_len} cubic square len {len}"
+            );
+        }
+    }
 }
