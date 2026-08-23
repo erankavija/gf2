@@ -117,21 +117,29 @@
 //!
 //! # Measured against uncalibrated
 //!
-//! The three ways a field keeps its default are not the same claim, and the
-//! emitted document distinguishes two of them from the third.
+//! Design §5 condition 5 governs every field this sweep does not cover: "Until
+//! the sweep covers it, a committed profile omits the field and inherits the
+//! default; a profile that carries an uncalibrated value is a
+//! `@/inv/benchmark-backed-performance` defect."
+//!
+//! The emitted document therefore states a field only when this run measured
+//! it, and the omission set is the complement: every
+//! `selectors.<family>.<field>` key [`TuningProfile::to_json`] writes, read off
+//! that output at run time, minus the fields whose sweep reached a comparison.
+//! A schema field this harness has never heard of is omitted by construction,
+//! so a follow-on selector family landing its fields cannot leak an unmeasured
+//! value into an emitted profile, and no field inventory is maintained here to
+//! go stale against the schema.
 //!
 //! A tie and a non-monotone crossover are **calibration outcomes**: both arms
 //! were measured across the grid, and the rule concluded that the default
 //! stands. Such a field states its value in the document like any other.
 //!
-//! A field with **no comparable grid point** was never calibrated at all. Design
-//! §5 condition 5 governs it: "Until the sweep covers it, a committed profile
-//! omits the field and inherits the default; a profile that carries an
-//! uncalibrated value is a `@/inv/benchmark-backed-performance` defect." The
-//! emitted document therefore has no key for such a field. An absent field is a
-//! supported state of the schema — `from_json` resolves it to the conservative
-//! default — so the document still loads and still selects the same threshold,
-//! and it stops claiming a value nothing measured.
+//! A field with **no comparable grid point**, and a field no sweep covers at
+//! all, were never calibrated. An absent field is a supported state of the
+//! schema — `from_json` resolves it to the conservative default — so the
+//! document still loads and still selects the same threshold, and it stops
+//! claiming a value nothing measured.
 //!
 //! # Arm reachability
 //!
@@ -226,6 +234,14 @@ impl CalibratedField {
         match self {
             Self::SimdMinWords => "bit_backend",
             _ => "polynomial",
+        }
+    }
+
+    /// The schema key this field's measured value is stated under.
+    fn schema_field(self) -> SchemaField {
+        SchemaField {
+            family: self.family().to_owned(),
+            name: self.to_string(),
         }
     }
 
@@ -349,6 +365,23 @@ impl fmt::Display for CalibratedField {
             Self::DivRemFastMinLen => "div_rem_fast_min_len",
             Self::SubproductMinLen => "subproduct_min_len",
         })
+    }
+}
+
+/// One `selectors.<family>.<field>` key of the emitted schema.
+///
+/// The schema carries many more of these than this sweep measures, and the two
+/// sets are compared by value rather than by a maintained list, so a field the
+/// sweep does not name is omitted from the emitted document whatever it is.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct SchemaField {
+    family: String,
+    name: String,
+}
+
+impl fmt::Display for SchemaField {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{}.{}", self.family, self.name)
     }
 }
 
@@ -1523,6 +1556,41 @@ fn print_sweep(sweep: &FieldSweep) {
     }
 }
 
+/// Prints the omission set with each field's inherited value and why it is
+/// omitted, which is the inventory the receipt records.
+///
+/// The inherited values are read out of the conservative table's own
+/// serialization, so the report states what the loader will resolve an absent
+/// key to rather than a figure written into this tool.
+fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), String> {
+    let conservative: serde_json::Value =
+        serde_json::from_str(&TuningProfile::CONSERVATIVE.to_json())
+            .map_err(|error| format!("the conservative profile is not JSON: {error}"))?;
+    let uncomparable: Vec<SchemaField> = uncalibrated_fields(sweeps)
+        .into_iter()
+        .map(CalibratedField::schema_field)
+        .collect();
+    println!(
+        "\nomitted ({}): the emitted document states no value for these schema fields, and the \
+         loader resolves each absent key to the inherited conservative default",
+        omitted.len()
+    );
+    println!("family\tfield\tinherited\treason");
+    for field in omitted {
+        let inherited = conservative
+            .pointer(&format!("/selectors/{}/{}", field.family, field.name))
+            .and_then(serde_json::Value::as_u64)
+            .ok_or_else(|| format!("the conservative table states no `{field}`"))?;
+        let reason = if uncomparable.contains(field) {
+            "no grid point offers both arms"
+        } else {
+            "no sweep covers this field"
+        };
+        println!("{}\t{}\t{inherited}\t{reason}", field.family, field.name);
+    }
+    Ok(())
+}
+
 /// The fields whose value the sweep could not measure at any grid point.
 ///
 /// A field that keeps its default after a comparison — no grid point beat the
@@ -1547,7 +1615,65 @@ fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
         .collect()
 }
 
-/// Serializes `profile` and drops the fields the sweep could not measure.
+/// The schema fields whose value this run measured.
+///
+/// A field the sweep covered and concluded on — including one that kept its
+/// default on a tie or a non-monotone crossover — is measured. A field with no
+/// comparable grid point is not, and neither is any schema field no sweep
+/// names.
+fn measured_fields(sweeps: &[FieldSweep]) -> Vec<SchemaField> {
+    let uncalibrated = uncalibrated_fields(sweeps);
+    sweeps
+        .iter()
+        .map(|sweep| sweep.field)
+        .filter(|field| !uncalibrated.contains(field))
+        .map(CalibratedField::schema_field)
+        .collect()
+}
+
+/// Every `selectors.<family>.<field>` key `document` states.
+///
+/// The inventory is read off the serialized profile at run time rather than
+/// listed in this tool. A list here would be a hand-maintained copy of the
+/// schema — the staleness defect `@/inv/runtime-observed-provenance` names —
+/// and the moment it fell behind, an unswept field would be emitted with a
+/// value nothing measured.
+fn schema_fields(document: &str) -> Result<Vec<SchemaField>, String> {
+    let parsed: serde_json::Value = serde_json::from_str(document)
+        .map_err(|error| format!("the profile document is not JSON: {error}"))?;
+    let families = parsed
+        .pointer("/selectors")
+        .and_then(serde_json::Value::as_object)
+        .ok_or("the profile document has no `selectors` object")?;
+    let mut fields = Vec::new();
+    for (family, members) in families {
+        let members = members
+            .as_object()
+            .ok_or_else(|| format!("the `{family}` selector family is not an object"))?;
+        fields.extend(members.keys().map(|name| SchemaField {
+            family: family.clone(),
+            name: name.clone(),
+        }));
+    }
+    Ok(fields)
+}
+
+/// Every schema field the emitted document omits.
+///
+/// The set is the complement of what this run measured, so it covers both a
+/// swept field with no comparable grid point and every schema field outside the
+/// sweep, whatever the schema has grown since. Design §5 condition 5 admits an
+/// omitted field and forbids an unmeasured stated one, so the complement is the
+/// rule rather than a conservative approximation of it.
+fn omitted_fields(document: &str, sweeps: &[FieldSweep]) -> Result<Vec<SchemaField>, String> {
+    let measured = measured_fields(sweeps);
+    Ok(schema_fields(document)?
+        .into_iter()
+        .filter(|field| !measured.contains(field))
+        .collect())
+}
+
+/// Serializes `profile` and drops the fields this run did not measure.
 ///
 /// `TuningProfile::to_json` states every schema field, so omission is expressed
 /// here rather than there. An absent field is a supported state of the schema:
@@ -1562,29 +1688,26 @@ fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
 /// deleted key. The edit is then checked against the same removal performed
 /// structurally on the parsed value, so a text edit that disturbed anything
 /// else is caught here rather than in a committed artifact.
-fn calibrated_document(
-    profile: &TuningProfile,
-    omitted: &[CalibratedField],
-) -> Result<String, String> {
+fn calibrated_document(profile: &TuningProfile, omitted: &[SchemaField]) -> Result<String, String> {
     let serialized = profile.to_json();
     let mut document = serialized.clone();
     for field in omitted {
-        document = remove_selector_key(&document, *field)?;
+        document = remove_selector_key(&document, field)?;
     }
 
     let mut expected: serde_json::Value = serde_json::from_str(&serialized)
         .map_err(|error| format!("the serialized profile is not JSON: {error}"))?;
     for field in omitted {
         let family = expected
-            .pointer_mut(&format!("/selectors/{}", field.family()))
+            .pointer_mut(&format!("/selectors/{}", field.family))
             .and_then(serde_json::Value::as_object_mut)
             .ok_or_else(|| {
                 format!(
                     "the serialized profile has no `{}` selector family",
-                    field.family()
+                    field.family
                 )
             })?;
-        if family.remove(&field.to_string()).is_none() {
+        if family.remove(&field.name).is_none() {
             return Err(format!(
                 "the serialized profile has no `{field}` field to omit"
             ));
@@ -1604,22 +1727,29 @@ fn calibrated_document(
 /// Deletes `field`'s `"name":<digits>` entry, and one adjacent comma, from the
 /// selector family object it belongs to.
 ///
-/// The search is scoped to that family's braces so a provenance string can
-/// never be mistaken for a selector key. Every selector value is an unsigned
-/// integer and `to_json` writes compact JSON, so the entry ends at the first
-/// non-digit after the colon.
-fn remove_selector_key(text: &str, field: CalibratedField) -> Result<String, String> {
-    let opening = format!("\"{}\":{{", field.family());
-    let body_start = text
+/// The search starts at the `selectors` object and is then scoped to that
+/// family's braces, so neither a provenance string nor a same-named field of
+/// another family can be mistaken for the key. Every selector value is an
+/// unsigned integer and `to_json` writes compact JSON, so the entry ends at the
+/// first non-digit after the colon.
+fn remove_selector_key(text: &str, field: &SchemaField) -> Result<String, String> {
+    const SELECTORS: &str = "\"selectors\":{";
+    let selectors_at = text
+        .find(SELECTORS)
+        .ok_or("no `selectors` object in the document")?
+        + SELECTORS.len();
+    let opening = format!("\"{}\":{{", field.family);
+    let body_start = text[selectors_at..]
         .find(&opening)
-        .ok_or_else(|| format!("no `{}` selector family in the document", field.family()))?
+        .ok_or_else(|| format!("no `{}` selector family in the document", field.family))?
+        + selectors_at
         + opening.len();
     let body_len = text[body_start..]
         .find('}')
-        .ok_or_else(|| format!("the `{}` selector family is unterminated", field.family()))?;
+        .ok_or_else(|| format!("the `{}` selector family is unterminated", field.family))?;
     let body = &text[body_start..body_start + body_len];
 
-    let key = format!("\"{field}\":");
+    let key = format!("\"{}\":", field.name);
     let key_at = body
         .find(&key)
         .ok_or_else(|| format!("no `{field}` field in the document to omit"))?;
@@ -1826,15 +1956,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         receipt: receipt_path,
     };
     let profile = build_profile(id, provenance, &selected)?;
-    let omitted = uncalibrated_fields(&sweeps);
-    for field in &omitted {
-        println!(
-            "\nomitted: {field} carries no value in the emitted document, because no grid point \
-             offered both arms. The loader resolves the absent field to the conservative default \
-             {}.",
-            field.conservative_default()
-        );
-    }
+    let omitted = omitted_fields(&profile.to_json(), &sweeps)?;
+    print_omitted(&omitted, &sweeps)?;
     let document = calibrated_document(&profile, &omitted)?;
     let json = emit_profile(out, &document, &profile)?;
 
@@ -1973,8 +2096,11 @@ mod tests {
     #[test]
     fn the_emitted_document_omits_the_field_the_sweep_could_not_compare() {
         let profile = profile_from(&DISTINCT);
-        let document =
-            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[CalibratedField::KaratsubaMinDegree.schema_field()],
+        )
+        .unwrap();
         assert!(
             !document.contains("karatsuba_min_degree"),
             "the uncalibrated field is still stated: {document}"
@@ -1993,8 +2119,11 @@ mod tests {
     #[test]
     fn omitting_one_field_leaves_the_other_four_stated() {
         let profile = profile_from(&DISTINCT);
-        let document =
-            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[CalibratedField::KaratsubaMinDegree.schema_field()],
+        )
+        .unwrap();
         let loaded = TuningProfile::from_json(&document).unwrap();
         assert_eq!(
             loaded.bit_backend().simd_min_words(),
@@ -2026,8 +2155,11 @@ mod tests {
     #[test]
     fn omission_removes_exactly_the_field_and_leaves_the_key_order_alone() {
         let profile = profile_from(&DISTINCT);
-        let document =
-            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[CalibratedField::KaratsubaMinDegree.schema_field()],
+        )
+        .unwrap();
         let entry = format!(
             "\"karatsuba_min_degree\":{},",
             DISTINCT.karatsuba_min_degree
@@ -2038,7 +2170,8 @@ mod tests {
     #[test]
     fn omitting_the_last_field_of_a_family_leaves_an_empty_object() {
         let profile = profile_from(&DISTINCT);
-        let document = calibrated_document(&profile, &[CalibratedField::SimdMinWords]).unwrap();
+        let document =
+            calibrated_document(&profile, &[CalibratedField::SimdMinWords.schema_field()]).unwrap();
         assert!(document.contains(r#""bit_backend":{}"#), "{document}");
         let loaded = TuningProfile::from_json(&document).unwrap();
         assert_eq!(
@@ -2063,8 +2196,11 @@ mod tests {
             &DISTINCT,
         )
         .unwrap();
-        let document =
-            calibrated_document(&profile, &[CalibratedField::KaratsubaMinDegree]).unwrap();
+        let document = calibrated_document(
+            &profile,
+            &[CalibratedField::KaratsubaMinDegree.schema_field()],
+        )
+        .unwrap();
         let loaded = TuningProfile::from_json(&document).unwrap();
         let Provenance::Calibrated { receipt, .. } = loaded.provenance() else {
             panic!("the document stays calibrated");
@@ -2102,6 +2238,150 @@ mod tests {
             vec![CalibratedField::KaratsubaMinDegree],
             "a tie and a non-monotone crossover are calibration outcomes, not absent measurements"
         );
+    }
+
+    /// A sweep for every field, each concluding on a comparison, so nothing is
+    /// omitted for want of a grid point and the omission set is exactly the
+    /// schema fields outside the sweep.
+    #[allow(dead_code)]
+    fn measured_sweeps() -> Vec<FieldSweep> {
+        CalibratedField::ALL
+            .into_iter()
+            .map(|field| {
+                let points = vec![point(field.conservative_default(), 100.0, 50.0, 0.01)];
+                FieldSweep {
+                    field,
+                    selection: select(field, &points),
+                    points,
+                }
+            })
+            .collect()
+    }
+
+    #[test]
+    fn every_swept_field_names_a_key_the_schema_states() {
+        let schema = schema_fields(&profile_from(&DISTINCT).to_json()).unwrap();
+        for field in CalibratedField::ALL {
+            let key = field.schema_field();
+            assert!(
+                schema.contains(&key),
+                "the sweep states {key}, which the schema does not carry; a renamed schema field \
+                 would leave the measured value silently omitted"
+            );
+        }
+    }
+
+    #[test]
+    fn the_schema_carries_fields_no_sweep_covers() {
+        let schema = schema_fields(&profile_from(&DISTINCT).to_json()).unwrap();
+        assert!(
+            schema.len() > CalibratedField::ALL.len(),
+            "the schema states {} fields against {} swept ones; the omission-set tests below are \
+             vacuous once the two coincide",
+            schema.len(),
+            CalibratedField::ALL.len()
+        );
+    }
+
+    #[test]
+    fn an_emitted_document_states_only_the_fields_the_run_measured() {
+        let profile = profile_from(&DISTINCT);
+        let sweeps = measured_sweeps();
+        let omitted = omitted_fields(&profile.to_json(), &sweeps).unwrap();
+        let document = calibrated_document(&profile, &omitted).unwrap();
+        let mut stated = schema_fields(&document).unwrap();
+        let mut swept: Vec<SchemaField> = CalibratedField::ALL
+            .into_iter()
+            .map(CalibratedField::schema_field)
+            .collect();
+        stated.sort();
+        swept.sort();
+        assert_eq!(
+            stated, swept,
+            "the emitted document states a field this run did not measure"
+        );
+    }
+
+    #[test]
+    fn an_unswept_schema_field_is_omitted_and_resolves_to_its_inherited_value() {
+        let profile = profile_from(&DISTINCT);
+        let sweeps = measured_sweeps();
+        let omitted = omitted_fields(&profile.to_json(), &sweeps).unwrap();
+        let document = calibrated_document(&profile, &omitted).unwrap();
+        let stated = schema_fields(&document).unwrap();
+        let loaded: serde_json::Value = serde_json::from_str(
+            &TuningProfile::from_json(&document)
+                .expect("an omitted field is a supported state of the schema")
+                .to_json(),
+        )
+        .unwrap();
+        let inherited: serde_json::Value =
+            serde_json::from_str(&TuningProfile::CONSERVATIVE.to_json()).unwrap();
+        assert!(!omitted.is_empty());
+        for field in &omitted {
+            let pointer = format!("/selectors/{}/{}", field.family, field.name);
+            assert!(!stated.contains(field), "{field} is still stated");
+            assert_eq!(
+                loaded.pointer(&pointer),
+                inherited.pointer(&pointer),
+                "the loader does not resolve the absent {field} to its inherited value"
+            );
+        }
+    }
+
+    #[test]
+    fn the_omission_set_is_the_complement_of_what_the_run_measured() {
+        let document = profile_from(&DISTINCT).to_json();
+        let sweeps = measured_sweeps();
+        let measured = measured_fields(&sweeps);
+        let omitted = omitted_fields(&document, &sweeps).unwrap();
+        for field in &measured {
+            assert!(
+                !omitted.contains(field),
+                "{field} is both measured and omitted"
+            );
+        }
+        let mut union: Vec<SchemaField> = measured.into_iter().chain(omitted).collect();
+        union.sort();
+        let mut schema = schema_fields(&document).unwrap();
+        schema.sort();
+        assert_eq!(union, schema, "the two sets do not partition the schema");
+    }
+
+    #[test]
+    fn a_swept_field_without_a_comparison_joins_the_unswept_fields_in_the_omission_set() {
+        let profile = profile_from(&DISTINCT);
+        let mut sweeps = measured_sweeps();
+        sweeps.retain(|sweep| sweep.field != CalibratedField::SubproductMinLen);
+        sweeps.push(concluded(
+            CalibratedField::SubproductMinLen,
+            Fallback::NoComparableGridPoint,
+        ));
+        let omitted = omitted_fields(&profile.to_json(), &sweeps).unwrap();
+        assert!(omitted.contains(&CalibratedField::SubproductMinLen.schema_field()));
+        let document = calibrated_document(&profile, &omitted).unwrap();
+        assert_eq!(
+            TuningProfile::from_json(&document)
+                .unwrap()
+                .polynomial()
+                .subproduct_min_len(),
+            TuningProfile::CONSERVATIVE
+                .polynomial()
+                .subproduct_min_len()
+        );
+    }
+
+    #[test]
+    fn a_family_scoped_removal_leaves_a_similarly_named_field_of_another_family() {
+        let profile = profile_from(&DISTINCT);
+        let document =
+            calibrated_document(&profile, &[CalibratedField::SimdMinWords.schema_field()]).unwrap();
+        let stated = schema_fields(&document).unwrap();
+        assert!(!stated.contains(&CalibratedField::SimdMinWords.schema_field()));
+        assert!(stated.contains(&SchemaField {
+            family: "bit_matrix".to_owned(),
+            name: "matvec_simd_min_words".to_owned(),
+        }));
     }
 
     #[test]
