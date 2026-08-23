@@ -20,7 +20,8 @@
 //! confirms a scalar-arm call (below `parallel_min_len`) records nothing.
 
 use gf2_core::compute::field::{
-    last_effective_soa_chunk, reset_last_effective_soa_chunk, soa_parallel_route, SoaParallelRoute,
+    last_effective_soa_chunk, reset_last_effective_soa_chunk, soa_parallel_pool_is_multi_threaded,
+    soa_parallel_route, SoaParallelRoute,
 };
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig, QuadraticExt};
@@ -115,6 +116,16 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
         "a scalar-arm call (len {scalar_len} < parallel_min_len {INSTALLED_MIN_LEN}) must not record a chunk"
     );
 
+    // The dispatcher's gate is `route == Parallel && pool has > 1 thread`;
+    // the expected observation follows that same gate, so the witness holds
+    // on every supported configuration (a single-threaded pool takes the
+    // scalar arm and records nothing).
+    let expected_parallel_observation = if soa_parallel_pool_is_multi_threaded() {
+        Some(INSTALLED_CHUNK_LEN)
+    } else {
+        None
+    };
+
     // Chunk-length determinism witness: lengths at/above the installed
     // parallel_min_len (so the public dispatcher's route is Parallel),
     // including lengths that do not evenly divide the installed
@@ -157,7 +168,7 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
             .to_quadratic::<CfgBeta3>();
         assert_eq!(
             last_effective_soa_chunk(),
-            Some(INSTALLED_CHUNK_LEN),
+            expected_parallel_observation,
             "quadratic mul len {len} must run its parallel arm and consume the installed chunk length"
         );
         assert_eq!(
@@ -171,7 +182,7 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
             .to_quadratic::<CfgBeta3>();
         assert_eq!(
             last_effective_soa_chunk(),
-            Some(INSTALLED_CHUNK_LEN),
+            expected_parallel_observation,
             "quadratic square len {len} must run its parallel arm and consume the installed chunk length"
         );
         assert_eq!(
@@ -208,7 +219,7 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
             .to_cubic::<CfgCubicBeta3>();
         assert_eq!(
             last_effective_soa_chunk(),
-            Some(INSTALLED_CHUNK_LEN),
+            expected_parallel_observation,
             "cubic mul len {len} must run its parallel arm and consume the installed chunk length"
         );
         assert_eq!(
@@ -222,7 +233,7 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
             .to_cubic::<CfgCubicBeta3>();
         assert_eq!(
             last_effective_soa_chunk(),
-            Some(INSTALLED_CHUNK_LEN),
+            expected_parallel_observation,
             "cubic square len {len} must run its parallel arm and consume the installed chunk length"
         );
         assert_eq!(
