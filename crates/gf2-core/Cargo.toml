@@ -399,6 +399,14 @@ required-features = ["tuning-profile"]
 name = "tuning_profile_ple_install_above"
 required-features = ["tuning-profile"]
 
+[[test]]
+name = "tuning_profile_triangular_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_triangular_install_above"
+required-features = ["tuning-profile"]
+
 # ── Issue `5ecc9bf8` (epic `6dc81018`) — explicit host-calibration action ──
 #
 # `harness = false` is the shape every bench target above uses. The
