@@ -7,7 +7,10 @@
 //! `tuning::install` resolves once per process.
 
 use gf2_core::field::matrix::gemm;
-use gf2_core::field::ple::{ple_panel_route, PlePanelRoute};
+use gf2_core::field::ple::{
+    max_effective_panel_dispatch_cols, ple_panel_route, reset_max_effective_panel_dispatch_cols,
+    PlePanelRoute,
+};
 use gf2_core::field::test_random_matrix::random_fp;
 use gf2_core::field::{FiniteField, PlePanelLane};
 use gf2_core::gfp::Fp;
@@ -101,6 +104,34 @@ fn installed_byte_lane_width_bounds_the_byte_lane_panel_window() {
         PlePanelRoute::RecursiveSplit,
         "above the installed width the halving split takes the window on every host"
     );
+
+    // ── The installed lane ceiling bounds EVERY panel dispatch ──────────────
+    //
+    // 256 columns exceeds the conservative sub-panel split width (128), so the
+    // recursive splitter runs; the recorder observes the widest window the
+    // panel kernel actually received. Output equality cannot show this — a
+    // splitter slicing at the split width alone would still produce correct
+    // results while bypassing the installed 64-column lane ceiling.
+    reset_max_effective_panel_dispatch_cols();
+    let a = random_fp::<251>(96, 256, 0xB702);
+    let (p, l, e, rank) = a.ple();
+    assert_eq!(l.cols(), rank);
+    assert_eq!(e.rows(), rank);
+    assert_eq!(p.apply(&gemm(&l, &e)), a, "P · L · E != A (wide)");
+    match max_effective_panel_dispatch_cols() {
+        Some(widest) => {
+            assert!(lane.is_some(), "panel dispatch observed without a lane");
+            assert!(
+                widest <= byte,
+                "panel kernel received a {widest}-column window above the installed \
+                 byte-lane ceiling {byte}"
+            );
+        }
+        None => assert!(
+            lane.is_none(),
+            "a byte-lane carrier must reach the panel kernel on this shape"
+        ),
+    }
 
     let a = random_fp::<251>(96, 96, 0xB701);
     let (p, l, e, rank) = a.ple();
