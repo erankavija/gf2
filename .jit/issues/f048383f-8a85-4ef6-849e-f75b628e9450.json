@@ -40,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Extend the tuning schema with the seam fields",
-  "updated_at": "2026-08-22T22:17:34.195547769Z"
+  "updated_at": "2026-08-23T07:47:12.716208451Z"
 }
