@@ -49,26 +49,23 @@ pub fn last_effective_soa_chunk() -> Option<usize> {
     }
 }
 
-/// Reports the thread half of [`should_parallelize_soa_batch`]'s gate —
-/// whether the rayon pool this process dispatches into has more than one
-/// thread. Route observation tests branch on it so their expectations
-/// follow the same gate the dispatcher uses on every supported
-/// configuration (a single-threaded pool takes the scalar arm and records
-/// no chunk).
+/// Runs `f` inside a dedicated rayon pool with the given thread count, so
+/// a route-observation test can GUARANTEE the parallel arm's thread gate
+/// holds instead of tolerating whatever pool the process happens to have —
+/// a witness that merely tolerates a single-threaded pool can pass without
+/// ever exercising the installed chunk length. `rayon::current_num_threads`
+/// inside `f` reports this pool's size, so
+/// [`should_parallelize_soa_batch`]'s gate observes it.
 ///
-/// Exists only under `cfg(test)` or the `test-support` feature.
-#[cfg(any(test, feature = "test-support"))]
-#[must_use]
-pub fn soa_parallel_pool_is_multi_threaded() -> bool {
-    #[cfg(feature = "parallel")]
-    {
-        rayon::current_num_threads() > 1
-    }
-
-    #[cfg(not(feature = "parallel"))]
-    {
-        false
-    }
+/// Exists only under `cfg(test)` or the `test-support` feature, with the
+/// `parallel` feature.
+#[cfg(all(feature = "parallel", any(test, feature = "test-support")))]
+pub fn run_in_dedicated_parallel_pool<R: Send>(threads: usize, f: impl FnOnce() -> R + Send) -> R {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()
+        .expect("dedicated test pool builds")
+        .install(f)
 }
 
 /// Clears the value [`last_effective_soa_chunk`] reports, so a subsequent
