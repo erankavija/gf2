@@ -65,7 +65,9 @@ pub mod cpu;
 #[cfg(feature = "parallel")]
 pub mod field;
 
-/// Number of extension elements processed by one rayon task.
+/// Conservative default for `soa_batch.parallel_chunk_len()` in the active
+/// [`crate::tuning::TuningProfile`]: number of extension elements processed
+/// by one rayon task.
 ///
 /// The chunk is large enough to amortise rayon scheduling overhead while still
 /// keeping the six coefficient input lanes plus three output lanes for cubic
@@ -74,13 +76,19 @@ pub mod field;
 ///
 /// Declared here rather than in `field`, which the `parallel` feature gates,
 /// so that the conservative tuning table can name it in every configuration.
+/// This constant remains the compiled-in conservative default consumed by
+/// [`crate::tuning::TuningProfile::CONSERVATIVE`].
 pub const SOA_PARALLEL_CHUNK_LEN: usize = 16 * 1024;
 
-/// Minimum batch size that enables rayon fan-out.
+/// Conservative default for `soa_batch.parallel_min_len()` in the active
+/// [`crate::tuning::TuningProfile`]: minimum batch size that enables rayon
+/// fan-out.
 ///
 /// Smaller batches keep the exact single-thread path to avoid losing the Tier-C
 /// micro-benchmark shape to scheduling overhead. Declared here for the same
-/// reason as [`SOA_PARALLEL_CHUNK_LEN`].
+/// reason as [`SOA_PARALLEL_CHUNK_LEN`]; this constant remains the compiled-in
+/// conservative default consumed by
+/// [`crate::tuning::TuningProfile::CONSERVATIVE`].
 pub const SOA_PARALLEL_MIN_LEN: usize = 2 * SOA_PARALLEL_CHUNK_LEN;
 
 #[cfg(test)]
