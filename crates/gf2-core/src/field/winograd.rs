@@ -96,6 +96,20 @@
 use crate::field::matrix::{gemm, FieldMatrix};
 use crate::field::{FieldVec, FiniteField};
 
+/// Default for [`FiniteField::WINOGRAD_THRESHOLD`]: square-matrix size at
+/// or below which [`gemm_winograd`] falls back to the classical blocked
+/// [`gemm`].
+///
+/// Selected by a sweep over `{32, 64, 128, 256, 512, 1024}` against a
+/// classical baseline at `n = 2048` on Mersenne-31
+/// (`crates/gf2-core/benches/strassen_threshold_results.md:29-53`): 32, 64
+/// and 128 tie within single-run noise at 1.75–1.81×, and 128 is selected
+/// for the shorter recursion tree and L2-resident blocks. Both Mersenne-31
+/// and `Gf2mWide<1, Gf2m8>` cross over at ≈ 128
+/// (`crates/gf2-core/benches/strassen_threshold_results.md:56-58`). Landed
+/// by `66c4759b`.
+pub(crate) const WINOGRAD_MIN_DIM_DEFAULT: usize = 128;
+
 /// Strassen–Winograd matrix multiplication over an arbitrary
 /// [`FiniteField`](crate::field::FiniteField).
 ///
