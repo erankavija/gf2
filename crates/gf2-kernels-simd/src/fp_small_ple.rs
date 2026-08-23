@@ -31,8 +31,11 @@
 //! Schur-update speedup automatically via `gemm_axpy_into_view`'s
 //! lifted small/medium-prime fast paths (40195c09 lift + 74ba1cdc R1).
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub use crate::x86::fp_small_ple::PANEL_SCRATCH_COLS;
+/// Structural scratch bound for the byte-lane PLE kernel, in columns.
+///
+/// This bound is distinct from the tuned L1d blocking factor
+/// [`crate::x86::fp_small_panel::KC`].
+pub const PANEL_SCRATCH_COLS: usize = 256;
 
 /// Whole panelized PLE base-case signature.
 ///
