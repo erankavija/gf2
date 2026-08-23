@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the SoA parallelization threshold and chunk length to runtime resolved reads.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.2 and the soa_batch row of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: parallel_min_len and parallel_chunk_len are runtime resolved reads at should_parallelize_soa_batch and the four parallel entry points, satisfying design §2.3, arithmetic unchanged.\n- [hard] REQ-02: soa_parallel_route reporter called by the dispatcher, boundary route files, and a determinism witness that a changed chunk length leaves results identical, all pass.\n- [hard] REQ-03: Rustdoc names the profile fields; existing tests pass unchanged with no profile installed.",
   "documents": [],
+  "done_at": "2026-08-23T13:15:12.138216950Z",
   "first_ready_at": "2026-08-22T21:26:17.283049594Z",
   "gates_required": [
     "cargo-ci",
@@ -26,8 +27,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-23T13:12:59.327935972Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T13:14:53.394825595Z",
       "updated_by": "auto:executor"
     }
   },
@@ -39,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cut the SoA batch selectors over to the tuning profile",
-  "updated_at": "2026-08-23T13:12:59.327935972Z"
+  "updated_at": "2026-08-23T13:15:12.138216950Z"
 }
