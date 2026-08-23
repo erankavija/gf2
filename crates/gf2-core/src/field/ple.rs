@@ -55,12 +55,14 @@
 //! # Algorithm
 //!
 //! Block-recursive (Dumas–Pernet §2.2 alg. 2.5), splitting on columns, with
-//! a direct-elimination base case when the column window reaches
-//! [`FiniteField::PLE_BASE_COLS`] (default 1 — the single-column leaf):
+//! a direct-elimination base case selected by the active profile's
+//! `ple.scalar_base_max_cols()`, whose conservative default
+//! [`PLE_SCALAR_BASE_MAX_COLS_DEFAULT`] is the single-column leaf, and
+//! reported by [`ple_base_route`]:
 //!
 //! ```text
 //! ple(A):  // A is m × n
-//!     if n <= PLE_BASE_COLS:
+//!     if ple_base_route(n) == ScalarBase:
 //!         direct column-by-column Gaussian elimination (ple_base_direct)
 //!     else:
 //!         h = n / 2
@@ -87,13 +89,24 @@
 //! silently corrupts the trsm + gemm update — see jit:bd9c6e13 for the
 //! discovery case (15x17 GF(7), seed=1, density=0.05).
 //!
-//! The default `PLE_BASE_COLS = 1` uses the block-recursive trsm+gemm path
-//! for all window widths > 1. This is optimal for large-prime fields (e.g.
-//! Mersenne-31) where the blocked GEMM with delayed u128 reduction
-//! significantly outperforms any scalar schoolbook loop. Fields with cheap
-//! per-element arithmetic (e.g. GF(2^m)) or small primes (p ≤ 251 with AVX2)
-//! may benefit from a larger `PLE_BASE_COLS` override if profiling confirms
-//! the schoolbook base case beats the recursive dispatch overhead.
+//! At the conservative width, the block-recursive trsm+gemm path drives every
+//! window wider than one column. This suits large-prime fields (e.g.
+//! Mersenne-31) whose blocked GEMM with delayed `u128` reduction outperforms a
+//! scalar schoolbook loop. A host whose fields have cheap per-element
+//! arithmetic (GF(2^m)) or a SIMD panel kernel (p ≤ 251 with AVX2) can install
+//! a profile that widens the window and moves those windows to the schoolbook
+//! base case.
+//!
+//! A carrier that registers a SIMD panel kernel —
+//! [`FiniteField::simd_ple_panel_lane`] returns `Some` — takes one of two
+//! further arms in place of the halving split, reported by
+//! [`ple_panel_route`]: a window wider than the profile's
+//! `ple.panel_base_max_cols()` is walked in narrow sub-panels
+//! ([`PlePanelRoute::SubPanelRecursion`]), and a window that also fits the
+//! lane's own width — `ple.panel_byte_lane_max_cols()` for
+//! [`PlePanelLane::Byte`], `ple.panel_u16_lane_max_cols()` for
+//! [`PlePanelLane::U16`] — goes to the kernel in one shot
+//! ([`PlePanelRoute::PanelBase`]).
 //!
 //! Compact storage: after the recursion, the working buffer interleaves
 //! `E`'s entries and `L`'s multipliers within a single dense `m × n`
@@ -134,14 +147,13 @@
 use crate::field::matrix::{gemm_axpy_into_view, FieldMatrix, MatView, MatViewMut};
 use crate::field::triangular::{trsm_lower, trsm_upper};
 use crate::field::vec::FieldVec;
-use crate::field::FiniteField;
-#[cfg(test)]
-use crate::field::PlePanelLane;
+use crate::field::{FiniteField, PlePanelLane};
 use crate::tuning;
 
-/// Default for [`FiniteField::PLE_BASE_COLS`]: column-window width at or
-/// below which [`FieldMatrix::ple`]'s block-recursive driver switches to
-/// the direct column-by-column base case.
+/// Conservative default for `ple.scalar_base_max_cols()` in the active
+/// [`crate::tuning::TuningProfile`]: the widest column window
+/// [`FieldMatrix::ple`]'s block-recursive driver hands to the direct
+/// column-by-column base case.
 ///
 /// Selected by the same Criterion session as
 /// `triangular::TRI_BASE_MAX_DIM_DEFAULT`: values 1, 4, 8 and 16 were
@@ -149,6 +161,9 @@ use crate::tuning;
 /// because the Mersenne-31 blocked GEMM amortises its delayed `u128`
 /// reduction and the schoolbook leaf does not —
 /// `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md:146`.
+/// This constant remains the compiled-in conservative default consumed by
+/// [`crate::tuning::TuningProfile::CONSERVATIVE`]; the live value comes from
+/// the active profile and is reported by [`ple_base_route`].
 pub(crate) const PLE_SCALAR_BASE_MAX_COLS_DEFAULT: usize = 1;
 
 // ─── Permutation ─────────────────────────────────────────────────────────────
@@ -423,7 +438,8 @@ fn zero_matrix_like<F: FiniteField>(
 
 /// Direct column-by-column Gaussian elimination base case for small windows.
 ///
-/// Called by [`ple_in_place_window`] when `win <= F::PLE_BASE_COLS`. Processes
+/// Called by [`ple_in_place_window`] when [`ple_base_route`] reports
+/// [`PleBaseRoute::ScalarBase`] for the column window. Processes
 /// the column window `[col_lo, col_hi)` of the full matrix view `a` using a
 /// simple left-to-right partial-pivoting elimination. Maintains compact storage
 /// convention: pivot values stay in row `rank`'s diagonal entry; the entries
@@ -507,9 +523,8 @@ fn ple_base_direct<F: FiniteField>(
 /// Panelized SIMD base-case dispatch helper (issue `6823c8a0`,
 /// design `2e8c5a29`).
 ///
-/// Called by [`ple_in_place_window`] when the column window is at or
-/// below the field's `PLE_PANEL_COLS` threshold and the field's
-/// `simd_ple_panel_lane` returns `Some`. Extracts the parent
+/// Called by [`ple_in_place_window`] when [`ple_panel_route`] reports
+/// [`PlePanelRoute::PanelBase`] for the column window. Extracts the parent
 /// matrix's raw storage from the `MatViewMut`, invokes the field's
 /// `try_simd_ple_panel_base` hook, and returns `Some(rank)` on
 /// success or `None` if the kernel declined (caller then falls back
@@ -540,6 +555,63 @@ fn try_panel_base_dispatch<F: FiniteField>(
     F::try_simd_ple_panel_base(sub, parent_cols, rows, col_lo, col_hi, perm, pivot_cols)
 }
 
+/// The PLE column-width selectors resolved once per [`FieldMatrix::ple`] call
+/// from the active [`crate::tuning::TuningProfile`].
+///
+/// [`ple_in_place`] builds one at the panel entry and threads it by parameter
+/// through [`ple_in_place_window`], [`ple_panel_recursive_window`] and
+/// [`ple_in_place_window_no_panel`], so no recursion node reads the profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct PleWidths {
+    /// `ple.scalar_base_max_cols()` — the widest window handed to the direct
+    /// column-by-column base case.
+    scalar_base_max_cols: usize,
+    /// `ple.panel_base_max_cols()` — the widest window the panel base handles
+    /// without a sub-panel walk.
+    panel_base_max_cols: usize,
+    /// The active width for the carrier's own panel-kernel lane class, or
+    /// `None` when the carrier registers no panel kernel.
+    panel_lane_max_cols: Option<usize>,
+}
+
+impl PleWidths {
+    /// Resolves the three widths for carrier `F` from the active profile.
+    fn resolve<F: FiniteField>() -> Self {
+        let ple = tuning::active().ple();
+        let widths = Self {
+            scalar_base_max_cols: ple.scalar_base_max_cols(),
+            panel_base_max_cols: ple.panel_base_max_cols(),
+            panel_lane_max_cols: ple_lane_max_cols(ple, F::simd_ple_panel_lane()),
+        };
+        // R4 of design `2e8c5a29`: a lane width below the scalar base leaves the
+        // panel branch dead rather than wrong, because the scalar base case has
+        // already returned for every window that narrow.
+        debug_assert!(
+            widths
+                .panel_lane_max_cols
+                .is_none_or(|lane_max_cols| lane_max_cols >= widths.scalar_base_max_cols),
+            "ple panel lane width ({:?}) must be >= ple.scalar_base_max_cols ({})",
+            widths.panel_lane_max_cols,
+            widths.scalar_base_max_cols
+        );
+        widths
+    }
+}
+
+/// The active profile's panel width for `lane`: `ple.panel_byte_lane_max_cols()`
+/// for [`PlePanelLane::Byte`] and `ple.panel_u16_lane_max_cols()` for
+/// [`PlePanelLane::U16`]. A carrier with no registered panel kernel has no panel
+/// width, so `None` carries through.
+fn ple_lane_max_cols(
+    ple: &crate::tuning::PleSelectors,
+    lane: Option<PlePanelLane>,
+) -> Option<usize> {
+    lane.map(|lane| match lane {
+        PlePanelLane::Byte => ple.panel_byte_lane_max_cols(),
+        PlePanelLane::U16 => ple.panel_u16_lane_max_cols(),
+    })
+}
+
 /// In-place PLE on the supplied [`MatViewMut`]. Records destination →
 /// source row swaps in `perm` (caller-managed). Writes the L-factor's
 /// strict-lower entries directly into `a`'s storage; the leading pivot
@@ -554,18 +626,19 @@ fn try_panel_base_dispatch<F: FiniteField>(
 /// Returns the rank of the column window (i.e., the number of pivots
 /// found in those columns).
 ///
-/// This is the panel entry: it resolves `ple.panel_base_max_cols()` from the
-/// active [`crate::tuning::TuningProfile`] exactly once and threads the value
-/// through [`ple_in_place_window`]'s recursion by parameter, so no recursion
-/// node reads the profile.
+/// This is the panel entry: it resolves all three PLE column widths —
+/// `ple.scalar_base_max_cols()`, `ple.panel_base_max_cols()` and the carrier
+/// lane's own width — exactly once and threads them by parameter through
+/// [`ple_in_place_window`]'s recursion, so no recursion node reads the
+/// profile.
 fn ple_in_place<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
 ) -> usize {
     let n = a.cols();
-    let panel_base_max_cols = tuning::active().ple().panel_base_max_cols();
-    ple_in_place_window(a.reborrow(), 0, n, perm, pivot_cols, panel_base_max_cols)
+    let widths = PleWidths::resolve::<F>();
+    ple_in_place_window(a.reborrow(), 0, n, perm, pivot_cols, widths)
 }
 
 /// Conservative default for `ple.panel_base_max_cols()` in the active
@@ -584,42 +657,90 @@ fn ple_in_place<F: FiniteField>(
 /// the active profile and is reported by [`ple_panel_route`].
 pub(crate) const PLE_PANEL_RECURSIVE_BASE: usize = 128;
 
+/// The selected arm of the [`FieldMatrix::ple`] base-case dispatcher for one
+/// column window.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PleBaseRoute {
+    /// The column window is eliminated directly, column by column, by
+    /// `ple_base_direct`.
+    ScalarBase,
+    /// The column window enters the block-recursive driver: one of the panel
+    /// arms [`ple_panel_route`] reports, or the binary-halving trsm + gemm
+    /// split.
+    BlockRecursive,
+}
+
+/// Reports the [`FieldMatrix::ple`] base-case arm for a column-window width.
+///
+/// The comparison uses the active `ple.scalar_base_max_cols()` profile value:
+/// a window at or below it is eliminated directly. The conservative default is
+/// [`PLE_SCALAR_BASE_MAX_COLS_DEFAULT`].
+#[must_use]
+pub fn ple_base_route(win: usize) -> PleBaseRoute {
+    ple_base_route_resolved(tuning::active().ple().scalar_base_max_cols(), win)
+}
+
+/// Reports the base-case arm for a column-window width against an
+/// already-resolved `scalar_base_max_cols`.
+fn ple_base_route_resolved(scalar_base_max_cols: usize, win: usize) -> PleBaseRoute {
+    if win <= scalar_base_max_cols {
+        PleBaseRoute::ScalarBase
+    } else {
+        PleBaseRoute::BlockRecursive
+    }
+}
+
 /// The selected arm of the [`FieldMatrix::ple`] panel dispatcher for one
 /// column window.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlePanelRoute {
-    /// The column window is handled without a sub-panel walk: through the
-    /// SIMD panel kernel when the field exposes a
-    /// [`crate::field::PlePanelLane`] and the window fits
-    /// [`FiniteField::PLE_PANEL_COLS`], through the binary-halving recursive
-    /// split otherwise.
+    /// The carrier's SIMD panel kernel takes the whole column window: the
+    /// carrier registers a [`crate::field::PlePanelLane`] and the window fits
+    /// both the profile's panel base width and that lane's own width. The
+    /// kernel may still decline at run time, in which case the window falls
+    /// through to the binary-halving split.
     PanelBase,
     /// The column window is walked in narrow sub-panels, each dispatched to
     /// the panel base and followed by a wide trsm + gemm update of the right
     /// tail.
     SubPanelRecursion,
+    /// The column window is halved and driven by the recursive trsm + gemm
+    /// split: the carrier registers no panel kernel, or the window is wider
+    /// than the registered lane's panel width.
+    RecursiveSplit,
 }
 
 /// Reports the [`FieldMatrix::ple`] panel arm for a column-window width.
 ///
-/// The comparison uses the active `ple.panel_base_max_cols()` profile value:
-/// a window strictly above it takes the sub-panel recursion. Which kernel
-/// each arm then reaches depends on the field's own
-/// [`crate::field::PlePanelLane`] and [`FiniteField::PLE_PANEL_COLS`] rather
-/// than on the profile, so a field without a panel kernel runs the
-/// binary-halving split at every width.
+/// `lane` is the carrier's own [`FiniteField::simd_ple_panel_lane`]; the
+/// dispatcher passes `F::simd_ple_panel_lane()`. Two active profile values carry
+/// the comparison: `ple.panel_base_max_cols()`, above which a window takes the
+/// sub-panel walk, and the lane's own width — `ple.panel_byte_lane_max_cols()`
+/// for [`crate::field::PlePanelLane::Byte`] and
+/// `ple.panel_u16_lane_max_cols()` for [`crate::field::PlePanelLane::U16`] —
+/// above which the window takes the recursive split instead of the kernel.
 #[must_use]
-pub fn ple_panel_route(win: usize) -> PlePanelRoute {
-    ple_panel_route_resolved(tuning::active().ple().panel_base_max_cols(), win)
+pub fn ple_panel_route(lane: Option<PlePanelLane>, win: usize) -> PlePanelRoute {
+    let ple = tuning::active().ple();
+    ple_panel_route_resolved(ple.panel_base_max_cols(), ple_lane_max_cols(ple, lane), win)
 }
 
-/// Reports the panel arm for a column-window width against an
-/// already-resolved `panel_base_max_cols`.
-fn ple_panel_route_resolved(panel_base_max_cols: usize, win: usize) -> PlePanelRoute {
+/// Reports the panel arm for a column-window width against already-resolved
+/// widths.
+fn ple_panel_route_resolved(
+    panel_base_max_cols: usize,
+    panel_lane_max_cols: Option<usize>,
+    win: usize,
+) -> PlePanelRoute {
+    let Some(lane_max_cols) = panel_lane_max_cols else {
+        return PlePanelRoute::RecursiveSplit;
+    };
     if win > panel_base_max_cols {
         PlePanelRoute::SubPanelRecursion
-    } else {
+    } else if win <= lane_max_cols {
         PlePanelRoute::PanelBase
+    } else {
+        PlePanelRoute::RecursiveSplit
     }
 }
 
@@ -648,18 +769,18 @@ fn ple_panel_route_resolved(panel_base_max_cols: usize, win: usize) -> PlePanelR
 /// — corrupting the Schur complement update and dropping otherwise-
 /// valid pivots in the right-half recursion.
 ///
-/// # Panel width
+/// # Panel widths
 ///
-/// `panel_base_max_cols` is the active profile's `ple.panel_base_max_cols()`,
-/// resolved once by [`ple_in_place`] and forwarded unchanged to every
-/// recursive call and to [`ple_panel_recursive_window`].
+/// `widths` contains the active profile's three PLE column widths, resolved
+/// once by [`ple_in_place`] and forwarded unchanged to every recursive call and
+/// to [`ple_panel_recursive_window`].
 fn ple_in_place_window<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
-    panel_base_max_cols: usize,
+    widths: PleWidths,
 ) -> usize {
     let m = a.rows();
     let win = col_hi.saturating_sub(col_lo);
@@ -668,70 +789,52 @@ fn ple_in_place_window<F: FiniteField>(
         return 0;
     }
 
-    // Base case: column window at or below `PLE_BASE_COLS`.
+    // Base case: column window at or below the active scalar-base width.
     //
-    // When `win <= F::PLE_BASE_COLS`, use `ple_base_direct` — a direct
+    // On `PleBaseRoute::ScalarBase`, use `ple_base_direct` — a direct
     // column-by-column Gaussian elimination that avoids the per-level
     // materialise_l1_unit / materialise_block / trsm dispatch overhead.
-    // The default `PLE_BASE_COLS = 1` restricts this to the single-column
-    // leaf, where the recursive path would recurse into an empty right half.
-    // Fields with cheap per-element arithmetic may override to a larger value.
+    // The conservative width restricts this to the single-column leaf,
+    // where the recursive path would recurse into an empty right half. A
+    // host whose fields have cheap per-element arithmetic can install a
+    // wider one.
     //
     // Complexity: O(m · win²) element operations per call.
-    if win <= F::PLE_BASE_COLS {
+    if ple_base_route_resolved(widths.scalar_base_max_cols, win) == PleBaseRoute::ScalarBase {
         return ple_base_direct(&mut a, col_lo, col_hi, perm, pivot_cols);
     }
 
-    // Panelized SIMD base case (issue 6823c8a0, design 2e8c5a29).
+    // Panelized SIMD dispatch (issue 6823c8a0, design 2e8c5a29), in the
+    // recursive-PLUQ left-looking shape the design's R1 amendment fixes.
     //
-    // When `win <= F::PLE_PANEL_COLS` (= 256 for `Fp<P>` with P ≤ 251,
-    // default = PLE_BASE_COLS otherwise) and the field has registered
-    // a panel-base kernel via `try_simd_ple_panel_base`, dispatch
-    // through the AVX2 panel kernel. Falls through to the recursive
-    // trsm+gemm split below when the kernel declines or the field has
-    // no panel path.
+    // A carrier that exposes the AVX2 panel base kernel does not run that
+    // kernel over a full lane-width window in one shot. The kernel's inner
+    // Schur update is row-major axpy (one pivot at a time over a shrinking
+    // tail); even with AVX2 byte lanes its throughput at large win is
+    // roughly 8 Gop/s — far below fflas-ffpack's ~30 Gop/s sgemm-cascade
+    // PLUQ. To close the gap the driver dispatches the kernel on a narrow
+    // leftmost sub-panel (`widths.panel_base_max_cols` columns wide), then
+    // updates the wide right tail via the existing `trsm_lower` +
+    // `gemm_axpy_into_view` path. The wide gemm inherits the small-prime
+    // whole-GEMM fast path from issue 40195c09 (lift), which hits the
+    // kernel's u8 byte-lane throughput on the bulk of the operations.
     //
-    // The `PLE_PANEL_COLS >= PLE_BASE_COLS` invariant (R4 from the
-    // design doc) is asserted in debug builds; release builds trust
-    // the trait impl.
-    debug_assert!(
-        F::PLE_PANEL_COLS >= F::PLE_BASE_COLS,
-        "PLE_PANEL_COLS ({}) must be >= PLE_BASE_COLS ({})",
-        F::PLE_PANEL_COLS,
-        F::PLE_BASE_COLS
-    );
-
-    // Recursive PLUQ left-looking blocking for small-prime fields (issue
-    // 6823c8a0 R1, design 2e8c5a29 → R1 amendment).
-    //
-    // When the field exposes the AVX2 panel base kernel, we no longer
-    // run the panel kernel over a full `PLE_PANEL_COLS`-wide window in
-    // one shot. The panel kernel's inner Schur update is row-major axpy
-    // (one pivot at a time over a shrinking tail); even with AVX2 byte
-    // lanes its throughput at large win is roughly 8 Gop/s — far below
-    // fflas-ffpack's ~30 Gop/s sgemm-cascade PLUQ. To close the gap we
-    // dispatch the panel kernel only on a narrow leftmost sub-panel
-    // (`panel_base_max_cols` columns wide), then update the wide
-    // right tail via the existing `trsm_lower` + `gemm_axpy_into_view`
-    // path. The wide gemm inherits the small-prime whole-GEMM fast path
-    // from issue 40195c09 (lift), which hits the kernel's u8 byte-lane
-    // throughput on the bulk of the operations.
-    if F::simd_ple_panel_lane().is_some()
-        && ple_panel_route_resolved(panel_base_max_cols, win) == PlePanelRoute::SubPanelRecursion
-    {
-        return ple_panel_recursive_window::<F>(
-            a,
-            col_lo,
-            col_hi,
-            perm,
-            pivot_cols,
-            panel_base_max_cols,
-        );
-    }
-    if win <= F::PLE_PANEL_COLS && F::simd_ple_panel_lane().is_some() {
-        if let Some(rank) = try_panel_base_dispatch::<F>(&mut a, col_lo, col_hi, perm, pivot_cols) {
-            return rank;
+    // A window that fits both that width and the carrier lane's own width
+    // goes to the kernel directly. A carrier with no lane, or a window
+    // wider than its lane's width, falls through to the halving split
+    // below; so does a kernel that declines at run time.
+    match ple_panel_route_resolved(widths.panel_base_max_cols, widths.panel_lane_max_cols, win) {
+        PlePanelRoute::SubPanelRecursion => {
+            return ple_panel_recursive_window::<F>(a, col_lo, col_hi, perm, pivot_cols, widths);
         }
+        PlePanelRoute::PanelBase => {
+            if let Some(rank) =
+                try_panel_base_dispatch::<F>(&mut a, col_lo, col_hi, perm, pivot_cols)
+            {
+                return rank;
+            }
+        }
+        PlePanelRoute::RecursiveSplit => {}
     }
 
     let h = win / 2;
@@ -744,14 +847,7 @@ fn ple_in_place_window<F: FiniteField>(
     // left-half pivots after the recursion returns (they sit at
     // `pivot_cols[pivot_cols_start..pivot_cols_start + r1]`).
     let pivot_cols_start = pivot_cols.len();
-    let r1 = ple_in_place_window(
-        a.reborrow(),
-        col_lo,
-        mid,
-        perm,
-        pivot_cols,
-        panel_base_max_cols,
-    );
+    let r1 = ple_in_place_window(a.reborrow(), col_lo, mid, perm, pivot_cols, widths);
 
     // Steps 2 & 3 — trsm and gemm on the right half.
     //
@@ -805,14 +901,7 @@ fn ple_in_place_window<F: FiniteField>(
     // inputs that exhibit early-termination rank-deficiency).
     let r2 = if r1 < m && mid < col_hi {
         let (_top, a4) = a.split_rows_mut(r1);
-        ple_in_place_window(
-            a4,
-            mid,
-            col_hi,
-            &mut perm[r1..],
-            pivot_cols,
-            panel_base_max_cols,
-        )
+        ple_in_place_window(a4, mid, col_hi, &mut perm[r1..], pivot_cols, widths)
     } else {
         0
     };
@@ -824,7 +913,7 @@ fn ple_in_place_window<F: FiniteField>(
 /// 6823c8a0 R1, design 2e8c5a29 R1 amendment).
 ///
 /// Iterates over the column window `[col_lo, col_hi)` in narrow
-/// sub-panels of width `base_cols` each. For every sub-panel:
+/// sub-panels of width `widths.panel_base_max_cols` each. For every sub-panel:
 ///
 /// 1. Dispatch the field's AVX2 panel-base kernel on the sub-panel
 ///    covering rows below the running rank cursor. Returns `r_i` new
@@ -870,24 +959,25 @@ fn ple_in_place_window<F: FiniteField>(
 ///   in place for every row swap performed by the kernel.
 /// * `pivot_cols` — absolute pivot-column accumulator. New pivots are
 ///   appended in left-to-right order.
-/// * `base_cols` — width of each sub-panel: the active profile's
-///   `ple.panel_base_max_cols()`, resolved by [`ple_in_place`] and forwarded
-///   through [`ple_in_place_window`]. Its conservative default is
-///   [`PLE_PANEL_RECURSIVE_BASE`].
+/// * `widths` — the resolved PLE column widths. Each sub-panel is
+///   `widths.panel_base_max_cols` columns wide, and the scalar base width rides
+///   along for the fallback driver. The values are resolved by [`ple_in_place`]
+///   and forwarded through [`ple_in_place_window`], with conservative defaults
+///   [`PLE_PANEL_RECURSIVE_BASE`] and [`PLE_SCALAR_BASE_MAX_COLS_DEFAULT`].
 fn ple_panel_recursive_window<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
-    base_cols: usize,
+    widths: PleWidths,
 ) -> usize {
     let m = a.rows();
     let mut col_cur = col_lo;
     let mut rank_total = 0usize;
 
     while col_cur < col_hi && rank_total < m {
-        let sub_hi = (col_cur + base_cols).min(col_hi);
+        let sub_hi = (col_cur + widths.panel_base_max_cols).min(col_hi);
 
         // Snapshot pivot-cols length so we can slice this sub-panel's
         // own pivots after the dispatch returns. The dispatch pushes
@@ -935,6 +1025,7 @@ fn ple_panel_recursive_window<F: FiniteField>(
                         sub_hi,
                         perm,
                         pivot_cols,
+                        widths,
                     )
                 } else {
                     let (_top, bot) = a.reborrow().split_rows_mut(rank_total);
@@ -944,6 +1035,7 @@ fn ple_panel_recursive_window<F: FiniteField>(
                         sub_hi,
                         &mut perm[rank_total..],
                         pivot_cols,
+                        widths,
                     )
                 }
             }
@@ -998,27 +1090,30 @@ fn ple_panel_recursive_window<F: FiniteField>(
 /// SIMD panel-base path even when available. Used by
 /// [`ple_panel_recursive_window`] when the panel dispatch declines mid-
 /// execution (e.g. AVX2 unavailable at runtime). Mirrors the structure
-/// of `ple_in_place_window` minus the panel-base dispatch arm.
+/// of `ple_in_place_window` minus the panel-base dispatch arm, so of
+/// `widths` it reads only `scalar_base_max_cols`; the rest rides along to
+/// keep one resolved value per call reaching every driver.
 fn ple_in_place_window_no_panel<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
+    widths: PleWidths,
 ) -> usize {
     let m = a.rows();
     let win = col_hi.saturating_sub(col_lo);
     if m == 0 || win == 0 {
         return 0;
     }
-    if win <= F::PLE_BASE_COLS {
+    if ple_base_route_resolved(widths.scalar_base_max_cols, win) == PleBaseRoute::ScalarBase {
         return ple_base_direct(&mut a, col_lo, col_hi, perm, pivot_cols);
     }
 
     let h = win / 2;
     let mid = col_lo + h;
     let pivot_cols_start = pivot_cols.len();
-    let r1 = ple_in_place_window_no_panel::<F>(a.reborrow(), col_lo, mid, perm, pivot_cols);
+    let r1 = ple_in_place_window_no_panel::<F>(a.reborrow(), col_lo, mid, perm, pivot_cols, widths);
 
     if r1 > 0 && mid < col_hi {
         let left_pivots: &[usize] = &pivot_cols[pivot_cols_start..pivot_cols_start + r1];
@@ -1038,7 +1133,7 @@ fn ple_in_place_window_no_panel<F: FiniteField>(
 
     let r2 = if r1 < m && mid < col_hi {
         let (_top, a4) = a.split_rows_mut(r1);
-        ple_in_place_window_no_panel::<F>(a4, mid, col_hi, &mut perm[r1..], pivot_cols)
+        ple_in_place_window_no_panel::<F>(a4, mid, col_hi, &mut perm[r1..], pivot_cols, widths)
     } else {
         0
     };
@@ -3489,19 +3584,33 @@ mod tests {
 
     #[test]
     fn test_ple_panelized_dispatch_active_for_small_primes() {
-        // Sanity probe: confirm `PLE_PANEL_COLS` and
-        // `simd_ple_panel_lane` resolve to the expected values for
-        // each in-scope field.
-        assert_eq!(<Fp<7> as FiniteField>::PLE_PANEL_COLS, 256);
-        assert_eq!(<Fp<31> as FiniteField>::PLE_PANEL_COLS, 256);
-        assert_eq!(<Fp<127> as FiniteField>::PLE_PANEL_COLS, 256);
-        assert_eq!(<Fp<241> as FiniteField>::PLE_PANEL_COLS, 256);
-        assert_eq!(<Fp<251> as FiniteField>::PLE_PANEL_COLS, 256);
-        // GF(65521) now uses the medium-prime u16-lane PLE base case
-        // (issue `68db401b`); `PLE_PANEL_COLS = 128` matches `KC_U16`.
-        assert_eq!(<Fp<65521> as FiniteField>::PLE_PANEL_COLS, 128);
-        // Mersenne-31 has P >= 65536; the panel base case is unchanged.
-        assert_eq!(<Fp<MERSENNE_31> as FiniteField>::PLE_PANEL_COLS, 1);
+        // This binary installs no profile, so the widths are the conservative
+        // defaults; route observation goes through the reporter the dispatcher
+        // itself calls.
+        let ple = tuning::active().ple();
+        assert!(ple.panel_byte_lane_max_cols() >= ple.panel_base_max_cols());
+        assert!(ple.panel_u16_lane_max_cols() >= ple.panel_base_max_cols());
+        for lane in [PlePanelLane::Byte, PlePanelLane::U16] {
+            assert_eq!(
+                ple_panel_route(Some(lane), ple.panel_base_max_cols()),
+                PlePanelRoute::PanelBase
+            );
+            assert_eq!(
+                ple_panel_route(Some(lane), ple.panel_base_max_cols() + 1),
+                PlePanelRoute::SubPanelRecursion
+            );
+        }
+        for w in [
+            1,
+            ple.panel_base_max_cols(),
+            ple.panel_base_max_cols() + 1,
+            usize::MAX,
+        ] {
+            assert_eq!(ple_panel_route(None, w), PlePanelRoute::RecursiveSplit);
+        }
+        // Per-lane width boundaries are covered by the installed-profile
+        // binaries `tests/tuning_profile_ple_*_install*.rs`, because the
+        // conservative panel base width is narrower than either lane width.
 
         // `simd_ple_panel_lane()` should report `Byte` for P <= 251 and
         // `U16` for 252 <= P < 65536 (medium primes, e.g. GF(65521);
@@ -3649,6 +3758,7 @@ mod tests {
             n,
             &mut perm,
             &mut pivot_cols,
+            PleWidths::resolve::<F>(),
         );
         let (l, e) = split_compact(&working, rank, &pivot_cols);
         let inverse_perm = invert_perm(&perm);
@@ -4542,13 +4652,27 @@ mod tests {
 
     #[test]
     fn test_ple_panel_route_boundary_is_the_conservative_panel_width() {
+        // The byte lane's conservative width is wider than the conservative
+        // panel base width, so the panel base width is the boundary that binds.
         assert_eq!(
-            ple_panel_route(PLE_PANEL_RECURSIVE_BASE),
+            ple_panel_route(Some(PlePanelLane::Byte), PLE_PANEL_RECURSIVE_BASE),
             PlePanelRoute::PanelBase
         );
         assert_eq!(
-            ple_panel_route(PLE_PANEL_RECURSIVE_BASE + 1),
+            ple_panel_route(Some(PlePanelLane::Byte), PLE_PANEL_RECURSIVE_BASE + 1),
             PlePanelRoute::SubPanelRecursion
+        );
+    }
+
+    #[test]
+    fn test_ple_base_route_boundary_is_the_conservative_scalar_base() {
+        assert_eq!(
+            ple_base_route(PLE_SCALAR_BASE_MAX_COLS_DEFAULT),
+            PleBaseRoute::ScalarBase
+        );
+        assert_eq!(
+            ple_base_route(PLE_SCALAR_BASE_MAX_COLS_DEFAULT + 1),
+            PleBaseRoute::BlockRecursive
         );
     }
 
