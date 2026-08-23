@@ -17,6 +17,70 @@ use crate::tuning;
 
 pub use super::{SOA_PARALLEL_CHUNK_LEN, SOA_PARALLEL_MIN_LEN};
 
+/// Records the `parallel_chunk_len` value most recently consumed by the
+/// parallel arm of a soa_batch entry point (`batch_mul_quadratic_parallel`,
+/// `batch_square_quadratic_parallel`, `batch_mul_cubic_parallel`, or
+/// `batch_square_cubic_parallel`). Zero means "not recorded since the last
+/// [`reset_last_effective_soa_chunk`] call";
+/// [`crate::tuning::SoaBatchSelectors::parallel_chunk_len`] floors at 1, so
+/// zero is never a live value. Read through [`last_effective_soa_chunk`].
+#[cfg(any(test, feature = "test-support"))]
+static LAST_EFFECTIVE_SOA_CHUNK: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
+/// Route-observation hook: returns the `parallel_chunk_len` value most
+/// recently consumed by the parallel arm of a soa_batch entry point, or
+/// `None` if no parallel arm has run since the last
+/// [`reset_last_effective_soa_chunk`] call.
+///
+/// Exists only under `cfg(test)` or the `test-support` feature. The parallel
+/// and scalar arms are bit-exact for every valid chunk length, so comparing
+/// a parallel entry point's output against direct scalar arithmetic is not
+/// evidence that the resolved `parallel_chunk_len` actually reached the
+/// parallel arm — every valid chunk length produces the same output. This
+/// hook lets a route-observation test read the value production code
+/// received, directly, instead of inferring it from output equality.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn last_effective_soa_chunk() -> Option<usize> {
+    match LAST_EFFECTIVE_SOA_CHUNK.load(std::sync::atomic::Ordering::SeqCst) {
+        0 => None,
+        chunk_len => Some(chunk_len),
+    }
+}
+
+/// Reports the thread half of [`should_parallelize_soa_batch`]'s gate —
+/// whether the rayon pool this process dispatches into has more than one
+/// thread. Route observation tests branch on it so their expectations
+/// follow the same gate the dispatcher uses on every supported
+/// configuration (a single-threaded pool takes the scalar arm and records
+/// no chunk).
+///
+/// Exists only under `cfg(test)` or the `test-support` feature.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn soa_parallel_pool_is_multi_threaded() -> bool {
+    #[cfg(feature = "parallel")]
+    {
+        rayon::current_num_threads() > 1
+    }
+
+    #[cfg(not(feature = "parallel"))]
+    {
+        false
+    }
+}
+
+/// Clears the value [`last_effective_soa_chunk`] reports, so a subsequent
+/// call can be observed in isolation — including observing that a scalar-arm
+/// call (below `soa_batch.parallel_min_len()`) records nothing.
+///
+/// Exists only under `cfg(test)` or the `test-support` feature.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_last_effective_soa_chunk() {
+    LAST_EFFECTIVE_SOA_CHUNK.store(0, std::sync::atomic::Ordering::SeqCst);
+}
+
 /// The selected arm of the [`should_parallelize_soa_batch`] length dispatch.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SoaParallelRoute {
@@ -89,6 +153,8 @@ where
     );
 
     let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
+    #[cfg(any(test, feature = "test-support"))]
+    LAST_EFFECTIVE_SOA_CHUNK.store(chunk_len, std::sync::atomic::Ordering::SeqCst);
     let len = lhs.len();
     let mut c0 = vec![F::zero(); len];
     let mut c1 = vec![F::zero(); len];
@@ -124,6 +190,8 @@ where
     C: ExtConfig<BaseField = F>,
 {
     let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
+    #[cfg(any(test, feature = "test-support"))]
+    LAST_EFFECTIVE_SOA_CHUNK.store(chunk_len, std::sync::atomic::Ordering::SeqCst);
     let len = xs.len();
     let mut c0 = vec![F::zero(); len];
     let mut c1 = vec![F::zero(); len];
@@ -198,6 +266,8 @@ where
     );
 
     let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
+    #[cfg(any(test, feature = "test-support"))]
+    LAST_EFFECTIVE_SOA_CHUNK.store(chunk_len, std::sync::atomic::Ordering::SeqCst);
     let len = lhs.len();
     let mut c0 = vec![F::zero(); len];
     let mut c1 = vec![F::zero(); len];
@@ -238,6 +308,8 @@ where
     C: ExtConfig<BaseField = F>,
 {
     let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
+    #[cfg(any(test, feature = "test-support"))]
+    LAST_EFFECTIVE_SOA_CHUNK.store(chunk_len, std::sync::atomic::Ordering::SeqCst);
     let len = xs.len();
     let mut c0 = vec![F::zero(); len];
     let mut c1 = vec![F::zero(); len];
