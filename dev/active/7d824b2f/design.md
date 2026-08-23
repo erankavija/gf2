@@ -730,3 +730,29 @@ cutover carries a second reporter, `inv_route`/`InvRoute`, in
 Both dispatchers report; the §4 test obligation (installed-profile route
 files on both sides of each of the two thresholds) is unchanged. Ratified
 as lead decision DEC-B12.
+
+## Amendment A2 (2026-08-23, DEC-B13/DEC-B14 + errata, appended by issue aa904331's cutover)
+
+DEC-B13 (ratified deviation): migrating `choose_k_block`,
+`choose_k_block_small_n`, `production_table_budget` and
+`use_register_tiled_schedule` to resolved-value parameters (§2.3
+obligation 1) forced mechanical call-site updates in five pre-existing
+`alg::m4rm` unit tests — an added first argument via an explicit
+`conservative_m4rm()` helper. No assertion, expected value, feature gate
+or `required-features` changed.
+
+DEC-B14 (reporter extension): §4's m4rm row gives the reporter the
+signature `m4rm_schedule_route(k, n)`, which cannot express
+`use_register_tiled_schedule`'s row-count input, leaving the
+§5.2-sweepable `tiled_min_stride_words` without route observation. The
+cutover factors the stride comparison into a shared predicate
+(`stride_admits_tiled_schedule`) called by both the dispatcher and the
+reporter, surfaced as `M4rmScheduleRoute::tiled_stride_admitted()`. The
+row half of the gate (`>= M4RM_TILE_ROWS` full rows) is kernel shape and
+stays outside the reporter; its rustdoc says so.
+
+Errata: §8's T5 row says "five resolved reads" where §3.3 and the task's
+REQ-01 correctly say seven; §3.3's closing line "Every read reaches
+`choose_k_block`" contradicts its own table row for
+`tiled_min_stride_words` (read site `use_register_tiled_schedule`). The
+table rows are authoritative.
