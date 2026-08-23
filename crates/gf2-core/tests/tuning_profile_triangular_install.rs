@@ -7,6 +7,7 @@ use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::triangular::{
     last_effective_trsm_panel_rows, reset_last_effective_trsm_panel_rows, trsm_route, TrsmRoute,
 };
+use gf2_core::field::FiniteField;
 use gf2_core::gfp::Fp;
 use gf2_core::tuning::{self, TuningProfile};
 
@@ -47,10 +48,26 @@ fn installed_triangular_profile_lowers_threshold_and_reaches_blocked_panel() {
 
     // `solve_batch` is the production dispatcher. The observation is taken
     // at the blocked callee entry, so equal results cannot mask an ignored
-    // installed panel width.
+    // installed panel width. The blocked arm runs only when the field
+    // exposes the SIMD whole-GEMM fast path; on fallback configurations
+    // (no `simd` feature, or no AVX2 at runtime) the recursive arm runs
+    // and no panel width is observed — the same gate the dispatcher uses
+    // decides which assertion applies.
     reset_last_effective_trsm_panel_rows();
     let a = FieldMatrix::<Fp<251>>::identity(8);
     let b = FieldMatrix::<Fp<251>>::identity(8);
     assert!(a.solve_batch(&b).is_some());
-    assert_eq!(last_effective_trsm_panel_rows(), Some(3));
+    if <Fp<251> as FiniteField>::has_simd_gemm_classical() {
+        assert_eq!(
+            last_effective_trsm_panel_rows(),
+            Some(3),
+            "blocked callee must observe the installed panel width"
+        );
+    } else {
+        assert_eq!(
+            last_effective_trsm_panel_rows(),
+            None,
+            "without the SIMD gemm fast path the recursive arm runs"
+        );
+    }
 }
