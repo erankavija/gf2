@@ -3,21 +3,119 @@
 //! This module provides a memory-efficient matrix type where each element is a single bit,
 //! stored in a row-major layout with bits packed into u64 words.
 
+use crate::tuning;
 use std::fmt;
 use std::ops::Mul;
 
-// Route the PPC A1 design sizes (512 and 1024 columns, i.e. 8 and 16 words)
-// through the AVX2-dispatched AND+popcount kernel when available. Benchmarked
-// vs ppc-v0-2026-04-27: 512 cols 2.356x, 1024 cols 2.949x, geomean 2.636x.
+/// Conservative default definition for `bit_matrix.matvec_simd_min_words`.
+///
+/// The matvec selector uses this value in ordinary builds; the
+/// `gf2_tuning_baked` build configuration substitutes the baked counterpart
+/// at the selection site. The conservative profile names this constant as its
+/// default definition.
 pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
 
-/// Outer macro-tile edge, in 64×64 bit-blocks, used by the cache-tiled
-/// transpose driver.
+#[cfg(all(feature = "simd", gf2_tuning_baked))]
+const MATVEC_SIMD_MIN_WORDS_SELECTED: usize = crate::tuning::baked::MATVEC_SIMD_MIN_WORDS;
+
+#[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
+const MATVEC_SIMD_MIN_WORDS_SELECTED: usize = MATVEC_SIMD_MIN_WORDS;
+
+/// Conservative default definition for `bit_matrix.transpose_macro_tile_blocks`.
 ///
-/// Sized so that the (input row-strip) × (output column-strip) working set of
-/// one macro-tile stays L1-resident on a Zen 3 core; the value is empirical
-/// for the B1 recovery measurements.
+/// The active profile's `transpose_macro_tile_blocks` value replaces this
+/// default at the transpose dispatch entry. It is sized so that the
+/// (input row-strip) × (output column-strip) working set of one macro-tile
+/// stays L1-resident on a Zen 3 core; the value is empirical for the B1
+/// recovery measurements.
 pub(crate) const MACRO_TILE_BLOCKS: usize = 8;
+
+/// The selected arm of the [`BitMatrix::matvec`] dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MatvecRoute {
+    /// Use the scalar row-parity implementation.
+    Scalar,
+    /// Attempt the SIMD row-parity implementation when it is available.
+    Simd,
+}
+
+/// Reports the word-count arm of [`BitMatrix::matvec`].
+///
+/// The comparison uses the baked `bit_matrix.matvec_simd_min_words` value.
+/// Runtime profile installation does not move this boundary; the dispatcher
+/// still falls back to the scalar implementation when SIMD is unavailable.
+#[must_use]
+pub fn matvec_route(stride_words: usize) -> MatvecRoute {
+    #[cfg(feature = "simd")]
+    {
+        if stride_words >= MATVEC_SIMD_MIN_WORDS_SELECTED {
+            return MatvecRoute::Simd;
+        }
+    }
+
+    #[cfg(not(feature = "simd"))]
+    let _ = stride_words;
+    MatvecRoute::Scalar
+}
+
+/// The selected outer-loop strategy of [`BitMatrix::transpose`].
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TransposeRoute {
+    /// Use the direct two-level block loop.
+    Simple,
+    /// Use the cache-tiled outer loop with the resolved macro-tile extent.
+    MacroTiled {
+        /// Number of 64×64 blocks in each outer-loop edge.
+        macro_tile_blocks: usize,
+    },
+}
+
+impl TransposeRoute {
+    /// Returns the macro-tile extent consumed by the cache-tiled route.
+    ///
+    /// The simple route has no macro-tile extent and returns `None`.
+    #[must_use]
+    pub fn macro_tile_blocks(self) -> Option<usize> {
+        match self {
+            Self::Simple => None,
+            Self::MacroTiled { macro_tile_blocks } => Some(macro_tile_blocks),
+        }
+    }
+}
+
+/// Reports the block-count arm of [`BitMatrix::transpose`].
+///
+/// The two selector values are read once from the active
+/// `bit_matrix.transpose_simple_max_blocks` and
+/// `bit_matrix.transpose_macro_tile_blocks` profile fields. The transpose
+/// dispatcher calls this reporter and consumes the returned macro-tile
+/// extent.
+#[must_use]
+pub fn transpose_route(n_row_blocks: usize, n_col_blocks: usize) -> TransposeRoute {
+    let selectors = tuning::active().bit_matrix();
+    transpose_route_resolved(
+        selectors.transpose_simple_max_blocks(),
+        selectors.transpose_macro_tile_blocks(),
+        n_row_blocks,
+        n_col_blocks,
+    )
+}
+
+/// Reports the transpose arm against already-resolved selector values.
+fn transpose_route_resolved(
+    transpose_simple_max_blocks: usize,
+    transpose_macro_tile_blocks: usize,
+    n_row_blocks: usize,
+    n_col_blocks: usize,
+) -> TransposeRoute {
+    if n_row_blocks <= transpose_simple_max_blocks && n_col_blocks <= transpose_simple_max_blocks {
+        TransposeRoute::Simple
+    } else {
+        TransposeRoute::MacroTiled {
+            macro_tile_blocks: transpose_macro_tile_blocks,
+        }
+    }
+}
 
 /// A row-major, bit-packed boolean matrix.
 ///
@@ -1094,7 +1192,7 @@ impl BitMatrix {
     /// Tiled transpose driver: walks 64×64 bit-blocks and dispatches each
     /// to `transpose_64x64`.
     ///
-    /// Beyond the [`Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS`] block
+    /// Beyond the active `bit_matrix.transpose_simple_max_blocks` block
     /// count, the driver imposes an L1-friendly outer macro-tile so
     /// the (input row-band) × (output column-band) working set fits
     /// in L1d. Below the threshold it uses the simple 2-level block
@@ -1114,52 +1212,50 @@ impl BitMatrix {
         let n_row_blocks = self.rows.div_ceil(64);
         let n_col_blocks = self.cols.div_ceil(64);
 
-        // V7: pick a macro-tile once either dimension spans enough
-        // 64×64 blocks that the simple 2-level loop starts losing
-        // cache locality; small and medium matrices stay on the
-        // simpler path.
-        if n_row_blocks <= Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS
-            && n_col_blocks <= Self::TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS
-        {
-            Self::transpose_inner_loop(
-                &self.data,
-                &mut out.data,
-                in_stride,
-                out_stride,
-                self.rows,
-                self.cols,
-                0,
-                n_row_blocks,
-                0,
-                n_col_blocks,
-                transpose_64x64,
-            );
-        } else {
-            // Macro-tiled outer loop: process MACRO_TILE_BLOCKS ×
-            // MACRO_TILE_BLOCKS bit-blocks per macro-tile so the
-            // per-tile input/output footprint stays L1-resident.
-            let mut br_macro = 0usize;
-            while br_macro < n_row_blocks {
-                let br_end = (br_macro + MACRO_TILE_BLOCKS).min(n_row_blocks);
-                let mut bc_macro = 0usize;
-                while bc_macro < n_col_blocks {
-                    let bc_end = (bc_macro + MACRO_TILE_BLOCKS).min(n_col_blocks);
-                    Self::transpose_inner_loop(
-                        &self.data,
-                        &mut out.data,
-                        in_stride,
-                        out_stride,
-                        self.rows,
-                        self.cols,
-                        br_macro,
-                        br_end,
-                        bc_macro,
-                        bc_end,
-                        transpose_64x64,
-                    );
-                    bc_macro = bc_end;
+        match transpose_route(n_row_blocks, n_col_blocks) {
+            TransposeRoute::Simple => {
+                Self::transpose_inner_loop(
+                    &self.data,
+                    &mut out.data,
+                    in_stride,
+                    out_stride,
+                    self.rows,
+                    self.cols,
+                    0,
+                    n_row_blocks,
+                    0,
+                    n_col_blocks,
+                    transpose_64x64,
+                );
+            }
+            TransposeRoute::MacroTiled { macro_tile_blocks } => {
+                // Macro-tiled outer loop: process the resolved
+                // macro_tile_blocks × macro_tile_blocks bit-blocks per
+                // macro-tile so the per-tile input/output footprint stays
+                // L1-resident.
+                let mut br_macro = 0usize;
+                while br_macro < n_row_blocks {
+                    let br_end = (br_macro + macro_tile_blocks).min(n_row_blocks);
+                    let mut bc_macro = 0usize;
+                    while bc_macro < n_col_blocks {
+                        let bc_end = (bc_macro + macro_tile_blocks).min(n_col_blocks);
+                        Self::transpose_inner_loop(
+                            &self.data,
+                            &mut out.data,
+                            in_stride,
+                            out_stride,
+                            self.rows,
+                            self.cols,
+                            br_macro,
+                            br_end,
+                            bc_macro,
+                            bc_end,
+                            transpose_64x64,
+                        );
+                        bc_macro = bc_end;
+                    }
+                    br_macro = br_end;
                 }
-                br_macro = br_end;
             }
         }
 
@@ -1171,13 +1267,15 @@ impl BitMatrix {
         out
     }
 
-    /// Threshold (in 64×64 bit-blocks) below which the transpose
-    /// driver uses the simple 2-level block loop and above which it
-    /// engages the V7 macro-tile outer loop.
+    /// Conservative default definition for
+    /// `bit_matrix.transpose_simple_max_blocks` (in 64×64 bit-blocks).
     ///
-    /// Tuned from the recovered B1 benchmark sweep: matrices up to
-    /// 16 blocks (= 1024 rows/cols) in both dimensions use the simple
-    /// loop, while larger matrices use the macro-tiled driver.
+    /// The active profile's `transpose_simple_max_blocks` value controls
+    /// whether the transpose driver uses the simple two-level block loop or
+    /// the macro-tiled outer loop. This default is tuned from the recovered B1
+    /// benchmark sweep: matrices up to 16 blocks (= 1024 rows/cols) in both
+    /// dimensions use the simple loop, while larger matrices use the
+    /// macro-tiled driver.
     pub(crate) const TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS: usize = 16;
 
     /// Inner loop over a (br, bc) range of 64×64 bit-blocks.
@@ -1329,14 +1427,16 @@ impl BitMatrix {
     pub fn matvec(&self, x: &crate::BitVec) -> crate::BitVec {
         assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
 
-        #[cfg(feature = "simd")]
-        if self.stride_words >= MATVEC_SIMD_MIN_WORDS {
-            if let Some(fns) = crate::simd::maybe_simd() {
-                return self.matvec_simd(x, fns);
+        match matvec_route(self.stride_words) {
+            MatvecRoute::Simd => {
+                #[cfg(feature = "simd")]
+                if let Some(fns) = crate::simd::maybe_simd() {
+                    return self.matvec_simd(x, fns);
+                }
+                self.matvec_scalar(x)
             }
+            MatvecRoute::Scalar => self.matvec_scalar(x),
         }
-
-        self.matvec_scalar(x)
     }
 
     #[inline]
