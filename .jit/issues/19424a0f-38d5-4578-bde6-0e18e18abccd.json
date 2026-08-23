@@ -8,6 +8,7 @@
   ],
   "description": "Wire the baked selection inside the prime-field route predicates and at the FieldVec dot-product scratch length.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.8, §3.11 and the prime_route and field_vec rows of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: f32_min_prime, f32_min_cols and f64_min_cols resolve through the baked constants inside the const fn predicates (which stay const fn), and dot_chunk_len resolves through its baked constant as the stack-array length, all with arithmetic unchanged.\n- [hard] REQ-02: The prime_gemm_route reporter and both baked witnesses (wired into the CI baked step) pass; the FieldVec dot-product equivalence suite passes unchanged.\n- [hard] REQ-03: Rustdoc names the profile fields; existing tests pass unchanged.",
   "documents": [],
+  "done_at": "2026-08-23T15:10:08.824803166Z",
   "first_ready_at": "2026-08-22T21:27:02.762767036Z",
   "gates_required": [
     "cargo-ci",
@@ -21,14 +22,14 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-23T15:02:50.388152312Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T15:07:03.482693029Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:27:06.013495292Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T15:09:52.080550491Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "19424a0f-38d5-4578-bde6-0e18e18abccd",
@@ -39,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cut the prime-route and FieldVec selectors over to the tuning profile",
-  "updated_at": "2026-08-23T15:02:50.388152312Z"
+  "updated_at": "2026-08-23T15:10:08.824803166Z"
 }
