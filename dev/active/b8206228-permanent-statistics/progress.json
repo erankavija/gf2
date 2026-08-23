@@ -147,7 +147,7 @@
           "short_id": "a39bb161",
           "title": "Accelerator execution for campaign cells",
           "classification": "implementation",
-          "status": "rework-2 dispatched after the 2026-08-24 crash recovery. Lead review at f55cf2fe found the production driver path per-cell, but the public run_field_with_worker_count_and_accelerator API still applies one AcceleratorConfig to every cell in a field and its Rustdoc remains incomplete. Attempt 2 must converge the field API on AcceleratorCostTable, add a multi-cell behavioural test, and complete all public contracts. GPU/device work is forbidden while the owner's Baldur's Gate 3 process is live."
+          "status": "blocked pending owner escalation after rework-2 reached MAX. Commit 7316c062 (merged by f077c380) converged the public field API on AcceleratorCostTable and added the multi-cell behavioural test, but independent review found the binary's --accelerator-cost-table requirement is manifest-global while execution is field-scoped: selecting a processor-only field from a mixed manifest refuses solely because another field contains accelerator cells. The recommended bounded lead-direct repair makes the CLI check field-scoped, adds a real-binary mixed-manifest regression, and reruns the registered gates."
         }
       ]
     },
@@ -501,11 +501,25 @@
       "requested_at": "2026-08-17T22:55:00Z",
       "resolved_at": "2026-08-17T22:57:00Z",
       "decision": "Owner: top-2 per cell. Nominate two candidates per gap cell from existing non-cohort evidence with recorded per-cell basis, measure those in 296a41c9-pattern cohorts, rule-3-exclude the rest with recorded exclusions."
+    },
+    {
+      "issue": "a39bb161",
+      "reason": "Independent review after rework-2 found a new field-scope defect with the rework counter at MAX: permanent_campaign requires --accelerator-cost-table when any manifest field contains an accelerator cell, even when --q selects a processor-only field. The driver itself correctly preflights only the selected field, so the binary rejects a valid processor-only execution before reaching that path.",
+      "status": "pending",
+      "requested_at": "2026-08-24T01:13:13+03:00",
+      "options": [
+        "Approve one bounded lead-direct repair: scope the CLI requirement to the selected field, add a real-binary mixed-manifest regression, and rerun the registered gates.",
+        "Take over the issue manually.",
+        "Reject the issue, leaving accelerator execution and every dependent campaign task blocked."
+      ],
+      "lead_recommendation": "Approve the bounded lead-direct repair. It is local, preserves the reviewed per-cell scheduler contract, and directly tests the only remaining failure."
     }
   ],
   "standing_rules": [
     "Owner directive 2026-08-18: within this epic, codex Luna may be used for at most one rework round per issue; any subsequent rework round is dispatched to an Opus subagent (Agent tool, model opus).",
-    "codex luna dispatches can wedge before doing any work: a stalled worker shows a live process with 00:00:00 CPU time and no ~/.codex/sessions rollout file for that run. Diagnose with `ps -o etime,time` plus the session-log listing before concluding it is merely slow, then TaskStop rather than waiting. Observed session 13: a39bb161 rework-1 held 47 minutes at zero CPU and produced nothing."
+    "codex luna dispatches can wedge before doing any work: a stalled worker shows a live process with 00:00:00 CPU time and no ~/.codex/sessions rollout file for that run. Diagnose with `ps -o etime,time` plus the session-log listing before concluding it is merely slow, then TaskStop rather than waiting. Observed session 13: a39bb161 rework-1 held 47 minutes at zero CPU and produced nothing.",
+    "Owner directive 2026-08-24: agent dispatch and rework prompts are ephemeral coordination material and do not belong in the repository.",
+    "Owner directive 2026-08-24: GPU-heavy work is guaranteed safe from 02:00 local unless the owner says otherwise. Baldur's Gate 3 belongs to another user, so this workflow must not use process visibility as the admission test."
   ],
   "rework_counts": {
     "6c7fcb38": 1,
@@ -620,7 +634,13 @@
       "issue": "7a816262",
       "source": "2026-08-24 host-crash recovery",
       "finding": "The transient target/permanent-campaign tree and premeasure-v1 process receipts are absent after the host crash. No durable artifact proves that the re-armed 2026-08-19 run completed, so none of its intended measurements can be credited.",
-      "disposition": "Rebuild the pinned preparation state and rerun the resumable premeasurement only after 02:00 local and only while the owner's /data/SteamLibrary/steamapps/common/Baldurs Gate 3/bin/bg3 process is absent. Persist completed evidence outside target before relying on it across another crash."
+      "disposition": "Rebuild the pinned preparation state and rerun the resumable premeasurement only at or after the owner-guaranteed 02:00 local window unless the owner overrides it. Baldur's Gate 3 belongs to another user, so process visibility is not an admission check. Persist completed evidence outside target before relying on it across another crash."
+    },
+    {
+      "issue": "53d8e438",
+      "source": "forward decision audit, session 14",
+      "finding": "REQ-03 requires a preregistered specified multiple of standard error for |delta(n)|, while the authoritative protocol defines interval-aware delta-AIC without that multiple and REQ-02 forbids selecting a threshold after seeing campaign data.",
+      "disposition": "Resolve before dispatch. Recommended: amend REQ-03 to the protocol's preregistered interval-aware delta-AIC decision rule; alternatively preregister a concrete standard-error multiple before campaign data exist."
     }
   ],
   "started_at": "2026-08-09T12:20:30Z",
