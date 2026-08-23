@@ -9201,3 +9201,4 @@
 {"gate_key":"doc-review","id":"bb856967-b9f2-4627-9377-8f4aa5ac33e1","issue_id":"e2744fcf-470b-45d6-8750-0413620eb151","timestamp":"2026-08-23T17:04:35.789433298Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"01419609-3d60-4fd3-9389-7798bfdeb03d","issue_id":"e2744fcf-470b-45d6-8750-0413620eb151","timestamp":"2026-08-23T17:07:23.569307637Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"83307c16-4430-4c07-8041-0fc8a18ff80b","issue_id":"e2744fcf-470b-45d6-8750-0413620eb151","timestamp":"2026-08-23T17:09:54.994281280Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"c1437793-aa52-43c4-9306-81f6ec406b9b","issue_id":"e2744fcf-470b-45d6-8750-0413620eb151","timestamp":"2026-08-23T17:12:06.045662761Z","type":"gate_failed","updated_by":"auto:executor"}
