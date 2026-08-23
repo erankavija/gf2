@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the PLE selectors over to the tuning profile",
-  "updated_at": "2026-08-22T21:28:32.262740726Z"
+  "updated_at": "2026-08-23T07:08:33.621482476Z"
 }

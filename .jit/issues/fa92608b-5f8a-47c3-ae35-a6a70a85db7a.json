@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the SoA batch selectors over to the tuning profile",
-  "updated_at": "2026-08-22T21:28:01.912895169Z"
+  "updated_at": "2026-08-23T07:08:48.927200374Z"
 }

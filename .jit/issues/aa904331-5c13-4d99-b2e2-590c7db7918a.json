@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the M4RM schedule selectors over to the tuning profile",
-  "updated_at": "2026-08-22T21:28:09.553319155Z"
+  "updated_at": "2026-08-23T07:08:18.341244664Z"
 }

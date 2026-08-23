@@ -39,7 +39,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the parallel-permanent chunk length over to the tuning profile",
-  "updated_at": "2026-08-22T21:28:55.058787003Z"
+  "updated_at": "2026-08-23T07:08:41.269607941Z"
 }

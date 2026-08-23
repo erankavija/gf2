@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Extend the baked tuning module with the follow-on constants",
-  "updated_at": "2026-08-22T21:27:21.924784836Z"
+  "updated_at": "2026-08-23T07:08:03.112106185Z"
 }

@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the dense-inversion selectors over to the tuning profile",
-  "updated_at": "2026-08-22T21:28:17.135427140Z"
+  "updated_at": "2026-08-23T07:08:25.979592201Z"
 }

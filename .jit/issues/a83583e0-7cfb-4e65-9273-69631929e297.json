@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-08-22T21:29:10.377186659Z"
+  "updated_at": "2026-08-23T07:08:10.719135846Z"
 }
