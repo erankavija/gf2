@@ -17,12 +17,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-23T14:21:45.093514253Z",
+      "updated_at": "2026-08-23T14:58:07.757577441Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-23T14:25:05.834939364Z",
+      "updated_at": "2026-08-23T15:02:50.388152312Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -41,5 +41,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut the prime-route and FieldVec selectors over to the tuning profile",
-  "updated_at": "2026-08-23T14:25:05.834939364Z"
+  "updated_at": "2026-08-23T15:02:50.388152312Z"
 }
