@@ -49,6 +49,28 @@ pub fn last_effective_soa_chunk() -> Option<usize> {
     }
 }
 
+/// Reports the thread half of [`should_parallelize_soa_batch`]'s gate —
+/// whether the rayon pool this process dispatches into has more than one
+/// thread. Route observation tests branch on it so their expectations
+/// follow the same gate the dispatcher uses on every supported
+/// configuration (a single-threaded pool takes the scalar arm and records
+/// no chunk).
+///
+/// Exists only under `cfg(test)` or the `test-support` feature.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn soa_parallel_pool_is_multi_threaded() -> bool {
+    #[cfg(feature = "parallel")]
+    {
+        rayon::current_num_threads() > 1
+    }
+
+    #[cfg(not(feature = "parallel"))]
+    {
+        false
+    }
+}
+
 /// Clears the value [`last_effective_soa_chunk`] reports, so a subsequent
 /// call can be observed in isolation — including observing that a scalar-arm
 /// call (below `soa_batch.parallel_min_len()`) records nothing.
