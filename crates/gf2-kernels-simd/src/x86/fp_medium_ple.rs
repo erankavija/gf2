@@ -73,8 +73,6 @@ use core::arch::x86_64::*;
 /// Inner SIMD lane width (8 × u32 lanes per ymm).
 const LANE_U32: usize = 8;
 
-pub use crate::fp_medium_ple::KC_U16;
-
 pub use crate::fp_medium_ple::PANEL_SCRATCH_COLS;
 
 /// Panelized PLE base-case elimination on canonical u16 storage.
