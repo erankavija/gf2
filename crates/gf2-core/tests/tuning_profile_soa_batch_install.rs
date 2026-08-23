@@ -152,7 +152,9 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
         let expected_square2: Vec<Fq2Big> = a2.iter().map(|x| *x * *x).collect();
 
         reset_last_effective_soa_chunk();
-        let got_mul2 = ba2.batch_mul_quadratic::<CfgBeta3>(&bb2).to_quadratic::<CfgBeta3>();
+        let got_mul2 = ba2
+            .batch_mul_quadratic::<CfgBeta3>(&bb2)
+            .to_quadratic::<CfgBeta3>();
         assert_eq!(
             last_effective_soa_chunk(),
             Some(INSTALLED_CHUNK_LEN),
@@ -164,7 +166,9 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
         );
 
         reset_last_effective_soa_chunk();
-        let got_square2 = ba2.batch_square_quadratic::<CfgBeta3>().to_quadratic::<CfgBeta3>();
+        let got_square2 = ba2
+            .batch_square_quadratic::<CfgBeta3>()
+            .to_quadratic::<CfgBeta3>();
         assert_eq!(
             last_effective_soa_chunk(),
             Some(INSTALLED_CHUNK_LEN),
@@ -199,7 +203,9 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
         let expected_square3: Vec<Fq3Big> = a3.iter().map(|x| *x * *x).collect();
 
         reset_last_effective_soa_chunk();
-        let got_mul3 = ba3.batch_mul_cubic::<CfgCubicBeta3>(&bb3).to_cubic::<CfgCubicBeta3>();
+        let got_mul3 = ba3
+            .batch_mul_cubic::<CfgCubicBeta3>(&bb3)
+            .to_cubic::<CfgCubicBeta3>();
         assert_eq!(
             last_effective_soa_chunk(),
             Some(INSTALLED_CHUNK_LEN),
@@ -211,7 +217,9 @@ fn installed_soa_batch_profile_moves_route_boundary_and_chunk_length_is_determin
         );
 
         reset_last_effective_soa_chunk();
-        let got_square3 = ba3.batch_square_cubic::<CfgCubicBeta3>().to_cubic::<CfgCubicBeta3>();
+        let got_square3 = ba3
+            .batch_square_cubic::<CfgCubicBeta3>()
+            .to_cubic::<CfgCubicBeta3>();
         assert_eq!(
             last_effective_soa_chunk(),
             Some(INSTALLED_CHUNK_LEN),
