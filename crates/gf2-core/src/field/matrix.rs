@@ -2526,7 +2526,8 @@ pub(crate) const GEMM_COL_TILE: usize = crate::tuning::baked::GEMM_COL_TILE;
 /// per cell), and the contiguous-A + scratch-output allocations dominate the
 /// inner work. Tuned empirically against the trsm recursion shape (which
 /// decomposes an n×n trsm into many tiny `gemm_axpy_into_view` calls down to
-/// `TRI_BASE_THRESHOLD = 8`): at `m, k, n ≤ 32` the per-cell SIMD dot wins; at
+/// the triangular base case — live bound `triangular.base_case_max_dim`,
+/// conservative default `8`): at `m, k, n ≤ 32` the per-cell SIMD dot wins; at
 /// `m · k · n ≥ 4096` (≈ a 16³ cube) the whole-GEMM kernel wins on every cell
 /// measured in `2026-05-26-40195c09-gemm-axpy-lift`. This is the conservative
 /// default for the tuning-profile field `gemm.axpy_fast_path_min_volume`.
