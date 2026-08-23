@@ -36,8 +36,20 @@
 //! ([`crate::fp_small_ple`]) is used. For `P ≥ 65536` the generic
 //! 64-bit Montgomery path remains.
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub use crate::x86::fp_medium_ple::{KC_U16, PANEL_SCRATCH_COLS};
+/// L1d-fit column-window blocking factor for the u16-lane panel-base
+/// kernel: half the byte-lane panel kernel's `KC = 256`
+/// ([`crate::x86::fp_small_panel::KC`]), reflecting the 2× lane-density
+/// gap between u16 and u8 lanes (16 → 8 u16 lanes per AVX2 tile against
+/// 16 u8 lanes for the byte-lane kernel). Measured on the 5900X
+/// reference host:
+/// `dev/bench_results/2026-05-27-68db401b-fp-medium-ple.md:30-31` (host
+/// at `:8`).
+pub const KC_U16: usize = 128;
+
+/// Structural scratch bound for the u16-lane PLE kernel, in columns.
+///
+/// This bound is distinct from the tuned L1d blocking factor [`KC_U16`].
+pub const PANEL_SCRATCH_COLS: usize = 256;
 
 /// Whole panelized PLE base-case signature (u16-lane variant).
 ///
