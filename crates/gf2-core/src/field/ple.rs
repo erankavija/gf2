@@ -134,6 +134,18 @@ use crate::field::triangular::{trsm_lower, trsm_upper};
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
 
+/// Default for [`FiniteField::PLE_BASE_COLS`]: column-window width at or
+/// below which [`FieldMatrix::ple`]'s block-recursive driver switches to
+/// the direct column-by-column base case.
+///
+/// Selected by the same Criterion session as
+/// `triangular::TRI_BASE_MAX_DIM_DEFAULT`: values 1, 4, 8 and 16 were
+/// evaluated, and 8 produced a ≈ 80% regression on `pluq/Fp_M31/uniform/256`
+/// because the Mersenne-31 blocked GEMM amortises its delayed `u128`
+/// reduction and the schoolbook leaf does not —
+/// `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md:146`.
+pub(crate) const PLE_SCALAR_BASE_MAX_COLS_DEFAULT: usize = 1;
+
 // ─── Permutation ─────────────────────────────────────────────────────────────
 
 /// A row permutation produced by [`FieldMatrix::ple`].
@@ -638,7 +650,7 @@ fn ple_in_place_window<F: FiniteField>(
     // but each panel handles few enough columns that the wide GEMM
     // dominates the work between panels. 128 was empirically selected
     // from a tuning sweep over {32, 48, 64, 96, 128} — see
-    // `dev/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
+    // `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
     const PLE_PANEL_RECURSIVE_BASE: usize = 128;
     if F::has_simd_ple_panel_base() && win > PLE_PANEL_RECURSIVE_BASE {
         return ple_panel_recursive_window::<F>(
@@ -750,7 +762,7 @@ fn ple_in_place_window<F: FiniteField>(
 /// 2D recursion. The 2D split is structurally equivalent at the cost
 /// of more recursion bookkeeping; the 1D column-axis form has been
 /// sufficient to close the GF(251) ratio gap empirically (see
-/// `dev/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md`).
+/// `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md`).
 ///
 /// # Correctness invariants preserved
 ///

@@ -242,6 +242,18 @@ use crate::field::FiniteField;
 /// each diagonal block stays within L1 cache on a typical x86-64 core.
 pub const TRSM_BLOCKED_PANEL_SIZE: usize = 64;
 
+/// Default for [`FiniteField::TRI_BASE_THRESHOLD`]: block size at or below
+/// which the triangular primitives' recursion drops into a direct loop.
+///
+/// Selected by a Criterion sweep over `{4, 8, 16, 32, 64}` on
+/// `Fp<MERSENNE_31>` at `n ∈ {256, 1024}` for `trsm_upper`, `trsm_lower`
+/// and `pluq`, on an AMD Ryzen 9 5900X (Zen 3) with `rustc 1.95.0`:
+/// `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md:26-33`
+/// for the host and `:79-110` for the sweep tables and the selection.
+/// Recorded again at
+/// `dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-10.md:41`.
+pub(crate) const TRI_BASE_MAX_DIM_DEFAULT: usize = 8;
+
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /// Solves the upper-triangular linear system `A · X = B` in place,
