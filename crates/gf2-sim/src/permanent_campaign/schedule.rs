@@ -112,6 +112,14 @@ impl Default for AcceleratorCostTable {
     /// Every accelerator cell resolves to
     /// [`ScheduleError::AcceleratorCostMissing`] against it, which is what a
     /// caller that supplied no measured costs should get.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)` time and space.
     fn default() -> Self {
         Self {
             costs: BTreeMap::new(),
@@ -122,6 +130,18 @@ impl Default for AcceleratorCostTable {
 
 impl AcceleratorCostTable {
     /// Builds a table from measured `(q, n) -> per-matrix cost` entries.
+    ///
+    /// The map is adopted without iteration or validation. In particular, a
+    /// zero cost remains valid and has the unbounded-rate meaning documented by
+    /// [`launch_size`].
+    ///
+    /// # Panics
+    ///
+    /// Does not panic.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`; ownership of the existing map is moved into the table.
     #[must_use]
     pub fn new(costs: BTreeMap<(u8, u16), Duration>, launch_cap: Duration) -> Self {
         Self { costs, launch_cap }
@@ -133,6 +153,14 @@ impl AcceleratorCostTable {
     ///
     /// Returns [`ScheduleError::AcceleratorCostMissing`] when the cell has no
     /// measured entry.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic.
+    ///
+    /// # Complexity
+    ///
+    /// `O(log C)` for `C` measured cells.
     pub fn config_for(&self, q: u8, n: u16) -> Result<AcceleratorConfig, ScheduleError> {
         let per_matrix_cost = self
             .costs
@@ -146,6 +174,14 @@ impl AcceleratorCostTable {
     }
 
     /// Whether the table has a measured entry for one cell.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic.
+    ///
+    /// # Complexity
+    ///
+    /// `O(log C)` for `C` measured cells.
     #[must_use]
     pub fn contains(&self, q: u8, n: u16) -> bool {
         self.costs.contains_key(&(q, n))
@@ -161,6 +197,14 @@ impl AcceleratorCostTable {
 /// The measured per-matrix input therefore sizes each successive launch rather
 /// than reusing one batch size across the grid. A zero measured cost is treated
 /// as an unbounded rate and selects all remaining matrices.
+///
+/// # Panics
+///
+/// Does not panic, including for zero durations or zero remaining matrices.
+///
+/// # Complexity
+///
+/// `O(1)` time and space.
 #[must_use]
 pub fn launch_size(per_matrix: Duration, cap: Duration, remaining: u64) -> usize {
     if remaining == 0 {
@@ -461,6 +505,30 @@ pub fn enumerate_work_items(
 /// matrices of dimension `n`, the evaluation cost is the selected algebra
 /// kernel plus an optional `O(n³)` determinant per matrix; sampler and packing
 /// storage remain `O(n²)`.
+///
+/// Accelerator cells are refused with
+/// [`ScheduleError::AcceleratorCostMissing`] because this convenience entry
+/// point supplies no measured accelerator costs. Processor-only fields execute
+/// normally.
+///
+/// # Errors
+///
+/// Returns [`ScheduleError::FieldNotFound`] if `field` is absent,
+/// [`ScheduleError::MissingCampaignPurpose`] if the manifest has no campaign
+/// stream purpose, [`ScheduleError::InvalidWorkItem`] for invalid work-item or
+/// sampler configuration, [`ScheduleError::BackendUnavailable`] when a frozen
+/// backend is unsupported, [`ScheduleError::AcceleratorCostMissing`] when an
+/// accelerator cell has no measured cost.
+///
+/// # Panics
+///
+/// Does not intentionally panic. Invalid execution configuration is returned
+/// as an error.
+///
+/// # Complexity
+///
+/// Linear in selected shards, with each shard dominated by its configured
+/// permanent kernel and optional `O(n³)` determinant per matrix.
 pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, ScheduleError> {
     run_field_with_worker_count(manifest, field, 1)
 }
@@ -477,9 +545,18 @@ pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Sch
 ///
 /// # Errors
 ///
-/// Returns [`ScheduleError`] when `worker_count` is zero, the manifest has no
-/// campaign stream purpose, or a selected work item cannot be opened or
-/// evaluated. The batch pool is configured exactly with `worker_count`.
+/// Returns [`ScheduleError::FieldNotFound`] if `field` is absent,
+/// [`ScheduleError::MissingCampaignPurpose`] if the manifest has no campaign
+/// stream purpose, [`ScheduleError::InvalidWorkItem`] when `worker_count` is
+/// zero or a work item, sampler, pool, or dispatch is invalid,
+/// [`ScheduleError::BackendUnavailable`] when a frozen backend is unsupported,
+/// [`ScheduleError::AcceleratorCostMissing`] when an accelerator cell has no
+/// measured cost. The batch pool is configured exactly with `worker_count`.
+///
+/// # Panics
+///
+/// Does not intentionally panic. Invalid execution configuration and
+/// pool-construction failures are returned as schedule errors.
 ///
 /// # Complexity
 ///
@@ -491,20 +568,68 @@ pub fn run_field_with_worker_count(
     field: u8,
     worker_count: usize,
 ) -> Result<FieldRun, ScheduleError> {
-    run_field_with_worker_count_and_accelerator(manifest, field, worker_count, None)
+    run_field_with_worker_count_and_accelerator(
+        manifest,
+        field,
+        worker_count,
+        &AcceleratorCostTable::default(),
+    )
 }
 
-/// Executes one field with explicit accelerator launch-sizing configuration.
+/// Executes one field with measured accelerator costs resolved per `(q, n)`.
 ///
-/// The configuration is runtime input and is intentionally not read from or
-/// written to the frozen manifest. Processor-only cells follow the same paths
-/// as [`run_field_with_worker_count`].
+/// The table is runtime input and is intentionally not read from or written to
+/// the frozen manifest. Every accelerator work item resolves its own entry,
+/// and all entries are preflighted before any matrix is drawn or evaluated.
+/// An empty/default table therefore retains processor-only behavior while
+/// refusing an accelerator field before partial execution.
+///
+/// # Errors
+///
+/// Returns [`ScheduleError::FieldNotFound`] if `field` is absent,
+/// [`ScheduleError::MissingCampaignPurpose`] if the manifest has no campaign
+/// stream purpose, [`ScheduleError::InvalidWorkItem`] when `worker_count` is
+/// zero or a work item, sampler, pool, or dispatch is invalid,
+/// [`ScheduleError::BackendUnavailable`] when a frozen backend is unsupported,
+/// [`ScheduleError::AcceleratorCostMissing`] when any accelerator `(q, n)` has
+/// no measured entry, and [`ScheduleError::AcceleratorDeviceUnavailable`] when
+/// an accelerator cell's required device is absent.
+///
+/// # Panics
+///
+/// Does not intentionally panic. Invalid execution configuration and
+/// pool-construction failures are returned as schedule errors.
+///
+/// # Complexity
+///
+/// Preflight is `O(S log C)` for `S` selected shards and `C` measured cells.
+/// Execution is linear in selected shards, each dominated by its configured
+/// permanent kernel and optional `O(n³)` determinant per matrix.
 pub fn run_field_with_worker_count_and_accelerator(
     manifest: &CampaignManifest,
     field: u8,
     worker_count: usize,
-    accelerator: Option<AcceleratorConfig>,
+    accelerator: &AcceleratorCostTable,
 ) -> Result<FieldRun, ScheduleError> {
+    run_field_with_accelerator_evaluator(manifest, field, worker_count, accelerator, run_shard)
+}
+
+fn run_field_with_accelerator_evaluator<E>(
+    manifest: &CampaignManifest,
+    field: u8,
+    worker_count: usize,
+    accelerator: &AcceleratorCostTable,
+    mut evaluator: E,
+) -> Result<FieldRun, ScheduleError>
+where
+    E: FnMut(
+        u64,
+        u8,
+        &WorkItem,
+        usize,
+        Option<AcceleratorConfig>,
+    ) -> Result<ShardRun, ScheduleError>,
+{
     validate_worker_count(worker_count)?;
     let purpose = manifest
         .stream_purposes
@@ -512,14 +637,24 @@ pub fn run_field_with_worker_count_and_accelerator(
         .find(|purpose| purpose.tag == CAMPAIGN_CELL_PURPOSE_TAG)
         .ok_or(ScheduleError::MissingCampaignPurpose)?;
     let items = enumerate_work_items(manifest, Some(field))?;
+    let accelerator_configs = items
+        .iter()
+        .map(|item| {
+            if item.backend == Backend::Accelerator {
+                accelerator.config_for(item.q, item.n).map(Some)
+            } else {
+                Ok(None)
+            }
+        })
+        .collect::<Result<Vec<_>, ScheduleError>>()?;
     let mut shards = Vec::with_capacity(items.len());
-    for item in &items {
-        shards.push(run_shard(
+    for (item, accelerator_config) in items.iter().zip(accelerator_configs) {
+        shards.push(evaluator(
             manifest.root_seed,
             purpose.tag,
             item,
             worker_count,
-            accelerator,
+            accelerator_config,
         )?);
     }
     let summary = summarize(field, &shards, manifest.cells.len() as u64);
@@ -629,6 +764,29 @@ fn run_shard(
 ///
 /// This is the library seam used by the checkpointed driver and by tests that
 /// inject an evaluation failure. It performs no dataset I/O.
+/// In a build that provides the accelerator backend, accelerator work is
+/// refused with [`ScheduleError::AcceleratorCostMissing`] because this
+/// convenience entry point supplies no measured cost; other builds return
+/// [`ScheduleError::BackendUnavailable`] first.
+///
+/// # Errors
+///
+/// Returns [`ScheduleError::MissingCampaignPurpose`] when the manifest has no
+/// campaign stream purpose, [`ScheduleError::InvalidWorkItem`] for invalid
+/// work-item or sampler configuration, [`ScheduleError::BackendUnavailable`]
+/// when the frozen backend is unsupported,
+/// [`ScheduleError::AcceleratorCostMissing`] when an accelerator item has no
+/// measured cost.
+///
+/// # Panics
+///
+/// Does not intentionally panic. Invalid execution configuration is returned
+/// as an error.
+///
+/// # Complexity
+///
+/// Dominated by the selected permanent kernel, plus `O(n³)` when the
+/// determinant companion is enabled.
 pub fn evaluate_work_item(
     manifest: &CampaignManifest,
     item: &WorkItem,
@@ -641,10 +799,22 @@ pub fn evaluate_work_item(
 ///
 /// # Errors
 ///
-/// Returns [`ScheduleError`] when `worker_count` is zero, the manifest has no
-/// campaign stream purpose, or the work item cannot be opened or evaluated.
-/// The function does not intentionally panic; invalid execution configuration
-/// and pool-construction failures are returned as schedule errors.
+/// Returns [`ScheduleError::MissingCampaignPurpose`] when the manifest has no
+/// campaign stream purpose, [`ScheduleError::InvalidWorkItem`] when
+/// `worker_count` is zero or the work item, sampler, pool, or dispatch is
+/// invalid, [`ScheduleError::BackendUnavailable`] when the frozen backend is
+/// unsupported, [`ScheduleError::AcceleratorCostMissing`] when an accelerator
+/// item has no measured cost.
+///
+/// # Panics
+///
+/// Does not intentionally panic. Invalid execution configuration and
+/// pool-construction failures are returned as schedule errors.
+///
+/// # Complexity
+///
+/// Dominated by the selected permanent kernel, plus `O(n³)` when the
+/// determinant companion is enabled.
 pub fn evaluate_work_item_with_worker_count(
     manifest: &CampaignManifest,
     item: &WorkItem,
@@ -669,6 +839,7 @@ pub fn evaluate_work_item_with_worker_count(
 /// that cannot be opened, or a dispatch that returns the wrong number of
 /// values, [`ScheduleError::BackendUnavailable`] when the cell names a backend
 /// this build does not provide, and — for an accelerator cell —
+/// [`ScheduleError::AcceleratorCostMissing`] when `accelerator` is `None`, and
 /// [`ScheduleError::AcceleratorDeviceUnavailable`] when no usable device is
 /// present.
 ///
@@ -1944,6 +2115,79 @@ mod tests {
     }
 
     #[test]
+    fn test_run_field_resolves_each_accelerator_cell_and_preflights_missing_costs() {
+        let mut small = cell(3, 2, 1, &[(0, 41)]);
+        small.backend = Backend::Accelerator;
+        let mut large = cell(3, 3, 1, &[(0, 43)]);
+        large.backend = Backend::Accelerator;
+        let campaign = manifest(vec![small, large]);
+        let launch_cap = Duration::from_millis(500);
+        let mut costs = BTreeMap::new();
+        costs.insert((3, 2), Duration::from_micros(40));
+        costs.insert((3, 3), Duration::from_micros(770));
+        let table = AcceleratorCostTable::new(costs, launch_cap);
+
+        let mut resolved = Vec::new();
+        let run = run_field_with_accelerator_evaluator(
+            &campaign,
+            3,
+            1,
+            &table,
+            |root_seed, purpose_tag, item, _worker_count, accelerator| {
+                resolved.push(((item.q, item.n), accelerator));
+                Ok(synthetic_shard_run(root_seed, purpose_tag, item))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(run.shards().len(), 2);
+        assert_eq!(
+            resolved,
+            vec![
+                (
+                    (3, 2),
+                    Some(AcceleratorConfig {
+                        per_matrix_cost: Duration::from_micros(40),
+                        launch_cap,
+                    })
+                ),
+                (
+                    (3, 3),
+                    Some(AcceleratorConfig {
+                        per_matrix_cost: Duration::from_micros(770),
+                        launch_cap,
+                    })
+                ),
+            ]
+        );
+
+        let mut incomplete_costs = BTreeMap::new();
+        incomplete_costs.insert((3, 2), Duration::from_micros(40));
+        let incomplete = AcceleratorCostTable::new(incomplete_costs, launch_cap);
+        let mut evaluation_count = 0;
+        let error = run_field_with_accelerator_evaluator(
+            &campaign,
+            3,
+            1,
+            &incomplete,
+            |root_seed, purpose_tag, item, _worker_count, _accelerator| {
+                evaluation_count += 1;
+                Ok(synthetic_shard_run(root_seed, purpose_tag, item))
+            },
+        )
+        .unwrap_err();
+
+        assert!(matches!(
+            error,
+            ScheduleError::AcceleratorCostMissing { q: 3, n: 3 }
+        ));
+        let rendered = error.to_string();
+        assert!(rendered.contains("q=3"), "{rendered}");
+        assert!(rendered.contains("n=3"), "{rendered}");
+        assert_eq!(evaluation_count, 0, "preflight must precede evaluation");
+    }
+
+    #[test]
     fn test_launch_size_never_returns_zero() {
         assert_eq!(
             launch_size(Duration::from_secs(2), Duration::from_millis(1), 10),
@@ -2164,6 +2408,35 @@ mod tests {
                     .unwrap(),
             },
             determinant_companion: DeterminantPlan::NotEvaluated,
+        }
+    }
+
+    fn synthetic_shard_run(root_seed: u64, purpose_tag: u8, item: &WorkItem) -> ShardRun {
+        let mut permanent_histogram = vec![0; usize::from(item.q)];
+        permanent_histogram[1] = item.matrix_count;
+        ShardRun {
+            record: ShardRecord {
+                schema_version: SCHEMA_VERSION,
+                shard_id: item.shard_id,
+                stream_address: StreamAddress {
+                    root_seed,
+                    q: item.q,
+                    n: item.n,
+                    purpose_tag,
+                    stream_index: item.stream_index,
+                },
+                matrix_count: item.matrix_count,
+                permanent_zero_count: 0,
+                permanent_histogram,
+                determinant: DeterminantCount::NotEvaluated,
+            },
+            timing: PhaseDurations {
+                draw: Duration::ZERO,
+                pack: Duration::ZERO,
+                evaluate: Duration::ZERO,
+                determinant: Duration::ZERO,
+                count: Duration::ZERO,
+            },
         }
     }
 
