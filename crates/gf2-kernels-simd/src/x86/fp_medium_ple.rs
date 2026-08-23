@@ -83,6 +83,11 @@ const LANE_U32: usize = 8;
 /// at `:8`).
 pub const KC_U16: usize = 128;
 
+/// Structural scratch bound for the u16-lane PLE kernel, in columns.
+///
+/// This bound is distinct from the tuned L1d blocking factor [`KC_U16`].
+pub const PANEL_SCRATCH_COLS: usize = 256;
+
 /// Panelized PLE base-case elimination on canonical u16 storage.
 ///
 /// See module docs for algorithm. Performs in-place rank-revealing
@@ -274,13 +279,12 @@ unsafe fn fused_scale_and_schur_u16(
 
     // Snapshot the pivot row's tail into a stack buffer so the inner
     // loop can broadcast contiguous lanes without aliasing the
-    // mutable `window` slice. Callers keep `win` within the tuned
-    // blocking factor [`KC_U16`]; the scratch capacity of 256 elements
-    // (2 × [`KC_U16`]) is the limit this function itself enforces.
-    let mut pivot_buf = [0u16; 256];
+    // mutable `window` slice. The scratch capacity is the structural bound
+    // this function itself enforces; callers may tune `win` independently.
+    let mut pivot_buf = [0u16; PANEL_SCRATCH_COLS];
     debug_assert!(
-        tail_len <= pivot_buf.len(),
-        "fused_scale_and_schur_u16: tail_len exceeds the 256-element scratch capacity"
+        tail_len <= PANEL_SCRATCH_COLS,
+        "fused_scale_and_schur_u16: tail_len exceeds the kernel scratch capacity"
     );
     if tail_len > 0 {
         let pivot_base = rank * win + tail_start;

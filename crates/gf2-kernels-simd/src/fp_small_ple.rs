@@ -31,6 +31,9 @@
 //! Schur-update speedup automatically via `gemm_axpy_into_view`'s
 //! lifted small/medium-prime fast paths (40195c09 lift + 74ba1cdc R1).
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub use crate::x86::fp_small_ple::PANEL_SCRATCH_COLS;
+
 /// Whole panelized PLE base-case signature.
 ///
 /// `window` is the canonical-byte panel storage (row-major,
