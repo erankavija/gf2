@@ -756,3 +756,24 @@ REQ-01 correctly say seven; §3.3's closing line "Every read reaches
 `choose_k_block`" contradicts its own table row for
 `tiled_min_stride_words` (read site `use_register_tiled_schedule`). The
 table rows are authoritative.
+
+## Amendment A3 (2026-08-23, DEC-B15, appended by issue 19424a0f's cutover)
+
+Baked-field naming, harmonized across the follow-on cutovers (t3, t9,
+t15): the design-fixed plain names (`N_THRESH_PRIME`, `F32_MIN_COLS`,
+`F64_MIN_COLS`, `DOT_CHUNK_LEN`, `MATVEC_SIMD_MIN_WORDS`,
+`GEMM_ROW_TILE`, `GEMM_COL_TILE`, …) remain the conservative in-source
+constants that §3's "Default names" and the schema's CONSERVATIVE
+entries reference; each baked selection site reads a cfg-selected
+indirection constant named `<NAME>_SELECTED` (`gf2_tuning_baked` →
+`crate::tuning::baked::<NAME>`, otherwise the conservative constant).
+DEC-G's earlier bit-backend pair (`SIMD_MIN_WORDS_DEFAULT` /
+`SIMD_MIN_WORDS`) predates this rule and stays as landed.
+
+Recorded limitation (surfaced by t15, inherent to D5): while every baked
+constant equals its conservative default, no test can distinguish a
+selection site wired to the conservative constant from one wired to the
+baked constant; only a value divergence is detectable. The baked
+witnesses take their expected boundaries from the committed calibrated
+profile via `TuningProfile::from_json`, so they follow a future
+calibration without naming literals.
