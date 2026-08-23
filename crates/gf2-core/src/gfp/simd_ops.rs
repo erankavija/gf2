@@ -1799,10 +1799,16 @@ pub(crate) fn prime_gemm_select<const P: u64>(m: usize, k: usize, n: usize) -> P
 /// Reports the prime-field GEMM arm for the field `Fp<P>` at output shape
 /// `m × n` with inner dimension `k`.
 ///
+/// The window halves of the decision take their bounds from the tuning
+/// profile's `prime_route.f32_min_prime`, `prime_route.f32_min_cols` and
+/// `prime_route.f64_min_cols` fields, baked at compile time through
+/// [`select_f32_path`] and [`select_f64_path`]
+/// (`dev/active/7d824b2f/design.md` §3.11).
+///
 /// The reporter is [`prime_gemm_select`], the function the dispatchers
 /// themselves select on, so what this reports is what the dispatcher runs.
 /// See that function for the gate chain and for which parts of it are baked
-/// and which are runtime state.
+/// and which are runtime state (host-detected kernels, GF(251) switches).
 #[cfg(feature = "simd")]
 #[must_use]
 pub fn prime_gemm_route<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
