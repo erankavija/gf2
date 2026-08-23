@@ -535,6 +535,35 @@ fn ple_base_direct<F: FiniteField>(
 /// pivot search, swap, scale, and Schur update; the caller's
 /// permutation tracker `perm` (length = view rows) and absolute
 /// pivot column indices are updated in place.
+/// Widest column window handed to the panel kernel since the last
+/// [`reset_max_effective_panel_dispatch_cols`] call. Zero means "none".
+/// Route-observation tests read this to prove the installed per-lane
+/// ceiling bounds every panel dispatch, including the sub-panels the
+/// recursive splitter produces — output equality cannot show that.
+#[cfg(any(test, feature = "test-support"))]
+static MAX_EFFECTIVE_PANEL_DISPATCH_COLS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
+/// Reads the widest panel-kernel dispatch window since the last reset.
+///
+/// Exists only under `cfg(test)` or the `test-support` feature.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn max_effective_panel_dispatch_cols() -> Option<usize> {
+    match MAX_EFFECTIVE_PANEL_DISPATCH_COLS.load(std::sync::atomic::Ordering::SeqCst) {
+        0 => None,
+        w => Some(w),
+    }
+}
+
+/// Clears [`max_effective_panel_dispatch_cols`].
+///
+/// Exists only under `cfg(test)` or the `test-support` feature.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_max_effective_panel_dispatch_cols() {
+    MAX_EFFECTIVE_PANEL_DISPATCH_COLS.store(0, std::sync::atomic::Ordering::SeqCst);
+}
+
 fn try_panel_base_dispatch<F: FiniteField>(
     a: &mut MatViewMut<'_, F>,
     col_lo: usize,
@@ -542,6 +571,9 @@ fn try_panel_base_dispatch<F: FiniteField>(
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
 ) -> Option<usize> {
+    #[cfg(any(test, feature = "test-support"))]
+    MAX_EFFECTIVE_PANEL_DISPATCH_COLS
+        .fetch_max(col_hi - col_lo, std::sync::atomic::Ordering::SeqCst);
     let (data, parent_cols, row_offset, col_offset, rows, cols) = a.raw_parts_mut();
     debug_assert_eq!(col_offset, 0, "ple panel dispatch: view col_offset != 0");
     debug_assert!(
@@ -978,7 +1010,17 @@ fn ple_panel_recursive_window<F: FiniteField>(
     let mut rank_total = 0usize;
 
     while col_cur < col_hi && rank_total < m {
-        let sub_hi = (col_cur + widths.panel_base_max_cols).min(col_hi);
+        // Each sub-panel respects BOTH bounds: the sub-panel split width
+        // and the resolved per-lane ceiling the panel kernel accepts (an
+        // installed profile may set the lane ceiling below the split
+        // width; the direct arm enforces it via the route, so the
+        // splitter must too).
+        let sub_panel_cols = widths
+            .panel_lane_max_cols
+            .map_or(widths.panel_base_max_cols, |lane_max_cols| {
+                lane_max_cols.min(widths.panel_base_max_cols)
+            });
+        let sub_hi = (col_cur + sub_panel_cols).min(col_hi);
 
         // Snapshot pivot-cols length so we can slice this sub-panel's
         // own pivots after the dispatch returns. The dispatch pushes
