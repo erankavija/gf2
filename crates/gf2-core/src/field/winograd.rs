@@ -139,8 +139,18 @@ pub fn winograd_route(m: usize, k: usize, n: usize) -> WinogradRoute {
 
 /// Reports the Winograd arm against an already-resolved
 /// `gemm.winograd_min_dim`.
+/// The single base-case comparison shared by the route reporter and every
+/// dispatch site (top-level and recursive), so reporter and dispatcher
+/// cannot drift: `true` when the classical base case fires for the given
+/// shape at the given threshold (floored at 2 to guard the degenerate
+/// half-dim recursion).
+#[inline]
+pub(crate) fn winograd_takes_base_case(threshold: usize, m: usize, k: usize, n: usize) -> bool {
+    m.min(k).min(n) < threshold.max(2)
+}
+
 fn winograd_route_resolved(winograd_min_dim: usize, m: usize, k: usize, n: usize) -> WinogradRoute {
-    if m.min(k).min(n) < winograd_min_dim.max(2) {
+    if winograd_takes_base_case(winograd_min_dim, m, k, n) {
         WinogradRoute::Classical
     } else {
         WinogradRoute::Winograd
@@ -341,11 +351,10 @@ fn gemm_winograd_inner<F: FiniteField>(
     //
     // The Winograd peel needs `m, k, n ≥ 2` after padding to make
     // progress (half-dim ≥ 1). For tiny matrices with any dim = 1 we
-    // can't peel productively, so we floor the effective threshold at
-    // `2`. This also guards against the `threshold = 1` stress case
-    // used by the bench harness / explicit-threshold tests.
-    let effective_threshold = threshold.max(2);
-    if m.min(k).min(n) < effective_threshold {
+    // can't peel productively, so `winograd_takes_base_case` floors the
+    // threshold at `2`. This also guards against the `threshold = 1`
+    // stress case used by the bench harness / explicit-threshold tests.
+    if winograd_takes_base_case(threshold, m, k, n) {
         return gemm(a, b);
     }
 
@@ -966,7 +975,7 @@ mod tests {
         if m == 0 || k == 0 || n == 0 {
             return gemm(a, b);
         }
-        if m.min(k).min(n) < threshold.max(2) {
+        if winograd_takes_base_case(threshold, m, k, n) {
             // Base case: assert canonical operands respect the theorem-4
             // bound at THIS level (level). For level 0 this is the
             // trivially loose `k · (p-1)²` bound; at deeper levels the
@@ -1166,7 +1175,7 @@ mod tests {
         if m == 0 || k == 0 || n == 0 {
             return I128Mat::zeros(m, n);
         }
-        if m.min(k).min(n) < threshold.max(2) {
+        if winograd_takes_base_case(threshold, m, k, n) {
             // Base case: no further peel. Assert that the *operands*
             // entering this gemm respect the bound at THIS level.
             let bound = theorem_4_bound(level, k_top, p_minus_1);
