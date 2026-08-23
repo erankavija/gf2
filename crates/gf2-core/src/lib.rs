@@ -287,9 +287,10 @@ pub(crate) mod simd {
     /// Candidate F at every cell by 5–10 %. Production therefore routes
     /// to [`maybe_fp_small`] for these cells.
     ///
-    /// Candidate F retains forward-compatibility value: a future amendment
-    /// supported by fresh bench data on a host where F dominates can lower
-    /// `N_THRESH_PRIME` without touching this accessor or the kernel itself.
+    /// Candidate F retains forward-compatibility value: on a host where F
+    /// dominates, a calibration of the tuning profile's
+    /// `prime_route.f32_min_prime` field lowers the prime window without
+    /// touching this accessor or the kernel itself.
     /// Returns `None` on hosts without FMA3.
     ///
     /// Specialised Fermat / Mersenne kernels for `P > 251` remain
