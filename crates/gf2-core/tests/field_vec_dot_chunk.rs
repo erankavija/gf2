@@ -11,7 +11,7 @@
 //!
 //! The observation is a process-wide maximum, so exactly one test per binary
 //! resets and reads it.
-#![cfg(feature = "simd")]
+#![cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 
 use gf2_core::field::vec::{max_effective_dot_chunk_len, reset_max_effective_dot_chunk_len};
 use gf2_core::field::FieldVec;
