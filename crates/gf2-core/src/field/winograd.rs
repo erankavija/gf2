@@ -7,10 +7,11 @@
 //! `O(n^log₂ 7) ≈ O(n^2.807)` complexity versus the classical `O(n³)` gemm
 //! shipped in [`crate::field::matrix::gemm`] (T1, issue `91c06222`).
 //!
-//! The public entry point is [`gemm_winograd`]. Below
-//! [`FiniteField::WINOGRAD_THRESHOLD`] the recursion peels down to T1's
-//! classical blocked gemm, which inherits the crate's SIMD path via
-//! `FieldVec::dot_product_slices`. Odd dimensions are handled by padding a
+//! The public entry point is [`gemm_winograd`]. Below the active
+//! `gemm.winograd_min_dim` profile value — resolved once per call, with
+//! [`WINOGRAD_MIN_DIM_DEFAULT`] as its conservative default — the
+//! recursion peels down to T1's classical blocked gemm, which inherits
+//! the crate's SIMD path via `FieldVec::dot_product_slices`. Odd dimensions are handled by padding a
 //! single row/column of zero field elements, recursing, then slicing the
 //! result back to the original output shape — zero-padding is admissible
 //! over any field because `0 · anything = 0`.
