@@ -13,11 +13,18 @@
 //! serial reference for the same matrix, which is the determinism witness
 //! `dev/active/7d824b2f/design.md` §7.2 requires: the observable permanent
 //! value is identical across installed chunk lengths.
+//!
+//! Chunk-partitioned output is bit-identical for every valid chunk length
+//! (`parallel_bipedal3`'s `# Determinism` section), so an output-equality
+//! comparison between [`permanent_bipedal3_parallel`] and a forced-chunk call
+//! is not evidence that the resolved chunk reached the callee — every valid
+//! chunk length produces the same output. The "reaches `_with_chunk`"
+//! witness instead reads [`last_effective_chunk`], a `test-support` hook
+//! [`permanent_bipedal3_parallel_with_chunk`] records itself, directly off
+//! production code.
 
 use gf2_algebra::packed::Bipedal3Matrix;
-use gf2_algebra::permanent::parallel_bipedal3::{
-    permanent_bipedal3_parallel_with_chunk, permanent_chunk_len,
-};
+use gf2_algebra::permanent::parallel_bipedal3::{last_effective_chunk, permanent_chunk_len};
 use gf2_algebra::permanent::{permanent_bipedal3, permanent_bipedal3_parallel};
 use gf2_core::gfp::Fp;
 use gf2_core::tuning::{
@@ -57,13 +64,12 @@ fn installed_permanent_profile_resolved_chunk_reaches_with_chunk() {
     let mat = test_matrix();
     let reference = permanent_bipedal3(&mat);
 
-    // The production auto-resolving entry point reaches the same chunk value
-    // the accessor reports: this is the "reaches `_with_chunk`" witness.
-    assert_eq!(
-        permanent_bipedal3_parallel(&mat),
-        permanent_bipedal3_parallel_with_chunk(&mat, permanent_chunk_len())
-    );
+    // Call the production auto-resolving entry point, then read back the
+    // chunk value production code actually received: this is the "reaches
+    // `_with_chunk`" witness.
+    let result = permanent_bipedal3_parallel(&mat);
+    assert_eq!(last_effective_chunk(), SMALL_CHUNK);
 
     // Correctness holds under the installed (small, heavily-partitioned) chunk.
-    assert_eq!(permanent_bipedal3_parallel(&mat), reference);
+    assert_eq!(result, reference);
 }
