@@ -517,47 +517,87 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
     None
 }
 
-/// Minimum prime for which Candidate F (f32-FMA cascade) is preferred
-/// over Candidate C (AVX2 16-bit Barrett).
+/// Conservative default for the tuning profile's `prime_route.f32_min_prime`
+/// field: the minimum prime for which Candidate F (f32-FMA cascade) is
+/// preferred over Candidate C (AVX2 16-bit Barrett).
+///
+/// `select_f32_path` compares against `F32_MIN_PRIME_SELECTED`, which is this
+/// constant in the default build and the committed calibrated profile's value
+/// under `--cfg gf2_tuning_baked`.
 ///
 /// Set to 251 (the value of the highest in-scope small prime) based on the
 /// Phase 1 route-selection decision (issue 41096af5, 2026-05-25). Combined
-/// with the n-threshold in `select_f32_path` (`n >= 512`), only the cell
+/// with the column threshold in `select_f32_path`, only the cell
 /// `P == 251 && n >= 512` reaches the F / route-A path; all other in-scope
 /// primes (GF(7), GF(31), GF(127), GF(241)) have `P < 251` and therefore
-/// `P >= N_THRESH_PRIME` evaluates to `false`, routing them to Candidate C
-/// unchanged. See
+/// `P >= F32_MIN_PRIME_SELECTED` evaluates to `false`, routing them to
+/// Candidate C. See
 /// `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
 /// for the full side-by-side evidence table and decision-rule application.
 ///
-/// To select F for primes ≥ some threshold, lower this constant (e.g.
-/// `N_THRESH_PRIME = 11` would route GF(7) to C and GF(11)+ to F). The
-/// dispatch wiring is forward-compatible; amending this constant is the
-/// only code change needed when fresh data supports a lower threshold.
+/// Selecting F for a wider prime window is a calibration of the profile
+/// field, baked through `crate::tuning::baked::N_THRESH_PRIME` (e.g. a value
+/// of 11 routes GF(7) to C and GF(11)+ to F); the dispatch wiring is
+/// forward-compatible and needs no further change.
 pub(crate) const N_THRESH_PRIME: u64 = 251;
 
-/// Minimum output width, in columns, at which `select_f32_path` prefers the
-/// f32-FMA cascade.
+/// Conservative default for the tuning profile's `prime_route.f32_min_cols`
+/// field: the minimum output width, in columns, at which `select_f32_path`
+/// prefers the f32-FMA cascade.
 ///
 /// The pack-cost overhead amortises at this size (≈ 7 % at `n = 1024` against
-/// ≈ 28 % at `n = 256`); below it Candidate C wins.
+/// ≈ 28 % at `n = 256`); below it Candidate C wins. `select_f32_path`
+/// compares against `F32_MIN_COLS_SELECTED`.
 pub(crate) const F32_MIN_COLS: usize = 512;
+
+/// The `prime_route.f32_min_prime` value [`select_f32_path`] compares `P`
+/// against.
+///
+/// The field is baked rather than resolved through `crate::tuning::active()`
+/// because the predicate is a `const fn` over a const-generic prime, so the
+/// whole comparison folds at monomorphisation and a runtime profile read
+/// would put a load and a branch in front of every prime-field GEMM dispatch
+/// (`dev/active/7d824b2f/design.md` §3.11). The default build resolves it to
+/// [`N_THRESH_PRIME`]; `RUSTFLAGS="--cfg gf2_tuning_baked"` resolves it to
+/// `crate::tuning::baked::N_THRESH_PRIME`, following the bit-backend wiring
+/// at `crates/gf2-core/src/kernels/backend.rs:83-89` (DEC-G). Installing a
+/// runtime profile does not move this boundary.
+#[cfg(all(feature = "simd", gf2_tuning_baked))]
+const F32_MIN_PRIME_SELECTED: u64 = crate::tuning::baked::N_THRESH_PRIME;
+
+/// The `prime_route.f32_min_prime` value [`select_f32_path`] compares `P`
+/// against; see the baked arm for the mechanism.
+#[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
+const F32_MIN_PRIME_SELECTED: u64 = N_THRESH_PRIME;
+
+/// The `prime_route.f32_min_cols` value [`select_f32_path`] compares `n`
+/// against; the mechanism is [`F32_MIN_PRIME_SELECTED`]'s.
+#[cfg(all(feature = "simd", gf2_tuning_baked))]
+const F32_MIN_COLS_SELECTED: usize = crate::tuning::baked::F32_MIN_COLS;
+
+/// The `prime_route.f32_min_cols` value [`select_f32_path`] compares `n`
+/// against; the mechanism is [`F32_MIN_PRIME_SELECTED`]'s.
+#[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
+const F32_MIN_COLS_SELECTED: usize = F32_MIN_COLS;
 
 /// Per-(P, m, k, n) Candidate-F / route-A selector.
 ///
 /// Returns `true` when the F-path / route-A is the production default for
 /// this (prime, size) cell.
 ///
-/// With `N_THRESH_PRIME = 251` combined with the n-threshold (`n >= 512`),
-/// only the cell `P == 251 && n >= 512` reaches the F / route-A path:
+/// The two bounds come from the tuning profile's `prime_route.f32_min_prime`
+/// and `prime_route.f32_min_cols` fields through [`F32_MIN_PRIME_SELECTED`]
+/// and [`F32_MIN_COLS_SELECTED`]; at their conservative defaults (251 and
+/// 512) only the cell `P == 251 && n >= 512` reaches the F / route-A path:
 ///
 /// * `P == 251`: `251 >= 251` → prime window satisfied.
 /// * `n >= 512`: pack-cost overhead amortises at this size (≈ 7% at n=1024
 ///   vs ≈ 28% at n=256); below this threshold Candidate C wins.
 ///
 /// All other in-scope primes (`P ∈ {7, 31, 127, 241}`) have `P < 251` and
-/// therefore `P >= N_THRESH_PRIME` evaluates to `false` → Candidate C.
-/// GF(251)/n < 512 is excluded by the `n >= 512` guard → Candidate C.
+/// therefore `P >= F32_MIN_PRIME_SELECTED` evaluates to `false` →
+/// Candidate C. GF(251)/n < 512 is excluded by the column guard →
+/// Candidate C.
 ///
 /// GF(251)/n=1024 ratio: 0.683 vs fflas-ffpack on Zen 3, PASS (≥ 0.667).
 /// GF(251)/n=256 ratio: 0.547 — pack cost dominates; Candidate C wins.
@@ -568,14 +608,14 @@ pub(crate) const F32_MIN_COLS: usize = 512;
 #[inline]
 const fn select_f32_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
     // F-path / route A enabled when prime is in window AND size has
-    // amortised the pack cost. With N_THRESH_PRIME = 251, the prime
-    // window is exactly {251}; other in-scope primes (≤ 241) stay on
+    // amortised the pack cost. At the conservative prime bound of 251 the
+    // prime window is exactly {251}; other in-scope primes (≤ 241) stay on
     // Candidate C.
     //
     // GF(251)/n ≥ 512: ratio 0.683 vs fflas-ffpack on Zen 3, PASS.
     // GF(251)/n < 512: pack cost dominates; Candidate C wins.
     // See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`.
-    P >= N_THRESH_PRIME && P <= 251 && n >= F32_MIN_COLS
+    P >= F32_MIN_PRIME_SELECTED && P <= 251 && n >= F32_MIN_COLS_SELECTED
 }
 
 // ---------------------------------------------------------------------------
@@ -721,9 +761,10 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
 /// (ratio 0.679 > 0.667). `select_f32_path` returns `true` for `P == 251 &&
 /// n >= 512` (the pack-cost amortisation threshold determined by the Phase 1
 /// route-selection decision, `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`);
-/// `N_THRESH_PRIME = 251` combined with `n >= 512` routes exactly the cell
-/// `P == 251 && n >= 512` through route A; all other in-scope primes have
-/// `P < 251` and stay on Candidate C.
+/// the conservative `prime_route.f32_min_prime` and `prime_route.f32_min_cols`
+/// defaults (251 and 512) route exactly the cell `P == 251 && n >= 512`
+/// through route A; all other in-scope primes have `P < 251` and stay on
+/// Candidate C. [`prime_gemm_route`] reports the arm for any cell.
 ///
 /// **Route-A dispatch (issues 68cdf4c8 + 41096af5):** route A (reworked
 /// Candidate F: `from_mont_f32` lookup-table pack + vectorized AVX2 Barrett
@@ -813,7 +854,8 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         //       `set_route_a_gf251_enabled(true)` — opt-in for any n.
         //   (b) `f32_selected && P == 251`: production default; `f32_selected`
         //       is `true` only when `select_f32_path` returns `true`, which
-        //       with N_THRESH_PRIME = 251 means `P == 251 && n >= 512`.
+        //       at the conservative `prime_route` defaults means
+        //       `P == 251 && n >= 512`.
         //       The `&& P == 251` guard is belt-and-suspenders (compile-time
         //       const-generic comparison, optimised out by the compiler) and
         //       preserves local readability. GF(7)/GF(31)/GF(127)/GF(241)
@@ -937,10 +979,10 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         // only reachable when `select_f32_path` returns `true` but the
         // route-A block above was not taken (i.e. `route_a_selected` was
         // false and the `maybe_fp_small_f32()` lookup returned `None` for
-        // the route-A path). In practice with N_THRESH_PRIME = 251 the
-        // only cell that sets `f32_selected` is `P == 251 && n >= 512`,
-        // which is also covered by route A above. This block therefore
-        // acts as a fallback for the no-FMA3 edge case. Allocation
+        // the route-A path). In practice at the conservative `prime_route`
+        // defaults the only cell that sets `f32_selected` is `P == 251 &&
+        // n >= 512`, which is also covered by route A above. This block
+        // therefore acts as a fallback for the no-FMA3 edge case. Allocation
         // pattern is unchanged; the F-path body is kept verbatim as the
         // upgrade path.
         if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
@@ -960,7 +1002,7 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
 
     // Candidate C (AVX2 16-bit-integer Barrett kernel) — primary path
     // for all `p ≤ 251` cells except `P == 251 && n >= 512` which is
-    // handled by route A above (N_THRESH_PRIME = 251, n >= 512 guard).
+    // handled by route A above (the conservative `prime_route` defaults).
     let Some(fns) = crate::simd::maybe_fp_small() else {
         return false;
     };
@@ -1608,13 +1650,25 @@ pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
     None
 }
 
-/// Minimum output width, in columns, at which `select_f64_path` prefers the
-/// f64-FMA cascade.
+/// Conservative default for the tuning profile's `prime_route.f64_min_cols`
+/// field: the minimum output width, in columns, at which `select_f64_path`
+/// prefers the f64-FMA cascade.
 ///
 /// The f64 pack cost is ~3-4× the u16 pack cost (REDC against truncation), and
 /// the panel kernel's inner-loop throughput advantage (~70 Gop/s against
 /// ~40 Gop/s on Zen 3) only amortises that overhead from this width up.
+/// `select_f64_path` compares against `F64_MIN_COLS_SELECTED`.
 pub(crate) const F64_MIN_COLS: usize = 512;
+
+/// The `prime_route.f64_min_cols` value [`select_f64_path`] compares `n`
+/// against; the mechanism is [`F32_MIN_PRIME_SELECTED`]'s.
+#[cfg(all(feature = "simd", gf2_tuning_baked))]
+const F64_MIN_COLS_SELECTED: usize = crate::tuning::baked::F64_MIN_COLS;
+
+/// The `prime_route.f64_min_cols` value [`select_f64_path`] compares `n`
+/// against; the mechanism is [`F32_MIN_PRIME_SELECTED`]'s.
+#[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
+const F64_MIN_COLS_SELECTED: usize = F64_MIN_COLS;
 
 /// Per-(P, m, k, n) f64-cascade selector for medium primes (issue `0749dbad`,
 /// Phase 6e).
@@ -1626,7 +1680,9 @@ pub(crate) const F64_MIN_COLS: usize = 512;
 /// size threshold the u16 panel kernel wins because its pack is a pure
 /// `u64 → u16` truncation (no REDC per element).
 ///
-/// Threshold `n >= 512`: the f64 pack cost is ~3-4× the u16 pack cost
+/// The column threshold comes from the tuning profile's
+/// `prime_route.f64_min_cols` field through [`F64_MIN_COLS_SELECTED`]; at its
+/// conservative default of 512 the f64 pack cost is ~3-4× the u16 pack cost
 /// (REDC vs truncation), and the panel kernel's inner-loop throughput
 /// advantage (~70 Gop/s vs ~40 Gop/s on Zen 3) only amortises that
 /// overhead at n ≥ 512. Below n=512 the u16 kernel + its lighter pack
@@ -1639,8 +1695,53 @@ const fn select_f64_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
     // inner-loop is ≈ 80 % of wall; at n=512 the pack overhead is ~15 %
     // (still amortised); at n=256 the pack approaches 25 % and the u16
     // kernel's lighter pack wins. The threshold mirrors Route A's
-    // `select_f32_path` n ≥ 512 calibration for fp_small.
-    P > 251 && P < 65536 && n >= F64_MIN_COLS
+    // `select_f32_path` column calibration for fp_small.
+    P > 251 && P < 65536 && n >= F64_MIN_COLS_SELECTED
+}
+
+/// The selected arm of the prime-field GEMM dispatchers.
+///
+/// The two cascades cover disjoint prime windows, so one enum reports both
+/// boundaries: [`PrimeGemmRoute::F32Cascade`] is reachable only for small
+/// primes and [`PrimeGemmRoute::F64Cascade`] only for medium ones.
+#[cfg(feature = "simd")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PrimeGemmRoute {
+    /// The f32-FMA cascade (Candidate F, "route A") in
+    /// `fp_small_try_gemm_classical`.
+    F32Cascade,
+    /// The f64-FMA cascade in `fp_medium_try_gemm_panel`.
+    F64Cascade,
+    /// The integer u16 baseline: Candidate C's `_mm256_madd_epi16` kernel for
+    /// small primes, the u16 panel kernel for medium ones.
+    U16Baseline,
+}
+
+/// Reports the prime-field GEMM arm for the field `Fp<P>` at output shape
+/// `m × n` with inner dimension `k`.
+///
+/// The two dispatchers call [`select_f32_path`] and [`select_f64_path`]; this
+/// reporter calls the same two predicates, so it observes the production
+/// selection rather than a copy of it. Both predicates take their bounds from
+/// the tuning profile's `prime_route.f32_min_prime`, `prime_route.f32_min_cols`
+/// and `prime_route.f64_min_cols` fields, baked at compile time
+/// (`dev/active/7d824b2f/design.md` §3.11), which is why this function is a
+/// `const fn`: the whole route folds at monomorphisation.
+///
+/// The reported route is the production default. The GF(251) debug toggles
+/// [`set_route_a_gf251_enabled`] and [`set_route_c_gf251_enabled`] override
+/// the dispatch at run time and are outside what this reporter observes.
+#[cfg(feature = "simd")]
+#[inline]
+#[must_use]
+pub const fn prime_gemm_route<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
+    if select_f32_path::<P>(m, k, n) {
+        PrimeGemmRoute::F32Cascade
+    } else if select_f64_path::<P>(m, k, n) {
+        PrimeGemmRoute::F64Cascade
+    } else {
+        PrimeGemmRoute::U16Baseline
+    }
 }
 
 /// GEMM helper: whole-GEMM panelized AVX2 kernel for medium-prime
