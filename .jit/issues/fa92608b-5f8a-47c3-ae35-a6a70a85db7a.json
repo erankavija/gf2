@@ -16,8 +16,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "passed",
-      "updated_at": "2026-08-23T12:07:00.451628517Z",
+      "status": "failed",
+      "updated_at": "2026-08-23T12:28:10.902532673Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -41,5 +41,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut the SoA batch selectors over to the tuning profile",
-  "updated_at": "2026-08-23T12:11:01.294736343Z"
+  "updated_at": "2026-08-23T12:28:10.902532673Z"
 }
