@@ -1,25 +1,31 @@
 //! T15 — Rayon parallel `permanent_bipedal3` with chunk-size sweep.
 //!
-//! Splits the `2^n - 1` Gray-code subset walk into `CHUNK_SUBSETS`-sized
-//! chunks, each processed by an independent rayon worker. Each worker
-//! computes its starting `col_sum` from scratch via
-//! [`gray_code_index_to_subset`] (O(n) per chunk start), then walks the chunk
-//! in Gray order using the standard incremental add/sub update. Partial Ryser
-//! sums are combined deterministically at the end.
+//! Splits the `2^n - 1` Gray-code subset walk into fixed-size chunks, each
+//! processed by an independent rayon worker. Each worker computes its
+//! starting `col_sum` from scratch via [`gray_code_index_to_subset`] (O(n)
+//! per chunk start), then walks the chunk in Gray order using the standard
+//! incremental add/sub update. Partial Ryser sums are combined
+//! deterministically at the end.
 //!
 //! # Determinism
 //!
-//! The chunk partition is fixed by `(n, CHUNK_SUBSETS)`. Within each chunk the
-//! Gray walk is deterministic. The final reduction is associative under F_3
-//! addition — `par_bridge` + rayon's work-stealing may reorder map results but
-//! the reduction order does not affect the sum in a commutative group. Output
-//! is therefore bit-identical to `permanent_bipedal3` (serial) regardless of
-//! rayon's thread schedule. CLAUDE.md §Algorithm reference confirms this
-//! property.
+//! The chunk partition is fixed by `(n, chunk_subsets)`. Within each chunk
+//! the Gray walk is deterministic. The final reduction is associative under
+//! F_3 addition — `par_bridge` + rayon's work-stealing may reorder map
+//! results but the reduction order does not affect the sum in a commutative
+//! group. Output is therefore bit-identical to `permanent_bipedal3` (serial)
+//! regardless of rayon's thread schedule or the chunk length. CLAUDE.md
+//! §Algorithm reference confirms this property.
 //!
 //! # Chunk-size tuning
 //!
-//! The default `CHUNK_SUBSETS = 1 << 16` was chosen by running
+//! [`permanent_bipedal3_parallel`] resolves its chunk length at runtime via
+//! [`permanent_chunk_len`], a single non-recursive read of the active
+//! [`gf2_core::tuning`] profile's `permanent.gray_chunk_subsets` field
+//! (`dev/active/7d824b2f/design.md` §2.3, §3.12). With no profile installed
+//! this resolves to [`CHUNK_SUBSETS`], so default behaviour is unchanged.
+//!
+//! `CHUNK_SUBSETS = 1 << 16`, the conservative default, was chosen by running
 //! `crates/gf2-algebra/examples/parallel_chunk_sweep.rs` at n=28 on the dev
 //! host (AMD Ryzen 9 5900X, 12c/24t). See the dated CSV at
 //! `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-*.csv` for the
@@ -53,12 +59,32 @@ use crate::packed::PackedFieldVec;
 /// `gf2-core` constant cannot name one declared here.
 pub const CHUNK_SUBSETS: usize = gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT;
 
+/// Returns the Gray-code chunk length [`permanent_bipedal3_parallel`] passes
+/// to [`permanent_bipedal3_parallel_with_chunk`].
+///
+/// Reads the active [`gf2_core::tuning`] profile's
+/// `permanent.gray_chunk_subsets` field
+/// ([`gf2_core::tuning::PermanentSelectors::gray_chunk_subsets`]) once per
+/// call, at the non-recursive, non-looping entry position
+/// `dev/active/7d824b2f/design.md` §2.3 requires. With no profile installed,
+/// [`gf2_core::tuning::active`] resolves to
+/// [`gf2_core::tuning::TuningProfile::CONSERVATIVE`], whose
+/// `permanent.gray_chunk_subsets` names
+/// [`gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT`] — the same
+/// constant [`CHUNK_SUBSETS`] names — so default behaviour is unchanged.
+#[must_use]
+pub fn permanent_chunk_len() -> usize {
+    gf2_core::tuning::active().permanent().gray_chunk_subsets()
+}
+
 /// Compute the permanent of an `n × n` matrix over `F_3` using rayon-parallel
 /// Ryser's formula, splitting the Gray-code subset enumeration across worker
 /// threads.
 ///
 /// Mirrors [`super::bipedal3::permanent_bipedal3`] in algorithm but splits the
-/// `2^n - 1` non-empty-subset walk into `CHUNK_SUBSETS`-sized chunks. Each
+/// `2^n - 1` non-empty-subset walk into chunks sized by [`permanent_chunk_len`]
+/// (the active tuning profile's `permanent.gray_chunk_subsets` field, read
+/// once here and passed to [`permanent_bipedal3_parallel_with_chunk`]). Each
 /// rayon worker independently reconstructs its starting `col_sum` from the
 /// Gray-code index (O(n) per chunk start) and then performs incremental
 /// add/sub updates within the chunk. Partial Ryser contributions are summed
@@ -103,17 +129,18 @@ pub const CHUNK_SUBSETS: usize = gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_
 ///
 /// `O(n · 2^n / T)` field operations per thread for `T` rayon threads, plus
 /// `O(n · C)` per chunk start to reconstruct the initial `col_sum` (where
-/// `C = CHUNK_SUBSETS`). Matrix prep is `O(n^2)` one-time.
+/// `C = `[`permanent_chunk_len`]`()`). Matrix prep is `O(n^2)` one-time.
 pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
-    permanent_bipedal3_parallel_with_chunk(mat, CHUNK_SUBSETS)
+    permanent_bipedal3_parallel_with_chunk(mat, permanent_chunk_len())
 }
 
 /// Same as [`permanent_bipedal3_parallel`] but takes the chunk size as a
-/// runtime argument instead of the [`CHUNK_SUBSETS`] compile-time default.
+/// runtime argument instead of resolving it from the tuning profile via
+/// [`permanent_chunk_len`].
 ///
 /// This is the SSOT entry point used by both the production wrapper
-/// ([`permanent_bipedal3_parallel`] passes `CHUNK_SUBSETS`) and the
-/// `parallel_chunk_sweep` example (sweeps over `2^7..=2^22`). Keeping the
+/// ([`permanent_bipedal3_parallel`] passes the resolved [`permanent_chunk_len`])
+/// and the `parallel_chunk_sweep` example (sweeps over `2^7..=2^22`). Keeping the
 /// chunk-sweep and production paths sharing one implementation ensures
 /// the recorded CSV throughput numbers reflect the exact code path that
 /// production callers exercise.

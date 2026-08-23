@@ -22,8 +22,9 @@
 //!
 //! # Chosen default
 //!
-//! `CHUNK_SUBSETS = 1 << 16` (65536 subsets per chunk) is the value baked into
-//! `permanent_bipedal3_parallel`. See the CSV for empirical justification.
+//! `CHUNK_SUBSETS = 1 << 16` (65536 subsets per chunk) is the conservative
+//! default `permanent_bipedal3_parallel` resolves when no tuning profile is
+//! installed. See the CSV for empirical justification.
 //! At n=28 on the dev host (AMD Ryzen 9 5900X, 12c/24t), the throughput plateau
 //! sits across `2^14 .. 2^16` (within ~1 σ of each other); `2^16` is chosen
 //! as a single round number near the empirical optimum at `2^14`. Smaller
