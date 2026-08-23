@@ -232,7 +232,7 @@ run_step fmt    "${NICE_PREFIX[@]}" cargo fmt --all -- --check
 # harness is excluded deliberately: its self-tests bracket the default
 # configuration's threshold and are expected to report a re-pinning need under
 # the baked cfg.
-run_step baked  env RUSTFLAGS="--cfg gf2_tuning_baked" "${NICE_PREFIX[@]}" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
+run_step baked  env RUSTFLAGS="--cfg gf2_tuning_baked" "${NICE_PREFIX[@]}" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
 
 echo "$summary"
 
