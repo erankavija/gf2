@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the Winograd threshold over to the tuning profile",
-  "updated_at": "2026-08-22T22:17:41.735863320Z"
+  "updated_at": "2026-08-23T15:54:11.314965594Z"
 }

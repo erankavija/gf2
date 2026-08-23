@@ -10,6 +10,7 @@
   ],
   "description": "Add the five seam fields to the gemm, triangular and ple profile families.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: gemm.winograd_min_dim, triangular.base_case_max_dim, ple.scalar_base_max_cols, ple.panel_byte_lane_max_cols and ple.panel_u16_lane_max_cols exist with the ranges seam design §4.2 derives, vocabulary entries, and CONSERVATIVE entries naming the constants of the kernel crate and the hoisted defaults; the two lane fields' ranges cap at their kernels' asserted bounds.\n- [hard] REQ-02: The JSON round trip and conservative.json regeneration pass; no selector site changes.",
   "documents": [],
+  "done_at": "2026-08-23T15:53:55.489126626Z",
   "first_ready_at": "2026-08-22T22:16:44.528935546Z",
   "gates_required": [
     "cargo-ci",
@@ -28,8 +29,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-23T15:51:21.855924465Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T15:53:42.424231811Z",
       "updated_by": "auto:executor"
     }
   },
@@ -41,7 +42,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Extend the tuning schema with the seam fields",
-  "updated_at": "2026-08-23T15:51:21.855924465Z"
+  "updated_at": "2026-08-23T15:53:55.489126626Z"
 }
