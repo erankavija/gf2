@@ -6,14 +6,62 @@
 
 use crate::field::{ConstField, FiniteField};
 use std::ops::Index;
+#[cfg(any(test, feature = "test-support"))]
+use std::sync::atomic::{AtomicUsize, Ordering};
 
-/// Elements per chunk of the SIMD dot-product walk.
+/// Conservative default for the tuning profile's `field_vec.dot_chunk_len`
+/// field: the elements per chunk of the SIMD dot-product walk.
 ///
 /// The chunk is the length of the three stack scratch buffers the walk fills,
 /// so it must stay a compile-time constant: 256 elements are
 /// `256 · 8` (a) + `256 · 8` (b) + `256 · 16` (products) = 8 KiB of stack, which
-/// keeps the scratch off the heap.
+/// keeps the scratch off the heap. `try_simd_dot_product` sizes its buffers
+/// with `DOT_CHUNK_LEN_SELECTED`.
 pub(crate) const DOT_CHUNK_LEN: usize = 256;
+
+/// The `field_vec.dot_chunk_len` value `try_simd_dot_product` uses as its
+/// stack-buffer length and walk step.
+///
+/// The field is baked rather than resolved through `crate::tuning::active()`
+/// because only a compile-time constant can size a stack array; a runtime
+/// read would move the scratch to the heap, which is what the chunked walk
+/// exists to avoid (`dev/active/7d824b2f/design.md` §3.8). The default build
+/// resolves it to [`DOT_CHUNK_LEN`]; `RUSTFLAGS="--cfg gf2_tuning_baked"`
+/// resolves it to `crate::tuning::baked::DOT_CHUNK_LEN`, following the
+/// bit-backend wiring at `crates/gf2-core/src/kernels/backend.rs:83-89`
+/// (DEC-G). Installing a runtime profile does not move this length.
+#[cfg(all(feature = "simd", gf2_tuning_baked))]
+const DOT_CHUNK_LEN_SELECTED: usize = crate::tuning::baked::DOT_CHUNK_LEN;
+
+/// The `field_vec.dot_chunk_len` value `try_simd_dot_product` uses as its
+/// stack-buffer length and walk step; see the baked arm for the mechanism.
+#[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
+const DOT_CHUNK_LEN_SELECTED: usize = DOT_CHUNK_LEN;
+
+/// Widest chunk any SIMD dot-product walk has filled since the last reset.
+#[cfg(any(test, feature = "test-support"))]
+static MAX_EFFECTIVE_DOT_CHUNK_LEN: AtomicUsize = AtomicUsize::new(0);
+
+/// Clears the test-support observation of the SIMD dot-product walk's chunk.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_max_effective_dot_chunk_len() {
+    MAX_EFFECTIVE_DOT_CHUNK_LEN.store(0, Ordering::Relaxed);
+}
+
+/// Returns the widest chunk the SIMD dot-product walk has filled since the
+/// last [`reset_max_effective_dot_chunk_len`].
+///
+/// This observation is available in tests and `test-support` builds so the
+/// baked witness can verify that `field_vec.dot_chunk_len()` reaches the walk
+/// rather than merely producing an equal result. A walk over `n` elements
+/// fills chunks of `min(step, n - offset)` elements, so the widest chunk of a
+/// walk with `n` above the step is the step itself. It stays `0` when the
+/// host offers no SIMD carry-less multiply and the walk never runs.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn max_effective_dot_chunk_len() -> usize {
+    MAX_EFFECTIVE_DOT_CHUNK_LEN.load(Ordering::Relaxed)
+}
 
 // ── FieldVec ─────────────────────────────────────────────────────────────────
 
@@ -1026,18 +1074,20 @@ impl FieldVec<Gf2mElement> {
         let reducer = sample.barrett_reducer()?;
 
         // Process in chunks that fit comfortably on the stack; see
-        // `DOT_CHUNK_LEN`.
-        let mut a_buf = [0u64; DOT_CHUNK_LEN];
-        let mut b_buf = [0u64; DOT_CHUNK_LEN];
-        let mut p_buf = [0u128; DOT_CHUNK_LEN];
+        // `DOT_CHUNK_LEN_SELECTED`.
+        let mut a_buf = [0u64; DOT_CHUNK_LEN_SELECTED];
+        let mut b_buf = [0u64; DOT_CHUNK_LEN_SELECTED];
+        let mut p_buf = [0u128; DOT_CHUNK_LEN_SELECTED];
 
         let mut acc: u128 = 0;
         let mut offset = 0;
         let n = self.len();
 
         while offset < n {
-            let end = (offset + DOT_CHUNK_LEN).min(n);
+            let end = (offset + DOT_CHUNK_LEN_SELECTED).min(n);
             let chunk_len = end - offset;
+            #[cfg(any(test, feature = "test-support"))]
+            MAX_EFFECTIVE_DOT_CHUNK_LEN.fetch_max(chunk_len, Ordering::Relaxed);
 
             // Extract raw u64 values into stack buffers.
             for (i, (a, b)) in self.data[offset..end]

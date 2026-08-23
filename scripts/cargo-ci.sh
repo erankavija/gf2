@@ -226,13 +226,14 @@ run_step check  "${NICE_PREFIX[@]}" cargo check --workspace $FEAT_FLAGS
 run_step test   "${NICE_PREFIX[@]}" cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
 run_step clippy "${NICE_PREFIX[@]}" cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings
 run_step fmt    "${NICE_PREFIX[@]}" cargo fmt --all -- --check
-# Baked bit-backend threshold (DEC-G): the gf2_tuning_baked cfg is not a Cargo
+# Baked selector fields (DEC-G, and the follow-on families of
+# dev/active/7d824b2f/design.md §2.2): the gf2_tuning_baked cfg is not a Cargo
 # feature, so --all-features never builds it; this scoped step executes the
-# baked routing witnesses and drift tests. The frozen selector non-regression
-# harness is excluded deliberately: its self-tests bracket the default
-# configuration's threshold and are expected to report a re-pinning need under
-# the baked cfg.
-run_step baked  env RUSTFLAGS="--cfg gf2_tuning_baked" "${NICE_PREFIX[@]}" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
+# baked routing witnesses and drift tests. Each baked family names its witness
+# target here. The frozen selector non-regression harness is excluded
+# deliberately: its self-tests bracket the default configuration's threshold
+# and are expected to report a re-pinning need under the baked cfg.
+run_step baked  env RUSTFLAGS="--cfg gf2_tuning_baked" "${NICE_PREFIX[@]}" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable --test prime_route_baked --test field_vec_baked
 
 echo "$summary"
 
