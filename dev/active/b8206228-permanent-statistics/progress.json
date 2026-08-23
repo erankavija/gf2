@@ -1,7 +1,7 @@
 {
   "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
   "epic_short_id": "b8206228",
-  "current_wave": 7,
+  "current_wave": 8,
   "waves": [
     {
       "wave_number": 1,
@@ -147,7 +147,7 @@
           "short_id": "a39bb161",
           "title": "Accelerator execution for campaign cells",
           "classification": "implementation",
-          "status": "owner-approved bounded lead-direct repair merged at d7f1b428. The binary's accelerator-cost-table admission check is field-scoped and the real-binary mixed-manifest regression proves a selected processor field runs without a table while the selected accelerator field still refuses. Focused red/green evidence, all three permanent_campaign_bin tests, fmt, focused clippy, merged-tree binary tests, and independent re-review pass. Registered cargo-ci and code-review remain to run at or after the 02:00 safe window."
+          "status": "done: owner-approved bounded lead-direct repair merged at d7f1b428; the real-binary mixed-manifest regression and per-cell scheduler contract pass. Registered cargo-ci passed on a clean tree, code-review passed with zero findings, lead six-tier review passed, and the issue closed at fbe7bef1."
         }
       ]
     },
@@ -159,7 +159,7 @@
           "short_id": "1947125e",
           "title": "Shared behavioural conformance suite across campaign backends",
           "classification": "implementation",
-          "status": "pending"
+          "status": "ready after a39bb161 closure, but not dispatched. Read-only preflight found REQ-01's literal all-five-backends-per-field contract impossible because intra_matrix_parallel is selectable only for q=3; owner criterion decision is pending. Any implementation waits until the full-host premeasurement session exits so Cargo/GPU work cannot contaminate benchmark evidence."
         }
       ]
     },
