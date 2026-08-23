@@ -16,19 +16,19 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:48.728711591Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T13:35:43.126707681Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:48.850535942Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T13:39:12.397688710Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:48.971388503Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-23T13:42:12.380048588Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "26ae7d6b-e526-41cd-b0d6-3dac68d362e0",
@@ -41,5 +41,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut the GEMM selectors over to the tuning profile",
-  "updated_at": "2026-08-23T11:54:44.611693952Z"
+  "updated_at": "2026-08-23T13:42:12.380048588Z"
 }
