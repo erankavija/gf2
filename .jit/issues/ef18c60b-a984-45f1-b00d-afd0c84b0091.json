@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the parallel permanent's Gray-walk chunk length in gf2-algebra to a runtime resolved read of gf2-core's profile.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.12, D4, and the permanent row of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: gray_chunk_subsets is a runtime resolved read at permanent_bipedal3_parallel reaching the existing _with_chunk parameter, satisfying design §2.3, with no new dependency edge in either direction.\n- [hard] REQ-02: The permanent_chunk_len accessor is exercised by an installed-profile witness that the chunk reaches the callee, and a determinism witness across chunk lengths passes.\n- [hard] REQ-03: Rustdoc names the profile field; existing tests pass unchanged.",
   "documents": [],
+  "done_at": "2026-08-23T11:23:13.377418061Z",
   "first_ready_at": "2026-08-22T21:26:57.096804754Z",
   "gates_required": [
     "cargo-ci",
@@ -17,18 +18,18 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-23T09:59:50.735178501Z",
+      "updated_at": "2026-08-23T11:17:29.738310015Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-23T10:03:25.566053598Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T11:20:55.077685163Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:27:00.336705232Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T11:22:55.361155533Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "ef18c60b-a984-45f1-b00d-afd0c84b0091",
@@ -40,7 +41,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cut the parallel-permanent chunk length over to the tuning profile",
-  "updated_at": "2026-08-23T10:03:25.566053598Z"
+  "updated_at": "2026-08-23T11:23:13.377418061Z"
 }
