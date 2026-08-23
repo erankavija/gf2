@@ -6019,9 +6019,11 @@ mod tests {
 
     /// Deterministic correctness test for the Mersenne31 whole-GEMM
     /// fast path in `gemm_axpy_into_view`. Verifies bit-exact equality
-    /// against the scalar oracle at `n ∈ {16, 64, 256}` — sizes above
-    /// `GEMM_AXPY_FAST_PATH_THRESHOLD = 4096` (i.e. n³ ≥ 4096) trigger
-    /// the `fp_m31_try_gemm_classical` dispatch.
+    /// against the scalar oracle at `n ∈ {16, 64, 256}` — sizes whose
+    /// volume clears the active `gemm.axpy_fast_path_min_volume` bound
+    /// (no profile installed here, so its conservative default
+    /// `GEMM_AXPY_FAST_PATH_THRESHOLD = 4096` applies; n³ ≥ 4096)
+    /// trigger the `fp_m31_try_gemm_classical` dispatch.
     ///
     /// Issue: `6a7d4c8e` (wire `m31_batch_dot_fn` into `gemm_axpy_into_view`).
     #[test]
