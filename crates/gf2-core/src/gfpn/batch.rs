@@ -2166,10 +2166,8 @@ mod tests {
                 )
                 .to_quadratic::<CfgBeta3>();
             let got_square2 =
-                crate::compute::field::batch_square_quadratic_parallel::<Fp<65537>, CfgBeta3>(
-                    &ba2,
-                )
-                .to_quadratic::<CfgBeta3>();
+                crate::compute::field::batch_square_quadratic_parallel::<Fp<65537>, CfgBeta3>(&ba2)
+                    .to_quadratic::<CfgBeta3>();
             assert_eq!(
                 got_mul2, expected_mul2,
                 "installed chunk_len={installed_chunk_len} quadratic mul len {len}"
@@ -2202,16 +2200,16 @@ mod tests {
             let expected_mul3: Vec<Fq3Big> =
                 a3.iter().zip(b3.iter()).map(|(x, y)| *x * *y).collect();
             let expected_square3: Vec<Fq3Big> = a3.iter().map(|x| *x * *x).collect();
-            let got_mul3 =
-                crate::compute::field::batch_mul_cubic_parallel::<Fp<65537>, CfgCubicBeta3>(
-                    &ba3, &bb3,
-                )
-                .to_cubic::<CfgCubicBeta3>();
-            let got_square3 =
-                crate::compute::field::batch_square_cubic_parallel::<Fp<65537>, CfgCubicBeta3>(
-                    &ba3,
-                )
-                .to_cubic::<CfgCubicBeta3>();
+            let got_mul3 = crate::compute::field::batch_mul_cubic_parallel::<
+                Fp<65537>,
+                CfgCubicBeta3,
+            >(&ba3, &bb3)
+            .to_cubic::<CfgCubicBeta3>();
+            let got_square3 = crate::compute::field::batch_square_cubic_parallel::<
+                Fp<65537>,
+                CfgCubicBeta3,
+            >(&ba3)
+            .to_cubic::<CfgCubicBeta3>();
             assert_eq!(
                 got_mul3, expected_mul3,
                 "installed chunk_len={installed_chunk_len} cubic mul len {len}"
