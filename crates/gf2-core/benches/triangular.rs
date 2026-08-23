@@ -25,10 +25,11 @@
 //! cargo bench -p gf2-core --bench triangular --features rand -- triangular/trsm_upper/Fp_M31/256
 //! ```
 //!
-//! All benches use the default per-field `TRI_BASE_THRESHOLD` (currently
-//! 8, selected by Criterion sweep in jit:73ec5da3). The threshold is
-//! wired through the `FiniteField` trait so any future override
-//! propagates here without bench code changes.
+//! All benches run with no profile installed, so the live
+//! `triangular.base_case_max_dim` bound resolves to its conservative
+//! default (8, selected by the Criterion sweep in jit:73ec5da3, recorded
+//! at measurement time as the per-field `TRI_BASE_THRESHOLD`). A future
+//! calibrated profile propagates here without bench code changes.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;

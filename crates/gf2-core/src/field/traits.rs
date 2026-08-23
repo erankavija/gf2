@@ -847,11 +847,16 @@ pub trait FiniteField:
     /// tests in `src/field/winograd.rs`.
     const WINOGRAD_THRESHOLD: usize = crate::field::winograd::WINOGRAD_MIN_DIM_DEFAULT;
 
-    /// Base-case threshold for the block-recursive triangular primitives
-    /// in [`crate::field::triangular`] (`trsm`, `trmm`, `trtri`, `trtrm`,
-    /// per Dumas–Pernet §2.1 algorithms 2.1–2.4). Recursion stops at sizes
-    /// `≤ TRI_BASE_THRESHOLD` and falls through to a small direct loop
-    /// (back-substitution for `trsm`, schoolbook for `trmm`/`trtri`).
+    /// Historical per-field base-case threshold for the block-recursive
+    /// triangular primitives in [`crate::field::triangular`] (`trsm`,
+    /// `trmm`, `trtri`, `trtrm`, per Dumas–Pernet §2.1 algorithms
+    /// 2.1–2.4), retained only for the extraction surface until the seam
+    /// removal retires it. Live dispatch reads the single host-level
+    /// `triangular.base_case_max_dim` profile value (recursion stops at
+    /// sizes at or below it and falls through to a small direct loop —
+    /// back-substitution for `trsm`, schoolbook for `trmm`/`trtri`);
+    /// this constant no longer participates in dispatch, and per-field
+    /// overrides of it have no dispatch effect.
     ///
     /// The default `8` was selected by Criterion sweep over candidate
     /// values `{4, 8, 16, 32, 64}` on `Fp<MERSENNE_31>` at `n ∈ {256,
@@ -867,13 +872,14 @@ pub trait FiniteField:
     /// brings that cell to 1.43× and improves the others
     /// proportionally.
     ///
-    /// Fields with materially heavier per-MAC cost (e.g. `Fp<P>` with
-    /// `P` close to `2^63`, or tower extensions) may override this to
-    /// a smaller value because the recursion's `gemm` dispatch overhead
-    /// is amortised over fewer cells. Lighter fields (e.g. GF(2)
-    /// bit-packed) may benefit from a larger threshold.
+    /// The crossover intuition is per-field — fields with materially
+    /// heavier per-MAC cost (e.g. `Fp<P>` with `P` close to `2^63`, or
+    /// tower extensions) cross over at smaller sizes, lighter fields
+    /// (e.g. GF(2) bit-packed) at larger ones — but the live carrier is
+    /// one host-level value, and per-field crossover control has no
+    /// live carrier.
     ///
-    /// Like [`Self::WINOGRAD_THRESHOLD`], this knob is **soft**:
+    /// Like [`Self::WINOGRAD_THRESHOLD`], this threshold is **soft**:
     /// correctness is independent of it. Property tests in
     /// `src/field/triangular.rs` exercise `trsm`/`trmm`/`trtri`/`trtrm`
     /// at sizes that straddle the threshold and assert bit-exact
