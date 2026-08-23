@@ -384,6 +384,17 @@ required-features = ["simd", "tuning-profile"]
 name = "tuning_profile_committed"
 required-features = ["tuning-profile"]
 
+# ── Issue `df385aa7` (epic `6dc81018`) — PLE route observation. One installed
+# profile per binary: `install` resolves once per process, so the below-default
+# and ceiling halves of the two PLE boundaries need separate targets.
+[[test]]
+name = "tuning_profile_ple_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_ple_install_above"
+required-features = ["tuning-profile"]
+
 # ── Issue `5ecc9bf8` (epic `6dc81018`) — explicit host-calibration action ──
 #
 # `harness = false` is the shape every bench target above uses. The
