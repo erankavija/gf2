@@ -30,6 +30,8 @@
 
 use std::fmt;
 use std::ops::{Bound, Index, RangeBounds};
+#[cfg(any(test, feature = "test-support"))]
+use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 
 use crate::field::{ConstField, FieldVec, FiniteField};
 use crate::matrix_like::{MatrixLike, MatrixLikeMut};
@@ -2495,17 +2497,26 @@ impl<F: FiniteField + fmt::Display> fmt::Display for FieldMatrix<F> {
 // materialised matrix write `(&a + &b).into()` (or rely on type inference
 // at the binding site).
 
-// Row-tile height for the blocked classical gemm. Sized to keep the
-// active working set (one row block of `A`, one column block of `B`, one
-// output block) in L1/L2 on commodity x86_64 and aarch64 cores. The value
-// is a soft knob — correctness is independent of it, so it can be retuned
-// in issue `64c88ae4` (the terminal benchmark story) without touching
-// callers.
+/// Row-tile height for the blocked classical GEMM loops.
+///
+/// This is the compile-time selection site for the tuning-profile field
+/// `gemm.row_tile`. The default build retains the conservative value; a
+/// `gf2_tuning_baked` build uses the committed baked profile value.
+#[cfg(not(gf2_tuning_baked))]
 pub(crate) const GEMM_ROW_TILE: usize = 32;
 
-// Column-tile width for the blocked classical gemm. See `GEMM_ROW_TILE`
-// for the tuning rationale.
+#[cfg(gf2_tuning_baked)]
+pub(crate) const GEMM_ROW_TILE: usize = crate::tuning::baked::GEMM_ROW_TILE;
+
+/// Column-tile width for the blocked classical GEMM loops.
+///
+/// This is the compile-time selection site for the tuning-profile field
+/// `gemm.col_tile`; see [`GEMM_ROW_TILE`] for the selection mechanism.
+#[cfg(not(gf2_tuning_baked))]
 pub(crate) const GEMM_COL_TILE: usize = 64;
+
+#[cfg(gf2_tuning_baked)]
+pub(crate) const GEMM_COL_TILE: usize = crate::tuning::baked::GEMM_COL_TILE;
 
 /// Smallest work volume `m · k · n` at which [`gemm_axpy_into_view`] takes the
 /// whole-GEMM fast path.
@@ -2517,8 +2528,170 @@ pub(crate) const GEMM_COL_TILE: usize = 64;
 /// decomposes an n×n trsm into many tiny `gemm_axpy_into_view` calls down to
 /// `TRI_BASE_THRESHOLD = 8`): at `m, k, n ≤ 32` the per-cell SIMD dot wins; at
 /// `m · k · n ≥ 4096` (≈ a 16³ cube) the whole-GEMM kernel wins on every cell
-/// measured in `2026-05-26-40195c09-gemm-axpy-lift`.
+/// measured in `2026-05-26-40195c09-gemm-axpy-lift`. This is the conservative
+/// default for the tuning-profile field `gemm.axpy_fast_path_min_volume`.
 pub(crate) const GEMM_AXPY_FAST_PATH_THRESHOLD: usize = 16 * 16 * 16;
+
+/// The selected volume arm of the crate-private `gemm_axpy_into_view`
+/// dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GemmAxpyRoute {
+    /// Use the per-cell dot-product traversal.
+    PerCell,
+    /// Attempt the whole-GEMM field kernel before falling back per cell.
+    WholeGemm,
+}
+
+/// Reports the volume arm of the crate-private `gemm_axpy_into_view`
+/// dispatcher for an `m × k` by `k × n` product.
+///
+/// The comparison uses the active tuning-profile field
+/// `gemm.axpy_fast_path_min_volume`. Field capability remains a separate
+/// dispatcher condition: a field without a whole-GEMM kernel follows the
+/// per-cell implementation even when this reporter returns
+/// [`GemmAxpyRoute::WholeGemm`].
+#[must_use]
+pub fn gemm_axpy_route(m: usize, k: usize, n: usize) -> GemmAxpyRoute {
+    gemm_axpy_route_resolved(
+        crate::tuning::active().gemm().axpy_fast_path_min_volume(),
+        m,
+        k,
+        n,
+    )
+}
+
+/// Reports the GEMM AXPY volume arm against an already-resolved
+/// `axpy_fast_path_min_volume`.
+fn gemm_axpy_route_resolved(
+    axpy_fast_path_min_volume: usize,
+    m: usize,
+    k: usize,
+    n: usize,
+) -> GemmAxpyRoute {
+    if m * k * n >= axpy_fast_path_min_volume {
+        GemmAxpyRoute::WholeGemm
+    } else {
+        GemmAxpyRoute::PerCell
+    }
+}
+
+/// One of the seven production blocked loops that consume the GEMM tiles.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(usize)]
+pub enum GemmTileSite {
+    /// The owning [`gemm`] kernel.
+    MatrixGemm,
+    /// The view-writing `gemm_into_view` kernel.
+    MatrixGemmIntoView,
+    /// The fused `gemm_axpy_into_view` kernel.
+    MatrixGemmAxpyIntoView,
+    /// The implicit-diagonal `gemm_axpy_into_view_diag` kernel.
+    MatrixGemmAxpyIntoViewDiag,
+    /// The expression evaluator's concrete GEMM-plus-beta kernel.
+    ExprGemmWithBeta,
+    /// The expression evaluator's concrete transposed-left GEMM kernel.
+    ExprGemmTransA,
+    /// The expression evaluator's concrete transposed-left fused kernel.
+    ExprGemmTransAWithBeta,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl GemmTileSite {
+    /// Every production blocked-loop selection site, in stable display order.
+    pub const ALL: [Self; 7] = [
+        Self::MatrixGemm,
+        Self::MatrixGemmIntoView,
+        Self::MatrixGemmAxpyIntoView,
+        Self::MatrixGemmAxpyIntoViewDiag,
+        Self::ExprGemmWithBeta,
+        Self::ExprGemmTransA,
+        Self::ExprGemmTransAWithBeta,
+    ];
+}
+
+/// A tile pair observed at one production blocked-loop site.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct GemmTileObservation {
+    /// Production loop that consumed the tile pair.
+    pub site: GemmTileSite,
+    /// Row-tile extent consumed by that loop.
+    pub row_tile: usize,
+    /// Column-tile extent consumed by that loop.
+    pub col_tile: usize,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static OBSERVED_GEMM_ROW_TILES: [AtomicUsize; 7] = [const { AtomicUsize::new(0) }; 7];
+
+#[cfg(any(test, feature = "test-support"))]
+static OBSERVED_GEMM_COL_TILES: [AtomicUsize; 7] = [const { AtomicUsize::new(0) }; 7];
+
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn record_gemm_tiles(site: GemmTileSite, row_tile: usize, col_tile: usize) {
+    OBSERVED_GEMM_ROW_TILES[site as usize].store(row_tile, Ordering::Relaxed);
+    OBSERVED_GEMM_COL_TILES[site as usize].store(col_tile, Ordering::Relaxed);
+}
+
+/// Clears all test-support observations of production GEMM tile reads.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_gemm_tile_observations() {
+    for site in GemmTileSite::ALL {
+        OBSERVED_GEMM_ROW_TILES[site as usize].store(0, Ordering::Relaxed);
+        OBSERVED_GEMM_COL_TILES[site as usize].store(0, Ordering::Relaxed);
+    }
+}
+
+/// Returns the tile pairs observed at production blocked-loop sites.
+///
+/// Only sites reached since [`reset_gemm_tile_observations`] are returned.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn gemm_tile_observations() -> Vec<GemmTileObservation> {
+    GemmTileSite::ALL
+        .into_iter()
+        .filter_map(|site| {
+            let row_tile = OBSERVED_GEMM_ROW_TILES[site as usize].load(Ordering::Relaxed);
+            let col_tile = OBSERVED_GEMM_COL_TILES[site as usize].load(Ordering::Relaxed);
+            (row_tile != 0 && col_tile != 0).then_some(GemmTileObservation {
+                site,
+                row_tile,
+                col_tile,
+            })
+        })
+        .collect()
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static LAST_GEMM_AXPY_DISPATCH_ROUTE: AtomicU8 = AtomicU8::new(0);
+
+#[cfg(any(test, feature = "test-support"))]
+fn record_gemm_axpy_dispatch_route(route: GemmAxpyRoute) {
+    let value = match route {
+        GemmAxpyRoute::PerCell => 1,
+        GemmAxpyRoute::WholeGemm => 2,
+    };
+    LAST_GEMM_AXPY_DISPATCH_ROUTE.store(value, Ordering::Relaxed);
+}
+
+/// Clears the test-support observation of the last GEMM AXPY dispatch route.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_last_gemm_axpy_dispatch_route() {
+    LAST_GEMM_AXPY_DISPATCH_ROUTE.store(0, Ordering::Relaxed);
+}
+
+/// Returns the route consumed by the last crate-private
+/// `gemm_axpy_into_view` dispatch.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn last_gemm_axpy_dispatch_route() -> Option<GemmAxpyRoute> {
+    match LAST_GEMM_AXPY_DISPATCH_ROUTE.load(Ordering::Relaxed) {
+        1 => Some(GemmAxpyRoute::PerCell),
+        2 => Some(GemmAxpyRoute::WholeGemm),
+        _ => None,
+    }
+}
 
 /// Classical blocked gemm over `F: FiniteField` with delayed reduction.
 ///
@@ -2709,6 +2882,8 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
 
     // Blocked traversal over output tiles. The inner kernel is a single
     // `dot_product_slices` call per output cell.
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_tiles(GemmTileSite::MatrixGemm, GEMM_ROW_TILE, GEMM_COL_TILE);
     for i_blk in (0..a.rows).step_by(GEMM_ROW_TILE) {
         let i_end = (i_blk + GEMM_ROW_TILE).min(a.rows);
         for j_blk in (0..b.cols).step_by(GEMM_COL_TILE) {
@@ -2818,6 +2993,12 @@ where
     // walks contiguous memory. This is the only allocation this kernel
     // performs.
     let b_t = b.transpose();
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_tiles(
+        GemmTileSite::MatrixGemmIntoView,
+        GEMM_ROW_TILE,
+        GEMM_COL_TILE,
+    );
     for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
         let i_end = (i_blk + GEMM_ROW_TILE).min(m);
         for j_blk in (0..n).step_by(GEMM_COL_TILE) {
@@ -2940,6 +3121,9 @@ pub(crate) fn gemm_axpy_into_view<F>(
         out.rows(),
         out.cols()
     );
+    let route = gemm_axpy_route(m, k, n);
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_axpy_dispatch_route(route);
     if m == 0 || n == 0 {
         return;
     }
@@ -2974,9 +3158,10 @@ pub(crate) fn gemm_axpy_into_view<F>(
     // `a_flat` / `scratch` buffers below are paid only when the
     // kernel will actually execute. The default trait impl returns
     // `false`, so non-`Fp<P>` fields (Mersenne31, GF(2^m), etc.) skip
-    // this block entirely. The volume gate is
-    // `GEMM_AXPY_FAST_PATH_THRESHOLD`.
-    if F::has_simd_gemm_classical() && m * k * n >= GEMM_AXPY_FAST_PATH_THRESHOLD {
+    // this block entirely. The volume gate is the active
+    // `gemm.axpy_fast_path_min_volume` profile field reported by
+    // `gemm_axpy_route` above.
+    if F::has_simd_gemm_classical() && route == GemmAxpyRoute::WholeGemm {
         // Pack `A` (which may be a strided sub-view of a parent
         // buffer) into a contiguous row-major `m × k` slice. Walks
         // `a.row_slice(i)` to avoid the per-cell `get` indexing.
@@ -3059,6 +3244,12 @@ pub(crate) fn gemm_axpy_into_view<F>(
     // primitive `gemm` uses. The `β · out[i, j]` fold reads the cell
     // BEFORE writing the new value at (i, j), so the routine is safe
     // even when `out` aliases its own `C` operand.
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_tiles(
+        GemmTileSite::MatrixGemmAxpyIntoView,
+        GEMM_ROW_TILE,
+        GEMM_COL_TILE,
+    );
     for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
         let i_end = (i_blk + GEMM_ROW_TILE).min(m);
         for j_blk in (0..n).step_by(GEMM_COL_TILE) {
@@ -3094,6 +3285,31 @@ pub(crate) fn gemm_axpy_into_view<F>(
             }
         }
     }
+}
+
+/// Runs the production GEMM AXPY dispatcher as `out ← a · b` for
+/// test-support route observation.
+///
+/// This thin test-support entry exists so integration tests can observe the
+/// route consumed inside the crate-private `gemm_axpy_into_view` dispatcher.
+///
+/// # Panics
+///
+/// Panics when either operand is empty, when their inner dimensions differ,
+/// or when `out` does not have the product shape.
+#[cfg(any(test, feature = "test-support"))]
+pub fn run_gemm_axpy_dispatch_for_test<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    out: &mut FieldMatrix<F>,
+) {
+    assert!(a.rows() > 0 && a.cols() > 0 && b.cols() > 0);
+    let one = a.get(0, 0).one_like();
+    let zero = one.zero_like();
+    let a_view = a.submat(.., ..);
+    let b_view = b.submat(.., ..);
+    let out_view = out.submat_mut(.., ..);
+    gemm_axpy_into_view(one, &a_view, &b_view, zero, out_view);
 }
 
 // ─── gemm_axpy_into_view_diag — implicit unit-diagonal variant ────────────────
@@ -3275,6 +3491,12 @@ pub(crate) fn gemm_axpy_into_view_diag<F, A, B>(
     // Inside each tile we compute the inner dot product eagerly, since a
     // unit-diagonal operand cannot expose a contiguous slice for
     // `dot_product_slices`.
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_tiles(
+        GemmTileSite::MatrixGemmAxpyIntoViewDiag,
+        GEMM_ROW_TILE,
+        GEMM_COL_TILE,
+    );
     for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
         let i_end = (i_blk + GEMM_ROW_TILE).min(m);
         for j_blk in (0..n).step_by(GEMM_COL_TILE) {
