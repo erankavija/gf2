@@ -9160,3 +9160,5 @@
 {"id":"4d16dae5-c5b3-472d-aaac-0c9819b4227e","issue_id":"26ae7d6b-e526-41cd-b0d6-3dac68d362e0","timestamp":"2026-08-23T13:53:51.863312097Z","type":"issue_completed"}
 {"gate_key":"cargo-ci","id":"36215784-a906-4363-b712-4a725eeb5f30","issue_id":"19424a0f-38d5-4578-bde6-0e18e18abccd","timestamp":"2026-08-23T14:01:35.542271890Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"8d3914c0-2955-4005-bba0-513f6c9ced4e","issue_id":"19424a0f-38d5-4578-bde6-0e18e18abccd","timestamp":"2026-08-23T14:05:09.885029703Z","type":"gate_failed","updated_by":"auto:executor"}
+{"from":"ready","id":"0d438c8e-00d6-4779-8078-e0970236a2fc","issue_id":"f048383f-8a85-4ef6-849e-f75b628e9450","timestamp":"2026-08-23T14:06:23.065932422Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"5602b95c-5675-4f47-be71-0bd7bc3f1183","issue_id":"f048383f-8a85-4ef6-849e-f75b628e9450","timestamp":"2026-08-23T14:06:23.065932422Z","type":"issue_claimed"}

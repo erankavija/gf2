@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-23T14:06:23.065932422Z",
   "context": {},
   "created_at": "2026-08-22T22:16:44.528935546Z",
   "dependencies": [
@@ -40,7 +41,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Extend the tuning schema with the seam fields",
-  "updated_at": "2026-08-23T07:47:12.716208451Z"
+  "updated_at": "2026-08-23T14:06:23.065932422Z"
 }
