@@ -1,7 +1,10 @@
 # Strassen-Winograd threshold sweep and classical-vs-Winograd speedup
 
-Issue `ad597ede`, story `d48a3cfd/T3`. Evidence for the chosen
-`FiniteField::WINOGRAD_THRESHOLD` default and for the `[aspirational]`
+Issue `ad597ede`, story `d48a3cfd/T3`. Evidence for the chosen Winograd
+base-case default — today `WINOGRAD_MIN_DIM_DEFAULT`, the conservative
+default of the `gemm.winograd_min_dim` tuning-profile field that live
+dispatch reads (at measurement time the value was carried by
+`FiniteField::WINOGRAD_THRESHOLD`) — and for the `[aspirational]`
 criterion "Winograd beats classical at the chosen threshold by ≥ 1.2×".
 
 Reproduce with:
