@@ -246,8 +246,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 /// conservative defaults; direct callers of the forced blocked entry points
 /// can still pass it explicitly.
 ///
-/// Chosen empirically: large enough for the update GEMM to surpass
-/// `GEMM_AXPY_FAST_PATH_THRESHOLD = 16³` even at `n = 1` (after two
+/// Chosen empirically: large enough for the update GEMM to surpass the
+/// `gemm.axpy_fast_path_min_volume` bound at its conservative default
+/// (`GEMM_AXPY_FAST_PATH_THRESHOLD = 16³`) even at `n = 1` (after two
 /// diagonal tiles the update covers `64 × 64 × 1 = 4096` cell-triples;
 /// after three panels it is `192 × 64 × 1 = 12288`), small enough that
 /// each diagonal block stays within L1 cache on a typical x86-64 core.
@@ -1092,7 +1093,9 @@ fn trsm_upper_blocked_inner<F: FiniteField>(
         // A_off = A[0..row_start, row_start..row_end],  (row_start × bs_k)
         // X_panel = b_bot[0..bs_k, :]                   (bs_k × n, just solved)
         // GEMM shape: row_start × bs_k × n.  At k=3, bs=64, n=1 this is
-        // 192 × 64 × 1 = 12288 ≥ GEMM_AXPY_FAST_PATH_THRESHOLD = 4096.
+        // 192 × 64 × 1 = 12288, clearing gemm.axpy_fast_path_min_volume
+        // at its conservative default (GEMM_AXPY_FAST_PATH_THRESHOLD =
+        // 4096).
         if row_start > 0 {
             let a_off = a.submat(0..row_start, row_start..row_end);
             let x_panel = b_bot.submat(0..bs_k, ..);
