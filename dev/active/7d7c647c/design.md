@@ -688,3 +688,17 @@ section that meets it.
 | REQ-01 | §2, §3 | §2 states what the surface holds today and that no extracted definition or lemma reads it; §3 fixes the three-part seam, tabulates what the surface holds afterwards with the probe that verifies each claim on the pinned pair, and shows the chain of record's three results all stand. |
 | REQ-02 | §4 | §4.1 gives each constant its family, field name, kind, range, conservative default naming an in-source constant, read site and mechanism; §4.2 derives every range from the read site's arithmetic; §4.3 answers the per-field-to-per-host mapping; §4.4 carries the measured provenance forward; §4.5 names the route reporter and test obligation per family. |
 | REQ-03 | §8 | Ten worker-sized tasks with one-line scopes, dependencies and gates, ordered into three independent preparation tasks, a schema task, three family cutovers, the single surface-moving task with its Lean gates, the convention amendment, and the calibration extension. |
+
+## Amendment A1 (2026-08-23, appended by issue f048383f / seam U3)
+
+§4.2's rows for `ple.panel_byte_lane_max_cols` and
+`ple.panel_u16_lane_max_cols` state the admissible range as $1 \le t$
+with no upper bound. U3's REQ-01 ("the two lane fields' ranges cap at
+their kernels' asserted bounds") supersedes that: the schema rejects
+values above each PLE panel kernel's asserted structural scratch bound,
+named `PANEL_SCRATCH_COLS` (= 256 for both the byte-lane and u16-lane
+kernels: `crates/gf2-kernels-simd/src/fp_small_ple.rs` and
+`fp_medium_ple.rs`, single arch-independent definitions re-used by the
+kernels' own scratch arrays and asserts). The conservative defaults
+remain the tuned blocking factors `KC` = 256 and `KC_U16` = 128; the
+enforced admissible ranges are $1 \le t \le 256$ for both lane fields.
