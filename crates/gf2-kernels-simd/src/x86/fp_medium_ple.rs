@@ -73,6 +73,16 @@ use core::arch::x86_64::*;
 /// Inner SIMD lane width (8 × u32 lanes per ymm).
 const LANE_U32: usize = 8;
 
+/// L1d-fit column-window blocking factor for the u16-lane panel-base
+/// kernel: half the byte-lane panel kernel's `KC = 256`
+/// ([`crate::x86::fp_small_panel::KC`]), reflecting the 2× lane-density
+/// gap between u16 and u8 lanes (16 → 8 u16 lanes per AVX2 tile against
+/// 16 u8 lanes for the byte-lane kernel). Measured on the 5900X
+/// reference host:
+/// `dev/bench_results/2026-05-27-68db401b-fp-medium-ple.md:30-31` (host
+/// at `:8`).
+pub const KC_U16: usize = 128;
+
 /// Panelized PLE base-case elimination on canonical u16 storage.
 ///
 /// See module docs for algorithm. Performs in-place rank-revealing
@@ -198,7 +208,7 @@ pub unsafe fn ple_panel_base_canonical_u16(
 /// Swap two rows of the row-major window panel.
 ///
 /// Uses 16-byte (8-u16) and 32-byte (16-u16) AVX2 chunks where
-/// possible; the panel rows are at most `KC = 128` u16 wide
+/// possible; the panel rows are at most [`KC_U16`] u16 wide
 /// (256 bytes), so the swap is cheap.
 #[inline]
 #[target_feature(enable = "avx2")]
@@ -264,12 +274,12 @@ unsafe fn fused_scale_and_schur_u16(
 
     // Snapshot the pivot row's tail into a stack buffer so the inner
     // loop can broadcast contiguous lanes without aliasing the
-    // mutable `window` slice. The tail length is at most `win <= 128`
-    // (PLE_PANEL_COLS_U16 = 128), bounded here at 256 for safety.
+    // mutable `window` slice. The tail length is at most `win <=
+    // KC_U16`, bounded here at 256 for safety.
     let mut pivot_buf = [0u16; 256];
     debug_assert!(
         tail_len <= 256,
-        "fused_scale_and_schur_u16: tail_len > 256 (win exceeds PLE_PANEL_COLS_U16 bound)"
+        "fused_scale_and_schur_u16: tail_len > 256 (win exceeds KC_U16 bound)"
     );
     if tail_len > 0 {
         let pivot_base = rank * win + tail_start;
