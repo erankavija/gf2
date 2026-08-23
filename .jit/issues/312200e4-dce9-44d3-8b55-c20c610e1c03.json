@@ -19,6 +19,39 @@
       "format": "markdown",
       "label": "OSD authoritative breakdown manifest",
       "path": "dev/active/b7157be6-osd/breakdown.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5e40581dd6a4150f6b178a7383f8848cb21c553f93c544f5a7ad9f64f91d5f56",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md",
+          "resolved_path": "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a08e725150c9c1e5fd8c648acc12bb913939ec9807236d55224a8e0df9974b0d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/b7157be6-osd/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cf58fa347b0930649193c9ccd0cc6a6ff018da0c10d150896c27e7f1f3612af8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/b7157be6-osd/investigation.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "OSD concise plan",
+      "path": "dev/active/b7157be6-osd/plan.md"
     }
   ],
   "first_ready_at": "2026-08-23T22:06:47.849195622Z",
@@ -44,5 +77,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Ordered-statistics decoding as the universal soft-decision baseline",
-  "updated_at": "2026-08-23T22:36:29.668183854Z"
+  "updated_at": "2026-08-23T22:36:53.450882858Z"
 }
