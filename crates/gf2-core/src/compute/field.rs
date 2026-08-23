@@ -55,7 +55,7 @@ pub fn last_effective_soa_chunk() -> Option<usize> {
 /// a witness that merely tolerates a single-threaded pool can pass without
 /// ever exercising the installed chunk length. `rayon::current_num_threads`
 /// inside `f` reports this pool's size, so
-/// [`should_parallelize_soa_batch`]'s gate observes it.
+/// [`should_parallelize_soa_batch_resolved`]'s gate observes it.
 ///
 /// Exists only under `cfg(test)` or the `test-support` feature, with the
 /// `parallel` feature.
@@ -78,7 +78,7 @@ pub fn reset_last_effective_soa_chunk() {
     LAST_EFFECTIVE_SOA_CHUNK.store(0, std::sync::atomic::Ordering::SeqCst);
 }
 
-/// The selected arm of the [`should_parallelize_soa_batch`] length dispatch.
+/// The selected arm of the [`should_parallelize_soa_batch_resolved`] length dispatch.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SoaParallelRoute {
     /// Run the batch on the calling thread.
@@ -87,12 +87,12 @@ pub enum SoaParallelRoute {
     Parallel,
 }
 
-/// Reports the length-based arm of [`should_parallelize_soa_batch`] for a
+/// Reports the length-based arm of [`should_parallelize_soa_batch_resolved`] for a
 /// SoA batch of `len` elements.
 ///
 /// The comparison uses the active `soa_batch.parallel_min_len()` profile
 /// value. It does not account for rayon thread availability;
-/// [`should_parallelize_soa_batch`] applies that separately.
+/// [`should_parallelize_soa_batch_resolved`] applies that separately.
 #[must_use]
 pub fn soa_parallel_route(len: usize) -> SoaParallelRoute {
     soa_parallel_route_resolved(tuning::active().soa_batch().parallel_min_len(), len)
@@ -108,34 +108,31 @@ fn soa_parallel_route_resolved(parallel_min_len: usize, len: usize) -> SoaParall
     }
 }
 
-/// Returns whether a SoA batch of `len` elements should use rayon.
+/// Returns whether a SoA batch of `len` elements should use rayon, against
+/// an already-resolved `parallel_min_len`.
 ///
-/// Uses the active `soa_batch.parallel_min_len()` profile value via
-/// [`soa_parallel_route`].
+/// The public batch entry points resolve `tuning::active().soa_batch()`
+/// exactly once and pass `parallel_min_len` here and `parallel_chunk_len`
+/// to the parallel arm, per the design's single-read obligation
+/// (`dev/active/7d824b2f/design.md` §2.3).
+#[cfg(feature = "parallel")]
 #[inline]
-pub(crate) fn should_parallelize_soa_batch(len: usize) -> bool {
-    #[cfg(feature = "parallel")]
-    {
-        soa_parallel_route(len) == SoaParallelRoute::Parallel && rayon::current_num_threads() > 1
-    }
-
-    #[cfg(not(feature = "parallel"))]
-    {
-        let _ = len;
-        false
-    }
+pub(crate) fn should_parallelize_soa_batch_resolved(parallel_min_len: usize, len: usize) -> bool {
+    soa_parallel_route_resolved(parallel_min_len, len) == SoaParallelRoute::Parallel
+        && rayon::current_num_threads() > 1
 }
 
 /// Parallel Karatsuba multiplication for quadratic SoA batches.
 ///
 /// This is bit-exact with [`BatchExtField::batch_mul_quadratic`]; it only
 /// changes the schedule by assigning contiguous coefficient-lane chunks to
-/// rayon workers. The chunk length is the active `soa_batch.parallel_chunk_len()`
-/// profile value, resolved once for this call. Complexity is `O(len)`.
+/// rayon workers. The chunk length is the `soa_batch.parallel_chunk_len()` profile value,
+/// resolved once by the caller at the public entry and passed in. Complexity is `O(len)`.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_mul_quadratic_parallel<F, C>(
     lhs: &BatchExtField<F, 2>,
     rhs: &BatchExtField<F, 2>,
+    chunk_len: usize,
 ) -> BatchExtField<F, 2>
 where
     F: ConstField + SimdKaratsubaHook + Send + Sync,
@@ -149,7 +146,6 @@ where
         rhs.len()
     );
 
-    let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
     #[cfg(any(test, feature = "test-support"))]
     LAST_EFFECTIVE_SOA_CHUNK.store(chunk_len, std::sync::atomic::Ordering::SeqCst);
     let len = lhs.len();
@@ -181,12 +177,14 @@ where
 /// The chunk length is the active `soa_batch.parallel_chunk_len()` profile
 /// value, resolved once for this call.
 #[cfg(feature = "parallel")]
-pub(crate) fn batch_square_quadratic_parallel<F, C>(xs: &BatchExtField<F, 2>) -> BatchExtField<F, 2>
+pub(crate) fn batch_square_quadratic_parallel<F, C>(
+    xs: &BatchExtField<F, 2>,
+    chunk_len: usize,
+) -> BatchExtField<F, 2>
 where
     F: ConstField + SimdKaratsubaHook + Send + Sync,
     C: ExtConfig<BaseField = F>,
 {
-    let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
     #[cfg(any(test, feature = "test-support"))]
     LAST_EFFECTIVE_SOA_CHUNK.store(chunk_len, std::sync::atomic::Ordering::SeqCst);
     let len = xs.len();
@@ -249,6 +247,7 @@ where
 pub(crate) fn batch_mul_cubic_parallel<F, C>(
     lhs: &BatchExtField<F, 3>,
     rhs: &BatchExtField<F, 3>,
+    chunk_len: usize,
 ) -> BatchExtField<F, 3>
 where
     F: ConstField + SimdKaratsubaHook + Send + Sync,
@@ -262,7 +261,6 @@ where
         rhs.len()
     );
 
-    let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
     #[cfg(any(test, feature = "test-support"))]
     LAST_EFFECTIVE_SOA_CHUNK.store(chunk_len, std::sync::atomic::Ordering::SeqCst);
     let len = lhs.len();
@@ -299,12 +297,14 @@ where
 /// The chunk length is the active `soa_batch.parallel_chunk_len()` profile
 /// value, resolved once for this call.
 #[cfg(feature = "parallel")]
-pub(crate) fn batch_square_cubic_parallel<F, C>(xs: &BatchExtField<F, 3>) -> BatchExtField<F, 3>
+pub(crate) fn batch_square_cubic_parallel<F, C>(
+    xs: &BatchExtField<F, 3>,
+    chunk_len: usize,
+) -> BatchExtField<F, 3>
 where
     F: ConstField + SimdKaratsubaHook + Send + Sync,
     C: ExtConfig<BaseField = F>,
 {
-    let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
     #[cfg(any(test, feature = "test-support"))]
     LAST_EFFECTIVE_SOA_CHUNK.store(chunk_len, std::sync::atomic::Ordering::SeqCst);
     let len = xs.len();
