@@ -832,14 +832,14 @@ pub trait FiniteField:
     /// `benches/strassen_threshold.rs` at `n = 2048`, where both fields
     /// cross over at ≈ 128.
     ///
-    /// The per-field crossover intuition survives in the tuning layer,
-    /// not here: fields with materially heavier scalar MACs than
-    /// Mersenne-31 (e.g. `Goldilocks`, 128-bit reduction path) cross
-    /// over at smaller sizes because a single multiply costs more, and
-    /// fields with much lighter MACs (e.g. GF(2) bit-packed) at larger
-    /// ones — a calibrated profile records such a value in
-    /// `gemm.winograd_min_dim`; overriding this constant changes
-    /// nothing at runtime.
+    /// The crossover intuition is per-field — fields with materially
+    /// heavier scalar MACs than Mersenne-31 (e.g. `Goldilocks`, 128-bit
+    /// reduction path) cross over at smaller sizes, fields with much
+    /// lighter MACs (e.g. GF(2) bit-packed) at larger ones — but the
+    /// live carrier, `gemm.winograd_min_dim`, is a single host-level
+    /// value: a calibrated profile records one host-wide threshold, and
+    /// per-field crossover control has no live carrier. Overriding this
+    /// constant changes nothing at runtime.
     ///
     /// The threshold is **soft** — correctness is independent of it.
     /// The Winograd implementation is bit-exact equal to the classical

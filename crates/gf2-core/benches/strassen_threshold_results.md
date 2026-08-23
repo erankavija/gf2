@@ -57,10 +57,11 @@ crossover.
 
 At record time the trait default could be overridden per field if
 empirical evidence called for it — for example `Goldilocks` (128-bit
-path) or GF(2) bit-packed storage. Today that per-field tuning lives in
-the `gemm.winograd_min_dim` profile field (a calibrated profile records
-the field-specific crossover; overriding the trait constant no longer
-affects dispatch, jit:e2744fcf). The measured Mersenne-31 and
+path) or GF(2) bit-packed storage. Today live dispatch reads the
+single host-level `gemm.winograd_min_dim` profile value (overriding
+the trait constant no longer affects dispatch, jit:e2744fcf); a
+calibrated profile records one host-wide threshold, and per-field
+crossover control has no live carrier. The measured Mersenne-31 and
 `Gf2mWide<1, Gf2m8>` crossover is ≈ 128 on both fields, matching the
 conservative default.
 
