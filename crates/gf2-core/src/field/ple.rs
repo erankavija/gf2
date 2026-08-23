@@ -732,13 +732,17 @@ pub enum PlePanelRoute {
     /// kernel may still decline at run time, in which case the window falls
     /// through to the binary-halving split.
     PanelBase,
-    /// The column window is walked in narrow sub-panels, each dispatched to
-    /// the panel base and followed by a wide trsm + gemm update of the right
-    /// tail.
+    /// The column window is wider than the profile's panel base width and is
+    /// walked in narrow sub-panels — each at most that width, capped at the
+    /// resolved lane ceiling when an installed profile sets it lower — every
+    /// sub-panel dispatched to the panel base and followed by a wide trsm +
+    /// gemm update of the right tail.
     SubPanelRecursion,
     /// The column window is halved and driven by the recursive trsm + gemm
-    /// split: the carrier registers no panel kernel, or the window is wider
-    /// than the registered lane's panel width.
+    /// split: the carrier registers no panel kernel, or the window lies
+    /// between the resolved lane ceiling and the profile's panel base width
+    /// (too wide for one panel dispatch, not wide enough for the sub-panel
+    /// walk).
     RecursiveSplit,
 }
 
