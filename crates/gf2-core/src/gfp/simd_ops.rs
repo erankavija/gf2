@@ -1699,7 +1699,7 @@ const fn select_f64_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
     P > 251 && P < 65536 && n >= F64_MIN_COLS_SELECTED
 }
 
-/// The selected arm of the prime-field GEMM dispatchers.
+/// The arm the prime-field GEMM dispatchers run for one cell.
 ///
 /// The two cascades cover disjoint prime windows, so one enum reports both
 /// boundaries: [`PrimeGemmRoute::F32Cascade`] is reachable only for small
@@ -1712,36 +1712,84 @@ pub enum PrimeGemmRoute {
     F32Cascade,
     /// The f64-FMA cascade in `fp_medium_try_gemm_panel`.
     F64Cascade,
-    /// The integer u16 baseline: Candidate C's `_mm256_madd_epi16` kernel for
-    /// small primes, the u16 panel kernel for medium ones.
+    /// Route C's pure-integer panelized micro-kernel for GF(251), reachable
+    /// only through [`set_route_c_gf251_enabled`].
+    U8Panel,
+    /// The integer baseline: Candidate C's byte-lane kernel for small primes,
+    /// the u16 panel kernel for medium ones.
     U16Baseline,
+    /// Neither dispatcher runs a SIMD arm: the prime falls outside both
+    /// windows, the shape is degenerate, or no kernel is registered on this
+    /// host. The caller's own fallback computes the product — its scalar loop
+    /// for an in-window prime, or the generic Montgomery kernel for
+    /// `P >= 65536`.
+    Deferred,
 }
 
 /// Reports the prime-field GEMM arm for the field `Fp<P>` at output shape
 /// `m × n` with inner dimension `k`.
 ///
-/// The two dispatchers call [`select_f32_path`] and [`select_f64_path`]; this
-/// reporter calls the same two predicates, so it observes the production
-/// selection rather than a copy of it. Both predicates take their bounds from
-/// the tuning profile's `prime_route.f32_min_prime`, `prime_route.f32_min_cols`
-/// and `prime_route.f64_min_cols` fields, baked at compile time
-/// (`dev/active/7d824b2f/design.md` §3.11), which is why this function is a
-/// `const fn`: the whole route folds at monomorphisation.
+/// The reporter walks the same gate chain as the dispatchers, in their order,
+/// calling the same functions they call: the eligibility window
+/// (`fp_small_enabled`, `fp_medium_eligible`), the degenerate-shape guard, the
+/// [`select_f32_path`] / [`select_f64_path`] window predicates, the GF(251)
+/// debug toggles, and the kernel-registration lookups in [`crate::simd`] that
+/// decide whether the selected arm can actually run. A cell whose window
+/// predicate holds but whose kernel is absent therefore reports the arm the
+/// dispatcher falls back to, not the arm the predicate alone would suggest.
 ///
-/// The reported route is the production default. The GF(251) debug toggles
-/// [`set_route_a_gf251_enabled`] and [`set_route_c_gf251_enabled`] override
-/// the dispatch at run time and are outside what this reporter observes.
+/// The window predicates take their bounds from the tuning profile's
+/// `prime_route.f32_min_prime`, `prime_route.f32_min_cols` and
+/// `prime_route.f64_min_cols` fields, baked at compile time
+/// (`dev/active/7d824b2f/design.md` §3.11); the rest of the chain is runtime
+/// state, so the reported route depends on the host's detected kernels and on
+/// the current setting of [`set_route_a_gf251_enabled`] and
+/// [`set_route_c_gf251_enabled`].
 #[cfg(feature = "simd")]
-#[inline]
 #[must_use]
-pub const fn prime_gemm_route<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
-    if select_f32_path::<P>(m, k, n) {
-        PrimeGemmRoute::F32Cascade
-    } else if select_f64_path::<P>(m, k, n) {
-        PrimeGemmRoute::F64Cascade
-    } else {
-        PrimeGemmRoute::U16Baseline
+pub fn prime_gemm_route<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
+    // Both dispatchers reject a degenerate shape before selecting an arm.
+    if m == 0 || k == 0 || n == 0 {
+        return PrimeGemmRoute::Deferred;
     }
+
+    if fp_small_enabled::<P>() {
+        // `fp_small_try_gemm_classical`, in block order: route A, route C,
+        // legacy Candidate F, Candidate C.
+        let f32_selected = select_f32_path::<P>(m, k, n);
+        if (route_a_gf251_enabled::<P>() || (f32_selected && P == 251))
+            && crate::simd::maybe_fp_small_f32().is_some()
+        {
+            return PrimeGemmRoute::F32Cascade;
+        }
+        if route_c_gf251_enabled::<P>() && crate::simd::maybe_fp_small_panel().is_some() {
+            return PrimeGemmRoute::U8Panel;
+        }
+        if f32_selected && crate::simd::maybe_fp_small_f32().is_some() {
+            return PrimeGemmRoute::F32Cascade;
+        }
+        return if crate::simd::maybe_fp_small().is_some() {
+            PrimeGemmRoute::U16Baseline
+        } else {
+            PrimeGemmRoute::Deferred
+        };
+    }
+
+    if fp_medium_eligible::<P>() {
+        // `fp_medium_try_gemm_panel`: the f64 cascade first, then the u16
+        // panel kernel. `fp_medium_f64_try_gemm` reports `false` when the f64
+        // kernel is absent, which is the lookup mirrored here.
+        if select_f64_path::<P>(m, k, n) && crate::simd::maybe_fp_medium_f64().is_some() {
+            return PrimeGemmRoute::F64Cascade;
+        }
+        return if crate::simd::maybe_fp_medium().is_some() {
+            PrimeGemmRoute::U16Baseline
+        } else {
+            PrimeGemmRoute::Deferred
+        };
+    }
+
+    PrimeGemmRoute::Deferred
 }
 
 /// GEMM helper: whole-GEMM panelized AVX2 kernel for medium-prime
