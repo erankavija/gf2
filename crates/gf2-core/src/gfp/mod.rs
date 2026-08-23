@@ -64,7 +64,7 @@ use specialized::{
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
-use crate::field::{ConstField, FiniteField};
+use crate::field::{ConstField, FiniteField, PlePanelLane};
 
 /// Compile-time flag indicating whether `Fp<P>` should use canonical storage
 /// with a specialized reduction instead of Montgomery form.
@@ -952,16 +952,18 @@ impl<const P: u64> FiniteField for Fp<P> {
         )
     }
 
-    /// Non-allocating availability probe for
+    /// Non-allocating lane-class probe for
     /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base).
-    /// Returns `true` when `P <= 251` and the small-prime PLE panel
-    /// kernel is registered, or when `252 <= P < 65536` and the medium-
-    /// prime PLE panel kernel is registered (issue `68db401b`). Both
-    /// require the `simd` feature and runtime-detected AVX2.
+    /// Returns `Some(PlePanelLane::Byte)` when `P <= 251` and the
+    /// small-prime PLE panel kernel is registered, or
+    /// `Some(PlePanelLane::U16)` when `252 <= P < 65536` and the
+    /// medium-prime PLE panel kernel is registered (issue `68db401b`).
+    /// Both require the `simd` feature and runtime-detected AVX2.
+    /// Returns `None` otherwise.
     #[cfg(not(verify_lean))]
     #[inline]
-    fn has_simd_ple_panel_base() -> bool {
-        simd_ops::fp_ple_panel_base_available::<P>()
+    fn simd_ple_panel_lane() -> Option<PlePanelLane> {
+        simd_ops::fp_ple_panel_lane::<P>()
     }
 }
 

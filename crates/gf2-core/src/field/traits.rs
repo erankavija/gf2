@@ -15,6 +15,22 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
+/// SIMD panel-kernel lane class for the panelized PLE base case
+/// (issue `6823c8a0`, design `2e8c5a29`).
+///
+/// Reported by [`FiniteField::simd_ple_panel_lane`]. Identifies which
+/// AVX2 panel kernel a field carrier has registered for
+/// [`FiniteField::try_simd_ple_panel_base`]. It carries no numeric
+/// width — the panel window's tuned size is a host-tuning concern,
+/// not a per-carrier constant.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PlePanelLane {
+    /// Byte-lane AVX2 panel kernel (`Fp<P>` for `P <= 251`).
+    Byte,
+    /// u16-lane AVX2 panel kernel (`Fp<P>` for `252 <= P < 65536`).
+    U16,
+}
+
 /// Core trait for finite field elements.
 ///
 /// Provides arithmetic operations, identity elements, and a wide accumulator type
@@ -971,20 +987,23 @@ pub trait FiniteField:
         None
     }
 
-    /// Non-allocating availability probe for
+    /// Non-allocating lane-class probe for
     /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base)
     /// (issue `6823c8a0`).
     ///
     /// Callers (specifically
     /// [`crate::field::ple::ple_in_place_window`]) use this probe to
-    /// decide whether to take the panel-base dispatch arm. The default
-    /// returns `false`; `Fp<P>` for `P <= 251` overrides to return
-    /// `true` when the `simd` feature is enabled and AVX2 is detected
-    /// at runtime.
+    /// decide whether to take the panel-base dispatch arm and, when
+    /// `Some`, which lane class the registered kernel runs. The default
+    /// returns `None`; `Fp<P>` overrides to return
+    /// `Some(PlePanelLane::Byte)` for `P <= 251` or
+    /// `Some(PlePanelLane::U16)` for `252 <= P < 65536`, when the
+    /// `simd` feature is enabled and AVX2 is detected at runtime, and
+    /// `None` otherwise.
     #[doc(hidden)]
     #[inline]
-    fn has_simd_ple_panel_base() -> bool {
-        false
+    fn simd_ple_panel_lane() -> Option<PlePanelLane> {
+        None
     }
 }
 

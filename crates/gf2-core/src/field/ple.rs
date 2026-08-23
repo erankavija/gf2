@@ -133,6 +133,8 @@ use crate::field::matrix::{gemm_axpy_into_view, FieldMatrix, MatView, MatViewMut
 use crate::field::triangular::{trsm_lower, trsm_upper};
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
+#[cfg(test)]
+use crate::field::PlePanelLane;
 
 /// Default for [`FiniteField::PLE_BASE_COLS`]: column-window width at or
 /// below which [`FieldMatrix::ple`]'s block-recursive driver switches to
@@ -504,7 +506,7 @@ fn ple_base_direct<F: FiniteField>(
 ///
 /// Called by [`ple_in_place_window`] when the column window is at or
 /// below the field's `PLE_PANEL_COLS` threshold and the field's
-/// `has_simd_ple_panel_base` returns `true`. Extracts the parent
+/// `simd_ple_panel_lane` returns `Some`. Extracts the parent
 /// matrix's raw storage from the `MatViewMut`, invokes the field's
 /// `try_simd_ple_panel_base` hook, and returns `Some(rank)` on
 /// success or `None` if the kernel declined (caller then falls back
@@ -654,7 +656,7 @@ fn ple_in_place_window<F: FiniteField>(
     // path. The wide gemm inherits the small-prime whole-GEMM fast path
     // from issue 40195c09 (lift), which hits the kernel's u8 byte-lane
     // throughput on the bulk of the operations.
-    if F::has_simd_ple_panel_base() && win > PLE_PANEL_RECURSIVE_BASE {
+    if F::simd_ple_panel_lane().is_some() && win > PLE_PANEL_RECURSIVE_BASE {
         return ple_panel_recursive_window::<F>(
             a,
             col_lo,
@@ -664,7 +666,7 @@ fn ple_in_place_window<F: FiniteField>(
             PLE_PANEL_RECURSIVE_BASE,
         );
     }
-    if win <= F::PLE_PANEL_COLS && F::has_simd_ple_panel_base() {
+    if win <= F::PLE_PANEL_COLS && F::simd_ple_panel_lane().is_some() {
         if let Some(rank) = try_panel_base_dispatch::<F>(&mut a, col_lo, col_hi, perm, pivot_cols) {
             return rank;
         }
@@ -3370,7 +3372,7 @@ mod tests {
     #[test]
     fn test_ple_panelized_dispatch_active_for_small_primes() {
         // Sanity probe: confirm `PLE_PANEL_COLS` and
-        // `has_simd_ple_panel_base` resolve to the expected values for
+        // `simd_ple_panel_lane` resolve to the expected values for
         // each in-scope field.
         assert_eq!(<Fp<7> as FiniteField>::PLE_PANEL_COLS, 256);
         assert_eq!(<Fp<31> as FiniteField>::PLE_PANEL_COLS, 256);
@@ -3383,33 +3385,54 @@ mod tests {
         // Mersenne-31 has P >= 65536; the panel base case is unchanged.
         assert_eq!(<Fp<MERSENNE_31> as FiniteField>::PLE_PANEL_COLS, 1);
 
-        // `has_simd_ple_panel_base()` should be true for P <= 251 AND
-        // for 252 <= P < 65536 (medium primes, e.g. GF(65521); issue
-        // `68db401b`) on any AVX2 host with the `simd` feature.
-        // Without the simd feature it always returns false (the kernel
+        // `simd_ple_panel_lane()` should report `Byte` for P <= 251 and
+        // `U16` for 252 <= P < 65536 (medium primes, e.g. GF(65521);
+        // issue `68db401b`) on any AVX2 host with the `simd` feature.
+        // Without the simd feature it always returns `None` (the kernel
         // dispatch is feature-gated). Detect both axes.
         #[cfg(feature = "simd")]
         {
             if std::arch::is_x86_feature_detected!("avx2") {
-                assert!(<Fp<7> as FiniteField>::has_simd_ple_panel_base());
-                assert!(<Fp<31> as FiniteField>::has_simd_ple_panel_base());
-                assert!(<Fp<127> as FiniteField>::has_simd_ple_panel_base());
-                assert!(<Fp<241> as FiniteField>::has_simd_ple_panel_base());
-                assert!(<Fp<251> as FiniteField>::has_simd_ple_panel_base());
-                assert!(<Fp<65521> as FiniteField>::has_simd_ple_panel_base());
+                assert_eq!(
+                    <Fp<7> as FiniteField>::simd_ple_panel_lane(),
+                    Some(PlePanelLane::Byte)
+                );
+                assert_eq!(
+                    <Fp<31> as FiniteField>::simd_ple_panel_lane(),
+                    Some(PlePanelLane::Byte)
+                );
+                assert_eq!(
+                    <Fp<127> as FiniteField>::simd_ple_panel_lane(),
+                    Some(PlePanelLane::Byte)
+                );
+                assert_eq!(
+                    <Fp<241> as FiniteField>::simd_ple_panel_lane(),
+                    Some(PlePanelLane::Byte)
+                );
+                assert_eq!(
+                    <Fp<251> as FiniteField>::simd_ple_panel_lane(),
+                    Some(PlePanelLane::Byte)
+                );
+                assert_eq!(
+                    <Fp<65521> as FiniteField>::simd_ple_panel_lane(),
+                    Some(PlePanelLane::U16)
+                );
             }
         }
         #[cfg(not(feature = "simd"))]
         {
-            // Without `simd`, every prime should report false.
-            assert!(!<Fp<7> as FiniteField>::has_simd_ple_panel_base());
-            assert!(!<Fp<251> as FiniteField>::has_simd_ple_panel_base());
-            assert!(!<Fp<65521> as FiniteField>::has_simd_ple_panel_base());
+            // Without `simd`, every prime should report `None`.
+            assert_eq!(<Fp<7> as FiniteField>::simd_ple_panel_lane(), None);
+            assert_eq!(<Fp<251> as FiniteField>::simd_ple_panel_lane(), None);
+            assert_eq!(<Fp<65521> as FiniteField>::simd_ple_panel_lane(), None);
         }
-        // P >= 65536 must NEVER advertise the panel kernel — both
-        // byte-lane (P <= 251) and u16-lane (252..65536) kernels exclude
+        // P >= 65536 must NEVER advertise a panel lane — both byte-lane
+        // (P <= 251) and u16-lane (252..65536) kernels exclude
         // it.
-        assert!(!<Fp<MERSENNE_31> as FiniteField>::has_simd_ple_panel_base());
+        assert_eq!(
+            <Fp<MERSENNE_31> as FiniteField>::simd_ple_panel_lane(),
+            None
+        );
     }
 
     /// Helper: build a rank-deficient matrix of shape (m, n) over Fp<P>
