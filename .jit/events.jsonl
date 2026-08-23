@@ -9132,3 +9132,5 @@
 {"assignee":"agent:worker","id":"02173dc3-8f99-4317-b4da-037a5434a270","issue_id":"26ae7d6b-e526-41cd-b0d6-3dac68d362e0","timestamp":"2026-08-23T11:54:44.611693952Z","type":"issue_claimed"}
 {"from":"ready","id":"87728749-6398-4249-8600-b3295e4e0ba4","issue_id":"19424a0f-38d5-4578-bde6-0e18e18abccd","timestamp":"2026-08-23T11:54:52.452164737Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"e5d25d4a-e9c8-4687-9301-3b720ac87f8c","issue_id":"19424a0f-38d5-4578-bde6-0e18e18abccd","timestamp":"2026-08-23T11:54:52.452164737Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"6062c28f-2a2f-44e4-b1f9-4d509671663f","issue_id":"fa92608b-5f8a-47c3-ae35-a6a70a85db7a","timestamp":"2026-08-23T12:07:00.451628517Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"14b9334d-6b86-45c5-bfba-0e67de10be9b","issue_id":"fa92608b-5f8a-47c3-ae35-a6a70a85db7a","timestamp":"2026-08-23T12:11:01.294736343Z","type":"gate_failed","updated_by":"auto:executor"}
