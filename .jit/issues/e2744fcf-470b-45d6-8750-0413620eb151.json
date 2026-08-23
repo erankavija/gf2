@@ -27,7 +27,7 @@
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-23T17:04:35.789433298Z",
+      "updated_at": "2026-08-23T17:07:23.569307637Z",
       "updated_by": "auto:executor"
     }
   },
@@ -41,5 +41,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut the Winograd threshold over to the tuning profile",
-  "updated_at": "2026-08-23T17:04:35.789433298Z"
+  "updated_at": "2026-08-23T17:07:23.569307637Z"
 }
