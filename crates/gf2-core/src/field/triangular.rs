@@ -203,9 +203,10 @@
 //! `trsm_upper` / `trsm_lower` generate many small `gemm_axpy_into_view`
 //! calls (one per recursion level). At small `B`-column counts (e.g. `n = 1`
 //! for a single right-hand side), the inner GEMM dimensions become too small
-//! to trigger the whole-GEMM `fp_small_try_gemm_classical` threshold
-//! (`GEMM_AXPY_FAST_PATH_THRESHOLD = 16³ = 4096` cell-triples), so the SIMD
-//! fast path is never reached.
+//! to trigger the whole-GEMM `fp_small_try_gemm_classical` threshold — the
+//! active `gemm.axpy_fast_path_min_volume` profile value, whose
+//! conservative default is `GEMM_AXPY_FAST_PATH_THRESHOLD = 16³ = 4096`
+//! cell-triples — so the SIMD fast path is never reached.
 //!
 //! [`trsm_upper_blocked`] and [`trsm_lower_blocked`] implement Higham § 14.1
 //! right-looking blocked back-substitution: the triangular factor `A` is
