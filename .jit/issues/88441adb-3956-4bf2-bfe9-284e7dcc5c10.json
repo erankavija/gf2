@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the triangular base-case crossover to resolve-once reads at the nine public entries.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the seven *_inner drivers takes the resolved threshold by parameter, each of the nine public entries resolves triangular.base_case_max_dim exactly once, and tuning::active() never appears inside a recursion.\n- [hard] REQ-02: triangular_route is public and called by the dispatchers; installed-profile route files on both sides of the boundary for one trsm, one trmm and one trtri entry pass.\n- [hard] REQ-03: The module dispatch tables the seam design §8 U6 names are rewritten to name the profile field; behaviour with no profile installed is unchanged.",
   "documents": [],
+  "done_at": "2026-08-23T17:33:45.367143172Z",
   "first_ready_at": "2026-08-22T22:17:02.265120077Z",
   "gates_required": [
     "cargo-ci",
@@ -26,8 +27,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-23T17:29:48.755512221Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T17:33:28.748717878Z",
       "updated_by": "auto:executor"
     }
   },
@@ -39,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cut the triangular base-case threshold over to the tuning profile",
-  "updated_at": "2026-08-23T17:29:48.755512221Z"
+  "updated_at": "2026-08-23T17:33:45.367143172Z"
 }
