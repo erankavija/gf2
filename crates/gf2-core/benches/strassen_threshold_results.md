@@ -55,11 +55,14 @@ Mersenne-31 blocks fit comfortably in L2, and (c) the shorter
 recursion tree reduces heap traffic without giving up the measured
 crossover.
 
-The trait default can be overridden per field if empirical evidence
-calls for it — for example `Goldilocks` (128-bit path) or GF(2)
-bit-packed storage. The current Mersenne-31 and `Gf2mWide<1, Gf2m8>`
-implementations both use the default; measured crossover is ≈ 128 on
-both fields.
+At record time the trait default could be overridden per field if
+empirical evidence called for it — for example `Goldilocks` (128-bit
+path) or GF(2) bit-packed storage. Today that per-field tuning lives in
+the `gemm.winograd_min_dim` profile field (a calibrated profile records
+the field-specific crossover; overriding the trait constant no longer
+affects dispatch, jit:e2744fcf). The measured Mersenne-31 and
+`Gf2mWide<1, Gf2m8>` crossover is ≈ 128 on both fields, matching the
+conservative default.
 
 ## Classical vs Winograd at the chosen default threshold
 
