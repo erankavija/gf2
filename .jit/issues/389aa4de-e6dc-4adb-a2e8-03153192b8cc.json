@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-23T18:09:59.814578334Z",
   "context": {},
   "created_at": "2026-08-19T21:22:50.424356970Z",
   "dependencies": [
@@ -28,7 +29,7 @@
     "epic:field-capability-dispatch"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
-  "updated_at": "2026-08-22T21:29:43.650780373Z"
+  "updated_at": "2026-08-23T18:09:59.814578334Z"
 }
