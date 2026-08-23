@@ -1,7 +1,7 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 21,
+  "current_wave": 24,
   "wave_notes": "Session 10: worktree REUSE policy active (owner directive) \u2014 merged worker worktrees are moved+re-anchored to main HEAD keeping target/ caches, via scratchpad reuse-worker-worktree.sh. Wave 21a complete session 10. Gate-vs-lock sequencing rule: never queue worker worktree CI while a main gate chain needs the lock (gate runner budget 900s < flock patience 1800s).",
   "waves": [
     {
@@ -704,6 +704,20 @@
           "notes": "U7, hard (lane-width threading + t8 reporter signature evolution). DONE: native opus (worker stalled post-commit; lead ran CI and review). code-review R1 found a REAL defect: sub-panel recursion bypassed installed lane ceilings \u2014 lead-fixed with min(split,lane) cap + observed max-dispatch-width witness. 3 further doc rounds aligning the window-partition prose. Rework 1 (lead-executed)."
         }
       ]
+    },
+    {
+      "wave_number": 23.5,
+      "issues": [
+        {
+          "id": "389aa4de",
+          "short_id": "389aa4de",
+          "title": "Extend the calibration sweep to karatsuba_min_degree",
+          "classification": "implementation",
+          "model": "opus (native worker, harness phase) + lead (measured phase pending)",
+          "status": "harness-merged-measured-run-pending",
+          "notes": "Harness phase MERGED 28f674d6: omission set = schema complement (33/38 omitted, 7 drift tests), forced-arm child-process sweep (route/operand/product verification, 14 tests), DEC-B16 grid-point forcing (crossover direction confirmed between degree 16 and 31), receipt-notes.md Blocks A-E linked. cargo-ci PASS; code-review FAIL F1/F2/F3 = exactly the deferred measured-phase deliverables (REQ-02 artifact, REQ-03 record application, v2 token per DEC-B17-as-amended) -- phase boundary, NOT rework. Claim held by agent:worker."
+        }
+      ]
     }
   ],
   "created_during_execution": [
@@ -996,6 +1010,12 @@
       "issue": "wave-21/22",
       "date": "2026-08-23",
       "decision": "DEC-B12 (inv_route second reporter, Amendment A1), DEC-B13 (m4rm call-site deviation), DEC-B14 (stride-gate reporter, Amendment A2). Owner directives: codex subagents via DIRECT codex exec only (no wrapper agents); hard tasks alternate gpt-5.6-sol and native Opus."
+    },
+    {
+      "kind": "lead-decisions",
+      "issue": "389aa4de",
+      "date": "2026-08-23",
+      "decision": "DEC-B16: karatsuba asymptotic arm forces the grid point (minimal forcing timed a non-production algorithm; evidence in receipt-notes Block D + design A4). DEC-B17 (amended): harness token bumps to tuning-calibration-v2 IN THE SAME CHANGE as the measured run's v2 profile commit -- a committed v1 profile (gf2-5ecc9bf8-calibration-e202c080.json) is the drift anchor of the whole baked mechanism (9 readers); replacing it may re-pin DEC-G (smoke suggests simd_min_words 2 vs baked 4) -- owner decision listed in handoff open questions."
     }
   ],
   "rework_counts": {
