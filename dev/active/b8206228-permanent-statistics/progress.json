@@ -523,6 +523,7 @@
       "requested_at": "2026-08-24T01:13:13+03:00",
       "resolved_at": "2026-08-24T01:20:00+03:00",
       "decision": "Owner approved the recommended criterion amendment: REQ-03 uses the protocol's complete nested-prefix delta-AIC table and calls candidates distinguishable only when the nominal 95% bootstrap interval is non-fallback and lies wholly above +2 or below -2; every other prefix is indistinguishable regardless of point estimate.",
+      "applied_commit": "e752fa71",
       "lead_recommendation": "Amend the criterion rather than add a second decision rule, preserving the protocol as the single preregistered source of truth."
     },
     {
@@ -663,7 +664,7 @@
       "issue": "53d8e438",
       "source": "forward decision audit, session 14",
       "finding": "REQ-03 requires a preregistered specified multiple of standard error for |delta(n)|, while the authoritative protocol defines interval-aware delta-AIC without that multiple and REQ-02 forbids selecting a threshold after seeing campaign data.",
-      "disposition": "Owner approved the recommended amendment on 2026-08-24. Replace the issue's stale standard-error framing with the protocol's complete nested-prefix delta-AIC table, nominal 95% bootstrap interval, fallback status, and fixed +/-2 distinguishability rule before dispatch."
+      "disposition": "Resolved at e752fa71 under the owner's 2026-08-24 approval. The issue now uses the protocol's complete nested-prefix delta-AIC table, nominal 95% bootstrap interval, fallback status, and fixed +/-2 distinguishability rule."
     },
     {
       "issue": "1947125e",
