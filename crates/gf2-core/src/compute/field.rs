@@ -59,6 +59,12 @@ pub fn last_effective_soa_chunk() -> Option<usize> {
 ///
 /// Exists only under `cfg(test)` or the `test-support` feature, with the
 /// `parallel` feature.
+///
+/// # Panics
+///
+/// Panics if the dedicated rayon pool cannot be built — e.g. `threads`
+/// is zero on a platform where rayon rejects it, or thread spawning
+/// fails. Test-only code: a panic is the correct failure mode.
 #[cfg(all(feature = "parallel", any(test, feature = "test-support")))]
 pub fn run_in_dedicated_parallel_pool<R: Send>(threads: usize, f: impl FnOnce() -> R + Send) -> R {
     rayon::ThreadPoolBuilder::new()
