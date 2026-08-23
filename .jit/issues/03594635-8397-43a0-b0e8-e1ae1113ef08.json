@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "Replace the boolean panel-availability hook with a lane-class tag hook.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: PlePanelLane and #[doc(hidden)] fn simd_ple_panel_lane() -> Option<PlePanelLane> replace has_simd_ple_panel_base(), with the Fp<P> override under #[cfg(not(verify_lean))] exactly as the existing accelerator hooks carry it.\n- [hard] REQ-02: Dispatch behaviour is unchanged (the driver gates on lane presence); the extraction surface is unchanged (the seam design's probe AS3 verifies the target state); the workspace CI contract passes.",
   "documents": [],
+  "done_at": "2026-08-23T08:00:50.704320186Z",
   "first_ready_at": "2026-08-22T22:16:50.382117338Z",
   "gates_required": [
     "cargo-ci",
@@ -14,19 +15,19 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-22T22:16:53.442417304Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T07:54:49.370135723Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T22:16:53.617386417Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T07:58:06.883808814Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T22:16:53.792832500Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T08:00:02.821886697Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "03594635-8397-43a0-b0e8-e1ae1113ef08",
@@ -37,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Introduce the PLE panel lane hook",
-  "updated_at": "2026-08-22T22:19:30.206931770Z"
+  "updated_at": "2026-08-23T08:00:50.704320186Z"
 }
