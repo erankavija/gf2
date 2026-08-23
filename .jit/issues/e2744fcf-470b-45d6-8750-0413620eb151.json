@@ -16,14 +16,14 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-22T22:16:59.358368627Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T16:35:21.447138622Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T22:16:59.581118113Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-23T16:38:59.805236113Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "pending",
@@ -41,5 +41,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut the Winograd threshold over to the tuning profile",
-  "updated_at": "2026-08-23T15:55:50.615035375Z"
+  "updated_at": "2026-08-23T16:38:59.805236113Z"
 }
