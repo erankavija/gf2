@@ -16,13 +16,13 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-08-23T12:28:10.902532673Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T12:56:31.510994346Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-23T12:11:01.294736343Z",
+      "updated_at": "2026-08-23T12:59:35.566349423Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -41,5 +41,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut the SoA batch selectors over to the tuning profile",
-  "updated_at": "2026-08-23T12:28:10.902532673Z"
+  "updated_at": "2026-08-23T12:59:35.566349423Z"
 }
