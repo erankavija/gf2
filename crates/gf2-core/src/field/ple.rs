@@ -710,7 +710,8 @@ pub enum PlePanelRoute {
     RecursiveSplit,
 }
 
-/// Reports the [`FieldMatrix::ple`] panel arm for a column-window width.
+/// Reports the [`FieldMatrix::ple`] panel arm for a carrier's lane class and
+/// a column-window width.
 ///
 /// `lane` is the carrier's own [`FiniteField::simd_ple_panel_lane`]; the
 /// dispatcher passes `F::simd_ple_panel_lane()`. Two active profile values carry
