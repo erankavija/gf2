@@ -820,8 +820,12 @@ pub trait FiniteField:
         u128::MAX
     }
 
-    /// Square-matrix size at or below which Strassen–Winograd recursion
-    /// falls back to the classical blocked `gemm`. Empirically tuned per
+    /// Per-field override hook for the Strassen–Winograd fallback size.
+    /// Live dispatch in [`crate::field::winograd::gemm_winograd`] reads
+    /// the active `gemm.winograd_min_dim` profile value (whose
+    /// conservative default this constant also names); this trait
+    /// constant remains for per-field overrides and the extraction
+    /// surface until the seam removal retires it. Empirically tuned per
     /// field: the default `128` is calibrated against Mersenne-31 and
     /// `Gf2mWide<1, Gf2m8>` in `benches/strassen_threshold.rs` at
     /// `n = 2048`, where both fields cross over at ≈ 128.

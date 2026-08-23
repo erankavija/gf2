@@ -88,7 +88,8 @@
 //! built on PLE (`O(n^3)`). That `O(n^3)` solve dominates the running time
 //! and prevents the gemm-driven `O(n^omega * log n)` doublings from winning
 //! at the measured sizes — even though each doubling does dispatch to
-//! Strassen-Winograd through [`FiniteField::WINOGRAD_THRESHOLD`]. The
+//! Strassen-Winograd through the active `gemm.winograd_min_dim` profile
+//! value. The
 //! cubic Krylov path's inner loop is matvec-shaped (linear, not
 //! Strassen-amenable), but its constant in front of `n^3` is
 //! significantly smaller than the PLE-dominated Keller-Gehrig constant.
