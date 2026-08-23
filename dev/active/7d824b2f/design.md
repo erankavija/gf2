@@ -777,3 +777,27 @@ baked constant; only a value divergence is detectable. The baked
 witnesses take their expected boundaries from the committed calibrated
 profile via `TuningProfile::from_json`, so they follow a future
 calibration without naming literals.
+
+## Amendment A4 (2026-08-23, DEC-B16/DEC-B17, appended by issue 389aa4de's harness phase)
+
+DEC-B16: §5.1 condition 2 (and issue 389aa4de's Background) described the
+karatsuba forced-arm mechanism as installing the admissible-range
+endpoints — minimal for the Karatsuba arm, maximal for schoolbook. The
+minimal forcing times an algorithm production never executes: the
+Karatsuba arm recurses on the same installed threshold, so at
+`karatsuba_min_degree = 1` it descends to the degree-0 base case instead
+of splitting once over production base cases. Measured on the harness
+smoke run, that artifact loses to schoolbook at every grid point
+(2.9–12.3×) and would freeze the conservative default regardless of the
+machine, while 5ecc9bf8's production-arm receipt shows the faithful arm
+crossing over near degree 32–64. The amended mechanism forces
+`karatsuba_min_degree` equal to the grid point for the asymptotic arm
+(schoolbook keeps `usize::MAX`), so the timed arm is the one dispatch
+runs when that threshold is chosen. REQ-01's contract — both arms via an
+installed profile, no new public API — is unchanged.
+
+DEC-B17: the harness's behavioural identity token bumps to
+`tuning-calibration-v2` (child-process timing for the karatsuba field;
+omission set computed as the schema complement, 33 unswept keys), per
+`@/inv/behavioral-evidence-validity`. No committed profile carries a
+`harness_schema`, so no committed artifact is invalidated.
