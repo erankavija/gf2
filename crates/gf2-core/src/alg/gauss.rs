@@ -4,9 +4,11 @@
 //! the augmented matrix `[A | I]`. Two paths are exposed:
 //!
 //! - The public [`invert`] selects the M4RM Gray-table path
-//!   ([`invert_m4ri`]) for matrices at or above [`INVERT_M4RI_THRESHOLD`]
-//!   and the scalar Gauss–Jordan path ([`invert_scalar`]) below it where
-//!   table setup is the dominant cost.
+//!   ([`invert_m4ri`]) for matrices at or above the active
+//!   `dense_inverse.m4ri_min_dim()` profile value ([`INVERT_M4RI_THRESHOLD`]
+//!   is the conservative default) and the scalar Gauss–Jordan path
+//!   ([`invert_scalar`]) below it where table setup is the dominant cost.
+//!   [`invert_route`] reports the selected arm.
 //! - [`invert_m4ri`] runs Gauss–Jordan in `k`-column blocks. For each block
 //!   it finds `k` pivots in the block, then builds a 2ᵏ-entry Gray-code
 //!   table over the corresponding pivot-row suffixes and uses the table to
@@ -21,20 +23,57 @@ use crate::alg::m4rm::build_gray_table_flat;
 use crate::alg::rref::default_block_size;
 use crate::kernels::ops::{resolve_xor_inplace, xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
+use crate::tuning;
 
-/// Smallest `n` at which the M4RM Gray-table invert path is used by
-/// [`invert`]. Below this size the constant overhead of allocating and
+/// Conservative default for `dense_inverse.m4ri_min_dim()` in the active
+/// [`crate::tuning::TuningProfile`].
+///
+/// Below the active profile value the constant overhead of allocating and
 /// populating the Gray table is larger than the row traffic that the
-/// blocked schedule saves, so the scalar path wins.
+/// blocked schedule saves, so [`invert`] takes the scalar path
+/// ([`invert_scalar`]); at or above it, the M4RM Gray-table path
+/// ([`invert_m4ri`]). This constant remains the compiled-in conservative
+/// default consumed by [`crate::tuning::TuningProfile::CONSERVATIVE`].
 pub const INVERT_M4RI_THRESHOLD: usize = 8;
+
+/// The selected arm of the [`invert`] dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum InvertRoute {
+    /// Use the scalar Gauss–Jordan path ([`invert_scalar`]).
+    Scalar,
+    /// Use the M4RM Gray-table path ([`invert_m4ri`]).
+    M4ri,
+}
+
+/// Reports the [`invert`] arm for a matrix of dimension `n`.
+///
+/// The comparison uses the active `dense_inverse.m4ri_min_dim()` profile
+/// value: matrices with `n` strictly below it take the scalar path, at or
+/// above it the M4RM Gray-table path.
+#[must_use]
+pub fn invert_route(n: usize) -> InvertRoute {
+    invert_route_resolved(tuning::active().dense_inverse().m4ri_min_dim(), n)
+}
+
+/// Reports the [`invert`] arm for a matrix of dimension `n` against an
+/// already-resolved `m4ri_min_dim`.
+fn invert_route_resolved(m4ri_min_dim: usize, n: usize) -> InvertRoute {
+    if n < m4ri_min_dim {
+        InvertRoute::Scalar
+    } else {
+        InvertRoute::M4ri
+    }
+}
 
 /// Inverts a square matrix over GF(2).
 ///
 /// Dispatches to the M4RM Gray-table path ([`invert_m4ri`]) when the matrix
 /// is large enough to amortise the table setup, and to the scalar
-/// Gauss–Jordan path ([`invert_scalar`]) otherwise. Both paths produce the
-/// same bit-exact result; the dispatch threshold is a perf knob, not a
-/// correctness boundary. See [`INVERT_M4RI_THRESHOLD`].
+/// Gauss–Jordan path ([`invert_scalar`]) otherwise, as reported by
+/// [`invert_route`] from the active `dense_inverse.m4ri_min_dim()` profile
+/// value ([`INVERT_M4RI_THRESHOLD`] is the conservative default). Both
+/// paths produce the same bit-exact result; the dispatch threshold is a
+/// perf knob, not a correctness boundary.
 ///
 /// Returns `None` if the matrix is non-square or singular.
 ///
@@ -67,10 +106,10 @@ pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
     if n != m.cols() {
         return None;
     }
-    if n < INVERT_M4RI_THRESHOLD {
-        return invert_scalar(m);
+    match invert_route(n) {
+        InvertRoute::Scalar => invert_scalar(m),
+        InvertRoute::M4ri => invert_m4ri(m),
     }
-    invert_m4ri(m)
 }
 
 /// Inverts a square matrix using textbook Gauss–Jordan over the augmented
@@ -79,7 +118,7 @@ pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
 /// This is the scalar path — kept as the correctness oracle for the
 /// blocked M4RM path and used for very small matrices where its lower
 /// constant factor wins. It is called directly by [`invert`] for matrices
-/// below [`INVERT_M4RI_THRESHOLD`].
+/// below the active `dense_inverse.m4ri_min_dim()` profile value.
 ///
 /// # Arguments
 ///
@@ -167,9 +206,9 @@ pub fn invert_scalar(m: &BitMatrix) -> Option<BitMatrix> {
 /// word-op count drops from O(n³ / 64) to O(n³ / (64 · k)), with
 /// `k = O(log₂ n)`.
 ///
-/// For matrices below [`INVERT_M4RI_THRESHOLD`] the constant overhead of
-/// the Gray table dominates row traffic, so [`invert`] dispatches to
-/// [`invert_scalar`] instead.
+/// For matrices below the active `dense_inverse.m4ri_min_dim()` profile
+/// value the constant overhead of the Gray table dominates row traffic, so
+/// [`invert`] dispatches to [`invert_scalar`] instead.
 ///
 /// # Arguments
 ///
