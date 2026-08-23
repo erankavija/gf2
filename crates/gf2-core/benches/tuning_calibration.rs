@@ -2058,7 +2058,7 @@ fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), S
     Ok(())
 }
 
-/// The fields whose value the sweep could not measure at any grid point.
+/// The swept fields whose value the sweep could not measure at any grid point.
 ///
 /// A field that keeps its default after a comparison — no grid point beat the
 /// noise band, or the crossover was non-monotone — is a calibration outcome and
@@ -2066,6 +2066,9 @@ fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), S
 /// never calibrated, and design §5 condition 5 requires the document to omit it
 /// rather than state a value: "a profile that carries an uncalibrated value is a
 /// `@/inv/benchmark-backed-performance` defect".
+///
+/// These are not the whole omission set: [`omitted_fields`] adds every schema
+/// field no sweep covers, which the same rule governs for the same reason.
 fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
     sweeps
         .iter()
