@@ -67,22 +67,54 @@ use crate::field::triangular::{
 };
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
+use crate::tuning;
 
 // ─── Blocked-invert constants ─────────────────────────────────────────────────
 
-/// Minimum matrix size at which `FieldMatrix::inv` takes the panelized
-/// fast path instead of the scalar-pivot driver.
+/// Conservative default for `dense_inverse.blocked_min_dim()` in the active
+/// [`crate::tuning::TuningProfile`].
 ///
-/// Below this threshold the scalar-PLE + `trtri` + `trtrm` driver is
-/// competitive with (or faster than) the panelized path because the
-/// GEMM inner dimensions are too small to amortise the packing overhead
-/// of `fp_small_try_gemm_classical` / `gemm_axpy_into_view`. The value
-/// 16 was selected empirically: the `fieldmatrix_solve` bench shows a
-/// crossover for small primes in the range n ∈ [14, 18] across
-/// GF(7), GF(251), and GF(65521) (see `dev/bench_results/
-/// 2026-05-26-8df0c501-blocked-invert.md` § 2 for the sweep).
-/// For n ≥ 16 the panelized path is equal-or-faster on every prime tested.
+/// Below the active profile value the scalar-PLE + `trtri` + `trtrm` driver
+/// is competitive with (or faster than) the panelized path
+/// ([`blocked_inv_panelized`]) because the GEMM inner dimensions are too
+/// small to amortise the packing overhead of `fp_small_try_gemm_classical` /
+/// `gemm_axpy_into_view`. The default value 16 was selected empirically: the
+/// `fieldmatrix_solve` bench shows a crossover for small primes in the range
+/// n ∈ [14, 18] across GF(7), GF(251), and GF(65521) (see
+/// `dev/bench_results/2026-05-26-8df0c501-blocked-invert.md` § 2 for the
+/// sweep). For n ≥ 16 the panelized path is equal-or-faster on every prime
+/// tested. This constant remains the compiled-in conservative default
+/// consumed by [`crate::tuning::TuningProfile::CONSERVATIVE`].
 pub(crate) const BLOCKED_INVERT_THRESHOLD: usize = 16;
+
+/// The selected arm of the [`FieldMatrix::inv`] dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum InvRoute {
+    /// Use the scalar-pivot PLE + `trtri` + `trtrm` driver.
+    ScalarPle,
+    /// Use the panelized blocked-invert driver ([`blocked_inv_panelized`]).
+    BlockedPanelized,
+}
+
+/// Reports the [`FieldMatrix::inv`] arm for a matrix of dimension `n`.
+///
+/// The comparison uses the active `dense_inverse.blocked_min_dim()` profile
+/// value: matrices with `n` at or above it take the panelized blocked path,
+/// below it the scalar-pivot path.
+#[must_use]
+pub fn inv_route(n: usize) -> InvRoute {
+    inv_route_resolved(tuning::active().dense_inverse().blocked_min_dim(), n)
+}
+
+/// Reports the [`FieldMatrix::inv`] arm for a matrix of dimension `n`
+/// against an already-resolved `blocked_min_dim`.
+fn inv_route_resolved(blocked_min_dim: usize, n: usize) -> InvRoute {
+    if n >= blocked_min_dim {
+        InvRoute::BlockedPanelized
+    } else {
+        InvRoute::ScalarPle
+    }
+}
 
 // ─── Public methods on FieldMatrix ───────────────────────────────────────────
 
@@ -164,7 +196,8 @@ impl<F: FiniteField> FieldMatrix<F> {
 
         // Panelized fast path (issue 8df0c501, design feb15da9).
         //
-        // For n ≥ BLOCKED_INVERT_THRESHOLD the blocked-invert algorithm
+        // At or above the active `dense_inverse.blocked_min_dim()` profile
+        // value, as reported by `inv_route`, the blocked-invert algorithm
         // (Higham §14.1) replaces the scalar-pivot PLE + trtri + trtrm
         // driver with:
         //   1. panelized_ple(A) — wide Schur updates via gemm_axpy_into_view,
@@ -175,10 +208,10 @@ impl<F: FiniteField> FieldMatrix<F> {
         //   4. column-permute by Pᵀ.
         //
         // The result is returned directly. The scalar-pivot path is not
-        // reached when n ≥ BLOCKED_INVERT_THRESHOLD; returning None from
+        // reached on the blocked route; returning None from
         // blocked_inv_panelized signals rank-deficiency (same contract as
         // the scalar path's `if rank < n { return None; }` guard).
-        if n >= BLOCKED_INVERT_THRESHOLD {
+        if inv_route(n) == InvRoute::BlockedPanelized {
             return blocked_inv_panelized(self);
         }
 
@@ -645,7 +678,9 @@ fn blocked_inv_panelized<F: FiniteField>(a: &FieldMatrix<F>) -> Option<FieldMatr
     }
 
     // Step 3: build n×n identity. We need a zero and one witness — safe
-    // because n >= BLOCKED_INVERT_THRESHOLD >= 1, so `a.get(0, 0)` exists.
+    // because this path is only reached when `inv_route(n)` reports
+    // `BlockedPanelized`, i.e. n >= dense_inverse.blocked_min_dim() >= 1
+    // (the field's floor), so `a.get(0, 0)` exists.
     let zero = a.get(0, 0).zero_like();
     let one = zero.one_like();
     let mut y = FieldMatrix::new(n, n, zero.clone());
