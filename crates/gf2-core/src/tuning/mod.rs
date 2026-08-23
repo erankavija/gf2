@@ -355,8 +355,18 @@ pub enum ProfileField {
     TrsmBlockedMinDim,
     /// The blocked triangular-solve panel-row extent.
     TrsmPanelRows,
+    /// The minimum dimension for the Winograd GEMM path.
+    WinogradMinDim,
+    /// The maximum dimension for triangular base cases.
+    BaseCaseMaxDim,
     /// The recursive PLE panel-width ceiling.
     PanelBaseMaxCols,
+    /// The maximum width for the scalar PLE base case.
+    ScalarBaseMaxCols,
+    /// The maximum byte-lane PLE panel width.
+    PanelByteLaneMaxCols,
+    /// The maximum u16-lane PLE panel width.
+    PanelU16LaneMaxCols,
     /// The blocked PLE back-substitution dimension threshold.
     BlockedBackSubMinDim,
     /// The GEMM row-tile extent.
@@ -410,7 +420,12 @@ impl fmt::Display for ProfileField {
             Self::BlockedMinDim => "blocked_min_dim",
             Self::TrsmBlockedMinDim => "trsm_blocked_min_dim",
             Self::TrsmPanelRows => "trsm_panel_rows",
+            Self::WinogradMinDim => "winograd_min_dim",
+            Self::BaseCaseMaxDim => "base_case_max_dim",
             Self::PanelBaseMaxCols => "panel_base_max_cols",
+            Self::ScalarBaseMaxCols => "scalar_base_max_cols",
+            Self::PanelByteLaneMaxCols => "panel_byte_lane_max_cols",
+            Self::PanelU16LaneMaxCols => "panel_u16_lane_max_cols",
             Self::BlockedBackSubMinDim => "blocked_back_sub_min_dim",
             Self::RowTile => "row_tile",
             Self::ColTile => "col_tile",
@@ -881,6 +896,7 @@ impl DenseInverseSelectors {
 pub struct TriangularSelectors {
     trsm_blocked_min_dim: usize,
     trsm_panel_rows: usize,
+    base_case_max_dim: usize,
 }
 
 impl TriangularSelectors {
@@ -888,11 +904,12 @@ impl TriangularSelectors {
     ///
     /// # Errors
     ///
-    /// Returns [`ProfileError::SelectorOutOfRange`] when `trsm_panel_rows` is
-    /// zero because a blocked panel must contain at least one row.
+    /// Returns [`ProfileError::SelectorOutOfRange`] when `trsm_panel_rows` or
+    /// `base_case_max_dim` is zero because both dimensions must be positive.
     pub fn try_new(
         trsm_blocked_min_dim: usize,
         trsm_panel_rows: usize,
+        base_case_max_dim: usize,
     ) -> Result<Self, ProfileError> {
         if trsm_panel_rows == 0 {
             return Err(out_of_range(
@@ -901,9 +918,17 @@ impl TriangularSelectors {
                 trsm_panel_rows as u64,
             ));
         }
+        if base_case_max_dim == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Triangular,
+                ProfileField::BaseCaseMaxDim,
+                base_case_max_dim as u64,
+            ));
+        }
         Ok(Self {
             trsm_blocked_min_dim,
             trsm_panel_rows,
+            base_case_max_dim,
         })
     }
 
@@ -916,6 +941,11 @@ impl TriangularSelectors {
     pub fn trsm_panel_rows(&self) -> usize {
         self.trsm_panel_rows
     }
+
+    /// Returns the maximum dimension for triangular base cases.
+    pub fn base_case_max_dim(&self) -> usize {
+        self.base_case_max_dim
+    }
 }
 
 /// Selector values for PLE decomposition.
@@ -923,6 +953,9 @@ impl TriangularSelectors {
 pub struct PleSelectors {
     panel_base_max_cols: usize,
     blocked_back_sub_min_dim: usize,
+    scalar_base_max_cols: usize,
+    panel_byte_lane_max_cols: usize,
+    panel_u16_lane_max_cols: usize,
 }
 
 impl PleSelectors {
@@ -930,11 +963,15 @@ impl PleSelectors {
     ///
     /// # Errors
     ///
-    /// Returns [`ProfileError::SelectorOutOfRange`] when `panel_base_max_cols`
-    /// is zero because the recursive panel must make progress.
+    /// Returns [`ProfileError::SelectorOutOfRange`] when a panel or scalar
+    /// base width is zero, or when a SIMD panel width exceeds its kernel's
+    /// asserted bound.
     pub fn try_new(
         panel_base_max_cols: usize,
         blocked_back_sub_min_dim: usize,
+        scalar_base_max_cols: usize,
+        panel_byte_lane_max_cols: usize,
+        panel_u16_lane_max_cols: usize,
     ) -> Result<Self, ProfileError> {
         if panel_base_max_cols == 0 {
             return Err(out_of_range(
@@ -943,9 +980,37 @@ impl PleSelectors {
                 panel_base_max_cols as u64,
             ));
         }
+        if scalar_base_max_cols == 0 {
+            return Err(out_of_range(
+                ProfileFamily::Ple,
+                ProfileField::ScalarBaseMaxCols,
+                scalar_base_max_cols as u64,
+            ));
+        }
+        if panel_byte_lane_max_cols == 0
+            || panel_byte_lane_max_cols > gf2_kernels_simd::fp_small_panel::KC
+        {
+            return Err(out_of_range(
+                ProfileFamily::Ple,
+                ProfileField::PanelByteLaneMaxCols,
+                panel_byte_lane_max_cols as u64,
+            ));
+        }
+        if panel_u16_lane_max_cols == 0
+            || panel_u16_lane_max_cols > gf2_kernels_simd::fp_medium_ple::KC_U16
+        {
+            return Err(out_of_range(
+                ProfileFamily::Ple,
+                ProfileField::PanelU16LaneMaxCols,
+                panel_u16_lane_max_cols as u64,
+            ));
+        }
         Ok(Self {
             panel_base_max_cols,
             blocked_back_sub_min_dim,
+            scalar_base_max_cols,
+            panel_byte_lane_max_cols,
+            panel_u16_lane_max_cols,
         })
     }
 
@@ -958,6 +1023,21 @@ impl PleSelectors {
     pub fn blocked_back_sub_min_dim(&self) -> usize {
         self.blocked_back_sub_min_dim
     }
+
+    /// Returns the maximum width for the scalar PLE base case.
+    pub fn scalar_base_max_cols(&self) -> usize {
+        self.scalar_base_max_cols
+    }
+
+    /// Returns the maximum width for the byte-lane PLE panel kernel.
+    pub fn panel_byte_lane_max_cols(&self) -> usize {
+        self.panel_byte_lane_max_cols
+    }
+
+    /// Returns the maximum width for the u16-lane PLE panel kernel.
+    pub fn panel_u16_lane_max_cols(&self) -> usize {
+        self.panel_u16_lane_max_cols
+    }
 }
 
 /// Selector values for finite-field GEMM.
@@ -966,6 +1046,7 @@ pub struct GemmSelectors {
     row_tile: usize,
     col_tile: usize,
     axpy_fast_path_min_volume: usize,
+    winograd_min_dim: usize,
 }
 
 impl GemmSelectors {
@@ -979,6 +1060,7 @@ impl GemmSelectors {
         row_tile: usize,
         col_tile: usize,
         axpy_fast_path_min_volume: usize,
+        winograd_min_dim: usize,
     ) -> Result<Self, ProfileError> {
         if row_tile == 0 {
             return Err(out_of_range(
@@ -998,6 +1080,7 @@ impl GemmSelectors {
             row_tile,
             col_tile,
             axpy_fast_path_min_volume,
+            winograd_min_dim,
         })
     }
 
@@ -1014,6 +1097,11 @@ impl GemmSelectors {
     /// Returns the minimum volume for the GEMM AXPY fast path.
     pub fn axpy_fast_path_min_volume(&self) -> usize {
         self.axpy_fast_path_min_volume
+    }
+
+    /// Returns the minimum dimension for the Winograd GEMM path.
+    pub fn winograd_min_dim(&self) -> usize {
+        self.winograd_min_dim
     }
 }
 
@@ -1206,15 +1294,20 @@ impl SelectorFamilies {
         triangular: TriangularSelectors {
             trsm_blocked_min_dim: crate::field::triangular::TRSM_BLOCKED_PANEL_SIZE,
             trsm_panel_rows: crate::field::triangular::TRSM_BLOCKED_PANEL_SIZE,
+            base_case_max_dim: crate::field::triangular::TRI_BASE_MAX_DIM_DEFAULT,
         },
         ple: PleSelectors {
             panel_base_max_cols: crate::field::ple::PLE_PANEL_RECURSIVE_BASE,
             blocked_back_sub_min_dim: crate::field::ple::BLOCKED_BACK_SUB_MIN_DIM,
+            scalar_base_max_cols: crate::field::ple::PLE_SCALAR_BASE_MAX_COLS_DEFAULT,
+            panel_byte_lane_max_cols: gf2_kernels_simd::fp_small_panel::KC,
+            panel_u16_lane_max_cols: gf2_kernels_simd::fp_medium_ple::KC_U16,
         },
         gemm: GemmSelectors {
             row_tile: crate::field::matrix::GEMM_ROW_TILE,
             col_tile: crate::field::matrix::GEMM_COL_TILE,
             axpy_fast_path_min_volume: crate::field::matrix::GEMM_AXPY_FAST_PATH_THRESHOLD,
+            winograd_min_dim: crate::field::winograd::WINOGRAD_MIN_DIM_DEFAULT,
         },
         field_vec: FieldVecSelectors {
             dot_chunk_len: crate::field::vec::DOT_CHUNK_LEN,
@@ -1496,18 +1589,28 @@ impl TuningProfile {
                 .unwrap_or(Self::CONSERVATIVE.selectors.triangular.trsm_blocked_min_dim),
             optional(triangular.trsm_panel_rows)?
                 .unwrap_or(Self::CONSERVATIVE.selectors.triangular.trsm_panel_rows),
+            optional(triangular.base_case_max_dim)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.triangular.base_case_max_dim),
         )?;
         let ple = PleSelectors::try_new(
             optional(ple.panel_base_max_cols)?
                 .unwrap_or(Self::CONSERVATIVE.selectors.ple.panel_base_max_cols),
             optional(ple.blocked_back_sub_min_dim)?
                 .unwrap_or(Self::CONSERVATIVE.selectors.ple.blocked_back_sub_min_dim),
+            optional(ple.scalar_base_max_cols)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.ple.scalar_base_max_cols),
+            optional(ple.panel_byte_lane_max_cols)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.ple.panel_byte_lane_max_cols),
+            optional(ple.panel_u16_lane_max_cols)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.ple.panel_u16_lane_max_cols),
         )?;
         let gemm = GemmSelectors::try_new(
             optional(gemm.row_tile)?.unwrap_or(Self::CONSERVATIVE.selectors.gemm.row_tile),
             optional(gemm.col_tile)?.unwrap_or(Self::CONSERVATIVE.selectors.gemm.col_tile),
             optional(gemm.axpy_fast_path_min_volume)?
                 .unwrap_or(Self::CONSERVATIVE.selectors.gemm.axpy_fast_path_min_volume),
+            optional(gemm.winograd_min_dim)?
+                .unwrap_or(Self::CONSERVATIVE.selectors.gemm.winograd_min_dim),
         )?;
         let field_vec = FieldVecSelectors::try_new(
             optional(field_vec.dot_chunk_len)?
@@ -1615,15 +1718,20 @@ impl TuningProfile {
                 triangular: JsonTriangularOut {
                     trsm_blocked_min_dim: self.selectors.triangular.trsm_blocked_min_dim,
                     trsm_panel_rows: self.selectors.triangular.trsm_panel_rows,
+                    base_case_max_dim: self.selectors.triangular.base_case_max_dim,
                 },
                 ple: JsonPleOut {
                     panel_base_max_cols: self.selectors.ple.panel_base_max_cols,
                     blocked_back_sub_min_dim: self.selectors.ple.blocked_back_sub_min_dim,
+                    scalar_base_max_cols: self.selectors.ple.scalar_base_max_cols,
+                    panel_byte_lane_max_cols: self.selectors.ple.panel_byte_lane_max_cols,
+                    panel_u16_lane_max_cols: self.selectors.ple.panel_u16_lane_max_cols,
                 },
                 gemm: JsonGemmOut {
                     row_tile: self.selectors.gemm.row_tile,
                     col_tile: self.selectors.gemm.col_tile,
                     axpy_fast_path_min_volume: self.selectors.gemm.axpy_fast_path_min_volume,
+                    winograd_min_dim: self.selectors.gemm.winograd_min_dim,
                 },
                 field_vec: JsonFieldVecOut {
                     dot_chunk_len: self.selectors.field_vec.dot_chunk_len,
@@ -1987,6 +2095,7 @@ struct JsonDenseInverse {
 struct JsonTriangular {
     trsm_blocked_min_dim: Option<Option<usize>>,
     trsm_panel_rows: Option<Option<usize>>,
+    base_case_max_dim: Option<Option<usize>>,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -1995,6 +2104,9 @@ struct JsonTriangular {
 struct JsonPle {
     panel_base_max_cols: Option<Option<usize>>,
     blocked_back_sub_min_dim: Option<Option<usize>>,
+    scalar_base_max_cols: Option<Option<usize>>,
+    panel_byte_lane_max_cols: Option<Option<usize>>,
+    panel_u16_lane_max_cols: Option<Option<usize>>,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -2004,6 +2116,7 @@ struct JsonGemm {
     row_tile: Option<Option<usize>>,
     col_tile: Option<Option<usize>>,
     axpy_fast_path_min_volume: Option<Option<usize>>,
+    winograd_min_dim: Option<Option<usize>>,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -2178,6 +2291,7 @@ struct JsonDenseInverseOut {
 struct JsonTriangularOut {
     trsm_blocked_min_dim: usize,
     trsm_panel_rows: usize,
+    base_case_max_dim: usize,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -2185,6 +2299,9 @@ struct JsonTriangularOut {
 struct JsonPleOut {
     panel_base_max_cols: usize,
     blocked_back_sub_min_dim: usize,
+    scalar_base_max_cols: usize,
+    panel_byte_lane_max_cols: usize,
+    panel_u16_lane_max_cols: usize,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -2193,6 +2310,7 @@ struct JsonGemmOut {
     row_tile: usize,
     col_tile: usize,
     axpy_fast_path_min_volume: usize,
+    winograd_min_dim: usize,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -2917,5 +3035,118 @@ mod tests {
         assert_eq!(profile.polynomial().interpolate_fast_min_points(), 17);
         assert_eq!(profile.prime_route().f32_min_prime(), 252);
         assert_eq!(profile.permanent().gray_chunk_subsets(), 65_537);
+    }
+
+    #[test]
+    fn seam_fields_validate_ranges_and_round_trip() {
+        let conservative = &TuningProfile::CONSERVATIVE;
+        assert_eq!(
+            conservative.gemm().winograd_min_dim(),
+            crate::field::winograd::WINOGRAD_MIN_DIM_DEFAULT
+        );
+        assert_eq!(
+            conservative.triangular().base_case_max_dim(),
+            crate::field::triangular::TRI_BASE_MAX_DIM_DEFAULT
+        );
+        assert_eq!(
+            conservative.ple().scalar_base_max_cols(),
+            crate::field::ple::PLE_SCALAR_BASE_MAX_COLS_DEFAULT
+        );
+        assert_eq!(
+            conservative.ple().panel_byte_lane_max_cols(),
+            gf2_kernels_simd::fp_small_panel::KC
+        );
+        assert_eq!(
+            conservative.ple().panel_u16_lane_max_cols(),
+            gf2_kernels_simd::fp_medium_ple::KC_U16
+        );
+
+        let profile = TuningProfile::from_json(&inherited_document(&format!(
+            r#"{{
+                "gemm":{{"winograd_min_dim":0}},
+                "triangular":{{"base_case_max_dim":1}},
+                "ple":{{"scalar_base_max_cols":1,"panel_byte_lane_max_cols":{},"panel_u16_lane_max_cols":{}}}
+            }}"#,
+            gf2_kernels_simd::fp_small_panel::KC,
+            gf2_kernels_simd::fp_medium_ple::KC_U16,
+        )))
+        .unwrap();
+        assert_eq!(
+            TuningProfile::from_json(&profile.to_json()).unwrap(),
+            profile
+        );
+        assert_eq!(profile.gemm().winograd_min_dim(), 0);
+        assert_eq!(profile.triangular().base_case_max_dim(), 1);
+        assert_eq!(profile.ple().scalar_base_max_cols(), 1);
+        assert_eq!(
+            profile.ple().panel_byte_lane_max_cols(),
+            gf2_kernels_simd::fp_small_panel::KC
+        );
+        assert_eq!(
+            profile.ple().panel_u16_lane_max_cols(),
+            gf2_kernels_simd::fp_medium_ple::KC_U16
+        );
+    }
+
+    #[test]
+    fn seam_fields_reject_zero_or_kernel_bound_excess() {
+        for (family, field, expected) in [
+            (
+                "triangular",
+                "base_case_max_dim",
+                ProfileField::BaseCaseMaxDim,
+            ),
+            (
+                "ple",
+                "scalar_base_max_cols",
+                ProfileField::ScalarBaseMaxCols,
+            ),
+            (
+                "ple",
+                "panel_byte_lane_max_cols",
+                ProfileField::PanelByteLaneMaxCols,
+            ),
+            (
+                "ple",
+                "panel_u16_lane_max_cols",
+                ProfileField::PanelU16LaneMaxCols,
+            ),
+        ] {
+            let text = inherited_document(&format!(r#"{{"{family}":{{"{field}":0}}}}"#));
+            assert_eq!(
+                TuningProfile::from_json(&text).unwrap_err(),
+                ProfileError::SelectorOutOfRange {
+                    family: if family == "triangular" {
+                        ProfileFamily::Triangular
+                    } else {
+                        ProfileFamily::Ple
+                    },
+                    field: expected,
+                    value: 0,
+                }
+            );
+        }
+
+        for (field, value) in [
+            (
+                ProfileField::PanelByteLaneMaxCols,
+                gf2_kernels_simd::fp_small_panel::KC + 1,
+            ),
+            (
+                ProfileField::PanelU16LaneMaxCols,
+                gf2_kernels_simd::fp_medium_ple::KC_U16 + 1,
+            ),
+        ] {
+            let name = field.to_string();
+            let text = inherited_document(&format!(r#"{{"ple":{{"{name}":{value}}}}}"#));
+            assert_eq!(
+                TuningProfile::from_json(&text).unwrap_err(),
+                ProfileError::SelectorOutOfRange {
+                    family: ProfileFamily::Ple,
+                    field,
+                    value: value as u64,
+                }
+            );
+        }
     }
 }
