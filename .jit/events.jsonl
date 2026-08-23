@@ -9217,3 +9217,4 @@
 {"gate_key":"code-review","id":"bd320dec-1ad3-4124-bf89-02a2130ad6e8","issue_id":"e8a727ff-44b8-48d2-9368-8dedf774777c","timestamp":"2026-08-23T17:57:05.336716046Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"f4e09387-a932-448c-9bea-279b677fb3bb","issue_id":"e8a727ff-44b8-48d2-9368-8dedf774777c","timestamp":"2026-08-23T17:59:04.657865275Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"295247a7-ff48-4e62-baf6-bf2e0b9d900b","issue_id":"e8a727ff-44b8-48d2-9368-8dedf774777c","timestamp":"2026-08-23T18:01:51.425012970Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"fd792716-90e8-4a5e-b128-afae9d32d413","issue_id":"e8a727ff-44b8-48d2-9368-8dedf774777c","timestamp":"2026-08-23T18:05:09.485350367Z","type":"gate_failed","updated_by":"auto:executor"}
