@@ -9,6 +9,7 @@
 use gf2_core::field::matrix::gemm;
 use gf2_core::field::ple::{back_sub_route, ple_panel_route, BackSubRoute, PlePanelRoute};
 use gf2_core::field::test_random_matrix::{direct_rref_oracle_fp, random_fp};
+use gf2_core::field::PlePanelLane;
 use gf2_core::tuning::{self, TuningProfile};
 
 #[test]
@@ -35,11 +36,17 @@ fn installed_ple_profile_raises_both_route_boundaries_to_the_usize_ceiling() {
     // ── Panel-width boundary ────────────────────────────────────────────────
     let conservative_panel = TuningProfile::CONSERVATIVE.ple().panel_base_max_cols();
     assert_eq!(
-        ple_panel_route(conservative_panel + 1),
+        ple_panel_route(Some(PlePanelLane::Byte), conservative_panel + 1),
         PlePanelRoute::PanelBase,
         "a window above the conservative width no longer splits into sub-panels"
     );
-    assert_eq!(ple_panel_route(usize::MAX), PlePanelRoute::PanelBase);
+    // With panel_base_max_cols = usize::MAX no window takes the sub-panel
+    // walk; a window this wide also exceeds the byte lane's own width, so it
+    // takes the recursive split.
+    assert_eq!(
+        ple_panel_route(Some(PlePanelLane::Byte), usize::MAX),
+        PlePanelRoute::RecursiveSplit
+    );
 
     // ── Back-substitution boundary ──────────────────────────────────────────
     let conservative_dim = TuningProfile::CONSERVATIVE.ple().blocked_back_sub_min_dim();

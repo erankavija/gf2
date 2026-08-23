@@ -7,6 +7,7 @@
 use gf2_core::field::matrix::gemm;
 use gf2_core::field::ple::{back_sub_route, ple_panel_route, BackSubRoute, PlePanelRoute};
 use gf2_core::field::test_random_matrix::{direct_rref_oracle_fp, random_fp};
+use gf2_core::field::PlePanelLane;
 use gf2_core::tuning::{self, TuningProfile};
 
 #[test]
@@ -33,17 +34,17 @@ fn installed_ple_profile_lowers_both_route_boundaries() {
     // ── Panel-width boundary ────────────────────────────────────────────────
     let panel_base_max_cols = ple.panel_base_max_cols();
     assert_eq!(
-        ple_panel_route(panel_base_max_cols),
+        ple_panel_route(Some(PlePanelLane::Byte), panel_base_max_cols),
         PlePanelRoute::PanelBase,
         "the widest window the panel base handles directly is the field value"
     );
     assert_eq!(
-        ple_panel_route(panel_base_max_cols + 1),
+        ple_panel_route(Some(PlePanelLane::Byte), panel_base_max_cols + 1),
         PlePanelRoute::SubPanelRecursion
     );
     let conservative_panel = TuningProfile::CONSERVATIVE.ple().panel_base_max_cols();
     assert_eq!(
-        ple_panel_route(conservative_panel),
+        ple_panel_route(Some(PlePanelLane::Byte), conservative_panel),
         PlePanelRoute::SubPanelRecursion,
         "the conservative panel width now splits into sub-panels"
     );
