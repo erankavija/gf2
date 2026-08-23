@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the GEMM selectors over to the tuning profile",
-  "updated_at": "2026-08-22T21:28:39.839815292Z"
+  "updated_at": "2026-08-23T11:03:07.570678937Z"
 }

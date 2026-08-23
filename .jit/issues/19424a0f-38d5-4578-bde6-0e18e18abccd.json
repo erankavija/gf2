@@ -38,7 +38,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut the prime-route and FieldVec selectors over to the tuning profile",
-  "updated_at": "2026-08-22T21:29:02.722299456Z"
+  "updated_at": "2026-08-23T11:02:59.784443684Z"
 }

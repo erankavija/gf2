@@ -8,6 +8,7 @@
   ],
   "description": "Add the seven baked follow-on constants with rustdoc and drift tests to the baked tuning module, and hoist the unnamed literals they default from; no selection-site wiring.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3 marks the baked fields (gemm tiles, field_vec chunk, prime-route trio, bit-matrix matvec) and D5 fixes the module shape and drift-test contract.\n\n## Success Criteria\n\n- [hard] REQ-01: crate::tuning::baked holds one documented pub(crate) constant per baked follow-on field, each with the drift test the bit-backend constant carries (baked value equals the committed calibrated profile's value, or the conservative default when omitted).\n- [hard] REQ-02: The two n>=512 prime-route literals and the FieldVec dot-product scratch length are hoisted and named as module-level constants at their defining modules, with behaviour unchanged.\n- [hard] REQ-03: No selection site is wired; each family's cutover wires its own sites.",
   "documents": [],
+  "done_at": "2026-08-23T11:02:51.985266962Z",
   "first_ready_at": "2026-08-22T21:26:05.862438424Z",
   "gates_required": [
     "cargo-ci",
@@ -16,19 +17,19 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:08.879463726Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T10:56:54.379031701Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:08.998406808Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T11:00:19.700093412Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:09.120978199Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T11:02:33.060870885Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "8dbb27e9-e1d9-4d14-9d40-babec27d1216",
@@ -39,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Extend the baked tuning module with the follow-on constants",
-  "updated_at": "2026-08-23T08:01:06.007257675Z"
+  "updated_at": "2026-08-23T11:02:51.985266962Z"
 }
