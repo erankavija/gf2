@@ -524,6 +524,18 @@
       "resolved_at": "2026-08-24T01:20:00+03:00",
       "decision": "Owner approved the recommended criterion amendment: REQ-03 uses the protocol's complete nested-prefix delta-AIC table and calls candidates distinguishable only when the nominal 95% bootstrap interval is non-fallback and lies wholly above +2 or below -2; every other prefix is indistinguishable regardless of point estimate.",
       "lead_recommendation": "Amend the criterion rather than add a second decision rule, preserving the protocol as the single preregistered source of truth."
+    },
+    {
+      "issue": "1947125e",
+      "reason": "Read-only preflight found REQ-01 literally asks all five campaign backends to agree on a common matrix set for every supported field, but intra_matrix_parallel is selectable only for q=3 and correctly returns BackendUnavailable for q=5 and q=7.",
+      "status": "pending",
+      "requested_at": "2026-08-24T01:32:00+03:00",
+      "options": [
+        "Amend REQ-01 to certify every campaign-selectable backend per field, with intra-matrix coverage limited to q=3.",
+        "Add q=5 and q=7 intra-matrix production support, materially expanding the issue beyond a shared conformance suite.",
+        "Reject or defer the shared suite."
+      ],
+      "lead_recommendation": "Amend REQ-01 to the actual selectable backend set per field. It preserves the scheduler contract and keeps this leaf a standing conformance suite rather than a new backend implementation."
     }
   ],
   "standing_rules": [
@@ -652,6 +664,12 @@
       "source": "forward decision audit, session 14",
       "finding": "REQ-03 requires a preregistered specified multiple of standard error for |delta(n)|, while the authoritative protocol defines interval-aware delta-AIC without that multiple and REQ-02 forbids selecting a threshold after seeing campaign data.",
       "disposition": "Owner approved the recommended amendment on 2026-08-24. Replace the issue's stale standard-error framing with the protocol's complete nested-prefix delta-AIC table, nominal 95% bootstrap interval, fallback status, and fixed +/-2 distinguishability rule before dispatch."
+    },
+    {
+      "issue": "1947125e",
+      "source": "read-only next-wave preflight, session 14",
+      "finding": "REQ-01's all-five-backends-per-supported-field wording is unattainable because resolve_processor_path intentionally supports intra_matrix_parallel only for q=3; q=5 and q=7 expose scalar, batch-parallel, generic Ryser, and accelerator, not intra-matrix.",
+      "disposition": "Resolve before dispatch. Recommended: amend REQ-01 to one shared suite over every campaign-selectable backend per field, explicitly limiting intra-matrix coverage to q=3. The likely implementation touches schedule.rs tests and possibly nextest GPU serialization only, with no announced OSD path conflict."
     }
   ],
   "started_at": "2026-08-09T12:20:30Z",
