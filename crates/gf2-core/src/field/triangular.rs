@@ -209,7 +209,8 @@
 //!
 //! [`trsm_upper_blocked`] and [`trsm_lower_blocked`] implement Higham § 14.1
 //! right-looking blocked back-substitution: the triangular factor `A` is
-//! tiled into row panels of width [`TRSM_BLOCKED_PANEL_SIZE`] (default 64).
+//! tiled into row panels of the active `triangular.trsm_panel_rows()` profile
+//! value (the conservative default is [`TRSM_BLOCKED_PANEL_SIZE`] = 64).
 //! The diagonal tile is solved with the recursive scalar
 //! `trsm_upper/lower_inner`, and the update step
 //!
@@ -231,9 +232,18 @@ use crate::field::matrix::{
     MatViewMut, UnitDiag,
 };
 use crate::field::FiniteField;
+use crate::tuning;
 
-/// Default row-panel width for the blocked triangular solve
-/// (`trsm_upper_blocked` / `trsm_lower_blocked`).
+#[cfg(any(test, feature = "test-support"))]
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+/// Conservative default for the triangular profile's
+/// `trsm_blocked_min_dim` and `trsm_panel_rows` fields.
+///
+/// The active values are read from [`crate::tuning::TuningProfile`] by the
+/// triangular-solve dispatcher. This constant remains the one source of both
+/// conservative defaults; direct callers of the forced blocked entry points
+/// can still pass it explicitly.
 ///
 /// Chosen empirically: large enough for the update GEMM to surpass
 /// `GEMM_AXPY_FAST_PATH_THRESHOLD = 16³` even at `n = 1` (after two
@@ -241,6 +251,59 @@ use crate::field::FiniteField;
 /// after three panels it is `192 × 64 × 1 = 12288`), small enough that
 /// each diagonal block stays within L1 cache on a typical x86-64 core.
 pub const TRSM_BLOCKED_PANEL_SIZE: usize = 64;
+
+/// The selected arm of the triangular-solve dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TrsmRoute {
+    /// Use the recursive triangular solve.
+    Recursive,
+    /// Use the blocked triangular solve.
+    Blocked,
+}
+
+/// Reports the triangular-solve arm for a matrix of dimension `n`.
+///
+/// The comparison uses the active `triangular.trsm_blocked_min_dim()` profile
+/// field. Dimensions below it take the recursive path; dimensions at or above
+/// it take the blocked path. The conservative default for that field is
+/// [`TRSM_BLOCKED_PANEL_SIZE`].
+#[must_use]
+pub fn trsm_route(n: usize) -> TrsmRoute {
+    trsm_route_resolved(tuning::active().triangular().trsm_blocked_min_dim(), n)
+}
+
+/// Reports the triangular-solve arm against an already-resolved
+/// `trsm_blocked_min_dim`.
+pub(crate) fn trsm_route_resolved(trsm_blocked_min_dim: usize, n: usize) -> TrsmRoute {
+    if n >= trsm_blocked_min_dim {
+        TrsmRoute::Blocked
+    } else {
+        TrsmRoute::Recursive
+    }
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static LAST_EFFECTIVE_TRSM_PANEL_ROWS: AtomicUsize = AtomicUsize::new(0);
+
+/// Clears the test-support observation of the last blocked TRSM panel width.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_last_effective_trsm_panel_rows() {
+    LAST_EFFECTIVE_TRSM_PANEL_ROWS.store(0, Ordering::Relaxed);
+}
+
+/// Returns the panel width observed at the last blocked TRSM callee entry.
+///
+/// This observation is available in tests and `test-support` builds so
+/// route tests can verify that `triangular.trsm_panel_rows()` reaches the
+/// production blocked callees rather than merely producing an equal result.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn last_effective_trsm_panel_rows() -> Option<usize> {
+    match LAST_EFFECTIVE_TRSM_PANEL_ROWS.load(Ordering::Relaxed) {
+        0 => None,
+        rows => Some(rows),
+    }
+}
 
 /// Default for [`FiniteField::TRI_BASE_THRESHOLD`]: block size at or below
 /// which the triangular primitives' recursion drops into a direct loop.
@@ -391,13 +454,15 @@ pub fn trsm_lower<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
 /// row-panel blocked algorithm (Higham § 14.1).
 ///
 /// This variant tiles the `m × m` triangular factor `A` into row panels of
-/// width [`TRSM_BLOCKED_PANEL_SIZE`] and processes them from the last panel
-/// to the first. For each panel the diagonal block is solved with the existing
-/// recursive [`trsm_upper`] (which handles odd sizes and the base threshold),
-/// and the update of all rows above the panel is performed by a single
-/// `gemm_axpy_into_view` call whose row dimension grows with each panel,
-/// ensuring that the whole-GEMM `fp_small_try_gemm_classical` threshold is
-/// reached even when `b` has only one column.
+/// the supplied width and processes them from the last panel to the first.
+/// The profile dispatcher supplies `triangular.trsm_panel_rows()`; direct
+/// callers choose the extent explicitly. For each panel the diagonal block is
+/// solved with the existing recursive [`trsm_upper`] (which handles odd sizes
+/// and the base threshold), and the update of all rows above the panel is
+/// performed by a single `gemm_axpy_into_view` call whose row dimension grows
+/// with each panel, ensuring that the whole-GEMM
+/// `fp_small_try_gemm_classical` threshold is reached even when `b` has only
+/// one column.
 ///
 /// Bit-exact equivalent to [`trsm_upper`] (same field arithmetic; only the
 /// loop order and GEMM tile granularity differ). The proptests in
@@ -408,8 +473,9 @@ pub fn trsm_lower<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
 ///
 /// * `a` — Square `m × m` upper-triangular view.
 /// * `b` — `m × n` right-hand side; overwritten with the solution `X`.
-/// * `block_size` — Row-panel width. Pass [`TRSM_BLOCKED_PANEL_SIZE`] for
-///   the default.
+/// * `block_size` — Row-panel width. The dispatcher resolves this from
+///   `triangular.trsm_panel_rows()`; pass [`TRSM_BLOCKED_PANEL_SIZE`] for the
+///   conservative default in a direct call.
 ///
 /// # Panics
 ///
@@ -444,6 +510,8 @@ pub fn trsm_upper_blocked<F: FiniteField>(
     b: MatViewMut<'_, F>,
     block_size: usize,
 ) {
+    #[cfg(any(test, feature = "test-support"))]
+    LAST_EFFECTIVE_TRSM_PANEL_ROWS.store(block_size, Ordering::Relaxed);
     assert_eq!(
         a.rows(),
         a.cols(),
@@ -475,7 +543,9 @@ pub fn trsm_upper_blocked<F: FiniteField>(
 ///
 /// * `a` — Square `m × m` lower-triangular view.
 /// * `b` — `m × n` right-hand side; overwritten with the solution `X`.
-/// * `block_size` — Row-panel width. Pass [`TRSM_BLOCKED_PANEL_SIZE`].
+/// * `block_size` — Row-panel width. The dispatcher resolves this from
+///   `triangular.trsm_panel_rows()`; pass [`TRSM_BLOCKED_PANEL_SIZE`] for the
+///   conservative default in a direct call.
 ///
 /// # Panics
 ///
@@ -509,6 +579,8 @@ pub fn trsm_lower_blocked<F: FiniteField>(
     b: MatViewMut<'_, F>,
     block_size: usize,
 ) {
+    #[cfg(any(test, feature = "test-support"))]
+    LAST_EFFECTIVE_TRSM_PANEL_ROWS.store(block_size, Ordering::Relaxed);
     assert_eq!(
         a.rows(),
         a.cols(),
