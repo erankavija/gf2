@@ -114,8 +114,9 @@ derives them.
   keeps the default on a tie, a non-monotone crossover, or no winning grid
   point — the fallback reason and the default kept. §2.7 rule 3 and REQ-02 both
   ask for that case explicitly.
-- The forced threshold each arm's child installed, which the sweep header
-  prints beside the arm names.
+- The forcing policy, which the sweep header prints beside the arm names: the
+  top of the admissible range for the schoolbook arm, the grid point itself for
+  the Karatsuba arm.
 - The omission inventory: the harness prints one row per omitted schema field
   with its inherited value and whether no sweep covers it or no grid point
   offered both arms.
@@ -123,22 +124,66 @@ derives them.
 
 ## What the forced Karatsuba arm measures
 
-The forced thresholds are the endpoints of the field's admissible range:
-`usize::MAX` for the schoolbook arm and `1` for the Karatsuba arm, following
-the mechanism the issue Background and `dev/active/7d824b2f/design.md` §5.1
-condition 2 both describe. `mul_karatsuba_raw` recurses on the same profile
-value, so under the forced minimum the Karatsuba arm recurses to its degree-0
-base case rather than bottoming out at the threshold the sweep is choosing.
+The schoolbook arm forces `usize::MAX`, the top of the field's admissible
+range, where no grid point routes to Karatsuba. The Karatsuba arm forces **the
+grid point itself**, per owner decision DEC-B16.
 
-That is a different arm from the one a chosen threshold produces in
-production, where a top-level Karatsuba split hands sub-operands below the
-threshold to schoolbook. The receipt must say so, and must not present the
-selected value as a measurement of the production recursion shape.
+`mul_karatsuba_raw` recurses on the same profile value, so the value forced
+decides which algorithm is timed. Forcing the grid point makes the recursion
+split once at that degree and hand its sub-operands, at about half the degree,
+to the schoolbook base case — the algorithm the dispatcher runs when
+`karatsuba_min_degree` is set to that grid point. Each grid point therefore
+compares the two arms the selection rule chooses between at that point, so the
+receipt may read the selected value as a threshold recommendation without a
+recursion-shape caveat.
 
-An unpinned smoke run of the harness on a contended host — one execution, one
-repetition, one millisecond, no lock wrapper, therefore evidence of nothing
-beyond the harness's mechanics — put the forced-minimum Karatsuba arm between
-2.9x and 12.3x the schoolbook arm's cost at every grid point from degree 4 to
-degree 256, so the rule kept the conservative default with no winning grid
-point. The measured run decides what the receipt records; this note exists so
-that the reading is prepared rather than discovered afterwards.
+## Block D — DEC-B16, the mechanism the earlier records describe
+
+Three records describe the forcing as minimal-against-maximal: the issue's own
+Background, `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`
+F2's tracked-owner paragraph at `:361`–`:367`, and
+`dev/active/7d824b2f/design.md` §5.1 condition 2 at `:427`–`:431`. DEC-B16
+supersedes that detail. The paragraph below carries the correction; append it
+to Block A and to Block C, and apply it to the issue Background.
+
+```markdown
+Owner decision DEC-B16 fixes one detail of the mechanism these records
+describe. The forcing is not minimal-against-maximal. The schoolbook arm
+installs the top of the admissible range, where no grid point routes to
+Karatsuba, and the Karatsuba arm installs the grid point itself.
+`mul_karatsuba_raw` recurses on the same profile value, so forcing the bottom
+of the range would time a Karatsuba recursion carried to its degree-0 base
+case — an algorithm no threshold produces — while forcing the grid point times
+the single split over schoolbook base cases that a threshold at that grid point
+does produce. Both forced values stay ordinary admissible values and reserve no
+sentinel.
+```
+
+### Evidence for DEC-B16
+
+Both readings were measured on the same binary and host. The numbers below come
+from unpinned smoke runs on a contended host — no lock wrapper, three windows,
+minimum-of-three reported — so they are evidence of a direction, not of a
+crossover, and no receipt may cite them as a measurement.
+
+Forcing the bottom of the range put the Karatsuba arm behind the schoolbook arm
+at **every** grid point, by 12.3x at degree 4 falling to 2.9x at degree 256, so
+the §2.7 rule kept the conservative default for want of a winning grid point.
+
+Forcing the grid point reverses it:
+
+| Operand degree | schoolbook ns | karatsuba ns | karatsuba / schoolbook |
+|---:|---:|---:|---:|
+| 16 | 346.6 | 373.3 | 1.077 |
+| 31 | 1288.8 | 1083.2 | 0.841 |
+| 32 | 1267.8 | 1204.3 | 0.950 |
+| 64 | 5053.8 | 4087.8 | 0.809 |
+| 128 | 19260.6 | 15504.5 | 0.805 |
+
+The Karatsuba arm loses at 16 and wins from 31 upward, so a crossover exists
+between those degrees. That agrees with what `2026-08-20-host-calibration.md`
+recorded from the dispatcher curve alone at `:188`–`:193`: `FieldPoly::mul`
+cost 1248.166 ns at degree 31 on the schoolbook arm and 1135.357 ns at degree
+32 on the Karatsuba arm, a step **down** for one more coefficient, which that
+receipt noted as consistent with the crossover lying below 32 while claiming
+no crossover from it. The measured run decides the value.
