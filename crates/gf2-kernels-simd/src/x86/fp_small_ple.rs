@@ -60,11 +60,7 @@ use core::arch::x86_64::*;
 /// Inner SIMD lane width (8 × u32 lanes per ymm).
 const LANE_U32: usize = 8;
 
-/// Structural scratch bound for the byte-lane PLE kernel, in columns.
-///
-/// This bound is distinct from the tuned L1d blocking factor
-/// [`crate::x86::fp_small_panel::KC`].
-pub const PANEL_SCRATCH_COLS: usize = 256;
+pub use crate::fp_small_ple::PANEL_SCRATCH_COLS;
 
 /// Panelized PLE base-case elimination on canonical-byte storage.
 ///

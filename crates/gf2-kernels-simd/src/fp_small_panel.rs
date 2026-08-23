@@ -61,8 +61,14 @@
 //! at runtime). Callers without AVX2 receive `None` and must fall
 //! back to Candidate C or scalar.
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub use crate::x86::fp_small_panel::KC;
+/// Cache-blocking factor along the k-axis: the byte-lane panel
+/// kernel's L1d-fit blocking factor. See module docs and
+/// `dev/active/fc182ed5/fc182ed5-route-c-design.md` § 2.2 for the
+/// derivation and the route-C measurement
+/// `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel-aggregate.csv`;
+/// the u32 overflow bound (`KC ≤ 68 719` at p = 251) is orders of
+/// magnitude larger and not binding.
+pub const KC: usize = 256;
 
 /// Whole-GEMM panelized integer kernel signature for `Fp<P>` with
 /// `P <= 251`.
