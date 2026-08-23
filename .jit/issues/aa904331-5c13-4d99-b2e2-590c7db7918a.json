@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-23T08:01:21.628521834Z",
   "context": {},
   "created_at": "2026-08-22T21:26:22.979387941Z",
   "dependencies": [
@@ -38,7 +39,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Cut the M4RM schedule selectors over to the tuning profile",
-  "updated_at": "2026-08-23T07:08:18.341244664Z"
+  "updated_at": "2026-08-23T08:01:21.628521834Z"
 }
