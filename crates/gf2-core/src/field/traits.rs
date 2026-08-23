@@ -820,15 +820,17 @@ pub trait FiniteField:
         u128::MAX
     }
 
-    /// Per-field override hook for the Strassen–Winograd fallback size.
-    /// Live dispatch in [`crate::field::winograd::gemm_winograd`] reads
-    /// the active `gemm.winograd_min_dim` profile value (whose
-    /// conservative default this constant also names); this trait
-    /// constant remains for per-field overrides and the extraction
-    /// surface until the seam removal retires it. Empirically tuned per
-    /// field: the default `128` is calibrated against Mersenne-31 and
-    /// `Gf2mWide<1, Gf2m8>` in `benches/strassen_threshold.rs` at
-    /// `n = 2048`, where both fields cross over at ≈ 128.
+    /// Historical per-field Strassen–Winograd fallback size, retained
+    /// only for the extraction surface until the seam removal retires
+    /// it. Live dispatch in [`crate::field::winograd::gemm_winograd`]
+    /// reads the active `gemm.winograd_min_dim` profile value; this
+    /// constant no longer participates in dispatch, and per-field
+    /// overrides of it have no dispatch effect. Its default names
+    /// [`crate::field::winograd::WINOGRAD_MIN_DIM_DEFAULT`], the
+    /// profile field's conservative default: `128`, calibrated against
+    /// Mersenne-31 and `Gf2mWide<1, Gf2m8>` in
+    /// `benches/strassen_threshold.rs` at `n = 2048`, where both fields
+    /// cross over at ≈ 128.
     ///
     /// Fields with materially heavier scalar MACs than Mersenne-31 — for
     /// example `Goldilocks` (128-bit reduction path) — should override

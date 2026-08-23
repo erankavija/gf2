@@ -8,9 +8,10 @@
 //! 2. Threshold sweep at `n = 2048` over Mersenne-31: records the Winograd
 //!    runtime for per-recursion thresholds `∈ {32, 64, 128, 256, 512, 1024}`
 //!    — the winning value is recorded in
-//!    `benches/strassen_threshold_results.md` and fed back to the
-//!    `FiniteField::WINOGRAD_THRESHOLD` default (see
-//!    `crates/gf2-core/src/field/traits.rs`).
+//!    `benches/strassen_threshold_results.md` and fed back to
+//!    `WINOGRAD_MIN_DIM_DEFAULT`, the conservative default of the
+//!    `gemm.winograd_min_dim` profile field that live dispatch reads
+//!    (see `crates/gf2-core/src/field/winograd.rs`).
 //!
 //! The recorded results live in `benches/strassen_threshold_results.md`.
 //!
@@ -125,7 +126,8 @@ fn bench_gemm_vs_winograd_gf2m8(c: &mut Criterion) {
 
 /// Threshold sweep at `n = 2048` over Mersenne-31. The winning threshold
 /// is recorded in `benches/strassen_threshold_results.md` and fed back
-/// to the `FiniteField::WINOGRAD_THRESHOLD` default. The sweep routes
+/// to `WINOGRAD_MIN_DIM_DEFAULT`, the conservative default of the
+/// `gemm.winograd_min_dim` profile field. The sweep routes
 /// through the production recursion via
 /// [`gemm_winograd_with_threshold`], so no helper duplication.
 fn bench_threshold_sweep(c: &mut Criterion) {
