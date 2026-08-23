@@ -6030,9 +6030,11 @@ mod tests {
     fn test_gemm_axpy_into_view_mersenne31_simd_path() {
         // M31 = 2^31 - 1
         const P: u64 = (1u64 << 31) - 1;
-        // n=16 is below the 16³=4096 threshold so it falls through to
-        // per-cell scalar; n=64 (64³=262144) and n=256 (256³>4096) hit
-        // the whole-GEMM fast path when AVX2 is available.
+        // n=16 (16³ = 4096) sits exactly at the conservative default of
+        // gemm.axpy_fast_path_min_volume, which the inclusive `>=`
+        // dispatch admits; n=64 and n=256 are well above it. All three
+        // hit the whole-GEMM fast path when AVX2 is available (no
+        // profile installed in this binary).
         for &n in &[16usize, 64, 256] {
             let m = n;
             let k = n;

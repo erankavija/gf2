@@ -206,7 +206,8 @@
 //! to trigger the whole-GEMM `fp_small_try_gemm_classical` threshold — the
 //! active `gemm.axpy_fast_path_min_volume` profile value, whose
 //! conservative default is `GEMM_AXPY_FAST_PATH_THRESHOLD = 16³ = 4096`
-//! cell-triples — so the SIMD fast path is never reached.
+//! cell-triples — so under that default the SIMD fast path goes unreached
+//! (an installed profile moves the boundary either way).
 //!
 //! [`trsm_upper_blocked`] and [`trsm_lower_blocked`] implement Higham § 14.1
 //! right-looking blocked back-substitution: the triangular factor `A` is
@@ -462,9 +463,11 @@ pub fn trsm_lower<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
 /// solved with the existing recursive [`trsm_upper`] (which handles odd sizes
 /// and the base threshold), and the update of all rows above the panel is
 /// performed by a single `gemm_axpy_into_view` call whose row dimension grows
-/// with each panel, ensuring that the whole-GEMM
-/// `fp_small_try_gemm_classical` threshold is reached even when `b` has only
-/// one column.
+/// with each panel, so the update volume clears the whole-GEMM
+/// `fp_small_try_gemm_classical` bound (`gemm.axpy_fast_path_min_volume`)
+/// at its conservative default even when `b` has only one column; an
+/// installed profile that raises the bound narrows or removes that
+/// guarantee.
 ///
 /// Bit-exact equivalent to [`trsm_upper`] (same field arithmetic; only the
 /// loop order and GEMM tile granularity differ). The proptests in
