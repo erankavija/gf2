@@ -83,6 +83,16 @@ fn installed_m4rm_profile_raises_the_tier_boundary_and_keeps_omitted_budgets() {
         m4rm.wide_max_k()
     );
 
+    // The register-tiled C-update gate follows the installed
+    // `tiled_min_stride_words`, which sits well above the conservative one: the
+    // conservative table admits the tile at every stride the two assertions
+    // below straddle.
+    let tiled_min = m4rm.tiled_min_stride_words();
+    assert!(tiled_min > conservative.tiled_min_stride_words());
+    let n_tiled_below = (tiled_min - 1) * 64;
+    assert!(!m4rm_schedule_route(k, n_tiled_below).tiled_stride_admitted());
+    assert!(m4rm_schedule_route(k, n_tiled_below + 1).tiled_stride_admitted());
+
     // The product is still the product at the width the conservative table
     // would have routed to the wide tier.
     let a = BitMatrix::random_seeded(16, 33, 0x1f2e_3d4c);

@@ -20,9 +20,10 @@
 //! [`crate::tuning::TuningProfile`] once per multiplication and threads the
 //! resolved values into the schedule route and the register-tiled C-update
 //! gate, so no per-panel or per-row helper reads the profile.
-//! [`m4rm_schedule_route`] reports the tier and Gray-code panel width the
-//! dispatcher uses. With no profile installed each field resolves to the
-//! conservative default this module's constants define.
+//! [`m4rm_schedule_route`] reports the tier, the Gray-code panel width, and the
+//! register-tiled stride gate the dispatcher uses. With no profile installed
+//! each field resolves to the conservative default this module's constants
+//! define.
 
 use crate::kernels::ops::{resolve_xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
@@ -125,11 +126,13 @@ pub enum M4rmScheduleTier {
     Wide,
 }
 
-/// The tier and Gray-code panel width selected for one M4RM multiplication.
+/// The tier, Gray-code panel width, and register-tiled stride gate selected for
+/// one M4RM multiplication.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct M4rmScheduleRoute {
     tier: M4rmScheduleTier,
     panel_width: usize,
+    tiled_stride_admitted: bool,
 }
 
 impl M4rmScheduleRoute {
@@ -147,16 +150,29 @@ impl M4rmScheduleRoute {
     pub fn panel_width(&self) -> usize {
         self.panel_width
     }
+
+    /// Returns whether the output width admits the register-tiled C-update.
+    ///
+    /// This is the stride half of that schedule's gate, the half
+    /// `m4rm.tiled_min_stride_words()` carries. The other half — at least
+    /// `M4RM_TILE_ROWS` full rows — is kernel shape and depends on the
+    /// operand's row count, which this reporter does not take, so an admitted
+    /// stride does not on its own put a multiplication on the tiled schedule.
+    #[must_use]
+    pub fn tiled_stride_admitted(&self) -> bool {
+        self.tiled_stride_admitted
+    }
 }
 
 /// Reports the M4RM schedule [`multiply`] selects for an inner dimension and an
 /// output width.
 ///
-/// The tier comparison reads `m4rm.wide_tier_min_stride_words()` and the panel
-/// width reads the three table byte budgets and both panel-width ceilings, all
+/// The tier comparison reads `m4rm.wide_tier_min_stride_words()`, the panel
+/// width reads the three table byte budgets and both panel-width ceilings, and
+/// the register-tiled stride gate reads `m4rm.tiled_min_stride_words()`, all
 /// from the active [`crate::tuning::TuningProfile`]. [`multiply`] resolves the
-/// same family once per call and selects through the same resolved selector, so
-/// this reporter and the dispatcher cannot disagree.
+/// same family once per call and selects through the same resolved selectors,
+/// so this reporter and the dispatcher cannot disagree.
 #[must_use]
 pub fn m4rm_schedule_route(k: usize, n: usize) -> M4rmScheduleRoute {
     m4rm_schedule_route_resolved(crate::tuning::active().m4rm(), k, n)
@@ -164,9 +180,14 @@ pub fn m4rm_schedule_route(k: usize, n: usize) -> M4rmScheduleRoute {
 
 /// Reports the M4RM schedule against an already-resolved selector family.
 fn m4rm_schedule_route_resolved(m4rm: &M4rmSelectors, k: usize, n: usize) -> M4rmScheduleRoute {
+    let stride_words = row_stride_words(n);
     M4rmScheduleRoute {
-        tier: schedule_tier(m4rm.wide_tier_min_stride_words(), row_stride_words(n)),
+        tier: schedule_tier(m4rm.wide_tier_min_stride_words(), stride_words),
         panel_width: choose_k_block(m4rm, k, n),
+        tiled_stride_admitted: stride_admits_tiled_schedule(
+            m4rm.tiled_min_stride_words(),
+            stride_words,
+        ),
     }
 }
 
@@ -855,14 +876,24 @@ pub fn multiply_rowwise_for_test(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
 /// The row count is kernel shape ([`M4RM_TILE_ROWS`] full rows per tile); the
 /// stride bound is `m4rm.tiled_min_stride_words()` from the active
 /// [`crate::tuning::TuningProfile`], resolved once per multiplication by
-/// [`multiply`].
+/// [`multiply`] and compared by [`stride_admits_tiled_schedule`], which is also
+/// what [`M4rmScheduleRoute::tiled_stride_admitted`] reports.
 #[inline]
 fn use_register_tiled_schedule(
     tiled_min_stride_words: usize,
     m: usize,
     stride_words: usize,
 ) -> bool {
-    m >= M4RM_TILE_ROWS && stride_words >= tiled_min_stride_words
+    m >= M4RM_TILE_ROWS && stride_admits_tiled_schedule(tiled_min_stride_words, stride_words)
+}
+
+/// Compares a row stride against an already-resolved `tiled_min_stride_words`.
+///
+/// One comparison serves both the dispatcher's predicate and the route
+/// reporter, so neither can drift from the other.
+#[inline]
+fn stride_admits_tiled_schedule(tiled_min_stride_words: usize, stride_words: usize) -> bool {
+    stride_words >= tiled_min_stride_words
 }
 
 #[inline]
@@ -1264,6 +1295,39 @@ mod tests {
                 M4rmScheduleTier::Wide => assert!(route.panel_width() <= m4rm.wide_max_k()),
             }
         }
+    }
+
+    #[test]
+    fn test_m4rm_schedule_route_reports_the_tiled_stride_gate() {
+        let m4rm = conservative_m4rm();
+        let tiled_min = m4rm.tiled_min_stride_words();
+        let n_below = (tiled_min - 1) * 64;
+        let n_at = n_below + 1;
+
+        assert!(!m4rm_schedule_route(4096, n_below).tiled_stride_admitted());
+        assert!(m4rm_schedule_route(4096, n_at).tiled_stride_admitted());
+
+        // The reported gate is the stride half of the predicate the dispatcher
+        // calls, so it agrees with it at every width once the row count admits
+        // a full tile.
+        for n in [n_below, n_at, 4096, 0] {
+            let stride_words = row_stride_words(n);
+            assert_eq!(
+                m4rm_schedule_route(4096, n).tiled_stride_admitted(),
+                use_register_tiled_schedule(tiled_min, M4RM_TILE_ROWS, stride_words),
+                "reported gate disagrees with the dispatcher's predicate at n={n}"
+            );
+        }
+
+        // The row half is kernel shape and outside what the reporter observes:
+        // too few rows leave the tile unusable at an admitted stride.
+        let stride_words = row_stride_words(n_at);
+        assert!(m4rm_schedule_route(4096, n_at).tiled_stride_admitted());
+        assert!(!use_register_tiled_schedule(
+            tiled_min,
+            M4RM_TILE_ROWS - 1,
+            stride_words
+        ));
     }
 
     #[test]

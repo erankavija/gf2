@@ -107,6 +107,17 @@ fn installed_m4rm_profile_moves_the_tier_boundary_and_binds_every_budget() {
         );
     }
 
+    // The register-tiled C-update gate follows the installed
+    // `tiled_min_stride_words`, on both sides of it. The conservative table
+    // admits the tile at every stride from 4 up, so the stride below the
+    // installed value is where the two tables disagree.
+    let tiled_min = m4rm.tiled_min_stride_words();
+    let n_tiled_below = (tiled_min - 1) * 64;
+    let n_tiled_at = n_tiled_below + 1;
+    assert!(!m4rm_schedule_route(k, n_tiled_below).tiled_stride_admitted());
+    assert!(m4rm_schedule_route(k, n_tiled_at).tiled_stride_admitted());
+    assert!(!m4rm_schedule_route(k, (tiled_min - 3) * 64).tiled_stride_admitted());
+
     // The product is still the product on both sides of the moved boundary,
     // with the register-tiled C-update gate at the installed
     // `tiled_min_stride_words` rather than the conservative one.
