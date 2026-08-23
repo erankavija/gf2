@@ -12,6 +12,13 @@
       "format": "markdown",
       "label": "OSD planning investigation",
       "path": "dev/active/b7157be6-osd/investigation.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "OSD authoritative breakdown manifest",
+      "path": "dev/active/b7157be6-osd/breakdown.json"
     }
   ],
   "first_ready_at": "2026-08-23T22:06:47.849195622Z",
@@ -37,5 +44,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Ordered-statistics decoding as the universal soft-decision baseline",
-  "updated_at": "2026-08-23T22:21:24.718068026Z"
+  "updated_at": "2026-08-23T22:36:29.668183854Z"
 }
