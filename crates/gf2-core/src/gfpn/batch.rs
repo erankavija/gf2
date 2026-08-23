@@ -632,8 +632,18 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
         );
 
         #[cfg(feature = "parallel")]
-        if crate::compute::field::should_parallelize_soa_batch(self.len()) {
-            return crate::compute::field::batch_mul_quadratic_parallel::<F, C>(self, other);
+        {
+            let soa_batch = crate::tuning::active().soa_batch();
+            if crate::compute::field::should_parallelize_soa_batch_resolved(
+                soa_batch.parallel_min_len(),
+                self.len(),
+            ) {
+                return crate::compute::field::batch_mul_quadratic_parallel::<F, C>(
+                    self,
+                    other,
+                    soa_batch.parallel_chunk_len(),
+                );
+            }
         }
 
         let a0 = self.coeff(0);
@@ -683,8 +693,17 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     /// ```
     pub fn batch_square_quadratic<C: ExtConfig<BaseField = F>>(&self) -> Self {
         #[cfg(feature = "parallel")]
-        if crate::compute::field::should_parallelize_soa_batch(self.len()) {
-            return crate::compute::field::batch_square_quadratic_parallel::<F, C>(self);
+        {
+            let soa_batch = crate::tuning::active().soa_batch();
+            if crate::compute::field::should_parallelize_soa_batch_resolved(
+                soa_batch.parallel_min_len(),
+                self.len(),
+            ) {
+                return crate::compute::field::batch_square_quadratic_parallel::<F, C>(
+                    self,
+                    soa_batch.parallel_chunk_len(),
+                );
+            }
         }
 
         let a0 = self.coeff(0);
@@ -839,8 +858,18 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
         );
 
         #[cfg(feature = "parallel")]
-        if crate::compute::field::should_parallelize_soa_batch(self.len()) {
-            return crate::compute::field::batch_mul_cubic_parallel::<F, C>(self, other);
+        {
+            let soa_batch = crate::tuning::active().soa_batch();
+            if crate::compute::field::should_parallelize_soa_batch_resolved(
+                soa_batch.parallel_min_len(),
+                self.len(),
+            ) {
+                return crate::compute::field::batch_mul_cubic_parallel::<F, C>(
+                    self,
+                    other,
+                    soa_batch.parallel_chunk_len(),
+                );
+            }
         }
 
         let coeffs = batch_cubic_karatsuba::<F, C>(
@@ -889,8 +918,17 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     /// ```
     pub fn batch_square_cubic<C: ExtConfig<BaseField = F>>(&self) -> Self {
         #[cfg(feature = "parallel")]
-        if crate::compute::field::should_parallelize_soa_batch(self.len()) {
-            return crate::compute::field::batch_square_cubic_parallel::<F, C>(self);
+        {
+            let soa_batch = crate::tuning::active().soa_batch();
+            if crate::compute::field::should_parallelize_soa_batch_resolved(
+                soa_batch.parallel_min_len(),
+                self.len(),
+            ) {
+                return crate::compute::field::batch_square_cubic_parallel::<F, C>(
+                    self,
+                    soa_batch.parallel_chunk_len(),
+                );
+            }
         }
 
         let coeffs = batch_cubic_karatsuba::<F, C>(
@@ -2039,12 +2077,16 @@ mod tests {
 
             let got_mul =
                 crate::compute::field::batch_mul_quadratic_parallel::<Fp<65537>, CfgBeta3>(
-                    &ba, &bb,
+                    &ba,
+                    &bb,
+                    crate::compute::field::SOA_PARALLEL_CHUNK_LEN,
                 )
                 .to_quadratic::<CfgBeta3>();
-            let got_square =
-                crate::compute::field::batch_square_quadratic_parallel::<Fp<65537>, CfgBeta3>(&ba)
-                    .to_quadratic::<CfgBeta3>();
+            let got_square = crate::compute::field::batch_square_quadratic_parallel::<
+                Fp<65537>,
+                CfgBeta3,
+            >(&ba, crate::compute::field::SOA_PARALLEL_CHUNK_LEN)
+            .to_quadratic::<CfgBeta3>();
 
             assert_eq!(got_mul, expected_mul, "parallel Fq2 mul len {len}");
             assert_eq!(got_square, expected_square, "parallel Fq2 square len {len}");
@@ -2091,12 +2133,16 @@ mod tests {
 
             let got_mul =
                 crate::compute::field::batch_mul_cubic_parallel::<Fp<65537>, CfgCubicBeta3>(
-                    &ba, &bb,
+                    &ba,
+                    &bb,
+                    crate::compute::field::SOA_PARALLEL_CHUNK_LEN,
                 )
                 .to_cubic::<CfgCubicBeta3>();
-            let got_square =
-                crate::compute::field::batch_square_cubic_parallel::<Fp<65537>, CfgCubicBeta3>(&ba)
-                    .to_cubic::<CfgCubicBeta3>();
+            let got_square = crate::compute::field::batch_square_cubic_parallel::<
+                Fp<65537>,
+                CfgCubicBeta3,
+            >(&ba, crate::compute::field::SOA_PARALLEL_CHUNK_LEN)
+            .to_cubic::<CfgCubicBeta3>();
 
             assert_eq!(got_mul, expected_mul, "parallel Fq3 mul len {len}");
             assert_eq!(got_square, expected_square, "parallel Fq3 square len {len}");
