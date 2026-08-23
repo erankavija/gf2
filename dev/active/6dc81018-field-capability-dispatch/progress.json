@@ -562,8 +562,8 @@
           "title": "Cut the triangular base-case threshold over",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
-          "notes": "Seam U6. Nine entries, seven inner splits. Same files as t7 \u2014 t7 must be merged first."
+          "status": "done",
+          "notes": "Seam U6. Nine entries, seven inner splits. Same files as t7 \u2014 t7 must be merged first. DONE: codex sol; one doc round (retired-authority sweep, lead-fixed); one contention-flake CI red cleared by identical-tree re-run. Rework 0."
         },
         {
           "id": "e8a727ff",
@@ -571,8 +571,8 @@
           "title": "Cut the PLE selectors over",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
-          "notes": "Seam U7. Same file as t8 \u2014 t8 merged first."
+          "status": "done",
+          "notes": "Seam U7. Same file as t8 \u2014 t8 merged first. DONE: native opus (worker stalled post-commit; lead ran CI and review). code-review R1 found a REAL defect: sub-panel recursion bypassed installed lane ceilings \u2014 lead-fixed with min(split,lane) cap + observed max-dispatch-width witness. 3 further doc rounds aligning the window-partition prose. Rework 1 (lead-executed)."
         }
       ]
     },
@@ -691,8 +691,8 @@
           "title": "Cut the triangular base-case threshold over",
           "classification": "implementation",
           "model": "codex gpt-5.6-sol (direct exec)",
-          "status": "dispatching",
-          "notes": "U6, hard (7 inner drivers, 9 entries)."
+          "status": "done",
+          "notes": "U6, hard (7 inner drivers, 9 entries). DONE: codex sol; one doc round (retired-authority sweep, lead-fixed); one contention-flake CI red cleared by identical-tree re-run. Rework 0."
         },
         {
           "id": "e8a727ff",
@@ -700,8 +700,8 @@
           "title": "Cut the PLE selectors over (seam)",
           "classification": "implementation",
           "model": "opus (native worker)",
-          "status": "dispatching",
-          "notes": "U7, hard (lane-width threading + t8 reporter signature evolution)."
+          "status": "done",
+          "notes": "U7, hard (lane-width threading + t8 reporter signature evolution). DONE: native opus (worker stalled post-commit; lead ran CI and review). code-review R1 found a REAL defect: sub-panel recursion bypassed installed lane ceilings \u2014 lead-fixed with min(split,lane) cap + observed max-dispatch-width witness. 3 further doc rounds aligning the window-partition prose. Rework 1 (lead-executed)."
         }
       ]
     }
@@ -1026,7 +1026,10 @@
     "19424a0f": 2,
     "f048383f": 1,
     "26ae7d6b": 0,
-    "d0365895": 0
+    "d0365895": 0,
+    "88441adb": 0,
+    "e8a727ff": 1,
+    "e2744fcf": 0
   },
   "surfaced_pitfalls": [
     {
