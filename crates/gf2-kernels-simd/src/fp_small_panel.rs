@@ -61,6 +61,9 @@
 //! at runtime). Callers without AVX2 receive `None` and must fall
 //! back to Candidate C or scalar.
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub use crate::x86::fp_small_panel::KC;
+
 /// Whole-GEMM panelized integer kernel signature for `Fp<P>` with
 /// `P <= 251`.
 ///
