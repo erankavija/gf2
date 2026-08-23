@@ -553,8 +553,8 @@
           "title": "Cut the Winograd threshold over",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "Seam U5."
+          "status": "done",
+          "notes": "Seam U5. DONE: codex luna; 8 review rounds total (1 route-drift fix: shared winograd_takes_base_case predicate; 7 doc rounds converging every WINOGRAD_THRESHOLD narration to record-time/host-level framing, all lead-fixed). Rework 0 worker-attributed."
         },
         {
           "id": "88441adb",
@@ -682,8 +682,8 @@
           "title": "Cut the Winograd threshold over",
           "classification": "implementation",
           "model": "codex gpt-5.6-luna (direct exec)",
-          "status": "dispatching",
-          "notes": "U5."
+          "status": "done",
+          "notes": "U5. DONE: codex luna; 8 review rounds total (1 route-drift fix: shared winograd_takes_base_case predicate; 7 doc rounds converging every WINOGRAD_THRESHOLD narration to record-time/host-level framing, all lead-fixed). Rework 0 worker-attributed."
         },
         {
           "id": "88441adb",
@@ -1098,6 +1098,11 @@
       "issue": "19424a0f",
       "date": "2026-08-23",
       "pitfall": "D5 blind spot: baked constants all equal conservative defaults, so wiring errors (conservative vs baked constant at a selection site) are undetectable until a calibrated value diverges. Recorded in 7d824b2f Amendment A3."
+    },
+    {
+      "issue": "e2744fcf",
+      "date": "2026-08-23",
+      "pitfall": "U5 cutover: per-field Winograd crossover control has no live carrier \u2014 gemm.winograd_min_dim is one host-level value; a field like Goldilocks wanting a smaller threshold cannot get one until a per-field profile axis exists. Documented in traits.rs and the strassen receipt."
     }
   ],
   "started_at": "2026-08-18T00:00:00Z"
