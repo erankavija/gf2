@@ -61,6 +61,17 @@ fn unavailable_backend_manifest() -> CampaignManifest {
     campaign
 }
 
+fn mixed_backend_manifest() -> CampaignManifest {
+    let mut campaign = manifest();
+    let mut accelerator_cell = campaign.cells[0].clone();
+    accelerator_cell.q = 5;
+    accelerator_cell.n = 20;
+    accelerator_cell.shards[0].stream_index = 11;
+    accelerator_cell.backend = Backend::Accelerator;
+    campaign.cells.push(accelerator_cell);
+    campaign
+}
+
 fn temp_path(label: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
         "gf2-permanent-campaign-bin-{label}-{}-{}",
@@ -185,6 +196,97 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
     assert!(stderr.contains("n=20"), "stderr:\n{stderr}");
     assert!(
         stderr.contains("intra_matrix_parallel"),
+        "stderr:\n{stderr}"
+    );
+
+    let _ = fs::remove_dir_all(parent);
+}
+
+#[test]
+fn binary_requires_accelerator_costs_only_for_the_selected_field() {
+    let parent = temp_path("mixed-backend");
+    let manifest_path = parent.join("manifest");
+    let manifest_file = manifest_path.join("manifest.json");
+    let repository = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .unwrap();
+    let checkout = parent.join("checkout");
+    let output_path =
+        checkout.join("dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
+    fs::create_dir_all(&parent).unwrap();
+    fs::create_dir_all(&manifest_path).unwrap();
+    fs::write(
+        &manifest_file,
+        serde_json::to_vec_pretty(&mixed_backend_manifest()).unwrap(),
+    )
+    .unwrap();
+
+    let clone = Command::new("git")
+        .args([
+            "clone",
+            "--quiet",
+            "--no-local",
+            repository.to_str().unwrap(),
+            checkout.to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        clone.status.success(),
+        "test checkout must be clean and usable: {}",
+        String::from_utf8_lossy(&clone.stderr)
+    );
+    let built_revision = build_revision().to_string();
+    let checkout_revision = Command::new("git")
+        .args([
+            "-C",
+            checkout.to_str().unwrap(),
+            "checkout",
+            "--quiet",
+            &built_revision,
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        checkout_revision.status.success(),
+        "test checkout must contain the binary's build revision: {}",
+        String::from_utf8_lossy(&checkout_revision.stderr)
+    );
+    fs::create_dir_all(output_path.parent().unwrap()).unwrap();
+
+    let processor = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "3",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        processor.status.success(),
+        "processor-only selected field must run without an accelerator cost table; stderr:\n{}",
+        String::from_utf8_lossy(&processor.stderr)
+    );
+
+    let accelerator = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "5",
+        ])
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&accelerator.stderr);
+    assert!(!accelerator.status.success(), "stderr:\n{stderr}");
+    assert!(
+        stderr.contains("--accelerator-cost-table is required"),
         "stderr:\n{stderr}"
     );
 
