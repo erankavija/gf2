@@ -165,8 +165,9 @@
 //! reachable only through [`FieldPoly::mul`], which picks one of them from the
 //! active profile — schoolbook below `karatsuba_min_degree`, Karatsuba at or
 //! above it. The sweep reaches both by installing a profile that forces the
-//! arm: [`FORCED_KARATSUBA_MIN_DEGREE`] takes the Karatsuba arm at every grid
-//! point and [`FORCED_SCHOOLBOOK_MIN_DEGREE`] takes the schoolbook arm.
+//! arm, as [`forced_karatsuba_min_degree`] states: the grid point itself takes
+//! the Karatsuba arm there, and [`FORCED_SCHOOLBOOK_MIN_DEGREE`] takes the
+//! schoolbook arm.
 //!
 //! `gf2_core::tuning::install` resolves the process-wide profile once, so one
 //! process offers one arm. Each arm at each grid point is therefore measured in
@@ -183,12 +184,14 @@
 //! - a digest of the product, which the parent compares across the two arms as
 //!   this field's equivalence probe.
 //!
-//! The forced values are the endpoints of the field's admissible range, so the
-//! Karatsuba arm recurses to its degree-0 base case rather than bottoming out
-//! at some intermediate threshold. This field's asymptotic arm is thereby
-//! measured as an algorithm, on the same footing as the other four fields'
-//! second entry points, and the sweep claims nothing about the cost of a
-//! Karatsuba recursion whose base case sits at a chosen degree.
+//! `mul_karatsuba_raw` recurses on the same profile value, so the value forced
+//! for the Karatsuba arm decides which algorithm is timed. Forcing the grid
+//! point makes the recursion split once at that degree and hand every
+//! sub-operand, whose degree is about half of it, to the schoolbook base case —
+//! exactly what the dispatcher runs when `karatsuba_min_degree` is set to that
+//! grid point. Each grid point therefore compares the two arms the selection
+//! rule chooses between at that point, rather than the cost of a Karatsuba
+//! recursion carried to a base case no threshold would produce.
 
 use std::env;
 use std::fmt;
@@ -225,21 +228,13 @@ const BIT_FIXTURES: usize = 8;
 const WORDS_PER_LINE: usize = 8;
 const SEED_ROOT: u64 = 0x5ecc_9bf8_0000_0000;
 const GIT_STATUS_ARGS: &[&str] = &["status", "--porcelain", "--untracked-files=all"];
-/// `polynomial.karatsuba_min_degree` a child installs to force the Karatsuba
-/// arm.
-///
-/// 1 is the smallest value the loader admits for this field, so every operand
-/// on the grid clears it and [`FieldPoly::mul`] takes the Karatsuba arm. The
-/// recursion carries the same value, so it bottoms out at degree 0, where the
-/// schoolbook base case takes a pair of single coefficients.
-const FORCED_KARATSUBA_MIN_DEGREE: usize = 1;
 /// `polynomial.karatsuba_min_degree` a child installs to force the schoolbook
 /// arm.
 ///
-/// `usize::MAX` is the field's other endpoint and means "never take the named
-/// path"; no operand degree reaches it, so every product on the grid runs
-/// schoolbook. It is an ordinary admissible value rather than a reserved
-/// sentinel.
+/// `usize::MAX` is the top of the field's admissible range and means "never
+/// take the named path"; no operand degree reaches it, so every product on the
+/// grid runs schoolbook. It is an ordinary admissible value rather than a
+/// reserved sentinel.
 const FORCED_SCHOOLBOOK_MIN_DEGREE: usize = usize::MAX;
 /// Profile identifier a child installs, recorded nowhere but its own process.
 const FORCED_ARM_PROFILE_ID: &str = "calibration-forced-arm";
@@ -1443,11 +1438,22 @@ struct ChildReport {
     rates: Vec<f64>,
 }
 
-/// The `karatsuba_min_degree` a child installs to reach `arm`.
-fn forced_karatsuba_min_degree(arm: Arm) -> usize {
+/// The `karatsuba_min_degree` a child installs to reach `arm` at `size`.
+///
+/// The Karatsuba arm forces the grid point itself, which is the smallest value
+/// that still routes operands of that degree to Karatsuba. `mul_karatsuba_raw`
+/// recurses on the same value, so the recursion splits once and its
+/// sub-operands, at about half the degree, fall to the schoolbook base case —
+/// the algorithm the dispatcher runs when `karatsuba_min_degree` is set to this
+/// grid point. Forcing the bottom of the admissible range instead would time a
+/// recursion carried to degree 0, which no threshold produces.
+///
+/// The schoolbook arm forces the top of the range, where no grid point routes
+/// to Karatsuba at all.
+fn forced_karatsuba_min_degree(arm: Arm, size: usize) -> usize {
     match arm {
         Arm::Conservative => FORCED_SCHOOLBOOK_MIN_DEGREE,
-        Arm::Asymptotic => FORCED_KARATSUBA_MIN_DEGREE,
+        Arm::Asymptotic => size,
     }
 }
 
@@ -1505,7 +1511,7 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<(), String> {
             spec.field
         ));
     }
-    install_forced_profile(forced_karatsuba_min_degree(spec.arm))?;
+    install_forced_profile(forced_karatsuba_min_degree(spec.arm, spec.size))?;
 
     let degree = spec.size;
     println!(
@@ -1600,7 +1606,7 @@ fn verify_child_report(
         return Err(format!(
             "the child for {spec} forced karatsuba_min_degree={} and the production selector then \
              picked the `{}` arm rather than `{expected_arm}`",
-            forced_karatsuba_min_degree(spec.arm),
+            forced_karatsuba_min_degree(spec.arm, spec.size),
             report.route
         ));
     }
@@ -1967,10 +1973,11 @@ fn print_sweep(sweep: &FieldSweep) {
     if field.arm_source() == ArmSource::ChildProcess {
         println!(
             "each arm measured in a child process installing \
-             polynomial.karatsuba_min_degree={} for {} and {} for {}",
-            forced_karatsuba_min_degree(Arm::Conservative),
+             polynomial.karatsuba_min_degree={} for {}, and the grid point itself for {}, so the \
+             {} arm splits once at that degree over schoolbook base cases",
+            FORCED_SCHOOLBOOK_MIN_DEGREE,
             field.conservative_arm(),
-            forced_karatsuba_min_degree(Arm::Asymptotic),
+            field.asymptotic_arm(),
             field.asymptotic_arm()
         );
     }
@@ -3258,33 +3265,36 @@ mod tests {
     }
 
     #[test]
-    fn the_forced_thresholds_are_the_endpoints_of_the_admissible_range() {
-        // Both endpoints are ordinary admissible values, so forcing an arm
-        // reserves no sentinel. The minimum is the smallest the loader accepts.
-        assert_eq!(
-            forced_karatsuba_min_degree(Arm::Asymptotic),
-            FORCED_KARATSUBA_MIN_DEGREE
-        );
-        assert_eq!(
-            forced_karatsuba_min_degree(Arm::Conservative),
-            FORCED_SCHOOLBOOK_MIN_DEGREE
-        );
+    fn the_karatsuba_arm_forces_the_grid_point_and_the_schoolbook_arm_the_range_top() {
         let inherited = &TuningProfile::CONSERVATIVE;
-        for forced in [FORCED_KARATSUBA_MIN_DEGREE, FORCED_SCHOOLBOOK_MIN_DEGREE] {
-            let conservative = inherited.polynomial();
-            assert!(PolynomialSelectors::try_new(
-                forced,
-                conservative.karatsuba_max_out_len(),
-                conservative.div_rem_fast_min_len(),
-                conservative.subproduct_min_len(),
-                conservative.interpolate_fast_min_points(),
-            )
-            .is_ok());
+        for size in CalibratedField::KaratsubaMinDegree.grid() {
+            assert_eq!(
+                forced_karatsuba_min_degree(Arm::Asymptotic, size),
+                size,
+                "the Karatsuba arm times the recursion a threshold of {size} produces"
+            );
+            assert_eq!(
+                forced_karatsuba_min_degree(Arm::Conservative, size),
+                FORCED_SCHOOLBOOK_MIN_DEGREE
+            );
+            // Both forced values are ordinary admissible values, so forcing an
+            // arm reserves no sentinel and installs no profile the loader would
+            // reject.
+            for arm in Arm::BOTH {
+                let conservative = inherited.polynomial();
+                assert!(
+                    PolynomialSelectors::try_new(
+                        forced_karatsuba_min_degree(arm, size),
+                        conservative.karatsuba_max_out_len(),
+                        conservative.div_rem_fast_min_len(),
+                        conservative.subproduct_min_len(),
+                        conservative.interpolate_fast_min_points(),
+                    )
+                    .is_ok(),
+                    "{arm} at {size} forces an inadmissible threshold"
+                );
+            }
         }
-        assert!(
-            PolynomialSelectors::try_new(FORCED_KARATSUBA_MIN_DEGREE - 1, 128, 2048, 4096, 16)
-                .is_err()
-        );
     }
 
     #[test]
@@ -3294,12 +3304,28 @@ mod tests {
         // threshold, Karatsuba at or above it.
         for size in CalibratedField::KaratsubaMinDegree.grid() {
             assert!(
-                size >= FORCED_KARATSUBA_MIN_DEGREE,
-                "{size} does not reach the forced Karatsuba threshold"
+                size >= forced_karatsuba_min_degree(Arm::Asymptotic, size),
+                "{size} does not reach the threshold forced for the Karatsuba arm"
             );
             assert!(
-                size < FORCED_SCHOOLBOOK_MIN_DEGREE,
-                "{size} reaches the forced schoolbook threshold"
+                size < forced_karatsuba_min_degree(Arm::Conservative, size),
+                "{size} reaches the threshold forced for the schoolbook arm"
+            );
+        }
+    }
+
+    #[test]
+    fn the_karatsuba_arm_hands_its_sub_operands_to_the_schoolbook_base_case() {
+        // A split at degree `size` produces sub-operands of about half that
+        // degree, which fall below the same threshold and take the schoolbook
+        // arm. That is the recursion shape a chosen threshold produces, and it
+        // is what distinguishes this forcing from one at the bottom of the
+        // range, where the recursion would reach degree 0.
+        for size in CalibratedField::KaratsubaMinDegree.grid() {
+            let forced = forced_karatsuba_min_degree(Arm::Asymptotic, size);
+            assert!(
+                size.div_ceil(2) < forced,
+                "a split at {size} recurses again"
             );
         }
     }
