@@ -89,7 +89,7 @@
 //! | [`build_subproduct_tree`] (free fn) | Balanced pair-merge | `O(k · M(k))` polynomial mults | Single source of truth shared by `batch_evaluate` and `interpolate_fast`. |
 //! | [`interpolate`] (see [`crate::field::poly_interpolate`]) | Barycentric Lagrange + `batch_inverse` | `O(n²)` field ops | — |
 //! | [`interpolate_fast`] (see [`crate::field::poly_interpolate`]) | Subproduct-tree Lagrange over [`FieldPoly::batch_evaluate`] | `O(n² log n)` with the generic substrate; [`TwoAdicField`] callers routing through [`FieldPoly::batch_evaluate_auto`] reach `O(n log² n)` above the active subproduct selector | — |
-//! | [`interpolate_auto`] (see [`crate::field::poly_interpolate`]) | Dispatcher over the two above | picks the right asymptotic | [`INTERPOLATE_THRESHOLD`] = 16 |
+//! | [`interpolate_auto`] (see [`crate::field::poly_interpolate`]) | Dispatcher over the two above | picks the right asymptotic | `polynomial.interpolate_fast_min_points()` (conservative default [`INTERPOLATE_THRESHOLD`] = 16) |
 //! | [`formal_derivative`] (see [`crate::field::poly_interpolate`]) | Elementwise `i · coeffs[i]` | `O(n)` | — |
 //!
 //! ## Batch polynomial operations
@@ -381,8 +381,9 @@
 //! |  2048 | 288.30 ms |  30.08 ms |   9.58× |
 //!
 //! The `fast` path wins at every measured `n ≥ 4` on `Fp<65537>`; the
-//! tuned [`INTERPOLATE_THRESHOLD`] is set at 16 as a conservative margin
-//! for callers on fields with more expensive polynomial multiplication.
+//! `polynomial.interpolate_fast_min_points()` conservative default
+//! ([`INTERPOLATE_THRESHOLD`] = 16) is kept as a margin for callers on
+//! fields with more expensive polynomial multiplication.
 //!
 //! ## `div_rem` — schoolbook vs. Newton-iteration fast
 //!

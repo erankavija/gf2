@@ -11,7 +11,7 @@
 //! | [`interpolate`] | Lagrange barycentric | `O(n²)` field ops | `O(n²)` |
 //! | [`interpolate_fast`] | Subproduct-tree, generic [`FieldPoly::batch_evaluate`] | `O(n² log n)` field ops | `O(n² log n)` |
 //! | [`interpolate_fast_auto`] | Subproduct-tree, [`FieldPoly::batch_evaluate_auto`]¹ | — (bound requires `TwoAdicField`) | `O(n log² n)` above the active `polynomial.subproduct_min_len()` |
-//! | [`interpolate_auto_two_adic`] | Profile-driven dispatcher over [`interpolate`] + [`interpolate_fast_auto`] | — | `O(n²)` below, `O(n log² n)` above both [`INTERPOLATE_THRESHOLD`] and the active subproduct selector |
+//! | [`interpolate_auto_two_adic`] | Profile-driven dispatcher over [`interpolate`] + [`interpolate_fast_auto`] | — | `O(n²)` below, `O(n log² n)` above both the active `polynomial.interpolate_fast_min_points()` value (conservative default [`INTERPOLATE_THRESHOLD`]) and the active subproduct selector |
 //!
 //! ¹ The `_auto` suffix threads the Newton-iteration
 //! [`FieldPoly::div_rem_auto`] primitive (issue `ae0c7e1f`,
@@ -23,8 +23,9 @@
 //! unconditional free-function variant.
 //!
 //! [`interpolate_auto`] stays generic over `F: FiniteField` and
-//! dispatches to [`interpolate_fast`] above
-//! [`INTERPOLATE_THRESHOLD`] (currently 16). [`TwoAdicField`]
+//! dispatches to [`interpolate_fast`] above the active
+//! `polynomial.interpolate_fast_min_points()` value (conservative
+//! default [`INTERPOLATE_THRESHOLD`] = 16). [`TwoAdicField`]
 //! call-sites should prefer [`interpolate_auto_two_adic`] so the
 //! `O(n log² n)` middle-step asymptotic fires automatically above
 //! the active `polynomial.subproduct_min_len()` value. Rust coherence
@@ -78,12 +79,15 @@
 //! [`interpolate_fast`]-style recipe; the fast-division primitive
 //! lands from the active division selector (conservative default 2048) upwards.
 //!
-//! `INTERPOLATE_THRESHOLD = 16` is kept as a conservative safety margin
-//! for callers on fields with very expensive Karatsuba (where the
-//! merge-pass polynomial multiplications may flip the balance upward).
-//! On cheap fields like `Fp<65537>` the threshold could safely drop to
-//! 4; the tuning is deliberately conservative. Call [`interpolate`] or
-//! [`interpolate_fast`] directly to override, or use
+//! The conservative default `INTERPOLATE_THRESHOLD = 16` for
+//! `polynomial.interpolate_fast_min_points()` is kept as a conservative
+//! safety margin for callers on fields with very expensive Karatsuba
+//! (where the merge-pass polynomial multiplications may flip the
+//! balance upward). On cheap fields like `Fp<65537>` the threshold
+//! could safely drop to 4; the tuning is deliberately conservative.
+//! Call [`interpolate`] or [`interpolate_fast`] directly to override,
+//! install a profile with a different
+//! `polynomial.interpolate_fast_min_points()` value, or use
 //! [`interpolate_auto`] for the tuned default.
 //!
 //! Regenerate this table with
@@ -92,14 +96,19 @@
 use crate::field::batch_ops::batch_inverse;
 use crate::field::poly::build_subproduct_tree;
 use crate::field::{FieldPoly, FiniteField, TwoAdicField};
+use crate::tuning;
 use std::fmt;
 
 // ---------------------------------------------------------------------
 // Threshold + dispatcher
 // ---------------------------------------------------------------------
 
+/// Conservative default for `polynomial.interpolate_fast_min_points()`
+/// in the active [`crate::tuning::TuningProfile`].
+///
 /// Number-of-points threshold at which [`interpolate_auto`] prefers
-/// [`interpolate_fast`] over [`interpolate`].
+/// [`interpolate_fast`] over [`interpolate`]; [`interpolate_route`]
+/// reads the live value.
 ///
 /// Tuned from the benchmark table in the module docstring: `fast`
 /// already wins the `n = 4` cell on `Fp<65537>` at `0.63×` of the
@@ -112,14 +121,57 @@ use std::fmt;
 /// crossover remains at `n = 4` so no retuning was needed. Callers
 /// who want a specific variant regardless of `n` should call
 /// [`interpolate`] or [`interpolate_fast`] directly.
+///
+/// This constant remains the compiled-in conservative default consumed
+/// by [`crate::tuning::TuningProfile::CONSERVATIVE`].
 pub const INTERPOLATE_THRESHOLD: usize = 16;
+
+/// The selected arm of the [`interpolate_auto`] / [`interpolate_auto_two_adic`]
+/// point-count dispatcher.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum InterpolateRoute {
+    /// Use the quadratic barycentric [`interpolate`].
+    Barycentric,
+    /// Use the subproduct-tree fast path: [`interpolate_fast`] for
+    /// [`interpolate_auto`], [`interpolate_fast_auto`] for
+    /// [`interpolate_auto_two_adic`].
+    SubproductTree,
+}
+
+/// Reports the [`interpolate_auto`] / [`interpolate_auto_two_adic`] arm
+/// for a point count.
+///
+/// The comparison uses the active `polynomial.interpolate_fast_min_points()`
+/// profile value (conservative default [`INTERPOLATE_THRESHOLD`]). Both
+/// dispatchers share this reporter and this boundary.
+#[must_use]
+pub fn interpolate_route(points_len: usize) -> InterpolateRoute {
+    interpolate_route_resolved(
+        tuning::active().polynomial().interpolate_fast_min_points(),
+        points_len,
+    )
+}
+
+/// Reports the [`interpolate_route`] arm for `points_len` against an
+/// already-resolved `interpolate_fast_min_points`.
+fn interpolate_route_resolved(
+    interpolate_fast_min_points: usize,
+    points_len: usize,
+) -> InterpolateRoute {
+    if points_len < interpolate_fast_min_points {
+        InterpolateRoute::Barycentric
+    } else {
+        InterpolateRoute::SubproductTree
+    }
+}
 
 /// Interpolates through `points` using the threshold-tuned dispatcher.
 ///
-/// Routes to [`interpolate`] for `points.len() < INTERPOLATE_THRESHOLD`
-/// (where the quadratic path is at worst on par with the fast path) and to
-/// [`interpolate_fast`] otherwise. Retains the same error contract as the
-/// two entry points.
+/// Routes to [`interpolate`] when `points.len()` is below the active
+/// `polynomial.interpolate_fast_min_points()` value (conservative
+/// default [`INTERPOLATE_THRESHOLD`]) — where the quadratic path is at
+/// worst on par with the fast path — and to [`interpolate_fast`] at or
+/// above it. Retains the same error contract as the two entry points.
 ///
 /// # Arguments
 ///
@@ -146,12 +198,13 @@ pub const INTERPOLATE_THRESHOLD: usize = 16;
 ///
 /// # Complexity
 ///
-/// Below the threshold: `O(n²)` field operations (via [`interpolate`]).
-/// Above the threshold: `O(n² log n)` field operations with the generic
-/// substrate (via [`interpolate_fast`]). Callers on [`TwoAdicField`]
+/// Below the active `polynomial.interpolate_fast_min_points()` value:
+/// `O(n²)` field operations (via [`interpolate`]). At or above it:
+/// `O(n² log n)` field operations with the generic substrate (via
+/// [`interpolate_fast`]). Callers on [`TwoAdicField`]
 /// should reach for [`interpolate_auto_two_adic`] to pick up the
-/// `O(n log² n)` middle-step asymptotic at
-/// `n ≥ INTERPOLATE_THRESHOLD` and
+/// `O(n log² n)` middle-step asymptotic at or above the active
+/// `polynomial.interpolate_fast_min_points()` value and
 /// sizes above the active subproduct selector (Newton-iteration fast-division
 /// substrate from issue `ae0c7e1f`, subproduct-tree integration from
 /// issue `046f95c1`). Rust coherence forbids a second
@@ -160,10 +213,9 @@ pub const INTERPOLATE_THRESHOLD: usize = 16;
 pub fn interpolate_auto<F: FiniteField>(
     points: &[(F, F)],
 ) -> Result<FieldPoly<F>, InterpolationError> {
-    if points.len() < INTERPOLATE_THRESHOLD {
-        interpolate(points)
-    } else {
-        interpolate_fast(points)
+    match interpolate_route(points.len()) {
+        InterpolateRoute::Barycentric => interpolate(points),
+        InterpolateRoute::SubproductTree => interpolate_fast(points),
     }
 }
 
@@ -181,9 +233,10 @@ pub fn interpolate_auto<F: FiniteField>(
 /// entry point when they want the `O(n log² n)` asymptotic to fire
 /// automatically.
 ///
-/// Below [`INTERPOLATE_THRESHOLD`]: identical to [`interpolate`] (the
-/// quadratic barycentric path). At or above: routes through
-/// [`interpolate_fast_auto`] — semantically identical to
+/// Below the active `polynomial.interpolate_fast_min_points()` value
+/// (conservative default [`INTERPOLATE_THRESHOLD`]): identical to
+/// [`interpolate`] (the quadratic barycentric path). At or above: routes
+/// through [`interpolate_fast_auto`] — semantically identical to
 /// [`interpolate_fast`] but with the `_auto`-substrate middle step.
 ///
 /// # Arguments
@@ -211,19 +264,19 @@ pub fn interpolate_auto<F: FiniteField>(
 ///
 /// # Complexity
 ///
-/// Below [`INTERPOLATE_THRESHOLD`]: `O(n²)` field operations (via
-/// [`interpolate`]). Above the threshold: `O(n log² n)` field
-/// operations on [`TwoAdicField`] above the active subproduct selector (via
+/// Below the active `polynomial.interpolate_fast_min_points()` value:
+/// `O(n²)` field operations (via [`interpolate`]). At or above it:
+/// `O(n log² n)` field operations on [`TwoAdicField`] above the active
+/// subproduct selector (via
 /// [`interpolate_fast_auto`]'s [`FieldPoly::batch_evaluate_auto`]
 /// middle step), falling back to `O(n²)` for the middle step at small
 /// sizes where the subproduct-tree dispatch prefers naive Horner.
 pub fn interpolate_auto_two_adic<F: TwoAdicField>(
     points: &[(F, F)],
 ) -> Result<FieldPoly<F>, InterpolationError> {
-    if points.len() < INTERPOLATE_THRESHOLD {
-        interpolate(points)
-    } else {
-        interpolate_fast_auto(points)
+    match interpolate_route(points.len()) {
+        InterpolateRoute::Barycentric => interpolate(points),
+        InterpolateRoute::SubproductTree => interpolate_fast_auto(points),
     }
 }
 

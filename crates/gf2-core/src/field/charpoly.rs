@@ -23,9 +23,11 @@
 //! ## Default dispatch (issue `1454ec2d`)
 //!
 //! [`FieldMatrix::charpoly`] is the public entry. It currently always
-//! selects the cubic baseline because [`KG_DISPATCH_MIN_N`] is set to
-//! [`usize::MAX`] — see the R2 amendment in issue `e47231cd` and the
-//! 4a59d1f9 post-Wave-9 reassessment for the empirical justification
+//! selects the cubic baseline because the active
+//! `charpoly.keller_gehrig_min_dim()` profile value defaults to
+//! [`KG_DISPATCH_MIN_N`] = [`usize::MAX`] — see the R2 amendment in
+//! issue `e47231cd` and the 4a59d1f9 post-Wave-9 reassessment for the
+//! empirical justification
 //! (cubic is ~148x faster than KG at `n = 256` on `Fp<MERSENNE_31>`
 //! with the current PLE-based K⁻¹ pipeline; ratio grows monotonically
 //! with `n`).
@@ -34,11 +36,13 @@
 //! explicit seed. Bit-exact equality across paths is guaranteed by the
 //! KG path's Cayley–Hamilton verification (`charpoly.eval_at_matrix(A) == 0`).
 //!
-//! When the threshold is later tuned downward (after the K⁻¹ step is
-//! replaced with a Strassen-amenable inversion), the dispatch will
-//! select between the two paths via these rules, in order:
+//! When the threshold is later tuned downward — by installing a lower
+//! `charpoly.keller_gehrig_min_dim()` profile value, or after the K⁻¹
+//! step is replaced with a Strassen-amenable inversion — the dispatch
+//! will select between the two paths via these rules, in order:
 //!
-//! 1. If `n < KG_DISPATCH_MIN_N`: cubic.
+//! 1. If `n` is below the active `charpoly.keller_gehrig_min_dim()`
+//!    value ([`charpoly_route`] reports [`CharpolyRoute::Cubic`]): cubic.
 //! 2. If [`FiniteField::cardinality_log2_hint`] returns `None`
 //!    (runtime-context fields like [`crate::gf2m::Gf2mElement`]): cubic.
 //! 3. If `cardinality_log2_hint > 127` (`q` does not fit in `u128`):
@@ -101,16 +105,20 @@
 //! Given the empirical finding above (cubic is 31-700x faster than KG at
 //! `n` in {64..1024}, with no measurable crossover; confirmed by both the
 //! 2026-04-26 pre-Wave-9 and 2026-05-07 post-Wave-9 sweeps per issue
-//! `4a59d1f9`), [`KG_DISPATCH_MIN_N`] is set to [`usize::MAX`] so that
-//! public [`FieldMatrix::charpoly`] **always selects the cubic baseline**
-//! under default dispatch. The correctness contract still holds: when
-//! a future fix replaces the K^{-1} PLE pipeline with a Strassen-amenable
-//! inversion and the threshold is tuned downward, KG would re-engage
-//! conditionally on the field cardinality (`q > 2n^2`) and pass the
-//! Cayley-Hamilton verification before returning. Callers who want to
-//! opt into the KG path NOW (e.g. for benchmarks or research)
-//! must call [`FieldMatrix::charpoly_keller_gehrig`] explicitly with a
-//! deterministic seed.
+//! `4a59d1f9`), the conservative default for
+//! `charpoly.keller_gehrig_min_dim()` is [`KG_DISPATCH_MIN_N`] =
+//! [`usize::MAX`], so that public [`FieldMatrix::charpoly`] **always
+//! selects the cubic baseline** under the conservative default. The
+//! correctness contract still holds: when a future fix replaces the
+//! K^{-1} PLE pipeline with a Strassen-amenable inversion and the
+//! active threshold is tuned downward, KG would re-engage conditionally
+//! on the field cardinality (`q > 2n^2`) and pass the Cayley-Hamilton
+//! verification before returning. Callers who want to opt into the KG
+//! path NOW (e.g. for benchmarks or research) must call
+//! [`FieldMatrix::charpoly_keller_gehrig`] explicitly with a
+//! deterministic seed, or install a profile with a lower
+//! `charpoly.keller_gehrig_min_dim()` value to move [`charpoly_route`]'s
+//! boundary.
 //!
 //! ## Cubic path
 //!
@@ -211,6 +219,7 @@ use crate::field::matrix::{BasisReducer, ChainPolyArith, FieldMatrix, PackedMatv
 use crate::field::poly::FieldPoly;
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
+use crate::tuning;
 
 /// Iterative-driver matvec helper (issue `d1dd266c`).
 ///
@@ -257,23 +266,75 @@ impl<'a, F: FiniteField> MatvecDriver<'a, F> {
     }
 }
 
+/// Conservative default for `charpoly.keller_gehrig_min_dim()` in the
+/// active [`crate::tuning::TuningProfile`].
+///
 /// Minimum matrix size at which [`FieldMatrix::charpoly`] considers the
-/// sub-cubic Keller-Gehrig path. See the module rustdoc for the
-/// empirical crossover discussion.
+/// sub-cubic Keller-Gehrig path; [`charpoly_route`] reads the live
+/// value. See the module rustdoc for the empirical crossover
+/// discussion. Both `usize` endpoints are admissible and no value is
+/// reserved as a sentinel: `0` engages Keller-Gehrig at every dimension
+/// and [`usize::MAX`] disables it unconditionally, which is this
+/// constant's own value.
 ///
 /// Set to [`usize::MAX`] so that **`charpoly()` always routes to the
-/// cubic baseline** under default dispatch. The empirical measurements
+/// cubic baseline** under the conservative default. The empirical measurements
 /// (issue `4a59d1f9`, post-Wave-9 kernels, 2026-05-07) confirm cubic
 /// is 31-337x faster than Keller-Gehrig at n in {64..512} on
 /// `Fp<MERSENNE_31>`; ratio grows monotonically with n. No crossover
 /// is visible in the measured range. The K^{-1} step's PLE-backed solve
 /// is `O(n^3)` and dominates. Callers who want to opt into KG explicitly
-/// can call [`FieldMatrix::charpoly_keller_gehrig`] directly.
+/// can call [`FieldMatrix::charpoly_keller_gehrig`] directly, or install
+/// a profile with a lower `charpoly.keller_gehrig_min_dim()` value to
+/// move [`charpoly_route`]'s boundary.
 ///
-/// Re-tune the threshold downward in a future ticket once the K^{-1}
-/// step is replaced with a Strassen-amenable inversion (`trtri_upper`
-/// + `gemm`) or the algorithm is restructured to avoid it.
+/// This constant remains the compiled-in conservative default consumed
+/// by [`crate::tuning::TuningProfile::CONSERVATIVE`]. Re-tune it
+/// downward in a future ticket once the K^{-1} step is replaced with a
+/// Strassen-amenable inversion (`trtri_upper` + `gemm`) or the
+/// algorithm is restructured to avoid it.
 pub const KG_DISPATCH_MIN_N: usize = usize::MAX;
+
+/// The selected arm of the [`FieldMatrix::charpoly`] size-gate
+/// dispatcher at a given matrix dimension.
+///
+/// This reports only the size-gate comparison at `n` against the
+/// active `charpoly.keller_gehrig_min_dim()` value; it is not a
+/// guarantee that [`FieldMatrix::charpoly_keller_gehrig`] runs.
+/// [`CharpolyRoute::KellerGehrig`] still passes through the field's
+/// cardinality gate and the Las-Vegas retry loop inside the dispatcher,
+/// both of which can fall back to the cubic path — see the module
+/// rustdoc's decision tree.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CharpolyRoute {
+    /// `n` is below the active threshold: the dispatcher returns
+    /// [`FieldMatrix::charpoly_cubic`] unconditionally.
+    Cubic,
+    /// `n` clears the size gate: the dispatcher proceeds to the
+    /// field-cardinality gate and, on success, the Las-Vegas
+    /// Keller-Gehrig path.
+    KellerGehrig,
+}
+
+/// Reports the [`FieldMatrix::charpoly`] size-gate arm for a matrix
+/// dimension `n`.
+///
+/// The comparison uses the active `charpoly.keller_gehrig_min_dim()`
+/// profile value (conservative default [`KG_DISPATCH_MIN_N`]).
+#[must_use]
+pub fn charpoly_route(n: usize) -> CharpolyRoute {
+    charpoly_route_resolved(tuning::active().charpoly().keller_gehrig_min_dim(), n)
+}
+
+/// Reports the [`charpoly_route`] arm for `n` against an
+/// already-resolved `keller_gehrig_min_dim`.
+fn charpoly_route_resolved(keller_gehrig_min_dim: usize, n: usize) -> CharpolyRoute {
+    if n < keller_gehrig_min_dim {
+        CharpolyRoute::Cubic
+    } else {
+        CharpolyRoute::KellerGehrig
+    }
+}
 
 /// Maximum number of Las-Vegas retries
 /// [`FieldMatrix::charpoly_keller_gehrig`] performs before returning
@@ -1092,7 +1153,8 @@ fn charpoly_dispatch<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
     // unconditionally (the sub-cubic path's `log n` factor and Las-Vegas
     // bookkeeping aren't amortised at small `n`, and the probability
     // gate `q > 2 n²` doesn't hold for low-cardinality fields).
-    if n < KG_DISPATCH_MIN_N {
+    let keller_gehrig_min_dim = tuning::active().charpoly().keller_gehrig_min_dim();
+    if charpoly_route_resolved(keller_gehrig_min_dim, n) == CharpolyRoute::Cubic {
         return a.charpoly_cubic();
     }
     let log_q = match F::cardinality_log2_hint() {
