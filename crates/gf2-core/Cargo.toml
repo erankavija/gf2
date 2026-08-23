@@ -457,6 +457,18 @@ required-features = ["tuning-profile"]
 name = "tuning_profile_gemm_install_above"
 required-features = ["tuning-profile"]
 
+# ── Issue `e2744fcf` (epic `6dc81018`) — Winograd threshold route observation
+# ────────────────────────────────────────────────────────────────────────────
+# One installed profile per binary: the first target moves the threshold below
+# the conservative default, and the second moves it above that boundary.
+[[test]]
+name = "tuning_profile_winograd_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_winograd_install_above"
+required-features = ["tuning-profile"]
+
 [[test]]
 name = "gemm_tiles_baked"
 required-features = ["tuning-profile"]
