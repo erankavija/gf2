@@ -716,3 +716,17 @@ section that meets it.
 | REQ-02 | §2.2, §2.3, §4 | The mechanism rule assigns each field a compile-time bake or a resolved read at a non-recursive entry; four structural obligations keep the read out of loops and recursion; the per-family table names the route reporter and the test obligation. |
 | REQ-03 | §5 | A three-condition sweepability test splits the twenty-eight fields into eleven sweepable and seventeen recorded under the standing omission rule, and the behaviour-preservation argument rests on defaults naming the source constants, nothing installed by default, and a per-mechanism cost bound. |
 | REQ-04 | §8 | Fifteen worker-sized tasks with one-line scopes, dependencies, and gates, ordered into a schema step, a bake step, ten independent family cutovers, and the measurement work. |
+
+## Amendment A1 (2026-08-23, DEC-B12, appended by issue aec4b6c8's cutover)
+
+§4's `dense_inverse` row names one reporter, `invert_route(n)` at
+`alg/gauss.rs`, for a family whose §3.4 subsection lists two read sites in
+two modules over two unrelated types: `alg::gauss::invert` (`BitMatrix`,
+gated by `m4ri_min_dim`) and `field::inverse::FieldMatrix::inv` (generic
+`FieldMatrix<F>`, gated by `blocked_min_dim`). Per §2.3's structural
+obligation — each dispatcher calls a reporter at its own entry — the
+cutover carries a second reporter, `inv_route`/`InvRoute`, in
+`field/inverse.rs` beside the existing `invert_route` in `alg/gauss.rs`.
+Both dispatchers report; the §4 test obligation (installed-profile route
+files on both sides of each of the two thresholds) is unchanged. Ratified
+as lead decision DEC-B12.
