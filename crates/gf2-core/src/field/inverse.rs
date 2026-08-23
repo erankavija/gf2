@@ -61,9 +61,11 @@
 //! Moore–Penrose pseudo-inverse manually.
 
 use crate::field::matrix::FieldMatrix;
+#[cfg(test)]
+use crate::field::triangular::TRSM_BLOCKED_PANEL_SIZE;
 use crate::field::triangular::{
-    trsm_lower, trsm_lower_blocked, trsm_upper, trsm_upper_blocked, trtri_lower, trtri_upper,
-    trtrm, TRSM_BLOCKED_PANEL_SIZE,
+    trsm_lower, trsm_lower_blocked, trsm_route_resolved, trsm_upper, trsm_upper_blocked,
+    trtri_lower, trtri_upper, trtrm, TrsmRoute,
 };
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
@@ -442,31 +444,31 @@ impl<F: FiniteField> FieldMatrix<F> {
         // to b. Permutation::apply(&b) computes (P · B)[i] = B[perm[i]],
         // so we use perm.inverse().apply(b) for Pᵀ · B.
         let mut y = perm.inverse().apply(b);
+        let triangular = tuning::active().triangular();
+        let trsm_blocked_min_dim = triangular.trsm_blocked_min_dim();
+        let trsm_panel_rows = triangular.trsm_panel_rows();
 
         // Solve L · Y' = Y in place. L is n×n unit lower-triangular at
         // full rank. Result overwrites y.
         // Dispatch to the blocked variant when the field exposes the AVX2
         // whole-GEMM fast path and the matrix is large enough to benefit
         // (the first blocking update lands at panel k=1, GEMM shape
-        // bs × bs × k, which hits the threshold at bs = 64 even for k=1).
-        if F::has_simd_gemm_classical() && n >= TRSM_BLOCKED_PANEL_SIZE {
-            trsm_lower_blocked(
-                l.submat(.., ..),
-                y.submat_mut(.., ..),
-                TRSM_BLOCKED_PANEL_SIZE,
-            );
+        // bs × bs × k, which hits the fast path at the conservative panel
+        // width even for k=1).
+        if F::has_simd_gemm_classical()
+            && trsm_route_resolved(trsm_blocked_min_dim, n) == TrsmRoute::Blocked
+        {
+            trsm_lower_blocked(l.submat(.., ..), y.submat_mut(.., ..), trsm_panel_rows);
         } else {
             trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
         }
 
         // Solve E · X = Y' in place. E is n×n upper-triangular at full
         // rank (pivots on the leading diagonal because rank == n).
-        if F::has_simd_gemm_classical() && n >= TRSM_BLOCKED_PANEL_SIZE {
-            trsm_upper_blocked(
-                e.submat(.., ..),
-                y.submat_mut(.., ..),
-                TRSM_BLOCKED_PANEL_SIZE,
-            );
+        if F::has_simd_gemm_classical()
+            && trsm_route_resolved(trsm_blocked_min_dim, n) == TrsmRoute::Blocked
+        {
+            trsm_upper_blocked(e.submat(.., ..), y.submat_mut(.., ..), trsm_panel_rows);
         } else {
             trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
         }
