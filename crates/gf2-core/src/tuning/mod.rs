@@ -363,9 +363,13 @@ pub enum ProfileField {
     PanelBaseMaxCols,
     /// The maximum width for the scalar PLE base case.
     ScalarBaseMaxCols,
-    /// The maximum byte-lane PLE panel width.
+    /// The maximum byte-lane PLE panel width: the conservative default is
+    /// the tuned L1d blocking factor, and the admissible maximum is the
+    /// kernel's asserted structural scratch bound.
     PanelByteLaneMaxCols,
-    /// The maximum u16-lane PLE panel width.
+    /// The maximum u16-lane PLE panel width: the conservative default is the
+    /// tuned L1d blocking factor, and the admissible maximum is the kernel's
+    /// asserted structural scratch bound.
     PanelU16LaneMaxCols,
     /// The blocked PLE back-substitution dimension threshold.
     BlockedBackSubMinDim,
@@ -988,7 +992,7 @@ impl PleSelectors {
             ));
         }
         if panel_byte_lane_max_cols == 0
-            || panel_byte_lane_max_cols > gf2_kernels_simd::fp_small_panel::KC
+            || panel_byte_lane_max_cols > gf2_kernels_simd::fp_small_ple::PANEL_SCRATCH_COLS
         {
             return Err(out_of_range(
                 ProfileFamily::Ple,
@@ -997,7 +1001,7 @@ impl PleSelectors {
             ));
         }
         if panel_u16_lane_max_cols == 0
-            || panel_u16_lane_max_cols > gf2_kernels_simd::fp_medium_ple::KC_U16
+            || panel_u16_lane_max_cols > gf2_kernels_simd::fp_medium_ple::PANEL_SCRATCH_COLS
         {
             return Err(out_of_range(
                 ProfileFamily::Ple,
@@ -1030,11 +1034,21 @@ impl PleSelectors {
     }
 
     /// Returns the maximum width for the byte-lane PLE panel kernel.
+    ///
+    /// The conservative default is the tuned L1d blocking factor
+    /// [`gf2_kernels_simd::fp_small_panel::KC`]. The admissible maximum is
+    /// the kernel's structural scratch bound
+    /// [`gf2_kernels_simd::fp_small_ple::PANEL_SCRATCH_COLS`].
     pub fn panel_byte_lane_max_cols(&self) -> usize {
         self.panel_byte_lane_max_cols
     }
 
     /// Returns the maximum width for the u16-lane PLE panel kernel.
+    ///
+    /// The conservative default is the tuned L1d blocking factor
+    /// [`gf2_kernels_simd::fp_medium_ple::KC_U16`]. The admissible maximum is
+    /// the kernel's structural scratch bound
+    /// [`gf2_kernels_simd::fp_medium_ple::PANEL_SCRATCH_COLS`].
     pub fn panel_u16_lane_max_cols(&self) -> usize {
         self.panel_u16_lane_max_cols
     }
@@ -3067,8 +3081,8 @@ mod tests {
                 "triangular":{{"base_case_max_dim":1}},
                 "ple":{{"scalar_base_max_cols":1,"panel_byte_lane_max_cols":{},"panel_u16_lane_max_cols":{}}}
             }}"#,
-            gf2_kernels_simd::fp_small_panel::KC,
-            gf2_kernels_simd::fp_medium_ple::KC_U16,
+            gf2_kernels_simd::fp_small_ple::PANEL_SCRATCH_COLS,
+            gf2_kernels_simd::fp_medium_ple::PANEL_SCRATCH_COLS,
         )))
         .unwrap();
         assert_eq!(
@@ -3080,11 +3094,11 @@ mod tests {
         assert_eq!(profile.ple().scalar_base_max_cols(), 1);
         assert_eq!(
             profile.ple().panel_byte_lane_max_cols(),
-            gf2_kernels_simd::fp_small_panel::KC
+            gf2_kernels_simd::fp_small_ple::PANEL_SCRATCH_COLS
         );
         assert_eq!(
             profile.ple().panel_u16_lane_max_cols(),
-            gf2_kernels_simd::fp_medium_ple::KC_U16
+            gf2_kernels_simd::fp_medium_ple::PANEL_SCRATCH_COLS
         );
     }
 
@@ -3130,11 +3144,11 @@ mod tests {
         for (field, value) in [
             (
                 ProfileField::PanelByteLaneMaxCols,
-                gf2_kernels_simd::fp_small_panel::KC + 1,
+                gf2_kernels_simd::fp_small_ple::PANEL_SCRATCH_COLS + 1,
             ),
             (
                 ProfileField::PanelU16LaneMaxCols,
-                gf2_kernels_simd::fp_medium_ple::KC_U16 + 1,
+                gf2_kernels_simd::fp_medium_ple::PANEL_SCRATCH_COLS + 1,
             ),
         ] {
             let name = field.to_string();
@@ -3148,5 +3162,26 @@ mod tests {
                 }
             );
         }
+
+        for (field, value) in [
+            (
+                ProfileField::PanelByteLaneMaxCols,
+                gf2_kernels_simd::fp_small_ple::PANEL_SCRATCH_COLS,
+            ),
+            (
+                ProfileField::PanelU16LaneMaxCols,
+                gf2_kernels_simd::fp_medium_ple::PANEL_SCRATCH_COLS,
+            ),
+        ] {
+            let name = field.to_string();
+            let text = inherited_document(&format!(r#"{{"ple":{{"{name}":{value}}}}}"#));
+            assert!(TuningProfile::from_json(&text).is_ok());
+        }
+
+        let text = inherited_document(&format!(
+            r#"{{"ple":{{"panel_u16_lane_max_cols":{}}}}}"#,
+            gf2_kernels_simd::fp_medium_ple::KC_U16 + 1,
+        ));
+        assert!(TuningProfile::from_json(&text).is_ok());
     }
 }

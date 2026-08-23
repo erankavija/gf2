@@ -37,7 +37,7 @@
 //! 64-bit Montgomery path remains.
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub use crate::x86::fp_medium_ple::KC_U16;
+pub use crate::x86::fp_medium_ple::{KC_U16, PANEL_SCRATCH_COLS};
 
 /// Whole panelized PLE base-case signature (u16-lane variant).
 ///

@@ -60,6 +60,12 @@ use core::arch::x86_64::*;
 /// Inner SIMD lane width (8 × u32 lanes per ymm).
 const LANE_U32: usize = 8;
 
+/// Structural scratch bound for the byte-lane PLE kernel, in columns.
+///
+/// This bound is distinct from the tuned L1d blocking factor
+/// [`crate::x86::fp_small_panel::KC`].
+pub const PANEL_SCRATCH_COLS: usize = 256;
+
 /// Panelized PLE base-case elimination on canonical-byte storage.
 ///
 /// See module docs for algorithm. Performs in-place rank-revealing
@@ -241,9 +247,10 @@ unsafe fn fused_scale_and_schur(
 
     // Snapshot the pivot row's tail into a stack buffer so the inner
     // loop can broadcast contiguous lanes without aliasing the
-    // mutable `window` slice. The tail length is at most `win <= 256`.
-    let mut pivot_buf = [0u8; 256];
-    debug_assert!(tail_len <= 256);
+    // mutable `window` slice. The tail length is at most
+    // `PANEL_SCRATCH_COLS`.
+    let mut pivot_buf = [0u8; PANEL_SCRATCH_COLS];
+    debug_assert!(tail_len <= PANEL_SCRATCH_COLS);
     if tail_len > 0 {
         let pivot_base = rank * win + tail_start;
         for c in 0..tail_len {
