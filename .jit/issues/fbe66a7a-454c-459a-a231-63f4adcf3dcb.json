@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the TRSM blocked threshold and panel width (the design's split of one source constant) to runtime resolved reads.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §3.5, D3, and the triangular row of §4.\n\n## Success Criteria\n\n- [hard] REQ-01: trsm_blocked_min_dim and trsm_panel_rows are runtime resolved reads at both guards, satisfying design §2.3, both defaulting to the one source constant.\n- [hard] REQ-02: trsm_route reporter called by the dispatcher, boundary route files, and a witness that the panel width reaches the blocked callees pass.\n- [hard] REQ-03: Rustdoc names the profile fields; existing tests pass unchanged.",
   "documents": [],
+  "done_at": "2026-08-23T11:43:27.829838744Z",
   "first_ready_at": "2026-08-22T21:26:34.385658574Z",
   "gates_required": [
     "cargo-ci",
@@ -17,18 +18,18 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-23T11:30:58.674166553Z",
+      "updated_at": "2026-08-23T11:37:08.160398532Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-23T11:34:49.611243374Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T11:40:39.596728136Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:26:37.633345010Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-23T11:43:14.785559456Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "fbe66a7a-454c-459a-a231-63f4adcf3dcb",
@@ -39,7 +40,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cut the triangular-solve selectors over to the tuning profile",
-  "updated_at": "2026-08-23T11:34:49.611243374Z"
+  "updated_at": "2026-08-23T11:43:27.829838744Z"
 }
