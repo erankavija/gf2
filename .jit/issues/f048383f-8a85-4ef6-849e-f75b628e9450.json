@@ -19,12 +19,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-23T14:45:04.590336540Z",
+      "updated_at": "2026-08-23T15:17:39.669306978Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-23T14:48:57.416100989Z",
+      "updated_at": "2026-08-23T15:21:23.730490615Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -43,5 +43,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the tuning schema with the seam fields",
-  "updated_at": "2026-08-23T14:48:57.416100989Z"
+  "updated_at": "2026-08-23T15:21:23.730490615Z"
 }
