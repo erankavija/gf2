@@ -401,6 +401,14 @@ name = "backend_selection_baked"
 required-features = ["simd", "tuning-profile"]
 
 [[test]]
+name = "tuning_profile_matrix_install"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "matrix_selection_baked"
+required-features = ["simd", "tuning-profile"]
+
+[[test]]
 name = "tuning_profile_committed"
 required-features = ["tuning-profile"]
 
