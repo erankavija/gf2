@@ -28,10 +28,10 @@ const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN
 
 Accelerator options:
   --accelerator-launch-cap-ms MS     target cap per launch (default: 500 ms)
-  --accelerator-cost-table PATH      required for accelerator cells; CSV of measured
-                                     per-matrix costs with header q,n,per_matrix_us,
-                                     one row per accelerator cell, each value taken
-                                     from that cell's committed measurement receipt
+  --accelerator-cost-table PATH      required when the selected field has accelerator
+                                     cells; CSV of measured per-matrix costs with header
+                                     q,n,per_matrix_us, one row per accelerator cell,
+                                     each value taken from that cell's committed receipt
 ";
 
 /// Reads measured per-matrix accelerator costs from a CSV.
@@ -150,7 +150,7 @@ fn main() -> ExitCode {
     if manifest
         .cells
         .iter()
-        .any(|cell| cell.backend == Backend::Accelerator)
+        .any(|cell| cell.q == field && cell.backend == Backend::Accelerator)
         && accelerator_cost_table.is_none()
     {
         return usage(
