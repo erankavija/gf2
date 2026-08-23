@@ -360,6 +360,14 @@ required-features = ["tuning-profile"]
 name = "tuning_profile_polynomial_install"
 required-features = ["tuning-profile"]
 
+# ── Issue `fa92608b` (epic `6dc81018`) — soa_batch follow-on selector
+# cutover. Needs `parallel` in addition to `tuning-profile`: the
+# `compute::field` module the route reporter lives in is itself gated on the
+# `parallel` feature.
+[[test]]
+name = "tuning_profile_soa_batch_install"
+required-features = ["parallel", "tuning-profile"]
+
 [[test]]
 name = "backend_selection_profile"
 required-features = ["simd", "tuning-profile"]

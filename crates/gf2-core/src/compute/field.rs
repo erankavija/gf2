@@ -13,15 +13,49 @@
 
 use crate::field::ConstField;
 use crate::gfpn::{BatchExtField, ExtConfig, SimdKaratsubaHook};
+use crate::tuning;
 
 pub use super::{SOA_PARALLEL_CHUNK_LEN, SOA_PARALLEL_MIN_LEN};
 
+/// The selected arm of the [`should_parallelize_soa_batch`] length dispatch.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SoaParallelRoute {
+    /// Run the batch on the calling thread.
+    Sequential,
+    /// Fan the batch out across the rayon pool.
+    Parallel,
+}
+
+/// Reports the length-based arm of [`should_parallelize_soa_batch`] for a
+/// SoA batch of `len` elements.
+///
+/// The comparison uses the active `soa_batch.parallel_min_len()` profile
+/// value. It does not account for rayon thread availability;
+/// [`should_parallelize_soa_batch`] applies that separately.
+#[must_use]
+pub fn soa_parallel_route(len: usize) -> SoaParallelRoute {
+    soa_parallel_route_resolved(tuning::active().soa_batch().parallel_min_len(), len)
+}
+
+/// Reports the [`soa_parallel_route`] arm against an already-resolved
+/// `parallel_min_len`.
+fn soa_parallel_route_resolved(parallel_min_len: usize, len: usize) -> SoaParallelRoute {
+    if len >= parallel_min_len {
+        SoaParallelRoute::Parallel
+    } else {
+        SoaParallelRoute::Sequential
+    }
+}
+
 /// Returns whether a SoA batch of `len` elements should use rayon.
+///
+/// Uses the active `soa_batch.parallel_min_len()` profile value via
+/// [`soa_parallel_route`].
 #[inline]
 pub(crate) fn should_parallelize_soa_batch(len: usize) -> bool {
     #[cfg(feature = "parallel")]
     {
-        len >= SOA_PARALLEL_MIN_LEN && rayon::current_num_threads() > 1
+        soa_parallel_route(len) == SoaParallelRoute::Parallel && rayon::current_num_threads() > 1
     }
 
     #[cfg(not(feature = "parallel"))]
@@ -35,7 +69,8 @@ pub(crate) fn should_parallelize_soa_batch(len: usize) -> bool {
 ///
 /// This is bit-exact with [`BatchExtField::batch_mul_quadratic`]; it only
 /// changes the schedule by assigning contiguous coefficient-lane chunks to
-/// rayon workers. Complexity is `O(len)`.
+/// rayon workers. The chunk length is the active `soa_batch.parallel_chunk_len()`
+/// profile value, resolved once for this call. Complexity is `O(len)`.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_mul_quadratic_parallel<F, C>(
     lhs: &BatchExtField<F, 2>,
@@ -53,16 +88,17 @@ where
         rhs.len()
     );
 
+    let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
     let len = lhs.len();
     let mut c0 = vec![F::zero(); len];
     let mut c1 = vec![F::zero(); len];
 
     use rayon::prelude::*;
-    c0.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN)
-        .zip(c1.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN))
+    c0.par_chunks_mut(chunk_len)
+        .zip(c1.par_chunks_mut(chunk_len))
         .enumerate()
         .for_each(|(chunk_idx, (out_c0, out_c1))| {
-            let start = chunk_idx * SOA_PARALLEL_CHUNK_LEN;
+            let start = chunk_idx * chunk_len;
             let end = start + out_c0.len();
             quadratic_chunk::<F, C>(
                 &lhs.coeff(0)[start..end],
@@ -78,22 +114,26 @@ where
 }
 
 /// Parallel Karatsuba squaring for quadratic SoA batches.
+///
+/// The chunk length is the active `soa_batch.parallel_chunk_len()` profile
+/// value, resolved once for this call.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_square_quadratic_parallel<F, C>(xs: &BatchExtField<F, 2>) -> BatchExtField<F, 2>
 where
     F: ConstField + SimdKaratsubaHook + Send + Sync,
     C: ExtConfig<BaseField = F>,
 {
+    let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
     let len = xs.len();
     let mut c0 = vec![F::zero(); len];
     let mut c1 = vec![F::zero(); len];
 
     use rayon::prelude::*;
-    c0.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN)
-        .zip(c1.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN))
+    c0.par_chunks_mut(chunk_len)
+        .zip(c1.par_chunks_mut(chunk_len))
         .enumerate()
         .for_each(|(chunk_idx, (out_c0, out_c1))| {
-            let start = chunk_idx * SOA_PARALLEL_CHUNK_LEN;
+            let start = chunk_idx * chunk_len;
             let end = start + out_c0.len();
             quadratic_chunk::<F, C>(
                 &xs.coeff(0)[start..end],
@@ -137,7 +177,9 @@ where
 ///
 /// Each rayon task receives contiguous SoA slices and then dispatches through
 /// the same fused SIMD hook (or scalar straight-line fallback) as the
-/// single-thread implementation. Complexity is `O(len)`.
+/// single-thread implementation. The chunk length is the active
+/// `soa_batch.parallel_chunk_len()` profile value, resolved once for this
+/// call. Complexity is `O(len)`.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_mul_cubic_parallel<F, C>(
     lhs: &BatchExtField<F, 3>,
@@ -155,18 +197,19 @@ where
         rhs.len()
     );
 
+    let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
     let len = lhs.len();
     let mut c0 = vec![F::zero(); len];
     let mut c1 = vec![F::zero(); len];
     let mut c2 = vec![F::zero(); len];
 
     use rayon::prelude::*;
-    c0.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN)
-        .zip(c1.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN))
-        .zip(c2.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN))
+    c0.par_chunks_mut(chunk_len)
+        .zip(c1.par_chunks_mut(chunk_len))
+        .zip(c2.par_chunks_mut(chunk_len))
         .enumerate()
         .for_each(|(chunk_idx, ((out_c0, out_c1), out_c2))| {
-            let start = chunk_idx * SOA_PARALLEL_CHUNK_LEN;
+            let start = chunk_idx * chunk_len;
             let end = start + out_c0.len();
             cubic_chunk::<F, C>(
                 &lhs.coeff(0)[start..end],
@@ -185,24 +228,28 @@ where
 }
 
 /// Parallel Karatsuba-3 squaring for cubic SoA batches.
+///
+/// The chunk length is the active `soa_batch.parallel_chunk_len()` profile
+/// value, resolved once for this call.
 #[cfg(feature = "parallel")]
 pub(crate) fn batch_square_cubic_parallel<F, C>(xs: &BatchExtField<F, 3>) -> BatchExtField<F, 3>
 where
     F: ConstField + SimdKaratsubaHook + Send + Sync,
     C: ExtConfig<BaseField = F>,
 {
+    let chunk_len = tuning::active().soa_batch().parallel_chunk_len();
     let len = xs.len();
     let mut c0 = vec![F::zero(); len];
     let mut c1 = vec![F::zero(); len];
     let mut c2 = vec![F::zero(); len];
 
     use rayon::prelude::*;
-    c0.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN)
-        .zip(c1.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN))
-        .zip(c2.par_chunks_mut(SOA_PARALLEL_CHUNK_LEN))
+    c0.par_chunks_mut(chunk_len)
+        .zip(c1.par_chunks_mut(chunk_len))
+        .zip(c2.par_chunks_mut(chunk_len))
         .enumerate()
         .for_each(|(chunk_idx, ((out_c0, out_c1), out_c2))| {
-            let start = chunk_idx * SOA_PARALLEL_CHUNK_LEN;
+            let start = chunk_idx * chunk_len;
             let end = start + out_c0.len();
             cubic_chunk::<F, C>(
                 &xs.coeff(0)[start..end],
