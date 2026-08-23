@@ -846,7 +846,9 @@ fn ple_in_place_window<F: FiniteField>(
     // tail); even with AVX2 byte lanes its throughput at large win is
     // roughly 8 Gop/s — far below fflas-ffpack's ~30 Gop/s sgemm-cascade
     // PLUQ. To close the gap the driver dispatches the kernel on a narrow
-    // leftmost sub-panel (`widths.panel_base_max_cols` columns wide), then
+    // leftmost sub-panel (`widths.panel_base_max_cols` columns wide, capped
+    // at the resolved per-lane ceiling when an installed profile sets it
+    // lower), then
     // updates the wide right tail via the existing `trsm_lower` +
     // `gemm_axpy_into_view` path. The wide gemm inherits the small-prime
     // whole-GEMM fast path from issue 40195c09 (lift), which hits the
@@ -993,7 +995,9 @@ fn ple_in_place_window<F: FiniteField>(
 /// * `pivot_cols` — absolute pivot-column accumulator. New pivots are
 ///   appended in left-to-right order.
 /// * `widths` — the resolved PLE column widths. Each sub-panel is
-///   `widths.panel_base_max_cols` columns wide, and the scalar base width rides
+///   at most `widths.panel_base_max_cols` columns wide — capped at the
+///   resolved per-lane ceiling when an installed profile sets it lower —
+///   and the scalar base width rides
 ///   along for the fallback driver. The values are resolved by [`ple_in_place`]
 ///   and forwarded through [`ple_in_place_window`], with conservative defaults
 ///   [`PLE_PANEL_RECURSIVE_BASE`] and [`PLE_SCALAR_BASE_MAX_COLS_DEFAULT`].

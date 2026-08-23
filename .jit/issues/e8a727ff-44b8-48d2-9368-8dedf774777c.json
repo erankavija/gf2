@@ -18,18 +18,18 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-23T17:41:04.781859575Z",
+      "updated_at": "2026-08-23T17:53:55.734559599Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-23T17:44:26.475570838Z",
+      "status": "passed",
+      "updated_at": "2026-08-23T17:57:05.336716046Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T22:17:11.602659270Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-23T17:59:04.657865275Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "e8a727ff-44b8-48d2-9368-8dedf774777c",
@@ -42,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut the PLE selectors over to the tuning profile",
-  "updated_at": "2026-08-23T17:44:26.475570838Z"
+  "updated_at": "2026-08-23T17:59:04.657865275Z"
 }
