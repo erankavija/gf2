@@ -536,34 +536,48 @@ pub struct ShardSpec {
     pub stream_index: u64,
 }
 
-/// Backend selected for a campaign cell.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Backend {
-    /// Single-threaded field-specialized implementation.
-    Scalar,
-    /// Matrices distributed across a processor thread pool.
-    BatchParallel,
-    /// One matrix evaluated by an intra-matrix parallel implementation.
-    IntraMatrixParallel,
-    /// Generic finite-field Ryser reference implementation.
-    GenericRyser,
-    /// Accelerator batch implementation selected by the frozen manifest.
-    Accelerator,
+macro_rules! define_campaign_backends {
+    ($( $(#[$doc:meta])* $variant:ident => $token:literal, )+) => {
+        /// Backend selected for a campaign cell.
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+        #[serde(rename_all = "snake_case")]
+        pub enum Backend {
+            $(
+                $(#[$doc])*
+                $variant,
+            )+
+        }
+
+        impl Backend {
+            /// Every campaign backend, in canonical serialized-token order.
+            ///
+            /// This inventory and [`Self::name`] are generated from the same
+            /// variant declaration, so a backend cannot join one without the
+            /// other.
+            pub const ALL: &[Self] = &[$(Self::$variant,)+];
+
+            /// Returns the canonical serialized backend token.
+            #[must_use]
+            pub const fn name(self) -> &'static str {
+                match self {
+                    $(Self::$variant => $token,)+
+                }
+            }
+        }
+    };
 }
 
-impl Backend {
-    /// Returns the canonical serialized backend token.
-    #[must_use]
-    pub const fn name(self) -> &'static str {
-        match self {
-            Self::Scalar => "scalar",
-            Self::BatchParallel => "batch_parallel",
-            Self::IntraMatrixParallel => "intra_matrix_parallel",
-            Self::GenericRyser => "generic_ryser",
-            Self::Accelerator => "accelerator",
-        }
-    }
+define_campaign_backends! {
+    /// Single-threaded field-specialized implementation.
+    Scalar => "scalar",
+    /// Matrices distributed across a processor thread pool.
+    BatchParallel => "batch_parallel",
+    /// One matrix evaluated by an intra-matrix parallel implementation.
+    IntraMatrixParallel => "intra_matrix_parallel",
+    /// Generic finite-field Ryser reference implementation.
+    GenericRyser => "generic_ryser",
+    /// Accelerator batch implementation selected by the frozen manifest.
+    Accelerator => "accelerator",
 }
 
 /// Frozen determinant-companion plan for a cell.
