@@ -1873,6 +1873,31 @@ mod decoder_tests {
     }
 
     #[test]
+    fn test_posterior_llrs_preserved_after_failed_codeword_decode() {
+        let edges = vec![(0, 0), (0, 1), (1, 1), (1, 2)];
+        let code = LdpcCode::from_edges(2, 3, &edges);
+        let mut decoder = LdpcDecoder::new(code.clone());
+        let llrs = vec![Llr::new(10.0), Llr::new(-2.0), Llr::new(1.0)];
+
+        let result = decoder.decode_to_codeword(&llrs, 1);
+
+        assert!(!result.syndrome_check_passed);
+        let posterior = decoder.posterior_llrs().to_vec();
+        assert_eq!(posterior.len(), code.n());
+        assert_eq!(
+            posterior
+                .iter()
+                .map(|llr| llr.hard_decision())
+                .collect::<Vec<_>>(),
+            (0..code.n())
+                .map(|index| result.decoded_bits.get(index))
+                .collect::<Vec<_>>()
+        );
+        assert!(posterior.iter().any(|llr| llr.value() != 0.0));
+        assert_eq!(decoder.posterior_llrs(), posterior);
+    }
+
+    #[test]
     fn test_trivial_decode_no_errors() {
         // Simple repetition code
         let edges = vec![(0, 0), (0, 1), (0, 2)];
