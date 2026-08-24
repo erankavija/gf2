@@ -54,14 +54,15 @@
       "path": "dev/active/b7157be6-osd/plan.md"
     }
   ],
+  "done_at": "2026-08-24T05:51:24.953988663Z",
   "first_ready_at": "2026-08-23T22:06:47.849195622Z",
   "gates_required": [
     "plan-review"
   ],
   "gates_status": {
     "plan-review": {
-      "status": "failed",
-      "updated_at": "2026-08-24T05:42:22.885681926Z",
+      "status": "passed",
+      "updated_at": "2026-08-24T05:50:40.802577371Z",
       "updated_by": "auto:executor"
     }
   },
@@ -75,7 +76,7 @@
     "type:planning"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "planning: Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-24T05:43:48.444746135Z"
+  "updated_at": "2026-08-24T05:51:24.953988663Z"
 }
