@@ -13,7 +13,7 @@
      "title": "Ordered-column elimination transform",
      "classification": "implementation",
      "model": "opus",
-     "status": "pending"
+     "status": "awaiting-report"
     },
     {
      "id": null,
@@ -22,7 +22,7 @@
      "title": "Canonical reliability permutation API",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "review-pending-gates"
     },
     {
      "id": null,
@@ -31,7 +31,7 @@
      "title": "SoftDecisionDecoder trait removal",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "review-pending-gates"
     },
     {
      "id": null,
@@ -58,7 +58,7 @@
      "title": "Published eBCH OSD curve dataset",
      "classification": "research",
      "model": "opus",
-     "status": "pending"
+     "status": "amended-review-pending"
     },
     {
      "id": null,
@@ -67,7 +67,7 @@
      "title": "Reusable OSD campaign protocol",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "pending"
+     "status": "rework"
     }
    ]
   },
@@ -198,7 +198,48 @@
  ],
  "created_during_execution": [],
  "escalations": [],
- "rework_counts": {},
- "surfaced_pitfalls": [],
+ "rework_counts": {
+  "bebe485c": 1
+ },
+ "surfaced_pitfalls": [
+  {
+   "id": "PIT-01",
+   "issue": "5dd3539f",
+   "source": "agent:codex live review",
+   "text": "ordered_column_elimination adds a second unblocked Gauss-Jordan loop beside rref mechanics; lead review must require convergence on one parameterized kernel or a named tracked exception (convention-convergence)."
+  },
+  {
+   "id": "PIT-02",
+   "issue": "bebe485c",
+   "source": "agent:codex live review; caused by lead dispatch pin wording",
+   "text": "osd_campaign publicly re-exports permanent_campaign::schema types, creating a second public path. Review must strip pub use; public signatures reference gf2_sim::permanent_campaign::schema directly; shared-module extraction deferred as tracked follow-up while 679cf170 is in flight."
+  },
+  {
+   "id": "PIT-03",
+   "issue": "bebe485c",
+   "source": "agent:codex live review",
+   "text": "Checkpoint/Receipt persist both completed_cells and cell_results; settled set is fully derivable from terminal OsdCellReceipt entries (validate_checkpoint proves equality). Review requires deriving the set and removing completed_cells unless worker demonstrates a non-derivable semantic distinction (single-source-prose/convention-convergence)."
+  },
+  {
+   "id": "PIT-04",
+   "issue": "a82f2dd9",
+   "text": "Fossorier1995 journal article is closed-access and unobtainable; digitization used the open 1994 PhD dissertation (same author/algorithm/code/channel). Issue REQ-01 names the article explicitly \u2014 criterion unmeetable as written without the article PDF. Escalated."
+  },
+  {
+   "id": "PIT-05",
+   "issue": "a82f2dd9",
+   "text": "Published series metric is BER, not BLER; plan D-01/issue Background premise (BLER vs Eb/N0) fails. Campaign issues (c8322eff, cef1ae5f) must measure BER to compare against the published curves, or the comparison target must be re-approved. Escalated."
+  },
+  {
+   "id": "PIT-06",
+   "issue": "f0d6fb9a",
+   "text": "Plan premise \"source pin determines the primitive polynomial\" fails: no source fixes any polynomial or field ordering. eBCH(128,64) construction identity is a recorded campaign decision (permutation-equivalence makes curves insensitive to it). f0d6fb9a wording must be checked before wave-2 dispatch."
+  },
+  {
+   "id": "PIT-07",
+   "issue": "a82f2dd9",
+   "text": "Dissertation needs a citation registry key (external-claims-cited); Fossorier1995 remains the article key. Table-vs-figure contradiction at order-2/4.56 dB preserved unreconciled in CSV per falsification-preserved."
+  }
+ ],
  "started_at": "2026-08-24T19:48:07.381765+00:00"
 }
