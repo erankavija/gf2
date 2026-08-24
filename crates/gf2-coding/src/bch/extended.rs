@@ -26,6 +26,7 @@
 //! | eBCH(16,7) | BCH(15,7) | 2 | 6 |
 //! | eBCH(32,26) | BCH(31,26) | 1 | 4 |
 //! | eBCH(64,57) | BCH(63,57) | 1 | 4 |
+//! | eBCH(128,64) | BCH(127,64) | 10 | 22 |
 //!
 //! # Examples
 //!
@@ -345,6 +346,43 @@ impl ExtendedBchCode {
     pub fn ebch_64_57() -> Self {
         let field = Gf2mField::new(6, 0b1000011).with_tables();
         let base = BchCode::new(63, 57, 1, field);
+        Self::from_bch(&base)
+    }
+
+    /// Creates the reference eBCH(128,64,22) code from BCH(127,64,10).
+    ///
+    /// Fossorier's 1994 dissertation, Figure 4.14 and Tables 4.7--4.9,
+    /// identifies the published code by its `(128,64,22)` parameters and a
+    /// systematic convention, but does not specify a `GF(2^7)` representation.
+    /// Campaign decision D-21 therefore chooses gf2-core's standard verified
+    /// primitive polynomial `x^7 + x + 1` (`0x83`). The canonical generator
+    /// and parity-check matrices, serialization convention, and decision
+    /// provenance are recorded in
+    /// `tests/data/ebch_128_64_reference.json`.
+    ///
+    /// The returned generator uses systematic `[message | parity]` form. Its
+    /// final codeword coordinate is the overall extension bit, so every
+    /// encoded codeword has even weight.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::traits::BlockEncoder;
+    /// use gf2_core::BitVec;
+    ///
+    /// let code = ExtendedBchCode::ebch_128_64();
+    /// let mut message = BitVec::zeros(code.k());
+    /// message.set(63, true);
+    /// let codeword = code.encode(&message);
+    ///
+    /// assert_eq!((code.n(), code.k()), (128, 64));
+    /// assert_eq!(BitVec::from_bitslice(codeword.bit_slice(..code.k())), message);
+    /// assert_eq!(codeword.count_ones() % 2, 0);
+    /// ```
+    pub fn ebch_128_64() -> Self {
+        let field = Gf2mField::new(7, 0b10000011).with_tables();
+        let base = BchCode::new(127, 64, 10, field);
         Self::from_bch(&base)
     }
 
