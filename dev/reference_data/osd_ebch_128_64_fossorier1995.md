@@ -14,8 +14,8 @@ published control described under
 [Order-1 control status](#order-1-control-status).
 
 **The published metric is bit error rate, not block error rate.** The epic's
-reproduction target is stated as BLER; the source publishes BER, and this
-dataset stores BER unconverted. Read
+reproduction comparison metric is BER (owner decision D-21 in the epic plan),
+matching what the source publishes; this dataset stores BER unconverted. Read
 [Channel, modulation, metric, and abscissa](#channel-modulation-metric-and-abscissa)
 before comparing anything against these values.
 
@@ -33,9 +33,10 @@ IEEE Xplore article-PDF endpoints answer with authentication redirects. No open
 copy was located. Its figure numbering, page numbering, and series legends
 therefore remain unknown, and this document asserts none.
 
-The digitized values come from the author's antecedent dissertation, which is
-open access and reports the same algorithm, code, channel, and reprocessing
-orders:
+The digitized values come from the author's antecedent dissertation
+`@/citation/Fossorier1994`, the authoritative pinned source (owner decision
+D-21), which is open access and reports the same algorithm, code, channel, and
+reprocessing orders:
 
 | Field | Value |
 | --- | --- |
@@ -55,9 +56,8 @@ carries an uncoded-BPSK reference, a soft-decision union bound, and theoretical
 order-$l$ curves. Tables 4.7–4.9 are captioned "Order-$l$ simulation results
 for (128,64,22) extended BCH code (\*: union bound)".
 
-This dissertation resolves in no key of the citation registry. Adding one is
-outside this artifact's scope and is recorded under
-[Gaps](#gaps-and-contradictions).
+The dissertation resolves as `@/citation/Fossorier1994` in the citation
+registry.
 
 ## Code construction identity
 
@@ -303,11 +303,7 @@ Constraints on how that series may be used:
   1994 dissertation instead and asserts nothing about the article's internal
   numbering. Whether the article reproduces Figure 4.14 and Tables 4.7–4.9
   unchanged is unknown.
-- **Registry gap.** The 1994 dissertation supplies every number in the CSV and
-  resolves in no citation-registry key. `@/inv/external-claims-cited` is
-  therefore not satisfied by this artifact alone; a registry entry for the
-  dissertation is required, and adding it is outside this artifact's scope.
-- **Metric mismatch with the reproduction target.** The target is BLER; the
+- **Metric note.** The reproduction comparison metric is BER (D-21); the
   published series are BER. No conversion is applied.
 - **Table-versus-figure contradiction at 4.56 dB, order 2.** Table 4.7 prints
   $P_e = 10^{-5.7}$; the corresponding marker in Figure 4.14 reads
