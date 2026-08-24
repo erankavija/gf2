@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "8d650253-6afe-4da5-b41b-e713e92c12a6"
+  ],
+  "description": "Provide a reusable `gf2-sim` library surface for deterministic OSD campaign execution and receipted statistical evidence.\n\n## Background\n\nCampaign protocol belongs in the library layer so executables remain thin consumers. The surface defines only OSD-specific cell payload, receipt fields, and orchestration: persistence composes the canonical `gf2_sim::checkpoint` writer and reader, confidence intervals come from the shared `gf2-stats` interval API with a named method and level, and provenance reuses the campaign schema's existing semantic types or extracts them to a shared module.\n\n## Success Criteria\n\n- [hard] REQ-01: Defines a reusable campaign protocol over explicit cells with deterministic seed derivation from campaign seed plus stable cell identity.\n- [hard] REQ-02: Defines versioned checkpoint and receipt schemas carrying completed-cell identity, samples, errors, BLER, named binomial confidence intervals, OSD work counters, and termination state.\n- [hard] REQ-03: Persists and recovers cells through `CheckpointPayload`, `CheckpointWriter`, and `CheckpointReader` rather than a parallel persistence mechanism.\n- [hard] REQ-04: Computes intervals through the shared `gf2-stats` interval API, recording method and level in the receipt.\n- [hard] REQ-05: Reuses the campaign schema's existing provenance semantic types for runtime-observed git revision, toolchain, hardware, configuration, and measurement behavioral identity; any relocation to a shared module happens in the same change with no duplicate definitions.\n- [hard] REQ-06: Resumes without repeating completed cells and preserves interrupted, censored, exhausted, or contradictory cell results.\n- [hard] REQ-07: Provides the reproduction comparison predicate accepting a published value $p$ exactly when $p \\in [L-\\delta, U+\\delta]$, where $[L, U]$ is the receipt interval at its recorded method and level and $\\delta$ the recorded digitization precision, with equality and rejection fixtures.\n- [hard] REQ-08: Covers deterministic seeding, schema round trips, checkpoint recovery, and resume behavior through library tests.",
+  "documents": [],
+  "first_ready_at": "2026-08-24T05:52:49.650437955Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "bebe485c-82c8-49a5-aea8-20b44ad4fb3a",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-sim",
+    "satisfies:REQ-02",
+    "cites:Fossorier1995"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Reusable OSD campaign protocol",
+  "updated_at": "2026-08-24T05:54:55.746823781Z"
+}

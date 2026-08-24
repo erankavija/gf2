@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "583ec31c-dc85-4751-8531-687ce6e7fd7d",
+    "835e15fb-a402-44b8-9928-98b10776782a"
+  ],
+  "description": "Expose BP-first decoding with syndrome-domain OSD fallback through a mutable inherent API and a composition-specific result.\n\n## Background\n\nBP mutates `LdpcDecoder` state through the `IterativeSoftDecoder` convention. When BP ends with a failed syndrome, the composition passes that hard word plus its posterior LLRs to magnitude-cost syndrome correction; it does not route BP through the immutable hard-decision-only `SoftDecoder` implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Provides a mutable decode method consistent with `IterativeSoftDecoder` lifecycle and no immutable BP decoding promise.\n- [hard] REQ-02: Returns the BP hard word directly on syndrome success and invokes syndrome correction only after BP syndrome failure.\n- [hard] REQ-03: Supplies the failed hard word plus posterior LLRs to correction and returns a zero-syndrome corrected word when fallback succeeds.\n- [hard] REQ-04: Returns an inherent result carrying deciding stage, BP iterations, OSD work counters, final syndrome status, and termination reason.\n- [hard] REQ-05: Defines pre-decode, repeated-decode, failure, and `reset` behavior for BP beliefs plus composition results.\n- [hard] REQ-06: Covers BP success, BP failure with OSD success, exhausted OSD, inconsistent syndrome, and reset on a bounded LDPC fixture.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "d76ffd12-2528-4e9f-b871-cc807ac2436d",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-coding",
+    "satisfies:REQ-03",
+    "cites:Roffe2020"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Mutable BP fallback composition",
+  "updated_at": "2026-08-24T05:52:49.650437955Z"
+}

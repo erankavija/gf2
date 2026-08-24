@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "b3cab18e-0ce0-427c-9e11-048a5578ec1a"
+  ],
+  "description": "Apply configurable discard thresholds to segmented OSD search under the implementation-produced complexity policy.\n\n## Background\n\nThresholds are optional normal-priority work. They may skip candidates only through the documented segment metric and must leave baseline exhaustive search unchanged when disabled.\n\n## Success Criteria\n\n- [hard] REQ-01: Applies documented threshold comparisons at deterministic segment boundaries.\n- [hard] REQ-02: Reports discarded-pattern, tested-candidate, elimination, and termination counters without counting a discarded pattern as tested.\n- [hard] REQ-03: Preserves exhaustive baseline results when thresholds are disabled.\n- [hard] REQ-04: Covers threshold equality, no-discard, full-discard, cap, and cancellation cases in engine-local tests.\n- [hard] REQ-05: Documents that thresholded results are policy-bounded approximations rather than exhaustive order-$m$ search.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "5194f470-1703-4564-8057-37fc4efb39b2",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-coding",
+    "satisfies:REQ-04",
+    "cites:Yue2022"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "OSD discard thresholds",
+  "updated_at": "2026-08-24T05:52:49.650437955Z"
+}

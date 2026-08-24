@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "8d650253-6afe-4da5-b41b-e713e92c12a6"
+  ],
+  "description": "Expose final BP beliefs through a read-only public `LdpcDecoder` API suitable for mutable post-processing workflows.\n\n## Background\n\n`LdpcDecoder` computes posterior `Llr` values that drive its hard word, but the belief vector is private. The accessor exposes state without providing mutable access to decoder internals.\n\n## Success Criteria\n\n- [hard] REQ-01: Returns one posterior `Llr` per variable after `decode_to_codeword` and mutable iterative decoding.\n- [hard] REQ-02: Returns values whose hard decisions match the decoder's latest failed or successful hard word exactly.\n- [hard] REQ-03: Documents and tests the pre-decode state plus the state after `reset`.\n- [hard] REQ-04: Preserves posterior values after syndrome failure for immediate post-processing.\n- [hard] REQ-05: Exposes no mutable belief access and preserves existing BP convergence behavior.",
+  "documents": [],
+  "first_ready_at": "2026-08-24T05:52:49.650437955Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "835e15fb-a402-44b8-9928-98b10776782a",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-coding",
+    "satisfies:REQ-03",
+    "cites:Roffe2020"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "LDPC posterior LLR access",
+  "updated_at": "2026-08-24T05:54:39.698297860Z"
+}

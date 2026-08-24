@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "377a7a62-ae1f-486f-bac9-2106095d7cb0"
+  ],
+  "description": "Move ORBGRAND reliability ordering onto the canonical magnitude permutation while preserving decoder behavior.\n\n## Background\n\nORBGRAND currently owns a private ascending `Llr`-magnitude index sort. The shared total order removes that duplicate without changing logistic-weight pattern semantics.\n\n## Success Criteria\n\n- [hard] REQ-01: Obtains ascending reliability indices through the canonical `Llr` convenience wrapper.\n- [hard] REQ-02: Preserves hard-decision, query-order, candidate, and stopping behavior for finite inputs.\n- [hard] REQ-03: Covers tied magnitudes, signed zero, and infinite LLRs through ORBGRAND regression tests.\n- [hard] REQ-04: Contains no private reliability comparator duplicating the canonical helper.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "ac78aff8-a41b-4a56-b7e6-a2d089d817b8",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-coding"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "ORBGRAND reliability migration",
+  "updated_at": "2026-08-24T05:52:49.650437955Z"
+}

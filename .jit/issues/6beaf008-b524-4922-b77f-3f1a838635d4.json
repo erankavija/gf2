@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "8d650253-6afe-4da5-b41b-e713e92c12a6"
+  ],
+  "description": "Provide the OSD-specific Hamming-weight pattern source with checked growth and baseline termination metadata.\n\n## Background\n\nOSD enumerates subsets through order $m$ under the checked bound $\\sum_{i=0}^{m} \\binom{k}{i}$. GRAND's logistic-weight iterator remains separate because it has different ordering semantics. This leaf establishes the `osd` module tree for later submodules.\n\n## Success Criteria\n\n- [hard] REQ-01: Enumerates each subset of weights zero through $\\min(m,k)$ exactly once in a documented deterministic order.\n- [hard] REQ-02: Computes the theoretical candidate bound with checked arithmetic and rejects unrepresentable configurations.\n- [hard] REQ-03: Stops at the optional candidate cap or cancellation and reports generated, tested, and termination counters without unbounded allocation.\n- [hard] REQ-04: Uses exhaustive order-$m$ enumeration when no candidate cap is configured.\n- [hard] REQ-05: Covers $k=0$, $m=0$, $m>k$, exact-cap, overflow, and cancellation cases with module-local property tests.",
+  "documents": [],
+  "first_ready_at": "2026-08-24T05:52:49.650437955Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "6beaf008-b524-4922-b77f-3f1a838635d4",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-coding",
+    "satisfies:REQ-01",
+    "cites:Fossorier1995",
+    "cites:Yue2022"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Bounded OSD pattern enumeration",
+  "updated_at": "2026-08-24T05:54:31.684415867Z"
+}

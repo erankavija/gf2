@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "abd48d99-1204-42d5-ae81-d0fd56a24f14"
+  ],
+  "description": "Expose the order-$m$ generator-matrix OSD baseline for linear block codes through the canonical immutable soft-decoder trait.\n\n## Background\n\nThe decoder is generic over `GeneratorMatrixAccess`; convolutional streaming and codes without that surface are outside its scope. Candidate enumeration and MRB reprocessing remain in the shared engine, while this adapter owns codeword reconstruction and `SoftDecoder` behavior.\n\n## Success Criteria\n\n- [hard] REQ-01: Implements `SoftDecoder` for a decoder generic over `GeneratorMatrixAccess` with order and cap supplied by `OsdConfig`.\n- [hard] REQ-02: Reconstructs generator-domain candidates and returns the deterministic minimum soft-metric hard decision.\n- [hard] REQ-03: Exposes engine rank, work counters, candidate bound, and termination metadata without duplicating search logic.\n- [hard] REQ-04: Matches exhaustive maximum-likelihood decoding on bounded small-code fixtures with tied reliabilities and non-systematic generators.\n- [hard] REQ-05: Documents invalid LLR length, NaN, and rank-deficient generator behavior on the public API.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "c97b2961-6101-4383-9505-d69b380c5457",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-coding",
+    "satisfies:REQ-01",
+    "cites:Fossorier1995",
+    "cites:Yue2022"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Generator-matrix OSD decoder",
+  "updated_at": "2026-08-24T05:52:49.650437955Z"
+}

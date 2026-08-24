@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "c8322eff-8122-41bc-9209-9bcc9f591655"
+  ],
+  "description": "Run the pinned resumable campaign and commit its versioned evidence receipt with a concise provenance record.\n\n## Background\n\nThe scientific target is Fossorier1995 eBCH $(128,64)$ BI-AWGN/BPSK order-2 BLER versus $E_b/N_0$, with order 1 as an explicitly internal control. Measurements remain valid or falsifying according to confidence intervals and recorded protocol identity.\n\n## Success Criteria\n\n- [hard] REQ-01: The committed receipt records seeds, git revision, toolchain, hardware, configuration, per-cell counts, work counters, termination, and binomial confidence intervals.\n- [hard] REQ-02: Each matched order-2 point accepts its published value $p$ exactly when $p \\in [L-\\delta, U+\\delta]$, where $[L, U]$ is the receipt interval at its recorded method and level and $\\delta$ the recorded digitization precision, without converting discrepancies into silent retuning.\n- [hard] REQ-03: Order-1 results are identified as campaign controls rather than externally sourced claims.\n- [hard] REQ-04: Interrupted, censored, or budget-exhausted cells remain visible and resumable without repeated completed work.\n- [hard] REQ-05: The provenance note identifies contradictory evidence and the exact receipt schema version.",
+  "documents": [],
+  "gates_required": [
+    "research-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "cef1ae5f-a971-464f-979e-61043ade81eb",
+  "labels": [
+    "type:simulation",
+    "epic:osd",
+    "component:gf2-sim",
+    "satisfies:REQ-02",
+    "cites:Fossorier1995",
+    "cites:Yue2022"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "eBCH OSD curve reproduction",
+  "updated_at": "2026-08-24T05:52:49.650437955Z"
+}

@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "8d650253-6afe-4da5-b41b-e713e92c12a6"
+  ],
+  "description": "Extend dense $\\mathrm{GF}(2)$ row reduction with an ordered-column preference and the row-operation transform needed by matrix and syndrome callers.\n\n## Background\n\n`gf2_core::alg::rref` exposes directional pivoting but cannot consume an explicit preference permutation or apply the same row operations to a right-hand side. The reusable primitive remains independent of coding and LLR policy.\n\n## Success Criteria\n\n- [hard] REQ-01: Accepts a complete ordered column preference and returns the reduced matrix, selected independent columns in preference order, rank, and applied row transform.\n- [hard] REQ-02: Applies the returned transform to a conforming right-hand side so $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$ is equivalent to $(\\mathbf{U}\\mathbf{A})\\mathbf{x}=\\mathbf{U}\\mathbf{b}$.\n- [hard] REQ-03: Handles rank-deficient, empty, and rectangular matrices deterministically and identifies inconsistent transformed right-hand sides outside the reachable row space.\n- [hard] REQ-04: Rejects malformed preference permutations and right-hand-side dimensions through documented public errors.\n- [hard] REQ-05: Matches existing RREF rank and row-space semantics under natural and reversed column orders.",
+  "documents": [],
+  "first_ready_at": "2026-08-24T05:52:49.650437955Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "5dd3539f-3c3a-413e-956d-87596d346263",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-core",
+    "satisfies:REQ-01",
+    "cites:Fossorier1995"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Ordered-column elimination transform",
+  "updated_at": "2026-08-24T05:54:07.698146095Z"
+}

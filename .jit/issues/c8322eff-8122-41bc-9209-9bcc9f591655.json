@@ -1,0 +1,31 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "bebe485c-82c8-49a5-aea8-20b44ad4fb3a",
+    "c97b2961-6101-4383-9505-d69b380c5457",
+    "f0d6fb9a-e138-4267-8a81-a5170ebf8e72"
+  ],
+  "description": "Add a thin `gf2-sim` executable that binds the eBCH OSD baseline to the reusable campaign protocol.\n\n## Background\n\nThe executable selects the pinned eBCH $(128,64)$ factory, BI-AWGN/BPSK channel, order-2 decoder, order-1 control, configured cells, checkpoint path, and receipt path. Protocol logic remains in the `gf2-sim` library rather than the CLI.\n\n## Success Criteria\n\n- [hard] REQ-01: Parses the pinned campaign configuration and dispatches order-2 plus order-1 cells through the library protocol.\n- [hard] REQ-02: Configures the decoder's candidate enumeration to the pinned reference dataset's recorded list order and tie policy.\n- [hard] REQ-03: Uses deterministic resume and versioned receipt APIs without owning schema, seed, interval, or checkpoint logic.\n- [hard] REQ-04: Exposes bounded sample and error stopping controls suitable for interrupted campaign execution.\n- [hard] REQ-05: A CLI fixture verifies configuration mapping, checkpoint resume, receipt emission, and nonzero failure status for invalid input.\n- [hard] REQ-06: Public usage text names output paths and the exact eBCH/channel/metric convention.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "c8322eff-8122-41bc-9209-9bcc9f591655",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-sim",
+    "satisfies:REQ-02",
+    "cites:Fossorier1995",
+    "cites:Yue2022"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "eBCH OSD campaign executable",
+  "updated_at": "2026-08-24T05:52:49.650437955Z"
+}

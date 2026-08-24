@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "8d650253-6afe-4da5-b41b-e713e92c12a6"
+  ],
+  "description": "Expose one deterministic index permutation for numeric reliability magnitudes plus an `Llr` convenience surface.\n\n## Background\n\nORBGRAND and Chase-Pyndiah sort reliability indices privately from different input representations. The core helper accepts an `f32` magnitude slice so `Llr` and raw soft-value consumers share one total-order convention.\n\n## Success Criteria\n\n- [hard] REQ-01: Returns each input index exactly once under the total order on magnitude and original index.\n- [hard] REQ-02: Provides ascending and descending accessors that retain ascending original-index ties in either magnitude direction.\n- [hard] REQ-03: Orders infinite magnitudes naturally and documents a panic for any NaN magnitude.\n- [hard] REQ-04: Provides an `Llr` wrapper that delegates through `Llr::magnitude()` to the `f32` primitive.\n- [hard] REQ-05: Covers empty, singleton, repeated-magnitude, signed-zero, infinite, and NaN cases with public rustdoc and property tests.",
+  "documents": [],
+  "first_ready_at": "2026-08-24T05:52:49.650437955Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "377a7a62-ae1f-486f-bac9-2106095d7cb0",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-coding",
+    "satisfies:REQ-01",
+    "cites:Fossorier1995",
+    "cites:Yue2022"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Canonical reliability permutation API",
+  "updated_at": "2026-08-24T05:54:15.697972443Z"
+}

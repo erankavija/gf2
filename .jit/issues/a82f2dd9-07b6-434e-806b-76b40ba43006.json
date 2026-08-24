@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T05:52:49.650437955Z",
+  "dependencies": [
+    "8d650253-6afe-4da5-b41b-e713e92c12a6"
+  ],
+  "description": "Commit a machine-readable digitization that pins the selected published eBCH OSD curve plus its complete construction identity.\n\n## Background\n\nThe reproduction target is eBCH $(128,64)$ on BI-AWGN/BPSK with BLER versus $E_b/N_0$, OSD order 2, and order 1 as a control. Fossorier1995 is authoritative and Yue2022 supplies an independent cross-check. The source pin determines the primitive polynomial rather than the plan.\n\n## Success Criteria\n\n- [hard] REQ-01: Identifies the exact Fossorier1995 page, figure, series, construction, channel, metric, and OSD order represented by the digitized data.\n- [hard] REQ-02: Records the published reprocessing list order, naming the source's candidate enumeration order and tie policy for the digitized series.\n- [hard] REQ-03: Pins the eBCH $(128,64)$ construction identity including primitive polynomial, extension convention, dimensions, and systematic matrix convention.\n- [hard] REQ-04: Stores auditable $E_b/N_0$ plus BLER points with digitization method, precision, and provenance.\n- [hard] REQ-05: Records the Yue2022 cross-check and material construction or curve differences without silently reconciling them.\n- [hard] REQ-06: Distinguishes the published order-2 series from the campaign's order-1 control so the control carries no unsupported external claim.",
+  "documents": [],
+  "first_ready_at": "2026-08-24T05:52:49.650437955Z",
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "a82f2dd9-07b6-434e-806b-76b40ba43006",
+  "labels": [
+    "type:task",
+    "epic:osd",
+    "component:gf2-sim",
+    "satisfies:REQ-02",
+    "cites:Fossorier1995",
+    "cites:Yue2022"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Published eBCH OSD curve dataset",
+  "updated_at": "2026-08-24T05:54:47.712149623Z"
+}
