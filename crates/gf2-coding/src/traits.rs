@@ -358,27 +358,6 @@ pub trait IterativeSoftDecoder: SoftDecoder {
     fn reset(&mut self);
 }
 
-/// Soft-decision decoder for block codes (deprecated - use `SoftDecoder`).
-///
-/// This trait is deprecated in favor of the more comprehensive `SoftDecoder` trait.
-#[deprecated(since = "0.2.0", note = "Use SoftDecoder trait instead")]
-pub trait SoftDecisionDecoder {
-    /// Decodes using soft information (e.g., LLRs).
-    ///
-    /// # Arguments
-    ///
-    /// * `soft_bits` - Soft information for each bit position
-    ///
-    /// # Returns
-    ///
-    /// Decoded message bits
-    ///
-    /// # Note
-    ///
-    /// Deprecated: Use `SoftDecoder::decode_soft()` instead.
-    fn decode_soft(&self, soft_bits: &[f64]) -> BitVec;
-}
-
 /// Streaming encoder for convolutional codes.
 ///
 /// A streaming encoder processes bits one at a time, maintaining internal state
