@@ -72,6 +72,7 @@ pub mod ldpc;
 pub mod linear;
 pub mod llr;
 pub mod modem;
+pub mod osd;
 pub mod product;
 
 // SIMD detection is now handled internally in llr.rs via once_cell::Lazy
