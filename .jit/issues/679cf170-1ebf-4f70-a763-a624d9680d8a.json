@@ -12,7 +12,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-24T22:27:15.952738636Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "679cf170-1ebf-4f70-a763-a624d9680d8a",
   "labels": [
     "type:task",
@@ -23,5 +29,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Scope campaign emission provenance to the measured artifact",
-  "updated_at": "2026-08-24T19:57:22.060905094Z"
+  "updated_at": "2026-08-24T22:27:15.952738636Z"
 }
