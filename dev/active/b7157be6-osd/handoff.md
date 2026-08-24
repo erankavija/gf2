@@ -7,7 +7,7 @@
 ## Current state
 
 - Epic: `b7157be6` — state: backlog (dependency-blocked container, assigned `agent:jit-execution-lead` assign-only)
-- Wave in progress: wave 1 of 6 (6 of 7 merged; 835e15fb worker running); wave 2 partially dispatched early (2 of 3 workers running)
+- Wave in progress: wave 1 of 6 (6 of 7 merged; 835e15fb review-passed, merge pending); wave 2 partially dispatched early (2 of 3 workers running)
 - Children summary: bracket P/B done; 0 impl issues done (6 merged awaiting review gates), 4 in_progress with live workers (835e15fb, ac78aff8, f0d6fb9a) or committed-pending-merge (dd6f1665 at 24962b69), 8 backlog
 - Active claims: wave-1 seven + wave-2 three claimed `agent:worker`; epic assign-only
 - Open escalations: none (D-21 source/metric amendment was approved by the owner this session and is fully reconciled)
@@ -28,7 +28,7 @@
 ## What to do next
 
 - [ ] HOST FREEZE until 07:40 EEST 2026-08-25: no writes to the primary checkout (no merges, no `.jit` writes — gate evaluation writes `.jit` at completion — no cargo-ci on main). Worktree-confined worker activity is fine.
-- [ ] Collect reports from live workers as they finish: 835e15fb (bq1mik373), ac78aff8 (bccre9o6j), dd6f1665 (be491b48j). Content-review each; commit their trees on their branches (codex sandbox cannot commit — see Traps).
+- [ ] Collect reports from still-live workers: ac78aff8 (bccre9o6j), f0d6fb9a (bnj01f0j9). Content-review; commit their trees. DONE already: 835e15fb (b3d76014, review passed) and dd6f1665 (24962b69, review passed) — both merge-ready after 07:40, cargo-ci after each merge (their bases predate the wave-1/679cf170 merges — semantic-merge risk is why they were not merged un-gated tonight).
 - [ ] f0d6fb9a (Sol) dispatched ~01:07 (task bnj01f0j9) — collect its report too; worktree agent-f0d6fb9a, target pre-seeded.
 - [ ] After 07:40: run code-review+doc-review for 80cead18, 377a7a62, 6beaf008, bebe485c; doc-review+research-review for a82f2dd9; then mark wave-1 issues done and commit per state-commit-patterns.
 - [ ] After 07:40: merge 835e15fb (if review passed) then wave-2 branches, cargo-ci after each batch, leak check (`/tmp/lead-pre-dispatch-latest.txt` → snapshot of 213836), reclaim with `LEAD_CACHE_POOL=/data/gf2-osd-cache-pool .agents/skills/jit-execution-lead/scripts/reclaim-worker-worktree.sh <sids>`.
