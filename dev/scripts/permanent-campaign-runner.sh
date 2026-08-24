@@ -687,6 +687,7 @@ validate_premeasure_plan() {
 }
 
 load_premeasure_schedule() {
+    local check_admission="${1:-true}"
     validate_premeasure_plan
     local row q n token backend batch _rest key code _cycle
     local -a sorted_rows
@@ -724,7 +725,9 @@ load_premeasure_schedule() {
         done
     done
     [[ "${#PREMEASURE_SCHEDULE[@]}" -eq 1440 ]] || die "premeasurement schedule has ${#PREMEASURE_SCHEDULE[@]} processes; expected 1440"
-    validate_premeasure_admission
+    if [[ "$check_admission" == true ]]; then
+        validate_premeasure_admission
+    fi
 }
 
 validate_premeasure_admission() {
@@ -962,62 +965,649 @@ run_locked_premeasure() {
     [[ "$PREMEASURE_FAILURE_COUNT" -eq 0 ]] || return "$CENSORED_EXIT"
 }
 
-PREMEASURE_COLLECT_HEADER="record_type,process_index,schedule_position,raw_file,config_id,config_code,q,n,backend,batch_size,outcome,fresh_process,reps,matrices,zeros,total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s,timestamp_utc,machine_warmup,lock_mode,lock_path,git_sha,binary_sha256,exit_status,status"
+PREMEASURE_COLLECT_COLUMNS=(
+    record_type process_index schedule_position raw_file receipt_file scratch_file
+    config_id config_code plan_q plan_n plan_manifest_backend plan_harness_backend
+    plan_batch_size ledger_state candidate_emitted receipt_present
+    receipt_structurally_valid scratch_present scratch_structurally_valid
+    session_resolution identity_valid provenance_complete row_valid validity_reasons
+    receipt_schema_version receipt_run_id receipt_session_id receipt_schedule_position
+    receipt_q receipt_n receipt_config_code receipt_manifest_backend
+    receipt_harness_backend receipt_batch_size receipt_machine_warmup
+    receipt_started_utc receipt_finished_utc receipt_command receipt_scratch_csv
+    receipt_status receipt_exit_status exit_status_file receipt_exit_agreement
+    receipt_failure receipt_plan_sha256 receipt_manifest_locator
+    receipt_prepared_manifest_sha256 session_provenance_file session_id
+    session_campaign_run_id session_started_utc session_source_revision
+    session_plan_path session_plan_sha256 session_manifest_locator
+    session_wrapper_invocation session_binary_actual_chain
+    session_binary_expected_chain session_binary_chain_match
+    scratch_binary_matches_session_actual recovery_plan_sha256
+    recovery_plan_matches_session scratch_q scratch_n scratch_backend scratch_outcome
+    scratch_batch_size scratch_reps scratch_matrices scratch_zeros scratch_total_s
+    scratch_gen_s scratch_eval_s scratch_reduce_s scratch_store_s
+    scratch_composite_matrices_per_s scratch_eval_matrices_per_s observed_git_sha
+    observed_git_worktree_dirty observed_harness_source_sha
+    observed_harness_source_dirty observed_deps_source_sha observed_deps_source_dirty
+    observed_running_binary_sha256 observed_rustc observed_cargo observed_cpu
+    observed_logical_cpus observed_rayon_threads observed_cpu_features
+    observed_cpu_governor observed_gpu observed_rocm observed_hip_feature
+    observed_kernel observed_timestamp_utc observed_invocation
+)
+
+csv_write_header() {
+    local path="$1"
+    shift
+    local IFS=,
+    printf '%s\n' "$*" > "$path"
+}
+
+csv_write_row() {
+    local path="$1"
+    shift
+    [[ "$#" -eq "${#PREMEASURE_COLLECT_COLUMNS[@]}" ]] \
+        || die "collector row has $# fields; expected ${#PREMEASURE_COLLECT_COLUMNS[@]}"
+    local field escaped separator=''
+    {
+        for field in "$@"; do
+            field="${field//$'\r'/ }"
+            field="${field//$'\n'/ }"
+            escaped="${field//\"/\"\"}"
+            printf '%s"%s"' "$separator" "$escaped"
+            separator=,
+        done
+        printf '\n'
+    } >> "$path"
+}
+
+declare -A COLON_VALUES COLON_COUNTS
+
+parse_colon_metadata() {
+    local path="$1" line key value
+    COLON_VALUES=()
+    COLON_COUNTS=()
+    [[ -f "$path" ]] || return 0
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ "$line" =~ ^([A-Za-z0-9_]+):[[:space:]]?(.*)$ ]]; then
+            key="${BASH_REMATCH[1]}"
+            value="${BASH_REMATCH[2]}"
+            COLON_COUNTS["$key"]=$(( ${COLON_COUNTS["$key"]:-0} + 1 ))
+            if [[ -n "${COLON_VALUES[$key]+set}" ]]; then
+                COLON_VALUES["$key"]+=" || $value"
+            else
+                COLON_VALUES["$key"]="$value"
+            fi
+        fi
+    done < "$path"
+}
+
+declare -A SCRATCH_META_VALUES SCRATCH_META_COUNTS SCRATCH_DATA
+SCRATCH_PRESENT=false
+SCRATCH_STRUCTURALLY_VALID=false
+SCRATCH_REASONS=''
+
+scratch_reason() {
+    SCRATCH_REASONS+="${SCRATCH_REASONS:+;}$1"
+}
+
+parse_premeasure_scratch() {
+    local path="$1" line key value header_seen=false header_line='' data_line=''
+    local data_count=0 i
+    local -a header_fields data_fields
+    local -a expected_header=(
+        q n backend outcome batch_size reps matrices zeros total_s gen_s eval_s
+        reduce_s store_s composite_matrices_per_s eval_matrices_per_s
+    )
+    local -a required_preamble=(
+        git_sha git_worktree_dirty harness_source_sha harness_source_dirty
+        deps_source_sha deps_source_dirty binary_sha256 rustc cargo cpu logical_cpus
+        rayon_threads avx2 cpu_governor gpu rocm hip_feature kernel timestamp_utc
+        invocation
+    )
+    SCRATCH_META_VALUES=()
+    SCRATCH_META_COUNTS=()
+    SCRATCH_DATA=()
+    SCRATCH_PRESENT=false
+    SCRATCH_STRUCTURALLY_VALID=false
+    SCRATCH_REASONS=''
+    [[ -f "$path" ]] || return 0
+    SCRATCH_PRESENT=true
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ "$header_seen" == false && "$line" == \#* ]]; then
+            if [[ "$line" =~ ^\#[[:space:]]([A-Za-z0-9_]+):[[:space:]]?(.*)$ ]]; then
+                key="${BASH_REMATCH[1]}"
+                value="${BASH_REMATCH[2]}"
+                SCRATCH_META_COUNTS["$key"]=$(( ${SCRATCH_META_COUNTS["$key"]:-0} + 1 ))
+                if [[ -n "${SCRATCH_META_VALUES[$key]+set}" ]]; then
+                    SCRATCH_META_VALUES["$key"]+=" || $value"
+                else
+                    SCRATCH_META_VALUES["$key"]="$value"
+                fi
+            fi
+            continue
+        fi
+        [[ -n "$line" ]] || continue
+        if [[ "$line" == \#* ]]; then
+            scratch_reason "preamble_after_header"
+        elif [[ "$header_seen" == false ]]; then
+            header_line="$line"
+            header_seen=true
+        else
+            data_count=$((data_count + 1))
+            [[ "$data_count" -ne 1 ]] || data_line="$line"
+        fi
+    done < "$path"
+    if [[ "$header_seen" == false ]]; then
+        scratch_reason "missing_header"
+    else
+        IFS=, read -r -a header_fields <<< "${header_line},__collector_end__"
+        unset 'header_fields[${#header_fields[@]}-1]'
+        if [[ "${#header_fields[@]}" -lt "${#expected_header[@]}" ]]; then
+            scratch_reason "short_header"
+        else
+            for ((i=0; i<${#expected_header[@]}; i++)); do
+                if [[ "${header_fields[$i]}" != "${expected_header[$i]}" ]]; then
+                    scratch_reason "header_column_${i}_mismatch"
+                fi
+            done
+        fi
+    fi
+    if [[ "$data_count" -ne 1 ]]; then
+        scratch_reason "data_row_count_${data_count}"
+    else
+        IFS=, read -r -a data_fields <<< "${data_line},__collector_end__"
+        unset 'data_fields[${#data_fields[@]}-1]'
+        if [[ "${#data_fields[@]}" -lt "${#expected_header[@]}" ]]; then
+            scratch_reason "short_data_row"
+        else
+            for ((i=0; i<${#expected_header[@]}; i++)); do
+                SCRATCH_DATA["${expected_header[$i]}"]="${data_fields[$i]}"
+            done
+        fi
+    fi
+    for key in "${required_preamble[@]}"; do
+        if [[ "${SCRATCH_META_COUNTS[$key]:-0}" -eq 0 ]]; then
+            scratch_reason "missing_preamble_${key}"
+        elif [[ "${SCRATCH_META_COUNTS[$key]}" -ne 1 ]]; then
+            scratch_reason "duplicate_preamble_${key}"
+        elif [[ -z "${SCRATCH_META_VALUES[$key]}" ]]; then
+            scratch_reason "empty_preamble_${key}"
+        fi
+    done
+    [[ -n "$SCRATCH_REASONS" ]] || SCRATCH_STRUCTURALLY_VALID=true
+}
+
+session_metadata_value() {
+    local composite="$1"$'\034'"$2"
+    printf '%s' "${SESSION_VALUES[$composite]:-}"
+}
+
+session_metadata_count() {
+    local composite="$1"$'\034'"$2"
+    printf '%s' "${SESSION_COUNTS[$composite]:-0}"
+}
 
 premeasure_collect() {
-    load_premeasure_schedule
-    local run_dir tmp row q n code token backend batch process_index receipt csv status data
-    local -A completed failures
+    # Collection is a recovery projection over already-observed evidence. It
+    # deliberately does not verify or run the current harness, inspect HEAD, or
+    # hash the current binary: none of those collector-time facts describe an
+    # execution that already happened.
+    load_premeasure_schedule false
+    local run_dir ledger_tmp candidates_tmp ledger_path candidates_path
+    local row q n code token backend batch process_index receipt receipt_file csv
+    local recovery_plan_sha256
+    local -A expected completed terminal invalid censored candidates
     run_dir=$(premeasure_run_dir)
-    [[ -d "$run_dir/processes" ]] || die "premeasurement run directory not found: $run_dir"
-    tmp="$run_dir/premeasure-candidates.csv.tmp.$$"
-    printf '%s\n' "$PREMEASURE_COLLECT_HEADER" > "$tmp"
-    local source_revision binary_hash
-    source_revision="$(git -C "$REPO_ROOT" rev-parse HEAD)"
-    binary_hash="$(hash_file "$HARNESS_BIN")"
+    mkdir -p "$run_dir"
+    ledger_path="$run_dir/premeasure-ledger.csv"
+    candidates_path="$run_dir/premeasure-candidates.csv"
+    ledger_tmp="$run_dir/.premeasure-ledger.csv.tmp.$$"
+    candidates_tmp="$run_dir/.premeasure-candidates.csv.tmp.$$"
+    PREMEASURE_COLLECT_TMP_FILES=("$ledger_tmp" "$candidates_tmp")
+    trap 'rm -f "${PREMEASURE_COLLECT_TMP_FILES[@]}"' EXIT
+    csv_write_header "$ledger_tmp" "${PREMEASURE_COLLECT_COLUMNS[@]}"
+    csv_write_header "$candidates_tmp" "${PREMEASURE_COLLECT_COLUMNS[@]}"
+    recovery_plan_sha256="$(hash_file "$PREMEASURE_PLAN")"
+
+    local -A SESSION_VALUES SESSION_COUNTS SESSION_ID_COUNT SESSION_ID_PATH
+    local -A SESSION_ACTUAL_CHAIN SESSION_EXPECTED_CHAIN SESSION_CHAIN_MATCH
+    local -A SESSION_ACTUAL_HASHES SESSION_FILE_REASONS
+    local -a session_files=()
+    local session_file line key value composite inner_id
+    local valid_session_files=0 only_session_file=''
+    if [[ -d "$run_dir/sessions" ]]; then
+        shopt -s nullglob
+        session_files=("$run_dir"/sessions/session-*.provenance.txt)
+        shopt -u nullglob
+    fi
+    for session_file in "${session_files[@]}"; do
+        local -A actual_by_path=() expected_by_path=() actual_seen=() expected_seen=()
+        local -a actual_paths=() expected_paths=()
+        local actual_chain='' expected_chain='' actual_hashes='' chain_status=true
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            if [[ "$line" == "binary_hash: "* ]]; then
+                value="${line#binary_hash: }"
+                local observed_hash="${value##* }" observed_path="${value% *}"
+                actual_chain+="${actual_chain:+ | }$observed_path=$observed_hash"
+                actual_hashes+="${actual_hashes:+$'\n'}$observed_hash"
+                actual_seen["$observed_path"]=$(( ${actual_seen["$observed_path"]:-0} + 1 ))
+                actual_by_path["$observed_path"]="$observed_hash"
+                actual_paths+=("$observed_path")
+            elif [[ "$line" == "binary_manifest_hash: "* ]]; then
+                value="${line#binary_manifest_hash: }"
+                local expected_hash="${value##* }" expected_path="${value% *}"
+                expected_chain+="${expected_chain:+ | }$expected_path=$expected_hash"
+                expected_seen["$expected_path"]=$(( ${expected_seen["$expected_path"]:-0} + 1 ))
+                expected_by_path["$expected_path"]="$expected_hash"
+                expected_paths+=("$expected_path")
+            elif [[ "$line" =~ ^([A-Za-z0-9_]+):[[:space:]]?(.*)$ ]]; then
+                key="${BASH_REMATCH[1]}"
+                value="${BASH_REMATCH[2]}"
+                composite="$session_file"$'\034'"$key"
+                SESSION_COUNTS["$composite"]=$(( ${SESSION_COUNTS["$composite"]:-0} + 1 ))
+                if [[ -n "${SESSION_VALUES[$composite]+set}" ]]; then
+                    SESSION_VALUES["$composite"]+=" || $value"
+                else
+                    SESSION_VALUES["$composite"]="$value"
+                fi
+            fi
+        done < "$session_file"
+        if [[ "${#actual_paths[@]}" -eq 0 || "${#expected_paths[@]}" -eq 0 ]]; then
+            chain_status=unavailable
+        elif [[ "${#actual_paths[@]}" -ne "${#expected_paths[@]}" ]]; then
+            chain_status=false
+        else
+            for key in "${actual_paths[@]}"; do
+                if [[ "${actual_seen[$key]}" -ne 1 || "${expected_seen[$key]:-0}" -ne 1 \
+                    || "${actual_by_path[$key]}" != "${expected_by_path[$key]:-}" ]]; then
+                    chain_status=false
+                fi
+            done
+        fi
+        SESSION_ACTUAL_CHAIN["$session_file"]="$actual_chain"
+        SESSION_EXPECTED_CHAIN["$session_file"]="$expected_chain"
+        SESSION_ACTUAL_HASHES["$session_file"]="$actual_hashes"
+        SESSION_CHAIN_MATCH["$session_file"]="$chain_status"
+        inner_id="$(session_metadata_value "$session_file" session_id)"
+        if [[ "$(session_metadata_count "$session_file" session_id)" -eq 1 && -n "$inner_id" ]]; then
+            SESSION_ID_COUNT["$inner_id"]=$(( ${SESSION_ID_COUNT["$inner_id"]:-0} + 1 ))
+            SESSION_ID_PATH["$inner_id"]="$session_file"
+            valid_session_files=$((valid_session_files + 1))
+            only_session_file="$session_file"
+        else
+            SESSION_FILE_REASONS["$session_file"]="invalid_session_id"
+        fi
+    done
+
+    local any_incomplete=false
     for row in "${PREMEASURE_SCHEDULE[@]}"; do
         IFS=, read -r q n code token backend batch process_index <<< "$row"
         receipt="$run_dir/processes/process-$(printf '%04d' "$process_index")-$q-$n-$code"
-        if ! premeasure_process_is_final "$receipt"; then
-            failures["$q:$n:$code"]="missing or interrupted receipt"
-            continue
-        fi
-        status=$(sed -n 's/^status: //p' "$receipt/receipt.txt" | tail -n 1)
-        if [[ "$status" != completed ]]; then
-            failures["$q:$n:$code"]="exit $(cat "$receipt/exit.status")"
-            continue
-        fi
+        receipt_file="$receipt/receipt.txt"
         csv="$receipt/scratch.csv"
-        data=$(grep -v '^#' "$csv" | tail -n 1)
-        [[ -n "$data" ]] || { failures["$q:$n:$code"]="completed without a data row"; continue; }
-        local hq hn hbackend houtcome hm hrep hmat hzeros htotal hgen heval hreduce hstore hrate hevalsec rest started warmup
-        IFS=, read -r hq hn hbackend houtcome hm hrep hmat hzeros htotal hgen heval hreduce hstore hrate hevalsec rest <<< "$data"
-        completed["$q:$n:$code"]=$(( ${completed["$q:$n:$code"]:-0} + 1 ))
-        started=$(sed -n 's/^started_utc: //p' "$receipt/receipt.txt" | tail -n 1)
-        warmup=$(sed -n 's/^machine_warmup: //p' "$receipt/receipt.txt" | tail -n 1)
-        printf 'execution,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,True,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ccx1-bench-flock --full-host,/tmp/gf2-ccx1.lock,%s,%s,%s,completed\n' \
-            "$process_index" "$process_index" "$csv" "q${q}_n${n}" "$code" "$hq" "$hn" "$hbackend" "$hm" "$houtcome" "$hrep" "$hmat" "$hzeros" "$htotal" "$hgen" "$heval" "$hreduce" "$hstore" "$hrate" "$hevalsec" "$started" "$warmup" "$source_revision" "$binary_hash" "$(cat "$receipt/exit.status")" >> "$tmp"
+        local config_key="$q:$n:$code"
+        expected["$config_key"]=$(( ${expected["$config_key"]:-0} + 1 ))
+        local reasons='' receipt_present=false receipt_valid=false
+        local receipt_schema='' receipt_run='' receipt_session='' receipt_position=''
+        local receipt_q='' receipt_n='' receipt_code='' receipt_token=''
+        local receipt_backend='' receipt_batch='' receipt_warmup='' receipt_started=''
+        local receipt_finished='' receipt_command='' receipt_scratch='' receipt_status=''
+        local receipt_exit='' exit_file='' receipt_exit_agreement=unavailable
+        local receipt_failure='' receipt_plan_sha=unavailable receipt_manifest=unavailable
+        local receipt_prepared_manifest_sha=unavailable
+        parse_colon_metadata "$receipt_file"
+        if [[ -f "$receipt_file" ]]; then
+            receipt_present=true
+            receipt_valid=true
+            local required_receipt_key
+            local -a required_receipt_keys=(
+                schema_version run_id schedule_position q n config_code manifest_backend
+                harness_backend batch_size machine_warmup started_utc command scratch_csv
+                status
+            )
+            for required_receipt_key in "${required_receipt_keys[@]}"; do
+                if [[ "${COLON_COUNTS[$required_receipt_key]:-0}" -ne 1 \
+                    || -z "${COLON_VALUES[$required_receipt_key]:-}" ]]; then
+                    receipt_valid=false
+                    reasons+="${reasons:+;}receipt_${required_receipt_key}_count_or_value"
+                fi
+            done
+            if [[ "${COLON_COUNTS[session_id]:-0}" -gt 1 ]]; then
+                receipt_valid=false
+                reasons+="${reasons:+;}receipt_duplicate_session_id"
+            fi
+            receipt_schema="${COLON_VALUES[schema_version]:-}"
+            receipt_run="${COLON_VALUES[run_id]:-}"
+            receipt_session="${COLON_VALUES[session_id]:-}"
+            receipt_position="${COLON_VALUES[schedule_position]:-}"
+            receipt_q="${COLON_VALUES[q]:-}"
+            receipt_n="${COLON_VALUES[n]:-}"
+            receipt_code="${COLON_VALUES[config_code]:-}"
+            receipt_token="${COLON_VALUES[manifest_backend]:-}"
+            receipt_backend="${COLON_VALUES[harness_backend]:-}"
+            receipt_batch="${COLON_VALUES[batch_size]:-}"
+            receipt_warmup="${COLON_VALUES[machine_warmup]:-}"
+            receipt_started="${COLON_VALUES[started_utc]:-}"
+            receipt_finished="${COLON_VALUES[finished_utc]:-}"
+            receipt_command="${COLON_VALUES[command]:-}"
+            receipt_scratch="${COLON_VALUES[scratch_csv]:-}"
+            receipt_status="${COLON_VALUES[status]:-}"
+            receipt_exit="${COLON_VALUES[exit_status]:-}"
+            receipt_failure="${COLON_VALUES[failure]:-}"
+            [[ "${COLON_COUNTS[plan_sha256]:-0}" -eq 0 ]] \
+                || receipt_plan_sha="${COLON_VALUES[plan_sha256]}"
+            [[ "${COLON_COUNTS[manifest]:-0}" -eq 0 ]] \
+                || receipt_manifest="${COLON_VALUES[manifest]}"
+            if [[ "${COLON_COUNTS[prepared_manifest_sha256]:-0}" -ne 0 ]]; then
+                receipt_prepared_manifest_sha="${COLON_VALUES[prepared_manifest_sha256]}"
+            elif [[ "${COLON_COUNTS[manifest_sha256]:-0}" -ne 0 ]]; then
+                receipt_prepared_manifest_sha="${COLON_VALUES[manifest_sha256]}"
+            fi
+        else
+            reasons="missing_receipt"
+        fi
+        if [[ -f "$receipt/exit.status" ]]; then
+            exit_file="$(<"$receipt/exit.status")"
+        fi
+        local receipt_exit_count="${COLON_COUNTS[exit_status]:-0}"
+        local receipt_finished_count="${COLON_COUNTS[finished_utc]:-0}"
+        local receipt_failure_count="${COLON_COUNTS[failure]:-0}"
+        local interrupted_shape=none
+        if [[ "$receipt_status" == failed && "$receipt_failure_count" -eq 1 \
+            && "$receipt_failure" == 'interrupted by runner signal' \
+            && "$exit_file" == 130 && "$receipt_exit_count" -eq 0 \
+            && "$receipt_finished_count" -eq 0 ]]; then
+            interrupted_shape=signal
+        elif [[ "$receipt_status" == failed && "$receipt_failure_count" -eq 1 \
+            && "$receipt_failure" == 'interrupted before final receipt' \
+            && "$exit_file" == 125 && "$receipt_exit_count" -eq 1 \
+            && "$receipt_exit" == 125 && "$receipt_finished_count" -eq 0 ]]; then
+            interrupted_shape=orphan
+        fi
+        if [[ "$interrupted_shape" == none ]]; then
+            if [[ "$receipt_exit_count" -ne 1 || -z "$receipt_exit" ]]; then
+                receipt_valid=false
+                reasons+="${reasons:+;}receipt_exit_status_count_or_value"
+            fi
+            if [[ "$receipt_finished_count" -ne 1 || -z "$receipt_finished" ]]; then
+                receipt_valid=false
+                reasons+="${reasons:+;}receipt_finished_utc_count_or_value"
+            fi
+        fi
+        local terminal_exit_consistent=false
+        if [[ "$exit_file" =~ ^[0-9]+$ ]]; then
+            if [[ "$receipt_status" == completed && "$exit_file" -eq 0 ]] \
+                || [[ "$receipt_status" == failed && "$exit_file" -ne 0 ]]; then
+                terminal_exit_consistent=true
+            fi
+        fi
+        if [[ -n "$receipt_exit" ]]; then
+            receipt_exit_agreement=false
+            if [[ "$receipt_exit" =~ ^[0-9]+$ && "$receipt_exit" == "$exit_file" \
+                && "$terminal_exit_consistent" == true ]]; then
+                receipt_exit_agreement=true
+            else
+                reasons+="${reasons:+;}receipt_exit_disagreement"
+            fi
+        elif [[ "$terminal_exit_consistent" != true ]]; then
+            reasons+="${reasons:+;}missing_terminal_exit_fact"
+        fi
+        if [[ "$receipt_status" =~ ^(completed|failed)$ && "$exit_file" =~ ^[0-9]+$ ]]; then
+            terminal["$config_key"]=$(( ${terminal["$config_key"]:-0} + 1 ))
+        fi
+        if [[ "$receipt_status" == completed && "$terminal_exit_consistent" == true ]]; then
+            completed["$config_key"]=$(( ${completed["$config_key"]:-0} + 1 ))
+        elif [[ "$receipt_status" == failed && "$terminal_exit_consistent" == true ]]; then
+            censored["$config_key"]=$(( ${censored["$config_key"]:-0} + 1 ))
+        fi
+
+        parse_premeasure_scratch "$csv"
+        local scratch_present="$SCRATCH_PRESENT" scratch_valid="$SCRATCH_STRUCTURALLY_VALID"
+        local scratch_q="${SCRATCH_DATA[q]:-}" scratch_n="${SCRATCH_DATA[n]:-}"
+        local scratch_backend="${SCRATCH_DATA[backend]:-}" scratch_outcome="${SCRATCH_DATA[outcome]:-}"
+        local scratch_batch="${SCRATCH_DATA[batch_size]:-}" scratch_reps="${SCRATCH_DATA[reps]:-}"
+        local scratch_matrices="${SCRATCH_DATA[matrices]:-}" scratch_zeros="${SCRATCH_DATA[zeros]:-}"
+        local scratch_total="${SCRATCH_DATA[total_s]:-}" scratch_gen="${SCRATCH_DATA[gen_s]:-}"
+        local scratch_eval="${SCRATCH_DATA[eval_s]:-}" scratch_reduce="${SCRATCH_DATA[reduce_s]:-}"
+        local scratch_store="${SCRATCH_DATA[store_s]:-}"
+        local scratch_rate="${SCRATCH_DATA[composite_matrices_per_s]:-}"
+        local scratch_eval_rate="${SCRATCH_DATA[eval_matrices_per_s]:-}"
+        if [[ "$receipt_status" == completed && "$scratch_valid" != true ]]; then
+            reasons+="${reasons:+;}$SCRATCH_REASONS"
+        fi
+
+        local session_resolution=absent resolved_session='' session_valid=false
+        if [[ -n "$receipt_session" && "${COLON_COUNTS[session_id]:-0}" -eq 1 ]]; then
+            case "${SESSION_ID_COUNT[$receipt_session]:-0}" in
+                0) session_resolution=absent ;;
+                1) session_resolution=exact; resolved_session="${SESSION_ID_PATH[$receipt_session]}" ;;
+                *) session_resolution=ambiguous ;;
+            esac
+        elif [[ "$valid_session_files" -eq 1 ]]; then
+            session_resolution=legacy_unique_fallback
+            resolved_session="$only_session_file"
+        elif [[ "$valid_session_files" -gt 1 ]]; then
+            session_resolution=ambiguous
+        fi
+        local session_id='' session_campaign='' session_started='' session_source=''
+        local session_plan_path='' session_plan_sha='' session_manifest=''
+        local session_wrapper='' session_actual_chain='' session_expected_chain=''
+        local session_chain_match=unavailable scratch_binary_match=unavailable
+        local recovery_plan_match=unavailable
+        if [[ -n "$resolved_session" ]]; then
+            session_valid=true
+            local required_session_key session_count session_value
+            local -a required_session_keys=(
+                session_id campaign_run_id started_utc source_revision manifest exact_plan
+                plan_sha256 wrapper_invocation
+            )
+            for required_session_key in "${required_session_keys[@]}"; do
+                composite="$resolved_session"$'\034'"$required_session_key"
+                session_count="${SESSION_COUNTS[$composite]:-0}"
+                session_value="${SESSION_VALUES[$composite]:-}"
+                if [[ "$session_count" -ne 1 || -z "$session_value" ]]; then
+                    session_valid=false
+                    reasons+="${reasons:+;}session_${required_session_key}_count_or_value"
+                fi
+            done
+            composite="$resolved_session"$'\034'session_id
+            session_id="${SESSION_VALUES[$composite]:-}"
+            composite="$resolved_session"$'\034'campaign_run_id
+            session_campaign="${SESSION_VALUES[$composite]:-}"
+            composite="$resolved_session"$'\034'started_utc
+            session_started="${SESSION_VALUES[$composite]:-}"
+            composite="$resolved_session"$'\034'source_revision
+            session_source="${SESSION_VALUES[$composite]:-}"
+            composite="$resolved_session"$'\034'exact_plan
+            session_plan_path="${SESSION_VALUES[$composite]:-}"
+            composite="$resolved_session"$'\034'plan_sha256
+            session_plan_sha="${SESSION_VALUES[$composite]:-}"
+            composite="$resolved_session"$'\034'manifest
+            session_manifest="${SESSION_VALUES[$composite]:-}"
+            composite="$resolved_session"$'\034'wrapper_invocation
+            session_wrapper="${SESSION_VALUES[$composite]:-}"
+            session_actual_chain="${SESSION_ACTUAL_CHAIN[$resolved_session]:-}"
+            session_expected_chain="${SESSION_EXPECTED_CHAIN[$resolved_session]:-}"
+            session_chain_match="${SESSION_CHAIN_MATCH[$resolved_session]:-unavailable}"
+            if [[ -n "$session_plan_sha" ]]; then
+                if [[ "$session_plan_sha" == "$recovery_plan_sha256" ]]; then
+                    recovery_plan_match=true
+                else
+                    recovery_plan_match=false
+                    reasons+="${reasons:+;}session_plan_mismatch"
+                fi
+            fi
+            local observed_binary="${SCRATCH_META_VALUES[binary_sha256]:-}"
+            if [[ "$scratch_valid" == true && -n "$observed_binary" \
+                && "$observed_binary" != unavailable ]]; then
+                local binary_matches=0 session_hash
+                while IFS= read -r session_hash; do
+                    [[ "$session_hash" == "$observed_binary" ]] \
+                        && binary_matches=$((binary_matches + 1))
+                done <<< "${SESSION_ACTUAL_HASHES[$resolved_session]:-}"
+                case "$binary_matches" in
+                    1) scratch_binary_match=true ;;
+                    0) scratch_binary_match=false; reasons+="${reasons:+;}scratch_binary_session_mismatch" ;;
+                    *) scratch_binary_match=ambiguous; reasons+="${reasons:+;}scratch_binary_session_ambiguous" ;;
+                esac
+            fi
+            if [[ "$session_chain_match" == false ]]; then
+                reasons+="${reasons:+;}session_binary_manifest_mismatch"
+            elif [[ "$session_chain_match" == unavailable ]]; then
+                reasons+="${reasons:+;}session_binary_chain_unavailable"
+            fi
+        else
+            reasons+="${reasons:+;}session_$session_resolution"
+        fi
+
+        local identity_valid=true
+        if [[ "$receipt_present" == true ]]; then
+            local expected_value observed_value identity_name
+            local -a identity_names=(run position q n code token backend batch scratch)
+            local -a identity_expected=(
+                "$RUN_ID" "$process_index" "$q" "$n" "$code" "$token" "$backend"
+                "$batch" "$csv"
+            )
+            local -a identity_observed=(
+                "$receipt_run" "$receipt_position" "$receipt_q" "$receipt_n"
+                "$receipt_code" "$receipt_token" "$receipt_backend" "$receipt_batch"
+                "$receipt_scratch"
+            )
+            local identity_index
+            for ((identity_index=0; identity_index<${#identity_names[@]}; identity_index++)); do
+                identity_name="${identity_names[$identity_index]}"
+                expected_value="${identity_expected[$identity_index]}"
+                observed_value="${identity_observed[$identity_index]}"
+                if [[ -n "$observed_value" && "$observed_value" != "$expected_value" ]]; then
+                    identity_valid=false
+                    reasons+="${reasons:+;}receipt_${identity_name}_mismatch"
+                fi
+            done
+        else
+            identity_valid=false
+        fi
+        if [[ "$receipt_status" == completed && "$scratch_valid" == true ]]; then
+            if [[ "$scratch_q" != "$q" || "$scratch_n" != "$n" \
+                || "$scratch_backend" != "$backend" || "$scratch_batch" != "$batch" ]]; then
+                identity_valid=false
+                reasons+="${reasons:+;}scratch_plan_identity_mismatch"
+            fi
+        fi
+        if [[ -n "$resolved_session" ]]; then
+            if [[ -n "$receipt_session" && "$receipt_session" != "$session_id" ]]; then
+                identity_valid=false
+                reasons+="${reasons:+;}receipt_session_identity_mismatch"
+            fi
+            if [[ -n "$session_campaign" && "$session_campaign" != "$RUN_ID" ]]; then
+                identity_valid=false
+                reasons+="${reasons:+;}session_run_identity_mismatch"
+            fi
+            if [[ "$receipt_plan_sha" != unavailable && "$receipt_plan_sha" != "$session_plan_sha" ]]; then
+                identity_valid=false
+                reasons+="${reasons:+;}receipt_plan_session_mismatch"
+            fi
+        fi
+
+        local provenance_complete=true observed_key
+        if [[ "$receipt_status" == completed && "$scratch_valid" == true ]]; then
+            local -a observed_keys=(
+                git_sha git_worktree_dirty harness_source_sha harness_source_dirty
+                deps_source_sha deps_source_dirty binary_sha256 rustc cargo cpu logical_cpus
+                rayon_threads avx2 cpu_governor gpu rocm hip_feature kernel timestamp_utc
+                invocation
+            )
+            for observed_key in "${observed_keys[@]}"; do
+                if [[ "${SCRATCH_META_VALUES[$observed_key]:-}" == unavailable ]]; then
+                    provenance_complete=false
+                fi
+            done
+        fi
+        local row_valid=false
+        if [[ "$receipt_valid" == true && "$terminal_exit_consistent" == true \
+            && "$receipt_exit_agreement" != false \
+            && "$session_valid" == true && "$identity_valid" == true \
+            && "$recovery_plan_match" == true && "$session_chain_match" == true ]]; then
+            if [[ "$receipt_status" == failed ]]; then
+                row_valid=true
+            elif [[ "$receipt_status" == completed && "$scratch_valid" == true \
+                && "$scratch_binary_match" == true ]]; then
+                row_valid=true
+            fi
+        fi
+        local candidate_emitted=false
+        if [[ "$receipt_status" == completed && "$scratch_valid" == true ]]; then
+            candidate_emitted=true
+            candidates["$config_key"]=$(( ${candidates["$config_key"]:-0} + 1 ))
+        fi
+        local ledger_state=structurally_invalid
+        if [[ "$receipt_present" == false ]]; then
+            ledger_state=pending_missing
+        elif [[ "$row_valid" == true && "$receipt_status" == completed ]]; then
+            ledger_state=completed
+        elif [[ "$row_valid" == true && "$receipt_status" == failed ]]; then
+            ledger_state=censored
+        fi
+        if [[ "$row_valid" != true ]]; then
+            invalid["$config_key"]=$(( ${invalid["$config_key"]:-0} + 1 ))
+        fi
+        if [[ "$ledger_state" != completed ]]; then
+            any_incomplete=true
+        fi
+        local raw_file="$receipt_file"
+        [[ "$scratch_present" == false ]] || raw_file="$csv"
+        local -a collector_row=(
+            ledger "$process_index" "$process_index" "$raw_file" "$receipt_file" "$csv"
+            "q${q}_n${n}" "$code" "$q" "$n" "$token" "$backend" "$batch"
+            "$ledger_state" "$candidate_emitted" "$receipt_present" "$receipt_valid"
+            "$scratch_present" "$scratch_valid" "$session_resolution" "$identity_valid"
+            "$provenance_complete" "$row_valid" "$reasons" "$receipt_schema"
+            "$receipt_run" "$receipt_session" "$receipt_position" "$receipt_q" "$receipt_n"
+            "$receipt_code" "$receipt_token" "$receipt_backend" "$receipt_batch"
+            "$receipt_warmup" "$receipt_started" "$receipt_finished" "$receipt_command"
+            "$receipt_scratch" "$receipt_status" "$receipt_exit" "$exit_file"
+            "$receipt_exit_agreement" "$receipt_failure" "$receipt_plan_sha"
+            "$receipt_manifest" "$receipt_prepared_manifest_sha" "$resolved_session"
+            "$session_id" "$session_campaign" "$session_started" "$session_source"
+            "$session_plan_path" "$session_plan_sha" "$session_manifest" "$session_wrapper"
+            "$session_actual_chain" "$session_expected_chain" "$session_chain_match"
+            "$scratch_binary_match" "$recovery_plan_sha256" "$recovery_plan_match"
+            "$scratch_q" "$scratch_n" "$scratch_backend" "$scratch_outcome" "$scratch_batch"
+            "$scratch_reps" "$scratch_matrices" "$scratch_zeros" "$scratch_total"
+            "$scratch_gen" "$scratch_eval" "$scratch_reduce" "$scratch_store" "$scratch_rate"
+            "$scratch_eval_rate" "${SCRATCH_META_VALUES[git_sha]:-}"
+            "${SCRATCH_META_VALUES[git_worktree_dirty]:-}"
+            "${SCRATCH_META_VALUES[harness_source_sha]:-}"
+            "${SCRATCH_META_VALUES[harness_source_dirty]:-}"
+            "${SCRATCH_META_VALUES[deps_source_sha]:-}"
+            "${SCRATCH_META_VALUES[deps_source_dirty]:-}"
+            "${SCRATCH_META_VALUES[binary_sha256]:-}" "${SCRATCH_META_VALUES[rustc]:-}"
+            "${SCRATCH_META_VALUES[cargo]:-}" "${SCRATCH_META_VALUES[cpu]:-}"
+            "${SCRATCH_META_VALUES[logical_cpus]:-}" "${SCRATCH_META_VALUES[rayon_threads]:-}"
+            "${SCRATCH_META_VALUES[avx2]:-}" "${SCRATCH_META_VALUES[cpu_governor]:-}"
+            "${SCRATCH_META_VALUES[gpu]:-}" "${SCRATCH_META_VALUES[rocm]:-}"
+            "${SCRATCH_META_VALUES[hip_feature]:-}" "${SCRATCH_META_VALUES[kernel]:-}"
+            "${SCRATCH_META_VALUES[timestamp_utc]:-}" "${SCRATCH_META_VALUES[invocation]:-}"
+        )
+        csv_write_row "$ledger_tmp" "${collector_row[@]}"
+        if [[ "$candidate_emitted" == true ]]; then
+            collector_row[0]=candidate_execution
+            csv_write_row "$candidates_tmp" "${collector_row[@]}"
+        fi
     done
-    local zero=0 key count
+    local key count
     for key in "${PREMEASURE_CONFIG_KEYS[@]}"; do
         for code in A B; do
-            local config_key
-            config_key="$key:$code"
-            count="${completed[$config_key]:-0}"
-            if [[ -n "${failures[$config_key]:-}" ]]; then
-                echo "completeness $config_key: $count/12 failures=${failures[$config_key]}"
-            else
-                echo "completeness $config_key: $count/12"
-            fi
-            if [[ "$count" -eq 0 ]]; then zero=$((zero + 1)); fi
+            local summary_key="$key:$code"
+            echo "completeness $summary_key: expected=${expected[$summary_key]:-0} completed=${completed[$summary_key]:-0} terminal=${terminal[$summary_key]:-0} invalid=${invalid[$summary_key]:-0} censored=${censored[$summary_key]:-0} candidates=${candidates[$summary_key]:-0}"
         done
     done
-    if [[ "$zero" -ne 0 ]]; then
-        rm -f "$tmp"
-        die "refusing to aggregate $zero configuration(s) with zero completed processes"
-    fi
-    mv "$tmp" "$run_dir/premeasure-candidates.csv"
-    echo "wrote $run_dir/premeasure-candidates.csv"
+    mv -f "$ledger_tmp" "$ledger_path"
+    mv -f "$candidates_tmp" "$candidates_path"
+    PREMEASURE_COLLECT_TMP_FILES=()
+    trap - EXIT
+    echo "wrote $ledger_path"
+    echo "wrote $candidates_path"
+    [[ "$any_incomplete" == false ]] || return "$CENSORED_EXIT"
 }
 
 run_premeasure() {
@@ -1105,9 +1695,7 @@ case "${1:-}" in
         run_premeasure "$(parse_session_cap "${@:2}")"
         ;;
     premeasure-collect)
-        require_command git
         require_command sha256sum
-        verify_manifest
         premeasure_collect
         ;;
     *) usage >&2; exit 2 ;;
