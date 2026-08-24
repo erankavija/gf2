@@ -1,0 +1,204 @@
+{
+ "epic_id": "b7157be6-16d8-4050-834c-e996d4fa27c3",
+ "epic_short_id": "b7157be6",
+ "current_wave": 1,
+ "waves": [
+  {
+   "wave_number": 1,
+   "issues": [
+    {
+     "id": null,
+     "short_id": "5dd3539f",
+     "key": "mrb-elimination-core",
+     "title": "Ordered-column elimination transform",
+     "classification": "implementation",
+     "model": "opus",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "377a7a62",
+     "key": "reliability-permutation-api",
+     "title": "Canonical reliability permutation API",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "80cead18",
+     "key": "soft-decision-trait-removal",
+     "title": "SoftDecisionDecoder trait removal",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "6beaf008",
+     "key": "osd-pattern-enumerator",
+     "title": "Bounded OSD pattern enumeration",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "835e15fb",
+     "key": "bp-posterior-access",
+     "title": "LDPC posterior LLR access",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "a82f2dd9",
+     "key": "osd-reference-curves",
+     "title": "Published eBCH OSD curve dataset",
+     "classification": "research",
+     "model": "opus",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "bebe485c",
+     "key": "osd-campaign-protocol",
+     "title": "Reusable OSD campaign protocol",
+     "classification": "implementation",
+     "model": "sol-xhigh",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 2,
+   "issues": [
+    {
+     "id": null,
+     "short_id": "ac78aff8",
+     "key": "orbgrand-reliability-cutover",
+     "title": "ORBGRAND reliability migration",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "dd6f1665",
+     "key": "chase-reliability-cutover",
+     "title": "Chase-Pyndiah reliability migration",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "f0d6fb9a",
+     "key": "ebch-128-64-factory",
+     "title": "Named eBCH(128,64) reference factory",
+     "classification": "implementation",
+     "model": "sol-xhigh",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 3,
+   "issues": [
+    {
+     "id": null,
+     "short_id": "abd48d99",
+     "key": "osd-reprocessing-engine",
+     "title": "Shared OSD reprocessing engine",
+     "classification": "implementation",
+     "model": "opus",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 4,
+   "issues": [
+    {
+     "id": null,
+     "short_id": "c97b2961",
+     "key": "osd-generator-decoder",
+     "title": "Generator-matrix OSD decoder",
+     "classification": "implementation",
+     "model": "sol-xhigh",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 5,
+   "issues": [
+    {
+     "id": null,
+     "short_id": "583ec31c",
+     "key": "osd-syndrome-adapter",
+     "title": "Syndrome-domain OSD adapter",
+     "classification": "implementation",
+     "model": "opus",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "c8322eff",
+     "key": "osd-campaign-binary",
+     "title": "eBCH OSD campaign executable",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "b3cab18e",
+     "key": "osd-pattern-segmentation",
+     "title": "OSD pattern segmentation policy",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 6,
+   "issues": [
+    {
+     "id": null,
+     "short_id": "d76ffd12",
+     "key": "bp-osd-decoder",
+     "title": "Mutable BP fallback composition",
+     "classification": "implementation",
+     "model": "sol-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "5194f470",
+     "key": "osd-discard-thresholds",
+     "title": "OSD discard thresholds",
+     "classification": "implementation",
+     "model": "luna-xhigh",
+     "status": "pending"
+    },
+    {
+     "id": null,
+     "short_id": "cef1ae5f",
+     "key": "osd-ebch-campaign",
+     "title": "eBCH OSD curve reproduction",
+     "classification": "research",
+     "model": "opus",
+     "status": "pending"
+    }
+   ]
+  }
+ ],
+ "created_during_execution": [],
+ "escalations": [],
+ "rework_counts": {},
+ "surfaced_pitfalls": [],
+ "started_at": "2026-08-24T19:48:07.381765+00:00"
+}
