@@ -40,6 +40,100 @@
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Llr(f32);
 
+/// Deterministic index orders for a slice of reliability magnitudes.
+///
+/// Both orders contain every input index exactly once. [`Self::ascending`]
+/// orders smaller magnitudes first, while [`Self::descending`] orders larger
+/// magnitudes first. Equal numeric magnitudes, including `-0.0` and `0.0`,
+/// are ordered by their original index in both directions.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::llr::ReliabilityPermutation;
+///
+/// let order = ReliabilityPermutation::from_magnitudes(&[2.0, 1.0, 2.0]);
+/// assert_eq!(order.ascending(), &[1, 0, 2]);
+/// assert_eq!(order.descending(), &[0, 2, 1]);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReliabilityPermutation {
+    ascending: Vec<usize>,
+    descending: Vec<usize>,
+}
+
+impl ReliabilityPermutation {
+    /// Builds deterministic ascending and descending index orders.
+    ///
+    /// The input values are interpreted as numeric reliability magnitudes.
+    /// Infinite values participate in the natural `f32` order. Equal values
+    /// are tied by original index, so each returned order is a permutation of
+    /// `0..magnitudes.len()`.
+    ///
+    /// # Arguments
+    ///
+    /// * `magnitudes` - Reliability magnitudes to order by index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any magnitude is NaN. NaN has no numeric ordering and is not
+    /// a valid reliability magnitude for this API.
+    ///
+    /// # Complexity
+    ///
+    /// O(n log n) time and O(n) additional space for `n` magnitudes.
+    pub fn from_magnitudes(magnitudes: &[f32]) -> Self {
+        assert!(
+            !magnitudes.iter().any(|magnitude| magnitude.is_nan()),
+            "reliability magnitude cannot be NaN"
+        );
+
+        let mut ascending: Vec<usize> = (0..magnitudes.len()).collect();
+        ascending.sort_by(|&left, &right| {
+            magnitudes[left]
+                .partial_cmp(&magnitudes[right])
+                .expect("NaN magnitudes were rejected above")
+                .then(left.cmp(&right))
+        });
+
+        let mut descending: Vec<usize> = (0..magnitudes.len()).collect();
+        descending.sort_by(|&left, &right| {
+            magnitudes[right]
+                .partial_cmp(&magnitudes[left])
+                .expect("NaN magnitudes were rejected above")
+                .then(left.cmp(&right))
+        });
+
+        Self {
+            ascending,
+            descending,
+        }
+    }
+
+    /// Returns indices from least reliable to most reliable.
+    ///
+    /// Equal magnitudes retain ascending original-index order.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    pub fn ascending(&self) -> &[usize] {
+        &self.ascending
+    }
+
+    /// Returns indices from most reliable to least reliable.
+    ///
+    /// Equal magnitudes retain ascending original-index order; this is not
+    /// necessarily the reverse of [`Self::ascending`].
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    pub fn descending(&self) -> &[usize] {
+        &self.descending
+    }
+}
+
 impl Llr {
     /// Creates a new LLR from a raw f32 value.
     ///
@@ -86,6 +180,28 @@ impl Llr {
     /// ```
     pub fn magnitude(self) -> f32 {
         self.0.abs()
+    }
+
+    /// Builds deterministic reliability index orders from LLR magnitudes.
+    ///
+    /// This convenience surface extracts each magnitude with
+    /// [`Llr::magnitude`] and delegates the ordering contract to
+    /// [`ReliabilityPermutation::from_magnitudes`].
+    ///
+    /// # Arguments
+    ///
+    /// * `llrs` - LLR values to order by reliability magnitude.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any LLR has a NaN magnitude.
+    ///
+    /// # Complexity
+    ///
+    /// O(n log n) time and O(n) additional space for `n` LLRs.
+    pub fn reliability_permutation(llrs: &[Llr]) -> ReliabilityPermutation {
+        let magnitudes: Vec<f32> = llrs.iter().map(|llr| llr.magnitude()).collect();
+        ReliabilityPermutation::from_magnitudes(&magnitudes)
     }
 
     /// Creates an LLR representing infinite confidence in bit 0.
