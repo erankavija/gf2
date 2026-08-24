@@ -2678,6 +2678,131 @@ mod tests {
         assert_batch_results_match_ryser::<7>(7);
     }
 
+    // This seed and stream identify the common matrix set used to compare each
+    // selectable backend within a field. Keep them fixed so a discrepancy is
+    // reproducible from this test alone.
+    const BACKEND_CONFORMANCE_ROOT_SEED: u64 = 0xC0DE_1947_125E_5EED;
+    const BACKEND_CONFORMANCE_STREAM_INDEX: u64 = 47;
+    const BACKEND_CONFORMANCE_MATRIX_COUNT: u64 = 12;
+    const BACKEND_CONFORMANCE_DIMENSION: u16 = 4;
+
+    fn assert_backend_conformance<const Q: u64>(
+        q: u8,
+        field_order: FieldOrder,
+        backends: &[Backend],
+    ) {
+        let mut reference_sampler = MatrixSampler::<Q>::new(MatrixAddress::new(
+            BACKEND_CONFORMANCE_ROOT_SEED,
+            field_order,
+            usize::from(BACKEND_CONFORMANCE_DIMENSION),
+            SamplerPurpose::CampaignCell,
+            StreamIndex::new(BACKEND_CONFORMANCE_STREAM_INDEX).unwrap(),
+        ))
+        .unwrap();
+        let mut entries = vec![Fp::<Q>::new(0); usize::from(BACKEND_CONFORMANCE_DIMENSION).pow(2)];
+        let reference: Vec<_> = (0..BACKEND_CONFORMANCE_MATRIX_COUNT)
+            .map(|_| {
+                reference_sampler.fill_next_matrix(&mut entries);
+                (
+                    entries.clone(),
+                    permanent_ryser(&entries, usize::from(BACKEND_CONFORMANCE_DIMENSION)).value(),
+                )
+            })
+            .collect();
+
+        for &backend in backends {
+            let mut campaign = manifest(vec![cell(
+                q,
+                BACKEND_CONFORMANCE_DIMENSION,
+                BACKEND_CONFORMANCE_MATRIX_COUNT,
+                &[(0, BACKEND_CONFORMANCE_STREAM_INDEX)],
+            )]);
+            campaign.root_seed = BACKEND_CONFORMANCE_ROOT_SEED;
+            campaign.cells[0].backend = backend;
+            let item = enumerate_work_items(&campaign, Some(q)).unwrap().remove(0);
+            let mut matrix_index = 0;
+
+            run_shard_for_with_observer_with_worker_count(
+                campaign.root_seed,
+                CAMPAIGN_CELL_PURPOSE_TAG,
+                &item,
+                field_order,
+                4,
+                #[cfg(feature = "hip")]
+                (backend == Backend::Accelerator).then_some(AcceleratorConfig {
+                    per_matrix_cost: Duration::ZERO,
+                    launch_cap: DEFAULT_ACCELERATOR_LAUNCH_CAP,
+                }),
+                #[cfg(not(feature = "hip"))]
+                None,
+                &mut |observed_entries: &[Fp<Q>], observed_permanent, _| {
+                    let (reference_entries, reference_permanent) = &reference[matrix_index];
+                    assert_eq!(
+                        observed_entries,
+                        reference_entries,
+                        "backend {} changed the common q={q} matrix set at index {matrix_index}",
+                        backend.name()
+                    );
+                    assert_eq!(
+                        observed_permanent,
+                        *reference_permanent,
+                        "backend {} disagreed with generic Ryser at q={q}, matrix {matrix_index}",
+                        backend.name()
+                    );
+                    matrix_index += 1;
+                },
+            )
+            .unwrap();
+            assert_eq!(
+                matrix_index,
+                BACKEND_CONFORMANCE_MATRIX_COUNT as usize,
+                "backend {} did not evaluate every common q={q} matrix",
+                backend.name()
+            );
+        }
+    }
+
+    #[test]
+    fn campaign_selectable_backends_match_generic_ryser_per_matrix() {
+        assert_backend_conformance::<3>(
+            3,
+            FieldOrder::F3,
+            &[
+                Backend::Scalar,
+                Backend::BatchParallel,
+                Backend::IntraMatrixParallel,
+                Backend::GenericRyser,
+            ],
+        );
+        assert_backend_conformance::<5>(
+            5,
+            FieldOrder::F5,
+            &[
+                Backend::Scalar,
+                Backend::BatchParallel,
+                Backend::GenericRyser,
+            ],
+        );
+        assert_backend_conformance::<7>(
+            7,
+            FieldOrder::F7,
+            &[
+                Backend::Scalar,
+                Backend::BatchParallel,
+                Backend::GenericRyser,
+            ],
+        );
+
+        #[cfg(feature = "hip")]
+        if gf2_algebra::gpu::has_usable_device() {
+            assert_backend_conformance::<3>(3, FieldOrder::F3, &[Backend::Accelerator]);
+            assert_backend_conformance::<5>(5, FieldOrder::F5, &[Backend::Accelerator]);
+            assert_backend_conformance::<7>(7, FieldOrder::F7, &[Backend::Accelerator]);
+        } else {
+            eprintln!("skipping accelerator backend conformance: no usable HIP accelerator device");
+        }
+    }
+
     #[test]
     fn batch_records_are_identical_across_configured_thread_counts() {
         for (q, stream_index) in [(3, 29), (5, 31), (7, 37)] {
