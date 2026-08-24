@@ -9324,3 +9324,5 @@
 {"fields":["dependencies"],"id":"1bd5d08b-3c72-4576-9918-f6dd0a9ef35b","issue_id":"6639435f-8be8-4408-b6ab-759fe0099bd2","timestamp":"2026-08-24T08:19:50.275669435Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["dependencies"],"id":"e40cbda4-5be3-49f3-bd18-21b940c81b14","issue_id":"6639435f-8be8-4408-b6ab-759fe0099bd2","timestamp":"2026-08-24T08:20:01.189027558Z","type":"issue_updated","updated_by":"dependency-remove"}
 {"fields":["dependencies"],"id":"058f82aa-b86c-44a8-a56e-bd1c77330f8a","issue_id":"b05c908b-690d-4caa-9e2d-46d0f9ae0acc","timestamp":"2026-08-24T08:20:12.428984674Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"b55eaebc-b6fc-4697-9cda-52dbd90fcfa3","issue_id":"1947125e-33eb-4442-b717-24442cc35ca1","timestamp":"2026-08-24T08:22:19.387077227Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-terra","id":"5c8bce3c-c337-47c4-8858-041c09f02769","issue_id":"1947125e-33eb-4442-b717-24442cc35ca1","timestamp":"2026-08-24T08:22:19.387077227Z","type":"issue_claimed"}
