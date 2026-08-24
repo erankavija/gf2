@@ -3,11 +3,13 @@ use std::path::{Path, PathBuf};
 
 use gf2_sim::checkpoint::{CheckpointPayload, CheckpointReader};
 use gf2_sim::osd_campaign::{
-    accepts_published_value, derive_cell_seed, run_osd_campaign, ArtifactIdentity, Availability,
-    BinomialIntervalMethod, BinomialIntervalSpec, GitRevision, OsdCampaign, OsdCampaignCheckpoint,
-    OsdCampaignProvenance, OsdCampaignTermination, OsdCell, OsdCellId, OsdCellRun,
-    OsdCellTermination, OsdWorkCounters, Provenance, RngAlgorithm, Sha256Digest,
-    OSD_CAMPAIGN_SCHEMA_VERSION,
+    accepts_published_value, derive_cell_seed, run_osd_campaign, BinomialIntervalMethod,
+    BinomialIntervalSpec, OsdCampaign, OsdCampaignCheckpoint, OsdCampaignProvenance,
+    OsdCampaignReceipt, OsdCampaignTermination, OsdCell, OsdCellId, OsdCellRun, OsdCellTermination,
+    OsdWorkCounters, OSD_CAMPAIGN_SCHEMA_VERSION,
+};
+use gf2_sim::permanent_campaign::schema::{
+    ArtifactIdentity, Availability, GitRevision, Provenance, RngAlgorithm, Sha256Digest,
 };
 
 struct TempDir(PathBuf);
@@ -95,6 +97,15 @@ fn work(eliminations: u64, patterns: u64, candidates: u64) -> OsdWorkCounters {
     }
 }
 
+fn completed_cell_ids(receipt: &OsdCampaignReceipt) -> Vec<OsdCellId> {
+    receipt
+        .cell_results
+        .iter()
+        .filter(|result| !matches!(result.termination, OsdCellTermination::Interrupted))
+        .map(|result| result.cell.id.clone())
+        .collect()
+}
+
 #[test]
 fn deterministic_cell_seeds_depend_on_root_and_stable_identity() {
     let alpha = "order-2-point-0".parse::<OsdCellId>().unwrap();
@@ -135,7 +146,9 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_shared_interval() {
         assert_eq!(context.resume.samples, 0);
         OsdCellRun {
             samples: 100,
-            errors: 12,
+            sampled_bits: 6_400,
+            bit_errors: 12,
+            block_errors: 7,
             work: work(100, 450, 431),
             termination: OsdCellTermination::Completed,
         }
@@ -147,24 +160,38 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_shared_interval() {
         <OsdCampaignCheckpoint as CheckpointPayload>::SCHEMA_VERSION,
         OSD_CAMPAIGN_SCHEMA_VERSION
     );
-    assert_eq!(receipt.cell_results[0].bler, 0.12);
+    assert_eq!(receipt.cell_results[0].ber, 12.0 / 6_400.0);
+    assert_eq!(receipt.cell_results[0].bler, 0.07);
     assert_eq!(
-        receipt.cell_results[0].confidence_interval.method,
+        receipt.cell_results[0].ber_confidence_interval.method,
         BinomialIntervalMethod::ClopperPearson
     );
-    assert_eq!(receipt.cell_results[0].confidence_interval.level, 0.95);
+    assert_eq!(receipt.cell_results[0].ber_confidence_interval.level, 0.95);
+    assert_eq!(receipt.cell_results[0].bler_confidence_interval.level, 0.95);
     assert_eq!(
         (
-            receipt.cell_results[0].confidence_interval.lower,
-            receipt.cell_results[0].confidence_interval.upper,
+            receipt.cell_results[0].ber_confidence_interval.lower,
+            receipt.cell_results[0].ber_confidence_interval.upper,
         ),
-        gf2_stats::intervals::clopper_pearson_interval(12, 100, 0.95)
+        gf2_stats::intervals::clopper_pearson_interval(12, 6_400, 0.95)
     );
     assert_eq!(
-        serde_json::from_str::<gf2_sim::osd_campaign::OsdCampaignReceipt>(
-            &serde_json::to_string(&receipt).unwrap()
-        )
-        .unwrap(),
+        (
+            receipt.cell_results[0].bler_confidence_interval.lower,
+            receipt.cell_results[0].bler_confidence_interval.upper,
+        ),
+        gf2_stats::intervals::clopper_pearson_interval(7, 100, 0.95)
+    );
+    assert!(receipt.cell_results[0].accepts_published_value(12.0 / 6_400.0));
+    assert!(!accepts_published_value(
+        12.0 / 6_400.0,
+        &receipt.cell_results[0].bler_confidence_interval,
+        receipt.cell_results[0].cell.digitization_precision,
+    ));
+    let receipt_json = serde_json::to_value(&receipt).unwrap();
+    assert!(receipt_json.get("completed_cells").is_none());
+    assert_eq!(
+        serde_json::from_value::<gf2_sim::osd_campaign::OsdCampaignReceipt>(receipt_json).unwrap(),
         receipt
     );
 
@@ -175,12 +202,12 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_shared_interval() {
     .load_payload()
     .expect("checkpoint envelope is valid")
     .expect("checkpoint exists");
+    let checkpoint_json = serde_json::to_value(&checkpoint).unwrap();
+    assert!(checkpoint_json.get("completed_cells").is_none());
     assert_eq!(
-        serde_json::from_str::<OsdCampaignCheckpoint>(&serde_json::to_string(&checkpoint).unwrap())
-            .unwrap(),
+        serde_json::from_value::<OsdCampaignCheckpoint>(checkpoint_json).unwrap(),
         checkpoint
     );
-    assert_eq!(checkpoint.completed_cells, receipt.completed_cells);
     assert_eq!(checkpoint.cell_results, receipt.cell_results);
 }
 
@@ -199,7 +226,9 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
         if context.cell.id == first_id {
             OsdCellRun {
                 samples: 10,
-                errors: 1,
+                sampled_bits: 640,
+                bit_errors: 3,
+                block_errors: 1,
                 work: work(10, 40, 38),
                 termination: OsdCellTermination::Completed,
             }
@@ -207,7 +236,9 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
             assert_eq!(context.cell.id, second_id);
             OsdCellRun {
                 samples: 4,
-                errors: 1,
+                sampled_bits: 256,
+                bit_errors: 2,
+                block_errors: 1,
                 work: work(4, 17, 15),
                 termination: OsdCellTermination::Interrupted,
             }
@@ -220,19 +251,23 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
             cell_id: second_id.clone()
         }
     );
-    assert_eq!(first_receipt.completed_cells, vec![first_id.clone()]);
+    assert_eq!(completed_cell_ids(&first_receipt), vec![first_id.clone()]);
 
     let mut resumed_calls = Vec::new();
     let resumed = run_osd_campaign(&checkpoint_path, &campaign, |context| {
         resumed_calls.push(context.cell.id.clone());
         assert_eq!(context.cell.id, second_id);
         assert_eq!(context.resume.samples, 4);
-        assert_eq!(context.resume.errors, 1);
+        assert_eq!(context.resume.sampled_bits, 256);
+        assert_eq!(context.resume.bit_errors, 2);
+        assert_eq!(context.resume.block_errors, 1);
         assert_eq!(context.resume.work, work(4, 17, 15));
         assert_eq!(context.seed, campaign.cell_seed(&second_id));
         OsdCellRun {
             samples: 10,
-            errors: 2,
+            sampled_bits: 640,
+            bit_errors: 4,
+            block_errors: 2,
             work: work(10, 45, 42),
             termination: OsdCellTermination::Completed,
         }
@@ -241,7 +276,7 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
 
     assert_eq!(resumed_calls, vec![second_id.clone()]);
     assert_eq!(resumed.termination, OsdCampaignTermination::Completed);
-    assert_eq!(resumed.completed_cells, vec![first_id, second_id]);
+    assert_eq!(completed_cell_ids(&resumed), vec![first_id, second_id]);
     assert_eq!(resumed.cell_results.len(), 3);
     assert!(matches!(
         &resumed.cell_results[1].termination,
@@ -280,19 +315,58 @@ fn resume_preserves_censored_exhausted_and_contradictory_results() {
         };
         OsdCellRun {
             samples: 20,
-            errors: 3,
+            sampled_bits: 1_280,
+            bit_errors: 5,
+            block_errors: 3,
             work: work(20, 80, 75),
             termination,
         }
     })
     .expect("terminal evidence is checkpointed");
 
-    assert_eq!(receipt.completed_cells.len(), 3);
+    assert_eq!(completed_cell_ids(&receipt).len(), 3);
     let recovered = run_osd_campaign(&checkpoint_path, &campaign, |_| {
         panic!("preserved terminal cells must not be repeated")
     })
     .expect("terminal evidence recovers");
     assert_eq!(recovered, receipt);
+}
+
+#[test]
+fn bit_and_block_counts_are_validated_against_their_own_samples() {
+    let campaign = campaign(vec![cell("accounting", 2.0, 2)]);
+
+    let bit_dir = TempDir::new("invalid-bit-accounting");
+    let bit_error = run_osd_campaign(bit_dir.path().join("checkpoint.json"), &campaign, |_| {
+        OsdCellRun {
+            samples: 1,
+            sampled_bits: 8,
+            bit_errors: 9,
+            block_errors: 1,
+            work: work(1, 1, 1),
+            termination: OsdCellTermination::Completed,
+        }
+    })
+    .expect_err("bit errors cannot exceed sampled bits");
+    assert!(bit_error
+        .to_string()
+        .contains("bit errors cannot exceed sampled bits"));
+
+    let block_dir = TempDir::new("invalid-block-accounting");
+    let block_error = run_osd_campaign(block_dir.path().join("checkpoint.json"), &campaign, |_| {
+        OsdCellRun {
+            samples: 1,
+            sampled_bits: 8,
+            bit_errors: 2,
+            block_errors: 2,
+            work: work(1, 1, 1),
+            termination: OsdCellTermination::Completed,
+        }
+    })
+    .expect_err("block errors cannot exceed sampled blocks");
+    assert!(block_error
+        .to_string()
+        .contains("block errors cannot exceed samples"));
 }
 
 #[test]

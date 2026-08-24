@@ -1,11 +1,12 @@
 //! Deterministic, resumable ordered-statistics-decoding campaigns.
 //!
 //! This module owns the campaign mechanics shared by OSD executables: explicit
-//! cell identities, order-independent seed derivation, named binomial
-//! intervals, strict checkpoint and receipt schemas, and cell-boundary resume.
-//! Domain executables retain only code/channel construction and one evaluator
-//! closure. Persistence delegates to [`crate::checkpoint`], while interval
-//! endpoints delegate to [`gf2_stats::intervals`].
+//! cell identities, order-independent seed derivation, bit- and block-error
+//! accounting, named binomial intervals for BER and BLER, strict checkpoint
+//! and receipt schemas, and cell-boundary resume. Domain executables retain
+//! only code/channel construction and one evaluator closure. Persistence
+//! delegates to [`crate::checkpoint`], while interval endpoints delegate to
+//! [`gf2_stats::intervals`].
 //!
 //! An interrupted evaluation reports cumulative counters. On the next call,
 //! the evaluator receives those counters in [`OsdCellExecution::resume`] and
@@ -23,11 +24,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader, CheckpointWriter,
 };
-
-pub use crate::permanent_campaign::schema::{
-    ArtifactIdentity, ArtifactPath, Availability, GitRevision, Provenance, RngAlgorithm,
-    Sha256Digest,
-};
+use crate::permanent_campaign::schema::{ArtifactIdentity, Provenance};
 
 /// The schema version shared by OSD checkpoints, receipts, and cell records.
 pub const OSD_CAMPAIGN_SCHEMA_VERSION: u32 = 1;
@@ -149,7 +146,7 @@ pub enum BinomialIntervalMethod {
     ClopperPearson,
 }
 
-/// Named confidence-interval configuration for all cells in one campaign.
+/// Named confidence-interval configuration for both rates in every cell.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BinomialIntervalSpec {
@@ -207,10 +204,12 @@ pub struct BinomialConfidenceInterval {
 /// Mechanical provenance attached to an OSD campaign receipt.
 ///
 /// This deliberately composes the permanent-campaign schema's canonical
-/// [`Provenance`] and [`ArtifactIdentity`] types. `runtime` records the git
-/// revision, compiler, invocation, and hardware observed by the producer;
-/// the two artifact identities bind the exact campaign configuration and the
-/// measurement behavior that gives prior receipts their validity.
+/// [`crate::permanent_campaign::schema::Provenance`] and
+/// [`crate::permanent_campaign::schema::ArtifactIdentity`] types. `runtime`
+/// records the git revision, compiler, invocation, and hardware observed by
+/// the producer; the two artifact identities bind the exact campaign
+/// configuration and the measurement behavior that gives prior receipts their
+/// validity.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OsdCampaignProvenance {
@@ -226,11 +225,11 @@ pub struct OsdCampaignProvenance {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OsdWorkCounters {
-    /// Ordered-basis eliminations performed across sampled frames.
+    /// Ordered-basis eliminations performed across sampled blocks.
     pub eliminations: u64,
-    /// Reprocessing patterns generated across sampled frames.
+    /// Reprocessing patterns generated across sampled blocks.
     pub generated_patterns: u64,
-    /// Candidate words tested across sampled frames.
+    /// Candidate words tested across sampled blocks.
     pub tested_candidates: u64,
 }
 
@@ -262,7 +261,7 @@ pub enum OsdCellTermination {
     },
     /// The result contradicts the recorded published comparison value.
     Contradictory {
-        /// Published value rejected by the widened receipt interval.
+        /// Published BER rejected by the widened BER receipt interval.
         published_value: f64,
     },
 }
@@ -276,14 +275,19 @@ impl OsdCellTermination {
 /// Cumulative evaluator output for one cell attempt.
 ///
 /// On resume these fields must be at least the corresponding values in
-/// [`OsdCellExecution::resume`]. `samples` must advance, and `errors` must not
-/// exceed `samples`; violations are refused before checkpoint persistence.
+/// [`OsdCellExecution::resume`]. Both sample denominators must advance, bit
+/// errors cannot exceed sampled bits, and block errors cannot exceed sampled
+/// blocks; violations are refused before checkpoint persistence.
 #[derive(Debug, Clone, PartialEq)]
 pub struct OsdCellRun {
-    /// Cumulative sampled frames for this cell.
+    /// Cumulative sampled blocks for this cell.
     pub samples: u64,
+    /// Cumulative sampled information bits across the sampled blocks.
+    pub sampled_bits: u64,
+    /// Cumulative information-bit errors for this cell.
+    pub bit_errors: u64,
     /// Cumulative block errors for this cell.
-    pub errors: u64,
+    pub block_errors: u64,
     /// Cumulative OSD work counters for this cell.
     pub work: OsdWorkCounters,
     /// State reached by this attempt.
@@ -293,10 +297,14 @@ pub struct OsdCellRun {
 /// Cumulative progress supplied to a resumed cell evaluator.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct OsdCellResume {
-    /// Samples already represented by the preceding attempt.
+    /// Sampled blocks already represented by the preceding attempt.
     pub samples: u64,
-    /// Errors already represented by the preceding attempt.
-    pub errors: u64,
+    /// Sampled information bits already represented by the preceding attempt.
+    pub sampled_bits: u64,
+    /// Information-bit errors already represented by the preceding attempt.
+    pub bit_errors: u64,
+    /// Block errors already represented by the preceding attempt.
+    pub block_errors: u64,
     /// OSD work already represented by the preceding attempt.
     pub work: OsdWorkCounters,
 }
@@ -322,14 +330,22 @@ pub struct OsdCellReceipt {
     pub cell: OsdCell,
     /// Deterministic cell seed.
     pub seed: u64,
-    /// Cumulative sampled frames.
+    /// Cumulative sampled blocks.
     pub samples: u64,
+    /// Cumulative sampled information bits.
+    pub sampled_bits: u64,
+    /// Cumulative information-bit errors.
+    pub bit_errors: u64,
     /// Cumulative block errors.
-    pub errors: u64,
-    /// Block error-rate point estimate `errors / samples`.
+    pub block_errors: u64,
+    /// Bit error-rate point estimate `bit_errors / sampled_bits`.
+    pub ber: f64,
+    /// Block error-rate point estimate `block_errors / samples`.
     pub bler: f64,
-    /// Named interval computed from `errors` and `samples`.
-    pub confidence_interval: BinomialConfidenceInterval,
+    /// Named BER interval computed from `bit_errors` and `sampled_bits`.
+    pub ber_confidence_interval: BinomialConfidenceInterval,
+    /// Named BLER interval computed from `block_errors` and `samples`.
+    pub bler_confidence_interval: BinomialConfidenceInterval,
     /// Cumulative OSD work.
     pub work: OsdWorkCounters,
     /// State reached by this cell attempt.
@@ -337,7 +353,7 @@ pub struct OsdCellReceipt {
 }
 
 impl OsdCellReceipt {
-    /// Tests the published value against this receipt's widened interval.
+    /// Tests a published BER against this receipt's widened BER interval.
     ///
     /// This uses the cell's recorded digitization precision and accepts both
     /// widened endpoints exactly.
@@ -345,7 +361,7 @@ impl OsdCellReceipt {
     pub fn accepts_published_value(&self, published_value: f64) -> bool {
         accepts_published_value(
             published_value,
-            &self.confidence_interval,
+            &self.ber_confidence_interval,
             self.cell.digitization_precision,
         )
     }
@@ -376,12 +392,10 @@ pub struct OsdCampaignCheckpoint {
     pub campaign_seed: u64,
     /// Ordered explicit campaign grid.
     pub cells: Vec<OsdCell>,
-    /// Named interval configuration applied to every result.
+    /// Named interval configuration applied to both rates in every result.
     pub interval: BinomialIntervalSpec,
     /// Runtime, configuration, and measurement-behavior provenance.
     pub provenance: OsdCampaignProvenance,
-    /// Identities of terminal cells that resume must not repeat.
-    pub completed_cells: Vec<OsdCellId>,
     /// Ordered history of cell attempts, including interrupted evidence.
     pub cell_results: Vec<OsdCellReceipt>,
     /// Latest campaign-wide execution state.
@@ -403,14 +417,12 @@ pub struct OsdCampaignReceipt {
     pub campaign_seed: u64,
     /// Ordered explicit campaign grid.
     pub cells: Vec<OsdCell>,
-    /// Named interval configuration applied to every result.
+    /// Named interval configuration applied to both rates in every result.
     pub interval: BinomialIntervalSpec,
     /// Runtime, configuration, and measurement-behavior provenance.
     pub provenance: OsdCampaignProvenance,
     /// Deterministic configuration hash bound to the checkpoint envelope.
     pub configuration_hash: String,
-    /// Identities of terminal cells that resume must not repeat.
-    pub completed_cells: Vec<OsdCellId>,
     /// Ordered history of all cell attempts.
     pub cell_results: Vec<OsdCellReceipt>,
     /// Final state of this invocation.
@@ -565,7 +577,7 @@ pub fn derive_cell_seed(campaign_seed: u64, cell_id: &OsdCellId) -> u64 {
     u64::from_le_bytes(seed_bytes)
 }
 
-/// Applies the preregistered widened-interval reproduction predicate.
+/// Applies the metric-agnostic widened-interval reproduction predicate.
 ///
 /// For finite values and a finite non-negative `digitization_precision`, this
 /// returns `true` exactly when `published_value` lies in the inclusive interval
@@ -590,10 +602,13 @@ pub fn accepts_published_value(
 ///
 /// The generic reader first validates the payload identity, schema version,
 /// and complete campaign hash. Each evaluator result is validated, converted
-/// to BLER plus the configured shared interval, and atomically checkpointed
-/// before the next cell. An interrupted result ends this invocation; a later
-/// call receives the same seed and cumulative resume counters. All terminal
-/// cell identities are skipped on recovery.
+/// to BER and BLER plus their configured shared intervals, and atomically
+/// checkpointed before the next cell. The receipt comparison method applies
+/// the metric-agnostic predicate to the BER interval because the campaign's
+/// published reproduction target is BER. An interrupted result ends this
+/// invocation; a later call receives the same seed and cumulative resume
+/// counters. All terminal cell identities are derived from their retained
+/// results and skipped on recovery.
 ///
 /// # Errors
 ///
@@ -626,7 +641,7 @@ pub fn run_osd_campaign(
         configuration_hash.clone(),
     )
     .map_err(OsdCampaignError::Io)?;
-    let mut completed: BTreeSet<_> = checkpoint.completed_cells.iter().cloned().collect();
+    let mut completed = settled_cell_ids(&checkpoint.cell_results);
 
     for cell in &campaign.cells {
         if completed.contains(&cell.id) {
@@ -655,7 +670,6 @@ pub fn run_osd_campaign(
 
         if terminal {
             completed.insert(cell.id.clone());
-            checkpoint.completed_cells.push(cell.id.clone());
             checkpoint.termination = if completed.len() == campaign.cells.len() {
                 OsdCampaignTermination::Completed
             } else {
@@ -671,7 +685,7 @@ pub fn run_osd_campaign(
             .map_err(OsdCampaignError::Io)?;
 
         if interrupted {
-            return Ok(receipt_from_checkpoint(checkpoint, configuration_hash));
+            return receipt_from_persisted_checkpoint(&reader, campaign, configuration_hash);
         }
     }
 
@@ -679,7 +693,7 @@ pub fn run_osd_campaign(
     writer
         .write_payload(&checkpoint)
         .map_err(OsdCampaignError::Io)?;
-    Ok(receipt_from_checkpoint(checkpoint, configuration_hash))
+    receipt_from_persisted_checkpoint(&reader, campaign, configuration_hash)
 }
 
 fn validate_cell(cell: &OsdCell) -> Result<(), OsdCampaignError> {
@@ -726,7 +740,6 @@ fn new_checkpoint(campaign: &OsdCampaign) -> OsdCampaignCheckpoint {
         cells: campaign.cells.clone(),
         interval: campaign.interval,
         provenance: campaign.provenance.clone(),
-        completed_cells: Vec::new(),
         cell_results: Vec::new(),
         termination: if campaign.cells.is_empty() {
             OsdCampaignTermination::Completed
@@ -743,9 +756,19 @@ fn latest_resume(results: &[OsdCellReceipt], cell_id: &OsdCellId) -> OsdCellResu
         .find(|receipt| &receipt.cell.id == cell_id)
         .map_or_else(OsdCellResume::default, |receipt| OsdCellResume {
             samples: receipt.samples,
-            errors: receipt.errors,
+            sampled_bits: receipt.sampled_bits,
+            bit_errors: receipt.bit_errors,
+            block_errors: receipt.block_errors,
             work: receipt.work,
         })
+}
+
+fn settled_cell_ids(results: &[OsdCellReceipt]) -> BTreeSet<OsdCellId> {
+    results
+        .iter()
+        .filter(|receipt| receipt.termination.is_terminal())
+        .map(|receipt| receipt.cell.id.clone())
+        .collect()
 }
 
 fn validate_cell_run(
@@ -760,11 +783,26 @@ fn validate_cell_run(
     if run.samples <= resume.samples {
         return Err(invalid("cumulative samples must advance"));
     }
-    if run.errors < resume.errors {
-        return Err(invalid("cumulative errors cannot decrease"));
+    if run.sampled_bits <= resume.sampled_bits {
+        return Err(invalid("cumulative sampled bits must advance"));
     }
-    if run.errors > run.samples {
-        return Err(invalid("errors cannot exceed samples"));
+    if run.sampled_bits < run.samples {
+        return Err(invalid("sampled bits cannot be less than samples"));
+    }
+    if run.bit_errors < resume.bit_errors {
+        return Err(invalid("cumulative bit errors cannot decrease"));
+    }
+    if run.block_errors < resume.block_errors {
+        return Err(invalid("cumulative block errors cannot decrease"));
+    }
+    if run.bit_errors > run.sampled_bits {
+        return Err(invalid("bit errors cannot exceed sampled bits"));
+    }
+    if run.block_errors > run.samples {
+        return Err(invalid("block errors cannot exceed samples"));
+    }
+    if run.block_errors > run.bit_errors {
+        return Err(invalid("block errors cannot exceed bit errors"));
     }
     if !run.work.contains(resume.work) {
         return Err(invalid("cumulative OSD work counters cannot decrease"));
@@ -789,12 +827,35 @@ fn make_cell_receipt(campaign: &OsdCampaign, cell: &OsdCell, run: OsdCellRun) ->
         cell: cell.clone(),
         seed: campaign.cell_seed(&cell.id),
         samples: run.samples,
-        errors: run.errors,
-        bler: run.errors as f64 / run.samples as f64,
-        confidence_interval: campaign.interval.compute(run.errors, run.samples),
+        sampled_bits: run.sampled_bits,
+        bit_errors: run.bit_errors,
+        block_errors: run.block_errors,
+        ber: run.bit_errors as f64 / run.sampled_bits as f64,
+        bler: run.block_errors as f64 / run.samples as f64,
+        ber_confidence_interval: campaign.interval.compute(run.bit_errors, run.sampled_bits),
+        bler_confidence_interval: campaign.interval.compute(run.block_errors, run.samples),
         work: run.work,
         termination: run.termination,
     }
+}
+
+fn same_derived_probability(left: f64, right: f64) -> bool {
+    const MAX_ULPS: u64 = 4;
+
+    left == right
+        || (left.is_finite()
+            && right.is_finite()
+            && left.to_bits().abs_diff(right.to_bits()) <= MAX_ULPS)
+}
+
+fn same_derived_interval(
+    left: BinomialConfidenceInterval,
+    right: BinomialConfidenceInterval,
+) -> bool {
+    left.method == right.method
+        && left.level == right.level
+        && same_derived_probability(left.lower, right.lower)
+        && same_derived_probability(left.upper, right.upper)
 }
 
 fn validate_checkpoint(
@@ -850,17 +911,37 @@ fn validate_checkpoint(
         let resume = latest.get(&receipt.cell.id).copied().unwrap_or_default();
         let run = OsdCellRun {
             samples: receipt.samples,
-            errors: receipt.errors,
+            sampled_bits: receipt.sampled_bits,
+            bit_errors: receipt.bit_errors,
+            block_errors: receipt.block_errors,
             work: receipt.work,
             termination: receipt.termination.clone(),
         };
         validate_cell_run(cell, resume, &run).map_err(|error| invalid(error.to_string()))?;
-        let expected_interval = campaign.interval.compute(receipt.errors, receipt.samples);
-        let expected_bler = receipt.errors as f64 / receipt.samples as f64;
-        if receipt.bler != expected_bler || receipt.confidence_interval != expected_interval {
+        let expected_ber_interval = campaign
+            .interval
+            .compute(receipt.bit_errors, receipt.sampled_bits);
+        let expected_bler_interval = campaign
+            .interval
+            .compute(receipt.block_errors, receipt.samples);
+        let expected_ber = receipt.bit_errors as f64 / receipt.sampled_bits as f64;
+        let expected_bler = receipt.block_errors as f64 / receipt.samples as f64;
+        if !same_derived_probability(receipt.ber, expected_ber)
+            || !same_derived_probability(receipt.bler, expected_bler)
+            || !same_derived_interval(receipt.ber_confidence_interval, expected_ber_interval)
+            || !same_derived_interval(receipt.bler_confidence_interval, expected_bler_interval)
+        {
             return Err(invalid(format!(
-                "statistical fields disagree with counts for cell {}",
-                receipt.cell.id
+                "statistical fields disagree with counts for cell {}: BER {} (expected {}), BLER {} (expected {}), BER interval {:?} (expected {:?}), BLER interval {:?} (expected {:?})",
+                receipt.cell.id,
+                receipt.ber,
+                expected_ber,
+                receipt.bler,
+                expected_bler,
+                receipt.ber_confidence_interval,
+                expected_ber_interval,
+                receipt.bler_confidence_interval,
+                expected_bler_interval,
             )));
         }
         if let OsdCellTermination::Contradictory { published_value } = &receipt.termination {
@@ -878,18 +959,14 @@ fn validate_checkpoint(
             receipt.cell.id.clone(),
             OsdCellResume {
                 samples: receipt.samples,
-                errors: receipt.errors,
+                sampled_bits: receipt.sampled_bits,
+                bit_errors: receipt.bit_errors,
+                block_errors: receipt.block_errors,
                 work: receipt.work,
             },
         );
     }
 
-    let completed: BTreeSet<_> = checkpoint.completed_cells.iter().cloned().collect();
-    if completed.len() != checkpoint.completed_cells.len() || completed != settled {
-        return Err(invalid(
-            "completed cell identities do not match terminal results".to_owned(),
-        ));
-    }
     let expected_termination = if settled.len() == campaign.cells.len() {
         OsdCampaignTermination::Completed
     } else if let Some(last) = checkpoint.cell_results.last() {
@@ -922,8 +999,24 @@ fn receipt_from_checkpoint(
         interval: checkpoint.interval,
         provenance: checkpoint.provenance,
         configuration_hash,
-        completed_cells: checkpoint.completed_cells,
         cell_results: checkpoint.cell_results,
         termination: checkpoint.termination,
     }
+}
+
+fn receipt_from_persisted_checkpoint(
+    reader: &CheckpointReader<OsdCampaignCheckpoint, String>,
+    campaign: &OsdCampaign,
+    configuration_hash: String,
+) -> Result<OsdCampaignReceipt, OsdCampaignError> {
+    let checkpoint = reader
+        .load_payload()
+        .map_err(OsdCampaignError::Checkpoint)?
+        .ok_or_else(|| {
+            OsdCampaignError::InvalidCheckpoint(
+                "checkpoint disappeared after a successful durable write".to_owned(),
+            )
+        })?;
+    validate_checkpoint(&checkpoint, campaign)?;
+    Ok(receipt_from_checkpoint(checkpoint, configuration_hash))
 }
