@@ -713,7 +713,7 @@
   ],
   "started_at": "2026-08-09T12:20:30Z",
   "rederived_at": "2026-08-24T22:45:48+03:00",
-  "rederivation_note": "Session 15 reconciled waves 8-13 from the live graph over the 15 open label-matching records, including epic b8206228: 7a816262 and 1947125e are the active frontier; 3f664839 and 73317b2e follow; new 8ec10dde and the three campaign arms follow; then 6639435f and f27150a5; then 53d8e438, b05c908b, and f74e327d; finally 0665e7be and b5d45bcd. Historical unfinished entries were moved forward in this progress view only; no JIT dependency was changed by reconciliation.",
+  "rederivation_note": "Session 15 reconciled waves 8-13 from the live graph over the 16 open label-matching records, including epic b8206228: 7a816262 and 1947125e are the active frontier; 3f664839 and 73317b2e follow; new 8ec10dde and the three campaign arms follow; then 6639435f and f27150a5; then 53d8e438, b05c908b, and f74e327d; finally 0665e7be and b5d45bcd. Historical unfinished entries were moved forward in this progress view only; no JIT dependency was changed by reconciliation.",
   "overnight_runs": [
     {
       "armed_at": "2026-08-18T21:21+03:00",
