@@ -85,7 +85,16 @@ fn selects_greedy_independent_columns_in_preference_order() {
     //     [0 1 0 1]
     //     [1 1 1 0]
     let mut a = BitMatrix::zeros(3, 4);
-    for (r, c) in [(0, 0), (0, 2), (0, 3), (1, 1), (1, 3), (2, 0), (2, 1), (2, 2)] {
+    for (r, c) in [
+        (0, 0),
+        (0, 2),
+        (0, 3),
+        (1, 1),
+        (1, 3),
+        (2, 0),
+        (2, 1),
+        (2, 2),
+    ] {
         a.set(r, c, true);
     }
 
@@ -114,7 +123,12 @@ fn selects_greedy_independent_columns_in_preference_order() {
 fn transform_reproduces_the_reduced_matrix() {
     for cols in BOUNDARY_SIZES {
         for rows in [1usize, 5, 64, 65] {
-            let a = random_matrix(rows, cols, 0.5, 0xA11CE ^ (rows as u64) ^ (cols as u64) << 8);
+            let a = random_matrix(
+                rows,
+                cols,
+                0.5,
+                0xA11CE ^ (rows as u64) ^ (cols as u64) << 8,
+            );
             let preference = reversed_preference(cols);
             let result = ordered_column_elimination(&a, &preference).expect("valid preference");
 
@@ -142,7 +156,11 @@ fn selected_columns_match_the_rank_and_are_preference_ordered() {
         let result = ordered_column_elimination(&a, &preference).expect("valid preference");
 
         assert_eq!(result.selected_cols.len(), result.rank);
-        assert_eq!(result.rank, rref(&a, false).rank, "rank is order-independent");
+        assert_eq!(
+            result.rank,
+            rref(&a, false).rank,
+            "rank is order-independent"
+        );
 
         let positions: Vec<usize> = result
             .selected_cols
@@ -171,7 +189,9 @@ fn transformed_system_has_the_same_solutions() {
             for seed in 0..4u64 {
                 let x = random_vector(cols, seed ^ 0xF00D);
                 let b = a.matvec(&x);
-                let transformed = result.apply_transform(&b).expect("conforming right-hand side");
+                let transformed = result
+                    .apply_transform(&b)
+                    .expect("conforming right-hand side");
 
                 assert_eq!(
                     result.reduced.matvec(&x),
@@ -193,7 +213,10 @@ fn apply_transform_agrees_with_the_returned_matrix() {
     let result = ordered_column_elimination(&a, &natural_preference(12)).expect("valid preference");
     let b = random_vector(9, 99);
 
-    assert_eq!(result.apply_transform(&b).expect("conforming"), result.transform.matvec(&b));
+    assert_eq!(
+        result.apply_transform(&b).expect("conforming"),
+        result.transform.matvec(&b)
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -371,13 +394,16 @@ fn preference_repeated_column_is_rejected() {
 fn right_hand_side_length_mismatch_is_rejected() {
     let a = random_matrix(4, 6, 0.5, 7);
     let result = ordered_column_elimination(&a, &natural_preference(6)).expect("valid preference");
-    let expected = Err(OrderedEliminationError::RightHandSideLength {
+    let expected = OrderedEliminationError::RightHandSideLength {
         expected: 4,
         actual: 6,
-    });
+    };
 
-    assert_eq!(result.apply_transform(&BitVec::zeros(6)), expected);
-    assert_eq!(result.is_consistent(&BitVec::zeros(6)), expected);
+    assert_eq!(
+        result.apply_transform(&BitVec::zeros(6)),
+        Err(expected.clone())
+    );
+    assert_eq!(result.is_consistent(&BitVec::zeros(6)), Err(expected));
 }
 
 #[test]
@@ -429,7 +455,12 @@ fn natural_order_matches_left_to_right_rref() {
 fn reversed_order_matches_right_to_left_rref() {
     for cols in BOUNDARY_SIZES {
         for rows in [0usize, 1, 5, 64, 65] {
-            let a = random_matrix(rows, cols, 0.5, 0xC0FFEE ^ (rows as u64) << 32 ^ cols as u64);
+            let a = random_matrix(
+                rows,
+                cols,
+                0.5,
+                0xC0FFEE ^ (rows as u64) << 32 ^ cols as u64,
+            );
             let ordered = ordered_column_elimination(&a, &reversed_preference(cols))
                 .expect("valid preference");
             let baseline = rref(&a, true);
