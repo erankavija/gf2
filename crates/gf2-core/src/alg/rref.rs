@@ -510,8 +510,9 @@ impl OrderedEliminationResult {
         Ok(self.transform.matvec(rhs))
     }
 
-    /// Reports whether a transformed right-hand side lies in the reachable row
-    /// space, that is, whether the system has a solution.
+    /// Reports whether a transformed right-hand side lies in the image
+    /// (column space) of the eliminated matrix, that is, whether the system
+    /// has a solution.
     ///
     /// Takes the output of [`apply_transform`](Self::apply_transform). Rows
     /// `rank..` of `reduced` are zero, so a set entry at any of those rows
@@ -580,7 +581,9 @@ impl OrderedEliminationResult {
 ///
 /// # Complexity
 ///
-/// O(rank × rows × (cols + rows) / 64) word operations.
+/// O(rank × rows × (cols + rows) / 64) word operations for the elimination
+/// itself, plus O(cols) preference validation and O(rows × cols / 64) pivot
+/// scanning that is paid even when the rank is zero.
 ///
 /// # Examples
 ///
