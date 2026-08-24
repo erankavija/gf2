@@ -89,6 +89,22 @@ for sid in "$@"; do
         exit 1
     fi
 
+    pool="${LEAD_CACHE_POOL:-$repo_root/.agents/cache-pool}"
+    if [[ -d "$pool" ]]; then
+        for cache_dir in "$pool"/*/; do
+            [[ -d "$cache_dir" ]] || continue
+            name="$(basename "$cache_dir")"
+            if cp -al "$cache_dir" "$wt_path/$name" 2>/dev/null; then
+                seed_mode="hardlink"
+            else
+                rm -rf "${wt_path:?}/${name:?}"
+                cp -a "$cache_dir" "$wt_path/$name"
+                seed_mode="copy"
+            fi
+            echo "[ok] $wt_path/$name seeded from pool ($seed_mode)"
+        done
+    fi
+
     echo "[ok] $wt_path  branch=$wt_branch  base=${short_main_sha}"
     created+=("$sid")
 done
@@ -115,6 +131,9 @@ Hard rules for path discipline (worktree-dispatch-protocol):
   files into main's checkout.
 - Never run 'git checkout', 'git switch', 'git worktree add/remove'.
 - Commit on your worktree branch only. Do not push.
+- Keep every build/dependency cache inside the worktree (it may be
+  pre-seeded warm). Never place a cache on tmpfs or outside the
+  worktree.
 EOF
 done
 
