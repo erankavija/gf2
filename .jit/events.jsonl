@@ -9360,3 +9360,5 @@
 {"fields":["documents"],"id":"e311e322-4536-4795-bd29-3a8081a74d34","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-24T19:51:10.276155415Z","type":"issue_updated","updated_by":"doc-add"}
 {"id":"3f1169c9-9724-4c9b-b981-1cb66c84edb2","issue_id":"679cf170-1ebf-4f70-a763-a624d9680d8a","priority":"high","timestamp":"2026-08-24T19:53:15.495089831Z","title":"Scope campaign emission provenance to the measured artifact","type":"issue_created"}
 {"fields":["dependencies"],"id":"d2afe17f-d907-471c-87e4-e70df76310a2","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-24T19:53:30.837801710Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"1ef833f5-ab46-4ae1-a168-2c1a2cd0b0e2","issue_id":"679cf170-1ebf-4f70-a763-a624d9680d8a","timestamp":"2026-08-24T19:57:22.060905094Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:gf2-a1","id":"b04ee881-e3f0-4269-895e-bde904f0f29b","issue_id":"679cf170-1ebf-4f70-a763-a624d9680d8a","timestamp":"2026-08-24T19:57:22.060905094Z","type":"issue_claimed"}
