@@ -21,7 +21,7 @@
     "component:gf2-coding"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "SoftDecisionDecoder trait removal",
-  "updated_at": "2026-08-24T05:54:23.683137948Z"
+  "updated_at": "2026-08-24T19:42:48.697532913Z"
 }
