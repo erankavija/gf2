@@ -49,7 +49,7 @@
      "title": "LDPC posterior LLR access",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "continuation worker running; merge deferred"
+     "status": "review-passed at b3d76014; merge+gates after 07:40; note: tests module-local, not disclosed tests/ldpc_posterior.rs"
     },
     {
      "id": null,
@@ -90,7 +90,7 @@
      "title": "Chase-Pyndiah reliability migration",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "in-progress-worker-running"
+     "status": "review-passed at 24962b69; merge+gates after 07:40"
     },
     {
      "id": null,
