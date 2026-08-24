@@ -9370,3 +9370,4 @@
 {"fields":["labels"],"id":"2b7382b3-8824-4a28-aa74-aa4c0a7f2d83","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-24T20:44:06.173111546Z","type":"issue_updated","updated_by":"issue-update"}
 {"id":"10d41784-0e60-4702-864b-750b9c210b9d","issue_id":"c0bb2ab1-b25e-48d6-a0fb-ebc5ab6b318a","priority":"normal","timestamp":"2026-08-24T20:56:53.208198437Z","title":"Blocked schedule for ordered-column elimination","type":"issue_created"}
 {"gate_key":"plan-review","id":"93ad9166-b1c5-4dfc-9d30-e1768aba52c7","issue_id":"312200e4-dce9-44d3-8b55-c20c610e1c03","timestamp":"2026-08-24T21:02:27.784132540Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"breakdown-review","id":"288f7fe2-14b4-48cb-9469-70fa23c349b3","issue_id":"8d650253-6afe-4da5-b41b-e713e92c12a6","timestamp":"2026-08-24T21:07:36.206423920Z","type":"gate_passed","updated_by":"auto:executor"}

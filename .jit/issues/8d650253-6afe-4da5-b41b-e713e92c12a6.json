@@ -17,7 +17,7 @@
   "gates_status": {
     "breakdown-review": {
       "status": "passed",
-      "updated_at": "2026-08-24T19:41:52.394108354Z",
+      "updated_at": "2026-08-24T21:07:36.206423920Z",
       "updated_by": "auto:executor"
     },
     "coverage-preview": {
@@ -39,5 +39,5 @@
   "priority": "high",
   "state": "done",
   "title": "breakdown: Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-24T19:42:12.946888164Z"
+  "updated_at": "2026-08-24T21:07:36.206423920Z"
 }
