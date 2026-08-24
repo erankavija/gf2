@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-24T21:36:43.241288621Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6beaf008-b524-4922-b77f-3f1a838635d4",
   "labels": [
     "type:task",
@@ -27,5 +33,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Bounded OSD pattern enumeration",
-  "updated_at": "2026-08-24T19:48:45.956707315Z"
+  "updated_at": "2026-08-24T21:36:43.241288621Z"
 }

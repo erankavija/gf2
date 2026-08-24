@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-24T21:35:33.418677304Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "377a7a62-ae1f-486f-bac9-2106095d7cb0",
   "labels": [
     "type:task",
@@ -27,5 +33,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Canonical reliability permutation API",
-  "updated_at": "2026-08-24T19:48:28.053735483Z"
+  "updated_at": "2026-08-24T21:35:33.418677304Z"
 }

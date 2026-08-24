@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-24T21:37:53.144636710Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "bebe485c-82c8-49a5-aea8-20b44ad4fb3a",
   "labels": [
     "type:task",
@@ -26,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reusable OSD campaign protocol",
-  "updated_at": "2026-08-24T20:43:41.714493169Z"
+  "updated_at": "2026-08-24T21:37:53.144636710Z"
 }
