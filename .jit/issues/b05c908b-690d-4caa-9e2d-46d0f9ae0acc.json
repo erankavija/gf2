@@ -3,9 +3,10 @@
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
-    "6639435f-8be8-4408-b6ab-759fe0099bd2"
+    "6639435f-8be8-4408-b6ab-759fe0099bd2",
+    "f27150a5-8713-4bce-b404-9e477937d498"
   ],
-  "description": "The validated rare-event estimator produces one estimate at the preregistered target $(q, n, k)$ beyond direct sampling's reach, published as its own receipted artefact.\n\n## Background\n\nThe estimate is the point of the estimator, and it is also the number nobody can check directly — which is why it lands only after the estimator's unbiasedness and coverage are demonstrated, and why the run's own diagnostics travel with it. An estimate that cannot state its variance and effective sample size is a number, not a result.\n\nThe artefact is a derived product: like every derived artefact it sits outside the dataset's raw checksum set and modifies no published raw file.\n\n## Success Criteria\n\n- [aspirational] REQ-01: One estimate is produced at the preregistered target $(q, n, k)$, reporting its variance and effective sample size beside the estimate itself.\n- [aspirational] REQ-02: The artefact records the estimator configuration, the reserved rare-event stream purpose its draws came from, the seeds, the git revision, and the toolchain, so the run is reproducible from the artefact alone.\n- [aspirational] REQ-03: A run whose effective sample size falls below the design's usability threshold is recorded as unusable rather than as an estimate, and that outcome closes this work honestly.\n- [aspirational] REQ-04: The artefact is its own document under the campaign home, outside the raw checksum set, and modifies no other published artefact.\n\n## Notes\n\nEvery criterion here is aspirational: whether the preregistered target is reachable at a usable effective sample size is exactly what the run determines.\n",
+  "description": "The preregistered target receives an exact rational permanental-rank-deficiency probability, accompanied by an independent importance-sampling cross-check and full provenance.\n\n## Background\n\nExact compressed-state propagation is the authoritative calculation. The stochastic result provides an independently accumulated uncertainty-bearing check, not a substitute estimate. A failed or unusable stochastic check does not erase the exact value and is preserved as a falsification record.\n\nThe result is a derived campaign artifact outside the raw dataset checksum set.\n\n## Success Criteria\n\n- [aspirational] REQ-01: Publishes the exact numerator, denominator, scientific-notation rendering, and logarithmic rendering for $(q,n,k)=(3,1024,3)$.\n- [aspirational] REQ-02: Reports the theorem margin $3<0.1\\sqrt{1024}=3.2$ and quantifies direct-sampling infeasibility against the exact result and the cited leading-order prediction.\n- [aspirational] REQ-03: Publishes the independent stochastic point estimate, interval, variance, sample count, ESS, and usability verdict beside the exact value.\n- [aspirational] REQ-04: Preserves disagreement, failed coverage, or inadequate ESS without rerunning, retuning, or replacing the stochastic result.\n- [aspirational] REQ-05: Records the final manifest identity, rare-event stream addresses, seeds, git revision, toolchain, executable identity, and exact algorithm version.\n- [aspirational] REQ-06: Stores the artifact under the finalized campaign home, outside the raw checksum set, and modifies no previously published raw or derived artifact.\n",
   "documents": [],
   "gates_required": [
     "doc-review",
@@ -22,6 +23,6 @@
   ],
   "priority": "low",
   "state": "backlog",
-  "title": "Preregistered rare-event estimate beyond direct sampling",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "title": "Exact permanental-rank probability beyond direct sampling",
+  "updated_at": "2026-08-24T08:20:12.428984674Z"
 }
