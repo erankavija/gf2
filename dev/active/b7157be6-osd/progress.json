@@ -13,7 +13,7 @@
      "title": "Ordered-column elimination transform",
      "classification": "implementation",
      "model": "opus",
-     "status": "merged-gates-pending"
+     "status": "merged; cargo-ci passed; code-review FAILED R1 (2 doc findings, fixed at dc81c2bd, rerun pending); doc-review pending"
     },
     {
      "id": null,
@@ -22,7 +22,7 @@
      "title": "Canonical reliability permutation API",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "review-pending-gates"
+     "status": "merged; cargo-ci passed; code-review/doc-review pending"
     },
     {
      "id": null,
@@ -31,7 +31,7 @@
      "title": "SoftDecisionDecoder trait removal",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "review-pending-gates"
+     "status": "merged; cargo-ci passed; code-review/doc-review pending"
     },
     {
      "id": null,
@@ -40,7 +40,7 @@
      "title": "Bounded OSD pattern enumeration",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "review-passed-merge-pending"
+     "status": "merged; cargo-ci passed; code-review/doc-review pending"
     },
     {
      "id": null,
@@ -49,7 +49,7 @@
      "title": "LDPC posterior LLR access",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "in-progress-continuation"
+     "status": "continuation worker running; merge deferred"
     },
     {
      "id": null,
@@ -58,7 +58,7 @@
      "title": "Published eBCH OSD curve dataset",
      "classification": "research",
      "model": "opus",
-     "status": "review-passed-merge-pending"
+     "status": "merged; content review passed under D-21; doc-review/research-review pending"
     },
     {
      "id": null,
@@ -67,7 +67,7 @@
      "title": "Reusable OSD campaign protocol",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "review-passed-merge-pending"
+     "status": "merged (rework R1 complete); cargo-ci passed; code-review/doc-review pending"
     }
    ]
   },
@@ -81,7 +81,7 @@
      "title": "ORBGRAND reliability migration",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "in-progress-worker-running"
     },
     {
      "id": null,
@@ -90,7 +90,7 @@
      "title": "Chase-Pyndiah reliability migration",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "in-progress-worker-running"
     },
     {
      "id": null,
@@ -99,7 +99,7 @@
      "title": "Named eBCH(128,64) reference factory",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "pending"
+     "status": "claimed-not-dispatched (worktree ready, target seeded warm)"
     }
    ]
   },
@@ -205,7 +205,8 @@
  ],
  "escalations": [],
  "rework_counts": {
-  "bebe485c": 1
+  "bebe485c": 1,
+  "5dd3539f": 1
  },
  "surfaced_pitfalls": [
   {
