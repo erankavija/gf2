@@ -40,7 +40,7 @@
      "title": "Bounded OSD pattern enumeration",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "review-passed-merge-pending"
     },
     {
      "id": null,
@@ -49,7 +49,7 @@
      "title": "LDPC posterior LLR access",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "in-progress-continuation"
     },
     {
      "id": null,
@@ -67,7 +67,7 @@
      "title": "Reusable OSD campaign protocol",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "rework"
+     "status": "review-passed-merge-pending"
     }
    ]
   },
@@ -219,13 +219,15 @@
    "id": "PIT-02",
    "issue": "bebe485c",
    "source": "agent:codex live review; caused by lead dispatch pin wording",
-   "text": "osd_campaign publicly re-exports permanent_campaign::schema types, creating a second public path. Review must strip pub use; public signatures reference gf2_sim::permanent_campaign::schema directly; shared-module extraction deferred as tracked follow-up while 679cf170 is in flight."
+   "text": "osd_campaign publicly re-exports permanent_campaign::schema types, creating a second public path. Review must strip pub use; public signatures reference gf2_sim::permanent_campaign::schema directly; shared-module extraction deferred as tracked follow-up while 679cf170 is in flight.",
+   "resolution": "Resolved in rework commit 38e2175f; verified closed at HEAD."
   },
   {
    "id": "PIT-03",
    "issue": "bebe485c",
    "source": "agent:codex live review",
-   "text": "Checkpoint/Receipt persist both completed_cells and cell_results; settled set is fully derivable from terminal OsdCellReceipt entries (validate_checkpoint proves equality). Review requires deriving the set and removing completed_cells unless worker demonstrates a non-derivable semantic distinction (single-source-prose/convention-convergence)."
+   "text": "Checkpoint/Receipt persist both completed_cells and cell_results; settled set is fully derivable from terminal OsdCellReceipt entries (validate_checkpoint proves equality). Review requires deriving the set and removing completed_cells unless worker demonstrates a non-derivable semantic distinction (single-source-prose/convention-convergence).",
+   "resolution": "Resolved in rework commit 38e2175f; verified closed at HEAD."
   },
   {
    "id": "PIT-04",
