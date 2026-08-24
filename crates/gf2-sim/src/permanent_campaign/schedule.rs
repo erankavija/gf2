@@ -2801,6 +2801,9 @@ mod tests {
         } else {
             eprintln!("skipping accelerator backend conformance: no usable HIP accelerator device");
         }
+
+        #[cfg(not(feature = "hip"))]
+        eprintln!("skipping accelerator backend conformance: HIP support is not enabled");
     }
 
     #[test]
