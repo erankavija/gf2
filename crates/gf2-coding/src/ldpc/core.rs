@@ -1016,6 +1016,33 @@ impl LdpcDecoder {
         }
     }
 
+    /// Returns the current posterior LLR for each variable node.
+    ///
+    /// The returned slice has exactly [`LdpcCode::n`] entries and is read-only;
+    /// it does not expose the decoder's message-passing state for mutation.
+    /// A newly constructed decoder and a decoder after [`IterativeSoftDecoder::reset`]
+    /// return zero beliefs. After decoding, the slice contains the beliefs from
+    /// the final BP iteration, including when the final hard word fails its
+    /// syndrome check, so callers can use it for immediate post-processing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
+    /// use gf2_coding::llr::Llr;
+    ///
+    /// let code = LdpcCode::from_edges(1, 3, &[(0, 0), (0, 1), (0, 2)]);
+    /// let mut decoder = LdpcDecoder::new(code.clone());
+    /// assert_eq!(decoder.posterior_llrs().len(), code.n());
+    /// assert!(decoder.posterior_llrs().iter().all(|llr| llr.value() == 0.0));
+    ///
+    /// decoder.decode_to_codeword(&[Llr::new(10.0); 3], 10);
+    /// assert!(decoder.posterior_llrs().iter().all(|llr| llr.value() > 0.0));
+    /// ```
+    pub fn posterior_llrs(&self) -> &[Llr] {
+        &self.beliefs
+    }
+
     /// Decodes multiple LLR blocks in batch (parallel).
     ///
     /// Each block is decoded independently using thread-local decoders.
@@ -1768,6 +1795,81 @@ mod decoder_tests {
         let decoder = LdpcDecoder::new(code);
 
         assert_eq!(decoder.last_iteration_count(), 0);
+    }
+
+    #[test]
+    fn test_posterior_llrs_pre_decode_and_after_reset() {
+        let edges = vec![(0, 0), (0, 1), (0, 2)];
+        let code = LdpcCode::from_edges(1, 3, &edges);
+        let mut decoder = LdpcDecoder::new(code.clone());
+
+        let initial_beliefs: &[Llr] = decoder.posterior_llrs();
+        assert_eq!(initial_beliefs.len(), code.n());
+        assert!(initial_beliefs.iter().all(|belief| belief.value() == 0.0));
+
+        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+        decoder.decode_to_codeword(&llrs, 10);
+        assert!(decoder
+            .posterior_llrs()
+            .iter()
+            .any(|belief| belief.value() != 0.0));
+
+        decoder.reset();
+
+        assert!(decoder
+            .posterior_llrs()
+            .iter()
+            .all(|belief| belief.value() == 0.0));
+    }
+
+    #[test]
+    fn test_posterior_llrs_match_decode_to_codeword_hard_word() {
+        let edges = vec![(0, 0), (0, 1), (1, 1), (1, 2)];
+        let code = LdpcCode::from_edges(2, 3, &edges);
+        let mut decoder = LdpcDecoder::new(code.clone());
+        let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
+
+        let result = decoder.decode_to_codeword(&llrs, 10);
+
+        assert!(result.converged);
+        assert!(result.syndrome_check_passed);
+        assert_eq!(decoder.posterior_llrs().len(), code.n());
+        for (index, posterior) in decoder.posterior_llrs().iter().enumerate() {
+            assert_eq!(
+                posterior.hard_decision(),
+                result.decoded_bits.get(index),
+                "posterior hard decision differs at variable {index}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_posterior_llrs_match_failed_iterative_decode() {
+        let edges = vec![(0, 0), (0, 1), (1, 1), (1, 2)];
+        let code = LdpcCode::from_edges(2, 3, &edges);
+        let mut decoder = LdpcDecoder::new(code.clone());
+        let llrs = vec![Llr::new(10.0), Llr::new(-2.0), Llr::new(1.0)];
+
+        let result = decoder.decode_iterative(&llrs, 1);
+
+        assert!(!result.syndrome_check_passed);
+        let mut codeword_decoder = LdpcDecoder::new(code.clone());
+        let codeword_result = codeword_decoder.decode_to_codeword(&llrs, 1);
+        assert!(!codeword_result.syndrome_check_passed);
+        assert_eq!(decoder.posterior_llrs().len(), code.n());
+        for (index, posterior) in decoder.posterior_llrs().iter().enumerate() {
+            assert_eq!(
+                posterior.hard_decision(),
+                codeword_result.decoded_bits.get(index),
+                "posterior hard decision differs at variable {index}"
+            );
+        }
+
+        let posterior_for_post_processing = decoder.posterior_llrs().to_vec();
+        assert!(posterior_for_post_processing
+            .iter()
+            .any(|belief| belief.value() != 0.0));
+        assert_eq!(decoder.posterior_llrs(), posterior_for_post_processing);
     }
 
     #[test]
