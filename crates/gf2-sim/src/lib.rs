@@ -91,6 +91,7 @@
 //! | [`error`] | [`StageError`], [`RecoverableError`], [`FatalError`], [`BuildError`] |
 //! | [`config`] | [`PipelineConfig`] (with `From<&SimulationConfig>`) |
 //! | [`observability`] | tracing setup, [`observability::install_campaign_subscriber`] |
+//! | [`osd_campaign`] | deterministic, checkpointed OSD campaign execution and statistical receipts |
 //! | [`permanent_campaign`] | permanent-zero-fraction dataset schemas, layout, source-identity guard, and integrity checking |
 //! | [`parallel`] | per-worker dispatch + ChaCha20 seek + counter reduction (owned by `3fcb7025`) |
 //! | [`frame_sim`] | reusable DVB-T2 BICM-AWGN single-frame simulation kernel (owned by `3fcb7025`) |
@@ -121,6 +122,7 @@ pub mod frame_sim;
 pub mod gpu;
 pub mod graph;
 pub mod observability;
+pub mod osd_campaign;
 pub mod parallel;
 pub mod permanent_campaign;
 pub mod pipeline;
