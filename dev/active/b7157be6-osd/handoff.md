@@ -8,7 +8,7 @@
 
 - Epic: `b7157be6` — state: backlog (dependency-blocked container, assigned `agent:jit-execution-lead` assign-only)
 - Wave in progress: wave 1 of 6 (6 of 7 merged; 835e15fb worker running); wave 2 partially dispatched early (2 of 3 workers running)
-- Children summary: bracket P/B done; 0 impl issues done (6 merged awaiting review gates), 3 in_progress with live workers, 1 claimed-undispatched, 8 backlog
+- Children summary: bracket P/B done; 0 impl issues done (6 merged awaiting review gates), 4 in_progress with live workers (835e15fb, ac78aff8, f0d6fb9a) or committed-pending-merge (dd6f1665 at 24962b69), 8 backlog
 - Active claims: wave-1 seven + wave-2 three claimed `agent:worker`; epic assign-only
 - Open escalations: none (D-21 source/metric amendment was approved by the owner this session and is fully reconciled)
 - Progress file: `progress.json` here (per-issue status strings carry gate detail)
@@ -29,7 +29,7 @@
 
 - [ ] HOST FREEZE until 07:40 EEST 2026-08-25: no writes to the primary checkout (no merges, no `.jit` writes — gate evaluation writes `.jit` at completion — no cargo-ci on main). Worktree-confined worker activity is fine.
 - [ ] Collect reports from live workers as they finish: 835e15fb (bq1mik373), ac78aff8 (bccre9o6j), dd6f1665 (be491b48j). Content-review each; commit their trees on their branches (codex sandbox cannot commit — see Traps).
-- [ ] Dispatch f0d6fb9a when a build slot frees: Sol xhigh, prompt `scratchpad wave2/f0d6fb9a.md` (session-scratchpad; regenerate from breakdown.json if lost), from INSIDE `.agents/worktrees/agent-f0d6fb9a` (target pre-seeded), stdin `/dev/null`.
+- [ ] f0d6fb9a (Sol) dispatched ~01:07 (task bnj01f0j9) — collect its report too; worktree agent-f0d6fb9a, target pre-seeded.
 - [ ] Check 5dd3539f code-review R4 outcome (`jit gate status 5dd3539f code-review`): R1 doc findings fixed `dc81c2bd`, R2 complexity term fixed `f1f4043a`, R3 public-field panic fixed `ff5dcd6e` (split dimension checks). If R4 failed with a NEW finding class, note rework_counts and continue per protocol; three distinct finding classes so far, none repeated. After 07:40: run code-review+doc-review for 80cead18, 377a7a62, 6beaf008, bebe485c; doc-review+research-review for a82f2dd9; then mark wave-1 issues done and commit per state-commit-patterns.
 - [ ] After 07:40: merge 835e15fb (if review passed) then wave-2 branches, cargo-ci after each batch, leak check (`/tmp/lead-pre-dispatch-latest.txt` → snapshot of 213836), reclaim with `LEAD_CACHE_POOL=/data/gf2-osd-cache-pool .agents/skills/jit-execution-lead/scripts/reclaim-worker-worktree.sh <sids>`.
 - [ ] Then wave 3 (abd48d99 osd-reprocessing-engine, hard → Opus per model plan in progress.json).
