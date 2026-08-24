@@ -118,6 +118,11 @@ pub(crate) fn manifest_at_revision(revision: &GitRevision) -> CampaignManifest {
         }],
         provenance: Provenance {
             git_revision: revision.clone(),
+            binary_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+                .parse()
+                .unwrap(),
+            deps_source_revision: revision.clone(),
+            deps_source_dirty: false,
             compiler_version: "rustc 1.95.0".to_owned(),
             rng_algorithm: RngAlgorithm::ChaCha20,
             rng_version: "rand_chacha 0.9.0".to_owned(),

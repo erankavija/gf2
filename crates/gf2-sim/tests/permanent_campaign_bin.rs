@@ -1,12 +1,24 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use gf2_sim::permanent_campaign::provenance::build_revision;
 use gf2_sim::permanent_campaign::schema::{
     ArtifactIdentity, Availability, Backend, CampaignManifest, CellSpec, DeterminantPlan,
     GitRevision, Provenance, RngAlgorithm, ShardSpec, StreamPurpose, SCHEMA_VERSION,
 };
+
+fn emitter_digest() -> String {
+    let output = Command::new("sha256sum")
+        .arg(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .output()
+        .unwrap();
+    String::from_utf8(output.stdout)
+        .unwrap()
+        .split_whitespace()
+        .next()
+        .unwrap()
+        .to_owned()
+}
 
 fn manifest() -> CampaignManifest {
     CampaignManifest {
@@ -41,6 +53,11 @@ fn manifest() -> CampaignManifest {
             git_revision: "95ccd9776376b2b060e0dd40785e2effae29e766"
                 .parse::<GitRevision>()
                 .unwrap(),
+            binary_sha256: emitter_digest().parse().unwrap(),
+            deps_source_revision: "95ccd9776376b2b060e0dd40785e2effae29e766"
+                .parse::<GitRevision>()
+                .unwrap(),
+            deps_source_dirty: false,
             compiler_version: "rustc test".to_owned(),
             rng_algorithm: RngAlgorithm::ChaCha20,
             rng_version: "rand_chacha test".to_owned(),
@@ -81,6 +98,53 @@ fn temp_path(label: &str) -> PathBuf {
             .unwrap()
             .as_nanos()
     ))
+}
+
+fn commit_campaign_manifest(checkout: &Path, output: &Path) {
+    let relative = output.strip_prefix(checkout).unwrap();
+    let added = Command::new("git")
+        .args(["-C", checkout.to_str().unwrap(), "add", "--"])
+        .arg(relative)
+        .output()
+        .unwrap();
+    assert!(added.status.success());
+    let committed = Command::new("git")
+        .args([
+            "-C",
+            checkout.to_str().unwrap(),
+            "-c",
+            "user.name=fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "--quiet",
+            "--no-gpg-sign",
+            "-m",
+            "freeze campaign manifest",
+        ])
+        .output()
+        .unwrap();
+    assert!(committed.status.success());
+}
+
+fn campaign_checkout(parent: &Path, manifest: &Path) -> (PathBuf, PathBuf) {
+    let checkout = parent.join("checkout");
+    let output = checkout.join("dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
+    fs::create_dir_all(&output).unwrap();
+    let initialized = Command::new("git")
+        .args([
+            "-C",
+            checkout.to_str().unwrap(),
+            "init",
+            "--quiet",
+            "--initial-branch=main",
+        ])
+        .output()
+        .unwrap();
+    assert!(initialized.status.success());
+    fs::copy(manifest, output.join("manifest.json")).unwrap();
+    commit_campaign_manifest(&checkout, &output);
+    (checkout, output)
 }
 
 #[test]
@@ -130,13 +194,6 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
     let parent = temp_path("backend");
     let manifest_path = parent.join("manifest");
     let manifest_file = manifest_path.join("manifest.json");
-    let repository = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .canonicalize()
-        .unwrap();
-    let checkout = parent.join("checkout");
-    let output_path =
-        checkout.join("dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
     fs::create_dir_all(&parent).unwrap();
     fs::create_dir_all(&manifest_path).unwrap();
     fs::write(
@@ -144,39 +201,7 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
         serde_json::to_vec_pretty(&unavailable_backend_manifest()).unwrap(),
     )
     .unwrap();
-
-    let clone = Command::new("git")
-        .args([
-            "clone",
-            "--quiet",
-            "--no-local",
-            repository.to_str().unwrap(),
-            checkout.to_str().unwrap(),
-        ])
-        .output()
-        .unwrap();
-    assert!(
-        clone.status.success(),
-        "test checkout must be clean and usable: {}",
-        String::from_utf8_lossy(&clone.stderr)
-    );
-    let built_revision = build_revision().to_string();
-    let checkout_revision = Command::new("git")
-        .args([
-            "-C",
-            checkout.to_str().unwrap(),
-            "checkout",
-            "--quiet",
-            &built_revision,
-        ])
-        .output()
-        .unwrap();
-    assert!(
-        checkout_revision.status.success(),
-        "test checkout must contain the binary's build revision: {}",
-        String::from_utf8_lossy(&checkout_revision.stderr)
-    );
-    fs::create_dir_all(output_path.parent().unwrap()).unwrap();
+    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
 
     let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
         .args([
@@ -207,13 +232,6 @@ fn binary_requires_accelerator_costs_only_for_the_selected_field() {
     let parent = temp_path("mixed-backend");
     let manifest_path = parent.join("manifest");
     let manifest_file = manifest_path.join("manifest.json");
-    let repository = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .canonicalize()
-        .unwrap();
-    let checkout = parent.join("checkout");
-    let output_path =
-        checkout.join("dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
     fs::create_dir_all(&parent).unwrap();
     fs::create_dir_all(&manifest_path).unwrap();
     fs::write(
@@ -221,39 +239,7 @@ fn binary_requires_accelerator_costs_only_for_the_selected_field() {
         serde_json::to_vec_pretty(&mixed_backend_manifest()).unwrap(),
     )
     .unwrap();
-
-    let clone = Command::new("git")
-        .args([
-            "clone",
-            "--quiet",
-            "--no-local",
-            repository.to_str().unwrap(),
-            checkout.to_str().unwrap(),
-        ])
-        .output()
-        .unwrap();
-    assert!(
-        clone.status.success(),
-        "test checkout must be clean and usable: {}",
-        String::from_utf8_lossy(&clone.stderr)
-    );
-    let built_revision = build_revision().to_string();
-    let checkout_revision = Command::new("git")
-        .args([
-            "-C",
-            checkout.to_str().unwrap(),
-            "checkout",
-            "--quiet",
-            &built_revision,
-        ])
-        .output()
-        .unwrap();
-    assert!(
-        checkout_revision.status.success(),
-        "test checkout must contain the binary's build revision: {}",
-        String::from_utf8_lossy(&checkout_revision.stderr)
-    );
-    fs::create_dir_all(output_path.parent().unwrap()).unwrap();
+    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
 
     let processor = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
         .args([

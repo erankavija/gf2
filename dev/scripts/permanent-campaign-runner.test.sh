@@ -106,8 +106,8 @@ t1() {
     printf '\nrunner self-test marker\n' >> "$TEST_REPO/README.md"
     set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" dirty 2>&1); r=$?; set -e
     cp "$BACKUP" "$TEST_REPO/README.md"
-    assert_rc 2 "$r" t1; assert_has "$o" 'clean worktree (tracked and untracked)' t1
-    echo 'PASS: tracked dirty refusal'; PASS=$((PASS + 1))
+    assert_rc 0 "$r" t1; assert_has "$o" 'all pipeline steps completed' t1
+    echo 'PASS: unrelated tracked edit is admitted'; PASS=$((PASS + 1))
 }
 
 t2() {
@@ -116,8 +116,8 @@ t2() {
     touch "$marker"
     set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" untracked 2>&1); r=$?; set -e
     rm -f "$marker"
-    assert_rc 2 "$r" t2; assert_has "$o" 'clean worktree (tracked and untracked)' t2; assert_has "$o" 'permanent-campaign-runner-untracked' t2
-    echo 'PASS: untracked refusal'; PASS=$((PASS + 1))
+    assert_rc 0 "$r" t2; assert_has "$o" 'all pipeline steps completed' t2
+    echo 'PASS: unrelated untracked path is admitted'; PASS=$((PASS + 1))
 }
 
 t3() {
@@ -190,19 +190,17 @@ t8() {
     local d="$WORK/t8" h="$WORK/h" f="$WORK/f-dirtying"
     local marker="$TEST_REPO/.permanent-campaign-runner-lock-race-$BASHPID"; mkdir -p "$d"
     stub_harness "$h"; stub_flock_dirtying "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
-    # The tree is clean when measure runs its pre-lock checks, so the refusal
-    # below can only come from the revalidation inside the lock-held child.
+    # The tree is clean when measure runs its pre-lock checks. The wrapper adds
+    # an unrelated path while the run waits for the lock; the scoped rule
+    # leaves that path outside the measured source closure.
     set +e; local o r
     o=$(CAMPAIGN_TEST_LOCK_DIRTY_MARKER="$marker" measure "$d/m" "$h" "$f" "$d/s" lock-race 2>&1); r=$?
     set -e
     rm -f "$marker"
-    assert_rc 2 "$r" t8
-    assert_has "$o" 'clean worktree (tracked and untracked)' t8
-    assert_has "$o" 'permanent-campaign-runner-lock-race' t8
-    # run_campaign creates the study root before taking the lock; refusing under
-    # the lock must leave it without a single run summary.
-    [[ -z "$(find "$d/s" -name '*.run-summary.txt' 2>/dev/null)" ]] || { echo 'FAIL: t8 ran a step after refusing'; return 1; }
-    echo 'PASS: dirt landing during the lock wait is refused under the lock'; PASS=$((PASS + 1))
+    assert_rc 0 "$r" t8
+    assert_has "$o" 'all pipeline steps completed' t8
+    [[ -n "$(find "$d/s" -name '*.run-summary.txt' 2>/dev/null)" ]] || { echo 'FAIL: t8 did not run after unrelated dirt'; return 1; }
+    echo 'PASS: unrelated dirt landing during the lock wait is admitted'; PASS=$((PASS + 1))
 }
 
 # The measure pipeline must hand both isolates the harness's own grid order

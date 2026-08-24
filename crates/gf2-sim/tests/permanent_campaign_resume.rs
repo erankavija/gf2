@@ -68,6 +68,13 @@ fn manifest(root_seed: u64) -> CampaignManifest {
             git_revision: "95ccd9776376b2b060e0dd40785e2effae29e766"
                 .parse::<GitRevision>()
                 .unwrap(),
+            binary_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+                .parse()
+                .unwrap(),
+            deps_source_revision: "95ccd9776376b2b060e0dd40785e2effae29e766"
+                .parse::<GitRevision>()
+                .unwrap(),
+            deps_source_dirty: false,
             compiler_version: "test".to_owned(),
             rng_algorithm: RngAlgorithm::ChaCha20,
             rng_version: "rand_chacha test".to_owned(),

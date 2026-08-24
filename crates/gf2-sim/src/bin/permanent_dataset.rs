@@ -4,8 +4,8 @@
 //! This is the reader- and finalization-side tool for the dataset described in
 //! `dev/simulation_results/permanent-zero-fraction/README.md`. It exists so the
 //! source-identity guard and the integrity layer are runnable by hand, and so
-//! the revision `gf2-sim` embeds at build time is carried by a real executable
-//! rather than only by the library that any executable links.
+//! runtime-observed provenance is carried by a real executable rather than
+//! only by the library that any executable links.
 //!
 //! The campaign driver is the `permanent_campaign` binary. It enumerates the
 //! frozen manifest's work items, derives stream addresses, draws matrices,
@@ -25,8 +25,8 @@
 //! $ permanent_dataset verify <campaign-directory>
 //! ```
 //!
-//! `revision` prints the embedded source revision, which equals
-//! `git rev-parse HEAD` exactly when this binary is current with the checkout.
+//! `revision` prints the repository-wide revision observed at command start as
+//! provenance context.
 //! `emission-check` runs the guard that `permanent_campaign` passes before
 //! writing.
 //! `checksums` renders the integrity file for a finished dataset on stdout.
@@ -42,7 +42,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use gf2_sim::permanent_campaign::provenance::{
-    approve_emission, build_revision, generate_integrity_file, verify_dataset, DatasetVerdict,
+    approve_emission, generate_integrity_file, runtime_git_revision, verify_dataset, DatasetVerdict,
 };
 use gf2_sim::permanent_campaign::schema::{conform_dataset, read_manifest};
 
@@ -53,10 +53,13 @@ fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let arguments: Vec<&str> = arguments.iter().map(String::as_str).collect();
     match arguments.as_slice() {
-        ["revision"] => {
-            println!("{}", build_revision());
-            ExitCode::SUCCESS
-        }
+        ["revision"] => match runtime_git_revision() {
+            Ok(revision) => {
+                println!("{revision}");
+                ExitCode::SUCCESS
+            }
+            Err(error) => report(&error),
+        },
         ["emission-check", root] => emission_check(Path::new(root)),
         ["checksums", root] => checksums(Path::new(root)),
         ["conform", root] => conform(Path::new(root)),
@@ -71,7 +74,7 @@ fn main() -> ExitCode {
 fn emission_check(root: &Path) -> ExitCode {
     match approve_emission(root) {
         Ok(approval) => {
-            println!("emission approved at revision {}", approval.revision());
+            println!("emission approved for binary {}", approval.binary_sha256());
             ExitCode::SUCCESS
         }
         Err(refusal) => report(&refusal),
