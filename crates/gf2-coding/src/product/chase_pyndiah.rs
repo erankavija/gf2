@@ -47,7 +47,7 @@
 //! assert_eq!(result.decoded_bits.len(), product.k());
 //! ```
 
-use crate::llr::Llr;
+use crate::llr::{Llr, ReliabilityPermutation};
 use gf2_core::{BitMatrix, BitVec};
 
 use super::{ProductCode, ProductComponent, TurboDecoderResult};
@@ -416,13 +416,21 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
         let p = self.config.p.min(n); // cap p at n
 
         // Step 1: Hard decision and reliability
-        let hard: Vec<bool> = input.iter().map(|&l| l < 0.0).collect();
-        let reliability: Vec<f32> = input.iter().map(|&l| l.abs()).collect();
+        let hard: Vec<bool> = input
+            .iter()
+            .copied()
+            .map(Llr::new)
+            .map(Llr::hard_decision)
+            .collect();
+        let reliability: Vec<f32> = input.iter().copied().map(f32::abs).collect();
 
         // Find p least reliable positions
-        let mut indices: Vec<usize> = (0..n).collect();
-        indices.sort_by(|&a, &b| reliability[a].partial_cmp(&reliability[b]).unwrap());
-        let least_reliable: Vec<usize> = indices[..p].to_vec();
+        let least_reliable: Vec<usize> = ReliabilityPermutation::from_magnitudes(&reliability)
+            .ascending()
+            .iter()
+            .take(p)
+            .copied()
+            .collect();
 
         // Reliability statistics for bounding the soft output
         let mean_reliability: f32 = reliability.iter().copied().sum::<f32>() / n as f32;
@@ -577,7 +585,7 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
         let mut matrix = BitMatrix::zeros(n, n);
         for (i, row) in llr_matrix.iter().enumerate().take(n) {
             for (j, &val) in row.iter().enumerate().take(n) {
-                if val < 0.0 {
+                if Llr::new(val).hard_decision() {
                     matrix.set(i, j, true);
                 }
             }
@@ -601,7 +609,7 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
         let mut msg = BitVec::with_capacity(k * k);
         for row in llr_matrix.iter().take(k) {
             for &val in row.iter().take(k) {
-                msg.push_bit(val < 0.0);
+                msg.push_bit(Llr::new(val).hard_decision());
             }
         }
         msg
@@ -658,6 +666,31 @@ mod tests {
         assert!((config.alpha[7] - 1.0).abs() < 1e-10);
         assert!((config.beta[0] - 0.2).abs() < 1e-10);
         assert!((config.beta[7] - 1.2).abs() < 1e-10);
+    }
+
+    #[test]
+    #[should_panic(expected = "reliability magnitude cannot be NaN")]
+    fn test_siso_uses_canonical_reliability_input_contract() {
+        let component = ExtendedBchCode::ebch_16_11();
+        let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
+
+        let mut input = vec![1.0; 16];
+        input[0] = f32::NAN;
+        let _ = decoder.chase_pyndiah_siso(&input, 0.5);
+    }
+
+    #[test]
+    fn test_extract_message_uses_canonical_hard_decision_for_signed_zero_and_infinity() {
+        let component = ExtendedBchCode::ebch_16_11();
+        let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
+
+        let mut matrix = vec![vec![f32::INFINITY; 16]; 16];
+        matrix[0][0] = -0.0;
+        matrix[0][1] = f32::NEG_INFINITY;
+
+        let decoded = decoder.extract_decoded_message(&matrix);
+        assert!(!decoded.get(0), "signed zero must map to bit zero");
+        assert!(decoded.get(1), "negative infinity must map to bit one");
     }
 
     #[test]
