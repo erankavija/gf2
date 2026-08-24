@@ -13,7 +13,7 @@
      "title": "Ordered-column elimination transform",
      "classification": "implementation",
      "model": "opus",
-     "status": "awaiting-report"
+     "status": "merged-gates-pending"
     },
     {
      "id": null,
@@ -58,7 +58,7 @@
      "title": "Published eBCH OSD curve dataset",
      "classification": "research",
      "model": "opus",
-     "status": "amended-review-pending"
+     "status": "review-passed-merge-pending"
     },
     {
      "id": null,
@@ -196,7 +196,13 @@
    ]
   }
  ],
- "created_during_execution": [],
+ "created_during_execution": [
+  {
+   "short_id": "c0bb2ab1",
+   "title": "Blocked schedule for ordered-column elimination",
+   "reason": "convention-convergence exception convergence condition for 5dd3539f"
+  }
+ ],
  "escalations": [],
  "rework_counts": {
   "bebe485c": 1
@@ -206,7 +212,8 @@
    "id": "PIT-01",
    "issue": "5dd3539f",
    "source": "agent:codex live review",
-   "text": "ordered_column_elimination adds a second unblocked Gauss-Jordan loop beside rref mechanics; lead review must require convergence on one parameterized kernel or a named tracked exception (convention-convergence)."
+   "text": "ordered_column_elimination adds a second unblocked Gauss-Jordan loop beside rref mechanics; lead review must require convergence on one parameterized kernel or a named tracked exception (convention-convergence).",
+   "resolution": "Resolved: worker analysis shows blocked rref schedule structurally requires ascending pivot columns; ordered loop is a named tracked exception cited in rustdoc, convergence tracked as issue c0bb2ab1 (created_during_execution)."
   },
   {
    "id": "PIT-02",
@@ -239,6 +246,11 @@
    "id": "PIT-07",
    "issue": "a82f2dd9",
    "text": "Dissertation needs a citation registry key (external-claims-cited); Fossorier1995 remains the article key. Table-vs-figure contradiction at order-2/4.56 dB preserved unreconciled in CSV per falsification-preserved."
+  },
+  {
+   "id": "NOTE-01",
+   "issue": "a82f2dd9",
+   "text": "Codex-provided open alternatives for future cross-checks: Coskun2019 PhyComm Fig.4 (CER, OSD t=3/4, DOI 10.1016/j.phycom.2019.03.004, OA elib.dlr.de/127269), Alnawayseh-Loskot 2012 (BER, OSD(1)/(2), DOI 10.1186/1687-1499-2012-314), LiangMa arXiv:2401.16709 (FER, LC-OSD + MLD bound), Liva arXiv:1610.00873 (precursor of Coskun, not independent). None pin a construction. Candidate follow-up task: digitize Coskun Fig.4 as second anchor."
   }
  ],
  "started_at": "2026-08-24T19:48:07.381765+00:00"
