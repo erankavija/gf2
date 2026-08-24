@@ -1,4 +1,4 @@
-# Plan: Ordered-statistics decoding as the universal soft-decision baseline (b7157be6)
+# Plan: Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline (b7157be6)
 
 > Planning node: 312200e4. Authoritative graph:
 > [breakdown.json](breakdown.json).
@@ -44,7 +44,7 @@ The reference-data producer determines the eBCH $(128,64)$ construction identity
 
 ### `osd-reference-curve` [implementation-produced] — Published curve dataset
 
-The machine-readable dataset identifies the exact Fossorier1995 page, figure, series, eBCH construction, BI-AWGN/BPSK convention, $E_b/N_0$ axis, BLER metric, OSD order, digitization precision, and Yue2022 cross-check. It distinguishes source values from the campaign's order-1 control.
+The machine-readable dataset identifies the exact Fossorier1995 page, figure, series, eBCH construction, BI-AWGN/BPSK convention, $E_b/N_0$ axis, BLER metric, OSD order, the published reprocessing list order — the source's candidate enumeration order and tie policy, which the campaign decoder configuration must match — digitization precision, and Yue2022 cross-check. It distinguishes source values from the campaign's order-1 control.
 
 ### `bp-osd-composition` [implementation-produced] — Mutable BP-first result
 
@@ -52,7 +52,7 @@ The composition owns a mutable BP decode lifecycle consistent with `IterativeSof
 
 ### `osd-campaign-receipt` [implementation-produced] — Resumable statistical evidence
 
-The `gf2-sim` library producer defines only OSD-specific cell payload, receipt fields, and orchestration over the canonical mechanisms: persistence composes `gf2_sim::checkpoint` (`CheckpointPayload`, `CheckpointWriter`, `CheckpointReader`), confidence intervals come from `gf2_stats::intervals` with a named method and level, and provenance reuses the existing campaign schema's semantic types or extracts them to a shared module rather than redefining them. Stable per-cell identity derives deterministic seeds; receipts carry samples, errors, BLER, the named intervals, OSD work, termination, configuration, behavioral identity, and runtime-observed git/toolchain/hardware provenance. The contract pins the reproduction comparison rule before the campaign runs: each matched point's published value lies within the receipt's stated interval, widened by the recorded digitization precision, at the named level. Resume skips completed cells and preserves interrupted, censored, exhausted, or contradictory results. Thin executables only bind domain configuration to this API.
+The `gf2-sim` library producer defines only OSD-specific cell payload, receipt fields, and orchestration over the canonical mechanisms: persistence composes `gf2_sim::checkpoint` (`CheckpointPayload`, `CheckpointWriter`, `CheckpointReader`), confidence intervals come from `gf2_stats::intervals` with a named method and level, and provenance reuses the campaign schema's existing semantic types; if reuse forces them out of their current module, they move to a shared `gf2-sim` module in the same change, a relocation disclosed as footprint uncertainty on the producing leaf. Stable per-cell identity derives deterministic seeds; receipts carry samples, errors, BLER, the named intervals, OSD work, termination, configuration, behavioral identity, and runtime-observed git/toolchain/hardware provenance. The contract pins the reproduction comparison rule before the campaign runs: each matched point's published value lies within the receipt's stated interval, widened by the recorded digitization precision, at the named level. Resume skips completed cells and preserves interrupted, censored, exhausted, or contradictory results. Thin executables only bind domain configuration to this API.
 
 ### `osd-complexity-policy` [implementation-produced] — Segmentation and discard semantics
 
@@ -76,7 +76,7 @@ The segmentation producer defines deterministic segment boundaries, policy repre
 | bp-osd-decoder | Mutable BP fallback composition | task | A mutable BP-first surface returns stage-specific fallback results with explicit lifecycle state. | osd-config, osd-syndrome-domain, posterior-llr-access, soft-decision-surface, bp-osd-composition | REQ-03, D-02, D-10, D-16, D-20, INV-CLAIMS, INV-CONSUMERS, EXTREV-OSD | creates 1, touches 1 | bp-osd-integration | osd-syndrome-adapter, bp-posterior-access |
 | osd-reference-curves | Published eBCH OSD curve dataset | task | A cited dataset pins the published OSD curve plus the eBCH construction identity. | ebch-reference, osd-reference-curve | REQ-02, D-01, D-03, D-11, D-13, D-17, INV-CLAIMS, INV-PRIORART, EXTREV-OSD | creates 2 | osd-campaign | — |
 | ebch-128-64-factory | Named eBCH(128,64) reference factory | task | The named eBCH $(128,64)$ factory matches the published-source construction fixture. | ebch-reference, osd-reference-curve | REQ-02, D-01, D-11, D-17, INV-CLAIMS, INV-PRIMITIVES, EXTREV-OSD | creates 2, touches 1 | osd-campaign | osd-reference-curves |
-| osd-campaign-protocol | Reusable OSD campaign protocol | task | `gf2-sim` exposes a reusable seeded campaign protocol with versioned resumable receipts. | osd-campaign-receipt | REQ-02, D-03, D-12, D-13, D-19, INV-CLAIMS, INV-ARCH, INV-CONSUMERS, EXTREV-OSD | creates 2, touches 1 | osd-campaign | — |
+| osd-campaign-protocol | Reusable OSD campaign protocol | task | `gf2-sim` exposes a reusable seeded campaign protocol with versioned resumable receipts. | osd-campaign-receipt | REQ-02, D-03, D-12, D-13, D-19, INV-CLAIMS, INV-ARCH, INV-CONSUMERS, EXTREV-OSD | creates 2, touches 1, uncertain | osd-campaign | — |
 | osd-campaign-binary | eBCH OSD campaign executable | task | A thin `gf2-sim` executable drives the pinned eBCH OSD protocol. | ebch-reference, osd-config, osd-campaign-receipt | REQ-02, D-01, D-03, D-12, D-13, D-19, INV-CLAIMS, INV-ARCH, INV-CONSUMERS, EXTREV-OSD | creates 2, touches 1 | osd-campaign | osd-campaign-protocol, ebch-128-64-factory, osd-generator-decoder |
 | osd-ebch-campaign | eBCH OSD curve reproduction | simulation | A committed receipt demonstrates the order-2 curve comparison with stated uncertainty. | osd-reference-curve, osd-campaign-receipt | REQ-02, D-01, D-03, D-13, INV-CLAIMS, INV-PRIORART, EXTREV-OSD | creates 2 | osd-campaign | osd-campaign-binary |
 | osd-pattern-segmentation | OSD pattern segmentation policy | task | Segmented OSD search emits deterministic boundaries plus explicit work counters. | osd-config, osd-complexity-policy | REQ-04, D-04, D-09, D-16, D-17, INV-CONVENTIONS, INV-PRIORART | touches 2 | osd-complexity | osd-generator-decoder |
@@ -139,7 +139,7 @@ flowchart LR
 | D-11 | Chosen: a named eBCH $(128,64)$ factory plus canonical fixture consumes the published-source identity; rejected: ad hoc campaign-only construction. |
 | D-12 | Chosen: a dedicated `gf2-sim` campaign executable follows checkpoint and provenance conventions; rejected: extending the gf2-coding `sim_runner` registry. |
 | D-13 | Chosen: committed JSON plus README provenance carries per-point counts and binomial intervals emitted under the campaign contract; rejected: hand-authored or unreceipted claims. |
-| D-14 | Chosen: retain the owner-authored epic title while recording that implemented scope is the D-06 generator-matrix and syndrome baseline; rejected: autonomous renaming of the owner's epic. |
+| D-14 | Chosen: rename the container and its bracket nodes to the generator-matrix and syndrome baseline framing, following the external review; the plan title mirrors the renamed epic and D-06 fixes the matching scope. Rejected: retaining the earlier title, which two independent reviews flagged as overclaiming. |
 | D-15 | Chosen: ordered-column elimination returns its row transform for identical right-hand-side transformation, with rank-deficient and inconsistent-syndrome behavior; rejected: transform-free elimination that forces a private solver. |
 | D-16 | Chosen: the enumerator creates `osd/mod.rs` and `patterns.rs`; subsequent engine, generator, syndrome, and BP leaves create one submodule each and touch `mod.rs` only for wiring. The generator-to-syndrome edge serializes the landing surface and carries no semantic dependency. Complexity leaves touch engine/pattern files without touching `mod.rs`; rejected: parallel shared-file writers or a separate integration leaf. |
 | D-17 | Chosen: published-source work produces `ebch-reference`, baseline `osd-config` contains only order, optional cap, checked bound, counters, termination, and exhaustive default, and segmentation produces `osd-complexity-policy`; rejected: plan-fixed empirical identity or optional complexity fields in the baseline config. |
@@ -155,3 +155,12 @@ flowchart LR
 
 - [Investigation](investigation.md) — grounding, exhaustive consumers, and file inventories remain there.
 - [External review](../aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md) — the OSD paragraph supplies the shared-engine, bounded-search, pinned-reference, and receipted-campaign constraints.
+
+### Source identifier universe
+
+Every `planning.source_refs` identifier in [breakdown.json](breakdown.json) resolves here:
+
+- `REQ-01`…`REQ-04` — the container's success criteria on epic b7157be6.
+- `D-01`…`D-20` — the rows of the decisions table above.
+- `INV-CLAIMS`, `INV-CONVENTIONS`, `INV-PRIORART`, `INV-PRIMITIVES`, `INV-ARCH`, `INV-CONSUMERS` — the [investigation](investigation.md) sections "Claim classification", "Convention-convergence inventory", "Prior art", "Primitive verification", "Architecture fit", and "Consumers and integration points".
+- `EXTREV-OSD` — the OSD paragraph of the [external review](../aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md).

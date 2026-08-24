@@ -60,9 +60,9 @@
   ],
   "gates_status": {
     "plan-review": {
-      "status": "pending",
-      "updated_at": "2026-08-23T22:06:47.849195622Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-24T05:42:22.885681926Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "312200e4-dce9-44d3-8b55-c20c610e1c03",
@@ -76,6 +76,6 @@
   ],
   "priority": "high",
   "state": "in_progress",
-  "title": "planning: Ordered-statistics decoding as the universal soft-decision baseline",
-  "updated_at": "2026-08-23T22:36:53.450882858Z"
+  "title": "planning: Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
+  "updated_at": "2026-08-24T05:43:48.444746135Z"
 }
