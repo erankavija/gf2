@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-24T21:33:05.252839694Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "5dd3539f-3c3a-413e-956d-87596d346263",
   "labels": [
     "type:task",
@@ -26,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Ordered-column elimination transform",
-  "updated_at": "2026-08-24T19:48:19.198063500Z"
+  "updated_at": "2026-08-24T21:33:05.252839694Z"
 }
