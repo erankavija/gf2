@@ -2339,13 +2339,7 @@ mod tests {
 
     #[test]
     fn test_backend_name_agrees_with_serialized_token() {
-        for backend in [
-            Backend::Scalar,
-            Backend::BatchParallel,
-            Backend::IntraMatrixParallel,
-            Backend::GenericRyser,
-            Backend::Accelerator,
-        ] {
+        for &backend in Backend::ALL {
             let serialized = serde_json::to_value(backend).unwrap();
             assert_eq!(serialized.as_str(), Some(backend.name()));
         }
@@ -2689,7 +2683,7 @@ mod tests {
     fn assert_backend_conformance<const Q: u64>(
         q: u8,
         field_order: FieldOrder,
-        backends: &[Backend],
+        accelerator_available: bool,
     ) {
         let mut reference_sampler = MatrixSampler::<Q>::new(MatrixAddress::new(
             BACKEND_CONFORMANCE_ROOT_SEED,
@@ -2710,7 +2704,10 @@ mod tests {
             })
             .collect();
 
-        for &backend in backends {
+        for backend in Backend::ALL.iter().copied().filter(|&backend| {
+            resolve_processor_path(q, BACKEND_CONFORMANCE_DIMENSION, backend).is_ok()
+                && (backend != Backend::Accelerator || accelerator_available)
+        }) {
             let mut campaign = manifest(vec![cell(
                 q,
                 BACKEND_CONFORMANCE_DIMENSION,
@@ -2764,46 +2761,21 @@ mod tests {
 
     #[test]
     fn campaign_selectable_backends_match_generic_ryser_per_matrix() {
-        assert_backend_conformance::<3>(
-            3,
-            FieldOrder::F3,
-            &[
-                Backend::Scalar,
-                Backend::BatchParallel,
-                Backend::IntraMatrixParallel,
-                Backend::GenericRyser,
-            ],
-        );
-        assert_backend_conformance::<5>(
-            5,
-            FieldOrder::F5,
-            &[
-                Backend::Scalar,
-                Backend::BatchParallel,
-                Backend::GenericRyser,
-            ],
-        );
-        assert_backend_conformance::<7>(
-            7,
-            FieldOrder::F7,
-            &[
-                Backend::Scalar,
-                Backend::BatchParallel,
-                Backend::GenericRyser,
-            ],
-        );
-
         #[cfg(feature = "hip")]
-        if gf2_algebra::gpu::has_usable_device() {
-            assert_backend_conformance::<3>(3, FieldOrder::F3, &[Backend::Accelerator]);
-            assert_backend_conformance::<5>(5, FieldOrder::F5, &[Backend::Accelerator]);
-            assert_backend_conformance::<7>(7, FieldOrder::F7, &[Backend::Accelerator]);
-        } else {
+        let accelerator_available = gf2_algebra::gpu::has_usable_device();
+        #[cfg(feature = "hip")]
+        if !accelerator_available {
             eprintln!("skipping accelerator backend conformance: no usable HIP accelerator device");
         }
 
         #[cfg(not(feature = "hip"))]
+        let accelerator_available = false;
+        #[cfg(not(feature = "hip"))]
         eprintln!("skipping accelerator backend conformance: HIP support is not enabled");
+
+        assert_backend_conformance::<3>(3, FieldOrder::F3, accelerator_available);
+        assert_backend_conformance::<5>(5, FieldOrder::F5, accelerator_available);
+        assert_backend_conformance::<7>(7, FieldOrder::F7, accelerator_available);
     }
 
     #[test]
