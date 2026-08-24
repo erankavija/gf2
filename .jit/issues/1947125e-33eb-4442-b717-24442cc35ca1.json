@@ -13,7 +13,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-24T08:45:20.374971540Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "1947125e-33eb-4442-b717-24442cc35ca1",
   "labels": [
     "type:task",
@@ -25,5 +31,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Shared behavioural conformance suite across campaign backends",
-  "updated_at": "2026-08-24T08:22:19.387077227Z"
+  "updated_at": "2026-08-24T08:45:20.374971540Z"
 }

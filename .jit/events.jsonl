@@ -9326,3 +9326,4 @@
 {"fields":["dependencies"],"id":"058f82aa-b86c-44a8-a56e-bd1c77330f8a","issue_id":"b05c908b-690d-4caa-9e2d-46d0f9ae0acc","timestamp":"2026-08-24T08:20:12.428984674Z","type":"issue_updated","updated_by":"dependency-add"}
 {"from":"ready","id":"b55eaebc-b6fc-4697-9cda-52dbd90fcfa3","issue_id":"1947125e-33eb-4442-b717-24442cc35ca1","timestamp":"2026-08-24T08:22:19.387077227Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:codex-terra","id":"5c8bce3c-c337-47c4-8858-041c09f02769","issue_id":"1947125e-33eb-4442-b717-24442cc35ca1","timestamp":"2026-08-24T08:22:19.387077227Z","type":"issue_claimed"}
+{"gate_key":"code-review","id":"64563d8e-05d5-49ea-af3e-1c76528396d4","issue_id":"1947125e-33eb-4442-b717-24442cc35ca1","timestamp":"2026-08-24T08:45:20.374971540Z","type":"gate_passed","updated_by":"auto:executor"}
