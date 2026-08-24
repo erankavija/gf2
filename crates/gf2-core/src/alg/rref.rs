@@ -506,7 +506,7 @@ impl OrderedEliminationResult {
     ///
     /// O(rows² / 64) word operations.
     pub fn apply_transform(&self, rhs: &BitVec) -> Result<BitVec, OrderedEliminationError> {
-        self.check_rhs_len(rhs)?;
+        self.check_untransformed_rhs(rhs)?;
         Ok(self.transform.matvec(rhs))
     }
 
@@ -525,13 +525,32 @@ impl OrderedEliminationResult {
     /// `transformed_rhs` does not carry one entry per row of the eliminated
     /// matrix.
     pub fn is_consistent(&self, transformed_rhs: &BitVec) -> Result<bool, OrderedEliminationError> {
-        self.check_rhs_len(transformed_rhs)?;
+        self.check_transformed_rhs(transformed_rhs)?;
         Ok((self.rank..self.reduced.rows()).all(|row| !transformed_rhs.get(row)))
     }
 
-    fn check_rhs_len(&self, rhs: &BitVec) -> Result<(), OrderedEliminationError> {
+    // The dimension checks validate against the consuming operation's own
+    // requirements, not only the reduced matrix: the fields are public, so a
+    // caller-assembled or mutated result must error here rather than panic
+    // inside the multiplication or the zero-row scan.
+
+    /// `apply_transform` multiplies `transform · rhs`.
+    fn check_untransformed_rhs(&self, rhs: &BitVec) -> Result<(), OrderedEliminationError> {
+        let expected = self.transform.cols();
+        if rhs.len() == expected && self.transform.rows() == self.reduced.rows() {
+            Ok(())
+        } else {
+            Err(OrderedEliminationError::RightHandSideLength {
+                expected,
+                actual: rhs.len(),
+            })
+        }
+    }
+
+    /// `is_consistent` scans rows `rank..reduced.rows()` of `transformed_rhs`.
+    fn check_transformed_rhs(&self, rhs: &BitVec) -> Result<(), OrderedEliminationError> {
         let expected = self.reduced.rows();
-        if rhs.len() == expected {
+        if rhs.len() == expected && self.rank <= expected {
             Ok(())
         } else {
             Err(OrderedEliminationError::RightHandSideLength {
