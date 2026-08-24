@@ -45,6 +45,7 @@
 - **Do NOT run `jit` state-mutating commands from a worker worktree** — `worktree.write_policy` refuses and earlier in this session the refusal was masked by a wrapper printing rc 0. Run them from the primary checkout and verify the write landed.
 - **Do NOT treat gf2-sim `hybrid_*` / `executor_oom_fallback` TIMEOUTs as caused by your merge.** They are chronic 5s-budget-edge tests (pass 3.9–4.95s quiet, flip under load). Verified against an anchored baseline tree. Being tracked by the 679cf170 session.
 - **zsh eats `=====`-style separators** (`=word` expansion) — use `---` or quote.
+- **Known-red neighbor test on main (NOT ours):** dev/scripts/permanent-campaign-premeasure.test.sh t4 asserts the clean-worktree refusal that 679cf170's landing removed. Red since 8be289e9-lineage; the 679cf170 session owns the fix. Do not chase it as an OSD regression.
 - **The manifest is authoritative:** any issue-description change must be made in `breakdown.json` AND the issue, revalidated (`breakdown_manifest.py validate/render`), and plan-review + breakdown-review re-run. Done once this session for D-21; follow the same sequence for any future amendment.
 
 ## Open questions needing invoker input
