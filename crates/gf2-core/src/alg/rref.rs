@@ -2,8 +2,17 @@
 //!
 //! This module implements row reduction (Gaussian elimination) to compute
 //! the reduced row echelon form of matrices over the binary field GF(2).
+//!
+//! [`rref`] pivots in a fixed direction and reports the pivot columns it
+//! reaches. [`ordered_column_elimination`] takes an explicit column preference
+//! instead, and additionally returns the invertible row transform that produced
+//! the reduced matrix, so a caller holding a right-hand side can move it into
+//! the same coordinates.
+
+use std::fmt;
 
 use crate::matrix::BitMatrix;
+use crate::BitVec;
 
 /// Result of reduced row echelon form computation.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -380,6 +389,302 @@ fn rref_unblocked_right_to_left(matrix: &BitMatrix) -> RrefResult {
         row_perm,
         rank,
     }
+}
+
+/// Errors reported by [`ordered_column_elimination`] and by the right-hand-side
+/// operations of [`OrderedEliminationResult`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OrderedEliminationError {
+    /// The column preference does not list one entry per matrix column.
+    PreferenceLength {
+        /// Number of columns in the matrix.
+        expected: usize,
+        /// Number of entries in the supplied preference.
+        actual: usize,
+    },
+
+    /// A preference entry names a column outside `0..cols`.
+    PreferenceColumnOutOfRange {
+        /// Position of the offending entry within the preference.
+        position: usize,
+        /// Column index the entry names.
+        column: usize,
+        /// Number of columns in the matrix.
+        cols: usize,
+    },
+
+    /// A preference entry repeats a column that an earlier entry already named.
+    PreferenceColumnRepeated {
+        /// Position of the repeating entry.
+        position: usize,
+        /// Column index named twice.
+        column: usize,
+        /// Position of the first entry naming this column.
+        first_position: usize,
+    },
+
+    /// A right-hand side does not carry one entry per matrix row.
+    RightHandSideLength {
+        /// Number of rows in the eliminated matrix.
+        expected: usize,
+        /// Number of entries in the supplied right-hand side.
+        actual: usize,
+    },
+}
+
+impl fmt::Display for OrderedEliminationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            OrderedEliminationError::PreferenceLength { expected, actual } => write!(
+                f,
+                "column preference has {actual} entries, expected one per column ({expected})"
+            ),
+            OrderedEliminationError::PreferenceColumnOutOfRange {
+                position,
+                column,
+                cols,
+            } => write!(
+                f,
+                "column preference entry {position} names column {column}, outside 0..{cols}"
+            ),
+            OrderedEliminationError::PreferenceColumnRepeated {
+                position,
+                column,
+                first_position,
+            } => write!(
+                f,
+                "column preference entry {position} repeats column {column}, \
+                 first named by entry {first_position}"
+            ),
+            OrderedEliminationError::RightHandSideLength { expected, actual } => write!(
+                f,
+                "right-hand side has {actual} entries, expected one per row ({expected})"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for OrderedEliminationError {}
+
+/// Result of an ordered-column elimination over GF(2).
+///
+/// The elimination applies invertible row operations `U` to the input matrix
+/// `A`, so `reduced = U · A`. The selected columns carry the identity:
+/// `reduced` has a set entry at row `i`, column `selected_cols[j]` exactly when
+/// `i == j`. Rows `rank..` of `reduced` are zero, so a transformed right-hand
+/// side is reachable precisely when its entries at those rows are zero.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OrderedEliminationResult {
+    /// Reduced matrix `U · A`, with the shape of the input.
+    pub reduced: BitMatrix,
+
+    /// Independent columns in preference order; `selected_cols[i]` is the
+    /// column that pivots on row `i`.
+    pub selected_cols: Vec<usize>,
+
+    /// Rank of the input matrix, equal to `selected_cols.len()`.
+    pub rank: usize,
+
+    /// Applied row transform `U`: an invertible `rows × rows` matrix over
+    /// GF(2).
+    pub transform: BitMatrix,
+}
+
+impl OrderedEliminationResult {
+    /// Moves a right-hand side into the coordinates of the reduced matrix.
+    ///
+    /// Returns `U · b`, so `A x = b` and `(U · A) x = U · b` have the same
+    /// solution set. Pass the result to [`is_consistent`](Self::is_consistent)
+    /// to learn whether that solution set is non-empty.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OrderedEliminationError::RightHandSideLength`] when `rhs` does
+    /// not carry one entry per row of the eliminated matrix.
+    ///
+    /// # Complexity
+    ///
+    /// O(rows² / 64) word operations.
+    pub fn apply_transform(&self, rhs: &BitVec) -> Result<BitVec, OrderedEliminationError> {
+        self.check_rhs_len(rhs)?;
+        Ok(self.transform.matvec(rhs))
+    }
+
+    /// Reports whether a transformed right-hand side lies in the reachable row
+    /// space, that is, whether the system has a solution.
+    ///
+    /// Takes the output of [`apply_transform`](Self::apply_transform). Rows
+    /// `rank..` of `reduced` are zero, so a set entry at any of those rows
+    /// demands `0 = 1` and marks the system inconsistent. An elimination of
+    /// full row rank is consistent for every right-hand side.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OrderedEliminationError::RightHandSideLength`] when
+    /// `transformed_rhs` does not carry one entry per row of the eliminated
+    /// matrix.
+    pub fn is_consistent(&self, transformed_rhs: &BitVec) -> Result<bool, OrderedEliminationError> {
+        self.check_rhs_len(transformed_rhs)?;
+        Ok((self.rank..self.reduced.rows()).all(|row| !transformed_rhs.get(row)))
+    }
+
+    fn check_rhs_len(&self, rhs: &BitVec) -> Result<(), OrderedEliminationError> {
+        let expected = self.reduced.rows();
+        if rhs.len() == expected {
+            Ok(())
+        } else {
+            Err(OrderedEliminationError::RightHandSideLength {
+                expected,
+                actual: rhs.len(),
+            })
+        }
+    }
+}
+
+/// Reduce a matrix over GF(2), preferring pivot columns in a caller-supplied
+/// order.
+///
+/// The preference is a complete permutation of the column indices. The
+/// elimination walks it from front to back and pivots on every column that is
+/// independent of the columns already selected, which makes the selected set
+/// the greedy independent basis under that order. Reduction is full: each
+/// selected column ends with a single set entry, in its own pivot row.
+///
+/// The operation carries no domain policy; a caller decides what the order
+/// means, for example by ranking columns by reliability.
+///
+/// # Arguments
+///
+/// * `matrix` — input matrix `A`
+/// * `preference` — every column index in `0..matrix.cols()`, exactly once, in
+///   decreasing order of preference
+///
+/// # Errors
+///
+/// Returns [`OrderedEliminationError::PreferenceLength`],
+/// [`OrderedEliminationError::PreferenceColumnOutOfRange`], or
+/// [`OrderedEliminationError::PreferenceColumnRepeated`] when `preference` is
+/// not a permutation of the column indices.
+///
+/// # Algorithm
+///
+/// Unblocked Gauss-Jordan elimination over the preference order, mirroring the
+/// row operations onto an identity matrix to accumulate the transform `U`.
+/// Rank-deficient, empty, and rectangular inputs are ordinary cases: a column
+/// that is dependent on the selected ones is skipped, and the rows below the
+/// rank end zero.
+///
+/// # Complexity
+///
+/// O(rank × rows × (cols + rows) / 64) word operations.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::alg::rref::ordered_column_elimination;
+/// use gf2_core::matrix::BitMatrix;
+/// use gf2_core::BitVec;
+///
+/// // Row 2 is the sum of rows 0 and 1, so A has rank 2.
+/// //     [1 1 0]
+/// //     [0 1 1]
+/// //     [1 0 1]
+/// let mut a = BitMatrix::zeros(3, 3);
+/// for (row, col) in [(0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 2)] {
+///     a.set(row, col, true);
+/// }
+///
+/// // Prefer the rightmost columns.
+/// let result = ordered_column_elimination(&a, &[2, 1, 0]).unwrap();
+/// assert_eq!(result.rank, 2);
+/// assert_eq!(result.selected_cols, vec![2, 1]);
+/// assert_eq!(&result.transform * &a, result.reduced);
+///
+/// // x solves A x = b, so it also solves (U A) x = U b.
+/// let mut x = BitVec::zeros(3);
+/// x.set(0, true);
+/// x.set(2, true);
+/// let b = a.matvec(&x);
+///
+/// let transformed = result.apply_transform(&b).unwrap();
+/// assert_eq!(result.reduced.matvec(&x), transformed);
+/// assert!(result.is_consistent(&transformed).unwrap());
+/// ```
+pub fn ordered_column_elimination(
+    matrix: &BitMatrix,
+    preference: &[usize],
+) -> Result<OrderedEliminationResult, OrderedEliminationError> {
+    validate_preference(preference, matrix.cols())?;
+
+    let rows = matrix.rows();
+    let mut reduced = matrix.clone();
+    let mut transform = BitMatrix::identity(rows);
+    let mut selected_cols = Vec::new();
+    let mut pivot_row = 0;
+
+    for &col in preference {
+        if pivot_row == rows {
+            break;
+        }
+
+        let Some(source_row) = reduced.find_pivot_row(col, pivot_row) else {
+            continue;
+        };
+
+        if source_row != pivot_row {
+            reduced.swap_rows(pivot_row, source_row);
+            transform.swap_rows(pivot_row, source_row);
+        }
+
+        for row in 0..rows {
+            if row != pivot_row && reduced.get_unchecked(row, col) {
+                reduced.row_xor(row, pivot_row);
+                transform.row_xor(row, pivot_row);
+            }
+        }
+
+        selected_cols.push(col);
+        pivot_row += 1;
+    }
+
+    let rank = selected_cols.len();
+
+    Ok(OrderedEliminationResult {
+        reduced,
+        selected_cols,
+        rank,
+        transform,
+    })
+}
+
+fn validate_preference(preference: &[usize], cols: usize) -> Result<(), OrderedEliminationError> {
+    if preference.len() != cols {
+        return Err(OrderedEliminationError::PreferenceLength {
+            expected: cols,
+            actual: preference.len(),
+        });
+    }
+
+    let mut seen_at: Vec<Option<usize>> = vec![None; cols];
+    for (position, &column) in preference.iter().enumerate() {
+        if column >= cols {
+            return Err(OrderedEliminationError::PreferenceColumnOutOfRange {
+                position,
+                column,
+                cols,
+            });
+        }
+        if let Some(first_position) = seen_at[column] {
+            return Err(OrderedEliminationError::PreferenceColumnRepeated {
+                position,
+                column,
+                first_position,
+            });
+        }
+        seen_at[column] = Some(position);
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
