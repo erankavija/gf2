@@ -132,7 +132,8 @@ impl std::error::Error for PatternEnumerationError {}
 pub enum PatternControl {
     /// Continue generating patterns.
     Continue,
-    /// Stop the run and report cancellation.
+    /// Stop the run and report cancellation.  Cancellation takes precedence
+    /// over a candidate cap observed at the same boundary.
     Cancel,
 }
 
@@ -141,7 +142,7 @@ pub enum PatternControl {
 pub enum OsdTermination {
     /// Every subset through the configured order was generated.
     Exhaustive,
-    /// The configured candidate cap was reached.
+    /// The configured candidate cap was reached without cancellation.
     CandidateCap,
     /// The caller requested cancellation.
     Cancelled,
@@ -256,17 +257,27 @@ impl PatternEnumerator {
     }
 
     /// Requests cancellation before the next pattern is generated.
+    ///
+    /// Cancellation takes precedence over a candidate cap that was reached by
+    /// the most recently generated pattern but has not yet been observed by
+    /// the caller.
     pub fn cancel(&mut self) {
         self.cancellation_requested = true;
+        if self.termination == Some(OsdTermination::CandidateCap) {
+            self.finish(OsdTermination::Cancelled);
+        }
     }
 
     /// Visits generated patterns until the source is exhausted, capped, or
     /// cancelled by the visitor.
     ///
-    /// The visitor is called exactly once for every generated pattern.  Each
-    /// callback is counted as one tested candidate.  A [`PatternControl::Cancel`]
+    /// The visitor is called exactly once for every pattern generated during
+    /// this invocation.  Each callback is counted as one tested candidate.  A
+    /// [`PatternControl::Cancel`]
     /// response stops immediately after that candidate and reports
-    /// [`OsdTermination::Cancelled`].
+    /// [`OsdTermination::Cancelled`].  If that candidate also reaches the
+    /// configured cap, cancellation still takes precedence over
+    /// [`OsdTermination::CandidateCap`].
     pub fn run<F>(&mut self, mut visitor: F) -> PatternEnumerationReport
     where
         F: FnMut(&[usize]) -> PatternControl,
@@ -295,11 +306,14 @@ impl PatternEnumerator {
     where
         F: FnMut(&[usize]) -> PatternControl,
     {
-        while self.termination.is_none() {
+        loop {
             if self.cancellation_requested
                 || cancellation.is_some_and(|flag| flag.load(Ordering::Relaxed))
             {
                 self.finish(OsdTermination::Cancelled);
+                break;
+            }
+            if self.termination.is_some() {
                 break;
             }
 
@@ -319,7 +333,10 @@ impl PatternEnumerator {
     }
 
     fn finish(&mut self, termination: OsdTermination) {
-        if self.termination.is_none() {
+        if self.termination.is_none()
+            || (termination == OsdTermination::Cancelled
+                && self.termination == Some(OsdTermination::CandidateCap))
+        {
             self.termination = Some(termination);
             self.next_pattern = None;
         }
@@ -341,11 +358,11 @@ impl Iterator for PatternEnumerator {
     type Item = Vec<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.termination.is_some() {
-            return None;
-        }
         if self.cancellation_requested {
             self.finish(OsdTermination::Cancelled);
+            return None;
+        }
+        if self.termination.is_some() {
             return None;
         }
         if self
@@ -545,6 +562,45 @@ mod tests {
         assert_eq!(report.generated(), 1);
         assert_eq!(report.tested(), 1);
         assert_eq!(report.termination(), OsdTermination::Cancelled);
+    }
+
+    #[test]
+    fn cancellation_overrides_cap_on_the_final_candidate() {
+        let config = OsdConfig::new(1).with_candidate_cap(Some(1));
+        let report = enumerate_patterns(10, config, |_| PatternControl::Cancel).unwrap();
+
+        assert_eq!(report.generated(), 1);
+        assert_eq!(report.tested(), 1);
+        assert_eq!(report.termination(), OsdTermination::Cancelled);
+    }
+
+    #[test]
+    fn atomic_cancellation_overrides_cap_after_the_final_candidate() {
+        let config = OsdConfig::new(1).with_candidate_cap(Some(1));
+        let cancelled = AtomicBool::new(false);
+        let report = {
+            let mut enumerator = PatternEnumerator::new(10, config).unwrap();
+            enumerator.enumerate_with_cancellation(&cancelled, |_| {
+                cancelled.store(true, Ordering::Relaxed);
+                PatternControl::Continue
+            })
+        };
+
+        assert_eq!(report.generated(), 1);
+        assert_eq!(report.tested(), 1);
+        assert_eq!(report.termination(), OsdTermination::Cancelled);
+    }
+
+    #[test]
+    fn direct_cancellation_overrides_a_reached_cap() {
+        let config = OsdConfig::new(1).with_candidate_cap(Some(1));
+        let mut enumerator = PatternEnumerator::new(10, config).unwrap();
+
+        assert_eq!(enumerator.next(), Some(Vec::new()));
+        enumerator.cancel();
+
+        assert_eq!(enumerator.termination(), Some(OsdTermination::Cancelled));
+        assert_eq!(enumerator.next(), None);
     }
 
     #[test]
