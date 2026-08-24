@@ -17,6 +17,13 @@
       "format": "markdown",
       "label": "External epic review 2026-08-07",
       "path": "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Execution handoff session 1",
+      "path": "dev/active/b7157be6-osd/handoff.md"
     }
   ],
   "first_ready_at": "2026-08-07T12:31:54.967767596Z",
@@ -38,5 +45,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-24T19:46:28.778997228Z"
+  "updated_at": "2026-08-24T22:03:33.781586020Z"
 }
