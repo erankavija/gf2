@@ -549,12 +549,13 @@ macro_rules! define_campaign_backends {
         }
 
         impl Backend {
-            /// Every campaign backend, in canonical serialized-token order.
+            /// Every campaign backend exercised by crate tests.
             ///
             /// This inventory and [`Self::name`] are generated from the same
             /// variant declaration, so a backend cannot join one without the
             /// other.
-            pub const ALL: &[Self] = &[$(Self::$variant,)+];
+            #[cfg(test)]
+            pub(crate) const ALL: &[Self] = &[$(Self::$variant,)+];
 
             /// Returns the canonical serialized backend token.
             #[must_use]
