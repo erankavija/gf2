@@ -5,7 +5,7 @@
   "dependencies": [
     "a82f2dd9-07b6-434e-806b-76b40ba43006"
   ],
-  "description": "Add the named extended BCH constructor used by OSD conformance and campaign work against the implementation-produced reference identity.\n\n## Background\n\nThe existing named-constructor family stops at eBCH $(64,57)$. Published-source pinning supplies the primitive polynomial and construction provenance consumed by this factory.\n\n## Success Criteria\n\n- [hard] REQ-01: `ExtendedBchCode::ebch_128_64()` constructs the pinned primitive BCH extension with $n=128$, $k=64$, and systematic generator form.\n- [hard] REQ-02: A committed fixture records the pinned primitive polynomial plus canonical serialized generator and parity-check matrices.\n- [hard] REQ-03: Tests verify fixture identity, matrix dimensions, orthogonality, systematic encoding, and even extension parity.\n- [hard] REQ-04: Public rustdoc cites construction provenance and demonstrates the named factory workflow.",
+  "description": "Add the named extended BCH constructor used by OSD conformance and campaign work against the implementation-produced reference identity.\n\n## Background\n\nThe existing named-constructor family stops at eBCH $(64,57)$. The pinned published source fixes dimensions, minimum distance, and systematic convention only; the primitive polynomial and field representation are a recorded campaign decision consumed by this factory, and the published curves are invariant under that permutation-equivalent representation choice.\n\n## Success Criteria\n\n- [hard] REQ-01: `ExtendedBchCode::ebch_128_64()` constructs the recorded primitive BCH extension with $n=128$, $k=64$, and systematic generator form.\n- [hard] REQ-02: A committed fixture records the chosen primitive polynomial, its decision provenance, and canonical serialized generator and parity-check matrices.\n- [hard] REQ-03: Tests verify fixture identity, matrix dimensions, orthogonality, systematic encoding, and even extension parity.\n- [hard] REQ-04: Public rustdoc cites construction provenance and demonstrates the named factory workflow.",
   "documents": [],
   "gates_required": [
     "cargo-ci",
@@ -25,5 +25,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Named eBCH(128,64) reference factory",
-  "updated_at": "2026-08-24T05:52:49.650437955Z"
+  "updated_at": "2026-08-24T20:43:31.647750949Z"
 }

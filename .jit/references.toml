@@ -32,6 +32,11 @@ citation = "Wan, Zhang — Reducing ORBGRAND Latency via Partial Gaussian Elimin
 arxiv = "2602.01174"
 
 [[references]]
+key = "Fossorier1994"
+citation = "Fossorier — Decoding of Linear Block Codes Based on Ordered Statistics. Ph.D. dissertation, University of Hawai'i at Manoa, December 1994. UMI 9519442."
+url = "https://scholarspace.manoa.hawaii.edu/items/46246020-a80c-43a9-912e-68f3774c3f3e"
+
+[[references]]
 key = "Fossorier1995"
 citation = "Fossorier, Lin — Soft-Decision Decoding of Linear Block Codes Based on Ordered Statistics. IEEE Trans. Inf. Theory 41(5):1379–1396, 1995."
 doi = "10.1109/18.412683"
