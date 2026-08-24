@@ -582,8 +582,8 @@ impl OrderedEliminationResult {
 /// # Complexity
 ///
 /// O(rank × rows × (cols + rows) / 64) word operations for the elimination
-/// itself, plus O(cols) preference validation and O(rows × cols / 64) pivot
-/// scanning that is paid even when the rank is zero.
+/// itself, plus O(cols) preference validation and O(rows × cols) single-word
+/// pivot probes that are paid even when the rank is zero.
 ///
 /// # Examples
 ///
