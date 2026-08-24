@@ -18,7 +18,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer, Serialize};
 
 /// The only dataset schema version accepted by this module.
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 /// Root manifest file name.
 pub const MANIFEST_FILE: &str = "manifest.json";
@@ -94,6 +94,9 @@ const JSON_FIELDS: &[&str] = &[
     "shard_id",
     "stream_index",
     "git_revision",
+    "binary_sha256",
+    "deps_source_revision",
+    "deps_source_dirty",
     "compiler_version",
     "rng_algorithm",
     "rng_version",
@@ -603,8 +606,15 @@ pub enum RngAlgorithm {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Provenance {
-    /// Full source git revision embedded by the producing build.
+    /// Repository-wide revision observed at run start, recorded as context
+    /// rather than as the dataset's identity.
     pub git_revision: GitRevision,
+    /// SHA-256 digest of the executable that emitted the dataset.
+    pub binary_sha256: Sha256Digest,
+    /// Revision of the linked source closure (`crates/` and `Cargo.lock`).
+    pub deps_source_revision: GitRevision,
+    /// Whether the linked source closure was dirty at run start.
+    pub deps_source_dirty: bool,
     /// Complete compiler version string.
     pub compiler_version: String,
     /// Closed RNG algorithm identity.

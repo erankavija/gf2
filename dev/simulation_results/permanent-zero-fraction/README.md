@@ -174,26 +174,18 @@ establishes the file shapes and cross-file count relationships; the presence of
 
 ## Source identity of an emission
 
-A dataset is only as traceable as the build that wrote it, so an emitting
-binary embeds the revision it was compiled from and checks that revision before
-it writes. `gf2_sim::permanent_campaign::provenance::approve_emission` approves
-a write only when the embedded revision equals the repository's `HEAD` and no
-tracked file differs outside the campaign's own directory. A build that
-recorded no revision — compiled outside a checkout, or on a host without `git` —
-never emits.
+A dataset records the executable SHA-256, the linked source-closure revision and
+dirty state, and the repository-wide revision as run-start context.
+`gf2_sim::permanent_campaign::provenance::approve_emission` approves a write
+when the running executable digest matches `provenance.binary_sha256` in the
+committed frozen manifest. A missing executable digest, a manifest that differs
+from its committed content, or a root that is not exactly one campaign id below
+the dataset home refuses the emission.
 
-The rule is deliberately narrower than "the working tree is clean". This
-dataset lives inside the repository, so a clean-tree rule would refuse the
-second shard of every campaign: the first shard already dirtied the tree. Files
-under `<campaign-id>/`, raw and derived alike, are the campaign's expected
-output and are exempt. `manifest.json` is the one exception inside that
-directory, because it declares the identity the numbers are published under: a
-tracked change to it refuses. A changed source file, build or dependency
-manifest, `protocol.md`, or any other tracked file outside the campaign
-directory refuses the emission, and the refusal names every path that differs.
-
-Untracked paths never refuse. The source a binary was compiled from is fixed by
-`HEAD`, and a file git does not track is not part of it.
+The source closure is `crates/` plus `Cargo.lock`. Repository-wide edits and
+untracked paths outside that closure do not affect emission approval. The
+manifest remains frozen because it declares the identity under which the
+numbers are published.
 
 The guard accepts only one campaign's own directory as the root it is emitting
 into: exactly one campaign id below this home, inside the repository. Being
@@ -203,16 +195,6 @@ and one at this home would excuse every campaign and the protocol beside them.
 A root that is an ancestor of this home, the home itself, deeper than one
 campaign id below it, elsewhere in the tree, or named by something that is not
 a campaign id refuses, and the refusal says which of those it was.
-
-A build follows `HEAD` only when asked to. By default the embedded revision is
-fixed when `gf2-sim` is compiled and a later commit does not refresh it, so
-landing a commit does not recompile the workspace's heaviest crate. The guard
-then refuses with a revision mismatch until the crate is rebuilt, which is the
-safe direction: a stale binary cannot publish under a source it was not built
-from. A publisher exports `GF2_SIM_TRACK_HEAD=1` for the build that will emit,
-and that build follows `HEAD` commit by commit. Setting or clearing the
-variable re-runs the build script, so switching it on is itself enough to
-refresh a stale binary.
 
 ## Integrity file
 
@@ -242,6 +224,10 @@ manifest, every executed shard record, every field summary, and the pooled
 summary. Shard paths a halted cell never executed are absent from the dataset
 and from this file. Derived artefacts are excluded, and the file does not cover
 itself.
+
+The `checksum-mismatch` fixture keeps a correct `manifest.json` checksum because
+`manifest_fault` short-circuits verification; a deliberately wrong entry would
+mask the three raw-file mismatches that fixture exercises.
 
 The root manifest's content hash is consequently a sidecar value: it is this
 file's `manifest.json` entry, and `manifest.json` stores no hash of itself. A
@@ -276,8 +262,8 @@ $ cargo run -p gf2-sim --release --bin permanent_dataset -- <subcommand> [campai
 
 | Subcommand | Does |
 | --- | --- |
-| `revision` | Prints the source revision this build embedded; it equals `git rev-parse HEAD` exactly when the binary is current with the checkout |
-| `emission-check <dir>` | Runs the source-identity guard that `permanent_campaign` passes before writing, printing the approved revision or naming every path that refuses it |
+| `revision` | Prints the repository-wide revision observed at command start as provenance context |
+| `emission-check <dir>` | Runs the binary-identity guard that `permanent_campaign` passes before writing, printing the approved executable digest or the refusal |
 | `checksums <dir>` | Renders the integrity file for a finished dataset on standard output; it writes nothing, so redirect it into `checksums.sha256` |
 | `conform <dir>` | Validates the complete schema and cross-document shard and summary aggregates without modifying the dataset |
 | `verify <dir>` | Re-checks a dataset against its integrity file and its recorded source |

@@ -1,21 +1,17 @@
 //! Source identity and integrity for published campaign datasets.
 //!
 //! Two independent guarantees live here. [`approve_emission`] decides whether
-//! the running binary may publish into a campaign directory at all: it compares
-//! the revision embedded into the build against the repository's current
-//! `HEAD`, then refuses when any tracked file differs outside the campaign's own
-//! output subtree. [`verify_dataset`] decides, later and from the published
-//! bytes alone, whether the dataset still matches its
+//! the running binary may publish into a campaign directory at all: it checks
+//! the executable identity named by the frozen manifest and refuses when that
+//! manifest differs from its committed content. [`verify_dataset`] decides,
+//! later and from the published bytes alone, whether the dataset still matches its
 //! [`INTEGRITY_FILE`](super::schema::INTEGRITY_FILE) and whether the revision it
 //! names still exists.
 //!
-//! The emission rule is deliberately narrower than "the tree is clean". A
-//! published dataset lives inside this repository, so a clean-tree rule would
-//! refuse the second shard of every campaign: the first shard already dirtied
-//! the tree. What emission protects is the identity of the source behind the
-//! numbers, not the absence of output. The frozen root manifest is the one
-//! exception inside that subtree, because it fixes what the numbers claim
-//! rather than recording them.
+//! Emission protects the identity of the executable and the frozen manifest,
+//! not repository-wide cleanliness. Runtime source facts are captured in the
+//! source-closure fields and the repository-wide revision is retained as
+//! context; neither context nor unrelated output is an emission gate.
 //!
 //! The on-disk integrity format and its `sha256sum -c` verification procedure
 //! are documented in
@@ -32,96 +28,23 @@ use sha2::{Digest, Sha256};
 use super::schema::{
     field_summary_file, read_field_summary, read_manifest, shard_record_file, ArtifactPath,
     ArtifactPathError, CampaignId, CampaignManifest, CellTerminalState, DatasetFileClass,
-    DatasetLayout, GitRevision, GitRevisionError, SchemaError, Sha256Digest, Sha256DigestError,
-    DATASET_HOME, INTEGRITY_FILE, MANIFEST_FILE,
+    DatasetLayout, GitRevision, GitRevisionError, Provenance, SchemaError, Sha256Digest,
+    Sha256DigestError, DATASET_HOME, INTEGRITY_FILE, MANIFEST_FILE,
 };
-
-/// Source revision recorded into this build of `gf2-sim` by its build script.
-const BUILD_GIT_REVISION: &str = env!("GF2_SIM_BUILD_GIT_REVISION");
-
-/// Source revision a binary carries from the build that produced it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BuildRevision {
-    /// The build recorded the revision its source came from.
-    Recorded(GitRevision),
-    /// The build could not determine a revision, so emission has nothing to
-    /// check its numbers against and refuses.
-    Unavailable,
-}
-
-impl fmt::Display for BuildRevision {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Recorded(revision) => revision.fmt(f),
-            Self::Unavailable => f.write_str("unavailable"),
-        }
-    }
-}
-
-/// Returns the source revision embedded into this build.
-///
-/// The value is fixed when `gf2-sim` is compiled, by the crate's build script.
-/// A build made outside a git checkout, or without `git` on `PATH`, records no
-/// revision and yields [`BuildRevision::Unavailable`]; emission then refuses
-/// rather than publishing numbers whose source cannot be named.
-///
-/// The build script does not follow `HEAD` unless `GF2_SIM_TRACK_HEAD` is set
-/// to a value other than `0`, so after a later commit this value is stale and
-/// [`approve_emission`] refuses with a revision mismatch. That refusal is the
-/// fail-closed direction — a stale binary cannot publish under a source it was
-/// not built from — and a publisher's build sets the variable. The build
-/// script documents the trade-off it protects.
-pub fn build_revision() -> BuildRevision {
-    match BUILD_GIT_REVISION.parse() {
-        Ok(revision) => BuildRevision::Recorded(revision),
-        Err(_) => BuildRevision::Unavailable,
-    }
-}
 
 /// Permission for one binary to publish into one campaign directory.
 ///
-/// The token is produced only by [`approve_emission`] and its explicit-revision
-/// form, and it carries the revision both the build and the repository agreed
-/// on, so a writer records exactly the revision that was checked.
+/// The token is produced only by [`approve_emission`] and carries the executable
+/// digest that was checked against the frozen manifest.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EmissionApproval {
-    revision: GitRevision,
+    binary_sha256: Sha256Digest,
 }
 
 impl EmissionApproval {
-    /// Returns the source revision the emitting build was checked against.
-    pub fn revision(&self) -> &GitRevision {
-        &self.revision
-    }
-}
-
-/// How a tracked file differs from the revision the binary was built at.
-///
-/// Rename and copy detection is disabled when the working tree is inspected, so
-/// a rename appears as a deletion and an addition rather than a single entry.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SourceChangeKind {
-    /// The path is new in the index.
-    Added,
-    /// The path's content differs.
-    Modified,
-    /// The path is gone.
-    Deleted,
-    /// The path changed between file, symlink, or submodule.
-    TypeChanged,
-    /// The path has an unresolved merge conflict.
-    Unmerged,
-}
-
-impl fmt::Display for SourceChangeKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            Self::Added => "added",
-            Self::Modified => "modified",
-            Self::Deleted => "deleted",
-            Self::TypeChanged => "type-changed",
-            Self::Unmerged => "unmerged",
-        })
+    /// Returns the digest of the executable approved to emit.
+    pub fn binary_sha256(&self) -> &Sha256Digest {
+        &self.binary_sha256
     }
 }
 
@@ -169,21 +92,6 @@ impl fmt::Display for CampaignPathFault {
     }
 }
 
-/// One tracked file that differs from the built revision.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SourceChange {
-    /// Path relative to the repository root.
-    pub path: PathBuf,
-    /// How the path differs.
-    pub kind: SourceChangeKind,
-}
-
-impl fmt::Display for SourceChange {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} ({})", self.path.display(), self.kind)
-    }
-}
-
 /// Why a binary may not publish into a campaign directory.
 ///
 /// Every variant refuses: an inconclusive check is a refusal, because a dataset
@@ -191,19 +99,22 @@ impl fmt::Display for SourceChange {
 /// prevent.
 #[derive(Debug)]
 pub enum EmissionRefusal {
-    /// The build recorded no source revision.
-    UnknownBuildRevision,
-    /// The build's revision is not the repository's current `HEAD`.
-    RevisionMismatch {
-        /// Revision the binary was built from.
-        built: GitRevision,
-        /// Revision the repository currently has checked out.
-        head: GitRevision,
+    /// The running executable's digest could not be determined.
+    UnknownBinaryDigest {
+        /// Diagnostic explaining why the digest was unavailable.
+        message: String,
     },
-    /// Tracked files differ outside the campaign's own output subtree.
-    SourceChanged {
-        /// Every differing path, ordered by path.
-        changes: Vec<SourceChange>,
+    /// The running executable differs from the identity frozen in the manifest.
+    BinaryDigestMismatch {
+        /// Digest claimed by the frozen manifest.
+        expected: Sha256Digest,
+        /// Digest observed for the running executable.
+        actual: Sha256Digest,
+    },
+    /// The frozen manifest differs from the committed manifest content.
+    ManifestChanged {
+        /// Manifest path that differs from committed content.
+        path: PathBuf,
     },
     /// The campaign directory is not inside the repository being checked.
     OutsideRepository {
@@ -231,26 +142,25 @@ pub enum EmissionRefusal {
         /// Underlying operating-system error.
         source: std::io::Error,
     },
+    /// The frozen manifest is not a schema-conformant dataset manifest.
+    Schema(SchemaError),
 }
 
 impl fmt::Display for EmissionRefusal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::UnknownBuildRevision => f.write_str(
-                "the emitting build recorded no source revision, so the dataset it would write \
-                 cannot be traced to a source",
-            ),
-            Self::RevisionMismatch { built, head } => write!(
-                f,
-                "the emitting build is at revision {built} but the repository is at {head}"
-            ),
-            Self::SourceChanged { changes } => {
-                f.write_str("tracked files differ outside the campaign output subtree:")?;
-                for change in changes {
-                    write!(f, " {change}")?;
-                }
-                Ok(())
+            Self::UnknownBinaryDigest { message } => {
+                write!(f, "cannot determine the running executable SHA-256: {message}")
             }
+            Self::BinaryDigestMismatch { expected, actual } => write!(
+                f,
+                "the frozen manifest names binary SHA-256 {expected}, but the running executable is {actual}"
+            ),
+            Self::ManifestChanged { path } => write!(
+                f,
+                "frozen campaign manifest {} differs from its committed content",
+                path.display()
+            ),
             Self::OutsideRepository { path } => write!(
                 f,
                 "campaign directory {} is outside the repository being checked",
@@ -263,6 +173,7 @@ impl fmt::Display for EmissionRefusal {
                 write!(f, "`git {command}` failed: {message}")
             }
             Self::Io { path, source } => write!(f, "cannot resolve {}: {source}", path.display()),
+            Self::Schema(source) => source.fmt(f),
         }
     }
 }
@@ -271,21 +182,18 @@ impl std::error::Error for EmissionRefusal {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Io { source, .. } => Some(source),
+            Self::Schema(source) => Some(source),
             _ => None,
         }
     }
 }
 
-/// Decides whether this build may publish into `campaign_root`.
+/// Decides whether the running executable may publish into `campaign_root`.
 ///
-/// Emission is approved when the revision embedded by the build script equals
-/// the repository's `HEAD` and no tracked file differs outside
-/// `campaign_root`. The campaign's own raw and derived output is expected to
-/// dirty the tree and is therefore exempt, with one exception: the frozen
-/// [`MANIFEST_FILE`] inside `campaign_root` refuses when it differs, because it
-/// declares the identity the numbers are published under. Untracked paths never
-/// refuse; the compiled source is fixed by `HEAD`, and a file git does not track
-/// is not part of it.
+/// Emission is approved when the running executable has a determinable digest,
+/// the frozen manifest is committed without modification, and its claimed
+/// binary digest equals the running executable's digest. Repository-wide git
+/// state is recorded as context by the producer and is not an emission gate.
 ///
 /// `campaign_root` must be one campaign's directory: exactly one
 /// [`CampaignId`] level below [`DATASET_HOME`] inside the repository. A root
@@ -300,26 +208,29 @@ impl std::error::Error for EmissionRefusal {
 /// repository, an unreadable path, or a failing `git` invocation refuses too:
 /// the guard never approves a check it could not complete.
 pub fn approve_emission(campaign_root: &Path) -> Result<EmissionApproval, EmissionRefusal> {
-    approve_emission_from(&build_revision(), campaign_root)
+    approve_emission_with_binary_digest(Some(running_binary_sha256()?), campaign_root)
 }
 
-/// Decides whether a binary built at `built` may publish into `campaign_root`.
-///
-/// [`approve_emission`] is this function applied to the revision embedded in
-/// this build. Passing the revision explicitly lets a test drive the rule
-/// against a throwaway repository, and lets a separately built emitter supply
-/// the revision its own build recorded.
-///
-/// # Errors
-///
-/// As [`approve_emission`].
-pub fn approve_emission_from(
-    built: &BuildRevision,
+/// Returns the SHA-256 digest of the running executable.
+fn running_binary_sha256() -> Result<Sha256Digest, EmissionRefusal> {
+    let executable =
+        std::env::current_exe().map_err(|error| EmissionRefusal::UnknownBinaryDigest {
+            message: error.to_string(),
+        })?;
+    let bytes = fs::read(&executable).map_err(|error| EmissionRefusal::UnknownBinaryDigest {
+        message: format!("{}: {error}", executable.display()),
+    })?;
+    Ok(digest_of(&bytes))
+}
+
+/// Applies the emission rule to an optionally supplied executable digest.
+fn approve_emission_with_binary_digest(
+    binary_sha256: Option<Sha256Digest>,
     campaign_root: &Path,
 ) -> Result<EmissionApproval, EmissionRefusal> {
-    let BuildRevision::Recorded(built) = built else {
-        return Err(EmissionRefusal::UnknownBuildRevision);
-    };
+    let binary_sha256 = binary_sha256.ok_or_else(|| EmissionRefusal::UnknownBinaryDigest {
+        message: "the executable digest was unavailable".to_owned(),
+    })?;
 
     let anchor = if campaign_root.is_dir() {
         campaign_root.to_owned()
@@ -336,56 +247,32 @@ pub fn approve_emission_from(
         &["rev-parse", "--show-toplevel"],
     )?))?;
 
-    let head: GitRevision = run_git(&repository, &["rev-parse", "HEAD"])?
-        .parse()
-        .map_err(|error: GitRevisionError| EmissionRefusal::Git {
-            command: "rev-parse HEAD".to_owned(),
-            message: error.to_string(),
+    let prefix = campaign_prefix(&anchor, campaign_root, &repository)?;
+    let manifest_path = campaign_root.join(MANIFEST_FILE);
+    let manifest_bytes =
+        fs::read(&manifest_path).map_err(|_| EmissionRefusal::ManifestChanged {
+            path: manifest_path.clone(),
         })?;
-    if &head != built {
-        return Err(EmissionRefusal::RevisionMismatch {
-            built: built.clone(),
-            head,
+    let committed = run_git_bytes(
+        &repository,
+        &["show", &format!("HEAD:{prefix}{MANIFEST_FILE}")],
+    )
+    .map_err(|_| EmissionRefusal::ManifestChanged {
+        path: manifest_path.clone(),
+    })?;
+    if manifest_bytes != committed {
+        return Err(EmissionRefusal::ManifestChanged {
+            path: manifest_path,
         });
     }
-
-    let exempt_prefix = campaign_prefix(&anchor, campaign_root, &repository)?;
-    let arguments = ["status", "--porcelain=v1", "-z", "--no-renames"];
-    let status = run_git(&repository, &arguments)?;
-    let mut changes = Vec::new();
-    for record in status.split('\0').filter(|record| !record.is_empty()) {
-        let Some((codes, path)) = split_status_record(record) else {
-            return Err(EmissionRefusal::Git {
-                command: arguments.join(" "),
-                message: format!("unparsable status record {record:?}"),
-            });
-        };
-        // Untracked and ignored paths never refuse: the source the binary was
-        // compiled from is fixed by HEAD, and a file git does not track is not
-        // part of it.
-        if codes == "??" || codes == "!!" {
-            continue;
-        }
-        let exempt = path
-            .strip_prefix(exempt_prefix.as_str())
-            .is_some_and(|inside| inside != MANIFEST_FILE);
-        if exempt {
-            continue;
-        }
-        changes.push(SourceChange {
-            path: PathBuf::from(path),
-            kind: change_kind(codes).ok_or_else(|| EmissionRefusal::Git {
-                command: arguments.join(" "),
-                message: format!("unrecognized status code {codes:?} for {path}"),
-            })?,
+    let manifest = read_manifest(campaign_root).map_err(EmissionRefusal::Schema)?;
+    if manifest.provenance.binary_sha256 != binary_sha256 {
+        return Err(EmissionRefusal::BinaryDigestMismatch {
+            expected: manifest.provenance.binary_sha256,
+            actual: binary_sha256,
         });
     }
-    if changes.is_empty() {
-        Ok(EmissionApproval { revision: head })
-    } else {
-        changes.sort_by(|left, right| left.path.cmp(&right.path));
-        Err(EmissionRefusal::SourceChanged { changes })
-    }
+    Ok(EmissionApproval { binary_sha256 })
 }
 
 /// Returns the campaign subtree as a repository-relative `/`-terminated prefix.
@@ -449,33 +336,32 @@ fn campaign_prefix(
     Ok(prefix)
 }
 
-/// Splits an `XY <path>` porcelain record into its status codes and path.
-fn split_status_record(record: &str) -> Option<(&str, &str)> {
-    let bytes = record.as_bytes();
-    (bytes.len() > 3 && bytes[2] == b' ').then(|| (&record[..2], &record[3..]))
-}
-
-/// Maps a porcelain status pair to how the path differs.
-fn change_kind(codes: &str) -> Option<SourceChangeKind> {
-    let bytes = codes.as_bytes();
-    if bytes.contains(&b'U') || codes == "AA" || codes == "DD" {
-        return Some(SourceChangeKind::Unmerged);
-    }
-    let code = if bytes[0] == b' ' { bytes[1] } else { bytes[0] };
-    match code {
-        b'A' => Some(SourceChangeKind::Added),
-        b'M' => Some(SourceChangeKind::Modified),
-        b'D' => Some(SourceChangeKind::Deleted),
-        b'T' => Some(SourceChangeKind::TypeChanged),
-        _ => None,
-    }
-}
-
 fn canonicalize(path: &Path) -> Result<PathBuf, EmissionRefusal> {
     fs::canonicalize(path).map_err(|source| EmissionRefusal::Io {
         path: path.to_owned(),
         source,
     })
+}
+
+/// Runs a git command and preserves its stdout bytes.
+fn run_git_bytes(directory: &Path, arguments: &[&str]) -> Result<Vec<u8>, EmissionRefusal> {
+    let refuse = |message: String| EmissionRefusal::Git {
+        command: arguments.join(" "),
+        message,
+    };
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(directory)
+        .args(arguments)
+        .env("GIT_OPTIONAL_LOCKS", "0")
+        .output()
+        .map_err(|source| refuse(source.to_string()))?;
+    if !output.status.success() {
+        return Err(refuse(
+            String::from_utf8_lossy(&output.stderr).trim().to_owned(),
+        ));
+    }
+    Ok(output.stdout)
 }
 
 /// Runs `git` in `directory` and returns its stdout without the trailing newline.
@@ -501,6 +387,82 @@ fn run_git(directory: &Path, arguments: &[&str]) -> Result<String, EmissionRefus
     String::from_utf8(output.stdout)
         .map(|text| text.trim_end_matches(['\n', '\r']).to_owned())
         .map_err(|source| refuse(source.to_string()))
+}
+
+/// Runtime-observed source facts for a measurement artifact.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RuntimeSourceIdentity {
+    /// Repository-wide revision observed at run start, retained as context.
+    pub git_revision: GitRevision,
+    /// Whether any repository path was dirty at run start, retained as context.
+    pub git_dirty: bool,
+    /// Revision of the source closure (`crates/` and `Cargo.lock`).
+    pub deps_source_revision: GitRevision,
+    /// Whether the source closure was dirty at run start.
+    pub deps_source_dirty: bool,
+}
+
+/// Captures source identity at runtime for a measurement artifact.
+pub fn observe_source_identity(
+    repository: &Path,
+) -> Result<RuntimeSourceIdentity, EmissionRefusal> {
+    let git_revision = run_git(repository, &["rev-parse", "HEAD"])?
+        .parse()
+        .map_err(|error: GitRevisionError| EmissionRefusal::Git {
+            command: ["rev-parse", "HEAD"].join(" "),
+            message: error.to_string(),
+        })?;
+    let deps_source_revision = run_git(
+        repository,
+        &["log", "-1", "--format=%H", "--", "crates/", "Cargo.lock"],
+    )?
+    .parse()
+    .map_err(|error: GitRevisionError| EmissionRefusal::Git {
+        command: "log -1 --format=%H -- crates/ Cargo.lock".to_owned(),
+        message: error.to_string(),
+    })?;
+    let git_dirty = !run_git(
+        repository,
+        &["status", "--porcelain", "--untracked-files=all"],
+    )?
+    .is_empty();
+    let deps_source_dirty = !run_git(
+        repository,
+        &[
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+            "--",
+            "crates/",
+            "Cargo.lock",
+        ],
+    )?
+    .is_empty();
+    Ok(RuntimeSourceIdentity {
+        git_revision,
+        git_dirty,
+        deps_source_revision,
+        deps_source_dirty,
+    })
+}
+
+/// Returns the repository-wide revision observed at runtime by this command.
+pub fn runtime_git_revision() -> Result<GitRevision, EmissionRefusal> {
+    let repository = canonicalize(Path::new(env!("CARGO_MANIFEST_DIR")))?;
+    observe_source_identity(&repository).map(|identity| identity.git_revision)
+}
+
+/// Records runtime-observed identity fields in a provenance value.
+pub fn observe_provenance(
+    repository: &Path,
+    mut provenance: Provenance,
+) -> Result<Provenance, EmissionRefusal> {
+    let identity = observe_source_identity(repository)?;
+    provenance.git_revision = identity.git_revision;
+    provenance.binary_sha256 = running_binary_sha256()?;
+    provenance.deps_source_revision = identity.deps_source_revision;
+    provenance.deps_source_dirty = identity.deps_source_dirty;
+    Ok(provenance)
 }
 
 /// One raw dataset file and the digest recorded for it.
@@ -1129,7 +1091,7 @@ mod tests {
 
     use super::super::fixture::{
         manifest_at_revision, unique_temp_dir, write_fixture_at_revision, write_halted_fixture,
-        TestDir, FIXTURE_CAMPAIGN_ID,
+        write_integrity_file, TestDir, FIXTURE_CAMPAIGN_ID,
     };
     use super::super::schema::POOLED_SUMMARY_FILE;
     use super::*;
@@ -1221,6 +1183,17 @@ mod tests {
             let root = self.campaign_root();
             fs::create_dir_all(&root).unwrap();
             write_fixture_at_revision(&root, &self.head());
+            let mut manifest: serde_json::Value =
+                serde_json::from_slice(&fs::read(root.join(MANIFEST_FILE)).unwrap()).unwrap();
+            manifest["provenance"]["binary_sha256"] =
+                serde_json::json!(running_binary_sha256().unwrap().as_str());
+            fs::write(
+                root.join(MANIFEST_FILE),
+                serde_json::to_vec_pretty(&manifest).unwrap(),
+            )
+            .unwrap();
+            let manifest = read_manifest(&root).unwrap();
+            write_integrity_file(&root, &manifest);
             root
         }
     }
@@ -1232,61 +1205,141 @@ mod tests {
     }
 
     fn approve(repo: &TestRepo, campaign: &Path) -> Result<EmissionApproval, EmissionRefusal> {
-        approve_emission_from(&BuildRevision::Recorded(repo.head()), campaign)
+        let _ = repo;
+        approve_emission_with_binary_digest(Some(running_binary_sha256()?), campaign)
     }
 
-    /// REQ-01: the embedded revision exists and is what the build recorded.
-    ///
-    /// This asserts that the build recorded a revision, not that the recorded
-    /// revision is current. The build script follows `HEAD` only under
-    /// `GF2_SIM_TRACK_HEAD`, so an ordinary build carries the revision it was
-    /// compiled at and goes stale; equality with `HEAD` is the guard's job, and
-    /// `emission_requires_the_built_revision_to_equal_head` drives both sides
-    /// of it against a throwaway repository.
-    #[test]
-    fn build_revision_is_recorded_when_the_crate_is_built_from_a_checkout() {
-        let built_from_checkout = Command::new("git")
-            .args(["-C", env!("CARGO_MANIFEST_DIR"), "rev-parse", "--verify"])
-            .arg("HEAD")
-            .output()
-            .is_ok_and(|output| output.status.success());
-        match build_revision() {
-            BuildRevision::Recorded(revision) => assert_eq!(revision.as_str().len(), 40),
-            BuildRevision::Unavailable => assert!(
-                !built_from_checkout,
-                "a build inside a git checkout must record its source revision"
-            ),
-        }
+    fn approve_with_running_binary(
+        _repo: &TestRepo,
+        campaign: &Path,
+    ) -> Result<EmissionApproval, EmissionRefusal> {
+        approve_emission_with_binary_digest(Some(running_binary_sha256()?), campaign)
     }
 
-    /// REQ-01: emission requires an embedded revision equal to `HEAD`.
+    fn prepare_manifest_for_running_binary(repo: &TestRepo, campaign: &Path) {
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(campaign.join(MANIFEST_FILE)).unwrap()).unwrap();
+        manifest["provenance"]["binary_sha256"] =
+            serde_json::json!(running_binary_sha256().unwrap().as_str());
+        fs::write(
+            campaign.join(MANIFEST_FILE),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+        repo.commit_all("freeze the emitting binary identity");
+    }
+
     #[test]
-    fn emission_requires_the_built_revision_to_equal_head() {
+    fn emission_survives_unrelated_commit() {
         let repo = TestRepo::new();
-        let campaign = repo.campaign_root();
+        let campaign = repo.write_dataset();
+        prepare_manifest_for_running_binary(&repo, &campaign);
 
-        let refusal = approve_emission_from(&BuildRevision::Unavailable, &campaign)
-            .expect_err("a build with no recorded revision must refuse");
-        assert!(
-            matches!(refusal, EmissionRefusal::UnknownBuildRevision),
-            "{refusal}"
-        );
+        approve_with_running_binary(&repo, &campaign).expect("the frozen emitter is approved");
+        repo.write("README.md", "unrelated documentation\n");
+        repo.commit_all("document unrelated work");
+        approve_with_running_binary(&repo, &campaign)
+            .expect("an unrelated commit cannot change the emitter");
+    }
 
-        let stale = repo.head();
-        repo.write(SOURCE_FILE, "pub fn permanent() -> u8 { 0 }\n");
-        repo.commit_all("advance the source revision");
-        let refusal = approve_emission_from(&BuildRevision::Recorded(stale.clone()), &campaign)
-            .expect_err("a build behind HEAD must refuse");
+    #[test]
+    fn emission_survives_unrelated_tracked_edit() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        prepare_manifest_for_running_binary(&repo, &campaign);
+
+        repo.write("README.md", "unrelated tracked edit\n");
+        approve_with_running_binary(&repo, &campaign)
+            .expect("an unrelated tracked edit cannot change the emitter");
+    }
+
+    #[test]
+    fn provenance_context_revision_is_the_only_field_moved_by_unrelated_commit() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        prepare_manifest_for_running_binary(&repo, &campaign);
+        let template = read_manifest(&campaign).unwrap().provenance;
+        let before = observe_provenance(&repo.root, template.clone()).unwrap();
+
+        repo.write("README.md", "unrelated documentation\n");
+        repo.commit_all("advance unrelated context");
+        let after = observe_provenance(&repo.root, template).unwrap();
+
+        assert_eq!(before.binary_sha256, after.binary_sha256);
+        assert_eq!(before.deps_source_revision, after.deps_source_revision);
+        assert_eq!(before.deps_source_dirty, after.deps_source_dirty);
+        assert_ne!(before.git_revision, after.git_revision);
+    }
+
+    #[test]
+    fn emission_refuses_unknown_binary_digest() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        let refusal = approve_emission_with_binary_digest(None, &campaign)
+            .expect_err("an unknown executable digest must refuse");
+        assert!(matches!(
+            refusal,
+            EmissionRefusal::UnknownBinaryDigest { .. }
+        ));
+    }
+
+    #[test]
+    fn emission_refuses_a_manifest_naming_a_different_binary() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(campaign.join(MANIFEST_FILE)).unwrap()).unwrap();
+        manifest["provenance"]["binary_sha256"] =
+            serde_json::json!("0000000000000000000000000000000000000000000000000000000000000000");
+        fs::write(
+            campaign.join(MANIFEST_FILE),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+        repo.commit_all("freeze a different emitter identity");
+
+        let actual = running_binary_sha256().unwrap();
+        let refusal = approve_emission_with_binary_digest(Some(actual.clone()), &campaign)
+            .expect_err("a manifest naming another executable must refuse");
         match refusal {
-            EmissionRefusal::RevisionMismatch { built, head } => {
-                assert_eq!(built, stale);
-                assert_eq!(head, repo.head());
+            EmissionRefusal::BinaryDigestMismatch {
+                expected,
+                actual: found,
+            } => {
+                assert_ne!(expected, found);
+                assert_eq!(found, actual);
             }
-            other => panic!("a stale build revision must be refused: {other}"),
+            other => panic!("unexpected refusal: {other}"),
         }
+    }
 
-        let approval = approve(&repo, &campaign).expect("a build at HEAD emits");
-        assert_eq!(approval.revision(), &repo.head());
+    #[test]
+    fn emission_approves_a_manifest_naming_the_running_binary() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        prepare_manifest_for_running_binary(&repo, &campaign);
+
+        let approval =
+            approve_emission(&campaign).expect("the manifest names the running executable");
+        assert_eq!(approval.binary_sha256(), &running_binary_sha256().unwrap());
+    }
+
+    #[test]
+    fn emission_refuses_changed_frozen_manifest() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        prepare_manifest_for_running_binary(&repo, &campaign);
+        fs::write(campaign.join(MANIFEST_FILE), b"changed frozen manifest\n").unwrap();
+
+        let refusal = approve(&repo, &campaign).expect_err("the frozen manifest must be immutable");
+        assert!(matches!(refusal, EmissionRefusal::ManifestChanged { .. }));
+    }
+
+    #[test]
+    fn dataset_verdict_unchanged_after_schema_migration() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        assert_eq!(verify_dataset(&campaign).unwrap(), DatasetVerdict::Verified);
     }
 
     /// REQ-02, REQ-03: the campaign's own output never refuses its own writer.
@@ -1316,7 +1369,7 @@ mod tests {
     /// exempted the tree around it would approve rather than refuse — the test
     /// fails if the exemption hole reopens, not merely if a path check moves.
     #[test]
-    fn emission_refuses_a_root_that_is_not_a_campaign_directory() {
+    fn emission_refuses_non_campaign_root() {
         let repo = TestRepo::new();
         repo.write_dataset();
         repo.commit_all("publish the dataset");
@@ -1369,72 +1422,16 @@ mod tests {
         approve(&repo, &root).expect("one campaign's own directory emits");
     }
 
-    /// REQ-02, REQ-03: changed source, build metadata, or protocol refuses.
-    #[test]
-    fn emission_refuses_a_changed_source_dependency_or_protocol_file() {
-        for changed in [
-            SOURCE_FILE.to_owned(),
-            DEPENDENCY_MANIFEST.to_owned(),
-            protocol_document(),
-        ] {
-            let repo = TestRepo::new();
-            let campaign = repo.write_dataset();
-            repo.commit_all("publish the dataset");
-
-            fs::write(campaign.join(FIRST_SHARD), b"{}\n").unwrap();
-            repo.write(&changed, "changed after the build\n");
-
-            let refusal = approve(&repo, &campaign)
-                .expect_err("a changed tracked file outside the campaign must refuse");
-            let EmissionRefusal::SourceChanged { changes } = &refusal else {
-                panic!("{changed} must refuse as a source change: {refusal}");
-            };
-            assert_eq!(
-                changes,
-                &[SourceChange {
-                    path: PathBuf::from(&changed),
-                    kind: SourceChangeKind::Modified,
-                }],
-                "only {changed} differs outside the campaign subtree"
-            );
-            assert!(
-                refusal.to_string().contains(&changed),
-                "the refusal must name what changed: {refusal}"
-            );
-        }
-    }
-
-    /// REQ-02: the frozen root manifest is not covered by the subtree exemption.
-    #[test]
-    fn emission_refuses_a_changed_frozen_root_manifest() {
-        let repo = TestRepo::new();
-        let campaign = repo.write_dataset();
-        repo.commit_all("publish the dataset");
-        fs::write(campaign.join(MANIFEST_FILE), b"{}\n").unwrap();
-
-        let refusal = approve(&repo, &campaign).expect_err("a changed frozen manifest must refuse");
-        let EmissionRefusal::SourceChanged { changes } = &refusal else {
-            panic!("a changed manifest must refuse as a source change: {refusal}");
-        };
-        assert_eq!(
-            changes,
-            &[SourceChange {
-                path: PathBuf::from(format!(
-                    "{DATASET_HOME}/{FIXTURE_CAMPAIGN_ID}/{MANIFEST_FILE}"
-                )),
-                kind: SourceChangeKind::Modified,
-            }]
-        );
-    }
-
     /// REQ-02: a campaign directory outside the repository cannot be approved.
     #[test]
     fn emission_refuses_a_campaign_directory_outside_the_repository() {
-        let repo = TestRepo::new();
         let outside = TestDir::new();
 
-        let refusal = approve_emission_from(&BuildRevision::Recorded(repo.head()), outside.root())
-            .expect_err("a campaign outside any repository must refuse");
+        let refusal = approve_emission_with_binary_digest(
+            Some(running_binary_sha256().unwrap()),
+            outside.root(),
+        )
+        .expect_err("a campaign outside any repository must refuse");
         assert!(
             matches!(
                 refusal,

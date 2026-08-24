@@ -96,12 +96,13 @@ Subcommands:
            write the binary-hash manifest used by measure and smoke.
   smoke    Run the complete four-step pipeline for q=3,5,7 with tiny inputs;
            outputs are isolated below each study's smoke/ directory.
-  measure  Refuse tracked worktree changes or hash drift, then run the
-           overnight receipt campaign while holding the canonical full-host
+  measure  Verify prepared binary hashes, then run the overnight receipt
+           campaign while holding the canonical full-host
            benchmark mutex for the entire run.
   premeasure [--session-cap SECONDS]
-           Run the resumable 60-cell premeasurement schedule under one
-           canonical full-host lock. The default session cap is 43200 seconds.
+           Verify prepared binary hashes and run the resumable 60-cell
+           premeasurement schedule under one canonical full-host lock. The
+           default session cap is 43200 seconds.
   premeasure-collect
            Collect completed premeasurement process receipts and report
            per-configuration completeness; no pooled means are calculated.
@@ -122,23 +123,27 @@ hash_file() {
 }
 
 tracked_worktree_clean() {
-    git -C "$REPO_ROOT" diff --quiet \
-        && git -C "$REPO_ROOT" diff --cached --quiet \
-        && [[ -z "$(git -C "$REPO_ROOT" status --porcelain --untracked-files=all)" ]]
+    git -C "$REPO_ROOT" diff --quiet -- crates/ Cargo.lock \
+        && git -C "$REPO_ROOT" diff --cached --quiet -- crates/ Cargo.lock \
+        && [[ -z "$(git -C "$REPO_ROOT" status --porcelain --untracked-files=all -- crates/ Cargo.lock)" ]]
+}
+
+source_closure_revision() {
+    git -C "$REPO_ROOT" log -1 --format=%H -- crates/ Cargo.lock
 }
 
 assert_tracked_worktree_clean() {
     if ! tracked_worktree_clean; then
-        echo "ERROR: measure requires a clean worktree (tracked and untracked)" >&2
-        git -C "$REPO_ROOT" status --short --untracked-files=all >&2
+        echo "ERROR: prepare requires a clean source closure (crates/ and Cargo.lock; tracked and untracked)" >&2
+        git -C "$REPO_ROOT" status --short --untracked-files=all -- crates/ Cargo.lock >&2
         exit 2
     fi
 }
 
 assert_premeasure_worktree_clean() {
     if ! tracked_worktree_clean; then
-        echo "ERROR: premeasure requires a clean worktree (tracked and untracked)" >&2
-        git -C "$REPO_ROOT" status --short --untracked-files=all >&2
+        echo "ERROR: prepare requires a clean source closure (crates/ and Cargo.lock; tracked and untracked)" >&2
+        git -C "$REPO_ROOT" status --short --untracked-files=all -- crates/ Cargo.lock >&2
         exit 2
     fi
 }
@@ -190,7 +195,7 @@ verify_manifest() {
                 actual=$(hash_file "$path")
                 [[ "$actual" == "$expected" ]] || die "binary hash mismatch: $path (manifest $expected, actual $actual)"
                 ;;
-            ''|manifest_version=*|source_revision=*|tracked_worktree_dirty=*|resource_receipt=*|rust_toolchain=*|build_rustc=*) ;;
+            ''|manifest_version=*|repository_revision=*|source_closure_revision=*|source_closure_dirty=*|source_closure_dirty_check=*|resource_receipt=*|rust_toolchain=*|build_rustc=*) ;;
             *) die "unknown manifest line: $kind|$path|$expected" ;;
         esac
     done < "$MANIFEST_PATH"
@@ -210,9 +215,10 @@ write_provenance() {
     {
         echo "schema_version: 1"
         echo "campaign_run_id: $RUN_ID"
-        echo "source_revision: $(git -C "$REPO_ROOT" rev-parse HEAD)"
-        if tracked_worktree_clean; then echo "tracked_worktree_dirty: false"; else echo "tracked_worktree_dirty: true"; fi
-        echo "tracked_dirty_check: git diff --quiet && git diff --cached --quiet && git status --porcelain --untracked-files=all"
+        echo "repository_revision: $(git -C "$REPO_ROOT" rev-parse --verify HEAD)"
+        echo "source_closure_revision: $(source_closure_revision)"
+        if tracked_worktree_clean; then echo "source_closure_dirty: false"; else echo "source_closure_dirty: true"; fi
+        echo "source_closure_dirty_check: git diff --quiet -- crates/ Cargo.lock && git diff --cached --quiet -- crates/ Cargo.lock && git status --porcelain --untracked-files=all -- crates/ Cargo.lock"
         echo "rust_toolchain: $(manifest_value rust_toolchain)"
         echo "build_rustc: $(manifest_value build_rustc)"
         echo "binary_hashes: see $MANIFEST_PATH and the harness CSV preambles"
@@ -359,6 +365,7 @@ prepare() {
     require_command sha256sum
     require_command git
     require_command rustc
+    assert_tracked_worktree_clean
     mkdir -p "$SAMPLING_TARGET_DIR" "$WAVE_TARGET_DIR" "$TARGET_ROOT"
     echo "building permanent-sampling-feas (HIP)"
     cargo +1.95.0 build --manifest-path "$SAMPLING_MANIFEST" --release --features hip --target-dir "$SAMPLING_TARGET_DIR"
@@ -369,8 +376,10 @@ prepare() {
     mkdir -p "$resource_root"
     {
         echo "schema_version: 1"
-        echo "source_revision: $(git -C "$REPO_ROOT" rev-parse HEAD)"
-        echo "tracked_worktree_dirty=$(if tracked_worktree_clean; then echo false; else echo true; fi)"
+        echo "repository_revision: $(git -C "$REPO_ROOT" rev-parse --verify HEAD)"
+        echo "source_closure_revision=$(source_closure_revision)"
+        echo "source_closure_dirty=$(if tracked_worktree_clean; then echo false; else echo true; fi)"
+        echo "source_closure_dirty_check=crates/ Cargo.lock"
         echo "architecture: $ARCH"
         echo "hipcc: $ROCM_PATH/bin/hipcc"
         echo "resource_flag: -Rpass-analysis=kernel-resource-usage"
@@ -387,8 +396,10 @@ prepare() {
     local manifest_tmp="$MANIFEST_PATH.tmp.$$"
     {
         echo "manifest_version=1"
-        echo "source_revision=$(git -C "$REPO_ROOT" rev-parse HEAD)"
-        echo "tracked_worktree_dirty=$(if tracked_worktree_clean; then echo false; else echo true; fi)"
+        echo "repository_revision=$(git -C "$REPO_ROOT" rev-parse --verify HEAD)"
+        echo "source_closure_revision=$(source_closure_revision)"
+        echo "source_closure_dirty=$(if tracked_worktree_clean; then echo false; else echo true; fi)"
+        echo "source_closure_dirty_check=crates/ Cargo.lock"
         echo "rust_toolchain=1.95.0"
         echo "build_rustc=$(rustc +1.95.0 -V)"
         echo "resource_receipt=$resource_root/receipt.txt"
@@ -400,7 +411,7 @@ prepare() {
     } > "$manifest_tmp"
     mv "$manifest_tmp" "$MANIFEST_PATH"
     echo "prepared manifest: $MANIFEST_PATH"
-    grep -E '^(manifest_version|source_revision|rust_toolchain|build_rustc|resource_receipt|binary\|)' "$MANIFEST_PATH"
+    grep -E '^(manifest_version|repository_revision|source_closure_revision|source_closure_dirty|rust_toolchain|build_rustc|resource_receipt|binary\|)' "$MANIFEST_PATH"
 }
 
 run_step() {
@@ -806,7 +817,7 @@ write_premeasure_provenance() {
         echo "session_id: $session_id"
         echo "mode: premeasure"
         echo "started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        echo "source_revision: $(git -C "$REPO_ROOT" rev-parse HEAD)"
+        echo "repository_revision: $(git -C "$REPO_ROOT" rev-parse --verify HEAD)"
         echo "session_cap_seconds: $cap"
         echo "warmup_state_file: $warmup_state"
         echo "manifest: $MANIFEST_PATH"
@@ -978,7 +989,7 @@ PREMEASURE_COLLECT_COLUMNS=(
     receipt_status receipt_exit_status exit_status_file receipt_exit_agreement
     receipt_failure receipt_plan_sha256 receipt_manifest_locator
     receipt_prepared_manifest_sha256 session_provenance_file session_id
-    session_campaign_run_id session_started_utc session_source_revision
+    session_campaign_run_id session_started_utc session_repository_revision
     session_plan_path session_plan_sha256 session_manifest_locator
     session_wrapper_invocation session_binary_actual_chain
     session_binary_expected_chain session_binary_chain_match
@@ -1149,8 +1160,9 @@ session_metadata_count() {
 
 premeasure_collect() {
     # Collection is a recovery projection over already-observed evidence. It
-    # deliberately does not verify or run the current harness, inspect HEAD, or
-    # hash the current binary: none of those collector-time facts describe an
+    # deliberately does not verify or run the current harness, inspect the
+    # current repository state, or hash the current binary: none of those
+    # collector-time facts describe an
     # execution that already happened.
     load_premeasure_schedule false
     local run_dir ledger_tmp candidates_tmp ledger_path candidates_path
@@ -1398,7 +1410,7 @@ premeasure_collect() {
             session_valid=true
             local required_session_key session_count session_value
             local -a required_session_keys=(
-                session_id campaign_run_id started_utc source_revision manifest exact_plan
+                session_id campaign_run_id started_utc repository_revision manifest exact_plan
                 plan_sha256 wrapper_invocation
             )
             for required_session_key in "${required_session_keys[@]}"; do
@@ -1416,7 +1428,7 @@ premeasure_collect() {
             session_campaign="${SESSION_VALUES[$composite]:-}"
             composite="$resolved_session"$'\034'started_utc
             session_started="${SESSION_VALUES[$composite]:-}"
-            composite="$resolved_session"$'\034'source_revision
+            composite="$resolved_session"$'\034'repository_revision
             session_source="${SESSION_VALUES[$composite]:-}"
             composite="$resolved_session"$'\034'exact_plan
             session_plan_path="${SESSION_VALUES[$composite]:-}"
@@ -1620,24 +1632,20 @@ run_premeasure() {
 
 revalidate_premeasure_under_lock() {
     require_command git
-    assert_premeasure_worktree_clean
     verify_manifest
 }
 
-# Re-runs measure's refusals inside the lock-held child, before any step. The
-# pre-lock checks fail fast without waiting, but the canonical mutex is shared
-# with every other worker on this host and a run can sit on it for a long time;
-# a commit, an untracked file, or a rebuilt binary landing during that wait
-# would otherwise reach the campaign unchecked (REQ-02). smoke deliberately
-# tolerates a dirty tree — its outputs are plumbing evidence, not campaign
-# evidence — so it revalidates nothing here.
+# Re-runs the prepared-binary check inside the lock-held child, before any step.
+# The canonical mutex is shared with every other worker on this host and a run
+# can sit on it for a long time; a rebuilt binary landing during that wait must
+# still be refused. smoke deliberately skips this revalidation because its
+# outputs are plumbing evidence rather than campaign evidence.
 revalidate_under_lock() {
     local smoke="$1"
     if [[ "$smoke" == true ]]; then
         return 0
     fi
     require_command git
-    assert_tracked_worktree_clean
     verify_manifest
 }
 
@@ -1681,16 +1689,14 @@ case "${1:-}" in
         ;;
     measure)
         # Fail fast before queueing for the host mutex; revalidate_under_lock
-        # repeats both refusals once the lock is held.
+        # repeats the prepared-binary check once the lock is held.
         require_command git
-        assert_tracked_worktree_clean
         verify_manifest
         run_campaign false
         ;;
     premeasure)
         require_command git
         require_command sha256sum
-        assert_premeasure_worktree_clean
         verify_manifest
         run_premeasure "$(parse_session_cap "${@:2}")"
         ;;
