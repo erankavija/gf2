@@ -9368,3 +9368,4 @@
 {"fields":["description"],"id":"a997f876-b63e-4fad-8b6f-40455e5eaf02","issue_id":"bebe485c-82c8-49a5-aea8-20b44ad4fb3a","timestamp":"2026-08-24T20:43:41.714493169Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["description"],"id":"4fd38a01-b4e2-4bbc-99d3-427e2a565a07","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-24T20:43:55.896917226Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["labels"],"id":"2b7382b3-8824-4a28-aa74-aa4c0a7f2d83","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-24T20:44:06.173111546Z","type":"issue_updated","updated_by":"issue-update"}
+{"id":"10d41784-0e60-4702-864b-750b9c210b9d","issue_id":"c0bb2ab1-b25e-48d6-a0fb-ebc5ab6b318a","priority":"normal","timestamp":"2026-08-24T20:56:53.208198437Z","title":"Blocked schedule for ordered-column elimination","type":"issue_created"}

@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-24T20:56:53.208198437Z",
+  "dependencies": [],
+  "description": "Converge the GF(2) elimination family: give `ordered_column_elimination` a blocked (M4RI-style) schedule so the unblocked ordered loop stops being a third elimination path beside the blocked left-to-right and unblocked right-to-left `rref` variants.\n\n## Background\n\n`ordered_column_elimination` (crates/gf2-core/src/alg/rref.rs) is a deliberate, tracked exception to @/inv/convention-convergence: the blocked `rref` schedule assumes ascending pivot columns (suffix-only block updates, contiguous pivot-bit fast path), so it cannot host an arbitrary preference permutation, and neither existing path tracks a row transform. Equivalence distance is already measured: ordered elimination under natural order reproduces `rref(a,false)` exactly and under reversed order matches `rref(a,true)` up to row order (crates/gf2-core/tests/ordered_column_elimination.rs). `rref` sits on a benchmark-receipted hot path, so convergence must not regress it.\n\n## Success Criteria\n\n- [hard] REQ-01: One elimination mechanism serves ordered-preference and directional pivoting, or the blocked ordered schedule shares its block kernels with `rref` with no third independent loop.\n- [hard] REQ-02: Existing `rref` benchmark receipts are reproduced or re-baselined under the named benchmark protocol with no regression outside noise.\n- [hard] REQ-03: The ordered-elimination conformance suite passes unchanged.\n- [aspirational] REQ-04: Transform accumulation gains a blocked schedule with measured elimination counts.",
+  "documents": [],
+  "first_ready_at": "2026-08-24T20:56:53.208198437Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "c0bb2ab1-b25e-48d6-a0fb-ebc5ab6b318a",
+  "labels": [
+    "component:gf2-core",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Blocked schedule for ordered-column elimination",
+  "updated_at": "2026-08-24T20:56:53.208198437Z"
+}

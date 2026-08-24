@@ -574,6 +574,10 @@ impl OrderedEliminationResult {
 /// that is dependent on the selected ones is skipped, and the rows below the
 /// rank end zero.
 ///
+/// This loop is a tracked exception to `@/inv/convention-convergence` beside
+/// the blocked [`rref`] schedule, which requires ascending pivot columns;
+/// convergence onto a shared blocked kernel is `@/issue/c0bb2ab1`.
+///
 /// # Complexity
 ///
 /// O(rank × rows × (cols + rows) / 64) word operations.
