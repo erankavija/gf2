@@ -286,6 +286,11 @@
    "id": "NOTE-04",
    "issue": "a82f2dd9",
    "text": "research-review R5 advisories: DEC-02 wording promises axis-anchor perturbation and per-point sensitivity that the committed evidence only partially provides (calibration holds axes fixed; Yue2022 reads carry only the factor-1.3 declaration). Advisory-only; revisit if a future gate re-reads DEC-02 literally."
+  },
+  {
+   "id": "NOTE-05",
+   "issue": "b7157be6",
+   "text": "Owner ruling (session 2): plan-review/breakdown-review are the breakdown-instantiation checkpoint stamps and are NOT re-run for execution-time manifest/description amendments; their completion-time passes stand. Post-completion advisory runs on P/B ending 2026-08-25 (D-16 serialization findings) are superseded by this ruling; wave-6 dispatch order serializes the shared osd/mod.rs writers operationally. Amendment stamps during execution are: manifest validate + render check, plus the affected issue's own gates."
   }
  ],
  "started_at": "2026-08-24T19:48:07.381765+00:00"
