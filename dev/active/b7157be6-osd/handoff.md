@@ -59,5 +59,5 @@ None. (D-21 resolved this session. The codex lead never confirmed whether main c
 - Dataset: `dev/reference_data/osd_ebch_128_64_fossorier1995.{csv,md}` (merged)
 - Progress: `dev/active/b7157be6-osd/progress.json` (waves, model plan, pitfalls PIT-01..07 + NOTE-01, rework counts)
 - Convergence follow-up: `jit issue show c0bb2ab1`
-- Neighbor coordination: forum `~/Projects/forum-poc/forum.sh` (mailbox `agent:codex`), peer session gf2-a1 (679cf170, landed)
+- Neighbor coordination: peer session gf2-a1 (679cf170, landed)
 - Worktrees live: agent-835e15fb, agent-ac78aff8, agent-dd6f1665, agent-f0d6fb9a (+ b820's agent-a39bb161/agent-389aa4de — DO NOT TOUCH; also baseline-check at f7e17a3c — safe to remove)
