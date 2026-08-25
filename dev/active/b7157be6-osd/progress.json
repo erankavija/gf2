@@ -173,7 +173,7 @@
      "title": "Mutable BP fallback composition",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "session 3: content review PASS; committed a28ed759; merged f4a5883b; cargo-ci gate running"
+     "status": "done (all gates passed round 1: cargo-ci, code-review, doc-review; merged f4a5883b)"
     },
     {
      "id": null,
