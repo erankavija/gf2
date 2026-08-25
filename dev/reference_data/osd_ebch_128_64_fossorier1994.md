@@ -53,12 +53,24 @@ IEEE Trans. Inf. Theory 41(5):1379–1396, 1995, doi:`10.1109/18.412683` — is
 recorded as bibliographically related to the pinned dissertation but is not a
 source of any value in this dataset. **The page, figure, and series
 identifiers inside `Fossorier1995` are not verified.** The article is closed
-access: Unpaywall reports `is_oa: false`, `oa_status: "closed"`,
-`has_repository_copy: false` and an empty `oa_locations` list for
-`10.1109/18.412683` (queried 2026-08-24), and the IEEE Xplore article-PDF
-endpoints answer with authentication redirects. No open copy was located. Its
-figure numbering, page numbering, and series legends therefore remain unknown,
-and this document asserts none.
+access, as recorded in the committed access evidence: the fresh 2026-08-25
+[Unpaywall response](/dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/unpaywall_10.1109_18.412683.json)
+reports `is_oa: false`, `oa_status: "closed"`,
+`has_repository_copy: false`, null best and first OA locations, and empty
+`oa_locations` and `oa_locations_embargoed` arrays. The
+[access-audit receipt](/dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/README.md)
+records the query, retrieval date, and response hash.
+
+A ResearchGate lead advertising author-uploaded public full text is a
+title-collision false positive. Its download is the five-author 1999 IEICE
+meeting work *Soft decision decoding of linear block codes based on ordered
+statistics in multilevel signaling*, not the two-author 1995 IEEE article. The
+[title-page identification](/dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/researchgate_lead_identification.md)
+records the distinct title, authors, venue, local-file hash, and PDF metadata
+without redistributing that PDF. The 1995 article remains unobtained by this
+audit. That result does not claim an exhaustive proof that no copy exists. Its
+figure numbering, page numbering, and series legends remain unknown, and this
+document asserts none.
 
 ## Code construction identity
 
@@ -188,12 +200,35 @@ calibration:
    separates a marker glyph from a line crossing it, then confirm every
    retained marker visually at 4–6$\times$ zoom.
 
+The executable
+[`extract.py`](/dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/extract.py)
+replays this calibration against the pinned PDF. It verifies the source
+SHA-256 and byte count, renders printed page 60 (PDF page 80) at 300 dpi,
+checks the 23-by-23-pixel inspection window around each manual read, and emits
+the axis anchors, pixel coordinates, and calibrated values. Its committed
+[`calibration.json`](/dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/calibration.json)
+is the versioned raw measurement receipt; the accompanying
+[`README.md`](/dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/README.md)
+states the reproduction command and limits. It contains 30 reads: all 21
+primary figure ordinates and all nine table-row figure cross-checks.
+
 Precision of the pixel-read ordinates: $\pm 0.1$ in $\log_{10}$
 (about $\pm 25\%$ in linear value). This figure is measured, not assumed. The
 `figure_crosscheck_log10` column carries the pixel read for each row whose
 ordinate also appears in a printed table; across the nine such rows eight agree
 with the printed numeral within $0.12$ decades, and the ninth is the
 contradiction recorded below.
+
+The CSV exposes digitization precision per row. Primary figure reads carry
+`digitization_uncertainty_log10 = 0.1` and
+`digitization_precision_basis = plus_or_minus_0.1_log10_marker_read`.
+Printed-table rows carry `digitization_uncertainty_log10 = 0` and
+`digitization_precision_basis = exact_print_transcription`; zero describes
+transcription error, not the source table's $\pm 0.05$-decade print
+quantization and not statistical confidence. The nine table rows with a
+figure cross-read carry
+`figure_crosscheck_digitization_uncertainty_log10 = 0.1`; rows without one
+carry `not_applicable_no_figure_crosscheck`.
 
 Abscissas: rows whose abscissa appears in a printed table carry the printed
 numeral. The remaining abscissas — 1.55, 6.02, 6.48, 6.99, 7.57 dB — are the
@@ -202,12 +237,30 @@ extending the grid the tabulated abscissas establish. Marker columns measured
 from the scan agree with those grid values within 0.05 dB, the largest
 deviation being 0.045 dB at 7.57 dB.
 
-Sample sizes: the source states no per-point block count for the tabulated
-series. It states 50 000 coded blocks for the order-3 and order-4 complexity
-comparison at the highest simulated SNR, and warns in the same paragraph that
-"the number of simulated blocks is far too small to obtain reliable information
-at such an error performance" (p. 69). No confidence interval is published for
-any point in this dataset.
+## Source-reported stochastic provenance
+
+Source silence is recorded, not filled with inferred campaign metadata. The
+dissertation reports no per-point block count or confidence interval for any
+of the 32 simulation rows. Accordingly, every simulation row carries the
+literal `not_reported_by_source` in both `source_sample_count` and
+`source_confidence_interval`. The seven `union_bound` rows are analytical bound
+values rather than stochastic measurements and carry `not_applicable_bound` in
+both columns.
+
+The source states 50,000 coded blocks for the order-3 and order-4 complexity
+comparison at the highest simulated SNR, but does not bind that count to an
+individual BER point. It warns in the same paragraph that "the number of
+simulated blocks is far too small to obtain reliable information at such an
+error performance" (p. 69). No confidence interval is published for any
+point in this dataset.
+
+The published simulations' seeds, random-number-generator identity, hardware,
+toolchain, and invocation are not reported by the source. The source also
+reports no producing version-control revision or git SHA. None is invented or
+borrowed from the present repository. The only executable, versioned receipt
+published with this dataset is the digitization receipt above: it receipts the
+source hash, page render, axis anchors, and pixel measurements, not the
+unreported 1994 simulation execution.
 
 ## Series inventory
 
@@ -225,7 +278,9 @@ legend text in `legend_full`, and the exact page-level locator in
 so that the existing
 [`compare_results.py`](/dev/reference_data/scripts/compare_results.py) helper
 can consume the file; `value_log10` holds the published or measured quantity at
-its own precision.
+its own precision. The source-count and confidence columns record either
+source silence or bound non-applicability, while the digitization columns keep
+measurement precision separate from statistical uncertainty.
 
 ## Yue2022 cross-check
 
@@ -300,10 +355,11 @@ Constraints on how that series may be used:
 
 - **Unverified article-level pin.** The exact page, figure number, series
   legends, and figure-level construction statements of `Fossorier1995` are
-  unverified because the article is closed access. This document pins the
-  1994 dissertation instead and asserts nothing about the article's internal
-  numbering. Whether the article reproduces Figure 4.14 and Tables 4.7–4.9
-  unchanged is unknown.
+  unverified. The committed access audit records a closed Unpaywall result and
+  identifies the advertised ResearchGate full text as a different five-author
+  1999 work. This document pins the 1994 dissertation instead and asserts
+  nothing about the article's internal numbering. Whether the article
+  reproduces Figure 4.14 and Tables 4.7–4.9 unchanged is unknown.
 - **Metric note.** The reproduction comparison metric is BER (D-21); the
   published series are BER. No conversion is applied.
 - **Table-versus-figure contradiction at 4.56 dB, order 2.** Table 4.7 prints
@@ -313,14 +369,20 @@ Constraints on how that series may be used:
   decades. The CSV keeps the printed table value in `value_log10` and the pixel
   read in `figure_crosscheck_log10`; neither is corrected against the other, and
   which one the source intends is unresolved.
+- **Digitization-receipt reconciliation.** All 30 committed receipt values
+  trace to a CSV primary or figure-cross-check field. The maximum absolute
+  ordinate delta between the calibrated receipt value and the two-decimal CSV
+  read is 0.0035 decade, so no re-extraction differs beyond the stated
+  $\pm 0.1$ precision and no new discrepancy is present. This does not resolve
+  the independent table-versus-figure contradiction above.
 - **Unresolved figure/text equation reference.** The theoretical curves in
   Figure 4.14 are labelled "Eq. 4.46", which defines the codeword error
   probability $P_s(i)$, while §4.3.1 (pp. 51–52) says the simulated results are
   compared against Equation 4.47, the bit error bound $P_b(i)$. The plotted
   simulation markers are BER by the p. 63–64 statements; the theoretical curves
   are not part of this dataset and their label is left as the source has it.
-- **Unpublished uncertainty.** No sample count or confidence interval is
-  published for any digitized point, and the source itself warns that its block
-  counts are too small at the lowest error rates. Rows marked
-  `value_kind = union_bound` are bound values, not measurements, and must not
-  be treated as simulation evidence.
+- **Unpublished simulation provenance.** No per-point sample count, confidence
+  interval, seed, RNG identity, hardware, toolchain, invocation, or producing
+  revision is published for the simulations. The CSV records that source
+  silence explicitly. Rows marked `value_kind = union_bound` are bound values,
+  not measurements, and must not be treated as simulation evidence.
