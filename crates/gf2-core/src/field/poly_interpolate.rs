@@ -104,7 +104,7 @@ use std::fmt;
 // ---------------------------------------------------------------------
 
 /// Conservative default for `polynomial.interpolate_fast_min_points()`
-/// in the active [`crate::tuning::TuningProfile`].
+/// in the active [`crate::tuning::CoreTuning`].
 ///
 /// Number-of-points threshold at which [`interpolate_auto`] prefers
 /// [`interpolate_fast`] over [`interpolate`]; [`interpolate_route`]
@@ -123,7 +123,7 @@ use std::fmt;
 /// [`interpolate`] or [`interpolate_fast`] directly.
 ///
 /// This constant remains the compiled-in conservative default consumed
-/// by [`crate::tuning::TuningProfile::CONSERVATIVE`].
+/// by [`crate::tuning::CoreTuning::CONSERVATIVE`].
 pub const INTERPOLATE_THRESHOLD: usize = 16;
 
 /// The selected arm of the [`interpolate_auto`] / [`interpolate_auto_two_adic`]

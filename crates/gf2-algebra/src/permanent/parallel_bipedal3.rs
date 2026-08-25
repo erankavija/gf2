@@ -21,7 +21,7 @@
 //!
 //! [`permanent_bipedal3_parallel`] resolves its chunk length at runtime via
 //! [`permanent_chunk_len`], a single non-recursive read of the active
-//! [`gf2_core::tuning`] profile's `permanent.gray_chunk_subsets` field
+//! [`crate::tuning::AlgebraTuning`] section's `permanent.gray_chunk_subsets` field
 //! (`dev/active/7d824b2f/design.md` §2.3, §3.12). With no profile installed
 //! this resolves to [`CHUNK_SUBSETS`], so default behaviour is unchanged.
 //!
@@ -41,40 +41,20 @@ use crate::packed::bipedal3::{Bipedal3, Bipedal3Matrix};
 use crate::packed::PackedField;
 use crate::packed::PackedFieldVec;
 
-/// Number of Gray-code subsets per parallel chunk. Tuned via the chunk-sweep
-/// bench at `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-*.csv`.
-///
-/// At n=28 (268M subsets) on the dev host (Ryzen 9 5900X, 12c/24t), the
-/// sweep at `2^7` (128) → `2^22` (4_194_304) — a dynamic range of 32 768x,
-/// more than four orders of magnitude — shows the flat top of the
-/// throughput curve sits at `2^14..2^16`. The default `2^16 = 65536` is
-/// chosen for clarity (a single round number near the optimum); it
-/// measures within 0.6% (~1 σ) of the empirical best at `2^14`, and well
-/// outside the rolloff at `2^7` (-91%) and `2^22` (-10%). See the CSV
-/// for the full sweep.
-///
-/// The value is the conservative default of the tuning profile's
-/// `permanent.gray_chunk_subsets` field, defined at
-/// [`gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT`] because a
-/// `gf2-core` constant cannot name one declared here.
-pub const CHUNK_SUBSETS: usize = gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT;
+pub use super::CHUNK_SUBSETS;
 
 /// Returns the Gray-code chunk length [`permanent_bipedal3_parallel`] passes
 /// to [`permanent_bipedal3_parallel_with_chunk`].
 ///
-/// Reads the active [`gf2_core::tuning`] profile's
-/// `permanent.gray_chunk_subsets` field
-/// ([`gf2_core::tuning::PermanentSelectors::gray_chunk_subsets`]) once per
-/// call, at the non-recursive, non-looping entry position
-/// `dev/active/7d824b2f/design.md` §2.3 requires. With no profile installed,
-/// [`gf2_core::tuning::active`] resolves to
-/// [`gf2_core::tuning::TuningProfile::CONSERVATIVE`], whose
-/// `permanent.gray_chunk_subsets` names
-/// [`gf2_core::tuning::PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT`] — the same
-/// constant [`CHUNK_SUBSETS`] names — so default behaviour is unchanged.
+/// Reads [`crate::tuning::AlgebraTuning::permanent`]'s
+/// [`crate::tuning::PermanentSelectors::gray_chunk_subsets`] once per call, at
+/// the non-recursive, non-looping entry position
+/// `dev/active/7d824b2f/design.md` §2.3 requires. With no envelope installed,
+/// [`crate::tuning::active`] resolves to [`crate::tuning::AlgebraTuning::CONSERVATIVE`],
+/// whose value is the canonical [`CHUNK_SUBSETS`] constant.
 #[must_use]
 pub fn permanent_chunk_len() -> usize {
-    gf2_core::tuning::active().permanent().gray_chunk_subsets()
+    crate::tuning::active().permanent().gray_chunk_subsets()
 }
 
 /// Records the `chunk_subsets` value most recently received by

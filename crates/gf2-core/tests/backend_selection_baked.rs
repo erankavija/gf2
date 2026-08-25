@@ -6,10 +6,10 @@
 //! boundary is asserted by `backend_selection.rs` and friends.
 #![cfg(gf2_tuning_baked)]
 
-use gf2_core::{
-    kernels::select_backend_for_size,
-    tuning::{self, TuningProfile},
-};
+#[path = "support/core_tuning.rs"]
+mod support;
+
+use gf2_core::{kernels::select_backend_for_size, tuning};
 
 #[test]
 fn baked_build_routes_by_committed_profile_value() {
@@ -17,17 +17,10 @@ fn baked_build_routes_by_committed_profile_value() {
     assert_eq!(select_backend_for_size(4).name(), "simd");
 }
 
-#[test]
-fn install_does_not_govern_bit_backend_selection() {
-    let profile = TuningProfile::from_json(
+support::fresh_tuning_test!(install_does_not_govern_bit_backend_selection, {
+    let profile = support::prepared_core_json(
         r#"
-        {
-          "schema_version": 1,
-          "profile_id": "baked-selection-install-witness",
-          "provenance": {"kind": "inherited"},
-          "selectors": {"bit_backend": {"simd_min_words": 16}}
-        }
-        "#,
+        {"bit_backend": {"simd_min_words": 16}}"#,
     )
     .expect("test profile is valid");
     tuning::install(profile).expect("profile has not been resolved");
@@ -36,4 +29,4 @@ fn install_does_not_govern_bit_backend_selection() {
     // runtime profile cannot move the baked four-word boundary.
     assert_eq!(select_backend_for_size(3).name(), "scalar");
     assert_eq!(select_backend_for_size(4).name(), "simd");
-}
+});

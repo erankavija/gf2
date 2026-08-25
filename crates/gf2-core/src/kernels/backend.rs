@@ -82,10 +82,10 @@ impl SelectedBackend {
 /// Conservative-table value for `bit_backend.simd_min_words`.
 pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;
 
-#[cfg(gf2_tuning_baked)]
+#[cfg(all(any(test, feature = "simd"), gf2_tuning_baked))]
 const SIMD_MIN_WORDS: usize = crate::tuning::baked::SIMD_MIN_WORDS;
 
-#[cfg(not(gf2_tuning_baked))]
+#[cfg(all(any(test, feature = "simd"), not(gf2_tuning_baked)))]
 const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;
 
 /// Selects the best backend for operations on buffers of the given size.

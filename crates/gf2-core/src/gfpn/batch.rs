@@ -633,7 +633,8 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
 
         #[cfg(feature = "parallel")]
         {
-            let soa_batch = crate::tuning::active().soa_batch();
+            let tuning = crate::tuning::active();
+            let soa_batch = tuning.soa_batch();
             if crate::compute::field::should_parallelize_soa_batch_resolved(
                 soa_batch.parallel_min_len(),
                 self.len(),
@@ -694,7 +695,8 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     pub fn batch_square_quadratic<C: ExtConfig<BaseField = F>>(&self) -> Self {
         #[cfg(feature = "parallel")]
         {
-            let soa_batch = crate::tuning::active().soa_batch();
+            let tuning = crate::tuning::active();
+            let soa_batch = tuning.soa_batch();
             if crate::compute::field::should_parallelize_soa_batch_resolved(
                 soa_batch.parallel_min_len(),
                 self.len(),
@@ -859,7 +861,8 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
 
         #[cfg(feature = "parallel")]
         {
-            let soa_batch = crate::tuning::active().soa_batch();
+            let tuning = crate::tuning::active();
+            let soa_batch = tuning.soa_batch();
             if crate::compute::field::should_parallelize_soa_batch_resolved(
                 soa_batch.parallel_min_len(),
                 self.len(),
@@ -919,7 +922,8 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     pub fn batch_square_cubic<C: ExtConfig<BaseField = F>>(&self) -> Self {
         #[cfg(feature = "parallel")]
         {
-            let soa_batch = crate::tuning::active().soa_batch();
+            let tuning = crate::tuning::active();
+            let soa_batch = tuning.soa_batch();
             if crate::compute::field::should_parallelize_soa_batch_resolved(
                 soa_batch.parallel_min_len(),
                 self.len(),

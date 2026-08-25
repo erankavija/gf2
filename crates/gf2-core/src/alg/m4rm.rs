@@ -17,7 +17,7 @@
 //! # Schedule selection
 //!
 //! [`multiply`] resolves the `m4rm` selector family of the active
-//! [`crate::tuning::TuningProfile`] once per multiplication and threads the
+//! [`crate::tuning::CoreTuning`] once per multiplication and threads the
 //! resolved values into the schedule route and the register-tiled C-update
 //! gate, so no per-panel or per-row helper reads the profile.
 //! [`m4rm_schedule_route`] reports the tier, the Gray-code panel width, and the
@@ -38,7 +38,7 @@ const B2_GRAY_TILE_WORDS: usize = 8;
 const B2_GRAY_MAX_TILES: usize = 4;
 
 /// Conservative default for `m4rm.default_table_bytes()` in the active
-/// [`crate::tuning::TuningProfile`].
+/// [`crate::tuning::CoreTuning`].
 ///
 /// It is the Gray-table byte budget [`production_table_budget`] applies to the
 /// narrowest wide-tier strides, where the table stays L1-resident.
@@ -52,13 +52,13 @@ pub(crate) const M4RM_DEFAULT_TABLE_BYTES: usize = 64 * 1024;
 #[cfg_attr(not(test), allow(dead_code))]
 const M4RM_DEFAULT_MAX_K: usize = 8;
 /// Conservative default for `m4rm.mid_table_bytes()` in the active
-/// [`crate::tuning::TuningProfile`].
+/// [`crate::tuning::CoreTuning`].
 ///
 /// It is the Gray-table byte budget [`production_table_budget`] applies to the
 /// mid-width band between the default and wide budgets.
 pub(crate) const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
 /// Conservative default for `m4rm.wide_table_bytes()` in the active
-/// [`crate::tuning::TuningProfile`]: the wider schedule budget for
+/// [`crate::tuning::CoreTuning`]: the wider schedule budget for
 /// LLC-streaming M4RM rows.
 ///
 /// The production policy keeps rows narrower than the register-tiled threshold
@@ -68,7 +68,7 @@ pub(crate) const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
 /// grow beyond the 256 KiB L2 size class that regressed at small widths.
 pub(crate) const M4RM_WIDE_TABLE_BYTES: usize = 256 * 1024;
 /// Conservative default for `m4rm.wide_max_k()` in the active
-/// [`crate::tuning::TuningProfile`].
+/// [`crate::tuning::CoreTuning`].
 ///
 /// It caps the Gray-code panel width the wide tier selects once the byte budget
 /// admits a wider one.
@@ -88,7 +88,7 @@ const M4RM_TILE_ROWS: usize = 8;
 /// tile even once.
 pub(crate) const M4RM_TILE_WORDS: usize = 4;
 /// Conservative default for `m4rm.tiled_min_stride_words()` in the active
-/// [`crate::tuning::TuningProfile`]: the minimum row stride (in u64 words) for
+/// [`crate::tuning::CoreTuning`]: the minimum row stride (in u64 words) for
 /// the register-tiled M4RM C-update.
 ///
 /// The 8×4 YMM tile processes four output words per lane, so it needs at least
@@ -102,7 +102,7 @@ pub(crate) const M4RM_TILE_WORDS: usize = 4;
 /// no full 4-word tile.
 pub(crate) const M4RM_TILED_MIN_STRIDE_WORDS: usize = M4RM_TILE_WORDS;
 /// Conservative default for `m4rm.small_n_max_k()` in the active
-/// [`crate::tuning::TuningProfile`]: the upper bound on the small-`n`
+/// [`crate::tuning::CoreTuning`]: the upper bound on the small-`n`
 /// (sub-wide-tier) Gray-code panel width.
 ///
 /// Below the wide-row tier the table is L1-resident and the cost-balanced
@@ -115,7 +115,7 @@ type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
 /// The Gray-code schedule tier [`multiply`] selects for an output width.
 ///
 /// The tier comparison reads `m4rm.wide_tier_min_stride_words()` from the
-/// active [`crate::tuning::TuningProfile`]: a row stride at or above that value
+/// active [`crate::tuning::CoreTuning`]: a row stride at or above that value
 /// takes the byte-budgeted wide schedule, anything narrower the L1-resident
 /// small-`n` heuristic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -170,7 +170,7 @@ impl M4rmScheduleRoute {
 /// The tier comparison reads `m4rm.wide_tier_min_stride_words()`, the panel
 /// width reads the three table byte budgets and both panel-width ceilings, and
 /// the register-tiled stride gate reads `m4rm.tiled_min_stride_words()`, all
-/// from the active [`crate::tuning::TuningProfile`]. [`multiply`] resolves the
+/// from the active [`crate::tuning::CoreTuning`]. [`multiply`] resolves the
 /// same family once per call and selects through the same resolved selectors,
 /// so this reporter and the dispatcher cannot disagree.
 #[must_use]
@@ -243,7 +243,7 @@ fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
 }
 
 /// Conservative default for `m4rm.wide_tier_min_stride_words()` in the active
-/// [`crate::tuning::TuningProfile`]: the stride threshold (in u64 words) at
+/// [`crate::tuning::CoreTuning`]: the stride threshold (in u64 words) at
 /// which the wide-row M4RM schedule applies.
 ///
 /// At and above 16 words (`n >= 1024`) the production policy keeps the
@@ -747,7 +747,8 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
 
     // The one profile read of a multiplication: the resolved family feeds both
     // the schedule route and the register-tiled C-update gate below.
-    let m4rm = crate::tuning::active().m4rm();
+    let tuning = crate::tuning::active();
+    let m4rm = tuning.m4rm();
     let route = m4rm_schedule_route_resolved(m4rm, k, n);
     multiply_with_k_block(a, b, route.panel_width(), m4rm.tiled_min_stride_words())
 }
@@ -800,7 +801,7 @@ fn multiply_with_k_block(
 /// The two arguments replace the profile's table budgets and panel-width
 /// ceilings for this call; the register-tiled C-update gate still follows
 /// `m4rm.tiled_min_stride_words()` in the active
-/// [`crate::tuning::TuningProfile`], resolved once here.
+/// [`crate::tuning::CoreTuning`], resolved once here.
 ///
 /// # Panics
 ///
@@ -875,7 +876,7 @@ pub fn multiply_rowwise_for_test(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
 ///
 /// The row count is kernel shape ([`M4RM_TILE_ROWS`] full rows per tile); the
 /// stride bound is `m4rm.tiled_min_stride_words()` from the active
-/// [`crate::tuning::TuningProfile`], resolved once per multiplication by
+/// [`crate::tuning::CoreTuning`], resolved once per multiplication by
 /// [`multiply`] and compared by [`stride_admits_tiled_schedule`], which is also
 /// what [`M4rmScheduleRoute::tiled_stride_admitted`] reports.
 #[inline]
@@ -1195,7 +1196,7 @@ mod tests {
     /// The M4RM selector family of the active profile. No lib test installs a
     /// profile, so every case below runs on the conservative table.
     fn conservative_m4rm() -> &'static M4rmSelectors {
-        crate::tuning::active().m4rm()
+        crate::tuning::CoreTuning::CONSERVATIVE.m4rm()
     }
 
     #[test]

@@ -2,8 +2,8 @@
 //!
 //! This target is an explicit benchmark **action**, not a build step. It
 //! measures both arms of each selector crossover on the current host, picks a
-//! threshold per field, and emits a [`TuningProfile`] JSON document that
-//! [`TuningProfile::from_json`] accepts. Nothing about a `cargo build`,
+//! threshold per field, and emits a canonical format-2 core-owner envelope
+//! that [`ProducedCoreProfile::from_json`] accepts. Nothing about a `cargo build`,
 //! `cargo test`, or `cargo clippy` invokes it: `cargo` only runs a
 //! `harness = false` bench target under `cargo bench`, and even then the
 //! target refuses to measure or emit unless the prepared-host marker
@@ -70,7 +70,7 @@
 //! ## 3. Commit the emitted profile
 //!
 //! The action writes to the `--out` path, refusing a path that already exists,
-//! then reads the file back through [`TuningProfile::from_json`] and compares
+//! then reads the file back through [`ProducedCoreProfile::from_json`] and compares
 //! the parsed value against the one it serialised. Only a document that
 //! survives that round trip is reported as an artifact. Write to a unique
 //! absent `/tmp` path so a partial or rejected run leaves nothing behind and
@@ -134,8 +134,8 @@
 //!
 //! The emitted document therefore states a field only when this run measured
 //! it, and the omission set is the complement: every
-//! `selectors.<family>.<field>` key [`TuningProfile::to_json`] writes, read off
-//! that output at run time, minus the fields whose sweep reached a comparison.
+//! `selectors.<family>.<field>` key the [`CoreTuningCodec`] writes, read off its
+//! output at run time, minus the fields whose sweep reached a comparison.
 //! A schema field this harness has never heard of is omitted by construction,
 //! so a follow-on selector family landing its fields cannot leak an unmeasured
 //! value into an emitted profile, and no field inventory is maintained here to
@@ -209,9 +209,113 @@ use gf2_core::kernels::{Backend, ScalarBackend};
 use gf2_core::rng::Lcg;
 use gf2_core::tuning;
 use gf2_core::tuning::{
-    BitBackendSelectors, GitRevision, HarnessSchema, PolynomialSelectors, ProfileError, ProfileId,
-    Provenance, RepoRelPath, Rfc3339Utc, SelectorFamilies, Sha256, TuningProfile,
+    AssemblyProvenance, BitBackendSelectors, CanonicalValue, CompiledProfileProvenance,
+    CoreSelectors, CoreTuning, CoreTuningCodec, GitRevision, HarnessSchema, MeasurementProvenance,
+    PolynomialSelectors, PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder,
+    RepoRelPath, Rfc3339Utc, SectionCodec, Sha256,
 };
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ProducedCoreProfile {
+    id: ProfileId,
+    measurement: MeasurementProvenance,
+    assembly: AssemblyProvenance,
+    section: CoreTuning,
+}
+
+impl std::ops::Deref for ProducedCoreProfile {
+    type Target = CoreTuning;
+
+    fn deref(&self) -> &Self::Target {
+        &self.section
+    }
+}
+
+impl ProducedCoreProfile {
+    fn to_json(&self) -> String {
+        let prepared = PreparedEnvelope::compiled(
+            self.id.clone(),
+            CompiledProfileProvenance {
+                artifact_id: self.id.clone(),
+            },
+        )
+        .insert_measured::<CoreTuning, CoreTuningCodec>(
+            self.section.clone(),
+            self.measurement.clone(),
+        )
+        .expect("calibration evidence was validated when collected")
+        .build()
+        .expect("one typed section builds a prepared envelope");
+        core_registry()
+            .expect("the core owner registry has one valid codec")
+            .to_json(&prepared, &self.assembly)
+            .expect("validated calibration output encodes")
+    }
+
+    fn from_json(document: &str) -> Result<Self, String> {
+        let prepared = core_registry()
+            .map_err(|error| format!("core registry is invalid: {error}"))?
+            .from_json(document)
+            .map_err(|error| format!("core owner envelope is invalid: {error}"))?;
+        let ids: Vec<&str> = prepared.section_ids().collect();
+        if ids != ["gf2-core/selectors"] {
+            return Err(format!("core owner envelope has section IDs {ids:?}"));
+        }
+        let projection = prepared
+            .section::<CoreTuning>()
+            .map_err(|error| format!("typed core projection failed: {error}"))?
+            .ok_or("core owner envelope is missing its section")?;
+        let assembly = prepared
+            .verified_assembly()
+            .ok_or("canonical core owner lacks verified assembly")?
+            .provenance
+            .clone();
+        Ok(Self {
+            id: prepared.profile_id().clone(),
+            measurement: projection.measurement.clone(),
+            assembly,
+            section: projection.section.clone(),
+        })
+    }
+
+    fn omitting(&self, omitted: &[SchemaField]) -> Result<Self, String> {
+        let body = CoreTuningCodec::encode_body(&self.section)
+            .map_err(|error| format!("complete core section does not encode: {error}"))?;
+        let mut selectors = serde_json::to_value(body)
+            .map_err(|error| format!("complete core section is not JSON: {error}"))?;
+        for field in omitted {
+            let family = selectors
+                .get_mut(&field.family)
+                .and_then(serde_json::Value::as_object_mut)
+                .ok_or_else(|| format!("complete core section has no `{}` family", field.family))?;
+            if family.remove(&field.name).is_none() {
+                return Err(format!("complete core section has no `{field}` field"));
+            }
+        }
+        let canonical = CanonicalValue::serialize(&selectors)
+            .map_err(|error| format!("omitted selector body is not canonical: {error}"))?;
+        let section = CoreTuningCodec::decode_body(canonical)
+            .map_err(|error| format!("omitted core section is invalid: {error}"))?;
+        Ok(Self {
+            section,
+            ..self.clone()
+        })
+    }
+}
+
+fn core_registry() -> Result<ProfileRegistry, gf2_core::tuning::RegistryError> {
+    ProfileRegistryBuilder::new()
+        .register::<CoreTuning, CoreTuningCodec>()?
+        .build()
+}
+
+fn complete_selector_value(section: &CoreTuning) -> Result<serde_json::Value, String> {
+    let complete = CoreTuning::from_selectors(section.selectors().clone());
+    let body = CoreTuningCodec::encode_body(&complete)
+        .map_err(|error| format!("complete selector view does not encode: {error}"))?;
+    serde_json::to_value(body)
+        .map_err(|error| format!("complete selector view is not JSON: {error}"))
+}
 
 /// Prepared-host marker required before this action measures or emits.
 const BENCH_MODE_VAR: &str = "GF2_BENCH";
@@ -297,7 +401,7 @@ impl CalibratedField {
 
     /// The conservative table's value for this field.
     fn conservative_default(self) -> usize {
-        let profile = &TuningProfile::CONSERVATIVE;
+        let profile = &CoreTuning::CONSERVATIVE;
         match self {
             Self::SimdMinWords => profile.bit_backend().simd_min_words(),
             Self::KaratsubaMinDegree => profile.polynomial().karatsuba_min_degree(),
@@ -1465,7 +1569,7 @@ fn forced_karatsuba_min_degree(arm: Arm, size: usize) -> usize {
 /// `tuning::active`, because an install that silently lost a race would leave
 /// the child measuring the conservative default and reporting it as an arm.
 fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
-    let inherited = &TuningProfile::CONSERVATIVE;
+    let inherited = &CoreTuning::CONSERVATIVE;
     let conservative = inherited.polynomial();
     let polynomial = PolynomialSelectors::try_new(
         karatsuba_min_degree,
@@ -1477,19 +1581,22 @@ fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
     .map_err(|error| {
         format!("karatsuba_min_degree {karatsuba_min_degree} is inadmissible: {error}")
     })?;
-    let profile = TuningProfile::try_new(
-        ProfileId::parse(FORCED_ARM_PROFILE_ID)
-            .map_err(|error| format!("`{FORCED_ARM_PROFILE_ID}` is not a profile id: {error}"))?,
-        Provenance::Inherited,
-        SelectorFamilies {
-            polynomial,
-            ..SelectorFamilies::CONSERVATIVE
-        },
-    )
-    .map_err(|error| format!("the arm-forcing profile does not validate: {error}"))?;
+    let id = ProfileId::parse(FORCED_ARM_PROFILE_ID)
+        .map_err(|error| format!("`{FORCED_ARM_PROFILE_ID}` is not a profile id: {error}"))?;
+    let section = CoreTuning::from_selectors(CoreSelectors {
+        polynomial,
+        ..CoreSelectors::CONSERVATIVE
+    });
+    let profile =
+        PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
+            .insert(section)
+            .map_err(|error| format!("the arm-forcing section does not prepare: {error}"))?
+            .build()
+            .map_err(|error| format!("the arm-forcing envelope does not build: {error}"))?;
     tuning::install(profile)
         .map_err(|error| format!("the arm-forcing profile was not installed: {error}"))?;
-    let active = tuning::active().polynomial().karatsuba_min_degree();
+    let active_tuning = tuning::active();
+    let active = active_tuning.polynomial().karatsuba_min_degree();
     if active != karatsuba_min_degree {
         return Err(format!(
             "the active karatsuba_min_degree is {active}, not the forced {karatsuba_min_degree}"
@@ -1872,35 +1979,57 @@ impl SelectedValues {
 /// puts the argument order and the field names on one screen.
 fn build_profile(
     id: ProfileId,
-    provenance: Provenance,
+    measurement: MeasurementProvenance,
     selected: &SelectedValues,
-) -> Result<TuningProfile, ProfileError> {
+) -> Result<ProducedCoreProfile, String> {
     let simd_min_words: usize = selected.simd_min_words;
     let karatsuba_min_degree: usize = selected.karatsuba_min_degree;
     let karatsuba_max_out_len: usize = selected.karatsuba_max_out_len;
     let div_rem_fast_min_len: usize = selected.div_rem_fast_min_len;
     let subproduct_min_len: usize = selected.subproduct_min_len;
-    let interpolate_fast_min_points: usize = TuningProfile::CONSERVATIVE
+    let interpolate_fast_min_points: usize = CoreTuning::CONSERVATIVE
         .polynomial()
         .interpolate_fast_min_points();
 
-    let bit_backend = BitBackendSelectors::try_new(simd_min_words)?;
+    let bit_backend =
+        BitBackendSelectors::try_new(simd_min_words).map_err(|error| error.to_string())?;
     let polynomial = PolynomialSelectors::try_new(
         karatsuba_min_degree,
         karatsuba_max_out_len,
         div_rem_fast_min_len,
         subproduct_min_len,
         interpolate_fast_min_points,
-    )?;
-    TuningProfile::try_new(
+    )
+    .map_err(|error| error.to_string())?;
+    let assembly = match &measurement {
+        MeasurementProvenance::Calibrated {
+            measured_at,
+            source_revision,
+            source_dirty,
+            harness,
+            binary_sha256,
+            ..
+        } => AssemblyProvenance {
+            assembled_at: measured_at.clone(),
+            source_revision: source_revision.clone(),
+            source_dirty: *source_dirty,
+            tool: harness.clone(),
+            tool_sha256: binary_sha256.clone(),
+        },
+        MeasurementProvenance::Inherited => {
+            return Err("the measurement harness cannot emit inherited evidence".to_owned())
+        }
+    };
+    Ok(ProducedCoreProfile {
         id,
-        provenance,
-        SelectorFamilies {
+        measurement,
+        assembly,
+        section: CoreTuning::from_selectors(CoreSelectors {
             bit_backend,
             polynomial,
-            ..SelectorFamilies::CONSERVATIVE
-        },
-    )
+            ..CoreSelectors::CONSERVATIVE
+        }),
+    })
 }
 
 // ---------------------------------------------------------------------
@@ -1927,7 +2056,7 @@ fn print_grid() {
 fn print_protocol(protocol: &Protocol) {
     println!(
         "protocol: harness_schema={} executions={} repetitions={} target_ms={} windows_per_arm={}",
-        HarnessSchema::SUPPORTED,
+        CoreTuningCodec::HARNESS_SCHEMA,
         protocol.executions,
         protocol.repetitions,
         protocol.target_ms,
@@ -2037,9 +2166,10 @@ fn print_sweep(sweep: &FieldSweep) {
 /// serialization, so the report states what the loader will resolve an absent
 /// key to rather than a figure written into this tool.
 fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), String> {
-    let conservative: serde_json::Value =
-        serde_json::from_str(&TuningProfile::CONSERVATIVE.to_json())
-            .map_err(|error| format!("the conservative profile is not JSON: {error}"))?;
+    let conservative = CoreTuningCodec::encode_body(&CoreTuning::CONSERVATIVE)
+        .map_err(|error| format!("the conservative section does not encode: {error}"))?;
+    let conservative = serde_json::to_value(conservative)
+        .map_err(|error| format!("the conservative section is not JSON: {error}"))?;
     let uncomparable: Vec<SchemaField> = uncalibrated_fields(sweeps)
         .into_iter()
         .map(CalibratedField::schema_field)
@@ -2052,7 +2182,7 @@ fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), S
     println!("family\tfield\tinherited\treason");
     for field in omitted {
         let inherited = conservative
-            .pointer(&format!("/selectors/{}/{}", field.family, field.name))
+            .pointer(&format!("/{}/{}", field.family, field.name))
             .and_then(serde_json::Value::as_u64)
             .ok_or_else(|| format!("the conservative table states no `{field}`"))?;
         let reason = if uncomparable.contains(field) {
@@ -2119,7 +2249,7 @@ fn schema_fields(document: &str) -> Result<Vec<SchemaField>, String> {
     let parsed: serde_json::Value = serde_json::from_str(document)
         .map_err(|error| format!("the profile document is not JSON: {error}"))?;
     let families = parsed
-        .pointer("/selectors")
+        .pointer("/sections/gf2-core~1selectors/selectors")
         .and_then(serde_json::Value::as_object)
         .ok_or("the profile document has no `selectors` object")?;
     let mut fields = Vec::new();
@@ -2150,109 +2280,17 @@ fn omitted_fields(document: &str, sweeps: &[FieldSweep]) -> Result<Vec<SchemaFie
         .collect())
 }
 
-/// Serializes `profile` and drops the fields this run did not measure.
+/// Re-encodes `profile` after omitting fields this run did not measure.
 ///
-/// `TuningProfile::to_json` states every schema field, so omission is expressed
-/// here rather than there. An absent field is a supported state of the schema:
-/// `from_json` resolves it to the conservative default, so the document still
-/// loads and still selects the same threshold — what it stops doing is claiming
-/// a value nothing measured.
-///
-/// The removal edits the serialized text, so every surviving key keeps the
-/// order `to_json` writes it in and an emitted document sits next to the
-/// committed `conservative.json` in the same shape. Reserializing a parsed
-/// value would reorder the whole document alphabetically for the sake of one
-/// deleted key. The edit is then checked against the same removal performed
-/// structurally on the parsed value, so a text edit that disturbed anything
-/// else is caught here rather than in a committed artifact.
-fn calibrated_document(profile: &TuningProfile, omitted: &[SchemaField]) -> Result<String, String> {
-    let serialized = profile.to_json();
-    let mut document = serialized.clone();
-    for field in omitted {
-        document = remove_selector_key(&document, field)?;
-    }
-
-    let mut expected: serde_json::Value = serde_json::from_str(&serialized)
-        .map_err(|error| format!("the serialized profile is not JSON: {error}"))?;
-    for field in omitted {
-        let family = expected
-            .pointer_mut(&format!("/selectors/{}", field.family))
-            .and_then(serde_json::Value::as_object_mut)
-            .ok_or_else(|| {
-                format!(
-                    "the serialized profile has no `{}` selector family",
-                    field.family
-                )
-            })?;
-        if family.remove(&field.name).is_none() {
-            return Err(format!(
-                "the serialized profile has no `{field}` field to omit"
-            ));
-        }
-    }
-    let actual: serde_json::Value = serde_json::from_str(&document)
-        .map_err(|error| format!("the omitted-field document is not JSON: {error}"))?;
-    if actual != expected {
-        return Err(
-            "omitting a field changed something else in the document; this is a harness defect"
-                .to_owned(),
-        );
-    }
-    Ok(document)
-}
-
-/// Deletes `field`'s `"name":<digits>` entry, and one adjacent comma, from the
-/// selector family object it belongs to.
-///
-/// The search starts at the `selectors` object and is then scoped to that
-/// family's braces, so neither a provenance string nor a same-named field of
-/// another family can be mistaken for the key. Every selector value is an
-/// unsigned integer and `to_json` writes compact JSON, so the entry ends at the
-/// first non-digit after the colon.
-fn remove_selector_key(text: &str, field: &SchemaField) -> Result<String, String> {
-    const SELECTORS: &str = "\"selectors\":{";
-    let selectors_at = text
-        .find(SELECTORS)
-        .ok_or("no `selectors` object in the document")?
-        + SELECTORS.len();
-    let opening = format!("\"{}\":{{", field.family);
-    let body_start = text[selectors_at..]
-        .find(&opening)
-        .ok_or_else(|| format!("no `{}` selector family in the document", field.family))?
-        + selectors_at
-        + opening.len();
-    let body_len = text[body_start..]
-        .find('}')
-        .ok_or_else(|| format!("the `{}` selector family is unterminated", field.family))?;
-    let body = &text[body_start..body_start + body_len];
-
-    let key = format!("\"{}\":", field.name);
-    let key_at = body
-        .find(&key)
-        .ok_or_else(|| format!("no `{field}` field in the document to omit"))?;
-    let value_at = key_at + key.len();
-    let digits = body[value_at..]
-        .find(|character: char| !character.is_ascii_digit())
-        .unwrap_or(body.len() - value_at);
-    if digits == 0 {
-        return Err(format!("`{field}` does not hold an unsigned integer"));
-    }
-    let value_end = value_at + digits;
-
-    let (cut_start, cut_end) = if body[value_end..].starts_with(',') {
-        (key_at, value_end + 1)
-    } else if body[..key_at].ends_with(',') {
-        (key_at - 1, value_end)
-    } else {
-        (key_at, value_end)
-    };
-    Ok(format!(
-        "{}{}{}{}",
-        &text[..body_start],
-        &body[..cut_start],
-        &body[cut_end..],
-        &text[body_start + body_len..]
-    ))
+/// The owner codec decodes the reduced selector body so private presence state
+/// records each omission, then the one registry encoder recomputes the format-2
+/// content digest. Absent fields retain their conservative dispatch semantics
+/// without making a measurement claim.
+fn calibrated_document(
+    profile: &ProducedCoreProfile,
+    omitted: &[SchemaField],
+) -> Result<String, String> {
+    Ok(profile.omitting(omitted)?.to_json())
 }
 
 /// Writes the emitted document, then reads it back and reparses it.
@@ -2261,7 +2299,7 @@ fn remove_selector_key(text: &str, field: &SchemaField) -> Result<String, String
 /// harness could not have loaded never reaches a receipt. The comparison is
 /// against the measured profile: an omitted field resolves back to the
 /// conservative default, which is the value the sweep left it at.
-fn emit_profile(path: &Path, json: &str, profile: &TuningProfile) -> io::Result<String> {
+fn emit_profile(path: &Path, json: &str) -> io::Result<String> {
     let path = resolve_repository_path(path);
     if path.exists() {
         return Err(io::Error::new(
@@ -2280,14 +2318,14 @@ fn emit_profile(path: &Path, json: &str, profile: &TuningProfile) -> io::Result<
     }
     fs::write(&path, json)?;
     let written = fs::read_to_string(&path)?;
-    let reparsed = TuningProfile::from_json(&written).map_err(|error| {
+    let reparsed = ProducedCoreProfile::from_json(&written).map_err(|error| {
         io::Error::other(format!(
             "the emitted document does not load back: {error}; this is a harness defect"
         ))
     })?;
-    if &reparsed != profile {
+    if reparsed.to_json() != written {
         return Err(io::Error::other(
-            "the emitted document does not load back to the profile that was measured",
+            "the emitted document does not round-trip canonically",
         ));
     }
     Ok(written)
@@ -2370,6 +2408,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     print_protocol(&args.protocol);
     print_host_facts(&facts);
+    println!("lock_wrapper: {}", lock_wrapper_path.as_str());
     print_grid();
 
     let measured_at = rfc3339_utc(SystemTime::now())?;
@@ -2417,12 +2456,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\ntimed work: {:.1} s", started.elapsed().as_secs_f64());
 
     let selected = SelectedValues::from_sweeps(&sweeps);
-    let provenance = Provenance::Calibrated {
+    let provenance = MeasurementProvenance::Calibrated {
         measured_at: Rfc3339Utc::parse(&measured_at)?,
         source_revision: facts.source_revision.clone(),
         source_dirty: facts.source_dirty,
         harness: facts.harness.clone(),
-        harness_schema: HarnessSchema::parse(HarnessSchema::SUPPORTED)?,
+        harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA)?,
         binary_sha256: facts.binary_sha256.clone(),
         toolchain: facts.toolchain.clone(),
         host: facts.host.clone(),
@@ -2430,19 +2469,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         cpu_features: facts.cpu_features.clone(),
         os_kernel: facts.os_kernel.clone(),
         governor: facts.governor.clone(),
-        lock_wrapper: lock_wrapper_path,
-        lock_file: facts.lock_file.clone(),
-        cpu_affinity: facts.cpu_affinity.clone(),
-        executions: args.protocol.executions,
-        repetitions: args.protocol.repetitions,
-        target_ms: args.protocol.target_ms,
         receipt: receipt_path,
     };
     let profile = build_profile(id, provenance, &selected)?;
     let omitted = omitted_fields(&profile.to_json(), &sweeps)?;
     print_omitted(&omitted, &sweeps)?;
     let document = calibrated_document(&profile, &omitted)?;
-    let json = emit_profile(out, &document, &profile)?;
+    let json = emit_profile(out, &document)?;
 
     println!("\nemitted and re-loaded {}", out.display());
     println!("{json}");
@@ -2471,13 +2504,13 @@ mod tests {
     };
 
     #[allow(dead_code)]
-    fn calibrated_provenance() -> Provenance {
-        Provenance::Calibrated {
+    fn calibrated_provenance() -> MeasurementProvenance {
+        MeasurementProvenance::Calibrated {
             measured_at: Rfc3339Utc::parse("2026-08-20T00:00:00Z").unwrap(),
             source_revision: GitRevision::parse(&"a".repeat(40)).unwrap(),
             source_dirty: false,
             harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs").unwrap(),
-            harness_schema: HarnessSchema::parse(HarnessSchema::SUPPORTED).unwrap(),
+            harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA).unwrap(),
             binary_sha256: Sha256::parse(&"b".repeat(64)).unwrap(),
             toolchain: "rustc 1.95.0".to_owned(),
             host: "test-host".to_owned(),
@@ -2485,18 +2518,12 @@ mod tests {
             cpu_features: vec!["avx2".to_owned()],
             os_kernel: "Linux".to_owned(),
             governor: "performance".to_owned(),
-            lock_wrapper: RepoRelPath::parse("dev/scripts/ccx1-bench-flock.sh").unwrap(),
-            lock_file: "/tmp/gf2-ccx1.lock".to_owned(),
-            cpu_affinity: "6-11".to_owned(),
-            executions: 5,
-            repetitions: 5,
-            target_ms: 250,
             receipt: RepoRelPath::parse("dev/benchmarks/tuning_profiles/receipt.md").unwrap(),
         }
     }
 
     #[allow(dead_code)]
-    fn profile_from(selected: &SelectedValues) -> TuningProfile {
+    fn profile_from(selected: &SelectedValues) -> ProducedCoreProfile {
         build_profile(
             ProfileId::parse("test-profile").unwrap(),
             calibrated_provenance(),
@@ -2588,13 +2615,11 @@ mod tests {
             !document.contains("karatsuba_min_degree"),
             "the uncalibrated field is still stated: {document}"
         );
-        let loaded = TuningProfile::from_json(&document)
+        let loaded = ProducedCoreProfile::from_json(&document)
             .expect("an omitted field is a supported state of the schema");
         assert_eq!(
             loaded.polynomial().karatsuba_min_degree(),
-            TuningProfile::CONSERVATIVE
-                .polynomial()
-                .karatsuba_min_degree(),
+            CoreTuning::CONSERVATIVE.polynomial().karatsuba_min_degree(),
             "the loader resolves the absent field to the conservative default"
         );
     }
@@ -2607,7 +2632,7 @@ mod tests {
             &[CalibratedField::KaratsubaMinDegree.schema_field()],
         )
         .unwrap();
-        let loaded = TuningProfile::from_json(&document).unwrap();
+        let loaded = ProducedCoreProfile::from_json(&document).unwrap();
         assert_eq!(
             loaded.bit_backend().simd_min_words(),
             DISTINCT.simd_min_words
@@ -2636,18 +2661,28 @@ mod tests {
     }
 
     #[test]
-    fn omission_removes_exactly_the_field_and_leaves_the_key_order_alone() {
+    fn omission_changes_only_the_selector_body_and_recomputes_the_digest() {
         let profile = profile_from(&DISTINCT);
         let document = calibrated_document(
             &profile,
             &[CalibratedField::KaratsubaMinDegree.schema_field()],
         )
         .unwrap();
-        let entry = format!(
-            "\"karatsuba_min_degree\":{},",
-            DISTINCT.karatsuba_min_degree
+        let complete: serde_json::Value = serde_json::from_str(&profile.to_json()).unwrap();
+        let omitted: serde_json::Value = serde_json::from_str(&document).unwrap();
+        let mut expected = complete["sections"]["gf2-core/selectors"]["selectors"].clone();
+        expected["polynomial"]
+            .as_object_mut()
+            .unwrap()
+            .remove("karatsuba_min_degree");
+        assert_eq!(
+            omitted["sections"]["gf2-core/selectors"]["selectors"],
+            expected
         );
-        assert_eq!(document, profile.to_json().replace(&entry, ""));
+        assert_ne!(
+            omitted["assembly"]["content_sha256"],
+            complete["assembly"]["content_sha256"]
+        );
     }
 
     #[test]
@@ -2656,10 +2691,10 @@ mod tests {
         let document =
             calibrated_document(&profile, &[CalibratedField::SimdMinWords.schema_field()]).unwrap();
         assert!(document.contains(r#""bit_backend":{}"#), "{document}");
-        let loaded = TuningProfile::from_json(&document).unwrap();
+        let loaded = ProducedCoreProfile::from_json(&document).unwrap();
         assert_eq!(
             loaded.bit_backend().simd_min_words(),
-            TuningProfile::CONSERVATIVE.bit_backend().simd_min_words()
+            CoreTuning::CONSERVATIVE.bit_backend().simd_min_words()
         );
     }
 
@@ -2668,7 +2703,7 @@ mod tests {
         // The receipt path names the field, so a document-wide search would cut
         // the wrong bytes.
         let mut provenance = calibrated_provenance();
-        if let Provenance::Calibrated { receipt, .. } = &mut provenance {
+        if let MeasurementProvenance::Calibrated { receipt, .. } = &mut provenance {
             *receipt =
                 RepoRelPath::parse("dev/benchmarks/tuning_profiles/karatsuba_min_degree-notes.md")
                     .unwrap();
@@ -2684,8 +2719,8 @@ mod tests {
             &[CalibratedField::KaratsubaMinDegree.schema_field()],
         )
         .unwrap();
-        let loaded = TuningProfile::from_json(&document).unwrap();
-        let Provenance::Calibrated { receipt, .. } = loaded.provenance() else {
+        let loaded = ProducedCoreProfile::from_json(&document).unwrap();
+        let MeasurementProvenance::Calibrated { receipt, .. } = &loaded.measurement else {
             panic!("the document stays calibrated");
         };
         assert_eq!(
@@ -2694,9 +2729,7 @@ mod tests {
         );
         assert_eq!(
             loaded.polynomial().karatsuba_min_degree(),
-            TuningProfile::CONSERVATIVE
-                .polynomial()
-                .karatsuba_min_degree()
+            CoreTuning::CONSERVATIVE.polynomial().karatsuba_min_degree()
         );
     }
 
@@ -2792,17 +2825,13 @@ mod tests {
         let omitted = omitted_fields(&profile.to_json(), &sweeps).unwrap();
         let document = calibrated_document(&profile, &omitted).unwrap();
         let stated = schema_fields(&document).unwrap();
-        let loaded: serde_json::Value = serde_json::from_str(
-            &TuningProfile::from_json(&document)
-                .expect("an omitted field is a supported state of the schema")
-                .to_json(),
-        )
-        .unwrap();
-        let inherited: serde_json::Value =
-            serde_json::from_str(&TuningProfile::CONSERVATIVE.to_json()).unwrap();
+        let loaded = ProducedCoreProfile::from_json(&document)
+            .expect("an omitted field is a supported state of the schema");
+        let loaded = complete_selector_value(&loaded.section).unwrap();
+        let inherited = complete_selector_value(&CoreTuning::CONSERVATIVE).unwrap();
         assert!(!omitted.is_empty());
         for field in &omitted {
-            let pointer = format!("/selectors/{}/{}", field.family, field.name);
+            let pointer = format!("/{}/{}", field.family, field.name);
             assert!(!stated.contains(field), "{field} is still stated");
             assert_eq!(
                 loaded.pointer(&pointer),
@@ -2844,13 +2873,11 @@ mod tests {
         assert!(omitted.contains(&CalibratedField::SubproductMinLen.schema_field()));
         let document = calibrated_document(&profile, &omitted).unwrap();
         assert_eq!(
-            TuningProfile::from_json(&document)
+            ProducedCoreProfile::from_json(&document)
                 .unwrap()
                 .polynomial()
                 .subproduct_min_len(),
-            TuningProfile::CONSERVATIVE
-                .polynomial()
-                .subproduct_min_len()
+            CoreTuning::CONSERVATIVE.polynomial().subproduct_min_len()
         );
     }
 
@@ -2881,7 +2908,7 @@ mod tests {
     #[test]
     fn emitted_profile_round_trips_through_the_loader() {
         let profile = profile_from(&DISTINCT);
-        let reparsed = TuningProfile::from_json(&profile.to_json())
+        let reparsed = ProducedCoreProfile::from_json(&profile.to_json())
             .expect("the harness emits a document the loader accepts");
         assert_eq!(reparsed, profile);
     }
@@ -2889,18 +2916,18 @@ mod tests {
     #[test]
     fn emitted_provenance_is_calibrated_and_populated() {
         let profile = profile_from(&DISTINCT);
-        let Provenance::Calibrated {
+        let MeasurementProvenance::Calibrated {
             harness_schema,
-            executions,
-            repetitions,
-            target_ms,
+            toolchain,
+            host,
             ..
-        } = profile.provenance()
+        } = &profile.measurement
         else {
             panic!("the calibration action emits calibrated provenance");
         };
-        assert_eq!(harness_schema.as_str(), HarnessSchema::SUPPORTED);
-        assert_eq!((*executions, *repetitions, *target_ms), (5, 5, 250));
+        assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
+        assert_eq!(toolchain, "rustc 1.95.0");
+        assert_eq!(host, "test-host");
     }
 
     #[test]
@@ -3044,7 +3071,7 @@ mod tests {
     fn a_default_valued_sweep_reproduces_the_conservative_selectors() {
         let selected = SelectedValues::from_sweeps(&[]);
         let profile = profile_from(&selected);
-        let conservative = &TuningProfile::CONSERVATIVE;
+        let conservative = &CoreTuning::CONSERVATIVE;
         assert_eq!(profile.bit_backend(), conservative.bit_backend());
         assert_eq!(profile.polynomial(), conservative.polynomial());
     }
@@ -3266,7 +3293,7 @@ mod tests {
 
     #[test]
     fn the_karatsuba_arm_forces_the_grid_point_and_the_schoolbook_arm_the_range_top() {
-        let inherited = &TuningProfile::CONSERVATIVE;
+        let inherited = &CoreTuning::CONSERVATIVE;
         for size in CalibratedField::KaratsubaMinDegree.grid() {
             assert_eq!(
                 forced_karatsuba_min_degree(Arm::Asymptotic, size),

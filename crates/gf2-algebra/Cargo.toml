@@ -38,6 +38,7 @@ gf2-stats = { path = "../gf2-stats" }
 # SHA-256 for the `paper_repro_slope` example's input-fingerprint column
 # (criterion 5 amendment 2026-05-11). Test-time only.
 sha2 = "0.10"
+serde_json = { workspace = true }
 # Self-dev-dependency exposing the `test-support` feature so integration
 # tests and benches can use `gf2_algebra::testutil::random_matrix` —
 # the workspace SSOT for deterministic mod-P matrix generation via
@@ -142,8 +143,28 @@ f7 = []
 # in. Pulls in serde with the derive feature.
 serde = ["dep:serde"]
 
+# Strict format-2 owner codec for algebra-owned tuning. The typed selector
+# section and active accessor are always available; only JSON support is gated.
+tuning-profile = ["gf2-core/tuning-profile", "dep:serde"]
+
 # Exposes the canonical test-only matrix generators (`testutil::random_matrix`,
 # `testutil::random_matrix_with_rng`) to integration tests, benchmarks, and
 # downstream crates. Off by default; auto-enabled under `cargo test` via the
 # self-dev-dependency above. Mirrors the `gf2-core::test-support` pattern.
 test-support = []
+
+[[test]]
+name = "tuning_section"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_repository_envelopes"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_profile_permanent_install"
+required-features = ["parallel", "tuning-profile"]
+
+[[test]]
+name = "tuning_profile_permanent_install_large_chunk"
+required-features = ["parallel", "tuning-profile"]

@@ -2,8 +2,11 @@ use gf2_core::field::poly_interpolate::{
     interpolate, interpolate_auto, interpolate_auto_two_adic, interpolate_fast,
     interpolate_fast_auto, interpolate_route, InterpolateRoute,
 };
+#[path = "support/core_tuning.rs"]
+mod support;
+
 use gf2_core::gfp::Fp;
-use gf2_core::tuning::{self, TuningProfile};
+use gf2_core::tuning;
 
 type FP = Fp<65537>;
 
@@ -13,17 +16,10 @@ fn points(n: usize) -> Vec<(FP, FP)> {
         .collect()
 }
 
-#[test]
-fn installed_interpolate_profile_moves_both_entry_points() {
-    let profile = TuningProfile::from_json(
+support::fresh_tuning_test!(installed_interpolate_profile_moves_both_entry_points, {
+    let profile = support::prepared_core_json(
         r#"
-        {
-          "schema_version": 1,
-          "profile_id": "interpolate-route-test",
-          "provenance": {"kind": "inherited"},
-          "selectors": {"polynomial": {"interpolate_fast_min_points": 3}}
-        }
-        "#,
+        {"polynomial": {"interpolate_fast_min_points": 3}}"#,
     )
     .expect("test profile is valid");
     assert_eq!(tuning::install(profile), Ok(()));
@@ -61,4 +57,4 @@ fn installed_interpolate_profile_moves_both_entry_points() {
         interpolate_auto_two_adic(&at).unwrap(),
         interpolate_fast_auto(&at).unwrap()
     );
-}
+});

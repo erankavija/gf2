@@ -92,7 +92,8 @@ impl TransposeRoute {
 /// extent.
 #[must_use]
 pub fn transpose_route(n_row_blocks: usize, n_col_blocks: usize) -> TransposeRoute {
-    let selectors = tuning::active().bit_matrix();
+    let tuning = tuning::active();
+    let selectors = tuning.bit_matrix();
     transpose_route_resolved(
         selectors.transpose_simple_max_blocks(),
         selectors.transpose_macro_tile_blocks(),
@@ -719,6 +720,7 @@ impl BitMatrix {
 
     /// Returns a contiguous immutable slice spanning `row_count` rows from
     /// `row_start`, in row-major (`stride_words`-strided) layout.
+    #[cfg(feature = "simd")]
     #[inline]
     pub(crate) fn row_words_block(&self, row_start: usize, row_count: usize) -> &[u64] {
         assert!(

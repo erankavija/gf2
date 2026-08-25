@@ -2151,12 +2151,12 @@ impl<'a, F: FiniteField> SubAssign<&'a FieldPoly<F>> for FieldPoly<F> {
 // ---------------------------------------------------------------------
 
 /// Conservative default for `polynomial.karatsuba_min_degree()` in the active
-/// [`crate::tuning::TuningProfile`].
+/// [`crate::tuning::CoreTuning`].
 ///
 /// Operand degrees strictly less than the active profile value use the
 /// schoolbook algorithm; at or above it both operands recurse through
 /// Karatsuba. This constant remains the compiled-in conservative default
-/// consumed by [`crate::tuning::TuningProfile::CONSERVATIVE`].
+/// consumed by [`crate::tuning::CoreTuning::CONSERVATIVE`].
 pub const KARATSUBA_THRESHOLD: usize = 32;
 
 /// The selected arm of the [`FieldPoly::mul`] schoolbook/Karatsuba
@@ -2198,7 +2198,7 @@ fn mul_route_resolved(
 }
 
 /// Conservative default for `polynomial.subproduct_min_len()` in the active
-/// [`crate::tuning::TuningProfile`] for [`FieldPoly::batch_evaluate`] (generic,
+/// [`crate::tuning::CoreTuning`] for [`FieldPoly::batch_evaluate`] (generic,
 /// schoolbook [`FieldPoly::div_rem`]) and
 /// [`FieldPoly::batch_evaluate_auto`] ([`TwoAdicField`], Newton-iteration
 /// [`FieldPoly::div_rem_auto`]) between the subproduct-tree algorithm
@@ -2805,7 +2805,7 @@ impl<'b, F: FiniteField> Mul<&'b FieldPoly<F>> for &FieldPoly<F> {
 // ---------------------------------------------------------------------
 
 /// Conservative default for `polynomial.karatsuba_max_out_len()` in the active
-/// [`crate::tuning::TuningProfile`].
+/// [`crate::tuning::CoreTuning`].
 ///
 /// When the *output* length `lhs.len() + rhs.len() - 1` strictly exceeds the
 /// active profile value, the free function [`mul_fast`] routes through
@@ -2819,7 +2819,7 @@ impl<'b, F: FiniteField> Mul<&'b FieldPoly<F>> for &FieldPoly<F> {
 /// the `FieldPoly::mul` arm and 12,057 ns for `out_len` 129 on the NTT arm.
 /// This constant
 /// remains the compiled-in conservative default consumed by
-/// [`crate::tuning::TuningProfile::CONSERVATIVE`]. Callers that want
+/// [`crate::tuning::CoreTuning::CONSERVATIVE`]. Callers that want
 /// deterministic behaviour can bypass the gate by calling
 /// [`FieldPoly::mul_ntt`] directly.
 pub const NTT_THRESHOLD: usize = 128;
@@ -3015,7 +3015,8 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
     if a.is_zero() || b.is_zero() {
         return FieldPoly { coeffs: Vec::new() };
     }
-    let polynomial = tuning::active().polynomial();
+    let tuning = tuning::active();
+    let polynomial = tuning.polynomial();
     let out_len = a.coeffs.len() + b.coeffs.len() - 1;
     match mul_fast_route_resolved(polynomial.karatsuba_max_out_len(), out_len) {
         MulFastRoute::Karatsuba => {
@@ -3030,7 +3031,7 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
 // ---------------------------------------------------------------------
 
 /// Conservative default for `polynomial.div_rem_fast_min_len()` in the active
-/// [`crate::tuning::TuningProfile`] between schoolbook
+/// [`crate::tuning::CoreTuning`] between schoolbook
 /// [`FieldPoly::div_rem`] and Newton-iteration [`FieldPoly::div_rem_fast`] on
 /// a [`TwoAdicField`].
 ///
