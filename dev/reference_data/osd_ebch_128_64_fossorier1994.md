@@ -216,8 +216,8 @@ primary figure ordinates and all nine table-row figure cross-checks.
 Precision of the pixel-read ordinates is recorded as a declared conservative
 bound of $\pm 0.1$ in $\log_{10}$ (about $\pm 25\%$ in linear value), per
 DEC-02; it is neither a measured statistical interval nor source-side
-simulation uncertainty. The committed sensitivity pass recalculates every
-point for all 25 integer marker-center hypotheses in the Cartesian $\pm 2$ px
+simulation uncertainty. The committed `perturbation-sensitivity` pass
+recalculates every point for all 25 integer marker-center hypotheses in the Cartesian $\pm 2$ px
 neighborhood, with the axis calibration held fixed. Its largest observed
 one-sided change is $0.0144$ decade and its largest full minimum-to-maximum
 range is $0.0288$ decade, so all 30 reads remain within the declared bound. The
@@ -240,9 +240,11 @@ carry `not_applicable_no_figure_crosscheck`.
 Abscissas: rows whose abscissa appears in a printed table carry the printed
 numeral. The remaining abscissas — 1.55, 6.02, 6.48, 6.99, 7.57 dB — are the
 grid values $10\log_{10}(2/N_0)$ for $N_0 \in \{1.4, 0.5, 0.45, 0.4, 0.35\}$,
-extending the grid the tabulated abscissas establish. Marker columns measured
-from the scan agree with those grid values within 0.05 dB, the largest
-deviation being 0.045 dB at 7.57 dB.
+extending the grid the tabulated abscissas establish. The receipt-derived
+reconciliation in [`calibration.json`](/dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/calibration.json)
+gives a maximum absolute CSV-to-receipt abscissa delta of 0.0025 dB and a
+maximum absolute CSV-to-receipt ordinate delta of 0.0035 in $\log_{10}(\mathrm{BER})$,
+comparing each receipt point with its recorded `csv_field`.
 
 ## Source-reported stochastic provenance
 
@@ -309,8 +311,14 @@ The committed
 [`yue2022_fig1_receipt.json`](/dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/yue2022_fig1_receipt.json)
 pins those source bytes and records the page, figure, panel, series, all six
 manual reads, their precision, and the near-ML reference comparison used
-below. The same `extract.py` emits it with the reproduction command documented
-beside the receipt.
+below. Each read records `source_sample_count` and
+`source_confidence_interval` as `not_reported_by_source`. The receipt-level
+`source_stochastic_provenance` block records `seeds`, `rng_identity`,
+`producing_revision`, `hardware`, `toolchain`, and `invocation` as
+`not_reported_by_source` for Figure 1. The rough factor-1.3 read precision is
+digitization precision, distinct from source statistical uncertainty. The same
+`extract.py` emits these fields with the reproduction command documented beside
+the receipt.
 
 The comparable object is Figure 1, left panel, "$(128,64)$ codes": the eBCH
 simulation curve, its ML bound, and OSD markers, plotted as block error rate
@@ -343,7 +351,10 @@ Material differences, recorded and not reconciled:
   the highest minimum Hamming distances among state-of-the-art linear codes.
 - **Sample size and stopping.** Yue2022 states its 1000-decoding-error stopping
   rule for Figures 3–4 only, and states no sample size, predeclared sampling
-  plan, or stopping rule for Figure 1.
+  plan, or stopping rule for Figure 1. The receipt records this source silence
+  per read and records the unreported stochastic provenance in its
+  `source_stochastic_provenance` block; it does not supply statistical
+  uncertainty for the six digitized points.
 
 Consistency observed at the shared abscissa: Fossorier reports optimum
 performance at BER $10^{-6}$ for a 7.0 dB coding gain, i.e. $E_b/N_0 \approx
