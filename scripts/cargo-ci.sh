@@ -241,10 +241,10 @@ run_step test   "${NICE_PREFIX[@]}" cargo nextest run --workspace $FEAT_FLAGS --
 run_step tuning-profile-nextest "${NICE_PREFIX[@]}" cargo nextest run -p gf2-core --release --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness
 run_step tuning-lifecycle-cargo "${NICE_PREFIX[@]}" cargo test -p gf2-core --release --no-default-features --test tuning_process_lifecycle
 
-run_step clippy "${NICE_PREFIX[@]}" cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings
-# Lint both section owners with every profile surface even when FEAT_FLAGS is
-# the ordinary non-HIP subset.
-run_step tuning-owner-clippy "${NICE_PREFIX[@]}" cargo clippy -p gf2-core -p gf2-algebra --all-targets --all-features -- -D warnings
+# Add profile I/O to the same host-appropriate feature selection used by the
+# workspace lint. On ordinary hosts FEAT_FLAGS is the explicit non-HIP set, so
+# this reaches both owner codecs without pulling in the excluded ROCm crate.
+run_step clippy "${NICE_PREFIX[@]}" cargo clippy --workspace --all-targets $FEAT_FLAGS --features tuning-profile -- -D warnings
 run_step fmt    "${NICE_PREFIX[@]}" cargo fmt --all -- --check
 # Baked selector fields (DEC-G, and the follow-on families of
 # dev/active/7d824b2f/design.md §2.2): the gf2_tuning_baked cfg is not a Cargo
