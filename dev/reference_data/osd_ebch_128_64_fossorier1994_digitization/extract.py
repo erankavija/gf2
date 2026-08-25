@@ -356,7 +356,7 @@ def make_yue2022_receipt(pdf: Path) -> dict[str, object]:
 
     comparison_id = "fossorier1994_near_ml_reference"
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "receipt_date": "2026-08-25",
         "source": {
             "work_citekey": "Yue2022",
@@ -379,12 +379,29 @@ def make_yue2022_receipt(pdf: Path) -> dict[str, object]:
             "method": "manual_by_eye_not_axis_calibrated",
             "precision_factor": 1.3,
             "precision_basis": "rough_multiplicative_factor",
+            "precision_note": (
+                "The rough factor-1.3 read precision is digitization precision, "
+                "distinct from source statistical uncertainty."
+            ),
             "use": "qualitative_crosscheck_only",
         },
         "source_sampling_provenance": {
             "predeclared_sampling_plan": "not_reported_for_figure_1",
             "stopping_rule": "not_reported_for_figure_1",
             "note": "The 1000-decoding-error rule is stated for Figures 3-4 only.",
+        },
+        "source_stochastic_provenance": {
+            "scope": "Yue2022 Figure 1 published results",
+            "seeds": "not_reported_by_source",
+            "rng_identity": "not_reported_by_source",
+            "producing_revision": "not_reported_by_source",
+            "hardware": "not_reported_by_source",
+            "toolchain": "not_reported_by_source",
+            "invocation": "not_reported_by_source",
+            "note": (
+                "Yue2022 publishes none of these stochastic provenance fields "
+                "for Figure 1."
+            ),
         },
         "comparisons": [
             {
@@ -420,6 +437,8 @@ def make_yue2022_receipt(pdf: Path) -> dict[str, object]:
                 "es_n0_db": read.es_n0_db,
                 "bler": read.bler,
                 "bler_scientific": read.bler_scientific,
+                "source_sample_count": "not_reported_by_source",
+                "source_confidence_interval": "not_reported_by_source",
                 "digitization_precision_factor": 1.3,
                 "comparison_id": comparison_id,
                 "comparison_role": "qualitative_near_ml_crosscheck_only",
