@@ -19,6 +19,11 @@
       "status": "passed",
       "updated_at": "2026-08-24T21:34:24.009937736Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-25T13:29:06.457842692Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "80cead18-07e4-409e-8bfe-a86dc186586a",
@@ -30,5 +35,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "SoftDecisionDecoder trait removal",
-  "updated_at": "2026-08-24T21:34:24.009937736Z"
+  "updated_at": "2026-08-25T13:29:06.457842692Z"
 }
