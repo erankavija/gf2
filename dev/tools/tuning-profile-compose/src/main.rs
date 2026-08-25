@@ -11,14 +11,39 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec};
 use gf2_core::tuning::{
     AssemblyProvenance, CompiledProfileProvenance, CoreTuning, CoreTuningCodec, GitRevision,
-    PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder, RepoRelPath, Rfc3339Utc,
-    Sha256, TuningSection,
+    MeasurementProvenance, PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder,
+    RepoRelPath, Rfc3339Utc, Sha256, TuningSection,
 };
 use serde::Deserialize;
 use serde_json::value::RawValue;
 use sha2::{Digest, Sha256 as Sha256Hasher};
 
 const TOOL_PATH: &str = "dev/tools/tuning-profile-compose";
+const USAGE: &str = "usage: tuning-profile-compose \
+    (core-owner OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
+     algebra-owner OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
+     complete CORE_OWNER ALGEBRA_OWNER OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256)";
+
+#[derive(Debug, PartialEq, Eq)]
+enum Command {
+    CoreOwner {
+        output_path: PathBuf,
+        profile_id: ProfileId,
+        assembly: AssemblyProvenance,
+    },
+    AlgebraOwner {
+        output_path: PathBuf,
+        profile_id: ProfileId,
+        assembly: AssemblyProvenance,
+    },
+    Complete {
+        core_path: PathBuf,
+        algebra_path: PathBuf,
+        output_path: PathBuf,
+        profile_id: ProfileId,
+        assembly: AssemblyProvenance,
+    },
+}
 
 fn main() {
     if let Err(error) = run() {
@@ -29,13 +54,65 @@ fn main() {
 
 fn run() -> Result<(), Box<dyn Error>> {
     let arguments: Vec<String> = env::args().skip(1).collect();
-    let [core_path, algebra_path, output_path, profile_id, assembled_at, source_revision, source_dirty, tool_sha256] =
-        arguments.as_slice()
-    else {
-        return Err("usage: tuning-profile-compose CORE_OWNER ALGEBRA_OWNER OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256".into());
-    };
+    execute(parse_command(&arguments)?)
+}
 
-    let source_dirty = match source_dirty.as_str() {
+fn parse_command(arguments: &[String]) -> Result<Command, Box<dyn Error>> {
+    match arguments {
+        [mode, output_path, profile_id, assembled_at, source_revision, source_dirty, tool_sha256]
+            if mode == "core-owner" || mode == "algebra-owner" =>
+        {
+            let (profile_id, assembly) = parse_identity_and_assembly(
+                profile_id,
+                assembled_at,
+                source_revision,
+                source_dirty,
+                tool_sha256,
+            )?;
+            if mode == "core-owner" {
+                Ok(Command::CoreOwner {
+                    output_path: PathBuf::from(output_path),
+                    profile_id,
+                    assembly,
+                })
+            } else {
+                Ok(Command::AlgebraOwner {
+                    output_path: PathBuf::from(output_path),
+                    profile_id,
+                    assembly,
+                })
+            }
+        }
+        [mode, core_path, algebra_path, output_path, profile_id, assembled_at, source_revision, source_dirty, tool_sha256]
+            if mode == "complete" =>
+        {
+            let (profile_id, assembly) = parse_identity_and_assembly(
+                profile_id,
+                assembled_at,
+                source_revision,
+                source_dirty,
+                tool_sha256,
+            )?;
+            Ok(Command::Complete {
+                core_path: PathBuf::from(core_path),
+                algebra_path: PathBuf::from(algebra_path),
+                output_path: PathBuf::from(output_path),
+                profile_id,
+                assembly,
+            })
+        }
+        _ => Err(USAGE.into()),
+    }
+}
+
+fn parse_identity_and_assembly(
+    profile_id: &str,
+    assembled_at: &str,
+    source_revision: &str,
+    source_dirty: &str,
+    tool_sha256: &str,
+) -> Result<(ProfileId, AssemblyProvenance), Box<dyn Error>> {
+    let source_dirty = match source_dirty {
         "true" => true,
         "false" => false,
         _ => return Err("SOURCE_DIRTY must be true or false".into()),
@@ -47,13 +124,171 @@ fn run() -> Result<(), Box<dyn Error>> {
         tool: RepoRelPath::parse(TOOL_PATH)?,
         tool_sha256: Sha256::parse(tool_sha256)?,
     };
-    compose(
-        Path::new(core_path),
-        Path::new(algebra_path),
-        Path::new(output_path),
-        ProfileId::parse(profile_id)?,
-        &assembly,
-    )
+    Ok((ProfileId::parse(profile_id)?, assembly))
+}
+
+fn execute(command: Command) -> Result<(), Box<dyn Error>> {
+    match command {
+        Command::CoreOwner {
+            output_path,
+            profile_id,
+            assembly,
+        } => emit_core_owner(&output_path, profile_id, &assembly),
+        Command::AlgebraOwner {
+            output_path,
+            profile_id,
+            assembly,
+        } => emit_algebra_owner(&output_path, profile_id, &assembly),
+        Command::Complete {
+            core_path,
+            algebra_path,
+            output_path,
+            profile_id,
+            assembly,
+        } => compose(
+            &core_path,
+            &algebra_path,
+            &output_path,
+            profile_id,
+            &assembly,
+        ),
+    }
+}
+
+fn emit_core_owner(
+    output_path: &Path,
+    profile_id: ProfileId,
+    assembly: &AssemblyProvenance,
+) -> Result<(), Box<dyn Error>> {
+    let text = core_owner_text(profile_id.clone(), assembly)?;
+    write_validated_atomic(output_path, text.as_bytes(), |written_path| {
+        let written_text = fs::read_to_string(written_path)?;
+        verify_core_owner(&written_text, &profile_id, assembly)
+    })
+}
+
+fn emit_algebra_owner(
+    output_path: &Path,
+    profile_id: ProfileId,
+    assembly: &AssemblyProvenance,
+) -> Result<(), Box<dyn Error>> {
+    let text = algebra_owner_text(profile_id.clone(), assembly)?;
+    write_validated_atomic(output_path, text.as_bytes(), |written_path| {
+        let written_text = fs::read_to_string(written_path)?;
+        verify_algebra_owner(&written_text, &profile_id, assembly)
+    })
+}
+
+fn core_owner_text(
+    profile_id: ProfileId,
+    assembly: &AssemblyProvenance,
+) -> Result<String, Box<dyn Error>> {
+    let provenance = CompiledProfileProvenance {
+        artifact_id: profile_id.clone(),
+    };
+    let prepared = PreparedEnvelope::compiled(profile_id.clone(), provenance)
+        .insert(CoreTuning::CONSERVATIVE)?
+        .build()?;
+    let text = owner_core_registry()?.to_json(&prepared, assembly)?;
+    verify_core_owner(&text, &profile_id, assembly)?;
+    Ok(text)
+}
+
+fn algebra_owner_text(
+    profile_id: ProfileId,
+    assembly: &AssemblyProvenance,
+) -> Result<String, Box<dyn Error>> {
+    let provenance = CompiledProfileProvenance {
+        artifact_id: profile_id.clone(),
+    };
+    let prepared = PreparedEnvelope::compiled(profile_id.clone(), provenance)
+        .insert(AlgebraTuning::CONSERVATIVE)?
+        .build()?;
+    let text = owner_algebra_registry()?.to_json(&prepared, assembly)?;
+    verify_algebra_owner(&text, &profile_id, assembly)?;
+    Ok(text)
+}
+
+fn verify_core_owner(
+    text: &str,
+    expected_profile_id: &ProfileId,
+    expected_assembly: &AssemblyProvenance,
+) -> Result<(), Box<dyn Error>> {
+    let registry = owner_core_registry()?;
+    let reopened = registry.from_json(text)?;
+    verify_owner_identity(
+        &registry,
+        &reopened,
+        text,
+        expected_profile_id,
+        expected_assembly,
+        &[CoreTuning::ID.as_str()],
+    )?;
+    let projection = reopened
+        .section::<CoreTuning>()?
+        .ok_or("core owner envelope is missing its typed section")?;
+    if projection.section != &CoreTuning::CONSERVATIVE
+        || projection.measurement != &MeasurementProvenance::Inherited
+    {
+        return Err("core owner is not the complete inherited conservative section".into());
+    }
+    Ok(())
+}
+
+fn verify_algebra_owner(
+    text: &str,
+    expected_profile_id: &ProfileId,
+    expected_assembly: &AssemblyProvenance,
+) -> Result<(), Box<dyn Error>> {
+    let registry = owner_algebra_registry()?;
+    let reopened = registry.from_json(text)?;
+    verify_owner_identity(
+        &registry,
+        &reopened,
+        text,
+        expected_profile_id,
+        expected_assembly,
+        &[AlgebraTuning::ID.as_str()],
+    )?;
+    let projection = reopened
+        .section::<AlgebraTuning>()?
+        .ok_or("algebra owner envelope is missing its typed section")?;
+    if projection.section != &AlgebraTuning::CONSERVATIVE
+        || projection.measurement != &MeasurementProvenance::Inherited
+    {
+        return Err("algebra owner is not the inherited conservative section".into());
+    }
+    Ok(())
+}
+
+fn verify_owner_identity(
+    registry: &ProfileRegistry,
+    reopened: &PreparedEnvelope,
+    text: &str,
+    expected_profile_id: &ProfileId,
+    expected_assembly: &AssemblyProvenance,
+    expected_ids: &[&str],
+) -> Result<(), Box<dyn Error>> {
+    require_ids(reopened, expected_ids)?;
+    if reopened.profile_id() != expected_profile_id {
+        return Err(format!(
+            "owner profile ID {} does not match caller ID {}",
+            reopened.profile_id().as_str(),
+            expected_profile_id.as_str()
+        )
+        .into());
+    }
+    let verified = reopened
+        .verified_assembly()
+        .ok_or("owner envelope lacks verified assembly")?;
+    if &verified.provenance != expected_assembly {
+        return Err("owner assembly provenance changed during publication".into());
+    }
+    let canonical = registry.to_json(reopened, expected_assembly)?;
+    if canonical != text {
+        return Err("owner envelope or content digest is not canonical".into());
+    }
+    Ok(())
 }
 
 fn compose(
@@ -160,6 +395,10 @@ fn verify_composition(
         .provenance;
     if reopened_assembly != expected_assembly {
         return Err("complete assembly provenance changed during publication".into());
+    }
+    let canonical_complete = both_registry.to_json(&reopened, expected_assembly)?;
+    if canonical_complete != complete_text {
+        return Err("complete envelope or content digest is not canonical".into());
     }
 
     let canonical_core = core_registry.to_json(
@@ -311,7 +550,7 @@ mod tests {
     }
 
     impl TestOutput {
-        fn new() -> Self {
+        fn new(file_name: &str) -> Self {
             static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
             let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             let directory = env::temp_dir().join(format!(
@@ -319,7 +558,7 @@ mod tests {
                 std::process::id()
             ));
             fs::create_dir_all(&directory).unwrap();
-            let path = directory.join("complete.json");
+            let path = directory.join(file_name);
             Self { directory, path }
         }
     }
@@ -352,6 +591,102 @@ mod tests {
             )
             .unwrap(),
         }
+    }
+
+    fn command_arguments(mode: &str, paths: &[&str]) -> Vec<String> {
+        let mut arguments = vec![mode.to_owned()];
+        arguments.extend(paths.iter().map(|path| (*path).to_owned()));
+        arguments.extend([
+            "campaign".to_owned(),
+            "2026-08-25T19:00:00Z".to_owned(),
+            "0123456789abcdef0123456789abcdef01234567".to_owned(),
+            "false".to_owned(),
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_owned(),
+        ]);
+        arguments
+    }
+
+    fn artifact_arguments(
+        mode: &str,
+        paths: &[&Path],
+        profile_id: &ProfileId,
+        assembly: &AssemblyProvenance,
+    ) -> Vec<String> {
+        let mut arguments = vec![mode.to_owned()];
+        arguments.extend(paths.iter().map(|path| path.to_string_lossy().into_owned()));
+        arguments.extend([
+            profile_id.as_str().to_owned(),
+            assembly.assembled_at.as_str().to_owned(),
+            assembly.source_revision.as_str().to_owned(),
+            assembly.source_dirty.to_string(),
+            assembly.tool_sha256.as_str().to_owned(),
+        ]);
+        arguments
+    }
+
+    #[test]
+    fn parser_routes_only_the_three_explicit_producer_modes() {
+        let core = parse_command(&command_arguments("core-owner", &["core.json"])).unwrap();
+        assert!(matches!(
+            core,
+            Command::CoreOwner {
+                output_path,
+                profile_id,
+                ..
+            } if output_path == Path::new("core.json") && profile_id.as_str() == "campaign"
+        ));
+
+        let algebra =
+            parse_command(&command_arguments("algebra-owner", &["algebra.json"])).unwrap();
+        assert!(matches!(
+            algebra,
+            Command::AlgebraOwner {
+                output_path,
+                profile_id,
+                ..
+            } if output_path == Path::new("algebra.json") && profile_id.as_str() == "campaign"
+        ));
+
+        let complete = parse_command(&command_arguments(
+            "complete",
+            &["core.json", "algebra.json", "complete.json"],
+        ))
+        .unwrap();
+        assert!(matches!(
+            complete,
+            Command::Complete {
+                core_path,
+                algebra_path,
+                output_path,
+                profile_id,
+                ..
+            } if core_path == Path::new("core.json")
+                && algebra_path == Path::new("algebra.json")
+                && output_path == Path::new("complete.json")
+                && profile_id.as_str() == "campaign"
+        ));
+
+        assert!(parse_command(&command_arguments(
+            "unknown",
+            &["core.json", "algebra.json", "complete.json"]
+        ))
+        .unwrap_err()
+        .to_string()
+        .contains(USAGE));
+        assert!(parse_command(&command_arguments(
+            "complete",
+            &["core.json", "algebra.json"]
+        ))
+        .unwrap_err()
+        .to_string()
+        .contains(USAGE));
+
+        let mut invalid_dirty = command_arguments("core-owner", &["core.json"]);
+        invalid_dirty[5] = "maybe".to_owned();
+        assert_eq!(
+            parse_command(&invalid_dirty).unwrap_err().to_string(),
+            "SOURCE_DIRTY must be true or false"
+        );
     }
 
     #[test]
@@ -399,7 +734,7 @@ mod tests {
 
     #[test]
     fn atomic_publication_never_replaces_an_existing_complete_envelope() {
-        let output = TestOutput::new();
+        let output = TestOutput::new("complete.json");
 
         write_validated_atomic(&output.path, b"first", |_| Ok(())).unwrap();
         let error = write_validated_atomic(&output.path, b"second", |_| Ok(()))
@@ -412,7 +747,7 @@ mod tests {
 
     #[test]
     fn strict_validation_failure_leaves_no_published_or_temporary_artifact() {
-        let output = TestOutput::new();
+        let output = TestOutput::new("complete.json");
 
         write_validated_atomic(&output.path, b"{}", |written_path| {
             let text = fs::read_to_string(written_path)?;
@@ -427,7 +762,7 @@ mod tests {
 
     #[test]
     fn validated_publication_reopens_the_temporary_and_final_artifact() {
-        let output = TestOutput::new();
+        let output = TestOutput::new("complete.json");
         let calls = std::cell::Cell::new(0);
         let complete = complete_registry().unwrap().from_json(COMPLETE).unwrap();
         let profile_id = complete.profile_id().clone();
@@ -463,6 +798,43 @@ mod tests {
             assert_eq!(assembly.tool.as_str(), TOOL_PATH);
             assert_eq!(assembly.tool_sha256.as_str(), source_digest);
         }
+
+        let core_output = TestOutput::new("core.json");
+        let core_arguments = artifact_arguments(
+            "core-owner",
+            &[&core_output.path],
+            core.profile_id(),
+            &core.verified_assembly().unwrap().provenance,
+        );
+        execute(parse_command(&core_arguments).unwrap()).unwrap();
+        assert_eq!(fs::read_to_string(&core_output.path).unwrap(), CORE_OWNER);
+
+        let algebra_output = TestOutput::new("algebra.json");
+        let algebra_arguments = artifact_arguments(
+            "algebra-owner",
+            &[&algebra_output.path],
+            algebra.profile_id(),
+            &algebra.verified_assembly().unwrap().provenance,
+        );
+        execute(parse_command(&algebra_arguments).unwrap()).unwrap();
+        assert_eq!(
+            fs::read_to_string(&algebra_output.path).unwrap(),
+            ALGEBRA_OWNER
+        );
+
+        let complete_output = TestOutput::new("complete.json");
+        let complete_arguments = artifact_arguments(
+            "complete",
+            &[
+                &core_output.path,
+                &algebra_output.path,
+                &complete_output.path,
+            ],
+            complete.profile_id(),
+            &complete.verified_assembly().unwrap().provenance,
+        );
+        execute(parse_command(&complete_arguments).unwrap()).unwrap();
+        assert_eq!(fs::read_to_string(&complete_output.path).unwrap(), COMPLETE);
 
         assert_eq!(
             compose_texts(
