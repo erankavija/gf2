@@ -558,13 +558,7 @@ impl OrbGrand {
 
         // Step 2: Sort bit positions by reliability (ascending |LLR|)
         // pi[j] = the j-th least reliable bit position (0-indexed)
-        let mut pi: Vec<usize> = (0..self.n).collect();
-        pi.sort_by(|&a, &b| {
-            llrs[a]
-                .magnitude()
-                .partial_cmp(&llrs[b].magnitude())
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
+        let pi = Llr::reliability_permutation(llrs).ascending().to_vec();
 
         // Pre-compute syndrome of hard-decision word: s = H * y
         let base_syndrome = self.h_sparse.matvec(&hard);
@@ -1173,6 +1167,71 @@ mod tests {
             1, 0, 1, 1, 0, 1, 0;
             0, 1, 1, 1, 0, 0, 1
         ]
+    }
+
+    #[test]
+    fn test_decode_finite_reliability_order_preserves_query_and_stopping_behavior() {
+        // This one-check code accepts every word whose first bit is zero.
+        // The hard decision violates that check, so the candidate is found
+        // exactly when the first bit's reliability rank is queried.
+        let h = gf2_core::bitmatrix![1, 0, 0, 0, 0];
+        let llrs = [
+            Llr::new(-0.4),
+            Llr::new(2.0),
+            Llr::new(-1.0),
+            Llr::new(0.2),
+            Llr::new(3.0),
+        ];
+        let order = Llr::reliability_permutation(&llrs);
+        assert_eq!(order.ascending(), &[3, 0, 2, 1, 4]);
+
+        let config = OrbGrandConfig {
+            max_queries: 3,
+            one_line_intercept: OneLineIntercept::Basic,
+            ..OrbGrandConfig::default()
+        };
+        let result = OrbGrand::new(h, config).decode(&llrs);
+
+        assert_eq!(result.hard_decision.count_ones(), 2);
+        assert!(result.hard_decision.get(0));
+        assert!(result.hard_decision.get(2));
+        assert_eq!(result.query_count, 3);
+        assert!(result.success());
+        assert_eq!(result.best_codeword().unwrap().noise_weight, 1);
+        assert!(!result.best_codeword().unwrap().codeword.get(0));
+    }
+
+    #[test]
+    fn test_decode_tied_signed_zero_and_infinite_reliabilities() {
+        // Equal magnitudes, including signed zero, retain original index
+        // order. Infinite confidence remains the most reliable position.
+        let h = gf2_core::bitmatrix![1, 0, 0, 0, 0];
+        let llrs = [
+            Llr::new(-1.0),
+            Llr::new(1.0),
+            Llr::new(-0.0),
+            Llr::new(0.0),
+            Llr::infinity(),
+        ];
+        let order = Llr::reliability_permutation(&llrs);
+        assert_eq!(order.ascending(), &[2, 3, 0, 1, 4]);
+
+        let config = OrbGrandConfig {
+            max_queries: 4,
+            one_line_intercept: OneLineIntercept::Basic,
+            ..OrbGrandConfig::default()
+        };
+        let result = OrbGrand::new(h, config).decode(&llrs);
+
+        assert!(result.hard_decision.get(0));
+        assert!(!result.hard_decision.get(1));
+        assert!(!result.hard_decision.get(2));
+        assert!(!result.hard_decision.get(3));
+        assert!(!result.hard_decision.get(4));
+        assert_eq!(result.query_count, 4);
+        assert!(result.success());
+        assert_eq!(result.best_codeword().unwrap().noise_weight, 1);
+        assert!(!result.best_codeword().unwrap().codeword.get(0));
     }
 
     // =====================================================================
