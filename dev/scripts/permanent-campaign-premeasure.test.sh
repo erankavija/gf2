@@ -139,9 +139,11 @@ t4() {
     local rc=$?
     set -e
     git -C "$REPO" checkout -- README.md
-    [[ "$rc" -eq 2 ]]
-    assert_has "$o" 'premeasure requires a clean worktree' t4
-    echo 'PASS: dirty-tree pre-flight refusal'
+    [[ "$rc" -eq 0 ]] || { printf 'FAIL: t4 premeasure returned %s\n%s\n' "$rc" "$o"; return 1; }
+    local session
+    session=$(find "$WORK/dirty/premeasure-dirty/sessions" -name 'session-*.status' -print -quit 2>/dev/null)
+    [[ -n "$session" ]] || { echo 'FAIL: t4 premeasure did no work'; return 1; }
+    echo 'PASS: dirt outside the source closure is admitted'
     PASS=$((PASS + 1))
 }
 
@@ -184,7 +186,7 @@ write_session() {
         printf 'session_id: %s\n' "$session_id"
         printf 'mode: premeasure\n'
         printf 'started_utc: 2026-08-17T00:00:00Z\n'
-        printf 'source_revision: session-source-%s\n' "$file_tag"
+        printf 'repository_revision: session-source-%s\n' "$file_tag"
         printf 'session_cap_seconds: 43200\n'
         printf 'manifest: prepared, manifest "locator"\n'
         printf 'binary_hash: %s %s\n' "$WORK/timed binary, quoted" "$actual_sha"

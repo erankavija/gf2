@@ -18,9 +18,11 @@ dataset in place.
 
 The canonical typed schema and conformance reader are
 `gf2_sim::permanent_campaign::schema`. JSON documents reject missing required
-fields and unknown fields. Every JSON document and every pooled CSV row carries
-the same integer `schema_version`; the reader accepts only the version named by
-that module's `SCHEMA_VERSION` constant.
+fields and unknown fields. The writer emits the version named by
+`SCHEMA_VERSION`, while the reader accepts every version named by
+`READABLE_SCHEMA_VERSIONS`. Every JSON document and every pooled CSV row in one
+dataset carries the manifest's same integer `schema_version`; a dataset may not
+mix versions.
 
 ## Layout and ownership
 
@@ -69,9 +71,17 @@ exact measurements and deterministic selection record used for that cell,
 without assigning an artifact subtype. The determinant plan is `evaluate` or
 `not_evaluated`.
 
-The provenance record requires the full `git_revision`, `compiler_version`,
-`rng_algorithm`, `rng_version`, tokenized `invocation`, `cpu_model`,
-`accelerator_runtime`, and `gpu_model`. The revision is the complete
+The provenance record requires the full `git_revision`, `binary_sha256`,
+`deps_source_revision`, `deps_source_dirty`, `compiler_version`, `rng_algorithm`,
+`rng_version`, tokenized `invocation`, `cpu_model`, `accelerator_runtime`, and
+`gpu_model`. `git_revision` is the repository-wide revision observed at run
+start, recorded as context. `deps_source_revision` is the revision of the
+linked source closure (`crates/` and `Cargo.lock`), and `deps_source_dirty`
+records whether that closure was dirty at run start. `binary_sha256` is the
+lowercase hexadecimal SHA-256 of the executable that emitted the dataset, and
+the emission guard admits a writer only when the running executable matches it.
+Version-1 datasets predate all three version-2 fields and omit them; the reader
+accepts their absence only at version 1. The revision is the complete
 40-character lowercase hexadecimal object name; an abbreviation resolves only
 against the repository that produced it, so it cannot identify the source of a
 dataset read elsewhere. The RNG algorithm is the closed token
@@ -263,6 +273,7 @@ $ cargo run -p gf2-sim --release --bin permanent_dataset -- <subcommand> [campai
 | Subcommand | Does |
 | --- | --- |
 | `revision` | Prints the repository-wide revision observed at command start as provenance context |
+| `provenance <dir>` | Prints the manifest provenance with runtime-observed identity fields as pretty JSON |
 | `emission-check <dir>` | Runs the binary-identity guard that `permanent_campaign` passes before writing, printing the approved executable digest or the refusal |
 | `checksums <dir>` | Renders the integrity file for a finished dataset on standard output; it writes nothing, so redirect it into `checksums.sha256` |
 | `conform <dir>` | Validates the complete schema and cross-document shard and summary aggregates without modifying the dataset |

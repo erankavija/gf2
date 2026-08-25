@@ -96,12 +96,14 @@ dependency bump, while `ChaCha20Rng::from_seed` is stable.
 
 ### `dataset-provenance-rule` [implementation-produced] — Source identity and integrity
 
-What makes a published dataset traceable and verifiable. The emitting binary
-embeds the revision it was built from; emission requires that revision to equal
-`HEAD` and no tracked file to differ outside the active campaign's output
-subtree, so expected raw and derived files under the frozen campaign id are
-permitted while changed source, build metadata, protocol, or root manifest
-refuse. A clean-tree rule cannot be used: the dataset lives in the repository, so
+What makes a published dataset traceable and verifiable. The published manifest
+declares the emitting binary's SHA-256, the revision of the source closure that
+binary links (`crates/` and `Cargo.lock`), and that closure's dirty state;
+emission requires the running executable's digest to equal the declared one and
+the frozen manifest to be committed and unmodified. The repository-wide revision
+is recorded as context rather than as a gate, so commits and edits made
+elsewhere by parallel sessions cannot block publication. A whole-repository
+clean-tree rule cannot be used either: the dataset lives in the repository, so
 the first shard written would deadlock the second emission. `checksums.sha256`
 covers the raw set only, and the root manifest's content hash is taken over a
 canonical serialisation with the hash field omitted, or held in a sidecar, so a
@@ -307,7 +309,7 @@ superseded text are named, since the study's record stands unedited.
 | Determinant companion: counts here, verdicts there | The evaluation leaf produces determinant sample counts, zero counts, and an explicit not-evaluated state, and nothing more; estimates, intervals and exact-test verdicts belong to the acceptance layer, which depends on it. One code path turns counts into decisions. The not-evaluated state is required rather than optional: a numeric zero for a cell that ran without the companion is indistinguishable from a cell that evaluated its matrices and found none singular, and would silently enter any pooled estimate. |
 | The companion runs on the same matrices | The determinant is evaluated inside the composite loop on the identical drawn entries, not on an independent sample. An independently drawn companion would test a different pipeline than the one producing the published permanent counts, leaving the shared draw, pack and address path — where this problem family's recorded defects occurred — unchecked. |
 | Dataset lifecycle and checksum boundary | Each field execution writes only its own shard paths and field summary; a finalizer is the sole writer of campaign-scoped paths and refuses a dataset with any cell in no terminal state. `checksums.sha256` covers raw data only — manifest, shard records, field summaries, pooled summary — while reports, figures and fit outputs are derived and outside it, since a checksum file covering documents that quote it could never close. |
-| Source identity at emission | The emitting binary's embedded revision must equal `HEAD`, and no tracked file may differ outside the active campaign's output subtree; expected raw and derived files under the frozen campaign id are permitted, while changed source, build or dependency manifest, protocol, or root manifest refuses. A clean-tree rule would deadlock, since the dataset lives in the repository and the first shard dirties the tree. The root manifest's content hash is taken over a canonical serialisation omitting the hash field, or held in a sidecar, so a reader can recompute it. |
+| Source identity at emission | Emission depends on the emitting binary and the campaign directory: the running executable's SHA-256 must equal the digest the frozen manifest declares, and that manifest must be committed and unmodified. Repository-wide `HEAD` and worktree state are recorded as provenance context, not as gates, so a parallel session's commit or edit elsewhere cannot block publication. A whole-repository clean-tree rule would deadlock in any case, since the dataset lives in the repository and the first shard dirties the tree. The root manifest's content hash is taken over a canonical serialisation omitting the hash field, or held in a sidecar, so a reader can recompute it. |
 | Analysis tooling separates from published artefacts | The curve and table pipeline is fixture-tested with no dependency on any arm; a materialisation leaf runs it against the finalized dataset and commits the per-field curve and table artefacts that REQ-03 asks for. A pipeline that could produce curves is not a curve, and the report depends on the materialised artefacts rather than on the tooling. |
 | Stream address encoding | The fourth seed word carries the purpose tag in its top 8 bits and the stream index in its low 56 bits, with the bound asserted at derivation, so the address map is injective by construction; golden derivation vectors are committed. Separation is asserted at the address, seed and generator-state level and never as "two streams share no matrix" — at $q{=}3$, $n{=}2$ there are only $81$ matrices, so collisions are expected and testing for their absence would assert something false. |
 | Estimator correctness contracts | Each interval estimator is validated against an independent computation of its own definition — Clopper-Pearson additionally by an empirical coverage check — never against containing the other, which follows from construction and evidences nothing. The two estimators are separate leaves in one module, Wilson then Clopper-Pearson, because each is independently testable. |
