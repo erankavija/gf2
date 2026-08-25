@@ -8,14 +8,20 @@
 //! canonical reliability order plus an ordered GF(2) elimination into a
 //! bounded, soft-ranked candidate search.  What a candidate means stays with
 //! the caller's [`OsdSemantics`] adapter.
+//!
+//! [`GeneratorMatrixOsdDecoder`] supplies the generator-row-space semantics
+//! for linear block codes through the immutable [`crate::traits::SoftDecoder`]
+//! surface.
 
 mod engine;
+mod generator;
 mod patterns;
 
 pub use engine::{
     reprocess, reprocess_with_cancellation, ColumnPreference, MostReliableBasis, OsdCandidate,
     OsdEngineError, OsdOutcome, OsdSemantics, OsdWork, ReprocessedColumns,
 };
+pub use generator::{GeneratorMatrixOsdDecoder, GeneratorMatrixOsdResult};
 pub use patterns::{
     checked_candidate_bound, enumerate_patterns, OsdConfig, OsdTermination, PatternControl,
     PatternEnumerationError, PatternEnumerationReport, PatternEnumerator,
