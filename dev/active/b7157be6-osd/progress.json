@@ -31,7 +31,7 @@
      "title": "SoftDecisionDecoder trait removal",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "merged; cargo-ci passed; code-review R1 FAIL (stale SoftDecisionDecoder in archive audit docs); Luna rework in flight; doc-review pending"
+     "status": "done (code-review R4 pass after archive-doc audit sweep; doc-review pass)"
     },
     {
      "id": null,
@@ -49,7 +49,7 @@
      "title": "LDPC posterior LLR access",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "merged at 5237e4de; cargo-ci gate passed; code-review running; doc-review pending"
+     "status": "done (all gates passed)"
     },
     {
      "id": null,
@@ -58,7 +58,7 @@
      "title": "Published eBCH OSD curve dataset",
      "classification": "research",
      "model": "opus",
-     "status": "merged; doc-review R1 FAIL (dataset identifiers fossorier1995 -> must be fossorier1994); Luna rename rework queued; research-review pending; lead owes breakdown.json footprint + handoff reference reconciliation after rework lands"
+     "status": "merged+renamed to fossorier1994 pin; doc-review R3 pass; research-review R2 running after owner-approved citation-format amendment"
     },
     {
      "id": null,
@@ -81,7 +81,7 @@
      "title": "ORBGRAND reliability migration",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "worker WIP completed+verified by lead, committed fcddaf1a, merged f2030c7b; cargo-ci gate running; code/doc-review pending"
+     "status": "merged; cargo-ci+doc-review pass; code-review R4 running (NaN-panic doc qualification rounds)"
     },
     {
      "id": null,
@@ -90,7 +90,7 @@
      "title": "Chase-Pyndiah reliability migration",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "merged 2b634350; cargo-ci gate passed; code-review running; doc-review pending"
+     "status": "done (all gates passed)"
     },
     {
      "id": null,
@@ -99,7 +99,7 @@
      "title": "Named eBCH(128,64) reference factory",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "worker commit 18de2ce8 lead-content-review PASS, merged 9f31bee9; cargo-ci gate running; code/doc-review pending"
+     "status": "all gates passed; done-transition blocked on a82f2dd9 dependency"
     }
    ]
   },
@@ -203,12 +203,20 @@
    "reason": "convention-convergence exception convergence condition for 5dd3539f"
   }
  ],
- "escalations": [],
+ "escalations": [
+  {
+   "id": "ESC-01",
+   "date": "2026-08-25",
+   "category": "issue description amendment",
+   "summary": "research-review tier-1 requires bracketed [Key] citations matching cites: labels. Owner approved: bracket [Fossorier1995]/[Yue2022] in a82f2dd9, bracket [Fossorier1995] + drop cites:Yue2022 in cef1ae5f; manifest mirrored; inherited cites labels stripped from breakdown node 8d650253."
+  }
+ ],
  "rework_counts": {
   "bebe485c": 1,
   "5dd3539f": 1,
-  "80cead18": 1,
-  "a82f2dd9": 1
+  "80cead18": 3,
+  "a82f2dd9": 2,
+  "ac78aff8": 3
  },
  "surfaced_pitfalls": [
   {
@@ -256,6 +264,16 @@
    "id": "NOTE-01",
    "issue": "a82f2dd9",
    "text": "Codex-provided open alternatives for future cross-checks: Coskun2019 PhyComm Fig.4 (CER, OSD t=3/4, DOI 10.1016/j.phycom.2019.03.004, OA elib.dlr.de/127269), Alnawayseh-Loskot 2012 (BER, OSD(1)/(2), DOI 10.1186/1687-1499-2012-314), LiangMa arXiv:2401.16709 (FER, LC-OSD + MLD bound), Liva arXiv:1610.00873 (precursor of Coskun, not independent). None pin a construction. Candidate follow-up task: digitize Coskun Fig.4 as second anchor."
+  },
+  {
+   "id": "NOTE-02",
+   "issue": "8d650253",
+   "text": "breakdown-review R2 advisories: (a) P/B scaffold descriptions retain superseded universal-baseline wording despite D-14; (b) osd-campaign-protocol provenance-type relocation destination unresolved leaving terminal footprint inexact; (c) c0bb2ab1 orphan-leaf warning (validated non-isolated after wiring to 5dd3539f)."
+  },
+  {
+   "id": "NOTE-03",
+   "issue": "bebe485c",
+   "text": "doc-review advisories (pre-existing, repo-wide): AGENTS.md:48 gf2-sim design-source JIT address does not resolve; README.md:27 workspace layout omits gf2-sim crate. Outside epic scope; candidate repo-hygiene follow-up."
   }
  ],
  "started_at": "2026-08-24T19:48:07.381765+00:00"
