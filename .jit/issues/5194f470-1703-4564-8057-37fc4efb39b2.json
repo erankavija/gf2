@@ -8,13 +8,30 @@
   ],
   "description": "Apply configurable discard thresholds to segmented OSD search under the implementation-produced complexity policy.\n\n## Background\n\nThresholds are optional normal-priority work. They may skip candidates only through the documented segment metric and must leave baseline exhaustive search unchanged when disabled.\n\n## Success Criteria\n\n- [hard] REQ-01: Applies documented threshold comparisons at deterministic segment boundaries.\n- [hard] REQ-02: Reports discarded-pattern, tested-candidate, elimination, and termination counters without counting a discarded pattern as tested.\n- [hard] REQ-03: Preserves exhaustive baseline results when thresholds are disabled.\n- [hard] REQ-04: Covers threshold equality, no-discard, full-discard, cap, and cancellation cases in engine-local tests.\n- [hard] REQ-05: Documents that thresholded results are policy-bounded approximations rather than exhaustive order-$m$ search.",
   "documents": [],
+  "done_at": "2026-08-25T21:34:06.785898040Z",
   "first_ready_at": "2026-08-25T20:01:53.352806973Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T21:28:48.806905736Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T21:31:38.749992347Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T21:33:48.207194885Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "5194f470-1703-4564-8057-37fc4efb39b2",
   "labels": [
     "type:task",
@@ -24,7 +41,7 @@
     "cites:Yue2022"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "OSD discard thresholds",
-  "updated_at": "2026-08-25T20:57:35.139539365Z"
+  "updated_at": "2026-08-25T21:34:06.785898040Z"
 }
