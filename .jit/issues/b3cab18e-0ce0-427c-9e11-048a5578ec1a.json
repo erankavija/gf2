@@ -14,7 +14,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T18:56:45.033785334Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-25T19:01:34.604956741Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "b3cab18e-0ce0-427c-9e11-048a5578ec1a",
   "labels": [
     "type:task",
@@ -26,5 +37,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "OSD pattern segmentation policy",
-  "updated_at": "2026-08-25T17:47:42.374050180Z"
+  "updated_at": "2026-08-25T19:01:34.604956741Z"
 }

@@ -14,7 +14,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T18:57:38.613409743Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T19:02:11.263532729Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T19:04:38.459500262Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "583ec31c-dc85-4751-8531-687ce6e7fd7d",
   "labels": [
     "type:task",
@@ -27,5 +43,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Syndrome-domain OSD adapter",
-  "updated_at": "2026-08-25T17:47:00.904066565Z"
+  "updated_at": "2026-08-25T19:04:38.459500262Z"
 }

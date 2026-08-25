@@ -10,13 +10,30 @@
   ],
   "description": "Add a thin `gf2-sim` executable that binds the eBCH OSD baseline to the reusable campaign protocol.\n\n## Background\n\nThe executable selects the pinned eBCH $(128,64)$ factory, BI-AWGN/BPSK channel, order-2 decoder, order-1 control, configured cells, checkpoint path, and receipt path. Protocol logic remains in the `gf2-sim` library rather than the CLI.\n\n## Success Criteria\n\n- [hard] REQ-01: Parses the pinned campaign configuration and dispatches order-2 plus order-1 cells through the library protocol.\n- [hard] REQ-02: Configures the decoder's candidate enumeration to the pinned reference dataset's recorded list order and tie policy.\n- [hard] REQ-03: Uses deterministic resume and versioned receipt APIs without owning schema, seed, interval, or checkpoint logic.\n- [hard] REQ-04: Exposes bounded sample and error stopping controls suitable for interrupted campaign execution.\n- [hard] REQ-05: A CLI fixture verifies configuration mapping, checkpoint resume, receipt emission, and nonzero failure status for invalid input.\n- [hard] REQ-06: Public usage text names output paths and the exact eBCH/channel/metric convention.",
   "documents": [],
+  "done_at": "2026-08-25T19:04:45.428572236Z",
   "first_ready_at": "2026-08-25T17:43:58.633951217Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T18:55:51.347215444Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T19:02:42.461846965Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T19:04:28.140846620Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c8322eff-8122-41bc-9209-9bcc9f591655",
   "labels": [
     "type:task",
@@ -27,7 +44,7 @@
     "cites:Yue2022"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "eBCH OSD campaign executable",
-  "updated_at": "2026-08-25T17:47:20.902408657Z"
+  "updated_at": "2026-08-25T19:04:45.428572236Z"
 }
