@@ -1,4 +1,4 @@
-//! Inspect, checksum, conform, and verify a published permanent-zero-fraction
+//! Inspect provenance, checksum, conform, and verify a published permanent-zero-fraction
 //! dataset.
 //!
 //! This is the reader- and finalization-side tool for the dataset described in
@@ -19,6 +19,7 @@
 //!
 //! ```console
 //! $ permanent_dataset revision
+//! $ permanent_dataset provenance <campaign-directory>
 //! $ permanent_dataset emission-check <campaign-directory>
 //! $ permanent_dataset checksums <campaign-directory> > <campaign-directory>/checksums.sha256
 //! $ permanent_dataset conform <campaign-directory>
@@ -27,6 +28,8 @@
 //!
 //! `revision` prints the repository-wide revision observed at command start as
 //! provenance context.
+//! `provenance` renders the manifest provenance after replacing its runtime
+//! identity fields with values observed by this executable.
 //! `emission-check` runs the guard that `permanent_campaign` passes before
 //! writing.
 //! `checksums` renders the integrity file for a finished dataset on stdout.
@@ -42,11 +45,13 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use gf2_sim::permanent_campaign::provenance::{
-    approve_emission, generate_integrity_file, runtime_git_revision, verify_dataset, DatasetVerdict,
+    approve_emission, generate_integrity_file, observe_provenance, repository_top_level,
+    runtime_git_revision, verify_dataset, DatasetVerdict,
 };
 use gf2_sim::permanent_campaign::schema::{conform_dataset, read_manifest};
 
-const USAGE: &str = "usage: permanent_dataset <revision | emission-check | checksums | conform | \
+const USAGE: &str =
+    "usage: permanent_dataset <revision | provenance | emission-check | checksums | conform | \
                     verify> [campaign-directory]";
 
 fn main() -> ExitCode {
@@ -60,6 +65,7 @@ fn main() -> ExitCode {
             }
             Err(error) => report(&error),
         },
+        ["provenance", root] => provenance(Path::new(root)),
         ["emission-check", root] => emission_check(Path::new(root)),
         ["checksums", root] => checksums(Path::new(root)),
         ["conform", root] => conform(Path::new(root)),
@@ -68,6 +74,28 @@ fn main() -> ExitCode {
             eprintln!("{USAGE}");
             ExitCode::from(64)
         }
+    }
+}
+
+fn provenance(root: &Path) -> ExitCode {
+    let manifest = match read_manifest(root) {
+        Ok(manifest) => manifest,
+        Err(error) => return report(&error),
+    };
+    let repository = match repository_top_level(root) {
+        Ok(repository) => repository,
+        Err(error) => return report(&error),
+    };
+    let observed = match observe_provenance(&repository, manifest.provenance) {
+        Ok(observed) => observed,
+        Err(error) => return report(&error),
+    };
+    match serde_json::to_string_pretty(&observed) {
+        Ok(json) => {
+            println!("{json}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => report(&error),
     }
 }
 
@@ -134,6 +162,7 @@ mod tests {
 
     #[test]
     fn usage_lists_canonical_conformance() {
+        assert!(USAGE.contains("provenance"));
         assert!(USAGE.contains("conform"));
     }
 }

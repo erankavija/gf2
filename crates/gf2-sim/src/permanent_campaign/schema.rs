@@ -1,10 +1,11 @@
 //! Versioned permanent-zero-fraction dataset schema.
 //!
 //! JSON documents use strict serde schemas: required fields cannot be omitted,
-//! unknown fields are rejected, and every document carries
-//! [`SCHEMA_VERSION`]. The pooled summary is deliberately a flat CSV whose
-//! exact header is [`SUMMARY_CSV_FIELDS`]. [`conform_dataset`] is the one
-//! reader-side conformance entry point for the complete raw dataset; the
+//! unknown fields are rejected, and every document carries the version it was
+//! written with. This module writes [`SCHEMA_VERSION`] and reads every version
+//! in [`READABLE_SCHEMA_VERSIONS`]. The pooled summary is deliberately a flat
+//! CSV whose exact header is [`SUMMARY_CSV_FIELDS`]. [`conform_dataset`] is the
+//! one reader-side conformance entry point for the complete raw dataset; the
 //! cryptographic half of reading a dataset lives in
 //! [`provenance`](super::provenance).
 
@@ -17,8 +18,15 @@ use std::str::FromStr;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer, Serialize};
 
-/// The only dataset schema version accepted by this module.
+/// Dataset schema version written by this module.
 pub const SCHEMA_VERSION: u32 = 2;
+
+/// Published dataset schema versions accepted by this reader.
+///
+/// A published permanent dataset is an immutable archive, so the reader
+/// accepts every schema version this repository has published rather than
+/// requiring archives to be rewritten when the writer advances.
+pub const READABLE_SCHEMA_VERSIONS: &[u32] = &[1, 2];
 
 /// Root manifest file name.
 pub const MANIFEST_FILE: &str = "manifest.json";
@@ -480,6 +488,10 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for Availability<T> {
 }
 
 /// Root manifest for one immutable campaign id.
+///
+/// Validation couples `schema_version` to the optional provenance fields:
+/// version 1 omits all three version-2 identity fields, while version 2
+/// requires all three.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CampaignManifest {
@@ -609,12 +621,18 @@ pub struct Provenance {
     /// Repository-wide revision observed at run start, recorded as context
     /// rather than as the dataset's identity.
     pub git_revision: GitRevision,
-    /// SHA-256 digest of the executable that emitted the dataset.
-    pub binary_sha256: Sha256Digest,
-    /// Revision of the linked source closure (`crates/` and `Cargo.lock`).
-    pub deps_source_revision: GitRevision,
-    /// Whether the linked source closure was dirty at run start.
-    pub deps_source_dirty: bool,
+    /// SHA-256 digest of the executable that emitted the dataset, present from
+    /// schema version 2 onward.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub binary_sha256: Option<Sha256Digest>,
+    /// Revision of the linked source closure (`crates/` and `Cargo.lock`),
+    /// present from schema version 2 onward.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deps_source_revision: Option<GitRevision>,
+    /// Whether the linked source closure was dirty at run start, present from
+    /// schema version 2 onward.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deps_source_dirty: Option<bool>,
     /// Complete compiler version string.
     pub compiler_version: String,
     /// Closed RNG algorithm identity.
@@ -1096,7 +1114,7 @@ impl fmt::Display for SchemaError {
             }
             Self::UnsupportedVersion { path, found } => write!(
                 f,
-                "{} uses dataset schema version {found}; expected {SCHEMA_VERSION}",
+                "{} uses dataset schema version {found}; expected one of {READABLE_SCHEMA_VERSIONS:?}",
                 path.display()
             ),
             Self::InvalidValue { path, message } => {
@@ -1130,6 +1148,31 @@ impl SchemaDocument for CampaignManifest {
     }
 
     fn validate(&self) -> Result<(), String> {
+        match self.schema_version {
+            1 if self.provenance.binary_sha256.is_none()
+                && self.provenance.deps_source_revision.is_none()
+                && self.provenance.deps_source_dirty.is_none() => {}
+            1 => {
+                return Err(
+                    "schema version 1 provenance must omit binary_sha256, deps_source_revision, and deps_source_dirty"
+                        .to_owned(),
+                )
+            }
+            2 if self.provenance.binary_sha256.is_some()
+                && self.provenance.deps_source_revision.is_some()
+                && self.provenance.deps_source_dirty.is_some() => {}
+            2 => {
+                return Err(
+                    "schema version 2 provenance must include binary_sha256, deps_source_revision, and deps_source_dirty"
+                        .to_owned(),
+                )
+            }
+            version => {
+                return Err(format!(
+                    "schema version {version} has no provenance validation rule"
+                ))
+            }
+        }
         validate_nonempty("compiler_version", &self.provenance.compiler_version)?;
         validate_nonempty("rng_version", &self.provenance.rng_version)?;
         if self.provenance.rng_version.contains('\0') {
@@ -1264,6 +1307,12 @@ impl SchemaDocument for FieldSummary {
         let mut orders = BTreeSet::new();
         for row in &self.rows {
             row.validate()?;
+            if row.schema_version != self.schema_version {
+                return Err(format!(
+                    "summary row schema version {} differs from field summary version {}",
+                    row.schema_version, self.schema_version
+                ));
+            }
             if row.q != self.q {
                 return Err(format!(
                     "row q={} differs from field summary q={}",
@@ -1299,9 +1348,9 @@ impl SchemaDocument for FieldSummary {
 
 impl SummaryRow {
     fn validate(&self) -> Result<(), String> {
-        if self.schema_version != SCHEMA_VERSION {
+        if !READABLE_SCHEMA_VERSIONS.contains(&self.schema_version) {
             return Err(format!(
-                "summary row schema version is {}",
+                "summary row schema version {} is not readable",
                 self.schema_version
             ));
         }
@@ -1454,7 +1503,7 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
     let mut field_rows = BTreeMap::new();
     for q in fields {
         let path = root.join(field_summary_file(q));
-        let summary: FieldSummary = read_json(&path)?;
+        let summary: FieldSummary = read_json_at_version(&path, manifest.schema_version)?;
         if summary.q != q {
             return invalid_value(&path, "field summary identity differs from its path");
         }
@@ -1501,7 +1550,7 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
                 continue;
             }
             observed_shard_paths.insert(PathBuf::from(&relative_path));
-            let record: ShardRecord = read_json(&path)?;
+            let record: ShardRecord = read_json_at_version(&path, manifest.schema_version)?;
             if record.shard_id != shard_spec.shard_id
                 || record.stream_address.root_seed != manifest.root_seed
                 || record.stream_address.q != cell.q
@@ -1611,7 +1660,7 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
     });
 
     let pooled_path = root.join(POOLED_SUMMARY_FILE);
-    let pooled_summary = decode_summary_csv(&pooled_path)?;
+    let pooled_summary = decode_summary_csv(&pooled_path, manifest.schema_version)?;
     let pooled_rows: BTreeMap<_, _> = pooled_summary
         .iter()
         .cloned()
@@ -1732,7 +1781,7 @@ where
             path: path.to_owned(),
             message: source.to_string(),
         })?;
-    if document.version() != SCHEMA_VERSION {
+    if !READABLE_SCHEMA_VERSIONS.contains(&document.version()) {
         return Err(SchemaError::UnsupportedVersion {
             path: path.to_owned(),
             found: document.version(),
@@ -1744,6 +1793,23 @@ where
             path: path.to_owned(),
             message,
         })?;
+    Ok(document)
+}
+
+fn read_json_at_version<T>(path: &Path, expected: u32) -> Result<T, SchemaError>
+where
+    T: DeserializeOwned + SchemaDocument,
+{
+    let document = read_json::<T>(path)?;
+    if document.version() != expected {
+        return invalid_value(
+            path,
+            &format!(
+                "document schema version {} differs from manifest version {expected}",
+                document.version()
+            ),
+        );
+    }
     Ok(document)
 }
 
@@ -1857,7 +1923,7 @@ pub fn encode_summary_csv(rows: &[SummaryRow]) -> String {
     output
 }
 
-fn decode_summary_csv(path: &Path) -> Result<Vec<SummaryRow>, SchemaError> {
+fn decode_summary_csv(path: &Path, expected_version: u32) -> Result<Vec<SummaryRow>, SchemaError> {
     let text = fs::read_to_string(path).map_err(|source| SchemaError::Io {
         path: path.to_owned(),
         source,
@@ -1887,11 +1953,14 @@ fn decode_summary_csv(path: &Path) -> Result<Vec<SummaryRow>, SchemaError> {
             path: path.to_owned(),
             message: format!("CSV row {}: {message}", index + 2),
         })?;
-        if row.schema_version != SCHEMA_VERSION {
-            return Err(SchemaError::UnsupportedVersion {
-                path: path.to_owned(),
-                found: row.schema_version,
-            });
+        if row.schema_version != expected_version {
+            return invalid_value(
+                path,
+                &format!(
+                    "CSV row schema version {} differs from manifest version {expected_version}",
+                    row.schema_version
+                ),
+            );
         }
         row.validate()
             .map_err(|message| SchemaError::InvalidValue {

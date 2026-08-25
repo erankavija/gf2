@@ -140,14 +140,6 @@ assert_tracked_worktree_clean() {
     fi
 }
 
-assert_premeasure_worktree_clean() {
-    if ! tracked_worktree_clean; then
-        echo "ERROR: prepare requires a clean source closure (crates/ and Cargo.lock; tracked and untracked)" >&2
-        git -C "$REPO_ROOT" status --short --untracked-files=all -- crates/ Cargo.lock >&2
-        exit 2
-    fi
-}
-
 capture_block() {
     local title="$1"
     shift
