@@ -517,8 +517,6 @@ enum ProcessTuning {
         at: ResolutionSite,
         profile_id: ProfileId,
         entries: BTreeMap<String, ErasedSection>,
-        #[allow(dead_code)]
-        origin: PreparedOrigin,
     },
     FrozenBeforeInstall {
         at: ResolutionSite,
@@ -548,7 +546,6 @@ pub fn install(prepared: PreparedEnvelope) -> Result<(), AlreadyResolved> {
         at,
         profile_id: prepared.id,
         entries: prepared.entries,
-        origin: prepared.origin,
     };
     match PROCESS_TUNING.set(state) {
         Ok(()) => Ok(()),
@@ -566,6 +563,18 @@ pub fn install(prepared: PreparedEnvelope) -> Result<(), AlreadyResolved> {
 /// The first call before installation permanently freezes conservative
 /// resolution. A section absent from an installed envelope defaults without
 /// consulting which codecs parsed that envelope.
+///
+/// The installed path performs one immutable `BTreeMap` lookup, so resolution
+/// is `O(log s)` for `s` present sections; the frozen path is `O(1)`. After the
+/// process resolves, neither path allocates or takes a lock. Resolve once at a
+/// public-operation boundary and thread the selector through hot inner loops.
+///
+/// # Panics
+///
+/// Panics with [`ActiveSectionInvariant`] only if installed erased storage
+/// violates its internal stable-ID/Rust-type invariant. Ordinary malformed
+/// serialized input is rejected before installation and cannot cause this
+/// panic.
 #[must_use]
 #[track_caller]
 pub fn active_section<T: TuningSection>() -> ActiveSection<'static, T> {
@@ -643,15 +652,6 @@ pub enum SectionError {
 }
 
 impl SectionError {
-    /// Builds a harness-schema error using the token in calibrated evidence.
-    #[must_use]
-    pub fn unsupported_harness(supported: &'static str) -> Self {
-        Self::UnsupportedHarnessSchema {
-            found: String::new(),
-            supported,
-        }
-    }
-
     /// Builds a harness-schema error retaining the unsupported token.
     #[must_use]
     pub fn unsupported_harness_found(found: &HarnessSchema, supported: &'static str) -> Self {

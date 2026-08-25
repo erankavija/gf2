@@ -54,9 +54,9 @@ impl SectionCodec<AlphaAlias> for AlphaAliasCodec {
     fn validate_measurement(value: &MeasurementProvenance) -> Result<(), SectionError> {
         match value {
             MeasurementProvenance::Inherited => Ok(()),
-            MeasurementProvenance::Calibrated { .. } => {
-                Err(SectionError::unsupported_harness("test-alpha-alias-v1"))
-            }
+            MeasurementProvenance::Calibrated { harness_schema, .. } => Err(
+                SectionError::unsupported_harness_found(harness_schema, "test-alpha-alias-v1"),
+            ),
         }
     }
 
@@ -77,9 +77,9 @@ impl SectionCodec<Alpha> for AlphaCodec {
     fn validate_measurement(value: &MeasurementProvenance) -> Result<(), SectionError> {
         match value {
             MeasurementProvenance::Inherited => Ok(()),
-            MeasurementProvenance::Calibrated { .. } => {
-                Err(SectionError::unsupported_harness("test-alpha-v1"))
-            }
+            MeasurementProvenance::Calibrated { harness_schema, .. } => Err(
+                SectionError::unsupported_harness_found(harness_schema, "test-alpha-v1"),
+            ),
         }
     }
 
@@ -120,9 +120,9 @@ impl SectionCodec<Beta> for BetaCodec {
     fn validate_measurement(value: &MeasurementProvenance) -> Result<(), SectionError> {
         match value {
             MeasurementProvenance::Inherited => Ok(()),
-            MeasurementProvenance::Calibrated { .. } => {
-                Err(SectionError::unsupported_harness("test-beta-v1"))
-            }
+            MeasurementProvenance::Calibrated { harness_schema, .. } => Err(
+                SectionError::unsupported_harness_found(harness_schema, "test-beta-v1"),
+            ),
         }
     }
 
@@ -340,6 +340,98 @@ fn unsupported_envelope_versions_duplicate_keys_and_floats_are_rejected() {
 }
 
 #[test]
+fn strict_loading_obeys_the_global_validation_phase_order() {
+    let registry = ProfileRegistryBuilder::new()
+        .register::<Alpha, AlphaCodec>()
+        .unwrap()
+        .build()
+        .unwrap();
+    let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
+        .insert(Alpha { value: 29 })
+        .unwrap()
+        .build()
+        .unwrap();
+    let json = registry.to_json(&prepared, &assembly()).unwrap();
+
+    let unsupported_envelope = json
+        .replacen(
+            &format!("\"profile_format_version\":{PROFILE_FORMAT_VERSION}"),
+            "\"profile_format_version\":3",
+            1,
+        )
+        .replacen(
+            "\"measurement\":{\"kind\":\"inherited\"}",
+            "\"measurement\":false",
+            1,
+        );
+    assert!(matches!(
+        registry.from_json(&unsupported_envelope),
+        Err(ProfileError::UnsupportedProfileFormatVersion {
+            found: 3,
+            supported: PROFILE_FORMAT_VERSION,
+        })
+    ));
+
+    let invalid_assembly_and_bad_digest = json
+        .replacen(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "not-a-sha256",
+            1,
+        )
+        .replacen("\"value\":29", "\"value\":30", 1);
+    assert!(matches!(
+        registry.from_json(&invalid_assembly_and_bad_digest),
+        Err(ProfileError::Malformed)
+    ));
+
+    let bad_digest_and_malformed_measurement = json.replacen(
+        "\"measurement\":{\"kind\":\"inherited\"}",
+        "\"measurement\":false",
+        1,
+    );
+    assert!(matches!(
+        registry.from_json(&bad_digest_and_malformed_measurement),
+        Err(ProfileError::ContentDigestMismatch { .. })
+    ));
+
+    let unknown_id_and_malformed_measurement =
+        recompute_content_digest(&json.replacen("test/alpha", "test/unknown", 1).replacen(
+            "\"measurement\":{\"kind\":\"inherited\"}",
+            "\"measurement\":false",
+            1,
+        ));
+    let unknown_error = registry
+        .from_json(&unknown_id_and_malformed_measurement)
+        .expect_err("the unknown section must be rejected");
+    assert!(
+        matches!(
+            &unknown_error,
+            ProfileError::UnexpectedSection { id } if id == "test/unknown"
+        ),
+        "unexpected phase result: {unknown_error:?}"
+    );
+
+    let unsupported_section_and_malformed_payload = recompute_content_digest(
+        &json
+            .replacen("\"schema_version\":1", "\"schema_version\":2", 1)
+            .replacen(
+                "\"measurement\":{\"kind\":\"inherited\"}",
+                "\"measurement\":false",
+                1,
+            )
+            .replacen("\"selectors\":{\"value\":29}", "\"selectors\":null", 1),
+    );
+    assert!(matches!(
+        registry.from_json(&unsupported_section_and_malformed_payload),
+        Err(ProfileError::UnsupportedSectionSchemaVersion {
+            id,
+            found: 2,
+            supported: AlphaCodec::SCHEMA_VERSION,
+        }) if id == Alpha::ID.as_str()
+    ));
+}
+
+#[test]
 fn section_versions_are_checked_after_a_valid_content_digest() {
     let registry = ProfileRegistryBuilder::new()
         .register::<Alpha, AlphaCodec>()
@@ -415,6 +507,18 @@ fn calibrated_core_measurement_rejects_an_unknown_harness_token() {
             found,
             supported: CoreTuningCodec::HARNESS_SCHEMA,
         }) if id == CoreTuning::ID.as_str() && found == unknown
+    ));
+}
+
+#[test]
+fn synthetic_codecs_retain_the_actual_unsupported_harness_token() {
+    let measurement = calibrated_core_measurement();
+    assert!(matches!(
+        AlphaCodec::validate_measurement(&measurement),
+        Err(SectionError::UnsupportedHarnessSchema {
+            found,
+            supported: "test-alpha-v1",
+        }) if found == CoreTuningCodec::HARNESS_SCHEMA
     ));
 }
 
@@ -596,4 +700,26 @@ fn core_codec_rejects_null_instead_of_treating_it_as_omission() {
             Err(SectionError::InvalidBody(_))
         ));
     }
+}
+
+#[test]
+fn core_range_errors_retain_the_exact_owner_family_field_and_value() {
+    let registry = core_registry();
+    let json = registry
+        .to_json(&core_envelope(CoreTuning::CONSERVATIVE), &assembly())
+        .unwrap();
+    let changed =
+        recompute_content_digest(&json.replacen("\"dot_chunk_len\":256", "\"dot_chunk_len\":0", 1));
+
+    assert!(matches!(
+        registry.from_json(&changed),
+        Err(ProfileError::InvalidSection {
+            id,
+            source: SectionError::SelectorOutOfRange {
+                family: "field_vec",
+                field: "dot_chunk_len",
+                value: 0,
+            },
+        }) if id == CoreTuning::ID.as_str()
+    ));
 }

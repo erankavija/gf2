@@ -51,6 +51,16 @@ pub use super::CHUNK_SUBSETS;
 /// `dev/active/7d824b2f/design.md` §2.3 requires. With no envelope installed,
 /// [`crate::tuning::active`] resolves to [`crate::tuning::AlgebraTuning::CONSERVATIVE`],
 /// whose value is the canonical [`CHUNK_SUBSETS`] constant.
+///
+/// This is one `O(log s)` immutable section lookup for `s` installed sections;
+/// after process resolution it allocates nothing and takes no lock. The
+/// parallel permanent wrapper calls it once and passes the result into the
+/// exponential Gray-code walk.
+///
+/// # Panics
+///
+/// Panics only if installed erased tuning storage violates its internal typed
+/// section invariant. Malformed profile input is rejected before installation.
 #[must_use]
 pub fn permanent_chunk_len() -> usize {
     crate::tuning::active().permanent().gray_chunk_subsets()
