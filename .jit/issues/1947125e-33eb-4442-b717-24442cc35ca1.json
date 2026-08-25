@@ -8,12 +8,18 @@
   ],
   "description": "One standing behavioural suite asserts that every campaign-selectable backend computes the same permanents as the generic reference routine at each field where that backend is selectable, so no execution path certifies its own correctness privately.\n\n## Background\n\nThis leaf lands last in the execution layer, which is what lets it exist: the campaign exposes scalar, batch-parallel, intra-matrix, generic Ryser, and accelerator backend kinds, but selectability is field-scoped. One suite can therefore assert agreement for every backend at every field where the frozen execution layer may select it, rather than each path asserting its own correctness privately. The intra-matrix backend is selectable only for $q=3$. That is what `@/inv/backend-behavioral-equivalence` asks for and what a one-off equivalence run does not provide.\n\nThe suite is a standing test rather than a script, because the property it guards — per-matrix agreement across paths — must keep holding as the paths evolve, and a script that was run once proves nothing about the tree as it stands.\n\n## Success Criteria\n\n- [hard] REQ-01: One shared behavioural suite asserts per-matrix agreement between the generic reference routine and every backend that the campaign execution layer makes selectable for each supported field, on a common fixed-seed matrix set for that field; the intra-matrix case appears only for $q=3$.\n- [hard] REQ-02: The suite runs as a standing test rather than a one-off script, with accelerator cases skipped and reported as skipped on hosts without the device.\n- [hard] REQ-03: The common matrix set is drawn through a fixed seed recorded in the test, so a failure reproduces from the test alone.\n\n## Notes\n\nThe backend set is the campaign-selectable set as the execution layer defines it, evaluated separately for each field. A backend added later joins the suite at every field where that change makes it selectable; a field restriction, including the $q=3$-only intra-matrix restriction, is represented by the suite cases rather than by an unsupported case.\n",
   "documents": [],
+  "done_at": "2026-08-25T09:59:17.184825443Z",
   "first_ready_at": "2026-08-23T23:15:54.305236872Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T09:57:05.773261976Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
       "updated_at": "2026-08-24T08:45:20.374971540Z",
@@ -29,7 +35,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Shared behavioural conformance suite across campaign backends",
-  "updated_at": "2026-08-24T08:45:20.374971540Z"
+  "updated_at": "2026-08-25T09:59:17.184825443Z"
 }
