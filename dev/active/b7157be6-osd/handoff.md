@@ -56,7 +56,7 @@ None. (D-21 resolved this session. The codex lead never confirmed whether main c
 
 - Epic: `jit issue show b7157be6`; bracket: P=312200e4 (done), B=8d650253 (done)
 - Plan/manifest: `dev/active/b7157be6-osd/plan.md`, `breakdown.json` (D-21 amendment at `ec4b2047`)
-- Dataset: `dev/reference_data/osd_ebch_128_64_fossorier1995.{csv,md}` (merged)
+- Dataset: `dev/reference_data/osd_ebch_128_64_fossorier1994.{csv,md}` (merged; renamed to the 1994 pin in session 2)
 - Progress: `dev/active/b7157be6-osd/progress.json` (waves, model plan, pitfalls PIT-01..07 + NOTE-01, rework counts)
 - Convergence follow-up: `jit issue show c0bb2ab1`
 - Neighbor coordination: peer session gf2-a1 (679cf170, landed)
