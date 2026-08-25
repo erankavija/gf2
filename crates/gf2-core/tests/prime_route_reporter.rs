@@ -19,7 +19,7 @@
 #![cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 
 use gf2_core::gfp::simd_ops::{prime_gemm_route, PrimeGemmRoute};
-use gf2_core::tuning::TuningProfile;
+use gf2_core::tuning::CoreTuning;
 
 /// Operand shape held fixed across the boundary walks: the window predicates
 /// take `m` and `k` but select on `P` and `n` alone.
@@ -28,7 +28,7 @@ const K: usize = 64;
 
 #[test]
 fn gf251_takes_the_f32_cascade_from_the_conservative_column_bound() {
-    let cols = TuningProfile::CONSERVATIVE.prime_route().f32_min_cols();
+    let cols = CoreTuning::CONSERVATIVE.prime_route().f32_min_cols();
     let below = cols
         .checked_sub(1)
         .expect("the bound admits a cell below it");
@@ -52,7 +52,7 @@ fn gf251_takes_the_f32_cascade_from_the_conservative_column_bound() {
 
 #[test]
 fn small_primes_below_the_conservative_prime_bound_never_take_the_cascade() {
-    let conservative = TuningProfile::CONSERVATIVE;
+    let conservative = CoreTuning::CONSERVATIVE;
     let prime_route = conservative.prime_route();
     assert!(
         (242..=251).contains(&prime_route.f32_min_prime()),
@@ -75,7 +75,7 @@ fn small_primes_below_the_conservative_prime_bound_never_take_the_cascade() {
 
 #[test]
 fn medium_primes_take_the_f64_cascade_from_the_conservative_column_bound() {
-    let cols = TuningProfile::CONSERVATIVE.prime_route().f64_min_cols();
+    let cols = CoreTuning::CONSERVATIVE.prime_route().f64_min_cols();
     let below = cols
         .checked_sub(1)
         .expect("the bound admits a cell below it");
@@ -103,7 +103,7 @@ fn medium_primes_take_the_f64_cascade_from_the_conservative_column_bound() {
 
 #[test]
 fn primes_outside_both_eligibility_windows_reach_no_dispatcher_arm() {
-    let wide = TuningProfile::CONSERVATIVE.prime_route().f64_min_cols() + 512;
+    let wide = CoreTuning::CONSERVATIVE.prime_route().f64_min_cols() + 512;
 
     // `fp_small_enabled` covers `3 ..= 251` and `fp_medium_eligible` covers
     // `252 .. 65536`; a prime outside both reaches neither dispatcher, whose
@@ -117,7 +117,7 @@ fn primes_outside_both_eligibility_windows_reach_no_dispatcher_arm() {
 
 #[test]
 fn a_degenerate_shape_reaches_no_dispatcher_arm() {
-    let cols = TuningProfile::CONSERVATIVE.prime_route().f32_min_cols();
+    let cols = CoreTuning::CONSERVATIVE.prime_route().f32_min_cols();
 
     // Both dispatchers reject `m == 0 || k == 0 || n == 0` before selecting.
     assert_eq!(

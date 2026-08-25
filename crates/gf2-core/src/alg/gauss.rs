@@ -26,14 +26,14 @@ use crate::matrix::BitMatrix;
 use crate::tuning;
 
 /// Conservative default for `dense_inverse.m4ri_min_dim()` in the active
-/// [`crate::tuning::TuningProfile`].
+/// [`crate::tuning::CoreTuning`].
 ///
 /// Below the active profile value the constant overhead of allocating and
 /// populating the Gray table is larger than the row traffic that the
 /// blocked schedule saves, so [`invert`] takes the scalar path
 /// ([`invert_scalar`]); at or above it, the M4RM Gray-table path
 /// ([`invert_m4ri`]). This constant remains the compiled-in conservative
-/// default consumed by [`crate::tuning::TuningProfile::CONSERVATIVE`].
+/// default consumed by [`crate::tuning::CoreTuning::CONSERVATIVE`].
 pub const INVERT_M4RI_THRESHOLD: usize = 8;
 
 /// The selected arm of the [`invert`] dispatcher.

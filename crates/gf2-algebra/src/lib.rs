@@ -86,6 +86,7 @@
 pub mod gray;
 pub mod packed;
 pub mod permanent;
+pub mod tuning;
 
 #[cfg(feature = "parallel")]
 pub mod parallel;

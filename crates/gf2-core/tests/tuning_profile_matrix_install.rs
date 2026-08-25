@@ -4,30 +4,26 @@
 //! through the production `transpose_route` reporter. The reporter is also
 //! the selector called by `BitMatrix::transpose`.
 
+#[path = "support/core_tuning.rs"]
+mod support;
+
 use gf2_core::matrix::{transpose_route, TransposeRoute};
-use gf2_core::tuning::{self, TuningProfile};
+use gf2_core::tuning::{self, CoreTuning};
 
 const INSTALLED_SIMPLE_MAX_BLOCKS: usize = 3;
 const INSTALLED_MACRO_TILE_BLOCKS: usize = 5;
 
-#[test]
-fn installed_matrix_profile_moves_both_transpose_selectors() {
-    let conservative_profile = TuningProfile::CONSERVATIVE;
+support::fresh_tuning_test!(installed_matrix_profile_moves_both_transpose_selectors, {
+    let conservative_profile = CoreTuning::CONSERVATIVE;
     let conservative = conservative_profile.bit_matrix();
-    let profile = TuningProfile::from_json(
+    let profile = support::prepared_core_json(
         r#"
         {
-          "schema_version": 1,
-          "profile_id": "bit-matrix-route-test",
-          "provenance": {"kind": "inherited"},
-          "selectors": {
             "bit_matrix": {
               "transpose_simple_max_blocks": 3,
               "transpose_macro_tile_blocks": 5
             }
-          }
-        }
-        "#,
+          }"#,
     )
     .expect("test profile is valid");
 
@@ -45,7 +41,8 @@ fn installed_matrix_profile_moves_both_transpose_selectors() {
 
     // The witness cannot silently run against the conservative table: both
     // resolved values must be active before the production route is observed.
-    let bit_matrix = tuning::active().bit_matrix();
+    let active_tuning = tuning::active();
+    let bit_matrix = active_tuning.bit_matrix();
     assert_eq!(
         bit_matrix.transpose_simple_max_blocks(),
         INSTALLED_SIMPLE_MAX_BLOCKS
@@ -81,4 +78,4 @@ fn installed_matrix_profile_moves_both_transpose_selectors() {
         .macro_tile_blocks(),
         Some(INSTALLED_MACRO_TILE_BLOCKS)
     );
-}
+});

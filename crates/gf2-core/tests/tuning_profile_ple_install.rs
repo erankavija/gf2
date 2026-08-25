@@ -4,30 +4,27 @@
 //! `tuning::install` resolves once per process, so the above-default half of
 //! both boundaries lives in `tuning_profile_ple_install_above.rs`.
 
+#[path = "support/core_tuning.rs"]
+mod support;
+
 use gf2_core::field::matrix::gemm;
 use gf2_core::field::ple::{back_sub_route, ple_panel_route, BackSubRoute, PlePanelRoute};
 use gf2_core::field::test_random_matrix::{direct_rref_oracle_fp, random_fp};
 use gf2_core::field::PlePanelLane;
-use gf2_core::tuning::{self, TuningProfile};
+use gf2_core::tuning::{self, CoreTuning};
 
-#[test]
-fn installed_ple_profile_lowers_both_route_boundaries() {
+support::fresh_tuning_test!(installed_ple_profile_lowers_both_route_boundaries, {
     let text = r#"
     {
-      "schema_version": 1,
-      "profile_id": "ple-route-test-below",
-      "provenance": {"kind": "inherited"},
-      "selectors": {
         "ple": {
           "panel_base_max_cols": 32,
           "blocked_back_sub_min_dim": 8
         }
-      }
-    }
-    "#;
-    let profile = TuningProfile::from_json(text).expect("test profile is valid");
+      }"#;
+    let profile = support::prepared_core_json(text).expect("test profile is valid");
     assert_eq!(tuning::install(profile), Ok(()));
-    let ple = tuning::active().ple();
+    let active_tuning = tuning::active();
+    let ple = active_tuning.ple();
     assert_eq!(ple.panel_base_max_cols(), 32);
     assert_eq!(ple.blocked_back_sub_min_dim(), 8);
 
@@ -42,7 +39,7 @@ fn installed_ple_profile_lowers_both_route_boundaries() {
         ple_panel_route(Some(PlePanelLane::Byte), panel_base_max_cols + 1),
         PlePanelRoute::SubPanelRecursion
     );
-    let conservative_panel = TuningProfile::CONSERVATIVE.ple().panel_base_max_cols();
+    let conservative_panel = CoreTuning::CONSERVATIVE.ple().panel_base_max_cols();
     assert_eq!(
         ple_panel_route(Some(PlePanelLane::Byte), conservative_panel),
         PlePanelRoute::SubPanelRecursion,
@@ -59,7 +56,7 @@ fn installed_ple_profile_lowers_both_route_boundaries() {
         back_sub_route(blocked_back_sub_min_dim, 1),
         BackSubRoute::Blocked
     );
-    let conservative_dim = TuningProfile::CONSERVATIVE.ple().blocked_back_sub_min_dim();
+    let conservative_dim = CoreTuning::CONSERVATIVE.ple().blocked_back_sub_min_dim();
     assert_eq!(
         back_sub_route(conservative_dim - 1, conservative_dim - 1),
         BackSubRoute::Blocked,
@@ -84,4 +81,4 @@ fn installed_ple_profile_lowers_both_route_boundaries() {
     let (x, r) = small.rref();
     assert_eq!(r, direct_rref_oracle_fp(&small));
     assert_eq!(gemm(&x, &small), r, "X · A != R");
-}
+});

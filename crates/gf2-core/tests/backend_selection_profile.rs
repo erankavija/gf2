@@ -1,20 +1,16 @@
+#[path = "support/core_tuning.rs"]
+mod support;
+
 use gf2_core::{
     kernels::select_backend_for_size,
-    tuning::{self, TuningProfile},
+    tuning::{self, CoreTuning},
 };
 
-#[test]
-fn install_does_not_govern_bit_backend_selection() {
-    let conservative_threshold = TuningProfile::CONSERVATIVE.bit_backend().simd_min_words();
-    let profile = TuningProfile::from_json(
+support::fresh_tuning_test!(install_does_not_govern_bit_backend_selection, {
+    let conservative_threshold = CoreTuning::CONSERVATIVE.bit_backend().simd_min_words();
+    let profile = support::prepared_core_json(
         r#"
-        {
-          "schema_version": 1,
-          "profile_id": "backend-selection-test",
-          "provenance": {"kind": "inherited"},
-          "selectors": {"bit_backend": {"simd_min_words": 4}}
-        }
-        "#,
+        {"bit_backend": {"simd_min_words": 4}}"#,
     )
     .unwrap();
 
@@ -43,4 +39,4 @@ fn install_does_not_govern_bit_backend_selection() {
         "scalar",
         "3 words remain scalar below the baked/default threshold"
     );
-}
+});

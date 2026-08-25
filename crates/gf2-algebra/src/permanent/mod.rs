@@ -49,6 +49,11 @@ pub use rank::{
 pub use reference::permanent_mod3_reference;
 pub use ryser::permanent_ryser;
 
+/// Conservative number of Gray-code subsets assigned to one parallel worker
+/// chunk. This permanent-owned declaration is available in every feature
+/// layout; [`crate::tuning::CHUNK_SUBSETS`] re-exports it for tuning clients.
+pub const CHUNK_SUBSETS: usize = 1 << 16;
+
 /// Re-export of [`crate::gray`] so the canonical W1-T6 API
 /// `gf2_algebra::permanent::gray::gray_code_iter` resolves.
 pub use crate::gray;

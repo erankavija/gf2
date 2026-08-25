@@ -151,7 +151,7 @@ use crate::field::{FiniteField, PlePanelLane};
 use crate::tuning;
 
 /// Conservative default for `ple.scalar_base_max_cols()` in the active
-/// [`crate::tuning::TuningProfile`]: the widest column window
+/// [`crate::tuning::CoreTuning`]: the widest column window
 /// [`FieldMatrix::ple`]'s block-recursive driver hands to the direct
 /// column-by-column base case.
 ///
@@ -162,7 +162,7 @@ use crate::tuning;
 /// reduction and the schoolbook leaf does not —
 /// `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md:146`.
 /// This constant remains the compiled-in conservative default consumed by
-/// [`crate::tuning::TuningProfile::CONSERVATIVE`]; the live value comes from
+/// [`crate::tuning::CoreTuning::CONSERVATIVE`]; the live value comes from
 /// the active profile and is reported by [`ple_base_route`].
 pub(crate) const PLE_SCALAR_BASE_MAX_COLS_DEFAULT: usize = 1;
 
@@ -588,7 +588,7 @@ fn try_panel_base_dispatch<F: FiniteField>(
 }
 
 /// The PLE column-width selectors resolved once per [`FieldMatrix::ple`] call
-/// from the active [`crate::tuning::TuningProfile`].
+/// from the active [`crate::tuning::CoreTuning`].
 ///
 /// [`ple_in_place`] builds one at the panel entry and threads it by parameter
 /// through [`ple_in_place_window`], [`ple_panel_recursive_window`] and
@@ -609,7 +609,8 @@ struct PleWidths {
 impl PleWidths {
     /// Resolves the three widths for carrier `F` from the active profile.
     fn resolve<F: FiniteField>() -> Self {
-        let ple = tuning::active().ple();
+        let tuning = tuning::active();
+        let ple = tuning.ple();
         let widths = Self {
             scalar_base_max_cols: ple.scalar_base_max_cols(),
             panel_base_max_cols: ple.panel_base_max_cols(),
@@ -674,7 +675,7 @@ fn ple_in_place<F: FiniteField>(
 }
 
 /// Conservative default for `ple.panel_base_max_cols()` in the active
-/// [`crate::tuning::TuningProfile`]: the widest column window the panel base
+/// [`crate::tuning::CoreTuning`]: the widest column window the panel base
 /// handles directly before [`ple_in_place_window`] splits it into recursive
 /// sub-panels.
 ///
@@ -685,7 +686,7 @@ fn ple_in_place<F: FiniteField>(
 /// selected from a tuning sweep over {32, 48, 64, 96, 128} — see
 /// `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
 /// This constant remains the compiled-in conservative default consumed by
-/// [`crate::tuning::TuningProfile::CONSERVATIVE`]; the live value comes from
+/// [`crate::tuning::CoreTuning::CONSERVATIVE`]; the live value comes from
 /// the active profile and is reported by [`ple_panel_route`].
 pub(crate) const PLE_PANEL_RECURSIVE_BASE: usize = 128;
 
@@ -760,7 +761,8 @@ pub enum PlePanelRoute {
 /// kernel.
 #[must_use]
 pub fn ple_panel_route(lane: Option<PlePanelLane>, win: usize) -> PlePanelRoute {
-    let ple = tuning::active().ple();
+    let tuning = tuning::active();
+    let ple = tuning.ple();
     ple_panel_route_resolved(ple.panel_base_max_cols(), ple_lane_max_cols(ple, lane), win)
 }
 
@@ -1895,7 +1897,7 @@ fn pad_l_to_full<F: FiniteField>(
 // ─── Blocked back-substitution (Stage 3a + 3b) ───────────────────────────────
 
 /// Conservative default for `ple.blocked_back_sub_min_dim()` in the active
-/// [`crate::tuning::TuningProfile`]: the minimum matrix dimension
+/// [`crate::tuning::CoreTuning`]: the minimum matrix dimension
 /// (max(m, n)) below which `try_blocked_back_sub` returns `false` and lets
 /// `rref` fall through to the scalar loop.
 ///
@@ -1905,7 +1907,7 @@ fn pad_l_to_full<F: FiniteField>(
 /// The crossover based on CCX1 measurements (2026-05-27) is between 64 and
 /// 256; a threshold of 128 leaves a ≥5% safety margin in both directions.
 /// This constant remains the compiled-in conservative default consumed by
-/// [`crate::tuning::TuningProfile::CONSERVATIVE`]; the live value comes from
+/// [`crate::tuning::CoreTuning::CONSERVATIVE`]; the live value comes from
 /// the active profile and is reported by [`back_sub_route`].
 pub(crate) const BLOCKED_BACK_SUB_MIN_DIM: usize = 128;
 
@@ -3642,7 +3644,8 @@ mod tests {
         // This binary installs no profile, so the widths are the conservative
         // defaults; route observation goes through the reporter the dispatcher
         // itself calls.
-        let ple = tuning::active().ple();
+        let active_tuning = tuning::active();
+        let ple = active_tuning.ple();
         assert!(ple.panel_byte_lane_max_cols() >= ple.panel_base_max_cols());
         assert!(ple.panel_u16_lane_max_cols() >= ple.panel_base_max_cols());
         for lane in [PlePanelLane::Byte, PlePanelLane::U16] {
@@ -4700,7 +4703,7 @@ mod tests {
     // ─── Route reporters under the conservative profile ─────────────────────
     //
     // No test in this binary installs a tuning profile, so `tuning::active()`
-    // resolves to `TuningProfile::CONSERVATIVE`, whose PLE entries are defined
+    // resolves to `CoreTuning::CONSERVATIVE`, whose PLE entries are defined
     // by naming the two constants below. The installed-profile halves of both
     // boundaries live in `tests/tuning_profile_ple_install.rs` and
     // `tests/tuning_profile_ple_install_above.rs`.

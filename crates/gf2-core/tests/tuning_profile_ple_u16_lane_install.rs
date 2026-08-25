@@ -6,39 +6,36 @@
 //! byte-lane half lives in `tuning_profile_ple_byte_lane_install.rs`, because
 //! `tuning::install` resolves once per process.
 
+#[path = "support/core_tuning.rs"]
+mod support;
+
 use gf2_core::field::matrix::gemm;
 use gf2_core::field::ple::{ple_panel_route, PlePanelRoute};
 use gf2_core::field::test_random_matrix::random_fp;
 use gf2_core::field::{FiniteField, PlePanelLane};
 use gf2_core::gfp::Fp;
-use gf2_core::tuning::{self, TuningProfile};
+use gf2_core::tuning::{self, CoreTuning};
 
-#[test]
-fn installed_u16_lane_width_bounds_the_u16_lane_panel_window() {
+support::fresh_tuning_test!(installed_u16_lane_width_bounds_the_u16_lane_panel_window, {
     let text = r#"
     {
-      "schema_version": 1,
-      "profile_id": "ple-u16-lane-test",
-      "provenance": {"kind": "inherited"},
-      "selectors": {
         "ple": {
           "panel_u16_lane_max_cols": 32
         }
-      }
-    }
-    "#;
-    let profile = TuningProfile::from_json(text).expect("test profile is valid");
+      }"#;
+    let profile = support::prepared_core_json(text).expect("test profile is valid");
     assert_eq!(tuning::install(profile), Ok(()));
-    let ple = tuning::active().ple();
+    let active_tuning = tuning::active();
+    let ple = active_tuning.ple();
     assert_eq!(ple.panel_u16_lane_max_cols(), 32);
     // The absent keys resolve to their conservative defaults.
     assert_eq!(
         ple.panel_byte_lane_max_cols(),
-        TuningProfile::CONSERVATIVE.ple().panel_byte_lane_max_cols()
+        CoreTuning::CONSERVATIVE.ple().panel_byte_lane_max_cols()
     );
     assert_eq!(
         ple.panel_base_max_cols(),
-        TuningProfile::CONSERVATIVE.ple().panel_base_max_cols()
+        CoreTuning::CONSERVATIVE.ple().panel_base_max_cols()
     );
 
     // ── u16-lane width boundary ─────────────────────────────────────────────
@@ -105,4 +102,4 @@ fn installed_u16_lane_width_bounds_the_u16_lane_panel_window() {
     assert_eq!(l.cols(), rank);
     assert_eq!(e.rows(), rank);
     assert_eq!(p.apply(&gemm(&l, &e)), a, "P · L · E != A");
-}
+});

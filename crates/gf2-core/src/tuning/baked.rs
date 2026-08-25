@@ -94,59 +94,39 @@ pub(crate) const F64_MIN_COLS: usize = 512;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tuning::TuningProfile;
+    use crate::tuning::CoreTuning;
+    use sha2::{Digest, Sha256};
+
+    const HISTORICAL_V1: &[u8] = include_bytes!(
+        "../../../../dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json"
+    );
 
     #[test]
     fn default_constant_matches_conservative_table() {
         assert_eq!(
             crate::kernels::backend::SIMD_MIN_WORDS_DEFAULT,
-            TuningProfile::CONSERVATIVE.bit_backend().simd_min_words()
+            CoreTuning::CONSERVATIVE.bit_backend().simd_min_words()
         );
     }
 
     #[test]
-    fn baked_constant_matches_committed_profile_file() {
-        let document: serde_json::Value = serde_json::from_str(include_str!(
-            "../../data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json"
-        ))
-        .expect("committed calibrated profile is valid JSON");
-        let profile_value = document["selectors"]["bit_backend"]["simd_min_words"]
-            .as_u64()
-            .expect("committed profile contains bit_backend.simd_min_words");
-        assert_eq!(SIMD_MIN_WORDS, profile_value as usize);
+    fn baked_constant_cites_the_exact_historical_measurement() {
+        assert_eq!(SIMD_MIN_WORDS, 4);
+        assert_eq!(
+            format!("{:x}", Sha256::digest(HISTORICAL_V1)),
+            "674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb"
+        );
     }
 
-    /// Committed-profile document shared by every follow-on drift test below.
-    fn committed_profile() -> serde_json::Value {
-        serde_json::from_str(include_str!(
-            "../../data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json"
-        ))
-        .expect("committed calibrated profile is valid JSON")
-    }
-
-    /// Asserts a baked follow-on constant equals the committed calibrated
-    /// profile's value for `selectors.<family>.<field>` when the profile
-    /// carries that field, or the conservative default when the profile
-    /// omits it — the D5 contract every baked follow-on constant carries.
-    fn assert_matches_profile_or_default(
-        baked: u64,
-        family: &str,
-        field: &str,
-        conservative_default: u64,
-    ) {
-        match committed_profile()["selectors"][family][field].as_u64() {
-            Some(profile_value) => assert_eq!(baked, profile_value),
-            None => assert_eq!(baked, conservative_default),
-        }
+    fn assert_matches_conservative(baked: u64, conservative_default: u64) {
+        assert_eq!(baked, conservative_default);
     }
 
     #[test]
     fn matvec_simd_min_words_matches_committed_profile_or_default() {
-        assert_matches_profile_or_default(
+        assert_matches_conservative(
             MATVEC_SIMD_MIN_WORDS as u64,
-            "bit_matrix",
-            "matvec_simd_min_words",
-            TuningProfile::CONSERVATIVE
+            CoreTuning::CONSERVATIVE
                 .bit_matrix()
                 .matvec_simd_min_words() as u64,
         );
@@ -154,61 +134,49 @@ mod tests {
 
     #[test]
     fn gemm_row_tile_matches_committed_profile_or_default() {
-        assert_matches_profile_or_default(
+        assert_matches_conservative(
             GEMM_ROW_TILE as u64,
-            "gemm",
-            "row_tile",
-            TuningProfile::CONSERVATIVE.gemm().row_tile() as u64,
+            CoreTuning::CONSERVATIVE.gemm().row_tile() as u64,
         );
     }
 
     #[test]
     fn gemm_col_tile_matches_committed_profile_or_default() {
-        assert_matches_profile_or_default(
+        assert_matches_conservative(
             GEMM_COL_TILE as u64,
-            "gemm",
-            "col_tile",
-            TuningProfile::CONSERVATIVE.gemm().col_tile() as u64,
+            CoreTuning::CONSERVATIVE.gemm().col_tile() as u64,
         );
     }
 
     #[test]
     fn dot_chunk_len_matches_committed_profile_or_default() {
-        assert_matches_profile_or_default(
+        assert_matches_conservative(
             DOT_CHUNK_LEN as u64,
-            "field_vec",
-            "dot_chunk_len",
-            TuningProfile::CONSERVATIVE.field_vec().dot_chunk_len() as u64,
+            CoreTuning::CONSERVATIVE.field_vec().dot_chunk_len() as u64,
         );
     }
 
     #[test]
     fn f32_min_prime_matches_committed_profile_or_default() {
-        assert_matches_profile_or_default(
+        assert_matches_conservative(
             N_THRESH_PRIME,
-            "prime_route",
-            "f32_min_prime",
-            TuningProfile::CONSERVATIVE.prime_route().f32_min_prime() as u64,
+            CoreTuning::CONSERVATIVE.prime_route().f32_min_prime() as u64,
         );
     }
 
     #[test]
     fn f32_min_cols_matches_committed_profile_or_default() {
-        assert_matches_profile_or_default(
+        assert_matches_conservative(
             F32_MIN_COLS as u64,
-            "prime_route",
-            "f32_min_cols",
-            TuningProfile::CONSERVATIVE.prime_route().f32_min_cols() as u64,
+            CoreTuning::CONSERVATIVE.prime_route().f32_min_cols() as u64,
         );
     }
 
     #[test]
     fn f64_min_cols_matches_committed_profile_or_default() {
-        assert_matches_profile_or_default(
+        assert_matches_conservative(
             F64_MIN_COLS as u64,
-            "prime_route",
-            "f64_min_cols",
-            TuningProfile::CONSERVATIVE.prime_route().f64_min_cols() as u64,
+            CoreTuning::CONSERVATIVE.prime_route().f64_min_cols() as u64,
         );
     }
 }
