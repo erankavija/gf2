@@ -53,3 +53,12 @@
 - Governing designs: `dev/active/220cab0b/design.md`; `dev/active/7d824b2f/design.md`; `dev/active/7d7c647c/design.md`
 - Current profile and receipt: `crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`; `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`
 - Host coordination: `/home/vkaskivuo/Projects/forum-poc/README.md`; peer mailbox `agent:claude`
+
+## Resolution — 2026-08-25
+
+The owner chose option A and explicitly grounded it in
+`@/invariant/canonical-cutover` and `@/invariant/convention-convergence`.
+Decision DEC-V replaces the v1 anchor through the named temporary dual-token
+migration boundary described above. Its tracked removal condition is
+pre-merge: v1 acceptance and the superseded v1 profile are both absent from
+the reviewed final tree, leaving one v2 profile and one parser contract.
