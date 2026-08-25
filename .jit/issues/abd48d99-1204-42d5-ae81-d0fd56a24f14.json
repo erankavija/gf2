@@ -16,7 +16,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T16:24:29.797532303Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T16:45:38.239888477Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T16:27:05.372024663Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "abd48d99-1204-42d5-ae81-d0fd56a24f14",
   "labels": [
     "type:task",
@@ -29,5 +45,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Shared OSD reprocessing engine",
-  "updated_at": "2026-08-25T14:30:04.738885734Z"
+  "updated_at": "2026-08-25T16:45:38.239888477Z"
 }

@@ -62,7 +62,7 @@
   "gates_status": {
     "plan-review": {
       "status": "passed",
-      "updated_at": "2026-08-24T21:02:27.784132540Z",
+      "updated_at": "2026-08-25T16:38:35.654349464Z",
       "updated_by": "auto:executor"
     }
   },
@@ -78,5 +78,5 @@
   "priority": "high",
   "state": "done",
   "title": "planning: Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-24T21:02:27.784132540Z"
+  "updated_at": "2026-08-25T16:38:35.654349464Z"
 }
