@@ -13,7 +13,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T13:33:26.759954645Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "dd6f1665-9394-4cc8-92ea-c67255f292b8",
   "labels": [
     "type:task",
@@ -23,5 +29,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Chase-Pyndiah reliability migration",
-  "updated_at": "2026-08-25T13:32:26.315186572Z"
+  "updated_at": "2026-08-25T13:33:26.759954645Z"
 }

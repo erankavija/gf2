@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T13:32:33.752556549Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "835e15fb-a402-44b8-9928-98b10776782a",
   "labels": [
     "type:task",
@@ -26,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "LDPC posterior LLR access",
-  "updated_at": "2026-08-24T19:48:54.907752566Z"
+  "updated_at": "2026-08-25T13:32:33.752556549Z"
 }
