@@ -1,8 +1,8 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 23.5,
-  "wave_notes": "Session 11 resume audit: wave 23.5 remains open at 389aa4de's measured phase. A clean v2-emitting binary is required, but the inherited replace-vs-add Block E choice and provenance-safe bootstrap are unresolved. No measurement or mutation proceeds until the owner decides. Claude owns unrelated OSD epic b7157be6 and coordinates shared Cargo/benchmark host windows through /home/vkaskivuo/Projects/forum-poc.",
+  "current_wave": 23.6,
+  "wave_notes": "DEC-W supersedes D4/DEC-B10 item 2/DEC-B11: tuning vocabulary belongs to the crate that owns the algorithm. Independent architecture review passed a profile-format-2 typed-section envelope with shared mechanism in gf2-core and permanent semantics in gf2-algebra. Issues 3fa7c9d0 (design) and b749bdfc (implementation) precede 389aa4de and the remaining calibration/proof waves. The reserved benchmark window was cancelled; no measurement resumes until the clean canonical producer exists.",
   "open_escalations": [],
   "waves": [
     {
@@ -715,8 +715,31 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus (native worker, harness phase) + lead (measured phase pending)",
-          "status": "v2-bootstrap-committed-awaiting-host",
-          "notes": "Harness phase MERGED 28f674d6: omission set = schema complement (33/38 omitted, 7 drift tests), forced-arm child-process sweep (route/operand/product verification, 14 tests), DEC-B16 grid-point forcing (crossover direction confirmed between degree 16 and 31), receipt-notes.md Blocks A-E linked. cargo-ci PASS; code-review FAIL F1/F2/F3. DEC-V selects replacement under canonical-cutover and convention-convergence. Bootstrap commit 6566bb3d on worktree-agent-389aa4de-v2 emits v2 and names the temporary v1 parser boundary with its pre-merge removal condition; the v1 profile remains byte-identical. Lead static review and leak check pass; no Cargo ran while Claude's wave-5 workers were active. Await a fully quiet host window before checks and measurement. Claim held by agent:worker."
+          "status": "backlog-blocked-on-b749bdfc",
+          "notes": "Harness phase MERGED 28f674d6 remains valid implementation evidence, but DEC-W pauses the measured phase. The unmerged bootstrap commit 6566bb3d emits the ownership-wrong flat/core-owned schema and must not be measured or merged. Issue reset to backlog/unassigned and now depends on b749bdfc. Rebase the v2 behavioral change onto the reviewed profile-format-2 core section after the ownership cutover; the expected omission complement becomes 32/37."
+        }
+      ]
+    },
+    {
+      "wave_number": 23.6,
+      "issues": [
+        {
+          "id": "3fa7c9d0-2353-48bf-bd37-ef34e36dea27",
+          "short_id": "3fa7c9d0",
+          "title": "Design crate-owned typed tuning sections",
+          "classification": "design",
+          "model": "gpt-5.6-sol max",
+          "status": "ready",
+          "notes": "Owner-directed architecture correction. The design direction passed independent review after strict/subset validation, freeze-site diagnostics, per-section resolution provenance, envelope assembly provenance, and explicit section-version rejection were pinned. Doc-review required before implementation."
+        },
+        {
+          "id": "b749bdfc-63e1-41c6-b8dc-65d334fdd652",
+          "short_id": "b749bdfc",
+          "title": "Cut tuning over to crate-owned typed sections",
+          "classification": "implementation",
+          "model": "gpt-5.6-sol max",
+          "status": "backlog-blocked-on-3fa7c9d0",
+          "notes": "Blocks 389aa4de, a83583e0, and 5bdc9552. Produces the clean canonical format-2 core calibration producer; no host measurement in this issue."
         }
       ]
     }
@@ -781,6 +804,18 @@
       "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
       "reason": "DEC-L (escalation #26): second attributable excursion needs a tracked owner in fc976a80's mould before any acceptance, fix, or next measured session",
       "parented": "50b47eae -> eb9b324c (inside epic 6dc81018)"
+    },
+    {
+      "id": "3fa7c9d0",
+      "title": "Design crate-owned typed tuning sections",
+      "reason": "DEC-W: the owner requires tuning semantics to live in the crate that owns the algorithm; the prior permanent-family exception is dependency-safe but ownership-wrong.",
+      "parented": "epic 6dc81018 directly; design prerequisite of b749bdfc"
+    },
+    {
+      "id": "b749bdfc",
+      "title": "Cut tuning over to crate-owned typed sections",
+      "reason": "Implement the independently reviewed profile-format-2 envelope and canonical permanent-family ownership cutover before any further calibration or proof regeneration.",
+      "parented": "epic 6dc81018 directly; depends on 3fa7c9d0 and blocks 389aa4de, a83583e0, and 5bdc9552"
     }
   ],
   "escalations": [
@@ -1023,6 +1058,12 @@
       "issue": "389aa4de",
       "date": "2026-08-25",
       "decision": "DEC-V: choose Block E shape A. Replace the v1 calibrated-profile anchor; do not add a second lasting profile. The clean-source bootstrap is a named, versioned temporary dual-token migration boundary on the issue branch with the tracked removal condition that v1 acceptance is removed before the reviewed series merges. The final state has one v2 profile and one canonical parser contract, per @/invariant/canonical-cutover and @/invariant/convention-convergence."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "3fa7c9d0/b749bdfc",
+      "date": "2026-08-25",
+      "decision": "DEC-W supersedes D4, DEC-B10 item 2, and DEC-B11 as the durable convention. Tuning vocabulary, defaults, validation, codec, baked values, and calibration logic belong to the crate that owns the algorithm; gf2-core retains the one generic envelope/registry/install mechanism and its own typed section. The final cutover removes core permanent semantics and all flat-format/compatibility residue under @/invariant/canonical-cutover and @/invariant/convention-convergence. Independent review PASS followed two blocking-review corrections and three provenance/versioning corrections."
     }
   ],
   "rework_counts": {

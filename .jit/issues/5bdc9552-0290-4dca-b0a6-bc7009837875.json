@@ -4,6 +4,7 @@
   "created_at": "2026-08-22T22:17:14.094352974Z",
   "dependencies": [
     "88441adb-3956-4bf2-bfe9-284e7dcc5c10",
+    "b749bdfc-63e1-41c6-b8dc-65d334fdd652",
     "e2744fcf-470b-45d6-8750-0413620eb151",
     "e8a727ff-44b8-48d2-9368-8dedf774777c"
   ],
@@ -52,7 +53,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "backlog",
   "title": "Remove the trait selectors and regenerate the proof surface",
-  "updated_at": "2026-08-23T18:08:54.484970688Z"
+  "updated_at": "2026-08-25T18:45:26.637607303Z"
 }

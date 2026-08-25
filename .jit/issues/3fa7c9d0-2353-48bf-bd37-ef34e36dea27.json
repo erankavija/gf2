@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-25T18:44:09.545100777Z",
+  "dependencies": [],
+  "description": "Design the canonical ownership cutover from the flat, core-owned tuning schema to one versioned profile envelope with crate-owned typed sections.\n\n## Background\n\nThe standing designs `dev/active/220cab0b/design.md` and `dev/active/7d824b2f/design.md` put `permanent.gray_chunk_subsets` in `gf2-core::tuning` under D4 and owner decision DEC-B11. That preserves the dependency edge `gf2-algebra -> gf2-core`, but it makes the lower-level crate define, validate, serialize, and document vocabulary for a permanent algorithm owned by `gf2-algebra`. The epic owner supersedes that durable ownership shape: tuning semantics belong to the crate that owns the algorithm and selection boundary, while shared profile mechanics remain one inward dependency.\n\nThe reviewed direction is profile format 2: `gf2-core` owns a generic envelope, explicit typed-section registry, deterministic encoding, provenance types, and the single process-wide install/resolve cell. `gf2-core` and `gf2-algebra` each own their typed selector section, defaults, validation, codec, and calibration behavior. Strict full validation is the default. An explicit subset load requires named registered sections, records skipped section IDs and digests, and makes later access to a skipped section fatal. Missing registered sections resolve to their owning crate's conservative default. Independent architecture review passed this direction after the design added freeze-site diagnostics, subprocess-isolated one-shot tests, per-section resolution provenance, envelope assembly provenance, and explicit per-section schema-version rejection.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed design fixes the profile-format-2 wire shape and Rust API for the generic envelope, stable section IDs, erased codecs without unsafe code, explicit registry construction, deterministic encoding, one atomic install/resolve authority, and crate-owned typed active-section access. It states the exact `StrictFull` and `ExplicitSubset` validation rules, including required-section presence, skipped-section ID and digest recording, fatal skipped-section access, and the intentional `DefaultedMissing` asymmetry.\n- [hard] REQ-02: The design fixes failure and test semantics: late install is a hard error carrying the first-resolution call site; calibration producers exit nonzero on it; per-section resolution reports `Installed`, `DefaultedMissing`, or `FrozenBeforeInstall`; install-order tests run through one named fresh-subprocess helper rather than a resettable alternate global.\n- [hard] REQ-03: The design assigns every semantic responsibility to its owner. `gf2-core` owns common mechanism and only core selector vocabulary; `gf2-algebra` owns `PermanentSelectors`, `CHUNK_SUBSETS`, its admissible range, codec, active accessor, baked values, and calibration component. It preserves the inward production dependency and identifies every current symbol, test, artifact, and prose site removed or amended at cutover.\n- [hard] REQ-04: The design fixes versioning and evidence composition: envelope assembly provenance and digest coexist with per-section measurement provenance; every codec rejects unsupported section schema versions before decoding selectors; serde/codecs stay behind non-default tuning-profile features; repository-level composite artifacts and crate-owned calibration components compose under one outer benchmark lock with no build side effect.\n- [hard] REQ-05: The design provides a canonical-cutover migration for the active flat profile and baked evidence anchor without relabeling measurements or weakening provenance. It defines the clean intermediate artifact, archive treatment if historical bytes remain necessary, storage paths, final stale-symbol/prose sweep, and dependencies/amendments for `389aa4de`, `eaae1b56`, `a83583e0`, and `dbd8787d`. The final tree has no core permanent tuning symbol, active flat profile, flat reader, compatibility alias, or dual ownership.\n\n## Notes\n\n- Append supersession amendments to closed designs and decisions rather than rewriting their historical record.\n- Baked selector constants remain crate-owned at their selection sites; they are not dynamically read from the envelope.\n- A neutral production tuning crate is out of scope because `gf2-core` has no production dependency on another gf2 workspace crate.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-25T18:44:09.545100777Z",
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "3fa7c9d0-2353-48bf-bd37-ef34e36dea27",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "component:gf2-algebra",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Design crate-owned typed tuning sections",
+  "updated_at": "2026-08-25T18:44:09.545100777Z"
+}

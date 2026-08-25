@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-25T18:44:16.179756445Z",
+  "dependencies": [
+    "3fa7c9d0-2353-48bf-bd37-ef34e36dea27"
+  ],
+  "description": "Implement the reviewed profile-format-2 envelope and cut permanent tuning ownership over from `gf2-core` to `gf2-algebra`.\n\n## Background\n\nThe prerequisite crate-ownership design governs this task. Work test-first and preserve one process-wide installation authority. The cutover is incompatible by design: the active flat profile representation and core-owned permanent family are superseded, not retained beside the canonical form. Historical measurement evidence may remain only where the design places it as an immutable archive/receipt input; production profile discovery and loaders must not consume it.\n\n## Success Criteria\n\n- [hard] REQ-01: Tests establish explicit registry construction, duplicate section-ID/type rejection, strict rejection of unregistered sections, explicit-subset required-section and skipped-digest behavior, unsupported envelope and section version rejection, deterministic bytes independent of registration order, missing-section conservative resolution, fatal skipped-section access, and global one-shot install/default ordering through the design's subprocess helper.\n- [hard] REQ-02: `gf2-core` implements the generic format-2 envelope, provenance and resolution records, typed erased codec registry using only safe Rust, deterministic encoding, first-resolution diagnostics, and the single atomic install/resolve cell. Core selector vocabulary is represented by one core-owned section and remains behaviorally identical under conservative resolution.\n- [hard] REQ-03: `gf2-algebra` owns its tuning section, `PermanentSelectors`, validation, codec, active accessor, and the canonical `CHUNK_SUBSETS` default at the permanent selector source. The permanent dispatch boundary reads that section through the shared mechanism, and shared behavioral tests prove conservative equivalence, installed-value routing, and deterministic results across chunk lengths.\n- [hard] REQ-04: The active committed profile/storage and every loader, baked witness, test, calibration producer, and permanent artifact are cut over exactly as the design specifies. Serde/codecs remain non-default features, assembly and section provenance round-trip, and no build side effect or reverse production dependency is introduced.\n- [hard] REQ-05: `cargo-ci`, independent code review, and documentation review pass on a final tree with no `gf2_core::tuning::PermanentSelectors`, `PERMANENT_GRAY_CHUNK_SUBSETS_DEFAULT`, core `permanent` profile family/field variants, active flat-format profile or reader, compatibility alias, duplicate install authority, or present-tense prose retaining D4/DEC-B11 as the current convention.\n\n## Notes\n\n- Do not run a host calibration in this issue. It produces the clean canonical format-2 producer that `389aa4de` measures next.\n- Preserve old receipts as taken; append supersession and archive records rather than changing measured figures.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-25T18:44:16.179756445Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "b749bdfc-63e1-41c6-b8dc-65d334fdd652",
+  "labels": [
+    "epic:field-capability-dispatch",
+    "component:gf2-core",
+    "component:gf2-algebra",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Cut tuning over to crate-owned typed sections",
+  "updated_at": "2026-08-25T18:45:00.862957479Z"
+}

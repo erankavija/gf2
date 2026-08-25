@@ -3,7 +3,8 @@
   "context": {},
   "created_at": "2026-08-22T21:27:08.444306766Z",
   "dependencies": [
-    "856f1b48-e518-4329-889f-e2589629622d"
+    "856f1b48-e518-4329-889f-e2589629622d",
+    "b749bdfc-63e1-41c6-b8dc-65d334fdd652"
   ],
   "description": "Predeclare and implement an argmin sweep protocol for extent fields, scoped to the twelve extent fields of the follow-on schema.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §5.1-§5.2 record why the standing crossover rule cannot sweep an extent field; task row T13 of §8 fixes the shape: an argmin search over a parameter grid at fixed operand sizes, the default kept on a tie or a non-monotone curve, the full grid recorded in the receipt.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed predeclaration fixes the extent-sweep rule - grid, argmin selection, tie and non-monotonicity handling, and receipt format - before any extent measurement exists.\n- [hard] REQ-02: The calibration action implements the protocol for the twelve extent fields behind the explicit benchmark action, with no build side effect.\n- [hard] REQ-03: Protocol runs record their grids and outcomes in the calibration receipt; an unswept field stays omitted from committed profiles under the standing omission rule.",
   "documents": [],
@@ -38,7 +39,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "backlog",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-08-23T07:08:10.719135846Z"
+  "updated_at": "2026-08-25T18:45:18.041565714Z"
 }
