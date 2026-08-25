@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "Campaign emission is gated on the whole repository's git state, so a commit or edit made anywhere by a parallel session blocks publication for the duration of a campaign. Scope the gate to the artifact that was actually measured.\n\n## Background\n\nTwo independent conditions must hold for a campaign to publish. The emission guard requires the revision embedded at build time to equal the repository's current `HEAD`, and refuses when any tracked file differs outside the campaign's own output subtree. The campaign runner is stricter still: its measure and premeasure modes require a clean worktree across the entire repository, untracked files included.\n\nNeither condition describes the measured artifact. Once the emitting binary is compiled, commits and edits elsewhere cannot change what it does. The conditions are preconditions on the repository standing in for a property of the binary, and they are checked for the whole multi-hour campaign rather than at the instant of the build.\n\nThe repository cannot hold them. It lands on the order of a thousand commits per thirty days, it is worked by parallel sessions, and the tracker's own workflow state lives under version control, so `HEAD` moves and the worktree dirties for reasons unrelated to any measurement. The practical effect is a repository-wide freeze for every campaign.\n\nA scoped provenance record already exists in the feasibility harness. It pins the running executable by SHA-256, pins the linked crate sources by a path-scoped revision and dirty flag, and keeps the repository-wide revision as recorded context rather than as a gate. The campaign path is a private parallel variant of that mechanism.\n\n## Success Criteria\n\n- [hard] REQ-01: Emission approval depends only on facts about the emitting binary and the campaign directory. A commit touching no path in the emitting binary's source closure leaves the approval outcome unchanged.\n- [hard] REQ-02: Published campaign provenance records the emitting binary's SHA-256, a source revision scoped to the crates the binary links, and that scope's dirty state, alongside the repository-wide revision retained as context and labelled as such.\n- [hard] REQ-03: A test demonstrates that an unrelated commit and an unrelated tracked-file edit, both made after the emitting build, leave emission approved and leave the recorded provenance unchanged apart from the context revision.\n- [hard] REQ-04: Emission refuses when the running executable's hash differs from the hash recorded for the approved build, when that hash cannot be determined, and when the campaign root is not one campaign directory.\n- [hard] REQ-05: The runner's measure and premeasure modes require no repository-wide clean worktree. Their cleanliness check is scoped to the source closure and evaluated when the binary is built.\n- [hard] REQ-06: Prose and doc comments describing the emission rule state the scoped rule, and no remaining text asserts a `HEAD`-equality or whole-repository cleanliness requirement.\n- [hard] REQ-07: Dataset verification of an already-published campaign returns the same verdict before and after the change for a dataset that was valid under the previous rule.\n\n## Decision — the breakdown manifest is excluded\n\nRecorded by the repository owner on 2026-08-25, and binding on this issue's\ncriteria.\n\n`dev/active/b8206228-permanent-statistics/breakdown.json` is excluded from\nREQ-06's sweep and from live-prose audits generally, on the same terms as the\ndecision recorded in issue `240b7618` on 2026-08-09.\n\nThe exclusion is a decision, not a property the file has to demonstrate. It does\nnot depend on the file being frozen, on it matching any particular revision, or\non its entries agreeing with the `.jit/` issue store. A reviewer should not look\nfor evidence that the manifest has earned its exclusion.\n\nThe manifest is the input that created this epic's issues, and its entries state\nthe conditions that motivated them at breakdown time. Its `dataset-provenance-rule`\nentry therefore describes the repository-wide emission rule that this issue\nretires; that entry is expected to read that way, and a correction belongs in the\nissue rather than in the manifest. This issue was not created from the manifest\nand has no entry in it.\n\n## Notes\n\nEnforces `@/inv/convention-convergence`: the canonical form of measurement-tool provenance in this repository is the binary hash plus path-scoped source identity, and the campaign guard is a local variant of it.\n\nThe binary hash answers whether two runs used the same executable. It does not answer whether measurement behavior changed, because unrelated edits to tool source move it; that separate question is tracked under `@/inv/behavioral-evidence-validity` and is not in scope here. This work must record the binary hash beside any behavioral identity rather than in place of one.",
   "documents": [],
+  "done_at": "2026-08-25T08:39:14.944578511Z",
   "first_ready_at": "2026-08-24T19:53:15.495089831Z",
   "gates_required": [
     "cargo-ci",
@@ -19,8 +20,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-25T07:02:12.165636491Z",
+      "status": "passed",
+      "updated_at": "2026-08-25T08:38:28.187115234Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -37,7 +38,7 @@
     "enforces:@/invariant/convention-convergence"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Scope campaign emission provenance to the measured artifact",
-  "updated_at": "2026-08-25T08:34:32.150764603Z"
+  "updated_at": "2026-08-25T08:39:14.944578511Z"
 }
