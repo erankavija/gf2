@@ -205,12 +205,13 @@ impl PatternSegmentation {
                 )?;
             }
             let theoretical_end = theoretical_start + coefficient;
-            let generated_start = config
-                .candidate_cap
-                .map_or(theoretical_start, |cap| theoretical_start.min(cap));
-            let generated_end = config
-                .candidate_cap
-                .map_or(theoretical_end, |cap| theoretical_end.min(cap));
+            // The generated range is always a (possibly empty) prefix of the
+            // theoretical range: a cap that ends in an earlier segment leaves
+            // an empty range at this segment's own boundary, never at the cap.
+            let generated_start = theoretical_start;
+            let generated_end = config.candidate_cap.map_or(theoretical_end, |cap| {
+                theoretical_end.min(cap).max(theoretical_start)
+            });
             segments.push(PatternSegment {
                 weight,
                 theoretical_start,
@@ -997,6 +998,24 @@ mod tests {
         assert_eq!(report.segments(), 2);
         assert_eq!(report.termination(), OsdTermination::CandidateCap);
         assert_eq!(report.segment_reports()[2].generated(), 0);
+    }
+
+    #[test]
+    fn empty_tail_segment_ranges_clip_at_their_own_boundary_not_the_cap() {
+        let segmentation =
+            PatternSegmentation::new(4, OsdConfig::new(2).with_candidate_cap(Some(3))).unwrap();
+        let tail = segmentation.segment(2).unwrap();
+
+        assert!(tail.is_empty());
+        assert_eq!(tail.theoretical_range(), 5..11);
+        assert_eq!(tail.generated_range(), 5..5);
+        for segment in segmentation.segments() {
+            assert_eq!(
+                segment.generated_range().start,
+                segment.theoretical_range().start,
+            );
+            assert!(segment.generated_range().end <= segment.theoretical_range().end);
+        }
     }
 
     #[test]
