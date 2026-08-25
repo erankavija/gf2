@@ -55,14 +55,18 @@ fn provenance() -> OsdCampaignProvenance {
             git_revision: "0123456789abcdef0123456789abcdef01234567"
                 .parse::<GitRevision>()
                 .expect("valid git revision"),
-            binary_sha256: std::iter::repeat_n('c', 64)
-                .collect::<String>()
-                .parse::<Sha256Digest>()
-                .expect("valid SHA-256 digest"),
-            deps_source_revision: "0123456789abcdef0123456789abcdef01234567"
-                .parse::<GitRevision>()
-                .expect("valid git revision"),
-            deps_source_dirty: false,
+            binary_sha256: Some(
+                std::iter::repeat_n('c', 64)
+                    .collect::<String>()
+                    .parse::<Sha256Digest>()
+                    .expect("valid SHA-256 digest"),
+            ),
+            deps_source_revision: Some(
+                "0123456789abcdef0123456789abcdef01234567"
+                    .parse::<GitRevision>()
+                    .expect("valid git revision"),
+            ),
+            deps_source_dirty: Some(false),
             compiler_version: "rustc 1.95.0".to_owned(),
             rng_algorithm: RngAlgorithm::ChaCha20,
             rng_version: "0.9.0".to_owned(),

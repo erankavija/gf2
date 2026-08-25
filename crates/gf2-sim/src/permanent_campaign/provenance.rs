@@ -111,6 +111,11 @@ pub enum EmissionRefusal {
         /// Digest observed for the running executable.
         actual: Sha256Digest,
     },
+    /// The frozen manifest predates binary-scoped provenance and declares no digest.
+    UndeclaredBinaryDigest {
+        /// Manifest path that declares no binary digest.
+        path: PathBuf,
+    },
     /// The frozen manifest differs from the committed manifest content.
     ManifestChanged {
         /// Manifest path that differs from committed content.
@@ -155,6 +160,11 @@ impl fmt::Display for EmissionRefusal {
             Self::BinaryDigestMismatch { expected, actual } => write!(
                 f,
                 "the frozen manifest names binary SHA-256 {expected}, but the running executable is {actual}"
+            ),
+            Self::UndeclaredBinaryDigest { path } => write!(
+                f,
+                "frozen campaign manifest {} declares no binary SHA-256",
+                path.display()
             ),
             Self::ManifestChanged { path } => write!(
                 f,
@@ -266,9 +276,14 @@ fn approve_emission_with_binary_digest(
         });
     }
     let manifest = read_manifest(campaign_root).map_err(EmissionRefusal::Schema)?;
-    if manifest.provenance.binary_sha256 != binary_sha256 {
+    let Some(expected) = manifest.provenance.binary_sha256 else {
+        return Err(EmissionRefusal::UndeclaredBinaryDigest {
+            path: manifest_path,
+        });
+    };
+    if expected != binary_sha256 {
         return Err(EmissionRefusal::BinaryDigestMismatch {
-            expected: manifest.provenance.binary_sha256,
+            expected,
             actual: binary_sha256,
         });
     }
@@ -406,14 +421,15 @@ pub struct RuntimeSourceIdentity {
 pub fn observe_source_identity(
     repository: &Path,
 ) -> Result<RuntimeSourceIdentity, EmissionRefusal> {
-    let git_revision = run_git(repository, &["rev-parse", "HEAD"])?
+    let repository = repository_top_level(repository)?;
+    let git_revision = run_git(&repository, &["rev-parse", "HEAD"])?
         .parse()
         .map_err(|error: GitRevisionError| EmissionRefusal::Git {
             command: ["rev-parse", "HEAD"].join(" "),
             message: error.to_string(),
         })?;
     let deps_source_revision = run_git(
-        repository,
+        &repository,
         &["log", "-1", "--format=%H", "--", "crates/", "Cargo.lock"],
     )?
     .parse()
@@ -422,12 +438,12 @@ pub fn observe_source_identity(
         message: error.to_string(),
     })?;
     let git_dirty = !run_git(
-        repository,
+        &repository,
         &["status", "--porcelain", "--untracked-files=all"],
     )?
     .is_empty();
     let deps_source_dirty = !run_git(
-        repository,
+        &repository,
         &[
             "status",
             "--porcelain",
@@ -446,6 +462,19 @@ pub fn observe_source_identity(
     })
 }
 
+/// Resolves any path inside a Git repository to its top-level directory.
+pub fn repository_top_level(path: &Path) -> Result<PathBuf, EmissionRefusal> {
+    let anchor = canonicalize(path)?;
+    let git_marker = anchor.join(".git");
+    if git_marker.is_dir() || git_marker.is_file() {
+        return Ok(anchor);
+    }
+    canonicalize(Path::new(&run_git(
+        &anchor,
+        &["rev-parse", "--show-toplevel"],
+    )?))
+}
+
 /// Returns the repository-wide revision observed at runtime by this command.
 pub fn runtime_git_revision() -> Result<GitRevision, EmissionRefusal> {
     let repository = canonicalize(Path::new(env!("CARGO_MANIFEST_DIR")))?;
@@ -459,9 +488,9 @@ pub fn observe_provenance(
 ) -> Result<Provenance, EmissionRefusal> {
     let identity = observe_source_identity(repository)?;
     provenance.git_revision = identity.git_revision;
-    provenance.binary_sha256 = running_binary_sha256()?;
-    provenance.deps_source_revision = identity.deps_source_revision;
-    provenance.deps_source_dirty = identity.deps_source_dirty;
+    provenance.binary_sha256 = Some(running_binary_sha256()?);
+    provenance.deps_source_revision = Some(identity.deps_source_revision);
+    provenance.deps_source_dirty = Some(identity.deps_source_dirty);
     Ok(provenance)
 }
 
@@ -1091,7 +1120,7 @@ mod tests {
 
     use super::super::fixture::{
         manifest_at_revision, unique_temp_dir, write_fixture_at_revision, write_halted_fixture,
-        write_integrity_file, TestDir, FIXTURE_CAMPAIGN_ID,
+        write_integrity_file, write_version_1_fixture, TestDir, FIXTURE_CAMPAIGN_ID,
     };
     use super::super::schema::POOLED_SUMMARY_FILE;
     use super::*;
@@ -1243,6 +1272,18 @@ mod tests {
     }
 
     #[test]
+    fn source_identity_is_the_same_from_a_repository_subdirectory() {
+        let repo = TestRepo::new();
+        let root = observe_source_identity(&repo.root).expect("root identity is observable");
+        let subdirectory = repo.path("crates/gf2-sim");
+        let nested = observe_source_identity(&subdirectory)
+            .expect("identity from a repository subdirectory is observable");
+
+        assert_eq!(root.deps_source_revision, nested.deps_source_revision);
+        assert_eq!(root.deps_source_dirty, nested.deps_source_dirty);
+    }
+
+    #[test]
     fn emission_survives_unrelated_tracked_edit() {
         let repo = TestRepo::new();
         let campaign = repo.write_dataset();
@@ -1340,6 +1381,132 @@ mod tests {
         let repo = TestRepo::new();
         let campaign = repo.write_dataset();
         assert_eq!(verify_dataset(&campaign).unwrap(), DatasetVerdict::Verified);
+    }
+
+    #[test]
+    fn verification_accepts_a_version_1_dataset() {
+        let repo = TestRepo::new();
+        let campaign = repo.campaign_root();
+        fs::create_dir_all(&campaign).unwrap();
+        write_version_1_fixture(&campaign, &repo.head());
+
+        assert_eq!(verify_dataset(&campaign).unwrap(), DatasetVerdict::Verified);
+    }
+
+    #[test]
+    fn conformance_accepts_a_version_1_dataset() {
+        let repo = TestRepo::new();
+        let campaign = repo.campaign_root();
+        fs::create_dir_all(&campaign).unwrap();
+        write_version_1_fixture(&campaign, &repo.head());
+
+        super::super::schema::conform_dataset(&campaign)
+            .expect("a complete version-1 dataset conforms");
+    }
+
+    #[test]
+    fn version_1_manifest_carrying_binary_digest_is_invalid() {
+        let repo = TestRepo::new();
+        let campaign = repo.campaign_root();
+        fs::create_dir_all(&campaign).unwrap();
+        write_version_1_fixture(&campaign, &repo.head());
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(campaign.join(MANIFEST_FILE)).unwrap()).unwrap();
+        manifest["provenance"]["binary_sha256"] = serde_json::json!("0".repeat(64));
+        fs::write(
+            campaign.join(MANIFEST_FILE),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = read_manifest(&campaign).expect_err("version 1 rejects a version-2 field");
+        assert!(
+            matches!(&error, SchemaError::InvalidValue { message, .. }
+                if message.contains("schema version 1 provenance must omit")),
+            "unexpected error: {error}"
+        );
+    }
+
+    #[test]
+    fn version_2_manifest_omitting_binary_digest_is_invalid() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(campaign.join(MANIFEST_FILE)).unwrap()).unwrap();
+        manifest["provenance"]
+            .as_object_mut()
+            .unwrap()
+            .remove("binary_sha256");
+        fs::write(
+            campaign.join(MANIFEST_FILE),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = read_manifest(&campaign).expect_err("version 2 requires the emitter digest");
+        assert!(
+            matches!(&error, SchemaError::InvalidValue { message, .. }
+                if message.contains("schema version 2 provenance must include")),
+            "unexpected error: {error}"
+        );
+    }
+
+    #[test]
+    fn dataset_mixing_schema_versions_is_refused() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        let summary_path = campaign.join(field_summary_file(3));
+        let mut summary: serde_json::Value =
+            serde_json::from_slice(&fs::read(&summary_path).unwrap()).unwrap();
+        // The summary is internally consistent at version 1, so it is the
+        // disagreement with the version-2 manifest that must refuse it.
+        summary["schema_version"] = serde_json::json!(1);
+        for row in summary["rows"].as_array_mut().unwrap() {
+            row["schema_version"] = serde_json::json!(1);
+        }
+        fs::write(&summary_path, serde_json::to_vec_pretty(&summary).unwrap()).unwrap();
+
+        let error = super::super::schema::conform_dataset(&campaign)
+            .expect_err("a dataset may not mix schema versions");
+        assert!(
+            matches!(&error, SchemaError::InvalidValue { message, .. }
+                if message.contains("differs from manifest version")),
+            "unexpected error: {error}"
+        );
+    }
+
+    #[test]
+    fn field_summary_disagreeing_with_its_own_rows_is_refused() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        let summary_path = campaign.join(field_summary_file(3));
+        let mut summary: serde_json::Value =
+            serde_json::from_slice(&fs::read(&summary_path).unwrap()).unwrap();
+        summary["schema_version"] = serde_json::json!(1);
+        fs::write(&summary_path, serde_json::to_vec_pretty(&summary).unwrap()).unwrap();
+
+        let error = read_field_summary(&campaign, 3)
+            .expect_err("a field summary may not disagree with its own rows");
+        assert!(
+            matches!(&error, SchemaError::InvalidValue { message, .. }
+                if message.contains("differs from field summary version")),
+            "unexpected error: {error}"
+        );
+    }
+
+    #[test]
+    fn emission_refuses_a_version_1_campaign() {
+        let repo = TestRepo::new();
+        let campaign = repo.campaign_root();
+        fs::create_dir_all(&campaign).unwrap();
+        write_version_1_fixture(&campaign, &repo.head());
+        repo.commit_all("publish a version-1 dataset");
+
+        let refusal = approve(&repo, &campaign).expect_err("version 1 has no emitter digest");
+        assert!(matches!(
+            refusal,
+            EmissionRefusal::UndeclaredBinaryDigest { .. }
+        ));
     }
 
     /// REQ-02, REQ-03: the campaign's own output never refuses its own writer.

@@ -20,6 +20,19 @@ fn emitter_digest() -> String {
         .to_owned()
 }
 
+fn dataset_digest() -> String {
+    let output = Command::new("sha256sum")
+        .arg(env!("CARGO_BIN_EXE_permanent_dataset"))
+        .output()
+        .unwrap();
+    String::from_utf8(output.stdout)
+        .unwrap()
+        .split_whitespace()
+        .next()
+        .unwrap()
+        .to_owned()
+}
+
 fn manifest() -> CampaignManifest {
     CampaignManifest {
         schema_version: SCHEMA_VERSION,
@@ -53,11 +66,13 @@ fn manifest() -> CampaignManifest {
             git_revision: "95ccd9776376b2b060e0dd40785e2effae29e766"
                 .parse::<GitRevision>()
                 .unwrap(),
-            binary_sha256: emitter_digest().parse().unwrap(),
-            deps_source_revision: "95ccd9776376b2b060e0dd40785e2effae29e766"
-                .parse::<GitRevision>()
-                .unwrap(),
-            deps_source_dirty: false,
+            binary_sha256: Some(emitter_digest().parse().unwrap()),
+            deps_source_revision: Some(
+                "95ccd9776376b2b060e0dd40785e2effae29e766"
+                    .parse::<GitRevision>()
+                    .unwrap(),
+            ),
+            deps_source_dirty: Some(false),
             compiler_version: "rustc test".to_owned(),
             rng_algorithm: RngAlgorithm::ChaCha20,
             rng_version: "rand_chacha test".to_owned(),
@@ -100,11 +115,9 @@ fn temp_path(label: &str) -> PathBuf {
     ))
 }
 
-fn commit_campaign_manifest(checkout: &Path, output: &Path) {
-    let relative = output.strip_prefix(checkout).unwrap();
+fn commit_campaign_manifest(checkout: &Path) {
     let added = Command::new("git")
-        .args(["-C", checkout.to_str().unwrap(), "add", "--"])
-        .arg(relative)
+        .args(["-C", checkout.to_str().unwrap(), "add", "--all"])
         .output()
         .unwrap();
     assert!(added.status.success());
@@ -142,9 +155,49 @@ fn campaign_checkout(parent: &Path, manifest: &Path) -> (PathBuf, PathBuf) {
         .output()
         .unwrap();
     assert!(initialized.status.success());
+    fs::create_dir_all(checkout.join("crates/gf2-sim")).unwrap();
+    fs::write(
+        checkout.join("crates/gf2-sim/lib.rs"),
+        "pub fn fixture() {}\n",
+    )
+    .unwrap();
+    fs::write(checkout.join("Cargo.lock"), "# fixture lockfile\n").unwrap();
     fs::copy(manifest, output.join("manifest.json")).unwrap();
-    commit_campaign_manifest(&checkout, &output);
+    commit_campaign_manifest(&checkout);
     (checkout, output)
+}
+
+#[test]
+fn provenance_reports_the_running_dataset_binary_and_source_revision() {
+    let parent = temp_path("provenance");
+    let manifest_path = parent.join("manifest");
+    let manifest_file = manifest_path.join("manifest.json");
+    fs::create_dir_all(&manifest_path).unwrap();
+    fs::write(
+        &manifest_file,
+        serde_json::to_vec_pretty(&manifest()).unwrap(),
+    )
+    .unwrap();
+    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
+
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_dataset"))
+        .args(["provenance", output_path.to_str().unwrap()])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "stderr:\n{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let provenance: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(provenance["binary_sha256"], dataset_digest());
+    let revision = provenance["deps_source_revision"].as_str().unwrap();
+    assert_eq!(revision.len(), 40);
+    assert!(revision
+        .chars()
+        .all(|character| character.is_ascii_hexdigit()));
+
+    let _ = fs::remove_dir_all(parent);
 }
 
 #[test]
