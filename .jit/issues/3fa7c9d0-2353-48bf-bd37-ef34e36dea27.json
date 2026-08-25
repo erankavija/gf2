@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-25T18:50:58.956580921Z",
   "context": {},
   "created_at": "2026-08-25T18:44:09.545100777Z",
   "dependencies": [],
@@ -19,7 +20,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Design crate-owned typed tuning sections",
-  "updated_at": "2026-08-25T18:44:09.545100777Z"
+  "updated_at": "2026-08-25T18:50:58.956580921Z"
 }

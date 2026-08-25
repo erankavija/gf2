@@ -9516,3 +9516,5 @@
 {"fields":["dependencies"],"id":"ec270031-89a9-4de2-9b43-a9c9ad67bfd9","issue_id":"5bdc9552-0290-4dca-b0a6-bc7009837875","timestamp":"2026-08-25T18:45:26.637607303Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["assignee"],"id":"3425a17a-ab05-4d89-b38d-d09b5642a21d","issue_id":"389aa4de-e6dc-4adb-a2e8-03153192b8cc","timestamp":"2026-08-25T18:45:30.043649708Z","type":"issue_updated","updated_by":"issue-unassign"}
 {"from":"in_progress","id":"1b61345d-e423-4ccd-98bb-bca7d2cd2c51","issue_id":"389aa4de-e6dc-4adb-a2e8-03153192b8cc","timestamp":"2026-08-25T18:46:19.154905449Z","to":"backlog","type":"issue_state_changed"}
+{"from":"ready","id":"a1020e3e-577e-4d9a-aa72-9a4eb00c836f","issue_id":"3fa7c9d0-2353-48bf-bd37-ef34e36dea27","timestamp":"2026-08-25T18:50:58.956580921Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"137dee51-f616-4c8f-b5dc-3d036d0f7447","issue_id":"3fa7c9d0-2353-48bf-bd37-ef34e36dea27","timestamp":"2026-08-25T18:50:58.956580921Z","type":"issue_claimed"}
