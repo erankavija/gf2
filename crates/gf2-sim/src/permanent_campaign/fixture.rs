@@ -82,8 +82,17 @@ pub(crate) fn manifest_with_determinant_companion() -> CampaignManifest {
 
 /// Returns the default root manifest with `revision` recorded as its source.
 pub(crate) fn manifest_at_revision(revision: &GitRevision) -> CampaignManifest {
+    manifest_at_schema_version(revision, SCHEMA_VERSION)
+}
+
+/// Returns the fixture manifest in one of the published schema versions.
+pub(crate) fn manifest_at_schema_version(
+    revision: &GitRevision,
+    schema_version: u32,
+) -> CampaignManifest {
+    let version_2 = schema_version == 2;
     CampaignManifest {
-        schema_version: SCHEMA_VERSION,
+        schema_version,
         campaign_id: FIXTURE_CAMPAIGN_ID.parse().unwrap(),
         root_seed: 0x5758_790d,
         stream_purposes: vec![StreamPurpose {
@@ -118,11 +127,13 @@ pub(crate) fn manifest_at_revision(revision: &GitRevision) -> CampaignManifest {
         }],
         provenance: Provenance {
             git_revision: revision.clone(),
-            binary_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
-                .parse()
-                .unwrap(),
-            deps_source_revision: revision.clone(),
-            deps_source_dirty: false,
+            binary_sha256: version_2.then(|| {
+                "0000000000000000000000000000000000000000000000000000000000000000"
+                    .parse()
+                    .unwrap()
+            }),
+            deps_source_revision: version_2.then(|| revision.clone()),
+            deps_source_dirty: version_2.then_some(false),
             compiler_version: "rustc 1.95.0".to_owned(),
             rng_algorithm: RngAlgorithm::ChaCha20,
             rng_version: "rand_chacha 0.9.0".to_owned(),
@@ -140,8 +151,12 @@ pub(crate) fn manifest_at_revision(revision: &GitRevision) -> CampaignManifest {
 
 /// Returns one $q = 3$, $n = 4$ shard record of ten matrices.
 pub(crate) fn shard(shard_id: u64, stream_index: u64) -> ShardRecord {
+    shard_at_schema_version(shard_id, stream_index, SCHEMA_VERSION)
+}
+
+fn shard_at_schema_version(shard_id: u64, stream_index: u64, schema_version: u32) -> ShardRecord {
     ShardRecord {
-        schema_version: SCHEMA_VERSION,
+        schema_version,
         shard_id,
         stream_address: StreamAddress {
             root_seed: 0x5758_790d,
@@ -159,8 +174,12 @@ pub(crate) fn shard(shard_id: u64, stream_index: u64) -> ShardRecord {
 
 /// Returns the completed summary row pooling both fixture shards.
 pub(crate) fn summary_row() -> SummaryRow {
+    summary_row_at_schema_version(SCHEMA_VERSION)
+}
+
+fn summary_row_at_schema_version(schema_version: u32) -> SummaryRow {
     SummaryRow {
-        schema_version: SCHEMA_VERSION,
+        schema_version,
         q: 3,
         n: 4,
         matrix_count: 20,
@@ -187,7 +206,16 @@ pub(crate) fn write_fixture(root: &Path) {
 
 /// Writes the single-field dataset with `revision` recorded as its source.
 pub(crate) fn write_fixture_at_revision(root: &Path, revision: &GitRevision) {
-    let campaign = manifest_at_revision(revision);
+    write_fixture_at_schema_version(root, revision, SCHEMA_VERSION);
+}
+
+/// Writes a complete version-1 fixture without the version-2 provenance fields.
+pub(crate) fn write_version_1_fixture(root: &Path, revision: &GitRevision) {
+    write_fixture_at_schema_version(root, revision, 1);
+}
+
+fn write_fixture_at_schema_version(root: &Path, revision: &GitRevision, schema_version: u32) {
+    let campaign = manifest_at_schema_version(revision, schema_version);
     fs::write(
         root.join(MANIFEST_FILE),
         serde_json::to_vec_pretty(&campaign).unwrap(),
@@ -199,7 +227,8 @@ pub(crate) fn write_fixture_at_revision(root: &Path, revision: &GitRevision) {
     for (id, stream) in [(0, 100), (1, 101)] {
         fs::write(
             shard_dir.join(format!("shard-{id:06}.json")),
-            serde_json::to_vec_pretty(&shard(id, stream)).unwrap(),
+            serde_json::to_vec_pretty(&shard_at_schema_version(id, stream, schema_version))
+                .unwrap(),
         )
         .unwrap();
     }
@@ -207,9 +236,9 @@ pub(crate) fn write_fixture_at_revision(root: &Path, revision: &GitRevision) {
     let summary_dir = root.join("summaries");
     fs::create_dir_all(&summary_dir).unwrap();
     let field_summary = FieldSummary {
-        schema_version: SCHEMA_VERSION,
+        schema_version,
         q: 3,
-        rows: vec![summary_row()],
+        rows: vec![summary_row_at_schema_version(schema_version)],
         quarantined: Vec::new(),
     };
     fs::write(
