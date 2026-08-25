@@ -245,7 +245,13 @@ pub enum ProfileFamily {
 
 impl fmt::Display for ProfileFamily {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(match self {
+        formatter.write_str(self.as_str())
+    }
+}
+
+impl ProfileFamily {
+    const fn as_str(self) -> &'static str {
+        match self {
             Self::BitBackend => "bit_backend",
             Self::BitMatrix => "bit_matrix",
             Self::SoaBatch => "soa_batch",
@@ -258,7 +264,7 @@ impl fmt::Display for ProfileFamily {
             Self::Charpoly => "charpoly",
             Self::Polynomial => "polynomial",
             Self::PrimeRoute => "prime_route",
-        })
+        }
     }
 }
 
@@ -347,7 +353,13 @@ pub enum ProfileField {
 
 impl fmt::Display for ProfileField {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(match self {
+        formatter.write_str(self.as_str())
+    }
+}
+
+impl ProfileField {
+    const fn as_str(self) -> &'static str {
+        match self {
             Self::SimdMinWords => "simd_min_words",
             Self::KaratsubaMinDegree => "karatsuba_min_degree",
             Self::KaratsubaMaxOutLen => "karatsuba_max_out_len",
@@ -385,7 +397,7 @@ impl fmt::Display for ProfileField {
             Self::F32MinPrime => "f32_min_prime",
             Self::F32MinCols => "f32_min_cols",
             Self::F64MinCols => "f64_min_cols",
-        })
+        }
     }
 }
 
@@ -1421,6 +1433,17 @@ impl TuningSection for CoreTuning {
 }
 
 /// Returns the process-wide core tuning section and its resolution provenance.
+///
+/// This wrapper performs the generic accessor's one `O(log s)` installed
+/// section lookup (`s` is the number of installed sections) and does not
+/// allocate or lock after process resolution. Call it once at the outer
+/// operation boundary rather than from a hot inner loop.
+///
+/// # Panics
+///
+/// Panics with [`ActiveSectionInvariant`] only if installed erased storage
+/// violates the typed section invariant. Malformed profile input is rejected
+/// before installation.
 #[must_use]
 #[track_caller]
 pub fn active() -> ActiveSection<'static, CoreTuning> {
@@ -1815,7 +1838,18 @@ fn section_optional<T>(value: Present<T>) -> Result<Option<T>, SectionError> {
 
 #[cfg(feature = "tuning-profile")]
 fn core_section_error(error: ProfileError) -> SectionError {
-    SectionError::InvalidBody(error.to_string())
+    match error {
+        ProfileError::SelectorOutOfRange {
+            family,
+            field,
+            value,
+        } => SectionError::SelectorOutOfRange {
+            family: family.as_str(),
+            field: field.as_str(),
+            value,
+        },
+        error => SectionError::InvalidBody(error.to_string()),
+    }
 }
 
 #[cfg(feature = "tuning-profile")]

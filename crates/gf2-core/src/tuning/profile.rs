@@ -414,26 +414,57 @@ impl ProfileRegistry {
     pub fn from_json(&self, text: &str) -> Result<PreparedEnvelope, ProfileError> {
         let canonical: CanonicalValue =
             serde_json::from_str(text).map_err(|_| ProfileError::Malformed)?;
-        let envelope: WireEnvelope = serde_json::from_value(canonical.into_json_value())
-            .map_err(|_| ProfileError::Malformed)?;
+        let envelope = canonical_object(&canonical)?;
 
-        if envelope.profile_format_version != PROFILE_FORMAT_VERSION {
+        // Phase 2: validate envelope identity and assembly semantics without
+        // inspecting any section wrapper. Phase 1 above is the only parse of
+        // the input bytes and has already rejected duplicate keys and floats.
+        let profile_format_version = canonical_u32(
+            envelope
+                .get("profile_format_version")
+                .ok_or(ProfileError::Malformed)?,
+        )?;
+        if profile_format_version != PROFILE_FORMAT_VERSION {
             return Err(ProfileError::UnsupportedProfileFormatVersion {
-                found: envelope.profile_format_version,
+                found: profile_format_version,
                 supported: PROFILE_FORMAT_VERSION,
             });
         }
-        let profile_id = ProfileId::parse(&envelope.profile_id)?;
-        if envelope.assembly.kind != "assembled" {
+        let profile_id_text =
+            canonical_string(envelope.get("profile_id").ok_or(ProfileError::Malformed)?)?;
+        let profile_id = ProfileId::parse(profile_id_text)?;
+        let wire_assembly: WireAssembly =
+            deserialize_wire(envelope.get("assembly").ok_or(ProfileError::Malformed)?)?;
+        if wire_assembly.kind != "assembled" {
+            return Err(ProfileError::Malformed);
+        }
+        let assembly = AssemblyProvenance {
+            assembled_at: Rfc3339Utc::parse(&wire_assembly.assembled_at)?,
+            source_revision: GitRevision::parse(&wire_assembly.source_revision)?,
+            source_dirty: wire_assembly.source_dirty,
+            tool: RepoRelPath::parse(&wire_assembly.tool)?,
+            tool_sha256: Sha256::parse(&wire_assembly.tool_sha256)?,
+        };
+        let sections_value = envelope.get("sections").ok_or(ProfileError::Malformed)?;
+        let sections = canonical_object(sections_value)?;
+        if envelope.len() != 4
+            || ![
+                "profile_format_version",
+                "profile_id",
+                "assembly",
+                "sections",
+            ]
+            .into_iter()
+            .all(|key| envelope.contains_key(key))
+        {
             return Err(ProfileError::Malformed);
         }
 
-        let expected_digest = content_digest(
-            envelope.profile_format_version,
-            &envelope.profile_id,
-            &envelope.sections,
-        )?;
-        let found_digest = Sha256::parse(&envelope.assembly.content_sha256)?;
+        // Phase 3: the digest covers the raw canonical section values. No
+        // wrapper, measurement, or selector field is required before this.
+        let found_digest = Sha256::parse(&wire_assembly.content_sha256)?;
+        let expected_digest =
+            raw_content_digest(profile_format_version, profile_id_text, sections)?;
         if found_digest != expected_digest {
             return Err(ProfileError::ContentDigestMismatch {
                 found: found_digest.as_str().to_owned(),
@@ -441,35 +472,49 @@ impl ProfileRegistry {
             });
         }
 
-        let assembly = AssemblyProvenance {
-            assembled_at: Rfc3339Utc::parse(&envelope.assembly.assembled_at)?,
-            source_revision: GitRevision::parse(&envelope.assembly.source_revision)?,
-            source_dirty: envelope.assembly.source_dirty,
-            tool: RepoRelPath::parse(&envelope.assembly.tool)?,
-            tool_sha256: Sha256::parse(&envelope.assembly.tool_sha256)?,
-        };
-
-        let mut entries = BTreeMap::new();
-        for (id, section) in envelope.sections {
-            if !valid_owned_section_id(&id) {
+        // Phase 4: validate every present stable ID and dispatch it to the
+        // explicit registry before looking at any wrapper contents.
+        for id in sections.keys() {
+            if !valid_owned_section_id(id) {
                 return Err(ProfileError::Malformed);
             }
-            let Some(codec) = self.codecs.get(&id) else {
-                return Err(ProfileError::UnexpectedSection { id });
-            };
-            if section.schema_version != codec.schema_version() {
+            if !self.codecs.contains_key(id) {
+                return Err(ProfileError::UnexpectedSection { id: id.clone() });
+            }
+        }
+
+        // Phase 5: inspect only schema_version for every registered section.
+        // A bad version therefore wins over malformed measurement/body data.
+        for (id, section) in sections {
+            let codec = self
+                .codecs
+                .get(id)
+                .expect("the preceding registry phase found every codec");
+            let version: WireSectionVersion = deserialize_wire(section)?;
+            if version.schema_version != codec.schema_version() {
                 return Err(ProfileError::UnsupportedSectionSchemaVersion {
-                    id,
-                    found: section.schema_version,
+                    id: id.clone(),
+                    found: version.schema_version,
                     supported: codec.schema_version(),
                 });
             }
+        }
+
+        // Phase 6: require the complete wrapper, decode measurement semantics,
+        // then invoke the owner codec's measurement and body/range validation.
+        let mut entries = BTreeMap::new();
+        for (id, raw_section) in sections {
+            let codec = self
+                .codecs
+                .get(id)
+                .expect("the registry and version phases found every codec");
+            let section: WireSection = deserialize_wire(raw_section)?;
             let measurement = section.measurement.into_semantic()?;
             let value = codec
                 .decode(&measurement, section.selectors)
                 .map_err(|source| section_error(id.clone(), source))?;
             entries.insert(
-                id,
+                id.clone(),
                 ErasedSection {
                     value,
                     type_id: codec.section_type_id(),
@@ -588,7 +633,144 @@ fn content_digest(
     Ok(Sha256(format!("{digest:x}")))
 }
 
-#[derive(Deserialize, Serialize)]
+fn raw_content_digest(
+    profile_format_version: u32,
+    profile_id: &str,
+    sections: &BTreeMap<String, CanonicalValue>,
+) -> Result<Sha256, ProfileError> {
+    #[derive(Serialize)]
+    struct Content<'a> {
+        profile_format_version: u32,
+        profile_id: &'a str,
+        sections: RawDigestSections<'a>,
+    }
+
+    let bytes = serde_json::to_vec(&Content {
+        profile_format_version,
+        profile_id,
+        sections: RawDigestSections(sections),
+    })
+    .map_err(|_| ProfileError::Malformed)?;
+    let digest = Sha256Hasher::digest(bytes);
+    Ok(Sha256(format!("{digest:x}")))
+}
+
+/// Raw section values serialized in the established format-2 wire-field order.
+/// This ordering step neither requires nor semantically decodes wrapper data.
+struct RawDigestSections<'a>(&'a BTreeMap<String, CanonicalValue>);
+
+impl Serialize for RawDigestSections<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(self.0.len()))?;
+        for (id, section) in self.0 {
+            map.serialize_entry(id, &RawDigestSection(section))?;
+        }
+        map.end()
+    }
+}
+
+struct RawDigestSection<'a>(&'a CanonicalValue);
+
+impl Serialize for RawDigestSection<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let CanonicalNode::Object(fields) = &self.0 .0 else {
+            return Serialize::serialize(self.0, serializer);
+        };
+        let known = ["schema_version", "measurement", "selectors"];
+        let mut map = serializer.serialize_map(Some(fields.len()))?;
+        for key in known {
+            if let Some(value) = fields.get(key) {
+                if key == "measurement" {
+                    map.serialize_entry(key, &RawDigestMeasurement(value))?;
+                } else {
+                    map.serialize_entry(key, value)?;
+                }
+            }
+        }
+        for (key, value) in fields {
+            if !known.contains(&key.as_str()) {
+                map.serialize_entry(key, value)?;
+            }
+        }
+        map.end()
+    }
+}
+
+struct RawDigestMeasurement<'a>(&'a CanonicalValue);
+
+impl Serialize for RawDigestMeasurement<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let CanonicalNode::Object(fields) = &self.0 .0 else {
+            return Serialize::serialize(self.0, serializer);
+        };
+        let known = [
+            "kind",
+            "measured_at",
+            "source_revision",
+            "source_dirty",
+            "harness",
+            "harness_schema",
+            "binary_sha256",
+            "toolchain",
+            "host",
+            "cpu_model",
+            "cpu_features",
+            "os_kernel",
+            "governor",
+            "receipt",
+        ];
+        let mut map = serializer.serialize_map(Some(fields.len()))?;
+        for key in known {
+            if let Some(value) = fields.get(key) {
+                map.serialize_entry(key, value)?;
+            }
+        }
+        for (key, value) in fields {
+            if !known.contains(&key.as_str()) {
+                map.serialize_entry(key, value)?;
+            }
+        }
+        map.end()
+    }
+}
+
+fn canonical_object(
+    value: &CanonicalValue,
+) -> Result<&BTreeMap<String, CanonicalValue>, ProfileError> {
+    match &value.0 {
+        CanonicalNode::Object(value) => Ok(value),
+        _ => Err(ProfileError::Malformed),
+    }
+}
+
+fn canonical_string(value: &CanonicalValue) -> Result<&str, ProfileError> {
+    match &value.0 {
+        CanonicalNode::String(value) => Ok(value),
+        _ => Err(ProfileError::Malformed),
+    }
+}
+
+fn canonical_u32(value: &CanonicalValue) -> Result<u32, ProfileError> {
+    match &value.0 {
+        CanonicalNode::U64(value) => u32::try_from(*value).map_err(|_| ProfileError::Malformed),
+        _ => Err(ProfileError::Malformed),
+    }
+}
+
+fn deserialize_wire<T: DeserializeOwned>(value: &CanonicalValue) -> Result<T, ProfileError> {
+    serde_json::from_value(value.clone().into_json_value()).map_err(|_| ProfileError::Malformed)
+}
+
+#[derive(Serialize)]
 #[serde(deny_unknown_fields)]
 struct WireEnvelope {
     profile_format_version: u32,
@@ -615,6 +797,11 @@ struct WireSection {
     schema_version: u32,
     measurement: WireMeasurement,
     selectors: CanonicalValue,
+}
+
+#[derive(Deserialize)]
+struct WireSectionVersion {
+    schema_version: u32,
 }
 
 #[allow(clippy::large_enum_variant)]

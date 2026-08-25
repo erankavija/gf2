@@ -122,6 +122,17 @@ impl TuningSection for AlgebraTuning {
 }
 
 /// Returns the process-wide algebra tuning section and resolution provenance.
+///
+/// This wrapper performs the generic accessor's one `O(log s)` installed
+/// section lookup (`s` is the number of installed sections) and does not
+/// allocate or lock after process resolution. Resolve it once at the outer
+/// permanent-operation boundary and pass the value into inner loops.
+///
+/// # Panics
+///
+/// Panics with [`gf2_core::tuning::ActiveSectionInvariant`] only if installed
+/// erased storage violates the typed section invariant. Malformed profile
+/// input is rejected before installation.
 #[must_use]
 #[track_caller]
 pub fn active() -> ActiveSection<'static, AlgebraTuning> {
