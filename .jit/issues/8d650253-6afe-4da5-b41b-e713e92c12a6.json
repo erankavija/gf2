@@ -16,8 +16,8 @@
   ],
   "gates_status": {
     "breakdown-review": {
-      "status": "failed",
-      "updated_at": "2026-08-25T13:48:10.188923146Z",
+      "status": "passed",
+      "updated_at": "2026-08-25T13:56:47.695904726Z",
       "updated_by": "auto:executor"
     },
     "coverage-preview": {
@@ -30,14 +30,11 @@
   "labels": [
     "epic:osd",
     "component:gf2-coding",
-    "cites:Fossorier1995",
-    "cites:Yue2022",
-    "cites:Roffe2020",
     "type:breakdown",
     "brackets:b7157be6"
   ],
   "priority": "high",
   "state": "done",
   "title": "breakdown: Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-25T13:48:10.188923146Z"
+  "updated_at": "2026-08-25T13:56:47.695904726Z"
 }
