@@ -10,6 +10,13 @@
 //! writer, while `emit_field` remains the library emission primitive. Use
 //! `permanent_dataset conform` after all field arms and campaign finalization
 //! files are present.
+//!
+//! ```console
+//! $ permanent_campaign --print-provenance --manifest <campaign-directory>
+//! ```
+//!
+//! `--print-provenance` observes and prints the provenance for this emitting
+//! executable without running a campaign or writing a dataset file.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -20,11 +27,15 @@ use std::time::Duration;
 use gf2_sim::permanent_campaign::driver::{
     field_checkpoint_path, run_field_checkpointed_with_accelerator_config,
 };
-use gf2_sim::permanent_campaign::provenance::approve_emission;
+use gf2_sim::permanent_campaign::provenance::{
+    approve_emission, observe_provenance, repository_top_level,
+};
 use gf2_sim::permanent_campaign::schedule::{AcceleratorCostTable, DEFAULT_ACCELERATOR_LAUNCH_CAP};
 use gf2_sim::permanent_campaign::schema::{read_manifest, Backend};
 
 const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N] [--accelerator-launch-cap-ms MS] [--accelerator-cost-table PATH]
+
+       permanent_campaign --print-provenance --manifest PATH
 
 Accelerator options:
   --accelerator-launch-cap-ms MS     target cap per launch (default: 500 ms)
@@ -98,11 +109,16 @@ fn main() -> ExitCode {
     let mut workers = 1usize;
     let mut accelerator_launch_cap = DEFAULT_ACCELERATOR_LAUNCH_CAP;
     let mut accelerator_cost_table: Option<PathBuf> = None;
+    let mut print_provenance = false;
     let mut index = 0;
     while index < arguments.len() {
         let name = arguments[index].as_str();
         let value = arguments.get(index + 1).map(String::as_str);
         match (name, value) {
+            ("--print-provenance", _) => {
+                print_provenance = true;
+                index += 1;
+            }
             ("--manifest", Some(path)) => {
                 manifest_path = Some(PathBuf::from(path));
                 index += 2;
@@ -138,6 +154,34 @@ fn main() -> ExitCode {
             }
             _ => return usage("unrecognized or incomplete argument"),
         }
+    }
+
+    if print_provenance {
+        let Some(manifest_path) = manifest_path else {
+            return usage("--print-provenance requires --manifest");
+        };
+        if output.is_some() || field.is_some() {
+            return usage("--print-provenance cannot be combined with --output or --q");
+        }
+        let manifest = match read_manifest(&manifest_path) {
+            Ok(manifest) => manifest,
+            Err(error) => return failure(error),
+        };
+        let repository = match repository_top_level(&manifest_path) {
+            Ok(repository) => repository,
+            Err(error) => return failure(error),
+        };
+        let observed = match observe_provenance(&repository, manifest.provenance) {
+            Ok(observed) => observed,
+            Err(error) => return failure(error),
+        };
+        return match serde_json::to_string_pretty(&observed) {
+            Ok(json) => {
+                println!("{json}");
+                ExitCode::SUCCESS
+            }
+            Err(error) => failure(error),
+        };
     }
 
     let (Some(manifest_path), Some(output), Some(field)) = (manifest_path, output, field) else {
