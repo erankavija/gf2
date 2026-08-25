@@ -242,11 +242,10 @@ impl MostReliableBasis {
 ///
 /// The engine reconstructs candidates as an affine map over GF(2): the empty
 /// pattern reconstructs [`Self::base_candidate`], and a pattern adds the
-/// [`Self::position_deltas`] of the reprocessed columns it names.  Both
-/// downstream shapes are affine in exactly this sense — a generator-codeword
-/// adapter adds reduced generator rows to a re-encoded word, and a
-/// syndrome-error adapter adds free-column solution deltas to the pivot
-/// back-substitution — so the engine needs no other reconstruction hook.
+/// [`Self::position_deltas`] of the reprocessed columns it names.  A candidate
+/// space carved out of a linear system is affine in exactly this sense —
+/// re-encoding from an information set and back-substituting a free assignment
+/// both are — so the engine needs no other reconstruction hook.
 ///
 /// Every vector an adapter returns carries one entry per matrix column.
 ///

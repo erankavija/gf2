@@ -1,10 +1,9 @@
 //! Contract tests for the shared OSD most-reliable-basis reprocessing engine.
 //!
-//! The engine is exercised through two abstract semantic adapters that stand
-//! in for the downstream generator-codeword and syndrome-error shapes without
-//! borrowing their semantics: a basis-reprocessing adapter whose candidates
-//! are the row space of the eliminated matrix, and a free-column adapter whose
-//! candidates solve the transformed system.
+//! The engine is exercised through one abstract adapter per supported shape,
+//! neither of which carries coding semantics: a basis-reprocessing adapter
+//! whose candidates are the row space of the eliminated matrix, and a
+//! free-column adapter whose candidates solve the transformed system.
 
 use std::cell::Cell;
 use std::sync::atomic::{AtomicBool, Ordering};
