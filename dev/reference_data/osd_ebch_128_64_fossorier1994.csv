@@ -1,0 +1,40 @@
+figure,metric,eb_n0_db,value,decoder,code_params,legend_full,osd_order,value_log10,value_kind,ordinate_source,source_locator,figure_crosscheck_log10
+osd_ebch_128_64_fossorier1994,BER,1.55,0.15488,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-0.81,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,2.22,0.11482,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-0.94,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,3.01,0.066069,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-1.18,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,3.47,0.043652,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-1.36,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,3.98,0.024547,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-1.61,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,4.56,0.012882,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-1.89,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,5.23,0.0046774,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-2.33,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,6.02,0.0011749,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-2.93,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,6.48,0.00045709,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-3.34,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,6.99,0.00013804,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-3.86,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,7.57,3.2359e-05,OSD_order0,"eBCH(128,64,22)",x: Order 0,0,-4.49,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,1.55,0.063096,OSD_order1,"eBCH(128,64,22)",+: Order 1,1,-1.20,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,2.22,0.029512,OSD_order1,"eBCH(128,64,22)",+: Order 1,1,-1.53,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,3.01,0.0097724,OSD_order1,"eBCH(128,64,22)",+: Order 1,1,-2.01,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,3.47,0.0038905,OSD_order1,"eBCH(128,64,22)",+: Order 1,1,-2.41,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,3.98,0.0012882,OSD_order1,"eBCH(128,64,22)",+: Order 1,1,-2.89,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,4.56,0.00027542,OSD_order1,"eBCH(128,64,22)",+: Order 1,1,-3.56,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,5.23,3.8905e-05,OSD_order1,"eBCH(128,64,22)",+: Order 1,1,-4.41,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,1.55,0.02138,OSD_order2,"eBCH(128,64,22)",o: Order 2,2,-1.67,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,2.22,0.0063096,OSD_order2,"eBCH(128,64,22)",o: Order 2,2,-2.2,simulation,printed_table,Fossorier1994 Table 4.7 p.71,-2.22
+osd_ebch_128_64_fossorier1994,BER,3.01,0.001,OSD_order2,"eBCH(128,64,22)",o: Order 2,2,-3.0,simulation,printed_table,Fossorier1994 Table 4.7 p.71,-3.04
+osd_ebch_128_64_fossorier1994,BER,3.47,0.00025119,OSD_order2,"eBCH(128,64,22)",o: Order 2,2,-3.6,simulation,printed_table,Fossorier1994 Table 4.7 p.71,-3.65
+osd_ebch_128_64_fossorier1994,BER,3.98,3.9811e-05,OSD_order2,"eBCH(128,64,22)",o: Order 2,2,-4.4,simulation,printed_table,Fossorier1994 Table 4.7 p.71,-4.51
+osd_ebch_128_64_fossorier1994,BER,4.56,1.9953e-06,OSD_order2,"eBCH(128,64,22)",o: Order 2,2,-5.7,simulation,printed_table,Fossorier1994 Table 4.7 p.71,-5.49
+osd_ebch_128_64_fossorier1994,BER,5.23,2.5119e-07,OSD_order2,"eBCH(128,64,22)",o: Order 2,2,-6.6,union_bound,printed_table,Fossorier1994 Table 4.7 p.71,
+osd_ebch_128_64_fossorier1994,BER,1.55,0.0091201,OSD_order3,"eBCH(128,64,22)",*: Order 3,3,-2.04,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,2.22,0.0015849,OSD_order3,"eBCH(128,64,22)",*: Order 3,3,-2.8,simulation,printed_table,Fossorier1994 Table 4.8 p.71,-2.79
+osd_ebch_128_64_fossorier1994,BER,3.01,0.0001,OSD_order3,"eBCH(128,64,22)",*: Order 3,3,-4.0,simulation,printed_table,Fossorier1994 Table 4.8 p.71,-4.12
+osd_ebch_128_64_fossorier1994,BER,3.47,1.2589e-05,OSD_order3,"eBCH(128,64,22)",*: Order 3,3,-4.9,simulation,printed_table,Fossorier1994 Table 4.8 p.71,-4.94
+osd_ebch_128_64_fossorier1994,BER,3.98,1.5849e-06,OSD_order3,"eBCH(128,64,22)",*: Order 3,3,-5.8,union_bound,printed_table,Fossorier1994 Table 4.8 p.71,
+osd_ebch_128_64_fossorier1994,BER,4.56,7.9433e-08,OSD_order3,"eBCH(128,64,22)",*: Order 3,3,-7.1,union_bound,printed_table,Fossorier1994 Table 4.8 p.71,
+osd_ebch_128_64_fossorier1994,BER,5.23,1.2589e-09,OSD_order3,"eBCH(128,64,22)",*: Order 3,3,-8.9,union_bound,printed_table,Fossorier1994 Table 4.8 p.71,
+osd_ebch_128_64_fossorier1994,BER,1.55,0.0069183,OSD_order4,"eBCH(128,64,22)",Order 4,4,-2.16,simulation,axis_calibrated_pixel_read,Fossorier1994 Fig. 4.14 p.60,
+osd_ebch_128_64_fossorier1994,BER,2.22,0.001,OSD_order4,"eBCH(128,64,22)",Order 4,4,-3.0,simulation,printed_table,Fossorier1994 Table 4.9 p.71,-3.06
+osd_ebch_128_64_fossorier1994,BER,3.01,3.1623e-05,OSD_order4,"eBCH(128,64,22)",Order 4,4,-4.5,simulation,printed_table,Fossorier1994 Table 4.9 p.71,
+osd_ebch_128_64_fossorier1994,BER,3.47,3.1623e-06,OSD_order4,"eBCH(128,64,22)",Order 4,4,-5.5,simulation,printed_table,Fossorier1994 Table 4.9 p.71,
+osd_ebch_128_64_fossorier1994,BER,3.98,6.3096e-08,OSD_order4,"eBCH(128,64,22)",Order 4,4,-7.2,union_bound,printed_table,Fossorier1994 Table 4.9 p.71,
+osd_ebch_128_64_fossorier1994,BER,4.56,7.9433e-10,OSD_order4,"eBCH(128,64,22)",Order 4,4,-9.1,union_bound,printed_table,Fossorier1994 Table 4.9 p.71,
+osd_ebch_128_64_fossorier1994,BER,5.23,5.0119e-12,OSD_order4,"eBCH(128,64,22)",Order 4,4,-11.3,union_bound,printed_table,Fossorier1994 Table 4.9 p.71,

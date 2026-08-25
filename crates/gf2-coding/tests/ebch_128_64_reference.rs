@@ -95,7 +95,7 @@ fn ebch_128_64_matches_canonical_fixture() {
     );
     assert_eq!(
         fixture.decision_provenance.published_identity_artifact,
-        "dev/reference_data/osd_ebch_128_64_fossorier1995.md"
+        "dev/reference_data/osd_ebch_128_64_fossorier1994.md"
     );
     assert!(fixture
         .decision_provenance

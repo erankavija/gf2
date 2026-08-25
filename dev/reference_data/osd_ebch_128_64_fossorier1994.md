@@ -3,7 +3,7 @@
 > **Diátaxis Type:** Reference
 
 Provenance for
-[`osd_ebch_128_64_fossorier1995.csv`](/dev/reference_data/osd_ebch_128_64_fossorier1995.csv),
+[`osd_ebch_128_64_fossorier1994.csv`](/dev/reference_data/osd_ebch_128_64_fossorier1994.csv),
 a digitization of the published ordered-statistics decoding (OSD) error-rate
 curves of the extended BCH $(128,64,22)$ code on the additive white Gaussian
 noise (AWGN) channel with BPSK signalling.

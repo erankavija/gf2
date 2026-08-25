@@ -20,7 +20,7 @@
     "kind": "campaign_decision",
     "decision": "D-21",
     "artifact": "dev/active/b7157be6-osd/plan.md",
-    "published_identity_artifact": "dev/reference_data/osd_ebch_128_64_fossorier1995.md",
+    "published_identity_artifact": "dev/reference_data/osd_ebch_128_64_fossorier1994.md",
     "rationale": "The published sources fix eBCH(128,64,22) but leave the GF(2^7) representation not source-determined. D-21 chooses gf2-core's standard verified primitive polynomial; permutation-equivalent representations leave the published reliability-ordered curves invariant."
   },
   "serialization": {
