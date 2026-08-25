@@ -715,8 +715,8 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus (native worker, harness phase) + lead (measured phase pending)",
-          "status": "preparing-v2-bootstrap",
-          "notes": "Harness phase MERGED 28f674d6: omission set = schema complement (33/38 omitted, 7 drift tests), forced-arm child-process sweep (route/operand/product verification, 14 tests), DEC-B16 grid-point forcing (crossover direction confirmed between degree 16 and 31), receipt-notes.md Blocks A-E linked. cargo-ci PASS; code-review FAIL F1/F2/F3. Session-11 audit confirmed the measured phase cannot start truthfully from the current v1-emitting source. DEC-V selects replacement under canonical-cutover and convention-convergence: a named temporary dual-token boundary on the issue branch, followed by the measured v2 profile and removal of v1 acceptance before merge. Claim held by agent:worker."
+          "status": "v2-bootstrap-committed-awaiting-host",
+          "notes": "Harness phase MERGED 28f674d6: omission set = schema complement (33/38 omitted, 7 drift tests), forced-arm child-process sweep (route/operand/product verification, 14 tests), DEC-B16 grid-point forcing (crossover direction confirmed between degree 16 and 31), receipt-notes.md Blocks A-E linked. cargo-ci PASS; code-review FAIL F1/F2/F3. DEC-V selects replacement under canonical-cutover and convention-convergence. Bootstrap commit 6566bb3d on worktree-agent-389aa4de-v2 emits v2 and names the temporary v1 parser boundary with its pre-merge removal condition; the v1 profile remains byte-identical. Lead static review and leak check pass; no Cargo ran while Claude's wave-5 workers were active. Await a fully quiet host window before checks and measurement. Claim held by agent:worker."
         }
       ]
     }
