@@ -2,7 +2,7 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 
 #[cfg(feature = "tuning-profile")]
-use gf2_core::tuning::{CanonicalValue, CoreTuningCodec, ProfileRegistryBuilder, SectionCodec};
+use gf2_core::tuning::{CanonicalValue, CoreTuningCodec, SectionCodec};
 use gf2_core::tuning::{CompiledProfileProvenance, CoreTuning, PreparedEnvelope, ProfileId};
 
 const SENTINEL: &str = "GF2_TUNING_FRESH_CASE";
@@ -54,28 +54,6 @@ pub fn prepared_core(section: CoreTuning) -> PreparedEnvelope {
         .unwrap()
         .build()
         .unwrap()
-}
-
-#[allow(dead_code)]
-#[cfg(feature = "tuning-profile")]
-pub fn committed_core_owner(text: &str) -> Result<CoreTuning, String> {
-    let registry = ProfileRegistryBuilder::new()
-        .register::<CoreTuning, CoreTuningCodec>()
-        .map_err(|error| format!("cannot register the core tuning codec: {error}"))?
-        .build()
-        .map_err(|error| format!("cannot build the core tuning registry: {error}"))?;
-    let prepared = registry
-        .from_json(text)
-        .map_err(|error| format!("committed core owner envelope is invalid: {error}"))?;
-    let ids = prepared.section_ids().collect::<Vec<_>>();
-    if ids != ["gf2-core/selectors"] {
-        return Err(format!("unexpected core owner section IDs {ids:?}"));
-    }
-    prepared
-        .section::<CoreTuning>()
-        .map_err(|error| format!("cannot project the core tuning section: {error}"))?
-        .map(|section| section.section.clone())
-        .ok_or_else(|| "committed core owner section is absent".to_owned())
 }
 
 pub(crate) fn fresh_tuning_process(case: FreshProcessCase) -> Result<(), String> {

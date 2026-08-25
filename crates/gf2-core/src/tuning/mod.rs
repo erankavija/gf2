@@ -33,6 +33,7 @@
 
 use std::fmt;
 
+#[cfg(any(test, gf2_tuning_baked))]
 pub(crate) mod baked;
 mod mechanism;
 pub use mechanism::*;

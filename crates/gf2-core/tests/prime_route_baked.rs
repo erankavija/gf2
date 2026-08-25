@@ -5,9 +5,13 @@
 //! (`RUSTFLAGS="--cfg gf2_tuning_baked"`); the default build's conservative
 //! boundaries are asserted by `prime_route_reporter.rs`.
 //!
-//! The expected values come from the strict committed core-owner envelope. Its
-//! programmatic complete conservative section carries the same values as the
-//! baked constants (`dev/active/3fa7c9d0/design.md` §7.5).
+//! The format-1 calibration archived at
+//! `dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
+//! (SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`)
+//! cites `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` but
+//! omits `prime_route`. These baked fields therefore retain their conservative
+//! defaults until measured format-2 evidence supersedes that anchor, as
+//! `dev/active/3fa7c9d0/design.md` §7.1 requires.
 //!
 //! `prime_gemm_route` reports the dispatchers' whole gate chain, and whether a
 //! cascade kernel is registered is a host property, so each boundary test
@@ -19,6 +23,8 @@
 use gf2_core::gfp::simd_ops::{prime_gemm_route, PrimeGemmRoute};
 use gf2_core::tuning::{self, CoreTuning};
 
+#[path = "support/historical_v1.rs"]
+mod historical_v1;
 #[path = "support/core_tuning.rs"]
 mod support;
 
@@ -27,15 +33,15 @@ mod support;
 const M: usize = 64;
 const K: usize = 64;
 
-/// Loads the committed conservative core section the baked constants mirror.
-fn committed_core_section() -> CoreTuning {
-    support::committed_core_owner(include_str!("../data/tuning-profiles/conservative.json"))
-        .expect("committed core-owner envelope is valid")
+/// Returns the defaults justified by the archived calibration's omission.
+fn archived_default_section() -> CoreTuning {
+    historical_v1::assert_family_was_omitted("prime_route");
+    CoreTuning::CONSERVATIVE
 }
 
 #[test]
-fn baked_build_routes_gf251_by_the_committed_column_bound() {
-    let profile = committed_core_section();
+fn baked_build_routes_gf251_by_the_archived_default_column_bound() {
+    let profile = archived_default_section();
     let cols = profile.prime_route().f32_min_cols();
     let below = cols
         .checked_sub(1)
@@ -58,12 +64,12 @@ fn baked_build_routes_gf251_by_the_committed_column_bound() {
 }
 
 #[test]
-fn baked_build_brackets_the_committed_prime_bound() {
-    let profile = committed_core_section();
+fn baked_build_brackets_the_archived_default_prime_bound() {
+    let profile = archived_default_section();
     let prime_route = profile.prime_route();
     assert!(
         (242..=251).contains(&prime_route.f32_min_prime()),
-        "the committed prime_route.f32_min_prime is {}, outside the \
+        "the archived default prime_route.f32_min_prime is {}, outside the \
          (241, 251] window this witness brackets; re-pin it against the \
          in-scope primes adjacent to the candidate bound",
         prime_route.f32_min_prime()
@@ -86,8 +92,8 @@ fn baked_build_brackets_the_committed_prime_bound() {
 }
 
 #[test]
-fn baked_build_routes_medium_primes_by_the_committed_column_bound() {
-    let profile = committed_core_section();
+fn baked_build_routes_medium_primes_by_the_archived_default_column_bound() {
+    let profile = archived_default_section();
     let cols = profile.prime_route().f64_min_cols();
     let below = cols
         .checked_sub(1)
@@ -129,7 +135,7 @@ support::fresh_tuning_test!(install_does_not_govern_prime_route_selection, {
 
     // The family is baked: the installed profile would put every cell below on
     // a cascade if the boundary were read at run time, and none of them move.
-    let profile = committed_core_section();
+    let profile = archived_default_section();
     let prime_route = profile.prime_route();
     if let Some(below) = prime_route.f32_min_cols().checked_sub(1) {
         assert!(!prime_gemm_route::<251>(M, K, below).is_f32_cascade());
