@@ -173,7 +173,7 @@
      "title": "Mutable BP fallback composition",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "session 3: claimed; dispatched to worktree agent-d76ffd12 (anchored 673bb928)"
+     "status": "session 3: content review PASS; committed a28ed759; merged f4a5883b; cargo-ci gate running"
     },
     {
      "id": null,
@@ -182,7 +182,7 @@
      "title": "OSD discard thresholds",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "session 3: claimed; dispatched to worktree agent-5194f470 (anchored 673bb928)"
+     "status": "done (all gates passed round 1: cargo-ci, code-review, doc-review; merged 04a43e45; completed 7a92d49f)"
     },
     {
      "id": null,
@@ -191,7 +191,7 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "session 3: claimed; dispatched (native Opus agent) to worktree agent-cef1ae5f (anchored 673bb928, unseeded cold build due to disk pressure)"
+     "status": "session 3: dispatched (native Opus); release build in progress after slow spec-reading phase"
     }
    ]
   }
