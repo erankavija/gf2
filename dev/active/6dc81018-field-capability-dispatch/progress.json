@@ -3,15 +3,7 @@
   "epic_short_id": "6dc81018",
   "current_wave": 23.5,
   "wave_notes": "Session 11 resume audit: wave 23.5 remains open at 389aa4de's measured phase. A clean v2-emitting binary is required, but the inherited replace-vs-add Block E choice and provenance-safe bootstrap are unresolved. No measurement or mutation proceeds until the owner decides. Claude owns unrelated OSD epic b7157be6 and coordinates shared Cargo/benchmark host windows through /home/vkaskivuo/Projects/forum-poc.",
-  "open_escalations": [
-    {
-      "kind": "architectural-decision",
-      "issue": "389aa4de",
-      "date": "2026-08-25",
-      "question": "Choose the committed calibrated-profile migration shape before the v2 measurement: replace the v1 anchor through a provenance-safe temporary migration, or add a v2 profile beside it with an explicitly versioned compatibility boundary.",
-      "recommendation": "Replace. Authorize a two-commit temporary-branch migration: first a clean dual-token bootstrap that leaves the byte-identical v1 anchor loadable, then the measured v2 profile/receipt and removal of v1 acceptance. Merge the complete series to main only after all checks pass."
-    }
-  ],
+  "open_escalations": [],
   "waves": [
     {
       "wave_number": 1,
@@ -723,8 +715,8 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus (native worker, harness phase) + lead (measured phase pending)",
-          "status": "blocked-owner-decision",
-          "notes": "Harness phase MERGED 28f674d6: omission set = schema complement (33/38 omitted, 7 drift tests), forced-arm child-process sweep (route/operand/product verification, 14 tests), DEC-B16 grid-point forcing (crossover direction confirmed between degree 16 and 31), receipt-notes.md Blocks A-E linked. cargo-ci PASS; code-review FAIL F1/F2/F3. Session-11 audit confirmed the measured phase cannot start truthfully from the current v1-emitting source: an uncommitted token bump makes source_dirty=true, a v2-only loader rejects the committed v1 anchor, and relabelling the old artifact as v2 violates behavioral provenance. Await the Block E owner decision and bootstrap authorization. Claim held by agent:worker."
+          "status": "preparing-v2-bootstrap",
+          "notes": "Harness phase MERGED 28f674d6: omission set = schema complement (33/38 omitted, 7 drift tests), forced-arm child-process sweep (route/operand/product verification, 14 tests), DEC-B16 grid-point forcing (crossover direction confirmed between degree 16 and 31), receipt-notes.md Blocks A-E linked. cargo-ci PASS; code-review FAIL F1/F2/F3. Session-11 audit confirmed the measured phase cannot start truthfully from the current v1-emitting source. DEC-V selects replacement under canonical-cutover and convention-convergence: a named temporary dual-token boundary on the issue branch, followed by the measured v2 profile and removal of v1 acceptance before merge. Claim held by agent:worker."
         }
       ]
     }
@@ -1025,6 +1017,12 @@
       "issue": "389aa4de",
       "date": "2026-08-23",
       "decision": "DEC-B16: karatsuba asymptotic arm forces the grid point (minimal forcing timed a non-production algorithm; evidence in receipt-notes Block D + design A4). DEC-B17 (amended): harness token bumps to tuning-calibration-v2 IN THE SAME CHANGE as the measured run's v2 profile commit -- a committed v1 profile (gf2-5ecc9bf8-calibration-e202c080.json) is the drift anchor of the whole baked mechanism (9 readers); replacing it may re-pin DEC-G (smoke suggests simd_min_words 2 vs baked 4) -- owner decision listed in handoff open questions."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "389aa4de",
+      "date": "2026-08-25",
+      "decision": "DEC-V: choose Block E shape A. Replace the v1 calibrated-profile anchor; do not add a second lasting profile. The clean-source bootstrap is a named, versioned temporary dual-token migration boundary on the issue branch with the tracked removal condition that v1 acceptance is removed before the reviewed series merges. The final state has one v2 profile and one canonical parser contract, per @/invariant/canonical-cutover and @/invariant/convention-convergence."
     }
   ],
   "rework_counts": {
