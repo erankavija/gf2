@@ -21,22 +21,10 @@ before comparing anything against these values.
 
 ## Source pin
 
-The reproduction target work is `@/citation/Fossorier1995` — Fossorier, Lin,
-"Soft-Decision Decoding of Linear Block Codes Based on Ordered Statistics",
-IEEE Trans. Inf. Theory 41(5):1379–1396, 1995, doi:`10.1109/18.412683`.
-
-**The page, figure, and series identifiers inside `Fossorier1995` are not
-verified.** That article is closed access: Unpaywall reports
-`is_oa: false`, `oa_status: "closed"`, `has_repository_copy: false` and an
-empty `oa_locations` list for `10.1109/18.412683` (queried 2026-08-24), and the
-IEEE Xplore article-PDF endpoints answer with authentication redirects. No open
-copy was located. Its figure numbering, page numbering, and series legends
-therefore remain unknown, and this document asserts none.
-
-The digitized values come from the author's antecedent dissertation
-`@/citation/Fossorier1994`, the authoritative pinned source (owner decision
-D-21), which is open access and reports the same algorithm, code, channel, and
-reprocessing orders:
+The authoritative pinned source, and the work all digitized values come from,
+is the author's dissertation `@/citation/Fossorier1994` (owner decision D-21).
+It is open access and reports the algorithm, code, channel, and reprocessing
+orders digitized here:
 
 | Field | Value |
 | --- | --- |
@@ -58,6 +46,19 @@ for (128,64,22) extended BCH code (\*: union bound)".
 
 The dissertation resolves as `@/citation/Fossorier1994` in the citation
 registry.
+
+The journal article `@/citation/Fossorier1995` — Fossorier, Lin,
+"Soft-Decision Decoding of Linear Block Codes Based on Ordered Statistics",
+IEEE Trans. Inf. Theory 41(5):1379–1396, 1995, doi:`10.1109/18.412683` — is
+recorded as bibliographically related to the pinned dissertation but is not a
+source of any value in this dataset. **The page, figure, and series
+identifiers inside `Fossorier1995` are not verified.** The article is closed
+access: Unpaywall reports `is_oa: false`, `oa_status: "closed"`,
+`has_repository_copy: false` and an empty `oa_locations` list for
+`10.1109/18.412683` (queried 2026-08-24), and the IEEE Xplore article-PDF
+endpoints answer with authentication redirects. No open copy was located. Its
+figure numbering, page numbering, and series legends therefore remain unknown,
+and this document asserts none.
 
 ## Code construction identity
 
