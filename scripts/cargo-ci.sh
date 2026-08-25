@@ -233,7 +233,18 @@ run_step tuning-algebra-no-default "${NICE_PREFIX[@]}" cargo check -p gf2-algebr
 run_step tuning-algebra-codec-only "${NICE_PREFIX[@]}" cargo check -p gf2-algebra --no-default-features --features tuning-profile
 
 run_step test   "${NICE_PREFIX[@]}" cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
+
+# The ordinary non-HIP feature set intentionally omits profile I/O, so keep the
+# format-2 authority, process lifecycle, and calibration producer unit surface
+# explicitly reachable in the fast tier. These are ordinary release tests: no
+# ignored test or benchmark/calibration action is selected.
+run_step tuning-profile-nextest "${NICE_PREFIX[@]}" cargo nextest run -p gf2-core --release --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness
+run_step tuning-lifecycle-cargo "${NICE_PREFIX[@]}" cargo test -p gf2-core --release --no-default-features --test tuning_process_lifecycle
+
 run_step clippy "${NICE_PREFIX[@]}" cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings
+# Lint both section owners with every profile surface even when FEAT_FLAGS is
+# the ordinary non-HIP subset.
+run_step tuning-owner-clippy "${NICE_PREFIX[@]}" cargo clippy -p gf2-core -p gf2-algebra --all-targets --all-features -- -D warnings
 run_step fmt    "${NICE_PREFIX[@]}" cargo fmt --all -- --check
 # Baked selector fields (DEC-G, and the follow-on families of
 # dev/active/7d824b2f/design.md §2.2): the gf2_tuning_baked cfg is not a Cargo
