@@ -9400,3 +9400,5 @@
 {"gate_key":"cargo-ci","id":"6fe23f6f-052a-4ae9-b776-626a018e311e","issue_id":"1947125e-33eb-4442-b717-24442cc35ca1","timestamp":"2026-08-25T09:57:05.773261976Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"665b5dce-052b-4a5e-84c3-aae3080d98d2","issue_id":"1947125e-33eb-4442-b717-24442cc35ca1","timestamp":"2026-08-25T09:59:17.184825443Z","to":"done","type":"issue_state_changed"}
 {"id":"bf283300-c048-4432-92c2-befd8c8aabef","issue_id":"1947125e-33eb-4442-b717-24442cc35ca1","timestamp":"2026-08-25T09:59:17.184825443Z","type":"issue_completed"}
+{"fields":["documents"],"id":"e746e8ce-f879-4cdd-9174-8ce234bf9d33","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-25T10:10:52.225869966Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"c5c9e3eb-5e64-4599-91f1-bb21340d0249","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-25T10:11:59.105020100Z","type":"issue_updated","updated_by":"doc-add"}
