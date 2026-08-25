@@ -2,10 +2,11 @@
 
 use gf2_core::tuning::{
     AssemblyProvenance, CanonicalValue, CompiledProfileProvenance, CoreTuning, CoreTuningCodec,
-    MeasurementProvenance, PreparedEnvelope, ProfileError, ProfileId, ProfileRegistryBuilder,
-    RepoRelPath, Rfc3339Utc, SectionCodec, SectionError, SectionId, Sha256, TuningSection,
-    PROFILE_FORMAT_VERSION,
+    GitRevision, HarnessSchema, MeasurementProvenance, PreparedEnvelope, ProfileError, ProfileId,
+    ProfileRegistryBuilder, RegistryError, RepoRelPath, Rfc3339Utc, SectionCodec, SectionError,
+    SectionId, Sha256, TuningSection, PROFILE_FORMAT_VERSION,
 };
+use sha2::{Digest, Sha256 as Sha256Hasher};
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 struct Alpha {
@@ -24,6 +25,47 @@ impl TuningSection for Alpha {
 
     fn selectors(&self) -> &Self::Selectors {
         &self.value
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct AlphaAlias(u64);
+
+static ALPHA_ALIAS_CONSERVATIVE: AlphaAlias = AlphaAlias(31);
+
+impl TuningSection for AlphaAlias {
+    const ID: SectionId = Alpha::ID;
+    type Selectors = u64;
+
+    fn conservative() -> &'static Self {
+        &ALPHA_ALIAS_CONSERVATIVE
+    }
+
+    fn selectors(&self) -> &Self::Selectors {
+        &self.0
+    }
+}
+
+struct AlphaAliasCodec;
+
+impl SectionCodec<AlphaAlias> for AlphaAliasCodec {
+    const SCHEMA_VERSION: u32 = 1;
+
+    fn validate_measurement(value: &MeasurementProvenance) -> Result<(), SectionError> {
+        match value {
+            MeasurementProvenance::Inherited => Ok(()),
+            MeasurementProvenance::Calibrated { .. } => {
+                Err(SectionError::unsupported_harness("test-alpha-alias-v1"))
+            }
+        }
+    }
+
+    fn decode_body(body: CanonicalValue) -> Result<AlphaAlias, SectionError> {
+        body.deserialize().map(AlphaAlias)
+    }
+
+    fn encode_body(section: &AlphaAlias) -> Result<CanonicalValue, SectionError> {
+        CanonicalValue::serialize(&section.0)
     }
 }
 
@@ -119,6 +161,47 @@ fn assembly() -> AssemblyProvenance {
     }
 }
 
+fn recompute_content_digest(json: &str) -> String {
+    let mut document = json.trim_end_matches('\n').to_owned();
+    let assembly = document
+        .find(",\"assembly\":")
+        .expect("the registry emits assembly before sections");
+    let sections = document
+        .find(",\"sections\":")
+        .expect("the registry emits a sections object");
+    let content = format!("{},{}", &document[..assembly], &document[sections + 1..]);
+    let digest = format!("{:x}", Sha256Hasher::digest(content.as_bytes()));
+    let digest_marker = "\"content_sha256\":\"";
+    let digest_start = document
+        .find(digest_marker)
+        .expect("the registry emits an assembly digest")
+        + digest_marker.len();
+    document.replace_range(digest_start..digest_start + 64, &digest);
+    document.push('\n');
+    document
+}
+
+fn calibrated_core_measurement() -> MeasurementProvenance {
+    MeasurementProvenance::Calibrated {
+        measured_at: Rfc3339Utc::parse("2026-08-25T18:00:00Z").unwrap(),
+        source_revision: GitRevision::parse("0123456789abcdef0123456789abcdef01234567").unwrap(),
+        source_dirty: false,
+        harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs").unwrap(),
+        harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA).unwrap(),
+        binary_sha256: Sha256::parse(
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        )
+        .unwrap(),
+        toolchain: "rustc 1.95.0".to_owned(),
+        host: "test-host".to_owned(),
+        cpu_model: "test-cpu".to_owned(),
+        cpu_features: vec!["avx2".to_owned()],
+        os_kernel: "Linux 6.test".to_owned(),
+        governor: "performance".to_owned(),
+        receipt: RepoRelPath::parse("dev/benchmarks/tuning_profiles/test.md").unwrap(),
+    }
+}
+
 #[test]
 fn registration_and_insertion_order_do_not_change_canonical_bytes() {
     let alpha_beta = ProfileRegistryBuilder::new()
@@ -191,6 +274,11 @@ fn present_sections_are_strict_and_registered_but_absent_sections_are_valid() {
         .build()
         .unwrap();
     let owner_json = alpha_registry.to_json(&owner, &assembly()).unwrap();
+    assert_eq!(
+        complete_registry.to_json(&owner, &assembly()).unwrap(),
+        owner_json,
+        "an extra registered codec does not emit an absent section"
+    );
     let reopened = complete_registry.from_json(&owner_json).unwrap();
     assert!(reopened.section::<Beta>().unwrap().is_none());
 
@@ -252,19 +340,177 @@ fn unsupported_envelope_versions_duplicate_keys_and_floats_are_rejected() {
 }
 
 #[test]
-fn duplicate_registry_and_prepared_identities_are_rejected() {
-    assert!(ProfileRegistryBuilder::new()
+fn section_versions_are_checked_after_a_valid_content_digest() {
+    let registry = ProfileRegistryBuilder::new()
         .register::<Alpha, AlphaCodec>()
         .unwrap()
+        .build()
+        .unwrap();
+    let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
+        .insert(Alpha { value: 29 })
+        .unwrap()
+        .build()
+        .unwrap();
+    let json = registry.to_json(&prepared, &assembly()).unwrap();
+
+    for version in [0, 2, u32::MAX] {
+        let changed = json.replacen(
+            &format!("\"schema_version\":{}", AlphaCodec::SCHEMA_VERSION),
+            &format!("\"schema_version\":{version}"),
+            1,
+        );
+        let changed = recompute_content_digest(&changed);
+        assert!(matches!(
+            registry.from_json(&changed),
+            Err(ProfileError::UnsupportedSectionSchemaVersion {
+                id,
+                found,
+                supported: AlphaCodec::SCHEMA_VERSION,
+            }) if id == Alpha::ID.as_str() && found == version
+        ));
+    }
+}
+
+#[test]
+fn selector_changes_without_reassembly_fail_the_content_digest() {
+    let registry = ProfileRegistryBuilder::new()
         .register::<Alpha, AlphaCodec>()
-        .is_err());
-    assert!(
+        .unwrap()
+        .build()
+        .unwrap();
+    let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
+        .insert(Alpha { value: 29 })
+        .unwrap()
+        .build()
+        .unwrap();
+    let json = registry.to_json(&prepared, &assembly()).unwrap();
+    let changed = json.replacen("\"value\":29", "\"value\":30", 1);
+
+    assert!(matches!(
+        registry.from_json(&changed),
+        Err(ProfileError::ContentDigestMismatch { .. })
+    ));
+}
+
+#[test]
+fn calibrated_core_measurement_rejects_an_unknown_harness_token() {
+    let registry = core_registry();
+    let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
+        .insert_measured::<CoreTuning, CoreTuningCodec>(
+            CoreTuning::CONSERVATIVE,
+            calibrated_core_measurement(),
+        )
+        .unwrap()
+        .build()
+        .unwrap();
+    let json = registry.to_json(&prepared, &assembly()).unwrap();
+    let unknown = "unknown-core-harness-v9";
+    let changed = json.replacen(CoreTuningCodec::HARNESS_SCHEMA, unknown, 1);
+    let changed = recompute_content_digest(&changed);
+
+    assert!(matches!(
+        registry.from_json(&changed),
+        Err(ProfileError::UnsupportedHarnessSchema {
+            id,
+            found,
+            supported: CoreTuningCodec::HARNESS_SCHEMA,
+        }) if id == CoreTuning::ID.as_str() && found == unknown
+    ));
+}
+
+#[test]
+fn duplicate_registry_and_prepared_identities_are_rejected() {
+    assert!(ProfileRegistryBuilder::new().build().is_err());
+    assert!(matches!(
+        ProfileRegistryBuilder::new()
+            .register::<Alpha, AlphaCodec>()
+            .unwrap()
+            .register::<Alpha, AlphaCodec>(),
+        Err(RegistryError::DuplicateSectionType(_))
+    ));
+    assert!(matches!(
+        ProfileRegistryBuilder::new()
+            .register::<Alpha, AlphaCodec>()
+            .unwrap()
+            .register::<AlphaAlias, AlphaAliasCodec>(),
+        Err(RegistryError::DuplicateSectionId(id)) if id == Alpha::ID.as_str()
+    ));
+    assert!(matches!(
         PreparedEnvelope::compiled(profile_id(), compiled_provenance())
             .insert(Alpha { value: 1 })
             .unwrap()
-            .insert(Alpha { value: 2 })
-            .is_err()
+            .insert(Alpha { value: 2 }),
+        Err(ProfileError::DuplicateSectionType { .. })
+    ));
+    assert!(matches!(
+        PreparedEnvelope::compiled(profile_id(), compiled_provenance())
+            .insert(Alpha { value: 1 })
+            .unwrap()
+            .insert(AlphaAlias(2)),
+        Err(ProfileError::DuplicateSectionId { id }) if id == Alpha::ID.as_str()
+    ));
+}
+
+#[test]
+fn prepared_projection_checks_the_stable_id_and_rust_type_without_resolving() {
+    let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
+        .insert(Alpha { value: 37 })
+        .unwrap()
+        .build()
+        .unwrap();
+
+    assert!(matches!(
+        prepared.section::<AlphaAlias>(),
+        Err(ProfileError::RegistryInvariant {
+            id,
+            expected_type: _,
+            stored_type: _,
+        }) if id == Alpha::ID.as_str()
+    ));
+    assert_eq!(
+        prepared.section::<Alpha>().unwrap().unwrap().section.value,
+        37
     );
+}
+
+#[test]
+fn registry_encoding_reports_an_id_type_mismatch_without_panicking() {
+    let registry = ProfileRegistryBuilder::new()
+        .register::<Alpha, AlphaCodec>()
+        .unwrap()
+        .build()
+        .unwrap();
+    let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
+        .insert(AlphaAlias(41))
+        .unwrap()
+        .build()
+        .unwrap();
+
+    assert!(matches!(
+        registry.to_json(&prepared, &assembly()),
+        Err(ProfileError::RegistryInvariant {
+            id,
+            expected_type: _,
+            stored_type: _,
+        }) if id == Alpha::ID.as_str()
+    ));
+}
+
+#[test]
+fn a_strict_empty_envelope_is_valid_and_projects_every_type_as_absent() {
+    let registry = ProfileRegistryBuilder::new()
+        .register::<Alpha, AlphaCodec>()
+        .unwrap()
+        .build()
+        .unwrap();
+    let empty = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
+        .build()
+        .unwrap();
+    let json = registry.to_json(&empty, &assembly()).unwrap();
+    let reopened = registry.from_json(&json).unwrap();
+
+    assert_eq!(reopened.section_ids().count(), 0);
+    assert!(reopened.section::<Alpha>().unwrap().is_none());
 }
 
 fn core_registry() -> gf2_core::tuning::ProfileRegistry {

@@ -1,4 +1,5 @@
-//! Fresh-process installed algebra-section witness for a 4,000,000-subset chunk.
+//! Guarded fresh-process witness that `AlgebraTuningCodec` installs a
+//! 4,000,000-subset chunk and the production permanent callee observes it.
 
 #[path = "support/fresh_tuning_process.rs"]
 mod fresh;

@@ -4,8 +4,9 @@ use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;
 use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec};
 use gf2_core::tuning::{
@@ -64,8 +65,17 @@ fn compose(
 ) -> Result<(), Box<dyn Error>> {
     let core_text = fs::read_to_string(core_path)?;
     let algebra_text = fs::read_to_string(algebra_path)?;
-    let complete_text = compose_texts(&core_text, &algebra_text, profile_id, assembly)?;
-    write_atomic(output_path, complete_text.as_bytes())?;
+    let complete_text = compose_texts(&core_text, &algebra_text, profile_id.clone(), assembly)?;
+    write_validated_atomic(output_path, complete_text.as_bytes(), |written_path| {
+        let written_text = fs::read_to_string(written_path)?;
+        verify_composition(
+            &core_text,
+            &algebra_text,
+            &written_text,
+            &profile_id,
+            assembly,
+        )
+    })?;
     Ok(())
 }
 
@@ -93,7 +103,7 @@ fn compose_texts(
     let provenance = CompiledProfileProvenance {
         artifact_id: profile_id.clone(),
     };
-    let complete = PreparedEnvelope::compiled(profile_id, provenance)
+    let complete = PreparedEnvelope::compiled(profile_id.clone(), provenance)
         .insert_measured::<CoreTuning, CoreTuningCodec>(
             core_projection.section.clone(),
             core_projection.measurement.clone(),
@@ -104,11 +114,53 @@ fn compose_texts(
         )?
         .build()?;
     let complete_text = both_registry.to_json(&complete, assembly)?;
-    let reopened = both_registry.from_json(&complete_text)?;
+    verify_composition(
+        core_text,
+        algebra_text,
+        &complete_text,
+        &profile_id,
+        assembly,
+    )?;
+
+    Ok(complete_text)
+}
+
+/// Strictly reopens one complete artifact and verifies its composition inputs.
+fn verify_composition(
+    core_text: &str,
+    algebra_text: &str,
+    complete_text: &str,
+    expected_profile_id: &ProfileId,
+    expected_assembly: &AssemblyProvenance,
+) -> Result<(), Box<dyn Error>> {
+    let core_registry = owner_core_registry()?;
+    let algebra_registry = owner_algebra_registry()?;
+    let both_registry = complete_registry()?;
+    let core = core_registry.from_json(core_text)?;
+    let algebra = algebra_registry.from_json(algebra_text)?;
+    require_ids(&core, &[CoreTuning::ID.as_str()])?;
+    require_ids(&algebra, &[AlgebraTuning::ID.as_str()])?;
+
+    let reopened = both_registry.from_json(complete_text)?;
     require_ids(
         &reopened,
         &[AlgebraTuning::ID.as_str(), CoreTuning::ID.as_str()],
     )?;
+    if reopened.profile_id() != expected_profile_id {
+        return Err(format!(
+            "complete profile ID {} does not match caller ID {}",
+            reopened.profile_id().as_str(),
+            expected_profile_id.as_str()
+        )
+        .into());
+    }
+    let reopened_assembly = &reopened
+        .verified_assembly()
+        .ok_or("complete envelope lacks verified assembly")?
+        .provenance;
+    if reopened_assembly != expected_assembly {
+        return Err("complete assembly provenance changed during publication".into());
+    }
 
     let canonical_core = core_registry.to_json(
         &core,
@@ -124,14 +176,14 @@ fn compose_texts(
             .ok_or("algebra owner lacks verified assembly")?
             .provenance,
     )?;
-    verify_wrapper_identity(&canonical_core, &complete_text, CoreTuning::ID.as_str())?;
+    verify_wrapper_identity(&canonical_core, complete_text, CoreTuning::ID.as_str())?;
     verify_wrapper_identity(
         &canonical_algebra,
-        &complete_text,
+        complete_text,
         AlgebraTuning::ID.as_str(),
     )?;
 
-    Ok(complete_text)
+    Ok(())
 }
 
 fn owner_core_registry() -> Result<ProfileRegistry, Box<dyn Error>> {
@@ -192,27 +244,91 @@ fn verify_wrapper_identity(
     Ok(())
 }
 
-fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), Box<dyn Error>> {
+fn write_validated_atomic(
+    path: &Path,
+    bytes: &[u8],
+    validate: impl Fn(&Path) -> Result<(), Box<dyn Error>>,
+) -> Result<(), Box<dyn Error>> {
     let file_name = path
         .file_name()
         .and_then(|value| value.to_str())
         .ok_or("output path has no UTF-8 file name")?;
-    let temporary_name = format!(".{file_name}.{}.tmp", std::process::id());
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or(Duration::ZERO)
+        .as_nanos();
+    let temporary_name = format!(".{file_name}.{}-{nonce}.tmp", std::process::id());
     let temporary_path: PathBuf = path.with_file_name(temporary_name);
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(&temporary_path)?;
-    file.write_all(bytes)?;
-    file.sync_all()?;
-    drop(file);
-    fs::rename(&temporary_path, path)?;
-    Ok(())
+    let result = (|| -> Result<(), Box<dyn Error>> {
+        file.write_all(bytes)?;
+        file.sync_all()?;
+        drop(file);
+        validate(&temporary_path)?;
+        fs::hard_link(&temporary_path, path).map_err(|error| {
+            if error.kind() == io::ErrorKind::AlreadyExists {
+                io::Error::new(
+                    io::ErrorKind::AlreadyExists,
+                    format!("refusing to replace existing output {}", path.display()),
+                )
+            } else {
+                error
+            }
+        })?;
+        if let Err(error) = validate(path) {
+            fs::remove_file(path)?;
+            return Err(error);
+        }
+        Ok(())
+    })();
+    if let Err(error) = fs::remove_file(&temporary_path) {
+        eprintln!(
+            "warning: could not remove temporary composition output {}: {error}",
+            temporary_path.display()
+        );
+    }
+    result
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const COMPOSER_SOURCE: &[u8] = include_bytes!("main.rs");
+    const CORE_OWNER: &str =
+        include_str!("../../../../crates/gf2-core/data/tuning-profiles/conservative.json");
+    const ALGEBRA_OWNER: &str =
+        include_str!("../../../../crates/gf2-algebra/data/tuning-profiles/conservative.json");
+    const COMPLETE: &str =
+        include_str!("../../../../dev/reference_data/tuning-profiles/conservative.json");
+
+    struct TestOutput {
+        directory: PathBuf,
+        path: PathBuf,
+    }
+
+    impl TestOutput {
+        fn new() -> Self {
+            static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+            let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let directory = env::temp_dir().join(format!(
+                "gf2-tuning-compose-{}-{serial}",
+                std::process::id()
+            ));
+            fs::create_dir_all(&directory).unwrap();
+            let path = directory.join("complete.json");
+            Self { directory, path }
+        }
+    }
+
+    impl Drop for TestOutput {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.directory);
+        }
+    }
 
     fn id(value: &str) -> ProfileId {
         ProfileId::parse(value).unwrap()
@@ -279,5 +395,84 @@ mod tests {
         .unwrap();
 
         assert_eq!(gf2_core::tuning::install(complete), Ok(()));
+    }
+
+    #[test]
+    fn atomic_publication_never_replaces_an_existing_complete_envelope() {
+        let output = TestOutput::new();
+
+        write_validated_atomic(&output.path, b"first", |_| Ok(())).unwrap();
+        let error = write_validated_atomic(&output.path, b"second", |_| Ok(()))
+            .expect_err("composition must not replace an existing artifact");
+
+        assert!(error.to_string().contains("refusing to replace"));
+        assert_eq!(fs::read(&output.path).unwrap(), b"first");
+        assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn strict_validation_failure_leaves_no_published_or_temporary_artifact() {
+        let output = TestOutput::new();
+
+        write_validated_atomic(&output.path, b"{}", |written_path| {
+            let text = fs::read_to_string(written_path)?;
+            complete_registry()?.from_json(&text)?;
+            Ok(())
+        })
+        .expect_err("an invalid envelope must fail strict reopening");
+
+        assert!(!output.path.exists());
+        assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn validated_publication_reopens_the_temporary_and_final_artifact() {
+        let output = TestOutput::new();
+        let calls = std::cell::Cell::new(0);
+        let complete = complete_registry().unwrap().from_json(COMPLETE).unwrap();
+        let profile_id = complete.profile_id().clone();
+        let assembly = complete.verified_assembly().unwrap().provenance.clone();
+
+        write_validated_atomic(&output.path, COMPLETE.as_bytes(), |written_path| {
+            calls.set(calls.get() + 1);
+            let text = fs::read_to_string(written_path)?;
+            verify_composition(CORE_OWNER, ALGEBRA_OWNER, &text, &profile_id, &assembly)
+        })
+        .unwrap();
+
+        assert_eq!(calls.get(), 2);
+        assert_eq!(fs::read_to_string(&output.path).unwrap(), COMPLETE);
+        assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn committed_artifacts_are_exact_output_of_this_composer_source() {
+        let source_digest = format!("{:x}", Sha256Hasher::digest(COMPOSER_SOURCE));
+        let core = owner_core_registry()
+            .unwrap()
+            .from_json(CORE_OWNER)
+            .unwrap();
+        let algebra = owner_algebra_registry()
+            .unwrap()
+            .from_json(ALGEBRA_OWNER)
+            .unwrap();
+        let complete = complete_registry().unwrap().from_json(COMPLETE).unwrap();
+
+        for prepared in [&core, &algebra, &complete] {
+            let assembly = &prepared.verified_assembly().unwrap().provenance;
+            assert_eq!(assembly.tool.as_str(), TOOL_PATH);
+            assert_eq!(assembly.tool_sha256.as_str(), source_digest);
+        }
+
+        assert_eq!(
+            compose_texts(
+                CORE_OWNER,
+                ALGEBRA_OWNER,
+                complete.profile_id().clone(),
+                &complete.verified_assembly().unwrap().provenance,
+            )
+            .unwrap(),
+            COMPLETE
+        );
     }
 }

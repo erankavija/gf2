@@ -3,9 +3,28 @@ mod fresh;
 
 use fresh::{fresh_tuning_process, FreshProcessCase};
 use gf2_core::tuning::{
-    self, BitBackendSelectors, CompiledProfileProvenance, CoreSelectors, CoreTuning,
-    PreparedEnvelope, ProfileId, ResolutionCause, SectionResolution,
+    self, ActiveSectionInvariant, BitBackendSelectors, CompiledProfileProvenance, CoreSelectors,
+    CoreTuning, PreparedEnvelope, ProfileId, ResolutionCause, SectionId, SectionResolution,
+    TuningSection,
 };
+
+#[derive(Clone)]
+struct CoreAlias;
+
+static CORE_ALIAS_CONSERVATIVE: CoreAlias = CoreAlias;
+
+impl TuningSection for CoreAlias {
+    const ID: SectionId = CoreTuning::ID;
+    type Selectors = ();
+
+    fn conservative() -> &'static Self {
+        &CORE_ALIAS_CONSERVATIVE
+    }
+
+    fn selectors(&self) -> &Self::Selectors {
+        &()
+    }
+}
 
 fn profile_id(name: &str) -> ProfileId {
     ProfileId::parse(name).unwrap()
@@ -22,6 +41,14 @@ fn prepared_core(value: usize) -> PreparedEnvelope {
     selectors.bit_backend = BitBackendSelectors::try_new(value).unwrap();
     PreparedEnvelope::compiled(profile_id("process-test"), compiled("process-test"))
         .insert(CoreTuning::from_selectors(selectors))
+        .unwrap()
+        .build()
+        .unwrap()
+}
+
+fn prepared_core_alias() -> PreparedEnvelope {
+    PreparedEnvelope::compiled(profile_id("type-mismatch"), compiled("type-mismatch"))
+        .insert(CoreAlias)
         .unwrap()
         .build()
         .unwrap()
@@ -66,6 +93,13 @@ fn prepared_projection_is_read_only_and_does_not_freeze_installation() {
     assert_eq!(result["projected"], 31);
     assert_eq!(result["resolution"], "installed");
     assert_eq!(result["value"], 31);
+}
+
+#[test]
+fn installed_id_and_type_mismatch_raises_the_typed_active_invariant() {
+    let result = fresh_tuning_process(FreshProcessCase::ActiveTypeMismatch).unwrap();
+    assert_eq!(result["panic"], "active-section-invariant");
+    assert_eq!(result["section_id"], CoreTuning::ID.as_str());
 }
 
 #[test]
@@ -151,6 +185,18 @@ fn fresh_tuning_process_child() {
                 "projected": projected,
                 "resolution": "installed",
                 "value": active.bit_backend().simd_min_words()
+            })
+        }
+        FreshProcessCase::ActiveTypeMismatch => {
+            tuning::install(prepared_core_alias()).unwrap();
+            let panic = std::panic::catch_unwind(tuning::active)
+                .expect_err("a mismatched installed entry must not produce a typed section");
+            let invariant = panic
+                .downcast_ref::<ActiveSectionInvariant>()
+                .expect("active mismatch uses the typed invariant payload");
+            serde_json::json!({
+                "panic": "active-section-invariant",
+                "section_id": invariant.section_id.as_str(),
             })
         }
     };

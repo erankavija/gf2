@@ -1,4 +1,4 @@
-//! T15 — Rayon parallel `permanent_bipedal3` with chunk-size sweep.
+//! Rayon-parallel `permanent_bipedal3` over fixed Gray-code chunks.
 //!
 //! Splits the `2^n - 1` Gray-code subset walk into fixed-size chunks, each
 //! processed by an independent rayon worker. Each worker computes its
@@ -14,8 +14,9 @@
 //! F_3 addition — `par_bridge` + rayon's work-stealing may reorder map
 //! results but the reduction order does not affect the sum in a commutative
 //! group. Output is therefore bit-identical to `permanent_bipedal3` (serial)
-//! regardless of rayon's thread schedule or the chunk length. CLAUDE.md
-//! §Algorithm reference confirms this property.
+//! regardless of rayon's thread schedule or the chunk length. The shared
+//! scalar/parallel behavioral suite checks this equivalence across chunk
+//! lengths.
 //!
 //! # Chunk-size tuning
 //!
@@ -23,15 +24,13 @@
 //! [`permanent_chunk_len`], a single non-recursive read of the active
 //! [`crate::tuning::AlgebraTuning`] section's `permanent.gray_chunk_subsets` field
 //! (`dev/active/7d824b2f/design.md` §2.3, §3.12). With no profile installed
-//! this resolves to [`CHUNK_SUBSETS`], so default behaviour is unchanged.
+//! the field resolves to the crate-owned conservative [`CHUNK_SUBSETS`].
 //!
-//! `CHUNK_SUBSETS = 1 << 16`, the conservative default, was chosen by running
-//! `crates/gf2-algebra/examples/parallel_chunk_sweep.rs` at n=28 on the dev
-//! host (AMD Ryzen 9 5900X, 12c/24t). See the dated CSV at
-//! `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-*.csv` for the
-//! full sweep. Chunks of 2^16 = 65536 subsets gave the best throughput:
-//! smaller chunks waste rayon-scheduler overhead; larger chunks leave tail
-//! threads idle near `2^n - 1`.
+//! `CHUNK_SUBSETS = 1 << 16` is the conservative declaration. Supporting n=28
+//! sweep rows are committed at
+//! `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-2026-05-11.csv`;
+//! they do not establish a universal optimum. An installed
+//! algebra section can select a different admissible chunk for its campaign.
 
 use gf2_core::gfp::Fp;
 use rayon::prelude::*;
@@ -87,12 +86,11 @@ pub fn last_effective_chunk() -> usize {
 ///
 /// Mirrors [`super::bipedal3::permanent_bipedal3`] in algorithm but splits the
 /// `2^n - 1` non-empty-subset walk into chunks sized by [`permanent_chunk_len`]
-/// (the active tuning profile's `permanent.gray_chunk_subsets` field, read
+/// (the active algebra section's `permanent.gray_chunk_subsets` selector, read
 /// once here and passed to [`permanent_bipedal3_parallel_with_chunk`]). Each
 /// rayon worker independently reconstructs its starting `col_sum` from the
-/// Gray-code index (O(n) per chunk start) and then performs incremental
-/// add/sub updates within the chunk. Partial Ryser contributions are summed
-/// at the end.
+/// Gray-code index (O(n) per chunk start) and then performs incremental add/sub
+/// updates within the chunk. Partial Ryser contributions are summed at the end.
 ///
 /// Output is bit-identical to `permanent_bipedal3` on the same matrix,
 /// regardless of thread count or rayon's work-stealing schedule
@@ -140,7 +138,7 @@ pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
 }
 
 /// Same as [`permanent_bipedal3_parallel`] but takes the chunk size as a
-/// runtime argument instead of resolving it from the tuning profile via
+/// runtime argument instead of resolving it from the algebra tuning section via
 /// [`permanent_chunk_len`].
 ///
 /// This is the SSOT entry point used by both the production wrapper

@@ -6,7 +6,7 @@
 //! is that its value reaches the walk as the stack-buffer length and the walk
 //! step. The production walk records the widest chunk it fills, and this test
 //! reads that observation back. `field_vec_baked.rs` witnesses the same
-//! property against the committed calibrated value under
+//! property against the committed conservative value under
 //! `--cfg gf2_tuning_baked`.
 //!
 //! The observation is a process-wide maximum, so exactly one test per binary

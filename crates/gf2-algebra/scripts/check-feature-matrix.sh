@@ -2,8 +2,10 @@
 # check-feature-matrix.sh — W1-T1 acceptance gate for gf2-algebra.
 #
 # Iterates the 64 cells of the (simd, parallel, hip, f5, f7, serde)
-# Cargo feature matrix from D1c §4 and runs `cargo check -p gf2-algebra`
-# against each. Fails fast on the first non-zero exit.
+# Cargo feature matrix from D1c §4, then checks the profile-codec overlay in
+# its no-default, crate-default, and complete host-supported configurations.
+# Each cell runs `cargo check -p gf2-algebra`; the script fails fast on the
+# first non-zero exit.
 #
 # Cell encoding: a 6-bit bitmap (b5..b0) where the bits map to features
 # in the order (simd, parallel, hip, f5, f7, serde) — same order as the
@@ -23,7 +25,7 @@
 #   bash crates/gf2-algebra/scripts/check-feature-matrix.sh --log out.log
 #
 # Exit codes:
-#   0 — all 64 cells passed (any hip substitutions noted in the log).
+#   0 — all base and profile-overlay cells passed (hip substitutions noted).
 #   1 — a cell failed; the offending bitmap and `cargo check` output
 #       are printed before exit.
 
@@ -137,4 +139,46 @@ for ((cell=0; cell<64; cell++)); do
 done
 
 emit ""
-emit "# summary: ${PASS_COUNT} pass, ${FAIL_COUNT} fail (out of 64)"
+emit "# base summary: ${PASS_COUNT} pass, ${FAIL_COUNT} fail (out of 64)"
+
+# `tuning-profile` gates only the owner codec. Exercise it separately so this
+# established six-dimensional arithmetic/backend matrix does not double in
+# size. These three overlays cover the profile-only surface, the crate-default
+# surface plus the codec, and every host-supported feature plus the codec.
+all_profile_features=()
+for feature in "${FEATURES[@]}"; do
+    if [[ "${feature}" == "hip" && ${HIP_AVAILABLE} -eq 0 ]]; then
+        continue
+    fi
+    all_profile_features+=("${feature}")
+done
+all_profile_features+=("tuning-profile")
+all_profile_joined="$(IFS=,; printf '%s' "${all_profile_features[*]}")"
+
+for label in profile-only profile-default profile-all; do
+    case "${label}" in
+        profile-only)
+            args=(check -p gf2-algebra --no-default-features --features tuning-profile)
+            ;;
+        profile-default)
+            # Let Cargo resolve the manifest's default list; do not duplicate it here.
+            args=(check -p gf2-algebra --features tuning-profile)
+            ;;
+        profile-all)
+            args=(check -p gf2-algebra --no-default-features --features "${all_profile_joined}")
+            ;;
+    esac
+    if cargo "${args[@]}" >/dev/null 2>&1; then
+        emit "PASS overlay=${label} args=$(printf '%q ' "${args[@]}")"
+        PASS_COUNT=$((PASS_COUNT + 1))
+    else
+        emit "FAIL overlay=${label} args=$(printf '%q ' "${args[@]}")"
+        cargo "${args[@]}" || true
+        emit ""
+        emit "# ABORT after profile overlay ${label}"
+        exit 1
+    fi
+done
+
+emit ""
+emit "# summary: ${PASS_COUNT} pass, ${FAIL_COUNT} fail (64 base + 3 profile overlays)"

@@ -45,7 +45,11 @@ pub use profile::*;
 #[cfg(feature = "tuning-profile")]
 use serde::Deserialize;
 
-/// A non-empty kebab-case profile basename: `[a-z0-9]+(-[a-z0-9]+)*`.
+/// A logical tuning configuration or campaign label in lowercase kebab case.
+///
+/// The label is not a globally unique identity for artifact bytes. An exact
+/// serialized artifact is identified by its explicit path, verified content
+/// digest, and provenance; owner and complete envelopes may share one label.
 #[derive(Clone, Debug)]
 pub struct ProfileId(ProfileText);
 
@@ -552,9 +556,9 @@ impl BitBackendSelectors {
 
     /// Returns the profile's minimum word count for the SIMD backend.
     ///
-    /// The field remains part of the runtime profile schema and is observable
-    /// through [`CoreTuning`] and [`active`]. The bit-backend routing
-    /// boundary uses a compile-time constant instead, per DEC-G in
+    /// [`CoreTuningCodec`] encodes this field in the core section, and
+    /// [`active`] exposes its installed or conservative value. The bit-backend
+    /// routing boundary uses a compile-time constant instead, per DEC-G in
     /// `dev/active/220cab0b/design.md`.
     pub fn simd_min_words(&self) -> usize {
         self.simd_min_words
@@ -2149,16 +2153,11 @@ fn out_of_range(family: ProfileFamily, field: ProfileField, value: impl Into<u64
 }
 
 #[cfg(feature = "tuning-profile")]
+#[derive(Default)]
 enum Present<T> {
+    #[default]
     Missing,
     Value(Option<T>),
-}
-
-#[cfg(feature = "tuning-profile")]
-impl<T> Default for Present<T> {
-    fn default() -> Self {
-        Self::Missing
-    }
 }
 
 #[cfg(feature = "tuning-profile")]

@@ -810,3 +810,23 @@ under that change's authority, and amending the host-calibration
 receipt's emitted-artifact citation (receipt-notes.md Block E). The
 bump still precedes any committed v2 evidence, which is the timeline
 `@/inv/behavioral-evidence-validity` requires.
+
+## Amendment A5 (2026-08-26, DEC-W format-2 ownership)
+
+`dev/active/3fa7c9d0/design.md` supersedes D4 and D5 only for selector
+ownership and serialization. `gf2-algebra` owns `AlgebraTuning`,
+`PermanentSelectors`, their range/default/codec/active accessor, and the
+canonical `CHUNK_SUBSETS` declaration. `gf2-core` owns the generic typed
+envelope, registry, provenance, and single install/freeze authority plus its
+own `CoreTuning` section. Algebra uses that one generic authority; it does not
+introduce a second profile or process cell.
+
+The per-field runtime-versus-baked classifications, §2.3 read-once placement,
+route-observation obligations, determinism requirements, and §5.3 amortisation
+rule remain authoritative. Baked values that came from the v1 calibrated
+artifact cite its exact archived bytes at
+`dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
+and SHA-256
+`674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`;
+the inherited format-2 conservative envelopes are not calibration evidence.
+No format-1 reader is retained to support those historical citations.
