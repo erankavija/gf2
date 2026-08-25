@@ -50,10 +50,9 @@ impl EmissionApproval {
 
 /// Why a path inside the repository is not one campaign's directory.
 ///
-/// The guard exempts everything below the campaign root from the
-/// source-identity check, so accepting a root that is not a campaign directory
-/// would exempt whatever that root happens to contain — at the repository root,
-/// the entire workspace. The accepted shape is therefore exactly
+/// The root names the frozen manifest the guard verifies against, so a root
+/// that is not one campaign's directory names no single manifest and leaves
+/// the guard nothing to check. The accepted shape is therefore exactly
 /// `<repository>/<DATASET_HOME>/<campaign-id>`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CampaignPathFault {
@@ -207,8 +206,8 @@ impl std::error::Error for EmissionRefusal {
 ///
 /// `campaign_root` must be one campaign's directory: exactly one
 /// [`CampaignId`] level below [`DATASET_HOME`] inside the repository. A root
-/// that is merely somewhere inside the repository is refused, because the
-/// subtree exemption would otherwise excuse whatever that root contains. It may
+/// that is merely somewhere inside the repository is refused, because it names
+/// no single frozen manifest for the guard to verify against. It may
 /// name a directory that does not exist yet, provided its parent does; the
 /// first emission of a campaign creates it.
 ///
@@ -290,14 +289,14 @@ fn approve_emission_with_binary_digest(
     Ok(EmissionApproval { binary_sha256 })
 }
 
-/// Returns the campaign subtree as a repository-relative `/`-terminated prefix.
+/// Returns the campaign directory as a repository-relative `/`-terminated prefix.
 ///
-/// Being somewhere inside the repository is not enough. Everything below the
-/// returned prefix is exempt from the source-identity check, so a root that is
-/// not one campaign's directory would exempt whatever it contains — the whole
-/// workspace, at the repository root. The path must therefore be exactly one
-/// [`CampaignId`] directory below [`DATASET_HOME`]; anything else refuses and
-/// names which of those conditions it broke.
+/// The prefix addresses that campaign's committed manifest as
+/// `HEAD:<prefix>manifest.json`, the copy the guard compares the on-disk
+/// manifest against. Being somewhere inside the repository is not enough: only
+/// exactly one [`CampaignId`] directory below [`DATASET_HOME`] names one
+/// campaign's frozen manifest, so anything else refuses and names which of
+/// those conditions it broke.
 fn campaign_prefix(
     anchor: &Path,
     campaign_root: &Path,
@@ -1517,10 +1516,11 @@ mod tests {
 
     /// REQ-02, REQ-03: the campaign's own output never refuses its own writer.
     ///
-    /// The criterion exempts expected raw *and derived* files under the frozen
-    /// campaign id, so the derived report is committed first and then changed:
-    /// a tracked modification exercises the subtree exemption itself, where an
-    /// untracked file would only exercise the weaker untracked rule.
+    /// Emission reads the frozen manifest and the running binary, so writing a
+    /// campaign's own raw and derived files cannot refuse the writer that
+    /// produces them. The derived report is committed and then changed, and a
+    /// second shard added, so the test fails if a repository-state sweep is
+    /// ever reintroduced ahead of the guard.
     #[test]
     fn emission_admits_a_tree_dirtied_only_by_campaign_outputs() {
         let repo = TestRepo::new();
@@ -1538,9 +1538,10 @@ mod tests {
 
     /// REQ-02: only one campaign's own directory may be emitted into.
     ///
-    /// A tracked source file is modified throughout, so a root that wrongly
-    /// exempted the tree around it would approve rather than refuse — the test
-    /// fails if the exemption hole reopens, not merely if a path check moves.
+    /// Each rejected root names no single frozen manifest, which is what the
+    /// guard needs to decide emission. A tracked source file is modified
+    /// throughout to show the refusal follows from the root's shape alone and
+    /// not from the state of the tree around it.
     #[test]
     fn emission_refuses_non_campaign_root() {
         let repo = TestRepo::new();
