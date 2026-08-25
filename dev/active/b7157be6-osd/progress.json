@@ -173,7 +173,7 @@
      "title": "Mutable BP fallback composition",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "pending"
+     "status": "session 3: claimed; dispatched to worktree agent-d76ffd12 (anchored 673bb928)"
     },
     {
      "id": null,
@@ -182,7 +182,7 @@
      "title": "OSD discard thresholds",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "session 3: claimed; dispatched to worktree agent-5194f470 (anchored 673bb928)"
     },
     {
      "id": null,
@@ -191,7 +191,7 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "pending"
+     "status": "session 3: claimed; awaiting worktree seed, host window granted by codex (HOST IS YOURS 20:56Z, later relaxed to shared-by-owner-instruction)"
     }
    ]
   }
