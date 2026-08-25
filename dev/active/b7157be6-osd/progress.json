@@ -191,7 +191,7 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "session 3: claimed; awaiting worktree seed, host window granted by codex (HOST IS YOURS 20:56Z, later relaxed to shared-by-owner-instruction)"
+     "status": "session 3: claimed; dispatched (native Opus agent) to worktree agent-cef1ae5f (anchored 673bb928, unseeded cold build due to disk pressure)"
     }
    ]
   }
