@@ -14,6 +14,10 @@ Read the context issue, its hard criteria, `cites:` labels, linked documents, an
 
 The issue description may record user decisions under a `## Decisions` heading (items `DEC-NN`). Decisions bind this review: treat the state a decision accepts as authoritative, and do not raise a blocking finding whose only remedy the decision forecloses. If evidence contradicts a decision's factual premise, surface that as an advisory finding citing the decision identifier.
 
+## Convergence across rounds
+
+Verify every prior blocking finding's state at HEAD before any new judgment and open the report with a one-line-per-finding closure ledger: closed (cite the closing artifact), open, or regressed; a regression outranks any new finding. After the first round, judge what changed since the reviewed revision plus prior open findings; a new blocking finding against content unchanged since a prior round names the round that could have observed it and why it is material now, else report it as advisory. A `## Decisions` item forecloses its remedy class across the whole attributable footprint — the same foreclosed-evidence class on a sibling surface of the same dataset is re-raised only as a factual-premise advisory citing the decision.
+
 ## Rubric — blocking on failure
 
 - Trace every quantitative claim (speedup, BLER, threshold, probability estimate, crossover, sample statistic) in attributable text to a committed artifact. Reject prose-only numbers.
@@ -33,4 +37,4 @@ The issue description may record user decisions under a `## Decisions` heading (
 
 ## Verdict policy
 
-Any blocking finding on attributable content: FAIL. Advisory-only findings: PASS with the findings listed. Pre-existing debt outside the attributable footprint is advisory. Do not fail for pending judgment gates. Verify every hard criterion that concerns measurement, statistics, or citation; consume executable-gate evidence from the context rather than re-running it.
+Any blocking finding on attributable content: FAIL. Advisory-only findings: PASS with the findings listed. Pre-existing debt outside the attributable footprint is advisory. Do not fail for pending judgment gates. Verify every hard criterion that concerns measurement, statistics, or citation; consume executable-gate evidence from the context rather than re-running it. Every finding classifies `disposition` (blocking or advisory) and `origin` (issue-impact or pre-existing); the verdict is fail if and only if an unresolved issue-impact blocking finding exists.
