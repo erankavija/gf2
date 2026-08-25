@@ -223,11 +223,11 @@ According to ROADMAP:
 16. ✅ **Verified SIMD feature** (compiles, per ROADMAP claims working)
 
 ### Phase 4: API Design & Ergonomics
-17. ✅ **Audited trait design** (8 traits, 10 implementations, consistent naming)
+17. ✅ **Audited trait design** (7 traits, 10 implementations, consistent naming)
 18. ✅ **Verified error handling** (panics for contracts, Results for I/O)
 19. ✅ **Reviewed constructor patterns** (clear factories, no builder needed)
 20. ✅ **Validated usability** (12 examples working, clear panic messages)
-21. ✅ **Assessed API stability** (1 deprecation with migration path)
+21. ✅ **Assessed API stability** (no deprecated APIs in the public surface)
 
 ### Phase 5: Code Architecture & Maintainability
 22. ✅ **Audited module organization** (8163 lines, clear boundaries)
@@ -497,7 +497,7 @@ Tested error conditions - all panic messages are **actionable**:
 - Additional DVB-T2 configurations (data population)
 
 #### Semver Strategy
-Currently **pre-1.0** (version 0.x.x implied by deprecation notes):
+Currently **pre-1.0** (version 0.x.x):
 - Minor version bumps for breaking changes acceptable
 - Plan needed for 1.0 release (API freeze)
 - Phase C11 parallel framework may require breaking changes
@@ -516,7 +516,7 @@ Currently **pre-1.0** (version 0.x.x implied by deprecation notes):
 - `bch/core.rs` - 1123 lines - BCH encoding/decoding with Berlekamp-Massey
 - `linear.rs` - 1117 lines - Linear block codes with syndrome table decoding
 - `llr.rs` - 919 lines - Log-likelihood ratio operations with SIMD support
-- `traits.rs` - 700 lines - 8 public traits defining API contracts
+- `traits.rs` - 700 lines - 7 public traits defining API contracts
 - `ldpc/encoding/richardson_urbanke.rs` - 662 lines - Systematic LDPC encoding
 - `ldpc/encoding/cache.rs` - 633 lines - Generator matrix caching system
 - `channel.rs` - 533 lines - AWGN channel simulation and BPSK modulation
