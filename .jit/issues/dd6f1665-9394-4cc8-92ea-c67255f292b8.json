@@ -7,6 +7,7 @@
   ],
   "description": "Move Chase-Pyndiah reliability ordering and hard decisions onto canonical soft-value helpers while preserving SISO behavior.\n\n## Background\n\nThe Chase-Pyndiah engine accepts raw `f32` soft values, owns a private magnitude sorter, and duplicates the sign-to-bit rule. The canonical magnitude primitive serves this consumer without forcing an `Llr` representation.\n\n## Success Criteria\n\n- [hard] REQ-01: Obtains ascending reliability indices from the canonical `f32` magnitude permutation.\n- [hard] REQ-02: Obtains hard decisions from the canonical sign convention while preserving zero-to-bit-zero behavior.\n- [hard] REQ-03: Preserves candidate selection, correction, and SISO output on existing product-code fixtures.\n- [hard] REQ-04: Covers tied magnitudes, signed zero, and infinite magnitudes without a private reliability comparator or sign test.",
   "documents": [],
+  "first_ready_at": "2026-08-25T13:32:26.315186572Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -20,7 +21,7 @@
     "component:gf2-coding"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Chase-Pyndiah reliability migration",
-  "updated_at": "2026-08-24T05:52:49.650437955Z"
+  "updated_at": "2026-08-25T13:32:26.315186572Z"
 }

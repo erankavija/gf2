@@ -13,7 +13,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-25T13:30:18.874022640Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "a82f2dd9-07b6-434e-806b-76b40ba43006",
   "labels": [
     "type:task",
@@ -27,5 +33,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Published eBCH OSD curve dataset",
-  "updated_at": "2026-08-24T20:43:22.342501766Z"
+  "updated_at": "2026-08-25T13:30:18.874022640Z"
 }
