@@ -147,7 +147,7 @@ High-performance Rust library for error-correcting codes and coding theory. Curr
 
 **Findings:**
 - Recent breaking change: Llr f64→f32 (already completed)
-- 1 deprecated trait with clear migration note
+- No deprecated traits; `SoftDecoder` is the canonical soft-decision surface
 - Pre-1.0 API evolution manageable
 - Phase C11 parallel framework may require breaking changes
 - Need 1.0 release plan (API freeze)
