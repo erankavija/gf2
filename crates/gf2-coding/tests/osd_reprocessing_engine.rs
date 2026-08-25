@@ -123,10 +123,7 @@ fn exhaustive_solution_best(
         if matrix.matvec(&candidate) != *rhs {
             continue;
         }
-        let weight = free_cols
-            .iter()
-            .filter(|&&col| candidate.get(col))
-            .count();
+        let weight = free_cols.iter().filter(|&&col| candidate.get(col)).count();
         if weight > order {
             continue;
         }
@@ -319,7 +316,10 @@ fn basis_is_the_greedy_independent_set_of_the_most_reliable_columns() {
 
     assert_eq!(basis.preference_order(), &[3, 2, 1, 0]);
     assert_eq!(basis.elimination().rank, 3);
-    assert_eq!(basis.reprocessed_cols(ReprocessedColumns::Basis), &[3, 2, 1]);
+    assert_eq!(
+        basis.reprocessed_cols(ReprocessedColumns::Basis),
+        &[3, 2, 1]
+    );
     assert_eq!(basis.free_cols(), &[0]);
     assert_eq!(basis.reprocessed_cols(ReprocessedColumns::Free), &[0]);
     assert_eq!(basis.preference(), ColumnPreference::MostReliableFirst);
@@ -343,7 +343,10 @@ fn least_reliable_preference_selects_the_opposite_basis() {
     .unwrap();
 
     assert_eq!(basis.preference_order(), &[0, 1, 2, 3]);
-    assert_eq!(basis.reprocessed_cols(ReprocessedColumns::Basis), &[0, 1, 2]);
+    assert_eq!(
+        basis.reprocessed_cols(ReprocessedColumns::Basis),
+        &[0, 1, 2]
+    );
     assert_eq!(basis.free_cols(), &[3]);
 }
 
@@ -832,13 +835,8 @@ fn cancellation_during_reprocessing_stops_after_the_observed_candidate() {
         seen: Cell::new(0),
         cancellation: &cancellation,
     };
-    let outcome = reprocess_with_cancellation(
-        &basis,
-        &semantics,
-        OsdConfig::new(1),
-        &cancellation,
-    )
-    .unwrap();
+    let outcome =
+        reprocess_with_cancellation(&basis, &semantics, OsdConfig::new(1), &cancellation).unwrap();
 
     let work = outcome.work();
     assert_eq!(work.generated_patterns(), 2);
@@ -863,13 +861,9 @@ fn a_pre_set_cancellation_flag_stops_before_the_first_candidate() {
     .unwrap();
 
     let cancellation = AtomicBool::new(true);
-    let outcome = reprocess_with_cancellation(
-        &basis,
-        &RowSpaceSemantics,
-        OsdConfig::new(2),
-        &cancellation,
-    )
-    .unwrap();
+    let outcome =
+        reprocess_with_cancellation(&basis, &RowSpaceSemantics, OsdConfig::new(2), &cancellation)
+            .unwrap();
 
     assert!(outcome.best().is_none());
     assert_eq!(outcome.work().generated_patterns(), 0);
