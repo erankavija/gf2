@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-25T20:57:43.338108201Z",
   "context": {},
   "created_at": "2026-08-24T05:52:49.650437955Z",
   "dependencies": [
@@ -23,7 +24,7 @@
     "cites:Fossorier1994"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "eBCH OSD curve reproduction",
-  "updated_at": "2026-08-25T19:04:53.617878279Z"
+  "updated_at": "2026-08-25T20:57:43.338108201Z"
 }
