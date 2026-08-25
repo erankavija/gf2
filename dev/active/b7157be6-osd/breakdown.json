@@ -330,7 +330,8 @@
             "crates/gf2-coding/src/osd/engine.rs"
           ],
           "touches": [
-            "crates/gf2-coding/src/osd/mod.rs"
+            "crates/gf2-coding/src/osd/mod.rs",
+            "crates/gf2-coding/src/osd/patterns.rs"
           ]
         }
       }
