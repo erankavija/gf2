@@ -1,6 +1,16 @@
 //! Production-site witnesses for the baked GEMM row and column tiles.
+//!
+//! The format-1 calibration archived at
+//! `dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
+//! (SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`)
+//! cites `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` but
+//! omits `gemm`. These extent fields therefore retain their conservative
+//! defaults until measured format-2 evidence supersedes that anchor, as
+//! `dev/active/3fa7c9d0/design.md` §7.1 requires.
 #![cfg(gf2_tuning_baked)]
 
+#[path = "support/historical_v1.rs"]
+mod historical_v1;
 #[path = "support/core_tuning.rs"]
 mod support;
 
@@ -9,7 +19,7 @@ use gf2_core::field::matrix::{
 };
 use gf2_core::field::triangular::trtrm;
 use gf2_core::gfp::Fp;
-use gf2_core::tuning;
+use gf2_core::tuning::{self, CoreTuning};
 
 support::fresh_tuning_test!(baked_tiles_reach_all_seven_blocked_loops, {
     let profile = support::prepared_core_json(
@@ -42,11 +52,9 @@ support::fresh_tuning_test!(baked_tiles_reach_all_seven_blocked_loops, {
     let one = Fp::<65537>::new(1);
     let _: FieldMatrix<Fp<65537>> = ((one * a.t()) * &b + one * &c).into();
 
-    let committed =
-        support::committed_core_owner(include_str!("../data/tuning-profiles/conservative.json"))
-            .expect("committed core-owner envelope is valid");
-    let expected_row_tile = committed.gemm().row_tile();
-    let expected_col_tile = committed.gemm().col_tile();
+    historical_v1::assert_family_was_omitted("gemm");
+    let expected_row_tile = CoreTuning::CONSERVATIVE.gemm().row_tile();
+    let expected_col_tile = CoreTuning::CONSERVATIVE.gemm().col_tile();
 
     let observations = gemm_tile_observations();
     assert_eq!(observations.len(), GemmTileSite::ALL.len());

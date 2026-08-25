@@ -14,7 +14,6 @@
 /// format-1 evidence is archived at
 /// `dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
 /// with SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`.
-#[allow(dead_code)]
 pub(crate) const SIMD_MIN_WORDS: usize = 4;
 
 /// Baked value for `bit_matrix.matvec_simd_min_words`, mirroring
@@ -24,7 +23,6 @@ pub(crate) const SIMD_MIN_WORDS: usize = 4;
 /// reaches this field and it is non-sweepable
 /// (`dev/active/7d824b2f/design.md` §5.2). Its value is the core section's
 /// conservative declaration rather than a measured figure.
-#[allow(dead_code)]
 pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
 
 /// Baked value for `gemm.row_tile`, mirroring
@@ -33,7 +31,6 @@ pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
 /// The field is an extent, not a threshold, so it is non-sweepable
 /// (`dev/active/7d824b2f/design.md` §5.2). Its value is the core section's
 /// conservative declaration.
-#[allow(dead_code)]
 pub(crate) const GEMM_ROW_TILE: usize = 32;
 
 /// Baked value for `gemm.col_tile`, mirroring
@@ -41,7 +38,6 @@ pub(crate) const GEMM_ROW_TILE: usize = 32;
 ///
 /// See `GEMM_ROW_TILE` for the tiling rationale; the value is the conservative
 /// default for the same reason.
-#[allow(dead_code)]
 pub(crate) const GEMM_COL_TILE: usize = 64;
 
 /// Baked value for `field_vec.dot_chunk_len`, mirroring
@@ -51,7 +47,6 @@ pub(crate) const GEMM_COL_TILE: usize = 64;
 /// the bake mechanism can carry it (`dev/active/7d824b2f/design.md` §3.8);
 /// as an extent it is also non-sweepable (§5.2). Its value is the core
 /// section's conservative declaration.
-#[allow(dead_code)]
 pub(crate) const DOT_CHUNK_LEN: usize = 256;
 
 /// Baked value for `prime_route.f32_min_prime`, mirroring
@@ -64,7 +59,6 @@ pub(crate) const DOT_CHUNK_LEN: usize = 256;
 /// primes selected by a type parameter rather than a size grid, so the field
 /// is non-sweepable (§5.2); its value is the core section's conservative
 /// declaration.
-#[allow(dead_code)]
 pub(crate) const N_THRESH_PRIME: u64 = 251;
 
 /// Baked value for `prime_route.f32_min_cols`, mirroring
@@ -74,7 +68,6 @@ pub(crate) const N_THRESH_PRIME: u64 = 251;
 /// `n >= 512`, so no grid point offers both arms across the default and the
 /// field is non-sweepable (`dev/active/7d824b2f/design.md` §5.2). Its value is
 /// the core section's conservative declaration.
-#[allow(dead_code)]
 pub(crate) const F32_MIN_COLS: usize = 512;
 
 /// Baked value for `prime_route.f64_min_cols`, mirroring
@@ -83,7 +76,6 @@ pub(crate) const F32_MIN_COLS: usize = 512;
 /// No public toggle offers both arms of this boundary, so the field is
 /// non-sweepable (`dev/active/7d824b2f/design.md` §5.2); its value is the core
 /// section's conservative declaration.
-#[allow(dead_code)]
 pub(crate) const F64_MIN_COLS: usize = 512;
 
 #[cfg(test)]

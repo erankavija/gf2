@@ -2046,6 +2046,7 @@ impl SelectedValues {
 fn build_profile(
     id: ProfileId,
     measurement: MeasurementProvenance,
+    assembled_at: Rfc3339Utc,
     selected: &SelectedValues,
 ) -> Result<ProducedCoreProfile, String> {
     let simd_min_words: usize = selected.simd_min_words;
@@ -2069,14 +2070,13 @@ fn build_profile(
     .map_err(|error| error.to_string())?;
     let assembly = match &measurement {
         MeasurementProvenance::Calibrated {
-            measured_at,
             source_revision,
             source_dirty,
             harness,
             binary_sha256,
             ..
         } => AssemblyProvenance {
-            assembled_at: measured_at.clone(),
+            assembled_at,
             source_revision: source_revision.clone(),
             source_dirty: *source_dirty,
             tool: harness.clone(),
@@ -2596,6 +2596,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\ntimed work: {:.1} s", started.elapsed().as_secs_f64());
 
     let selected = SelectedValues::from_sweeps(&sweeps);
+    let assembled_at = Rfc3339Utc::parse(&rfc3339_utc(SystemTime::now())?)?;
     let provenance = MeasurementProvenance::Calibrated {
         measured_at: Rfc3339Utc::parse(&measured_at)?,
         source_revision: facts.source_revision.clone(),
@@ -2611,7 +2612,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         governor: facts.governor.clone(),
         receipt: receipt_path,
     };
-    let profile = build_profile(id, provenance, &selected)?;
+    let profile = build_profile(id, provenance, assembled_at, &selected)?;
     let omitted = omitted_fields(&profile.to_json(), &sweeps)?;
     print_omitted(&omitted, &sweeps)?;
     let document = calibrated_document(&profile, &omitted)?;
@@ -2688,11 +2689,16 @@ mod tests {
         }
     }
 
+    fn assembly_instant() -> Rfc3339Utc {
+        Rfc3339Utc::parse("2026-08-20T01:00:00Z").unwrap()
+    }
+
     #[allow(dead_code)]
     fn profile_from(selected: &SelectedValues) -> ProducedCoreProfile {
         build_profile(
             ProfileId::parse("test-profile").unwrap(),
             calibrated_provenance(),
+            assembly_instant(),
             selected,
         )
         .expect("the swept values are in range")
@@ -2714,6 +2720,21 @@ mod tests {
                 windows: 25,
             }),
         }
+    }
+
+    #[test]
+    fn assembly_uses_the_supplied_post_sweep_instant_not_measurement_start() {
+        let profile = profile_from(&DISTINCT);
+        let MeasurementProvenance::Calibrated { measured_at, .. } = &profile.measurement else {
+            panic!("the test profile must carry calibrated measurement evidence");
+        };
+
+        assert_eq!(measured_at.as_str(), "2026-08-20T00:00:00Z");
+        assert_eq!(
+            profile.assembly.assembled_at.as_str(),
+            "2026-08-20T01:00:00Z"
+        );
+        assert_ne!(profile.assembly.assembled_at, *measured_at);
     }
 
     #[test]
@@ -2877,6 +2898,7 @@ mod tests {
         let profile = build_profile(
             ProfileId::parse("test-profile").unwrap(),
             provenance,
+            assembly_instant(),
             &DISTINCT,
         )
         .unwrap();
