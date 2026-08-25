@@ -41,7 +41,7 @@ The draft reader validation is recorded in [`validation.md`](validation.md). It 
 
 | Artifact | SHA-256 | Role |
 |---|---|---|
-| [`manifest.json`](manifest-draft/manifest.json) | `61a9298b07bb0eed14924577178b182a00acf184395471469111d6167a7ef71c` | schema-valid 63-cell draft |
+| [`manifest.json`](manifest-draft/manifest.json) | `d9bbcd6d8bddd51bab0e232732bb0e16d4710e5dce4ff48932d4879afea00cce` | schema-valid 63-cell draft |
 | [`backend-selection-draft.md`](backend-selection-draft.md) | `f009e79b2ae2c4a7ea16415fdc14cd98da9e2e07a2796fde482fdfbd93bc1184` | manifest-bound draft selection receipt |
 | [`receipt-inventory.md`](receipt-inventory.md) | `42ab7d118081fcb7956105dec7a2d4a0872119259c6215331af774bef8c41efd` | committed receipt inventory |
 

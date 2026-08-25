@@ -1288,8 +1288,14 @@ mod tests {
         let repo = TestRepo::new();
         let campaign = repo.write_dataset();
         prepare_manifest_for_running_binary(&repo, &campaign);
+        let template = read_manifest(&campaign).unwrap().provenance;
+        let before = observe_provenance(&repo.root, template.clone()).unwrap();
 
         repo.write("README.md", "unrelated tracked edit\n");
+        let after = observe_provenance(&repo.root, template).unwrap();
+
+        // An uncommitted edit does not move HEAD, so the context revision is unchanged too.
+        assert_eq!(before, after);
         approve_with_running_binary(&repo, &campaign)
             .expect("an unrelated tracked edit cannot change the emitter");
     }
@@ -1325,7 +1331,7 @@ mod tests {
     }
 
     #[test]
-    fn emission_refuses_a_manifest_naming_a_different_binary() {
+    fn emission_refuses_a_manifest_declaring_the_placeholder_digest() {
         let repo = TestRepo::new();
         let campaign = repo.write_dataset();
         let mut manifest: serde_json::Value =
@@ -1337,17 +1343,17 @@ mod tests {
             serde_json::to_vec_pretty(&manifest).unwrap(),
         )
         .unwrap();
-        repo.commit_all("freeze a different emitter identity");
+        repo.commit_all("freeze the placeholder emitter identity");
 
         let actual = running_binary_sha256().unwrap();
         let refusal = approve_emission_with_binary_digest(Some(actual.clone()), &campaign)
-            .expect_err("a manifest naming another executable must refuse");
+            .expect_err("the placeholder digest can never name a real executable");
         match refusal {
             EmissionRefusal::BinaryDigestMismatch {
                 expected,
                 actual: found,
             } => {
-                assert_ne!(expected, found);
+                assert_eq!(expected.as_str(), "0".repeat(64));
                 assert_eq!(found, actual);
             }
             other => panic!("unexpected refusal: {other}"),
