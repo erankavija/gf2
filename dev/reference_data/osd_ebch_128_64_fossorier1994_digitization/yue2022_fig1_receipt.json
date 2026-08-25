@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "receipt_date": "2026-08-25",
+  "source": {
+    "work_citekey": "Yue2022",
+    "arxiv_id": "2206.09572v2",
+    "download_url": "https://arxiv.org/pdf/2206.09572v2",
+    "filename": "2206.09572v2.pdf",
+    "sha256": "869b8cc048b5d210f00db6ea8f69c2b368f5245e2bacc2b5aa0c14e91d5cf8ed",
+    "bytes": 11239658
+  },
+  "locator": {
+    "pdf_page_one_based": 3,
+    "figure": "Figure 1",
+    "panel": "left",
+    "panel_label": "(128, 64) codes",
+    "series": "eBCH code, Simulation with OSD markers",
+    "metric": "BLER",
+    "abscissa": "Es/N0 [dB]"
+  },
+  "digitization": {
+    "method": "manual_by_eye_not_axis_calibrated",
+    "precision_factor": 1.3,
+    "precision_basis": "rough_multiplicative_factor",
+    "use": "qualitative_crosscheck_only"
+  },
+  "source_sampling_provenance": {
+    "predeclared_sampling_plan": "not_reported_for_figure_1",
+    "stopping_rule": "not_reported_for_figure_1",
+    "note": "The 1000-decoding-error rule is stated for Figures 3-4 only."
+  },
+  "comparisons": [
+    {
+      "id": "fossorier1994_near_ml_reference",
+      "against_work_citekey": "Fossorier1994",
+      "against_locator": "p. 64 optimum-performance coding-gain statement",
+      "against_quantity": {
+        "metric": "BER",
+        "eb_n0_db": 3.53,
+        "value": 1e-06
+      },
+      "yue2022_reference": {
+        "series": "eBCH code, ML bound",
+        "metric": "BLER",
+        "es_n0_db_range": [
+          3.4,
+          3.5
+        ],
+        "approximate_value": 1e-05
+      },
+      "document_assumption_not_source_claim": {
+        "information_bit_errors_per_block_error_range": [
+          4,
+          12
+        ],
+        "mapped_fossorier_bler_range": [
+          4e-06,
+          1.2e-05
+        ]
+      },
+      "conclusion": "agreement_of_near_ml_references_only; no conclusion about the order-2 target and no CSV adjustment",
+      "pointwise_comparison": "none: metric, modulation, and OSD order differ"
+    }
+  ],
+  "reads": [
+    {
+      "es_n0_db": 1.0,
+      "bler": 0.11,
+      "bler_scientific": "1.1e-1",
+      "digitization_precision_factor": 1.3,
+      "comparison_id": "fossorier1994_near_ml_reference",
+      "comparison_role": "qualitative_near_ml_crosscheck_only"
+    },
+    {
+      "es_n0_db": 1.5,
+      "bler": 0.043,
+      "bler_scientific": "4.3e-2",
+      "digitization_precision_factor": 1.3,
+      "comparison_id": "fossorier1994_near_ml_reference",
+      "comparison_role": "qualitative_near_ml_crosscheck_only"
+    },
+    {
+      "es_n0_db": 2.0,
+      "bler": 0.009,
+      "bler_scientific": "9e-3",
+      "digitization_precision_factor": 1.3,
+      "comparison_id": "fossorier1994_near_ml_reference",
+      "comparison_role": "qualitative_near_ml_crosscheck_only"
+    },
+    {
+      "es_n0_db": 2.5,
+      "bler": 0.0013,
+      "bler_scientific": "1.3e-3",
+      "digitization_precision_factor": 1.3,
+      "comparison_id": "fossorier1994_near_ml_reference",
+      "comparison_role": "qualitative_near_ml_crosscheck_only"
+    },
+    {
+      "es_n0_db": 3.0,
+      "bler": 0.00014,
+      "bler_scientific": "1.4e-4",
+      "digitization_precision_factor": 1.3,
+      "comparison_id": "fossorier1994_near_ml_reference",
+      "comparison_role": "qualitative_near_ml_crosscheck_only"
+    },
+    {
+      "es_n0_db": 3.5,
+      "bler": 1e-05,
+      "bler_scientific": "1.0e-5",
+      "digitization_precision_factor": 1.3,
+      "comparison_id": "fossorier1994_near_ml_reference",
+      "comparison_role": "qualitative_near_ml_crosscheck_only"
+    }
+  ]
+}

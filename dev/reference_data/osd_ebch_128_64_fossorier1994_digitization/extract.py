@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Reproduce the Figure 4.14 pixel-to-data calibration receipt.
+"""Reproduce the Fossorier1994 and Yue2022 digitization receipts.
 
 The marker centers in ``PIXEL_READS`` are manual measurements.  This script
 pins their source, renders the same page at the recorded resolution, checks
 that each measurement window contains figure ink, applies the committed axis
-calibration, and emits the complete machine-readable receipt as JSON.
+calibration, runs the committed marker-center sensitivity pass, and emits the
+complete machine-readable receipt as JSON.  The ``yue2022`` output mode pins
+the separate manual by-eye reads used only for the qualitative cross-check.
 """
 
 from __future__ import annotations
@@ -22,6 +24,10 @@ from typing import BinaryIO, NamedTuple
 
 EXPECTED_SHA256 = "9e867a44f2a7d54047396383db5e6bc4fb0cb083c83faea2a9c8649a6f3e5eeb"
 EXPECTED_BYTES = 4_640_976
+YUE2022_EXPECTED_SHA256 = (
+    "869b8cc048b5d210f00db6ea8f69c2b368f5245e2bacc2b5aa0c14e91d5cf8ed"
+)
+YUE2022_EXPECTED_BYTES = 11_239_658
 DPI = 300
 
 # Printed dissertation page 60 is PDF page 80: the scan has twenty title and
@@ -31,6 +37,10 @@ PRINTED_PAGE = 60
 EXPECTED_RENDER_SIZE = (2583, 3324)
 MARKER_WINDOW_SIZE = 23
 DARK_PIXEL_THRESHOLD = 128
+SENSITIVITY_PIXEL_RADIUS = 2
+SENSITIVITY_PIXEL_OFFSETS = tuple(
+    range(-SENSITIVITY_PIXEL_RADIUS, SENSITIVITY_PIXEL_RADIUS + 1)
+)
 
 X_ANCHORS = tuple(
     {"x_px": 502.5 + 178.0 * (eb_n0_db - 1), "eb_n0_db": float(eb_n0_db)}
@@ -51,6 +61,22 @@ class PixelRead(NamedTuple):
     x_px: int
     y_px: int
     read_basis: str = "marker_center"
+
+
+class Yue2022Read(NamedTuple):
+    es_n0_db: float
+    bler: float
+    bler_scientific: str
+
+
+YUE2022_READS = (
+    Yue2022Read(1.0, 1.1e-1, "1.1e-1"),
+    Yue2022Read(1.5, 4.3e-2, "4.3e-2"),
+    Yue2022Read(2.0, 9.0e-3, "9e-3"),
+    Yue2022Read(2.5, 1.3e-3, "1.3e-3"),
+    Yue2022Read(3.0, 1.4e-4, "1.4e-4"),
+    Yue2022Read(3.5, 1.0e-5, "1.0e-5"),
+)
 
 
 # Coordinates use the top-left of the rendered PDF page as (0, 0).  Primary
@@ -172,6 +198,28 @@ def log10_ber_from_y(y_px: int) -> float:
     raise ValueError(f"pixel y={y_px} is outside the calibrated BER axis")
 
 
+def ordinate_sensitivity(y_px: int) -> dict[str, object]:
+    """Measure ordinate variation over the declared center perturbations."""
+    center = log10_ber_from_y(y_px)
+    values = [
+        log10_ber_from_y(y_px + delta_y)
+        for _delta_x in SENSITIVITY_PIXEL_OFFSETS
+        for delta_y in SENSITIVITY_PIXEL_OFFSETS
+    ]
+    minimum = min(values)
+    maximum = max(values)
+    return {
+        "min_derived_value_log10": round(minimum, 4),
+        "max_derived_value_log10": round(maximum, 4),
+        "min_delta_from_center_log10": round(minimum - center, 4),
+        "max_delta_from_center_log10": round(maximum - center, 4),
+        "max_abs_delta_from_center_log10": round(
+            max(abs(minimum - center), abs(maximum - center)), 4
+        ),
+        "full_range_log10": round(maximum - minimum, 4),
+    }
+
+
 def dark_pixel_count(
     pixels: bytes, width: int, height: int, x_px: int, y_px: int
 ) -> int:
@@ -226,8 +274,17 @@ def make_receipt(pdf: Path) -> dict[str, object]:
                 "derived_eb_n0_db": round(eb_n0_from_x(read.x_px), 4),
                 "derived_value_log10": round(log10_ber_from_y(read.y_px), 4),
                 "dark_pixel_count_23x23": ink_count,
+                "sensitivity_log10": ordinate_sensitivity(read.y_px),
             }
         )
+
+    max_abs_sensitivity = max(
+        point["sensitivity_log10"]["max_abs_delta_from_center_log10"]
+        for point in points
+    )
+    max_full_range = max(
+        point["sensitivity_log10"]["full_range_log10"] for point in points
+    )
 
     return {
         "schema_version": 1,
@@ -263,6 +320,19 @@ def make_receipt(pdf: Path) -> dict[str, object]:
                 "anchors": Y_ANCHORS,
             },
             "digitization_uncertainty_log10": 0.1,
+            "digitization_uncertainty_basis": "declared_conservative_bound",
+            "sensitivity": {
+                "method": (
+                    "cartesian_integer_marker_center_perturbation_"
+                    "with_fixed_axis_calibration"
+                ),
+                "pixel_offset_x": SENSITIVITY_PIXEL_OFFSETS,
+                "pixel_offset_y": SENSITIVITY_PIXEL_OFFSETS,
+                "hypotheses_per_point": len(SENSITIVITY_PIXEL_OFFSETS) ** 2,
+                "max_abs_delta_from_center_log10": max_abs_sensitivity,
+                "max_full_range_log10": max_full_range,
+                "all_points_within_declared_bound": max_abs_sensitivity <= 0.1,
+            },
             "marker_window_px": [MARKER_WINDOW_SIZE, MARKER_WINDOW_SIZE],
             "dark_pixel_threshold": DARK_PIXEL_THRESHOLD,
         },
@@ -270,12 +340,110 @@ def make_receipt(pdf: Path) -> dict[str, object]:
     }
 
 
+def make_yue2022_receipt(pdf: Path) -> dict[str, object]:
+    actual_sha256 = sha256(pdf)
+    if actual_sha256 != YUE2022_EXPECTED_SHA256:
+        raise ValueError(
+            "Yue2022 source PDF SHA-256 mismatch: "
+            f"expected {YUE2022_EXPECTED_SHA256}, got {actual_sha256}"
+        )
+    actual_bytes = pdf.stat().st_size
+    if actual_bytes != YUE2022_EXPECTED_BYTES:
+        raise ValueError(
+            "Yue2022 source PDF size mismatch: "
+            f"expected {YUE2022_EXPECTED_BYTES}, got {actual_bytes}"
+        )
+
+    comparison_id = "fossorier1994_near_ml_reference"
+    return {
+        "schema_version": 1,
+        "receipt_date": "2026-08-25",
+        "source": {
+            "work_citekey": "Yue2022",
+            "arxiv_id": "2206.09572v2",
+            "download_url": "https://arxiv.org/pdf/2206.09572v2",
+            "filename": "2206.09572v2.pdf",
+            "sha256": actual_sha256,
+            "bytes": actual_bytes,
+        },
+        "locator": {
+            "pdf_page_one_based": 3,
+            "figure": "Figure 1",
+            "panel": "left",
+            "panel_label": "(128, 64) codes",
+            "series": "eBCH code, Simulation with OSD markers",
+            "metric": "BLER",
+            "abscissa": "Es/N0 [dB]",
+        },
+        "digitization": {
+            "method": "manual_by_eye_not_axis_calibrated",
+            "precision_factor": 1.3,
+            "precision_basis": "rough_multiplicative_factor",
+            "use": "qualitative_crosscheck_only",
+        },
+        "source_sampling_provenance": {
+            "predeclared_sampling_plan": "not_reported_for_figure_1",
+            "stopping_rule": "not_reported_for_figure_1",
+            "note": "The 1000-decoding-error rule is stated for Figures 3-4 only.",
+        },
+        "comparisons": [
+            {
+                "id": comparison_id,
+                "against_work_citekey": "Fossorier1994",
+                "against_locator": "p. 64 optimum-performance coding-gain statement",
+                "against_quantity": {
+                    "metric": "BER",
+                    "eb_n0_db": 3.53,
+                    "value": 1.0e-6,
+                },
+                "yue2022_reference": {
+                    "series": "eBCH code, ML bound",
+                    "metric": "BLER",
+                    "es_n0_db_range": [3.4, 3.5],
+                    "approximate_value": 1.0e-5,
+                },
+                "document_assumption_not_source_claim": {
+                    "information_bit_errors_per_block_error_range": [4, 12],
+                    "mapped_fossorier_bler_range": [4.0e-6, 1.2e-5],
+                },
+                "conclusion": (
+                    "agreement_of_near_ml_references_only; no conclusion about "
+                    "the order-2 target and no CSV adjustment"
+                ),
+                "pointwise_comparison": (
+                    "none: metric, modulation, and OSD order differ"
+                ),
+            }
+        ],
+        "reads": [
+            {
+                "es_n0_db": read.es_n0_db,
+                "bler": read.bler,
+                "bler_scientific": read.bler_scientific,
+                "digitization_precision_factor": 1.3,
+                "comparison_id": comparison_id,
+                "comparison_role": "qualitative_near_ml_crosscheck_only",
+            }
+            for read in YUE2022_READS
+        ],
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("pdf", type=Path, help="path to uhm_phd_9519442_r.pdf")
+    parser.add_argument(
+        "--receipt",
+        choices=("fossorier1994", "yue2022"),
+        default="fossorier1994",
+        help="receipt to emit (default: fossorier1994)",
+    )
+    parser.add_argument("pdf", type=Path, help="path to the selected source PDF")
     args = parser.parse_args()
     try:
-        receipt = make_receipt(args.pdf)
+        if args.receipt == "fossorier1994":
+            receipt = make_receipt(args.pdf)
+        else:
+            receipt = make_yue2022_receipt(args.pdf)
     except (OSError, RuntimeError, subprocess.CalledProcessError, ValueError) as error:
         print(f"extract.py: {error}", file=sys.stderr)
         return 1
