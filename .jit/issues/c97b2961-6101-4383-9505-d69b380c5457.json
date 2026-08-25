@@ -8,13 +8,30 @@
   ],
   "description": "Expose the order-$m$ generator-matrix OSD baseline for linear block codes through the canonical immutable soft-decoder trait.\n\n## Background\n\nThe decoder is generic over `GeneratorMatrixAccess`; convolutional streaming and codes without that surface are outside its scope. Candidate enumeration and MRB reprocessing remain in the shared engine, while this adapter owns codeword reconstruction and `SoftDecoder` behavior.\n\n## Success Criteria\n\n- [hard] REQ-01: Implements `SoftDecoder` for a decoder generic over `GeneratorMatrixAccess` with order and cap supplied by `OsdConfig`.\n- [hard] REQ-02: Reconstructs generator-domain candidates and returns the deterministic minimum soft-metric hard decision.\n- [hard] REQ-03: Exposes engine rank, work counters, candidate bound, and termination metadata without duplicating search logic.\n- [hard] REQ-04: Matches exhaustive maximum-likelihood decoding on bounded small-code fixtures with tied reliabilities and non-systematic generators.\n- [hard] REQ-05: Documents invalid LLR length, NaN, and rank-deficient generator behavior on the public API.",
   "documents": [],
+  "done_at": "2026-08-25T17:43:34.690301887Z",
   "first_ready_at": "2026-08-25T16:51:10.963968810Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T17:35:46.746223047Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T17:43:16.532247122Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T17:38:13.223541935Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c97b2961-6101-4383-9505-d69b380c5457",
   "labels": [
     "type:task",
@@ -25,7 +42,7 @@
     "cites:Yue2022"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Generator-matrix OSD decoder",
-  "updated_at": "2026-08-25T16:54:06.283455139Z"
+  "updated_at": "2026-08-25T17:43:34.690301887Z"
 }
