@@ -80,11 +80,14 @@ linked source closure (`crates/` and `Cargo.lock`), and `deps_source_dirty`
 records whether that closure was dirty at run start. `binary_sha256` is the
 lowercase hexadecimal SHA-256 of the executable that emitted the dataset, and
 the emission guard admits a writer only when the running executable matches it.
-The prepared emitter supplies this value: after
-`permanent-campaign-runner.sh prepare`, run
+The emitting executable supplies this value. Build it with
+`cargo build -p gf2-sim --release --bin permanent_campaign`, then run that
+same build as
 `permanent_campaign --print-provenance --manifest <campaign-directory>` and
-use its `binary_sha256` in the manifest before freezing it. A manifest frozen
-with the 64-zero placeholder digest refuses every emission.
+record the `binary_sha256` it reports in the manifest before freezing it. The
+digest identifies one build, so rebuilding the emitter changes it and the
+manifest is refrozen against the rebuilt executable. A manifest frozen with
+the 64-zero placeholder digest refuses every emission.
 Version-1 datasets predate all three version-2 fields and omit them; the reader
 accepts their absence only at version 1. The revision is the complete
 40-character lowercase hexadecimal object name; an abbreviation resolves only
