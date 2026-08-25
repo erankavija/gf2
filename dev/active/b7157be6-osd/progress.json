@@ -1,7 +1,7 @@
 {
  "epic_id": "b7157be6-16d8-4050-834c-e996d4fa27c3",
  "epic_short_id": "b7157be6",
- "current_wave": 5,
+ "current_wave": 6,
  "waves": [
   {
    "wave_number": 1,
@@ -141,7 +141,7 @@
      "title": "Syndrome-domain OSD adapter",
      "classification": "implementation",
      "model": "opus",
-     "status": "dispatched to native Opus in worktree agent-583ec31c (base 4a8ade83)"
+     "status": "done (all gates passed round 1: cargo-ci, code-review, doc-review; merged d950370e; worktree reclaimed)"
     },
     {
      "id": null,
@@ -150,7 +150,7 @@
      "title": "eBCH OSD campaign executable",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "dispatched to Luna xhigh in worktree agent-c8322eff (base 4a8ade83)"
+     "status": "done (all gates passed round 1; merged d9046b3f; worktree reclaimed)"
     },
     {
      "id": null,
@@ -159,7 +159,7 @@
      "title": "OSD pattern segmentation policy",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "dispatched to Luna xhigh in worktree agent-b3cab18e (base 4a8ade83)"
+     "status": "done (code-review R5 pass after export fix + empty-tail range fix; cargo-ci re-certified; merged f81c966f; worktree reclaimed; low advisory: engine.rs:372 self-referential # Errors link on segmented entry points)"
     }
    ]
   },
@@ -215,6 +215,12 @@
    "date": "2026-08-25",
    "category": "research-review convergence",
    "summary": "R2-R4 research-review rounds: owner approved guidance-reset rework, DEC-01..03 mechanism, then DEC-01/02 generalization to all digitized sources. ResearchGate lead identified as Isaka1999 title collision (article stays unobtained)."
+  },
+  {
+   "id": "ESC-03",
+   "date": "2026-08-25",
+   "category": "issue description amendment",
+   "summary": "b3cab18e Background said segmentation changes no module exports while REQ-04 requires a public policy surface; owner approved rewording (additive public exports) + D-16 landing wording. Owner also ruled bracket gates (plan/breakdown-review) are not re-run for execution-time amendments (NOTE-05)."
   }
  ],
  "rework_counts": {
@@ -223,7 +229,8 @@
   "80cead18": 3,
   "a82f2dd9": 4,
   "ac78aff8": 3,
-  "abd48d99": 1
+  "abd48d99": 1,
+  "b3cab18e": 2
  },
  "surfaced_pitfalls": [
   {

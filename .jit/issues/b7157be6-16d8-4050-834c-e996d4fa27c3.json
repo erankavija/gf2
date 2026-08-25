@@ -24,6 +24,13 @@
       "format": "markdown",
       "label": "Execution handoff session 1",
       "path": "dev/active/b7157be6-osd/handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Execution handoff session 2",
+      "path": "dev/active/b7157be6-osd/handoff-2.md"
     }
   ],
   "first_ready_at": "2026-08-07T12:31:54.967767596Z",
@@ -45,5 +52,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-24T22:03:33.781586020Z"
+  "updated_at": "2026-08-25T20:04:05.268841034Z"
 }
