@@ -268,8 +268,8 @@ pub trait OsdSemantics {
 
     /// Reports whether a reconstructed candidate is valid for this semantics.
     ///
-    /// Rejected candidates are counted as generated patterns but never enter
-    /// the ranking.
+    /// Every candidate reaching this rule counts as a tested candidate.  A
+    /// rejected one never enters the ranking.
     fn accepts(&self, candidate: &BitVec) -> bool;
 }
 
@@ -344,8 +344,13 @@ impl OsdWork {
         self.generated_patterns
     }
 
-    /// Returns the number of reconstructed candidates the semantics accepted,
-    /// which is the number that entered the ranking.
+    /// Returns the number of reconstructed candidates the semantics evaluated.
+    ///
+    /// Every candidate handed to [`OsdSemantics::accepts`] counts, whichever
+    /// way that rule answered; a candidate the run stopped before evaluating
+    /// does not.  The accepted subset is what the ranking sees, so a run whose
+    /// semantics rejected everything reports tested candidates and no best
+    /// candidate.
     pub const fn tested_candidates(&self) -> usize {
         self.tested_candidates
     }
@@ -514,6 +519,11 @@ impl From<PatternEnumerationError> for OsdEngineError {
 /// generation order.  Because the reprocessed columns are listed in the
 /// canonical preference order, which breaks equal magnitudes by original
 /// index, the whole ranking is a deterministic function of the inputs.
+///
+/// The work metadata keeps those stages apart:
+/// [`OsdWork::generated_patterns`] counts what the enumerator emitted,
+/// [`OsdWork::tested_candidates`] counts what the semantics evaluated, and the
+/// returned candidate is the ranking over the accepted subset.
 ///
 /// An inconsistent transformed right-hand side has no solution, so the run
 /// generates nothing and reports [`OsdTermination::InconsistentTransform`].
@@ -710,9 +720,9 @@ where
 
         let current = generation;
         generation += 1;
+        tested_candidates += 1;
 
         if semantics.accepts(&candidate) {
-            tested_candidates += 1;
             let metric = soft_metric(&candidate, &basis.reference, &basis.magnitudes);
             if best
                 .as_ref()

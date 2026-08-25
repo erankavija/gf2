@@ -246,7 +246,7 @@ impl OsdSemantics for CancelAfter<'_> {
     }
 }
 
-/// Rejects every candidate, so no pattern reaches the ranking.
+/// Rejects every candidate, so none reaches the ranking.
 struct RejectAllSemantics;
 
 impl OsdSemantics for RejectAllSemantics {
@@ -264,6 +264,30 @@ impl OsdSemantics for RejectAllSemantics {
 
     fn accepts(&self, _candidate: &BitVec) -> bool {
         false
+    }
+}
+
+/// Rejects the first candidate it evaluates and accepts the rest.
+struct RejectFirst {
+    seen: Cell<usize>,
+}
+
+impl OsdSemantics for RejectFirst {
+    fn reprocessed_columns(&self) -> ReprocessedColumns {
+        ReprocessedColumns::Basis
+    }
+
+    fn base_candidate(&self, basis: &MostReliableBasis) -> BitVec {
+        RowSpaceSemantics.base_candidate(basis)
+    }
+
+    fn position_deltas(&self, basis: &MostReliableBasis) -> Vec<BitVec> {
+        RowSpaceSemantics.position_deltas(basis)
+    }
+
+    fn accepts(&self, _candidate: &BitVec) -> bool {
+        self.seen.set(self.seen.get() + 1);
+        self.seen.get() > 1
     }
 }
 
@@ -871,7 +895,7 @@ fn a_pre_set_cancellation_flag_stops_before_the_first_candidate() {
 }
 
 #[test]
-fn rejected_candidates_are_generated_but_not_tested() {
+fn rejected_candidates_are_tested_but_never_ranked() {
     let matrix = matrix_from_rows(&["1011", "0110"]);
     let magnitudes = [3.0, 1.0, 4.0, 2.0];
     let reference = word("1111");
@@ -888,8 +912,42 @@ fn rejected_candidates_are_generated_but_not_tested() {
 
     assert!(outcome.best().is_none());
     assert_eq!(outcome.work().generated_patterns(), 3);
-    assert_eq!(outcome.work().tested_candidates(), 0);
+    assert_eq!(outcome.work().tested_candidates(), 3);
     assert_eq!(outcome.work().termination(), OsdTermination::Exhaustive);
+}
+
+#[test]
+fn rejection_withholds_a_tested_candidate_from_the_ranking_only() {
+    let matrix = matrix_from_rows(&["1011", "0110"]);
+    let magnitudes = [3.0, 1.0, 4.0, 2.0];
+    let reference = word("1111");
+
+    let basis = MostReliableBasis::build(
+        &matrix,
+        &magnitudes,
+        &reference,
+        None,
+        ColumnPreference::MostReliableFirst,
+    )
+    .unwrap();
+
+    // Accepted, the order-zero candidate wins with a metric of 1.0.
+    let accepted = reprocess(&basis, &RowSpaceSemantics, OsdConfig::new(1)).unwrap();
+    assert_eq!(accepted.best().unwrap().metric(), 1.0);
+
+    let semantics = RejectFirst { seen: Cell::new(0) };
+    let outcome = reprocess(&basis, &semantics, OsdConfig::new(1)).unwrap();
+
+    // All three candidates were generated and tested, but the ranking saw only
+    // the two the semantics accepted.
+    let work = outcome.work();
+    assert_eq!(work.generated_patterns(), 3);
+    assert_eq!(work.tested_candidates(), 3);
+
+    let best = outcome.best().unwrap();
+    assert_eq!(best.pattern(), &[0]);
+    assert_eq!(best.generation(), 1);
+    assert_eq!(best.metric(), 4.0);
 }
 
 #[test]
