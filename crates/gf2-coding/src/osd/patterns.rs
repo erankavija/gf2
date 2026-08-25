@@ -137,7 +137,11 @@ pub enum PatternControl {
     Cancel,
 }
 
-/// Why an OSD pattern run stopped.
+/// Why an OSD run stopped.
+///
+/// A pattern run reports the three reasons a pattern source can observe.
+/// [`Self::InconsistentTransform`] belongs to the reprocessing engine, which
+/// rejects a system with no solution before generating anything.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum OsdTermination {
     /// Every subset through the configured order was generated.
@@ -146,6 +150,9 @@ pub enum OsdTermination {
     CandidateCap,
     /// The caller requested cancellation.
     Cancelled,
+    /// The transformed right-hand side lies outside the reachable row space,
+    /// so the system has no solution and no candidate was generated.
+    InconsistentTransform,
 }
 
 /// Counters and termination metadata for one pattern run.
