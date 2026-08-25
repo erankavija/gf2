@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": null,
   "claimed_at": "2026-08-25T18:50:58.956580921Z",
   "context": {},
   "created_at": "2026-08-25T18:44:09.545100777Z",
@@ -14,11 +14,18 @@
       "path": "dev/active/3fa7c9d0/design.md"
     }
   ],
+  "done_at": "2026-08-25T20:15:23.312935784Z",
   "first_ready_at": "2026-08-25T18:44:09.545100777Z",
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T20:15:08.555943392Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "3fa7c9d0-2353-48bf-bd37-ef34e36dea27",
   "labels": [
     "epic:field-capability-dispatch",
@@ -28,7 +35,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Design crate-owned typed tuning sections",
-  "updated_at": "2026-08-25T20:13:07.878230756Z"
+  "updated_at": "2026-08-25T20:15:23.312935784Z"
 }

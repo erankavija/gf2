@@ -23,7 +23,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Cut tuning over to crate-owned typed sections",
-  "updated_at": "2026-08-25T20:11:58.474470629Z"
+  "updated_at": "2026-08-25T20:15:31.734742754Z"
 }
