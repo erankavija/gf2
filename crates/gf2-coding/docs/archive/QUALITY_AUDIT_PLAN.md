@@ -118,10 +118,10 @@ High-performance Rust library for error-correcting codes and coding theory. Curr
 - [x] Evaluate `GeneratorMatrixAccess` trait design (lazy computation)
 
 **Findings:**
-- 8 public traits with clear separation of concerns
+- 7 public traits with clear separation of concerns
 - 10 implementations across BCH, LDPC, Linear codes
 - Method signatures consistent (k(), n(), encode(), decode())
-- 1 deprecated trait with clear migration path (SoftDecisionDecoder → SoftDecoder)
+- No deprecated traits; `SoftDecoder` is the canonical soft-decision surface
 - No builder pattern needed - constructors are simple and self-documenting
 
 ### 4.2 Usability Testing ✅

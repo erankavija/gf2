@@ -342,13 +342,12 @@ The gf2-coding crate is **production-ready** with excellent code quality, compre
 ### 4.1 API Consistency Review ✅
 
 #### Trait Design
-- **8 public traits** with clear separation of concerns:
+- **7 public traits** with clear separation of concerns:
   - `GeneratorMatrixAccess` - On-demand generator matrix access (k, n, generator_matrix)
   - `BlockEncoder` - Fixed-length encoding (k, n, encode)
   - `HardDecisionDecoder` - Hard-decision decoding (decode)
   - `SoftDecoder` - Soft-decision with LLRs (k, n, decode_soft, decode_soft_with_result)
   - `IterativeSoftDecoder` - Extends SoftDecoder (decode_iterative, last_iteration_count, reset)
-  - `SoftDecisionDecoder` - **DEPRECATED** in v0.2.0 (clear migration note to `SoftDecoder`)
   - `StreamingEncoder` - Convolutional codes (encode_bit, reset)
   - `StreamingDecoder` - Convolutional codes (decode_symbols, reset)
 
@@ -479,9 +478,7 @@ Tested error conditions - all panic messages are **actionable**:
 ### 4.5 Breaking Changes & Stability ✅
 
 #### Deprecations
-- **1 deprecated trait:** `SoftDecisionDecoder` (v0.2.0)
-  - Clear migration path: "Use SoftDecoder trait instead"
-  - New trait provides better ergonomics and iteration control
+- No deprecated traits in the current public surface
   
 #### Recent Breaking Changes
 - **Llr type change:** `f64 → f32` (mentioned in ROADMAP, already completed)
@@ -1544,7 +1541,7 @@ gf2_ldpc_decode(decoder, llrs, output);
 
 ### 10.5 Extensibility & Trait Design ✅ EXCELLENT
 
-**Trait Architecture** (8 public traits):
+**Trait Architecture** (7 public traits):
 
 ```rust
 pub trait GeneratorMatrixAccess         // Lazy matrix access
@@ -1554,7 +1551,6 @@ pub trait SoftDecoder                  // Soft-decision with LLRs
 pub trait IterativeSoftDecoder         // Extends SoftDecoder
 pub trait StreamingEncoder             // Convolutional codes
 pub trait StreamingDecoder             // Convolutional codes
-#[deprecated] pub trait SoftDecisionDecoder  // Migration to SoftDecoder
 ```
 
 **Extensibility Assessment**:
@@ -1597,7 +1593,7 @@ pub trait ComputeBackend: Send + Sync {
 
 **Recent Breaking Changes**:
 - ✅ `Llr` f64 → f32 (justified: 5% performance gain, pre-release)
-- ✅ `SoftDecisionDecoder` → `SoftDecoder` (deprecated with clear migration)
+- ✅ `SoftDecoder` is the canonical soft-decision surface
 
 **Pre-1.0 Strategy**:
 1. Continue breaking changes as needed for optimization
