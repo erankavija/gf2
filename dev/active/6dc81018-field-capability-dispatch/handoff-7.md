@@ -87,3 +87,18 @@ backlog/unassigned. Commit `6566bb3d` remains unmerged evidence only: it emits
 the superseded flat/core-owned schema and must not be measured or merged.
 Claude released the previously reserved host window; request a new window only
 after `b749bdfc` produces a clean canonical calibration producer.
+
+## Strict format-2 correction — 2026-08-26
+
+The subset-load and skipped-section statements in the DEC-W paragraph above
+were corrected before implementation. Format 2 has no subset loader and no
+skipped state: every present section must have a registered owner codec and
+validate completely; an unknown or unregistered present section rejects the
+whole envelope. An absent typed section resolves to its crate-owned
+conservative value with `DefaultedMissing` after installation.
+
+DEC-W also overtook DEC-V's proposed dual-token migration mechanics before
+they were executed. The implemented boundary is an atomic cutover: exact v1
+bytes move to the historical archive, active artifacts use format 2, and no
+v1 compatibility reader or alias remains. The tracker dependency graph remains
+the sequencing authority for the downstream calibration work.

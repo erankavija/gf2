@@ -2,7 +2,7 @@
 //!
 //! The field sizes `try_simd_dot_product`'s three stack buffers, so only the
 //! bake mechanism can carry it (`dev/active/7d824b2f/design.md` §3.8). This
-//! witness asserts the committed calibrated length, so it is compiled only
+//! witness asserts the committed conservative length, so it is compiled only
 //! under the declared cfg `gf2_tuning_baked`
 //! (`RUSTFLAGS="--cfg gf2_tuning_baked"`); the default build's conservative
 //! length is asserted by `field_vec_dot_chunk.rs`.
@@ -23,8 +23,8 @@ use gf2_core::tuning::{self, CoreTuning};
 #[path = "support/core_tuning.rs"]
 mod support;
 
-/// Loads the committed calibrated profile the baked constant mirrors.
-fn committed_profile() -> CoreTuning {
+/// Loads the committed conservative core section the baked constant mirrors.
+fn committed_core_section() -> CoreTuning {
     support::committed_core_owner(include_str!("../data/tuning-profiles/conservative.json"))
         .expect("committed core-owner envelope is valid")
 }
@@ -40,7 +40,7 @@ support::fresh_tuning_test!(
         tuning::install(installed).expect("profile has not been resolved");
         assert_eq!(tuning::active().field_vec().dot_chunk_len(), 3);
 
-        let chunk = committed_profile().field_vec().dot_chunk_len();
+        let chunk = committed_core_section().field_vec().dot_chunk_len();
         let field = Gf2mField::gf256();
         let n = 2 * chunk as u64 + 1;
         let a: FieldVec<Gf2mElement> = (0..n).map(|i| field.element((i * 37 + 13) % 256)).collect();

@@ -483,3 +483,22 @@ condition rather than emitting silently.
   document's silence on that field is the claim: it is unmeasured.
 - No number here is a non-regression verdict. The pinned set of
   `selector-non-regression-plan-v1.md` and its receipts own that comparison.
+
+## Format-2 supersession (2026-08-26)
+
+Every figure and the emitted JSON quoted above remain the evidence produced by
+this run. The quoted emitted file is 1,086 bytes with SHA-256
+`f0c3100ddd23fe3bbaadb5bf3b7fde51af78fc6e9929bb76886b1b032a165635`.
+Later history committed the same document with a terminating newline: those
+exact 1,087 bytes have SHA-256
+`674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`
+and are preserved at
+`dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`.
+They remain format-1 historical evidence and are never relabeled format 2.
+
+The active `conservative.json` artifacts are inherited format-2 owner and
+complete envelopes. They make no claim to this receipt's calibration, even
+where a conservative value happens to equal a value recorded here. A future
+`389aa4de` receipt may supersede this run with measured format-2 core-section
+evidence; until then, baked measurements cite the archived bytes and digest
+above. This section changes no prior measurement, conclusion, or quoted byte.

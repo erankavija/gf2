@@ -242,9 +242,13 @@ Backend selection is implemented by `select_backend_for_size` in
 `crates/gf2-core/src/kernels/backend.rs`. The default build compares the
 buffer's `u64` word count with the conservative compile-time threshold
 `SIMD_MIN_WORDS_DEFAULT`; building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
-substitutes the committed calibrated threshold. The selector uses SIMD when the feature is available and
-otherwise falls back to the scalar backend. The runtime profile field remains
-part of the schema but does not govern this boundary (DEC-G).
+substitutes the four-word value recorded by
+`dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` and archived at
+`dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
+(SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`).
+The selector uses SIMD when the feature is available and otherwise falls back
+to the scalar backend. The core format-2 section encodes the corresponding
+field, while this routing boundary stays compile-time (DEC-G).
 
 **Operations Updated:**
 - `xor_inplace(dst, src)` - XOR with dispatch

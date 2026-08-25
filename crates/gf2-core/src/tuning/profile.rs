@@ -363,15 +363,15 @@ impl ProfileRegistryBuilder {
         C: SectionCodec<T>,
     {
         let id = T::ID.as_str();
-        if self.codecs.contains_key(id) {
-            return Err(RegistryError::DuplicateSectionId(id.to_owned()));
-        }
         if self
             .codecs
             .values()
             .any(|codec| codec.section_type_id() == TypeId::of::<T>())
         {
             return Err(RegistryError::DuplicateSectionType(type_name::<T>()));
+        }
+        if self.codecs.contains_key(id) {
+            return Err(RegistryError::DuplicateSectionId(id.to_owned()));
         }
         self.codecs.insert(
             id.to_owned(),

@@ -1,6 +1,6 @@
 //! Routing witness for the baked `prime_route` selector family.
 //!
-//! These tests assert the committed calibrated boundaries, so they are
+//! These tests assert the committed conservative boundaries, so they are
 //! compiled only under the declared cfg `gf2_tuning_baked`
 //! (`RUSTFLAGS="--cfg gf2_tuning_baked"`); the default build's conservative
 //! boundaries are asserted by `prime_route_reporter.rs`.
@@ -27,15 +27,15 @@ mod support;
 const M: usize = 64;
 const K: usize = 64;
 
-/// Loads the committed calibrated profile the baked constants mirror.
-fn committed_profile() -> CoreTuning {
+/// Loads the committed conservative core section the baked constants mirror.
+fn committed_core_section() -> CoreTuning {
     support::committed_core_owner(include_str!("../data/tuning-profiles/conservative.json"))
         .expect("committed core-owner envelope is valid")
 }
 
 #[test]
 fn baked_build_routes_gf251_by_the_committed_column_bound() {
-    let profile = committed_profile();
+    let profile = committed_core_section();
     let cols = profile.prime_route().f32_min_cols();
     let below = cols
         .checked_sub(1)
@@ -59,13 +59,13 @@ fn baked_build_routes_gf251_by_the_committed_column_bound() {
 
 #[test]
 fn baked_build_brackets_the_committed_prime_bound() {
-    let profile = committed_profile();
+    let profile = committed_core_section();
     let prime_route = profile.prime_route();
     assert!(
         (242..=251).contains(&prime_route.f32_min_prime()),
         "the committed prime_route.f32_min_prime is {}, outside the \
          (241, 251] window this witness brackets; re-pin it against the \
-         in-scope primes adjacent to the new bound",
+         in-scope primes adjacent to the candidate bound",
         prime_route.f32_min_prime()
     );
     let wide = prime_route.f32_min_cols() + 512;
@@ -87,7 +87,7 @@ fn baked_build_brackets_the_committed_prime_bound() {
 
 #[test]
 fn baked_build_routes_medium_primes_by_the_committed_column_bound() {
-    let profile = committed_profile();
+    let profile = committed_core_section();
     let cols = profile.prime_route().f64_min_cols();
     let below = cols
         .checked_sub(1)
@@ -129,7 +129,7 @@ support::fresh_tuning_test!(install_does_not_govern_prime_route_selection, {
 
     // The family is baked: the installed profile would put every cell below on
     // a cascade if the boundary were read at run time, and none of them move.
-    let profile = committed_profile();
+    let profile = committed_core_section();
     let prime_route = profile.prime_route();
     if let Some(below) = prime_route.f32_min_cols().checked_sub(1) {
         assert!(!prime_gemm_route::<251>(M, K, below).is_f32_cascade());

@@ -133,6 +133,7 @@ Validated speedups on large operands (>512 bytes): 3.4–3.6× for bulk logical 
 | `simd` | — | Route through `gf2-kernels-simd` (AVX2 / AVX-512) |
 | `parallel` | — | Rayon batch algorithms |
 | `visualization` | — | Save `BitMatrix` as PNG |
+| `tuning-profile` | — | Strict format-2 envelope JSON codecs; typed selectors and active access remain available without it |
 
 ## Invariants
 

@@ -173,7 +173,10 @@ pub struct VerifiedAssembly {
 /// Identifies an in-process typed construction without making a measurement claim.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CompiledProfileProvenance {
-    /// Identity of the compiled artifact supplying the values.
+    /// Logical configuration or campaign label supplying the compiled values.
+    ///
+    /// This is not byte identity: compiled values have no serialized envelope
+    /// path or content digest.
     pub artifact_id: ProfileId,
 }
 
@@ -349,9 +352,6 @@ impl PreparedEnvelopeBuilder {
         measurement: MeasurementProvenance,
     ) -> Result<Self, ProfileError> {
         let id = T::ID.as_str();
-        if self.entries.contains_key(id) {
-            return Err(ProfileError::DuplicateSectionId { id: id.to_owned() });
-        }
         if self
             .entries
             .values()
@@ -360,6 +360,9 @@ impl PreparedEnvelopeBuilder {
             return Err(ProfileError::DuplicateSectionType {
                 type_name: type_name::<T>(),
             });
+        }
+        if self.entries.contains_key(id) {
+            return Err(ProfileError::DuplicateSectionId { id: id.to_owned() });
         }
         self.entries.insert(
             id.to_owned(),

@@ -620,6 +620,7 @@ impl BitMatrix {
     ///
     /// Panics if row >= rows or word_idx >= stride_words.
     #[inline]
+    #[cfg(feature = "io")]
     pub(crate) fn get_word(&self, row: usize, word_idx: usize) -> u64 {
         assert!(
             row < self.rows,
@@ -642,6 +643,7 @@ impl BitMatrix {
     ///
     /// Panics if row >= rows or word_idx >= stride_words.
     #[inline]
+    #[cfg(feature = "io")]
     pub(crate) fn set_word(&mut self, row: usize, word_idx: usize, word: u64) {
         assert!(
             row < self.rows,

@@ -175,12 +175,13 @@ assert_eq!(permanent_bipedal3_parallel(&mat), Fp::<3>::new(0));
 | `f7`           | yes     | Enable `Packed7`, `Packed7Vec`, `Packed7Matrix`, and `permanent_bipedal7`. |
 | `hip`          | no      | Enable `gf2_algebra::gpu` (requires ROCm / hipcc; AMD gfx1030+). |
 | `serde`        | no      | Serde `Serialize` / `Deserialize` on packed types. |
+| `tuning-profile` | no    | Enable the strict format-2 `AlgebraTuningCodec`; typed conservative/install/access APIs remain available without it. |
 | `test-support` | no      | Expose `testutil::random_matrix` / `random_matrix_with_rng` / `permanental_rank_bruteforce` to downstream crates and benchmarks. |
 
 ## Acceleration
 
 - **SIMD** (default on): On x86_64 hosts with AVX2, `permanent_bipedal3_batch` evaluates up to four matrices together through `gf2-kernels-simd`; `permanent_bipedal3_singleword_simd` exposes the single-matrix kernel directly for conformance work. The public single-matrix `permanent_bipedal3` entry point selects its faster scalar kernel on every host. Runtime detection is cached via `OnceLock` (no `build.rs` magic), and the batched API falls back safely when AVX2 is unavailable.
-- **Parallel** (default on): `permanent_bipedal3_parallel` partitions the 2^n Gray-code walk into independent chunks, each dispatched via Rayon work-stealing. Chunk size resolves at runtime from the active tuning profile's `permanent.gray_chunk_subsets` field (`permanent_chunk_len`), or explicitly via `permanent_bipedal3_parallel_with_chunk`'s `chunk_subsets` parameter; the conservative default is auto-selected from `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`.
+- **Parallel** (default on): `permanent_bipedal3_parallel` partitions the 2^n Gray-code walk into independent chunks, each dispatched via Rayon work-stealing. `permanent_chunk_len` reads `gf2_algebra::tuning::AlgebraTuning` once and defaults to the permanent-owned `CHUNK_SUBSETS`; `permanent_bipedal3_parallel_with_chunk` accepts an explicit `chunk_subsets` argument for controlled callers.
 - **Multi-word** (built-in): For `n > 63` the column-sum vector spans `ceil(n / 64)` Bipedal3 words, using the R3 cache-blocking design from `dev/plans/60c30e2d/r3_multi_word_streaming.md`. Supported up to `n = 255`.
 - **GPU** (opt-in, `--features hip`): `gf2_algebra::gpu::permanent_batch_bipedal{3,5,7}` sends a whole batch to the device in one kernel launch (one GPU block per matrix). Requires `hipcc` and a ROCm 6.x+ environment; the crate is excluded from the default workspace build.
 
@@ -222,9 +223,9 @@ cargo clippy -p gf2-algebra --all-targets --all-features -- -D warnings
 
 Always use `--release`: debug mode is 10-100x slower on the packed arithmetic and the benchmark suite has a 5 s per-test wall-clock limit.
 
-To repeat the live narrative audit for superseded single-matrix AVX2 dispatch
-framing, run this from the repository root. It searches the whole repository and
-returns nothing while the prose agrees with the dispatcher:
+To check the single-matrix AVX2 dispatch narrative, run this from the repository
+root. The command searches the whole repository and returns nothing while the
+prose agrees with the dispatcher:
 
 ```bash
 rg -n -i \

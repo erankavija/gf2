@@ -1,4 +1,5 @@
-//! Fresh-process installed algebra-section witness for a three-subset chunk.
+//! Guarded fresh-process witness that `AlgebraTuningCodec` installs a
+//! three-subset chunk and the production permanent callee observes it.
 
 #[path = "support/fresh_tuning_process.rs"]
 mod fresh;

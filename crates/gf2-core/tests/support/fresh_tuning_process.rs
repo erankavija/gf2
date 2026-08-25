@@ -11,6 +11,7 @@ pub enum FreshProcessCase {
     InstallPresent,
     InstallMissing,
     ProjectionThenInstall,
+    ActiveTypeMismatch,
 }
 
 impl FreshProcessCase {
@@ -20,6 +21,7 @@ impl FreshProcessCase {
             Self::InstallPresent => "install-present",
             Self::InstallMissing => "install-missing",
             Self::ProjectionThenInstall => "projection-then-install",
+            Self::ActiveTypeMismatch => "active-type-mismatch",
         }
     }
 
@@ -39,6 +41,7 @@ impl FreshProcessCase {
             Some("install-present") => Ok(Self::InstallPresent),
             Some("install-missing") => Ok(Self::InstallMissing),
             Some("projection-then-install") => Ok(Self::ProjectionThenInstall),
+            Some("active-type-mismatch") => Ok(Self::ActiveTypeMismatch),
             _ => Err("fresh-process case has an unknown case name".to_owned()),
         }
     }

@@ -329,3 +329,24 @@ The document quoted at §Emitted profile, its SHA-256 in the provenance table,
 and every measured figure in this receipt stand as taken. They record what one
 identified binary measured on one host, which no later change re-measures.
 ```
+
+## Format-2 supersession (2026-08-26, issue `b749bdfc`)
+
+Blocks A through E above preserve useful historical diagnosis, but their flat
+profile, global harness-token, and transitional reader mechanics are not
+applicable verbatim after the atomic format-2 cutover. Issue `389aa4de` steers
+core selectors through `CoreTuning` and guarded `fresh_tuning_process`
+children, then emits and strictly reopens an owner envelope containing exactly
+`gf2-core/selectors` through `CoreTuningCodec`.
+
+The five-field sweep derives its omission complement mechanically from the
+core codec. The expected relationship is five measured fields and 32 omitted
+fields out of the current 37-field core section; those counts are an assertion
+over codec output, not a parallel schema inventory. Calibrated measurement
+provenance belongs to the core section, while assembly provenance and the
+recomputed content digest describe the owner envelope. The core codec accepts
+the `tuning-calibration-v2` behavior token; it is not a global loader token.
+
+The resulting core-owner artifact contains no algebra vocabulary. The exact
+v1 evidence is archived without retagging, and neither a compatibility reader
+nor dual write is part of this follow-on calibration.

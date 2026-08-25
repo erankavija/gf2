@@ -1,16 +1,44 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-use gf2_core::tuning::{
-    CanonicalValue, CompiledProfileProvenance, CoreTuning, CoreTuningCodec, PreparedEnvelope,
-    ProfileId, ProfileRegistryBuilder, SectionCodec,
-};
+#[cfg(feature = "tuning-profile")]
+use gf2_core::tuning::{CanonicalValue, CoreTuningCodec, ProfileRegistryBuilder, SectionCodec};
+use gf2_core::tuning::{CompiledProfileProvenance, CoreTuning, PreparedEnvelope, ProfileId};
 
 const SENTINEL: &str = "GF2_TUNING_FRESH_CASE";
 const SENTINEL_VALUE: &str = "child-v1";
 const RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";
 
+/// One named scenario for the guarded fresh-process test protocol.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct FreshProcessCase(String);
+
+impl FreshProcessCase {
+    pub(crate) fn named(name: &str) -> Result<Self, String> {
+        if name.is_empty()
+            || !name
+                .bytes()
+                .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_')
+        {
+            return Err(format!("invalid fresh-process case name {name:?}"));
+        }
+        Ok(Self(name.to_owned()))
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.0
+    }
+
+    fn canonical_json(&self) -> String {
+        format!(
+            "{{\"case\":{}}}",
+            serde_json::to_string(self.name()).expect("a case name is JSON-encodable")
+        )
+    }
+}
+
 #[allow(dead_code)]
+#[cfg(feature = "tuning-profile")]
 pub fn prepared_core_json(body: &str) -> Result<PreparedEnvelope, String> {
     let canonical: CanonicalValue = serde_json::from_str(body)
         .map_err(|error| format!("core selector body is not JSON: {error}"))?;
@@ -29,6 +57,7 @@ pub fn prepared_core(section: CoreTuning) -> PreparedEnvelope {
 }
 
 #[allow(dead_code)]
+#[cfg(feature = "tuning-profile")]
 pub fn committed_core_owner(text: &str) -> Result<CoreTuning, String> {
     let registry = ProfileRegistryBuilder::new()
         .register::<CoreTuning, CoreTuningCodec>()
@@ -49,10 +78,9 @@ pub fn committed_core_owner(text: &str) -> Result<CoreTuning, String> {
         .ok_or_else(|| "committed core owner section is absent".to_owned())
 }
 
-pub fn fresh_tuning_process(case: &str) -> Result<(), String> {
+pub(crate) fn fresh_tuning_process(case: FreshProcessCase) -> Result<(), String> {
     let executable =
         std::env::current_exe().map_err(|error| format!("test binary has no path: {error}"))?;
-    let input = format!("{{\"case\":{}}}", serde_json::to_string(case).unwrap());
     let mut child = Command::new(&executable)
         .args(["--exact", "fresh_tuning_process_child", "--nocapture"])
         .env(SENTINEL, SENTINEL_VALUE)
@@ -65,7 +93,7 @@ pub fn fresh_tuning_process(case: &str) -> Result<(), String> {
         .stdin
         .take()
         .ok_or("fresh-process child has no stdin")?
-        .write_all(input.as_bytes())
+        .write_all(case.canonical_json().as_bytes())
         .map_err(|error| format!("cannot write child case: {error}"))?;
     let output = child
         .wait_with_output()
@@ -92,7 +120,7 @@ pub fn fresh_tuning_process(case: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn child_case() -> Result<Option<String>, String> {
+pub fn child_case() -> Result<Option<FreshProcessCase>, String> {
     let sentinel = match std::env::var(SENTINEL) {
         Err(std::env::VarError::NotPresent) => return Ok(None),
         Err(error) => return Err(format!("cannot read fresh-process sentinel: {error}")),
@@ -115,10 +143,9 @@ pub fn child_case() -> Result<Option<String>, String> {
     let case = object
         .get("case")
         .and_then(serde_json::Value::as_str)
-        .ok_or("fresh-process case name is missing")?
-        .to_owned();
-    let canonical = format!("{{\"case\":{}}}", serde_json::to_string(&case).unwrap());
-    if input != canonical {
+        .ok_or("fresh-process case name is missing")?;
+    let case = FreshProcessCase::named(case)?;
+    if input != case.canonical_json() {
         return Err("fresh-process case is not in canonical compact form".to_owned());
     }
     Ok(Some(case))
@@ -132,7 +159,8 @@ macro_rules! fresh_tuning_test {
     ($name:ident, $body:block) => {
         #[test]
         fn $name() {
-            crate::support::fresh_tuning_process(stringify!($name)).unwrap();
+            let case = crate::support::FreshProcessCase::named(stringify!($name)).unwrap();
+            crate::support::fresh_tuning_process(case).unwrap();
         }
 
         #[test]
@@ -142,7 +170,7 @@ macro_rules! fresh_tuning_test {
             else {
                 return;
             };
-            assert_eq!(case, stringify!($name));
+            assert_eq!(case.name(), stringify!($name));
             $body
             crate::support::emit_ok();
         }

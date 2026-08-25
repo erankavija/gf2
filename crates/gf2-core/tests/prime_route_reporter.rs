@@ -7,7 +7,7 @@
 //! the production selection rather than a copy of it. The `prime_route` family
 //! is baked (`dev/active/7d824b2f/design.md` §3.11), so the default build's
 //! boundaries are the conservative table's values and no installed profile
-//! moves them; `prime_route_baked.rs` witnesses the committed calibrated
+//! moves them; `prime_route_baked.rs` witnesses the committed conservative
 //! boundaries under `--cfg gf2_tuning_baked`.
 //!
 //! Whether a cascade kernel is registered is a host property, so each boundary

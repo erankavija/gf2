@@ -223,6 +223,15 @@ fi
 
 # Run all steps in order; continue through failures to report all of them.
 run_step check  "${NICE_PREFIX[@]}" cargo check --workspace $FEAT_FLAGS
+
+# Typed selector sections and active accessors are always built; JSON codecs
+# are separately opt-in. Keep the no-default and codec-only surfaces explicit
+# so optional dependency unification cannot make this layout pass accidentally.
+run_step tuning-core-no-default "${NICE_PREFIX[@]}" cargo check -p gf2-core --no-default-features
+run_step tuning-core-codec-only "${NICE_PREFIX[@]}" cargo check -p gf2-core --no-default-features --features tuning-profile
+run_step tuning-algebra-no-default "${NICE_PREFIX[@]}" cargo check -p gf2-algebra --no-default-features
+run_step tuning-algebra-codec-only "${NICE_PREFIX[@]}" cargo check -p gf2-algebra --no-default-features --features tuning-profile
+
 run_step test   "${NICE_PREFIX[@]}" cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
 run_step clippy "${NICE_PREFIX[@]}" cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings
 run_step fmt    "${NICE_PREFIX[@]}" cargo fmt --all -- --check
@@ -233,7 +242,14 @@ run_step fmt    "${NICE_PREFIX[@]}" cargo fmt --all -- --check
 # target here. The frozen selector non-regression harness is excluded
 # deliberately: its self-tests bracket the default configuration's threshold
 # and are expected to report a re-pinning need under the baked cfg.
-run_step baked  env RUSTFLAGS="--cfg gf2_tuning_baked" "${NICE_PREFIX[@]}" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
+run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "${NICE_PREFIX[@]}" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
+
+# Format-2 artifacts are opt-in I/O surfaces rather than ordinary feature
+# defaults. Validate each explicit owner and the mechanically composed complete
+# repository envelope without filesystem discovery.
+run_step tuning-core-artifact "${NICE_PREFIX[@]}" cargo test -p gf2-core --release --features tuning-profile --test tuning_profile_committed
+run_step tuning-algebra-artifacts "${NICE_PREFIX[@]}" cargo test -p gf2-algebra --release --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
+run_step tuning-composer "${NICE_PREFIX[@]}" cargo test --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml
 
 echo "$summary"
 

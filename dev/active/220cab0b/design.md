@@ -852,3 +852,25 @@ source so it keeps one form:
 Every field this document already defines is a threshold field and keeps its
 name and operator unchanged. This amendment is additive and changes no
 preceding line.
+
+## Amendment — format-2 crate ownership (2026-08-26, DEC-W)
+
+The format-2 design in `dev/active/3fa7c9d0/design.md` supersedes this
+document's flat `TuningProfile` artifact and API mechanics. One generic typed
+envelope and one process-wide install/freeze authority live in `gf2-core`;
+`gf2-core` owns only its `CoreTuning` section, while each algorithm-owning
+crate owns its selector section, codec, validation, and conservative values.
+In particular, algebra's `CHUNK_SUBSETS` declaration remains beside the
+permanent algorithm rather than in core.
+
+D2 remains authoritative: a caller explicitly installs a prepared envelope,
+no ambient environment or filesystem lookup chooses one, and first access
+freezes the process when installation has not happened. Calibration remains an
+explicit benchmark-only action. Format 1 is retained only as exact historical
+evidence under `dev/archive/3fa7c9d0/tuning-profiles/`; no v1 reader,
+compatibility alias, or dual representation survives the cutover.
+
+`ProfileId` is a logical configuration or campaign label rather than a unique
+identity for artifact bytes. Owner and complete envelopes may share it when
+they represent one logical configuration; path, canonical content digest, and
+provenance identify the exact artifact.

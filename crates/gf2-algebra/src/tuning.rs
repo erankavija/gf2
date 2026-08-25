@@ -224,16 +224,11 @@ struct JsonPermanent {
 }
 
 #[cfg(feature = "tuning-profile")]
+#[derive(Default)]
 enum Present<T> {
+    #[default]
     Missing,
     Value(Option<T>),
-}
-
-#[cfg(feature = "tuning-profile")]
-impl<T> Default for Present<T> {
-    fn default() -> Self {
-        Self::Missing
-    }
 }
 
 #[cfg(feature = "tuning-profile")]
