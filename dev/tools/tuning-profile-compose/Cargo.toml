@@ -1,0 +1,15 @@
+[package]
+name = "tuning-profile-compose"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[workspace]
+
+[dependencies]
+gf2-core = { path = "../../../crates/gf2-core", features = ["tuning-profile"] }
+gf2-algebra = { path = "../../../crates/gf2-algebra", default-features = false, features = ["tuning-profile"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+sha2 = "0.10"

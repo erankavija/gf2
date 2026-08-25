@@ -3,7 +3,7 @@ use gf2_core::alg::m4rm::multiply as m4rm_multiply;
 use gf2_core::kernels::scalar::SCALAR_BACKEND;
 use gf2_core::kernels::Backend;
 use gf2_core::matrix::BitMatrix;
-use gf2_core::tuning::TuningProfile;
+use gf2_core::tuning::CoreTuning;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
@@ -34,9 +34,7 @@ fn row_xor_fallback_inputs() -> (BitMatrix, BitMatrix) {
     //   default SIMD dispatch threshold (a `--cfg gf2_tuning_baked` build
     //   selects the committed calibrated threshold at compile time).
     assert_eq!(FALLBACK_INNER, 1);
-    assert!(
-        FALLBACK_COLS.div_ceil(64) >= TuningProfile::CONSERVATIVE.bit_backend().simd_min_words()
-    );
+    assert!(FALLBACK_COLS.div_ceil(64) >= CoreTuning::CONSERVATIVE.bit_backend().simd_min_words());
 
     let mut lhs = BitMatrix::zeros(FALLBACK_ROWS, FALLBACK_INNER);
     for row in 0..FALLBACK_ROWS {

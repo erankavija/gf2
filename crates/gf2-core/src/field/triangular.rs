@@ -244,7 +244,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 /// Conservative default for the triangular profile's
 /// `trsm_blocked_min_dim` and `trsm_panel_rows` fields.
 ///
-/// The active values are read from [`crate::tuning::TuningProfile`] by the
+/// The active values are read from [`crate::tuning::CoreTuning`] by the
 /// triangular-solve dispatcher. This constant remains the one source of both
 /// conservative defaults; direct callers of the forced blocked entry points
 /// can still pass it explicitly.
@@ -311,7 +311,7 @@ pub fn last_effective_trsm_panel_rows() -> Option<usize> {
 }
 
 /// Conservative default for `triangular.base_case_max_dim()` in the active
-/// [`crate::tuning::TuningProfile`]: the largest triangular dimension handled
+/// [`crate::tuning::CoreTuning`]: the largest triangular dimension handled
 /// by a direct loop rather than another recursive split.
 ///
 /// Selected by a Criterion sweep over `{4, 8, 16, 32, 64}` on

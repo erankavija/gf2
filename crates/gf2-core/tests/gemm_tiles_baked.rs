@@ -1,24 +1,30 @@
 //! Production-site witnesses for the baked GEMM row and column tiles.
+//!
+//! The format-1 calibration archived at
+//! `dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
+//! (SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`)
+//! cites `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` but
+//! omits `gemm`. These extent fields therefore retain their conservative
+//! defaults until measured format-2 evidence supersedes that anchor, as
+//! `dev/active/3fa7c9d0/design.md` §7.1 requires.
 #![cfg(gf2_tuning_baked)]
+
+#[path = "support/historical_v1.rs"]
+mod historical_v1;
+#[path = "support/core_tuning.rs"]
+mod support;
 
 use gf2_core::field::matrix::{
     gemm, gemm_tile_observations, reset_gemm_tile_observations, FieldMatrix, GemmTileSite,
 };
 use gf2_core::field::triangular::trtrm;
 use gf2_core::gfp::Fp;
-use gf2_core::tuning::{self, TuningProfile};
+use gf2_core::tuning::{self, CoreTuning};
 
-#[test]
-fn baked_tiles_reach_all_seven_blocked_loops() {
-    let profile = TuningProfile::from_json(
+support::fresh_tuning_test!(baked_tiles_reach_all_seven_blocked_loops, {
+    let profile = support::prepared_core_json(
         r#"
-        {
-          "schema_version": 1,
-          "profile_id": "gemm-baked-tile-install-witness",
-          "provenance": {"kind": "inherited"},
-          "selectors": {"gemm": {"row_tile": 1, "col_tile": 1}}
-        }
-        "#,
+        {"gemm": {"row_tile": 1, "col_tile": 1}}"#,
     )
     .expect("test profile is valid");
     assert_eq!(tuning::install(profile), Ok(()));
@@ -46,18 +52,9 @@ fn baked_tiles_reach_all_seven_blocked_loops() {
     let one = Fp::<65537>::new(1);
     let _: FieldMatrix<Fp<65537>> = ((one * a.t()) * &b + one * &c).into();
 
-    let committed: serde_json::Value = serde_json::from_str(include_str!(
-        "../data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json"
-    ))
-    .expect("committed calibrated profile is valid JSON");
-    let conservative_profile = TuningProfile::CONSERVATIVE;
-    let conservative = conservative_profile.gemm();
-    let expected_row_tile = committed["selectors"]["gemm"]["row_tile"]
-        .as_u64()
-        .map_or(conservative.row_tile(), |value| value as usize);
-    let expected_col_tile = committed["selectors"]["gemm"]["col_tile"]
-        .as_u64()
-        .map_or(conservative.col_tile(), |value| value as usize);
+    historical_v1::assert_family_was_omitted("gemm");
+    let expected_row_tile = CoreTuning::CONSERVATIVE.gemm().row_tile();
+    let expected_col_tile = CoreTuning::CONSERVATIVE.gemm().col_tile();
 
     let observations = gemm_tile_observations();
     assert_eq!(observations.len(), GemmTileSite::ALL.len());
@@ -69,4 +66,4 @@ fn baked_tiles_reach_all_seven_blocked_loops() {
         assert_eq!(observation.row_tile, expected_row_tile, "site {site:?}");
         assert_eq!(observation.col_tile, expected_col_tile, "site {site:?}");
     }
-}
+});

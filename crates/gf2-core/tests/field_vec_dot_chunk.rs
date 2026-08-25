@@ -6,7 +6,7 @@
 //! is that its value reaches the walk as the stack-buffer length and the walk
 //! step. The production walk records the widest chunk it fills, and this test
 //! reads that observation back. `field_vec_baked.rs` witnesses the same
-//! property against the committed calibrated value under
+//! property against the committed conservative value under
 //! `--cfg gf2_tuning_baked`.
 //!
 //! The observation is a process-wide maximum, so exactly one test per binary
@@ -16,11 +16,11 @@
 use gf2_core::field::vec::{max_effective_dot_chunk_len, reset_max_effective_dot_chunk_len};
 use gf2_core::field::FieldVec;
 use gf2_core::gf2m::{Gf2mElement, Gf2mField};
-use gf2_core::tuning::TuningProfile;
+use gf2_core::tuning::CoreTuning;
 
 #[test]
 fn the_walk_steps_by_the_conservative_chunk_length() {
-    let chunk = TuningProfile::CONSERVATIVE.field_vec().dot_chunk_len();
+    let chunk = CoreTuning::CONSERVATIVE.field_vec().dot_chunk_len();
     let field = Gf2mField::gf256();
     let n = 2 * chunk as u64 + 1;
     let a: FieldVec<Gf2mElement> = (0..n).map(|i| field.element((i * 37 + 13) % 256)).collect();

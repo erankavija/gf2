@@ -74,7 +74,7 @@ use crate::tuning;
 // ─── Blocked-invert constants ─────────────────────────────────────────────────
 
 /// Conservative default for `dense_inverse.blocked_min_dim()` in the active
-/// [`crate::tuning::TuningProfile`].
+/// [`crate::tuning::CoreTuning`].
 ///
 /// Below the active profile value the scalar-PLE + `trtri` + `trtrm` driver
 /// is competitive with (or faster than) the panelized path
@@ -86,7 +86,7 @@ use crate::tuning;
 /// `dev/bench_results/2026-05-26-8df0c501-blocked-invert.md` § 2 for the
 /// sweep). For n ≥ 16 the panelized path is equal-or-faster on every prime
 /// tested. This constant remains the compiled-in conservative default
-/// consumed by [`crate::tuning::TuningProfile::CONSERVATIVE`].
+/// consumed by [`crate::tuning::CoreTuning::CONSERVATIVE`].
 pub(crate) const BLOCKED_INVERT_THRESHOLD: usize = 16;
 
 /// The selected arm of the [`FieldMatrix::inv`] dispatcher.
@@ -444,7 +444,8 @@ impl<F: FiniteField> FieldMatrix<F> {
         // to b. Permutation::apply(&b) computes (P · B)[i] = B[perm[i]],
         // so we use perm.inverse().apply(b) for Pᵀ · B.
         let mut y = perm.inverse().apply(b);
-        let triangular = tuning::active().triangular();
+        let tuning = tuning::active();
+        let triangular = tuning.triangular();
         let trsm_blocked_min_dim = triangular.trsm_blocked_min_dim();
         let trsm_panel_rows = triangular.trsm_panel_rows();
 

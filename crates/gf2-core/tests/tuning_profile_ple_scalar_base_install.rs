@@ -4,37 +4,34 @@
 //! `tuning::install` resolves once per process, so this binary installs the one
 //! profile it observes.
 
+#[path = "support/core_tuning.rs"]
+mod support;
+
 use gf2_core::field::matrix::gemm;
 use gf2_core::field::ple::{ple_base_route, PleBaseRoute};
 use gf2_core::field::test_random_matrix::random_fp;
-use gf2_core::tuning::{self, TuningProfile};
+use gf2_core::tuning::{self, CoreTuning};
 
 /// Mersenne-31 sits above every PLE panel kernel's prime range, so its column
 /// windows reach the scalar base and the halving split alone.
 const MERSENNE_31: u64 = 2_147_483_647;
 
-#[test]
-fn installed_ple_profile_widens_the_scalar_base_window() {
+support::fresh_tuning_test!(installed_ple_profile_widens_the_scalar_base_window, {
     let text = r#"
     {
-      "schema_version": 1,
-      "profile_id": "ple-scalar-base-test",
-      "provenance": {"kind": "inherited"},
-      "selectors": {
         "ple": {
           "scalar_base_max_cols": 8
         }
-      }
-    }
-    "#;
-    let profile = TuningProfile::from_json(text).expect("test profile is valid");
+      }"#;
+    let profile = support::prepared_core_json(text).expect("test profile is valid");
     assert_eq!(tuning::install(profile), Ok(()));
-    let ple = tuning::active().ple();
+    let active_tuning = tuning::active();
+    let ple = active_tuning.ple();
     assert_eq!(ple.scalar_base_max_cols(), 8);
     // The absent keys resolve to their conservative defaults.
     assert_eq!(
         ple.panel_base_max_cols(),
-        TuningProfile::CONSERVATIVE.ple().panel_base_max_cols()
+        CoreTuning::CONSERVATIVE.ple().panel_base_max_cols()
     );
 
     // ── Base-case boundary ──────────────────────────────────────────────────
@@ -50,7 +47,7 @@ fn installed_ple_profile_widens_the_scalar_base_window() {
     );
     assert_eq!(ple_base_route(1), PleBaseRoute::ScalarBase);
 
-    let conservative_base = TuningProfile::CONSERVATIVE.ple().scalar_base_max_cols();
+    let conservative_base = CoreTuning::CONSERVATIVE.ple().scalar_base_max_cols();
     assert_eq!(
         ple_base_route(conservative_base + 1),
         PleBaseRoute::ScalarBase,
@@ -81,4 +78,4 @@ fn installed_ple_profile_widens_the_scalar_base_window() {
         deficient,
         "P · L · E != A (rank-deficient)"
     );
-}
+});

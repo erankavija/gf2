@@ -268,7 +268,7 @@ impl<'a, F: FiniteField> MatvecDriver<'a, F> {
 }
 
 /// Conservative default for `charpoly.keller_gehrig_min_dim()` in the
-/// active [`crate::tuning::TuningProfile`].
+/// active [`crate::tuning::CoreTuning`].
 ///
 /// Minimum matrix size at which [`FieldMatrix::charpoly`] considers the
 /// sub-cubic Keller-Gehrig path; [`charpoly_route`] reads the live
@@ -290,7 +290,7 @@ impl<'a, F: FiniteField> MatvecDriver<'a, F> {
 /// move [`charpoly_route`]'s boundary.
 ///
 /// This constant remains the compiled-in conservative default consumed
-/// by [`crate::tuning::TuningProfile::CONSERVATIVE`]. Re-tune it
+/// by [`crate::tuning::CoreTuning::CONSERVATIVE`]. Re-tune it
 /// downward in a future ticket once the K^{-1} step is replaced with a
 /// Strassen-amenable inversion (`trtri_upper` + `gemm`) or the
 /// algorithm is restructured to avoid it.

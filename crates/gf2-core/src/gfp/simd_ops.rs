@@ -522,8 +522,7 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
 /// preferred over Candidate C (AVX2 16-bit Barrett).
 ///
 /// `select_f32_path` compares against `F32_MIN_PRIME_SELECTED`, which is this
-/// constant in the default build and the committed calibrated profile's value
-/// under `--cfg gf2_tuning_baked`.
+/// conservative declaration in both the default and current baked builds.
 ///
 /// Set to 251 (the value of the highest in-scope small prime) based on the
 /// Phase 1 route-selection decision (issue 41096af5, 2026-05-25). Combined
@@ -535,10 +534,9 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
 /// `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
 /// for the full side-by-side evidence table and decision-rule application.
 ///
-/// Selecting F for a wider prime window is a calibration of the profile
-/// field, baked through `crate::tuning::baked::N_THRESH_PRIME` (e.g. a value
-/// of 11 routes GF(7) to C and GF(11)+ to F); the dispatch wiring is
-/// forward-compatible and needs no further change.
+/// A measured replacement can select F for a wider prime window through
+/// `crate::tuning::baked::N_THRESH_PRIME` (e.g. a value of 11 routes GF(7) to
+/// C and GF(11)+ to F); the dispatch wiring accepts such a baked declaration.
 pub(crate) const N_THRESH_PRIME: u64 = 251;
 
 /// Conservative default for the tuning profile's `prime_route.f32_min_cols`
