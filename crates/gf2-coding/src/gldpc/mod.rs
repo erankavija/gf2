@@ -1263,7 +1263,7 @@ impl IterativeSoftDecoder for GldpcDecoder {
     /// # Panics
     ///
     /// Panics if `llrs.len() != n`.
-    /// Panics if any LLR has a NaN magnitude.
+    /// Panics if any LLR has a NaN magnitude and at least one iteration runs.
     fn decode_iterative(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
         assert_eq!(
             llrs.len(),
