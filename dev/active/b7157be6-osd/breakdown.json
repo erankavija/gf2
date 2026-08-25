@@ -607,8 +607,8 @@
         "worker_sized_reason": "One published series receives one provenance review.",
         "footprint": {
           "creates": [
-            "dev/reference_data/osd_ebch_128_64_fossorier1995.csv",
-            "dev/reference_data/osd_ebch_128_64_fossorier1995.md"
+            "dev/reference_data/osd_ebch_128_64_fossorier1994.csv",
+            "dev/reference_data/osd_ebch_128_64_fossorier1994.md"
           ]
         }
       }
