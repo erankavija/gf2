@@ -1,8 +1,17 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 24,
-  "wave_notes": "Session 10: worktree REUSE policy active (owner directive) \u2014 merged worker worktrees are moved+re-anchored to main HEAD keeping target/ caches, via scratchpad reuse-worker-worktree.sh. Wave 21a complete session 10. Gate-vs-lock sequencing rule: never queue worker worktree CI while a main gate chain needs the lock (gate runner budget 900s < flock patience 1800s).",
+  "current_wave": 23.5,
+  "wave_notes": "Session 11 resume audit: wave 23.5 remains open at 389aa4de's measured phase. A clean v2-emitting binary is required, but the inherited replace-vs-add Block E choice and provenance-safe bootstrap are unresolved. No measurement or mutation proceeds until the owner decides. Claude owns unrelated OSD epic b7157be6 and coordinates shared Cargo/benchmark host windows through /home/vkaskivuo/Projects/forum-poc.",
+  "open_escalations": [
+    {
+      "kind": "architectural-decision",
+      "issue": "389aa4de",
+      "date": "2026-08-25",
+      "question": "Choose the committed calibrated-profile migration shape before the v2 measurement: replace the v1 anchor through a provenance-safe temporary migration, or add a v2 profile beside it with an explicitly versioned compatibility boundary.",
+      "recommendation": "Replace. Authorize a two-commit temporary-branch migration: first a clean dual-token bootstrap that leaves the byte-identical v1 anchor loadable, then the measured v2 profile/receipt and removal of v1 acceptance. Merge the complete series to main only after all checks pass."
+    }
+  ],
   "waves": [
     {
       "wave_number": 1,
@@ -714,8 +723,8 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus (native worker, harness phase) + lead (measured phase pending)",
-          "status": "harness-merged-measured-run-pending",
-          "notes": "Harness phase MERGED 28f674d6: omission set = schema complement (33/38 omitted, 7 drift tests), forced-arm child-process sweep (route/operand/product verification, 14 tests), DEC-B16 grid-point forcing (crossover direction confirmed between degree 16 and 31), receipt-notes.md Blocks A-E linked. cargo-ci PASS; code-review FAIL F1/F2/F3 = exactly the deferred measured-phase deliverables (REQ-02 artifact, REQ-03 record application, v2 token per DEC-B17-as-amended) -- phase boundary, NOT rework. Claim held by agent:worker."
+          "status": "blocked-owner-decision",
+          "notes": "Harness phase MERGED 28f674d6: omission set = schema complement (33/38 omitted, 7 drift tests), forced-arm child-process sweep (route/operand/product verification, 14 tests), DEC-B16 grid-point forcing (crossover direction confirmed between degree 16 and 31), receipt-notes.md Blocks A-E linked. cargo-ci PASS; code-review FAIL F1/F2/F3. Session-11 audit confirmed the measured phase cannot start truthfully from the current v1-emitting source: an uncommitted token bump makes source_dirty=true, a v2-only loader rejects the committed v1 anchor, and relabelling the old artifact as v2 violates behavioral provenance. Await the Block E owner decision and bootstrap authorization. Claim held by agent:worker."
         }
       ]
     }
