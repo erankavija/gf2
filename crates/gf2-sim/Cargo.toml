@@ -20,6 +20,11 @@ rayon = "1"
 rand_chacha = { workspace = true }
 rand_core = { workspace = true }
 rand = "0.9"
+# `gf2-coding::simulation::BpskAwgnChannel` retains its workspace rand 0.8
+# ChannelModel ABI. The OSD campaign binary uses these aliases only to pass a
+# deterministic ChaCha20 stream through that canonical channel.
+rand08 = { package = "rand", version = "0.8" }
+rand_chacha08 = { package = "rand_chacha", version = "0.3" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
