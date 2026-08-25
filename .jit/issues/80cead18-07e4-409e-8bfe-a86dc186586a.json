@@ -8,6 +8,7 @@
   ],
   "description": "Remove the unused `SoftDecisionDecoder` trait so the canonical soft-decoding surfaces remain unambiguous.\n\n## Background\n\n`SoftDecisionDecoder` at `crates/gf2-coding/src/traits.rs:365` has zero implementors and zero consumers. `SoftDecoder` covers immutable decoder calls, while stateful BP behavior belongs to the mutable `IterativeSoftDecoder` surface.\n\n## Success Criteria\n\n- [hard] REQ-01: The `SoftDecisionDecoder` declaration is absent from the public traits module.\n- [hard] REQ-02: Repository references confirm zero surviving imports, implementors, trait bounds, or documentation links.\n- [hard] REQ-03: Existing `SoftDecoder` and `IterativeSoftDecoder` APIs retain their behavior and documentation.",
   "documents": [],
+  "done_at": "2026-08-25T13:48:15.628986432Z",
   "first_ready_at": "2026-08-24T05:52:49.650437955Z",
   "gates_required": [
     "cargo-ci",
@@ -21,8 +22,13 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-25T13:38:50.988266767Z",
+      "status": "passed",
+      "updated_at": "2026-08-25T13:47:42.211311051Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T13:40:40.702651167Z",
       "updated_by": "auto:executor"
     }
   },
@@ -33,7 +39,7 @@
     "component:gf2-coding"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "SoftDecisionDecoder trait removal",
-  "updated_at": "2026-08-25T13:38:50.988266767Z"
+  "updated_at": "2026-08-25T13:48:15.628986432Z"
 }

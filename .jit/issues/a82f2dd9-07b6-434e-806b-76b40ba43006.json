@@ -16,7 +16,7 @@
   "gates_status": {
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-25T13:30:18.874022640Z",
+      "updated_at": "2026-08-25T13:44:46.204421665Z",
       "updated_by": "auto:executor"
     }
   },
@@ -33,5 +33,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Published eBCH OSD curve dataset",
-  "updated_at": "2026-08-25T13:30:18.874022640Z"
+  "updated_at": "2026-08-25T13:44:46.204421665Z"
 }

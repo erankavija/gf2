@@ -22,6 +22,11 @@
       "status": "passed",
       "updated_at": "2026-08-25T13:39:02.423485639Z",
       "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-25T13:46:13.946346299Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "f0d6fb9a-e138-4267-8a81-a5170ebf8e72",
@@ -36,5 +41,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Named eBCH(128,64) reference factory",
-  "updated_at": "2026-08-25T13:39:02.423485639Z"
+  "updated_at": "2026-08-25T13:46:13.946346299Z"
 }
