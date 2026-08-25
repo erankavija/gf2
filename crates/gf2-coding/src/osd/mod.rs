@@ -12,10 +12,15 @@
 //! [`GeneratorMatrixOsdDecoder`] supplies the generator-row-space semantics
 //! for linear block codes through the immutable [`crate::traits::SoftDecoder`]
 //! surface.
+//!
+//! [`SyndromeOsdCorrector`] supplies the parity-check semantics: it corrects a
+//! failed hard word `y` from posterior reliabilities by solving
+//! `H eᵀ = H yᵀ` over the same engine.
 
 mod engine;
 mod generator;
 mod patterns;
+mod syndrome;
 
 pub use engine::{
     reprocess, reprocess_with_cancellation, ColumnPreference, MostReliableBasis, OsdCandidate,
@@ -26,3 +31,4 @@ pub use patterns::{
     checked_candidate_bound, enumerate_patterns, OsdConfig, OsdTermination, PatternControl,
     PatternEnumerationError, PatternEnumerationReport, PatternEnumerator,
 };
+pub use syndrome::{SyndromeOsdCorrector, SyndromeOsdError, SyndromeOsdResult};
