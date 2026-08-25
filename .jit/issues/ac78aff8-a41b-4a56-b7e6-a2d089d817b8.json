@@ -13,7 +13,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T13:34:20.115059Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "ac78aff8-a41b-4a56-b7e6-a2d089d817b8",
   "labels": [
     "type:task",
@@ -23,5 +29,5 @@
   "priority": "high",
   "state": "ready",
   "title": "ORBGRAND reliability migration",
-  "updated_at": "2026-08-25T13:32:18.315672703Z"
+  "updated_at": "2026-08-25T13:34:20.115059Z"
 }

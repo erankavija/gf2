@@ -12,7 +12,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-25T13:35:12.892701110Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "f0d6fb9a-e138-4267-8a81-a5170ebf8e72",
   "labels": [
     "type:task",
@@ -25,5 +31,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Named eBCH(128,64) reference factory",
-  "updated_at": "2026-08-24T20:43:31.647750949Z"
+  "updated_at": "2026-08-25T13:35:12.892701110Z"
 }
