@@ -64,7 +64,8 @@ records the query, retrieval date, and response hash.
 A ResearchGate lead advertising author-uploaded public full text is a
 title-collision false positive. Its download is the five-author 1999 IEICE
 meeting work *Soft decision decoding of linear block codes based on ordered
-statistics in multilevel signaling*, not the two-author 1995 IEEE article. The
+statistics in multilevel signaling* [Isaka1999]
+(`@/citation/Isaka1999`), not the two-author 1995 IEEE article. The
 [title-page identification](/dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/researchgate_lead_identification.md)
 records the distinct title, authors, venue, local-file hash, and PDF metadata
 without redistributing that PDF. The 1995 article remains unobtained by this
@@ -212,8 +213,14 @@ is the versioned raw measurement receipt; the accompanying
 states the reproduction command and limits. It contains 30 reads: all 21
 primary figure ordinates and all nine table-row figure cross-checks.
 
-Precision of the pixel-read ordinates: $\pm 0.1$ in $\log_{10}$
-(about $\pm 25\%$ in linear value). This figure is measured, not assumed. The
+Precision of the pixel-read ordinates is recorded as a declared conservative
+bound of $\pm 0.1$ in $\log_{10}$ (about $\pm 25\%$ in linear value), per
+DEC-02; it is neither a measured statistical interval nor source-side
+simulation uncertainty. The committed sensitivity pass recalculates every
+point for all 25 integer marker-center hypotheses in the Cartesian $\pm 2$ px
+neighborhood, with the axis calibration held fixed. Its largest observed
+one-sided change is $0.0144$ decade and its largest full minimum-to-maximum
+range is $0.0288$ decade, so all 30 reads remain within the declared bound. The
 `figure_crosscheck_log10` column carries the pixel read for each row whose
 ordinate also appears in a printed table; across the nine such rows eight agree
 with the printed numeral within $0.12$ decades, and the ninth is the
@@ -254,13 +261,21 @@ simulated blocks is far too small to obtain reliable information at such an
 error performance" (p. 69). No confidence interval is published for any
 point in this dataset.
 
+Neither the 1994 dissertation nor Yue2022 publishes a predeclared sampling
+plan or stopping rule for the Fossorier simulation points digitized here or
+for Yue2022 Figure 1, so none can be recorded. Yue2022's
+1000-decoding-error stopping rule applies expressly to Figures 3–4, not Figure
+1. This is source silence recorded under DEC-01's rule, not an omission by
+this dataset.
+
 The published simulations' seeds, random-number-generator identity, hardware,
 toolchain, and invocation are not reported by the source. The source also
 reports no producing version-control revision or git SHA. None is invented or
 borrowed from the present repository. The only executable, versioned receipt
-published with this dataset is the digitization receipt above: it receipts the
-source hash, page render, axis anchors, and pixel measurements, not the
-unreported 1994 simulation execution.
+published for the Fossorier points is the digitization receipt above: it
+receipts the source hash, page render, axis anchors, and pixel measurements,
+not the unreported 1994 simulation execution. The separate Yue2022 receipt
+likewise records manual figure reads, not that source's simulation execution.
 
 ## Series inventory
 
@@ -289,6 +304,13 @@ measurement precision separate from statistical uncertainty.
 arXiv:2206.09572v2 (22 Dec 2022), retrieved 2026-08-24, SHA-256
 `869b8cc048b5d210f00db6ea8f69c2b368f5245e2bacc2b5aa0c14e91d5cf8ed`. Its
 reference [6] is `Fossorier1995`.
+
+The committed
+[`yue2022_fig1_receipt.json`](/dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/yue2022_fig1_receipt.json)
+pins those source bytes and records the page, figure, panel, series, all six
+manual reads, their precision, and the near-ML reference comparison used
+below. The same `extract.py` emits it with the reproduction command documented
+beside the receipt.
 
 The comparable object is Figure 1, left panel, "$(128,64)$ codes": the eBCH
 simulation curve, its ML bound, and OSD markers, plotted as block error rate
@@ -319,8 +341,9 @@ Material differences, recorded and not reconciled:
 - **Construction.** Yue2022 pins no primitive polynomial either; it names the
   code only as the $(128,64)$ eBCH code with the remark that such codes have
   the highest minimum Hamming distances among state-of-the-art linear codes.
-- **Sample size.** Yue2022 states its 1000-decoding-error stopping rule for
-  Figures 3–4 only, and states no sample size for Figure 1.
+- **Sample size and stopping.** Yue2022 states its 1000-decoding-error stopping
+  rule for Figures 3–4 only, and states no sample size, predeclared sampling
+  plan, or stopping rule for Figure 1.
 
 Consistency observed at the shared abscissa: Fossorier reports optimum
 performance at BER $10^{-6}$ for a 7.0 dB coding gain, i.e. $E_b/N_0 \approx

@@ -27,8 +27,8 @@ reported fields, not an inference that no copy can exist anywhere.
 [`researchgate_lead_identification.md`](researchgate_lead_identification.md)
 records the title-page identification of the file delivered by the advertised
 ResearchGate “full text” lead. The file is a different 1999 work with five
-authors. Its hash and metadata are recorded, but the PDF itself is not copied
-into the repository.
+authors, [Isaka1999] (`@/citation/Isaka1999`). Its hash and metadata are
+recorded, but the PDF itself is not copied into the repository.
 
 The audit establishes that this lead is a title-collision false positive; it
 does not establish an exhaustive search of every possible repository. The
