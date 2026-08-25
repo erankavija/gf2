@@ -1054,8 +1054,8 @@ scratch_reason() {
 }
 
 parse_premeasure_scratch() {
-    local path="$1" line key value header_seen=false header_line='' data_line=''
-    local data_count=0 i
+    local path="$1" plan_backend="${2:-}" line key value header_seen=false header_line='' data_line=''
+    local second_data_line='' data_count=0 i
     local -a header_fields data_fields
     local -a expected_header=(
         q n backend outcome batch_size reps matrices zeros total_s gen_s eval_s
@@ -1098,6 +1098,7 @@ parse_premeasure_scratch() {
         else
             data_count=$((data_count + 1))
             [[ "$data_count" -ne 1 ]] || data_line="$line"
+            [[ "$data_count" -ne 2 ]] || second_data_line="$line"
         fi
     done < "$path"
     if [[ "$header_seen" == false ]]; then
@@ -1115,9 +1116,21 @@ parse_premeasure_scratch() {
             done
         fi
     fi
-    if [[ "$data_count" -ne 1 ]]; then
+    if [[ "$data_count" -eq 2 && "$plan_backend" == gpu_hip ]]; then
+        # The frozen premeasure harness grid holds two gpu_hip specs per cell
+        # (M=256 and M=1024); the runner's --batch-size override coerces both
+        # to the plan's M before --only filters, so one gpu_hip process
+        # measures its cell twice into one scratch file. Per the recorded
+        # decision on jit:7a816262 (2026-08-25), the native-M grid slot — the
+        # second data row — is the process measurement; the first row is a
+        # recorded, unused replicate. See
+        # dev/benchmarks/permanent_campaign/premeasure-v1-deviations.md.
+        data_line="$second_data_line"
+    elif [[ "$data_count" -ne 1 ]]; then
         scratch_reason "data_row_count_${data_count}"
-    else
+        data_line=''
+    fi
+    if [[ -n "$data_line" ]]; then
         IFS=, read -r -a data_fields <<< "${data_line},__collector_end__"
         unset 'data_fields[${#data_fields[@]}-1]'
         if [[ "${#data_fields[@]}" -lt "${#expected_header[@]}" ]]; then
@@ -1365,7 +1378,7 @@ premeasure_collect() {
             censored["$config_key"]=$(( ${censored["$config_key"]:-0} + 1 ))
         fi
 
-        parse_premeasure_scratch "$csv"
+        parse_premeasure_scratch "$csv" "$backend"
         local scratch_present="$SCRATCH_PRESENT" scratch_valid="$SCRATCH_STRUCTURALLY_VALID"
         local scratch_q="${SCRATCH_DATA[q]:-}" scratch_n="${SCRATCH_DATA[n]:-}"
         local scratch_backend="${SCRATCH_DATA[backend]:-}" scratch_outcome="${SCRATCH_DATA[outcome]:-}"

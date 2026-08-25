@@ -232,6 +232,10 @@ write_scratch() {
         else
             printf 'q,n,backend,outcome,batch_size,reps,matrices,zeros,total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s\n'
         fi
+        if [[ "$mode" == dual || "$mode" == triple ]]; then
+            printf '%s,%s,%s,measured,%s,4,352,7,4,1,2.2,0.4,0.4,88,160\n' "$q" "$n" "$backend" "$batch"
+        fi
+        [[ "$mode" != triple ]] || printf '%s,%s,%s,measured,%s,4,352,7,4,1,2.2,0.4,0.4,88,160\n' "$q" "$n" "$backend" "$batch"
         printf '%s,%s,%s,measured,%s,5,480,10,5,1,3,0.5,0.5,96,160\n' "$q" "$n" "$backend" "$batch"
     } > "$path"
 }
@@ -579,6 +583,54 @@ t10() {
     PASS=$((PASS + 1))
 }
 
+t11() {
+    local target="$WORK/dual-gpu-collect" run_id=dual-gpu-collect
+    local root="$target/premeasure-dual-gpu-collect"
+    local session=dual-session
+    write_session "$root" one "$session" "$run_id" "$PLAN_SHA" \
+        "$OBSERVED_BINARY_SHA" "$OBSERVED_BINARY_SHA"
+    local q n code token backend batch process_index
+    local gpu_dual='' gpu_triple='' cpu_dual=''
+    while IFS=, read -r q n code token backend batch process_index; do
+        local mode=''
+        if [[ "$backend" == gpu_hip && -z "$gpu_dual" ]]; then
+            gpu_dual="$process_index"; mode=dual
+        elif [[ "$backend" == gpu_hip && -z "$gpu_triple" ]]; then
+            gpu_triple="$process_index"; mode=triple
+        elif [[ "$backend" != gpu_hip && -z "$cpu_dual" ]]; then
+            cpu_dual="$process_index"; mode=dual
+        fi
+        [[ -n "$mode" ]] || continue
+        write_receipt "$root" "$run_id" "$session" "$process_index" "$q" "$n" \
+            "$code" "$token" "$backend" "$batch" completed 0
+        write_scratch "$root/processes/process-$(printf '%04d' "$process_index")-$q-$n-$code/scratch.csv" \
+            "$q" "$n" "$backend" "$batch" "$OBSERVED_BINARY_SHA" "$mode"
+    done < "$SCHEDULE"
+    set +e
+    run_collect "$target" "$run_id" >/dev/null 2>&1
+    local rc=$?
+    set -e
+    [[ "$rc" -eq 7 ]]
+    [[ "$(csv_field "$root/premeasure-ledger.csv" "$gpu_dual" ledger_state)" == completed ]]
+    [[ "$(csv_field "$root/premeasure-ledger.csv" "$gpu_dual" row_valid)" == true ]]
+    [[ "$(csv_field "$root/premeasure-ledger.csv" "$gpu_dual" scratch_structurally_valid)" == true ]]
+    [[ "$(csv_field "$root/premeasure-ledger.csv" "$gpu_dual" candidate_emitted)" == true ]]
+    [[ "$(csv_field "$root/premeasure-ledger.csv" "$gpu_dual" scratch_matrices)" == 480 ]]
+    [[ "$(csv_field "$root/premeasure-ledger.csv" "$gpu_dual" scratch_reps)" == 5 ]]
+    local cpu_state cpu_reasons
+    cpu_state="$(csv_field "$root/premeasure-ledger.csv" "$cpu_dual" ledger_state)"
+    cpu_reasons="$(csv_field "$root/premeasure-ledger.csv" "$cpu_dual" validity_reasons)"
+    [[ "$cpu_state" == structurally_invalid ]]
+    [[ "$cpu_reasons" == *data_row_count_2* ]]
+    local triple_state triple_reasons
+    triple_state="$(csv_field "$root/premeasure-ledger.csv" "$gpu_triple" ledger_state)"
+    triple_reasons="$(csv_field "$root/premeasure-ledger.csv" "$gpu_triple" validity_reasons)"
+    [[ "$triple_state" == structurally_invalid ]]
+    [[ "$triple_reasons" == *data_row_count_3* ]]
+    echo 'PASS: dual-row gpu_hip scratch selects the native-M second row; other row counts stay invalid'
+    PASS=$((PASS + 1))
+}
+
 trap 'rm -rf "$WORK"' EXIT
 t1
 t2
@@ -590,4 +642,5 @@ t7
 t8
 t9
 t10
-echo "PASS: $PASS/10 premeasure tests"
+t11
+echo "PASS: $PASS/11 premeasure tests"
