@@ -351,7 +351,8 @@ impl ExtendedBchCode {
 
     /// Creates the reference eBCH(128,64,22) code from BCH(127,64,10).
     ///
-    /// Fossorier's 1994 dissertation, Figure 4.14 and Tables 4.7--4.9,
+    /// Fossorier's 1994 dissertation (`@/citation/Fossorier1994`),
+    /// Figure 4.14 and Tables 4.7--4.9,
     /// identifies the published code by its `(128,64,22)` parameters and a
     /// systematic convention, but does not specify a `GF(2^7)` representation.
     /// Campaign decision D-21 therefore chooses gf2-core's standard verified
