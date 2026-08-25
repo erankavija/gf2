@@ -15,7 +15,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-25T06:18:22.679052209Z",
+      "updated_at": "2026-08-25T06:39:57.655256295Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -25,7 +25,7 @@
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-25T06:38:49.198159619Z",
+      "updated_at": "2026-08-25T06:51:02.081923049Z",
       "updated_by": "auto:executor"
     }
   },
@@ -39,5 +39,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Scope campaign emission provenance to the measured artifact",
-  "updated_at": "2026-08-25T06:38:49.198159619Z"
+  "updated_at": "2026-08-25T06:51:02.081923049Z"
 }
