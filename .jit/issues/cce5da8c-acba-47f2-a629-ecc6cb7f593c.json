@@ -35,7 +35,7 @@
     "cites:Hillmann2024"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Quantum LDPC decoding with classical GF(2) machinery",
-  "updated_at": "2026-08-25T13:49:28.302526024Z"
+  "updated_at": "2026-08-25T19:05:29.163956659Z"
 }

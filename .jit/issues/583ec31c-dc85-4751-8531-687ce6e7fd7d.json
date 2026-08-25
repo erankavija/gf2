@@ -8,6 +8,7 @@
   ],
   "description": "Provide parity-check-domain OSD correction for a failed hard word using posterior reliability magnitudes.\n\n## Background\n\nFor parity-check matrix $\\mathbf{H}$ and failed hard word $\\mathbf{y}$, the adapter forms $\\mathbf{s}=\\mathbf{H}\\mathbf{y}^{\\mathsf T}$ and searches for $\\mathbf{e}$ satisfying $\\mathbf{H}\\mathbf{e}^{\\mathsf T}=\\mathbf{s}$. Elimination prefers columns in ascending posterior magnitude so pivots align with the least reliable coordinates; for rank $r$, error patterns enumerate the $n-r$ free coordinates up to order $m$, each completed uniquely by pivot back-substitution, with order 0 the all-zero free pattern. Candidate cost is the magnitude-only sum of flipped posterior LLRs, ties break deterministically in enumeration order, and the returned word is $\\mathbf{y}\\oplus\\mathbf{e}$ for the lowest-cost valid tested candidate. The result equals the global order-$m$ cost minimum only in uncapped exhaustive configuration.\n\n## Success Criteria\n\n- [hard] REQ-01: Accepts a parity-check matrix, failed hard word, posterior LLRs, and `OsdConfig` with documented dimension and NaN validation.\n- [hard] REQ-02: Returns $\\mathbf{y}\\oplus\\mathbf{e}$ only when its syndrome is zero, ranking candidates by $\\sum_i e_i |L_i|$ with deterministic enumeration-order ties.\n- [hard] REQ-03: Selects pivots by ascending posterior magnitude and completes each free-coordinate pattern by back-substitution through the elimination row transform.\n- [hard] REQ-04: Order-0 and order-1 results on bounded fixtures match hand-computed back-substitution with the all-zero and single free-coordinate flip patterns.\n- [hard] REQ-05: Classifies rank-deficient systems through the row transform and reports a syndrome outside the reachable row space explicitly.\n- [hard] REQ-06: Exposes rank, candidate, cap, and termination metadata from the shared reprocessing engine.\n- [hard] REQ-07: Matches exhaustive magnitude-cost error search on bounded parity-check fixtures in uncapped configuration for zero, nonzero, rank-deficient, and inconsistent syndromes.",
   "documents": [],
+  "done_at": "2026-08-25T19:05:21.102217482Z",
   "first_ready_at": "2026-08-25T17:43:42.682339704Z",
   "gates_required": [
     "cargo-ci",
@@ -41,7 +42,7 @@
     "cites:Roffe2020"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Syndrome-domain OSD adapter",
-  "updated_at": "2026-08-25T19:04:38.459500262Z"
+  "updated_at": "2026-08-25T19:05:21.102217482Z"
 }
