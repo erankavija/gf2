@@ -20,19 +20,6 @@ fn emitter_digest() -> String {
         .to_owned()
 }
 
-fn dataset_digest() -> String {
-    let output = Command::new("sha256sum")
-        .arg(env!("CARGO_BIN_EXE_permanent_dataset"))
-        .output()
-        .unwrap();
-    String::from_utf8(output.stdout)
-        .unwrap()
-        .split_whitespace()
-        .next()
-        .unwrap()
-        .to_owned()
-}
-
 fn manifest() -> CampaignManifest {
     CampaignManifest {
         schema_version: SCHEMA_VERSION,
@@ -168,7 +155,7 @@ fn campaign_checkout(parent: &Path, manifest: &Path) -> (PathBuf, PathBuf) {
 }
 
 #[test]
-fn provenance_reports_the_running_dataset_binary_and_source_revision() {
+fn print_provenance_reports_the_emitting_binary_and_source_revision() {
     let parent = temp_path("provenance");
     let manifest_path = parent.join("manifest");
     let manifest_file = manifest_path.join("manifest.json");
@@ -180,8 +167,12 @@ fn provenance_reports_the_running_dataset_binary_and_source_revision() {
     .unwrap();
     let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
 
-    let result = Command::new(env!("CARGO_BIN_EXE_permanent_dataset"))
-        .args(["provenance", output_path.to_str().unwrap()])
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--print-provenance",
+            "--manifest",
+            output_path.to_str().unwrap(),
+        ])
         .output()
         .unwrap();
     assert!(
@@ -190,12 +181,13 @@ fn provenance_reports_the_running_dataset_binary_and_source_revision() {
         String::from_utf8_lossy(&result.stderr)
     );
     let provenance: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
-    assert_eq!(provenance["binary_sha256"], dataset_digest());
+    assert_eq!(provenance["binary_sha256"], emitter_digest());
+    assert_eq!(provenance["deps_source_dirty"], false);
     let revision = provenance["deps_source_revision"].as_str().unwrap();
     assert_eq!(revision.len(), 40);
     assert!(revision
         .chars()
-        .all(|character| character.is_ascii_hexdigit()));
+        .all(|character| character.is_ascii_digit() || matches!(character, 'a'..='f')));
 
     let _ = fs::remove_dir_all(parent);
 }
