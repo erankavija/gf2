@@ -16,12 +16,18 @@
 //! [`SyndromeOsdCorrector`] supplies the parity-check semantics: it corrects a
 //! failed hard word `y` from posterior reliabilities by solving
 //! `H eᵀ = H yᵀ` over the same engine.
+//!
+//! [`BpOsdDecoder`] supplies the mutable BP-first composition.  It returns a
+//! successful BP hard word without reprocessing and otherwise hands that word
+//! plus BP's posterior LLRs to [`SyndromeOsdCorrector`].
 
+mod bp_osd;
 mod engine;
 mod generator;
 mod patterns;
 mod syndrome;
 
+pub use bp_osd::{BpOsdDecodeError, BpOsdDecoder, BpOsdResult, BpOsdStage, BpOsdTermination};
 pub use engine::{
     reprocess, reprocess_segmented, reprocess_segmented_with_cancellation,
     reprocess_with_cancellation, ColumnPreference, MostReliableBasis, OsdCandidate,
