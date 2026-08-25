@@ -18,6 +18,11 @@
       "status": "passed",
       "updated_at": "2026-08-25T13:34:20.115059Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-25T13:38:01.468984740Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "ac78aff8-a41b-4a56-b7e6-a2d089d817b8",
@@ -29,5 +34,5 @@
   "priority": "high",
   "state": "ready",
   "title": "ORBGRAND reliability migration",
-  "updated_at": "2026-08-25T13:34:20.115059Z"
+  "updated_at": "2026-08-25T13:38:01.468984740Z"
 }
