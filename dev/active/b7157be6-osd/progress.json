@@ -1,7 +1,7 @@
 {
  "epic_id": "b7157be6-16d8-4050-834c-e996d4fa27c3",
  "epic_short_id": "b7157be6",
- "current_wave": 4,
+ "current_wave": 5,
  "waves": [
   {
    "wave_number": 1,
@@ -127,7 +127,7 @@
      "title": "Generator-matrix OSD decoder",
      "classification": "implementation",
      "model": "sol-xhigh",
-     "status": "dispatched to Sol xhigh in worktree agent-c97b2961 (base 8282fceb)"
+     "status": "done (all gates passed round 1; merged 67b0291a; worktree reclaimed)"
     }
    ]
   },
@@ -141,7 +141,7 @@
      "title": "Syndrome-domain OSD adapter",
      "classification": "implementation",
      "model": "opus",
-     "status": "pending"
+     "status": "dispatched to native Opus in worktree agent-583ec31c (base 4a8ade83)"
     },
     {
      "id": null,
@@ -150,7 +150,7 @@
      "title": "eBCH OSD campaign executable",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "dispatched to Luna xhigh in worktree agent-c8322eff (base 4a8ade83)"
     },
     {
      "id": null,
@@ -159,7 +159,7 @@
      "title": "OSD pattern segmentation policy",
      "classification": "implementation",
      "model": "luna-xhigh",
-     "status": "pending"
+     "status": "dispatched to Luna xhigh in worktree agent-b3cab18e (base 4a8ade83)"
     }
    ]
   },
