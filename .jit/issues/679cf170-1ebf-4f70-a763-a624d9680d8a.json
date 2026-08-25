@@ -24,8 +24,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-25T06:51:02.081923049Z",
+      "status": "passed",
+      "updated_at": "2026-08-25T06:52:47.139884916Z",
       "updated_by": "auto:executor"
     }
   },
@@ -39,5 +39,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Scope campaign emission provenance to the measured artifact",
-  "updated_at": "2026-08-25T06:51:02.081923049Z"
+  "updated_at": "2026-08-25T06:52:47.139884916Z"
 }
