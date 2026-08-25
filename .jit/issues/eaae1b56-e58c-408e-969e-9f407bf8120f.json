@@ -10,11 +10,10 @@
     "aec4b6c8-d66d-45f2-ae53-211cff95c5e6",
     "d0365895-ee84-4d40-a8d3-8c9d767b9fa7",
     "df385aa7-89e0-4684-8cbf-3ce782a26694",
-    "ef18c60b-a984-45f1-b00d-afd0c84b0091",
     "fa92608b-5f8a-47c3-ae35-a6a70a85db7a",
     "fbe66a7a-454c-459a-a231-63f4adcf3dcb"
   ],
-  "description": "Extend the explicit calibration action's sweep to the sweepable follow-on threshold fields.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §5.1-§5.2 fix the sweepability test and the split: eleven sweepable threshold fields, every one except the interpolation crossover depending on the profile-steered two-process technique that the karatsuba_min_degree steering mechanism provides. This design adds no second steering mechanism.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration action sweeps the eleven sweepable follow-on threshold fields through the standing crossover rule, reusing the existing profile-steering mechanism for fields whose arms need steering.\n- [hard] REQ-02: Each field's outcome - measured, tie, non-monotone, or uncalibrated - is recorded in the calibration receipt, and non-sweepable fields stay omitted from committed profiles under the standing omission rule.\n- [hard] REQ-03: Calibration remains an explicit benchmark action with no build side effect, and committed profiles regenerated from a sweep carry provenance per the standing design.",
+  "description": "Extend the explicit calibration action to the eleven sweepable follow-on core threshold fields.\n\n## Background\n\nThe follow-on selector migration design at `dev/active/7d824b2f/design.md` fixes the sweepability test and field set. The strict format-2 mechanism and the pilot measured core-owner envelope are inputs. This task reuses the one fresh-process steering protocol and `CoreTuningCodec`; it creates no second loader, forcing hook, or artifact representation.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration action sweeps the eleven sweepable follow-on threshold fields through the standing crossover rule. Every timed route runs in a fresh child that installs a strict prepared core section and asserts `Installed` for every steered field before public production dispatch. The parent and composer never install a profile; a nonzero exit, malformed result, `DefaultedMissing`, or `FrozenBeforeInstall` invalidates the run without publishing an artifact.\n- [hard] REQ-02: The receipt records every field's grid, timing samples and uncertainty, route observations, selection and fallback rule, and outcome—measured, tie, non-monotone, or uncalibrated—together with clean source revision, seed, host, toolchain, and separate section-measurement versus envelope-assembly provenance. A non-sweepable or invalid result remains omitted under the core codec's section-local omission rule and is never filled with an estimate.\n- [hard] REQ-03: The authoritative core-owner envelope is updated atomically and strictly reopened and contains no algebra vocabulary. Its one section-level measurement provenance and receipt cover every retained measured selector; values not covered by the run are explicitly superseded or omitted rather than copied beneath unrelated evidence.\n- [hard] REQ-04: Calibration remains an explicit action under one outer benchmark lock with no build side effect. The both-codec composer regenerates and strictly reopens the complete repository envelope while preserving the canonical core wrapper and leaving the algebra wrapper unchanged.\n",
   "documents": [],
   "first_ready_at": "2026-08-22T21:29:27.371031186Z",
   "gates_required": [
@@ -49,5 +48,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-08-22T21:29:35.698437815Z"
+  "updated_at": "2026-08-25T23:27:54.304839658Z"
 }

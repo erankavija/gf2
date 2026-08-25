@@ -3,10 +3,9 @@
   "context": {},
   "created_at": "2026-08-22T21:27:08.444306766Z",
   "dependencies": [
-    "856f1b48-e518-4329-889f-e2589629622d",
-    "b749bdfc-63e1-41c6-b8dc-65d334fdd652"
+    "eaae1b56-e58c-408e-969e-9f407bf8120f"
   ],
-  "description": "Predeclare and implement an argmin sweep protocol for extent fields, scoped to the twelve extent fields of the follow-on schema.\n\n## Background\n\nThe follow-on selector migration design (dev/active/7d824b2f/design.md) governs this task; read it in full. Its §2 fixes the two field kinds and the mechanism rule with four structural read-pattern obligations, §3 gives every field its name, range, default-naming constant, read site and mechanism, §4 names the route reporter and test obligation per family, and §5.3 states the ratified amortisation screening rule and the behaviour-preservation argument (defaults name the in-source constants; observable behaviour unchanged when no profile is installed). Design §5.1-§5.2 record why the standing crossover rule cannot sweep an extent field; task row T13 of §8 fixes the shape: an argmin search over a parameter grid at fixed operand sizes, the default kept on a tie or a non-monotone curve, the full grid recorded in the receipt.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed predeclaration fixes the extent-sweep rule - grid, argmin selection, tie and non-monotonicity handling, and receipt format - before any extent measurement exists.\n- [hard] REQ-02: The calibration action implements the protocol for the twelve extent fields behind the explicit benchmark action, with no build side effect.\n- [hard] REQ-03: Protocol runs record their grids and outcomes in the calibration receipt; an unswept field stays omitted from committed profiles under the standing omission rule.",
+  "description": "Predeclare and execute the argmin calibration protocol for the twelve extent fields under crate-owned tuning sections.\n\n## Background\n\nThe follow-on selector migration design at `dev/active/7d824b2f/design.md` fixes the extent-field set and explains why the standing crossover rule does not apply. Eleven extent fields belong to `gf2-core`; `permanent.gray_chunk_subsets` belongs to `gf2-algebra`. The crate-owned tuning design at `dev/active/3fa7c9d0/design.md` governs the two owner codecs, strict owner envelopes, fresh-process steering, and mechanical complete-envelope composition.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed predeclaration fixes, before measurement, each extent field's operand sizes, parameter grid, repetitions/stopping rule, argmin selection, tie handling, non-monotonicity handling, fallback, receipt schema, and deterministic seed/stream allocation.\n- [hard] REQ-02: The explicit benchmark action implements the protocol for all twelve extents: eleven core fields through `CoreTuningCodec` and `permanent.gray_chunk_subsets` only through the algebra-owned `AlgebraTuningCodec` and `gf2-algebra/permanent` section. Core never owns or serializes the permanent selector. Every timed route runs in a fresh child that installs the required strict owner or complete envelope and proves `Installed` resolution for every affecting section. The parents and composer never install; a nonzero exit, malformed result, `DefaultedMissing`, or `FrozenBeforeInstall` invalidates the run without publishing an artifact.\n- [hard] REQ-03: The receipt records full grids, timing samples and uncertainty, route observations, argmin selection and fallback, ties, non-monotone cases, contradictory evidence, clean source revision, seed, host, toolchain, and separate section-measurement versus envelope-assembly provenance. An unswept or invalid field remains omitted when the predeclared protocol justifies no measured claim.\n- [hard] REQ-04: The run atomically updates and strictly reopens authoritative core-owner and algebra-owner format-2 envelopes. Each owner's single section-level measurement provenance and receipt cover every retained measured selector in that section; values not covered by the run are explicitly superseded or omitted. The both-codec composer emits and strictly reopens the complete repository envelope with exact canonical wrapper identity for both owners.\n- [hard] REQ-05: One outer benchmark lock covers calibration and composition; no inner component locks, build side effects, reverse production dependency, partial-composite loader, or duplicate tuning authority are introduced.\n",
   "documents": [],
   "first_ready_at": "2026-08-22T21:27:08.444306766Z",
   "gates_required": [
@@ -36,10 +35,11 @@
     "epic:field-capability-dispatch",
     "component:gf2-core",
     "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "component:gf2-algebra"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-08-25T18:45:18.041565714Z"
+  "updated_at": "2026-08-25T23:28:06.012341818Z"
 }
