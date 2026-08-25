@@ -1,16 +1,10 @@
 # Design: crate-owned typed tuning sections (3fa7c9d0)
 
-This design fixes the canonical cutover from the flat, core-owned tuning
-profile to profile format 2: one generic envelope and process-wide resolution
+Profile format 2 consists of one generic envelope and process-wide resolution
 authority in `gf2-core`, with typed selector sections owned by the crate that
-owns each algorithm. It supersedes the durable ownership decision in
-`dev/active/7d824b2f/design.md` D4 without rewriting that historical record.
-
-The architecture is owner-approved. The independent architecture review
-recorded on issue `3fa7c9d0` passed after the design direction added
-freeze-site diagnostics, subprocess-isolated one-shot tests, per-section
-resolution provenance, assembly provenance, and explicit section-version
-rejection. This document makes that reviewed direction implementation-exact.
+owns each algorithm. This document is the implementation-exact authority for
+that architecture. `dev/active/7d824b2f/design.md` D4 remains a historical
+record and receives the append-only supersession described in §7.3.
 
 ## Success Criteria
 
@@ -90,8 +84,26 @@ pub trait TuningSection: Clone + Send + Sync + 'static {
 #[cfg(feature = "tuning-profile")]
 pub trait SectionCodec<T: TuningSection>: Send + Sync + 'static {
     const SCHEMA_VERSION: u32;
+    fn validate_measurement(value: &MeasurementProvenance)
+        -> Result<(), SectionError>;
     fn decode_body(body: CanonicalValue) -> Result<T, SectionError>;
     fn encode_body(section: &T) -> Result<CanonicalValue, SectionError>;
+}
+pub struct PreparedEnvelope { /* validated typed entries; private fields */ }
+pub struct PreparedEnvelopeBuilder { /* typed erased sections; no serde */ }
+pub struct CompiledProfileProvenance { pub artifact_id: ProfileId }
+impl PreparedEnvelope {
+    pub fn compiled(
+        id: ProfileId,
+        provenance: CompiledProfileProvenance,
+    ) -> PreparedEnvelopeBuilder;
+}
+impl PreparedEnvelopeBuilder {
+    pub fn insert<T: TuningSection>(
+        self,
+        section: T,
+    ) -> Result<Self, ProfileError>;
+    pub fn build(self) -> Result<PreparedEnvelope, ProfileError>;
 }
 #[cfg(feature = "tuning-profile")]
 pub struct ProfileRegistryBuilder { /* BTreeMap<SectionId, erased codec> */ }
@@ -121,8 +133,24 @@ pub struct ActiveSection<'a, T> {
 }
 ```
 
-`CanonicalValue` is a profile-private, deterministic JSON value exposed to
-codecs only through constructors and typed serde adapters. It stores object
+`SectionId`, `TuningSection`, `PreparedEnvelope`, its compiled builder, the
+provenance/diagnostic types, `active_section`, and `install` are always
+available. The compiled builder safely erases concrete `TuningSection` values
+with `Any` and constructs a usable in-memory envelope without serde, JSON, or
+filesystem access. Every inserted section has `MeasurementProvenance::Inherited`.
+`CompiledProfileProvenance` identifies that compiled input; it is not
+serializable as a canonical envelope and makes no measurement claim.
+A caller whose profile values are compiled into its binary constructs this
+prepared value at startup and installs it before dispatch; baked selectors
+themselves remain compile-time constants and do not call `install`.
+`CanonicalValue`, `SectionCodec`, the registry, format-2 parser/encoder, and
+canonical digest implementation exist only with `tuning-profile`. Parsing and
+compiled construction converge on the same `PreparedEnvelope`, so the
+unconditional `install` signature compiles and is useful with
+`--no-default-features`.
+
+`CanonicalValue` is an opaque, deterministic JSON value exposed to codecs
+only through constructors and typed serde adapters. It stores object
 members in `BTreeMap<String, CanonicalValue>`, rejects duplicate keys, rejects
 floating-point numbers, and serializes without insignificant whitespace.
 Selectors are integral today; excluding floats avoids platform-dependent
@@ -151,6 +179,11 @@ decode returns `Arc<dyn Any + Send + Sync>` and its encode performs
 registry entry also stores `TypeId::of::<T>()`; build rejects duplicate IDs,
 duplicate type IDs, and an empty registry.
 
+`PreparedEnvelopeBuilder::insert::<T>()` uses the same `Any` representation
+without a codec: `TuningSection::ID` supplies the map key and the already-typed
+constructor supplies validation. It rejects duplicate IDs and type IDs before
+producing a prepared value.
+
 No raw pointer, transmute, unchecked downcast, linker registration, inventory
 crate, mutable global, or `unsafe` block is used. This is mandatory because
 production unsafe code is isolated to the two kernel crates. A downcast
@@ -167,6 +200,7 @@ registration and no dependency from the mechanism to a section owner.
 ```rust
 pub struct CoreTuning { selectors: CoreSelectors }
 pub struct CoreSelectors { /* the 37 core fields, grouped as today */ }
+#[cfg(feature = "tuning-profile")]
 pub struct CoreTuningCodec;
 
 impl TuningSection for CoreTuning {
@@ -193,6 +227,7 @@ pub mod tuning {
     pub const CHUNK_SUBSETS: usize = 1 << 16;
     pub struct PermanentSelectors { gray_chunk_subsets: usize }
     pub struct AlgebraTuning { permanent: PermanentSelectors }
+    #[cfg(feature = "tuning-profile")]
     pub struct AlgebraTuningCodec;
     impl PermanentSelectors {
         pub fn try_new(gray_chunk_subsets: usize) -> Result<Self, SectionError>;
@@ -313,38 +348,58 @@ pub enum LoadMode {
 ```
 
 Both modes first reject malformed JSON, duplicate keys, an envelope version
-other than 2, an invalid identity/provenance token, or a mismatched content
-digest. Validation then follows this table.
+other than 2, an invalid envelope identity or assembly-provenance token, or a
+mismatched content digest. Section measurement provenance is interpreted only
+for decoded sections. Validation then follows this table.
 
 | Condition | `StrictFull` | `ExplicitSubset` |
 |---|---|---|
-| Required IDs | Exactly every ID registered in this registry | Exactly the caller's non-empty `required` set |
-| Required ID not registered | Impossible by construction | `UnregisteredRequiredSection` |
-| Required section absent | `MissingRequiredSection` | `MissingRequiredSection` |
-| Wire IDs | Must equal the registry ID set exactly | Required IDs plus any number of skipped IDs |
-| Unknown wire ID | `UnexpectedSection` | Record ID + canonical raw SHA-256; do not decode |
-| Registered, present, not required | Not applicable | Record as skipped; do not decode |
-| Registered, absent, not required | Not applicable | No skipped record; later access defaults |
-| Required section schema unsupported | Reject before selector decoding | Reject before selector decoding |
+| IDs decoded | Every present wire ID | Exactly the caller's non-empty `required` set |
+| Required ID not registered | Not applicable | `UnregisteredRequiredSection` |
+| Requested section absent | Not applicable | `MissingRequiredSection` |
+| Wire-ID relation to registry | Wire IDs must be a subset of registered IDs | Requested IDs must be registered; other present IDs need not be |
+| Present unregistered/unknown ID | `UnexpectedSection`; reject | Record ID + canonical raw SHA-256; do not decode |
+| Registered and present | Validate version, provenance, body, and range | Decode only when requested; otherwise record as skipped |
+| Registered but absent | Valid; later typed access defaults | Valid unless requested; later typed access defaults |
+| Decoded section schema unsupported | Reject before selector decoding | Reject before selector decoding |
 | Skipped section schema unsupported | Not applicable | Allowed and recorded by raw digest |
-| Any required codec/range error | Reject whole envelope | Reject whole envelope |
+| Any decoded codec/range error | Reject whole envelope | Reject whole envelope |
 
-The subset set is canonicalized as a `BTreeSet`; duplicate caller IDs are a
-construction error before parsing. No implicit "all known" subset exists.
+The subset set is a `BTreeSet`, so duplicate caller IDs are unrepresentable;
+an empty set is `EmptyRequiredSubset`. No implicit "all known" subset exists.
 Callers spell out every section whose semantics they intend to accept.
 
-The two absence cases are intentionally asymmetric:
+The `StrictFull` algorithm iterates the wire `sections` map. For each present
+ID it requires a registered codec, checks that codec's section version and
+measurement token, and decodes the body. It does not iterate registry IDs to
+require presence: an envelope containing only `gf2-core/selectors` is a valid
+strict-full input even when the registry also knows the algebra codec.
+
+The `ExplicitSubset` algorithm first verifies that every requested ID is
+registered and present. It decodes exactly those IDs. For every other present
+wire entry—whether registered or unknown—it stores `SkippedSection { id,
+canonical_raw_sha256 }` without interpreting its version, provenance, or body.
+The errors `UnregisteredRequiredSection` and `MissingRequiredSection` therefore
+belong only to `ExplicitSubset`; `UnexpectedSection` belongs only to
+`StrictFull`.
+
+Presence, absence, and skipping are intentionally asymmetric:
 
 - An installed envelope that contains no entry for section $S$ permits access
   to $S$ and yields `T::conservative()` with `DefaultedMissing`. Absence makes
-  no claim about $S$.
+  no claim about $S$. This holds whether or not a codec for $S$ participated
+  in parsing; `TuningSection` supplies the stable ID and conservative value.
 - An installed envelope that contains $S$ but whose subset load skipped it
   makes access to $S$ fatal. The document made a claim, and silently replacing
   that claim with a default would erase operator intent and provenance.
 
-This is not partial application. Every required section validates before a
-`PreparedEnvelope` exists; installation moves the whole prepared value into
-the one process cell.
+A decoded section is necessarily registered because only a registered codec
+can produce it. Codec registration governs decoding of present bytes, not the
+ability to use a crate-owned conservative value for absent bytes.
+
+This is not partial application. Every section selected for decoding validates
+before a `PreparedEnvelope` exists; installation moves the whole prepared
+value into the one process cell.
 
 ## 5. Install, freeze, access, and errors
 
@@ -357,14 +412,22 @@ enum ProcessTuning {
     Installed {
         at: ResolutionSite,
         profile_id: ProfileId,
-        registered: BTreeSet<SectionId>,
-        sections: BTreeMap<SectionId, ErasedSection>,
-        skipped: BTreeMap<SectionId, SkippedSection>,
-        assembly: AssemblyProvenance,
+        entries: BTreeMap<OwnedSectionId, PreparedEntry>,
+        origin: PreparedOrigin,
     },
     FrozenBeforeInstall {
         at: ResolutionSite,
     },
+}
+
+enum PreparedOrigin {
+    CanonicalEnvelope(AssemblyProvenance),
+    Compiled(CompiledProfileProvenance),
+}
+
+enum PreparedEntry {
+    Decoded(ErasedSection),
+    Skipped(SkippedSection),
 }
 ```
 
@@ -410,11 +473,18 @@ pub enum SectionResolution<'a> {
 | Process state and section | Access result | Resolution |
 |---|---|---|
 | Installed and decoded | Typed installed section | `Installed` |
-| Installed and absent | Owning type's conservative section | `DefaultedMissing` |
+| Installed and absent, codec registered or not | Owning type's conservative section | `DefaultedMissing` |
 | Installed and skipped | Fatal `SkippedSectionAccess` with ID and digest | No value |
-| Installed but type was not registered | Fatal `UnregisteredSectionAccess` | No value |
 | Frozen before any install | Owning type's conservative section | `FrozenBeforeInstall` |
 | Type/ID mismatch | Fatal registry invariant | No value |
+
+Access looks up `T::ID` once. A decoded entry is downcast and returned; a
+skipped entry is fatal. No entry means the wire section was absent, so the
+accessor returns `T::conservative()` with `DefaultedMissing`; it does not
+consult a record of parser registrations. Thus a core-only installed envelope
+followed by `active_section::<AlgebraTuning>()` defaults even when the registry was
+core-only. A present algebra entry could only be decoded by an algebra codec or
+retained as skipped, so it can never fall through to the absent case.
 
 "Fatal" means a dedicated panic from `active_section` because production
 selection accessors cannot return `Result` without infecting every algorithm
@@ -462,17 +532,31 @@ unchanged. It cannot promote `Inherited` to `Calibrated`, rewrite a receipt,
 or merge two measurements into one section without that section owner's
 calibration component doing so.
 
-Envelope version rejection happens before registry logic. For each required
+`HarnessSchema` validates the lexical shape of a measurement-behavior identity
+but has no globally hard-coded supported value. Each `SectionCodec` owns the
+accepted harness token or tokens for its calibrated section through
+`validate_measurement`; an inherited section has no harness token to validate.
+After checking the wrapper's section schema and before decoding selectors, the
+erased adapter parses common provenance and asks that codec to validate it.
+An unsupported calibrated token is
+`UnsupportedHarnessSchema { section_id, found, supported }` for that section.
+Envelope format 2 and section schema 1 therefore say nothing by themselves
+about calibration behavior.
+
+Envelope version rejection happens before registry logic. For each decoded
 section, the erased adapter reads only `schema_version`, compares it to
 `C::SCHEMA_VERSION`, and returns `UnsupportedSectionSchemaVersion { id,
-found, supported }` before calling `decode_body`. Envelope and section errors
-are distinct enum variants and tests.
+found, supported }` before provenance or selector decoding. Envelope version,
+section version, and harness-schema errors are distinct enum variants and
+tests. The inherited conservative intermediate in §7.1 is a format-2
+container with inherited values; it is not labeled calibrated and does not
+claim a version-2 measurement behavior.
 
 ### 6.2 Feature and dependency layout
 
-| Crate/area | Feature | Dependencies | Default? | Contents |
+| Crate/area | Feature | Additional dependencies | Default? | Contents |
 |---|---|---|---|---|
-| `gf2-core` | always | standard library | yes | IDs, typed-section trait, process cell, active access, conservative core values |
+| `gf2-core` | always | none for tuning | yes | IDs, typed-section trait, prepared/compiled builder, process cell, install/active access, conservative core values |
 | `gf2-core` | `tuning-profile` | optional `serde`, `serde_json`, `sha2` | no | canonical JSON, registry/codecs, envelope validation, digesting |
 | `gf2-algebra` | always | existing `gf2-core` | yes | `AlgebraTuning`, `PermanentSelectors`, range/default/accessor, baked constants |
 | `gf2-algebra` | `tuning-profile` | `gf2-core/tuning-profile`, optional `serde` | no | `AlgebraTuningCodec`, section calibration serialization |
@@ -480,9 +564,17 @@ are distinct enum variants and tests.
 
 The existing algebra `serde` feature may share the dependency, but
 `tuning-profile` is separately named and non-default; enabling selector codecs
-does not promise serde support for unrelated packed types. No production crate
-gains a reverse dependency, a build script, environment lookup, filesystem
-scan, or build-time profile input.
+does not promise serde support for unrelated packed types. A no-default-feature
+build can use conservative access or install a programmatically compiled
+`PreparedEnvelope`; it cannot parse or emit JSON. No production crate gains a
+reverse dependency, build script, environment lookup, filesystem scan, or
+build-time profile input.
+
+Serde implementations for always-available tuning types are themselves gated
+by `tuning-profile`. Cargo feature unification may activate the optional serde
+dependency through another feature such as core `io`, but that does not expose
+the profile parser, codecs, registry, or serde implementations unless
+`tuning-profile` is explicitly enabled.
 
 ### 6.3 Storage and calibration composition
 
@@ -493,16 +585,35 @@ Crate-owned component artifacts live under:
   algebra.
 
 Repository-level complete envelopes live at
-`dev/reference_data/tuning-profiles/<profile-id>.json`. They are composite
-evidence, not packaged input auto-discovered by a library. The conservative
-developer example may also be projected there; crate-level tests compare
-their own conservative component to their compiled table.
+`dev/reference_data/tuning-profiles/<profile-id>.json`. This is the canonical
+committed reference/composite input location. A caller that wants one of these
+profiles reads it explicitly and supplies its text to the registry; it is not
+packaged production runtime data, auto-discovered, or selected by a library.
+Owner crates compile conservative defaults and scan no filesystem. The
+conservative reference envelope is projected there, while crate-level tests
+compare each conservative component to its compiled table.
 
 Each crate owns a calibration component that returns a validated typed section
 plus `MeasurementProvenance`; it neither installs a process profile nor writes
 a composite artifact. A dev-only repository composer invokes selected
 components, builds one registry, assembles the envelope, validates its digest,
 and writes one absent output path atomically.
+
+The composer and each top-level component remain parent processes and do not
+install a profile into themselves: one installation would prevent the several
+forced variants a sweep needs. Every forced measurement uses
+`fresh_tuning_process` to start a child that constructs or parses one prepared
+envelope, installs it exactly once before any dispatch, and asserts
+`SectionResolution::Installed` for every steered section. A late install,
+skipped-present access, `DefaultedMissing`, or `FrozenBeforeInstall` is fatal;
+the child exits nonzero and contributes no timing or selected value. This is
+the steering contract for the core sweeps in `389aa4de`, `eaae1b56`, and
+`dbd8787d`, and for both the 11 core extents and one algebra extent in
+`a83583e0`.
+
+The parent treats a nonzero child, absent structured result, or non-installed
+resolution as a hard calibration failure. It exits nonzero and emits neither a
+section component nor a composite artifact.
 
 The outer invocation acquires `dev/scripts/ccx1-bench-flock.sh` once for the
 whole composite run. Inner core/algebra components never acquire the lock.
@@ -512,9 +623,9 @@ build side effect.
 
 ## 7. Canonical migration and current inventory
 
-### 7.1 Current production data and historical evidence
+### 7.1 Migration data and historical evidence
 
-The current files have distinct evidentiary roles:
+The migration inputs have distinct evidentiary roles:
 
 | Current path | Current identity | Format-2 disposition |
 |---|---|---|
@@ -522,11 +633,11 @@ The current files have distinct evidentiary roles:
 | `crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json` | Exact calibrated v1 bytes, SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb` | Move exact bytes to `dev/archive/3fa7c9d0/tuning-profiles/` only while a baked/evidence reader needs them; never relabel them format 2 |
 | `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` | Measurement receipt quoting the v1 output | Preserve every existing byte and append a supersession section pointing to the new artifact |
 
-The clean intermediate production envelope is inherited and core-only even
+The clean intermediate canonical reference envelope is inherited and core-only even
 though its core values equal today's conservative table. It does not borrow
-the old calibration's identity, host, timestamp, harness digest, or receipt.
-It is production data only until `389aa4de` performs a new run and emits a
-calibrated format-2 core section.
+the v1 calibration's identity, host, timestamp, harness digest, or receipt.
+Callers supply it explicitly until `389aa4de` emits a calibrated format-2 core
+section; owner crates still compile their defaults and do not discover it.
 
 At the format-2 cutover, `389aa4de`'s five-field core sweep is expected to omit
 32 of the 37 core fields. This is a migration expectation, not a maintained
@@ -535,11 +646,12 @@ codec. `a83583e0` owns twelve extent sweeps split as 11 core fields plus one
 algebra field, so it consumes both calibration components through the composer.
 
 Baked-value tests do not treat the inherited intermediate envelope as
-calibration. Until a new measured section supersedes the anchor, each baked
+calibration. Until a measured format-2 section supersedes the anchor, each baked
 test cites the historical artifact path and SHA-256 above together with its
-unchanged receipt. Once the last such reader moves to new measurement, the
-exact old bytes may move to `dev/archive/` or be removed if Git history plus
-the receipt citation is sufficient; the receipt itself is never rewritten.
+unchanged receipt. Once the last such reader cites superseding measurement, the
+archived v1 bytes may be removed if Git history plus the receipt citation is
+sufficient; existing receipt content remains byte-for-byte and supersession is
+append-only.
 
 ### 7.2 Symbol and reader cutover inventory
 
@@ -554,12 +666,12 @@ the receipt citation is sufficient; the receipt itself is never rewritten.
 | Flat `from_json`/`to_json` and serde mirror structs in `tuning/mod.rs` | Replace by envelope registry plus core codec |
 | `ACTIVE: OnceLock<TuningProfile>` | Replace once by `PROCESS_TUNING`; no parallel algebra cell |
 | `parallel_bipedal3::permanent_chunk_len` | Read `gf2_algebra::tuning::active()` |
-| Two algebra installed-profile integration binaries | Rebuild through the named subprocess helper and algebra codec |
+| Two algebra installed-profile integration binaries | Rebuild through `fresh_tuning_process` and the algebra codec |
 | Core unit tests enumerating permanent alongside core families | Move permanent range/round-trip/default cases to algebra; core canonical inventory has only core fields |
 | `tuning_calibration.rs` flat builder/omission/serializer | Emit a core component; schema complement is registry/section aware |
 | `tuning_calibration_harness.rs` and committed-profile tests | Read format 2, assert envelope and section versions separately |
 | `tuning/baked.rs` profile reader | Read measured core section or cite historical anchor; algebra baked values stay in algebra |
-| Every `crates/gf2-core/tests/tuning_profile_*` binary | Use core typed builders/codec and the shared fresh-subprocess helper where install order matters |
+| Every `crates/gf2-core/tests/tuning_profile_*` binary | Use core typed builders/codec and `fresh_tuning_process` where install order matters |
 | `scripts/cargo-ci.sh` baked step | Invoke crate-owned baked witnesses; no flat-profile grep or parser |
 
 The prose sweep includes module rustdoc in `gf2-core::tuning`,
@@ -603,34 +715,44 @@ this table, remains sequencing authority.
 
 ## 8. Test matrix
 
-### 8.1 Named subprocess helper
+### 8.1 `fresh_tuning_process`
 
-All order-sensitive integration tests use one helper named
-`fresh_tuning_process(case: FreshProcessCase)`. The parent launches the current
-test binary with one private case token and `--exact fresh_process_child`, the
-child performs exactly one lifecycle scenario, writes a structured JSON result
-to stdout, and exits. The child case is never run in the ordinary in-process
-test path. No reset hook, serial-test mutex, alternate global, or fork-after-
-threads technique is accepted.
+All order-sensitive integration tests and calibration forced-child launches
+use `fresh_tuning_process(case: FreshProcessCase)`. For integration tests the
+parent launches the current test binary with one private case token and
+`--exact fresh_tuning_process_child`; calibration cases launch the current
+calibration executable's private child mode. The child performs exactly one
+lifecycle or forced-dispatch scenario, writes a structured JSON result to
+stdout, and exits. A child entry is never run in the ordinary parent path. No
+reset hook, serial-test mutex, alternate global, or fork-after-threads
+technique is accepted.
 
 | Area | Case | Expected observation |
 |---|---|---|
 | Registry | duplicate stable ID/type | build error before parsing |
 | Envelope | version 1, 3, max | explicit unsupported envelope version |
-| Section | required core/algebra version 0, 2, max | reject before selector decode |
+| Section | decoded core/algebra version 0, 2, max | reject before provenance/selector decode |
+| Provenance | calibrated section has unknown harness token | owning codec rejects the token; another codec may accept a different token |
 | Determinism | keys reordered on input | one pinned output and stable content digest |
 | Raw JSON | duplicate key or float | reject before codec |
-| Strict full | exact core+algebra | both installed |
-| Strict full | either required section absent | `MissingRequiredSection` |
-| Strict full | unknown extra section | `UnexpectedSection` |
+| Strict full | core+algebra present and registered | validate and install both |
+| Strict full | core present, registered algebra absent | valid; algebra access is `DefaultedMissing` |
+| Strict full | core present, no algebra codec, algebra absent | valid; algebra access is `DefaultedMissing` |
+| Strict full | no sections present | valid; any typed access is `DefaultedMissing` |
+| Strict full | present unknown/unregistered section | `UnexpectedSection` |
 | Subset | required core present, algebra present but not required | algebra skipped record has canonical digest; algebra access is fatal |
+| Subset | unrequested present section has unsupported schema/token | load succeeds, raw digest is recorded, and later access is fatal |
 | Subset | required core present, algebra absent | algebra access returns conservative with `DefaultedMissing` |
+| Subset | empty required set | `EmptyRequiredSubset` |
 | Subset | required ID absent/unregistered | load error |
 | Freeze | core access before install | core conservative, `FrozenBeforeInstall`, caller site captured |
 | Late install | after first access | hard `AlreadyResolved` carries same site |
 | Install order | install before access | `Installed` for present sections |
 | Missing | install core-only then algebra access | algebra conservative and `DefaultedMissing` |
-| Calibration | intentional early access | nonzero exit and no output file |
+| Compiled install | no profile/serde feature, typed core section present | install succeeds and core resolution is `Installed` |
+| Calibration | intentional early access or late install | child exits nonzero and contributes no result |
+| Calibration | core forced child for `389`/`eaae`/`dbd` | exactly one install precedes dispatch; every steered core resolution is `Installed` |
+| Calibration | each `a835` core or algebra extent child | every section that child steers is `Installed`; no default or skipped section is timed |
 | Ownership | algebra chunk values 3 and 4,000,000 | production callee observes each; permanent output identical |
 | Defaults | no install | every selector equals its crate-owned declaration |
 | Baked | default and `gf2_tuning_baked` | crate selection sites use crate-owned constants and cited measured anchor |
@@ -663,9 +785,10 @@ requires benchmark evidence.
 1. Add generic stable IDs, canonical value/digest support, registry builder,
    envelope wire types, load modes, and exhaustive parser tests in `gf2-core`
    behind the non-default feature. Do not change selection readers yet.
-2. Add `PROCESS_TUNING`, tracked resolution sites, typed active access,
-   resolution provenance, fatal skipped access, and the single subprocess
-   helper; establish failing lifecycle tests before replacing `ACTIVE`.
+2. Add always-available `PreparedEnvelope` compiled construction,
+   `PROCESS_TUNING`, tracked resolution sites, typed active access, resolution
+   provenance, fatal skipped access, and `fresh_tuning_process`; establish
+   failing lifecycle tests before replacing `ACTIVE`.
 3. Define `CoreTuning`/`CoreSelectors` and `CoreTuningCodec`; convert core
    selectors, builders, core route tests, and core calibration component.
 4. Define `AlgebraTuning`, `PermanentSelectors`, codec, range, active accessor,
@@ -711,15 +834,14 @@ deletes v1 does not merge until both owners and every reader are ready.
 | Dynamically read baked constants from the envelope | Changes compile-time/hot-loop mechanisms fixed by `7d824b2f` |
 | Let each calibration component lock independently | Risks deadlock or interleaving and fails to hold one host exclusion across the composite run |
 
-## 12. Review notes and risks
+## 12. Authority and risks
 
-The owner decision is DEC-W in the epic progress record. It supersedes D4,
-DEC-B10 item 2, and DEC-B11: algorithm owners own vocabulary, defaults,
-validation, codec, baked values, and calibration logic; core owns the generic
-mechanism and its own section. The recorded independent review passed after
-two ownership/blocking corrections and three provenance/versioning
-corrections. Those corrections are represented explicitly in §§2, 4, 5, and
-6 rather than left as review-history prose.
+DEC-W in the epic progress record is the ownership authority: algorithm-owning
+crates own vocabulary, defaults, validation, codecs, baked values, and
+calibration logic; `gf2-core` owns the generic mechanism and its own section.
+This rule governs conflicts with D4, DEC-B10 item 2, and DEC-B11. The normative
+freeze, subset, resolution, provenance, and version contracts are stated in
+§§2–6.
 
 | Risk | Containment |
 |---|---|
@@ -738,7 +860,7 @@ corrections. Those corrections are represented explicitly in §§2, 4, 5, and
 | Criterion | Design sections | Verification anchor |
 |---|---|---|
 | REQ-01 | §§1–4 | API pseudocode, stable-ID table, safe erasure, canonical JSON, registry/load validation |
-| REQ-02 | §§4–5, §8 | asymmetry table, state machine, tracked error, resolution enum, fresh-process matrix |
+| REQ-02 | §§4–5, §8 | asymmetry table, state machine, tracked error, resolution enum, `fresh_tuning_process` matrix |
 | REQ-03 | §§1–2.3, §§7.2–7.3 | crate-owned API, symbol/reader/prose inventory, dependency amendments |
 | REQ-04 | §§3, 6, 8 | JSON example, digest rule, two provenance layers, version rejection, feature/storage layout, composite lock |
 | REQ-05 | §7, §10 | clean inherited envelope, exact v1 digest treatment, append-only supersession, ordered no-compatibility cutover |
