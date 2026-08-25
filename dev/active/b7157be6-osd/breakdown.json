@@ -878,7 +878,8 @@
         "footprint": {
           "touches": [
             "crates/gf2-coding/src/osd/engine.rs",
-            "crates/gf2-coding/src/osd/patterns.rs"
+            "crates/gf2-coding/src/osd/patterns.rs",
+            "crates/gf2-coding/src/osd/mod.rs"
           ]
         }
       }

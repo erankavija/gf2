@@ -23,12 +23,15 @@ mod patterns;
 mod syndrome;
 
 pub use engine::{
-    reprocess, reprocess_with_cancellation, ColumnPreference, MostReliableBasis, OsdCandidate,
-    OsdEngineError, OsdOutcome, OsdSemantics, OsdWork, ReprocessedColumns,
+    reprocess, reprocess_segmented, reprocess_segmented_with_cancellation,
+    reprocess_with_cancellation, ColumnPreference, MostReliableBasis, OsdCandidate,
+    OsdComplexityMetric, OsdComplexityPolicy, OsdEngineError, OsdOutcome, OsdSegmentWork,
+    OsdSegmentedOutcome, OsdSegmentedWork, OsdSemantics, OsdWork, ReprocessedColumns,
 };
 pub use generator::{GeneratorMatrixOsdDecoder, GeneratorMatrixOsdResult};
 pub use patterns::{
     checked_candidate_bound, enumerate_patterns, OsdConfig, OsdTermination, PatternControl,
-    PatternEnumerationError, PatternEnumerationReport, PatternEnumerator,
+    PatternEnumerationError, PatternEnumerationReport, PatternEnumerator, PatternSegment,
+    PatternSegmentEnumerationReport, PatternSegmentReport, PatternSegmentation,
 };
 pub use syndrome::{SyndromeOsdCorrector, SyndromeOsdError, SyndromeOsdResult};
