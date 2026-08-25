@@ -260,7 +260,7 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     /// # Panics
     ///
     /// Panics if `channel_llrs.len() != n^2`.
-    /// Panics if any LLR has a NaN magnitude.
+    /// Panics if any LLR has a NaN magnitude and at least one iteration runs.
     ///
     /// # Examples
     ///
