@@ -5,7 +5,7 @@
   "dependencies": [
     "c8322eff-8122-41bc-9209-9bcc9f591655"
   ],
-  "description": "Run the pinned resumable campaign and commit its versioned evidence receipt with a concise provenance record.\n\n## Background\n\nThe scientific target is the pinned Fossorier 1994 dissertation series [Fossorier1994] for eBCH $(128,64)$ on BI-AWGN/BPSK: order-2 BER versus $E_b/N_0$, with order 1 as an explicitly internal control. The Fossorier1995 article is closed-access and recorded as unverified. Measurements remain valid or falsifying according to confidence intervals and recorded protocol identity.\n\n## Success Criteria\n\n- [hard] REQ-01: The committed receipt records seeds, git revision, toolchain, hardware, configuration, per-cell counts, work counters, termination, and binomial confidence intervals.\n- [hard] REQ-02: Each matched order-2 point accepts its published value $p$ exactly when $p \\in [L-\\delta, U+\\delta]$, where $[L, U]$ is the receipt interval at its recorded method and level and $\\delta$ the recorded digitization precision, without converting discrepancies into silent retuning.\n- [hard] REQ-03: Order-1 results are identified as campaign controls rather than externally sourced claims.\n- [hard] REQ-04: Interrupted, censored, or budget-exhausted cells remain visible and resumable without repeated completed work.\n- [hard] REQ-05: The provenance note identifies contradictory evidence and the exact receipt schema version.",
+  "description": "Run the pinned resumable campaign and commit its versioned evidence receipt with a concise provenance record.\n\n## Background\n\nThe scientific target is the pinned Fossorier 1994 dissertation series [Fossorier1994] for eBCH $(128,64)$ on BI-AWGN/BPSK: order-2 BER versus $E_b/N_0$, with order 1 as an explicitly internal control. The [Fossorier1995] article is closed-access and recorded as unverified. Measurements remain valid or falsifying according to confidence intervals and recorded protocol identity.\n\n## Success Criteria\n\n- [hard] REQ-01: The committed receipt records seeds, git revision, toolchain, hardware, configuration, per-cell counts, work counters, termination, and binomial confidence intervals.\n- [hard] REQ-02: Each matched order-2 point accepts its published value $p$ exactly when $p \\in [L-\\delta, U+\\delta]$, where $[L, U]$ is the receipt interval at its recorded method and level and $\\delta$ the recorded digitization precision, without converting discrepancies into silent retuning.\n- [hard] REQ-03: Order-1 results are identified as campaign controls rather than externally sourced claims.\n- [hard] REQ-04: Interrupted, censored, or budget-exhausted cells remain visible and resumable without repeated completed work.\n- [hard] REQ-05: The provenance note identifies contradictory evidence and the exact receipt schema version.",
   "documents": [],
   "gates_required": [
     "research-review",
@@ -19,11 +19,10 @@
     "component:gf2-sim",
     "satisfies:REQ-02",
     "cites:Fossorier1995",
-    "cites:Yue2022",
     "cites:Fossorier1994"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "eBCH OSD curve reproduction",
-  "updated_at": "2026-08-24T20:44:06.173111546Z"
+  "updated_at": "2026-08-25T14:28:26.436011650Z"
 }
