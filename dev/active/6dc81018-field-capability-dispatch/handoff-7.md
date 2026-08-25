@@ -62,3 +62,28 @@ Decision DEC-V replaces the v1 anchor through the named temporary dual-token
 migration boundary described above. Its tracked removal condition is
 pre-merge: v1 acceptance and the superseded v1 profile are both absent from
 the reviewed final tree, leaving one v2 profile and one parser contract.
+
+## Architecture correction — DEC-W (2026-08-25)
+
+The owner subsequently required tuning to be owned by the crate that owns the
+algorithm. DEC-W supersedes D4, DEC-B10 item 2, and DEC-B11 as the durable
+convention: `gf2-core` keeps one generic profile-format-2 envelope, explicit
+typed-section registry, provenance types, and atomic install/resolve cell;
+`gf2-core` and `gf2-algebra` own their respective selector vocabulary,
+defaults, validation, codecs, baked values, and calibration components.
+
+Independent architecture review first found two blocking gaps and three
+required corrections. The corrected design passed: strict full validation is
+the default; explicit subset loads require named sections and record skipped
+section IDs/digests; skipped access is fatal; late install carries the first
+resolution site; one-shot tests use fresh subprocesses; resolution provenance
+is per section; assembly and measurement provenance are distinct; and each
+codec rejects unknown section schema versions before selector decoding.
+
+New issue `3fa7c9d0` designs the cutover and new issue `b749bdfc` implements it.
+The latter blocks `389aa4de`, `a83583e0`, and `5bdc9552`; threshold and seam
+calibration remain transitively blocked by `389aa4de`. Issue `389aa4de` is
+backlog/unassigned. Commit `6566bb3d` remains unmerged evidence only: it emits
+the superseded flat/core-owned schema and must not be measured or merged.
+Claude released the previously reserved host window; request a new window only
+after `b749bdfc` produces a clean canonical calibration producer.
