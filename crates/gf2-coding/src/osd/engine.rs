@@ -29,7 +29,7 @@ mod segmentation_tests {
 
     use super::{
         reprocess, reprocess_segmented, ColumnPreference, MostReliableBasis, OsdConfig,
-        OsdSemantics, ReprocessedColumns,
+        OsdSemantics, OsdTermination, ReprocessedColumns,
     };
 
     struct RowSpace;
@@ -86,6 +86,7 @@ mod segmentation_tests {
         assert_eq!(segmented.work().eliminations(), 1);
         assert_eq!(segmented.work().generated_patterns(), 2);
         assert_eq!(segmented.work().tested_candidates(), 2);
+        assert_eq!(segmented.work().discarded_patterns(), 0);
     }
 
     #[test]
@@ -124,6 +125,7 @@ mod segmentation_tests {
         assert_eq!(capped.work().segments(), 1);
         assert_eq!(capped.work().generated_patterns(), 1);
         assert_eq!(capped.work().tested_candidates(), 1);
+        assert_eq!(capped.work().discarded_patterns(), 0);
         assert_eq!(
             capped.work().termination(),
             super::OsdTermination::CandidateCap
@@ -141,6 +143,117 @@ mod segmentation_tests {
             cancelled_outcome.work().termination(),
             super::OsdTermination::Cancelled
         );
+    }
+
+    #[test]
+    fn discard_threshold_equality_retains_the_segment() {
+        let basis = basis();
+        let baseline = reprocess(&basis, &RowSpace, OsdConfig::new(1)).unwrap();
+        let thresholded = basis
+            .reprocess_segmented_with_discard_threshold(&RowSpace, OsdConfig::new(1), Some(1))
+            .unwrap();
+
+        assert_eq!(thresholded.outcome(), baseline);
+        assert_eq!(thresholded.work().discarded_patterns(), 0);
+        assert_eq!(thresholded.work().tested_candidates(), 2);
+        assert_eq!(thresholded.work().eliminations(), 1);
+        assert_eq!(thresholded.work().termination(), OsdTermination::Exhaustive);
+        assert_eq!(thresholded.work().policy().discard_threshold(), Some(1));
+        assert!(thresholded
+            .work()
+            .segment_work()
+            .iter()
+            .all(|segment| segment.discarded_patterns() == 0));
+    }
+
+    #[test]
+    fn discard_threshold_that_is_not_triggered_is_baseline_equivalent() {
+        let basis = basis();
+        let baseline = reprocess(&basis, &RowSpace, OsdConfig::new(2)).unwrap();
+        let thresholded = basis
+            .reprocess_segmented_with_discard_threshold(
+                &RowSpace,
+                OsdConfig::new(2),
+                Some(usize::MAX),
+            )
+            .unwrap();
+
+        assert_eq!(thresholded.outcome(), baseline);
+        assert_eq!(thresholded.work().discarded_patterns(), 0);
+        assert_eq!(thresholded.work().tested_candidates(), 2);
+        assert_eq!(thresholded.work().eliminations(), 1);
+        assert_eq!(thresholded.work().termination(), OsdTermination::Exhaustive);
+        assert!(thresholded
+            .work()
+            .segment_work()
+            .iter()
+            .all(|segment| segment.tested_candidates() == segment.generated_patterns()));
+    }
+
+    #[test]
+    fn discard_threshold_can_discard_every_pattern() {
+        let basis = basis();
+        let thresholded = basis
+            .reprocess_segmented_with_discard_threshold(&RowSpace, OsdConfig::new(2), Some(0))
+            .unwrap();
+
+        assert!(thresholded.best().is_none());
+        assert_eq!(thresholded.work().discarded_patterns(), 2);
+        assert_eq!(thresholded.work().tested_candidates(), 0);
+        assert_eq!(thresholded.work().eliminations(), 1);
+        assert_eq!(thresholded.work().termination(), OsdTermination::Exhaustive);
+        assert!(thresholded
+            .work()
+            .segment_work()
+            .iter()
+            .filter(|segment| !segment.segment().is_empty())
+            .all(|segment| segment.discarded_patterns() == segment.generated_patterns()));
+    }
+
+    #[test]
+    fn discard_threshold_respects_the_candidate_cap() {
+        let basis = basis();
+        let thresholded = basis
+            .reprocess_segmented_with_discard_threshold(
+                &RowSpace,
+                OsdConfig::new(2).with_candidate_cap(Some(1)),
+                Some(0),
+            )
+            .unwrap();
+
+        assert!(thresholded.best().is_none());
+        assert_eq!(thresholded.work().generated_patterns(), 1);
+        assert_eq!(thresholded.work().discarded_patterns(), 1);
+        assert_eq!(thresholded.work().tested_candidates(), 0);
+        assert_eq!(thresholded.work().eliminations(), 1);
+        assert_eq!(
+            thresholded.work().termination(),
+            OsdTermination::CandidateCap
+        );
+        assert_eq!(thresholded.work().segment_work()[0].discarded_patterns(), 1);
+        assert_eq!(thresholded.work().segment_work()[0].tested_candidates(), 0);
+        assert_eq!(thresholded.work().segment_work()[1].discarded_patterns(), 0);
+    }
+
+    #[test]
+    fn discard_threshold_cancellation_terminates_before_testing() {
+        let basis = basis();
+        let cancellation = AtomicBool::new(true);
+        let thresholded = basis
+            .reprocess_segmented_with_discard_threshold_and_cancellation(
+                &RowSpace,
+                OsdConfig::new(2),
+                Some(0),
+                &cancellation,
+            )
+            .unwrap();
+
+        assert!(thresholded.best().is_none());
+        assert_eq!(thresholded.work().generated_patterns(), 0);
+        assert_eq!(thresholded.work().discarded_patterns(), 0);
+        assert_eq!(thresholded.work().tested_candidates(), 0);
+        assert_eq!(thresholded.work().eliminations(), 1);
+        assert_eq!(thresholded.work().termination(), OsdTermination::Cancelled);
     }
 }
 
@@ -369,7 +482,10 @@ impl MostReliableBasis {
     ///
     /// # Errors
     ///
-    /// Returns the same errors as [`Self::reprocess_segmented`].
+    /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
+    /// order-m candidate bound cannot be represented by `usize`, or when the
+    /// semantics returns a base candidate or delta vector with a width or
+    /// count that does not match the basis.
     ///
     /// # Panics
     ///
@@ -386,11 +502,54 @@ impl MostReliableBasis {
         reprocess_segmented(self, semantics, config)
     }
 
+    /// Reprocesses this basis with an optional implementation-policy discard
+    /// threshold.
+    ///
+    /// The threshold is compared with the policy's generated-pattern metric
+    /// once, at each deterministic weight-segment boundary.  A segment is
+    /// discarded only when `metric > discard_threshold`; equality retains the
+    /// segment.  `None` disables discarding and preserves exhaustive order-`m`
+    /// results.  A thresholded result is a policy-bounded approximation, not
+    /// an exhaustive order-`m` search.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
+    /// order-m candidate bound cannot be represented by `usize`, or when the
+    /// semantics returns a base candidate or delta vector with a width or
+    /// count that does not match the basis.
+    ///
+    /// # Panics
+    ///
+    /// This method adds no panics beyond those possible while executing the
+    /// caller-provided [`OsdSemantics`] implementation.
+    ///
+    /// # Complexity
+    ///
+    /// The pattern source still accounts for each generated pattern, while
+    /// reconstruction, validation, and ranking run only for retained
+    /// patterns: O(generated + retained × (weight + columns) / 64) word
+    /// operations after the shared basis setup.
+    pub fn reprocess_segmented_with_discard_threshold<S>(
+        &self,
+        semantics: &S,
+        config: OsdConfig,
+        discard_threshold: Option<usize>,
+    ) -> Result<OsdSegmentedOutcome, OsdEngineError>
+    where
+        S: OsdSemantics + ?Sized,
+    {
+        reprocess_segmented_with_discard_threshold(self, semantics, config, discard_threshold, None)
+    }
+
     /// Reprocesses this basis with segment accounting and caller cancellation.
     ///
     /// # Errors
     ///
-    /// Returns the same errors as [`Self::reprocess_segmented_with_cancellation`].
+    /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
+    /// order-m candidate bound cannot be represented by `usize`, or when the
+    /// semantics returns a base candidate or delta vector with a width or
+    /// count that does not match the basis.
     ///
     /// # Panics
     ///
@@ -406,6 +565,53 @@ impl MostReliableBasis {
         S: OsdSemantics + ?Sized,
     {
         reprocess_segmented_with_cancellation(self, semantics, config, cancellation)
+    }
+
+    /// Reprocesses this basis with an optional discard threshold and caller
+    /// cancellation.
+    ///
+    /// Threshold decisions use the implementation-produced generated-pattern
+    /// metric at deterministic weight boundaries.  A segment is discarded
+    /// only when `metric > discard_threshold`; equality retains it.  `None`
+    /// disables discarding.  When a threshold is active, the returned best
+    /// candidate is a policy-bounded approximation rather than the result of
+    /// exhaustive order-`m` search.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
+    /// order-m candidate bound cannot be represented by `usize`, or when the
+    /// semantics returns a base candidate or delta vector with a width or
+    /// count that does not match the basis.
+    ///
+    /// # Panics
+    ///
+    /// This method adds no panics beyond those possible while executing the
+    /// caller-provided [`OsdSemantics`] implementation.
+    ///
+    /// # Complexity
+    ///
+    /// The pattern source accounts for each generated pattern, while
+    /// reconstruction, validation, and ranking run only for retained
+    /// patterns: O(generated + retained × (weight + columns) / 64) word
+    /// operations after the shared basis setup.
+    pub fn reprocess_segmented_with_discard_threshold_and_cancellation<S>(
+        &self,
+        semantics: &S,
+        config: OsdConfig,
+        discard_threshold: Option<usize>,
+        cancellation: &AtomicBool,
+    ) -> Result<OsdSegmentedOutcome, OsdEngineError>
+    where
+        S: OsdSemantics + ?Sized,
+    {
+        reprocess_segmented_with_discard_threshold(
+            self,
+            semantics,
+            config,
+            discard_threshold,
+            Some(cancellation),
+        )
     }
 }
 
@@ -586,8 +792,11 @@ pub enum OsdComplexityMetric {
 /// The policy has one weight-ordered descriptor per possible pattern weight.
 /// Its [`Self::segment_metric`] values are the cap-bounded generated-pattern
 /// counts a threshold evaluator compares before deciding whether to retain a
-/// segment.  The policy is descriptive: constructing it never changes
-/// [`OsdConfig`] or the baseline exhaustive enumerator.
+/// segment.  An optional discard threshold uses the rule
+/// `segment_metric > discard_threshold`; equality retains the segment.  With
+/// no threshold, the policy is descriptive and segmented execution remains
+/// exhaustive.  With a threshold, results are policy-bounded approximations,
+/// not exhaustive order-`m` search results.
 ///
 /// # Panics
 ///
@@ -596,6 +805,7 @@ pub enum OsdComplexityMetric {
 pub struct OsdComplexityPolicy {
     segmentation: PatternSegmentation,
     metric: OsdComplexityMetric,
+    discard_threshold: Option<usize>,
 }
 
 impl OsdComplexityPolicy {
@@ -613,7 +823,33 @@ impl OsdComplexityPolicy {
         Ok(Self {
             segmentation: PatternSegmentation::new(dimension, config)?,
             metric: OsdComplexityMetric::GeneratedPatterns,
+            discard_threshold: None,
         })
+    }
+
+    /// Returns a copy of this policy with an optional segment discard
+    /// threshold.
+    ///
+    /// The threshold compares only [`Self::segment_metric`] at a deterministic
+    /// segment boundary.  A segment is discarded when the metric is strictly
+    /// greater than the threshold; equality retains it.  `None` disables
+    /// discarding.
+    ///
+    /// # Panics
+    ///
+    /// This builder never panics.
+    pub const fn with_discard_threshold(mut self, threshold: Option<usize>) -> Self {
+        self.discard_threshold = threshold;
+        self
+    }
+
+    /// Returns the configured segment discard threshold, if any.
+    ///
+    /// # Panics
+    ///
+    /// This accessor never panics.
+    pub const fn discard_threshold(&self) -> Option<usize> {
+        self.discard_threshold
     }
 
     /// Returns the metric used at every segment boundary.
@@ -654,7 +890,7 @@ impl OsdComplexityPolicy {
     /// This accessor never panics for any index.
     pub fn segment_metric(&self, index: usize) -> Option<usize> {
         self.segment(index)
-            .map(PatternSegment::generated_pattern_count)
+            .map(|segment| self.metric_value(segment))
     }
 
     /// Returns the checked uncapped candidate bound.
@@ -674,6 +910,17 @@ impl OsdComplexityPolicy {
     pub const fn candidate_cap(&self) -> Option<usize> {
         self.segmentation.candidate_cap()
     }
+
+    fn metric_value(&self, segment: &PatternSegment) -> usize {
+        match self.metric {
+            OsdComplexityMetric::GeneratedPatterns => segment.generated_pattern_count(),
+        }
+    }
+
+    fn discards(&self, segment: &PatternSegment) -> bool {
+        self.discard_threshold
+            .is_some_and(|threshold| self.metric_value(segment) > threshold)
+    }
 }
 
 /// Per-segment counters emitted by a segmented OSD run.
@@ -686,6 +933,7 @@ pub struct OsdSegmentWork {
     segment: PatternSegment,
     generated_patterns: usize,
     tested_candidates: usize,
+    discarded_patterns: usize,
 }
 
 impl OsdSegmentWork {
@@ -715,6 +963,18 @@ impl OsdSegmentWork {
     pub const fn tested_candidates(&self) -> usize {
         self.tested_candidates
     }
+
+    /// Returns the number of generated patterns discarded by the active
+    /// segment policy before candidate reconstruction.
+    ///
+    /// A discarded pattern is never counted by [`Self::tested_candidates`].
+    ///
+    /// # Panics
+    ///
+    /// This accessor never panics.
+    pub const fn discarded_patterns(&self) -> usize {
+        self.discarded_patterns
+    }
 }
 
 /// Work metadata for a segmented OSD run.
@@ -722,7 +982,10 @@ impl OsdSegmentWork {
 /// Aggregate counters retain the baseline meanings: generated patterns are
 /// enumerator output and tested candidates are adapter evaluations.  The
 /// segment reports add deterministic weight-local counters without changing
-/// the baseline [`OsdWork`] representation.
+/// the baseline [`OsdWork`] representation.  A discarded pattern contributes
+/// to generated and discarded counts, but never to tested candidates.
+/// Thresholded outcomes are policy-bounded approximations rather than
+/// exhaustive order-`m` searches.
 ///
 /// # Panics
 ///
@@ -736,6 +999,7 @@ pub struct OsdSegmentedWork {
     theoretical_candidates: usize,
     generated_patterns: usize,
     tested_candidates: usize,
+    discarded_patterns: usize,
     eliminations: usize,
     termination: OsdTermination,
 }
@@ -808,6 +1072,16 @@ impl OsdSegmentedWork {
         self.tested_candidates
     }
 
+    /// Returns the number of generated patterns discarded before candidate
+    /// reconstruction.
+    ///
+    /// # Panics
+    ///
+    /// This accessor never panics.
+    pub const fn discarded_patterns(&self) -> usize {
+        self.discarded_patterns
+    }
+
     /// Returns the number of ordered eliminations behind the outcome.
     ///
     /// # Panics
@@ -839,6 +1113,11 @@ impl OsdSegmentedWork {
 }
 
 /// Best candidate and complexity metadata from segmented OSD search.
+///
+/// When [`OsdSegmentedWork::policy`] has a discard threshold, the candidate is
+/// a policy-bounded approximation rather than the result of exhaustive
+/// order-`m` search.  With no threshold, the segmented result preserves the
+/// exhaustive baseline candidate order and ranking.
 ///
 /// # Panics
 ///
@@ -1182,7 +1461,7 @@ pub fn reprocess_segmented<S>(
 where
     S: OsdSemantics + ?Sized,
 {
-    reprocess_segmented_inner(basis, semantics, config, None)
+    reprocess_segmented_inner(basis, semantics, config, None, None)
 }
 
 /// Reprocesses with deterministic segment accounting and observes a caller-
@@ -1208,7 +1487,7 @@ pub fn reprocess_segmented_with_cancellation<S>(
 where
     S: OsdSemantics + ?Sized,
 {
-    reprocess_segmented_inner(basis, semantics, config, Some(cancellation))
+    reprocess_segmented_inner(basis, semantics, config, Some(cancellation), None)
 }
 
 struct ReprocessRun {
@@ -1217,6 +1496,7 @@ struct ReprocessRun {
     policy: Option<OsdComplexityPolicy>,
     segment_work: Vec<OsdSegmentWork>,
     segments: usize,
+    discarded_patterns: usize,
 }
 
 fn reprocess_inner<S>(
@@ -1228,7 +1508,7 @@ fn reprocess_inner<S>(
 where
     S: OsdSemantics + ?Sized,
 {
-    let run = execute_reprocess(basis, semantics, config, cancellation, false)?;
+    let run = execute_reprocess(basis, semantics, config, cancellation, false, None)?;
     Ok(OsdOutcome {
         best: run.best,
         work: run.work,
@@ -1240,11 +1520,19 @@ fn reprocess_segmented_inner<S>(
     semantics: &S,
     config: OsdConfig,
     cancellation: Option<&AtomicBool>,
+    discard_threshold: Option<usize>,
 ) -> Result<OsdSegmentedOutcome, OsdEngineError>
 where
     S: OsdSemantics + ?Sized,
 {
-    let run = execute_reprocess(basis, semantics, config, cancellation, true)?;
+    let run = execute_reprocess(
+        basis,
+        semantics,
+        config,
+        cancellation,
+        true,
+        discard_threshold,
+    )?;
     Ok(OsdSegmentedOutcome {
         best: run.best,
         work: OsdSegmentedWork {
@@ -1257,10 +1545,24 @@ where
             theoretical_candidates: run.work.theoretical_candidates,
             generated_patterns: run.work.generated_patterns,
             tested_candidates: run.work.tested_candidates,
+            discarded_patterns: run.discarded_patterns,
             eliminations: run.work.eliminations,
             termination: run.work.termination,
         },
     })
+}
+
+fn reprocess_segmented_with_discard_threshold<S>(
+    basis: &MostReliableBasis,
+    semantics: &S,
+    config: OsdConfig,
+    discard_threshold: Option<usize>,
+    cancellation: Option<&AtomicBool>,
+) -> Result<OsdSegmentedOutcome, OsdEngineError>
+where
+    S: OsdSemantics + ?Sized,
+{
+    reprocess_segmented_inner(basis, semantics, config, cancellation, discard_threshold)
 }
 
 fn execute_reprocess<S>(
@@ -1269,6 +1571,7 @@ fn execute_reprocess<S>(
     config: OsdConfig,
     cancellation: Option<&AtomicBool>,
     segmented: bool,
+    discard_threshold: Option<usize>,
 ) -> Result<ReprocessRun, OsdEngineError>
 where
     S: OsdSemantics + ?Sized,
@@ -1278,8 +1581,10 @@ where
         .len();
     let mut enumerator = PatternEnumerator::new(dimension, config)?;
     let rank = basis.elimination.rank;
-    let policy = segmented
-        .then(|| OsdComplexityPolicy::from_segmentation(enumerator.segmentation().clone()));
+    let policy = segmented.then(|| {
+        OsdComplexityPolicy::from_segmentation(enumerator.segmentation().clone())
+            .with_discard_threshold(discard_threshold)
+    });
 
     if !basis.consistent {
         let segment_work = policy.as_ref().map_or_else(Vec::new, empty_segment_work);
@@ -1296,6 +1601,7 @@ where
             policy,
             segment_work,
             segments: 0,
+            discarded_patterns: 0,
         });
     }
 
@@ -1327,15 +1633,60 @@ where
     let mut best: Option<OsdCandidate> = None;
     let mut tested_candidates = 0;
     let mut generation = 0;
+    let mut discarded_patterns = 0;
+    let mut segment_tested_candidates = policy
+        .as_ref()
+        .map(|policy| vec![0usize; policy.segments().len()]);
+    let mut segment_discarded_patterns = policy
+        .as_ref()
+        .map(|policy| vec![0usize; policy.segments().len()]);
+    let mut active_segment_weight = None;
+    let mut active_segment_index = None;
+    let mut discard_active_segment = false;
 
-    let mut visit = |pattern: &[usize]| {
+    let mut visit = |segment: Option<&PatternSegment>, pattern: &[usize]| {
+        let current = generation;
+        generation += 1;
+
+        if let Some(segment) = segment {
+            let segment_index = if active_segment_weight == Some(segment.weight()) {
+                active_segment_index.expect("an active segment always has an index")
+            } else {
+                let index = policy
+                    .as_ref()
+                    .and_then(|policy| {
+                        policy
+                            .segments()
+                            .iter()
+                            .position(|candidate| candidate.weight() == segment.weight())
+                    })
+                    .expect("a generated segment belongs to the complexity policy");
+                active_segment_weight = Some(segment.weight());
+                active_segment_index = Some(index);
+                discard_active_segment = policy
+                    .as_ref()
+                    .is_some_and(|policy| policy.discards(segment));
+                index
+            };
+
+            if discard_active_segment {
+                discarded_patterns += 1;
+                segment_discarded_patterns
+                    .as_mut()
+                    .expect("segmented execution has segment counters")[segment_index] += 1;
+                return PatternControl::Continue;
+            }
+
+            segment_tested_candidates
+                .as_mut()
+                .expect("segmented execution has segment counters")[segment_index] += 1;
+        }
+
         let mut candidate = base.clone();
         for &position in pattern {
             candidate.bit_xor_into(&deltas[position]);
         }
 
-        let current = generation;
-        generation += 1;
         tested_candidates += 1;
 
         if semantics.accepts(&candidate) {
@@ -1358,18 +1709,20 @@ where
 
     let (generated_patterns, segment_reports, segments, termination) = if segmented {
         let report = match cancellation {
-            Some(flag) => {
-                enumerator.run_segmented_with_cancellation(flag, |_, pattern| visit(pattern))
-            }
-            None => enumerator.run_segmented(|_, pattern| visit(pattern)),
+            Some(flag) => enumerator.run_segmented_with_cancellation(flag, |segment, pattern| {
+                visit(Some(segment), pattern)
+            }),
+            None => enumerator.run_segmented(|segment, pattern| visit(Some(segment), pattern)),
         };
         let segments = report.segments();
         let termination = report.termination();
         (report.generated(), Some(report), segments, termination)
     } else {
         let report = match cancellation {
-            Some(flag) => enumerator.enumerate_with_cancellation(flag, &mut visit),
-            None => enumerator.run(&mut visit),
+            Some(flag) => {
+                enumerator.enumerate_with_cancellation(flag, |pattern| visit(None, pattern))
+            }
+            None => enumerator.run(|pattern| visit(None, pattern)),
         };
         (report.generated(), None, 0, report.termination())
     };
@@ -1378,10 +1731,16 @@ where
         report
             .segment_reports()
             .iter()
+            .enumerate()
             .map(|segment| OsdSegmentWork {
-                segment: segment.segment(),
-                generated_patterns: segment.generated(),
-                tested_candidates: segment.tested(),
+                segment: segment.1.segment(),
+                generated_patterns: segment.1.generated(),
+                tested_candidates: segment_tested_candidates
+                    .as_ref()
+                    .expect("segmented execution has segment counters")[segment.0],
+                discarded_patterns: segment_discarded_patterns
+                    .as_ref()
+                    .expect("segmented execution has segment counters")[segment.0],
             })
             .collect()
     });
@@ -1399,6 +1758,7 @@ where
         policy,
         segment_work,
         segments,
+        discarded_patterns,
     })
 }
 
@@ -1407,6 +1767,7 @@ impl OsdComplexityPolicy {
         Self {
             segmentation,
             metric: OsdComplexityMetric::GeneratedPatterns,
+            discard_threshold: None,
         }
     }
 }
@@ -1420,6 +1781,7 @@ fn empty_segment_work(policy: &OsdComplexityPolicy) -> Vec<OsdSegmentWork> {
             segment,
             generated_patterns: 0,
             tested_candidates: 0,
+            discarded_patterns: 0,
         })
         .collect()
 }
