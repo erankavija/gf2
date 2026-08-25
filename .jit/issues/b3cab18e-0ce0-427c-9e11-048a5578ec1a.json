@@ -6,7 +6,7 @@
   "dependencies": [
     "c97b2961-6101-4383-9505-d69b380c5457"
   ],
-  "description": "Add deterministic pattern segmentation over the baseline OSD engine and produce the implementation-level complexity policy.\n\n## Background\n\nSegmentation is optional normal-priority work over exhaustive order-$m$ search. It groups the existing deterministic pattern stream without changing baseline configuration, candidate identity, or module exports.\n\n## Success Criteria\n\n- [hard] REQ-01: Defines deterministic segment boundaries over the existing order-$m$ pattern sequence.\n- [hard] REQ-02: Preserves candidate order and result equivalence when segmentation has no active discard threshold.\n- [hard] REQ-03: Reports segment, elimination, generated-pattern, and tested-candidate counters with cap plus cancellation termination.\n- [hard] REQ-04: Produces the public complexity-policy representation consumed by threshold evaluation.\n- [hard] REQ-05: Covers boundary, empty-segment, exact-cap, and cancellation cases in module-local tests.",
+  "description": "Add deterministic pattern segmentation over the baseline OSD engine and produce the implementation-level complexity policy.\n\n## Background\n\nSegmentation is optional normal-priority work over exhaustive order-$m$ search. It groups the existing deterministic pattern stream without changing baseline configuration, candidate identity, or previously exported surfaces; the segmentation and complexity-policy types are additive public exports.\n\n## Success Criteria\n\n- [hard] REQ-01: Defines deterministic segment boundaries over the existing order-$m$ pattern sequence.\n- [hard] REQ-02: Preserves candidate order and result equivalence when segmentation has no active discard threshold.\n- [hard] REQ-03: Reports segment, elimination, generated-pattern, and tested-candidate counters with cap plus cancellation termination.\n- [hard] REQ-04: Produces the public complexity-policy representation consumed by threshold evaluation.\n- [hard] REQ-05: Covers boundary, empty-segment, exact-cap, and cancellation cases in module-local tests.",
   "documents": [],
   "first_ready_at": "2026-08-25T17:43:50.652341324Z",
   "gates_required": [
@@ -22,7 +22,12 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-25T19:01:34.604956741Z",
+      "updated_at": "2026-08-25T19:12:35.603444554Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-25T19:08:32.852647283Z",
       "updated_by": "auto:executor"
     }
   },
@@ -37,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "OSD pattern segmentation policy",
-  "updated_at": "2026-08-25T19:01:34.604956741Z"
+  "updated_at": "2026-08-25T19:40:33.047068204Z"
 }
