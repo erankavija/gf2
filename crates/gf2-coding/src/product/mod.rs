@@ -1057,6 +1057,7 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     /// # Panics
     ///
     /// Panics if `channel_llrs.len() != n^2`.
+    /// Panics if any LLR has a NaN magnitude.
     ///
     /// # Examples
     ///

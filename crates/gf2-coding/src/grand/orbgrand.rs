@@ -514,6 +514,7 @@ impl OrbGrand {
     /// # Panics
     ///
     /// Panics if `llrs.len() != n`.
+    /// Panics if any LLR has a NaN magnitude.
     ///
     /// # Examples
     ///
@@ -784,6 +785,7 @@ impl SoftDecoder for OrbGrand {
     /// # Panics
     ///
     /// Panics if the decoder was configured with `systematic: false`.
+    /// Panics if any LLR has a NaN magnitude.
     /// Use [`OrbGrand::decode`] directly for non-systematic codes.
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
         assert!(
@@ -810,6 +812,12 @@ impl SoftDecoder for OrbGrand {
         }
     }
 
+    /// Decodes using soft information and returns detailed result metadata.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the decoder was configured with `systematic: false`.
+    /// Panics if any LLR has a NaN magnitude.
     fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
         assert!(
             self.config.systematic,

@@ -254,6 +254,7 @@ impl SoGrand {
     /// # Panics
     ///
     /// Panics if `input_llrs.len() != n`.
+    /// Panics if any LLR has a NaN magnitude.
     ///
     /// # Examples
     ///
