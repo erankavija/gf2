@@ -1,33 +1,28 @@
 //! GEMM AXPY route observation under an installed profile whose volume
 //! boundary is above the conservative default.
 
+#[path = "support/core_tuning.rs"]
+mod support;
+
 use gf2_core::field::matrix::{
     gemm_axpy_route, last_gemm_axpy_dispatch_route, reset_last_gemm_axpy_dispatch_route,
     run_gemm_axpy_dispatch_for_test, FieldMatrix, GemmAxpyRoute,
 };
 use gf2_core::gfp::Fp;
-use gf2_core::tuning::{self, TuningProfile};
+use gf2_core::tuning::{self, CoreTuning};
 
-#[test]
-fn installed_gemm_profile_raises_axpy_volume_boundary() {
-    let profile = TuningProfile::from_json(
+support::fresh_tuning_test!(installed_gemm_profile_raises_axpy_volume_boundary, {
+    let profile = support::prepared_core_json(
         r#"
-        {
-          "schema_version": 1,
-          "profile_id": "gemm-axpy-route-test-above",
-          "provenance": {"kind": "inherited"},
-          "selectors": {"gemm": {"axpy_fast_path_min_volume": 8192}}
-        }
-        "#,
+        {"gemm": {"axpy_fast_path_min_volume": 8192}}"#,
     )
     .expect("test profile is valid");
     assert_eq!(tuning::install(profile), Ok(()));
-    let gemm = tuning::active().gemm();
+    let active_tuning = tuning::active();
+    let gemm = active_tuning.gemm();
     assert_eq!(gemm.axpy_fast_path_min_volume(), 8192);
 
-    let conservative_boundary = TuningProfile::CONSERVATIVE
-        .gemm()
-        .axpy_fast_path_min_volume();
+    let conservative_boundary = CoreTuning::CONSERVATIVE.gemm().axpy_fast_path_min_volume();
     assert_eq!(conservative_boundary, 16 * 16 * 16);
     assert_eq!(
         gemm_axpy_route(16, 16, 16),
@@ -47,4 +42,4 @@ fn installed_gemm_profile_raises_axpy_volume_boundary() {
         Some(GemmAxpyRoute::PerCell),
         "the production dispatcher must consume the installed boundary"
     );
-}
+});

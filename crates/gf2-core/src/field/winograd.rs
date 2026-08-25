@@ -102,10 +102,10 @@ use crate::tuning;
 use std::sync::atomic::{AtomicU8, Ordering};
 
 /// Conservative default for `gemm.winograd_min_dim` in the active
-/// [`crate::tuning::TuningProfile`]: square-matrix size below which
+/// [`crate::tuning::CoreTuning`]: square-matrix size below which
 /// [`gemm_winograd`] falls back to the classical blocked [`gemm`]. The live
 /// value comes from the active profile; this constant is the value used by
-/// [`crate::tuning::TuningProfile::CONSERVATIVE`].
+/// [`crate::tuning::CoreTuning::CONSERVATIVE`].
 ///
 /// Selected by a sweep over `{32, 64, 128, 256, 512, 1024}` against a
 /// classical baseline at `n = 2048` on Mersenne-31
@@ -130,7 +130,7 @@ pub enum WinogradRoute {
 ///
 /// The comparison uses the active `gemm.winograd_min_dim` profile field. The
 /// conservative default comes from [`WINOGRAD_MIN_DIM_DEFAULT`] through
-/// [`crate::tuning::TuningProfile::CONSERVATIVE`]. The effective threshold is
+/// [`crate::tuning::CoreTuning::CONSERVATIVE`]. The effective threshold is
 /// floored at two, matching the recursive dispatcher's progress guard.
 #[must_use]
 pub fn winograd_route(m: usize, k: usize, n: usize) -> WinogradRoute {

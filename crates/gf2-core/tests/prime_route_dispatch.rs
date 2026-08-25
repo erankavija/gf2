@@ -17,7 +17,7 @@ use gf2_core::gfp::simd_ops::{
     last_executed_prime_gemm_route, prime_gemm_route, reset_last_executed_prime_gemm_route,
     PrimeGemmRoute,
 };
-use gf2_core::tuning::TuningProfile;
+use gf2_core::tuning::CoreTuning;
 use std::sync::Mutex;
 
 /// Serialises the process-wide executed-arm observation across the test
@@ -44,7 +44,7 @@ fn executed_route<const Q: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute 
 
 #[test]
 fn gf251_above_the_column_bound_executes_the_reported_cascade() {
-    let cols = TuningProfile::CONSERVATIVE.prime_route().f32_min_cols();
+    let cols = CoreTuning::CONSERVATIVE.prime_route().f32_min_cols();
     let (m, k, n) = (4, 64, cols);
 
     let reported = prime_gemm_route::<251>(m, k, n);
@@ -58,7 +58,7 @@ fn gf251_above_the_column_bound_executes_the_reported_cascade() {
 
 #[test]
 fn gf251_below_the_column_bound_executes_the_reported_baseline() {
-    let cols = TuningProfile::CONSERVATIVE.prime_route().f32_min_cols();
+    let cols = CoreTuning::CONSERVATIVE.prime_route().f32_min_cols();
     let (m, k, n) = (4, 64, cols - 1);
 
     let reported = prime_gemm_route::<251>(m, k, n);
@@ -68,7 +68,7 @@ fn gf251_below_the_column_bound_executes_the_reported_baseline() {
 
 #[test]
 fn a_small_prime_below_the_prime_bound_executes_the_reported_baseline() {
-    let cols = TuningProfile::CONSERVATIVE.prime_route().f32_min_cols();
+    let cols = CoreTuning::CONSERVATIVE.prime_route().f32_min_cols();
     let (m, k, n) = (4, 64, cols);
 
     let reported = prime_gemm_route::<241>(m, k, n);
@@ -78,7 +78,7 @@ fn a_small_prime_below_the_prime_bound_executes_the_reported_baseline() {
 
 #[test]
 fn a_medium_prime_above_the_column_bound_executes_the_reported_cascade() {
-    let cols = TuningProfile::CONSERVATIVE.prime_route().f64_min_cols();
+    let cols = CoreTuning::CONSERVATIVE.prime_route().f64_min_cols();
     let (m, k, n) = (4, 64, cols);
 
     let reported = prime_gemm_route::<65521>(m, k, n);
@@ -88,7 +88,7 @@ fn a_medium_prime_above_the_column_bound_executes_the_reported_cascade() {
 
 #[test]
 fn a_medium_prime_below_the_column_bound_executes_the_reported_baseline() {
-    let cols = TuningProfile::CONSERVATIVE.prime_route().f64_min_cols();
+    let cols = CoreTuning::CONSERVATIVE.prime_route().f64_min_cols();
     let (m, k, n) = (4, 64, cols - 1);
 
     let reported = prime_gemm_route::<65521>(m, k, n);

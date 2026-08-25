@@ -22,6 +22,7 @@ rayon = { workspace = true, optional = true }
 image = { version = "0.25", optional = true, default-features = false, features = ["png"] }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
+sha2 = { version = "0.10", optional = true }
 # Only pulled in when the `test-support` feature is enabled.
 proptest = { workspace = true, optional = true }
 
@@ -31,6 +32,7 @@ gf2-core = { path = ".", features = ["test-support"] }
 proptest = { workspace = true }
 rand = { workspace = true }
 serde_json = { workspace = true }
+sha2 = "0.10"
 # Test-only: applies `#[serial]` to the `field::{inverse,triangular,ple}`
 # allocation-counter tests. Those tests read the thread-local
 # `field::matrix::fieldmatrix_new_count`, so the serialisation is defensive
@@ -53,7 +55,7 @@ visualization = ["image"]
 # File I/O support
 io = ["dep:serde", "dep:serde_json"]
 # Versioned tuning-profile parsing and serialization.
-tuning-profile = ["dep:serde", "dep:serde_json"]
+tuning-profile = ["dep:serde", "dep:serde_json", "dep:sha2"]
 # Exposes the canonical field axiom test harness (`field::axiom_tests`) to
 # integration tests, benchmarks, and downstream crates. Off by default; gets
 # auto-enabled under `cargo test` via the self-dev-dependency above.
@@ -357,6 +359,13 @@ name = "tuning_profile_install"
 required-features = ["tuning-profile"]
 
 [[test]]
+name = "tuning_envelope_v2"
+required-features = ["tuning-profile"]
+
+[[test]]
+name = "tuning_process_lifecycle"
+
+[[test]]
 name = "tuning_profile_polynomial_install"
 required-features = ["tuning-profile"]
 
@@ -505,8 +514,8 @@ required-features = ["tuning-profile"]
 #
 # `harness = false` is the shape every bench target above uses. The
 # `tuning-profile` requirement is real rather than defensive: without the
-# feature the target has no `TuningProfile::to_json`/`from_json` and so cannot
-# emit or validate the profile it exists to produce.
+# feature the target has no strict format-2 registry and so cannot emit or
+# validate the core-owner envelope it exists to produce.
 [[bench]]
 name = "tuning_calibration"
 harness = false

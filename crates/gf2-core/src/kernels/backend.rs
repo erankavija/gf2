@@ -82,10 +82,10 @@ impl SelectedBackend {
 /// Conservative-table value for `bit_backend.simd_min_words`.
 pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;
 
-#[cfg(gf2_tuning_baked)]
+#[cfg(all(any(test, feature = "simd"), gf2_tuning_baked))]
 const SIMD_MIN_WORDS: usize = crate::tuning::baked::SIMD_MIN_WORDS;
 
-#[cfg(not(gf2_tuning_baked))]
+#[cfg(all(any(test, feature = "simd"), not(gf2_tuning_baked)))]
 const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;
 
 /// Selects the best backend for operations on buffers of the given size.
@@ -93,10 +93,12 @@ const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;
 /// Uses a compile-time threshold to determine whether SIMD acceleration is
 /// beneficial. The default build uses the conservative table's eight-word
 /// (64-byte) value. Building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
-/// selects the committed calibrated profile's four-word value; the flag is a
-/// declared cfg, not a Cargo feature, so `--all-features` builds keep the
-/// conservative threshold. Runtime profile installation does not govern this
-/// boundary; see `dev/active/220cab0b/design.md` (DEC-G).
+/// selects the four-word value measured in the archived format-1 artifact at
+/// `dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
+/// (SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`).
+/// The flag is a declared cfg, not a Cargo feature, so `--all-features` builds
+/// keep the conservative threshold. Runtime profile installation does not
+/// govern this boundary; see `dev/active/220cab0b/design.md` (DEC-G).
 ///
 /// # Arguments
 ///

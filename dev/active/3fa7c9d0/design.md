@@ -386,7 +386,10 @@ envelope representation. There is no alternate owner-artifact JSON type. The
 composer compares each owner's complete canonical section wrapper—schema,
 measurement, and selectors—and its SHA-256 before and after composition.
 Envelope assembly provenance and `content_sha256` are recomputed because
-profile identity and the set of sections differ.
+composition is a distinct assembly action and the set of sections differs.
+The caller supplies the complete envelope's `ProfileId`; it may match an owner
+when all artifacts represent one logical configuration, or differ when the
+composition has its own campaign label.
 
 ## 4. Strict registry validation
 

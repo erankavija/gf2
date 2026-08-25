@@ -2,8 +2,8 @@
 //!
 //! This target is an explicit benchmark **action**, not a build step. It
 //! measures both arms of each selector crossover on the current host, picks a
-//! threshold per field, and emits a [`TuningProfile`] JSON document that
-//! [`TuningProfile::from_json`] accepts. Nothing about a `cargo build`,
+//! threshold per field, and emits a canonical format-2 core-owner envelope
+//! that [`ProducedCoreProfile::from_json`] accepts. Nothing about a `cargo build`,
 //! `cargo test`, or `cargo clippy` invokes it: `cargo` only runs a
 //! `harness = false` bench target under `cargo bench`, and even then the
 //! target refuses to measure or emit unless the prepared-host marker
@@ -62,24 +62,29 @@
 //! conservative defaults it straddles, and which arms are measured in a child
 //! process. Neither needs `GF2_BENCH=1`.
 //!
-//! `--child-arm` is how a run measures one arm of one grid point of a
-//! child-process family; the calibrating process passes it to a copy of itself
-//! and reads the report back. Running it by hand measures that one arm and
-//! emits nothing.
+//! Forced arms run through a private `--fresh-tuning-process-child` entry. The
+//! parent guards it with `GF2_TUNING_FRESH_CASE=child-v1`, sends one canonical
+//! compact JSON case on stdin, and accepts exactly one canonical result line
+//! prefixed `GF2_TUNING_RESULT=`. The child mode accepts no case data on its
+//! command line and does not consult the prepared-host marker.
 //!
 //! ## 3. Commit the emitted profile
 //!
-//! The action writes to the `--out` path, refusing a path that already exists,
-//! then reads the file back through [`TuningProfile::from_json`] and compares
-//! the parsed value against the one it serialised. Only a document that
-//! survives that round trip is reported as an artifact. Write to a unique
-//! absent `/tmp` path so a partial or rejected run leaves nothing behind and
-//! nothing under version control is overwritten.
+//! The action writes a temporary file beside the `--out` path, reads it back
+//! through [`ProducedCoreProfile::from_json`], and compares the parsed value
+//! against the one it serialised. It publishes the validated bytes atomically
+//! without replacing an existing path. Only a document that survives that
+//! round trip is reported as an artifact. Write to a unique absent `/tmp` path
+//! so a partial or rejected run leaves no final artifact and nothing under
+//! version control is overwritten.
 //!
-//! Committing an emitted profile means copying that validated file
-//! byte-for-byte to `crates/gf2-core/data/tuning-profiles/<profile_id>.json`,
-//! where the directory-glob test loads and validates every committed file, and
-//! committing the receipt named by `--receipt` in the same commit. The receipt
+//! Committing an emitted profile means selecting an explicit authoritative
+//! core-owner path, copying the validated file byte-for-byte there, and naming
+//! that exact path in its focused artifact test. The complete repository
+//! envelope is then assembled mechanically from the explicit core and algebra
+//! owner paths; composition preserves each section's measurement provenance
+//! and recomputes the complete envelope's assembly provenance and content
+//! digest. Commit the receipt named by `--receipt` with those artifacts. It
 //! carries the provenance table, the protocol, the per-field grid with the
 //! selecting margin, and every tie or non-monotone case, following the
 //! committed-receipt conventions of the sibling receipts under
@@ -134,8 +139,8 @@
 //!
 //! The emitted document therefore states a field only when this run measured
 //! it, and the omission set is the complement: every
-//! `selectors.<family>.<field>` key [`TuningProfile::to_json`] writes, read off
-//! that output at run time, minus the fields whose sweep reached a comparison.
+//! `selectors.<family>.<field>` key the [`CoreTuningCodec`] writes, read off its
+//! output at run time, minus the fields whose sweep reached a comparison.
 //! A schema field this harness has never heard of is omitted by construction,
 //! so a follow-on selector family landing its fields cannot leak an unmeasured
 //! value into an emitted profile, and no field inventory is maintained here to
@@ -147,7 +152,7 @@
 //!
 //! A field with **no comparable grid point**, and a field no sweep covers at
 //! all, were never calibrated. An absent field is a supported state of the
-//! schema — `from_json` resolves it to the conservative default — so the
+//! core owner codec, which resolves it to the conservative default, so the
 //! document still loads and still selects the same threshold, and it stops
 //! claiming a value nothing measured.
 //!
@@ -171,9 +176,10 @@
 //!
 //! `gf2_core::tuning::install` resolves the process-wide profile once, so one
 //! process offers one arm. Each arm at each grid point is therefore measured in
-//! a **child process**: this binary re-executes itself with `--child-arm`, and
-//! the child installs the forcing profile before any selection boundary runs
-//! and reports back
+//! a **child process**: this binary re-executes its guarded private child mode,
+//! and the child installs the forcing profile before any selection boundary
+//! runs, asserts that the core section resolved as `Installed`, and reports
+//! back
 //!
 //! - the arm the production selector [`mul_route`] picks under that profile,
 //!   which the parent checks against the arm it asked for, so "both arms were
@@ -195,12 +201,12 @@
 
 use std::env;
 use std::fmt;
-use std::fs;
+use std::fs::{self, OpenOptions};
 use std::hint::black_box;
-use std::io;
+use std::io::{self, Write};
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use gf2_core::field::poly::{batch_evaluate_subproduct_auto, mul_route, FieldPoly, MulRoute};
@@ -209,12 +215,121 @@ use gf2_core::kernels::{Backend, ScalarBackend};
 use gf2_core::rng::Lcg;
 use gf2_core::tuning;
 use gf2_core::tuning::{
-    BitBackendSelectors, GitRevision, HarnessSchema, PolynomialSelectors, ProfileError, ProfileId,
-    Provenance, RepoRelPath, Rfc3339Utc, SelectorFamilies, Sha256, TuningProfile,
+    AssemblyProvenance, BitBackendSelectors, CanonicalValue, CompiledProfileProvenance,
+    CoreSelectors, CoreTuning, CoreTuningCodec, GitRevision, HarnessSchema, MeasurementProvenance,
+    PolynomialSelectors, PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder,
+    RepoRelPath, Rfc3339Utc, SectionCodec, Sha256,
 };
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ProducedCoreProfile {
+    id: ProfileId,
+    measurement: MeasurementProvenance,
+    assembly: AssemblyProvenance,
+    section: CoreTuning,
+}
+
+impl std::ops::Deref for ProducedCoreProfile {
+    type Target = CoreTuning;
+
+    fn deref(&self) -> &Self::Target {
+        &self.section
+    }
+}
+
+impl ProducedCoreProfile {
+    fn to_json(&self) -> String {
+        let prepared = PreparedEnvelope::compiled(
+            self.id.clone(),
+            CompiledProfileProvenance {
+                artifact_id: self.id.clone(),
+            },
+        )
+        .insert_measured::<CoreTuning, CoreTuningCodec>(
+            self.section.clone(),
+            self.measurement.clone(),
+        )
+        .expect("calibration evidence was validated when collected")
+        .build()
+        .expect("one typed section builds a prepared envelope");
+        core_registry()
+            .expect("the core owner registry has one valid codec")
+            .to_json(&prepared, &self.assembly)
+            .expect("validated calibration output encodes")
+    }
+
+    fn from_json(document: &str) -> Result<Self, String> {
+        let prepared = core_registry()
+            .map_err(|error| format!("core registry is invalid: {error}"))?
+            .from_json(document)
+            .map_err(|error| format!("core owner envelope is invalid: {error}"))?;
+        let ids: Vec<&str> = prepared.section_ids().collect();
+        if ids != ["gf2-core/selectors"] {
+            return Err(format!("core owner envelope has section IDs {ids:?}"));
+        }
+        let projection = prepared
+            .section::<CoreTuning>()
+            .map_err(|error| format!("typed core projection failed: {error}"))?
+            .ok_or("core owner envelope is missing its section")?;
+        let assembly = prepared
+            .verified_assembly()
+            .ok_or("canonical core owner lacks verified assembly")?
+            .provenance
+            .clone();
+        Ok(Self {
+            id: prepared.profile_id().clone(),
+            measurement: projection.measurement.clone(),
+            assembly,
+            section: projection.section.clone(),
+        })
+    }
+
+    fn omitting(&self, omitted: &[SchemaField]) -> Result<Self, String> {
+        let body = CoreTuningCodec::encode_body(&self.section)
+            .map_err(|error| format!("complete core section does not encode: {error}"))?;
+        let mut selectors = serde_json::to_value(body)
+            .map_err(|error| format!("complete core section is not JSON: {error}"))?;
+        for field in omitted {
+            let family = selectors
+                .get_mut(&field.family)
+                .and_then(serde_json::Value::as_object_mut)
+                .ok_or_else(|| format!("complete core section has no `{}` family", field.family))?;
+            if family.remove(&field.name).is_none() {
+                return Err(format!("complete core section has no `{field}` field"));
+            }
+        }
+        let canonical = CanonicalValue::serialize(&selectors)
+            .map_err(|error| format!("omitted selector body is not canonical: {error}"))?;
+        let section = CoreTuningCodec::decode_body(canonical)
+            .map_err(|error| format!("omitted core section is invalid: {error}"))?;
+        Ok(Self {
+            section,
+            ..self.clone()
+        })
+    }
+}
+
+fn core_registry() -> Result<ProfileRegistry, gf2_core::tuning::RegistryError> {
+    ProfileRegistryBuilder::new()
+        .register::<CoreTuning, CoreTuningCodec>()?
+        .build()
+}
+
+#[allow(dead_code)]
+fn complete_selector_value(section: &CoreTuning) -> Result<serde_json::Value, String> {
+    let complete = CoreTuning::from_selectors(section.selectors().clone());
+    let body = CoreTuningCodec::encode_body(&complete)
+        .map_err(|error| format!("complete selector view does not encode: {error}"))?;
+    serde_json::to_value(body)
+        .map_err(|error| format!("complete selector view is not JSON: {error}"))
+}
 
 /// Prepared-host marker required before this action measures or emits.
 const BENCH_MODE_VAR: &str = "GF2_BENCH";
+/// Private guard for every forced tuning child.
+const FRESH_CASE_VAR: &str = "GF2_TUNING_FRESH_CASE";
+const FRESH_CASE_VALUE: &str = "child-v1";
+const FRESH_RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";
 /// Wrapper-overridable mutex path, read only to explain a failed lock probe.
 const LOCK_PATH_VAR: &str = "GF2_CCX1_LOCK";
 const DEFAULT_EXECUTIONS: u64 = 5;
@@ -252,7 +367,8 @@ type F = Fp<65537>;
 // ---------------------------------------------------------------------
 
 /// The five selector fields this sweep measures.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 enum CalibratedField {
     SimdMinWords,
     KaratsubaMinDegree,
@@ -297,7 +413,7 @@ impl CalibratedField {
 
     /// The conservative table's value for this field.
     fn conservative_default(self) -> usize {
-        let profile = &TuningProfile::CONSERVATIVE;
+        let profile = &CoreTuning::CONSERVATIVE;
         match self {
             Self::SimdMinWords => profile.bit_backend().simd_min_words(),
             Self::KaratsubaMinDegree => profile.polynomial().karatsuba_min_degree(),
@@ -345,14 +461,6 @@ impl CalibratedField {
             Self::KaratsubaMinDegree => ArmSource::ChildProcess,
             _ => ArmSource::InProcess,
         }
-    }
-
-    /// The field named by its schema key, for a child process's command line.
-    fn parse(token: &str) -> Result<Self, String> {
-        Self::ALL
-            .into_iter()
-            .find(|field| field.to_string() == token)
-            .ok_or_else(|| format!("`{token}` names no swept field"))
     }
 
     /// The unit the grid points are measured in.
@@ -454,7 +562,8 @@ impl fmt::Display for SchemaField {
 }
 
 /// Which side of a crossover an arm sits on.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 enum Arm {
     /// The arm the comparison selects below the threshold.
     Conservative,
@@ -464,13 +573,6 @@ enum Arm {
 
 impl Arm {
     const BOTH: [Self; 2] = [Self::Conservative, Self::Asymptotic];
-
-    fn parse(token: &str) -> Result<Self, String> {
-        Self::BOTH
-            .into_iter()
-            .find(|arm| arm.to_string() == token)
-            .ok_or_else(|| format!("`{token}` names no arm"))
-    }
 }
 
 impl fmt::Display for Arm {
@@ -505,7 +607,8 @@ impl fmt::Display for ArmSource {
 // Command line
 // ---------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
 struct Protocol {
     executions: u64,
     repetitions: u64,
@@ -533,9 +636,8 @@ enum Mode {
     },
     SelfCheck,
     ListGrid,
-    /// One arm of one grid point, measured in this process because the parent
-    /// spawned it with the arm it wants forced.
-    ArmChild(ChildSpec),
+    /// Fixed private entry mode; the guarded case arrives canonically on stdin.
+    FreshChild,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -554,20 +656,35 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
     let mut receipt: Option<String> = None;
     let mut self_check = false;
     let mut list_grid = false;
-    let mut child_arm: Option<ChildSpec> = None;
+    let mut fresh_child = false;
+    let mut protocol_override = false;
     let mut iter = args;
     while let Some(arg) = iter.next() {
         match arg.as_str() {
-            "--executions" => executions = parse_value(&mut iter, &arg)?,
-            "--repetitions" => repetitions = parse_value(&mut iter, &arg)?,
-            "--target-ms" => target_ms = parse_value(&mut iter, &arg)?,
+            "--executions" => {
+                executions = parse_value(&mut iter, &arg)?;
+                protocol_override = true;
+            }
+            "--repetitions" => {
+                repetitions = parse_value(&mut iter, &arg)?;
+                protocol_override = true;
+            }
+            "--target-ms" => {
+                target_ms = parse_value(&mut iter, &arg)?;
+                protocol_override = true;
+            }
             "--out" => out = Some(PathBuf::from(next_value(&mut iter, &arg)?)),
             "--profile-id" => profile_id = Some(next_value(&mut iter, &arg)?),
             "--lock-wrapper" => lock_wrapper = Some(next_value(&mut iter, &arg)?),
             "--receipt" => receipt = Some(next_value(&mut iter, &arg)?),
             "--self-check" => self_check = true,
             "--list-grid" => list_grid = true,
-            "--child-arm" => child_arm = Some(ChildSpec::parse(&next_value(&mut iter, &arg)?)?),
+            "--fresh-tuning-process-child" => {
+                if fresh_child {
+                    return Err("duplicate --fresh-tuning-process-child".to_owned());
+                }
+                fresh_child = true;
+            }
             "--bench" => {}
             _ => return Err(format!("unknown argument: {arg}")),
         }
@@ -581,13 +698,15 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
             return Err(format!("{flag} must be positive"));
         }
     }
-    if [self_check, list_grid, child_arm.is_some()]
+    if [self_check, list_grid, fresh_child]
         .into_iter()
         .filter(|selected| *selected)
         .count()
         > 1
     {
-        return Err("--self-check, --list-grid and --child-arm are separate modes".into());
+        return Err(
+            "--self-check, --list-grid and --fresh-tuning-process-child are separate modes".into(),
+        );
     }
     let protocol = Protocol {
         executions,
@@ -598,8 +717,18 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
         Mode::SelfCheck
     } else if list_grid {
         Mode::ListGrid
-    } else if let Some(spec) = child_arm {
-        Mode::ArmChild(spec)
+    } else if fresh_child {
+        if protocol_override
+            || out.is_some()
+            || profile_id.is_some()
+            || lock_wrapper.is_some()
+            || receipt.is_some()
+        {
+            return Err(
+                "the fresh tuning child accepts its complete case only on standard input".into(),
+            );
+        }
+        Mode::FreshChild
     } else {
         Mode::Calibrate {
             out: out.ok_or("--out is required; name a unique absent path under /tmp")?,
@@ -651,7 +780,8 @@ fn resolve_repository_path(path: &Path) -> PathBuf {
 // ---------------------------------------------------------------------
 
 /// What a child process is asked to do with the arm it forces.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum ChildTask {
     /// Report the arm and the digests, and time nothing.
     Probe,
@@ -668,43 +798,14 @@ impl fmt::Display for ChildTask {
     }
 }
 
-/// One arm of one grid point, as a child process's command line carries it.
-///
-/// The rendered form is `<field>:<size>:<arm>:<probe|execution>`, which is one
-/// argument value and round-trips through [`ChildSpec::parse`].
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// One forced arm at one grid point.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
 struct ChildSpec {
     field: CalibratedField,
     size: usize,
     arm: Arm,
     task: ChildTask,
-}
-
-impl ChildSpec {
-    fn parse(text: &str) -> Result<Self, String> {
-        let parts: Vec<&str> = text.split(':').collect();
-        let [field, size, arm, task] = parts.as_slice() else {
-            return Err(format!(
-                "`{text}` is not a `<field>:<size>:<arm>:<probe|execution>` child specification"
-            ));
-        };
-        Ok(Self {
-            field: CalibratedField::parse(field)?,
-            size: size
-                .parse()
-                .map_err(|_| format!("`{size}` is not a grid point"))?,
-            arm: Arm::parse(arm)?,
-            task: if *task == "probe" {
-                ChildTask::Probe
-            } else {
-                ChildTask::Measure {
-                    execution: task
-                        .parse()
-                        .map_err(|_| format!("`{task}` is neither `probe` nor an execution"))?,
-                }
-            },
-        })
-    }
 }
 
 impl fmt::Display for ChildSpec {
@@ -715,6 +816,14 @@ impl fmt::Display for ChildSpec {
             self.field, self.size, self.arm, self.task
         )
     }
+}
+
+/// Canonical case sent to one guarded forced-tuning child.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct FreshProcessCase {
+    spec: ChildSpec,
+    protocol: Protocol,
 }
 
 // ---------------------------------------------------------------------
@@ -1426,7 +1535,8 @@ fn calibrated_calls(target: Duration, mut call: impl FnMut(usize)) -> u64 {
 // ---------------------------------------------------------------------
 
 /// What a child process reports back on its standard output.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
 struct ChildReport {
     /// Arm the production selector picked under the installed profile.
     route: String,
@@ -1465,7 +1575,7 @@ fn forced_karatsuba_min_degree(arm: Arm, size: usize) -> usize {
 /// `tuning::active`, because an install that silently lost a race would leave
 /// the child measuring the conservative default and reporting it as an arm.
 fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
-    let inherited = &TuningProfile::CONSERVATIVE;
+    let inherited = &CoreTuning::CONSERVATIVE;
     let conservative = inherited.polynomial();
     let polynomial = PolynomialSelectors::try_new(
         karatsuba_min_degree,
@@ -1477,19 +1587,31 @@ fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
     .map_err(|error| {
         format!("karatsuba_min_degree {karatsuba_min_degree} is inadmissible: {error}")
     })?;
-    let profile = TuningProfile::try_new(
-        ProfileId::parse(FORCED_ARM_PROFILE_ID)
-            .map_err(|error| format!("`{FORCED_ARM_PROFILE_ID}` is not a profile id: {error}"))?,
-        Provenance::Inherited,
-        SelectorFamilies {
-            polynomial,
-            ..SelectorFamilies::CONSERVATIVE
-        },
-    )
-    .map_err(|error| format!("the arm-forcing profile does not validate: {error}"))?;
+    let id = ProfileId::parse(FORCED_ARM_PROFILE_ID)
+        .map_err(|error| format!("`{FORCED_ARM_PROFILE_ID}` is not a profile id: {error}"))?;
+    let section = CoreTuning::from_selectors(CoreSelectors {
+        polynomial,
+        ..CoreSelectors::CONSERVATIVE
+    });
+    let profile =
+        PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
+            .insert(section)
+            .map_err(|error| format!("the arm-forcing section does not prepare: {error}"))?
+            .build()
+            .map_err(|error| format!("the arm-forcing envelope does not build: {error}"))?;
     tuning::install(profile)
         .map_err(|error| format!("the arm-forcing profile was not installed: {error}"))?;
-    let active = tuning::active().polynomial().karatsuba_min_degree();
+    let active_tuning = tuning::active();
+    if !matches!(
+        active_tuning.resolution,
+        tuning::SectionResolution::Installed { .. }
+    ) {
+        return Err(format!(
+            "the arm-forcing core section did not resolve as Installed: {:?}",
+            active_tuning.resolution
+        ));
+    }
+    let active = active_tuning.polynomial().karatsuba_min_degree();
     if active != karatsuba_min_degree {
         return Err(format!(
             "the active karatsuba_min_degree is {active}, not the forced {karatsuba_min_degree}"
@@ -1498,13 +1620,13 @@ fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
     Ok(())
 }
 
-/// Runs one child task and writes its report to standard output.
+/// Runs one child task and returns its structured report.
 ///
 /// The profile is installed before anything else touches a selection boundary,
 /// so `tuning::install` cannot fail on an already-resolved profile. The arm is
 /// then read back from the production selector rather than assumed from the
 /// value installed.
-fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<(), String> {
+fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String> {
     if spec.field.arm_source() != ArmSource::ChildProcess {
         return Err(format!(
             "{} reaches both arms in one process and needs no child",
@@ -1514,84 +1636,133 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<(), String> {
     install_forced_profile(forced_karatsuba_min_degree(spec.arm, spec.size))?;
 
     let degree = spec.size;
-    println!(
-        "route\t{}",
-        match mul_route(degree, degree) {
-            MulRoute::Schoolbook => "schoolbook",
-            MulRoute::Karatsuba => "karatsuba",
-        }
-    );
+    let route = match mul_route(degree, degree) {
+        MulRoute::Schoolbook => "schoolbook",
+        MulRoute::Karatsuba => "karatsuba",
+    }
+    .to_owned();
     let Fixture::Mul { a, b } = build_fixture(spec.field, spec.size) else {
         return Err(format!("{} has no multiplication fixture", spec.field));
     };
-    println!("operands\t{}", operand_digest(&a, &b));
-    println!("product\t{}", poly_digest(&a.mul(&b)));
-    if let ChildTask::Measure { execution } = spec.task {
-        for rate in execution_windows(protocol, execution, |_| {
+    let operands = operand_digest(&a, &b);
+    let product = poly_digest(&a.mul(&b));
+    let rates = match spec.task {
+        ChildTask::Probe => Vec::new(),
+        ChildTask::Measure { execution } => execution_windows(protocol, execution, |_| {
             black_box(black_box(&a).mul(black_box(&b)));
-        }) {
-            println!("rate\t{rate}");
-        }
-    }
-    Ok(())
-}
-
-/// Re-executes this binary for one arm of one grid point and returns its
-/// standard output.
-fn spawn_child(spec: ChildSpec, protocol: &Protocol) -> Result<String, String> {
-    let executable =
-        env::current_exe().map_err(|error| format!("this binary has no path: {error}"))?;
-    let output = Command::new(&executable)
-        .arg("--child-arm")
-        .arg(spec.to_string())
-        .arg("--executions")
-        .arg(protocol.executions.to_string())
-        .arg("--repetitions")
-        .arg(protocol.repetitions.to_string())
-        .arg("--target-ms")
-        .arg(protocol.target_ms.to_string())
-        .output()
-        .map_err(|error| format!("cannot run {} for {spec}: {error}", executable.display()))?;
-    if !output.status.success() {
-        return Err(format!(
-            "the child for {spec} exited with {}: {}",
-            output.status,
-            String::from_utf8_lossy(&output.stderr).trim()
-        ));
-    }
-    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
-}
-
-/// Reads a child's report off its standard output.
-fn parse_child_report(text: &str) -> Result<ChildReport, String> {
-    let mut route: Option<String> = None;
-    let mut operands: Option<u64> = None;
-    let mut product: Option<u64> = None;
-    let mut rates = Vec::new();
-    for line in text.lines() {
-        let Some((key, value)) = line.split_once('\t') else {
-            return Err(format!("the child printed an unkeyed line: {line}"));
-        };
-        match key {
-            "route" => route = Some(value.to_owned()),
-            "operands" => operands = Some(parse_report_value(key, value)?),
-            "product" => product = Some(parse_report_value(key, value)?),
-            "rate" => rates.push(parse_report_value(key, value)?),
-            _ => return Err(format!("the child printed an unknown key: {key}")),
-        }
-    }
+        }),
+    };
     Ok(ChildReport {
-        route: route.ok_or("the child reported no arm")?,
-        operands: operands.ok_or("the child reported no operand digest")?,
-        product: product.ok_or("the child reported no product digest")?,
+        route,
+        operands,
+        product,
         rates,
     })
 }
 
-fn parse_report_value<T: std::str::FromStr>(key: &str, value: &str) -> Result<T, String> {
-    value
-        .parse()
-        .map_err(|_| format!("the child reported `{value}` for {key}"))
+/// Re-executes this binary for one guarded forced-tuning case.
+fn fresh_tuning_process(case: FreshProcessCase) -> Result<ChildReport, String> {
+    if env::var(BENCH_MODE_VAR).as_deref() != Ok("1") {
+        return Err(format!(
+            "forced calibration children require {BENCH_MODE_VAR}=1 in the parent"
+        ));
+    }
+    let executable =
+        env::current_exe().map_err(|error| format!("this binary has no path: {error}"))?;
+    let input = serde_json::to_string(&case)
+        .map_err(|error| format!("cannot encode the fresh tuning case: {error}"))?;
+    let mut child = Command::new(&executable)
+        .arg("--fresh-tuning-process-child")
+        .env(FRESH_CASE_VAR, FRESH_CASE_VALUE)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|error| {
+            format!(
+                "cannot run {} for {}: {error}",
+                executable.display(),
+                case.spec
+            )
+        })?;
+    child
+        .stdin
+        .take()
+        .ok_or("the fresh tuning child has no standard input")?
+        .write_all(input.as_bytes())
+        .map_err(|error| format!("cannot write the fresh tuning case: {error}"))?;
+    let output = child
+        .wait_with_output()
+        .map_err(|error| format!("cannot wait for the fresh tuning child: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "the child for {} exited with {}\nstdout:\n{}\nstderr:\n{}",
+            case.spec,
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let stdout = String::from_utf8(output.stdout)
+        .map_err(|_| "the fresh tuning child emitted non-UTF-8 output".to_owned())?;
+    parse_child_report(&stdout)
+}
+
+fn decode_fresh_case(input: &str) -> Result<FreshProcessCase, String> {
+    let case: FreshProcessCase = serde_json::from_str(input)
+        .map_err(|error| format!("fresh tuning stdin is not one valid case: {error}"))?;
+    let canonical = serde_json::to_string(&case)
+        .map_err(|error| format!("cannot re-encode the fresh tuning case: {error}"))?;
+    if input != canonical {
+        return Err("fresh tuning stdin is not canonical compact JSON".to_owned());
+    }
+    Ok(case)
+}
+
+fn read_fresh_case() -> Result<FreshProcessCase, String> {
+    match env::var(FRESH_CASE_VAR) {
+        Ok(value) if value == FRESH_CASE_VALUE => {}
+        Ok(value) => return Err(format!("invalid fresh tuning sentinel {value:?}")),
+        Err(env::VarError::NotPresent) => {
+            return Err("fresh tuning child sentinel is absent".to_owned())
+        }
+        Err(error) => return Err(format!("cannot read fresh tuning sentinel: {error}")),
+    }
+    let mut input = String::new();
+    io::Read::read_to_string(&mut io::stdin(), &mut input)
+        .map_err(|error| format!("cannot read fresh tuning stdin: {error}"))?;
+    decode_fresh_case(&input)
+}
+
+fn run_fresh_child() -> Result<(), String> {
+    let case = read_fresh_case()?;
+    let report = run_child(case.spec, &case.protocol)?;
+    let result = serde_json::to_string(&report)
+        .map_err(|error| format!("cannot encode the fresh tuning result: {error}"))?;
+    println!("{FRESH_RESULT_PREFIX}{result}");
+    Ok(())
+}
+
+/// Reads the one guarded structured result from a child's standard output.
+fn parse_child_report(text: &str) -> Result<ChildReport, String> {
+    let lines: Vec<&str> = text.lines().collect();
+    let [line] = lines.as_slice() else {
+        return Err(format!(
+            "the child emitted {} lines rather than one structured result",
+            lines.len()
+        ));
+    };
+    let payload = line
+        .strip_prefix(FRESH_RESULT_PREFIX)
+        .ok_or("the child result lacks the GF2_TUNING_RESULT= prefix")?;
+    let report: ChildReport = serde_json::from_str(payload)
+        .map_err(|error| format!("the child result is not valid JSON: {error}"))?;
+    let canonical = serde_json::to_string(&report)
+        .map_err(|error| format!("cannot re-encode the child result: {error}"))?;
+    if payload != canonical {
+        return Err("the child result is not canonical compact JSON".to_owned());
+    }
+    Ok(report)
 }
 
 /// Checks a child's report against what the parent asked for and holds.
@@ -1637,12 +1808,14 @@ fn verify_child_report(
 /// arm. That is the same abort discipline [`equivalence_probe`] applies to the
 /// in-process families.
 fn checked_child_report(spec: ChildSpec, operands: u64, protocol: &Protocol) -> ChildReport {
-    let report = spawn_child(spec, protocol)
-        .and_then(|text| parse_child_report(&text))
-        .and_then(|report| {
-            verify_child_report(spec, operands, protocol, &report)?;
-            Ok(report)
-        });
+    let case = FreshProcessCase {
+        spec,
+        protocol: protocol.clone(),
+    };
+    let report = fresh_tuning_process(case).and_then(|report| {
+        verify_child_report(spec, operands, protocol, &report)?;
+        Ok(report)
+    });
     report.unwrap_or_else(|error| panic!("{error}"))
 }
 
@@ -1872,35 +2045,57 @@ impl SelectedValues {
 /// puts the argument order and the field names on one screen.
 fn build_profile(
     id: ProfileId,
-    provenance: Provenance,
+    measurement: MeasurementProvenance,
+    assembled_at: Rfc3339Utc,
     selected: &SelectedValues,
-) -> Result<TuningProfile, ProfileError> {
+) -> Result<ProducedCoreProfile, String> {
     let simd_min_words: usize = selected.simd_min_words;
     let karatsuba_min_degree: usize = selected.karatsuba_min_degree;
     let karatsuba_max_out_len: usize = selected.karatsuba_max_out_len;
     let div_rem_fast_min_len: usize = selected.div_rem_fast_min_len;
     let subproduct_min_len: usize = selected.subproduct_min_len;
-    let interpolate_fast_min_points: usize = TuningProfile::CONSERVATIVE
+    let interpolate_fast_min_points: usize = CoreTuning::CONSERVATIVE
         .polynomial()
         .interpolate_fast_min_points();
 
-    let bit_backend = BitBackendSelectors::try_new(simd_min_words)?;
+    let bit_backend =
+        BitBackendSelectors::try_new(simd_min_words).map_err(|error| error.to_string())?;
     let polynomial = PolynomialSelectors::try_new(
         karatsuba_min_degree,
         karatsuba_max_out_len,
         div_rem_fast_min_len,
         subproduct_min_len,
         interpolate_fast_min_points,
-    )?;
-    TuningProfile::try_new(
+    )
+    .map_err(|error| error.to_string())?;
+    let assembly = match &measurement {
+        MeasurementProvenance::Calibrated {
+            source_revision,
+            source_dirty,
+            harness,
+            binary_sha256,
+            ..
+        } => AssemblyProvenance {
+            assembled_at,
+            source_revision: source_revision.clone(),
+            source_dirty: *source_dirty,
+            tool: harness.clone(),
+            tool_sha256: binary_sha256.clone(),
+        },
+        MeasurementProvenance::Inherited => {
+            return Err("the measurement harness cannot emit inherited evidence".to_owned())
+        }
+    };
+    Ok(ProducedCoreProfile {
         id,
-        provenance,
-        SelectorFamilies {
+        measurement,
+        assembly,
+        section: CoreTuning::from_selectors(CoreSelectors {
             bit_backend,
             polynomial,
-            ..SelectorFamilies::CONSERVATIVE
-        },
-    )
+            ..CoreSelectors::CONSERVATIVE
+        }),
+    })
 }
 
 // ---------------------------------------------------------------------
@@ -1927,7 +2122,7 @@ fn print_grid() {
 fn print_protocol(protocol: &Protocol) {
     println!(
         "protocol: harness_schema={} executions={} repetitions={} target_ms={} windows_per_arm={}",
-        HarnessSchema::SUPPORTED,
+        CoreTuningCodec::HARNESS_SCHEMA,
         protocol.executions,
         protocol.repetitions,
         protocol.target_ms,
@@ -2037,9 +2232,10 @@ fn print_sweep(sweep: &FieldSweep) {
 /// serialization, so the report states what the loader will resolve an absent
 /// key to rather than a figure written into this tool.
 fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), String> {
-    let conservative: serde_json::Value =
-        serde_json::from_str(&TuningProfile::CONSERVATIVE.to_json())
-            .map_err(|error| format!("the conservative profile is not JSON: {error}"))?;
+    let conservative = CoreTuningCodec::encode_body(&CoreTuning::CONSERVATIVE)
+        .map_err(|error| format!("the conservative section does not encode: {error}"))?;
+    let conservative = serde_json::to_value(conservative)
+        .map_err(|error| format!("the conservative section is not JSON: {error}"))?;
     let uncomparable: Vec<SchemaField> = uncalibrated_fields(sweeps)
         .into_iter()
         .map(CalibratedField::schema_field)
@@ -2052,7 +2248,7 @@ fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), S
     println!("family\tfield\tinherited\treason");
     for field in omitted {
         let inherited = conservative
-            .pointer(&format!("/selectors/{}/{}", field.family, field.name))
+            .pointer(&format!("/{}/{}", field.family, field.name))
             .and_then(serde_json::Value::as_u64)
             .ok_or_else(|| format!("the conservative table states no `{field}`"))?;
         let reason = if uncomparable.contains(field) {
@@ -2119,7 +2315,7 @@ fn schema_fields(document: &str) -> Result<Vec<SchemaField>, String> {
     let parsed: serde_json::Value = serde_json::from_str(document)
         .map_err(|error| format!("the profile document is not JSON: {error}"))?;
     let families = parsed
-        .pointer("/selectors")
+        .pointer("/sections/gf2-core~1selectors/selectors")
         .and_then(serde_json::Value::as_object)
         .ok_or("the profile document has no `selectors` object")?;
     let mut fields = Vec::new();
@@ -2150,118 +2346,26 @@ fn omitted_fields(document: &str, sweeps: &[FieldSweep]) -> Result<Vec<SchemaFie
         .collect())
 }
 
-/// Serializes `profile` and drops the fields this run did not measure.
+/// Re-encodes `profile` after omitting fields this run did not measure.
 ///
-/// `TuningProfile::to_json` states every schema field, so omission is expressed
-/// here rather than there. An absent field is a supported state of the schema:
-/// `from_json` resolves it to the conservative default, so the document still
-/// loads and still selects the same threshold — what it stops doing is claiming
-/// a value nothing measured.
-///
-/// The removal edits the serialized text, so every surviving key keeps the
-/// order `to_json` writes it in and an emitted document sits next to the
-/// committed `conservative.json` in the same shape. Reserializing a parsed
-/// value would reorder the whole document alphabetically for the sake of one
-/// deleted key. The edit is then checked against the same removal performed
-/// structurally on the parsed value, so a text edit that disturbed anything
-/// else is caught here rather than in a committed artifact.
-fn calibrated_document(profile: &TuningProfile, omitted: &[SchemaField]) -> Result<String, String> {
-    let serialized = profile.to_json();
-    let mut document = serialized.clone();
-    for field in omitted {
-        document = remove_selector_key(&document, field)?;
-    }
-
-    let mut expected: serde_json::Value = serde_json::from_str(&serialized)
-        .map_err(|error| format!("the serialized profile is not JSON: {error}"))?;
-    for field in omitted {
-        let family = expected
-            .pointer_mut(&format!("/selectors/{}", field.family))
-            .and_then(serde_json::Value::as_object_mut)
-            .ok_or_else(|| {
-                format!(
-                    "the serialized profile has no `{}` selector family",
-                    field.family
-                )
-            })?;
-        if family.remove(&field.name).is_none() {
-            return Err(format!(
-                "the serialized profile has no `{field}` field to omit"
-            ));
-        }
-    }
-    let actual: serde_json::Value = serde_json::from_str(&document)
-        .map_err(|error| format!("the omitted-field document is not JSON: {error}"))?;
-    if actual != expected {
-        return Err(
-            "omitting a field changed something else in the document; this is a harness defect"
-                .to_owned(),
-        );
-    }
-    Ok(document)
+/// The owner codec decodes the reduced selector body so private presence state
+/// records each omission, then the one registry encoder recomputes the format-2
+/// content digest. Absent fields retain their conservative dispatch semantics
+/// without making a measurement claim.
+fn calibrated_document(
+    profile: &ProducedCoreProfile,
+    omitted: &[SchemaField],
+) -> Result<String, String> {
+    Ok(profile.omitting(omitted)?.to_json())
 }
 
-/// Deletes `field`'s `"name":<digits>` entry, and one adjacent comma, from the
-/// selector family object it belongs to.
-///
-/// The search starts at the `selectors` object and is then scoped to that
-/// family's braces, so neither a provenance string nor a same-named field of
-/// another family can be mistaken for the key. Every selector value is an
-/// unsigned integer and `to_json` writes compact JSON, so the entry ends at the
-/// first non-digit after the colon.
-fn remove_selector_key(text: &str, field: &SchemaField) -> Result<String, String> {
-    const SELECTORS: &str = "\"selectors\":{";
-    let selectors_at = text
-        .find(SELECTORS)
-        .ok_or("no `selectors` object in the document")?
-        + SELECTORS.len();
-    let opening = format!("\"{}\":{{", field.family);
-    let body_start = text[selectors_at..]
-        .find(&opening)
-        .ok_or_else(|| format!("no `{}` selector family in the document", field.family))?
-        + selectors_at
-        + opening.len();
-    let body_len = text[body_start..]
-        .find('}')
-        .ok_or_else(|| format!("the `{}` selector family is unterminated", field.family))?;
-    let body = &text[body_start..body_start + body_len];
-
-    let key = format!("\"{}\":", field.name);
-    let key_at = body
-        .find(&key)
-        .ok_or_else(|| format!("no `{field}` field in the document to omit"))?;
-    let value_at = key_at + key.len();
-    let digits = body[value_at..]
-        .find(|character: char| !character.is_ascii_digit())
-        .unwrap_or(body.len() - value_at);
-    if digits == 0 {
-        return Err(format!("`{field}` does not hold an unsigned integer"));
-    }
-    let value_end = value_at + digits;
-
-    let (cut_start, cut_end) = if body[value_end..].starts_with(',') {
-        (key_at, value_end + 1)
-    } else if body[..key_at].ends_with(',') {
-        (key_at - 1, value_end)
-    } else {
-        (key_at, value_end)
-    };
-    Ok(format!(
-        "{}{}{}{}",
-        &text[..body_start],
-        &body[..cut_start],
-        &body[cut_end..],
-        &text[body_start + body_len..]
-    ))
-}
-
-/// Writes the emitted document, then reads it back and reparses it.
+/// Writes the emitted document to a temporary file, reparses it, then publishes it.
 ///
 /// Only a document the loader accepts is an artifact, so a document this
 /// harness could not have loaded never reaches a receipt. The comparison is
 /// against the measured profile: an omitted field resolves back to the
 /// conservative default, which is the value the sweep left it at.
-fn emit_profile(path: &Path, json: &str, profile: &TuningProfile) -> io::Result<String> {
+fn emit_profile(path: &Path, json: &str) -> io::Result<String> {
     let path = resolve_repository_path(path);
     if path.exists() {
         return Err(io::Error::new(
@@ -2278,19 +2382,92 @@ fn emit_profile(path: &Path, json: &str, profile: &TuningProfile) -> io::Result<
     {
         fs::create_dir_all(parent)?;
     }
-    fs::write(&path, json)?;
-    let written = fs::read_to_string(&path)?;
-    let reparsed = TuningProfile::from_json(&written).map_err(|error| {
-        io::Error::other(format!(
-            "the emitted document does not load back: {error}; this is a harness defect"
-        ))
+
+    let file_name = path.file_name().ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("the output path has no file name: {}", path.display()),
+        )
     })?;
-    if &reparsed != profile {
-        return Err(io::Error::other(
-            "the emitted document does not load back to the profile that was measured",
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or(Duration::ZERO)
+        .as_nanos();
+    let mut temporary = None;
+    for attempt in 0..128_u8 {
+        let candidate = parent.join(format!(
+            ".{}.tmp-{}-{nonce}-{attempt}",
+            file_name.to_string_lossy(),
+            std::process::id()
         ));
+        match OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&candidate)
+        {
+            Ok(file) => {
+                temporary = Some((candidate, file));
+                break;
+            }
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(error),
+        }
     }
-    Ok(written)
+    let (temporary_path, mut temporary_file) = temporary.ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            format!(
+                "could not reserve a temporary output beside {}",
+                path.display()
+            ),
+        )
+    })?;
+
+    let result = (|| {
+        temporary_file.write_all(json.as_bytes())?;
+        temporary_file.sync_all()?;
+        drop(temporary_file);
+
+        let written = fs::read_to_string(&temporary_path)?;
+        let reparsed = ProducedCoreProfile::from_json(&written).map_err(|error| {
+            io::Error::other(format!(
+                "the emitted document does not load back: {error}; this is a harness defect"
+            ))
+        })?;
+        if reparsed.to_json() != written {
+            return Err(io::Error::other(
+                "the emitted document does not round-trip canonically",
+            ));
+        }
+
+        fs::hard_link(&temporary_path, &path).map_err(|error| {
+            if error.kind() == io::ErrorKind::AlreadyExists {
+                io::Error::new(
+                    io::ErrorKind::AlreadyExists,
+                    format!(
+                        "refusing to overwrite an existing path: {}; name a unique absent path",
+                        path.display()
+                    ),
+                )
+            } else {
+                error
+            }
+        })?;
+        Ok(written)
+    })();
+
+    // The final path is either absent or a complete hard link to the validated
+    // bytes. A cleanup failure can leave only the hidden temporary link, never
+    // a partial final artifact, so it must not turn a successfully published
+    // artifact into an ambiguous reported failure.
+    if let Err(error) = fs::remove_file(&temporary_path) {
+        eprintln!(
+            "warning: could not remove temporary tuning artifact {}: {error}",
+            temporary_path.display()
+        );
+    }
+    result
 }
 
 /// The profile identifier, taken from `--profile-id` or the emitted file's own
@@ -2329,10 +2506,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             return Ok(());
         }
-        // The parent this was spawned by is already behind the prepared-host
-        // gate and the lock probe, so the child repeats neither.
-        Mode::ArmChild(spec) => {
-            run_child(*spec, &args.protocol)?;
+        // The guarded case contains the complete child protocol. The parent is
+        // already behind the prepared-host gate and lock probe, so the child
+        // consults neither of those ambient inputs.
+        Mode::FreshChild => {
+            run_fresh_child()?;
             return Ok(());
         }
         Mode::Calibrate {
@@ -2370,6 +2548,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     print_protocol(&args.protocol);
     print_host_facts(&facts);
+    println!("lock_wrapper: {}", lock_wrapper_path.as_str());
     print_grid();
 
     let measured_at = rfc3339_utc(SystemTime::now())?;
@@ -2417,12 +2596,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\ntimed work: {:.1} s", started.elapsed().as_secs_f64());
 
     let selected = SelectedValues::from_sweeps(&sweeps);
-    let provenance = Provenance::Calibrated {
+    let assembled_at = Rfc3339Utc::parse(&rfc3339_utc(SystemTime::now())?)?;
+    let provenance = MeasurementProvenance::Calibrated {
         measured_at: Rfc3339Utc::parse(&measured_at)?,
         source_revision: facts.source_revision.clone(),
         source_dirty: facts.source_dirty,
         harness: facts.harness.clone(),
-        harness_schema: HarnessSchema::parse(HarnessSchema::SUPPORTED)?,
+        harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA)?,
         binary_sha256: facts.binary_sha256.clone(),
         toolchain: facts.toolchain.clone(),
         host: facts.host.clone(),
@@ -2430,19 +2610,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         cpu_features: facts.cpu_features.clone(),
         os_kernel: facts.os_kernel.clone(),
         governor: facts.governor.clone(),
-        lock_wrapper: lock_wrapper_path,
-        lock_file: facts.lock_file.clone(),
-        cpu_affinity: facts.cpu_affinity.clone(),
-        executions: args.protocol.executions,
-        repetitions: args.protocol.repetitions,
-        target_ms: args.protocol.target_ms,
         receipt: receipt_path,
     };
-    let profile = build_profile(id, provenance, &selected)?;
+    let profile = build_profile(id, provenance, assembled_at, &selected)?;
     let omitted = omitted_fields(&profile.to_json(), &sweeps)?;
     print_omitted(&omitted, &sweeps)?;
     let document = calibrated_document(&profile, &omitted)?;
-    let json = emit_profile(out, &document, &profile)?;
+    let json = emit_profile(out, &document)?;
 
     println!("\nemitted and re-loaded {}", out.display());
     println!("{json}");
@@ -2459,6 +2633,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use super::*;
 
+    #[allow(dead_code)]
+    struct TestOutput {
+        directory: PathBuf,
+        path: PathBuf,
+    }
+
+    #[allow(dead_code)]
+    impl TestOutput {
+        fn new(label: &str) -> Self {
+            static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+            let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let directory = env::temp_dir().join(format!(
+                "gf2-tuning-calibration-{}-{serial}-{label}",
+                std::process::id()
+            ));
+            let path = directory.join("profile.json");
+            Self { directory, path }
+        }
+    }
+
+    impl Drop for TestOutput {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.directory);
+        }
+    }
+
     /// Five distinct values, so a transposition among the four polynomial
     /// thresholds cannot satisfy the per-field assertions below.
     #[allow(dead_code)]
@@ -2471,13 +2671,13 @@ mod tests {
     };
 
     #[allow(dead_code)]
-    fn calibrated_provenance() -> Provenance {
-        Provenance::Calibrated {
+    fn calibrated_provenance() -> MeasurementProvenance {
+        MeasurementProvenance::Calibrated {
             measured_at: Rfc3339Utc::parse("2026-08-20T00:00:00Z").unwrap(),
             source_revision: GitRevision::parse(&"a".repeat(40)).unwrap(),
             source_dirty: false,
             harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs").unwrap(),
-            harness_schema: HarnessSchema::parse(HarnessSchema::SUPPORTED).unwrap(),
+            harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA).unwrap(),
             binary_sha256: Sha256::parse(&"b".repeat(64)).unwrap(),
             toolchain: "rustc 1.95.0".to_owned(),
             host: "test-host".to_owned(),
@@ -2485,21 +2685,20 @@ mod tests {
             cpu_features: vec!["avx2".to_owned()],
             os_kernel: "Linux".to_owned(),
             governor: "performance".to_owned(),
-            lock_wrapper: RepoRelPath::parse("dev/scripts/ccx1-bench-flock.sh").unwrap(),
-            lock_file: "/tmp/gf2-ccx1.lock".to_owned(),
-            cpu_affinity: "6-11".to_owned(),
-            executions: 5,
-            repetitions: 5,
-            target_ms: 250,
             receipt: RepoRelPath::parse("dev/benchmarks/tuning_profiles/receipt.md").unwrap(),
         }
     }
 
+    fn assembly_instant() -> Rfc3339Utc {
+        Rfc3339Utc::parse("2026-08-20T01:00:00Z").unwrap()
+    }
+
     #[allow(dead_code)]
-    fn profile_from(selected: &SelectedValues) -> TuningProfile {
+    fn profile_from(selected: &SelectedValues) -> ProducedCoreProfile {
         build_profile(
             ProfileId::parse("test-profile").unwrap(),
             calibrated_provenance(),
+            assembly_instant(),
             selected,
         )
         .expect("the swept values are in range")
@@ -2521,6 +2720,21 @@ mod tests {
                 windows: 25,
             }),
         }
+    }
+
+    #[test]
+    fn assembly_uses_the_supplied_post_sweep_instant_not_measurement_start() {
+        let profile = profile_from(&DISTINCT);
+        let MeasurementProvenance::Calibrated { measured_at, .. } = &profile.measurement else {
+            panic!("the test profile must carry calibrated measurement evidence");
+        };
+
+        assert_eq!(measured_at.as_str(), "2026-08-20T00:00:00Z");
+        assert_eq!(
+            profile.assembly.assembled_at.as_str(),
+            "2026-08-20T01:00:00Z"
+        );
+        assert_ne!(profile.assembly.assembled_at, *measured_at);
     }
 
     #[test]
@@ -2588,13 +2802,11 @@ mod tests {
             !document.contains("karatsuba_min_degree"),
             "the uncalibrated field is still stated: {document}"
         );
-        let loaded = TuningProfile::from_json(&document)
+        let loaded = ProducedCoreProfile::from_json(&document)
             .expect("an omitted field is a supported state of the schema");
         assert_eq!(
             loaded.polynomial().karatsuba_min_degree(),
-            TuningProfile::CONSERVATIVE
-                .polynomial()
-                .karatsuba_min_degree(),
+            CoreTuning::CONSERVATIVE.polynomial().karatsuba_min_degree(),
             "the loader resolves the absent field to the conservative default"
         );
     }
@@ -2607,7 +2819,7 @@ mod tests {
             &[CalibratedField::KaratsubaMinDegree.schema_field()],
         )
         .unwrap();
-        let loaded = TuningProfile::from_json(&document).unwrap();
+        let loaded = ProducedCoreProfile::from_json(&document).unwrap();
         assert_eq!(
             loaded.bit_backend().simd_min_words(),
             DISTINCT.simd_min_words
@@ -2636,18 +2848,28 @@ mod tests {
     }
 
     #[test]
-    fn omission_removes_exactly_the_field_and_leaves_the_key_order_alone() {
+    fn omission_changes_only_the_selector_body_and_recomputes_the_digest() {
         let profile = profile_from(&DISTINCT);
         let document = calibrated_document(
             &profile,
             &[CalibratedField::KaratsubaMinDegree.schema_field()],
         )
         .unwrap();
-        let entry = format!(
-            "\"karatsuba_min_degree\":{},",
-            DISTINCT.karatsuba_min_degree
+        let complete: serde_json::Value = serde_json::from_str(&profile.to_json()).unwrap();
+        let omitted: serde_json::Value = serde_json::from_str(&document).unwrap();
+        let mut expected = complete["sections"]["gf2-core/selectors"]["selectors"].clone();
+        expected["polynomial"]
+            .as_object_mut()
+            .unwrap()
+            .remove("karatsuba_min_degree");
+        assert_eq!(
+            omitted["sections"]["gf2-core/selectors"]["selectors"],
+            expected
         );
-        assert_eq!(document, profile.to_json().replace(&entry, ""));
+        assert_ne!(
+            omitted["assembly"]["content_sha256"],
+            complete["assembly"]["content_sha256"]
+        );
     }
 
     #[test]
@@ -2656,10 +2878,10 @@ mod tests {
         let document =
             calibrated_document(&profile, &[CalibratedField::SimdMinWords.schema_field()]).unwrap();
         assert!(document.contains(r#""bit_backend":{}"#), "{document}");
-        let loaded = TuningProfile::from_json(&document).unwrap();
+        let loaded = ProducedCoreProfile::from_json(&document).unwrap();
         assert_eq!(
             loaded.bit_backend().simd_min_words(),
-            TuningProfile::CONSERVATIVE.bit_backend().simd_min_words()
+            CoreTuning::CONSERVATIVE.bit_backend().simd_min_words()
         );
     }
 
@@ -2668,7 +2890,7 @@ mod tests {
         // The receipt path names the field, so a document-wide search would cut
         // the wrong bytes.
         let mut provenance = calibrated_provenance();
-        if let Provenance::Calibrated { receipt, .. } = &mut provenance {
+        if let MeasurementProvenance::Calibrated { receipt, .. } = &mut provenance {
             *receipt =
                 RepoRelPath::parse("dev/benchmarks/tuning_profiles/karatsuba_min_degree-notes.md")
                     .unwrap();
@@ -2676,6 +2898,7 @@ mod tests {
         let profile = build_profile(
             ProfileId::parse("test-profile").unwrap(),
             provenance,
+            assembly_instant(),
             &DISTINCT,
         )
         .unwrap();
@@ -2684,8 +2907,8 @@ mod tests {
             &[CalibratedField::KaratsubaMinDegree.schema_field()],
         )
         .unwrap();
-        let loaded = TuningProfile::from_json(&document).unwrap();
-        let Provenance::Calibrated { receipt, .. } = loaded.provenance() else {
+        let loaded = ProducedCoreProfile::from_json(&document).unwrap();
+        let MeasurementProvenance::Calibrated { receipt, .. } = &loaded.measurement else {
             panic!("the document stays calibrated");
         };
         assert_eq!(
@@ -2694,9 +2917,7 @@ mod tests {
         );
         assert_eq!(
             loaded.polynomial().karatsuba_min_degree(),
-            TuningProfile::CONSERVATIVE
-                .polynomial()
-                .karatsuba_min_degree()
+            CoreTuning::CONSERVATIVE.polynomial().karatsuba_min_degree()
         );
     }
 
@@ -2792,17 +3013,13 @@ mod tests {
         let omitted = omitted_fields(&profile.to_json(), &sweeps).unwrap();
         let document = calibrated_document(&profile, &omitted).unwrap();
         let stated = schema_fields(&document).unwrap();
-        let loaded: serde_json::Value = serde_json::from_str(
-            &TuningProfile::from_json(&document)
-                .expect("an omitted field is a supported state of the schema")
-                .to_json(),
-        )
-        .unwrap();
-        let inherited: serde_json::Value =
-            serde_json::from_str(&TuningProfile::CONSERVATIVE.to_json()).unwrap();
+        let loaded = ProducedCoreProfile::from_json(&document)
+            .expect("an omitted field is a supported state of the schema");
+        let loaded = complete_selector_value(&loaded.section).unwrap();
+        let inherited = complete_selector_value(&CoreTuning::CONSERVATIVE).unwrap();
         assert!(!omitted.is_empty());
         for field in &omitted {
-            let pointer = format!("/selectors/{}/{}", field.family, field.name);
+            let pointer = format!("/{}/{}", field.family, field.name);
             assert!(!stated.contains(field), "{field} is still stated");
             assert_eq!(
                 loaded.pointer(&pointer),
@@ -2844,13 +3061,11 @@ mod tests {
         assert!(omitted.contains(&CalibratedField::SubproductMinLen.schema_field()));
         let document = calibrated_document(&profile, &omitted).unwrap();
         assert_eq!(
-            TuningProfile::from_json(&document)
+            ProducedCoreProfile::from_json(&document)
                 .unwrap()
                 .polynomial()
                 .subproduct_min_len(),
-            TuningProfile::CONSERVATIVE
-                .polynomial()
-                .subproduct_min_len()
+            CoreTuning::CONSERVATIVE.polynomial().subproduct_min_len()
         );
     }
 
@@ -2881,26 +3096,64 @@ mod tests {
     #[test]
     fn emitted_profile_round_trips_through_the_loader() {
         let profile = profile_from(&DISTINCT);
-        let reparsed = TuningProfile::from_json(&profile.to_json())
+        let reparsed = ProducedCoreProfile::from_json(&profile.to_json())
             .expect("the harness emits a document the loader accepts");
         assert_eq!(reparsed, profile);
     }
 
     #[test]
+    fn valid_output_is_published_only_after_canonical_reopen() {
+        let output = TestOutput::new("valid");
+        let document = profile_from(&DISTINCT).to_json();
+
+        assert_eq!(emit_profile(&output.path, &document).unwrap(), document);
+        assert_eq!(fs::read_to_string(&output.path).unwrap(), document);
+        assert_eq!(
+            fs::read_dir(&output.directory).unwrap().count(),
+            1,
+            "the validated final file is the only surviving directory entry"
+        );
+    }
+
+    #[test]
+    fn invalid_output_leaves_no_final_or_temporary_artifact() {
+        let output = TestOutput::new("invalid");
+
+        let error = emit_profile(&output.path, "{}")
+            .expect_err("a document outside the strict owner schema must not publish");
+        assert!(error.to_string().contains("does not load back"));
+        assert!(!output.path.exists());
+        assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn output_publication_never_replaces_an_existing_path() {
+        let output = TestOutput::new("occupied");
+        fs::create_dir_all(&output.directory).unwrap();
+        fs::write(&output.path, "sentinel").unwrap();
+
+        let error = emit_profile(&output.path, &profile_from(&DISTINCT).to_json())
+            .expect_err("an existing artifact must win the publication race");
+        assert_eq!(error.kind(), io::ErrorKind::AlreadyExists);
+        assert_eq!(fs::read_to_string(&output.path).unwrap(), "sentinel");
+        assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 1);
+    }
+
+    #[test]
     fn emitted_provenance_is_calibrated_and_populated() {
         let profile = profile_from(&DISTINCT);
-        let Provenance::Calibrated {
+        let MeasurementProvenance::Calibrated {
             harness_schema,
-            executions,
-            repetitions,
-            target_ms,
+            toolchain,
+            host,
             ..
-        } = profile.provenance()
+        } = &profile.measurement
         else {
             panic!("the calibration action emits calibrated provenance");
         };
-        assert_eq!(harness_schema.as_str(), HarnessSchema::SUPPORTED);
-        assert_eq!((*executions, *repetitions, *target_ms), (5, 5, 250));
+        assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
+        assert_eq!(toolchain, "rustc 1.95.0");
+        assert_eq!(host, "test-host");
     }
 
     #[test]
@@ -3044,7 +3297,7 @@ mod tests {
     fn a_default_valued_sweep_reproduces_the_conservative_selectors() {
         let selected = SelectedValues::from_sweeps(&[]);
         let profile = profile_from(&selected);
-        let conservative = &TuningProfile::CONSERVATIVE;
+        let conservative = &CoreTuning::CONSERVATIVE;
         assert_eq!(profile.bit_backend(), conservative.bit_backend());
         assert_eq!(profile.polynomial(), conservative.polynomial());
     }
@@ -3134,71 +3387,59 @@ mod tests {
     }
 
     #[test]
-    fn a_child_specification_round_trips_through_its_rendered_form() {
-        for spec in [
-            CHILD_SPEC,
-            ChildSpec {
-                arm: Arm::Conservative,
-                task: ChildTask::Probe,
-                ..CHILD_SPEC
-            },
-        ] {
-            assert_eq!(ChildSpec::parse(&spec.to_string()), Ok(spec));
-        }
-    }
-
-    #[test]
-    fn a_malformed_child_specification_is_rejected() {
-        for text in [
-            "karatsuba_min_degree:31:asymptotic",
-            "karatsuba_min_degree:31:asymptotic:2:3",
-            "no_such_field:31:asymptotic:2",
-            "karatsuba_min_degree:thirty:asymptotic:2",
-            "karatsuba_min_degree:31:sideways:2",
-            "karatsuba_min_degree:31:asymptotic:later",
-        ] {
-            assert!(ChildSpec::parse(text).is_err(), "{text} was accepted");
-        }
-    }
-
-    #[test]
-    fn the_child_mode_carries_its_specification_and_protocol() {
-        let args =
-            ["--child-arm", &CHILD_SPEC.to_string(), "--repetitions", "3"].map(str::to_owned);
-        let parsed = parse_args(args.into_iter()).unwrap();
-        assert_eq!(parsed.mode, Mode::ArmChild(CHILD_SPEC));
-        assert_eq!(parsed.protocol.repetitions, 3);
-    }
-
-    #[test]
-    fn the_child_mode_excludes_the_reporting_modes() {
-        let args = ["--child-arm", &CHILD_SPEC.to_string(), "--list-grid"].map(str::to_owned);
-        assert!(parse_args(args.into_iter()).is_err());
-    }
-
-    #[test]
-    fn a_child_report_is_read_back_off_its_keyed_lines() {
-        let text = "route\tkaratsuba\noperands\t4369\nproduct\t8738\nrate\t10\nrate\t12.5\n";
+    fn a_fresh_process_case_has_one_pinned_canonical_stdin_encoding() {
+        let case = FreshProcessCase {
+            spec: CHILD_SPEC,
+            protocol: child_protocol(3),
+        };
+        let encoded = serde_json::to_string(&case).unwrap();
         assert_eq!(
-            parse_child_report(text),
-            Ok(ChildReport {
-                route: "karatsuba".to_owned(),
-                operands: 4369,
-                product: 8738,
-                rates: vec![10.0, 12.5],
-            })
+            encoded,
+            r#"{"spec":{"field":"karatsuba_min_degree","size":31,"arm":"asymptotic","task":{"kind":"measure","execution":2}},"protocol":{"executions":1,"repetitions":3,"target_ms":1}}"#
         );
+        assert_eq!(decode_fresh_case(&encoded), Ok(case));
+        assert!(decode_fresh_case(&format!("{encoded}\n")).is_err());
+        assert!(decode_fresh_case(&format!(" {encoded}")).is_err());
     }
 
     #[test]
-    fn an_incomplete_or_unkeyed_child_report_is_rejected() {
+    fn the_child_mode_accepts_no_case_data_outside_stdin() {
+        let parsed = parse_args(["--fresh-tuning-process-child".to_owned()].into_iter()).unwrap();
+        assert_eq!(parsed.mode, Mode::FreshChild);
+        for args in [
+            vec!["--fresh-tuning-process-child", "--list-grid"],
+            vec!["--fresh-tuning-process-child", "--repetitions", "3"],
+            vec!["--child-arm", "karatsuba_min_degree:31:asymptotic:2"],
+        ] {
+            assert!(
+                parse_args(args.iter().copied().map(str::to_owned)).is_err(),
+                "alternate child input {args:?} was accepted"
+            );
+        }
+    }
+
+    #[test]
+    fn a_child_report_is_one_canonical_prefixed_json_line() {
+        let report = ChildReport {
+            route: "karatsuba".to_owned(),
+            operands: 4369,
+            product: 8738,
+            rates: vec![10.0, 12.5],
+        };
+        let text = format!(
+            "{FRESH_RESULT_PREFIX}{}\n",
+            serde_json::to_string(&report).unwrap()
+        );
+        assert_eq!(parse_child_report(&text), Ok(report));
+    }
+
+    #[test]
+    fn an_incomplete_unprefixed_or_repeated_child_result_is_rejected() {
         for text in [
-            "operands\t1\nproduct\t2\n",
-            "route\tkaratsuba\nproduct\t2\n",
-            "route\tkaratsuba\noperands\t1\n",
-            "route\tkaratsuba\noperands\tnot-a-digest\nproduct\t2\n",
-            "route karatsuba\n",
-            "arm\tkaratsuba\n",
+            "{}\n",
+            "route\tkaratsuba\n",
+            "GF2_TUNING_RESULT={\"operands\":1,\"product\":2,\"rates\":[]}\n",
+            "GF2_TUNING_RESULT={\"route\":\"karatsuba\",\"operands\":1,\"product\":2,\"rates\":[]}\nextra\n",
         ] {
             assert!(
                 parse_child_report(text).is_err(),
@@ -3266,7 +3507,7 @@ mod tests {
 
     #[test]
     fn the_karatsuba_arm_forces_the_grid_point_and_the_schoolbook_arm_the_range_top() {
-        let inherited = &TuningProfile::CONSERVATIVE;
+        let inherited = &CoreTuning::CONSERVATIVE;
         for size in CalibratedField::KaratsubaMinDegree.grid() {
             assert_eq!(
                 forced_karatsuba_min_degree(Arm::Asymptotic, size),

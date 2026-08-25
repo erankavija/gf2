@@ -5,45 +5,46 @@
 //! `tuning_profile_winograd_install_above`, because `tuning::install` is
 //! one-shot per process.
 
+#[path = "support/core_tuning.rs"]
+mod support;
+
 use gf2_core::field::matrix::{gemm, FieldMatrix};
 use gf2_core::field::winograd::{
     gemm_winograd, last_winograd_dispatch_route, reset_last_winograd_dispatch_route,
     winograd_route, WinogradRoute,
 };
 use gf2_core::gfp::Fp;
-use gf2_core::tuning::{self, TuningProfile};
+use gf2_core::tuning::{self, CoreTuning};
 
-#[test]
-fn installed_winograd_profile_lowers_boundary_and_reaches_dispatcher() {
-    let profile = TuningProfile::from_json(
-        r#"
-        {
-          "schema_version": 1,
-          "profile_id": "winograd-route-test-below",
-          "provenance": {"kind": "inherited"},
-          "selectors": {"gemm": {"winograd_min_dim": 4}}
-        }
-        "#,
-    )
-    .expect("test profile is valid");
-    assert_eq!(tuning::install(profile), Ok(()));
+support::fresh_tuning_test!(
+    installed_winograd_profile_lowers_boundary_and_reaches_dispatcher,
+    {
+        let profile = support::prepared_core_json(
+            r#"
+        {"gemm": {"winograd_min_dim": 4}}"#,
+        )
+        .expect("test profile is valid");
+        assert_eq!(tuning::install(profile), Ok(()));
 
-    let gemm_selectors = tuning::active().gemm();
-    assert_eq!(gemm_selectors.winograd_min_dim(), 4);
-    let conservative = TuningProfile::CONSERVATIVE.gemm().winograd_min_dim();
-    assert!(4 < conservative);
+        let active_tuning = tuning::active();
 
-    assert_eq!(winograd_route(3, 3, 3), WinogradRoute::Classical);
-    assert_eq!(winograd_route(4, 4, 4), WinogradRoute::Winograd);
+        let gemm_selectors = active_tuning.gemm();
+        assert_eq!(gemm_selectors.winograd_min_dim(), 4);
+        let conservative = CoreTuning::CONSERVATIVE.gemm().winograd_min_dim();
+        assert!(4 < conservative);
 
-    let a = FieldMatrix::<Fp<7>>::identity(4);
-    let b = FieldMatrix::<Fp<7>>::identity(4);
-    let expected = gemm(&a, &b);
-    reset_last_winograd_dispatch_route();
-    assert_eq!(gemm_winograd(&a, &b), expected);
-    assert_eq!(
-        last_winograd_dispatch_route(),
-        Some(WinogradRoute::Winograd),
-        "the production dispatcher must consume the installed threshold"
-    );
-}
+        assert_eq!(winograd_route(3, 3, 3), WinogradRoute::Classical);
+        assert_eq!(winograd_route(4, 4, 4), WinogradRoute::Winograd);
+
+        let a = FieldMatrix::<Fp<7>>::identity(4);
+        let b = FieldMatrix::<Fp<7>>::identity(4);
+        let expected = gemm(&a, &b);
+        reset_last_winograd_dispatch_route();
+        assert_eq!(gemm_winograd(&a, &b), expected);
+        assert_eq!(
+            last_winograd_dispatch_route(),
+            Some(WinogradRoute::Winograd),
+            "the production dispatcher must consume the installed threshold"
+        );
+    }
+);

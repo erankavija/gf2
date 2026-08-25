@@ -11,13 +11,13 @@
 #![cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 
 use gf2_core::gfp::simd_ops::{prime_gemm_route, set_route_a_gf251_enabled, PrimeGemmRoute};
-use gf2_core::tuning::TuningProfile;
+use gf2_core::tuning::CoreTuning;
 
 #[test]
 fn the_route_a_switch_moves_gf251_below_the_column_bound() {
     const M: usize = 64;
     const K: usize = 64;
-    let below = TuningProfile::CONSERVATIVE
+    let below = CoreTuning::CONSERVATIVE
         .prime_route()
         .f32_min_cols()
         .checked_sub(1)

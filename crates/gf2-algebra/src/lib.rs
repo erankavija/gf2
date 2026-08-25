@@ -70,11 +70,11 @@
 //!
 //! # Features
 //!
-//! See [`dev/plans/4fced99b/d1c_feature_matrix.md`](../../../dev/plans/4fced99b/d1c_feature_matrix.md)
-//! for the authoritative feature catalogue and the 64-cell compatibility
-//! matrix. Defaults are `["simd", "parallel", "f5", "f7"]`; `f5` and
-//! `f7` were flipped default-on as the W4 closing edit after the
-//! per-prime encodings landed in `packed5` / `packed7`.
+//! The crate manifest is the feature catalogue. The compatibility sweep in
+//! `scripts/check-feature-matrix.sh` covers the established 64-cell
+//! arithmetic/backend matrix plus the non-default `tuning-profile` codec
+//! overlay in profile-only, crate-default, and complete host-supported
+//! configurations. Typed algebra selectors and active access are always built.
 //!
 //! # See also
 //!
@@ -86,6 +86,7 @@
 pub mod gray;
 pub mod packed;
 pub mod permanent;
+pub mod tuning;
 
 #[cfg(feature = "parallel")]
 pub mod parallel;
