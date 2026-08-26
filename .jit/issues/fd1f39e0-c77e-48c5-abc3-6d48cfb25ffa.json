@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-26T01:32:37.887427078Z",
+  "dependencies": [
+    "c8322eff-8122-41bc-9209-9bcc9f591655"
+  ],
+  "description": "All order-1 internal-control cells sit after all order-2 target cells in the pinned campaign grid, and the driver returns at its first non-terminal cell, so no control can be measured until the most expensive target cell reaches a terminal state.\n\n## Background\n\nThe campaign driver processes cells in grid order and stops the invocation at the first cell that ends interrupted. The highest-SNR order-2 cell is orders of magnitude more expensive than any order-1 cell, so the cheap control series is unmeasurable until the most expensive measurement completes. Controls lose their diagnostic value when they cannot run early.\n\n## Success Criteria\n\n- [hard] REQ-01: An invocation continues to later cells after recording an interrupted cell, or the pinned grid orders cells so controls precede the open-ended target cells; either way controls are measurable while a target cell is still open.\n- [hard] REQ-02: Checkpoint resume semantics and per-cell determinism are unchanged.\n- [hard] REQ-03: The pinned eBCH grid still records the same cell identities and seeds for completed cells.",
+  "documents": [],
+  "first_ready_at": "2026-08-26T01:32:37.887427078Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "fd1f39e0-c77e-48c5-abc3-6d48cfb25ffa",
+  "labels": [
+    "component:gf2-sim",
+    "epic:osd",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "pinned grid blocks internal-control cells behind the hardest target cell",
+  "updated_at": "2026-08-26T01:33:18.769634714Z"
+}

@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-26T01:32:21.688890334Z",
+  "dependencies": [
+    "c8322eff-8122-41bc-9209-9bcc9f591655"
+  ],
+  "description": "Resuming an interrupted campaign cell replays every previously completed sample through the decoder before producing one new sample, making continuation cost quadratic in the number of resumes.\n\n## Background\n\nThe evaluator restores RNG position by iterating `simulate_frame` over the full recorded sample count. For a cell interrupted at 8M blocks the replay costs ~95 minutes of pure recomputation per additional invocation. Checkpointed evidence is durable, but continuation is only affordable when invocation bounds are chosen large enough to avoid resumes — the opposite of the bounded-run model campaign-resumability describes.\n\n## Success Criteria\n\n- [hard] REQ-01: Resuming an interrupted cell reaches its first new sample in time independent of the completed-sample count (for example by persisting resumable RNG state), within the deterministic-seeded-execution contract.\n- [hard] REQ-02: Resumed cells produce results identical to an uninterrupted run with the same seed and configuration.\n- [hard] REQ-03: Existing committed checkpoints either remain readable or are refused with an explanatory schema-version error.",
+  "documents": [],
+  "first_ready_at": "2026-08-26T01:32:21.688890334Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "f7844d2d-fed4-4333-bdc6-36be23a8bc62",
+  "labels": [
+    "component:gf2-sim",
+    "epic:osd",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "cell resume replays the entire durable prefix",
+  "updated_at": "2026-08-26T01:33:02.334965232Z"
+}

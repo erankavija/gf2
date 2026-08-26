@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-26T01:32:13.591519667Z",
+  "dependencies": [
+    "c8322eff-8122-41bc-9209-9bcc9f591655"
+  ],
+  "description": "Resuming a checkpointed OSD campaign fails after any commit, rebuild, or relocation because the resumption identity hash covers provenance context that does not affect resumed results.\n\n## Background\n\n`OsdCampaign::config_hash()` hashes the full serialized campaign, including `provenance.runtime.git_revision` (the repository HEAD) and `binary_sha256` (the SHA-256 of the running executable, which embeds absolute build paths). A committed checkpoint is therefore resumable only from the original working-tree revision, on the original machine, at the original path, with the original build artifact intact. Both fields are legitimate provenance to record; neither affects the resumed numbers once seeds, cells, interval, schema, and the dependency source closure are fixed. This contradicts campaign-resumability, which promises durable committed evidence that continues across sessions.\n\n## Success Criteria\n\n- [hard] REQ-01: A checkpoint written at one repository revision resumes at a later revision when seeds, cells, interval, schema version, and dependency source closure are unchanged.\n- [hard] REQ-02: A checkpoint resumes under a rebuilt or relocated campaign executable with unchanged source closure.\n- [hard] REQ-03: Recorded provenance still captures git revision and binary digest for every contributing run; the resumed receipt preserves each run's own provenance.\n- [hard] REQ-04: A genuine behavioral mismatch (changed seeds, cells, interval, schema, or source closure) still refuses the checkpoint with a distinct, explanatory error.",
+  "documents": [],
+  "first_ready_at": "2026-08-26T01:32:13.591519667Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "9af52659-1615-453b-aef0-8cff2714cdd6",
+  "labels": [
+    "component:gf2-sim",
+    "epic:osd",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "resumption hash conflates provenance context with campaign identity",
+  "updated_at": "2026-08-26T01:32:54.139934248Z"
+}

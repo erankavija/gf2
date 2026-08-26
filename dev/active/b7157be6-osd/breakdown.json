@@ -1,936 +1,937 @@
 [
-  {
-    "key": "mrb-elimination-core",
-    "title": "Ordered-column elimination transform",
-    "description": "Extend dense $\\mathrm{GF}(2)$ row reduction with an ordered-column preference and the row-operation transform needed by matrix and syndrome callers.\n\n## Background\n\n`gf2_core::alg::rref` exposes directional pivoting but cannot consume an explicit preference permutation or apply the same row operations to a right-hand side. The reusable primitive remains independent of coding and LLR policy.\n\n## Success Criteria\n\n- [hard] REQ-01: Accepts a complete ordered column preference and returns the reduced matrix, selected independent columns in preference order, rank, and applied row transform.\n- [hard] REQ-02: Applies the returned transform to a conforming right-hand side so $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$ is equivalent to $(\\mathbf{U}\\mathbf{A})\\mathbf{x}=\\mathbf{U}\\mathbf{b}$.\n- [hard] REQ-03: Handles rank-deficient, empty, and rectangular matrices deterministically and identifies inconsistent transformed right-hand sides outside the reachable row space.\n- [hard] REQ-04: Rejects malformed preference permutations and right-hand-side dimensions through documented public errors.\n- [hard] REQ-05: Matches existing RREF rank and row-space semantics under natural and reversed column orders.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-core",
-      "satisfies:REQ-01",
-      "cites:Fossorier1995"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [],
-    "planning": {
-      "outcome": "Ordered $\\mathrm{GF}(2)$ elimination returns basis metadata plus a reusable row transform.",
-      "contract_refs": [
-        "mrb-elimination"
-      ],
-      "source_refs": [
-        "REQ-01",
-        "D-02",
-        "D-05",
-        "D-15",
-        "INV-CONVENTIONS",
-        "INV-PRIMITIVES",
-        "INV-ARCH",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-core",
-      "terminal": {
-        "consumer_family": "dense elimination callers",
-        "test_boundary": "ordered elimination conformance",
-        "worker_sized_reason": "One core algorithm surface receives focused algebraic coverage.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-core/tests/ordered_column_elimination.rs"
-          ],
-          "touches": [
-            "crates/gf2-core/src/alg/rref.rs",
-            "crates/gf2-core/src/alg/mod.rs"
-          ]
-        }
-      }
+ {
+  "key": "mrb-elimination-core",
+  "title": "Ordered-column elimination transform",
+  "description": "Extend dense $\\mathrm{GF}(2)$ row reduction with an ordered-column preference and the row-operation transform needed by matrix and syndrome callers.\n\n## Background\n\n`gf2_core::alg::rref` exposes directional pivoting but cannot consume an explicit preference permutation or apply the same row operations to a right-hand side. The reusable primitive remains independent of coding and LLR policy.\n\n## Success Criteria\n\n- [hard] REQ-01: Accepts a complete ordered column preference and returns the reduced matrix, selected independent columns in preference order, rank, and applied row transform.\n- [hard] REQ-02: Applies the returned transform to a conforming right-hand side so $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$ is equivalent to $(\\mathbf{U}\\mathbf{A})\\mathbf{x}=\\mathbf{U}\\mathbf{b}$.\n- [hard] REQ-03: Handles rank-deficient, empty, and rectangular matrices deterministically and identifies inconsistent transformed right-hand sides outside the reachable row space.\n- [hard] REQ-04: Rejects malformed preference permutations and right-hand-side dimensions through documented public errors.\n- [hard] REQ-05: Matches existing RREF rank and row-space semantics under natural and reversed column orders.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-core",
+   "satisfies:REQ-01",
+   "cites:Fossorier1995"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "Ordered $\\mathrm{GF}(2)$ elimination returns basis metadata plus a reusable row transform.",
+   "contract_refs": [
+    "mrb-elimination"
+   ],
+   "source_refs": [
+    "REQ-01",
+    "D-02",
+    "D-05",
+    "D-15",
+    "INV-CONVENTIONS",
+    "INV-PRIMITIVES",
+    "INV-ARCH",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-core",
+   "terminal": {
+    "consumer_family": "dense elimination callers",
+    "test_boundary": "ordered elimination conformance",
+    "worker_sized_reason": "One core algorithm surface receives focused algebraic coverage.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-core/tests/ordered_column_elimination.rs"
+     ],
+     "touches": [
+      "crates/gf2-core/src/alg/rref.rs",
+      "crates/gf2-core/src/alg/mod.rs"
+     ]
     }
-  },
-  {
-    "key": "reliability-permutation-api",
-    "title": "Canonical reliability permutation API",
-    "description": "Expose one deterministic index permutation for numeric reliability magnitudes plus an `Llr` convenience surface.\n\n## Background\n\nORBGRAND and Chase-Pyndiah sort reliability indices privately from different input representations. The core helper accepts an `f32` magnitude slice so `Llr` and raw soft-value consumers share one total-order convention.\n\n## Success Criteria\n\n- [hard] REQ-01: Returns each input index exactly once under the total order on magnitude and original index.\n- [hard] REQ-02: Provides ascending and descending accessors that retain ascending original-index ties in either magnitude direction.\n- [hard] REQ-03: Orders infinite magnitudes naturally and documents a panic for any NaN magnitude.\n- [hard] REQ-04: Provides an `Llr` wrapper that delegates through `Llr::magnitude()` to the `f32` primitive.\n- [hard] REQ-05: Covers empty, singleton, repeated-magnitude, signed-zero, infinite, and NaN cases with public rustdoc and property tests.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-01",
-      "cites:Fossorier1995",
-      "cites:Yue2022"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [],
-    "planning": {
-      "outcome": "The LLR module exposes one index-stable magnitude permutation for soft-decision algorithms.",
-      "contract_refs": [
-        "reliability-permutation"
-      ],
-      "source_refs": [
-        "REQ-01",
-        "D-07",
-        "D-08",
-        "D-18",
-        "INV-CONVENTIONS",
-        "INV-PRIMITIVES"
-      ],
-      "landing_group": "reliability-convention",
-      "terminal": {
-        "consumer_family": "reliability ordering callers",
-        "test_boundary": "reliability permutation conformance",
-        "worker_sized_reason": "One helper family receives bounded ordering properties.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-coding/tests/llr_reliability.rs"
-          ],
-          "touches": [
-            "crates/gf2-coding/src/llr.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "orbgrand-reliability-cutover",
-    "title": "ORBGRAND reliability migration",
-    "description": "Move ORBGRAND reliability ordering onto the canonical magnitude permutation while preserving decoder behavior.\n\n## Background\n\nORBGRAND currently owns a private ascending `Llr`-magnitude index sort. The shared total order removes that duplicate without changing logistic-weight pattern semantics.\n\n## Success Criteria\n\n- [hard] REQ-01: Obtains ascending reliability indices through the canonical `Llr` convenience wrapper.\n- [hard] REQ-02: Preserves hard-decision, query-order, candidate, and stopping behavior for finite inputs.\n- [hard] REQ-03: Covers tied magnitudes, signed zero, and infinite LLRs through ORBGRAND regression tests.\n- [hard] REQ-04: Contains no private reliability comparator duplicating the canonical helper.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "reliability-permutation-api"
-    ],
-    "planning": {
-      "outcome": "ORBGRAND consumes the canonical reliability permutation with unchanged query semantics.",
-      "contract_refs": [
-        "reliability-permutation"
-      ],
-      "source_refs": [
-        "D-07",
-        "D-08",
-        "D-18",
-        "INV-CONVENTIONS",
-        "INV-CONSUMERS"
-      ],
-      "landing_group": "reliability-convention",
-      "terminal": {
-        "consumer_family": "ORBGRAND decoder",
-        "test_boundary": "ORBGRAND reliability regression",
-        "worker_sized_reason": "One decoder replaces one private ordering helper.",
-        "footprint": {
-          "touches": [
-            "crates/gf2-coding/src/grand/orbgrand.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "chase-reliability-cutover",
-    "title": "Chase-Pyndiah reliability migration",
-    "description": "Move Chase-Pyndiah reliability ordering and hard decisions onto canonical soft-value helpers while preserving SISO behavior.\n\n## Background\n\nThe Chase-Pyndiah engine accepts raw `f32` soft values, owns a private magnitude sorter, and duplicates the sign-to-bit rule. The canonical magnitude primitive serves this consumer without forcing an `Llr` representation.\n\n## Success Criteria\n\n- [hard] REQ-01: Obtains ascending reliability indices from the canonical `f32` magnitude permutation.\n- [hard] REQ-02: Obtains hard decisions from the canonical sign convention while preserving zero-to-bit-zero behavior.\n- [hard] REQ-03: Preserves candidate selection, correction, and SISO output on existing product-code fixtures.\n- [hard] REQ-04: Covers tied magnitudes, signed zero, and infinite magnitudes without a private reliability comparator or sign test.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "reliability-permutation-api"
-    ],
-    "planning": {
-      "outcome": "Chase-Pyndiah consumes canonical reliability plus hard-decision semantics with unchanged SISO results.",
-      "contract_refs": [
-        "reliability-permutation"
-      ],
-      "source_refs": [
-        "D-07",
-        "D-08",
-        "D-18",
-        "INV-CONVENTIONS",
-        "INV-CONSUMERS"
-      ],
-      "landing_group": "reliability-convention",
-      "terminal": {
-        "consumer_family": "Chase-Pyndiah engine",
-        "test_boundary": "Chase-Pyndiah reliability regression",
-        "worker_sized_reason": "One SISO engine replaces two private conventions.",
-        "footprint": {
-          "touches": [
-            "crates/gf2-coding/src/product/chase_pyndiah.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "soft-decision-trait-removal",
-    "title": "SoftDecisionDecoder trait removal",
-    "description": "Remove the unused `SoftDecisionDecoder` trait so the canonical soft-decoding surfaces remain unambiguous.\n\n## Background\n\n`SoftDecisionDecoder` at `crates/gf2-coding/src/traits.rs:365` has zero implementors and zero consumers. `SoftDecoder` covers immutable decoder calls, while stateful BP behavior belongs to the mutable `IterativeSoftDecoder` surface.\n\n## Success Criteria\n\n- [hard] REQ-01: The `SoftDecisionDecoder` declaration is absent from the public traits module.\n- [hard] REQ-02: Repository references confirm zero surviving imports, implementors, trait bounds, or documentation links.\n- [hard] REQ-03: Existing `SoftDecoder` and `IterativeSoftDecoder` APIs retain their behavior and documentation.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [],
-    "planning": {
-      "outcome": "`SoftDecisionDecoder` is absent from the canonical decoder trait surface.",
-      "contract_refs": [
-        "soft-decision-surface"
-      ],
-      "source_refs": [
-        "D-07",
-        "D-18",
-        "INV-CONVENTIONS",
-        "INV-CONSUMERS"
-      ],
-      "landing_group": "decoder-traits",
-      "terminal": {
-        "consumer_family": "decoder trait surface",
-        "test_boundary": "trait surface regression",
-        "worker_sized_reason": "One zero-consumer declaration is removed cleanly.",
-        "footprint": {
-          "touches": [
-            "crates/gf2-coding/src/traits.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-pattern-enumerator",
-    "title": "Bounded OSD pattern enumeration",
-    "description": "Provide the OSD-specific Hamming-weight pattern source with checked growth and baseline termination metadata.\n\n## Background\n\nOSD enumerates subsets through order $m$ under the checked bound $\\sum_{i=0}^{m} \\binom{k}{i}$. GRAND's logistic-weight iterator remains separate because it has different ordering semantics. This leaf establishes the `osd` module tree for later submodules.\n\n## Success Criteria\n\n- [hard] REQ-01: Enumerates each subset of weights zero through $\\min(m,k)$ exactly once in a documented deterministic order.\n- [hard] REQ-02: Computes the theoretical candidate bound with checked arithmetic and rejects unrepresentable configurations.\n- [hard] REQ-03: Stops at the optional candidate cap or cancellation and reports generated, tested, and termination counters without unbounded allocation.\n- [hard] REQ-04: Uses exhaustive order-$m$ enumeration when no candidate cap is configured.\n- [hard] REQ-05: Covers $k=0$, $m=0$, $m>k$, exact-cap, overflow, and cancellation cases with module-local property tests.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-01",
-      "cites:Fossorier1995",
-      "cites:Yue2022"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [],
-    "planning": {
-      "outcome": "Bounded OSD enumeration exposes checked caps plus deterministic termination metadata.",
-      "contract_refs": [
-        "osd-config"
-      ],
-      "source_refs": [
-        "REQ-01",
-        "D-03",
-        "D-09",
-        "D-16",
-        "D-17",
-        "INV-CONVENTIONS",
-        "INV-PRIORART",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-engine",
-      "terminal": {
-        "consumer_family": "OSD pattern search",
-        "test_boundary": "pattern enumeration properties",
-        "worker_sized_reason": "One bounded iterator owns one module bootstrap.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-coding/src/osd/mod.rs",
-            "crates/gf2-coding/src/osd/patterns.rs"
-          ],
-          "touches": [
-            "crates/gf2-coding/src/lib.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-reprocessing-engine",
-    "title": "Shared OSD reprocessing engine",
-    "description": "Implement the reusable most-reliable-basis candidate engine independently of generator-codeword and syndrome-error semantics.\n\n## Background\n\nThe engine consumes canonical reliability permutations, ordered $\\mathrm{GF}(2)$ elimination with right-hand-side transforms, and bounded Hamming-weight patterns. Semantic adapters supply the initial basis representation, candidate reconstruction, and validity rule.\n\n## Success Criteria\n\n- [hard] REQ-01: Builds a most-reliable independent basis from the canonical permutation and ordered elimination result.\n- [hard] REQ-02: Reprocesses order-$m$ test patterns through a caller-supplied semantic adapter and ranks candidates by deterministic soft metric with original-index tie behavior.\n- [hard] REQ-03: Returns rank, theoretical cap, generated-pattern, tested-candidate, elimination, and termination metadata from `OsdConfig`.\n- [hard] REQ-04: Handles rank deficiency, transformed right-hand-side inconsistency, cap exhaustion, and cancellation without a private eliminator or reliability sorter.\n- [hard] REQ-05: Matches exhaustive bounded candidate search on small abstract fixtures for both supported semantic adapter shapes.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-01",
-      "cites:Fossorier1995",
-      "cites:Yue2022"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "mrb-elimination-core",
-      "osd-pattern-enumerator",
-      "orbgrand-reliability-cutover",
-      "chase-reliability-cutover"
-    ],
-    "planning": {
-      "outcome": "The reusable OSD engine ranks MRB candidates behind a semantic adapter boundary.",
-      "contract_refs": [
-        "mrb-elimination",
-        "reliability-permutation",
-        "osd-config"
-      ],
-      "source_refs": [
-        "REQ-01",
-        "D-02",
-        "D-05",
-        "D-06",
-        "D-09",
-        "D-15",
-        "D-16",
-        "D-18",
-        "INV-CLAIMS",
-        "INV-PRIORART",
-        "INV-PRIMITIVES",
-        "INV-ARCH",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-engine",
-      "terminal": {
-        "consumer_family": "OSD semantic adapters",
-        "test_boundary": "reprocessing engine conformance",
-        "worker_sized_reason": "One internal engine composes three finished primitives.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-coding/src/osd/engine.rs"
-          ],
-          "touches": [
-            "crates/gf2-coding/src/osd/mod.rs",
-            "crates/gf2-coding/src/osd/patterns.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-generator-decoder",
-    "title": "Generator-matrix OSD decoder",
-    "description": "Expose the order-$m$ generator-matrix OSD baseline for linear block codes through the canonical immutable soft-decoder trait.\n\n## Background\n\nThe decoder is generic over `GeneratorMatrixAccess`; convolutional streaming and codes without that surface are outside its scope. Candidate enumeration and MRB reprocessing remain in the shared engine, while this adapter owns codeword reconstruction and `SoftDecoder` behavior.\n\n## Success Criteria\n\n- [hard] REQ-01: Implements `SoftDecoder` for a decoder generic over `GeneratorMatrixAccess` with order and cap supplied by `OsdConfig`.\n- [hard] REQ-02: Reconstructs generator-domain candidates and returns the deterministic minimum soft-metric hard decision.\n- [hard] REQ-03: Exposes engine rank, work counters, candidate bound, and termination metadata without duplicating search logic.\n- [hard] REQ-04: Matches exhaustive maximum-likelihood decoding on bounded small-code fixtures with tied reliabilities and non-systematic generators.\n- [hard] REQ-05: Documents invalid LLR length, NaN, and rank-deficient generator behavior on the public API.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-01",
-      "cites:Fossorier1995",
-      "cites:Yue2022"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "osd-reprocessing-engine"
-    ],
-    "planning": {
-      "outcome": "`GeneratorMatrixAccess` codes expose order-$m$ OSD through `SoftDecoder` with bounded ML conformance.",
-      "contract_refs": [
-        "mrb-elimination",
-        "reliability-permutation",
-        "osd-config",
-        "soft-decision-surface"
-      ],
-      "source_refs": [
-        "REQ-01",
-        "D-02",
-        "D-05",
-        "D-06",
-        "D-08",
-        "D-09",
-        "D-14",
-        "D-16",
-        "INV-CLAIMS",
-        "INV-PRIORART",
-        "INV-PRIMITIVES",
-        "INV-ARCH",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-engine",
-      "terminal": {
-        "consumer_family": "generator-matrix block codes",
-        "test_boundary": "bounded ML conformance",
-        "worker_sized_reason": "One public adapter owns generator-domain semantics.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-coding/src/osd/generator.rs"
-          ],
-          "touches": [
-            "crates/gf2-coding/src/osd/mod.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-syndrome-adapter",
-    "title": "Syndrome-domain OSD adapter",
-    "description": "Provide parity-check-domain OSD correction for a failed hard word using posterior reliability magnitudes.\n\n## Background\n\nFor parity-check matrix $\\mathbf{H}$ and failed hard word $\\mathbf{y}$, the adapter forms $\\mathbf{s}=\\mathbf{H}\\mathbf{y}^{\\mathsf T}$ and searches for $\\mathbf{e}$ satisfying $\\mathbf{H}\\mathbf{e}^{\\mathsf T}=\\mathbf{s}$. Elimination prefers columns in ascending posterior magnitude so pivots align with the least reliable coordinates; for rank $r$, error patterns enumerate the $n-r$ free coordinates up to order $m$, each completed uniquely by pivot back-substitution, with order 0 the all-zero free pattern. Candidate cost is the magnitude-only sum of flipped posterior LLRs, ties break deterministically in enumeration order, and the returned word is $\\mathbf{y}\\oplus\\mathbf{e}$ for the lowest-cost valid tested candidate. The result equals the global order-$m$ cost minimum only in uncapped exhaustive configuration.\n\n## Success Criteria\n\n- [hard] REQ-01: Accepts a parity-check matrix, failed hard word, posterior LLRs, and `OsdConfig` with documented dimension and NaN validation.\n- [hard] REQ-02: Returns $\\mathbf{y}\\oplus\\mathbf{e}$ only when its syndrome is zero, ranking candidates by $\\sum_i e_i |L_i|$ with deterministic enumeration-order ties.\n- [hard] REQ-03: Selects pivots by ascending posterior magnitude and completes each free-coordinate pattern by back-substitution through the elimination row transform.\n- [hard] REQ-04: Order-0 and order-1 results on bounded fixtures match hand-computed back-substitution with the all-zero and single free-coordinate flip patterns.\n- [hard] REQ-05: Classifies rank-deficient systems through the row transform and reports a syndrome outside the reachable row space explicitly.\n- [hard] REQ-06: Exposes rank, candidate, cap, and termination metadata from the shared reprocessing engine.\n- [hard] REQ-07: Matches exhaustive magnitude-cost error search on bounded parity-check fixtures in uncapped configuration for zero, nonzero, rank-deficient, and inconsistent syndromes.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-03",
-      "cites:Fossorier1995",
-      "cites:Roffe2020"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "osd-generator-decoder"
-    ],
-    "planning": {
-      "outcome": "The syndrome adapter returns the lowest-cost valid tested correction of the failed hard word.",
-      "contract_refs": [
-        "mrb-elimination",
-        "reliability-permutation",
-        "osd-config",
-        "osd-syndrome-domain"
-      ],
-      "source_refs": [
-        "REQ-03",
-        "D-02",
-        "D-05",
-        "D-09",
-        "D-15",
-        "D-16",
-        "D-20",
-        "INV-PRIORART",
-        "INV-ARCH",
-        "INV-CONSUMERS",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-engine",
-      "terminal": {
-        "consumer_family": "parity-check post-processors",
-        "test_boundary": "syndrome-domain conformance",
-        "worker_sized_reason": "One public adapter owns error-domain semantics.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-coding/src/osd/syndrome.rs"
-          ],
-          "touches": [
-            "crates/gf2-coding/src/osd/mod.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "bp-posterior-access",
-    "title": "LDPC posterior LLR access",
-    "description": "Expose final BP beliefs through a read-only public `LdpcDecoder` API suitable for mutable post-processing workflows.\n\n## Background\n\n`LdpcDecoder` computes posterior `Llr` values that drive its hard word, but the belief vector is private. The accessor exposes state without providing mutable access to decoder internals.\n\n## Success Criteria\n\n- [hard] REQ-01: Returns one posterior `Llr` per variable after `decode_to_codeword` and mutable iterative decoding.\n- [hard] REQ-02: Returns values whose hard decisions match the decoder's latest failed or successful hard word exactly.\n- [hard] REQ-03: Documents and tests the pre-decode state plus the state after `reset`.\n- [hard] REQ-04: Preserves posterior values after syndrome failure for immediate post-processing.\n- [hard] REQ-05: Exposes no mutable belief access and preserves existing BP convergence behavior.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-03",
-      "cites:Roffe2020"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [],
-    "planning": {
-      "outcome": "`LdpcDecoder` exposes its latest posterior belief slice with defined reset semantics.",
-      "contract_refs": [
-        "posterior-llr-access"
-      ],
-      "source_refs": [
-        "REQ-03",
-        "D-10",
-        "D-20",
-        "INV-CLAIMS",
-        "INV-PRIMITIVES",
-        "INV-CONSUMERS"
-      ],
-      "landing_group": "bp-osd-integration",
-      "terminal": {
-        "consumer_family": "LDPC post-processors",
-        "test_boundary": "posterior lifecycle conformance",
-        "worker_sized_reason": "One state vector gains one read-only surface.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-coding/tests/ldpc_posterior.rs"
-          ],
-          "touches": [
-            "crates/gf2-coding/src/ldpc/core.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "bp-osd-decoder",
-    "title": "Mutable BP fallback composition",
-    "description": "Expose BP-first decoding with syndrome-domain OSD fallback through a mutable inherent API and a composition-specific result.\n\n## Background\n\nBP mutates `LdpcDecoder` state through the `IterativeSoftDecoder` convention. When BP ends with a failed syndrome, the composition passes that hard word plus its posterior LLRs to magnitude-cost syndrome correction; it does not route BP through the immutable hard-decision-only `SoftDecoder` implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Provides a mutable decode method consistent with `IterativeSoftDecoder` lifecycle and no immutable BP decoding promise.\n- [hard] REQ-02: Returns the BP hard word directly on syndrome success and invokes syndrome correction only after BP syndrome failure.\n- [hard] REQ-03: Supplies the failed hard word plus posterior LLRs to correction and returns a zero-syndrome corrected word when fallback succeeds.\n- [hard] REQ-04: Returns an inherent result carrying deciding stage, BP iterations, OSD work counters, final syndrome status, and termination reason.\n- [hard] REQ-05: Defines pre-decode, repeated-decode, failure, and `reset` behavior for BP beliefs plus composition results.\n- [hard] REQ-06: Covers BP success, BP failure with OSD success, exhausted OSD, inconsistent syndrome, and reset on a bounded LDPC fixture.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-03",
-      "cites:Roffe2020"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "osd-syndrome-adapter",
-      "bp-posterior-access"
-    ],
-    "planning": {
-      "outcome": "A mutable BP-first surface returns stage-specific fallback results with explicit lifecycle state.",
-      "contract_refs": [
-        "osd-config",
-        "osd-syndrome-domain",
-        "posterior-llr-access",
-        "soft-decision-surface",
-        "bp-osd-composition"
-      ],
-      "produces_contracts": [
-        "bp-osd-composition"
-      ],
-      "source_refs": [
-        "REQ-03",
-        "D-02",
-        "D-10",
-        "D-16",
-        "D-20",
-        "INV-CLAIMS",
-        "INV-CONSUMERS",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "bp-osd-integration",
-      "terminal": {
-        "consumer_family": "LDPC fallback callers",
-        "test_boundary": "small-LDPC fallback conformance",
-        "worker_sized_reason": "One composition surface joins two completed adapters.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-coding/src/osd/bp_osd.rs"
-          ],
-          "touches": [
-            "crates/gf2-coding/src/osd/mod.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-reference-curves",
-    "title": "Published eBCH OSD curve dataset",
-    "description": "Commit a machine-readable digitization that pins the selected published eBCH OSD curve plus its source-fixed construction identity.\n\n## Background\n\nThe reproduction target is eBCH $(128,64)$ on BI-AWGN/BPSK with BER versus $E_b/N_0$, OSD order 2, with order 1 as a control. The open-access Fossorier 1994 dissertation [Fossorier1994] is the authoritative pinned source: it publishes the same author's algorithm on this code and channel (Figure 4.14 and Tables 4.7–4.9). The [Fossorier1995] article is closed-access and is recorded as bibliographically related but unverified against the digitized material. [Yue2022] supplies an independent near-ML cross-check. The pinned source fixes dimensions, minimum distance, and the per-block systematic convention only; primitive polynomial and field representation are not source-determined.\n\n## Success Criteria\n\n- [hard] REQ-01: Identifies the exact pinned-source page, figure, series, construction, channel, metric, and OSD order represented by the digitized data, and records the closed-access, unverified status of the Fossorier1995 article.\n- [hard] REQ-02: Records the published reprocessing list order, naming the source's candidate enumeration order and stating where the source leaves tie policy undefined.\n- [hard] REQ-03: Records every construction constraint the pinned source fixes — dimensions, minimum distance, and systematic per-block convention — and states explicitly that primitive polynomial and field representation are not source-determined.\n- [hard] REQ-04: Stores auditable $E_b/N_0$ plus BER points with digitization method, precision, and provenance.\n- [hard] REQ-05: Records the Yue2022 cross-check and material construction, metric, or curve differences without silently reconciling them.\n- [hard] REQ-06: Distinguishes the published series from the campaign's order-1 control so the control carries no unsupported external claim.\n\n## Decisions\n\n- DEC-01: No digitized third-party published source in this dataset (the pinned 1994 dissertation and the Yue2022 cross-check alike) reports per-point sample counts, confidence intervals, seeds, RNG identity, producing revision, hardware, toolchain, or invocation for its published results. The dataset records that source silence explicitly per row, receipt, and section; supplying such values is foreclosed as they do not exist in the sources and inventing them is prohibited.\n- DEC-02: The per-point uncertainty of every digitized published point is its digitization precision, recorded per row as a declared conservative bound and supported by committed perturbation-sensitivity evidence (marker-center and axis-anchor perturbation); source-side statistical uncertainty is unobtainable per DEC-01.\n- DEC-03: The ResearchGate author-uploaded full-text lead for the Fossorier1995 article is resolved as a title-collision false positive: its served attachment is the distinct 1999 IEICE work [Isaka1999]. The article's closed-access, unverified status stands; further acquisition attempts are not required.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-sim",
-      "satisfies:REQ-02",
-      "cites:Fossorier1995",
-      "cites:Yue2022",
-      "cites:Fossorier1994",
-      "cites:Isaka1999"
-    ],
-    "gates": [
-      "doc-review",
-      "research-review"
-    ],
-    "depends_on": [],
-    "planning": {
-      "outcome": "A cited dataset pins the published OSD curve plus the eBCH construction identity.",
-      "contract_refs": [
-        "ebch-reference",
-        "osd-reference-curve"
-      ],
-      "produces_contracts": [
-        "ebch-reference",
-        "osd-reference-curve"
-      ],
-      "source_refs": [
-        "REQ-02",
-        "D-01",
-        "D-03",
-        "D-11",
-        "D-13",
-        "D-17",
-        "INV-CLAIMS",
-        "INV-PRIORART",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-campaign",
-      "terminal": {
-        "consumer_family": "OSD curve reproduction",
-        "test_boundary": "reference data review",
-        "worker_sized_reason": "One published series receives one provenance review.",
-        "footprint": {
-          "creates": [
-            "dev/reference_data/osd_ebch_128_64_fossorier1994.csv",
-            "dev/reference_data/osd_ebch_128_64_fossorier1994.md"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "ebch-128-64-factory",
-    "title": "Named eBCH(128,64) reference factory",
-    "description": "Add the named extended BCH constructor used by OSD conformance and campaign work against the implementation-produced reference identity.\n\n## Background\n\nThe existing named-constructor family stops at eBCH $(64,57)$. The pinned published source fixes dimensions, minimum distance, and systematic convention only; the primitive polynomial and field representation are a recorded campaign decision consumed by this factory, and the published curves are invariant under that permutation-equivalent representation choice.\n\n## Success Criteria\n\n- [hard] REQ-01: `ExtendedBchCode::ebch_128_64()` constructs the recorded primitive BCH extension with $n=128$, $k=64$, and systematic generator form.\n- [hard] REQ-02: A committed fixture records the chosen primitive polynomial, its decision provenance, and canonical serialized generator and parity-check matrices.\n- [hard] REQ-03: Tests verify fixture identity, matrix dimensions, orthogonality, systematic encoding, and even extension parity.\n- [hard] REQ-04: Public rustdoc cites construction provenance and demonstrates the named factory workflow.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-02",
-      "cites:Fossorier1995",
-      "cites:Yue2022"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "osd-reference-curves"
-    ],
-    "planning": {
-      "outcome": "The named eBCH $(128,64)$ factory matches the published-source construction fixture.",
-      "contract_refs": [
-        "ebch-reference",
-        "osd-reference-curve"
-      ],
-      "source_refs": [
-        "REQ-02",
-        "D-01",
-        "D-11",
-        "D-17",
-        "INV-CLAIMS",
-        "INV-PRIMITIVES",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-campaign",
-      "terminal": {
-        "consumer_family": "reference eBCH callers",
-        "test_boundary": "eBCH fixture conformance",
-        "worker_sized_reason": "One constructor extends one established factory family.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-coding/tests/ebch_128_64_reference.rs",
-            "crates/gf2-coding/tests/data/ebch_128_64_reference.json"
-          ],
-          "touches": [
-            "crates/gf2-coding/src/bch/extended.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-campaign-protocol",
-    "title": "Reusable OSD campaign protocol",
-    "description": "Provide a reusable `gf2-sim` library surface for deterministic OSD campaign execution and receipted statistical evidence.\n\n## Background\n\nCampaign protocol belongs in the library layer so executables remain thin consumers. The surface defines only OSD-specific cell payload, receipt fields, and orchestration: persistence composes the canonical `gf2_sim::checkpoint` writer and reader, confidence intervals come from the shared `gf2-stats` interval API with a named method and level, and provenance reuses the campaign schema's existing semantic types or extracts them to a shared module.\n\n## Success Criteria\n\n- [hard] REQ-01: Defines a reusable campaign protocol over explicit cells with deterministic seed derivation from campaign seed plus stable cell identity.\n- [hard] REQ-02: Defines versioned checkpoint and receipt schemas carrying completed-cell identity, samples, bit- and block-error counts, the derived BER and BLER, named confidence intervals for both rates, OSD work counters, and termination state.\n- [hard] REQ-03: Persists and recovers cells through `CheckpointPayload`, `CheckpointWriter`, and `CheckpointReader` rather than a parallel persistence mechanism.\n- [hard] REQ-04: Computes intervals through the shared `gf2-stats` interval API, recording method and level in the receipt.\n- [hard] REQ-05: Reuses the campaign schema's existing provenance semantic types for runtime-observed git revision, toolchain, hardware, configuration, and measurement behavioral identity; any relocation to a shared module happens in the same change with no duplicate definitions.\n- [hard] REQ-06: Resumes without repeating completed cells and preserves interrupted, censored, exhausted, or contradictory cell results.\n- [hard] REQ-07: Provides the reproduction comparison predicate accepting a published value $p$ exactly when $p \\in [L-\\delta, U+\\delta]$, where $[L, U]$ is the receipt interval at its recorded method and level and $\\delta$ the recorded digitization precision, with equality and rejection fixtures.\n- [hard] REQ-08: Covers deterministic seeding, schema round trips, checkpoint recovery, and resume behavior through library tests.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-sim",
-      "satisfies:REQ-02",
-      "cites:Fossorier1995"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [],
-    "planning": {
-      "outcome": "`gf2-sim` exposes a reusable seeded campaign protocol with versioned resumable receipts.",
-      "contract_refs": [
-        "osd-campaign-receipt"
-      ],
-      "produces_contracts": [
-        "osd-campaign-receipt"
-      ],
-      "source_refs": [
-        "REQ-02",
-        "D-03",
-        "D-12",
-        "D-13",
-        "D-19",
-        "INV-CLAIMS",
-        "INV-ARCH",
-        "INV-CONSUMERS",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-campaign",
-      "terminal": {
-        "consumer_family": "simulation campaign libraries",
-        "test_boundary": "campaign protocol conformance",
-        "worker_sized_reason": "One library module owns one reusable protocol.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-sim/src/osd_campaign.rs",
-            "crates/gf2-sim/tests/osd_campaign_protocol.rs"
-          ],
-          "touches": [
-            "crates/gf2-sim/src/lib.rs"
-          ],
-          "uncertainty": "Reusing the provenance semantic types may relocate them from crates/gf2-sim/src/permanent_campaign/schema.rs to a shared gf2-sim module; the exact shared-module path is decided at implementation."
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-campaign-binary",
-    "title": "eBCH OSD campaign executable",
-    "description": "Add a thin `gf2-sim` executable that binds the eBCH OSD baseline to the reusable campaign protocol.\n\n## Background\n\nThe executable selects the pinned eBCH $(128,64)$ factory, BI-AWGN/BPSK channel, order-2 decoder, order-1 control, configured cells, checkpoint path, and receipt path. Protocol logic remains in the `gf2-sim` library rather than the CLI.\n\n## Success Criteria\n\n- [hard] REQ-01: Parses the pinned campaign configuration and dispatches order-2 plus order-1 cells through the library protocol.\n- [hard] REQ-02: Configures the decoder's candidate enumeration to the pinned reference dataset's recorded list order and tie policy.\n- [hard] REQ-03: Uses deterministic resume and versioned receipt APIs without owning schema, seed, interval, or checkpoint logic.\n- [hard] REQ-04: Exposes bounded sample and error stopping controls suitable for interrupted campaign execution.\n- [hard] REQ-05: A CLI fixture verifies configuration mapping, checkpoint resume, receipt emission, and nonzero failure status for invalid input.\n- [hard] REQ-06: Public usage text names output paths and the exact eBCH/channel/metric convention.",
-    "type": "task",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-sim",
-      "satisfies:REQ-02",
-      "cites:Fossorier1995",
-      "cites:Yue2022"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "osd-campaign-protocol",
-      "ebch-128-64-factory",
-      "osd-generator-decoder"
-    ],
-    "planning": {
-      "outcome": "A thin `gf2-sim` executable drives the pinned eBCH OSD protocol.",
-      "contract_refs": [
-        "ebch-reference",
-        "osd-config",
-        "osd-campaign-receipt"
-      ],
-      "source_refs": [
-        "REQ-02",
-        "D-01",
-        "D-03",
-        "D-12",
-        "D-13",
-        "D-19",
-        "INV-CLAIMS",
-        "INV-ARCH",
-        "INV-CONSUMERS",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-campaign",
-      "terminal": {
-        "consumer_family": "eBCH campaign operators",
-        "test_boundary": "campaign CLI fixtures",
-        "worker_sized_reason": "One thin executable binds three finished libraries.",
-        "footprint": {
-          "creates": [
-            "crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs",
-            "crates/gf2-sim/tests/ebch_osd_campaign_cli.rs"
-          ],
-          "touches": [
-            "crates/gf2-sim/Cargo.toml"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-ebch-campaign",
-    "title": "eBCH OSD curve reproduction",
-    "description": "Run the pinned resumable campaign and commit its versioned evidence receipt with a concise provenance record.\n\n## Background\n\nThe scientific target is the pinned Fossorier 1994 dissertation series [Fossorier1994] for eBCH $(128,64)$ on BI-AWGN/BPSK: order-2 BER versus $E_b/N_0$, with order 1 as an explicitly internal control. The [Fossorier1995] article is closed-access and recorded as unverified. Measurements remain valid or falsifying according to confidence intervals and recorded protocol identity.\n\n## Success Criteria\n\n- [hard] REQ-01: The committed receipt records seeds, git revision, toolchain, hardware, configuration, per-cell counts, work counters, termination, and binomial confidence intervals.\n- [hard] REQ-02: Each matched order-2 point accepts its published value $p$ exactly when $p \\in [L-\\delta, U+\\delta]$, where $[L, U]$ is the receipt interval at its recorded method and level and $\\delta$ the recorded digitization precision, without converting discrepancies into silent retuning.\n- [hard] REQ-03: Order-1 results are identified as campaign controls rather than externally sourced claims.\n- [hard] REQ-04: Interrupted, censored, or budget-exhausted cells remain visible and resumable without repeated completed work.\n- [hard] REQ-05: The provenance note identifies contradictory evidence and the exact receipt schema version.",
-    "type": "simulation",
-    "priority": "high",
-    "labels": [
-      "epic:osd",
-      "component:gf2-sim",
-      "satisfies:REQ-02",
-      "cites:Fossorier1995",
-      "cites:Fossorier1994"
-    ],
-    "gates": [
-      "research-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "osd-campaign-binary"
-    ],
-    "planning": {
-      "outcome": "A committed receipt demonstrates the order-2 curve comparison with stated uncertainty.",
-      "contract_refs": [
-        "osd-reference-curve",
-        "osd-campaign-receipt"
-      ],
-      "source_refs": [
-        "REQ-02",
-        "D-01",
-        "D-03",
-        "D-13",
-        "INV-CLAIMS",
-        "INV-PRIORART",
-        "EXTREV-OSD"
-      ],
-      "landing_group": "osd-campaign",
-      "terminal": {
-        "consumer_family": "OSD research evidence",
-        "test_boundary": "receipted curve comparison",
-        "worker_sized_reason": "One bounded campaign yields one evidence set.",
-        "footprint": {
-          "creates": [
-            "dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.json",
-            "dev/simulation_results/osd-ebch-128-64/README.md"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-pattern-segmentation",
-    "title": "OSD pattern segmentation policy",
-    "description": "Add deterministic pattern segmentation over the baseline OSD engine and produce the implementation-level complexity policy.\n\n## Background\n\nSegmentation is optional normal-priority work over exhaustive order-$m$ search. It groups the existing deterministic pattern stream without changing baseline configuration, candidate identity, or previously exported surfaces; the segmentation and complexity-policy types are additive public exports.\n\n## Success Criteria\n\n- [hard] REQ-01: Defines deterministic segment boundaries over the existing order-$m$ pattern sequence.\n- [hard] REQ-02: Preserves candidate order and result equivalence when segmentation has no active discard threshold.\n- [hard] REQ-03: Reports segment, elimination, generated-pattern, and tested-candidate counters with cap plus cancellation termination.\n- [hard] REQ-04: Produces the public complexity-policy representation consumed by threshold evaluation.\n- [hard] REQ-05: Covers boundary, empty-segment, exact-cap, and cancellation cases in module-local tests.",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-04",
-      "cites:Yue2022"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "osd-generator-decoder"
-    ],
-    "planning": {
-      "outcome": "Segmented OSD search emits deterministic boundaries plus explicit work counters.",
-      "contract_refs": [
-        "osd-config",
-        "osd-complexity-policy"
-      ],
-      "produces_contracts": [
-        "osd-complexity-policy"
-      ],
-      "source_refs": [
-        "REQ-04",
-        "D-04",
-        "D-09",
-        "D-16",
-        "D-17",
-        "INV-CONVENTIONS",
-        "INV-PRIORART"
-      ],
-      "landing_group": "osd-complexity",
-      "terminal": {
-        "consumer_family": "OSD complexity experiments",
-        "test_boundary": "segmentation counter conformance",
-        "worker_sized_reason": "One optional policy introduces deterministic segmentation only.",
-        "footprint": {
-          "touches": [
-            "crates/gf2-coding/src/osd/engine.rs",
-            "crates/gf2-coding/src/osd/patterns.rs",
-            "crates/gf2-coding/src/osd/mod.rs"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "osd-discard-thresholds",
-    "title": "OSD discard thresholds",
-    "description": "Apply configurable discard thresholds to segmented OSD search under the implementation-produced complexity policy.\n\n## Background\n\nThresholds are optional normal-priority work. They may skip candidates only through the documented segment metric and must leave baseline exhaustive search unchanged when disabled.\n\n## Success Criteria\n\n- [hard] REQ-01: Applies documented threshold comparisons at deterministic segment boundaries.\n- [hard] REQ-02: Reports discarded-pattern, tested-candidate, elimination, and termination counters without counting a discarded pattern as tested.\n- [hard] REQ-03: Preserves exhaustive baseline results when thresholds are disabled.\n- [hard] REQ-04: Covers threshold equality, no-discard, full-discard, cap, and cancellation cases in engine-local tests.\n- [hard] REQ-05: Documents that thresholded results are policy-bounded approximations rather than exhaustive order-$m$ search.",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:osd",
-      "component:gf2-coding",
-      "satisfies:REQ-04",
-      "cites:Yue2022"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "osd-pattern-segmentation"
-    ],
-    "planning": {
-      "outcome": "Thresholded OSD search skips segmented candidates under explicit counter semantics.",
-      "contract_refs": [
-        "osd-config",
-        "osd-complexity-policy"
-      ],
-      "source_refs": [
-        "REQ-04",
-        "D-04",
-        "D-09",
-        "D-16",
-        "D-17",
-        "INV-CONVENTIONS",
-        "INV-PRIORART"
-      ],
-      "landing_group": "osd-complexity",
-      "terminal": {
-        "consumer_family": "OSD complexity experiments",
-        "test_boundary": "discard counter conformance",
-        "worker_sized_reason": "One optional policy adds threshold evaluation only.",
-        "footprint": {
-          "touches": [
-            "crates/gf2-coding/src/osd/engine.rs"
-          ]
-        }
-      }
-    }
+   }
   }
+ },
+ {
+  "key": "reliability-permutation-api",
+  "title": "Canonical reliability permutation API",
+  "description": "Expose one deterministic index permutation for numeric reliability magnitudes plus an `Llr` convenience surface.\n\n## Background\n\nORBGRAND and Chase-Pyndiah sort reliability indices privately from different input representations. The core helper accepts an `f32` magnitude slice so `Llr` and raw soft-value consumers share one total-order convention.\n\n## Success Criteria\n\n- [hard] REQ-01: Returns each input index exactly once under the total order on magnitude and original index.\n- [hard] REQ-02: Provides ascending and descending accessors that retain ascending original-index ties in either magnitude direction.\n- [hard] REQ-03: Orders infinite magnitudes naturally and documents a panic for any NaN magnitude.\n- [hard] REQ-04: Provides an `Llr` wrapper that delegates through `Llr::magnitude()` to the `f32` primitive.\n- [hard] REQ-05: Covers empty, singleton, repeated-magnitude, signed-zero, infinite, and NaN cases with public rustdoc and property tests.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-01",
+   "cites:Fossorier1995",
+   "cites:Yue2022"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "The LLR module exposes one index-stable magnitude permutation for soft-decision algorithms.",
+   "contract_refs": [
+    "reliability-permutation"
+   ],
+   "source_refs": [
+    "REQ-01",
+    "D-07",
+    "D-08",
+    "D-18",
+    "INV-CONVENTIONS",
+    "INV-PRIMITIVES"
+   ],
+   "landing_group": "reliability-convention",
+   "terminal": {
+    "consumer_family": "reliability ordering callers",
+    "test_boundary": "reliability permutation conformance",
+    "worker_sized_reason": "One helper family receives bounded ordering properties.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/tests/llr_reliability.rs"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/llr.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "orbgrand-reliability-cutover",
+  "title": "ORBGRAND reliability migration",
+  "description": "Move ORBGRAND reliability ordering onto the canonical magnitude permutation while preserving decoder behavior.\n\n## Background\n\nORBGRAND currently owns a private ascending `Llr`-magnitude index sort. The shared total order removes that duplicate without changing logistic-weight pattern semantics.\n\n## Success Criteria\n\n- [hard] REQ-01: Obtains ascending reliability indices through the canonical `Llr` convenience wrapper.\n- [hard] REQ-02: Preserves hard-decision, query-order, candidate, and stopping behavior for finite inputs.\n- [hard] REQ-03: Covers tied magnitudes, signed zero, and infinite LLRs through ORBGRAND regression tests.\n- [hard] REQ-04: Contains no private reliability comparator duplicating the canonical helper.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "reliability-permutation-api"
+  ],
+  "planning": {
+   "outcome": "ORBGRAND consumes the canonical reliability permutation with unchanged query semantics.",
+   "contract_refs": [
+    "reliability-permutation"
+   ],
+   "source_refs": [
+    "D-07",
+    "D-08",
+    "D-18",
+    "INV-CONVENTIONS",
+    "INV-CONSUMERS"
+   ],
+   "landing_group": "reliability-convention",
+   "terminal": {
+    "consumer_family": "ORBGRAND decoder",
+    "test_boundary": "ORBGRAND reliability regression",
+    "worker_sized_reason": "One decoder replaces one private ordering helper.",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/grand/orbgrand.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "chase-reliability-cutover",
+  "title": "Chase-Pyndiah reliability migration",
+  "description": "Move Chase-Pyndiah reliability ordering and hard decisions onto canonical soft-value helpers while preserving SISO behavior.\n\n## Background\n\nThe Chase-Pyndiah engine accepts raw `f32` soft values, owns a private magnitude sorter, and duplicates the sign-to-bit rule. The canonical magnitude primitive serves this consumer without forcing an `Llr` representation.\n\n## Success Criteria\n\n- [hard] REQ-01: Obtains ascending reliability indices from the canonical `f32` magnitude permutation.\n- [hard] REQ-02: Obtains hard decisions from the canonical sign convention while preserving zero-to-bit-zero behavior.\n- [hard] REQ-03: Preserves candidate selection, correction, and SISO output on existing product-code fixtures.\n- [hard] REQ-04: Covers tied magnitudes, signed zero, and infinite magnitudes without a private reliability comparator or sign test.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "reliability-permutation-api"
+  ],
+  "planning": {
+   "outcome": "Chase-Pyndiah consumes canonical reliability plus hard-decision semantics with unchanged SISO results.",
+   "contract_refs": [
+    "reliability-permutation"
+   ],
+   "source_refs": [
+    "D-07",
+    "D-08",
+    "D-18",
+    "INV-CONVENTIONS",
+    "INV-CONSUMERS"
+   ],
+   "landing_group": "reliability-convention",
+   "terminal": {
+    "consumer_family": "Chase-Pyndiah engine",
+    "test_boundary": "Chase-Pyndiah reliability regression",
+    "worker_sized_reason": "One SISO engine replaces two private conventions.",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/product/chase_pyndiah.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "soft-decision-trait-removal",
+  "title": "SoftDecisionDecoder trait removal",
+  "description": "Remove the unused `SoftDecisionDecoder` trait so the canonical soft-decoding surfaces remain unambiguous.\n\n## Background\n\n`SoftDecisionDecoder` at `crates/gf2-coding/src/traits.rs:365` has zero implementors and zero consumers. `SoftDecoder` covers immutable decoder calls, while stateful BP behavior belongs to the mutable `IterativeSoftDecoder` surface.\n\n## Success Criteria\n\n- [hard] REQ-01: The `SoftDecisionDecoder` declaration is absent from the public traits module.\n- [hard] REQ-02: Repository references confirm zero surviving imports, implementors, trait bounds, or documentation links.\n- [hard] REQ-03: Existing `SoftDecoder` and `IterativeSoftDecoder` APIs retain their behavior and documentation.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "`SoftDecisionDecoder` is absent from the canonical decoder trait surface.",
+   "contract_refs": [
+    "soft-decision-surface"
+   ],
+   "source_refs": [
+    "D-07",
+    "D-18",
+    "INV-CONVENTIONS",
+    "INV-CONSUMERS"
+   ],
+   "landing_group": "decoder-traits",
+   "terminal": {
+    "consumer_family": "decoder trait surface",
+    "test_boundary": "trait surface regression",
+    "worker_sized_reason": "One zero-consumer declaration is removed cleanly.",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/traits.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-pattern-enumerator",
+  "title": "Bounded OSD pattern enumeration",
+  "description": "Provide the OSD-specific Hamming-weight pattern source with checked growth and baseline termination metadata.\n\n## Background\n\nOSD enumerates subsets through order $m$ under the checked bound $\\sum_{i=0}^{m} \\binom{k}{i}$. GRAND's logistic-weight iterator remains separate because it has different ordering semantics. This leaf establishes the `osd` module tree for later submodules.\n\n## Success Criteria\n\n- [hard] REQ-01: Enumerates each subset of weights zero through $\\min(m,k)$ exactly once in a documented deterministic order.\n- [hard] REQ-02: Computes the theoretical candidate bound with checked arithmetic and rejects unrepresentable configurations.\n- [hard] REQ-03: Stops at the optional candidate cap or cancellation and reports generated, tested, and termination counters without unbounded allocation.\n- [hard] REQ-04: Uses exhaustive order-$m$ enumeration when no candidate cap is configured.\n- [hard] REQ-05: Covers $k=0$, $m=0$, $m>k$, exact-cap, overflow, and cancellation cases with module-local property tests.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-01",
+   "cites:Fossorier1995",
+   "cites:Yue2022"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "Bounded OSD enumeration exposes checked caps plus deterministic termination metadata.",
+   "contract_refs": [
+    "osd-config"
+   ],
+   "source_refs": [
+    "REQ-01",
+    "D-03",
+    "D-09",
+    "D-16",
+    "D-17",
+    "INV-CONVENTIONS",
+    "INV-PRIORART",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-engine",
+   "terminal": {
+    "consumer_family": "OSD pattern search",
+    "test_boundary": "pattern enumeration properties",
+    "worker_sized_reason": "One bounded iterator owns one module bootstrap.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/osd/mod.rs",
+      "crates/gf2-coding/src/osd/patterns.rs"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/lib.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-reprocessing-engine",
+  "title": "Shared OSD reprocessing engine",
+  "description": "Implement the reusable most-reliable-basis candidate engine independently of generator-codeword and syndrome-error semantics.\n\n## Background\n\nThe engine consumes canonical reliability permutations, ordered $\\mathrm{GF}(2)$ elimination with right-hand-side transforms, and bounded Hamming-weight patterns. Semantic adapters supply the initial basis representation, candidate reconstruction, and validity rule.\n\n## Success Criteria\n\n- [hard] REQ-01: Builds a most-reliable independent basis from the canonical permutation and ordered elimination result.\n- [hard] REQ-02: Reprocesses order-$m$ test patterns through a caller-supplied semantic adapter and ranks candidates by deterministic soft metric with original-index tie behavior.\n- [hard] REQ-03: Returns rank, theoretical cap, generated-pattern, tested-candidate, elimination, and termination metadata from `OsdConfig`.\n- [hard] REQ-04: Handles rank deficiency, transformed right-hand-side inconsistency, cap exhaustion, and cancellation without a private eliminator or reliability sorter.\n- [hard] REQ-05: Matches exhaustive bounded candidate search on small abstract fixtures for both supported semantic adapter shapes.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-01",
+   "cites:Fossorier1995",
+   "cites:Yue2022"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "mrb-elimination-core",
+   "osd-pattern-enumerator",
+   "orbgrand-reliability-cutover",
+   "chase-reliability-cutover"
+  ],
+  "planning": {
+   "outcome": "The reusable OSD engine ranks MRB candidates behind a semantic adapter boundary.",
+   "contract_refs": [
+    "mrb-elimination",
+    "reliability-permutation",
+    "osd-config"
+   ],
+   "source_refs": [
+    "REQ-01",
+    "D-02",
+    "D-05",
+    "D-06",
+    "D-09",
+    "D-15",
+    "D-16",
+    "D-18",
+    "INV-CLAIMS",
+    "INV-PRIORART",
+    "INV-PRIMITIVES",
+    "INV-ARCH",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-engine",
+   "terminal": {
+    "consumer_family": "OSD semantic adapters",
+    "test_boundary": "reprocessing engine conformance",
+    "worker_sized_reason": "One internal engine composes three finished primitives.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/osd/engine.rs"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/osd/mod.rs",
+      "crates/gf2-coding/src/osd/patterns.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-generator-decoder",
+  "title": "Generator-matrix OSD decoder",
+  "description": "Expose the order-$m$ generator-matrix OSD baseline for linear block codes through the canonical immutable soft-decoder trait.\n\n## Background\n\nThe decoder is generic over `GeneratorMatrixAccess`; convolutional streaming and codes without that surface are outside its scope. Candidate enumeration and MRB reprocessing remain in the shared engine, while this adapter owns codeword reconstruction and `SoftDecoder` behavior.\n\n## Success Criteria\n\n- [hard] REQ-01: Implements `SoftDecoder` for a decoder generic over `GeneratorMatrixAccess` with order and cap supplied by `OsdConfig`.\n- [hard] REQ-02: Reconstructs generator-domain candidates and returns the deterministic minimum soft-metric hard decision.\n- [hard] REQ-03: Exposes engine rank, work counters, candidate bound, and termination metadata without duplicating search logic.\n- [hard] REQ-04: Matches exhaustive maximum-likelihood decoding on bounded small-code fixtures with tied reliabilities and non-systematic generators.\n- [hard] REQ-05: Documents invalid LLR length, NaN, and rank-deficient generator behavior on the public API.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-01",
+   "cites:Fossorier1995",
+   "cites:Yue2022"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "osd-reprocessing-engine"
+  ],
+  "planning": {
+   "outcome": "`GeneratorMatrixAccess` codes expose order-$m$ OSD through `SoftDecoder` with bounded ML conformance.",
+   "contract_refs": [
+    "mrb-elimination",
+    "reliability-permutation",
+    "osd-config",
+    "soft-decision-surface"
+   ],
+   "source_refs": [
+    "REQ-01",
+    "D-02",
+    "D-05",
+    "D-06",
+    "D-08",
+    "D-09",
+    "D-14",
+    "D-16",
+    "INV-CLAIMS",
+    "INV-PRIORART",
+    "INV-PRIMITIVES",
+    "INV-ARCH",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-engine",
+   "terminal": {
+    "consumer_family": "generator-matrix block codes",
+    "test_boundary": "bounded ML conformance",
+    "worker_sized_reason": "One public adapter owns generator-domain semantics.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/osd/generator.rs"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/osd/mod.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-syndrome-adapter",
+  "title": "Syndrome-domain OSD adapter",
+  "description": "Provide parity-check-domain OSD correction for a failed hard word using posterior reliability magnitudes.\n\n## Background\n\nFor parity-check matrix $\\mathbf{H}$ and failed hard word $\\mathbf{y}$, the adapter forms $\\mathbf{s}=\\mathbf{H}\\mathbf{y}^{\\mathsf T}$ and searches for $\\mathbf{e}$ satisfying $\\mathbf{H}\\mathbf{e}^{\\mathsf T}=\\mathbf{s}$. Elimination prefers columns in ascending posterior magnitude so pivots align with the least reliable coordinates; for rank $r$, error patterns enumerate the $n-r$ free coordinates up to order $m$, each completed uniquely by pivot back-substitution, with order 0 the all-zero free pattern. Candidate cost is the magnitude-only sum of flipped posterior LLRs, ties break deterministically in enumeration order, and the returned word is $\\mathbf{y}\\oplus\\mathbf{e}$ for the lowest-cost valid tested candidate. The result equals the global order-$m$ cost minimum only in uncapped exhaustive configuration.\n\n## Success Criteria\n\n- [hard] REQ-01: Accepts a parity-check matrix, failed hard word, posterior LLRs, and `OsdConfig` with documented dimension and NaN validation.\n- [hard] REQ-02: Returns $\\mathbf{y}\\oplus\\mathbf{e}$ only when its syndrome is zero, ranking candidates by $\\sum_i e_i |L_i|$ with deterministic enumeration-order ties.\n- [hard] REQ-03: Selects pivots by ascending posterior magnitude and completes each free-coordinate pattern by back-substitution through the elimination row transform.\n- [hard] REQ-04: Order-0 and order-1 results on bounded fixtures match hand-computed back-substitution with the all-zero and single free-coordinate flip patterns.\n- [hard] REQ-05: Classifies rank-deficient systems through the row transform and reports a syndrome outside the reachable row space explicitly.\n- [hard] REQ-06: Exposes rank, candidate, cap, and termination metadata from the shared reprocessing engine.\n- [hard] REQ-07: Matches exhaustive magnitude-cost error search on bounded parity-check fixtures in uncapped configuration for zero, nonzero, rank-deficient, and inconsistent syndromes.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-03",
+   "cites:Fossorier1995",
+   "cites:Roffe2020"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "osd-generator-decoder"
+  ],
+  "planning": {
+   "outcome": "The syndrome adapter returns the lowest-cost valid tested correction of the failed hard word.",
+   "contract_refs": [
+    "mrb-elimination",
+    "reliability-permutation",
+    "osd-config",
+    "osd-syndrome-domain"
+   ],
+   "source_refs": [
+    "REQ-03",
+    "D-02",
+    "D-05",
+    "D-09",
+    "D-15",
+    "D-16",
+    "D-20",
+    "INV-PRIORART",
+    "INV-ARCH",
+    "INV-CONSUMERS",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-engine",
+   "terminal": {
+    "consumer_family": "parity-check post-processors",
+    "test_boundary": "syndrome-domain conformance",
+    "worker_sized_reason": "One public adapter owns error-domain semantics.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/osd/syndrome.rs"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/osd/mod.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "bp-posterior-access",
+  "title": "LDPC posterior LLR access",
+  "description": "Expose final BP beliefs through a read-only public `LdpcDecoder` API suitable for mutable post-processing workflows.\n\n## Background\n\n`LdpcDecoder` computes posterior `Llr` values that drive its hard word, but the belief vector is private. The accessor exposes state without providing mutable access to decoder internals.\n\n## Success Criteria\n\n- [hard] REQ-01: Returns one posterior `Llr` per variable after `decode_to_codeword` and mutable iterative decoding.\n- [hard] REQ-02: Returns values whose hard decisions match the decoder's latest failed or successful hard word exactly.\n- [hard] REQ-03: Documents and tests the pre-decode state plus the state after `reset`.\n- [hard] REQ-04: Preserves posterior values after syndrome failure for immediate post-processing.\n- [hard] REQ-05: Exposes no mutable belief access and preserves existing BP convergence behavior.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-03",
+   "cites:Roffe2020"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "`LdpcDecoder` exposes its latest posterior belief slice with defined reset semantics.",
+   "contract_refs": [
+    "posterior-llr-access"
+   ],
+   "source_refs": [
+    "REQ-03",
+    "D-10",
+    "D-20",
+    "INV-CLAIMS",
+    "INV-PRIMITIVES",
+    "INV-CONSUMERS"
+   ],
+   "landing_group": "bp-osd-integration",
+   "terminal": {
+    "consumer_family": "LDPC post-processors",
+    "test_boundary": "posterior lifecycle conformance",
+    "worker_sized_reason": "One state vector gains one read-only surface.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/tests/ldpc_posterior.rs"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/ldpc/core.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "bp-osd-decoder",
+  "title": "Mutable BP fallback composition",
+  "description": "Expose BP-first decoding with syndrome-domain OSD fallback through a mutable inherent API and a composition-specific result.\n\n## Background\n\nBP mutates `LdpcDecoder` state through the `IterativeSoftDecoder` convention. When BP ends with a failed syndrome, the composition passes that hard word plus its posterior LLRs to magnitude-cost syndrome correction; it does not route BP through the immutable hard-decision-only `SoftDecoder` implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Provides a mutable decode method consistent with `IterativeSoftDecoder` lifecycle and no immutable BP decoding promise.\n- [hard] REQ-02: Returns the BP hard word directly on syndrome success and invokes syndrome correction only after BP syndrome failure.\n- [hard] REQ-03: Supplies the failed hard word plus posterior LLRs to correction and returns a zero-syndrome corrected word when fallback succeeds.\n- [hard] REQ-04: Returns an inherent result carrying deciding stage, BP iterations, OSD work counters, final syndrome status, and termination reason.\n- [hard] REQ-05: Defines pre-decode, repeated-decode, failure, and `reset` behavior for BP beliefs plus composition results.\n- [hard] REQ-06: Covers BP success, BP failure with OSD success, exhausted OSD, inconsistent syndrome, and reset on a bounded LDPC fixture.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-03",
+   "cites:Roffe2020"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "osd-syndrome-adapter",
+   "bp-posterior-access"
+  ],
+  "planning": {
+   "outcome": "A mutable BP-first surface returns stage-specific fallback results with explicit lifecycle state.",
+   "contract_refs": [
+    "osd-config",
+    "osd-syndrome-domain",
+    "posterior-llr-access",
+    "soft-decision-surface",
+    "bp-osd-composition"
+   ],
+   "produces_contracts": [
+    "bp-osd-composition"
+   ],
+   "source_refs": [
+    "REQ-03",
+    "D-02",
+    "D-10",
+    "D-16",
+    "D-20",
+    "INV-CLAIMS",
+    "INV-CONSUMERS",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "bp-osd-integration",
+   "terminal": {
+    "consumer_family": "LDPC fallback callers",
+    "test_boundary": "small-LDPC fallback conformance",
+    "worker_sized_reason": "One composition surface joins two completed adapters.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/osd/bp_osd.rs"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/osd/mod.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-reference-curves",
+  "title": "Published eBCH OSD curve dataset",
+  "description": "Commit a machine-readable digitization that pins the selected published eBCH OSD curve plus its source-fixed construction identity.\n\n## Background\n\nThe reproduction target is eBCH $(128,64)$ on BI-AWGN/BPSK with BER versus $E_b/N_0$, OSD order 2, with order 1 as a control. The open-access Fossorier 1994 dissertation [Fossorier1994] is the authoritative pinned source: it publishes the same author's algorithm on this code and channel (Figure 4.14 and Tables 4.7\u20134.9). The [Fossorier1995] article is closed-access and is recorded as bibliographically related but unverified against the digitized material. [Yue2022] supplies an independent near-ML cross-check. The pinned source fixes dimensions, minimum distance, and the per-block systematic convention only; primitive polynomial and field representation are not source-determined.\n\n## Success Criteria\n\n- [hard] REQ-01: Identifies the exact pinned-source page, figure, series, construction, channel, metric, and OSD order represented by the digitized data, and records the closed-access, unverified status of the Fossorier1995 article.\n- [hard] REQ-02: Records the published reprocessing list order, naming the source's candidate enumeration order and stating where the source leaves tie policy undefined.\n- [hard] REQ-03: Records every construction constraint the pinned source fixes \u2014 dimensions, minimum distance, and systematic per-block convention \u2014 and states explicitly that primitive polynomial and field representation are not source-determined.\n- [hard] REQ-04: Stores auditable $E_b/N_0$ plus BER points with digitization method, precision, and provenance.\n- [hard] REQ-05: Records the Yue2022 cross-check and material construction, metric, or curve differences without silently reconciling them.\n- [hard] REQ-06: Distinguishes the published series from the campaign's order-1 control so the control carries no unsupported external claim.\n\n## Decisions\n\n- DEC-01: No digitized third-party published source in this dataset (the pinned 1994 dissertation and the Yue2022 cross-check alike) reports per-point sample counts, confidence intervals, seeds, RNG identity, producing revision, hardware, toolchain, or invocation for its published results. The dataset records that source silence explicitly per row, receipt, and section; supplying such values is foreclosed as they do not exist in the sources and inventing them is prohibited.\n- DEC-02: The per-point uncertainty of every digitized published point is its digitization precision, recorded per row as a declared conservative bound and supported by committed perturbation-sensitivity evidence (marker-center and axis-anchor perturbation); source-side statistical uncertainty is unobtainable per DEC-01.\n- DEC-03: The ResearchGate author-uploaded full-text lead for the Fossorier1995 article is resolved as a title-collision false positive: its served attachment is the distinct 1999 IEICE work [Isaka1999]. The article's closed-access, unverified status stands; further acquisition attempts are not required.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-sim",
+   "satisfies:REQ-02",
+   "cites:Fossorier1995",
+   "cites:Yue2022",
+   "cites:Fossorier1994",
+   "cites:Isaka1999"
+  ],
+  "gates": [
+   "doc-review",
+   "research-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "A cited dataset pins the published OSD curve plus the eBCH construction identity.",
+   "contract_refs": [
+    "ebch-reference",
+    "osd-reference-curve"
+   ],
+   "produces_contracts": [
+    "ebch-reference",
+    "osd-reference-curve"
+   ],
+   "source_refs": [
+    "REQ-02",
+    "D-01",
+    "D-03",
+    "D-11",
+    "D-13",
+    "D-17",
+    "INV-CLAIMS",
+    "INV-PRIORART",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-campaign",
+   "terminal": {
+    "consumer_family": "OSD curve reproduction",
+    "test_boundary": "reference data review",
+    "worker_sized_reason": "One published series receives one provenance review.",
+    "footprint": {
+     "creates": [
+      "dev/reference_data/osd_ebch_128_64_fossorier1994.csv",
+      "dev/reference_data/osd_ebch_128_64_fossorier1994.md"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "ebch-128-64-factory",
+  "title": "Named eBCH(128,64) reference factory",
+  "description": "Add the named extended BCH constructor used by OSD conformance and campaign work against the implementation-produced reference identity.\n\n## Background\n\nThe existing named-constructor family stops at eBCH $(64,57)$. The pinned published source fixes dimensions, minimum distance, and systematic convention only; the primitive polynomial and field representation are a recorded campaign decision consumed by this factory, and the published curves are invariant under that permutation-equivalent representation choice.\n\n## Success Criteria\n\n- [hard] REQ-01: `ExtendedBchCode::ebch_128_64()` constructs the recorded primitive BCH extension with $n=128$, $k=64$, and systematic generator form.\n- [hard] REQ-02: A committed fixture records the chosen primitive polynomial, its decision provenance, and canonical serialized generator and parity-check matrices.\n- [hard] REQ-03: Tests verify fixture identity, matrix dimensions, orthogonality, systematic encoding, and even extension parity.\n- [hard] REQ-04: Public rustdoc cites construction provenance and demonstrates the named factory workflow.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-02",
+   "cites:Fossorier1995",
+   "cites:Yue2022"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "osd-reference-curves"
+  ],
+  "planning": {
+   "outcome": "The named eBCH $(128,64)$ factory matches the published-source construction fixture.",
+   "contract_refs": [
+    "ebch-reference",
+    "osd-reference-curve"
+   ],
+   "source_refs": [
+    "REQ-02",
+    "D-01",
+    "D-11",
+    "D-17",
+    "INV-CLAIMS",
+    "INV-PRIMITIVES",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-campaign",
+   "terminal": {
+    "consumer_family": "reference eBCH callers",
+    "test_boundary": "eBCH fixture conformance",
+    "worker_sized_reason": "One constructor extends one established factory family.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/tests/ebch_128_64_reference.rs",
+      "crates/gf2-coding/tests/data/ebch_128_64_reference.json"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/bch/extended.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-campaign-protocol",
+  "title": "Reusable OSD campaign protocol",
+  "description": "Provide a reusable `gf2-sim` library surface for deterministic OSD campaign execution and receipted statistical evidence.\n\n## Background\n\nCampaign protocol belongs in the library layer so executables remain thin consumers. The surface defines only OSD-specific cell payload, receipt fields, and orchestration: persistence composes the canonical `gf2_sim::checkpoint` writer and reader, confidence intervals come from the shared `gf2-stats` interval API with a named method and level, and provenance reuses the campaign schema's existing semantic types or extracts them to a shared module.\n\n## Success Criteria\n\n- [hard] REQ-01: Defines a reusable campaign protocol over explicit cells with deterministic seed derivation from campaign seed plus stable cell identity.\n- [hard] REQ-02: Defines versioned checkpoint and receipt schemas carrying completed-cell identity, samples, bit- and block-error counts, the derived BER and BLER, named confidence intervals for both rates, OSD work counters, and termination state.\n- [hard] REQ-03: Persists and recovers cells through `CheckpointPayload`, `CheckpointWriter`, and `CheckpointReader` rather than a parallel persistence mechanism.\n- [hard] REQ-04: Computes intervals through the shared `gf2-stats` interval API, recording method and level in the receipt.\n- [hard] REQ-05: Reuses the campaign schema's existing provenance semantic types for runtime-observed git revision, toolchain, hardware, configuration, and measurement behavioral identity; any relocation to a shared module happens in the same change with no duplicate definitions.\n- [hard] REQ-06: Resumes without repeating completed cells and preserves interrupted, censored, exhausted, or contradictory cell results.\n- [hard] REQ-07: Provides the reproduction comparison predicate accepting a published value $p$ exactly when $p \\in [L-\\delta, U+\\delta]$, where $[L, U]$ is the receipt interval at its recorded method and level and $\\delta$ the recorded digitization precision, with equality and rejection fixtures.\n- [hard] REQ-08: Covers deterministic seeding, schema round trips, checkpoint recovery, and resume behavior through library tests.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-sim",
+   "satisfies:REQ-02",
+   "cites:Fossorier1995"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "`gf2-sim` exposes a reusable seeded campaign protocol with versioned resumable receipts.",
+   "contract_refs": [
+    "osd-campaign-receipt"
+   ],
+   "produces_contracts": [
+    "osd-campaign-receipt"
+   ],
+   "source_refs": [
+    "REQ-02",
+    "D-03",
+    "D-12",
+    "D-13",
+    "D-19",
+    "INV-CLAIMS",
+    "INV-ARCH",
+    "INV-CONSUMERS",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-campaign",
+   "terminal": {
+    "consumer_family": "simulation campaign libraries",
+    "test_boundary": "campaign protocol conformance",
+    "worker_sized_reason": "One library module owns one reusable protocol.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-sim/src/osd_campaign.rs",
+      "crates/gf2-sim/tests/osd_campaign_protocol.rs"
+     ],
+     "touches": [
+      "crates/gf2-sim/src/lib.rs"
+     ],
+     "uncertainty": "Reusing the provenance semantic types may relocate them from crates/gf2-sim/src/permanent_campaign/schema.rs to a shared gf2-sim module; the exact shared-module path is decided at implementation."
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-campaign-binary",
+  "title": "eBCH OSD campaign executable",
+  "description": "Add a thin `gf2-sim` executable that binds the eBCH OSD baseline to the reusable campaign protocol.\n\n## Background\n\nThe executable selects the pinned eBCH $(128,64)$ factory, BI-AWGN/BPSK channel, order-2 decoder, order-1 control, configured cells, checkpoint path, and receipt path. Protocol logic remains in the `gf2-sim` library rather than the CLI.\n\n## Success Criteria\n\n- [hard] REQ-01: Parses the pinned campaign configuration and dispatches order-2 plus order-1 cells through the library protocol.\n- [hard] REQ-02: Configures the decoder's candidate enumeration to the pinned reference dataset's recorded list order and tie policy.\n- [hard] REQ-03: Uses deterministic resume and versioned receipt APIs without owning schema, seed, interval, or checkpoint logic.\n- [hard] REQ-04: Exposes bounded sample and error stopping controls suitable for interrupted campaign execution.\n- [hard] REQ-05: A CLI fixture verifies configuration mapping, checkpoint resume, receipt emission, and nonzero failure status for invalid input.\n- [hard] REQ-06: Public usage text names output paths and the exact eBCH/channel/metric convention.",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-sim",
+   "satisfies:REQ-02",
+   "cites:Fossorier1995",
+   "cites:Yue2022"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "osd-campaign-protocol",
+   "ebch-128-64-factory",
+   "osd-generator-decoder"
+  ],
+  "planning": {
+   "outcome": "A thin `gf2-sim` executable drives the pinned eBCH OSD protocol.",
+   "contract_refs": [
+    "ebch-reference",
+    "osd-config",
+    "osd-campaign-receipt"
+   ],
+   "source_refs": [
+    "REQ-02",
+    "D-01",
+    "D-03",
+    "D-12",
+    "D-13",
+    "D-19",
+    "INV-CLAIMS",
+    "INV-ARCH",
+    "INV-CONSUMERS",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-campaign",
+   "terminal": {
+    "consumer_family": "eBCH campaign operators",
+    "test_boundary": "campaign CLI fixtures",
+    "worker_sized_reason": "One thin executable binds three finished libraries.",
+    "footprint": {
+     "creates": [
+      "crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs",
+      "crates/gf2-sim/tests/ebch_osd_campaign_cli.rs"
+     ],
+     "touches": [
+      "crates/gf2-sim/Cargo.toml"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-ebch-campaign",
+  "title": "eBCH OSD curve reproduction",
+  "description": "Run the pinned resumable campaign and commit its versioned evidence receipt with a concise provenance record.\n\n## Background\n\nThe scientific target is the pinned Fossorier 1994 dissertation series [Fossorier1994] for eBCH $(128,64)$ on BI-AWGN/BPSK: order-2 BER versus $E_b/N_0$, with order 1 as an explicitly internal control. The [Fossorier1995] article is closed-access and recorded as unverified. Measurements remain valid or falsifying according to confidence intervals and recorded protocol identity.\n\n## Success Criteria\n\n- [hard] REQ-01: The committed receipt records seeds, git revision, toolchain, hardware, configuration, per-cell counts, work counters, termination, and binomial confidence intervals.\n- [hard] REQ-02: Each matched order-2 point accepts its published value $p$ exactly when $p \\in [L-\\delta, U+\\delta]$, where $[L, U]$ is the receipt interval at its recorded method and level and $\\delta$ the recorded digitization precision, without converting discrepancies into silent retuning.\n- [hard] REQ-03: Order-1 results are identified as campaign controls rather than externally sourced claims.\n- [hard] REQ-04: Interrupted, censored, or budget-exhausted cells remain visible and resumable without repeated completed work.\n- [hard] REQ-05: The provenance note identifies contradictory evidence and the exact receipt schema version.",
+  "type": "simulation",
+  "priority": "high",
+  "labels": [
+   "epic:osd",
+   "component:gf2-sim",
+   "satisfies:REQ-02",
+   "cites:Fossorier1995",
+   "cites:Fossorier1994"
+  ],
+  "gates": [
+   "research-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "osd-campaign-binary"
+  ],
+  "planning": {
+   "outcome": "A committed receipt demonstrates the order-2 curve comparison with stated uncertainty.",
+   "contract_refs": [
+    "osd-reference-curve",
+    "osd-campaign-receipt"
+   ],
+   "source_refs": [
+    "REQ-02",
+    "D-01",
+    "D-03",
+    "D-13",
+    "INV-CLAIMS",
+    "INV-PRIORART",
+    "EXTREV-OSD"
+   ],
+   "landing_group": "osd-campaign",
+   "terminal": {
+    "consumer_family": "OSD research evidence",
+    "test_boundary": "receipted curve comparison",
+    "worker_sized_reason": "One bounded campaign yields one evidence set.",
+    "footprint": {
+     "creates": [
+      "dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.json",
+      "dev/simulation_results/osd-ebch-128-64/README.md",
+      "dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.checkpoint.json"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-pattern-segmentation",
+  "title": "OSD pattern segmentation policy",
+  "description": "Add deterministic pattern segmentation over the baseline OSD engine and produce the implementation-level complexity policy.\n\n## Background\n\nSegmentation is optional normal-priority work over exhaustive order-$m$ search. It groups the existing deterministic pattern stream without changing baseline configuration, candidate identity, or previously exported surfaces; the segmentation and complexity-policy types are additive public exports.\n\n## Success Criteria\n\n- [hard] REQ-01: Defines deterministic segment boundaries over the existing order-$m$ pattern sequence.\n- [hard] REQ-02: Preserves candidate order and result equivalence when segmentation has no active discard threshold.\n- [hard] REQ-03: Reports segment, elimination, generated-pattern, and tested-candidate counters with cap plus cancellation termination.\n- [hard] REQ-04: Produces the public complexity-policy representation consumed by threshold evaluation.\n- [hard] REQ-05: Covers boundary, empty-segment, exact-cap, and cancellation cases in module-local tests.",
+  "type": "task",
+  "priority": "normal",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-04",
+   "cites:Yue2022"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "osd-generator-decoder"
+  ],
+  "planning": {
+   "outcome": "Segmented OSD search emits deterministic boundaries plus explicit work counters.",
+   "contract_refs": [
+    "osd-config",
+    "osd-complexity-policy"
+   ],
+   "produces_contracts": [
+    "osd-complexity-policy"
+   ],
+   "source_refs": [
+    "REQ-04",
+    "D-04",
+    "D-09",
+    "D-16",
+    "D-17",
+    "INV-CONVENTIONS",
+    "INV-PRIORART"
+   ],
+   "landing_group": "osd-complexity",
+   "terminal": {
+    "consumer_family": "OSD complexity experiments",
+    "test_boundary": "segmentation counter conformance",
+    "worker_sized_reason": "One optional policy introduces deterministic segmentation only.",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/osd/engine.rs",
+      "crates/gf2-coding/src/osd/patterns.rs",
+      "crates/gf2-coding/src/osd/mod.rs"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "key": "osd-discard-thresholds",
+  "title": "OSD discard thresholds",
+  "description": "Apply configurable discard thresholds to segmented OSD search under the implementation-produced complexity policy.\n\n## Background\n\nThresholds are optional normal-priority work. They may skip candidates only through the documented segment metric and must leave baseline exhaustive search unchanged when disabled.\n\n## Success Criteria\n\n- [hard] REQ-01: Applies documented threshold comparisons at deterministic segment boundaries.\n- [hard] REQ-02: Reports discarded-pattern, tested-candidate, elimination, and termination counters without counting a discarded pattern as tested.\n- [hard] REQ-03: Preserves exhaustive baseline results when thresholds are disabled.\n- [hard] REQ-04: Covers threshold equality, no-discard, full-discard, cap, and cancellation cases in engine-local tests.\n- [hard] REQ-05: Documents that thresholded results are policy-bounded approximations rather than exhaustive order-$m$ search.",
+  "type": "task",
+  "priority": "normal",
+  "labels": [
+   "epic:osd",
+   "component:gf2-coding",
+   "satisfies:REQ-04",
+   "cites:Yue2022"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "osd-pattern-segmentation"
+  ],
+  "planning": {
+   "outcome": "Thresholded OSD search skips segmented candidates under explicit counter semantics.",
+   "contract_refs": [
+    "osd-config",
+    "osd-complexity-policy"
+   ],
+   "source_refs": [
+    "REQ-04",
+    "D-04",
+    "D-09",
+    "D-16",
+    "D-17",
+    "INV-CONVENTIONS",
+    "INV-PRIORART"
+   ],
+   "landing_group": "osd-complexity",
+   "terminal": {
+    "consumer_family": "OSD complexity experiments",
+    "test_boundary": "discard counter conformance",
+    "worker_sized_reason": "One optional policy adds threshold evaluation only.",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/osd/engine.rs"
+     ]
+    }
+   }
+  }
+ }
 ]
