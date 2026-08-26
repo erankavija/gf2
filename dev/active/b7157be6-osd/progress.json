@@ -191,7 +191,7 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "campaign complete (14/14 cells, merged c59f1a8f); research-review R1 tier-1 label-drift fixed, R2 FAIL (5 blocking); F2/F3/F4 rework dispatched; F1/F5 escalated (ESC-04)"
+     "status": "F2/F3/F4 rework merged cf689b17 (session 4); ESC-04 resolved: fix tool (8a908f79+cf37be3b), probe re-run reduced compute, rigorous run scheduled 02:00 if probe clean; research-review re-run after rigorous campaign"
     }
    ]
   }
@@ -201,6 +201,16 @@
    "short_id": "c0bb2ab1",
    "title": "Blocked schedule for ordered-column elimination",
    "reason": "convention-convergence exception convergence condition for 5dd3539f"
+  },
+  {
+   "short_id": "8a908f79",
+   "title": "campaign BER intervals assume bit independence under block-burst errors",
+   "reason": "pre-existing filed bug promoted to cef1ae5f prerequisite by ESC-04 resolution (session 4); driven by the lead, not an epic child"
+  },
+  {
+   "short_id": "cf37be3b",
+   "title": "digitization precision units differ between dataset and acceptance predicate",
+   "reason": "pre-existing filed bug promoted to cef1ae5f prerequisite by ESC-04 resolution (session 4); driven by the lead, not an epic child"
   }
  ],
  "escalations": [
@@ -226,7 +236,7 @@
    "id": "ESC-04",
    "date": "2026-08-26",
    "category": "gate failure contesting issue criteria",
-   "summary": "research-review R2 F1/F5: recorded BER intervals lack coverage under block-burst errors + adaptive stopping (8a908f79) and the acceptance predicate mixes log10-decade delta with linear probability (cf37be3b); reviewer holds cef1ae5f REQ-01/REQ-02 unmet as written. Raised to owner with options: tool-fix+rerun (A), criterion amendment (B), reject (C). Pending."
+   "summary": "research-review R2 F1/F5: recorded BER intervals lack coverage under block-burst errors + adaptive stopping (8a908f79) and the acceptance predicate mixes log10-decade delta with linear probability (cf37be3b); reviewer holds cef1ae5f REQ-01/REQ-02 unmet as written. RESOLVED 2026-08-26 (session 4): owner chose staged option A — fix the tool (bugs 8a908f79 + cf37be3b), validate with a reduced-compute probe run, then schedule the rigorous campaign at 02:00 local if the probe looks OK."
   }
  ],
  "rework_counts": {
