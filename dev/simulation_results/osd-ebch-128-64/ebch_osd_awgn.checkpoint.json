@@ -1,0 +1,745 @@
+{
+  "schema_version": 1,
+  "payload_identity": "osd-campaign/cell-progress",
+  "config_hash": "blake3:54d446f6777406f5de51615f21550b8606c540f72f275853aa05981737d2c70f",
+  "payload": {
+    "schema_version": 1,
+    "campaign_seed": 3358732031,
+    "cells": [
+      {
+        "id": "order-2-point-00",
+        "eb_n0_db": 1.55,
+        "osd_order": 2,
+        "digitization_precision": 0.1
+      },
+      {
+        "id": "order-2-point-01",
+        "eb_n0_db": 2.22,
+        "osd_order": 2,
+        "digitization_precision": 0.0
+      },
+      {
+        "id": "order-2-point-02",
+        "eb_n0_db": 3.01,
+        "osd_order": 2,
+        "digitization_precision": 0.0
+      },
+      {
+        "id": "order-2-point-03",
+        "eb_n0_db": 3.47,
+        "osd_order": 2,
+        "digitization_precision": 0.0
+      },
+      {
+        "id": "order-2-point-04",
+        "eb_n0_db": 3.98,
+        "osd_order": 2,
+        "digitization_precision": 0.0
+      },
+      {
+        "id": "order-2-point-05",
+        "eb_n0_db": 4.56,
+        "osd_order": 2,
+        "digitization_precision": 0.0
+      },
+      {
+        "id": "order-2-point-06",
+        "eb_n0_db": 5.23,
+        "osd_order": 2,
+        "digitization_precision": 0.0
+      },
+      {
+        "id": "order-1-point-00",
+        "eb_n0_db": 1.55,
+        "osd_order": 1,
+        "digitization_precision": 0.1
+      },
+      {
+        "id": "order-1-point-01",
+        "eb_n0_db": 2.22,
+        "osd_order": 1,
+        "digitization_precision": 0.1
+      },
+      {
+        "id": "order-1-point-02",
+        "eb_n0_db": 3.01,
+        "osd_order": 1,
+        "digitization_precision": 0.1
+      },
+      {
+        "id": "order-1-point-03",
+        "eb_n0_db": 3.47,
+        "osd_order": 1,
+        "digitization_precision": 0.1
+      },
+      {
+        "id": "order-1-point-04",
+        "eb_n0_db": 3.98,
+        "osd_order": 1,
+        "digitization_precision": 0.1
+      },
+      {
+        "id": "order-1-point-05",
+        "eb_n0_db": 4.56,
+        "osd_order": 1,
+        "digitization_precision": 0.1
+      },
+      {
+        "id": "order-1-point-06",
+        "eb_n0_db": 5.23,
+        "osd_order": 1,
+        "digitization_precision": 0.1
+      }
+    ],
+    "interval": {
+      "method": "clopper_pearson",
+      "level": 0.95
+    },
+    "provenance": {
+      "runtime": {
+        "git_revision": "673bb9283fba7b264b62a39b721449696d311616",
+        "binary_sha256": "ae0ecf0c6994053e4aa9c43b12e05c52f8c200022304ac3e19beaedb872ed1bd",
+        "deps_source_revision": "0d8749157c2ae52ee5f692b66d7e2348c733dfd6",
+        "deps_source_dirty": false,
+        "compiler_version": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+        "rng_algorithm": "cha_cha20",
+        "rng_version": "rand_chacha 0.3.1 (gf2-coding BPSK channel ABI)",
+        "invocation": [
+          "ebch_osd_awgn_campaign"
+        ],
+        "accelerator_runtime": {
+          "state": "not_present"
+        },
+        "cpu_model": "linux-x86_64",
+        "gpu_model": {
+          "state": "not_present"
+        }
+      },
+      "configuration": {
+        "path": "dev/reference_data/osd_ebch_128_64_fossorier1994.md",
+        "sha256": "26824d11f78c30c59d3c48a65c2fbe5631e87b5a7e8d38158aae411c457f1e0c"
+      },
+      "measurement_behavior": {
+        "path": "crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs",
+        "sha256": "3600d1068c0fe50ebf5cacf113315cbc50ec9f3286634d5ff7031dbaa302a8d4"
+      }
+    },
+    "cell_results": [
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-00",
+          "eb_n0_db": 1.55,
+          "osd_order": 2,
+          "digitization_precision": 0.1
+        },
+        "seed": 16883133263190389042,
+        "samples": 54,
+        "sampled_bits": 3456,
+        "bit_errors": 107,
+        "block_errors": 8,
+        "ber": 0.030960648148148147,
+        "bler": 0.14814814814814814,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.02544087852933448,
+          "upper": 0.03729142061663843
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0661975771612967,
+          "upper": 0.27119768856212234
+        },
+        "work": {
+          "eliminations": 54,
+          "generated_patterns": 112374,
+          "tested_candidates": 112374
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-01",
+          "eb_n0_db": 2.22,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 2405895533945335398,
+        "samples": 147,
+        "sampled_bits": 9408,
+        "bit_errors": 103,
+        "block_errors": 7,
+        "ber": 0.01094812925170068,
+        "bler": 0.047619047619047616,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.008944761958066982,
+          "upper": 0.01326229517455696
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.019356937913599697,
+          "upper": 0.095650890233045
+        },
+        "work": {
+          "eliminations": 147,
+          "generated_patterns": 305907,
+          "tested_candidates": 305907
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-02",
+          "eb_n0_db": 3.01,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 14733212875608643011,
+        "samples": 2390,
+        "sampled_bits": 152960,
+        "bit_errors": 110,
+        "block_errors": 9,
+        "ber": 0.000719142259414226,
+        "bler": 0.0037656903765690376,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0005910834081682196,
+          "upper": 0.0008666969154001976
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0017233149347773442,
+          "upper": 0.007136365746177636
+        },
+        "work": {
+          "eliminations": 2390,
+          "generated_patterns": 4973590,
+          "tested_candidates": 4973590
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-03",
+          "eb_n0_db": 3.47,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 10578918770922365407,
+        "samples": 6486,
+        "sampled_bits": 415104,
+        "bit_errors": 102,
+        "block_errors": 9,
+        "ber": 0.00024572155411655875,
+        "bler": 0.0013876040703052729,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0002003608653031617,
+          "upper": 0.0002982813607700631
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.000634691055945977,
+          "upper": 0.002632463209345866
+        },
+        "work": {
+          "eliminations": 6486,
+          "generated_patterns": 13497366,
+          "tested_candidates": 13497366
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-04",
+          "eb_n0_db": 3.98,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 10009584865954157554,
+        "samples": 20000,
+        "sampled_bits": 1280000,
+        "bit_errors": 67,
+        "block_errors": 6,
+        "ber": 0.00005234375,
+        "bler": 0.0003,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.00004056591033357133,
+          "upper": 0.00006647424253662635
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0001101024150453358,
+          "upper": 0.0006528584655883241
+        },
+        "work": {
+          "eliminations": 20000,
+          "generated_patterns": 41620000,
+          "tested_candidates": 41620000
+        },
+        "termination": {
+          "state": "interrupted"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-04",
+          "eb_n0_db": 3.98,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 10009584865954157554,
+        "samples": 26757,
+        "sampled_bits": 1712448,
+        "bit_errors": 108,
+        "block_errors": 9,
+        "ber": 0.00006306760847628658,
+        "bler": 0.0003363605785401951,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.00005173585968017994,
+          "upper": 0.00007614354289237069
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0001538166414935192,
+          "upper": 0.0006384206887713462
+        },
+        "work": {
+          "eliminations": 26757,
+          "generated_patterns": 55681317,
+          "tested_candidates": 55681317
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-05",
+          "eb_n0_db": 4.56,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 4595831582004035410,
+        "samples": 151600,
+        "sampled_bits": 9702400,
+        "bit_errors": 100,
+        "block_errors": 7,
+        "ber": 0.000010306728232189972,
+        "bler": 0.00004617414248021108,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 8.385973072715031e-6,
+          "upper": 0.000012535729122999296
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.000018564595130394666,
+          "upper": 0.00009513405198163792
+        },
+        "work": {
+          "eliminations": 151600,
+          "generated_patterns": 315479600,
+          "tested_candidates": 315479600
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-06",
+          "eb_n0_db": 5.23,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 15656177087142036630,
+        "samples": 6000000,
+        "sampled_bits": 384000000,
+        "bit_errors": 87,
+        "block_errors": 7,
+        "ber": 2.265625e-7,
+        "bler": 1.1666666666666666e-6,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 1.8146727705297904e-7,
+          "upper": 2.794639963837398e-7
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 4.6906063456858867e-7,
+          "upper": 2.4037777409884713e-6
+        },
+        "work": {
+          "eliminations": 6000000,
+          "generated_patterns": 12486000000,
+          "tested_candidates": 12486000000
+        },
+        "termination": {
+          "state": "interrupted"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-06",
+          "eb_n0_db": 5.23,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 15656177087142036630,
+        "samples": 8000000,
+        "sampled_bits": 512000000,
+        "bit_errors": 96,
+        "block_errors": 8,
+        "ber": 1.875e-7,
+        "bler": 1e-6,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 1.518756211600739e-7,
+          "upper": 2.2896956426618217e-7
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 4.317291173919197e-7,
+          "upper": 1.9703976974427054e-6
+        },
+        "work": {
+          "eliminations": 8000000,
+          "generated_patterns": 16648000000,
+          "tested_candidates": 16648000000
+        },
+        "termination": {
+          "state": "interrupted"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-06",
+          "eb_n0_db": 5.23,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 15656177087142036630,
+        "samples": 8066414,
+        "sampled_bits": 516250496,
+        "bit_errors": 111,
+        "block_errors": 9,
+        "ber": 2.1501189995951114e-7,
+        "bler": 1.1157374268169226e-6,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 1.7687794333127774e-7,
+          "upper": 2.589297854502836e-7
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 5.101863216331595e-7,
+          "upper": 2.118016125693891e-6
+        },
+        "work": {
+          "eliminations": 8066414,
+          "generated_patterns": 16786207534,
+          "tested_candidates": 16786207534
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-1-point-00",
+          "eb_n0_db": 1.55,
+          "osd_order": 1,
+          "digitization_precision": 0.1
+        },
+        "seed": 10474219255314992975,
+        "samples": 15,
+        "sampled_bits": 960,
+        "bit_errors": 104,
+        "block_errors": 7,
+        "ber": 0.10833333333333334,
+        "bler": 0.4666666666666667,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.08937713758220728,
+          "upper": 0.12972922941507897
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.21266672951930815,
+          "upper": 0.7341386527226028
+        },
+        "work": {
+          "eliminations": 15,
+          "generated_patterns": 975,
+          "tested_candidates": 975
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-1-point-01",
+          "eb_n0_db": 2.22,
+          "osd_order": 1,
+          "digitization_precision": 0.1
+        },
+        "seed": 5480432538994370957,
+        "samples": 76,
+        "sampled_bits": 4864,
+        "bit_errors": 109,
+        "block_errors": 8,
+        "ber": 0.02240953947368421,
+        "bler": 0.10526315789473684,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.018435804363175587,
+          "upper": 0.026969841741468346
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.04655356275747616,
+          "upper": 0.19691669919168636
+        },
+        "work": {
+          "eliminations": 76,
+          "generated_patterns": 4940,
+          "tested_candidates": 4940
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-1-point-02",
+          "eb_n0_db": 3.01,
+          "osd_order": 1,
+          "digitization_precision": 0.1
+        },
+        "seed": 12290133047268339515,
+        "samples": 74,
+        "sampled_bits": 4736,
+        "bit_errors": 111,
+        "block_errors": 7,
+        "ber": 0.0234375,
+        "bler": 0.0945945945945946,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.019319005495735245,
+          "upper": 0.02815695558336212
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0388840269989352,
+          "upper": 0.18523761647347387
+        },
+        "work": {
+          "eliminations": 74,
+          "generated_patterns": 4810,
+          "tested_candidates": 4810
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-1-point-03",
+          "eb_n0_db": 3.47,
+          "osd_order": 1,
+          "digitization_precision": 0.1
+        },
+        "seed": 14904810603723668175,
+        "samples": 288,
+        "sampled_bits": 18432,
+        "bit_errors": 101,
+        "block_errors": 8,
+        "ber": 0.005479600694444444,
+        "bler": 0.027777777777777776,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.004465375565902504,
+          "upper": 0.006654284172913749
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.012067153336105401,
+          "upper": 0.05399752923747085
+        },
+        "work": {
+          "eliminations": 288,
+          "generated_patterns": 18720,
+          "tested_candidates": 18720
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-1-point-04",
+          "eb_n0_db": 3.98,
+          "osd_order": 1,
+          "digitization_precision": 0.1
+        },
+        "seed": 9662786435176207707,
+        "samples": 571,
+        "sampled_bits": 36544,
+        "bit_errors": 103,
+        "block_errors": 7,
+        "ber": 0.0028185201401050787,
+        "bler": 0.012259194395796848,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0023011323069840562,
+          "upper": 0.003417249818492632
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.004942650752452838,
+          "upper": 0.025094704034092183
+        },
+        "work": {
+          "eliminations": 571,
+          "generated_patterns": 37115,
+          "tested_candidates": 37115
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-1-point-05",
+          "eb_n0_db": 4.56,
+          "osd_order": 1,
+          "digitization_precision": 0.1
+        },
+        "seed": 16976757923693294735,
+        "samples": 10711,
+        "sampled_bits": 685504,
+        "bit_errors": 113,
+        "block_errors": 9,
+        "ber": 0.0001648422182802726,
+        "bler": 0.0008402576790215666,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.00013585518893344885,
+          "upper": 0.00019818250540403864
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.0003842890136603822,
+          "upper": 0.0015944688557300037
+        },
+        "work": {
+          "eliminations": 10711,
+          "generated_patterns": 696215,
+          "tested_candidates": 696215
+        },
+        "termination": {
+          "state": "completed"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-1-point-06",
+          "eb_n0_db": 5.23,
+          "osd_order": 1,
+          "digitization_precision": 0.1
+        },
+        "seed": 16425227754657054499,
+        "samples": 48166,
+        "sampled_bits": 3082624,
+        "bit_errors": 104,
+        "block_errors": 8,
+        "ber": 0.00003373749117634846,
+        "bler": 0.00016609226425279243,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.00002756605564809497,
+          "upper": 0.00004087847141687991
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 0.00007170949066979027,
+          "upper": 0.0003272416002704304
+        },
+        "work": {
+          "eliminations": 48166,
+          "generated_patterns": 3130790,
+          "tested_candidates": 3130790
+        },
+        "termination": {
+          "state": "completed"
+        }
+      }
+    ],
+    "termination": {
+      "state": "completed"
+    }
+  }
+}
