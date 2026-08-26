@@ -251,7 +251,8 @@ fn pinned_campaign(
             precision,
         )?);
     }
-    let interval = BinomialIntervalSpec::new(BinomialIntervalMethod::ClopperPearson, 0.95)?;
+    let interval =
+        BinomialIntervalSpec::new(BinomialIntervalMethod::NegativeBinomialClopperPearson, 0.95)?;
     OsdCampaign::new(seed, cells, interval, target_block_errors, provenance)
 }
 
@@ -277,6 +278,7 @@ fn evaluate_cell(
     let mut samples = context.resume.samples;
     let mut bit_errors = context.resume.bit_errors;
     let mut block_errors = context.resume.block_errors;
+    let mut squared_block_bit_errors = context.resume.squared_block_bit_errors;
     let mut work = context.resume.work;
     for _ in 0..max_samples {
         let frame = simulate_frame(code, &decoder, &channel, context.cell.eb_n0_db, &mut rng);
@@ -287,6 +289,9 @@ fn evaluate_cell(
         block_errors = block_errors
             .checked_add(u64::from(frame.block_error))
             .expect("block-error counter overflow");
+        squared_block_bit_errors = squared_block_bit_errors
+            .checked_add(frame.bit_errors * frame.bit_errors)
+            .expect("squared block bit-error counter overflow");
         work.eliminations = work
             .eliminations
             .checked_add(frame.work.eliminations)
@@ -302,11 +307,14 @@ fn evaluate_cell(
 
         if block_errors >= context.target_block_errors {
             return cell_run(
-                samples,
+                CellCounters {
+                    samples,
+                    bit_errors,
+                    block_errors,
+                    squared_block_bit_errors,
+                    work,
+                },
                 code.k(),
-                bit_errors,
-                block_errors,
-                work,
                 OsdCellTermination::Completed,
                 context.resume,
             );
@@ -314,26 +322,36 @@ fn evaluate_cell(
     }
 
     cell_run(
-        samples,
+        CellCounters {
+            samples,
+            bit_errors,
+            block_errors,
+            squared_block_bit_errors,
+            work,
+        },
         code.k(),
-        bit_errors,
-        block_errors,
-        work,
         OsdCellTermination::Interrupted,
         context.resume,
     )
 }
 
-fn cell_run(
+/// Cumulative counters this evaluator accumulates for one cell attempt.
+struct CellCounters {
     samples: u64,
-    information_bits: usize,
     bit_errors: u64,
     block_errors: u64,
+    squared_block_bit_errors: u64,
     work: OsdWorkCounters,
+}
+
+fn cell_run(
+    counters: CellCounters,
+    information_bits: usize,
     termination: OsdCellTermination,
     resume: OsdCellResume,
 ) -> OsdCellRun {
-    let added_samples = samples
+    let added_samples = counters
+        .samples
         .checked_sub(resume.samples)
         .expect("sample counter must be cumulative");
     let sampled_bits = resume
@@ -345,11 +363,12 @@ fn cell_run(
         )
         .expect("sampled-bit counter overflow");
     OsdCellRun {
-        samples,
+        samples: counters.samples,
         sampled_bits,
-        bit_errors,
-        block_errors,
-        work,
+        bit_errors: counters.bit_errors,
+        block_errors: counters.block_errors,
+        squared_block_bit_errors: counters.squared_block_bit_errors,
+        work: counters.work,
         termination,
     }
 }
