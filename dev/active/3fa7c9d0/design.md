@@ -168,7 +168,7 @@ compiled construction converge on the same `PreparedEnvelope`, so the
 unconditional `install` signature compiles and is useful with
 `--no-default-features`.
 
-`PreparedEnvelope` owns its `ProfileId` and a
+`PreparedEnvelope` owns its `ProfileId`, its pre-install `PreparedOrigin`, and a
 `BTreeMap<OwnedSectionId, ErasedSection>`. Every entry holds only the decoded
 typed value, its `TypeId`, and its `MeasurementProvenance`.
 `insert_measured::<T, C>` is the composer path: the one owner codec validates
@@ -425,19 +425,23 @@ enum ProcessTuning {
         at: ResolutionSite,
         profile_id: ProfileId,
         entries: BTreeMap<OwnedSectionId, ErasedSection>,
-        origin: PreparedOrigin,
     },
     FrozenBeforeInstall {
         at: ResolutionSite,
     },
 }
 
-enum PreparedOrigin {
-    CanonicalEnvelope(VerifiedAssembly),
-    Compiled(CompiledProfileProvenance),
-}
-
 ```
+
+`PreparedOrigin` belongs to `PreparedEnvelope` and records provenance before
+installation: either verified canonical-envelope assembly or compiled
+construction. Installation consumes the prepared envelope's `ProfileId` and
+typed entries into `ProcessTuning`; it does not make envelope assembly or
+compiled construction provenance part of installed process state. The
+installed state retains the profile ID, typed entries with each entry's
+`MeasurementProvenance`, and the resolution site. `SectionResolution` is the
+runtime provenance reported at access time, not a second copy of the prepared
+origin.
 
 `T::conservative()` returns a crate-owned static reference, so missing and
 pre-install defaults need no allocation, lock, or second cache. Installed
@@ -533,7 +537,8 @@ takes the `ProfileId`, ordered typed entries, and per-entry
 `MeasurementProvenance` from `PreparedEnvelope`; it takes the assembly fields
 above from the separate argument, re-canonicalizes the entries as §2.1 fixes,
 computes `content_sha256`, and emits wire `kind: "assembled"`. Parsing verifies
-the digest and retains the pair as `VerifiedAssembly` in the prepared origin.
+the digest and retains the pair as `VerifiedAssembly` in the `PreparedEnvelope`'s
+`PreparedOrigin`.
 
 Each section wrapper contains `MeasurementProvenance` owned semantically by
 that section codec:
