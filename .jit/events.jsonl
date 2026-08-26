@@ -9663,3 +9663,11 @@
 {"fields":["labels"],"id":"2a2a6ec5-3d85-49f5-ab80-109eb1b18c9c","issue_id":"f7844d2d-fed4-4333-bdc6-36be23a8bc62","timestamp":"2026-08-26T19:24:04.913953179Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["labels"],"id":"b8b87a1a-e67e-41f0-9133-c32394e29a18","issue_id":"fd1f39e0-c77e-48c5-abc3-6d48cfb25ffa","timestamp":"2026-08-26T19:24:13.226245297Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["description"],"id":"630de23a-2f97-4af5-af2a-b6b7f0ef4b43","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-26T19:35:24.815266010Z","type":"issue_updated","updated_by":"issue-update"}
+{"gate_key":"cargo-ci","id":"2aebc5d3-a09a-4285-8f93-9011ff9f596b","issue_id":"8a908f79-baf4-4135-bffe-c69abb9378bf","timestamp":"2026-08-26T19:59:29.862338941Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"ebee5670-99e0-4e37-bae0-bd71ec26bc98","issue_id":"cf37be3b-df10-4e2a-896e-69be4cf7b900","timestamp":"2026-08-26T20:00:24.645882895Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"a36cf8f4-f9a9-4fa1-9377-9d50c946f280","issue_id":"52afe5ef-1087-4451-9ab5-62cea5673296","timestamp":"2026-08-26T20:01:19.420468856Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"4768cbd5-adaa-4035-b83d-993f1f57c2f9","issue_id":"14029b3f-6532-46d8-bdf4-08a2d50e94c0","timestamp":"2026-08-26T20:02:13.781729739Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"566432f1-5b3b-431e-ad32-527db0a1ec9c","issue_id":"8a908f79-baf4-4135-bffe-c69abb9378bf","timestamp":"2026-08-26T20:05:48.179353988Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"9f6ea754-94ab-483c-96d3-49796c3dbe1c","issue_id":"cf37be3b-df10-4e2a-896e-69be4cf7b900","timestamp":"2026-08-26T20:09:44.213842358Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"1108acdf-7f43-402f-9167-1cf398da19f0","issue_id":"52afe5ef-1087-4451-9ab5-62cea5673296","timestamp":"2026-08-26T20:13:40.570436710Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"0120eab1-2f9a-4464-885e-9185aedeffb2","issue_id":"14029b3f-6532-46d8-bdf4-08a2d50e94c0","timestamp":"2026-08-26T20:17:19.406805810Z","type":"gate_passed","updated_by":"auto:executor"}

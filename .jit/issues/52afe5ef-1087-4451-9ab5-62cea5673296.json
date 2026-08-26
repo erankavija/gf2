@@ -14,14 +14,14 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-26T19:14:19.668306288Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-26T20:01:19.420468856Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-26T19:14:31.273419639Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-26T20:13:40.570436710Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "pending",
@@ -38,5 +38,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "campaign receipt records binary name only, not the invocation arguments",
-  "updated_at": "2026-08-26T19:19:22.980786697Z"
+  "updated_at": "2026-08-26T20:13:40.570436710Z"
 }
