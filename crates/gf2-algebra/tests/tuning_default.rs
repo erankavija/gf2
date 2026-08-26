@@ -1,16 +1,23 @@
-//! Feature-independent default witness for the algebra-owned tuning section.
+//! Fresh-process default witness for the algebra-owned tuning section.
 
-use gf2_algebra::tuning::{self, AlgebraTuning, CHUNK_SUBSETS};
-use gf2_core::tuning::SectionResolution;
+#[path = "support/fresh_tuning_process.rs"]
+mod fresh;
+
+use gf2_algebra::tuning::CHUNK_SUBSETS;
 
 #[test]
 fn first_algebra_access_uses_the_crate_owned_conservative_declaration() {
-    let active = tuning::active();
+    let result = fresh::fresh_tuning_process(fresh::FreshProcessCase::ConservativeDefault)
+        .expect("fresh-process default witness succeeds");
 
-    assert_eq!(active.section, &AlgebraTuning::CONSERVATIVE);
-    assert_eq!(active.permanent().gray_chunk_subsets(), CHUNK_SUBSETS);
-    assert!(matches!(
-        active.resolution,
-        SectionResolution::FrozenBeforeInstall { .. }
-    ));
+    assert_eq!(result["chunk"], CHUNK_SUBSETS);
+    assert_eq!(result["resolution"], "frozen-before-install");
+}
+
+#[test]
+fn fresh_tuning_process_child() {
+    let Some(case) = fresh::child_case().expect("fresh-process protocol is valid") else {
+        return;
+    };
+    fresh::emit_result(fresh::execute_child(case));
 }
