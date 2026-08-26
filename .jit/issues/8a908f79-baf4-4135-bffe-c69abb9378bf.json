@@ -15,12 +15,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-26T21:47:24.630818627Z",
+      "updated_at": "2026-08-26T22:15:54.427400253Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-26T21:50:37.073477785Z",
+      "updated_at": "2026-08-26T22:20:12.621560113Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -38,5 +38,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "campaign BER intervals assume bit independence under block-burst errors",
-  "updated_at": "2026-08-26T21:50:37.073477785Z"
+  "updated_at": "2026-08-26T22:20:12.621560113Z"
 }
