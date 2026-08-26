@@ -1,6 +1,6 @@
 # eBCH(128,64) ordered-statistics decoding campaign
 
-This directory holds one resumable OSD reproduction campaign and its versioned
+This directory holds one complete OSD reproduction campaign and its versioned
 evidence. The scientific target is the order-2 bit-error-rate curve of the
 extended BCH code $(128, 64, 22)$ on BI-AWGN with BPSK at rate $1/2$ published
 in [Fossorier1994]. Order 1 is an internal control of this campaign, not a
@@ -14,6 +14,8 @@ reproduction target.
 
 Every number below is a projection of `ebch_osd_awgn.json`; the receipt is the
 source of truth for seeds, counts, intervals, work counters, and provenance.
+All fourteen cells hold a completed result and the campaign termination is
+`completed`.
 
 ## What was run
 
@@ -65,20 +67,20 @@ $[L, U]$ at level $0.95$.
 | 3.47 | 2.51e-04 | Table 4.7 | 0 | 6486 | 415104 | 102 | 2.46e-04 | [2.00e-04, 2.98e-04] | accept |
 | 3.98 | 3.98e-05 | Table 4.7 | 0 | 26757 | 1712448 | 108 | 6.31e-05 | [5.17e-05, 7.61e-05] | **outside** |
 | 4.56 | 2.00e-06 | Table 4.7 | 0 | 151600 | 9702400 | 100 | 1.03e-05 | [8.39e-06, 1.25e-05] | **outside** |
-| 5.23 | 2.51e-07 | Table 4.7 (bound) | 0 | 8000000 | 512000000 | 96 | 1.88e-07 | [1.52e-07, 2.29e-07] | **outside** (interim) |
+| 5.23 | 2.51e-07 | Table 4.7 (bound) | 0 | 8066414 | 516250496 | 111 | 2.15e-07 | [1.77e-07, 2.59e-07] | accept |
 
-Four of the six abscissas whose published entry is a simulation fall outside
-their acceptance window. Those measurements stand as recorded; no seed, error
-target, tie policy, or other control was changed in response to them. The
-deviation is not one-signed: at 3.01 dB the measured interval lies below the
-published value, and at 2.22, 3.98, and 4.56 dB it lies above, with the largest
-separation at 4.56 dB.
+Under the recorded interval, four of the six abscissas whose published entry is
+a simulation reject their published value. Those measurements stand as recorded;
+no seed, error target, tie policy, or other control was changed in response to
+them. The deviation is not one-signed: at 3.01 dB the measured interval lies
+below the published value, and at 2.22, 3.98, and 4.56 dB it lies above, with
+the largest separation at 4.56 dB.
 
-The 5.23 dB row is marked interim because that cell is interrupted at its
-invocation bound rather than complete, holding 96 of its 100 target bit errors.
-Its published entry is a bound rather than a measurement, so its verdict is not
-evidence about curve reproduction; see
-[Contradictory evidence](#contradictory-evidence).
+The recorded interval assumes independent bit trials, which this campaign's
+sampling violates. [Interval width and correlated bit
+errors](#interval-width-and-correlated-bit-errors) shows that three of those
+four rejections do not survive an interval computed over independent blocks,
+and that the 4.56 dB rejection does.
 
 ## Order-1 internal control
 
@@ -89,17 +91,66 @@ them.
 
 | $E_b/N_0$ (dB) | blocks $n$ | sampled bits | bit errors | BER | 95% Clopper-Pearson $[L,U]$ | BLER | status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.55 | not started | — | — | — | — | — | pending |
-| 2.22 | not started | — | — | — | — | — | pending |
-| 3.01 | not started | — | — | — | — | — | pending |
-| 3.47 | not started | — | — | — | — | — | pending |
-| 3.98 | not started | — | — | — | — | — | pending |
-| 4.56 | not started | — | — | — | — | — | pending |
-| 5.23 | not started | — | — | — | — | — | pending |
+| 1.55 | 15 | 960 | 104 | 1.08e-01 | [8.94e-02, 1.30e-01] | 4.67e-01 | completed |
+| 2.22 | 76 | 4864 | 109 | 2.24e-02 | [1.84e-02, 2.70e-02] | 1.05e-01 | completed |
+| 3.01 | 74 | 4736 | 111 | 2.34e-02 | [1.93e-02, 2.82e-02] | 9.46e-02 | completed |
+| 3.47 | 288 | 18432 | 101 | 5.48e-03 | [4.47e-03, 6.65e-03] | 2.78e-02 | completed |
+| 3.98 | 571 | 36544 | 103 | 2.82e-03 | [2.30e-03, 3.42e-03] | 1.23e-02 | completed |
+| 4.56 | 10711 | 685504 | 113 | 1.65e-04 | [1.36e-04, 1.98e-04] | 8.40e-04 | completed |
+| 5.23 | 48166 | 3082624 | 104 | 3.37e-05 | [2.76e-05, 4.09e-05] | 1.66e-04 | completed |
 
-The control cells follow every order-2 cell in the campaign grid, and an
-invocation returns at its first interrupted cell, so they remain unmeasured
-while `order-2-point-06` is interrupted.
+The control's point estimates are not monotone in $E_b/N_0$: its 3.01 dB BER
+exceeds its 2.22 dB BER, where a lower error rate at higher $E_b/N_0$ is the
+unambiguous physical expectation. The two recorded intervals overlap almost
+entirely, so the campaign does not resolve these two abscissas apart at all,
+even though the corresponding published order-1 values differ by a factor of
+about three. Those cells stop after 76 and 74 blocks respectively. The control
+therefore exhibits the interval-width defect described below, in the arm where
+the expected ordering is known independently of any published number.
+
+## Interval width and correlated bit errors
+
+Every cell in this campaign stops on a cumulative count of 100 information-bit
+errors, and every cell reaches that count from between seven and nine failed
+blocks, each failed block contributing roughly twelve to sixteen bit errors. A
+Clopper-Pearson interval over sampled bits treats those bits as independent
+trials. They are not: a block either decodes correctly and contributes no
+errors, or fails and contributes a burst. The independent sampling unit is the
+block, so the effective sample size behind each BER estimate is the block-error
+count, not the bit-error count.
+
+The consequence is that every recorded BER interval is far narrower than the
+evidence supports. Each spans about $\pm 19\%$ of its point estimate, the
+precision a hundred independent trials would give, while the seven to nine
+independent failures actually observed support roughly $\pm 70\%$.
+
+The column below labelled block-resolved rescales the receipt's own BLER
+Clopper-Pearson interval, which is computed over blocks and is therefore valid,
+by the observed mean bit errors per failed block. It uses only committed receipt
+fields and no new sampling.
+
+| $E_b/N_0$ (dB) | block errors | bit errors per failed block | recorded bit-level $[L,U]$ | block-resolved $[L,U]$ | recorded verdict | block-resolved verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1.55 | 8 | 13.4 | [2.54e-02, 3.73e-02] | [1.38e-02, 5.67e-02] | accept | accept |
+| 2.22 | 7 | 14.7 | [8.94e-03, 1.33e-02] | [4.45e-03, 2.20e-02] | **outside** | accept |
+| 3.01 | 9 | 12.2 | [5.91e-04, 8.67e-04] | [3.29e-04, 1.36e-03] | **outside** | accept |
+| 3.47 | 9 | 11.3 | [2.00e-04, 2.98e-04] | [1.12e-04, 4.66e-04] | accept | accept |
+| 3.98 | 9 | 12.0 | [5.17e-05, 7.61e-05] | [2.88e-05, 1.20e-04] | **outside** | accept |
+| 4.56 | 7 | 14.3 | [8.39e-06, 1.25e-05] | [4.14e-06, 2.12e-05] | **outside** | **outside** |
+| 5.23 | 9 | 12.3 | [1.77e-07, 2.59e-07] | [9.83e-08, 4.08e-07] | accept | accept |
+
+The REQ-02 verdicts of record remain the recorded ones, because the criterion
+names the receipt interval at its recorded method and level. This section does
+not replace them; it identifies which of them are artifacts of the independence
+assumption. The 2.22, 3.01, and 3.98 dB rejections are such artifacts. The
+4.56 dB rejection is not: the published $1.995\times10^{-6}$ stays below the
+block-resolved lower endpoint $4.14\times10^{-6}$ by a factor of about two, so
+that abscissa is this campaign's one robust disagreement with the published
+curve.
+
+Resolving this needs a stopping rule counting block errors, or a clustered
+interval for BER, in the producing tool. Neither is applied here, because that
+would change committed measurement behavior under an issue that does not own it.
 
 ## Cell status and resumption
 
@@ -111,14 +162,14 @@ while `order-2-point-06` is interrupted.
 | `order-2-point-03` | 2 | 3.47 | 1 | 6486 | 102 | completed |
 | `order-2-point-04` | 2 | 3.98 | 2 (interrupted, completed) | 26757 | 108 | completed |
 | `order-2-point-05` | 2 | 4.56 | 1 | 151600 | 100 | completed |
-| `order-2-point-06` | 2 | 5.23 | 2 (interrupted, interrupted) | 8000000 | 96 | interrupted |
-| `order-1-point-00` | 1 | 1.55 | 0 | 0 | 0 | not started |
-| `order-1-point-01` | 1 | 2.22 | 0 | 0 | 0 | not started |
-| `order-1-point-02` | 1 | 3.01 | 0 | 0 | 0 | not started |
-| `order-1-point-03` | 1 | 3.47 | 0 | 0 | 0 | not started |
-| `order-1-point-04` | 1 | 3.98 | 0 | 0 | 0 | not started |
-| `order-1-point-05` | 1 | 4.56 | 0 | 0 | 0 | not started |
-| `order-1-point-06` | 1 | 5.23 | 0 | 0 | 0 | not started |
+| `order-2-point-06` | 2 | 5.23 | 3 (interrupted, interrupted, completed) | 8066414 | 111 | completed |
+| `order-1-point-00` | 1 | 1.55 | 1 | 15 | 104 | completed |
+| `order-1-point-01` | 1 | 2.22 | 1 | 76 | 109 | completed |
+| `order-1-point-02` | 1 | 3.01 | 1 | 74 | 111 | completed |
+| `order-1-point-03` | 1 | 3.47 | 1 | 288 | 101 | completed |
+| `order-1-point-04` | 1 | 3.98 | 1 | 571 | 103 | completed |
+| `order-1-point-05` | 1 | 4.56 | 1 | 10711 | 113 | completed |
+| `order-1-point-06` | 1 | 5.23 | 1 | 48166 | 104 | completed |
 
 Resume with the same command and the same checkpoint path:
 
@@ -132,34 +183,38 @@ $ ./target/release/ebch_osd_awgn_campaign \
 The protocol skips every cell holding a terminal result and continues an
 interrupted cell from its durable counters, so completed work is never repeated.
 Each attempt stays in the receipt's `cell_results` history, so an interrupted
-attempt remains visible whether a later attempt completes the cell, as at
-3.98 dB, or bounds it again, as at 5.23 dB.
-
-`order-2-point-06` is the one cell still short of its stopping rule, holding 96
-of 100 target bit errors after 8,000,000 blocks. Continuing it replays those
-8,000,000 blocks before drawing a new sample, so the next invocation should
-carry a `--max-samples` bound large enough to finish the cell in one attempt.
+attempt remains visible beside the result that supersedes it; `order-2-point-04`
+records one such attempt and `order-2-point-06` records two.
 
 Three properties bound a resume. The evaluator replays a resumed cell's durable
 prefix through the same decoder to re-advance its ChaCha20 stream, so the cost
-of continuing a cell includes re-running the samples it already holds.
+of continuing a cell includes re-running the samples it already holds. At
+`order-2-point-06` that replay was 8,000,000 blocks, and it dominated the final
+invocation.
 
 The remaining two follow from `OsdCampaign::config_hash`, which covers the whole
 validated campaign including its runtime provenance, and which the checkpoint
 reader compares exactly. It covers `provenance.runtime.git_revision`, so a
 resume is accepted only while the repository HEAD equals the revision recorded
 in the checkpoint; at any later revision the checkpoint is refused with a
-configuration-hash mismatch and the campaign continues only from a checkout of
-the recorded revision. It also covers `provenance.runtime.binary_sha256`, the
-SHA-256 of the running executable, so the resume requires the exact binary that
-produced the checkpoint. Rebuilding is not a substitute: a rebuild that differs
-in any byte, including one from a different absolute worktree path, produces a
-different digest and is refused. Verify the executable before resuming:
+configuration-hash mismatch. It also covers `provenance.runtime.binary_sha256`,
+the SHA-256 of the running executable, so the resume requires the exact binary
+that produced the checkpoint. Rebuilding is not a substitute: a rebuild that
+differs in any byte, including one from a different absolute worktree path,
+produces a different digest and is refused. Verify the executable before
+resuming:
 
 ```console
 $ sha256sum target/release/ebch_osd_awgn_campaign
 ae0ecf0c6994053e4aa9c43b12e05c52f8c200022304ac3e19beaedb872ed1bd
 ```
+
+Because the recorded revision precedes the commits carrying these files, the
+campaign's later invocations ran from a detached checkout of that revision with
+the checkpoint and receipt restored into the working tree as untracked paths.
+Untracked paths under `dev/` do not affect `deps_source_dirty`, which is
+observed over `crates/` and `Cargo.lock` alone, so the configuration hash still
+matched. A future resume follows the same procedure.
 
 ## Provenance
 
@@ -194,25 +249,38 @@ $0.1$-decade read precision. The dataset keeps the printed table value in
 `value` and `value_log10` and the pixel read in `figure_crosscheck_log10`, and
 corrects neither against the other. This comparison tests the dataset's primary
 `value` field as committed and selects neither reading. The verdict at this
-abscissa does not depend on that choice: the measured interval
+abscissa does not depend on that choice: the recorded interval
 $[8.39\times10^{-6}, 1.25\times10^{-5}]$ excludes the table value and the figure
-cross-read alike.
+cross-read alike, and the wider block-resolved interval
+$[4.14\times10^{-6}, 2.12\times10^{-5}]$ excludes both as well.
 
-**Measured points outside their acceptance window.** The 2.22, 3.01, 3.98, and
-4.56 dB order-2 points reject their published values under the REQ-02
-predicate. They are recorded here with the contradiction rather than reconciled,
-and the campaign controls that produced them are unchanged.
+**A measured point outside its acceptance window under either interval.** The
+4.56 dB order-2 point rejects its published value whether the interval is the
+recorded bit-level one or the block-resolved one. It is recorded with the
+contradiction rather than reconciled, and the campaign controls that produced it
+are unchanged.
+
+**Rejections that do not survive a valid interval.** The 2.22, 3.01, and 3.98 dB
+order-2 points reject their published values under the recorded interval and
+accept them under the block-resolved one. Both verdicts are reported above; the
+recorded verdict is the one REQ-02 names, and it is not evidence of a physical
+discrepancy at those three abscissas.
+
+**Recorded BER intervals understate uncertainty.** Every cell reaches its
+100-bit-error stopping rule from seven to nine failed blocks, so the recorded
+Clopper-Pearson BER intervals are roughly a factor of three too narrow. This is
+a property of the producing tool's stopping rule and interval choice, recorded
+here rather than corrected. The order-1 control's non-monotone 2.22/3.01 dB pair
+is the clearest symptom.
 
 **A bound compared as if it were a measurement.** The dataset marks the 5.23 dB
 order-2 entry `value_kind = union_bound` and states that bound rows are not
 simulation evidence. The predicate is evaluated mechanically for that row and
 reported above for completeness, but its verdict there carries no claim about
-reproducing a published measurement. The measured interval
-$[1.52\times10^{-7}, 2.29\times10^{-7}]$ lies entirely below the tabulated
-bound $2.5119\times10^{-7}$, which is the relation an upper bound and a
-measurement are expected to have; the predicate nonetheless reports the row as
-outside, because it tests membership of a published point rather than the
-inequality a bound asserts.
+reproducing a published measurement. The recorded interval
+$[1.77\times10^{-7}, 2.59\times10^{-7}]$ contains the tabulated bound
+$2.5119\times10^{-7}$ and the point estimate lies below it, which is the
+relation an upper bound and a measurement are expected to have.
 
 **Recorded digitization precision carries decade units.** The dataset records
 $\delta$ in $\log_{10}$ decades (`digitization_uncertainty_log10`), while the
