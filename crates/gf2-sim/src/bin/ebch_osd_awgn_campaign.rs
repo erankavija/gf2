@@ -3,10 +3,10 @@
 //!
 //! The executable owns only the domain binding: the named
 //! [`ExtendedBchCode::ebch_128_64`] factory, the BI-AWGN/BPSK channel, the
-//! order-2 target and order-1 control cells, and this evaluator's bounded
-//! stopping controls.  Cell identity, deterministic seed derivation,
-//! checkpoint validation, BER/BLER intervals, receipt schema, and resume
-//! history remain in [`gf2_sim::osd_campaign`].
+//! order-2 target and order-1 control cells, and each sampled block's outcome.
+//! Cell identity, deterministic seed derivation, bounded stopping, checkpoint
+//! validation, BER/BLER intervals, receipt schema, and resume history remain in
+//! [`gf2_sim::osd_campaign`].
 //!
 //! # Usage
 //!
@@ -51,9 +51,8 @@ use rand_chacha08::ChaCha20Rng;
 use sha2::{Digest, Sha256};
 
 use gf2_sim::osd_campaign::{
-    BinomialIntervalMethod, BinomialIntervalSpec, OsdCampaign, OsdCampaignError,
-    OsdCampaignProvenance, OsdCell, OsdCellExecution, OsdCellResume, OsdCellRun,
-    OsdCellTermination, OsdWorkCounters,
+    BinomialIntervalMethod, BinomialIntervalSpec, OsdBlockContext, OsdBlockOutcome, OsdCampaign,
+    OsdCampaignError, OsdCampaignProvenance, OsdCell, OsdCellId, OsdWorkCounters,
 };
 use gf2_sim::permanent_campaign::provenance::{
     observe_cpu_identity, observe_provenance, repository_top_level,
@@ -122,9 +121,13 @@ fn run() -> Result<(), String> {
     let campaign = pinned_campaign(args.seed, args.target_block_errors, provenance)
         .map_err(|error| error.to_string())?;
     let code = ExtendedBchCode::ebch_128_64();
-    let receipt = gf2_sim::osd_campaign::run_osd_campaign(&args.checkpoint, &campaign, |context| {
-        evaluate_cell(context, &code, args.max_samples)
-    })
+    let mut evaluator = None;
+    let receipt = gf2_sim::osd_campaign::run_osd_campaign(
+        &args.checkpoint,
+        &campaign,
+        args.max_samples,
+        |context| evaluate_block(context, &code, &mut evaluator),
+    )
     .map_err(|error| error.to_string())?;
     write_receipt(&args.receipt, &receipt)?;
     println!(
@@ -256,126 +259,89 @@ fn pinned_campaign(
     OsdCampaign::new(seed, cells, interval, target_block_errors, provenance)
 }
 
-fn evaluate_cell(
-    context: OsdCellExecution<'_>,
+fn evaluate_block(
+    context: OsdBlockContext<'_>,
     code: &ExtendedBchCode,
-    max_samples: u64,
-) -> OsdCellRun {
-    let decoder = GeneratorMatrixOsdDecoder::new(
-        code.clone(),
-        OsdConfig::new(usize::from(context.cell.osd_order)),
-    );
-    let channel = BpskAwgnChannel;
-    let mut rng = ChaCha20Rng::seed_from_u64(context.seed);
-
-    // Replaying the already durable prefix advances the same ChaCha20 stream
-    // that an uninterrupted evaluator would have consumed.  The protocol
-    // supplies the counters; this closure supplies only domain work.
-    for _ in 0..context.resume.samples {
-        let _ = simulate_frame(code, &decoder, &channel, context.cell.eb_n0_db, &mut rng);
+    evaluator: &mut Option<CellEvaluator>,
+) -> OsdBlockOutcome {
+    let starts_new_cell = evaluator
+        .as_ref()
+        .is_none_or(|evaluator| evaluator.cell_id != context.cell.id);
+    if starts_new_cell {
+        *evaluator = Some(CellEvaluator::new(context, code));
     }
+    evaluator
+        .as_mut()
+        .expect("the cell evaluator was initialized")
+        .sample(context, code)
+}
 
-    let mut samples = context.resume.samples;
-    let mut bit_errors = context.resume.bit_errors;
-    let mut block_errors = context.resume.block_errors;
-    let mut squared_block_bit_errors = context.resume.squared_block_bit_errors;
-    let mut work = context.resume.work;
-    for _ in 0..max_samples {
-        let frame = simulate_frame(code, &decoder, &channel, context.cell.eb_n0_db, &mut rng);
-        samples = samples.checked_add(1).expect("sample counter overflow");
-        bit_errors = bit_errors
-            .checked_add(frame.bit_errors)
-            .expect("bit-error counter overflow");
-        block_errors = block_errors
-            .checked_add(u64::from(frame.block_error))
-            .expect("block-error counter overflow");
-        squared_block_bit_errors = squared_block_bit_errors
-            .checked_add(frame.bit_errors * frame.bit_errors)
-            .expect("squared block bit-error counter overflow");
-        work.eliminations = work
-            .eliminations
-            .checked_add(frame.work.eliminations)
-            .expect("elimination counter overflow");
-        work.generated_patterns = work
-            .generated_patterns
-            .checked_add(frame.work.generated_patterns)
-            .expect("pattern counter overflow");
-        work.tested_candidates = work
-            .tested_candidates
-            .checked_add(frame.work.tested_candidates)
-            .expect("candidate counter overflow");
+struct CellEvaluator {
+    cell_id: OsdCellId,
+    seed: u64,
+    next_block_index: u64,
+    decoder: GeneratorMatrixOsdDecoder<ExtendedBchCode>,
+    channel: BpskAwgnChannel,
+    rng: ChaCha20Rng,
+}
 
-        if block_errors >= context.target_block_errors {
-            return cell_run(
-                CellCounters {
-                    samples,
-                    bit_errors,
-                    block_errors,
-                    squared_block_bit_errors,
-                    work,
-                },
-                code.k(),
-                OsdCellTermination::Completed,
-                context.resume,
-            );
+impl CellEvaluator {
+    fn new(context: OsdBlockContext<'_>, code: &ExtendedBchCode) -> Self {
+        let decoder = GeneratorMatrixOsdDecoder::new(
+            code.clone(),
+            OsdConfig::new(usize::from(context.cell.osd_order)),
+        );
+        let channel = BpskAwgnChannel;
+        let mut rng = ChaCha20Rng::seed_from_u64(context.seed);
+
+        // The checkpoint intentionally stores aggregate evidence rather than
+        // implementation-specific RNG bytes. Replaying the durable prefix
+        // restores the exact ChaCha20 position used by the original evaluator.
+        for _ in 0..context.block_index {
+            let _ = simulate_frame(code, &decoder, &channel, context.cell.eb_n0_db, &mut rng);
+        }
+
+        Self {
+            cell_id: context.cell.id.clone(),
+            seed: context.seed,
+            next_block_index: context.block_index,
+            decoder,
+            channel,
+            rng,
         }
     }
 
-    cell_run(
-        CellCounters {
-            samples,
-            bit_errors,
-            block_errors,
-            squared_block_bit_errors,
-            work,
-        },
-        code.k(),
-        OsdCellTermination::Interrupted,
-        context.resume,
-    )
-}
-
-/// Cumulative counters this evaluator accumulates for one cell attempt.
-struct CellCounters {
-    samples: u64,
-    bit_errors: u64,
-    block_errors: u64,
-    squared_block_bit_errors: u64,
-    work: OsdWorkCounters,
-}
-
-fn cell_run(
-    counters: CellCounters,
-    information_bits: usize,
-    termination: OsdCellTermination,
-    resume: OsdCellResume,
-) -> OsdCellRun {
-    let added_samples = counters
-        .samples
-        .checked_sub(resume.samples)
-        .expect("sample counter must be cumulative");
-    let sampled_bits = resume
-        .sampled_bits
-        .checked_add(
-            added_samples
-                .checked_mul(information_bits as u64)
-                .expect("sampled-bit counter overflow"),
-        )
-        .expect("sampled-bit counter overflow");
-    OsdCellRun {
-        samples: counters.samples,
-        sampled_bits,
-        bit_errors: counters.bit_errors,
-        block_errors: counters.block_errors,
-        squared_block_bit_errors: counters.squared_block_bit_errors,
-        work: counters.work,
-        termination,
+    fn sample(&mut self, context: OsdBlockContext<'_>, code: &ExtendedBchCode) -> OsdBlockOutcome {
+        assert_eq!(
+            self.cell_id, context.cell.id,
+            "cell identity must be stable"
+        );
+        assert_eq!(self.seed, context.seed, "cell seed must be stable");
+        assert_eq!(
+            self.next_block_index, context.block_index,
+            "protocol block indices must be consecutive"
+        );
+        let frame = simulate_frame(
+            code,
+            &self.decoder,
+            &self.channel,
+            context.cell.eb_n0_db,
+            &mut self.rng,
+        );
+        self.next_block_index = self
+            .next_block_index
+            .checked_add(1)
+            .expect("block index overflow");
+        OsdBlockOutcome {
+            information_bits: code.k() as u64,
+            information_bit_errors: frame.bit_errors,
+            work: frame.work,
+        }
     }
 }
 
 struct FrameResult {
     bit_errors: u64,
-    block_error: bool,
     work: OsdWorkCounters,
 }
 
@@ -412,11 +378,7 @@ fn simulate_frame(
     let bit_errors = (0..code.k())
         .filter(|&bit| decoded.get(bit) != message.get(bit))
         .count() as u64;
-    FrameResult {
-        bit_errors,
-        block_error: bit_errors != 0,
-        work,
-    }
+    FrameResult { bit_errors, work }
 }
 
 fn campaign_provenance(invocation: Vec<String>) -> Result<OsdCampaignProvenance, String> {
