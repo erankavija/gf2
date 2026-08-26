@@ -12,10 +12,11 @@ reproduction target.
 | `ebch_osd_awgn.checkpoint.json` | Durable resumable progress, one entry per cell attempt |
 | `README.md` | This provenance record |
 
-Every number below is a projection of `ebch_osd_awgn.json`; the receipt is the
-source of truth for seeds, counts, intervals, work counters, and provenance.
-All fourteen cells hold a completed result and the campaign termination is
-`completed`.
+Every number below is a projection of `ebch_osd_awgn.json`, with one labelled
+exception: the host CPU identity under [Provenance](#provenance), which the
+receipt's schema cannot carry. The receipt is the source of truth for seeds,
+counts, intervals, work counters, and provenance. All fourteen cells hold a
+completed result and the campaign termination is `completed`.
 
 ## What was run
 
@@ -247,7 +248,14 @@ Each row names the receipt field it projects.
 The revision is observed at run start and recorded as context, so it names the
 revision the campaign ran at rather than the commit that carries these files.
 The recorded hardware field is the producer's OS and architecture token; the
-producer records no specific CPU model.
+producer records no specific CPU model, which is tracked as `14029b3f`.
+
+Because the receipt's own field cannot carry it, the campaign operator records
+the host identity observed with `lscpu` during this campaign: an AMD Ryzen 9
+5900X, twelve cores and twenty-four threads on one socket. This sentence is
+operator-recorded context rather than a projection of the receipt, and the work
+counters the receipt records are the machine-independent evidence; wall-clock
+cost is not a claim of this artifact set.
 
 ## Contradictory evidence
 
