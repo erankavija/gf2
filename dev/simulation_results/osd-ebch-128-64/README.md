@@ -10,13 +10,16 @@ reproduction target.
 | --- | --- |
 | `ebch_osd_awgn.json` | Versioned statistical receipt; the authoritative record |
 | `ebch_osd_awgn.checkpoint.json` | Durable resumable progress, one entry per cell attempt |
+| `host-lscpu.txt` | Unedited `lscpu` output identifying the producing host |
 | `README.md` | This provenance record |
 
-Every number below is a projection of `ebch_osd_awgn.json`, with one labelled
-exception: the host CPU identity under [Provenance](#provenance), which the
-receipt's schema cannot carry. The receipt is the source of truth for seeds,
-counts, intervals, work counters, and provenance. All fourteen cells hold a
-completed result and the campaign termination is `completed`.
+Every number below is a projection of `ebch_osd_awgn.json` except two labelled
+operator-recorded additions, each covering a fact the receipt's schema cannot
+carry: the host identity under [Provenance](#provenance), committed as
+`host-lscpu.txt`, and the [invocation ledger](#invocation-ledger), taken from
+the session that executed the campaign. The receipt remains the source of truth
+for seeds, counts, intervals, work counters, and provenance. All fourteen cells
+hold a completed result and the campaign termination is `completed`.
 
 ## What was run
 
@@ -90,15 +93,15 @@ the decoder, channel, and interval machinery across the same abscissas. They are
 not externally sourced claims, and no published value is asserted or tested for
 them.
 
-| $E_b/N_0$ (dB) | blocks $n$ | sampled bits | bit errors | BER | 95% Clopper-Pearson $[L,U]$ | BLER | status |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.55 | 15 | 960 | 104 | 1.08e-01 | [8.94e-02, 1.30e-01] | 4.67e-01 | completed |
-| 2.22 | 76 | 4864 | 109 | 2.24e-02 | [1.84e-02, 2.70e-02] | 1.05e-01 | completed |
-| 3.01 | 74 | 4736 | 111 | 2.34e-02 | [1.93e-02, 2.82e-02] | 9.46e-02 | completed |
-| 3.47 | 288 | 18432 | 101 | 5.48e-03 | [4.47e-03, 6.65e-03] | 2.78e-02 | completed |
-| 3.98 | 571 | 36544 | 103 | 2.82e-03 | [2.30e-03, 3.42e-03] | 1.23e-02 | completed |
-| 4.56 | 10711 | 685504 | 113 | 1.65e-04 | [1.36e-04, 1.98e-04] | 8.40e-04 | completed |
-| 5.23 | 48166 | 3082624 | 104 | 3.37e-05 | [2.76e-05, 4.09e-05] | 1.66e-04 | completed |
+| $E_b/N_0$ (dB) | blocks $n$ | sampled bits | bit errors | BER | BER 95% Clopper-Pearson $[L,U]$ | block errors | BLER | BLER 95% Clopper-Pearson $[L,U]$ | status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1.55 | 15 | 960 | 104 | 1.08e-01 | [8.94e-02, 1.30e-01] | 7 | 4.67e-01 | [2.13e-01, 7.34e-01] | completed |
+| 2.22 | 76 | 4864 | 109 | 2.24e-02 | [1.84e-02, 2.70e-02] | 8 | 1.05e-01 | [4.66e-02, 1.97e-01] | completed |
+| 3.01 | 74 | 4736 | 111 | 2.34e-02 | [1.93e-02, 2.82e-02] | 7 | 9.46e-02 | [3.89e-02, 1.85e-01] | completed |
+| 3.47 | 288 | 18432 | 101 | 5.48e-03 | [4.47e-03, 6.65e-03] | 8 | 2.78e-02 | [1.21e-02, 5.40e-02] | completed |
+| 3.98 | 571 | 36544 | 103 | 2.82e-03 | [2.30e-03, 3.42e-03] | 7 | 1.23e-02 | [4.94e-03, 2.51e-02] | completed |
+| 4.56 | 10711 | 685504 | 113 | 1.65e-04 | [1.36e-04, 1.98e-04] | 9 | 8.40e-04 | [3.84e-04, 1.59e-03] | completed |
+| 5.23 | 48166 | 3082624 | 104 | 3.37e-05 | [2.76e-05, 4.09e-05] | 8 | 1.66e-04 | [7.17e-05, 3.27e-04] | completed |
 
 The control's point estimates are not monotone in $E_b/N_0$: its 3.01 dB BER
 exceeds its 2.22 dB BER, where a lower error rate at higher $E_b/N_0$ is the
@@ -227,6 +230,43 @@ matched. A future resume follows the same procedure. That the hash gates
 resumption on provenance context which does not affect resumed results is
 tracked as `9af52659`.
 
+### Invocation ledger
+
+The receipt's `provenance.runtime.invocation` field records the executable name
+alone, without the arguments that produced each attempt, which is tracked as
+`52afe5ef`. The ledger below is therefore operator-recorded from the session
+that executed the campaign, not a projection of the receipt. Its attempt column
+maps onto the receipt's `cell_results` history in order, and the four rows
+account for all seventeen recorded attempts.
+
+Every invocation ran the same executable, SHA-256 `ae0ecf0c…`, built once and
+never rebuilt. Arguments are given after the `--` separator; all four passed
+`--checkpoint dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.checkpoint.json`
+and `--receipt dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.json`, so
+only `--max-samples` differs. Times are local (UTC+03:00) on 2026-08-26.
+
+| # | Start | Exit | `--max-samples` | Checkout context | Attempts produced |
+| --- | --- | --- | --- | --- | --- |
+| 1 | approx. 00:20 | approx. 00:20, 21.2 s later | `20000` | branch `worktree-agent-cef1ae5f` at `673bb928`, clean tree | 1–5: `order-2-point-00` … `-03` completed, `-04` interrupted at 20,000 |
+| 2 | 00:20:36 | 01:32:56 | `6000000` | branch at `673bb928`, artifacts untracked | 6–8: `-04` completed, `-05` completed, `-06` interrupted at 6,000,000 |
+| 3 | 01:33:48 | between 03:00:58 and 03:04:29 | `2000000` | branch at `673bb928`, artifacts untracked | 9: `-06` interrupted at 8,000,000 |
+| 4 | 04:23:44 | between 05:49:13 and 05:56:32 | `20000000` | detached `673bb928`, artifacts restored untracked | 10–17: `-06` completed at 8,066,414, then all seven `order-1-point-*` completed |
+
+Row 1's exact clock times are not in the session record; its duration is, and
+its ordering relative to row 2 is fixed by row 2's recorded start. Rows 3 and 4
+were observed by polling rather than at exit, so their exit times are bracketed
+between the last observation showing the process alive and the first showing it
+gone. Row 3 began before the first commit of these artifacts and was still
+running when that commit landed; the configuration hash is computed once at
+process start, so the commit did not disturb it.
+
+Three further runs of the binary are excluded from the ledger because they wrote
+to a scratch checkpoint outside the repository and contributed no attempt to
+this receipt: two throughput probes and one deliberate check that a changed
+repository HEAD is refused. Cell seeds derive from the campaign seed and cell
+identity alone, so runs against a separate checkpoint cannot perturb these
+results.
+
 ## Provenance
 
 Each row names the receipt field it projects.
@@ -250,12 +290,14 @@ revision the campaign ran at rather than the commit that carries these files.
 The recorded hardware field is the producer's OS and architecture token; the
 producer records no specific CPU model, which is tracked as `14029b3f`.
 
-Because the receipt's own field cannot carry it, the campaign operator records
-the host identity observed with `lscpu` during this campaign: an AMD Ryzen 9
-5900X, twelve cores and twenty-four threads on one socket. This sentence is
-operator-recorded context rather than a projection of the receipt, and the work
-counters the receipt records are the machine-independent evidence; wall-clock
-cost is not a claim of this artifact set.
+Because the receipt's own field cannot carry it, the host identity is committed
+beside the receipt as [`host-lscpu.txt`](host-lscpu.txt), the unedited output of
+`lscpu` on the machine that ran this campaign. That file is the hardware
+evidence for this artifact set; it names an AMD Ryzen 9 5900X with twelve cores
+and twenty-four threads on one socket. It is operator-captured rather than
+emitted by the producer, so it carries no digest inside the receipt. The work
+counters the receipt records are the machine-independent evidence, and
+wall-clock cost is not a claim of this artifact set.
 
 ## Contradictory evidence
 
