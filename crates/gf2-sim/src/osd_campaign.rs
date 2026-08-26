@@ -18,12 +18,14 @@
 //!
 //! Schema 2 treats one decoded block as the independent sampling unit for both
 //! intervals, and both follow the stopping design rather than assuming a fixed
-//! trial count. A completed cell stops at its `K`-th block error, where `K` is
-//! the campaign's `target_block_errors`, so the total block count `N` is a
-//! stopping time and the design is inverse-binomial. `--max-samples` bounds one
-//! invocation without consulting any outcome, so that censoring is independent
-//! of the sampled values and a resumed completed cell still holds exactly `K`
-//! failing blocks drawn under the same design.
+//! trial count. A completed cell is accepted only with exactly `K` block
+//! errors, where `K` is the campaign's `target_block_errors`; the protocol
+//! enforces that the last sampled block is the target's `K`-th error. The total
+//! block count `N` is therefore a stopping time and the design is
+//! inverse-binomial. `--max-samples` bounds one invocation without consulting
+//! any outcome, so that censoring is independent of the sampled values and a
+//! resumed completed cell still holds exactly `K` failing blocks drawn under
+//! the same design.
 //!
 //! BER factors over that design as `BER = BLER * mu`, where `mu` is the mean
 //! information-bit error fraction of a failing block. Both factors are
@@ -391,6 +393,10 @@ impl BinomialIntervalSpec {
     /// length and no estimand.
     #[must_use]
     pub fn ber_interval(self, counts: BlockSampleCounts) -> BinomialConfidenceInterval {
+        assert!(
+            counts.samples > 0,
+            "BER interval requires at least one sampled block"
+        );
         let block_rate = self.bler_interval(counts.block_errors, counts.samples);
         let (fraction_lower, fraction_upper) =
             counts.failing_block_fraction_interval(self.component_level());
@@ -1261,6 +1267,12 @@ fn validate_cell_run(
             return Err(invalid(
                 "completed cell has not reached the target block-error count",
             ));
+        }
+        OsdCellTermination::Completed if run.block_errors > target_block_errors => {
+            return Err(invalid(&format!(
+                "completed cell must stop exactly at the target block-error count; the inverse-binomial interval assumes the last sampled block is the target's K-th error (observed {}, target {})",
+                run.block_errors, target_block_errors
+            )));
         }
         OsdCellTermination::Interrupted if run.block_errors >= target_block_errors => {
             return Err(invalid(
