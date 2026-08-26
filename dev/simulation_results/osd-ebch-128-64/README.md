@@ -175,7 +175,12 @@ from the block-error rate and the mean failing-block error fraction. That is a
 change of measurement behavior, so this artifact set keeps the behavioral
 identity it was produced under and is not re-derived; reproducing these cells
 under the current tool is a new campaign. The recorded BLER intervals are
-unaffected, since they are computed over blocks.
+computed over blocks, so within-block error clustering does not distort them,
+but they share the adaptive-stopping caveat: this campaign stopped each cell on
+a cumulative bit-error target, an outcome-dependent rule under which the
+fixed-trial Clopper-Pearson coverage they state is not exact either. They
+remain the schema-1 record of what was computed, reinterpreted rather than
+re-derived.
 
 ## Cell status and resumption
 
