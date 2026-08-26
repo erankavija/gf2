@@ -354,7 +354,7 @@
         "sampled_bits": 9702400,
         "bit_errors": 100,
         "block_errors": 7,
-        "ber": 0.000010306728232189973,
+        "ber": 0.000010306728232189972,
         "bler": 0.00004617414248021108,
         "ber_confidence_interval": {
           "method": "clopper_pearson",
@@ -366,7 +366,7 @@
           "method": "clopper_pearson",
           "level": 0.95,
           "lower": 0.000018564595130394666,
-          "upper": 0.00009513405198163793
+          "upper": 0.00009513405198163792
         },
         "work": {
           "eliminations": 151600,
@@ -395,7 +395,7 @@
         "ber_confidence_interval": {
           "method": "clopper_pearson",
           "level": 0.95,
-          "lower": 1.8146727705297902e-7,
+          "lower": 1.8146727705297904e-7,
           "upper": 2.794639963837398e-7
         },
         "bler_confidence_interval": {
@@ -408,6 +408,42 @@
           "eliminations": 6000000,
           "generated_patterns": 12486000000,
           "tested_candidates": 12486000000
+        },
+        "termination": {
+          "state": "interrupted"
+        }
+      },
+      {
+        "schema_version": 1,
+        "cell": {
+          "id": "order-2-point-06",
+          "eb_n0_db": 5.23,
+          "osd_order": 2,
+          "digitization_precision": 0.0
+        },
+        "seed": 15656177087142036630,
+        "samples": 8000000,
+        "sampled_bits": 512000000,
+        "bit_errors": 96,
+        "block_errors": 8,
+        "ber": 1.875e-7,
+        "bler": 1e-6,
+        "ber_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 1.5187562116007388e-7,
+          "upper": 2.2896956426618214e-7
+        },
+        "bler_confidence_interval": {
+          "method": "clopper_pearson",
+          "level": 0.95,
+          "lower": 4.317291173919197e-7,
+          "upper": 1.9703976974427054e-6
+        },
+        "work": {
+          "eliminations": 8000000,
+          "generated_patterns": 16648000000,
+          "tested_candidates": 16648000000
         },
         "termination": {
           "state": "interrupted"
