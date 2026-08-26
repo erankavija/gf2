@@ -26,8 +26,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-26T03:49:33.523213180Z",
+      "status": "passed",
+      "updated_at": "2026-08-26T04:00:08.474337120Z",
       "updated_by": "auto:executor"
     }
   },
@@ -42,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut tuning over to crate-owned typed sections",
-  "updated_at": "2026-08-26T03:49:33.523213180Z"
+  "updated_at": "2026-08-26T04:00:08.474337120Z"
 }
