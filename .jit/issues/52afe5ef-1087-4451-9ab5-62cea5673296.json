@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "The campaign receipt's provenance.runtime.invocation field records only the executable name, omitting the arguments of the invocation that produced each run, so a multi-invocation resumable campaign cannot be reproduced invocation-for-invocation from the receipt.\n\n## Background\n\nReceipts record invocation as a one-element vector such as [\"ebch_osd_awgn_campaign\"]. Resumable campaigns are sequences of bounded invocations whose per-invocation sample bounds shape the recorded attempt history; without the argument vector the receipt's attempt history cannot be regenerated exactly. The checkpoint and receipt record per-attempt sample counts, which bound but do not determine the arguments used.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt records the complete argument vector of every invocation that contributed an attempt, alongside that attempt's provenance.\n- [hard] REQ-02: A resumed campaign's receipt preserves each contributing invocation's arguments rather than only the latest.\n- [hard] REQ-03: Existing committed receipts remain readable, with the single-element form documented as the prior format.",
   "documents": [],
+  "done_at": "2026-08-26T21:36:18.165461769Z",
   "first_ready_at": "2026-08-26T03:23:06.557095755Z",
   "gates_required": [
     "cargo-ci",
@@ -36,7 +37,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "campaign receipt records binary name only, not the invocation arguments",
-  "updated_at": "2026-08-26T21:19:05.341272436Z"
+  "updated_at": "2026-08-26T21:36:18.165461769Z"
 }

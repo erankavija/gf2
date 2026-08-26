@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "The published-curve dataset records digitization precision in log10 decades while the campaign acceptance predicate applies it as a linear BER offset.\n\n## Background\n\nThe reference dataset documents per-point digitization precision delta as a width in log10 space. The campaign comparison accepts a published value p when p lies in [L-delta, U+delta] with delta applied linearly. For the current eBCH(128,64) grid the interpretations disagree only where delta is nonzero (the 1.55 dB order-2 point and the order-1 series), and no acceptance verdict changes under either reading; the defect is the silent unit mismatch, not a current wrong verdict.\n\n## Success Criteria\n\n- [hard] REQ-01: The acceptance predicate and the dataset agree on one documented unit for digitization precision, converted explicitly at the comparison boundary.\n- [hard] REQ-02: A test exercises a nonzero precision value and pins the agreed interpretation.\n- [hard] REQ-03: The dataset provenance note and the campaign receipt name the same unit.",
   "documents": [],
+  "done_at": "2026-08-26T21:36:10.019139229Z",
   "first_ready_at": "2026-08-26T01:32:29.778752168Z",
   "gates_required": [
     "cargo-ci",
@@ -36,7 +37,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "digitization precision units differ between dataset and acceptance predicate",
-  "updated_at": "2026-08-26T21:16:57.905532166Z"
+  "updated_at": "2026-08-26T21:36:10.019139229Z"
 }
