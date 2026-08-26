@@ -9612,3 +9612,4 @@
 {"fields":["dependencies"],"id":"516f7d17-cb4b-41e2-8eda-18655c0129ca","issue_id":"52afe5ef-1087-4451-9ab5-62cea5673296","timestamp":"2026-08-26T03:23:21.933611904Z","type":"issue_updated","updated_by":"dependency-add"}
 {"fields":["documents"],"id":"d80140bd-5f78-4734-9874-ba2d2a58e9ee","issue_id":"b7157be6-16d8-4050-834c-e996d4fa27c3","timestamp":"2026-08-26T03:24:58.021482595Z","type":"issue_updated","updated_by":"doc-add"}
 {"gate_key":"cargo-ci","id":"4c8c6275-758b-4b2e-bc02-14b7c3a30a2e","issue_id":"b749bdfc-63e1-41c6-b8dc-65d334fdd652","timestamp":"2026-08-26T03:41:34.998260863Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"cfb337ce-4649-4c70-804d-6d541cda5f21","issue_id":"b749bdfc-63e1-41c6-b8dc-65d334fdd652","timestamp":"2026-08-26T03:41:52.380077025Z","type":"gate_failed","updated_by":"auto:executor"}

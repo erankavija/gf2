@@ -22,7 +22,7 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-26T01:29:52.429703Z",
+      "updated_at": "2026-08-26T03:41:52.380077025Z",
       "updated_by": "auto:executor"
     }
   },
@@ -37,5 +37,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut tuning over to crate-owned typed sections",
-  "updated_at": "2026-08-26T03:41:34.998260863Z"
+  "updated_at": "2026-08-26T03:41:52.380077025Z"
 }
