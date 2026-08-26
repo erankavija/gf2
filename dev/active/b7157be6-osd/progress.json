@@ -191,7 +191,7 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "session 3: dispatched (native Opus); release build in progress after slow spec-reading phase"
+     "status": "campaign complete (14/14 cells, merged c59f1a8f); research-review R1 tier-1 label-drift fixed, R2 FAIL (5 blocking); F2/F3/F4 rework dispatched; F1/F5 escalated (ESC-04)"
     }
    ]
   }
@@ -221,6 +221,12 @@
    "date": "2026-08-25",
    "category": "issue description amendment",
    "summary": "b3cab18e Background said segmentation changes no module exports while REQ-04 requires a public policy surface; owner approved rewording (additive public exports) + D-16 landing wording. Owner also ruled bracket gates (plan/breakdown-review) are not re-run for execution-time amendments (NOTE-05)."
+  },
+  {
+   "id": "ESC-04",
+   "date": "2026-08-26",
+   "category": "gate failure contesting issue criteria",
+   "summary": "research-review R2 F1/F5: recorded BER intervals lack coverage under block-burst errors + adaptive stopping (8a908f79) and the acceptance predicate mixes log10-decade delta with linear probability (cf37be3b); reviewer holds cef1ae5f REQ-01/REQ-02 unmet as written. Raised to owner with options: tool-fix+rerun (A), criterion amendment (B), reject (C). Pending."
   }
  ],
  "rework_counts": {
@@ -230,7 +236,8 @@
   "a82f2dd9": 4,
   "ac78aff8": 3,
   "abd48d99": 1,
-  "b3cab18e": 2
+  "b3cab18e": 2,
+  "cef1ae5f": 1
  },
  "surfaced_pitfalls": [
   {
@@ -298,6 +305,11 @@
    "id": "NOTE-05",
    "issue": "b7157be6",
    "text": "Owner ruling (session 2): plan-review/breakdown-review are the breakdown-instantiation checkpoint stamps and are NOT re-run for execution-time manifest/description amendments; their completion-time passes stand. Post-completion advisory runs on P/B ending 2026-08-25 (D-16 serialization findings) are superseded by this ruling; wave-6 dispatch order serializes the shared osd/mod.rs writers operationally. Amendment stamps during execution are: manifest validate + render check, plus the affected issue's own gates."
+  },
+  {
+   "id": "NOTE-06",
+   "issue": "cef1ae5f",
+   "text": "research-review R2 advisories F6 (no independent seeded rerun cross-check) and F7 (comparison results scattered across receipt/CSV/README; suggest single authoritative comparison artifact). Not blocking; candidates for follow-up alongside the 7 filed protocol bugs."
   }
  ],
  "started_at": "2026-08-24T19:48:07.381765+00:00"

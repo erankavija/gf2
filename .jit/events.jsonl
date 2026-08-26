@@ -9610,3 +9610,4 @@
 {"gate_key":"research-review","id":"c705632b-1f85-43b4-bba6-4817ead6565d","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-26T03:21:01.129800270Z","type":"gate_failed","updated_by":"auto:executor"}
 {"id":"a7e7aa7f-560e-43dc-8fe4-932e4511bdfc","issue_id":"52afe5ef-1087-4451-9ab5-62cea5673296","priority":"normal","timestamp":"2026-08-26T03:23:06.557095755Z","title":"campaign receipt records binary name only, not the invocation arguments","type":"issue_created"}
 {"fields":["dependencies"],"id":"516f7d17-cb4b-41e2-8eda-18655c0129ca","issue_id":"52afe5ef-1087-4451-9ab5-62cea5673296","timestamp":"2026-08-26T03:23:21.933611904Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["documents"],"id":"d80140bd-5f78-4734-9874-ba2d2a58e9ee","issue_id":"b7157be6-16d8-4050-834c-e996d4fa27c3","timestamp":"2026-08-26T03:24:58.021482595Z","type":"issue_updated","updated_by":"doc-add"}
