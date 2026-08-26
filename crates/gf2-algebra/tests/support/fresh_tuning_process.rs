@@ -1,14 +1,23 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
+use gf2_algebra::tuning::{self, AlgebraTuning, CHUNK_SUBSETS};
+use gf2_core::tuning::SectionResolution;
+
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
 use gf2_algebra::packed::Bipedal3Matrix;
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
 use gf2_algebra::permanent::parallel_bipedal3::{last_effective_chunk, permanent_chunk_len};
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
 use gf2_algebra::permanent::{permanent_bipedal3, permanent_bipedal3_parallel};
-use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec, PermanentSelectors};
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
+use gf2_algebra::tuning::{AlgebraTuningCodec, PermanentSelectors};
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
 use gf2_core::gfp::Fp;
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
 use gf2_core::tuning::{
-    self, AssemblyProvenance, CompiledProfileProvenance, GitRevision, PreparedEnvelope, ProfileId,
-    ProfileRegistryBuilder, RepoRelPath, Rfc3339Utc, SectionResolution, Sha256,
+    AssemblyProvenance, CompiledProfileProvenance, GitRevision, PreparedEnvelope, ProfileId,
+    ProfileRegistryBuilder, RepoRelPath, Rfc3339Utc, Sha256,
 };
 
 const SENTINEL: &str = "GF2_TUNING_FRESH_CASE";
@@ -17,20 +26,28 @@ const RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FreshProcessCase {
+    ConservativeDefault,
+    #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
     Chunk3,
+    #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
     Chunk4000000,
 }
 
 impl FreshProcessCase {
     fn name(self) -> &'static str {
         match self {
+            Self::ConservativeDefault => "conservative-default",
+            #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
             Self::Chunk3 => "chunk-3",
+            #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
             Self::Chunk4000000 => "chunk-4000000",
         }
     }
 
+    #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
     fn chunk(self) -> usize {
         match self {
+            Self::ConservativeDefault => unreachable!("conservative default has no install chunk"),
             Self::Chunk3 => 3,
             Self::Chunk4000000 => 4_000_000,
         }
@@ -48,7 +65,10 @@ impl FreshProcessCase {
             return Err("fresh-process case has unexpected fields".to_owned());
         }
         match object.get("case").and_then(serde_json::Value::as_str) {
+            Some("conservative-default") => Ok(Self::ConservativeDefault),
+            #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
             Some("chunk-3") => Ok(Self::Chunk3),
+            #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
             Some("chunk-4000000") => Ok(Self::Chunk4000000),
             _ => Err("fresh-process case has an unknown case name".to_owned()),
         }
@@ -120,7 +140,8 @@ pub fn child_case() -> Result<Option<FreshProcessCase>, String> {
     Ok(Some(case))
 }
 
-fn prepared_algebra(chunk: usize) -> gf2_core::tuning::PreparedEnvelope {
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
+fn prepared_algebra(chunk: usize) -> PreparedEnvelope {
     let id = ProfileId::parse("permanent-install-test").unwrap();
     let typed = PreparedEnvelope::compiled(
         id.clone(),
@@ -154,6 +175,7 @@ fn prepared_algebra(chunk: usize) -> gf2_core::tuning::PreparedEnvelope {
     registry.from_json(&json).unwrap()
 }
 
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
 fn test_matrix() -> Bipedal3Matrix {
     let n = 8;
     let data: Vec<Fp<3>> = (0..n * n)
@@ -163,6 +185,29 @@ fn test_matrix() -> Bipedal3Matrix {
 }
 
 pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
+    match case {
+        FreshProcessCase::ConservativeDefault => execute_conservative_child(),
+        #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
+        FreshProcessCase::Chunk3 | FreshProcessCase::Chunk4000000 => execute_install_child(case),
+    }
+}
+
+fn execute_conservative_child() -> serde_json::Value {
+    let active = tuning::active();
+    assert_eq!(active.section, &AlgebraTuning::CONSERVATIVE);
+    assert_eq!(active.permanent().gray_chunk_subsets(), CHUNK_SUBSETS);
+    assert!(matches!(
+        active.resolution,
+        SectionResolution::FrozenBeforeInstall { .. }
+    ));
+    serde_json::json!({
+        "chunk": CHUNK_SUBSETS,
+        "resolution": "frozen-before-install",
+    })
+}
+
+#[cfg(all(feature = "parallel", feature = "tuning-profile"))]
+fn execute_install_child(case: FreshProcessCase) -> serde_json::Value {
     let chunk = case.chunk();
     tuning::install(prepared_algebra(chunk)).unwrap();
     let active = gf2_algebra::tuning::active();
