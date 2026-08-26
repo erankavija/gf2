@@ -123,7 +123,6 @@ while `order-2-point-06` is interrupted.
 Resume with the same command and the same checkpoint path:
 
 ```console
-$ cargo build --release -p gf2-sim --bin ebch_osd_awgn_campaign
 $ ./target/release/ebch_osd_awgn_campaign \
     --checkpoint dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.checkpoint.json \
     --receipt dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.json \
@@ -141,14 +140,26 @@ of 100 target bit errors after 8,000,000 blocks. Continuing it replays those
 8,000,000 blocks before drawing a new sample, so the next invocation should
 carry a `--max-samples` bound large enough to finish the cell in one attempt.
 
-Two properties bound a resume. The evaluator replays a resumed cell's durable
+Three properties bound a resume. The evaluator replays a resumed cell's durable
 prefix through the same decoder to re-advance its ChaCha20 stream, so the cost
-of continuing a cell includes re-running the samples it already holds. The
-campaign configuration hash covers `provenance.runtime.git_revision`, so a
+of continuing a cell includes re-running the samples it already holds.
+
+The remaining two follow from `OsdCampaign::config_hash`, which covers the whole
+validated campaign including its runtime provenance, and which the checkpoint
+reader compares exactly. It covers `provenance.runtime.git_revision`, so a
 resume is accepted only while the repository HEAD equals the revision recorded
 in the checkpoint; at any later revision the checkpoint is refused with a
 configuration-hash mismatch and the campaign continues only from a checkout of
-the recorded revision.
+the recorded revision. It also covers `provenance.runtime.binary_sha256`, the
+SHA-256 of the running executable, so the resume requires the exact binary that
+produced the checkpoint. Rebuilding is not a substitute: a rebuild that differs
+in any byte, including one from a different absolute worktree path, produces a
+different digest and is refused. Verify the executable before resuming:
+
+```console
+$ sha256sum target/release/ebch_osd_awgn_campaign
+ae0ecf0c6994053e4aa9c43b12e05c52f8c200022304ac3e19beaedb872ed1bd
+```
 
 ## Provenance
 
