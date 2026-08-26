@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-26T19:12:36.037788650Z",
   "context": {},
   "created_at": "2026-08-26T03:01:58.267038054Z",
   "dependencies": [
@@ -8,8 +9,28 @@
   "description": "The OSD campaign's bit-error stopping rule and bit-level Clopper-Pearson BER intervals assume independent bit trials, but decoder failures produce correlated bit-error bursts, making every recorded BER interval roughly three times too narrow.\n\n## Background\n\nEach cell stops on a cumulative information-bit-error target (default 100), which a cell reaches from only seven to nine failed blocks at twelve to sixteen bit errors per failure. The independent sampling unit is the block; the recorded interval treats sampled bits as independent trials. Recorded intervals span roughly +/-19% of the estimate, while the independent-failure count supports roughly +/-70%. In the eBCH(128,64) reference campaign this flipped three of four published-point rejections when re-evaluated with a block-resolved interval derived from the receipt's own BLER interval, and the order-1 control arm shows non-monotone point estimates whose recorded intervals cannot resolve published values differing by a factor of three. The recorded BLER interval is unaffected (it is computed over blocks).\n\n## Success Criteria\n\n- [hard] REQ-01: Cell stopping targets a count of independent error events (block errors), or the recorded BER interval uses an estimator valid under within-block error clustering (for example a clustered or ratio interval over block failures).\n- [hard] REQ-02: The receipt names the sampling unit and estimator for every interval it records, and the BER interval's stated coverage is valid under the block-burst error process.\n- [hard] REQ-03: A test exercises a bursty-error decoder fixture and verifies the recorded BER interval widens relative to the bit-independence interval.\n- [hard] REQ-04: Existing committed receipts remain readable; reinterpretation of their recorded intervals is documented rather than silently rewritten.",
   "documents": [],
   "first_ready_at": "2026-08-26T03:01:58.267038054Z",
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-26T19:12:29.679175680Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-26T19:12:29.917776309Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-26T19:12:30.149318265Z",
+      "updated_by": null
+    }
+  },
   "id": "8a908f79-baf4-4135-bffe-c69abb9378bf",
   "labels": [
     "component:gf2-sim",
@@ -17,7 +38,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "campaign BER intervals assume bit independence under block-burst errors",
-  "updated_at": "2026-08-26T03:02:14.059789283Z"
+  "updated_at": "2026-08-26T19:12:36.037788650Z"
 }
