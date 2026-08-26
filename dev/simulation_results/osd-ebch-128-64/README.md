@@ -59,11 +59,21 @@ and its provenance record
 [`osd_ebch_128_64_fossorier1994.md`](../../reference_data/osd_ebch_128_64_fossorier1994.md);
 nothing is re-digitized here. The column $p$ is that dataset's primary `value`
 field and $\delta$ is the digitization precision the receipt records for the
-cell. A point accepts its published value exactly when
-$p \in [L - \delta, U + \delta]$ for the receipt's Clopper-Pearson interval
-$[L, U]$ at level $0.95$.
+cell.
 
-| $E_b/N_0$ (dB) | published $p$ | source | $\delta$ | blocks $n$ | sampled bits | bit errors | BER | 95% Clopper-Pearson $[L,U]$ | $p\in[L-\delta,U+\delta]$ |
+The acceptance column applies the schema-1 comparison rule this evidence was
+produced under: a point accepts its published value exactly when
+$p \in [L - \delta, U + \delta]$ for the receipt's Clopper-Pearson interval
+$[L, U]$ at level $0.95$, with $\delta$ subtracted from and added to a
+probability although the dataset records it in $\log_{10}$ decades. Schema 2
+supersedes that rule with the decade-scaled
+$p \in [L \cdot 10^{-\delta}, U \cdot 10^{+\delta}]$ of
+`gf2_sim::osd_campaign::accepts_published_value`. The column is kept as the
+schema-1 verdict of record; [Recorded digitization precision carries decade
+units](#contradictory-evidence) reports why no verdict here changes under the
+superseding rule.
+
+| $E_b/N_0$ (dB) | published $p$ | source | $\delta$ | blocks $n$ | sampled bits | bit errors | BER | 95% Clopper-Pearson $[L,U]$ | schema-1 $p\in[L-\delta,U+\delta]$ |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1.55 | 2.14e-02 | Fig. 4.14 | 0.1 | 54 | 3456 | 107 | 3.10e-02 | [2.54e-02, 3.73e-02] | accept |
 | 2.22 | 6.31e-03 | Table 4.7 | 0 | 147 | 9408 | 103 | 1.09e-02 | [8.94e-03, 1.33e-02] | **outside** |
@@ -159,10 +169,13 @@ that abscissa is this campaign's one robust disagreement with the published
 curve.
 
 Resolving this needs a stopping rule counting block errors, or a clustered
-interval for BER, in the producing tool. Neither is applied here, because that
-would change committed measurement behavior under an issue that does not own it.
-Tracked as `8a908f79`. The recorded BLER intervals are unaffected, since they
-are computed over blocks.
+interval for BER, in the producing tool. `8a908f79` applies both: the tool stops
+a cell at a preregistered block-error count and records a BER interval composed
+from the block-error rate and the mean failing-block error fraction. That is a
+change of measurement behavior, so this artifact set keeps the behavioral
+identity it was produced under and is not re-derived; reproducing these cells
+under the current tool is a new campaign. The recorded BLER intervals are
+unaffected, since they are computed over blocks.
 
 ## Cell status and resumption
 
@@ -344,12 +357,16 @@ relation an upper bound and a measurement are expected to have.
 
 **Recorded digitization precision carries decade units.** The dataset records
 $\delta$ in $\log_{10}$ decades (`digitization_uncertainty_log10`), while the
-predicate compares it linearly against a probability. Only cells with a nonzero
-$\delta$ are affected: the 1.55 dB order-2 cell and every order-1 control cell.
-Recomputing the 1.55 dB verdict with $\delta$ applied in decades accepts as
-well, and every other order-2 cell records $\delta = 0$, where the linear and
-logarithmic forms of the test agree exactly. No verdict in this record depends
-on the interpretation. Tracked as `cf37be3b`.
+schema-1 predicate that produced the acceptance column compares it linearly
+against a probability. Only cells with a nonzero $\delta$ are affected: the
+1.55 dB order-2 cell and every order-1 control cell. Recomputing the 1.55 dB
+verdict with $\delta$ applied in decades accepts as well, and every other
+order-2 cell records $\delta = 0$, where the linear and logarithmic forms of
+the test agree exactly. No verdict in this record depends on the
+interpretation. Schema 2 supersedes the linear rule with the decade-scaled
+comparison in `gf2_sim::osd_campaign::accepts_published_value`; the verdicts
+recorded above remain the schema-1 ones, which is the reinterpretation
+`cf37be3b` prescribes rather than a rewrite of the recorded data.
 
 **Unverified article-level pin.** The reproduction target is the 1994
 dissertation. [Fossorier1995] is closed access and unverified, and no claim here
