@@ -100,15 +100,19 @@ fn interval_spec() -> BinomialIntervalSpec {
         .expect("valid interval")
 }
 
-fn campaign(cells: Vec<OsdCell>) -> OsdCampaign {
+fn campaign_with_target(cells: Vec<OsdCell>, target_block_errors: u64) -> OsdCampaign {
     OsdCampaign::new(
         0x5eed_cafe_1234_5678,
         cells,
         interval_spec(),
-        2,
+        target_block_errors,
         provenance(),
     )
     .expect("valid campaign")
+}
+
+fn campaign(cells: Vec<OsdCell>) -> OsdCampaign {
+    campaign_with_target(cells, 2)
 }
 
 fn work(eliminations: u64, patterns: u64, candidates: u64) -> OsdWorkCounters {
@@ -162,11 +166,11 @@ fn deterministic_cell_seeds_depend_on_root_and_stable_identity() {
 fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
     let dir = TempDir::new("round-trip");
     let checkpoint_path = dir.path().join("checkpoint.json");
-    let campaign = campaign(vec![cell("order-2-point-0", 2.0, 2)]);
+    let campaign = campaign_with_target(vec![cell("order-2-point-0", 2.0, 2)], 7);
 
     let receipt = run_osd_campaign(&checkpoint_path, &campaign, |context| {
         assert_eq!(context.resume.samples, 0);
-        assert_eq!(context.target_block_errors, 2);
+        assert_eq!(context.target_block_errors, 7);
         OsdCellRun {
             samples: 100,
             sampled_bits: 6_400,
@@ -231,7 +235,7 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
         receipt.digitization_precision_unit,
         Some(DigitizationPrecisionUnit::Log10Decades)
     );
-    assert_eq!(receipt.target_block_errors, Some(2));
+    assert_eq!(receipt.target_block_errors, Some(7));
     assert_eq!(receipt.invocation_history.len(), 1);
     assert_eq!(receipt.invocation_history[0].first_attempt_index, 0);
     assert_eq!(receipt.invocation_history[0].attempt_count, 1);
@@ -316,7 +320,7 @@ fn bursty_fixture_clustered_ber_interval_is_wider_than_bit_independence_interval
 #[test]
 fn recorded_ber_interval_rescales_the_recorded_block_error_interval() {
     let dir = TempDir::new("product-structure");
-    let campaign = campaign(vec![cell("product", 2.0, 2)]);
+    let campaign = campaign_with_target(vec![cell("product", 2.0, 2)], 100);
     let receipt = run_osd_campaign(dir.path().join("checkpoint.json"), &campaign, |_| {
         OsdCellRun {
             samples: 4_000,
@@ -682,6 +686,25 @@ fn cell_termination_is_bound_to_the_independent_block_error_target() {
         .to_string()
         .contains("has not reached the target block-error count"));
 
+    let overshoot_dir = TempDir::new("overshoot-completion");
+    let overshoot = run_osd_campaign(
+        overshoot_dir.path().join("checkpoint.json"),
+        &campaign,
+        |_| OsdCellRun {
+            samples: 10,
+            sampled_bits: 640,
+            bit_errors: 60,
+            block_errors: 3,
+            squared_block_bit_errors: 1_200,
+            work: work(10, 10, 10),
+            termination: OsdCellTermination::Completed,
+        },
+    )
+    .expect_err("a completed cell cannot overshoot the target block-error count");
+    assert!(overshoot.to_string().contains(
+        "must stop exactly at the target block-error count; the inverse-binomial interval assumes the last sampled block is the target's K-th error"
+    ));
+
     let late_dir = TempDir::new("late-interruption");
     let late = run_osd_campaign(late_dir.path().join("checkpoint.json"), &campaign, |_| {
         OsdCellRun {
@@ -698,6 +721,18 @@ fn cell_termination_is_bound_to_the_independent_block_error_target() {
     assert!(late
         .to_string()
         .contains("has already reached the target block-error count"));
+}
+
+#[test]
+#[should_panic(expected = "BER interval requires at least one sampled block")]
+fn ber_interval_panics_for_zero_samples() {
+    let _ = interval_spec().ber_interval(BlockSampleCounts {
+        samples: 0,
+        sampled_bits: 0,
+        bit_errors: 0,
+        block_errors: 0,
+        squared_block_bit_errors: 0,
+    });
 }
 
 /// The pinned eBCH(128,64) grid's four representative operating points, each
