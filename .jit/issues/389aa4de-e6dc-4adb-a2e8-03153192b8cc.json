@@ -48,7 +48,7 @@
     "epic:field-capability-dispatch"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
-  "updated_at": "2026-08-25T23:26:51.185211070Z"
+  "updated_at": "2026-08-26T04:00:49.208679325Z"
 }
