@@ -15,7 +15,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-26T20:02:13.781729739Z",
+      "updated_at": "2026-08-26T21:01:41.746653891Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -24,9 +24,9 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-26T19:17:22.828369911Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-26T21:20:48.825680993Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "14029b3f-6532-46d8-bdf4-08a2d50e94c0",
@@ -38,5 +38,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "campaign provenance cpu_model records a platform token, not the CPU model",
-  "updated_at": "2026-08-26T20:17:19.406805810Z"
+  "updated_at": "2026-08-26T21:20:48.825680993Z"
 }

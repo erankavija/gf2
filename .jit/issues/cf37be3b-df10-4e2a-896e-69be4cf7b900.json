@@ -15,18 +15,18 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-26T20:00:24.645882895Z",
+      "updated_at": "2026-08-26T20:59:52.878576184Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-26T20:09:44.213842358Z",
+      "status": "passed",
+      "updated_at": "2026-08-26T21:09:00.043515399Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-26T19:12:30.842382323Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-26T21:16:57.905532166Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "cf37be3b-df10-4e2a-896e-69be4cf7b900",
@@ -38,5 +38,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "digitization precision units differ between dataset and acceptance predicate",
-  "updated_at": "2026-08-26T20:09:44.213842358Z"
+  "updated_at": "2026-08-26T21:16:57.905532166Z"
 }
