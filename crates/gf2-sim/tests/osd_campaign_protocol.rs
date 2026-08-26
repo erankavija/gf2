@@ -553,7 +553,7 @@ fn recorded_ber_interval_rescales_the_recorded_block_error_interval() {
 fn schema_1_committed_receipt_remains_readable_with_historical_semantics() {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
-        .join("dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.json");
+        .join("dev/simulation_results/osd-ebch-128-64/schema1/ebch_osd_awgn.json");
     let receipt: OsdCampaignReceipt =
         serde_json::from_slice(&std::fs::read(path).expect("read committed schema-1 receipt"))
             .expect("schema-1 receipt remains readable");
