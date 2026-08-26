@@ -1,4 +1,4 @@
-//! Confidence intervals for binomial counts.
+//! Confidence intervals for binomial counts and for bounded sample means.
 
 use crate::numerics::log_gamma;
 
@@ -138,6 +138,152 @@ pub fn clopper_pearson_interval(successes: u64, trials: u64, level: f64) -> (f64
     (lower, upper)
 }
 
+/// Computes an equal-tailed exact interval for an inverse-binomial event rate.
+///
+/// Inverse (negative-binomial) sampling runs a Bernoulli process until the
+/// `events`-th event and reports the `trials` count reached at that moment, so
+/// `trials` is a stopping time and the final trial is an event by construction.
+/// `level` is the requested two-sided confidence level, strictly between zero
+/// and one. The returned tuple is `(lower, upper)`, with both bounds in
+/// `[0, 1]`.
+///
+/// The endpoints invert the exact sampling distribution through the identity
+/// `P_p[trials <= n] = P_p[Binomial(n, p) >= events]`, which turns each tail
+/// equation into a regularized incomplete beta quantile. Writing `g` for the
+/// per-tail probability `(1 - level) / 2`, the lower endpoint solves
+/// `P_p[trials <= n] = g` and the upper endpoint solves `P_p[trials >= n] = g`.
+/// The lower endpoint therefore coincides with the [`clopper_pearson_interval`]
+/// lower endpoint, while the upper endpoint is strictly tighter: the design
+/// fixes the event count, so the final trial carries no uncertainty.
+///
+/// Use this interval when sampling stops on an event count, for example a
+/// simulation cell that runs until it observes a preregistered number of
+/// failures. Applying [`clopper_pearson_interval`] to such a sample states a
+/// coverage its fixed-trial design does not have.
+///
+/// # Panics
+///
+/// Panics when `events` exceeds `trials`, or when `level` is not finite or is
+/// outside the open interval `(0, 1)`. A zero `trials` count has no estimand
+/// and returns `(NaN, NaN)`. A zero `events` count leaves the design without an
+/// observed stopping event; the returned interval is then the conservative
+/// fixed-trial interval `[0, U]` for zero observed events.
+///
+/// # Complexity
+///
+/// Matches [`clopper_pearson_interval`]: two fixed 80-step bisections over beta
+/// CDF evaluations, with $O(1)$ auxiliary space.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_stats::intervals::{clopper_pearson_interval, negative_binomial_interval};
+///
+/// let (lower, upper) = negative_binomial_interval(12, 100, 0.95);
+/// assert!(lower < 0.12 && 0.12 < upper);
+///
+/// let fixed_trials = clopper_pearson_interval(12, 100, 0.95);
+/// assert_eq!(lower, fixed_trials.0);
+/// assert!(upper < fixed_trials.1);
+/// ```
+#[must_use]
+pub fn negative_binomial_interval(events: u64, trials: u64, level: f64) -> (f64, f64) {
+    assert!(events <= trials, "events cannot exceed trials");
+    assert!(
+        level.is_finite() && 0.0 < level && level < 1.0,
+        "level must be finite and strictly between zero and one"
+    );
+
+    if trials == 0 {
+        return (f64::NAN, f64::NAN);
+    }
+
+    let tail_probability = (1.0 - level) / 2.0;
+    let n = trials as f64;
+    let k = events as f64;
+    let lower = if events == 0 {
+        0.0
+    } else {
+        inverse_regularized_beta(tail_probability, k, n - k + 1.0)
+    };
+    let upper = if events == trials {
+        1.0
+    } else {
+        inverse_regularized_beta(1.0 - tail_probability, k.max(1.0), n - k)
+    };
+
+    (lower, upper)
+}
+
+/// Computes a Maurer-Pontil empirical-Bernstein interval for a bounded mean.
+///
+/// The observations are independent and identically distributed in `[0, 1]`.
+/// `mean` is their sample mean, `sample_variance` their unbiased sample
+/// variance (the `count - 1` denominator), `count` their number, and `level`
+/// the requested two-sided confidence level. The returned tuple is
+/// `(lower, upper)`, clipped to `[0, 1]`.
+///
+/// Maurer and Pontil (*Empirical Bernstein Bounds and Sample Variance
+/// Penalization*, 2009) bound the one-sided deviation of the sample mean
+/// `M` from the true mean by
+/// `sqrt(2 V ln(2 / d) / n) + 7 ln(2 / d) / (3 (n - 1))`
+/// with probability at least `1 - d`, for sample variance `V` and `n >= 2`.
+/// This entry point spends `d = (1 - level) / 2` on each side, so the two-sided
+/// statement holds at `level`. The bound is variance-adaptive: unlike Hoeffding
+/// its leading term shrinks with the observed spread rather than with the range
+/// of the observation domain, which matters when bounded observations
+/// concentrate far from their extremes.
+///
+/// # Panics
+///
+/// Panics when `mean` is not finite or lies outside `[0, 1]`, when
+/// `sample_variance` is not finite or is negative, or when `level` is not
+/// finite or is outside the open interval `(0, 1)`. Fewer than two
+/// observations admit no variance estimate; the returned interval is then the
+/// trivial `(0.0, 1.0)`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_stats::intervals::empirical_bernstein_interval;
+///
+/// let (lower, upper) = empirical_bernstein_interval(0.2, 0.001, 100, 0.95);
+/// assert!(lower < 0.2 && 0.2 < upper);
+///
+/// // Concentrated observations give a tighter interval than dispersed ones.
+/// let (dispersed_lower, _) = empirical_bernstein_interval(0.2, 0.05, 100, 0.95);
+/// assert!(dispersed_lower < lower);
+/// ```
+#[must_use]
+pub fn empirical_bernstein_interval(
+    mean: f64,
+    sample_variance: f64,
+    count: u64,
+    level: f64,
+) -> (f64, f64) {
+    assert!(
+        mean.is_finite() && (0.0..=1.0).contains(&mean),
+        "mean must be finite and inside the observation domain"
+    );
+    assert!(
+        sample_variance.is_finite() && sample_variance >= 0.0,
+        "sample variance must be finite and non-negative"
+    );
+    assert!(
+        level.is_finite() && 0.0 < level && level < 1.0,
+        "level must be finite and strictly between zero and one"
+    );
+
+    if count < 2 {
+        return (0.0, 1.0);
+    }
+
+    let n = count as f64;
+    let log_term = (4.0 / (1.0 - level)).ln();
+    let radius = (2.0 * sample_variance * log_term / n).sqrt() + 7.0 * log_term / (3.0 * (n - 1.0));
+    ((mean - radius).max(0.0), (mean + radius).min(1.0))
+}
+
 /// Inverts a regularized incomplete beta CDF by bisection.  The fixed 80
 /// iterations reduce the initial unit interval below `2^-80`, well below f64
 /// precision, while retaining a bracketed result even at very large counts.
@@ -227,7 +373,10 @@ fn beta_continued_fraction(a: f64, b: f64, x: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{wilson_interval, Z_95};
+    use super::{
+        clopper_pearson_interval, empirical_bernstein_interval, negative_binomial_interval,
+        regularized_beta, wilson_interval, Z_95,
+    };
 
     /// Solves the Wilson score inequality directly for its two roots. This is
     /// deliberately independent of the centre/half-width implementation.
@@ -273,5 +422,69 @@ mod tests {
         let (lower, upper) = wilson_interval(2_857_143, 20_000_000, Z_95);
         assert!(lower.is_finite() && upper.is_finite());
         assert!(0.0 <= lower && lower <= upper && upper <= 1.0);
+    }
+
+    /// The endpoints are defined by the two tail equations of the stopping
+    /// distribution, rewritten through the binomial-tail identity. Evaluating
+    /// those tails at the returned endpoints is independent of the bisection
+    /// that produced them.
+    #[test]
+    fn negative_binomial_endpoints_solve_their_defining_tail_equations() {
+        let (events, trials, level) = (12_u64, 100_u64, 0.95);
+        let (lower, upper) = negative_binomial_interval(events, trials, level);
+        let tail = (1.0 - level) / 2.0;
+        let (k, n) = (events as f64, trials as f64);
+
+        // P_lower[trials <= n] = P_lower[Binomial(n, p) >= events] = tail.
+        assert!((regularized_beta(lower, k, n - k + 1.0) - tail).abs() <= 1e-9);
+        // P_upper[trials >= n] = 1 - P_upper[Binomial(n - 1, p) >= events] = tail.
+        assert!((1.0 - regularized_beta(upper, k, n - k) - tail).abs() <= 1e-9);
+    }
+
+    #[test]
+    fn negative_binomial_shares_the_fixed_trial_lower_endpoint_and_tightens_the_upper() {
+        for (events, trials) in [(3_u64, 40_u64), (100, 140_000), (7, 9)] {
+            let inverse = negative_binomial_interval(events, trials, 0.95);
+            let fixed = clopper_pearson_interval(events, trials, 0.95);
+            assert_eq!(inverse.0, fixed.0);
+            assert!(inverse.1 < fixed.1);
+            assert!(inverse.0 <= events as f64 / trials as f64);
+            assert!(inverse.1 >= events as f64 / trials as f64);
+        }
+    }
+
+    #[test]
+    fn negative_binomial_handles_degenerate_event_counts() {
+        let (lower, upper) = negative_binomial_interval(0, 500, 0.95);
+        assert_eq!(lower, 0.0);
+        assert_eq!(upper, clopper_pearson_interval(0, 500, 0.95).1);
+
+        assert_eq!(negative_binomial_interval(9, 9, 0.95).1, 1.0);
+        assert!(negative_binomial_interval(0, 0, 0.95).0.is_nan());
+    }
+
+    #[test]
+    fn empirical_bernstein_narrows_with_variance_and_with_observation_count() {
+        let concentrated = empirical_bernstein_interval(0.2, 0.000_9, 100, 0.95);
+        let dispersed = empirical_bernstein_interval(0.2, 0.02, 100, 0.95);
+        let plentiful = empirical_bernstein_interval(0.2, 0.000_9, 10_000, 0.95);
+
+        assert!(concentrated.1 - concentrated.0 < dispersed.1 - dispersed.0);
+        assert!(plentiful.1 - plentiful.0 < concentrated.1 - concentrated.0);
+        assert!(concentrated.0 < 0.2 && 0.2 < concentrated.1);
+    }
+
+    #[test]
+    fn empirical_bernstein_is_symmetric_about_the_sample_mean_before_clipping() {
+        let (lower, upper) = empirical_bernstein_interval(0.5, 0.01, 400, 0.95);
+        assert!(((0.5 - lower) - (upper - 0.5)).abs() <= 1e-12);
+        assert!(lower > 0.0 && upper < 1.0);
+    }
+
+    #[test]
+    fn empirical_bernstein_clips_to_the_observation_domain() {
+        assert_eq!(empirical_bernstein_interval(0.01, 0.2, 5, 0.95).0, 0.0);
+        assert_eq!(empirical_bernstein_interval(0.99, 0.2, 5, 0.95).1, 1.0);
+        assert_eq!(empirical_bernstein_interval(0.3, 0.0, 1, 0.95), (0.0, 1.0));
     }
 }
