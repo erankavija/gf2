@@ -226,7 +226,8 @@ ordinate also appears in a printed table; across the nine such rows eight agree
 with the printed numeral within $0.12$ decades, and the ninth is the
 contradiction recorded below.
 
-The CSV exposes digitization precision per row. Primary figure reads carry
+The CSV exposes digitization precision per row in the unit `log10_decades`.
+Primary figure reads carry
 `digitization_uncertainty_log10 = 0.1` and
 `digitization_precision_basis = plus_or_minus_0.1_log10_marker_read`.
 Printed-table rows carry `digitization_uncertainty_log10 = 0` and

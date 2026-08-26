@@ -43,7 +43,7 @@ fn binary_path() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_ebch_osd_awgn_campaign"))
 }
 
-fn campaign_args(dir: &Path, max_samples: &str, target_errors: &str) -> Vec<String> {
+fn campaign_args(dir: &Path, max_samples: &str, target_block_errors: &str) -> Vec<String> {
     vec![
         "--checkpoint".to_owned(),
         dir.join("checkpoint.json").display().to_string(),
@@ -51,8 +51,8 @@ fn campaign_args(dir: &Path, max_samples: &str, target_errors: &str) -> Vec<Stri
         dir.join("receipt.json").display().to_string(),
         "--max-samples".to_owned(),
         max_samples.to_owned(),
-        "--target-errors".to_owned(),
-        target_errors.to_owned(),
+        "--target-block-errors".to_owned(),
+        target_block_errors.to_owned(),
         "--seed".to_owned(),
         "42".to_owned(),
     ]
@@ -82,6 +82,7 @@ fn usage_names_pinned_configuration_and_output_paths() {
     assert!(usage.contains("BER vs Eb/N0"), "usage: {usage}");
     assert!(usage.contains("--checkpoint PATH"), "usage: {usage}");
     assert!(usage.contains("--receipt PATH"), "usage: {usage}");
+    assert!(usage.contains("--target-block-errors N"), "usage: {usage}");
     assert!(usage.contains("ascending Hamming weight"), "usage: {usage}");
     assert!(usage.contains("source-undefined"), "usage: {usage}");
 }
@@ -113,6 +114,11 @@ fn campaign_maps_pinned_cells_and_resumes_into_the_same_receipt() {
         OsdCellTermination::Interrupted
     ));
     assert_eq!(first_receipt.cell_results[0].samples, 1);
+    assert_eq!(first_receipt.invocation_history.len(), 1);
+    assert_eq!(
+        &first_receipt.invocation_history[0].provenance.invocation[1..],
+        campaign_args(dir.path(), "1", "1000000")
+    );
 
     let second = run(&campaign_args(dir.path(), "2", "1000000"));
     assert!(
@@ -129,25 +135,52 @@ fn campaign_maps_pinned_cells_and_resumes_into_the_same_receipt() {
     assert_eq!(resumed.cell_results[1].cell.id, resumed.cells[0].id);
     assert_eq!(resumed.cell_results[1].samples, 3);
     assert_eq!(resumed.cell_results[1].seed, resumed.cell_results[0].seed);
-
-    // A zero error target is a bounded smoke completion: each cell still
-    // contributes one decoded sample, then the protocol advances to the next
-    // cell.  This proves both the order-2 target and order-1 control are
-    // dispatched through the same executable binding.
-    let third = run(&campaign_args(dir.path(), "1", "0"));
-    assert!(
-        third.status.success(),
-        "completion run failed:\n{}",
-        String::from_utf8_lossy(&third.stderr)
+    assert_eq!(resumed.invocation_history.len(), 2);
+    assert_eq!(
+        &resumed.invocation_history[0].provenance.invocation[1..],
+        campaign_args(dir.path(), "1", "1000000")
     );
-    let completed = receipt(&receipt_path);
-    assert_eq!(completed.cell_results.len(), 16);
-    assert!(completed.cell_results.iter().any(|result| {
-        result.cell.osd_order == 2 && matches!(result.termination, OsdCellTermination::Completed)
-    }));
-    assert!(completed.cell_results.iter().any(|result| {
-        result.cell.osd_order == 1 && matches!(result.termination, OsdCellTermination::Completed)
-    }));
+    assert_eq!(
+        &resumed.invocation_history[1].provenance.invocation[1..],
+        campaign_args(dir.path(), "2", "1000000")
+    );
+    assert_eq!(resumed.cell_results[0].invocation_index, Some(0));
+    assert_eq!(resumed.cell_results[1].invocation_index, Some(1));
+}
+
+#[test]
+fn recorded_cpu_model_matches_runtime_observed_processor_identity() {
+    let dir = TempDir::new("cpu-identity");
+    let output = run(&campaign_args(dir.path(), "1", "1000000"));
+    assert!(
+        output.status.success(),
+        "bounded campaign failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt = receipt(&dir.path().join("receipt.json"));
+    let cpuinfo = fs::read_to_string("/proc/cpuinfo").expect("Linux processor identity");
+    let observed_model = cpuinfo
+        .lines()
+        .find_map(|line| line.strip_prefix("model name\t: "))
+        .expect("/proc/cpuinfo model name");
+
+    assert_eq!(receipt.provenance.runtime.cpu_model, observed_model);
+    assert_ne!(
+        receipt.provenance.runtime.cpu_model,
+        format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH)
+    );
+    let physical_cores = receipt
+        .provenance
+        .runtime
+        .cpu_physical_cores
+        .expect("physical core count");
+    let logical_threads = receipt
+        .provenance
+        .runtime
+        .cpu_logical_threads
+        .expect("logical thread count");
+    assert!(physical_cores > 0);
+    assert!(logical_threads >= physical_cores);
 }
 
 #[test]

@@ -85,6 +85,8 @@ fn manifest(root_seed: u64) -> CampaignManifest {
             invocation: vec!["permanent_campaign".to_owned()],
             accelerator_runtime: Availability::NotPresent,
             cpu_model: "test".to_owned(),
+            cpu_physical_cores: None,
+            cpu_logical_threads: None,
             gpu_model: Availability::NotPresent,
         },
     }

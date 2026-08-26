@@ -29,10 +29,10 @@
 //! candidate for an equal metric.  Those are implementation decisions, not
 //! source claims.
 //!
-//! `--max-samples` is an additional per-invocation sample bound.  Reaching it
+//! `--max-samples` is an additional per-invocation sample bound. Reaching it
 //! records an interrupted cell so a later invocation can continue from the
-//! durable counters.  `--target-errors` is the cumulative information-bit
-//! error target for a cell; reaching it records a completed cell.
+//! durable counters. `--target-block-errors` is the cumulative independent
+//! block-error target for a cell; reaching it records a completed cell.
 
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
@@ -55,7 +55,9 @@ use gf2_sim::osd_campaign::{
     OsdCampaignProvenance, OsdCell, OsdCellExecution, OsdCellResume, OsdCellRun,
     OsdCellTermination, OsdWorkCounters,
 };
-use gf2_sim::permanent_campaign::provenance::{observe_provenance, repository_top_level};
+use gf2_sim::permanent_campaign::provenance::{
+    observe_cpu_identity, observe_provenance, repository_top_level,
+};
 use gf2_sim::permanent_campaign::schema::{
     ArtifactIdentity, Availability, GitRevision, Provenance, RngAlgorithm, Sha256Digest,
 };
@@ -65,7 +67,7 @@ const ORDER_2_DIGITIZATION_PRECISION: [f64; 7] = [0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 
 const ORDER_1_DIGITIZATION_PRECISION: [f64; 7] = [0.1; 7];
 const DEFAULT_SEED: u64 = 0xC832_2EFF;
 const DEFAULT_MAX_SAMPLES: u64 = 100_000;
-const DEFAULT_TARGET_ERRORS: u64 = 100;
+const DEFAULT_TARGET_BLOCK_ERRORS: u64 = 100;
 
 const USAGE: &str = "Usage: ebch_osd_awgn_campaign --checkpoint PATH --receipt PATH [OPTIONS]
 
@@ -79,7 +81,7 @@ Options:
   --receipt PATH           Versioned JSON receipt output path (required)
   --seed U64               Campaign root seed [default: 0xC8322EFF]
   --max-samples N         Additional samples per cell invocation [default: 100000]
-  --target-errors N       Cumulative information-bit errors per cell [default: 100]
+  --target-block-errors N Cumulative block errors per cell [default: 100]
   --help                  Show this message
 
 OSD list and tie policy:
@@ -88,8 +90,8 @@ OSD list and tie policy:
   ties use ascending original coordinate index, and source-undefined distance
   ties retain the first generated candidate (implementation decisions).
 
-The library owns the versioned receipt schema, Clopper-Pearson intervals,
-deterministic cell seeds, checkpoint validation, and resume history.";
+The library owns the versioned receipt schema, block-sampled confidence
+intervals, deterministic cell seeds, checkpoint validation, and resume history.";
 
 #[derive(Debug)]
 struct Args {
@@ -97,7 +99,8 @@ struct Args {
     receipt: PathBuf,
     seed: u64,
     max_samples: u64,
-    target_errors: u64,
+    target_block_errors: u64,
+    invocation: Vec<String>,
 }
 
 fn main() -> ExitCode {
@@ -115,11 +118,12 @@ fn run() -> Result<(), String> {
         println!("{USAGE}");
         return Ok(());
     };
-    let provenance = campaign_provenance()?;
-    let campaign = pinned_campaign(args.seed, provenance).map_err(|error| error.to_string())?;
+    let provenance = campaign_provenance(args.invocation)?;
+    let campaign = pinned_campaign(args.seed, args.target_block_errors, provenance)
+        .map_err(|error| error.to_string())?;
     let code = ExtendedBchCode::ebch_128_64();
     let receipt = gf2_sim::osd_campaign::run_osd_campaign(&args.checkpoint, &campaign, |context| {
-        evaluate_cell(context, &code, args.max_samples, args.target_errors)
+        evaluate_cell(context, &code, args.max_samples)
     })
     .map_err(|error| error.to_string())?;
     write_receipt(&args.receipt, &receipt)?;
@@ -139,8 +143,9 @@ fn parse_args() -> Result<Option<Args>, String> {
     let mut receipt = None;
     let mut seed = DEFAULT_SEED;
     let mut max_samples = DEFAULT_MAX_SAMPLES;
-    let mut target_errors = DEFAULT_TARGET_ERRORS;
-    let arguments: Vec<String> = std::env::args().skip(1).collect();
+    let invocation: Vec<String> = std::env::args().collect();
+    let arguments: Vec<String> = invocation.iter().skip(1).cloned().collect();
+    let mut target_block_errors = DEFAULT_TARGET_BLOCK_ERRORS;
     let mut index = 0;
 
     while index < arguments.len() {
@@ -165,11 +170,14 @@ fn parse_args() -> Result<Option<Args>, String> {
                     return Err("--max-samples must be positive".to_owned());
                 }
             }
-            "--target-errors" => {
-                let value = required_value(&arguments, &mut index, "--target-errors")?;
-                target_errors = value
-                    .parse()
-                    .map_err(|_| format!("--target-errors must be an integer, got {value:?}"))?;
+            "--target-block-errors" => {
+                let value = required_value(&arguments, &mut index, "--target-block-errors")?;
+                target_block_errors = value.parse().map_err(|_| {
+                    format!("--target-block-errors must be an integer, got {value:?}")
+                })?;
+                if target_block_errors == 0 {
+                    return Err("--target-block-errors must be positive".to_owned());
+                }
             }
             option if option.starts_with('-') => {
                 return Err(format!("unknown option {option:?}\n\n{USAGE}"));
@@ -188,7 +196,8 @@ fn parse_args() -> Result<Option<Args>, String> {
             .map(PathBuf::from)?,
         seed,
         max_samples,
-        target_errors,
+        target_block_errors,
+        invocation,
     }))
 }
 
@@ -210,6 +219,7 @@ fn parse_u64(value: &str, option: &str) -> Result<u64, String> {
 
 fn pinned_campaign(
     seed: u64,
+    target_block_errors: u64,
     provenance: OsdCampaignProvenance,
 ) -> Result<OsdCampaign, OsdCampaignError> {
     let mut cells = Vec::with_capacity(PINNED_EB_N0_DB.len() * 2);
@@ -242,14 +252,13 @@ fn pinned_campaign(
         )?);
     }
     let interval = BinomialIntervalSpec::new(BinomialIntervalMethod::ClopperPearson, 0.95)?;
-    OsdCampaign::new(seed, cells, interval, provenance)
+    OsdCampaign::new(seed, cells, interval, target_block_errors, provenance)
 }
 
 fn evaluate_cell(
     context: OsdCellExecution<'_>,
     code: &ExtendedBchCode,
     max_samples: u64,
-    target_errors: u64,
 ) -> OsdCellRun {
     let decoder = GeneratorMatrixOsdDecoder::new(
         code.clone(),
@@ -291,7 +300,7 @@ fn evaluate_cell(
             .checked_add(frame.work.tested_candidates)
             .expect("candidate counter overflow");
 
-        if bit_errors >= target_errors {
+        if block_errors >= context.target_block_errors {
             return cell_run(
                 samples,
                 code.k(),
@@ -391,7 +400,7 @@ fn simulate_frame(
     }
 }
 
-fn campaign_provenance() -> Result<OsdCampaignProvenance, String> {
+fn campaign_provenance(invocation: Vec<String>) -> Result<OsdCampaignProvenance, String> {
     let repository = repository_top_level(Path::new(env!("CARGO_MANIFEST_DIR")))
         .map_err(|error| error.to_string())?;
     let configuration = artifact_identity(
@@ -405,6 +414,7 @@ fn campaign_provenance() -> Result<OsdCampaignProvenance, String> {
     let placeholder_revision = "0000000000000000000000000000000000000000"
         .parse::<GitRevision>()
         .expect("static revision");
+    let cpu = observe_cpu_identity().map_err(|error| error.to_string())?;
     let runtime = observe_provenance(
         &repository,
         Provenance {
@@ -415,9 +425,11 @@ fn campaign_provenance() -> Result<OsdCampaignProvenance, String> {
             compiler_version: rustc_version(),
             rng_algorithm: RngAlgorithm::ChaCha20,
             rng_version: "rand_chacha 0.3.1 (gf2-coding BPSK channel ABI)".to_owned(),
-            invocation: vec!["ebch_osd_awgn_campaign".to_owned()],
+            invocation,
             accelerator_runtime: Availability::NotPresent,
-            cpu_model: format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
+            cpu_model: cpu.model,
+            cpu_physical_cores: Some(cpu.physical_cores),
+            cpu_logical_threads: Some(cpu.logical_threads),
             gpu_model: Availability::NotPresent,
         },
     )
