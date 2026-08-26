@@ -259,6 +259,11 @@
  },
  "surfaced_pitfalls": [
   {
+   "id": "NOTE-08",
+   "issue": "cef1ae5f",
+   "text": "Owner hold (2026-08-27, session 4): no probe or campaign runs while the bg3 workload occupies the host. Before any compute-heavy launch, verify bg3 has subsided (check running processes / ask owner); gate evaluations may continue."
+  },
+  {
    "id": "PIT-01",
    "issue": "5dd3539f",
    "source": "agent:codex live review",
