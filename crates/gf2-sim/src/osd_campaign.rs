@@ -53,12 +53,11 @@
 //! `1 - alpha / 2 - alpha / 2 = 1 - alpha`. Nothing in the construction assumes
 //! independence among the bit errors inside a block.
 //!
-//! That coverage statement is a statement about a completed cell. An attempt
-//! that stopped for any other reason is recorded with the same construction
-//! evaluated at its current counters, as interim evidence: its block-error
-//! count is not the design's fixed `K`, so its endpoints carry no stated
-//! coverage. [`OsdCellReceipt::termination`] distinguishes the two, and no
-//! separate flag repeats that distinction.
+//! That coverage statement applies only to a completed cell. An attempt that
+//! stopped for any other reason retains its cumulative counters but records no
+//! intervals: its block-error count is not the design's fixed `K`, so the
+//! stopping design does not deliver the intervals' stated coverage there.
+//! Published-value acceptance likewise applies only to a completed cell.
 //!
 //! Schema 1 receipts remain deserializable as historical evidence. Their BER
 //! intervals used Clopper-Pearson over individual bits without naming a
@@ -385,7 +384,9 @@ impl BinomialIntervalSpec {
     /// with the endpoints of the mean failing-block error-fraction interval,
     /// both taken at [`Self::component_level`]. The composition, its coverage
     /// argument, and the conditions under which the stated coverage applies are
-    /// documented at the [module level](self).
+    /// documented at the [module level](self). This construction is recorded
+    /// only for completed cells, where the stopping design supplies its stated
+    /// coverage.
     ///
     /// # Panics
     ///
@@ -509,7 +510,7 @@ pub enum OsdCellTermination {
     },
     /// The result contradicts the recorded published comparison value.
     Contradictory {
-        /// Published BER rejected by the widened BER receipt interval.
+        /// Published BER associated with the contradiction.
         published_value: f64,
     },
 }
@@ -622,10 +623,14 @@ pub struct OsdCellReceipt {
     pub ber: f64,
     /// Block error-rate point estimate `block_errors / samples`.
     pub bler: f64,
-    /// Composed BER interval over the block-error stopping design.
-    pub ber_confidence_interval: BinomialConfidenceInterval,
-    /// Named BLER interval computed from `block_errors` and `samples`.
-    pub bler_confidence_interval: BinomialConfidenceInterval,
+    /// Composed BER interval over the block-error stopping design, present for
+    /// completed cells only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ber_confidence_interval: Option<BinomialConfidenceInterval>,
+    /// Named BLER interval computed from `block_errors` and `samples`, present
+    /// for completed cells only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bler_confidence_interval: Option<BinomialConfidenceInterval>,
     /// Cumulative OSD work.
     pub work: OsdWorkCounters,
     /// State reached by this cell attempt.
@@ -633,18 +638,26 @@ pub struct OsdCellReceipt {
 }
 
 impl OsdCellReceipt {
-    /// Tests a published BER against this receipt's widened BER interval.
+    /// Tests a published BER against a completed receipt's widened BER
+    /// interval.
     ///
     /// This interprets the cell's recorded digitization precision in
     /// [`DigitizationPrecisionUnit::Log10Decades`] and accepts both
-    /// multiplicatively widened endpoints exactly.
+    /// multiplicatively widened endpoints exactly. It returns `false` for a
+    /// non-completed cell, which has no valid interval for this predicate.
     #[must_use]
     pub fn accepts_published_value(&self, published_value: f64) -> bool {
-        accepts_published_value(
-            published_value,
-            &self.ber_confidence_interval,
-            self.cell.digitization_precision,
-        )
+        matches!(self.termination, OsdCellTermination::Completed)
+            && self
+                .ber_confidence_interval
+                .as_ref()
+                .is_some_and(|interval| {
+                    accepts_published_value(
+                        published_value,
+                        interval,
+                        self.cell.digitization_precision,
+                    )
+                })
     }
 
     /// Returns the block-sampled counters supporting this attempt's intervals.
@@ -945,13 +958,14 @@ pub fn accepts_published_value(
 ///
 /// The generic reader first validates the payload identity, schema version,
 /// and complete campaign hash. Each evaluator result is validated, converted
-/// to BER and BLER plus their configured block-sampled intervals, and atomically
+/// to BER and BLER, and receives configured block-sampled intervals only when
+/// it completes under the stopping design; each result is atomically
 /// checkpointed before the next cell. The receipt comparison method applies
-/// the metric-agnostic predicate to the BER interval because the campaign's
-/// published reproduction target is BER. An interrupted result ends this
-/// invocation; a later call receives the same seed and cumulative resume
-/// counters. All terminal cell identities are derived from their retained
-/// results and skipped on recovery.
+/// the metric-agnostic predicate to the completed BER interval because the
+/// campaign's published reproduction target is BER. An interrupted result
+/// ends this invocation; a later call receives the same seed and cumulative
+/// resume counters. All terminal cell identities are derived from their
+/// retained results and skipped on recovery.
 ///
 /// # Errors
 ///
@@ -1006,15 +1020,6 @@ pub fn run_osd_campaign(
         });
         validate_cell_run(cell, campaign.target_block_errors, resume, &run)?;
         let receipt = make_cell_receipt(campaign, cell, run, invocation_index);
-        if let OsdCellTermination::Contradictory { published_value } = &receipt.termination {
-            if receipt.accepts_published_value(*published_value) {
-                return Err(OsdCampaignError::InvalidCellResult {
-                    cell_id: cell.id.clone(),
-                    message: "contradictory published value is accepted by the widened interval"
-                        .to_owned(),
-                });
-            }
-        }
         let interrupted = matches!(&receipt.termination, OsdCellTermination::Interrupted);
         let terminal = receipt.termination.is_terminal();
         if !invocation_recorded {
@@ -1301,7 +1306,19 @@ fn make_cell_receipt(
     run: OsdCellRun,
     invocation_index: u64,
 ) -> OsdCellReceipt {
-    let counts = run.counts();
+    let intervals = if matches!(&run.termination, OsdCellTermination::Completed) {
+        let counts = run.counts();
+        (
+            Some(campaign.interval.ber_interval(counts)),
+            Some(
+                campaign
+                    .interval
+                    .bler_interval(run.block_errors, run.samples),
+            ),
+        )
+    } else {
+        (None, None)
+    };
     OsdCellReceipt {
         schema_version: OSD_CAMPAIGN_SCHEMA_VERSION,
         invocation_index: Some(invocation_index),
@@ -1314,10 +1331,8 @@ fn make_cell_receipt(
         squared_block_bit_errors: Some(run.squared_block_bit_errors),
         ber: run.bit_errors as f64 / run.sampled_bits as f64,
         bler: run.block_errors as f64 / run.samples as f64,
-        ber_confidence_interval: campaign.interval.ber_interval(counts),
-        bler_confidence_interval: campaign
-            .interval
-            .bler_interval(run.block_errors, run.samples),
+        ber_confidence_interval: intervals.0,
+        bler_confidence_interval: intervals.1,
         work: run.work,
         termination: run.termination,
     }
@@ -1341,6 +1356,17 @@ fn same_derived_interval(
         && left.level == right.level
         && same_derived_probability(left.lower, right.lower)
         && same_derived_probability(left.upper, right.upper)
+}
+
+fn same_derived_optional_interval(
+    left: Option<BinomialConfidenceInterval>,
+    right: Option<BinomialConfidenceInterval>,
+) -> bool {
+    match (left, right) {
+        (Some(left), Some(right)) => same_derived_interval(left, right),
+        (None, None) => true,
+        _ => false,
+    }
 }
 
 fn same_resume_provenance(
@@ -1467,15 +1493,30 @@ fn validate_checkpoint(
         validate_cell_run(cell, campaign.target_block_errors, resume, &run)
             .map_err(|error| invalid(error.to_string()))?;
         let expected_ber = receipt.bit_errors as f64 / receipt.sampled_bits as f64;
-        let expected_ber_interval = campaign.interval.ber_interval(receipt.counts());
-        let expected_bler_interval = campaign
-            .interval
-            .bler_interval(receipt.block_errors, receipt.samples);
+        let (expected_ber_interval, expected_bler_interval) =
+            if matches!(&receipt.termination, OsdCellTermination::Completed) {
+                (
+                    Some(campaign.interval.ber_interval(receipt.counts())),
+                    Some(
+                        campaign
+                            .interval
+                            .bler_interval(receipt.block_errors, receipt.samples),
+                    ),
+                )
+            } else {
+                (None, None)
+            };
         let expected_bler = receipt.block_errors as f64 / receipt.samples as f64;
         if !same_derived_probability(receipt.ber, expected_ber)
             || !same_derived_probability(receipt.bler, expected_bler)
-            || !same_derived_interval(receipt.ber_confidence_interval, expected_ber_interval)
-            || !same_derived_interval(receipt.bler_confidence_interval, expected_bler_interval)
+            || !same_derived_optional_interval(
+                receipt.ber_confidence_interval,
+                expected_ber_interval,
+            )
+            || !same_derived_optional_interval(
+                receipt.bler_confidence_interval,
+                expected_bler_interval,
+            )
         {
             return Err(invalid(format!(
                 "statistical fields disagree with counts for cell {}: BER {} (expected {}), BLER {} (expected {}), BER interval {:?} (expected {:?}), BLER interval {:?} (expected {:?})",
@@ -1489,14 +1530,6 @@ fn validate_checkpoint(
                 receipt.bler_confidence_interval,
                 expected_bler_interval,
             )));
-        }
-        if let OsdCellTermination::Contradictory { published_value } = &receipt.termination {
-            if receipt.accepts_published_value(*published_value) {
-                return Err(invalid(format!(
-                    "contradictory value is accepted for cell {}",
-                    receipt.cell.id
-                )));
-            }
         }
         if receipt.termination.is_terminal() {
             settled.insert(receipt.cell.id.clone());

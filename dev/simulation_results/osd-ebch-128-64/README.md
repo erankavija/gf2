@@ -25,9 +25,9 @@ hold a completed result and the campaign termination is `completed`.
 
 The producer is `crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs`, built as the
 `gf2-sim` release binary `ebch_osd_awgn_campaign` and driven by the reusable
-protocol in `gf2_sim::osd_campaign`. The receipt and the checkpoint both carry
-**schema version 1**, the value of
-`gf2_sim::osd_campaign::OSD_CAMPAIGN_SCHEMA_VERSION`.
+protocol in `gf2_sim::osd_campaign`. The receipt and checkpoint are archival
+**schema version 1** artifacts produced by the schema-1 tool; the current tool
+writes schema version 2.
 
 The pinned grid is the seven [Fossorier1994] abscissas
 $E_b/N_0 \in \{1.55, 2.22, 3.01, 3.47, 3.98, 4.56, 5.23\}$ dB, instantiated
