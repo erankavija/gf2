@@ -191,7 +191,7 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "F2/F3/F4 rework merged cf689b17 (session 4); ESC-04 resolved: fix tool (8a908f79+cf37be3b), probe re-run reduced compute, rigorous run scheduled 02:00 if probe clean; research-review re-run after rigorous campaign"
+     "status": "rigorous schema-2 campaign RUNNING (launched 02:21 2026-08-27, one invocation, K=100, main @ ce5ae21f, binary 63744f8a; ~20h est). Tool fixed: all 4 prerequisite bugs done (8a908f79 5 rounds). Probe validated receipt end-to-end; plot.py committed-ready and probe-tested (REQ-06). Next: worker writes README+comparison, figures, doc links, research-review."
     }
    ]
   }
