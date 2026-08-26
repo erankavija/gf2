@@ -209,7 +209,7 @@ fn execute_conservative_child() -> serde_json::Value {
 #[cfg(all(feature = "parallel", feature = "tuning-profile"))]
 fn execute_install_child(case: FreshProcessCase) -> serde_json::Value {
     let chunk = case.chunk();
-    tuning::install(prepared_algebra(chunk)).unwrap();
+    gf2_core::tuning::install(prepared_algebra(chunk)).unwrap();
     let active = gf2_algebra::tuning::active();
     assert!(matches!(
         active.resolution,
