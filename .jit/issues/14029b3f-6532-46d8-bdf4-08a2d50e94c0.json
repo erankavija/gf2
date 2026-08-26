@@ -1,15 +1,34 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-26T19:18:01.245515292Z",
   "context": {},
   "created_at": "2026-08-26T03:03:50.913278433Z",
-  "dependencies": [
-    "c8322eff-8122-41bc-9209-9bcc9f591655"
-  ],
+  "dependencies": [],
   "description": "The campaign provenance's cpu_model field records the producer's OS-and-architecture token rather than the host CPU identity, so committed receipts do not name the hardware that produced machine-dependent work counters and timings.\n\n## Background\n\nReceipts record provenance.runtime.cpu_model as a platform token such as linux-x86_64. The claims-trace-to-artifacts invariant expects committed evidence to record hardware identity; a platform token cannot distinguish hosts with different microarchitectures. The provenance note of the affected campaign states the limitation and records the host in prose, which is a workaround rather than tool-observed fact.\n\n## Success Criteria\n\n- [hard] REQ-01: The provenance runtime section records the runtime-observed CPU model string (and core/thread counts) of the producing host.\n- [hard] REQ-02: A test asserts the recorded cpu_model is the observed processor identity, not an OS or architecture token.\n- [hard] REQ-03: Existing committed receipts remain readable and their platform-token fields are documented as the prior format.",
   "documents": [],
   "first_ready_at": "2026-08-26T03:03:50.913278433Z",
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-26T19:15:31.374534964Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-26T19:15:35.775758253Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-26T19:17:22.828369911Z",
+      "updated_by": null
+    }
+  },
   "id": "14029b3f-6532-46d8-bdf4-08a2d50e94c0",
   "labels": [
     "component:gf2-sim",
@@ -17,7 +36,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "campaign provenance cpu_model records a platform token, not the CPU model",
-  "updated_at": "2026-08-26T03:04:09.499682070Z"
+  "updated_at": "2026-08-26T19:19:41.572919636Z"
 }

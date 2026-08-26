@@ -13,11 +13,10 @@
   "id": "f7844d2d-fed4-4333-bdc6-36be23a8bc62",
   "labels": [
     "component:gf2-sim",
-    "epic:osd",
     "type:bug"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "cell resume replays the entire durable prefix",
-  "updated_at": "2026-08-26T01:33:02.334965232Z"
+  "updated_at": "2026-08-26T19:24:04.913953179Z"
 }

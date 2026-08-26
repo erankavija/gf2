@@ -13,11 +13,10 @@
   "id": "fd1f39e0-c77e-48c5-abc3-6d48cfb25ffa",
   "labels": [
     "component:gf2-sim",
-    "epic:osd",
     "type:bug"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "pinned grid blocks internal-control cells behind the hardest target cell",
-  "updated_at": "2026-08-26T01:33:18.769634714Z"
+  "updated_at": "2026-08-26T19:24:13.226245297Z"
 }

@@ -13,11 +13,10 @@
   "id": "9af52659-1615-453b-aef0-8cff2714cdd6",
   "labels": [
     "component:gf2-sim",
-    "epic:osd",
     "type:bug"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "resumption hash conflates provenance context with campaign identity",
-  "updated_at": "2026-08-26T01:32:54.139934248Z"
+  "updated_at": "2026-08-26T19:23:56.646338053Z"
 }
