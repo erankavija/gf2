@@ -4,15 +4,20 @@
 //! cell identities, order-independent seed derivation, bit- and block-error
 //! accounting, block-sampled intervals for BER and BLER, strict checkpoint and
 //! receipt schemas, and cell-boundary resume. Domain executables retain only
-//! code/channel construction and one evaluator closure. Persistence delegates
-//! to [`crate::checkpoint`], while the exact binomial endpoints delegate to
-//! [`gf2_stats::intervals`].
+//! code/channel construction and a per-block evaluator closure. Persistence
+//! delegates to [`crate::checkpoint`], while the exact binomial endpoints
+//! delegate to [`gf2_stats::intervals`].
 //!
-//! An interrupted evaluation reports cumulative counters. On the next call,
-//! the evaluator receives those counters in [`OsdCellExecution::resume`] and
-//! the same cell seed, so it can continue at the next sample. Earlier attempts
-//! remain in the receipt. Completed, censored, exhausted, and contradictory
-//! cells are terminal evidence and are never evaluated again.
+//! The protocol calls the evaluator exactly once for each sampled block, in
+//! increasing [`OsdBlockContext::block_index`] order. It alone accumulates the
+//! sample, error, squared-error, and work counters and stops immediately after
+//! the block carrying the target's `K`-th error. The evaluator can determine a
+//! block's result from its cell, deterministic cell seed, and block index, but
+//! cannot choose termination, report aggregate counters, or skip, reorder, or
+//! double-count blocks. On resume the protocol restores durable counters and
+//! continues with the next block index under the same cell seed. Earlier
+//! attempts remain in the receipt. Completed, censored, exhausted, and
+//! contradictory cells are terminal evidence and are never evaluated again.
 //!
 //! # Interval coverage and schema history
 //!
@@ -470,15 +475,18 @@ pub struct OsdCampaignInvocation {
     pub attempt_count: u64,
 }
 
-/// Aggregate OSD work performed while producing a cell result.
+/// OSD work counters for either one block or cumulative cell evidence.
+///
+/// [`OsdBlockOutcome`] uses these as a per-block delta. Checkpoints and
+/// receipts store their protocol-accumulated totals.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OsdWorkCounters {
-    /// Ordered-basis eliminations performed across sampled blocks.
+    /// Ordered-basis eliminations performed.
     pub eliminations: u64,
-    /// Reprocessing patterns generated across sampled blocks.
+    /// Reprocessing patterns generated.
     pub generated_patterns: u64,
-    /// Candidate words tested across sampled blocks.
+    /// Candidate words tested.
     pub tested_candidates: u64,
 }
 
@@ -487,6 +495,18 @@ impl OsdWorkCounters {
         self.eliminations >= prior.eliminations
             && self.generated_patterns >= prior.generated_patterns
             && self.tested_candidates >= prior.tested_candidates
+    }
+
+    fn checked_add(self, increment: Self) -> Option<Self> {
+        Some(Self {
+            eliminations: self.eliminations.checked_add(increment.eliminations)?,
+            generated_patterns: self
+                .generated_patterns
+                .checked_add(increment.generated_patterns)?,
+            tested_candidates: self
+                .tested_candidates
+                .checked_add(increment.tested_candidates)?,
+        })
     }
 }
 
@@ -521,40 +541,20 @@ impl OsdCellTermination {
     }
 }
 
-/// Cumulative evaluator output for one cell attempt.
-///
-/// On resume these fields must be at least the corresponding values in
-/// [`OsdCellExecution::resume`]. Both sample denominators must advance, bit
-/// errors cannot exceed sampled bits, and block errors cannot exceed sampled
-/// blocks; violations are refused before checkpoint persistence.
-///
-/// The evaluator counts a block error exactly when a sampled block holds at
-/// least one information-bit error, and reports the squared per-block bit-error
-/// counts alongside their sum. The protocol refuses counters that contradict
-/// that contract, and the BER interval's failing-block decomposition rests on
-/// it.
+/// Cumulative protocol-owned result for one cell attempt.
 #[derive(Debug, Clone, PartialEq)]
-pub struct OsdCellRun {
-    /// Cumulative sampled blocks for this cell.
-    pub samples: u64,
-    /// Cumulative sampled information bits across the sampled blocks.
-    pub sampled_bits: u64,
-    /// Cumulative information-bit errors for this cell.
-    pub bit_errors: u64,
-    /// Cumulative block errors for this cell.
-    pub block_errors: u64,
-    /// Cumulative sum of squared per-block information-bit error counts.
-    pub squared_block_bit_errors: u64,
-    /// Cumulative OSD work counters for this cell.
-    pub work: OsdWorkCounters,
-    /// State reached by this attempt.
-    pub termination: OsdCellTermination,
+struct CellRun {
+    samples: u64,
+    sampled_bits: u64,
+    bit_errors: u64,
+    block_errors: u64,
+    squared_block_bit_errors: u64,
+    work: OsdWorkCounters,
+    termination: OsdCellTermination,
 }
 
-impl OsdCellRun {
-    /// Returns the block-sampled counters supporting this attempt's intervals.
-    #[must_use]
-    pub fn counts(&self) -> BlockSampleCounts {
+impl CellRun {
+    fn counts(&self) -> BlockSampleCounts {
         BlockSampleCounts {
             samples: self.samples,
             sampled_bits: self.sampled_bits,
@@ -565,34 +565,49 @@ impl OsdCellRun {
     }
 }
 
-/// Cumulative progress supplied to a resumed cell evaluator.
+/// Cumulative progress restored from a preceding interrupted attempt.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct OsdCellResume {
-    /// Sampled blocks already represented by the preceding attempt.
-    pub samples: u64,
-    /// Sampled information bits already represented by the preceding attempt.
-    pub sampled_bits: u64,
-    /// Information-bit errors already represented by the preceding attempt.
-    pub bit_errors: u64,
-    /// Block errors already represented by the preceding attempt.
-    pub block_errors: u64,
-    /// Squared per-block bit-error sum already represented by that attempt.
-    pub squared_block_bit_errors: u64,
-    /// OSD work already represented by the preceding attempt.
-    pub work: OsdWorkCounters,
+struct CellResume {
+    samples: u64,
+    sampled_bits: u64,
+    bit_errors: u64,
+    block_errors: u64,
+    squared_block_bit_errors: u64,
+    work: OsdWorkCounters,
 }
 
-/// Evaluator context for one pending OSD campaign cell.
+/// Read-only context for exactly one protocol-selected sampled block.
+///
+/// `block_index` is the zero-based cumulative index within `cell`. Calls for a
+/// cell arrive in strictly increasing order, including after resume. `seed` is
+/// the campaign's stable per-cell seed and is identical on every call for that
+/// cell, so an evaluator can restore and advance its deterministic random
+/// stream to `block_index` without controlling the protocol's sampling order.
 #[derive(Debug, Clone, Copy)]
-pub struct OsdCellExecution<'a> {
-    /// Explicit campaign cell being evaluated.
+pub struct OsdBlockContext<'a> {
+    /// Explicit campaign cell owning this block.
     pub cell: &'a OsdCell,
     /// Deterministic seed derived from campaign seed and cell identity.
     pub seed: u64,
-    /// Cumulative counters from an earlier interrupted attempt.
-    pub resume: OsdCellResume,
-    /// Cumulative independent block-error target that completes the cell.
-    pub target_block_errors: u64,
+    /// Zero-based cumulative block index selected by the protocol.
+    pub block_index: u64,
+}
+
+/// Domain result for one sampled information block.
+///
+/// The protocol derives whether this is a block error from
+/// `information_bit_errors != 0`, accumulates the squared error count, and adds
+/// `work` as a per-block delta. The evaluator cannot report aggregate counters
+/// or a termination state.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OsdBlockOutcome {
+    /// Number of information bits in this block; it must be positive and fixed
+    /// for every block of a cell, including across resume.
+    pub information_bits: u64,
+    /// Information-bit errors observed in this block.
+    pub information_bit_errors: u64,
+    /// OSD work performed for this block, added to the cell's durable totals.
+    pub work: OsdWorkCounters,
 }
 
 /// Durable statistical evidence for one cell attempt.
@@ -957,27 +972,36 @@ pub fn accepts_published_value(
 /// Runs or resumes an explicit OSD campaign through the canonical checkpoint.
 ///
 /// The generic reader first validates the payload identity, schema version,
-/// and complete campaign hash. Each evaluator result is validated, converted
-/// to BER and BLER, and receives configured block-sampled intervals only when
-/// it completes under the stopping design; each result is atomically
-/// checkpointed before the next cell. The receipt comparison method applies
-/// the metric-agnostic predicate to the completed BER interval because the
-/// campaign's published reproduction target is BER. An interrupted result
-/// ends this invocation; a later call receives the same seed and cumulative
-/// resume counters. All terminal cell identities are derived from their
-/// retained results and skipped on recovery.
+/// and complete campaign hash. For each pending cell it invokes `evaluate`
+/// once per block, accumulates the returned per-block outcome, and completes
+/// the cell immediately when that block is the target's `K`-th block error.
+/// The evaluator receives only the selected cell, stable cell seed, and next
+/// cumulative block index: it cannot choose termination, alter cumulative
+/// counters, or skip, reorder, or double-count blocks. If `max_samples` blocks
+/// are sampled for a pending cell in this invocation before it completes, the
+/// protocol records an interrupted attempt; a later call restores the counters
+/// and continues at the next block index. Each attempt is atomically
+/// checkpointed before the next cell, and terminal cells are skipped on
+/// recovery.
 ///
 /// # Errors
 ///
 /// Returns [`OsdCampaignError`] for invalid live configuration, a present
-/// invalid or mismatched checkpoint, invalid/non-monotonic evaluator output,
-/// serialization failure, or checkpoint I/O failure.
+/// invalid or mismatched checkpoint, a zero invocation sample bound, an
+/// invalid per-block outcome, counter overflow, serialization failure, or
+/// checkpoint I/O failure.
 pub fn run_osd_campaign(
     checkpoint_path: impl AsRef<Path>,
     campaign: &OsdCampaign,
-    mut evaluate: impl FnMut(OsdCellExecution<'_>) -> OsdCellRun,
+    max_samples: u64,
+    mut evaluate: impl FnMut(OsdBlockContext<'_>) -> OsdBlockOutcome,
 ) -> Result<OsdCampaignReceipt, OsdCampaignError> {
     validate_campaign(campaign)?;
+    if max_samples == 0 {
+        return Err(OsdCampaignError::InvalidConfiguration(
+            "max samples per cell invocation must be positive".to_owned(),
+        ));
+    }
     let configuration_hash = campaign
         .config_hash()
         .map_err(OsdCampaignError::Serialization)?;
@@ -1012,12 +1036,14 @@ pub fn run_osd_campaign(
             continue;
         }
         let resume = latest_resume(&checkpoint.cell_results, &cell.id);
-        let run = evaluate(OsdCellExecution {
+        let run = sample_cell(
             cell,
-            seed: campaign.cell_seed(&cell.id),
+            campaign.cell_seed(&cell.id),
+            campaign.target_block_errors,
+            max_samples,
             resume,
-            target_block_errors: campaign.target_block_errors,
-        });
+            &mut evaluate,
+        )?;
         validate_cell_run(cell, campaign.target_block_errors, resume, &run)?;
         let receipt = make_cell_receipt(campaign, cell, run, invocation_index);
         let interrupted = matches!(&receipt.termination, OsdCellTermination::Interrupted);
@@ -1168,12 +1194,12 @@ fn new_checkpoint(campaign: &OsdCampaign) -> OsdCampaignCheckpoint {
     }
 }
 
-fn latest_resume(results: &[OsdCellReceipt], cell_id: &OsdCellId) -> OsdCellResume {
+fn latest_resume(results: &[OsdCellReceipt], cell_id: &OsdCellId) -> CellResume {
     results
         .iter()
         .rev()
         .find(|receipt| &receipt.cell.id == cell_id)
-        .map_or_else(OsdCellResume::default, |receipt| OsdCellResume {
+        .map_or_else(CellResume::default, |receipt| CellResume {
             samples: receipt.samples,
             sampled_bits: receipt.sampled_bits,
             bit_errors: receipt.bit_errors,
@@ -1181,6 +1207,93 @@ fn latest_resume(results: &[OsdCellReceipt], cell_id: &OsdCellId) -> OsdCellResu
             squared_block_bit_errors: receipt.squared_block_bit_errors.unwrap_or_default(),
             work: receipt.work,
         })
+}
+
+fn sample_cell(
+    cell: &OsdCell,
+    seed: u64,
+    target_block_errors: u64,
+    max_samples: u64,
+    resume: CellResume,
+    evaluate: &mut impl FnMut(OsdBlockContext<'_>) -> OsdBlockOutcome,
+) -> Result<CellRun, OsdCampaignError> {
+    let invalid = |message: String| OsdCampaignError::InvalidCellResult {
+        cell_id: cell.id.clone(),
+        message,
+    };
+    let mut run = CellRun {
+        samples: resume.samples,
+        sampled_bits: resume.sampled_bits,
+        bit_errors: resume.bit_errors,
+        block_errors: resume.block_errors,
+        squared_block_bit_errors: resume.squared_block_bit_errors,
+        work: resume.work,
+        termination: OsdCellTermination::Interrupted,
+    };
+    let mut information_bits = (resume.samples > 0).then(|| resume.sampled_bits / resume.samples);
+
+    for _ in 0..max_samples {
+        let outcome = evaluate(OsdBlockContext {
+            cell,
+            seed,
+            block_index: run.samples,
+        });
+        if outcome.information_bits == 0 {
+            return Err(invalid(
+                "sampled information blocks must contain at least one bit".to_owned(),
+            ));
+        }
+        if outcome.information_bit_errors > outcome.information_bits {
+            return Err(invalid(
+                "information-bit errors cannot exceed the sampled block length".to_owned(),
+            ));
+        }
+        match information_bits {
+            Some(expected) if outcome.information_bits != expected => {
+                return Err(invalid(
+                    "information-block length cannot change within a cell".to_owned(),
+                ));
+            }
+            None => information_bits = Some(outcome.information_bits),
+            _ => {}
+        }
+
+        run.samples = run
+            .samples
+            .checked_add(1)
+            .ok_or_else(|| invalid("sample counter overflow".to_owned()))?;
+        run.sampled_bits = run
+            .sampled_bits
+            .checked_add(outcome.information_bits)
+            .ok_or_else(|| invalid("sampled-bit counter overflow".to_owned()))?;
+        run.bit_errors = run
+            .bit_errors
+            .checked_add(outcome.information_bit_errors)
+            .ok_or_else(|| invalid("bit-error counter overflow".to_owned()))?;
+        run.block_errors = run
+            .block_errors
+            .checked_add(u64::from(outcome.information_bit_errors != 0))
+            .ok_or_else(|| invalid("block-error counter overflow".to_owned()))?;
+        let squared_errors = outcome
+            .information_bit_errors
+            .checked_mul(outcome.information_bit_errors)
+            .ok_or_else(|| invalid("squared block bit-error counter overflow".to_owned()))?;
+        run.squared_block_bit_errors = run
+            .squared_block_bit_errors
+            .checked_add(squared_errors)
+            .ok_or_else(|| invalid("squared block bit-error counter overflow".to_owned()))?;
+        run.work = run
+            .work
+            .checked_add(outcome.work)
+            .ok_or_else(|| invalid("OSD work counter overflow".to_owned()))?;
+
+        if run.block_errors == target_block_errors {
+            run.termination = OsdCellTermination::Completed;
+            return Ok(run);
+        }
+    }
+
+    Ok(run)
 }
 
 fn settled_cell_ids(results: &[OsdCellReceipt]) -> BTreeSet<OsdCellId> {
@@ -1194,8 +1307,8 @@ fn settled_cell_ids(results: &[OsdCellReceipt]) -> BTreeSet<OsdCellId> {
 fn validate_cell_run(
     cell: &OsdCell,
     target_block_errors: u64,
-    resume: OsdCellResume,
-    run: &OsdCellRun,
+    resume: CellResume,
+    run: &CellRun,
 ) -> Result<(), OsdCampaignError> {
     let invalid = |message: &str| OsdCampaignError::InvalidCellResult {
         cell_id: cell.id.clone(),
@@ -1303,7 +1416,7 @@ fn validate_cell_run(
 fn make_cell_receipt(
     campaign: &OsdCampaign,
     cell: &OsdCell,
-    run: OsdCellRun,
+    run: CellRun,
     invocation_index: u64,
 ) -> OsdCellReceipt {
     let intervals = if matches!(&run.termination, OsdCellTermination::Completed) {
@@ -1455,7 +1568,7 @@ fn validate_checkpoint(
         .map(|cell| (cell.id.clone(), cell))
         .collect();
     let mut settled = BTreeSet::new();
-    let mut latest = BTreeMap::<OsdCellId, OsdCellResume>::new();
+    let mut latest = BTreeMap::<OsdCellId, CellResume>::new();
     for receipt in &checkpoint.cell_results {
         let cell = expected.get(&receipt.cell.id).ok_or_else(|| {
             invalid(format!(
@@ -1481,7 +1594,7 @@ fn validate_checkpoint(
             )));
         }
         let resume = latest.get(&receipt.cell.id).copied().unwrap_or_default();
-        let run = OsdCellRun {
+        let run = CellRun {
             samples: receipt.samples,
             sampled_bits: receipt.sampled_bits,
             bit_errors: receipt.bit_errors,
@@ -1536,7 +1649,7 @@ fn validate_checkpoint(
         }
         latest.insert(
             receipt.cell.id.clone(),
-            OsdCellResume {
+            CellResume {
                 samples: receipt.samples,
                 sampled_bits: receipt.sampled_bits,
                 bit_errors: receipt.bit_errors,
