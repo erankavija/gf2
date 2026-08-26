@@ -108,6 +108,12 @@ about three. Those cells stop after 76 and 74 blocks respectively. The control
 therefore exhibits the interval-width defect described below, in the arm where
 the expected ordering is known independently of any published number.
 
+The control cells follow every order-2 cell in the pinned grid, and an
+invocation returns at its first non-terminal cell, so a bounded invocation
+reaches the controls only once every order-2 cell holds a terminal result. The
+most expensive target cell therefore gates the whole control arm, which is
+tracked as `fd1f39e0`.
+
 ## Interval width and correlated bit errors
 
 Every cell in this campaign stops on a cumulative count of 100 information-bit
@@ -190,7 +196,7 @@ Three properties bound a resume. The evaluator replays a resumed cell's durable
 prefix through the same decoder to re-advance its ChaCha20 stream, so the cost
 of continuing a cell includes re-running the samples it already holds. At
 `order-2-point-06` that replay was 8,000,000 blocks, and it dominated the final
-invocation.
+invocation. Tracked as `f7844d2d`.
 
 The remaining two follow from `OsdCampaign::config_hash`, which covers the whole
 validated campaign including its runtime provenance, and which the checkpoint
@@ -214,7 +220,9 @@ campaign's later invocations ran from a detached checkout of that revision with
 the checkpoint and receipt restored into the working tree as untracked paths.
 Untracked paths under `dev/` do not affect `deps_source_dirty`, which is
 observed over `crates/` and `Cargo.lock` alone, so the configuration hash still
-matched. A future resume follows the same procedure.
+matched. A future resume follows the same procedure. That the hash gates
+resumption on provenance context which does not affect resumed results is
+tracked as `9af52659`.
 
 ## Provenance
 
@@ -289,7 +297,7 @@ $\delta$ are affected: the 1.55 dB order-2 cell and every order-1 control cell.
 Recomputing the 1.55 dB verdict with $\delta$ applied in decades accepts as
 well, and every other order-2 cell records $\delta = 0$, where the linear and
 logarithmic forms of the test agree exactly. No verdict in this record depends
-on the interpretation.
+on the interpretation. Tracked as `cf37be3b`.
 
 **Unverified article-level pin.** The reproduction target is the 1994
 dissertation. [Fossorier1995] is closed access and unverified, and no claim here
