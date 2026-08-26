@@ -317,6 +317,11 @@
    "text": "Owner ruling (session 2): plan-review/breakdown-review are the breakdown-instantiation checkpoint stamps and are NOT re-run for execution-time manifest/description amendments; their completion-time passes stand. Post-completion advisory runs on P/B ending 2026-08-25 (D-16 serialization findings) are superseded by this ruling; wave-6 dispatch order serializes the shared osd/mod.rs writers operationally. Amendment stamps during execution are: manifest validate + render check, plus the affected issue's own gates."
   },
   {
+   "id": "NOTE-07",
+   "issue": "cef1ae5f",
+   "text": "Owner directive (session 4): every campaign of this kind must commit result figures (estimates with intervals vs published values), generated deterministically from the receipt by a committed script, and link them to the issue via jit doc add. Applied to cef1ae5f as REQ-06 (+ REQ-02 reworded to the log-space predicate the cf37be3b fix implements). Candidate project-wide convention for the completion report."
+  },
+  {
    "id": "NOTE-06",
    "issue": "cef1ae5f",
    "text": "research-review R2 advisories F6 (no independent seeded rerun cross-check) and F7 (comparison results scattered across receipt/CSV/README; suggest single authoritative comparison artifact). Not blocking; candidates for follow-up alongside the 7 filed protocol bugs."
