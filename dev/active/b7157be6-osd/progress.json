@@ -237,10 +237,16 @@
    "date": "2026-08-26",
    "category": "gate failure contesting issue criteria",
    "summary": "research-review R2 F1/F5: recorded BER intervals lack coverage under block-burst errors + adaptive stopping (8a908f79) and the acceptance predicate mixes log10-decade delta with linear probability (cf37be3b); reviewer holds cef1ae5f REQ-01/REQ-02 unmet as written. RESOLVED 2026-08-26 (session 4): owner chose staged option A — fix the tool (bugs 8a908f79 + cf37be3b), validate with a reduced-compute probe run, then schedule the rigorous campaign at 02:00 local if the probe looks OK."
+  },
+  {
+   "id": "ESC-05",
+   "date": "2026-08-27",
+   "category": "rework limit",
+   "summary": "8a908f79 exceeded MAX_REWORK_ATTEMPTS after R3 code-review fail; owner approved one guided round (counter reset). R4 fixed interval presence but review surfaced the sharper stopping-design facet (last-block-is-Kth-error not provable from counters); R5 dispatched (Sol xhigh) moving the sampling loop into the protocol for structural enforcement. Same-finding-class count: 2 (R3, R4) - third occurrence escalates."
   }
  ],
  "rework_counts": {
-  "8a908f79": 2,
+  "8a908f79": 3,
   "cf37be3b": 1,
   "bebe485c": 1,
   "5dd3539f": 1,
@@ -276,7 +282,7 @@
   {
    "id": "PIT-04",
    "issue": "a82f2dd9",
-   "text": "Fossorier1995 journal article is closed-access and unobtainable; digitization used the open 1994 PhD dissertation (same author/algorithm/code/channel). Issue REQ-01 names the article explicitly \u2014 criterion unmeetable as written without the article PDF. Escalated."
+   "text": "Fossorier1995 journal article is closed-access and unobtainable; digitization used the open 1994 PhD dissertation (same author/algorithm/code/channel). Issue REQ-01 names the article explicitly — criterion unmeetable as written without the article PDF. Escalated."
   },
   {
    "id": "PIT-05",
