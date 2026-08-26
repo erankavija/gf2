@@ -157,6 +157,8 @@ curve.
 Resolving this needs a stopping rule counting block errors, or a clustered
 interval for BER, in the producing tool. Neither is applied here, because that
 would change committed measurement behavior under an issue that does not own it.
+Tracked as `8a908f79`. The recorded BLER intervals are unaffected, since they
+are computed over blocks.
 
 ## Cell status and resumption
 
@@ -278,8 +280,8 @@ discrepancy at those three abscissas.
 100-bit-error stopping rule from seven to nine failed blocks, so the recorded
 Clopper-Pearson BER intervals are roughly a factor of three too narrow. This is
 a property of the producing tool's stopping rule and interval choice, recorded
-here rather than corrected. The order-1 control's non-monotone 2.22/3.01 dB pair
-is the clearest symptom.
+here rather than corrected, and tracked as `8a908f79`. The order-1 control's
+non-monotone 2.22/3.01 dB pair is the clearest symptom.
 
 **A bound compared as if it were a measurement.** The dataset marks the 5.23 dB
 order-2 entry `value_kind = union_bound` and states that bound rows are not
