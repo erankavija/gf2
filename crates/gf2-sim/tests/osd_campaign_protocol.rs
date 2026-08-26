@@ -191,44 +191,43 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
     assert_eq!(receipt.cell_results[0].ber, 12.0 / 6_400.0);
     assert_eq!(receipt.cell_results[0].bler, 0.07);
     assert_eq!(receipt.cell_results[0].squared_block_bit_errors, Some(22));
+    let completed = &receipt.cell_results[0];
+    let ber_interval = completed
+        .ber_confidence_interval
+        .as_ref()
+        .expect("completed cells record a BER interval");
+    let bler_interval = completed
+        .bler_confidence_interval
+        .as_ref()
+        .expect("completed cells record a BLER interval");
     assert_eq!(
-        receipt.cell_results[0].ber_confidence_interval.estimator,
+        ber_interval.estimator,
         ConfidenceIntervalEstimator::BlockRatioProductInterval
     );
     assert_eq!(
-        receipt.cell_results[0]
-            .ber_confidence_interval
-            .sampling_unit,
+        ber_interval.sampling_unit,
         Some(IntervalSamplingUnit::Block)
     );
     assert_eq!(
-        receipt.cell_results[0].bler_confidence_interval.estimator,
+        bler_interval.estimator,
         ConfidenceIntervalEstimator::NegativeBinomialClopperPearson
     );
     assert_eq!(
-        receipt.cell_results[0]
-            .bler_confidence_interval
-            .sampling_unit,
+        bler_interval.sampling_unit,
         Some(IntervalSamplingUnit::Block)
     );
-    assert_eq!(receipt.cell_results[0].ber_confidence_interval.level, 0.95);
+    assert_eq!(ber_interval.level, 0.95);
+    assert_eq!(bler_interval.level, interval_spec().component_level());
+    assert!(ber_interval.lower <= receipt.cell_results[0].ber);
+    assert!(ber_interval.upper >= receipt.cell_results[0].ber);
     assert_eq!(
-        receipt.cell_results[0].bler_confidence_interval.level,
-        interval_spec().component_level()
-    );
-    assert!(receipt.cell_results[0].ber_confidence_interval.lower <= receipt.cell_results[0].ber);
-    assert!(receipt.cell_results[0].ber_confidence_interval.upper >= receipt.cell_results[0].ber);
-    assert_eq!(
-        (
-            receipt.cell_results[0].bler_confidence_interval.lower,
-            receipt.cell_results[0].bler_confidence_interval.upper,
-        ),
+        (bler_interval.lower, bler_interval.upper),
         gf2_stats::intervals::negative_binomial_interval(7, 100, interval_spec().component_level())
     );
     assert!(receipt.cell_results[0].accepts_published_value(12.0 / 6_400.0));
     assert!(!accepts_published_value(
         12.0 / 6_400.0,
-        &receipt.cell_results[0].bler_confidence_interval,
+        bler_interval,
         receipt.cell_results[0].cell.digitization_precision,
     ));
     assert_eq!(
@@ -285,6 +284,56 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
 }
 
 #[test]
+fn only_completed_attempts_serialize_confidence_intervals() {
+    let dir = TempDir::new("optional-intervals");
+    let campaign = campaign(vec![cell("completed", 2.0, 2), cell("interrupted", 2.5, 2)]);
+    let receipt = run_osd_campaign(dir.path().join("checkpoint.json"), &campaign, |context| {
+        if context.cell.id.as_str() == "completed" {
+            OsdCellRun {
+                samples: 10,
+                sampled_bits: 640,
+                bit_errors: 3,
+                block_errors: 2,
+                squared_block_bit_errors: 5,
+                work: work(10, 40, 38),
+                termination: OsdCellTermination::Completed,
+            }
+        } else {
+            OsdCellRun {
+                samples: 4,
+                sampled_bits: 256,
+                bit_errors: 2,
+                block_errors: 1,
+                squared_block_bit_errors: 4,
+                work: work(4, 17, 15),
+                termination: OsdCellTermination::Interrupted,
+            }
+        }
+    })
+    .expect("interrupted progress is checkpointed");
+
+    assert!(receipt.cell_results[0].ber_confidence_interval.is_some());
+    assert!(receipt.cell_results[0].bler_confidence_interval.is_some());
+    assert!(receipt.cell_results[1].ber_confidence_interval.is_none());
+    assert!(receipt.cell_results[1].bler_confidence_interval.is_none());
+    assert!(!receipt.cell_results[1].accepts_published_value(0.0));
+
+    let json = serde_json::to_value(&receipt).expect("receipt serializes");
+    assert!(json["cell_results"][0]
+        .get("ber_confidence_interval")
+        .is_some());
+    assert!(json["cell_results"][0]
+        .get("bler_confidence_interval")
+        .is_some());
+    assert!(json["cell_results"][1]
+        .get("ber_confidence_interval")
+        .is_none());
+    assert!(json["cell_results"][1]
+        .get("bler_confidence_interval")
+        .is_none());
+}
+
+#[test]
 fn bursty_fixture_clustered_ber_interval_is_wider_than_bit_independence_interval() {
     let dir = TempDir::new("bursty-interval");
     let campaign = campaign(vec![cell("bursty", 2.0, 2)]);
@@ -301,7 +350,9 @@ fn bursty_fixture_clustered_ber_interval_is_wider_than_bit_independence_interval
     })
     .expect("bursty fixture completes");
 
-    let clustered = receipt.cell_results[0].ber_confidence_interval;
+    let clustered = receipt.cell_results[0]
+        .ber_confidence_interval
+        .expect("completed cells record a BER interval");
     let bit_independence = gf2_stats::intervals::clopper_pearson_interval(64, 6_400, 0.95);
     let clustered_width = clustered.upper - clustered.lower;
     let bit_independence_width = bit_independence.1 - bit_independence.0;
@@ -334,8 +385,12 @@ fn recorded_ber_interval_rescales_the_recorded_block_error_interval() {
     })
     .expect("product fixture completes");
 
-    let ber = receipt.cell_results[0].ber_confidence_interval;
-    let bler = receipt.cell_results[0].bler_confidence_interval;
+    let ber = receipt.cell_results[0]
+        .ber_confidence_interval
+        .expect("completed cells record a BER interval");
+    let bler = receipt.cell_results[0]
+        .bler_confidence_interval
+        .expect("completed cells record a BLER interval");
     let fraction_lower = ber.lower / bler.lower;
     let fraction_upper = ber.upper / bler.upper;
     let smallest_fraction = 1.0 / 64.0;
@@ -367,11 +422,27 @@ fn schema_1_committed_receipt_remains_readable_with_historical_semantics() {
     );
     assert!(receipt.cell_results.iter().all(|result| {
         result.invocation_index.is_none()
-            && result.ber_confidence_interval.sampling_unit.is_none()
-            && result.bler_confidence_interval.sampling_unit.is_none()
-            && result.ber_confidence_interval.estimator
+            && result.ber_confidence_interval.is_some()
+            && result.bler_confidence_interval.is_some()
+            && result
+                .ber_confidence_interval
+                .expect("schema-1 BER interval")
+                .sampling_unit
+                .is_none()
+            && result
+                .bler_confidence_interval
+                .expect("schema-1 BLER interval")
+                .sampling_unit
+                .is_none()
+            && result
+                .ber_confidence_interval
+                .expect("schema-1 BER interval")
+                .estimator
                 == ConfidenceIntervalEstimator::ClopperPearson
-            && result.bler_confidence_interval.estimator
+            && result
+                .bler_confidence_interval
+                .expect("schema-1 BLER interval")
+                .estimator
                 == ConfidenceIntervalEstimator::ClopperPearson
     }));
 }
@@ -562,6 +633,9 @@ fn resume_preserves_censored_exhausted_and_contradictory_results() {
     .expect("terminal evidence is checkpointed");
 
     assert_eq!(completed_cell_ids(&receipt).len(), 3);
+    assert!(receipt.cell_results.iter().all(|result| {
+        result.ber_confidence_interval.is_none() && result.bler_confidence_interval.is_none()
+    }));
     let recovered = run_osd_campaign(&checkpoint_path, &campaign, |_| {
         panic!("preserved terminal cells must not be repeated")
     })
