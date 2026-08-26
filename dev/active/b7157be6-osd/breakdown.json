@@ -734,8 +734,7 @@
    "epic:osd",
    "component:gf2-sim",
    "satisfies:REQ-02",
-   "cites:Fossorier1995",
-   "cites:Yue2022"
+   "cites:Fossorier1995"
   ],
   "gates": [
    "cargo-ci",
@@ -895,8 +894,7 @@
   "labels": [
    "epic:osd",
    "component:gf2-coding",
-   "satisfies:REQ-04",
-   "cites:Yue2022"
+   "satisfies:REQ-04"
   ],
   "gates": [
    "cargo-ci",

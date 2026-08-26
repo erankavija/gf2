@@ -40,11 +40,10 @@
     "epic:osd",
     "component:gf2-sim",
     "satisfies:REQ-02",
-    "cites:Fossorier1995",
-    "cites:Yue2022"
+    "cites:Fossorier1995"
   ],
   "priority": "high",
   "state": "done",
   "title": "eBCH OSD campaign executable",
-  "updated_at": "2026-08-25T19:04:45.428572236Z"
+  "updated_at": "2026-08-26T03:08:15.651091085Z"
 }
