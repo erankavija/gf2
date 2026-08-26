@@ -65,7 +65,7 @@ $[L, U]$ at level $0.95$.
 | 3.47 | 2.51e-04 | Table 4.7 | 0 | 6486 | 415104 | 102 | 2.46e-04 | [2.00e-04, 2.98e-04] | accept |
 | 3.98 | 3.98e-05 | Table 4.7 | 0 | 26757 | 1712448 | 108 | 6.31e-05 | [5.17e-05, 7.61e-05] | **outside** |
 | 4.56 | 2.00e-06 | Table 4.7 | 0 | 151600 | 9702400 | 100 | 1.03e-05 | [8.39e-06, 1.25e-05] | **outside** |
-| 5.23 | 2.51e-07 | Table 4.7 (bound) | 0 | 6000000 | 384000000 | 87 | 2.27e-07 | [1.81e-07, 2.79e-07] | accept (interim) |
+| 5.23 | 2.51e-07 | Table 4.7 (bound) | 0 | 8000000 | 512000000 | 96 | 1.88e-07 | [1.52e-07, 2.29e-07] | **outside** (interim) |
 
 Four of the six abscissas whose published entry is a simulation fall outside
 their acceptance window. Those measurements stand as recorded; no seed, error
@@ -74,8 +74,10 @@ deviation is not one-signed: at 3.01 dB the measured interval lies below the
 published value, and at 2.22, 3.98, and 4.56 dB it lies above, with the largest
 separation at 4.56 dB.
 
-The 5.23 dB row is marked interim because that cell is interrupted rather than
-complete, and its published entry is a bound rather than a measurement; see
+The 5.23 dB row is marked interim because that cell is interrupted at its
+invocation bound rather than complete, holding 96 of its 100 target bit errors.
+Its published entry is a bound rather than a measurement, so its verdict is not
+evidence about curve reproduction; see
 [Contradictory evidence](#contradictory-evidence).
 
 ## Order-1 internal control
@@ -109,7 +111,7 @@ while `order-2-point-06` is interrupted.
 | `order-2-point-03` | 2 | 3.47 | 1 | 6486 | 102 | completed |
 | `order-2-point-04` | 2 | 3.98 | 2 (interrupted, completed) | 26757 | 108 | completed |
 | `order-2-point-05` | 2 | 4.56 | 1 | 151600 | 100 | completed |
-| `order-2-point-06` | 2 | 5.23 | 1 | 6000000 | 87 | interrupted |
+| `order-2-point-06` | 2 | 5.23 | 2 (interrupted, interrupted) | 8000000 | 96 | interrupted |
 | `order-1-point-00` | 1 | 1.55 | 0 | 0 | 0 | not started |
 | `order-1-point-01` | 1 | 2.22 | 0 | 0 | 0 | not started |
 | `order-1-point-02` | 1 | 3.01 | 0 | 0 | 0 | not started |
@@ -131,7 +133,13 @@ $ ./target/release/ebch_osd_awgn_campaign \
 The protocol skips every cell holding a terminal result and continues an
 interrupted cell from its durable counters, so completed work is never repeated.
 Each attempt stays in the receipt's `cell_results` history, so an interrupted
-attempt remains visible beside the completed result that supersedes it.
+attempt remains visible whether a later attempt completes the cell, as at
+3.98 dB, or bounds it again, as at 5.23 dB.
+
+`order-2-point-06` is the one cell still short of its stopping rule, holding 96
+of 100 target bit errors after 8,000,000 blocks. Continuing it replays those
+8,000,000 blocks before drawing a new sample, so the next invocation should
+carry a `--max-samples` bound large enough to finish the cell in one attempt.
 
 Two properties bound a resume. The evaluator replays a resumed cell's durable
 prefix through the same decoder to re-advance its ChaCha20 stream, so the cost
@@ -187,10 +195,13 @@ and the campaign controls that produced them are unchanged.
 **A bound compared as if it were a measurement.** The dataset marks the 5.23 dB
 order-2 entry `value_kind = union_bound` and states that bound rows are not
 simulation evidence. The predicate is evaluated mechanically for that row and
-reported above for completeness, but acceptance there is not evidence that a
-published measurement is reproduced. The measured interval contains the
-tabulated bound and its point estimate lies below it, which is the relation a
-bound and a measurement are expected to have.
+reported above for completeness, but its verdict there carries no claim about
+reproducing a published measurement. The measured interval
+$[1.52\times10^{-7}, 2.29\times10^{-7}]$ lies entirely below the tabulated
+bound $2.5119\times10^{-7}$, which is the relation an upper bound and a
+measurement are expected to have; the predicate nonetheless reports the row as
+outside, because it tests membership of a published point rather than the
+inequality a bound asserts.
 
 **Recorded digitization precision carries decade units.** The dataset records
 $\delta$ in $\log_{10}$ decades (`digitization_uncertainty_log10`), while the

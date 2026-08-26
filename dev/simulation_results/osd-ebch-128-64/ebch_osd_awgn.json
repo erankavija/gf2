@@ -409,6 +409,42 @@
       "termination": {
         "state": "interrupted"
       }
+    },
+    {
+      "schema_version": 1,
+      "cell": {
+        "id": "order-2-point-06",
+        "eb_n0_db": 5.23,
+        "osd_order": 2,
+        "digitization_precision": 0.0
+      },
+      "seed": 15656177087142036630,
+      "samples": 8000000,
+      "sampled_bits": 512000000,
+      "bit_errors": 96,
+      "block_errors": 8,
+      "ber": 1.875e-7,
+      "bler": 1e-6,
+      "ber_confidence_interval": {
+        "method": "clopper_pearson",
+        "level": 0.95,
+        "lower": 1.518756211600739e-7,
+        "upper": 2.2896956426618217e-7
+      },
+      "bler_confidence_interval": {
+        "method": "clopper_pearson",
+        "level": 0.95,
+        "lower": 4.317291173919197e-7,
+        "upper": 1.9703976974427054e-6
+      },
+      "work": {
+        "eliminations": 8000000,
+        "generated_patterns": 16648000000,
+        "tested_candidates": 16648000000
+      },
+      "termination": {
+        "state": "interrupted"
+      }
     }
   ],
   "termination": {
