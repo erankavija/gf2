@@ -144,6 +144,8 @@ pub(crate) fn manifest_at_schema_version(
             ],
             accelerator_runtime: Availability::NotPresent,
             cpu_model: "Test CPU".to_owned(),
+            cpu_physical_cores: None,
+            cpu_logical_threads: None,
             gpu_model: Availability::NotPresent,
         },
     }

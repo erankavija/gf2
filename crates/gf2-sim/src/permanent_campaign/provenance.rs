@@ -416,6 +416,148 @@ pub struct RuntimeSourceIdentity {
     pub deps_source_dirty: bool,
 }
 
+/// Processor identity and topology observed on the producing host.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RuntimeCpuIdentity {
+    /// Processor model string reported by the operating system.
+    pub model: String,
+    /// Number of distinct physical processor cores.
+    pub physical_cores: u32,
+    /// Number of logical processor threads.
+    pub logical_threads: u32,
+}
+
+/// Observes the producing host's processor model and core/thread topology.
+///
+/// Linux uses `/proc/cpuinfo`, counting distinct `(physical id, core id)`
+/// pairs and processor records. Platforms without that interface use the
+/// corresponding `sysctl` model and topology values. Linux falls back to sysfs
+/// topology identifiers when `/proc/cpuinfo` omits package or core identifiers.
+///
+/// # Errors
+///
+/// Returns [`std::io::ErrorKind::InvalidData`] when the operating system does
+/// not expose a non-empty model and a positive, internally consistent topology.
+pub fn observe_cpu_identity() -> std::io::Result<RuntimeCpuIdentity> {
+    if let Ok(cpuinfo) = fs::read_to_string("/proc/cpuinfo") {
+        return parse_proc_cpuinfo(&cpuinfo);
+    }
+
+    let model = sysctl_value("machdep.cpu.brand_string")
+        .or_else(|| sysctl_value("hw.model"))
+        .ok_or_else(|| invalid_cpu_data("runtime CPU model probe is unavailable"))?;
+    let physical_cores = sysctl_value("hw.physicalcpu")
+        .and_then(|value| value.parse::<u32>().ok())
+        .ok_or_else(|| invalid_cpu_data("runtime physical CPU core-count probe is unavailable"))?;
+    let logical_threads = sysctl_value("hw.logicalcpu")
+        .and_then(|value| value.parse::<u32>().ok())
+        .ok_or_else(|| invalid_cpu_data("runtime logical CPU thread-count probe is unavailable"))?;
+    validate_cpu_identity(RuntimeCpuIdentity {
+        model,
+        physical_cores,
+        logical_threads,
+    })
+}
+
+fn parse_proc_cpuinfo(cpuinfo: &str) -> std::io::Result<RuntimeCpuIdentity> {
+    let model = cpuinfo
+        .lines()
+        .filter_map(cpuinfo_field)
+        .find_map(|(name, value)| {
+            matches!(name, "model name" | "Processor" | "Hardware").then(|| value.to_owned())
+        })
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| invalid_cpu_data("/proc/cpuinfo does not contain a processor model"))?;
+    let logical_threads = cpuinfo
+        .lines()
+        .filter_map(cpuinfo_field)
+        .filter(|(name, _)| *name == "processor")
+        .count();
+    let physical_core_ids: BTreeSet<_> = cpuinfo
+        .split("\n\n")
+        .filter_map(|processor| {
+            let mut package = None;
+            let mut core = None;
+            for (name, value) in processor.lines().filter_map(cpuinfo_field) {
+                match name {
+                    "physical id" => package = Some(value.to_owned()),
+                    "core id" => core = Some(value.to_owned()),
+                    _ => {}
+                }
+            }
+            package.zip(core)
+        })
+        .collect();
+    let physical_cores = if physical_core_ids.is_empty() {
+        linux_sysfs_physical_core_ids()?.len()
+    } else {
+        physical_core_ids.len()
+    };
+    validate_cpu_identity(RuntimeCpuIdentity {
+        model,
+        physical_cores: u32::try_from(physical_cores)
+            .map_err(|_| invalid_cpu_data("physical CPU core count exceeds u32"))?,
+        logical_threads: u32::try_from(logical_threads)
+            .map_err(|_| invalid_cpu_data("logical CPU thread count exceeds u32"))?,
+    })
+}
+
+fn linux_sysfs_physical_core_ids() -> std::io::Result<BTreeSet<(String, String)>> {
+    let mut core_ids = BTreeSet::new();
+    for entry in fs::read_dir("/sys/devices/system/cpu")? {
+        let entry = entry?;
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+        let Some(index) = name.strip_prefix("cpu") else {
+            continue;
+        };
+        if index.is_empty() || !index.bytes().all(|byte| byte.is_ascii_digit()) {
+            continue;
+        }
+        let topology = entry.path().join("topology");
+        let package = fs::read_to_string(topology.join("physical_package_id"))?;
+        let core = fs::read_to_string(topology.join("core_id"))?;
+        core_ids.insert((package.trim().to_owned(), core.trim().to_owned()));
+    }
+    if core_ids.is_empty() {
+        return Err(invalid_cpu_data(
+            "Linux CPU topology exposes no physical core identifiers",
+        ));
+    }
+    Ok(core_ids)
+}
+
+fn validate_cpu_identity(identity: RuntimeCpuIdentity) -> std::io::Result<RuntimeCpuIdentity> {
+    if identity.model.trim().is_empty()
+        || identity.physical_cores == 0
+        || identity.logical_threads < identity.physical_cores
+    {
+        return Err(invalid_cpu_data(
+            "runtime CPU identity contains an invalid model or topology",
+        ));
+    }
+    Ok(identity)
+}
+
+fn cpuinfo_field(line: &str) -> Option<(&str, &str)> {
+    line.split_once(':')
+        .map(|(name, value)| (name.trim(), value.trim()))
+}
+
+fn sysctl_value(name: &str) -> Option<String> {
+    Command::new("sysctl")
+        .args(["-n", name])
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_owned())
+        .filter(|value| !value.is_empty())
+}
+
+fn invalid_cpu_data(message: &str) -> std::io::Error {
+    std::io::Error::new(std::io::ErrorKind::InvalidData, message)
+}
+
 /// Captures source identity at runtime for a measurement artifact.
 pub fn observe_source_identity(
     repository: &Path,

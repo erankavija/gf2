@@ -111,6 +111,8 @@ const JSON_FIELDS: &[&str] = &[
     "invocation",
     "accelerator_runtime",
     "cpu_model",
+    "cpu_physical_cores",
+    "cpu_logical_threads",
     "gpu_model",
     "state",
     "value",
@@ -645,6 +647,12 @@ pub struct Provenance {
     pub accelerator_runtime: Availability<String>,
     /// Processor model.
     pub cpu_model: String,
+    /// Runtime-observed number of physical processor cores, when recorded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cpu_physical_cores: Option<u32>,
+    /// Runtime-observed number of logical processor threads, when recorded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cpu_logical_threads: Option<u32>,
     /// Accelerator model, or an explicit absent state.
     pub gpu_model: Availability<String>,
 }
