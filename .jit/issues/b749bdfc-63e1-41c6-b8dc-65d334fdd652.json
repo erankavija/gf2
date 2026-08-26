@@ -16,8 +16,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "passed",
-      "updated_at": "2026-08-26T01:19:34.552963974Z",
+      "status": "failed",
+      "updated_at": "2026-08-26T02:43:30.552455525Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -37,5 +37,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cut tuning over to crate-owned typed sections",
-  "updated_at": "2026-08-26T01:29:52.429703Z"
+  "updated_at": "2026-08-26T02:43:30.552455525Z"
 }
