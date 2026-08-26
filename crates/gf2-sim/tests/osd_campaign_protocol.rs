@@ -3,15 +3,17 @@ use std::path::{Path, PathBuf};
 
 use gf2_sim::checkpoint::{CheckpointPayload, CheckpointReader};
 use gf2_sim::osd_campaign::{
-    accepts_published_value, derive_cell_seed, run_osd_campaign, BinomialIntervalMethod,
-    BinomialIntervalSpec, ConfidenceIntervalEstimator, DigitizationPrecisionUnit,
-    IntervalSamplingUnit, OsdCampaign, OsdCampaignCheckpoint, OsdCampaignProvenance,
-    OsdCampaignReceipt, OsdCampaignTermination, OsdCell, OsdCellId, OsdCellRun, OsdCellTermination,
-    OsdWorkCounters, OSD_CAMPAIGN_SCHEMA_VERSION,
+    accepts_published_value, derive_cell_seed, run_osd_campaign, BinomialConfidenceInterval,
+    BinomialIntervalMethod, BinomialIntervalSpec, BlockSampleCounts, ConfidenceIntervalEstimator,
+    DigitizationPrecisionUnit, IntervalSamplingUnit, OsdCampaign, OsdCampaignCheckpoint,
+    OsdCampaignProvenance, OsdCampaignReceipt, OsdCampaignTermination, OsdCell, OsdCellId,
+    OsdCellRun, OsdCellTermination, OsdWorkCounters, OSD_CAMPAIGN_SCHEMA_VERSION,
 };
 use gf2_sim::permanent_campaign::schema::{
     ArtifactIdentity, Availability, GitRevision, Provenance, RngAlgorithm, Sha256Digest,
 };
+use rand_chacha::ChaCha20Rng;
+use rand_core::{RngCore, SeedableRng};
 
 struct TempDir(PathBuf);
 
@@ -93,12 +95,16 @@ fn cell(id: &str, eb_n0_db: f64, order: u8) -> OsdCell {
     .expect("valid cell")
 }
 
+fn interval_spec() -> BinomialIntervalSpec {
+    BinomialIntervalSpec::new(BinomialIntervalMethod::NegativeBinomialClopperPearson, 0.95)
+        .expect("valid interval")
+}
+
 fn campaign(cells: Vec<OsdCell>) -> OsdCampaign {
     OsdCampaign::new(
         0x5eed_cafe_1234_5678,
         cells,
-        BinomialIntervalSpec::new(BinomialIntervalMethod::ClopperPearson, 0.95)
-            .expect("valid interval"),
+        interval_spec(),
         2,
         provenance(),
     )
@@ -166,6 +172,7 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
             sampled_bits: 6_400,
             bit_errors: 12,
             block_errors: 7,
+            squared_block_bit_errors: 22,
             work: work(100, 450, 431),
             termination: OsdCellTermination::Completed,
         }
@@ -179,9 +186,10 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
     );
     assert_eq!(receipt.cell_results[0].ber, 12.0 / 6_400.0);
     assert_eq!(receipt.cell_results[0].bler, 0.07);
+    assert_eq!(receipt.cell_results[0].squared_block_bit_errors, Some(22));
     assert_eq!(
         receipt.cell_results[0].ber_confidence_interval.estimator,
-        ConfidenceIntervalEstimator::HoeffdingBlockMeanSequence
+        ConfidenceIntervalEstimator::BlockRatioProductInterval
     );
     assert_eq!(
         receipt.cell_results[0]
@@ -191,7 +199,7 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
     );
     assert_eq!(
         receipt.cell_results[0].bler_confidence_interval.estimator,
-        ConfidenceIntervalEstimator::ClopperPearson
+        ConfidenceIntervalEstimator::NegativeBinomialClopperPearson
     );
     assert_eq!(
         receipt.cell_results[0]
@@ -200,7 +208,10 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
         Some(IntervalSamplingUnit::Block)
     );
     assert_eq!(receipt.cell_results[0].ber_confidence_interval.level, 0.95);
-    assert_eq!(receipt.cell_results[0].bler_confidence_interval.level, 0.95);
+    assert_eq!(
+        receipt.cell_results[0].bler_confidence_interval.level,
+        interval_spec().component_level()
+    );
     assert!(receipt.cell_results[0].ber_confidence_interval.lower <= receipt.cell_results[0].ber);
     assert!(receipt.cell_results[0].ber_confidence_interval.upper >= receipt.cell_results[0].ber);
     assert_eq!(
@@ -208,7 +219,7 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
             receipt.cell_results[0].bler_confidence_interval.lower,
             receipt.cell_results[0].bler_confidence_interval.upper,
         ),
-        gf2_stats::intervals::clopper_pearson_interval(7, 100, 0.95)
+        gf2_stats::intervals::negative_binomial_interval(7, 100, interval_spec().component_level())
     );
     assert!(receipt.cell_results[0].accepts_published_value(12.0 / 6_400.0));
     assert!(!accepts_published_value(
@@ -234,11 +245,19 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
     );
     assert_eq!(
         receipt_json["cell_results"][0]["ber_confidence_interval"]["estimator"],
-        "hoeffding_block_mean_sequence"
+        "block_ratio_product_interval"
     );
     assert_eq!(
         receipt_json["cell_results"][0]["bler_confidence_interval"]["estimator"],
-        "clopper_pearson"
+        "negative_binomial_clopper_pearson"
+    );
+    assert_eq!(
+        receipt_json["cell_results"][0]["squared_block_bit_errors"],
+        22
+    );
+    assert_eq!(
+        receipt_json["interval"]["method"],
+        "negative_binomial_clopper_pearson"
     );
     assert_eq!(
         serde_json::from_value::<gf2_sim::osd_campaign::OsdCampaignReceipt>(receipt_json).unwrap(),
@@ -271,6 +290,7 @@ fn bursty_fixture_clustered_ber_interval_is_wider_than_bit_independence_interval
             sampled_bits: 6_400,
             bit_errors: 64,
             block_errors: 2,
+            squared_block_bit_errors: 2_048,
             work: work(100, 100, 100),
             termination: OsdCellTermination::Completed,
         }
@@ -285,9 +305,40 @@ fn bursty_fixture_clustered_ber_interval_is_wider_than_bit_independence_interval
     assert_eq!(clustered.sampling_unit, Some(IntervalSamplingUnit::Block));
     assert_eq!(
         clustered.estimator,
-        ConfidenceIntervalEstimator::HoeffdingBlockMeanSequence
+        ConfidenceIntervalEstimator::BlockRatioProductInterval
     );
     assert!(clustered_width > bit_independence_width);
+}
+
+/// The BER interval is the recorded block-error interval rescaled by the
+/// bounded mean failing-block error fraction, so dividing the two recorded
+/// intervals recovers a factor inside that fraction's domain.
+#[test]
+fn recorded_ber_interval_rescales_the_recorded_block_error_interval() {
+    let dir = TempDir::new("product-structure");
+    let campaign = campaign(vec![cell("product", 2.0, 2)]);
+    let receipt = run_osd_campaign(dir.path().join("checkpoint.json"), &campaign, |_| {
+        OsdCellRun {
+            samples: 4_000,
+            sampled_bits: 256_000,
+            bit_errors: 1_302,
+            block_errors: 100,
+            squared_block_bit_errors: 17_317,
+            work: work(4_000, 4_000, 4_000),
+            termination: OsdCellTermination::Completed,
+        }
+    })
+    .expect("product fixture completes");
+
+    let ber = receipt.cell_results[0].ber_confidence_interval;
+    let bler = receipt.cell_results[0].bler_confidence_interval;
+    let fraction_lower = ber.lower / bler.lower;
+    let fraction_upper = ber.upper / bler.upper;
+    let smallest_fraction = 1.0 / 64.0;
+
+    assert!(smallest_fraction <= fraction_lower && fraction_lower <= fraction_upper);
+    assert!(fraction_upper <= 1.0);
+    assert!(fraction_lower <= 1_302.0 / 6_400.0 && 1_302.0 / 6_400.0 <= fraction_upper);
 }
 
 #[test]
@@ -339,6 +390,7 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
                 sampled_bits: 640,
                 bit_errors: 3,
                 block_errors: 2,
+                squared_block_bit_errors: 5,
                 work: work(10, 40, 38),
                 termination: OsdCellTermination::Completed,
             }
@@ -349,6 +401,7 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
                 sampled_bits: 256,
                 bit_errors: 2,
                 block_errors: 1,
+                squared_block_bit_errors: 4,
                 work: work(4, 17, 15),
                 termination: OsdCellTermination::Interrupted,
             }
@@ -371,6 +424,7 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
         assert_eq!(context.resume.sampled_bits, 256);
         assert_eq!(context.resume.bit_errors, 2);
         assert_eq!(context.resume.block_errors, 1);
+        assert_eq!(context.resume.squared_block_bit_errors, 4);
         assert_eq!(context.resume.work, work(4, 17, 15));
         assert_eq!(context.seed, campaign.cell_seed(&second_id));
         OsdCellRun {
@@ -378,6 +432,7 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
             sampled_bits: 640,
             bit_errors: 4,
             block_errors: 2,
+            squared_block_bit_errors: 8,
             work: work(10, 45, 42),
             termination: OsdCellTermination::Completed,
         }
@@ -411,19 +466,14 @@ fn invocation_history_accumulates_full_arguments_across_resume() {
         "--max-samples".to_owned(),
         "4".to_owned(),
     ];
-    let first_campaign = OsdCampaign::new(
-        17,
-        vec![cell.clone()],
-        BinomialIntervalSpec::new(BinomialIntervalMethod::ClopperPearson, 0.95).unwrap(),
-        2,
-        first_provenance,
-    )
-    .unwrap();
+    let first_campaign =
+        OsdCampaign::new(17, vec![cell.clone()], interval_spec(), 2, first_provenance).unwrap();
     run_osd_campaign(&checkpoint_path, &first_campaign, |_| OsdCellRun {
         samples: 4,
         sampled_bits: 256,
         bit_errors: 8,
         block_errors: 1,
+        squared_block_bit_errors: 64,
         work: work(4, 4, 4),
         termination: OsdCellTermination::Interrupted,
     })
@@ -435,14 +485,8 @@ fn invocation_history_accumulates_full_arguments_across_resume() {
         "--max-samples".to_owned(),
         "8".to_owned(),
     ];
-    let second_campaign = OsdCampaign::new(
-        17,
-        vec![cell],
-        BinomialIntervalSpec::new(BinomialIntervalMethod::ClopperPearson, 0.95).unwrap(),
-        2,
-        second_provenance,
-    )
-    .unwrap();
+    let second_campaign =
+        OsdCampaign::new(17, vec![cell], interval_spec(), 2, second_provenance).unwrap();
     let receipt = run_osd_campaign(&checkpoint_path, &second_campaign, |context| {
         assert_eq!(context.resume.samples, 4);
         OsdCellRun {
@@ -450,6 +494,7 @@ fn invocation_history_accumulates_full_arguments_across_resume() {
             sampled_bits: 768,
             bit_errors: 20,
             block_errors: 2,
+            squared_block_bit_errors: 208,
             work: work(12, 12, 12),
             termination: OsdCellTermination::Completed,
         }
@@ -505,6 +550,7 @@ fn resume_preserves_censored_exhausted_and_contradictory_results() {
             sampled_bits: 1_280,
             bit_errors: 5,
             block_errors: 3,
+            squared_block_bit_errors: 9,
             work: work(20, 80, 75),
             termination,
         }
@@ -530,6 +576,7 @@ fn bit_and_block_counts_are_validated_against_their_own_samples() {
             sampled_bits: 8,
             bit_errors: 9,
             block_errors: 1,
+            squared_block_bit_errors: 81,
             work: work(1, 1, 1),
             termination: OsdCellTermination::Completed,
         }
@@ -546,6 +593,7 @@ fn bit_and_block_counts_are_validated_against_their_own_samples() {
             sampled_bits: 8,
             bit_errors: 2,
             block_errors: 2,
+            squared_block_bit_errors: 4,
             work: work(1, 1, 1),
             termination: OsdCellTermination::Completed,
         }
@@ -554,6 +602,64 @@ fn bit_and_block_counts_are_validated_against_their_own_samples() {
     assert!(block_error
         .to_string()
         .contains("block errors cannot exceed samples"));
+}
+
+/// The failing-block decomposition needs every bit error to live inside a
+/// failing block, and needs the squared per-block sum to be consistent with the
+/// bit-error total it was accumulated from.
+#[test]
+fn failing_block_counters_are_validated_against_the_bit_error_total() {
+    let campaign = campaign(vec![cell("failing-blocks", 2.0, 2)]);
+    let refuse = |run: OsdCellRun, label: &str| {
+        let dir = TempDir::new(label);
+        run_osd_campaign(dir.path().join("checkpoint.json"), &campaign, move |_| {
+            run.clone()
+        })
+        .expect_err("the protocol refuses inconsistent failing-block counters")
+        .to_string()
+    };
+
+    assert!(refuse(
+        OsdCellRun {
+            samples: 10,
+            sampled_bits: 640,
+            bit_errors: 100,
+            block_errors: 1,
+            squared_block_bit_errors: 10_000,
+            work: work(10, 10, 10),
+            termination: OsdCellTermination::Completed,
+        },
+        "bit-errors-outside-failing-blocks",
+    )
+    .contains("bit errors must fit inside the failing blocks"));
+
+    assert!(refuse(
+        OsdCellRun {
+            samples: 10,
+            sampled_bits: 640,
+            bit_errors: 12,
+            block_errors: 2,
+            squared_block_bit_errors: 800,
+            work: work(10, 10, 10),
+            termination: OsdCellTermination::Completed,
+        },
+        "block-longer-than-information-block",
+    )
+    .contains("more bit errors than its information-block length"));
+
+    assert!(refuse(
+        OsdCellRun {
+            samples: 10,
+            sampled_bits: 640,
+            bit_errors: 12,
+            block_errors: 2,
+            squared_block_bit_errors: 60,
+            work: work(10, 10, 10),
+            termination: OsdCellTermination::Completed,
+        },
+        "squares-below-their-floor",
+    )
+    .contains("squared block bit errors contradict the bit-error total"));
 }
 
 #[test]
@@ -566,6 +672,7 @@ fn cell_termination_is_bound_to_the_independent_block_error_target() {
             sampled_bits: 640,
             bit_errors: 60,
             block_errors: 1,
+            squared_block_bit_errors: 3_600,
             work: work(10, 10, 10),
             termination: OsdCellTermination::Completed,
         }
@@ -582,6 +689,7 @@ fn cell_termination_is_bound_to_the_independent_block_error_target() {
             sampled_bits: 640,
             bit_errors: 60,
             block_errors: 2,
+            squared_block_bit_errors: 1_800,
             work: work(10, 10, 10),
             termination: OsdCellTermination::Interrupted,
         }
@@ -590,6 +698,156 @@ fn cell_termination_is_bound_to_the_independent_block_error_target() {
     assert!(late
         .to_string()
         .contains("has already reached the target block-error count"));
+}
+
+/// The pinned eBCH(128,64) grid's four representative operating points, each
+/// stopped at 100 block errors with the campaign's 64-bit information blocks.
+/// The per-failing-block error fractions average about 0.2 with a standard
+/// deviation near 0.03, so `squared_block_bit_errors` is the sum of squares
+/// those two moments imply.
+const OPERATING_POINTS: [(&str, u64, u64, u64); 4] = [
+    ("1.55 dB", 195, 1_373, 19_216),
+    ("3.47 dB", 3_700, 1_302, 17_317),
+    ("4.56 dB", 140_000, 1_523, 23_560),
+    ("5.23 dB", 630_000, 1_371, 19_162),
+];
+
+/// A scale-oblivious estimator produces endpoints orders of magnitude away from
+/// the point estimate at these operating points, which makes any downstream
+/// acceptance rule accept every published value. This is the regression guard
+/// against that: the interval must exclude zero and span at most one decade.
+#[test]
+fn ber_interval_stays_informative_at_the_pinned_grid_operating_points() {
+    let spec = interval_spec();
+    for (label, samples, bit_errors, squared_block_bit_errors) in OPERATING_POINTS {
+        let counts = BlockSampleCounts {
+            samples,
+            sampled_bits: samples * 64,
+            bit_errors,
+            block_errors: 100,
+            squared_block_bit_errors,
+        };
+        let interval = spec.ber_interval(counts);
+        let estimate = bit_errors as f64 / (samples * 64) as f64;
+
+        println!(
+            "{label}: n={samples} BER={estimate:.3e} interval=[{:.3e}, {:.3e}] ratio={:.2} width/estimate={:.2}",
+            interval.lower,
+            interval.upper,
+            interval.upper / interval.lower,
+            (interval.upper - interval.lower) / estimate,
+        );
+        assert!(interval.lower > 0.0, "{label} lower endpoint is vacuous");
+        assert!(
+            interval.upper / interval.lower <= 10.0,
+            "{label} spans more than one decade"
+        );
+        assert!(interval.lower <= estimate && estimate <= interval.upper);
+    }
+}
+
+/// A seeded bursty process with a known BER: a block fails with probability
+/// `1 / 4`, and a failing block carries a uniform 8 to 15 of its 64
+/// information bits in error. Sampling stops at 100 block errors, matching the
+/// design the interval claims coverage for.
+fn bursty_stopped_sample(rng: &mut ChaCha20Rng, block_errors: u64) -> BlockSampleCounts {
+    let mut counts = BlockSampleCounts {
+        samples: 0,
+        sampled_bits: 0,
+        bit_errors: 0,
+        block_errors: 0,
+        squared_block_bit_errors: 0,
+    };
+    while counts.block_errors < block_errors {
+        counts.samples += 1;
+        counts.sampled_bits += 64;
+        if rng.next_u64().is_multiple_of(4) {
+            let errors = 8 + rng.next_u64() % 8;
+            counts.block_errors += 1;
+            counts.bit_errors += errors;
+            counts.squared_block_bit_errors += errors * errors;
+        }
+    }
+    counts
+}
+
+/// Empirical coverage over independent replications of that process must reach
+/// the nominal level. The tolerance is 0.05 below nominal: at 200 replications
+/// the Monte Carlo standard error of a coverage estimate near 0.95 is about
+/// 0.015, so the tolerance is roughly three standard errors and the seeded
+/// draw makes the outcome deterministic.
+#[test]
+fn ber_interval_covers_a_seeded_bursty_process_at_its_nominal_level() {
+    const REPLICATIONS: u32 = 200;
+    const TOLERANCE: f64 = 0.05;
+
+    let spec = interval_spec();
+    let true_ber = 0.25 * 11.5 / 64.0;
+    let mut rng = ChaCha20Rng::seed_from_u64(0x0bad_5eed_1234_5678);
+    let mut covered = 0_u32;
+    for _ in 0..REPLICATIONS {
+        let interval = spec.ber_interval(bursty_stopped_sample(&mut rng, 100));
+        if interval.lower <= true_ber && true_ber <= interval.upper {
+            covered += 1;
+        }
+    }
+
+    let coverage = f64::from(covered) / f64::from(REPLICATIONS);
+    assert!(
+        coverage >= spec.level - TOLERANCE,
+        "empirical coverage {coverage} fell below the nominal level {}",
+        spec.level
+    );
+}
+
+/// The stopping design fixes which exact inversion is valid, so the campaign
+/// refuses the fixed-trial method. The method vocabulary still dispatches what
+/// it names, which is what keeps a schema 1 receipt's estimator meaningful.
+#[test]
+fn a_block_error_stopping_campaign_refuses_the_fixed_trial_interval_method() {
+    let spec = BinomialIntervalSpec::new(BinomialIntervalMethod::ClopperPearson, 0.95)
+        .expect("valid interval");
+    let error = OsdCampaign::new(17, vec![cell("fixed-trial", 2.0, 2)], spec, 2, provenance())
+        .expect_err("a stopping-time block count refuses the fixed-trial inversion");
+    assert!(error
+        .to_string()
+        .contains("inverse-binomial exact interval"));
+
+    let interval = spec.bler_interval(7, 100);
+    assert_eq!(
+        interval.estimator,
+        ConfidenceIntervalEstimator::ClopperPearson
+    );
+    assert_eq!(
+        (interval.lower, interval.upper),
+        gf2_stats::intervals::clopper_pearson_interval(7, 100, spec.component_level())
+    );
+}
+
+/// A digitization precision large enough to overflow its decade scale must
+/// still produce a decision rather than an indeterminate comparison.
+#[test]
+fn a_precision_beyond_the_decade_range_keeps_the_predicate_total() {
+    let zero_width = BinomialConfidenceInterval {
+        estimator: ConfidenceIntervalEstimator::BlockRatioProductInterval,
+        sampling_unit: Some(IntervalSamplingUnit::Block),
+        level: 0.95,
+        lower: 0.0,
+        upper: 0.0,
+    };
+    let positive = BinomialConfidenceInterval {
+        lower: 0.2,
+        upper: 0.3,
+        ..zero_width
+    };
+
+    for delta in [400.0, 1e6, f64::MAX] {
+        assert!(accepts_published_value(0.0, &zero_width, delta));
+        assert!(!accepts_published_value(1e-300, &zero_width, delta));
+        assert!(accepts_published_value(0.0, &positive, delta));
+        assert!(accepts_published_value(f64::MAX, &positive, delta));
+        assert!(!accepts_published_value(f64::INFINITY, &positive, delta));
+    }
 }
 
 #[test]

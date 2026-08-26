@@ -17,21 +17,57 @@
 //! # Interval coverage and schema history
 //!
 //! Schema 2 treats one decoded block as the independent sampling unit for both
-//! intervals. BLER uses an equal-tailed Clopper-Pearson interval. BER is the
-//! mean of the per-block information-bit error fractions and uses a two-sided,
-//! time-uniform Hoeffding confidence sequence for independent observations in
-//! `[0, 1]`. At block count `n`, it spends error probability
-//! `alpha / (n * (n + 1))`; the sum over all possible stopping times is
-//! `alpha`. Its coverage therefore survives the block-error stopping rule and
-//! permits arbitrary dependence among bit errors inside a block. It requires
-//! independent, identically distributed blocks with a fixed information-block
-//! length and is conservative because it assumes no within-block error model.
+//! intervals, and both follow the stopping design rather than assuming a fixed
+//! trial count. A completed cell stops at its `K`-th block error, where `K` is
+//! the campaign's `target_block_errors`, so the total block count `N` is a
+//! stopping time and the design is inverse-binomial. `--max-samples` bounds one
+//! invocation without consulting any outcome, so that censoring is independent
+//! of the sampled values and a resumed completed cell still holds exactly `K`
+//! failing blocks drawn under the same design.
+//!
+//! BER factors over that design as `BER = BLER * mu`, where `mu` is the mean
+//! information-bit error fraction of a failing block. Both factors are
+//! estimated at the component level `1 - alpha / 2` for a requested two-sided
+//! level `1 - alpha`:
+//!
+//! - BLER uses the equal-tailed exact inversion of the inverse-binomial
+//!   sampling distribution
+//!   ([`gf2_stats::intervals::negative_binomial_interval`]).
+//! - `mu` uses the Maurer-Pontil empirical-Bernstein bound
+//!   ([`gf2_stats::intervals::empirical_bernstein_interval`]) over the `K`
+//!   per-failing-block error fractions, intersected with the domain
+//!   `[1 / k, 1]` for information-block length `k`. `K` is fixed by the
+//!   stopping rule, so this fixed-sample bound applies; the failing blocks'
+//!   error magnitudes are independent and identically distributed under the
+//!   conditional law of a failing block, and are independent of where those
+//!   failures fall in the block sequence. The bound is variance-adaptive, which
+//!   matters because a failing block's error fraction concentrates far below
+//!   the `[0, 1]` range a Hoeffding-type bound would have to assume.
+//!
+//! The recorded BER interval is the endpoint product
+//! `[BLER_L * mu_L, BLER_U * mu_U]`. All four endpoints are non-negative, so
+//! the product interval contains `BER` whenever both factor intervals contain
+//! their factors; by the union bound its coverage is at least
+//! `1 - alpha / 2 - alpha / 2 = 1 - alpha`. Nothing in the construction assumes
+//! independence among the bit errors inside a block.
+//!
+//! That coverage statement is a statement about a completed cell. An attempt
+//! that stopped for any other reason is recorded with the same construction
+//! evaluated at its current counters, as interim evidence: its block-error
+//! count is not the design's fixed `K`, so its endpoints carry no stated
+//! coverage. [`OsdCellReceipt::termination`] distinguishes the two, and no
+//! separate flag repeats that distinction.
 //!
 //! Schema 1 receipts remain deserializable as historical evidence. Their BER
 //! intervals used Clopper-Pearson over individual bits without naming a
 //! sampling unit, so their stated coverage does not apply to clustered decoder
-//! error bursts. Their BLER intervals remain valid block-level intervals.
-//! Schema 1 also stored one usually executable-only invocation in the global
+//! error bursts. Their BLER intervals are computed over blocks, but under a
+//! bit-error stopping rule that leaves the block count a stopping time rather
+//! than the fixed trial count that inversion assumes. Schema 1 also compared a
+//! published value against `[L - delta, U + delta]`, applying a digitization
+//! precision recorded in base-10 decades as a linear probability offset; schema
+//! 2 supersedes that rule with [`accepts_published_value`]. Schema 1 stored one
+//! usually executable-only invocation in the global
 //! runtime provenance, and its `cpu_model` may contain an OS/architecture
 //! platform token. Schema 2 records the full argument vector and runtime
 //! provenance for every invocation that contributes an attempt, plus observed
@@ -158,15 +194,22 @@ impl OsdCell {
     }
 }
 
-/// Binomial confidence-interval implementation used by a campaign.
+/// Block-error interval implementation used by a campaign.
 ///
 /// The closed vocabulary prevents a receipt from naming an estimator other
 /// than the one actually dispatched through the shared `gf2-stats` API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BinomialIntervalMethod {
-    /// Equal-tailed exact Clopper-Pearson interval.
+    /// Equal-tailed exact Clopper-Pearson interval for a fixed trial count.
+    ///
+    /// Schema 1 campaigns stopped on a bit-error target and dispatched this for
+    /// both rates. A live campaign under this protocol stops on block errors,
+    /// where the block count is a stopping time, so [`OsdCampaign::new`]
+    /// refuses this method and it survives only for reading schema 1 evidence.
     ClopperPearson,
+    /// Equal-tailed exact inversion of the stop-at-Kth-error design.
+    NegativeBinomialClopperPearson,
 }
 
 /// Independent sampling unit supporting a receipted interval.
@@ -181,10 +224,13 @@ pub enum IntervalSamplingUnit {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ConfidenceIntervalEstimator {
-    /// Equal-tailed exact interval for a binomial block-error count.
+    /// Equal-tailed exact interval for a fixed-trial block-error count.
     ClopperPearson,
-    /// Time-uniform two-sided Hoeffding sequence for bounded block means.
-    HoeffdingBlockMeanSequence,
+    /// Equal-tailed exact inversion of the stop-at-Kth-block-error design.
+    NegativeBinomialClopperPearson,
+    /// Product of the block-error rate and the mean failing-block error
+    /// fraction, each bounded at half the requested error probability.
+    BlockRatioProductInterval,
 }
 
 /// Unit used by every OSD published-curve digitization precision.
@@ -195,13 +241,86 @@ pub enum DigitizationPrecisionUnit {
     Log10Decades,
 }
 
-/// Exact BLER interval method and confidence level shared by both cell rates.
+/// Cumulative block-sampled counters that determine a cell's BER interval.
+///
+/// A block error is a sampled block holding at least one information-bit
+/// error, so every counted bit error lies inside a failing block and a failing
+/// block's error fraction lies in `[1 / k, 1]` for information-block length
+/// `k = sampled_bits / samples`. The protocol refuses evaluator output that
+/// contradicts those relations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BlockSampleCounts {
+    /// Sampled blocks, the stopping time of a completed cell.
+    pub samples: u64,
+    /// Sampled information bits across those blocks.
+    pub sampled_bits: u64,
+    /// Information-bit errors, all of them inside failing blocks.
+    pub bit_errors: u64,
+    /// Failing blocks; the design's fixed count once the cell completes.
+    pub block_errors: u64,
+    /// Sum of the squared per-block information-bit error counts.
+    pub squared_block_bit_errors: u64,
+}
+
+impl BlockSampleCounts {
+    /// Returns the mean and unbiased sample variance of the failing blocks'
+    /// information-bit error fractions, both in error-fraction units.
+    ///
+    /// The counters are integers, so the sum of squared deviations is formed
+    /// exactly in `u128` before it reaches floating point and can never turn
+    /// negative through cancellation.
+    fn failing_block_fraction_moments(self) -> (f64, f64) {
+        let information_bits = (self.sampled_bits / self.samples) as f64;
+        let failures = self.block_errors as f64;
+        let mean = self.bit_errors as f64 / (failures * information_bits);
+        if self.block_errors < 2 {
+            return (mean, 0.0);
+        }
+        let scaled_deviation = u128::from(self.squared_block_bit_errors)
+            * u128::from(self.block_errors)
+            - u128::from(self.bit_errors) * u128::from(self.bit_errors);
+        let variance = scaled_deviation as f64
+            / (failures * (failures - 1.0) * information_bits * information_bits);
+        (mean, variance)
+    }
+
+    /// Bounds the mean failing-block error fraction at `level`.
+    ///
+    /// With no observed failing block the fraction has no estimand and the
+    /// whole domain is returned, which leaves the BER interval equal to the
+    /// block-error interval. Otherwise the empirical-Bernstein bound is
+    /// intersected with the domain floor `1 / k`; validated counters keep the
+    /// sample mean at or above that floor, so the intersection is non-empty.
+    fn failing_block_fraction_interval(self, level: f64) -> (f64, f64) {
+        if self.block_errors == 0 {
+            return (0.0, 1.0);
+        }
+        let (mean, variance) = self.failing_block_fraction_moments();
+        let (lower, upper) = gf2_stats::intervals::empirical_bernstein_interval(
+            mean,
+            variance,
+            self.block_errors,
+            level,
+        );
+        (
+            lower.max(self.samples as f64 / self.sampled_bits as f64),
+            upper,
+        )
+    }
+}
+
+/// Exact block-error interval method and the campaign's confidence level.
+///
+/// `level` is the two-sided level of the composed BER interval, the campaign's
+/// comparison metric. Each factor of that composition, the recorded BLER
+/// interval included, is computed at [`Self::component_level`], and every
+/// recorded interval carries the level it was computed at.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BinomialIntervalSpec {
-    /// Named exact estimator used for BLER.
+    /// Named exact estimator used for the block error rate.
     pub method: BinomialIntervalMethod,
-    /// Requested two-sided confidence level.
+    /// Requested two-sided confidence level of the composed BER interval.
     pub level: f64,
 }
 
@@ -221,18 +340,66 @@ impl BinomialIntervalSpec {
         Ok(Self { method, level })
     }
 
-    fn compute(self, errors: u64, samples: u64) -> BinomialConfidenceInterval {
-        let (lower, upper) = match self.method {
-            BinomialIntervalMethod::ClopperPearson => {
-                gf2_stats::intervals::clopper_pearson_interval(errors, samples, self.level)
-            }
+    /// Returns the two-sided level spent on each factor of the BER interval.
+    ///
+    /// The BER interval is the product of a block-error rate interval and a
+    /// failing-block error-fraction interval. Each is computed at
+    /// `1 - alpha / 2` for the requested `1 - alpha`, so the union bound leaves
+    /// the product at the requested level.
+    #[must_use]
+    pub fn component_level(self) -> f64 {
+        1.0 - (1.0 - self.level) / 2.0
+    }
+
+    /// Computes the block error-rate interval at [`Self::component_level`].
+    ///
+    /// The estimator recorded with the endpoints is the one this method
+    /// dispatched, so a receipt cannot name an interval it does not hold.
+    #[must_use]
+    pub fn bler_interval(self, block_errors: u64, samples: u64) -> BinomialConfidenceInterval {
+        let level = self.component_level();
+        let (estimator, (lower, upper)) = match self.method {
+            BinomialIntervalMethod::ClopperPearson => (
+                ConfidenceIntervalEstimator::ClopperPearson,
+                gf2_stats::intervals::clopper_pearson_interval(block_errors, samples, level),
+            ),
+            BinomialIntervalMethod::NegativeBinomialClopperPearson => (
+                ConfidenceIntervalEstimator::NegativeBinomialClopperPearson,
+                gf2_stats::intervals::negative_binomial_interval(block_errors, samples, level),
+            ),
         };
         BinomialConfidenceInterval {
-            estimator: ConfidenceIntervalEstimator::ClopperPearson,
+            estimator,
             sampling_unit: Some(IntervalSamplingUnit::Block),
-            level: self.level,
+            level,
             lower,
             upper,
+        }
+    }
+
+    /// Computes the composed bit error-rate interval at the requested level.
+    ///
+    /// The endpoints are the products of the [`Self::bler_interval`] endpoints
+    /// with the endpoints of the mean failing-block error-fraction interval,
+    /// both taken at [`Self::component_level`]. The composition, its coverage
+    /// argument, and the conditions under which the stated coverage applies are
+    /// documented at the [module level](self).
+    ///
+    /// # Panics
+    ///
+    /// Panics when `counts.samples` is zero, which has no information-block
+    /// length and no estimand.
+    #[must_use]
+    pub fn ber_interval(self, counts: BlockSampleCounts) -> BinomialConfidenceInterval {
+        let block_rate = self.bler_interval(counts.block_errors, counts.samples);
+        let (fraction_lower, fraction_upper) =
+            counts.failing_block_fraction_interval(self.component_level());
+        BinomialConfidenceInterval {
+            estimator: ConfidenceIntervalEstimator::BlockRatioProductInterval,
+            sampling_unit: Some(IntervalSamplingUnit::Block),
+            level: self.level,
+            lower: (block_rate.lower * fraction_lower).clamp(0.0, 1.0),
+            upper: (block_rate.upper * fraction_upper).clamp(0.0, 1.0),
         }
     }
 }
@@ -353,6 +520,12 @@ impl OsdCellTermination {
 /// [`OsdCellExecution::resume`]. Both sample denominators must advance, bit
 /// errors cannot exceed sampled bits, and block errors cannot exceed sampled
 /// blocks; violations are refused before checkpoint persistence.
+///
+/// The evaluator counts a block error exactly when a sampled block holds at
+/// least one information-bit error, and reports the squared per-block bit-error
+/// counts alongside their sum. The protocol refuses counters that contradict
+/// that contract, and the BER interval's failing-block decomposition rests on
+/// it.
 #[derive(Debug, Clone, PartialEq)]
 pub struct OsdCellRun {
     /// Cumulative sampled blocks for this cell.
@@ -363,10 +536,26 @@ pub struct OsdCellRun {
     pub bit_errors: u64,
     /// Cumulative block errors for this cell.
     pub block_errors: u64,
+    /// Cumulative sum of squared per-block information-bit error counts.
+    pub squared_block_bit_errors: u64,
     /// Cumulative OSD work counters for this cell.
     pub work: OsdWorkCounters,
     /// State reached by this attempt.
     pub termination: OsdCellTermination,
+}
+
+impl OsdCellRun {
+    /// Returns the block-sampled counters supporting this attempt's intervals.
+    #[must_use]
+    pub fn counts(&self) -> BlockSampleCounts {
+        BlockSampleCounts {
+            samples: self.samples,
+            sampled_bits: self.sampled_bits,
+            bit_errors: self.bit_errors,
+            block_errors: self.block_errors,
+            squared_block_bit_errors: self.squared_block_bit_errors,
+        }
+    }
 }
 
 /// Cumulative progress supplied to a resumed cell evaluator.
@@ -380,6 +569,8 @@ pub struct OsdCellResume {
     pub bit_errors: u64,
     /// Block errors already represented by the preceding attempt.
     pub block_errors: u64,
+    /// Squared per-block bit-error sum already represented by that attempt.
+    pub squared_block_bit_errors: u64,
     /// OSD work already represented by the preceding attempt.
     pub work: OsdWorkCounters,
 }
@@ -418,11 +609,14 @@ pub struct OsdCellReceipt {
     pub bit_errors: u64,
     /// Cumulative block errors.
     pub block_errors: u64,
+    /// Cumulative squared per-block bit-error sum, absent in schema 1.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub squared_block_bit_errors: Option<u64>,
     /// Bit error-rate point estimate `bit_errors / sampled_bits`.
     pub ber: f64,
     /// Block error-rate point estimate `block_errors / samples`.
     pub bler: f64,
-    /// Block-sampled BER interval for the mean per-block bit-error fraction.
+    /// Composed BER interval over the block-error stopping design.
     pub ber_confidence_interval: BinomialConfidenceInterval,
     /// Named BLER interval computed from `block_errors` and `samples`.
     pub bler_confidence_interval: BinomialConfidenceInterval,
@@ -445,6 +639,21 @@ impl OsdCellReceipt {
             &self.ber_confidence_interval,
             self.cell.digitization_precision,
         )
+    }
+
+    /// Returns the block-sampled counters supporting this attempt's intervals.
+    ///
+    /// A schema 1 attempt carries no squared per-block bit-error sum, so its
+    /// counters report zero there and do not reproduce its recorded intervals.
+    #[must_use]
+    pub fn counts(&self) -> BlockSampleCounts {
+        BlockSampleCounts {
+            samples: self.samples,
+            sampled_bits: self.sampled_bits,
+            bit_errors: self.bit_errors,
+            block_errors: self.block_errors,
+            squared_block_bit_errors: self.squared_block_bit_errors.unwrap_or_default(),
+        }
     }
 }
 
@@ -473,7 +682,7 @@ pub struct OsdCampaignCheckpoint {
     pub campaign_seed: u64,
     /// Ordered explicit campaign grid.
     pub cells: Vec<OsdCell>,
-    /// Exact BLER method and confidence level shared by both rates.
+    /// Exact block-error interval method and campaign confidence level.
     pub interval: BinomialIntervalSpec,
     /// Cumulative block-error target that completes each cell.
     pub target_block_errors: u64,
@@ -502,7 +711,7 @@ pub struct OsdCampaignReceipt {
     pub campaign_seed: u64,
     /// Ordered explicit campaign grid.
     pub cells: Vec<OsdCell>,
-    /// Exact BLER method and confidence level shared by both rates.
+    /// Exact block-error interval method and campaign confidence level.
     pub interval: BinomialIntervalSpec,
     /// Cumulative block-error target, absent from historical schema 1 receipts.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -693,40 +902,37 @@ pub fn derive_cell_seed(campaign_seed: u64, cell_id: &OsdCellId) -> u64 {
 /// this accepts a finite `published_value` exactly when it lies in the inclusive
 /// interval `[lower * 10^(-delta), upper * 10^(delta)]`. Invalid numeric inputs
 /// return `false`.
+///
+/// The predicate is total over every finite non-negative `delta`. A `delta`
+/// large enough to overflow `10^delta` widens the upper endpoint to infinity,
+/// and a zero upper endpoint stays zero rather than becoming an indeterminate
+/// product, so a zero-width interval at zero still accepts a published zero.
 #[must_use]
 pub fn accepts_published_value(
     published_value: f64,
     interval: &BinomialConfidenceInterval,
     digitization_precision: f64,
 ) -> bool {
-    let scale = 10.0_f64.powf(digitization_precision);
-    published_value.is_finite()
-        && interval.lower.is_finite()
-        && interval.upper.is_finite()
-        && interval.lower >= 0.0
-        && interval.lower <= interval.upper
-        && digitization_precision.is_finite()
-        && digitization_precision >= 0.0
-        && published_value >= interval.lower / scale
-        && published_value <= interval.upper * scale
-}
-
-fn block_mean_hoeffding_sequence(
-    point_estimate: f64,
-    samples: u64,
-    level: f64,
-) -> BinomialConfidenceInterval {
-    let alpha = 1.0 - level;
-    let sample_count = samples as f64;
-    let radius =
-        ((2.0 * sample_count * (sample_count + 1.0) / alpha).ln() / (2.0 * sample_count)).sqrt();
-    BinomialConfidenceInterval {
-        estimator: ConfidenceIntervalEstimator::HoeffdingBlockMeanSequence,
-        sampling_unit: Some(IntervalSamplingUnit::Block),
-        level,
-        lower: (point_estimate - radius).max(0.0),
-        upper: (point_estimate + radius).min(1.0),
+    if !published_value.is_finite()
+        || !interval.lower.is_finite()
+        || !interval.upper.is_finite()
+        || interval.lower < 0.0
+        || interval.lower > interval.upper
+        || !digitization_precision.is_finite()
+        || digitization_precision < 0.0
+    {
+        return false;
     }
+    // `delta >= 0` keeps `scale >= 1`, so dividing cannot overflow and the
+    // quotient stays finite even when the scale itself does not.
+    let scale = 10.0_f64.powf(digitization_precision);
+    let widened_lower = interval.lower / scale;
+    let widened_upper = if interval.upper > 0.0 {
+        interval.upper * scale
+    } else {
+        0.0
+    };
+    published_value >= widened_lower && published_value <= widened_upper
 }
 
 /// Runs or resumes an explicit OSD campaign through the canonical checkpoint.
@@ -909,6 +1115,11 @@ fn validate_campaign(campaign: &OsdCampaign) -> Result<(), OsdCampaignError> {
         )));
     }
     BinomialIntervalSpec::new(campaign.interval.method, campaign.interval.level)?;
+    if campaign.interval.method != BinomialIntervalMethod::NegativeBinomialClopperPearson {
+        return Err(OsdCampaignError::InvalidConfiguration(
+            "a block-error stopping rule leaves the block count a stopping time and requires the inverse-binomial exact interval".to_owned(),
+        ));
+    }
     if campaign.target_block_errors == 0 {
         return Err(OsdCampaignError::InvalidConfiguration(
             "target block errors must be positive".to_owned(),
@@ -956,6 +1167,7 @@ fn latest_resume(results: &[OsdCellReceipt], cell_id: &OsdCellId) -> OsdCellResu
             sampled_bits: receipt.sampled_bits,
             bit_errors: receipt.bit_errors,
             block_errors: receipt.block_errors,
+            squared_block_bit_errors: receipt.squared_block_bit_errors.unwrap_or_default(),
             work: receipt.work,
         })
 }
@@ -1013,6 +1225,34 @@ fn validate_cell_run(
     if run.block_errors > run.bit_errors {
         return Err(invalid("block errors cannot exceed bit errors"));
     }
+    if run.squared_block_bit_errors < resume.squared_block_bit_errors {
+        return Err(invalid(
+            "cumulative squared block bit errors cannot decrease",
+        ));
+    }
+    if run.squared_block_bit_errors < run.bit_errors {
+        return Err(invalid(
+            "squared block bit errors cannot fall below the bit-error count",
+        ));
+    }
+    let information_bits = run.sampled_bits / run.samples;
+    if u128::from(run.bit_errors) > u128::from(run.block_errors) * u128::from(information_bits) {
+        return Err(invalid("bit errors must fit inside the failing blocks"));
+    }
+    if u128::from(run.squared_block_bit_errors)
+        > u128::from(information_bits) * u128::from(run.bit_errors)
+    {
+        return Err(invalid(
+            "a block cannot contribute more bit errors than its information-block length",
+        ));
+    }
+    if u128::from(run.squared_block_bit_errors) * u128::from(run.block_errors)
+        < u128::from(run.bit_errors) * u128::from(run.bit_errors)
+    {
+        return Err(invalid(
+            "squared block bit errors contradict the bit-error total",
+        ));
+    }
     if !run.work.contains(resume.work) {
         return Err(invalid("cumulative OSD work counters cannot decrease"));
     }
@@ -1049,7 +1289,7 @@ fn make_cell_receipt(
     run: OsdCellRun,
     invocation_index: u64,
 ) -> OsdCellReceipt {
-    let ber = run.bit_errors as f64 / run.sampled_bits as f64;
+    let counts = run.counts();
     OsdCellReceipt {
         schema_version: OSD_CAMPAIGN_SCHEMA_VERSION,
         invocation_index: Some(invocation_index),
@@ -1059,14 +1299,13 @@ fn make_cell_receipt(
         sampled_bits: run.sampled_bits,
         bit_errors: run.bit_errors,
         block_errors: run.block_errors,
-        ber,
+        squared_block_bit_errors: Some(run.squared_block_bit_errors),
+        ber: run.bit_errors as f64 / run.sampled_bits as f64,
         bler: run.block_errors as f64 / run.samples as f64,
-        ber_confidence_interval: block_mean_hoeffding_sequence(
-            ber,
-            run.samples,
-            campaign.interval.level,
-        ),
-        bler_confidence_interval: campaign.interval.compute(run.block_errors, run.samples),
+        ber_confidence_interval: campaign.interval.ber_interval(counts),
+        bler_confidence_interval: campaign
+            .interval
+            .bler_interval(run.block_errors, run.samples),
         work: run.work,
         termination: run.termination,
     }
@@ -1194,6 +1433,7 @@ fn validate_checkpoint(
         }
         if receipt.schema_version != OSD_CAMPAIGN_SCHEMA_VERSION
             || receipt.invocation_index.is_none()
+            || receipt.squared_block_bit_errors.is_none()
             || receipt.cell != **cell
             || receipt.seed != campaign.cell_seed(&receipt.cell.id)
         {
@@ -1208,17 +1448,17 @@ fn validate_checkpoint(
             sampled_bits: receipt.sampled_bits,
             bit_errors: receipt.bit_errors,
             block_errors: receipt.block_errors,
+            squared_block_bit_errors: receipt.squared_block_bit_errors.unwrap_or_default(),
             work: receipt.work,
             termination: receipt.termination.clone(),
         };
         validate_cell_run(cell, campaign.target_block_errors, resume, &run)
             .map_err(|error| invalid(error.to_string()))?;
         let expected_ber = receipt.bit_errors as f64 / receipt.sampled_bits as f64;
-        let expected_ber_interval =
-            block_mean_hoeffding_sequence(expected_ber, receipt.samples, campaign.interval.level);
+        let expected_ber_interval = campaign.interval.ber_interval(receipt.counts());
         let expected_bler_interval = campaign
             .interval
-            .compute(receipt.block_errors, receipt.samples);
+            .bler_interval(receipt.block_errors, receipt.samples);
         let expected_bler = receipt.block_errors as f64 / receipt.samples as f64;
         if !same_derived_probability(receipt.ber, expected_ber)
             || !same_derived_probability(receipt.bler, expected_bler)
@@ -1256,6 +1496,7 @@ fn validate_checkpoint(
                 sampled_bits: receipt.sampled_bits,
                 bit_errors: receipt.bit_errors,
                 block_errors: receipt.block_errors,
+                squared_block_bit_errors: run.squared_block_bit_errors,
                 work: receipt.work,
             },
         );
