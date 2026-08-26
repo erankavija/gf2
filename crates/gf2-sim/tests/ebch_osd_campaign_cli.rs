@@ -146,6 +146,24 @@ fn campaign_maps_pinned_cells_and_resumes_into_the_same_receipt() {
     );
     assert_eq!(resumed.cell_results[0].invocation_index, Some(0));
     assert_eq!(resumed.cell_results[1].invocation_index, Some(1));
+
+    let uninterrupted_dir = TempDir::new("uninterrupted-prefix");
+    let uninterrupted_output = run(&campaign_args(uninterrupted_dir.path(), "3", "1000000"));
+    assert!(
+        uninterrupted_output.status.success(),
+        "uninterrupted bounded run failed:\n{}",
+        String::from_utf8_lossy(&uninterrupted_output.stderr)
+    );
+    let uninterrupted = receipt(&uninterrupted_dir.path().join("receipt.json"));
+    let mut resumed_cell = resumed.cell_results[1].clone();
+    let mut uninterrupted_cell = uninterrupted.cell_results[0].clone();
+    resumed_cell.invocation_index = None;
+    uninterrupted_cell.invocation_index = None;
+    assert_eq!(
+        serde_json::to_vec(&resumed_cell).unwrap(),
+        serde_json::to_vec(&uninterrupted_cell).unwrap(),
+        "resuming must preserve the byte identity of cumulative cell evidence"
+    );
 }
 
 #[test]
