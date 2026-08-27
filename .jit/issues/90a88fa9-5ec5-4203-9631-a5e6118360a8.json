@@ -17,7 +17,7 @@
     "component:gf2-sim"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Converge campaign orchestration onto shared deterministic-parallelism and scheduling primitives",
-  "updated_at": "2026-08-27T06:54:28.422752296Z"
+  "updated_at": "2026-08-27T12:57:31.452747679Z"
 }
