@@ -191,7 +191,21 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "rigorous schema-2 campaign RUNNING (launched 02:21 2026-08-27, one invocation, K=100, main @ ce5ae21f, binary 63744f8a; ~20h est). Tool fixed: all 4 prerequisite bugs done (8a908f79 5 rounds). Probe validated receipt end-to-end; plot.py committed-ready and probe-tested (REQ-06). Next: worker writes README+comparison, figures, doc links, research-review."
+     "status": "rigorous schema-2 campaign RUNNING (launched 02:21 2026-08-27, one invocation, K=100, main @ ce5ae21f, binary 63744f8a). Single-threaded (bug 258be082): 6/14 cells done in first 44 min, dominant order-2 5.23 dB cell in progress; owner ruled the run finishes (statistics unaffected). Probe validated receipt end-to-end; plot.py committed and probe-tested (REQ-06). Next: worker writes README+comparison, figures, doc links, research-review."
+    }
+   ]
+  },
+  {
+   "wave_number": 7,
+   "issues": [
+    {
+     "id": null,
+     "short_id": "258be082",
+     "key": null,
+     "title": "OSD campaign protocol evaluates blocks single-threaded, idling 23 of 24 host threads",
+     "classification": "implementation",
+     "model": "opus",
+     "status": "filed and wired (epic child per owner ruling; deps: b7157be6 -> 258be082 -> 8a908f79; gates cargo-ci/code-review/doc-review). Dispatch after the running campaign completes (owner chose finish-run-then-fix). Design pinned in the issue: deterministic lookahead, sequential block stream, parallel decode, in-order commit, identical counters/stopping index; evaluator contract moves off FnMut."
     }
    ]
   }
@@ -211,6 +225,11 @@
    "short_id": "cf37be3b",
    "title": "digitization precision units differ between dataset and acceptance predicate",
    "reason": "pre-existing filed bug promoted to cef1ae5f prerequisite by ESC-04 resolution (session 4); driven by the lead, not an epic child"
+  },
+  {
+   "short_id": "258be082",
+   "title": "OSD campaign protocol evaluates blocks single-threaded, idling 23 of 24 host threads",
+   "reason": "owner-reported defect during the rigorous run (session 4); owner ruled it in epic scope - wired as epic child, wave 7. Not a manifest node (bug idiom, matching the other prerequisite bugs)."
   }
  ],
  "escalations": [
@@ -333,6 +352,11 @@
    "id": "NOTE-07",
    "issue": "cef1ae5f",
    "text": "Owner directive (session 4): every campaign of this kind must commit result figures (estimates with intervals vs published values), generated deterministically from the receipt by a committed script, and link them to the issue via jit doc add. Applied to cef1ae5f as REQ-06 (+ REQ-02 reworded to the log-space predicate the cf37be3b fix implements). Candidate project-wide convention for the completion report."
+  },
+  {
+   "id": "NOTE-09",
+   "issue": "258be082",
+   "text": "Owner report (2026-08-27, session 4): rigorous campaign runs single-threaded (Threads: 1, 24-thread host) - defect present since the tool's creation (8e1212e4, c8322eff); no review round flagged it (all scoped to statistics). R5's FnMut per-block contract now structurally forces sequential evaluation, so the fix reworks the protocol loop. Owner decisions: the running campaign finishes (correctness unaffected; ~2-5h remained vs a from-zero rerun), and the fix is epic scope (258be082, wave 7). Fix must keep byte-identical counters/stopping index via sequential block stream + parallel decode + in-order commit."
   },
   {
    "id": "NOTE-06",
