@@ -15,14 +15,6 @@
     {
       "assets": [
         {
-          "asset_type": "missing",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../reference_data/osd_ebch_128_64_fossorier1994.csv",
-          "resolved_path": "dev/simulation_results/reference_data/osd_ebch_128_64_fossorier1994.csv"
-        },
-        {
           "asset_type": "local",
           "content_hash": "7e63dcdbea437747dd5b2415af44b0e30f206e6a96cfda9775ba86cf61c02697",
           "is_shared": false,
@@ -31,12 +23,20 @@
           "resolved_path": "dev/simulation_results/osd-ebch-128-64/schema1/host-lscpu.txt"
         },
         {
-          "asset_type": "missing",
-          "content_hash": null,
+          "asset_type": "local",
+          "content_hash": "acacfaa6183c3f37f5a0ca4627e066be1374e1e774a2c6d00d76b61650ca7fae",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../reference_data/osd_ebch_128_64_fossorier1994.md",
+          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "de77bf60944be7dd4050017894f628a54ae0146b840c7bc0b459c35faa9c4ffc",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../reference_data/osd_ebch_128_64_fossorier1994.md",
-          "resolved_path": "dev/simulation_results/reference_data/osd_ebch_128_64_fossorier1994.md"
+          "original_path": "../../../reference_data/osd_ebch_128_64_fossorier1994.csv",
+          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.csv"
         }
       ],
       "commit": null,
@@ -188,7 +188,7 @@
   "gates_status": {
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-27T16:30:29.794556811Z",
+      "updated_at": "2026-08-27T16:35:20.952146892Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -209,5 +209,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "eBCH OSD curve reproduction",
-  "updated_at": "2026-08-27T16:30:29.794556811Z"
+  "updated_at": "2026-08-27T16:35:51.040068290Z"
 }
