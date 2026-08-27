@@ -61,19 +61,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "7251f33f34f3714212749a2c43be40e2ab14a70efa126dc92b05f61e5d0ddae4",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "host-lscpu.txt",
-          "resolved_path": "dev/simulation_results/osd-ebch-128-64/host-lscpu.txt"
-        },
-        {
-          "asset_type": "directory",
-          "content_hash": null,
+          "content_hash": "de77bf60944be7dd4050017894f628a54ae0146b840c7bc0b459c35faa9c4ffc",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "schema1/",
-          "resolved_path": "dev/simulation_results/osd-ebch-128-64/schema1"
+          "original_path": "../../reference_data/osd_ebch_128_64_fossorier1994.csv",
+          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.csv"
         },
         {
           "asset_type": "local",
@@ -85,31 +77,31 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "a32c807cfdf265a80a02b286b65966f1166d659fc119b6e83fe0a6daea9a16b0",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md",
-          "resolved_path": "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "5c969815beb52919fd9334a81dbe0e9aebb8277564d49f171583c20aed4ed8bb",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "plot.py",
-          "resolved_path": "dev/simulation_results/osd-ebch-128-64/plot.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "2d1c99f7830bf24c197bc88caba11a7c1d922b433d167e9815ea40cd8b6754c2",
+          "content_hash": "5dcf3a77389038d75fb65765ae21745036799cd0e7629c26c004490b41d4010e",
           "is_shared": false,
           "mime_type": "image/png",
           "original_path": "order1_controls.png",
           "resolved_path": "dev/simulation_results/osd-ebch-128-64/order1_controls.png"
         },
         {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "schema1/",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/schema1"
+        },
+        {
           "asset_type": "local",
-          "content_hash": "f33dcce98ab8a7df8d2d7092ca5106b850a4a8702bc7ce9a7679f92a9904a80a",
+          "content_hash": "80a446e10f469cb5eebc31128ab8adefd2f3986f8e43ef656e73b76b1a49dc0f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "comparison.json",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/comparison.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8e3da8afa6308eb356f44090046433a4287804cc19f453c1bc44db627e8dbe86",
           "is_shared": false,
           "mime_type": "image/png",
           "original_path": "order2_ber_comparison.png",
@@ -117,11 +109,43 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "de77bf60944be7dd4050017894f628a54ae0146b840c7bc0b459c35faa9c4ffc",
+          "content_hash": "0ed4346b7580e474d69b935e9fd90a39e9afed22d6a2db88934f3cbd683cf519",
+          "is_shared": false,
+          "mime_type": "image/svg+xml",
+          "original_path": "order1_controls.svg",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/order1_controls.svg"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2b07b984e25bec698ecf6a5428c4aea211d48998fb75e071f05894e6883807d0",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../reference_data/osd_ebch_128_64_fossorier1994.csv",
-          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.csv"
+          "original_path": "plot.py",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/plot.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b72ee2a45775f3461d3c7ef3366fd681cbb256de1a69f74f59c5f2a3d1698a0f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md",
+          "resolved_path": "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7251f33f34f3714212749a2c43be40e2ab14a70efa126dc92b05f61e5d0ddae4",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "host-lscpu.txt",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/host-lscpu.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5581d13b1a5aceccd747bde239fb46113802b2ddb3f8338b72767810f5677d51",
+          "is_shared": false,
+          "mime_type": "image/svg+xml",
+          "original_path": "order2_ber_comparison.svg",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/order2_ber_comparison.svg"
         }
       ],
       "commit": null,
@@ -134,7 +158,7 @@
       "commit": null,
       "doc_type": "script",
       "format": "markdown",
-      "label": "Figure generation script",
+      "label": "Comparison and figure generation script",
       "path": "dev/simulation_results/osd-ebch-128-64/plot.py"
     },
     {
@@ -148,6 +172,12 @@
       "doc_type": "figure",
       "label": "Order-1 internal control series",
       "path": "dev/simulation_results/osd-ebch-128-64/order1_controls.svg"
+    },
+    {
+      "commit": null,
+      "doc_type": "results",
+      "label": "Machine-readable acceptance comparison",
+      "path": "dev/simulation_results/osd-ebch-128-64/comparison.json"
     }
   ],
   "first_ready_at": "2026-08-25T19:04:53.617878279Z",
@@ -174,5 +204,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "eBCH OSD curve reproduction",
-  "updated_at": "2026-08-27T15:43:50.557933043Z"
+  "updated_at": "2026-08-27T16:06:57.551895775Z"
 }
