@@ -830,7 +830,9 @@
       "dev/simulation_results/osd-ebch-128-64/host-lscpu.txt",
       "dev/simulation_results/osd-ebch-128-64/plot.py",
       "dev/simulation_results/osd-ebch-128-64/order2_ber_comparison.png",
-      "dev/simulation_results/osd-ebch-128-64/order1_controls.png"
+      "dev/simulation_results/osd-ebch-128-64/order1_controls.png",
+      "dev/simulation_results/osd-ebch-128-64/order2_ber_comparison.svg",
+      "dev/simulation_results/osd-ebch-128-64/order1_controls.svg"
      ]
     }
    }
