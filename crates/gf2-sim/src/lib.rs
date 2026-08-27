@@ -158,8 +158,9 @@ pub use frame_sim::DvbT2BicmFrameSim;
 pub use graph::Chain;
 #[doc(inline)]
 pub use parallel::{
-    run_snr_point, run_snr_point_range, run_snr_point_stateless, worker_offset, FrameOutcome,
-    SnrPointRangeOutcome, WorkerCounters, WorkerCtx, FRAME_STRIDE, SNR_STRIDE, WORKER_STRIDE,
+    map_indices_in_order, run_snr_point, run_snr_point_range, run_snr_point_stateless,
+    worker_index_partition, worker_offset, FrameOutcome, SnrPointRangeOutcome, WorkerCounters,
+    WorkerCtx, FRAME_STRIDE, SNR_STRIDE, WORKER_STRIDE,
 };
 #[doc(inline)]
 pub use pipeline::{BatchHandle, Pipeline};

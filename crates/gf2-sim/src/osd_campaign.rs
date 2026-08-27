@@ -1,23 +1,43 @@
 //! Deterministic, resumable ordered-statistics-decoding campaigns.
 //!
 //! This module owns the campaign mechanics shared by OSD executables: explicit
-//! cell identities, order-independent seed derivation, bit- and block-error
-//! accounting, block-sampled intervals for BER and BLER, strict checkpoint and
-//! receipt schemas, and cell-boundary resume. Domain executables retain only
-//! code/channel construction and a per-block evaluator closure. Persistence
-//! delegates to [`crate::checkpoint`], while the exact binomial endpoints
-//! delegate to [`gf2_stats::intervals`].
+//! cell identities, order-independent seed derivation, block-index-keyed random
+//! streams, multi-worker block evaluation, bit- and block-error accounting,
+//! block-sampled intervals for BER and BLER, strict checkpoint and receipt
+//! schemas, and cell-boundary resume. Domain executables retain only
+//! code/channel construction and a per-block evaluator. Persistence delegates
+//! to [`crate::checkpoint`], parallel dispatch to [`crate::parallel`], and the
+//! exact binomial endpoints to [`gf2_stats::intervals`].
 //!
-//! The protocol calls the evaluator exactly once for each sampled block, in
-//! increasing [`OsdBlockContext::block_index`] order. It alone accumulates the
-//! sample, error, squared-error, and work counters and stops immediately after
-//! the block carrying the target's `K`-th error. The evaluator can determine a
-//! block's result from its cell, deterministic cell seed, and block index, but
-//! cannot choose termination, report aggregate counters, or skip, reorder, or
-//! double-count blocks. On resume the protocol restores durable counters and
-//! continues with the next block index under the same cell seed. Earlier
-//! attempts remain in the receipt. Completed, censored, exhausted, and
+//! # Evaluation and stopping
+//!
+//! A block's identity is its cell, that cell's deterministic seed, and its
+//! zero-based cumulative [`block_index`](OsdBlockContext::block_index).
+//! [`OsdBlockStream`] positions the block's random stream from that index
+//! alone, so a block's outcome is a pure function of its identity — the
+//! evaluator contract this protocol requires and the reason results do not
+//! depend on which worker evaluated which block.
+//!
+//! The protocol dispatches blocks to `workers` per-worker evaluators through
+//! [`crate::parallel::map_indices_in_order`] and commits the returned outcomes
+//! in block-index order. It alone accumulates the sample, error, squared-error,
+//! and work counters, and completes a cell at the smallest block index whose
+//! in-order cumulative block-error count reaches the target `K`. Workers
+//! evaluate blocks past that index speculatively; those outcomes are discarded
+//! and contribute to no counter. The evaluator therefore answers for every
+//! index it is handed, in any order, and cannot choose termination, report
+//! aggregate counters, or skip, reorder, or double-count blocks.
+//!
+//! Results are byte-identical across worker counts for a fixed campaign and
+//! seed, with the single-worker run as the reference. On resume the protocol
+//! restores durable counters and continues at the next block index under the
+//! same cell seed, reaching the evidence an uninterrupted run would have.
+//! Earlier attempts remain in the receipt. Completed, censored, exhausted, and
 //! contradictory cells are terminal evidence and are never evaluated again.
+//!
+//! The worker count is invocation-local: it never enters the campaign
+//! configuration identity, and reaches a receipt only through the recorded
+//! invocation argument vector.
 //!
 //! # Interval coverage and schema history
 //!
@@ -81,13 +101,19 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+use std::num::NonZeroUsize;
 use std::path::Path;
 use std::str::FromStr;
 
+use rand08::SeedableRng;
+use rand_chacha08::ChaCha20Rng;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader, CheckpointWriter,
+};
+use crate::parallel::{
+    map_indices_in_order, worker_offset, DEBUG_ASSERT_WORD_MARGIN, FRAME_STRIDE,
 };
 use crate::permanent_campaign::schema::{ArtifactIdentity, Provenance};
 
@@ -96,6 +122,18 @@ pub const OSD_CAMPAIGN_SCHEMA_VERSION: u32 = 2;
 
 const CHECKPOINT_IDENTITY: &str = "osd-campaign/cell-progress";
 const CELL_SEED_DOMAIN: &[u8] = b"gf2-sim/osd-campaign/cell-seed/v1\0";
+
+/// Blocks dispatched to each worker per speculative wave.
+///
+/// A wave is the unit of speculation: the protocol dispatches
+/// `workers * OSD_WAVE_BLOCKS_PER_WORKER` blocks (capped by the invocation's
+/// remaining sample bound), then commits them in index order. A cell therefore
+/// wastes at most one wave of block evaluations past its stopping block, once,
+/// while the wave stays long enough to amortise the fan-out over the per-block
+/// decode cost. The value changes how much speculative work happens, never the
+/// committed result: index-ordered truncation makes the outcome a function of
+/// the block sequence and the block-error target alone.
+const OSD_WAVE_BLOCKS_PER_WORKER: u64 = 16;
 
 /// Stable identity of one OSD campaign cell.
 ///
@@ -578,11 +616,15 @@ struct CellResume {
 
 /// Read-only context for exactly one protocol-selected sampled block.
 ///
-/// `block_index` is the zero-based cumulative index within `cell`. Calls for a
-/// cell arrive in strictly increasing order, including after resume. `seed` is
+/// `block_index` is the zero-based cumulative index within `cell`. `seed` is
 /// the campaign's stable per-cell seed and is identical on every call for that
-/// cell, so an evaluator can restore and advance its deterministic random
-/// stream to `block_index` without controlling the protocol's sampling order.
+/// cell, so an evaluator positions its deterministic random stream from
+/// `block_index` alone — [`OsdBlockStream`] is that seek.
+///
+/// Workers evaluate a cell's blocks concurrently, so calls arrive in no
+/// particular order and include blocks past the cell's stopping index. An
+/// evaluator answers for every index it is handed and lets no block's outcome
+/// depend on another's.
 #[derive(Debug, Clone, Copy)]
 pub struct OsdBlockContext<'a> {
     /// Explicit campaign cell owning this block.
@@ -591,6 +633,124 @@ pub struct OsdBlockContext<'a> {
     pub seed: u64,
     /// Zero-based cumulative block index selected by the protocol.
     pub block_index: u64,
+}
+
+/// A cell's ChaCha20 stream, positioned at one block's reserved region.
+///
+/// This is the protocol's per-block seek: the stream is selected by the cell
+/// seed and positioned by [`worker_offset`]`(seed, 0, 0, block_index)`, the
+/// design-doc §3 word-position scheme. A block's draws therefore depend on its
+/// global index alone, which is what makes a cell's counters, stopping index,
+/// and receipt byte-identical across worker counts and across a checkpoint
+/// boundary.
+///
+/// Each block owns a reserved [`FRAME_STRIDE`] region (`2^20` ChaCha20 32-bit
+/// words, 4 MiB), so a variable-consumption sampler — the campaign's
+/// rejection-sampled Gaussian noise — cannot draw into the next block's region.
+/// [`debug_assert_block_budget`] checks that in debug builds, as
+/// [`WorkerCtx`](crate::parallel::WorkerCtx) does per frame.
+///
+/// # Named exception to the shared worker context
+///
+/// This type mirrors [`WorkerCtx`](crate::parallel::WorkerCtx)'s seek surface
+/// instead of reusing it, and delegates the offset arithmetic to the shared
+/// [`worker_offset`]. `WorkerCtx` owns a `rand_chacha` 0.9 stream, while the
+/// campaign's channel (`gf2_coding::simulation::BpskAwgnChannel`) takes a
+/// `rand` 0.8 RNG, and the two ecosystems' `ChaCha20Rng` types do not
+/// interoperate. Their word-position
+/// contracts do agree — both count ChaCha20 32-bit words in a 68-bit space with
+/// `BLOCK_WORDS = 16` — so the same offsets are valid in both. The exception is
+/// recorded under `@/inv/convention-convergence` against `@/issue/c1b253cb`
+/// (the `rand` 0.8 holdout), whose convergence condition is `gf2-coding` moving
+/// to `rand` 0.9; `@/issue/90a88fa9` tracks converging the campaign execution
+/// stacks.
+///
+/// [`debug_assert_block_budget`]: Self::debug_assert_block_budget
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::osd_campaign::OsdBlockStream;
+/// use gf2_sim::parallel::worker_offset;
+///
+/// let mut stream = OsdBlockStream::new(0x5eed);
+/// stream.seek_to_block(3);
+/// assert_eq!(stream.current_word_pos(), worker_offset(0x5eed, 0, 0, 3));
+///
+/// // Two streams on the same cell seed agree at the same block, whichever
+/// // worker holds them and whatever they drew before.
+/// let mut other = OsdBlockStream::new(0x5eed);
+/// other.seek_to_block(9);
+/// other.seek_to_block(3);
+/// assert_eq!(other.current_word_pos(), stream.current_word_pos());
+/// ```
+pub struct OsdBlockStream {
+    seed: u64,
+    rng: ChaCha20Rng,
+}
+
+impl OsdBlockStream {
+    /// Opens the ChaCha20 stream for a cell seed, at word position zero.
+    ///
+    /// Call [`seek_to_block`](Self::seek_to_block) before each block's draws.
+    #[must_use]
+    pub fn new(seed: u64) -> Self {
+        Self {
+            seed,
+            rng: ChaCha20Rng::seed_from_u64(seed),
+        }
+    }
+
+    /// Positions the stream at the start of `block_index`'s reserved region.
+    ///
+    /// # Panics
+    ///
+    /// Panics when `block_index` exceeds `usize::MAX`, the index width the
+    /// shared [`worker_offset`] takes; no campaign reaches `2^64` blocks on a
+    /// 64-bit host.
+    pub fn seek_to_block(&mut self, block_index: u64) {
+        let block_index =
+            usize::try_from(block_index).expect("block index fits the host word size");
+        self.rng
+            .set_word_pos(worker_offset(self.seed, 0, 0, block_index));
+    }
+
+    /// Mutable access to the positioned stream for the block's draws.
+    #[inline]
+    pub fn rng_mut(&mut self) -> &mut ChaCha20Rng {
+        &mut self.rng
+    }
+
+    /// The stream's current absolute word position (ChaCha20 32-bit words).
+    #[inline]
+    #[must_use]
+    pub fn current_word_pos(&self) -> u128 {
+        self.rng.get_word_pos()
+    }
+
+    /// Debug-asserts the block's draws stayed inside its reserved region.
+    ///
+    /// Call after a block's draws with the index it was seeked to. No-op in
+    /// release builds.
+    pub fn debug_assert_block_budget(&self, block_index: u64) {
+        debug_assert!({
+            let block_index =
+                usize::try_from(block_index).expect("block index fits the host word size");
+            let start = worker_offset(self.seed, 0, 0, block_index);
+            let drawn = self.rng.get_word_pos().saturating_sub(start);
+            drawn <= FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN
+        });
+    }
+}
+
+impl fmt::Debug for OsdBlockStream {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("OsdBlockStream")
+            .field("seed", &self.seed)
+            .field("word_pos", &self.current_word_pos())
+            .finish()
+    }
 }
 
 /// Domain result for one sampled information block.
@@ -972,17 +1132,38 @@ pub fn accepts_published_value(
 /// Runs or resumes an explicit OSD campaign through the canonical checkpoint.
 ///
 /// The generic reader first validates the payload identity, schema version,
-/// and complete campaign hash. For each pending cell it invokes `evaluate`
-/// once per block, accumulates the returned per-block outcome, and completes
-/// the cell immediately when that block is the target's `K`-th block error.
-/// The evaluator receives only the selected cell, stable cell seed, and next
-/// cumulative block index: it cannot choose termination, alter cumulative
-/// counters, or skip, reorder, or double-count blocks. If `max_samples` blocks
-/// are sampled for a pending cell in this invocation before it completes, the
-/// protocol records an interrupted attempt; a later call restores the counters
-/// and continues at the next block index. Each attempt is atomically
-/// checkpointed before the next cell, and terminal cells are skipped on
-/// recovery.
+/// and complete campaign hash. For each pending cell the protocol dispatches
+/// blocks to `workers` per-worker evaluators, commits the outcomes in
+/// block-index order, and completes the cell at the block carrying the target's
+/// `K`-th block error. Blocks the workers evaluated past that one are
+/// discarded. An evaluator receives only the selected cell, stable cell seed,
+/// and block index: it cannot choose termination, alter cumulative counters, or
+/// skip, reorder, or double-count blocks. If `max_samples` blocks are sampled
+/// for a pending cell in this invocation before it completes, the protocol
+/// records an interrupted attempt; a later call restores the counters and
+/// continues at the next block index. Each attempt is atomically checkpointed
+/// before the next cell, and terminal cells are skipped on recovery.
+///
+/// `workers` is invocation-local. It changes how fast a cell is sampled, never
+/// what is sampled: for a fixed campaign and seed every counter, the stopping
+/// index, and the receipt payload are byte-identical across worker counts, with
+/// the single-worker run as the reference. It is excluded from the campaign
+/// configuration identity and reaches a receipt only through the caller's
+/// recorded invocation argument vector.
+///
+/// # Arguments
+///
+/// * `checkpoint_path` — the protocol's durable progress file.
+/// * `campaign` — the validated campaign configuration.
+/// * `max_samples` — this invocation's per-cell sample bound. It is consulted
+///   without reference to any outcome, so censoring stays independent of the
+///   sampled values.
+/// * `workers` — number of concurrent block evaluators.
+/// * `make_evaluator` — per-worker evaluator factory, called once per worker
+///   per dispatched wave. Every evaluator it produces must return the same
+///   outcome for the same block, so a block's result stays a pure function of
+///   its cell, seed, and index; [`OsdBlockStream`] is the seek that delivers
+///   that for a random block process.
 ///
 /// # Errors
 ///
@@ -990,12 +1171,17 @@ pub fn accepts_published_value(
 /// invalid or mismatched checkpoint, a zero invocation sample bound, an
 /// invalid per-block outcome, counter overflow, serialization failure, or
 /// checkpoint I/O failure.
-pub fn run_osd_campaign(
+pub fn run_osd_campaign<E, M>(
     checkpoint_path: impl AsRef<Path>,
     campaign: &OsdCampaign,
     max_samples: u64,
-    mut evaluate: impl FnMut(OsdBlockContext<'_>) -> OsdBlockOutcome,
-) -> Result<OsdCampaignReceipt, OsdCampaignError> {
+    workers: NonZeroUsize,
+    make_evaluator: M,
+) -> Result<OsdCampaignReceipt, OsdCampaignError>
+where
+    M: Fn() -> E + Sync,
+    E: FnMut(OsdBlockContext<'_>) -> OsdBlockOutcome,
+{
     validate_campaign(campaign)?;
     if max_samples == 0 {
         return Err(OsdCampaignError::InvalidConfiguration(
@@ -1041,8 +1227,9 @@ pub fn run_osd_campaign(
             campaign.cell_seed(&cell.id),
             campaign.target_block_errors,
             max_samples,
+            workers,
             resume,
-            &mut evaluate,
+            &make_evaluator,
         )?;
         validate_cell_run(cell, campaign.target_block_errors, resume, &run)?;
         let receipt = make_cell_receipt(campaign, cell, run, invocation_index);
@@ -1209,14 +1396,27 @@ fn latest_resume(results: &[OsdCellReceipt], cell_id: &OsdCellId) -> CellResume 
         })
 }
 
-fn sample_cell(
+/// Samples one pending cell, dispatching blocks in waves and committing their
+/// outcomes in block-index order.
+///
+/// Each wave covers `workers * OSD_WAVE_BLOCKS_PER_WORKER` consecutive block
+/// indices, capped by the invocation's remaining sample bound so that bound
+/// never depends on an outcome. The wave's outcomes are committed in index
+/// order until the cell reaches the block-error target; the rest of the wave is
+/// discarded unread.
+fn sample_cell<E, M>(
     cell: &OsdCell,
     seed: u64,
     target_block_errors: u64,
     max_samples: u64,
+    workers: NonZeroUsize,
     resume: CellResume,
-    evaluate: &mut impl FnMut(OsdBlockContext<'_>) -> OsdBlockOutcome,
-) -> Result<CellRun, OsdCampaignError> {
+    make_evaluator: &M,
+) -> Result<CellRun, OsdCampaignError>
+where
+    M: Fn() -> E + Sync,
+    E: FnMut(OsdBlockContext<'_>) -> OsdBlockOutcome,
+{
     let invalid = |message: String| OsdCampaignError::InvalidCellResult {
         cell_id: cell.id.clone(),
         message,
@@ -1231,69 +1431,97 @@ fn sample_cell(
         termination: OsdCellTermination::Interrupted,
     };
     let mut information_bits = (resume.samples > 0).then(|| resume.sampled_bits / resume.samples);
+    let wave_blocks = OSD_WAVE_BLOCKS_PER_WORKER.saturating_mul(workers.get() as u64);
+    let mut remaining = max_samples;
 
-    for _ in 0..max_samples {
-        let outcome = evaluate(OsdBlockContext {
-            cell,
-            seed,
-            block_index: run.samples,
-        });
-        if outcome.information_bits == 0 {
-            return Err(invalid(
-                "sampled information blocks must contain at least one bit".to_owned(),
-            ));
-        }
-        if outcome.information_bit_errors > outcome.information_bits {
-            return Err(invalid(
-                "information-bit errors cannot exceed the sampled block length".to_owned(),
-            ));
-        }
-        match information_bits {
-            Some(expected) if outcome.information_bits != expected => {
-                return Err(invalid(
-                    "information-block length cannot change within a cell".to_owned(),
-                ));
+    while remaining > 0 {
+        let wave = remaining.min(wave_blocks);
+        let first_index = run.samples;
+        let end_index = first_index
+            .checked_add(wave)
+            .ok_or_else(|| invalid("block index overflow".to_owned()))?;
+        let outcomes = map_indices_in_order(
+            first_index..end_index,
+            workers,
+            make_evaluator,
+            |block_index, evaluator| {
+                evaluator(OsdBlockContext {
+                    cell,
+                    seed,
+                    block_index,
+                })
+            },
+        );
+
+        for outcome in outcomes {
+            commit_block(&mut run, &mut information_bits, outcome, &invalid)?;
+            if run.block_errors == target_block_errors {
+                run.termination = OsdCellTermination::Completed;
+                return Ok(run);
             }
-            None => information_bits = Some(outcome.information_bits),
-            _ => {}
         }
-
-        run.samples = run
-            .samples
-            .checked_add(1)
-            .ok_or_else(|| invalid("sample counter overflow".to_owned()))?;
-        run.sampled_bits = run
-            .sampled_bits
-            .checked_add(outcome.information_bits)
-            .ok_or_else(|| invalid("sampled-bit counter overflow".to_owned()))?;
-        run.bit_errors = run
-            .bit_errors
-            .checked_add(outcome.information_bit_errors)
-            .ok_or_else(|| invalid("bit-error counter overflow".to_owned()))?;
-        run.block_errors = run
-            .block_errors
-            .checked_add(u64::from(outcome.information_bit_errors != 0))
-            .ok_or_else(|| invalid("block-error counter overflow".to_owned()))?;
-        let squared_errors = outcome
-            .information_bit_errors
-            .checked_mul(outcome.information_bit_errors)
-            .ok_or_else(|| invalid("squared block bit-error counter overflow".to_owned()))?;
-        run.squared_block_bit_errors = run
-            .squared_block_bit_errors
-            .checked_add(squared_errors)
-            .ok_or_else(|| invalid("squared block bit-error counter overflow".to_owned()))?;
-        run.work = run
-            .work
-            .checked_add(outcome.work)
-            .ok_or_else(|| invalid("OSD work counter overflow".to_owned()))?;
-
-        if run.block_errors == target_block_errors {
-            run.termination = OsdCellTermination::Completed;
-            return Ok(run);
-        }
+        remaining -= wave;
     }
 
     Ok(run)
+}
+
+/// Accumulates one validated block outcome into a cell's cumulative counters.
+fn commit_block(
+    run: &mut CellRun,
+    information_bits: &mut Option<u64>,
+    outcome: OsdBlockOutcome,
+    invalid: &impl Fn(String) -> OsdCampaignError,
+) -> Result<(), OsdCampaignError> {
+    if outcome.information_bits == 0 {
+        return Err(invalid(
+            "sampled information blocks must contain at least one bit".to_owned(),
+        ));
+    }
+    if outcome.information_bit_errors > outcome.information_bits {
+        return Err(invalid(
+            "information-bit errors cannot exceed the sampled block length".to_owned(),
+        ));
+    }
+    match information_bits {
+        Some(expected) if outcome.information_bits != *expected => {
+            return Err(invalid(
+                "information-block length cannot change within a cell".to_owned(),
+            ));
+        }
+        None => *information_bits = Some(outcome.information_bits),
+        _ => {}
+    }
+
+    run.samples = run
+        .samples
+        .checked_add(1)
+        .ok_or_else(|| invalid("sample counter overflow".to_owned()))?;
+    run.sampled_bits = run
+        .sampled_bits
+        .checked_add(outcome.information_bits)
+        .ok_or_else(|| invalid("sampled-bit counter overflow".to_owned()))?;
+    run.bit_errors = run
+        .bit_errors
+        .checked_add(outcome.information_bit_errors)
+        .ok_or_else(|| invalid("bit-error counter overflow".to_owned()))?;
+    run.block_errors = run
+        .block_errors
+        .checked_add(u64::from(outcome.information_bit_errors != 0))
+        .ok_or_else(|| invalid("block-error counter overflow".to_owned()))?;
+    let squared_errors = outcome
+        .information_bit_errors
+        .checked_mul(outcome.information_bit_errors)
+        .ok_or_else(|| invalid("squared block bit-error counter overflow".to_owned()))?;
+    run.squared_block_bit_errors = run
+        .squared_block_bit_errors
+        .checked_add(squared_errors)
+        .ok_or_else(|| invalid("squared block bit-error counter overflow".to_owned()))?;
+    run.work = run
+        .work
+        .checked_add(outcome.work)
+        .ok_or_else(|| invalid("OSD work counter overflow".to_owned()))?;
+    Ok(())
 }
 
 fn settled_cell_ids(results: &[OsdCellReceipt]) -> BTreeSet<OsdCellId> {
