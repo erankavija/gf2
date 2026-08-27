@@ -191,7 +191,7 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "rigorous PARALLEL campaign RUNNING (launched 2026-08-27 on 258be082 binary sha b1015246, main @ c7bfcbce, one invocation, K=100, --workers 24, fresh checkpoint; ~1.5-2.5h est vs ~20h serial). Sample counts differ from the serial partials by design (worker-offset seeking = new behavioral identity). PRIOR: serial rigorous run KILLED at owner direction 14:20 2026-08-27 (12h in, 6/14 cells, dominant 5.23 dB cell unfinished at ~64M samples; partial checkpoint + log preserved in session scratchpad superseded-serial-run/; stale checkpoint removed from dev/). Rerun happens on the 258be082 parallel binary from a fresh checkpoint (new behavioral identity - no resume). Early signal from serial partials: order-2 4.56 dB sim BER 5.56e-6 vs published 2.00e-6 (0.44 decades; predicate will likely reject; same point as PIT-07 table-vs-figure contradiction). plot.py committed and probe-tested (REQ-06). Next after 258be082: probe, rigorous parallel run, closeout worker (README+comparison, figures, doc links), research-review."
+     "status": "campaign COMPLETE (14/14 cells, K=100 each, ~80 min on 24 workers; all 7 order-2 points accept). README+figures+comparison.json committed; 7 docs linked. research-review R3 FAILED with 6 findings: F8 Maurer-Pontil citekey missing (lead fixed: registered @/citation/MaurerPontil2009), F9 bench receipt lacked RNG provenance (lead fixed), F10 order-1 figure omitted published values per hard REQ-06 (lead fixed), F12 advisory no authoritative machine-readable artifact (lead fixed: plot.py emits comparison.json), F13 advisory stale doc-link hashes (pending re-link), F11 blocking union-bound contradiction unsupported -> dispatched worker-cef1ae5f-r3. Next: re-run research-review, then doc-review."
     }
    ]
   },
@@ -279,9 +279,19 @@
   "ac78aff8": 3,
   "abd48d99": 1,
   "b3cab18e": 2,
-  "cef1ae5f": 1
+  "cef1ae5f": 2
  },
  "surfaced_pitfalls": [
+  {
+   "id": "NOTE-10",
+   "issue": "cef1ae5f",
+   "text": "research-review R3 F11 (lead inference error, session 4): the record claimed the 5.23 dB estimate exceeding the tabulated union bound reverses 'the relation an upper bound and a measurement are expected to have'. That holds only if the bound bounds the same error probability under the same decoding rule. A soft-decision union bound typically bounds ML error probability, and order-2 OSD is suboptimal relative to ML, so sitting above it is not anomalous. The archived schema-1 README makes the mirror-image claim on the same unestablished premise (left as historical evidence, not rewritten). Watch for this premise leaking into future campaign records."
+  },
+  {
+   "id": "NOTE-11",
+   "issue": "b7157be6",
+   "text": "NOTE-03 correction (session 4): the advisory's claim that AGENTS.md:48's @/issue/ec530af9 'does not resolve' is WITHDRAWN. The issue exists, is done, and has its design doc linked; @/issue/<short-id> is simply not dereferenced by jit item show for any issue, the established crates/gf2-core/src/alg/rref.rs:599 idiom included. Only the workspace-README gf2-sim omission was real, filed as 68189a0a under the doc-debt epic. Do not 'fix' AGENTS.md on the strength of the original advisory."
+  },
   {
    "id": "NOTE-08",
    "issue": "cef1ae5f",
