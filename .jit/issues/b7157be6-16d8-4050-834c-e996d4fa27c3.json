@@ -24,21 +24,28 @@
       "doc_type": "handoff",
       "format": "markdown",
       "label": "Execution handoff session 1",
-      "path": "dev/active/b7157be6-osd/handoff.md"
+      "path": "dev/archive/b7157be6-osd/active/handoff.md"
     },
     {
       "commit": null,
       "doc_type": "handoff",
       "format": "markdown",
       "label": "Execution handoff session 2",
-      "path": "dev/active/b7157be6-osd/handoff-2.md"
+      "path": "dev/archive/b7157be6-osd/active/handoff-2.md"
     },
     {
       "commit": null,
       "doc_type": "handoff",
       "format": "markdown",
       "label": "Execution handoff session 3",
-      "path": "dev/active/b7157be6-osd/handoff-3.md"
+      "path": "dev/archive/b7157be6-osd/active/handoff-3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Epic completion report",
+      "path": "dev/archive/b7157be6-osd/active/b7157be6-completion-report.md"
     }
   ],
   "first_ready_at": "2026-08-07T12:31:54.967767596Z",
@@ -47,7 +54,23 @@
     "doc-review",
     "holistic-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-27T16:48:42.895058790Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "passed",
+      "updated_at": "2026-08-27T16:53:11.725737273Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-08-27T16:39:34.866145657Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "b7157be6-16d8-4050-834c-e996d4fa27c3",
   "labels": [
     "type:epic",
@@ -60,5 +83,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-27T16:39:18.254795975Z"
+  "updated_at": "2026-08-27T16:56:04.329997655Z"
 }

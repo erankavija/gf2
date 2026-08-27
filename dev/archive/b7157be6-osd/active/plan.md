@@ -8,7 +8,7 @@
 | Criterion | Approach | Evidence / open gap |
 |---|---|---|
 | REQ-01 | Establish ordered $\mathrm{GF}(2)$ elimination with right-hand-side transforms and canonical reliability ordering before a shared MRB engine serves the generator-matrix adapter. | [Investigation: primitive verification](investigation.md#primitive-verification); Fossorier1995 and Yue2022 resolve in the citation registry. The implemented scope is the D-06 generator-matrix baseline. |
-| REQ-02 | Pin the published eBCH $(128,64)$ curve and its source-fixed construction constraints, expose a reusable seeded campaign library, bind it through a thin CLI, and compare receipted BER intervals against the pinned published series. | [Investigation: claim classification](investigation.md#claim-classification); [external review, OSD paragraph](../aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md). The pinned source fixes dimensions and systematic convention; the primitive polynomial is a recorded decision (D-21). |
+| REQ-02 | Pin the published eBCH $(128,64)$ curve and its source-fixed construction constraints, expose a reusable seeded campaign library, bind it through a thin CLI, and compare receipted BER intervals against the pinned published series. | [Investigation: claim classification](investigation.md#claim-classification); [external review, OSD paragraph](../../../active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md). The pinned source fixes dimensions and systematic convention; the primitive polynomial is a recorded decision (D-21). |
 | REQ-03 | Correct a failed BP hard word through the syndrome equation using posterior reliability magnitudes, then expose mutable BP-first composition with explicit lifecycle results. | [Investigation: BP and syndrome facts](investigation.md#bp-and-syndrome-facts); Roffe2020 resolves in the citation registry. |
 | REQ-04 | Layer implementation-produced segmentation and discard policy over the exhaustive baseline while preserving deterministic counter semantics. | [Investigation: convention-convergence inventory](investigation.md#convention-convergence-inventory); Yue2022 resolves in the citation registry. |
 
@@ -155,7 +155,7 @@ flowchart LR
 ## Investigation sources
 
 - [Investigation](investigation.md) — grounding, exhaustive consumers, and file inventories remain there.
-- [External review](../aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md) — the OSD paragraph supplies the shared-engine, bounded-search, pinned-reference, and receipted-campaign constraints.
+- [External review](../../../active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md) — the OSD paragraph supplies the shared-engine, bounded-search, pinned-reference, and receipted-campaign constraints.
 
 ### Source identifier universe
 
@@ -164,4 +164,4 @@ Every `planning.source_refs` identifier in [breakdown.json](breakdown.json) reso
 - `REQ-01`…`REQ-04` — the container's success criteria on epic b7157be6.
 - `D-01`…`D-20` — the rows of the decisions table above.
 - `INV-CLAIMS`, `INV-CONVENTIONS`, `INV-PRIORART`, `INV-PRIMITIVES`, `INV-ARCH`, `INV-CONSUMERS` — the [investigation](investigation.md) sections "Claim classification", "Convention-convergence inventory", "Prior art", "Primitive verification", "Architecture fit", and "Consumers and integration points".
-- `EXTREV-OSD` — the OSD paragraph of the [external review](../aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md).
+- `EXTREV-OSD` — the OSD paragraph of the [external review](../../../active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md).
