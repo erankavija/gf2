@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-27T15:19:29.680006073Z",
+  "dependencies": [],
+  "description": "## Problem\n\n`README.md`'s Workspace layout table lists `gf2-core`, `gf2-coding`, `gf2-stats`, `gf2-algebra`, `gf2-kernels-simd`, `gf2-kernels-hip`, and `proofs/`, but not `gf2-sim` — even though the file carries a `gf2-sim` coverage badge at `README.md:7` and the crate owns the CPU/GPU simulation pipeline, the campaign runners, and the OSD campaign protocol. A reader of the workspace table cannot discover the crate.\n\nRecorded during epic b7157be6 as a deferred doc-review advisory (NOTE-03) and classified there as repo hygiene outside that epic's scope.\n\nThe same advisory paired this with a claim that `AGENTS.md:48`'s `@/issue/ec530af9` address does not resolve. That half is withdrawn: the issue exists, is `done`, and has its design doc linked; `@/issue/<short-id>` is simply not dereferenceable through `jit item show` for any issue, including the established `crates/gf2-core/src/alg/rref.rs:599` idiom. No AGENTS.md change is wanted.\n\n## Success Criteria\n\n- [hard] REQ-01: The workspace layout table in `README.md` carries a `gf2-sim` row describing the crate's purpose, consistent in style with the surrounding rows.\n- [hard] REQ-02: The row's description matches what the crate actually owns, checked against `crates/gf2-sim/src/lib.rs` and `AGENTS.md`.",
+  "documents": [],
+  "first_ready_at": "2026-08-27T15:19:29.680006073Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "68189a0a-bb03-413a-9550-1f6c400dfe44",
+  "labels": [
+    "type:task",
+    "component:workspace",
+    "epic:quality-documentation-tech-debt"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Workspace README omits the gf2-sim crate from its layout table",
+  "updated_at": "2026-08-27T15:20:06.849963517Z"
+}
