@@ -13,6 +13,12 @@
 //!    per-frame closure across `parallelism` rayon workers within one SNR point,
 //!    each worker owning its own seeked RNG, then reduces the per-worker
 //!    counters in **`worker_idx` order** (the SSOT aggregation order).
+//! 4. [`map_indices_in_order`] — the same strided fan-out
+//!    ([`worker_index_partition`]) for work whose reduction is *not* a counter
+//!    sum: it returns one outcome per global index in **index order**, so a
+//!    consumer with a sequential stopping rule (the OSD campaign protocol,
+//!    [`crate::osd_campaign`]) can commit outcomes in order and discard the
+//!    ones its workers evaluated speculatively past the stopping index.
 //!
 //! # Determinism contract (design doc §3, §11)
 //!
@@ -157,6 +163,168 @@ pub fn worker_offset(
     (snr_idx as u128) * SNR_STRIDE
         + (worker_idx as u128) * WORKER_STRIDE
         + (frame_idx_in_worker as u128) * FRAME_STRIDE
+}
+
+/// The global indices worker `worker_idx` processes under the design-doc §3
+/// strided partition of `indices` across `num_workers`.
+///
+/// Worker `w` of `W` takes `start + w`, `start + w + W`, `start + w + 2W`, …
+/// below `end`. The partition covers every index of `indices` exactly once for
+/// any worker count, which is what lets a per-index outcome keyed on the global
+/// index stay independent of how the range was partitioned. This is the one
+/// definition of the rule; [`run_snr_point_range`] and
+/// [`map_indices_in_order`] both dispatch through it.
+///
+/// # Arguments
+///
+/// * `indices` — the half-open global index range being dispatched.
+/// * `worker_idx` — zero-based worker index, `< num_workers`. A `worker_idx` at
+///   or above `num_workers` yields an empty iterator or a strided subsequence
+///   that overlaps another worker's, so callers pass `0..num_workers`.
+/// * `num_workers` — the worker count the range is partitioned across.
+///
+/// # Complexity
+///
+/// `O(1)` to build; the iterator yields `indices.len() / num_workers` items
+/// (rounded up for the low worker indices).
+///
+/// # Examples
+///
+/// ```
+/// use std::num::NonZeroUsize;
+/// use gf2_sim::parallel::worker_index_partition;
+///
+/// let three = NonZeroUsize::new(3).unwrap();
+/// let of = |w| worker_index_partition(10..17, w, three).collect::<Vec<_>>();
+/// assert_eq!(of(0), vec![10, 13, 16]);
+/// assert_eq!(of(1), vec![11, 14]);
+/// assert_eq!(of(2), vec![12, 15]);
+/// ```
+pub fn worker_index_partition(
+    indices: std::ops::Range<u64>,
+    worker_idx: usize,
+    num_workers: NonZeroUsize,
+) -> impl Iterator<Item = u64> + Clone {
+    let start = indices.start.saturating_add(worker_idx as u64);
+    (start..indices.end).step_by(num_workers.get())
+}
+
+/// Evaluates every global index of `indices` across `parallelism` rayon
+/// workers and returns the outcomes **in global index order**.
+///
+/// This is the dispatch primitive for work whose reduction is not a counter sum
+/// — where the consumer must see outcomes in index order because its own
+/// stopping rule is sequential. [`run_snr_point`] stays the primitive for the
+/// counter-summing frame path; both fan out through the same
+/// [`worker_index_partition`] rule.
+///
+/// # Byte-identity across worker counts
+///
+/// The returned vector is a pure function of `indices` and `evaluate`'s
+/// behavior, never of `parallelism`: the strided partition covers each index
+/// exactly once and the outcomes are reassembled in index order. When
+/// `evaluate` is itself a pure function of the global index — which the
+/// worker-seeked RNG discipline of [`worker_offset`] delivers — the whole
+/// dispatch is byte-identical across worker counts.
+///
+/// A single worker runs the range directly on the calling thread, so a
+/// one-worker dispatch pays no fan-out cost and is the honest sequential
+/// reference for a speedup measurement.
+///
+/// # Per-worker mutable state
+///
+/// As in [`run_snr_point`], each worker builds its own state through
+/// `make_state` and threads it into `evaluate` by `&mut`, so a kernel holding
+/// an interior-mutable decoder does not serialise the workers on one lock. The
+/// factory must produce equivalent state on every call, and `evaluate` must not
+/// let one index's outcome depend on the state left by another, or the result
+/// stops being a pure function of the index.
+///
+/// # Arguments
+///
+/// * `indices` — the half-open global index range to evaluate.
+/// * `parallelism` — number of rayon workers to fan out across.
+/// * `make_state` — per-worker state factory, called once per worker.
+/// * `evaluate` — per-index closure `(global_index, &mut S) -> T`.
+///
+/// # Returns
+///
+/// One outcome per index of `indices`, ordered by index.
+///
+/// # Panics
+///
+/// Panics when `indices` is longer than `usize::MAX`, which cannot be collected
+/// into a `Vec`.
+///
+/// # Complexity
+///
+/// `O(indices.len())` closure calls fanned out across `parallelism` workers,
+/// plus one `make_state` call per worker and an `O(indices.len())` reassembly.
+/// The whole range's outcomes are held in memory at once, so callers with an
+/// unbounded index space dispatch in bounded chunks.
+///
+/// # Examples
+///
+/// ```
+/// use std::num::NonZeroUsize;
+/// use gf2_sim::parallel::map_indices_in_order;
+///
+/// let squares = |workers| {
+///     map_indices_in_order(
+///         3..9,
+///         NonZeroUsize::new(workers).unwrap(),
+///         || (),
+///         |index, ()| index * index,
+///     )
+/// };
+/// assert_eq!(squares(1), vec![9, 16, 25, 36, 49, 64]);
+/// // Index order, whatever the worker count.
+/// assert_eq!(squares(4), squares(1));
+/// ```
+pub fn map_indices_in_order<S, T, M, F>(
+    indices: std::ops::Range<u64>,
+    parallelism: NonZeroUsize,
+    make_state: M,
+    evaluate: F,
+) -> Vec<T>
+where
+    M: Fn() -> S + Sync,
+    F: Fn(u64, &mut S) -> T + Sync,
+    T: Send,
+{
+    let num_workers = parallelism.get();
+    let len = usize::try_from(indices.end.saturating_sub(indices.start))
+        .expect("dispatched index range must fit the host word size");
+    if num_workers == 1 {
+        let mut state = make_state();
+        return indices.map(|index| evaluate(index, &mut state)).collect();
+    }
+
+    // Each worker owns its strided subsequence, so the fan-out is data-race
+    // free and every index is evaluated exactly once.
+    let per_worker: Vec<Vec<T>> = (0..num_workers)
+        .into_par_iter()
+        .map(|worker_idx| {
+            let mut state = make_state();
+            worker_index_partition(indices.clone(), worker_idx, parallelism)
+                .map(|index| evaluate(index, &mut state))
+                .collect()
+        })
+        .collect();
+
+    // Reassemble the strided subsequences into index order: the outcome for
+    // `indices.start + offset` sits at position `offset / num_workers` of
+    // worker `offset % num_workers`.
+    let mut cursors: Vec<_> = per_worker.into_iter().map(Vec::into_iter).collect();
+    let mut ordered = Vec::with_capacity(len);
+    for offset in 0..len {
+        ordered.push(
+            cursors[offset % num_workers]
+                .next()
+                .expect("the strided partition covers every dispatched index"),
+        );
+    }
+    ordered
 }
 
 /// Order-independent per-worker simulation counters (design doc §3, §11).
@@ -685,15 +853,14 @@ where
             // One fresh state per worker — never shared by `&` across threads.
             let mut state = make_state();
 
-            // Contiguous strided assignment over the *sub-range*: worker `w`
-            // processes global frames start+w, start+w+num_workers, ... < end.
-            // This partitions `start..end` exactly once across workers for any
-            // worker count; the RNG seek (keyed on g) makes the per-frame
-            // outcome independent of the partitioning and of where the range
-            // boundaries fall.
+            // Strided assignment over the *sub-range* (the shared
+            // `worker_index_partition` rule). It partitions `start..end`
+            // exactly once across workers for any worker count; the RNG seek
+            // (keyed on g) makes the per-frame outcome independent of the
+            // partitioning and of where the range boundaries fall.
             let mut frames_done: u64 = 0;
-            let mut g = start + worker_idx;
-            while g < end {
+            for g in worker_index_partition(start as u64..end as u64, worker_idx, parallelism) {
+                let g = usize::try_from(g).expect("frame index fits the host word size");
                 ctx.reseek_to_frame(g);
                 let outcome = sim_frame(g, &mut ctx, &mut state);
                 ctx.debug_assert_frame_budget(g);
@@ -704,7 +871,6 @@ where
                     outcome.bit_errors,
                 );
                 frames_done += 1;
-                g += num_workers;
             }
             (ctx.counters(), frames_done)
         })
@@ -901,6 +1067,69 @@ mod tests {
         let two = run_snr_point_stateless(0xABCD, 2, 40, NonZeroUsize::new(2).unwrap(), &sim);
         assert_eq!(one, two);
         assert_eq!(one.frames, 40);
+    }
+
+    #[test]
+    fn test_worker_index_partition_covers_the_range_exactly_once() {
+        let range = 7_u64..40;
+        for workers in [1_usize, 2, 3, 8, 24, 64] {
+            let parallelism = NonZeroUsize::new(workers).unwrap();
+            let mut covered: Vec<u64> = (0..workers)
+                .flat_map(|w| worker_index_partition(range.clone(), w, parallelism))
+                .collect();
+            covered.sort_unstable();
+            assert_eq!(
+                covered,
+                range.clone().collect::<Vec<_>>(),
+                "{workers} workers must cover the range exactly once"
+            );
+        }
+    }
+
+    #[test]
+    fn test_worker_index_partition_is_empty_past_the_range() {
+        let one = NonZeroUsize::new(1).unwrap();
+        assert_eq!(worker_index_partition(5..5, 0, one).count(), 0);
+        // A worker index beyond the range start yields nothing rather than
+        // wrapping the addition.
+        let big = NonZeroUsize::new(8).unwrap();
+        assert_eq!(worker_index_partition(0..3, 5, big).count(), 0);
+    }
+
+    #[test]
+    fn test_map_indices_in_order_is_byte_identical_across_worker_counts() {
+        // A per-index outcome keyed on the index alone, as the seek discipline
+        // delivers for a real kernel.
+        let evaluate = |index: u64, _state: &mut ()| index.wrapping_mul(0x9E37_79B9);
+        let reference = map_indices_in_order(0..97, NonZeroUsize::new(1).unwrap(), || (), evaluate);
+        for workers in [2_usize, 3, 8, 24] {
+            let observed =
+                map_indices_in_order(0..97, NonZeroUsize::new(workers).unwrap(), || (), evaluate);
+            assert_eq!(observed, reference, "{workers} workers must agree");
+        }
+        assert_eq!(reference.len(), 97);
+        assert_eq!(reference[3], 3_u64.wrapping_mul(0x9E37_79B9));
+    }
+
+    #[test]
+    fn test_map_indices_in_order_builds_one_state_per_worker() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let factory_calls = AtomicUsize::new(0);
+        let outcomes = map_indices_in_order(
+            0..20,
+            NonZeroUsize::new(4).unwrap(),
+            || {
+                factory_calls.fetch_add(1, Ordering::Relaxed);
+                0_u64
+            },
+            |index, seen| {
+                *seen += 1;
+                index
+            },
+        );
+        assert_eq!(outcomes, (0..20).collect::<Vec<_>>());
+        assert_eq!(factory_calls.load(Ordering::Relaxed), 4);
     }
 
     #[test]

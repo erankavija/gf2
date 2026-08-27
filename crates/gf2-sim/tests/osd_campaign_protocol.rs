@@ -1,13 +1,16 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
+use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 use gf2_sim::checkpoint::{CheckpointPayload, CheckpointReader, CheckpointWriter};
 use gf2_sim::osd_campaign::{
     accepts_published_value, derive_cell_seed, run_osd_campaign, BinomialConfidenceInterval,
     BinomialIntervalMethod, BinomialIntervalSpec, BlockSampleCounts, ConfidenceIntervalEstimator,
-    DigitizationPrecisionUnit, IntervalSamplingUnit, OsdBlockOutcome, OsdCampaign,
-    OsdCampaignCheckpoint, OsdCampaignProvenance, OsdCampaignReceipt, OsdCampaignTermination,
-    OsdCell, OsdCellId, OsdCellTermination, OsdWorkCounters, OSD_CAMPAIGN_SCHEMA_VERSION,
+    DigitizationPrecisionUnit, IntervalSamplingUnit, OsdBlockContext, OsdBlockOutcome,
+    OsdBlockStream, OsdCampaign, OsdCampaignCheckpoint, OsdCampaignProvenance, OsdCampaignReceipt,
+    OsdCampaignTermination, OsdCell, OsdCellId, OsdCellTermination, OsdWorkCounters,
+    OSD_CAMPAIGN_SCHEMA_VERSION,
 };
 use gf2_sim::permanent_campaign::schema::{
     ArtifactIdentity, Availability, GitRevision, Provenance, RngAlgorithm, Sha256Digest,
@@ -123,6 +126,77 @@ fn work(eliminations: u64, patterns: u64, candidates: u64) -> OsdWorkCounters {
     }
 }
 
+/// The single-worker dispatch the worker-count invariance contract is stated
+/// against.
+fn serial() -> NonZeroUsize {
+    NonZeroUsize::new(1).expect("one worker")
+}
+
+fn workers(count: usize) -> NonZeroUsize {
+    NonZeroUsize::new(count).expect("positive worker count")
+}
+
+/// Scripted per-block error counts with two failing blocks, at indices 2 and 6.
+fn scripted_errors(block_index: u64) -> u64 {
+    match block_index {
+        2 => 3,
+        6 => 2,
+        _ => 0,
+    }
+}
+
+/// A block-index-pure pseudo-random process: about one block in sixteen fails,
+/// carrying between 1 and 24 of its 64 information bits in error.
+///
+/// The mixing is SplitMix64 over the global block index alone, so a block's
+/// outcome does not depend on which worker evaluates it — the property the
+/// protocol's evaluator contract demands.
+fn mixed_block_errors(block_index: u64) -> u64 {
+    let mut z = block_index.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    let mixed = z ^ (z >> 31);
+    if mixed.is_multiple_of(16) {
+        1 + (mixed >> 8) % 24
+    } else {
+        0
+    }
+}
+
+/// The block index carrying the `target`-th error of [`mixed_block_errors`],
+/// derived independently of the protocol.
+fn mixed_stopping_index(target: u64) -> u64 {
+    let mut failures = 0;
+    for block_index in 0.. {
+        if mixed_block_errors(block_index) != 0 {
+            failures += 1;
+            if failures == target {
+                return block_index;
+            }
+        }
+    }
+    unreachable!("the scripted process fails infinitely often")
+}
+
+/// Runs the [`mixed_block_errors`] process to completion at `workers`.
+fn mixed_run(label: &str, campaign: &OsdCampaign, workers: NonZeroUsize) -> OsdCampaignReceipt {
+    let dir = TempDir::new(label);
+    run_osd_campaign(
+        dir.path().join("checkpoint.json"),
+        campaign,
+        100_000,
+        workers,
+        || {
+            |context: OsdBlockContext<'_>| OsdBlockOutcome {
+                information_bits: 64,
+                information_bit_errors: mixed_block_errors(context.block_index),
+                work: work(context.block_index + 1, 2, 3),
+            }
+        },
+    )
+    .expect("the scripted process reaches the block-error target")
+}
+
 fn scripted_outcomes(
     samples: u64,
     information_bits: u64,
@@ -172,15 +246,18 @@ fn tampered_completed_receipt_error(
     let dir = TempDir::new(label);
     let checkpoint_path = dir.path().join("checkpoint.json");
     let outcomes = scripted_outcomes(10, 64, &[6, 6], work(10, 10, 10));
-    run_osd_campaign(&checkpoint_path, campaign, 10, |context| {
-        outcomes[context.block_index as usize]
+    let outcomes = &outcomes;
+    run_osd_campaign(&checkpoint_path, campaign, 10, serial(), || {
+        move |context: OsdBlockContext<'_>| outcomes[context.block_index as usize]
     })
     .expect("create a valid completed receipt");
     let mut checkpoint = read_checkpoint(&checkpoint_path, campaign);
     mutate(&mut checkpoint.cell_results[0]);
     write_checkpoint(&checkpoint_path, campaign, &checkpoint);
-    run_osd_campaign(&checkpoint_path, campaign, 1, |_| {
-        panic!("an invalid completed receipt must be refused before evaluation")
+    run_osd_campaign(&checkpoint_path, campaign, 1, serial(), || {
+        |_: OsdBlockContext<'_>| -> OsdBlockOutcome {
+            panic!("an invalid completed receipt must be refused before evaluation")
+        }
     })
     .expect_err("tampered completed receipt is invalid")
     .to_string()
@@ -199,25 +276,32 @@ fn completed_cell_ids(receipt: &OsdCampaignReceipt) -> Vec<OsdCellId> {
 fn protocol_stops_on_the_block_carrying_the_exact_target_error() {
     let dir = TempDir::new("exact-kth-error");
     let campaign = campaign(vec![cell("scripted", 2.0, 2)]);
-    let errors = [0, 0, 3, 0, 0, 0, 2, 0];
-    let mut observed_indices = Vec::new();
+    let evaluated = Mutex::new(BTreeSet::new());
+    let evaluated_ref = &evaluated;
 
     let receipt = run_osd_campaign(
         dir.path().join("checkpoint.json"),
         &campaign,
         100,
-        |context| {
-            observed_indices.push(context.block_index);
-            OsdBlockOutcome {
-                information_bits: 64,
-                information_bit_errors: errors[context.block_index as usize],
-                work: work(1, 2, 3),
+        serial(),
+        || {
+            move |context: OsdBlockContext<'_>| {
+                evaluated_ref
+                    .lock()
+                    .expect("scripted evaluator lock")
+                    .insert(context.block_index);
+                OsdBlockOutcome {
+                    information_bits: 64,
+                    information_bit_errors: scripted_errors(context.block_index),
+                    work: work(1, 2, 3),
+                }
             }
         },
     )
     .expect("the second scripted block error completes the cell");
 
-    assert_eq!(observed_indices, (0..7).collect::<Vec<_>>());
+    let evaluated = evaluated.into_inner().expect("scripted evaluator lock");
+    assert!((0..7).all(|index| evaluated.contains(&index)));
     assert_eq!(receipt.cell_results[0].samples, 7);
     assert_eq!(receipt.cell_results[0].block_errors, 2);
     assert_eq!(receipt.cell_results[0].bit_errors, 5);
@@ -226,6 +310,171 @@ fn protocol_stops_on_the_block_carrying_the_exact_target_error() {
         receipt.cell_results[0].termination,
         OsdCellTermination::Completed
     ));
+}
+
+/// REQ-01: for a fixed campaign and seed the counters, the stopping index, and
+/// the whole receipt payload are byte-identical across worker counts, with the
+/// single-worker run as the reference.
+#[test]
+fn multi_worker_runs_reproduce_the_single_worker_reference() {
+    let campaign = campaign_with_target(vec![cell("invariance", 2.0, 2)], 25);
+    let reference = mixed_run("invariance-1", &campaign, serial());
+    let reference_bytes = serde_json::to_vec(&reference).expect("receipt serializes");
+
+    for count in [2, 8, 24] {
+        let observed = mixed_run(&format!("invariance-{count}"), &campaign, workers(count));
+        assert_eq!(
+            serde_json::to_vec(&observed).expect("receipt serializes"),
+            reference_bytes,
+            "{count} workers must reproduce the single-worker receipt byte for byte"
+        );
+    }
+
+    // The cell must be long enough that 24 workers span several dispatched
+    // waves, otherwise the invariance above is vacuous.
+    assert!(reference.cell_results[0].samples > 24 * 16);
+}
+
+/// REQ-02: completion falls exactly on the block carrying the `K`-th block
+/// error, and the blocks workers evaluate past it contribute to no counter.
+#[test]
+fn speculative_blocks_past_the_kth_error_contribute_to_no_counter() {
+    let dir = TempDir::new("speculative-truncation");
+    let campaign = campaign(vec![cell("truncation", 2.0, 2)]);
+    let evaluated = Mutex::new(BTreeSet::new());
+    let evaluated_ref = &evaluated;
+
+    let receipt = run_osd_campaign(
+        dir.path().join("checkpoint.json"),
+        &campaign,
+        1_000,
+        workers(8),
+        || {
+            move |context: OsdBlockContext<'_>| {
+                evaluated_ref
+                    .lock()
+                    .expect("scripted evaluator lock")
+                    .insert(context.block_index);
+                OsdBlockOutcome {
+                    information_bits: 64,
+                    information_bit_errors: scripted_errors(context.block_index),
+                    work: work(1, 2, 3),
+                }
+            }
+        },
+    )
+    .expect("the second scripted block error completes the cell");
+
+    let evaluated = evaluated.into_inner().expect("scripted evaluator lock");
+    let result = &receipt.cell_results[0];
+    assert_eq!(result.samples, 7, "block 6 carries the second block error");
+    assert_eq!(result.block_errors, 2);
+    assert_eq!(result.bit_errors, 5);
+    assert_eq!(result.squared_block_bit_errors, Some(13));
+    assert_eq!(
+        result.work,
+        work(7, 14, 21),
+        "exactly one work delta per committed block"
+    );
+    assert!(
+        evaluated.iter().copied().max().expect("evaluated blocks") > 6,
+        "eight workers must have evaluated past the stopping block"
+    );
+    assert!((0..7).all(|index| evaluated.contains(&index)));
+}
+
+/// REQ-02 at scale: the protocol's stopping index equals the independently
+/// derived index of the target's `K`-th error.
+#[test]
+fn the_stopping_index_is_the_block_carrying_the_kth_error() {
+    let campaign = campaign_with_target(vec![cell("invariance", 2.0, 2)], 25);
+    let receipt = mixed_run("stopping-index", &campaign, workers(8));
+
+    assert_eq!(
+        receipt.cell_results[0].samples,
+        mixed_stopping_index(25) + 1
+    );
+    assert_eq!(receipt.cell_results[0].block_errors, 25);
+}
+
+/// REQ-03: an interrupted multi-worker cell that resumes across several
+/// bounded invocations, at differing worker counts, reaches the uninterrupted
+/// cumulative evidence.
+#[test]
+fn interrupted_multi_worker_cell_resumes_to_the_uninterrupted_result() {
+    let campaign = campaign_with_target(vec![cell("invariance", 2.0, 2)], 25);
+    let uninterrupted = mixed_run("resume-uninterrupted", &campaign, workers(8));
+
+    let dir = TempDir::new("resume-interrupted");
+    let checkpoint_path = dir.path().join("checkpoint.json");
+    let bounded = |count: usize| {
+        run_osd_campaign(&checkpoint_path, &campaign, 40, workers(count), || {
+            |context: OsdBlockContext<'_>| OsdBlockOutcome {
+                information_bits: 64,
+                information_bit_errors: mixed_block_errors(context.block_index),
+                work: work(context.block_index + 1, 2, 3),
+            }
+        })
+        .expect("bounded invocation checkpoints its progress")
+    };
+    for count in [24, 3, 1] {
+        let interrupted = bounded(count);
+        assert!(matches!(
+            interrupted
+                .cell_results
+                .last()
+                .expect("an attempt")
+                .termination,
+            OsdCellTermination::Interrupted
+        ));
+    }
+
+    let resumed = mixed_resume(&checkpoint_path, &campaign, workers(2));
+    let resumed_cell = resumed.cell_results.last().expect("the completed attempt");
+    let uninterrupted_cell = &uninterrupted.cell_results[0];
+    let mut comparable = resumed_cell.clone();
+    comparable.invocation_index = uninterrupted_cell.invocation_index;
+    assert_eq!(
+        serde_json::to_vec(&comparable).expect("receipt serializes"),
+        serde_json::to_vec(uninterrupted_cell).expect("receipt serializes"),
+        "resuming must preserve the byte identity of cumulative cell evidence"
+    );
+}
+
+/// Resumes the [`mixed_block_errors`] process on an existing checkpoint.
+fn mixed_resume(
+    checkpoint_path: &Path,
+    campaign: &OsdCampaign,
+    workers: NonZeroUsize,
+) -> OsdCampaignReceipt {
+    run_osd_campaign(checkpoint_path, campaign, 100_000, workers, || {
+        |context: OsdBlockContext<'_>| OsdBlockOutcome {
+            information_bits: 64,
+            information_bit_errors: mixed_block_errors(context.block_index),
+            work: work(context.block_index + 1, 2, 3),
+        }
+    })
+    .expect("resume reaches the block-error target")
+}
+
+/// The per-block stream is positioned by the shared
+/// [`gf2_sim::parallel::worker_offset`] seek, so a block's random draw depends
+/// on its global index alone.
+#[test]
+fn block_streams_seek_to_the_shared_worker_offset() {
+    let mut stream = OsdBlockStream::new(0x5eed_cafe);
+    for block_index in [0_u64, 1, 63, 64, 65, 1 << 20] {
+        stream.seek_to_block(block_index);
+        assert_eq!(
+            stream.current_word_pos(),
+            gf2_sim::parallel::worker_offset(
+                0x5eed_cafe,
+                0,
+                0,
+                usize::try_from(block_index).expect("host word size")
+            )
+        );
+    }
 }
 
 #[test]
@@ -243,15 +492,23 @@ fn bounded_interruption_resumes_to_uninterrupted_totals() {
         work: work(block_index + 1, 2 * block_index + 1, 3),
     };
 
-    let mut resumed_indices = Vec::new();
+    let resumed_indices = Mutex::new(BTreeSet::new());
+    let resumed_indices_ref = &resumed_indices;
+    let recording = || {
+        move |context: OsdBlockContext<'_>| {
+            resumed_indices_ref
+                .lock()
+                .expect("scripted evaluator lock")
+                .insert(context.block_index);
+            outcome(context.block_index)
+        }
+    };
     let interrupted = run_osd_campaign(
         resumed_dir.path().join("checkpoint.json"),
         &campaign,
         4,
-        |context| {
-            resumed_indices.push(context.block_index);
-            outcome(context.block_index)
-        },
+        serial(),
+        recording,
     )
     .expect("the invocation bound interrupts before the second error");
     assert!(matches!(
@@ -264,21 +521,26 @@ fn bounded_interruption_resumes_to_uninterrupted_totals() {
         resumed_dir.path().join("checkpoint.json"),
         &campaign,
         100,
-        |context| {
-            resumed_indices.push(context.block_index);
-            outcome(context.block_index)
-        },
+        serial(),
+        recording,
     )
     .expect("resume reaches the second error");
     let uninterrupted = run_osd_campaign(
         uninterrupted_dir.path().join("checkpoint.json"),
         &campaign,
         100,
-        |context| outcome(context.block_index),
+        serial(),
+        || |context: OsdBlockContext<'_>| outcome(context.block_index),
     )
     .expect("uninterrupted run reaches the same second error");
 
-    assert_eq!(resumed_indices, (0..7).collect::<Vec<_>>());
+    let resumed_indices = resumed_indices
+        .into_inner()
+        .expect("scripted evaluator lock");
+    assert!(
+        (0..7).all(|index| resumed_indices.contains(&index)),
+        "every committed block is evaluated once across the two invocations"
+    );
     let resumed_result = resumed.cell_results.last().unwrap();
     let uninterrupted_result = uninterrupted.cell_results.last().unwrap();
     assert_eq!(resumed_result.samples, uninterrupted_result.samples);
@@ -342,10 +604,14 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
     let checkpoint_path = dir.path().join("checkpoint.json");
     let campaign = campaign_with_target(vec![cell("order-2-point-0", 2.0, 2)], 7);
     let outcomes = scripted_outcomes(100, 64, &[2, 2, 2, 2, 2, 1, 1], work(100, 450, 431));
+    let outcomes = &outcomes;
+    let campaign_ref = &campaign;
 
-    let receipt = run_osd_campaign(&checkpoint_path, &campaign, 100, |context| {
-        assert_eq!(context.seed, campaign.cell_seed(&context.cell.id));
-        outcomes[context.block_index as usize]
+    let receipt = run_osd_campaign(&checkpoint_path, &campaign, 100, serial(), || {
+        move |context: OsdBlockContext<'_>| {
+            assert_eq!(context.seed, campaign_ref.cell_seed(&context.cell.id));
+            outcomes[context.block_index as usize]
+        }
     })
     .expect("campaign completes");
 
@@ -451,17 +717,20 @@ fn only_completed_attempts_serialize_confidence_intervals() {
         dir.path().join("checkpoint.json"),
         &campaign,
         4,
-        |context| {
-            let errors = match (context.cell.id.as_str(), context.block_index) {
-                ("completed", 1) => 2,
-                ("completed", 3) => 1,
-                ("interrupted", 3) => 2,
-                _ => 0,
-            };
-            OsdBlockOutcome {
-                information_bits: 64,
-                information_bit_errors: errors,
-                work: work(1, 1, 1),
+        workers(4),
+        || {
+            |context: OsdBlockContext<'_>| {
+                let errors = match (context.cell.id.as_str(), context.block_index) {
+                    ("completed", 1) => 2,
+                    ("completed", 3) => 1,
+                    ("interrupted", 3) => 2,
+                    _ => 0,
+                };
+                OsdBlockOutcome {
+                    information_bits: 64,
+                    information_bit_errors: errors,
+                    work: work(1, 1, 1),
+                }
             }
         },
     )
@@ -493,11 +762,13 @@ fn bursty_fixture_clustered_ber_interval_is_wider_than_bit_independence_interval
     let dir = TempDir::new("bursty-interval");
     let campaign = campaign(vec![cell("bursty", 2.0, 2)]);
     let outcomes = scripted_outcomes(100, 64, &[32, 32], work(100, 100, 100));
+    let outcomes = &outcomes;
     let receipt = run_osd_campaign(
         dir.path().join("checkpoint.json"),
         &campaign,
         100,
-        |context| outcomes[context.block_index as usize],
+        serial(),
+        || move |context: OsdBlockContext<'_>| outcomes[context.block_index as usize],
     )
     .expect("bursty fixture completes");
 
@@ -526,11 +797,13 @@ fn recorded_ber_interval_rescales_the_recorded_block_error_interval() {
     let mut failing_errors = vec![13; 98];
     failing_errors.extend([14, 14]);
     let outcomes = scripted_outcomes(4_000, 64, &failing_errors, work(4_000, 4_000, 4_000));
+    let outcomes = &outcomes;
     let receipt = run_osd_campaign(
         dir.path().join("checkpoint.json"),
         &campaign,
         4_000,
-        |context| outcomes[context.block_index as usize],
+        workers(4),
+        || move |context: OsdBlockContext<'_>| outcomes[context.block_index as usize],
     )
     .expect("product fixture completes");
 
@@ -607,21 +880,25 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
         cell(second_id.as_str(), 2.5, 2),
     ]);
 
-    let first_receipt = run_osd_campaign(&checkpoint_path, &campaign, 4, |context| {
-        let errors = if context.cell.id == first_id {
-            match context.block_index {
-                1 => 1,
-                3 => 2,
-                _ => 0,
+    let first_id_ref = &first_id;
+    let second_id_ref = &second_id;
+    let first_receipt = run_osd_campaign(&checkpoint_path, &campaign, 4, serial(), || {
+        move |context: OsdBlockContext<'_>| {
+            let errors = if &context.cell.id == first_id_ref {
+                match context.block_index {
+                    1 => 1,
+                    3 => 2,
+                    _ => 0,
+                }
+            } else {
+                assert_eq!(&context.cell.id, second_id_ref);
+                u64::from(context.block_index == 3) * 2
+            };
+            OsdBlockOutcome {
+                information_bits: 64,
+                information_bit_errors: errors,
+                work: work(1, 1, 1),
             }
-        } else {
-            assert_eq!(context.cell.id, second_id);
-            u64::from(context.block_index == 3) * 2
-        };
-        OsdBlockOutcome {
-            information_bits: 64,
-            information_bit_errors: errors,
-            work: work(1, 1, 1),
         }
     })
     .expect("interrupted progress is checkpointed");
@@ -633,24 +910,32 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
     );
     assert_eq!(completed_cell_ids(&first_receipt), vec![first_id.clone()]);
 
-    let mut resumed_calls = Vec::new();
-    let resumed = run_osd_campaign(&checkpoint_path, &campaign, 6, |context| {
-        resumed_calls.push((context.cell.id.clone(), context.block_index, context.seed));
-        assert_eq!(context.cell.id, second_id);
-        assert_eq!(context.seed, campaign.cell_seed(&second_id));
-        OsdBlockOutcome {
-            information_bits: 64,
-            information_bit_errors: u64::from(context.block_index == 9) * 2,
-            work: work(1, 1, 1),
+    let resumed_calls = Mutex::new(BTreeSet::new());
+    let resumed_calls_ref = &resumed_calls;
+    let campaign_ref = &campaign;
+    let resumed = run_osd_campaign(&checkpoint_path, &campaign, 6, workers(3), || {
+        move |context: OsdBlockContext<'_>| {
+            resumed_calls_ref
+                .lock()
+                .expect("scripted evaluator lock")
+                .insert((context.cell.id.clone(), context.block_index, context.seed));
+            assert_eq!(&context.cell.id, second_id_ref);
+            assert_eq!(context.seed, campaign_ref.cell_seed(second_id_ref));
+            OsdBlockOutcome {
+                information_bits: 64,
+                information_bit_errors: u64::from(context.block_index == 9) * 2,
+                work: work(1, 1, 1),
+            }
         }
     })
     .expect("resume completes remaining cell");
 
     assert_eq!(
-        resumed_calls,
+        resumed_calls.into_inner().expect("scripted evaluator lock"),
         (4..10)
             .map(|index| (second_id.clone(), index, campaign.cell_seed(&second_id)))
-            .collect::<Vec<_>>()
+            .collect::<BTreeSet<_>>(),
+        "the invocation bound caps the dispatched blocks at the remaining budget"
     );
     assert_eq!(resumed.termination, OsdCampaignTermination::Completed);
     assert_eq!(completed_cell_ids(&resumed), vec![first_id, second_id]);
@@ -660,8 +945,10 @@ fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
         OsdCellTermination::Interrupted
     ));
 
-    let recovered = run_osd_campaign(&checkpoint_path, &campaign, 1, |_| {
-        panic!("a completed campaign must not execute another block")
+    let recovered = run_osd_campaign(&checkpoint_path, &campaign, 1, serial(), || {
+        |_: OsdBlockContext<'_>| -> OsdBlockOutcome {
+            panic!("a completed campaign must not execute another block")
+        }
     })
     .expect("completed checkpoint is recovered");
     assert_eq!(recovered, resumed);
@@ -680,8 +967,8 @@ fn invocation_history_accumulates_full_arguments_across_resume() {
     ];
     let first_campaign =
         OsdCampaign::new(17, vec![cell.clone()], interval_spec(), 2, first_provenance).unwrap();
-    run_osd_campaign(&checkpoint_path, &first_campaign, 4, |context| {
-        OsdBlockOutcome {
+    run_osd_campaign(&checkpoint_path, &first_campaign, 4, workers(2), || {
+        |context: OsdBlockContext<'_>| OsdBlockOutcome {
             information_bits: 64,
             information_bit_errors: u64::from(context.block_index == 3) * 8,
             work: work(1, 1, 1),
@@ -697,12 +984,14 @@ fn invocation_history_accumulates_full_arguments_across_resume() {
     ];
     let second_campaign =
         OsdCampaign::new(17, vec![cell], interval_spec(), 2, second_provenance).unwrap();
-    let receipt = run_osd_campaign(&checkpoint_path, &second_campaign, 8, |context| {
-        assert!((4..12).contains(&context.block_index));
-        OsdBlockOutcome {
-            information_bits: 64,
-            information_bit_errors: u64::from(context.block_index == 11) * 12,
-            work: work(1, 1, 1),
+    let receipt = run_osd_campaign(&checkpoint_path, &second_campaign, 8, workers(4), || {
+        |context: OsdBlockContext<'_>| {
+            assert!((4..12).contains(&context.block_index));
+            OsdBlockOutcome {
+                information_bits: 64,
+                information_bit_errors: u64::from(context.block_index == 11) * 12,
+                work: work(1, 1, 1),
+            }
         }
     })
     .expect("second invocation resumes");
@@ -738,10 +1027,12 @@ fn resume_preserves_censored_exhausted_and_contradictory_results() {
         cell("contradictory", 2.0, 2),
     ]);
 
-    run_osd_campaign(&checkpoint_path, &campaign, 2, |_| OsdBlockOutcome {
-        information_bits: 64,
-        information_bit_errors: 1,
-        work: work(1, 1, 1),
+    run_osd_campaign(&checkpoint_path, &campaign, 2, workers(2), || {
+        |_: OsdBlockContext<'_>| OsdBlockOutcome {
+            information_bits: 64,
+            information_bit_errors: 1,
+            work: work(1, 1, 1),
+        }
     })
     .expect("create structurally valid receipt-level evidence");
     let mut checkpoint = read_checkpoint(&checkpoint_path, &campaign);
@@ -763,8 +1054,10 @@ fn resume_preserves_censored_exhausted_and_contradictory_results() {
     }
     write_checkpoint(&checkpoint_path, &campaign, &checkpoint);
 
-    let receipt = run_osd_campaign(&checkpoint_path, &campaign, 1, |_| {
-        panic!("preserved terminal cells must not be repeated")
+    let receipt = run_osd_campaign(&checkpoint_path, &campaign, 1, serial(), || {
+        |_: OsdBlockContext<'_>| -> OsdBlockOutcome {
+            panic!("preserved terminal cells must not be repeated")
+        }
     })
     .expect("terminal evidence recovers");
 
@@ -772,8 +1065,10 @@ fn resume_preserves_censored_exhausted_and_contradictory_results() {
     assert!(receipt.cell_results.iter().all(|result| {
         result.ber_confidence_interval.is_none() && result.bler_confidence_interval.is_none()
     }));
-    let recovered = run_osd_campaign(&checkpoint_path, &campaign, 1, |_| {
-        panic!("preserved terminal cells must not be repeated")
+    let recovered = run_osd_campaign(&checkpoint_path, &campaign, 1, serial(), || {
+        |_: OsdBlockContext<'_>| -> OsdBlockOutcome {
+            panic!("preserved terminal cells must not be repeated")
+        }
     })
     .expect("terminal evidence recovers again");
     assert_eq!(recovered, receipt);
@@ -784,13 +1079,19 @@ fn per_block_outcomes_validate_bit_counts_and_fixed_block_length() {
     let campaign = campaign(vec![cell("accounting", 2.0, 2)]);
 
     let bit_dir = TempDir::new("invalid-bit-accounting");
-    let bit_error = run_osd_campaign(bit_dir.path().join("checkpoint.json"), &campaign, 1, |_| {
-        OsdBlockOutcome {
-            information_bits: 8,
-            information_bit_errors: 9,
-            work: work(1, 1, 1),
-        }
-    })
+    let bit_error = run_osd_campaign(
+        bit_dir.path().join("checkpoint.json"),
+        &campaign,
+        1,
+        serial(),
+        || {
+            |_: OsdBlockContext<'_>| OsdBlockOutcome {
+                information_bits: 8,
+                information_bit_errors: 9,
+                work: work(1, 1, 1),
+            }
+        },
+    )
     .expect_err("bit errors cannot exceed sampled bits");
     assert!(bit_error
         .to_string()
@@ -801,10 +1102,13 @@ fn per_block_outcomes_validate_bit_counts_and_fixed_block_length() {
         width_dir.path().join("checkpoint.json"),
         &campaign,
         2,
-        |context| OsdBlockOutcome {
-            information_bits: if context.block_index == 0 { 8 } else { 7 },
-            information_bit_errors: 0,
-            work: work(1, 1, 1),
+        serial(),
+        || {
+            |context: OsdBlockContext<'_>| OsdBlockOutcome {
+                information_bits: if context.block_index == 0 { 8 } else { 7 },
+                information_bit_errors: 0,
+                work: work(1, 1, 1),
+            }
         },
     )
     .expect_err("information-block length cannot vary");

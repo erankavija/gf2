@@ -21,8 +21,12 @@ rand_chacha = { workspace = true }
 rand_core = { workspace = true }
 rand = "0.9"
 # `gf2-coding::simulation::BpskAwgnChannel` retains its workspace rand 0.8
-# ChannelModel ABI. The OSD campaign binary uses these aliases only to pass a
-# deterministic ChaCha20 stream through that canonical channel.
+# ChannelModel ABI. These aliases exist only to pass a deterministic ChaCha20
+# stream through that canonical channel: `osd_campaign::OsdBlockStream` seeks
+# one per sampled block and the OSD campaign binary draws from it. That mirror
+# of `parallel::WorkerCtx` is the named exception recorded there against
+# `@/issue/c1b253cb`, whose convergence condition is `gf2-coding` moving to
+# `rand` 0.9.
 rand08 = { package = "rand", version = "0.8" }
 rand_chacha08 = { package = "rand_chacha", version = "0.3" }
 tracing = "0.1"
