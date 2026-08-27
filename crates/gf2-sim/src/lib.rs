@@ -106,8 +106,9 @@
 //!
 //! The trait shapes, error hierarchy, module layout, and determinism contract
 //! are specified in the Phase 0 design doc
-//! `dev/active/ec530af9/ec530af9-pipeline-design.md`, which is the single source of
-//! truth for this crate.
+//! `dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md`,
+//! which is the single source of truth for this crate. It is the document
+//! linked to JIT issue `ec530af9`, archived with its epic.
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 

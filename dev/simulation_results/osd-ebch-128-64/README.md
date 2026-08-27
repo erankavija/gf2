@@ -198,9 +198,21 @@ One reading the committed evidence does not exclude is that the bound applies to
 maximum-likelihood decoding. Order-$l$ reprocessing minimizes squared Euclidean
 distance over the $\sum_{i=0}^{l}\binom{K}{i}$ candidates its enumeration
 reaches, a subset of the code (`:154-162`), so its error probability is at least
-that of the unrestricted minimum-distance rule. Under that reading an order-2
-error rate sitting above the bound is the relation to expect rather than a
-violated one.
+that of the unrestricted minimum-distance rule.
+
+That reading fixes the decoding rule and leaves the error quantity open, so it
+does not by itself make the ordering the relation to expect. An ordering
+argument needs both halves: the bound and the estimate must concern the same
+error probability. This campaign measures a bit error rate, while the source's
+neighbouring analytical quantities are the codeword error probability
+$P_s(i)$ of Equation 4.46 and the bit error bound $P_b(i)$ of Equation 4.47,
+whose attribution the dataset records as unresolved. A bound on codeword error
+probability is not comparable to a bit error rate at all: at this cell the two
+differ by a factor of $5.05$, the campaign's own BLER $1.524\times10^{-6}$
+against its BER $3.016\times10^{-7}$, and $0.70$ decades dwarfs the $0.079$
+decade gap under discussion. So even under the maximum-likelihood reading the
+ordering is established only if the bound is a bit-error bound, which the
+record does not say.
 
 That reading has recorded evidence against it. The dataset's `union_bound` rows
 are order-indexed: order 2 carries one only at 5.23 dB, while orders 3 and 4

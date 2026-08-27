@@ -661,10 +661,10 @@ pub struct OsdBlockContext<'a> {
 /// interoperate. Their word-position
 /// contracts do agree — both count ChaCha20 32-bit words in a 68-bit space with
 /// `BLOCK_WORDS = 16` — so the same offsets are valid in both. The exception is
-/// recorded under `@/inv/convention-convergence` against `@/issue/c1b253cb`
-/// (the `rand` 0.8 holdout), whose convergence condition is `gf2-coding` moving
-/// to `rand` 0.9; `@/issue/90a88fa9` tracks converging the campaign execution
-/// stacks.
+/// recorded under `@/inv/convention-convergence` against JIT issue
+/// `c1b253cb` (the `rand` 0.8 holdout), whose convergence condition is
+/// `gf2-coding` moving to `rand` 0.9; JIT issue `90a88fa9` tracks converging
+/// the campaign execution stacks.
 ///
 /// [`debug_assert_block_budget`]: Self::debug_assert_block_budget
 ///

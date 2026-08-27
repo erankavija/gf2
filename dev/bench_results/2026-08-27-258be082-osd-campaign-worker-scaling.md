@@ -48,12 +48,17 @@ in-process invariance tests in `crates/gf2-sim/tests/osd_campaign_protocol.rs`.
 
 Throughput rises from 1545 blocks/s at one worker to 19139 blocks/s at 24.
 
-Efficiency falls off in the expected place: the host has 12 physical cores with
-2 SMT threads each, so 24 workers occupy 12 cores. Measured against the 12
-physical cores rather than the 24 logical threads, the 24-worker run holds
-103% — the decode loop is compute-bound, and SMT contributes the residual 0.4×
-above linear physical-core scaling. The 51.6% figure in the table is efficiency
-per logical thread and understates the result for that reason.
+The host has 12 physical cores with 2 SMT threads each, so 24 workers occupy 12
+cores. Measured against the 12 physical cores rather than the 24 logical
+threads, the 24-worker run holds 103%. The 51.6% figure in the table is
+efficiency per logical thread and is the smaller number for that reason; which
+of the two denominators is the fair one is not settled here.
+
+This campaign measured wall clock and worker count alone. It attributes the
+shape of the curve to nothing: no per-core, SMT-isolated, or hardware-counter
+measurement was taken, so whether the loop is compute-bound and what the second
+thread on each core contributes are open questions rather than findings. A
+`perf stat` run over the same cells at 12 and 24 workers would settle both.
 
 ## Interpretation and scope
 
