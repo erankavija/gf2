@@ -11,16 +11,18 @@ reproduction target.
 | `ebch_osd_awgn.json` | Versioned statistical receipt; the authoritative record |
 | `ebch_osd_awgn.checkpoint.json` | Durable resumable progress, one entry per cell attempt |
 | `host-lscpu.txt` | Unedited `lscpu` output identifying the producing host |
-| `plot.py` | Deterministic figure generator over the receipt and the reference dataset |
+| `plot.py` | Deterministic generator of `comparison.json` and both figures over the receipt and the reference dataset |
+| `comparison.json` | Machine-readable per-cell comparison; the single derivation point the tables below project |
 | `order2_ber_comparison.png`, `.svg` | Order-2 simulation BER against the published order-2 series |
-| `order1_controls.png`, `.svg` | Order-1 internal-control BER and BLER series |
+| `order1_controls.png`, `.svg` | Order-1 internal-control BER and BLER series, with the published order-1 BER as a cross-check |
 | `schema1/` | Superseded schema-1 artifact set, retained as historical evidence |
 | `README.md` | This provenance record |
 
 The receipt and checkpoint are **schema version 2**
 (`schema_version`; `OSD_CAMPAIGN_SCHEMA_VERSION` at
 `crates/gf2-sim/src/osd_campaign.rs:121`). Every number below is a projection of
-`ebch_osd_awgn.json`, of the committed reference dataset
+`ebch_osd_awgn.json`, of [`comparison.json`](comparison.json) — which `plot.py`
+derives from that receipt and the dataset — of the committed reference dataset
 [`osd_ebch_128_64_fossorier1994.csv`](../../reference_data/osd_ebch_128_64_fossorier1994.csv),
 or of a cited in-tree source location. The single exception is the host identity
 under [Provenance](#provenance), a fact the receipt's schema cannot carry, which
@@ -143,6 +145,14 @@ $\log_{10}(\widehat{\text{BER}} / p)$ and carries no verdict; it is reported so
 the strength of each agreement is visible independently of the accept/reject
 outcome (`@/inv/uncertainty-reported`).
 
+The table projects [`comparison.json`](comparison.json), which `plot.py` derives
+from the receipt and the dataset in one pass so that the prose, the figures, and
+the machine-readable comparison have a single derivation point rather than three
+independent transcriptions. Its columns are that file's `ber`, `ber_interval`,
+`published.value`, `published.source_locator`,
+`published.digitization_precision_log10_decades`, `accept_window`, `log10_gap`,
+and `accepts` fields, for the entries it marks `role = reproduction_target`.
+
 | $E_b/N_0$ (dB) | BER estimate | receipt $[L, U]$ | published $p$ | source | $\delta$ | accept window $[L \cdot 10^{-\delta}, U \cdot 10^{+\delta}]$ | gap (decades) | verdict |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1.55 | 2.367e-02 | [7.776e-03, 4.596e-02] | 2.138e-02 | Fig. 4.14 | 0.1 | [6.177e-03, 5.787e-02] | +0.044 | accept |
@@ -162,15 +172,37 @@ records that bound rows are analytical bound values rather than stochastic
 measurements and are not simulation evidence
 (`dev/reference_data/osd_ebch_128_64_fossorier1994.md:184-186`, `:256-258`). The
 predicate is evaluated mechanically for that row for completeness, and its
-verdict carries no claim about reproducing a published measurement. That row also
-does not have the relation an upper bound and a measurement are expected to have:
-a union bound sits at or above the true error probability, and here the point
-estimate $3.016\times10^{-7}$ lies **above** the tabulated bound
-$2.512\times10^{-7}$ by $0.079$ decades, a factor of $1.20$. The recorded
-interval $[7.889\times10^{-8},\, 6.227\times10^{-7}]$ contains the bound, so the
-excursion is well inside what $K = 100$ block errors can resolve and is
-consistent with sampling fluctuation; this campaign does not separate the two.
-It is recorded here rather than reconciled.
+verdict carries no claim about reproducing a published measurement.
+
+At that row the point estimate $3.016\times10^{-7}$ lies **above** the tabulated
+value $2.512\times10^{-7}$ by $0.079$ decades, a factor of $1.20$, and the
+recorded interval $[7.889\times10^{-8},\, 6.227\times10^{-7}]$ contains that
+value, so this campaign does not separate the two at $K = 100$ block errors.
+What the ordering signifies is a separate question, and the committed evidence
+does not settle it. Beyond the row's kind, all the dataset records is the source
+caption that assigns it: Tables 4.7–4.9 are captioned "Order-$l$ simulation
+results for (128,64,22) extended BCH code (\*: union bound)" (`:44-45`). Neither
+which error probability the bound upper-bounds nor the decoding rule it is
+derived for is recorded anywhere. The digitization receipts add nothing on
+either point: they cover the Figure 4.14 marker reads and their axis
+calibration, and no receipt field names the bound
+(`dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/README.md:39-65`).
+The dataset does record an unresolved ambiguity in the source's neighbouring
+analytical quantities: Figure 4.14's theoretical curves are labelled
+"Eq. 4.46", which defines the codeword error probability $P_s(i)$, while §4.3.1
+states that the simulated results are compared against Equation 4.47, the bit
+error bound $P_b(i)$. That label is left as the source has it (`:414-418`).
+
+Lacking those two facts, the ordering is **not established as a contradiction**.
+One reading the committed evidence does not exclude is that the bound applies to
+maximum-likelihood decoding. Order-$l$ reprocessing minimizes squared Euclidean
+distance over the $\sum_{i=0}^{l}\binom{K}{i}$ candidates its enumeration
+reaches, a subset of the code (`:154-162`), so its error probability is at least
+that of the unrestricted minimum-distance rule. Under that reading an order-2
+error rate sitting above the bound is the relation to expect rather than a
+violated one, and the ordering is unremarkable. This record selects no reading.
+It states the observation, states the gap in the evidence that leaves the
+ordering's significance undecidable, and reconciles nothing.
 
 The supporting counters for each order-2 cell are below. Every cell stops at its
 100th block error and holds 64 information bits per block
@@ -217,7 +249,8 @@ gap against the figure cross-read is $+0.218$ decades, against $+0.428$ decades
 for the table entry.
 
 The local slope structure points the same way. Taking the three highest order-2
-abscissas and reading successive ratios:
+abscissas and reading successive ratios, with the published series' 5.23 dB
+endpoint being its `union_bound` row rather than a simulation row:
 
 | series at 4.56 dB | 3.98 dB $\rightarrow$ 4.56 dB | 4.56 dB $\rightarrow$ 5.23 dB |
 | --- | --- | --- |
@@ -229,24 +262,27 @@ The abscissas are unevenly spaced, so the comparable quantity is the local slope
 in decades per dB. Over the published series' six steps from 1.55 dB to 5.23 dB
 it runs $0.791,\, 1.013,\, 1.304,\, 1.569,\, 2.241,\, 1.343$: monotonically
 steepening across the waterfall, then a step into 4.56 dB that is $43\%$ steeper
-than the one before it, then a fall of $40\%$. Substituting the figure cross-read
-replaces the last two with $1.879$ and $1.657$, which continues the series' own
-progression and leaves a far smaller dip. This campaign's own order-2 slopes over
-the same six steps run $0.891,\, 0.881,\, 1.417,\, 1.572,\, 1.550,\, 1.864$,
-steepening without a spike.
+than the one before it, then a fall of $40\%$. That sixth step ends on the
+`union_bound` row and is carried here as arithmetic over the tabulated numerals
+alone; the first limit below states why it bears no weight. Substituting the
+figure cross-read at 4.56 dB replaces the last two with $1.879$ and $1.657$,
+which continues the series' own progression through the fifth step and leaves a
+far smaller dip. This campaign's own order-2 slopes over the same six steps run
+$0.891,\, 0.881,\, 1.417,\, 1.572,\, 1.550,\, 1.864$, steepening without a
+spike.
 
-Two limits on that argument, both of which cut against the table reading rather
-than for it:
+Two limits on that argument:
 
-- The 5.23 dB published entry is a `union_bound` row. A union bound sits at or
-  above the true value, so the true drop into 5.23 dB is **at least** the
-  $7.94\times$ computed from it and the true slope at least $1.343$ decades per
-  dB. The apparent flattening after 4.56 dB could therefore be partly or wholly
-  an artifact of comparing against a bound, which would weaken the
-  steepen-then-flatten reading. The load-bearing part of the argument does not
-  need it: 3.98 dB and 4.56 dB are both `simulation` rows, and the step between
-  them is where the table and figure readings differ by $19.95\times$ against
-  $12.30\times$.
+- The 5.23 dB published entry is a `union_bound` row rather than a `simulation`
+  row, and the dataset records neither which error probability it bounds nor the
+  decoding rule it is derived for. The final step's $7.94\times$ ratio and
+  $1.343$ decades per dB are therefore not a simulation-to-simulation step of
+  the published series, and no direction of bias can be assigned to them. The
+  flattening after 4.56 dB may be an artifact of that row's kind; this record
+  neither claims it is nor claims it is not. The load-bearing part of the
+  argument does not use that step: 3.98 dB and 4.56 dB are both `simulation`
+  rows, and the step between them is where the table and figure readings differ
+  by $19.95\times$ against $12.30\times$.
 - Table 4.7 prints $P_e$ as $10^{-x}$ with one decimal in the exponent, so each
   printed entry carries the source's own $\pm 0.05$ decade quantization
   (`dev/reference_data/osd_ebch_128_64_fossorier1994.md:182-184`). A ratio of
@@ -280,7 +316,9 @@ These seven cells are measurements this campaign produces as an internal control
 on the decoder, channel, seed derivation, and interval machinery across the same
 abscissas. **They are campaign results, not externally sourced claims.** The
 campaign asserts no published value for them, and the acceptance predicate of
-the previous section is not evaluated for them.
+the previous section is not evaluated for them:
+[`comparison.json`](comparison.json) marks every order-1 entry
+`role = internal_control` and emits no `accepts` field for any of them.
 
 | $E_b/N_0$ (dB) | blocks $n$ | sampled bits | bit errors | block errors | BER | BER $[L, U]$ | BLER | BLER $[L, U]$ |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -305,7 +343,9 @@ that metric and those conventions
 status"). Set beside those points, the campaign's order-1 BER estimates differ
 by $+0.001$, $+0.037$, $-0.010$, $+0.013$, $-0.019$, $-0.006$, and $+0.007$
 decades from 1.55 dB upward, every one inside the dataset's own $\pm 0.1$ decade
-read precision.
+read precision. That published series is drawn on the order-1 figure beside the
+control series and labelled `cross-check only`, which is the whole of its role
+here.
 
 That observation licenses one thing and not another. It licenses the statement
 that this campaign's decoder, channel, and seed machinery behave consistently
@@ -346,10 +386,12 @@ $1 - \alpha/2 = 0.975$ (`OsdIntervalSpec::component_level`,
   sampling distribution, recorded as `negative_binomial_clopper_pearson`
   (`crates/gf2-sim/src/osd_campaign.rs:403-412`). Its endpoints are the ones
   tabulated above, at level $0.975$.
-- **$\mu$** uses the Maurer-Pontil empirical-Bernstein bound over the $K$
-  per-failing-block error fractions, intersected with the domain $[1/k, 1]$ for
-  information-block length $k = 64$
-  (`crates/gf2-sim/src/osd_campaign.rs:63-72`, `:338`). $K$ is fixed by the
+- **$\mu$** uses the Maurer-Pontil empirical-Bernstein bound [MaurerPontil2009]
+  over the $K$ per-failing-block error fractions, intersected with the domain
+  $[1/k, 1]$ for information-block length $k = 64$
+  (`crates/gf2-sim/src/osd_campaign.rs:63-72`, `:338`; the implementation and
+  its one-sided coverage statement are at
+  `crates/gf2-stats/src/intervals.rs:218-235`). $K$ is fixed by the
   stopping rule, so this fixed-sample bound applies. The bound is
   variance-adaptive, which matters because a failing block's error fraction
   concentrates far below the $[0, 1]$ range a Hoeffding-type bound would have to
@@ -361,10 +403,12 @@ $[L_{\text{BLER}} \cdot L_\mu,\; U_{\text{BLER}} \cdot U_\mu]$, recorded as
 `block_ratio_product_interval` at level $0.95$
 (`crates/gf2-sim/src/osd_campaign.rs:439-452`). All four endpoints are
 non-negative, so the product contains BER whenever both factor intervals contain
-their factors; **by the union bound** its coverage is at least
-$1 - \alpha/2 - \alpha/2 = 1 - \alpha$. Nothing in the construction assumes
-independence among the bit errors inside a block, which is the property a
-decoder's burst-shaped block failures violate.
+their factors; **by a union bound over the two failure events** its coverage is
+at least $1 - \alpha/2 - \alpha/2 = 1 - \alpha$. That is Boole's inequality over
+this construction's own events, unrelated to the source's `union_bound` row
+kind. Nothing in the construction assumes independence among the bit errors
+inside a block, which is the property a decoder's burst-shaped block failures
+violate.
 
 **Why fixed-trial coverage statements do not apply.** A Clopper-Pearson interval
 states exact coverage for a fixed trial count with a random success count. Under
@@ -388,7 +432,7 @@ block-error count is not the design's fixed $K$
 block errors the recorded BER interval spans a factor of $5.70$ to $7.89$ end to
 end across the fourteen cells: the lower endpoint sits a factor of $3.00$ to
 $3.82$ below the point estimate and the upper endpoint a factor of $1.90$ to
-$2.07$ above it. The BLER intervals, resting on one factor rather than two, span
+$2.06$ above it. The BLER intervals, resting on one factor rather than two, span
 a factor of $1.47$ to $1.57$. This is the price of stopping every cell at 100
 block errors, and it is the reason the 4.56 dB point accepts a published value
 $2.68\times$ away from its estimate. Narrowing it means raising $K$, which
@@ -476,10 +520,11 @@ The invocation argument vector is deliberately excluded from the hash, because
 every full vector is retained in `invocation_history`
 (`crates/gf2-sim/src/osd_campaign.rs:999-1002`).
 
-## Figures
+## Figures and the derived comparison
 
 Both figures are projections of the receipt and the reference dataset, with
-error bars on every plotted point (`@/inv/uncertainty-reported`).
+error bars on every plotted point (`@/inv/uncertainty-reported`), and each plots
+this campaign's estimates against the published values.
 
 - [`order2_ber_comparison.png`](order2_ber_comparison.png)
   ([SVG](order2_ber_comparison.svg)) — order-2 simulation BER with its
@@ -488,31 +533,35 @@ error bars on every plotted point (`@/inv/uncertainty-reported`).
   multiplicative error bar.
 - [`order1_controls.png`](order1_controls.png)
   ([SVG](order1_controls.svg)) — the order-1 internal-control BER and BLER
-  series with their recorded intervals. It carries no published series, and its
-  title states that no published claim is made.
+  series with their recorded intervals, against the published order-1 BER with
+  its recorded digitization uncertainty. The published series is labelled
+  `cross-check only` and the title names the panel as not a reproduction target,
+  because order 1 is an internal control: no acceptance verdict is computed for
+  any order-1 cell.
 
 Each figure is committed in both formats from the same draw. The SVG is the
 form the issue tracker accepts as a linked document, since `jit doc add`
 requires UTF-8 content; both figures are linked to the issue in that form.
 
-Both are generated deterministically by the committed
-[`plot.py`](plot.py) from `ebch_osd_awgn.json` and
-`dev/reference_data/osd_ebch_128_64_fossorier1994.csv`. Regenerate from the
-repository root:
+Both figures and [`comparison.json`](comparison.json) are generated
+deterministically in one pass by the committed [`plot.py`](plot.py) from
+`ebch_osd_awgn.json` and `dev/reference_data/osd_ebch_128_64_fossorier1994.csv`.
+Regenerate from the repository root:
 
 ```console
 $ python3 dev/simulation_results/osd-ebch-128-64/plot.py
 ```
 
 `--output-dir` redirects the output without changing it. Regenerating into a
-scratch directory reproduces all four committed files byte for byte:
+scratch directory reproduces every committed output byte for byte:
 
 | file | SHA-256 |
 | --- | --- |
 | `order2_ber_comparison.png` | `8e3da8afa6308eb3…` |
 | `order2_ber_comparison.svg` | `5581d13b1a5acecc…` |
-| `order1_controls.png` | `2d1c99f7830bf24c…` |
-| `order1_controls.svg` | `d835cd4a40f43f7e…` |
+| `order1_controls.png` | `5dcf3a77389038d7…` |
+| `order1_controls.svg` | `0ed4346b7580e474…` |
+| `comparison.json` | `80a446e10f469cb5…` |
 
 SVG output is deterministic only because the script pins matplotlib's
 `svg.hashsalt` and writes no creation date; without both, element identifiers
@@ -543,6 +592,15 @@ not re-derived, because the difference is a change of measurement behavior and
 reproducing those cells under the current tool is a new campaign
 (`@/inv/behavioral-evidence-validity`).
 
+Its record also carries a reading of the 5.23 dB `union_bound` row that this
+record declines. It says of its own estimate, which fell below the tabulated
+value, that this "is the relation an upper bound and a measurement are expected
+to have" (`schema1/README.md:355-362`). That rests on the same premise as the
+mirror-image claim would: which error probability the bound upper-bounds, and
+under which decoding rule, is recorded nowhere in the committed evidence, so
+neither ordering is established as expected or as anomalous. The archived text
+is retained unedited as historical evidence rather than corrected in place.
+
 ## Contradictory evidence
 
 **Table-versus-figure contradiction at 4.56 dB, order 2.** The committed dataset
@@ -570,13 +628,20 @@ simulation evidence. The predicate is evaluated mechanically for that row and
 reported for completeness; its verdict carries no claim about reproducing a
 published measurement.
 
-**A measurement above the union bound it is compared with.** At 5.23 dB, order
-2, the point estimate $3.016\times10^{-7}$ exceeds the tabulated union bound
-$2.512\times10^{-7}$ by $0.079$ decades, the reverse of the relation an upper
-bound and a measurement should have. The recorded interval contains the bound,
-so the campaign does not resolve them apart at $K = 100$ block errors, and the
-excursion is well inside the width the budget buys. The observation is recorded
-rather than reconciled: no campaign control was adjusted, and the dataset row is
+**An ordering against a bound row whose significance the evidence cannot
+judge.** At 5.23 dB, order 2, the point estimate $3.016\times10^{-7}$ exceeds
+the tabulated `union_bound` value $2.512\times10^{-7}$ by $0.079$ decades. The
+recorded interval contains that value, so the campaign does not resolve the two
+apart at $K = 100$ block errors, and the excursion is well inside the width the
+budget buys. Whether the ordering is anomalous at all is undecidable on the
+committed evidence, which records the source's `*: union bound` caption flag and
+the row's analytical kind but neither which error probability the bound
+upper-bounds nor the decoding rule it is derived for. It is therefore **not**
+recorded here as a contradiction.
+[Order-2 comparison against the published curve](#order-2-comparison-against-the-published-curve)
+gives that reasoning in full, including the maximum-likelihood reading under
+which the ordering is the relation to expect. The observation is recorded rather
+than reconciled: no campaign control was adjusted, and the dataset row is
 unchanged.
 
 **No independent seeded rerun.** This is one campaign at one seed. No second
@@ -597,6 +662,10 @@ derives from it (`PIT-07`).
   Closed access and unverified: the committed access audit records a closed
   Unpaywall result, and the advertised full-text lead resolves to a different
   five-author 1999 work.
+- [MaurerPontil2009] Maurer, Pontil — *Empirical Bernstein Bounds and Sample
+  Variance Penalization*. COLT 2009. arXiv:0907.3740. The source of the
+  empirical-Bernstein bound and its coverage statement for the $\mu$ factor of
+  the composed BER interval.
 
-Both keys resolve in the repository citation registry `.jit/references.toml`
-(`@/inv/external-claims-cited`).
+Every key here resolves in the repository citation registry
+`.jit/references.toml` (`@/inv/external-claims-cited`).
