@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-27T16:08:55.320199399Z",
+  "dependencies": [
+    "a82f2dd9-07b6-434e-806b-76b40ba43006"
+  ],
+  "description": "## Problem\n\n`dev/reference_data/osd_ebch_128_64_fossorier1994.csv` carries seven rows marked `value_kind = union_bound`, assigned from the source caption \"Order-$l$ simulation results for (128,64,22) extended BCH code (\\*: union bound)\". The provenance record `osd_ebch_128_64_fossorier1994.md` states that these are analytical bound values rather than stochastic measurements and must not be treated as simulation evidence, but records neither which error probability they upper-bound nor the decoding rule they are derived for.\n\nThat gap has already cost a downstream reader a wrong inference. Campaign `cef1ae5f` recorded the observation that its order-2 estimate at 5.23 dB exceeds the tabulated bound as \"the reverse of the relation an upper bound and a measurement are expected to have\"; that relation only holds if the bound bounds the same error probability under the same decoding rule, which the dataset does not establish. The claim was withdrawn under research-review finding F11, and the archived schema-1 record carries the mirror-image claim on the same premise.\n\nAn unrecorded structural fact bears directly on the question and is worth capturing in the same pass: the bound rows are per-order and differ sharply at a shared abscissa. At 5.23 dB the values are $2.5119\\times10^{-7}$ (order 2), $1.2589\\times10^{-9}$ (order 3), and $5.0119\\times10^{-12}$ (order 4); order 2 carries a bound row only at 5.23 dB while orders 3 and 4 carry them at 3.98, 4.56, and 5.23 dB. A bound on maximum-likelihood decoding of the code is a property of the code and channel rather than of a reprocessing order and would not vary this way, so the ordering of the rows is itself evidence about the bound's nature.\n\nA further ambiguity is already recorded and is adjacent to this one: Figure 4.14's theoretical curves are labelled \"Eq. 4.46\", the codeword error probability $P_s(i)$, while §4.3.1 states the simulated results are compared against Equation 4.47, the bit error bound $P_b(i)$.\n\n## Success Criteria\n\n- [hard] REQ-01: The provenance record states, from the source, which error probability each `union_bound` row upper-bounds and under which decoding rule, or records explicitly that the source does not establish it and that comparisons against those rows therefore carry no expected ordering.\n- [hard] REQ-02: The per-order structure of the bound rows is recorded as a dataset fact, with the values and the abscissas each order covers.\n- [hard] REQ-03: Anything the source does establish is cited to a located page, equation, or table; anything it does not is recorded as unestablished rather than inferred (`@/inv/falsification-preserved`).",
+  "documents": [],
+  "first_ready_at": "2026-08-27T16:08:55.320199399Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "a1c801cb-5fc1-4094-83a1-6c16d0fb41b4",
+  "labels": [
+    "type:task",
+    "component:gf2-sim",
+    "cites:Fossorier1994"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Reference dataset does not record what the Fossorier1994 union-bound rows bound",
+  "updated_at": "2026-08-27T16:09:21.206362235Z"
+}
