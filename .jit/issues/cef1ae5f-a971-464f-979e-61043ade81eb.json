@@ -180,6 +180,7 @@
       "path": "dev/simulation_results/osd-ebch-128-64/comparison.json"
     }
   ],
+  "done_at": "2026-08-27T16:39:09.398360501Z",
   "first_ready_at": "2026-08-25T19:04:53.617878279Z",
   "gates_required": [
     "research-review",
@@ -187,8 +188,8 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-27T16:35:20.952146892Z",
+      "status": "passed",
+      "updated_at": "2026-08-27T16:38:44.569283937Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -207,7 +208,7 @@
     "cites:Fossorier1994"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "eBCH OSD curve reproduction",
-  "updated_at": "2026-08-27T16:35:51.040068290Z"
+  "updated_at": "2026-08-27T16:39:09.398360501Z"
 }

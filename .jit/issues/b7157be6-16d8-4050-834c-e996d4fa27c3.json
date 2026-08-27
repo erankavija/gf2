@@ -58,7 +58,7 @@
     "cites:Roffe2020"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-27T04:37:11.566619413Z"
+  "updated_at": "2026-08-27T16:39:18.254795975Z"
 }
