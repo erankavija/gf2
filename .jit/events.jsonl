@@ -9720,3 +9720,4 @@
 {"gate_key":"code-review","id":"144391d8-0273-4230-a7ef-45b6412ec3d2","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T12:26:15.545110328Z","type":"gate_failed","updated_by":"auto:executor"}
 {"fields":["description"],"id":"9564f9a6-7d0a-4e24-bcaa-ee2b8d04ef55","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T12:52:27.242778814Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["description"],"id":"0af42307-bd2b-4296-a1a4-4b5649690534","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T12:52:51.240992090Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["documents"],"id":"47f139f9-8b5c-4303-a249-fc9585038474","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T12:53:03.039026765Z","type":"issue_updated","updated_by":"doc-add"}
