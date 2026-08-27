@@ -198,3 +198,8 @@ url = "https://github.com/AeneasVerif/charon"
 [[references]]
 key = "Isaka1999"
 citation = "Isaka, Morelos-Zaragoza, Fossorier, Lin, Imai — Soft Decision Decoding of Linear Block Codes Based on Ordered Statistics in Multilevel Signaling. IEICE IT technical group meeting, Tokushima, Japan, May 1999."
+
+[[references]]
+key = "MaurerPontil2009"
+citation = "Maurer, Pontil — Empirical Bernstein Bounds and Sample Variance Penalization. COLT 2009. arXiv:0907.3740."
+arxiv = "0907.3740"

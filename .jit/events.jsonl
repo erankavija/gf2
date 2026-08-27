@@ -9735,3 +9735,4 @@
 {"fields":["labels"],"id":"054c4782-8377-4a03-a816-919cd18c6114","issue_id":"68189a0a-bb03-413a-9550-1f6c400dfe44","timestamp":"2026-08-27T15:19:47.459552370Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["labels"],"id":"0b4cda81-bdc0-4125-9023-0281253199d1","issue_id":"68189a0a-bb03-413a-9550-1f6c400dfe44","timestamp":"2026-08-27T15:20:06.849963517Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["dependencies"],"id":"5b214a66-9687-4a0f-8795-ee630325f695","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-27T15:20:15.170302858Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"research-review","id":"9b295003-56d5-41ab-b0c1-c716b11c7143","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-27T15:43:50.557933043Z","type":"gate_failed","updated_by":"auto:executor"}

@@ -223,8 +223,8 @@ pub fn negative_binomial_interval(events: u64, trials: u64, level: f64) -> (f64,
 /// the requested two-sided confidence level. The returned tuple is
 /// `(lower, upper)`, clipped to `[0, 1]`.
 ///
-/// Maurer and Pontil (*Empirical Bernstein Bounds and Sample Variance
-/// Penalization*, 2009) bound the one-sided deviation of the sample mean
+/// Maurer and Pontil (`@/citation/MaurerPontil2009`) bound the one-sided
+/// deviation of the sample mean
 /// `M` from the true mean by
 /// `sqrt(2 V ln(2 / d) / n) + 7 ln(2 / d) / (3 (n - 1))`
 /// with probability at least `1 - d`, for sample variance `V` and `n >= 2`.
