@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-27T11:24:28.384649401Z",
   "context": {},
   "created_at": "2026-08-27T04:36:10.703605060Z",
   "dependencies": [
@@ -37,7 +38,7 @@
     "component:gf2-sim"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "OSD campaign protocol evaluates blocks single-threaded, idling 23 of 24 host threads",
-  "updated_at": "2026-08-27T06:53:33.530740801Z"
+  "updated_at": "2026-08-27T11:24:28.384649401Z"
 }
