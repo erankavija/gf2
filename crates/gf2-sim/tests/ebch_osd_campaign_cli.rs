@@ -44,6 +44,15 @@ fn binary_path() -> PathBuf {
 }
 
 fn campaign_args(dir: &Path, max_samples: &str, target_block_errors: &str) -> Vec<String> {
+    workers_campaign_args(dir, max_samples, target_block_errors, "2")
+}
+
+fn workers_campaign_args(
+    dir: &Path,
+    max_samples: &str,
+    target_block_errors: &str,
+    workers: &str,
+) -> Vec<String> {
     vec![
         "--checkpoint".to_owned(),
         dir.join("checkpoint.json").display().to_string(),
@@ -55,6 +64,8 @@ fn campaign_args(dir: &Path, max_samples: &str, target_block_errors: &str) -> Ve
         target_block_errors.to_owned(),
         "--seed".to_owned(),
         "42".to_owned(),
+        "--workers".to_owned(),
+        workers.to_owned(),
     ]
 }
 
@@ -83,8 +94,99 @@ fn usage_names_pinned_configuration_and_output_paths() {
     assert!(usage.contains("--checkpoint PATH"), "usage: {usage}");
     assert!(usage.contains("--receipt PATH"), "usage: {usage}");
     assert!(usage.contains("--target-block-errors N"), "usage: {usage}");
+    assert!(usage.contains("--workers N"), "usage: {usage}");
     assert!(usage.contains("ascending Hamming weight"), "usage: {usage}");
     assert!(usage.contains("source-undefined"), "usage: {usage}");
+}
+
+/// The worker count is invocation-local provenance, not campaign
+/// configuration: the same cell evidence comes out at any worker count, and
+/// the resolved count is always part of the recorded argument vector — the
+/// default included, so the record reproduces the run.
+#[test]
+fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
+    let defaulted_dir = TempDir::new("workers-default");
+    let defaulted_args = vec![
+        "--checkpoint".to_owned(),
+        defaulted_dir
+            .path()
+            .join("checkpoint.json")
+            .display()
+            .to_string(),
+        "--receipt".to_owned(),
+        defaulted_dir
+            .path()
+            .join("receipt.json")
+            .display()
+            .to_string(),
+        "--max-samples".to_owned(),
+        "8".to_owned(),
+        "--target-block-errors".to_owned(),
+        "1000000".to_owned(),
+        "--seed".to_owned(),
+        "42".to_owned(),
+    ];
+    let defaulted = run(&defaulted_args);
+    assert!(
+        defaulted.status.success(),
+        "defaulted worker count failed:\n{}",
+        String::from_utf8_lossy(&defaulted.stderr)
+    );
+    let defaulted_receipt = receipt(&defaulted_dir.path().join("receipt.json"));
+    let recorded = &defaulted_receipt.invocation_history[0]
+        .provenance
+        .invocation;
+    let available = std::thread::available_parallelism()
+        .expect("host reports available parallelism")
+        .to_string();
+    assert_eq!(
+        &recorded[recorded.len() - 2..],
+        ["--workers".to_owned(), available],
+        "the defaulted worker count must appear in the recorded argument vector"
+    );
+
+    // The single-worker run is the reference the invariance contract is stated
+    // against; the real eBCH/OSD evaluator must reproduce it at every count.
+    let reference_dir = TempDir::new("workers-1");
+    let reference_run = run(&workers_campaign_args(
+        reference_dir.path(),
+        "8",
+        "1000000",
+        "1",
+    ));
+    assert!(
+        reference_run.status.success(),
+        "single-worker run failed:\n{}",
+        String::from_utf8_lossy(&reference_run.stderr)
+    );
+    let reference = receipt(&reference_dir.path().join("receipt.json"));
+    assert_eq!(reference.cell_results[0].samples, 8);
+
+    for workers in ["2", "8", "24"] {
+        let dir = TempDir::new(&format!("workers-{workers}"));
+        let output = run(&workers_campaign_args(dir.path(), "8", "1000000", workers));
+        assert!(
+            output.status.success(),
+            "{workers}-worker run failed:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let observed = receipt(&dir.path().join("receipt.json"));
+        assert_eq!(
+            serde_json::to_vec(&observed.cell_results[0]).unwrap(),
+            serde_json::to_vec(&reference.cell_results[0]).unwrap(),
+            "{workers} workers must not change a cell's sampled evidence"
+        );
+        assert_eq!(
+            observed.configuration_hash, reference.configuration_hash,
+            "worker count must stay out of the campaign configuration identity"
+        );
+    }
+
+    assert_eq!(
+        serde_json::to_vec(&defaulted_receipt.cell_results[0]).unwrap(),
+        serde_json::to_vec(&reference.cell_results[0]).unwrap(),
+        "the defaulted worker count must produce the same cell evidence"
+    );
 }
 
 #[test]

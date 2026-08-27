@@ -33,11 +33,19 @@
 //! records an interrupted cell so a later invocation can continue from the
 //! durable counters. `--target-block-errors` is the cumulative independent
 //! block-error target for a cell; reaching it records a completed cell.
+//!
+//! `--workers` sets how many blocks are decoded concurrently and defaults to
+//! the host's available parallelism. It changes throughput only: every block
+//! draws from its own reserved region of the cell's ChaCha20 stream, keyed on
+//! the block index alone, so the sampled sequence and every recorded counter
+//! are the same at any worker count. The resolved value is always part of the
+//! recorded invocation argument vector, which therefore reproduces the run.
 
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
 use std::fs;
+use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -46,13 +54,13 @@ use gf2_coding::osd::{GeneratorMatrixOsdDecoder, OsdConfig};
 use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
 use gf2_coding::traits::BlockEncoder;
 use gf2_core::BitVec;
-use rand08::{Rng, SeedableRng};
+use rand08::Rng;
 use rand_chacha08::ChaCha20Rng;
 use sha2::{Digest, Sha256};
 
 use gf2_sim::osd_campaign::{
-    BinomialIntervalMethod, BinomialIntervalSpec, OsdBlockContext, OsdBlockOutcome, OsdCampaign,
-    OsdCampaignError, OsdCampaignProvenance, OsdCell, OsdCellId, OsdWorkCounters,
+    BinomialIntervalMethod, BinomialIntervalSpec, OsdBlockContext, OsdBlockOutcome, OsdBlockStream,
+    OsdCampaign, OsdCampaignError, OsdCampaignProvenance, OsdCell, OsdCellId, OsdWorkCounters,
 };
 use gf2_sim::permanent_campaign::provenance::{
     observe_cpu_identity, observe_provenance, repository_top_level,
@@ -81,7 +89,12 @@ Options:
   --seed U64               Campaign root seed [default: 0xC8322EFF]
   --max-samples N         Additional samples per cell invocation [default: 100000]
   --target-block-errors N Cumulative block errors per cell [default: 100]
+  --workers N             Concurrent block evaluators [default: available parallelism]
   --help                  Show this message
+
+Worker count affects throughput only: results are byte-identical at any
+worker count, and the resolved value is recorded in the receipt's invocation
+argument vector.
 
 OSD list and tie policy:
   ascending Hamming weight over the MRI positions, then lexicographic
@@ -99,6 +112,7 @@ struct Args {
     seed: u64,
     max_samples: u64,
     target_block_errors: u64,
+    workers: NonZeroUsize,
     invocation: Vec<String>,
 }
 
@@ -121,20 +135,24 @@ fn run() -> Result<(), String> {
     let campaign = pinned_campaign(args.seed, args.target_block_errors, provenance)
         .map_err(|error| error.to_string())?;
     let code = ExtendedBchCode::ebch_128_64();
-    let mut evaluator = None;
     let receipt = gf2_sim::osd_campaign::run_osd_campaign(
         &args.checkpoint,
         &campaign,
         args.max_samples,
-        |context| evaluate_block(context, &code, &mut evaluator),
+        args.workers,
+        || {
+            let mut evaluator = CellEvaluator::new(&code);
+            move |context: OsdBlockContext<'_>| evaluator.sample(context)
+        },
     )
     .map_err(|error| error.to_string())?;
     write_receipt(&args.receipt, &receipt)?;
     println!(
-        "wrote {} cell attempts to checkpoint {} and receipt {}",
+        "wrote {} cell attempts to checkpoint {} and receipt {} using {} workers",
         receipt.cell_results.len(),
         args.checkpoint.display(),
-        args.receipt.display()
+        args.receipt.display(),
+        args.workers
     );
     Ok(())
 }
@@ -146,9 +164,10 @@ fn parse_args() -> Result<Option<Args>, String> {
     let mut receipt = None;
     let mut seed = DEFAULT_SEED;
     let mut max_samples = DEFAULT_MAX_SAMPLES;
-    let invocation: Vec<String> = std::env::args().collect();
+    let mut invocation: Vec<String> = std::env::args().collect();
     let arguments: Vec<String> = invocation.iter().skip(1).cloned().collect();
     let mut target_block_errors = DEFAULT_TARGET_BLOCK_ERRORS;
+    let mut workers = None;
     let mut index = 0;
 
     while index < arguments.len() {
@@ -182,6 +201,13 @@ fn parse_args() -> Result<Option<Args>, String> {
                     return Err("--target-block-errors must be positive".to_owned());
                 }
             }
+            "--workers" => {
+                let value = required_value(&arguments, &mut index, "--workers")?;
+                workers =
+                    Some(value.parse::<NonZeroUsize>().map_err(|_| {
+                        format!("--workers must be a positive integer, got {value:?}")
+                    })?);
+            }
             option if option.starts_with('-') => {
                 return Err(format!("unknown option {option:?}\n\n{USAGE}"));
             }
@@ -189,6 +215,18 @@ fn parse_args() -> Result<Option<Args>, String> {
         }
         index += 1;
     }
+
+    // The recorded argument vector reproduces the run, so it always names the
+    // resolved worker count even when the flag was left to its default.
+    let workers = match workers {
+        Some(workers) => workers,
+        None => {
+            let workers = available_parallelism();
+            invocation.push("--workers".to_owned());
+            invocation.push(workers.to_string());
+            workers
+        }
+    };
 
     Ok(Some(Args {
         checkpoint: checkpoint
@@ -200,8 +238,15 @@ fn parse_args() -> Result<Option<Args>, String> {
         seed,
         max_samples,
         target_block_errors,
+        workers,
         invocation,
     }))
+}
+
+/// The host's available parallelism, falling back to one worker where the
+/// platform does not report it.
+fn available_parallelism() -> NonZeroUsize {
+    std::thread::available_parallelism().unwrap_or(NonZeroUsize::MIN)
 }
 
 fn required_value(arguments: &[String], index: &mut usize, option: &str) -> Result<String, String> {
@@ -259,81 +304,65 @@ fn pinned_campaign(
     OsdCampaign::new(seed, cells, interval, target_block_errors, provenance)
 }
 
-fn evaluate_block(
-    context: OsdBlockContext<'_>,
-    code: &ExtendedBchCode,
-    evaluator: &mut Option<CellEvaluator>,
-) -> OsdBlockOutcome {
-    let starts_new_cell = evaluator
-        .as_ref()
-        .is_none_or(|evaluator| evaluator.cell_id != context.cell.id);
-    if starts_new_cell {
-        *evaluator = Some(CellEvaluator::new(context, code));
-    }
-    evaluator
-        .as_mut()
-        .expect("the cell evaluator was initialized")
-        .sample(context, code)
-}
-
-struct CellEvaluator {
-    cell_id: OsdCellId,
-    seed: u64,
-    next_block_index: u64,
-    decoder: GeneratorMatrixOsdDecoder<ExtendedBchCode>,
+/// One worker's block evaluator: the code, the channel, and whichever cell
+/// binding the worker last saw.
+///
+/// The protocol builds one of these per worker and hands it blocks of a single
+/// cell at a time, in no particular order. Every block seeks the cell's stream
+/// to its own reserved region, so an evaluator carries no state from one block
+/// to the next and two evaluators agree on any block they both see.
+struct CellEvaluator<'a> {
+    code: &'a ExtendedBchCode,
     channel: BpskAwgnChannel,
-    rng: ChaCha20Rng,
+    binding: Option<CellBinding>,
 }
 
-impl CellEvaluator {
-    fn new(context: OsdBlockContext<'_>, code: &ExtendedBchCode) -> Self {
-        let decoder = GeneratorMatrixOsdDecoder::new(
-            code.clone(),
-            OsdConfig::new(usize::from(context.cell.osd_order)),
-        );
-        let channel = BpskAwgnChannel;
-        let mut rng = ChaCha20Rng::seed_from_u64(context.seed);
+/// The decoder and random stream bound to the cell a worker is sampling.
+struct CellBinding {
+    cell_id: OsdCellId,
+    decoder: GeneratorMatrixOsdDecoder<ExtendedBchCode>,
+    stream: OsdBlockStream,
+}
 
-        // The checkpoint intentionally stores aggregate evidence rather than
-        // implementation-specific RNG bytes. Replaying the durable prefix
-        // restores the exact ChaCha20 position used by the original evaluator.
-        for _ in 0..context.block_index {
-            let _ = simulate_frame(code, &decoder, &channel, context.cell.eb_n0_db, &mut rng);
-        }
-
+impl<'a> CellEvaluator<'a> {
+    fn new(code: &'a ExtendedBchCode) -> Self {
         Self {
-            cell_id: context.cell.id.clone(),
-            seed: context.seed,
-            next_block_index: context.block_index,
-            decoder,
-            channel,
-            rng,
+            code,
+            channel: BpskAwgnChannel,
+            binding: None,
         }
     }
 
-    fn sample(&mut self, context: OsdBlockContext<'_>, code: &ExtendedBchCode) -> OsdBlockOutcome {
-        assert_eq!(
-            self.cell_id, context.cell.id,
-            "cell identity must be stable"
-        );
-        assert_eq!(self.seed, context.seed, "cell seed must be stable");
-        assert_eq!(
-            self.next_block_index, context.block_index,
-            "protocol block indices must be consecutive"
-        );
+    fn sample(&mut self, context: OsdBlockContext<'_>) -> OsdBlockOutcome {
+        let rebind = self
+            .binding
+            .as_ref()
+            .is_none_or(|binding| binding.cell_id != context.cell.id);
+        if rebind {
+            self.binding = Some(CellBinding {
+                cell_id: context.cell.id.clone(),
+                decoder: GeneratorMatrixOsdDecoder::new(
+                    self.code.clone(),
+                    OsdConfig::new(usize::from(context.cell.osd_order)),
+                ),
+                stream: OsdBlockStream::new(context.seed),
+            });
+        }
+        let binding = self.binding.as_mut().expect("the cell was just bound");
+
+        binding.stream.seek_to_block(context.block_index);
         let frame = simulate_frame(
-            code,
-            &self.decoder,
+            self.code,
+            &binding.decoder,
             &self.channel,
             context.cell.eb_n0_db,
-            &mut self.rng,
+            binding.stream.rng_mut(),
         );
-        self.next_block_index = self
-            .next_block_index
-            .checked_add(1)
-            .expect("block index overflow");
+        binding
+            .stream
+            .debug_assert_block_budget(context.block_index);
         OsdBlockOutcome {
-            information_bits: code.k() as u64,
+            information_bits: self.code.k() as u64,
             information_bit_errors: frame.bit_errors,
             work: frame.work,
         }
