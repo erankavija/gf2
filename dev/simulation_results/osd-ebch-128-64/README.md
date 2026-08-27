@@ -200,9 +200,34 @@ distance over the $\sum_{i=0}^{l}\binom{K}{i}$ candidates its enumeration
 reaches, a subset of the code (`:154-162`), so its error probability is at least
 that of the unrestricted minimum-distance rule. Under that reading an order-2
 error rate sitting above the bound is the relation to expect rather than a
-violated one, and the ordering is unremarkable. This record selects no reading.
-It states the observation, states the gap in the evidence that leaves the
-ordering's significance undecidable, and reconciles nothing.
+violated one.
+
+That reading has recorded evidence against it. The dataset's `union_bound` rows
+are order-indexed: order 2 carries one only at 5.23 dB, while orders 3 and 4
+carry one at each of 3.98, 4.56, and 5.23 dB, and at a shared abscissa their
+values differ by orders of magnitude. At 5.23 dB the order-2 row reads
+$2.5119\times10^{-7}$, the order-3 row $1.2589\times10^{-9}$, and the order-4
+row $5.0119\times10^{-12}$
+(`dev/reference_data/osd_ebch_128_64_fossorier1994.csv:26`, `:33`, `:40`,
+transcribed from Tables 4.7, 4.8, and 4.9). A union bound on maximum-likelihood
+decoding of this code is a property of the code and the channel rather than of a
+reprocessing order, so it would take one value per abscissa. These take three.
+
+That tells against the maximum-likelihood reading without putting anything in
+its place. The dataset still records neither the bound's derivation nor its
+decoding rule. An order-indexed bound could bound order-$l$ reprocessing
+performance itself, under which the 5.23 dB ordering would regain the
+significance the maximum-likelihood reading denies it, and in the direction the
+anomaly reading assumed; or it could be a third quantity this dataset does not
+describe. The question stays undecidable on the committed evidence.
+
+So neither verdict is established. The ordering is not recorded as a
+contradiction, and it is not explained away either: the one concrete reading
+under which it would be unremarkable is itself one the dataset's order-indexed
+bound rows tell against. This record selects no reading. It states the
+observation, states the gaps in the evidence that leave the ordering's
+significance undecidable, and reconciles nothing
+(`@/inv/falsification-preserved`).
 
 The supporting counters for each order-2 cell are below. Every cell stops at its
 100th block error and holds 64 information bits per block
@@ -637,12 +662,13 @@ budget buys. Whether the ordering is anomalous at all is undecidable on the
 committed evidence, which records the source's `*: union bound` caption flag and
 the row's analytical kind but neither which error probability the bound
 upper-bounds nor the decoding rule it is derived for. It is therefore **not**
-recorded here as a contradiction.
+recorded here as a contradiction — and equally it is not explained away.
 [Order-2 comparison against the published curve](#order-2-comparison-against-the-published-curve)
-gives that reasoning in full, including the maximum-likelihood reading under
-which the ordering is the relation to expect. The observation is recorded rather
-than reconciled: no campaign control was adjusted, and the dataset row is
-unchanged.
+gives that reasoning in full: a maximum-likelihood reading under which the
+ordering is the relation to expect, and the dataset's order-indexed
+`union_bound` rows, which tell against that reading without establishing one in
+its place. The observation is recorded rather than reconciled: no campaign
+control was adjusted, and the dataset row is unchanged.
 
 **No independent seeded rerun.** This is one campaign at one seed. No second
 seed and no independent rerun cross-check its cells, so no statement here is
