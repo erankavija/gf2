@@ -91,7 +91,7 @@ fn ebch_128_64_matches_canonical_fixture() {
     assert_eq!(fixture.decision_provenance.decision, "D-21");
     assert_eq!(
         fixture.decision_provenance.artifact,
-        "dev/active/b7157be6-osd/plan.md"
+        "dev/archive/b7157be6-osd/active/plan.md"
     );
     assert_eq!(
         fixture.decision_provenance.published_identity_artifact,
