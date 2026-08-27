@@ -191,7 +191,7 @@
      "title": "eBCH OSD curve reproduction",
      "classification": "research",
      "model": "opus",
-     "status": "rigorous schema-2 campaign RUNNING (launched 02:21 2026-08-27, one invocation, K=100, main @ ce5ae21f, binary 63744f8a). Single-threaded (bug 258be082): 6/14 cells done in first 44 min, dominant order-2 5.23 dB cell in progress; owner ruled the run finishes (statistics unaffected). Probe validated receipt end-to-end; plot.py committed and probe-tested (REQ-06). Next: worker writes README+comparison, figures, doc links, research-review."
+     "status": "serial rigorous run KILLED at owner direction 14:20 2026-08-27 (12h in, 6/14 cells, dominant 5.23 dB cell unfinished at ~64M samples; partial checkpoint + log preserved in session scratchpad superseded-serial-run/; stale checkpoint removed from dev/). Rerun happens on the 258be082 parallel binary from a fresh checkpoint (new behavioral identity - no resume). Early signal from serial partials: order-2 4.56 dB sim BER 5.56e-6 vs published 2.00e-6 (0.44 decades; predicate will likely reject; same point as PIT-07 table-vs-figure contradiction). plot.py committed and probe-tested (REQ-06). Next after 258be082: probe, rigorous parallel run, closeout worker (README+comparison, figures, doc links), research-review."
     }
    ]
   },
@@ -205,7 +205,7 @@
      "title": "OSD campaign protocol evaluates blocks single-threaded, idling 23 of 24 host threads",
      "classification": "implementation",
      "model": "opus",
-     "status": "filed and wired (epic child per owner ruling; deps: b7157be6 -> 258be082 -> 8a908f79; gates cargo-ci/code-review/doc-review). Dispatch after the running campaign completes (owner chose finish-run-then-fix). Owner-approved amendment: fix converges on gf2_sim::parallel primitives (worker_offset seek, WorkerCtx, ordered reduction; design doc s3/s11) with index-ordered stopping truncation; identity contract is worker-count invariance (REQ-01), new REQ-06 binds convention-convergence; block stream changes vs the serial binary (new behavioral identity, fixtures re-pin per REQ-03)."
+     "status": "DISPATCHED (native Opus, worktree agent-258be082) - owner reversed finish-run-then-fix at 12h mark (dominant cell ETA had grown to 2.5-11h more); serial run killed, fix pulled forward, campaign reruns on the parallel binary. GPU OSD reprocessing stays out of scope (no kernels exist; would be a new issue). Owner-approved amendment: fix converges on gf2_sim::parallel primitives (worker_offset seek, WorkerCtx, ordered reduction; design doc s3/s11) with index-ordered stopping truncation; identity contract is worker-count invariance (REQ-01), new REQ-06 binds convention-convergence; block stream changes vs the serial binary (new behavioral identity, fixtures re-pin per REQ-03)."
     }
    ]
   }
