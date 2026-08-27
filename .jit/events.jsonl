@@ -9701,3 +9701,10 @@
 {"fields":["documents"],"id":"049745f3-113e-4332-b61b-e7ed16404bd6","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-26T22:29:01.845314455Z","type":"issue_updated","updated_by":"doc-remove"}
 {"fields":["documents"],"id":"9f4b634d-071d-4aa6-b60e-5ec2607d50d4","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-26T22:29:02.104254499Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"7afa953f-76df-4aba-9cd6-299fe1d57633","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-26T22:29:02.363305043Z","type":"issue_updated","updated_by":"doc-add"}
+{"id":"14086fe4-c9e7-4098-9ee7-25d7618f0612","issue_id":"258be082-94e5-4505-adbf-652601e6c127","priority":"high","timestamp":"2026-08-27T04:36:10.703605060Z","title":"OSD campaign protocol evaluates blocks single-threaded, idling 23 of 24 host threads","type":"issue_created"}
+{"fields":["labels"],"id":"39256640-da06-4dc9-84e2-2c6c380cafd4","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T04:37:03.621861710Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["dependencies"],"id":"2eb48900-ab64-42b4-be71-1ab621cb835e","issue_id":"b7157be6-16d8-4050-834c-e996d4fa27c3","timestamp":"2026-08-27T04:37:11.566619413Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"8a0f0201-33ee-4778-86b0-ae8acf157c5c","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T04:37:19.506283615Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"6b870cae-591f-4b2c-ad23-2e0862ab3eeb","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T04:37:22.595717279Z","type":"gate_added"}
+{"gate_key":"code-review","id":"ea5a96bf-15c5-4f00-979d-54cb0620a34c","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T04:37:22.722139525Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"750fd61d-395b-46bf-99b0-14b0a791b8e0","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T04:37:22.848903941Z","type":"gate_added"}
