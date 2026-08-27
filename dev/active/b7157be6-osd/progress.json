@@ -267,6 +267,24 @@
    "date": "2026-08-27",
    "category": "rework limit",
    "summary": "8a908f79 exceeded MAX_REWORK_ATTEMPTS after R3 code-review fail; owner approved one guided round (counter reset). R4 fixed interval presence but review surfaced the sharper stopping-design facet (last-block-is-Kth-error not provable from counters); R5 dispatched (Sol xhigh) moving the sampling loop into the protocol for structural enforcement. Same-finding-class count: 2 (R3, R4) - third occurrence escalates."
+  },
+  {
+   "id": "ESC-06",
+   "date": "2026-08-27",
+   "category": "issue criteria contradiction",
+   "summary": "258be082 code-review F1: REQ-01 demanded full receipt-payload byte identity across worker counts while REQ-04 requires the worker count in the recorded argv - unsatisfiable together. Lead-authored defect. Owner approved scoping REQ-01's identity to the cell evidence, leaving invocation provenance as the only difference. [hard] markers added at the same time for content-standard conformance."
+  },
+  {
+   "id": "ESC-07",
+   "date": "2026-08-27",
+   "category": "criterion vs tooling capability",
+   "summary": "cef1ae5f REQ-06 requires figures linked to the issue as documents, but jit doc add refuses non-UTF-8 content so PNGs cannot be linked. Owner chose emitting SVG beside each PNG from the same draw and linking the SVG, over rewording REQ-06. plot.py pins matplotlib determinism (fixed svg.hashsalt, no embedded date); footprint amended."
+  },
+  {
+   "id": "ESC-08",
+   "date": "2026-08-27",
+   "category": "campaign execution reversal",
+   "summary": "Owner reported the rigorous campaign running single-threaded on a 24-thread host. Owner first ruled the serial run should finish, then at the 12h mark (6/14 cells, dominant cell ETA grown to 2.5-11h more) reversed and killed it, pulling the parallelism fix forward. Owner also ruled the fix in epic scope (258be082, wave 7) and directed convention-convergence, which produced tracker 90a88fa9. GPU OSD reprocessing was ruled out of scope: no kernels exist."
   }
  ],
  "rework_counts": {
