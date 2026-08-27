@@ -186,9 +186,14 @@
     "doc-review"
   ],
   "gates_status": {
-    "research-review": {
+    "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-27T15:43:50.557933043Z",
+      "updated_at": "2026-08-27T16:30:29.794556811Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-08-27T16:27:47.296215030Z",
       "updated_by": "auto:executor"
     }
   },
@@ -204,5 +209,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "eBCH OSD curve reproduction",
-  "updated_at": "2026-08-27T16:06:57.551895775Z"
+  "updated_at": "2026-08-27T16:30:29.794556811Z"
 }

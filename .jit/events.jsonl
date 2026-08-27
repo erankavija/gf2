@@ -9742,3 +9742,6 @@
 {"id":"4875845b-48c8-4769-8d1f-afdcd9fed1a3","issue_id":"a1c801cb-5fc1-4094-83a1-6c16d0fb41b4","priority":"normal","timestamp":"2026-08-27T16:08:55.320199399Z","title":"Reference dataset does not record what the Fossorier1994 union-bound rows bound","type":"issue_created"}
 {"fields":["labels"],"id":"6ec6d69c-4505-43b6-874d-2eb3167e80e1","issue_id":"a1c801cb-5fc1-4094-83a1-6c16d0fb41b4","timestamp":"2026-08-27T16:09:12.862793018Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["dependencies"],"id":"50974e79-cc98-4c4f-8c35-4fbe7882d783","issue_id":"a1c801cb-5fc1-4094-83a1-6c16d0fb41b4","timestamp":"2026-08-27T16:09:21.206362235Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"research-review","id":"cfeae0bb-d360-4ec3-abcd-0731cee1284f","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-27T16:27:47.296215030Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"270bbf41-a467-4f0e-ab89-cb1026848016","issue_id":"cef1ae5f-a971-464f-979e-61043ade81eb","timestamp":"2026-08-27T16:30:29.794556811Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["description"],"id":"c5dec56b-d41e-4cce-82b3-28fea75dc5cb","issue_id":"68189a0a-bb03-413a-9550-1f6c400dfe44","timestamp":"2026-08-27T16:32:09.679068098Z","type":"issue_updated","updated_by":"issue-update"}
