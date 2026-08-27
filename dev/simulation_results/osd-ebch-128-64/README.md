@@ -12,8 +12,8 @@ reproduction target.
 | `ebch_osd_awgn.checkpoint.json` | Durable resumable progress, one entry per cell attempt |
 | `host-lscpu.txt` | Unedited `lscpu` output identifying the producing host |
 | `plot.py` | Deterministic figure generator over the receipt and the reference dataset |
-| `order2_ber_comparison.png` | Order-2 simulation BER against the published order-2 series |
-| `order1_controls.png` | Order-1 internal-control BER and BLER series |
+| `order2_ber_comparison.png`, `.svg` | Order-2 simulation BER against the published order-2 series |
+| `order1_controls.png`, `.svg` | Order-1 internal-control BER and BLER series |
 | `schema1/` | Superseded schema-1 artifact set, retained as historical evidence |
 | `README.md` | This provenance record |
 
@@ -481,13 +481,19 @@ every full vector is retained in `invocation_history`
 Both figures are projections of the receipt and the reference dataset, with
 error bars on every plotted point (`@/inv/uncertainty-reported`).
 
-- [`order2_ber_comparison.png`](order2_ber_comparison.png) — order-2 simulation
-  BER with its `block_ratio_product_interval` endpoints, against the published
-  order-2 series with each point's recorded digitization uncertainty as a
+- [`order2_ber_comparison.png`](order2_ber_comparison.png)
+  ([SVG](order2_ber_comparison.svg)) — order-2 simulation BER with its
+  `block_ratio_product_interval` endpoints, against the published order-2
+  series with each point's recorded digitization uncertainty as a
   multiplicative error bar.
-- [`order1_controls.png`](order1_controls.png) — the order-1 internal-control
-  BER and BLER series with their recorded intervals. It carries no published
-  series, and its title states that no published claim is made.
+- [`order1_controls.png`](order1_controls.png)
+  ([SVG](order1_controls.svg)) — the order-1 internal-control BER and BLER
+  series with their recorded intervals. It carries no published series, and its
+  title states that no published claim is made.
+
+Each figure is committed in both formats from the same draw. The SVG is the
+form the issue tracker accepts as a linked document, since `jit doc add`
+requires UTF-8 content; both figures are linked to the issue in that form.
 
 Both are generated deterministically by the committed
 [`plot.py`](plot.py) from `ebch_osd_awgn.json` and
@@ -499,21 +505,27 @@ $ python3 dev/simulation_results/osd-ebch-128-64/plot.py
 ```
 
 `--output-dir` redirects the output without changing it. Regenerating into a
-scratch directory at revision `5bfe6d5d` reproduces both committed PNGs byte for
-byte: `order2_ber_comparison.png` SHA-256 `f33dcce9…` and `order1_controls.png`
-SHA-256 `2d1c99f7…`.
+scratch directory reproduces all four committed files byte for byte:
+
+| file | SHA-256 |
+| --- | --- |
+| `order2_ber_comparison.png` | `8e3da8afa6308eb3…` |
+| `order2_ber_comparison.svg` | `5581d13b1a5acecc…` |
+| `order1_controls.png` | `2d1c99f7830bf24c…` |
+| `order1_controls.svg` | `d835cd4a40f43f7e…` |
+
+SVG output is deterministic only because the script pins matplotlib's
+`svg.hashsalt` and writes no creation date; without both, element identifiers
+and the embedded timestamp differ per run.
 
 The script draws only completed cells, because the receipt records intervals for
 completed cells alone.
 
-One legend in `order2_ber_comparison.png` is narrower than the data it labels:
-the published order-2 series is named "Fossorier1994 Fig. 4.14", while only the
-1.55 dB point comes from Figure 4.14 and the other six are printed
-transcriptions from Table 4.7. The plotted values and error bars are the CSV's
-own `value` and `digitization_uncertainty_log10` fields and are correct; only the
-series label understates the sources. It is recorded here rather than corrected
-in place, because editing `plot.py` changes the committed figures this issue
-carries as evidence.
+The published order-2 series is labelled from the source locators the CSV
+records for the rows actually plotted, so the legend names both Figure 4.14 and
+Table 4.7 rather than either alone. Only the 1.55 dB point is an
+axis-calibrated figure read; the other six are printed transcriptions from
+Table 4.7.
 
 ## Relationship to the superseded schema-1 artifact set
 

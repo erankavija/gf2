@@ -5,9 +5,9 @@ Reads:
   - ``ebch_osd_awgn.json``  (schema-2 campaign receipt beside this script)
   - ``dev/reference_data/osd_ebch_128_64_fossorier1994.csv``  (digitized series)
 
-Produces, beside this script:
-  - ``order2_ber_comparison.png``  (order-2 BER vs published order-2 series)
-  - ``order1_controls.png``        (order-1 internal-control BER/BLER series)
+Produces, beside this script, each as PNG and SVG:
+  - ``order2_ber_comparison``  (order-2 BER vs published order-2 series)
+  - ``order1_controls``        (order-1 internal-control BER/BLER series)
 
 Every plotted simulation value is a projection of the receipt: BER point
 estimates with their ``block_ratio_product_interval`` endpoints, BLER point
@@ -27,6 +27,7 @@ directory. Non-interactive; safe for headless environments.
 import argparse
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -34,6 +35,9 @@ try:
     import matplotlib
 
     matplotlib.use("Agg")
+    # A fixed hash salt makes SVG element identifiers reproducible; without it
+    # matplotlib salts them per process and no two runs agree byte for byte.
+    matplotlib.rcParams["svg.hashsalt"] = "osd-ebch-128-64"
     import matplotlib.pyplot as plt
 except ImportError:
     print("Error: matplotlib is required. Install with: pip install matplotlib", file=sys.stderr)
@@ -79,7 +83,14 @@ def series(cells, order):
 
 
 def published_series(csv_path, osd_order):
+    """Returns the published series and the source locators it was read from.
+
+    The locators are collected so the legend names every source actually
+    plotted; this series mixes printed-table transcriptions with
+    axis-calibrated figure reads.
+    """
     ebn0, value, lo, hi = [], [], [], []
+    sources = set()
     with open(csv_path, newline="") as handle:
         for row in csv.DictReader(handle):
             if row["metric"] != "BER" or int(row["osd_order"]) != osd_order:
@@ -90,7 +101,10 @@ def published_series(csv_path, osd_order):
             value.append(v)
             lo.append(v * (1 - 10.0**-delta) if delta else 0.0)
             hi.append(v * (10.0**delta - 1) if delta else 0.0)
-    return ebn0, value, lo, hi
+            match = re.search(r"(Table|Fig\.)\s*[\d.]+", row["source_locator"])
+            if match:
+                sources.add(match.group(0))
+    return ebn0, value, lo, hi, sorted(sources)
 
 
 def error_bars(points, lower, upper):
@@ -98,6 +112,21 @@ def error_bars(points, lower, upper):
         [p - l for p, l in zip(points, lower)],
         [u - p for p, u in zip(points, upper)],
     ]
+
+
+def save(fig, output_dir, stem):
+    """Writes the figure as PNG and SVG, and returns the paths written.
+
+    The SVG carries no creation date, so a regeneration from an unchanged
+    receipt reproduces both files byte for byte; the SVG is the form the
+    issue tracker accepts as a linked document.
+    """
+    written = []
+    for suffix, metadata in ((".png", None), (".svg", {"Date": None})):
+        path = output_dir / f"{stem}{suffix}"
+        fig.savefig(path, dpi=150, metadata=metadata)
+        written.append(path)
+    return written
 
 
 def style(ax, title):
@@ -117,7 +146,7 @@ def main():
 
     # Order-2 comparison figure.
     ebn0, ber, lo, hi, _, _, _ = series(cells, 2)
-    p_ebn0, p_val, p_lo, p_hi = published_series(args.reference_csv, 2)
+    p_ebn0, p_val, p_lo, p_hi, p_sources = published_series(args.reference_csv, 2)
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.errorbar(
         ebn0, ber, yerr=error_bars(ber, lo, hi), fmt="o-", capsize=3,
@@ -125,14 +154,13 @@ def main():
     )
     ax.errorbar(
         p_ebn0, p_val, yerr=[p_lo, p_hi], fmt="s--", capsize=3,
-        label=r"Fossorier1994 Fig. 4.14 (digitized, $\pm\delta$ decades)",
+        label=f"Fossorier1994 {', '.join(p_sources)}" + r" ($\pm\delta$ decades)",
     )
     ax.set_ylabel("BER")
     style(ax, "eBCH(128,64) OSD order-2: simulation vs published BER")
     fig.tight_layout()
-    out = args.output_dir / "order2_ber_comparison.png"
-    fig.savefig(out, dpi=150)
-    print(f"wrote {out}")
+    for out in save(fig, args.output_dir, "order2_ber_comparison"):
+        print(f"wrote {out}")
 
     # Order-1 internal-control figure.
     ebn0, ber, lo, hi, bler, blo, bhi = series(cells, 1)
@@ -148,9 +176,8 @@ def main():
     ax.set_ylabel("error rate")
     style(ax, "eBCH(128,64) OSD order-1 internal controls (no published claim)")
     fig.tight_layout()
-    out = args.output_dir / "order1_controls.png"
-    fig.savefig(out, dpi=150)
-    print(f"wrote {out}")
+    for out in save(fig, args.output_dir, "order1_controls"):
+        print(f"wrote {out}")
 
 
 if __name__ == "__main__":
