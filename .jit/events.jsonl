@@ -9708,3 +9708,9 @@
 {"gate_key":"cargo-ci","id":"6b870cae-591f-4b2c-ad23-2e0862ab3eeb","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T04:37:22.595717279Z","type":"gate_added"}
 {"gate_key":"code-review","id":"ea5a96bf-15c5-4f00-979d-54cb0620a34c","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T04:37:22.722139525Z","type":"gate_added"}
 {"gate_key":"doc-review","id":"750fd61d-395b-46bf-99b0-14b0a791b8e0","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T04:37:22.848903941Z","type":"gate_added"}
+{"fields":["description"],"id":"958b3aad-4ae9-4421-8932-50a26ab55432","issue_id":"258be082-94e5-4505-adbf-652601e6c127","timestamp":"2026-08-27T06:53:33.530740801Z","type":"issue_updated","updated_by":"issue-update"}
+{"id":"ba95e0c8-eb0c-4237-9e10-c13e145c9c6e","issue_id":"90a88fa9-5ec5-4203-9631-a5e6118360a8","priority":"normal","timestamp":"2026-08-27T06:53:58.504026386Z","title":"Converge campaign orchestration onto shared deterministic-parallelism and scheduling primitives","type":"issue_created"}
+{"fields":["labels"],"id":"d7c2872b-f63c-4f21-b0ef-be21b5e6b2ba","issue_id":"90a88fa9-5ec5-4203-9631-a5e6118360a8","timestamp":"2026-08-27T06:54:12.331177352Z","type":"issue_updated","updated_by":"issue-update"}
+{"from":"ready","id":"fec8c072-b14e-4c1c-8161-fa55fb3c4678","issue_id":"90a88fa9-5ec5-4203-9631-a5e6118360a8","timestamp":"2026-08-27T06:54:20.375747134Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"8c6dd470-77f0-44b6-b8d5-acfb58863cb8","issue_id":"90a88fa9-5ec5-4203-9631-a5e6118360a8","timestamp":"2026-08-27T06:54:20.375747134Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"c6b52734-8011-4e90-b194-11d4b143ba9c","issue_id":"90a88fa9-5ec5-4203-9631-a5e6118360a8","timestamp":"2026-08-27T06:54:28.422752296Z","type":"issue_updated","updated_by":"dependency-add"}

@@ -205,7 +205,7 @@
      "title": "OSD campaign protocol evaluates blocks single-threaded, idling 23 of 24 host threads",
      "classification": "implementation",
      "model": "opus",
-     "status": "filed and wired (epic child per owner ruling; deps: b7157be6 -> 258be082 -> 8a908f79; gates cargo-ci/code-review/doc-review). Dispatch after the running campaign completes (owner chose finish-run-then-fix). Design pinned in the issue: deterministic lookahead, sequential block stream, parallel decode, in-order commit, identical counters/stopping index; evaluator contract moves off FnMut."
+     "status": "filed and wired (epic child per owner ruling; deps: b7157be6 -> 258be082 -> 8a908f79; gates cargo-ci/code-review/doc-review). Dispatch after the running campaign completes (owner chose finish-run-then-fix). Owner-approved amendment: fix converges on gf2_sim::parallel primitives (worker_offset seek, WorkerCtx, ordered reduction; design doc s3/s11) with index-ordered stopping truncation; identity contract is worker-count invariance (REQ-01), new REQ-06 binds convention-convergence; block stream changes vs the serial binary (new behavioral identity, fixtures re-pin per REQ-03)."
     }
    ]
   }
@@ -230,6 +230,11 @@
    "short_id": "258be082",
    "title": "OSD campaign protocol evaluates blocks single-threaded, idling 23 of 24 host threads",
    "reason": "owner-reported defect during the rigorous run (session 4); owner ruled it in epic scope - wired as epic child, wave 7. Not a manifest node (bug idiom, matching the other prerequisite bugs)."
+  },
+  {
+   "short_id": "90a88fa9",
+   "title": "Converge campaign orchestration onto shared deterministic-parallelism and scheduling primitives",
+   "reason": "deferred convention-convergence tracker for the three gf2-sim campaign execution stacks (executor/Pipeline, permanent_campaign driver, osd_campaign loop) - owner directive 'we must really do something to follow convention-convergence' (session 4). Wired 90a88fa9 -> {258be082, bebe485c} per the c0bb2ab1 idiom; not an epic child."
   }
  ],
  "escalations": [
@@ -356,7 +361,7 @@
   {
    "id": "NOTE-09",
    "issue": "258be082",
-   "text": "Owner report (2026-08-27, session 4): rigorous campaign runs single-threaded (Threads: 1, 24-thread host) - defect present since the tool's creation (8e1212e4, c8322eff); no review round flagged it (all scoped to statistics). R5's FnMut per-block contract now structurally forces sequential evaluation, so the fix reworks the protocol loop. Owner decisions: the running campaign finishes (correctness unaffected; ~2-5h remained vs a from-zero rerun), and the fix is epic scope (258be082, wave 7). Fix must keep byte-identical counters/stopping index via sequential block stream + parallel decode + in-order commit."
+   "text": "Owner report (2026-08-27, session 4): rigorous campaign runs single-threaded (Threads: 1, 24-thread host) - defect present since the tool's creation (8e1212e4, c8322eff); no review round flagged it (all scoped to statistics). R5's FnMut per-block contract now structurally forces sequential evaluation, so the fix reworks the protocol loop. Owner decisions: the running campaign finishes (correctness unaffected; ~2-5h remained vs a from-zero rerun), and the fix is epic scope (258be082, wave 7). Fix must keep byte-identical counters/stopping index via sequential block stream + parallel decode + in-order commit. AMENDED (owner-approved, session 4): the fix instead converges on gf2_sim::parallel (worker_offset seek, ordered reduction) with worker-count-invariant identity and index-ordered stopping truncation; REQ-06 added binding convention-convergence; broader three-stack orchestration convergence tracked as deferred enhancement 90a88fa9."
   },
   {
    "id": "NOTE-06",

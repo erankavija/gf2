@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-27T06:53:58.504026386Z",
+  "dependencies": [
+    "258be082-94e5-4505-adbf-652601e6c127",
+    "bebe485c-82c8-49a5-aea8-20b44ad4fb3a"
+  ],
+  "description": "## Problem\n\n`gf2-sim` now carries three campaign execution stacks: the `executor`/`Pipeline` hybrid frame scheduler (`dvb_t2_awgn_campaign`, `ldpc_bler_sweep`), the `permanent_campaign` driver/schedule field-arm runner, and the `osd_campaign` protocol loop added by epic b7157be6. They share the data layers (canonical checkpoint writer/reader, `gf2-stats` intervals, `permanent_campaign::schema` provenance) but each owns a separate execution loop with its own parallelism and determinism mechanics. The OSD loop shipped single-threaded because nothing forced it through the existing convention (bug 258be082).\n\n## Direction\n\nConverge the execution layer under convention-convergence: every campaign runner drives worker parallelism and RNG determinism through the `gf2_sim::parallel` primitives (worker-offset seek, per-worker counters, ordered reduction), and the assessment names which scheduling responsibilities (work enumeration, checkpoint cadence, interruption, quarantine) can share one core across the fixed-work-item runners and the sequential-stopping OSD loop. Where semantics genuinely differ, the divergence is recorded as a named tracked exception in rustdoc, not left implicit.\n\n## Success Criteria\n\n- REQ-01: An assessment enumerates the three stacks' execution responsibilities and marks each as converged, convergeable (with the target primitive), or a named exception with rationale.\n- REQ-02: All campaign runners obtain worker parallelism and per-worker RNG streams through `gf2_sim::parallel` or a named tracked exception cited in rustdoc.\n- REQ-03: Any consolidation preserves each stack's recorded behavioral identity or re-pins fixtures explicitly in the same change.",
+  "documents": [],
+  "first_ready_at": "2026-08-27T06:53:58.504026386Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "90a88fa9-5ec5-4203-9631-a5e6118360a8",
+  "labels": [
+    "type:enhancement",
+    "component:gf2-sim"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Converge campaign orchestration onto shared deterministic-parallelism and scheduling primitives",
+  "updated_at": "2026-08-27T06:54:28.422752296Z"
+}
