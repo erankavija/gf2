@@ -48,6 +48,7 @@
       "path": "dev/archive/b7157be6-osd/active/b7157be6-completion-report.md"
     }
   ],
+  "done_at": "2026-08-27T16:59:13.496388246Z",
   "first_ready_at": "2026-08-07T12:31:54.967767596Z",
   "gates_required": [
     "repo-validate",
@@ -81,7 +82,7 @@
     "cites:Roffe2020"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "done",
   "title": "Ordered-statistics decoding as the generator-matrix and syndrome soft-decision baseline",
-  "updated_at": "2026-08-27T16:56:04.329997655Z"
+  "updated_at": "2026-08-27T16:59:13.496388246Z"
 }
