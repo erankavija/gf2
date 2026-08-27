@@ -81,6 +81,15 @@ result.
 - Toolchain: `rustc 1.97.0 (2d8144b78 2026-07-07)`; `cargo 1.97.0 (c980f4866
   2026-06-30)`
 - Campaign seed: `0xC8322EFF` (the binary's pinned default)
+- RNG: `cha_cha20`, `rand_chacha 0.3.1 (gf2-coding BPSK channel ABI)`, as the
+  campaign receipt records under `provenance.rng_algorithm` and
+  `.rng_version`. The stochastic identity matters to these timings as well as
+  to the evidence: each block's draws are positioned by the shared
+  `gf2_sim::parallel::worker_offset` word-position seek, so the block stream —
+  and therefore the decode work each trial performs — is fixed by the seed and
+  block index rather than by the worker count. That is what makes the wall
+  clocks below comparable across worker counts and what the identical
+  cell-evidence hash confirms.
 
 Regenerate one cell of the table with:
 

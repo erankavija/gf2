@@ -61,7 +61,8 @@
 //!   sampling distribution
 //!   ([`gf2_stats::intervals::negative_binomial_interval`]).
 //! - `mu` uses the Maurer-Pontil empirical-Bernstein bound
-//!   ([`gf2_stats::intervals::empirical_bernstein_interval`]) over the `K`
+//!   (`@/citation/MaurerPontil2009`,
+//!   [`gf2_stats::intervals::empirical_bernstein_interval`]) over the `K`
 //!   per-failing-block error fractions, intersected with the domain
 //!   `[1 / k, 1]` for information-block length `k`. `K` is fixed by the
 //!   stopping rule, so this fixed-sample bound applies; the failing blocks'
