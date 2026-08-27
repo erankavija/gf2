@@ -54,9 +54,9 @@ whose cumulative counters a later invocation continues.
 ## Order-2 comparison against the published curve
 
 Published values are the committed dataset
-[`osd_ebch_128_64_fossorier1994.csv`](../../reference_data/osd_ebch_128_64_fossorier1994.csv)
+[`osd_ebch_128_64_fossorier1994.csv`](../../../reference_data/osd_ebch_128_64_fossorier1994.csv)
 and its provenance record
-[`osd_ebch_128_64_fossorier1994.md`](../../reference_data/osd_ebch_128_64_fossorier1994.md);
+[`osd_ebch_128_64_fossorier1994.md`](../../../reference_data/osd_ebch_128_64_fossorier1994.md);
 nothing is re-digitized here. The column $p$ is that dataset's primary `value`
 field and $\delta$ is the digitization precision the receipt records for the
 cell.

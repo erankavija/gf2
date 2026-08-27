@@ -308,7 +308,7 @@
   {
    "id": "NOTE-11",
    "issue": "b7157be6",
-   "text": "NOTE-03 correction (session 4): the advisory's claim that AGENTS.md:48's @/issue/ec530af9 'does not resolve' is WITHDRAWN. The issue exists, is done, and has its design doc linked; @/issue/<short-id> is simply not dereferenced by jit item show for any issue, the established crates/gf2-core/src/alg/rref.rs:599 idiom included. Only the workspace-README gf2-sim omission was real, filed as 68189a0a under the doc-debt epic. Do not 'fix' AGENTS.md on the strength of the original advisory."
+   "text": "NOTE-03 refinement (session 4, corrected after doc-review flagged it again): the advisory's complaint about AGENTS.md:48's @/issue/ec530af9 is LIVE, but not for the stated reason. The cited issue exists and is done, so it is not a dangling target; the defect is that .jit/config.toml declares no 'issue' item kind (only requirement, decision, risk, invariant, rule, citation, gate), so the @/issue/<short-id> form resolves for no issue while mimicking the resolvable @/<kind>/<self-id> addresses. The repo's dominant prose convention is the backticked short-id (JIT issue `c7e91dfd`). Three @/issue/ sites were added during this epic (gf2-sim Cargo.toml:28, osd_campaign.rs:664 and :666) following the rref.rs:599 precedent; they sit in code certified by a passed code-review, so they were left in place and the convention question was routed to 68189a0a rather than re-certifying a done issue. An earlier withdrawal of this item on 'the issue exists' grounds was wrong and is retracted."
   },
   {
    "id": "NOTE-08",
