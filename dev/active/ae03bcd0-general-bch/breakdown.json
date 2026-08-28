@@ -711,9 +711,9 @@
   }
  },
  {
-  "key": "bch-construct-flavors",
-  "title": "Complete the construction flavors: seed sets, explicit generators, non-primitive, boundary codes",
-  "description": "Extend the canonical construction path to the remaining `BchSpec` flavors: arbitrary seed sets with derived $q$-cyclotomic closure, explicitly supplied generator polynomials, non-primitive lengths with derived or explicit $n$-th roots of unity, and the mathematically valid boundary codes.\n\n## Success Criteria\n\n- [hard] REQ-01: Seed-set specs accept unclosed input, derive the closure, and construct with the witnessed bound from the longest consecutive run in the closed set.\n- [hard] REQ-02: Explicit-generator specs verify splitting-field compatibility and $g(x) \\mid x^n-1$, derive the root set, and reject incompatible generators with typed errors.\n- [hard] REQ-03: Non-primitive lengths work with both the derived canonical order-$n$ element and an explicitly supplied root of unity, and the two agree when the explicit root is the canonical one.\n- [hard] REQ-04: Empty seed sets yield the full-space code and complete defining sets yield the zero-dimensional code.\n",
+  "key": "bch-construct-seedset",
+  "title": "Construction from arbitrary seed sets, including boundary codes",
+  "description": "Extend the canonical construction path to seed-set `BchSpec` flavors: arbitrary root seed sets whose $q$-cyclotomic closure the construction derives, including the mathematically valid boundary codes.\n\n## Success Criteria\n\n- [hard] REQ-01: Seed-set specs accept unclosed input, derive the closure, and construct with the witnessed bound from the longest consecutive run in the closed set.\n- [hard] REQ-02: Empty seed sets yield the full-space code and complete defining sets yield the zero-dimensional code, each with correct derived parameters.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -730,7 +730,7 @@
    "bch-construct-core"
   ],
   "planning": {
-   "outcome": "Each remaining BchSpec flavor constructs through the same canonical path",
+   "outcome": "Seed-set BchSpecs construct through the canonical path with boundary codes included",
    "contract_refs": [
     "bchspec-model",
     "error-surface"
@@ -738,13 +738,96 @@
    "source_refs": [
     "REQ-03",
     "REQ-04",
-    "BRIEF-BOUNDS",
     "INV-CLAIMS"
    ],
    "terminal": {
     "consumer_family": "canonical-model consumers",
-    "test_boundary": "flavor property tests over the closed construction pipeline",
-    "worker_sized_reason": "Flavor extensions on a finished pipeline; no new pipeline stages",
+    "test_boundary": "seed-set property tests over the closed construction pipeline",
+    "worker_sized_reason": "One flavor family on a finished pipeline",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/spec.rs"
+     ]
+    }
+   },
+   "landing_group": "bch-construction"
+  }
+ },
+ {
+  "key": "bch-construct-generator",
+  "title": "Construction from explicitly supplied generator polynomials",
+  "description": "Extend the canonical construction path to explicit-generator `BchSpec` flavors: verify splitting-field compatibility and $g(x) \\mid x^n-1$, derive the root set, and reject incompatible generators.\n\n## Success Criteria\n\n- [hard] REQ-01: Explicit-generator specs verify compatibility and divisibility, derive the root set in the splitting field, and construct with parameters derived from that root set.\n- [hard] REQ-02: Incompatible generators — wrong field, non-divisor, coefficients outside the base field — report typed errors naming the failed check.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-03",
+   "satisfies:REQ-04"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "bch-construct-seedset"
+  ],
+  "planning": {
+   "outcome": "Explicit-generator BchSpecs verify and construct through the canonical path",
+   "contract_refs": [
+    "bchspec-model",
+    "error-surface"
+   ],
+   "source_refs": [
+    "REQ-03",
+    "REQ-04",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "canonical-model consumers",
+    "test_boundary": "explicit-generator verification tests",
+    "worker_sized_reason": "One flavor family on a finished pipeline",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/spec.rs"
+     ]
+    }
+   },
+   "landing_group": "bch-construction"
+  }
+ },
+ {
+  "key": "bch-construct-nonprimitive",
+  "title": "Construction at non-primitive lengths with both root conventions",
+  "description": "Extend the canonical construction path to non-primitive lengths: callers supply only $n$ for a derived canonical element of order $n$, or supply an explicit $n$-th root of unity.\n\n## Success Criteria\n\n- [hard] REQ-01: Non-primitive construction works with the derived canonical order-$n$ element and with an explicitly supplied root of unity, and the two agree when the explicit root is the canonical one.\n- [hard] REQ-02: Roots of wrong order and lengths violating $\\gcd(n,q)=1$ report typed errors.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-03"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "bch-construct-generator"
+  ],
+  "planning": {
+   "outcome": "Non-primitive BchSpecs construct with derived or explicit roots of unity",
+   "contract_refs": [
+    "bchspec-model",
+    "error-surface"
+   ],
+   "source_refs": [
+    "REQ-03",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "canonical-model consumers",
+    "test_boundary": "non-primitive construction property tests",
+    "worker_sized_reason": "One flavor family on a finished pipeline",
     "footprint": {
      "touches": [
       "crates/gf2-coding/src/bch/spec.rs"
@@ -771,7 +854,7 @@
    "doc-review"
   ],
   "depends_on": [
-   "bch-construct-flavors",
+   "bch-construct-nonprimitive",
    "conway-registry"
   ],
   "planning": {
@@ -1359,10 +1442,14 @@
      "touches": [
       "crates/gf2-coding/src/bch/dvb_t2/mod.rs",
       "crates/gf2-coding/src/bch/dvb_t2/generators.rs",
+      "crates/gf2-coding/src/bch/dvb_t2/params.rs",
       "crates/gf2-coding/src/ldpc/dvb_t2/concat.rs",
       "crates/gf2-coding/src/bcjr/mod.rs",
       "crates/gf2-coding/src/gldpc/mod.rs",
-      "crates/gf2-coding/src/osd/generator.rs"
+      "crates/gf2-coding/src/osd/generator.rs",
+      "crates/gf2-coding/src/dvb_t2_bicm_harness.rs",
+      "crates/gf2-coding/src/simulation.rs",
+      "crates/gf2-coding/src/lib.rs"
      ]
     }
    },
@@ -1403,9 +1490,17 @@
     "footprint": {
      "touches": [
       "crates/gf2-coding/src/bin/sim_runner.rs",
+      "crates/gf2-coding/src/bin/check_encoding.rs",
       "crates/gf2-coding/examples/dvb_t2_bch_demo.rs",
+      "crates/gf2-coding/examples/block_code_intro.rs",
       "crates/gf2-coding/benches/bch_parallel.rs",
-      "crates/gf2-coding/tests/bch_tests.rs"
+      "crates/gf2-coding/benches/batch_operations.rs",
+      "crates/gf2-coding/tests/bch_tests.rs",
+      "crates/gf2-coding/tests/dvb_t2_bch_verification.rs",
+      "crates/gf2-coding/tests/ebch_128_64_reference.rs",
+      "crates/gf2-coding/tests/backend_integration.rs",
+      "crates/gf2-coding/tests/grand_phase1_smoke.rs",
+      "crates/gf2-coding/tests/bch_primitive_verification.rs"
      ]
     }
    },
@@ -1450,7 +1545,13 @@
     "footprint": {
      "touches": [
       "crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs",
-      "crates/gf2-sim/tests/osd_campaign_protocol.rs"
+      "crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs",
+      "crates/gf2-sim/tests/ebch_osd_campaign_cli.rs",
+      "crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs",
+      "crates/gf2-sim/tests/gpu_byte_identity.rs",
+      "crates/gf2-sim/tests/osd_campaign_protocol.rs",
+      "crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs",
+      "crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs"
      ]
     }
    },
@@ -1459,8 +1560,8 @@
  },
  {
   "key": "cutover-removal",
-  "title": "Remove the superseded BCH surface",
-  "description": "Delete the superseded surface after all consumers are migrated: `BchCode::new(n, k, t, field)`, the redundant-parameter `from_generator` form, the private polynomial LCM, `ExtendedBchCode`, the unconditional matrix cache, and parallel BCH-specific abstractions; sweep documentation references in the same change.\n\n## Success Criteria\n\n- [hard] REQ-01: The superseded constructors, redundant parameters, duplicated polynomial operations, `ExtendedBchCode`, and BCH-specific parallel abstractions are gone, with no remaining reference in production, test, bench, example, or documentation trees.\n- [hard] REQ-02: The workspace builds and passes with clippy warnings denied and formatting clean.\n",
+  "title": "Delete the superseded BCH code surface",
+  "description": "Delete the superseded code surface after all consumers are migrated: `BchCode::new(n, k, t, field)`, the redundant-parameter `from_generator` form, the private polynomial LCM, `ExtendedBchCode`, the unconditional matrix cache, and parallel BCH-specific abstractions.\n\n## Success Criteria\n\n- [hard] REQ-01: The superseded constructors, redundant parameters, duplicated polynomial operations, `ExtendedBchCode`, and BCH-specific parallel abstractions are gone from the source tree, with no remaining production, test, bench, or example reference.\n- [hard] REQ-02: The workspace builds and passes with clippy warnings denied and formatting clean.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -1470,14 +1571,13 @@
   ],
   "gates": [
    "cargo-ci",
-   "code-review",
-   "doc-review"
+   "code-review"
   ],
   "depends_on": [
    "cutover-external"
   ],
   "planning": {
-   "outcome": "The superseded BCH surface is gone with stale references swept",
+   "outcome": "The superseded BCH code surface is deleted",
    "contract_refs": [
     "bchspec-model"
    ],
@@ -1487,14 +1587,56 @@
     "D-02"
    ],
    "terminal": {
-    "consumer_family": "remaining legacy-surface references",
+    "consumer_family": "remaining legacy-surface code references",
     "test_boundary": "full workspace suite after deletion",
-    "worker_sized_reason": "A deletion sweep over already-migrated consumers",
+    "worker_sized_reason": "A code deletion sweep over already-migrated consumers",
     "footprint": {
      "touches": [
       "crates/gf2-coding/src/bch/core.rs",
       "crates/gf2-coding/src/bch/extended.rs",
       "crates/gf2-coding/src/bch/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "cutover"
+  }
+ },
+ {
+  "key": "legacy-reference-sweep",
+  "title": "Sweep stale prose references to the removed BCH surface",
+  "description": "Update the prose that references the removed BCH surface — crate README, the systematic-encoding and parallelization documents, and the primitive-polynomial guide — to describe the canonical model in present tense.\n\n## Success Criteria\n\n- [hard] REQ-01: No tracked document under the crates or docs trees references the removed constructors, `ExtendedBchCode`, or the redundant-parameter conventions; updated prose describes the canonical surface in present tense.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "doc-review"
+  ],
+  "depends_on": [
+   "cutover-removal"
+  ],
+  "planning": {
+   "outcome": "Stale prose references to the removed surface are gone",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-10",
+    "INV-CONSUMERS"
+   ],
+   "terminal": {
+    "consumer_family": "readers of the coding documentation",
+    "test_boundary": "documentation review over the swept files",
+    "worker_sized_reason": "A prose sweep over a named file set",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/README.md",
+      "docs/SYSTEMATIC_ENCODING_CONVENTION.md",
+      "docs/PARALLELIZATION.md",
+      "crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md"
      ]
     }
    },
@@ -1991,7 +2133,7 @@
    "doc-review"
   ],
   "depends_on": [
-   "cutover-removal",
+   "legacy-reference-sweep",
    "fieldmatrix-serialization",
    "avx2-batch-kernels",
    "genmatrix-perf"
