@@ -2,13 +2,10 @@
   "assignee": null,
   "context": {},
   "created_at": "2026-08-28T21:36:52.719617558Z",
-  "dependencies": [
-    "3243bc1f-83ce-48e3-9cc2-9f8b45038624",
-    "88ca7d2f-5045-4356-8ee3-e4e26876847d",
-    "8f51d6cf-873a-4b30-8f98-58875cfd79d2"
-  ],
+  "dependencies": [],
   "description": "Plan Harden and generalize BCH codes over finite fields (ae03bcd0) against every hard success criterion, write the concise design at dev/active/ae03bcd0-general-bch/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The concise plan at dev/active/ae03bcd0-general-bch/plan.md and its authoritative sibling breakdown manifest exist, are linked to this issue, and pass the manifest validation, render check, and batch-create dry run.\n- [hard] REQ-02: The plan-review gate passes on this issue.",
   "documents": [],
+  "first_ready_at": "2026-08-28T21:52:00.591534572Z",
   "gates_required": [
     "plan-review"
   ],
@@ -29,7 +26,7 @@
     "type:planning"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "planning: Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-08-28T21:36:52.719617558Z"
+  "updated_at": "2026-08-28T21:52:00.591534572Z"
 }
