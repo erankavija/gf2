@@ -9,14 +9,6 @@ two overlap, the epic description is canonical.
 
 ## Construction semantics
 
-- **Root seed sets are inputs, closure is derived.** The construction API
-  accepts a seed set that is not required to be closed under $q$-cyclotomic
-  conjugacy and computes the closure itself. The epic's REQ-03 phrase "seed
-  sets closed under $q$-cyclotomic conjugacy" describes the derived defining
-  set, never a precondition on user input.
-- **Non-primitive lengths accept both root conventions.** Callers may supply
-  only $n$ and let the library derive a canonical element of order $n$, or
-  supply an explicitly chosen $n$-th root of unity.
 - **Designed distance is a bound, terminologically.** The public API and
   documentation present the witnessed classical bound as a guaranteed lower
   bound on minimum distance and never label it the actual minimum distance
