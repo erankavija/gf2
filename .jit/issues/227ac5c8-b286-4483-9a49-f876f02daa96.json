@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T23:04:06.062337929Z",
+  "dependencies": [
+    "5ee83cd3-cbdf-42cb-a465-6941852016f3",
+    "97410c80-aba2-420f-870c-b71a5066d5e4"
+  ],
+  "description": "Migrate the gf2-coding integration tests consuming legacy BCH constructors to the canonical model, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each test in this task's inventory passes on the canonical model with its assertions preserved, or re-pins fixtures explicitly in the same change.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "227ac5c8-b286-4483-9a49-f876f02daa96",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-10"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Migrate gf2-coding integration tests",
+  "updated_at": "2026-08-28T23:04:06.062337929Z"
+}

@@ -1404,9 +1404,56 @@
   }
  },
  {
-  "key": "cutover-standards",
-  "title": "Migrate gf2-coding library consumers to the canonical BCH model",
-  "description": "Migrate the gf2-coding library consumers of the legacy BCH constructors to the canonical model: the DVB-T2 modules, LDPC concatenation, and the BCJR, GLDPC, and OSD touchpoints, per the investigation inventory. The GRAND, fading, and product paths are owned by the eBCH migration task.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding library consumer in the inventory builds and passes on the canonical model, with DVB-T2 verification vectors unchanged.\n- [hard] REQ-02: Outside the superseded `bch/core.rs` and `bch/extended.rs` modules awaiting deletion, no gf2-coding library path constructs a BCH code through `BchCode::new` or `from_generator` any longer.\n",
+  "key": "cutover-dvbt2",
+  "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
+  "description": "Migrate the DVB-T2 family to the canonical BCH model: the DVB-T2 BCH modules, LDPC concatenation, and the BICM harness, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: The DVB-T2 modules build and pass on the canonical model with the DVB-T2 verification vectors unchanged.\n- [hard] REQ-02: No file in this task's inventory constructs a BCH code through `BchCode::new` or `from_generator` any longer.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "bch-convenience-ctors",
+   "encode-batch-workspace"
+  ],
+  "planning": {
+   "outcome": "The DVB-T2 family runs on the canonical BCH model",
+   "contract_refs": [
+    "bchspec-model",
+    "block-code-traits"
+   ],
+   "source_refs": [
+    "REQ-10",
+    "INV-CONSUMERS",
+    "D-02"
+   ],
+   "terminal": {
+    "consumer_family": "DVB-T2 BCH consumers",
+    "test_boundary": "DVB-T2 verification vectors",
+    "worker_sized_reason": "One standards family with its own pinned vectors",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/dvb_t2/mod.rs",
+      "crates/gf2-coding/src/bch/dvb_t2/generators.rs",
+      "crates/gf2-coding/src/bch/dvb_t2/params.rs",
+      "crates/gf2-coding/src/ldpc/dvb_t2/concat.rs",
+      "crates/gf2-coding/src/dvb_t2_bicm_harness.rs"
+     ]
+    }
+   },
+   "landing_group": "cutover"
+  }
+ },
+ {
+  "key": "cutover-components",
+  "title": "Migrate the component-code BCH consumers to the canonical model",
+  "description": "Migrate the remaining gf2-coding library components consuming legacy BCH constructors: the BCJR, GLDPC, and OSD touchpoints, the simulation module, and the crate root re-exports, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each file in this task's inventory builds and passes on the canonical model with unchanged observable results.\n- [hard] REQ-02: No file in this task's inventory constructs a BCH code through the legacy constructors any longer.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -1424,7 +1471,7 @@
    "ebch-migration"
   ],
   "planning": {
-   "outcome": "Each gf2-coding library consumer runs on the canonical BCH model",
+   "outcome": "The component codes run on the canonical BCH model",
    "contract_refs": [
     "bchspec-model",
     "block-code-traits"
@@ -1435,19 +1482,14 @@
     "D-02"
    ],
    "terminal": {
-    "consumer_family": "gf2-coding library BCH consumers",
-    "test_boundary": "library consumer suites with DVB-T2 verification vectors",
-    "worker_sized_reason": "One library consumer-family migration from a cited inventory",
+    "consumer_family": "component-code BCH consumers",
+    "test_boundary": "component suites over the migrated call sites",
+    "worker_sized_reason": "One library consumer family from a cited inventory",
     "footprint": {
      "touches": [
-      "crates/gf2-coding/src/bch/dvb_t2/mod.rs",
-      "crates/gf2-coding/src/bch/dvb_t2/generators.rs",
-      "crates/gf2-coding/src/bch/dvb_t2/params.rs",
-      "crates/gf2-coding/src/ldpc/dvb_t2/concat.rs",
       "crates/gf2-coding/src/bcjr/mod.rs",
       "crates/gf2-coding/src/gldpc/mod.rs",
       "crates/gf2-coding/src/osd/generator.rs",
-      "crates/gf2-coding/src/dvb_t2_bicm_harness.rs",
       "crates/gf2-coding/src/simulation.rs",
       "crates/gf2-coding/src/lib.rs"
      ]
@@ -1457,9 +1499,9 @@
   }
  },
  {
-  "key": "cutover-tooling",
-  "title": "Migrate gf2-coding binaries, examples, benches, and tests",
-  "description": "Migrate the gf2-coding tooling consumers of the legacy BCH constructors to the canonical model: crate binaries, examples, benches, and integration tests, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding binary, example, bench, and test in the inventory builds and passes on the canonical model with unchanged observable behavior.\n- [hard] REQ-02: No gf2-coding tooling path constructs a BCH code through the legacy constructors any longer.\n",
+  "key": "cutover-bins-examples",
+  "title": "Migrate gf2-coding binaries and examples",
+  "description": "Migrate the gf2-coding binaries and examples consuming legacy BCH constructors to the canonical model, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each binary and example in this task's inventory builds and runs on the canonical model with unchanged observable behavior.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -1472,10 +1514,11 @@
    "code-review"
   ],
   "depends_on": [
-   "cutover-standards"
+   "cutover-dvbt2",
+   "cutover-components"
   ],
   "planning": {
-   "outcome": "Each gf2-coding tooling consumer runs on the canonical BCH model",
+   "outcome": "The gf2-coding binaries and examples run on the canonical model",
    "contract_refs": [
     "bchspec-model"
    ],
@@ -1484,17 +1527,55 @@
     "INV-CONSUMERS"
    ],
    "terminal": {
-    "consumer_family": "gf2-coding tooling BCH consumers",
-    "test_boundary": "tooling suites over the migrated call sites",
-    "worker_sized_reason": "One tooling consumer-family migration from a cited inventory",
+    "consumer_family": "gf2-coding executable demos",
+    "test_boundary": "executable runs over the migrated call sites",
+    "worker_sized_reason": "One executable consumer family from a cited inventory",
     "footprint": {
      "touches": [
       "crates/gf2-coding/src/bin/sim_runner.rs",
       "crates/gf2-coding/src/bin/check_encoding.rs",
       "crates/gf2-coding/examples/dvb_t2_bch_demo.rs",
-      "crates/gf2-coding/examples/block_code_intro.rs",
-      "crates/gf2-coding/benches/bch_parallel.rs",
-      "crates/gf2-coding/benches/batch_operations.rs",
+      "crates/gf2-coding/examples/block_code_intro.rs"
+     ]
+    }
+   },
+   "landing_group": "cutover"
+  }
+ },
+ {
+  "key": "cutover-test-suite",
+  "title": "Migrate gf2-coding integration tests",
+  "description": "Migrate the gf2-coding integration tests consuming legacy BCH constructors to the canonical model, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each test in this task's inventory passes on the canonical model with its assertions preserved, or re-pins fixtures explicitly in the same change.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "cutover-dvbt2",
+   "cutover-components"
+  ],
+  "planning": {
+   "outcome": "The gf2-coding integration tests run on the canonical model",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-10",
+    "INV-CONSUMERS"
+   ],
+   "terminal": {
+    "consumer_family": "gf2-coding integration tests",
+    "test_boundary": "the migrated test files themselves",
+    "worker_sized_reason": "One test-tree migration from a cited inventory",
+    "footprint": {
+     "touches": [
       "crates/gf2-coding/tests/bch_tests.rs",
       "crates/gf2-coding/tests/dvb_t2_bch_verification.rs",
       "crates/gf2-coding/tests/ebch_128_64_reference.rs",
@@ -1508,15 +1589,102 @@
   }
  },
  {
-  "key": "cutover-external",
-  "title": "Migrate simulation and kernel-crate BCH consumers",
-  "description": "Migrate the BCH consumers outside gf2-coding to the canonical model: gf2-sim campaign binaries and tests, the GPU byte-identity and crosscheck tests, and the HIP field-test constructions, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-sim and kernel-crate consumer in the inventory builds and passes on the canonical model with unchanged observable campaign behavior.\n- [hard] REQ-02: Campaign checkpoint and protocol tests keep their recorded behavioral identity or re-pin fixtures explicitly in the same change.\n",
+  "key": "cutover-benches",
+  "title": "Migrate gf2-coding benchmarks",
+  "description": "Migrate the gf2-coding Criterion benchmarks consuming legacy BCH constructors to the canonical model, preserving benchmark IDs where the measured behavior is unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each bench in this task's inventory compiles and runs on the canonical model, keeping comparable benchmark IDs for the non-regression comparison.\n",
   "type": "task",
   "priority": "high",
   "labels": [
    "epic:general-bch",
    "component:gf2-coding",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "cutover-dvbt2",
+   "cutover-components"
+  ],
+  "planning": {
+   "outcome": "The gf2-coding benches run on the canonical model",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-10",
+    "INV-CONSUMERS",
+    "D-11"
+   ],
+   "terminal": {
+    "consumer_family": "gf2-coding benchmark targets",
+    "test_boundary": "bench compilation with smoke runs",
+    "worker_sized_reason": "One bench-tree migration from a cited inventory",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/benches/bch_parallel.rs",
+      "crates/gf2-coding/benches/batch_operations.rs"
+     ]
+    }
+   },
+   "landing_group": "cutover"
+  }
+ },
+ {
+  "key": "cutover-sim",
+  "title": "Migrate gf2-sim BCH consumers",
+  "description": "Migrate the gf2-sim campaign binaries and tests consuming legacy BCH constructors to the canonical model, per the investigation inventory. The GPU byte-identity suite for BCH syndromes is owned by the HIP equivalence task and stays out of scope here.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-sim consumer in this task's inventory builds and passes on the canonical model with unchanged observable campaign behavior.\n- [hard] REQ-02: Campaign checkpoint and protocol tests keep their recorded behavioral identity or re-pin fixtures explicitly in the same change.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
    "component:gf2-sim",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "cutover-dvbt2",
+   "cutover-components",
+   "hip-equivalence"
+  ],
+  "planning": {
+   "outcome": "The gf2-sim consumers run on the canonical BCH model",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-10",
+    "INV-CONSUMERS"
+   ],
+   "terminal": {
+    "consumer_family": "gf2-sim campaign consumers",
+    "test_boundary": "campaign protocol suites",
+    "worker_sized_reason": "One simulation-crate migration from a cited inventory",
+    "footprint": {
+     "touches": [
+      "crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs",
+      "crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs",
+      "crates/gf2-sim/tests/ebch_osd_campaign_cli.rs",
+      "crates/gf2-sim/tests/gpu_byte_identity.rs",
+      "crates/gf2-sim/tests/osd_campaign_protocol.rs"
+     ]
+    }
+   },
+   "landing_group": "cutover"
+  }
+ },
+ {
+  "key": "cutover-hip-tests",
+  "title": "Migrate gf2-kernels-hip BCH test consumers",
+  "description": "Migrate the gf2-kernels-hip tests consuming legacy BCH constructors to the canonical model, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: The kernel-crate GPU tests build and pass on the canonical model on a HIP-capable host, self-gating where hardware is absent.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
    "component:gf2-kernels-hip",
    "satisfies:REQ-10"
   ],
@@ -1526,11 +1694,10 @@
    "gf2-kernels-hip-ci"
   ],
   "depends_on": [
-   "cutover-tooling",
    "hip-equivalence"
   ],
   "planning": {
-   "outcome": "Each external BCH consumer runs on the canonical model",
+   "outcome": "The HIP kernel tests run on the canonical BCH model",
    "contract_refs": [
     "bchspec-model"
    ],
@@ -1539,17 +1706,11 @@
     "INV-CONSUMERS"
    ],
    "terminal": {
-    "consumer_family": "external BCH consumer crates",
-    "test_boundary": "external consumer identity suites",
-    "worker_sized_reason": "One consumer-family migration outside the library crate",
+    "consumer_family": "kernel-crate GPU test consumers",
+    "test_boundary": "the kernel-crate GPU suites",
+    "worker_sized_reason": "One kernel-crate test migration from a cited inventory",
     "footprint": {
      "touches": [
-      "crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs",
-      "crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs",
-      "crates/gf2-sim/tests/ebch_osd_campaign_cli.rs",
-      "crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs",
-      "crates/gf2-sim/tests/gpu_byte_identity.rs",
-      "crates/gf2-sim/tests/osd_campaign_protocol.rs",
       "crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs",
       "crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs"
      ]
@@ -1574,7 +1735,11 @@
    "code-review"
   ],
   "depends_on": [
-   "cutover-external"
+   "cutover-bins-examples",
+   "cutover-test-suite",
+   "cutover-benches",
+   "cutover-sim",
+   "cutover-hip-tests"
   ],
   "planning": {
    "outcome": "The superseded BCH code surface is deleted",
@@ -2047,7 +2212,8 @@
   ],
   "depends_on": [
    "avx2-batch-kernels",
-   "genmatrix-perf"
+   "genmatrix-perf",
+   "cutover-benches"
   ],
   "planning": {
    "outcome": "Criterion benches cover both selected workloads on the canonical model",
