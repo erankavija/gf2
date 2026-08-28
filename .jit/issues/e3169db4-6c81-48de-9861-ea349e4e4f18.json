@@ -7,6 +7,7 @@
   ],
   "description": "After the plan-review checkpoint passes, decompose the plan for Harden and generalize BCH codes over finite fields (ae03bcd0) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
   "documents": [],
+  "first_ready_at": "2026-08-28T22:49:56.857922169Z",
   "gates_required": [
     "coverage-preview",
     "breakdown-review"
@@ -34,7 +35,7 @@
     "brackets:ae03bcd0"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "breakdown: Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-08-28T21:36:52.719617558Z"
+  "updated_at": "2026-08-28T22:49:56.857922169Z"
 }
