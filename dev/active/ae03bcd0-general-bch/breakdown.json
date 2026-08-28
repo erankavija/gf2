@@ -341,7 +341,7 @@
  {
   "key": "conway-registry",
   "title": "Automatic modulus selection: Conway registry plus deterministic verified search",
-  "description": "Extend the polynomial registry and automatic field construction so splitting-field moduli are selected deterministically: canonical Conway polynomials where they are defined and registered, and a documented deterministic verified irreducible-polynomial search otherwise.\n\n## Background\n\nThe registry currently holds primitive entries for $m \\le 16$, irreducibility-only entries for $m = 64..127$, and a single documented Conway-derived GF(2^32) entry; there is no deterministic verified search policy. Automatic construction must be reproducible across hosts and versions because serialized field identities depend on it.\n\n## Success Criteria\n\n- [hard] REQ-01: Automatic modulus selection is deterministic and documented: registry Conway entries are preferred where present, and the fallback search is a specified deterministic order with full irreducibility verification.\n- [hard] REQ-02: Selection results are stable under repetition and covered by tests pinning representative selections, including at least one nonbinary base.\n- [hard] REQ-03: Registry additions carry the same verification evidence style as existing entries.\n",
+  "description": "Extend the polynomial registry and automatic field construction so splitting-field moduli are selected deterministically: canonical Conway polynomials where they are defined and registered, and a documented deterministic verified irreducible-polynomial search otherwise.\n\n## Background\n\nThe registry currently holds primitive entries for $m \\le 16$, irreducibility-only entries for $m = 64..127$, and a single documented Conway-derived GF(2^32) entry; there is no deterministic verified search policy. Automatic construction must be reproducible across hosts and versions because serialized field identities depend on it.\n\n## Success Criteria\n\n- [hard] REQ-01: A generic modulus-selection module represents moduli with coefficients over GF(p) and GF(p^r) bases; the existing binary u64/u128 registry becomes one adapter behind it.\n- [hard] REQ-02: Automatic selection is deterministic and documented: registry Conway entries are preferred where present, and the fallback search is a specified deterministic order with full irreducibility verification.\n- [hard] REQ-03: Selection results are stable under repetition and covered by tests pinning representative selections over binary and nonbinary bases; registry additions carry the existing verification evidence style.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -369,8 +369,11 @@
    "terminal": {
     "consumer_family": "automatic field-selection callers",
     "test_boundary": "pinned deterministic-selection tests",
-    "worker_sized_reason": "One selection policy over an existing registry",
+    "worker_sized_reason": "One selection policy with a generic module and a binary adapter",
     "footprint": {
+     "creates": [
+      "crates/gf2-core/src/field/modulus_select.rs"
+     ],
      "touches": [
       "crates/gf2-core/src/primitive_polys.rs"
      ]
@@ -562,8 +565,8 @@
  },
  {
   "key": "matrix-materialize",
-  "title": "Compact-until-requested matrices with caller buffers and opt-in caching",
-  "description": "Make generator and parity-check access compact by default: matrices are materialized only on request, into caller-provided buffers where asked, with caching an explicit opt-in.\n\n## Background\n\nThe current BCH implementation caches its first computed `BitMatrix` unconditionally behind a mutex; the replacement access behavior applies to the new canonical code types, with the old cache deleted at cutover. Access is field-generic with packed binary specialization.\n\n## Success Criteria\n\n- [hard] REQ-01: Generator and parity-check access provide allocating and caller-buffer materialization paths, field-generic with packed binary specialization, without implicit caching; shape mismatches report the coding-general error layer.\n- [hard] REQ-02: Opt-in caching is explicit, documented, and covered by tests demonstrating both cached and uncached flows.\n",
+  "title": "Reference matrix materialization: compact access, caller buffers, opt-in caching",
+  "description": "Implement the reference generator and parity-check materialization for canonical BCH codes with the compact-by-default access behavior: matrices are materialized only on request, into caller-provided buffers where asked, with caching an explicit opt-in.\n\n## Background\n\nThe current BCH implementation caches its first computed `BitMatrix` unconditionally behind a mutex; the old cache is deleted at cutover. This task owns the correct reference materialization from the canonical construction model — packed binary and field-generic over `FieldMatrix` — while the later optimization task speeds up this same implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Canonical BCH codes materialize generator and parity-check matrices from the construction model, packed binary and field-generic, correct against direct polynomial-derived references.\n- [hard] REQ-02: Access provides allocating and caller-buffer paths without implicit caching; shape mismatches report the coding-general error layer; opt-in caching is explicit and tested in both flows.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -576,10 +579,11 @@
    "code-review"
   ],
   "depends_on": [
-   "type-erased-handles"
+   "type-erased-handles",
+   "bch-construct-core"
   ],
   "planning": {
-   "outcome": "Matrices stay compact until requested, with caller buffers and opt-in caching",
+   "outcome": "Canonical BCH matrices materialize compactly with caller buffers and opt-in caching",
    "contract_refs": [
     "block-code-traits",
     "error-surface"
@@ -590,9 +594,12 @@
    ],
    "terminal": {
     "consumer_family": "matrix-consuming access paths",
-    "test_boundary": "materialization behavior tests for both flows",
-    "worker_sized_reason": "One access-behavior change on the new trait surface",
+    "test_boundary": "materialization correctness tests for both flows",
+    "worker_sized_reason": "One reference implementation plus its access behavior",
     "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/bch/matrix.rs"
+     ],
      "touches": [
       "crates/gf2-coding/src/traits.rs"
      ]
@@ -1138,8 +1145,8 @@
  },
  {
   "key": "genmatrix-perf",
-  "title": "Optimized generator-matrix materialization",
-  "description": "Optimize generator- and parity-check-matrix materialization for the survey's workload: packed binary fast path and field-generic path over `FieldMatrix`, feeding caller buffers without redundant recomputation.\n\n## Success Criteria\n\n- [hard] REQ-01: Materialization uses the packed binary representation for binary codes and `FieldMatrix` generically, with results equal to the reference construction on the predeclared workload dimensions.\n- [hard] REQ-02: The caller-buffer path avoids intermediate allocation, verified by tests.\n",
+  "title": "Optimize the reference generator-matrix materialization",
+  "description": "Optimize the reference generator- and parity-check materialization for the survey's selected workload dimensions, keeping results bit-identical to the reference implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: The optimized path produces results equal to the reference materialization on the workload-selection dimensions, packed binary and field-generic.\n- [hard] REQ-02: The caller-buffer path avoids intermediate allocation, verified by tests, and throughput on the selected workload improves over the unoptimized reference measurably on the bench harness.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -1170,13 +1177,10 @@
    "terminal": {
     "consumer_family": "matrix materialization callers",
     "test_boundary": "equality-with-reference tests on the workload dimensions",
-    "worker_sized_reason": "One materialization path over existing matrix machinery",
+    "worker_sized_reason": "One optimization pass over a finished reference implementation",
     "footprint": {
-     "creates": [
-      "crates/gf2-coding/src/bch/genmatrix.rs"
-     ],
      "touches": [
-      "crates/gf2-coding/src/bch/mod.rs"
+      "crates/gf2-coding/src/bch/matrix.rs"
      ]
     }
    },
@@ -1302,12 +1306,14 @@
    "terminal": {
     "consumer_family": "library eBCH consumers",
     "test_boundary": "existing eBCH reference suites with unchanged outcomes",
-    "worker_sized_reason": "One library consumer-family migration with pinned reference vectors",
+    "worker_sized_reason": "One mechanical replacement pattern across five modules, pinned by reference vectors",
     "footprint": {
      "touches": [
       "crates/gf2-coding/src/grand/sogrand.rs",
+      "crates/gf2-coding/src/grand/orbgrand.rs",
       "crates/gf2-coding/src/fading.rs",
-      "crates/gf2-coding/src/product/mod.rs"
+      "crates/gf2-coding/src/product/mod.rs",
+      "crates/gf2-coding/src/product/chase_pyndiah.rs"
      ]
     }
    },
@@ -1315,9 +1321,9 @@
   }
  },
  {
-  "key": "cutover-coding",
-  "title": "Migrate gf2-coding consumers to the canonical BCH model",
-  "description": "Migrate the gf2-coding direct consumers of the legacy BCH constructors to the canonical model: the DVB-T2 modules, LDPC concatenation, BCJR/GLDPC/OSD touchpoints, crate binaries, examples, benches, and tests, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding consumer in the inventory builds and passes on the canonical model, with DVB-T2 verification vectors unchanged.\n- [hard] REQ-02: No gf2-coding call site constructs a BCH code through `BchCode::new` or `from_generator` any longer.\n",
+  "key": "cutover-standards",
+  "title": "Migrate gf2-coding library consumers to the canonical BCH model",
+  "description": "Migrate the gf2-coding library consumers of the legacy BCH constructors to the canonical model: the DVB-T2 modules, LDPC concatenation, and the BCJR, GLDPC, product, and OSD touchpoints, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding library consumer in the inventory builds and passes on the canonical model, with DVB-T2 verification vectors unchanged.\n- [hard] REQ-02: No gf2-coding library path constructs a BCH code through `BchCode::new` or `from_generator` any longer.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -1335,7 +1341,7 @@
    "ebch-migration"
   ],
   "planning": {
-   "outcome": "Each gf2-coding consumer runs on the canonical BCH model",
+   "outcome": "Each gf2-coding library consumer runs on the canonical BCH model",
    "contract_refs": [
     "bchspec-model",
     "block-code-traits"
@@ -1346,14 +1352,60 @@
     "D-02"
    ],
    "terminal": {
-    "consumer_family": "gf2-coding BCH consumers",
-    "test_boundary": "existing consumer suites with DVB-T2 verification vectors",
-    "worker_sized_reason": "One crate's consumer migration against a complete cited inventory",
+    "consumer_family": "gf2-coding library BCH consumers",
+    "test_boundary": "library consumer suites with DVB-T2 verification vectors",
+    "worker_sized_reason": "One library consumer-family migration from a cited inventory",
     "footprint": {
      "touches": [
       "crates/gf2-coding/src/bch/dvb_t2/mod.rs",
+      "crates/gf2-coding/src/bch/dvb_t2/generators.rs",
       "crates/gf2-coding/src/ldpc/dvb_t2/concat.rs",
-      "crates/gf2-coding/src/bin/sim_runner.rs"
+      "crates/gf2-coding/src/bcjr/mod.rs",
+      "crates/gf2-coding/src/gldpc/mod.rs",
+      "crates/gf2-coding/src/osd/generator.rs"
+     ]
+    }
+   },
+   "landing_group": "cutover"
+  }
+ },
+ {
+  "key": "cutover-tooling",
+  "title": "Migrate gf2-coding binaries, examples, benches, and tests",
+  "description": "Migrate the gf2-coding tooling consumers of the legacy BCH constructors to the canonical model: crate binaries, examples, benches, and integration tests, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding binary, example, bench, and test in the inventory builds and passes on the canonical model with unchanged observable behavior.\n- [hard] REQ-02: No gf2-coding tooling path constructs a BCH code through the legacy constructors any longer.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "cutover-standards"
+  ],
+  "planning": {
+   "outcome": "Each gf2-coding tooling consumer runs on the canonical BCH model",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-10",
+    "INV-CONSUMERS"
+   ],
+   "terminal": {
+    "consumer_family": "gf2-coding tooling BCH consumers",
+    "test_boundary": "tooling suites over the migrated call sites",
+    "worker_sized_reason": "One tooling consumer-family migration from a cited inventory",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bin/sim_runner.rs",
+      "crates/gf2-coding/examples/dvb_t2_bch_demo.rs",
+      "crates/gf2-coding/benches/bch_parallel.rs",
+      "crates/gf2-coding/tests/bch_tests.rs"
      ]
     }
    },
@@ -1369,14 +1421,17 @@
   "labels": [
    "epic:general-bch",
    "component:gf2-coding",
+   "component:gf2-sim",
+   "component:gf2-kernels-hip",
    "satisfies:REQ-10"
   ],
   "gates": [
    "cargo-ci",
-   "code-review"
+   "code-review",
+   "gf2-kernels-hip-ci"
   ],
   "depends_on": [
-   "cutover-coding",
+   "cutover-tooling",
    "hip-equivalence"
   ],
   "planning": {
@@ -1714,7 +1769,8 @@
   "depends_on": [
    "bch-convenience-ctors",
    "extend-transform",
-   "matrix-materialize"
+   "matrix-materialize",
+   "systematic-encode"
   ],
   "planning": {
    "outcome": "One shared conformance suite passes over the three base-field classes",

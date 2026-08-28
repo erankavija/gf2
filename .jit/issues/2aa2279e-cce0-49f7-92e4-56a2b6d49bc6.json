@@ -74,7 +74,7 @@
     "type:planning"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "planning: Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-08-28T22:11:42.214360347Z"
+  "updated_at": "2026-08-28T22:27:12.961806626Z"
 }
