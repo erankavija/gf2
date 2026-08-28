@@ -186,10 +186,14 @@ no untracked assumptions.
 | decoder-outcomes | Harden the binary decoder: canonical model, typed outcomes, verified corrections | task | The binary decoder returns verified typed outcomes with fast and diagnostic paths | bchspec-model, error-surface | REQ-09, BRIEF-DIAGNOSTIC, INV-CLAIMS | touches 1 | decoder | bch-construct-core |
 | hip-equivalence | Migrate HIP syndrome/decode support behaviorally intact | task | HIP syndrome/decode support behaves equivalently on the canonical model | error-surface | REQ-09, INV-CLAIMS, INV-UNKNOWNS | touches 2 | decoder | decoder-outcomes |
 | ebch-migration | Migrate library eBCH consumers to the generic extension | task | Generic extension replaces ExtendedBchCode in the gf2-coding library paths | coordinate-map-api | REQ-10, INV-CONSUMERS, D-05 | touches 5 | cutover | extend-transform, decoder-outcomes |
-| cutover-standards | Migrate gf2-coding library consumers to the canonical BCH model | task | Each gf2-coding library consumer runs on the canonical BCH model | bchspec-model, block-code-traits | REQ-10, INV-CONSUMERS, D-02 | touches 10 | cutover | bch-convenience-ctors, encode-batch-workspace, ebch-migration |
-| cutover-tooling | Migrate gf2-coding binaries, examples, benches, and tests | task | Each gf2-coding tooling consumer runs on the canonical BCH model | bchspec-model | REQ-10, INV-CONSUMERS | touches 12 | cutover | cutover-standards |
-| cutover-external | Migrate simulation and kernel-crate BCH consumers | task | Each external BCH consumer runs on the canonical model | bchspec-model | REQ-10, INV-CONSUMERS | touches 8 | cutover | cutover-tooling, hip-equivalence |
-| cutover-removal | Delete the superseded BCH code surface | task | The superseded BCH code surface is deleted | bchspec-model | REQ-10, INV-CONSUMERS, D-02 | touches 3 | cutover | cutover-external |
+| cutover-dvbt2 | Migrate the DVB-T2 BCH consumers to the canonical model | task | The DVB-T2 family runs on the canonical BCH model | bchspec-model, block-code-traits | REQ-10, INV-CONSUMERS, D-02 | touches 5 | cutover | bch-convenience-ctors, encode-batch-workspace |
+| cutover-components | Migrate the component-code BCH consumers to the canonical model | task | The component codes run on the canonical BCH model | bchspec-model, block-code-traits | REQ-10, INV-CONSUMERS, D-02 | touches 5 | cutover | bch-convenience-ctors, encode-batch-workspace, ebch-migration |
+| cutover-bins-examples | Migrate gf2-coding binaries and examples | task | The gf2-coding binaries and examples run on the canonical model | bchspec-model | REQ-10, INV-CONSUMERS | touches 4 | cutover | cutover-dvbt2, cutover-components |
+| cutover-test-suite | Migrate gf2-coding integration tests | task | The gf2-coding integration tests run on the canonical model | bchspec-model | REQ-10, INV-CONSUMERS | touches 6 | cutover | cutover-dvbt2, cutover-components |
+| cutover-benches | Migrate gf2-coding benchmarks | task | The gf2-coding benches run on the canonical model | bchspec-model | REQ-10, INV-CONSUMERS, D-11 | touches 2 | cutover | cutover-dvbt2, cutover-components |
+| cutover-sim | Migrate gf2-sim BCH consumers | task | The gf2-sim consumers run on the canonical BCH model | bchspec-model | REQ-10, INV-CONSUMERS | touches 5 | cutover | cutover-dvbt2, cutover-components, hip-equivalence |
+| cutover-hip-tests | Migrate gf2-kernels-hip BCH test consumers | task | The HIP kernel tests run on the canonical BCH model | bchspec-model | REQ-10, INV-CONSUMERS | touches 2 | cutover | hip-equivalence |
+| cutover-removal | Delete the superseded BCH code surface | task | The superseded BCH code surface is deleted | bchspec-model | REQ-10, INV-CONSUMERS, D-02 | touches 3 | cutover | cutover-bins-examples, cutover-test-suite, cutover-benches, cutover-sim, cutover-hip-tests |
 | legacy-reference-sweep | Sweep stale prose references to the removed BCH surface | task | Stale prose references to the removed surface are gone | bchspec-model | REQ-10, INV-CONSUMERS | touches 4 | cutover | cutover-removal |
 | proof-sketch | Author the formal-proof sketch for the algebraic foundations | task | Each proof obligation has a named path, lemma, strategy, and binding mode approved | lean-refinement-boundary, field-extension-api | REQ-12, INV-CLAIMS, D-08, D-12 | creates 1 | verification | systematic-encode |
 | lean-ext-laws | Lean proofs: extension embedding, restriction, and relative Frobenius laws | task | Extension-law lemmas pass the proof gates | lean-refinement-boundary | REQ-12, D-08 | touches 1 | verification | proof-sketch |
@@ -200,7 +204,7 @@ no untracked assumptions.
 | conformance-suites | Shared property and conformance suites across field classes | task | One shared conformance suite passes over the three base-field classes | bchspec-model, coordinate-map-api, evidence-protocol | REQ-11, D-02, D-07, INV-PRIMITIVES | creates 1 | verification | bch-convenience-ctors, extend-transform, matrix-materialize, systematic-encode |
 | oracle-agreement | External oracle and standards-vector agreement | task | Corpus results agree with both named external oracles and standards vectors | evidence-protocol | REQ-11, D-07, INV-UNKNOWNS | creates 2 | verification | bch-convenience-ctors, systematic-encode |
 | baseline-survey | Reproducible external-baseline survey and workload selection | task | The strongest external baselines and exact workloads are pinned reproducibly | evidence-protocol | REQ-13, REQ-14, D-04, D-07, INV-PRIORART, INV-UNKNOWNS | creates 1 | performance | — |
-| bench-extension | Extend Criterion benchmarks to the selected workloads | task | Criterion benches cover both selected workloads on the canonical model | workload-selection | REQ-13, D-02, INV-CLAIMS | touches 1 | performance | avx2-batch-kernels, genmatrix-perf |
+| bench-extension | Extend Criterion benchmarks to the selected workloads | task | Criterion benches cover both selected workloads on the canonical model | workload-selection | REQ-13, D-02, INV-CLAIMS | touches 1 | performance | avx2-batch-kernels, genmatrix-perf, cutover-benches |
 | perf-receipts | Committed performance receipts: non-regression, determinism, SOTA comparison | task | Committed receipts show non-regression, determinism, fallback coverage, and the SOTA comparison | evidence-protocol, workload-selection | REQ-13, REQ-14, D-07, D-11 | creates 1 | performance | bench-extension, conformance-suites |
 | researcher-docs | Researcher-oriented rustdoc and runnable examples | task | Researchers have runnable examples and rustdoc for the full canonical surface | systematic-layout, matrix-serialization-format | REQ-15, BRIEF-TERMINOLOGY | touches 2 | docs | legacy-reference-sweep, fieldmatrix-serialization, avx2-batch-kernels, genmatrix-perf |
 | followup-tracking | Create the tracked follow-up issues against the canonical interfaces | task | The three follow-up issues exist against the canonical interfaces | bchspec-model | REQ-16, BRIEF-API | uncertain | docs | bch-api-design |
@@ -239,24 +243,28 @@ flowchart LR
     N29["decoder-outcomes: Harden the binary decoder: canonical model, typed outcomes, verified corrections"]
     N30["hip-equivalence: Migrate HIP syndrome/decode support behaviorally intact"]
     N31["ebch-migration: Migrate library eBCH consumers to the generic extension"]
-    N32["cutover-standards: Migrate gf2-coding library consumers to the canonical BCH model"]
-    N33["cutover-tooling: Migrate gf2-coding binaries, examples, benches, and tests"]
-    N34["cutover-external: Migrate simulation and kernel-crate BCH consumers"]
-    N35["cutover-removal: Delete the superseded BCH code surface"]
-    N36["legacy-reference-sweep: Sweep stale prose references to the removed BCH surface"]
-    N37["proof-sketch: Author the formal-proof sketch for the algebraic foundations"]
-    N38["lean-ext-laws: Lean proofs: extension embedding, restriction, and relative Frobenius laws"]
-    N39["lean-quotient-reduction: Lean proofs: quotient reduction preserves the represented element"]
-    N40["lean-closure: Lean proofs: q-cyclotomic seed closure"]
-    N41["lean-generator: Lean proofs: generator base-field membership and root correctness"]
-    N42["lean-encoding: Lean proofs: systematic encoding correctness"]
-    N43["conformance-suites: Shared property and conformance suites across field classes"]
-    N44["oracle-agreement: External oracle and standards-vector agreement"]
-    N45["baseline-survey: Reproducible external-baseline survey and workload selection"]
-    N46["bench-extension: Extend Criterion benchmarks to the selected workloads"]
-    N47["perf-receipts: Committed performance receipts: non-regression, determinism, SOTA comparison"]
-    N48["researcher-docs: Researcher-oriented rustdoc and runnable examples"]
-    N49["followup-tracking: Create the tracked follow-up issues against the canonical interfaces"]
+    N32["cutover-dvbt2: Migrate the DVB-T2 BCH consumers to the canonical model"]
+    N33["cutover-components: Migrate the component-code BCH consumers to the canonical model"]
+    N34["cutover-bins-examples: Migrate gf2-coding binaries and examples"]
+    N35["cutover-test-suite: Migrate gf2-coding integration tests"]
+    N36["cutover-benches: Migrate gf2-coding benchmarks"]
+    N37["cutover-sim: Migrate gf2-sim BCH consumers"]
+    N38["cutover-hip-tests: Migrate gf2-kernels-hip BCH test consumers"]
+    N39["cutover-removal: Delete the superseded BCH code surface"]
+    N40["legacy-reference-sweep: Sweep stale prose references to the removed BCH surface"]
+    N41["proof-sketch: Author the formal-proof sketch for the algebraic foundations"]
+    N42["lean-ext-laws: Lean proofs: extension embedding, restriction, and relative Frobenius laws"]
+    N43["lean-quotient-reduction: Lean proofs: quotient reduction preserves the represented element"]
+    N44["lean-closure: Lean proofs: q-cyclotomic seed closure"]
+    N45["lean-generator: Lean proofs: generator base-field membership and root correctness"]
+    N46["lean-encoding: Lean proofs: systematic encoding correctness"]
+    N47["conformance-suites: Shared property and conformance suites across field classes"]
+    N48["oracle-agreement: External oracle and standards-vector agreement"]
+    N49["baseline-survey: Reproducible external-baseline survey and workload selection"]
+    N50["bench-extension: Extend Criterion benchmarks to the selected workloads"]
+    N51["perf-receipts: Committed performance receipts: non-regression, determinism, SOTA comparison"]
+    N52["researcher-docs: Researcher-oriented rustdoc and runnable examples"]
+    N53["followup-tracking: Create the tracked follow-up issues against the canonical interfaces"]
     N0 --> N1
     N1 --> N2
     N2 --> N3
@@ -290,7 +298,7 @@ flowchart LR
     N10 --> N24
     N24 --> N25
     N25 --> N26
-    N45 --> N26
+    N49 --> N26
     N26 --> N27
     N13 --> N28
     N26 --> N28
@@ -300,33 +308,47 @@ flowchart LR
     N29 --> N31
     N19 --> N32
     N25 --> N32
-    N31 --> N32
-    N32 --> N33
+    N19 --> N33
+    N25 --> N33
+    N31 --> N33
+    N32 --> N34
     N33 --> N34
-    N30 --> N34
-    N34 --> N35
-    N35 --> N36
-    N24 --> N37
-    N37 --> N38
+    N32 --> N35
+    N33 --> N35
+    N32 --> N36
+    N33 --> N36
+    N32 --> N37
+    N33 --> N37
+    N30 --> N37
+    N30 --> N38
+    N34 --> N39
+    N35 --> N39
+    N36 --> N39
+    N37 --> N39
     N38 --> N39
     N39 --> N40
-    N40 --> N41
+    N24 --> N41
     N41 --> N42
-    N19 --> N43
-    N23 --> N43
-    N13 --> N43
-    N24 --> N43
-    N19 --> N44
-    N24 --> N44
-    N27 --> N46
-    N28 --> N46
-    N46 --> N47
-    N43 --> N47
-    N36 --> N48
-    N14 --> N48
-    N27 --> N48
-    N28 --> N48
-    N9 --> N49
+    N42 --> N43
+    N43 --> N44
+    N44 --> N45
+    N45 --> N46
+    N19 --> N47
+    N23 --> N47
+    N13 --> N47
+    N24 --> N47
+    N19 --> N48
+    N24 --> N48
+    N27 --> N50
+    N28 --> N50
+    N36 --> N50
+    N50 --> N51
+    N47 --> N51
+    N40 --> N52
+    N14 --> N52
+    N27 --> N52
+    N28 --> N52
+    N9 --> N53
 ```
 <!-- jit:breakdown-overview:end -->
 
