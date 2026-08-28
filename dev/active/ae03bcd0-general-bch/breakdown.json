@@ -1406,7 +1406,7 @@
  {
   "key": "cutover-standards",
   "title": "Migrate gf2-coding library consumers to the canonical BCH model",
-  "description": "Migrate the gf2-coding library consumers of the legacy BCH constructors to the canonical model: the DVB-T2 modules, LDPC concatenation, and the BCJR, GLDPC, product, and OSD touchpoints, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding library consumer in the inventory builds and passes on the canonical model, with DVB-T2 verification vectors unchanged.\n- [hard] REQ-02: No gf2-coding library path constructs a BCH code through `BchCode::new` or `from_generator` any longer.\n",
+  "description": "Migrate the gf2-coding library consumers of the legacy BCH constructors to the canonical model: the DVB-T2 modules, LDPC concatenation, and the BCJR, GLDPC, and OSD touchpoints, per the investigation inventory. The GRAND, fading, and product paths are owned by the eBCH migration task.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding library consumer in the inventory builds and passes on the canonical model, with DVB-T2 verification vectors unchanged.\n- [hard] REQ-02: Outside the superseded `bch/core.rs` and `bch/extended.rs` modules awaiting deletion, no gf2-coding library path constructs a BCH code through `BchCode::new` or `from_generator` any longer.\n",
   "type": "task",
   "priority": "high",
   "labels": [

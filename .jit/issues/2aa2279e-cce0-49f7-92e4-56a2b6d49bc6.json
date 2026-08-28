@@ -60,7 +60,7 @@
   "gates_status": {
     "plan-review": {
       "status": "failed",
-      "updated_at": "2026-08-28T22:36:04.636953799Z",
+      "updated_at": "2026-08-28T22:44:26.161915007Z",
       "updated_by": "auto:executor"
     }
   },
@@ -76,5 +76,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-08-28T22:38:24.551776659Z"
+  "updated_at": "2026-08-28T22:44:26.161915007Z"
 }

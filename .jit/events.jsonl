@@ -9801,3 +9801,4 @@
 {"from":"ready","id":"36a0fd58-041f-4d27-8786-ed9d649f89c0","issue_id":"2aa2279e-cce0-49f7-92e4-56a2b6d49bc6","timestamp":"2026-08-28T22:27:12.961806626Z","to":"in_progress","type":"issue_state_changed"}
 {"gate_key":"plan-review","id":"0d1a8054-18ca-4e2d-82a6-7c04648c4f10","issue_id":"2aa2279e-cce0-49f7-92e4-56a2b6d49bc6","timestamp":"2026-08-28T22:36:04.636953799Z","type":"gate_failed","updated_by":"auto:executor"}
 {"fields":["documents"],"id":"d60417f8-784d-4561-9686-2460a5c70722","issue_id":"2aa2279e-cce0-49f7-92e4-56a2b6d49bc6","timestamp":"2026-08-28T22:38:24.551776659Z","type":"issue_updated","updated_by":"doc-update"}
+{"gate_key":"plan-review","id":"d2bb4045-8101-4506-88a3-95a7e31897bf","issue_id":"2aa2279e-cce0-49f7-92e4-56a2b6d49bc6","timestamp":"2026-08-28T22:44:26.161915007Z","type":"gate_failed","updated_by":"auto:executor"}
