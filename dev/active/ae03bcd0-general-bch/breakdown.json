@@ -1,0 +1,1605 @@
+[
+ {
+  "key": "ext-design",
+  "title": "Design the relative field-extension abstraction and field identity",
+  "description": "Author the design document fixing the canonical relative finite-field extension abstraction for gf2-core and the stable field-identity representation shared by serialization and automatic field selection.\n\n## Background\n\ngf2-core has concrete extension configurations (`ExtConfig` binomial towers, runtime `Gf2mField`) but no canonical public relationship expressing that one field extends another: no relative degree, checked membership, restriction, or relative Frobenius across two field types. Compile-time and runtime quotient fields will coexist, so the design must fix one identity and conversion semantics between them, and one stable canonical field identity usable in serialized artifacts. The investigation linked from the epic's plan records the current surfaces with citations.\n\n## Success Criteria\n\n- [hard] REQ-01: A design document in the epic's dev/active directory defines the extension trait surface (embedding, checked membership and restriction, relative degree, relative Frobenius, field-order relationships, validation certificates), citing the existing types it must cover.\n- [hard] REQ-02: The document fixes one stable canonical field-identity representation and the equivalence/conversion semantics between compile-time and runtime forms of the same field.\n- [hard] REQ-03: The document names which operations belong on the trait versus derived helpers, with a worked GF(2)/GF(2^m) and GF(p)/GF(p^r) example each.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-01"
+  ],
+  "gates": [
+   "doc-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "Relative-extension abstraction and stable field identity fixed by an approved design",
+   "contract_refs": [],
+   "source_refs": [
+    "REQ-01",
+    "REQ-02",
+    "INV-UNKNOWNS",
+    "INV-CLAIMS",
+    "D-06"
+   ],
+   "terminal": {
+    "consumer_family": "foundation implementers consuming the extension design",
+    "test_boundary": "Documentation review against the linked investigation",
+    "worker_sized_reason": "Single design document; no code changes",
+    "footprint": {
+     "creates": [
+      "dev/active/ae03bcd0-general-bch/extension-design.md"
+     ]
+    }
+   },
+   "produces_contracts": [
+    "field-extension-api",
+    "field-identity"
+   ],
+   "landing_group": "extension-foundations"
+  }
+ },
+ {
+  "key": "extension-trait",
+  "title": "Implement the relative field-extension abstraction in gf2-core",
+  "description": "Implement the canonical relative finite-field extension abstraction designed for gf2-core, covering base-field embedding, checked membership and restriction, relative degree, relative Frobenius, field-order relationships, and reusable validation certificates.\n\n## Background\n\nThe abstraction realizes the approved extension design. Existing pairs must be covered: GF(2) into runtime `Gf2mField`, and `ConstField` bases into the binomial towers. Validation work performed once (irreducibility, compatibility, order facts) is captured in a reusable certificate value so repeated constructions do not revalidate.\n\n## Success Criteria\n\n- [hard] REQ-01: gf2-core exposes the designed extension abstraction implemented for the existing binary and tower field pairs, with embedding, membership, restriction, relative degree, relative Frobenius, and order relationships behaving per the field-law conformance style of the crate.\n- [hard] REQ-02: Validation certificates are constructed once, are reusable across constructions, and invalid pairs report typed errors.\n- [hard] REQ-03: The shared field axiom/conformance harness gains extension-law cases exercised for every implemented pair.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-01"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "ext-design"
+  ],
+  "planning": {
+   "outcome": "gf2-core exposes the canonical relative extension abstraction with reusable validation certificates",
+   "contract_refs": [
+    "field-extension-api"
+   ],
+   "source_refs": [
+    "REQ-01",
+    "INV-CLAIMS",
+    "INV-ARCH"
+   ],
+   "terminal": {
+    "consumer_family": "field-level extension consumers",
+    "test_boundary": "Extension-law conformance cases over the implemented pairs",
+    "worker_sized_reason": "One trait surface with conformance coverage; design already fixed",
+    "footprint": {
+     "creates": [
+      "crates/gf2-core/src/field/extension.rs"
+     ],
+     "touches": [
+      "crates/gf2-core/src/field/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "extension-foundations"
+  }
+ },
+ {
+  "key": "order-minpoly",
+  "title": "Add exact-order element derivation and minimal polynomials over a base field",
+  "description": "Add reusable gf2-core operations deriving an element of exact multiplicative order $n$ in an extension field and computing the minimal polynomial of an extension element over an arbitrary base field.\n\n## Background\n\nToday `Gf2mField::primitive_element` requires tables and `minimal_polynomial` is specialized to GF(2); no generic exact-order derivation or minimal-polynomial-over-subfield operation exists. Both are required by general BCH construction (order-$n$ roots of unity for non-primitive lengths; generator coefficients restricted to the base field) and must land as library capabilities, not BCH-private code.\n\n## Success Criteria\n\n- [hard] REQ-01: gf2-core derives an element of exact multiplicative order $n$ for any supported extension field, validating the order exactly, and returns a typed error when no such element exists.\n- [hard] REQ-02: gf2-core computes minimal polynomials of extension elements over an arbitrary base field through the extension abstraction, agreeing with the existing GF(2)-specialized operation on its domain.\n- [hard] REQ-03: Both operations carry property tests over binary and nonbinary pairs within the fast-tier budget.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-01"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "extension-trait"
+  ],
+  "planning": {
+   "outcome": "Exact-order-$n$ elements and minimal polynomials over arbitrary base fields are reusable gf2-core operations",
+   "contract_refs": [
+    "field-extension-api"
+   ],
+   "source_refs": [
+    "REQ-01",
+    "INV-CLAIMS",
+    "INV-PRIMITIVES"
+   ],
+   "terminal": {
+    "consumer_family": "BCH construction machinery",
+    "test_boundary": "property tests spanning both field classes",
+    "worker_sized_reason": "Two tightly coupled algebraic operations on one new trait surface",
+    "footprint": {
+     "touches": [
+      "crates/gf2-core/src/field/extension.rs",
+      "crates/gf2-core/src/gf2m/field.rs"
+     ]
+    }
+   },
+   "landing_group": "extension-foundations"
+  }
+ },
+ {
+  "key": "cyclotomic-closure",
+  "title": "Implement q-cyclotomic coset closure over extension fields",
+  "description": "Implement $q$-cyclotomic coset computation and seed-set closure in gf2-core: given a seed set of root exponents modulo $n$, derive the closed defining set under multiplication by $q$, partitioned into cosets.\n\n## Background\n\nGeneral BCH construction accepts seed sets that are not already closed and derives the closure itself. Coset partitions also drive generator-polynomial assembly (one minimal polynomial per coset) and are a named Lean proof obligation, so the operation lives in gf2-core where the proof surface can reach it.\n\n## Success Criteria\n\n- [hard] REQ-01: gf2-core computes the $q$-cyclotomic closure and coset partition of any seed set modulo $n$ with $\\gcd(n,q)=1$, deterministically ordered.\n- [hard] REQ-02: Property tests verify closure idempotence, coset disjointness, and agreement between coset unions and closure over binary and nonbinary cases.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-03"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "order-minpoly"
+  ],
+  "planning": {
+   "outcome": "Seed sets close deterministically under q-cyclotomic conjugacy with coset partitions",
+   "contract_refs": [],
+   "source_refs": [
+    "REQ-03",
+    "REQ-04",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "generator-assembly callers",
+    "test_boundary": "coset-closure property tests",
+    "worker_sized_reason": "One self-contained combinatorial-algebra operation",
+    "footprint": {
+     "touches": [
+      "crates/gf2-core/src/field/extension.rs"
+     ]
+    }
+   },
+   "landing_group": "extension-foundations"
+  }
+ },
+ {
+  "key": "quotient-ext-runtime",
+  "title": "Implement runtime-configured polynomial quotient extension fields",
+  "description": "Implement arbitrary-degree polynomial quotient extension fields in gf2-core with a runtime-configured modulus, eagerly and completely validating irreducibility at construction.\n\n## Background\n\nThe current tower types support only binomial moduli of degree two and three; no arbitrary polynomial quotient exists. The runtime form defines the reference semantics of the pair (`quotient-extension-api`): representation, reduction, inversion, Frobenius, embedding of the base field, and the stable field identity. Materialization beyond `usize`/`u128` limits returns a typed unsupported-size error.\n\n## Success Criteria\n\n- [hard] REQ-01: A runtime quotient extension over any supported base field constructs from an arbitrary irreducible modulus, fully validating irreducibility eagerly, and satisfies the shared field-law conformance suite.\n- [hard] REQ-02: The type implements the extension abstraction with its validation certificate, and carries the stable field identity fixed by the extension design.\n- [hard] REQ-03: Reducible moduli and materialization beyond `usize`/`u128` limits report typed errors.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-02"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "extension-trait"
+  ],
+  "planning": {
+   "outcome": "Runtime polynomial quotient extensions construct with eager validation and stable identity",
+   "contract_refs": [
+    "field-extension-api",
+    "field-identity"
+   ],
+   "source_refs": [
+    "REQ-02",
+    "INV-CLAIMS",
+    "D-06"
+   ],
+   "terminal": {
+    "consumer_family": "splitting-field constructors",
+    "test_boundary": "Shared field-law conformance suite plus typed-error cases",
+    "worker_sized_reason": "One field implementation against an existing conformance harness",
+    "footprint": {
+     "creates": [
+      "crates/gf2-core/src/gfpn/quotient.rs"
+     ],
+     "touches": [
+      "crates/gf2-core/src/gfpn/mod.rs"
+     ]
+    }
+   },
+   "produces_contracts": [
+    "quotient-extension-api"
+   ],
+   "landing_group": "extension-foundations"
+  }
+ },
+ {
+  "key": "quotient-ext-const",
+  "title": "Implement compile-time configured quotient extensions with equivalence evidence",
+  "description": "Implement the compile-time configured form of arbitrary polynomial quotient extensions and demonstrate observable equivalence with the runtime form of the same field.\n\n## Background\n\nPerformance-critical paths use compile-time configured fields in the style of the existing `ExtConfig` towers; exploratory use needs the runtime form. Both forms of the same field must be observably equivalent and share one field identity.\n\n## Success Criteria\n\n- [hard] REQ-01: A compile-time configured quotient extension implements the same field and extension contracts as the runtime form and passes the shared field-law conformance suite.\n- [hard] REQ-02: A shared differential suite shows observable equivalence between compile-time and runtime forms of representative fields, including identity equality.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-02"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "quotient-ext-runtime"
+  ],
+  "planning": {
+   "outcome": "Compile-time quotient extensions match the runtime form observably",
+   "contract_refs": [
+    "quotient-extension-api",
+    "field-identity"
+   ],
+   "source_refs": [
+    "REQ-02",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "optimized construction paths",
+    "test_boundary": "Differential equivalence suite versus the runtime form",
+    "worker_sized_reason": "Second implementation of an already-fixed contract with a differential harness",
+    "footprint": {
+     "touches": [
+      "crates/gf2-core/src/gfpn/quotient.rs",
+      "crates/gf2-core/src/gfpn/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "extension-foundations"
+  }
+ },
+ {
+  "key": "conway-registry",
+  "title": "Automatic modulus selection: Conway registry plus deterministic verified search",
+  "description": "Extend the polynomial registry and automatic field construction so splitting-field moduli are selected deterministically: canonical Conway polynomials where they are defined and registered, and a documented deterministic verified irreducible-polynomial search otherwise.\n\n## Background\n\nThe registry currently holds primitive entries for $m \\le 16$, irreducibility-only entries for $m = 64..127$, and a single documented Conway-derived GF(2^32) entry; there is no deterministic verified search policy. Automatic construction must be reproducible across hosts and versions because serialized field identities depend on it.\n\n## Success Criteria\n\n- [hard] REQ-01: Automatic modulus selection is deterministic and documented: registry Conway entries are preferred where present, and the fallback search is a specified deterministic order with full irreducibility verification.\n- [hard] REQ-02: Selection results are stable under repetition and covered by tests pinning representative selections, including at least one nonbinary base.\n- [hard] REQ-03: Registry additions carry the same verification evidence style as existing entries.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-02"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "quotient-ext-runtime"
+  ],
+  "planning": {
+   "outcome": "Automatic modulus selection is deterministic: Conway where defined, verified search otherwise",
+   "contract_refs": [
+    "quotient-extension-api"
+   ],
+   "source_refs": [
+    "REQ-02",
+    "INV-CLAIMS",
+    "INV-PRIORART"
+   ],
+   "terminal": {
+    "consumer_family": "automatic field-selection callers",
+    "test_boundary": "Pinned deterministic-selection tests",
+    "worker_sized_reason": "One selection policy over an existing registry",
+    "footprint": {
+     "touches": [
+      "crates/gf2-core/src/primitive_polys.rs"
+     ]
+    }
+   },
+   "landing_group": "extension-foundations"
+  }
+ },
+ {
+  "key": "bch-api-design",
+  "title": "Design BchSpec, the code-trait generalization, and the compatibility boundary",
+  "description": "Author the design document fixing the canonical `BchSpec` model, the static-generic versus type-erased code type split, the field-generic block-code trait surface (including parity-check access), and the named, versioned compatibility boundary for code families that migrate later.\n\n## Background\n\nThe planning brief fixes the semantic shape: `BchSpec` variants carrying only independent inputs, one `BchCode::construct` path, convenience constructors that delegate, and derived codes as generic wrappers. Today `BlockEncoder` is `BitVec`-bound, `GeneratorMatrixAccess` returns `BitMatrix`, and parity-check access is inherent per type, so the generic trait shape and the migration boundary must be fixed before construction or trait work fans out.\n\n## Success Criteria\n\n- [hard] REQ-01: A design document fixes every `BchSpec` variant with its exact independent inputs, the construct/derivation pipeline stages, and the static/erased type split.\n- [hard] REQ-02: The document fixes the field-generic block-code, encoder, generator-matrix, and parity-check trait surface with its `BitVec`/`BitMatrix` specializations, and names the compatibility boundary (name, version, removal condition) for unmigrated families.\n- [hard] REQ-03: The document maps every current consumer family from the linked investigation inventory to immediate migration or the boundary.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-03",
+   "satisfies:REQ-06"
+  ],
+  "gates": [
+   "doc-review"
+  ],
+  "depends_on": [
+   "ext-design"
+  ],
+  "planning": {
+   "outcome": "BchSpec variants, generic trait surface, and compatibility boundary fixed by an approved design",
+   "contract_refs": [],
+   "source_refs": [
+    "REQ-03",
+    "REQ-06",
+    "REQ-10",
+    "BRIEF-API",
+    "INV-CONSUMERS",
+    "D-03"
+   ],
+   "terminal": {
+    "consumer_family": "epic implementation tasks consuming the design",
+    "test_boundary": "Documentation review against the investigation inventory",
+    "worker_sized_reason": "Single design document synthesizing already-cited inventories",
+    "footprint": {
+     "creates": [
+      "dev/active/ae03bcd0-general-bch/bch-api-design.md"
+     ]
+    }
+   },
+   "produces_contracts": [
+    "bchspec-model",
+    "block-code-traits"
+   ],
+   "landing_group": "code-traits"
+  }
+ },
+ {
+  "key": "generic-traits-core",
+  "title": "Introduce field-generic block-code traits with binary specializations",
+  "description": "Implement the designed field-generic block-code, encoding, generator-matrix, and parity-check trait surface with packed `BitVec`/`BitMatrix` binary specializations, and stand up the named compatibility boundary so existing code families compile unchanged.\n\n## Background\n\nThis is the trait cutover child shared with the streaming/batch unification story: that story builds on these traits rather than designing a competing surface. Existing families (LDPC, CRC, product, GRAND consumers) remain on the compatibility boundary until their own migrations; BCH migrates within this epic.\n\n## Success Criteria\n\n- [hard] REQ-01: The designed generic traits exist with binary specializations preserving packed behavior, and static generic implementations dispatch with zero-cost monomorphization.\n- [hard] REQ-02: The named, versioned compatibility boundary keeps every existing consumer family compiling and passing tests unchanged, with its removal condition recorded.\n- [hard] REQ-03: Workspace tests, clippy with warnings denied, and formatting pass.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-06",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "bch-api-design"
+  ],
+  "planning": {
+   "outcome": "Field-generic code traits exist with binary specializations and a named compatibility boundary",
+   "contract_refs": [
+    "block-code-traits"
+   ],
+   "source_refs": [
+    "REQ-06",
+    "REQ-10",
+    "INV-CLAIMS",
+    "INV-CONSUMERS",
+    "D-03",
+    "BRIEF-WIRING"
+   ],
+   "terminal": {
+    "consumer_family": "code-family trait implementations",
+    "test_boundary": "Existing consumer suites unchanged plus new trait conformance tests",
+    "worker_sized_reason": "One trait surface plus a shim; consumer migrations excluded",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/traits.rs",
+      "crates/gf2-coding/src/linear.rs"
+     ]
+    }
+   },
+   "landing_group": "code-traits"
+  }
+ },
+ {
+  "key": "type-erased-handles",
+  "title": "Add runtime type-erased code handles for exploratory workflows",
+  "description": "Add the type-erased/runtime code handle layer over the generic traits so exploratory workflows can hold heterogeneous codes without naming their field types.\n\n## Success Criteria\n\n- [hard] REQ-01: A type-erased handle wraps any static generic code and exposes the shared trait operations with dynamic field/type mismatches reported as typed errors.\n- [hard] REQ-02: A doctest-backed example demonstrates an exploratory flow constructing and encoding through the erased handle.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-06"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "generic-traits-core",
+   "bch-error-surface"
+  ],
+  "planning": {
+   "outcome": "Type-erased handles run exploratory workflows over any static code type",
+   "contract_refs": [
+    "block-code-traits",
+    "bch-error-contract"
+   ],
+   "source_refs": [
+    "REQ-06",
+    "BRIEF-API"
+   ],
+   "terminal": {
+    "consumer_family": "exploratory workflow callers",
+    "test_boundary": "Erased-handle behavioral tests mirroring static-path results",
+    "worker_sized_reason": "One wrapper layer over an already-fixed trait surface",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/traits.rs"
+     ]
+    }
+   },
+   "landing_group": "code-traits"
+  }
+ },
+ {
+  "key": "matrix-materialize",
+  "title": "Compact-until-requested matrices with caller buffers and opt-in caching",
+  "description": "Make generator and parity-check access compact by default: matrices are materialized only on request, into caller-provided buffers where asked, with caching an explicit opt-in.\n\n## Background\n\nThe current BCH implementation caches its first computed `BitMatrix` unconditionally behind a mutex. The generic access surface replaces that with explicit materialization and opt-in caching, field-generically with packed binary specialization.\n\n## Success Criteria\n\n- [hard] REQ-01: Generator and parity-check access provide allocating and caller-buffer materialization paths, field-generic with packed binary specialization, without implicit caching.\n- [hard] REQ-02: Opt-in caching is explicit, documented, and covered by tests demonstrating both cached and uncached flows.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-08"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "generic-traits-core"
+  ],
+  "planning": {
+   "outcome": "Matrices stay compact until requested, with caller buffers and opt-in caching",
+   "contract_refs": [
+    "block-code-traits"
+   ],
+   "source_refs": [
+    "REQ-08",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "matrix-consuming access paths",
+    "test_boundary": "Materialization behavior tests for both flows",
+    "worker_sized_reason": "One access-behavior change on the new trait surface",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/traits.rs"
+     ]
+    }
+   },
+   "landing_group": "code-traits"
+  }
+ },
+ {
+  "key": "fieldmatrix-serialization",
+  "title": "Canonical checksummed FieldMatrix serialization with atomic replacement",
+  "description": "Implement the canonical serialization format for `FieldMatrix` carrying field identity and element representation, with checksummed payloads, atomic file replacement, and validated load-back.\n\n## Background\n\nThe existing `.gf2` BitMatrix format has no checksum, non-atomic writes, and no field identity; its only production round trip is the LDPC cache and it stays untouched. The new format is field-generic, reuses the repository's atomic write-rename pattern and BLAKE3 integrity precedent, and deliberately carries no code-specific metadata.\n\n## Success Criteria\n\n- [hard] REQ-01: Saving a `FieldMatrix` writes a versioned format carrying the stable field identity and element representation with a checksummed payload, via write-temp, sync, atomic rename.\n- [hard] REQ-02: Loading validates identity, representation, and checksum, returns the saved matrix losslessly, and reports any mismatch or corruption as a typed error.\n- [hard] REQ-03: Round-trip and corruption tests cover binary and nonbinary fields, including a runtime/compile-time identity match case.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-08"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "quotient-ext-runtime"
+  ],
+  "planning": {
+   "outcome": "FieldMatrix round-trips through a checksummed, atomic, identity-validated format",
+   "contract_refs": [
+    "field-identity"
+   ],
+   "source_refs": [
+    "REQ-08",
+    "INV-PRIMITIVES",
+    "D-06",
+    "D-10"
+   ],
+   "terminal": {
+    "consumer_family": "matrix persistence callers",
+    "test_boundary": "round-trip test suite with corruption coverage",
+    "worker_sized_reason": "One serialization format with an existing atomicity/integrity pattern to reuse",
+    "footprint": {
+     "creates": [
+      "crates/gf2-core/src/io/field_matrix.rs"
+     ],
+     "touches": [
+      "crates/gf2-core/src/io/mod.rs"
+     ]
+    }
+   },
+   "produces_contracts": [
+    "matrix-serialization-format"
+   ],
+   "landing_group": "code-traits"
+  }
+ },
+ {
+  "key": "bch-error-surface",
+  "title": "Implement the canonical typed BCH error surface",
+  "description": "Implement the typed error types spanning every new public BCH-stack surface: construction, transformation, matrix access, serialization interop, and decoding.\n\n## Background\n\nThe epic requires typed errors at all new public boundaries with panics reserved for violated internal invariants; the current constructors panic through asserts. This task owns the error type design so construction, transformation, and decoder work consume one coherent surface rather than inventing parallel enums.\n\n## Success Criteria\n\n- [hard] REQ-01: A coherent typed error surface exists covering construction validation, transformation coordinate errors, buffer/shape mismatches, dynamic type mismatches, and decoder input errors, following the designed API shapes.\n- [hard] REQ-02: Error types are structured (not stringly), carry the mathematically relevant context, and are documented with their production conditions.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-04"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "bch-api-design"
+  ],
+  "planning": {
+   "outcome": "One typed error surface spans the new public BCH-stack boundaries",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-04",
+    "BRIEF-API",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "new BCH-stack public surfaces",
+    "test_boundary": "Unit tests asserting each error's production condition",
+    "worker_sized_reason": "One error-surface module consumed by later tasks",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/bch/error.rs"
+     ]
+    }
+   },
+   "produces_contracts": [
+    "bch-error-contract"
+   ],
+   "landing_group": "bch-construction"
+  }
+ },
+ {
+  "key": "bchspec-construct",
+  "title": "Implement BchSpec and the canonical construction path",
+  "description": "Implement the `BchSpec` model and the single canonical construction path deriving and validating every dependent parameter for all supported construction flavors.\n\n## Background\n\nSupported flavors: primitive narrow-sense, primitive with arbitrary first root, non-primitive lengths with a derived canonical order-$n$ element or an explicit $n$-th root of unity, arbitrary seed sets whose $q$-cyclotomic closure is derived, and explicitly supplied generator polynomials (verified compatible, $g(x) \\mid x^n-1$, root set derived). Construction derives the generator polynomial from coset minimal polynomials via the public polynomial LCM, dimension $k$, a witnessed classical BCH bound from the longest consecutive root run, and the correction radius that bound implies; validates $\\gcd(n,q)=1$, exact root order, field compatibility, and coefficient restriction; and supports full-space and zero-dimensional boundary codes. Stronger defining-set bounds stay out of scope.\n\n## Success Criteria\n\n- [hard] REQ-01: Every `BchSpec` variant constructs through one path that derives generator, dimension, witnessed bound, and radius, with all listed validations reporting typed errors.\n- [hard] REQ-02: Seed-set closure is derived (unclosed input accepted), explicit-generator specs are verified and rejected when incompatible, and both non-primitive root conventions work.\n- [hard] REQ-03: Boundary codes (empty seed set, complete defining set) construct as full-space and zero-dimensional codes.\n- [hard] REQ-04: Binary primitive narrow-sense results agree with the current implementation's generator polynomials on representative parameters.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-03",
+   "satisfies:REQ-04"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "cyclotomic-closure",
+   "quotient-ext-runtime",
+   "bch-error-surface"
+  ],
+  "planning": {
+   "outcome": "Each BchSpec flavor constructs through one validated, deriving canonical path",
+   "contract_refs": [
+    "bchspec-model",
+    "bch-error-contract",
+    "field-extension-api",
+    "quotient-extension-api"
+   ],
+   "source_refs": [
+    "REQ-03",
+    "REQ-04",
+    "BRIEF-API",
+    "BRIEF-BOUNDS",
+    "INV-CLAIMS",
+    "D-02"
+   ],
+   "terminal": {
+    "consumer_family": "canonical-model consumers",
+    "test_boundary": "construction property tests with legacy-agreement fixtures",
+    "worker_sized_reason": "One construction pipeline against fixed contracts; flavors share the same path",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/bch/spec.rs"
+     ],
+     "touches": [
+      "crates/gf2-coding/src/bch/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "bch-construction"
+  }
+ },
+ {
+  "key": "bch-convenience-ctors",
+  "title": "Add delegating convenience constructors with automatic field selection",
+  "description": "Add the ergonomic constructors (`primitive_narrow_sense`, `primitive`, defining-set, non-primitive forms) that build the corresponding `BchSpec` and delegate to the canonical path, accepting either an explicit splitting-field representation or automatic selection.\n\n## Background\n\nConstructors accept only independent mathematical inputs; derived quantities are validated on request, never supplied. Automatic selection uses the deterministic registry/search policy. The designed distance is presented as a guaranteed lower bound, never as the minimum distance.\n\n## Success Criteria\n\n- [hard] REQ-01: Each convenience constructor delegates to the canonical path, accepts only independent inputs, and supports explicit and automatic field selection.\n- [hard] REQ-02: Doctests cover the concise binary primitive case deriving $(n, k, t)$ from the field and designed distance alone.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-03"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "bchspec-construct",
+   "conway-registry"
+  ],
+  "planning": {
+   "outcome": "Convenience constructors delegate to the canonical path with automatic or explicit fields",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-03",
+    "BRIEF-TERMINOLOGY",
+    "BRIEF-API"
+   ],
+   "terminal": {
+    "consumer_family": "library users",
+    "test_boundary": "Doctested constructor behavior equal to explicit BchSpec construction",
+    "worker_sized_reason": "Thin delegation layer over the finished canonical path",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/spec.rs"
+     ]
+    }
+   },
+   "landing_group": "bch-construction"
+  }
+ },
+ {
+  "key": "coordinate-provenance",
+  "title": "Implement the coordinate-map provenance abstraction",
+  "description": "Implement the coordinate-map abstraction recording, for every derived-code transformation, the explicit mapping between derived and mother-code coordinates, with compact representations for regular patterns.\n\n## Success Criteria\n\n- [hard] REQ-01: A coordinate-map type maps derived positions to mother positions and composes across chained transformations, with compact range/permutation representations avoiding full vectors for regular cases.\n- [hard] REQ-02: Property tests cover composition associativity and round-trip consistency.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-05"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "generic-traits-core"
+  ],
+  "planning": {
+   "outcome": "Each derived code carries a composable coordinate map to its mother code",
+   "contract_refs": [
+    "block-code-traits"
+   ],
+   "source_refs": [
+    "REQ-05",
+    "BRIEF-HELPERS"
+   ],
+   "terminal": {
+    "consumer_family": "derived-code transformations",
+    "test_boundary": "composition round-trip property tests",
+    "worker_sized_reason": "One data abstraction with focused algebraic tests",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/transform/coordinate_map.rs"
+     ]
+    }
+   },
+   "produces_contracts": [
+    "coordinate-map-api"
+   ],
+   "landing_group": "derived-codes"
+  }
+ },
+ {
+  "key": "shorten-puncture",
+  "title": "Generic shortening and puncturing over arbitrary coordinate sets",
+  "description": "Implement shortening and puncturing as generic linear-code transformations over arbitrary coordinate sets, deriving the resulting dimension by rank and reporting the resulting information-set structure.\n\n## Background\n\nTrue shortening restricts to codewords zero on the chosen coordinates then deletes them; dimension follows from rank, not a count formula, and the result need not stay systematic in the original positions. Count-based helpers cover the conventional systematic positions. Every transformation preserves its coordinate map.\n\n## Success Criteria\n\n- [hard] REQ-01: Shortening and puncturing accept arbitrary coordinate sets on any generic linear code, derive dimension by rank, report the information-set structure, and preserve coordinate maps.\n- [hard] REQ-02: Count-based helpers delegate to the coordinate-set forms.\n- [hard] REQ-03: Property tests verify dimension-by-rank against direct generator-matrix computation, including non-systematic cases, over binary and nonbinary codes.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-05"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "coordinate-provenance",
+   "bch-error-surface"
+  ],
+  "planning": {
+   "outcome": "Arbitrary-coordinate shortening and puncturing derive dimension by rank with provenance",
+   "contract_refs": [
+    "coordinate-map-api",
+    "bch-error-contract"
+   ],
+   "source_refs": [
+    "REQ-05",
+    "BRIEF-HELPERS",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "derived-code users",
+    "test_boundary": "Rank-versus-matrix property tests over both field classes",
+    "worker_sized_reason": "Two dual transformations sharing one rank mechanism and test harness",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/src/transform/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "derived-codes"
+  }
+ },
+ {
+  "key": "extend-transform",
+  "title": "Generic one-symbol extension transformation",
+  "description": "Implement the canonical one-symbol extension as a generic transformation: the added coordinate makes the total symbol sum zero over the base field, with coordinate provenance preserved.\n\n## Success Criteria\n\n- [hard] REQ-01: Extension of any generic linear code adds the zero-sum coordinate, derives the resulting parameters, and preserves the coordinate map.\n- [hard] REQ-02: For binary BCH mothers, extended results agree with the existing `ExtendedBchCode` parity-check semantics on representative parameters.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-05"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "coordinate-provenance"
+  ],
+  "planning": {
+   "outcome": "One-symbol zero-sum extension works generically and matches legacy eBCH semantics",
+   "contract_refs": [
+    "coordinate-map-api"
+   ],
+   "source_refs": [
+    "REQ-05",
+    "INV-CLAIMS",
+    "D-05"
+   ],
+   "terminal": {
+    "consumer_family": "extension-transform consumers",
+    "test_boundary": "Agreement fixtures against the existing extended-BCH semantics",
+    "worker_sized_reason": "One transformation with a concrete legacy-agreement oracle",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/transform/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "derived-codes"
+  }
+ },
+ {
+  "key": "systematic-encode",
+  "title": "General systematic BCH encoding across supported base fields",
+  "description": "Implement general BCH encoding over every supported base field with the canonical coordinate convention: coordinate $i \\leftrightarrow x^i$ internally, `[message | parity]` as the default systematic user layout through an explicit zero-cost coordinate mapping, and declared standards-specific layouts.\n\n## Success Criteria\n\n- [hard] REQ-01: Encoding produces valid codewords ($g(x) \\mid c(x)$) over binary and nonbinary base fields with the message preserved in the systematic positions of the default layout.\n- [hard] REQ-02: The internal cyclic convention and user layout are connected by an explicit mapping consumed from the shared layout contract, and a declared alternative layout round-trips.\n- [hard] REQ-03: Binary results agree with the current encoder on representative primitive codes.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-07"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "bchspec-construct",
+   "generic-traits-core"
+  ],
+  "planning": {
+   "outcome": "General systematic encoding works over each supported base field with explicit layouts",
+   "contract_refs": [
+    "bchspec-model",
+    "block-code-traits",
+    "systematic-layout"
+   ],
+   "source_refs": [
+    "REQ-07",
+    "INV-CLAIMS",
+    "BRIEF-API"
+   ],
+   "terminal": {
+    "consumer_family": "encoding-path consumers",
+    "test_boundary": "divisibility-layout property tests with legacy fixtures",
+    "worker_sized_reason": "One encoding semantics layer; performance paths excluded",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "encoding"
+  }
+ },
+ {
+  "key": "encode-batch-workspace",
+  "title": "Allocation-free single and reusable-workspace batch encoding",
+  "description": "Add the performance-path encoding APIs: allocation-free single-codeword `encode_into` and reusable-workspace batch methods, alongside the allocating conveniences.\n\n## Success Criteria\n\n- [hard] REQ-01: `encode_into` and workspace batch methods produce results identical to the allocating paths without per-call allocation on the hot path.\n- [hard] REQ-02: Buffer-size mismatches report typed errors, and batch determinism holds across supported worker counts.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-07"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "systematic-encode"
+  ],
+  "planning": {
+   "outcome": "Allocation-free single and workspace batch encoding match the allocating paths",
+   "contract_refs": [
+    "bch-error-contract"
+   ],
+   "source_refs": [
+    "REQ-07",
+    "BRIEF-DISPATCH"
+   ],
+   "terminal": {
+    "consumer_family": "batch encoding callers",
+    "test_boundary": "identity tests against the allocating path",
+    "worker_sized_reason": "API-shape work over finished encoding semantics",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "encoding"
+  }
+ },
+ {
+  "key": "encode-dispatch",
+  "title": "Profile-driven dispatch among equivalent batch-encoding algorithms",
+  "description": "Implement the profile-driven selector dispatching among mathematically equivalent batch-encoding algorithm families, preserving at least one scalar reference encoder.\n\n## Background\n\nThe dispatch mechanism is required; the concrete family set (polynomial remainder, precomputed linear recurrences, matrix-based kernels) is selected on survey and profiling evidence rather than mandated up front. The selector composes with, and is distinct from, the SIMD feature-dispatch seam.\n\n## Success Criteria\n\n- [hard] REQ-01: A dispatch seam selects among registered encoding algorithm families per profile, with the scalar reference always available and selected results bit-identical across families.\n- [hard] REQ-02: At least two families are registered with differential tests proving equivalence on representative codes.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-07"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "encode-batch-workspace"
+  ],
+  "planning": {
+   "outcome": "Profile-driven dispatch selects among equivalent encoding families over a scalar reference",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-07",
+    "REQ-13",
+    "BRIEF-DISPATCH",
+    "D-04"
+   ],
+   "terminal": {
+    "consumer_family": "batch-encoding backends",
+    "test_boundary": "Cross-family differential equivalence tests",
+    "worker_sized_reason": "One dispatch seam; families beyond two arrive with evidence later",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "encoding"
+  }
+ },
+ {
+  "key": "avx2-batch-kernels",
+  "title": "AVX2 batch-encoding kernels with tested scalar fallback",
+  "description": "Implement AVX2 batch-encoding kernels for binary BCH through the existing carry-less-multiply primitives and function-pointer dispatch seam in gf2-kernels-simd, with the scalar fallback exercised in tests.\n\n## Background\n\nThe kernel crate already exposes PCLMULQDQ primitives, AVX2 detection, and safe function-pointer dispatch with scalar selection; the design compiles on the Rust 1.95 MSRV. Unsafe code stays isolated in the kernel crate.\n\n## Success Criteria\n\n- [hard] REQ-01: AVX2 batch encoding produces bit-identical results to the scalar reference across the conformance corpus, dispatching through the existing detection seam.\n- [hard] REQ-02: The scalar fallback path is exercised by tests independent of host capability, and kernel-crate unsafe carries safety contracts.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-kernels-simd",
+   "component:gf2-coding",
+   "satisfies:REQ-13"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "encode-dispatch"
+  ],
+  "planning": {
+   "outcome": "AVX2 batch encoding is bit-identical to scalar with a tested fallback",
+   "contract_refs": [
+    "systematic-layout"
+   ],
+   "source_refs": [
+    "REQ-13",
+    "REQ-14",
+    "INV-CLAIMS",
+    "INV-ARCH",
+    "D-09"
+   ],
+   "terminal": {
+    "consumer_family": "benchmark evidence workloads",
+    "test_boundary": "Bit-identity differential tests versus scalar across the corpus",
+    "worker_sized_reason": "One kernel family through an existing dispatch and primitive seam",
+    "footprint": {
+     "creates": [
+      "crates/gf2-kernels-simd/src/bch_encode.rs"
+     ]
+    }
+   },
+   "landing_group": "encoding"
+  }
+ },
+ {
+  "key": "genmatrix-perf",
+  "title": "Optimized generator-matrix materialization",
+  "description": "Optimize generator- and parity-check-matrix materialization for the survey's workload: packed binary fast path and field-generic path over `FieldMatrix`, feeding caller buffers without redundant recomputation.\n\n## Success Criteria\n\n- [hard] REQ-01: Materialization uses the packed binary representation for binary codes and `FieldMatrix` generically, with results equal to the reference construction.\n- [hard] REQ-02: The caller-buffer path avoids intermediate allocation, verified by tests.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "component:gf2-core",
+   "satisfies:REQ-13"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "matrix-materialize",
+   "bchspec-construct"
+  ],
+  "planning": {
+   "outcome": "Generator-matrix materialization is optimized for packed binary and generic fields",
+   "contract_refs": [
+    "block-code-traits"
+   ],
+   "source_refs": [
+    "REQ-13",
+    "REQ-08",
+    "INV-PRIORART"
+   ],
+   "terminal": {
+    "consumer_family": "matrix materialization callers",
+    "test_boundary": "Equality-with-reference plus allocation tests",
+    "worker_sized_reason": "One materialization path over existing matrix machinery",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "encoding"
+  }
+ },
+ {
+  "key": "decoder-outcomes",
+  "title": "Harden the binary decoder: canonical model, typed outcomes, verified corrections",
+  "description": "Migrate the binary BCH decoder to the canonical construction model and give it typed outcomes: `NoErrors`, `Corrected`, or `Uncorrectable`, where `Uncorrectable` means the bounded-distance procedure found no verified correction.\n\n## Background\n\nThe current decoder returns flipped message bits without post-correction verification or failure reporting. The hardened decoder verifies candidate corrections by syndrome recomputation, documents the exact bounded-distance guarantee including possible beyond-radius miscorrection, and splits a no-allocation status/count fast path from an opt-in diagnostic path exposing corrected codeword, message, positions, and count. Nonbinary and derived-code decoding stay outside the epic.\n\n## Success Criteria\n\n- [hard] REQ-01: The decoder consumes the canonical construction model and returns the typed outcome with candidate corrections verified before being reported as `Corrected`.\n- [hard] REQ-02: The fast path corrects into caller storage returning status/count without allocation; the opt-in diagnostic path returns full structured evidence.\n- [hard] REQ-03: The documented contract states the within-radius guarantee and beyond-radius miscorrection semantics verbatim in rustdoc, and error-injection tests cover all three outcomes at and beyond the radius.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-09"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "bchspec-construct"
+  ],
+  "planning": {
+   "outcome": "The binary decoder returns verified typed outcomes with fast and diagnostic paths",
+   "contract_refs": [
+    "bchspec-model",
+    "bch-error-contract"
+   ],
+   "source_refs": [
+    "REQ-09",
+    "BRIEF-DIAGNOSTIC",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "binary decode callers",
+    "test_boundary": "error-injection outcome tests around the radius",
+    "worker_sized_reason": "One decoder result-contract migration; algorithms unchanged",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/core.rs"
+     ]
+    }
+   },
+   "landing_group": "decoder"
+  }
+ },
+ {
+  "key": "hip-equivalence",
+  "title": "Migrate HIP syndrome/decode support behaviorally intact",
+  "description": "Migrate the HIP GPU syndrome path and batch decode integration to the canonical construction model and typed decoder outcomes, preserving behavioral equivalence with the CPU path.\n\n## Background\n\nThe HIP path computes syndromes on device with BM/Chien/correction on CPU; existing byte-identity simulation tests pin CPU-versus-GPU agreement for the current status-less behavior and are the equivalence baseline for the migration.\n\n## Success Criteria\n\n- [hard] REQ-01: GPU-assisted decoding consumes the canonical model, returns the same typed outcomes as the CPU decoder, and the existing byte-identity suites pass updated to the new result type.\n- [hard] REQ-02: CPU/GPU outcome equality holds across the error-injection corpus on HIP-capable hosts, with the suite self-gating where hardware is absent.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-09"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "decoder-outcomes"
+  ],
+  "planning": {
+   "outcome": "HIP syndrome/decode support behaves equivalently on the canonical model",
+   "contract_refs": [
+    "bch-error-contract"
+   ],
+   "source_refs": [
+    "REQ-09",
+    "INV-CLAIMS",
+    "INV-UNKNOWNS"
+   ],
+   "terminal": {
+    "consumer_family": "GPU simulation workflows",
+    "test_boundary": "CPU-versus-GPU outcome-identity suites",
+    "worker_sized_reason": "One integration migration pinned by existing identity tests",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/core.rs",
+      "crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs"
+     ]
+    }
+   },
+   "landing_group": "decoder"
+  }
+ },
+ {
+  "key": "ebch-migration",
+  "title": "Replace ExtendedBchCode with the generic extension transformation",
+  "description": "Migrate every `ExtendedBchCode` consumer to the generic one-symbol extension of canonical BCH codes and remove the bespoke wrapper.\n\n## Background\n\n`ExtendedBchCode` is a binary, matrix-materializing wrapper coupled to the legacy `BchCode`, consumed by GRAND, fading, product, and campaign paths enumerated in the linked investigation inventory. Behavioral pins: the extended parity-check semantics agreement fixtures from the extension-transformation task, and existing eBCH reference tests.\n\n## Success Criteria\n\n- [hard] REQ-01: Every eBCH consumer in the inventory compiles and passes against the generic transformation with unchanged observable results, including the eBCH reference-vector tests.\n- [hard] REQ-02: `ExtendedBchCode` and its bespoke constructors are removed.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "extend-transform",
+   "decoder-outcomes"
+  ],
+  "planning": {
+   "outcome": "Generic extension replaces ExtendedBchCode for each consumer with outcomes unchanged",
+   "contract_refs": [
+    "coordinate-map-api"
+   ],
+   "source_refs": [
+    "REQ-10",
+    "INV-CONSUMERS",
+    "D-05"
+   ],
+   "terminal": {
+    "consumer_family": "eBCH consumer modules",
+    "test_boundary": "existing eBCH reference suites with unchanged outcomes",
+    "worker_sized_reason": "One consumer-family migration with pinned reference vectors",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/extended.rs",
+      "crates/gf2-coding/src/grand/sogrand.rs",
+      "crates/gf2-coding/src/fading.rs"
+     ]
+    }
+   },
+   "landing_group": "cutover"
+  }
+ },
+ {
+  "key": "bch-cutover",
+  "title": "Cut over the BCH surface to the canonical model",
+  "description": "Execute the canonical cutover: remove `BchCode::new(n, k, t, field)`, `from_generator`'s redundant-parameter form, the private polynomial LCM, and parallel BCH-specific abstractions; migrate every remaining direct BCH consumer in the inventory to the canonical model.\n\n## Background\n\nDirect consumers span DVB-T2 modules, simulation binaries, benches, examples, and tests enumerated in the linked investigation inventory. Non-BCH code families remain on the named compatibility boundary with its tracked removal condition. Documentation references to removed constructors are swept in the same change.\n\n## Success Criteria\n\n- [hard] REQ-01: The superseded constructors, redundant parameters, duplicated polynomial operations, and BCH-specific parallel abstractions are gone; no production, test, bench, example, or doc reference to them remains.\n- [hard] REQ-02: Every direct consumer in the inventory builds and passes on the canonical model, with DVB-T2 verification vectors unchanged.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-10"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "bch-convenience-ctors",
+   "encode-batch-workspace",
+   "ebch-migration"
+  ],
+  "planning": {
+   "outcome": "The superseded BCH surface is gone with each direct consumer on the canonical model",
+   "contract_refs": [
+    "bchspec-model",
+    "block-code-traits"
+   ],
+   "source_refs": [
+    "REQ-10",
+    "INV-CONSUMERS",
+    "D-02"
+   ],
+   "terminal": {
+    "consumer_family": "remaining direct BCH consumers",
+    "test_boundary": "Full workspace suite plus DVB-T2 verification vectors",
+    "worker_sized_reason": "One deletion-and-migration sweep against a complete cited inventory",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/core.rs",
+      "crates/gf2-coding/src/bch/dvb_t2/mod.rs"
+     ]
+    }
+   },
+   "landing_group": "cutover"
+  }
+ },
+ {
+  "key": "proof-sketch",
+  "title": "Author the formal-proof sketch for the algebraic foundations",
+  "description": "Author the formal-proof sketch naming, for each obligation, the exact production path, lemma statements, and proof strategy: extension embedding/restriction and relative-Frobenius laws, quotient reduction, cyclotomic closure, generator base-field/root correctness, and systematic encoding correctness.\n\n## Background\n\nThe repository requires an approved sketch before proof code. The current extraction surface makes raw bounded gf2m paths transparent while runtime field-carrying code and the polynomial module are opaque; the sketch therefore assigns each obligation to direct extraction or to an abstract Lean model with tested refinement to the optimized Rust paths, per the plan's refinement-boundary contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The sketch names, per obligation, the production path (file and function), the lemma statements, the proof strategy, and whether it binds by extraction or by model-plus-refinement, consistent with the current extraction surface.\n- [hard] REQ-02: Refinement obligations name their equivalence evidence (differential test or extracted witness) and no obligation rests on an untracked assumption.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-12"
+  ],
+  "gates": [
+   "doc-review",
+   "research-review"
+  ],
+  "depends_on": [
+   "ext-design"
+  ],
+  "planning": {
+   "outcome": "Each proof obligation has a named path, lemma, strategy, and binding mode approved",
+   "contract_refs": [
+    "lean-refinement-boundary",
+    "field-extension-api"
+   ],
+   "source_refs": [
+    "REQ-12",
+    "INV-CLAIMS",
+    "D-08"
+   ],
+   "terminal": {
+    "consumer_family": "Lean proof implementers",
+    "test_boundary": "Research review of obligations against the extraction surface",
+    "worker_sized_reason": "Single sketch document; no proof code",
+    "footprint": {
+     "creates": [
+      "dev/active/ae03bcd0-general-bch/proof-sketch.md"
+     ]
+    }
+   },
+   "landing_group": "verification"
+  }
+ },
+ {
+  "key": "lean-extension-proofs",
+  "title": "Lean proofs: extension laws and quotient reduction",
+  "description": "Implement the sketch's Lean obligations for extension embedding/restriction and relative-Frobenius laws and for polynomial-quotient reduction preserving the represented element, with their extraction or refinement evidence.\n\n## Success Criteria\n\n- [hard] REQ-01: The named lemmas are proven in the proofs tree and `lake build` passes with no new untracked assumptions or axioms.\n- [hard] REQ-02: Each obligation binds to its named production path exactly as the approved sketch assigns (extraction or model-plus-refinement), with refinement evidence landed.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "satisfies:REQ-12"
+  ],
+  "gates": [
+   "code-review",
+   "doc-review",
+   "lake-build"
+  ],
+  "depends_on": [
+   "proof-sketch",
+   "quotient-ext-runtime"
+  ],
+  "planning": {
+   "outcome": "Extension-law and quotient-reduction lemmas pass the proof gates",
+   "contract_refs": [
+    "lean-refinement-boundary"
+   ],
+   "source_refs": [
+    "REQ-12",
+    "D-08"
+   ],
+   "terminal": {
+    "consumer_family": "Repository proof gates",
+    "test_boundary": "lake build plus refinement-evidence suites",
+    "worker_sized_reason": "Two adjacent algebraic obligation groups from an approved sketch",
+    "footprint": {
+     "touches": [
+      "proofs/Gf2Core.lean"
+     ]
+    }
+   },
+   "landing_group": "verification"
+  }
+ },
+ {
+  "key": "lean-bch-proofs",
+  "title": "Lean proofs: cyclotomic closure, generator correctness, systematic encoding",
+  "description": "Implement the sketch's Lean obligations for $q$-cyclotomic seed closure, the theorem that the constructed generator lies in the base field and vanishes on every requested root, and systematic encoding preserving the message and producing a generator multiple.\n\n## Success Criteria\n\n- [hard] REQ-01: The named lemmas are proven and `lake build` passes with no new untracked assumptions.\n- [hard] REQ-02: Refinement evidence binds the model-level theorems to the production construction and encoding paths named in the sketch.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-core",
+   "component:gf2-coding",
+   "satisfies:REQ-12"
+  ],
+  "gates": [
+   "code-review",
+   "doc-review",
+   "lake-build"
+  ],
+  "depends_on": [
+   "proof-sketch",
+   "systematic-encode"
+  ],
+  "planning": {
+   "outcome": "Closure, generator-correctness, and encoding lemmas pass the proof gates",
+   "contract_refs": [
+    "lean-refinement-boundary"
+   ],
+   "source_refs": [
+    "REQ-12",
+    "D-08"
+   ],
+   "terminal": {
+    "consumer_family": "Repository proof gates",
+    "test_boundary": "lake build plus refinement-evidence suites",
+    "worker_sized_reason": "Three obligation groups sharing the sketch's BCH model",
+    "footprint": {
+     "touches": [
+      "proofs/Gf2Core.lean"
+     ]
+    }
+   },
+   "landing_group": "verification"
+  }
+ },
+ {
+  "key": "conformance-suites",
+  "title": "Shared property and conformance suites across field classes",
+  "description": "Extend the shared property/conformance suites to cover construction, encoding, matrices, and the derived-code transformations (including coordinate maps and rank-derived dimensions) over base fields of forms $\\mathrm{GF}(2)$, $\\mathrm{GF}(p)$, and $\\mathrm{GF}(p^r)$, including valid boundary codes.\n\n## Background\n\nThe pre-cutover binary property tests provide the baseline invariants; this suite generalizes them to the canonical model and all field classes under the repository's shared-test-contract and tier-budget rules.\n\n## Success Criteria\n\n- [hard] REQ-01: One shared suite exercises construction, encoding, matrix, and transformation invariants over all three field classes, with boundary codes included and deterministic seeds.\n- [hard] REQ-02: Every implementation of the shared code interfaces runs the same behavioral conformance cases; fast-tier budgets hold with slow cases tagged.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-11"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "bch-convenience-ctors",
+   "shorten-puncture",
+   "extend-transform",
+   "systematic-encode"
+  ],
+  "planning": {
+   "outcome": "One shared conformance suite passes over GF(2), GF(p), and GF(p^r)",
+   "contract_refs": [
+    "bchspec-model",
+    "coordinate-map-api"
+   ],
+   "source_refs": [
+    "REQ-11",
+    "D-02",
+    "INV-PRIMITIVES"
+   ],
+   "terminal": {
+    "consumer_family": "canonical-model implementations",
+    "test_boundary": "The shared conformance suite itself across the three field classes",
+    "worker_sized_reason": "One suite generalizing existing binary invariants to fixed interfaces",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/tests/bch_conformance.rs"
+     ]
+    }
+   },
+   "landing_group": "verification"
+  }
+ },
+ {
+  "key": "oracle-agreement",
+  "title": "External oracle and standards-vector agreement",
+  "description": "Establish agreement of representative binary and nonbinary construction and encoding results with at least two independent external oracles and with authoritative published or standards vectors where available, committing the fixtures with provenance.\n\n## Background\n\nThe evidence-protocol contract in the plan predeclares the candidate oracles and the representative corpus; existing DVB-T2 verification vectors remain in place. External BCH-oracle availability for nonbinary cases is an open unknown, so validating and pinning the oracle set is part of this task.\n\n## Success Criteria\n\n- [hard] REQ-01: Committed fixtures record generator polynomials and codewords from two named, versioned independent oracles agreeing with this implementation across the predeclared corpus, with generation scripts and provenance.\n- [hard] REQ-02: Authoritative standards vectors are wired into the suite where they exist, and any oracle gap for a corpus row is recorded explicitly rather than silently skipped.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-11"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review",
+   "doc-review"
+  ],
+  "depends_on": [
+   "bch-convenience-ctors",
+   "systematic-encode"
+  ],
+  "planning": {
+   "outcome": "Representative results agree with two named external oracles and standards vectors",
+   "contract_refs": [
+    "evidence-protocol"
+   ],
+   "source_refs": [
+    "REQ-11",
+    "D-07",
+    "INV-UNKNOWNS"
+   ],
+   "terminal": {
+    "consumer_family": "conformance evidence reviewers",
+    "test_boundary": "Oracle-agreement fixture suite over the predeclared corpus",
+    "worker_sized_reason": "One evidence task against a predeclared protocol",
+    "footprint": {
+     "creates": [
+      "crates/gf2-coding/tests/bch_oracle_agreement.rs",
+      "dev/active/ae03bcd0-general-bch/oracle-provenance.md"
+     ]
+    }
+   },
+   "landing_group": "verification"
+  }
+ },
+ {
+  "key": "baseline-survey",
+  "title": "Reproducible external-baseline survey for the two workloads",
+  "description": "Survey external implementations of large-batch BCH encoding and generator-matrix materialization, select the strongest available baselines reproducibly, and predeclare the representative workloads for the performance contract.\n\n## Background\n\nThe SOTA target-matrix conventions supply the pinning and receipt format; its coverage is linear-algebra-centric and records GF(2^m) gaps, so BCH-encoder baselines must be established. Selection criteria, versions, build flags, and measurement protocol are recorded so the survey reruns identically.\n\n## Success Criteria\n\n- [hard] REQ-01: A survey document pins candidate libraries with versions and build configuration, measures the two workloads under a stated protocol, and selects the strongest baseline per workload with committed receipts.\n- [hard] REQ-02: The predeclared representative workloads for REQ-13/REQ-14 evidence are fixed in the document, consistent with the plan's evidence-protocol contract.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-13"
+  ],
+  "gates": [
+   "doc-review",
+   "research-review"
+  ],
+  "depends_on": [],
+  "planning": {
+   "outcome": "The strongest external baselines and representative workloads are pinned reproducibly",
+   "contract_refs": [
+    "evidence-protocol"
+   ],
+   "source_refs": [
+    "REQ-13",
+    "REQ-14",
+    "D-07",
+    "INV-PRIORART",
+    "INV-UNKNOWNS"
+   ],
+   "terminal": {
+    "consumer_family": "performance evidence tasks",
+    "test_boundary": "research review of the survey protocol receipts",
+    "worker_sized_reason": "Single survey document with receipts; no library code",
+    "footprint": {
+     "creates": [
+      "dev/active/ae03bcd0-general-bch/baseline-survey.md"
+     ]
+    }
+   },
+   "landing_group": "performance"
+  }
+ },
+ {
+  "key": "bench-extension",
+  "title": "Extend Criterion benchmarks to the survey workloads",
+  "description": "Extend the existing BCH Criterion benches to the predeclared survey workloads: field-generic and AVX2 large-batch encoding and generator-matrix materialization, with worker-count sweeps and scalar/AVX2 selection reporting.\n\n## Success Criteria\n\n- [hard] REQ-01: Criterion targets cover both predeclared workloads on the canonical model, binary and nonbinary, reporting the dispatch path taken.\n- [hard] REQ-02: Benchmarks run on the existing harness conventions and emit data consumable by the receipt task.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-13"
+  ],
+  "gates": [
+   "cargo-ci",
+   "code-review"
+  ],
+  "depends_on": [
+   "avx2-batch-kernels",
+   "genmatrix-perf"
+  ],
+  "planning": {
+   "outcome": "Criterion benches cover both predeclared workloads on the canonical model",
+   "contract_refs": [
+    "evidence-protocol"
+   ],
+   "source_refs": [
+    "REQ-13",
+    "D-02",
+    "INV-CLAIMS"
+   ],
+   "terminal": {
+    "consumer_family": "Performance-receipt evidence",
+    "test_boundary": "bench targets producing protocol-conformant output",
+    "worker_sized_reason": "Bench-target extension over existing harnesses",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/benches/batch_operations.rs"
+     ]
+    }
+   },
+   "landing_group": "performance"
+  }
+ },
+ {
+  "key": "perf-receipts",
+  "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
+  "description": "Produce the committed benchmark receipts on suitable uncontended hosts: no statistically measurable throughput regression on the existing optimized binary paths, deterministic results across supported worker counts, tested scalar fallback for AVX2 dispatch, and the comparison rows against the survey's selected external baselines.\n\n## Background\n\nThe comparison against the strongest external baseline is the epic's aspirational target; the receipts report it either way under the predeclared statistical protocol.\n\n## Success Criteria\n\n- [hard] REQ-01: Committed receipts demonstrate non-regression versus the pre-cutover baseline under the predeclared statistical threshold, determinism across worker counts, and scalar-fallback coverage, with host, seed, revision, and toolchain recorded.\n- [hard] REQ-02: Receipts include the external-baseline comparison rows for both workloads with the survey's protocol, reporting the aspirational outcome explicitly.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-13",
+   "satisfies:REQ-14"
+  ],
+  "gates": [
+   "doc-review"
+  ],
+  "depends_on": [
+   "baseline-survey",
+   "bench-extension",
+   "conformance-suites"
+  ],
+  "planning": {
+   "outcome": "Committed receipts show non-regression, determinism, fallback coverage, and the SOTA comparison",
+   "contract_refs": [
+    "evidence-protocol"
+   ],
+   "source_refs": [
+    "REQ-13",
+    "REQ-14",
+    "D-07"
+   ],
+   "terminal": {
+    "consumer_family": "epic completion reviewers",
+    "test_boundary": "Receipt review against the predeclared protocol",
+    "worker_sized_reason": "One measurement-and-receipt campaign over finished benches",
+    "footprint": {
+     "creates": [
+      "dev/bench_results/ae03bcd0-bch-encode-receipts.md"
+     ]
+    }
+   },
+   "landing_group": "performance"
+  }
+ },
+ {
+  "key": "researcher-docs",
+  "title": "Researcher-oriented rustdoc and runnable examples",
+  "description": "Write the researcher-facing documentation: crate-level rustdoc and runnable examples covering concise primitive binary construction, fully explicit nonbinary general construction, systematic encoding, matrix materialization and saving, coordinate conventions, error contracts, complexity, and performance-path selection.\n\n## Background\n\nThe designed distance is documented as a guaranteed lower bound, never the minimum distance unless independently established. Examples compile as doctests or example binaries under the fast-tier budget.\n\n## Success Criteria\n\n- [hard] REQ-01: Runnable examples cover the concise binary case and the fully explicit nonbinary case end to end, including matrix saving through the canonical format.\n- [hard] REQ-02: Rustdoc covers coordinate conventions, error contracts, decoder guarantees, complexity, and performance-path selection, with the distance-bound terminology observed throughout.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-15"
+  ],
+  "gates": [
+   "cargo-ci",
+   "doc-review"
+  ],
+  "depends_on": [
+   "bch-cutover",
+   "fieldmatrix-serialization"
+  ],
+  "planning": {
+   "outcome": "Researchers have runnable examples and rustdoc for the full canonical surface",
+   "contract_refs": [
+    "systematic-layout",
+    "matrix-serialization-format"
+   ],
+   "source_refs": [
+    "REQ-15",
+    "BRIEF-TERMINOLOGY"
+   ],
+   "terminal": {
+    "consumer_family": "Library users",
+    "test_boundary": "doctested examples running in the fast tier",
+    "worker_sized_reason": "Documentation over a finished, stable surface",
+    "footprint": {
+     "touches": [
+      "crates/gf2-coding/src/bch/mod.rs",
+      "crates/gf2-coding/examples/dvb_t2_bch_demo.rs"
+     ]
+    }
+   },
+   "landing_group": "docs"
+  }
+ },
+ {
+  "key": "followup-tracking",
+  "title": "Create the tracked follow-up issues against the canonical interfaces",
+  "description": "Create the separate tracked follow-up issues the epic requires, defined against the canonical interfaces: generalized/nonbinary decoding, decoding of shortened/punctured/extended codes, and GPU encoding.\n\n## Success Criteria\n\n- [hard] REQ-01: Three follow-up issues exist with standalone contracts naming the canonical interfaces they build on, wired into the tracker outside this epic's completion path.\n",
+  "type": "task",
+  "priority": "high",
+  "labels": [
+   "epic:general-bch",
+   "component:gf2-coding",
+   "satisfies:REQ-16"
+  ],
+  "gates": [
+   "repo-validate"
+  ],
+  "depends_on": [
+   "bch-api-design"
+  ],
+  "planning": {
+   "outcome": "The three follow-up issues exist against the canonical interfaces",
+   "contract_refs": [
+    "bchspec-model"
+   ],
+   "source_refs": [
+    "REQ-16",
+    "BRIEF-API"
+   ],
+   "terminal": {
+    "consumer_family": "Future planning cycles",
+    "test_boundary": "Tracker validation of the created issues",
+    "worker_sized_reason": "Issue-authoring only, from finished interface designs",
+    "footprint": {
+     "uncertainty": "Creates tracker issues, not source files; exact issue wiring resolved at execution"
+    }
+   },
+   "landing_group": "docs"
+  }
+ }
+]
