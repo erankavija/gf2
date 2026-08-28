@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "230dd84d-de00-4d79-b74b-f1a8d244da48"
+  ],
+  "description": "Extend the canonical construction path to seed-set `BchSpec` flavors: arbitrary root seed sets whose $q$-cyclotomic closure the construction derives, including the mathematically valid boundary codes.\n\n## Success Criteria\n\n- [hard] REQ-01: Seed-set specs accept unclosed input, derive the closure, and construct with the witnessed bound from the longest consecutive run in the closed set.\n- [hard] REQ-02: Empty seed sets yield the full-space code and complete defining sets yield the zero-dimensional code, each with correct derived parameters.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "37c288cf-fe3d-436c-8310-9f428dada164",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Construction from arbitrary seed sets, including boundary codes",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

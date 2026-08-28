@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "7a3a6738-3ec0-42ea-86dd-c2d845689e1a"
+  ],
+  "description": "Create the separate tracked follow-up issues the epic requires, defined against the canonical interfaces: generalized/nonbinary decoding, decoding of shortened/punctured/extended codes, and GPU encoding.\n\n## Success Criteria\n\n- [hard] REQ-01: Three follow-up issues exist with standalone contracts naming the canonical interfaces they build on, wired into the tracker outside this epic's completion path.\n",
+  "documents": [],
+  "gates_required": [
+    "repo-validate"
+  ],
+  "gates_status": {},
+  "id": "997f0ab9-c591-4bfb-ad3b-b2b48336fe35",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-16"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Create the tracked follow-up issues against the canonical interfaces",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

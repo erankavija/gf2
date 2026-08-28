@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "d1b4f85e-acb7-4a73-bf4f-7bc10ac5d512",
+    "e1e0e7ff-36f3-46e4-8bcb-db406c526bcb"
+  ],
+  "description": "Produce the committed benchmark receipts on suitable uncontended hosts: no statistically measurable throughput regression against the pinned pre-cutover baseline, deterministic results across supported worker counts, tested scalar fallback for AVX2 dispatch, and the comparison rows against the survey's selected external baselines.\n\n## Background\n\nThe regression comparison uses the pre-cutover baseline receipt pinned by its dedicated issue, under the evidence protocol's statistical rule. The comparison against the strongest external baseline is the epic's aspirational target; the receipts report it either way.\n\n## Success Criteria\n\n- [hard] REQ-01: Committed receipts demonstrate non-regression versus the pinned pre-cutover baseline under the protocol's one-sided bound, determinism across worker counts, and scalar-fallback coverage, with host, seed, revision, and toolchain recorded.\n- [hard] REQ-02: Receipts include the external-baseline comparison rows for both workloads with the survey's protocol, reporting the aspirational outcome explicitly.\n",
+  "documents": [],
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "fd9d5416-d529-427d-a273-10e6468b9a19",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-13",
+    "satisfies:REQ-14"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

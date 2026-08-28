@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "177bdc85-11ac-4ed8-94ef-ae2876e44045"
+  ],
+  "description": "Implement AVX2 batch-encoding kernels for binary BCH through the existing carry-less-multiply primitives and function-pointer dispatch seam in gf2-kernels-simd, with a dispatch predicate covering the complete required ISA feature set and the scalar fallback exercised in tests.\n\n## Background\n\nThe kernel crate already exposes PCLMULQDQ primitives, AVX2 detection, and safe function-pointer dispatch with scalar selection; the design compiles on the Rust 1.95 MSRV. Runtime safety requires detecting the full feature set the kernels use — carry-less multiply support in addition to AVX2 — as one combined predicate. Unsafe code stays isolated in the kernel crate.\n\n## Success Criteria\n\n- [hard] REQ-01: AVX2 batch encoding produces bit-identical results to the scalar reference on the predeclared corpus rows, including the packed word-boundary lengths 0, 1, 63, 64, and 65 with little-endian indexing and zero tail padding.\n- [hard] REQ-02: The dispatch predicate detects the complete ISA feature set the kernels require before selecting them, and the scalar fallback path is exercised by tests independent of host capability.\n- [hard] REQ-03: Kernel-crate unsafe carries safety contracts naming the detected features.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "2b6968d3-1a00-4958-bdd0-4c86d548be00",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-kernels-simd",
+    "component:gf2-coding",
+    "satisfies:REQ-13"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

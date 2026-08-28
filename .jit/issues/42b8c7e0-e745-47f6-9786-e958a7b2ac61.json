@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "1c9a0f9f-3fa5-4728-85b7-5354448af01f",
+    "6d67e57e-0dac-44a4-afa8-b5c1eb33aff7",
+    "8f68699b-d66a-45f2-a276-b8700bd4cc65"
+  ],
+  "description": "Migrate the gf2-coding library consumers of the legacy BCH constructors to the canonical model: the DVB-T2 modules, LDPC concatenation, and the BCJR, GLDPC, and OSD touchpoints, per the investigation inventory. The GRAND, fading, and product paths are owned by the eBCH migration task.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding library consumer in the inventory builds and passes on the canonical model, with DVB-T2 verification vectors unchanged.\n- [hard] REQ-02: Outside the superseded `bch/core.rs` and `bch/extended.rs` modules awaiting deletion, no gf2-coding library path constructs a BCH code through `BchCode::new` or `from_generator` any longer.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "42b8c7e0-e745-47f6-9786-e958a7b2ac61",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-10"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Migrate gf2-coding library consumers to the canonical BCH model",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

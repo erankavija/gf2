@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "e3169db4-6c81-48de-9861-ea349e4e4f18"
+  ],
+  "description": "Survey external implementations of large-batch BCH encoding and generator-matrix materialization, select the strongest available baselines reproducibly, and fix the exact workload-selection contract the encoding and benchmark tasks consume.\n\n## Background\n\nThe SOTA target-matrix conventions supply the pinning and receipt format; its coverage is linear-algebra-centric and records GF(2^m) gaps, so BCH-encoder baselines must be established. The survey fixes, before any optimization work: the exact benchmark codes, batch sizes, matrix dimensions, cache state, worker counts, the encoding algorithm families to register, and the baseline library versions and build flags — completing the plan's evidence-protocol skeleton into the concrete workload-selection contract.\n\n## Success Criteria\n\n- [hard] REQ-01: A survey document pins candidate libraries with versions and build configuration, measures the two workloads under a stated protocol, and selects the strongest baseline per workload with committed receipts.\n- [hard] REQ-02: The workload-selection contract is fixed: exact codes, batch sizes, matrix dimensions, cache state, worker counts, and algorithm families, predeclared before optimization tasks consume them.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-28T22:50:47.339714882Z",
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "4e732b56-b6ab-451b-959e-ff4ea09a59d2",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-13"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Reproducible external-baseline survey and workload selection",
+  "updated_at": "2026-08-28T22:51:32.030071298Z"
+}

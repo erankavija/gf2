@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "2b6968d3-1a00-4958-bdd0-4c86d548be00",
+    "bd0edfa2-092e-4844-9291-3dd8fbd43d3e",
+    "e992c5b0-d3c0-4b4c-a2f0-44b5c00594db",
+    "f759d724-e1e3-466b-9d57-a3d1a57123ab"
+  ],
+  "description": "Write the researcher-facing documentation: crate-level rustdoc and runnable examples covering concise primitive binary construction, fully explicit nonbinary general construction, systematic encoding, matrix materialization and saving, coordinate conventions, error contracts, complexity, and performance-path selection.\n\n## Background\n\nThe designed distance is documented as a guaranteed lower bound, never the minimum distance unless independently established. Examples compile as doctests or example binaries under the fast-tier budget.\n\n## Success Criteria\n\n- [hard] REQ-01: Runnable examples cover the concise binary case and the fully explicit nonbinary case end to end, including matrix saving through the canonical format.\n- [hard] REQ-02: Rustdoc covers coordinate conventions, error contracts, decoder guarantees, complexity, and performance-path selection, with the distance-bound terminology observed throughout.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "4ad869d6-901d-465d-9d29-7c3a4f34ee8e",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-15"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Researcher-oriented rustdoc and runnable examples",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

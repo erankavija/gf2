@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "596131fc-5131-4707-ac6e-5c32a6f27997",
+    "c3cc5226-2edf-40f7-a95d-b35bdcc1da57"
+  ],
+  "description": "Migrate the BCH consumers outside gf2-coding to the canonical model: gf2-sim campaign binaries and tests, the GPU byte-identity and crosscheck tests, and the HIP field-test constructions, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-sim and kernel-crate consumer in the inventory builds and passes on the canonical model with unchanged observable campaign behavior.\n- [hard] REQ-02: Campaign checkpoint and protocol tests keep their recorded behavioral identity or re-pin fixtures explicitly in the same change.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "gf2-kernels-hip-ci"
+  ],
+  "gates_status": {},
+  "id": "1f4a4b39-1461-46ee-9ea9-3465aebdfa6d",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "component:gf2-sim",
+    "component:gf2-kernels-hip",
+    "satisfies:REQ-10"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Migrate simulation and kernel-crate BCH consumers",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

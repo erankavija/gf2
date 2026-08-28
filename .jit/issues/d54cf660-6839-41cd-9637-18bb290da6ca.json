@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "230dd84d-de00-4d79-b74b-f1a8d244da48",
+    "992c6c6e-47a6-4e9b-9393-d9dfe33fab3e"
+  ],
+  "description": "Implement the reference generator and parity-check materialization for canonical BCH codes with the compact-by-default access behavior: matrices are materialized only on request, into caller-provided buffers where asked, with caching an explicit opt-in.\n\n## Background\n\nThe current BCH implementation caches its first computed `BitMatrix` unconditionally behind a mutex; the old cache is deleted at cutover. This task owns the correct reference materialization from the canonical construction model — packed binary and field-generic over `FieldMatrix` — while the later optimization task speeds up this same implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Canonical BCH codes materialize generator and parity-check matrices from the construction model, packed binary and field-generic, correct against direct polynomial-derived references.\n- [hard] REQ-02: Access provides allocating and caller-buffer paths without implicit caching; shape mismatches report the coding-general error layer; opt-in caching is explicit and tested in both flows.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "d54cf660-6839-41cd-9637-18bb290da6ca",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-08"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Reference matrix materialization: compact access, caller buffers, opt-in caching",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "b1bd75ca-5003-4597-87c0-0f9808a7b760"
+  ],
+  "description": "Implement the sketch's Lean obligation that systematic encoding preserves the message and produces a multiple of the generator polynomial.\n\n## Success Criteria\n\n- [hard] REQ-01: The encoding-correctness lemmas are proven and `lake build` passes with no new untracked assumptions.\n- [hard] REQ-02: The obligation binds to the encoding production path exactly as the approved sketch assigns, with refinement evidence landed where assigned.\n",
+  "documents": [],
+  "gates_required": [
+    "code-review",
+    "doc-review",
+    "lake-build"
+  ],
+  "gates_status": {},
+  "id": "94597a51-67af-4ac3-b106-be82b9b1a34a",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-core",
+    "component:gf2-coding",
+    "satisfies:REQ-12"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Lean proofs: systematic encoding correctness",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

@@ -1,0 +1,31 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "217deff3-904b-42ba-b14d-bd89344761d2",
+    "769c3144-318c-4c3c-9258-ba36a4f5bd80",
+    "8f51d6cf-873a-4b30-8f98-58875cfd79d2",
+    "ebdbd228-cc01-4b49-b961-cda8b32a7935"
+  ],
+  "description": "Implement the `BchSpec` model types and the canonical construction path for the consecutive-root flavors: primitive narrow-sense and primitive with arbitrary first root, over any supported base field.\n\n## Background\n\nConstruction derives the generator polynomial from coset minimal polynomials via the public polynomial LCM, dimension $k$, a witnessed classical BCH bound from the longest consecutive root run, and the correction radius that bound implies; it validates $\\gcd(n,q)=1$, exact root order, base/splitting-field compatibility, and coefficient restriction, reporting failures through the layered error surface. Remaining flavors (seed sets, explicit generators, non-primitive conventions, degenerate codes) land in the follow-on flavor task on this same pipeline.\n\n## Success Criteria\n\n- [hard] REQ-01: `BchSpec` types exist per the approved design, and primitive consecutive-root specs construct through one path deriving generator, dimension, witnessed bound, and radius with the listed validations as typed errors.\n- [hard] REQ-02: Binary primitive narrow-sense results agree with the current implementation's generator polynomials on representative parameters.\n- [hard] REQ-03: Nonbinary primitive construction works over GF(p) and GF(p^r) bases with base-coefficient generators dividing $x^n-1$.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "230dd84d-de00-4d79-b74b-f1a8d244da48",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Implement BchSpec and the consecutive-root construction path",
+  "updated_at": "2026-08-28T22:51:57.334279678Z"
+}

@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "42b8c7e0-e745-47f6-9786-e958a7b2ac61"
+  ],
+  "description": "Migrate the gf2-coding tooling consumers of the legacy BCH constructors to the canonical model: crate binaries, examples, benches, and integration tests, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-coding binary, example, bench, and test in the inventory builds and passes on the canonical model with unchanged observable behavior.\n- [hard] REQ-02: No gf2-coding tooling path constructs a BCH code through the legacy constructors any longer.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "596131fc-5131-4707-ac6e-5c32a6f27997",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-10"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Migrate gf2-coding binaries, examples, benches, and tests",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}

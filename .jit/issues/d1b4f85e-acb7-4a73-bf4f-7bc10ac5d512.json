@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "2b6968d3-1a00-4958-bdd0-4c86d548be00",
+    "88ca7d2f-5045-4356-8ee3-e4e26876847d",
+    "bd0edfa2-092e-4844-9291-3dd8fbd43d3e"
+  ],
+  "description": "Extend the existing BCH Criterion benches to the workload-selection contract: field-generic and AVX2 large-batch encoding and generator-matrix materialization, with worker-count sweeps and dispatch-path reporting.\n\n## Success Criteria\n\n- [hard] REQ-01: Criterion targets cover both selected workloads on the canonical model, binary and nonbinary, reporting the dispatch path taken.\n- [hard] REQ-02: Benchmarks run on the existing harness conventions and emit data consumable by the receipt task.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "d1b4f85e-acb7-4a73-bf4f-7bc10ac5d512",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-13"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Extend Criterion benchmarks to the selected workloads",
+  "updated_at": "2026-08-28T22:52:14.104780706Z"
+}

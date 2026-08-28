@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-28T22:50:47.339714882Z",
+  "dependencies": [
+    "1f4a4b39-1461-46ee-9ea9-3465aebdfa6d"
+  ],
+  "description": "Delete the superseded code surface after all consumers are migrated: `BchCode::new(n, k, t, field)`, the redundant-parameter `from_generator` form, the private polynomial LCM, `ExtendedBchCode`, the unconditional matrix cache, and parallel BCH-specific abstractions.\n\n## Success Criteria\n\n- [hard] REQ-01: The superseded constructors, redundant parameters, duplicated polynomial operations, `ExtendedBchCode`, and BCH-specific parallel abstractions are gone from the source tree, with no remaining production, test, bench, or example reference.\n- [hard] REQ-02: The workspace builds and passes with clippy warnings denied and formatting clean.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "4a2baa12-af89-47f2-abb4-90b741929b5e",
+  "labels": [
+    "type:task",
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-10"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Delete the superseded BCH code surface",
+  "updated_at": "2026-08-28T22:50:47.339714882Z"
+}
