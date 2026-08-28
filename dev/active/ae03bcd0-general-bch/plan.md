@@ -170,8 +170,10 @@ no untracked assumptions.
 | matrix-materialize | Reference matrix materialization: compact access, caller buffers, opt-in caching | task | Canonical BCH matrices materialize compactly with caller buffers and opt-in caching | block-code-traits, error-surface | REQ-08, INV-CLAIMS | creates 1, touches 1 | code-traits | type-erased-handles, bch-construct-core |
 | fieldmatrix-serialization | Canonical checksummed FieldMatrix serialization with atomic replacement | task | FieldMatrix round-trips through a checksummed, atomic, identity-validated format | field-identity | REQ-08, INV-PRIMITIVES, D-06, D-10 | creates 1, touches 1 | code-traits | quotient-ext-runtime |
 | bch-construct-core | Implement BchSpec and the consecutive-root construction path | task | Primitive consecutive-root BchSpecs construct through one validated, deriving path | bchspec-model, error-surface, field-extension-api, quotient-extension-api | REQ-03, REQ-04, BRIEF-API, INV-CLAIMS, D-02 | creates 1, touches 1 | bch-construction | cyclotomic-closure, quotient-ext-runtime, coding-error-surface |
-| bch-construct-flavors | Complete the construction flavors: seed sets, explicit generators, non-primitive, boundary codes | task | Each remaining BchSpec flavor constructs through the same canonical path | bchspec-model, error-surface | REQ-03, REQ-04, BRIEF-BOUNDS, INV-CLAIMS | touches 1 | bch-construction | bch-construct-core |
-| bch-convenience-ctors | Add delegating convenience constructors with automatic field selection | task | Convenience constructors delegate to the canonical path with automatic or explicit fields | bchspec-model | REQ-03, BRIEF-TERMINOLOGY, BRIEF-API | touches 1 | bch-construction | bch-construct-flavors, conway-registry |
+| bch-construct-seedset | Construction from arbitrary seed sets, including boundary codes | task | Seed-set BchSpecs construct through the canonical path with boundary codes included | bchspec-model, error-surface | REQ-03, REQ-04, INV-CLAIMS | touches 1 | bch-construction | bch-construct-core |
+| bch-construct-generator | Construction from explicitly supplied generator polynomials | task | Explicit-generator BchSpecs verify and construct through the canonical path | bchspec-model, error-surface | REQ-03, REQ-04, INV-CLAIMS | touches 1 | bch-construction | bch-construct-seedset |
+| bch-construct-nonprimitive | Construction at non-primitive lengths with both root conventions | task | Non-primitive BchSpecs construct with derived or explicit roots of unity | bchspec-model, error-surface | REQ-03, INV-CLAIMS | touches 1 | bch-construction | bch-construct-generator |
+| bch-convenience-ctors | Add delegating convenience constructors with automatic field selection | task | Convenience constructors delegate to the canonical path with automatic or explicit fields | bchspec-model | REQ-03, BRIEF-TERMINOLOGY, BRIEF-API | touches 1 | bch-construction | bch-construct-nonprimitive, conway-registry |
 | coordinate-provenance | Implement the coordinate-map provenance abstraction | task | Each derived code carries a composable coordinate map to its mother code | block-code-traits | REQ-05, BRIEF-HELPERS | creates 1 | derived-codes | generic-traits-core |
 | shorten-transform | Generic shortening over arbitrary coordinate sets | task | Arbitrary-coordinate shortening derives dimension by rank with provenance | coordinate-map-api, error-surface | REQ-05, BRIEF-HELPERS, INV-CLAIMS | creates 1 | derived-codes | coordinate-provenance, coding-error-surface |
 | puncture-transform | Generic puncturing over arbitrary coordinate sets | task | Arbitrary-coordinate puncturing derives dimension by rank with provenance | coordinate-map-api, error-surface | REQ-05, INV-CLAIMS | touches 1 | derived-codes | shorten-transform |
@@ -184,10 +186,11 @@ no untracked assumptions.
 | decoder-outcomes | Harden the binary decoder: canonical model, typed outcomes, verified corrections | task | The binary decoder returns verified typed outcomes with fast and diagnostic paths | bchspec-model, error-surface | REQ-09, BRIEF-DIAGNOSTIC, INV-CLAIMS | touches 1 | decoder | bch-construct-core |
 | hip-equivalence | Migrate HIP syndrome/decode support behaviorally intact | task | HIP syndrome/decode support behaves equivalently on the canonical model | error-surface | REQ-09, INV-CLAIMS, INV-UNKNOWNS | touches 2 | decoder | decoder-outcomes |
 | ebch-migration | Migrate library eBCH consumers to the generic extension | task | Generic extension replaces ExtendedBchCode in the gf2-coding library paths | coordinate-map-api | REQ-10, INV-CONSUMERS, D-05 | touches 5 | cutover | extend-transform, decoder-outcomes |
-| cutover-standards | Migrate gf2-coding library consumers to the canonical BCH model | task | Each gf2-coding library consumer runs on the canonical BCH model | bchspec-model, block-code-traits | REQ-10, INV-CONSUMERS, D-02 | touches 6 | cutover | bch-convenience-ctors, encode-batch-workspace, ebch-migration |
-| cutover-tooling | Migrate gf2-coding binaries, examples, benches, and tests | task | Each gf2-coding tooling consumer runs on the canonical BCH model | bchspec-model | REQ-10, INV-CONSUMERS | touches 4 | cutover | cutover-standards |
-| cutover-external | Migrate simulation and kernel-crate BCH consumers | task | Each external BCH consumer runs on the canonical model | bchspec-model | REQ-10, INV-CONSUMERS | touches 2 | cutover | cutover-tooling, hip-equivalence |
-| cutover-removal | Remove the superseded BCH surface | task | The superseded BCH surface is gone with stale references swept | bchspec-model | REQ-10, INV-CONSUMERS, D-02 | touches 3 | cutover | cutover-external |
+| cutover-standards | Migrate gf2-coding library consumers to the canonical BCH model | task | Each gf2-coding library consumer runs on the canonical BCH model | bchspec-model, block-code-traits | REQ-10, INV-CONSUMERS, D-02 | touches 10 | cutover | bch-convenience-ctors, encode-batch-workspace, ebch-migration |
+| cutover-tooling | Migrate gf2-coding binaries, examples, benches, and tests | task | Each gf2-coding tooling consumer runs on the canonical BCH model | bchspec-model | REQ-10, INV-CONSUMERS | touches 12 | cutover | cutover-standards |
+| cutover-external | Migrate simulation and kernel-crate BCH consumers | task | Each external BCH consumer runs on the canonical model | bchspec-model | REQ-10, INV-CONSUMERS | touches 8 | cutover | cutover-tooling, hip-equivalence |
+| cutover-removal | Delete the superseded BCH code surface | task | The superseded BCH code surface is deleted | bchspec-model | REQ-10, INV-CONSUMERS, D-02 | touches 3 | cutover | cutover-external |
+| legacy-reference-sweep | Sweep stale prose references to the removed BCH surface | task | Stale prose references to the removed surface are gone | bchspec-model | REQ-10, INV-CONSUMERS | touches 4 | cutover | cutover-removal |
 | proof-sketch | Author the formal-proof sketch for the algebraic foundations | task | Each proof obligation has a named path, lemma, strategy, and binding mode approved | lean-refinement-boundary, field-extension-api | REQ-12, INV-CLAIMS, D-08, D-12 | creates 1 | verification | systematic-encode |
 | lean-ext-laws | Lean proofs: extension embedding, restriction, and relative Frobenius laws | task | Extension-law lemmas pass the proof gates | lean-refinement-boundary | REQ-12, D-08 | touches 1 | verification | proof-sketch |
 | lean-quotient-reduction | Lean proofs: quotient reduction preserves the represented element | task | Quotient-reduction lemmas pass the proof gates | lean-refinement-boundary | REQ-12, D-08 | touches 1 | verification | lean-ext-laws |
@@ -199,7 +202,7 @@ no untracked assumptions.
 | baseline-survey | Reproducible external-baseline survey and workload selection | task | The strongest external baselines and exact workloads are pinned reproducibly | evidence-protocol | REQ-13, REQ-14, D-04, D-07, INV-PRIORART, INV-UNKNOWNS | creates 1 | performance | — |
 | bench-extension | Extend Criterion benchmarks to the selected workloads | task | Criterion benches cover both selected workloads on the canonical model | workload-selection | REQ-13, D-02, INV-CLAIMS | touches 1 | performance | avx2-batch-kernels, genmatrix-perf |
 | perf-receipts | Committed performance receipts: non-regression, determinism, SOTA comparison | task | Committed receipts show non-regression, determinism, fallback coverage, and the SOTA comparison | evidence-protocol, workload-selection | REQ-13, REQ-14, D-07, D-11 | creates 1 | performance | bench-extension, conformance-suites |
-| researcher-docs | Researcher-oriented rustdoc and runnable examples | task | Researchers have runnable examples and rustdoc for the full canonical surface | systematic-layout, matrix-serialization-format | REQ-15, BRIEF-TERMINOLOGY | touches 2 | docs | cutover-removal, fieldmatrix-serialization, avx2-batch-kernels, genmatrix-perf |
+| researcher-docs | Researcher-oriented rustdoc and runnable examples | task | Researchers have runnable examples and rustdoc for the full canonical surface | systematic-layout, matrix-serialization-format | REQ-15, BRIEF-TERMINOLOGY | touches 2 | docs | legacy-reference-sweep, fieldmatrix-serialization, avx2-batch-kernels, genmatrix-perf |
 | followup-tracking | Create the tracked follow-up issues against the canonical interfaces | task | The three follow-up issues exist against the canonical interfaces | bchspec-model | REQ-16, BRIEF-API | uncertain | docs | bch-api-design |
 
 ```mermaid
@@ -220,37 +223,40 @@ flowchart LR
     N13["matrix-materialize: Reference matrix materialization: compact access, caller buffers, opt-in caching"]
     N14["fieldmatrix-serialization: Canonical checksummed FieldMatrix serialization with atomic replacement"]
     N15["bch-construct-core: Implement BchSpec and the consecutive-root construction path"]
-    N16["bch-construct-flavors: Complete the construction flavors: seed sets, explicit generators, non-primitive, boundary codes"]
-    N17["bch-convenience-ctors: Add delegating convenience constructors with automatic field selection"]
-    N18["coordinate-provenance: Implement the coordinate-map provenance abstraction"]
-    N19["shorten-transform: Generic shortening over arbitrary coordinate sets"]
-    N20["puncture-transform: Generic puncturing over arbitrary coordinate sets"]
-    N21["extend-transform: Generic one-symbol extension transformation"]
-    N22["systematic-encode: General systematic BCH encoding across supported base fields"]
-    N23["encode-batch-workspace: Allocation-free single, workspace batch, and parallel batch encoding"]
-    N24["encode-dispatch: Profile-driven dispatch among equivalent batch-encoding algorithms"]
-    N25["avx2-batch-kernels: AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback"]
-    N26["genmatrix-perf: Optimize the reference generator-matrix materialization"]
-    N27["decoder-outcomes: Harden the binary decoder: canonical model, typed outcomes, verified corrections"]
-    N28["hip-equivalence: Migrate HIP syndrome/decode support behaviorally intact"]
-    N29["ebch-migration: Migrate library eBCH consumers to the generic extension"]
-    N30["cutover-standards: Migrate gf2-coding library consumers to the canonical BCH model"]
-    N31["cutover-tooling: Migrate gf2-coding binaries, examples, benches, and tests"]
-    N32["cutover-external: Migrate simulation and kernel-crate BCH consumers"]
-    N33["cutover-removal: Remove the superseded BCH surface"]
-    N34["proof-sketch: Author the formal-proof sketch for the algebraic foundations"]
-    N35["lean-ext-laws: Lean proofs: extension embedding, restriction, and relative Frobenius laws"]
-    N36["lean-quotient-reduction: Lean proofs: quotient reduction preserves the represented element"]
-    N37["lean-closure: Lean proofs: q-cyclotomic seed closure"]
-    N38["lean-generator: Lean proofs: generator base-field membership and root correctness"]
-    N39["lean-encoding: Lean proofs: systematic encoding correctness"]
-    N40["conformance-suites: Shared property and conformance suites across field classes"]
-    N41["oracle-agreement: External oracle and standards-vector agreement"]
-    N42["baseline-survey: Reproducible external-baseline survey and workload selection"]
-    N43["bench-extension: Extend Criterion benchmarks to the selected workloads"]
-    N44["perf-receipts: Committed performance receipts: non-regression, determinism, SOTA comparison"]
-    N45["researcher-docs: Researcher-oriented rustdoc and runnable examples"]
-    N46["followup-tracking: Create the tracked follow-up issues against the canonical interfaces"]
+    N16["bch-construct-seedset: Construction from arbitrary seed sets, including boundary codes"]
+    N17["bch-construct-generator: Construction from explicitly supplied generator polynomials"]
+    N18["bch-construct-nonprimitive: Construction at non-primitive lengths with both root conventions"]
+    N19["bch-convenience-ctors: Add delegating convenience constructors with automatic field selection"]
+    N20["coordinate-provenance: Implement the coordinate-map provenance abstraction"]
+    N21["shorten-transform: Generic shortening over arbitrary coordinate sets"]
+    N22["puncture-transform: Generic puncturing over arbitrary coordinate sets"]
+    N23["extend-transform: Generic one-symbol extension transformation"]
+    N24["systematic-encode: General systematic BCH encoding across supported base fields"]
+    N25["encode-batch-workspace: Allocation-free single, workspace batch, and parallel batch encoding"]
+    N26["encode-dispatch: Profile-driven dispatch among equivalent batch-encoding algorithms"]
+    N27["avx2-batch-kernels: AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback"]
+    N28["genmatrix-perf: Optimize the reference generator-matrix materialization"]
+    N29["decoder-outcomes: Harden the binary decoder: canonical model, typed outcomes, verified corrections"]
+    N30["hip-equivalence: Migrate HIP syndrome/decode support behaviorally intact"]
+    N31["ebch-migration: Migrate library eBCH consumers to the generic extension"]
+    N32["cutover-standards: Migrate gf2-coding library consumers to the canonical BCH model"]
+    N33["cutover-tooling: Migrate gf2-coding binaries, examples, benches, and tests"]
+    N34["cutover-external: Migrate simulation and kernel-crate BCH consumers"]
+    N35["cutover-removal: Delete the superseded BCH code surface"]
+    N36["legacy-reference-sweep: Sweep stale prose references to the removed BCH surface"]
+    N37["proof-sketch: Author the formal-proof sketch for the algebraic foundations"]
+    N38["lean-ext-laws: Lean proofs: extension embedding, restriction, and relative Frobenius laws"]
+    N39["lean-quotient-reduction: Lean proofs: quotient reduction preserves the represented element"]
+    N40["lean-closure: Lean proofs: q-cyclotomic seed closure"]
+    N41["lean-generator: Lean proofs: generator base-field membership and root correctness"]
+    N42["lean-encoding: Lean proofs: systematic encoding correctness"]
+    N43["conformance-suites: Shared property and conformance suites across field classes"]
+    N44["oracle-agreement: External oracle and standards-vector agreement"]
+    N45["baseline-survey: Reproducible external-baseline survey and workload selection"]
+    N46["bench-extension: Extend Criterion benchmarks to the selected workloads"]
+    N47["perf-receipts: Committed performance receipts: non-regression, determinism, SOTA comparison"]
+    N48["researcher-docs: Researcher-oriented rustdoc and runnable examples"]
+    N49["followup-tracking: Create the tracked follow-up issues against the canonical interfaces"]
     N0 --> N1
     N1 --> N2
     N2 --> N3
@@ -272,52 +278,55 @@ flowchart LR
     N11 --> N15
     N15 --> N16
     N16 --> N17
-    N8 --> N17
-    N10 --> N18
+    N17 --> N18
     N18 --> N19
-    N11 --> N19
-    N19 --> N20
+    N8 --> N19
+    N10 --> N20
     N20 --> N21
-    N15 --> N22
-    N10 --> N22
+    N11 --> N21
+    N21 --> N22
     N22 --> N23
-    N23 --> N24
-    N42 --> N24
+    N15 --> N24
+    N10 --> N24
     N24 --> N25
-    N13 --> N26
-    N24 --> N26
-    N15 --> N27
-    N27 --> N28
-    N21 --> N29
-    N27 --> N29
-    N17 --> N30
-    N23 --> N30
+    N25 --> N26
+    N45 --> N26
+    N26 --> N27
+    N13 --> N28
+    N26 --> N28
+    N15 --> N29
     N29 --> N30
-    N30 --> N31
+    N23 --> N31
+    N29 --> N31
+    N19 --> N32
+    N25 --> N32
     N31 --> N32
-    N28 --> N32
     N32 --> N33
-    N22 --> N34
+    N33 --> N34
+    N30 --> N34
     N34 --> N35
     N35 --> N36
-    N36 --> N37
+    N24 --> N37
     N37 --> N38
     N38 --> N39
-    N17 --> N40
-    N21 --> N40
-    N13 --> N40
-    N22 --> N40
-    N17 --> N41
-    N22 --> N41
-    N25 --> N43
-    N26 --> N43
-    N43 --> N44
-    N40 --> N44
-    N33 --> N45
-    N14 --> N45
-    N25 --> N45
-    N26 --> N45
-    N9 --> N46
+    N39 --> N40
+    N40 --> N41
+    N41 --> N42
+    N19 --> N43
+    N23 --> N43
+    N13 --> N43
+    N24 --> N43
+    N19 --> N44
+    N24 --> N44
+    N27 --> N46
+    N28 --> N46
+    N46 --> N47
+    N43 --> N47
+    N36 --> N48
+    N14 --> N48
+    N27 --> N48
+    N28 --> N48
+    N9 --> N49
 ```
 <!-- jit:breakdown-overview:end -->
 
@@ -344,9 +353,21 @@ flowchart LR
 
 ## Investigation sources
 
-- [Investigation](investigation.md) — claim classifications, complete consumer
-  inventories, primitive verification, architecture fit; exhaustive lists live
-  there.
-- [Planning brief](../../plans/ae03bcd0-general-bch/planning-brief.md) — owner
-  decisions the epic contract does not carry (API shape, dispatch, diagnostics,
-  helpers, wiring, terminology).
+The manifest's `source_refs` resolve in this declared universe:
+
+- `REQ-01`…`REQ-16` — the epic contract's success criteria (issue `ae03bcd0`).
+- `D-01`…`D-13` — the rows of the Material risks and owner decisions table
+  above.
+- `INV-*` — sections of [investigation.md](investigation.md):
+  `INV-CLAIMS` = "Claim classification", `INV-CONSUMERS` = "Consumer
+  inventory", `INV-PRIORART` = "Prior art", `INV-PRIMITIVES` = "Primitive
+  verification", `INV-ARCH` = "Architecture fit", `INV-UNKNOWNS` = "Open
+  unknowns". Exhaustive consumer and file inventories live there.
+- `BRIEF-*` — sections of the
+  [planning brief](../../plans/ae03bcd0-general-bch/planning-brief.md):
+  `BRIEF-API` = "API shape", `BRIEF-DISPATCH` = "Encoding architecture",
+  `BRIEF-DIAGNOSTIC` = the decoder-diagnostic bullet of "API shape",
+  `BRIEF-HELPERS` = the count-based-conveniences bullet of "API shape",
+  `BRIEF-WIRING` = "Breakdown wiring", `BRIEF-TERMINOLOGY` = the
+  designed-distance bullet of "Construction semantics", `BRIEF-BOUNDS` = the
+  stronger-bounds exclusion bullet of "Construction semantics".

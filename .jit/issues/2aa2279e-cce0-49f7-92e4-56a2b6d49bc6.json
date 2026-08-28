@@ -49,7 +49,7 @@
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
-      "label": "Authoritative breakdown manifest (37 issues, 55 edges)",
+      "label": "Authoritative breakdown manifest",
       "path": "dev/active/ae03bcd0-general-bch/breakdown.json"
     }
   ],
@@ -59,9 +59,9 @@
   ],
   "gates_status": {
     "plan-review": {
-      "status": "pending",
-      "updated_at": "2026-08-28T21:36:52.719617558Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-28T22:36:04.636953799Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "2aa2279e-cce0-49f7-92e4-56a2b6d49bc6",
@@ -76,5 +76,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-08-28T22:27:12.961806626Z"
+  "updated_at": "2026-08-28T22:38:24.551776659Z"
 }
