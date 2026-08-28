@@ -9770,3 +9770,7 @@
 {"fields":["documents"],"id":"754dc557-7f5b-4a98-99d1-f05b69c4a7a4","issue_id":"312200e4-dce9-44d3-8b55-c20c610e1c03","timestamp":"2026-08-27T16:56:12.669300411Z","type":"issue_updated","updated_by":"doc-add"}
 {"from":"ready","id":"8b7436af-1286-4620-bae6-d6d1d9e2583a","issue_id":"b7157be6-16d8-4050-834c-e996d4fa27c3","timestamp":"2026-08-27T16:59:13.496388246Z","to":"done","type":"issue_state_changed"}
 {"id":"d2732c10-f21d-4ff0-884a-27ce831ad98c","issue_id":"b7157be6-16d8-4050-834c-e996d4fa27c3","timestamp":"2026-08-27T16:59:13.496388246Z","type":"issue_completed"}
+{"id":"8e494f67-2148-4b8b-a928-0eda6068ed5d","issue_id":"ae03bcd0-8881-4308-99f5-cad2b3c717d1","priority":"high","timestamp":"2026-08-28T21:14:59.928863085Z","title":"Harden and generalize BCH codes over finite fields","type":"issue_created"}
+{"from":"ready","id":"33486f8d-1995-41df-9c17-e1a6278fe2dc","issue_id":"ae03bcd0-8881-4308-99f5-cad2b3c717d1","timestamp":"2026-08-28T21:15:24.223172556Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"86dc663b-9b24-4e6a-be73-e012fde7b73f","issue_id":"ae03bcd0-8881-4308-99f5-cad2b3c717d1","timestamp":"2026-08-28T21:15:24.223172556Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"b83f8949-7740-41db-ac67-a5e447c5af29","issue_id":"2caf738d-b0e8-487f-b32f-537277767352","timestamp":"2026-08-28T21:15:39.213098495Z","type":"issue_updated","updated_by":"dependency-add"}
