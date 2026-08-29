@@ -28,6 +28,19 @@
       "format": "markdown",
       "label": "Determinant-cost v5 behavioral tests",
       "path": "dev/benchmarks/permanent_campaign/test_determinant_cost_v5.py"
+    },
+    {
+      "commit": "0273d0e3",
+      "doc_type": "research",
+      "label": "Determinant-cost v5 machine receipt",
+      "path": "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv"
+    },
+    {
+      "commit": "0273d0e3",
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Determinant-cost v5 rendered receipt",
+      "path": "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md"
     }
   ],
   "first_ready_at": "2026-08-29T07:45:28.845722952Z",
@@ -69,5 +82,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Complete determinant marginal-cost coverage for campaign cells",
-  "updated_at": "2026-08-29T11:42:59.331139828Z"
+  "updated_at": "2026-08-29T12:06:20.173175872Z"
 }
