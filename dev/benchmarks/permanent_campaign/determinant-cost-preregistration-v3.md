@@ -72,9 +72,12 @@ the recorded address space.
 
 ## Receipt and pooling
 
-The canonical machine-readable receipt is
-`dev/benchmarks/permanent_campaign/determinant-cost.csv` with schema
-`determinant-companion-v3`. It contains one outcome row for every planned
+The versioned all-cell machine-readable receipt is
+`dev/benchmarks/permanent_campaign/determinant-cost-all-cells.csv` with schema
+`determinant-companion-v3`. The representative-cell v2 receipt remains
+immutable at its existing path; v3 evolves the same harness and measurement
+contract rather than splicing new rows into old provenance. The v3 receipt
+contains one outcome row for every planned
 $(q,n,e)$, including failed or censored outcomes. A measured row records the
 five raw repetition elapsed times, fixed calls per repetition, total sample
 count, pooled elapsed determinant time, warm-up work, fixture starts, and the
