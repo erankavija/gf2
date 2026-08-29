@@ -10122,3 +10122,7 @@
 {"assignee":"agent:codex-sol","id":"d35caaac-d6e0-4255-a0aa-013817103c5b","issue_id":"86185f88-c731-4c12-b50b-c3d1aabfa867","timestamp":"2026-08-29T21:38:38.319452687Z","type":"issue_claimed"}
 {"from":"ready","id":"678062a6-4d11-470e-b125-b0bafa31cc06","issue_id":"6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7","timestamp":"2026-08-29T21:38:46.956559288Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:codex-luna","id":"39e48bce-61ec-4884-9af6-fff9d5bf08bd","issue_id":"6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7","timestamp":"2026-08-29T21:38:46.956559288Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"6507bcf8-e96f-4c82-9613-a51efbe04d74","issue_id":"6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7","timestamp":"2026-08-29T22:17:13.350300662Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"228dda72-4539-4367-a806-cca178d1c098","issue_id":"6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7","timestamp":"2026-08-29T22:19:15.314714697Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"a8f81a1e-bdd7-4a11-8f5b-9e2eb1ed3fb3","issue_id":"6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7","timestamp":"2026-08-29T22:19:42.469900316Z","to":"done","type":"issue_state_changed"}
+{"id":"da92cc7b-4f70-4071-928a-078fcf3542bf","issue_id":"6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7","timestamp":"2026-08-29T22:19:42.469900316Z","type":"issue_completed"}
