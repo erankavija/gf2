@@ -160,7 +160,7 @@
      "short_id": "ec22205e",
      "title": "Complete determinant marginal-cost coverage for campaign cells",
      "classification": "research",
-     "status": "rework-2 after owner-approved counter reset: canonical v5 preregistration and source cutover are committed, but independent readiness review found that a signal-truncated addressed scratch row can be misclassified as measured and prevent the complete censored receipt promised by REQ-02. Fix and re-review this failure-retention path before asking the owner to schedule timing; timing remains held."
+     "status": "escalated at rework MAX after owner-approved counter reset: canonical v5 preregistration and source cutover are committed, and rework-2 closes truncation after a parseable address, but independent review proved that interruption before q/n/process_index is parseable still aborts before the complete 315-row censored receipt can be written. Owner decision is required before any further source repair. Timing remains held and no v5 receipt, report, or scratch directory exists."
     }
    ],
    "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
@@ -359,6 +359,17 @@
   }
  ],
  "escalations": [
+  {
+   "issue": "ec22205e",
+   "reason": "At rework MAX after the owner-approved canonical-v5 reset, independent readiness review proved that the failure-retention repair handles a truncated scratch row only after q/n/process_index are parseable. A signal can interrupt the Rust writeln before those fields are complete; Python then calls int(None) while indexing scratch rows and aborts before writing the promised complete 315-row censored receipt. This violates hard REQ-02 and REQ-04, so timing cannot be scheduled at HEAD 1ddcc266.",
+   "status": "pending",
+   "requested_at": "2026-08-29T13:04:40+03:00",
+   "options": [
+    "Authorize one final bounded source-only repair with a counter reset: treat only an incomplete, unparseable final scratch record as interrupted output, retain complete preceding rows, fill every missing planned address with signal/process/harness censoring according to child status, add early-truncation and exit-zero regressions, and require a fresh independent readiness PASS before scheduling.",
+    "Stop the canonical v5 rerun and leave ec22205e, the wave-8 freeze, and epic execution blocked; no timing or evidence artifact is produced."
+   ],
+   "lead_recommendation": "Authorize the final bounded repair. The remaining defect is local and precisely reproduced; a tail-aware fail-closed parser preserves the preregistered complete-receipt contract without changing the statistical protocol, schema, canonical-cutover, or historical evidence."
+  },
   {
    "issue": "ec22205e",
    "reason": "At rework MAX, formal research-review found three new publication-evidence gaps in the canonical v4 determinant receipt: explicit RNG identity is absent from the machine manifest, the five-process timing table has no uncertainty/error columns, and the fixed-N/twelve-hour baseline is not pinned to its authoritative protocol artifact and revision.",
