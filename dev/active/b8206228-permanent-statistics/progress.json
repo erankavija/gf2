@@ -363,6 +363,27 @@
       "reason": "Found during 7a816262 freeze validation: permanent_dataset emission-check calls approve_emission, which hashes the running executable, so it compares permanent_dataset's digest against the manifest's pinned permanent_campaign emitter and refuses for every valid frozen manifest. The writer path applies the same guard to its own matching digest, so execution is unaffected.",
       "wave": "8 (interleaved)",
       "status": "ready"
+    },
+    {
+      "short_id": "69e7d174",
+      "title": "research-review Tier 1 misattributes dependency citation labels to the issue under review",
+      "type": "bug",
+      "wave": "8 (immediate)",
+      "reason": "owner-approved gate-scoping fix unblocking 7a816262"
+    },
+    {
+      "short_id": "6dfb1b5e",
+      "title": "Campaign README promises execution receipts quote the sidecar manifest SHA-256, but the driver emits blake3",
+      "type": "bug",
+      "wave": "9",
+      "reason": "freeze audit finding 5; wired before all three campaign arms"
+    },
+    {
+      "short_id": "bc6155fa",
+      "title": "Committed pre-draw execution receipt binding protocol, manifest, and campaign identity",
+      "type": "task",
+      "wave": "9",
+      "reason": "freeze audit finding 6; wired before all three campaign arms"
     }
   ],
   "escalations": [

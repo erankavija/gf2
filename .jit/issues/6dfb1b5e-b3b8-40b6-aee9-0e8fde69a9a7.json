@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-29T16:32:08.156774705Z",
+  "dependencies": [],
+  "description": "`dev/simulation_results/permanent-zero-fraction/README.md` states that \"an\nexecution receipt that identifies a manifest quotes the same value\" as the\nsidecar's `manifest.json` SHA-256 entry. The only manifest digest the execution\nmachinery actually produces is `blake3::hash` over a fresh\n`serde_json::to_vec(manifest)` re-serialization\n(`crates/gf2-sim/src/permanent_campaign/driver.rs:206`, consumed by\n`campaign_config_hash` at `driver.rs:190-199`). An auditor comparing a field\ncheckpoint's recorded hash against `checksums.sha256` finds two unrelated\nvalues with no way to tell which artifact is wrong.\n\nPre-existing before the campaign freeze; surfaced by the independent freeze\naudit (finding 5). Either the driver's receipt identity must become SHA-256\nover the on-disk manifest bytes, or the README must describe the blake3\nre-serialization identity and its relation to the sidecar value. The choice\nmust land before the first campaign arm executes, because field checkpoints\nwritten during draws are permanent evidence.\n\n## Success criteria\n\n- [hard] REQ-01: The digest algorithm and byte source of the execution\n  receipt's manifest identity match between the campaign README's prose and\n  the driver's emitted value, verified by a test or transcribed run.\n- [hard] REQ-02: An auditor's comparison path from a field checkpoint to the\n  frozen manifest identity is stated in the README and actually reproduces.",
+  "documents": [],
+  "first_ready_at": "2026-08-29T16:32:08.156774705Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-29T16:32:28.115584175Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-29T16:32:28.318059173Z",
+      "updated_by": null
+    }
+  },
+  "id": "6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7",
+  "labels": [
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Campaign README promises execution receipts quote the sidecar manifest SHA-256, but the driver emits blake3 over a re-serialization",
+  "updated_at": "2026-08-29T16:32:28.318059173Z"
+}

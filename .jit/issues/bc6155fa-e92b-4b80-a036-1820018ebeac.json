@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-29T16:32:16.630625489Z",
+  "dependencies": [],
+  "description": "`dev/simulation_results/permanent-zero-fraction/protocol.md` requires a\n\"committed pre-draw execution receipt [that] records this repository-relative\npath, content SHA-256, and corresponding root-manifest identity\". No committed\nartifact claims that role. The freeze record\n(`dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md`)\nsupplies all three bindings — protocol path, protocol SHA-256\n`249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639`, and the\ncampaign/manifest identity — but never claims the receipt role.\n\nSurfaced by the independent freeze audit (finding 6). This is a live protocol\nobligation: it must be discharged before the first campaign draw. The likely\nminimal resolution designates the freeze record as the pre-draw execution\nreceipt with an explicit role claim, or commits a small dedicated receipt that\nnames all three bindings.\n\n## Success criteria\n\n- [hard] REQ-01: A committed artifact explicitly claims the protocol's\n  pre-draw execution receipt role and records the protocol's\n  repository-relative path, its content SHA-256, and the corresponding\n  root-manifest identity.\n- [hard] REQ-02: The protocol's governing clause and the receipt artifact\n  resolve to each other without ambiguity (path or identity cross-reference in\n  both directions).\n- [hard] REQ-03: The receipt is committed before any non-fixture campaign\n  draw exists in repository history.",
+  "documents": [],
+  "first_ready_at": "2026-08-29T16:32:16.630625489Z",
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-08-29T16:32:28.516267420Z",
+      "updated_by": null
+    }
+  },
+  "id": "bc6155fa-e92b-4b80-a036-1820018ebeac",
+  "labels": [
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Committed pre-draw execution receipt binding protocol, manifest, and campaign identity",
+  "updated_at": "2026-08-29T16:32:28.516267420Z"
+}
