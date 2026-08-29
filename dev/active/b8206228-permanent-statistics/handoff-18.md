@@ -10,7 +10,7 @@
 - Wave in progress: wave 8 of 13.
 - Children summary: 16 done, 1 in_progress, 1 ready, 13 backlog, 0 rejected across the execution-wave plan, plus new bug `e1d45c20` (ready).
 - Active claims: `7a816262` — `agent:sol-freeze`, claimed 2026-08-29; rework count 2 = MAX.
-- Open escalations: **one, unanswered — see "Open questions needing invoker input".** The owner ended the session with "Handoff now." rather than selecting an option, so the `research-review` Tier 1 decision is still open.
+- Open escalations: **two, unanswered — see "Open questions needing invoker input".** The owner ended the session with "Handoff now." rather than selecting an option, so the `research-review` Tier 1 decision is still open.
 - Progress file: `progress.json` in `dev/active/b8206228-permanent-statistics`, the epic artifact directory returned by `jit doc dir b8206228 dev/active`.
 
 ## What just happened
@@ -39,6 +39,15 @@
 - Contrast case proving the check normally works: `a82f2dd9` failed the same check on `cites:Yue2022`, but `a82f2dd9` **owns** that label, so that was genuine label/text drift on the issue itself.
 - This is unsatisfiable without either a shared-gate change or a scope change to `7a816262`, so per invariant 3 and escalation policy entries 4 and 8 the lead escalated instead of working around it. **No workaround was applied.**
 
+### Independent audit returned VERDICT: FAIL
+
+The `freeze-auditor` (native Opus, read-only) reported after the handoff was first written. All eight hard criteria pass on their literal wording; the FAIL is driven by findings 1 and 2, which are defects in the freeze **record**, not in the decisions it records. The lead confirmed findings 1 and 4 directly.
+
+1. **MEDIUM — the committed freeze record narrates the pre-commit worker tree as current state, and commit `57c9633f` falsified those sentences in the same act that added them.** `freeze.md:192` says "the lead-owned commit does not yet contain these manifest bytes"; `:196` transcribes `emission-check` output as `...differs from its committed content`; `:201` says "This validation cannot pass in the uncommitted worker tree"; `:133` says "after that commit, repository history supplies REQ-02's final ordering evidence". The `:185-190` diff transcript no longer reproduces because `observe_provenance` (`crates/gf2-sim/src/permanent_campaign/provenance.rs:631`) overwrites `git_revision` with live HEAD. `dev/simulation_results` is a configured permanent path (`.jit/config.toml:164`), so the **present-tense-prose** invariant (`AGENTS.md:145`) binds this file. **Lead confirmed by reading `freeze.md` at HEAD.** Note that `doc-review` PASSED over this — the gate did not catch it, and neither did the lead's Tier 2.5 sweep, which checked the repository for stale references to the freeze but not the freeze record's own pre-commit tense.
+2. **MEDIUM — `freeze.md` is the sole record of REQ-04, REQ-05, REQ-07 and REQ-08's construction, and no committed artifact records its digest.** `checksums.sha256` holds a single `manifest.json` entry and `manifest_content_hash` (`provenance.rs:1036`) hashes `manifest.json` alone, so an edit to the per-cell level at `freeze.md:34`, `K = 63` at `:36`, the stream-index construction at `:51`, or a measured determinant cost in the `:63-125` table passes `sha256sum -c`, `emission-check` and `verify_dataset` unchanged. REQ-06's "a later modification is detectable rather than silent" therefore does not reach the half of the frozen content the `deny_unknown_fields` schema cannot carry. **The obvious fix does not work:** adding a `freeze.md` line to `checksums.sha256` makes `verify_dataset` raise `IntegrityFault::OutsideRawSet` (`provenance.rs:1096`) because `freeze.md` is not in `DatasetLayout`'s RawData set.
+3. **LOW — `freeze.md` sits at a campaign-root position the campaign README's closed layout table does not admit.** `dev/simulation_results/permanent-zero-fraction/README.md:29-36` gives the layout-and-ownership table whose only report class is `derived/`, and `:45-48` gives the reason: a checksum file cannot close if it also covers reports that quote its value — which `freeze.md:13` does. `freeze.md:3` states the placement deliberately, but no README row was added.
+4. **LOW — supersession pointers are missing on the phase-1 drafts.** The first half of this finding is **stale**: the lead linked `backend-selection-v1.md`, `manifest.json`, `freeze.md` and `checksums.sha256` to `7a816262` via `jit doc add` after the audit brief was written, so `jit doc list 7a816262` now returns 7 documents. The remaining half stands: `freeze-feasibility-draft.md` and `gap-list.md` are still linked and still assert draft status in the present tense with no supersession pointer to the final artifacts. The auditor's report was truncated mid-finding-4 and the remainder had not arrived when the session ended.
+
 ### New bug filed
 
 - `e1d45c20` (`type:bug`, ready, gates `cargo-ci` + `code-review`, wired under `b8206228`): `permanent_dataset emission-check` calls `approve_emission`, which hashes the **running** executable, so it compares `permanent_dataset`'s digest (`86e88750…`) against the manifest's pinned `permanent_campaign` emitter digest (`2d6edcd9…`) and refuses for every valid frozen manifest. `crates/gf2-sim/src/bin/permanent_dataset.rs:29` misdescribes the subcommand as running the writer's guard. The writer path at `crates/gf2-sim/src/bin/permanent_campaign.rs:204` applies the same guard to its own matching digest, so campaign execution is unaffected.
@@ -47,7 +56,7 @@
 
 - [ ] **Resolve the open escalation first.** Until then `7a816262` cannot close and waves 9–13 stay blocked behind it. The three options, verbatim as presented, are in "Open questions needing invoker input" below.
 - [ ] After the decision lands, re-run `jit gate evaluate 7a816262 research-review` and let Tier 2 (the AI methodology review) actually run — it has never executed for this issue, so the freeze has had **no** independent research-methodology review yet.
-- [ ] Collect the `freeze-auditor` independent audit result. It was dispatched (native Opus, read-only) against `/tmp/claude-1000/-home-vkaskivuo-Projects-gf2/a250772b-21dd-4adf-ac04-c775a42e10b2/scratchpad/audit-7a816262.md` and had not reported when the session ended. Re-run that brief if the result is gone.
+- [ ] **Resolve the independent audit's VERDICT: FAIL on `7a816262` (second open escalation).** Findings 1 and 2 below are defects in the committed freeze record. The rework counter is at MAX, so these escalate rather than rework.
 - [ ] Then perform the lead six-tier review of `7a816262` and close it. Its rework counter is at MAX, so any gate or review failure escalates rather than reworking.
 - [ ] Disposition the `e1d45c20` inspection-tool defect before the first campaign draw, as `freeze.md` §"Pre-draw and validation record" requires.
 - [ ] After `7a816262` closes, dispatch wave 9: `3f664839` (design) and `73317b2e` (implementation). Both wait only on `7a816262`.
@@ -62,6 +71,8 @@
 - **Do NOT re-derive the 63-cell selection from scratch to review it.** The lead's independent derivation is reproducible from the committed CSVs alone and is saved at `<scratchpad>/expected-backends.json` and `expected-cells.json`; regenerate it with the same rule set rather than spot-checking.
 - **Do NOT let the `(3,27)` cell mislead you.** Its rule-3-ineligible accelerator arm has the *higher* finite-only mean (38.750780/s vs 33.762700/s for the selected `intra_matrix_parallel`). The receipt records that mean explicitly marked "not ranked"; that is correct, not an error to fix.
 - **Do NOT `git add`/`git commit` while a worker runs.** Lead and worker share one checkout and one git index (existing trap, re-confirmed as a live risk this session by two concurrent AI review gates plus a read-only auditor).
+- **Do NOT assume `doc-review` catches present-tense-prose violations.** It passed `7a816262` while `freeze.md` narrated the pre-commit worker tree as current state in a permanent path. The independent audit caught it; the gate did not.
+- **Do NOT sweep only the repository for stale references when committing a record that describes its own commit.** The lead's Tier 2.5 sweep checked whether other files referenced the freeze as pending, but not whether the freeze record's own prose was falsified by the act of committing it. A record that says "the commit does not yet contain these bytes" becomes false the moment it is committed.
 - All unresolved traps in `handoff-17.md` and earlier handoffs remain in force.
 
 ## Open questions needing invoker input
@@ -73,6 +84,10 @@
     2. Add the three `cites:` labels and a References section to `7a816262`. An issue scope change; makes the issue claim literature it does not use.
     3. File the scoping defect and leave the gate red, stalling the epic's critical path.
   - Lead recommendation: option 1. The script's own comment describes check 3 as a "label/text drift check" on the issue's labels; applying it to dependency labels is a defect in the check, and option 2 falsifies the issue description to satisfy a grep.
+
+- **Question: how should the independent audit's two MEDIUM findings on `7a816262` be resolved?** Not put to the owner; the session ended first.
+  - Context: `7a816262` is at MAX rework, so per escalation policy entry 5 these findings escalate rather than being reworked. Finding 1 is a present-tense-prose invariant violation in a permanent path that `doc-review` passed over. Finding 2 is a genuine gap in REQ-06's tamper-detection whose obvious fix breaks `verify_dataset`.
+  - Lead recommendation: finding 1 is a bounded, mechanical correction to `freeze.md`'s validation section — rewrite the pre-commit narration as a post-commit record and re-transcribe the `emission-check` output that actually reproduces at HEAD. Finding 2 needs an owner decision on where a non-raw frozen record's digest belongs, since `checksums.sha256` structurally cannot hold it.
 
 ## Reference artefacts
 
