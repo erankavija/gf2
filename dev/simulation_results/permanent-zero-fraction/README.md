@@ -285,7 +285,8 @@ $ cargo run -p gf2-sim --release --bin permanent_dataset -- <subcommand> [campai
 | Subcommand | Does |
 | --- | --- |
 | `revision` | Prints the repository-wide revision observed at command start as provenance context |
-| `emission-check <dir>` | Runs the binary-identity guard that `permanent_campaign` passes before writing, printing the approved executable digest or the refusal |
+| `emission-check <dir>` | Without an emitter path, verifies everything except writer identity, reports the manifest's pinned emitter digest, and states that writer identity is asserted only by the writer's own guard at emission time |
+| `emission-check <dir> <emitter-path>` | Hashes the named emitter and runs the full emission guard, including writer identity, printing the approved executable digest or the refusal |
 | `checksums <dir>` | Renders the integrity file for a finished dataset on standard output; it writes nothing, so redirect it into `checksums.sha256` |
 | `conform <dir>` | Validates the complete schema and cross-document shard and summary aggregates without modifying the dataset |
 | `verify <dir>` | Re-checks a dataset against its integrity file and its recorded source |
