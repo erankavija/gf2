@@ -28,46 +28,14 @@ MEASURED = "measured"
 OUTCOMES = {MEASURED, "process_failed", "signal_censored", "harness_censored"}
 BENCHMARK_WRAPPER_PATH = "dev/scripts/ccx1-bench-flock.sh"
 BENCHMARK_WRAPPER = f"{BENCHMARK_WRAPPER_PATH}:ccx1"
-
-
-@dataclasses.dataclass(frozen=True)
-class CohortConfig:
-    """Frozen identity and artifact paths for one independent cohort."""
-
-    key: str
-    schema_version: str
-    seed_root: int
-    preregistration_path: str
-    receipt_path: str
-    report_path: str
-
-
-V3 = CohortConfig(
-    key="v3",
-    schema_version="determinant-companion-v3",
-    seed_root=0xEC22_205E_0000_0000,
-    preregistration_path=(
-        "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v3.md"
-    ),
-    receipt_path="dev/benchmarks/permanent_campaign/determinant-cost-all-cells.csv",
-    report_path="dev/benchmarks/permanent_campaign/determinant-cost-all-cells.md",
+SCHEMA_VERSION = "determinant-companion-v4"
+SEED_ROOT = 0xEC22_205E_0000_0001
+PREREGISTRATION_PATH = (
+    "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v4.md"
 )
-V4 = CohortConfig(
-    key="v4",
-    schema_version="determinant-companion-v4",
-    seed_root=0xEC22_205E_0000_0001,
-    preregistration_path=(
-        "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v4.md"
-    ),
-    receipt_path="dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v2.csv",
-    report_path="dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v2.md",
-)
-COHORTS = {cohort.key: cohort for cohort in (V3, V4)}
-COHORTS_BY_SCHEMA = {cohort.schema_version: cohort for cohort in COHORTS.values()}
-
-# Compatibility names used by the original v3 tests and consumers.
-SCHEMA_VERSION = V3.schema_version
-SEED_ROOT = V3.seed_root
+RECEIPT_PATH = "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.csv"
+REPORT_PATH = "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.md"
+RUNNER_PATH = "dev/benchmarks/permanent_campaign/determinant_cost_v4.py"
 
 FIELDNAMES = [
     "schema_version",
@@ -143,15 +111,15 @@ TIMING_FIELDS = [
     "finished_unix_ns",
 ]
 
-COMMON_RELEVANT_SOURCE_PATHS = [
+RELEVANT_SOURCE_PATHS = [
     "Cargo.toml",
     "Cargo.lock",
     "crates/gf2-core",
     "crates/gf2-algebra",
     BENCHMARK_WRAPPER_PATH,
-    "dev/benchmarks/permanent_campaign/determinant_cost_v3.py",
+    RUNNER_PATH,
+    PREREGISTRATION_PATH,
 ]
-RELEVANT_SOURCE_PATHS = [*COMMON_RELEVANT_SOURCE_PATHS, V3.preregistration_path]
 
 
 class ReceiptError(ValueError):
@@ -189,8 +157,8 @@ def fixed_sample_count(q: int, n: int) -> int:
     raise ReceiptError(f"cell ({q},{n}) is outside the frozen campaign universe")
 
 
-def cell_seed(q: int, n: int, cohort: CohortConfig = V3) -> int:
-    return cohort.seed_root ^ (q << 48) ^ (n << 32)
+def cell_seed(q: int, n: int) -> int:
+    return SEED_ROOT ^ (q << 48) ^ (n << 32)
 
 
 def fixture_starts(process_index: int) -> list[int]:
@@ -214,14 +182,8 @@ def command_output(args: Sequence[str]) -> str:
     return completed.stdout.strip()
 
 
-def relevant_source_paths(cohort: CohortConfig) -> list[str]:
-    """Return the complete tracked producing-source closure for a cohort."""
-    return [*COMMON_RELEVANT_SOURCE_PATHS, cohort.preregistration_path]
-
-
 def relevant_source_status(
     git_command: Sequence[str] = ("git",),
-    cohort: CohortConfig = V3,
 ) -> str:
     """Return tracked modifications in the measurement source closure."""
     return command_output(
@@ -231,7 +193,7 @@ def relevant_source_status(
             "--porcelain",
             "--untracked-files=no",
             "--",
-            *relevant_source_paths(cohort),
+            *RELEVANT_SOURCE_PATHS,
         ]
     )
 
@@ -272,9 +234,8 @@ def format_affinity(cpus: Iterable[int]) -> str:
 def runtime_provenance(
     binary: Path,
     cohort_invocation: Sequence[str],
-    cohort: CohortConfig = V3,
 ) -> dict[str, str]:
-    source_status = relevant_source_status(cohort=cohort)
+    source_status = relevant_source_status()
     boost_value = read_text(Path("/sys/devices/system/cpu/cpufreq/boost"))
     boost = {"0": "disabled", "1": "enabled"}.get(boost_value, boost_value)
     try:
@@ -323,16 +284,6 @@ def read_scratch_csv(path: Path) -> list[dict[str, str]]:
         return [dict(row) for row in csv.DictReader(handle)]
 
 
-def cohort_from_rows(rows: Sequence[dict[str, str]]) -> CohortConfig:
-    if not rows:
-        raise ReceiptError("receipt contains no rows")
-    schema_version = rows[0].get("schema_version", "")
-    try:
-        return COHORTS_BY_SCHEMA[schema_version]
-    except KeyError as error:
-        raise ReceiptError(f"unknown cohort schema {schema_version!r}") from error
-
-
 def write_csv_exclusive(path: Path, rows: Sequence[dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("x", newline="", encoding="utf-8") as handle:
@@ -347,20 +298,19 @@ def empty_outcome_row(
     process_index: int,
     outcome: str,
     exit_code: int,
-    cohort: CohortConfig = V3,
 ) -> dict[str, str]:
     row = {field: "" for field in FIELDNAMES}
     row.update(
         {
-            "schema_version": cohort.schema_version,
+            "schema_version": SCHEMA_VERSION,
             "process_index": str(process_index),
             "q": str(q),
             "n": str(n),
             "outcome": outcome,
             "process_exit_code": str(exit_code),
             "backend": BACKEND,
-            "seed_root": f"0x{cohort.seed_root:016x}",
-            "cell_seed": f"0x{cell_seed(q, n, cohort):016x}",
+            "seed_root": f"0x{SEED_ROOT:016x}",
+            "cell_seed": f"0x{cell_seed(q, n):016x}",
             "fixture_count": str(FIXTURE_COUNT),
             "fixture_starts": ";".join(str(value) for value in fixture_starts(process_index)),
             "warmup_policy": WARMUP_POLICY,
@@ -380,7 +330,6 @@ def merge_process_rows(
     invocation: Sequence[str],
     stdout: bytes,
     stderr: bytes,
-    cohort: CohortConfig = V3,
 ) -> list[dict[str, str]]:
     by_cell: dict[tuple[int, int], dict[str, str]] = {}
     for source in scratch_rows:
@@ -412,9 +361,7 @@ def merge_process_rows(
             row = {field: by_cell[(q, n)].get(field, "") for field in FIELDNAMES}
             row["outcome"] = MEASURED
         else:
-            row = empty_outcome_row(
-                q, n, process_index, missing_outcome, exit_code, cohort
-            )
+            row = empty_outcome_row(q, n, process_index, missing_outcome, exit_code)
         row["process_exit_code"] = str(exit_code)
         row.update(provenance)
         row["invocation"] = invocation_json
@@ -434,7 +381,6 @@ def parse_int(row: dict[str, str], field: str, address: tuple[int, int, int]) ->
 def validate_measured_row(
     row: dict[str, str],
     address: tuple[int, int, int],
-    cohort: CohortConfig,
 ) -> None:
     q, n, process_index = address
     starts = [int(value) for value in row["fixture_starts"].split(";")]
@@ -465,15 +411,11 @@ def validate_measured_row(
         row, "finished_unix_ns", address
     ):
         raise ReceiptError(f"{address}: timestamps run backwards")
-    if row["cell_seed"] != f"0x{cell_seed(q, n, cohort):016x}":
+    if row["cell_seed"] != f"0x{cell_seed(q, n):016x}":
         raise ReceiptError(f"{address}: cell seed differs from frozen addressing")
 
 
-def validate_rows(
-    rows: Sequence[dict[str, str]],
-    cohort: CohortConfig | None = None,
-) -> list[CellSummary]:
-    cohort = cohort or cohort_from_rows(rows)
+def validate_rows(rows: Sequence[dict[str, str]]) -> list[CellSummary]:
     expected_addresses = {
         (q, n, process_index)
         for q, n in campaign_cells()
@@ -495,16 +437,16 @@ def validate_rows(
         if address not in expected_addresses:
             raise ReceiptError(f"extra address {address}")
         by_address[address] = row
-        if row["schema_version"] != cohort.schema_version:
+        if row["schema_version"] != SCHEMA_VERSION:
             raise ReceiptError(f"{address}: schema version differs")
         if row["outcome"] not in OUTCOMES:
             raise ReceiptError(f"{address}: unknown outcome {row['outcome']!r}")
         q, n, process_index = address
         if row["backend"] != BACKEND:
             raise ReceiptError(f"{address}: backend differs")
-        if row["seed_root"] != f"0x{cohort.seed_root:016x}":
+        if row["seed_root"] != f"0x{SEED_ROOT:016x}":
             raise ReceiptError(f"{address}: seed root differs")
-        if row["cell_seed"] != f"0x{cell_seed(q, n, cohort):016x}":
+        if row["cell_seed"] != f"0x{cell_seed(q, n):016x}":
             raise ReceiptError(f"{address}: cell seed differs")
         if row["fixture_count"] != str(FIXTURE_COUNT):
             raise ReceiptError(f"{address}: fixture count differs")
@@ -548,23 +490,12 @@ def validate_rows(
             raise ReceiptError(f"{address}: process invocation omits its index")
         if not isinstance(cohort_invocation, list):
             raise ReceiptError(f"{address}: cohort invocation is not an argv")
-        if cohort == V4:
-            if not any(
-                invocation[index : index + 2] == ["--cohort", cohort.key]
-                for index in range(len(invocation) - 1)
-            ):
-                raise ReceiptError(f"{address}: process invocation omits cohort identity")
-            if not any(
-                cohort_invocation[index : index + 2] == ["--cohort", cohort.key]
-                for index in range(len(cohort_invocation) - 1)
-            ):
-                raise ReceiptError(f"{address}: cohort invocation omits cohort identity")
         if reference_provenance is None:
             reference_provenance = provenance_from_row(row)
         elif provenance_from_row(row) != reference_provenance:
             raise ReceiptError(f"{address}: cohort provenance differs")
         if row["outcome"] == MEASURED:
-            validate_measured_row(row, address, cohort)
+            validate_measured_row(row, address)
         elif any(row[field] for field in TIMING_FIELDS):
             raise ReceiptError(f"{address}: non-measured timing fields are populated")
 
@@ -605,10 +536,8 @@ def markdown_escape(value: str) -> str:
 def render_report(
     rows: Sequence[dict[str, str]],
     receipt_sha256: str,
-    cohort: CohortConfig | None = None,
 ) -> str:
-    cohort = cohort or cohort_from_rows(rows)
-    summaries = validate_rows(rows, cohort)
+    summaries = validate_rows(rows)
     first = rows[0]
     nonmeasured = [row for row in rows if row["outcome"] != MEASURED]
     starts = [int(row["started_unix_ns"]) for row in rows if row["started_unix_ns"]]
@@ -643,10 +572,10 @@ def render_report(
         "",
         "| Item | Recorded value |",
         "|---|---|",
-        f"| Preregistration | `{cohort.preregistration_path}` |",
-        f"| Machine-readable receipt | `{cohort.receipt_path}` |",
+        f"| Preregistration | `{PREREGISTRATION_PATH}` |",
+        f"| Machine-readable receipt | `{RECEIPT_PATH}` |",
         f"| Receipt SHA-256 | `{receipt_sha256}` |",
-        f"| Schema | `{cohort.schema_version}` |",
+        f"| Schema | `{SCHEMA_VERSION}` |",
         f"| Source revision | `{first['git_revision']}` |",
         f"| Relevant measurement source dirty | `{first['source_dirty']}` |",
         f"| Benchmark executable SHA-256 | `{first['binary_sha256']}` |",
@@ -719,19 +648,11 @@ def render_report(
                 f"`{row['outcome']}` | `{row['process_exit_code']}` | "
                 f"`{row['stderr_sha256']}` |"
             )
-    if cohort == V3:
-        validation_argv_lines = [
-            "python3 dev/benchmarks/permanent_campaign/determinant_cost_v3.py validate \\",
-            f"  --receipt {cohort.receipt_path} \\",
-            f"  --report {cohort.report_path}",
-        ]
-    else:
-        validation_argv_lines = [
-            "python3 dev/benchmarks/permanent_campaign/determinant_cost_v3.py validate \\",
-            f"  --cohort {cohort.key} \\",
-            f"  --receipt {cohort.receipt_path} \\",
-            f"  --report {cohort.report_path}",
-        ]
+    validation_argv_lines = [
+        f"python3 {RUNNER_PATH} validate \\",
+        f"  --receipt {RECEIPT_PATH} \\",
+        f"  --report {REPORT_PATH}",
+    ]
     lines.extend(
         [
             "",
@@ -759,9 +680,8 @@ def validate_rendered_report(
     rows: Sequence[dict[str, str]],
     receipt_sha256: str,
     rendered: str,
-    cohort: CohortConfig | None = None,
 ) -> None:
-    expected = render_report(rows, receipt_sha256, cohort)
+    expected = render_report(rows, receipt_sha256)
     if rendered != expected:
         raise ReceiptError("rendered receipt mismatch")
 
@@ -772,8 +692,7 @@ def require_artifact_path(path: Path, expected: str, kind: str) -> None:
 
 
 def run_cohort(args: argparse.Namespace) -> int:
-    cohort = COHORTS[args.cohort]
-    require_artifact_path(args.output, cohort.receipt_path, "receipt")
+    require_artifact_path(args.output, RECEIPT_PATH, "receipt")
     binary = args.binary.resolve()
     if not binary.is_file() or not os.access(binary, os.X_OK):
         raise ReceiptError(f"benchmark binary is not executable: {binary}")
@@ -783,7 +702,7 @@ def run_cohort(args: argparse.Namespace) -> int:
         raise ReceiptError(f"refusing to reuse scratch directory: {args.scratch_dir}")
     args.scratch_dir.mkdir(parents=True)
     cohort_invocation = [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]]
-    provenance = runtime_provenance(binary, cohort_invocation, cohort)
+    provenance = runtime_provenance(binary, cohort_invocation)
     if provenance["source_dirty"] != "false":
         raise ReceiptError("relevant measurement source is dirty; timing did not begin")
     if provenance["affinity"] != "6-11":
@@ -797,8 +716,6 @@ def run_cohort(args: argparse.Namespace) -> int:
         scratch = args.scratch_dir / f"process-{process_index}.csv"
         invocation = [
             str(binary),
-            "--cohort",
-            cohort.key,
             "--execution",
             str(process_index),
             "--output",
@@ -816,11 +733,10 @@ def run_cohort(args: argparse.Namespace) -> int:
                 invocation=invocation,
                 stdout=completed.stdout,
                 stderr=completed.stderr,
-                cohort=cohort,
             )
         )
 
-    validate_rows(rows, cohort)
+    validate_rows(rows)
     write_csv_exclusive(args.output, rows)
     print(f"wrote {len(rows)} outcomes to {args.output}")
     if any_nonzero or any(row["outcome"] != MEASURED for row in rows):
@@ -830,12 +746,11 @@ def run_cohort(args: argparse.Namespace) -> int:
 
 
 def render_command(args: argparse.Namespace) -> int:
-    cohort = COHORTS[args.cohort]
-    require_artifact_path(args.receipt, cohort.receipt_path, "receipt")
-    require_artifact_path(args.report, cohort.report_path, "report")
+    require_artifact_path(args.receipt, RECEIPT_PATH, "receipt")
+    require_artifact_path(args.report, REPORT_PATH, "report")
     rows = read_csv(args.receipt)
     receipt_hash = sha256_file(args.receipt)
-    rendered = render_report(rows, receipt_hash, cohort)
+    rendered = render_report(rows, receipt_hash)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     with args.report.open("x", encoding="utf-8") as handle:
         handle.write(rendered)
@@ -844,14 +759,13 @@ def render_command(args: argparse.Namespace) -> int:
 
 
 def validate_command(args: argparse.Namespace) -> int:
-    cohort = COHORTS[args.cohort]
-    require_artifact_path(args.receipt, cohort.receipt_path, "receipt")
-    require_artifact_path(args.report, cohort.report_path, "report")
+    require_artifact_path(args.receipt, RECEIPT_PATH, "receipt")
+    require_artifact_path(args.report, REPORT_PATH, "report")
     rows = read_csv(args.receipt)
     receipt_hash = sha256_file(args.receipt)
     rendered = args.report.read_text(encoding="utf-8")
-    validate_rendered_report(rows, receipt_hash, rendered, cohort)
-    summaries = validate_rows(rows, cohort)
+    validate_rendered_report(rows, receipt_hash, rendered)
+    summaries = validate_rows(rows)
     print(
         "PASS: "
         f"{len(summaries)} cells, {len(rows)} process outcomes, "
@@ -865,20 +779,17 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     run = subparsers.add_parser("run", help="run the frozen five-process cohort")
-    run.add_argument("--cohort", choices=sorted(COHORTS), required=True)
     run.add_argument("--binary", type=Path, required=True)
     run.add_argument("--output", type=Path, required=True)
     run.add_argument("--scratch-dir", type=Path, required=True)
     run.set_defaults(function=run_cohort)
 
     render = subparsers.add_parser("render", help="render the validated receipt")
-    render.add_argument("--cohort", choices=sorted(COHORTS), default=V3.key)
     render.add_argument("--receipt", type=Path, required=True)
     render.add_argument("--report", type=Path, required=True)
     render.set_defaults(function=render_command)
 
     validate = subparsers.add_parser("validate", help="validate CSV and rendered report")
-    validate.add_argument("--cohort", choices=sorted(COHORTS), default=V3.key)
     validate.add_argument("--receipt", type=Path, required=True)
     validate.add_argument("--report", type=Path, required=True)
     validate.set_defaults(function=validate_command)
