@@ -17,8 +17,12 @@ use gf2_core::field::{matrix::FieldMatrix, FieldVec, FiniteField};
 use gf2_core::gfp::Fp;
 
 const BACKEND: &str = "fieldmatrix_det_ple";
-const SCHEMA_VERSION: &str = "determinant-companion-v4";
-const SEED_ROOT: u64 = 0xec22_205e_0000_0001;
+const RNG_ALGORITHM: &str = "mmix_lcg_u64";
+const RNG_VERSION: &str =
+    "multiplier-6364136223846793005-increment-1442695040888963407-wrapping-u64-v1";
+const RNG_ENTRY_MAPPING: &str = "advance-then-next-u64-mod-q-row-major-v1";
+const SCHEMA_VERSION: &str = "determinant-companion-v5";
+const SEED_ROOT: u64 = 0xec22_205e_0000_0002;
 const FIXTURE_COUNT: usize = 32;
 const PROCESS_COUNT: u32 = 5;
 const TIMED_REPETITIONS: u32 = 5;
@@ -50,8 +54,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut output = open_output(&args.output)?;
     writeln!(
         output,
-        "schema_version,process_index,q,n,backend,seed_root,cell_seed,fixture_count,\
-         fixture_starts,warmup_policy,warmup_calls,warmup_elapsed_ns,target_ms,\
+        "schema_version,process_index,q,n,backend,rng_algorithm,rng_version,rng_entry_mapping,\
+         seed_root,cell_seed,fixture_count,fixture_starts,warmup_policy,warmup_calls,warmup_elapsed_ns,target_ms,\
          timed_repetitions,calls_per_repetition,repetition_elapsed_ns,sample_count,\
          elapsed_determinant_ns,ns_per_matrix,started_unix_ns,finished_unix_ns"
     )?;
@@ -251,8 +255,9 @@ where
         .join(";");
     writeln!(
         output,
-        "{SCHEMA_VERSION},{},{P},{n},{BACKEND},{SEED_ROOT:#018x},{:#018x},{FIXTURE_COUNT},\
-         {start_list},{WARMUP_POLICY},{},{},{TARGET_MS},{TIMED_REPETITIONS},{},\
+        "{SCHEMA_VERSION},{},{P},{n},{BACKEND},{RNG_ALGORITHM},{RNG_VERSION},\
+         {RNG_ENTRY_MAPPING},{SEED_ROOT:#018x},{:#018x},{FIXTURE_COUNT},{start_list},\
+         {WARMUP_POLICY},{},{},{TARGET_MS},{TIMED_REPETITIONS},{},\
          {elapsed_list},{sample_count},{elapsed_ns},{ns_per_matrix:.9},{started_unix_ns},\
          {finished_unix_ns}",
         args.execution,

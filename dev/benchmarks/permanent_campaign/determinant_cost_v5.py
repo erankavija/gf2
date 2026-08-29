@@ -24,18 +24,31 @@ TARGET_MS = 250
 WORKER_COUNT = 1
 WARMUP_POLICY = "doubling-probe-to-min-20ms-target-250ms-max-2^32"
 BACKEND = "fieldmatrix_det_ple"
+RNG_ALGORITHM = "mmix_lcg_u64"
+RNG_VERSION = (
+    "multiplier-6364136223846793005-increment-1442695040888963407-"
+    "wrapping-u64-v1"
+)
+RNG_ENTRY_MAPPING = "advance-then-next-u64-mod-q-row-major-v1"
 MEASURED = "measured"
 OUTCOMES = {MEASURED, "process_failed", "signal_censored", "harness_censored"}
 BENCHMARK_WRAPPER_PATH = "dev/scripts/ccx1-bench-flock.sh"
 BENCHMARK_WRAPPER = f"{BENCHMARK_WRAPPER_PATH}:ccx1"
-SCHEMA_VERSION = "determinant-companion-v4"
-SEED_ROOT = 0xEC22_205E_0000_0001
+SCHEMA_VERSION = "determinant-companion-v5"
+SEED_ROOT = 0xEC22_205E_0000_0002
 PREREGISTRATION_PATH = (
-    "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v4.md"
+    "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md"
 )
-RECEIPT_PATH = "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.csv"
-REPORT_PATH = "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.md"
-RUNNER_PATH = "dev/benchmarks/permanent_campaign/determinant_cost_v4.py"
+RECEIPT_PATH = "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv"
+REPORT_PATH = "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md"
+RUNNER_PATH = "dev/benchmarks/permanent_campaign/determinant_cost_v5.py"
+BASELINE_PATH = "dev/simulation_results/permanent-zero-fraction/protocol.md"
+BASELINE_GIT_REVISION = "7901430a324616b00b92c9fc23e3b3dbee66c291"
+BASELINE_SHA256 = "a93d89fee1a898bf08726d76339dcd385d0f340959658a5010ae08aeb3579596"
+CELL_CEILING_SECONDS = 43_200
+PRODUCTIVE_COMPUTE_SECONDS = 36_720
+RESERVE_FRACTION = "0.15"
+STUDENT_T_975_DF4 = 2.7764451051977987
 
 FIELDNAMES = [
     "schema_version",
@@ -45,6 +58,9 @@ FIELDNAMES = [
     "outcome",
     "process_exit_code",
     "backend",
+    "rng_algorithm",
+    "rng_version",
+    "rng_entry_mapping",
     "seed_root",
     "cell_seed",
     "fixture_count",
@@ -61,6 +77,12 @@ FIELDNAMES = [
     "ns_per_matrix",
     "started_unix_ns",
     "finished_unix_ns",
+    "baseline_path",
+    "baseline_git_revision",
+    "baseline_sha256",
+    "cell_ceiling_seconds",
+    "productive_compute_seconds",
+    "reserve_fraction",
     "git_revision",
     "source_dirty",
     "rustc",
@@ -82,6 +104,15 @@ FIELDNAMES = [
 ]
 
 PROVENANCE_FIELDS = [
+    "rng_algorithm",
+    "rng_version",
+    "rng_entry_mapping",
+    "baseline_path",
+    "baseline_git_revision",
+    "baseline_sha256",
+    "cell_ceiling_seconds",
+    "productive_compute_seconds",
+    "reserve_fraction",
     "git_revision",
     "source_dirty",
     "rustc",
@@ -119,6 +150,7 @@ RELEVANT_SOURCE_PATHS = [
     BENCHMARK_WRAPPER_PATH,
     RUNNER_PATH,
     PREREGISTRATION_PATH,
+    BASELINE_PATH,
 ]
 
 
@@ -134,9 +166,15 @@ class CellSummary:
     nonmeasured_processes: int
     elapsed_ns: int
     sample_count: int
-    ns_per_matrix: float | None
+    pooled_ns_per_matrix: float | None
+    process_mean_ns_per_matrix: float | None
+    process_stddev_ns_per_matrix: float | None
+    ci95_lower_ns_per_matrix: float | None
+    ci95_upper_ns_per_matrix: float | None
     fixed_sample_count: int
     projected_seconds: float | None
+    projected_lower_seconds: float | None
+    projected_upper_seconds: float | None
 
 
 def campaign_cells() -> list[tuple[int, int]]:
@@ -243,6 +281,15 @@ def runtime_provenance(
     except AttributeError:
         affinity = "unknown"
     return {
+        "rng_algorithm": RNG_ALGORITHM,
+        "rng_version": RNG_VERSION,
+        "rng_entry_mapping": RNG_ENTRY_MAPPING,
+        "baseline_path": BASELINE_PATH,
+        "baseline_git_revision": BASELINE_GIT_REVISION,
+        "baseline_sha256": BASELINE_SHA256,
+        "cell_ceiling_seconds": str(CELL_CEILING_SECONDS),
+        "productive_compute_seconds": str(PRODUCTIVE_COMPUTE_SECONDS),
+        "reserve_fraction": RESERVE_FRACTION,
         "git_revision": command_output(["git", "rev-parse", "HEAD"]),
         "source_dirty": str(bool(source_status)).lower(),
         "rustc": command_output(["rustc", "+1.95.0", "--version"]),
@@ -309,6 +356,9 @@ def empty_outcome_row(
             "outcome": outcome,
             "process_exit_code": str(exit_code),
             "backend": BACKEND,
+            "rng_algorithm": RNG_ALGORITHM,
+            "rng_version": RNG_VERSION,
+            "rng_entry_mapping": RNG_ENTRY_MAPPING,
             "seed_root": f"0x{SEED_ROOT:016x}",
             "cell_seed": f"0x{cell_seed(q, n):016x}",
             "fixture_count": str(FIXTURE_COUNT),
@@ -316,6 +366,12 @@ def empty_outcome_row(
             "warmup_policy": WARMUP_POLICY,
             "target_ms": str(TARGET_MS),
             "timed_repetitions": str(TIMED_REPETITIONS),
+            "baseline_path": BASELINE_PATH,
+            "baseline_git_revision": BASELINE_GIT_REVISION,
+            "baseline_sha256": BASELINE_SHA256,
+            "cell_ceiling_seconds": str(CELL_CEILING_SECONDS),
+            "productive_compute_seconds": str(PRODUCTIVE_COMPUTE_SECONDS),
+            "reserve_fraction": RESERVE_FRACTION,
         }
     )
     return row
@@ -427,6 +483,9 @@ def validate_rows(rows: Sequence[dict[str, str]]) -> list[CellSummary]:
         missing_fields = set(FIELDNAMES) - set(row)
         if missing_fields:
             raise ReceiptError(f"row omits fields: {sorted(missing_fields)}")
+        extra_fields = set(row) - set(FIELDNAMES)
+        if extra_fields:
+            raise ReceiptError(f"row has extra fields: {sorted(extra_fields)}")
         address = (
             parse_int(row, "q", (0, 0, 0)),
             parse_int(row, "n", (0, 0, 0)),
@@ -444,6 +503,12 @@ def validate_rows(rows: Sequence[dict[str, str]]) -> list[CellSummary]:
         q, n, process_index = address
         if row["backend"] != BACKEND:
             raise ReceiptError(f"{address}: backend differs")
+        if row["rng_algorithm"] != RNG_ALGORITHM:
+            raise ReceiptError(f"{address}: rng algorithm differs")
+        if row["rng_version"] != RNG_VERSION:
+            raise ReceiptError(f"{address}: rng version differs")
+        if row["rng_entry_mapping"] != RNG_ENTRY_MAPPING:
+            raise ReceiptError(f"{address}: rng entry mapping differs")
         if row["seed_root"] != f"0x{SEED_ROOT:016x}":
             raise ReceiptError(f"{address}: seed root differs")
         if row["cell_seed"] != f"0x{cell_seed(q, n):016x}":
@@ -460,6 +525,18 @@ def validate_rows(rows: Sequence[dict[str, str]]) -> list[CellSummary]:
             raise ReceiptError(f"{address}: target differs")
         if row["timed_repetitions"] != str(TIMED_REPETITIONS):
             raise ReceiptError(f"{address}: repetition count differs")
+        if row["baseline_path"] != BASELINE_PATH:
+            raise ReceiptError(f"{address}: baseline path differs")
+        if row["baseline_git_revision"] != BASELINE_GIT_REVISION:
+            raise ReceiptError(f"{address}: baseline git revision differs")
+        if row["baseline_sha256"] != BASELINE_SHA256:
+            raise ReceiptError(f"{address}: baseline sha256 differs")
+        if row["cell_ceiling_seconds"] != str(CELL_CEILING_SECONDS):
+            raise ReceiptError(f"{address}: cell ceiling seconds differs")
+        if row["productive_compute_seconds"] != str(PRODUCTIVE_COMPUTE_SECONDS):
+            raise ReceiptError(f"{address}: productive compute seconds differs")
+        if row["reserve_fraction"] != RESERVE_FRACTION:
+            raise ReceiptError(f"{address}: reserve fraction differs")
         if row["source_dirty"] != "false":
             raise ReceiptError(f"{address}: relevant measurement source is dirty")
         if re.fullmatch(r"[0-9a-f]{40}", row["git_revision"]) is None:
@@ -512,6 +589,27 @@ def validate_rows(rows: Sequence[dict[str, str]]) -> list[CellSummary]:
         elapsed = sum(int(row["elapsed_determinant_ns"]) for row in measured)
         samples = sum(int(row["sample_count"]) for row in measured)
         pooled = elapsed / samples if samples else None
+        process_values = [
+            int(row["elapsed_determinant_ns"]) / int(row["sample_count"])
+            for row in measured
+        ]
+        if len(process_values) == PROCESS_COUNT:
+            process_mean = sum(process_values) / PROCESS_COUNT
+            process_variance = (
+                sum((value - process_mean) ** 2 for value in process_values)
+                / (PROCESS_COUNT - 1)
+            )
+            process_stddev = math.sqrt(process_variance)
+            half_width = (
+                STUDENT_T_975_DF4 * process_stddev / math.sqrt(PROCESS_COUNT)
+            )
+            ci95_lower = process_mean - half_width
+            ci95_upper = process_mean + half_width
+        else:
+            process_mean = None
+            process_stddev = None
+            ci95_lower = None
+            ci95_upper = None
         fixed_n = fixed_sample_count(q, n)
         summaries.append(
             CellSummary(
@@ -521,9 +619,23 @@ def validate_rows(rows: Sequence[dict[str, str]]) -> list[CellSummary]:
                 nonmeasured_processes=PROCESS_COUNT - len(measured),
                 elapsed_ns=elapsed,
                 sample_count=samples,
-                ns_per_matrix=pooled,
+                pooled_ns_per_matrix=pooled,
+                process_mean_ns_per_matrix=process_mean,
+                process_stddev_ns_per_matrix=process_stddev,
+                ci95_lower_ns_per_matrix=ci95_lower,
+                ci95_upper_ns_per_matrix=ci95_upper,
                 fixed_sample_count=fixed_n,
-                projected_seconds=(pooled * fixed_n / 1e9) if pooled is not None else None,
+                projected_seconds=(
+                    process_mean * fixed_n / 1e9
+                    if process_mean is not None
+                    else None
+                ),
+                projected_lower_seconds=(
+                    ci95_lower * fixed_n / 1e9 if ci95_lower is not None else None
+                ),
+                projected_upper_seconds=(
+                    ci95_upper * fixed_n / 1e9 if ci95_upper is not None else None
+                ),
             )
         )
     return summaries
@@ -542,21 +654,33 @@ def render_report(
     nonmeasured = [row for row in rows if row["outcome"] != MEASURED]
     starts = [int(row["started_unix_ns"]) for row in rows if row["started_unix_ns"]]
     finishes = [int(row["finished_unix_ns"]) for row in rows if row["finished_unix_ns"]]
-    max_projection = max(
-        summary.projected_seconds or 0.0 for summary in summaries
+    max_upper_projection = max(
+        summary.projected_upper_seconds or 0.0 for summary in summaries
     )
     all_fit = all(
-        summary.projected_seconds is not None and summary.projected_seconds <= 43_200
+        summary.projected_upper_seconds is not None
+        and summary.projected_upper_seconds <= CELL_CEILING_SECONDS
         for summary in summaries
     )
-    verdict = (
-        f"All 63 cells have five measured process outcomes. The largest projected "
-        f"fixed-$N$ determinant addition is {max_projection:.6f} s, and every cell "
-        f"fits the twelve-hour operational ceiling."
-        if not nonmeasured and all_fit
-        else f"The receipt retains {len(nonmeasured)} failed or censored process outcomes; "
-        "the per-cell table reports only directly measured pooled totals."
-    )
+    if nonmeasured:
+        verdict = (
+            f"The receipt retains {len(nonmeasured)} failed or censored process outcomes; "
+            "affected cells retain pooled audit totals but have no process-mean "
+            "interval or ceiling verdict."
+        )
+    elif all_fit:
+        verdict = (
+            "All 63 cells have five measured process outcomes. The largest projected "
+            "upper 95% interval endpoint for the fixed-$N$ determinant addition is "
+            f"{max_upper_projection:.6f} s, and every cell fits the "
+            f"{CELL_CEILING_SECONDS:,}-second operational ceiling conservatively."
+        )
+    else:
+        verdict = (
+            "All 63 cells have five measured process outcomes, but at least one "
+            "projected upper 95% interval endpoint exceeds the "
+            f"{CELL_CEILING_SECONDS:,}-second operational ceiling."
+        )
     lines = [
         "# Determinant companion cost for every campaign cell",
         "",
@@ -576,6 +700,7 @@ def render_report(
         f"| Machine-readable receipt | `{RECEIPT_PATH}` |",
         f"| Receipt SHA-256 | `{receipt_sha256}` |",
         f"| Schema | `{SCHEMA_VERSION}` |",
+        f"| RNG | `{first['rng_algorithm']}`; `{first['rng_version']}`; `{first['rng_entry_mapping']}` |",
         f"| Source revision | `{first['git_revision']}` |",
         f"| Relevant measurement source dirty | `{first['source_dirty']}` |",
         f"| Benchmark executable SHA-256 | `{first['binary_sha256']}` |",
@@ -585,6 +710,8 @@ def render_report(
         f"| Power policy | governor `{markdown_escape(first['governor'])}`; boost `{markdown_escape(first['boost'])}` |",
         f"| Isolation | `{first['benchmark_wrapper']}`; affinity `{first['affinity']}`; one serial worker |",
         f"| Process contract | {PROCESS_COUNT} fresh processes per cell; {TIMED_REPETITIONS} timed repetitions per process; {TARGET_MS} ms target |",
+        f"| Budget baseline | `{first['baseline_path']}` at `{first['baseline_git_revision']}`; SHA-256 `{first['baseline_sha256']}` |",
+        f"| Budget limits | {int(first['cell_ceiling_seconds']):,} s operational ceiling; {first['productive_compute_seconds']} s productive compute; reserve fraction {first['reserve_fraction']} |",
         f"| Recorded window | Unix ns `{min(starts) if starts else 'none'}` through `{max(finishes) if finishes else 'none'}` |",
         f"| Exact cohort argv | `{markdown_escape(first['cohort_invocation'])}` |",
         "| Exact process argv | Recorded per process in the CSV `invocation` column |",
@@ -594,34 +721,64 @@ def render_report(
         "the timed windows. The preregistration fixes the address formula and the",
         "calibration stopping rule.",
         "",
-        "## Pooled marginal cost and fixed-$N$ projection",
+        "## Process uncertainty and fixed-$N$ projection",
         "",
-        "For measured processes $M_{q,n}$, each cell uses pooled raw totals:",
+        "The pooled audit value retains the measured raw totals:",
         "",
         "$$",
-        "t_{q,n}=\\frac{\\sum_{e\\in M_{q,n}}T_e}{\\sum_{e\\in M_{q,n}}C_e}.",
+        "t^{\\mathrm{pool}}_{q,n}=\\frac{\\sum_{e\\in M_{q,n}}T_e}{\\sum_{e\\in M_{q,n}}C_e}.",
         "$$",
         "",
-        "No representative-order interpolation or mean of process means enters the",
-        "table. The projected addition is $N_{q,n}t_{q,n}$ using the protocol's",
-        "fixed sample count.",
+        "For complete cells, the primary point is the mean of the five process costs",
+        "$x_e=T_e/C_e$. Its standard two-sided 95% Student-$t$ interval uses the",
+        f"sample standard deviation, four degrees of freedom, and critical value",
+        f"{STUDENT_T_975_DF4}. The process interval is not an interval for the pooled",
+        "audit estimator. The point and interval endpoints are multiplied by the",
+        "fixed sample count from the pinned budget baseline.",
         "",
-        "| $q$ | $n$ | measured / planned | determinant ($\\mu$s/matrix) | fixed $N$ | projected addition (s) | projected addition (h) | fits 12 h |",
-        "|---:|---:|---:|---:|---:|---:|---:|:---:|",
+        "| $q$ | $n$ | measured / planned | pooled audit ($\\mu$s/matrix) | process mean ($\\mu$s/matrix) | process standard deviation ($\\mu$s/matrix) | process mean 95% CI ($\\mu$s/matrix) | fixed $N$ | projected point (s) | projected 95% CI (s) | upper CI fits 12 h |",
+        "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|:---:|",
     ]
     for summary in summaries:
-        if summary.ns_per_matrix is None or summary.projected_seconds is None:
-            microseconds = projected_seconds = projected_hours = "not measured"
-            fits = "no measurement"
+        pooled_microseconds = (
+            f"{summary.pooled_ns_per_matrix / 1_000:.9f}"
+            if summary.pooled_ns_per_matrix is not None
+            else "not measured"
+        )
+        if (
+            summary.process_mean_ns_per_matrix is None
+            or summary.process_stddev_ns_per_matrix is None
+            or summary.ci95_lower_ns_per_matrix is None
+            or summary.ci95_upper_ns_per_matrix is None
+            or summary.projected_seconds is None
+            or summary.projected_lower_seconds is None
+            or summary.projected_upper_seconds is None
+        ):
+            process_mean = process_stddev = process_interval = "not estimable"
+            projected_seconds = projected_interval = "not estimable"
+            fits = "not estimable"
         else:
-            microseconds = f"{summary.ns_per_matrix / 1_000:.9f}"
+            process_mean = f"{summary.process_mean_ns_per_matrix / 1_000:.9f}"
+            process_stddev = f"{summary.process_stddev_ns_per_matrix / 1_000:.9f}"
+            process_interval = (
+                f"[{summary.ci95_lower_ns_per_matrix / 1_000:.9f}, "
+                f"{summary.ci95_upper_ns_per_matrix / 1_000:.9f}]"
+            )
             projected_seconds = f"{summary.projected_seconds:.6f}"
-            projected_hours = f"{summary.projected_seconds / 3_600:.9f}"
-            fits = "yes" if summary.projected_seconds <= 43_200 else "**no**"
+            projected_interval = (
+                f"[{summary.projected_lower_seconds:.6f}, "
+                f"{summary.projected_upper_seconds:.6f}]"
+            )
+            fits = (
+                "yes"
+                if summary.projected_upper_seconds <= CELL_CEILING_SECONDS
+                else "**no**"
+            )
         lines.append(
             f"| {summary.q} | {summary.n} | {summary.measured_processes} / {PROCESS_COUNT} | "
-            f"{microseconds} | {summary.fixed_sample_count:,} | {projected_seconds} | "
-            f"{projected_hours} | {fits} |"
+            f"{pooled_microseconds} | {process_mean} | {process_stddev} | "
+            f"{process_interval} | {summary.fixed_sample_count:,} | "
+            f"{projected_seconds} | {projected_interval} | {fits} |"
         )
     lines.extend(["", "## Preserved failures and contradictions", ""])
     if not nonmeasured:
@@ -663,9 +820,10 @@ def render_report(
             "## Validation",
             "",
             "The committed validator proves the exact 63-cell and 315-row address set,",
-            "uniform cohort provenance, raw-to-pooled arithmetic, fixture-address",
-            "uniqueness, non-measured-row emptiness, and byte-for-byte agreement between",
-            "this rendered document and the machine receipt.",
+            "uniform cohort provenance, RNG and pinned-baseline identities, raw-to-pooled",
+            "arithmetic, process-mean Student-$t$ intervals and projections,",
+            "fixture-address uniqueness, non-measured-row emptiness, and byte-for-byte",
+            "agreement between this rendered document and the machine receipt.",
             "",
             "```sh",
             *validation_argv_lines,
