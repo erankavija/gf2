@@ -355,7 +355,15 @@ def read_scratch_csv(path: Path) -> list[dict[str, str]]:
     if not path.exists():
         return []
     with path.open(newline="", encoding="utf-8") as handle:
-        return [dict(row) for row in csv.DictReader(handle)]
+        reader = csv.DictReader(handle)
+        if reader.fieldnames is None:
+            return []
+        if reader.fieldnames != SCRATCH_FIELDNAMES:
+            raise ReceiptError(
+                "scratch schema columns differ: "
+                f"expected {SCRATCH_FIELDNAMES}, got {reader.fieldnames}"
+            )
+        return [dict(row) for row in reader]
 
 
 def write_csv_exclusive(path: Path, rows: Sequence[dict[str, str]]) -> None:
@@ -415,17 +423,28 @@ def merge_process_rows(
     stderr: bytes,
 ) -> list[dict[str, str]]:
     by_cell: dict[tuple[int, int], dict[str, str]] = {}
-    for source in scratch_rows:
+    campaign_cell_set = set(campaign_cells())
+    for row_index, source in enumerate(scratch_rows):
+        if set(source) != set(SCRATCH_FIELDNAMES):
+            raise ReceiptError("scratch row fields differ from the exact harness schema")
+        if scratch_row_is_incomplete(source):
+            if row_index != len(scratch_rows) - 1:
+                raise ReceiptError("incomplete non-tail scratch row")
+            continue
         try:
             address = (int(source["q"]), int(source["n"]))
-        except (KeyError, ValueError) as error:
+            source_process_index = int(source["process_index"])
+        except (KeyError, TypeError, ValueError) as error:
             raise ReceiptError(f"malformed scratch address: {error}") from error
-        if address not in set(campaign_cells()):
+        if address not in campaign_cell_set:
             raise ReceiptError(f"scratch row has extra cell {address}")
         if address in by_cell:
             raise ReceiptError(f"scratch row has duplicate cell {address}")
-        if int(source["process_index"]) != process_index:
+        if source_process_index != process_index:
             raise ReceiptError(f"scratch process index differs at cell {address}")
+        full_address = (*address, process_index)
+        validate_harness_identity(source, full_address)
+        validate_measured_row(source, full_address)
         by_cell[address] = dict(source)
 
     if exit_code < 0:
@@ -440,8 +459,7 @@ def merge_process_rows(
     stderr_hash = sha256_bytes(stderr)
     merged: list[dict[str, str]] = []
     for q, n in campaign_cells():
-        address = (q, n, process_index)
-        if (q, n) in by_cell and scratch_row_is_complete(by_cell[(q, n)], address):
+        if (q, n) in by_cell:
             row = {field: by_cell[(q, n)].get(field, "") for field in FIELDNAMES}
             row["outcome"] = MEASURED
         else:
@@ -499,23 +517,14 @@ def validate_harness_identity(
         raise ReceiptError(f"{address}: repetition count differs")
 
 
-def scratch_row_is_complete(
-    row: dict[str, str],
-    address: tuple[int, int, int],
-) -> bool:
-    if set(row) != set(SCRATCH_FIELDNAMES):
-        return False
-    if any(
-        not isinstance(row[field], str) or not row[field]
-        for field in SCRATCH_FIELDNAMES
-    ):
-        return False
-    try:
-        validate_harness_identity(row, address)
-        validate_measured_row(row, address)
-    except (KeyError, TypeError, ValueError):
-        return False
-    return True
+def scratch_row_is_incomplete(row: dict[str, str]) -> bool:
+    for field in SCRATCH_FIELDNAMES:
+        value = row[field]
+        if value is None or value == "":
+            return True
+        if not isinstance(value, str):
+            raise ReceiptError(f"scratch field {field} is not text")
+    return False
 
 
 def validate_measured_row(
@@ -908,6 +917,10 @@ def require_artifact_path(path: Path, expected: str, kind: str) -> None:
         raise ReceiptError(f"{kind} path must be {expected}")
 
 
+def cohort_result_code(any_nonzero: bool, rows: Sequence[dict[str, str]]) -> int:
+    return 7 if any_nonzero or any(row["outcome"] != MEASURED for row in rows) else 0
+
+
 def run_cohort(args: argparse.Namespace) -> int:
     require_artifact_path(args.output, RECEIPT_PATH, "receipt")
     binary = args.binary.resolve()
@@ -956,10 +969,10 @@ def run_cohort(args: argparse.Namespace) -> int:
     validate_rows(rows)
     write_csv_exclusive(args.output, rows)
     print(f"wrote {len(rows)} outcomes to {args.output}")
-    if any_nonzero or any(row["outcome"] != MEASURED for row in rows):
+    result_code = cohort_result_code(any_nonzero, rows)
+    if result_code:
         print("cohort retained non-measured outcomes", file=sys.stderr)
-        return 7
-    return 0
+    return result_code
 
 
 def render_command(args: argparse.Namespace) -> int:
