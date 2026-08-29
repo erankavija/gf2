@@ -22,6 +22,7 @@
 //! the production crates depends on it.
 
 pub mod backend;
+pub mod campaign_selection;
 pub mod env;
 pub mod equivalence;
 pub mod gray_update;

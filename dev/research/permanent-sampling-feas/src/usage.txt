@@ -3,23 +3,27 @@ campaign (JIT issue b488f02c).
 
 SUBCOMMANDS
   equivalence  Compare per-matrix permanent values across every backend on shared
-               inputs. Exits non-zero on any mismatch. Run this before `grid`;
-               a throughput number from a disagreeing backend is not evidence.
+               inputs. The embedded cell table is read from
+               dev/benchmarks/permanent_campaign/backend-selection-v1.md; the
+               command emits exactly one row per nominated configuration and
+               never reconstructs a selection from timing data. It exits
+               non-zero on a mismatch or an unexecuted nomination.
                  --out PATH        output CSV (default equivalence.csv)
                  --matrices N      cap on the matrices per (q, n) cell; it only
                                    lowers a count, never raises one
-                 --n LIST          comma-separated subset of the order table to
-                                   run (default every order below)
-               Sizes cover every timed grid order, with n=8 retained below them.
-               Per-order ceilings are 512 through n=20, then 32 at n=24 and 4
-               at n=28. Each (q, n) cell starts at its ceiling and halves,
-               flooring at 2, until the sum of its measured CPU backends'
-               committed probe_matrix_s costs times the count fits a 240-second
-               per-cell budget at the speeds of superseded grid-receipt run
-               20260813T230032Z-1321576, whose grid CSVs are retrievable
-               from git history. Only the
-               q=5, n=28 cell halves: its three CPU backends sum to 68.354 s
-               per matrix, so four matrices project to 273 s and two to 137 s.
+                 --q Q             run one field in {3,5,7} (default all)
+                 --n LIST          comma-separated subset of that field's exact
+                                   campaign cells (default all)
+               The default covers q=3 n=4..28, q=5 n=4..24, and q=7 n=4..20:
+               63 cells and 124 nominated configurations. Per-order ceilings
+               are 512 through n=20, 32 through n=24, and 4 through n=28.
+               Each cell halves from its ceiling, flooring at 2, until the sum
+               of its reference-plus-nomination committed probe costs fits the
+               240-second cell budget. A missing exact-order cost uses the
+               nearest finite same-or-higher-order probe. If no such probe
+               exists, the cell takes the two-matrix floor; no lower-order
+               latency is extrapolated. CPU and GPU nominations run together;
+               there is no backend-class split or equivalence append mode.
 
   grid         Time the composite campaign hot path over q in {3,5,7} and
                n in {12,16,20,24,28} on every backend. Requires an idle host.

@@ -59,7 +59,7 @@ permanent-wave-gpu = { path = "../permanent_wave_gpu", optional = true, default-
 rayon = "1.10"
 # ChaCha20 is the named, versioned campaign RNG. `rand_chacha` 0.9 is already
 # used elsewhere in the repository (crates/gf2-kernels-hip dev-dependencies).
-rand_chacha = "0.9"
+rand_chacha = "=0.9.0"
 rand_core = "0.9"
 # `sched_setaffinity` for per-thread core pinning of the single-thread cells.
 libc = "0.2"
