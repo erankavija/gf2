@@ -12,9 +12,9 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-29T16:24:45.286584969Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-29T16:37:17.902138164Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "69e7d174-ac31-4ad1-b7de-4edcf9274954",
@@ -25,5 +25,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "research-review Tier 1 misattributes dependency citation labels to the issue under review",
-  "updated_at": "2026-08-29T16:25:04.803146073Z"
+  "updated_at": "2026-08-29T16:37:17.902138164Z"
 }

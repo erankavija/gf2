@@ -709,6 +709,20 @@
       "audit_verified_do_not_redo": "All 63 cells individually; all 14,229 stream_index values equal (cell_ordinal << 32) | shard_id and are globally distinct; shard counts ceil(N/50000)=14,229; determinant_companion evaluate in all 63; backend_receipt identical and never a draft in all 63; REQ-08 checked against the code, confirming MatrixAddress::seed (crates/gf2-stats/src/sampler.rs:181-195) builds the four little-endian u64 words freeze.md:51 states.",
       "resolved_at": "2026-08-29T19:05:00+03:00",
       "decision": "Owner selected the fast path: fix F1's falsified present-tense prose in freeze.md; record git history as the tamper-evidence disposition for F2; tidy LOW findings F3/F4; file F5/F6 as follow-up issues (F6 wired before the first draw); then close 7a816262 and dispatch wave 9."
+    },
+    {
+      "issue": "7a816262",
+      "reason": "research-review tier 2 (first methodology review of the freeze) returned VERDICT: FAIL. F1 (high, blocking): the backend-selection performance cohorts lack committed RNG provenance \u2014 premeasure ledger has no seed/RNG fields, frontier receipt lacks RNG implementation/version, and the standalone harness Cargo.lock is gitignored/unhashed, while these measurements determined all 63 frozen backend choices. F2 (medium, advisory): the gpu_hip native-row projection rule was fixed after dual-row measurements existed.",
+      "status": "approved",
+      "requested_at": "2026-08-29T20:05:00+03:00",
+      "resolved_at": "2026-08-29T20:06:00+03:00",
+      "decision": "Owner selected addendum + rebuild proof: a versioned RNG-provenance addendum receipt with a rebuild of the harness at the pinned revision matching the recorded SHA-256, committed dependency resolution, and seed-provenance pointers; no remeasurement; the immutable cohort stays untouched. This guidance resets the 7a816262 rework counter.",
+      "options": [
+        "Addendum + rebuild proof",
+        "Document-only addendum",
+        "Leave the gate red"
+      ],
+      "lead_recommendation": "Addendum + rebuild proof. Lead pre-verified: the retained binary at /data/gf2-campaigns/b8206228/premeasure-recovery-20260824/permanent-sampling-feas-hip/release/permanent_sampling_feas hashes to the receipt digest 1198cce4..., the build tree dep-info pins rand_chacha 0.9.0 (plus a 0.3.1 elsewhere in the graph to attribute), and dev/research/permanent-sampling-feas/Cargo.lock survives untracked."
     }
   ],
   "standing_rules": [
@@ -743,7 +757,7 @@
     "63d931a9": 1,
     "4a6bdcff": 1,
     "eb8825c8": 1,
-    "7a816262": 2,
+    "7a816262": 0,
     "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached. Session 22 redispatched the freeze as CONTINUATION of a prerequisite-blocked issue, not as a third repair round: its work had never been review-failed, it was waiting on the premeasurement cohort, two owner decisions, and ec22205e. The counter stays at 2; any gate or lead-review failure on the freeze escalates rather than reworking.",
     "ec22205e": 2,
     "ec22205e_note": "The first cycle reached MAX after v4 research-review found three publication-evidence gaps. The owner's first option-A reset produced canonical v5 and reached MAX when failure-retention review exposed truncation before a parseable address. The owner's second option-A reset produced the tail-aware parser as count 1; its review found the None-versus-empty conflation, the third repeat of the same root cause. Owner option A at 2026-08-29T14:37:36+03:00 authorizes the exact correction as count 2. MAX is reached; any further readiness failure escalates. Timing remains held.",
@@ -888,7 +902,8 @@
     "7a816262 | doc-review PASSED while freeze.md violated the present-tense-prose invariant in a permanent path (dev/simulation_results), narrating the pre-commit worker tree as current state. The independent audit caught it; the gate did not. Do not treat a doc-review pass as coverage of present-tense-prose.",
     "7a816262 | REQ-06 tamper-detection does not reach freeze.md, which is the sole record of REQ-04, REQ-05, REQ-07 and REQ-08 construction. checksums.sha256 covers manifest.json alone, and adding freeze.md to it raises IntegrityFault::OutsideRawSet in verify_dataset (provenance.rs:1096). Needs an owner decision before the campaign is treated as immutably frozen.",
     "7a816262 | Protocol obligation possibly unmet and outside REQ-01..08: protocol.md:3-6 requires a committed pre-draw execution receipt recording the manifest's repository-relative path, content SHA-256, and root-manifest identity. freeze.md:7,13,14 supplies all three bindings but never claims the role, and no artifact is named as that receipt. Resolve before the first campaign draw.",
-    "Pre-existing, epic-wide: dev/simulation_results/permanent-zero-fraction/README.md:253-254 claims an execution receipt quotes the sidecar SHA-256, but driver.rs:206 emits blake3 over a fresh serde_json re-serialization, not SHA-256 over on-disk bytes. Two unrelated values with no way to tell which artifact is wrong."
+    "Pre-existing, epic-wide: dev/simulation_results/permanent-zero-fraction/README.md:253-254 claims an execution receipt quotes the sidecar SHA-256, but driver.rs:206 emits blake3 over a fresh serde_json re-serialization, not SHA-256 over on-disk bytes. Two unrelated values with no way to tell which artifact is wrong.",
+    "7a816262 | research-review tier-2 F2 (advisory): the gpu_hip native-M projection rule was established after 359 processes had emitted dual rows; mitigated by the value-independent slot rule and deviation record. Standing rule for future cohorts: fix the selected grid slot before timing and retain a committed checksum inventory for every raw row."
   ],
   "started_at": "2026-08-09T12:20:30Z",
   "rederived_at": "2026-08-29T18:43:06+03:00",
