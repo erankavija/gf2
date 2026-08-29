@@ -273,15 +273,23 @@ Within that cohort, selection proceeds in this order:
    against the generic reference, including the validation anchors.
 2. Exclude it unless the intended host and build satisfy its documented safety,
    capability, launch-duration, and resource conditions.
-3. Exclude it unless one of the selection receipt's hashed raw receipts measures
+3. Exclude it unless every one of the preregistered processes for its
+   configuration completed with outcome `measured` and a finite composite
+   draw-pack-evaluate-count throughput. A signal-censored or harness-censored
+   process remains in the immutable receipt and makes that backend arm
+   ineligible; it is not replaced, omitted from the denominator, or converted
+   into a finite rate. For premeasure-v1 the fixed eligibility count is twelve
+   finite measurements out of twelve planned processes per configuration.
+4. Exclude it unless one of the selection receipt's hashed raw receipts measures
    cell-applicable composite draw-pack-evaluate-count throughput. Rank the
-   remaining backends by that measured composite throughput and use the greater
-   measured mean. An exact tie is broken by the lower documented worst-case
-   launch duration and then the lower documented resource demand, both safety
-   properties; if those also tie, the manifest cannot freeze until another
-   preregistered timing replication resolves the ordering. If only one backend
-   remains eligible, the selection receipt records the exclusions rather than
-   implying a timing comparison that did not occur.
+   remaining eligible backends by that measured composite throughput and use
+   the greater measured mean over the complete preregistered cohort. An exact
+   tie is broken by the lower documented worst-case launch duration and then
+   the lower documented resource demand, both safety properties; if those also
+   tie, the manifest cannot freeze until another preregistered timing
+   replication resolves the ordering. If only one backend remains eligible,
+   the selection receipt records every excluded outcome rather than implying a
+   timing comparison that did not occur.
 
 Timing fixtures use their own stream purpose. The campaign execution stream
 reports draw, pack, permanent evaluate, determinant, and count phases per
@@ -295,7 +303,7 @@ fallbacks in the production libraries.
 
 ## Reproducibility identity
 
-The root provenance names `rng_algorithm` as the token `chacha20`, records
+The root provenance names `rng_algorithm` as the schema token `cha_cha20`, records
 `rng_version` as the exact implementation and crate version, and stores
 `invocation` as the exact argument vector rather than shell prose. These fields
 are mandatory for this campaign. Together with the manifest's root seed,

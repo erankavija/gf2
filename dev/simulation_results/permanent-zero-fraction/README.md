@@ -92,8 +92,8 @@ Version-1 datasets predate all three version-2 fields and omit them; the reader
 accepts their absence only at version 1. The revision is the complete
 40-character lowercase hexadecimal object name; an abbreviation resolves only
 against the repository that produced it, so it cannot identify the source of a
-dataset read elsewhere. The RNG algorithm is the closed token
-`chacha20`; `rng_version` records the exact crate or implementation version,
+dataset read elsewhere. The RNG algorithm is the closed schema token
+`cha_cha20`; `rng_version` records the exact crate or implementation version,
 and `invocation` stores the producer's argv tokens without shell quoting.
 Accelerator runtime and GPU model use a tagged availability value: either
 `{"state":"present","value":...}` or `{"state":"not_present"}`. Absence is
