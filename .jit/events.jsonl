@@ -10003,3 +10003,4 @@
 {"fields":["documents"],"id":"7753ecc6-76cd-4765-b937-82f5c480bae0","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T08:59:48.822178771Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"ac2cb5c7-21c9-43d2-8530-ccb329dcc75d","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T08:59:49.013906126Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"71603292-e96e-434a-8c0a-2d40195473d1","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T08:59:49.204983801Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"cargo-ci","id":"7935216d-8d46-4e21-ad43-74a79356a7b2","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T09:05:02.478157479Z","type":"gate_passed","updated_by":"auto:executor"}
