@@ -520,7 +520,7 @@ def validate_harness_identity(
 def scratch_row_is_incomplete(row: dict[str, str]) -> bool:
     for field in SCRATCH_FIELDNAMES:
         value = row[field]
-        if value is None or value == "":
+        if value is None:
             return True
         if not isinstance(value, str):
             raise ReceiptError(f"scratch field {field} is not text")
