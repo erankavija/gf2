@@ -384,6 +384,13 @@
       "type": "task",
       "wave": "9",
       "reason": "freeze audit finding 6; wired before all three campaign arms"
+    },
+    {
+      "short_id": "86185f88",
+      "title": "Cell-exhaustive backend equivalence receipt for the 124 nominated selection configurations",
+      "type": "task",
+      "wave": "8 (freeze closure)",
+      "reason": "research-review F3 owner decision: produce the evidence; wired before all three campaign arms; full run scheduled for the 02:00 exclusive window"
     }
   ],
   "escalations": [
@@ -1005,5 +1012,13 @@
       "committed_receipt": "dev/benchmarks/permanent_campaign/premeasure-v1-receipt.md",
       "commit": "5e2799f7485280d717868f66a718275216f2993a"
     }
-  ]
+  ],
+  "session_23_state": {
+    "recorded_at": "2026-08-29T20:45:00+03:00",
+    "research_review_7a816262": "FAIL round R2 (recorded run, 5 blocking findings). Dispositions: F1 REQ-04 amended (owner), F2 invocation reading recorded in freeze.md (owner), F3 -> task 86185f88 evidence run (owner), F4 closed by backend-selection-v1-rng-addendum.md, F5 draft relabeled. Re-run research-review AND doc-review on 7a816262 only after 86185f88's receipt lands.",
+    "merged": "bc6155fa (pre-draw receipt section), e1d45c20 (emitter-aware emission-check; cargo-ci passed in worktree pre-merge)",
+    "in_flight": "gates: e1d45c20 cargo-ci + code-review, bc6155fa doc-review; workers: 86185f88 (sol xhigh, worktree), 6dfb1b5e (luna xhigh, worktree)",
+    "note_variance": "research-review R2's first reviewer pass (rollout 19-35-41) returned 2 findings; ai-review re-ran after a stale-claims-lock stall and the recorded pass returned 5. The recorded run is authoritative.",
+    "frozen_emitter_backup": "~/.local/state/gf2-frozen/permanent_campaign-2d6edcd9 (sha256 2d6edcd9...)"
+  }
 }

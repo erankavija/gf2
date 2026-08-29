@@ -5,12 +5,24 @@
   "dependencies": [],
   "description": "`permanent_dataset emission-check` hashes its own executable, so it can never approve a real campaign manifest.\n\n## Background\n\n`crates/gf2-sim/src/bin/permanent_dataset.rs:29` documents `emission-check` as\n\"runs the guard that `permanent_campaign` passes before writing\". It calls\n`approve_emission` (`crates/gf2-sim/src/bin/permanent_dataset.rs:74`), which\nresolves the running executable's digest via `running_binary_sha256()`\n(`crates/gf2-sim/src/permanent_campaign/provenance.rs:220`) and compares it with\n`manifest.provenance.binary_sha256`\n(`crates/gf2-sim/src/permanent_campaign/provenance.rs:283-288`).\n\nA frozen campaign manifest necessarily pins the emitting binary, which is\n`permanent_campaign`, not `permanent_dataset`. The two executables cannot share a\ndigest, so the subcommand refuses with `BinaryDigestMismatch` for every valid\nfrozen manifest. Observed against the committed freeze\n`permanent-zero-fraction-20260829` at revision `57c9633f`:\n\n```text\n$ target/release/permanent_dataset emission-check \\\n    dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829\nthe frozen manifest names binary SHA-256 2d6edcd940abe9340143c8b724a8274fff8eca1200a491ad13deec9e386eba58,\nbut the running executable is 86e887504731ddc7c94e4cb69b2e6f3773ed1d9cf9eca45658e1226c1ef820b8\n$ echo $?\n1\n```\n\nThe manifest is correct and the writer's own guard is correct:\n`crates/gf2-sim/src/bin/permanent_campaign.rs:204` applies the same\n`approve_emission` to its own matching digest before writing, so campaign\nexecution is unaffected. Only the standalone inspection subcommand and its\ndoc comment are wrong. The defect is that a diagnostic advertised as a pre-flight\ncannot return success, which invites a reader to interpret a structurally\nguaranteed refusal as a defect in the frozen manifest.\n\nThe refusal ordering is itself useful evidence and should be preserved: before the\nfreeze commit the guard reports `ManifestChanged`, and after it reports\n`BinaryDigestMismatch`, which is what proves the on-disk manifest matches `HEAD`.\n\n## Success Criteria\n\n- [hard] REQ-01: `permanent_dataset emission-check` either checks the manifest's\n  pinned emitter digest against the named emitter rather than against its own\n  executable, or the subcommand and its doc comment state plainly that it\n  verifies everything except writer identity and name the writer-side guard as\n  the only complete check.\n- [hard] REQ-02: A regression test covers the case of a manifest whose\n  `provenance.binary_sha256` names a different executable than the one running\n  the check, and asserts the chosen behaviour from REQ-01.\n- [hard] REQ-03: The `permanent_dataset` module doc comment at\n  `crates/gf2-sim/src/bin/permanent_dataset.rs:29` no longer claims the\n  subcommand runs the guard that `permanent_campaign` passes before writing,\n  unless REQ-01 makes that claim true.\n- [hard] REQ-04: The manifest-versus-`HEAD` comparison keeps refusing with\n  `ManifestChanged` for an uncommitted or modified manifest; this change does not\n  weaken the emission guard on the writer path.\n\n## Notes\n\nFound during the `7a816262` freeze validation. The freeze record documents the\nmismatch at\n`dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md`\n§\"Pre-draw and validation record\". No campaign draw has occurred.\n",
   "documents": [],
+  "done_at": "2026-08-29T17:35:59.408757785Z",
   "first_ready_at": "2026-08-29T15:11:21.561571053Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-29T17:35:43.448896539Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-29T17:34:23.222801976Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "e1d45c20-17e7-4d51-a9c3-0c71a82abc40",
   "labels": [
     "epic:permanent-statistics",
@@ -18,7 +30,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "done",
   "title": "permanent_dataset emission-check compares its own binary digest, never the pinned emitter",
-  "updated_at": "2026-08-29T15:11:21.561571053Z"
+  "updated_at": "2026-08-29T17:35:59.408757785Z"
 }
