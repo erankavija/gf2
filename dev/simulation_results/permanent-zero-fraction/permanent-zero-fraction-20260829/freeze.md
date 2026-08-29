@@ -18,6 +18,27 @@ This record binds the campaign decisions that the strict `CampaignManifest` JSON
 
 The manifest enumerates the complete 63-cell universe in lexicographic `(q,n)` order. Every cell's backend is the selected backend in the accepted 63-row receipt, and every `backend_receipt` binds that receipt by the path and digest above. The receipt applies protocol rules 1–4 and records the measured basis and any exclusion or single-eligible-arm basis for every decision; no historical draft is a manifest input.
 
+## Pre-draw execution receipt
+
+This freeze record is the committed pre-draw execution receipt that the
+protocol's governing clause (`protocol.md:3-6`) requires:
+
+> This document governs the first permanent-zero-fraction campaign whose
+> committed pre-draw execution receipt records this repository-relative path,
+> content SHA-256, and corresponding root-manifest identity.
+
+The three bindings for this receipt are:
+
+- Protocol path: `dev/simulation_results/permanent-zero-fraction/protocol.md`.
+- Protocol content SHA-256: `249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639`.
+- Root-manifest identity: campaign id `permanent-zero-fraction-20260829`; manifest content SHA-256 `c37305910037d5c0f0a41f51a6be3960a53d27ce66d63bda87c6ae45fb4b2952`.
+
+REQ-02 resolves in both directions: `protocol.md:3-6` identifies its receipt
+descriptively as the artifact recording exactly these three bindings. This
+section closes the loop by explicitly claiming the pre-draw execution receipt
+role and citing that clause. No protocol edit occurs: the protocol is frozen,
+and a changed protocol would define a new campaign id.
+
 ## Cell universe, multiplicity, and error allocation
 
 The frozen values cite the protocol's [cell universe and sample-size table](/dev/simulation_results/permanent-zero-fraction/protocol.md#frozen-cell-universe-and-sample-sizes), [empty extension family](/dev/simulation_results/permanent-zero-fraction/protocol.md#extension-family), and [global error budget](/dev/simulation_results/permanent-zero-fraction/protocol.md#global-error-budget-and-exact-decisions):
