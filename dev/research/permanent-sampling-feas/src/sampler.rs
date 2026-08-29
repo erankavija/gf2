@@ -58,6 +58,11 @@ use gf2_core::gfp::Fp;
 use rand_chacha::ChaCha20Rng;
 use rand_core::{RngCore, SeedableRng};
 
+/// RNG implementation that supplies every measurement matrix entry.
+pub const RNG_IMPLEMENTATION: &str = "rand_chacha::ChaCha20Rng (ChaCha20)";
+/// Exact implementation-crate version, pinned by `Cargo.toml` and the lock.
+pub const RNG_IMPLEMENTATION_VERSION: &str = "rand_chacha 0.9.0";
+
 /// Width of the high stream-word field reserved for measurement purposes.
 pub const PURPOSE_TAG_BITS: u32 = 16;
 /// Width of the low stream-word field reserved for per-purpose indices.

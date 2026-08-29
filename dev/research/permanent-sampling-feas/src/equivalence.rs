@@ -17,7 +17,7 @@ use gf2_algebra::packed::packed5::Packed5Matrix;
 use gf2_algebra::packed::packed7::Packed7Matrix;
 use gf2_core::gfp::Fp;
 
-/// One backend's agreement with the scalar reference at a given `(q, n)`.
+/// One backend's agreement with the selected reference at a given `(q, n)`.
 #[derive(Clone, Debug)]
 pub struct EquivalenceRow {
     pub q: u64,
@@ -28,26 +28,35 @@ pub struct EquivalenceRow {
     pub mismatches: usize,
     pub zeros_reference: u64,
     pub zeros_backend: u64,
+    pub seed_root: u64,
+    pub stream_purpose: &'static str,
+    pub stream_index: u64,
     pub status: String,
 }
 
-/// CSV header for [`EquivalenceRow::to_csv_row`].
-pub const EQUIVALENCE_CSV_HEADER: &str =
-    "q,n,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,status";
+/// CSV header for [`EquivalenceRow::to_csv_row`], including the authoritative
+/// selection-arm identity supplied to that method.
+pub const EQUIVALENCE_CSV_HEADER: &str = "q,n,selection_arm,manifest_backend,reference,backend,\
+matrices,mismatches,zeros_reference,zeros_backend,seed_root,stream_purpose,stream_index,status";
 
 impl EquivalenceRow {
     #[must_use]
-    pub fn to_csv_row(&self) -> String {
+    pub fn to_csv_row(&self, selection_arm: &str, manifest_backend: &str) -> String {
         format!(
-            "{},{},{},{},{},{},{},{},{}",
+            "{},{},{},{},{},{},{},{},{},{},0x{:016x},{},{},{}",
             self.q,
             self.n,
+            selection_arm,
+            manifest_backend,
             self.reference,
             self.backend,
             self.matrices,
             self.mismatches,
             self.zeros_reference,
             self.zeros_backend,
+            self.seed_root,
+            self.stream_purpose,
+            self.stream_index,
             self.status
         )
     }
@@ -96,7 +105,23 @@ fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64, purpose: Measurement
     }
 }
 
-/// Check every backend against a reference kernel at `(q, n)`.
+/// Select the reference implementation for `(q, n)`.
+///
+/// The scalar single-word kernel is preferred. The generic Ryser
+/// implementation is used only where the packed scalar kernel is unavailable.
+#[must_use]
+pub fn reference_backend(q: u64, n: usize) -> Option<Backend> {
+    match support(Backend::Scalar, q, n) {
+        Support::Supported => Some(Backend::Scalar),
+        Support::Unsupported(_) => match support(Backend::RyserGeneric, q, n) {
+            Support::Supported => Some(Backend::RyserGeneric),
+            Support::Unsupported(_) => None,
+        },
+    }
+}
+
+/// Check every scheduled non-reference backend against a reference kernel at
+/// `(q, n)`.
 ///
 /// The reference is the scalar single-word kernel wherever it is supported. At
 /// `q = 7, n > 16` that kernel does not exist — `permanent_bipedal7` asserts
@@ -109,31 +134,69 @@ fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64, purpose: Measurement
 /// reported with their reason rather than dropped.
 #[must_use]
 pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> {
+    check_backends(
+        q,
+        n,
+        m,
+        seed_root,
+        scheduled_backends(SchedulePhase::Equivalence).map(|scheduled| scheduled.backend()),
+        false,
+    )
+}
+
+/// Check exactly `backends` against the reference kernel at `(q, n)`.
+///
+/// Unlike [`check`], this function emits a row when a requested backend is the
+/// reference itself. That row records the values already produced by the
+/// reference evaluation, allowing an authoritative nomination table to retain
+/// one evidence row for every nominated configuration.
+#[must_use]
+pub fn check_selected(
+    q: u64,
+    n: usize,
+    m: usize,
+    seed_root: u64,
+    backends: &[Backend],
+) -> Vec<EquivalenceRow> {
+    check_backends(q, n, m, seed_root, backends.iter().copied(), true)
+}
+
+fn check_backends(
+    q: u64,
+    n: usize,
+    m: usize,
+    seed_root: u64,
+    backends: impl IntoIterator<Item = Backend>,
+    include_reference: bool,
+) -> Vec<EquivalenceRow> {
     let mut rows = Vec::new();
     let purpose = scheduled_backends(SchedulePhase::Equivalence)
         .next()
         .expect("the canonical backend schedule is nonempty")
         .purpose();
 
-    let reference_backend = match support(Backend::Scalar, q, n) {
-        Support::Supported => Backend::Scalar,
-        Support::Unsupported(scalar_reason) => match support(Backend::RyserGeneric, q, n) {
-            Support::Supported => Backend::RyserGeneric,
-            Support::Unsupported(generic_reason) => {
-                rows.push(EquivalenceRow {
-                    q,
-                    n,
-                    reference: Backend::Scalar.name(),
-                    backend: "all",
-                    matrices: 0,
-                    mismatches: 0,
-                    zeros_reference: 0,
-                    zeros_backend: 0,
-                    status: format!("skipped: no reference ({scalar_reason}; {generic_reason})"),
-                });
-                return rows;
-            }
-        },
+    let Some(reference_backend) = reference_backend(q, n) else {
+        let Support::Unsupported(scalar_reason) = support(Backend::Scalar, q, n) else {
+            unreachable!("a supported scalar backend would have been selected")
+        };
+        let Support::Unsupported(generic_reason) = support(Backend::RyserGeneric, q, n) else {
+            unreachable!("a supported generic backend would have been selected")
+        };
+        rows.push(EquivalenceRow {
+            q,
+            n,
+            reference: Backend::Scalar.name(),
+            backend: "all",
+            matrices: 0,
+            mismatches: 0,
+            zeros_reference: 0,
+            zeros_backend: 0,
+            seed_root,
+            stream_purpose: purpose.name(),
+            stream_index: 0,
+            status: format!("skipped: no reference ({scalar_reason}; {generic_reason})"),
+        });
+        return rows;
     };
 
     let batch = shared_batch(q, n, m, seed_root, purpose);
@@ -154,12 +217,10 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
     // order - which is what makes the per-matrix comparison meaningful.
     let raw = raw_ref;
 
-    for scheduled in scheduled_backends(SchedulePhase::Equivalence) {
-        let backend = scheduled.backend();
-        if backend == reference_backend {
+    for backend in backends {
+        if backend == reference_backend && !include_reference {
             continue;
         }
-        debug_assert_eq!(scheduled.purpose(), purpose);
         let mut row = EquivalenceRow {
             q,
             n,
@@ -169,6 +230,9 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
             mismatches: 0,
             zeros_reference,
             zeros_backend: 0,
+            seed_root,
+            stream_purpose: purpose.name(),
+            stream_index: 0,
             status: String::new(),
         };
         match support(backend, q, n) {
@@ -177,7 +241,10 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
                 row.status = format!("unsupported: {reason}");
             }
             Support::Supported => {
-                if matches!(backend, Backend::Avx2 | Backend::RayonAvx2)
+                if backend == reference_backend {
+                    row.zeros_backend = zeros_reference;
+                    row.status = "identical".to_string();
+                } else if matches!(backend, Backend::Avx2 | Backend::RayonAvx2)
                     && crate::backend::avx2_fns().is_none()
                 {
                     row.matrices = 0;
@@ -416,6 +483,19 @@ independent expansion counted {independent}"
                 assert_eq!(row.zeros_reference, row.zeros_backend);
             }
         }
+    }
+
+    #[test]
+    fn a_nominated_reference_keeps_its_own_evidence_row() {
+        let rows = check_selected(7, 17, 2, 0xB488_F02C, &[Backend::RyserGeneric]);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].reference, Backend::RyserGeneric.name());
+        assert_eq!(rows[0].backend, Backend::RyserGeneric.name());
+        assert_eq!(rows[0].matrices, 2);
+        assert_eq!(rows[0].mismatches, 0);
+        assert_eq!(rows[0].status, "identical");
+        assert_eq!(rows[0].stream_purpose, "equivalence");
+        assert_eq!(rows[0].stream_index, 0);
     }
 
     /// The equivalence command compares the values the timed GPU path emits,
