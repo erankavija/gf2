@@ -146,7 +146,7 @@
      "short_id": "7a816262",
      "title": "Frozen root manifest for the campaign",
      "classification": "implementation",
-     "status": "in_progress: claimed by agent:codex since 2026-08-17T19:18:31Z; rework MAX. Premeasurement: 1007 completed + 1 censored (position 539) valid, 432 pending (48 q5, 384 q7). Dual-row gpu_hip scratch resolved by owner decision 2026-08-25 (native-M second row); collector amendment landed on main at d7493bdc and on the pinned collector branch at 8811d7b6; deviation record dev/benchmarks/permanent_campaign/premeasure-v1-deviations.md linked. Resume+collect timers armed for 2026-08-26 02:00/07:40 EEST."
+     "status": "in_progress: claimed by agent:codex since 2026-08-17T19:18:31Z; rework MAX. All 1,440 preregistered positions are terminal: 1,439 collector candidates and signal-censored position 539. The immutable ledger, candidates, censored raw files, fail-closed summarizer, and 120-configuration summary are committed at 5e2799f7. Final freeze waits on owner decisions for the rng_algorithm token and five incomplete/nonfinite accelerator configurations, and on new prerequisite ec22205e for the 52 missing per-cell determinant marginal-cost measurements."
     },
     {
      "id": "1947125e-33eb-4442-b717-24442cc35ca1",
@@ -154,9 +154,16 @@
      "title": "Shared behavioural conformance suite across campaign backends",
      "classification": "implementation",
      "status": "done: cargo-ci passed at 51e28a31 (clean tree) and code-review passed at d8f6cb01 with zero findings; lead six-tier review PASS; closed session 16, closure commit 370eb43a."
+    },
+    {
+     "id": "ec22205e-64f9-43c9-9848-ff8e6c41348c",
+     "short_id": "ec22205e",
+     "title": "Complete determinant marginal-cost coverage for campaign cells",
+     "classification": "research",
+     "status": "ready: created session 17 after the freeze audit proved determinant-cost.csv directly measures only 11 of the 63 enabled cells. The task extends the canonical harness and receipt for the remaining 52 cells and is a prerequisite of 7a816262."
     }
    ],
-   "note": "Current topological frontier after reconciliation. Do not advance to wave 9 until both issues are done or rejected."
+   "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
   },
   {
    "wave_number": 9,
@@ -342,6 +349,13 @@
    "reason": "The owner-approved rare-event graph amendment at b9c50d97 inserts exact compressed-state propagation between the preregistered design 3f664839 and the independent importance-sampling cross-check 6639435f; commit 0bf6e7a1 hardens its validation contract.",
    "wave": 10,
    "status": "backlog"
+  },
+  {
+   "short_id": "ec22205e",
+   "title": "Complete determinant marginal-cost coverage for campaign cells",
+   "reason": "The session-17 freeze audit proved that 7a816262 REQ-05 requires directly measured per-cell determinant marginal cost while the canonical receipt covers only 11 of the 63 enabled cells. The new leaf extends that receipt for the other 52 cells without treating interpolation as measurement.",
+   "wave": 8,
+   "status": "ready"
   }
  ],
  "escalations": [
@@ -575,6 +589,29 @@
    "status": "resolved",
    "requested_at": "2026-08-25T10:15:00Z",
    "resolution": "Owner 2026-08-25: (1) collector accepts dual-row gpu_hip scratch and selects the native-M grid slot (second data row) as the process measurement, first row preserved as unused replicate; (2) bounded lead-direct repair (main d7493bdc, pinned collector branch 8811d7b6, premeasure test t11); (3) re-arm tonight's bounded session, same root and run ID."
+  },
+  {
+   "issue": "7a816262",
+   "reason": "The frozen protocol and permanent-campaign README require rng_algorithm token chacha20, while the strict canonical CampaignManifest schema serializes ChaCha20 as cha_cha20 and existing valid artifacts use that schema token. A final manifest cannot satisfy both contracts.",
+   "status": "awaiting_owner",
+   "requested_at": "2026-08-29T10:50:02+03:00",
+   "options": [
+    "Amend the frozen protocol and README to the canonical schema token cha_cha20 before the first campaign draw.",
+    "Change the shared schema serialization to chacha20 and update or migrate fixtures and dependent artifacts."
+   ],
+   "lead_recommendation": "Amend the protocol and README to cha_cha20. This preserves the strict shared schema and already-committed artifact vocabulary, and the correction is still before any campaign shard exists."
+  },
+  {
+   "issue": "7a816262",
+   "reason": "The preregistered 12-process backend cohort has five accelerator configurations without 12 finite measurements, but the frozen selection rule does not define their eligibility: q3n26 has 11 measured plus one signal-censor; q3n27 has 5 measured plus 7 harness-censors; q5n21, q5n22, and q5n23 each have 0 measured plus 12 harness-censors.",
+   "status": "awaiting_owner",
+   "requested_at": "2026-08-29T10:50:02+03:00",
+   "options": [
+    "Amend eligibility so a backend arm requires all 12 finite measurements; preserve every outcome and select the complete arm at affected cells.",
+    "Preregister a new same-size remeasurement cohort under a new run id for the five affected configurations, preserving the original cohort and terminal censor.",
+    "Rank by the available finite-row mean despite unequal and sometimes zero finite samples."
+   ],
+   "lead_recommendation": "Require 12 of 12 finite measurements for eligibility and select the complete arm. This is conservative, preserves the no-replacement cohort, avoids biased unequal-sample ranking, and requires no additional GPU work."
   }
  ],
  "standing_rules": [
@@ -582,7 +619,7 @@
   "codex luna dispatches can wedge before doing any work: a stalled worker shows a live process with 00:00:00 CPU time and no ~/.codex/sessions rollout file for that run. Diagnose with `ps -o etime,time` plus the session-log listing before concluding it is merely slow, then TaskStop rather than waiting. Observed session 13: a39bb161 rework-1 held 47 minutes at zero CPU and produced nothing.",
   "Owner directive 2026-08-24: agent dispatch and rework prompts are ephemeral coordination material and do not belong in the repository.",
   "Owner directive 2026-08-24: GPU-heavy work is guaranteed safe from 02:00 local unless the owner says otherwise. Baldur's Gate 3 belongs to another user, so this workflow must not use process visibility as the admission test.",
-  "The transient 7a816262 resume and collector units are bound to .agents/worktrees/agent-a39bb161 and .agents/worktrees/agent-389aa4de. Do not remove, prune, reset, or repurpose either worktree until both timers have fired and their evidence has been inspected."
+  "The premeasure-v1 cohort is immutable at source revision 1350d5b4. Recollect it only with the pinned collector behavior at 8811d7b6; current main uses incompatible provenance keys. Never rerun, repair, or delete terminal position 539."
  ],
  "rework_counts": {
   "6c7fcb38": 1,
@@ -726,11 +763,29 @@
    "issue": "b8206228",
    "source": "session-16 jit validate",
    "finding": "Repo-wide jit validate fails on isolated issue c0bb2ab1 (Blocked schedule for ordered-column elimination, created 2026-08-24 outside this epic, no epic label, no dependency edges). Outside the epic's scope; left for the owner. Epic-level gate runs that shell out to jit validate will trip on it."
+  },
+  {
+   "issue": "7a816262",
+   "source": "session-17 service and durable-root reconciliation",
+   "finding": "The 2026-08-26 collector unit failed with status 200/CHDIR because its old worktree path had vanished, even though the overnight resume session completed every remaining preregistered position.",
+   "disposition": "Recovered without touching receipts: ran premeasure-collect from a temporary worktree at pinned commit 8811d7b6, obtained 1,440 valid terminal ledger rows, 1,439 candidate rows, zero invalid rows, and removed the temporary worktree. The final evidence is committed at 5e2799f7."
+  },
+  {
+   "issue": "7a816262",
+   "source": "session-17 premeasurement summary audit",
+   "finding": "A successful process exit does not imply a finite throughput measurement. Forty-three candidate rows have scratch_outcome=censored and a NaN composite rate: seven at q3n27 accelerator and twelve each at q5n21, q5n22, and q5n23 accelerator. Position 539 adds one signal-censored q3n26 accelerator process.",
+   "disposition": "The committed summary labels all five affected configurations ranking_rule_required and makes no backend choice. The frozen protocol has no censor eligibility rule, so an owner decision is open."
+  },
+  {
+   "issue": "7a816262/ec22205e",
+   "source": "session-17 freeze evidence audit",
+   "finding": "The canonical determinant-cost receipt directly measures 11 representative cells, while the freeze enables the determinant companion on all 63 cells and requires measured marginal cost per enabled cell.",
+   "disposition": "Created and wired prerequisite ec22205e for a preregistered extension covering the 52 omitted cells; commit 2d6d9648. Interpolation is not accepted as measurement."
   }
  ],
  "started_at": "2026-08-09T12:20:30Z",
- "rederived_at": "2026-08-25T13:20:00+03:00",
- "rederivation_note": "Session 16: 1947125e closed, 679cf170 closed externally by agent:gf2-a1; wave-8 frontier is 7a816262 alone, DAG-blocked wave 9 (3f664839, 73317b2e) confirmed dependent on it.",
+ "rederived_at": "2026-08-29T10:50:02+03:00",
+ "rederivation_note": "Session 17: all 1,440 premeasurement positions are terminal and the cohort receipt is committed at 5e2799f7. New prerequisite ec22205e supplies the missing 52 determinant-cost cells. Wave 8 remains active with 7a816262 awaiting two owner protocol decisions; wave 9 remains DAG-blocked.",
  "overnight_runs": [
   {
    "armed_at": "2026-08-18T21:21+03:00",
@@ -807,6 +862,26 @@
    "worktree": ".agents/worktrees/agent-389aa4de (branch worktree-agent-389aa4de at 8811d7b6)",
    "log": "premeasure-collect-20260826.log",
    "exit_status_file": "premeasure-collect-20260826.exit.status"
+  },
+  {
+   "armed_at": "2026-08-29T10:17:00+03:00",
+   "unit": "direct lead recovery collection from temporary pinned worktree",
+   "command": "CAMPAIGN_TARGET_ROOT=/data/gf2-campaigns/b8206228/premeasure-recovery-20260824 CAMPAIGN_RUN_ID=premeasure-v1 permanent-campaign-runner.sh premeasure-collect",
+   "durable_root": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824",
+   "run_id": "premeasure-v1",
+   "collector_revision": "8811d7b6",
+   "status": "complete_with_terminal_censor",
+   "receipts": {
+    "completed_candidates": 1439,
+    "signal_censored": 1,
+    "invalid": 0,
+    "missing": 0,
+    "total": 1440
+   },
+   "ledger_sha256": "d1efd9dcfa39b8498db1e04ba0720de2bf96677fc6b820ffadc3f1919848d046",
+   "candidates_sha256": "272a524185c14515394a24a5e7385e07b7dc5620c0a488a12438668b72b8c6b8",
+   "committed_receipt": "dev/benchmarks/permanent_campaign/premeasure-v1-receipt.md",
+   "commit": "5e2799f7485280d717868f66a718275216f2993a"
   }
  ]
 }
