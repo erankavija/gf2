@@ -43,6 +43,7 @@
       "path": "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md"
     }
   ],
+  "done_at": "2026-08-29T14:32:23.708468749Z",
   "first_ready_at": "2026-08-29T07:45:28.845722952Z",
   "gates_required": [
     "cargo-ci",
@@ -53,22 +54,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-29T09:05:02.478157479Z",
+      "updated_at": "2026-08-29T14:17:43.785953771Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-08-29T09:08:23.939276248Z",
+      "updated_at": "2026-08-29T14:24:15.824477414Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-08-29T09:10:51.702372143Z",
+      "updated_at": "2026-08-29T14:20:06.330571043Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-08-29T09:18:09.609011269Z",
+      "status": "passed",
+      "updated_at": "2026-08-29T14:31:37.847278288Z",
       "updated_by": "auto:executor"
     }
   },
@@ -80,7 +81,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Complete determinant marginal-cost coverage for campaign cells",
-  "updated_at": "2026-08-29T12:06:20.173175872Z"
+  "updated_at": "2026-08-29T14:32:23.708468749Z"
 }
