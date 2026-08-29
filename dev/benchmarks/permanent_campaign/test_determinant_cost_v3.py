@@ -18,32 +18,37 @@ sys.path.insert(0, str(HERE))
 import determinant_cost_v3 as receipt  # noqa: E402
 
 
-def measured_row(q: int, n: int, process_index: int) -> dict[str, str]:
+def measured_row(
+    q: int,
+    n: int,
+    process_index: int,
+    cohort: receipt.CohortConfig | None = None,
+) -> dict[str, str]:
+    cohort = cohort or receipt.V3
     starts = [5 * (process_index - 1) + offset for offset in range(5)]
     repetition_elapsed = [1_000_000 + process_index + offset for offset in range(5)]
     calls = 100
     elapsed = sum(repetition_elapsed)
     sample_count = calls * len(repetition_elapsed)
-    invocation = json.dumps(
-        [
-            "/tmp/determinant_companion-deadbeef",
-            "--execution",
-            str(process_index),
-            "--output",
-            f"/tmp/process-{process_index}.csv",
-        ],
-        separators=(",", ":"),
-    )
+    process_argv = [
+        "/tmp/determinant_companion-deadbeef",
+        *(["--cohort", cohort.key] if cohort == receipt.V4 else []),
+        "--execution",
+        str(process_index),
+        "--output",
+        f"/tmp/process-{process_index}.csv",
+    ]
+    invocation = json.dumps(process_argv, separators=(",", ":"))
     return {
-        "schema_version": receipt.SCHEMA_VERSION,
+        "schema_version": cohort.schema_version,
         "process_index": str(process_index),
         "q": str(q),
         "n": str(n),
         "outcome": "measured",
         "process_exit_code": "0",
         "backend": "fieldmatrix_det_ple",
-        "seed_root": "0xec22205e00000000",
-        "cell_seed": f"0x{receipt.cell_seed(q, n):016x}",
+        "seed_root": f"0x{cohort.seed_root:016x}",
+        "cell_seed": f"0x{receipt.cell_seed(q, n, cohort):016x}",
         "fixture_count": "32",
         "fixture_starts": ";".join(str(value) for value in starts),
         "warmup_policy": receipt.WARMUP_POLICY,
@@ -73,7 +78,13 @@ def measured_row(q: int, n: int, process_index: int) -> dict[str, str]:
         "worker_count": "1",
         "benchmark_wrapper": "dev/scripts/ccx1-bench-flock.sh:ccx1",
         "cohort_invocation": json.dumps(
-            ["python3", "determinant_cost_v3.py", "run"], separators=(",", ":")
+            [
+                "python3",
+                "determinant_cost_v3.py",
+                "run",
+                *(["--cohort", cohort.key] if cohort == receipt.V4 else []),
+            ],
+            separators=(",", ":"),
         ),
         "invocation": invocation,
         "stdout_sha256": hashlib.sha256(b"").hexdigest(),
@@ -81,9 +92,9 @@ def measured_row(q: int, n: int, process_index: int) -> dict[str, str]:
     }
 
 
-def complete_rows() -> list[dict[str, str]]:
+def complete_rows(cohort: receipt.CohortConfig | None = None) -> list[dict[str, str]]:
     return [
-        measured_row(q, n, process_index)
+        measured_row(q, n, process_index, cohort)
         for q, n in receipt.campaign_cells()
         for process_index in range(1, 6)
     ]
@@ -143,6 +154,46 @@ class ProvenanceTests(unittest.TestCase):
                 receipt.relevant_source_status(git),
             )
 
+    def test_exact_v4_preregistration_participates_in_dirty_detection(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository = Path(temporary_directory)
+            paths = [
+                receipt.BENCHMARK_WRAPPER_PATH,
+                receipt.V4.preregistration_path,
+            ]
+            for relative in paths:
+                path = repository / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(f"frozen {relative}\n", encoding="utf-8")
+            subprocess.run(["git", "init", "--quiet"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "config", "user.email", "receipt-test@example.invalid"],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "Receipt Test"],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(["git", "add", *paths], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "commit", "--quiet", "--no-gpg-sign", "-m", "test fixture"],
+                cwd=repository,
+                check=True,
+            )
+
+            git = ["git", "-C", str(repository)]
+            self.assertEqual(receipt.relevant_source_status(git, receipt.V4), "")
+
+            preregistration = repository / receipt.V4.preregistration_path
+            preregistration.write_text("changed contract\n", encoding="utf-8")
+
+            self.assertIn(
+                receipt.V4.preregistration_path,
+                receipt.relevant_source_status(git, receipt.V4),
+            )
+
 
 class ValidationTests(unittest.TestCase):
     def test_complete_receipt_validates_and_renders_every_cell(self) -> None:
@@ -155,6 +206,24 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(rendered.count("\n| 5 |"), 21)
         self.assertEqual(rendered.count("\n| 7 |"), 17)
         self.assertIn("No failed or censored process outcome was observed", rendered)
+
+    def test_v3_committed_receipt_and_report_remain_compatible(self) -> None:
+        receipt_path = HERE / "determinant-cost-all-cells.csv"
+        report_path = HERE / "determinant-cost-all-cells.md"
+        rows = receipt.read_csv(receipt_path)
+        receipt.validate_rendered_report(
+            rows,
+            receipt.sha256_file(receipt_path),
+            report_path.read_text(encoding="utf-8"),
+            receipt.V3,
+        )
+
+    def test_v4_report_binds_v4_preregistration_and_machine_receipt(self) -> None:
+        rendered = receipt.render_report(complete_rows(receipt.V4), "e" * 64)
+        self.assertIn(f"`{receipt.V4.preregistration_path}`", rendered)
+        self.assertIn(f"`{receipt.V4.receipt_path}`", rendered)
+        self.assertIn(f"`{receipt.V4.schema_version}`", rendered)
+        self.assertNotIn(f"`{receipt.V3.preregistration_path}`", rendered)
 
     def test_duplicate_or_missing_process_address_fails_closed(self) -> None:
         rows = complete_rows()
