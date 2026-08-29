@@ -160,7 +160,7 @@
      "short_id": "ec22205e",
      "title": "Complete determinant marginal-cost coverage for campaign cells",
      "classification": "research",
-     "status": "escalation pending at rework MAX: canonical v4 produced 315/315 measured outcomes with a complete clean wrapper/source closure; cargo-ci, code-review, and doc-review pass. Formal research-review failed on three publication-evidence gaps: the machine receipt lacks explicit RNG algorithm/version, the five-process timing table lacks uncertainty/error columns, and the fixed-N/12-hour baseline lacks a pinned authoritative protocol identity. Owner decision is required before any further rework."
+     "status": "rework-1 after owner-approved counter reset: prepare a canonical v5 cohort whose raw manifest records RNG identity, whose five-process timing report carries preregistered 95% process-level intervals, and whose fixed-N/twelve-hour comparison pins the authoritative protocol path/revision/hash. Preserve v4 as falsification evidence and cut active tooling to v5 only. Preparation may proceed, but timing is held until the owner supplies the schedule."
     }
    ],
    "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
@@ -362,8 +362,10 @@
   {
    "issue": "ec22205e",
    "reason": "At rework MAX, formal research-review found three new publication-evidence gaps in the canonical v4 determinant receipt: explicit RNG identity is absent from the machine manifest, the five-process timing table has no uncertainty/error columns, and the fixed-N/twelve-hour baseline is not pinned to its authoritative protocol artifact and revision.",
-   "status": "pending",
+   "status": "approved",
    "requested_at": "2026-08-29T12:18:09+03:00",
+   "resolved_at": "2026-08-29T12:36:49+03:00",
+   "decision": "Owner selected option A: authorize one bounded counter-reset rework with canonical v5 preregistration and producing source; preserve v4 as evidence, retain canonical-cutover, and pause before timing so the owner can advise on the schedule.",
    "options": [
     "Authorize one bounded counter-reset rework with a preregistered canonical v5 cohort: raw rows record the closed MMIX LCG identity/version, the report derives 95% process-level timing intervals from the five fixed outcomes, and the baseline path/revision/hash is pinned; preserve v4 as falsification evidence and cut active code over to v5 only.",
     "Authorize a derived companion manifest/report repair over the existing v4 raw receipt without remeasurement; this is faster but risks another rejection because the formal finding requires RNG identity in the machine receipt itself."
@@ -663,8 +665,8 @@
   "eb8825c8": 1,
   "7a816262": 2,
   "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached, any further failure escalates",
-  "ec22205e": 2,
-  "ec22205e_note": "rework-1 fixed the formal review's wrapper-closure defect at 1d813fae. Rework-2 was dispatched 2026-08-29 after independent review proved that this prospective fix cannot attest the historical working-copy wrapper bytes: preserve the original cohort, preregister and measure a separate 63-cell/315-outcome cohort under the repaired closure, never pool or replace outcomes. MAX reached; any further substantive review failure escalates",
+  "ec22205e": 1,
+  "ec22205e_note": "The first cycle reached MAX after v4 research-review found three new publication-evidence gaps. Owner option A on 2026-08-29 reset the counter to 0 and authorized one bounded canonical-v5 rework; count 1 records the preparation dispatch. Timing remains held for owner scheduling.",
   "032cc754": 1,
   "a39bb161": 2,
   "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates"
