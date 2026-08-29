@@ -128,9 +128,11 @@ The protocol [requires the determinant companion on the identical draws for all 
 
 `manifest.json` contains no self-hash field. `gf2_sim::permanent_campaign::provenance::manifest_content_hash` recomputes SHA-256 over the exact `manifest.json` bytes, while `checksums.sha256` records that digest in its `manifest.json` entry and does not hash itself. A reader reads the sidecar entry, recomputes the content hash, and compares the two; modification therefore produces a mismatch instead of silently changing the campaign identity.
 
+This freeze record itself is not a `checksums.sha256` member: the campaign README's integrity set is deliberately closed over raw data, and a checksum file cannot close if it also covers a record that quotes its entries — which this file does. The record's tamper evidence is repository history: `freeze.md` is a committed, tracked file, and any modification after the freeze commit `57c9633f` appears as a tracked-file diff rather than passing silently. This disposition is recorded under issue `7a816262`.
+
 ## Pre-draw and validation record
 
-The freeze-preparation audit finds no non-fixture campaign shard, field summary, pooled summary, or campaign checkpoint in the worktree. A history-wide path audit likewise finds only the committed fixture shards under `fixtures/`. The lead-owned freeze commit must precede every future non-fixture shard commit; after that commit, repository history supplies REQ-02's final ordering evidence.
+Each transcript in this section is pinned to the revision at which it ran: the freeze-preparation validations ran at revision `396cf929`, the parent of the freeze commit `57c9633f`, and the post-commit confirmations ran at revision `67f5108f`. The freeze-preparation audit at `396cf929` reports no non-fixture campaign shard, field summary, pooled summary, or campaign checkpoint in the tree, and a history-wide path audit reports only the committed fixture shards under `fixtures/`. The freeze commit `57c9633f` therefore precedes every non-fixture shard commit in repository history, which supplies REQ-02's ordering evidence.
 
 The HIP-enabled emitter is built only after the shared Cargo process check returns no process:
 
@@ -148,7 +150,7 @@ warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on /hom
 
 The `gfx940` probe warning is an expected architecture skip; the linked emitter carries the host's HIP, HSA, and profiler runtime libraries. Its SHA-256 is the nonzero digest frozen in `manifest.json`.
 
-The following command enters through the real `read_manifest` call in `permanent_campaign`, so exit status zero is the strict-schema parse evidence as well as the required provenance output:
+The following command, run at revision `396cf929`, enters through the real `read_manifest` call in `permanent_campaign`, so exit status zero is the strict-schema parse evidence as well as the required provenance output:
 
 ```text
 $ target/release/permanent_campaign --print-provenance --manifest dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829
@@ -182,14 +184,16 @@ $ echo $?
 0
 ```
 
-The printed value also matches the manifest's stored provenance exactly:
+At revision `396cf929` the printed value also matches the manifest's stored provenance exactly:
 
 ```text
 $ if diff -u <(jq -S '.provenance' dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json) <(target/release/permanent_campaign --print-provenance --manifest dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829 | jq -S '.') >/dev/null; then echo 'PASS: read_manifest accepted the strict schema and printed provenance exactly matches manifest provenance'; else echo 'FAIL: printed provenance differs'; exit 1; fi
 PASS: read_manifest accepted the strict schema and printed provenance exactly matches manifest provenance
 ```
 
-The pre-commit emission check fails closed, as required, because the lead-owned commit does not yet contain these manifest bytes:
+`observe_provenance` reports the live checkout's `git_revision`, so at any other revision the printed provenance differs from the manifest's stored provenance in exactly that field; the stored value pins `396cf929` as the manifest-creation revision. The recomputed diff at revision `67f5108f` confirms `git_revision` is the only differing field.
+
+The emission check fails closed at every stage, as required. At revision `396cf929`, where the manifest bytes are not yet committed, it refuses on the committed-content comparison:
 
 ```text
 $ target/release/permanent_dataset emission-check dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829
@@ -198,7 +202,16 @@ $ echo $?
 1
 ```
 
-This validation cannot pass in the uncommitted worker tree. There is also a distinct inspection-tool limitation to resolve before campaign execution: `permanent_dataset emission-check` calls `approve_emission`, which hashes the currently running `permanent_dataset` executable (`86e887504731ddc7c94e4cb69b2e6f3773ed1d9cf9eca45658e1226c1ef820b8`), while the manifest correctly pins the HIP-enabled `permanent_campaign` emitter (`2d6edcd940abe9340143c8b724a8274fff8eca1200a491ad13deec9e386eba58`). After the manifest is committed, the requested inspection command is therefore expected to advance from `ManifestChanged` to `BinaryDigestMismatch`, not to approval. The actual writer applies the same guard to its own correct digest, but no positive writer-only dry run exists; invoking its write path would violate the pre-draw constraint. The lead must resolve or explicitly disposition this validation-tool mismatch before the first campaign draw.
+At revision `67f5108f`, with the freeze commit in history, the same command advances past the committed-content comparison and refuses on the binary digest instead:
+
+```text
+$ target/release/permanent_dataset emission-check dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829
+the frozen manifest names binary SHA-256 2d6edcd940abe9340143c8b724a8274fff8eca1200a491ad13deec9e386eba58, but the running executable is 86e887504731ddc7c94e4cb69b2e6f3773ed1d9cf9eca45658e1226c1ef820b8
+$ echo $?
+1
+```
+
+The advance from the changed-manifest refusal to the binary-digest refusal is positive evidence that the on-disk manifest bytes match their committed content. The remaining refusal is an inspection-tool defect, not a manifest defect: `permanent_dataset emission-check` calls `approve_emission`, which hashes the currently running `permanent_dataset` executable (`86e887504731ddc7c94e4cb69b2e6f3773ed1d9cf9eca45658e1226c1ef820b8`), while the manifest correctly pins the HIP-enabled `permanent_campaign` emitter (`2d6edcd940abe9340143c8b724a8274fff8eca1200a491ad13deec9e386eba58`). The writer applies the same guard to its own matching digest, so campaign execution is unaffected. No positive writer-only dry run exists; invoking the write path would violate the pre-draw constraint. The defect is tracked as issue `e1d45c20`, to be resolved or explicitly dispositioned before the first campaign draw.
 
 The content-hash recomputation and sidecar comparison succeed over the final manifest bytes:
 

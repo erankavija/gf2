@@ -1,5 +1,7 @@
 # Draft gap list
 
+> **Superseded phase-1 draft.** The premeasurement this draft calls for has since run and is receipted, and the freeze is complete. The authoritative selection record is `dev/benchmarks/permanent_campaign/backend-selection-v1.md`; the frozen campaign record is `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md`. This draft remains as phase-1 history only and is not a ranking or freeze input.
+
 A gap is a core cell for which no backend selection is dischargeable from committed evidence under the protocol's cohort rules. This draft has 60 gaps: exactly two candidates are nominated per gap for premeasurement, with 3 forced nominations and 57 evidence-based nominations. The nominations choose what to measure; they are not a ranking and do not discharge a cell. The protocol therefore requires a same-cohort remeasurement before freeze. No measurement runs in this phase.
 
 ## Minimal closing premeasurement

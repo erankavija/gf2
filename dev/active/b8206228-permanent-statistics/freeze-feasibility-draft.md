@@ -1,5 +1,7 @@
 # Phase-1 freeze-feasibility inventory and draft manifest
 
+> **Superseded phase-1 draft.** The premeasurement this draft calls for has since run and is receipted, and the freeze is complete. The authoritative selection record is `dev/benchmarks/permanent_campaign/backend-selection-v1.md`; the frozen campaign record is `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md`. This draft remains as phase-1 history only and is not a ranking or freeze input.
+
 Status: draft. This artifact set supports feasibility review for JIT issue `7a816262`; it is not a final freeze and it does not authorize campaign draws.
 
 ## Outcome

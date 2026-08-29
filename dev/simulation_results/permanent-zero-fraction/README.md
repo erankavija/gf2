@@ -34,6 +34,7 @@ mix versions.
 | `summary.csv` | raw data | finalization | Deterministic pooling of all field-summary rows |
 | `checksums.sha256` | integrity metadata | finalization | SHA-256 entries for exactly the raw-data paths above; it does not cover itself |
 | `derived/` | derived artefacts | analysis tasks | Reports, figures, tables, and fit outputs |
+| `freeze.md` | frozen decision record | finalization | Human-auditable freeze decisions the strict manifest schema does not carry |
 
 Every required file has exactly one writer role. Field executions may write
 only their field-scoped shard and summary paths. They never write
@@ -45,7 +46,10 @@ targeting one file.
 The integrity set is deliberately closed before analysis begins. It covers the
 manifest, shard records, field summaries, and pooled summary. Derived artefacts
 live under `derived/` and are not members of that set: a checksum file cannot
-close if it also covers reports or figures that quote its value.
+close if it also covers reports or figures that quote its value. The freeze
+record `freeze.md` quotes sidecar entries, so it is likewise outside the set;
+its tamper evidence is repository history, where it is a committed, tracked
+file.
 
 ## Root manifest schema
 
