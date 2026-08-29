@@ -518,6 +518,27 @@ class ValidationTests(unittest.TestCase):
                 stderr=b"",
             )
 
+    def test_full_width_empty_required_scratch_field_is_rejected(self) -> None:
+        provenance_row = measured_row(3, 4, 1)
+        cases = {
+            "backend": "backend differs",
+            "calls_per_repetition": "invalid integer calls_per_repetition",
+        }
+        for field, message in cases.items():
+            with self.subTest(field=field):
+                malformed = scratch_row(3, 4, 1)
+                malformed[field] = ""
+                with self.assertRaisesRegex(receipt.ReceiptError, message):
+                    receipt.merge_process_rows(
+                        process_index=1,
+                        exit_code=0,
+                        scratch_rows=[malformed],
+                        provenance=receipt.provenance_from_row(provenance_row),
+                        invocation=json.loads(provenance_row["invocation"]),
+                        stdout=b"",
+                        stderr=b"",
+                    )
+
     def test_empty_or_header_only_scratch_censors_every_missing_address(self) -> None:
         provenance_row = measured_row(3, 4, 1)
         self.assertEqual(read_scratch_records([]), [])
