@@ -146,7 +146,7 @@
      "short_id": "7a816262",
      "title": "Frozen root manifest for the campaign",
      "classification": "implementation",
-     "status": "in_progress: claimed by agent:codex since 2026-08-17T19:18:31Z; rework MAX. All 1,440 preregistered positions are terminal: 1,439 collector candidates and signal-censored position 539. The immutable ledger, candidates, censored raw files, fail-closed summarizer, and 120-configuration summary are committed at 5e2799f7. Final freeze waits on owner decisions for the rng_algorithm token and five incomplete/nonfinite accelerator configurations, and on new prerequisite ec22205e for the 52 missing per-cell determinant marginal-cost measurements."
+     "status": "in_progress: claimed by agent:codex since 2026-08-17T19:18:31Z; rework MAX. All 1,440 preregistered positions are terminal: 1,439 collector candidates and signal-censored position 539. The immutable cohort is committed at 5e2799f7. Owner decisions 2026-08-29 fix rng_algorithm as cha_cha20 and require 12/12 finite measurements for backend eligibility. Final freeze waits only on in-progress prerequisite ec22205e for the 52 missing per-cell determinant marginal-cost measurements."
     },
     {
      "id": "1947125e-33eb-4442-b717-24442cc35ca1",
@@ -160,7 +160,7 @@
      "short_id": "ec22205e",
      "title": "Complete determinant marginal-cost coverage for campaign cells",
      "classification": "research",
-     "status": "ready: created session 17 after the freeze audit proved determinant-cost.csv directly measures only 11 of the 63 enabled cells. The task extends the canonical harness and receipt for the remaining 52 cells and is a prerequisite of 7a816262."
+     "status": "in_progress: claimed by agent:worker on 2026-08-29 for a frontier-tier implementation/research dispatch. The task extends the canonical harness and receipt for the remaining 52 cells and is a prerequisite of 7a816262."
     }
    ],
    "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
@@ -355,7 +355,7 @@
    "title": "Complete determinant marginal-cost coverage for campaign cells",
    "reason": "The session-17 freeze audit proved that 7a816262 REQ-05 requires directly measured per-cell determinant marginal cost while the canonical receipt covers only 11 of the 63 enabled cells. The new leaf extends that receipt for the other 52 cells without treating interpolation as measurement.",
    "wave": 8,
-   "status": "ready"
+   "status": "in_progress"
   }
  ],
  "escalations": [
@@ -593,8 +593,10 @@
   {
    "issue": "7a816262",
    "reason": "The frozen protocol and permanent-campaign README require rng_algorithm token chacha20, while the strict canonical CampaignManifest schema serializes ChaCha20 as cha_cha20 and existing valid artifacts use that schema token. A final manifest cannot satisfy both contracts.",
-   "status": "awaiting_owner",
+   "status": "approved",
    "requested_at": "2026-08-29T10:50:02+03:00",
+   "resolved_at": "2026-08-29T10:54:00+03:00",
+   "decision": "Owner selected option A: amend the protocol and README to canonical strict-schema token cha_cha20 before the first campaign draw; fixtures whose intended failure is unrelated to RNG spelling converge on the same token.",
    "options": [
     "Amend the frozen protocol and README to the canonical schema token cha_cha20 before the first campaign draw.",
     "Change the shared schema serialization to chacha20 and update or migrate fixtures and dependent artifacts."
@@ -604,8 +606,10 @@
   {
    "issue": "7a816262",
    "reason": "The preregistered 12-process backend cohort has five accelerator configurations without 12 finite measurements, but the frozen selection rule does not define their eligibility: q3n26 has 11 measured plus one signal-censor; q3n27 has 5 measured plus 7 harness-censors; q5n21, q5n22, and q5n23 each have 0 measured plus 12 harness-censors.",
-   "status": "awaiting_owner",
+   "status": "approved",
    "requested_at": "2026-08-29T10:50:02+03:00",
+   "resolved_at": "2026-08-29T10:54:00+03:00",
+   "decision": "Owner selected option A: a backend arm is eligible only with 12 of 12 finite measured outcomes; every censor remains in the immutable receipt, no replacement or finite-only ranking occurs, and affected cells select the complete arm.",
    "options": [
     "Amend eligibility so a backend arm requires all 12 finite measurements; preserve every outcome and select the complete arm at affected cells.",
     "Preregister a new same-size remeasurement cohort under a new run id for the five affected configurations, preserving the original cohort and terminal censor.",
@@ -785,7 +789,7 @@
  ],
  "started_at": "2026-08-09T12:20:30Z",
  "rederived_at": "2026-08-29T10:50:02+03:00",
- "rederivation_note": "Session 17: all 1,440 premeasurement positions are terminal and the cohort receipt is committed at 5e2799f7. New prerequisite ec22205e supplies the missing 52 determinant-cost cells. Wave 8 remains active with 7a816262 awaiting two owner protocol decisions; wave 9 remains DAG-blocked.",
+ "rederivation_note": "Session 17 resumed: all 1,440 premeasurement positions are terminal and the cohort receipt is committed at 5e2799f7. Owner selected A/A on 2026-08-29: cha_cha20 is canonical and only 12/12 finite backend arms are eligible. Wave 8 remains active while frontier-tier worker agent:worker completes determinant prerequisite ec22205e; wave 9 remains DAG-blocked.",
  "overnight_runs": [
   {
    "armed_at": "2026-08-18T21:21+03:00",
