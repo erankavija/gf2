@@ -34,8 +34,10 @@ use super::schema::{
 
 /// Permission for one binary to publish into one campaign directory.
 ///
-/// The token is produced only by [`approve_emission`] and carries the executable
-/// digest that was checked against the frozen manifest.
+/// The token carries the executable digest that was checked against the frozen
+/// manifest. [`approve_emission`] produces it for the running writer; the
+/// explicit-digest seam can also produce an inspection result when no live
+/// writer identity is supplied.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EmissionApproval {
     binary_sha256: Sha256Digest,
@@ -233,14 +235,17 @@ fn running_binary_sha256() -> Result<Sha256Digest, EmissionRefusal> {
 }
 
 /// Applies the emission rule to an optionally supplied executable digest.
-fn approve_emission_with_binary_digest(
+///
+/// `Some` checks the supplied digest as the emitting binary's identity. `None`
+/// verifies every other emission guard and uses the frozen manifest's own
+/// digest as the identity under test; this is the inspection mode for callers
+/// that do not have the writer executable available. In either mode the
+/// manifest is compared with its committed bytes before it is parsed, so a
+/// changed manifest remains a [`EmissionRefusal::ManifestChanged`] refusal.
+pub fn approve_emission_with_binary_digest(
     binary_sha256: Option<Sha256Digest>,
     campaign_root: &Path,
 ) -> Result<EmissionApproval, EmissionRefusal> {
-    let binary_sha256 = binary_sha256.ok_or_else(|| EmissionRefusal::UnknownBinaryDigest {
-        message: "the executable digest was unavailable".to_owned(),
-    })?;
-
     let anchor = if campaign_root.is_dir() {
         campaign_root.to_owned()
     } else {
@@ -280,12 +285,14 @@ fn approve_emission_with_binary_digest(
             path: manifest_path,
         });
     };
-    if expected != binary_sha256 {
-        return Err(EmissionRefusal::BinaryDigestMismatch {
-            expected,
-            actual: binary_sha256,
-        });
-    }
+    let binary_sha256 = if let Some(actual) = binary_sha256 {
+        if expected != actual {
+            return Err(EmissionRefusal::BinaryDigestMismatch { expected, actual });
+        }
+        actual
+    } else {
+        expected
+    };
     Ok(EmissionApproval { binary_sha256 })
 }
 
@@ -1460,15 +1467,25 @@ mod tests {
     }
 
     #[test]
-    fn emission_refuses_unknown_binary_digest() {
+    fn emission_uses_manifest_digest_when_binary_identity_is_not_supplied() {
         let repo = TestRepo::new();
         let campaign = repo.write_dataset();
-        let refusal = approve_emission_with_binary_digest(None, &campaign)
-            .expect_err("an unknown executable digest must refuse");
-        assert!(matches!(
-            refusal,
-            EmissionRefusal::UnknownBinaryDigest { .. }
-        ));
+        let expected = "0000000000000000000000000000000000000000000000000000000000000000"
+            .parse::<Sha256Digest>()
+            .unwrap();
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(campaign.join(MANIFEST_FILE)).unwrap()).unwrap();
+        manifest["provenance"]["binary_sha256"] = serde_json::json!(expected.as_str());
+        fs::write(
+            campaign.join(MANIFEST_FILE),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+        repo.commit_all("freeze a different emitter identity");
+
+        let approval = approve_emission_with_binary_digest(None, &campaign)
+            .expect("inspection without a live writer identity must approve");
+        assert_eq!(approval.binary_sha256(), &expected);
     }
 
     #[test]
@@ -1502,6 +1519,65 @@ mod tests {
     }
 
     #[test]
+    fn emission_refuses_a_named_emitter_with_a_mismatching_digest() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        let expected = digest_of(b"pinned emitter");
+        let emitter_path = repo.path("different-emitter");
+        fs::write(&emitter_path, b"different emitter").unwrap();
+        let actual = digest_of(&fs::read(&emitter_path).unwrap());
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(campaign.join(MANIFEST_FILE)).unwrap()).unwrap();
+        manifest["provenance"]["binary_sha256"] = serde_json::json!(expected.as_str());
+        fs::write(
+            campaign.join(MANIFEST_FILE),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+        repo.commit_all("freeze the named emitter identity");
+
+        let refusal = approve_emission_with_binary_digest(Some(actual.clone()), &campaign)
+            .expect_err("a named emitter with a different digest must refuse");
+        assert!(matches!(
+            refusal,
+            EmissionRefusal::BinaryDigestMismatch {
+                expected: found_expected,
+                actual: found_actual,
+            } if found_expected == expected && found_actual == actual
+        ));
+        let refusal = approve_emission_with_binary_digest(Some(actual), &campaign)
+            .expect_err("the mismatch refusal must name the pinned and observed digests");
+        let message = refusal.to_string();
+        assert!(message.contains(expected.as_str()), "{message}");
+        assert!(
+            message.contains(digest_of(b"different emitter").as_str()),
+            "{message}"
+        );
+    }
+
+    #[test]
+    fn emission_approves_a_named_emitter_with_the_pinned_digest() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        let emitter_path = repo.path("matching-emitter");
+        fs::write(&emitter_path, b"the pinned emitter").unwrap();
+        let expected = digest_of(&fs::read(&emitter_path).unwrap());
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(campaign.join(MANIFEST_FILE)).unwrap()).unwrap();
+        manifest["provenance"]["binary_sha256"] = serde_json::json!(expected.as_str());
+        fs::write(
+            campaign.join(MANIFEST_FILE),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+        repo.commit_all("freeze the matching emitter identity");
+
+        let approval = approve_emission_with_binary_digest(Some(expected.clone()), &campaign)
+            .expect("a named emitter with the pinned digest must approve");
+        assert_eq!(approval.binary_sha256(), &expected);
+    }
+
+    #[test]
     fn emission_approves_a_manifest_naming_the_running_binary() {
         let repo = TestRepo::new();
         let campaign = repo.write_dataset();
@@ -1520,6 +1596,9 @@ mod tests {
         fs::write(campaign.join(MANIFEST_FILE), b"changed frozen manifest\n").unwrap();
 
         let refusal = approve(&repo, &campaign).expect_err("the frozen manifest must be immutable");
+        assert!(matches!(refusal, EmissionRefusal::ManifestChanged { .. }));
+        let refusal = approve_emission_with_binary_digest(None, &campaign)
+            .expect_err("inspection must also reject the changed frozen manifest");
         assert!(matches!(refusal, EmissionRefusal::ManifestChanged { .. }));
     }
 
