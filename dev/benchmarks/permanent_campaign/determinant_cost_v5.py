@@ -103,6 +103,33 @@ FIELDNAMES = [
     "stderr_sha256",
 ]
 
+SCRATCH_FIELDNAMES = [
+    "schema_version",
+    "process_index",
+    "q",
+    "n",
+    "backend",
+    "rng_algorithm",
+    "rng_version",
+    "rng_entry_mapping",
+    "seed_root",
+    "cell_seed",
+    "fixture_count",
+    "fixture_starts",
+    "warmup_policy",
+    "warmup_calls",
+    "warmup_elapsed_ns",
+    "target_ms",
+    "timed_repetitions",
+    "calls_per_repetition",
+    "repetition_elapsed_ns",
+    "sample_count",
+    "elapsed_determinant_ns",
+    "ns_per_matrix",
+    "started_unix_ns",
+    "finished_unix_ns",
+]
+
 PROVENANCE_FIELDS = [
     "rng_algorithm",
     "rng_version",
@@ -413,7 +440,8 @@ def merge_process_rows(
     stderr_hash = sha256_bytes(stderr)
     merged: list[dict[str, str]] = []
     for q, n in campaign_cells():
-        if (q, n) in by_cell:
+        address = (q, n, process_index)
+        if (q, n) in by_cell and scratch_row_is_complete(by_cell[(q, n)], address):
             row = {field: by_cell[(q, n)].get(field, "") for field in FIELDNAMES}
             row["outcome"] = MEASURED
         else:
@@ -432,6 +460,62 @@ def parse_int(row: dict[str, str], field: str, address: tuple[int, int, int]) ->
         return int(row[field])
     except (KeyError, ValueError) as error:
         raise ReceiptError(f"{address}: invalid integer {field}") from error
+
+
+def validate_harness_identity(
+    row: dict[str, str],
+    address: tuple[int, int, int],
+) -> None:
+    q, n, process_index = address
+    if row["schema_version"] != SCHEMA_VERSION:
+        raise ReceiptError(f"{address}: schema version differs")
+    if row["process_index"] != str(process_index):
+        raise ReceiptError(f"{address}: process index differs")
+    if row["q"] != str(q) or row["n"] != str(n):
+        raise ReceiptError(f"{address}: cell address differs")
+    if row["backend"] != BACKEND:
+        raise ReceiptError(f"{address}: backend differs")
+    if row["rng_algorithm"] != RNG_ALGORITHM:
+        raise ReceiptError(f"{address}: rng algorithm differs")
+    if row["rng_version"] != RNG_VERSION:
+        raise ReceiptError(f"{address}: rng version differs")
+    if row["rng_entry_mapping"] != RNG_ENTRY_MAPPING:
+        raise ReceiptError(f"{address}: rng entry mapping differs")
+    if row["seed_root"] != f"0x{SEED_ROOT:016x}":
+        raise ReceiptError(f"{address}: seed root differs")
+    if row["cell_seed"] != f"0x{cell_seed(q, n):016x}":
+        raise ReceiptError(f"{address}: cell seed differs")
+    if row["fixture_count"] != str(FIXTURE_COUNT):
+        raise ReceiptError(f"{address}: fixture count differs")
+    if row["fixture_starts"] != ";".join(
+        str(value) for value in fixture_starts(process_index)
+    ):
+        raise ReceiptError(f"{address}: fixture starts differ")
+    if row["warmup_policy"] != WARMUP_POLICY:
+        raise ReceiptError(f"{address}: warmup policy differs")
+    if row["target_ms"] != str(TARGET_MS):
+        raise ReceiptError(f"{address}: target differs")
+    if row["timed_repetitions"] != str(TIMED_REPETITIONS):
+        raise ReceiptError(f"{address}: repetition count differs")
+
+
+def scratch_row_is_complete(
+    row: dict[str, str],
+    address: tuple[int, int, int],
+) -> bool:
+    if set(row) != set(SCRATCH_FIELDNAMES):
+        return False
+    if any(
+        not isinstance(row[field], str) or not row[field]
+        for field in SCRATCH_FIELDNAMES
+    ):
+        return False
+    try:
+        validate_harness_identity(row, address)
+        validate_measured_row(row, address)
+    except (KeyError, TypeError, ValueError):
+        return False
+    return True
 
 
 def validate_measured_row(
@@ -496,35 +580,10 @@ def validate_rows(rows: Sequence[dict[str, str]]) -> list[CellSummary]:
         if address not in expected_addresses:
             raise ReceiptError(f"extra address {address}")
         by_address[address] = row
-        if row["schema_version"] != SCHEMA_VERSION:
-            raise ReceiptError(f"{address}: schema version differs")
         if row["outcome"] not in OUTCOMES:
             raise ReceiptError(f"{address}: unknown outcome {row['outcome']!r}")
         q, n, process_index = address
-        if row["backend"] != BACKEND:
-            raise ReceiptError(f"{address}: backend differs")
-        if row["rng_algorithm"] != RNG_ALGORITHM:
-            raise ReceiptError(f"{address}: rng algorithm differs")
-        if row["rng_version"] != RNG_VERSION:
-            raise ReceiptError(f"{address}: rng version differs")
-        if row["rng_entry_mapping"] != RNG_ENTRY_MAPPING:
-            raise ReceiptError(f"{address}: rng entry mapping differs")
-        if row["seed_root"] != f"0x{SEED_ROOT:016x}":
-            raise ReceiptError(f"{address}: seed root differs")
-        if row["cell_seed"] != f"0x{cell_seed(q, n):016x}":
-            raise ReceiptError(f"{address}: cell seed differs")
-        if row["fixture_count"] != str(FIXTURE_COUNT):
-            raise ReceiptError(f"{address}: fixture count differs")
-        if row["fixture_starts"] != ";".join(
-            str(value) for value in fixture_starts(process_index)
-        ):
-            raise ReceiptError(f"{address}: fixture starts differ")
-        if row["warmup_policy"] != WARMUP_POLICY:
-            raise ReceiptError(f"{address}: warmup policy differs")
-        if row["target_ms"] != str(TARGET_MS):
-            raise ReceiptError(f"{address}: target differs")
-        if row["timed_repetitions"] != str(TIMED_REPETITIONS):
-            raise ReceiptError(f"{address}: repetition count differs")
+        validate_harness_identity(row, address)
         if row["baseline_path"] != BASELINE_PATH:
             raise ReceiptError(f"{address}: baseline path differs")
         if row["baseline_git_revision"] != BASELINE_GIT_REVISION:
