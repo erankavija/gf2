@@ -14,9 +14,9 @@ for this issue. This cohort does not pool, replace, rewrite, or delete any v3
 row. Its receipt and report are independent evidence under a repaired closure.
 
 The machine-readable receipt is
-`dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v2.csv`, its
+`dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.csv`, its
 rendered report is
-`dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v2.md`, and its
+`dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.md`, and its
 schema identity is `determinant-companion-v4`.
 
 ## Frozen cell and process universe
@@ -102,14 +102,13 @@ The canonical validator fails closed unless it proves the exact 63-cell,
 identity; measured-row arithmetic; five unique repetition starts per process
 and 25 per complete cell; empty timing fields on non-measured rows; and
 byte-for-byte agreement between this cohort's receipt and rendered report. The
-same validator continues to validate the immutable v3 receipt against its v3
-preregistration and report identities.
+active validator accepts this cohort's schema and identity only.
 
 ## Canonical execution
 
 The producing revision contains this preregistration and all producing source.
 It builds the release benchmark executable with Rust 1.95, runs one five-process
-cohort inside the exclusive wrapper, renders the new report, and validates both
-the v3 and v4 artifacts. The recorded source revision, executable digest,
+cohort inside the exclusive wrapper, renders the report, and validates the v4
+artifacts. The recorded source revision, executable digest,
 working-copy closure, invocations, and runtime observations identify the
 measurement context without reconstructing historical working-copy state.
