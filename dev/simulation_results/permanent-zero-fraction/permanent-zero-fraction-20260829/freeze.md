@@ -33,10 +33,11 @@ The three bindings for this receipt are:
 - Protocol content SHA-256: `249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639`.
 - Root-manifest identity: campaign id `permanent-zero-fraction-20260829`; manifest content SHA-256 `c37305910037d5c0f0a41f51a6be3960a53d27ce66d63bda87c6ae45fb4b2952`.
 
-REQ-02 resolves in both directions: `protocol.md:3-6` identifies its receipt
-descriptively as the artifact recording exactly these three bindings. This
-section closes the loop by explicitly claiming the pre-draw execution receipt
-role and citing that clause. No protocol edit occurs: the protocol is frozen,
+The protocol clause and this receipt resolve to each other in both
+directions: `protocol.md:3-6` identifies its receipt descriptively as the
+artifact recording exactly these three bindings, and this section closes the
+loop by explicitly claiming the pre-draw execution receipt role and citing
+that clause. No protocol edit occurs: the protocol is frozen,
 and a changed protocol would define a new campaign id.
 
 ## Cell universe, multiplicity, and error allocation
@@ -213,6 +214,8 @@ PASS: read_manifest accepted the strict schema and printed provenance exactly ma
 ```
 
 `observe_provenance` reports the live checkout's `git_revision`, so at any other revision the printed provenance differs from the manifest's stored provenance in exactly that field; the stored value pins `396cf929` as the manifest-creation revision. The recomputed diff at revision `67f5108f` confirms `git_revision` is the only differing field.
+
+The stored provenance `invocation` holds the argv of the process that observed the provenance — the `--print-provenance` command transcribed above — per the campaign README's field definition: `invocation` stores the producer's argv tokens, and the producer of a pre-draw provenance record is necessarily an observer, because an executable campaign invocation would draw. The executable run shape is fixed without it: the protocol's worker clause and the frozen manifest determine `permanent_campaign --manifest <campaign-directory> --output <campaign-directory> --q <q>` together with the `--workers` and accelerator-cost options the protocol fixes, and each field arm's checkpoint records the argv of its actual run. (Owner disposition under issue `7a816262`.)
 
 The emission check fails closed at every stage, as required. At revision `396cf929`, where the manifest bytes are not yet committed, it refuses on the committed-content comparison:
 

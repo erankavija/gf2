@@ -21,7 +21,7 @@ The stream index is allocated as `((cell_ordinal as u64) << 32) | shard_id`, wit
 The cell counts are the protocol's exact values: q=3 uses 20,000,000 for n=4..20 and 222,223 for n=21..28; q=5 uses 16,000,000 for n=4..16 and 160,000 for n=17..24; q=7 uses 12,244,898 for n=4..16 and 122,449 for n=17..20. The multiplicity is K=63. The permanent-floor and determinant families each use family budget 0.025 and per-cell level 1/2520. The manifest schema has no error-budget fields, so the freeze document binds these protocol values by citation rather than adding unknown JSON fields.
 
 `determinant_companion` is `evaluate` for all 63 cells. The determinant-cost receipt supplies marginal-cost evidence but never acts as a backend ranking receipt.
-`dev/benchmarks/permanent_campaign/determinant-cost.md` §Verdict and §Twelve-hour budget projection record no marginal-cost failures; the largest measured addition is 0.014288 h at (q,n)=(3,20), with 0.000328 h at (3,28), 0.000187 h at (5,24), and 0.000098 h at (7,20). The receipt's §Measured ratio and §Twelve-hour budget projection tables record the other measured anchor cells and the fixed-N calculation.
+`dev/benchmarks/permanent_campaign/determinant-cost.md` §Verdict and §Twelve-hour budget projection record no marginal-cost failures; the largest projected fixed-N addition — measured per-matrix marginal cost extrapolated to the planned sample count, a derived projection rather than a measurement — is 0.014288 h at (q,n)=(3,20), with 0.000328 h at (3,28), 0.000187 h at (5,24), and 0.000098 h at (7,20). The receipt's §Measured ratio and §Twelve-hour budget projection tables record the other measured anchor cells and the fixed-N calculation.
 
 ## Integrity and reproducibility
 
