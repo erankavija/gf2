@@ -115,6 +115,23 @@ def complete_scratch_rows(process_index: int) -> list[dict[str, str]]:
     return [scratch_row(q, n, process_index) for q, n in receipt.campaign_cells()]
 
 
+def read_scratch_records(records: list[list[str]]) -> list[dict[str, str]]:
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        scratch_path = Path(temporary_directory) / "scratch.csv"
+        with scratch_path.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.writer(handle, lineterminator="\n")
+            writer.writerow(receipt.SCRATCH_FIELDNAMES)
+            writer.writerows(records)
+        return receipt.read_scratch_csv(scratch_path)
+
+
+def scratch_values(row: dict[str, str], through: str | None = None) -> list[str]:
+    fields = receipt.SCRATCH_FIELDNAMES
+    if through is not None:
+        fields = fields[: fields.index(through) + 1]
+    return [row[field] for field in fields]
+
+
 class GridTests(unittest.TestCase):
     def test_campaign_grid_and_fixed_counts_match_protocol_boundaries(self) -> None:
         cells = receipt.campaign_cells()
@@ -380,16 +397,9 @@ class ValidationTests(unittest.TestCase):
             if process_index == 2:
                 scratch = [scratch_row(3, 4, process_index)]
                 truncated = scratch_row(3, 5, process_index)
-                with tempfile.TemporaryDirectory() as temporary_directory:
-                    scratch_path = Path(temporary_directory) / "truncated.csv"
-                    with scratch_path.open("w", newline="", encoding="utf-8") as handle:
-                        writer = csv.writer(handle, lineterminator="\n")
-                        writer.writerow(receipt.SCRATCH_FIELDNAMES)
-                        end = receipt.SCRATCH_FIELDNAMES.index("sample_count") + 1
-                        writer.writerow(
-                            [truncated[field] for field in receipt.SCRATCH_FIELDNAMES[:end]]
-                        )
-                    scratch.extend(receipt.read_scratch_csv(scratch_path))
+                scratch.extend(
+                    read_scratch_records([scratch_values(truncated, "sample_count")])
+                )
                 exit_code = -15
             else:
                 scratch = complete_scratch_rows(process_index)
@@ -424,10 +434,10 @@ class ValidationTests(unittest.TestCase):
             self.assertEqual(len(persisted), 315)
             self.assertEqual(len(receipt.validate_rows(persisted)), 63)
 
-    def test_successful_process_with_truncated_address_is_harness_censored(self) -> None:
+    def test_successful_process_with_early_tail_is_harness_censored(self) -> None:
         provenance_row = measured_row(3, 4, 1)
-        scratch = complete_scratch_rows(1)
-        scratch[1].pop("elapsed_determinant_ns")
+        early_tail = read_scratch_records([[receipt.SCHEMA_VERSION]])
+        scratch = [scratch_row(3, 4, 1), *early_tail]
         merged = receipt.merge_process_rows(
             process_index=1,
             exit_code=0,
@@ -440,6 +450,99 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(merged[0]["outcome"], "measured")
         self.assertEqual(merged[1]["outcome"], "harness_censored")
         self.assertTrue(any(row["outcome"] != "measured" for row in merged))
+        self.assertEqual(receipt.cohort_result_code(False, merged), 7)
+
+    def test_early_unparseable_tail_retains_complete_315_row_receipt(self) -> None:
+        rows: list[dict[str, str]] = []
+        for process_index in range(1, receipt.PROCESS_COUNT + 1):
+            provenance_row = measured_row(3, 4, process_index)
+            if process_index == 2:
+                early_tail = read_scratch_records([[receipt.SCHEMA_VERSION]])
+                scratch = [scratch_row(3, 4, process_index), *early_tail]
+                exit_code = -15
+            else:
+                scratch = complete_scratch_rows(process_index)
+                exit_code = 0
+            rows.extend(
+                receipt.merge_process_rows(
+                    process_index=process_index,
+                    exit_code=exit_code,
+                    scratch_rows=scratch,
+                    provenance=receipt.provenance_from_row(provenance_row),
+                    invocation=json.loads(provenance_row["invocation"]),
+                    stdout=b"partial output" if exit_code else b"",
+                    stderr=b"terminated" if exit_code else b"",
+                )
+            )
+
+        self.assertEqual(len(rows), 315)
+        process_two = [row for row in rows if row["process_index"] == "2"]
+        self.assertEqual(process_two[0]["outcome"], "measured")
+        self.assertTrue(
+            all(row["outcome"] == "signal_censored" for row in process_two[1:])
+        )
+        self.assertEqual(len(receipt.validate_rows(rows)), 63)
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            receipt_path = Path(temporary_directory) / "receipt.csv"
+            receipt.write_csv_exclusive(receipt_path, rows)
+            persisted = receipt.read_csv(receipt_path)
+            self.assertEqual(len(persisted), 315)
+            self.assertEqual(len(receipt.validate_rows(persisted)), 63)
+
+    def test_malformed_non_tail_scratch_row_is_rejected(self) -> None:
+        provenance_row = measured_row(3, 4, 1)
+        malformed = read_scratch_records([[receipt.SCHEMA_VERSION]])[0]
+        scratch = [malformed, scratch_row(3, 4, 1)]
+        with self.assertRaisesRegex(receipt.ReceiptError, "incomplete non-tail"):
+            receipt.merge_process_rows(
+                process_index=1,
+                exit_code=-15,
+                scratch_rows=scratch,
+                provenance=receipt.provenance_from_row(provenance_row),
+                invocation=json.loads(provenance_row["invocation"]),
+                stdout=b"",
+                stderr=b"terminated",
+            )
+
+    def test_duplicate_complete_scratch_address_is_rejected(self) -> None:
+        provenance_row = measured_row(3, 4, 1)
+        duplicate = scratch_row(3, 4, 1)
+        with self.assertRaisesRegex(receipt.ReceiptError, "duplicate cell"):
+            receipt.merge_process_rows(
+                process_index=1,
+                exit_code=0,
+                scratch_rows=[duplicate, copy.deepcopy(duplicate)],
+                provenance=receipt.provenance_from_row(provenance_row),
+                invocation=json.loads(provenance_row["invocation"]),
+                stdout=b"",
+                stderr=b"",
+            )
+
+    def test_empty_or_header_only_scratch_censors_every_missing_address(self) -> None:
+        provenance_row = measured_row(3, 4, 1)
+        self.assertEqual(read_scratch_records([]), [])
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            empty_path = Path(temporary_directory) / "empty.csv"
+            empty_path.touch()
+            self.assertEqual(receipt.read_scratch_csv(empty_path), [])
+        merged = receipt.merge_process_rows(
+            process_index=1,
+            exit_code=0,
+            scratch_rows=[],
+            provenance=receipt.provenance_from_row(provenance_row),
+            invocation=json.loads(provenance_row["invocation"]),
+            stdout=b"",
+            stderr=b"",
+        )
+        self.assertEqual(len(merged), 63)
+        self.assertTrue(all(row["outcome"] == "harness_censored" for row in merged))
+
+    def test_scratch_header_drift_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            scratch_path = Path(temporary_directory) / "scratch.csv"
+            scratch_path.write_text("schema_version,q\nv5,3\n", encoding="utf-8")
+            with self.assertRaisesRegex(receipt.ReceiptError, "scratch schema columns"):
+                receipt.read_scratch_csv(scratch_path)
 
     def test_rendered_receipt_comparison_is_byte_exact(self) -> None:
         rows = complete_rows()
