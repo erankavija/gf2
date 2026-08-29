@@ -146,7 +146,7 @@
           "short_id": "7a816262",
           "title": "Frozen root manifest for the campaign",
           "classification": "implementation",
-          "status": "in_progress: claimed by agent:sol-freeze 2026-08-29; rework MAX. Freeze artifacts are produced, independently verified by the lead, and committed: selection receipt backend-selection-v1.md at 396cf929 (sha256 fe5d37ba...), and campaign permanent-zero-fraction-20260829 (manifest.json, checksums.sha256, freeze.md) at 57c9633f. All four artifacts linked via jit doc add. doc-review PASSED. research-review FAILED at deterministic Tier 1 on cites: labels owned by dependencies 9c5b26fb and 0de41c82, not by this issue; its Tier 2 AI methodology review has never run. BLOCKED on the open owner escalation. Independent read-only Opus audit returned VERDICT: FAIL \u2014 all eight hard criteria pass on literal wording, but two MEDIUM findings hit the freeze record itself: freeze.md narrates the pre-commit tree as current state (present-tense-prose invariant, permanent path, doc-review passed over it), and no committed digest covers freeze.md even though it is the sole record of REQ-04/05/07/08. Rework is at MAX, so both escalate."
+          "status": "in_progress: session 23 applied owner dispositions for all five research-review R2 findings (REQ-04 amended; invocation reading recorded; RNG addendum committed; draft relabeled; equivalence evidence task 86185f88 filed and wired). Blocked on the 86185f88 receipt, then research-review + doc-review re-runs and the lead six-tier review. Rework counter 0."
         },
         {
           "id": "1947125e-33eb-4442-b717-24442cc35ca1",
@@ -1017,8 +1017,10 @@
     "recorded_at": "2026-08-29T20:45:00+03:00",
     "research_review_7a816262": "FAIL round R2 (recorded run, 5 blocking findings). Dispositions: F1 REQ-04 amended (owner), F2 invocation reading recorded in freeze.md (owner), F3 -> task 86185f88 evidence run (owner), F4 closed by backend-selection-v1-rng-addendum.md, F5 draft relabeled. Re-run research-review AND doc-review on 7a816262 only after 86185f88's receipt lands.",
     "merged": "bc6155fa (pre-draw receipt section), e1d45c20 (emitter-aware emission-check; cargo-ci passed in worktree pre-merge)",
-    "in_flight": "gates: e1d45c20 cargo-ci + code-review, bc6155fa doc-review; workers: 86185f88 (sol xhigh, worktree), 6dfb1b5e (luna xhigh, worktree)",
+    "in_flight": "none \u2014 session closed; 86185f88 and 6dfb1b5e ready and unclaimed (their dispatches never started; see handoff-19 traps)",
     "note_variance": "research-review R2's first reviewer pass (rollout 19-35-41) returned 2 findings; ai-review re-ran after a stale-claims-lock stall and the recorded pass returned 5. The recorded run is authoritative.",
-    "frozen_emitter_backup": "~/.local/state/gf2-frozen/permanent_campaign-2d6edcd9 (sha256 2d6edcd9...)"
+    "frozen_emitter_backup": "~/.local/state/gf2-frozen/permanent_campaign-2d6edcd9 (sha256 2d6edcd9...)",
+    "handoff": "handoff-19.md",
+    "hardware_note": "Owner performing RAM+disk upgrade before next compute; CPU/GPU unchanged so all measurement evidence and the pinned emitter remain valid. Do not start the equivalence run until the owner confirms."
   }
 }
