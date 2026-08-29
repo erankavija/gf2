@@ -52,8 +52,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-08-29T08:21:02.852535526Z",
+      "status": "passed",
+      "updated_at": "2026-08-29T08:24:17.870524371Z",
       "updated_by": "auto:executor"
     }
   },
@@ -67,5 +67,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Complete determinant marginal-cost coverage for campaign cells",
-  "updated_at": "2026-08-29T08:21:02.852535526Z"
+  "updated_at": "2026-08-29T08:24:17.870524371Z"
 }
