@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "`contrib/gates/research-review.sh` Tier 1 checks 2 and 3 grep the entire gate\ncontext file for `cites:<key>` tokens. The context embeds each dependency's\nlabels (but only dependency titles, never their descriptions), so an issue whose\ndependencies own `cites:` labels is required to carry bracketed citations for\nliterature it does not use. Observed on `7a816262`: it owns no `cites:` label,\nyet the check reported the union of its dependencies' three keys and failed the\ngate in text that structurally cannot contain them.\n\nA second defect compounds it: the context also embeds `run_history`, including\nprior runs' stdout. A prior Tier 1 failure message contains the literal\nbracketed keys (e.g. `[GGK2025]`), so a re-run of the current script can\nspuriously PASS check 3 against its own prior failure output. Check 1 is\npolluted the same way: any unresolvable bracketed token quoted in run history,\nthe gate description, or the review prompt is misattributed to the issue.\n\n## Fix\n\nScope Tier 1 to the issue under review, parsing the context JSON with `jq`:\n\n- Owned labels: extract `cites:` keys from `.issue.labels` only, never from\n  dependency labels or any other context text.\n- Issue text: checks 1 and 3 match against `.issue.title` + `.issue.description`\n  only, never against the prompt, gate metadata, or `run_history`.\n- Preserve the existing report format (`TIER1-F<n>: ...`), verdict lines, and\n  the tier-2 handoff via `exec ai-review.sh`.\n- Provide a test seam (e.g. `RESEARCH_REVIEW_TIER1_ONLY=1` skips tier 2, and a\n  `REFS_FILE` override) so tier 1 is testable without an AI review.\n- Update the script's header comment, which currently claims tier 1 \"needs no\n  JSON parser\" — that shortcut is the root cause.\n\n## Success criteria\n\n- [hard] REQ-01: A regression fixture reproducing the `7a816262` shape (issue owns no `cites:`\n  label; dependencies own several; run_history stdout quotes bracketed keys)\n  passes tier 1 with zero label findings.\n- [hard] REQ-02: A fixture where the issue owns `cites:X` but its title+description lack `[X]`\n  fails check 3; one where `[X]` is present and X resolves passes; one where the\n  owned key does not resolve in the registry fails check 2.\n- [hard] REQ-03: A fixture whose issue description cites an unresolvable `[Zzz9999]` fails\n  check 1 even when that token appears nowhere else in the context.\n- [hard] REQ-04: The fixtures run from a committed test script under `contrib/gates/tests/`\n  exercising the real `research-review.sh`, and the script exits nonzero on any\n  fixture mismatch.\n- [hard] REQ-05: `jit gate evaluate 7a816262 research-review` proceeds past Tier 1 (tier 2 AI\n  review runs; its verdict is its own).",
   "documents": [],
+  "done_at": "2026-08-29T17:54:25.914511319Z",
   "first_ready_at": "2026-08-29T16:24:13.012035825Z",
   "gates_required": [
     "code-review"
@@ -23,7 +24,7 @@
     "type:bug"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "research-review Tier 1 misattributes dependency citation labels to the issue under review",
-  "updated_at": "2026-08-29T16:37:17.902138164Z"
+  "updated_at": "2026-08-29T17:54:25.914511319Z"
 }

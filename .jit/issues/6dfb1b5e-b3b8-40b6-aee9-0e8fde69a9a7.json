@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:codex-luna",
+  "assignee": null,
   "claimed_at": "2026-08-29T17:33:19.651378228Z",
   "context": {},
   "created_at": "2026-08-29T16:32:08.156774705Z",
@@ -30,7 +30,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "ready",
   "title": "Campaign README promises execution receipts quote the sidecar manifest SHA-256, but the driver emits blake3 over a re-serialization",
-  "updated_at": "2026-08-29T17:33:19.651378228Z"
+  "updated_at": "2026-08-29T17:53:54.561939428Z"
 }
