@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import csv
 import hashlib
 import json
 import subprocess
@@ -103,6 +104,15 @@ def complete_rows() -> list[dict[str, str]]:
         for q, n in receipt.campaign_cells()
         for process_index in range(1, 6)
     ]
+
+
+def scratch_row(q: int, n: int, process_index: int) -> dict[str, str]:
+    row = measured_row(q, n, process_index)
+    return {field: row[field] for field in receipt.SCRATCH_FIELDNAMES}
+
+
+def complete_scratch_rows(process_index: int) -> list[dict[str, str]]:
+    return [scratch_row(q, n, process_index) for q, n in receipt.campaign_cells()]
 
 
 class GridTests(unittest.TestCase):
@@ -346,13 +356,14 @@ class ValidationTests(unittest.TestCase):
             receipt.validate_rows(rows)
 
     def test_missing_scratch_rows_become_retained_process_outcomes(self) -> None:
-        scratch = [measured_row(3, 4, 2)]
+        scratch = [scratch_row(3, 4, 2)]
+        provenance_row = measured_row(3, 4, 2)
         merged = receipt.merge_process_rows(
             process_index=2,
             exit_code=-15,
             scratch_rows=scratch,
-            provenance=receipt.provenance_from_row(scratch[0]),
-            invocation=json.loads(scratch[0]["invocation"]),
+            provenance=receipt.provenance_from_row(provenance_row),
+            invocation=json.loads(provenance_row["invocation"]),
             stdout=b"partial output",
             stderr=b"terminated",
         )
@@ -361,6 +372,74 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(merged[1]["outcome"], "signal_censored")
         self.assertEqual(merged[1]["process_exit_code"], "-15")
         self.assertEqual(merged[1]["elapsed_determinant_ns"], "")
+
+    def test_signal_truncated_address_becomes_censored_in_complete_receipt(self) -> None:
+        rows: list[dict[str, str]] = []
+        for process_index in range(1, receipt.PROCESS_COUNT + 1):
+            provenance_row = measured_row(3, 4, process_index)
+            if process_index == 2:
+                scratch = [scratch_row(3, 4, process_index)]
+                truncated = scratch_row(3, 5, process_index)
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    scratch_path = Path(temporary_directory) / "truncated.csv"
+                    with scratch_path.open("w", newline="", encoding="utf-8") as handle:
+                        writer = csv.writer(handle, lineterminator="\n")
+                        writer.writerow(receipt.SCRATCH_FIELDNAMES)
+                        end = receipt.SCRATCH_FIELDNAMES.index("sample_count") + 1
+                        writer.writerow(
+                            [truncated[field] for field in receipt.SCRATCH_FIELDNAMES[:end]]
+                        )
+                    scratch.extend(receipt.read_scratch_csv(scratch_path))
+                exit_code = -15
+            else:
+                scratch = complete_scratch_rows(process_index)
+                exit_code = 0
+            rows.extend(
+                receipt.merge_process_rows(
+                    process_index=process_index,
+                    exit_code=exit_code,
+                    scratch_rows=scratch,
+                    provenance=receipt.provenance_from_row(provenance_row),
+                    invocation=json.loads(provenance_row["invocation"]),
+                    stdout=b"partial output" if exit_code else b"",
+                    stderr=b"terminated" if exit_code else b"",
+                )
+            )
+
+        self.assertEqual(len(rows), 315)
+        process_two = {
+            (int(row["q"]), int(row["n"])): row
+            for row in rows
+            if row["process_index"] == "2"
+        }
+        self.assertEqual(process_two[(3, 4)]["outcome"], "measured")
+        self.assertEqual(process_two[(3, 5)]["outcome"], "signal_censored")
+        self.assertEqual(process_two[(3, 5)]["elapsed_determinant_ns"], "")
+        self.assertEqual(len(receipt.validate_rows(rows)), 63)
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            receipt_path = Path(temporary_directory) / "receipt.csv"
+            receipt.write_csv_exclusive(receipt_path, rows)
+            persisted = receipt.read_csv(receipt_path)
+            self.assertEqual(len(persisted), 315)
+            self.assertEqual(len(receipt.validate_rows(persisted)), 63)
+
+    def test_successful_process_with_truncated_address_is_harness_censored(self) -> None:
+        provenance_row = measured_row(3, 4, 1)
+        scratch = complete_scratch_rows(1)
+        scratch[1].pop("elapsed_determinant_ns")
+        merged = receipt.merge_process_rows(
+            process_index=1,
+            exit_code=0,
+            scratch_rows=scratch,
+            provenance=receipt.provenance_from_row(provenance_row),
+            invocation=json.loads(provenance_row["invocation"]),
+            stdout=b"",
+            stderr=b"",
+        )
+        self.assertEqual(merged[0]["outcome"], "measured")
+        self.assertEqual(merged[1]["outcome"], "harness_censored")
+        self.assertTrue(any(row["outcome"] != "measured" for row in merged))
 
     def test_rendered_receipt_comparison_is_byte_exact(self) -> None:
         rows = complete_rows()
