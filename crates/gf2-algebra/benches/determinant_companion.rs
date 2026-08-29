@@ -16,9 +16,7 @@ use gf2_algebra::testutil::random_matrix;
 use gf2_core::field::{matrix::FieldMatrix, FieldVec, FiniteField};
 use gf2_core::gfp::Fp;
 
-const SCHEMA_VERSION: &str = "determinant-companion-v3";
 const BACKEND: &str = "fieldmatrix_det_ple";
-const SEED_ROOT: u64 = 0xec22_205e_0000_0000;
 const FIXTURE_COUNT: usize = 32;
 const PROCESS_COUNT: u32 = 5;
 const TIMED_REPETITIONS: u32 = 5;
@@ -27,8 +25,46 @@ const WARMUP_PROBE_MS: u64 = 20;
 const WARMUP_POLICY: &str = "doubling-probe-to-min-20ms-target-250ms-max-2^32";
 const MAX_CALLS: u64 = 1 << 32;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Cohort {
+    V3,
+    V4,
+}
+
+impl Cohort {
+    fn parse(value: &str) -> Result<Self, String> {
+        match value {
+            "v3" => Ok(Self::V3),
+            "v4" => Ok(Self::V4),
+            _ => Err(format!("unknown cohort: {value}")),
+        }
+    }
+
+    fn key(self) -> &'static str {
+        match self {
+            Self::V3 => "v3",
+            Self::V4 => "v4",
+        }
+    }
+
+    fn schema_version(self) -> &'static str {
+        match self {
+            Self::V3 => "determinant-companion-v3",
+            Self::V4 => "determinant-companion-v4",
+        }
+    }
+
+    fn seed_root(self) -> u64 {
+        match self {
+            Self::V3 => 0xec22_205e_0000_0000,
+            Self::V4 => 0xec22_205e_0000_0001,
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Args {
+    cohort: Cohort,
     execution: u32,
     output: PathBuf,
     self_check: bool,
@@ -69,12 +105,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn parse_args() -> Result<Args, String> {
+    let mut cohort = None;
     let mut execution = None;
     let mut output = None;
     let mut self_check = false;
     let mut iter = env::args().skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_str() {
+            "--cohort" => {
+                cohort = Some(Cohort::parse(&next_value(&mut iter, &arg)?)?);
+            }
             "--execution" => execution = Some(parse_value(&mut iter, &arg)?),
             "--output" => output = Some(PathBuf::from(next_value(&mut iter, &arg)?)),
             "--self-check" => self_check = true,
@@ -86,17 +126,20 @@ fn parse_args() -> Result<Args, String> {
     }
     if self_check {
         return Ok(Args {
+            cohort: cohort.unwrap_or(Cohort::V3),
             execution: 1,
             output: PathBuf::new(),
             self_check,
         });
     }
+    let cohort = cohort.ok_or("--cohort is required")?;
     let execution = execution.ok_or("--execution is required")?;
     if !(1..=PROCESS_COUNT).contains(&execution) {
         return Err(format!("--execution must be between 1 and {PROCESS_COUNT}"));
     }
     let output = output.ok_or("--output is required")?;
     Ok(Args {
+        cohort,
         execution,
         output,
         self_check,
@@ -144,8 +187,8 @@ fn campaign_cells() -> Vec<(u64, usize)> {
         .collect()
 }
 
-fn cell_seed(q: u64, n: usize) -> u64 {
-    SEED_ROOT ^ (q << 48) ^ ((n as u64) << 32)
+fn cell_seed(cohort: Cohort, q: u64, n: usize) -> u64 {
+    cohort.seed_root() ^ (q << 48) ^ ((n as u64) << 32)
 }
 
 fn dense_matrix<F: FiniteField>(row_major: &[F], n: usize) -> FieldMatrix<F> {
@@ -156,11 +199,11 @@ fn dense_matrix<F: FiniteField>(row_major: &[F], n: usize) -> FieldMatrix<F> {
     FieldMatrix::from_rows(rows)
 }
 
-fn fixtures<const P: u64>(n: usize) -> Vec<FieldMatrix<Fp<P>>>
+fn fixtures<const P: u64>(cohort: Cohort, n: usize) -> Vec<FieldMatrix<Fp<P>>>
 where
     Fp<P>: FiniteField,
 {
-    let seed = cell_seed(P, n);
+    let seed = cell_seed(cohort, P, n);
     (0..FIXTURE_COUNT)
         .map(|index| {
             let row_major = random_matrix::<P>(n, seed.wrapping_add(index as u64));
@@ -220,7 +263,7 @@ fn measure_cell<const P: u64>(args: &Args, output: &mut File, n: usize) -> io::R
 where
     Fp<P>: FiniteField,
 {
-    let matrices = fixtures::<P>(n);
+    let matrices = fixtures::<P>(args.cohort, n);
     let started_unix_ns = unix_time_ns()?;
     let target = Duration::from_millis(TARGET_MS);
     let calibration = calibrate(target, |index| matrices[index].det());
@@ -251,12 +294,14 @@ where
         .join(";");
     writeln!(
         output,
-        "{SCHEMA_VERSION},{},{P},{n},{BACKEND},{SEED_ROOT:#018x},{:#018x},{FIXTURE_COUNT},\
+        "{},{},{P},{n},{BACKEND},{:#018x},{:#018x},{FIXTURE_COUNT},\
          {start_list},{WARMUP_POLICY},{},{},{TARGET_MS},{TIMED_REPETITIONS},{},\
          {elapsed_list},{sample_count},{elapsed_ns},{ns_per_matrix:.9},{started_unix_ns},\
          {finished_unix_ns}",
+        args.cohort.schema_version(),
         args.execution,
-        cell_seed(P, n),
+        args.cohort.seed_root(),
+        cell_seed(args.cohort, P, n),
         calibration.warmup_calls,
         calibration.warmup_elapsed.as_nanos(),
         calibration.timed_calls,
@@ -285,9 +330,18 @@ fn self_check() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(starts, (0..25).collect::<Vec<_>>());
     assert_eq!(unique_starts.len(), 25);
 
-    let f3 = fixtures::<3>(4);
-    let f5 = fixtures::<5>(4);
-    let f7 = fixtures::<7>(4);
+    assert_ne!(
+        cell_seed(Cohort::V3, 3, 4),
+        cell_seed(Cohort::V4, 3, 4),
+        "independent cohort fixture roots must differ"
+    );
+    for cohort in [Cohort::V3, Cohort::V4] {
+        assert!(cohort.schema_version().ends_with(cohort.key()));
+    }
+
+    let f3 = fixtures::<3>(Cohort::V4, 4);
+    let f5 = fixtures::<5>(Cohort::V4, 4);
+    let f7 = fixtures::<7>(Cohort::V4, 4);
     assert_eq!(f3.len(), FIXTURE_COUNT);
     assert_eq!(f5.len(), FIXTURE_COUNT);
     assert_eq!(f7.len(), FIXTURE_COUNT);
