@@ -21,7 +21,7 @@
     "satisfies:REQ-13"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-08-28T22:51:32.030071298Z"
+  "updated_at": "2026-08-29T07:24:09.420062536Z"
 }

@@ -20,7 +20,7 @@
     "satisfies:REQ-01"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Design the relative field-extension abstraction and field identity",
-  "updated_at": "2026-08-28T22:51:23.672355467Z"
+  "updated_at": "2026-08-29T07:24:17.688913181Z"
 }
