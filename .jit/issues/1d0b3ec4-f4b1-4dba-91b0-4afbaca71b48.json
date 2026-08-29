@@ -6,6 +6,7 @@
     "44534b2f-b92a-4758-9e78-3a93ce4a209c",
     "6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7",
     "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
+    "86185f88-c731-4c12-b50b-c3d1aabfa867",
     "bc6155fa-e92b-4b80-a036-1820018ebeac",
     "e1d45c20-17e7-4d51-a9c3-0c71a82abc40"
   ],
@@ -27,5 +28,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Campaign arm for $q = 5$",
-  "updated_at": "2026-08-29T16:34:05.060137731Z"
+  "updated_at": "2026-08-29T17:28:21.247848434Z"
 }
