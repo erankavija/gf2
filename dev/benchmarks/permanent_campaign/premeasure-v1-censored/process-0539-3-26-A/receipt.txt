@@ -1,0 +1,16 @@
+schema_version: 1
+run_id: premeasure-v1
+session_id: 20260824T055928Z-726522
+schedule_position: 539
+q: 3
+n: 26
+config_code: A
+manifest_backend: accelerator
+harness_backend: gpu_hip
+batch_size: 1024
+machine_warmup: skipped
+started_utc: 2026-08-24T08:07:41Z
+command: /data/gf2-campaigns/b8206228/premeasure-recovery-20260824/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-premeasure-v1/processes/process-0539-3-26-A/scratch.csv --only q=3\,n=26\,backend=gpu_hip --orders 26 --batch-size 1024 --execution-id 539 --skip-machine-warmup
+scratch_csv: /data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-premeasure-v1/processes/process-0539-3-26-A/scratch.csv
+status: failed
+failure: interrupted by runner signal
