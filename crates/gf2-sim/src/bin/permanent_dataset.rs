@@ -18,7 +18,7 @@
 //!
 //! ```console
 //! $ permanent_dataset revision
-//! $ permanent_dataset emission-check <campaign-directory>
+//! $ permanent_dataset emission-check <campaign-directory> [emitter-path]
 //! $ permanent_dataset checksums <campaign-directory> > <campaign-directory>/checksums.sha256
 //! $ permanent_dataset conform <campaign-directory>
 //! $ permanent_dataset verify <campaign-directory>
@@ -26,8 +26,11 @@
 //!
 //! `revision` prints the repository-wide revision observed at command start as
 //! provenance context.
-//! `emission-check` runs the guard that `permanent_campaign` passes before
-//! writing.
+//! `emission-check` verifies every emission guard. Without an `emitter-path`,
+//! it verifies everything except writer identity and reports the pinned emitter
+//! digest; writer identity is asserted only by the writer's own guard at
+//! emission time. With an `emitter-path`, it hashes that file and performs the
+//! full check, including writer identity.
 //! `checksums` renders the integrity file for a finished dataset on stdout.
 //! `conform` checks the complete schema and all cross-document aggregates.
 //! `verify` re-checks a dataset against that file and its recorded source.
@@ -37,16 +40,19 @@
 //! decided, and `64` for a usage error.
 
 use std::error::Error;
+use std::fs;
 use std::path::Path;
 use std::process::ExitCode;
 
 use gf2_sim::permanent_campaign::provenance::{
-    approve_emission, generate_integrity_file, runtime_git_revision, verify_dataset, DatasetVerdict,
+    approve_emission_with_binary_digest, generate_integrity_file, runtime_git_revision,
+    verify_dataset, DatasetVerdict,
 };
-use gf2_sim::permanent_campaign::schema::{conform_dataset, read_manifest};
+use gf2_sim::permanent_campaign::schema::{conform_dataset, read_manifest, Sha256Digest};
+use sha2::{Digest, Sha256};
 
 const USAGE: &str = "usage: permanent_dataset <revision | emission-check | checksums | conform | \
-                    verify> [campaign-directory]";
+                    verify> [campaign-directory]\n       permanent_dataset emission-check <campaign-directory> [emitter-path]";
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -59,7 +65,10 @@ fn main() -> ExitCode {
             }
             Err(error) => report(&error),
         },
-        ["emission-check", root] => emission_check(Path::new(root)),
+        ["emission-check", root] => emission_check(Path::new(root), None),
+        ["emission-check", root, emitter] => {
+            emission_check(Path::new(root), Some(Path::new(emitter)))
+        }
         ["checksums", root] => checksums(Path::new(root)),
         ["conform", root] => conform(Path::new(root)),
         ["verify", root] => verify(Path::new(root)),
@@ -70,14 +79,36 @@ fn main() -> ExitCode {
     }
 }
 
-fn emission_check(root: &Path) -> ExitCode {
-    match approve_emission(root) {
-        Ok(approval) => {
-            println!("emission approved for binary {}", approval.binary_sha256());
-            ExitCode::SUCCESS
-        }
+fn emission_check(root: &Path, emitter_path: Option<&Path>) -> ExitCode {
+    let binary_sha256 = match emitter_path {
+        Some(path) => match emitter_digest(path) {
+            Ok(digest) => Some(digest),
+            Err(error) => return report(error.as_ref()),
+        },
+        None => None,
+    };
+    match approve_emission_with_binary_digest(binary_sha256, root) {
+        Ok(approval) => match emitter_path {
+            Some(_) => {
+                println!("emission approved for binary {}", approval.binary_sha256());
+                ExitCode::SUCCESS
+            }
+            None => {
+                println!(
+                    "everything except writer identity is verified; the pinned emitter digest is {}; writer identity is asserted only by the writer's own guard at emission time.",
+                    approval.binary_sha256()
+                );
+                ExitCode::SUCCESS
+            }
+        },
         Err(refusal) => report(&refusal),
     }
+}
+
+fn emitter_digest(path: &Path) -> Result<Sha256Digest, Box<dyn Error>> {
+    let bytes = fs::read(path)?;
+    let digest = Sha256::digest(bytes);
+    Ok(format!("{digest:x}").parse()?)
 }
 
 fn checksums(root: &Path) -> ExitCode {
@@ -134,5 +165,10 @@ mod tests {
     #[test]
     fn usage_lists_canonical_conformance() {
         assert!(USAGE.contains("conform"));
+    }
+
+    #[test]
+    fn usage_documents_optional_emitter_path() {
+        assert!(USAGE.contains("emission-check <campaign-directory> [emitter-path]"));
     }
 }
