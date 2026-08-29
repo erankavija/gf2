@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-29T08:03:02.695225411Z",
+  "dependencies": [
+    "7a816262-1eed-492c-a58b-6752fdf50636"
+  ],
+  "description": "Freeze the production launch-cost table required to execute every accelerator-backed cell in the permanent zero-fraction campaign. The table derives only from committed same-cell measurements and is validated against the frozen manifest before any campaign arm uses it.\n\n## Background\n\nThe campaign scheduler sizes accelerator launches from a CSV row `q,n,per_matrix_us` and refuses an accelerator cell whose exact $(q,n)$ cost is absent. The frozen backend map selects accelerator execution for fifteen cells across $q=3$ and $q=7$. The immutable premeasurement cohort records the applicable per-process evaluation timings, but no production cost-table artifact currently binds their pooling and integer-rounding rule or proves exact agreement with the manifest's accelerator set.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed production CSV has header `q,n,per_matrix_us` and exactly one positive integer row for every accelerator-backed cell in the frozen manifest, with no row for a processor-backed cell.\n- [hard] REQ-02: Every table value is reproducibly derived from that same cell's committed eligible premeasurement outcomes by one documented, deterministic pooling and conservative integer-rounding rule; no representative-size interpolation or fabricated replacement enters the table.\n- [hard] REQ-03: A versioned receipt binds the frozen manifest and every timing input by repository-relative path and lowercase SHA-256, and records the source revision, executable identity, host and accelerator provenance, process count, finite/censored outcome counts, pooled arithmetic, and rounded value for each table row.\n- [hard] REQ-04: A fail-closed validator proves that the table's $(q,n)$ keys exactly equal the manifest's accelerator-backed keys, every key and input outcome is unique, every value recomputes from the bound receipts, and the rendered receipt agrees with the CSV.\n- [hard] REQ-05: Focused release-mode tests demonstrate that the campaign binary accepts the complete table and rejects a missing, duplicate, zero, malformed, processor-only, or wrong-cell row without drawing or emitting a shard.\n- [hard] REQ-06: Formatting, linting, focused tests, and all configured quality gates pass, and permanent documentation identifies the cost table as launch sizing evidence rather than backend-selection or scientific-result evidence.\n\n## Notes\n\nThe cost table is an execution input, not part of the strict campaign manifest schema. It preserves every censored premeasurement outcome in the bound evidence even though only complete eligible accelerator arms can contribute timing values.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-29T08:03:02.695225411Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "2c1ae813-67ce-4814-a96b-45272643d53e",
+  "labels": [
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Freeze accelerator launch-cost table for campaign cells",
+  "updated_at": "2026-08-29T08:03:16.904111346Z"
+}

@@ -3,6 +3,7 @@
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
+    "2c1ae813-67ce-4814-a96b-45272643d53e",
     "44534b2f-b92a-4758-9e78-3a93ce4a209c",
     "73317b2e-8f01-472e-b04f-05ff9ef2b8be"
   ],
@@ -25,5 +26,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Campaign arm for $q = 3$ as reproduction",
-  "updated_at": "2026-08-24T08:19:28.386128153Z"
+  "updated_at": "2026-08-29T08:03:25.645549177Z"
 }

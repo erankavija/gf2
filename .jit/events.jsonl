@@ -9977,3 +9977,8 @@
 {"fields":["documents"],"id":"0fbb9272-9c82-4a4f-8d87-6c7e3d8c9b26","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-29T07:52:36.356728174Z","type":"issue_updated","updated_by":"doc-add"}
 {"from":"ready","id":"412ffc53-7aeb-4d39-941a-4ae9de514b5a","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T07:55:45.851325129Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"29f9430f-0c06-4eac-be4d-03ec592dfd7e","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T07:55:45.851325129Z","type":"issue_claimed"}
+{"id":"689dd615-50ce-4222-80e9-5726a8ea6ae3","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","priority":"high","timestamp":"2026-08-29T08:03:02.695225411Z","title":"Freeze accelerator launch-cost table for campaign cells","type":"issue_created"}
+{"from":"ready","id":"c575bf7b-8012-4fb6-a256-596f70c3ead8","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-29T08:03:16.904111346Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"90e6b8e2-f865-404e-bbca-ddfdf976e214","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-29T08:03:16.904111346Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"95898f85-020b-4d22-acdd-f68573286e39","issue_id":"90a61cd4-c48d-4097-ae2c-e628163a754a","timestamp":"2026-08-29T08:03:25.645549177Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"52caa216-deaa-46b7-ab61-2e8129381305","issue_id":"ed494117-4245-4e92-855b-3c54e207697d","timestamp":"2026-08-29T08:03:34.403412243Z","type":"issue_updated","updated_by":"dependency-add"}
