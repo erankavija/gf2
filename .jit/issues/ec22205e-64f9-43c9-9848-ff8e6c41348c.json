@@ -9,38 +9,25 @@
   "description": "Extend the committed determinant-companion timing evidence from its representative orders to every cell in the frozen 63-cell campaign universe. The root manifest needs an observed marginal-cost record for each cell on which it enables determinant evaluation; an interpolated or representative-order value is not a measurement at the omitted order.\n\n## Background\n\nThe campaign protocol enables the determinant companion on all 63 core cells. The existing `dev/benchmarks/permanent_campaign/determinant-cost.csv` cohort directly measures 11 cells: four orders for each of $q=3$ and $q=5$, and three for $q=7$. Issue `7a816262` requires the frozen manifest to record the measured marginal cost per enabled cell, so the other 52 cells need a preregistered, reproducible receipt before the manifest freezes. This work extends the existing canonical determinant-cost harness and receipt; it does not create a parallel measurement format or revise permanent-backend selection.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed preregistration fixes the missing $(q,n)$ cells, process count, warm-up policy, repetition rule, stopping rule, fixture addressing, and pooling formula before their timing begins, with no result-dependent extension or replacement.\n- [hard] REQ-02: One versioned machine-readable receipt directly measures determinant marginal cost for every one of the 63 protocol cells and retains every preregistered process outcome, including failures or censoring.\n- [hard] REQ-03: Every receipt row records seeds or fixture addresses, source revision, compiler and build identity, executable hash, hardware, power policy, process and worker configuration, warm-up, timed repetitions, sample count, and elapsed determinant time.\n- [hard] REQ-04: A recorded validator proves exact 63-cell coverage, the preregistered process count per cell, internally consistent pooled arithmetic, unique addresses, and agreement between the machine-readable receipt and its rendered summary.\n- [hard] REQ-05: The rendered receipt reports the observed per-matrix determinant marginal cost and projected fixed-$N$ addition for every cell without presenting representative-order interpolation as measurement, and preserves any contradiction or failed process.\n- [hard] REQ-06: Focused release-mode tests, formatting, and linting pass for any harness change, and the measurement receipt cites the exact producing revision and invocation.\n\n## Notes\n\nThe existing determinant-cost harness, CSV schema, and report are canonical and are extended at their source. Measurement runs follow the repository benchmark-host protocol and timing restrictions.\n",
   "documents": [
     {
-      "commit": "dd97d651",
+      "commit": "ac550959",
       "doc_type": "design",
       "format": "markdown",
-      "label": "Determinant-cost v4 preregistration",
-      "path": "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v4.md"
+      "label": "Determinant-cost v5 preregistration",
+      "path": "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md"
     },
     {
-      "commit": "3b44d511",
+      "commit": "1ddcc266",
       "doc_type": "implementation",
       "format": "markdown",
-      "label": "Determinant-cost v4 runner and validator",
-      "path": "dev/benchmarks/permanent_campaign/determinant_cost_v4.py"
+      "label": "Determinant-cost v5 runner and validator",
+      "path": "dev/benchmarks/permanent_campaign/determinant_cost_v5.py"
     },
     {
-      "commit": "3b44d511",
+      "commit": "1ddcc266",
       "doc_type": "implementation",
       "format": "markdown",
-      "label": "Determinant-cost v4 behavioral tests",
-      "path": "dev/benchmarks/permanent_campaign/test_determinant_cost_v4.py"
-    },
-    {
-      "commit": "ad79c508",
-      "doc_type": "research",
-      "label": "Determinant-cost v4 machine receipt",
-      "path": "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.csv"
-    },
-    {
-      "commit": "ad79c508",
-      "doc_type": "research",
-      "format": "markdown",
-      "label": "Determinant-cost v4 rendered receipt",
-      "path": "dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.md"
+      "label": "Determinant-cost v5 behavioral tests",
+      "path": "dev/benchmarks/permanent_campaign/test_determinant_cost_v5.py"
     }
   ],
   "first_ready_at": "2026-08-29T07:45:28.845722952Z",
@@ -82,5 +69,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Complete determinant marginal-cost coverage for campaign cells",
-  "updated_at": "2026-08-29T09:18:09.609011269Z"
+  "updated_at": "2026-08-29T10:04:36.729685330Z"
 }
