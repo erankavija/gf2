@@ -160,7 +160,7 @@
      "short_id": "ec22205e",
      "title": "Complete determinant marginal-cost coverage for campaign cells",
      "classification": "research",
-     "status": "measurement-ready after rework-2/MAX: owner-authorized None-versus-empty correction committed at 015e2cda; independent readiness review PASS with zero findings; Python 24/24 and binary self-check pass; reviewed binary SHA-256 3285beacce410ffaa7d0dbbf9e8500545b38324c800264d8c9a59ad8359788d0. The measurement source closure is byte-identical to reviewed commit 015e2cda, clean, and v5 receipt/report/scratch paths are absent; later commits contain JIT readiness metadata only. Await the owner's uncontended 10-15 minute schedule; do not start timing early."
+     "status": "evidence committed, formal gates pending: owner-authorized one-shot v5 cohort completed at source revision 3d1c536a with 63/63 cells and 315/315 measured outcomes; receipt SHA-256 d3779aa3817bbefc995b858527bf418b4d3931a8f5406281eb4f0b71a7b45e77; report SHA-256 839ab3f1f22a995cc32bc6a7102f4c6aad721b6eff5713d3976df36838d2334a; largest projected upper 95% endpoint 50.523272 s, all cells conservatively below 43,200 s. Immutable evidence commit 0273d0e3 is linked. Rerun every registered gate against v5, perform the lead six-tier review, and close ec22205e before resuming 7a816262."
     }
    ],
    "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
