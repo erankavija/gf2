@@ -10031,3 +10031,7 @@
 {"gate_key":"research-review","id":"828ef9b4-d2ad-4c0d-a46c-b6199024a77d","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T14:31:37.847278288Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"ebf2e1f9-ea89-4b7a-bd39-d934b73e1a46","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T14:32:23.708468749Z","to":"done","type":"issue_state_changed"}
 {"id":"cc0e9e1e-7356-49c6-a9fa-65eedb8ffc6a","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T14:32:23.708468749Z","type":"issue_completed"}
+{"from":"in_progress","id":"ae13b7a0-1e00-4493-ba54-64752b9c994f","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-29T14:33:57.340301407Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:codex","id":"f76f44e5-c3c0-4edf-b0fc-71e3e1a8e1e3","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","reason":"prior agent:codex claim from 2026-08-17 is stale; blockers cleared, redispatching","timestamp":"2026-08-29T14:33:57.340301407Z","type":"issue_released"}
+{"from":"ready","id":"c06098f1-1737-4488-8ce8-8828921b89a2","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-29T14:34:05.944107288Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:sol-freeze","id":"9fbc0d91-21fe-42be-819f-8ebeb0ee0ada","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-29T14:34:05.944107288Z","type":"issue_claimed"}

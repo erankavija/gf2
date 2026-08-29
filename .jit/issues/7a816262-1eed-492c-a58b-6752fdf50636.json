@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:codex",
+  "assignee": "agent:sol-freeze",
   "claimed_at": "2026-08-17T19:18:31.266010272Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
@@ -99,5 +99,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Frozen root manifest for the campaign",
-  "updated_at": "2026-08-29T07:45:55.060690762Z"
+  "updated_at": "2026-08-29T14:34:05.944107288Z"
 }
