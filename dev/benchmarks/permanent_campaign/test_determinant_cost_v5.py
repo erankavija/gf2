@@ -15,7 +15,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-import determinant_cost_v4 as receipt  # noqa: E402
+import determinant_cost_v5 as receipt  # noqa: E402
 
 
 def measured_row(
@@ -44,6 +44,9 @@ def measured_row(
         "outcome": "measured",
         "process_exit_code": "0",
         "backend": "fieldmatrix_det_ple",
+        "rng_algorithm": receipt.RNG_ALGORITHM,
+        "rng_version": receipt.RNG_VERSION,
+        "rng_entry_mapping": receipt.RNG_ENTRY_MAPPING,
         "seed_root": f"0x{receipt.SEED_ROOT:016x}",
         "cell_seed": f"0x{receipt.cell_seed(q, n):016x}",
         "fixture_count": "32",
@@ -60,6 +63,12 @@ def measured_row(
         "ns_per_matrix": f"{elapsed / sample_count:.9f}",
         "started_unix_ns": "1787990000000000000",
         "finished_unix_ns": "1787990001000000000",
+        "baseline_path": receipt.BASELINE_PATH,
+        "baseline_git_revision": receipt.BASELINE_GIT_REVISION,
+        "baseline_sha256": receipt.BASELINE_SHA256,
+        "cell_ceiling_seconds": str(receipt.CELL_CEILING_SECONDS),
+        "productive_compute_seconds": str(receipt.PRODUCTIVE_COMPUTE_SECONDS),
+        "reserve_fraction": receipt.RESERVE_FRACTION,
         "git_revision": "a" * 40,
         "source_dirty": "false",
         "rustc": "rustc 1.95.0 (test)",
@@ -77,7 +86,7 @@ def measured_row(
         "cohort_invocation": json.dumps(
             [
                 "python3",
-                "determinant_cost_v4.py",
+                "determinant_cost_v5.py",
                 "run",
             ],
             separators=(",", ":"),
@@ -112,6 +121,21 @@ class GridTests(unittest.TestCase):
 
 
 class ProvenanceTests(unittest.TestCase):
+    def test_measurement_source_closure_is_canonical_and_complete(self) -> None:
+        self.assertEqual(
+            set(receipt.RELEVANT_SOURCE_PATHS),
+            {
+                "Cargo.toml",
+                "Cargo.lock",
+                "crates/gf2-core",
+                "crates/gf2-algebra",
+                receipt.BENCHMARK_WRAPPER_PATH,
+                receipt.RUNNER_PATH,
+                receipt.PREREGISTRATION_PATH,
+                receipt.BASELINE_PATH,
+            },
+        )
+
     def test_benchmark_wrapper_participates_in_source_dirty_detection(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository = Path(temporary_directory)
@@ -150,7 +174,7 @@ class ProvenanceTests(unittest.TestCase):
                 receipt.relevant_source_status(git),
             )
 
-    def test_exact_v4_preregistration_participates_in_dirty_detection(self) -> None:
+    def test_exact_v5_preregistration_participates_in_dirty_detection(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository = Path(temporary_directory)
             paths = [
@@ -203,17 +227,97 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(rendered.count("\n| 7 |"), 17)
         self.assertIn("No failed or censored process outcome was observed", rendered)
 
-    def test_v4_report_binds_v4_preregistration_and_machine_receipt(self) -> None:
+    def test_v5_report_binds_v5_preregistration_and_machine_receipt(self) -> None:
         rendered = receipt.render_report(complete_rows(), "e" * 64)
         self.assertIn(f"`{receipt.PREREGISTRATION_PATH}`", rendered)
         self.assertIn(f"`{receipt.RECEIPT_PATH}`", rendered)
         self.assertIn(f"`{receipt.SCHEMA_VERSION}`", rendered)
+        self.assertIn(f"`{receipt.RNG_ALGORITHM}`", rendered)
+        self.assertIn(f"`{receipt.RNG_VERSION}`", rendered)
+        self.assertIn(f"`{receipt.BASELINE_PATH}`", rendered)
+        self.assertIn(f"`{receipt.BASELINE_GIT_REVISION}`", rendered)
+        self.assertIn(f"`{receipt.BASELINE_SHA256}`", rendered)
 
     def test_superseded_schema_is_rejected(self) -> None:
         rows = complete_rows()
-        rows[0]["schema_version"] = "determinant-companion-v3"
-        with self.assertRaisesRegex(receipt.ReceiptError, "schema version differs"):
-            receipt.validate_rows(rows)
+        for schema in ("determinant-companion-v3", "determinant-companion-v4"):
+            with self.subTest(schema=schema):
+                changed = copy.deepcopy(rows)
+                changed[0]["schema_version"] = schema
+                with self.assertRaisesRegex(receipt.ReceiptError, "schema version differs"):
+                    receipt.validate_rows(changed)
+
+    def test_rng_and_baseline_identities_fail_closed(self) -> None:
+        cases = {
+            "rng_algorithm": "another_rng",
+            "rng_version": "another-version",
+            "rng_entry_mapping": "another-mapping",
+            "baseline_path": "another/protocol.md",
+            "baseline_git_revision": "f" * 40,
+            "baseline_sha256": "f" * 64,
+            "cell_ceiling_seconds": "1",
+            "productive_compute_seconds": "1",
+            "reserve_fraction": "0.10",
+        }
+        for field, value in cases.items():
+            with self.subTest(field=field):
+                rows = complete_rows()
+                rows[0][field] = value
+                with self.assertRaisesRegex(receipt.ReceiptError, field.replace("_", " ")):
+                    receipt.validate_rows(rows)
+
+    def test_process_mean_interval_and_projection_are_exact(self) -> None:
+        rows = complete_rows()
+        cell_rows = [row for row in rows if row["q"] == "3" and row["n"] == "4"]
+        process_values = [8_000.0, 9_000.0, 10_000.0, 11_000.0, 12_000.0]
+        for row, value in zip(cell_rows, process_values, strict=True):
+            samples = int(row["sample_count"])
+            elapsed = int(value * samples)
+            repetitions = [elapsed // 5] * 5
+            row["repetition_elapsed_ns"] = ";".join(map(str, repetitions))
+            row["elapsed_determinant_ns"] = str(sum(repetitions))
+            row["ns_per_matrix"] = f"{sum(repetitions) / samples:.9f}"
+
+        summary = receipt.validate_rows(rows)[0]
+        expected_mean = 10_000.0
+        expected_stddev = (2_500_000.0) ** 0.5
+        expected_half_width = (
+            receipt.STUDENT_T_975_DF4 * expected_stddev / (5.0**0.5)
+        )
+        self.assertAlmostEqual(summary.process_mean_ns_per_matrix, expected_mean)
+        self.assertAlmostEqual(summary.process_stddev_ns_per_matrix, expected_stddev)
+        self.assertAlmostEqual(
+            summary.ci95_lower_ns_per_matrix,
+            expected_mean - expected_half_width,
+        )
+        self.assertAlmostEqual(
+            summary.ci95_upper_ns_per_matrix,
+            expected_mean + expected_half_width,
+        )
+        self.assertAlmostEqual(
+            summary.projected_upper_seconds,
+            (expected_mean + expected_half_width) * 20_000_000 / 1e9,
+        )
+
+        rendered = receipt.render_report(rows, "f" * 64)
+        self.assertIn("process mean 95% CI", rendered)
+        self.assertIn("pooled audit", rendered)
+        self.assertIn("projected 95% CI", rendered)
+
+    def test_censored_cell_has_no_process_interval_or_ceiling_verdict(self) -> None:
+        rows = complete_rows()
+        first = rows[0]
+        first["outcome"] = "signal_censored"
+        for field in receipt.TIMING_FIELDS:
+            first[field] = ""
+        summary = receipt.validate_rows(rows)[0]
+        self.assertIsNotNone(summary.pooled_ns_per_matrix)
+        self.assertIsNone(summary.process_mean_ns_per_matrix)
+        self.assertIsNone(summary.ci95_lower_ns_per_matrix)
+        self.assertIsNone(summary.ci95_upper_ns_per_matrix)
+        self.assertIsNone(summary.projected_upper_seconds)
+        rendered = receipt.render_report(rows, "1" * 64)
+        self.assertIn("not estimable", rendered)
 
     def test_duplicate_or_missing_process_address_fails_closed(self) -> None:
         rows = complete_rows()
