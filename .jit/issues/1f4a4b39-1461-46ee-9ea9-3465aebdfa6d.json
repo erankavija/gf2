@@ -19,10 +19,11 @@
     "component:gf2-sim",
     "component:gf2-kernels-hip",
     "satisfies:REQ-10",
-    "resolution:obsolete"
+    "resolution:obsolete",
+    "epic:general-bch"
   ],
   "priority": "high",
   "state": "rejected",
   "title": "Migrate simulation and kernel-crate BCH consumers",
-  "updated_at": "2026-08-28T23:03:37.335650870Z"
+  "updated_at": "2026-08-29T07:07:04.324427854Z"
 }

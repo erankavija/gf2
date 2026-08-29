@@ -16,10 +16,11 @@
     "type:task",
     "component:gf2-coding",
     "satisfies:REQ-10",
-    "resolution:obsolete"
+    "resolution:obsolete",
+    "epic:general-bch"
   ],
   "priority": "high",
   "state": "rejected",
   "title": "Migrate gf2-coding library consumers to the canonical BCH model",
-  "updated_at": "2026-08-28T23:03:03.537926450Z"
+  "updated_at": "2026-08-29T07:06:55.968192593Z"
 }

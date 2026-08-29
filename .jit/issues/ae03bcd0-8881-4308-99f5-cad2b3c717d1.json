@@ -4,8 +4,11 @@
   "created_at": "2026-08-28T21:14:59.928863085Z",
   "dependencies": [
     "0e706bf5-2057-43e7-9aeb-ec21539c48a4",
+    "1f4a4b39-1461-46ee-9ea9-3465aebdfa6d",
     "3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee",
+    "42b8c7e0-e745-47f6-9786-e958a7b2ac61",
     "4ad869d6-901d-465d-9d29-7c3a4f34ee8e",
+    "596131fc-5131-4707-ac6e-5c32a6f27997",
     "94597a51-67af-4ac3-b106-be82b9b1a34a",
     "997f0ab9-c591-4bfb-ad3b-b2b48336fe35",
     "fd9d5416-d529-427d-a273-10e6468b9a19"
@@ -40,5 +43,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-08-28T22:51:44.582449660Z"
+  "updated_at": "2026-08-29T07:06:44.418465948Z"
 }

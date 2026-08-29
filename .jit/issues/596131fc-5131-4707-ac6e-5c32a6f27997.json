@@ -16,10 +16,11 @@
     "type:task",
     "component:gf2-coding",
     "satisfies:REQ-10",
-    "resolution:obsolete"
+    "resolution:obsolete",
+    "epic:general-bch"
   ],
   "priority": "high",
   "state": "rejected",
   "title": "Migrate gf2-coding binaries, examples, benches, and tests",
-  "updated_at": "2026-08-28T23:03:20.411020908Z"
+  "updated_at": "2026-08-29T07:07:12.672106702Z"
 }
