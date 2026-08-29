@@ -28,6 +28,8 @@ WARMUP_POLICY = "doubling-probe-to-min-20ms-target-250ms-max-2^32"
 BACKEND = "fieldmatrix_det_ple"
 MEASURED = "measured"
 OUTCOMES = {MEASURED, "process_failed", "signal_censored", "harness_censored"}
+BENCHMARK_WRAPPER_PATH = "dev/scripts/ccx1-bench-flock.sh"
+BENCHMARK_WRAPPER = f"{BENCHMARK_WRAPPER_PATH}:ccx1"
 
 FIELDNAMES = [
     "schema_version",
@@ -108,6 +110,7 @@ RELEVANT_SOURCE_PATHS = [
     "Cargo.lock",
     "crates/gf2-core",
     "crates/gf2-algebra",
+    BENCHMARK_WRAPPER_PATH,
     "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v3.md",
     "dev/benchmarks/permanent_campaign/determinant_cost_v3.py",
 ]
@@ -173,6 +176,20 @@ def command_output(args: Sequence[str]) -> str:
     return completed.stdout.strip()
 
 
+def relevant_source_status(git_command: Sequence[str] = ("git",)) -> str:
+    """Return tracked modifications in the measurement source closure."""
+    return command_output(
+        [
+            *git_command,
+            "status",
+            "--porcelain",
+            "--untracked-files=no",
+            "--",
+            *RELEVANT_SOURCE_PATHS,
+        ]
+    )
+
+
 def read_text(path: Path, default: str = "unknown") -> str:
     try:
         return path.read_text(encoding="utf-8").strip()
@@ -207,16 +224,7 @@ def format_affinity(cpus: Iterable[int]) -> str:
 
 
 def runtime_provenance(binary: Path, cohort_invocation: Sequence[str]) -> dict[str, str]:
-    source_status = command_output(
-        [
-            "git",
-            "status",
-            "--porcelain",
-            "--untracked-files=no",
-            "--",
-            *RELEVANT_SOURCE_PATHS,
-        ]
-    )
+    source_status = relevant_source_status()
     boost_value = read_text(Path("/sys/devices/system/cpu/cpufreq/boost"))
     boost = {"0": "disabled", "1": "enabled"}.get(boost_value, boost_value)
     try:
@@ -239,7 +247,7 @@ def runtime_provenance(binary: Path, cohort_invocation: Sequence[str]) -> dict[s
         "affinity": affinity,
         "process_count_per_cell": str(PROCESS_COUNT),
         "worker_count": str(WORKER_COUNT),
-        "benchmark_wrapper": "dev/scripts/ccx1-bench-flock.sh:ccx1",
+        "benchmark_wrapper": BENCHMARK_WRAPPER,
         "cohort_invocation": json.dumps(list(cohort_invocation), separators=(",", ":")),
     }
 
@@ -457,7 +465,7 @@ def validate_rows(rows: Sequence[dict[str, str]]) -> list[CellSummary]:
             raise ReceiptError(f"{address}: process count differs")
         if row["worker_count"] != str(WORKER_COUNT):
             raise ReceiptError(f"{address}: worker count differs")
-        if row["benchmark_wrapper"] != "dev/scripts/ccx1-bench-flock.sh:ccx1":
+        if row["benchmark_wrapper"] != BENCHMARK_WRAPPER:
             raise ReceiptError(f"{address}: benchmark wrapper differs")
         try:
             invocation = json.loads(row["invocation"])
