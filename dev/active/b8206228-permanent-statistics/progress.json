@@ -666,7 +666,7 @@
     {
       "issue": "7a816262",
       "reason": "research-review fails at deterministic Tier 1: contrib/gates/research-review.sh check 3 greps the whole gate context for cites:<key> tokens, and that context embeds each dependency's labels but only dependency titles. 7a816262 owns no cites: label; dependencies 9c5b26fb (GGK2025, HKS2026, Scheinerman2024) and 0de41c82 (Scheinerman2024) do. The check therefore demands bracketed citekeys in text that structurally cannot contain them.",
-      "status": "open",
+      "status": "approved",
       "requested_at": "2026-08-29T18:40:34+03:00",
       "options": [
         "Scope research-review.sh Tier 1 check 3 to the labels the issue under review owns, with a regression case (shared gate infrastructure).",
@@ -674,16 +674,20 @@
         "File the scoping defect and leave the gate red, stalling the epic's critical path."
       ],
       "lead_recommendation": "Option 1. The script's own comment calls check 3 a label/text drift check on the issue's labels; applying it to dependency labels is a defect in the check. Option 2 would make a manifest-freeze task claim literature it does not use, purely to satisfy a grep.",
-      "note": "Owner replied 'Handoff now.' without selecting an option. No workaround was applied; the gate remains red."
+      "note": "Owner replied 'Handoff now.' without selecting an option. No workaround was applied; the gate remains red.",
+      "resolved_at": "2026-08-29T19:05:00+03:00",
+      "decision": "Owner selected option 1: scope research-review.sh Tier 1 check 3 to the labels the issue under review owns, with a regression case."
     },
     {
       "issue": "7a816262",
       "reason": "Independent read-only audit returned VERDICT: FAIL after the freeze artifacts were committed. F1 (medium): freeze.md:133,192,196,201 narrate the pre-commit worker tree as current state and commit 57c9633f falsified them; dev/simulation_results is a permanent path so present-tense-prose (AGENTS.md:145) binds it; the :185-190 transcript no longer reproduces because observe_provenance overwrites git_revision with live HEAD. doc-review passed over this. F2 (medium): freeze.md is the sole record of REQ-04/05/07/08 construction but no committed artifact records its digest, so editing the per-cell level, K=63, the stream-index construction, or a determinant cost passes sha256sum -c, emission-check and verify_dataset unchanged; adding freeze.md to checksums.sha256 makes verify_dataset raise IntegrityFault::OutsideRawSet. Two LOW findings also recorded. Four LOW findings also recorded: F3 freeze.md sits outside the campaign README's closed layout table; F4 three phase-1 drafts remain linked asserting present-tense draft status with no supersession pointer (managed path, so present-tense-prose does not bind); F5 (pre-existing) README.md:253-254 claims an execution receipt quotes the sidecar SHA-256 while driver.rs:206 emits blake3 over a fresh re-serialization; F6 the protocol's required committed pre-draw execution receipt (protocol.md:3-6) is unallocated and unflagged.",
-      "status": "open",
+      "status": "approved",
       "requested_at": "2026-08-29T18:43:06+03:00",
       "lead_recommendation": "F1 is a bounded mechanical correction to freeze.md's validation section: rewrite the pre-commit narration as a post-commit record and re-transcribe the emission-check output that reproduces at HEAD. F2 needs an owner decision on where a non-raw frozen record's digest belongs, because checksums.sha256 structurally cannot hold it.",
       "note": "Not put to the owner; the session ended on the 'Handoff now.' instruction first. Rework at MAX.",
-      "audit_verified_do_not_redo": "All 63 cells individually; all 14,229 stream_index values equal (cell_ordinal << 32) | shard_id and are globally distinct; shard counts ceil(N/50000)=14,229; determinant_companion evaluate in all 63; backend_receipt identical and never a draft in all 63; REQ-08 checked against the code, confirming MatrixAddress::seed (crates/gf2-stats/src/sampler.rs:181-195) builds the four little-endian u64 words freeze.md:51 states."
+      "audit_verified_do_not_redo": "All 63 cells individually; all 14,229 stream_index values equal (cell_ordinal << 32) | shard_id and are globally distinct; shard counts ceil(N/50000)=14,229; determinant_companion evaluate in all 63; backend_receipt identical and never a draft in all 63; REQ-08 checked against the code, confirming MatrixAddress::seed (crates/gf2-stats/src/sampler.rs:181-195) builds the four little-endian u64 words freeze.md:51 states.",
+      "resolved_at": "2026-08-29T19:05:00+03:00",
+      "decision": "Owner selected the fast path: fix F1's falsified present-tense prose in freeze.md; record git history as the tamper-evidence disposition for F2; tidy LOW findings F3/F4; file F5/F6 as follow-up issues (F6 wired before the first draw); then close 7a816262 and dispatch wave 9."
     }
   ],
   "standing_rules": [

@@ -10044,3 +10044,9 @@
 {"fields":["documents"],"id":"5c8a3a9e-e893-49ec-9b4a-e66c42a6c183","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-29T15:39:00.090505212Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"dca7bb73-6925-4597-8fe9-2e438473a4a0","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-29T15:39:00.216694158Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"b986bedb-96ff-4e59-8359-0f1a5e55f8e8","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-29T15:40:40.639532590Z","type":"issue_updated","updated_by":"doc-add"}
+{"id":"a68dcedc-e0fa-49ca-a46b-e9efd9aaf9b4","issue_id":"69e7d174-ac31-4ad1-b7de-4edcf9274954","priority":"high","timestamp":"2026-08-29T16:24:13.012035825Z","title":"research-review Tier 1 misattributes dependency citation labels to the issue under review","type":"issue_created"}
+{"fields":["description"],"id":"b525ada8-8755-40cb-b589-7e3451a4b494","issue_id":"69e7d174-ac31-4ad1-b7de-4edcf9274954","timestamp":"2026-08-29T16:24:38.264495680Z","type":"issue_updated","updated_by":"issue-update"}
+{"gate_key":"code-review","id":"69ef079d-2e71-4668-98be-e0460ec28fe1","issue_id":"69e7d174-ac31-4ad1-b7de-4edcf9274954","timestamp":"2026-08-29T16:24:45.286584969Z","type":"gate_added"}
+{"fields":["dependencies"],"id":"d5d6e50d-c60b-4f7d-b9d4-937bc9f9c1c5","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-29T16:24:50.767891667Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"84590e48-3bd9-4ba0-8ec4-9f59eab68590","issue_id":"69e7d174-ac31-4ad1-b7de-4edcf9274954","timestamp":"2026-08-29T16:25:04.803146073Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-luna","id":"846a3f11-0fd1-41d2-a4e2-31fa11c03f8f","issue_id":"69e7d174-ac31-4ad1-b7de-4edcf9274954","timestamp":"2026-08-29T16:25:04.803146073Z","type":"issue_claimed"}
