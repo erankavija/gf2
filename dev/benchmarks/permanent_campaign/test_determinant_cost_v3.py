@@ -6,7 +6,9 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -100,6 +102,46 @@ class GridTests(unittest.TestCase):
         self.assertEqual(receipt.fixed_sample_count(5, 17), 160_000)
         self.assertEqual(receipt.fixed_sample_count(7, 16), 12_244_898)
         self.assertEqual(receipt.fixed_sample_count(7, 17), 122_449)
+
+
+class ProvenanceTests(unittest.TestCase):
+    def test_benchmark_wrapper_participates_in_source_dirty_detection(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository = Path(temporary_directory)
+            wrapper = repository / "dev/scripts/ccx1-bench-flock.sh"
+            wrapper.parent.mkdir(parents=True)
+            wrapper.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+            subprocess.run(["git", "init", "--quiet"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "config", "user.email", "receipt-test@example.invalid"],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "Receipt Test"],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "add", str(wrapper.relative_to(repository))],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "commit", "--quiet", "--no-gpg-sign", "-m", "test fixture"],
+                cwd=repository,
+                check=True,
+            )
+
+            git = ["git", "-C", str(repository)]
+            self.assertEqual(receipt.relevant_source_status(git), "")
+
+            wrapper.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+
+            self.assertIn(
+                "dev/scripts/ccx1-bench-flock.sh",
+                receipt.relevant_source_status(git),
+            )
 
 
 class ValidationTests(unittest.TestCase):
