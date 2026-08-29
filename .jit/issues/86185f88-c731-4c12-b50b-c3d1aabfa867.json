@@ -1,5 +1,5 @@
 {
-  "assignee": null,
+  "assignee": "agent:codex-sol",
   "claimed_at": "2026-08-29T17:32:58.466551007Z",
   "context": {},
   "created_at": "2026-08-29T17:27:47.247210056Z",
@@ -30,7 +30,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Cell-exhaustive backend equivalence receipt for the 124 nominated selection configurations",
-  "updated_at": "2026-08-29T17:53:45.932745980Z"
+  "updated_at": "2026-08-29T21:38:38.319452687Z"
 }
