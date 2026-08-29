@@ -60,6 +60,11 @@
       "status": "passed",
       "updated_at": "2026-08-29T09:08:23.939276248Z",
       "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-29T09:10:51.702372143Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "ec22205e-64f9-43c9-9848-ff8e6c41348c",
@@ -72,5 +77,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Complete determinant marginal-cost coverage for campaign cells",
-  "updated_at": "2026-08-29T09:08:23.939276248Z"
+  "updated_at": "2026-08-29T09:10:51.702372143Z"
 }
