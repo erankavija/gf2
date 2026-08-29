@@ -376,7 +376,9 @@
       "title": "Campaign README promises execution receipts quote the sidecar manifest SHA-256, but the driver emits blake3",
       "type": "bug",
       "wave": "9",
-      "reason": "freeze audit finding 5; wired before all three campaign arms"
+      "reason": "freeze audit finding 5; wired before all three campaign arms",
+      "status": "done",
+      "note": "Closed session 24: README-side fix (driver untouched; frozen emitter digest preserved). blake3 execution identity and sidecar SHA-256 both described with the reproducing two-step audit path; new driver test walks it against the committed frozen campaign. cargo-ci + code-review (0 findings) passed at 4e847a3f; lead six-tier review PASS."
     },
     {
       "short_id": "bc6155fa",
@@ -390,7 +392,9 @@
       "title": "Cell-exhaustive backend equivalence receipt for the 124 nominated selection configurations",
       "type": "task",
       "wave": "8 (freeze closure)",
-      "reason": "research-review F3 owner decision: produce the evidence; wired before all three campaign arms; full run scheduled for the 02:00 exclusive window"
+      "reason": "research-review F3 owner decision: produce the evidence; wired before all three campaign arms; full run scheduled for the 02:00 exclusive window",
+      "status": "in_progress",
+      "note": "Session 24: harness extension landed at 4e847a3f (Sol xhigh worker; embedded SHA-256-pinned selection authority, 63 cells / 124 nominations verified by deterministic tests; budget rule extends de5f7414 with conservative higher-order substitution and recorded 2-matrix floor). Addendum draft committed with TO FILL placeholders. Full receipt run scheduled inside the 02:00 window; reservation 8312 s. Gates (code-review, doc-review) run after the receipt and addendum finalization."
     }
   ],
   "escalations": [
@@ -1022,5 +1026,12 @@
     "frozen_emitter_backup": "~/.local/state/gf2-frozen/permanent_campaign-2d6edcd9 (sha256 2d6edcd9...)",
     "handoff": "handoff-19.md",
     "hardware_note": "Owner performing RAM+disk upgrade before next compute; CPU/GPU unchanged so all measurement evidence and the pinned emitter remain valid. Do not start the equivalence run until the owner confirms."
+  },
+  "session_24_state": {
+    "recorded_at": "2026-08-30T01:25:00+03:00",
+    "hardware": "Owner confirmed RAM+disk upgrade complete; compute unblocked.",
+    "closed": "6dfb1b5e",
+    "in_flight": "86185f88 equivalence receipt run scheduled for the 02:00 exclusive window; binary sha256 9f7905ad61b2ba45b5f3d21304e57e9faa04a64449e75cddf19fcea1edecd76a built from 4e847a3f tree.",
+    "next": "After receipt: fill addendum, gates on 86185f88, then research-review + doc-review re-runs on 7a816262, lead six-tier review, close freeze; then wave 9 (3f664839 native Opus, 73317b2e Sol xhigh)."
   }
 }
