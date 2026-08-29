@@ -1,5 +1,7 @@
 # Draft receipt inventory
 
+> **Superseded phase-1 draft.** The premeasurement this draft calls for has since run and is receipted, and the freeze is complete. The authoritative selection record is `dev/benchmarks/permanent_campaign/backend-selection-v1.md`; the frozen campaign record is `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md`. This draft remains as phase-1 history only and is not a ranking or freeze input.
+
 This draft inventories committed artifacts relevant to backend selection. It separates cell-applicable measurements from evidence that cannot be ranked under the backend-freeze cohort rules. Every path below is repository-relative and carries its current SHA-256.
 
 ## Canonical committed receipt files
