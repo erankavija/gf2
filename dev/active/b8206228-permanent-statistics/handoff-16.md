@@ -25,7 +25,7 @@
 ## What to do next
 
 - [ ] Obtain the owner's exact uncontended measurement window; reserve 10–15 uninterrupted minutes. Do not start early.
-- [ ] Immediately before launch, verify HEAD `015e2cda`, the exact binary SHA-256, clean source closure, CPU affinity admission, and absence of v5 receipt/report/scratch paths. Abort before timing if any check differs.
+- [ ] Immediately before launch, verify the current clean HEAD, confirm every path in `RELEVANT_SOURCE_PATHS` is byte-identical to reviewed source commit `015e2cda`, verify the exact binary SHA-256, CPU affinity admission, and absence of v5 receipt/report/scratch paths. Later JIT readiness/handoff commits are outside the source closure; abort if any producing path differs.
 - [ ] Run exactly one locked cohort with `./dev/scripts/ccx1-bench-flock.sh python3 dev/benchmarks/permanent_campaign/determinant_cost_v5.py run --binary target/release/deps/determinant_companion-214102561bb5c0a5 --output dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv --scratch-dir /tmp/gf2-ec22205e-determinant-cost-v5`.
 - [ ] Preserve every process outcome. Do not repair, replace, extend, or rerun based on measurements or censoring.
 - [ ] Render and validate the v5 report, commit immutable CSV/report evidence, update issue links, and run all registered formal gates before closing `ec22205e`.
@@ -44,7 +44,7 @@
 ## Open questions needing invoker input
 
 - Question: What exact local date and start time should the lead use for the one-shot determinant v5 cohort?
-  - Context: Independent readiness review passed at HEAD `015e2cda`; the CPU cohort needs 10–15 uninterrupted minutes and must not begin before the owner's chosen window.
+  - Context: Independent readiness review passed for the producing source closure at commit `015e2cda`; later commits record readiness metadata only. The CPU cohort needs 10–15 uninterrupted minutes and must not begin before the owner's chosen window.
   - Options: Any owner-selected uncontended window with at least 15 minutes reserved.
   - Recommendation: Choose a window when no other repository build, test, benchmark, simulation, or external CPU-heavy load will run.
 
