@@ -726,10 +726,56 @@ fn configuration_differences(
 mod tests {
     use super::*;
     use crate::permanent_campaign::fixture::{manifest, TestDir};
+    use crate::permanent_campaign::provenance::recorded_manifest_hash;
     use crate::permanent_campaign::schedule::evaluate_work_item;
+    use crate::permanent_campaign::schema::{read_manifest, MANIFEST_FILE};
+    use sha2::{Digest, Sha256};
     use std::cell::RefCell;
     use std::path::Path;
     use std::rc::Rc;
+
+    #[test]
+    fn frozen_manifest_checkpoint_identity_matches_integrity_sidecar() {
+        let campaign = Path::new(env!("CARGO_MANIFEST_DIR")).join(
+            "../../dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
+        );
+        let manifest_bytes =
+            fs::read(campaign.join(MANIFEST_FILE)).expect("frozen manifest must be readable");
+        let manifest = read_manifest(&campaign).expect("frozen manifest must pass its schema");
+        let reserialized =
+            serde_json::to_vec(&manifest).expect("campaign manifest is serializable");
+        let blake3_digest = blake3::hash(&reserialized).to_hex().to_string();
+
+        let checkpoint = CampaignCheckpoint::new(campaign_configuration(&manifest, 3));
+        assert_eq!(
+            checkpoint.configuration.manifest_content_hash, blake3_digest,
+            "checkpoint identity must use BLAKE3 of the driver's re-serialization"
+        );
+        assert_eq!(
+            campaign_config_hash(&manifest, 3),
+            format!(
+                "blake3:{blake3_digest};campaign_id={};field=3;root_seed={};manifest={blake3_digest}",
+                manifest.campaign_id, manifest.root_seed
+            )
+        );
+
+        let on_disk_sha256 = Sha256::digest(&manifest_bytes)
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
+        let sidecar_sha256 = recorded_manifest_hash(&campaign)
+            .expect("checksums.sha256 must cover the frozen manifest");
+        assert_eq!(
+            on_disk_sha256,
+            sidecar_sha256.as_str(),
+            "sidecar identity must be SHA-256 of the exact manifest bytes"
+        );
+        assert_ne!(
+            blake3_digest,
+            sidecar_sha256.as_str(),
+            "the execution and on-disk identities use distinct algorithms"
+        );
+    }
 
     #[test]
     fn shard_and_summary_durability_precede_checkpoint_recording() {
