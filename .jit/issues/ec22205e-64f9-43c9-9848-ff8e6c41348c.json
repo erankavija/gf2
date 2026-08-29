@@ -16,14 +16,14 @@
       "path": "dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md"
     },
     {
-      "commit": "8af81b55",
+      "commit": "015e2cda",
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Determinant-cost v5 runner and validator",
       "path": "dev/benchmarks/permanent_campaign/determinant_cost_v5.py"
     },
     {
-      "commit": "8af81b55",
+      "commit": "015e2cda",
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Determinant-cost v5 behavioral tests",
@@ -69,5 +69,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Complete determinant marginal-cost coverage for campaign cells",
-  "updated_at": "2026-08-29T10:19:19.608145424Z"
+  "updated_at": "2026-08-29T11:42:59.331139828Z"
 }
