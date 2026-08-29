@@ -251,11 +251,25 @@ The `checksum-mismatch` fixture keeps a correct `manifest.json` checksum because
 `manifest_fault` short-circuits verification; a deliberately wrong entry would
 mask the three raw-file mismatches that fixture exercises.
 
-The root manifest's content hash is consequently a sidecar value: it is this
-file's `manifest.json` entry, and `manifest.json` stores no hash of itself. A
-reader recomputes the hash from the manifest's bytes alone instead of having to
-know it in advance, and an execution receipt that identifies a manifest quotes
-the same value.
+The root manifest has two distinct identities. A field checkpoint's
+`configuration.manifest_content_hash` — also rendered by `campaign_config_hash`
+as the `blake3:<digest>` and `manifest=<digest>` components — is the driver's
+execution identity: it parses `manifest.json` as a `CampaignManifest`, calls
+`serde_json::to_vec(&manifest)` on that typed value, and hashes those
+re-serialized bytes with BLAKE3. The `manifest.json` entry in
+`checksums.sha256` is the on-disk identity: SHA-256 over the exact bytes stored
+in that file. These values are not expected to match because their algorithms
+and byte sources differ.
+
+An auditor follows two comparisons from a field checkpoint to the frozen
+manifest: first compare its recorded BLAKE3 value with
+`blake3::hash(serde_json::to_vec(&manifest))`, where `manifest` is the typed
+`CampaignManifest` parsed from the frozen `manifest.json`; then compare the
+exact `manifest.json` bytes with the sidecar's `manifest.json` SHA-256 entry
+(for example, with `sha256sum -c checksums.sha256`). The first comparison binds
+the checkpoint to the driver's manifest identity, and the second binds that
+typed manifest to the frozen on-disk bytes, so together they bind the
+checkpoint to the frozen manifest.
 
 ## Verifying a published dataset
 
