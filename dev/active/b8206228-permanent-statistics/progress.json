@@ -160,7 +160,7 @@
      "short_id": "ec22205e",
      "title": "Complete determinant marginal-cost coverage for campaign cells",
      "classification": "research",
-     "status": "in_progress: claimed by agent:worker on 2026-08-29 for a frontier-tier implementation/research dispatch. The task extends the canonical harness and receipt for the remaining 52 cells and is a prerequisite of 7a816262."
+     "status": "rework-1: the preregistered 63-cell, 315-outcome cohort is complete and immutable at f8599b60; cargo-ci passed. Formal code review found one provenance-closure defect: determinant_cost_v3.py does not include dev/scripts/ccx1-bench-flock.sh in its dirty-source paths even though the receipt records that wrapper. A fresh frontier-tier worker owns the bounded checker and regression-test repair; the measurement receipt must not be rerun or rewritten."
     }
    ],
    "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
@@ -652,6 +652,8 @@
   "eb8825c8": 1,
   "7a816262": 2,
   "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached, any further failure escalates",
+  "ec22205e": 1,
+  "ec22205e_note": "rework-1 dispatched 2026-08-29 for the formal code-review finding that the CCX1 wrapper was omitted from the determinant runner's dirty-source closure; preserve the complete immutable cohort and repair the checker with regression coverage",
   "032cc754": 1,
   "a39bb161": 2,
   "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates"
