@@ -9971,3 +9971,6 @@
 {"id":"7c9aad44-097c-4f09-b761-1b3dd3817bb4","issue_id":"e3169db4-6c81-48de-9861-ea349e4e4f18","timestamp":"2026-08-29T07:24:01.144694548Z","type":"issue_completed"}
 {"from":"backlog","id":"31d4b6c6-a5cf-4c6c-bec3-e108cfa72ca6","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-29T07:24:09.420062536Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"722672b2-5b7e-4c87-82e1-e55535f168be","issue_id":"ad6778e8-bc9d-4e04-a85a-3e048b2bf428","timestamp":"2026-08-29T07:24:17.688913181Z","to":"ready","type":"issue_state_changed"}
+{"id":"d11ec62b-5f83-40dc-aba0-8ab929220ab6","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","priority":"high","timestamp":"2026-08-29T07:45:28.845722952Z","title":"Complete determinant marginal-cost coverage for campaign cells","type":"issue_created"}
+{"fields":["dependencies"],"id":"358268f4-6ed6-4c9b-928b-8430cdec3599","issue_id":"ec22205e-64f9-43c9-9848-ff8e6c41348c","timestamp":"2026-08-29T07:45:46.355619482Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"8071159b-eafd-405e-975e-0cd3adb4eaa3","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-29T07:45:55.060690762Z","type":"issue_updated","updated_by":"dependency-add"}
