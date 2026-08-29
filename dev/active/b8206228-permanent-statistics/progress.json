@@ -160,7 +160,7 @@
      "short_id": "ec22205e",
      "title": "Complete determinant marginal-cost coverage for campaign cells",
      "classification": "research",
-     "status": "rework-1 after the owner's second counter reset: implement the authorized tail-aware v5 failure-retention repair so an incomplete unparseable final scratch record becomes planned censoring while complete preceding rows remain measured. Duplicate complete addresses and non-tail corruption stay fail-closed. Require a fresh independent readiness PASS before asking the owner to schedule timing; timing remains held."
+     "status": "escalated on the third repeat of the v5 failure-retention root cause: the owner-authorized tail repair correctly retains a structurally short final record, but it also classifies a full-width final row with an explicit empty required field as interrupted output. MAX_SAME_FINDING_REPEATS requires owner input before the exact None-versus-empty correction. Timing remains held and no v5 receipt, report, or scratch directory exists."
     }
    ],
    "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
@@ -359,6 +359,17 @@
   }
  ],
  "escalations": [
+  {
+   "issue": "ec22205e",
+   "reason": "The owner-authorized tail-aware repair at 8af81b55 closes physical truncation before a parseable address, but final readiness review found that scratch_row_is_incomplete treats both DictReader missing-column None values and explicit empty strings as interruption. A full-width final row with backend=\"\" is therefore converted to harness_censored instead of failing hard. This is the third review on the same failure-retention root cause, reaching MAX_SAME_FINDING_REPEATS even though the second-reset rework counter is 1.",
+   "status": "pending",
+   "requested_at": "2026-08-29T13:18:19+03:00",
+   "options": [
+    "Authorize one exact source-only correction: only missing-column None values identify a structurally short final record; any full-width row containing an explicit empty string remains a hard malformed-row error. Add the missing regression and require a fresh independent readiness PASS before scheduling.",
+    "Stop the canonical v5 rerun and leave ec22205e, the wave-8 freeze, and epic execution blocked; no timing or evidence artifact is produced."
+   ],
+   "lead_recommendation": "Authorize the exact correction. The reviewer has isolated the remaining condition to the None-versus-empty distinction, all other tail and cumulative readiness cases pass, and the change preserves the preregistration, schema, canonical-cutover, and historical evidence."
+  },
   {
    "issue": "ec22205e",
    "reason": "At rework MAX after the owner-approved canonical-v5 reset, independent readiness review proved that the failure-retention repair handles a truncated scratch row only after q/n/process_index are parseable. A signal can interrupt the Rust writeln before those fields are complete; Python then calls int(None) while indexing scratch rows and aborts before writing the promised complete 315-row censored receipt. This violates hard REQ-02 and REQ-04, so timing cannot be scheduled at HEAD 1ddcc266.",
@@ -679,7 +690,7 @@
   "7a816262": 2,
   "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached, any further failure escalates",
   "ec22205e": 1,
-  "ec22205e_note": "The first cycle reached MAX after v4 research-review found three publication-evidence gaps. The owner's first option-A reset produced canonical v5 and reached MAX when failure-retention review exposed truncation before a parseable address. The owner's second option-A decision at 2026-08-29T13:08:56+03:00 reset the counter to 0; count 1 records the authorized tail-aware source-only repair dispatch. Timing remains held for owner scheduling after a fresh independent PASS.",
+  "ec22205e_note": "The first cycle reached MAX after v4 research-review found three publication-evidence gaps. The owner's first option-A reset produced canonical v5 and reached MAX when failure-retention review exposed truncation before a parseable address. The owner's second option-A decision at 2026-08-29T13:08:56+03:00 reset the counter to 0; count 1 records the tail-aware source-only repair. Review then found the final classifier conflates missing columns with explicit empty fields, the third repeat of the same failure-retention root cause. MAX_SAME_FINDING_REPEATS requires escalation before another dispatch. Timing remains held.",
   "032cc754": 1,
   "a39bb161": 2,
   "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates"
