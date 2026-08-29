@@ -82,6 +82,42 @@
       "format": "markdown",
       "label": "Premeasure-v1 deviation record (D-01 dual-row gpu_hip)",
       "path": "dev/benchmarks/permanent_campaign/premeasure-v1-deviations.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Final backend selection receipt",
+      "path": "dev/benchmarks/permanent_campaign/backend-selection-v1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "research",
+      "label": "Frozen campaign root manifest",
+      "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/simulation_results/permanent-zero-fraction/protocol.md",
+          "resolved_path": "dev/simulation_results/permanent-zero-fraction/protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Campaign freeze record",
+      "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "research",
+      "label": "Manifest integrity sidecar",
+      "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/checksums.sha256"
     }
   ],
   "first_ready_at": "2026-08-17T19:16:35.076007960Z",
@@ -110,5 +146,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Frozen root manifest for the campaign",
-  "updated_at": "2026-08-29T15:17:09.511464723Z"
+  "updated_at": "2026-08-29T15:39:00.216694158Z"
 }

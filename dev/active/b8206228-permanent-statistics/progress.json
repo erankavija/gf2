@@ -146,7 +146,7 @@
           "short_id": "7a816262",
           "title": "Frozen root manifest for the campaign",
           "classification": "implementation",
-          "status": "in_progress: claimed by agent:codex since 2026-08-17T19:18:31Z; rework MAX. All 1,440 preregistered positions are terminal: 1,439 collector candidates and signal-censored position 539. The immutable cohort is committed at 5e2799f7. Owner decisions 2026-08-29 fix rng_algorithm as cha_cha20 and require 12/12 finite measurements for backend eligibility. Final freeze waits only on in-progress prerequisite ec22205e for the 52 missing per-cell determinant marginal-cost measurements."
+          "status": "in_progress: claimed by agent:sol-freeze 2026-08-29; rework MAX. Freeze artifacts are produced, independently verified by the lead, and committed: selection receipt backend-selection-v1.md at 396cf929 (sha256 fe5d37ba...), and campaign permanent-zero-fraction-20260829 (manifest.json, checksums.sha256, freeze.md) at 57c9633f. All four artifacts linked via jit doc add. doc-review PASSED. research-review FAILED at deterministic Tier 1 on cites: labels owned by dependencies 9c5b26fb and 0de41c82, not by this issue; its Tier 2 AI methodology review has never run. BLOCKED on the open owner escalation."
         },
         {
           "id": "1947125e-33eb-4442-b717-24442cc35ca1",
@@ -356,6 +356,13 @@
       "reason": "The session-17 freeze audit proved that 7a816262 REQ-05 requires directly measured per-cell determinant marginal cost while the canonical receipt covers only 11 of the 63 enabled cells. The new leaf extends that receipt for the other 52 cells without treating interpolation as measurement.",
       "wave": 8,
       "status": "done"
+    },
+    {
+      "short_id": "e1d45c20",
+      "title": "permanent_dataset emission-check compares its own binary digest, never the pinned emitter",
+      "reason": "Found during 7a816262 freeze validation: permanent_dataset emission-check calls approve_emission, which hashes the running executable, so it compares permanent_dataset's digest against the manifest's pinned permanent_campaign emitter and refuses for every valid frozen manifest. The writer path applies the same guard to its own matching digest, so execution is unaffected.",
+      "wave": "8 (interleaved)",
+      "status": "ready"
     }
   ],
   "escalations": [
@@ -655,6 +662,19 @@
         "Rank by the available finite-row mean despite unequal and sometimes zero finite samples."
       ],
       "lead_recommendation": "Require 12 of 12 finite measurements for eligibility and select the complete arm. This is conservative, preserves the no-replacement cohort, avoids biased unequal-sample ranking, and requires no additional GPU work."
+    },
+    {
+      "issue": "7a816262",
+      "reason": "research-review fails at deterministic Tier 1: contrib/gates/research-review.sh check 3 greps the whole gate context for cites:<key> tokens, and that context embeds each dependency's labels but only dependency titles. 7a816262 owns no cites: label; dependencies 9c5b26fb (GGK2025, HKS2026, Scheinerman2024) and 0de41c82 (Scheinerman2024) do. The check therefore demands bracketed citekeys in text that structurally cannot contain them.",
+      "status": "open",
+      "requested_at": "2026-08-29T18:40:34+03:00",
+      "options": [
+        "Scope research-review.sh Tier 1 check 3 to the labels the issue under review owns, with a regression case (shared gate infrastructure).",
+        "Add cites:GGK2025/HKS2026/Scheinerman2024 labels plus a References section to 7a816262 (issue scope change).",
+        "File the scoping defect and leave the gate red, stalling the epic's critical path."
+      ],
+      "lead_recommendation": "Option 1. The script's own comment calls check 3 a label/text drift check on the issue's labels; applying it to dependency labels is a defect in the check. Option 2 would make a manifest-freeze task claim literature it does not use, purely to satisfy a grep.",
+      "note": "Owner replied 'Handoff now.' without selecting an option. No workaround was applied; the gate remains red."
     }
   ],
   "standing_rules": [
@@ -690,7 +710,7 @@
     "4a6bdcff": 1,
     "eb8825c8": 1,
     "7a816262": 2,
-    "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached, any further failure escalates",
+    "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached. Session 22 redispatched the freeze as CONTINUATION of a prerequisite-blocked issue, not as a third repair round: its work had never been review-failed, it was waiting on the premeasurement cohort, two owner decisions, and ec22205e. The counter stays at 2; any gate or lead-review failure on the freeze escalates rather than reworking.",
     "ec22205e": 2,
     "ec22205e_note": "The first cycle reached MAX after v4 research-review found three publication-evidence gaps. The owner's first option-A reset produced canonical v5 and reached MAX when failure-retention review exposed truncation before a parseable address. The owner's second option-A reset produced the tail-aware parser as count 1; its review found the None-versus-empty conflation, the third repeat of the same root cause. Owner option A at 2026-08-29T14:37:36+03:00 authorizes the exact correction as count 2. MAX is reached; any further readiness failure escalates. Timing remains held.",
     "032cc754": 1,
@@ -828,11 +848,13 @@
       "disposition": "Created and wired prerequisite ec22205e for a preregistered extension covering the 52 omitted cells; commit 2d6d9648. Interpolation is not accepted as measurement."
     },
     "ec22205e | research-review F4 (medium, advisory, PASS verdict): determinant_cost_v5.py:259 suppresses untracked files while Cargo.lock is gitignored and absent from the producing revision, and the receipt records rustc and cargo_profile but not the Cargo version or build argv, so the measured binary is identified by hash yet not reconstructible. The reviewer applied its convergence-across-rounds policy and did not block. Not an ec22205e REQ-03 violation (that criterion's 'compiler and build identity' is supplied by rustc, cargo_profile and binary_sha256). Reconcile before the epic holistic-review gate; note that CampaignManifest.provenance already carries deps_source_revision and deps_source_dirty, so the campaign's own reproducibility path does not inherit the gap.",
-    "RESOLVED (verified session 22): surfaced_pitfalls[2], the stale design-reference path in crates/gf2-sim/src/lib.rs:109, now resolves \u2014 dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md exists at that path. No epic-level sweep action remains for it."
+    "RESOLVED (verified session 22): surfaced_pitfalls[2], the stale design-reference path in crates/gf2-sim/src/lib.rs:109, now resolves \u2014 dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md exists at that path. No epic-level sweep action remains for it.",
+    "7a816262 | research-review Tier 1 check 3 is issue-scope-blind: it greps the whole gate context for cites:<key>, and the context embeds dependency labels but only dependency titles. Any issue whose dependency owns a cites: label that is not bracketed in the combined context fails deterministically, before the AI review runs. Contrast a82f2dd9, which owned its cites:Yue2022 label and so failed genuinely. Repo-wide condition, not specific to this epic.",
+    "7a816262 | The freeze has passed doc-review and the lead's independent structural verification, but its research-review Tier 2 AI methodology review has NEVER executed (Tier 1 fails first, in 117 ms). Do not treat the doc-review pass as scientific review of the freeze."
   ],
   "started_at": "2026-08-09T12:20:30Z",
-  "rederived_at": "2026-08-29T17:33:00+03:00",
-  "rederivation_note": "Session 22: ec22205e closed with all four registered gates passed on the clean tree at 0e389483 and a lead six-tier PASS. 7a816262 is now fully unblocked (5/5 dependencies complete) and is the sole remaining wave-8 issue. Owner decisions in force: rng_algorithm is the strict schema token cha_cha20, and a backend arm is eligible only with 12/12 finite measured outcomes, making five accelerator arms ineligible so cells (3,26), (3,27), (5,21), (5,22), (5,23) select their complete arm. 7a816262 rework is at MAX: any gate or lead-review failure on the freeze escalates rather than reworking.",
+  "rederived_at": "2026-08-29T18:40:34+03:00",
+  "rederivation_note": "Session 22 ended on the owner's 'Handoff now.' instruction with one escalation open. ec22205e closed with all four gates passed and a lead six-tier PASS. 7a816262's freeze artifacts are committed at 396cf929 and 57c9633f and independently verified by the lead, doc-review passed, but research-review fails at Tier 1 on dependency-owned cites: labels and its Tier 2 methodology review has never run. The freeze cannot close, and waves 9-13 remain blocked behind it, until the owner resolves that escalation. New bug e1d45c20 records the permanent_dataset emission-check defect.",
   "overnight_runs": [
     {
       "armed_at": "2026-08-18T21:21+03:00",
