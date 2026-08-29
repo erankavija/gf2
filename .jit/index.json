@@ -732,9 +732,6 @@
     "88f0bb88-1971-4ad8-9210-0e94a5b5eee1",
     "c3cc5226-2edf-40f7-a95d-b35bdcc1da57",
     "6d67e57e-0dac-44a4-afa8-b5c1eb33aff7",
-    "42b8c7e0-e745-47f6-9786-e958a7b2ac61",
-    "596131fc-5131-4707-ac6e-5c32a6f27997",
-    "1f4a4b39-1461-46ee-9ea9-3465aebdfa6d",
     "4a2baa12-af89-47f2-abb4-90b741929b5e",
     "f759d724-e1e3-466b-9d57-a3d1a57123ab",
     "64fd3afd-98c0-4a21-b225-43c612d1ea82",
@@ -764,7 +761,10 @@
     "ca6a4035-207f-4ec5-8e2b-7c7caa90d5ac",
     "b99e475d-078e-47c9-a7b7-33093354c343",
     "c450f40b-bf33-4051-ba30-35d361ddb2cd",
-    "fe3c89f9-e4a9-44e4-a6b6-fb2ecbd9fe01"
+    "fe3c89f9-e4a9-44e4-a6b6-fb2ecbd9fe01",
+    "42b8c7e0-e745-47f6-9786-e958a7b2ac61",
+    "1f4a4b39-1461-46ee-9ea9-3465aebdfa6d",
+    "596131fc-5131-4707-ac6e-5c32a6f27997"
   ],
   "schema_version": 2
 }

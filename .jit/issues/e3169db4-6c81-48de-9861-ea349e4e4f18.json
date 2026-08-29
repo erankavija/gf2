@@ -15,7 +15,7 @@
   "gates_status": {
     "breakdown-review": {
       "status": "failed",
-      "updated_at": "2026-08-28T22:58:57.794819423Z",
+      "updated_at": "2026-08-29T07:16:54.647734496Z",
       "updated_by": "auto:executor"
     },
     "coverage-preview": {
@@ -37,5 +37,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "breakdown: Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-08-28T23:06:12.792401546Z"
+  "updated_at": "2026-08-29T07:16:54.647734496Z"
 }
