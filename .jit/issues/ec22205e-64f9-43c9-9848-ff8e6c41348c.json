@@ -50,7 +50,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-08-29T08:21:02.852535526Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "ec22205e-64f9-43c9-9848-ff8e6c41348c",
   "labels": [
     "epic:permanent-statistics",
@@ -61,5 +67,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Complete determinant marginal-cost coverage for campaign cells",
-  "updated_at": "2026-08-29T08:19:52.859175321Z"
+  "updated_at": "2026-08-29T08:21:02.852535526Z"
 }
