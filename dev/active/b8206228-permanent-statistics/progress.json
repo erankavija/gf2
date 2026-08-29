@@ -160,7 +160,7 @@
      "short_id": "ec22205e",
      "title": "Complete determinant marginal-cost coverage for campaign cells",
      "classification": "research",
-     "status": "escalated on the third repeat of the v5 failure-retention root cause: the owner-authorized tail repair correctly retains a structurally short final record, but it also classifies a full-width final row with an explicit empty required field as interrupted output. MAX_SAME_FINDING_REPEATS requires owner input before the exact None-versus-empty correction. Timing remains held and no v5 receipt, report, or scratch directory exists."
+     "status": "rework-2 after the owner's same-finding authorization: apply only the exact v5 None-versus-empty correction so missing CSV columns identify a structurally short interrupted tail while any full-width row with an explicit empty required field fails hard. Add the regression and require a fresh independent readiness PASS before asking for the schedule. Timing remains held."
     }
    ],
    "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
@@ -362,8 +362,10 @@
   {
    "issue": "ec22205e",
    "reason": "The owner-authorized tail-aware repair at 8af81b55 closes physical truncation before a parseable address, but final readiness review found that scratch_row_is_incomplete treats both DictReader missing-column None values and explicit empty strings as interruption. A full-width final row with backend=\"\" is therefore converted to harness_censored instead of failing hard. This is the third review on the same failure-retention root cause, reaching MAX_SAME_FINDING_REPEATS even though the second-reset rework counter is 1.",
-   "status": "pending",
+   "status": "approved",
    "requested_at": "2026-08-29T13:18:19+03:00",
+   "resolved_at": "2026-08-29T14:37:36+03:00",
+   "decision": "Owner selected option A: authorize the exact missing-column-None versus explicit-empty-string correction, its regression, and a fresh independent readiness review before scheduling.",
    "options": [
     "Authorize one exact source-only correction: only missing-column None values identify a structurally short final record; any full-width row containing an explicit empty string remains a hard malformed-row error. Add the missing regression and require a fresh independent readiness PASS before scheduling.",
     "Stop the canonical v5 rerun and leave ec22205e, the wave-8 freeze, and epic execution blocked; no timing or evidence artifact is produced."
@@ -689,8 +691,8 @@
   "eb8825c8": 1,
   "7a816262": 2,
   "7a816262_note": "rework-2 dispatched 2026-08-18 for the premeasure-v1 grid mismatch under the owner's opt-in-orders-flag decision; MAX reached, any further failure escalates",
-  "ec22205e": 1,
-  "ec22205e_note": "The first cycle reached MAX after v4 research-review found three publication-evidence gaps. The owner's first option-A reset produced canonical v5 and reached MAX when failure-retention review exposed truncation before a parseable address. The owner's second option-A decision at 2026-08-29T13:08:56+03:00 reset the counter to 0; count 1 records the tail-aware source-only repair. Review then found the final classifier conflates missing columns with explicit empty fields, the third repeat of the same failure-retention root cause. MAX_SAME_FINDING_REPEATS requires escalation before another dispatch. Timing remains held.",
+  "ec22205e": 2,
+  "ec22205e_note": "The first cycle reached MAX after v4 research-review found three publication-evidence gaps. The owner's first option-A reset produced canonical v5 and reached MAX when failure-retention review exposed truncation before a parseable address. The owner's second option-A reset produced the tail-aware parser as count 1; its review found the None-versus-empty conflation, the third repeat of the same root cause. Owner option A at 2026-08-29T14:37:36+03:00 authorizes the exact correction as count 2. MAX is reached; any further readiness failure escalates. Timing remains held.",
   "032cc754": 1,
   "a39bb161": 2,
   "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates"
