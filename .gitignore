@@ -2,7 +2,13 @@
 # (e.g. .agents/cache-pool/target, crates/*/target); an anchored
 # `/target/` let 1.3 GB of gf2-core build output reach a commit.
 target/
+# Lockfiles for the standalone dev/ experiment crates and sub-crates, each of
+# which resolves its own dependency graph outside the workspace.
 Cargo.lock
+# The workspace root lockfile is tracked: the workspace ships 15 binaries, and
+# `claims-trace-to-artifacts` (AGENTS.md) requires a benchmark receipt to pin
+# the dependency versions its numbers were produced with.
+!/Cargo.lock
 
 # IDE and editor files
 .vscode/
@@ -98,6 +104,10 @@ benchmarks/expected/sparse_smoke_n16.bin
 # GF(2^32) matmul path.
 benchmarks/expected/gf2pow32_smoke_n16.bin
 .claude/scheduled_tasks.lock
+
+# rocprofv1 working directories, created per profiling invocation next to the
+# real outputs it is asked to write. Tool scratch, not measurement evidence.
+rpl_data_*/
 
 # GPU hard-fail diagnostic dumps (gf2-sim `42eac5cc`; runtime-generated per fatal GPU event)
 dev/benchmarks/gf2-sim/diagnostic-dumps/
