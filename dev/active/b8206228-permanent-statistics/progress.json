@@ -914,7 +914,13 @@
     "7a816262 | REQ-06 tamper-detection does not reach freeze.md, which is the sole record of REQ-04, REQ-05, REQ-07 and REQ-08 construction. checksums.sha256 covers manifest.json alone, and adding freeze.md to it raises IntegrityFault::OutsideRawSet in verify_dataset (provenance.rs:1096). Needs an owner decision before the campaign is treated as immutably frozen.",
     "7a816262 | Protocol obligation possibly unmet and outside REQ-01..08: protocol.md:3-6 requires a committed pre-draw execution receipt recording the manifest's repository-relative path, content SHA-256, and root-manifest identity. freeze.md:7,13,14 supplies all three bindings but never claims the role, and no artifact is named as that receipt. Resolve before the first campaign draw.",
     "Pre-existing, epic-wide: dev/simulation_results/permanent-zero-fraction/README.md:253-254 claims an execution receipt quotes the sidecar SHA-256, but driver.rs:206 emits blake3 over a fresh serde_json re-serialization, not SHA-256 over on-disk bytes. Two unrelated values with no way to tell which artifact is wrong.",
-    "7a816262 | research-review tier-2 F2 (advisory): the gpu_hip native-M projection rule was established after 359 processes had emitted dual rows; mitigated by the value-independent slot rule and deviation record. Standing rule for future cohorts: fix the selected grid slot before timing and retain a committed checksum inventory for every raw row."
+    "7a816262 | research-review tier-2 F2 (advisory): the gpu_hip native-M projection rule was established after 359 processes had emitted dual rows; mitigated by the value-independent slot rule and deviation record. Standing rule for future cohorts: fix the selected grid slot before timing and retain a committed checksum inventory for every raw row.",
+    {
+      "id": "env-rs-sibling-path-dep-uncovered",
+      "issue": "86185f88",
+      "severity": "low",
+      "summary": "permanent-sampling-feas env.rs provenance flags cover the crate dir (harness_dirty) and crates/ (deps_dirty) but not the sibling path-dep dev/research/permanent_wave_gpu (env.rs:98-102); a dirty wave-gpu tree would be invisible to the receipt preamble flags. Session-24 runner gates on it explicitly; code fix is a follow-up."
+    }
   ],
   "started_at": "2026-08-09T12:20:30Z",
   "rederived_at": "2026-08-29T18:43:06+03:00",
@@ -1029,9 +1035,10 @@
   },
   "session_24_state": {
     "recorded_at": "2026-08-30T01:25:00+03:00",
-    "hardware": "Owner confirmed RAM+disk upgrade complete; compute unblocked.",
-    "closed": "6dfb1b5e",
-    "in_flight": "86185f88 equivalence receipt run scheduled for the 02:00 exclusive window; binary sha256 9f7905ad61b2ba45b5f3d21304e57e9faa04a64449e75cddf19fcea1edecd76a built from 4e847a3f tree.",
-    "next": "After receipt: fill addendum, gates on 86185f88, then research-review + doc-review re-runs on 7a816262, lead six-tier review, close freeze; then wave 9 (3f664839 native Opus, 73317b2e Sol xhigh)."
+    "hardware": "Owner confirmed RAM+disk upgrade complete; compute unblocked. System clock was ~36m40s ahead (NTP inactive); owner synced it, lead verified offset -8 ms.",
+    "closed": "6dfb1b5e (cargo-ci + code-review 0 findings at 4e847a3f; lead six-tier PASS; closure commit 28b8da3b)",
+    "in_flight": "86185f88: harness extension merged at 4e847a3f (binary sha256 9f7905ad61b2ba45b5f3d21304e57e9faa04a64449e75cddf19fcea1edecd76a). Measurement armed as transient systemd user timer gf2-equivalence-s24.timer firing 2026-08-30T02:00:30+03:00, runner ~/.local/state/gf2-session24/run-equivalence.sh, results to RESULT.txt there and dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.{csv,log}. Session-independent; closure-scoped dirty gate.",
+    "next": "Morning: validate receipt (rows=124 mismatches=0 unexecuted=0), commit CSV+log, fill addendum placeholders and its runbook, doc-link and gate 86185f88, then research-review + doc-review on 7a816262, lead six-tier review, close freeze; then wave 9 (3f664839 native Opus, 73317b2e Sol xhigh).",
+    "handoff": "handoff-20.md"
   }
 }
