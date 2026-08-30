@@ -78,8 +78,9 @@ fixed $N_{q,n}$ valid, unique draws. There is no early-success, target-error,
 confidence-width, significance, or futility stop.
 
 The operational ceiling is twelve wall-clock hours per cell, including recovery.
-The envelope reserves 15% of that ceiling for checkpointing, compaction, and one
-failed-shard recovery, leaving $36\,720$ seconds of planned productive compute.
+The envelope reserves 15% of that ceiling for receipt persistence, compaction,
+and one failed-shard recovery, leaving $36\,720$ seconds of planned productive
+compute.
 Reaching twelve hours before $N_{q,n}$ is a mechanical halt, not a sample-size
 revision and not an invitation to pool a partial estimate as a campaign result.
 
@@ -297,7 +298,7 @@ shard; those timings remain outside dataset files. Permanent or determinant
 values, zero counts, zero fractions, intervals, or test outcomes never enter
 backend selection. A backend discovered to be faster after the freeze does not replace
 the manifest choice. A manifest-named backend that is absent or becomes unsafe
-halts the cell; the driver does not silently substitute another backend. This
+halts the cell; the coordinator does not silently substitute another backend. This
 campaign-specific rule preserves the frozen selection and does not alter safe
 fallbacks in the production libraries.
 
@@ -311,18 +312,22 @@ purpose tags, stream addresses, git revision, build and toolchain provenance,
 they bind the sampler that maps an address to matrices. A manifest missing any
 of them cannot freeze.
 
-The `permanent_campaign` invocation accepts `--workers N`, where $N$ is an
-integer of at least $1$ and defaults to $1$ when the flag is omitted. Its first
-output line records the effective configuration as `campaign q={field}
-workers={N}` before any per-shard timing lines, so the execution receipt names
-the parallelism used by the driver rather than relying on host probing.
+The `permanent_campaign` invocation requires the exact selector `--q FIELD
+--n ORDER` and accepts `--workers N`, where $N$ is an integer of at least $1$
+and defaults to $1$ when the flag is omitted. Its first output line records the
+effective configuration as `campaign q={field} n={order} workers={N}` before
+any per-shard timing lines, so the execution receipt names the configured
+parallelism rather than relying on host probing. The coordinator persists the
+required $(7,20)$-first gate and admits campaign-purpose work serially.
 
-This claim is deliberately limited: the argument vector records how the driver
-was invoked, while the source revision and dependency lock resolve the RNG
-implementation. Neither an unrecorded local default nor a prose command is
-treated as sampler identity. Bit-for-bit regeneration additionally requires the
-same manifest and stream address; backend-result reproduction requires the
-manifest-selected backend and its bound build/receipt provenance.
+This claim is deliberately limited: the argument vector records how the
+compiled interface was invoked, while the source revision and dependency lock
+resolve the RNG implementation. The source revision is provenance context, not
+an executable input or an API boundary. Neither an unrecorded local default nor
+a prose command is treated as sampler identity. Bit-for-bit regeneration
+additionally requires the same manifest and stream address; backend-result
+reproduction requires the manifest-selected backend and its bound build/receipt
+provenance.
 
 ## Shard validity, quarantine, retry, and halt rules
 

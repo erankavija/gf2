@@ -10,10 +10,10 @@ The campaign's controlling [scientific preregistration](protocol.md) is stored
 beside those datasets; it is not part of any dataset's raw or derived file set.
 
 A campaign id uses lowercase ASCII letters, digits, and interior hyphens.
-Dataset-scale writers must refuse an existing campaign-id directory, while a
-field-scale writer refuses every existing shard or summary file inside the
-selected campaign directory. Corrections, extensions, reruns, and schema
-migrations always receive a new campaign id; they never overwrite an existing
+Dataset-scale writers refuse an existing campaign-id directory. The campaign
+coordinator admits one manifested shard attempt at a time and refuses to
+replace durable evidence. Corrections, extensions, reruns, and schema
+transitions receive a distinct campaign id; they do not overwrite an existing
 dataset in place.
 
 The canonical typed schema and conformance reader are
@@ -29,19 +29,20 @@ mix versions.
 | Path relative to `<campaign-id>/` | Class | Exclusive writer | Purpose |
 | --- | --- | --- | --- |
 | `manifest.json` | raw data | finalization | Frozen campaign identity, grid, streams, backend policy, and mechanical provenance |
-| `shards/q<q>/n<nn>/shard-<index>.json` | raw data | execution of field $q$ | Counts for one independently regenerable shard |
-| `summaries/q<q>.json` | raw data | execution of field $q$ | One typed summary row for each completed or halted cell in the field arm |
+| `shards/q<q>/n<nn>/shard-<index>.json` | raw data | campaign coordinator | Counts for one independently regenerable shard |
+| `summaries/q<q>.json` | raw data | campaign coordinator | One typed summary row for each completed or halted cell in the field |
 | `summary.csv` | raw data | finalization | Deterministic pooling of all field-summary rows |
 | `checksums.sha256` | integrity metadata | finalization | SHA-256 entries for exactly the raw-data paths above; it does not cover itself |
 | `derived/` | derived artefacts | analysis tasks | Reports, figures, tables, and fit outputs |
 | `freeze.md` | frozen decision record | finalization | Human-auditable freeze decisions the strict manifest schema does not carry |
 
-Every required file has exactly one writer role. Field executions may write
-only their field-scoped shard and summary paths. They never write
-`manifest.json`, `summary.csv`, or `checksums.sha256`. Finalization is the only
-writer of those campaign-scoped paths and does not rewrite field-scoped paths.
-Consequently the three field arms may execute concurrently without two writers
-targeting one file.
+Every required file has exactly one writer role. The campaign coordinator holds
+the campaign execution lock across admission, sampling, durable raw emission,
+and receipt terminalization. It serializes campaign-purpose admission and
+writes only the admitted cell's shard path; it produces a field projection when
+every cell in that field is terminal. It never writes `manifest.json`,
+`summary.csv`, or `checksums.sha256`. Finalization is the only writer of those
+campaign-scoped paths and does not rewrite coordinator-owned paths.
 
 The integrity set is deliberately closed before analysis begins. It covers the
 manifest, shard records, field summaries, and pooled summary. Derived artefacts
@@ -187,7 +188,7 @@ the manifest, a field-summary or row field identity that differs from its path,
 an unmanifested shard path, a completed cell missing a planned shard, a field
 summary that differs from its executed shard subset, and a pooled summary that
 differs from the field summaries. The returned layout contains only executed
-shard paths for halted cells and preserves their field-writer ownership.
+shard paths for halted cells and preserves coordinator ownership.
 
 Cryptographic checksum generation and verification are a separate layer,
 described under [Integrity file](#integrity-file). Schema conformance
@@ -198,16 +199,17 @@ establishes the file shapes and cross-file count relationships; the presence of
 
 A dataset records the executable SHA-256, the linked source-closure revision and
 dirty state, and the repository-wide revision as run-start context.
-`gf2_sim::permanent_campaign::provenance::approve_emission` approves a write
-when the running executable digest matches `provenance.binary_sha256` in the
-committed frozen manifest. A missing executable digest, a manifest that differs
-from its committed content, or a root that is not exactly one campaign id below
-the dataset home refuses the emission.
+`gf2_sim::permanent_campaign::provenance::approve_emission` returns live writer
+admission when the running executable digest matches
+`provenance.binary_sha256` in the committed frozen manifest. A missing
+executable digest, a manifest that differs from its committed content, or a
+root that is not exactly one campaign id below the dataset home refuses the
+emission.
 
 The source closure is `crates/` plus `Cargo.lock`. Repository-wide edits and
-untracked paths outside that closure do not affect emission approval. The
-manifest remains frozen because it declares the identity under which the
-numbers are published.
+untracked paths outside that closure do not affect writer admission. The source
+revision is provenance context; it is not executable input or a library API
+boundary. The executable bytes and the committed manifest bind the writer.
 
 The guard accepts only one campaign's own directory as the root it is emitting
 into: exactly one campaign id below this home, inside the repository. Being
@@ -251,25 +253,11 @@ The `checksum-mismatch` fixture keeps a correct `manifest.json` checksum because
 `manifest_fault` short-circuits verification; a deliberately wrong entry would
 mask the three raw-file mismatches that fixture exercises.
 
-The root manifest has two distinct identities. A field checkpoint's
-`configuration.manifest_content_hash` — also rendered by `campaign_config_hash`
-as the `blake3:<digest>` and `manifest=<digest>` components — is the driver's
-execution identity: it parses `manifest.json` as a `CampaignManifest`, calls
-`serde_json::to_vec(&manifest)` on that typed value, and hashes those
-re-serialized bytes with BLAKE3. The `manifest.json` entry in
-`checksums.sha256` is the on-disk identity: SHA-256 over the exact bytes stored
-in that file. These values are not expected to match because their algorithms
-and byte sources differ.
-
-An auditor follows two comparisons from a field checkpoint to the frozen
-manifest: first compare its recorded BLAKE3 value with
-`blake3::hash(serde_json::to_vec(&manifest))`, where `manifest` is the typed
-`CampaignManifest` parsed from the frozen `manifest.json`; then compare the
-exact `manifest.json` bytes with the sidecar's `manifest.json` SHA-256 entry
-(for example, with `sha256sum -c checksums.sha256`). The first comparison binds
-the checkpoint to the driver's manifest identity, and the second binds that
-typed manifest to the frozen on-disk bytes, so together they bind the
-checkpoint to the frozen manifest.
+The coordinator receipt stores the manifest `ArtifactIdentity`: the normalized
+repository-relative path and SHA-256 of the exact committed `manifest.json`
+bytes. Receipt validation rechecks that identity before every admission and
+before every durable transition. The integrity file independently records the
+same on-disk manifest bytes as one member of its closed raw-data set.
 
 ## Verifying a published dataset
 
@@ -299,17 +287,18 @@ $ cargo run -p gf2-sim --release --bin permanent_dataset -- <subcommand> [campai
 | Subcommand | Does |
 | --- | --- |
 | `revision` | Prints the repository-wide revision observed at command start as provenance context |
-| `emission-check <dir>` | Without an emitter path, verifies everything except writer identity, reports the manifest's pinned emitter digest, and states that writer identity is asserted only by the writer's own guard at emission time |
-| `emission-check <dir> <emitter-path>` | Hashes the named emitter and runs the full emission guard, including writer identity, printing the approved executable digest or the refusal |
+| `emission-check <dir>` | Inspects the frozen manifest and reports its pinned executable digest; inspection never authorizes a writer |
+| `emission-check <dir> <emitter-path>` | Inspects the named executable against the frozen identity and reports the matching digest or the refusal; only the emitting process obtains writer admission |
 | `checksums <dir>` | Renders the integrity file for a finished dataset on standard output; it writes nothing, so redirect it into `checksums.sha256` |
 | `conform <dir>` | Validates the complete schema and cross-document shard and summary aggregates without modifying the dataset |
 | `verify <dir>` | Re-checks a dataset against its integrity file and its recorded source |
 
-The `permanent_campaign` binary executes one field arm:
+The `permanent_campaign` binary is a thin compiled exact-cell interface to the
+reusable `gf2-sim` campaign coordinator:
 
 ```console
 $ cargo run -p gf2-sim --release --bin permanent_campaign -- \
-    --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N]
+    --manifest PATH --output CAMPAIGN-DIR --q FIELD --n ORDER [--workers N]
 ```
 
 An accelerator-backed field also supplies
@@ -321,34 +310,30 @@ binds and recomputes every value from committed same-cell measurement evidence;
 the fail-closed
 [validator](../../benchmarks/permanent_campaign/accelerator_launch_costs_v1.py)
 checks the bound inputs, arithmetic, rounding, and exact receipt/table
-agreement. The binary rejects a missing, duplicate, malformed, nonpositive,
-processor-backed, or unmanifested row before emission approval, drawing, or
-output. These costs are launch-sizing evidence used to bound accelerator batch
-sizes. They are neither backend-selection evidence nor scientific-result
-evidence.
+agreement. The coordinator resolves the table under its execution lock, binds
+the exact table bytes in the receipt, and rejects a missing, duplicate,
+malformed, nonpositive, processor-backed, or unmanifested row before writer
+admission, drawing, or output. These costs are launch-sizing evidence used to
+bound accelerator batch sizes. They are neither backend-selection evidence nor
+scientific-result evidence.
 
-`--workers N` sets the positive worker count for the field arm and defaults to
-`1` when omitted. One invocation executes exactly one field arm and writes only
-that field's shard files and field summary, so field arms can run concurrently.
+`--workers N` sets the positive worker count for the exact cell and defaults to
+`1` when omitted. Each invocation selects exactly one manifested `(q,n)` cell.
+The coordinator persists the required `(7,20)`-first gate, serializes every
+campaign-purpose admission, and holds one execution lock through receipt
+revalidation, writer admission, sampling, raw emission, and terminalization.
 The first output line records the effective configuration as
-`campaign q={field} workers={N}` before the per-shard timing lines. The writer
-passes `approve_emission` before it runs the field, establishing source
-identity before any dataset bytes are written. An interrupted field arm
-resumes from its field-specific
-`<campaign-directory>/campaign.q{field}.checkpoint.json`; checkpointed completed
-shards are never re-evaluated or rewritten, and a shard emitted just before a
-checkpoint update is adopted after a deterministic byte comparison.
-A resume whose configuration differs is refused and names the differing
-component. An evaluation failure is quarantined: its stable identity (`q`, `n`,
-`shard_id`) and mechanical `error` diagnostic remain visible in the field
-summary's `quarantined` diagnostic index while the remaining work continues.
-The committed campaign execution receipt named by the dataset protocol is the
-authoritative quarantine evidence, preserving bytes, logs, observed counts,
-failure reason, and attempt numbers; the quarantined shard remains excluded
-from the raw dataset and pooling. A completed field-arm rerun
-resumes from the checkpoint's completed work set, re-evaluates nothing, rewrites
-no shard or summary files, and exits successfully; the first emission is
-preserved because completed shards are never rewritten.
+`campaign q={field} n={order} workers={N}` before the per-shard timing lines.
+The emitting process verifies its live executable bytes and the committed
+manifest before it enters the transaction. An interrupted authorized attempt
+has one same-address recovery: a durable raw shard is adopted after deterministic
+byte validation, while missing or invalid evidence consumes the fixed mechanical
+attempt and remains recorded in the receipt. An evaluation failure is
+quarantined: its stable identity (`q`, `n`, `shard_id`) and mechanical `error`
+diagnostic remain visible in the coordinator's receipt while the shard remains
+excluded from the raw dataset and pooling. The coordinator publishes each field
+summary and field interpretation sidecar from terminal receipt evidence; callers
+do not supply a parallel projection model.
 Per-phase timings go to standard output and never into dataset files. Each
 shard timing line reports `draw_s`, `pack_s`, `evaluate_s`,
 `determinant_s`, and `count_s`; `determinant_s` is the measured companion
