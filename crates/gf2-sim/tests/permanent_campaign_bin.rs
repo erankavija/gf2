@@ -109,6 +109,19 @@ fn launch_cost_manifest() -> CampaignManifest {
     campaign
 }
 
+fn exact_selection_manifest() -> CampaignManifest {
+    let mut campaign = manifest();
+    let first = &mut campaign.cells[0];
+    first.q = 7;
+    first.n = 4;
+    first.shards[0].stream_index = 10;
+    let mut target = first.clone();
+    target.n = 20;
+    target.shards[0].stream_index = 11;
+    campaign.cells.push(target);
+    campaign
+}
+
 fn temp_path(label: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
         "gf2-permanent-campaign-bin-{label}-{}-{}",
@@ -508,4 +521,84 @@ fn production_table_is_accepted_by_the_production_cli_and_manifest() {
         before,
         "production-table preflight must preserve zero-draw dataset bytes"
     );
+}
+
+#[test]
+fn exact_selector_dry_run_schedules_only_the_requested_cell() {
+    let parent = temp_path("exact-selector");
+    let manifest_path = parent.join("manifest");
+    fs::create_dir_all(&manifest_path).unwrap();
+    fs::write(
+        manifest_path.join("manifest.json"),
+        serde_json::to_vec_pretty(&exact_selection_manifest()).unwrap(),
+    )
+    .unwrap();
+    let output_path = parent.join("campaign-bin-test");
+
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--dry-run-schedule",
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "7",
+            "--n",
+            "20",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        result.status.success(),
+        "stderr:\n{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    assert_eq!(String::from_utf8(result.stdout).unwrap(), "schedule q=7 n=20 shards=1\n");
+    assert!(
+        !output_path.exists(),
+        "dry scheduling must not open a checkpoint, draw, or emit output"
+    );
+    fs::remove_dir_all(parent).unwrap();
+}
+
+#[test]
+fn invalid_exact_selector_fails_before_checkpoint_or_output_creation() {
+    let parent = temp_path("invalid-exact-selector");
+    let manifest_path = parent.join("manifest");
+    fs::create_dir_all(&manifest_path).unwrap();
+    fs::write(
+        manifest_path.join("manifest.json"),
+        serde_json::to_vec_pretty(&exact_selection_manifest()).unwrap(),
+    )
+    .unwrap();
+
+    for arguments in [
+        vec!["--q", "7", "--n", "19"],
+        vec!["--q", "5", "--n", "20"],
+        vec!["--n", "20"],
+    ] {
+        let output_path = parent.join(format!("output-{}", arguments.join("-")));
+        let mut command = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"));
+        command.args([
+            "--dry-run-schedule",
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+        ]);
+        let result = command.args(arguments).output().unwrap();
+        let stderr = String::from_utf8_lossy(&result.stderr);
+        assert!(!result.status.success(), "invalid selection unexpectedly passed");
+        assert!(
+            stderr.contains("exact cell selector"),
+            "selector failure must be explicit; stderr:\n{stderr}"
+        );
+        assert!(
+            !output_path.exists(),
+            "invalid selection must fail before checkpoint or output creation"
+        );
+    }
+    fs::remove_dir_all(parent).unwrap();
 }
