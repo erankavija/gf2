@@ -1,0 +1,157 @@
+# git_sha: db0c67e4e9561de50507eeab3c81219946d50182
+# git_worktree_dirty: true
+# harness_tree: c72fcf9c2ca54023fe6f2c11760d736e4dda8b28
+# harness_dirty: false
+# deps_tree: 4de075f6b54e0d5f6ddd69bff7c40b5ce1cc31ee
+# deps_dirty: false
+# wave_gpu_tree: 8355e34ecc179439fb9c4c3ec10408f5262b8fe7
+# wave_gpu_dirty: false
+# binary_sha256: 3650d6cc1f1e1413c6ebbc0d1db7b35849fb4a990fd848b052c6c94c08f359f0
+# note: BINDING provenance: harness_tree, deps_tree, wave_gpu_tree, and binary_sha256; harness_dirty, deps_dirty, and wave_gpu_dirty qualify their respective committed trees. INFORMATIONAL only: git_sha and git_worktree_dirty. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
+# rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
+# cargo: cargo 1.97.0 (c980f4866 2026-06-30)
+# cpu: AMD Ryzen 9 5900X 12-Core Processor
+# logical_cpus: 24
+# rayon_threads: 24
+# avx2: true, avx512f: false
+# cpu_governor: powersave
+# gpu: card0,AMD Radeon RX 6950 XT,0x73a5,Advanced Micro Devices Inc. [AMD/ATI],D4124100,0x0e3a,0xc0,1,13731,gfx1030
+# rocm: 7.2.4
+# hip_feature: true
+# kernel: 7.1.11-arch1-1
+# timestamp_utc: 2026-08-30T00:22:05Z
+# invocation: dev/research/permanent-sampling-feas/target/release/permanent_sampling_feas equivalence --out dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv
+# check: per-matrix permanent values against a reference kernel, named per row in the reference column. The scalar single-word kernel is the reference wherever it exists; at q=7, n>16 it does not (permanent_bipedal7 asserts n <= Packed7::LANES = 16), so the generic permanent_ryser is the reference there
+# selection_authority: dev/benchmarks/permanent_campaign/backend-selection-v1.md; sha256: fe5d37ba7c216a753bf3e546614a222c3c20e563f7f4e1d3c0341af9e1c464fe; the receipt is embedded in this executable and supplies the exact cell/arm table; no premeasurement rate is re-ranked
+# scope: 63 authoritative campaign cells and 124 nominated configurations in this invocation; each row is one nominated arm
+# matrices_per_cell: q=3,n=4:512; q=3,n=5:512; q=3,n=6:512; q=3,n=7:512; q=3,n=8:512; q=3,n=9:512; q=3,n=10:512; q=3,n=11:512; q=3,n=12:512; q=3,n=13:512; q=3,n=14:512; q=3,n=15:512; q=3,n=16:2; q=3,n=17:2; q=3,n=18:2; q=3,n=19:2; q=3,n=20:2; q=3,n=21:2; q=3,n=22:2; q=3,n=23:2; q=3,n=24:2; q=3,n=25:2; q=3,n=26:2; q=3,n=27:2; q=3,n=28:2; q=5,n=4:512; q=5,n=5:512; q=5,n=6:512; q=5,n=7:512; q=5,n=8:512; q=5,n=9:512; q=5,n=10:512; q=5,n=11:512; q=5,n=12:512; q=5,n=13:2; q=5,n=14:2; q=5,n=15:2; q=5,n=16:2; q=5,n=17:2; q=5,n=18:2; q=5,n=19:2; q=5,n=20:2; q=5,n=21:2; q=5,n=22:2; q=5,n=23:2; q=5,n=24:32; q=7,n=4:512; q=7,n=5:512; q=7,n=6:512; q=7,n=7:512; q=7,n=8:512; q=7,n=9:512; q=7,n=10:512; q=7,n=11:512; q=7,n=12:512; q=7,n=13:2; q=7,n=14:2; q=7,n=15:2; q=7,n=16:2; q=7,n=17:2; q=7,n=18:2; q=7,n=19:2; q=7,n=20:2
+# rng: rand_chacha::ChaCha20Rng (ChaCha20); version: rand_chacha 0.9.0; seed_root: 0xb488f02c00000001; stream identity per cell: (seed_root, q, n, purpose=equivalence, index=0)
+# sample_counts: start at the committed per-order ceiling, then halve, flooring at 2, until the sum of reference-plus-nominated committed probe costs fits the 240-second cell budget. probe_costs: dev/benchmarks/permanent_campaign/probe-costs-de5f7414.csv; sha256: 525100d986b8c2632b7c378c9059da8709f962c0d93d7b560b3393200debc3f0; the record is embedded in this executable and supplies every probe cost. A missing exact-order cost uses the nearest finite observation at the same or a higher order. If no such observation exists, the cell takes the two-matrix floor rather than extrapolating from a lower order. --matrices only lowers these counts
+# missing_probe_cost_floor_cells: q=3,n=16:[gpu_hip]; q=3,n=17:[gpu_hip]; q=3,n=18:[gpu_hip]; q=3,n=19:[gpu_hip]; q=3,n=20:[gpu_hip]; q=3,n=21:[gpu_hip]; q=3,n=22:[gpu_hip]; q=3,n=23:[gpu_hip]; q=3,n=24:[gpu_hip]; q=3,n=25:[gpu_hip]; q=3,n=26:[gpu_hip]; q=3,n=27:[gpu_hip]; q=3,n=28:[gpu_hip]; q=5,n=13:[gpu_hip]; q=5,n=14:[gpu_hip]; q=5,n=15:[gpu_hip]; q=5,n=16:[gpu_hip]; q=5,n=17:[gpu_hip]; q=5,n=18:[gpu_hip]; q=5,n=19:[gpu_hip]; q=5,n=20:[gpu_hip]; q=5,n=21:[gpu_hip]; q=5,n=22:[gpu_hip]; q=5,n=23:[gpu_hip]; q=7,n=13:[gpu_hip]; q=7,n=14:[gpu_hip]; q=7,n=15:[gpu_hip]; q=7,n=16:[gpu_hip]; q=7,n=17:[gpu_hip]; q=7,n=18:[gpu_hip]; q=7,n=19:[gpu_hip]; q=7,n=20:[gpu_hip]
+# draw_domain: equivalence uses MeasurementPurpose::Equivalence only (purpose tag 1); it does not use GridTimed or any campaign sampling purpose
+# invocation_shape: one invocation walks the selected cells in q,n order and runs CPU and GPU nominations together; --q and --n narrow cells, but there is no backend-class split or CSV append mode
+q,n,selection_arm,manifest_backend,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,seed_root,stream_purpose,stream_index,status
+3,4,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,197,197,0xb488f02c00000001,equivalence,0,identical
+3,4,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,197,197,0xb488f02c00000001,equivalence,0,identical
+3,5,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,188,188,0xb488f02c00000001,equivalence,0,identical
+3,5,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,188,188,0xb488f02c00000001,equivalence,0,identical
+3,6,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,198,198,0xb488f02c00000001,equivalence,0,identical
+3,6,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,198,198,0xb488f02c00000001,equivalence,0,identical
+3,7,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,168,168,0xb488f02c00000001,equivalence,0,identical
+3,7,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,168,168,0xb488f02c00000001,equivalence,0,identical
+3,8,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,169,169,0xb488f02c00000001,equivalence,0,identical
+3,8,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,169,169,0xb488f02c00000001,equivalence,0,identical
+3,9,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,176,176,0xb488f02c00000001,equivalence,0,identical
+3,9,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,176,176,0xb488f02c00000001,equivalence,0,identical
+3,10,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,170,170,0xb488f02c00000001,equivalence,0,identical
+3,10,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,170,170,0xb488f02c00000001,equivalence,0,identical
+3,11,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,182,182,0xb488f02c00000001,equivalence,0,identical
+3,11,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,182,182,0xb488f02c00000001,equivalence,0,identical
+3,12,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,165,165,0xb488f02c00000001,equivalence,0,identical
+3,12,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,165,165,0xb488f02c00000001,equivalence,0,identical
+3,13,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,181,181,0xb488f02c00000001,equivalence,0,identical
+3,13,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,181,181,0xb488f02c00000001,equivalence,0,identical
+3,14,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,162,162,0xb488f02c00000001,equivalence,0,identical
+3,14,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,162,162,0xb488f02c00000001,equivalence,0,identical
+3,15,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,176,176,0xb488f02c00000001,equivalence,0,identical
+3,15,B,generic_ryser,cpu_scalar,cpu_ryser_generic,512,0,176,176,0xb488f02c00000001,equivalence,0,identical
+3,16,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,16,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,17,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,17,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,18,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,18,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,19,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,19,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,20,A,accelerator,cpu_scalar,gpu_hip,2,0,2,2,0xb488f02c00000001,equivalence,0,identical
+3,20,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,2,2,0xb488f02c00000001,equivalence,0,identical
+3,21,A,accelerator,cpu_scalar,gpu_hip,2,0,2,2,0xb488f02c00000001,equivalence,0,identical
+3,21,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,2,2,0xb488f02c00000001,equivalence,0,identical
+3,22,A,accelerator,cpu_scalar,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,22,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,23,A,accelerator,cpu_scalar,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,23,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,24,A,accelerator,cpu_scalar,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,24,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,25,A,accelerator,cpu_scalar,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,25,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,26,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,26,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,27,A,accelerator,cpu_scalar,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,27,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+3,28,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+3,28,B,intra_matrix_parallel,cpu_scalar,cpu_rayon_intra_matrix,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,4,A,accelerator,cpu_scalar,gpu_hip,512,0,109,109,0xb488f02c00000001,equivalence,0,identical
+5,4,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,109,109,0xb488f02c00000001,equivalence,0,identical
+5,5,A,accelerator,cpu_scalar,gpu_hip,512,0,113,113,0xb488f02c00000001,equivalence,0,identical
+5,5,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,113,113,0xb488f02c00000001,equivalence,0,identical
+5,6,A,accelerator,cpu_scalar,gpu_hip,512,0,107,107,0xb488f02c00000001,equivalence,0,identical
+5,6,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,107,107,0xb488f02c00000001,equivalence,0,identical
+5,7,A,accelerator,cpu_scalar,gpu_hip,512,0,103,103,0xb488f02c00000001,equivalence,0,identical
+5,7,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,103,103,0xb488f02c00000001,equivalence,0,identical
+5,8,A,accelerator,cpu_scalar,gpu_hip,512,0,105,105,0xb488f02c00000001,equivalence,0,identical
+5,8,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,105,105,0xb488f02c00000001,equivalence,0,identical
+5,9,A,accelerator,cpu_scalar,gpu_hip,512,0,96,96,0xb488f02c00000001,equivalence,0,identical
+5,9,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,96,96,0xb488f02c00000001,equivalence,0,identical
+5,10,A,accelerator,cpu_scalar,gpu_hip,512,0,96,96,0xb488f02c00000001,equivalence,0,identical
+5,10,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,96,96,0xb488f02c00000001,equivalence,0,identical
+5,11,A,accelerator,cpu_scalar,gpu_hip,512,0,102,102,0xb488f02c00000001,equivalence,0,identical
+5,11,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,102,102,0xb488f02c00000001,equivalence,0,identical
+5,12,A,accelerator,cpu_scalar,gpu_hip,512,0,95,95,0xb488f02c00000001,equivalence,0,identical
+5,12,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,95,95,0xb488f02c00000001,equivalence,0,identical
+5,13,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,13,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,14,A,accelerator,cpu_scalar,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+5,14,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+5,15,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,15,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,16,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,16,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,17,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,17,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,18,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,18,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,19,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,19,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,20,A,accelerator,cpu_scalar,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+5,20,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+5,21,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,21,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,22,A,accelerator,cpu_scalar,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+5,22,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+5,23,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,23,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+5,24,A,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,32,0,6,6,0xb488f02c00000001,equivalence,0,identical
+7,4,A,accelerator,cpu_scalar,gpu_hip,512,0,70,70,0xb488f02c00000001,equivalence,0,identical
+7,4,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,70,70,0xb488f02c00000001,equivalence,0,identical
+7,5,A,accelerator,cpu_scalar,gpu_hip,512,0,83,83,0xb488f02c00000001,equivalence,0,identical
+7,5,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,83,83,0xb488f02c00000001,equivalence,0,identical
+7,6,A,accelerator,cpu_scalar,gpu_hip,512,0,67,67,0xb488f02c00000001,equivalence,0,identical
+7,6,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,67,67,0xb488f02c00000001,equivalence,0,identical
+7,7,A,accelerator,cpu_scalar,gpu_hip,512,0,84,84,0xb488f02c00000001,equivalence,0,identical
+7,7,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,84,84,0xb488f02c00000001,equivalence,0,identical
+7,8,A,accelerator,cpu_scalar,gpu_hip,512,0,64,64,0xb488f02c00000001,equivalence,0,identical
+7,8,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,64,64,0xb488f02c00000001,equivalence,0,identical
+7,9,A,accelerator,cpu_scalar,gpu_hip,512,0,76,76,0xb488f02c00000001,equivalence,0,identical
+7,9,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,76,76,0xb488f02c00000001,equivalence,0,identical
+7,10,A,accelerator,cpu_scalar,gpu_hip,512,0,68,68,0xb488f02c00000001,equivalence,0,identical
+7,10,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,68,68,0xb488f02c00000001,equivalence,0,identical
+7,11,A,accelerator,cpu_scalar,gpu_hip,512,0,68,68,0xb488f02c00000001,equivalence,0,identical
+7,11,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,68,68,0xb488f02c00000001,equivalence,0,identical
+7,12,A,accelerator,cpu_scalar,gpu_hip,512,0,65,65,0xb488f02c00000001,equivalence,0,identical
+7,12,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,512,0,65,65,0xb488f02c00000001,equivalence,0,identical
+7,13,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,13,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,14,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,14,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,15,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,15,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,16,A,accelerator,cpu_scalar,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,16,B,batch_parallel,cpu_scalar,cpu_rayon_batch_scalar,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,17,A,accelerator,cpu_ryser_generic,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,17,B,generic_ryser,cpu_ryser_generic,cpu_ryser_generic,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,18,A,accelerator,cpu_ryser_generic,gpu_hip,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+7,18,B,generic_ryser,cpu_ryser_generic,cpu_ryser_generic,2,0,1,1,0xb488f02c00000001,equivalence,0,identical
+7,19,A,accelerator,cpu_ryser_generic,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,19,B,generic_ryser,cpu_ryser_generic,cpu_ryser_generic,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
+7,20,A,accelerator,cpu_ryser_generic,gpu_hip,2,0,0,0,0xb488f02c00000001,equivalence,0,identical
