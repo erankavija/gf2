@@ -1,5 +1,4 @@
-//! Compile-fail guards for the typestate preset builders: DVB-T2
-//! (criterion-2 of `81d05bab`) and 5G NR (criterion-2 of `e478daa8`).
+//! Compile-fail guards for intentionally absent or state-restricted APIs.
 //!
 //! Verifies that the typestate markers make an out-of-order builder call a
 //! genuine **compile** error: `.decoder()` cannot be invoked before `.modcod()`
