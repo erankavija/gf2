@@ -173,14 +173,14 @@
      "short_id": "2c1ae813",
      "title": "Freeze accelerator launch-cost table for campaign cells",
      "classification": "implementation",
-     "status": "in progress: live-DAG issue omitted from the older saved frontier; dispatched in conflict-safe subwave 9a alongside the disjoint rare-event design. It lands before the coordinator and campaign arms."
+     "status": "done: exact accelerator launch-cost table, validator, production preflight, documentation, and all configured gates passed; issue completed at 49702c4a."
     },
     {
      "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
      "short_id": "3f664839",
      "title": "Preregistered compressed-state rare-event design",
      "classification": "design",
-     "status": "rework-1 in progress: doc-review and research-review passed at 49702c4a, but research review advised explicit versioned schemas, checksums, and immutable dataset identity for trajectory checkpoints and final cross-check receipts. Focused high-tier preregistration repair is limited to that advisory."
+     "status": "rework-2 in progress: artifact schemas, checksums, and immutable identities closed prior F1 and doc-review passed at a3e5375d; research-review F2 requires exact invocation and execution hardware to be versioned, checksum-bound, and transitively linked into final stochastic receipts. Focused high-tier repair changes provenance only."
     },
     {
      "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
@@ -782,7 +782,7 @@
   "032cc754": 1,
   "a39bb161": 2,
   "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates",
-  "3f664839": 1
+  "3f664839": 2
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
