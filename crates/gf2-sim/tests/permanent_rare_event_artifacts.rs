@@ -2689,6 +2689,124 @@ fn rare_event_terminal_requires_published_checkpoints() {
     assert!(!dataset.join("blocks/target/00/0001").exists());
 }
 
+fn runner_configuration(scientific: ScientificIdentityV1) -> RareEventConfigurationV1 {
+    let mut behavior = behavior();
+    behavior.executable_sha256 = sha256_hex(
+        &fs::read(env!("CARGO_BIN_EXE_permanent_rare_event")).expect("runner binary is built"),
+    );
+    behavior.closure.environment_input_names =
+        gf2_sim::permanent_rare_event::runner::ENVIRONMENT_INPUT_NAMES
+            .iter()
+            .map(|name| (*name).to_owned())
+            .collect();
+    behavior.estimator_behavior_sha256 = sha256_hex(&canonical_bytes(&behavior.closure).unwrap());
+    RareEventConfigurationV1 {
+        configuration_schema: CONFIGURATION_SCHEMA_V1.into(),
+        artifact_root: "dev/simulation_results/permanent-rare-event".into(),
+        design_identity: design(),
+        scientific_identity: scientific,
+        behavior,
+    }
+}
+
+fn write_runner_configuration(
+    root: &Path,
+    configuration: &RareEventConfigurationV1,
+) -> (String, RareEventDatasetIdentityV1) {
+    let relative = "dev/simulation_results/permanent-rare-event/configuration.json";
+    let path = root.join(relative);
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    fs::write(&path, canonical_bytes(configuration).unwrap()).unwrap();
+    let identity =
+        gf2_sim::permanent_rare_event::runner::dataset_identity(configuration, relative).unwrap();
+    (relative.to_owned(), identity)
+}
+
+fn invoke_runner(root: &Path, arguments: &[&str], budget: Option<&str>) -> std::process::Output {
+    let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_permanent_rare_event"));
+    command
+        .current_dir(root)
+        .env("RAYON_NUM_THREADS", "2")
+        .env_remove("GF2_RARE_EVENT_BLOCK_BUDGET")
+        .args(arguments);
+    if let Some(budget) = budget {
+        command.env("GF2_RARE_EVENT_BLOCK_BUDGET", budget);
+    }
+    command.output().expect("the runner binary runs")
+}
+
+/// The production runner is a one-argument delegate: it decodes the frozen
+/// configuration, hands the whole run to the library, and maps the status.
+#[test]
+fn rare_event_runner_delegates_one_frozen_configuration() {
+    let root = artifact_tempdir("rare-event-runner-");
+    let configuration = runner_configuration(ScientificIdentityV1::coverage());
+    let (relative, identity) = write_runner_configuration(root.path(), &configuration);
+    let dataset = root
+        .path()
+        .join("dev/simulation_results/permanent-rare-event")
+        .join(dataset_id(&identity).unwrap());
+
+    // One bounded run publishes exactly its budget and reports work remaining.
+    let first = invoke_runner(root.path(), &[&relative], Some("1"));
+    assert_eq!(
+        first.status.code(),
+        Some(10),
+        "{}",
+        String::from_utf8_lossy(&first.stderr)
+    );
+    assert!(dataset.join("attempts/000000000000/start").is_dir());
+    assert!(dataset.join("attempts/000000000000/terminal").is_dir());
+    assert!(dataset.join("blocks/coverage/q3/b000/r00/0000").is_dir());
+    let published = reconstruct_published_checkpoints(&dataset, &identity).unwrap();
+    assert_eq!(published.len(), 1);
+    assert_eq!(
+        published[0].checkpoint_ref().block_address,
+        "coverage/q3/b000/r00/0000"
+    );
+
+    // The next bounded run resumes from the reconstructed published prefix.
+    let second = invoke_runner(root.path(), &[&relative], Some("1"));
+    assert_eq!(
+        second.status.code(),
+        Some(10),
+        "{}",
+        String::from_utf8_lossy(&second.stderr)
+    );
+    let published = reconstruct_published_checkpoints(&dataset, &identity).unwrap();
+    assert_eq!(published.len(), 2);
+    assert_eq!(
+        published[1].checkpoint_ref().block_address,
+        "coverage/q3/b000/r01/0000"
+    );
+    let attempts = reconstruct_attempt_chain(&dataset, &identity).unwrap();
+    assert_eq!(attempts.completed_phases().len(), 4);
+    assert!(attempts.open_start().is_none());
+    let AttemptPhaseV1::Start {
+        resume_checkpoint_refs,
+        ..
+    } = &attempts.completed_phases()[2].payload().phase
+    else {
+        unreachable!()
+    };
+    assert_eq!(resume_checkpoint_refs.len(), 1);
+
+    // The argument vector is exactly one configuration path.
+    assert_eq!(invoke_runner(root.path(), &[], None).status.code(), Some(2));
+    assert_eq!(
+        invoke_runner(root.path(), &[&relative, &relative], None)
+            .status
+            .code(),
+        Some(2)
+    );
+    assert_eq!(
+        invoke_runner(root.path(), &["dev/absent.json"], None)
+            .status
+            .code(),
+        Some(1)
+    );
+}
+
 /// The reducers and the validators are two halves of one contract: a produced
 /// payload passes the independent revalidation the final receipt applies.
 #[test]
