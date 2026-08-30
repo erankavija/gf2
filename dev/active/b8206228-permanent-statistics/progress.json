@@ -1,7 +1,7 @@
 {
  "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
  "epic_short_id": "b8206228",
- "current_wave": 9,
+ "current_wave": 10,
  "waves": [
   {
    "wave_number": 1,
@@ -187,7 +187,7 @@
      "short_id": "73317b2e",
      "title": "Standing acceptance tests for campaign cells",
      "classification": "implementation",
-     "status": "delivery-ready through fd53b156: rework-2 closes all REQ-01 through REQ-14 findings, keeps coordinator-owned canonical projections, freezes the exact (7,20) emitter and coupled evidence identities without changing the scientific cell payload, and aligns canonical integration fixtures. Independent code review and refreeze audit passed; the full repository cargo-ci contract passed on the clean issue branch. JIT gate recording, merge, and closure remain; no campaign draw ran."
+     "status": "done: merged at 35da7951 with coordinator-owned canonical projections, exact (7,20) selection, exact interpretation-source identities, and a scientific-payload-preserving emitter refreeze. Independent review and refreeze audit passed; registered cargo-ci and code-review passed; issue closed without a campaign draw."
     }
    ]
   },
