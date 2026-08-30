@@ -1,32 +1,59 @@
-//! Exact exhaustive anchors for the smallest permanent-zero cells.
+//! Exact probabilities and exhaustive anchors for permanent-zero events.
 //!
-//! This module deliberately supports only the campaign anchor domain: orders
-//! three, five, and seven at the dimensions whose whole matrix spaces are
-//! small enough to enumerate.  It is not a general-purpose enumeration
-//! framework.  The returned counts, rather than floating-point estimates, are
-//! the source of truth for an anchor probability.
+//! [`ExactProbability`] is the permanent module's single arbitrary-precision
+//! count-over-total representation. The exhaustive enumerator deliberately
+//! supports only the small campaign-anchor domain; compressed propagation uses
+//! the same probability type at dimensions where matrix enumeration is
+//! impossible.
 
-/// An exact permanent-zero probability represented by its integer count.
+use num_bigint::BigUint;
+
+/// An exact event probability represented by arbitrary-precision counts.
 ///
-/// `zero_count / matrix_count` is the rational probability that the permanent
-/// of a uniformly selected matrix is zero.  The stored values are deliberately
-/// not reduced so callers retain the enumerated matrix count.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// `zero_count / matrix_count` is the rational probability of the relevant
+/// permanent-zero or permanental-rank-deficiency event. The stored values are
+/// deliberately not reduced so callers retain the complete raw outcome count.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactProbability {
-    zero_count: u64,
-    matrix_count: u64,
+    zero_count: BigUint,
+    matrix_count: BigUint,
 }
 
 impl ExactProbability {
-    /// Builds an exact probability from its zero count and total matrix count.
+    /// Builds an exact probability from machine-sized counts.
     ///
     /// # Panics
     ///
     /// Panics when `matrix_count` is zero or `zero_count` exceeds it.
+    ///
     #[must_use]
-    pub const fn from_counts(zero_count: u64, matrix_count: u64) -> Self {
+    pub fn from_counts(zero_count: u64, matrix_count: u64) -> Self {
+        Self::from_big_counts(zero_count.into(), matrix_count.into())
+    }
+
+    /// Builds an exact probability from arbitrary-precision counts.
+    ///
+    /// The counts remain unreduced so the denominator continues to identify
+    /// the complete enumerated or propagated sample space.
+    ///
+    /// # Panics
+    ///
+    /// Panics when `matrix_count` is zero or `zero_count` exceeds it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::permanent::ExactProbability;
+    /// use num_bigint::BigUint;
+    ///
+    /// let scale = BigUint::from(1_u8) << 200;
+    /// let probability = ExactProbability::from_big_counts(&scale * 2_u8, &scale * 6_u8);
+    /// assert_eq!(probability.reduced_decimal(), ("1".into(), "3".into()));
+    /// ```
+    #[must_use]
+    pub fn from_big_counts(zero_count: BigUint, matrix_count: BigUint) -> Self {
         assert!(
-            matrix_count != 0,
+            matrix_count != BigUint::from(0_u8),
             "an exact probability needs a nonzero total"
         );
         assert!(zero_count <= matrix_count, "zero count cannot exceed total");
@@ -36,23 +63,34 @@ impl ExactProbability {
         }
     }
 
-    /// Returns the number of matrices with zero permanent.
+    /// Returns the raw number of outcomes satisfying the exact event.
     #[must_use]
-    pub const fn zero_count(self) -> u64 {
-        self.zero_count
+    pub fn zero_count(&self) -> &BigUint {
+        &self.zero_count
     }
 
-    /// Returns the number of matrices enumerated.
+    /// Returns the raw number of outcomes in the unconditional sample space.
     #[must_use]
-    pub const fn matrix_count(self) -> u64 {
-        self.matrix_count
+    pub fn matrix_count(&self) -> &BigUint {
+        &self.matrix_count
     }
 
     /// Returns the same probability as a reduced numerator and denominator.
     #[must_use]
-    pub fn reduced(self) -> (u64, u64) {
-        let divisor = greatest_common_divisor(self.zero_count, self.matrix_count);
-        (self.zero_count / divisor, self.matrix_count / divisor)
+    pub fn reduced(&self) -> (BigUint, BigUint) {
+        let divisor = greatest_common_divisor(self.zero_count.clone(), self.matrix_count.clone());
+        (&self.zero_count / &divisor, &self.matrix_count / divisor)
+    }
+
+    /// Returns the reduced numerator and denominator as canonical base-ten
+    /// integer strings.
+    ///
+    /// These strings are the serialization-safe exact representation. This
+    /// API deliberately provides no floating-point or statistical rendering.
+    #[must_use]
+    pub fn reduced_decimal(&self) -> (String, String) {
+        let (numerator, denominator) = self.reduced();
+        (numerator.to_string(), denominator.to_string())
     }
 }
 
@@ -179,9 +217,9 @@ const PERMUTATIONS_4: [[usize; 4]; 24] = [
     [3, 2, 1, 0],
 ];
 
-fn greatest_common_divisor(mut left: u64, mut right: u64) -> u64 {
-    while right != 0 {
-        let remainder = left % right;
+fn greatest_common_divisor(mut left: BigUint, mut right: BigUint) -> BigUint {
+    while right != BigUint::from(0_u8) {
+        let remainder = &left % &right;
         left = right;
         right = remainder;
     }

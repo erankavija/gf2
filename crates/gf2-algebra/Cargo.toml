@@ -14,6 +14,7 @@ rust-version = "1.95"
 # packed types and permanent algorithms operate over. See D1a §3 for the
 # dependency-edge graph.
 gf2-core = { path = "../gf2-core" }
+num-bigint = { workspace = true }
 # Rayon dispatch is gated behind the `parallel` feature; the rayon crate
 # itself is therefore an optional dep. See D1c §2 row `parallel`.
 rayon = { workspace = true, optional = true }
