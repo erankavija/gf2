@@ -14,7 +14,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-30T20:19:00.736187907Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-30T20:27:28.291289979Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-30T20:16:16.126031491Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6639435f-8be8-4408-b6ab-759fe0099bd2",
   "labels": [
     "type:task",
@@ -26,5 +42,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Independent importance-sampling cross-check",
-  "updated_at": "2026-08-30T20:13:48.455553992Z"
+  "updated_at": "2026-08-30T20:27:28.291289979Z"
 }
