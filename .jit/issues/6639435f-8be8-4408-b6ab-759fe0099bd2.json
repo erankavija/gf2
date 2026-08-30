@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:codex-sol-importance",
+  "claimed_at": "2026-08-30T04:52:28.306626139Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -23,7 +24,7 @@
     "cites:GGK2025"
   ],
   "priority": "low",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Independent importance-sampling cross-check",
-  "updated_at": "2026-08-30T04:50:53.439493868Z"
+  "updated_at": "2026-08-30T04:52:28.306626139Z"
 }
