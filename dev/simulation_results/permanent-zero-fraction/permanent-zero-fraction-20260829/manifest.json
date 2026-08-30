@@ -57821,9 +57821,9 @@
     }
   ],
   "provenance": {
-    "git_revision": "396cf9295163e887519ada23532f7fa5634702c2",
-    "binary_sha256": "2d6edcd940abe9340143c8b724a8274fff8eca1200a491ad13deec9e386eba58",
-    "deps_source_revision": "6348b0c974b135d8b6d5923beb388d80fe7f4d10",
+    "git_revision": "785e3146d1a26bea3efb00426b4dc12c9c7c3316",
+    "binary_sha256": "c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d",
+    "deps_source_revision": "60e365ad1f385044193287a0485bccfa221dd64f",
     "deps_source_dirty": false,
     "compiler_version": "rustc 1.95.0 (59807616e 2026-04-14)",
     "rng_algorithm": "cha_cha20",
@@ -57836,6 +57836,8 @@
       "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
       "--q",
       "7",
+      "--n",
+      "20",
       "--workers",
       "1",
       "--accelerator-cost-table",
