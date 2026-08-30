@@ -10170,3 +10170,7 @@
 {"from":"in_progress","id":"091d17a2-9be2-4c57-b173-18629429c1fa","issue_id":"3f664839-fb97-4bb5-8141-7c39026325fe","timestamp":"2026-08-30T03:35:42.017497310Z","to":"done","type":"issue_state_changed"}
 {"id":"67dcd468-a0e7-4aae-9c15-db8177767eed","issue_id":"3f664839-fb97-4bb5-8141-7c39026325fe","timestamp":"2026-08-30T03:35:42.017497310Z","type":"issue_completed"}
 {"from":"backlog","id":"ab4828e1-b84d-4029-9fd6-e30cdf1d4ecc","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T03:35:50.647393209Z","to":"ready","type":"issue_state_changed"}
+{"from":"ready","id":"fa1e69e4-399c-4db2-af24-85e1c0bc6764","issue_id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","timestamp":"2026-08-30T03:36:47.543950597Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-sol-coordinator","id":"62cd92f4-ec22-4b70-a8e8-3fa2d8e92709","issue_id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","timestamp":"2026-08-30T03:36:47.543950597Z","type":"issue_claimed"}
+{"from":"ready","id":"71bfb133-4a15-4790-be26-426af4435537","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T03:37:03.607143023Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-sol-exact-rank","id":"e4d6c64a-2eb7-4cf4-bcc8-cd34b73efe85","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T03:37:03.607143023Z","type":"issue_claimed"}
