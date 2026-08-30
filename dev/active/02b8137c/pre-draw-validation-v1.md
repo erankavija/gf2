@@ -132,7 +132,9 @@ first two before it opens any address:
   be redrawn.
 - The `hip` feature is enabled and the host has a usable accelerator device.
   The frozen manifest's backend union includes the accelerator, so an
-  unavailable required backend fails validation.
+  unavailable required backend fails validation. The runner proves every
+  required backend on one constructed matrix first and refuses to start rather
+  than failing an anchor that could then never be redrawn.
 - A resumed run repeats the identical command from the identical clean source
   closure. The journal binds the run to its observed producer identity,
   including the argument tokens, and refuses to adopt a journal recorded under a

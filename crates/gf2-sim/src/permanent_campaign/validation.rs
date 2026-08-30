@@ -6,9 +6,9 @@
 //! provenance and no-redraw persistence. The repository-specific frozen plan
 //! is enforced separately by [`run_frozen_campaign_validation`].
 //!
-//! The frozen runner refuses a wrong producing toolchain before it opens any
-//! address, because an address opened under a refused build could not be
-//! redrawn.
+//! The frozen runner refuses a wrong producing toolchain or an unusable
+//! required backend before it opens any address, because an address opened
+//! under a refused build could not be redrawn.
 //!
 //! Exhaustive matrices are emitted once in bounded batches. Each identical
 //! batch is fanned to the independent fixed-expansion oracle result, the
@@ -770,6 +770,68 @@ pub fn run_validation(
     Ok(receipt)
 }
 
+/// Confirms every required backend can execute before an address is opened.
+///
+/// A backend the frozen manifest selects is required at each anchor its kernel
+/// domain covers, and one that cannot build or run fails that anchor. Because
+/// the protocol forbids redrawing a failed anchor, discovering an unusable
+/// build after the first start marker is published would block the campaign
+/// with no remedy inside this protocol. The frozen runner therefore proves each
+/// required backend on one fixed all-zero matrix first and refuses to start
+/// instead. The probe matrix is constructed, never sampled, so it consumes no
+/// stream and reads no oracle.
+///
+/// # Errors
+///
+/// Returns [`ValidationError::InvalidPlan`] naming the first backend, cell, and
+/// runtime diagnostic that prevents execution.
+pub fn preflight_required_backends(
+    preregistration: &ValidationPreregistration,
+    worker_count: usize,
+) -> Result<(), ValidationError> {
+    preregistration.validate()?;
+    if worker_count == 0 {
+        return invalid("validation worker count must be positive");
+    }
+    for spec in &preregistration.anchors {
+        for &backend in &preregistration.protocol.selectable_backends {
+            if !backend_supports_cell(backend, spec.q, spec.n) {
+                continue;
+            }
+            let probed = match spec.q {
+                3 => probe_backend::<3>(spec, backend, worker_count),
+                5 => probe_backend::<5>(spec, backend, worker_count),
+                7 => probe_backend::<7>(spec, backend, worker_count),
+                _ => return invalid("preregistration bounds the field"),
+            };
+            probed.map_err(|error| {
+                ValidationError::InvalidPlan(format!(
+                    "required backend {} cannot execute q={} n={}: {error}",
+                    backend.name(),
+                    spec.q,
+                    spec.n
+                ))
+            })?;
+        }
+    }
+    Ok(())
+}
+
+fn probe_backend<const Q: u64>(
+    spec: &AnchorSpec,
+    backend: Backend,
+    worker_count: usize,
+) -> Result<(), ScheduleError> {
+    let evaluator = ProductionBackendEvaluator::new(spec.q, spec.n, backend, worker_count)?;
+    let probe = vec![vec![Fp::<Q>::new(0); usize::from(spec.n).pow(2)]];
+    if evaluator.evaluate(&probe)?.len() != probe.len() {
+        return Err(ScheduleError::InvalidWorkItem(
+            "a backend probe returned the wrong number of values".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
 /// Loads and validates the exact committed ten-anchor frozen plan.
 pub fn load_frozen_campaign_validation_preregistration(
     repository: &Path,
@@ -795,6 +857,7 @@ pub fn run_frozen_campaign_validation(
 ) -> Result<ValidationReceipt, ValidationError> {
     validate_frozen_plan(repository, preregistration)?;
     validate_frozen_toolchain(env!("GF2_BUILD_RUSTC_VERSION"))?;
+    preflight_required_backends(preregistration, worker_count)?;
     create_directory_durable(state_directory)?;
     let observed_before = snapshot_frozen_campaign(repository)?;
     let before = publish_or_adopt(

@@ -29,8 +29,10 @@
 //! the journal binds itself to the producer identity it observed, argument
 //! tokens included, and refuses a journal recorded under a different one.
 //!
-//! The frozen plan pins its producing toolchain, and the runner refuses a build
-//! from another compiler before it opens the first address.
+//! The frozen plan pins its producing toolchain and requires every backend the
+//! frozen manifest selects. The runner refuses a build from another compiler,
+//! and a build or host on which a required backend cannot execute, before it
+//! opens the first address.
 //!
 //! ```console
 //! $ permanent_validation --verify-receipt dev/active/02b8137c/pre-draw-validation-v1-receipt.json
