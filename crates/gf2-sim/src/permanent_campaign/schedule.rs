@@ -462,57 +462,58 @@ fn backend_unavailable(q: u8, n: u16, backend: Backend) -> Result<ProcessorPath,
 ///
 /// This is a pure function of the manifest's `(q, n, backend)` values. It
 /// does not inspect host capabilities, timing, sampled matrices, or any
-/// measurement result. Matrix distribution for `BatchParallel` remains a
+/// measurement result. [`backend_supports_cell`] states the mathematical
+/// domain; this function adds only the kernel mapping and the accelerator
+/// build-feature gate. Matrix distribution for `BatchParallel` remains a
 /// separate scheduling concern.
 pub(crate) fn resolve_processor_path(
     q: u8,
     n: u16,
     backend: Backend,
 ) -> Result<ProcessorPath, ScheduleError> {
+    if !backend_supports_cell(backend, q, n) {
+        return backend_unavailable(q, n, backend);
+    }
     match backend {
         Backend::Scalar | Backend::BatchParallel => match q {
-            3 if n <= 63 => Ok(ProcessorPath::Bipedal3SingleWord),
-            5 if n <= 63 => Ok(ProcessorPath::Bipedal5SingleWord),
-            7 if n <= 16 => Ok(ProcessorPath::Bipedal7SingleWord),
+            3 => Ok(ProcessorPath::Bipedal3SingleWord),
+            5 => Ok(ProcessorPath::Bipedal5SingleWord),
+            7 => Ok(ProcessorPath::Bipedal7SingleWord),
             _ => backend_unavailable(q, n, backend),
         },
-        Backend::IntraMatrixParallel => match q {
-            3 if n <= 63 => Ok(ProcessorPath::Bipedal3IntraMatrixParallel),
-            _ => backend_unavailable(q, n, backend),
-        },
-        Backend::GenericRyser if n <= 63 => Ok(ProcessorPath::GenericRyser),
+        Backend::IntraMatrixParallel => Ok(ProcessorPath::Bipedal3IntraMatrixParallel),
+        Backend::GenericRyser => Ok(ProcessorPath::GenericRyser),
         Backend::Accelerator => {
             #[cfg(feature = "hip")]
             {
-                match q {
-                    3 | 5 | 7 if n <= 63 => Ok(ProcessorPath::Accelerator),
-                    _ => backend_unavailable(q, n, backend),
-                }
+                Ok(ProcessorPath::Accelerator)
             }
             #[cfg(not(feature = "hip"))]
             {
                 backend_unavailable(q, n, backend)
             }
         }
-        Backend::GenericRyser => backend_unavailable(q, n, backend),
     }
 }
 
 /// Returns whether a campaign backend's mathematical kernel domain includes a
 /// cell, independently of build features and runtime device availability.
 ///
-/// Validation uses this inventory rule to distinguish an inapplicable backend
+/// This is the campaign's one domain rule: [`resolve_processor_path`] admits a
+/// triple only when this predicate holds, so a kernel's `(q, n)` bounds are
+/// stated once. Validation consults it to distinguish an inapplicable backend
 /// from a supported backend that failed to build or execute. The latter is a
 /// validation failure and cannot be reported as unsupported.
 #[must_use]
 pub fn backend_supports_cell(backend: Backend, q: u8, n: u16) -> bool {
     match backend {
-        Backend::Scalar | Backend::BatchParallel => {
-            matches!(q, 3 | 5) && n <= 63 || q == 7 && n <= 16
-        }
+        Backend::Scalar | Backend::BatchParallel => match q {
+            3 | 5 => n <= 63,
+            7 => n <= 16,
+            _ => false,
+        },
         Backend::IntraMatrixParallel => q == 3 && n <= 63,
-        Backend::GenericRyser => matches!(q, 3 | 5 | 7) && n <= 63,
-        Backend::Accelerator => matches!(q, 3 | 5 | 7) && n <= 63,
+        Backend::GenericRyser | Backend::Accelerator => matches!(q, 3 | 5 | 7) && n <= 63,
     }
 }
 
@@ -1103,13 +1104,7 @@ where
     let stream = StreamIndex::new(item.stream_index).map_err(|error| {
         ScheduleError::InvalidWorkItem(format!("invalid stream index: {error}"))
     })?;
-    let address = MatrixAddress::new(
-        root_seed,
-        field_order,
-        usize::from(item.n),
-        purpose,
-        stream,
-    );
+    let address = MatrixAddress::new(root_seed, field_order, usize::from(item.n), purpose, stream);
     let mut sampler = MatrixSampler::<Q>::new(address).map_err(|error| {
         ScheduleError::InvalidWorkItem(format!("cannot open matrix sampler: {error}"))
     })?;
@@ -1381,13 +1376,7 @@ where
     let stream = StreamIndex::new(item.stream_index).map_err(|error| {
         ScheduleError::InvalidWorkItem(format!("invalid stream index: {error}"))
     })?;
-    let address = MatrixAddress::new(
-        root_seed,
-        field_order,
-        usize::from(item.n),
-        purpose,
-        stream,
-    );
+    let address = MatrixAddress::new(root_seed, field_order, usize::from(item.n), purpose, stream);
     let mut sampler = MatrixSampler::<Q>::new(address).map_err(|error| {
         ScheduleError::InvalidWorkItem(format!("cannot open matrix sampler: {error}"))
     })?;
@@ -1491,13 +1480,7 @@ where
     let stream = StreamIndex::new(item.stream_index).map_err(|error| {
         ScheduleError::InvalidWorkItem(format!("invalid stream index: {error}"))
     })?;
-    let address = MatrixAddress::new(
-        root_seed,
-        field_order,
-        usize::from(item.n),
-        purpose,
-        stream,
-    );
+    let address = MatrixAddress::new(root_seed, field_order, usize::from(item.n), purpose, stream);
     let mut sampler = MatrixSampler::<Q>::new(address).map_err(|error| {
         ScheduleError::InvalidWorkItem(format!("cannot open matrix sampler: {error}"))
     })?;
@@ -1682,7 +1665,6 @@ impl PackedMatrix {
 pub(crate) struct ProductionBackendEvaluator {
     q: u8,
     n: usize,
-    backend: Backend,
     processor_path: ProcessorPath,
     pool: Option<ThreadPool>,
 }
@@ -1713,7 +1695,6 @@ impl ProductionBackendEvaluator {
         Ok(Self {
             q,
             n: usize::from(n),
-            backend,
             processor_path,
             pool,
         })
@@ -1759,22 +1740,13 @@ impl ProductionBackendEvaluator {
             } else {
                 Some(PackedMatrix::new(entries, self.n))
             };
-            evaluate_permanent(
-                self.processor_path,
-                entries,
-                packed.as_ref(),
-                self.n,
-            )
+            evaluate_permanent(self.processor_path, entries, packed.as_ref(), self.n)
         };
         if let Some(pool) = &self.pool {
             pool.install(|| matrices.par_iter().map(evaluate_one).collect())
         } else {
             matrices.iter().map(evaluate_one).collect()
         }
-    }
-
-    pub(crate) const fn backend(&self) -> Backend {
-        self.backend
     }
 }
 
@@ -2846,10 +2818,14 @@ mod tests {
             })
             .collect();
 
-        for backend in Backend::campaign_inventory().iter().copied().filter(|&backend| {
-            resolve_processor_path(q, BACKEND_CONFORMANCE_DIMENSION, backend).is_ok()
-                && (backend != Backend::Accelerator || accelerator_available)
-        }) {
+        for backend in Backend::campaign_inventory()
+            .iter()
+            .copied()
+            .filter(|&backend| {
+                resolve_processor_path(q, BACKEND_CONFORMANCE_DIMENSION, backend).is_ok()
+                    && (backend != Backend::Accelerator || accelerator_available)
+            })
+        {
             let mut campaign = manifest(vec![cell(
                 q,
                 BACKEND_CONFORMANCE_DIMENSION,
