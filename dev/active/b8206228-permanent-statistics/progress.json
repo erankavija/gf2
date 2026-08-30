@@ -187,7 +187,7 @@
      "short_id": "73317b2e",
      "title": "Standing acceptance tests for campaign cells",
      "classification": "implementation",
-     "status": "ready: dependencies are done; held for subwave 9b because its gf2-sim campaign-driver surface conflicts with 2c1ae813."
+     "status": "in progress: claimed for a high-tier isolated worker in subwave 9b after 2c1ae813 completed; owns gf2-sim acceptance/coordinator extraction, canonical execution receipt, q7 n20-first scheduling, and field sidecars."
     }
    ]
   },
@@ -199,7 +199,7 @@
      "short_id": "8ec10dde",
      "title": "Exact compressed-state permanental-rank propagation",
      "classification": "implementation",
-     "status": "pending: backlog behind 3f664839; created during the owner-approved rare-event graph amendment at b9c50d97 and hardened at 0bf6e7a1."
+     "status": "in progress: unblocked by completed preregistration and claimed for a parallel high-tier isolated worker; owns exact compressed-state propagation in gf2-algebra with the fixed field-law/oracle domains."
     },
     {
      "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
