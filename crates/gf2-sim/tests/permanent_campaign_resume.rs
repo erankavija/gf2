@@ -9,6 +9,7 @@ use gf2_sim::checkpoint::{CheckpointReader, CheckpointWriter};
 use gf2_sim::permanent_campaign::driver::{
     campaign_config_hash, campaign_configuration, field_checkpoint_path, run_field_checkpointed,
     run_field_checkpointed_with_evaluator, CampaignCheckpoint, CampaignDriverError,
+    CampaignExecutionScope,
 };
 use gf2_sim::permanent_campaign::schedule::evaluate_work_item;
 use gf2_sim::permanent_campaign::schedule::ScheduleError;
@@ -413,10 +414,11 @@ fn signal_during_checkpoint_write_never_corrupts_resume() {
     let root = temp_root("fsync");
     let manifest = manifest(13);
     let path = checkpoint(&root);
-    let payload = CampaignCheckpoint::new(campaign_configuration(&manifest, 3));
+    let scope = CampaignExecutionScope::Field { q: 3 };
+    let payload = CampaignCheckpoint::new(campaign_configuration(&manifest, scope));
     let writer = CheckpointWriter::<CampaignCheckpoint, _>::for_payload(
         &path,
-        campaign_config_hash(&manifest, 3),
+        campaign_config_hash(&manifest, scope),
     )
     .unwrap();
     writer
@@ -424,7 +426,7 @@ fn signal_during_checkpoint_write_never_corrupts_resume() {
         .unwrap();
     let reader = CheckpointReader::<CampaignCheckpoint, _>::for_payload(
         &path,
-        campaign_config_hash(&manifest, 3),
+        campaign_config_hash(&manifest, scope),
     );
     assert_eq!(reader.load_payload().unwrap(), Some(payload));
     clear_interrupt();

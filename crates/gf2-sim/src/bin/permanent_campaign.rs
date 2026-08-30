@@ -17,22 +17,34 @@
 //!
 //! `--print-provenance` observes and prints the provenance for this emitting
 //! executable without running a campaign or writing a dataset file.
+//!
+//! `--n ORDER` narrows `--q FIELD` to one exact manifest cell. Exact execution
+//! uses a cell-scoped checkpoint and deliberately does not write a field
+//! summary; the outside campaign coordinator assembles that summary only after
+//! every cell in the field is terminal. `--dry-run-schedule` resolves the same
+//! exact selector without opening the output directory, a checkpoint, or a
+//! sampler.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::Duration;
 
 use gf2_sim::permanent_campaign::driver::{
-    field_checkpoint_path, run_field_checkpointed_with_accelerator_config,
+    cell_checkpoint_path, field_checkpoint_path, run_cell_checkpointed_with_accelerator_config,
+    run_field_checkpointed_with_accelerator_config,
 };
 use gf2_sim::permanent_campaign::launch_cost::read_accelerator_cost_table;
 use gf2_sim::permanent_campaign::provenance::{
     approve_emission, observe_provenance, repository_top_level,
 };
-use gf2_sim::permanent_campaign::schedule::{AcceleratorCostTable, DEFAULT_ACCELERATOR_LAUNCH_CAP};
+use gf2_sim::permanent_campaign::schedule::{
+    enumerate_cell_work_items, AcceleratorCostTable, DEFAULT_ACCELERATOR_LAUNCH_CAP,
+};
 use gf2_sim::permanent_campaign::schema::{read_manifest, Backend};
 
-const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N] [--accelerator-launch-cap-ms MS] [--accelerator-cost-table PATH]
+const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD [--n ORDER] [--workers N] [--accelerator-launch-cap-ms MS] [--accelerator-cost-table PATH]
+
+       permanent_campaign --dry-run-schedule --manifest PATH --output CAMPAIGN-DIR --q FIELD --n ORDER
 
        permanent_campaign --print-provenance --manifest PATH
 
@@ -49,10 +61,12 @@ fn main() -> ExitCode {
     let mut manifest_path = None;
     let mut output = None;
     let mut field = None;
+    let mut order = None;
     let mut workers = 1usize;
     let mut accelerator_launch_cap = DEFAULT_ACCELERATOR_LAUNCH_CAP;
     let mut accelerator_cost_table: Option<PathBuf> = None;
     let mut print_provenance = false;
+    let mut dry_run_schedule = false;
     let mut index = 0;
     while index < arguments.len() {
         let name = arguments[index].as_str();
@@ -60,6 +74,10 @@ fn main() -> ExitCode {
         match (name, value) {
             ("--print-provenance", _) => {
                 print_provenance = true;
+                index += 1;
+            }
+            ("--dry-run-schedule", _) => {
+                dry_run_schedule = true;
                 index += 1;
             }
             ("--manifest", Some(path)) => {
@@ -76,6 +94,13 @@ fn main() -> ExitCode {
                     index += 2;
                 }
                 Err(_) => return usage("--q must be an integer field order"),
+            },
+            ("--n", Some(value)) => match value.parse::<u16>() {
+                Ok(n) if n > 0 => {
+                    order = Some(n);
+                    index += 2;
+                }
+                _ => return usage("exact cell selector --n must be a positive integer order"),
             },
             ("--workers", Some(value)) => match value.parse::<usize>() {
                 Ok(parsed_workers) if parsed_workers >= 1 => {
@@ -103,8 +128,10 @@ fn main() -> ExitCode {
         let Some(manifest_path) = manifest_path else {
             return usage("--print-provenance requires --manifest");
         };
-        if output.is_some() || field.is_some() {
-            return usage("--print-provenance cannot be combined with --output or --q");
+        if output.is_some() || field.is_some() || order.is_some() || dry_run_schedule {
+            return usage(
+                "--print-provenance cannot be combined with execution or dry-schedule options",
+            );
         }
         let manifest = match read_manifest(&manifest_path) {
             Ok(manifest) => manifest,
@@ -127,13 +154,32 @@ fn main() -> ExitCode {
         };
     }
 
-    let (Some(manifest_path), Some(output), Some(field)) = (manifest_path, output, field) else {
+    let (Some(manifest_path), Some(output)) = (manifest_path, output) else {
         return usage("missing required argument");
+    };
+    let Some(field) = field else {
+        return if order.is_some() {
+            usage("exact cell selector --n requires --q")
+        } else {
+            usage("missing required argument")
+        };
     };
     let manifest = match read_manifest(&manifest_path) {
         Ok(manifest) => manifest,
         Err(error) => return failure(error),
     };
+    if let Some(order) = order {
+        let items = match enumerate_cell_work_items(&manifest, field, order) {
+            Ok(items) => items,
+            Err(error) => return failure(error),
+        };
+        if dry_run_schedule {
+            println!("schedule q={field} n={order} shards={}", items.len());
+            return ExitCode::SUCCESS;
+        }
+    } else if dry_run_schedule {
+        return usage("exact cell selector --dry-run-schedule requires --q and --n");
+    }
     if manifest
         .cells
         .iter()
@@ -158,15 +204,26 @@ fn main() -> ExitCode {
         eprintln!("emission refused: {refusal}");
         return ExitCode::FAILURE;
     }
-    let checkpoint = field_checkpoint_path(&output, field);
-    let run = match run_field_checkpointed_with_accelerator_config(
-        &output,
-        &manifest,
-        field,
-        &checkpoint,
-        workers,
-        &accelerator,
-    ) {
+    let run = match order {
+        Some(order) => run_cell_checkpointed_with_accelerator_config(
+            &output,
+            &manifest,
+            field,
+            order,
+            &cell_checkpoint_path(&output, field, order),
+            workers,
+            &accelerator,
+        ),
+        None => run_field_checkpointed_with_accelerator_config(
+            &output,
+            &manifest,
+            field,
+            &field_checkpoint_path(&output, field),
+            workers,
+            &accelerator,
+        ),
+    };
+    let run = match run {
         Ok(run) => run,
         Err(error) => return failure(error),
     };
