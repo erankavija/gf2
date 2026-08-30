@@ -5,7 +5,36 @@
   "created_at": "2026-08-29T17:27:47.247210056Z",
   "dependencies": [],
   "description": "research-review F3 on the campaign freeze: `backend-selection-v1.md` claims all\n124 selection-cohort configurations pass correctness rules at their nominated\ncells, but the committed equivalence evidence\n(`dev/active/b8206228-permanent-statistics/e31b1918-equiv-host-full.csv` and the\nshared-equivalence receipt it extends) covers only orders {8,12,16,20,24,28}\nper field plus the exact-anchor cell (3,4). Campaign cells off that grid have\nno cell-applicable equivalence row. The owner selected: produce the evidence.\n\nThe harness is `dev/research/permanent-sampling-feas` (`equivalence`\nsubcommand). Its order table stops at the timed grid orders, so it must be\nextended to run every exact campaign cell: q=3 n=4..28, q=5 n=4..24,\nq=7 n=4..20 (63 cells), evaluating at each cell the configurations\n`backend-selection-v1.md` nominates there (both selection arms), against the\nreference implementation on shared inputs. The per-cell matrix-count budget\nderivation from commit `de5f7414` (halving from a per-order ceiling, flooring\nat 2, against summed committed probe costs) extends to the new orders.\n\n## Success criteria\n\n- [hard] REQ-01: A committed equivalence CSV covers every campaign cell with at\n  least one row per nominated configuration at that exact (q,n), each row\n  comparing per-matrix permanent values against the reference on shared inputs\n  with zero mismatches, or recording the mismatch.\n- [hard] REQ-02: The run's provenance records source revision, executable\n  SHA-256, toolchain, RNG implementation and version, seed root, and stream\n  identity for the drawn matrices.\n- [hard] REQ-03: An addendum document cites the receipt and states the closure\n  of the backend-selection coverage claim, recording the prior evidence scope\n  as the contradiction falsification-preserved requires; `backend-selection-v1.md`\n  itself is not modified.\n- [hard] REQ-04: The GPU-dependent rows run inside the owner's safe window\n  (from 02:00 local); no campaign draw occurs (equivalence uses non-campaign\n  stream purposes only).",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Cell-exhaustive equivalence receipt (124 nominations, 63 cells)",
+      "path": "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "Equivalence run transcript",
+      "path": "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.log"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Cell-exhaustive equivalence addendum to backend selection v1",
+      "path": "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence-addendum.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Probe-cost derivation record (de5f7414 grid receipts)",
+      "path": "dev/benchmarks/permanent_campaign/probe-costs-de5f7414.csv"
+    }
+  ],
+  "done_at": "2026-08-30T00:33:55.990924652Z",
   "first_ready_at": "2026-08-29T17:27:47.247210056Z",
   "gates_required": [
     "code-review",
@@ -13,14 +42,14 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-29T17:27:54.073678009Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-30T00:30:40.605429741Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-29T17:27:54.205246467Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-30T00:33:08.482073259Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "86185f88-c731-4c12-b50b-c3d1aabfa867",
@@ -30,7 +59,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cell-exhaustive backend equivalence receipt for the 124 nominated selection configurations",
-  "updated_at": "2026-08-29T21:38:38.319452687Z"
+  "updated_at": "2026-08-30T00:33:55.990924652Z"
 }
