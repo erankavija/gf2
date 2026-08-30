@@ -627,5 +627,35 @@ fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
     unbound_arm.arms.push(arm(3, 4));
     write_receipt(&campaign_root, &campaign.campaign_id, &unbound_arm);
     assert!(CampaignCoordinator::read(&campaign_root).is_err());
+
+    let (exhausted_root, exhausted_manifest, mut exhausted) = fixture();
+    let exhausted_campaign = exhausted_root.join(exhausted_manifest.campaign_id.to_string());
+    exhausted.authorize_arm(arm(7, 20)).unwrap();
+    exhausted.persist(&exhausted_campaign).unwrap();
+    exhausted
+        .record_quarantine(7, 20, 0, "first failure".to_owned())
+        .unwrap();
+    exhausted
+        .record_quarantine(7, 20, 0, "recovery failure".to_owned())
+        .unwrap();
+    let mut forged_retry = exhausted.receipt().clone();
+    for cell in &mut forged_retry.cells {
+        cell.execution = if (cell.q, cell.n) == (7, 20) {
+            CellExecutionState::Scheduled { arm_index: 0 }
+        } else {
+            CellExecutionState::Pending
+        };
+    }
+    for field in &mut forged_retry.fields {
+        field.execution = FieldExecutionState::InProgress;
+    }
+    forged_retry.halt = CampaignHaltState::Running;
+    write_receipt(
+        &exhausted_campaign,
+        &exhausted_manifest.campaign_id,
+        &forged_retry,
+    );
+    assert!(CampaignCoordinator::read(&exhausted_campaign).is_err());
+    fs::remove_dir_all(exhausted_root).unwrap();
     fs::remove_dir_all(root).unwrap();
 }
