@@ -5,7 +5,8 @@
 //! probability at its comparison boundary.
 
 use gf2_algebra::permanent::{
-    enumerate_permanent_zero_probability, permanent_ryser, ExactProbability,
+    determinant_singular_probability, enumerate_permanent_zero_probability, permanent_ryser,
+    ExactProbability,
 };
 use gf2_core::gfp::Fp;
 use gf2_stats::intervals::clopper_pearson_interval;
@@ -102,14 +103,6 @@ fn permanent_anchor_slow_q3_order_four() {
 #[ignore = "slow: exhaustive q=7, n=3 permanent anchor enumerates 7^9 matrices"]
 fn permanent_anchor_slow_q7_order_three() {
     assert_permanent_anchor(7, 3);
-}
-
-fn determinant_singular_probability(field_order: u64, dimension: usize) -> ExactProbability {
-    let total = field_order.pow((dimension * dimension) as u32);
-    let invertible = (0..dimension).fold(1_u64, |count, exponent| {
-        count * (field_order.pow(dimension as u32) - field_order.pow(exponent as u32))
-    });
-    ExactProbability::from_counts(total - invertible, total)
 }
 
 fn determinant_is_singular(entries: &[u64], field_order: u64, dimension: usize) -> bool {

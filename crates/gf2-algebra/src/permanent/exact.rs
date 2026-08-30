@@ -128,12 +128,52 @@ pub fn enumerate_permanent_zero_probability(
     }
 }
 
+/// Returns the exact finite-`n` probability that a uniform matrix over
+/// $\mathbb{F}_q$ is singular.
+///
+/// The invertible matrices are the general linear group, so the singular count
+/// is $q^{n^2} - \prod_{i=0}^{n-1}(q^n - q^i)$. This closed form is exact for
+/// every prime power and is the authority the campaign's determinant evaluator
+/// must reproduce; nothing here samples or enumerates.
+///
+/// # Panics
+///
+/// Panics when `field_order` is below two, when `dimension` is zero, or when
+/// $q^{n^2}$ exceeds `u64`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::permanent::determinant_singular_probability;
+///
+/// // Over F_3 the 2x2 singular matrices are 33 of the 81 matrices.
+/// let probability = determinant_singular_probability(3, 2);
+/// assert_eq!(probability.zero_count().to_string(), "33");
+/// assert_eq!(probability.matrix_count().to_string(), "81");
+/// ```
+///
+/// # Complexity
+///
+/// `O(n)` multiplications and `O(1)` auxiliary space.
+#[must_use]
+pub fn determinant_singular_probability(field_order: u64, dimension: usize) -> ExactProbability {
+    assert!(field_order >= 2, "a field order is at least two");
+    assert!(dimension > 0, "a matrix order is at least one");
+    let exponent = u32::try_from(dimension * dimension).expect("anchor exponents fit u32");
+    let total = field_order
+        .checked_pow(exponent)
+        .expect("the anchor matrix count fits u64");
+    let order = field_order.pow(u32::try_from(dimension).expect("anchor orders fit u32"));
+    let invertible = (0..dimension).fold(1_u64, |count, exponent| {
+        count
+            * (order - field_order.pow(u32::try_from(exponent).expect("anchor exponents fit u32")))
+    });
+    ExactProbability::from_counts(total - invertible, total)
+}
+
 fn enumerate<const Q: u64>(dimension: usize) -> ExactProbability {
-    try_visit_permanent_anchor_matrices::<Q, std::convert::Infallible, _>(
-        dimension,
-        |_, _| Ok(()),
-    )
-    .expect("an infallible visitor cannot fail")
+    try_visit_permanent_anchor_matrices::<Q, std::convert::Infallible, _>(dimension, |_, _| Ok(()))
+        .expect("an infallible visitor cannot fail")
 }
 
 /// Visits every matrix in one exact-anchor domain exactly once.
@@ -190,11 +230,7 @@ where
             *entry = Fp::new(*residue);
             remaining /= Q;
         }
-        let permanent = Fp::new(permanent_mod_prime(
-            &residues[..entry_count],
-            dimension,
-            Q,
-        ));
+        let permanent = Fp::new(permanent_mod_prime(&residues[..entry_count], dimension, Q));
         if permanent == Fp::new(0) {
             zero_count += 1;
         }
