@@ -199,7 +199,7 @@
      "short_id": "8ec10dde",
      "title": "Exact compressed-state permanental-rank propagation",
      "classification": "implementation",
-     "status": "in progress: unblocked by completed preregistration and claimed for a parallel high-tier isolated worker; owns exact compressed-state propagation in gf2-algebra with the fixed field-law/oracle domains."
+     "status": "rework-1 in progress: RED/GREEN commits bd7c2ee5 and 381f5885 pass package evidence and all 14 CI phases; lead review found only a missing public wrapper panic contract and returned that bounded rustdoc repair before merge."
     },
     {
      "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -794,7 +794,8 @@
   "032cc754": 1,
   "a39bb161": 2,
   "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates",
-  "3f664839": 2
+  "3f664839": 2,
+  "8ec10dde": 1
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
