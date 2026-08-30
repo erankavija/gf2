@@ -20,12 +20,12 @@ use gf2_sim::permanent_campaign::schema::{read_manifest, ArtifactIdentity, Backe
 use gf2_sim::permanent_campaign::validation::{
     evaluate_validation_anchor, is_frozen_validation_toolchain,
     load_frozen_campaign_validation_preregistration, load_validation_preregistration,
-    publish_validation_receipt_atomic, read_validation_receipt, run_validation, AnchorSpec,
-    BackendAgreementStatus, DecisionRule, FrozenArtifactGuard, FrozenArtifactSnapshot, PhaseStatus,
-    ReplayMode, RetryRule, SampleOrigin, ValidationAuthorities, ValidationFailure, ValidationPhase,
-    ValidationPreregistration, ValidationProtocol, ValidationReceipt, ValidationStreamPurpose,
-    ValidationVerdict, FROZEN_TOOLCHAIN_PREFIX, PREREGISTRATION_SCHEMA_VERSION,
-    RECEIPT_SCHEMA_VERSION,
+    preflight_required_backends, publish_validation_receipt_atomic, read_validation_receipt,
+    run_validation, AnchorSpec, BackendAgreementStatus, DecisionRule, FrozenArtifactGuard,
+    FrozenArtifactSnapshot, PhaseStatus, ReplayMode, RetryRule, SampleOrigin,
+    ValidationAuthorities, ValidationFailure, ValidationPhase, ValidationPreregistration,
+    ValidationProtocol, ValidationReceipt, ValidationStreamPurpose, ValidationVerdict,
+    FROZEN_TOOLCHAIN_PREFIX, PREREGISTRATION_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION,
 };
 use gf2_stats::binomial::two_sided_test;
 use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
@@ -1165,4 +1165,82 @@ fn frozen_validation_evidence_is_pinned_to_its_producing_toolchain() {
         "the prefix ends at the separator, so 1.95.01 cannot match"
     );
     assert!(!is_frozen_validation_toolchain(""));
+}
+
+#[test]
+fn the_preflight_admits_every_backend_the_focused_plan_requires() {
+    let plan = focused_plan();
+    preflight_required_backends(&plan, 2).expect("every required CPU backend executes");
+
+    // A backend outside a cell's kernel domain is not required there, so its
+    // absence from that anchor is not a refusal.
+    let mut narrow = plan.clone();
+    narrow.protocol.sample_backend = Backend::GenericRyser;
+    narrow.protocol.selectable_backends = vec![Backend::IntraMatrixParallel, Backend::GenericRyser];
+    narrow.anchors = vec![focused_anchor(5, 2, 145)];
+    assert!(!backend_supports_cell(Backend::IntraMatrixParallel, 5, 2));
+    preflight_required_backends(&narrow, 1)
+        .expect("an unsupported cell is skipped rather than refused");
+
+    let error = preflight_required_backends(&plan, 0)
+        .expect_err("a zero worker count cannot execute any backend");
+    assert!(error.to_string().contains("worker count"), "{error}");
+}
+
+/// Without the accelerator build every anchor's required accelerator is
+/// unavailable, so the preflight must refuse rather than let the run open an
+/// address it could never redraw. This build has no HIP support, so the refusal
+/// comes from the kernel inventory and touches no device.
+#[cfg(not(feature = "hip"))]
+#[test]
+fn a_required_but_unavailable_backend_is_refused_before_any_address() {
+    let mut plan = focused_plan();
+    plan.protocol.selectable_backends = vec![Backend::BatchParallel, Backend::Accelerator];
+    assert!(
+        backend_supports_cell(Backend::Accelerator, 3, 2),
+        "the accelerator's kernel domain covers this anchor, so it is required here"
+    );
+
+    let error = preflight_required_backends(&plan, 1)
+        .expect_err("a required backend that cannot execute is refused");
+    let message = error.to_string();
+    assert!(message.contains("accelerator"), "{message}");
+    assert!(message.contains("cannot execute"), "{message}");
+}
+
+/// The frozen runner must refuse a wrong producing toolchain before it creates
+/// the journal, because an address opened under a refused build could never be
+/// redrawn.
+///
+/// A 1.95.0 build would pass that check and begin the lead's evidence run, so
+/// this test disables itself there rather than drawing 400,000 matrices.
+#[test]
+fn the_frozen_runner_refuses_a_wrong_toolchain_before_creating_the_journal() {
+    if is_frozen_validation_toolchain(env!("GF2_BUILD_RUSTC_VERSION")) {
+        eprintln!("skipping: a 1.95.0 build would start the frozen evidence run");
+        return;
+    }
+    let state = unique_directory("validation-frozen-refusal");
+    let receipt = unique_directory("validation-frozen-receipt").join("receipt.json");
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_permanent_validation"))
+        .current_dir(repository())
+        .args([
+            "--preregistration",
+            FROZEN_PREREGISTRATION,
+            "--state-dir",
+            state.to_str().expect("the journal path is UTF-8"),
+            "--receipt",
+            receipt.to_str().expect("the receipt path is UTF-8"),
+        ])
+        .output()
+        .expect("the runner executes");
+
+    assert_eq!(output.status.code(), Some(1), "a refusal is not a verdict");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains(FROZEN_TOOLCHAIN_PREFIX), "{stderr}");
+    assert!(
+        !state.exists(),
+        "the runner must refuse before it creates the journal"
+    );
+    assert!(!receipt.exists(), "a refused run publishes no receipt");
 }
