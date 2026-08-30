@@ -10188,3 +10188,10 @@
 {"from":"ready","id":"84781627-7cf2-426c-9389-ab45146eae6e","issue_id":"6639435f-8be8-4408-b6ab-759fe0099bd2","timestamp":"2026-08-30T04:52:28.306626139Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:codex-sol-importance","id":"a97716fc-2c1b-42d8-8908-81008a57145a","issue_id":"6639435f-8be8-4408-b6ab-759fe0099bd2","timestamp":"2026-08-30T04:52:28.306626139Z","type":"issue_claimed"}
 {"fields":["documents"],"id":"373b0ddf-4d80-4d03-a7b7-ab96c5aa3f82","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-30T06:55:55.518663529Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"cargo-ci","id":"fe054119-f1a8-4831-92c8-b69e2a97c1f6","issue_id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","timestamp":"2026-08-30T12:02:39.247895837Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"66454018-0ca0-4eff-91ff-77a1636bc772","issue_id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","timestamp":"2026-08-30T12:05:37.782074646Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"a0ecc216-2aa2-4754-9329-c1f9ee92daec","issue_id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","timestamp":"2026-08-30T12:05:59.820551771Z","to":"done","type":"issue_state_changed"}
+{"id":"1a81de8f-0760-4be7-a52c-39be42eac23a","issue_id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","timestamp":"2026-08-30T12:05:59.820551771Z","type":"issue_completed"}
+{"from":"backlog","id":"40399ace-a899-48a4-953d-fee28c8ba257","issue_id":"1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48","timestamp":"2026-08-30T12:06:08.546398088Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"2130ca2c-fd79-4085-987a-7908035e7e3c","issue_id":"90a61cd4-c48d-4097-ae2c-e628163a754a","timestamp":"2026-08-30T12:06:17.247706477Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"a7bb37e0-d037-4218-a92e-5ecc60d5dcb5","issue_id":"ed494117-4245-4e92-855b-3c54e207697d","timestamp":"2026-08-30T12:06:25.964126161Z","to":"ready","type":"issue_state_changed"}
