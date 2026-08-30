@@ -310,10 +310,13 @@ binds and recomputes every value from committed same-cell measurement evidence;
 the fail-closed
 [validator](../../benchmarks/permanent_campaign/accelerator_launch_costs_v1.py)
 checks the bound inputs, arithmetic, rounding, and exact receipt/table
-agreement. The coordinator resolves the table under its execution lock, binds
-the exact table bytes in the receipt, and rejects a missing, duplicate,
-malformed, nonpositive, processor-backed, or unmanifested row before writer
-admission, drawing, or output. These costs are launch-sizing evidence used to
+agreement. Live writer approval and acquisition of the execution lock precede
+accelerator table resolution. In a nonterminal sampling transaction, the
+coordinator validates and binds the exact table bytes before arm admission,
+receipt mutation, sampling, or raw output. A terminal retry may finish an
+idempotent summary/sidecar projection before table resolution and never enters
+the sampler. Missing, duplicate, malformed, nonpositive, processor-backed, or
+unmanifested rows are refused. These costs are launch-sizing evidence used to
 bound accelerator batch sizes. They are neither backend-selection evidence nor
 scientific-result evidence.
 
@@ -321,11 +324,12 @@ scientific-result evidence.
 `1` when omitted. Each invocation selects exactly one manifested `(q,n)` cell.
 The coordinator persists the required `(7,20)`-first gate, serializes every
 campaign-purpose admission, and holds one execution lock through receipt
-revalidation, writer admission, sampling, raw emission, and terminalization.
-The first output line records the effective configuration as
-`campaign q={field} n={order} workers={N}` before the per-shard timing lines.
-The emitting process verifies its live executable bytes and the committed
-manifest before it enters the transaction. An interrupted authorized attempt
+revalidation, arm admission, sampling, raw emission, terminalization, and
+terminal projection. After execution and its per-shard timing lines complete,
+the command prints the effective configuration as
+`campaign q={field} n={order} workers={N}` and its exact-cell summary. The
+emitting process verifies its live executable bytes and the committed manifest
+before it enters the transaction. An interrupted authorized attempt
 has one same-address recovery: a durable raw shard is adopted after deterministic
 byte validation, while missing or invalid evidence consumes the fixed mechanical
 attempt and remains recorded in the receipt. An evaluation failure is
