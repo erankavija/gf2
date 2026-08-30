@@ -120,6 +120,7 @@
       "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/checksums.sha256"
     }
   ],
+  "done_at": "2026-08-30T01:31:45.912626754Z",
   "first_ready_at": "2026-08-17T19:16:35.076007960Z",
   "gates_required": [
     "doc-review",
@@ -128,12 +129,12 @@
   "gates_status": {
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-08-30T00:58:49.573189509Z",
+      "updated_at": "2026-08-30T01:24:32.202965929Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-08-30T01:07:02.855494708Z",
+      "status": "passed",
+      "updated_at": "2026-08-30T01:30:51.681804158Z",
       "updated_by": "auto:executor"
     }
   },
@@ -144,7 +145,7 @@
     "component:gf2-sim"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Frozen root manifest for the campaign",
-  "updated_at": "2026-08-30T01:07:02.855494708Z"
+  "updated_at": "2026-08-30T01:31:45.912626754Z"
 }
