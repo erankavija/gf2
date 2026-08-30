@@ -6,6 +6,7 @@
 //! lineage. Publication synchronizes both files and their directory before a
 //! safe `RENAME_NOREPLACE`; an unsupported platform or filesystem refuses.
 
+use gf2_stats::weighted::ScaledStudentInterval;
 use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -763,6 +764,48 @@ pub struct HostObservationV1 {
     pub evidence: Vec<ObservationEvidenceV1>,
 }
 
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
+struct HostNormalizedEvidenceV1 {
+    observation_utc: String,
+    cpu_architecture: String,
+    cpu_vendor: String,
+    cpu_model: String,
+    sockets: u32,
+    numa_nodes: u32,
+    physical_cores: u32,
+    logical_cpus: u32,
+    online_cpus: Vec<u32>,
+    total_ram_bytes: u64,
+    available_ram_bytes: u64,
+    os_name: String,
+    os_version: String,
+    kernel_release: String,
+    kernel_version: String,
+}
+
+impl From<&HostObservationV1> for HostNormalizedEvidenceV1 {
+    fn from(host: &HostObservationV1) -> Self {
+        Self {
+            observation_utc: host.observation_utc.clone(),
+            cpu_architecture: host.cpu_architecture.clone(),
+            cpu_vendor: host.cpu_vendor.clone(),
+            cpu_model: host.cpu_model.clone(),
+            sockets: host.sockets,
+            numa_nodes: host.numa_nodes,
+            physical_cores: host.physical_cores,
+            logical_cpus: host.logical_cpus,
+            online_cpus: host.online_cpus.clone(),
+            total_ram_bytes: host.total_ram_bytes,
+            available_ram_bytes: host.available_ram_bytes,
+            os_name: host.os_name.clone(),
+            os_version: host.os_version.clone(),
+            kernel_release: host.kernel_release.clone(),
+            kernel_version: host.kernel_version.clone(),
+        }
+    }
+}
+
 /// Runtime accelerator observation.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "selection", rename_all = "snake_case", deny_unknown_fields)]
@@ -805,6 +848,42 @@ pub struct GpuObservationV1 {
     pub code_object_sha256: String,
     /// Exact runtime evidence.
     pub evidence: Vec<ObservationEvidenceV1>,
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
+struct GpuNormalizedEvidenceV1 {
+    model: String,
+    uuid: String,
+    pci_address: String,
+    architecture: String,
+    driver_version: String,
+    rocm_version: String,
+    hip_version: String,
+    kernel_name: String,
+    code_object_sha256: String,
+}
+
+impl From<&GpuObservationV1> for GpuNormalizedEvidenceV1 {
+    fn from(device: &GpuObservationV1) -> Self {
+        Self {
+            model: device.model.clone(),
+            uuid: device.uuid.clone(),
+            pci_address: device.pci_address.clone(),
+            architecture: device.architecture.clone(),
+            driver_version: device.driver_version.clone(),
+            rocm_version: device.rocm_version.clone(),
+            hip_version: device.hip_version.clone(),
+            kernel_name: device.kernel_name.clone(),
+            code_object_sha256: device.code_object_sha256.clone(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
+struct AcceleratorNotUsedEvidenceV1 {
+    reason: String,
 }
 
 /// Meaning of a terminal time.
@@ -879,14 +958,113 @@ pub struct AttemptRefV1 {
     pub attempt_terminal_sha256: String,
 }
 
-/// Validated complete execution lineage.
+/// Serialized execution provenance embedded in a final receipt.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct ValidatedExecutionLineage {
+pub struct ExecutionProvenanceV1 {
     /// Gap-free ordinal-ordered attempt triples.
     pub attempts: Vec<AttemptRefV1>,
     /// Complete ordered checkpoint partition.
     pub checkpoint_refs: Vec<CheckpointRefV1>,
+}
+
+/// Opaque complete checkpoint set accepted at the artifact boundary.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ValidatedCheckpointSet {
+    dataset_id: String,
+    checkpoints: Vec<ValidatedCheckpoint>,
+    references: Vec<CheckpointRefV1>,
+}
+
+impl ValidatedCheckpointSet {
+    /// Returns canonical references in exact semantic block order.
+    #[must_use]
+    pub fn checkpoint_refs(&self) -> &[CheckpointRefV1] {
+        &self.references
+    }
+
+    /// Returns the number of complete immutable blocks.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.references.len()
+    }
+
+    /// Returns whether this complete set has no blocks.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.references.is_empty()
+    }
+}
+
+/// Opaque checkpoint handle created only after full schema/address validation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ValidatedCheckpoint {
+    dataset_id: String,
+    reference: CheckpointRefV1,
+    attempt_id: String,
+    attempt_start_sha256: String,
+    producer: ProducerBackendV1,
+    accelerator_observation_sha256: String,
+    exponent_histogram: Vec<ExponentBinV1>,
+}
+
+impl ValidatedCheckpoint {
+    /// Returns the canonical immutable checkpoint reference.
+    #[must_use]
+    pub fn checkpoint_ref(&self) -> &CheckpointRefV1 {
+        &self.reference
+    }
+}
+
+/// Opaque validated start or terminal attempt artifact.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ValidatedAttemptArtifact {
+    digest: String,
+    payload: ExecutionAttemptReceiptV1,
+}
+
+impl ValidatedAttemptArtifact {
+    /// Returns the immutable artifact digest.
+    #[must_use]
+    pub fn digest(&self) -> &str {
+        &self.digest
+    }
+}
+
+/// Opaque gap-free execution lineage built from verified start/terminal phases.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ValidatedExecutionLineage {
+    dataset_id: String,
+    provenance: ExecutionProvenanceV1,
+}
+
+/// Opaque final receipt linked to validated checkpoints and attempt phases.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ValidatedFinalReceipt {
+    digest: String,
+    envelope: RareEventArtifactEnvelopeV1,
+}
+
+impl ValidatedFinalReceipt {
+    /// Returns the immutable final artifact digest.
+    #[must_use]
+    pub fn digest(&self) -> &str {
+        &self.digest
+    }
+
+    /// Returns the fully linked final envelope.
+    #[must_use]
+    pub fn envelope(&self) -> &RareEventArtifactEnvelopeV1 {
+        &self.envelope
+    }
+}
+
+impl ValidatedExecutionLineage {
+    /// Returns the canonical serialized execution provenance.
+    #[must_use]
+    pub fn provenance(&self) -> &ExecutionProvenanceV1 {
+        &self.provenance
+    }
 }
 
 /// Canonical target scientific result, separate from execution provenance.
@@ -974,7 +1152,7 @@ pub struct TargetCrossCheckReceiptV1 {
     /// SHA-256 over canonical result-payload bytes only.
     pub result_sha256: String,
     /// Complete execution provenance.
-    pub execution_provenance: ValidatedExecutionLineage,
+    pub execution_provenance: ExecutionProvenanceV1,
 }
 
 /// One coverage replicate result.
@@ -1058,7 +1236,7 @@ pub struct CoverageValidationReceiptV1 {
     /// SHA-256 over canonical result-payload bytes only.
     pub result_sha256: String,
     /// Complete execution provenance.
-    pub execution_provenance: ValidatedExecutionLineage,
+    pub execution_provenance: ExecutionProvenanceV1,
 }
 
 /// A schema, identity, integrity, lineage, or publication refusal.
@@ -1116,6 +1294,50 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
+/// Encodes the canonical raw collector record behind normalized host fields.
+pub fn normalized_host_evidence(
+    host: &HostObservationV1,
+) -> Result<ObservationEvidenceV1, ArtifactError> {
+    evidence_from_value(
+        "gf2.host-observation-normalized-json/v1",
+        &HostNormalizedEvidenceV1::from(host),
+    )
+}
+
+/// Encodes the canonical raw collector record behind one normalized GPU.
+pub fn normalized_gpu_evidence(
+    device: &GpuObservationV1,
+) -> Result<ObservationEvidenceV1, ArtifactError> {
+    evidence_from_value(
+        "gf2.gpu-observation-normalized-json/v1",
+        &GpuNormalizedEvidenceV1::from(device),
+    )
+}
+
+/// Encodes the canonical raw collector record behind a no-accelerator reason.
+pub fn normalized_accelerator_not_used_evidence(
+    reason: &str,
+) -> Result<ObservationEvidenceV1, ArtifactError> {
+    evidence_from_value(
+        "gf2.accelerator-not-used-normalized-json/v1",
+        &AcceleratorNotUsedEvidenceV1 {
+            reason: reason.to_owned(),
+        },
+    )
+}
+
+fn evidence_from_value(
+    source: &str,
+    value: &impl Serialize,
+) -> Result<ObservationEvidenceV1, ArtifactError> {
+    let bytes = canonical_bytes(value)?;
+    Ok(ObservationEvidenceV1 {
+        source: source.into(),
+        evidence_hex: bytes.iter().map(|byte| format!("{byte:02x}")).collect(),
+        evidence_sha256: sha256_hex(&bytes),
+    })
+}
+
 /// Recomputes a dataset ID from canonical identity bytes.
 pub fn dataset_id(identity: &RareEventDatasetIdentityV1) -> Result<String, ArtifactError> {
     domain_digest(
@@ -1165,7 +1387,13 @@ pub fn attempt_id(
     domain_digest(b"gf2-rare-event-attempt-identity-v1", &input)
 }
 
-/// Parses and validates exact canonical envelope bytes.
+/// Parses and validates exact canonical envelope bytes at the schema level.
+///
+/// For a final receipt this checks closed fields, identity, result arithmetic,
+/// and embedded reference shape, but deliberately does not confer scientific
+/// validity. Scientific acceptance requires opaque checkpoint handles and a
+/// [`ValidatedExecutionLineage`] through the final reducers or strict
+/// directory verification.
 pub fn decode_envelope(bytes: &[u8]) -> Result<RareEventArtifactEnvelopeV1, ArtifactError> {
     let envelope: RareEventArtifactEnvelopeV1 = serde_json::from_slice(bytes)?;
     if canonical_bytes(&envelope)? != bytes {
@@ -1239,19 +1467,362 @@ pub fn verify_artifact_files(
     Ok(envelope)
 }
 
+/// Reconstructs the complete canonical block-address set from a fixed identity.
+pub fn expected_checkpoint_block_addresses(
+    identity: &RareEventDatasetIdentityV1,
+) -> Result<Vec<String>, ArtifactError> {
+    validate_identity(identity)?;
+    let mut addresses = Vec::new();
+    match &identity.scientific {
+        ScientificIdentityV1::Target { .. } => {
+            addresses.reserve(2_048);
+            for run in 0..TARGET_RUNS {
+                for block in 0..64_u16 {
+                    addresses.push(format!("target/{run:02}/{block:04}"));
+                }
+            }
+        }
+        ScientificIdentityV1::Coverage { .. } => {
+            addresses.reserve(19_200);
+            for q in [3_u8, 5, 7] {
+                for replicate in 0..COVERAGE_REPLICATES {
+                    for run in 0..COVERAGE_RUNS {
+                        addresses.push(format!("coverage/q{q}/b{replicate:03}/r{run:02}/0000"));
+                    }
+                }
+            }
+        }
+    }
+    Ok(addresses)
+}
+
+/// Validates exact checkpoint bytes and returns an opaque immutable handle.
+pub fn validate_checkpoint_artifact_files(
+    artifact_json: &[u8],
+    artifact_sha256: &[u8],
+    expected_identity: &RareEventDatasetIdentityV1,
+) -> Result<ValidatedCheckpoint, ArtifactError> {
+    let digest = sha256_hex(artifact_json);
+    let envelope = verify_artifact_files(artifact_json, artifact_sha256, expected_identity)?;
+    let RareEventPayloadV1::TrajectoryCheckpoint(payload) = envelope.payload else {
+        return Err(ArtifactError::Schema(
+            "expected a trajectory checkpoint artifact".into(),
+        ));
+    };
+    Ok(ValidatedCheckpoint {
+        dataset_id: payload.dataset_id.clone(),
+        reference: CheckpointRefV1 {
+            block_address: checkpoint_block_address(&payload),
+            checkpoint_sha256: digest,
+        },
+        attempt_id: payload.attempt_id.clone(),
+        attempt_start_sha256: payload.attempt_start_sha256.clone(),
+        producer: payload.producer.clone(),
+        accelerator_observation_sha256: payload.accelerator_observation_sha256.clone(),
+        exponent_histogram: checkpoint_exponent_histogram(&payload),
+    })
+}
+
+/// Validates exact attempt-phase bytes and returns an opaque immutable handle.
+pub fn validate_attempt_artifact_files(
+    artifact_json: &[u8],
+    artifact_sha256: &[u8],
+    expected_identity: &RareEventDatasetIdentityV1,
+) -> Result<ValidatedAttemptArtifact, ArtifactError> {
+    let digest = sha256_hex(artifact_json);
+    let envelope = verify_artifact_files(artifact_json, artifact_sha256, expected_identity)?;
+    let RareEventPayloadV1::ExecutionAttempt(payload) = envelope.payload else {
+        return Err(ArtifactError::Schema(
+            "expected an execution-attempt artifact".into(),
+        ));
+    };
+    Ok(ValidatedAttemptArtifact {
+        digest,
+        payload: *payload,
+    })
+}
+
+/// Validates the exact closed checkpoint block set in canonical order.
+pub fn validate_checkpoint_set(
+    identity: &RareEventDatasetIdentityV1,
+    checkpoints: Vec<ValidatedCheckpoint>,
+) -> Result<ValidatedCheckpointSet, ArtifactError> {
+    let expected_dataset_id = dataset_id(identity)?;
+    let expected_addresses = expected_checkpoint_block_addresses(identity)?;
+    if checkpoints.len() != expected_addresses.len() {
+        return Err(ArtifactError::AddressSet(format!(
+            "checkpoint set needs exactly {} blocks",
+            expected_addresses.len()
+        )));
+    }
+    let mut references = Vec::with_capacity(checkpoints.len());
+    for (index, (checkpoint, expected_address)) in
+        checkpoints.iter().zip(expected_addresses).enumerate()
+    {
+        if checkpoint.dataset_id != expected_dataset_id {
+            return Err(ArtifactError::Identity(
+                "checkpoint handle belongs to a different dataset".into(),
+            ));
+        }
+        if checkpoint.reference.block_address != expected_address {
+            return Err(ArtifactError::AddressSet(
+                "checkpoint handles are missing, extra, duplicated, or reordered".into(),
+            ));
+        }
+        validate_digest(&checkpoint.reference.checkpoint_sha256)?;
+        match identity.scientific {
+            ScientificIdentityV1::Target { .. } => {
+                validate_histogram(&checkpoint.exponent_histogram, 3, 3 * 1_024, 256)?;
+            }
+            ScientificIdentityV1::Coverage { .. } => {
+                let q = [3_u8, 5, 7][index / (200 * 32)];
+                validate_histogram(&checkpoint.exponent_histogram, q, 9, 4_096)?;
+            }
+        }
+        references.push(checkpoint.reference.clone());
+    }
+    Ok(ValidatedCheckpointSet {
+        dataset_id: expected_dataset_id,
+        checkpoints,
+        references,
+    })
+}
+
+/// Constructs deterministic block-reference handles for schema conformance fixtures.
+///
+/// This does not read trajectory records and is unavailable to production builds.
+#[cfg(feature = "test-support")]
+pub fn validated_checkpoint_set_fixture(
+    identity: &RareEventDatasetIdentityV1,
+    references: Vec<CheckpointRefV1>,
+    attempt_id: &str,
+    attempt_start_sha256: &str,
+    producer: ProducerBackendV1,
+    accelerator_observation_sha256: &str,
+    exponent_histograms: Vec<Vec<ExponentBinV1>>,
+) -> Result<ValidatedCheckpointSet, ArtifactError> {
+    validate_digest(attempt_id)?;
+    validate_digest(attempt_start_sha256)?;
+    validate_digest(accelerator_observation_sha256)?;
+    let dataset_id = dataset_id(identity)?;
+    if references.len() != exponent_histograms.len() {
+        return Err(ArtifactError::AddressSet(
+            "fixture checkpoint references and summaries differ in length".into(),
+        ));
+    }
+    let checkpoints = references
+        .into_iter()
+        .zip(exponent_histograms)
+        .map(|(reference, exponent_histogram)| ValidatedCheckpoint {
+            dataset_id: dataset_id.clone(),
+            reference,
+            attempt_id: attempt_id.to_owned(),
+            attempt_start_sha256: attempt_start_sha256.to_owned(),
+            producer: producer.clone(),
+            accelerator_observation_sha256: accelerator_observation_sha256.to_owned(),
+            exponent_histogram,
+        })
+        .collect();
+    validate_checkpoint_set(identity, checkpoints)
+}
+
+/// Verifies a gap-free start/terminal chain and exact checkpoint partition.
+pub fn validate_execution_lineage(
+    identity: &RareEventDatasetIdentityV1,
+    phases: &[ValidatedAttemptArtifact],
+    checkpoints: &ValidatedCheckpointSet,
+) -> Result<ValidatedExecutionLineage, ArtifactError> {
+    let expected_dataset_id = dataset_id(identity)?;
+    if checkpoints.dataset_id != expected_dataset_id {
+        return Err(ArtifactError::Identity(
+            "checkpoint set and lineage dataset differ".into(),
+        ));
+    }
+    if phases.is_empty() || !phases.len().is_multiple_of(2) {
+        return Err(ArtifactError::Lineage(
+            "lineage needs one start and one terminal for every attempt".into(),
+        ));
+    }
+
+    let mut attempts = Vec::with_capacity(phases.len() / 2);
+    let mut claimed_refs = Vec::new();
+    let mut prior_terminal_digest: Option<String> = None;
+    for (ordinal, pair) in phases.chunks_exact(2).enumerate() {
+        let start = &pair[0];
+        let terminal = &pair[1];
+        let expected_predecessor = match &prior_terminal_digest {
+            None => AttemptPredecessorV1::None {},
+            Some(terminal_sha256) => AttemptPredecessorV1::Terminal {
+                terminal_sha256: terminal_sha256.clone(),
+            },
+        };
+        let expected_attempt_id = attempt_id(identity, ordinal as u64, &expected_predecessor)?;
+        if start.payload.dataset_id != expected_dataset_id
+            || terminal.payload.dataset_id != expected_dataset_id
+            || start.payload.attempt_ordinal != ordinal as u64
+            || terminal.payload.attempt_ordinal != ordinal as u64
+            || start.payload.predecessor != expected_predecessor
+            || terminal.payload.predecessor != expected_predecessor
+            || start.payload.attempt_id != expected_attempt_id
+            || terminal.payload.attempt_id != expected_attempt_id
+        {
+            return Err(ArtifactError::Lineage(
+                "attempt phases are gapped, reordered, forked, or replaced".into(),
+            ));
+        }
+        let AttemptPhaseV1::Start {
+            resume_checkpoint_refs,
+            start_utc,
+            host_observation,
+            accelerator_observation,
+            ..
+        } = &start.payload.phase
+        else {
+            return Err(ArtifactError::Lineage(
+                "attempt pair does not begin with a start phase".into(),
+            ));
+        };
+        let AttemptPhaseV1::Terminal {
+            attempt_start_sha256,
+            start_utc: terminal_start_utc,
+            host_observation_sha256,
+            accelerator_observation_sha256,
+            checkpoint_refs,
+            ..
+        } = &terminal.payload.phase
+        else {
+            return Err(ArtifactError::Lineage(
+                "attempt pair does not end with a terminal phase".into(),
+            ));
+        };
+        if attempt_start_sha256 != &start.digest
+            || terminal_start_utc != start_utc
+            || host_observation_sha256 != &sha256_hex(&canonical_bytes(host_observation)?)
+            || accelerator_observation_sha256
+                != &sha256_hex(&canonical_bytes(accelerator_observation)?)
+            || resume_checkpoint_refs != &claimed_refs
+        {
+            return Err(ArtifactError::Lineage(
+                "terminal/start link or accepted resume set mismatch".into(),
+            ));
+        }
+
+        let produced: Vec<_> = checkpoints
+            .checkpoints
+            .iter()
+            .filter(|checkpoint| checkpoint.attempt_id == expected_attempt_id)
+            .collect();
+        let produced_refs: Vec<_> = produced
+            .iter()
+            .map(|checkpoint| checkpoint.reference.clone())
+            .collect();
+        if &produced_refs != checkpoint_refs {
+            return Err(ArtifactError::Lineage(
+                "terminal checkpoint partition is missing, duplicated, or reordered".into(),
+            ));
+        }
+        for checkpoint in produced {
+            if checkpoint.attempt_start_sha256 != start.digest
+                || checkpoint.accelerator_observation_sha256 != *accelerator_observation_sha256
+            {
+                return Err(ArtifactError::Lineage(
+                    "checkpoint does not link to its producing start observation".into(),
+                ));
+            }
+            validate_producer(&checkpoint.producer, accelerator_observation)?;
+        }
+        claimed_refs.extend(produced_refs);
+        attempts.push(AttemptRefV1 {
+            attempt_id: expected_attempt_id,
+            attempt_start_sha256: start.digest.clone(),
+            attempt_terminal_sha256: terminal.digest.clone(),
+        });
+        prior_terminal_digest = Some(terminal.digest.clone());
+    }
+    if claimed_refs != checkpoints.references {
+        return Err(ArtifactError::Lineage(
+            "attempt terminals do not partition the exact checkpoint set".into(),
+        ));
+    }
+    Ok(ValidatedExecutionLineage {
+        dataset_id: expected_dataset_id,
+        provenance: ExecutionProvenanceV1 {
+            attempts,
+            checkpoint_refs: claimed_refs,
+        },
+    })
+}
+
+/// Validates final bytes against opaque checkpoint and execution handles.
+pub fn validate_final_artifact_files(
+    artifact_json: &[u8],
+    artifact_sha256: &[u8],
+    expected_identity: &RareEventDatasetIdentityV1,
+    checkpoints: &ValidatedCheckpointSet,
+    execution_lineage: &ValidatedExecutionLineage,
+) -> Result<ValidatedFinalReceipt, ArtifactError> {
+    let envelope = verify_artifact_files(artifact_json, artifact_sha256, expected_identity)?;
+    if checkpoints.dataset_id != dataset_id(expected_identity)?
+        || execution_lineage.dataset_id != checkpoints.dataset_id
+        || execution_lineage.provenance.checkpoint_refs != checkpoints.references
+    {
+        return Err(ArtifactError::Lineage(
+            "final verifier inputs do not share one dataset/checkpoint partition".into(),
+        ));
+    }
+    match &envelope.payload {
+        RareEventPayloadV1::TargetCrossCheck(receipt) => {
+            if receipt.execution_provenance != execution_lineage.provenance {
+                return Err(ArtifactError::Lineage(
+                    "target final provenance differs from validated execution lineage".into(),
+                ));
+            }
+            validate_target_result_against_checkpoints(&receipt.result_payload, checkpoints)?;
+        }
+        RareEventPayloadV1::CoverageValidation(receipt) => {
+            if receipt.execution_provenance != execution_lineage.provenance {
+                return Err(ArtifactError::Lineage(
+                    "coverage final provenance differs from validated execution lineage".into(),
+                ));
+            }
+            validate_coverage_result_against_checkpoints(&receipt.result_payload, checkpoints)?;
+        }
+        _ => {
+            return Err(ArtifactError::Schema(
+                "expected a target or coverage final receipt".into(),
+            ))
+        }
+    }
+    Ok(ValidatedFinalReceipt {
+        digest: sha256_hex(artifact_json),
+        envelope,
+    })
+}
+
 /// Wraps and validates a target final receipt from checked inputs.
 pub fn target_final_envelope(
     identity: RareEventDatasetIdentityV1,
     result_payload: TargetResultPayloadV1,
-    execution_provenance: ValidatedExecutionLineage,
+    checkpoints: &ValidatedCheckpointSet,
+    execution_lineage: &ValidatedExecutionLineage,
 ) -> Result<RareEventArtifactEnvelopeV1, ArtifactError> {
+    let expected_dataset_id = dataset_id(&identity)?;
+    if checkpoints.dataset_id != expected_dataset_id
+        || execution_lineage.dataset_id != expected_dataset_id
+        || checkpoints.references != execution_lineage.provenance.checkpoint_refs
+    {
+        return Err(ArtifactError::Lineage(
+            "target final inputs do not share one validated checkpoint lineage".into(),
+        ));
+    }
+    validate_target_result_against_checkpoints(&result_payload, checkpoints)?;
     let result_sha256 = sha256_hex(&canonical_bytes(&result_payload)?);
     let receipt = TargetCrossCheckReceiptV1 {
         dataset_id: dataset_id(&identity)?,
         dataset_identity: identity,
         result_payload,
         result_sha256,
-        execution_provenance,
+        execution_provenance: execution_lineage.provenance.clone(),
     };
     let envelope = RareEventArtifactEnvelopeV1 {
         envelope_schema: ENVELOPE_SCHEMA_V1.into(),
@@ -1266,15 +1837,26 @@ pub fn target_final_envelope(
 pub fn coverage_final_envelope(
     identity: RareEventDatasetIdentityV1,
     result_payload: CoverageResultPayloadV1,
-    execution_provenance: ValidatedExecutionLineage,
+    checkpoints: &ValidatedCheckpointSet,
+    execution_lineage: &ValidatedExecutionLineage,
 ) -> Result<RareEventArtifactEnvelopeV1, ArtifactError> {
+    let expected_dataset_id = dataset_id(&identity)?;
+    if checkpoints.dataset_id != expected_dataset_id
+        || execution_lineage.dataset_id != expected_dataset_id
+        || checkpoints.references != execution_lineage.provenance.checkpoint_refs
+    {
+        return Err(ArtifactError::Lineage(
+            "coverage final inputs do not share one validated checkpoint lineage".into(),
+        ));
+    }
+    validate_coverage_result_against_checkpoints(&result_payload, checkpoints)?;
     let result_sha256 = sha256_hex(&canonical_bytes(&result_payload)?);
     let receipt = CoverageValidationReceiptV1 {
         dataset_id: dataset_id(&identity)?,
         dataset_identity: identity,
         result_payload,
         result_sha256,
-        execution_provenance,
+        execution_provenance: execution_lineage.provenance.clone(),
     };
     let envelope = RareEventArtifactEnvelopeV1 {
         envelope_schema: ENVELOPE_SCHEMA_V1.into(),
@@ -1505,57 +2087,6 @@ fn parse_probability(value: &ExactDecimalV1, name: &str) -> Result<ExactValue, A
     Ok(value)
 }
 
-fn parse_rendered_probability(value: &str, name: &str) -> Result<ExactValue, ArtifactError> {
-    if value == "0e+0" {
-        return Ok(ExactValue::zero());
-    }
-    let (significand, exponent) = value
-        .split_once('e')
-        .ok_or_else(|| ArtifactError::Schema(format!("{name} is not scientific notation")))?;
-    let (whole, fractional) = significand
-        .split_once('.')
-        .ok_or_else(|| ArtifactError::Schema(format!("{name} lacks a decimal point")))?;
-    if whole.len() != 1
-        || !whole.bytes().all(|byte| (b'1'..=b'9').contains(&byte))
-        || fractional.len() < 17
-        || !fractional.bytes().all(|byte| byte.is_ascii_digit())
-    {
-        return Err(ArtifactError::Schema(format!(
-            "{name} is not a canonical at-least-18-digit rendering"
-        )));
-    }
-    let exponent_digits = exponent
-        .strip_prefix('+')
-        .or_else(|| exponent.strip_prefix('-'))
-        .ok_or_else(|| ArtifactError::Schema(format!("{name} lacks an exponent sign")))?;
-    if exponent_digits.is_empty()
-        || !exponent_digits.bytes().all(|byte| byte.is_ascii_digit())
-        || (exponent_digits.len() > 1 && exponent_digits.starts_with('0'))
-    {
-        return Err(ArtifactError::Schema(format!(
-            "{name} has a noncanonical exponent"
-        )));
-    }
-    let exponent_value: i64 = exponent
-        .parse()
-        .map_err(|_| ArtifactError::Schema(format!("{name} exponent is out of range")))?;
-    let digits = format!("{whole}{fractional}");
-    let mut exact = ExactValue::from_integer(parse_canonical_integer(&digits, name)?);
-    let scale = exponent_value - fractional.len() as i64;
-    if scale >= 0 {
-        exact.numerator *= BigUint::from(10_u8).pow(scale as u32);
-    } else {
-        exact.denominator *= BigUint::from(10_u8).pow((-scale) as u32);
-    }
-    exact = ExactValue::new(exact.numerator, exact.denominator)?;
-    if exact > ExactValue::one() {
-        return Err(ArtifactError::Schema(format!(
-            "{name} lies outside the closed unit interval"
-        )));
-    }
-    Ok(exact)
-}
-
 fn exact_mean(values: &[ExactValue]) -> ExactValue {
     values
         .iter()
@@ -1593,30 +2124,28 @@ fn validate_interval(
     upper: &str,
     center: &ExactValue,
     independent_run_variance: &ExactValue,
+    scale_base: u32,
+    scale_exponent: u32,
 ) -> Result<(), ArtifactError> {
-    let lower = parse_rendered_probability(lower, "interval lower endpoint")?;
-    let upper = parse_rendered_probability(upper, "interval upper endpoint")?;
-    if lower > *center || upper < *center || lower > upper {
+    let interval = ScaledStudentInterval::from_exact_independent_runs(
+        center.numerator.clone(),
+        center.denominator.clone(),
+        independent_run_variance.numerator.clone(),
+        independent_run_variance.denominator.clone(),
+        BigUint::from(1_019_756_723_u64),
+        BigUint::from(500_000_000_u64),
+        usize::from(TARGET_RUNS),
+        scale_base,
+        scale_exponent,
+    )
+    .map_err(|error| ArtifactError::Schema(error.to_string()))?;
+    let rendered = interval
+        .render_outward(18)
+        .map_err(|error| ArtifactError::Schema(error.to_string()))?;
+    if lower != rendered.lower || upper != rendered.upper {
         return Err(ArtifactError::Schema(
-            "rendered interval does not enclose its exact center".into(),
+            "interval endpoints differ from adjacent 18-digit outward rendering".into(),
         ));
-    }
-    let radius_squared = interval_radius_squared(independent_run_variance)?;
-    if lower > ExactValue::zero() {
-        let distance = center.abs_diff(&lower);
-        if distance.multiply(&distance) < radius_squared {
-            return Err(ArtifactError::Schema(
-                "lower interval endpoint is not rounded outward".into(),
-            ));
-        }
-    }
-    if upper < ExactValue::one() {
-        let distance = upper.abs_diff(center);
-        if distance.multiply(&distance) < radius_squared {
-            return Err(ArtifactError::Schema(
-                "upper interval endpoint is not rounded outward".into(),
-            ));
-        }
     }
     Ok(())
 }
@@ -1670,6 +2199,117 @@ fn validate_histogram(
             BigUint::from(expected_count) * base.pow(maximum_observed),
         )?,
     ))
+}
+
+fn merge_histograms<'a>(
+    histograms: impl IntoIterator<Item = &'a [ExponentBinV1]>,
+    maximum_exponent: u32,
+) -> Result<Vec<ExponentBinV1>, ArtifactError> {
+    let mut counts = vec![0_u64; maximum_exponent as usize + 1];
+    for histogram in histograms {
+        for bin in histogram {
+            counts[bin.exponent as usize] = counts[bin.exponent as usize]
+                .checked_add(bin.count)
+                .ok_or_else(|| ArtifactError::AddressSet("histogram count overflow".into()))?;
+        }
+    }
+    Ok(counts
+        .into_iter()
+        .enumerate()
+        .filter_map(|(exponent, count)| {
+            (count != 0).then_some(ExponentBinV1 {
+                exponent: exponent as u32,
+                count,
+            })
+        })
+        .collect())
+}
+
+fn validate_target_result_against_checkpoints(
+    payload: &TargetResultPayloadV1,
+    checkpoints: &ValidatedCheckpointSet,
+) -> Result<(), ArtifactError> {
+    if checkpoints.checkpoints.len() != 2_048 {
+        return Err(ArtifactError::AddressSet(
+            "target reducer needs every validated checkpoint".into(),
+        ));
+    }
+    for run in 0..usize::from(TARGET_RUNS) {
+        let blocks = &checkpoints.checkpoints[run * 64..(run + 1) * 64];
+        let histogram = merge_histograms(
+            blocks
+                .iter()
+                .map(|checkpoint| checkpoint.exponent_histogram.as_slice()),
+            3 * 1_024,
+        )?;
+        let (ess, _, mean) = validate_histogram(
+            &histogram,
+            3,
+            3 * 1_024,
+            u64::from(TARGET_TRAJECTORIES_PER_RUN),
+        )?;
+        if parse_exact(&payload.per_run_ess[run], "per-run checkpoint-backed ESS")? != ess
+            || parse_probability(&payload.run_means[run], "checkpoint-backed run mean")? != mean
+        {
+            return Err(ArtifactError::AddressSet(
+                "target per-run statistics disagree with validated checkpoints".into(),
+            ));
+        }
+    }
+    let pooled = merge_histograms(
+        checkpoints
+            .checkpoints
+            .iter()
+            .map(|checkpoint| checkpoint.exponent_histogram.as_slice()),
+        3 * 1_024,
+    )?;
+    if pooled != payload.exponent_histogram {
+        return Err(ArtifactError::AddressSet(
+            "target pooled histogram disagrees with validated checkpoints".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_coverage_result_against_checkpoints(
+    payload: &CoverageResultPayloadV1,
+    checkpoints: &ValidatedCheckpointSet,
+) -> Result<(), ArtifactError> {
+    if checkpoints.checkpoints.len() != 19_200 {
+        return Err(ArtifactError::AddressSet(
+            "coverage reducer needs every validated checkpoint".into(),
+        ));
+    }
+    for (case_slot, q) in [3_u8, 5, 7].into_iter().enumerate() {
+        for replicate in 0..usize::from(COVERAGE_REPLICATES) {
+            let result =
+                &payload.replicates[case_slot * usize::from(COVERAGE_REPLICATES) + replicate];
+            let offset = (case_slot * usize::from(COVERAGE_REPLICATES) + replicate)
+                * usize::from(COVERAGE_RUNS);
+            let runs = &checkpoints.checkpoints[offset..offset + usize::from(COVERAGE_RUNS)];
+            for (run, checkpoint) in runs.iter().enumerate() {
+                let (_, _, mean) = validate_histogram(&checkpoint.exponent_histogram, q, 9, 4_096)?;
+                if parse_probability(&result.run_means[run], "coverage checkpoint run mean")?
+                    != mean
+                {
+                    return Err(ArtifactError::AddressSet(
+                        "coverage run mean disagrees with validated checkpoint".into(),
+                    ));
+                }
+            }
+            let pooled = merge_histograms(
+                runs.iter()
+                    .map(|checkpoint| checkpoint.exponent_histogram.as_slice()),
+                9,
+            )?;
+            if pooled != result.exponent_histogram {
+                return Err(ArtifactError::AddressSet(
+                    "coverage replicate histogram disagrees with validated checkpoints".into(),
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 fn validate_extinction_reasons(reasons: &[String]) -> Result<(), ArtifactError> {
@@ -1733,6 +2373,8 @@ fn validate_target_result(payload: &TargetResultPayloadV1) -> Result<(), Artifac
         &payload.interval_upper,
         &estimate,
         &variance,
+        3,
+        payload.minimum_exponent,
     )?;
 
     let (computed_ess, computed_largest_weight_share, histogram_mean) =
@@ -1891,11 +2533,18 @@ fn validate_coverage_result(payload: &CoverageResultPayloadV1) -> Result<(), Art
                     "coverage variance differs from exact independent-run variance".into(),
                 ));
             }
+            let (computed_ess, _, histogram_mean) =
+                validate_histogram(&item.exponent_histogram, q, 9, REPLICATE_TRAJECTORIES)?;
             validate_interval(
                 &item.interval_lower,
                 &item.interval_upper,
                 &estimate,
                 &variance,
+                u32::from(q),
+                item.exponent_histogram
+                    .first()
+                    .expect("validated nonempty histogram")
+                    .exponent,
             )?;
             let contains = interval_contains(&anchor, &estimate, &variance)?;
             if item.contains_anchor != contains {
@@ -1905,8 +2554,6 @@ fn validate_coverage_result(payload: &CoverageResultPayloadV1) -> Result<(), Art
             }
             containing += u16::from(contains);
 
-            let (computed_ess, _, histogram_mean) =
-                validate_histogram(&item.exponent_histogram, q, 9, REPLICATE_TRAJECTORIES)?;
             if estimate != histogram_mean {
                 return Err(ArtifactError::Schema(
                     "coverage estimate disagrees with exponent histogram".into(),
@@ -2153,6 +2800,77 @@ fn validate_checkpoint(payload: &TrajectoryCheckpointV1) -> Result<(), ArtifactE
     Ok(())
 }
 
+fn checkpoint_block_address(payload: &TrajectoryCheckpointV1) -> String {
+    match payload.run_address {
+        RunAddressV1::Target { run } => {
+            format!("target/{run:02}/{:04}", payload.block_index)
+        }
+        RunAddressV1::Coverage { q, replicate, run } => {
+            format!(
+                "coverage/q{q}/b{replicate:03}/r{run:02}/{:04}",
+                payload.block_index
+            )
+        }
+    }
+}
+
+fn checkpoint_exponent_histogram(payload: &TrajectoryCheckpointV1) -> Vec<ExponentBinV1> {
+    let maximum = match &payload.records {
+        TrajectoryRecordsV1::Target(_) => 3 * 1_024,
+        TrajectoryRecordsV1::Coverage(_) => 9,
+    };
+    let mut counts = vec![0_u64; maximum as usize + 1];
+    match &payload.records {
+        TrajectoryRecordsV1::Target(records) => {
+            for record in records {
+                counts[record.exponent as usize] += 1;
+            }
+        }
+        TrajectoryRecordsV1::Coverage(records) => {
+            for record in records {
+                counts[record.exponent as usize] += 1;
+            }
+        }
+    }
+    counts
+        .into_iter()
+        .enumerate()
+        .filter_map(|(exponent, count)| {
+            (count != 0).then_some(ExponentBinV1 {
+                exponent: exponent as u32,
+                count,
+            })
+        })
+        .collect()
+}
+
+fn validate_producer(
+    producer: &ProducerBackendV1,
+    accelerator: &AcceleratorObservationV1,
+) -> Result<(), ArtifactError> {
+    match (producer, accelerator) {
+        (ProducerBackendV1::Cpu {}, AcceleratorObservationV1::NotUsed { .. }) => Ok(()),
+        (
+            ProducerBackendV1::Gpu {
+                device_uuid,
+                kernel_name,
+                code_object_sha256,
+            },
+            AcceleratorObservationV1::Used { devices },
+        ) if devices.iter().any(|device| {
+            device.uuid == *device_uuid
+                && device.kernel_name == *kernel_name
+                && device.code_object_sha256 == *code_object_sha256
+        }) =>
+        {
+            Ok(())
+        }
+        _ => Err(ArtifactError::Lineage(
+            "checkpoint producer disagrees with start accelerator observation".into(),
+        )),
+    }
+}
+
 fn validate_attempt(payload: &ExecutionAttemptReceiptV1) -> Result<(), ArtifactError> {
     if payload.attempt_id
         != attempt_id(
@@ -2238,12 +2956,13 @@ fn validate_attempt(payload: &ExecutionAttemptReceiptV1) -> Result<(), ArtifactE
                     "environment declarations differ from behavior closure".into(),
                 ));
             }
-            ensure_sorted_by(
-                &invocation.input_resolution,
-                |entry| &entry.field,
-                "input resolution",
-            )?;
             validate_worker(worker_configuration)?;
+            validate_input_resolution(
+                invocation,
+                environment_inputs,
+                worker_configuration,
+                &configuration,
+            )?;
             validate_host(host_observation)?;
             validate_accelerator(accelerator_observation)?;
             ensure_sorted_unique(resume_checkpoint_refs, "resume checkpoint refs")?;
@@ -2297,6 +3016,137 @@ fn validate_attempt(payload: &ExecutionAttemptReceiptV1) -> Result<(), ArtifactE
     Ok(())
 }
 
+fn validate_input_resolution(
+    invocation: &InvocationV1,
+    environment_inputs: &[EnvironmentInputV1],
+    worker: &WorkerConfigurationV1,
+    configuration: &RareEventConfigurationV1,
+) -> Result<(), ArtifactError> {
+    let scientific_mode = match configuration.scientific_identity {
+        ScientificIdentityV1::Target { .. } => "target",
+        ScientificIdentityV1::Coverage { .. } => "coverage",
+    };
+    let expected = [
+        (
+            "accelerator_selection",
+            worker.accelerator_selection.clone(),
+            false,
+        ),
+        ("artifact_root", configuration.artifact_root.clone(), true),
+        (
+            "block_assignment_policy",
+            worker.block_assignment_policy.clone(),
+            false,
+        ),
+        ("cpu_affinity", worker.cpu_affinity.clone(), false),
+        (
+            "effective_devices",
+            worker.effective_devices.join(","),
+            false,
+        ),
+        (
+            "effective_workers",
+            worker.effective_workers.to_string(),
+            false,
+        ),
+        ("executor_mode", worker.executor_mode.clone(), false),
+        ("fallback_policy", worker.fallback_policy.clone(), false),
+        (
+            "requested_workers",
+            worker.requested_workers.to_string(),
+            false,
+        ),
+        ("scientific_identity", scientific_mode.into(), true),
+        ("work_queue_policy", worker.work_queue_policy.clone(), false),
+    ];
+    if invocation.input_resolution.len() != expected.len() {
+        return Err(ArtifactError::Identity(
+            "input resolution does not contain the closed field inventory".into(),
+        ));
+    }
+    for (entry, (field, effective_value, configuration_only)) in
+        invocation.input_resolution.iter().zip(expected)
+    {
+        if entry.field != field || entry.value != effective_value {
+            return Err(ArtifactError::Identity(
+                "input-resolution field/value differs from effective inputs".into(),
+            ));
+        }
+        if configuration_only {
+            if entry.origin != InputOriginV1::Configuration {
+                return Err(ArtifactError::Identity(
+                    "configuration-owned input has a different claimed origin".into(),
+                ));
+            }
+            continue;
+        }
+        match entry.origin {
+            InputOriginV1::Argument => {
+                let flag = format!("--{}={}", field.replace('_', "-"), entry.value);
+                if invocation
+                    .argv
+                    .iter()
+                    .filter(|token| *token == &flag)
+                    .count()
+                    != 1
+                {
+                    return Err(ArtifactError::Identity(
+                        "argument-origin input lacks one exact argv token".into(),
+                    ));
+                }
+            }
+            InputOriginV1::Environment => {
+                let environment_name = if matches!(field, "requested_workers" | "effective_workers")
+                {
+                    "RAYON_NUM_THREADS".to_owned()
+                } else {
+                    format!("GF2_{}", field.to_ascii_uppercase())
+                };
+                let observed = environment_inputs
+                    .iter()
+                    .find(|item| item.name == environment_name);
+                if !matches!(
+                    observed,
+                    Some(EnvironmentInputV1 {
+                        value: EnvironmentValueV1::Set(value),
+                        ..
+                    }) if value == &entry.value
+                ) {
+                    return Err(ArtifactError::Identity(
+                        "environment-origin input differs from observed environment".into(),
+                    ));
+                }
+            }
+            InputOriginV1::SchemaDefault => {
+                if schema_default(field) != Some(entry.value.as_str()) {
+                    return Err(ArtifactError::Identity(
+                        "default-origin input differs from the closed schema default".into(),
+                    ));
+                }
+            }
+            InputOriginV1::Configuration => {
+                return Err(ArtifactError::Identity(
+                    "execution input is not owned by immutable scientific configuration".into(),
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn schema_default(field: &str) -> Option<&'static str> {
+    match field {
+        "accelerator_selection" => Some("none"),
+        "block_assignment_policy" => Some("round-robin/v1"),
+        "cpu_affinity" => Some("unpinned"),
+        "effective_devices" => Some(""),
+        "executor_mode" => Some("cpu"),
+        "fallback_policy" => Some("safe-cpu/v1"),
+        "work_queue_policy" => Some("canonical-block-queue/v1"),
+        _ => None,
+    }
+}
+
 fn validate_host(host: &HostObservationV1) -> Result<(), ArtifactError> {
     validate_timestamp(&host.observation_utc)?;
     if host.logical_cpus == 0
@@ -2319,6 +3169,23 @@ fn validate_host(host: &HostObservationV1) -> Result<(), ArtifactError> {
     for evidence in &host.evidence {
         validate_evidence(evidence)?;
     }
+    let normalized: Vec<_> = host
+        .evidence
+        .iter()
+        .filter(|evidence| evidence.source == "gf2.host-observation-normalized-json/v1")
+        .collect();
+    if normalized.len() != 1 {
+        return Err(ArtifactError::Identity(
+            "host observation needs exactly one canonical normalized collector record".into(),
+        ));
+    }
+    let bytes = decode_hex(&normalized[0].evidence_hex)?;
+    let observed: HostNormalizedEvidenceV1 = serde_json::from_slice(&bytes)?;
+    if canonical_bytes(&observed)? != bytes || observed != HostNormalizedEvidenceV1::from(host) {
+        return Err(ArtifactError::Identity(
+            "normalized host fields differ from immutable collector evidence".into(),
+        ));
+    }
     Ok(())
 }
 
@@ -2333,6 +3200,22 @@ fn validate_accelerator(accelerator: &AcceleratorObservationV1) -> Result<(), Ar
             for item in evidence {
                 validate_evidence(item)?;
             }
+            let normalized: Vec<_> = evidence
+                .iter()
+                .filter(|item| item.source == "gf2.accelerator-not-used-normalized-json/v1")
+                .collect();
+            if normalized.len() != 1 {
+                return Err(ArtifactError::Identity(
+                    "no-accelerator observation needs one canonical collector record".into(),
+                ));
+            }
+            let bytes = decode_hex(&normalized[0].evidence_hex)?;
+            let observed: AcceleratorNotUsedEvidenceV1 = serde_json::from_slice(&bytes)?;
+            if canonical_bytes(&observed)? != bytes || observed.reason != *reason {
+                return Err(ArtifactError::Identity(
+                    "no-accelerator reason differs from immutable collector evidence".into(),
+                ));
+            }
         }
         AcceleratorObservationV1::Used { devices } => {
             if devices.is_empty() {
@@ -2345,6 +3228,25 @@ fn validate_accelerator(accelerator: &AcceleratorObservationV1) -> Result<(), Ar
                 validate_digest(&device.code_object_sha256)?;
                 for item in &device.evidence {
                     validate_evidence(item)?;
+                }
+                let normalized: Vec<_> = device
+                    .evidence
+                    .iter()
+                    .filter(|item| item.source == "gf2.gpu-observation-normalized-json/v1")
+                    .collect();
+                if normalized.len() != 1 {
+                    return Err(ArtifactError::Identity(
+                        "GPU observation needs one canonical collector record".into(),
+                    ));
+                }
+                let bytes = decode_hex(&normalized[0].evidence_hex)?;
+                let observed: GpuNormalizedEvidenceV1 = serde_json::from_slice(&bytes)?;
+                if canonical_bytes(&observed)? != bytes
+                    || observed != GpuNormalizedEvidenceV1::from(device)
+                {
+                    return Err(ArtifactError::Identity(
+                        "normalized GPU fields differ from immutable collector evidence".into(),
+                    ));
                 }
             }
         }
@@ -2364,7 +3266,7 @@ fn validate_evidence(evidence: &ObservationEvidenceV1) -> Result<(), ArtifactErr
 
 fn validate_final_refs(
     identity: &RareEventDatasetIdentityV1,
-    provenance: &ValidatedExecutionLineage,
+    provenance: &ExecutionProvenanceV1,
     expected_blocks: usize,
 ) -> Result<(), ArtifactError> {
     if provenance.checkpoint_refs.len() != expected_blocks {
@@ -2372,9 +3274,19 @@ fn validate_final_refs(
             "final receipt needs {expected_blocks} checkpoint refs"
         )));
     }
-    ensure_sorted_unique(&provenance.checkpoint_refs, "final checkpoint refs")?;
-    for reference in &provenance.checkpoint_refs {
+    let expected_addresses = expected_checkpoint_block_addresses(identity)?;
+    for (reference, expected_address) in provenance.checkpoint_refs.iter().zip(expected_addresses) {
+        if reference.block_address != expected_address {
+            return Err(ArtifactError::AddressSet(
+                "final checkpoint refs are missing, extra, duplicated, or reordered".into(),
+            ));
+        }
         validate_digest(&reference.checkpoint_sha256)?;
+    }
+    if provenance.attempts.is_empty() {
+        return Err(ArtifactError::Lineage(
+            "final receipt omits its execution attempts".into(),
+        ));
     }
     for (ordinal, attempt) in provenance.attempts.iter().enumerate() {
         validate_digest(&attempt.attempt_start_sha256)?;
