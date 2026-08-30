@@ -30,7 +30,7 @@ use sha2::{Digest, Sha256};
 use super::root_fs::CampaignRoot;
 use super::schema::{
     field_summary_file, read_field_summary, read_manifest, shard_record_file, ArtifactPath,
-    ArtifactPathError, CampaignId, CampaignManifest, CellTerminalState, DatasetFileClass,
+    ArtifactPathError, Availability, CampaignId, CampaignManifest, CellTerminalState, DatasetFileClass,
     DatasetLayout, GitRevision, GitRevisionError, Provenance, SchemaError, Sha256Digest,
     Sha256DigestError, DATASET_HOME, INTEGRITY_FILE, MANIFEST_FILE,
 };
@@ -511,6 +511,49 @@ pub struct RuntimeCpuIdentity {
     pub physical_cores: u32,
     /// Number of logical processor threads.
     pub logical_threads: u32,
+}
+
+/// Accelerator runtime and model identity observed on the producing host.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RuntimeAcceleratorIdentity {
+    /// Installed ROCm runtime version, or an explicit absent state.
+    pub runtime: Availability<String>,
+    /// AMD accelerator product name, or an explicit absent state.
+    pub model: Availability<String>,
+}
+
+/// Observes the producing host's accelerator identity without running a
+/// kernel or opening a campaign stream.
+///
+/// The runtime version comes from ROCm's installation metadata. The model is
+/// read from the Linux DRM sysfs inventory and is reported only for an AMD GPU
+/// with a non-empty product name. Missing metadata is an explicit absent state,
+/// not a hand-written placeholder.
+pub fn observe_accelerator_identity() -> RuntimeAcceleratorIdentity {
+    let runtime = fs::read_to_string("/opt/rocm/.info/version")
+        .ok()
+        .map(|value| value.trim().to_owned())
+        .filter(|value| !value.is_empty())
+        .map_or(Availability::NotPresent, |value| Availability::Present { value });
+    let model = fs::read_dir("/sys/class/drm")
+        .ok()
+        .into_iter()
+        .flatten()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_name().to_string_lossy().starts_with("card"))
+        .find_map(|entry| {
+            let device = entry.path().join("device");
+            let vendor = fs::read_to_string(device.join("vendor")).ok()?;
+            if vendor.trim() != "0x1002" {
+                return None;
+            }
+            fs::read_to_string(device.join("product_name"))
+                .ok()
+                .map(|value| value.trim().to_owned())
+                .filter(|value| !value.is_empty())
+        })
+        .map_or(Availability::NotPresent, |value| Availability::Present { value });
+    RuntimeAcceleratorIdentity { runtime, model }
 }
 
 /// Observes the producing host's processor model and core/thread topology.

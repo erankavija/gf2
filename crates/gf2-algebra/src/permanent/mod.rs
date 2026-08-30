@@ -50,7 +50,9 @@ pub use compressed_rank::{
     CompressedTransitionTable, SupportedPrimeField, Vector3, CANONICAL_ENCODING_VERSION,
     CANONICAL_SUBSPACE_HASH_DOMAIN,
 };
-pub use exact::{enumerate_permanent_zero_probability, ExactProbability};
+pub use exact::{
+    enumerate_permanent_zero_probability, try_visit_permanent_anchor_matrices, ExactProbability,
+};
 pub use rank::{
     permanental_rank_status, permanental_rank_status_with_stats, PermanentalRank,
     PermanentalRankEvaluation,

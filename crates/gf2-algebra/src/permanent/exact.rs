@@ -6,6 +6,7 @@
 //! the same probability type at dimensions where matrix enumeration is
 //! impossible.
 
+use gf2_core::gfp::Fp;
 use num_bigint::BigUint;
 
 /// An exact event probability represented by arbitrary-precision counts.
@@ -119,7 +120,8 @@ pub fn enumerate_permanent_zero_probability(
 ) -> ExactProbability {
     match field_order {
         3 if (1..=4).contains(&dimension) => enumerate::<3>(dimension),
-        5 | 7 if (1..=3).contains(&dimension) => enumerate_dynamic(field_order, dimension),
+        5 if (1..=3).contains(&dimension) => enumerate::<5>(dimension),
+        7 if (1..=3).contains(&dimension) => enumerate::<7>(dimension),
         _ => panic!(
             "exact permanent anchors support q=3 with n<=4 and q=5,7 with n<=3; got q={field_order}, n={dimension}"
         ),
@@ -127,27 +129,79 @@ pub fn enumerate_permanent_zero_probability(
 }
 
 fn enumerate<const Q: u64>(dimension: usize) -> ExactProbability {
-    enumerate_dynamic(Q, dimension)
+    try_visit_permanent_anchor_matrices::<Q, std::convert::Infallible, _>(
+        dimension,
+        |_, _| Ok(()),
+    )
+    .expect("an infallible visitor cannot fail")
 }
 
-fn enumerate_dynamic(field_order: u64, dimension: usize) -> ExactProbability {
+/// Visits every matrix in one exact-anchor domain exactly once.
+///
+/// Matrices arrive in canonical row-major order, with the first entry changing
+/// fastest in the base-`Q` enumeration. The second callback argument is the
+/// independent fixed-expansion permanent used by
+/// [`enumerate_permanent_zero_probability`]; it does not call any production
+/// permanent implementation. Returning an error stops visitation immediately
+/// and forwards that error to the caller.
+///
+/// This visitor is the shared exhaustive address source for validation. It
+/// deliberately does not evaluate production backends or pool their outcomes,
+/// keeping the oracle path independent from the implementation under test.
+///
+/// # Errors
+///
+/// Returns the first error produced by `visitor`.
+///
+/// # Panics
+///
+/// Panics unless `Q` is 3 with `dimension` in `1..=4`, or `Q` is 5 or 7 with
+/// `dimension` in `1..=3`.
+///
+/// # Complexity
+///
+/// Visits `Q^(dimension^2)` matrices in constant auxiliary storage. The
+/// independent oracle uses a fixed expansion of at most 24 terms per matrix.
+pub fn try_visit_permanent_anchor_matrices<const Q: u64, E, F>(
+    dimension: usize,
+    mut visitor: F,
+) -> Result<ExactProbability, E>
+where
+    F: FnMut(&[Fp<Q>], Fp<Q>) -> Result<(), E>,
+{
+    assert!(
+        (Q == 3 && (1..=4).contains(&dimension))
+            || (matches!(Q, 5 | 7) && (1..=3).contains(&dimension)),
+        "exact permanent anchors support q=3 with n<=4 and q=5,7 with n<=3; got q={Q}, n={dimension}"
+    );
     let entry_count = dimension * dimension;
-    let matrix_count = field_order.pow(entry_count as u32);
-    let mut entries = [0_u64; 16];
+    let matrix_count = Q.pow(entry_count as u32);
+    let mut residues = [0_u64; 16];
+    let mut entries = [Fp::<Q>::new(0); 16];
     let mut zero_count = 0_u64;
 
     for encoded in 0..matrix_count {
         let mut remaining = encoded;
-        for entry in &mut entries[..entry_count] {
-            *entry = remaining % field_order;
-            remaining /= field_order;
+        for (residue, entry) in residues[..entry_count]
+            .iter_mut()
+            .zip(&mut entries[..entry_count])
+        {
+            *residue = remaining % Q;
+            *entry = Fp::new(*residue);
+            remaining /= Q;
         }
-        if permanent_mod_prime(&entries[..entry_count], dimension, field_order) == 0 {
+        let permanent = Fp::new(permanent_mod_prime(
+            &residues[..entry_count],
+            dimension,
+            Q,
+        ));
+        if permanent == Fp::new(0) {
             zero_count += 1;
         }
+        visitor(&entries[..entry_count], permanent)?;
     }
 
-    ExactProbability::from_counts(zero_count, matrix_count)
+    Ok(ExactProbability::from_counts(zero_count, matrix_count))
 }
 
 // The anchor domain ends at n=4.  Keeping these fixed expansions here avoids
