@@ -312,6 +312,21 @@ $ cargo run -p gf2-sim --release --bin permanent_campaign -- \
     --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N]
 ```
 
+An accelerator-backed field also supplies
+`--accelerator-cost-table dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv`.
+That versioned production table contains one positive integer launch cost for
+each and only each accelerator cell in the frozen manifest. Its
+[receipt](../../benchmarks/permanent_campaign/accelerator-launch-costs-v1.md)
+binds and recomputes every value from committed same-cell measurement evidence;
+the fail-closed
+[validator](../../benchmarks/permanent_campaign/accelerator_launch_costs_v1.py)
+checks the bound inputs, arithmetic, rounding, and exact receipt/table
+agreement. The binary rejects a missing, duplicate, malformed, nonpositive,
+processor-backed, or unmanifested row before emission approval, drawing, or
+output. These costs are launch-sizing evidence used to bound accelerator batch
+sizes. They are neither backend-selection evidence nor scientific-result
+evidence.
+
 `--workers N` sets the positive worker count for the field arm and defaults to
 `1` when omitted. One invocation executes exactly one field arm and writes only
 that field's shard files and field summary, so field arms can run concurrently.
