@@ -10,14 +10,14 @@
 //! the published prefix from the dataset directories and continues.
 //!
 //! All environment access that can affect execution passes through one
-//! instrumented layer: [`read_declared_environment`] refuses any name outside
-//! [`ENVIRONMENT_INPUT_NAMES`], each declared name is read exactly once, and
-//! the start receipt's environment record is derived from those same reads.
+//! instrumented layer: `read_declared_environment` refuses any name outside
+//! `ENVIRONMENT_INPUT_NAMES`, each declared name is read exactly once, and the
+//! start receipt's environment record is derived from those same reads.
 
 use std::collections::BTreeMap;
 use std::fmt;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use gf2_stats::sampler::MatrixAddress;
 
@@ -26,11 +26,12 @@ use super::artifact::result::{
     coverage_result_payload, decode_exact_target_result, target_result_payload,
 };
 use super::artifact::{
-    attempt_id, begin_attempt, canonical_bytes, coverage_final_artifact, dataset_id,
-    expected_checkpoint_block_addresses, finish_attempt, normalized_accelerator_not_used_evidence,
-    observe_host, observe_self_identity, publish_artifact, publish_checkpoint,
-    reconstruct_attempt_chain, reconstruct_execution_lineage, reconstruct_published_checkpoints,
-    recover_interrupted_attempt, run_id, sha256_hex, target_final_artifact,
+    attempt_id, begin_attempt, canonical_bytes, coverage_final_artifact, create_dataset_directory,
+    dataset_id, expected_checkpoint_block_addresses, finish_attempt,
+    normalized_accelerator_not_used_evidence, observe_host, observe_self_identity,
+    publish_artifact, publish_checkpoint, read_repository_file, reconstruct_attempt_chain,
+    reconstruct_execution_lineage, reconstruct_published_checkpoints, recover_interrupted_attempt,
+    run_id, sha256_hex, target_final_artifact, validate_configuration, validate_relative_path,
     verify_atomic_publication_support, AcceleratorObservationV1, ArtifactError, AttemptOutcomeV1,
     AttemptPhaseV1, AttemptPredecessorV1, AttemptStartArtifactV1, AttemptTerminalArtifactV1,
     CampaignAuthorityV1, CheckpointArtifactV1, CheckpointRefV1, CoverageTrajectoryRecordV1,
@@ -49,12 +50,17 @@ use super::{
 pub const BLOCK_BUDGET_ENVIRONMENT: &str = "GF2_RARE_EVENT_BLOCK_BUDGET";
 /// Environment name declaring the requested and effective worker count.
 pub const WORKER_ENVIRONMENT: &str = "RAYON_NUM_THREADS";
-/// Artifact-root-relative committed exact target result.
+/// Artifact-root-relative exact target result a completing target run reads.
+///
+/// The issue that executes a target campaign commits these bytes before its
+/// first draw; the final receipt then cites them by path and digest. No such
+/// file is committed for this issue, which exercises the estimator rather than
+/// executing a campaign.
 pub const EXACT_TARGET_RESULT_FILE: &str = "exact-target-result.json";
 
 /// Every environment name this runner may consult.
 ///
-/// This one inventory is what [`read_declared_environment`] permits, what a
+/// This one inventory is what the module's environment reader permits, what a
 /// start receipt records, and what a frozen configuration's behavior closure
 /// declares, so reading, recording, and declaring an environment input cannot
 /// drift apart. A receipt whose declared names differ from its closure is
@@ -196,13 +202,21 @@ impl RunOutcome {
 
 /// Reconstructs the complete dataset identity from one frozen configuration.
 ///
+/// Both the configuration and the path it was read from are revalidated here
+/// through the library's canonical checks, so a caller holding a hand-built
+/// configuration is held to exactly the grammar `decode_configuration`
+/// enforces. This runs before any filesystem effect in a run.
+///
 /// # Errors
 ///
-/// Refuses a configuration path that is not repository-relative.
+/// Refuses a configuration outside its closed grammar, and a configuration
+/// path that is not normalized repository-relative.
 pub fn dataset_identity(
     configuration: &RareEventConfigurationV1,
     configuration_path: &str,
 ) -> Result<RareEventDatasetIdentityV1, ArtifactError> {
+    validate_configuration(configuration)?;
+    validate_relative_path(configuration_path)?;
     let configuration_sha256 = sha256_hex(&canonical_bytes(configuration)?);
     Ok(RareEventDatasetIdentityV1 {
         campaign: CampaignAuthorityV1::default(),
@@ -225,6 +239,11 @@ pub fn dataset_identity(
 /// declared block budget, closes the attempt, and publishes the final receipt
 /// once the closed block set is complete.
 ///
+/// Nothing is created on disk until the configuration, its path, and its
+/// artifact root have all been accepted, so an invalid configuration leaves no
+/// trace. The dataset directory is then created through held descriptors like
+/// every other directory beneath the artifact root.
+///
 /// # Errors
 ///
 /// Refuses an unusable configuration or artifact root, a running executable
@@ -234,11 +253,10 @@ pub fn execute_frozen_run(
     configuration_path: &str,
     configuration: &RareEventConfigurationV1,
 ) -> Result<RunOutcome, RunError> {
+    // Every acceptance check runs before the first filesystem effect.
     let identity = dataset_identity(configuration, configuration_path)?;
     let dataset_id = dataset_id(&identity)?;
-    let artifact_root = PathBuf::from(&configuration.artifact_root);
-    let dataset_dir = artifact_root.join(&dataset_id);
-    fs::create_dir_all(&dataset_dir)?;
+    let dataset_dir = create_dataset_directory(&configuration.artifact_root, &dataset_id)?;
     verify_atomic_publication_support(&dataset_dir)?;
 
     let runtime = RuntimeInputs::observe(configuration, configuration_path)?;
@@ -338,7 +356,7 @@ pub fn execute_frozen_run(
         Some(publish_final_receipt(
             &dataset_dir,
             &identity,
-            &artifact_root,
+            &configuration.artifact_root,
         )?)
     } else {
         None
@@ -361,16 +379,13 @@ pub fn execute_frozen_run(
 fn publish_final_receipt(
     dataset_dir: &Path,
     identity: &RareEventDatasetIdentityV1,
-    artifact_root: &Path,
+    artifact_root: &str,
 ) -> Result<String, RunError> {
     let (checkpoints, lineage) = reconstruct_execution_lineage(dataset_dir, identity)?;
     let published = match &identity.scientific {
         ScientificIdentityV1::Target { .. } => {
-            let path = format!(
-                "{}/{EXACT_TARGET_RESULT_FILE}",
-                artifact_root.to_string_lossy()
-            );
-            let bytes = fs::read(artifact_root.join(EXACT_TARGET_RESULT_FILE))?;
+            let path = format!("{artifact_root}/{EXACT_TARGET_RESULT_FILE}");
+            let bytes = read_repository_file(&path)?;
             let exact = decode_exact_target_result(identity, &path, &bytes)?;
             let payload = target_result_payload(&checkpoints, &exact)?;
             let receipt = target_final_artifact(identity.clone(), payload, &checkpoints, &lineage)?;

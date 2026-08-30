@@ -30,7 +30,13 @@ const DEGENERACY_THRESHOLD_DENOMINATOR: u8 = 100;
 /// Fixed per-field coverage adequacy threshold out of 200 replicates.
 const COVERAGE_ADEQUACY_THRESHOLD: u16 = 180;
 
-/// The committed exact deficient-rank count this cross-check is measured against.
+/// The exact deficient-rank count this cross-check is measured against.
+///
+/// A completing target run reads these bytes from its artifact root and cites
+/// them by path and digest in its final receipt, so the stochastic estimate is
+/// compared against a preregistered exact answer rather than one chosen after
+/// the fact. The issue that executes a target campaign commits them before its
+/// first draw.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExactTargetResultV1 {
@@ -48,7 +54,7 @@ pub struct ExactTargetResultV1 {
     pub total: String,
 }
 
-/// One decoded exact result bound to the committed bytes it was read from.
+/// One decoded exact result bound to the exact bytes it was read from.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactTargetInput {
     path: String,
@@ -59,19 +65,22 @@ pub struct ExactTargetInput {
 
 impl ExactTargetInput {
     /// Returns the repository-relative path these exact bytes were read from.
+    ///
+    /// The final receipt cites this path, so it names the artifact a reader
+    /// must fetch to recheck the comparison.
     #[must_use]
     pub fn path(&self) -> &str {
         &self.path
     }
 
-    /// Returns the SHA-256 of the exact committed bytes.
+    /// Returns the SHA-256 of the exact bytes this result was decoded from.
     #[must_use]
     pub fn sha256(&self) -> &str {
         &self.sha256
     }
 }
 
-/// Decodes and binds the committed exact target result.
+/// Decodes one exact target result and binds it to its path and digest.
 ///
 /// # Errors
 ///

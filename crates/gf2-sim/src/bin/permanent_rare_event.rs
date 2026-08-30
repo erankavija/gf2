@@ -6,6 +6,20 @@
 //! onto an exit code. Proposal, weighting, interval, effective-sample-size, and
 //! artifact-lifecycle logic all live in the library.
 //!
+//! # Where a frozen configuration comes from
+//!
+//! A frozen configuration is authored to the schema the preregistered design
+//! `dev/active/3f664839/design.md` fixes, and reaches this binary only through
+//! [`decode_configuration`], which refuses a non-canonical encoding, an unknown
+//! schema, or any field outside that closed grammar. The issue that executes a
+//! campaign commits its frozen configuration before its first draw, so every
+//! artifact the run publishes cites immutable preregistered bytes by path and
+//! digest.
+//!
+//! This issue builds and exercises the estimator and its runner rather than
+//! executing a campaign, so it deliberately commits no configuration of its
+//! own. No path in this file names a file that exists in the repository.
+//!
 //! `RAYON_NUM_THREADS` declares the worker count. `GF2_RARE_EVENT_BLOCK_BUDGET`
 //! optionally bounds one invocation to that many checkpoint blocks; the run is
 //! resumable, so the next invocation continues from the published prefix.
@@ -13,7 +27,7 @@
 //! ```text
 //! RAYON_NUM_THREADS=8 GF2_RARE_EVENT_BLOCK_BUDGET=64 \
 //!     cargo run -p gf2-sim --release --bin permanent_rare_event -- \
-//!     dev/simulation_results/permanent-rare-event/target-configuration.json
+//!     <repository-relative path of the frozen configuration>
 //! ```
 //!
 //! Exit codes: `0` the dataset is complete, `10` durable progress was published
