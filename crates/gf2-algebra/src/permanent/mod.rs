@@ -51,7 +51,8 @@ pub use compressed_rank::{
     CANONICAL_SUBSPACE_HASH_DOMAIN,
 };
 pub use exact::{
-    enumerate_permanent_zero_probability, try_visit_permanent_anchor_matrices, ExactProbability,
+    determinant_singular_probability, enumerate_permanent_zero_probability,
+    try_visit_permanent_anchor_matrices, ExactProbability,
 };
 pub use rank::{
     permanental_rank_status, permanental_rank_status_with_stats, PermanentalRank,
