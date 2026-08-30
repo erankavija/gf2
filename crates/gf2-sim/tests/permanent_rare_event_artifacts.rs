@@ -2908,3 +2908,59 @@ fn rare_event_reducers_produce_revalidating_payloads() {
     )
     .unwrap();
 }
+
+/// Acceptance runs before the first filesystem effect, so an unusable
+/// configuration, configuration path, or artifact root leaves nothing on disk.
+#[test]
+fn rare_event_runner_validates_before_touching_the_filesystem() {
+    use gf2_sim::permanent_rare_event::runner::{dataset_identity, execute_frozen_run};
+
+    let configuration = runner_configuration(ScientificIdentityV1::coverage());
+    let relative = "dev/simulation_results/permanent-rare-event/configuration.json";
+    dataset_identity(&configuration, relative).expect("the frozen fixture is accepted");
+
+    // A configuration path outside the normalized repository-relative grammar.
+    for path in [
+        "/etc/passwd",
+        "dev/../escaped.json",
+        "",
+        "dev//escaped.json",
+        "dev/./escaped.json",
+        "dev\\escaped.json",
+    ] {
+        assert!(
+            dataset_identity(&configuration, path).is_err(),
+            "configuration path {path:?} was accepted"
+        );
+    }
+
+    // An absolute artifact root refuses, and creates nothing.
+    let root = artifact_tempdir("rare-event-unsafe-root-");
+    let absolute = root.path().join("escaped");
+    let mut hostile = configuration.clone();
+    hostile.artifact_root = absolute.to_string_lossy().into_owned();
+    assert!(dataset_identity(&hostile, relative).is_err());
+    assert!(execute_frozen_run(relative, &hostile).is_err());
+    assert!(
+        !absolute.exists(),
+        "an absolute artifact root was created on disk"
+    );
+
+    // An artifact root traversing out of the repository refuses the same way.
+    let mut traversal = configuration.clone();
+    traversal.artifact_root = "target/rare-event-guard/../escaped".into();
+    assert!(dataset_identity(&traversal, relative).is_err());
+    assert!(execute_frozen_run(relative, &traversal).is_err());
+    assert!(
+        !Path::new("target/escaped").exists(),
+        "a traversing artifact root was created on disk"
+    );
+    assert!(!Path::new("target/rare-event-guard").exists());
+
+    // An artifact root inside the raw campaign samples stays refused.
+    let mut raw = configuration.clone();
+    raw.artifact_root =
+        "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829".into();
+    assert!(dataset_identity(&raw, relative).is_err());
+    assert!(execute_frozen_run(relative, &raw).is_err());
+}
