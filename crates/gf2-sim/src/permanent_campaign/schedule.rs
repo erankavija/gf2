@@ -28,7 +28,7 @@
 //! assert_eq!(written.len(), work.len() + 1);
 //! ```
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
@@ -186,6 +186,45 @@ impl AcceleratorCostTable {
     pub fn contains(&self, q: u8, n: u16) -> bool {
         self.costs.contains_key(&(q, n))
     }
+
+    /// Validates this table against the complete manifest accelerator set.
+    ///
+    /// Exact-cell execution still binds the complete preregistered launch-cost
+    /// artifact: selecting one cell does not authorize a selected-only table
+    /// that omits another manifest accelerator cell or adds an unrelated key.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ScheduleError::AcceleratorCostMissing`] for the first missing
+    /// manifest accelerator cell, or
+    /// [`ScheduleError::AcceleratorCostUnexpected`] when the table contains a
+    /// processor-backed or nonmanifest key.
+    ///
+    /// # Complexity
+    ///
+    /// `O(C log C)` for the manifest and table cell counts.
+    pub fn validate_manifest(&self, manifest: &CampaignManifest) -> Result<(), ScheduleError> {
+        let expected: BTreeSet<_> = manifest
+            .cells
+            .iter()
+            .filter(|cell| cell.backend == Backend::Accelerator)
+            .map(|cell| (cell.q, cell.n))
+            .collect();
+        for &(q, n) in &expected {
+            if !self.costs.contains_key(&(q, n)) {
+                return Err(ScheduleError::AcceleratorCostMissing { q, n });
+            }
+        }
+        if let Some(&(q, n)) = self.costs.keys().find(|key| !expected.contains(key)) {
+            let backend = manifest
+                .cells
+                .iter()
+                .find(|cell| (cell.q, cell.n) == (q, n))
+                .map(|cell| cell.backend);
+            return Err(ScheduleError::AcceleratorCostUnexpected { q, n, backend });
+        }
+        Ok(())
+    }
 }
 
 /// Chooses the number of matrices for the next accelerator launch.
@@ -315,10 +354,6 @@ pub struct FieldRun {
 }
 
 impl FieldRun {
-    pub(crate) fn from_parts(q: u8, shards: Vec<ShardRun>, summary: FieldSummary) -> Self {
-        Self { q, shards, summary }
-    }
-
     /// Returns the field order covered by this invocation.
     #[must_use]
     pub const fn q(&self) -> u8 {
@@ -366,6 +401,15 @@ pub enum ScheduleError {
         /// Square matrix dimension of the cell.
         n: u16,
     },
+    /// The launch-cost table names a non-accelerator or nonmanifest cell.
+    AcceleratorCostUnexpected {
+        /// Field order in the unexpected key.
+        q: u8,
+        /// Matrix order in the unexpected key.
+        n: u16,
+        /// Manifest backend when the key names a processor-backed cell.
+        backend: Option<Backend>,
+    },
     /// The manifest selected an accelerator, but this host has no usable one.
     AcceleratorDeviceUnavailable {
         /// Prime field order of the cell.
@@ -405,6 +449,17 @@ impl fmt::Display for ScheduleError {
                 "accelerator cell q={q} n={n} has no measured per-matrix cost entry; \
                  supply one from that cell's committed measurement receipt"
             ),
+            Self::AcceleratorCostUnexpected { q, n, backend } => match backend {
+                Some(backend) => write!(
+                    formatter,
+                    "accelerator cost table key q={q} n={n} names processor backend {}",
+                    backend.name()
+                ),
+                None => write!(
+                    formatter,
+                    "accelerator cost table key q={q} n={n} is not a manifest cell"
+                ),
+            },
             Self::AcceleratorDeviceUnavailable { q, n, device } => write!(
                 formatter,
                 "cell q={q} n={n} requires {device}, but no usable device is present"
@@ -2142,6 +2197,36 @@ mod tests {
         let rendered = error.to_string();
         assert!(rendered.contains("q=3"), "{rendered}");
         assert!(rendered.contains("n=24"), "{rendered}");
+    }
+
+    #[test]
+    fn accelerator_cost_manifest_validation_classifies_unexpected_keys() {
+        let campaign = manifest(vec![cell(3, 2, 1, &[(0, 10)])]);
+        let processor_key = AcceleratorCostTable::new(
+            BTreeMap::from([((3, 2), Duration::from_micros(10))]),
+            Duration::from_millis(500),
+        );
+        assert!(matches!(
+            processor_key.validate_manifest(&campaign),
+            Err(ScheduleError::AcceleratorCostUnexpected {
+                q: 3,
+                n: 2,
+                backend: Some(Backend::GenericRyser),
+            })
+        ));
+
+        let nonmanifest_key = AcceleratorCostTable::new(
+            BTreeMap::from([((5, 9), Duration::from_micros(10))]),
+            Duration::from_millis(500),
+        );
+        assert!(matches!(
+            nonmanifest_key.validate_manifest(&campaign),
+            Err(ScheduleError::AcceleratorCostUnexpected {
+                q: 5,
+                n: 9,
+                backend: None,
+            })
+        ));
     }
 
     #[test]
