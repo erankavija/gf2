@@ -180,7 +180,7 @@
      "short_id": "3f664839",
      "title": "Preregistered compressed-state rare-event design",
      "classification": "design",
-     "status": "in progress: high-tier mathematics/design worker dispatched in conflict-safe subwave 9a; the amended hard validation and falsification contract is committed at b9c50d97 and 0bf6e7a1."
+     "status": "rework-1 in progress: doc-review and research-review passed at 49702c4a, but research review advised explicit versioned schemas, checksums, and immutable dataset identity for trajectory checkpoints and final cross-check receipts. Focused high-tier preregistration repair is limited to that advisory."
     },
     {
      "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
@@ -781,7 +781,8 @@
   "ec22205e_note": "The first cycle reached MAX after v4 research-review found three publication-evidence gaps. The owner's first option-A reset produced canonical v5 and reached MAX when failure-retention review exposed truncation before a parseable address. The owner's second option-A reset produced the tail-aware parser as count 1; its review found the None-versus-empty conflation, the third repeat of the same root cause. Owner option A at 2026-08-29T14:37:36+03:00 authorizes the exact correction as count 2. MAX is reached; any further readiness failure escalates. Timing remains held.",
   "032cc754": 1,
   "a39bb161": 2,
-  "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates"
+  "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates",
+  "3f664839": 1
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
