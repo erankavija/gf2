@@ -314,11 +314,12 @@ of them cannot freeze.
 
 The `permanent_campaign` invocation requires the exact selector `--q FIELD
 --n ORDER` and accepts `--workers N`, where $N$ is an integer of at least $1$
-and defaults to $1$ when the flag is omitted. Its first output line records the
-effective configuration as `campaign q={field} n={order} workers={N}` before
-any per-shard timing lines, so the execution receipt names the configured
-parallelism rather than relying on host probing. The coordinator persists the
-required $(7,20)$-first gate and admits campaign-purpose work serially.
+and defaults to $1$ when the flag is omitted. The command records the effective
+configuration as `campaign q={field} n={order} workers={N}` after the
+transaction and its per-shard timing lines complete. The persisted arm receipt
+names the configured parallelism without relying on host probing. The
+coordinator persists the required $(7,20)$-first gate and admits
+campaign-purpose work serially.
 
 This claim is deliberately limited: the argument vector records how the
 compiled interface was invoked, while the source revision and dependency lock
