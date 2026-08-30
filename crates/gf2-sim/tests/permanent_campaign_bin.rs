@@ -198,13 +198,14 @@ fn run_with_cost_table(label: &str, table: &str) -> std::process::Output {
     let parent = temp_path(label);
     let manifest_path = parent.join("manifest");
     let manifest_file = manifest_path.join("manifest.json");
+    let output_path = parent.join("campaign-bin-test");
     fs::create_dir_all(&manifest_path).unwrap();
+    fs::create_dir_all(&output_path).unwrap();
     fs::write(
         &manifest_file,
         serde_json::to_vec_pretty(&launch_cost_manifest()).unwrap(),
     )
     .unwrap();
-    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
     let before = files_under(&output_path);
     let table_path = parent.join("accelerator-costs.csv");
     fs::write(&table_path, table).unwrap();
@@ -406,9 +407,9 @@ fn binary_accepts_the_complete_exact_accelerator_key_set() {
     let stderr = String::from_utf8_lossy(&result.stderr);
     assert!(
         !result.status.success(),
-        "HIP-free test build must refuse the backend"
+        "the fixture output outside a repository must refuse emission"
     );
-    assert!(stderr.contains("accelerator"), "stderr:\n{stderr}");
+    assert!(stderr.contains("emission refused"), "stderr:\n{stderr}");
     assert!(
         !stderr.contains("accelerator cost table"),
         "stderr:\n{stderr}"
