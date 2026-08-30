@@ -2,6 +2,9 @@ use gf2_sim::permanent_rare_event::artifact::*;
 use gf2_stats::weighted::ScaledStudentInterval;
 use num_bigint::BigUint;
 use sha2::{Digest, Sha256};
+use std::fs;
+use std::sync::{Arc, Barrier};
+use tempfile::Builder;
 
 fn digest(byte: u8) -> String {
     format!("{byte:02x}").repeat(32)
@@ -1431,6 +1434,243 @@ fn validated_attempt(
     validate_attempt_artifact_files(&files.artifact_json, &files.artifact_sha256, identity).unwrap()
 }
 
+fn artifact_tempdir(prefix: &str) -> tempfile::TempDir {
+    fs::create_dir_all("target").unwrap();
+    Builder::new().prefix(prefix).tempdir_in("target").unwrap()
+}
+
+#[test]
+fn rare_event_artifact_partial_publish_recovery() {
+    let identity = identity(ScientificIdentityV1::target());
+    let checkpoint = target_checkpoint(identity.clone());
+    let start = start_envelope(identity.clone(), not_used());
+    let cuts = [
+        PublicationCutPoint::BeforeFileCreation,
+        PublicationCutPoint::AfterJsonWrite,
+        PublicationCutPoint::AfterJsonSync,
+        PublicationCutPoint::AfterSidecarWrite,
+        PublicationCutPoint::AfterSidecarSync,
+        PublicationCutPoint::AfterStagingDirectorySync,
+        PublicationCutPoint::BeforeNoReplace,
+        PublicationCutPoint::AfterNoReplace,
+    ];
+
+    for (case, (name, envelope)) in [("0000", &checkpoint), ("start", &start)]
+        .into_iter()
+        .enumerate()
+    {
+        for (cut_index, cut) in cuts.into_iter().enumerate() {
+            let root = artifact_tempdir(&format!("rare-event-cut-{case}-{cut_index}-"));
+            let parent = root.path().join("publication");
+            fs::create_dir(&parent).unwrap();
+            let result = publish_artifact_dir_at_cutpoint(&parent, name, envelope, cut);
+            assert!(result.is_err(), "cut {cut:?} did not interrupt publication");
+            let expected = vec![name.to_owned()];
+            let recovered = recover_artifact_parent(&parent, &expected, &identity).unwrap();
+            if cut == PublicationCutPoint::AfterNoReplace {
+                assert_eq!(recovered.len(), 1);
+                assert_eq!(
+                    recovered[0].digest(),
+                    encode_artifact_files(envelope).unwrap().digest
+                );
+            } else {
+                assert!(recovered.is_empty());
+                let entries: Vec<_> = fs::read_dir(&parent).unwrap().collect();
+                assert_eq!(
+                    entries.len(),
+                    1,
+                    "cut {cut:?} lost its diagnostic staging dir"
+                );
+            }
+        }
+    }
+
+    let probe = artifact_tempdir("rare-event-atomic-probe-");
+    verify_atomic_publication_support(probe.path()).unwrap();
+    assert_eq!(fs::read_dir(probe.path()).unwrap().count(), 0);
+
+    let strict = artifact_tempdir("rare-event-strict-directory-");
+    let published = publish_artifact_dir(strict.path(), "0000", &checkpoint).unwrap();
+    assert_eq!(fs::read_dir(published.path()).unwrap().count(), 2);
+    fs::write(published.path().join("extra"), b"unexpected").unwrap();
+    assert!(verify_artifact_dir(published.path(), &identity).is_err());
+    assert!(recover_artifact_parent(strict.path(), &["0000".into()], &identity).is_err());
+
+    let corrupt = artifact_tempdir("rare-event-corrupt-winner-");
+    let published = publish_artifact_dir(corrupt.path(), "0000", &checkpoint).unwrap();
+    assert!(publish_artifact_dir_at_cutpoint(
+        corrupt.path(),
+        "0000",
+        &checkpoint,
+        PublicationCutPoint::BeforeNoReplace,
+    )
+    .is_err());
+    let mut corrupt_json = fs::read(published.path().join(ARTIFACT_JSON)).unwrap();
+    corrupt_json[0] ^= 1;
+    fs::write(published.path().join(ARTIFACT_JSON), corrupt_json).unwrap();
+    assert!(recover_artifact_parent(corrupt.path(), &["0000".into()], &identity).is_err());
+    assert!(publish_artifact_dir(corrupt.path(), "0000", &checkpoint).is_err());
+    assert!(fs::read_dir(corrupt.path()).unwrap().count() >= 2);
+
+    let identical = artifact_tempdir("rare-event-identical-race-");
+    let parent = Arc::new(identical.path().to_owned());
+    let barrier = Arc::new(Barrier::new(2));
+    let threads: Vec<_> = (0..2)
+        .map(|_| {
+            let parent = Arc::clone(&parent);
+            let barrier = Arc::clone(&barrier);
+            let checkpoint = checkpoint.clone();
+            std::thread::spawn(move || {
+                barrier.wait();
+                publish_artifact_dir(&parent, "0000", &checkpoint)
+            })
+        })
+        .collect();
+    let results: Vec<_> = threads
+        .into_iter()
+        .map(|thread| thread.join().unwrap())
+        .collect();
+    assert!(results.iter().all(Result::is_ok));
+    assert_eq!(
+        recover_artifact_parent(&parent, &["0000".into()], &identity)
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(fs::read_dir(&*parent).unwrap().count(), 1);
+
+    let conflicting = artifact_tempdir("rare-event-conflicting-race-");
+    let parent = Arc::new(conflicting.path().to_owned());
+    let barrier = Arc::new(Barrier::new(2));
+    let mut different_start = start.clone();
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut different_start.payload else {
+        unreachable!()
+    };
+    let AttemptPhaseV1::Start {
+        start_receipt_utc, ..
+    } = &mut payload.phase
+    else {
+        unreachable!()
+    };
+    *start_receipt_utc = "2026-08-30T08:00:02.000000001Z".into();
+    let envelopes = [start.clone(), different_start];
+    let threads: Vec<_> = envelopes
+        .into_iter()
+        .map(|envelope| {
+            let parent = Arc::clone(&parent);
+            let barrier = Arc::clone(&barrier);
+            std::thread::spawn(move || {
+                barrier.wait();
+                publish_artifact_dir(&parent, "start", &envelope)
+            })
+        })
+        .collect();
+    let results: Vec<_> = threads
+        .into_iter()
+        .map(|thread| thread.join().unwrap())
+        .collect();
+    assert_eq!(results.iter().filter(|result| result.is_ok()).count(), 1);
+    assert_eq!(results.iter().filter(|result| result.is_err()).count(), 1);
+    assert_eq!(
+        recover_artifact_parent(&parent, &["start".into()], &identity)
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(fs::read_dir(&*parent).unwrap().count(), 2);
+
+    let invalid_name = artifact_tempdir("rare-event-invalid-name-");
+    fs::create_dir(invalid_name.path().join("unexpected")).unwrap();
+    assert!(recover_artifact_parent(invalid_name.path(), &["start".into()], &identity).is_err());
+
+    let finished_root = artifact_tempdir("rare-event-finished-attempt-");
+    let dataset_dir = finished_root.path().join(dataset_id(&identity).unwrap());
+    fs::create_dir(&dataset_dir).unwrap();
+    let validated_start = begin_attempt(&dataset_dir, &start, &[], &[]).unwrap();
+    let terminal = terminal_envelope(identity.clone(), &start, false, vec![]);
+    finish_attempt(&dataset_dir, &validated_start, &terminal, &[]).unwrap();
+    assert!(begin_attempt(&dataset_dir, &start, &[], &[]).is_err());
+
+    let recovery_root = artifact_tempdir("rare-event-recovered-attempt-");
+    let recovery_dataset = recovery_root.path().join(dataset_id(&identity).unwrap());
+    fs::create_dir(&recovery_dataset).unwrap();
+    let recovery_start = begin_attempt(&recovery_dataset, &start, &[], &[]).unwrap();
+    let live = RecoveryTerminalV1 {
+        observation_utc: "2026-08-30T08:00:04.000000000Z".into(),
+        launcher_sha256: digest(0x31),
+        liveness: process_liveness_observation(
+            123,
+            Some(123),
+            Some("fixture-start-token".into()),
+            Some("fixture-boot".into()),
+        )
+        .unwrap(),
+    };
+    assert!(recover_interrupted_attempt(&recovery_dataset, &recovery_start, live, &[]).is_err());
+    assert!(!recovery_dataset
+        .join("attempts/000000000000/terminal")
+        .exists());
+
+    let mut normalized_mismatch = process_liveness_observation(
+        123,
+        Some(123),
+        Some("reused-start-token".into()),
+        Some("fixture-boot".into()),
+    )
+    .unwrap();
+    normalized_mismatch.observed_boot_identity = Some("substituted-boot".into());
+    assert!(recover_interrupted_attempt(
+        &recovery_dataset,
+        &recovery_start,
+        RecoveryTerminalV1 {
+            observation_utc: "2026-08-30T08:00:04.000000000Z".into(),
+            launcher_sha256: digest(0x31),
+            liveness: normalized_mismatch,
+        },
+        &[],
+    )
+    .is_err());
+
+    let reused = RecoveryTerminalV1 {
+        observation_utc: "2026-08-30T08:00:04.000000000Z".into(),
+        launcher_sha256: digest(0x31),
+        liveness: process_liveness_observation(
+            123,
+            Some(123),
+            Some("reused-start-token".into()),
+            Some("fixture-boot".into()),
+        )
+        .unwrap(),
+    };
+    recover_interrupted_attempt(&recovery_dataset, &recovery_start, reused, &[]).unwrap();
+    let terminal = verify_artifact_dir(
+        &recovery_dataset.join("attempts/000000000000/terminal"),
+        &identity,
+    )
+    .unwrap();
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &terminal.envelope().payload else {
+        unreachable!()
+    };
+    let AttemptPhaseV1::Terminal {
+        end_time_meaning,
+        outcome_observer,
+        outcome,
+        ..
+    } = &payload.phase
+    else {
+        unreachable!()
+    };
+    assert_eq!(*end_time_meaning, EndTimeMeaningV1::ResumeObservation);
+    assert!(matches!(
+        outcome_observer,
+        OutcomeObserverV1::ResumingLauncher { .. }
+    ));
+    assert!(matches!(
+        outcome,
+        AttemptOutcomeV1::TerminationUnobservedOnResume {}
+    ));
+}
+
 #[test]
 fn rare_event_execution_attempt_lineage_rejected() {
     let identity = identity(ScientificIdentityV1::target());
@@ -1460,6 +1700,74 @@ fn rare_event_execution_attempt_lineage_rejected() {
         &checkpoints,
     )
     .unwrap();
+
+    let mut recovered_terminal = terminal.clone();
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut recovered_terminal.payload else {
+        unreachable!()
+    };
+    let AttemptPhaseV1::Terminal {
+        end_time_meaning,
+        monotonic_elapsed_ns,
+        outcome_observer,
+        outcome,
+        ..
+    } = &mut payload.phase
+    else {
+        unreachable!()
+    };
+    *end_time_meaning = EndTimeMeaningV1::ResumeObservation;
+    *monotonic_elapsed_ns = None;
+    *outcome_observer = OutcomeObserverV1::ResumingLauncher {
+        launcher_sha256: digest(0x31),
+        liveness_evidence: process_liveness_observation(
+            123,
+            Some(123),
+            Some("reused-start-token".into()),
+            Some("fixture-boot".into()),
+        )
+        .unwrap()
+        .evidence,
+    };
+    *outcome = AttemptOutcomeV1::TerminationUnobservedOnResume {};
+    validate_execution_lineage(
+        &identity,
+        &[
+            valid_start.clone(),
+            validated_attempt(&recovered_terminal, &identity),
+        ],
+        &checkpoints,
+    )
+    .unwrap();
+
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut recovered_terminal.payload else {
+        unreachable!()
+    };
+    let AttemptPhaseV1::Terminal {
+        outcome_observer, ..
+    } = &mut payload.phase
+    else {
+        unreachable!()
+    };
+    *outcome_observer = OutcomeObserverV1::ResumingLauncher {
+        launcher_sha256: digest(0x31),
+        liveness_evidence: process_liveness_observation(
+            123,
+            Some(123),
+            Some("fixture-start-token".into()),
+            Some("fixture-boot".into()),
+        )
+        .unwrap()
+        .evidence,
+    };
+    assert!(validate_execution_lineage(
+        &identity,
+        &[
+            valid_start.clone(),
+            validated_attempt(&recovered_terminal, &identity),
+        ],
+        &checkpoints,
+    )
+    .is_err());
 
     for phases in [
         vec![valid_start.clone()],
@@ -1535,6 +1843,16 @@ fn rare_event_execution_attempt_lineage_rejected() {
     normalized_gpu_mismatch["payload"]["accelerator_observation"]["devices"][0]["model"] =
         serde_json::json!("substituted-gpu");
     assert!(decode_envelope(&value_bytes(normalized_gpu_mismatch)).is_err());
+
+    let mut normalized_liveness_mismatch = process_liveness_observation(
+        123,
+        Some(123),
+        Some("reused-start-token".into()),
+        Some("fixture-boot".into()),
+    )
+    .unwrap();
+    normalized_liveness_mismatch.observed_boot_identity = Some("substituted-boot".into());
+    assert!(validate_process_liveness_observation(&normalized_liveness_mismatch).is_err());
 
     let mut wrong_start_link = terminal.clone();
     let RareEventPayloadV1::ExecutionAttempt(payload) = &mut wrong_start_link.payload else {
