@@ -1,7 +1,7 @@
 {
  "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
  "epic_short_id": "b8206228",
- "current_wave": 8,
+ "current_wave": 9,
  "waves": [
   {
    "wave_number": 1,
@@ -146,7 +146,7 @@
      "short_id": "7a816262",
      "title": "Frozen root manifest for the campaign",
      "classification": "implementation",
-     "status": "rework-1 in progress: final research-review at 94d81c78 closed prior F1/F3/F4/F5 but retained F2 because manifest provenance records the observer argv instead of the protocol-required exact campaign-driver argv. High-tier focused rework is limited to F2 plus cumulative and deferred-item audits."
+     "status": "done: focused high-tier rework changed only the frozen executable invocation and its coupled checksum/freeze references. The manifest retains 63 cells and 14,229 shards; doc-review and research-review passed at 8e660ae3 with zero findings; lead six-tier review PASS; closure commit d7210bb0."
     },
     {
      "id": "1947125e-33eb-4442-b717-24442cc35ca1",
@@ -163,24 +163,31 @@
      "status": "done: all four registered gates re-evaluated on the clean tree at HEAD 0e389483 and passed (cargo-ci, code-review, doc-review, research-review VERDICT: PASS). The committed v5 receipt revalidated byte-for-byte: PASS, 63 cells, 315 process outcomes, receipt sha256 d3779aa3817bbefc995b858527bf418b4d3931a8f5406281eb4f0b71a7b45e77. Lead six-tier review PASS; Tier 1.5 confirms all four prior findings closed with no regression, Tiers 2.5 and 2.75 empty. research-review advisory F4 recorded in surfaced_pitfalls. Closed session 22."
     }
    ],
-   "note": "Current topological frontier after session-17 reconciliation. Complete ec22205e and the owner-resolved 7a816262 freeze before advancing to wave 9."
+   "note": "Historical wave complete. The final freeze repair passed both gates and the lead review on 2026-08-30."
   },
   {
    "wave_number": 9,
    "issues": [
     {
+     "id": "2c1ae813-67ce-4814-a96b-45272643d53e",
+     "short_id": "2c1ae813",
+     "title": "Freeze accelerator launch-cost table for campaign cells",
+     "classification": "implementation",
+     "status": "in progress: live-DAG issue omitted from the older saved frontier; dispatched in conflict-safe subwave 9a alongside the disjoint rare-event design. It lands before the coordinator and campaign arms."
+    },
+    {
      "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
      "short_id": "3f664839",
      "title": "Preregistered compressed-state rare-event design",
      "classification": "design",
-     "status": "pending: backlog behind 7a816262; the amended hard validation and falsification contract is committed at b9c50d97 and 0bf6e7a1."
+     "status": "in progress: high-tier mathematics/design worker dispatched in conflict-safe subwave 9a; the amended hard validation and falsification contract is committed at b9c50d97 and 0bf6e7a1."
     },
     {
      "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
      "short_id": "73317b2e",
      "title": "Standing acceptance tests for campaign cells",
      "classification": "implementation",
-     "status": "pending: backlog behind both active wave-8 issues, 7a816262 and 1947125e."
+     "status": "ready: dependencies are done; held for subwave 9b because its gf2-sim campaign-driver surface conflicts with 2c1ae813."
     }
    ]
   },
