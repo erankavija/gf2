@@ -76,7 +76,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-30T02:23:37.704260054Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "2c1ae813-67ce-4814-a96b-45272643d53e",
   "labels": [
     "epic:permanent-statistics",
@@ -86,5 +92,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze accelerator launch-cost table for campaign cells",
-  "updated_at": "2026-08-30T02:21:43.786224382Z"
+  "updated_at": "2026-08-30T02:23:37.704260054Z"
 }

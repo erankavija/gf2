@@ -10153,3 +10153,4 @@
 {"fields":["documents"],"id":"2e9b6696-c95e-4b90-b5ff-5f1aab08190f","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-30T02:21:28.557780325Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"61d2dd68-60f5-41ee-bdbb-f2cd38e0b459","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-30T02:21:36.488699754Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"6dc3de09-2276-49e6-9d5b-8697b9bd8ca7","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-30T02:21:43.786224382Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"cargo-ci","id":"f9c15a3a-60bc-4ac8-9f40-4e32289accaf","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-30T02:23:37.704260054Z","type":"gate_passed","updated_by":"auto:executor"}
