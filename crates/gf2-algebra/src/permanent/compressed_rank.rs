@@ -542,6 +542,31 @@ impl<F: SupportedPrimeField> CanonicalSubspace<F> {
     }
 }
 
+/// Enumerates every canonical subspace of `F^3` for downstream conformance tests.
+///
+/// This test-support-only helper uses the production canonicalizer; it is not
+/// the independent explicit-set oracle owned by this crate's exhaustive
+/// transition suite. It lets consumers cover their own laws over the fixed
+/// state domain without copying subspace-enumeration algebra.
+#[cfg(feature = "test-support")]
+#[doc(hidden)]
+#[must_use]
+pub fn canonical_subspaces_for_test<F: SupportedPrimeField>() -> Vec<CanonicalSubspace<F>> {
+    let mut known = BTreeSet::from([CanonicalSubspace::zero()]);
+    loop {
+        let prior: Vec<_> = known.iter().copied().collect();
+        for subspace in prior {
+            for vector in all_vectors::<F>() {
+                known.insert(subspace.sum_vector(vector));
+            }
+        }
+        let expected = 2 * (usize::from(F::ORDER).pow(2) + usize::from(F::ORDER) + 1) + 2;
+        if known.len() == expected {
+            return known.into_iter().collect();
+        }
+    }
+}
+
 /// Failure to reconstruct a compressed state from canonical bytes and rows.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CompressedStateDecodeError {

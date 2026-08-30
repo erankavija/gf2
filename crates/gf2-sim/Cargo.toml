@@ -44,6 +44,7 @@ sha2 = "0.10"
 rustix = { version = "1.1", features = ["fs"] }
 
 [dev-dependencies]
+gf2-algebra = { path = "../gf2-algebra", features = ["test-support"] }
 proptest = { workspace = true }
 trybuild = { workspace = true }
 rayon = "1"
