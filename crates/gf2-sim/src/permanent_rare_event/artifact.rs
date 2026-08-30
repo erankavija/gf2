@@ -1894,6 +1894,59 @@ fn verify_dir_handle(
     })
 }
 
+/// Creates one dataset directory beneath a validated artifact root.
+///
+/// Every component is created and opened through a held descriptor, so an
+/// intermediate symbolic link refuses rather than redirecting the dataset, and
+/// no component escapes the repository-relative root. The returned path is the
+/// dataset directory the publication API subsequently pins.
+///
+/// # Errors
+///
+/// Refuses an artifact root that is not normalized repository-relative, a
+/// component outside the accepted grammar, and any component that resolves to
+/// a symbolic link or a non-directory.
+pub fn create_dataset_directory(
+    artifact_root: &str,
+    dataset_id: &str,
+) -> Result<PathBuf, ArtifactError> {
+    validate_relative_path(artifact_root)?;
+    let mut directory = DirHandle::open_root(Path::new("."))?;
+    let mut path = PathBuf::new();
+    for component in artifact_root.split('/') {
+        directory = directory.open_or_create_dir(Component::new(component)?)?;
+        path.push(component);
+    }
+    directory.open_or_create_dir(Component::new(dataset_id)?)?;
+    path.push(dataset_id);
+    Ok(path)
+}
+
+/// Reads one repository-relative file through held directory descriptors.
+///
+/// Each component is opened no-follow from the one before it, so a symbolic
+/// link anywhere along the path refuses rather than substituting content. A
+/// digest taken over the returned bytes therefore describes the file the cited
+/// path names.
+///
+/// # Errors
+///
+/// Refuses a path that is not normalized repository-relative, a component
+/// outside the accepted grammar, a symbolic link along the path, and a final
+/// component that is not a regular file.
+pub fn read_repository_file(relative_path: &str) -> Result<Vec<u8>, ArtifactError> {
+    validate_relative_path(relative_path)?;
+    let components: Vec<_> = relative_path.split('/').collect();
+    let (file, parents) = components
+        .split_last()
+        .expect("a validated relative path has at least one component");
+    let mut directory = DirHandle::open_root(Path::new("."))?;
+    for component in parents {
+        directory = directory.open_dir(Component::new(component)?)?;
+    }
+    directory.read_regular_file(Component::new(file)?)
+}
+
 /// Publishes one typed artifact into the destination its payload owns.
 ///
 /// Every intermediate directory is opened or created through the pinned
@@ -3390,7 +3443,20 @@ pub fn coverage_final_envelope(
     Ok(envelope)
 }
 
-fn validate_configuration(configuration: &RareEventConfigurationV1) -> Result<(), ArtifactError> {
+/// Validates one frozen configuration against its closed grammar.
+///
+/// This is the canonical acceptance check [`decode_configuration`] applies, so
+/// a consumer holding an already-decoded configuration revalidates through the
+/// same rules rather than a private copy of them.
+///
+/// # Errors
+///
+/// Refuses an artifact root that is not normalized repository-relative or that
+/// lies inside the raw campaign samples, and an invalid design, scientific, or
+/// behavior identity.
+pub fn validate_configuration(
+    configuration: &RareEventConfigurationV1,
+) -> Result<(), ArtifactError> {
     validate_relative_path(&configuration.artifact_root)?;
     if configuration.artifact_root == RAW_CAMPAIGN_ROOT
         || configuration
@@ -5033,7 +5099,16 @@ fn decode_hex(value: &str) -> Result<Vec<u8>, ArtifactError> {
         .collect()
 }
 
-fn validate_relative_path(value: &str) -> Result<(), ArtifactError> {
+/// Accepts one normalized repository-relative path.
+///
+/// A path is non-empty, has no absolute prefix, no backslash, and no empty,
+/// `.`, or `..` component, so it names a location beneath the repository root
+/// and cannot traverse out of it.
+///
+/// # Errors
+///
+/// Refuses an empty, absolute, backslash-bearing, or unnormalized path.
+pub fn validate_relative_path(value: &str) -> Result<(), ArtifactError> {
     if value.is_empty()
         || value.starts_with('/')
         || value.contains('\\')
