@@ -57830,9 +57830,18 @@
     "rng_version": "rand_chacha 0.9.0 (ChaCha20Rng)",
     "invocation": [
       "target/release/permanent_campaign",
-      "--print-provenance",
       "--manifest",
-      "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829"
+      "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
+      "--output",
+      "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
+      "--q",
+      "7",
+      "--workers",
+      "1",
+      "--accelerator-cost-table",
+      "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "--accelerator-launch-cap-ms",
+      "500"
     ],
     "accelerator_runtime": {
       "state": "present",
