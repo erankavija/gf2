@@ -206,7 +206,7 @@
      "short_id": "02b8137c",
      "title": "Execute frozen pre-draw validation anchors",
      "classification": "implementation",
-     "status": "ready: the launch audit proved the committed 4,096-draw interval test does not satisfy the frozen protocol's 1,024-matrix replay plus 400,000-draw exact-test validation phase. The session-30 worker stopped cleanly before edits, builds, tests, or draws; its isolated worktree remains at main commit 89c7e8cc. All three campaign arms depend on this leaf."
+     "status": "ready: owner stopped session 31 immediately. Uncompiled and unreviewed implementation WIP is preserved only on branch worktree-agent-02b8137c at 783d4abb; it is not merged. No validation or campaign draw occurred. All three campaign arms remain blocked on this leaf."
     },
     {
      "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -417,7 +417,7 @@
    "wave": "10 (pre-draw prerequisite)",
    "reason": "Session-30 launch audit found no committed evidence for the frozen protocol's complete ten-anchor 1,024-matrix regeneration and 400,000-draw exact two-sided validation phase. Existing 44534b2f covers 4,096 draws with a Clopper-Pearson interval instead. All three campaign arms are wired behind this leaf.",
    "status": "ready",
-   "note": "Session 30 dispatched a high-tier implementation worker, then stopped it on the owner's handoff instruction. The worktree is clean at 89c7e8cc with no commits or untracked files. Resume by extending the production schedule evaluator/pooling path through a public reusable validation API, committing preregistration and implementation before the fixed 400,000-draw run."
+   "note": "Session 31 resumed a high-tier worker and an independent read-only design audit. Owner then ordered an immediate stop. Lead-preserve commit 783d4abb contains an uncompiled 2,506-line WIP diff: independent exhaustive visitor, semantic validation-purpose schedule refactor, backend inventory/support, sealed provenance observers, validation API/journal, and focused test scaffold. Thin runner and committed strict preregistration are absent; no final WIP compile/test, gate, validation run, or review occurred. Resume in the existing worktree and review/fix before any merge."
   }
  ],
  "escalations": [
@@ -1191,5 +1191,16 @@
   "campaign_state": "The frozen campaign directory remains manifest/checksum/freeze only. Dry scheduling is not launch evidence. After validation closes, restore and hash-check the preserved c9b2307a emitter before executing exact q=7,n=20 first.",
   "open_escalation": "6639435f still awaits owner authorization for one bounded high-tier repair cycle covering all four final audit findings.",
   "handoff": "handoff-26.md"
+ },
+ "session_31_state": {
+  "recorded_at": "2026-08-30T16:10:03+03:00",
+  "reason": "Owner-directed immediate stop while the pre-draw validation implementation worker was active.",
+  "preserved_wip": "Branch worktree-agent-02b8137c, worktree .agents/worktrees/agent-02b8137c, commit 783d4abb. The branch is clean, unmerged, uncompiled, unreviewed, and must not be treated as launch evidence.",
+  "audit": "Independent high-tier audit mapped REQ-01..REQ-09 and caught semantic sampler-purpose, caller-forgeable provenance, duplicated exact-decision, expected-count-as-null, backend-authority, worker-count/batch-size, durable-directory-sync, and bounded-streaming risks. The worker reported addressing these in the WIP, but none is verified.",
+  "verification": "One early focused Cargo attempt ended at target discovery because the test file had not landed; no test body ran. The final WIP received no compile, test, fmt, clippy, cargo-ci, gate, or lead review. Main leak check passed after removing an older untracked worker test scaffold from main.",
+  "campaign_state": "No validation-purpose or campaign-purpose draw occurred. The frozen campaign directory still contains only manifest.json, checksums.sha256, and freeze.md. Campaign arms remain blocked on 02b8137c.",
+  "frontier": "02b8137c is ready and unassigned. Resume the isolated WIP, add the thin runner and strict committed preregistration, establish focused release evidence, review all audit findings, then merge/gate before the post-02:00 fixed validation run.",
+  "open_escalation": "6639435f still awaits owner authorization for one bounded high-tier repair cycle covering all four final audit findings.",
+  "handoff": "handoff-27.md"
  }
 }
