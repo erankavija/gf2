@@ -40,3 +40,30 @@ trybuild = "1"
 [profile.release]
 lto = "thin"
 codegen-units = 1
+
+# Gate build profile. `release` is tuned for benchmark receipts, where
+# generated-code speed is the product; the gate pays that tuning on every run
+# and gets nothing back for it. This profile trades runtime for compile
+# parallelism and is used by `scripts/cargo-ci.sh` for workspace test builds.
+#
+# Measured 2026-08-31, full workspace with --all-features on a 24-thread host,
+# cold build in a fresh worktree, against the same tree under `release`:
+#
+#   profile                        build     suite     slowest test
+#   release   (thin LTO, cgu 1)     433 s   28.98 s        3.754 s
+#   thin LTO, cgu 16                346 s   28.91 s        3.743 s
+#   this      (no LTO,   cgu 16)    153 s   31.08 s        4.899 s
+#
+# LTO dominates both directions: it costs most of the build and buys most of
+# the runtime, while codegen-units alone recovers only 20%. Dropping it is
+# worth 280 s per fresh worktree for 2.1 s of suite time.
+#
+# Benchmarks, receipts, and any published performance number stay on `release`.
+# `cargo bench` uses the bench profile and the wrappers under `dev/scripts/`
+# pass `--release` explicitly, so nothing here reaches them — a receipt built
+# without LTO would understate this workspace by roughly 30% on the permanent
+# kernels. See `@/inv/benchmark-backed-performance`.
+[profile.ci-test]
+inherits = "release"
+lto = false
+codegen-units = 16

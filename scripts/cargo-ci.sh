@@ -88,13 +88,23 @@ run_step() {
   fi
 }
 
+# nextest colorizes its output even when it is redirected to a file, and
+# NO_COLOR does not suppress it, so every pattern below must see plain text.
+# Both anchors here were defeated by it: a passing gate reported "ok" instead of
+# its test counts, and a failing gate recorded an exit code with no diagnostic
+# at all. nextest also indents both its summary and its per-test result lines,
+# so no pattern may anchor at column zero either.
+plain() {
+  sed -E 's/\x1b\[[0-9;]*[mK]//g' "$1"
+}
+
 summarize_pass() {
   local name="$1"
   case "$name" in
     test)
       # Extract nextest summary line: "Summary [Xs] N tests run: P passed, F failed, S skipped"
       local summary_line
-      summary_line=$(grep "^Summary" "$TMPDIR/$name.out" || true)
+      summary_line=$(plain "$TMPDIR/$name.out" | grep -E "^[[:space:]]*Summary" || true)
       if [ -n "$summary_line" ]; then
         local p f s
         p=$(echo "$summary_line" | grep -oP '\d+(?= passed)' || true)
@@ -123,21 +133,21 @@ summarize_fail() {
       # diagnostic at all. Observed on a run whose seven TIMEOUT lines were
       # invisible in the gate record.
       echo "--- $name failures ---"
-      grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" "$TMPDIR/$name.out" || true
-      grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" "$TMPDIR/$name.out" | head -60 || true
+      plain "$TMPDIR/$name.out" | grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" || true
+      plain "$TMPDIR/$name.out" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
       ;;
     clippy)
       echo "--- $name diagnostics ---"
       # Show warning/error lines with context
-      grep -E "^(warning|error)" "$TMPDIR/$name.out" || true
+      plain "$TMPDIR/$name.out" | grep -E "^(warning|error)" || true
       ;;
     fmt)
       echo "--- $name diffs ---"
-      cat "$TMPDIR/$name.out"
+      plain "$TMPDIR/$name.out"
       ;;
     *)
       echo "--- $name output ---"
-      tail -20 "$TMPDIR/$name.out"
+      plain "$TMPDIR/$name.out" | tail -20
       ;;
   esac
 }
@@ -160,19 +170,22 @@ run_step tuning-core-codec-only "$BUDGET" cargo check -p gf2-core --no-default-f
 run_step tuning-algebra-no-default "$BUDGET" cargo check -p gf2-algebra --no-default-features
 run_step tuning-algebra-codec-only "$BUDGET" cargo check -p gf2-algebra --no-default-features --features tuning-profile
 
-# Build outside the exclusive lock, then execute inside it. The release compile
-# with GPU/SIMD features is the heaviest work here, and holding the whole host
-# for it would serialize the part that has no wall-clock assertion.
-run_step test-build "$BUDGET" cargo nextest run --workspace $FEAT_FLAGS --release --profile ci --no-run
-run_step test   "$BUDGET" --test cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
+# Build outside the exclusive lock, then execute inside it. The workspace
+# compile with GPU/SIMD features is the heaviest work here, and holding the
+# whole host for it would serialize the part that has no wall-clock assertion.
+#
+# `ci-test` rather than `release`: see the profile's rationale in Cargo.toml.
+# Benchmarks and receipts stay on `release`.
+run_step test-build "$BUDGET" cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile ci --no-run
+run_step test   "$BUDGET" --test cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile ci
 
 # The ordinary non-HIP feature set intentionally omits profile I/O, so keep the
 # format-2 authority, process lifecycle, and calibration producer unit surface
-# explicitly reachable in the fast tier. These are ordinary release tests: no
+# explicitly reachable in the fast tier. These are ordinary fast-tier tests: no
 # ignored test or benchmark/calibration action is selected.
-run_step tuning-profile-build "$BUDGET" cargo nextest run -p gf2-core --release --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --no-run
-run_step tuning-profile-nextest "$BUDGET" --test cargo nextest run -p gf2-core --release --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness
-run_step tuning-lifecycle-cargo "$BUDGET" cargo test -p gf2-core --release --no-default-features --test tuning_process_lifecycle
+run_step tuning-profile-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --no-run
+run_step tuning-profile-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness
+run_step tuning-lifecycle-cargo "$BUDGET" cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
 
 # Add profile I/O to the same host-appropriate feature selection used by the
 # workspace lint. On ordinary hosts FEAT_FLAGS is the explicit non-HIP set, so
@@ -191,8 +204,8 @@ run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "$BUDGET" cargo test 
 # Format-2 artifacts are opt-in I/O surfaces rather than ordinary feature
 # defaults. Validate each explicit owner and the mechanically composed complete
 # repository envelope without filesystem discovery.
-run_step tuning-core-artifact "$BUDGET" cargo test -p gf2-core --release --features tuning-profile --test tuning_profile_committed
-run_step tuning-algebra-artifacts "$BUDGET" cargo test -p gf2-algebra --release --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
+run_step tuning-core-artifact "$BUDGET" cargo test -p gf2-core --profile ci-test --features tuning-profile --test tuning_profile_committed
+run_step tuning-algebra-artifacts "$BUDGET" cargo test -p gf2-algebra --profile ci-test --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
 run_step tuning-composer "$BUDGET" cargo test --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml
 
 echo "$summary"

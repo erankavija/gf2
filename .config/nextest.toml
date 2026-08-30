@@ -1,8 +1,23 @@
 [profile.default]
 slow-timeout = { period = "10s", terminate-after = 1 }
 
+# 8 s, raised from 5 s when the gate moved to the `ci-test` cargo profile.
+# Dropping LTO buys 280 s of build time per fresh worktree and costs runtime on
+# the hot paths: the slowest fast-tier test went from 3.754 s under `release` to
+# 4.899 s, i.e. from 25% headroom against a 5 s cap to 2%. Two gf2-algebra
+# permanent cross-checks sit at the top (bipedal5 and bipedal7
+# `test_cross_check_n14`) and neither is covered by the gf2-sim override below.
+#
+# 8 s is ~1.6x the measured worst case, restoring the margin the 5 s cap had
+# under `release`. The margin matters more than it did: the CPU budget in
+# `scripts/cargo-budget.sh` lets sibling builds run during a test step, so a
+# test now meets more contention than it used to, not less.
+#
+# This is a tier-budget change, not an accommodation of a busy runner — the
+# generated code really is slower. Tests that grow past this budget get faster
+# or get a descriptive `#[ignore]`; the cap does not move again to hold them.
 [profile.ci]
-slow-timeout = { period = "5s", terminate-after = 1 }
+slow-timeout = { period = "8s", terminate-after = 1 }
 fail-fast = false
 
 # The gf2-sim typestate compile-fail guard (issue 81d05bab) uses `trybuild`,
