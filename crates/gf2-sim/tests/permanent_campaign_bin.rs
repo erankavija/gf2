@@ -7,6 +7,11 @@ use gf2_sim::permanent_campaign::schema::{
     GitRevision, Provenance, RngAlgorithm, ShardSpec, StreamPurpose, SCHEMA_VERSION,
 };
 
+const INTERPRETATION_SOURCES: [&str; 2] = [
+    "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+    "dev/studies/b488f02c/literature-search-2026-08-08.md",
+];
+
 fn emitter_digest() -> String {
     let output = Command::new("sha256sum")
         .arg(env!("CARGO_BIN_EXE_permanent_campaign"))
@@ -76,7 +81,7 @@ fn manifest() -> CampaignManifest {
 fn unavailable_backend_manifest() -> CampaignManifest {
     let mut campaign = manifest();
     let cell = &mut campaign.cells[0];
-    cell.q = 5;
+    cell.q = 7;
     cell.n = 20;
     cell.backend = Backend::IntraMatrixParallel;
     campaign
@@ -84,6 +89,8 @@ fn unavailable_backend_manifest() -> CampaignManifest {
 
 fn mixed_backend_manifest() -> CampaignManifest {
     let mut campaign = manifest();
+    campaign.cells[0].q = 7;
+    campaign.cells[0].n = 20;
     let mut accelerator_cell = campaign.cells[0].clone();
     accelerator_cell.q = 5;
     accelerator_cell.n = 20;
@@ -106,6 +113,39 @@ fn launch_cost_manifest() -> CampaignManifest {
     campaign
         .cells
         .extend([field_three_accelerator, field_five_accelerator]);
+    campaign
+}
+
+fn exact_selection_manifest() -> CampaignManifest {
+    let mut campaign = manifest();
+    let first = &mut campaign.cells[0];
+    first.q = 7;
+    first.n = 4;
+    first.shards[0].stream_index = 10;
+    let mut target = first.clone();
+    target.n = 20;
+    target.shards[0].stream_index = 11;
+    campaign.cells.push(target);
+    campaign
+}
+
+fn exact_execution_manifest(parent: &Path) -> CampaignManifest {
+    let mut campaign = exact_selection_manifest();
+    let output =
+        parent.join("checkout/dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
+    campaign.provenance.invocation = vec![
+        env!("CARGO_BIN_EXE_permanent_campaign").to_owned(),
+        "--manifest".to_owned(),
+        output.to_str().unwrap().to_owned(),
+        "--output".to_owned(),
+        output.to_str().unwrap().to_owned(),
+        "--q".to_owned(),
+        "7".to_owned(),
+        "--n".to_owned(),
+        "20".to_owned(),
+        "--workers".to_owned(),
+        "1".to_owned(),
+    ];
     campaign
 }
 
@@ -168,6 +208,17 @@ fn campaign_checkout(parent: &Path, manifest: &Path) -> (PathBuf, PathBuf) {
     .unwrap();
     fs::write(checkout.join("Cargo.lock"), "# fixture lockfile\n").unwrap();
     fs::copy(manifest, output.join("manifest.json")).unwrap();
+    fs::write(
+        checkout.join("dev/simulation_results/permanent-zero-fraction/protocol.md"),
+        "fixture frozen protocol\n",
+    )
+    .unwrap();
+    let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for relative in INTERPRETATION_SOURCES {
+        let destination = checkout.join(relative);
+        fs::create_dir_all(destination.parent().unwrap()).unwrap();
+        fs::copy(repository.join(relative), destination).unwrap();
+    }
     commit_campaign_manifest(&checkout);
     (checkout, output)
 }
@@ -196,6 +247,13 @@ fn files_under(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
 
 fn run_with_cost_table(label: &str, table: &str) -> std::process::Output {
     let parent = temp_path(label);
+    fs::create_dir_all(&parent).unwrap();
+    assert!(Command::new("git")
+        .args(["init", "--quiet", "--initial-branch=main"])
+        .current_dir(&parent)
+        .status()
+        .unwrap()
+        .success());
     let manifest_path = parent.join("manifest");
     let manifest_file = manifest_path.join("manifest.json");
     let output_path = parent.join("campaign-bin-test");
@@ -211,12 +269,15 @@ fn run_with_cost_table(label: &str, table: &str) -> std::process::Output {
     fs::write(&table_path, table).unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
         .args([
+            "--dry-run-schedule",
             "--manifest",
             manifest_path.to_str().unwrap(),
             "--output",
             output_path.to_str().unwrap(),
             "--q",
             "5",
+            "--n",
+            "2",
             "--accelerator-cost-table",
             table_path.to_str().unwrap(),
         ])
@@ -290,6 +351,8 @@ fn binary_refuses_emission_before_writing_outside_repository() {
             output_path.to_str().unwrap(),
             "--q",
             "3",
+            "--n",
+            "2",
         ])
         .output()
         .unwrap();
@@ -318,9 +381,25 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
     let manifest_file = manifest_path.join("manifest.json");
     fs::create_dir_all(&parent).unwrap();
     fs::create_dir_all(&manifest_path).unwrap();
+    let expected_output =
+        parent.join("checkout/dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
+    let mut campaign = unavailable_backend_manifest();
+    campaign.provenance.invocation = vec![
+        env!("CARGO_BIN_EXE_permanent_campaign").to_owned(),
+        "--manifest".to_owned(),
+        manifest_path.to_str().unwrap().to_owned(),
+        "--output".to_owned(),
+        expected_output.to_str().unwrap().to_owned(),
+        "--q".to_owned(),
+        "7".to_owned(),
+        "--n".to_owned(),
+        "20".to_owned(),
+        "--workers".to_owned(),
+        "1".to_owned(),
+    ];
     fs::write(
         &manifest_file,
-        serde_json::to_vec_pretty(&unavailable_backend_manifest()).unwrap(),
+        serde_json::to_vec_pretty(&campaign).unwrap(),
     )
     .unwrap();
     let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
@@ -332,14 +411,16 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
             "--output",
             output_path.to_str().unwrap(),
             "--q",
-            "5",
+            "7",
+            "--n",
+            "20",
         ])
         .output()
         .unwrap();
 
     let stderr = String::from_utf8_lossy(&result.stderr);
     assert!(!result.status.success(), "stderr:\n{stderr}");
-    assert!(stderr.contains("q=5"), "stderr:\n{stderr}");
+    assert!(stderr.contains("q=7"), "stderr:\n{stderr}");
     assert!(stderr.contains("n=20"), "stderr:\n{stderr}");
     assert!(
         stderr.contains("intra_matrix_parallel"),
@@ -350,15 +431,31 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
 }
 
 #[test]
-fn binary_requires_accelerator_costs_only_for_the_selected_field() {
+fn binary_requires_full_cost_table_even_for_a_processor_selected_cell() {
     let parent = temp_path("mixed-backend");
     let manifest_path = parent.join("manifest");
     let manifest_file = manifest_path.join("manifest.json");
     fs::create_dir_all(&parent).unwrap();
     fs::create_dir_all(&manifest_path).unwrap();
+    let expected_output =
+        parent.join("checkout/dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
+    let mut campaign = mixed_backend_manifest();
+    campaign.provenance.invocation = vec![
+        env!("CARGO_BIN_EXE_permanent_campaign").to_owned(),
+        "--manifest".to_owned(),
+        manifest_path.to_str().unwrap().to_owned(),
+        "--output".to_owned(),
+        expected_output.to_str().unwrap().to_owned(),
+        "--q".to_owned(),
+        "7".to_owned(),
+        "--n".to_owned(),
+        "20".to_owned(),
+        "--workers".to_owned(),
+        "1".to_owned(),
+    ];
     fs::write(
         &manifest_file,
-        serde_json::to_vec_pretty(&mixed_backend_manifest()).unwrap(),
+        serde_json::to_vec_pretty(&campaign).unwrap(),
     )
     .unwrap();
     let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
@@ -370,31 +467,16 @@ fn binary_requires_accelerator_costs_only_for_the_selected_field() {
             "--output",
             output_path.to_str().unwrap(),
             "--q",
-            "3",
+            "7",
+            "--n",
+            "20",
         ])
         .output()
         .unwrap();
+    let stderr = String::from_utf8_lossy(&processor.stderr);
+    assert!(!processor.status.success(), "stderr:\n{stderr}");
     assert!(
-        processor.status.success(),
-        "processor-only selected field must run without an accelerator cost table; stderr:\n{}",
-        String::from_utf8_lossy(&processor.stderr)
-    );
-
-    let accelerator = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
-        .args([
-            "--manifest",
-            manifest_path.to_str().unwrap(),
-            "--output",
-            output_path.to_str().unwrap(),
-            "--q",
-            "5",
-        ])
-        .output()
-        .unwrap();
-    let stderr = String::from_utf8_lossy(&accelerator.stderr);
-    assert!(!accelerator.status.success(), "stderr:\n{stderr}");
-    assert!(
-        stderr.contains("--accelerator-cost-table is required"),
+        stderr.contains("accelerator") && stderr.contains("no measured per-matrix cost"),
         "stderr:\n{stderr}"
     );
 
@@ -405,11 +487,11 @@ fn binary_requires_accelerator_costs_only_for_the_selected_field() {
 fn binary_accepts_the_complete_exact_accelerator_key_set() {
     let result = run_with_cost_table("complete-cost-table", "q,n,per_matrix_us\n3,3,17\n5,2,19\n");
     let stderr = String::from_utf8_lossy(&result.stderr);
-    assert!(
-        !result.status.success(),
-        "the fixture output outside a repository must refuse emission"
+    assert!(result.status.success(), "stderr:\n{stderr}");
+    assert_eq!(
+        String::from_utf8(result.stdout).unwrap(),
+        "schedule q=5 n=2 shards=1\n"
     );
-    assert!(stderr.contains("emission refused"), "stderr:\n{stderr}");
     assert!(
         !stderr.contains("accelerator cost table"),
         "stderr:\n{stderr}"
@@ -478,12 +560,15 @@ fn production_table_is_accepted_by_the_production_cli_and_manifest() {
     let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
         .current_dir(repository)
         .args([
+            "--dry-run-schedule",
             "--manifest",
             campaign.to_str().unwrap(),
             "--output",
             campaign.to_str().unwrap(),
             "--q",
             "7",
+            "--n",
+            "20",
             "--workers",
             "1",
             "--accelerator-cost-table",
@@ -494,11 +579,7 @@ fn production_table_is_accepted_by_the_production_cli_and_manifest() {
         .output()
         .unwrap();
     let stderr = String::from_utf8_lossy(&result.stderr);
-    assert!(
-        !result.status.success(),
-        "the frozen emitter identity must remain binding"
-    );
-    assert!(stderr.contains("emission refused"), "stderr:\n{stderr}");
+    assert!(result.status.success(), "stderr:\n{stderr}");
     assert!(
         !stderr.contains("accelerator cost table"),
         "stderr:\n{stderr}"
@@ -506,6 +587,200 @@ fn production_table_is_accepted_by_the_production_cli_and_manifest() {
     assert_eq!(
         files_under(&campaign),
         before,
-        "production-table preflight must preserve zero-draw dataset bytes"
+        "production exact-cell dry preflight must preserve zero-draw dataset bytes"
     );
+}
+
+#[test]
+fn exact_selector_dry_run_schedules_only_the_requested_cell() {
+    let parent = temp_path("exact-selector");
+    let manifest_path = parent.join("manifest");
+    fs::create_dir_all(&manifest_path).unwrap();
+    fs::write(
+        manifest_path.join("manifest.json"),
+        serde_json::to_vec_pretty(&exact_selection_manifest()).unwrap(),
+    )
+    .unwrap();
+    let output_path = parent.join("campaign-bin-test");
+
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--dry-run-schedule",
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "7",
+            "--n",
+            "20",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        result.status.success(),
+        "stderr:\n{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    assert_eq!(
+        String::from_utf8(result.stdout).unwrap(),
+        "schedule q=7 n=20 shards=1\n"
+    );
+    assert!(
+        !output_path.exists(),
+        "dry scheduling must not open a receipt, lock, sampler, or output"
+    );
+    fs::remove_dir_all(parent).unwrap();
+}
+
+#[test]
+fn exact_selector_executes_only_target_shards_and_keeps_field_open() {
+    let parent = temp_path("exact-selector-execution");
+    let manifest_path = parent.join("manifest");
+    fs::create_dir_all(&manifest_path).unwrap();
+    let manifest_file = manifest_path.join("manifest.json");
+    fs::write(
+        &manifest_file,
+        serde_json::to_vec_pretty(&exact_execution_manifest(&parent)).unwrap(),
+    )
+    .unwrap();
+    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
+
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            output_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "7",
+            "--n",
+            "20",
+            "--workers",
+            "1",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        result.status.success(),
+        "stderr:\n{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    assert!(output_path
+        .join("shards/q7/n20/shard-000000.json")
+        .is_file());
+    assert!(!output_path.join("shards/q7/n04").exists());
+    assert!(output_path
+        .join("derived/campaign-bin-test/campaign-coordinator/coordinator-receipt.json")
+        .is_file());
+    assert!(
+        !output_path.join("summaries/q7.json").exists(),
+        "one exact cell must not finalize the field summary"
+    );
+    fs::remove_dir_all(parent).unwrap();
+}
+
+#[test]
+fn direct_nonfirst_execution_is_refused_before_sampler_or_raw_output() {
+    let parent = temp_path("direct-nonfirst-refusal");
+    let manifest_path = parent.join("manifest");
+    fs::create_dir_all(&manifest_path).unwrap();
+    let manifest_file = manifest_path.join("manifest.json");
+    fs::write(
+        &manifest_file,
+        serde_json::to_vec_pretty(&exact_execution_manifest(&parent)).unwrap(),
+    )
+    .unwrap();
+    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
+
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            output_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "7",
+            "--n",
+            "4",
+            "--workers",
+            "1",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(!result.status.success());
+    assert!(!output_path.join("shards/q7/n04").exists());
+    fs::remove_dir_all(parent).unwrap();
+}
+
+#[test]
+fn q_only_execution_is_refused_before_manifest_or_output_io() {
+    let parent = temp_path("q-only-refusal");
+    let output_path = parent.join("campaign-bin-test");
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            parent.join("absent-manifest").to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "7",
+        ])
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&result.stderr);
+    assert!(!result.status.success());
+    assert!(stderr.contains("exact cell selector requires both --q and --n"));
+    assert!(!stderr.contains("required dataset file is missing"));
+    assert!(!output_path.exists());
+}
+
+#[test]
+fn invalid_exact_selector_fails_before_receipt_or_output_creation() {
+    let parent = temp_path("invalid-exact-selector");
+    let manifest_path = parent.join("manifest");
+    fs::create_dir_all(&manifest_path).unwrap();
+    fs::write(
+        manifest_path.join("manifest.json"),
+        serde_json::to_vec_pretty(&exact_selection_manifest()).unwrap(),
+    )
+    .unwrap();
+
+    for dry in [false, true] {
+        for arguments in [
+            vec!["--q", "7", "--n", "19"],
+            vec!["--q", "5", "--n", "20"],
+            vec!["--n", "20"],
+        ] {
+            let output_path = parent.join(format!("output-{dry}-{}", arguments.join("-")));
+            let mut command = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"));
+            if dry {
+                command.arg("--dry-run-schedule");
+            }
+            command.args([
+                "--manifest",
+                manifest_path.to_str().unwrap(),
+                "--output",
+                output_path.to_str().unwrap(),
+            ]);
+            let result = command.args(arguments).output().unwrap();
+            let stderr = String::from_utf8_lossy(&result.stderr);
+            assert!(
+                !result.status.success(),
+                "invalid selection unexpectedly passed"
+            );
+            assert!(
+                stderr.contains("exact cell selector"),
+                "selector failure must be explicit; stderr:\n{stderr}"
+            );
+            assert!(
+                !output_path.exists(),
+                "invalid selection must fail before receipt or output creation"
+            );
+        }
+    }
+    fs::remove_dir_all(parent).unwrap();
 }

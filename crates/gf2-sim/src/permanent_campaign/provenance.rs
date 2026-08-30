@@ -19,12 +19,15 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
-use std::fs;
+use std::fs::{self, File};
+use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
+use std::sync::Arc;
 
 use sha2::{Digest, Sha256};
 
+use super::root_fs::CampaignRoot;
 use super::schema::{
     field_summary_file, read_field_summary, read_manifest, shard_record_file, ArtifactPath,
     ArtifactPathError, CampaignId, CampaignManifest, CellTerminalState, DatasetFileClass,
@@ -32,15 +35,18 @@ use super::schema::{
     Sha256DigestError, DATASET_HOME, INTEGRITY_FILE, MANIFEST_FILE,
 };
 
-/// Permission for one binary to publish into one campaign directory.
+/// Permission for the running binary to publish into one exact campaign.
 ///
-/// The token carries the executable digest that was checked against the frozen
-/// manifest. [`approve_emission`] produces it for the running writer; the
-/// explicit-digest seam can also produce an inspection result when no live
-/// writer identity is supplied.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Only [`approve_emission`] constructs this opaque token. It binds the live
+/// executable, canonical campaign directory, repository, and committed
+/// manifest bytes checked by the guard.
+#[derive(Debug, Clone)]
 pub struct EmissionApproval {
     binary_sha256: Sha256Digest,
+    campaign_root: CampaignRoot,
+    repository_root: PathBuf,
+    manifest_sha256: Sha256Digest,
+    _mapped_executable: Arc<File>,
 }
 
 impl EmissionApproval {
@@ -48,6 +54,42 @@ impl EmissionApproval {
     pub fn binary_sha256(&self) -> &Sha256Digest {
         &self.binary_sha256
     }
+
+    pub(crate) fn campaign_root(&self) -> &CampaignRoot {
+        &self.campaign_root
+    }
+
+    pub(crate) fn repository_root(&self) -> &Path {
+        &self.repository_root
+    }
+
+    pub(crate) fn manifest_sha256(&self) -> &Sha256Digest {
+        &self.manifest_sha256
+    }
+}
+
+/// Result of checking a supplied or omitted executable identity.
+///
+/// This value is informational and cannot authorize sampler entry. The
+/// campaign writer requires [`EmissionApproval`], which only the live
+/// executable check returns.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EmissionInspection {
+    binary_sha256: Sha256Digest,
+}
+
+impl EmissionInspection {
+    /// Returns the executable digest checked or declared by the manifest.
+    pub fn binary_sha256(&self) -> &Sha256Digest {
+        &self.binary_sha256
+    }
+}
+
+struct VerifiedEmission {
+    binary_sha256: Sha256Digest,
+    campaign_root: CampaignRoot,
+    repository_root: PathBuf,
+    manifest_sha256: Sha256Digest,
 }
 
 /// Why a path inside the repository is not one campaign's directory.
@@ -209,9 +251,8 @@ impl std::error::Error for EmissionRefusal {
 /// `campaign_root` must be one campaign's directory: exactly one
 /// [`CampaignId`] level below [`DATASET_HOME`] inside the repository. A root
 /// that is merely somewhere inside the repository is refused, because it names
-/// no single frozen manifest for the guard to verify against. It may
-/// name a directory that does not exist yet, provided its parent does; the
-/// first emission of a campaign creates it.
+/// no single frozen manifest for the guard to verify against. The frozen
+/// campaign directory and manifest must already exist.
 ///
 /// # Errors
 ///
@@ -219,22 +260,47 @@ impl std::error::Error for EmissionRefusal {
 /// repository, an unreadable path, or a failing `git` invocation refuses too:
 /// the guard never approves a check it could not complete.
 pub fn approve_emission(campaign_root: &Path) -> Result<EmissionApproval, EmissionRefusal> {
-    approve_emission_with_binary_digest(Some(running_binary_sha256()?), campaign_root)
+    let (mapped_executable, binary_sha256) = mapped_executable_identity()?;
+    let verified = verify_emission(Some(binary_sha256), campaign_root)?;
+    Ok(EmissionApproval {
+        binary_sha256: verified.binary_sha256,
+        campaign_root: verified.campaign_root,
+        repository_root: verified.repository_root,
+        manifest_sha256: verified.manifest_sha256,
+        _mapped_executable: Arc::new(mapped_executable),
+    })
 }
 
 /// Returns the SHA-256 digest of the running executable.
 fn running_binary_sha256() -> Result<Sha256Digest, EmissionRefusal> {
-    let executable =
-        std::env::current_exe().map_err(|error| EmissionRefusal::UnknownBinaryDigest {
-            message: error.to_string(),
-        })?;
-    let bytes = fs::read(&executable).map_err(|error| EmissionRefusal::UnknownBinaryDigest {
-        message: format!("{}: {error}", executable.display()),
-    })?;
-    Ok(digest_of(&bytes))
+    mapped_executable_identity().map(|(_, digest)| digest)
 }
 
-/// Applies the emission rule to an optionally supplied executable digest.
+#[cfg(target_os = "linux")]
+fn mapped_executable_identity() -> Result<(File, Sha256Digest), EmissionRefusal> {
+    let file =
+        File::open("/proc/self/exe").map_err(|error| EmissionRefusal::UnknownBinaryDigest {
+            message: format!("cannot open mapped executable handle: {error}"),
+        })?;
+    let mut reader = &file;
+    let mut bytes = Vec::new();
+    reader
+        .read_to_end(&mut bytes)
+        .map_err(|error| EmissionRefusal::UnknownBinaryDigest {
+            message: format!("cannot hash mapped executable handle: {error}"),
+        })?;
+    Ok((file, digest_of(&bytes)))
+}
+
+#[cfg(not(target_os = "linux"))]
+fn mapped_executable_identity() -> Result<(File, Sha256Digest), EmissionRefusal> {
+    Err(EmissionRefusal::UnknownBinaryDigest {
+        message: "this platform does not provide the required mapped-image handle binding"
+            .to_owned(),
+    })
+}
+
+/// Inspects emission-guard predicates for an optionally supplied digest.
 ///
 /// `Some` checks the supplied digest as the emitting binary's identity. `None`
 /// verifies every other emission guard and uses the frozen manifest's own
@@ -242,29 +308,36 @@ fn running_binary_sha256() -> Result<Sha256Digest, EmissionRefusal> {
 /// that do not have the writer executable available. In either mode the
 /// manifest is compared with its committed bytes before it is parsed, so a
 /// changed manifest remains a [`EmissionRefusal::ManifestChanged`] refusal.
-pub fn approve_emission_with_binary_digest(
+pub fn inspect_emission_with_binary_digest(
     binary_sha256: Option<Sha256Digest>,
     campaign_root: &Path,
-) -> Result<EmissionApproval, EmissionRefusal> {
-    let anchor = if campaign_root.is_dir() {
-        campaign_root.to_owned()
-    } else {
-        campaign_root
-            .parent()
-            .ok_or_else(|| EmissionRefusal::OutsideRepository {
-                path: campaign_root.to_owned(),
-            })?
-            .to_owned()
-    };
+) -> Result<EmissionInspection, EmissionRefusal> {
+    let verified = verify_emission(binary_sha256, campaign_root)?;
+    Ok(EmissionInspection {
+        binary_sha256: verified.binary_sha256,
+    })
+}
+
+fn verify_emission(
+    binary_sha256: Option<Sha256Digest>,
+    campaign_root: &Path,
+) -> Result<VerifiedEmission, EmissionRefusal> {
+    let campaign_anchor =
+        CampaignRoot::open(campaign_root).map_err(|source| EmissionRefusal::Io {
+            path: campaign_root.to_owned(),
+            source,
+        })?;
+    let anchor = campaign_anchor.path();
     let repository = canonicalize(Path::new(&run_git(
-        &anchor,
+        anchor,
         &["rev-parse", "--show-toplevel"],
     )?))?;
 
-    let prefix = campaign_prefix(&anchor, campaign_root, &repository)?;
+    let prefix = campaign_prefix(anchor, anchor, &repository)?;
     let manifest_path = campaign_root.join(MANIFEST_FILE);
-    let manifest_bytes =
-        fs::read(&manifest_path).map_err(|_| EmissionRefusal::ManifestChanged {
+    let manifest_bytes = campaign_anchor
+        .read(Path::new(MANIFEST_FILE))
+        .map_err(|_| EmissionRefusal::ManifestChanged {
             path: manifest_path.clone(),
         })?;
     let committed = run_git_bytes(
@@ -279,7 +352,8 @@ pub fn approve_emission_with_binary_digest(
             path: manifest_path,
         });
     }
-    let manifest = read_manifest(campaign_root).map_err(EmissionRefusal::Schema)?;
+    let manifest = super::schema::read_manifest_bytes(&manifest_bytes, &manifest_path)
+        .map_err(EmissionRefusal::Schema)?;
     let Some(expected) = manifest.provenance.binary_sha256 else {
         return Err(EmissionRefusal::UndeclaredBinaryDigest {
             path: manifest_path,
@@ -293,7 +367,12 @@ pub fn approve_emission_with_binary_digest(
     } else {
         expected
     };
-    Ok(EmissionApproval { binary_sha256 })
+    Ok(VerifiedEmission {
+        binary_sha256,
+        campaign_root: campaign_anchor,
+        repository_root: repository,
+        manifest_sha256: digest_of(&manifest_bytes),
+    })
 }
 
 /// Returns the campaign directory as a repository-relative `/`-terminated prefix.
@@ -1383,14 +1462,14 @@ mod tests {
 
     fn approve(repo: &TestRepo, campaign: &Path) -> Result<EmissionApproval, EmissionRefusal> {
         let _ = repo;
-        approve_emission_with_binary_digest(Some(running_binary_sha256()?), campaign)
+        approve_emission(campaign)
     }
 
     fn approve_with_running_binary(
         _repo: &TestRepo,
         campaign: &Path,
     ) -> Result<EmissionApproval, EmissionRefusal> {
-        approve_emission_with_binary_digest(Some(running_binary_sha256()?), campaign)
+        approve_emission(campaign)
     }
 
     fn prepare_manifest_for_running_binary(repo: &TestRepo, campaign: &Path) {
@@ -1483,9 +1562,9 @@ mod tests {
         .unwrap();
         repo.commit_all("freeze a different emitter identity");
 
-        let approval = approve_emission_with_binary_digest(None, &campaign)
-            .expect("inspection without a live writer identity must approve");
-        assert_eq!(approval.binary_sha256(), &expected);
+        let inspection = inspect_emission_with_binary_digest(None, &campaign)
+            .expect("inspection verifies every available guard predicate");
+        assert_eq!(inspection.binary_sha256(), &expected);
     }
 
     #[test]
@@ -1504,7 +1583,7 @@ mod tests {
         repo.commit_all("freeze the placeholder emitter identity");
 
         let actual = running_binary_sha256().unwrap();
-        let refusal = approve_emission_with_binary_digest(Some(actual.clone()), &campaign)
+        let refusal = inspect_emission_with_binary_digest(Some(actual.clone()), &campaign)
             .expect_err("the placeholder digest can never name a real executable");
         match refusal {
             EmissionRefusal::BinaryDigestMismatch {
@@ -1536,7 +1615,7 @@ mod tests {
         .unwrap();
         repo.commit_all("freeze the named emitter identity");
 
-        let refusal = approve_emission_with_binary_digest(Some(actual.clone()), &campaign)
+        let refusal = inspect_emission_with_binary_digest(Some(actual.clone()), &campaign)
             .expect_err("a named emitter with a different digest must refuse");
         assert!(matches!(
             refusal,
@@ -1545,7 +1624,7 @@ mod tests {
                 actual: found_actual,
             } if found_expected == expected && found_actual == actual
         ));
-        let refusal = approve_emission_with_binary_digest(Some(actual), &campaign)
+        let refusal = inspect_emission_with_binary_digest(Some(actual), &campaign)
             .expect_err("the mismatch refusal must name the pinned and observed digests");
         let message = refusal.to_string();
         assert!(message.contains(expected.as_str()), "{message}");
@@ -1556,7 +1635,7 @@ mod tests {
     }
 
     #[test]
-    fn emission_approves_a_named_emitter_with_the_pinned_digest() {
+    fn inspection_verifies_a_named_emitter_with_the_pinned_digest() {
         let repo = TestRepo::new();
         let campaign = repo.write_dataset();
         let emitter_path = repo.path("matching-emitter");
@@ -1572,9 +1651,9 @@ mod tests {
         .unwrap();
         repo.commit_all("freeze the matching emitter identity");
 
-        let approval = approve_emission_with_binary_digest(Some(expected.clone()), &campaign)
-            .expect("a named emitter with the pinned digest must approve");
-        assert_eq!(approval.binary_sha256(), &expected);
+        let inspection = inspect_emission_with_binary_digest(Some(expected.clone()), &campaign)
+            .expect("a named emitter with the pinned digest verifies");
+        assert_eq!(inspection.binary_sha256(), &expected);
     }
 
     #[test]
@@ -1588,6 +1667,64 @@ mod tests {
         assert_eq!(approval.binary_sha256(), &running_binary_sha256().unwrap());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn emission_refuses_a_symlinked_campaign_ancestor() {
+        use std::os::unix::fs::symlink;
+
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        prepare_manifest_for_running_binary(&repo, &campaign);
+        let dataset_root = campaign.parent().unwrap();
+        let held_dataset = repo.path("held-dataset-root");
+        fs::rename(dataset_root, &held_dataset).unwrap();
+        symlink(&held_dataset, dataset_root).unwrap();
+
+        assert!(approve_emission(&campaign).is_err());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn approval_hashes_the_mapped_executable_handle() {
+        const CHILD_CAMPAIGN: &str = "GF2_MAPPED_EXECUTABLE_CAMPAIGN";
+        const CHILD_LAUNCH_PATH: &str = "GF2_MAPPED_EXECUTABLE_LAUNCH_PATH";
+
+        if let (Ok(campaign), Ok(launch_path)) = (
+            std::env::var(CHILD_CAMPAIGN),
+            std::env::var(CHILD_LAUNCH_PATH),
+        ) {
+            let replacement = PathBuf::from(&launch_path).with_extension("replacement");
+            fs::write(&replacement, b"replacement executable pathname\n").unwrap();
+            fs::rename(&replacement, &launch_path).unwrap();
+            let approval = approve_emission(Path::new(&campaign))
+                .expect("approval hashes the process's mapped image after pathname replacement");
+            assert_eq!(approval.binary_sha256(), &running_binary_sha256().unwrap());
+            return;
+        }
+
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        prepare_manifest_for_running_binary(&repo, &campaign);
+        let launch_path = repo.path("mapped-executable-test");
+        fs::copy(std::env::current_exe().unwrap(), &launch_path).unwrap();
+        let output = Command::new(&launch_path)
+            .args([
+                "--exact",
+                "permanent_campaign::provenance::tests::approval_hashes_the_mapped_executable_handle",
+                "--nocapture",
+            ])
+            .env(CHILD_CAMPAIGN, &campaign)
+            .env(CHILD_LAUNCH_PATH, &launch_path)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "child stdout:\n{}\nchild stderr:\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
     #[test]
     fn emission_refuses_changed_frozen_manifest() {
         let repo = TestRepo::new();
@@ -1597,7 +1734,7 @@ mod tests {
 
         let refusal = approve(&repo, &campaign).expect_err("the frozen manifest must be immutable");
         assert!(matches!(refusal, EmissionRefusal::ManifestChanged { .. }));
-        let refusal = approve_emission_with_binary_digest(None, &campaign)
+        let refusal = inspect_emission_with_binary_digest(None, &campaign)
             .expect_err("inspection must also reject the changed frozen manifest");
         assert!(matches!(refusal, EmissionRefusal::ManifestChanged { .. }));
     }
@@ -1769,6 +1906,7 @@ mod tests {
         repo.write_dataset();
         repo.commit_all("publish the dataset");
         repo.write(SOURCE_FILE, "changed after the build\n");
+        fs::create_dir_all(repo.path(&format!("{DATASET_HOME}/Not_A_Campaign"))).unwrap();
 
         let campaign = format!("{DATASET_HOME}/{FIXTURE_CAMPAIGN_ID}");
         let rejected = [
@@ -1822,7 +1960,7 @@ mod tests {
     fn emission_refuses_a_campaign_directory_outside_the_repository() {
         let outside = TestDir::new();
 
-        let refusal = approve_emission_with_binary_digest(
+        let refusal = inspect_emission_with_binary_digest(
             Some(running_binary_sha256().unwrap()),
             outside.root(),
         )

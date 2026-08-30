@@ -6,13 +6,11 @@
 //! runtime-observed provenance is carried by a real executable rather than
 //! only by the library that any executable links.
 //!
-//! The campaign driver is the `permanent_campaign` binary. It enumerates the
-//! frozen manifest's work items, derives stream addresses, draws matrices,
-//! evaluates permanents and any manifest-requested determinant companions on
-//! the same row-major samples, accumulates shard records, and writes shard
-//! files and the field summary through the emission guard. This binary has no
-//! sampler, no backend selection, and no
-//! accumulator, and it never creates or mutates a dataset file: `checksums`
+//! The `gf2-sim` library owns reusable campaign scheduling, admission,
+//! sampling orchestration, and receipt persistence. `permanent_campaign` is a
+//! thin compiled CLI adapter that invokes one exact-cell transaction. This
+//! reader binary has no sampler, backend selection, or accumulator, and it
+//! never creates or mutates a dataset file: `checksums`
 //! prints to standard output rather than writing `checksums.sha256`, so the
 //! executable has no write path into a dataset at all.
 //!
@@ -45,7 +43,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use gf2_sim::permanent_campaign::provenance::{
-    approve_emission_with_binary_digest, generate_integrity_file, runtime_git_revision,
+    generate_integrity_file, inspect_emission_with_binary_digest, runtime_git_revision,
     verify_dataset, DatasetVerdict,
 };
 use gf2_sim::permanent_campaign::schema::{conform_dataset, read_manifest, Sha256Digest};
@@ -87,16 +85,19 @@ fn emission_check(root: &Path, emitter_path: Option<&Path>) -> ExitCode {
         },
         None => None,
     };
-    match approve_emission_with_binary_digest(binary_sha256, root) {
-        Ok(approval) => match emitter_path {
+    match inspect_emission_with_binary_digest(binary_sha256, root) {
+        Ok(inspection) => match emitter_path {
             Some(_) => {
-                println!("emission approved for binary {}", approval.binary_sha256());
+                println!(
+                    "supplied emitter identity verified: {}",
+                    inspection.binary_sha256()
+                );
                 ExitCode::SUCCESS
             }
             None => {
                 println!(
                     "everything except writer identity is verified; the pinned emitter digest is {}; writer identity is asserted only by the writer's own guard at emission time.",
-                    approval.binary_sha256()
+                    inspection.binary_sha256()
                 );
                 ExitCode::SUCCESS
             }

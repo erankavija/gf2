@@ -1,36 +1,24 @@
-//! Deterministic scheduling and field-shard emission for permanent campaigns.
+//! Deterministic exact-cell scheduling primitives for permanent campaigns.
 //!
-//! A campaign invocation owns one field arm. Work is ordered by `(q, n,
-//! shard_id)`, each shard opens the stream address recorded by its manifest,
-//! and every matrix passes through draw, pack, evaluate, determinant, and count
-//! phases when the cell requests the determinant companion. Generic Ryser
-//! cells omit the pack phase because their row-major operands are evaluated
-//! directly.
-//! Timings remain in [`ShardRun`] for progress reporting; only schema records
-//! and summaries are written to disk, so wall-clock variation cannot alter
-//! emitted bytes.
+//! Work is ordered by `(q, n, shard_id)`, each shard opens the stream address
+//! recorded by its manifest, and every matrix passes through draw, pack,
+//! evaluate, determinant, and count phases when the cell requests the
+//! determinant companion. Generic Ryser cells omit the pack phase because
+//! their row-major operands are evaluated directly. Production
+//! campaign-purpose evaluation and raw emission remain crate-private and are
+//! entered only by the persisted coordinator state machine.
 //!
 //! A `BatchParallel` cell draws each shard's matrices serially in bounded
 //! chunks, then uses a locally configured Rayon pool for packing, permanent
 //! evaluation, and optional determinant evaluation. Batch phase durations are
 //! wall-clock durations for those per-chunk pool sections; the observer and
 //! histogram updates retain input order on the caller thread.
-//!
-//! ```no_run
-//! # use std::path::Path;
-//! # use gf2_sim::permanent_campaign::schema::read_manifest;
-//! # use gf2_sim::permanent_campaign::schedule::{emit_field, enumerate_work_items, run_field};
-//! let root = Path::new("dev/simulation_results/permanent-zero-fraction/campaign");
-//! let manifest = read_manifest(root).unwrap();
-//! let work = enumerate_work_items(&manifest, Some(3)).unwrap();
-//! let result = run_field(&manifest, 3).unwrap();
-//! let written = emit_field(root, &manifest, &result).unwrap();
-//! assert_eq!(written.len(), work.len() + 1);
-//! ```
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+#[cfg(test)]
 use std::fs::{self, OpenOptions};
+#[cfg(test)]
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -43,32 +31,27 @@ use gf2_algebra::permanent::{
 };
 use gf2_core::field::{matrix::FieldMatrix, FieldVec};
 use gf2_core::gfp::Fp;
-use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test, two_sided_test};
 use gf2_stats::sampler::{
     FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose as SamplerPurpose,
 };
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
 
+use super::acceptance::AcceptanceError;
+#[cfg(test)]
+use super::acceptance::{assess_completed_cell, AcceptancePlan};
+use super::root_fs::CampaignRoot;
+#[cfg(test)]
 use super::schema::{
-    field_summary_file, shard_record_file, AcceptanceVerdict, Backend, CampaignManifest, CellSpec,
-    CellTerminalState, DeterminantCount, DeterminantEstimate, DeterminantPlan, FieldSummary,
-    Interval, ProportionEstimate, QuarantinedShard, ShardRecord, ShardSpec, StreamAddress,
-    SummaryRow, SCHEMA_VERSION,
+    field_summary_file, CellTerminalState, FieldSummary, QuarantinedShard, SummaryRow,
+};
+use super::schema::{
+    shard_record_file, Backend, CampaignManifest, CellSpec, DeterminantCount, DeterminantPlan,
+    ShardRecord, ShardSpec, StreamAddress, SCHEMA_VERSION,
 };
 
 /// The purpose tag reserved for published campaign-cell matrix streams.
 pub const CAMPAIGN_CELL_PURPOSE_TAG: u8 = SamplerPurpose::CampaignCell as u8;
-
-/// Family-wise error budget for the permanent-floor tests, as preregistered
-/// in `dev/simulation_results/permanent-zero-fraction/protocol.md` under
-/// "Error budgets" and "Permanent-floor decision".
-const PERMANENT_FAMILYWISE_ERROR: f64 = 0.025;
-
-/// Family-wise error budget for the determinant tests, as preregistered in
-/// `dev/simulation_results/permanent-zero-fraction/protocol.md` under
-/// "Error budgets" and "Determinant decision".
-const DETERMINANT_FAMILYWISE_ERROR: f64 = 0.025;
 
 /// Maximum number of field entries retained by one batch's raw matrices.
 const BATCH_CHUNK_MAX_MATRIX_ENTRIES: usize = 16 * 1024;
@@ -186,6 +169,45 @@ impl AcceleratorCostTable {
     pub fn contains(&self, q: u8, n: u16) -> bool {
         self.costs.contains_key(&(q, n))
     }
+
+    /// Validates this table against the complete manifest accelerator set.
+    ///
+    /// Exact-cell execution still binds the complete preregistered launch-cost
+    /// artifact: selecting one cell does not authorize a selected-only table
+    /// that omits another manifest accelerator cell or adds an unrelated key.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ScheduleError::AcceleratorCostMissing`] for the first missing
+    /// manifest accelerator cell, or
+    /// [`ScheduleError::AcceleratorCostUnexpected`] when the table contains a
+    /// processor-backed or nonmanifest key.
+    ///
+    /// # Complexity
+    ///
+    /// `O(C log C)` for the manifest and table cell counts.
+    pub fn validate_manifest(&self, manifest: &CampaignManifest) -> Result<(), ScheduleError> {
+        let expected: BTreeSet<_> = manifest
+            .cells
+            .iter()
+            .filter(|cell| cell.backend == Backend::Accelerator)
+            .map(|cell| (cell.q, cell.n))
+            .collect();
+        for &(q, n) in &expected {
+            if !self.costs.contains_key(&(q, n)) {
+                return Err(ScheduleError::AcceleratorCostMissing { q, n });
+            }
+        }
+        if let Some(&(q, n)) = self.costs.keys().find(|key| !expected.contains(key)) {
+            let backend = manifest
+                .cells
+                .iter()
+                .find(|cell| (cell.q, cell.n) == (q, n))
+                .map(|cell| cell.backend);
+            return Err(ScheduleError::AcceleratorCostUnexpected { q, n, backend });
+        }
+        Ok(())
+    }
 }
 
 /// Chooses the number of matrices for the next accelerator launch.
@@ -295,30 +317,24 @@ pub struct ShardRun {
     pub timing: PhaseDurations,
 }
 
-/// A deterministic shard result and the sampler's absolute generator position
-/// after its final matrix draw.
+/// A deterministic shard result admitted by the coordinator after evaluation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EvaluatedShard {
     /// Schema record produced by the evaluation.
     pub run: ShardRun,
-    /// Absolute ChaCha20 generator word position observed at the checkpoint
-    /// boundary. The driver records this caller-owned continuation state.
-    pub generator_word_position: u128,
 }
 
 /// Completed execution for one field arm.
+#[cfg(test)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct FieldRun {
+struct FieldRun {
     q: u8,
     shards: Vec<ShardRun>,
     summary: FieldSummary,
 }
 
+#[cfg(test)]
 impl FieldRun {
-    pub(crate) fn from_parts(q: u8, shards: Vec<ShardRun>, summary: FieldSummary) -> Self {
-        Self { q, shards, summary }
-    }
-
     /// Returns the field order covered by this invocation.
     #[must_use]
     pub const fn q(&self) -> u8 {
@@ -366,6 +382,15 @@ pub enum ScheduleError {
         /// Square matrix dimension of the cell.
         n: u16,
     },
+    /// The launch-cost table names a non-accelerator or nonmanifest cell.
+    AcceleratorCostUnexpected {
+        /// Field order in the unexpected key.
+        q: u8,
+        /// Matrix order in the unexpected key.
+        n: u16,
+        /// Manifest backend when the key names a processor-backed cell.
+        backend: Option<Backend>,
+    },
     /// The manifest selected an accelerator, but this host has no usable one.
     AcceleratorDeviceUnavailable {
         /// Prime field order of the cell.
@@ -384,6 +409,8 @@ pub enum ScheduleError {
     },
     /// JSON serialization failed.
     Serialization(serde_json::Error),
+    /// Completed counts cannot enter the canonical exact-decision path.
+    Acceptance(AcceptanceError),
 }
 
 impl fmt::Display for ScheduleError {
@@ -405,12 +432,24 @@ impl fmt::Display for ScheduleError {
                 "accelerator cell q={q} n={n} has no measured per-matrix cost entry; \
                  supply one from that cell's committed measurement receipt"
             ),
+            Self::AcceleratorCostUnexpected { q, n, backend } => match backend {
+                Some(backend) => write!(
+                    formatter,
+                    "accelerator cost table key q={q} n={n} names processor backend {}",
+                    backend.name()
+                ),
+                None => write!(
+                    formatter,
+                    "accelerator cost table key q={q} n={n} is not a manifest cell"
+                ),
+            },
             Self::AcceleratorDeviceUnavailable { q, n, device } => write!(
                 formatter,
                 "cell q={q} n={n} requires {device}, but no usable device is present"
             ),
             Self::Io { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::Serialization(source) => source.fmt(formatter),
+            Self::Acceptance(source) => source.fmt(formatter),
         }
     }
 }
@@ -464,6 +503,7 @@ impl std::error::Error for ScheduleError {
         match self {
             Self::Io { source, .. } => Some(source),
             Self::Serialization(source) => Some(source),
+            Self::Acceptance(source) => Some(source),
             _ => None,
         }
     }
@@ -474,7 +514,8 @@ impl std::error::Error for ScheduleError {
 /// When `field` is `Some(q)`, only that field arm is returned. The function
 /// performs no I/O and does not change manifest order in place. Complexity is
 /// `O(S log S)` for `S` selected shards.
-pub fn enumerate_work_items(
+#[cfg(test)]
+fn enumerate_work_items(
     manifest: &CampaignManifest,
     field: Option<u8>,
 ) -> Result<Vec<WorkItem>, ScheduleError> {
@@ -492,6 +533,45 @@ pub fn enumerate_work_items(
             return Err(ScheduleError::FieldNotFound { q });
         }
     }
+    items.sort_by_key(WorkItem::key);
+    Ok(items)
+}
+
+/// Enumerates exactly one manifest cell in deterministic shard order.
+///
+/// The selector is validated against the pair `(q, n)`: an order that exists
+/// under another field is not accepted. This function is pure and performs no
+/// checkpoint, sampler, or dataset I/O, so callers can reject an invalid
+/// selector before opening any campaign execution state.
+///
+/// # Errors
+///
+/// Returns [`ScheduleError::InvalidWorkItem`] when `(q, n)` is not a manifest
+/// cell or when one of that cell's shard specifications is invalid.
+///
+/// # Complexity
+///
+/// `O(C + S log S)` for `C` manifest cells and `S` shards in the selected
+/// cell.
+pub fn enumerate_cell_work_items(
+    manifest: &CampaignManifest,
+    q: u8,
+    n: u16,
+) -> Result<Vec<WorkItem>, ScheduleError> {
+    let Some(cell) = manifest
+        .cells
+        .iter()
+        .find(|cell| cell.q == q && cell.n == n)
+    else {
+        return Err(ScheduleError::InvalidWorkItem(format!(
+            "exact cell selector q={q} n={n} does not name a manifest cell"
+        )));
+    };
+    let mut items = cell
+        .shards
+        .iter()
+        .map(|shard| work_item(cell, shard))
+        .collect::<Result<Vec<_>, _>>()?;
     items.sort_by_key(WorkItem::key);
     Ok(items)
 }
@@ -529,7 +609,8 @@ pub fn enumerate_work_items(
 ///
 /// Linear in selected shards, with each shard dominated by its configured
 /// permanent kernel and optional `O(n³)` determinant per matrix.
-pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, ScheduleError> {
+#[cfg(test)]
+fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, ScheduleError> {
     run_field_with_worker_count(manifest, field, 1)
 }
 
@@ -563,7 +644,8 @@ pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Sch
 /// For a batch of `B` matrices of dimension `n`, raw matrix storage is bounded
 /// by the configured chunk limit and the per-matrix kernel remains the
 /// selected single-matrix cost; the sampler itself advances in input order.
-pub fn run_field_with_worker_count(
+#[cfg(test)]
+fn run_field_with_worker_count(
     manifest: &CampaignManifest,
     field: u8,
     worker_count: usize,
@@ -605,7 +687,8 @@ pub fn run_field_with_worker_count(
 /// Preflight is `O(S log C)` for `S` selected shards and `C` measured cells.
 /// Execution is linear in selected shards, each dominated by its configured
 /// permanent kernel and optional `O(n³)` determinant per matrix.
-pub fn run_field_with_worker_count_and_accelerator(
+#[cfg(test)]
+fn run_field_with_worker_count_and_accelerator(
     manifest: &CampaignManifest,
     field: u8,
     worker_count: usize,
@@ -614,6 +697,7 @@ pub fn run_field_with_worker_count_and_accelerator(
     run_field_with_accelerator_evaluator(manifest, field, worker_count, accelerator, run_shard)
 }
 
+#[cfg(test)]
 fn run_field_with_accelerator_evaluator<E>(
     manifest: &CampaignManifest,
     field: u8,
@@ -657,7 +741,7 @@ where
             accelerator_config,
         )?);
     }
-    let summary = summarize(field, &shards, manifest.cells.len() as u64);
+    let summary = summarize(manifest, field, &shards)?;
     Ok(FieldRun {
         q: field,
         shards,
@@ -672,7 +756,8 @@ where
 /// Consequently two invocations selecting different fields open disjoint
 /// shard and summary paths. The writer refuses every dataset file that already
 /// exists, so re-emission of the same work items targets a fresh campaign tree.
-pub fn emit_field(
+#[cfg(test)]
+fn emit_field(
     root: &Path,
     manifest: &CampaignManifest,
     run: &FieldRun,
@@ -750,6 +835,7 @@ fn shard_matrix_count(cell: &CellSpec, shard: &ShardSpec) -> u64 {
     cell.matrix_count.saturating_sub(start).min(cell.shard_size)
 }
 
+#[cfg(test)]
 fn run_shard(
     root_seed: u64,
     purpose_tag: u8,
@@ -758,69 +844,6 @@ fn run_shard(
     accelerator: Option<AcceleratorConfig>,
 ) -> Result<ShardRun, ScheduleError> {
     Ok(run_shard_with_position(root_seed, purpose_tag, item, worker_count, accelerator)?.run)
-}
-
-/// Evaluates one manifest work item and returns its continuation position.
-///
-/// This is the library seam used by the checkpointed driver and by tests that
-/// inject an evaluation failure. It performs no dataset I/O.
-/// In a build that provides the accelerator backend, accelerator work is
-/// refused with [`ScheduleError::AcceleratorCostMissing`] because this
-/// convenience entry point supplies no measured cost; other builds return
-/// [`ScheduleError::BackendUnavailable`] first.
-///
-/// # Errors
-///
-/// Returns [`ScheduleError::MissingCampaignPurpose`] when the manifest has no
-/// campaign stream purpose, [`ScheduleError::InvalidWorkItem`] for invalid
-/// work-item or sampler configuration, [`ScheduleError::BackendUnavailable`]
-/// when the frozen backend is unsupported,
-/// [`ScheduleError::AcceleratorCostMissing`] when an accelerator item has no
-/// measured cost.
-///
-/// # Panics
-///
-/// Does not intentionally panic. Invalid execution configuration is returned
-/// as an error.
-///
-/// # Complexity
-///
-/// Dominated by the selected permanent kernel, plus `O(n³)` when the
-/// determinant companion is enabled.
-pub fn evaluate_work_item(
-    manifest: &CampaignManifest,
-    item: &WorkItem,
-) -> Result<EvaluatedShard, ScheduleError> {
-    evaluate_work_item_with_worker_count(manifest, item, 1)
-}
-
-/// Evaluates one manifest work item using the caller's configured worker count
-/// for a `BatchParallel` backend.
-///
-/// # Errors
-///
-/// Returns [`ScheduleError::MissingCampaignPurpose`] when the manifest has no
-/// campaign stream purpose, [`ScheduleError::InvalidWorkItem`] when
-/// `worker_count` is zero or the work item, sampler, pool, or dispatch is
-/// invalid, [`ScheduleError::BackendUnavailable`] when the frozen backend is
-/// unsupported, [`ScheduleError::AcceleratorCostMissing`] when an accelerator
-/// item has no measured cost.
-///
-/// # Panics
-///
-/// Does not intentionally panic. Invalid execution configuration and
-/// pool-construction failures are returned as schedule errors.
-///
-/// # Complexity
-///
-/// Dominated by the selected permanent kernel, plus `O(n³)` when the
-/// determinant companion is enabled.
-pub fn evaluate_work_item_with_worker_count(
-    manifest: &CampaignManifest,
-    item: &WorkItem,
-    worker_count: usize,
-) -> Result<EvaluatedShard, ScheduleError> {
-    evaluate_work_item_with_worker_count_and_accelerator(manifest, item, worker_count, None)
 }
 
 /// Evaluates one work item with explicit accelerator launch-sizing input.
@@ -854,7 +877,7 @@ pub fn evaluate_work_item_with_worker_count(
 /// `O(n^3)` per matrix when the determinant companion is enabled. An
 /// accelerator cell issues `ceil(matrix_count / launch)` device launches, where
 /// `launch` comes from the measured per-matrix cost and the configured cap.
-pub fn evaluate_work_item_with_worker_count_and_accelerator(
+pub(crate) fn evaluate_work_item_with_worker_count_and_accelerator(
     manifest: &CampaignManifest,
     item: &WorkItem,
     worker_count: usize,
@@ -1135,7 +1158,6 @@ where
                 count,
             },
         },
-        generator_word_position: sampler.generator_word_position(),
     })
 }
 
@@ -1391,7 +1413,6 @@ where
                 count,
             },
         },
-        generator_word_position: sampler.generator_word_position(),
     })
 }
 
@@ -1551,7 +1572,6 @@ where
                 count,
             },
         },
-        generator_word_position: sampler.generator_word_position(),
     })
 }
 
@@ -1648,185 +1668,93 @@ fn evaluate_determinant<const Q: u64>(row_major: &[Fp<Q>], n: usize) -> u64 {
     FieldMatrix::from_rows(rows).det().value()
 }
 
-fn summarize(q: u8, shards: &[ShardRun], family_test_count: u64) -> FieldSummary {
-    let mut rows = Vec::new();
-    let mut index = 0;
-    while index < shards.len() {
-        let n = shards[index].record.stream_address.n;
-        let mut matrix_count = 0_u64;
-        let mut zero_count = 0_u64;
-        let mut determinant_evaluated = false;
-        let mut determinant_sample_count = 0_u64;
-        let mut determinant_zero_count = 0_u64;
-        while index < shards.len() && shards[index].record.stream_address.n == n {
-            matrix_count += shards[index].record.matrix_count;
-            zero_count += shards[index].record.permanent_zero_count;
-            if let DeterminantCount::Evaluated {
-                sample_count,
-                zero_count,
-            } = &shards[index].record.determinant
-            {
-                determinant_evaluated = true;
-                determinant_sample_count += *sample_count;
-                determinant_zero_count += *zero_count;
-            }
-            index += 1;
-        }
-        let (lower, upper) = wilson_interval(zero_count, matrix_count);
-        let determinant = if determinant_evaluated {
-            DeterminantCount::Evaluated {
-                sample_count: determinant_sample_count,
-                zero_count: determinant_zero_count,
-            }
-        } else {
-            DeterminantCount::NotEvaluated
-        };
-        let determinant_estimate = match determinant {
-            DeterminantCount::Evaluated {
-                sample_count,
-                zero_count,
-            } => {
-                let (lower, upper) = wilson_interval(zero_count, sample_count);
-                DeterminantEstimate::Evaluated {
-                    estimate: ProportionEstimate {
-                        point: zero_count as f64 / sample_count as f64,
-                        interval: Interval { lower, upper },
-                    },
-                    verdict: determinant_acceptance(
-                        q,
-                        n,
-                        zero_count,
-                        sample_count,
-                        family_test_count,
-                    ),
-                }
-            }
-            DeterminantCount::NotEvaluated => DeterminantEstimate::NotEvaluated,
-        };
-        rows.push(SummaryRow {
-            schema_version: SCHEMA_VERSION,
-            q,
-            n,
-            matrix_count,
-            permanent_zero_count: zero_count,
-            determinant,
-            terminal_state: CellTerminalState::Completed {
-                permanent_estimate: ProportionEstimate {
-                    point: zero_count as f64 / matrix_count as f64,
-                    interval: Interval { lower, upper },
-                },
-                permanent_verdict: permanent_acceptance(
-                    q,
-                    zero_count,
-                    matrix_count,
-                    family_test_count,
-                ),
-                determinant_estimate,
-            },
-        });
-    }
-    FieldSummary {
-        schema_version: SCHEMA_VERSION,
-        q,
-        rows,
-        quarantined: Vec::new(),
-    }
+#[cfg(test)]
+fn summarize(
+    manifest: &CampaignManifest,
+    q: u8,
+    shards: &[ShardRun],
+) -> Result<FieldSummary, ScheduleError> {
+    summarize_with_quarantine(manifest, q, shards, Vec::new())
 }
 
 /// Builds a field summary while retaining failed work-item identities.
-pub(crate) fn summarize_with_quarantine(
+#[cfg(test)]
+fn summarize_with_quarantine(
     manifest: &CampaignManifest,
     q: u8,
     shards: &[ShardRun],
     quarantined: Vec<QuarantinedShard>,
-) -> FieldSummary {
-    let mut summary = summarize(q, shards, manifest.cells.len() as u64);
-    for row in &mut summary.rows {
-        if quarantined
-            .iter()
-            .any(|item| item.q == row.q && item.n == row.n)
-        {
-            row.terminal_state = CellTerminalState::Halted {
-                reason: super::schema::HaltReason::ExecutionFailure,
-            };
-        }
-    }
+) -> Result<FieldSummary, ScheduleError> {
+    let plan = AcceptancePlan::for_manifest(manifest).map_err(ScheduleError::Acceptance)?;
+    let mut rows = Vec::new();
     for cell in manifest.cells.iter().filter(|cell| cell.q == q) {
-        if !summary.rows.iter().any(|row| row.n == cell.n) {
-            summary.rows.push(SummaryRow {
+        let selected: Vec<_> = shards
+            .iter()
+            .filter(|shard| {
+                (shard.record.stream_address.q, shard.record.stream_address.n) == (cell.q, cell.n)
+            })
+            .collect();
+        let matrix_count = selected.iter().map(|shard| shard.record.matrix_count).sum();
+        let permanent_zero_count = selected
+            .iter()
+            .map(|shard| shard.record.permanent_zero_count)
+            .sum();
+        let determinant = match cell.determinant_companion {
+            DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
+                sample_count: selected
+                    .iter()
+                    .filter_map(|shard| match shard.record.determinant {
+                        DeterminantCount::Evaluated { sample_count, .. } => Some(sample_count),
+                        DeterminantCount::NotEvaluated => None,
+                    })
+                    .sum(),
+                zero_count: selected
+                    .iter()
+                    .filter_map(|shard| match shard.record.determinant {
+                        DeterminantCount::Evaluated { zero_count, .. } => Some(zero_count),
+                        DeterminantCount::NotEvaluated => None,
+                    })
+                    .sum(),
+            },
+            DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
+        };
+        let halted = quarantined
+            .iter()
+            .any(|item| (item.q, item.n) == (cell.q, cell.n))
+            || matrix_count != cell.matrix_count;
+        if halted {
+            rows.push(SummaryRow {
                 schema_version: SCHEMA_VERSION,
                 q,
                 n: cell.n,
-                matrix_count: 0,
-                permanent_zero_count: 0,
-                determinant: match cell.determinant_companion {
-                    DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
-                        sample_count: 0,
-                        zero_count: 0,
-                    },
-                    DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
-                },
+                matrix_count,
+                permanent_zero_count,
+                determinant,
                 terminal_state: CellTerminalState::Halted {
                     reason: super::schema::HaltReason::ExecutionFailure,
                 },
             });
+        } else {
+            rows.push(
+                assess_completed_cell(&plan, cell, matrix_count, permanent_zero_count, determinant)
+                    .map_err(ScheduleError::Acceptance)?
+                    .summary,
+            );
         }
     }
-    summary.rows.sort_by_key(|row| row.n);
-    summary.quarantined = quarantined;
-    summary
-}
-
-fn permanent_acceptance(
-    q: u8,
-    permanent_zero_count: u64,
-    matrix_count: u64,
-    family_test_count: u64,
-) -> AcceptanceVerdict {
-    let level = bonferroni_level(PERMANENT_FAMILYWISE_ERROR, family_test_count);
-    if permanent_zero_floor_test(permanent_zero_count, matrix_count, u64::from(q)).rejects_at(level)
-    {
-        AcceptanceVerdict::Rejected
-    } else {
-        AcceptanceVerdict::Accepted
+    if rows.is_empty() {
+        return Err(ScheduleError::FieldNotFound { q });
     }
-}
-
-fn determinant_acceptance(
-    q: u8,
-    n: u16,
-    determinant_zero_count: u64,
-    determinant_sample_count: u64,
-    family_test_count: u64,
-) -> AcceptanceVerdict {
-    let level = bonferroni_level(DETERMINANT_FAMILYWISE_ERROR, family_test_count);
-    let null_probability = determinant_null_probability(q, n);
-    if two_sided_test(
-        determinant_zero_count,
-        determinant_sample_count,
-        null_probability,
-    )
-    .rejects_at(level)
-    {
-        AcceptanceVerdict::Rejected
-    } else {
-        AcceptanceVerdict::Accepted
-    }
-}
-
-/// Returns the exact finite-size singular probability
-/// \(p_{\det}(q,n)=1-\prod_{i=1}^{n}(1-q^{-i})\) in `f64`.
-fn determinant_null_probability(q: u8, n: u16) -> f64 {
-    let q = f64::from(q);
-    1.0 - (1..=n).fold(1.0, |nonsingular_probability, i| {
-        nonsingular_probability * (1.0 - q.powi(-i32::from(i)))
+    rows.sort_by_key(|row| row.n);
+    Ok(FieldSummary {
+        schema_version: SCHEMA_VERSION,
+        q,
+        rows,
+        quarantined,
     })
 }
 
-fn wilson_interval(successes: u64, trials: u64) -> (f64, f64) {
-    gf2_stats::intervals::wilson_interval(successes, trials, gf2_stats::intervals::Z_95)
-}
-
+#[cfg(test)]
 fn create_parent(path: &Path) -> Result<(), ScheduleError> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|source| ScheduleError::Io {
@@ -1837,10 +1765,12 @@ fn create_parent(path: &Path) -> Result<(), ScheduleError> {
     Ok(())
 }
 
+#[cfg(test)]
 fn write_file(path: &Path, bytes: &[u8]) -> Result<(), ScheduleError> {
     write_file_with_durability_hook(path, bytes, |_| {})
 }
 
+#[cfg(test)]
 fn write_file_with_durability_hook(
     path: &Path,
     bytes: &[u8],
@@ -1873,22 +1803,22 @@ fn write_file_with_durability_hook(
     Ok(())
 }
 
-/// Emits one shard record with the same create-new refusal as [`emit_field`],
-/// fsyncing the file and its directory and reporting the durable path.
+/// Emits one coordinator-authorized shard record with create-new refusal,
+/// fsyncing the file and its directory before reporting the durable path.
 pub(crate) fn emit_shard_with_durability_hook(
-    root: &Path,
+    root: &CampaignRoot,
     manifest: &CampaignManifest,
     shard: &ShardRun,
     mut on_durable: impl FnMut(&Path),
 ) -> Result<PathBuf, ScheduleError> {
     let campaign_name = manifest.campaign_id.to_string();
-    if root.file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
+    if root.path().file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
         return Err(ScheduleError::InvalidWorkItem(format!(
             "output directory must be named by campaign id {campaign_name}"
         )));
     }
     let address = &shard.record.stream_address;
-    let expected = enumerate_work_items(manifest, Some(address.q))?;
+    let expected = enumerate_cell_work_items(manifest, address.q, address.n)?;
     if !expected.iter().any(|item| {
         item.shard_id == shard.record.shard_id && item.q == address.q && item.n == address.n
     }) {
@@ -1896,14 +1826,19 @@ pub(crate) fn emit_shard_with_durability_hook(
             "shard result does not match manifest work items".to_owned(),
         ));
     }
-    let path = root.join(shard_record_file(
+    let relative = PathBuf::from(shard_record_file(
         address.q,
         address.n,
         shard.record.shard_id,
     ));
-    create_parent(&path)?;
     let bytes = shard_record_bytes(&shard.record)?;
-    write_file_with_durability_hook(&path, &bytes, &mut on_durable)?;
+    root.write_atomic_new(&relative, &bytes)
+        .map_err(|source| ScheduleError::Io {
+            path: root.path().join(&relative),
+            source,
+        })?;
+    let path = root.path().join(relative);
+    on_durable(&path);
     Ok(path)
 }
 
@@ -1911,28 +1846,6 @@ pub(crate) fn emit_shard_with_durability_hook(
 /// resume-time adoption comparison.
 pub(crate) fn shard_record_bytes(record: &ShardRecord) -> Result<Vec<u8>, ScheduleError> {
     serde_json::to_vec_pretty(record).map_err(ScheduleError::Serialization)
-}
-
-/// Emits a field summary after all selected work items reach a terminal
-/// state, with the existing create-new refusal and the same durability
-/// contract as shard emission.
-pub(crate) fn emit_summary_with_durability_hook(
-    root: &Path,
-    manifest: &CampaignManifest,
-    summary: &FieldSummary,
-    mut on_durable: impl FnMut(&Path),
-) -> Result<PathBuf, ScheduleError> {
-    let campaign_name = manifest.campaign_id.to_string();
-    if root.file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
-        return Err(ScheduleError::InvalidWorkItem(format!(
-            "output directory must be named by campaign id {campaign_name}"
-        )));
-    }
-    let path = root.join(field_summary_file(summary.q));
-    create_parent(&path)?;
-    let bytes = serde_json::to_vec_pretty(summary).map_err(ScheduleError::Serialization)?;
-    write_file_with_durability_hook(&path, &bytes, &mut on_durable)?;
-    Ok(path)
 }
 
 #[cfg(test)]
@@ -1943,7 +1856,6 @@ mod tests {
         Provenance, RngAlgorithm, ShardSpec, StreamPurpose,
     };
     use gf2_core::field::{matrix::FieldMatrix, FieldVec};
-    use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test, two_sided_test};
     use std::collections::BTreeSet;
 
     #[test]
@@ -2103,6 +2015,36 @@ mod tests {
         let rendered = error.to_string();
         assert!(rendered.contains("q=3"), "{rendered}");
         assert!(rendered.contains("n=24"), "{rendered}");
+    }
+
+    #[test]
+    fn accelerator_cost_manifest_validation_classifies_unexpected_keys() {
+        let campaign = manifest(vec![cell(3, 2, 1, &[(0, 10)])]);
+        let processor_key = AcceleratorCostTable::new(
+            BTreeMap::from([((3, 2), Duration::from_micros(10))]),
+            Duration::from_millis(500),
+        );
+        assert!(matches!(
+            processor_key.validate_manifest(&campaign),
+            Err(ScheduleError::AcceleratorCostUnexpected {
+                q: 3,
+                n: 2,
+                backend: Some(Backend::GenericRyser),
+            })
+        ));
+
+        let nonmanifest_key = AcceleratorCostTable::new(
+            BTreeMap::from([((5, 9), Duration::from_micros(10))]),
+            Duration::from_millis(500),
+        );
+        assert!(matches!(
+            nonmanifest_key.validate_manifest(&campaign),
+            Err(ScheduleError::AcceleratorCostUnexpected {
+                q: 5,
+                n: 9,
+                backend: None,
+            })
+        ));
     }
 
     #[test]
@@ -2987,71 +2929,23 @@ mod tests {
     }
 
     #[test]
-    fn determinant_verdict_uses_the_protocol_probability_ordered_test() {
-        let q = 3;
-        let n = 2;
-        let sample_count = 100;
-        let family_test_count = 63;
-        let level = bonferroni_level(DETERMINANT_FAMILYWISE_ERROR, family_test_count);
-        let null_probability = determinant_null_probability(q, n);
-
-        for (zero_count, expected_verdict) in [
-            (41, AcceptanceVerdict::Accepted),
-            (0, AcceptanceVerdict::Rejected),
-            (sample_count, AcceptanceVerdict::Rejected),
-        ] {
-            let expected_rejection =
-                two_sided_test(zero_count, sample_count, null_probability).rejects_at(level);
-            assert_eq!(
-                expected_rejection,
-                matches!(expected_verdict, AcceptanceVerdict::Rejected)
-            );
-            assert_eq!(
-                determinant_acceptance(q, n, zero_count, sample_count, family_test_count),
-                expected_verdict
-            );
-        }
-    }
-
-    #[test]
-    fn permanent_floor_rejection_is_the_preregistered_exact_test() {
-        let level = bonferroni_level(0.025, 1);
-        let rejected = permanent_zero_floor_test(0, 11, 3);
-        let accepted = permanent_zero_floor_test(4, 11, 3);
-
-        assert!(rejected.rejects_at(level));
-        assert!(!accepted.rejects_at(level));
-        assert_eq!(
-            permanent_acceptance(3, 0, 11, 1),
-            AcceptanceVerdict::Rejected
-        );
-        assert_eq!(
-            permanent_acceptance(3, 4, 11, 1),
-            AcceptanceVerdict::Accepted
-        );
-    }
-
-    #[test]
-    fn summary_verdict_matches_the_pooled_permanent_floor_decision() {
-        let campaign = manifest(vec![cell(3, 2, 4, &[(0, 7)])]);
-        let family_test_count = campaign.cells.len() as u64;
+    fn summary_uses_the_canonical_completed_cell_assessment() {
+        let mut campaign = manifest(vec![cell(3, 2, 4, &[(0, 7)])]);
+        campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
         let run = run_field(&campaign, 3).unwrap();
         let row = &run.summary().rows[0];
-        let CellTerminalState::Completed {
-            permanent_verdict, ..
-        } = row.terminal_state
-        else {
-            panic!("small completed run must produce a completed summary row");
-        };
-
+        let plan = AcceptancePlan::for_manifest(&campaign).unwrap();
+        let expected = assess_completed_cell(
+            &plan,
+            &campaign.cells[0],
+            row.matrix_count,
+            row.permanent_zero_count,
+            row.determinant.clone(),
+        )
+        .unwrap();
         assert_eq!(
-            permanent_verdict,
-            permanent_acceptance(
-                row.q,
-                row.permanent_zero_count,
-                row.matrix_count,
-                family_test_count,
-            )
+            row, &expected.summary,
+            "scheduler summaries and coordinator decisions share one implementation"
         );
     }
 

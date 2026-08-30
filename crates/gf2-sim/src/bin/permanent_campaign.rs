@@ -1,15 +1,14 @@
-//! Execute one field arm of a permanent-zero-fraction campaign.
+//! Execute one exact cell of a permanent-zero-fraction campaign.
 //!
 //! The manifest is read from `--manifest`; `--output` names the campaign
-//! directory, `--q` selects exactly one field, and `--workers N` selects the
-//! configured worker count (default: 1 when omitted). The binary reports the
-//! effective campaign configuration and timings to standard output and writes
-//! only the selected field's shard records and summary. Before execution, it
-//! passes the output directory through
-//! `approve_emission`; the guard contract binds writers, and this binary is the
-//! writer, while `emit_field` remains the library emission primitive. Use
-//! `permanent_dataset conform` after all field arms and campaign finalization
-//! files are present.
+//! directory, `--q FIELD --n ORDER` selects exactly one manifest cell, and
+//! `--workers N` selects the configured worker count (default: 1 when omitted).
+//! This thin CLI passes the parsed exact scope to the reusable `gf2-sim`
+//! campaign transaction. The library obtains live-executable and
+//! committed-manifest approval and reads the initial manifest before acquiring
+//! the execution lock. The held lock covers receipt and interpretation-source
+//! revalidation, arm and attempt admission, sampling, raw emission,
+//! terminalization, and projection.
 //!
 //! ```console
 //! $ permanent_campaign --print-provenance --manifest <campaign-directory>
@@ -17,42 +16,59 @@
 //!
 //! `--print-provenance` observes and prints the provenance for this emitting
 //! executable without running a campaign or writing a dataset file.
+//!
+//! Exact execution publishes the field summary and typed interpretation
+//! sidecar when every cell in the field is terminal. `--dry-run-schedule`
+//! resolves the same selector and validates the
+//! complete manifest accelerator-cost input without opening the output
+//! directory, coordinator receipt, execution lock, or sampler.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::Duration;
 
-use gf2_sim::permanent_campaign::driver::{
-    field_checkpoint_path, run_field_checkpointed_with_accelerator_config,
+use gf2_sim::permanent_campaign::coordinator::{
+    execute_campaign_cell, CampaignCoordinator, CellExecutionState, CoordinatorEvidenceSources,
+    ExactCellScope, ShardAttemptState,
 };
-use gf2_sim::permanent_campaign::launch_cost::read_accelerator_cost_table;
-use gf2_sim::permanent_campaign::provenance::{
-    approve_emission, observe_provenance, repository_top_level,
+use gf2_sim::permanent_campaign::launch_cost::resolve_accelerator_cost_table;
+use gf2_sim::permanent_campaign::provenance::{observe_provenance, repository_top_level};
+use gf2_sim::permanent_campaign::schedule::{
+    enumerate_cell_work_items, AcceleratorCostTable, DEFAULT_ACCELERATOR_LAUNCH_CAP,
 };
-use gf2_sim::permanent_campaign::schedule::{AcceleratorCostTable, DEFAULT_ACCELERATOR_LAUNCH_CAP};
-use gf2_sim::permanent_campaign::schema::{read_manifest, Backend};
+use gf2_sim::permanent_campaign::schema::{read_manifest, ArtifactIdentity, Backend};
 
-const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N] [--accelerator-launch-cap-ms MS] [--accelerator-cost-table PATH]
+const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD --n ORDER [--workers N] [--accelerator-launch-cap-ms MS] [--accelerator-cost-table PATH]
+
+       permanent_campaign --dry-run-schedule --manifest PATH --output CAMPAIGN-DIR --q FIELD --n ORDER
 
        permanent_campaign --print-provenance --manifest PATH
 
 Accelerator options:
   --accelerator-launch-cap-ms MS     target cap per launch (default: 500 ms)
-  --accelerator-cost-table PATH      required when the selected field has accelerator
-                                     cells; CSV of measured per-matrix costs with header
+  --accelerator-cost-table PATH      required when the manifest has accelerator cells;
+                                     CSV of measured per-matrix costs with header
                                      q,n,per_matrix_us, one row per accelerator cell,
                                      each value taken from that cell's committed receipt
 ";
+const Q3_TARGET_PATH: &str =
+    "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv";
+const Q3_TARGET_SHA256: &str = "e8ab603f082dfc0c85c8a5f66af3c03e041f6c08236d6eb3172fac6e1889245f";
+const Q5_Q7_SEARCH_PATH: &str = "dev/studies/b488f02c/literature-search-2026-08-08.md";
+const Q5_Q7_SEARCH_SHA256: &str =
+    "6264274bbfbc76ebe3a91d4a39ee562ffae4d9444516d8efc546d1234ab796c1";
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let mut manifest_path = None;
     let mut output = None;
     let mut field = None;
+    let mut order = None;
     let mut workers = 1usize;
     let mut accelerator_launch_cap = DEFAULT_ACCELERATOR_LAUNCH_CAP;
     let mut accelerator_cost_table: Option<PathBuf> = None;
     let mut print_provenance = false;
+    let mut dry_run_schedule = false;
     let mut index = 0;
     while index < arguments.len() {
         let name = arguments[index].as_str();
@@ -60,6 +76,10 @@ fn main() -> ExitCode {
         match (name, value) {
             ("--print-provenance", _) => {
                 print_provenance = true;
+                index += 1;
+            }
+            ("--dry-run-schedule", _) => {
+                dry_run_schedule = true;
                 index += 1;
             }
             ("--manifest", Some(path)) => {
@@ -76,6 +96,13 @@ fn main() -> ExitCode {
                     index += 2;
                 }
                 Err(_) => return usage("--q must be an integer field order"),
+            },
+            ("--n", Some(value)) => match value.parse::<u16>() {
+                Ok(n) if n > 0 => {
+                    order = Some(n);
+                    index += 2;
+                }
+                _ => return usage("exact cell selector --n must be a positive integer order"),
             },
             ("--workers", Some(value)) => match value.parse::<usize>() {
                 Ok(parsed_workers) if parsed_workers >= 1 => {
@@ -103,8 +130,10 @@ fn main() -> ExitCode {
         let Some(manifest_path) = manifest_path else {
             return usage("--print-provenance requires --manifest");
         };
-        if output.is_some() || field.is_some() {
-            return usage("--print-provenance cannot be combined with --output or --q");
+        if output.is_some() || field.is_some() || order.is_some() || dry_run_schedule {
+            return usage(
+                "--print-provenance cannot be combined with execution or dry-schedule options",
+            );
         }
         let manifest = match read_manifest(&manifest_path) {
             Ok(manifest) => manifest,
@@ -127,67 +156,128 @@ fn main() -> ExitCode {
         };
     }
 
-    let (Some(manifest_path), Some(output), Some(field)) = (manifest_path, output, field) else {
-        return usage("missing required argument");
+    let (Some(manifest_path), Some(output), Some(field), Some(order)) =
+        (manifest_path, output, field, order)
+    else {
+        return if field.is_some() || order.is_some() {
+            usage("exact cell selector requires both --q and --n")
+        } else {
+            usage("missing required argument")
+        };
     };
+    let scope = ExactCellScope { q: field, n: order };
     let manifest = match read_manifest(&manifest_path) {
         Ok(manifest) => manifest,
         Err(error) => return failure(error),
     };
-    if manifest
-        .cells
-        .iter()
-        .any(|cell| cell.q == field && cell.backend == Backend::Accelerator)
-        && accelerator_cost_table.is_none()
-    {
-        return usage(
-            "--accelerator-cost-table is required for accelerator cells; supply each cell's measured per-matrix cost from its committed measurement receipt",
-        );
-    }
-    let accelerator = match accelerator_cost_table {
-        Some(path) => match read_accelerator_cost_table(&path, &manifest, accelerator_launch_cap) {
-            Ok(table) => table,
-            Err(error) => {
-                eprintln!("accelerator cost table {}: {error}", path.display());
-                return ExitCode::FAILURE;
-            }
-        },
-        None => AcceleratorCostTable::default(),
-    };
-    if let Err(refusal) = approve_emission(&output) {
-        eprintln!("emission refused: {refusal}");
-        return ExitCode::FAILURE;
-    }
-    let checkpoint = field_checkpoint_path(&output, field);
-    let run = match run_field_checkpointed_with_accelerator_config(
-        &output,
-        &manifest,
-        field,
-        &checkpoint,
-        workers,
-        &accelerator,
-    ) {
-        Ok(run) => run,
+    let items = match enumerate_cell_work_items(&manifest, field, order) {
+        Ok(items) => items,
         Err(error) => return failure(error),
     };
-    println!("campaign q={} workers={workers}", run.q());
-    for shard in run.shards() {
+    if dry_run_schedule {
+        if manifest
+            .cells
+            .iter()
+            .any(|cell| cell.backend == Backend::Accelerator)
+            && accelerator_cost_table.is_none()
+        {
+            return usage(
+                "--accelerator-cost-table is required for a manifest with accelerator cells; supply every cell's measured per-matrix cost from its committed measurement receipt",
+            );
+        }
+        let accelerator = match accelerator_cost_table {
+            Some(path) => {
+                let repository = match repository_top_level(&manifest_path) {
+                    Ok(repository) => repository,
+                    Err(error) => return failure(error),
+                };
+                match resolve_accelerator_cost_table(
+                    &repository,
+                    &path,
+                    &manifest,
+                    accelerator_launch_cap,
+                ) {
+                    Ok(resolved) => resolved.table,
+                    Err(error) => {
+                        eprintln!("accelerator cost table {}: {error}", path.display());
+                        return ExitCode::FAILURE;
+                    }
+                }
+            }
+            None => AcceleratorCostTable::default(),
+        };
+        if let Err(error) = accelerator.validate_manifest(&manifest) {
+            return failure(error);
+        }
+        println!("schedule q={field} n={order} shards={}", items.len());
+        return ExitCode::SUCCESS;
+    }
+    let evidence_sources = CoordinatorEvidenceSources {
+        q3_targets: ArtifactIdentity {
+            path: Q3_TARGET_PATH
+                .parse()
+                .expect("built-in q=3 target path is normalized"),
+            sha256: Q3_TARGET_SHA256
+                .parse()
+                .expect("built-in q=3 target digest is normalized"),
+        },
+        q5_q7_literature_search: ArtifactIdentity {
+            path: Q5_Q7_SEARCH_PATH
+                .parse()
+                .expect("built-in literature-search path is normalized"),
+            sha256: Q5_Q7_SEARCH_SHA256
+                .parse()
+                .expect("built-in literature-search digest is normalized"),
+        },
+    };
+    let execution = match execute_campaign_cell(&output, scope, workers, &evidence_sources) {
+        Ok(execution) => execution,
+        Err(error) => return failure(error),
+    };
+    println!("campaign q={field} n={order} workers={workers}");
+    for shard in &execution.records {
         println!(
-            "q={} n={} shard={} matrices={} zeros={} draw_s={:.6} pack_s={:.6} evaluate_s={:.6} determinant_s={:.6} count_s={:.6}",
-            run.q(),
-            shard.record.stream_address.n,
-            shard.record.shard_id,
-            shard.record.matrix_count,
-            shard.record.permanent_zero_count,
-            shard.timing.draw.as_secs_f64(),
-            shard.timing.pack.as_secs_f64(),
-            shard.timing.evaluate.as_secs_f64(),
-            shard.timing.determinant.as_secs_f64(),
-            shard.timing.count.as_secs_f64(),
+            "q={} n={} shard={} matrices={} zeros={}",
+            shard.stream_address.q,
+            shard.stream_address.n,
+            shard.shard_id,
+            shard.matrix_count,
+            shard.permanent_zero_count,
         );
     }
-    println!("wrote deterministic field files for q={}", run.q());
-    ExitCode::SUCCESS
+    match execution.terminal_state {
+        CellExecutionState::Completed { assessment, .. } if !assessment.rejected() => {
+            println!("wrote deterministic exact-cell files for q={field} n={order}");
+            ExitCode::SUCCESS
+        }
+        CellExecutionState::Completed { .. } => {
+            failure("exact acceptance decision rejected; campaign is halted")
+        }
+        CellExecutionState::Halted { .. } => {
+            match CampaignCoordinator::read(&output)
+                .ok()
+                .and_then(|coordinator| {
+                    coordinator
+                        .receipt()
+                        .attempts
+                        .last()
+                        .and_then(|attempt| match &attempt.state {
+                            ShardAttemptState::Quarantined { error } => Some(error.clone()),
+                            ShardAttemptState::Authorized | ShardAttemptState::Accepted { .. } => {
+                                None
+                            }
+                        })
+                }) {
+                Some(error) => failure(format!(
+                    "exact execution halted mechanically; campaign is halted: {error}"
+                )),
+                None => failure("exact execution halted mechanically; campaign is halted"),
+            }
+        }
+        CellExecutionState::Pending | CellExecutionState::Scheduled { .. } => {
+            failure("exact execution returned a nonterminal receipt state")
+        }
+    }
 }
 
 fn usage(message: &str) -> ExitCode {

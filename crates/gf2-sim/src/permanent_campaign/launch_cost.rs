@@ -4,17 +4,28 @@
 //! This module keeps its stable boundary in one place so callers cannot accept
 //! different row sets or silently size one cell from another cell's timing.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use super::schedule::AcceleratorCostTable;
-use super::schema::{Backend, CampaignManifest};
+use sha2::{Digest, Sha256};
+
+use super::schedule::{AcceleratorCostTable, ScheduleError};
+use super::schema::{ArtifactIdentity, CampaignManifest};
 
 /// Stable header of an accelerator launch-cost CSV.
 pub const ACCELERATOR_COST_CSV_HEADER: &str = "q,n,per_matrix_us";
+
+/// One repository-bound immutable accelerator-cost input.
+#[derive(Clone, Debug)]
+pub struct ResolvedAcceleratorCostTable {
+    /// Parsed table from the exact byte snapshot.
+    pub table: AcceleratorCostTable,
+    /// Canonical repository-relative path and content digest.
+    pub identity: ArtifactIdentity,
+}
 
 /// A launch-cost CSV is malformed or disagrees with its campaign manifest.
 #[derive(Debug)]
@@ -28,6 +39,8 @@ pub enum AcceleratorCostTableError {
     },
     /// The CSV contains no header.
     Empty,
+    /// The CSV is not UTF-8 text.
+    Encoding,
     /// The stable header differs.
     Header {
         /// Header observed in the CSV.
@@ -98,6 +111,7 @@ impl fmt::Display for AcceleratorCostTableError {
                 write!(formatter, "cannot read {}: {source}", path.display())
             }
             Self::Empty => formatter.write_str("file is empty"),
+            Self::Encoding => formatter.write_str("file is not UTF-8"),
             Self::Header { found } => write!(
                 formatter,
                 "header is {found:?}, expected {ACCELERATOR_COST_CSV_HEADER:?}"
@@ -168,18 +182,82 @@ where
         })
 }
 
-/// Reads a launch-cost CSV and proves exact agreement with the manifest.
+/// Resolves, reads once, identifies, and parses a repository-owned cost table.
 ///
-/// The CSV must contain exactly one positive integer cost for every and only
-/// every accelerator-backed manifest cell. Duplicate keys, processor-backed
-/// keys, cells outside the manifest, and missing accelerator keys are refused.
-/// The returned table uses `launch_cap` for every cell.
+/// Relative paths resolve against `repository_root`, independent of the
+/// process working directory. Absolute paths must resolve inside that root.
+/// The returned identity and table derive from the same byte snapshot.
 ///
 /// # Errors
 ///
-/// Returns [`AcceleratorCostTableError`] when the file is unreadable,
-/// malformed, non-canonical, or its keys differ from the manifest's exact
-/// accelerator-backed key set.
+/// Returns [`AcceleratorCostTableError::Read`] for path and read failures and
+/// the parser's semantic errors for invalid content.
+pub fn resolve_accelerator_cost_table(
+    repository_root: &Path,
+    supplied_path: &Path,
+    manifest: &CampaignManifest,
+    launch_cap: Duration,
+) -> Result<ResolvedAcceleratorCostTable, AcceleratorCostTableError> {
+    let repository_root =
+        fs::canonicalize(repository_root).map_err(|source| AcceleratorCostTableError::Read {
+            path: repository_root.to_owned(),
+            source,
+        })?;
+    let candidate = if supplied_path.is_absolute() {
+        supplied_path.to_owned()
+    } else {
+        repository_root.join(supplied_path)
+    };
+    let canonical =
+        fs::canonicalize(&candidate).map_err(|source| AcceleratorCostTableError::Read {
+            path: candidate.clone(),
+            source,
+        })?;
+    let relative =
+        canonical
+            .strip_prefix(&repository_root)
+            .map_err(|_| AcceleratorCostTableError::Read {
+                path: canonical.clone(),
+                source: std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "accelerator cost table resolves outside the repository",
+                ),
+            })?;
+    let bytes = fs::read(&canonical).map_err(|source| AcceleratorCostTableError::Read {
+        path: canonical.clone(),
+        source,
+    })?;
+    let table = parse_accelerator_cost_table(&bytes, manifest, launch_cap)?;
+    let path = relative
+        .to_string_lossy()
+        .replace('\\', "/")
+        .parse()
+        .map_err(|error| AcceleratorCostTableError::Read {
+            path: relative.to_owned(),
+            source: std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("accelerator cost table path is not canonical: {error}"),
+            ),
+        })?;
+    let sha256 = format!("{:x}", Sha256::digest(&bytes))
+        .parse()
+        .expect("SHA-256 formatting is canonical");
+    Ok(ResolvedAcceleratorCostTable {
+        table,
+        identity: ArtifactIdentity { path, sha256 },
+    })
+}
+
+/// Parses one immutable launch-cost CSV byte snapshot.
+///
+/// The byte-oriented entry point lets a coordinator bind the content digest
+/// and execution configuration to the same single read under its execution
+/// lock.
+///
+/// # Errors
+///
+/// Returns [`AcceleratorCostTableError`] for non-UTF-8, malformed, or
+/// manifest-incomplete content.
 ///
 /// # Panics
 ///
@@ -187,17 +265,13 @@ where
 ///
 /// # Complexity
 ///
-/// `O(C log C + R log R)` time and `O(C + R)` space for `C` manifest cells
-/// and `R` CSV rows.
-pub fn read_accelerator_cost_table(
-    path: &Path,
+/// `O(C log C + R log R)` time and `O(C + R)` space.
+pub fn parse_accelerator_cost_table(
+    bytes: &[u8],
     manifest: &CampaignManifest,
     launch_cap: Duration,
 ) -> Result<AcceleratorCostTable, AcceleratorCostTableError> {
-    let text = fs::read_to_string(path).map_err(|source| AcceleratorCostTableError::Read {
-        path: path.to_owned(),
-        source,
-    })?;
+    let text = std::str::from_utf8(bytes).map_err(|_| AcceleratorCostTableError::Encoding)?;
     let mut lines = text.lines().enumerate();
     let (_, header) = lines.next().ok_or(AcceleratorCostTableError::Empty)?;
     if header != ACCELERATOR_COST_CSV_HEADER {
@@ -206,17 +280,6 @@ pub fn read_accelerator_cost_table(
         });
     }
 
-    let manifest_backends: BTreeMap<(u8, u16), Backend> = manifest
-        .cells
-        .iter()
-        .map(|cell| ((cell.q, cell.n), cell.backend))
-        .collect();
-    let expected: BTreeSet<(u8, u16)> = manifest
-        .cells
-        .iter()
-        .filter(|cell| cell.backend == Backend::Accelerator)
-        .map(|cell| (cell.q, cell.n))
-        .collect();
     let mut costs = BTreeMap::new();
     for (index, row) in lines {
         let line = index + 1;
@@ -242,15 +305,25 @@ pub fn read_accelerator_cost_table(
         {
             return Err(AcceleratorCostTableError::Duplicate { q, n, line });
         }
-        match manifest_backends.get(&(q, n)) {
-            Some(Backend::Accelerator) => {}
-            Some(_) => return Err(AcceleratorCostTableError::ProcessorBacked { q, n }),
-            None => return Err(AcceleratorCostTableError::NotManifestCell { q, n }),
-        }
     }
-
-    if let Some(&(q, n)) = expected.iter().find(|key| !costs.contains_key(key)) {
-        return Err(AcceleratorCostTableError::Missing { q, n });
-    }
-    Ok(AcceleratorCostTable::new(costs, launch_cap))
+    let table = AcceleratorCostTable::new(costs, launch_cap);
+    table
+        .validate_manifest(manifest)
+        .map_err(|error| match error {
+            ScheduleError::AcceleratorCostMissing { q, n } => {
+                AcceleratorCostTableError::Missing { q, n }
+            }
+            ScheduleError::AcceleratorCostUnexpected {
+                q,
+                n,
+                backend: Some(_),
+            } => AcceleratorCostTableError::ProcessorBacked { q, n },
+            ScheduleError::AcceleratorCostUnexpected {
+                q,
+                n,
+                backend: None,
+            } => AcceleratorCostTableError::NotManifestCell { q, n },
+            _ => unreachable!("manifest cost validation returns only key-set errors"),
+        })?;
+    Ok(table)
 }

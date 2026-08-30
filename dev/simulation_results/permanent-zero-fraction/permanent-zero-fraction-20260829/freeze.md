@@ -10,8 +10,8 @@ This record binds the campaign decisions that the strict `CampaignManifest` JSON
 - Freeze host: `fraktaali`, Linux `7.1.8-arch1-3`.
 - Processor: AMD Ryzen 9 5900X 12-Core Processor; 12 physical cores and 24 logical threads.
 - Accelerator: AMD Radeon RX 6950 XT (Navi 21, `gfx1030`); ROCm `7.2.4`, HIP `7.2.53211-9999`, and amdgpu `7.1.8-arch1-3`.
-- Manifest content SHA-256: `5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57`.
-- Protocol: `dev/simulation_results/permanent-zero-fraction/protocol.md`, SHA-256 `249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639`.
+- Manifest content SHA-256: `1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2`.
+- Protocol: `dev/simulation_results/permanent-zero-fraction/protocol.md`, SHA-256 `f299feae7b8786b51d0c83f478c45d01fa22a9af8c30ca7baf073d46c89e1247`.
 - Backend selection receipt: `dev/benchmarks/permanent_campaign/backend-selection-v1.md`, SHA-256 `fe5d37ba7c216a753bf3e546614a222c3c20e563f7f4e1d3c0341af9e1c464fe`.
 - Determinant machine receipt: `dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv`, SHA-256 `d3779aa3817bbefc995b858527bf418b4d3931a8f5406281eb4f0b71a7b45e77`.
 - Determinant rendered report: `dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md`, SHA-256 `839ab3f1f22a995cc32bc6a7102f4c6aad721b6eff5713d3976df36838d2334a`.
@@ -30,15 +30,15 @@ protocol's governing clause (`protocol.md:3-6`) requires:
 The three bindings for this receipt are:
 
 - Protocol path: `dev/simulation_results/permanent-zero-fraction/protocol.md`.
-- Protocol content SHA-256: `249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639`.
-- Root-manifest identity: campaign id `permanent-zero-fraction-20260829`; manifest content SHA-256 `5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57`.
+- Protocol content SHA-256: `f299feae7b8786b51d0c83f478c45d01fa22a9af8c30ca7baf073d46c89e1247`.
+- Root-manifest identity: campaign id `permanent-zero-fraction-20260829`; manifest content SHA-256 `1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2`.
 
 The protocol clause and this receipt resolve to each other in both
 directions: `protocol.md:3-6` identifies its receipt descriptively as the
 artifact recording exactly these three bindings, and this section closes the
 loop by explicitly claiming the pre-draw execution receipt role and citing
-that clause. No protocol edit occurs: the protocol is frozen,
-and a changed protocol would define a new campaign id.
+that clause. The protocol is frozen at the content identity above; a changed
+protocol defines a new campaign id.
 
 ## Cell universe, multiplicity, and error allocation
 
@@ -150,36 +150,32 @@ The protocol [requires the determinant companion on the identical draws for all 
 
 `manifest.json` contains no self-hash field. `gf2_sim::permanent_campaign::provenance::manifest_content_hash` recomputes SHA-256 over the exact `manifest.json` bytes, while `checksums.sha256` records that digest in its `manifest.json` entry and does not hash itself. A reader reads the sidecar entry, recomputes the content hash, and compares the two; modification therefore produces a mismatch instead of silently changing the campaign identity.
 
-This freeze record itself is not a `checksums.sha256` member: the campaign README's integrity set is deliberately closed over raw data, and a checksum file cannot close if it also covers a record that quotes its entries — which this file does. The record's tamper evidence is repository history: `freeze.md` is a committed, tracked file, and any modification after the freeze commit `57c9633f` appears as a tracked-file diff rather than passing silently. This disposition is recorded under issue `7a816262`.
+This freeze record itself is not a `checksums.sha256` member: the campaign README's integrity set is deliberately closed over raw data, and a checksum file cannot close if it also covers a record that quotes its entries — which this file does. Repository tracking supplies this record's tamper evidence: any modification is a tracked-file diff. This disposition is recorded under issue `7a816262`.
 
 ## Pre-draw and validation record
 
-Each transcript in this section is pinned to the revision at which it ran: the freeze-preparation validations ran at revision `396cf929`, the parent of the freeze commit `57c9633f`; the post-commit confirmations ran at revision `67f5108f`; and the read-only strict-manifest and provenance revalidation ran at revision `2df92724`. The freeze-preparation audit at `396cf929` reports no non-fixture campaign shard, field summary, pooled summary, or campaign checkpoint in the tree, and a history-wide path audit reports only the committed fixture shards under `fixtures/`. The freeze commit `57c9633f` therefore precedes every non-fixture shard commit in repository history, which supplies REQ-02's ordering evidence.
+The emitter source identity is revision `785e3146d1a26bea3efb00426b4dc12c9c7c3316`. The manifest and checksum identity is commit `72b06c8c`. Repository history contains no non-fixture campaign shard, field summary, pooled summary, coordinator receipt, or campaign checkpoint, so the committed manifest precedes every campaign draw and satisfies the preregistration ordering contract.
 
 The HIP-enabled emitter is built only after the shared Cargo process check returns no process:
 
 ```text
-$ pgrep -a cargo || true
+$ ps -eo pid,cmd | rg '[c]argo|[n]extest|[r]ustc' || true
 (no output)
-$ cargo +1.95.0 build -p gf2-sim --release --features hip --bin permanent_campaign
-warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
-   Compiling gf2-kernels-hip v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip)
-   Compiling gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-algebra)
-   Compiling gf2-coding v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-coding)
-   Compiling gf2-sim v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-sim)
-    Finished `release` profile [optimized] target(s) in 18.41s
+$ cargo +1.95.0 build -p gf2-sim --release --features hip --bin permanent_campaign --bin permanent_dataset
+warning: gf2-kernels-hip@0.1.0: skip gfx940: hipcc --offload-arch=gfx940 on /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-73317b2e/crates/gf2-kernels-hip/kernels/gfx940/probe.cpp exited with exit status: 1
+    Finished `release` profile [optimized] target(s) in 26.28s
 ```
 
 The `gfx940` probe warning is an expected architecture skip; the linked emitter carries the host's HIP, HSA, and profiler runtime libraries. Its SHA-256 is the nonzero digest frozen in `manifest.json`.
 
-The following read-only command, run at revision `2df92724`, enters through the real `read_manifest` call in `permanent_campaign`, so exit status zero is strict-schema parse evidence. It observes source and executable identity without entering the campaign execution path or drawing a matrix:
+The following read-only command runs at the emitter source revision `785e3146`, before the manifest identity commit. It enters through the real `read_manifest` call in `permanent_campaign`, so exit status zero is strict-schema parse evidence. It observes source and executable identity without entering the campaign execution path or drawing a matrix:
 
 ```text
 $ target/release/permanent_campaign --print-provenance --manifest dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829
 {
-  "git_revision": "2df9272459bad52d5987484ef64191a82234741a",
-  "binary_sha256": "934f6a59814a54f2a7bf9d4365aa688a967980e43029df5eaa52d6fe1504fd10",
-  "deps_source_revision": "04116a1ff4f0ab94a0475e07b8c66c17719578a5",
+  "git_revision": "785e3146d1a26bea3efb00426b4dc12c9c7c3316",
+  "binary_sha256": "c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d",
+  "deps_source_revision": "60e365ad1f385044193287a0485bccfa221dd64f",
   "deps_source_dirty": false,
   "compiler_version": "rustc 1.95.0 (59807616e 2026-04-14)",
   "rng_algorithm": "cha_cha20",
@@ -192,6 +188,8 @@ $ target/release/permanent_campaign --print-provenance --manifest dev/simulation
     "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
     "--q",
     "7",
+    "--n",
+    "20",
     "--workers",
     "1",
     "--accelerator-cost-table",
@@ -215,18 +213,18 @@ $ echo $?
 0
 ```
 
-`observe_provenance` replaces the runtime-observed Git, source-closure, and running-binary identity fields. Removing exactly those fields from both values verifies every frozen non-runtime field, including the executable driver argv:
+After the manifest identity commit, runtime Git context names that commit while the manifest continues to name the emitter's source revision. Removing only that runtime Git field verifies strict parsing and every executable, source-closure, toolchain, hardware, RNG, and argument-vector field; the supplied-emitter check below independently verifies the frozen binary identity:
 
 ```text
-$ if diff -u <(jq -S '.provenance | del(.git_revision, .binary_sha256, .deps_source_revision, .deps_source_dirty)' dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json) <(target/release/permanent_campaign --print-provenance --manifest dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829 | jq -S 'del(.git_revision, .binary_sha256, .deps_source_revision, .deps_source_dirty)') >/dev/null; then echo 'PASS: strict manifest parse succeeded and non-runtime provenance, including the frozen executable invocation, matches'; else echo 'FAIL: non-runtime provenance differs'; exit 1; fi
-PASS: strict manifest parse succeeded and non-runtime provenance, including the frozen executable invocation, matches
+$ if diff -u <(jq -S '.provenance | del(.git_revision)' dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json) <(target/release/permanent_campaign --print-provenance --manifest dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829 | jq -S 'del(.git_revision)') >/dev/null; then echo 'PASS: strict manifest parse and all non-Git provenance match'; else echo 'FAIL: provenance differs'; exit 1; fi
+PASS: strict manifest parse and all non-Git provenance match
 ```
 
-The stored `invocation` is the exact executable argument vector for the first field arm: both the manifest and output are the frozen campaign directory, `--q 7` selects the field containing the protocol's first cell, `--workers 1` makes parallelism explicit, and the accelerator settings make the scheduler's 500 ms default and mandatory per-cell cost input explicit. The repository-relative `dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv` name follows the versioned receipt naming in that directory and is the production CSV owned by downstream issue `2c1ae813`; that issue binds and validates the table before execution. The one-field arm remains subordinate to the persisted coordinator contract owned by issue `73317b2e`: its REQ-12 requires `(q,n)=(7,20)` to reach a terminal state before another campaign-purpose cell is scheduled. The provenance field records the driver argv, while the coordinator receipt binds the effective arm and cell schedule.
+The stored `invocation` is the exact executable argument vector for the first campaign cell. Both manifest and output name the frozen campaign directory; `--q 7 --n 20` selects only the protocol's required first cell; `--workers 1` makes parallelism explicit; and the accelerator settings bind the 500 ms launch cap and versioned per-cell cost input. The coordinator persists this effective arm and refuses every other campaign-purpose cell until `(7,20)` is terminal.
 
-The read-only `--print-provenance` command above is validation tooling and is not stored as campaign execution provenance. No executable campaign command is run during the freeze or this validation.
+The read-only `--print-provenance` command is validation tooling and is not campaign execution provenance. No campaign execution command runs during the freeze or its validation.
 
-The emission check fails closed at every stage, as required. At revision `396cf929`, where the manifest bytes are not yet committed, it refuses on the committed-content comparison:
+The following retained audit transcript records fail-closed states. At revision `396cf929`, uncommitted manifest bytes are refused by the committed-content comparison:
 
 ```text
 $ target/release/permanent_dataset emission-check dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829
@@ -235,7 +233,7 @@ $ echo $?
 1
 ```
 
-At revision `67f5108f`, with the freeze commit in history, the same command advances past the committed-content comparison and refuses on the binary digest instead:
+At revision `67f5108f`, committed manifest bytes reach the binary-identity comparison and the reader executable is correctly refused as the writer:
 
 ```text
 $ target/release/permanent_dataset emission-check dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829
@@ -244,29 +242,38 @@ $ echo $?
 1
 ```
 
-The advance from the changed-manifest refusal to the binary-digest refusal is positive evidence that the on-disk manifest bytes match their committed content. The remaining refusal is an inspection-tool defect, not a manifest defect: `permanent_dataset emission-check` calls `approve_emission`, which hashes the currently running `permanent_dataset` executable (`86e887504731ddc7c94e4cb69b2e6f3773ed1d9cf9eca45658e1226c1ef820b8`), while the manifest correctly pins the HIP-enabled `permanent_campaign` emitter (`2d6edcd940abe9340143c8b724a8274fff8eca1200a491ad13deec9e386eba58`). The writer applies the same guard to its own matching digest, so campaign execution is unaffected. No positive writer-only dry run exists; invoking the write path would violate the pre-draw constraint. The defect is tracked as issue `e1d45c20`, to be resolved or explicitly dispositioned before the first campaign draw.
+The two refusals preserve the audit progression and the inspection limitation tracked and closed by issue `e1d45c20`. The reader accepts a supplied emitter identity without obtaining writer admission. Against the committed exact-cell manifest it reports:
 
-The content-hash recomputation and sidecar comparison succeed over the final manifest bytes:
+```text
+$ target/release/permanent_dataset emission-check dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829 target/release/permanent_campaign
+supplied emitter identity verified: c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d
+$ target/release/permanent_dataset emission-check dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829
+everything except writer identity is verified; the pinned emitter digest is c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d; writer identity is asserted only by the writer's own guard at emission time.
+```
+
+The content-hash recomputation and checksum comparison succeed over the committed manifest bytes:
 
 ```text
 $ cd dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829
 $ sha256sum manifest.json
-5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57  manifest.json
+1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2  manifest.json
 $ sha256sum -c checksums.sha256
 manifest.json: OK
 ```
 
-The fixed artifact digests and the executables used for the read-only revalidation at revision `2df92724` recompute from their named bytes. The current executable lines identify the binaries that produced the revalidation transcript; they do not replace the manifest's frozen emitter digest from the initial freeze:
+The fixed artifact and executable digests recompute from their named bytes:
 
 ```text
-$ sha256sum dev/simulation_results/permanent-zero-fraction/protocol.md dev/benchmarks/permanent_campaign/backend-selection-v1.md dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md target/release/permanent_campaign target/release/permanent_dataset dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json
-249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639  dev/simulation_results/permanent-zero-fraction/protocol.md
+$ sha256sum dev/simulation_results/permanent-zero-fraction/protocol.md dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv dev/studies/b488f02c/literature-search-2026-08-08.md dev/benchmarks/permanent_campaign/backend-selection-v1.md dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md target/release/permanent_campaign target/release/permanent_dataset dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json
+f299feae7b8786b51d0c83f478c45d01fa22a9af8c30ca7baf073d46c89e1247  dev/simulation_results/permanent-zero-fraction/protocol.md
+e8ab603f082dfc0c85c8a5f66af3c03e041f6c08236d6eb3172fac6e1889245f  dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv
+6264274bbfbc76ebe3a91d4a39ee562ffae4d9444516d8efc546d1234ab796c1  dev/studies/b488f02c/literature-search-2026-08-08.md
 fe5d37ba7c216a753bf3e546614a222c3c20e563f7f4e1d3c0341af9e1c464fe  dev/benchmarks/permanent_campaign/backend-selection-v1.md
 d3779aa3817bbefc995b858527bf418b4d3931a8f5406281eb4f0b71a7b45e77  dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv
 839ab3f1f22a995cc32bc6a7102f4c6aad721b6eff5713d3976df36838d2334a  dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md
-934f6a59814a54f2a7bf9d4365aa688a967980e43029df5eaa52d6fe1504fd10  target/release/permanent_campaign
-a39f2d8f7843fdca15c2687fa8e7db129acbb65d3c28946d21c7b85c9fca6677  target/release/permanent_dataset
-5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57  dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json
+c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d  target/release/permanent_campaign
+57a696d890db101ddea6a16861dad037581726b7c651908b6114b64cef7e7e3c  target/release/permanent_dataset
+1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2  dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json
 ```
 
 The committed v5 validator independently checks all direct determinant measurements and the rendered report:
@@ -279,8 +286,8 @@ PASS: 63 cells, 315 process outcomes, receipt sha256 d3779aa3817bbefc995b858527b
 The pre-draw worktree and history checks return:
 
 ```text
-PASS: no non-fixture shard, checkpoint, field summary, or pooled summary exists in the worktree
-PASS: repository history contains no non-fixture campaign shard or checkpoint path
+PASS: the campaign directory contains only manifest.json, checksums.sha256, and freeze.md
+PASS: repository history contains no campaign shard, checkpoint, summary, coordinator receipt, or derived sidecar path
 ```
 
-No Rust source changes are part of this freeze, so `./scripts/cargo-ci.sh` is not run. Dataset `conform`, `verify`, and full-dataset checksum generation or verification are also not run because no campaign shard exists.
+The issue's Rust and documentation gates validate the emitting implementation. Dataset `conform`, `verify`, and full-dataset checksum generation remain inapplicable until campaign shards exist; invoking campaign execution to create them is outside this pre-draw validation record.
