@@ -43,32 +43,21 @@ use gf2_algebra::permanent::{
 };
 use gf2_core::field::{matrix::FieldMatrix, FieldVec};
 use gf2_core::gfp::Fp;
-use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test, two_sided_test};
 use gf2_stats::sampler::{
     FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose as SamplerPurpose,
 };
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
 
+use super::acceptance::{assess_completed_cell, AcceptanceError, AcceptancePlan};
 use super::schema::{
-    field_summary_file, shard_record_file, AcceptanceVerdict, Backend, CampaignManifest, CellSpec,
-    CellTerminalState, DeterminantCount, DeterminantEstimate, DeterminantPlan, FieldSummary,
-    Interval, ProportionEstimate, QuarantinedShard, ShardRecord, ShardSpec, StreamAddress,
-    SummaryRow, SCHEMA_VERSION,
+    field_summary_file, shard_record_file, Backend, CampaignManifest, CellSpec, CellTerminalState,
+    DeterminantCount, DeterminantPlan, FieldSummary, QuarantinedShard, ShardRecord, ShardSpec,
+    StreamAddress, SummaryRow, SCHEMA_VERSION,
 };
 
 /// The purpose tag reserved for published campaign-cell matrix streams.
 pub const CAMPAIGN_CELL_PURPOSE_TAG: u8 = SamplerPurpose::CampaignCell as u8;
-
-/// Family-wise error budget for the permanent-floor tests, as preregistered
-/// in `dev/simulation_results/permanent-zero-fraction/protocol.md` under
-/// "Error budgets" and "Permanent-floor decision".
-const PERMANENT_FAMILYWISE_ERROR: f64 = 0.025;
-
-/// Family-wise error budget for the determinant tests, as preregistered in
-/// `dev/simulation_results/permanent-zero-fraction/protocol.md` under
-/// "Error budgets" and "Determinant decision".
-const DETERMINANT_FAMILYWISE_ERROR: f64 = 0.025;
 
 /// Maximum number of field entries retained by one batch's raw matrices.
 const BATCH_CHUNK_MAX_MATRIX_ENTRIES: usize = 16 * 1024;
@@ -428,6 +417,8 @@ pub enum ScheduleError {
     },
     /// JSON serialization failed.
     Serialization(serde_json::Error),
+    /// Completed counts cannot enter the canonical exact-decision path.
+    Acceptance(AcceptanceError),
 }
 
 impl fmt::Display for ScheduleError {
@@ -466,6 +457,7 @@ impl fmt::Display for ScheduleError {
             ),
             Self::Io { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::Serialization(source) => source.fmt(formatter),
+            Self::Acceptance(source) => source.fmt(formatter),
         }
     }
 }
@@ -519,6 +511,7 @@ impl std::error::Error for ScheduleError {
         match self {
             Self::Io { source, .. } => Some(source),
             Self::Serialization(source) => Some(source),
+            Self::Acceptance(source) => Some(source),
             _ => None,
         }
     }
@@ -751,7 +744,7 @@ where
             accelerator_config,
         )?);
     }
-    let summary = summarize(field, &shards, manifest.cells.len() as u64);
+    let summary = summarize(manifest, field, &shards)?;
     Ok(FieldRun {
         q: field,
         shards,
@@ -1742,89 +1735,12 @@ fn evaluate_determinant<const Q: u64>(row_major: &[Fp<Q>], n: usize) -> u64 {
     FieldMatrix::from_rows(rows).det().value()
 }
 
-fn summarize(q: u8, shards: &[ShardRun], family_test_count: u64) -> FieldSummary {
-    let mut rows = Vec::new();
-    let mut index = 0;
-    while index < shards.len() {
-        let n = shards[index].record.stream_address.n;
-        let mut matrix_count = 0_u64;
-        let mut zero_count = 0_u64;
-        let mut determinant_evaluated = false;
-        let mut determinant_sample_count = 0_u64;
-        let mut determinant_zero_count = 0_u64;
-        while index < shards.len() && shards[index].record.stream_address.n == n {
-            matrix_count += shards[index].record.matrix_count;
-            zero_count += shards[index].record.permanent_zero_count;
-            if let DeterminantCount::Evaluated {
-                sample_count,
-                zero_count,
-            } = &shards[index].record.determinant
-            {
-                determinant_evaluated = true;
-                determinant_sample_count += *sample_count;
-                determinant_zero_count += *zero_count;
-            }
-            index += 1;
-        }
-        let (lower, upper) = wilson_interval(zero_count, matrix_count);
-        let determinant = if determinant_evaluated {
-            DeterminantCount::Evaluated {
-                sample_count: determinant_sample_count,
-                zero_count: determinant_zero_count,
-            }
-        } else {
-            DeterminantCount::NotEvaluated
-        };
-        let determinant_estimate = match determinant {
-            DeterminantCount::Evaluated {
-                sample_count,
-                zero_count,
-            } => {
-                let (lower, upper) = wilson_interval(zero_count, sample_count);
-                DeterminantEstimate::Evaluated {
-                    estimate: ProportionEstimate {
-                        point: zero_count as f64 / sample_count as f64,
-                        interval: Interval { lower, upper },
-                    },
-                    verdict: determinant_acceptance(
-                        q,
-                        n,
-                        zero_count,
-                        sample_count,
-                        family_test_count,
-                    ),
-                }
-            }
-            DeterminantCount::NotEvaluated => DeterminantEstimate::NotEvaluated,
-        };
-        rows.push(SummaryRow {
-            schema_version: SCHEMA_VERSION,
-            q,
-            n,
-            matrix_count,
-            permanent_zero_count: zero_count,
-            determinant,
-            terminal_state: CellTerminalState::Completed {
-                permanent_estimate: ProportionEstimate {
-                    point: zero_count as f64 / matrix_count as f64,
-                    interval: Interval { lower, upper },
-                },
-                permanent_verdict: permanent_acceptance(
-                    q,
-                    zero_count,
-                    matrix_count,
-                    family_test_count,
-                ),
-                determinant_estimate,
-            },
-        });
-    }
-    FieldSummary {
-        schema_version: SCHEMA_VERSION,
-        q,
-        rows,
-        quarantined: Vec::new(),
-    }
+fn summarize(
+    manifest: &CampaignManifest,
+    q: u8,
+    shards: &[ShardRun],
+) -> Result<FieldSummary, ScheduleError> {
+    summarize_with_quarantine(manifest, q, shards, Vec::new())
 }
 
 /// Builds a field summary while retaining failed work-item identities.
@@ -1833,92 +1749,74 @@ pub(crate) fn summarize_with_quarantine(
     q: u8,
     shards: &[ShardRun],
     quarantined: Vec<QuarantinedShard>,
-) -> FieldSummary {
-    let mut summary = summarize(q, shards, manifest.cells.len() as u64);
-    for row in &mut summary.rows {
-        if quarantined
-            .iter()
-            .any(|item| item.q == row.q && item.n == row.n)
-        {
-            row.terminal_state = CellTerminalState::Halted {
-                reason: super::schema::HaltReason::ExecutionFailure,
-            };
-        }
-    }
+) -> Result<FieldSummary, ScheduleError> {
+    let plan = AcceptancePlan::for_manifest(manifest).map_err(ScheduleError::Acceptance)?;
+    let mut rows = Vec::new();
     for cell in manifest.cells.iter().filter(|cell| cell.q == q) {
-        if !summary.rows.iter().any(|row| row.n == cell.n) {
-            summary.rows.push(SummaryRow {
+        let selected: Vec<_> = shards
+            .iter()
+            .filter(|shard| {
+                (shard.record.stream_address.q, shard.record.stream_address.n) == (cell.q, cell.n)
+            })
+            .collect();
+        let matrix_count = selected.iter().map(|shard| shard.record.matrix_count).sum();
+        let permanent_zero_count = selected
+            .iter()
+            .map(|shard| shard.record.permanent_zero_count)
+            .sum();
+        let determinant = match cell.determinant_companion {
+            DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
+                sample_count: selected
+                    .iter()
+                    .filter_map(|shard| match shard.record.determinant {
+                        DeterminantCount::Evaluated { sample_count, .. } => Some(sample_count),
+                        DeterminantCount::NotEvaluated => None,
+                    })
+                    .sum(),
+                zero_count: selected
+                    .iter()
+                    .filter_map(|shard| match shard.record.determinant {
+                        DeterminantCount::Evaluated { zero_count, .. } => Some(zero_count),
+                        DeterminantCount::NotEvaluated => None,
+                    })
+                    .sum(),
+            },
+            DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
+        };
+        let halted = quarantined
+            .iter()
+            .any(|item| (item.q, item.n) == (cell.q, cell.n))
+            || matrix_count != cell.matrix_count;
+        if halted {
+            rows.push(SummaryRow {
                 schema_version: SCHEMA_VERSION,
                 q,
                 n: cell.n,
-                matrix_count: 0,
-                permanent_zero_count: 0,
-                determinant: match cell.determinant_companion {
-                    DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
-                        sample_count: 0,
-                        zero_count: 0,
-                    },
-                    DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
-                },
+                matrix_count,
+                permanent_zero_count,
+                determinant,
                 terminal_state: CellTerminalState::Halted {
                     reason: super::schema::HaltReason::ExecutionFailure,
                 },
             });
+        } else {
+            rows.push(
+                assess_completed_cell(&plan, cell, matrix_count, permanent_zero_count, determinant)
+                    .map_err(ScheduleError::Acceptance)?
+                    .summary,
+            );
         }
     }
-    summary.rows.sort_by_key(|row| row.n);
-    summary.quarantined = quarantined;
-    summary
-}
-
-fn permanent_acceptance(
-    q: u8,
-    permanent_zero_count: u64,
-    matrix_count: u64,
-    family_test_count: u64,
-) -> AcceptanceVerdict {
-    let level = bonferroni_level(PERMANENT_FAMILYWISE_ERROR, family_test_count);
-    if permanent_zero_floor_test(permanent_zero_count, matrix_count, u64::from(q)).rejects_at(level)
-    {
-        AcceptanceVerdict::Rejected
-    } else {
-        AcceptanceVerdict::Accepted
+    if rows.is_empty() {
+        return Err(ScheduleError::FieldNotFound { q });
     }
-}
-
-fn determinant_acceptance(
-    q: u8,
-    n: u16,
-    determinant_zero_count: u64,
-    determinant_sample_count: u64,
-    family_test_count: u64,
-) -> AcceptanceVerdict {
-    let level = bonferroni_level(DETERMINANT_FAMILYWISE_ERROR, family_test_count);
-    let null_probability = determinant_null_probability(q, n);
-    if two_sided_test(
-        determinant_zero_count,
-        determinant_sample_count,
-        null_probability,
-    )
-    .rejects_at(level)
-    {
-        AcceptanceVerdict::Rejected
-    } else {
-        AcceptanceVerdict::Accepted
-    }
-}
-
-/// Returns the exact finite-size singular probability
-/// \(p_{\det}(q,n)=1-\prod_{i=1}^{n}(1-q^{-i})\) in `f64`.
-fn determinant_null_probability(q: u8, n: u16) -> f64 {
-    let q = f64::from(q);
-    1.0 - (1..=n).fold(1.0, |nonsingular_probability, i| {
-        nonsingular_probability * (1.0 - q.powi(-i32::from(i)))
+    rows.sort_by_key(|row| row.n);
+    Ok(FieldSummary {
+        schema_version: SCHEMA_VERSION,
+        q,
+        rows,
+        quarantined,
     })
-}
-
-fn wilson_interval(successes: u64, trials: u64) -> (f64, f64) {
-    gf2_stats::intervals::wilson_interval(successes, trials, gf2_stats::intervals::Z_95)
 }
 
 fn create_parent(path: &Path) -> Result<(), ScheduleError> {
@@ -2037,7 +1935,6 @@ mod tests {
         Provenance, RngAlgorithm, ShardSpec, StreamPurpose,
     };
     use gf2_core::field::{matrix::FieldMatrix, FieldVec};
-    use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test, two_sided_test};
     use std::collections::BTreeSet;
 
     #[test]
@@ -3111,71 +3008,23 @@ mod tests {
     }
 
     #[test]
-    fn determinant_verdict_uses_the_protocol_probability_ordered_test() {
-        let q = 3;
-        let n = 2;
-        let sample_count = 100;
-        let family_test_count = 63;
-        let level = bonferroni_level(DETERMINANT_FAMILYWISE_ERROR, family_test_count);
-        let null_probability = determinant_null_probability(q, n);
-
-        for (zero_count, expected_verdict) in [
-            (41, AcceptanceVerdict::Accepted),
-            (0, AcceptanceVerdict::Rejected),
-            (sample_count, AcceptanceVerdict::Rejected),
-        ] {
-            let expected_rejection =
-                two_sided_test(zero_count, sample_count, null_probability).rejects_at(level);
-            assert_eq!(
-                expected_rejection,
-                matches!(expected_verdict, AcceptanceVerdict::Rejected)
-            );
-            assert_eq!(
-                determinant_acceptance(q, n, zero_count, sample_count, family_test_count),
-                expected_verdict
-            );
-        }
-    }
-
-    #[test]
-    fn permanent_floor_rejection_is_the_preregistered_exact_test() {
-        let level = bonferroni_level(0.025, 1);
-        let rejected = permanent_zero_floor_test(0, 11, 3);
-        let accepted = permanent_zero_floor_test(4, 11, 3);
-
-        assert!(rejected.rejects_at(level));
-        assert!(!accepted.rejects_at(level));
-        assert_eq!(
-            permanent_acceptance(3, 0, 11, 1),
-            AcceptanceVerdict::Rejected
-        );
-        assert_eq!(
-            permanent_acceptance(3, 4, 11, 1),
-            AcceptanceVerdict::Accepted
-        );
-    }
-
-    #[test]
-    fn summary_verdict_matches_the_pooled_permanent_floor_decision() {
-        let campaign = manifest(vec![cell(3, 2, 4, &[(0, 7)])]);
-        let family_test_count = campaign.cells.len() as u64;
+    fn summary_uses_the_canonical_completed_cell_assessment() {
+        let mut campaign = manifest(vec![cell(3, 2, 4, &[(0, 7)])]);
+        campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
         let run = run_field(&campaign, 3).unwrap();
         let row = &run.summary().rows[0];
-        let CellTerminalState::Completed {
-            permanent_verdict, ..
-        } = row.terminal_state
-        else {
-            panic!("small completed run must produce a completed summary row");
-        };
-
+        let plan = AcceptancePlan::for_manifest(&campaign).unwrap();
+        let expected = assess_completed_cell(
+            &plan,
+            &campaign.cells[0],
+            row.matrix_count,
+            row.permanent_zero_count,
+            row.determinant.clone(),
+        )
+        .unwrap();
         assert_eq!(
-            permanent_verdict,
-            permanent_acceptance(
-                row.q,
-                row.permanent_zero_count,
-                row.matrix_count,
-                family_test_count,
-            )
+            row, &expected.summary,
+            "scheduler summaries and coordinator decisions share one implementation"
         );
     }
 

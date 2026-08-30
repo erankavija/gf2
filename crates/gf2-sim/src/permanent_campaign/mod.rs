@@ -7,6 +7,8 @@
 //! statistical estimators live outside this module; this orchestration layer
 //! only describes their durable records.
 
+pub mod acceptance;
+pub mod coordinator;
 pub mod driver;
 #[cfg(test)]
 pub(crate) mod fixture;
