@@ -1522,6 +1522,30 @@ fn validate_receipt(
         preceding_arm_index = arm_index;
         history.push(&attempt.outcome);
     }
+    for (&(q, n, _), history) in &attempt_history {
+        if history.len() == 2
+            && matches!(history[1], ShardAttemptOutcome::Quarantined { .. })
+            && (!matches!(
+                receipt
+                    .cells
+                    .iter()
+                    .find(|cell| (cell.q, cell.n) == (q, n))
+                    .map(|cell| &cell.execution),
+                Some(CellExecutionState::Halted { .. })
+            ) || !matches!(
+                receipt.halt,
+                CampaignHaltState::Halted {
+                    cause: CampaignHaltCause::Mechanical {
+                        q: cause_q,
+                        n: cause_n,
+                        reason: HaltReason::ExecutionFailure,
+                    }
+                } if (cause_q, cause_n) == (q, n)
+            ))
+        {
+            return refused("exhausted recovery is not a terminal mechanical campaign halt");
+        }
+    }
 
     let scheduled = receipt
         .cells
