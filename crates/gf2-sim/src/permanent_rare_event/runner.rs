@@ -8,7 +8,13 @@
 //! A run is bounded and resumable. `GF2_RARE_EVENT_BLOCK_BUDGET` caps how many
 //! checkpoint blocks one invocation produces; the next invocation reconstructs
 //! the published prefix from the dataset directories and continues.
+//!
+//! All environment access that can affect execution passes through one
+//! instrumented layer: [`read_declared_environment`] refuses any name outside
+//! [`ENVIRONMENT_INPUT_NAMES`], each declared name is read exactly once, and
+//! the start receipt's environment record is derived from those same reads.
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -46,11 +52,43 @@ pub const WORKER_ENVIRONMENT: &str = "RAYON_NUM_THREADS";
 /// Artifact-root-relative committed exact target result.
 pub const EXACT_TARGET_RESULT_FILE: &str = "exact-target-result.json";
 
-/// Every environment name this runner consults, in the order artifacts record.
+/// Every environment name this runner may consult.
 ///
-/// A frozen configuration's behavior closure declares exactly this list, so a
-/// start receipt's declared environment and the closure cannot drift apart.
+/// This one inventory is what [`read_declared_environment`] permits, what a
+/// start receipt records, and what a frozen configuration's behavior closure
+/// declares, so reading, recording, and declaring an environment input cannot
+/// drift apart. A receipt whose declared names differ from its closure is
+/// refused at publication.
 pub const ENVIRONMENT_INPUT_NAMES: [&str; 2] = [BLOCK_BUDGET_ENVIRONMENT, WORKER_ENVIRONMENT];
+
+/// Reads one declared environment input, refusing an undeclared name.
+///
+/// Every environment read in this module passes through here, so consulting a
+/// name outside [`ENVIRONMENT_INPUT_NAMES`] fails closed instead of silently
+/// letting an unrecorded input affect execution.
+///
+/// An absent name reads as `None`, which a receipt records as unset. A name
+/// holding bytes that are not UTF-8 is refused rather than reported absent,
+/// because a receipt may record only an exact UTF-8 value or an exact absence.
+///
+/// # Errors
+///
+/// Refuses a name this runner has not declared, and a declared name whose
+/// value is not UTF-8.
+fn read_declared_environment(name: &str) -> Result<Option<String>, RunError> {
+    if !ENVIRONMENT_INPUT_NAMES.contains(&name) {
+        return Err(RunError::Configuration(format!(
+            "{name} is consulted but is not a declared runner environment input"
+        )));
+    }
+    match std::env::var(name) {
+        Ok(value) => Ok(Some(value)),
+        Err(std::env::VarError::NotPresent) => Ok(None),
+        Err(std::env::VarError::NotUnicode(_)) => Err(RunError::Configuration(format!(
+            "{name} is set to a non-UTF-8 value, which the behavior closure rejects"
+        ))),
+    }
+}
 
 /// A configuration, observation, sampling, or artifact refusal.
 #[derive(Debug)]
@@ -488,11 +526,21 @@ impl RuntimeInputs {
             reason,
         };
 
-        let workers_value = std::env::var(WORKER_ENVIRONMENT).map_err(|_| {
-            RunError::Configuration(format!(
-                "{WORKER_ENVIRONMENT} must declare the worker count this run uses"
-            ))
-        })?;
+        // Every environment read this run performs happens here, once per
+        // declared name, so what is read, declared, and recorded cannot differ.
+        let mut observed = BTreeMap::new();
+        for name in ENVIRONMENT_INPUT_NAMES {
+            observed.insert(name, read_declared_environment(name)?);
+        }
+        let workers_value = observed
+            .get(WORKER_ENVIRONMENT)
+            .and_then(Option::as_deref)
+            .ok_or_else(|| {
+                RunError::Configuration(format!(
+                    "{WORKER_ENVIRONMENT} must declare the worker count this run uses"
+                ))
+            })?
+            .to_owned();
         let workers: usize = workers_value.parse().map_err(|_| {
             RunError::Configuration(format!("{WORKER_ENVIRONMENT} is not a decimal count"))
         })?;
@@ -501,9 +549,9 @@ impl RuntimeInputs {
                 "{WORKER_ENVIRONMENT} must be positive"
             )));
         }
-        let budget_value = std::env::var(BLOCK_BUDGET_ENVIRONMENT).ok();
-        let block_budget = budget_value
-            .as_deref()
+        let block_budget = observed
+            .get(BLOCK_BUDGET_ENVIRONMENT)
+            .and_then(Option::as_deref)
             .map(|value| {
                 value.parse::<usize>().map_err(|_| {
                     RunError::Configuration(format!(
@@ -524,19 +572,17 @@ impl RuntimeInputs {
             fallback_policy: "safe-cpu/v1".into(),
             effective_devices: Vec::new(),
         };
-        let environment_inputs = vec![
-            EnvironmentInputV1 {
-                name: BLOCK_BUDGET_ENVIRONMENT.into(),
-                value: match budget_value {
+        // Derived from the same reads above, in the sorted order a receipt needs.
+        let environment_inputs: Vec<_> = observed
+            .iter()
+            .map(|(name, value)| EnvironmentInputV1 {
+                name: (*name).to_owned(),
+                value: match value {
                     None => EnvironmentValueV1::Unset {},
-                    Some(value) => EnvironmentValueV1::Set(value),
+                    Some(value) => EnvironmentValueV1::Set(value.clone()),
                 },
-            },
-            EnvironmentInputV1 {
-                name: WORKER_ENVIRONMENT.into(),
-                value: EnvironmentValueV1::Set(workers_value.clone()),
-            },
-        ];
+            })
+            .collect();
 
         let executable_path = std::env::current_exe()?;
         let executable_sha256 = sha256_hex(&fs::read(&executable_path)?);
@@ -608,5 +654,74 @@ fn environment_input(field: &str, value: &str) -> InputResolutionV1 {
         field: field.to_owned(),
         origin: InputOriginV1::Environment,
         value: value.to_owned(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+    use std::sync::{Mutex, MutexGuard};
+
+    use super::{
+        read_declared_environment, RunError, BLOCK_BUDGET_ENVIRONMENT, ENVIRONMENT_INPUT_NAMES,
+    };
+
+    /// Serializes the tests that mutate this process's own environment.
+    static ENVIRONMENT: Mutex<()> = Mutex::new(());
+
+    fn environment_guard() -> MutexGuard<'static, ()> {
+        ENVIRONMENT
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    /// An environment name outside the declared inventory cannot be consulted.
+    #[test]
+    fn undeclared_environment_names_fail_closed() {
+        let _guard = environment_guard();
+        let refusal = read_declared_environment("GF2_RARE_EVENT_UNDECLARED")
+            .expect_err("an undeclared environment name must fail closed");
+        assert!(
+            matches!(&refusal, RunError::Configuration(_)),
+            "unexpected refusal: {refusal}"
+        );
+        for name in ENVIRONMENT_INPUT_NAMES {
+            read_declared_environment(name).expect("a declared name is readable");
+        }
+    }
+
+    /// A declared name holding bytes that are not UTF-8 is refused outright.
+    ///
+    /// Reporting it absent would let a receipt record an unset input while the
+    /// value was in fact set, falsifying the run's observed provenance.
+    #[test]
+    fn non_utf8_environment_values_fail_closed() {
+        let _guard = environment_guard();
+        let restore = std::env::var_os(BLOCK_BUDGET_ENVIRONMENT);
+        std::env::set_var(
+            BLOCK_BUDGET_ENVIRONMENT,
+            OsStr::from_bytes(&[0x36, 0x34, 0xff]),
+        );
+        let observed = read_declared_environment(BLOCK_BUDGET_ENVIRONMENT);
+        match restore {
+            Some(value) => std::env::set_var(BLOCK_BUDGET_ENVIRONMENT, value),
+            None => std::env::remove_var(BLOCK_BUDGET_ENVIRONMENT),
+        }
+        let refusal = observed.expect_err("a non-UTF-8 declared value must fail closed");
+        assert!(
+            matches!(&refusal, RunError::Configuration(_)),
+            "unexpected refusal: {refusal}"
+        );
+        read_declared_environment(BLOCK_BUDGET_ENVIRONMENT)
+            .expect("the restored environment reads cleanly");
+    }
+
+    /// The declared inventory is the sorted, duplicate-free list a receipt records.
+    #[test]
+    fn declared_environment_inventory_is_sorted_and_unique() {
+        assert!(ENVIRONMENT_INPUT_NAMES
+            .windows(2)
+            .all(|pair| pair[0] < pair[1]));
     }
 }
