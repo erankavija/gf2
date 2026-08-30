@@ -93,6 +93,22 @@ fn mixed_backend_manifest() -> CampaignManifest {
     campaign
 }
 
+fn launch_cost_manifest() -> CampaignManifest {
+    let mut campaign = manifest();
+    let mut field_three_accelerator = campaign.cells[0].clone();
+    field_three_accelerator.n = 3;
+    field_three_accelerator.shards[0].stream_index = 11;
+    field_three_accelerator.backend = Backend::Accelerator;
+    let mut field_five_accelerator = campaign.cells[0].clone();
+    field_five_accelerator.q = 5;
+    field_five_accelerator.shards[0].stream_index = 12;
+    field_five_accelerator.backend = Backend::Accelerator;
+    campaign
+        .cells
+        .extend([field_three_accelerator, field_five_accelerator]);
+    campaign
+}
+
 fn temp_path(label: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
         "gf2-permanent-campaign-bin-{label}-{}-{}",
@@ -154,6 +170,64 @@ fn campaign_checkout(parent: &Path, manifest: &Path) -> (PathBuf, PathBuf) {
     fs::copy(manifest, output.join("manifest.json")).unwrap();
     commit_campaign_manifest(&checkout);
     (checkout, output)
+}
+
+fn files_under(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
+    fn visit(root: &Path, path: &Path, files: &mut Vec<(PathBuf, Vec<u8>)>) {
+        for entry in fs::read_dir(path).unwrap() {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            if path.is_dir() {
+                visit(root, &path, files);
+            } else {
+                files.push((
+                    path.strip_prefix(root).unwrap().to_owned(),
+                    fs::read(path).unwrap(),
+                ));
+            }
+        }
+    }
+
+    let mut files = Vec::new();
+    visit(root, root, &mut files);
+    files.sort_by(|left, right| left.0.cmp(&right.0));
+    files
+}
+
+fn run_with_cost_table(label: &str, table: &str) -> std::process::Output {
+    let parent = temp_path(label);
+    let manifest_path = parent.join("manifest");
+    let manifest_file = manifest_path.join("manifest.json");
+    fs::create_dir_all(&manifest_path).unwrap();
+    fs::write(
+        &manifest_file,
+        serde_json::to_vec_pretty(&launch_cost_manifest()).unwrap(),
+    )
+    .unwrap();
+    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
+    let before = files_under(&output_path);
+    let table_path = parent.join("accelerator-costs.csv");
+    fs::write(&table_path, table).unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "5",
+            "--accelerator-cost-table",
+            table_path.to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(
+        files_under(&output_path),
+        before,
+        "cost-table preflight must not draw or emit campaign evidence"
+    );
+    fs::remove_dir_all(parent).unwrap();
+    result
 }
 
 #[test]
@@ -324,4 +398,113 @@ fn binary_requires_accelerator_costs_only_for_the_selected_field() {
     );
 
     let _ = fs::remove_dir_all(parent);
+}
+
+#[test]
+fn binary_accepts_the_complete_exact_accelerator_key_set() {
+    let result = run_with_cost_table("complete-cost-table", "q,n,per_matrix_us\n3,3,17\n5,2,19\n");
+    let stderr = String::from_utf8_lossy(&result.stderr);
+    assert!(
+        !result.status.success(),
+        "HIP-free test build must refuse the backend"
+    );
+    assert!(stderr.contains("accelerator"), "stderr:\n{stderr}");
+    assert!(
+        !stderr.contains("accelerator cost table"),
+        "stderr:\n{stderr}"
+    );
+}
+
+#[test]
+fn binary_rejects_invalid_cost_tables_before_draw_or_emission() {
+    let cases = [
+        ("missing-cost-row", "q,n,per_matrix_us\n3,3,17\n", "missing"),
+        (
+            "duplicate-cost-row",
+            "q,n,per_matrix_us\n3,3,17\n3,3,18\n5,2,19\n",
+            "duplicate",
+        ),
+        (
+            "zero-cost-row",
+            "q,n,per_matrix_us\n3,3,17\n5,2,0\n",
+            "positive",
+        ),
+        (
+            "malformed-cost-row",
+            "q,n,per_matrix_us\n3,3,17\n5,2,not-an-integer\n",
+            "integer",
+        ),
+        (
+            "processor-only-cost-row",
+            "q,n,per_matrix_us\n3,2,13\n3,3,17\n5,2,19\n",
+            "processor-backed",
+        ),
+        (
+            "wrong-cell-cost-row",
+            "q,n,per_matrix_us\n3,3,17\n5,2,19\n7,2,23\n",
+            "not a manifest cell",
+        ),
+    ];
+    for (label, table, expected) in cases {
+        let result = run_with_cost_table(label, table);
+        let stderr = String::from_utf8_lossy(&result.stderr);
+        assert!(!result.status.success(), "{label} unexpectedly passed");
+        assert!(
+            stderr.contains("accelerator cost table"),
+            "{label}: {stderr}"
+        );
+        assert!(stderr.contains(expected), "{label}: {stderr}");
+        assert!(result.stdout.is_empty(), "{label} emitted progress output");
+    }
+}
+
+#[test]
+fn production_table_is_accepted_by_the_production_cli_and_manifest() {
+    let repository = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap();
+    let campaign = repository
+        .join("dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829");
+    let table =
+        repository.join("dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv");
+    assert!(
+        table.is_file(),
+        "the frozen production cost table must exist"
+    );
+    let before = files_under(&campaign);
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .current_dir(repository)
+        .args([
+            "--manifest",
+            campaign.to_str().unwrap(),
+            "--output",
+            campaign.to_str().unwrap(),
+            "--q",
+            "7",
+            "--workers",
+            "1",
+            "--accelerator-cost-table",
+            table.to_str().unwrap(),
+            "--accelerator-launch-cap-ms",
+            "500",
+        ])
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&result.stderr);
+    assert!(
+        !result.status.success(),
+        "the frozen emitter identity must remain binding"
+    );
+    assert!(stderr.contains("emission refused"), "stderr:\n{stderr}");
+    assert!(
+        !stderr.contains("accelerator cost table"),
+        "stderr:\n{stderr}"
+    );
+    assert_eq!(
+        files_under(&campaign),
+        before,
+        "production-table preflight must preserve zero-draw dataset bytes"
+    );
 }
