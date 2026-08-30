@@ -12,10 +12,10 @@ use crate::permanent_campaign::coordinator::{
     classify_q3_precision, coordinator_field_sidecar_path, coordinator_lock_path,
     coordinator_receipt_path, execute_campaign_cell_with_evaluator, parse_q3_target_table,
     ArmInvocation, CampaignCoordinator, CampaignHaltCause, CampaignHaltState, CellExecutionState,
-    CoordinatorEvidenceSourcePaths, CoordinatorFieldInterpretation, CoordinatorFieldSidecar,
+    CoordinatorEvidenceSources, CoordinatorFieldInterpretation, CoordinatorFieldSidecar,
     CoordinatorFieldSidecarStatus, CoordinatorQ3ComparisonRow, ExactCellScope, FieldExecutionState,
-    LiteratureSearchClaim, Q3IntervalRelation, Q3PrecisionClassification, Q3SourceEvidence,
-    ShardAttemptState,
+    LiteratureSearchClaim, Q3IntervalRelation, Q3PrecisionClassification, Q3ReportedProbability,
+    Q3SourceEvidence, ShardAttemptState,
 };
 use crate::permanent_campaign::provenance::{approve_emission, EmissionApproval};
 use crate::permanent_campaign::schedule::{
@@ -186,20 +186,35 @@ fn fixture_from_manifest(
     (root, manifest, coordinator)
 }
 
-fn evidence_source_paths() -> CoordinatorEvidenceSourcePaths {
-    CoordinatorEvidenceSourcePaths {
-        q3_targets: "dev/simulation_results/permanent-zero-fraction/\
-                     scheinerman2024-q3-targets-v1.csv"
-            .parse()
-            .unwrap(),
-        q5_q7_literature_search: "dev/studies/b488f02c/literature-search-2026-08-08.md"
-            .parse()
-            .unwrap(),
+fn evidence_source_paths() -> CoordinatorEvidenceSources {
+    let q3_bytes = include_bytes!(
+        "../../../../dev/simulation_results/permanent-zero-fraction/\
+         scheinerman2024-q3-targets-v1.csv"
+    );
+    let search_bytes =
+        include_bytes!("../../../../dev/studies/b488f02c/literature-search-2026-08-08.md");
+    CoordinatorEvidenceSources {
+        q3_targets: ArtifactIdentity {
+            path: "dev/simulation_results/permanent-zero-fraction/\
+                   scheinerman2024-q3-targets-v1.csv"
+                .parse()
+                .unwrap(),
+            sha256: format!("{:x}", Sha256::digest(q3_bytes)).parse().unwrap(),
+        },
+        q5_q7_literature_search: ArtifactIdentity {
+            path: "dev/studies/b488f02c/literature-search-2026-08-08.md"
+                .parse()
+                .unwrap(),
+            sha256: format!("{:x}", Sha256::digest(search_bytes))
+                .parse()
+                .unwrap(),
+        },
     }
 }
 
 fn write_evidence_sources(repository: &Path) {
-    let target = repository.join(evidence_source_paths().q3_targets.as_str());
+    let sources = evidence_source_paths();
+    let target = repository.join(sources.q3_targets.path.as_str());
     fs::create_dir_all(target.parent().unwrap()).unwrap();
     fs::write(
         target,
@@ -209,7 +224,7 @@ fn write_evidence_sources(repository: &Path) {
         ),
     )
     .unwrap();
-    let search = repository.join(evidence_source_paths().q5_q7_literature_search.as_str());
+    let search = repository.join(sources.q5_q7_literature_search.path.as_str());
     fs::create_dir_all(search.parent().unwrap()).unwrap();
     fs::write(
         search,
@@ -1535,6 +1550,14 @@ fn q3_target_parser_is_exact_and_precision_boundaries_are_closed() {
     assert_eq!(targets.last().unwrap().n, 28);
     assert_eq!(targets[0].evidence, Q3SourceEvidence::ExactEnumeration);
     assert_eq!(targets[2].evidence, Q3SourceEvidence::MonteCarlo);
+    assert_eq!(
+        targets[0].reported_probability,
+        Q3ReportedProbability::Reported { value: 0.3976 }
+    );
+    assert_eq!(
+        targets[1].reported_probability,
+        Q3ReportedProbability::Reported { value: 0.3744 }
+    );
 
     let malformed = String::from_utf8(canonical.to_vec()).unwrap().replacen(
         "q,n,source_table,",
@@ -1549,6 +1572,18 @@ fn q3_target_parser_is_exact_and_precision_boundaries_are_closed() {
         .collect::<Vec<_>>()
         .join("\n");
     assert!(parse_q3_target_table(missing_n.as_bytes()).is_err());
+    let forged_exact_probability = String::from_utf8(canonical.to_vec()).unwrap().replacen(
+        ",0.3976,0.397622690007,",
+        ",0.9990,0.397622690007,",
+        1,
+    );
+    assert!(parse_q3_target_table(forged_exact_probability.as_bytes()).is_err());
+    let noncanonical_exact_probability = String::from_utf8(canonical.to_vec()).unwrap().replacen(
+        ",0.3976,0.397622690007,",
+        ",0.39760,0.397622690007,",
+        1,
+    );
+    assert!(parse_q3_target_table(noncanonical_exact_probability.as_bytes()).is_err());
 
     assert_eq!(
         classify_q3_precision(Q3SourceEvidence::ExactEnumeration, 99.0, 1.0),
@@ -1573,6 +1608,41 @@ fn q3_target_parser_is_exact_and_precision_boundaries_are_closed() {
 }
 
 #[test]
+fn transaction_refuses_mismatched_literature_identity_before_receipt_or_sampling() {
+    let campaign = single_cell_manifest(7);
+    let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
+    let expected_sources = evidence_source_paths();
+    let repository = root.join("checkout");
+    fs::write(
+        repository.join(expected_sources.q5_q7_literature_search.path.as_str()),
+        b"# Unrelated document\n\n## Limitations\nNone recorded.\n\n## Conclusion\nNo claim.\n",
+    )
+    .unwrap();
+
+    let mut evaluator_entries = 0_u8;
+    let result = execute_campaign_cell_with_evaluator(
+        &campaign_root,
+        ExactCellScope { q: 7, n: 20 },
+        1,
+        arm_for_manifest(&campaign, 7, 20).argv,
+        approval,
+        &expected_sources,
+        |_, _, _, _| {
+            evaluator_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "identity mismatch must prevent evaluator entry".to_owned(),
+            ))
+        },
+        |_| {},
+    );
+    assert!(result.is_err());
+    assert_eq!(evaluator_entries, 0);
+    assert!(!coordinator_receipt_path(&campaign_root, &campaign.campaign_id).exists());
+    assert!(!campaign_root.join(shard_record_file(7, 20, 0)).exists());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
     let mut campaign = single_cell_manifest(7);
     campaign
@@ -1582,6 +1652,7 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         .cells
         .push(cell(5, 4, DeterminantPlan::NotEvaluated));
     let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
+    let expected_sources = evidence_source_paths();
     let q7_argv = arm_for_manifest(&campaign, 7, 20).argv;
     execute_campaign_cell_with_evaluator(
         &campaign_root,
@@ -1589,7 +1660,7 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         1,
         q7_argv,
         approval,
-        &evidence_source_paths(),
+        &expected_sources,
         |manifest, item, _, _| Ok(evaluated_shard(manifest, item, 14)),
         |_| {},
     )
@@ -1600,7 +1671,7 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         1,
         arm_for_manifest(&campaign, 5, 4).argv,
         approve_emission(&campaign_root).unwrap(),
-        &evidence_source_paths(),
+        &expected_sources,
         |manifest, item, _, _| Ok(evaluated_shard(manifest, item, 20)),
         |_| {},
     )
@@ -1611,11 +1682,13 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         1,
         arm_for_manifest(&campaign, 3, 4).argv,
         approve_emission(&campaign_root).unwrap(),
-        &evidence_source_paths(),
+        &expected_sources,
         |manifest, item, _, _| Ok(evaluated_shard(manifest, item, 70)),
         |_| {},
     )
     .unwrap();
+    let persisted = CampaignCoordinator::read(&campaign_root).unwrap();
+    assert_eq!(&persisted.receipt().evidence_sources, &expected_sources);
 
     let q3_path = coordinator_field_sidecar_path(&campaign_root, &campaign.campaign_id, 3);
     let q3_bytes = fs::read(&q3_path).unwrap();
@@ -1637,7 +1710,7 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
     else {
         panic!("q=3 must carry the canonical target comparison");
     };
-    assert_eq!(target_table.path, evidence_source_paths().q3_targets);
+    assert_eq!(target_table, expected_sources.q3_targets);
     assert_eq!(rows.len(), 1);
     let CoordinatorQ3ComparisonRow::Completed {
         n,
@@ -1674,8 +1747,8 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         panic!("q=7 must carry the bounded literature claim");
     };
     assert_eq!(
-        search_receipt.path,
-        evidence_source_paths().q5_q7_literature_search
+        search_receipt,
+        expected_sources.q5_q7_literature_search.clone()
     );
     assert_eq!(
         claim,
@@ -1695,7 +1768,7 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         CoordinatorFieldInterpretation::ConditionalLiteratureSearch {
             search_receipt,
             claim: LiteratureSearchClaim::NoLocatedQ5Q7NumericsSubjectToRecordedLimits,
-        } if search_receipt.path == evidence_source_paths().q5_q7_literature_search
+        } if search_receipt == expected_sources.q5_q7_literature_search
     ));
 
     let mut forged: serde_json::Value = serde_json::from_slice(&q3_bytes).unwrap();
