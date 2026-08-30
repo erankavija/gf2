@@ -15,7 +15,23 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-30T04:31:33.458166665Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-30T04:35:12.532112532Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-30T04:38:01.567851494Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "8ec10dde-07db-40f8-bac6-094cbe2635c0",
   "labels": [
     "epic:permanent-statistics",
@@ -27,5 +43,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Exact compressed-state permanental-rank propagation",
-  "updated_at": "2026-08-30T03:37:03.607143023Z"
+  "updated_at": "2026-08-30T04:38:01.567851494Z"
 }

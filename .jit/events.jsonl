@@ -10174,3 +10174,6 @@
 {"assignee":"agent:codex-sol-coordinator","id":"62cd92f4-ec22-4b70-a8e8-3fa2d8e92709","issue_id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","timestamp":"2026-08-30T03:36:47.543950597Z","type":"issue_claimed"}
 {"from":"ready","id":"71bfb133-4a15-4790-be26-426af4435537","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T03:37:03.607143023Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:codex-sol-exact-rank","id":"e4d6c64a-2eb7-4cf4-bcc8-cd34b73efe85","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T03:37:03.607143023Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"9a8051f7-7ca2-4676-b128-9a92593d5acb","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T04:31:33.458166665Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"96b7f66c-3efc-499d-a0c1-ed4a4c337a92","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T04:35:12.532112532Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"2b05c898-0a29-4b5a-9a91-3510a1df1b35","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T04:38:01.567851494Z","type":"gate_failed","updated_by":"auto:executor"}
