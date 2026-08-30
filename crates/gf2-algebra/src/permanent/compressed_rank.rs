@@ -982,6 +982,11 @@ impl<F: SupportedPrimeField> CompressedTransitionTable<F> {
 /// Reuse [`CompressedTransitionTable`] directly when evaluating more than one
 /// row count over the same field.
 ///
+/// # Panics
+///
+/// Panics if `3 * rows` overflows `usize`, as specified by
+/// [`CompressedTransitionTable::deficiency_probability`].
+///
 /// # Examples
 ///
 /// ```
