@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "protocol": {
+    "root_seed": 4923361482881630209,
+    "stream_purpose": "validation",
+    "replay_matrix_count": 1024,
+    "sample_matrix_count": 400000,
+    "exact_test_level": 0.001,
+    "decision_rule": "probability_ordering_exact_two_sided_strict_greater",
+    "retry_rule": "no_redraw",
+    "backend_batch_matrix_count": 8192,
+    "sample_backend": "batch_parallel",
+    "selectable_backends": [
+      "batch_parallel",
+      "intra_matrix_parallel",
+      "generic_ryser",
+      "accelerator"
+    ]
+  },
+  "anchors": [
+    {
+      "q": 3,
+      "n": 1,
+      "stream_index": 0,
+      "expected_matrix_count": 3,
+      "expected_permanent_zero_count": 1,
+      "expected_determinant_zero_count": 1
+    },
+    {
+      "q": 3,
+      "n": 2,
+      "stream_index": 0,
+      "expected_matrix_count": 81,
+      "expected_permanent_zero_count": 33,
+      "expected_determinant_zero_count": 33
+    },
+    {
+      "q": 3,
+      "n": 3,
+      "stream_index": 0,
+      "expected_matrix_count": 19683,
+      "expected_permanent_zero_count": 8163,
+      "expected_determinant_zero_count": 8451
+    },
+    {
+      "q": 3,
+      "n": 4,
+      "stream_index": 0,
+      "expected_matrix_count": 43046721,
+      "expected_permanent_zero_count": 17116353,
+      "expected_determinant_zero_count": 18785601
+    },
+    {
+      "q": 5,
+      "n": 1,
+      "stream_index": 0,
+      "expected_matrix_count": 5,
+      "expected_permanent_zero_count": 1,
+      "expected_determinant_zero_count": 1
+    },
+    {
+      "q": 5,
+      "n": 2,
+      "stream_index": 0,
+      "expected_matrix_count": 625,
+      "expected_permanent_zero_count": 145,
+      "expected_determinant_zero_count": 145
+    },
+    {
+      "q": 5,
+      "n": 3,
+      "stream_index": 0,
+      "expected_matrix_count": 1953125,
+      "expected_permanent_zero_count": 439525,
+      "expected_determinant_zero_count": 465125
+    },
+    {
+      "q": 7,
+      "n": 1,
+      "stream_index": 0,
+      "expected_matrix_count": 7,
+      "expected_permanent_zero_count": 1,
+      "expected_determinant_zero_count": 1
+    },
+    {
+      "q": 7,
+      "n": 2,
+      "stream_index": 0,
+      "expected_matrix_count": 2401,
+      "expected_permanent_zero_count": 385,
+      "expected_determinant_zero_count": 385
+    },
+    {
+      "q": 7,
+      "n": 3,
+      "stream_index": 0,
+      "expected_matrix_count": 40353607,
+      "expected_permanent_zero_count": 6188455,
+      "expected_determinant_zero_count": 6569479
+    }
+  ],
+  "authorities": {
+    "protocol": {
+      "path": "dev/simulation_results/permanent-zero-fraction/protocol.md",
+      "sha256": "f299feae7b8786b51d0c83f478c45d01fa22a9af8c30ca7baf073d46c89e1247"
+    },
+    "manifest": {
+      "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json",
+      "sha256": "1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2"
+    },
+    "exact_anchors": {
+      "path": "dev/benchmarks/permanent_campaign/exact-anchors.csv",
+      "sha256": "688ac3f425d1eb57c7f81f0538c4464375a1b8bba1426dfd1b3ed79a8582adc7"
+    },
+    "backend_equivalence": {
+      "path": "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv",
+      "sha256": "fda669f399700a968e3feae75c0f34cec2743c0df76fa404c0177ffba70100bc"
+    }
+  }
+}
