@@ -1,4 +1,4 @@
-use std::fs;
+use std::fs::{self, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -6,11 +6,12 @@ use gf2_sim::permanent_campaign::acceptance::{
     assess_completed_cell, AcceptanceFamily, AcceptancePlan,
 };
 use gf2_sim::permanent_campaign::coordinator::{
-    coordinator_receipt_path, emit_field_sidecar, ArmInvocation, CampaignCoordinator,
-    CampaignHaltCause, CampaignHaltState, CellExecutionState, FieldExecutionState,
-    FieldInterpretation, LiteratureSearchClaim, ShardAttemptOutcome,
+    coordinator_lock_path, coordinator_receipt_path, emit_field_sidecar,
+    execute_scheduled_cell_with_evaluator, ArmInvocation, CampaignCoordinator, CampaignHaltCause,
+    CampaignHaltState, CellExecutionState, ExactCellScope, FieldExecutionState,
+    FieldInterpretation, LiteratureSearchClaim, ShardAttemptState,
 };
-use gf2_sim::permanent_campaign::driver::CampaignExecutionScope;
+use gf2_sim::permanent_campaign::schedule::ScheduleError;
 use gf2_sim::permanent_campaign::schema::{
     shard_record_file, AcceptanceVerdict, ArtifactIdentity, Availability, Backend,
     CampaignManifest, CellSpec, CellTerminalState, DeterminantCount, DeterminantPlan, GitRevision,
@@ -94,10 +95,6 @@ fn manifest() -> CampaignManifest {
                 "20".to_owned(),
                 "--workers".to_owned(),
                 "1".to_owned(),
-                "--accelerator-cost-table".to_owned(),
-                "dev/fixture/accelerator-costs.csv".to_owned(),
-                "--accelerator-launch-cap-ms".to_owned(),
-                "500".to_owned(),
             ],
             accelerator_runtime: Availability::NotPresent,
             cpu_model: "fixture".to_owned(),
@@ -110,7 +107,7 @@ fn manifest() -> CampaignManifest {
 
 fn arm(q: u8, n: u16) -> ArmInvocation {
     ArmInvocation {
-        scope: CampaignExecutionScope::ExactCell { q, n },
+        scope: ExactCellScope { q, n },
         argv: vec![
             "permanent_campaign".to_owned(),
             "--manifest".to_owned(),
@@ -123,10 +120,6 @@ fn arm(q: u8, n: u16) -> ArmInvocation {
             n.to_string(),
             "--workers".to_owned(),
             "1".to_owned(),
-            "--accelerator-cost-table".to_owned(),
-            "dev/fixture/accelerator-costs.csv".to_owned(),
-            "--accelerator-launch-cap-ms".to_owned(),
-            "500".to_owned(),
         ],
         worker_count: 1,
         executable_sha256: "b".repeat(64).parse().unwrap(),
@@ -215,6 +208,8 @@ fn accept_cell(
     determinant_zeros: Option<u64>,
 ) {
     coordinator.authorize_arm(arm(q, n)).unwrap();
+    coordinator.persist(root).unwrap();
+    coordinator.authorize_attempt(q, n, 0).unwrap();
     coordinator.persist(root).unwrap();
     write_shard(root, manifest, q, n, 0, permanent_zeros, determinant_zeros);
     coordinator.record_accepted(root, q, n, 0).unwrap();
@@ -324,12 +319,27 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
         .unwrap()
         .authorize_arm(duplicate_selector)
         .is_err());
+    let mut default_worker = arm(7, 20);
+    let worker_option = default_worker
+        .argv
+        .iter()
+        .position(|token| token == "--workers")
+        .unwrap();
+    default_worker.argv.drain(worker_option..=worker_option + 1);
+    CampaignCoordinator::new(&campaign_root)
+        .unwrap()
+        .authorize_arm(default_worker)
+        .expect("omitted --workers has the documented effective value one");
 
     coordinator.persist(&campaign_root).unwrap();
 
+    coordinator.authorize_attempt(7, 20, 0).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
     coordinator
         .record_quarantine(7, 20, 0, "mechanical fixture failure".to_owned())
         .unwrap();
+    coordinator.authorize_attempt(7, 20, 0).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
     let raw = write_shard(&campaign_root, &campaign, 7, 20, 0, 0, None);
     coordinator
         .record_accepted(&campaign_root, 7, 20, 0)
@@ -343,13 +353,11 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
     assert_eq!(attempts[1].stream_address.purpose_tag, 3);
     assert_eq!(attempts[1].rng_algorithm, RngAlgorithm::ChaCha20);
     assert_eq!(attempts[1].rng_version, "rand_chacha 0.9.0");
-    let ShardAttemptOutcome::Accepted { record, .. } = &attempts[1].outcome else {
+    let ShardAttemptState::Accepted { record, .. } = &attempts[1].state else {
         panic!("recovery attempt must preserve accepted evidence");
     };
     assert_eq!(record.sha256.as_str(), format!("{:x}", Sha256::digest(raw)));
-    assert!(coordinator
-        .record_quarantine(7, 20, 0, "forbidden third attempt".to_owned())
-        .is_err());
+    assert!(coordinator.authorize_attempt(7, 20, 0).is_err());
     coordinator
         .record_completed(7, 20, 100, 0, DeterminantCount::NotEvaluated)
         .unwrap();
@@ -374,9 +382,13 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
     let second_campaign_root = second_root.join("coordinator-fixture");
     second_failure.authorize_arm(arm(7, 20)).unwrap();
     second_failure.persist(&second_campaign_root).unwrap();
+    second_failure.authorize_attempt(7, 20, 0).unwrap();
+    second_failure.persist(&second_campaign_root).unwrap();
     second_failure
         .record_quarantine(7, 20, 0, "first mechanical failure".to_owned())
         .unwrap();
+    second_failure.authorize_attempt(7, 20, 0).unwrap();
+    second_failure.persist(&second_campaign_root).unwrap();
     second_failure
         .record_quarantine(7, 20, 0, "recovery mechanical failure".to_owned())
         .unwrap();
@@ -384,10 +396,184 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
         second_failure.cell_state(7, 20),
         Some(CellExecutionState::Halted { .. })
     ));
-    assert!(second_failure
-        .record_quarantine(7, 20, 0, "attempt three".to_owned())
-        .is_err());
+    assert!(second_failure.authorize_attempt(7, 20, 0).is_err());
     fs::remove_dir_all(second_root).unwrap();
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
+    let scope = ExactCellScope { q: 7, n: 20 };
+
+    let (unpersisted_root, unpersisted_manifest, _) = fixture();
+    let unpersisted_campaign = unpersisted_root.join(unpersisted_manifest.campaign_id.to_string());
+    let mut unpersisted_entries = 0_u8;
+    assert!(execute_scheduled_cell_with_evaluator(
+        &unpersisted_campaign,
+        scope,
+        1,
+        |_, _, _, _| {
+            unpersisted_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "unreachable fixture evaluator".to_owned(),
+            ))
+        },
+    )
+    .is_err());
+    assert_eq!(unpersisted_entries, 0);
+    assert!(!unpersisted_campaign.join("derived").exists());
+
+    let (retry_root, retry_manifest, mut retry) = fixture();
+    let retry_campaign = retry_root.join(retry_manifest.campaign_id.to_string());
+    retry.authorize_arm(arm(7, 20)).unwrap();
+    retry.persist(&retry_campaign).unwrap();
+    let mut mismatched_worker_entries = 0_u8;
+    assert!(
+        execute_scheduled_cell_with_evaluator(&retry_campaign, scope, 2, |_, _, _, _| {
+            mismatched_worker_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "mismatched worker evaluator must not run".to_owned(),
+            ))
+        },)
+        .is_err()
+    );
+    assert_eq!(mismatched_worker_entries, 0);
+    let mut addresses = Vec::new();
+    let execution =
+        execute_scheduled_cell_with_evaluator(&retry_campaign, scope, 1, |_, item, _, _| {
+            addresses.push((item.q, item.n, item.shard_id, item.stream_index));
+            Err(ScheduleError::InvalidWorkItem(
+                "deterministic mechanical fixture".to_owned(),
+            ))
+        })
+        .unwrap();
+    assert_eq!(addresses.len(), 2);
+    assert_eq!(addresses[0], addresses[1]);
+    assert!(matches!(
+        execution.terminal_state,
+        CellExecutionState::Halted { .. }
+    ));
+    let exhausted = CampaignCoordinator::read(&retry_campaign).unwrap();
+    assert_eq!(exhausted.receipt().attempts.len(), 2);
+    assert!(exhausted
+        .receipt()
+        .attempts
+        .iter()
+        .all(|attempt| matches!(attempt.state, ShardAttemptState::Quarantined { .. })));
+    let mut forbidden_entries = 0_u8;
+    assert!(
+        execute_scheduled_cell_with_evaluator(&retry_campaign, scope, 1, |_, _, _, _| {
+            forbidden_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "unreachable third attempt".to_owned(),
+            ))
+        },)
+        .is_err()
+    );
+    assert_eq!(forbidden_entries, 0);
+
+    let (adopt_root, adopt_manifest, mut adopt) = fixture();
+    let adopt_campaign = adopt_root.join(adopt_manifest.campaign_id.to_string());
+    adopt.authorize_arm(arm(7, 20)).unwrap();
+    adopt.persist(&adopt_campaign).unwrap();
+    adopt.authorize_attempt(7, 20, 0).unwrap();
+    adopt.persist(&adopt_campaign).unwrap();
+    write_shard(&adopt_campaign, &adopt_manifest, 7, 20, 0, 14, None);
+    let mut adopted_entries = 0_u8;
+    let adopted = execute_scheduled_cell_with_evaluator(&adopt_campaign, scope, 1, |_, _, _, _| {
+        adopted_entries += 1;
+        Err(ScheduleError::InvalidWorkItem(
+            "durable raw must be adopted".to_owned(),
+        ))
+    })
+    .unwrap();
+    assert_eq!(adopted_entries, 0);
+    assert_eq!(adopted.records.len(), 1);
+    assert!(matches!(
+        adopted.terminal_state,
+        CellExecutionState::Completed { .. }
+    ));
+    let adopted_receipt = CampaignCoordinator::read(&adopt_campaign).unwrap();
+    assert_eq!(adopted_receipt.receipt().attempts.len(), 1);
+    assert!(matches!(
+        adopted_receipt.receipt().attempts[0].state,
+        ShardAttemptState::Accepted { .. }
+    ));
+
+    let (invalid_root, invalid_manifest, mut invalid) = fixture();
+    let invalid_campaign = invalid_root.join(invalid_manifest.campaign_id.to_string());
+    invalid.authorize_arm(arm(7, 20)).unwrap();
+    invalid.persist(&invalid_campaign).unwrap();
+    invalid.authorize_attempt(7, 20, 0).unwrap();
+    invalid.persist(&invalid_campaign).unwrap();
+    let invalid_raw = invalid_campaign.join(shard_record_file(7, 20, 0));
+    fs::create_dir_all(invalid_raw.parent().unwrap()).unwrap();
+    fs::write(&invalid_raw, b"{invalid durable shard").unwrap();
+    let mut recovery_entries = 0_u8;
+    let invalid_execution =
+        execute_scheduled_cell_with_evaluator(&invalid_campaign, scope, 1, |_, _, _, _| {
+            recovery_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "deterministic recovery failure".to_owned(),
+            ))
+        })
+        .unwrap();
+    assert_eq!(recovery_entries, 1);
+    assert!(matches!(
+        invalid_execution.terminal_state,
+        CellExecutionState::Halted { .. }
+    ));
+    assert!(!invalid_raw.exists());
+    assert!(invalid_campaign
+        .join(
+            "derived/coordinator-fixture/campaign-coordinator/quarantine/\
+             q7-n20-shard-000000-attempt-1.json",
+        )
+        .is_file());
+    let invalid_receipt = CampaignCoordinator::read(&invalid_campaign).unwrap();
+    assert_eq!(invalid_receipt.receipt().attempts.len(), 2);
+    assert!(invalid_receipt
+        .receipt()
+        .attempts
+        .iter()
+        .all(|attempt| matches!(attempt.state, ShardAttemptState::Quarantined { .. })));
+
+    fs::remove_dir_all(unpersisted_root).unwrap();
+    fs::remove_dir_all(retry_root).unwrap();
+    fs::remove_dir_all(adopt_root).unwrap();
+    fs::remove_dir_all(invalid_root).unwrap();
+}
+
+#[test]
+fn exact_executor_lock_contention_has_zero_sampler_entry() {
+    let (root, campaign, mut coordinator) = fixture();
+    let campaign_root = root.join(campaign.campaign_id.to_string());
+    coordinator.authorize_arm(arm(7, 20)).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
+    let lock_path = coordinator_lock_path(&campaign_root, &campaign.campaign_id);
+    fs::create_dir_all(lock_path.parent().unwrap()).unwrap();
+    let lock = OpenOptions::new()
+        .create(true)
+        .read(true)
+        .write(true)
+        .open(lock_path)
+        .unwrap();
+    lock.try_lock().unwrap();
+    let mut entries = 0_u8;
+    assert!(execute_scheduled_cell_with_evaluator(
+        &campaign_root,
+        ExactCellScope { q: 7, n: 20 },
+        1,
+        |_, _, _, _| {
+            entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "contended evaluator must not run".to_owned(),
+            ))
+        },
+    )
+    .is_err());
+    assert_eq!(entries, 0);
+    drop(lock);
     fs::remove_dir_all(root).unwrap();
 }
 
@@ -426,13 +612,19 @@ fn receipt_summary_and_sidecars_are_terminal_monotonic_and_closed() {
 
     coordinator.authorize_arm(arm(5, 4)).unwrap();
     coordinator.persist(&campaign_root).unwrap();
+    coordinator.authorize_attempt(5, 4, 0).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
     write_shard(&campaign_root, &campaign, 5, 4, 0, 10, Some(12));
     coordinator
         .record_accepted(&campaign_root, 5, 4, 0)
         .unwrap();
+    coordinator.authorize_attempt(5, 4, 1).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
     coordinator
         .record_quarantine(5, 4, 1, "mechanical attempt one".to_owned())
         .unwrap();
+    coordinator.authorize_attempt(5, 4, 1).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
     coordinator
         .record_quarantine(5, 4, 1, "mechanical recovery".to_owned())
         .unwrap();
@@ -475,7 +667,7 @@ fn receipt_summary_and_sidecars_are_terminal_monotonic_and_closed() {
     assert_eq!(reloaded.receipt().arms[0].worker_count, 1);
     assert_eq!(
         reloaded.receipt().arms[0].scope,
-        CampaignExecutionScope::ExactCell { q: 7, n: 20 }
+        ExactCellScope { q: 7, n: 20 }
     );
     assert!(reloaded
         .receipt()
@@ -632,9 +824,13 @@ fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
     let exhausted_campaign = exhausted_root.join(exhausted_manifest.campaign_id.to_string());
     exhausted.authorize_arm(arm(7, 20)).unwrap();
     exhausted.persist(&exhausted_campaign).unwrap();
+    exhausted.authorize_attempt(7, 20, 0).unwrap();
+    exhausted.persist(&exhausted_campaign).unwrap();
     exhausted
         .record_quarantine(7, 20, 0, "first failure".to_owned())
         .unwrap();
+    exhausted.authorize_attempt(7, 20, 0).unwrap();
+    exhausted.persist(&exhausted_campaign).unwrap();
     exhausted
         .record_quarantine(7, 20, 0, "recovery failure".to_owned())
         .unwrap();

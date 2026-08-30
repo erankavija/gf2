@@ -76,7 +76,7 @@ fn manifest() -> CampaignManifest {
 fn unavailable_backend_manifest() -> CampaignManifest {
     let mut campaign = manifest();
     let cell = &mut campaign.cells[0];
-    cell.q = 5;
+    cell.q = 7;
     cell.n = 20;
     cell.backend = Backend::IntraMatrixParallel;
     campaign
@@ -84,6 +84,8 @@ fn unavailable_backend_manifest() -> CampaignManifest {
 
 fn mixed_backend_manifest() -> CampaignManifest {
     let mut campaign = manifest();
+    campaign.cells[0].q = 7;
+    campaign.cells[0].n = 20;
     let mut accelerator_cell = campaign.cells[0].clone();
     accelerator_cell.q = 5;
     accelerator_cell.n = 20;
@@ -119,6 +121,26 @@ fn exact_selection_manifest() -> CampaignManifest {
     target.n = 20;
     target.shards[0].stream_index = 11;
     campaign.cells.push(target);
+    campaign
+}
+
+fn exact_execution_manifest(parent: &Path) -> CampaignManifest {
+    let mut campaign = exact_selection_manifest();
+    let output =
+        parent.join("checkout/dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
+    campaign.provenance.invocation = vec![
+        env!("CARGO_BIN_EXE_permanent_campaign").to_owned(),
+        "--manifest".to_owned(),
+        output.to_str().unwrap().to_owned(),
+        "--output".to_owned(),
+        output.to_str().unwrap().to_owned(),
+        "--q".to_owned(),
+        "7".to_owned(),
+        "--n".to_owned(),
+        "20".to_owned(),
+        "--workers".to_owned(),
+        "1".to_owned(),
+    ];
     campaign
 }
 
@@ -341,9 +363,25 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
     let manifest_file = manifest_path.join("manifest.json");
     fs::create_dir_all(&parent).unwrap();
     fs::create_dir_all(&manifest_path).unwrap();
+    let expected_output =
+        parent.join("checkout/dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
+    let mut campaign = unavailable_backend_manifest();
+    campaign.provenance.invocation = vec![
+        env!("CARGO_BIN_EXE_permanent_campaign").to_owned(),
+        "--manifest".to_owned(),
+        manifest_path.to_str().unwrap().to_owned(),
+        "--output".to_owned(),
+        expected_output.to_str().unwrap().to_owned(),
+        "--q".to_owned(),
+        "7".to_owned(),
+        "--n".to_owned(),
+        "20".to_owned(),
+        "--workers".to_owned(),
+        "1".to_owned(),
+    ];
     fs::write(
         &manifest_file,
-        serde_json::to_vec_pretty(&unavailable_backend_manifest()).unwrap(),
+        serde_json::to_vec_pretty(&campaign).unwrap(),
     )
     .unwrap();
     let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
@@ -355,7 +393,7 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
             "--output",
             output_path.to_str().unwrap(),
             "--q",
-            "5",
+            "7",
             "--n",
             "20",
         ])
@@ -364,7 +402,7 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
 
     let stderr = String::from_utf8_lossy(&result.stderr);
     assert!(!result.status.success(), "stderr:\n{stderr}");
-    assert!(stderr.contains("q=5"), "stderr:\n{stderr}");
+    assert!(stderr.contains("q=7"), "stderr:\n{stderr}");
     assert!(stderr.contains("n=20"), "stderr:\n{stderr}");
     assert!(
         stderr.contains("intra_matrix_parallel"),
@@ -381,9 +419,25 @@ fn binary_requires_full_cost_table_even_for_a_processor_selected_cell() {
     let manifest_file = manifest_path.join("manifest.json");
     fs::create_dir_all(&parent).unwrap();
     fs::create_dir_all(&manifest_path).unwrap();
+    let expected_output =
+        parent.join("checkout/dev/simulation_results/permanent-zero-fraction/campaign-bin-test");
+    let mut campaign = mixed_backend_manifest();
+    campaign.provenance.invocation = vec![
+        env!("CARGO_BIN_EXE_permanent_campaign").to_owned(),
+        "--manifest".to_owned(),
+        manifest_path.to_str().unwrap().to_owned(),
+        "--output".to_owned(),
+        expected_output.to_str().unwrap().to_owned(),
+        "--q".to_owned(),
+        "7".to_owned(),
+        "--n".to_owned(),
+        "20".to_owned(),
+        "--workers".to_owned(),
+        "1".to_owned(),
+    ];
     fs::write(
         &manifest_file,
-        serde_json::to_vec_pretty(&mixed_backend_manifest()).unwrap(),
+        serde_json::to_vec_pretty(&campaign).unwrap(),
     )
     .unwrap();
     let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
@@ -395,16 +449,16 @@ fn binary_requires_full_cost_table_even_for_a_processor_selected_cell() {
             "--output",
             output_path.to_str().unwrap(),
             "--q",
-            "3",
+            "7",
             "--n",
-            "2",
+            "20",
         ])
         .output()
         .unwrap();
     let stderr = String::from_utf8_lossy(&processor.stderr);
     assert!(!processor.status.success(), "stderr:\n{stderr}");
     assert!(
-        stderr.contains("--accelerator-cost-table is required"),
+        stderr.contains("accelerator") && stderr.contains("no measured per-matrix cost"),
         "stderr:\n{stderr}"
     );
 
@@ -557,7 +611,7 @@ fn exact_selector_dry_run_schedules_only_the_requested_cell() {
     );
     assert!(
         !output_path.exists(),
-        "dry scheduling must not open a checkpoint, draw, or emit output"
+        "dry scheduling must not open a receipt, lock, sampler, or output"
     );
     fs::remove_dir_all(parent).unwrap();
 }
@@ -570,7 +624,7 @@ fn exact_selector_executes_only_target_shards_and_keeps_field_open() {
     let manifest_file = manifest_path.join("manifest.json");
     fs::write(
         &manifest_file,
-        serde_json::to_vec_pretty(&exact_selection_manifest()).unwrap(),
+        serde_json::to_vec_pretty(&exact_execution_manifest(&parent)).unwrap(),
     )
     .unwrap();
     let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
@@ -585,6 +639,8 @@ fn exact_selector_executes_only_target_shards_and_keeps_field_open() {
             "7",
             "--n",
             "20",
+            "--workers",
+            "1",
         ])
         .output()
         .unwrap();
@@ -601,7 +657,6 @@ fn exact_selector_executes_only_target_shards_and_keeps_field_open() {
     assert!(output_path
         .join("derived/campaign-bin-test/campaign-coordinator/coordinator-receipt.json")
         .is_file());
-    assert!(!output_path.join("campaign.q7.n20.checkpoint.json").exists());
     assert!(
         !output_path.join("summaries/q7.json").exists(),
         "one exact cell must not finalize the field summary"
@@ -617,7 +672,7 @@ fn direct_nonfirst_execution_is_refused_before_sampler_or_raw_output() {
     let manifest_file = manifest_path.join("manifest.json");
     fs::write(
         &manifest_file,
-        serde_json::to_vec_pretty(&exact_selection_manifest()).unwrap(),
+        serde_json::to_vec_pretty(&exact_execution_manifest(&parent)).unwrap(),
     )
     .unwrap();
     let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
@@ -632,13 +687,14 @@ fn direct_nonfirst_execution_is_refused_before_sampler_or_raw_output() {
             "7",
             "--n",
             "4",
+            "--workers",
+            "1",
         ])
         .output()
         .unwrap();
 
     assert!(!result.status.success());
     assert!(!output_path.join("shards/q7/n04").exists());
-    assert!(!output_path.join("campaign.q7.n04.checkpoint.json").exists());
     fs::remove_dir_all(parent).unwrap();
 }
 
@@ -665,7 +721,7 @@ fn q_only_execution_is_refused_before_manifest_or_output_io() {
 }
 
 #[test]
-fn invalid_exact_selector_fails_before_checkpoint_or_output_creation() {
+fn invalid_exact_selector_fails_before_receipt_or_output_creation() {
     let parent = temp_path("invalid-exact-selector");
     let manifest_path = parent.join("manifest");
     fs::create_dir_all(&manifest_path).unwrap();
@@ -704,7 +760,7 @@ fn invalid_exact_selector_fails_before_checkpoint_or_output_creation() {
             );
             assert!(
                 !output_path.exists(),
-                "invalid selection must fail before checkpoint or output creation"
+                "invalid selection must fail before receipt or output creation"
             );
         }
     }

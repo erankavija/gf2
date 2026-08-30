@@ -9,7 +9,6 @@
 
 pub mod acceptance;
 pub mod coordinator;
-pub mod driver;
 #[cfg(test)]
 pub(crate) mod fixture;
 pub mod launch_cost;
