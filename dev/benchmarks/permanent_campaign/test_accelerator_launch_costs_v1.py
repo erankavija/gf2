@@ -75,14 +75,65 @@ class IdentityTests(unittest.TestCase):
             receipt.require_unique(rows, lambda row: row["position"], "test input")
 
     def test_receipt_rendering_changes_when_a_rounded_row_changes(self) -> None:
-        derived = receipt.synthetic_cell_costs_for_test()
-        rendered = receipt.render_receipt(derived, receipt.synthetic_provenance_for_test())
+        derived = [
+            receipt.CellCost(
+                q=3,
+                n=3,
+                cohort="premeasure-v1",
+                planned_processes=12,
+                measured_processes=12,
+                harness_censored=0,
+                signal_censored=0,
+                batch_size=1024,
+                total_matrices=12_288,
+                total_seconds=Decimal("1.25"),
+                pooled_us=Decimal("101.7252604166666666666666667"),
+                rounded_us=102,
+            )
+        ]
+        premeasure = {
+            "source_revision": "a" * 40,
+            "binary_sha256": "b" * 64,
+            "cpu": "test cpu",
+            "logical_cpus": 1,
+            "gpu": "test gpu",
+            "rocm": "test",
+            "kernel": "test",
+            "cohort_planned": 12,
+            "cohort_measured": 12,
+            "harness_censored": 0,
+            "signal_censored": 0,
+            "contributing_provenance_complete": 12,
+            "contributing_provenance_supplemented": 0,
+            "supplemented_cells": [],
+            "unavailable_source_probes": receipt.OPTIONAL_SOURCE_PROBES,
+        }
+        frontier = dict(premeasure)
+        frontier.update(
+            {
+                "harness_source_revision": "c" * 40,
+                "deps_source_revision": "d" * 40,
+                "rust": "rustc test",
+                "cargo": "cargo test",
+                "contributing_provenance_complete": 0,
+            }
+        )
+        provenance = {
+            "schema": receipt.SCHEMA_VERSION,
+            "bindings": [],
+            "table_sha256": "e" * 64,
+            "premeasure": premeasure,
+            "frontier": frontier,
+            "contributing": 12,
+            "retained_censored": 0,
+        }
+        rendered = receipt.render_receipt(derived, provenance)
         changed = copy.deepcopy(derived)
         changed[0] = copy.copy(changed[0])
         changed[0].rounded_us += 1
         self.assertNotEqual(
             rendered,
-            receipt.render_receipt(changed, receipt.synthetic_provenance_for_test()),
+            receipt.render_receipt(changed, provenance),
         )
 
 
