@@ -202,25 +202,32 @@
      "status": "done: exact propagation and panic-contract repair are merged; all four configured gates passed at 248220fb, doc-review F1 closed, lead six-tier review passed, and issue completed at 91b7eefa. The one pre-existing stale-link advisory is tracked by 049a89af."
     },
     {
+     "id": "02b8137c-c258-44d0-93c4-171d15e5e1ab",
+     "short_id": "02b8137c",
+     "title": "Execute frozen pre-draw validation anchors",
+     "classification": "implementation",
+     "status": "ready: created during session 30 after the launch audit proved the committed 4,096-draw interval test does not satisfy the frozen protocol's 1,024-matrix replay plus 400,000-draw exact-test validation phase; all three campaign arms depend on this leaf."
+    },
+    {
      "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
      "short_id": "1d0b3ec4",
      "title": "Campaign arm for $q = 5$",
      "classification": "research",
-     "status": "pending"
+     "status": "blocked on 02b8137c"
     },
     {
      "id": "90a61cd4-c48d-4097-ae2c-e628163a754a",
      "short_id": "90a61cd4",
      "title": "Campaign arm for $q = 3$ as reproduction",
      "classification": "research",
-     "status": "pending"
+     "status": "blocked on 02b8137c"
     },
     {
      "id": "ed494117-4245-4e92-855b-3c54e207697d",
      "short_id": "ed494117",
      "title": "Campaign arm for $q = 7$",
      "classification": "research",
-     "status": "pending"
+     "status": "blocked on 02b8137c"
     }
    ]
   },
@@ -402,6 +409,14 @@
    "reason": "research-review F3 owner decision: produce the evidence; wired before all three campaign arms; full run scheduled for the 02:00 exclusive window",
    "status": "in_progress",
    "note": "Session 24: harness extension landed at 4e847a3f (Sol xhigh worker; embedded SHA-256-pinned selection authority, 63 cells / 124 nominations verified by deterministic tests; budget rule extends de5f7414 with conservative higher-order substitution and recorded 2-matrix floor). Addendum draft committed with TO FILL placeholders. Full receipt run scheduled inside the 02:00 window; reservation 8312 s. Gates (code-review, doc-review) run after the receipt and addendum finalization."
+  },
+  {
+   "short_id": "02b8137c",
+   "title": "Execute frozen pre-draw validation anchors",
+   "type": "task",
+   "wave": "10 (pre-draw prerequisite)",
+   "reason": "Session-30 launch audit found no committed evidence for the frozen protocol's complete ten-anchor 1,024-matrix regeneration and 400,000-draw exact two-sided validation phase. Existing 44534b2f covers 4,096 draws with a Clopper-Pearson interval instead. All three campaign arms are wired behind this leaf.",
+   "status": "ready"
   }
  ],
  "escalations": [
@@ -814,6 +829,13 @@
   "8ec10dde": 2
  },
  "surfaced_pitfalls": [
+  {
+   "id": "frozen-validation-phase-unexecuted",
+   "surfaced_at": "2026-08-30",
+   "issue": "02b8137c",
+   "finding": "The frozen protocol requires ten anchors, 1,024-matrix deterministic regeneration, 400,000 validation-purpose draws per anchor, a probability-ordering exact two-sided decision at 0.001, and no redraw. Issue 44534b2f instead commits a 4,096-draw Clopper-Pearson coverage test; the older study receipt has 400,000 draws only at n=3 for three fields. Neither is launch evidence for the complete frozen validation phase.",
+   "disposition": "Created 02b8137c and wired ed494117, 1d0b3ec4, and 90a61cd4 behind it before any campaign draw. Do not launch from dry-schedule evidence alone."
+  },
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
   "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
   "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf.",

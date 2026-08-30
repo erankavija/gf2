@@ -3,11 +3,10 @@
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
+    "02b8137c-c258-44d0-93c4-171d15e5e1ab",
     "2c1ae813-67ce-4814-a96b-45272643d53e",
-    "44534b2f-b92a-4758-9e78-3a93ce4a209c",
     "6dfb1b5e-b3b8-40b6-aee9-0e8fde69a9a7",
     "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
-    "86185f88-c731-4c12-b50b-c3d1aabfa867",
     "bc6155fa-e92b-4b80-a036-1820018ebeac",
     "e1d45c20-17e7-4d51-a9c3-0c71a82abc40"
   ],
@@ -29,7 +28,7 @@
     "cites:Scheinerman2024"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "backlog",
   "title": "Campaign arm for $q = 3$ as reproduction",
-  "updated_at": "2026-08-30T12:06:17.247706477Z"
+  "updated_at": "2026-08-30T12:24:30.224036250Z"
 }

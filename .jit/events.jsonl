@@ -10195,3 +10195,11 @@
 {"from":"backlog","id":"40399ace-a899-48a4-953d-fee28c8ba257","issue_id":"1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48","timestamp":"2026-08-30T12:06:08.546398088Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"2130ca2c-fd79-4085-987a-7908035e7e3c","issue_id":"90a61cd4-c48d-4097-ae2c-e628163a754a","timestamp":"2026-08-30T12:06:17.247706477Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"a7bb37e0-d037-4218-a92e-5ecc60d5dcb5","issue_id":"ed494117-4245-4e92-855b-3c54e207697d","timestamp":"2026-08-30T12:06:25.964126161Z","to":"ready","type":"issue_state_changed"}
+{"id":"f0c4e685-e27d-4b3d-b70f-1ef372e87a89","issue_id":"02b8137c-c258-44d0-93c4-171d15e5e1ab","priority":"high","timestamp":"2026-08-30T12:23:41.673727710Z","title":"Execute frozen pre-draw validation anchors","type":"issue_created"}
+{"fields":["dependencies"],"id":"67fec49b-7093-41ee-a9e4-54dd84451515","issue_id":"02b8137c-c258-44d0-93c4-171d15e5e1ab","timestamp":"2026-08-30T12:24:03.395318094Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"0213c331-f8dd-4272-87f2-4f405b7fea97","issue_id":"ed494117-4245-4e92-855b-3c54e207697d","timestamp":"2026-08-30T12:24:12.317920397Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"e266d5a1-35a4-4330-b860-d76e9eaeaf6b","issue_id":"ed494117-4245-4e92-855b-3c54e207697d","timestamp":"2026-08-30T12:24:12.317920397Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"1722d875-9be1-495c-949e-14acb6bef188","issue_id":"1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48","timestamp":"2026-08-30T12:24:21.288238874Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"627d1287-4c6d-4d10-beb6-050233e9e16d","issue_id":"1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48","timestamp":"2026-08-30T12:24:21.288238874Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"e73226ea-129c-416f-8914-d47a52cf27cc","issue_id":"90a61cd4-c48d-4097-ae2c-e628163a754a","timestamp":"2026-08-30T12:24:30.224036250Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"a9f2e0f4-f957-41e4-9a1e-0491caade022","issue_id":"90a61cd4-c48d-4097-ae2c-e628163a754a","timestamp":"2026-08-30T12:24:30.224036250Z","type":"issue_updated","updated_by":"dependency-add"}
