@@ -1270,6 +1270,122 @@ fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
     fs::remove_dir_all(root).unwrap();
 }
 
+#[cfg(unix)]
+#[test]
+fn transaction_refuses_symlinked_writer_ancestors_without_external_effects() {
+    use std::os::unix::fs::symlink;
+
+    for attacked in ["derived", "shards"] {
+        let (root, campaign_root, campaign, approval) = live_fixture();
+        let external = root.join(format!("external-{attacked}"));
+        fs::create_dir_all(&external).unwrap();
+        let sentinel = external.join("sentinel");
+        fs::write(&sentinel, b"outside campaign\n").unwrap();
+        symlink(&external, campaign_root.join(attacked)).unwrap();
+
+        let mut sampler_entries = 0_u8;
+        let result = execute_campaign_cell_with_evaluator(
+            &campaign_root,
+            ExactCellScope { q: 7, n: 20 },
+            1,
+            arm_for_manifest(&campaign, 7, 20).argv,
+            approval,
+            |manifest, item, _, _| {
+                sampler_entries += 1;
+                Ok(evaluated_shard(manifest, item, 14))
+            },
+            |_| {},
+        );
+        assert!(result.is_err(), "{attacked} ancestor symlink was followed");
+        assert_eq!(
+            sampler_entries, 0,
+            "{attacked} ancestor attack reached the sampler"
+        );
+        assert_eq!(fs::read(&sentinel).unwrap(), b"outside campaign\n");
+        assert_eq!(
+            fs::read_dir(&external).unwrap().count(),
+            1,
+            "{attacked} ancestor attack created external campaign evidence"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn transaction_refuses_symlinked_lock_and_receipt_entries() {
+    use std::os::unix::fs::symlink;
+
+    for attacked in ["execution.lock", "coordinator-receipt.json"] {
+        let (root, campaign_root, campaign, approval) = live_fixture();
+        let coordinator_dir = campaign_root
+            .join("derived")
+            .join(campaign.campaign_id.to_string())
+            .join("campaign-coordinator");
+        fs::create_dir_all(&coordinator_dir).unwrap();
+        let target = root.join(format!("external-{attacked}"));
+        fs::write(&target, b"outside campaign\n").unwrap();
+        symlink(&target, coordinator_dir.join(attacked)).unwrap();
+
+        let mut sampler_entries = 0_u8;
+        let result = execute_campaign_cell_with_evaluator(
+            &campaign_root,
+            ExactCellScope { q: 7, n: 20 },
+            1,
+            arm_for_manifest(&campaign, 7, 20).argv,
+            approval,
+            |manifest, item, _, _| {
+                sampler_entries += 1;
+                Ok(evaluated_shard(manifest, item, 14))
+            },
+            |_| {},
+        );
+        assert!(result.is_err(), "{attacked} symlink was followed");
+        assert_eq!(sampler_entries, 0, "{attacked} attack reached the sampler");
+        assert_eq!(fs::read(&target).unwrap(), b"outside campaign\n");
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn sidecar_refuses_symlinked_internal_ancestor() {
+    use std::os::unix::fs::symlink;
+
+    let (root, campaign, mut coordinator) = fixture();
+    let campaign_root = root.join(campaign.campaign_id.to_string());
+    accept_cell(&mut coordinator, &campaign_root, &campaign, 7, 20, 14, None);
+    coordinator.persist(&campaign_root).unwrap();
+    let sidecar_parent = campaign_root
+        .join("derived")
+        .join(campaign.campaign_id.to_string())
+        .join("campaign-coordinator");
+    fs::create_dir_all(&sidecar_parent).unwrap();
+    let external = root.join("external-field-sidecars");
+    fs::create_dir_all(&external).unwrap();
+    let sentinel = external.join("sentinel");
+    fs::write(&sentinel, b"outside campaign\n").unwrap();
+    symlink(&external, sidecar_parent.join("field-sidecars")).unwrap();
+
+    let result = emit_field_sidecar(
+        &campaign_root,
+        coordinator.receipt(),
+        7,
+        vec![artifact("summaries/q7.json", 'f')],
+        FieldInterpretation::LiteratureSearchBasis {
+            search_receipt: artifact(
+                "dev/studies/b488f02c/literature-search-2026-08-08.md",
+                'e',
+            ),
+            claim: LiteratureSearchClaim::NoLocatedQ5Q7NumericsSubjectToRecordedLimits,
+        },
+    );
+    assert!(result.is_err());
+    assert_eq!(fs::read(&sentinel).unwrap(), b"outside campaign\n");
+    assert_eq!(fs::read_dir(&external).unwrap().count(), 1);
+    fs::remove_dir_all(root).unwrap();
+}
+
 #[test]
 fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
     let (root, campaign, mut coordinator) = fixture();

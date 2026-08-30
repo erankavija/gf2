@@ -1648,6 +1648,48 @@ mod tests {
         assert_eq!(approval.binary_sha256(), &running_binary_sha256().unwrap());
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn approval_hashes_the_mapped_executable_handle() {
+        const CHILD_CAMPAIGN: &str = "GF2_MAPPED_EXECUTABLE_CAMPAIGN";
+        const CHILD_LAUNCH_PATH: &str = "GF2_MAPPED_EXECUTABLE_LAUNCH_PATH";
+
+        if let (Ok(campaign), Ok(launch_path)) = (
+            std::env::var(CHILD_CAMPAIGN),
+            std::env::var(CHILD_LAUNCH_PATH),
+        ) {
+            let replacement = PathBuf::from(&launch_path).with_extension("replacement");
+            fs::write(&replacement, b"replacement executable pathname\n").unwrap();
+            fs::rename(&replacement, &launch_path).unwrap();
+            let approval = approve_emission(Path::new(&campaign))
+                .expect("approval hashes the process's mapped image after pathname replacement");
+            assert_eq!(approval.binary_sha256(), &running_binary_sha256().unwrap());
+            return;
+        }
+
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        prepare_manifest_for_running_binary(&repo, &campaign);
+        let launch_path = repo.path("mapped-executable-test");
+        fs::copy(std::env::current_exe().unwrap(), &launch_path).unwrap();
+        let output = Command::new(&launch_path)
+            .args([
+                "--exact",
+                "permanent_campaign::provenance::tests::approval_hashes_the_mapped_executable_handle",
+                "--nocapture",
+            ])
+            .env(CHILD_CAMPAIGN, &campaign)
+            .env(CHILD_LAUNCH_PATH, &launch_path)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "child stdout:\n{}\nchild stderr:\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
     #[test]
     fn emission_refuses_changed_frozen_manifest() {
         let repo = TestRepo::new();
