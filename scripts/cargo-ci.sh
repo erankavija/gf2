@@ -11,68 +11,16 @@ set -euo pipefail
 #   1 — one or more steps failed
 #   2 — environment problem: no real cargo available on PATH
 
-# Host-wide build serialization. Only one cargo-ci run executes the heavy
-# build/test steps at a time. Concurrent gate runs (e.g. several agent sessions
-# each calling `jit gate evaluate ... cargo-ci`) otherwise oversubscribe the CPU —
-# every cargo build fans out to all cores, so K runs demand K×nproc — and
-# multiply peak RAM into swap, making the host and any interactive shell laggy.
-# That hurts especially here: the test step is a `--release` nextest run with
-# GPU/SIMD features, one of the heaviest builds on the machine. We re-run under
-# a blocking flock so concurrent runs queue rather than fail; the lock is held
-# for the whole run and released on exit. CARGO_CI_LOCKED guards against
-# infinite re-exec; CARGO_CI_NO_LOCK=1 disables (e.g. an isolated CI container
-# that already owns the machine); CARGO_CI_BUILD_LOCK overrides the lock path —
-# set it to the same value in this and the jit repo to serialize host-wide;
-# CARGO_CI_LOCK_TIMEOUT bounds the wait.
+# CPU budget and serialization live in `scripts/cargo-budget.sh`, which wraps
+# every step below. Build and lint steps share the machine by budget; `--test`
+# marks the steps whose per-test wall-clock kills need the exclusive lock. The
+# same wrapper is what direct agent invocations use, so one mechanism governs
+# both — see the commands section of AGENTS.md.
 #
-# `flock -o` is load-bearing: it closes the lock descriptor in the child before
-# exec. Without it every descendant inherits the descriptor, and a descendant
-# that daemonises keeps holding the lock after this run exits — `sccache`
-# double-forks to PPID 1 and does exactly that — so the next caller blocks
-# forever against a run that finished long ago. Because the lock is host-wide,
-# a daemon leaked by either repository wedges the other one.
-#
-# The wait is bounded and announced. An unbounded silent block is
-# indistinguishable from a hung or dead process; `-E 75` separates "could not
-# acquire the lock" from the wrapped command's own exit status so the timeout
-# can name what it was waiting for.
-report_build_lock_holders() {
-  local lock="$1"
-  if command -v lslocks >/dev/null 2>&1; then
-    lslocks -o COMMAND,PID,MODE,PATH 2>/dev/null | awk -v lock="$lock" 'NR==1 || $NF==lock'
-  elif command -v fuser >/dev/null 2>&1; then
-    fuser -v "$lock" 2>&1
-  fi
-}
-
-if [ -z "${CARGO_CI_NO_LOCK:-}" ] && [ -z "${CARGO_CI_LOCKED:-}" ]; then
-  # Host-wide by default, not per-repository: the jit checkout runs the same
-  # wrapper, and a repository-scoped lock let the two build concurrently and
-  # oversubscribe the machine. Measured consequence: seven gf2-coding tests
-  # timed out at 5.0-5.3 s against the fast tier's 5 s per-test kill, while the
-  # same twelve pass in ~1.0 s each on an uncontended host. Agreed with the jit
-  # execution lead as the shared default; override for an isolated host.
-  BUILD_LOCK="${CARGO_CI_BUILD_LOCK:-${XDG_RUNTIME_DIR:-/tmp}/cargo-ci.lock}"
-  LOCK_TIMEOUT="${CARGO_CI_LOCK_TIMEOUT:-1800}"
-  if command -v flock >/dev/null 2>&1; then
-    if ! flock -n -o "$BUILD_LOCK" true 2>/dev/null; then
-      echo "cargo-ci: another build holds $BUILD_LOCK; waiting up to ${LOCK_TIMEOUT}s" >&2
-      report_build_lock_holders "$BUILD_LOCK" >&2
-    fi
-    lock_status=0
-    env CARGO_CI_LOCKED=1 flock -o -w "$LOCK_TIMEOUT" -E 75 "$BUILD_LOCK" "$0" "$@" ||
-      lock_status=$?
-    if [ "$lock_status" -eq 75 ]; then
-      echo "ERROR: cargo-ci: timed out after ${LOCK_TIMEOUT}s waiting for $BUILD_LOCK" >&2
-      report_build_lock_holders "$BUILD_LOCK" >&2
-      echo "       A holder with PPID 1 and no live cargo/rustc is a leaked daemon," >&2
-      echo "       not a running build; stop it (e.g. sccache --stop-server) and retry." >&2
-      exit 2
-    fi
-    exit "$lock_status"
-  fi
-  echo "cargo-ci: flock not found; running without host-wide build lock" >&2
-fi
+# It is not the only mutex on this host. Benchmark evidence runs serialize
+# separately under `dev/scripts/ccx1-bench-flock.sh`; the two are independent by
+# design and neither subsumes the other. Do not double-wrap.
+BUDGET="$(dirname "$0")/cargo-budget.sh"
 
 # Resolve the real cargo binary. Some local setups place a debugging shim
 # at ~/.cargo/bin/cargo (or its rustup proxy target) that exits 0 for every
@@ -108,24 +56,6 @@ ensure_real_cargo() {
 
 ensure_real_cargo
 
-# Compilation cache. sccache caches rustc invocations content-addressed, so a
-# build reuses codegen produced by any other checkout on this host instead of
-# starting from zero. That is the dominant cost here: every dispatched agent
-# worktree begins with an empty target directory, and a cold run of this script
-# was measured at 13+ minutes against ~35-90 s warm. Unlike a shared target
-# directory it does not thrash when branches diverge, because each variant is
-# cached under its own hash.
-#
-# Guarded exactly like the nice/ionice prefixes below: a host without sccache
-# runs unchanged. An RUSTC_WRAPPER the caller already set is left alone.
-# CARGO_CI_NO_SCCACHE=1 disables. Cache location and size come from sccache's
-# own config (see ~/.config/sccache/config), not from this script, so the
-# repository carries no host-specific path.
-if [ -z "${CARGO_CI_NO_SCCACHE:-}" ] && [ -z "${RUSTC_WRAPPER:-}" ] &&
-   command -v sccache >/dev/null 2>&1; then
-  export RUSTC_WRAPPER=sccache
-fi
-
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -136,14 +66,24 @@ run_step() {
   local name="$1"
   shift
 
+  local started=$SECONDS
+
   if "$@" >"$TMPDIR/$name.out" 2>&1; then
     local detail
     detail=$(summarize_pass "$name")
-    summary+="  ✓ $name: $detail"$'\n'
+    summary+="  ✓ $name: $detail ($((SECONDS - started))s)"$'\n'
   else
     local rc=$?
-    summary+="  ✗ $name: FAILED (exit $rc)"$'\n'
-    summarize_fail "$name"
+    if [ "$rc" -eq 75 ]; then
+      # Exit 75 from the budget wrapper: this step lost the queue for a host
+      # lock — the exclusive test lock, or the CCX1 mutex held by a --full-host
+      # bench run. It is the only status here that says nothing about the tree
+      # under evaluation, so it must not read as a test failure.
+      summary+="  ⏳ $name: QUEUED OUT on a host lock ($((SECONDS - started))s)"$'\n'
+    else
+      summary+="  ✗ $name: FAILED (exit $rc, $((SECONDS - started))s)"$'\n'
+      summarize_fail "$name"
+    fi
     failed=1
   fi
 }
@@ -209,43 +149,36 @@ else
   FEAT_FLAGS="--features simd,parallel,visualization,llr-f64"
 fi
 
-# Deprioritize the build/test work so an interactive shell preempts it under
-# contention — this is what keeps the host responsive while the gate runs, not
-# just the serialization above. nice -n 19 = lowest CPU priority; ionice -c2 -n7
-# = best-effort lowest I/O priority (NOT the idle class -c3, which can be starved
-# indefinitely). Both are best-effort: a missing binary degrades gracefully to
-# running normally. CARGO_CI_NO_NICE=1 disables; CARGO_CI_NICE overrides it.
-NICE_PREFIX=()
-if [ -z "${CARGO_CI_NO_NICE:-}" ]; then
-  command -v nice   >/dev/null 2>&1 && NICE_PREFIX+=(nice -n "${CARGO_CI_NICE:-19}")
-  command -v ionice >/dev/null 2>&1 && NICE_PREFIX+=(ionice -c2 -n7)
-fi
-
 # Run all steps in order; continue through failures to report all of them.
-run_step check  "${NICE_PREFIX[@]}" cargo check --workspace $FEAT_FLAGS
+run_step check  "$BUDGET" cargo check --workspace $FEAT_FLAGS
 
 # Typed selector sections and active accessors are always built; JSON codecs
 # are separately opt-in. Keep the no-default and codec-only surfaces explicit
 # so optional dependency unification cannot make this layout pass accidentally.
-run_step tuning-core-no-default "${NICE_PREFIX[@]}" cargo check -p gf2-core --no-default-features
-run_step tuning-core-codec-only "${NICE_PREFIX[@]}" cargo check -p gf2-core --no-default-features --features tuning-profile
-run_step tuning-algebra-no-default "${NICE_PREFIX[@]}" cargo check -p gf2-algebra --no-default-features
-run_step tuning-algebra-codec-only "${NICE_PREFIX[@]}" cargo check -p gf2-algebra --no-default-features --features tuning-profile
+run_step tuning-core-no-default "$BUDGET" cargo check -p gf2-core --no-default-features
+run_step tuning-core-codec-only "$BUDGET" cargo check -p gf2-core --no-default-features --features tuning-profile
+run_step tuning-algebra-no-default "$BUDGET" cargo check -p gf2-algebra --no-default-features
+run_step tuning-algebra-codec-only "$BUDGET" cargo check -p gf2-algebra --no-default-features --features tuning-profile
 
-run_step test   "${NICE_PREFIX[@]}" cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
+# Build outside the exclusive lock, then execute inside it. The release compile
+# with GPU/SIMD features is the heaviest work here, and holding the whole host
+# for it would serialize the part that has no wall-clock assertion.
+run_step test-build "$BUDGET" cargo nextest run --workspace $FEAT_FLAGS --release --profile ci --no-run
+run_step test   "$BUDGET" --test cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
 
 # The ordinary non-HIP feature set intentionally omits profile I/O, so keep the
 # format-2 authority, process lifecycle, and calibration producer unit surface
 # explicitly reachable in the fast tier. These are ordinary release tests: no
 # ignored test or benchmark/calibration action is selected.
-run_step tuning-profile-nextest "${NICE_PREFIX[@]}" cargo nextest run -p gf2-core --release --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness
-run_step tuning-lifecycle-cargo "${NICE_PREFIX[@]}" cargo test -p gf2-core --release --no-default-features --test tuning_process_lifecycle
+run_step tuning-profile-build "$BUDGET" cargo nextest run -p gf2-core --release --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --no-run
+run_step tuning-profile-nextest "$BUDGET" --test cargo nextest run -p gf2-core --release --profile ci --features tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness
+run_step tuning-lifecycle-cargo "$BUDGET" cargo test -p gf2-core --release --no-default-features --test tuning_process_lifecycle
 
 # Add profile I/O to the same host-appropriate feature selection used by the
 # workspace lint. On ordinary hosts FEAT_FLAGS is the explicit non-HIP set, so
 # this reaches both owner codecs without pulling in the excluded ROCm crate.
-run_step clippy "${NICE_PREFIX[@]}" cargo clippy --workspace --all-targets $FEAT_FLAGS --features tuning-profile -- -D warnings
-run_step fmt    "${NICE_PREFIX[@]}" cargo fmt --all -- --check
+run_step clippy "$BUDGET" cargo clippy --workspace --all-targets $FEAT_FLAGS --features tuning-profile -- -D warnings
+run_step fmt    "$BUDGET" cargo fmt --all -- --check
 # Baked selector fields (DEC-G, and the follow-on families of
 # dev/active/7d824b2f/design.md §2.2): the gf2_tuning_baked cfg is not a Cargo
 # feature, so --all-features never builds it; this scoped step executes the
@@ -253,14 +186,14 @@ run_step fmt    "${NICE_PREFIX[@]}" cargo fmt --all -- --check
 # target here. The frozen selector non-regression harness is excluded
 # deliberately: its self-tests bracket the default configuration's threshold
 # and are expected to report a re-pinning need under the baked cfg.
-run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "${NICE_PREFIX[@]}" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
+run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "$BUDGET" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
 
 # Format-2 artifacts are opt-in I/O surfaces rather than ordinary feature
 # defaults. Validate each explicit owner and the mechanically composed complete
 # repository envelope without filesystem discovery.
-run_step tuning-core-artifact "${NICE_PREFIX[@]}" cargo test -p gf2-core --release --features tuning-profile --test tuning_profile_committed
-run_step tuning-algebra-artifacts "${NICE_PREFIX[@]}" cargo test -p gf2-algebra --release --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
-run_step tuning-composer "${NICE_PREFIX[@]}" cargo test --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml
+run_step tuning-core-artifact "$BUDGET" cargo test -p gf2-core --release --features tuning-profile --test tuning_profile_committed
+run_step tuning-algebra-artifacts "$BUDGET" cargo test -p gf2-algebra --release --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
+run_step tuning-composer "$BUDGET" cargo test --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml
 
 echo "$summary"
 

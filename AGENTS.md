@@ -14,6 +14,9 @@ standards conformance.
 
 ## Supported toolchain and commands
 
+Prefix each cargo command below with `./scripts/cargo-budget.sh`, and test
+execution with `./scripts/cargo-budget.sh --test`.
+
 - The Rust MSRV is 1.95. Use that toolchain for compatibility-sensitive work.
 - Run the repository CI contract with `./scripts/cargo-ci.sh`.
 - Build all ordinary workspace crates with
@@ -31,9 +34,21 @@ standards conformance.
   `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml` on a suitable
   host. It is intentionally outside the default Cargo workspace.
 
-Do not run multiple Cargo builds or nextest suites concurrently against the
-shared target directory. Tests, examples, simulations, and benchmarks that do
-substantial work must use release mode.
+Tests, examples, simulations, and benchmarks that do substantial work must use
+release mode.
+
+- Test execution goes through `./scripts/cargo-budget.sh --test`. A direct
+  `cargo nextest` bypasses the test lock and is not a permitted path for a
+  suite run.
+- Builds and lints run unlocked under the CPU budget; only test execution
+  serializes.
+- `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
+- `dev/scripts/ccx1-bench-flock.sh --full-host` holds the CCX1 mutex
+  exclusively and budget work holds it shared, so budget work waits. Such a run
+  sets `CARGO_CI_NO_LOCK=1` for its own cargo work or it deadlocks.
+- `RAYON_NUM_THREADS` in `.cargo/config.toml` pairs with `threads-required` in
+  `.config/nextest.toml`; change one and change the other. A binary run directly
+  from `target/` inherits neither.
 
 ## Architecture boundaries
 
