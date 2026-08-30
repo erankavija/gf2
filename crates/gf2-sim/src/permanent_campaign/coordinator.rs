@@ -168,14 +168,10 @@ pub enum CampaignHaltState {
 
 /// Closed retry rule fixed in every coordinator receipt.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct RetryRule {
-    /// Initial attempt plus exactly one recovery attempt.
-    pub maximum_attempts: u8,
-    /// Recovery reuses the identical manifest address and matrices.
-    pub same_address_only: bool,
-    /// Same-observation recovery spends no additional test budget.
-    pub additional_error_budget: u8,
+#[serde(rename_all = "snake_case")]
+pub enum RetryRule {
+    /// One recovery reuses the same stream address and spends no added alpha.
+    OneSameAddressRecoveryNoAdditionalAlpha,
 }
 
 /// One field's derived terminal progress in the canonical receipt.
@@ -298,12 +294,12 @@ impl From<AcceptanceError> for CoordinatorError {
 }
 
 impl CampaignCoordinator {
-    /// Creates an empty coordinator over the complete frozen manifest.
+    /// Creates an empty coordinator from the on-disk frozen campaign.
     ///
     /// # Errors
     ///
-    /// Refuses manifests without the predeclared first cell or artifact paths
-    /// that do not identify this manifest and the canonical protocol.
+    /// Refuses a manifest without the predeclared first cell, a campaign path
+    /// mismatch, or unavailable manifest/protocol bytes.
     ///
     /// # Panics
     ///
@@ -312,11 +308,13 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C log C)` time and `O(C)` space for `C` manifest cells.
-    pub fn new(
-        manifest: CampaignManifest,
-        manifest_identity: ArtifactIdentity,
-        protocol_identity: ArtifactIdentity,
-    ) -> Result<Self, CoordinatorError> {
+    pub fn new(campaign_root: &Path) -> Result<Self, CoordinatorError> {
+        let manifest =
+            super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
+        validate_campaign_directory(campaign_root, &manifest.campaign_id)?;
+        let manifest_identity =
+            identity_for_campaign_file(campaign_root, &manifest.campaign_id, MANIFEST_FILE)?;
+        let protocol_identity = identity_for_protocol(campaign_root)?;
         let acceptance_plan = AcceptancePlan::for_manifest(&manifest)?;
         if !manifest
             .cells
@@ -335,11 +333,7 @@ impl CampaignCoordinator {
             manifest_identity,
             protocol_identity,
             acceptance_plan,
-            retry_rule: RetryRule {
-                maximum_attempts: 2,
-                same_address_only: true,
-                additional_error_budget: 0,
-            },
+            retry_rule: RetryRule::OneSameAddressRecoveryNoAdditionalAlpha,
             arms: Vec::new(),
             attempts: Vec::new(),
             cells: manifest
@@ -566,7 +560,7 @@ impl CampaignCoordinator {
                 ) == (q, n, shard_id)
             })
             .collect();
-        if prior.len() >= usize::from(self.receipt.retry_rule.maximum_attempts) {
+        if prior.len() >= 2 {
             return refused("attempt exceeds the initial-plus-one-recovery rule");
         }
         if prior.len() == 1 && !matches!(prior[0].outcome, ShardAttemptOutcome::Quarantined { .. })
@@ -783,6 +777,7 @@ impl CampaignCoordinator {
     pub fn persist(&self, campaign_root: &Path) -> Result<(), CoordinatorError> {
         validate_campaign_directory(campaign_root, &self.receipt.campaign_id)?;
         validate_receipt(&self.manifest, &self.receipt)?;
+        validate_campaign_files(campaign_root, &self.manifest, &self.receipt)?;
         let path = coordinator_receipt_path(campaign_root, &self.receipt.campaign_id);
         if path.exists() {
             let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
@@ -791,6 +786,8 @@ impl CampaignCoordinator {
             })?;
             let prior: CampaignCoordinatorReceipt =
                 serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)?;
+            validate_receipt(&self.manifest, &prior)?;
+            validate_on_disk_attempts(campaign_root, &self.manifest, &prior)?;
             validate_monotonic_transition(&prior, &self.receipt)?;
         }
         atomic_json(&path, &self.receipt)
@@ -822,15 +819,7 @@ impl CampaignCoordinator {
         let receipt: CampaignCoordinatorReceipt =
             serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)?;
         validate_receipt(&manifest, &receipt)?;
-        let manifest_path = campaign_root.join(MANIFEST_FILE);
-        let manifest_bytes = fs::read(&manifest_path).map_err(|source| CoordinatorError::Io {
-            path: manifest_path,
-            source,
-        })?;
-        if receipt.manifest_identity.sha256 != digest(&manifest_bytes) {
-            return refused("coordinator receipt manifest digest differs from on-disk bytes");
-        }
-        validate_on_disk_attempts(campaign_root, &manifest, &receipt)?;
+        validate_campaign_files(campaign_root, &manifest, &receipt)?;
         Ok(Self { manifest, receipt })
     }
 
@@ -854,57 +843,7 @@ impl CampaignCoordinator {
         &self,
         cell: &CellSpec,
     ) -> Result<(ShardObservation, Vec<ArtifactIdentity>), CoordinatorError> {
-        let mut matrix_count = 0_u64;
-        let mut permanent_zero_count = 0_u64;
-        let mut determinant_sample_count = 0_u64;
-        let mut determinant_zero_count = 0_u64;
-        let mut sources = Vec::new();
-        for shard in &cell.shards {
-            if let Some((record, observation)) = self.receipt.attempts.iter().find_map(|attempt| {
-                if (
-                    attempt.stream_address.q,
-                    attempt.stream_address.n,
-                    attempt.shard_id,
-                ) != (cell.q, cell.n, shard.shard_id)
-                {
-                    return None;
-                }
-                match &attempt.outcome {
-                    ShardAttemptOutcome::Accepted {
-                        record,
-                        observation,
-                    } => Some((record, observation)),
-                    ShardAttemptOutcome::Quarantined { .. } => None,
-                }
-            }) {
-                matrix_count += observation.matrix_count;
-                permanent_zero_count += observation.permanent_zero_count;
-                if let DeterminantCount::Evaluated {
-                    sample_count,
-                    zero_count,
-                } = observation.determinant
-                {
-                    determinant_sample_count += sample_count;
-                    determinant_zero_count += zero_count;
-                }
-                sources.push(record.clone());
-            }
-        }
-        let determinant = match cell.determinant_companion {
-            DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
-                sample_count: determinant_sample_count,
-                zero_count: determinant_zero_count,
-            },
-            DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
-        };
-        Ok((
-            ShardObservation {
-                matrix_count,
-                permanent_zero_count,
-                determinant,
-            },
-            sources,
-        ))
+        pooled_accepted_from_receipt(&self.receipt, cell)
     }
 
     fn terminalize_mechanical(
@@ -1132,6 +1071,60 @@ fn validate_frozen_paths(
     Ok(())
 }
 
+fn identity_for_campaign_file(
+    campaign_root: &Path,
+    campaign_id: &CampaignId,
+    relative: &str,
+) -> Result<ArtifactIdentity, CoordinatorError> {
+    let path = campaign_root.join(relative);
+    let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
+        path: path.clone(),
+        source,
+    })?;
+    Ok(ArtifactIdentity {
+        path: format!("{DATASET_HOME}/{campaign_id}/{relative}")
+            .parse()
+            .map_err(|error| {
+                CoordinatorError::Refused(format!("invalid artifact path: {error}"))
+            })?,
+        sha256: digest(&bytes),
+    })
+}
+
+fn identity_for_protocol(campaign_root: &Path) -> Result<ArtifactIdentity, CoordinatorError> {
+    let dataset_root = campaign_root.parent().ok_or_else(|| {
+        CoordinatorError::Refused("campaign root has no dataset parent".to_owned())
+    })?;
+    let path = dataset_root.join("protocol.md");
+    let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
+        path: path.clone(),
+        source,
+    })?;
+    Ok(ArtifactIdentity {
+        path: PROTOCOL_PATH
+            .parse()
+            .expect("canonical protocol path is normalized"),
+        sha256: digest(&bytes),
+    })
+}
+
+fn validate_campaign_files(
+    campaign_root: &Path,
+    manifest: &CampaignManifest,
+    receipt: &CampaignCoordinatorReceipt,
+) -> Result<(), CoordinatorError> {
+    let on_disk =
+        super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
+    if on_disk != *manifest
+        || identity_for_campaign_file(campaign_root, &manifest.campaign_id, MANIFEST_FILE)?
+            != receipt.manifest_identity
+        || identity_for_protocol(campaign_root)? != receipt.protocol_identity
+    {
+        return refused("on-disk frozen manifest or protocol identity differs from the receipt");
+    }
+    validate_on_disk_attempts(campaign_root, manifest, receipt)
+}
+
 fn validate_arm(
     manifest: &CampaignManifest,
     arm: &ArmInvocation,
@@ -1335,6 +1328,81 @@ fn halted_row(cell: &CellSpec, partial: ShardObservation, reason: HaltReason) ->
     }
 }
 
+fn pooled_accepted_from_receipt(
+    receipt: &CampaignCoordinatorReceipt,
+    cell: &CellSpec,
+) -> Result<(ShardObservation, Vec<ArtifactIdentity>), CoordinatorError> {
+    let mut matrix_count = 0_u64;
+    let mut permanent_zero_count = 0_u64;
+    let mut determinant_sample_count = 0_u64;
+    let mut determinant_zero_count = 0_u64;
+    let mut sources = Vec::new();
+    for shard in &cell.shards {
+        if let Some((record, observation)) = receipt.attempts.iter().find_map(|attempt| {
+            if (
+                attempt.stream_address.q,
+                attempt.stream_address.n,
+                attempt.shard_id,
+            ) != (cell.q, cell.n, shard.shard_id)
+            {
+                return None;
+            }
+            match &attempt.outcome {
+                ShardAttemptOutcome::Accepted {
+                    record,
+                    observation,
+                } => Some((record, observation)),
+                ShardAttemptOutcome::Quarantined { .. } => None,
+            }
+        }) {
+            matrix_count = matrix_count
+                .checked_add(observation.matrix_count)
+                .ok_or_else(|| {
+                    CoordinatorError::Refused("pooled matrix count overflow".to_owned())
+                })?;
+            permanent_zero_count = permanent_zero_count
+                .checked_add(observation.permanent_zero_count)
+                .ok_or_else(|| {
+                    CoordinatorError::Refused("pooled zero count overflow".to_owned())
+                })?;
+            if let DeterminantCount::Evaluated {
+                sample_count,
+                zero_count,
+            } = observation.determinant
+            {
+                determinant_sample_count = determinant_sample_count
+                    .checked_add(sample_count)
+                    .ok_or_else(|| {
+                        CoordinatorError::Refused("pooled determinant count overflow".to_owned())
+                    })?;
+                determinant_zero_count = determinant_zero_count
+                    .checked_add(zero_count)
+                    .ok_or_else(|| {
+                        CoordinatorError::Refused(
+                            "pooled determinant zero count overflow".to_owned(),
+                        )
+                    })?;
+            }
+            sources.push(record.clone());
+        }
+    }
+    let determinant = match cell.determinant_companion {
+        DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
+            sample_count: determinant_sample_count,
+            zero_count: determinant_zero_count,
+        },
+        DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
+    };
+    Ok((
+        ShardObservation {
+            matrix_count,
+            permanent_zero_count,
+            determinant,
+        },
+        sources,
+    ))
+}
+
 fn validate_receipt(
     manifest: &CampaignManifest,
     receipt: &CampaignCoordinatorReceipt,
@@ -1342,12 +1410,7 @@ fn validate_receipt(
     if receipt.schema_version != COORDINATOR_SCHEMA_VERSION
         || receipt.campaign_id != manifest.campaign_id
         || receipt.acceptance_plan != AcceptancePlan::for_manifest(manifest)?
-        || receipt.retry_rule
-            != (RetryRule {
-                maximum_attempts: 2,
-                same_address_only: true,
-                additional_error_budget: 0,
-            })
+        || receipt.retry_rule != RetryRule::OneSameAddressRecoveryNoAdditionalAlpha
     {
         return refused("coordinator receipt fixed identity or plan is invalid");
     }
@@ -1361,32 +1424,43 @@ fn validate_receipt(
     if cells != manifested {
         return refused("coordinator cell inventory differs from the frozen manifest");
     }
-    for cell in &receipt.cells {
-        if let CellExecutionState::Completed { assessment, .. } = &cell.execution {
-            let spec = manifest
-                .cells
-                .iter()
-                .find(|spec| (spec.q, spec.n) == (cell.q, cell.n))
-                .ok_or_else(|| CoordinatorError::Refused("manifest cell not found".to_owned()))?;
-            let expected = assess_completed_cell(
-                &receipt.acceptance_plan,
-                spec,
-                assessment.summary.matrix_count,
-                assessment.summary.permanent_zero_count,
-                assessment.summary.determinant.clone(),
-            )?;
-            if expected != *assessment {
-                return refused("persisted terminal assessment is not canonical");
-            }
-        }
+    let mut expected_fields: Vec<_> = manifest.cells.iter().map(|cell| cell.q).collect();
+    expected_fields.sort_unstable();
+    expected_fields.dedup();
+    if receipt
+        .fields
+        .iter()
+        .map(|field| field.q)
+        .collect::<Vec<_>>()
+        != expected_fields
+    {
+        return refused("coordinator field inventory differs from the frozen manifest");
     }
-    for arm in &receipt.arms {
+
+    let mut arm_indices = BTreeMap::new();
+    for (index, arm) in receipt.arms.iter().enumerate() {
         let CampaignExecutionScope::ExactCell { q, n } = arm.scope else {
             return refused("persisted arm is not exact-cell scoped");
         };
         validate_arm(manifest, arm, q, n)?;
+        if !manifest.cells.iter().any(|cell| (cell.q, cell.n) == (q, n))
+            || arm_indices.insert((q, n), index).is_some()
+        {
+            return refused("persisted arm is duplicate or not manifested");
+        }
     }
-    let mut attempt_history: BTreeMap<(u8, u16, u64), &ShardAttemptOutcome> = BTreeMap::new();
+    if receipt.arms.first().is_some_and(|arm| {
+        arm.scope
+            != CampaignExecutionScope::ExactCell {
+                q: FIRST_FIELD,
+                n: FIRST_ORDER,
+            }
+    }) {
+        return refused("first persisted arm is not q=7 n=20");
+    }
+
+    let mut attempt_history: BTreeMap<(u8, u16, u64), Vec<&ShardAttemptOutcome>> = BTreeMap::new();
+    let mut preceding_arm_index = 0_usize;
     for attempt in &receipt.attempts {
         let q = attempt.stream_address.q;
         let n = attempt.stream_address.n;
@@ -1420,15 +1494,14 @@ fn validate_receipt(
             return refused("persisted attempt identity differs from the manifest");
         }
         let key = (q, n, attempt.shard_id);
-        let expected_number = if attempt_history.contains_key(&key) {
-            2
-        } else {
-            1
-        };
+        let history = attempt_history.entry(key).or_default();
+        let expected_number = u8::try_from(history.len() + 1)
+            .map_err(|_| CoordinatorError::Refused("attempt number overflow".to_owned()))?;
         if attempt.attempt != expected_number
+            || attempt.attempt > 2
             || (attempt.attempt == 2
                 && !matches!(
-                    attempt_history.get(&key),
+                    history.first(),
                     Some(ShardAttemptOutcome::Quarantined { .. })
                 ))
         {
@@ -1440,10 +1513,16 @@ fn validate_receipt(
             attempt.shard_id,
             &attempt.outcome,
         )?;
-        if attempt_history.insert(key, &attempt.outcome).is_some() && attempt.attempt != 2 {
-            return refused("persisted attempt history is not append-only");
+        let arm_index = *arm_indices
+            .get(&(q, n))
+            .ok_or_else(|| CoordinatorError::Refused("attempt has no admitted arm".to_owned()))?;
+        if !receipt.attempts.is_empty() && arm_index < preceding_arm_index {
+            return refused("attempt history interleaves serial exact-cell arms");
         }
+        preceding_arm_index = arm_index;
+        history.push(&attempt.outcome);
     }
+
     let scheduled = receipt
         .cells
         .iter()
@@ -1453,15 +1532,78 @@ fn validate_receipt(
         return refused("receipt contains more than one scheduled cell");
     }
     for cell in &receipt.cells {
-        if let CellExecutionState::Scheduled { arm_index } = cell.execution {
-            if !matches!(
-                receipt.arms.get(arm_index).map(|arm| arm.scope),
-                Some(CampaignExecutionScope::ExactCell { q, n }) if (q, n) == (cell.q, cell.n)
-            ) {
-                return refused("scheduled cell does not bind its exact arm");
+        let spec = manifest
+            .cells
+            .iter()
+            .find(|spec| (spec.q, spec.n) == (cell.q, cell.n))
+            .ok_or_else(|| CoordinatorError::Refused("manifest cell not found".to_owned()))?;
+        let arm_index = arm_indices.get(&(cell.q, cell.n)).copied();
+        let (pooled, expected_sources) = pooled_accepted_from_receipt(receipt, spec)?;
+        match &cell.execution {
+            CellExecutionState::Pending => {
+                if arm_index.is_some() || pooled.matrix_count != 0 {
+                    return refused("pending cell carries arm or attempt evidence");
+                }
+            }
+            CellExecutionState::Scheduled {
+                arm_index: stored_index,
+            } => {
+                if arm_index != Some(*stored_index)
+                    || Some(*stored_index) != receipt.arms.len().checked_sub(1)
+                {
+                    return refused("scheduled cell does not bind the final exact arm");
+                }
+            }
+            CellExecutionState::Completed {
+                assessment,
+                source_records,
+            } => {
+                if arm_index.is_none() || expected_sources.len() != spec.shards.len() {
+                    return refused("completed cell lacks its admitted arm or accepted shards");
+                }
+                let expected_assessment = assess_completed_cell(
+                    &receipt.acceptance_plan,
+                    spec,
+                    pooled.matrix_count,
+                    pooled.permanent_zero_count,
+                    pooled.determinant,
+                )?;
+                if *assessment != expected_assessment || *source_records != expected_sources {
+                    return refused("completed evidence differs from accepted shard attempts");
+                }
+            }
+            CellExecutionState::Halted {
+                summary,
+                source_records,
+            } => {
+                let CellTerminalState::Halted { reason } = summary.terminal_state else {
+                    return refused("halted receipt cell contains a completed summary");
+                };
+                if *summary != halted_row(spec, pooled, reason)
+                    || *source_records != expected_sources
+                {
+                    return refused("halted evidence differs from accepted shard attempts");
+                }
             }
         }
     }
+
+    for (index, arm) in receipt.arms.iter().enumerate() {
+        let CampaignExecutionScope::ExactCell { q, n } = arm.scope else {
+            unreachable!("exact arm checked above");
+        };
+        let state = receipt
+            .cells
+            .iter()
+            .find(|cell| (cell.q, cell.n) == (q, n))
+            .map(|cell| &cell.execution)
+            .ok_or_else(|| CoordinatorError::Refused("arm cell is absent".to_owned()))?;
+        if index + 1 < receipt.arms.len() && !matches!(state, CellExecutionState::Completed { .. })
+        {
+            return refused("a later arm follows a non-completed serial arm");
+        }
+    }
+
     for field in &receipt.fields {
         let states: Vec<_> = receipt
             .cells
@@ -1485,14 +1627,8 @@ fn validate_receipt(
             return refused("persisted field state is not derived from its cells");
         }
     }
-    if matches!(receipt.halt, CampaignHaltState::Halted { .. })
-        && !receipt
-            .cells
-            .iter()
-            .all(|cell| is_terminal(&cell.execution))
-    {
-        return refused("halted campaign contains a nonterminal cell");
-    }
+
+    validate_halt_state(receipt)?;
     Ok(())
 }
 
@@ -1548,6 +1684,127 @@ fn validate_on_disk_attempts(
     Ok(())
 }
 
+fn rejected_families(assessment: &CompletedCellAssessment) -> Vec<AcceptanceFamily> {
+    let mut families = Vec::new();
+    if assessment.permanent.test.verdict == AcceptanceVerdict::Rejected {
+        families.push(AcceptanceFamily::PermanentFloor);
+    }
+    if assessment
+        .determinant
+        .is_some_and(|value| value.test.verdict == AcceptanceVerdict::Rejected)
+    {
+        families.push(AcceptanceFamily::Determinant);
+    }
+    families
+}
+
+fn validate_halt_state(receipt: &CampaignCoordinatorReceipt) -> Result<(), CoordinatorError> {
+    match &receipt.halt {
+        CampaignHaltState::Running => {
+            if receipt.cells.iter().any(|cell| match &cell.execution {
+                CellExecutionState::Completed { assessment, .. } => assessment.rejected(),
+                CellExecutionState::Halted { .. } => true,
+                CellExecutionState::Pending | CellExecutionState::Scheduled { .. } => false,
+            }) {
+                return refused("running campaign contains rejecting or halted terminal evidence");
+            }
+        }
+        CampaignHaltState::Halted { cause } => {
+            if !receipt
+                .cells
+                .iter()
+                .all(|cell| is_terminal(&cell.execution))
+            {
+                return refused("halted campaign contains a nonterminal cell");
+            }
+            let (cause_q, cause_n) =
+                match cause {
+                    CampaignHaltCause::Acceptance {
+                        q,
+                        n,
+                        rejected_families: stored,
+                    } => {
+                        let Some(CellExecutionState::Completed { assessment, .. }) = receipt
+                            .cells
+                            .iter()
+                            .find(|cell| (cell.q, cell.n) == (*q, *n))
+                            .map(|cell| &cell.execution)
+                        else {
+                            return refused("acceptance halt does not name a completed cell");
+                        };
+                        if rejected_families(assessment) != *stored || stored.is_empty() {
+                            return refused("acceptance halt families differ from exact decisions");
+                        }
+                        for cell in &receipt.cells {
+                            if (cell.q, cell.n) == (*q, *n) {
+                                continue;
+                            }
+                            match &cell.execution {
+                                CellExecutionState::Completed { assessment, .. }
+                                    if !assessment.rejected() => {}
+                                CellExecutionState::Halted { summary, .. }
+                                    if matches!(
+                                        summary.terminal_state,
+                                        CellTerminalState::Halted {
+                                            reason: HaltReason::AcceptanceFailure
+                                        }
+                                    ) => {}
+                                _ => return refused(
+                                    "acceptance halt is inconsistent with another terminal cell",
+                                ),
+                            }
+                        }
+                        (*q, *n)
+                    }
+                    CampaignHaltCause::Mechanical { q, n, reason } => {
+                        if *reason == HaltReason::AcceptanceFailure {
+                            return refused("mechanical halt uses an acceptance reason");
+                        }
+                        let Some(CellExecutionState::Halted { summary, .. }) = receipt
+                            .cells
+                            .iter()
+                            .find(|cell| (cell.q, cell.n) == (*q, *n))
+                            .map(|cell| &cell.execution)
+                        else {
+                            return refused("mechanical halt does not name a halted cell");
+                        };
+                        if !matches!(
+                            summary.terminal_state,
+                            CellTerminalState::Halted { reason: stored } if stored == *reason
+                        ) {
+                            return refused("mechanical halt reason differs from its cause cell");
+                        }
+                        for cell in &receipt.cells {
+                            match &cell.execution {
+                                CellExecutionState::Completed { assessment, .. }
+                                    if !assessment.rejected() => {}
+                                CellExecutionState::Halted { summary, .. }
+                                    if matches!(
+                                        summary.terminal_state,
+                                        CellTerminalState::Halted { reason: stored }
+                                            if stored == *reason
+                                    ) => {}
+                                _ => return refused(
+                                    "mechanical halt is inconsistent with another terminal cell",
+                                ),
+                            }
+                        }
+                        (*q, *n)
+                    }
+                };
+            if receipt.arms.last().map(|arm| arm.scope)
+                != Some(CampaignExecutionScope::ExactCell {
+                    q: cause_q,
+                    n: cause_n,
+                })
+            {
+                return refused("campaign halt cause is not the final admitted arm");
+            }
+        }
+    }
+    Ok(())
+}
+
 fn validate_monotonic_transition(
     prior: &CampaignCoordinatorReceipt,
     next: &CampaignCoordinatorReceipt,
@@ -1565,14 +1822,36 @@ fn validate_monotonic_transition(
         return refused("receipt update changes frozen identity or prior append-only evidence");
     }
     for (old, new) in prior.cells.iter().zip(&next.cells) {
-        if (old.q, old.n) != (new.q, new.n)
-            || (is_terminal(&old.execution) && old.execution != new.execution)
-        {
+        if (old.q, old.n) != (new.q, new.n) {
             return refused("receipt update changes prior terminal cell evidence");
         }
+        let allowed = match (&old.execution, &new.execution) {
+            (CellExecutionState::Pending, CellExecutionState::Pending) => true,
+            (CellExecutionState::Pending, CellExecutionState::Scheduled { .. }) => true,
+            (CellExecutionState::Pending, CellExecutionState::Halted { .. }) => {
+                matches!(next.halt, CampaignHaltState::Halted { .. })
+            }
+            (
+                CellExecutionState::Scheduled {
+                    arm_index: old_index,
+                },
+                CellExecutionState::Scheduled {
+                    arm_index: new_index,
+                },
+            ) => old_index == new_index,
+            (CellExecutionState::Scheduled { .. }, state) => is_terminal(state),
+            (old_state, new_state) if is_terminal(old_state) => old_state == new_state,
+            _ => false,
+        };
+        if !allowed {
+            return refused("receipt update violates the cell lifecycle transition graph");
+        }
     }
-    if matches!(prior.halt, CampaignHaltState::Halted { .. }) && prior.halt != next.halt {
-        return refused("receipt update changes the terminal campaign halt");
+    match (&prior.halt, &next.halt) {
+        (CampaignHaltState::Running, _) => {}
+        (CampaignHaltState::Halted { .. }, CampaignHaltState::Halted { .. })
+            if prior.halt == next.halt => {}
+        _ => return refused("receipt update changes the terminal campaign halt"),
     }
     Ok(())
 }
