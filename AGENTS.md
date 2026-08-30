@@ -22,9 +22,12 @@ execution with `./scripts/cargo-budget.sh --test`.
 - Build all ordinary workspace crates with
   `cargo build --workspace --all-features`.
 - Run the fast test tier with
-  `cargo nextest run --workspace --all-features --release --profile ci`.
-- For focused work, keep release mode and select a package or test expression,
-  for example `cargo nextest run -p gf2-core --release --profile ci`.
+  `cargo nextest run --workspace --all-features --cargo-profile ci-test --profile ci`.
+- For focused work, keep the `ci-test` profile and select a package or test
+  expression, for example
+  `cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci`.
+- Build benchmarks and receipts under `--release`; `ci-test` drops LTO and
+  understates the permanent kernels by roughly 30%.
 - Check formatting with `cargo fmt --all -- --check` and lint with
   `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
 - Build API documentation with `cargo doc --workspace --all-features --no-deps`.
@@ -95,8 +98,8 @@ contract is mathematical or implemented by several backends.
   Repetitive examples for accessors, constants, constructors, predicates, and
   direct field mappings are documentation and doctest burden.
 
-The ordinary fast tier has a five-second per-test kill and a sixty-second suite
-budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`
+The ordinary fast tier has an eight-second per-test kill and a sixty-second
+suite budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`
 or `#[ignore = "sim: ..."]`; normal agent work never opts into ignored tests.
 The nightly slow tier uses
 `cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only`

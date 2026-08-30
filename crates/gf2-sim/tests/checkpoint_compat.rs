@@ -760,7 +760,17 @@ fn test_kill_mid_write_randomized_defense_in_depth() {
     // Defense in depth: the `--crash-loop` child writes in a tight loop; the
     // parent SIGKILLs at a randomised-ish moment so the kill lands at an
     // arbitrary point in the write/fsync/rename window. The canonical file must
-    // always be complete-or-absent. Fast tier: 30 sub-10ms spawn+kill cycles.
+    // always be complete-or-absent.
+    //
+    // The sweep spans ~0.2-58 ms rather than a sub-5 ms window. The safety
+    // property holds at every kill point and is asserted every iteration; the
+    // coverage guard at the end is the fragile part, because it needs at least
+    // one iteration where the child actually finished a checkpoint, and how
+    // long that takes moves with build profile and machine load. Under the
+    // `ci-test` profile in a loaded fast tier, a sub-5 ms sweep never let the
+    // child finish, so the guard fired while the property itself was never
+    // violated. A wider sweep also covers more of the write/fsync/rename
+    // window, so it strengthens the test rather than relaxing it.
     let iterations = 30;
     let mut observed_present = 0usize;
     for i in 0..iterations {
@@ -776,7 +786,7 @@ fn test_kill_mid_write_randomized_defense_in_depth() {
             "1",
             "--crash-loop",
         ]);
-        let micros = 200 + (i as u64 * 137) % 4000;
+        let micros = 200 + (i as u64 * 2000) % 60_000;
         std::thread::sleep(std::time::Duration::from_micros(micros));
         let _ = child.kill();
         let _ = child.wait();
