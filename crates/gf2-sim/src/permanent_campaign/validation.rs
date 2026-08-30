@@ -6,6 +6,10 @@
 //! provenance and no-redraw persistence. The repository-specific frozen plan
 //! is enforced separately by [`run_frozen_campaign_validation`].
 //!
+//! The frozen runner refuses a wrong producing toolchain before it opens any
+//! address, because an address opened under a refused build could not be
+//! redrawn.
+//!
 //! Exhaustive matrices are emitted once in bounded batches. Each identical
 //! batch is fanned to the independent fixed-expansion oracle result, the
 //! production determinant evaluator, and every required production permanent
@@ -51,6 +55,8 @@ pub const RECEIPT_SCHEMA_VERSION: u32 = 1;
 pub const RNG_VERSION: &str = "rand_chacha 0.9.0";
 /// Established validation namespace from the exact-anchor evidence.
 pub const FROZEN_VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
+/// Compiler-version prefix the frozen validation evidence must carry.
+pub const FROZEN_TOOLCHAIN_PREFIX: &str = "rustc 1.95.0 ";
 /// Frozen campaign directory whose payload and inventory must not change.
 pub const FROZEN_CAMPAIGN_DIRECTORY: &str =
     "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829";
@@ -647,6 +653,17 @@ impl std::error::Error for ValidationError {
     }
 }
 
+/// Returns whether a compiler version may produce frozen validation evidence.
+///
+/// The frozen campaign pins its producing toolchain, so a receipt built with
+/// any other compiler is refused. The runner checks this before it opens the
+/// first address: discovering the mismatch afterwards would leave opened
+/// addresses that the protocol forbids redrawing.
+#[must_use]
+pub fn is_frozen_validation_toolchain(compiler_version: &str) -> bool {
+    compiler_version.starts_with(FROZEN_TOOLCHAIN_PREFIX)
+}
+
 /// Loads and content-validates a committed preregistration and its authorities.
 pub fn load_validation_preregistration(
     repository: &Path,
@@ -772,6 +789,7 @@ pub fn run_frozen_campaign_validation(
     state_directory: &Path,
 ) -> Result<ValidationReceipt, ValidationError> {
     validate_frozen_plan(repository, preregistration)?;
+    validate_frozen_toolchain(env!("GF2_BUILD_RUSTC_VERSION"))?;
     create_directory_durable(state_directory)?;
     let observed_before = snapshot_frozen_campaign(repository)?;
     let before = publish_or_adopt(
@@ -1567,15 +1585,17 @@ fn validate_frozen_receipt(
     {
         return invalid("frozen artifact guard names the wrong directory");
     }
-    if !receipt
-        .runtime
-        .provenance
-        .compiler_version
-        .starts_with("rustc 1.95.0 ")
-    {
-        return invalid("frozen validation must be built with Rust 1.95.0");
-    }
+    validate_frozen_toolchain(&receipt.runtime.provenance.compiler_version)?;
     Ok(())
+}
+
+fn validate_frozen_toolchain(compiler_version: &str) -> Result<(), ValidationError> {
+    if is_frozen_validation_toolchain(compiler_version) {
+        return Ok(());
+    }
+    invalid(format!(
+        "frozen validation needs a `{FROZEN_TOOLCHAIN_PREFIX}` build, not `{compiler_version}`"
+    ))
 }
 
 fn observe_validation_runtime(worker_count: usize) -> Result<ValidationRuntime, ValidationError> {

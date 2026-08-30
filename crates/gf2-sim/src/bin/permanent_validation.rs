@@ -24,7 +24,13 @@
 //!
 //! The journal makes the run resumable and enforces the protocol's no-redraw
 //! rule. An anchor whose durable start marker exists without a terminal record
-//! is preserved as an interruption failure; its address is never reopened.
+//! is preserved as an interruption failure; its address is never reopened. A
+//! resumed run repeats the identical command from the identical source closure:
+//! the journal binds itself to the producer identity it observed, argument
+//! tokens included, and refuses a journal recorded under a different one.
+//!
+//! The frozen plan pins its producing toolchain, and the runner refuses a build
+//! from another compiler before it opens the first address.
 //!
 //! ```console
 //! $ permanent_validation --verify-receipt dev/active/02b8137c/pre-draw-validation-v1-receipt.json
