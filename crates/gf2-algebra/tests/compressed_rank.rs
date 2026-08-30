@@ -175,6 +175,7 @@ impl Hasher for RecordingHasher {
 
 fn canonical_subspace_contract<F: SupportedPrimeField>() {
     let q = F::ORDER;
+    assert!(Vector3::<F>::from_residues([q, 0, 0]).is_err());
     let explicit = enumerate_subspaces(q);
     let production: Vec<_> = explicit.iter().map(production_subspace::<F>).collect();
     let mut ordered = BTreeSet::new();
@@ -183,7 +184,7 @@ fn canonical_subspace_contract<F: SupportedPrimeField>() {
         assert_eq!(observed.dimension(), expected.dimension);
         assert_eq!(observed.basis_residues(), expected.basis);
         assert_eq!(observed.key_bytes(), expected.key());
-        assert!(ordered.insert(observed.clone()));
+        assert!(ordered.insert(*observed));
 
         let canonical_bytes = observed.to_canonical_bytes();
         assert_eq!(canonical_bytes[0], 1);
@@ -191,7 +192,7 @@ fn canonical_subspace_contract<F: SupportedPrimeField>() {
         assert_eq!(&canonical_bytes[2..], expected.key().as_slice());
         assert_eq!(
             CanonicalSubspace::<F>::from_canonical_bytes(&canonical_bytes),
-            Ok(observed.clone())
+            Ok(*observed)
         );
 
         let mut hasher = RecordingHasher::default();
@@ -232,6 +233,39 @@ fn canonical_subspace_contract<F: SupportedPrimeField>() {
     }
 
     assert_eq!(ordered.into_iter().collect::<Vec<_>>(), production);
+
+    let states: Vec<_> = production
+        .iter()
+        .flat_map(|row_span| {
+            production.iter().map(move |contraction_span| {
+                CompressedRankState::from_subspaces_for_test(*row_span, *contraction_span)
+            })
+        })
+        .collect();
+    assert_eq!(
+        states
+            .iter()
+            .copied()
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>(),
+        states
+    );
+    for state in states {
+        let mut hasher = RecordingHasher::default();
+        state.hash(&mut hasher);
+        let mut expected_hash = state.row_span().key_bytes().to_vec();
+        expected_hash.extend(state.contraction_span().key_bytes());
+        assert_eq!(hasher.0, expected_hash);
+        let bytes = state.to_canonical_bytes();
+        assert_eq!(bytes[0], 1);
+        assert_eq!(bytes[1], q);
+        assert_eq!(&bytes[2..12], state.row_span().key_bytes().as_slice());
+        assert_eq!(
+            &bytes[12..22],
+            state.contraction_span().key_bytes().as_slice()
+        );
+    }
 
     let zero = CanonicalSubspace::<F>::zero();
     let bytes = zero.to_canonical_bytes();
@@ -274,13 +308,32 @@ fn canonical_subspace_contract<F: SupportedPrimeField>() {
         let encoded = state.to_canonical_bytes();
         assert_eq!(
             CompressedRankState::from_replayed_bytes(&encoded, &rows),
-            Ok(state.clone())
+            Ok(state)
         );
         assert!(CompressedRankState::from_replayed_bytes(&encoded, &rows[..1]).is_err());
         let mut wrong = encoded;
         wrong[1] = if q == 3 { 5 } else { 3 };
         assert!(CompressedRankState::<F>::from_replayed_bytes(&wrong, &rows).is_err());
     }
+
+    let initial = CompressedRankState::<F>::initial().to_canonical_bytes();
+    assert_eq!(
+        CompressedRankState::<F>::from_replayed_bytes(&initial, &[]),
+        Ok(CompressedRankState::initial())
+    );
+    assert!(CompressedRankState::<F>::from_replayed_bytes(&initial[..21], &[]).is_err());
+    let mut malformed_state = initial;
+    malformed_state[0] = 2;
+    assert!(CompressedRankState::<F>::from_replayed_bytes(&malformed_state, &[]).is_err());
+    malformed_state = initial;
+    malformed_state[2] = 4;
+    assert!(CompressedRankState::<F>::from_replayed_bytes(&malformed_state, &[]).is_err());
+    malformed_state = initial;
+    malformed_state[3] = q;
+    assert!(CompressedRankState::<F>::from_replayed_bytes(&malformed_state, &[]).is_err());
+    malformed_state = initial;
+    malformed_state[3] = 1;
+    assert!(CompressedRankState::<F>::from_replayed_bytes(&malformed_state, &[]).is_err());
 }
 
 #[test]
@@ -330,11 +383,11 @@ fn compressed_transition_contract<F: SupportedPrimeField>() {
         })
         .collect();
 
-    for (u_index, u) in explicit.iter().enumerate() {
+    for (u_index, _) in explicit.iter().enumerate() {
         for (v_index, v) in explicit.iter().enumerate() {
             let state = CompressedRankState::from_subspaces_for_test(
-                production[u_index].clone(),
-                production[v_index].clone(),
+                production[u_index],
+                production[v_index],
             );
             let mut expected_multiplicities = BTreeMap::new();
             for (row_index, &row) in universe.iter().enumerate() {
@@ -365,7 +418,7 @@ fn compressed_transition_contract<F: SupportedPrimeField>() {
             let observed: BTreeMap<_, _> = state
                 .transition_multiplicities()
                 .iter()
-                .map(|transition| (transition.successor().clone(), transition.multiplicity()))
+                .map(|transition| (*transition.successor(), transition.multiplicity()))
                 .collect();
             assert_eq!(observed, expected_multiplicities);
             assert_eq!(
@@ -525,7 +578,7 @@ fn initial_and_anchor_contract<F: SupportedPrimeField>(
         );
         assert!(counts
             .keys()
-            .all(|state| table.transitions(state).len() > 0));
+            .all(|state| !table.transitions(state).is_empty()));
     }
 }
 
@@ -565,6 +618,31 @@ fn k2_formula(q: u64, n: u64) -> u64 {
     2 * q.pow(n as u32) - 1 + n * (q - 1).pow(2) + n * (n - 1) / 2 * (q - 1).pow(3)
 }
 
+fn k1_count_by_production<F: SupportedPrimeField>(n: usize) -> u64 {
+    let q = F::ORDER;
+    let mut encoded = vec![0_u8; n];
+    let total = usize::from(q).pow(n as u32);
+    let mut count = 0;
+    for matrix_index in 0..total {
+        let matrix: Vec<_> = encoded
+            .iter()
+            .copied()
+            .map(|entry| F::from_residue(entry).expect("enumerator residue is canonical"))
+            .collect();
+        let production = permanental_rank_status(&matrix, n, 1).is_deficient();
+        let independent = encoded.iter().all(|&entry| entry == 0);
+        assert_eq!(
+            production, independent,
+            "q={q}, n={n}, k=1, matrix={matrix_index}"
+        );
+        count += u64::from(production);
+        if matrix_index + 1 != total {
+            assert!(increment_encoded_row(&mut encoded, q));
+        }
+    }
+    count
+}
+
 #[test]
 fn compressed_k1_k2_formula_anchors() {
     for q in [3_u64, 5, 7] {
@@ -576,6 +654,13 @@ fn compressed_k1_k2_formula_anchors() {
                 &q.pow(n).to_string(),
                 ("1", &q.pow(n).to_string()),
             );
+            let observed = match q {
+                3 => k1_count_by_production::<Fp<3>>(n as usize),
+                5 => k1_count_by_production::<Fp<5>>(n as usize),
+                7 => k1_count_by_production::<Fp<7>>(n as usize),
+                _ => unreachable!(),
+            };
+            assert_eq!(observed, 1);
         }
     }
 
