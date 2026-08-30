@@ -101,7 +101,7 @@ The `freeze-auditor` (native Opus, read-only) reported after the handoff was fir
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior handoff: `dev/active/b8206228-permanent-statistics/handoff-17.md`
 - Final selection receipt: `dev/benchmarks/permanent_campaign/backend-selection-v1.md`, SHA-256 `fe5d37ba7c216a753bf3e546614a222c3c20e563f7f4e1d3c0341af9e1c464fe`, committed `396cf929`
-- Frozen campaign directory: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/`, committed `57c9633f`
-- Manifest SHA-256: `c37305910037d5c0f0a41f51a6be3960a53d27ce66d63bda87c6ae45fb4b2952`
+- Frozen campaign directory: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/`, initial freeze commit `57c9633f`
+- Current manifest SHA-256 after the exact-driver-argv rework: `5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57`
 - Pinned emitter digest: `2d6edcd940abe9340143c8b724a8274fff8eca1200a491ad13deec9e386eba58` (`target/release/permanent_campaign`)
 - Gate-failure evidence: `jit gate status 7a816262 research-review`
