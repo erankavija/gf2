@@ -1,0 +1,1927 @@
+//! Closed rare-event artifact schemas and immutable publication.
+//!
+//! The reader accepts one envelope version and four payload versions. It
+//! checks canonical JSON bytes, sidecars, embedded identities, recomputed
+//! dataset/run/attempt IDs, closed address sets, and attempt/checkpoint
+//! lineage. Publication synchronizes both files and their directory before a
+//! safe `RENAME_NOREPLACE`; an unsupported platform or filesystem refuses.
+
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use sha2::{Digest, Sha256};
+use std::fmt;
+
+use super::{
+    coverage_address, target_address, COVERAGE_REPLICATES, COVERAGE_RUNS,
+    COVERAGE_TRAJECTORIES_PER_RUN, RARE_EVENT_PURPOSE_TAG, RARE_EVENT_ROOT_SEED, TARGET_BLOCK_SIZE,
+    TARGET_RUNS, TARGET_TRAJECTORIES_PER_RUN,
+};
+
+/// The only accepted envelope schema.
+pub const ENVELOPE_SCHEMA_V1: &str = "gf2.rare-event-artifact-envelope/v1";
+/// The only accepted trajectory-checkpoint schema.
+pub const CHECKPOINT_SCHEMA_V1: &str = "gf2.rare-event-trajectory-checkpoint/v1";
+/// The only accepted execution-attempt schema.
+pub const ATTEMPT_SCHEMA_V1: &str = "gf2.rare-event-execution-attempt/v1";
+/// The only accepted target-final schema.
+pub const TARGET_RECEIPT_SCHEMA_V1: &str = "gf2.rare-event-target-cross-check/v1";
+/// The only accepted coverage-final schema.
+pub const COVERAGE_RECEIPT_SCHEMA_V1: &str = "gf2.rare-event-coverage-validation/v1";
+/// The only accepted strict configuration schema.
+pub const CONFIGURATION_SCHEMA_V1: &str = "gf2.rare-event-configuration/v1";
+/// The only accepted behavior-closure schema.
+pub const BEHAVIOR_CLOSURE_SCHEMA_V1: &str = "gf2.rare-event-behavior-closure/v1";
+/// Frozen partition identifier.
+pub const ADDRESS_PARTITION_V1: &str = "gf2.rare-event-stream-partitions/v1";
+/// Frozen proposal identifier.
+pub const SAMPLER_V1: &str = "gf2-vperp-uniform-likelihood-ratio/v1";
+/// Frozen address-to-seed identifier.
+pub const ADDRESS_TO_SEED_V1: &str = "gf2-matrix-address-chacha20/v1";
+/// Frozen RNG algorithm identifier.
+pub const RNG_V1: &str = "rand_chacha::ChaCha20Rng/v0.9.0";
+/// Frozen canonical serializer identifier.
+pub const SERIALIZER_V1: &str = "gf2-rare-event-artifact-canonical-json/v1";
+/// Published artifact JSON filename.
+pub const ARTIFACT_JSON: &str = "artifact.json";
+/// Published SHA-256 sidecar filename.
+pub const ARTIFACT_SIDECAR: &str = "artifact.sha256";
+
+const CAMPAIGN_ID: &str = "permanent-zero-fraction-20260829";
+const MANIFEST_PATH: &str =
+    "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json";
+const MANIFEST_SHA256: &str = "5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57";
+const PROTOCOL_PATH: &str = "dev/simulation_results/permanent-zero-fraction/protocol.md";
+const PROTOCOL_SHA256: &str = "249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639";
+
+/// A strict immutable rare-event configuration.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RareEventConfigurationV1 {
+    /// Exact schema identifier.
+    pub configuration_schema: String,
+    /// Repository-relative publication root outside raw campaign data.
+    pub artifact_root: String,
+    /// Pinned design object and bytes.
+    pub design_identity: DesignIdentityV1,
+    /// Scientific mode and allocation.
+    pub scientific_identity: ScientificIdentityV1,
+    /// Build receipt used to recreate the behavior closure.
+    pub behavior: BehaviorIdentityV1,
+    /// Requested worker/backend settings; these do not enter dataset identity.
+    pub worker_configuration: WorkerConfigurationV1,
+}
+
+/// Pinned committed preregistration identity.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DesignIdentityV1 {
+    /// Repository-relative preregistration path.
+    pub path: String,
+    /// Full producing Git revision.
+    pub git_revision: String,
+    /// Git blob object ID for the exact bytes.
+    pub blob_id: String,
+    /// SHA-256 of the exact committed bytes.
+    pub content_sha256: String,
+}
+
+/// Complete embedded dataset identity.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RareEventDatasetIdentityV1 {
+    /// Frozen campaign authority.
+    pub campaign: CampaignAuthorityV1,
+    /// Pinned design and immutable configuration identity.
+    pub preregistration: PreregistrationIdentityV1,
+    /// Fixed target or coverage allocation.
+    pub scientific: ScientificIdentityV1,
+    /// Fixed interval, ESS, and coverage constants.
+    pub statistical: StatisticalConstantsV1,
+    /// Sampler, source closure, executable, and toolchain identity.
+    pub behavior: BehaviorIdentityV1,
+}
+
+/// Frozen campaign authority used by every rare-event dataset.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CampaignAuthorityV1 {
+    /// Frozen campaign identifier.
+    pub campaign_id: String,
+    /// Root-manifest path.
+    pub manifest_path: String,
+    /// Root-manifest SHA-256.
+    pub manifest_sha256: String,
+    /// Frozen-protocol path.
+    pub protocol_path: String,
+    /// Frozen-protocol SHA-256.
+    pub protocol_sha256: String,
+    /// Root seed rendered as exact ASCII hexadecimal.
+    pub root_seed: String,
+    /// Canonical purpose name.
+    pub purpose_name: String,
+    /// Manifested purpose tag.
+    pub purpose_tag: u8,
+    /// Closed partition identifier.
+    pub address_partition: String,
+}
+
+impl Default for CampaignAuthorityV1 {
+    fn default() -> Self {
+        Self {
+            campaign_id: CAMPAIGN_ID.into(),
+            manifest_path: MANIFEST_PATH.into(),
+            manifest_sha256: MANIFEST_SHA256.into(),
+            protocol_path: PROTOCOL_PATH.into(),
+            protocol_sha256: PROTOCOL_SHA256.into(),
+            root_seed: format!("0x{RARE_EVENT_ROOT_SEED:016x}"),
+            purpose_name: "RareEvent".into(),
+            purpose_tag: RARE_EVENT_PURPOSE_TAG,
+            address_partition: ADDRESS_PARTITION_V1.into(),
+        }
+    }
+}
+
+/// Pinned preregistration and externally digested immutable configuration.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PreregistrationIdentityV1 {
+    /// Pinned design identity.
+    pub design: DesignIdentityV1,
+    /// Repository-relative configuration path.
+    pub configuration_path: String,
+    /// Exact configuration schema.
+    pub configuration_schema: String,
+    /// SHA-256 of canonical configuration bytes.
+    pub configuration_sha256: String,
+}
+
+/// Fixed target or coverage identity.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "mode", rename_all = "snake_case")]
+pub enum ScientificIdentityV1 {
+    /// Registered target allocation.
+    Target {
+        /// Field order.
+        q: u8,
+        /// Row count.
+        n: u16,
+        /// Column/rank parameter.
+        k: u8,
+        /// Independent runs.
+        runs: u16,
+        /// Trajectories per run.
+        trajectories_per_run: u32,
+        /// Immutable checkpoint block size.
+        block_size: u32,
+    },
+    /// Registered coverage allocation.
+    Coverage {
+        /// Ordered exact anchors.
+        cases: Vec<CoverageCaseV1>,
+        /// Interval replicates per field.
+        replicates: u16,
+        /// Independent runs per replicate.
+        runs: u16,
+        /// Trajectories per run.
+        trajectories_per_run: u32,
+        /// Immutable checkpoint block size.
+        block_size: u32,
+    },
+}
+
+impl ScientificIdentityV1 {
+    /// Returns the exact registered target identity.
+    #[must_use]
+    pub fn target() -> Self {
+        Self::Target {
+            q: 3,
+            n: 1_024,
+            k: 3,
+            runs: TARGET_RUNS,
+            trajectories_per_run: TARGET_TRAJECTORIES_PER_RUN,
+            block_size: TARGET_BLOCK_SIZE,
+        }
+    }
+
+    /// Returns the exact registered coverage identity.
+    #[must_use]
+    pub fn coverage() -> Self {
+        Self::Coverage {
+            cases: vec![
+                CoverageCaseV1::new(3, "907", "2187"),
+                CoverageCaseV1::new(5, "17581", "78125"),
+                CoverageCaseV1::new(7, "126295", "823543"),
+            ],
+            replicates: COVERAGE_REPLICATES,
+            runs: COVERAGE_RUNS,
+            trajectories_per_run: COVERAGE_TRAJECTORIES_PER_RUN,
+            block_size: COVERAGE_TRAJECTORIES_PER_RUN,
+        }
+    }
+}
+
+/// One exact coverage anchor.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CoverageCaseV1 {
+    /// Field order.
+    pub q: u8,
+    /// Row count.
+    pub n: u16,
+    /// Column/rank parameter.
+    pub k: u8,
+    /// Reduced exact anchor.
+    pub exact_anchor: ExactDecimalV1,
+}
+
+impl CoverageCaseV1 {
+    fn new(q: u8, numerator: &str, denominator: &str) -> Self {
+        Self {
+            q,
+            n: 3,
+            k: 3,
+            exact_anchor: ExactDecimalV1::new(numerator, denominator),
+        }
+    }
+}
+
+/// A reduced nonnegative exact value encoded as canonical decimal strings.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExactDecimalV1 {
+    /// Canonical nonnegative base-ten numerator.
+    pub numerator: String,
+    /// Canonical positive base-ten denominator.
+    pub denominator: String,
+}
+
+impl ExactDecimalV1 {
+    /// Constructs an exact decimal pair; validation occurs at the artifact boundary.
+    #[must_use]
+    pub fn new(numerator: impl Into<String>, denominator: impl Into<String>) -> Self {
+        Self {
+            numerator: numerator.into(),
+            denominator: denominator.into(),
+        }
+    }
+}
+
+/// Fixed statistical constants.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StatisticalConstantsV1 {
+    /// Nominal interval level, exactly `95/100`.
+    pub nominal_interval_level: ExactDecimalV1,
+    /// Exact `t_31` critical rational.
+    pub student_critical: ExactDecimalV1,
+    /// Final-weight ESS usability threshold.
+    pub ess_threshold: ExactDecimalV1,
+    /// Coverage acceptance count.
+    pub coverage_acceptance: ExactDecimalV1,
+    /// Sample-variance divisor expression.
+    pub variance_divisor: String,
+    /// Closed two-sided interval-rule identifier.
+    pub interval_rule: String,
+}
+
+impl Default for StatisticalConstantsV1 {
+    fn default() -> Self {
+        Self {
+            nominal_interval_level: ExactDecimalV1::new("19", "20"),
+            student_critical: ExactDecimalV1::new("1019756723", "500000000"),
+            ess_threshold: ExactDecimalV1::new("1", "100"),
+            coverage_acceptance: ExactDecimalV1::new("9", "10"),
+            variance_divisor: "runs-1".into(),
+            interval_rule: "gf2.scaled-two-sided-student-clipped/v1".into(),
+        }
+    }
+}
+
+/// Complete estimator/build behavior identity.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BehaviorIdentityV1 {
+    /// Proposal identifier.
+    pub sampler: String,
+    /// Address-to-seed identifier.
+    pub address_to_seed: String,
+    /// RNG algorithm identifier.
+    pub rng_algorithm: String,
+    /// Locked RNG package version.
+    pub rng_crate_version: String,
+    /// Canonical serializer identifier.
+    pub serializer: String,
+    /// SHA-256 of canonical behavior-closure bytes.
+    pub estimator_behavior_sha256: String,
+    /// Descriptor whose digest is checked.
+    pub closure: BehaviorClosureV1,
+    /// Producing executable SHA-256.
+    pub executable_sha256: String,
+    /// Exact rustc version.
+    pub rust_version: String,
+    /// Exact Cargo version.
+    pub cargo_version: String,
+    /// Compilation target triple.
+    pub compilation_target: String,
+    /// Runtime-observed source revision.
+    pub source_revision: String,
+    /// Runtime-observed checkout dirty flag.
+    pub source_dirty: bool,
+}
+
+/// Closed behavior-closure descriptor.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BehaviorClosureV1 {
+    /// Exact descriptor schema.
+    pub behavior_schema: String,
+    /// Sorted enabled feature names.
+    pub enabled_features: Vec<String>,
+    /// Sorted repository source inputs.
+    pub repository_inputs: Vec<RepositoryInputV1>,
+    /// Root lockfile SHA-256.
+    pub cargo_lock_sha256: String,
+    /// Sorted resolved package closure.
+    pub packages: Vec<PackageIdentityV1>,
+    /// Sorted declared behavior-affecting environment inputs.
+    pub environment_input_names: Vec<String>,
+}
+
+/// One source input reported by producing dependency information.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RepositoryInputV1 {
+    /// Repository-relative source path.
+    pub path: String,
+    /// Git blob object ID.
+    pub blob_id: String,
+    /// Content SHA-256.
+    pub content_sha256: String,
+}
+
+/// One Cargo-resolved package identity.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PackageIdentityV1 {
+    /// Package name.
+    pub package: String,
+    /// Exact version.
+    pub version: String,
+    /// Cargo source string.
+    pub source: String,
+    /// Registry checksum or explicit path sentinel.
+    pub checksum: String,
+}
+
+/// Artifact envelope selecting one closed payload.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RareEventArtifactEnvelopeV1 {
+    /// Exact common-envelope schema.
+    pub envelope_schema: String,
+    /// Closed artifact kind.
+    pub artifact_kind: ArtifactKindV1,
+    /// Schema-tagged closed payload.
+    pub payload: RareEventPayloadV1,
+}
+
+/// Closed artifact kinds.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ArtifactKindV1 {
+    /// Immutable complete trajectory block.
+    TrajectoryCheckpoint,
+    /// Immutable start or terminal attempt phase.
+    ExecutionAttempt,
+    /// Target final receipt.
+    TargetCrossCheck,
+    /// Coverage final receipt.
+    CoverageValidation,
+}
+
+/// Schema-tagged closed payload union.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "payload_schema")]
+pub enum RareEventPayloadV1 {
+    /// Trajectory checkpoint payload.
+    #[serde(rename = "gf2.rare-event-trajectory-checkpoint/v1")]
+    TrajectoryCheckpoint(Box<TrajectoryCheckpointV1>),
+    /// Execution-attempt phase payload.
+    #[serde(rename = "gf2.rare-event-execution-attempt/v1")]
+    ExecutionAttempt(Box<ExecutionAttemptReceiptV1>),
+    /// Target final payload.
+    #[serde(rename = "gf2.rare-event-target-cross-check/v1")]
+    TargetCrossCheck(Box<TargetCrossCheckReceiptV1>),
+    /// Coverage final payload.
+    #[serde(rename = "gf2.rare-event-coverage-validation/v1")]
+    CoverageValidation(Box<CoverageValidationReceiptV1>),
+}
+
+/// One logical run address; this is an artifact semantic type, not a sampler address.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "mode", rename_all = "snake_case")]
+pub enum RunAddressV1 {
+    /// Target run `(r)`.
+    Target {
+        /// Run index.
+        run: u16,
+    },
+    /// Coverage run `(q,b,r)`.
+    Coverage {
+        /// Field order.
+        q: u8,
+        /// Replicate index.
+        replicate: u16,
+        /// Run index.
+        run: u16,
+    },
+}
+
+/// One complete immutable trajectory checkpoint.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TrajectoryCheckpointV1 {
+    /// Complete dataset identity.
+    pub dataset_identity: RareEventDatasetIdentityV1,
+    /// Recomputed dataset ID.
+    pub dataset_id: String,
+    /// Logical run address.
+    pub run_address: RunAddressV1,
+    /// Recomputed run ID.
+    pub run_id: String,
+    /// Zero-based immutable block index.
+    pub block_index: u16,
+    /// Inclusive trajectory start.
+    pub trajectory_start: u32,
+    /// Exclusive trajectory end.
+    pub trajectory_end: u32,
+    /// Producing attempt ID.
+    pub attempt_id: String,
+    /// Producing start-artifact digest.
+    pub attempt_start_sha256: String,
+    /// Producing backend observation.
+    pub producer: ProducerBackendV1,
+    /// Matching accelerator-observation digest.
+    pub accelerator_observation_sha256: String,
+    /// Closed target or coverage records.
+    pub records: TrajectoryRecordsV1,
+}
+
+/// CPU or GPU checkpoint producer identity.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "backend", rename_all = "snake_case")]
+pub enum ProducerBackendV1 {
+    /// CPU producer.
+    Cpu,
+    /// GPU producer linked to the start receipt.
+    Gpu {
+        /// Runtime GPU UUID.
+        device_uuid: String,
+        /// Producing kernel name.
+        kernel_name: String,
+        /// Loaded code-object SHA-256.
+        code_object_sha256: String,
+    },
+}
+
+/// Closed target or coverage trajectory-record union.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "record_kind", content = "items", rename_all = "snake_case")]
+pub enum TrajectoryRecordsV1 {
+    /// Target records.
+    Target(Vec<TargetTrajectoryRecordV1>),
+    /// Coverage records.
+    Coverage(Vec<CoverageTrajectoryRecordV1>),
+}
+
+/// One target trajectory record `(r,j,s,E)`.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TargetTrajectoryRecordV1 {
+    /// Run index.
+    pub run: u16,
+    /// Trajectory index.
+    pub trajectory: u32,
+    /// Recomputed stream index.
+    pub stream_index: u64,
+    /// Final likelihood exponent.
+    pub exponent: u32,
+}
+
+/// One coverage trajectory record `(q,b,r,j,s,E)`.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CoverageTrajectoryRecordV1 {
+    /// Field order.
+    pub q: u8,
+    /// Replicate index.
+    pub replicate: u16,
+    /// Run index.
+    pub run: u16,
+    /// Trajectory index.
+    pub trajectory: u32,
+    /// Recomputed stream index.
+    pub stream_index: u64,
+    /// Final likelihood exponent.
+    pub exponent: u32,
+}
+
+/// Immutable start or terminal phase for one execution attempt.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ExecutionAttemptReceiptV1 {
+    /// Complete dataset identity.
+    pub dataset_identity: RareEventDatasetIdentityV1,
+    /// Recomputed dataset ID.
+    pub dataset_id: String,
+    /// Recomputed attempt ID.
+    pub attempt_id: String,
+    /// Gap-free zero-based ordinal.
+    pub attempt_ordinal: u64,
+    /// Closed predecessor tag.
+    pub predecessor: AttemptPredecessorV1,
+    /// Start or terminal fields.
+    #[serde(flatten)]
+    pub phase: AttemptPhaseV1,
+}
+
+/// Attempt predecessor tag.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "predecessor", rename_all = "snake_case")]
+pub enum AttemptPredecessorV1 {
+    /// First attempt has no predecessor.
+    None,
+    /// Later attempt binds the prior terminal artifact.
+    Terminal {
+        /// Prior terminal SHA-256.
+        terminal_sha256: String,
+    },
+}
+
+/// Closed start/terminal phase fields.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "phase", rename_all = "snake_case", deny_unknown_fields)]
+pub enum AttemptPhaseV1 {
+    /// Launcher-observed start phase.
+    Start {
+        /// Ordered accepted checkpoint refs at process start.
+        resume_checkpoint_refs: Vec<CheckpointRefV1>,
+        /// OS-successful child creation time.
+        start_utc: String,
+        /// Time immediately before start publication.
+        start_receipt_utc: String,
+        /// Exact invocation/effective-input record.
+        invocation: Box<InvocationV1>,
+        /// Sorted declared environment inputs.
+        environment_inputs: Vec<EnvironmentInputV1>,
+        /// Requested/effective worker settings.
+        worker_configuration: WorkerConfigurationV1,
+        /// Runtime-observed host.
+        host_observation: Box<HostObservationV1>,
+        /// Runtime-observed accelerator selection.
+        accelerator_observation: AcceleratorObservationV1,
+    },
+    /// Launcher- or resumer-observed terminal phase.
+    Terminal {
+        /// Digest of the immutable start artifact.
+        attempt_start_sha256: String,
+        /// Echoed start time.
+        start_utc: String,
+        /// Observed terminal/resume time.
+        end_utc: String,
+        /// Meaning of `end_utc`.
+        end_time_meaning: EndTimeMeaningV1,
+        /// Optional monotonic elapsed nanoseconds.
+        monotonic_elapsed_ns: Option<u64>,
+        /// Digest of start host observation canonical bytes.
+        host_observation_sha256: String,
+        /// Digest of start accelerator observation canonical bytes.
+        accelerator_observation_sha256: String,
+        /// Launcher/resumer observer identity.
+        outcome_observer: OutcomeObserverV1,
+        /// Closed outcome.
+        outcome: AttemptOutcomeV1,
+        /// Ordered checkpoint refs produced by this attempt.
+        checkpoint_refs: Vec<CheckpointRefV1>,
+    },
+}
+
+/// Exact invocation and effective input resolution.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct InvocationV1 {
+    /// Exact UTF-8 argument vector including argument zero.
+    pub argv: Vec<String>,
+    /// Resolved executable path.
+    pub executable_path: String,
+    /// Runtime executable SHA-256.
+    pub executable_sha256: String,
+    /// Runtime child PID.
+    pub process_id: u32,
+    /// OS process-start token.
+    pub process_start_token: String,
+    /// Boot/container identity.
+    pub boot_identity: String,
+    /// Immutable configuration path.
+    pub configuration_path: String,
+    /// Configuration digest.
+    pub configuration_sha256: String,
+    /// Canonical effective-configuration bytes as lowercase hex.
+    pub effective_configuration_hex: String,
+    /// Sorted field-by-field resolution.
+    pub input_resolution: Vec<InputResolutionV1>,
+}
+
+/// One effective input and its sole source.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct InputResolutionV1 {
+    /// Schema field name.
+    pub field: String,
+    /// Closed input origin.
+    pub origin: InputOriginV1,
+    /// Exact UTF-8 effective value.
+    pub value: String,
+}
+
+/// Closed input origin.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum InputOriginV1 {
+    /// Configuration file.
+    Configuration,
+    /// Argument token.
+    Argument,
+    /// Declared environment input.
+    Environment,
+    /// Schema default.
+    SchemaDefault,
+}
+
+/// One declared behavior-affecting environment input.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EnvironmentInputV1 {
+    /// Exact environment name.
+    pub name: String,
+    /// Unset or exact UTF-8 value.
+    pub value: EnvironmentValueV1,
+}
+
+/// Closed environment-value tag.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "state", content = "value", rename_all = "snake_case")]
+pub enum EnvironmentValueV1 {
+    /// Name was unset.
+    Unset,
+    /// Exact UTF-8 value.
+    Set(String),
+}
+
+/// Requested and effective execution configuration.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerConfigurationV1 {
+    /// Requested worker count.
+    pub requested_workers: usize,
+    /// Effective worker count.
+    pub effective_workers: usize,
+    /// Executor/backend mode.
+    pub executor_mode: String,
+    /// CPU affinity or exact `unpinned` tag.
+    pub cpu_affinity: String,
+    /// Work-queue policy identifier.
+    pub work_queue_policy: String,
+    /// Block-assignment policy identifier.
+    pub block_assignment_policy: String,
+    /// Accelerator-selection policy.
+    pub accelerator_selection: String,
+    /// Fallback policy.
+    pub fallback_policy: String,
+    /// Ordered effective device selection.
+    pub effective_devices: Vec<String>,
+}
+
+/// Exact observed evidence bytes and digest.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ObservationEvidenceV1 {
+    /// Runtime observation source identifier.
+    pub source: String,
+    /// Exact returned bytes as lowercase hex.
+    pub evidence_hex: String,
+    /// SHA-256 of decoded evidence bytes.
+    pub evidence_sha256: String,
+}
+
+/// Runtime-observed CPU/RAM/OS facts.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HostObservationV1 {
+    /// UTC collection time.
+    pub observation_utc: String,
+    /// Runtime architecture.
+    pub cpu_architecture: String,
+    /// Runtime vendor.
+    pub cpu_vendor: String,
+    /// Runtime model identity.
+    pub cpu_model: String,
+    /// Observed socket count.
+    pub sockets: u32,
+    /// Observed NUMA-node count.
+    pub numa_nodes: u32,
+    /// Observed physical-core count.
+    pub physical_cores: u32,
+    /// Observed logical CPU count.
+    pub logical_cpus: u32,
+    /// Sorted online logical identifiers.
+    pub online_cpus: Vec<u32>,
+    /// Total RAM bytes.
+    pub total_ram_bytes: u64,
+    /// Available RAM bytes.
+    pub available_ram_bytes: u64,
+    /// Runtime OS name.
+    pub os_name: String,
+    /// Runtime OS version.
+    pub os_version: String,
+    /// Kernel release.
+    pub kernel_release: String,
+    /// Kernel version.
+    pub kernel_version: String,
+    /// Ordered evidence groups used to derive normalized fields.
+    pub evidence: Vec<ObservationEvidenceV1>,
+}
+
+/// Runtime accelerator observation.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "selection", rename_all = "snake_case")]
+pub enum AcceleratorObservationV1 {
+    /// No accelerator selected or loaded.
+    NotUsed {
+        /// Runtime-observed selection reason.
+        reason: String,
+        /// Exact source evidence.
+        evidence: Vec<ObservationEvidenceV1>,
+    },
+    /// One or more selected/loaded GPUs.
+    Used {
+        /// Sorted observations by UUID.
+        devices: Vec<GpuObservationV1>,
+    },
+}
+
+/// One runtime-observed GPU and loaded kernel.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GpuObservationV1 {
+    /// Model name.
+    pub model: String,
+    /// Runtime UUID.
+    pub uuid: String,
+    /// PCI address.
+    pub pci_address: String,
+    /// Architecture identifier.
+    pub architecture: String,
+    /// Driver version.
+    pub driver_version: String,
+    /// ROCm version.
+    pub rocm_version: String,
+    /// HIP runtime version.
+    pub hip_version: String,
+    /// Producing kernel name.
+    pub kernel_name: String,
+    /// Loaded code-object SHA-256.
+    pub code_object_sha256: String,
+    /// Exact runtime evidence.
+    pub evidence: Vec<ObservationEvidenceV1>,
+}
+
+/// Meaning of a terminal time.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EndTimeMeaningV1 {
+    /// Launcher observed process termination.
+    ProcessObserved,
+    /// Resumer observed abandoned identity absent.
+    ResumeObservation,
+}
+
+/// Terminal outcome observer.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "observer", rename_all = "snake_case")]
+pub enum OutcomeObserverV1 {
+    /// Supervising launcher.
+    SupervisingLauncher {
+        /// Launcher executable SHA-256.
+        launcher_sha256: String,
+    },
+    /// Resuming launcher.
+    ResumingLauncher {
+        /// Launcher executable SHA-256.
+        launcher_sha256: String,
+        /// Liveness observation evidence.
+        liveness_evidence: ObservationEvidenceV1,
+    },
+}
+
+/// Closed terminal outcome.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "outcome", rename_all = "snake_case")]
+pub enum AttemptOutcomeV1 {
+    /// Successful observed exit and completed contract.
+    Completed,
+    /// Observed error exit or structured failure.
+    Failed {
+        /// Exact wait-status token.
+        wait_status: String,
+        /// Optional structured failure category.
+        failure_category: Option<String>,
+    },
+    /// Observed cancellation or termination signal.
+    Interrupted {
+        /// Exact signal/status token.
+        wait_status: String,
+    },
+    /// Prior child identity was proved not live during resume.
+    TerminationUnobservedOnResume,
+}
+
+/// One immutable checkpoint reference.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CheckpointRefV1 {
+    /// Canonical block address string.
+    pub block_address: String,
+    /// Checkpoint artifact SHA-256.
+    pub checkpoint_sha256: String,
+}
+
+/// One transitive attempt reference in a final receipt.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AttemptRefV1 {
+    /// Recomputed attempt ID.
+    pub attempt_id: String,
+    /// Start artifact SHA-256.
+    pub attempt_start_sha256: String,
+    /// Terminal artifact SHA-256.
+    pub attempt_terminal_sha256: String,
+}
+
+/// Validated complete execution lineage.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ValidatedExecutionLineage {
+    /// Gap-free ordinal-ordered attempt triples.
+    pub attempts: Vec<AttemptRefV1>,
+    /// Complete ordered checkpoint partition.
+    pub checkpoint_refs: Vec<CheckpointRefV1>,
+}
+
+/// Canonical target scientific result, separate from execution provenance.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TargetResultPayloadV1 {
+    /// Exact expected final-weight count.
+    pub expected_trajectory_count: u64,
+    /// Primary exact-result repository path.
+    pub exact_result_path: String,
+    /// Primary exact-result content SHA-256.
+    pub exact_result_sha256: String,
+    /// Raw exact deficient count.
+    pub exact_raw_count: String,
+    /// Raw exact total.
+    pub exact_total: String,
+    /// Reduced primary probability.
+    pub exact_probability: ExactDecimalV1,
+    /// Exact cross-check estimate.
+    pub cross_check_estimate: ExactDecimalV1,
+    /// Exact independent-run variance.
+    pub independent_run_variance: ExactDecimalV1,
+    /// Outward-rendered lower endpoint.
+    pub interval_lower: String,
+    /// Outward-rendered upper endpoint.
+    pub interval_upper: String,
+    /// Exact final-weight ESS.
+    pub final_weight_ess: ExactDecimalV1,
+    /// Exact ESS/sample fraction.
+    pub ess_fraction: ExactDecimalV1,
+    /// Complete pooled exponent histogram.
+    pub exponent_histogram: Vec<ExponentBinV1>,
+    /// Complete exact run means.
+    pub run_means: Vec<ExactDecimalV1>,
+    /// Every extinction diagnostic.
+    pub extinction_reasons: Vec<String>,
+    /// Fixed degeneracy verdict.
+    pub degeneracy: bool,
+    /// Closed usable/contradiction/unusable verdict.
+    pub verdict: CrossCheckVerdictV1,
+}
+
+/// One complete exponent-histogram bin.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExponentBinV1 {
+    /// Exponent.
+    pub exponent: u32,
+    /// Count.
+    pub count: u64,
+}
+
+/// Target cross-check verdict.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CrossCheckVerdictV1 {
+    /// Exact value lies in a usable interval.
+    Agreement,
+    /// Usable interval excludes the exact value.
+    Contradiction,
+    /// Extinction or below-threshold ESS.
+    Unusable,
+}
+
+/// Target final receipt.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TargetCrossCheckReceiptV1 {
+    /// Complete target identity.
+    pub dataset_identity: RareEventDatasetIdentityV1,
+    /// Recomputed dataset ID.
+    pub dataset_id: String,
+    /// Canonical scientific result.
+    pub result_payload: TargetResultPayloadV1,
+    /// SHA-256 over canonical result-payload bytes only.
+    pub result_sha256: String,
+    /// Complete execution provenance.
+    pub execution_provenance: ValidatedExecutionLineage,
+}
+
+/// One coverage replicate result.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CoverageReplicateV1 {
+    /// Field order.
+    pub q: u8,
+    /// Replicate index.
+    pub replicate: u16,
+    /// Exact anchor.
+    pub exact_anchor: ExactDecimalV1,
+    /// Exact point estimate.
+    pub estimate: ExactDecimalV1,
+    /// Outward-rendered lower endpoint.
+    pub interval_lower: String,
+    /// Outward-rendered upper endpoint.
+    pub interval_upper: String,
+    /// Exact containment verdict.
+    pub contains_anchor: bool,
+    /// Exact ESS fraction diagnostic.
+    pub ess_fraction: ExactDecimalV1,
+    /// Extinction diagnostics.
+    pub extinction_reasons: Vec<String>,
+}
+
+/// Canonical coverage scientific result.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CoverageResultPayloadV1 {
+    /// Exact expected final-weight count.
+    pub expected_trajectory_count: u64,
+    /// All replicates in increasing `(q,b)` order.
+    pub replicates: Vec<CoverageReplicateV1>,
+    /// Per-field containment counts.
+    pub coverage_counts: Vec<CoverageCountV1>,
+    /// Closed validation verdict.
+    pub verdict: CoverageVerdictV1,
+}
+
+/// One per-field empirical coverage count.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CoverageCountV1 {
+    /// Field order.
+    pub q: u8,
+    /// Containing intervals out of 200.
+    pub count: u16,
+}
+
+/// Coverage-validation verdict.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CoverageVerdictV1 {
+    /// Every field has at least 180/200.
+    Adequate,
+    /// At least one field fails 180/200 or has extinction.
+    Unusable,
+}
+
+/// Coverage final receipt.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CoverageValidationReceiptV1 {
+    /// Complete coverage identity.
+    pub dataset_identity: RareEventDatasetIdentityV1,
+    /// Recomputed dataset ID.
+    pub dataset_id: String,
+    /// Canonical scientific result.
+    pub result_payload: CoverageResultPayloadV1,
+    /// SHA-256 over canonical result-payload bytes only.
+    pub result_sha256: String,
+    /// Complete execution provenance.
+    pub execution_provenance: ValidatedExecutionLineage,
+}
+
+/// A schema, identity, integrity, lineage, or publication refusal.
+#[derive(Debug)]
+pub enum ArtifactError {
+    /// JSON serialization/deserialization failed.
+    Json(serde_json::Error),
+    /// Schema identifier, enum tag, field, or canonical encoding is invalid.
+    Schema(String),
+    /// SHA-256 sidecar or linked digest is invalid.
+    Integrity(String),
+    /// Dataset, run, attempt, or source identity is invalid.
+    Identity(String),
+    /// Semantic address set is incomplete, extra, duplicated, or reordered.
+    AddressSet(String),
+    /// Attempt/checkpoint lineage is invalid.
+    Lineage(String),
+}
+
+impl fmt::Display for ArtifactError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Json(error) => write!(formatter, "artifact JSON error: {error}"),
+            Self::Schema(message) => write!(formatter, "artifact schema refusal: {message}"),
+            Self::Integrity(message) => write!(formatter, "artifact integrity refusal: {message}"),
+            Self::Identity(message) => write!(formatter, "artifact identity refusal: {message}"),
+            Self::AddressSet(message) => {
+                write!(formatter, "artifact address-set refusal: {message}")
+            }
+            Self::Lineage(message) => write!(formatter, "artifact lineage refusal: {message}"),
+        }
+    }
+}
+
+impl std::error::Error for ArtifactError {}
+
+impl From<serde_json::Error> for ArtifactError {
+    fn from(error: serde_json::Error) -> Self {
+        Self::Json(error)
+    }
+}
+
+/// Serializes a schema value to canonical UTF-8 JSON plus one final LF.
+pub fn canonical_bytes<T: Serialize>(value: &T) -> Result<Vec<u8>, ArtifactError> {
+    let value = serde_json::to_value(value)?;
+    let mut bytes = Vec::new();
+    write_canonical_value(&value, &mut bytes)?;
+    bytes.push(b'\n');
+    Ok(bytes)
+}
+
+/// Computes lowercase SHA-256 over exact bytes.
+#[must_use]
+pub fn sha256_hex(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
+
+/// Recomputes a dataset ID from canonical identity bytes.
+pub fn dataset_id(identity: &RareEventDatasetIdentityV1) -> Result<String, ArtifactError> {
+    domain_digest(
+        b"gf2-rare-event-dataset-identity-v1",
+        &canonical_bytes(identity)?,
+    )
+}
+
+/// Recomputes a logical run ID from the dataset and semantic run address.
+pub fn run_id(
+    identity: &RareEventDatasetIdentityV1,
+    address: &RunAddressV1,
+) -> Result<String, ArtifactError> {
+    let dataset = decode_digest(&dataset_id(identity)?)?;
+    let address = canonical_bytes(address)?;
+    let mut input = Vec::with_capacity(dataset.len() + address.len());
+    input.extend(dataset);
+    input.extend(address);
+    domain_digest(b"gf2-rare-event-run-identity-v1", &input)
+}
+
+/// Recomputes an attempt ID from its dataset, ordinal, and predecessor.
+pub fn attempt_id(
+    identity: &RareEventDatasetIdentityV1,
+    ordinal: u64,
+    predecessor: &AttemptPredecessorV1,
+) -> Result<String, ArtifactError> {
+    if ordinal >= 1_000_000_000_000 {
+        return Err(ArtifactError::Identity(
+            "attempt ordinal is outside twelve digits".into(),
+        ));
+    }
+    let mut input = decode_digest(&dataset_id(identity)?)?;
+    input.extend(ordinal.to_le_bytes());
+    match predecessor {
+        AttemptPredecessorV1::None if ordinal == 0 => input.push(0),
+        AttemptPredecessorV1::Terminal { terminal_sha256 } if ordinal > 0 => {
+            input.push(1);
+            input.extend(decode_digest(terminal_sha256)?);
+        }
+        _ => {
+            return Err(ArtifactError::Identity(
+                "attempt predecessor tag disagrees with ordinal".into(),
+            ))
+        }
+    }
+    domain_digest(b"gf2-rare-event-attempt-identity-v1", &input)
+}
+
+/// Parses and validates exact canonical envelope bytes.
+pub fn decode_envelope(bytes: &[u8]) -> Result<RareEventArtifactEnvelopeV1, ArtifactError> {
+    let envelope: RareEventArtifactEnvelopeV1 = serde_json::from_slice(bytes)?;
+    if canonical_bytes(&envelope)? != bytes {
+        return Err(ArtifactError::Schema(
+            "artifact JSON is not canonical".into(),
+        ));
+    }
+    validate_envelope(&envelope)?;
+    Ok(envelope)
+}
+
+/// Parses a closed canonical configuration from exact bytes.
+pub fn decode_configuration(bytes: &[u8]) -> Result<RareEventConfigurationV1, ArtifactError> {
+    let configuration: RareEventConfigurationV1 = serde_json::from_slice(bytes)?;
+    if canonical_bytes(&configuration)? != bytes {
+        return Err(ArtifactError::Schema(
+            "configuration JSON is not canonical".into(),
+        ));
+    }
+    if configuration.configuration_schema != CONFIGURATION_SCHEMA_V1 {
+        return Err(ArtifactError::Schema("unknown configuration schema".into()));
+    }
+    validate_configuration(&configuration)?;
+    Ok(configuration)
+}
+
+/// Exact JSON, sidecar, and digest bytes ready for later immutable publication.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArtifactFileBytes {
+    /// Canonical `artifact.json` bytes.
+    pub artifact_json: Vec<u8>,
+    /// Exact `artifact.sha256` bytes.
+    pub artifact_sha256: Vec<u8>,
+    /// Lowercase SHA-256 of `artifact_json`.
+    pub digest: String,
+}
+
+/// Encodes and validates the two files of one artifact directory.
+pub fn encode_artifact_files(
+    envelope: &RareEventArtifactEnvelopeV1,
+) -> Result<ArtifactFileBytes, ArtifactError> {
+    validate_envelope(envelope)?;
+    let artifact_json = canonical_bytes(envelope)?;
+    let digest = sha256_hex(&artifact_json);
+    let artifact_sha256 = format!("{digest}  {ARTIFACT_JSON}\n").into_bytes();
+    Ok(ArtifactFileBytes {
+        artifact_json,
+        artifact_sha256,
+        digest,
+    })
+}
+
+/// Verifies exact JSON/sidecar bytes against an externally expected identity.
+pub fn verify_artifact_files(
+    artifact_json: &[u8],
+    artifact_sha256: &[u8],
+    expected_identity: &RareEventDatasetIdentityV1,
+) -> Result<RareEventArtifactEnvelopeV1, ArtifactError> {
+    let digest = sha256_hex(artifact_json);
+    if artifact_sha256 != format!("{digest}  {ARTIFACT_JSON}\n").as_bytes() {
+        return Err(ArtifactError::Integrity(
+            "artifact sidecar does not match canonical JSON bytes".into(),
+        ));
+    }
+    let envelope = decode_envelope(artifact_json)?;
+    if payload_identity(&envelope.payload) != expected_identity {
+        return Err(ArtifactError::Identity(
+            "embedded dataset identity differs from expected identity".into(),
+        ));
+    }
+    Ok(envelope)
+}
+
+/// Wraps and validates a target final receipt from checked inputs.
+pub fn target_final_envelope(
+    identity: RareEventDatasetIdentityV1,
+    result_payload: TargetResultPayloadV1,
+    execution_provenance: ValidatedExecutionLineage,
+) -> Result<RareEventArtifactEnvelopeV1, ArtifactError> {
+    let result_sha256 = sha256_hex(&canonical_bytes(&result_payload)?);
+    let receipt = TargetCrossCheckReceiptV1 {
+        dataset_id: dataset_id(&identity)?,
+        dataset_identity: identity,
+        result_payload,
+        result_sha256,
+        execution_provenance,
+    };
+    let envelope = RareEventArtifactEnvelopeV1 {
+        envelope_schema: ENVELOPE_SCHEMA_V1.into(),
+        artifact_kind: ArtifactKindV1::TargetCrossCheck,
+        payload: RareEventPayloadV1::TargetCrossCheck(Box::new(receipt)),
+    };
+    validate_envelope(&envelope)?;
+    Ok(envelope)
+}
+
+/// Wraps and validates a coverage final receipt from checked inputs.
+pub fn coverage_final_envelope(
+    identity: RareEventDatasetIdentityV1,
+    result_payload: CoverageResultPayloadV1,
+    execution_provenance: ValidatedExecutionLineage,
+) -> Result<RareEventArtifactEnvelopeV1, ArtifactError> {
+    let result_sha256 = sha256_hex(&canonical_bytes(&result_payload)?);
+    let receipt = CoverageValidationReceiptV1 {
+        dataset_id: dataset_id(&identity)?,
+        dataset_identity: identity,
+        result_payload,
+        result_sha256,
+        execution_provenance,
+    };
+    let envelope = RareEventArtifactEnvelopeV1 {
+        envelope_schema: ENVELOPE_SCHEMA_V1.into(),
+        artifact_kind: ArtifactKindV1::CoverageValidation,
+        payload: RareEventPayloadV1::CoverageValidation(Box::new(receipt)),
+    };
+    validate_envelope(&envelope)?;
+    Ok(envelope)
+}
+
+fn validate_configuration(configuration: &RareEventConfigurationV1) -> Result<(), ArtifactError> {
+    validate_relative_path(&configuration.artifact_root)?;
+    if configuration.artifact_root.starts_with(
+        "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/",
+    ) {
+        return Err(ArtifactError::Schema(
+            "artifact root must lie outside raw campaign samples".into(),
+        ));
+    }
+    validate_design(&configuration.design_identity)?;
+    validate_scientific(&configuration.scientific_identity)?;
+    validate_behavior(&configuration.behavior)?;
+    validate_worker(&configuration.worker_configuration)
+}
+
+fn validate_envelope(envelope: &RareEventArtifactEnvelopeV1) -> Result<(), ArtifactError> {
+    if envelope.envelope_schema != ENVELOPE_SCHEMA_V1 {
+        return Err(ArtifactError::Schema("unknown envelope schema".into()));
+    }
+    let expected_kind = match &envelope.payload {
+        RareEventPayloadV1::TrajectoryCheckpoint(payload) => {
+            validate_common(&payload.dataset_identity, &payload.dataset_id)?;
+            validate_checkpoint(payload)?;
+            ArtifactKindV1::TrajectoryCheckpoint
+        }
+        RareEventPayloadV1::ExecutionAttempt(payload) => {
+            validate_common(&payload.dataset_identity, &payload.dataset_id)?;
+            validate_attempt(payload)?;
+            ArtifactKindV1::ExecutionAttempt
+        }
+        RareEventPayloadV1::TargetCrossCheck(payload) => {
+            validate_common(&payload.dataset_identity, &payload.dataset_id)?;
+            if payload.result_sha256 != sha256_hex(&canonical_bytes(&payload.result_payload)?) {
+                return Err(ArtifactError::Integrity(
+                    "target result payload digest mismatch".into(),
+                ));
+            }
+            if payload.result_payload.expected_trajectory_count != 524_288 {
+                return Err(ArtifactError::AddressSet(
+                    "target result count must be 524288".into(),
+                ));
+            }
+            validate_final_refs(
+                &payload.dataset_identity,
+                &payload.execution_provenance,
+                2_048,
+            )?;
+            ArtifactKindV1::TargetCrossCheck
+        }
+        RareEventPayloadV1::CoverageValidation(payload) => {
+            validate_common(&payload.dataset_identity, &payload.dataset_id)?;
+            if payload.result_sha256 != sha256_hex(&canonical_bytes(&payload.result_payload)?) {
+                return Err(ArtifactError::Integrity(
+                    "coverage result payload digest mismatch".into(),
+                ));
+            }
+            if payload.result_payload.expected_trajectory_count != 78_643_200 {
+                return Err(ArtifactError::AddressSet(
+                    "coverage result count must be 78643200".into(),
+                ));
+            }
+            validate_final_refs(
+                &payload.dataset_identity,
+                &payload.execution_provenance,
+                19_200,
+            )?;
+            ArtifactKindV1::CoverageValidation
+        }
+    };
+    if envelope.artifact_kind != expected_kind {
+        return Err(ArtifactError::Schema(
+            "artifact kind does not select payload schema".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_common(
+    identity: &RareEventDatasetIdentityV1,
+    embedded_id: &str,
+) -> Result<(), ArtifactError> {
+    validate_identity(identity)?;
+    if embedded_id != dataset_id(identity)? {
+        return Err(ArtifactError::Identity(
+            "dataset ID recomputation mismatch".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_identity(identity: &RareEventDatasetIdentityV1) -> Result<(), ArtifactError> {
+    if identity.campaign != CampaignAuthorityV1::default() {
+        return Err(ArtifactError::Identity(
+            "campaign authority differs from frozen constants".into(),
+        ));
+    }
+    validate_design(&identity.preregistration.design)?;
+    validate_relative_path(&identity.preregistration.configuration_path)?;
+    if identity.preregistration.configuration_schema != CONFIGURATION_SCHEMA_V1 {
+        return Err(ArtifactError::Identity(
+            "unknown configuration identity".into(),
+        ));
+    }
+    validate_digest(&identity.preregistration.configuration_sha256)?;
+    validate_scientific(&identity.scientific)?;
+    if identity.statistical != StatisticalConstantsV1::default() {
+        return Err(ArtifactError::Identity(
+            "statistical constants differ from preregistration".into(),
+        ));
+    }
+    validate_behavior(&identity.behavior)
+}
+
+fn validate_design(design: &DesignIdentityV1) -> Result<(), ArtifactError> {
+    if design.path != "dev/active/3f664839/design.md" {
+        return Err(ArtifactError::Identity(
+            "design path is not the preregistration path".into(),
+        ));
+    }
+    validate_hex(&design.git_revision, 40)?;
+    validate_hex(&design.blob_id, 40)?;
+    validate_digest(&design.content_sha256)
+}
+
+fn validate_scientific(scientific: &ScientificIdentityV1) -> Result<(), ArtifactError> {
+    if scientific != &ScientificIdentityV1::target()
+        && scientific != &ScientificIdentityV1::coverage()
+    {
+        return Err(ArtifactError::Identity(
+            "scientific allocation differs from registered target/coverage".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_behavior(behavior: &BehaviorIdentityV1) -> Result<(), ArtifactError> {
+    if behavior.sampler != SAMPLER_V1
+        || behavior.address_to_seed != ADDRESS_TO_SEED_V1
+        || behavior.rng_algorithm != RNG_V1
+        || behavior.rng_crate_version != "0.9.0"
+        || behavior.serializer != SERIALIZER_V1
+    {
+        return Err(ArtifactError::Identity(
+            "unknown sampler/RNG/serializer behavior".into(),
+        ));
+    }
+    if behavior.source_dirty {
+        return Err(ArtifactError::Identity(
+            "dirty producer is forbidden".into(),
+        ));
+    }
+    for digest in [
+        &behavior.estimator_behavior_sha256,
+        &behavior.executable_sha256,
+        &behavior.closure.cargo_lock_sha256,
+    ] {
+        validate_digest(digest)?;
+    }
+    if behavior.closure.behavior_schema != BEHAVIOR_CLOSURE_SCHEMA_V1 {
+        return Err(ArtifactError::Identity(
+            "unknown behavior-closure schema".into(),
+        ));
+    }
+    ensure_sorted_unique(&behavior.closure.enabled_features, "enabled features")?;
+    ensure_sorted_unique(&behavior.closure.repository_inputs, "repository inputs")?;
+    ensure_sorted_unique(&behavior.closure.packages, "package closure")?;
+    ensure_sorted_unique(
+        &behavior.closure.environment_input_names,
+        "environment declarations",
+    )?;
+    for input in &behavior.closure.repository_inputs {
+        validate_relative_path(&input.path)?;
+        validate_hex(&input.blob_id, 40)?;
+        validate_digest(&input.content_sha256)?;
+    }
+    let closure_digest = sha256_hex(&canonical_bytes(&behavior.closure)?);
+    if closure_digest != behavior.estimator_behavior_sha256 {
+        return Err(ArtifactError::Identity(
+            "behavior closure digest mismatch".into(),
+        ));
+    }
+    validate_hex(&behavior.source_revision, 40)
+}
+
+fn validate_worker(worker: &WorkerConfigurationV1) -> Result<(), ArtifactError> {
+    if worker.requested_workers == 0 || worker.effective_workers == 0 {
+        return Err(ArtifactError::Schema(
+            "worker counts must be positive".into(),
+        ));
+    }
+    ensure_sorted_unique(&worker.effective_devices, "effective devices")
+}
+
+fn validate_checkpoint(payload: &TrajectoryCheckpointV1) -> Result<(), ArtifactError> {
+    if payload.run_id != run_id(&payload.dataset_identity, &payload.run_address)? {
+        return Err(ArtifactError::Identity(
+            "run ID recomputation mismatch".into(),
+        ));
+    }
+    validate_digest(&payload.attempt_start_sha256)?;
+    validate_digest(&payload.accelerator_observation_sha256)?;
+    validate_digest(&payload.attempt_id)?;
+    match (
+        &payload.run_address,
+        &payload.records,
+        &payload.dataset_identity.scientific,
+    ) {
+        (
+            RunAddressV1::Target { run },
+            TrajectoryRecordsV1::Target(records),
+            ScientificIdentityV1::Target { .. },
+        ) => {
+            if *run >= TARGET_RUNS
+                || payload.block_index >= 64
+                || payload.trajectory_start != u32::from(payload.block_index) * TARGET_BLOCK_SIZE
+                || payload.trajectory_end != payload.trajectory_start + TARGET_BLOCK_SIZE
+                || records.len() != TARGET_BLOCK_SIZE as usize
+            {
+                return Err(ArtifactError::AddressSet(
+                    "target checkpoint block shape mismatch".into(),
+                ));
+            }
+            for (offset, record) in records.iter().enumerate() {
+                let trajectory = payload.trajectory_start + offset as u32;
+                if record.run != *run
+                    || record.trajectory != trajectory
+                    || record.stream_index
+                        != target_address(*run, trajectory)
+                            .map_err(|error| ArtifactError::AddressSet(error.to_string()))?
+                            .stream()
+                            .get()
+                    || record.exponent > 3 * 1_024
+                {
+                    return Err(ArtifactError::AddressSet(
+                        "target record address/order/exponent mismatch".into(),
+                    ));
+                }
+            }
+        }
+        (
+            RunAddressV1::Coverage { q, replicate, run },
+            TrajectoryRecordsV1::Coverage(records),
+            ScientificIdentityV1::Coverage { .. },
+        ) => {
+            if ![3, 5, 7].contains(q)
+                || *replicate >= COVERAGE_REPLICATES
+                || *run >= COVERAGE_RUNS
+                || payload.block_index != 0
+                || payload.trajectory_start != 0
+                || payload.trajectory_end != COVERAGE_TRAJECTORIES_PER_RUN
+                || records.len() != COVERAGE_TRAJECTORIES_PER_RUN as usize
+            {
+                return Err(ArtifactError::AddressSet(
+                    "coverage checkpoint block shape mismatch".into(),
+                ));
+            }
+            for (trajectory, record) in records.iter().enumerate() {
+                if record.q != *q
+                    || record.replicate != *replicate
+                    || record.run != *run
+                    || record.trajectory != trajectory as u32
+                    || record.stream_index
+                        != coverage_address(*q, *replicate, *run, trajectory as u32)
+                            .map_err(|error| ArtifactError::AddressSet(error.to_string()))?
+                            .stream()
+                            .get()
+                    || record.exponent > 9
+                {
+                    return Err(ArtifactError::AddressSet(
+                        "coverage record address/order/exponent mismatch".into(),
+                    ));
+                }
+            }
+        }
+        _ => {
+            return Err(ArtifactError::Schema(
+                "checkpoint mode/records/identity mismatch".into(),
+            ))
+        }
+    }
+    Ok(())
+}
+
+fn validate_attempt(payload: &ExecutionAttemptReceiptV1) -> Result<(), ArtifactError> {
+    if payload.attempt_id
+        != attempt_id(
+            &payload.dataset_identity,
+            payload.attempt_ordinal,
+            &payload.predecessor,
+        )?
+    {
+        return Err(ArtifactError::Identity(
+            "attempt ID recomputation mismatch".into(),
+        ));
+    }
+    match &payload.phase {
+        AttemptPhaseV1::Start {
+            resume_checkpoint_refs,
+            start_utc,
+            start_receipt_utc,
+            invocation,
+            environment_inputs,
+            worker_configuration,
+            host_observation,
+            accelerator_observation,
+        } => {
+            validate_timestamp(start_utc)?;
+            validate_timestamp(start_receipt_utc)?;
+            validate_digest(&invocation.executable_sha256)?;
+            validate_digest(&invocation.configuration_sha256)?;
+            validate_hex_bytes(&invocation.effective_configuration_hex)?;
+            if invocation.argv.is_empty()
+                || invocation.process_start_token.is_empty()
+                || invocation.boot_identity.is_empty()
+            {
+                return Err(ArtifactError::Schema(
+                    "invocation lacks argv or PID-reuse identity".into(),
+                ));
+            }
+            ensure_sorted_by(
+                environment_inputs,
+                |entry| &entry.name,
+                "environment inputs",
+            )?;
+            let declared: Vec<_> = environment_inputs
+                .iter()
+                .map(|entry| entry.name.clone())
+                .collect();
+            if declared
+                != payload
+                    .dataset_identity
+                    .behavior
+                    .closure
+                    .environment_input_names
+            {
+                return Err(ArtifactError::Identity(
+                    "environment declarations differ from behavior closure".into(),
+                ));
+            }
+            ensure_sorted_by(
+                &invocation.input_resolution,
+                |entry| &entry.field,
+                "input resolution",
+            )?;
+            validate_worker(worker_configuration)?;
+            validate_host(host_observation)?;
+            validate_accelerator(accelerator_observation)?;
+            ensure_sorted_unique(resume_checkpoint_refs, "resume checkpoint refs")?;
+        }
+        AttemptPhaseV1::Terminal {
+            attempt_start_sha256,
+            start_utc,
+            end_utc,
+            end_time_meaning,
+            host_observation_sha256,
+            accelerator_observation_sha256,
+            outcome_observer,
+            outcome,
+            checkpoint_refs,
+            ..
+        } => {
+            validate_digest(attempt_start_sha256)?;
+            validate_digest(host_observation_sha256)?;
+            validate_digest(accelerator_observation_sha256)?;
+            validate_timestamp(start_utc)?;
+            validate_timestamp(end_utc)?;
+            ensure_sorted_unique(checkpoint_refs, "terminal checkpoint refs")?;
+            match (end_time_meaning, outcome_observer, outcome) {
+                (
+                    EndTimeMeaningV1::ProcessObserved,
+                    OutcomeObserverV1::SupervisingLauncher { launcher_sha256 },
+                    AttemptOutcomeV1::Completed
+                    | AttemptOutcomeV1::Failed { .. }
+                    | AttemptOutcomeV1::Interrupted { .. },
+                ) => validate_digest(launcher_sha256)?,
+                (
+                    EndTimeMeaningV1::ResumeObservation,
+                    OutcomeObserverV1::ResumingLauncher {
+                        launcher_sha256,
+                        liveness_evidence,
+                    },
+                    AttemptOutcomeV1::TerminationUnobservedOnResume,
+                ) => {
+                    validate_digest(launcher_sha256)?;
+                    validate_evidence(liveness_evidence)?;
+                }
+                _ => {
+                    return Err(ArtifactError::Lineage(
+                        "terminal outcome is not launcher-observed with matching time meaning"
+                            .into(),
+                    ))
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_host(host: &HostObservationV1) -> Result<(), ArtifactError> {
+    validate_timestamp(&host.observation_utc)?;
+    if host.logical_cpus == 0
+        || host.online_cpus.len() != host.logical_cpus as usize
+        || host.available_ram_bytes > host.total_ram_bytes
+    {
+        return Err(ArtifactError::Identity(
+            "normalized host fields are inconsistent".into(),
+        ));
+    }
+    if !host
+        .online_cpus
+        .windows(2)
+        .all(|window| window[0] < window[1])
+    {
+        return Err(ArtifactError::Identity(
+            "online CPUs are not strictly sorted".into(),
+        ));
+    }
+    for evidence in &host.evidence {
+        validate_evidence(evidence)?;
+    }
+    Ok(())
+}
+
+fn validate_accelerator(accelerator: &AcceleratorObservationV1) -> Result<(), ArtifactError> {
+    match accelerator {
+        AcceleratorObservationV1::NotUsed { reason, evidence } => {
+            if reason.is_empty() {
+                return Err(ArtifactError::Identity(
+                    "not-used accelerator needs observed reason".into(),
+                ));
+            }
+            for item in evidence {
+                validate_evidence(item)?;
+            }
+        }
+        AcceleratorObservationV1::Used { devices } => {
+            if devices.is_empty() {
+                return Err(ArtifactError::Identity(
+                    "used accelerator needs a device".into(),
+                ));
+            }
+            ensure_sorted_by(devices, |device| &device.uuid, "GPU observations")?;
+            for device in devices {
+                validate_digest(&device.code_object_sha256)?;
+                for item in &device.evidence {
+                    validate_evidence(item)?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_evidence(evidence: &ObservationEvidenceV1) -> Result<(), ArtifactError> {
+    let bytes = decode_hex(&evidence.evidence_hex)?;
+    if evidence.evidence_sha256 != sha256_hex(&bytes) {
+        return Err(ArtifactError::Identity(
+            "runtime evidence digest mismatch".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_final_refs(
+    identity: &RareEventDatasetIdentityV1,
+    provenance: &ValidatedExecutionLineage,
+    expected_blocks: usize,
+) -> Result<(), ArtifactError> {
+    if provenance.checkpoint_refs.len() != expected_blocks {
+        return Err(ArtifactError::AddressSet(format!(
+            "final receipt needs {expected_blocks} checkpoint refs"
+        )));
+    }
+    ensure_sorted_unique(&provenance.checkpoint_refs, "final checkpoint refs")?;
+    for reference in &provenance.checkpoint_refs {
+        validate_digest(&reference.checkpoint_sha256)?;
+    }
+    for (ordinal, attempt) in provenance.attempts.iter().enumerate() {
+        validate_digest(&attempt.attempt_start_sha256)?;
+        validate_digest(&attempt.attempt_terminal_sha256)?;
+        let predecessor = if ordinal == 0 {
+            AttemptPredecessorV1::None
+        } else {
+            AttemptPredecessorV1::Terminal {
+                terminal_sha256: provenance.attempts[ordinal - 1]
+                    .attempt_terminal_sha256
+                    .clone(),
+            }
+        };
+        if attempt.attempt_id != attempt_id(identity, ordinal as u64, &predecessor)? {
+            return Err(ArtifactError::Lineage(
+                "final attempt ID chain mismatch".into(),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn payload_identity(payload: &RareEventPayloadV1) -> &RareEventDatasetIdentityV1 {
+    match payload {
+        RareEventPayloadV1::TrajectoryCheckpoint(payload) => &payload.dataset_identity,
+        RareEventPayloadV1::ExecutionAttempt(payload) => &payload.dataset_identity,
+        RareEventPayloadV1::TargetCrossCheck(payload) => &payload.dataset_identity,
+        RareEventPayloadV1::CoverageValidation(payload) => &payload.dataset_identity,
+    }
+}
+
+fn write_canonical_value(value: &Value, bytes: &mut Vec<u8>) -> Result<(), ArtifactError> {
+    match value {
+        Value::Null => bytes.extend(b"null"),
+        Value::Bool(value) => bytes.extend(if *value {
+            b"true".as_slice()
+        } else {
+            b"false".as_slice()
+        }),
+        Value::Number(number) => {
+            if number.is_f64() {
+                return Err(ArtifactError::Schema(
+                    "floating-point JSON numbers are forbidden".into(),
+                ));
+            }
+            bytes.extend(number.to_string().as_bytes());
+        }
+        Value::String(string) => bytes.extend(serde_json::to_string(string)?.as_bytes()),
+        Value::Array(values) => {
+            bytes.push(b'[');
+            for (index, value) in values.iter().enumerate() {
+                if index != 0 {
+                    bytes.push(b',');
+                }
+                write_canonical_value(value, bytes)?;
+            }
+            bytes.push(b']');
+        }
+        Value::Object(object) => {
+            bytes.push(b'{');
+            let mut keys: Vec<_> = object.keys().collect();
+            keys.sort_by(|left, right| left.as_bytes().cmp(right.as_bytes()));
+            for (index, key) in keys.into_iter().enumerate() {
+                if index != 0 {
+                    bytes.push(b',');
+                }
+                bytes.extend(serde_json::to_string(key)?.as_bytes());
+                bytes.push(b':');
+                write_canonical_value(&object[key], bytes)?;
+            }
+            bytes.push(b'}');
+        }
+    }
+    Ok(())
+}
+
+fn domain_digest(domain: &[u8], input: &[u8]) -> Result<String, ArtifactError> {
+    let mut hasher = Sha256::new();
+    hasher.update(domain);
+    hasher.update([0]);
+    hasher.update(input);
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
+fn decode_digest(value: &str) -> Result<Vec<u8>, ArtifactError> {
+    validate_digest(value)?;
+    decode_hex(value)
+}
+
+fn validate_digest(value: &str) -> Result<(), ArtifactError> {
+    validate_hex(value, 64)
+}
+
+fn validate_hex(value: &str, length: usize) -> Result<(), ArtifactError> {
+    if value.len() != length
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    {
+        return Err(ArtifactError::Identity(format!(
+            "expected {length} lowercase hexadecimal characters"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_hex_bytes(value: &str) -> Result<(), ArtifactError> {
+    if !value.len().is_multiple_of(2)
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    {
+        return Err(ArtifactError::Schema(
+            "evidence bytes are not lowercase even-length hex".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn decode_hex(value: &str) -> Result<Vec<u8>, ArtifactError> {
+    validate_hex_bytes(value)?;
+    value
+        .as_bytes()
+        .chunks_exact(2)
+        .map(|pair| {
+            let digits = std::str::from_utf8(pair).expect("validated ASCII hex");
+            u8::from_str_radix(digits, 16).map_err(|_| ArtifactError::Schema("invalid hex".into()))
+        })
+        .collect()
+}
+
+fn validate_relative_path(value: &str) -> Result<(), ArtifactError> {
+    if value.is_empty()
+        || value.starts_with('/')
+        || value.contains('\\')
+        || value
+            .split('/')
+            .any(|component| component.is_empty() || component == "." || component == "..")
+    {
+        return Err(ArtifactError::Schema(
+            "path is not normalized repository-relative".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_timestamp(value: &str) -> Result<(), ArtifactError> {
+    let bytes = value.as_bytes();
+    let separators = [
+        (4, b'-'),
+        (7, b'-'),
+        (10, b'T'),
+        (13, b':'),
+        (16, b':'),
+        (19, b'.'),
+        (29, b'Z'),
+    ];
+    if bytes.len() != 30
+        || separators
+            .iter()
+            .any(|&(index, expected)| bytes[index] != expected)
+        || bytes.iter().enumerate().any(|(index, byte)| {
+            !separators.iter().any(|&(position, _)| position == index) && !byte.is_ascii_digit()
+        })
+    {
+        return Err(ArtifactError::Schema(
+            "UTC timestamp is not YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn ensure_sorted_unique<T: Ord>(values: &[T], name: &str) -> Result<(), ArtifactError> {
+    if values.windows(2).any(|window| window[0] >= window[1]) {
+        return Err(ArtifactError::Schema(format!(
+            "{name} must be strictly sorted and unique"
+        )));
+    }
+    Ok(())
+}
+
+fn ensure_sorted_by<T, K: Ord>(
+    values: &[T],
+    key: impl Fn(&T) -> &K,
+    name: &str,
+) -> Result<(), ArtifactError> {
+    if values
+        .windows(2)
+        .any(|window| key(&window[0]) >= key(&window[1]))
+    {
+        return Err(ArtifactError::Schema(format!(
+            "{name} must be strictly sorted and unique"
+        )));
+    }
+    Ok(())
+}

@@ -15,6 +15,9 @@ use gf2_stats::sampler::{
     STREAM_INDEX_LIMIT,
 };
 
+/// Closed schemas, canonical bytes, checksums, lineage, and atomic publication.
+pub mod artifact;
+
 /// Frozen campaign root shared with the manifested permanent campaign.
 pub const RARE_EVENT_ROOT_SEED: u64 = 0x7a81_6262_0000_0001;
 /// Manifested stream-purpose tag for rare-event work.
