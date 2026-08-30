@@ -1,4 +1,4 @@
-use gf2_stats::weighted::{ExactRatio, ExponentHistogram, WeightedRuns};
+use gf2_stats::weighted::{ExponentHistogram, WeightedRuns};
 
 #[test]
 fn exact_exponent_histograms_drive_weighted_run_statistics() {
@@ -10,20 +10,17 @@ fn exact_exponent_histograms_drive_weighted_run_statistics() {
 
     let summary = WeightedRuns::from_histograms(vec![first, second]).unwrap();
     assert_eq!(summary.sample_count(), 8);
+    assert_eq!(summary.weight_sum_decimal(), ("118".into(), "243".into()));
     assert_eq!(
-        summary.weight_sum().decimal_pair(),
-        ("118".into(), "243".into())
-    );
-    assert_eq!(
-        summary.squared_weight_sum().decimal_pair(),
+        summary.squared_weight_sum_decimal(),
         ("2512".into(), "59049".into())
     );
-    assert_eq!(summary.mean().decimal_pair(), ("59".into(), "972".into()));
+    assert_eq!(summary.mean_decimal(), ("59".into(), "972".into()));
     assert_eq!(
-        summary.final_weight_ess().decimal_pair(),
+        summary.final_weight_ess_decimal(),
         ("3481".into(), "628".into())
     );
-    assert!(*summary.final_weight_ess() <= ExactRatio::from_integer(8_u64));
+    assert!(summary.ess_fraction_at_least(1_u8, 100_u8).unwrap());
     assert_eq!(summary.run_count(), 2);
 }
 
@@ -37,9 +34,15 @@ fn scaled_student_interval_contains_without_absolute_float_conversion() {
     }
     let summary = WeightedRuns::from_histograms(runs).unwrap();
     let interval = summary
-        .student_interval(ExactRatio::new(1_019_756_723_u64, 500_000_000_u64).unwrap())
+        .student_interval(1_019_756_723_u64, 500_000_000_u64)
         .unwrap();
 
-    assert!(interval.contains_exact(summary.mean()));
+    let (mean_numerator, mean_denominator) = summary.mean_decimal();
+    assert!(interval
+        .contains_exact(
+            mean_numerator.parse::<num_bigint::BigUint>().unwrap(),
+            mean_denominator.parse::<num_bigint::BigUint>().unwrap(),
+        )
+        .unwrap());
     assert!(interval.render_outward(18).unwrap().lower.contains('e'));
 }

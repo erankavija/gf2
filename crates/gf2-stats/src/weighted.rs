@@ -13,20 +13,20 @@ use std::ops::{Add, Div, Mul};
 
 use num_bigint::BigUint;
 
-/// An exact nonnegative rational in canonical reduced form.
+/// Internal exact nonnegative ratio in canonical reduced form.
 #[derive(Clone, Debug, Eq)]
-pub struct ExactRatio {
+struct Ratio {
     numerator: BigUint,
     denominator: BigUint,
 }
 
-impl ExactRatio {
+impl Ratio {
     /// Constructs and reduces an exact ratio.
     ///
     /// # Errors
     ///
     /// Returns [`WeightedError::ZeroDenominator`] for a zero denominator.
-    pub fn new(
+    fn new(
         numerator: impl Into<BigUint>,
         denominator: impl Into<BigUint>,
     ) -> Result<Self, WeightedError> {
@@ -40,19 +40,19 @@ impl ExactRatio {
 
     /// Returns zero.
     #[must_use]
-    pub fn zero() -> Self {
+    fn zero() -> Self {
         Self::from_integer(0_u8)
     }
 
     /// Returns one.
     #[must_use]
-    pub fn one() -> Self {
+    fn one() -> Self {
         Self::from_integer(1_u8)
     }
 
     /// Constructs an exact integer ratio.
     #[must_use]
-    pub fn from_integer(value: impl Into<BigUint>) -> Self {
+    fn from_integer(value: impl Into<BigUint>) -> Self {
         Self {
             numerator: value.into(),
             denominator: BigUint::from(1_u8),
@@ -61,19 +61,7 @@ impl ExactRatio {
 
     /// Returns the reduced numerator.
     #[must_use]
-    pub const fn numerator(&self) -> &BigUint {
-        &self.numerator
-    }
-
-    /// Returns the positive reduced denominator.
-    #[must_use]
-    pub const fn denominator(&self) -> &BigUint {
-        &self.denominator
-    }
-
-    /// Returns canonical base-ten numerator and denominator strings.
-    #[must_use]
-    pub fn decimal_pair(&self) -> (String, String) {
+    fn decimal_pair(&self) -> (String, String) {
         (self.numerator.to_string(), self.denominator.to_string())
     }
 
@@ -113,52 +101,52 @@ impl ExactRatio {
     }
 }
 
-impl PartialEq for ExactRatio {
+impl PartialEq for Ratio {
     fn eq(&self, other: &Self) -> bool {
         self.numerator == other.numerator && self.denominator == other.denominator
     }
 }
 
-impl PartialOrd for ExactRatio {
+impl PartialOrd for Ratio {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for ExactRatio {
+impl Ord for Ratio {
     fn cmp(&self, other: &Self) -> Ordering {
         (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))
     }
 }
 
-impl Add for &ExactRatio {
-    type Output = ExactRatio;
+impl Add for &Ratio {
+    type Output = Ratio;
     fn add(self, other: Self) -> Self::Output {
-        ExactRatio::reduced(
+        Ratio::reduced(
             &self.numerator * &other.denominator + &other.numerator * &self.denominator,
             &self.denominator * &other.denominator,
         )
     }
 }
 
-impl Mul for &ExactRatio {
-    type Output = ExactRatio;
+impl Mul for &Ratio {
+    type Output = Ratio;
     fn mul(self, other: Self) -> Self::Output {
-        ExactRatio::reduced(
+        Ratio::reduced(
             &self.numerator * &other.numerator,
             &self.denominator * &other.denominator,
         )
     }
 }
 
-impl Div for &ExactRatio {
-    type Output = ExactRatio;
+impl Div for &Ratio {
+    type Output = Ratio;
     fn div(self, other: Self) -> Self::Output {
         assert!(
             other.numerator != BigUint::from(0_u8),
             "division by an exact zero ratio"
         );
-        ExactRatio::reduced(
+        Ratio::reduced(
             &self.numerator * &other.denominator,
             &self.denominator * &other.numerator,
         )
@@ -298,7 +286,7 @@ impl ExponentHistogram {
         self.counts.last_key_value().map(|(&exponent, _)| exponent)
     }
 
-    fn exact_sum(&self, exponent_multiplier: u32) -> ExactRatio {
+    fn exact_sum(&self, exponent_multiplier: u32) -> Ratio {
         let maximum = self
             .maximum_observed_exponent()
             .expect("nonempty histogram required before reduction")
@@ -311,7 +299,7 @@ impl ExponentHistogram {
             .fold(BigUint::from(0_u8), |sum, (&exponent, &count)| {
                 sum + BigUint::from(count) * base.pow(maximum - exponent * exponent_multiplier)
             });
-        ExactRatio::reduced(numerator, denominator)
+        Ratio::reduced(numerator, denominator)
     }
 }
 
@@ -320,14 +308,14 @@ impl ExponentHistogram {
 pub struct WeightedRuns {
     histograms: Vec<ExponentHistogram>,
     pooled_histogram: ExponentHistogram,
-    run_means: Vec<ExactRatio>,
-    weight_sum: ExactRatio,
-    squared_weight_sum: ExactRatio,
-    mean: ExactRatio,
-    run_variance: Option<ExactRatio>,
-    mean_variance: Option<ExactRatio>,
-    final_weight_ess: ExactRatio,
-    per_run_ess: Vec<ExactRatio>,
+    run_means: Vec<Ratio>,
+    weight_sum: Ratio,
+    squared_weight_sum: Ratio,
+    mean: Ratio,
+    run_variance: Option<Ratio>,
+    mean_variance: Option<Ratio>,
+    final_weight_ess: Ratio,
+    per_run_ess: Vec<Ratio>,
 }
 
 impl WeightedRuns {
@@ -362,12 +350,10 @@ impl WeightedRuns {
         }
         let weight_sum = pooled.exact_sum(1);
         let squared_weight_sum = pooled.exact_sum(2);
-        let mean = &weight_sum / &ExactRatio::from_integer(pooled.sample_count);
+        let mean = &weight_sum / &Ratio::from_integer(pooled.sample_count);
         let run_means: Vec<_> = histograms
             .iter()
-            .map(|histogram| {
-                &histogram.exact_sum(1) / &ExactRatio::from_integer(histogram.sample_count)
-            })
+            .map(|histogram| &histogram.exact_sum(1) / &Ratio::from_integer(histogram.sample_count))
             .collect();
         let per_run_ess = histograms
             .iter()
@@ -378,16 +364,14 @@ impl WeightedRuns {
             .collect();
         let final_weight_ess = &(&weight_sum * &weight_sum) / &squared_weight_sum;
         let (run_variance, mean_variance) = if run_means.len() >= 2 {
-            let run_grand_mean = &run_means
-                .iter()
-                .fold(ExactRatio::zero(), |sum, run| &sum + run)
-                / &ExactRatio::from_integer(run_means.len());
-            let squared_deviations = run_means.iter().fold(ExactRatio::zero(), |sum, run| {
+            let run_grand_mean = &run_means.iter().fold(Ratio::zero(), |sum, run| &sum + run)
+                / &Ratio::from_integer(run_means.len());
+            let squared_deviations = run_means.iter().fold(Ratio::zero(), |sum, run| {
                 let difference = run.abs_diff(&run_grand_mean);
                 &sum + &(&difference * &difference)
             });
-            let variance = &squared_deviations / &ExactRatio::from_integer(run_means.len() - 1);
-            let variance_of_mean = &variance / &ExactRatio::from_integer(run_means.len());
+            let variance = &squared_deviations / &Ratio::from_integer(run_means.len() - 1);
+            let variance_of_mean = &variance / &Ratio::from_integer(run_means.len());
             (Some(variance), Some(variance_of_mean))
         } else {
             (None, None)
@@ -416,74 +400,85 @@ impl WeightedRuns {
     pub const fn sample_count(&self) -> u64 {
         self.pooled_histogram.sample_count
     }
-    /// Returns the exact pooled weight sum.
+    /// Returns the exact pooled weight sum as reduced decimal integers.
     #[must_use]
-    pub const fn weight_sum(&self) -> &ExactRatio {
-        &self.weight_sum
+    pub fn weight_sum_decimal(&self) -> (String, String) {
+        self.weight_sum.decimal_pair()
     }
-    /// Returns the exact pooled squared-weight sum.
+    /// Returns the exact pooled squared-weight sum as reduced decimal integers.
     #[must_use]
-    pub const fn squared_weight_sum(&self) -> &ExactRatio {
-        &self.squared_weight_sum
+    pub fn squared_weight_sum_decimal(&self) -> (String, String) {
+        self.squared_weight_sum.decimal_pair()
     }
-    /// Returns the exact pooled mean weight.
+    /// Returns the exact pooled mean weight as reduced decimal integers.
     #[must_use]
-    pub const fn mean(&self) -> &ExactRatio {
-        &self.mean
+    pub fn mean_decimal(&self) -> (String, String) {
+        self.mean.decimal_pair()
     }
-    /// Returns exact run means in input order.
+    /// Returns exact run means as reduced decimal integer pairs in input order.
     #[must_use]
-    pub fn run_means(&self) -> &[ExactRatio] {
-        &self.run_means
+    pub fn run_means_decimal(&self) -> Vec<(String, String)> {
+        self.run_means.iter().map(Ratio::decimal_pair).collect()
     }
-    /// Returns sample variance of run means when at least two exist.
+    /// Returns sample variance of run means as reduced decimal integers.
     #[must_use]
-    pub const fn independent_run_variance(&self) -> Option<&ExactRatio> {
-        self.run_variance.as_ref()
+    pub fn independent_run_variance_decimal(&self) -> Option<(String, String)> {
+        self.run_variance.as_ref().map(Ratio::decimal_pair)
     }
-    /// Returns variance of the grand mean.
+    /// Returns variance of the grand mean as reduced decimal integers.
     #[must_use]
-    pub const fn mean_variance(&self) -> Option<&ExactRatio> {
-        self.mean_variance.as_ref()
+    pub fn mean_variance_decimal(&self) -> Option<(String, String)> {
+        self.mean_variance.as_ref().map(Ratio::decimal_pair)
     }
-    /// Returns final-weight ESS.
+    /// Returns final-weight ESS as reduced decimal integers.
     #[must_use]
-    pub const fn final_weight_ess(&self) -> &ExactRatio {
-        &self.final_weight_ess
+    pub fn final_weight_ess_decimal(&self) -> (String, String) {
+        self.final_weight_ess.decimal_pair()
     }
-    /// Returns per-run final-weight ESS in input order.
+    /// Returns per-run final-weight ESS as reduced decimal pairs in input order.
     #[must_use]
-    pub fn per_run_ess(&self) -> &[ExactRatio] {
-        &self.per_run_ess
+    pub fn per_run_ess_decimal(&self) -> Vec<(String, String)> {
+        self.per_run_ess.iter().map(Ratio::decimal_pair).collect()
     }
-    /// Returns pooled ESS divided by sample count.
+    /// Returns pooled ESS divided by sample count as reduced decimal integers.
     #[must_use]
-    pub fn ess_fraction(&self) -> ExactRatio {
-        &self.final_weight_ess / &ExactRatio::from_integer(self.sample_count())
+    pub fn ess_fraction_decimal(&self) -> (String, String) {
+        (&self.final_weight_ess / &Ratio::from_integer(self.sample_count())).decimal_pair()
     }
-    /// Returns the largest normalized single-weight share.
+    /// Returns the largest normalized single-weight share as reduced decimal integers.
     #[must_use]
-    pub fn largest_weight_share(&self) -> ExactRatio {
+    pub fn largest_weight_share_decimal(&self) -> (String, String) {
         let exponent = self
             .pooled_histogram
             .minimum_exponent()
             .expect("runs are nonempty");
-        &power_inverse(self.pooled_histogram.base, exponent) / &self.weight_sum
+        (&power_inverse(self.pooled_histogram.base, exponent) / &self.weight_sum).decimal_pair()
     }
-    /// Returns the largest run-mean share.
+    /// Returns the largest run-mean share as reduced decimal integers.
     #[must_use]
-    pub fn largest_run_mean_share(&self) -> ExactRatio {
+    pub fn largest_run_mean_share_decimal(&self) -> (String, String) {
         let largest = self.run_means.iter().max().expect("runs are nonempty");
         let total = self
             .run_means
             .iter()
-            .fold(ExactRatio::zero(), |sum, run| &sum + run);
-        largest / &total
+            .fold(Ratio::zero(), |sum, run| &sum + run);
+        (largest / &total).decimal_pair()
     }
-    /// Builds a scaled Student interval with an exact critical value.
+    /// Compares pooled ESS/sample count with an exact nonnegative threshold.
+    pub fn ess_fraction_at_least(
+        &self,
+        threshold_numerator: impl Into<BigUint>,
+        threshold_denominator: impl Into<BigUint>,
+    ) -> Result<bool, WeightedError> {
+        let threshold = Ratio::new(threshold_numerator, threshold_denominator)?;
+        Ok(&self.final_weight_ess / &Ratio::from_integer(self.sample_count()) >= threshold)
+    }
+
+    /// Builds a scaled Student interval with an exact critical-value pair.
     pub fn student_interval(
         &self,
-        critical: ExactRatio,
+        critical_numerator: impl Into<BigUint>,
+        critical_denominator: impl Into<BigUint>,
     ) -> Result<ScaledStudentInterval, WeightedError> {
         Ok(ScaledStudentInterval {
             center: self.mean.clone(),
@@ -491,7 +486,7 @@ impl WeightedRuns {
                 .mean_variance
                 .clone()
                 .ok_or(WeightedError::TooFewRuns)?,
-            critical,
+            critical: Ratio::new(critical_numerator, critical_denominator)?,
             scale_base: self.pooled_histogram.base,
             scale_exponent: self
                 .pooled_histogram
@@ -504,22 +499,26 @@ impl WeightedRuns {
 /// Exact center/variance/critical-value representation of a Student interval.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScaledStudentInterval {
-    center: ExactRatio,
-    variance: ExactRatio,
-    critical: ExactRatio,
+    center: Ratio,
+    variance: Ratio,
+    critical: Ratio,
     scale_base: u32,
     scale_exponent: u32,
 }
 
 impl ScaledStudentInterval {
     /// Tests clipped interval containment by exact squared comparison.
-    #[must_use]
-    pub fn contains_exact(&self, value: &ExactRatio) -> bool {
-        if value > &ExactRatio::one() {
-            return false;
+    pub fn contains_exact(
+        &self,
+        numerator: impl Into<BigUint>,
+        denominator: impl Into<BigUint>,
+    ) -> Result<bool, WeightedError> {
+        let value = Ratio::new(numerator, denominator)?;
+        if value > Ratio::one() {
+            return Ok(false);
         }
         let difference = value.abs_diff(&self.center);
-        &difference * &difference <= &(&self.critical * &self.critical) * &self.variance
+        Ok(&difference * &difference <= &(&self.critical * &self.critical) * &self.variance)
     }
 
     /// Renders clipped endpoints outward with at least the requested digits.
@@ -530,14 +529,13 @@ impl ScaledStudentInterval {
         if significant_digits < 2 {
             return Err(WeightedError::InvalidPrecision(significant_digits));
         }
-        let scale =
-            ExactRatio::from_integer(BigUint::from(self.scale_base).pow(self.scale_exponent));
+        let scale = Ratio::from_integer(BigUint::from(self.scale_base).pow(self.scale_exponent));
         let scaled_center = &self.center * &scale;
         let scaled_variance = &self.variance * &(&scale * &scale);
         let radius = &self.critical * &sqrt_upper(&scaled_variance, significant_digits + 8);
         let scaled_lower = scaled_center
             .checked_sub(&radius)
-            .unwrap_or_else(ExactRatio::zero);
+            .unwrap_or_else(Ratio::zero);
         let scaled_upper = std::cmp::min(&scaled_center + &radius, scale.clone());
         Ok(RenderedInterval {
             lower: render_ratio(
@@ -559,8 +557,8 @@ pub struct RenderedInterval {
     pub upper: String,
 }
 
-fn power_inverse(base: u32, exponent: u32) -> ExactRatio {
-    ExactRatio::reduced(BigUint::from(1_u8), BigUint::from(base).pow(exponent))
+fn power_inverse(base: u32, exponent: u32) -> Ratio {
+    Ratio::reduced(BigUint::from(1_u8), BigUint::from(base).pow(exponent))
 }
 
 fn gcd(mut left: BigUint, mut right: BigUint) -> BigUint {
@@ -572,16 +570,16 @@ fn gcd(mut left: BigUint, mut right: BigUint) -> BigUint {
     left
 }
 
-fn sqrt_upper(value: &ExactRatio, decimal_places: usize) -> ExactRatio {
+fn sqrt_upper(value: &Ratio, decimal_places: usize) -> Ratio {
     if value.numerator == BigUint::from(0_u8) {
-        return ExactRatio::zero();
+        return Ratio::zero();
     }
     let scale = BigUint::from(10_u8).pow(decimal_places as u32);
     let scaled_square = &value.numerator * &scale * &scale;
     let quotient = &scaled_square / &value.denominator;
     let root = integer_sqrt(&quotient);
     let exact = &root * &root * &value.denominator == scaled_square;
-    ExactRatio::reduced(root + u8::from(!exact), scale)
+    Ratio::reduced(root + u8::from(!exact), scale)
 }
 
 fn integer_sqrt(value: &BigUint) -> BigUint {
@@ -604,7 +602,7 @@ enum Rounding {
     Up,
 }
 
-fn render_ratio(value: &ExactRatio, significant_digits: usize, rounding: Rounding) -> String {
+fn render_ratio(value: &Ratio, significant_digits: usize, rounding: Rounding) -> String {
     if value.numerator == BigUint::from(0_u8) {
         return "0e+0".to_owned();
     }
@@ -638,7 +636,7 @@ fn render_ratio(value: &ExactRatio, significant_digits: usize, rounding: Roundin
     )
 }
 
-fn decimal_exponent(value: &ExactRatio) -> i64 {
+fn decimal_exponent(value: &Ratio) -> i64 {
     if value.numerator >= value.denominator {
         let mut exponent = 0_i64;
         let mut threshold = value.denominator.clone();
@@ -664,9 +662,9 @@ mod tests {
 
     #[test]
     fn rational_arithmetic_is_reduced() {
-        let half = ExactRatio::new(2_u8, 4_u8).unwrap();
+        let half = Ratio::new(2_u8, 4_u8).unwrap();
         assert_eq!(half.decimal_pair(), ("1".to_owned(), "2".to_owned()));
-        assert_eq!(&half + &half, ExactRatio::one());
+        assert_eq!(&half + &half, Ratio::one());
     }
 
     #[test]
