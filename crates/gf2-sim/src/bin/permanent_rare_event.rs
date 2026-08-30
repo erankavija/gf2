@@ -17,8 +17,10 @@
 //! digest.
 //!
 //! This issue builds and exercises the estimator and its runner rather than
-//! executing a campaign, so it deliberately commits no configuration of its
-//! own. No path in this file names a file that exists in the repository.
+//! executing a campaign, so it deliberately commits no frozen configuration of
+//! its own. The example below therefore carries a placeholder rather than a
+//! configuration path: no committed file answers to it. The design path cited
+//! above is committed and resolves.
 //!
 //! `RAYON_NUM_THREADS` declares the worker count. `GF2_RARE_EVENT_BLOCK_BUDGET`
 //! optionally bounds one invocation to that many checkpoint blocks; the run is
