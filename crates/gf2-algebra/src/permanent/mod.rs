@@ -44,6 +44,9 @@ pub use bipedal3::permanent_bipedal3;
 pub use bipedal3::permanent_bipedal3_batch;
 pub use bipedal3::permanent_bipedal3_singleword;
 pub use bipedal3_multiword::permanent_bipedal3_multiword;
+#[cfg(feature = "test-support")]
+#[doc(hidden)]
+pub use compressed_rank::canonical_subspaces_for_test;
 pub use compressed_rank::{
     exact_permanental_rank_deficiency, CanonicalSubspace, CanonicalSubspaceDecodeError,
     CompressedRankState, CompressedStateDecodeError, CompressedTransition,

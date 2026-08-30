@@ -42,12 +42,15 @@ sha2 = "0.10"
 # Safe no-follow opens bind accepted raw evidence to regular files without
 # introducing unsafe code outside the isolated kernel crates.
 rustix = { version = "1.1", features = ["fs"] }
+num-bigint = { workspace = true }
 
 [dev-dependencies]
+gf2-algebra = { path = "../gf2-algebra", features = ["test-support"] }
 proptest = { workspace = true }
 trybuild = { workspace = true }
 rayon = "1"
 serde_json = "1.0" # for tracing.jsonl JSON validation in campaign_cli_flags tests
+tempfile = "3"
 # Self-dev-dependency exposing the `test-support` feature so integration
 # tests and benches can use `gf2_sim::testutil::AwgnLlrSource` — the SSOT
 # for the deterministic SplitMix64 + Box-Muller AWGN channel-LLR source
