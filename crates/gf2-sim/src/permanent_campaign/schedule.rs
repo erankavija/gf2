@@ -16,7 +16,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+#[cfg(test)]
 use std::fs::{self, OpenOptions};
+#[cfg(test)]
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -38,6 +40,7 @@ use rayon::ThreadPoolBuilder;
 use super::acceptance::AcceptanceError;
 #[cfg(test)]
 use super::acceptance::{assess_completed_cell, AcceptancePlan};
+use super::root_fs::CampaignRoot;
 #[cfg(test)]
 use super::schema::{
     field_summary_file, CellTerminalState, FieldSummary, QuarantinedShard, SummaryRow,
@@ -1751,6 +1754,7 @@ fn summarize_with_quarantine(
     })
 }
 
+#[cfg(test)]
 fn create_parent(path: &Path) -> Result<(), ScheduleError> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|source| ScheduleError::Io {
@@ -1766,6 +1770,7 @@ fn write_file(path: &Path, bytes: &[u8]) -> Result<(), ScheduleError> {
     write_file_with_durability_hook(path, bytes, |_| {})
 }
 
+#[cfg(test)]
 fn write_file_with_durability_hook(
     path: &Path,
     bytes: &[u8],
@@ -1801,13 +1806,13 @@ fn write_file_with_durability_hook(
 /// Emits one coordinator-authorized shard record with create-new refusal,
 /// fsyncing the file and its directory before reporting the durable path.
 pub(crate) fn emit_shard_with_durability_hook(
-    root: &Path,
+    root: &CampaignRoot,
     manifest: &CampaignManifest,
     shard: &ShardRun,
     mut on_durable: impl FnMut(&Path),
 ) -> Result<PathBuf, ScheduleError> {
     let campaign_name = manifest.campaign_id.to_string();
-    if root.file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
+    if root.path().file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
         return Err(ScheduleError::InvalidWorkItem(format!(
             "output directory must be named by campaign id {campaign_name}"
         )));
@@ -1821,14 +1826,19 @@ pub(crate) fn emit_shard_with_durability_hook(
             "shard result does not match manifest work items".to_owned(),
         ));
     }
-    let path = root.join(shard_record_file(
+    let relative = PathBuf::from(shard_record_file(
         address.q,
         address.n,
         shard.record.shard_id,
     ));
-    create_parent(&path)?;
     let bytes = shard_record_bytes(&shard.record)?;
-    write_file_with_durability_hook(&path, &bytes, &mut on_durable)?;
+    root.write_atomic_new(&relative, &bytes)
+        .map_err(|source| ScheduleError::Io {
+            path: root.path().join(&relative),
+            source,
+        })?;
+    let path = root.path().join(relative);
+    on_durable(&path);
     Ok(path)
 }
 

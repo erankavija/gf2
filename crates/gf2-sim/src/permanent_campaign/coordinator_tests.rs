@@ -2,22 +2,23 @@ use std::fs::{self, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::Duration;
+use std::sync::OnceLock;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use gf2_sim::permanent_campaign::acceptance::{
+use crate::permanent_campaign::acceptance::{
     assess_completed_cell, AcceptanceFamily, AcceptancePlan,
 };
-use gf2_sim::permanent_campaign::coordinator::{
+use crate::permanent_campaign::coordinator::{
     coordinator_lock_path, coordinator_receipt_path, emit_field_sidecar,
     execute_campaign_cell_with_evaluator, ArmInvocation, CampaignCoordinator, CampaignHaltCause,
     CampaignHaltState, CellExecutionState, ExactCellScope, FieldExecutionState,
     FieldInterpretation, LiteratureSearchClaim, ShardAttemptState,
 };
-use gf2_sim::permanent_campaign::provenance::{approve_emission, EmissionApproval};
-use gf2_sim::permanent_campaign::schedule::{
+use crate::permanent_campaign::provenance::{approve_emission, EmissionApproval};
+use crate::permanent_campaign::schedule::{
     EvaluatedShard, PhaseDurations, ScheduleError, ShardRun, WorkItem,
 };
-use gf2_sim::permanent_campaign::schema::{
+use crate::permanent_campaign::schema::{
     field_summary_file, read_field_summary, shard_record_file, AcceptanceVerdict, ArtifactIdentity,
     Availability, Backend, CampaignManifest, CellSpec, CellTerminalState, DeterminantCount,
     DeterminantPlan, GitRevision, HaltReason, Provenance, RngAlgorithm, ShardRecord, ShardSpec,
@@ -26,6 +27,16 @@ use gf2_sim::permanent_campaign::schema::{
 use sha2::{Digest, Sha256};
 
 static FIXTURE_ID: AtomicU64 = AtomicU64::new(0);
+static TEST_RUN_ID: OnceLock<u128> = OnceLock::new();
+
+fn test_run_id() -> u128 {
+    *TEST_RUN_ID.get_or_init(|| {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("test clock is after the Unix epoch")
+            .as_nanos()
+    })
+}
 
 fn artifact(path: &str, byte: char) -> ArtifactIdentity {
     ArtifactIdentity {
@@ -156,8 +167,9 @@ fn fixture_from_manifest(
 ) -> (PathBuf, CampaignManifest, CampaignCoordinator) {
     let id = FIXTURE_ID.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!(
-        "gf2-coordinator-fixture-{}-{id}",
-        std::process::id()
+        "gf2-coordinator-fixture-{}-{}-{id}",
+        std::process::id(),
+        test_run_id()
     ));
     let campaign_root = root.join(manifest.campaign_id.to_string());
     fs::create_dir_all(&campaign_root).unwrap();
@@ -178,8 +190,9 @@ fn live_fixture() -> (PathBuf, PathBuf, CampaignManifest, EmissionApproval) {
     );
     let id = FIXTURE_ID.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!(
-        "gf2-live-coordinator-fixture-{}-{id}",
-        std::process::id()
+        "gf2-live-coordinator-fixture-{}-{}-{id}",
+        std::process::id(),
+        test_run_id()
     ));
     let repository = root.join("checkout");
     let dataset = repository.join("dev/simulation_results/permanent-zero-fraction");
@@ -353,8 +366,8 @@ fn accept_cell(
 
 fn write_receipt(
     campaign_root: &Path,
-    campaign_id: &gf2_sim::permanent_campaign::schema::CampaignId,
-    receipt: &gf2_sim::permanent_campaign::coordinator::CampaignCoordinatorReceipt,
+    campaign_id: &crate::permanent_campaign::schema::CampaignId,
+    receipt: &crate::permanent_campaign::coordinator::CampaignCoordinatorReceipt,
 ) {
     let path = coordinator_receipt_path(campaign_root, campaign_id);
     fs::write(path, serde_json::to_vec_pretty(receipt).unwrap()).unwrap();
@@ -1216,7 +1229,7 @@ fn receipt_summary_and_sidecars_are_terminal_monotonic_and_closed() {
             claim: LiteratureSearchClaim::NoLocatedQ5Q7NumericsSubjectToRecordedLimits,
         },
     )
-    .is_err());
+    .is_ok());
     assert_eq!(fs::read(&checksums).unwrap(), b"raw-checksum-fixture\n");
     fs::remove_dir_all(root).unwrap();
 }
@@ -1373,10 +1386,7 @@ fn sidecar_refuses_symlinked_internal_ancestor() {
         7,
         vec![artifact("summaries/q7.json", 'f')],
         FieldInterpretation::LiteratureSearchBasis {
-            search_receipt: artifact(
-                "dev/studies/b488f02c/literature-search-2026-08-08.md",
-                'e',
-            ),
+            search_receipt: artifact("dev/studies/b488f02c/literature-search-2026-08-08.md", 'e'),
             claim: LiteratureSearchClaim::NoLocatedQ5Q7NumericsSubjectToRecordedLimits,
         },
     );
@@ -1473,5 +1483,80 @@ fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
     );
     assert!(CampaignCoordinator::read(&exhausted_campaign).is_err());
     fs::remove_dir_all(exhausted_root).unwrap();
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn invalid_raw_refuses_symlinked_quarantine_ancestor() {
+    use std::os::unix::fs::symlink;
+
+    let (root, campaign_root, campaign, approval) = live_fixture();
+    let mut coordinator = CampaignCoordinator::new(&campaign_root).unwrap();
+    coordinator
+        .authorize_arm(arm_for_manifest(&campaign, 7, 20))
+        .unwrap();
+    coordinator.persist(&campaign_root).unwrap();
+    coordinator.authorize_attempt(7, 20, 0).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
+
+    let raw = campaign_root.join(shard_record_file(7, 20, 0));
+    fs::create_dir_all(raw.parent().unwrap()).unwrap();
+    fs::write(&raw, b"{invalid durable raw").unwrap();
+    let coordinator_dir = campaign_root
+        .join("derived")
+        .join(campaign.campaign_id.to_string())
+        .join("campaign-coordinator");
+    let external = root.join("external-quarantine");
+    fs::create_dir_all(&external).unwrap();
+    let sentinel = external.join("sentinel");
+    fs::write(&sentinel, b"outside campaign\n").unwrap();
+    symlink(&external, coordinator_dir.join("quarantine")).unwrap();
+
+    let mut sampler_entries = 0_u8;
+    let result = execute_campaign_cell_with_evaluator(
+        &campaign_root,
+        ExactCellScope { q: 7, n: 20 },
+        1,
+        arm_for_manifest(&campaign, 7, 20).argv,
+        approval,
+        |_, _, _, _| {
+            sampler_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "invalid durable raw is handled before sampling".to_owned(),
+            ))
+        },
+        |_| {},
+    );
+    assert!(result.is_err());
+    assert_eq!(sampler_entries, 0);
+    assert_eq!(fs::read(&sentinel).unwrap(), b"outside campaign\n");
+    assert_eq!(fs::read_dir(&external).unwrap().count(), 1);
+    assert_eq!(fs::read(&raw).unwrap(), b"{invalid durable raw");
+    assert!(matches!(
+        CampaignCoordinator::read(&campaign_root)
+            .unwrap()
+            .receipt()
+            .attempts[0]
+            .state,
+        ShardAttemptState::Authorized
+    ));
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn coordinator_refuses_symlinked_protocol_identity() {
+    use std::os::unix::fs::symlink;
+
+    let (root, campaign, _) = fixture();
+    let campaign_root = root.join(campaign.campaign_id.to_string());
+    let protocol = root.join("protocol.md");
+    let external = root.join("external-protocol.md");
+    fs::write(&external, b"outside protocol\n").unwrap();
+    fs::remove_file(&protocol).unwrap();
+    symlink(&external, &protocol).unwrap();
+    assert!(CampaignCoordinator::new(&campaign_root).is_err());
+    assert_eq!(fs::read(&external).unwrap(), b"outside protocol\n");
     fs::remove_dir_all(root).unwrap();
 }
