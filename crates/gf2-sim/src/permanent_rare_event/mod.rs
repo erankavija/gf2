@@ -17,6 +17,8 @@ use gf2_stats::sampler::{
 
 /// Closed schemas, canonical bytes, checksums, lineage, and atomic publication.
 pub mod artifact;
+/// Reusable bounded, resumable execution of one frozen configuration.
+pub mod runner;
 
 /// Frozen campaign root shared with the manifested permanent campaign.
 pub const RARE_EVENT_ROOT_SEED: u64 = 0x7a81_6262_0000_0001;
