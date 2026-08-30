@@ -187,7 +187,7 @@
      "short_id": "73317b2e",
      "title": "Standing acceptance tests for campaign cells",
      "classification": "implementation",
-     "status": "in progress: owner authorized the recommended narrowly versioned exact-cell selector and coupled emitter digest/invocation re-freeze at 2026-08-30T10:06:49+03:00. Repair and verification are pre-draw; no campaign/device/measurement work is authorized during implementation."
+     "status": "delivery-ready through fd53b156: rework-2 closes all REQ-01 through REQ-14 findings, keeps coordinator-owned canonical projections, freezes the exact (7,20) emitter and coupled evidence identities without changing the scientific cell payload, and aligns canonical integration fixtures. Independent code review and refreeze audit passed; the full repository cargo-ci contract passed on the clean issue branch. JIT gate recording, merge, and closure remain; no campaign draw ran."
     }
    ]
   },
@@ -809,6 +809,8 @@
   "a39bb161": 2,
   "a39bb161_note": "rework-2 dispatched after the 2026-08-24 host crash; MAX reached, any further review failure escalates",
   "3f664839": 2,
+  "73317b2e": 2,
+  "73317b2e_note": "Rework-2 is the execution-lead maximum. Rework-1 removed the public path-based sidecar mutator and completed coordinator-owned projection. Rework-2 closes the bounded interpretation and prose findings, exact-cell refreeze, and pre-gate canonical fixture/lint defects. Independent review and refreeze audit passed, followed by the complete raw cargo-ci contract on the clean branch.",
   "8ec10dde": 2
  },
  "surfaced_pitfalls": [
