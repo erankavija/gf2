@@ -496,6 +496,45 @@ pub fn enumerate_work_items(
     Ok(items)
 }
 
+/// Enumerates exactly one manifest cell in deterministic shard order.
+///
+/// The selector is validated against the pair `(q, n)`: an order that exists
+/// under another field is not accepted. This function is pure and performs no
+/// checkpoint, sampler, or dataset I/O, so callers can reject an invalid
+/// selector before opening any campaign execution state.
+///
+/// # Errors
+///
+/// Returns [`ScheduleError::InvalidWorkItem`] when `(q, n)` is not a manifest
+/// cell or when one of that cell's shard specifications is invalid.
+///
+/// # Complexity
+///
+/// `O(C + S log S)` for `C` manifest cells and `S` shards in the selected
+/// cell.
+pub fn enumerate_cell_work_items(
+    manifest: &CampaignManifest,
+    q: u8,
+    n: u16,
+) -> Result<Vec<WorkItem>, ScheduleError> {
+    let Some(cell) = manifest
+        .cells
+        .iter()
+        .find(|cell| cell.q == q && cell.n == n)
+    else {
+        return Err(ScheduleError::InvalidWorkItem(format!(
+            "exact cell selector q={q} n={n} does not name a manifest cell"
+        )));
+    };
+    let mut items = cell
+        .shards
+        .iter()
+        .map(|shard| work_item(cell, shard))
+        .collect::<Result<Vec<_>, _>>()?;
+    items.sort_by_key(WorkItem::key);
+    Ok(items)
+}
+
 /// Executes every shard for one field and builds its schema summary.
 ///
 /// The selected field is the only execution scope. Matrix generation uses the

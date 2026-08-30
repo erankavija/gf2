@@ -497,6 +497,8 @@ fn production_table_is_accepted_by_the_production_cli_and_manifest() {
             campaign.to_str().unwrap(),
             "--q",
             "7",
+            "--n",
+            "20",
             "--workers",
             "1",
             "--accelerator-cost-table",
@@ -555,7 +557,10 @@ fn exact_selector_dry_run_schedules_only_the_requested_cell() {
         "stderr:\n{}",
         String::from_utf8_lossy(&result.stderr)
     );
-    assert_eq!(String::from_utf8(result.stdout).unwrap(), "schedule q=7 n=20 shards=1\n");
+    assert_eq!(
+        String::from_utf8(result.stdout).unwrap(),
+        "schedule q=7 n=20 shards=1\n"
+    );
     assert!(
         !output_path.exists(),
         "dry scheduling must not open a checkpoint, draw, or emit output"
@@ -590,7 +595,10 @@ fn invalid_exact_selector_fails_before_checkpoint_or_output_creation() {
         ]);
         let result = command.args(arguments).output().unwrap();
         let stderr = String::from_utf8_lossy(&result.stderr);
-        assert!(!result.status.success(), "invalid selection unexpectedly passed");
+        assert!(
+            !result.status.success(),
+            "invalid selection unexpectedly passed"
+        );
         assert!(
             stderr.contains("exact cell selector"),
             "selector failure must be explicit; stderr:\n{stderr}"

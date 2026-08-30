@@ -30,17 +30,17 @@ use crate::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader, CheckpointWriter,
 };
 use crate::permanent_campaign::schedule::{
-    emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_work_items,
-    evaluate_work_item_with_worker_count_and_accelerator, resolve_processor_path,
-    shard_record_bytes, summarize_with_quarantine, AcceleratorCostTable, EvaluatedShard, FieldRun,
-    PhaseDurations, ScheduleError, ShardRun, WorkItem,
+    emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_cell_work_items,
+    enumerate_work_items, evaluate_work_item_with_worker_count_and_accelerator,
+    resolve_processor_path, shard_record_bytes, summarize_with_quarantine, AcceleratorCostTable,
+    EvaluatedShard, FieldRun, PhaseDurations, ScheduleError, ShardRun, WorkItem,
 };
 use crate::permanent_campaign::schema::{
     field_summary_file, shard_record_file, Backend, CampaignManifest, QuarantinedShard, ShardRecord,
 };
 use crate::snr_checkpoint::is_interrupted;
 
-const CHECKPOINT_SCHEMA_VERSION: u32 = 2;
+const CHECKPOINT_SCHEMA_VERSION: u32 = 3;
 
 /// Stable identity of one scheduler work item.
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
@@ -78,16 +78,14 @@ pub struct CampaignCheckpoint {
     /// The individually comparable configuration components for this resume;
     /// a mismatch is a hard refusal rather than fresh work.
     pub configuration: CampaignConfiguration,
-    /// Field arm represented by this payload.
-    pub field: u8,
     /// Work items whose records are durably emitted.
     pub completed: Vec<WorkItemId>,
     /// Work items retained as evaluation failures.
     pub quarantined: Vec<QuarantinedShard>,
     /// Absolute sampler positions observed at worker boundaries.
     pub worker_states: Vec<WorkerCheckpoint>,
-    /// Whether the field summary is durably emitted.
-    pub field_complete: bool,
+    /// Whether every work item in the selected scope is terminal.
+    pub scope_complete: bool,
 }
 
 impl CampaignCheckpoint {
@@ -95,12 +93,38 @@ impl CampaignCheckpoint {
     #[must_use]
     pub fn new(configuration: CampaignConfiguration) -> Self {
         Self {
-            field: configuration.field,
             configuration,
             completed: Vec::new(),
             quarantined: Vec::new(),
             worker_states: Vec::new(),
-            field_complete: false,
+            scope_complete: false,
+        }
+    }
+}
+
+/// Manifest scope represented by one campaign checkpoint.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum CampaignExecutionScope {
+    /// Every cell in one field arm.
+    Field {
+        /// Prime field order.
+        q: u8,
+    },
+    /// One exact `(q, n)` manifest cell.
+    ExactCell {
+        /// Prime field order.
+        q: u8,
+        /// Matrix order.
+        n: u16,
+    },
+}
+
+impl CampaignExecutionScope {
+    fn identity(self) -> String {
+        match self {
+            Self::Field { q } => format!("field:q={q}"),
+            Self::ExactCell { q, n } => format!("exact_cell:q={q},n={n}"),
         }
     }
 }
@@ -112,14 +136,14 @@ pub struct CampaignConfiguration {
     pub manifest_content_hash: String,
     /// Immutable campaign directory identity.
     pub campaign_id: String,
-    /// Field arm selected by the invocation.
-    pub field: u8,
+    /// Exact execution scope selected by the invocation.
+    pub scope: CampaignExecutionScope,
     /// Campaign-wide sampler root seed.
     pub root_seed: u64,
 }
 
 impl CheckpointPayload for CampaignCheckpoint {
-    const IDENTITY: &'static str = "permanent-campaign/field-progress";
+    const IDENTITY: &'static str = "permanent-campaign/scoped-progress";
     const SCHEMA_VERSION: u32 = CHECKPOINT_SCHEMA_VERSION;
 }
 
@@ -181,31 +205,34 @@ impl From<crate::permanent_campaign::schedule::ScheduleError> for CampaignDriver
     }
 }
 
-/// Returns the stable configuration identity for a field checkpoint.
+/// Returns the stable configuration identity for one execution scope.
 ///
 /// The digest covers the complete serialized manifest. The named components
 /// are retained in the identity so a refusal can identify common disagreements
 /// instead of exposing only an opaque digest.
 #[must_use]
-pub fn campaign_config_hash(manifest: &CampaignManifest, field: u8) -> String {
-    let configuration = campaign_configuration(manifest, field);
+pub fn campaign_config_hash(manifest: &CampaignManifest, scope: CampaignExecutionScope) -> String {
+    let configuration = campaign_configuration(manifest, scope);
     format!(
-        "blake3:{digest};campaign_id={campaign_id};field={field};root_seed={root_seed};manifest={digest}",
+        "blake3:{digest};campaign_id={campaign_id};scope={scope};root_seed={root_seed};manifest={digest}",
         campaign_id = configuration.campaign_id,
-        field = configuration.field,
+        scope = configuration.scope.identity(),
         root_seed = configuration.root_seed,
         digest = configuration.manifest_content_hash,
     )
 }
 
-/// Returns the individually comparable configuration recorded in a checkpoint.
+/// Returns the individually comparable scoped checkpoint configuration.
 #[must_use]
-pub fn campaign_configuration(manifest: &CampaignManifest, field: u8) -> CampaignConfiguration {
+pub fn campaign_configuration(
+    manifest: &CampaignManifest,
+    scope: CampaignExecutionScope,
+) -> CampaignConfiguration {
     let bytes = serde_json::to_vec(manifest).expect("campaign manifest is serializable");
     CampaignConfiguration {
         manifest_content_hash: blake3::hash(&bytes).to_hex().to_string(),
         campaign_id: manifest.campaign_id.to_string(),
-        field,
+        scope,
         root_seed: manifest.root_seed,
     }
 }
@@ -214,6 +241,117 @@ pub fn campaign_configuration(manifest: &CampaignManifest, field: u8) -> Campaig
 #[must_use]
 pub fn field_checkpoint_path(root: &Path, field: u8) -> PathBuf {
     root.join(format!("campaign.q{field}.checkpoint.json"))
+}
+
+/// Returns the checkpoint path for one exact campaign cell.
+#[must_use]
+pub fn cell_checkpoint_path(root: &Path, field: u8, order: u16) -> PathBuf {
+    root.join(format!("campaign.q{field}.n{order}.checkpoint.json"))
+}
+
+/// Runs one exact manifest cell with checkpointed shard execution.
+///
+/// The cell uses a cell-scoped configuration identity and checkpoint. It does
+/// not emit the field summary: a field summary is canonical only after an
+/// outside coordinator has terminal evidence for every cell in that field.
+/// Accelerator costs remain a full-manifest input validated by the caller;
+/// this function resolves the selected cell's frozen cost without deriving a
+/// replacement or fallback.
+///
+/// # Errors
+///
+/// Returns the same checkpoint, selection, scheduler, and I/O failures as
+/// [`run_field_checkpointed_with_accelerator_config`]. An invalid `(q, n)` is
+/// rejected before the checkpoint reader or sampler is opened.
+///
+/// # Complexity
+///
+/// Linear in the selected cell's shards, with one checkpoint write per shard.
+pub fn run_cell_checkpointed_with_accelerator_config(
+    root: &Path,
+    manifest: &CampaignManifest,
+    field: u8,
+    order: u16,
+    checkpoint_path: &Path,
+    worker_count: usize,
+    accelerator: &AcceleratorCostTable,
+) -> Result<FieldRun, CampaignDriverError> {
+    let items = enumerate_cell_work_items(manifest, field, order)?;
+    for item in &items {
+        if item.backend == Backend::Accelerator {
+            accelerator
+                .config_for(item.q, item.n)
+                .map_err(CampaignDriverError::Schedule)?;
+        }
+    }
+    run_field_checkpointed_inner(
+        root,
+        manifest,
+        field,
+        Some(order),
+        false,
+        checkpoint_path,
+        worker_count,
+        |item| {
+            let cell = if item.backend == Backend::Accelerator {
+                Some(accelerator.config_for(item.q, item.n)?)
+            } else {
+                None
+            };
+            evaluate_work_item_with_worker_count_and_accelerator(manifest, item, worker_count, cell)
+        },
+        DurabilityHooks {
+            on_shard_durable: ignore_durable_path,
+            on_summary_durable: ignore_durable_path,
+            on_checkpoint_fsync: ignore_checkpoint_fsync,
+        },
+    )
+}
+
+/// Runs one exact manifest cell through a caller-supplied deterministic
+/// evaluator seam.
+///
+/// This has the same cell-scoped checkpoint and no-field-summary contract as
+/// [`run_cell_checkpointed_with_accelerator_config`]. It exists for
+/// conformance fixtures that must observe selection, checkpoint, and emission
+/// behavior without opening the production matrix sampler.
+///
+/// # Errors
+///
+/// Returns selector, checkpoint, resume, I/O, and evaluator errors under the
+/// same rules as [`run_field_checkpointed_with_evaluator`].
+///
+/// # Complexity
+///
+/// Linear in the selected cell's manifested shards.
+pub fn run_cell_checkpointed_with_evaluator<E>(
+    root: &Path,
+    manifest: &CampaignManifest,
+    field: u8,
+    order: u16,
+    checkpoint_path: &Path,
+    worker_count: usize,
+    mut evaluator: E,
+) -> Result<FieldRun, CampaignDriverError>
+where
+    E: FnMut(&WorkItem) -> Result<EvaluatedShard, String>,
+{
+    enumerate_cell_work_items(manifest, field, order)?;
+    run_field_checkpointed_inner(
+        root,
+        manifest,
+        field,
+        Some(order),
+        false,
+        checkpoint_path,
+        worker_count,
+        |item| evaluator(item),
+        DurabilityHooks {
+            on_shard_durable: ignore_durable_path,
+            on_summary_durable: ignore_durable_path,
+            on_checkpoint_fsync: ignore_checkpoint_fsync,
+        },
+    )
 }
 
 /// Runs one field arm with checkpointed shard execution.
@@ -299,6 +437,8 @@ pub fn run_field_checkpointed_with_accelerator_config(
         root,
         manifest,
         field,
+        None,
+        true,
         checkpoint_path,
         worker_count,
         |item| {
@@ -342,6 +482,8 @@ where
         root,
         manifest,
         field,
+        None,
+        true,
         checkpoint_path,
         worker_count,
         |item| evaluator(item),
@@ -383,6 +525,8 @@ fn run_field_checkpointed_inner<E, EError, S, M, C>(
     root: &Path,
     manifest: &CampaignManifest,
     field: u8,
+    cell: Option<u16>,
+    emit_field_summary: bool,
     checkpoint_path: &Path,
     worker_count: usize,
     mut evaluator: E,
@@ -405,14 +549,21 @@ where
             "worker_count must be non-zero".to_owned(),
         ));
     }
-    let items = enumerate_work_items(manifest, Some(field))?;
+    let items = match cell {
+        Some(order) => enumerate_cell_work_items(manifest, field, order)?,
+        None => enumerate_work_items(manifest, Some(field))?,
+    };
     for item in &items {
         resolve_processor_path(item.q, item.n, item.backend)
             .map(|_| ())
             .map_err(CampaignDriverError::Schedule)?;
     }
-    let configuration = campaign_configuration(manifest, field);
-    let hash = campaign_config_hash(manifest, field);
+    let scope = match cell {
+        Some(n) => CampaignExecutionScope::ExactCell { q: field, n },
+        None => CampaignExecutionScope::Field { q: field },
+    };
+    let configuration = campaign_configuration(manifest, scope);
+    let hash = campaign_config_hash(manifest, scope);
     let reader =
         CheckpointReader::<CampaignCheckpoint, _>::for_payload(checkpoint_path, hash.clone());
     let writer = CheckpointWriter::<CampaignCheckpoint, _>::for_payload(checkpoint_path, hash)
@@ -430,12 +581,6 @@ where
         }
         Err(error) => return Err(CampaignDriverError::Checkpoint(error)),
     };
-    if checkpoint.field != field {
-        return Err(CampaignDriverError::ResumeRefused(format!(
-            "field differs: checkpoint has {}, live configuration has {field}",
-            checkpoint.field
-        )));
-    }
     if checkpoint.configuration != configuration {
         return Err(CampaignDriverError::ResumeRefused(
             configuration_differences(&checkpoint.configuration, &configuration),
@@ -554,19 +699,25 @@ where
             shard.record.shard_id,
         )
     });
-    let summary = summarize_with_quarantine(manifest, field, &shards, quarantined.clone());
-    let summary_path = root.join(field_summary_file(field));
-    if summary_path.is_file() {
-        let _ = crate::permanent_campaign::schema::read_field_summary(root, field)
-            .map_err(|error| CampaignDriverError::ResumeRefused(error.to_string()))?;
-    } else {
-        emit_summary_with_durability_hook(root, manifest, &summary, |path| {
-            on_summary_durable(path)
-        })?;
+    let mut summary = summarize_with_quarantine(manifest, field, &shards, quarantined.clone());
+    if let Some(order) = cell {
+        summary.rows.retain(|row| row.n == order);
+        summary.quarantined.retain(|item| item.n == order);
+    }
+    if emit_field_summary {
+        let summary_path = root.join(field_summary_file(field));
+        if summary_path.is_file() {
+            let _ = crate::permanent_campaign::schema::read_field_summary(root, field)
+                .map_err(|error| CampaignDriverError::ResumeRefused(error.to_string()))?;
+        } else {
+            emit_summary_with_durability_hook(root, manifest, &summary, |path| {
+                on_summary_durable(path)
+            })?;
+        }
     }
     checkpoint.completed = completed.into_iter().collect();
     checkpoint.quarantined = quarantined;
-    checkpoint.field_complete = true;
+    checkpoint.scope_complete = true;
     persist_checkpoint(
         &writer,
         &checkpoint,
@@ -703,10 +854,11 @@ fn configuration_differences(
             checkpoint.campaign_id, current.campaign_id
         ));
     }
-    if checkpoint.field != current.field {
+    if checkpoint.scope != current.scope {
         differences.push(format!(
-            "field differs (checkpointed={}, current={})",
-            checkpoint.field, current.field
+            "scope differs (checkpointed={}, current={})",
+            checkpoint.scope.identity(),
+            current.scope.identity()
         ));
     }
     if checkpoint.root_seed != current.root_seed {
@@ -728,11 +880,46 @@ mod tests {
     use crate::permanent_campaign::fixture::{manifest, TestDir};
     use crate::permanent_campaign::provenance::recorded_manifest_hash;
     use crate::permanent_campaign::schedule::evaluate_work_item;
-    use crate::permanent_campaign::schema::{read_manifest, MANIFEST_FILE};
+    use crate::permanent_campaign::schema::{
+        field_summary_file, read_manifest, DeterminantCount, ShardRecord, StreamAddress,
+        MANIFEST_FILE, SCHEMA_VERSION,
+    };
     use sha2::{Digest, Sha256};
     use std::cell::RefCell;
     use std::path::Path;
     use std::rc::Rc;
+
+    fn fixture_evaluation(manifest: &CampaignManifest, item: &WorkItem) -> EvaluatedShard {
+        let mut histogram = vec![0; usize::from(item.q)];
+        histogram[0] = item.matrix_count;
+        EvaluatedShard {
+            run: ShardRun {
+                record: ShardRecord {
+                    schema_version: SCHEMA_VERSION,
+                    shard_id: item.shard_id,
+                    stream_address: StreamAddress {
+                        root_seed: manifest.root_seed,
+                        q: item.q,
+                        n: item.n,
+                        purpose_tag: 3,
+                        stream_index: item.stream_index,
+                    },
+                    matrix_count: item.matrix_count,
+                    permanent_zero_count: item.matrix_count,
+                    permanent_histogram: histogram,
+                    determinant: DeterminantCount::NotEvaluated,
+                },
+                timing: PhaseDurations {
+                    draw: std::time::Duration::ZERO,
+                    pack: std::time::Duration::ZERO,
+                    evaluate: std::time::Duration::ZERO,
+                    determinant: std::time::Duration::ZERO,
+                    count: std::time::Duration::ZERO,
+                },
+            },
+            generator_word_position: u128::from(item.stream_index),
+        }
+    }
 
     #[test]
     fn frozen_manifest_checkpoint_identity_matches_integrity_sidecar() {
@@ -746,15 +933,16 @@ mod tests {
             serde_json::to_vec(&manifest).expect("campaign manifest is serializable");
         let blake3_digest = blake3::hash(&reserialized).to_hex().to_string();
 
-        let checkpoint = CampaignCheckpoint::new(campaign_configuration(&manifest, 3));
+        let scope = CampaignExecutionScope::Field { q: 3 };
+        let checkpoint = CampaignCheckpoint::new(campaign_configuration(&manifest, scope));
         assert_eq!(
             checkpoint.configuration.manifest_content_hash, blake3_digest,
             "checkpoint identity must use BLAKE3 of the driver's re-serialization"
         );
         assert_eq!(
-            campaign_config_hash(&manifest, 3),
+            campaign_config_hash(&manifest, scope),
             format!(
-                "blake3:{blake3_digest};campaign_id={};field=3;root_seed={};manifest={blake3_digest}",
+                "blake3:{blake3_digest};campaign_id={};scope=field:q=3;root_seed={};manifest={blake3_digest}",
                 manifest.campaign_id, manifest.root_seed
             )
         );
@@ -778,6 +966,55 @@ mod tests {
     }
 
     #[test]
+    fn exact_cell_checkpoint_is_scoped_and_does_not_finalize_the_field() {
+        let directory = TestDir::new();
+        let mut campaign = manifest();
+        let mut second = campaign.cells[0].clone();
+        second.n = 5;
+        for shard in &mut second.shards {
+            shard.stream_index += 100;
+        }
+        campaign.cells.push(second);
+        let checkpoint = cell_checkpoint_path(directory.root(), 3, 5);
+
+        let run = run_cell_checkpointed_with_evaluator(
+            directory.root(),
+            &campaign,
+            3,
+            5,
+            &checkpoint,
+            1,
+            |item| Ok(fixture_evaluation(&campaign, item)),
+        )
+        .unwrap();
+
+        assert!(checkpoint.is_file());
+        assert_eq!(run.summary().rows.len(), 1);
+        assert_eq!(run.summary().rows[0].n, 5);
+        assert!(
+            !directory.root().join(field_summary_file(3)).exists(),
+            "one exact terminal cell cannot finalize a partial field summary"
+        );
+
+        let error = run_cell_checkpointed_with_evaluator(
+            directory.root(),
+            &campaign,
+            3,
+            4,
+            &checkpoint,
+            1,
+            |item| Ok(fixture_evaluation(&campaign, item)),
+        )
+        .unwrap_err();
+        assert!(
+            error.to_string().contains(
+                "scope differs (checkpointed=exact_cell:q=3,n=5, current=exact_cell:q=3,n=4)"
+            ),
+            "cross-cell resume must name the semantic mismatch: {error}"
+        );
+    }
+
+    #[test]
     fn shard_and_summary_durability_precede_checkpoint_recording() {
         let directory = TestDir::new();
         let campaign = manifest();
@@ -791,6 +1028,8 @@ mod tests {
             directory.root(),
             &campaign,
             3,
+            None,
+            true,
             &checkpoint,
             1,
             |item| evaluate_work_item(&campaign, item),
