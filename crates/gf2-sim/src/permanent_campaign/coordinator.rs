@@ -9,6 +9,7 @@ use std::fmt;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -17,8 +18,13 @@ use super::acceptance::{
     assess_completed_cell, AcceptanceError, AcceptanceFamily, AcceptancePlan,
     CompletedCellAssessment,
 };
-use super::driver::CampaignExecutionScope;
+use super::launch_cost::read_accelerator_cost_table;
 use super::schedule::CAMPAIGN_CELL_PURPOSE_TAG;
+use super::schedule::{
+    emit_shard_with_durability_hook, enumerate_cell_work_items,
+    evaluate_work_item_with_worker_count_and_accelerator, AcceleratorConfig, AcceleratorCostTable,
+    EvaluatedShard, ScheduleError, WorkItem, DEFAULT_ACCELERATOR_LAUNCH_CAP,
+};
 use super::schema::{
     shard_record_file, AcceptanceVerdict, ArtifactIdentity, Backend, CampaignId, CampaignManifest,
     CellSpec, CellTerminalState, DeterminantCount, DeterminantPlan, FieldSummary, HaltReason,
@@ -41,13 +47,23 @@ const SEARCH_RECEIPT_PATH: &str = "dev/studies/b488f02c/literature-search-2026-0
 #[serde(deny_unknown_fields)]
 pub struct ArmInvocation {
     /// Exact semantic scope selected by the arm.
-    pub scope: CampaignExecutionScope,
+    pub scope: ExactCellScope,
     /// Exact argument vector, including executable token.
     pub argv: Vec<String>,
     /// Explicit worker count effective for the arm.
     pub worker_count: usize,
     /// SHA-256 of the exact emitting executable.
     pub executable_sha256: Sha256Digest,
+}
+
+/// Exact manifested cell selected by one campaign-purpose arm.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExactCellScope {
+    /// Prime field order.
+    pub q: u8,
+    /// Matrix order.
+    pub n: u16,
 }
 
 /// Raw sufficient statistics admitted with one mechanically valid shard.
@@ -62,10 +78,12 @@ pub struct ShardObservation {
     pub determinant: DeterminantCount,
 }
 
-/// Terminal outcome of one shard execution attempt.
+/// Lifecycle state of one persisted shard execution attempt.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
-pub enum ShardAttemptOutcome {
+pub enum ShardAttemptState {
+    /// The exact attempt is persisted and may enter the sampler once.
+    Authorized,
     /// Mechanically valid shard admitted to raw data.
     Accepted {
         /// Content-bound canonical raw shard identity.
@@ -98,8 +116,8 @@ pub struct ShardAttempt {
     pub rng_algorithm: RngAlgorithm,
     /// Frozen generator implementation version.
     pub rng_version: String,
-    /// Accepted or mechanically quarantined outcome.
-    pub outcome: ShardAttemptOutcome,
+    /// Authorized, accepted, or mechanically quarantined lifecycle state.
+    pub state: ShardAttemptState,
 }
 
 /// Persisted state of one frozen manifest cell.
@@ -243,6 +261,30 @@ pub struct CampaignCoordinator {
     receipt: CampaignCoordinatorReceipt,
 }
 
+/// Terminal exact-cell execution projected from the persisted receipt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCellExecution {
+    /// Exact manifested cell executed by this arm.
+    pub scope: ExactCellScope,
+    /// Canonical raw records in manifest shard order.
+    pub records: Vec<ShardRecord>,
+    /// Receipt terminal state for the exact cell.
+    pub terminal_state: CellExecutionState,
+}
+
+#[derive(Clone, Debug)]
+struct PersistedExactArmAuthorization {
+    scope: ExactCellScope,
+    manifest_identity: ArtifactIdentity,
+    arm: ArmInvocation,
+}
+
+#[derive(Clone, Debug)]
+struct PersistedShardAttemptAuthorization {
+    arm: PersistedExactArmAuthorization,
+    attempt: ShardAttempt,
+}
+
 /// Coordinator admission, lifecycle, or persistence failure.
 #[derive(Debug)]
 pub enum CoordinatorError {
@@ -261,6 +303,8 @@ pub enum CoordinatorError {
     Json(serde_json::Error),
     /// Root manifest could not be read.
     Manifest(super::schema::SchemaError),
+    /// Manifest work evaluation or raw emission failed.
+    Schedule(ScheduleError),
 }
 
 impl fmt::Display for CoordinatorError {
@@ -271,6 +315,7 @@ impl fmt::Display for CoordinatorError {
             Self::Io { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::Json(error) => error.fmt(formatter),
             Self::Manifest(error) => error.fmt(formatter),
+            Self::Schedule(error) => error.fmt(formatter),
         }
     }
 }
@@ -282,6 +327,7 @@ impl std::error::Error for CoordinatorError {
             Self::Io { source, .. } => Some(source),
             Self::Json(error) => Some(error),
             Self::Manifest(error) => Some(error),
+            Self::Schedule(error) => Some(error),
             Self::Refused(_) => None,
         }
     }
@@ -290,6 +336,12 @@ impl std::error::Error for CoordinatorError {
 impl From<AcceptanceError> for CoordinatorError {
     fn from(error: AcceptanceError) -> Self {
         Self::Acceptance(error)
+    }
+}
+
+impl From<ScheduleError> for CoordinatorError {
+    fn from(error: ScheduleError) -> Self {
+        Self::Schedule(error)
     }
 }
 
@@ -401,9 +453,7 @@ impl CampaignCoordinator {
     ///
     /// `O(C + A)` for `C` cells and `A` argument tokens.
     pub fn authorize_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
-        let CampaignExecutionScope::ExactCell { q, n } = arm.scope else {
-            return refused("coordinator admits exact-cell arms only");
-        };
+        let ExactCellScope { q, n } = arm.scope;
         validate_arm(&self.manifest, &arm, q, n)?;
         if !matches!(self.receipt.halt, CampaignHaltState::Running) {
             return refused("campaign is halted and admits no further arm");
@@ -432,17 +482,49 @@ impl CampaignCoordinator {
         Ok(())
     }
 
-    /// Records one manifest-derived mechanical quarantine.
-    ///
-    /// The coordinator derives stream, backend, receipt, root seed, purpose,
-    /// RNG, and attempt number. Attempt two is admitted only after attempt one
-    /// is mechanically quarantined. A second quarantine terminalizes the cell
-    /// and campaign without spending or evaluating acceptance alpha.
+    /// Admits a pending exact arm or verifies the identical persisted arm.
     ///
     /// # Errors
     ///
-    /// Refuses unknown or unscheduled shards, a retry after acceptance, a third
-    /// attempt, or an empty diagnostic.
+    /// Applies [`Self::authorize_arm`] to a pending cell. A scheduled cell is
+    /// accepted only when its persisted arm is byte-for-byte identical. A
+    /// terminal cell refuses another execution.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic.
+    ///
+    /// # Complexity
+    ///
+    /// `O(C + A)` for receipt cells and arguments.
+    pub fn authorize_or_resume_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
+        let scope = arm.scope;
+        match self.cell_state(scope.q, scope.n) {
+            Some(CellExecutionState::Pending) => self.authorize_arm(arm),
+            Some(CellExecutionState::Scheduled { arm_index }) => {
+                if self.receipt.arms.get(*arm_index) == Some(&arm) {
+                    Ok(())
+                } else {
+                    refused("scheduled arm differs from the persisted exact invocation")
+                }
+            }
+            Some(CellExecutionState::Completed { .. } | CellExecutionState::Halted { .. }) => {
+                refused("terminal cell cannot be executed again")
+            }
+            None => refused("arm scope does not name a manifest cell"),
+        }
+    }
+
+    /// Persists one exact shard-attempt authorization before sampler entry.
+    ///
+    /// The coordinator derives stream, backend, receipt, root seed, purpose,
+    /// RNG, and attempt number. Attempt two is admitted only after attempt one
+    /// is mechanically quarantined.
+    ///
+    /// # Errors
+    ///
+    /// Refuses unknown or unscheduled shards, an existing active attempt, a
+    /// retry after acceptance, or a third attempt.
     ///
     /// # Panics
     ///
@@ -451,91 +533,20 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C + S + T)` for manifest cells, shards, and prior attempts.
-    pub fn record_quarantine(
+    fn authorize_attempt_inner(
         &mut self,
         q: u8,
         n: u16,
         shard_id: u64,
-        error: String,
     ) -> Result<(), CoordinatorError> {
-        if error.trim().is_empty() {
-            return refused("quarantine diagnostic must not be empty");
-        }
-        self.append_attempt(q, n, shard_id, ShardAttemptOutcome::Quarantined { error })
-    }
-
-    /// Reads, validates, hashes, and records one emitted raw shard.
-    ///
-    /// The accepted identity and sufficient statistics are derived only from
-    /// the exact bytes at the canonical manifested shard path. Callers cannot
-    /// supply accepted counts or digests.
-    ///
-    /// # Errors
-    ///
-    /// Refuses an invalid campaign directory, unknown or unscheduled shard,
-    /// malformed JSON, or any schema, stream, count, histogram, determinant,
-    /// path, or retry mismatch.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
-    /// # Complexity
-    ///
-    /// `O(B + C + S + T)` for shard bytes, cells, shards, and attempts.
-    pub fn record_accepted(
-        &mut self,
-        campaign_root: &Path,
-        q: u8,
-        n: u16,
-        shard_id: u64,
-    ) -> Result<(), CoordinatorError> {
-        validate_campaign_directory(campaign_root, &self.receipt.campaign_id)?;
-        let cell = self.manifest_cell(q, n)?;
-        let shard = cell
-            .shards
+        if self
+            .receipt
+            .attempts
             .iter()
-            .find(|shard| shard.shard_id == shard_id)
-            .ok_or_else(|| CoordinatorError::Refused("manifest shard not found".to_owned()))?;
-        let relative = shard_record_file(q, n, shard_id);
-        let path = campaign_root.join(&relative);
-        let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
-            path: path.clone(),
-            source,
-        })?;
-        let record: ShardRecord = serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)?;
-        validate_raw_record(&self.manifest, cell, shard_id, shard.stream_index, &record)?;
-        let identity = ArtifactIdentity {
-            path: format!("{DATASET_HOME}/{}/{relative}", self.receipt.campaign_id)
-                .parse()
-                .map_err(|error| {
-                    CoordinatorError::Refused(format!("invalid shard path: {error}"))
-                })?,
-            sha256: digest(&bytes),
-        };
-        let observation = ShardObservation {
-            matrix_count: record.matrix_count,
-            permanent_zero_count: record.permanent_zero_count,
-            determinant: record.determinant,
-        };
-        self.append_attempt(
-            q,
-            n,
-            shard_id,
-            ShardAttemptOutcome::Accepted {
-                record: identity,
-                observation,
-            },
-        )
-    }
-
-    fn append_attempt(
-        &mut self,
-        q: u8,
-        n: u16,
-        shard_id: u64,
-        outcome: ShardAttemptOutcome,
-    ) -> Result<(), CoordinatorError> {
+            .any(|attempt| matches!(attempt.state, ShardAttemptState::Authorized))
+        {
+            return refused("one persisted shard attempt is already authorized");
+        }
         if !matches!(
             self.cell_state(q, n),
             Some(CellExecutionState::Scheduled { .. })
@@ -563,11 +574,9 @@ impl CampaignCoordinator {
         if prior.len() >= 2 {
             return refused("attempt exceeds the initial-plus-one-recovery rule");
         }
-        if prior.len() == 1 && !matches!(prior[0].outcome, ShardAttemptOutcome::Quarantined { .. })
-        {
+        if prior.len() == 1 && !matches!(prior[0].state, ShardAttemptState::Quarantined { .. }) {
             return refused("recovery requires one prior mechanical quarantine");
         }
-        validate_attempt_outcome(&self.receipt.campaign_id, &cell, shard_id, &outcome)?;
         let attempt_number = u8::try_from(prior.len() + 1)
             .map_err(|_| CoordinatorError::Refused("attempt number overflow".to_owned()))?;
         let purpose_tag = campaign_purpose_tag(&self.manifest)?;
@@ -585,12 +594,177 @@ impl CampaignCoordinator {
             backend_receipt: cell.backend_receipt,
             rng_algorithm: self.manifest.provenance.rng_algorithm,
             rng_version: self.manifest.provenance.rng_version.clone(),
-            outcome: outcome.clone(),
+            state: ShardAttemptState::Authorized,
         });
-        if attempt_number == 2 && matches!(outcome, ShardAttemptOutcome::Quarantined { .. }) {
+        Ok(())
+    }
+
+    /// Terminalizes the active attempt as mechanically quarantined.
+    ///
+    /// A second quarantine terminalizes the cell and campaign without spending
+    /// acceptance alpha.
+    ///
+    /// # Errors
+    ///
+    /// Refuses an empty diagnostic or a shard without one active authorization.
+    fn record_quarantine_inner(
+        &mut self,
+        q: u8,
+        n: u16,
+        shard_id: u64,
+        error: String,
+    ) -> Result<(), CoordinatorError> {
+        if error.trim().is_empty() {
+            return refused("quarantine diagnostic must not be empty");
+        }
+        let attempt = self.active_attempt_mut(q, n, shard_id)?;
+        let attempt_number = attempt.attempt;
+        attempt.state = ShardAttemptState::Quarantined { error };
+        if attempt_number == 2 {
             self.terminalize_mechanical(q, n, HaltReason::ExecutionFailure)?;
         }
         Ok(())
+    }
+
+    /// Reads, validates, hashes, and accepts the active emitted shard attempt.
+    ///
+    /// Accepted identity and counts derive only from exact canonical raw bytes.
+    ///
+    /// # Errors
+    ///
+    /// Refuses an absent active authorization or invalid raw evidence.
+    fn record_accepted_inner(
+        &mut self,
+        campaign_root: &Path,
+        q: u8,
+        n: u16,
+        shard_id: u64,
+    ) -> Result<(), CoordinatorError> {
+        validate_campaign_directory(campaign_root, &self.receipt.campaign_id)?;
+        let cell = self.manifest_cell(q, n)?.clone();
+        let shard = cell
+            .shards
+            .iter()
+            .find(|shard| shard.shard_id == shard_id)
+            .ok_or_else(|| CoordinatorError::Refused("manifest shard not found".to_owned()))?;
+        let relative = shard_record_file(q, n, shard_id);
+        let path = campaign_root.join(&relative);
+        let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
+            path: path.clone(),
+            source,
+        })?;
+        let record: ShardRecord = serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)?;
+        validate_raw_record(&self.manifest, &cell, shard_id, shard.stream_index, &record)?;
+        let identity = ArtifactIdentity {
+            path: format!("{DATASET_HOME}/{}/{relative}", self.receipt.campaign_id)
+                .parse()
+                .map_err(|error| {
+                    CoordinatorError::Refused(format!("invalid shard path: {error}"))
+                })?,
+            sha256: digest(&bytes),
+        };
+        let observation = ShardObservation {
+            matrix_count: record.matrix_count,
+            permanent_zero_count: record.permanent_zero_count,
+            determinant: record.determinant,
+        };
+        self.active_attempt_mut(q, n, shard_id)?.state = ShardAttemptState::Accepted {
+            record: identity,
+            observation,
+        };
+        Ok(())
+    }
+
+    fn active_attempt_mut(
+        &mut self,
+        q: u8,
+        n: u16,
+        shard_id: u64,
+    ) -> Result<&mut ShardAttempt, CoordinatorError> {
+        self.receipt
+            .attempts
+            .iter_mut()
+            .rev()
+            .find(|attempt| {
+                (
+                    attempt.stream_address.q,
+                    attempt.stream_address.n,
+                    attempt.shard_id,
+                ) == (q, n, shard_id)
+                    && matches!(attempt.state, ShardAttemptState::Authorized)
+            })
+            .ok_or_else(|| {
+                CoordinatorError::Refused("shard has no active authorized attempt".to_owned())
+            })
+    }
+
+    fn persisted_arm_authorization(
+        &self,
+        scope: ExactCellScope,
+    ) -> Result<PersistedExactArmAuthorization, CoordinatorError> {
+        let Some(CellExecutionState::Scheduled { arm_index }) = self.cell_state(scope.q, scope.n)
+        else {
+            return refused("exact execution requires a persisted scheduled arm");
+        };
+        let arm = self
+            .receipt
+            .arms
+            .get(*arm_index)
+            .filter(|arm| arm.scope == scope)
+            .cloned()
+            .ok_or_else(|| {
+                CoordinatorError::Refused(
+                    "scheduled cell does not bind its persisted exact arm".to_owned(),
+                )
+            })?;
+        Ok(PersistedExactArmAuthorization {
+            scope,
+            manifest_identity: self.receipt.manifest_identity.clone(),
+            arm,
+        })
+    }
+
+    fn persisted_attempt_authorization(
+        &self,
+        arm: &PersistedExactArmAuthorization,
+        item: &WorkItem,
+    ) -> Result<PersistedShardAttemptAuthorization, CoordinatorError> {
+        if self.receipt.manifest_identity != arm.manifest_identity
+            || arm.scope
+                != (ExactCellScope {
+                    q: item.q,
+                    n: item.n,
+                })
+            || self
+                .receipt
+                .arms
+                .iter()
+                .find(|candidate| *candidate == &arm.arm)
+                .is_none()
+        {
+            return refused("attempt authorization differs from its persisted exact arm");
+        }
+        let attempt = self
+            .receipt
+            .attempts
+            .last()
+            .filter(|attempt| {
+                attempt.stream_address.q == item.q
+                    && attempt.stream_address.n == item.n
+                    && attempt.shard_id == item.shard_id
+                    && attempt.stream_address.stream_index == item.stream_index
+                    && matches!(attempt.state, ShardAttemptState::Authorized)
+            })
+            .cloned()
+            .ok_or_else(|| {
+                CoordinatorError::Refused(
+                    "sampler entry lacks a persisted active shard authorization".to_owned(),
+                )
+            })?;
+        Ok(PersistedShardAttemptAuthorization {
+            arm: arm.clone(),
+            attempt,
+        })
     }
 
     /// Assesses raw completed counts and records immutable terminal evidence.
@@ -608,7 +782,7 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(S + n + log N)` for `S` shards, matrix order `n`, and count `N`.
-    pub fn record_completed(
+    fn record_completed_inner(
         &mut self,
         q: u8,
         n: u16,
@@ -671,6 +845,78 @@ impl CampaignCoordinator {
         Ok(())
     }
 
+    fn record_completed_from_attempts(&mut self, q: u8, n: u16) -> Result<(), CoordinatorError> {
+        let cell = self.manifest_cell(q, n)?.clone();
+        let (pooled, _) = self.pooled_accepted(&cell)?;
+        self.record_completed_inner(
+            q,
+            n,
+            pooled.matrix_count,
+            pooled.permanent_zero_count,
+            pooled.determinant,
+        )
+    }
+
+    /// Test-support admission of one manifest-derived attempt authorization.
+    ///
+    /// Production campaign execution admits attempts only through
+    /// [`execute_scheduled_cell`].
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn authorize_attempt(
+        &mut self,
+        q: u8,
+        n: u16,
+        shard_id: u64,
+    ) -> Result<(), CoordinatorError> {
+        self.authorize_attempt_inner(q, n, shard_id)
+    }
+
+    /// Test-support terminalization of an active mechanical attempt.
+    ///
+    /// Production campaign execution records this state only through
+    /// [`execute_scheduled_cell`].
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn record_quarantine(
+        &mut self,
+        q: u8,
+        n: u16,
+        shard_id: u64,
+        error: String,
+    ) -> Result<(), CoordinatorError> {
+        self.record_quarantine_inner(q, n, shard_id, error)
+    }
+
+    /// Test-support adoption of one active attempt's canonical raw bytes.
+    ///
+    /// Production campaign execution records this state only through
+    /// [`execute_scheduled_cell`].
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn record_accepted(
+        &mut self,
+        campaign_root: &Path,
+        q: u8,
+        n: u16,
+        shard_id: u64,
+    ) -> Result<(), CoordinatorError> {
+        self.record_accepted_inner(campaign_root, q, n, shard_id)
+    }
+
+    /// Test-support assessment of counts pooled from accepted attempts.
+    ///
+    /// Production campaign execution assesses a complete cell only through
+    /// [`execute_scheduled_cell`].
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn record_completed(
+        &mut self,
+        q: u8,
+        n: u16,
+        matrix_count: u64,
+        permanent_zero_count: u64,
+        determinant: DeterminantCount,
+    ) -> Result<(), CoordinatorError> {
+        self.record_completed_inner(q, n, matrix_count, permanent_zero_count, determinant)
+    }
+
     /// Records a backend-unavailable or fatal mechanical terminal path.
     ///
     /// Accepted shards remain pooled in the halted row and receipt. The halt
@@ -687,6 +933,7 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(CS)` in the worst case while terminalizing remaining cells.
+    #[cfg(any(test, feature = "test-support"))]
     pub fn record_terminal_failure(
         &mut self,
         q: u8,
@@ -736,8 +983,8 @@ impl CampaignCoordinator {
             .receipt
             .attempts
             .iter()
-            .filter_map(|attempt| match &attempt.outcome {
-                ShardAttemptOutcome::Quarantined { error } if attempt.stream_address.q == q => {
+            .filter_map(|attempt| match &attempt.state {
+                ShardAttemptState::Quarantined { error } if attempt.stream_address.q == q => {
                     Some(QuarantinedShard {
                         q,
                         n: attempt.stream_address.n,
@@ -926,6 +1173,465 @@ pub fn coordinator_receipt_path(campaign_root: &Path, campaign_id: &CampaignId) 
         .join(campaign_id.to_string())
         .join(COORDINATOR_DIRECTORY)
         .join(COORDINATOR_RECEIPT_FILE)
+}
+
+/// Returns the synchronization lock path for one campaign executor.
+///
+/// The lock is synchronization only. All durable lifecycle state remains in
+/// the coordinator receipt.
+#[must_use]
+pub fn coordinator_lock_path(campaign_root: &Path, campaign_id: &CampaignId) -> PathBuf {
+    campaign_root
+        .join("derived")
+        .join(campaign_id.to_string())
+        .join(COORDINATOR_DIRECTORY)
+        .join("execution.lock")
+}
+
+/// Executes one persisted exact-cell arm through the canonical receipt state machine.
+///
+/// The function holds the campaign execution lock across receipt revalidation,
+/// attempt authorization, evaluation, durable raw emission, and attempt
+/// terminalization. Every attempt authorization is persisted and re-read
+/// before the sampler is entered. A durable raw shard left by an interrupted
+/// process is adopted without another sampler entry.
+///
+/// # Errors
+///
+/// Refuses an unpersisted or mismatched arm, lock contention, an invalid full
+/// accelerator-cost table, inconsistent durable raw evidence, or a receipt
+/// transition failure. Evaluation and raw-emission failures consume the fixed
+/// mechanical attempt and are preserved in the receipt.
+///
+/// # Panics
+///
+/// Does not intentionally panic.
+///
+/// # Complexity
+///
+/// Receipt work is `O(C + S + T)` for cells, selected shards, and attempts;
+/// each admitted shard has the permanent and determinant cost documented by
+/// [`evaluate_work_item_with_worker_count_and_accelerator`].
+pub fn execute_scheduled_cell(
+    campaign_root: &Path,
+    scope: ExactCellScope,
+    worker_count: usize,
+) -> Result<ExactCellExecution, CoordinatorError> {
+    execute_scheduled_cell_inner(
+        campaign_root,
+        scope,
+        worker_count,
+        evaluate_work_item_with_worker_count_and_accelerator,
+    )
+}
+
+/// Deterministic evaluator seam for receipt-state-machine integration tests.
+///
+/// This entry point has the same persisted admission, locking, retry, and raw
+/// durability behavior as [`execute_scheduled_cell`]. Only shard evaluation is
+/// supplied by the test.
+///
+/// # Errors
+///
+/// Returns the same failures as [`execute_scheduled_cell`] plus failures from
+/// `evaluator`.
+///
+/// # Panics
+///
+/// Does not intentionally panic.
+///
+/// # Complexity
+///
+/// Adds `O(1)` dispatch overhead per authorized attempt to the evaluator's
+/// cost.
+#[cfg(any(test, feature = "test-support"))]
+pub fn execute_scheduled_cell_with_evaluator<E>(
+    campaign_root: &Path,
+    scope: ExactCellScope,
+    worker_count: usize,
+    evaluator: E,
+) -> Result<ExactCellExecution, CoordinatorError>
+where
+    E: FnMut(
+        &CampaignManifest,
+        &WorkItem,
+        usize,
+        Option<AcceleratorConfig>,
+    ) -> Result<EvaluatedShard, ScheduleError>,
+{
+    execute_scheduled_cell_inner(campaign_root, scope, worker_count, evaluator)
+}
+
+fn execute_scheduled_cell_inner<E>(
+    campaign_root: &Path,
+    scope: ExactCellScope,
+    worker_count: usize,
+    mut evaluator: E,
+) -> Result<ExactCellExecution, CoordinatorError>
+where
+    E: FnMut(
+        &CampaignManifest,
+        &WorkItem,
+        usize,
+        Option<AcceleratorConfig>,
+    ) -> Result<EvaluatedShard, ScheduleError>,
+{
+    let preflight = CampaignCoordinator::read(campaign_root)?;
+    let manifest = preflight.manifest.clone();
+    let preflight_arm = preflight.persisted_arm_authorization(scope)?;
+    if worker_count != preflight_arm.arm.worker_count {
+        return refused("runtime worker count differs from the persisted exact arm");
+    }
+    let accelerator_costs = accelerator_costs_for_arm(&manifest, &preflight_arm.arm)?;
+    accelerator_costs.validate_manifest(&manifest)?;
+    let lock_path = coordinator_lock_path(campaign_root, &manifest.campaign_id);
+    let lock_parent = lock_path
+        .parent()
+        .ok_or_else(|| CoordinatorError::Refused("execution lock has no parent".to_owned()))?;
+    fs::create_dir_all(lock_parent).map_err(|source| CoordinatorError::Io {
+        path: lock_parent.to_owned(),
+        source,
+    })?;
+    let lock_file = OpenOptions::new()
+        .create(true)
+        .read(true)
+        .write(true)
+        .open(&lock_path)
+        .map_err(|source| CoordinatorError::Io {
+            path: lock_path.clone(),
+            source,
+        })?;
+    if let Err(source) = lock_file.try_lock() {
+        return Err(CoordinatorError::Refused(format!(
+            "campaign execution lock is unavailable at {}: {source}",
+            lock_path.display()
+        )));
+    }
+
+    let mut coordinator = CampaignCoordinator::read(campaign_root)?;
+    let arm_authorization = coordinator.persisted_arm_authorization(scope)?;
+    if arm_authorization.scope != preflight_arm.scope
+        || arm_authorization.manifest_identity != preflight_arm.manifest_identity
+        || arm_authorization.arm != preflight_arm.arm
+    {
+        return refused("persisted exact arm changed while acquiring the execution lock");
+    }
+    let items = enumerate_cell_work_items(&manifest, scope.q, scope.n)?;
+    for item in &items {
+        loop {
+            if accepted_attempt(&coordinator.receipt, item).is_some() {
+                break;
+            }
+            if !matches!(
+                coordinator.cell_state(scope.q, scope.n),
+                Some(CellExecutionState::Scheduled { .. })
+            ) {
+                return exact_execution(campaign_root, &coordinator, scope, &items);
+            }
+
+            if let Some(active) = active_attempt(&coordinator.receipt, item).cloned() {
+                let raw_path =
+                    campaign_root.join(shard_record_file(scope.q, scope.n, item.shard_id));
+                if raw_path.is_file() {
+                    match coordinator.record_accepted_inner(
+                        campaign_root,
+                        scope.q,
+                        scope.n,
+                        item.shard_id,
+                    ) {
+                        Ok(()) => {
+                            coordinator.persist(campaign_root)?;
+                            continue;
+                        }
+                        Err(error) => {
+                            preserve_invalid_raw(
+                                campaign_root,
+                                &coordinator.receipt.campaign_id,
+                                item,
+                                active.attempt,
+                                &raw_path,
+                            )?;
+                            coordinator.record_quarantine_inner(
+                                scope.q,
+                                scope.n,
+                                item.shard_id,
+                                format!("durable raw shard failed canonical validation: {error}"),
+                            )?;
+                            coordinator.persist(campaign_root)?;
+                            continue;
+                        }
+                    }
+                }
+                coordinator.record_quarantine_inner(
+                    scope.q,
+                    scope.n,
+                    item.shard_id,
+                    "authorized attempt ended without a durable raw shard".to_owned(),
+                )?;
+                coordinator.persist(campaign_root)?;
+                continue;
+            }
+
+            let raw_path = campaign_root.join(shard_record_file(scope.q, scope.n, item.shard_id));
+            if raw_path.exists() {
+                return refused("raw shard exists without an active or accepted attempt");
+            }
+            coordinator.authorize_attempt_inner(scope.q, scope.n, item.shard_id)?;
+            coordinator.persist(campaign_root)?;
+            coordinator = CampaignCoordinator::read(campaign_root)?;
+            let attempt_authorization =
+                coordinator.persisted_attempt_authorization(&arm_authorization, item)?;
+            let accelerator = if item.backend == Backend::Accelerator {
+                Some(accelerator_costs.config_for(item.q, item.n)?)
+            } else {
+                None
+            };
+            match evaluate_authorized_attempt(
+                &attempt_authorization,
+                &manifest,
+                item,
+                worker_count,
+                accelerator,
+                &mut evaluator,
+            ) {
+                Ok(evaluated) => {
+                    let execution_result = validate_evaluated_shard(&manifest, item, &evaluated)
+                        .and_then(|()| {
+                            emit_shard_with_durability_hook(
+                                campaign_root,
+                                &manifest,
+                                &evaluated.run,
+                                |_| {},
+                            )
+                            .map(|_| ())
+                            .map_err(CoordinatorError::Schedule)
+                        });
+                    match execution_result {
+                        Ok(()) => {
+                            coordinator.record_accepted_inner(
+                                campaign_root,
+                                scope.q,
+                                scope.n,
+                                item.shard_id,
+                            )?;
+                            coordinator.persist(campaign_root)?;
+                        }
+                        Err(error) => {
+                            let raw_path = campaign_root.join(shard_record_file(
+                                scope.q,
+                                scope.n,
+                                item.shard_id,
+                            ));
+                            if raw_path.exists() {
+                                preserve_invalid_raw(
+                                    campaign_root,
+                                    &coordinator.receipt.campaign_id,
+                                    item,
+                                    attempt_authorization.attempt.attempt,
+                                    &raw_path,
+                                )?;
+                            }
+                            coordinator.record_quarantine_inner(
+                                scope.q,
+                                scope.n,
+                                item.shard_id,
+                                error.to_string(),
+                            )?;
+                            coordinator.persist(campaign_root)?;
+                        }
+                    }
+                }
+                Err(error) => {
+                    coordinator.record_quarantine_inner(
+                        scope.q,
+                        scope.n,
+                        item.shard_id,
+                        error.to_string(),
+                    )?;
+                    coordinator.persist(campaign_root)?;
+                }
+            }
+        }
+    }
+    coordinator.record_completed_from_attempts(scope.q, scope.n)?;
+    coordinator.persist(campaign_root)?;
+    exact_execution(campaign_root, &coordinator, scope, &items)
+}
+
+fn validate_evaluated_shard(
+    manifest: &CampaignManifest,
+    item: &WorkItem,
+    evaluated: &EvaluatedShard,
+) -> Result<(), CoordinatorError> {
+    let cell = manifest
+        .cells
+        .iter()
+        .find(|cell| (cell.q, cell.n) == (item.q, item.n))
+        .ok_or_else(|| CoordinatorError::Refused("authorized cell is not manifested".to_owned()))?;
+    validate_raw_record(
+        manifest,
+        cell,
+        item.shard_id,
+        item.stream_index,
+        &evaluated.run.record,
+    )
+}
+
+fn accelerator_costs_for_arm(
+    manifest: &CampaignManifest,
+    arm: &ArmInvocation,
+) -> Result<AcceleratorCostTable, CoordinatorError> {
+    let launch_cap = match optional_unique_option(&arm.argv, "--accelerator-launch-cap-ms")? {
+        Some(value) => {
+            let milliseconds = value.parse::<u64>().map_err(|_| {
+                CoordinatorError::Refused(
+                    "persisted accelerator launch cap is not an integer".to_owned(),
+                )
+            })?;
+            if milliseconds == 0 {
+                return refused("persisted accelerator launch cap must be positive");
+            }
+            Duration::from_millis(milliseconds)
+        }
+        None => DEFAULT_ACCELERATOR_LAUNCH_CAP,
+    };
+    match optional_unique_option(&arm.argv, "--accelerator-cost-table")? {
+        Some(path) => {
+            read_accelerator_cost_table(Path::new(&path), manifest, launch_cap).map_err(|error| {
+                CoordinatorError::Refused(format!(
+                    "persisted accelerator cost table {path} is invalid: {error}"
+                ))
+            })
+        }
+        None => Ok(AcceleratorCostTable::default()),
+    }
+}
+
+fn evaluate_authorized_attempt<E>(
+    authorization: &PersistedShardAttemptAuthorization,
+    manifest: &CampaignManifest,
+    item: &WorkItem,
+    worker_count: usize,
+    accelerator: Option<AcceleratorConfig>,
+    evaluator: &mut E,
+) -> Result<EvaluatedShard, ScheduleError>
+where
+    E: FnMut(
+        &CampaignManifest,
+        &WorkItem,
+        usize,
+        Option<AcceleratorConfig>,
+    ) -> Result<EvaluatedShard, ScheduleError>,
+{
+    debug_assert_eq!(authorization.arm.scope.q, item.q);
+    debug_assert_eq!(authorization.arm.scope.n, item.n);
+    debug_assert_eq!(authorization.attempt.shard_id, item.shard_id);
+    debug_assert_eq!(
+        authorization.attempt.stream_address.stream_index,
+        item.stream_index
+    );
+    evaluator(manifest, item, worker_count, accelerator)
+}
+
+fn active_attempt<'a>(
+    receipt: &'a CampaignCoordinatorReceipt,
+    item: &WorkItem,
+) -> Option<&'a ShardAttempt> {
+    receipt.attempts.last().filter(|attempt| {
+        attempt.stream_address.q == item.q
+            && attempt.stream_address.n == item.n
+            && attempt.shard_id == item.shard_id
+            && matches!(attempt.state, ShardAttemptState::Authorized)
+    })
+}
+
+fn accepted_attempt<'a>(
+    receipt: &'a CampaignCoordinatorReceipt,
+    item: &WorkItem,
+) -> Option<&'a ShardAttempt> {
+    receipt.attempts.iter().find(|attempt| {
+        attempt.stream_address.q == item.q
+            && attempt.stream_address.n == item.n
+            && attempt.shard_id == item.shard_id
+            && matches!(attempt.state, ShardAttemptState::Accepted { .. })
+    })
+}
+
+fn exact_execution(
+    campaign_root: &Path,
+    coordinator: &CampaignCoordinator,
+    scope: ExactCellScope,
+    items: &[WorkItem],
+) -> Result<ExactCellExecution, CoordinatorError> {
+    let terminal_state = coordinator
+        .cell_state(scope.q, scope.n)
+        .filter(|state| is_terminal(state))
+        .cloned()
+        .ok_or_else(|| CoordinatorError::Refused("exact cell is not terminal".to_owned()))?;
+    let records = items
+        .iter()
+        .filter(|item| accepted_attempt(&coordinator.receipt, item).is_some())
+        .map(|item| {
+            let path = campaign_root.join(shard_record_file(item.q, item.n, item.shard_id));
+            let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
+                path: path.clone(),
+                source,
+            })?;
+            serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(ExactCellExecution {
+        scope,
+        records,
+        terminal_state,
+    })
+}
+
+fn preserve_invalid_raw(
+    campaign_root: &Path,
+    campaign_id: &CampaignId,
+    item: &WorkItem,
+    attempt: u8,
+    raw_path: &Path,
+) -> Result<(), CoordinatorError> {
+    let path = campaign_root
+        .join("derived")
+        .join(campaign_id.to_string())
+        .join(COORDINATOR_DIRECTORY)
+        .join("quarantine")
+        .join(format!(
+            "q{}-n{}-shard-{:06}-attempt-{attempt}.json",
+            item.q, item.n, item.shard_id
+        ));
+    let parent = path
+        .parent()
+        .ok_or_else(|| CoordinatorError::Refused("quarantine path has no parent".to_owned()))?;
+    fs::create_dir_all(parent).map_err(|source| CoordinatorError::Io {
+        path: parent.to_owned(),
+        source,
+    })?;
+    if path.exists() {
+        return refused("quarantine evidence path already exists");
+    }
+    fs::rename(raw_path, &path).map_err(|source| CoordinatorError::Io {
+        path: path.clone(),
+        source,
+    })?;
+    fs::File::open(parent)
+        .and_then(|directory| directory.sync_all())
+        .map_err(|source| CoordinatorError::Io {
+            path: parent.to_owned(),
+            source,
+        })?;
+    let raw_parent = raw_path
+        .parent()
+        .ok_or_else(|| CoordinatorError::Refused("raw shard path has no parent".to_owned()))?;
+    fs::File::open(raw_parent)
+        .and_then(|directory| directory.sync_all())
+        .map_err(|source| CoordinatorError::Io {
+            path: raw_parent.to_owned(),
+            source,
+        })
 }
 
 /// Closed conditional claim licensed by the canonical search record.
@@ -1145,11 +1851,8 @@ fn validate_arm(
     }
     let selected_q = unique_option(&arm.argv, "--q")?;
     let selected_n = unique_option(&arm.argv, "--n")?;
-    let workers = unique_option(&arm.argv, "--workers")?;
-    if selected_q != q.to_string()
-        || selected_n != n.to_string()
-        || workers != arm.worker_count.to_string()
-    {
+    let workers = effective_worker_count(&arm.argv)?;
+    if selected_q != q.to_string() || selected_n != n.to_string() || workers != arm.worker_count {
         return refused("arm selectors or effective worker count conflict with its receipt");
     }
     if normalized_invocation(&manifest.provenance.invocation)? != normalized_invocation(&arm.argv)?
@@ -1162,7 +1865,7 @@ fn validate_arm(
 fn normalized_invocation(argv: &[String]) -> Result<Vec<String>, CoordinatorError> {
     unique_option(argv, "--q")?;
     unique_option(argv, "--n")?;
-    unique_option(argv, "--workers")?;
+    let workers = effective_worker_count(argv)?;
     let mut normalized = argv.to_vec();
     for option in ["--q", "--n"] {
         let index = normalized
@@ -1171,7 +1874,28 @@ fn normalized_invocation(argv: &[String]) -> Result<Vec<String>, CoordinatorErro
             .ok_or_else(|| CoordinatorError::Refused("frozen selector is absent".to_owned()))?;
         normalized[index + 1] = format!("<{option}>");
     }
+    if let Some(index) = normalized.iter().position(|value| value == "--workers") {
+        normalized.drain(index..=index + 1);
+    }
+    normalized.extend(["--workers".to_owned(), workers.to_string()]);
     Ok(normalized)
+}
+
+fn effective_worker_count(argv: &[String]) -> Result<usize, CoordinatorError> {
+    match optional_unique_option(argv, "--workers")? {
+        Some(value) => {
+            let workers = value.parse::<usize>().map_err(|_| {
+                CoordinatorError::Refused(
+                    "arm worker count must be a positive canonical integer".to_owned(),
+                )
+            })?;
+            if workers == 0 || value != workers.to_string() {
+                return refused("arm worker count must be a positive canonical integer");
+            }
+            Ok(workers)
+        }
+        None => Ok(1),
+    }
 }
 
 fn unique_option(argv: &[String], option: &str) -> Result<String, CoordinatorError> {
@@ -1187,6 +1911,23 @@ fn unique_option(argv: &[String], option: &str) -> Result<String, CoordinatorErr
     }
 }
 
+fn optional_unique_option(
+    argv: &[String],
+    option: &str,
+) -> Result<Option<String>, CoordinatorError> {
+    let values: Vec<_> = argv
+        .iter()
+        .enumerate()
+        .filter(|(_, value)| value.as_str() == option)
+        .map(|(index, _)| argv.get(index + 1))
+        .collect();
+    match values.as_slice() {
+        [] => Ok(None),
+        [Some(value)] if !value.starts_with("--") => Ok(Some((*value).clone())),
+        _ => refused("arm contains an ambiguous optional execution input"),
+    }
+}
+
 fn campaign_purpose_tag(manifest: &CampaignManifest) -> Result<u8, CoordinatorError> {
     manifest
         .stream_purposes
@@ -1196,18 +1937,19 @@ fn campaign_purpose_tag(manifest: &CampaignManifest) -> Result<u8, CoordinatorEr
         .ok_or_else(|| CoordinatorError::Refused("campaign purpose tag is absent".to_owned()))
 }
 
-fn validate_attempt_outcome(
+fn validate_attempt_state(
     campaign_id: &CampaignId,
     cell: &CellSpec,
     shard_id: u64,
-    outcome: &ShardAttemptOutcome,
+    state: &ShardAttemptState,
 ) -> Result<(), CoordinatorError> {
-    match outcome {
-        ShardAttemptOutcome::Quarantined { error } if error.trim().is_empty() => {
+    match state {
+        ShardAttemptState::Authorized => Ok(()),
+        ShardAttemptState::Quarantined { error } if error.trim().is_empty() => {
             refused("quarantine diagnostic must not be empty")
         }
-        ShardAttemptOutcome::Quarantined { .. } => Ok(()),
-        ShardAttemptOutcome::Accepted {
+        ShardAttemptState::Quarantined { .. } => Ok(()),
+        ShardAttemptState::Accepted {
             record,
             observation,
         } => {
@@ -1274,11 +2016,11 @@ fn validate_raw_record(
     {
         return refused("raw shard histogram or sample count is invalid");
     }
-    validate_attempt_outcome(
+    validate_attempt_state(
         &manifest.campaign_id,
         cell,
         shard_id,
-        &ShardAttemptOutcome::Accepted {
+        &ShardAttemptState::Accepted {
             record: ArtifactIdentity {
                 path: format!(
                     "{DATASET_HOME}/{}/{}",
@@ -1347,12 +2089,12 @@ fn pooled_accepted_from_receipt(
             {
                 return None;
             }
-            match &attempt.outcome {
-                ShardAttemptOutcome::Accepted {
+            match &attempt.state {
+                ShardAttemptState::Accepted {
                     record,
                     observation,
                 } => Some((record, observation)),
-                ShardAttemptOutcome::Quarantined { .. } => None,
+                ShardAttemptState::Authorized | ShardAttemptState::Quarantined { .. } => None,
             }
         }) {
             matrix_count = matrix_count
@@ -1439,9 +2181,7 @@ fn validate_receipt(
 
     let mut arm_indices = BTreeMap::new();
     for (index, arm) in receipt.arms.iter().enumerate() {
-        let CampaignExecutionScope::ExactCell { q, n } = arm.scope else {
-            return refused("persisted arm is not exact-cell scoped");
-        };
+        let ExactCellScope { q, n } = arm.scope;
         validate_arm(manifest, arm, q, n)?;
         if !manifest.cells.iter().any(|cell| (cell.q, cell.n) == (q, n))
             || arm_indices.insert((q, n), index).is_some()
@@ -1451,7 +2191,7 @@ fn validate_receipt(
     }
     if receipt.arms.first().is_some_and(|arm| {
         arm.scope
-            != CampaignExecutionScope::ExactCell {
+            != ExactCellScope {
                 q: FIRST_FIELD,
                 n: FIRST_ORDER,
             }
@@ -1459,9 +2199,10 @@ fn validate_receipt(
         return refused("first persisted arm is not q=7 n=20");
     }
 
-    let mut attempt_history: BTreeMap<(u8, u16, u64), Vec<&ShardAttemptOutcome>> = BTreeMap::new();
+    let mut attempt_history: BTreeMap<(u8, u16, u64), Vec<&ShardAttemptState>> = BTreeMap::new();
     let mut preceding_arm_index = 0_usize;
-    for attempt in &receipt.attempts {
+    let mut authorized_attempt = None;
+    for (attempt_index, attempt) in receipt.attempts.iter().enumerate() {
         let q = attempt.stream_address.q;
         let n = attempt.stream_address.n;
         let cell = manifest
@@ -1500,19 +2241,11 @@ fn validate_receipt(
         if attempt.attempt != expected_number
             || attempt.attempt > 2
             || (attempt.attempt == 2
-                && !matches!(
-                    history.first(),
-                    Some(ShardAttemptOutcome::Quarantined { .. })
-                ))
+                && !matches!(history.first(), Some(ShardAttemptState::Quarantined { .. })))
         {
             return refused("persisted retry history violates the quarantine rule");
         }
-        validate_attempt_outcome(
-            &receipt.campaign_id,
-            cell,
-            attempt.shard_id,
-            &attempt.outcome,
-        )?;
+        validate_attempt_state(&receipt.campaign_id, cell, attempt.shard_id, &attempt.state)?;
         let arm_index = *arm_indices
             .get(&(q, n))
             .ok_or_else(|| CoordinatorError::Refused("attempt has no admitted arm".to_owned()))?;
@@ -1520,11 +2253,33 @@ fn validate_receipt(
             return refused("attempt history interleaves serial exact-cell arms");
         }
         preceding_arm_index = arm_index;
-        history.push(&attempt.outcome);
+        if matches!(attempt.state, ShardAttemptState::Authorized) {
+            if authorized_attempt.replace((attempt_index, q, n)).is_some() {
+                return refused("receipt contains more than one active authorized attempt");
+            }
+        }
+        history.push(&attempt.state);
+    }
+    if let Some((attempt_index, q, n)) = authorized_attempt {
+        if attempt_index + 1 != receipt.attempts.len()
+            || !matches!(receipt.halt, CampaignHaltState::Running)
+            || !matches!(
+                receipt
+                    .cells
+                    .iter()
+                    .find(|cell| (cell.q, cell.n) == (q, n))
+                    .map(|cell| &cell.execution),
+                Some(CellExecutionState::Scheduled { .. })
+            )
+        {
+            return refused(
+                "active attempt is not the final evidence of the scheduled running cell",
+            );
+        }
     }
     for (&(q, n, _), history) in &attempt_history {
         if history.len() == 2
-            && matches!(history[1], ShardAttemptOutcome::Quarantined { .. })
+            && matches!(history[1], ShardAttemptState::Quarantined { .. })
             && (!matches!(
                 receipt
                     .cells
@@ -1613,9 +2368,7 @@ fn validate_receipt(
     }
 
     for (index, arm) in receipt.arms.iter().enumerate() {
-        let CampaignExecutionScope::ExactCell { q, n } = arm.scope else {
-            unreachable!("exact arm checked above");
-        };
+        let ExactCellScope { q, n } = arm.scope;
         let state = receipt
             .cells
             .iter()
@@ -1662,10 +2415,10 @@ fn validate_on_disk_attempts(
     receipt: &CampaignCoordinatorReceipt,
 ) -> Result<(), CoordinatorError> {
     for attempt in &receipt.attempts {
-        let ShardAttemptOutcome::Accepted {
+        let ShardAttemptState::Accepted {
             record,
             observation,
-        } = &attempt.outcome
+        } = &attempt.state
         else {
             continue;
         };
@@ -1817,7 +2570,7 @@ fn validate_halt_state(receipt: &CampaignCoordinatorReceipt) -> Result<(), Coord
                     }
                 };
             if receipt.arms.last().map(|arm| arm.scope)
-                != Some(CampaignExecutionScope::ExactCell {
+                != Some(ExactCellScope {
                     q: cause_q,
                     n: cause_n,
                 })
@@ -1840,10 +2593,20 @@ fn validate_monotonic_transition(
         || prior.acceptance_plan != next.acceptance_plan
         || prior.retry_rule != next.retry_rule
         || !next.arms.starts_with(&prior.arms)
-        || !next.attempts.starts_with(&prior.attempts)
+        || next.attempts.len() < prior.attempts.len()
         || prior.cells.len() != next.cells.len()
     {
         return refused("receipt update changes frozen identity or prior append-only evidence");
+    }
+    for (index, old) in prior.attempts.iter().enumerate() {
+        let new = &next.attempts[index];
+        let terminalizes_active = index + 1 == prior.attempts.len()
+            && matches!(old.state, ShardAttemptState::Authorized)
+            && !matches!(new.state, ShardAttemptState::Authorized)
+            && same_attempt_identity(old, new);
+        if old != new && !terminalizes_active {
+            return refused("receipt update changes prior shard-attempt evidence");
+        }
     }
     for (old, new) in prior.cells.iter().zip(&next.cells) {
         if (old.q, old.n) != (new.q, new.n) {
@@ -1878,6 +2641,16 @@ fn validate_monotonic_transition(
         _ => return refused("receipt update changes the terminal campaign halt"),
     }
     Ok(())
+}
+
+fn same_attempt_identity(left: &ShardAttempt, right: &ShardAttempt) -> bool {
+    left.stream_address == right.stream_address
+        && left.shard_id == right.shard_id
+        && left.attempt == right.attempt
+        && left.backend == right.backend
+        && left.backend_receipt == right.backend_receipt
+        && left.rng_algorithm == right.rng_algorithm
+        && left.rng_version == right.rng_version
 }
 
 fn validate_campaign_directory(

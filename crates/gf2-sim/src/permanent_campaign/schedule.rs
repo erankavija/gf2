@@ -1,32 +1,18 @@
-//! Deterministic scheduling and field-shard emission for permanent campaigns.
+//! Deterministic exact-cell scheduling primitives for permanent campaigns.
 //!
-//! A campaign invocation owns one field arm. Work is ordered by `(q, n,
-//! shard_id)`, each shard opens the stream address recorded by its manifest,
-//! and every matrix passes through draw, pack, evaluate, determinant, and count
-//! phases when the cell requests the determinant companion. Generic Ryser
-//! cells omit the pack phase because their row-major operands are evaluated
-//! directly.
-//! Timings remain in [`ShardRun`] for progress reporting; only schema records
-//! and summaries are written to disk, so wall-clock variation cannot alter
-//! emitted bytes.
+//! Work is ordered by `(q, n, shard_id)`, each shard opens the stream address
+//! recorded by its manifest, and every matrix passes through draw, pack,
+//! evaluate, determinant, and count phases when the cell requests the
+//! determinant companion. Generic Ryser cells omit the pack phase because
+//! their row-major operands are evaluated directly. Production
+//! campaign-purpose evaluation and raw emission remain crate-private and are
+//! entered only by the persisted coordinator state machine.
 //!
 //! A `BatchParallel` cell draws each shard's matrices serially in bounded
 //! chunks, then uses a locally configured Rayon pool for packing, permanent
 //! evaluation, and optional determinant evaluation. Batch phase durations are
 //! wall-clock durations for those per-chunk pool sections; the observer and
 //! histogram updates retain input order on the caller thread.
-//!
-//! ```no_run
-//! # use std::path::Path;
-//! # use gf2_sim::permanent_campaign::schema::read_manifest;
-//! # use gf2_sim::permanent_campaign::schedule::{emit_field, enumerate_work_items, run_field};
-//! let root = Path::new("dev/simulation_results/permanent-zero-fraction/campaign");
-//! let manifest = read_manifest(root).unwrap();
-//! let work = enumerate_work_items(&manifest, Some(3)).unwrap();
-//! let result = run_field(&manifest, 3).unwrap();
-//! let written = emit_field(root, &manifest, &result).unwrap();
-//! assert_eq!(written.len(), work.len() + 1);
-//! ```
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -49,11 +35,16 @@ use gf2_stats::sampler::{
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
 
-use super::acceptance::{assess_completed_cell, AcceptanceError, AcceptancePlan};
+use super::acceptance::AcceptanceError;
+#[cfg(test)]
+use super::acceptance::{assess_completed_cell, AcceptancePlan};
+#[cfg(test)]
 use super::schema::{
-    field_summary_file, shard_record_file, Backend, CampaignManifest, CellSpec, CellTerminalState,
-    DeterminantCount, DeterminantPlan, FieldSummary, QuarantinedShard, ShardRecord, ShardSpec,
-    StreamAddress, SummaryRow, SCHEMA_VERSION,
+    field_summary_file, CellTerminalState, FieldSummary, QuarantinedShard, SummaryRow,
+};
+use super::schema::{
+    shard_record_file, Backend, CampaignManifest, CellSpec, DeterminantCount, DeterminantPlan,
+    ShardRecord, ShardSpec, StreamAddress, SCHEMA_VERSION,
 };
 
 /// The purpose tag reserved for published campaign-cell matrix streams.
@@ -323,25 +314,23 @@ pub struct ShardRun {
     pub timing: PhaseDurations,
 }
 
-/// A deterministic shard result and the sampler's absolute generator position
-/// after its final matrix draw.
+/// A deterministic shard result admitted by the coordinator after evaluation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EvaluatedShard {
     /// Schema record produced by the evaluation.
     pub run: ShardRun,
-    /// Absolute ChaCha20 generator word position observed at the checkpoint
-    /// boundary. The driver records this caller-owned continuation state.
-    pub generator_word_position: u128,
 }
 
 /// Completed execution for one field arm.
+#[cfg(test)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct FieldRun {
+struct FieldRun {
     q: u8,
     shards: Vec<ShardRun>,
     summary: FieldSummary,
 }
 
+#[cfg(test)]
 impl FieldRun {
     /// Returns the field order covered by this invocation.
     #[must_use]
@@ -522,7 +511,8 @@ impl std::error::Error for ScheduleError {
 /// When `field` is `Some(q)`, only that field arm is returned. The function
 /// performs no I/O and does not change manifest order in place. Complexity is
 /// `O(S log S)` for `S` selected shards.
-pub fn enumerate_work_items(
+#[cfg(test)]
+fn enumerate_work_items(
     manifest: &CampaignManifest,
     field: Option<u8>,
 ) -> Result<Vec<WorkItem>, ScheduleError> {
@@ -616,7 +606,8 @@ pub fn enumerate_cell_work_items(
 ///
 /// Linear in selected shards, with each shard dominated by its configured
 /// permanent kernel and optional `O(n³)` determinant per matrix.
-pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, ScheduleError> {
+#[cfg(test)]
+fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, ScheduleError> {
     run_field_with_worker_count(manifest, field, 1)
 }
 
@@ -650,7 +641,8 @@ pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Sch
 /// For a batch of `B` matrices of dimension `n`, raw matrix storage is bounded
 /// by the configured chunk limit and the per-matrix kernel remains the
 /// selected single-matrix cost; the sampler itself advances in input order.
-pub fn run_field_with_worker_count(
+#[cfg(test)]
+fn run_field_with_worker_count(
     manifest: &CampaignManifest,
     field: u8,
     worker_count: usize,
@@ -692,7 +684,8 @@ pub fn run_field_with_worker_count(
 /// Preflight is `O(S log C)` for `S` selected shards and `C` measured cells.
 /// Execution is linear in selected shards, each dominated by its configured
 /// permanent kernel and optional `O(n³)` determinant per matrix.
-pub fn run_field_with_worker_count_and_accelerator(
+#[cfg(test)]
+fn run_field_with_worker_count_and_accelerator(
     manifest: &CampaignManifest,
     field: u8,
     worker_count: usize,
@@ -701,6 +694,7 @@ pub fn run_field_with_worker_count_and_accelerator(
     run_field_with_accelerator_evaluator(manifest, field, worker_count, accelerator, run_shard)
 }
 
+#[cfg(test)]
 fn run_field_with_accelerator_evaluator<E>(
     manifest: &CampaignManifest,
     field: u8,
@@ -759,7 +753,8 @@ where
 /// Consequently two invocations selecting different fields open disjoint
 /// shard and summary paths. The writer refuses every dataset file that already
 /// exists, so re-emission of the same work items targets a fresh campaign tree.
-pub fn emit_field(
+#[cfg(test)]
+fn emit_field(
     root: &Path,
     manifest: &CampaignManifest,
     run: &FieldRun,
@@ -837,6 +832,7 @@ fn shard_matrix_count(cell: &CellSpec, shard: &ShardSpec) -> u64 {
     cell.matrix_count.saturating_sub(start).min(cell.shard_size)
 }
 
+#[cfg(test)]
 fn run_shard(
     root_seed: u64,
     purpose_tag: u8,
@@ -845,69 +841,6 @@ fn run_shard(
     accelerator: Option<AcceleratorConfig>,
 ) -> Result<ShardRun, ScheduleError> {
     Ok(run_shard_with_position(root_seed, purpose_tag, item, worker_count, accelerator)?.run)
-}
-
-/// Evaluates one manifest work item and returns its continuation position.
-///
-/// This is the library seam used by the checkpointed driver and by tests that
-/// inject an evaluation failure. It performs no dataset I/O.
-/// In a build that provides the accelerator backend, accelerator work is
-/// refused with [`ScheduleError::AcceleratorCostMissing`] because this
-/// convenience entry point supplies no measured cost; other builds return
-/// [`ScheduleError::BackendUnavailable`] first.
-///
-/// # Errors
-///
-/// Returns [`ScheduleError::MissingCampaignPurpose`] when the manifest has no
-/// campaign stream purpose, [`ScheduleError::InvalidWorkItem`] for invalid
-/// work-item or sampler configuration, [`ScheduleError::BackendUnavailable`]
-/// when the frozen backend is unsupported,
-/// [`ScheduleError::AcceleratorCostMissing`] when an accelerator item has no
-/// measured cost.
-///
-/// # Panics
-///
-/// Does not intentionally panic. Invalid execution configuration is returned
-/// as an error.
-///
-/// # Complexity
-///
-/// Dominated by the selected permanent kernel, plus `O(n³)` when the
-/// determinant companion is enabled.
-pub fn evaluate_work_item(
-    manifest: &CampaignManifest,
-    item: &WorkItem,
-) -> Result<EvaluatedShard, ScheduleError> {
-    evaluate_work_item_with_worker_count(manifest, item, 1)
-}
-
-/// Evaluates one manifest work item using the caller's configured worker count
-/// for a `BatchParallel` backend.
-///
-/// # Errors
-///
-/// Returns [`ScheduleError::MissingCampaignPurpose`] when the manifest has no
-/// campaign stream purpose, [`ScheduleError::InvalidWorkItem`] when
-/// `worker_count` is zero or the work item, sampler, pool, or dispatch is
-/// invalid, [`ScheduleError::BackendUnavailable`] when the frozen backend is
-/// unsupported, [`ScheduleError::AcceleratorCostMissing`] when an accelerator
-/// item has no measured cost.
-///
-/// # Panics
-///
-/// Does not intentionally panic. Invalid execution configuration and
-/// pool-construction failures are returned as schedule errors.
-///
-/// # Complexity
-///
-/// Dominated by the selected permanent kernel, plus `O(n³)` when the
-/// determinant companion is enabled.
-pub fn evaluate_work_item_with_worker_count(
-    manifest: &CampaignManifest,
-    item: &WorkItem,
-    worker_count: usize,
-) -> Result<EvaluatedShard, ScheduleError> {
-    evaluate_work_item_with_worker_count_and_accelerator(manifest, item, worker_count, None)
 }
 
 /// Evaluates one work item with explicit accelerator launch-sizing input.
@@ -941,7 +874,7 @@ pub fn evaluate_work_item_with_worker_count(
 /// `O(n^3)` per matrix when the determinant companion is enabled. An
 /// accelerator cell issues `ceil(matrix_count / launch)` device launches, where
 /// `launch` comes from the measured per-matrix cost and the configured cap.
-pub fn evaluate_work_item_with_worker_count_and_accelerator(
+pub(crate) fn evaluate_work_item_with_worker_count_and_accelerator(
     manifest: &CampaignManifest,
     item: &WorkItem,
     worker_count: usize,
@@ -1222,7 +1155,6 @@ where
                 count,
             },
         },
-        generator_word_position: sampler.generator_word_position(),
     })
 }
 
@@ -1478,7 +1410,6 @@ where
                 count,
             },
         },
-        generator_word_position: sampler.generator_word_position(),
     })
 }
 
@@ -1638,7 +1569,6 @@ where
                 count,
             },
         },
-        generator_word_position: sampler.generator_word_position(),
     })
 }
 
@@ -1735,6 +1665,7 @@ fn evaluate_determinant<const Q: u64>(row_major: &[Fp<Q>], n: usize) -> u64 {
     FieldMatrix::from_rows(rows).det().value()
 }
 
+#[cfg(test)]
 fn summarize(
     manifest: &CampaignManifest,
     q: u8,
@@ -1744,7 +1675,8 @@ fn summarize(
 }
 
 /// Builds a field summary while retaining failed work-item identities.
-pub(crate) fn summarize_with_quarantine(
+#[cfg(test)]
+fn summarize_with_quarantine(
     manifest: &CampaignManifest,
     q: u8,
     shards: &[ShardRun],
@@ -1829,6 +1761,7 @@ fn create_parent(path: &Path) -> Result<(), ScheduleError> {
     Ok(())
 }
 
+#[cfg(test)]
 fn write_file(path: &Path, bytes: &[u8]) -> Result<(), ScheduleError> {
     write_file_with_durability_hook(path, bytes, |_| {})
 }
@@ -1865,8 +1798,8 @@ fn write_file_with_durability_hook(
     Ok(())
 }
 
-/// Emits one shard record with the same create-new refusal as [`emit_field`],
-/// fsyncing the file and its directory and reporting the durable path.
+/// Emits one coordinator-authorized shard record with create-new refusal,
+/// fsyncing the file and its directory before reporting the durable path.
 pub(crate) fn emit_shard_with_durability_hook(
     root: &Path,
     manifest: &CampaignManifest,
@@ -1880,7 +1813,7 @@ pub(crate) fn emit_shard_with_durability_hook(
         )));
     }
     let address = &shard.record.stream_address;
-    let expected = enumerate_work_items(manifest, Some(address.q))?;
+    let expected = enumerate_cell_work_items(manifest, address.q, address.n)?;
     if !expected.iter().any(|item| {
         item.shard_id == shard.record.shard_id && item.q == address.q && item.n == address.n
     }) {
@@ -1903,28 +1836,6 @@ pub(crate) fn emit_shard_with_durability_hook(
 /// resume-time adoption comparison.
 pub(crate) fn shard_record_bytes(record: &ShardRecord) -> Result<Vec<u8>, ScheduleError> {
     serde_json::to_vec_pretty(record).map_err(ScheduleError::Serialization)
-}
-
-/// Emits a field summary after all selected work items reach a terminal
-/// state, with the existing create-new refusal and the same durability
-/// contract as shard emission.
-pub(crate) fn emit_summary_with_durability_hook(
-    root: &Path,
-    manifest: &CampaignManifest,
-    summary: &FieldSummary,
-    mut on_durable: impl FnMut(&Path),
-) -> Result<PathBuf, ScheduleError> {
-    let campaign_name = manifest.campaign_id.to_string();
-    if root.file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
-        return Err(ScheduleError::InvalidWorkItem(format!(
-            "output directory must be named by campaign id {campaign_name}"
-        )));
-    }
-    let path = root.join(field_summary_file(summary.q));
-    create_parent(&path)?;
-    let bytes = serde_json::to_vec_pretty(summary).map_err(ScheduleError::Serialization)?;
-    write_file_with_durability_hook(&path, &bytes, &mut on_durable)?;
-    Ok(path)
 }
 
 #[cfg(test)]

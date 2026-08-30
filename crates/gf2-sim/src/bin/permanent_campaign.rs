@@ -3,10 +3,11 @@
 //! The manifest is read from `--manifest`; `--output` names the campaign
 //! directory, `--q FIELD --n ORDER` selects exactly one manifest cell, and
 //! `--workers N` selects the configured worker count (default: 1 when omitted).
-//! The binary reports the effective configuration and timings, then writes the
-//! selected cell's shard records and scoped checkpoint. Before execution, it
-//! passes the output directory through `approve_emission`; the guard contract
-//! binds this writer to the frozen emitter identity.
+//! The binary persists coordinator admission before executing manifested shard
+//! attempts, then writes the selected cell's raw records through that receipt
+//! state machine. Before execution, it passes the output directory through
+//! `approve_emission`; the guard contract binds this writer to the frozen
+//! emitter identity.
 //!
 //! ```console
 //! $ permanent_campaign --print-provenance --manifest <campaign-directory>
@@ -19,14 +20,15 @@
 //! coordinator assembles that summary only after every cell in the field is
 //! terminal. `--dry-run-schedule` resolves the same selector and validates the
 //! complete manifest accelerator-cost input without opening the output
-//! directory, a checkpoint, or a sampler.
+//! directory, coordinator receipt, execution lock, or sampler.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::Duration;
 
-use gf2_sim::permanent_campaign::driver::{
-    cell_checkpoint_path, run_cell_checkpointed_with_accelerator_config, CampaignExecutionScope,
+use gf2_sim::permanent_campaign::coordinator::{
+    coordinator_receipt_path, execute_scheduled_cell, ArmInvocation, CampaignCoordinator,
+    CellExecutionState, ExactCellScope, ShardAttemptState,
 };
 use gf2_sim::permanent_campaign::launch_cost::read_accelerator_cost_table;
 use gf2_sim::permanent_campaign::provenance::{
@@ -52,7 +54,8 @@ Accelerator options:
 ";
 
 fn main() -> ExitCode {
-    let arguments: Vec<String> = std::env::args().skip(1).collect();
+    let effective_argv: Vec<String> = std::env::args().collect();
+    let arguments = effective_argv[1..].to_vec();
     let mut manifest_path = None;
     let mut output = None;
     let mut field = None;
@@ -158,7 +161,7 @@ fn main() -> ExitCode {
             usage("missing required argument")
         };
     };
-    let scope = CampaignExecutionScope::ExactCell { q: field, n: order };
+    let scope = ExactCellScope { q: field, n: order };
     let manifest = match read_manifest(&manifest_path) {
         Ok(manifest) => manifest,
         Err(error) => return failure(error),
@@ -167,30 +170,32 @@ fn main() -> ExitCode {
         Ok(items) => items,
         Err(error) => return failure(error),
     };
-    if manifest
-        .cells
-        .iter()
-        .any(|cell| cell.backend == Backend::Accelerator)
-        && accelerator_cost_table.is_none()
-    {
-        return usage(
-            "--accelerator-cost-table is required for a manifest with accelerator cells; supply every cell's measured per-matrix cost from its committed measurement receipt",
-        );
-    }
-    let accelerator = match accelerator_cost_table {
-        Some(path) => match read_accelerator_cost_table(&path, &manifest, accelerator_launch_cap) {
-            Ok(table) => table,
-            Err(error) => {
-                eprintln!("accelerator cost table {}: {error}", path.display());
-                return ExitCode::FAILURE;
-            }
-        },
-        None => AcceleratorCostTable::default(),
-    };
-    if let Err(error) = accelerator.validate_manifest(&manifest) {
-        return failure(error);
-    }
     if dry_run_schedule {
+        if manifest
+            .cells
+            .iter()
+            .any(|cell| cell.backend == Backend::Accelerator)
+            && accelerator_cost_table.is_none()
+        {
+            return usage(
+                "--accelerator-cost-table is required for a manifest with accelerator cells; supply every cell's measured per-matrix cost from its committed measurement receipt",
+            );
+        }
+        let accelerator = match accelerator_cost_table {
+            Some(path) => {
+                match read_accelerator_cost_table(&path, &manifest, accelerator_launch_cap) {
+                    Ok(table) => table,
+                    Err(error) => {
+                        eprintln!("accelerator cost table {}: {error}", path.display());
+                        return ExitCode::FAILURE;
+                    }
+                }
+            }
+            None => AcceleratorCostTable::default(),
+        };
+        if let Err(error) = accelerator.validate_manifest(&manifest) {
+            return failure(error);
+        }
         println!("schedule q={field} n={order} shards={}", items.len());
         return ExitCode::SUCCESS;
     }
@@ -198,37 +203,85 @@ fn main() -> ExitCode {
         eprintln!("emission refused: {refusal}");
         return ExitCode::FAILURE;
     }
-    let run = match run_cell_checkpointed_with_accelerator_config(
-        &output,
-        &manifest,
-        field,
-        order,
-        &cell_checkpoint_path(&output, field, order),
-        workers,
-        &accelerator,
-    ) {
-        Ok(run) => run,
+    let output_manifest = match read_manifest(&output) {
+        Ok(output_manifest) if output_manifest == manifest => output_manifest,
+        Ok(_) => return failure("output manifest differs from --manifest"),
         Err(error) => return failure(error),
     };
-    debug_assert_eq!(run.scope(), scope);
-    println!("campaign q={} n={order} workers={workers}", run.q());
-    for shard in run.shards() {
+    let receipt_path = coordinator_receipt_path(&output, &output_manifest.campaign_id);
+    let mut coordinator = if receipt_path.exists() {
+        match CampaignCoordinator::read(&output) {
+            Ok(coordinator) => coordinator,
+            Err(error) => return failure(error),
+        }
+    } else {
+        match CampaignCoordinator::new(&output) {
+            Ok(coordinator) => coordinator,
+            Err(error) => return failure(error),
+        }
+    };
+    let Some(executable_sha256) = output_manifest.provenance.binary_sha256.clone() else {
+        return failure("frozen manifest has no emitter executable digest");
+    };
+    if let Err(error) = coordinator.authorize_or_resume_arm(ArmInvocation {
+        scope,
+        argv: effective_argv,
+        worker_count: workers,
+        executable_sha256,
+    }) {
+        return failure(error);
+    }
+    if let Err(error) = coordinator.persist(&output) {
+        return failure(error);
+    }
+    let execution = match execute_scheduled_cell(&output, scope, workers) {
+        Ok(execution) => execution,
+        Err(error) => return failure(error),
+    };
+    println!("campaign q={field} n={order} workers={workers}");
+    for shard in &execution.records {
         println!(
-            "q={} n={} shard={} matrices={} zeros={} draw_s={:.6} pack_s={:.6} evaluate_s={:.6} determinant_s={:.6} count_s={:.6}",
-            run.q(),
-            shard.record.stream_address.n,
-            shard.record.shard_id,
-            shard.record.matrix_count,
-            shard.record.permanent_zero_count,
-            shard.timing.draw.as_secs_f64(),
-            shard.timing.pack.as_secs_f64(),
-            shard.timing.evaluate.as_secs_f64(),
-            shard.timing.determinant.as_secs_f64(),
-            shard.timing.count.as_secs_f64(),
+            "q={} n={} shard={} matrices={} zeros={}",
+            shard.stream_address.q,
+            shard.stream_address.n,
+            shard.shard_id,
+            shard.matrix_count,
+            shard.permanent_zero_count,
         );
     }
-    println!("wrote deterministic exact-cell files for q={field} n={order}");
-    ExitCode::SUCCESS
+    match execution.terminal_state {
+        CellExecutionState::Completed { assessment, .. } if !assessment.rejected() => {
+            println!("wrote deterministic exact-cell files for q={field} n={order}");
+            ExitCode::SUCCESS
+        }
+        CellExecutionState::Completed { .. } => {
+            failure("exact acceptance decision rejected; campaign is halted")
+        }
+        CellExecutionState::Halted { .. } => {
+            match CampaignCoordinator::read(&output)
+                .ok()
+                .and_then(|coordinator| {
+                    coordinator
+                        .receipt()
+                        .attempts
+                        .last()
+                        .and_then(|attempt| match &attempt.state {
+                            ShardAttemptState::Quarantined { error } => Some(error.clone()),
+                            ShardAttemptState::Authorized | ShardAttemptState::Accepted { .. } => {
+                                None
+                            }
+                        })
+                }) {
+                Some(error) => failure(format!(
+                    "exact execution halted mechanically; campaign is halted: {error}"
+                )),
+                None => failure("exact execution halted mechanically; campaign is halted"),
+            }
+        }
+        CellExecutionState::Pending | CellExecutionState::Scheduled { .. } => {
+            failure("exact execution returned a nonterminal receipt state")
+        }
+    }
 }
 
 fn usage(message: &str) -> ExitCode {
