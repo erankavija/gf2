@@ -187,7 +187,7 @@
      "short_id": "73317b2e",
      "title": "Standing acceptance tests for campaign cells",
      "classification": "implementation",
-     "status": "blocked pending owner decision: the immutable pinned emitter accepts only --q and sorts q7 work by increasing n, so it necessarily schedules/draws n4 before n20 and an outside coordinator cannot satisfy hard REQ-12 without a narrowly versioned emitter/manifest re-freeze. Worker stopped before edits; no campaign/device/measurement work ran."
+     "status": "in progress: owner authorized the recommended narrowly versioned exact-cell selector and coupled emitter digest/invocation re-freeze at 2026-08-30T10:06:49+03:00. Repair and verification are pre-draw; no campaign/device/measurement work is authorized during implementation."
     }
    ]
   },
@@ -745,8 +745,10 @@
   {
    "issue": "73317b2e",
    "reason": "Hard REQ-12 requires (q,n)=(7,20) to be the first campaign-purpose cell and forbids scheduling another campaign-purpose cell before it is terminal. The frozen emitter pinned by SHA-256 2d6edcd9 accepts only --q; for --q 7 it enumerates the frozen q7 field and sorts work by (q,n,shard_id), scheduling and drawing n=4 before n=20. The mandated outside coordinator cannot change that internal order. The frozen manifest and emitter are immutable under the current authority.",
-   "status": "pending",
+   "status": "approved",
    "requested_at": "2026-08-30T06:42:45+03:00",
+   "resolved_at": "2026-08-30T10:06:49+03:00",
+   "decision": "Owner authorized the recommended narrowly versioned exact-cell selector and coupled emitter executable-digest/invocation re-freeze before any campaign draw.",
    "options": [
     "Authorize a narrowly versioned emitter extension with exact per-cell selection, then re-freeze the executable digest and invocation before any campaign draw.",
     "Amend REQ-12 to an order the frozen field-only emitter can enforce, accepting that q7 n4 is scheduled before n20.",
