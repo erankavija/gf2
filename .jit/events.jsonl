@@ -10181,3 +10181,4 @@
 {"gate_key":"code-review","id":"efa22251-98dc-43d2-b912-d1b4c24a572a","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T04:43:06.585760410Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"3caf361e-5dc4-4c2e-a279-423f3b98a90f","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T04:45:25.285751042Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"908a4e9d-86d5-4a72-baf2-0262991fc6a2","issue_id":"8ec10dde-07db-40f8-bac6-094cbe2635c0","timestamp":"2026-08-30T04:48:51.125445993Z","type":"gate_passed","updated_by":"auto:executor"}
+{"id":"2ba12d4b-2b03-44a9-b50c-b0ca4c94cd39","issue_id":"049a89af-abcb-493b-9be6-fde9f287347a","priority":"low","timestamp":"2026-08-30T04:50:07.119094165Z","title":"Repair archived design links in permanent module rustdoc","type":"issue_created"}
