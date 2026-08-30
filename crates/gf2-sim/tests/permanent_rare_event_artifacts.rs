@@ -1,4 +1,6 @@
 use gf2_sim::permanent_rare_event::artifact::*;
+use num_bigint::BigUint;
+use sha2::{Digest, Sha256};
 
 fn digest(byte: u8) -> String {
     format!("{byte:02x}").repeat(32)
@@ -77,7 +79,6 @@ fn config(scientific_identity: ScientificIdentityV1) -> RareEventConfigurationV1
         design_identity: design(),
         scientific_identity,
         behavior: behavior(),
-        worker_configuration: worker(),
     }
 }
 
@@ -143,6 +144,14 @@ fn used() -> AcceleratorObservationV1 {
 }
 
 fn invocation(identity: &RareEventDatasetIdentityV1) -> InvocationV1 {
+    let effective_configuration = RareEventConfigurationV1 {
+        configuration_schema: CONFIGURATION_SCHEMA_V1.into(),
+        artifact_root: "dev/simulation_results/permanent-rare-event".into(),
+        design_identity: identity.preregistration.design.clone(),
+        scientific_identity: identity.scientific.clone(),
+        behavior: identity.behavior.clone(),
+    };
+    let effective_configuration = canonical_bytes(&effective_configuration).unwrap();
     InvocationV1 {
         argv: vec!["permanent_rare_event".into(), "worker".into()],
         executable_path: "target/release/permanent_rare_event".into(),
@@ -152,7 +161,10 @@ fn invocation(identity: &RareEventDatasetIdentityV1) -> InvocationV1 {
         boot_identity: "fixture-boot".into(),
         configuration_path: identity.preregistration.configuration_path.clone(),
         configuration_sha256: identity.preregistration.configuration_sha256.clone(),
-        effective_configuration_hex: "00".into(),
+        effective_configuration_hex: effective_configuration
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect(),
         input_resolution: vec![InputResolutionV1 {
             field: "scientific_identity".into(),
             origin: InputOriginV1::Configuration,
@@ -165,7 +177,7 @@ fn start_envelope(
     identity: RareEventDatasetIdentityV1,
     accelerator: AcceleratorObservationV1,
 ) -> RareEventArtifactEnvelopeV1 {
-    let predecessor = AttemptPredecessorV1::None;
+    let predecessor = AttemptPredecessorV1::None {};
     let payload = ExecutionAttemptReceiptV1 {
         dataset_id: dataset_id(&identity).unwrap(),
         attempt_id: attempt_id(&identity, 0, &predecessor).unwrap(),
@@ -216,7 +228,7 @@ fn terminal_envelope(
         attempt_id: start_payload.attempt_id.clone(),
         dataset_identity: identity,
         attempt_ordinal: 0,
-        predecessor: AttemptPredecessorV1::None,
+        predecessor: AttemptPredecessorV1::None {},
         phase: AttemptPhaseV1::Terminal {
             attempt_start_sha256: start_digest,
             start_utc: start_utc.clone(),
@@ -236,7 +248,7 @@ fn terminal_envelope(
                     failure_category: Some("fixture".into()),
                 }
             } else {
-                AttemptOutcomeV1::Completed
+                AttemptOutcomeV1::Completed {}
             },
             checkpoint_refs: vec![],
         },
@@ -268,7 +280,7 @@ fn target_checkpoint(identity: RareEventDatasetIdentityV1) -> RareEventArtifactE
         trajectory_end: 256,
         attempt_id: digest(0x22),
         attempt_start_sha256: digest(0x23),
-        producer: ProducerBackendV1::Cpu,
+        producer: ProducerBackendV1::Cpu {},
         accelerator_observation_sha256: digest(0x24),
         records: TrajectoryRecordsV1::Target(records),
     };
@@ -351,25 +363,32 @@ fn checkpoint_refs_coverage() -> Vec<CheckpointRefV1> {
 }
 
 fn target_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnvelopeV1 {
+    let exact_raw_count = BigUint::from(3_u8).pow(3_071).to_string();
+    let exact_total = BigUint::from(3_u8).pow(3_072).to_string();
     target_final_envelope(
         identity,
         TargetResultPayloadV1 {
             expected_trajectory_count: 524_288,
             exact_result_path: "dev/simulation_results/permanent-rare-event/exact.json".into(),
             exact_result_sha256: digest(0x30),
-            exact_raw_count: "1".into(),
-            exact_total: "3".into(),
+            exact_raw_count,
+            exact_total,
             exact_probability: ExactDecimalV1::new("1", "3"),
             cross_check_estimate: ExactDecimalV1::new("1", "3"),
             independent_run_variance: ExactDecimalV1::new("0", "1"),
             interval_lower: "3.333333333333333330e-1".into(),
             interval_upper: "3.333333333333333340e-1".into(),
             final_weight_ess: ExactDecimalV1::new("524288", "1"),
+            per_run_ess: vec![ExactDecimalV1::new("16384", "1"); 32],
             ess_fraction: ExactDecimalV1::new("1", "1"),
+            largest_weight_share: ExactDecimalV1::new("1", "524288"),
+            largest_run_mean_share: ExactDecimalV1::new("1", "32"),
             exponent_histogram: vec![ExponentBinV1 {
                 exponent: 1,
                 count: 524_288,
             }],
+            minimum_exponent: 1,
+            maximum_exponent: 1,
             run_means: vec![ExactDecimalV1::new("1", "3"); 32],
             extinction_reasons: vec![],
             degeneracy: false,
@@ -383,6 +402,63 @@ fn target_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnvelo
     .unwrap()
 }
 
+fn gcd_u128(mut left: u128, mut right: u128) -> u128 {
+    while right != 0 {
+        let remainder = left % right;
+        left = right;
+        right = remainder;
+    }
+    left
+}
+
+fn exact_u128(numerator: u128, denominator: u128) -> ExactDecimalV1 {
+    let divisor = gcd_u128(numerator, denominator);
+    ExactDecimalV1::new(
+        (numerator / divisor).to_string(),
+        (denominator / divisor).to_string(),
+    )
+}
+
+fn coverage_histogram(q: u8, anchor_numerator: u64) -> Vec<ExponentBinV1> {
+    const PER_RUN: u64 = 4_096;
+    let mut remaining = PER_RUN * anchor_numerator * u64::from(q).pow(2) - PER_RUN;
+    let mut used = 0_u64;
+    let mut per_run = Vec::new();
+    for exponent in 0..9 {
+        let increment = u64::from(q).pow(9 - exponent) - 1;
+        let count = (remaining / increment).min(PER_RUN - used);
+        if count != 0 {
+            per_run.push((exponent, count));
+            used += count;
+            remaining -= count * increment;
+        }
+    }
+    assert_eq!(remaining, 0);
+    if used < PER_RUN {
+        per_run.push((9, PER_RUN - used));
+    }
+    per_run
+        .into_iter()
+        .map(|(exponent, count)| ExponentBinV1 {
+            exponent,
+            count: count * 32,
+        })
+        .collect()
+}
+
+fn histogram_ess(q: u8, bins: &[ExponentBinV1]) -> ExactDecimalV1 {
+    let maximum = bins.last().unwrap().exponent;
+    let sum: u128 = bins
+        .iter()
+        .map(|bin| u128::from(bin.count) * u128::from(q).pow(maximum - bin.exponent))
+        .sum();
+    let squares: u128 = bins
+        .iter()
+        .map(|bin| u128::from(bin.count) * u128::from(q).pow(2 * (maximum - bin.exponent)))
+        .sum();
+    exact_u128(sum * sum, squares)
+}
+
 fn coverage_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnvelopeV1 {
     let mut replicates = Vec::new();
     for (q, numerator, denominator) in [
@@ -390,17 +466,26 @@ fn coverage_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnve
         (5, "17581", "78125"),
         (7, "126295", "823543"),
     ] {
+        let histogram = coverage_histogram(q, numerator.parse().unwrap());
+        let final_weight_ess = histogram_ess(q, &histogram);
+        let ess_numerator: u128 = final_weight_ess.numerator.parse().unwrap();
+        let ess_denominator: u128 = final_weight_ess.denominator.parse().unwrap();
         for replicate in 0..200 {
             replicates.push(CoverageReplicateV1 {
                 q,
                 replicate,
                 exact_anchor: ExactDecimalV1::new(numerator, denominator),
                 estimate: ExactDecimalV1::new(numerator, denominator),
+                independent_run_variance: ExactDecimalV1::new("0", "1"),
                 interval_lower: "0e+0".into(),
                 interval_upper: "1.00000000000000000e+0".into(),
                 contains_anchor: true,
-                ess_fraction: ExactDecimalV1::new("1", "1"),
+                ess_fraction: exact_u128(ess_numerator, ess_denominator * 131_072),
+                final_weight_ess: final_weight_ess.clone(),
+                exponent_histogram: histogram.clone(),
+                run_means: vec![ExactDecimalV1::new(numerator, denominator); 32],
                 extinction_reasons: vec![],
+                degeneracy: false,
             });
         }
     }
@@ -456,6 +541,35 @@ fn files_from_json(json: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     (json, sidecar)
 }
 
+fn insert_unknown(value: &mut serde_json::Value) {
+    value
+        .as_object_mut()
+        .unwrap()
+        .insert("unknown_nested_field".into(), serde_json::json!(true));
+}
+
+fn rehash_result(value: &mut serde_json::Value) {
+    value["payload"]["result_sha256"] = serde_json::json!(sha256_hex(
+        &canonical_bytes(&value["payload"]["result_payload"]).unwrap()
+    ));
+}
+
+fn independent_domain_digest(domain: &[u8], input: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(domain);
+    hasher.update([0]);
+    hasher.update(input);
+    format!("{:x}", hasher.finalize())
+}
+
+fn decode_hex_fixture(value: &str) -> Vec<u8> {
+    value
+        .as_bytes()
+        .chunks_exact(2)
+        .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16).unwrap())
+        .collect()
+}
+
 #[test]
 fn rare_event_artifact_schema_roundtrip_v1() {
     for scientific in [
@@ -480,6 +594,105 @@ fn rare_event_artifact_schema_roundtrip_v1() {
             envelope
         );
     }
+
+    let target = identity(ScientificIdentityV1::target());
+    let coverage = identity(ScientificIdentityV1::coverage());
+    let canonical_goldens = [
+        target_checkpoint(target.clone()),
+        start_envelope(target.clone(), not_used()),
+        target_final(target),
+        coverage_final(coverage),
+    ]
+    .map(|envelope| {
+        let bytes = canonical_bytes(&envelope).unwrap();
+        (bytes.len(), sha256_hex(&bytes))
+    });
+    assert_eq!(
+        canonical_goldens,
+        [
+            (
+                18_821,
+                "14d644ecf167427d22e10787bba99db67801154ef7d16df95bf6123d2a2fd3c9".into(),
+            ),
+            (
+                8_508,
+                "c76012c7989c486ab39f988696535b46924c32f3404bc680e64c035572d95145".into(),
+            ),
+            (
+                259_322,
+                "ac1781364facdbde389dcd2966806f5c4493f07469a81f4a0eb93753c9fca604".into(),
+            ),
+            (
+                3_841_041,
+                "e28b334ca916c5e17448d6cfa31e83424a49a47254709b779c411ab76d37164d".into(),
+            ),
+        ]
+    );
+
+    let target = identity(ScientificIdentityV1::target());
+    let coverage = identity(ScientificIdentityV1::coverage());
+    let target_dataset = dataset_id(&target).unwrap();
+    let coverage_dataset = dataset_id(&coverage).unwrap();
+    let target_run = run_id(&target, &RunAddressV1::Target { run: 17 }).unwrap();
+    let coverage_run = run_id(
+        &coverage,
+        &RunAddressV1::Coverage {
+            q: 7,
+            replicate: 199,
+            run: 31,
+        },
+    )
+    .unwrap();
+    let first_attempt = attempt_id(&target, 0, &AttemptPredecessorV1::None {}).unwrap();
+    let second_attempt = attempt_id(
+        &target,
+        1,
+        &AttemptPredecessorV1::Terminal {
+            terminal_sha256: digest(0xab),
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        [
+            target_dataset.clone(),
+            coverage_dataset.clone(),
+            target_run.clone(),
+            coverage_run.clone(),
+            first_attempt.clone(),
+            second_attempt.clone(),
+        ],
+        [
+            "f9f9576fa6b599e7c0f104e043ef8a76e3ae7d7a404546639b8d4cd37a00484d",
+            "8f713d001bc135aae651a356f78d91d839bd0df5763609c0f51668fcc9b95a27",
+            "af48e27a7fc5bd40cff8ca9f0597100f5e406557c26b50d2b4340006f334d860",
+            "339702b2fdff6091a12958c2b0fa1f5525e069429ab900518d3ae5023050a674",
+            "5a9a79e123d21c4b6f02dcc4b67f18e59971fbc2dd04c03ff2f34661a25f782a",
+            "fdc229d1fd863d07ca071333105c76c22f9c7bf1b80e4416d838d33e353fc5ee",
+        ]
+    );
+    assert_eq!(
+        target_dataset,
+        independent_domain_digest(
+            b"gf2-rare-event-dataset-identity-v1",
+            &canonical_bytes(&target).unwrap(),
+        )
+    );
+    let mut independent_run_input = decode_hex_fixture(&target_dataset);
+    independent_run_input.extend(canonical_bytes(&RunAddressV1::Target { run: 17 }).unwrap());
+    assert_eq!(
+        target_run,
+        independent_domain_digest(b"gf2-rare-event-run-identity-v1", &independent_run_input)
+    );
+    let mut independent_attempt_input = decode_hex_fixture(&target_dataset);
+    independent_attempt_input.extend(0_u64.to_le_bytes());
+    independent_attempt_input.push(0);
+    assert_eq!(
+        first_attempt,
+        independent_domain_digest(
+            b"gf2-rare-event-attempt-identity-v1",
+            &independent_attempt_input,
+        )
+    );
 }
 
 #[test]
@@ -531,6 +744,81 @@ fn rare_event_artifact_unknown_versions_rejected() {
             serde_json::json!(format!("gf2.rare-event-configuration/{version}"));
         assert!(decode_configuration(&value_bytes(value)).is_err());
     }
+
+    let direct_unknowns: Vec<(serde_json::Value, &str)> = vec![
+        (
+            serde_json::to_value(ScientificIdentityV1::target()).unwrap(),
+            "scientific",
+        ),
+        (
+            serde_json::to_value(RunAddressV1::Target { run: 0 }).unwrap(),
+            "run address",
+        ),
+        (
+            serde_json::to_value(ProducerBackendV1::Cpu {}).unwrap(),
+            "producer",
+        ),
+        (
+            serde_json::to_value(TrajectoryRecordsV1::Target(vec![])).unwrap(),
+            "trajectory records",
+        ),
+        (
+            serde_json::to_value(AttemptPredecessorV1::None {}).unwrap(),
+            "predecessor",
+        ),
+        (
+            serde_json::to_value(EnvironmentValueV1::Set("fixture".into())).unwrap(),
+            "environment value",
+        ),
+        (
+            serde_json::to_value(AcceleratorObservationV1::NotUsed {
+                reason: "fixture".into(),
+                evidence: vec![],
+            })
+            .unwrap(),
+            "accelerator",
+        ),
+        (
+            serde_json::to_value(OutcomeObserverV1::SupervisingLauncher {
+                launcher_sha256: digest(1),
+            })
+            .unwrap(),
+            "observer",
+        ),
+        (
+            serde_json::to_value(AttemptOutcomeV1::Completed {}).unwrap(),
+            "outcome",
+        ),
+    ];
+    for (mut value, kind) in direct_unknowns {
+        insert_unknown(&mut value);
+        let rejected = match kind {
+            "scientific" => serde_json::from_value::<ScientificIdentityV1>(value).is_err(),
+            "run address" => serde_json::from_value::<RunAddressV1>(value).is_err(),
+            "producer" => serde_json::from_value::<ProducerBackendV1>(value).is_err(),
+            "trajectory records" => serde_json::from_value::<TrajectoryRecordsV1>(value).is_err(),
+            "predecessor" => serde_json::from_value::<AttemptPredecessorV1>(value).is_err(),
+            "environment value" => serde_json::from_value::<EnvironmentValueV1>(value).is_err(),
+            "accelerator" => serde_json::from_value::<AcceleratorObservationV1>(value).is_err(),
+            "observer" => serde_json::from_value::<OutcomeObserverV1>(value).is_err(),
+            "outcome" => serde_json::from_value::<AttemptOutcomeV1>(value).is_err(),
+            _ => unreachable!(),
+        };
+        assert!(
+            rejected,
+            "direct {kind} deserialization accepted an unknown field"
+        );
+    }
+
+    let mut payload = serde_json::to_value(&envelope.payload).unwrap();
+    insert_unknown(&mut payload);
+    assert!(serde_json::from_value::<RareEventPayloadV1>(payload).is_err());
+    let RareEventPayloadV1::ExecutionAttempt(attempt) = &envelope.payload else {
+        unreachable!()
+    };
+    let mut attempt = serde_json::to_value(attempt).unwrap();
+    insert_unknown(&mut attempt);
+    assert!(serde_json::from_value::<ExecutionAttemptReceiptV1>(attempt).is_err());
 }
 
 #[test]
@@ -625,7 +913,7 @@ fn rare_event_artifact_identity_mismatch_rejected() {
         run_id(&expected, &RunAddressV1::Target { run: 1 }).unwrap()
     );
     assert_ne!(
-        attempt_id(&expected, 0, &AttemptPredecessorV1::None).unwrap(),
+        attempt_id(&expected, 0, &AttemptPredecessorV1::None {}).unwrap(),
         attempt_id(
             &expected,
             1,
@@ -635,4 +923,148 @@ fn rare_event_artifact_identity_mismatch_rejected() {
         )
         .unwrap()
     );
+
+    let start = start_envelope(expected.clone(), not_used());
+    for path in [
+        &["executable_sha256"][..],
+        &["configuration_path"][..],
+        &["configuration_sha256"][..],
+        &["effective_configuration_hex"][..],
+    ] {
+        let mut value = serde_json::to_value(&start).unwrap();
+        let invocation = &mut value["payload"]["invocation"];
+        invocation[path[0]] = match path[0] {
+            "configuration_path" => serde_json::json!("different/config.json"),
+            "effective_configuration_hex" => serde_json::json!("00"),
+            _ => serde_json::json!(digest(0xef)),
+        };
+        assert!(decode_envelope(&value_bytes(value)).is_err());
+    }
+
+    let mut raw_root = config(ScientificIdentityV1::target());
+    raw_root.artifact_root =
+        "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829".into();
+    assert!(decode_configuration(&canonical_bytes(&raw_root).unwrap()).is_err());
+
+    let target_receipt = target_final(expected.clone());
+    let base = serde_json::to_value(&target_receipt).unwrap();
+    let target_mutations = [
+        ("exact_raw_count", serde_json::json!("01")),
+        (
+            "exact_probability",
+            serde_json::json!({"numerator":"2","denominator":"3"}),
+        ),
+        (
+            "independent_run_variance",
+            serde_json::json!({"numerator":"1","denominator":"1"}),
+        ),
+        (
+            "interval_lower",
+            serde_json::json!("3.40000000000000000e-1"),
+        ),
+        (
+            "final_weight_ess",
+            serde_json::json!({"numerator":"1","denominator":"1"}),
+        ),
+        (
+            "ess_fraction",
+            serde_json::json!({"numerator":"1","denominator":"2"}),
+        ),
+        (
+            "largest_weight_share",
+            serde_json::json!({"numerator":"1","denominator":"2"}),
+        ),
+        (
+            "largest_run_mean_share",
+            serde_json::json!({"numerator":"1","denominator":"2"}),
+        ),
+        ("degeneracy", serde_json::json!(true)),
+        ("verdict", serde_json::json!("contradiction")),
+    ];
+    for (field, replacement) in target_mutations {
+        let mut value = base.clone();
+        value["payload"]["result_payload"][field] = replacement;
+        rehash_result(&mut value);
+        assert!(
+            decode_envelope(&value_bytes(value)).is_err(),
+            "accepted target {field}"
+        );
+    }
+    for (field, replacement) in [
+        ("count", serde_json::json!(524_287)),
+        ("exponent", serde_json::json!(3_073)),
+    ] {
+        let mut value = base.clone();
+        value["payload"]["result_payload"]["exponent_histogram"][0][field] = replacement;
+        rehash_result(&mut value);
+        assert!(decode_envelope(&value_bytes(value)).is_err());
+    }
+    let mut value = base.clone();
+    value["payload"]["result_payload"]["run_means"][0] =
+        serde_json::json!({"numerator":"1","denominator":"2"});
+    rehash_result(&mut value);
+    assert!(decode_envelope(&value_bytes(value)).is_err());
+    let mut value = base.clone();
+    value["payload"]["result_payload"]["per_run_ess"][0] =
+        serde_json::json!({"numerator":"0","denominator":"1"});
+    rehash_result(&mut value);
+    assert!(decode_envelope(&value_bytes(value)).is_err());
+
+    let coverage_identity = identity(ScientificIdentityV1::coverage());
+    let coverage_receipt = coverage_final(coverage_identity.clone());
+    let coverage_base = serde_json::to_value(&coverage_receipt).unwrap();
+    for (field, replacement) in [
+        (
+            "exact_anchor",
+            serde_json::json!({"numerator":"1","denominator":"2"}),
+        ),
+        (
+            "estimate",
+            serde_json::json!({"numerator":"1","denominator":"2"}),
+        ),
+        (
+            "independent_run_variance",
+            serde_json::json!({"numerator":"1","denominator":"1"}),
+        ),
+        (
+            "interval_upper",
+            serde_json::json!("1.10000000000000000e+0"),
+        ),
+        ("contains_anchor", serde_json::json!(false)),
+        (
+            "final_weight_ess",
+            serde_json::json!({"numerator":"1","denominator":"1"}),
+        ),
+        (
+            "ess_fraction",
+            serde_json::json!({"numerator":"1","denominator":"1"}),
+        ),
+        ("degeneracy", serde_json::json!(true)),
+    ] {
+        let mut value = coverage_base.clone();
+        value["payload"]["result_payload"]["replicates"][0][field] = replacement;
+        rehash_result(&mut value);
+        assert!(
+            decode_envelope(&value_bytes(value)).is_err(),
+            "accepted coverage {field}"
+        );
+    }
+    let mut value = coverage_base.clone();
+    value["payload"]["result_payload"]["replicates"][0]["exponent_histogram"][0]["count"] =
+        serde_json::json!(1);
+    rehash_result(&mut value);
+    assert!(decode_envelope(&value_bytes(value)).is_err());
+    let mut value = coverage_base.clone();
+    value["payload"]["result_payload"]["coverage_counts"][0]["count"] = serde_json::json!(199);
+    rehash_result(&mut value);
+    assert!(decode_envelope(&value_bytes(value)).is_err());
+
+    let mut value = serde_json::to_value(target_receipt).unwrap();
+    value["payload"]["dataset_identity"] = serde_json::to_value(&coverage_identity).unwrap();
+    value["payload"]["dataset_id"] = serde_json::json!(dataset_id(&coverage_identity).unwrap());
+    assert!(decode_envelope(&value_bytes(value)).is_err());
+    let mut value = serde_json::to_value(coverage_receipt).unwrap();
+    value["payload"]["dataset_identity"] = serde_json::to_value(&expected).unwrap();
+    value["payload"]["dataset_id"] = serde_json::json!(dataset_id(&expected).unwrap());
+    assert!(decode_envelope(&value_bytes(value)).is_err());
 }

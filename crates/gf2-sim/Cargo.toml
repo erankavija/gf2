@@ -42,6 +42,7 @@ sha2 = "0.10"
 # Safe no-follow opens bind accepted raw evidence to regular files without
 # introducing unsafe code outside the isolated kernel crates.
 rustix = { version = "1.1", features = ["fs"] }
+num-bigint = { workspace = true }
 
 [dev-dependencies]
 gf2-algebra = { path = "../gf2-algebra", features = ["test-support"] }
