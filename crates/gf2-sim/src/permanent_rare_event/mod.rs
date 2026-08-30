@@ -260,7 +260,45 @@ pub fn sample_trajectory<const Q: u64>(
 where
     Fp<Q>: SupportedPrimeField,
 {
-    run_trajectory::<Q>(rows, address, 0)
+    validate_trajectory_address::<Q>(rows, address)?;
+    let mut sampler = MatrixSampler::<Q>::new(address)?;
+    let mut state = CompressedRankState::initial();
+    let mut exponent = 0;
+    advance_prefix(&mut sampler, &mut state, &mut exponent, rows);
+    Ok(outcome(rows, address, state, exponent))
+}
+
+/// A stopped addressed trajectory prefix used to test and implement restart.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TrajectoryPrefixCheckpoint {
+    /// Number of prefix rows consumed.
+    pub completed_prefix: usize,
+    /// Exact likelihood exponent accumulated through that prefix.
+    pub exponent: u32,
+    /// Canonical compressed state at the stop boundary.
+    pub state: [u8; 22],
+}
+
+/// Stops a trajectory after exactly `completed_prefix` rows.
+pub fn checkpoint_trajectory<const Q: u64>(
+    rows: usize,
+    address: MatrixAddress,
+    completed_prefix: usize,
+) -> Result<TrajectoryPrefixCheckpoint, RareEventError>
+where
+    Fp<Q>: SupportedPrimeField,
+{
+    validate_boundary(rows, completed_prefix)?;
+    validate_trajectory_address::<Q>(rows, address)?;
+    let mut sampler = MatrixSampler::<Q>::new(address)?;
+    let mut state = CompressedRankState::initial();
+    let mut exponent = 0;
+    advance_prefix(&mut sampler, &mut state, &mut exponent, completed_prefix);
+    Ok(TrajectoryPrefixCheckpoint {
+        completed_prefix,
+        exponent,
+        state: state.to_canonical_bytes(),
+    })
 }
 
 /// Restarts one trajectory from its immutable address and replays through a boundary.
@@ -275,13 +313,31 @@ pub fn resume_trajectory<const Q: u64>(
 where
     Fp<Q>: SupportedPrimeField,
 {
-    run_trajectory::<Q>(rows, address, completed_prefix)
+    let stopped = checkpoint_trajectory::<Q>(rows, address, completed_prefix)?;
+
+    // A new process owns a fresh private stream. It replays the immutable
+    // address through the stop boundary and refuses any checkpoint mismatch.
+    let mut sampler = MatrixSampler::<Q>::new(address)?;
+    let mut state = CompressedRankState::initial();
+    let mut exponent = 0;
+    advance_prefix(&mut sampler, &mut state, &mut exponent, completed_prefix);
+    if state.to_canonical_bytes() != stopped.state || exponent != stopped.exponent {
+        return Err(RareEventError::AddressOutOfRange);
+    }
+    advance_prefix(
+        &mut sampler,
+        &mut state,
+        &mut exponent,
+        rows - completed_prefix,
+    );
+    Ok(outcome(rows, address, state, exponent))
 }
 
 /// Samples addresses and returns outcomes in canonical input order.
 ///
-/// `workers` affects only assignment validation, not stream addresses or
-/// reduction order. This makes results identical across schedules.
+/// Addresses are assigned round-robin to distinct logical worker lanes, then
+/// reassembled by original address position. This makes scheduling paths
+/// distinct while preserving one canonical reduction order.
 pub fn sample_trajectories_in_order<const Q: u64>(
     rows: usize,
     addresses: &[MatrixAddress],
@@ -293,27 +349,35 @@ where
     if workers == 0 {
         return Err(RareEventError::ZeroWorkers);
     }
-    addresses
-        .iter()
-        .copied()
-        .map(|address| sample_trajectory::<Q>(rows, address))
-        .collect()
+    let mut outcomes = vec![None; addresses.len()];
+    for worker in 0..workers {
+        for index in (worker..addresses.len()).step_by(workers) {
+            outcomes[index] = Some(sample_trajectory::<Q>(rows, addresses[index])?);
+        }
+    }
+    Ok(outcomes
+        .into_iter()
+        .map(|outcome| outcome.expect("round-robin lanes cover every address"))
+        .collect())
 }
 
-fn run_trajectory<const Q: u64>(
-    rows: usize,
-    address: MatrixAddress,
-    completed_prefix: usize,
-) -> Result<TrajectoryOutcome, RareEventError>
-where
-    Fp<Q>: SupportedPrimeField,
-{
+fn validate_boundary(rows: usize, completed_prefix: usize) -> Result<(), RareEventError> {
     if completed_prefix > rows {
         return Err(RareEventError::ResumeAfterTerminal {
             boundary: completed_prefix,
             rows,
         });
     }
+    Ok(())
+}
+
+fn validate_trajectory_address<const Q: u64>(
+    rows: usize,
+    address: MatrixAddress,
+) -> Result<(), RareEventError>
+where
+    Fp<Q>: SupportedPrimeField,
+{
     if address.dimension() != rows {
         return Err(RareEventError::DimensionMismatch {
             requested: rows,
@@ -323,10 +387,19 @@ where
     if address.purpose() != StreamPurpose::RareEvent {
         return Err(RareEventError::AddressOutOfRange);
     }
-    let mut sampler = MatrixSampler::<Q>::new(address)?;
-    let mut state = CompressedRankState::<Fp<Q>>::initial();
-    let mut exponent = 0_u32;
-    for prefix in 0..rows {
+    MatrixSampler::<Q>::new(address)?;
+    Ok(())
+}
+
+fn advance_prefix<const Q: u64>(
+    sampler: &mut MatrixSampler<Q>,
+    state: &mut CompressedRankState<Fp<Q>>,
+    exponent: &mut u32,
+    row_count: usize,
+) where
+    Fp<Q>: SupportedPrimeField,
+{
+    for _ in 0..row_count {
         let nullspace = state.contraction_span().orthogonal_complement();
         let basis = nullspace.basis_residues();
         let mut residues = [0_u8; 3];
@@ -337,21 +410,24 @@ where
                     (residues[coordinate] + coefficient * basis_row[coordinate]) % Q as u8;
             }
         }
-        exponent += state.contraction_span().dimension() as u32;
+        *exponent += state.contraction_span().dimension() as u32;
         let row = Vector3::from_residues(residues).expect("sampled residues are canonical");
-        state = state.successor(row).expect("a nullspace row is admissible");
-        if prefix + 1 == completed_prefix {
-            // The boundary is observable for debugger/checkpoint fixtures; the
-            // stream remains private and continuation uses the same state.
-            debug_assert_eq!(prefix + 1, completed_prefix);
-        }
+        *state = state.successor(row).expect("a nullspace row is admissible");
     }
-    Ok(TrajectoryOutcome {
+}
+
+fn outcome<F: SupportedPrimeField>(
+    rows: usize,
+    address: MatrixAddress,
+    state: CompressedRankState<F>,
+    exponent: u32,
+) -> TrajectoryOutcome {
+    TrajectoryOutcome {
         exponent,
         rows_completed: rows,
         stream_index: address.stream().get(),
         terminal_state: state.to_canonical_bytes(),
-    })
+    }
 }
 
 fn field_order_from_u8(order: u8) -> Result<FieldOrder, RareEventError> {
