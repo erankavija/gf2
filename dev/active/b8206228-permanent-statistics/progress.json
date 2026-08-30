@@ -206,7 +206,7 @@
      "short_id": "02b8137c",
      "title": "Execute frozen pre-draw validation anchors",
      "classification": "implementation",
-     "status": "in_progress: claimed by agent:codex-sol-validation after the launch audit proved the committed 4,096-draw interval test does not satisfy the frozen protocol's 1,024-matrix replay plus 400,000-draw exact-test validation phase; all three campaign arms depend on this leaf."
+     "status": "ready: the launch audit proved the committed 4,096-draw interval test does not satisfy the frozen protocol's 1,024-matrix replay plus 400,000-draw exact-test validation phase. The session-30 worker stopped cleanly before edits, builds, tests, or draws; its isolated worktree remains at main commit 89c7e8cc. All three campaign arms depend on this leaf."
     },
     {
      "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -416,7 +416,8 @@
    "type": "task",
    "wave": "10 (pre-draw prerequisite)",
    "reason": "Session-30 launch audit found no committed evidence for the frozen protocol's complete ten-anchor 1,024-matrix regeneration and 400,000-draw exact two-sided validation phase. Existing 44534b2f covers 4,096 draws with a Clopper-Pearson interval instead. All three campaign arms are wired behind this leaf.",
-   "status": "ready"
+   "status": "ready",
+   "note": "Session 30 dispatched a high-tier implementation worker, then stopped it on the owner's handoff instruction. The worktree is clean at 89c7e8cc with no commits or untracked files. Resume by extending the production schedule evaluator/pooling path through a public reusable validation API, committing preregistration and implementation before the fixed 400,000-draw run."
   }
  ],
  "escalations": [
@@ -1180,5 +1181,15 @@
   "admission": "Read-only supplied-emitter inspection passed and exact dry scheduling reported q=7 n=20 shards=3. The campaign directory remains manifest/checksum/freeze only.",
   "frontier": "ed494117 remains ready and unclaimed; claim and execute exact q=7 n=20 first when resumed. 6639435f remains at its pending owner escalation.",
   "handoff": "handoff-25.md"
+ },
+ "session_30_state": {
+  "recorded_at": "2026-08-30T15:31:17+03:00",
+  "reason": "Owner-directed handoff after the launch audit found a missing frozen-protocol validation prerequisite.",
+  "created": "02b8137c, the ten-anchor frozen pre-draw validation task; campaign arms ed494117, 1d0b3ec4, and 90a61cd4 now depend on it.",
+  "worker_stop": "The high-tier worker stopped cleanly. Worktree .agents/worktrees/agent-02b8137c and branch worktree-agent-02b8137c remain at 89c7e8cc with no commits, modifications, untracked files, Cargo commands, tests, validation draws, or campaign draws.",
+  "frontier": "02b8137c is ready and unassigned. Implement and commit the public validation API, thin runner, tests, preregistration, and receipt contract before the fixed validation run; pass all four gates and link the receipt before any campaign arm can start.",
+  "campaign_state": "The frozen campaign directory remains manifest/checksum/freeze only. Dry scheduling is not launch evidence. After validation closes, restore and hash-check the preserved c9b2307a emitter before executing exact q=7,n=20 first.",
+  "open_escalation": "6639435f still awaits owner authorization for one bounded high-tier repair cycle covering all four final audit findings.",
+  "handoff": "handoff-26.md"
  }
 }
