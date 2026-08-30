@@ -10141,3 +10141,9 @@
 {"from":"in_progress","id":"314042cb-d464-476d-82fb-aef9aadd4ce0","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-30T01:31:45.912626754Z","to":"done","type":"issue_state_changed"}
 {"id":"867a3403-2516-4359-8116-b247dcedbb56","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-30T01:31:45.912626754Z","type":"issue_completed"}
 {"from":"backlog","id":"d8c90b82-3722-4ae2-9732-ee3ebcff2e6c","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-30T01:31:54.536746621Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"49b7f182-8593-49f4-a128-e2c50b7ffa48","issue_id":"3f664839-fb97-4bb5-8141-7c39026325fe","timestamp":"2026-08-30T01:32:03.801186402Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"e3497e0e-8838-457c-b042-9f560485fa14","issue_id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","timestamp":"2026-08-30T01:32:20.768980556Z","to":"ready","type":"issue_state_changed"}
+{"from":"ready","id":"3d84a662-8f99-487a-92f9-11c7f111cfe4","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-30T01:33:17.917260157Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-sol-cost-table","id":"a4ee676e-89d3-4d2e-abb4-c4bc41c9a63f","issue_id":"2c1ae813-67ce-4814-a96b-45272643d53e","timestamp":"2026-08-30T01:33:17.917260157Z","type":"issue_claimed"}
+{"from":"ready","id":"1fe4b943-4361-4456-a348-b71bfa841ef5","issue_id":"3f664839-fb97-4bb5-8141-7c39026325fe","timestamp":"2026-08-30T01:33:26.653418716Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-sol-rare-design","id":"ae3fc419-5e23-4a40-a34d-c1f36dad5b32","issue_id":"3f664839-fb97-4bb5-8141-7c39026325fe","timestamp":"2026-08-30T01:33:26.653418716Z","type":"issue_claimed"}

@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:codex-sol-rare-design",
+  "claimed_at": "2026-08-30T01:33:26.653418716Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -8,6 +9,7 @@
   ],
   "description": "A preregistered design for exact compressed-state propagation and an independent importance-sampling cross-check of permanental rank deficiency for three-column matrices.\n\n## Background\n\nFor rows $u,v,w\\in\\mathbb{F}_q^3$, define\n\n$$\n\\phi(u,v)=\n(u_2v_3+u_3v_2,\\,\n u_1v_3+u_3v_1,\\,\n u_1v_2+u_2v_1),\n$$\n\nso $\\operatorname{per}(u,v,w)=\\phi(u,v)\\cdot w$. A valid row prefix is therefore summarized by the row span $U$ and the span $V$ of its pair contractions. A new row preserves permanental-rank deficiency exactly when it lies in $V^\\perp$.\n\nThis finite state permits exact dynamic programming. It also defines a full-support importance proposal that samples the next row uniformly from $V^\\perp$ and applies the exact likelihood ratio $q^{-\\dim V}$. The stochastic calculation is an independent uncertainty-bearing cross-check; the exact rational calculation is the primary scientific result.\n\nEmpirical usefulness in the target regime remains aspirational at the parent epic. This design's mathematical identities, validation protocol, provenance, and falsification rules are hard requirements. A cross-check that fails its preregistered usability threshold is an allowed outcome; weakening, replacing, or retuning the threshold after observing results is not.\n\n## Success Criteria\n\n- [hard] REQ-01: Specifies canonical representations of $U$ and $V$, proves the prefix-validity condition $x\\in V^\\perp$, and specifies the updates $U'=U+\\langle x\\rangle$ and $V'=V+\\phi(U,x)$.\n- [hard] REQ-02: Specifies an exact recurrence over compressed states whose summed integer count divided by $q^{3n}$ equals the permanental-rank-deficiency probability.\n- [hard] REQ-03: Specifies the independent proposal $x\\sim\\operatorname{Unif}(V^\\perp)$, the incremental weight $q^{-\\dim V}$, its full-support condition, and a self-contained unbiasedness argument.\n- [hard] REQ-04: Names $(q,n,k)=(3,1024,3)$ as the target, records that $0.1\\sqrt{1024}=3.2$, and quantifies why direct sampling cannot reach a probability of leading order $3^{-1023}$.\n- [hard] REQ-05: Fixes before implementation the finite exhaustive transition and matrix-validation domains for each supported field, names every fast-tier and ignored slow-tier case, and fixes the exact anchors, independent-run counts, nominal interval level, empirical coverage rule, and contradiction rule; no runtime notion of `tractable` chooses additional exhaustive cases.\n- [hard] REQ-06: Defines final-weight ESS, independent-run variance, extinction or degeneracy diagnostics, and the threshold that makes the stochastic cross-check unusable without invalidating the exact result.\n- [hard] REQ-07: Binds every stochastic draw to manifested rare-event purpose tag $4$ under fixed stream-index subdomains, separate from campaign and validation data.\n- [hard] REQ-08: States that the exact rational value is primary, the stochastic interval is a cross-check, and disagreement or failed coverage is preserved rather than reconciled through retuning.\n",
   "documents": [],
+  "first_ready_at": "2026-08-30T01:32:03.801186402Z",
   "gates_required": [
     "doc-review",
     "research-review"
@@ -21,7 +23,7 @@
     "cites:GGK2025"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "in_progress",
   "title": "Preregistered compressed-state rare-event design",
-  "updated_at": "2026-08-24T10:22:44.148048697Z"
+  "updated_at": "2026-08-30T01:33:26.653418716Z"
 }
