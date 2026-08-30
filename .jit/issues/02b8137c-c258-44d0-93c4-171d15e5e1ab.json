@@ -16,7 +16,28 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-30T19:48:28.290329110Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-30T19:57:59.447266679Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-30T19:46:25.570095469Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-08-30T19:54:56.464912067Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "02b8137c-c258-44d0-93c4-171d15e5e1ab",
   "labels": [
     "epic:permanent-statistics",
@@ -28,5 +49,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Execute frozen pre-draw validation anchors",
-  "updated_at": "2026-08-30T19:43:38.994091231Z"
+  "updated_at": "2026-08-30T19:57:59.447266679Z"
 }
