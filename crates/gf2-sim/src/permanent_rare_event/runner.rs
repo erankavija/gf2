@@ -10,9 +10,9 @@
 //! the published prefix from the dataset directories and continues.
 //!
 //! All environment access that can affect execution passes through one
-//! instrumented layer: [`read_declared_environment`] refuses any name outside
-//! [`ENVIRONMENT_INPUT_NAMES`], each declared name is read exactly once, and
-//! the start receipt's environment record is derived from those same reads.
+//! instrumented layer: `read_declared_environment` refuses any name outside
+//! `ENVIRONMENT_INPUT_NAMES`, each declared name is read exactly once, and the
+//! start receipt's environment record is derived from those same reads.
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -49,12 +49,17 @@ use super::{
 pub const BLOCK_BUDGET_ENVIRONMENT: &str = "GF2_RARE_EVENT_BLOCK_BUDGET";
 /// Environment name declaring the requested and effective worker count.
 pub const WORKER_ENVIRONMENT: &str = "RAYON_NUM_THREADS";
-/// Artifact-root-relative committed exact target result.
+/// Artifact-root-relative exact target result a completing target run reads.
+///
+/// The issue that executes a target campaign commits these bytes before its
+/// first draw; the final receipt then cites them by path and digest. No such
+/// file is committed for this issue, which exercises the estimator rather than
+/// executing a campaign.
 pub const EXACT_TARGET_RESULT_FILE: &str = "exact-target-result.json";
 
 /// Every environment name this runner may consult.
 ///
-/// This one inventory is what [`read_declared_environment`] permits, what a
+/// This one inventory is what the module's environment reader permits, what a
 /// start receipt records, and what a frozen configuration's behavior closure
 /// declares, so reading, recording, and declaring an environment input cannot
 /// drift apart. A receipt whose declared names differ from its closure is
