@@ -182,11 +182,11 @@ fn fixture_from_manifest(
     fs::write(campaign_root.join("manifest.json"), &bytes).unwrap();
     fs::write(root.join("protocol.md"), b"fixture frozen protocol\n").unwrap();
     write_evidence_sources(&repository);
-    let coordinator = CampaignCoordinator::new(&campaign_root, &evidence_source_paths()).unwrap();
+    let coordinator = CampaignCoordinator::new(&campaign_root, &evidence_sources()).unwrap();
     (root, manifest, coordinator)
 }
 
-fn evidence_source_paths() -> CoordinatorEvidenceSources {
+fn evidence_sources() -> CoordinatorEvidenceSources {
     let q3_bytes = include_bytes!(
         "../../../../dev/simulation_results/permanent-zero-fraction/\
          scheinerman2024-q3-targets-v1.csv"
@@ -213,7 +213,7 @@ fn evidence_source_paths() -> CoordinatorEvidenceSources {
 }
 
 fn write_evidence_sources(repository: &Path) {
-    let sources = evidence_source_paths();
+    let sources = evidence_sources();
     let target = repository.join(sources.q3_targets.path.as_str());
     fs::create_dir_all(target.parent().unwrap()).unwrap();
     fs::write(
@@ -656,7 +656,7 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
         .argv
         .extend(["--q".to_owned(), "7".to_owned()]);
     assert!(
-        CampaignCoordinator::new(&campaign_root, &evidence_source_paths())
+        CampaignCoordinator::new(&campaign_root, &evidence_sources())
             .unwrap()
             .authorize_arm(duplicate_selector)
             .is_err()
@@ -668,7 +668,7 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
         .position(|token| token == "--workers")
         .unwrap();
     default_worker.argv.drain(worker_option..=worker_option + 1);
-    CampaignCoordinator::new(&campaign_root, &evidence_source_paths())
+    CampaignCoordinator::new(&campaign_root, &evidence_sources())
         .unwrap()
         .authorize_arm(default_worker)
         .expect("omitted --workers has the documented effective value one");
@@ -755,7 +755,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         2,
         arm_for_manifest(&retry_manifest, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             mismatched_worker_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -773,7 +773,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         1,
         arm_for_manifest(&retry_manifest, 7, 20).argv,
         approve_emission(&retry_campaign).unwrap(),
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, item, _, _| {
             let persisted = CampaignCoordinator::read(&retry_campaign).unwrap();
             assert!(matches!(
@@ -808,7 +808,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         1,
         arm_for_manifest(&retry_manifest, 7, 20).argv,
         approve_emission(&retry_campaign).unwrap(),
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             forbidden_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -821,7 +821,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
     assert_eq!(forbidden_entries, 0);
 
     let (adopt_root, adopt_campaign, adopt_manifest, approval) = live_fixture();
-    let mut adopt = CampaignCoordinator::new(&adopt_campaign, &evidence_source_paths()).unwrap();
+    let mut adopt = CampaignCoordinator::new(&adopt_campaign, &evidence_sources()).unwrap();
     adopt
         .authorize_arm(arm_for_manifest(&adopt_manifest, 7, 20))
         .unwrap();
@@ -836,7 +836,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         1,
         arm_for_manifest(&adopt_manifest, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             adopted_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -860,8 +860,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
     ));
 
     let (invalid_root, invalid_campaign, invalid_manifest, approval) = live_fixture();
-    let mut invalid =
-        CampaignCoordinator::new(&invalid_campaign, &evidence_source_paths()).unwrap();
+    let mut invalid = CampaignCoordinator::new(&invalid_campaign, &evidence_sources()).unwrap();
     invalid
         .authorize_arm(arm_for_manifest(&invalid_manifest, 7, 20))
         .unwrap();
@@ -878,7 +877,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         1,
         arm_for_manifest(&invalid_manifest, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             recovery_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -924,7 +923,7 @@ fn canonical_transaction_persists_authorization_before_sampling_and_raw_before_a
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |manifest, item, _, _| {
             let persisted = CampaignCoordinator::read(&campaign_root).unwrap();
             assert!(matches!(
@@ -994,7 +993,7 @@ fn persisted_arm_binds_one_repository_relative_accelerator_cost_snapshot() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approve_emission(&campaign_root).unwrap(),
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             first_entries += 1;
             fs::write(&table_path, b"q,n,per_matrix_us\n5,20,19\n").unwrap();
@@ -1014,7 +1013,7 @@ fn persisted_arm_binds_one_repository_relative_accelerator_cost_snapshot() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approve_emission(&campaign_root).unwrap(),
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             refused_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1057,7 +1056,7 @@ fn exact_executor_lock_contention_has_zero_sampler_entry() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1247,8 +1246,7 @@ fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
     use std::os::unix::fs::symlink;
 
     let (root, campaign_root, campaign, approval) = live_fixture();
-    let mut coordinator =
-        CampaignCoordinator::new(&campaign_root, &evidence_source_paths()).unwrap();
+    let mut coordinator = CampaignCoordinator::new(&campaign_root, &evidence_sources()).unwrap();
     coordinator
         .authorize_arm(arm_for_manifest(&campaign, 7, 20))
         .unwrap();
@@ -1269,7 +1267,7 @@ fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             sampler_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1312,7 +1310,7 @@ fn transaction_refuses_symlinked_writer_ancestors_without_external_effects() {
             1,
             arm_for_manifest(&campaign, 7, 20).argv,
             approval,
-            &evidence_source_paths(),
+            &evidence_sources(),
             |manifest, item, _, _| {
                 sampler_entries += 1;
                 Ok(evaluated_shard(manifest, item, 14))
@@ -1357,7 +1355,7 @@ fn transaction_refuses_symlinked_lock_and_receipt_entries() {
             1,
             arm_for_manifest(&campaign, 7, 20).argv,
             approval,
-            &evidence_source_paths(),
+            &evidence_sources(),
             |manifest, item, _, _| {
                 sampler_entries += 1;
                 Ok(evaluated_shard(manifest, item, 14))
@@ -1467,8 +1465,7 @@ fn invalid_raw_refuses_symlinked_quarantine_ancestor() {
     use std::os::unix::fs::symlink;
 
     let (root, campaign_root, campaign, approval) = live_fixture();
-    let mut coordinator =
-        CampaignCoordinator::new(&campaign_root, &evidence_source_paths()).unwrap();
+    let mut coordinator = CampaignCoordinator::new(&campaign_root, &evidence_sources()).unwrap();
     coordinator
         .authorize_arm(arm_for_manifest(&campaign, 7, 20))
         .unwrap();
@@ -1496,7 +1493,7 @@ fn invalid_raw_refuses_symlinked_quarantine_ancestor() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             sampler_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1533,7 +1530,7 @@ fn coordinator_refuses_symlinked_protocol_identity() {
     fs::write(&external, b"outside protocol\n").unwrap();
     fs::remove_file(&protocol).unwrap();
     symlink(&external, &protocol).unwrap();
-    assert!(CampaignCoordinator::new(&campaign_root, &evidence_source_paths()).is_err());
+    assert!(CampaignCoordinator::new(&campaign_root, &evidence_sources()).is_err());
     assert_eq!(fs::read(&external).unwrap(), b"outside protocol\n");
     fs::remove_dir_all(root).unwrap();
 }
@@ -1611,7 +1608,7 @@ fn q3_target_parser_is_exact_and_precision_boundaries_are_closed() {
 fn transaction_refuses_mismatched_literature_identity_before_receipt_or_sampling() {
     let campaign = single_cell_manifest(7);
     let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
-    let expected_sources = evidence_source_paths();
+    let expected_sources = evidence_sources();
     let repository = root.join("checkout");
     fs::write(
         repository.join(expected_sources.q5_q7_literature_search.path.as_str()),
@@ -1652,7 +1649,7 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         .cells
         .push(cell(5, 4, DeterminantPlan::NotEvaluated));
     let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
-    let expected_sources = evidence_source_paths();
+    let expected_sources = evidence_sources();
     let q7_argv = arm_for_manifest(&campaign, 7, 20).argv;
     execute_campaign_cell_with_evaluator(
         &campaign_root,
@@ -1792,7 +1789,7 @@ fn terminal_projection_recovers_without_sampling_and_refuses_conflicts() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |manifest, item, _, _| {
             first_entries += 1;
             Ok(evaluated_shard(manifest, item, 14))
@@ -1820,7 +1817,7 @@ fn terminal_projection_recovers_without_sampling_and_refuses_conflicts() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approve_emission(&campaign_root).unwrap(),
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             retry_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1841,7 +1838,7 @@ fn terminal_projection_recovers_without_sampling_and_refuses_conflicts() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approve_emission(&campaign_root).unwrap(),
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             adopted_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1870,7 +1867,7 @@ fn zero_evidence_halt_publishes_raw_only_halted_projection() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
-        &evidence_source_paths(),
+        &evidence_sources(),
         |_, _, _, _| {
             Err(ScheduleError::InvalidWorkItem(
                 "zero-evidence mechanical halt".to_owned(),

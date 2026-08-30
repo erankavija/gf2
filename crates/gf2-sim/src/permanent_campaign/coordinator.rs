@@ -70,20 +70,11 @@ const Q3_TARGET_FIELDS: [&str; 15] = [
     "reference_interval_upper",
 ];
 
-/// Normalized repository-relative paths to the two field-interpretation sources.
+/// Expected content-bound identities of the interpretation sources.
 ///
-/// The campaign binary selects repository policy. The reusable coordinator
-/// validates and hashes the named bytes before it admits a sampler.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct CoordinatorEvidenceSourcePaths {
-    /// Versioned exact q=3 target table.
-    pub q3_targets: ArtifactPath,
-    /// Recorded bounded q=5/q=7 literature search.
-    pub q5_q7_literature_search: ArtifactPath,
-}
-
-/// Content-bound identities of the validated interpretation sources.
+/// The caller selects repository policy by supplying exact path-and-digest
+/// identities. The coordinator descriptor-reads those paths, requires the
+/// actual bytes to match, and validates their schemas before sampler admission.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CoordinatorEvidenceSources {
@@ -471,10 +462,10 @@ impl CampaignCoordinator {
     #[cfg(test)]
     fn new(
         campaign_root: &Path,
-        evidence_source_paths: &CoordinatorEvidenceSourcePaths,
+        expected_sources: &CoordinatorEvidenceSources,
     ) -> Result<Self, CoordinatorError> {
         let root = open_campaign_root(campaign_root)?;
-        let evidence_sources = resolve_evidence_sources(&root, evidence_source_paths)?;
+        let evidence_sources = resolve_evidence_sources(&root, expected_sources)?;
         Self::new_inner(&root, evidence_sources)
     }
 
@@ -1297,7 +1288,7 @@ pub fn execute_campaign_cell(
     campaign_root: &Path,
     scope: ExactCellScope,
     worker_count: usize,
-    evidence_source_paths: &CoordinatorEvidenceSourcePaths,
+    expected_sources: &CoordinatorEvidenceSources,
 ) -> Result<ExactCellExecution, CoordinatorError> {
     let approval = approve_emission(campaign_root)
         .map_err(|error| CoordinatorError::Refused(format!("emission refused: {error}")))?;
@@ -1322,7 +1313,7 @@ pub fn execute_campaign_cell(
             worker_count,
             effective_argv,
             approval,
-            evidence_source_paths,
+            expected_sources,
         },
         evaluate_work_item_with_worker_count_and_accelerator,
         |_| {},
@@ -1355,7 +1346,7 @@ pub fn execute_campaign_cell_with_evaluator<E, H>(
     worker_count: usize,
     effective_argv: Vec<String>,
     approval: EmissionApproval,
-    evidence_source_paths: &CoordinatorEvidenceSourcePaths,
+    expected_sources: &CoordinatorEvidenceSources,
     evaluator: E,
     on_raw_durable: H,
 ) -> Result<ExactCellExecution, CoordinatorError>
@@ -1388,7 +1379,7 @@ where
             worker_count,
             effective_argv,
             approval,
-            evidence_source_paths,
+            expected_sources,
         },
         evaluator,
         on_raw_durable,
@@ -1401,7 +1392,7 @@ struct LockedCellRequest<'a> {
     worker_count: usize,
     effective_argv: Vec<String>,
     approval: EmissionApproval,
-    evidence_source_paths: &'a CoordinatorEvidenceSourcePaths,
+    expected_sources: &'a CoordinatorEvidenceSources,
 }
 
 fn execute_campaign_cell_locked<E, H>(
@@ -1424,10 +1415,10 @@ where
         worker_count,
         effective_argv,
         approval,
-        evidence_source_paths,
+        expected_sources,
     } = request;
     let manifest_on_disk = read_manifest_anchored(campaign_root)?;
-    let observed_sources = resolve_evidence_sources(campaign_root, evidence_source_paths)?;
+    let observed_sources = resolve_evidence_sources(campaign_root, expected_sources)?;
     let receipt_relative = coordinator_receipt_relative(&manifest_on_disk.campaign_id);
     let mut coordinator = match campaign_root_entry(campaign_root, &receipt_relative)? {
         EntryKind::Missing => {
@@ -2207,6 +2198,13 @@ fn parse_q3_target_row(
     if !approximately_equal(count_derived_probability, expected_probability) {
         return refused("q=3 target count-derived probability differs from its counts");
     }
+    if evidence == Q3SourceEvidence::ExactEnumeration
+        && fields[6] != format!("{expected_probability:.4}")
+    {
+        return refused(
+            "q=3 exact target source_reported_p_hat is not the canonical four-decimal count rounding",
+        );
+    }
     let expected_se =
         (expected_probability * (1.0 - expected_probability) / sample_count as f64).sqrt();
     let (expected_lower, expected_upper) =
@@ -2299,13 +2297,19 @@ fn validate_literature_search(bytes: &[u8]) -> Result<(), CoordinatorError> {
 
 fn resolve_evidence_sources(
     campaign_root: &CampaignRoot,
-    paths: &CoordinatorEvidenceSourcePaths,
+    expected: &CoordinatorEvidenceSources,
 ) -> Result<CoordinatorEvidenceSources, CoordinatorError> {
     let repository = repository_root_for_campaign(campaign_root.path())?;
-    let (q3_targets, q3_bytes) = repository_artifact(&repository, &paths.q3_targets)?;
+    let (q3_targets, q3_bytes) = repository_artifact(&repository, &expected.q3_targets.path)?;
+    if q3_targets != expected.q3_targets {
+        return refused("q=3 target bytes differ from the expected artifact identity");
+    }
     parse_q3_target_table(&q3_bytes)?;
     let (q5_q7_literature_search, search_bytes) =
-        repository_artifact(&repository, &paths.q5_q7_literature_search)?;
+        repository_artifact(&repository, &expected.q5_q7_literature_search.path)?;
+    if q5_q7_literature_search != expected.q5_q7_literature_search {
+        return refused("literature-search bytes differ from the expected artifact identity");
+    }
     validate_literature_search(&search_bytes)?;
     Ok(CoordinatorEvidenceSources {
         q3_targets,
@@ -2592,17 +2596,7 @@ fn validate_campaign_files(
     {
         return refused("on-disk frozen manifest or protocol identity differs from the receipt");
     }
-    let observed_sources = resolve_evidence_sources(
-        campaign_root,
-        &CoordinatorEvidenceSourcePaths {
-            q3_targets: receipt.evidence_sources.q3_targets.path.clone(),
-            q5_q7_literature_search: receipt
-                .evidence_sources
-                .q5_q7_literature_search
-                .path
-                .clone(),
-        },
-    )?;
+    let observed_sources = resolve_evidence_sources(campaign_root, &receipt.evidence_sources)?;
     if observed_sources != receipt.evidence_sources {
         return refused("field-interpretation source bytes differ from the coordinator receipt");
     }
