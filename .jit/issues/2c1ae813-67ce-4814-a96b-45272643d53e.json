@@ -69,6 +69,7 @@
       "path": "dev/simulation_results/permanent-zero-fraction/README.md"
     }
   ],
+  "done_at": "2026-08-30T02:39:10.227492901Z",
   "first_ready_at": "2026-08-29T08:03:02.695225411Z",
   "gates_required": [
     "cargo-ci",
@@ -79,7 +80,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-30T02:23:37.704260054Z",
+      "updated_at": "2026-08-30T02:24:56.764502114Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-30T02:29:02.456561137Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-30T02:30:50.074889777Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-08-30T02:38:04.065857962Z",
       "updated_by": "auto:executor"
     }
   },
@@ -90,7 +106,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Freeze accelerator launch-cost table for campaign cells",
-  "updated_at": "2026-08-30T02:23:37.704260054Z"
+  "updated_at": "2026-08-30T02:39:10.227492901Z"
 }
