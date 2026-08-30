@@ -47,7 +47,7 @@ PLANNED_PROCESSES = 12
 BOUND_INPUTS = (
     (
         MANIFEST_PATH,
-        "5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57",
+        "1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2",
         "frozen campaign cell and backend map",
     ),
     (
