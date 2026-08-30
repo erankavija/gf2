@@ -4,9 +4,11 @@
 //! directory, `--q FIELD --n ORDER` selects exactly one manifest cell, and
 //! `--workers N` selects the configured worker count (default: 1 when omitted).
 //! This thin CLI passes the parsed exact scope to the reusable `gf2-sim`
-//! campaign transaction. That library operation holds the execution lock while
-//! it verifies the live executable and committed manifest, persists admission,
-//! evaluates manifested attempts, and records terminal receipt evidence.
+//! campaign transaction. The library obtains live-executable and
+//! committed-manifest approval and reads the initial manifest before acquiring
+//! the execution lock. The held lock covers receipt and interpretation-source
+//! revalidation, arm and attempt admission, sampling, raw emission,
+//! terminalization, and projection.
 //!
 //! ```console
 //! $ permanent_campaign --print-provenance --manifest <campaign-directory>
@@ -26,7 +28,7 @@ use std::process::ExitCode;
 use std::time::Duration;
 
 use gf2_sim::permanent_campaign::coordinator::{
-    execute_campaign_cell, CampaignCoordinator, CellExecutionState, CoordinatorEvidenceSourcePaths,
+    execute_campaign_cell, CampaignCoordinator, CellExecutionState, CoordinatorEvidenceSources,
     ExactCellScope, ShardAttemptState,
 };
 use gf2_sim::permanent_campaign::launch_cost::resolve_accelerator_cost_table;
@@ -34,7 +36,7 @@ use gf2_sim::permanent_campaign::provenance::{observe_provenance, repository_top
 use gf2_sim::permanent_campaign::schedule::{
     enumerate_cell_work_items, AcceleratorCostTable, DEFAULT_ACCELERATOR_LAUNCH_CAP,
 };
-use gf2_sim::permanent_campaign::schema::{read_manifest, Backend};
+use gf2_sim::permanent_campaign::schema::{read_manifest, ArtifactIdentity, Backend};
 
 const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD --n ORDER [--workers N] [--accelerator-launch-cap-ms MS] [--accelerator-cost-table PATH]
 
@@ -51,7 +53,10 @@ Accelerator options:
 ";
 const Q3_TARGET_PATH: &str =
     "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv";
+const Q3_TARGET_SHA256: &str = "e8ab603f082dfc0c85c8a5f66af3c03e041f6c08236d6eb3172fac6e1889245f";
 const Q5_Q7_SEARCH_PATH: &str = "dev/studies/b488f02c/literature-search-2026-08-08.md";
+const Q5_Q7_SEARCH_SHA256: &str =
+    "6264274bbfbc76ebe3a91d4a39ee562ffae4d9444516d8efc546d1234ab796c1";
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -207,13 +212,23 @@ fn main() -> ExitCode {
         println!("schedule q={field} n={order} shards={}", items.len());
         return ExitCode::SUCCESS;
     }
-    let evidence_sources = CoordinatorEvidenceSourcePaths {
-        q3_targets: Q3_TARGET_PATH
-            .parse()
-            .expect("built-in q=3 target path is normalized"),
-        q5_q7_literature_search: Q5_Q7_SEARCH_PATH
-            .parse()
-            .expect("built-in literature-search path is normalized"),
+    let evidence_sources = CoordinatorEvidenceSources {
+        q3_targets: ArtifactIdentity {
+            path: Q3_TARGET_PATH
+                .parse()
+                .expect("built-in q=3 target path is normalized"),
+            sha256: Q3_TARGET_SHA256
+                .parse()
+                .expect("built-in q=3 target digest is normalized"),
+        },
+        q5_q7_literature_search: ArtifactIdentity {
+            path: Q5_Q7_SEARCH_PATH
+                .parse()
+                .expect("built-in literature-search path is normalized"),
+            sha256: Q5_Q7_SEARCH_SHA256
+                .parse()
+                .expect("built-in literature-search digest is normalized"),
+        },
     };
     let execution = match execute_campaign_cell(&output, scope, workers, &evidence_sources) {
         Ok(execution) => execution,
