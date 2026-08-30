@@ -14,7 +14,7 @@ The validator refuses changed bytes before deriving a value.
 
 | Path | SHA-256 | Role |
 |---|---|---|
-| `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json` | `5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57` | frozen campaign cell and backend map |
+| `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json` | `1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2` | frozen campaign cell and backend map |
 | `dev/benchmarks/permanent_campaign/backend-selection-v1.md` | `fe5d37ba7c216a753bf3e546614a222c3c20e563f7f4e1d3c0341af9e1c464fe` | complete-cohort eligibility and backend-selection receipt |
 | `dev/benchmarks/permanent_campaign/premeasure-v1-ledger.csv` | `d1efd9dcfa39b8498db1e04ba0720de2bf96677fc6b820ffadc3f1919848d046` | all 1,440 premeasure-v1 terminal process outcomes |
 | `dev/benchmarks/permanent_campaign/premeasure-v1-candidates.csv` | `272a524185c14515394a24a5e7385e07b7dc5620c0a488a12438668b72b8c6b8` | premeasure-v1 structurally valid timing projection |
@@ -23,7 +23,7 @@ The validator refuses changed bytes before deriving a value.
 | `dev/benchmarks/permanent_campaign/backend-ordering.csv` | `57c2fafbb4050d4eacf65837c41bf4c3fe1ab69fd49eac622486bb6282bc8dd2` | all 48 frontier execution outcomes and four summaries |
 | `dev/benchmarks/permanent_campaign/backend-ordering.md` | `7e50381daf157a5f045717c92932e37edd92fe54ca7d1a63ac387c44cfff13ae` | frontier protocol, arithmetic, and provenance receipt |
 | `dev/benchmarks/permanent_campaign/backend-selection-v1-rng-addendum.md` | `bb33bde423edb4918beb92abf134055157ca6950e67dfa45c8e1054791158314` | measurement RNG and rebuild provenance |
-| `dev/benchmarks/permanent_campaign/accelerator_launch_costs_v1.py` | `d0cd531018573d3a4f47e5afc7e706e445e6811c1741d3c84bf5f7c5ccf6e917` | derivation and validator source |
+| `dev/benchmarks/permanent_campaign/accelerator_launch_costs_v1.py` | `47b3796b406d94fdfadc9ca00767fb6e5495e22fa694f1d903e16885328136f8` | derivation and validator source |
 | `dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv` | `079c45dd9039044e1a47dc457ca8933e4e27423b0e6ec4888a37245e79e8e3cf` | production launch-cost CSV |
 
 ## Eligibility and arithmetic
