@@ -35,7 +35,7 @@ use gf2_stats::sampler::{
     FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose as SamplerPurpose,
 };
 use rayon::prelude::*;
-use rayon::ThreadPoolBuilder;
+use rayon::{ThreadPool, ThreadPoolBuilder};
 
 use super::acceptance::AcceptanceError;
 #[cfg(test)]
@@ -498,6 +498,24 @@ pub(crate) fn resolve_processor_path(
     }
 }
 
+/// Returns whether a campaign backend's mathematical kernel domain includes a
+/// cell, independently of build features and runtime device availability.
+///
+/// Validation uses this inventory rule to distinguish an inapplicable backend
+/// from a supported backend that failed to build or execute. The latter is a
+/// validation failure and cannot be reported as unsupported.
+#[must_use]
+pub fn backend_supports_cell(backend: Backend, q: u8, n: u16) -> bool {
+    match backend {
+        Backend::Scalar | Backend::BatchParallel => {
+            matches!(q, 3 | 5) && n <= 63 || q == 7 && n <= 16
+        }
+        Backend::IntraMatrixParallel => q == 3 && n <= 63,
+        Backend::GenericRyser => matches!(q, 3 | 5 | 7) && n <= 63,
+        Backend::Accelerator => matches!(q, 3 | 5 | 7) && n <= 63,
+    }
+}
+
 impl std::error::Error for ScheduleError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
@@ -843,7 +861,17 @@ fn run_shard(
     worker_count: usize,
     accelerator: Option<AcceleratorConfig>,
 ) -> Result<ShardRun, ScheduleError> {
-    Ok(run_shard_with_position(root_seed, purpose_tag, item, worker_count, accelerator)?.run)
+    if purpose_tag != SamplerPurpose::CampaignCell.tag() {
+        return Err(ScheduleError::MissingCampaignPurpose);
+    }
+    Ok(run_shard_with_position(
+        root_seed,
+        SamplerPurpose::CampaignCell,
+        item,
+        worker_count,
+        accelerator,
+    )?
+    .run)
 }
 
 /// Evaluates one work item with explicit accelerator launch-sizing input.
@@ -889,18 +917,50 @@ pub(crate) fn evaluate_work_item_with_worker_count_and_accelerator(
         .iter()
         .find(|purpose| purpose.tag == CAMPAIGN_CELL_PURPOSE_TAG)
         .ok_or(ScheduleError::MissingCampaignPurpose)?;
+    if purpose.tag != SamplerPurpose::CampaignCell.tag() {
+        return Err(ScheduleError::MissingCampaignPurpose);
+    }
     run_shard_with_position(
         manifest.root_seed,
-        purpose.tag,
+        SamplerPurpose::CampaignCell,
         item,
         worker_count,
         accelerator,
     )
 }
 
+/// Evaluates one validation-purpose stream through the production
+/// draw-pack-evaluate-count path without opening campaign persistence.
+pub(crate) fn evaluate_validation_sample(
+    root_seed: u64,
+    q: u8,
+    n: u16,
+    stream_index: u64,
+    matrix_count: u64,
+    backend: Backend,
+    worker_count: usize,
+) -> Result<EvaluatedShard, ScheduleError> {
+    let item = WorkItem {
+        q,
+        n,
+        shard_id: 0,
+        stream_index,
+        matrix_count,
+        backend,
+        determinant_companion: DeterminantPlan::NotEvaluated,
+    };
+    run_shard_with_position(
+        root_seed,
+        SamplerPurpose::Validation,
+        &item,
+        worker_count,
+        None,
+    )
+}
+
 fn run_shard_with_position(
     root_seed: u64,
-    purpose_tag: u8,
+    purpose: SamplerPurpose,
     item: &WorkItem,
     worker_count: usize,
     accelerator: Option<AcceleratorConfig>,
@@ -908,7 +968,7 @@ fn run_shard_with_position(
     match item.q {
         3 => run_shard_for::<3>(
             root_seed,
-            purpose_tag,
+            purpose,
             item,
             FieldOrder::F3,
             worker_count,
@@ -916,7 +976,7 @@ fn run_shard_with_position(
         ),
         5 => run_shard_for::<5>(
             root_seed,
-            purpose_tag,
+            purpose,
             item,
             FieldOrder::F5,
             worker_count,
@@ -924,7 +984,7 @@ fn run_shard_with_position(
         ),
         7 => run_shard_for::<7>(
             root_seed,
-            purpose_tag,
+            purpose,
             item,
             FieldOrder::F7,
             worker_count,
@@ -938,7 +998,7 @@ fn run_shard_with_position(
 
 fn run_shard_for<const Q: u64>(
     root_seed: u64,
-    purpose_tag: u8,
+    purpose: SamplerPurpose,
     item: &WorkItem,
     field_order: FieldOrder,
     worker_count: usize,
@@ -947,7 +1007,7 @@ fn run_shard_for<const Q: u64>(
     let mut observer = |_: &[Fp<Q>], _: u64, _: Option<u64>| {};
     run_shard_for_with_observer_with_worker_count(
         root_seed,
-        purpose_tag,
+        purpose,
         item,
         field_order,
         worker_count,
@@ -966,7 +1026,7 @@ fn run_shard_for<const Q: u64>(
 #[cfg(test)]
 pub(crate) fn run_shard_for_with_observer<const Q: u64, O>(
     root_seed: u64,
-    purpose_tag: u8,
+    purpose: SamplerPurpose,
     item: &WorkItem,
     field_order: FieldOrder,
     observer: &mut O,
@@ -976,7 +1036,7 @@ where
 {
     run_shard_for_with_observer_with_worker_count(
         root_seed,
-        purpose_tag,
+        purpose,
         item,
         field_order,
         1,
@@ -988,7 +1048,7 @@ where
 #[cfg(feature = "hip")]
 fn run_shard_for_accelerator<const Q: u64, O>(
     root_seed: u64,
-    purpose_tag: u8,
+    purpose: SamplerPurpose,
     item: &WorkItem,
     field_order: FieldOrder,
     accelerator: Option<AcceleratorConfig>,
@@ -999,7 +1059,7 @@ where
 {
     run_shard_for_accelerator_with_dispatch(
         root_seed,
-        purpose_tag,
+        purpose,
         item,
         field_order,
         accelerator,
@@ -1013,7 +1073,7 @@ where
 #[allow(clippy::too_many_arguments)]
 fn run_shard_for_accelerator_with_dispatch<const Q: u64, P, D, O>(
     root_seed: u64,
-    purpose_tag: u8,
+    purpose: SamplerPurpose,
     item: &WorkItem,
     field_order: FieldOrder,
     accelerator: Option<AcceleratorConfig>,
@@ -1047,7 +1107,7 @@ where
         root_seed,
         field_order,
         usize::from(item.n),
-        SamplerPurpose::CampaignCell,
+        purpose,
         stream,
     );
     let mut sampler = MatrixSampler::<Q>::new(address).map_err(|error| {
@@ -1112,16 +1172,16 @@ where
         for index in 0..batch_len {
             let value = permanent_values[index];
             let determinant_value = determinant_values.as_ref().map(|values| values[index]);
-            if determinant_value == Some(0) {
-                determinant_zero_count += 1;
-            }
             observer(&matrices[index], value, determinant_value);
 
             let started = Instant::now();
-            histogram[value as usize] += 1;
-            if value == 0 {
-                permanent_zero_count += 1;
-            }
+            pool_production_outcome(
+                &mut histogram,
+                &mut permanent_zero_count,
+                &mut determinant_zero_count,
+                value,
+                determinant_value,
+            );
             count += started.elapsed();
         }
         remaining -= batch_len as u64;
@@ -1136,7 +1196,7 @@ where
                     root_seed,
                     q: item.q,
                     n: item.n,
-                    purpose_tag,
+                    purpose_tag: purpose.tag(),
                     stream_index: item.stream_index,
                 },
                 matrix_count: item.matrix_count,
@@ -1261,7 +1321,7 @@ fn dispatch_accelerator<const Q: u64>(
 
 fn run_shard_for_with_observer_with_worker_count<const Q: u64, O>(
     root_seed: u64,
-    purpose_tag: u8,
+    purpose: SamplerPurpose,
     item: &WorkItem,
     field_order: FieldOrder,
     worker_count: usize,
@@ -1279,7 +1339,7 @@ where
     if processor_path == ProcessorPath::Accelerator {
         return run_shard_for_accelerator(
             root_seed,
-            purpose_tag,
+            purpose,
             item,
             field_order,
             accelerator,
@@ -1289,7 +1349,7 @@ where
     if item.backend == Backend::BatchParallel {
         return run_shard_for_batch(
             root_seed,
-            purpose_tag,
+            purpose,
             item,
             field_order,
             worker_count,
@@ -1299,7 +1359,7 @@ where
     }
     run_shard_for_serial(
         root_seed,
-        purpose_tag,
+        purpose,
         item,
         field_order,
         processor_path,
@@ -1309,7 +1369,7 @@ where
 
 fn run_shard_for_serial<const Q: u64, O>(
     root_seed: u64,
-    purpose_tag: u8,
+    purpose: SamplerPurpose,
     item: &WorkItem,
     field_order: FieldOrder,
     processor_path: ProcessorPath,
@@ -1325,7 +1385,7 @@ where
         root_seed,
         field_order,
         usize::from(item.n),
-        SamplerPurpose::CampaignCell,
+        purpose,
         stream,
     );
     let mut sampler = MatrixSampler::<Q>::new(address).map_err(|error| {
@@ -1363,9 +1423,6 @@ where
         let determinant_value = if item.determinant_companion == DeterminantPlan::Evaluate {
             let started = Instant::now();
             let value = evaluate_determinant(&row_major, n);
-            if value == 0 {
-                determinant_zero_count += 1;
-            }
             determinant += started.elapsed();
             Some(value)
         } else {
@@ -1375,10 +1432,13 @@ where
         observer(&row_major, value, determinant_value);
 
         let started = Instant::now();
-        histogram[value as usize] += 1;
-        if value == 0 {
-            permanent_zero_count += 1;
-        }
+        pool_production_outcome(
+            &mut histogram,
+            &mut permanent_zero_count,
+            &mut determinant_zero_count,
+            value,
+            determinant_value,
+        );
         count += started.elapsed();
     }
 
@@ -1391,7 +1451,7 @@ where
                     root_seed,
                     q: item.q,
                     n: item.n,
-                    purpose_tag,
+                    purpose_tag: purpose.tag(),
                     stream_index: item.stream_index,
                 },
                 matrix_count: item.matrix_count,
@@ -1418,7 +1478,7 @@ where
 
 fn run_shard_for_batch<const Q: u64, O>(
     root_seed: u64,
-    purpose_tag: u8,
+    purpose: SamplerPurpose,
     item: &WorkItem,
     field_order: FieldOrder,
     worker_count: usize,
@@ -1435,7 +1495,7 @@ where
         root_seed,
         field_order,
         usize::from(item.n),
-        SamplerPurpose::CampaignCell,
+        purpose,
         stream,
     );
     let mut sampler = MatrixSampler::<Q>::new(address).map_err(|error| {
@@ -1526,16 +1586,16 @@ where
         for index in 0..batch_len {
             let value = permanent_values[index];
             let determinant_value = determinant_values.as_ref().map(|values| values[index]);
-            if determinant_value == Some(0) {
-                determinant_zero_count += 1;
-            }
             observer(&matrices[index], value, determinant_value);
 
             let started = Instant::now();
-            histogram[value as usize] += 1;
-            if value == 0 {
-                permanent_zero_count += 1;
-            }
+            pool_production_outcome(
+                &mut histogram,
+                &mut permanent_zero_count,
+                &mut determinant_zero_count,
+                value,
+                determinant_value,
+            );
             count += started.elapsed();
         }
         remaining -= batch_len as u64;
@@ -1550,7 +1610,7 @@ where
                     root_seed,
                     q: item.q,
                     n: item.n,
-                    purpose_tag,
+                    purpose_tag: purpose.tag(),
                     stream_index: item.stream_index,
                 },
                 matrix_count: item.matrix_count,
@@ -1611,6 +1671,133 @@ impl PackedMatrix {
             _ => unreachable!("campaign q is validated before packing"),
         }
     }
+}
+
+/// Reusable evaluator over caller-supplied row-major matrices.
+///
+/// This owns the same processor-path resolution, packing, Rayon pool, and
+/// accelerator dispatcher used by campaign execution. The validation module
+/// feeds exhaustive-oracle matrices through it without sharing the oracle's
+/// permanent implementation.
+pub(crate) struct ProductionBackendEvaluator {
+    q: u8,
+    n: usize,
+    backend: Backend,
+    processor_path: ProcessorPath,
+    pool: Option<ThreadPool>,
+}
+
+impl ProductionBackendEvaluator {
+    pub(crate) fn new(
+        q: u8,
+        n: u16,
+        backend: Backend,
+        worker_count: usize,
+    ) -> Result<Self, ScheduleError> {
+        validate_worker_count(worker_count)?;
+        let processor_path = resolve_processor_path(q, n, backend)?;
+        let pool = if backend == Backend::BatchParallel {
+            Some(
+                ThreadPoolBuilder::new()
+                    .num_threads(worker_count)
+                    .build()
+                    .map_err(|error| {
+                        ScheduleError::InvalidWorkItem(format!(
+                            "cannot build batch thread pool: {error}"
+                        ))
+                    })?,
+            )
+        } else {
+            None
+        };
+        Ok(Self {
+            q,
+            n: usize::from(n),
+            backend,
+            processor_path,
+            pool,
+        })
+    }
+
+    pub(crate) fn evaluate<const Q: u64>(
+        &self,
+        matrices: &[Vec<Fp<Q>>],
+    ) -> Result<Vec<u64>, ScheduleError> {
+        if Q != u64::from(self.q) {
+            return Err(ScheduleError::InvalidWorkItem(format!(
+                "evaluator field q={} cannot consume F_{Q} matrices",
+                self.q
+            )));
+        }
+        let entry_count = self.n.checked_mul(self.n).ok_or_else(|| {
+            ScheduleError::InvalidWorkItem("matrix dimension overflows entry count".to_owned())
+        })?;
+        if let Some(index) = matrices
+            .iter()
+            .position(|entries| entries.len() != entry_count)
+        {
+            return Err(ScheduleError::InvalidWorkItem(format!(
+                "matrix {index} has {} entries, expected {entry_count}",
+                matrices[index].len()
+            )));
+        }
+        #[cfg(feature = "hip")]
+        if self.processor_path == ProcessorPath::Accelerator {
+            if !gf2_algebra::gpu::has_usable_device() {
+                return Err(ScheduleError::AcceleratorDeviceUnavailable {
+                    q: self.q,
+                    n: self.n as u16,
+                    device: "a usable HIP accelerator device",
+                });
+            }
+            return dispatch_accelerator(matrices, self.n).map(|(values, _)| values);
+        }
+
+        let evaluate_one = |entries: &Vec<Fp<Q>>| {
+            let packed = if self.processor_path == ProcessorPath::GenericRyser {
+                None
+            } else {
+                Some(PackedMatrix::new(entries, self.n))
+            };
+            evaluate_permanent(
+                self.processor_path,
+                entries,
+                packed.as_ref(),
+                self.n,
+            )
+        };
+        if let Some(pool) = &self.pool {
+            pool.install(|| matrices.par_iter().map(evaluate_one).collect())
+        } else {
+            matrices.iter().map(evaluate_one).collect()
+        }
+    }
+
+    pub(crate) const fn backend(&self) -> Backend {
+        self.backend
+    }
+}
+
+pub(crate) fn evaluate_production_determinants<const Q: u64>(
+    matrices: &[Vec<Fp<Q>>],
+    n: usize,
+) -> Vec<u64> {
+    matrices
+        .iter()
+        .map(|entries| evaluate_determinant(entries, n))
+        .collect()
+}
+
+pub(crate) fn pool_production_outcome(
+    histogram: &mut [u64],
+    permanent_zero_count: &mut u64,
+    determinant_zero_count: &mut u64,
+    permanent: u64,
+    determinant: Option<u64>,
+) {
+    histogram[permanent as usize] += 1;
+    *permanent_zero_count += u64::from(permanent == 0);
+    *determinant_zero_count += u64::from(determinant == Some(0));
 }
 
 fn evaluate_permanent<const Q: u64>(
@@ -2153,7 +2340,7 @@ mod tests {
         let mut observed = 0;
         let error = run_shard_for_accelerator_with_dispatch(
             campaign.root_seed,
-            CAMPAIGN_CELL_PURPOSE_TAG,
+            SamplerPurpose::CampaignCell,
             &item,
             FieldOrder::F3,
             // A measured cost is supplied, so this cell is refused for the
@@ -2198,7 +2385,7 @@ mod tests {
         let mut observed = 0;
         let error = run_shard_for_accelerator_with_dispatch(
             campaign.root_seed,
-            CAMPAIGN_CELL_PURPOSE_TAG,
+            SamplerPurpose::CampaignCell,
             &item,
             FieldOrder::F3,
             None,
@@ -2225,7 +2412,7 @@ mod tests {
         let mut first_launches = 0;
         let first = run_shard_for_accelerator_with_dispatch(
             campaign.root_seed,
-            CAMPAIGN_CELL_PURPOSE_TAG,
+            SamplerPurpose::CampaignCell,
             &item,
             FieldOrder::F3,
             Some(AcceleratorConfig {
@@ -2251,7 +2438,7 @@ mod tests {
         let mut second_launches = 0;
         let second = run_shard_for_accelerator_with_dispatch(
             campaign.root_seed,
-            CAMPAIGN_CELL_PURPOSE_TAG,
+            SamplerPurpose::CampaignCell,
             &item,
             FieldOrder::F3,
             Some(AcceleratorConfig {
@@ -2281,7 +2468,7 @@ mod tests {
 
     #[test]
     fn test_backend_name_agrees_with_serialized_token() {
-        for &backend in Backend::ALL {
+        for &backend in Backend::campaign_inventory() {
             let serialized = serde_json::to_value(backend).unwrap();
             assert_eq!(serialized.as_str(), Some(backend.name()));
         }
@@ -2420,7 +2607,7 @@ mod tests {
             let mut observed = Vec::new();
             let evaluated = run_shard_for_with_observer(
                 campaign.root_seed,
-                CAMPAIGN_CELL_PURPOSE_TAG,
+                SamplerPurpose::CampaignCell,
                 &item,
                 FieldOrder::F7,
                 &mut |entries: &[Fp<7>], permanent, _| {
@@ -2509,7 +2696,7 @@ mod tests {
         let mut observed = Vec::new();
         let observed_run = run_shard_for_with_observer(
             campaign.root_seed,
-            CAMPAIGN_CELL_PURPOSE_TAG,
+            SamplerPurpose::CampaignCell,
             &item,
             FieldOrder::F3,
             &mut |entries: &[Fp<3>], permanent, determinant| {
@@ -2593,7 +2780,7 @@ mod tests {
         let mut observed = Vec::new();
         run_shard_for_with_observer_with_worker_count(
             campaign.root_seed,
-            CAMPAIGN_CELL_PURPOSE_TAG,
+            SamplerPurpose::CampaignCell,
             &item,
             field_order,
             4,
@@ -2659,7 +2846,7 @@ mod tests {
             })
             .collect();
 
-        for backend in Backend::ALL.iter().copied().filter(|&backend| {
+        for backend in Backend::campaign_inventory().iter().copied().filter(|&backend| {
             resolve_processor_path(q, BACKEND_CONFORMANCE_DIMENSION, backend).is_ok()
                 && (backend != Backend::Accelerator || accelerator_available)
         }) {
@@ -2676,7 +2863,7 @@ mod tests {
 
             run_shard_for_with_observer_with_worker_count(
                 campaign.root_seed,
-                CAMPAIGN_CELL_PURPOSE_TAG,
+                SamplerPurpose::CampaignCell,
                 &item,
                 field_order,
                 4,
@@ -2765,7 +2952,7 @@ mod tests {
                 let mut batch_values = Vec::new();
                 run_shard_for_with_observer_with_worker_count(
                     scalar.root_seed,
-                    CAMPAIGN_CELL_PURPOSE_TAG,
+                    SamplerPurpose::CampaignCell,
                     &scalar_item,
                     FieldOrder::F3,
                     1,
@@ -2775,7 +2962,7 @@ mod tests {
                 .unwrap();
                 run_shard_for_with_observer_with_worker_count(
                     campaign.root_seed,
-                    CAMPAIGN_CELL_PURPOSE_TAG,
+                    SamplerPurpose::CampaignCell,
                     &batch_item,
                     FieldOrder::F3,
                     4,

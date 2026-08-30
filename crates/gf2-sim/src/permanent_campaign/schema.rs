@@ -566,13 +566,21 @@ macro_rules! define_campaign_backends {
         }
 
         impl Backend {
-            /// Every campaign backend exercised by crate tests.
+            /// Every backend admitted by the campaign schema.
             ///
             /// This inventory and [`Self::name`] are generated from the same
             /// variant declaration, so a backend cannot join one without the
             /// other.
-            #[cfg(test)]
-            pub(crate) const ALL: &[Self] = &[$(Self::$variant,)+];
+            #[must_use]
+            pub const fn campaign_inventory() -> &'static [Self] {
+                &[$(Self::$variant,)+]
+            }
+
+            /// Whether this backend requires the optional accelerator build.
+            #[must_use]
+            pub const fn is_accelerator(self) -> bool {
+                matches!(self, Self::Accelerator)
+            }
 
             /// Returns the canonical serialized backend token.
             #[must_use]
