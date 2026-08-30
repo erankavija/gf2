@@ -232,7 +232,7 @@
      "short_id": "6639435f",
      "title": "Independent importance-sampling cross-check",
      "classification": "implementation",
-     "status": "in progress: exact propagation dependency 8ec10dde is done; claimed for a high-tier isolated worker because the stochastic cross-check is independent of the blocked campaign coordinator. No target or coverage estimating run is authorized during implementation."
+     "status": "blocked pending owner authorization after final audit at ordinary rework MAX: implementation through final-receipt regeneration is committed on clean branch worktree-agent-6639435f at 49b4d452, but publication commit c05b5f11 has four hard boundary findings (descriptor-relative symlink safety, typed destination/payload binding, OS-owned timed liveness observation, and proof of durable checkpoint publication). The thin production runner and full CI have not started."
     },
     {
      "id": "f27150a5-8713-4bce-b404-9e477937d498",
@@ -1122,5 +1122,14 @@
   "probe_costs": "code-review F1 closed: the 28 prior-run probe observations moved from a hand-written constant table into dev/benchmarks/permanent_campaign/probe-costs-de5f7414.csv, parsed under a pinned SHA-256. Every row verified verbatim against the de5f7414 grid receipts; every per-cell budget unchanged.",
   "next": "research-review + doc-review on 7a816262 (F3 closes via this receipt; F1/F2/F4/F5 must be verified closed at HEAD), lead six-tier review, close the freeze; then wave 9 (3f664839 native Opus, 73317b2e Sol xhigh).",
   "handoff": "handoff-21.md"
+ },
+ "session_26_state": {
+  "recorded_at": "2026-08-30T09:54:25+03:00",
+  "closed": "2c1ae813 (accelerator launch costs), 3f664839 (rare-event design), and 8ec10dde (exact compressed-state propagation), all with configured gates and lead review passed. The 7a816262 frozen invocation repair also closed before this frontier.",
+  "blocked": "73317b2e needs owner authority to add a narrow exact-cell selector and re-freeze the pinned emitter before any campaign draw; 6639435f needs owner authority for one bounded high-tier rework after MAX to close four final publication/lifecycle findings.",
+  "importance_branch": "worktree-agent-6639435f at 49b4d452 in .agents/worktrees/agent-6639435f, clean and not merged. Commits 570ff55c..49b4d452 implement exact weighted statistics, addressed proposal, closed artifact schemas and lineage, immutable publication, and deterministic final-receipt regeneration.",
+  "verification": "rare_event_artifact_final_receipt_regeneration passed in 2.466s across all 24 target and 27 coverage layouts with exact 2048/19200 reference sets; focused Rust 1.95 clippy/fmt/diff checks passed. Full cargo-ci and formal issue gates were not run because final audit blocks the production runner.",
+  "main": "d014e120 records the pending 6639435f escalation; main is clean. No campaign, ignored slow test, device work, or scientific estimating run occurred.",
+  "handoff": "handoff-22.md"
  }
 }
