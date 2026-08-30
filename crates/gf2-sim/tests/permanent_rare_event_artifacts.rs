@@ -2,6 +2,7 @@ use gf2_sim::permanent_rare_event::artifact::*;
 use gf2_stats::weighted::ScaledStudentInterval;
 use num_bigint::BigUint;
 use sha2::{Digest, Sha256};
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::sync::{Arc, Barrier};
 use tempfile::Builder;
@@ -275,6 +276,58 @@ fn start_envelope(
     }
 }
 
+fn attempt_start_envelope(
+    identity: RareEventDatasetIdentityV1,
+    workers: usize,
+    ordinal: u64,
+    predecessor: AttemptPredecessorV1,
+    resume_checkpoint_refs: Vec<CheckpointRefV1>,
+) -> RareEventArtifactEnvelopeV1 {
+    let mut envelope = start_envelope(identity.clone(), not_used());
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut envelope.payload else {
+        unreachable!()
+    };
+    payload.attempt_ordinal = ordinal;
+    payload.predecessor = predecessor.clone();
+    payload.attempt_id = attempt_id(&identity, ordinal, &predecessor).unwrap();
+    let AttemptPhaseV1::Start {
+        resume_checkpoint_refs: embedded_refs,
+        start_utc,
+        start_receipt_utc,
+        invocation,
+        environment_inputs,
+        worker_configuration,
+        ..
+    } = &mut payload.phase
+    else {
+        unreachable!()
+    };
+    *embedded_refs = resume_checkpoint_refs;
+    *start_utc = format!("2026-08-30T08:00:01.{ordinal:09}Z");
+    *start_receipt_utc = format!("2026-08-30T08:00:02.{ordinal:09}Z");
+    invocation.process_id = 123 + ordinal as u32;
+    invocation.process_start_token = format!("fixture-start-token-{ordinal}");
+    for token in &mut invocation.argv {
+        if token.starts_with("--effective-workers=") {
+            *token = format!("--effective-workers={workers}");
+        } else if token.starts_with("--requested-workers=") {
+            *token = format!("--requested-workers={workers}");
+        }
+    }
+    for resolution in &mut invocation.input_resolution {
+        if matches!(
+            resolution.field.as_str(),
+            "effective_workers" | "requested_workers"
+        ) {
+            resolution.value = workers.to_string();
+        }
+    }
+    environment_inputs[0].value = EnvironmentValueV1::Set(workers.to_string());
+    worker_configuration.requested_workers = workers;
+    worker_configuration.effective_workers = workers;
+    envelope
+}
+
 fn terminal_envelope(
     identity: RareEventDatasetIdentityV1,
     start: &RareEventArtifactEnvelopeV1,
@@ -298,8 +351,8 @@ fn terminal_envelope(
         dataset_id: dataset_id(&identity).unwrap(),
         attempt_id: start_payload.attempt_id.clone(),
         dataset_identity: identity,
-        attempt_ordinal: 0,
-        predecessor: AttemptPredecessorV1::None {},
+        attempt_ordinal: start_payload.attempt_ordinal,
+        predecessor: start_payload.predecessor.clone(),
         phase: AttemptPhaseV1::Terminal {
             attempt_start_sha256: start_digest,
             start_utc: start_utc.clone(),
@@ -504,6 +557,148 @@ fn fixture_exponent_histograms(
             })
             .collect(),
     }
+}
+
+fn scheduled_canonical_references(
+    references: &[CheckpointRefV1],
+    workers: usize,
+    resume_boundary: usize,
+) -> Vec<CheckpointRefV1> {
+    assert!(workers > 0);
+    assert!(resume_boundary <= references.len());
+    let mut completion_order = references[..resume_boundary].to_vec();
+    let remaining = references.len() - resume_boundary;
+    for round in 0..remaining.div_ceil(workers) {
+        for worker in (0..workers).rev() {
+            let index = resume_boundary + round * workers + worker;
+            if index < references.len() {
+                completion_order.push(references[index].clone());
+            }
+        }
+    }
+    assert_eq!(completion_order.len(), references.len());
+    let mut by_address: BTreeMap<_, _> = completion_order
+        .into_iter()
+        .map(|reference| (reference.block_address.clone(), reference))
+        .collect();
+    assert_eq!(by_address.len(), references.len());
+    references
+        .iter()
+        .map(|expected| by_address.remove(&expected.block_address).unwrap())
+        .collect()
+}
+
+fn two_attempt_envelopes(
+    identity: &RareEventDatasetIdentityV1,
+    references: &[CheckpointRefV1],
+    workers: usize,
+    resume_boundary: usize,
+) -> Vec<RareEventArtifactEnvelopeV1> {
+    let start_zero = attempt_start_envelope(
+        identity.clone(),
+        workers,
+        0,
+        AttemptPredecessorV1::None {},
+        vec![],
+    );
+    let terminal_zero = terminal_envelope(
+        identity.clone(),
+        &start_zero,
+        true,
+        references[..resume_boundary].to_vec(),
+    );
+    let terminal_zero_files = encode_artifact_files(&terminal_zero).unwrap();
+    let predecessor = AttemptPredecessorV1::Terminal {
+        terminal_sha256: terminal_zero_files.digest.clone(),
+    };
+    let start_one = attempt_start_envelope(
+        identity.clone(),
+        workers,
+        1,
+        predecessor,
+        references[..resume_boundary].to_vec(),
+    );
+    let terminal_one = terminal_envelope(
+        identity.clone(),
+        &start_one,
+        false,
+        references[resume_boundary..].to_vec(),
+    );
+    vec![start_zero, terminal_zero, start_one, terminal_one]
+}
+
+fn two_attempt_fixture(
+    identity: &RareEventDatasetIdentityV1,
+    references: &[CheckpointRefV1],
+    validated_base: &ValidatedCheckpointSet,
+    workers: usize,
+    resume_boundary: usize,
+) -> (
+    Vec<RareEventArtifactEnvelopeV1>,
+    ValidatedCheckpointSet,
+    ValidatedExecutionLineage,
+) {
+    let references = scheduled_canonical_references(references, workers, resume_boundary);
+    let phases = two_attempt_envelopes(identity, &references, workers, resume_boundary);
+    let start_zero = &phases[0];
+    let terminal_zero = &phases[1];
+    let start_one = &phases[2];
+    let terminal_one = &phases[3];
+    let start_zero_files = encode_artifact_files(start_zero).unwrap();
+    let terminal_zero_files = encode_artifact_files(terminal_zero).unwrap();
+    let start_one_files = encode_artifact_files(start_one).unwrap();
+    let terminal_one_files = encode_artifact_files(terminal_one).unwrap();
+    let RareEventPayloadV1::ExecutionAttempt(start_zero_payload) = &start_zero.payload else {
+        unreachable!()
+    };
+    let RareEventPayloadV1::ExecutionAttempt(start_one_payload) = &start_one.payload else {
+        unreachable!()
+    };
+    let checkpoints = relink_validated_checkpoint_set_fixture(
+        identity,
+        validated_base,
+        &[
+            (
+                resume_boundary,
+                start_zero_payload.attempt_id.clone(),
+                start_zero_files.digest.clone(),
+            ),
+            (
+                references.len(),
+                start_one_payload.attempt_id.clone(),
+                start_one_files.digest.clone(),
+            ),
+        ],
+    )
+    .unwrap();
+    let handles = [
+        validate_attempt_artifact_files(
+            &start_zero_files.artifact_json,
+            &start_zero_files.artifact_sha256,
+            identity,
+        )
+        .unwrap(),
+        validate_attempt_artifact_files(
+            &terminal_zero_files.artifact_json,
+            &terminal_zero_files.artifact_sha256,
+            identity,
+        )
+        .unwrap(),
+        validate_attempt_artifact_files(
+            &start_one_files.artifact_json,
+            &start_one_files.artifact_sha256,
+            identity,
+        )
+        .unwrap(),
+        validate_attempt_artifact_files(
+            &terminal_one_files.artifact_json,
+            &terminal_one_files.artifact_sha256,
+            identity,
+        )
+        .unwrap(),
+    ];
+    let lineage = validate_execution_lineage(identity, &handles, &checkpoints).unwrap();
+    (phases, checkpoints, lineage)
 }
 
 fn target_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnvelopeV1 {
@@ -1872,4 +2067,147 @@ fn rare_event_execution_attempt_lineage_rejected() {
         &checkpoints,
     )
     .is_err());
+}
+
+#[test]
+fn rare_event_artifact_final_receipt_regeneration() {
+    let target_identity = identity(ScientificIdentityV1::target());
+    let target_reference_set = checkpoint_refs_target();
+    let target_base = validated_checkpoint_set_fixture(
+        &target_identity,
+        target_reference_set.clone(),
+        &digest(0x41),
+        &digest(0x42),
+        ProducerBackendV1::Cpu {},
+        &sha256_hex(&canonical_bytes(&not_used()).unwrap()),
+        fixture_exponent_histograms(&target_identity, target_reference_set.len()),
+    )
+    .unwrap();
+    let target_template = target_final(target_identity.clone());
+    let RareEventPayloadV1::TargetCrossCheck(target_receipt) = target_template.payload else {
+        unreachable!()
+    };
+    let target_result = target_receipt.result_payload;
+    let target_result_bytes = canonical_bytes(&target_result).unwrap();
+    let target_result_sha256 = sha256_hex(&target_result_bytes);
+    let mut target_provenance = HashSet::new();
+    let mut target_receipts = HashSet::new();
+    for workers in [1, 2, 7] {
+        for boundary in [0, 1, 63, 64, 65, 511, 2_047, 2_048] {
+            let (phases, checkpoints, lineage) = two_attempt_fixture(
+                &target_identity,
+                &target_reference_set,
+                &target_base,
+                workers,
+                boundary,
+            );
+            assert_eq!(checkpoints.checkpoint_refs(), target_reference_set);
+            let scheduled =
+                scheduled_canonical_references(&target_reference_set, workers, boundary);
+            let replay = two_attempt_envelopes(&target_identity, &scheduled, workers, boundary);
+            assert_eq!(phases, replay);
+            target_provenance.insert(sha256_hex(&canonical_bytes(lineage.provenance()).unwrap()));
+            if matches!(boundary, 0 | 2_048) {
+                let first = target_final_envelope(
+                    target_identity.clone(),
+                    target_result.clone(),
+                    &checkpoints,
+                    &lineage,
+                )
+                .unwrap();
+                let first_bytes = canonical_bytes(&first).unwrap();
+                target_receipts.insert(sha256_hex(&first_bytes));
+                if workers == 2 && boundary == 2_048 {
+                    let second = target_final_envelope(
+                        target_identity.clone(),
+                        target_result.clone(),
+                        &checkpoints,
+                        &lineage,
+                    )
+                    .unwrap();
+                    assert_eq!(first_bytes, canonical_bytes(&second).unwrap());
+                }
+                let RareEventPayloadV1::TargetCrossCheck(receipt) = &first.payload else {
+                    unreachable!()
+                };
+                assert_eq!(
+                    canonical_bytes(&receipt.result_payload).unwrap(),
+                    target_result_bytes
+                );
+                assert_eq!(receipt.result_sha256, target_result_sha256);
+            }
+        }
+    }
+    assert_eq!(target_provenance.len(), 24);
+    assert_eq!(target_receipts.len(), 6);
+
+    let coverage_identity = identity(ScientificIdentityV1::coverage());
+    let coverage_reference_set = checkpoint_refs_coverage();
+    let coverage_base = validated_checkpoint_set_fixture(
+        &coverage_identity,
+        coverage_reference_set.clone(),
+        &digest(0x43),
+        &digest(0x44),
+        ProducerBackendV1::Cpu {},
+        &sha256_hex(&canonical_bytes(&not_used()).unwrap()),
+        fixture_exponent_histograms(&coverage_identity, coverage_reference_set.len()),
+    )
+    .unwrap();
+    let coverage_template = coverage_final(coverage_identity.clone());
+    let RareEventPayloadV1::CoverageValidation(coverage_receipt) = coverage_template.payload else {
+        unreachable!()
+    };
+    let coverage_result = coverage_receipt.result_payload;
+    let coverage_result_bytes = canonical_bytes(&coverage_result).unwrap();
+    let coverage_result_sha256 = sha256_hex(&coverage_result_bytes);
+    let mut coverage_provenance = HashSet::new();
+    let mut coverage_receipts = HashSet::new();
+    for workers in [1, 2, 7] {
+        for boundary in [0, 1, 199, 200, 201, 2_047, 2_048, 19_199, 19_200] {
+            let (phases, checkpoints, lineage) = two_attempt_fixture(
+                &coverage_identity,
+                &coverage_reference_set,
+                &coverage_base,
+                workers,
+                boundary,
+            );
+            assert_eq!(checkpoints.checkpoint_refs(), coverage_reference_set);
+            let scheduled =
+                scheduled_canonical_references(&coverage_reference_set, workers, boundary);
+            let replay = two_attempt_envelopes(&coverage_identity, &scheduled, workers, boundary);
+            assert_eq!(phases, replay);
+            coverage_provenance.insert(sha256_hex(&canonical_bytes(lineage.provenance()).unwrap()));
+            if matches!(boundary, 0 | 19_200) {
+                let first = coverage_final_envelope(
+                    coverage_identity.clone(),
+                    coverage_result.clone(),
+                    &checkpoints,
+                    &lineage,
+                )
+                .unwrap();
+                let first_bytes = canonical_bytes(&first).unwrap();
+                coverage_receipts.insert(sha256_hex(&first_bytes));
+                if workers == 2 && boundary == 19_200 {
+                    let second = coverage_final_envelope(
+                        coverage_identity.clone(),
+                        coverage_result.clone(),
+                        &checkpoints,
+                        &lineage,
+                    )
+                    .unwrap();
+                    assert_eq!(first_bytes, canonical_bytes(&second).unwrap());
+                }
+                let RareEventPayloadV1::CoverageValidation(receipt) = &first.payload else {
+                    unreachable!()
+                };
+                assert_eq!(
+                    canonical_bytes(&receipt.result_payload).unwrap(),
+                    coverage_result_bytes
+                );
+                assert_eq!(receipt.result_sha256, coverage_result_sha256);
+            }
+        }
+    }
+    assert_eq!(coverage_provenance.len(), 27);
+    assert_eq!(coverage_receipts.len(), 6);
 }

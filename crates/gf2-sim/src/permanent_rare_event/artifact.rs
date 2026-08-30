@@ -2424,29 +2424,122 @@ pub fn validated_checkpoint_set_fixture(
     accelerator_observation_sha256: &str,
     exponent_histograms: Vec<Vec<ExponentBinV1>>,
 ) -> Result<ValidatedCheckpointSet, ArtifactError> {
-    validate_digest(attempt_id)?;
-    validate_digest(attempt_start_sha256)?;
+    validated_checkpoint_set_fixture_attempt_partitions(
+        identity,
+        references,
+        &[(
+            exponent_histograms.len(),
+            attempt_id.to_owned(),
+            attempt_start_sha256.to_owned(),
+        )],
+        producer,
+        accelerator_observation_sha256,
+        exponent_histograms,
+    )
+}
+
+/// Constructs conformance handles partitioned across deterministic attempts.
+///
+/// Each tuple is `(exclusive checkpoint end, attempt ID, start digest)`; ends
+/// are nondecreasing so an attempt may retain zero checkpoints.
+#[cfg(feature = "test-support")]
+pub fn validated_checkpoint_set_fixture_attempt_partitions(
+    identity: &RareEventDatasetIdentityV1,
+    references: Vec<CheckpointRefV1>,
+    attempt_partitions: &[(usize, String, String)],
+    producer: ProducerBackendV1,
+    accelerator_observation_sha256: &str,
+    exponent_histograms: Vec<Vec<ExponentBinV1>>,
+) -> Result<ValidatedCheckpointSet, ArtifactError> {
     validate_digest(accelerator_observation_sha256)?;
-    let dataset_id = dataset_id(identity)?;
     if references.len() != exponent_histograms.len() {
         return Err(ArtifactError::AddressSet(
             "fixture checkpoint references and summaries differ in length".into(),
         ));
     }
+    let mut prior_end = 0;
+    for (end, attempt_id, attempt_start_sha256) in attempt_partitions {
+        validate_digest(attempt_id)?;
+        validate_digest(attempt_start_sha256)?;
+        if *end < prior_end || *end > references.len() {
+            return Err(ArtifactError::Lineage(
+                "fixture attempt partitions overlap or exceed the checkpoint set".into(),
+            ));
+        }
+        prior_end = *end;
+    }
+    if attempt_partitions.is_empty() || prior_end != references.len() {
+        return Err(ArtifactError::Lineage(
+            "fixture attempt partitions do not cover the checkpoint set".into(),
+        ));
+    }
+    let dataset_id = dataset_id(identity)?;
+    let mut partition_index = 0;
     let checkpoints = references
         .into_iter()
         .zip(exponent_histograms)
-        .map(|(reference, exponent_histogram)| ValidatedCheckpoint {
-            dataset_id: dataset_id.clone(),
-            reference,
-            attempt_id: attempt_id.to_owned(),
-            attempt_start_sha256: attempt_start_sha256.to_owned(),
-            producer: producer.clone(),
-            accelerator_observation_sha256: accelerator_observation_sha256.to_owned(),
-            exponent_histogram,
+        .enumerate()
+        .map(|(index, (reference, exponent_histogram))| {
+            while index >= attempt_partitions[partition_index].0 {
+                partition_index += 1;
+            }
+            let (_, attempt_id, attempt_start_sha256) = &attempt_partitions[partition_index];
+            ValidatedCheckpoint {
+                dataset_id: dataset_id.clone(),
+                reference,
+                attempt_id: attempt_id.clone(),
+                attempt_start_sha256: attempt_start_sha256.clone(),
+                producer: producer.clone(),
+                accelerator_observation_sha256: accelerator_observation_sha256.to_owned(),
+                exponent_histogram,
+            }
         })
         .collect();
     validate_checkpoint_set(identity, checkpoints)
+}
+
+/// Relinks an already validated conformance set across deterministic attempts.
+#[cfg(feature = "test-support")]
+pub fn relink_validated_checkpoint_set_fixture(
+    identity: &RareEventDatasetIdentityV1,
+    validated: &ValidatedCheckpointSet,
+    attempt_partitions: &[(usize, String, String)],
+) -> Result<ValidatedCheckpointSet, ArtifactError> {
+    if validated.dataset_id != dataset_id(identity)? {
+        return Err(ArtifactError::Identity(
+            "fixture checkpoint set belongs to another dataset".into(),
+        ));
+    }
+    let mut prior_end = 0;
+    for (end, attempt_id, attempt_start_sha256) in attempt_partitions {
+        validate_digest(attempt_id)?;
+        validate_digest(attempt_start_sha256)?;
+        if *end < prior_end || *end > validated.checkpoints.len() {
+            return Err(ArtifactError::Lineage(
+                "fixture attempt partitions overlap or exceed the checkpoint set".into(),
+            ));
+        }
+        prior_end = *end;
+    }
+    if attempt_partitions.is_empty() || prior_end != validated.checkpoints.len() {
+        return Err(ArtifactError::Lineage(
+            "fixture attempt partitions do not cover the checkpoint set".into(),
+        ));
+    }
+    let mut checkpoints = validated.checkpoints.clone();
+    let mut partition_index = 0;
+    for (index, checkpoint) in checkpoints.iter_mut().enumerate() {
+        while index >= attempt_partitions[partition_index].0 {
+            partition_index += 1;
+        }
+        checkpoint.attempt_id = attempt_partitions[partition_index].1.clone();
+        checkpoint.attempt_start_sha256 = attempt_partitions[partition_index].2.clone();
+    }
+    Ok(ValidatedCheckpointSet {
+        dataset_id: validated.dataset_id.clone(),
+        checkpoints,
+        references: validated.references.clone(),
+    })
 }
 
 /// Verifies a gap-free start/terminal chain and exact checkpoint partition.
