@@ -7,6 +7,7 @@
   ],
   "description": "An independent importance-sampling implementation cross-checks exact compressed-state probabilities with preregistered uncertainty, coverage, and effective-sample-size diagnostics.\n\n## Background\n\nEach trajectory samples its next row uniformly from the current contraction nullspace and accumulates the exact incremental likelihood ratio. Independent trajectories therefore provide an unbiased stochastic estimate while avoiding rejection over row triples.\n\nThe stochastic result is not the primary probability. Its purpose is to exercise a separately accumulated path distribution and weighting calculation against exact answers. Shared compressed-transition semantics are covered independently by exhaustive conformance tests.\n\n## Success Criteria\n\n- [hard] REQ-01: Implements the fixed nullspace proposal and exact incremental weights, with hand-checked trajectory tests covering every possible contraction-space rank.\n- [hard] REQ-02: Uses deterministic, schedule-independent rare-event stream addresses and includes every manifested trajectory, including zero or degenerate outcomes.\n- [aspirational] REQ-03: Repeated independent estimates agree with exact probabilities under the preregistered interval rule without result-dependent extension or replacement.\n- [aspirational] REQ-04: Empirical interval coverage at every preregistered exact anchor satisfies the fixed binomial adequacy rule; failed coverage remains a published validation result.\n- [aspirational] REQ-05: Reports sample count, variance, confidence interval, final-weight ESS, and weight-distribution diagnostics, and labels a below-threshold configuration unusable.\n- [hard] REQ-06: Preserves every contradiction between stochastic and exact results together with seeds, configuration, source identity, and diagnostic evidence.\n- [hard] REQ-07: Exposes the estimator through a reusable library API; artifact-producing consumers remain thin and own no proposal, weighting, interval, or ESS logic.\n",
   "documents": [],
+  "first_ready_at": "2026-08-30T04:50:53.439493868Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -22,7 +23,7 @@
     "cites:GGK2025"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Independent importance-sampling cross-check",
-  "updated_at": "2026-08-24T08:20:01.189027558Z"
+  "updated_at": "2026-08-30T04:50:53.439493868Z"
 }
