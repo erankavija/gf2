@@ -729,7 +729,7 @@ where
             shard.record.shard_id,
         )
     });
-    let mut summary = summarize_with_quarantine(manifest, field, &shards, quarantined.clone());
+    let mut summary = summarize_with_quarantine(manifest, field, &shards, quarantined.clone())?;
     if let CampaignExecutionScope::ExactCell { n: order, .. } = scope {
         summary.rows.retain(|row| row.n == order);
         summary.quarantined.retain(|item| item.n == order);
