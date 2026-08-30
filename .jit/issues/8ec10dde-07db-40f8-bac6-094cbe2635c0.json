@@ -18,17 +18,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-30T04:31:33.458166665Z",
+      "updated_at": "2026-08-30T04:40:00.870235956Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-08-30T04:35:12.532112532Z",
+      "updated_at": "2026-08-30T04:43:06.585760410Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-30T04:38:01.567851494Z",
+      "status": "passed",
+      "updated_at": "2026-08-30T04:45:25.285751042Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-08-30T04:48:51.125445993Z",
       "updated_by": "auto:executor"
     }
   },
@@ -43,5 +48,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Exact compressed-state permanental-rank propagation",
-  "updated_at": "2026-08-30T04:38:01.567851494Z"
+  "updated_at": "2026-08-30T04:48:51.125445993Z"
 }
