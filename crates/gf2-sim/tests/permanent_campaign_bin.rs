@@ -181,6 +181,11 @@ fn campaign_checkout(parent: &Path, manifest: &Path) -> (PathBuf, PathBuf) {
     .unwrap();
     fs::write(checkout.join("Cargo.lock"), "# fixture lockfile\n").unwrap();
     fs::copy(manifest, output.join("manifest.json")).unwrap();
+    fs::write(
+        checkout.join("dev/simulation_results/permanent-zero-fraction/protocol.md"),
+        "fixture frozen protocol\n",
+    )
+    .unwrap();
     commit_campaign_manifest(&checkout);
     (checkout, output)
 }
@@ -594,12 +599,46 @@ fn exact_selector_executes_only_target_shards_and_keeps_field_open() {
         .is_file());
     assert!(!output_path.join("shards/q7/n04").exists());
     assert!(output_path
-        .join("campaign.q7.n20.checkpoint.json")
+        .join("derived/campaign-bin-test/campaign-coordinator/coordinator-receipt.json")
         .is_file());
+    assert!(!output_path.join("campaign.q7.n20.checkpoint.json").exists());
     assert!(
         !output_path.join("summaries/q7.json").exists(),
         "one exact cell must not finalize the field summary"
     );
+    fs::remove_dir_all(parent).unwrap();
+}
+
+#[test]
+fn direct_nonfirst_execution_is_refused_before_sampler_or_raw_output() {
+    let parent = temp_path("direct-nonfirst-refusal");
+    let manifest_path = parent.join("manifest");
+    fs::create_dir_all(&manifest_path).unwrap();
+    let manifest_file = manifest_path.join("manifest.json");
+    fs::write(
+        &manifest_file,
+        serde_json::to_vec_pretty(&exact_selection_manifest()).unwrap(),
+    )
+    .unwrap();
+    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
+
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            output_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "7",
+            "--n",
+            "4",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(!result.status.success());
+    assert!(!output_path.join("shards/q7/n04").exists());
+    assert!(!output_path.join("campaign.q7.n04.checkpoint.json").exists());
     fs::remove_dir_all(parent).unwrap();
 }
 
