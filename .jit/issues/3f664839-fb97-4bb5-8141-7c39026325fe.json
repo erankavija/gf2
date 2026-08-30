@@ -43,12 +43,12 @@
   "gates_status": {
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-08-30T03:06:35.576262079Z",
+      "updated_at": "2026-08-30T03:29:07.879930776Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-08-30T03:10:46.489804166Z",
+      "status": "passed",
+      "updated_at": "2026-08-30T03:35:01.549482472Z",
       "updated_by": "auto:executor"
     }
   },
@@ -62,5 +62,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Preregistered compressed-state rare-event design",
-  "updated_at": "2026-08-30T03:10:46.489804166Z"
+  "updated_at": "2026-08-30T03:35:01.549482472Z"
 }
