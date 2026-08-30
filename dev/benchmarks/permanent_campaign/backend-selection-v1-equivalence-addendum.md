@@ -1,7 +1,9 @@
 # Cell-exhaustive equivalence addendum to backend selection v1
 
-> Draft status: this document is not measurement evidence until the host run
-> replaces every `TO FILL AFTER RUN:` value below and commits the cited CSV.
+> The equivalence run has executed. The cited receipt is
+> `dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv`,
+> SHA-256
+> `fda669f399700a968e3feae75c0f34cec2743c0df76fa404c0177ffba70100bc`.
 
 This addendum supplies cell-applicable behavioural evidence for the
 configurations nominated by
@@ -11,16 +13,45 @@ It changes no backend selection, rate, campaign draw, or source receipt.
 
 ## Receipt identity
 
-- `TO FILL AFTER RUN: receipt filename`
-- `TO FILL AFTER RUN: row counts (total and q=3/q=5/q=7)`
-- `TO FILL AFTER RUN: mismatch count`
-- `TO FILL AFTER RUN: wall time`
-- `TO FILL AFTER RUN: executable SHA-256`
+- Receipt:
+  `dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv`,
+  SHA-256
+  `fda669f399700a968e3feae75c0f34cec2743c0df76fa404c0177ffba70100bc`.
+- Execution transcript:
+  `dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.log`,
+  SHA-256
+  `cc61211ef9760ea9a442bda6be64083b8768a3a416901ff324e4d815157bbe95`.
+- Rows: 124 total ($q=3$: 50, $q=5$: 41, $q=7$: 33).
+- Mismatches: 0; unexecuted nominations: 0; every row's status is `identical`.
+- Wall time: 230 s, started `2026-08-30T03:22:05+03:00` and finished
+  `2026-08-30T03:25:55+03:00`, inside the owner's 02:00-local safe window.
+- Executable SHA-256:
+  `3650d6cc1f1e1413c6ebbc0d1db7b35849fb4a990fd848b052c6c94c08f359f0`.
+- Measured source closure, each a committed Git tree: harness
+  `c72fcf9c2ca54023fe6f2c11760d736e4dda8b28`, `crates/`
+  `4de075f6b54e0d5f6ddd69bff7c40b5ce1cc31ee`, and `permanent_wave_gpu`
+  `8355e34ecc179439fb9c4c3ec10408f5262b8fe7`; `harness_dirty`, `deps_dirty`
+  and `wave_gpu_dirty` are all `false`.
+- Informational, not binding provenance: `git_sha`
+  `db0c67e4e9561de50507eeab3c81219946d50182`.
 
-The CSV preamble records the source revision, harness-source revision,
-path-dependency revision, source dirty flags, running-executable SHA-256,
-Rust and Cargo toolchains, host identity, accelerator identity, ROCm version,
-timestamp, and invocation. It also records the matrix RNG as
+The CSV preamble's `git_worktree_dirty: true` flag is attributable to the
+untracked `.log`, which the runbook's `tee` creates in the worktree before the
+harness starts. `HostInfo::probe()` captures the flag as the first statement
+of `cmd_equivalence`, at
+`dev/research/permanent-sampling-feas/src/main.rs:517`; the CSV is created
+later in that same function, by the `open_csv` call at line 638. Nothing else
+in the worktree was modified. `harness_dirty`, `deps_dirty` and
+`wave_gpu_dirty` are all `false`, and the three committed trees plus
+`binary_sha256` pin the measured source outright, so the closure's provenance
+is unaffected.
+
+The CSV preamble labels `harness_tree`, `deps_tree`, `wave_gpu_tree`, and
+`binary_sha256` as binding provenance, with `harness_dirty`, `deps_dirty`, and
+`wave_gpu_dirty` qualifying the committed trees. It labels `git_sha` and
+`git_worktree_dirty` as informational. The preamble also records Rust and Cargo
+toolchains, host identity, accelerator identity, ROCm version, timestamp, and
+invocation, and records the matrix RNG as
 `rand_chacha::ChaCha20Rng` (ChaCha20), version 0.9.0, and the root seed
 `0xb488f02c00000001`. Each data row records its complete stream identity as
 $(\text{seed root},q,n,\text{equivalence},0)$.
@@ -73,10 +104,11 @@ corpus, and records the mismatch count. The packed scalar kernel is the
 reference where supported. At $q=7,n>16$, the generic Ryser implementation is
 the reference; a nominated generic-Ryser arm still retains its own row.
 
-After the receipt identity above records 124 executed rows and zero mismatches,
-the cell-exhaustive receipt closes the coverage claim for all configurations at
-their exact nominated cells. A nonzero mismatch or an unexecuted nomination
-keeps the claim open and is retained as falsifying evidence.
+The receipt records 124 executed rows and zero mismatches, so the
+cell-exhaustive receipt closes the coverage claim for all nominated
+configurations at their exact nominated cells. A nonzero mismatch or an
+unexecuted nomination would have kept the claim open and would have been
+retained as falsifying evidence.
 
 ## Matrix-count budget derivation
 
@@ -86,13 +118,17 @@ halve the matrix count until the projection fits 240 seconds, never going below
 two. The ceilings are 512 through $n=20$, 32 through $n=24$, and 4
 through $n=28$.
 
-The finite costs come from run `20260813T230032Z-1321576` in the tree of
-`de5f7414`, under the three field study paths in `dev/studies/`. An exact-order
-cost is used when present. A missing exact-order cost uses the nearest finite
-cost for the same field and backend at a higher order. This rule is
-conservative and checkable: it never substitutes a cheaper lower-order probe.
-Reference and nominated paths are de-duplicated when the nomination is itself
-the reference.
+The finite costs come from the committed derivation record
+`dev/benchmarks/permanent_campaign/probe-costs-de5f7414.csv`, SHA-256
+`525100d986b8c2632b7c378c9059da8709f962c0d93d7b560b3393200debc3f0`,
+which the harness embeds and parses. That record carries the `probe_matrix_s`
+observations of run `20260813T230032Z-1321576` in the tree of `de5f7414` and
+names its three source paths with the SHA-256 of each at that commit. An
+exact-order cost is used when present. A missing exact-order cost uses the
+nearest finite cost for the same field and backend at a higher order. This
+rule is conservative and checkable: it never substitutes a cheaper lower-order
+probe. Reference and nominated paths are de-duplicated when the nomination is
+itself the reference.
 
 Fixed-batch GPU rows above $n=12$ contain `NaN` rather than a single-matrix
 probe. When no same-or-higher-order finite probe exists, the cell takes the
@@ -114,17 +150,28 @@ The deterministic tests reproduce the `de5f7414` halving example
 $4(22.054209+22.269200+24.030546)>240$ and
 $2(22.054209+22.269200+24.030546)\leq240$, verify the higher-order substitution,
 verify the missing-cost floor, and check every campaign cell's final count.
+They also check the embedded record against its committed SHA-256 and check
+that the parser rejects a malformed row and an unknown backend name.
 
 ## Host-window runbook and runtime reservation
 
 Build with the repository MSRV before the safe window:
 
 ```sh
-test -z "$(git status --porcelain)"
+test -z "$(git status --porcelain -- dev/research/permanent-sampling-feas dev/research/permanent_wave_gpu crates)"
+# hipcc adds -I$ROCM_PATH/include only when ROCM_PATH is set. A non-login
+# context (systemd unit, cron, CI) does not source /etc/profile.d/rocm.sh, so
+# without this export every HIP translation unit fails on
+# #include <hip/hip_runtime.h>. That is what happened on the first
+# scheduled attempt.
+export ROCM_PATH=/opt/rocm
 cargo +1.95.0 build --locked \
   --manifest-path dev/research/permanent-sampling-feas/Cargo.toml \
   --release --features hip
 ```
+
+The executed run was driven from a systemd user unit, where the `ROCM_PATH`
+export is mandatory.
 
 At or after 02:00 local time, run the complete receipt under the full-host
 benchmark lock:
@@ -186,7 +233,14 @@ per-field reservations are:
 | 7 | $9(33.795584)+8(240)$ | 2,224.160256 s = 37 min 4.160 s |
 | **Total** | $3127.036416+2960.815648+2224.160256$ | **8,312.012320 s = 2 h 18 min 32.012 s** |
 
-This is a scheduling reservation, not a measured wall-time claim or upper
-bound. The equivalence command has no per-cell timeout, and a fixed-batch GPU
-row without a committed probe can exceed or finish below its reserved share.
-The completed receipt replaces the reservation with its recorded wall time.
+The completed receipt replaces the reservation with a recorded wall time of
+230 s against a reservation of 8,312.012320 s. The reservation is not a
+measured wall-time claim or upper bound. It is dominated by the
+missing-probe-cost cells: 32 of the 63 cells reserve the full 240-second cell
+budget each, so $32(240)=7,680$ s, about 92% of the total reservation. Those
+same 32 cells execute the two-matrix floor, so their actual cost is a tiny
+fraction of the budget reserved for them. That is why the recorded wall time
+is far below the reservation, and it is the expected outcome of reserving a
+full budget rather than inventing a GPU latency. The run's speed is not
+evidence of anything about backend performance; this section makes no
+performance claim.
