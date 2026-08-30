@@ -6,9 +6,11 @@
 //! lineage. Publication synchronizes both files and their directory before a
 //! safe `RENAME_NOREPLACE`; an unsupported platform or filesystem refuses.
 
+use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
+use std::cmp::Ordering;
 use std::fmt;
 
 use super::{
@@ -52,6 +54,8 @@ const MANIFEST_PATH: &str =
 const MANIFEST_SHA256: &str = "5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57";
 const PROTOCOL_PATH: &str = "dev/simulation_results/permanent-zero-fraction/protocol.md";
 const PROTOCOL_SHA256: &str = "249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639";
+const RAW_CAMPAIGN_ROOT: &str =
+    "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829";
 
 /// A strict immutable rare-event configuration.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -67,8 +71,6 @@ pub struct RareEventConfigurationV1 {
     pub scientific_identity: ScientificIdentityV1,
     /// Build receipt used to recreate the behavior closure.
     pub behavior: BehaviorIdentityV1,
-    /// Requested worker/backend settings; these do not enter dataset identity.
-    pub worker_configuration: WorkerConfigurationV1,
 }
 
 /// Pinned committed preregistration identity.
@@ -157,7 +159,7 @@ pub struct PreregistrationIdentityV1 {
 
 /// Fixed target or coverage identity.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "mode", rename_all = "snake_case")]
+#[serde(tag = "mode", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ScientificIdentityV1 {
     /// Registered target allocation.
     Target {
@@ -401,7 +403,7 @@ pub enum ArtifactKindV1 {
 
 /// Schema-tagged closed payload union.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "payload_schema")]
+#[serde(tag = "payload_schema", deny_unknown_fields)]
 pub enum RareEventPayloadV1 {
     /// Trajectory checkpoint payload.
     #[serde(rename = "gf2.rare-event-trajectory-checkpoint/v1")]
@@ -419,7 +421,7 @@ pub enum RareEventPayloadV1 {
 
 /// One logical run address; this is an artifact semantic type, not a sampler address.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "mode", rename_all = "snake_case")]
+#[serde(tag = "mode", rename_all = "snake_case", deny_unknown_fields)]
 pub enum RunAddressV1 {
     /// Target run `(r)`.
     Target {
@@ -469,10 +471,10 @@ pub struct TrajectoryCheckpointV1 {
 
 /// CPU or GPU checkpoint producer identity.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "backend", rename_all = "snake_case")]
+#[serde(tag = "backend", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ProducerBackendV1 {
     /// CPU producer.
-    Cpu,
+    Cpu {},
     /// GPU producer linked to the start receipt.
     Gpu {
         /// Runtime GPU UUID.
@@ -486,7 +488,12 @@ pub enum ProducerBackendV1 {
 
 /// Closed target or coverage trajectory-record union.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "record_kind", content = "items", rename_all = "snake_case")]
+#[serde(
+    tag = "record_kind",
+    content = "items",
+    rename_all = "snake_case",
+    deny_unknown_fields
+)]
 pub enum TrajectoryRecordsV1 {
     /// Target records.
     Target(Vec<TargetTrajectoryRecordV1>),
@@ -546,10 +553,10 @@ pub struct ExecutionAttemptReceiptV1 {
 
 /// Attempt predecessor tag.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "predecessor", rename_all = "snake_case")]
+#[serde(tag = "predecessor", rename_all = "snake_case", deny_unknown_fields)]
 pub enum AttemptPredecessorV1 {
     /// First attempt has no predecessor.
-    None,
+    None {},
     /// Later attempt binds the prior terminal artifact.
     Terminal {
         /// Prior terminal SHA-256.
@@ -669,10 +676,15 @@ pub struct EnvironmentInputV1 {
 
 /// Closed environment-value tag.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "state", content = "value", rename_all = "snake_case")]
+#[serde(
+    tag = "state",
+    content = "value",
+    rename_all = "snake_case",
+    deny_unknown_fields
+)]
 pub enum EnvironmentValueV1 {
     /// Name was unset.
-    Unset,
+    Unset {},
     /// Exact UTF-8 value.
     Set(String),
 }
@@ -753,7 +765,7 @@ pub struct HostObservationV1 {
 
 /// Runtime accelerator observation.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "selection", rename_all = "snake_case")]
+#[serde(tag = "selection", rename_all = "snake_case", deny_unknown_fields)]
 pub enum AcceleratorObservationV1 {
     /// No accelerator selected or loaded.
     NotUsed {
@@ -807,7 +819,7 @@ pub enum EndTimeMeaningV1 {
 
 /// Terminal outcome observer.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "observer", rename_all = "snake_case")]
+#[serde(tag = "observer", rename_all = "snake_case", deny_unknown_fields)]
 pub enum OutcomeObserverV1 {
     /// Supervising launcher.
     SupervisingLauncher {
@@ -825,10 +837,10 @@ pub enum OutcomeObserverV1 {
 
 /// Closed terminal outcome.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "outcome", rename_all = "snake_case")]
+#[serde(tag = "outcome", rename_all = "snake_case", deny_unknown_fields)]
 pub enum AttemptOutcomeV1 {
     /// Successful observed exit and completed contract.
-    Completed,
+    Completed {},
     /// Observed error exit or structured failure.
     Failed {
         /// Exact wait-status token.
@@ -842,7 +854,7 @@ pub enum AttemptOutcomeV1 {
         wait_status: String,
     },
     /// Prior child identity was proved not live during resume.
-    TerminationUnobservedOnResume,
+    TerminationUnobservedOnResume {},
 }
 
 /// One immutable checkpoint reference.
@@ -903,10 +915,20 @@ pub struct TargetResultPayloadV1 {
     pub interval_upper: String,
     /// Exact final-weight ESS.
     pub final_weight_ess: ExactDecimalV1,
+    /// Exact final-weight ESS for every independent run.
+    pub per_run_ess: Vec<ExactDecimalV1>,
     /// Exact ESS/sample fraction.
     pub ess_fraction: ExactDecimalV1,
+    /// Largest normalized single final-weight share.
+    pub largest_weight_share: ExactDecimalV1,
+    /// Largest independent-run mean share.
+    pub largest_run_mean_share: ExactDecimalV1,
     /// Complete pooled exponent histogram.
     pub exponent_histogram: Vec<ExponentBinV1>,
+    /// Minimum observed final exponent.
+    pub minimum_exponent: u32,
+    /// Maximum observed final exponent.
+    pub maximum_exponent: u32,
     /// Complete exact run means.
     pub run_means: Vec<ExactDecimalV1>,
     /// Every extinction diagnostic.
@@ -967,6 +989,8 @@ pub struct CoverageReplicateV1 {
     pub exact_anchor: ExactDecimalV1,
     /// Exact point estimate.
     pub estimate: ExactDecimalV1,
+    /// Exact independent-run variance.
+    pub independent_run_variance: ExactDecimalV1,
     /// Outward-rendered lower endpoint.
     pub interval_lower: String,
     /// Outward-rendered upper endpoint.
@@ -975,8 +999,16 @@ pub struct CoverageReplicateV1 {
     pub contains_anchor: bool,
     /// Exact ESS fraction diagnostic.
     pub ess_fraction: ExactDecimalV1,
+    /// Exact pooled final-weight ESS diagnostic.
+    pub final_weight_ess: ExactDecimalV1,
+    /// Complete pooled exponent histogram.
+    pub exponent_histogram: Vec<ExponentBinV1>,
+    /// Complete exact independent-run means.
+    pub run_means: Vec<ExactDecimalV1>,
     /// Extinction diagnostics.
     pub extinction_reasons: Vec<String>,
+    /// Fixed below-threshold degeneracy diagnostic.
+    pub degeneracy: bool,
 }
 
 /// Canonical coverage scientific result.
@@ -1119,7 +1151,7 @@ pub fn attempt_id(
     let mut input = decode_digest(&dataset_id(identity)?)?;
     input.extend(ordinal.to_le_bytes());
     match predecessor {
-        AttemptPredecessorV1::None if ordinal == 0 => input.push(0),
+        AttemptPredecessorV1::None {} if ordinal == 0 => input.push(0),
         AttemptPredecessorV1::Terminal { terminal_sha256 } if ordinal > 0 => {
             input.push(1);
             input.extend(decode_digest(terminal_sha256)?);
@@ -1255,17 +1287,18 @@ pub fn coverage_final_envelope(
 
 fn validate_configuration(configuration: &RareEventConfigurationV1) -> Result<(), ArtifactError> {
     validate_relative_path(&configuration.artifact_root)?;
-    if configuration.artifact_root.starts_with(
-        "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/",
-    ) {
+    if configuration.artifact_root == RAW_CAMPAIGN_ROOT
+        || configuration
+            .artifact_root
+            .starts_with(&format!("{RAW_CAMPAIGN_ROOT}/"))
+    {
         return Err(ArtifactError::Schema(
             "artifact root must lie outside raw campaign samples".into(),
         ));
     }
     validate_design(&configuration.design_identity)?;
     validate_scientific(&configuration.scientific_identity)?;
-    validate_behavior(&configuration.behavior)?;
-    validate_worker(&configuration.worker_configuration)
+    validate_behavior(&configuration.behavior)
 }
 
 fn validate_envelope(envelope: &RareEventArtifactEnvelopeV1) -> Result<(), ArtifactError> {
@@ -1285,16 +1318,17 @@ fn validate_envelope(envelope: &RareEventArtifactEnvelopeV1) -> Result<(), Artif
         }
         RareEventPayloadV1::TargetCrossCheck(payload) => {
             validate_common(&payload.dataset_identity, &payload.dataset_id)?;
+            if payload.dataset_identity.scientific != ScientificIdentityV1::target() {
+                return Err(ArtifactError::Identity(
+                    "target receipt embeds a non-target dataset identity".into(),
+                ));
+            }
             if payload.result_sha256 != sha256_hex(&canonical_bytes(&payload.result_payload)?) {
                 return Err(ArtifactError::Integrity(
                     "target result payload digest mismatch".into(),
                 ));
             }
-            if payload.result_payload.expected_trajectory_count != 524_288 {
-                return Err(ArtifactError::AddressSet(
-                    "target result count must be 524288".into(),
-                ));
-            }
+            validate_target_result(&payload.result_payload)?;
             validate_final_refs(
                 &payload.dataset_identity,
                 &payload.execution_provenance,
@@ -1304,16 +1338,17 @@ fn validate_envelope(envelope: &RareEventArtifactEnvelopeV1) -> Result<(), Artif
         }
         RareEventPayloadV1::CoverageValidation(payload) => {
             validate_common(&payload.dataset_identity, &payload.dataset_id)?;
+            if payload.dataset_identity.scientific != ScientificIdentityV1::coverage() {
+                return Err(ArtifactError::Identity(
+                    "coverage receipt embeds a non-coverage dataset identity".into(),
+                ));
+            }
             if payload.result_sha256 != sha256_hex(&canonical_bytes(&payload.result_payload)?) {
                 return Err(ArtifactError::Integrity(
                     "coverage result payload digest mismatch".into(),
                 ));
             }
-            if payload.result_payload.expected_trajectory_count != 78_643_200 {
-                return Err(ArtifactError::AddressSet(
-                    "coverage result count must be 78643200".into(),
-                ));
-            }
+            validate_coverage_result(&payload.result_payload)?;
             validate_final_refs(
                 &payload.dataset_identity,
                 &payload.execution_provenance,
@@ -1338,6 +1373,588 @@ fn validate_common(
     if embedded_id != dataset_id(identity)? {
         return Err(ArtifactError::Identity(
             "dataset ID recomputation mismatch".into(),
+        ));
+    }
+    Ok(())
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ExactValue {
+    numerator: BigUint,
+    denominator: BigUint,
+}
+
+impl ExactValue {
+    fn new(numerator: BigUint, denominator: BigUint) -> Result<Self, ArtifactError> {
+        if denominator == BigUint::from(0_u8) {
+            return Err(ArtifactError::Schema(
+                "exact denominator must be positive".into(),
+            ));
+        }
+        let divisor = gcd(numerator.clone(), denominator.clone());
+        Ok(Self {
+            numerator: numerator / &divisor,
+            denominator: denominator / divisor,
+        })
+    }
+
+    fn zero() -> Self {
+        Self::from_integer(0_u8)
+    }
+
+    fn one() -> Self {
+        Self::from_integer(1_u8)
+    }
+
+    fn from_integer(value: impl Into<BigUint>) -> Self {
+        Self {
+            numerator: value.into(),
+            denominator: BigUint::from(1_u8),
+        }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(
+            &self.numerator * &other.denominator + &other.numerator * &self.denominator,
+            &self.denominator * &other.denominator,
+        )
+        .expect("product of positive exact denominators is positive")
+    }
+
+    fn multiply(&self, other: &Self) -> Self {
+        Self::new(
+            &self.numerator * &other.numerator,
+            &self.denominator * &other.denominator,
+        )
+        .expect("product of positive exact denominators is positive")
+    }
+
+    fn divide(&self, other: &Self) -> Result<Self, ArtifactError> {
+        Self::new(
+            &self.numerator * &other.denominator,
+            &self.denominator * &other.numerator,
+        )
+    }
+
+    fn abs_diff(&self, other: &Self) -> Self {
+        let left = &self.numerator * &other.denominator;
+        let right = &other.numerator * &self.denominator;
+        let numerator = if left >= right {
+            left - right
+        } else {
+            right - left
+        };
+        Self::new(numerator, &self.denominator * &other.denominator)
+            .expect("product of positive exact denominators is positive")
+    }
+}
+
+impl Ord for ExactValue {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))
+    }
+}
+
+impl PartialOrd for ExactValue {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn gcd(mut left: BigUint, mut right: BigUint) -> BigUint {
+    while right != BigUint::from(0_u8) {
+        let remainder = &left % &right;
+        left = right;
+        right = remainder;
+    }
+    left
+}
+
+fn parse_canonical_integer(value: &str, name: &str) -> Result<BigUint, ArtifactError> {
+    if value.is_empty()
+        || !value.bytes().all(|byte| byte.is_ascii_digit())
+        || (value.len() > 1 && value.starts_with('0'))
+    {
+        return Err(ArtifactError::Schema(format!(
+            "{name} is not a canonical nonnegative decimal integer"
+        )));
+    }
+    BigUint::parse_bytes(value.as_bytes(), 10)
+        .ok_or_else(|| ArtifactError::Schema(format!("{name} is not a decimal integer")))
+}
+
+fn parse_exact(value: &ExactDecimalV1, name: &str) -> Result<ExactValue, ArtifactError> {
+    let numerator = parse_canonical_integer(&value.numerator, name)?;
+    let denominator = parse_canonical_integer(&value.denominator, name)?;
+    let exact = ExactValue::new(numerator.clone(), denominator.clone())?;
+    if exact.numerator != numerator || exact.denominator != denominator {
+        return Err(ArtifactError::Schema(format!(
+            "{name} is not a reduced exact decimal pair"
+        )));
+    }
+    Ok(exact)
+}
+
+fn parse_probability(value: &ExactDecimalV1, name: &str) -> Result<ExactValue, ArtifactError> {
+    let value = parse_exact(value, name)?;
+    if value > ExactValue::one() {
+        return Err(ArtifactError::Schema(format!(
+            "{name} lies outside the closed unit interval"
+        )));
+    }
+    Ok(value)
+}
+
+fn parse_rendered_probability(value: &str, name: &str) -> Result<ExactValue, ArtifactError> {
+    if value == "0e+0" {
+        return Ok(ExactValue::zero());
+    }
+    let (significand, exponent) = value
+        .split_once('e')
+        .ok_or_else(|| ArtifactError::Schema(format!("{name} is not scientific notation")))?;
+    let (whole, fractional) = significand
+        .split_once('.')
+        .ok_or_else(|| ArtifactError::Schema(format!("{name} lacks a decimal point")))?;
+    if whole.len() != 1
+        || !whole.bytes().all(|byte| (b'1'..=b'9').contains(&byte))
+        || fractional.len() < 17
+        || !fractional.bytes().all(|byte| byte.is_ascii_digit())
+    {
+        return Err(ArtifactError::Schema(format!(
+            "{name} is not a canonical at-least-18-digit rendering"
+        )));
+    }
+    let exponent_digits = exponent
+        .strip_prefix('+')
+        .or_else(|| exponent.strip_prefix('-'))
+        .ok_or_else(|| ArtifactError::Schema(format!("{name} lacks an exponent sign")))?;
+    if exponent_digits.is_empty()
+        || !exponent_digits.bytes().all(|byte| byte.is_ascii_digit())
+        || (exponent_digits.len() > 1 && exponent_digits.starts_with('0'))
+    {
+        return Err(ArtifactError::Schema(format!(
+            "{name} has a noncanonical exponent"
+        )));
+    }
+    let exponent_value: i64 = exponent
+        .parse()
+        .map_err(|_| ArtifactError::Schema(format!("{name} exponent is out of range")))?;
+    let digits = format!("{whole}{fractional}");
+    let mut exact = ExactValue::from_integer(parse_canonical_integer(&digits, name)?);
+    let scale = exponent_value - fractional.len() as i64;
+    if scale >= 0 {
+        exact.numerator *= BigUint::from(10_u8).pow(scale as u32);
+    } else {
+        exact.denominator *= BigUint::from(10_u8).pow((-scale) as u32);
+    }
+    exact = ExactValue::new(exact.numerator, exact.denominator)?;
+    if exact > ExactValue::one() {
+        return Err(ArtifactError::Schema(format!(
+            "{name} lies outside the closed unit interval"
+        )));
+    }
+    Ok(exact)
+}
+
+fn exact_mean(values: &[ExactValue]) -> ExactValue {
+    values
+        .iter()
+        .fold(ExactValue::zero(), |sum, value| sum.add(value))
+        .divide(&ExactValue::from_integer(values.len()))
+        .expect("a nonempty exact mean has a positive divisor")
+}
+
+fn exact_sample_variance(values: &[ExactValue]) -> ExactValue {
+    let mean = exact_mean(values);
+    values
+        .iter()
+        .map(|value| value.abs_diff(&mean))
+        .map(|difference| difference.multiply(&difference))
+        .fold(ExactValue::zero(), |sum, square| sum.add(&square))
+        .divide(&ExactValue::from_integer(values.len() - 1))
+        .expect("multiple independent runs have a positive variance divisor")
+}
+
+fn interval_radius_squared(
+    independent_run_variance: &ExactValue,
+) -> Result<ExactValue, ArtifactError> {
+    let critical = ExactValue::new(
+        BigUint::from(1_019_756_723_u64),
+        BigUint::from(500_000_000_u64),
+    )?;
+    critical
+        .multiply(&critical)
+        .multiply(independent_run_variance)
+        .divide(&ExactValue::from_integer(TARGET_RUNS))
+}
+
+fn validate_interval(
+    lower: &str,
+    upper: &str,
+    center: &ExactValue,
+    independent_run_variance: &ExactValue,
+) -> Result<(), ArtifactError> {
+    let lower = parse_rendered_probability(lower, "interval lower endpoint")?;
+    let upper = parse_rendered_probability(upper, "interval upper endpoint")?;
+    if lower > *center || upper < *center || lower > upper {
+        return Err(ArtifactError::Schema(
+            "rendered interval does not enclose its exact center".into(),
+        ));
+    }
+    let radius_squared = interval_radius_squared(independent_run_variance)?;
+    if lower > ExactValue::zero() {
+        let distance = center.abs_diff(&lower);
+        if distance.multiply(&distance) < radius_squared {
+            return Err(ArtifactError::Schema(
+                "lower interval endpoint is not rounded outward".into(),
+            ));
+        }
+    }
+    if upper < ExactValue::one() {
+        let distance = upper.abs_diff(center);
+        if distance.multiply(&distance) < radius_squared {
+            return Err(ArtifactError::Schema(
+                "upper interval endpoint is not rounded outward".into(),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn interval_contains(
+    value: &ExactValue,
+    center: &ExactValue,
+    independent_run_variance: &ExactValue,
+) -> Result<bool, ArtifactError> {
+    let difference = value.abs_diff(center);
+    Ok(difference.multiply(&difference) <= interval_radius_squared(independent_run_variance)?)
+}
+
+fn validate_histogram(
+    bins: &[ExponentBinV1],
+    base: u8,
+    maximum_exponent: u32,
+    expected_count: u64,
+) -> Result<(ExactValue, ExactValue, ExactValue), ArtifactError> {
+    let observed_count = bins.iter().try_fold(0_u64, |sum, bin| {
+        sum.checked_add(bin.count)
+            .ok_or_else(|| ArtifactError::AddressSet("exponent histogram count overflow".into()))
+    })?;
+    if bins.is_empty()
+        || bins.iter().any(|bin| bin.count == 0)
+        || bins
+            .windows(2)
+            .any(|window| window[0].exponent >= window[1].exponent)
+        || bins.last().expect("nonempty histogram").exponent > maximum_exponent
+        || observed_count != expected_count
+    {
+        return Err(ArtifactError::AddressSet(
+            "exponent histogram is incomplete, unordered, or out of range".into(),
+        ));
+    }
+    let maximum_observed = bins.last().expect("nonempty histogram").exponent;
+    let base = BigUint::from(base);
+    let weight_sum = bins.iter().fold(BigUint::from(0_u8), |sum, bin| {
+        sum + BigUint::from(bin.count) * base.pow(maximum_observed - bin.exponent)
+    });
+    let squared_weight_sum = bins.iter().fold(BigUint::from(0_u8), |sum, bin| {
+        sum + BigUint::from(bin.count) * base.pow(2 * (maximum_observed - bin.exponent))
+    });
+    let minimum_observed = bins.first().expect("nonempty histogram").exponent;
+    let largest_scaled_weight = base.pow(maximum_observed - minimum_observed);
+    Ok((
+        ExactValue::new(&weight_sum * &weight_sum, squared_weight_sum)?,
+        ExactValue::new(largest_scaled_weight, weight_sum.clone())?,
+        ExactValue::new(
+            weight_sum,
+            BigUint::from(expected_count) * base.pow(maximum_observed),
+        )?,
+    ))
+}
+
+fn validate_extinction_reasons(reasons: &[String]) -> Result<(), ArtifactError> {
+    if reasons.iter().any(String::is_empty) {
+        return Err(ArtifactError::Schema(
+            "extinction diagnostics may not contain an empty reason".into(),
+        ));
+    }
+    ensure_sorted_unique(reasons, "extinction diagnostics")
+}
+
+fn validate_target_result(payload: &TargetResultPayloadV1) -> Result<(), ArtifactError> {
+    if payload.expected_trajectory_count != 524_288 {
+        return Err(ArtifactError::AddressSet(
+            "target result count must be 524288".into(),
+        ));
+    }
+    validate_relative_path(&payload.exact_result_path)?;
+    validate_digest(&payload.exact_result_sha256)?;
+    let raw_count = parse_canonical_integer(&payload.exact_raw_count, "exact raw count")?;
+    let raw_total = parse_canonical_integer(&payload.exact_total, "exact total")?;
+    let exact_probability = parse_probability(&payload.exact_probability, "exact probability")?;
+    if raw_count > raw_total
+        || raw_total != BigUint::from(3_u8).pow(3_072)
+        || ExactValue::new(raw_count, raw_total)? != exact_probability
+    {
+        return Err(ArtifactError::Schema(
+            "raw exact counts disagree with the reduced exact probability".into(),
+        ));
+    }
+
+    if payload.run_means.len() != usize::from(TARGET_RUNS)
+        || payload.per_run_ess.len() != usize::from(TARGET_RUNS)
+    {
+        return Err(ArtifactError::AddressSet(
+            "target diagnostics need exactly 32 independent runs".into(),
+        ));
+    }
+    let run_means: Vec<_> = payload
+        .run_means
+        .iter()
+        .map(|value| parse_probability(value, "target run mean"))
+        .collect::<Result<_, _>>()?;
+    let estimate = parse_probability(&payload.cross_check_estimate, "target estimate")?;
+    if estimate != exact_mean(&run_means) {
+        return Err(ArtifactError::Schema(
+            "target estimate differs from exact independent-run mean".into(),
+        ));
+    }
+    let variance = parse_exact(
+        &payload.independent_run_variance,
+        "target independent-run variance",
+    )?;
+    if variance != exact_sample_variance(&run_means) {
+        return Err(ArtifactError::Schema(
+            "target variance differs from exact independent-run variance".into(),
+        ));
+    }
+    validate_interval(
+        &payload.interval_lower,
+        &payload.interval_upper,
+        &estimate,
+        &variance,
+    )?;
+
+    let (computed_ess, computed_largest_weight_share, histogram_mean) =
+        validate_histogram(&payload.exponent_histogram, 3, 3 * 1_024, 524_288)?;
+    if payload.minimum_exponent
+        != payload
+            .exponent_histogram
+            .first()
+            .expect("validated nonempty histogram")
+            .exponent
+        || payload.maximum_exponent
+            != payload
+                .exponent_histogram
+                .last()
+                .expect("validated nonempty histogram")
+                .exponent
+    {
+        return Err(ArtifactError::Schema(
+            "target exponent extrema disagree with histogram".into(),
+        ));
+    }
+    if estimate != histogram_mean {
+        return Err(ArtifactError::Schema(
+            "target estimate disagrees with exponent histogram".into(),
+        ));
+    }
+    let final_ess = parse_exact(&payload.final_weight_ess, "target final-weight ESS")?;
+    if final_ess != computed_ess {
+        return Err(ArtifactError::Schema(
+            "target ESS disagrees with its exponent histogram".into(),
+        ));
+    }
+    let ess_fraction = parse_probability(&payload.ess_fraction, "target ESS fraction")?;
+    if ess_fraction
+        != final_ess.divide(&ExactValue::from_integer(payload.expected_trajectory_count))?
+    {
+        return Err(ArtifactError::Schema(
+            "target ESS fraction disagrees with final-weight ESS".into(),
+        ));
+    }
+    for per_run in &payload.per_run_ess {
+        let per_run = parse_exact(per_run, "per-run final-weight ESS")?;
+        if per_run == ExactValue::zero()
+            || per_run > ExactValue::from_integer(TARGET_TRAJECTORIES_PER_RUN)
+        {
+            return Err(ArtifactError::Schema(
+                "per-run ESS lies outside its fixed allocation".into(),
+            ));
+        }
+    }
+    if parse_probability(
+        &payload.largest_weight_share,
+        "largest normalized weight share",
+    )? != computed_largest_weight_share
+    {
+        return Err(ArtifactError::Schema(
+            "largest weight share disagrees with exponent histogram".into(),
+        ));
+    }
+    let run_sum = run_means
+        .iter()
+        .fold(ExactValue::zero(), |sum, value| sum.add(value));
+    if run_sum == ExactValue::zero() {
+        return Err(ArtifactError::Schema("target run-mean sum is zero".into()));
+    }
+    let largest_run_share = run_means
+        .iter()
+        .max()
+        .expect("32 target run means")
+        .divide(&run_sum)?;
+    if parse_probability(&payload.largest_run_mean_share, "largest run-mean share")?
+        != largest_run_share
+    {
+        return Err(ArtifactError::Schema(
+            "largest run-mean share disagrees with run means".into(),
+        ));
+    }
+
+    validate_extinction_reasons(&payload.extinction_reasons)?;
+    let degeneracy = ess_fraction < ExactValue::new(1_u8.into(), 100_u8.into())?;
+    if payload.degeneracy != degeneracy {
+        return Err(ArtifactError::Schema(
+            "target degeneracy disagrees with fixed ESS threshold".into(),
+        ));
+    }
+    let expected_verdict = if !payload.extinction_reasons.is_empty() || degeneracy {
+        CrossCheckVerdictV1::Unusable
+    } else if interval_contains(&exact_probability, &estimate, &variance)? {
+        CrossCheckVerdictV1::Agreement
+    } else {
+        CrossCheckVerdictV1::Contradiction
+    };
+    if payload.verdict != expected_verdict {
+        return Err(ArtifactError::Schema(
+            "target verdict disagrees with exact containment/usability".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_coverage_result(payload: &CoverageResultPayloadV1) -> Result<(), ArtifactError> {
+    const REPLICATE_TRAJECTORIES: u64 = 32 * 4_096;
+    if payload.expected_trajectory_count != 78_643_200 || payload.replicates.len() != 600 {
+        return Err(ArtifactError::AddressSet(
+            "coverage result must contain exactly 78643200 addressed weights".into(),
+        ));
+    }
+    let cases = [
+        (3_u8, "907", "2187"),
+        (5, "17581", "78125"),
+        (7, "126295", "823543"),
+    ];
+    let mut recomputed_counts = Vec::with_capacity(3);
+    let mut has_extinction = false;
+    for (case_index, &(q, numerator, denominator)) in cases.iter().enumerate() {
+        let anchor = ExactValue::new(
+            parse_canonical_integer(numerator, "coverage anchor")?,
+            parse_canonical_integer(denominator, "coverage anchor")?,
+        )?;
+        let mut containing = 0_u16;
+        for replicate in 0..COVERAGE_REPLICATES {
+            let item = &payload.replicates
+                [case_index * usize::from(COVERAGE_REPLICATES) + usize::from(replicate)];
+            if item.q != q || item.replicate != replicate {
+                return Err(ArtifactError::AddressSet(
+                    "coverage replicates are not in exact (q,b) order".into(),
+                ));
+            }
+            if parse_probability(&item.exact_anchor, "coverage exact anchor")? != anchor {
+                return Err(ArtifactError::Schema(
+                    "coverage replicate anchor differs from preregistration".into(),
+                ));
+            }
+            if item.run_means.len() != usize::from(COVERAGE_RUNS) {
+                return Err(ArtifactError::AddressSet(
+                    "coverage replicate needs exactly 32 independent runs".into(),
+                ));
+            }
+            let run_means: Vec<_> = item
+                .run_means
+                .iter()
+                .map(|value| parse_probability(value, "coverage run mean"))
+                .collect::<Result<_, _>>()?;
+            let estimate = parse_probability(&item.estimate, "coverage estimate")?;
+            if estimate != exact_mean(&run_means) {
+                return Err(ArtifactError::Schema(
+                    "coverage estimate differs from exact independent-run mean".into(),
+                ));
+            }
+            let variance = parse_exact(
+                &item.independent_run_variance,
+                "coverage independent-run variance",
+            )?;
+            if variance != exact_sample_variance(&run_means) {
+                return Err(ArtifactError::Schema(
+                    "coverage variance differs from exact independent-run variance".into(),
+                ));
+            }
+            validate_interval(
+                &item.interval_lower,
+                &item.interval_upper,
+                &estimate,
+                &variance,
+            )?;
+            let contains = interval_contains(&anchor, &estimate, &variance)?;
+            if item.contains_anchor != contains {
+                return Err(ArtifactError::Schema(
+                    "coverage containment bit disagrees with exact interval".into(),
+                ));
+            }
+            containing += u16::from(contains);
+
+            let (computed_ess, _, histogram_mean) =
+                validate_histogram(&item.exponent_histogram, q, 9, REPLICATE_TRAJECTORIES)?;
+            if estimate != histogram_mean {
+                return Err(ArtifactError::Schema(
+                    "coverage estimate disagrees with exponent histogram".into(),
+                ));
+            }
+            let final_ess = parse_exact(&item.final_weight_ess, "coverage final-weight ESS")?;
+            if final_ess != computed_ess {
+                return Err(ArtifactError::Schema(
+                    "coverage ESS disagrees with exponent histogram".into(),
+                ));
+            }
+            let ess_fraction = parse_probability(&item.ess_fraction, "coverage ESS fraction")?;
+            if ess_fraction
+                != final_ess.divide(&ExactValue::from_integer(REPLICATE_TRAJECTORIES))?
+            {
+                return Err(ArtifactError::Schema(
+                    "coverage ESS fraction disagrees with final-weight ESS".into(),
+                ));
+            }
+            let degeneracy = ess_fraction < ExactValue::new(1_u8.into(), 100_u8.into())?;
+            if item.degeneracy != degeneracy {
+                return Err(ArtifactError::Schema(
+                    "coverage degeneracy disagrees with fixed ESS threshold".into(),
+                ));
+            }
+            validate_extinction_reasons(&item.extinction_reasons)?;
+            has_extinction |= !item.extinction_reasons.is_empty();
+        }
+        recomputed_counts.push(CoverageCountV1 {
+            q,
+            count: containing,
+        });
+    }
+    if payload.coverage_counts != recomputed_counts {
+        return Err(ArtifactError::Schema(
+            "coverage counts disagree with exact containment bits".into(),
+        ));
+    }
+    let adequate = !has_extinction && payload.coverage_counts.iter().all(|item| item.count >= 180);
+    if payload.verdict
+        != if adequate {
+            CoverageVerdictV1::Adequate
+        } else {
+            CoverageVerdictV1::Unusable
+        }
+    {
+        return Err(ArtifactError::Schema(
+            "coverage verdict disagrees with fixed 180/200 rule".into(),
         ));
     }
     Ok(())
@@ -1561,9 +2178,38 @@ fn validate_attempt(payload: &ExecutionAttemptReceiptV1) -> Result<(), ArtifactE
         } => {
             validate_timestamp(start_utc)?;
             validate_timestamp(start_receipt_utc)?;
-            validate_digest(&invocation.executable_sha256)?;
-            validate_digest(&invocation.configuration_sha256)?;
-            validate_hex_bytes(&invocation.effective_configuration_hex)?;
+            if invocation.executable_sha256 != payload.dataset_identity.behavior.executable_sha256 {
+                return Err(ArtifactError::Identity(
+                    "invoked executable digest differs from dataset behavior".into(),
+                ));
+            }
+            if invocation.configuration_path
+                != payload.dataset_identity.preregistration.configuration_path
+                || invocation.configuration_sha256
+                    != payload
+                        .dataset_identity
+                        .preregistration
+                        .configuration_sha256
+            {
+                return Err(ArtifactError::Identity(
+                    "invoked configuration identity differs from dataset identity".into(),
+                ));
+            }
+            let effective_configuration = decode_hex(&invocation.effective_configuration_hex)?;
+            if sha256_hex(&effective_configuration) != invocation.configuration_sha256 {
+                return Err(ArtifactError::Identity(
+                    "effective configuration bytes differ from configuration digest".into(),
+                ));
+            }
+            let configuration = decode_configuration(&effective_configuration)?;
+            if configuration.design_identity != payload.dataset_identity.preregistration.design
+                || configuration.scientific_identity != payload.dataset_identity.scientific
+                || configuration.behavior != payload.dataset_identity.behavior
+            {
+                return Err(ArtifactError::Identity(
+                    "effective configuration differs from dataset scientific/source inputs".into(),
+                ));
+            }
             if invocation.argv.is_empty()
                 || invocation.process_start_token.is_empty()
                 || invocation.boot_identity.is_empty()
@@ -1624,7 +2270,7 @@ fn validate_attempt(payload: &ExecutionAttemptReceiptV1) -> Result<(), ArtifactE
                 (
                     EndTimeMeaningV1::ProcessObserved,
                     OutcomeObserverV1::SupervisingLauncher { launcher_sha256 },
-                    AttemptOutcomeV1::Completed
+                    AttemptOutcomeV1::Completed {}
                     | AttemptOutcomeV1::Failed { .. }
                     | AttemptOutcomeV1::Interrupted { .. },
                 ) => validate_digest(launcher_sha256)?,
@@ -1634,7 +2280,7 @@ fn validate_attempt(payload: &ExecutionAttemptReceiptV1) -> Result<(), ArtifactE
                         launcher_sha256,
                         liveness_evidence,
                     },
-                    AttemptOutcomeV1::TerminationUnobservedOnResume,
+                    AttemptOutcomeV1::TerminationUnobservedOnResume {},
                 ) => {
                     validate_digest(launcher_sha256)?;
                     validate_evidence(liveness_evidence)?;
@@ -1734,7 +2380,7 @@ fn validate_final_refs(
         validate_digest(&attempt.attempt_start_sha256)?;
         validate_digest(&attempt.attempt_terminal_sha256)?;
         let predecessor = if ordinal == 0 {
-            AttemptPredecessorV1::None
+            AttemptPredecessorV1::None {}
         } else {
             AttemptPredecessorV1::Terminal {
                 terminal_sha256: provenance.attempts[ordinal - 1]
