@@ -206,7 +206,7 @@
           "short_id": "02b8137c",
           "title": "Execute frozen pre-draw validation anchors",
           "classification": "implementation",
-          "status": "ready: owner stopped session 31 immediately. Uncompiled and unreviewed implementation WIP is preserved only on branch worktree-agent-02b8137c at 783d4abb; it is not merged. No validation or campaign draw occurred. All three campaign arms remain blocked on this leaf."
+          "status": "in_progress: implementation complete and merged at d06d6fe3 (resumed WIP 783d4abb; worker fixed four latent defects incl. post-draw toolchain gate; thin runner + committed preregistration dev/active/02b8137c/pre-draw-validation-v1*.{json,md}; 22 release tests). cargo-ci gate PASSED. code/doc/research-review each FAIL solely on the not-yet-existing receipt (REQ-05/09 run evidence) \u2014 re-evaluate after the run. Evidence run armed: systemd user timer gf2-predraw-validation fires 2026-08-31 02:00:30, runbook scratchpad/run-validation-0200.sh, binary 76c778f1\u2026 built at 660b742b, ccx1-bench-flock --full-host, --workers 24. Owner requires a separate go before any campaign-purpose draw."
         },
         {
           "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -1214,5 +1214,6 @@
     "frontier": "02b8137c is ready and unassigned. Resume the isolated WIP, add the thin runner and strict committed preregistration, establish focused release evidence, review all audit findings, then merge/gate before the post-02:00 fixed validation run.",
     "open_escalation": "6639435f still awaits owner authorization for one bounded high-tier repair cycle covering all four final audit findings.",
     "handoff": "handoff-27.md"
-  }
+  },
+  "current_session": 32
 }
