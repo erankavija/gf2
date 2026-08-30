@@ -232,7 +232,16 @@ fn validation_stream_sampler_and_clopper_pearson_cover_every_exact_anchor() {
             VALIDATION_DRAWS_PER_CELL,
             VALIDATION_INTERVAL_LEVEL,
         );
-        let exact_as_f64 = exact.zero_count() as f64 / exact.matrix_count() as f64;
+        let exact_as_f64 = exact
+            .zero_count()
+            .to_string()
+            .parse::<f64>()
+            .expect("small anchor count fits f64")
+            / exact
+                .matrix_count()
+                .to_string()
+                .parse::<f64>()
+                .expect("small anchor total fits f64");
         assert!(
             lower <= exact_as_f64 && exact_as_f64 <= upper,
             "validation interval {lower:?}..={upper:?} excluded exact {}/{} at q={order}, n={dimension}; \
