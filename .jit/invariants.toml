@@ -113,7 +113,7 @@ statement = "Quality defects surfaced while implementing a change are fixed in t
 enforced-by = "@/gate/research-review"
 id = "claims-trace-to-artifacts"
 kind = "enforced"
-statement = "Every published scientific number — error rate, threshold, probability estimate, statistic — traces to a committed, versioned artifact recording seeds, git revision, hardware, and toolchain."
+statement = "Every published scientific number — error rate, threshold, probability estimate, statistic — traces to a committed, versioned artifact recording seeds, source identity, hardware, and toolchain."
 
 [[invariants]]
 enforced-by = "@/gate/research-review"

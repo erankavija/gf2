@@ -1,0 +1,67 @@
+# Probe-cost derivation record for the permanent-campaign equivalence budgets.
+#
+# These are the single-matrix probe latencies that size the per-cell matrix
+# corpora of `permanent_sampling_feas equivalence`. The harness embeds this
+# file and parses these rows; it carries no probe figure of its own.
+#
+# source_commit: de5f7414bb698941c548d62a06b21d6f7bc76303
+# source_run: 20260813T230032Z-1321576
+#
+# source_paths, each with the SHA-256 of its bytes at source_commit:
+#   dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-grid.csv
+#     b0582e22dfeedf6cbd27f1d51cda17b5fb77fcc5d5697087506264e192311d38
+#   dev/studies/91605d4d/permanent-campaign-20260813T230032Z-1321576-q5-grid.csv
+#     74b149ea4a4bf0d988ce87afc90cde2357e0bf578f38bb5009369c40bd137718
+#   dev/studies/6c7fcb38/permanent-campaign-20260813T230032Z-1321576-q7-grid.csv
+#     59cfaf1ef17bdf413c04165b92ce5f413a1f8e2e897bd28b10878fbed4604dd3
+#
+# extraction rule: read the `probe_matrix_s` column of every grid row whose
+#   value is finite, keyed by (q, n, backend) in the backend vocabulary of
+#   the grid receipts. Retain a key when the reference-plus-nomination
+#   schedule of dev/benchmarks/permanent_campaign/backend-selection-v1.md
+#   evaluates that backend at some campaign cell (q, n_cell) whose
+#   conservative substitution selects it, that is, when this row's n is the
+#   smallest grid order at or above n_cell carrying a finite probe for
+#   (q, backend). The reference is the scalar single-word kernel wherever it
+#   exists and the generic Ryser path at q=7, n>16, where
+#   permanent_bipedal7 asserts n <= Packed7::LANES = 16.
+#
+#   Fixed-batch GPU rows after order 12 carry `NaN` rather than a probe and
+#   are absent by construction. Grid orders beyond a field's campaign range
+#   (q=5 at n=28; q=7 at n=24 and n=28) are unreachable and likewise absent,
+#   as are backends the schedule never evaluates at that field and order.
+#
+# supersession: run 20260813T230032Z-1321576 was superseded for rate evidence
+#   by run 20260814T230032Z-2085453 in commit 6f5a23ac, which removed the
+#   three source grid receipts from dev/studies/. This record retains the
+#   run solely as the budget-sizing input that the de5f7414 derivation fixes.
+#   No published rate derives from it.
+q,n,backend,probe_matrix_s
+3,12,cpu_scalar,0.000025
+3,12,cpu_rayon_batch_scalar,0.000026
+3,12,cpu_ryser_generic,0.000188
+3,16,cpu_scalar,0.000270
+3,16,cpu_rayon_batch_scalar,0.000273
+3,16,cpu_rayon_intra_matrix,0.000246
+3,16,cpu_ryser_generic,0.003321
+3,20,cpu_scalar,0.004144
+3,20,cpu_rayon_intra_matrix,0.000470
+3,24,cpu_scalar,0.067676
+3,24,cpu_rayon_intra_matrix,0.003775
+3,28,cpu_scalar,1.065811
+3,28,cpu_rayon_intra_matrix,0.052472
+5,12,cpu_scalar,0.000157
+5,12,cpu_rayon_batch_scalar,0.000161
+5,12,gpu_hip,0.052684
+5,16,cpu_scalar,0.003163
+5,16,cpu_rayon_batch_scalar,0.003192
+5,20,cpu_scalar,0.062510
+5,20,cpu_rayon_batch_scalar,0.062734
+5,24,cpu_scalar,1.197137
+5,24,cpu_rayon_batch_scalar,1.196064
+7,12,cpu_scalar,0.000164
+7,12,cpu_rayon_batch_scalar,0.000161
+7,12,gpu_hip,0.065682
+7,16,cpu_scalar,0.003210
+7,16,cpu_rayon_batch_scalar,0.003210
+7,20,cpu_ryser_generic,0.064976

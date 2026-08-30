@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 use permanent_sampling_feas::backend::Backend;
 use permanent_sampling_feas::campaign_selection::{
     campaign_cells, cell_budget, EQUIVALENCE_CELL_BUDGET_SECONDS, EQUIVALENCE_MIN_MATRICES,
-    SELECTION_AUTHORITY_PATH, SELECTION_AUTHORITY_SHA256,
+    PROBE_COSTS_PATH, PROBE_COSTS_SHA256, SELECTION_AUTHORITY_PATH, SELECTION_AUTHORITY_SHA256,
 };
 use permanent_sampling_feas::env::HostInfo;
 use permanent_sampling_feas::equivalence::{check_selected, EQUIVALENCE_CSV_HEADER};
@@ -613,11 +613,11 @@ configurations in this invocation; each row is one nominated arm",
         format!(
             "sample_counts: start at the committed per-order ceiling, then halve, flooring at \
 {EQUIVALENCE_MIN_MATRICES}, until the sum of reference-plus-nominated committed probe costs fits \
-the {EQUIVALENCE_CELL_BUDGET_SECONDS:.0}-second cell budget. Costs come from the superseded \
-20260813T230032Z-1321576 grid receipts in commit de5f7414. A missing exact-order cost uses the \
-nearest finite observation at the same or a higher order. If no such observation exists, the \
-cell takes the two-matrix floor rather than extrapolating from a lower order. --matrices only \
-lowers these counts"
+the {EQUIVALENCE_CELL_BUDGET_SECONDS:.0}-second cell budget. probe_costs: {PROBE_COSTS_PATH}; \
+sha256: {PROBE_COSTS_SHA256}; the record is embedded in this executable and supplies every probe \
+cost. A missing exact-order cost uses the nearest finite observation at the same or a higher \
+order. If no such observation exists, the cell takes the two-matrix floor rather than \
+extrapolating from a lower order. --matrices only lowers these counts"
         ),
         format!(
             "missing_probe_cost_floor_cells: {}",
