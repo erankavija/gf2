@@ -10187,3 +10187,4 @@
 {"from":"backlog","id":"6436fd78-b85b-4201-987a-3efef1b406b1","issue_id":"6639435f-8be8-4408-b6ab-759fe0099bd2","timestamp":"2026-08-30T04:50:53.439493868Z","to":"ready","type":"issue_state_changed"}
 {"from":"ready","id":"84781627-7cf2-426c-9389-ab45146eae6e","issue_id":"6639435f-8be8-4408-b6ab-759fe0099bd2","timestamp":"2026-08-30T04:52:28.306626139Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:codex-sol-importance","id":"a97716fc-2c1b-42d8-8908-81008a57145a","issue_id":"6639435f-8be8-4408-b6ab-759fe0099bd2","timestamp":"2026-08-30T04:52:28.306626139Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"373b0ddf-4d80-4d03-a7b7-ab96c5aa3f82","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-30T06:55:55.518663529Z","type":"issue_updated","updated_by":"doc-add"}
