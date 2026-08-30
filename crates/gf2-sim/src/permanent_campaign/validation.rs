@@ -16,7 +16,7 @@
 //! backend. Sampling opens a third fresh sampler at ordinal zero after the two
 //! replay samplers.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fmt;
 use std::fs::{self, File, OpenOptions};
@@ -67,17 +67,22 @@ const FROZEN_MANIFEST_PATH: &str =
 const EXACT_ANCHORS_PATH: &str = "dev/benchmarks/permanent_campaign/exact-anchors.csv";
 const BACKEND_EQUIVALENCE_PATH: &str =
     "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv";
-const FROZEN_ANCHORS: &[(u8, u16, u64, u64)] = &[
-    (3, 1, 1, 3),
-    (3, 2, 33, 81),
-    (3, 3, 8_163, 19_683),
-    (3, 4, 17_116_353, 43_046_721),
-    (5, 1, 1, 5),
-    (5, 2, 145, 625),
-    (5, 3, 439_525, 1_953_125),
-    (7, 1, 1, 7),
-    (7, 2, 385, 2_401),
-    (7, 3, 6_188_455, 40_353_607),
+/// The protocol's ten validation anchors, in address order.
+///
+/// These cells are a protocol constant. Their enumerated counts are not: those
+/// come from the committed exact-anchor evidence the preregistration binds by
+/// content, so this tool holds no second copy of them.
+const FROZEN_ANCHOR_CELLS: &[(u8, u16)] = &[
+    (3, 1),
+    (3, 2),
+    (3, 3),
+    (3, 4),
+    (5, 1),
+    (5, 2),
+    (5, 3),
+    (7, 1),
+    (7, 2),
+    (7, 3),
 ];
 
 /// The only stream purpose admitted by validation.
@@ -1502,22 +1507,6 @@ fn validate_frozen_plan(
     {
         return invalid("frozen protocol constants do not match the ten-anchor plan");
     }
-    if plan.anchors.len() != FROZEN_ANCHORS.len() {
-        return invalid("frozen plan must contain exactly ten anchors");
-    }
-    for (spec, &(q, n, zero_count, matrix_count)) in plan.anchors.iter().zip(FROZEN_ANCHORS) {
-        let expected = AnchorSpec {
-            q,
-            n,
-            stream_index: 0,
-            expected_matrix_count: matrix_count,
-            expected_permanent_zero_count: zero_count,
-            expected_determinant_zero_count: determinant_singular_count(q, n),
-        };
-        if *spec != expected {
-            return invalid("frozen anchor order, address, or authority count differs");
-        }
-    }
     for (identity, expected) in [
         (&plan.authorities.protocol, FROZEN_PROTOCOL_PATH),
         (&plan.authorities.manifest, FROZEN_MANIFEST_PATH),
@@ -1531,6 +1520,28 @@ fn validate_frozen_plan(
             return invalid(format!("frozen authority must be {expected}"));
         }
         verify_identity(repository, identity)?;
+    }
+    if plan.anchors.len() != FROZEN_ANCHOR_CELLS.len() {
+        return invalid("frozen plan must contain exactly ten anchors");
+    }
+    let enumerated = read_exact_anchor_authority(repository)?;
+    for (spec, &(q, n)) in plan.anchors.iter().zip(FROZEN_ANCHOR_CELLS) {
+        let Some(&(zero_count, matrix_count)) = enumerated.get(&(q, n)) else {
+            return invalid(format!(
+                "the exact-anchor evidence has no row for q={q} n={n}"
+            ));
+        };
+        let expected = AnchorSpec {
+            q,
+            n,
+            stream_index: 0,
+            expected_matrix_count: matrix_count,
+            expected_permanent_zero_count: zero_count,
+            expected_determinant_zero_count: determinant_singular_count(q, n),
+        };
+        if *spec != expected {
+            return invalid("frozen anchor order, address, or authority count differs");
+        }
     }
     let manifest_path = repository.join(FROZEN_MANIFEST_PATH);
     let manifest_root = manifest_path
@@ -1558,6 +1569,61 @@ fn validate_frozen_plan(
         return invalid("a manifest-selected backend has no supported validation anchor");
     }
     Ok(())
+}
+
+/// Enumerated zero count and universe size for one exact-anchor cell.
+type EnumeratedCounts = (u64, u64);
+
+/// Reads the committed exact-anchor evidence as `(q, n) -> (zeros, universe)`.
+///
+/// The caller verifies this artifact's content identity before this function
+/// consumes it. Comment lines and the column header are skipped; every
+/// remaining row supplies the field order, dimension, zero count, and matrix
+/// count in its first four fields.
+fn read_exact_anchor_authority(
+    repository: &Path,
+) -> Result<BTreeMap<(u8, u16), EnumeratedCounts>, ValidationError> {
+    let bytes = read_bytes(&repository.join(EXACT_ANCHORS_PATH))?;
+    let text = String::from_utf8(bytes)
+        .map_err(|_| ValidationError::InvalidPlan("exact-anchor evidence is not UTF-8".into()))?;
+    let mut rows = BTreeMap::new();
+    for line in text.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with("field_order") {
+            continue;
+        }
+        let mut fields = line.split(',');
+        let mut column = |label: &str| -> Result<u64, ValidationError> {
+            fields
+                .next()
+                .ok_or_else(|| {
+                    ValidationError::InvalidPlan(format!("an exact-anchor row lacks its {label}"))
+                })?
+                .trim()
+                .parse()
+                .map_err(|_| {
+                    ValidationError::InvalidPlan(format!(
+                        "an exact-anchor {label} is not an integer"
+                    ))
+                })
+        };
+        let q = column("field order")?;
+        let n = column("dimension")?;
+        let zero_count = column("zero count")?;
+        let matrix_count = column("matrix count")?;
+        let cell = (
+            u8::try_from(q).map_err(|_| {
+                ValidationError::InvalidPlan("an exact-anchor field order exceeds u8".into())
+            })?,
+            u16::try_from(n).map_err(|_| {
+                ValidationError::InvalidPlan("an exact-anchor dimension exceeds u16".into())
+            })?,
+        );
+        if rows.insert(cell, (zero_count, matrix_count)).is_some() {
+            return invalid("the exact-anchor evidence repeats a cell");
+        }
+    }
+    Ok(rows)
 }
 
 fn validate_frozen_receipt(
