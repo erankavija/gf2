@@ -30,9 +30,9 @@ use sha2::{Digest, Sha256};
 use super::root_fs::CampaignRoot;
 use super::schema::{
     field_summary_file, read_field_summary, read_manifest, shard_record_file, ArtifactPath,
-    ArtifactPathError, Availability, CampaignId, CampaignManifest, CellTerminalState, DatasetFileClass,
-    DatasetLayout, GitRevision, GitRevisionError, Provenance, SchemaError, Sha256Digest,
-    Sha256DigestError, DATASET_HOME, INTEGRITY_FILE, MANIFEST_FILE,
+    ArtifactPathError, Availability, CampaignId, CampaignManifest, CellTerminalState,
+    DatasetFileClass, DatasetLayout, GitRevision, GitRevisionError, Provenance, SchemaError,
+    Sha256Digest, Sha256DigestError, DATASET_HOME, INTEGRITY_FILE, MANIFEST_FILE,
 };
 
 /// Permission for the running binary to publish into one exact campaign.
@@ -534,7 +534,9 @@ pub fn observe_accelerator_identity() -> RuntimeAcceleratorIdentity {
         .ok()
         .map(|value| value.trim().to_owned())
         .filter(|value| !value.is_empty())
-        .map_or(Availability::NotPresent, |value| Availability::Present { value });
+        .map_or(Availability::NotPresent, |value| Availability::Present {
+            value,
+        });
     let model = fs::read_dir("/sys/class/drm")
         .ok()
         .into_iter()
@@ -552,7 +554,9 @@ pub fn observe_accelerator_identity() -> RuntimeAcceleratorIdentity {
                 .map(|value| value.trim().to_owned())
                 .filter(|value| !value.is_empty())
         })
-        .map_or(Availability::NotPresent, |value| Availability::Present { value });
+        .map_or(Availability::NotPresent, |value| Availability::Present {
+            value,
+        });
     RuntimeAcceleratorIdentity { runtime, model }
 }
 

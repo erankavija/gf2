@@ -21,27 +21,26 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use gf2_algebra::permanent::try_visit_permanent_anchor_matrices;
+use gf2_algebra::permanent::{
+    determinant_singular_probability, try_visit_permanent_anchor_matrices,
+};
 use gf2_core::gfp::Fp;
 use gf2_stats::binomial::two_sided_test;
-use gf2_stats::sampler::{
-    FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose,
-};
+use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use super::provenance::{
-    observe_accelerator_identity, observe_cpu_identity, observe_provenance,
-    repository_top_level,
+    observe_accelerator_identity, observe_cpu_identity, observe_provenance, repository_top_level,
 };
 use super::schedule::{
     backend_supports_cell, evaluate_production_determinants, evaluate_validation_sample,
     pool_production_outcome, ProductionBackendEvaluator, ScheduleError,
 };
 use super::schema::{
-    read_manifest, ArtifactIdentity, ArtifactPath, Availability, Backend, Provenance,
-    RngAlgorithm, Sha256Digest, StreamAddress,
+    read_manifest, ArtifactIdentity, ArtifactPath, Availability, Backend, Provenance, RngAlgorithm,
+    Sha256Digest, StreamAddress,
 };
 
 /// Schema written by the committed preregistration.
@@ -56,8 +55,7 @@ pub const FROZEN_VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
 pub const FROZEN_CAMPAIGN_DIRECTORY: &str =
     "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829";
 
-const FROZEN_PROTOCOL_PATH: &str =
-    "dev/simulation_results/permanent-zero-fraction/protocol.md";
+const FROZEN_PROTOCOL_PATH: &str = "dev/simulation_results/permanent-zero-fraction/protocol.md";
 const FROZEN_MANIFEST_PATH: &str =
     "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json";
 const EXACT_ANCHORS_PATH: &str = "dev/benchmarks/permanent_campaign/exact-anchors.csv";
@@ -233,8 +231,7 @@ impl ValidationPreregistration {
             return invalid("replay, sample, and backend batch counts must be nonzero");
         }
         if !self.protocol.exact_test_level.is_finite()
-            || !(0.0 < self.protocol.exact_test_level
-                && self.protocol.exact_test_level <= 1.0)
+            || !(0.0 < self.protocol.exact_test_level && self.protocol.exact_test_level <= 1.0)
         {
             return invalid("exact test level must be finite and in (0, 1]");
         }
@@ -243,8 +240,7 @@ impl ValidationPreregistration {
         }
         let mut backends = BTreeSet::new();
         for backend in &self.protocol.selectable_backends {
-            if !Backend::campaign_inventory().contains(backend)
-                || !backends.insert(backend.name())
+            if !Backend::campaign_inventory().contains(backend) || !backends.insert(backend.name())
             {
                 return invalid("selectable backends must be unique schema backends");
             }
@@ -262,7 +258,10 @@ impl ValidationPreregistration {
         let mut addresses = BTreeSet::new();
         for anchor in &self.anchors {
             if !supported_anchor(anchor.q, anchor.n) {
-                return invalid(format!("unsupported exact anchor q={} n={}", anchor.q, anchor.n));
+                return invalid(format!(
+                    "unsupported exact anchor q={} n={}",
+                    anchor.q, anchor.n
+                ));
             }
             if anchor.stream_index >= (1_u64 << 56)
                 || !addresses.insert((anchor.q, anchor.n, anchor.stream_index))
@@ -271,7 +270,9 @@ impl ValidationPreregistration {
             }
             let expected_total = u64::from(anchor.q)
                 .checked_pow(u32::from(anchor.n) * u32::from(anchor.n))
-                .ok_or_else(|| ValidationError::InvalidPlan("anchor matrix count overflows".into()))?;
+                .ok_or_else(|| {
+                    ValidationError::InvalidPlan("anchor matrix count overflows".into())
+                })?;
             if anchor.expected_matrix_count != expected_total
                 || anchor.expected_permanent_zero_count > expected_total
             {
@@ -291,7 +292,9 @@ impl ValidationPreregistration {
             if !backend_supports_cell(self.protocol.sample_backend, anchor.q, anchor.n) {
                 return invalid(format!(
                     "sample backend {} does not support q={} n={}",
-                    self.protocol.sample_backend.name(), anchor.q, anchor.n
+                    self.protocol.sample_backend.name(),
+                    anchor.q,
+                    anchor.n
                 ));
             }
         }
@@ -428,7 +431,10 @@ pub enum ValidationPhase {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ValidationFailure {
     /// A durable phase marker exists without a terminal record.
-    InterruptedAfterStart { phase: ValidationPhase },
+    InterruptedAfterStart {
+        /// Latest phase whose durable start marker was published.
+        phase: ValidationPhase,
+    },
     /// A production component returned a runtime failure.
     Mechanical {
         /// Phase that failed.
@@ -571,13 +577,7 @@ impl ValidationReceipt {
             }
             validate_anchor_receipt(&self.preregistration.protocol, spec, anchor)?;
         }
-        if self
-            .anchors
-            .iter()
-            .map(|anchor| anchor.finished_at)
-            .max()
-            != Some(self.finished_at)
-        {
+        if self.anchors.iter().map(|anchor| anchor.finished_at).max() != Some(self.finished_at) {
             return invalid("receipt finish time is not the latest terminal anchor");
         }
         let guard_passed = match &self.frozen_artifacts {
@@ -796,7 +796,8 @@ pub fn run_frozen_campaign_validation(
         after,
         status: guard_status,
     });
-    receipt.overall_verdict = combined_verdict(&receipt.anchors, guard_status == PhaseStatus::Passed);
+    receipt.overall_verdict =
+        combined_verdict(&receipt.anchors, guard_status == PhaseStatus::Passed);
     validate_frozen_receipt(repository, &receipt)?;
     Ok(receipt)
 }
@@ -892,10 +893,7 @@ fn run_or_adopt_anchor(
             started_at: now()?,
             phase,
         };
-        let path = state_directory.join(format!(
-            "{stem}.{}.started.json",
-            phase_file_token(phase)
-        ));
+        let path = state_directory.join(format!("{stem}.{}.started.json", phase_file_token(phase)));
         publish_or_adopt(&path, &phase_start, |existing| existing == &phase_start).map(|_| ())
     };
     let outcome = match spec.q {
@@ -944,21 +942,18 @@ where
     } else {
         PhaseStatus::Failed
     };
-    let determinant_status = if exact.production_determinant_zero_count
-        == spec.expected_determinant_zero_count
-    {
-        PhaseStatus::Passed
-    } else {
-        PhaseStatus::Failed
-    };
+    let determinant_status =
+        if exact.production_determinant_zero_count == spec.expected_determinant_zero_count {
+            PhaseStatus::Passed
+        } else {
+            PhaseStatus::Failed
+        };
     let backend_status = if backend_agreements_pass(protocol, spec, &exact) {
         PhaseStatus::Passed
     } else {
         PhaseStatus::Failed
     };
-    if [exact_oracle_status, determinant_status, backend_status]
-        .contains(&PhaseStatus::Failed)
-    {
+    if [exact_oracle_status, determinant_status, backend_status].contains(&PhaseStatus::Failed) {
         return Ok(ValidationAnchorOutcome {
             exact: Some(exact),
             replay: None,
@@ -1234,8 +1229,9 @@ fn backend_agreements_pass(
                                 && agreement.production_permanent_zero_count.is_none()
                                 && agreement.diagnostic.is_none()
                         }
-                        BackendAgreementStatus::Mismatch
-                        | BackendAgreementStatus::Unavailable => false,
+                        BackendAgreementStatus::Mismatch | BackendAgreementStatus::Unavailable => {
+                            false
+                        }
                     }
             })
 }
@@ -1309,8 +1305,8 @@ fn sample(
             "validation sampler returned a mismatched purpose or count".to_owned(),
         ));
     }
-    let null_probability = exact.oracle_permanent_zero_count as f64
-        / exact.enumerated_matrix_count as f64;
+    let null_probability =
+        exact.oracle_permanent_zero_count as f64 / exact.enumerated_matrix_count as f64;
     let test = two_sided_test(
         record.permanent_zero_count,
         record.matrix_count,
@@ -1369,13 +1365,12 @@ fn validate_anchor_receipt(
     } else {
         PhaseStatus::Failed
     };
-    let determinant_status = if exact.production_determinant_zero_count
-        == spec.expected_determinant_zero_count
-    {
-        PhaseStatus::Passed
-    } else {
-        PhaseStatus::Failed
-    };
+    let determinant_status =
+        if exact.production_determinant_zero_count == spec.expected_determinant_zero_count {
+            PhaseStatus::Passed
+        } else {
+            PhaseStatus::Failed
+        };
     let backend_status = if backend_agreements_pass(protocol, spec, exact) {
         PhaseStatus::Passed
     } else {
@@ -1443,7 +1438,9 @@ fn validate_anchor_receipt(
         || sample.matrix_count != protocol.sample_matrix_count
         || sample.permanent_zero_count > sample.matrix_count
     {
-        return invalid("sample counts, purpose, origin, or null disagree with runtime exact evidence");
+        return invalid(
+            "sample counts, purpose, origin, or null disagree with runtime exact evidence",
+        );
     }
     let test = two_sided_test(
         sample.permanent_zero_count,
@@ -1507,7 +1504,10 @@ fn validate_frozen_plan(
         (&plan.authorities.protocol, FROZEN_PROTOCOL_PATH),
         (&plan.authorities.manifest, FROZEN_MANIFEST_PATH),
         (&plan.authorities.exact_anchors, EXACT_ANCHORS_PATH),
-        (&plan.authorities.backend_equivalence, BACKEND_EQUIVALENCE_PATH),
+        (
+            &plan.authorities.backend_equivalence,
+            BACKEND_EQUIVALENCE_PATH,
+        ),
     ] {
         if identity.path.to_string() != expected {
             return invalid(format!("frozen authority must be {expected}"));
@@ -1559,16 +1559,20 @@ fn validate_frozen_receipt(
     {
         return invalid("receipt is not bound to the committed frozen preregistration");
     }
-    let guard = receipt
-        .frozen_artifacts
-        .as_ref()
-        .ok_or_else(|| ValidationError::InvalidPlan("frozen receipt lacks artifact guard".into()))?;
+    let guard = receipt.frozen_artifacts.as_ref().ok_or_else(|| {
+        ValidationError::InvalidPlan("frozen receipt lacks artifact guard".into())
+    })?;
     if guard.before.root.to_string() != FROZEN_CAMPAIGN_DIRECTORY
         || guard.after.root.to_string() != FROZEN_CAMPAIGN_DIRECTORY
     {
         return invalid("frozen artifact guard names the wrong directory");
     }
-    if !receipt.runtime.provenance.compiler_version.starts_with("rustc 1.95.0 ") {
+    if !receipt
+        .runtime
+        .provenance
+        .compiler_version
+        .starts_with("rustc 1.95.0 ")
+    {
         return invalid("frozen validation must be built with Rust 1.95.0");
     }
     Ok(())
@@ -1644,11 +1648,12 @@ fn validate_runtime(runtime: &ValidationRuntime) -> Result<(), ValidationError> 
 }
 
 fn snapshot_frozen_campaign(repository: &Path) -> Result<FrozenArtifactSnapshot, ValidationError> {
-    let root: ArtifactPath = FROZEN_CAMPAIGN_DIRECTORY
-        .parse()
-        .map_err(|error: super::schema::ArtifactPathError| {
-            ValidationError::InvalidPlan(error.to_string())
-        })?;
+    let root: ArtifactPath =
+        FROZEN_CAMPAIGN_DIRECTORY
+            .parse()
+            .map_err(|error: super::schema::ArtifactPathError| {
+                ValidationError::InvalidPlan(error.to_string())
+            })?;
     let absolute = repository.join(FROZEN_CAMPAIGN_DIRECTORY);
     let mut artifacts = Vec::new();
     visit_snapshot(repository, &absolute, &mut artifacts)?;
@@ -1748,10 +1753,7 @@ fn latest_started_phase(
     expected_address: &StreamAddress,
 ) -> Result<ValidationPhase, ValidationError> {
     for phase in [ValidationPhase::Sample, ValidationPhase::Replay] {
-        let path = state_directory.join(format!(
-            "{stem}.{}.started.json",
-            phase_file_token(phase)
-        ));
+        let path = state_directory.join(format!("{stem}.{}.started.json", phase_file_token(phase)));
         if path.exists() {
             let marker: PhaseStart = read_json(&path)?;
             if marker.phase != phase || marker.address != *expected_address {
@@ -1813,13 +1815,17 @@ fn supported_anchor(q: u8, n: u16) -> bool {
     (q == 3 && (1..=4).contains(&n)) || (matches!(q, 5 | 7) && (1..=3).contains(&n))
 }
 
+/// Projects the canonical finite-`n` singular probability to a machine count.
+///
+/// The formula itself lives in `gf2-algebra`; this adapter only narrows the
+/// arbitrary-precision count for a preregistered anchor, whose universe is
+/// bounded by construction.
 fn determinant_singular_count(q: u8, n: u16) -> u64 {
-    let q = u64::from(q);
-    let total = q.pow(u32::from(n) * u32::from(n));
-    let invertible = (0..u32::from(n)).fold(1_u64, |count, exponent| {
-        count * (q.pow(u32::from(n)) - q.pow(exponent))
-    });
-    total - invertible
+    determinant_singular_probability(u64::from(q), usize::from(n))
+        .zero_count()
+        .to_string()
+        .parse()
+        .expect("a supported anchor's singular count fits u64")
 }
 
 fn address(protocol: &ValidationProtocol, spec: &AnchorSpec) -> StreamAddress {
@@ -1857,9 +1863,11 @@ fn digest(bytes: &[u8]) -> Sha256Digest {
 }
 
 fn now() -> Result<UnixTimestamp, ValidationError> {
-    let duration = SystemTime::now().duration_since(UNIX_EPOCH).map_err(|error| {
-        ValidationError::InvalidPlan(format!("system clock precedes Unix epoch: {error}"))
-    })?;
+    let duration = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| {
+            ValidationError::InvalidPlan(format!("system clock precedes Unix epoch: {error}"))
+        })?;
     Ok(UnixTimestamp {
         seconds: duration.as_secs(),
         nanoseconds: duration.subsec_nanos(),
@@ -1889,7 +1897,10 @@ fn create_directory_durable(path: &Path) -> Result<(), ValidationError> {
         path: path.to_owned(),
         source,
     })?;
-    if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+    if let Some(parent) = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
         sync_directory(parent)?;
     }
     sync_directory(path)
@@ -1897,11 +1908,7 @@ fn create_directory_durable(path: &Path) -> Result<(), ValidationError> {
 
 static TEMPORARY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
-fn publish_or_adopt<T, F>(
-    path: &Path,
-    value: &T,
-    compatible: F,
-) -> Result<T, ValidationError>
+fn publish_or_adopt<T, F>(path: &Path, value: &T, compatible: F) -> Result<T, ValidationError>
 where
     T: Clone + DeserializeOwned + Serialize,
     F: Fn(&T) -> bool,
@@ -1963,7 +1970,10 @@ where
     if compatible(&existing) {
         Ok(existing)
     } else {
-        invalid(format!("published {} differs from expected content", path.display()))
+        invalid(format!(
+            "published {} differs from expected content",
+            path.display()
+        ))
     }
 }
 
