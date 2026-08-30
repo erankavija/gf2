@@ -1,9 +1,14 @@
+use gf2_sim::permanent_rare_event::artifact::result::{
+    coverage_result_payload, decode_exact_target_result, target_result_payload,
+    ExactTargetResultV1, EXACT_TARGET_RESULT_SCHEMA_V1,
+};
 use gf2_sim::permanent_rare_event::artifact::*;
 use gf2_stats::weighted::ScaledStudentInterval;
 use num_bigint::BigUint;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Barrier};
 use tempfile::Builder;
 
@@ -523,7 +528,7 @@ fn validated_final_inputs(
         identity,
     )
     .unwrap();
-    let lineage = validate_execution_lineage(
+    let lineage = validate_execution_lineage_fixture(
         identity,
         &[validated_start, validated_terminal],
         &checkpoints,
@@ -697,7 +702,7 @@ fn two_attempt_fixture(
         )
         .unwrap(),
     ];
-    let lineage = validate_execution_lineage(identity, &handles, &checkpoints).unwrap();
+    let lineage = validate_execution_lineage_fixture(identity, &handles, &checkpoints).unwrap();
     (phases, checkpoints, lineage)
 }
 
@@ -1629,6 +1634,83 @@ fn validated_attempt(
     validate_attempt_artifact_files(&files.artifact_json, &files.artifact_sha256, identity).unwrap()
 }
 
+fn checkpoint_artifact(envelope: &RareEventArtifactEnvelopeV1) -> CheckpointArtifactV1 {
+    let RareEventPayloadV1::TrajectoryCheckpoint(payload) = &envelope.payload else {
+        unreachable!()
+    };
+    CheckpointArtifactV1::new((**payload).clone()).unwrap()
+}
+
+fn attempt_receipt(envelope: &RareEventArtifactEnvelopeV1) -> ExecutionAttemptReceiptV1 {
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &envelope.payload else {
+        unreachable!()
+    };
+    (**payload).clone()
+}
+
+fn start_artifact(envelope: &RareEventArtifactEnvelopeV1) -> AttemptStartArtifactV1 {
+    AttemptStartArtifactV1::new(attempt_receipt(envelope)).unwrap()
+}
+
+fn terminal_artifact(envelope: &RareEventArtifactEnvelopeV1) -> AttemptTerminalArtifactV1 {
+    AttemptTerminalArtifactV1::new(attempt_receipt(envelope)).unwrap()
+}
+
+fn dataset_directory(root: &tempfile::TempDir, identity: &RareEventDatasetIdentityV1) -> PathBuf {
+    let dataset = root.path().join(dataset_id(identity).unwrap());
+    fs::create_dir(&dataset).unwrap();
+    dataset
+}
+
+fn destination_parent(dataset: &Path, destination: &[String]) -> PathBuf {
+    destination[..destination.len() - 1]
+        .iter()
+        .fold(dataset.to_owned(), |path, component| path.join(component))
+}
+
+const PUBLICATION_CUTS: [PublicationCutPoint; 8] = [
+    PublicationCutPoint::BeforeFileCreation,
+    PublicationCutPoint::AfterJsonWrite,
+    PublicationCutPoint::AfterJsonSync,
+    PublicationCutPoint::AfterSidecarWrite,
+    PublicationCutPoint::AfterSidecarSync,
+    PublicationCutPoint::AfterStagingDirectorySync,
+    PublicationCutPoint::BeforeNoReplace,
+    PublicationCutPoint::AfterNoReplace,
+];
+
+fn assert_cut_point_recovery<A: PublishableArtifact>(
+    prefix: &str,
+    identity: &RareEventDatasetIdentityV1,
+    artifact: &A,
+) {
+    let destination = artifact.destination().unwrap();
+    let leaf = destination.last().unwrap().clone();
+    for (cut_index, cut) in PUBLICATION_CUTS.into_iter().enumerate() {
+        let root = artifact_tempdir(&format!("{prefix}{cut_index}-"));
+        let dataset = dataset_directory(&root, identity);
+        let result = publish_artifact_at_cutpoint(&dataset, artifact, cut);
+        assert!(result.is_err(), "cut {cut:?} did not interrupt publication");
+        let parent = destination_parent(&dataset, &destination);
+        let recovered =
+            recover_artifact_parent(&parent, std::slice::from_ref(&leaf), identity).unwrap();
+        if cut == PublicationCutPoint::AfterNoReplace {
+            assert_eq!(recovered.len(), 1);
+            assert_eq!(
+                recovered[0].digest(),
+                encode_artifact_files(&artifact.envelope()).unwrap().digest
+            );
+        } else {
+            assert!(recovered.is_empty());
+            assert_eq!(
+                fs::read_dir(&parent).unwrap().count(),
+                1,
+                "cut {cut:?} lost its diagnostic staging dir"
+            );
+        }
+    }
+}
+
 fn artifact_tempdir(prefix: &str) -> tempfile::TempDir {
     fs::create_dir_all("target").unwrap();
     Builder::new().prefix(prefix).tempdir_in("target").unwrap()
@@ -1637,65 +1719,33 @@ fn artifact_tempdir(prefix: &str) -> tempfile::TempDir {
 #[test]
 fn rare_event_artifact_partial_publish_recovery() {
     let identity = identity(ScientificIdentityV1::target());
-    let checkpoint = target_checkpoint(identity.clone());
-    let start = start_envelope(identity.clone(), not_used());
-    let cuts = [
-        PublicationCutPoint::BeforeFileCreation,
-        PublicationCutPoint::AfterJsonWrite,
-        PublicationCutPoint::AfterJsonSync,
-        PublicationCutPoint::AfterSidecarWrite,
-        PublicationCutPoint::AfterSidecarSync,
-        PublicationCutPoint::AfterStagingDirectorySync,
-        PublicationCutPoint::BeforeNoReplace,
-        PublicationCutPoint::AfterNoReplace,
-    ];
+    let checkpoint_envelope = target_checkpoint(identity.clone());
+    let checkpoint = checkpoint_artifact(&checkpoint_envelope);
+    let start_envelope = start_envelope(identity.clone(), not_used());
+    let start = start_artifact(&start_envelope);
 
-    for (case, (name, envelope)) in [("0000", &checkpoint), ("start", &start)]
-        .into_iter()
-        .enumerate()
-    {
-        for (cut_index, cut) in cuts.into_iter().enumerate() {
-            let root = artifact_tempdir(&format!("rare-event-cut-{case}-{cut_index}-"));
-            let parent = root.path().join("publication");
-            fs::create_dir(&parent).unwrap();
-            let result = publish_artifact_dir_at_cutpoint(&parent, name, envelope, cut);
-            assert!(result.is_err(), "cut {cut:?} did not interrupt publication");
-            let expected = vec![name.to_owned()];
-            let recovered = recover_artifact_parent(&parent, &expected, &identity).unwrap();
-            if cut == PublicationCutPoint::AfterNoReplace {
-                assert_eq!(recovered.len(), 1);
-                assert_eq!(
-                    recovered[0].digest(),
-                    encode_artifact_files(envelope).unwrap().digest
-                );
-            } else {
-                assert!(recovered.is_empty());
-                let entries: Vec<_> = fs::read_dir(&parent).unwrap().collect();
-                assert_eq!(
-                    entries.len(),
-                    1,
-                    "cut {cut:?} lost its diagnostic staging dir"
-                );
-            }
-        }
-    }
+    assert_cut_point_recovery("rare-event-cut-block-", &identity, &checkpoint);
+    assert_cut_point_recovery("rare-event-cut-start-", &identity, &start);
 
     let probe = artifact_tempdir("rare-event-atomic-probe-");
     verify_atomic_publication_support(probe.path()).unwrap();
     assert_eq!(fs::read_dir(probe.path()).unwrap().count(), 0);
 
     let strict = artifact_tempdir("rare-event-strict-directory-");
-    let published = publish_artifact_dir(strict.path(), "0000", &checkpoint).unwrap();
+    let strict_dataset = dataset_directory(&strict, &identity);
+    let published = publish_artifact(&strict_dataset, &checkpoint).unwrap();
     assert_eq!(fs::read_dir(published.path()).unwrap().count(), 2);
+    let block_parent = destination_parent(&strict_dataset, &checkpoint.destination().unwrap());
     fs::write(published.path().join("extra"), b"unexpected").unwrap();
     assert!(verify_artifact_dir(published.path(), &identity).is_err());
-    assert!(recover_artifact_parent(strict.path(), &["0000".into()], &identity).is_err());
+    assert!(recover_artifact_parent(&block_parent, &["0000".into()], &identity).is_err());
+    assert!(reconstruct_published_checkpoints(&strict_dataset, &identity).is_err());
 
     let corrupt = artifact_tempdir("rare-event-corrupt-winner-");
-    let published = publish_artifact_dir(corrupt.path(), "0000", &checkpoint).unwrap();
-    assert!(publish_artifact_dir_at_cutpoint(
-        corrupt.path(),
-        "0000",
+    let corrupt_dataset = dataset_directory(&corrupt, &identity);
+    let published = publish_artifact(&corrupt_dataset, &checkpoint).unwrap();
+    assert!(publish_artifact_at_cutpoint(
+        &corrupt_dataset,
         &checkpoint,
         PublicationCutPoint::BeforeNoReplace,
     )
@@ -1703,21 +1753,22 @@ fn rare_event_artifact_partial_publish_recovery() {
     let mut corrupt_json = fs::read(published.path().join(ARTIFACT_JSON)).unwrap();
     corrupt_json[0] ^= 1;
     fs::write(published.path().join(ARTIFACT_JSON), corrupt_json).unwrap();
-    assert!(recover_artifact_parent(corrupt.path(), &["0000".into()], &identity).is_err());
-    assert!(publish_artifact_dir(corrupt.path(), "0000", &checkpoint).is_err());
-    assert!(fs::read_dir(corrupt.path()).unwrap().count() >= 2);
+    let corrupt_parent = destination_parent(&corrupt_dataset, &checkpoint.destination().unwrap());
+    assert!(recover_artifact_parent(&corrupt_parent, &["0000".into()], &identity).is_err());
+    assert!(publish_artifact(&corrupt_dataset, &checkpoint).is_err());
+    assert!(fs::read_dir(&corrupt_parent).unwrap().count() >= 2);
 
     let identical = artifact_tempdir("rare-event-identical-race-");
-    let parent = Arc::new(identical.path().to_owned());
+    let identical_dataset = Arc::new(dataset_directory(&identical, &identity));
     let barrier = Arc::new(Barrier::new(2));
     let threads: Vec<_> = (0..2)
         .map(|_| {
-            let parent = Arc::clone(&parent);
+            let dataset = Arc::clone(&identical_dataset);
             let barrier = Arc::clone(&barrier);
             let checkpoint = checkpoint.clone();
             std::thread::spawn(move || {
                 barrier.wait();
-                publish_artifact_dir(&parent, "0000", &checkpoint)
+                publish_artifact(&dataset, &checkpoint)
             })
         })
         .collect();
@@ -1726,18 +1777,26 @@ fn rare_event_artifact_partial_publish_recovery() {
         .map(|thread| thread.join().unwrap())
         .collect();
     assert!(results.iter().all(Result::is_ok));
+    let identical_parent =
+        destination_parent(&identical_dataset, &checkpoint.destination().unwrap());
     assert_eq!(
-        recover_artifact_parent(&parent, &["0000".into()], &identity)
+        recover_artifact_parent(&identical_parent, &["0000".into()], &identity)
             .unwrap()
             .len(),
         1
     );
-    assert_eq!(fs::read_dir(&*parent).unwrap().count(), 1);
+    assert_eq!(fs::read_dir(&identical_parent).unwrap().count(), 1);
+    assert_eq!(
+        reconstruct_published_checkpoints(&identical_dataset, &identity)
+            .unwrap()
+            .len(),
+        1
+    );
 
     let conflicting = artifact_tempdir("rare-event-conflicting-race-");
-    let parent = Arc::new(conflicting.path().to_owned());
+    let conflicting_dataset = Arc::new(dataset_directory(&conflicting, &identity));
     let barrier = Arc::new(Barrier::new(2));
-    let mut different_start = start.clone();
+    let mut different_start = start_envelope.clone();
     let RareEventPayloadV1::ExecutionAttempt(payload) = &mut different_start.payload else {
         unreachable!()
     };
@@ -1748,15 +1807,15 @@ fn rare_event_artifact_partial_publish_recovery() {
         unreachable!()
     };
     *start_receipt_utc = "2026-08-30T08:00:02.000000001Z".into();
-    let envelopes = [start.clone(), different_start];
-    let threads: Vec<_> = envelopes
+    let artifacts = [start.clone(), start_artifact(&different_start)];
+    let threads: Vec<_> = artifacts
         .into_iter()
-        .map(|envelope| {
-            let parent = Arc::clone(&parent);
+        .map(|artifact| {
+            let dataset = Arc::clone(&conflicting_dataset);
             let barrier = Arc::clone(&barrier);
             std::thread::spawn(move || {
                 barrier.wait();
-                publish_artifact_dir(&parent, "start", &envelope)
+                publish_artifact(&dataset, &artifact)
             })
         })
         .collect();
@@ -1766,104 +1825,33 @@ fn rare_event_artifact_partial_publish_recovery() {
         .collect();
     assert_eq!(results.iter().filter(|result| result.is_ok()).count(), 1);
     assert_eq!(results.iter().filter(|result| result.is_err()).count(), 1);
+    let start_parent = destination_parent(&conflicting_dataset, &start.destination().unwrap());
     assert_eq!(
-        recover_artifact_parent(&parent, &["start".into()], &identity)
+        recover_artifact_parent(&start_parent, &["start".into()], &identity)
             .unwrap()
             .len(),
         1
     );
-    assert_eq!(fs::read_dir(&*parent).unwrap().count(), 2);
+    assert_eq!(fs::read_dir(&start_parent).unwrap().count(), 2);
 
     let invalid_name = artifact_tempdir("rare-event-invalid-name-");
     fs::create_dir(invalid_name.path().join("unexpected")).unwrap();
     assert!(recover_artifact_parent(invalid_name.path(), &["start".into()], &identity).is_err());
 
     let finished_root = artifact_tempdir("rare-event-finished-attempt-");
-    let dataset_dir = finished_root.path().join(dataset_id(&identity).unwrap());
-    fs::create_dir(&dataset_dir).unwrap();
-    let validated_start = begin_attempt(&dataset_dir, &start, &[], &[]).unwrap();
-    let terminal = terminal_envelope(identity.clone(), &start, false, vec![]);
-    finish_attempt(&dataset_dir, &validated_start, &terminal, &[]).unwrap();
-    assert!(begin_attempt(&dataset_dir, &start, &[], &[]).is_err());
-
-    let recovery_root = artifact_tempdir("rare-event-recovered-attempt-");
-    let recovery_dataset = recovery_root.path().join(dataset_id(&identity).unwrap());
-    fs::create_dir(&recovery_dataset).unwrap();
-    let recovery_start = begin_attempt(&recovery_dataset, &start, &[], &[]).unwrap();
-    let live = RecoveryTerminalV1 {
-        observation_utc: "2026-08-30T08:00:04.000000000Z".into(),
-        launcher_sha256: digest(0x31),
-        liveness: process_liveness_observation(
-            123,
-            Some(123),
-            Some("fixture-start-token".into()),
-            Some("fixture-boot".into()),
-        )
-        .unwrap(),
-    };
-    assert!(recover_interrupted_attempt(&recovery_dataset, &recovery_start, live, &[]).is_err());
-    assert!(!recovery_dataset
-        .join("attempts/000000000000/terminal")
-        .exists());
-
-    let mut normalized_mismatch = process_liveness_observation(
-        123,
-        Some(123),
-        Some("reused-start-token".into()),
-        Some("fixture-boot".into()),
-    )
-    .unwrap();
-    normalized_mismatch.observed_boot_identity = Some("substituted-boot".into());
-    assert!(recover_interrupted_attempt(
-        &recovery_dataset,
-        &recovery_start,
-        RecoveryTerminalV1 {
-            observation_utc: "2026-08-30T08:00:04.000000000Z".into(),
-            launcher_sha256: digest(0x31),
-            liveness: normalized_mismatch,
-        },
-        &[],
-    )
-    .is_err());
-
-    let reused = RecoveryTerminalV1 {
-        observation_utc: "2026-08-30T08:00:04.000000000Z".into(),
-        launcher_sha256: digest(0x31),
-        liveness: process_liveness_observation(
-            123,
-            Some(123),
-            Some("reused-start-token".into()),
-            Some("fixture-boot".into()),
-        )
-        .unwrap(),
-    };
-    recover_interrupted_attempt(&recovery_dataset, &recovery_start, reused, &[]).unwrap();
-    let terminal = verify_artifact_dir(
-        &recovery_dataset.join("attempts/000000000000/terminal"),
-        &identity,
-    )
-    .unwrap();
-    let RareEventPayloadV1::ExecutionAttempt(payload) = &terminal.envelope().payload else {
-        unreachable!()
-    };
-    let AttemptPhaseV1::Terminal {
-        end_time_meaning,
-        outcome_observer,
-        outcome,
-        ..
-    } = &payload.phase
-    else {
-        unreachable!()
-    };
-    assert_eq!(*end_time_meaning, EndTimeMeaningV1::ResumeObservation);
-    assert!(matches!(
-        outcome_observer,
-        OutcomeObserverV1::ResumingLauncher { .. }
+    let dataset_dir = dataset_directory(&finished_root, &identity);
+    let validated_start = begin_attempt(&dataset_dir, &start).unwrap();
+    let terminal = terminal_artifact(&terminal_envelope(
+        identity.clone(),
+        &start_envelope,
+        false,
+        vec![],
     ));
-    assert!(matches!(
-        outcome,
-        AttemptOutcomeV1::TerminationUnobservedOnResume {}
-    ));
+    finish_attempt(&dataset_dir, &validated_start, &terminal).unwrap();
+    assert!(begin_attempt(&dataset_dir, &start).is_err());
+    let attempts = reconstruct_attempt_chain(&dataset_dir, &identity).unwrap();
+    assert_eq!(attempts.completed_phases().len(), 2);
+    assert!(attempts.open_start().is_none());
 }
 
 #[test]
@@ -1889,7 +1877,7 @@ fn rare_event_execution_attempt_lineage_rejected() {
     let terminal = terminal_envelope(identity.clone(), &start, false, references.clone());
     let valid_start = validated_attempt(&start, &identity);
     let valid_terminal = validated_attempt(&terminal, &identity);
-    validate_execution_lineage(
+    validate_execution_lineage_fixture(
         &identity,
         &[valid_start.clone(), valid_terminal.clone()],
         &checkpoints,
@@ -1914,17 +1902,18 @@ fn rare_event_execution_attempt_lineage_rejected() {
     *monotonic_elapsed_ns = None;
     *outcome_observer = OutcomeObserverV1::ResumingLauncher {
         launcher_sha256: digest(0x31),
-        liveness_evidence: process_liveness_observation(
+        liveness_evidence: process_liveness_evidence_fixture(
+            "2026-08-30T08:00:04.000000000Z",
             123,
-            Some(123),
-            Some("reused-start-token".into()),
-            Some("fixture-boot".into()),
+            ProcessOccupantV1::Present {
+                process_start_token: "reused-start-token".into(),
+                boot_identity: "fixture-boot".into(),
+            },
         )
-        .unwrap()
-        .evidence,
+        .unwrap(),
     };
     *outcome = AttemptOutcomeV1::TerminationUnobservedOnResume {};
-    validate_execution_lineage(
+    validate_execution_lineage_fixture(
         &identity,
         &[
             valid_start.clone(),
@@ -1945,16 +1934,17 @@ fn rare_event_execution_attempt_lineage_rejected() {
     };
     *outcome_observer = OutcomeObserverV1::ResumingLauncher {
         launcher_sha256: digest(0x31),
-        liveness_evidence: process_liveness_observation(
+        liveness_evidence: process_liveness_evidence_fixture(
+            "2026-08-30T08:00:04.000000000Z",
             123,
-            Some(123),
-            Some("fixture-start-token".into()),
-            Some("fixture-boot".into()),
+            ProcessOccupantV1::Present {
+                process_start_token: "fixture-start-token".into(),
+                boot_identity: "fixture-boot".into(),
+            },
         )
-        .unwrap()
-        .evidence,
+        .unwrap(),
     };
-    assert!(validate_execution_lineage(
+    assert!(validate_execution_lineage_fixture(
         &identity,
         &[
             valid_start.clone(),
@@ -1980,7 +1970,7 @@ fn rare_event_execution_attempt_lineage_rejected() {
             valid_terminal.clone(),
         ],
     ] {
-        assert!(validate_execution_lineage(&identity, &phases, &checkpoints).is_err());
+        assert!(validate_execution_lineage_fixture(&identity, &phases, &checkpoints).is_err());
     }
 
     let mut omitted_terminal = terminal_envelope(identity.clone(), &start, false, references);
@@ -1994,7 +1984,7 @@ fn rare_event_execution_attempt_lineage_rejected() {
         unreachable!()
     };
     checkpoint_refs.pop();
-    assert!(validate_execution_lineage(
+    assert!(validate_execution_lineage_fixture(
         &identity,
         &[
             valid_start.clone(),
@@ -2018,7 +2008,7 @@ fn rare_event_execution_attempt_lineage_rejected() {
         fixture_exponent_histograms(&identity, 2_048),
     )
     .unwrap();
-    assert!(validate_execution_lineage(
+    assert!(validate_execution_lineage_fixture(
         &identity,
         &[valid_start.clone(), valid_terminal.clone()],
         &mismatched_checkpoints,
@@ -2039,15 +2029,40 @@ fn rare_event_execution_attempt_lineage_rejected() {
         serde_json::json!("substituted-gpu");
     assert!(decode_envelope(&value_bytes(normalized_gpu_mismatch)).is_err());
 
-    let mut normalized_liveness_mismatch = process_liveness_observation(
-        123,
-        Some(123),
-        Some("reused-start-token".into()),
-        Some("fixture-boot".into()),
-    )
-    .unwrap();
-    normalized_liveness_mismatch.observed_boot_identity = Some("substituted-boot".into());
-    assert!(validate_process_liveness_observation(&normalized_liveness_mismatch).is_err());
+    let observed_liveness = observe_process_liveness(std::process::id()).unwrap();
+    validate_process_liveness_observation(&observed_liveness).unwrap();
+    assert_eq!(observed_liveness.recorded_process_id(), std::process::id());
+    assert!(matches!(
+        observed_liveness.occupant(),
+        ProcessOccupantV1::Present { .. }
+    ));
+    let substituted = OutcomeObserverV1::ResumingLauncher {
+        launcher_sha256: digest(0x31),
+        liveness_evidence: ObservationEvidenceV1 {
+            source: "gf2.process-liveness-observation-json/v1".into(),
+            evidence_hex: "7b7d".into(),
+            evidence_sha256: sha256_hex(b"{}"),
+        },
+    };
+    let mut substituted_liveness = terminal.clone();
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut substituted_liveness.payload else {
+        unreachable!()
+    };
+    let AttemptPhaseV1::Terminal {
+        end_time_meaning,
+        monotonic_elapsed_ns,
+        outcome_observer,
+        outcome,
+        ..
+    } = &mut payload.phase
+    else {
+        unreachable!()
+    };
+    *end_time_meaning = EndTimeMeaningV1::ResumeObservation;
+    *monotonic_elapsed_ns = None;
+    *outcome_observer = substituted;
+    *outcome = AttemptOutcomeV1::TerminationUnobservedOnResume {};
+    assert!(encode_artifact_files(&substituted_liveness).is_err());
 
     let mut wrong_start_link = terminal.clone();
     let RareEventPayloadV1::ExecutionAttempt(payload) = &mut wrong_start_link.payload else {
@@ -2061,7 +2076,7 @@ fn rare_event_execution_attempt_lineage_rejected() {
         unreachable!()
     };
     *attempt_start_sha256 = digest(0xfe);
-    assert!(validate_execution_lineage(
+    assert!(validate_execution_lineage_fixture(
         &identity,
         &[valid_start, validated_attempt(&wrong_start_link, &identity)],
         &checkpoints,
@@ -2210,4 +2225,563 @@ fn rare_event_artifact_final_receipt_regeneration() {
     }
     assert_eq!(coverage_provenance.len(), 27);
     assert_eq!(coverage_receipts.len(), 6);
+}
+
+fn start_envelope_with_process(
+    identity: RareEventDatasetIdentityV1,
+    process_id: u32,
+    process_start_token: &str,
+    boot_identity: &str,
+) -> RareEventArtifactEnvelopeV1 {
+    let mut envelope = start_envelope(identity, not_used());
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut envelope.payload else {
+        unreachable!()
+    };
+    let AttemptPhaseV1::Start { invocation, .. } = &mut payload.phase else {
+        unreachable!()
+    };
+    invocation.process_id = process_id;
+    invocation.process_start_token = process_start_token.to_owned();
+    invocation.boot_identity = boot_identity.to_owned();
+    envelope
+}
+
+fn linked_target_checkpoint(
+    identity: &RareEventDatasetIdentityV1,
+    attempt_id: &str,
+    attempt_start_sha256: &str,
+    block_index: u16,
+) -> TrajectoryCheckpointV1 {
+    let run_address = RunAddressV1::Target { run: 0 };
+    let trajectory_start = u32::from(block_index) * 256;
+    let trajectory_end = trajectory_start + 256;
+    let records = (trajectory_start..trajectory_end)
+        .map(|trajectory| TargetTrajectoryRecordV1 {
+            run: 0,
+            trajectory,
+            stream_index: u64::from(trajectory),
+            exponent: trajectory % 3073,
+        })
+        .collect();
+    TrajectoryCheckpointV1 {
+        dataset_id: dataset_id(identity).unwrap(),
+        run_id: run_id(identity, &run_address).unwrap(),
+        dataset_identity: identity.clone(),
+        run_address,
+        block_index,
+        trajectory_start,
+        trajectory_end,
+        attempt_id: attempt_id.to_owned(),
+        attempt_start_sha256: attempt_start_sha256.to_owned(),
+        producer: ProducerBackendV1::Cpu {},
+        accelerator_observation_sha256: sha256_hex(&canonical_bytes(&not_used()).unwrap()),
+        records: TrajectoryRecordsV1::Target(records),
+    }
+}
+
+/// Every destination is derived from its payload, so no caller can place one
+/// artifact kind or attempt phase under another's name.
+#[test]
+fn rare_event_destinations_bind_payload_kind_and_phase() {
+    let target = identity(ScientificIdentityV1::target());
+    let coverage = identity(ScientificIdentityV1::coverage());
+
+    let target_block = checkpoint_artifact(&target_checkpoint(target.clone()));
+    assert_eq!(
+        target_block.destination().unwrap(),
+        vec!["blocks", "target", "00", "0000"]
+    );
+    assert_eq!(
+        CheckpointArtifactV1::ARTIFACT_KIND,
+        ArtifactKindV1::TrajectoryCheckpoint
+    );
+
+    let coverage_block = checkpoint_artifact(&coverage_checkpoint(coverage.clone()));
+    assert_eq!(
+        coverage_block.destination().unwrap(),
+        vec!["blocks", "coverage", "q3", "b000", "r00", "0000"]
+    );
+
+    let start_envelope = start_envelope(target.clone(), not_used());
+    let start = start_artifact(&start_envelope);
+    assert_eq!(
+        start.destination().unwrap(),
+        vec!["attempts", "000000000000", "start"]
+    );
+    assert_eq!(
+        AttemptStartArtifactV1::ARTIFACT_KIND,
+        ArtifactKindV1::ExecutionAttempt
+    );
+    let terminal_envelope = terminal_envelope(target.clone(), &start_envelope, false, vec![]);
+    let terminal = terminal_artifact(&terminal_envelope);
+    assert_eq!(
+        terminal.destination().unwrap(),
+        vec!["attempts", "000000000000", "terminal"]
+    );
+
+    // A receipt cannot be bound to the other phase's destination type.
+    assert!(AttemptStartArtifactV1::new(attempt_receipt(&terminal_envelope)).is_err());
+    assert!(AttemptTerminalArtifactV1::new(attempt_receipt(&start_envelope)).is_err());
+
+    let RareEventPayloadV1::TargetCrossCheck(target_receipt) = target_final(target.clone()).payload
+    else {
+        unreachable!()
+    };
+    let target_final = TargetReceiptArtifactV1::new(*target_receipt).unwrap();
+    assert_eq!(target_final.destination().unwrap(), vec!["target-receipt"]);
+    assert_eq!(
+        TargetReceiptArtifactV1::ARTIFACT_KIND,
+        ArtifactKindV1::TargetCrossCheck
+    );
+    let RareEventPayloadV1::CoverageValidation(coverage_receipt) =
+        coverage_final(coverage.clone()).payload
+    else {
+        unreachable!()
+    };
+    let coverage_final = CoverageReceiptArtifactV1::new(*coverage_receipt).unwrap();
+    assert_eq!(
+        coverage_final.destination().unwrap(),
+        vec!["coverage-validation-receipt"]
+    );
+    assert_eq!(
+        CoverageReceiptArtifactV1::ARTIFACT_KIND,
+        ArtifactKindV1::CoverageValidation
+    );
+
+    // A payload published into a dataset it does not belong to is refused.
+    let root = artifact_tempdir("rare-event-destination-identity-");
+    let target_dataset = dataset_directory(&root, &target);
+    assert!(publish_artifact(&target_dataset, &coverage_block).is_err());
+    publish_artifact(&target_dataset, &target_block).unwrap();
+    assert!(target_dataset
+        .join("blocks/target/00/0000")
+        .join(ARTIFACT_JSON)
+        .is_file());
+}
+
+/// Every lookup below a pinned dataset root refuses a symbolic link, so a
+/// swapped name cannot redirect a published or verified artifact.
+#[test]
+fn rare_event_publication_refuses_symlinked_boundaries() {
+    let identity = identity(ScientificIdentityV1::target());
+    let checkpoint = checkpoint_artifact(&target_checkpoint(identity.clone()));
+
+    let root = artifact_tempdir("rare-event-symlink-root-");
+    let real = root.path().join("real");
+    fs::create_dir(&real).unwrap();
+    let linked_dataset = root.path().join(dataset_id(&identity).unwrap());
+    std::os::unix::fs::symlink(&real, &linked_dataset).unwrap();
+    assert!(publish_artifact(&linked_dataset, &checkpoint).is_err());
+    assert_eq!(fs::read_dir(&real).unwrap().count(), 0);
+
+    let component = artifact_tempdir("rare-event-symlink-component-");
+    let dataset = dataset_directory(&component, &identity);
+    let decoy = component.path().join("decoy");
+    fs::create_dir(&decoy).unwrap();
+    fs::create_dir(dataset.join("blocks")).unwrap();
+    std::os::unix::fs::symlink(&decoy, dataset.join("blocks").join("target")).unwrap();
+    assert!(publish_artifact(&dataset, &checkpoint).is_err());
+    assert!(reconstruct_published_checkpoints(&dataset, &identity).is_err());
+    assert_eq!(fs::read_dir(&decoy).unwrap().count(), 0);
+
+    // Byte-identical content reached through a symbolic link is still refused.
+    let file_root = artifact_tempdir("rare-event-symlink-file-");
+    let file_dataset = dataset_directory(&file_root, &identity);
+    let published = publish_artifact(&file_dataset, &checkpoint).unwrap();
+    let elsewhere = file_root.path().join("elsewhere.json");
+    fs::copy(published.path().join(ARTIFACT_JSON), &elsewhere).unwrap();
+    fs::remove_file(published.path().join(ARTIFACT_JSON)).unwrap();
+    std::os::unix::fs::symlink(&elsewhere, published.path().join(ARTIFACT_JSON)).unwrap();
+    assert!(verify_artifact_dir(published.path(), &identity).is_err());
+    assert!(reconstruct_published_checkpoints(&file_dataset, &identity).is_err());
+
+    // A whole published directory swapped for a link to identical content.
+    let dir_root = artifact_tempdir("rare-event-symlink-directory-");
+    let dir_dataset = dataset_directory(&dir_root, &identity);
+    let published = publish_artifact(&dir_dataset, &checkpoint).unwrap();
+    let twin = dir_root.path().join("twin");
+    fs::create_dir(&twin).unwrap();
+    for name in [ARTIFACT_JSON, ARTIFACT_SIDECAR] {
+        fs::copy(published.path().join(name), twin.join(name)).unwrap();
+        fs::remove_file(published.path().join(name)).unwrap();
+    }
+    fs::remove_dir(published.path()).unwrap();
+    std::os::unix::fs::symlink(&twin, published.path()).unwrap();
+    assert!(verify_artifact_dir(published.path(), &identity).is_err());
+    assert!(reconstruct_published_checkpoints(&dir_dataset, &identity).is_err());
+}
+
+/// A directory component swapped for a symbolic link while publication runs
+/// never diverts an artifact: the pinned descriptor, not the name, is used.
+#[test]
+fn rare_event_publication_refuses_concurrent_symlink_swap() {
+    let identity = identity(ScientificIdentityV1::target());
+    let start = start_artifact(&start_envelope(identity.clone(), not_used()));
+    let root = artifact_tempdir("rare-event-symlink-race-");
+    let dataset = dataset_directory(&root, &identity);
+    let decoy = root.path().join("decoy");
+    fs::create_dir(&decoy).unwrap();
+    let attempts = dataset.join("attempts");
+    fs::create_dir(&attempts).unwrap();
+    let ordinal = attempts.join("000000000000");
+    fs::create_dir(&ordinal).unwrap();
+
+    let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let adversary = {
+        let stop = Arc::clone(&stop);
+        let ordinal = ordinal.clone();
+        let parked = attempts.join("parked");
+        let decoy = decoy.clone();
+        std::thread::spawn(move || {
+            while !stop.load(std::sync::atomic::Ordering::Relaxed) {
+                if fs::rename(&ordinal, &parked).is_ok() {
+                    let _ = std::os::unix::fs::symlink(&decoy, &ordinal);
+                    let _ = fs::remove_file(&ordinal);
+                    let _ = fs::rename(&parked, &ordinal);
+                }
+            }
+        })
+    };
+    for _ in 0..300 {
+        let _ = publish_artifact(&dataset, &start);
+    }
+    stop.store(true, std::sync::atomic::Ordering::Relaxed);
+    adversary.join().unwrap();
+    assert_eq!(
+        fs::read_dir(&decoy).unwrap().count(),
+        0,
+        "a symbolic-link swap diverted publication into the decoy directory"
+    );
+    publish_artifact(&dataset, &start).unwrap();
+}
+
+/// Recovery reads the PID, its occupant's start token, the boot identity, and
+/// the observation time from the operating system at the recovery barrier.
+#[test]
+fn rare_event_recovery_observes_os_process_liveness() {
+    let identity = identity(ScientificIdentityV1::target());
+    let launcher = digest(0x31);
+
+    let mut child = std::process::Command::new("sleep")
+        .arg("30")
+        .spawn()
+        .expect("a POSIX sleep child");
+    let child_identity = observe_process_identity(child.id()).unwrap().unwrap();
+    assert_eq!(child_identity.process_id(), child.id());
+
+    let live_root = artifact_tempdir("rare-event-live-child-");
+    let live_dataset = dataset_directory(&live_root, &identity);
+    let live_start = start_artifact(&start_envelope_with_process(
+        identity.clone(),
+        child.id(),
+        child_identity.process_start_token(),
+        child_identity.boot_identity(),
+    ));
+    let live_validated = begin_attempt(&live_dataset, &live_start).unwrap();
+    let refusal =
+        recover_interrupted_attempt(&live_dataset, &live_validated, &launcher).unwrap_err();
+    assert!(
+        matches!(refusal, ArtifactError::Liveness(_)),
+        "live child did not refuse recovery: {refusal}"
+    );
+    assert!(!live_dataset.join("attempts/000000000000/terminal").exists());
+
+    child.kill().unwrap();
+    child.wait().unwrap();
+    let before = observe::observation_utc_now().unwrap();
+    let recovered = recover_interrupted_attempt(&live_dataset, &live_validated, &launcher).unwrap();
+    let after = observe::observation_utc_now().unwrap();
+    let AttemptPhaseV1::Terminal {
+        end_utc,
+        end_time_meaning,
+        outcome_observer,
+        outcome,
+        ..
+    } = &recovered.payload().phase
+    else {
+        unreachable!()
+    };
+    assert_eq!(*end_time_meaning, EndTimeMeaningV1::ResumeObservation);
+    assert!(matches!(
+        outcome,
+        AttemptOutcomeV1::TerminationUnobservedOnResume {}
+    ));
+    assert!(
+        before.as_str() <= end_utc.as_str() && end_utc.as_str() <= after.as_str(),
+        "terminal time {end_utc} is outside the recovery barrier {before}..{after}"
+    );
+    let OutcomeObserverV1::ResumingLauncher {
+        liveness_evidence, ..
+    } = outcome_observer
+    else {
+        unreachable!()
+    };
+    assert_eq!(
+        liveness_evidence.source,
+        "gf2.process-liveness-observation-json/v1"
+    );
+    let observed: serde_json::Value =
+        serde_json::from_slice(&decode_hex_fixture(&liveness_evidence.evidence_hex)).unwrap();
+    assert_eq!(observed["recorded_process_id"], child.id());
+    assert_eq!(observed["observed_at_utc"], *end_utc);
+
+    // A PID now held by an unrelated process is not the recorded child.
+    let self_identity = observe_self_identity().unwrap();
+    let reuse_root = artifact_tempdir("rare-event-pid-reuse-");
+    let reuse_dataset = dataset_directory(&reuse_root, &identity);
+    let stale_token = format!("{}0", self_identity.process_start_token());
+    let reuse_start = start_artifact(&start_envelope_with_process(
+        identity.clone(),
+        self_identity.process_id(),
+        &stale_token,
+        self_identity.boot_identity(),
+    ));
+    let reuse_validated = begin_attempt(&reuse_dataset, &reuse_start).unwrap();
+    let occupant = observe_process_liveness(self_identity.process_id()).unwrap();
+    assert!(matches!(
+        occupant.occupant(),
+        ProcessOccupantV1::Present { .. }
+    ));
+    recover_interrupted_attempt(&reuse_dataset, &reuse_validated, &launcher).unwrap();
+    assert!(reuse_dataset
+        .join("attempts/000000000000/terminal")
+        .is_dir());
+
+    // The same PID with the recorded start token is still the recorded child.
+    let live_self_root = artifact_tempdir("rare-event-live-self-");
+    let live_self_dataset = dataset_directory(&live_self_root, &identity);
+    let live_self_start = start_artifact(&start_envelope_with_process(
+        identity.clone(),
+        self_identity.process_id(),
+        self_identity.process_start_token(),
+        self_identity.boot_identity(),
+    ));
+    let live_self_validated = begin_attempt(&live_self_dataset, &live_self_start).unwrap();
+    assert!(
+        recover_interrupted_attempt(&live_self_dataset, &live_self_validated, &launcher).is_err()
+    );
+}
+
+/// A terminal and a resume reconstruct their checkpoint partition from the
+/// published directories, so a byte-valid but unpublished block cannot enter.
+#[test]
+fn rare_event_terminal_requires_published_checkpoints() {
+    let identity = identity(ScientificIdentityV1::target());
+    let root = artifact_tempdir("rare-event-published-checkpoints-");
+    let dataset = dataset_directory(&root, &identity);
+    let start_envelope = start_envelope(identity.clone(), not_used());
+    let start = start_artifact(&start_envelope);
+    let validated_start = begin_attempt(&dataset, &start).unwrap();
+
+    let block_zero = linked_target_checkpoint(
+        &identity,
+        validated_start.attempt_id(),
+        validated_start.digest(),
+        0,
+    );
+    let block_one = linked_target_checkpoint(
+        &identity,
+        validated_start.attempt_id(),
+        validated_start.digest(),
+        1,
+    );
+    let published_zero =
+        publish_checkpoint(&dataset, &CheckpointArtifactV1::new(block_zero).unwrap()).unwrap();
+    assert_eq!(
+        published_zero.destination(),
+        ["blocks", "target", "00", "0000"]
+    );
+    assert_eq!(published_zero.attempt_id(), validated_start.attempt_id());
+
+    let reconstructed = reconstruct_published_checkpoints(&dataset, &identity).unwrap();
+    assert_eq!(reconstructed.len(), 1);
+    assert_eq!(
+        reconstructed[0].checkpoint_ref(),
+        published_zero.checkpoint_ref()
+    );
+
+    // A staging directory an interrupted publication left behind is not a block.
+    assert!(publish_artifact_at_cutpoint(
+        &dataset,
+        &CheckpointArtifactV1::new(block_one.clone()).unwrap(),
+        PublicationCutPoint::BeforeNoReplace,
+    )
+    .is_err());
+    assert_eq!(
+        fs::read_dir(dataset.join("blocks/target/00"))
+            .unwrap()
+            .count(),
+        2
+    );
+    assert_eq!(
+        reconstruct_published_checkpoints(&dataset, &identity)
+            .unwrap()
+            .len(),
+        1
+    );
+
+    // A checkpoint that is byte-valid but never published cannot be claimed.
+    let unpublished_files = encode_artifact_files(&RareEventArtifactEnvelopeV1 {
+        envelope_schema: ENVELOPE_SCHEMA_V1.into(),
+        artifact_kind: ArtifactKindV1::TrajectoryCheckpoint,
+        payload: RareEventPayloadV1::TrajectoryCheckpoint(Box::new(block_one.clone())),
+    })
+    .unwrap();
+    let unpublished_ref = CheckpointRefV1 {
+        block_address: "target/00/0001".into(),
+        checkpoint_sha256: unpublished_files.digest.clone(),
+    };
+    let claimed_terminal = terminal_artifact(&terminal_envelope(
+        identity.clone(),
+        &start_envelope,
+        false,
+        vec![
+            published_zero.checkpoint_ref().clone(),
+            unpublished_ref.clone(),
+        ],
+    ));
+    assert!(finish_attempt(&dataset, &validated_start, &claimed_terminal).is_err());
+
+    // Omitting a published block is equally refused.
+    let empty_terminal = terminal_artifact(&terminal_envelope(
+        identity.clone(),
+        &start_envelope,
+        false,
+        vec![],
+    ));
+    assert!(finish_attempt(&dataset, &validated_start, &empty_terminal).is_err());
+
+    // The reconstructed partition is the only accepted claim.
+    let exact_terminal = terminal_artifact(&terminal_envelope(
+        identity.clone(),
+        &start_envelope,
+        false,
+        vec![published_zero.checkpoint_ref().clone()],
+    ));
+    finish_attempt(&dataset, &validated_start, &exact_terminal).unwrap();
+    let attempts = reconstruct_attempt_chain(&dataset, &identity).unwrap();
+    assert_eq!(attempts.completed_phases().len(), 2);
+    assert!(attempts.open_start().is_none());
+
+    // The next start resumes exactly the reconstructed durable prefix.
+    let mut resume_envelope = start_envelope.clone();
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut resume_envelope.payload else {
+        unreachable!()
+    };
+    payload.attempt_ordinal = 1;
+    payload.predecessor = AttemptPredecessorV1::Terminal {
+        terminal_sha256: attempts.completed_phases()[1].digest().to_owned(),
+    };
+    payload.attempt_id = attempt_id(&identity, 1, &payload.predecessor).unwrap();
+    let AttemptPhaseV1::Start {
+        resume_checkpoint_refs,
+        ..
+    } = &mut payload.phase
+    else {
+        unreachable!()
+    };
+    *resume_checkpoint_refs = vec![published_zero.checkpoint_ref().clone()];
+    begin_attempt(&dataset, &start_artifact(&resume_envelope)).unwrap();
+
+    // An incomplete set never forms a complete lineage.
+    assert!(reconstruct_execution_lineage(&dataset, &identity).is_err());
+    assert_eq!(unpublished_ref.block_address, "target/00/0001");
+    assert!(!dataset.join("blocks/target/00/0001").exists());
+}
+
+/// The reducers and the validators are two halves of one contract: a produced
+/// payload passes the independent revalidation the final receipt applies.
+#[test]
+fn rare_event_reducers_produce_revalidating_payloads() {
+    let target_identity = identity(ScientificIdentityV1::target());
+    let (target_checkpoints, target_lineage) = validated_final_inputs(
+        &target_identity,
+        not_used(),
+        ProducerBackendV1::Cpu {},
+        checkpoint_refs_target(),
+    );
+    let exact_bytes = canonical_bytes(&ExactTargetResultV1 {
+        exact_result_schema: EXACT_TARGET_RESULT_SCHEMA_V1.into(),
+        q: 3,
+        n: 1_024,
+        k: 3,
+        raw_count: BigUint::from(3_u8).pow(3_071).to_string(),
+        total: BigUint::from(3_u8).pow(3_072).to_string(),
+    })
+    .unwrap();
+    let exact_path = "dev/simulation_results/permanent-rare-event/exact-target-result.json";
+    let exact = decode_exact_target_result(&target_identity, exact_path, &exact_bytes).unwrap();
+    assert_eq!(exact.path(), exact_path);
+    assert_eq!(exact.sha256(), sha256_hex(&exact_bytes));
+
+    let target_payload = target_result_payload(&target_checkpoints, &exact).unwrap();
+    assert_eq!(target_payload.expected_trajectory_count, 524_288);
+    assert_eq!(target_payload.verdict, CrossCheckVerdictV1::Agreement);
+    assert!(!target_payload.degeneracy);
+    assert_eq!(target_payload.ess_fraction, ExactDecimalV1::new("1", "1"));
+    assert_eq!(
+        target_payload.cross_check_estimate,
+        ExactDecimalV1::new("1", "3")
+    );
+    assert!(target_payload.extinction_reasons.is_empty());
+    target_final_artifact(
+        target_identity.clone(),
+        target_payload,
+        &target_checkpoints,
+        &target_lineage,
+    )
+    .unwrap();
+
+    // A contradicting exact value is preserved as a contradiction verdict.
+    let contradicting = canonical_bytes(&ExactTargetResultV1 {
+        exact_result_schema: EXACT_TARGET_RESULT_SCHEMA_V1.into(),
+        q: 3,
+        n: 1_024,
+        k: 3,
+        raw_count: BigUint::from(3_u8).pow(3_070).to_string(),
+        total: BigUint::from(3_u8).pow(3_072).to_string(),
+    })
+    .unwrap();
+    let contradicting =
+        decode_exact_target_result(&target_identity, exact_path, &contradicting).unwrap();
+    let contradicting_payload = target_result_payload(&target_checkpoints, &contradicting).unwrap();
+    assert_eq!(
+        contradicting_payload.verdict,
+        CrossCheckVerdictV1::Contradiction
+    );
+    target_final_artifact(
+        target_identity,
+        contradicting_payload,
+        &target_checkpoints,
+        &target_lineage,
+    )
+    .unwrap();
+
+    let coverage_identity = identity(ScientificIdentityV1::coverage());
+    let (coverage_checkpoints, coverage_lineage) = validated_final_inputs(
+        &coverage_identity,
+        used(),
+        ProducerBackendV1::Gpu {
+            device_uuid: "GPU-0001".into(),
+            kernel_name: "fixture_kernel".into(),
+            code_object_sha256: digest(0x20),
+        },
+        checkpoint_refs_coverage(),
+    );
+    let coverage_payload =
+        coverage_result_payload(&coverage_identity, &coverage_checkpoints).unwrap();
+    assert_eq!(coverage_payload.expected_trajectory_count, 78_643_200);
+    assert_eq!(coverage_payload.replicates.len(), 600);
+    assert_eq!(coverage_payload.verdict, CoverageVerdictV1::Adequate);
+    assert!(coverage_payload
+        .coverage_counts
+        .iter()
+        .all(|count| count.count == 200));
+    coverage_final_artifact(
+        coverage_identity,
+        coverage_payload,
+        &coverage_checkpoints,
+        &coverage_lineage,
+    )
+    .unwrap();
 }

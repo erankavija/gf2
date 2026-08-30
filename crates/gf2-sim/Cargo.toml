@@ -43,7 +43,6 @@ sha2 = "0.10"
 # introducing unsafe code outside the isolated kernel crates.
 rustix = { version = "1.1", features = ["fs"] }
 num-bigint = { workspace = true }
-rustix = { version = "1.1", features = ["fs"] }
 
 [dev-dependencies]
 gf2-algebra = { path = "../gf2-algebra", features = ["test-support"] }

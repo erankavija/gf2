@@ -5,25 +5,50 @@
 //! dataset/run/attempt IDs, closed address sets, and attempt/checkpoint
 //! lineage. Publication synchronizes both files and their directory before a
 //! safe `RENAME_NOREPLACE`; an unsupported platform or filesystem refuses.
+//!
+//! Publication and recovery form one boundary with four properties. Every
+//! directory and file below a pinned dataset root is reached through a held
+//! descriptor with no-follow opens, so a name swapped between a check and its
+//! use cannot redirect an artifact. Each payload derives the destination it
+//! owns, so publication takes no caller-chosen name and no payload can occupy
+//! another kind's or phase's directory. Recovery reads process liveness from
+//! the operating system at the recovery barrier and binds the observation
+//! time. Terminals, resumes, and final receipts reconstruct their checkpoint
+//! and attempt state from the strict published directories, so a byte-valid
+//! artifact that never reached the filesystem cannot enter the lifecycle.
 
 use gf2_stats::weighted::ScaledStudentInterval;
 use num_bigint::BigUint;
-use rustix::fs::{renameat_with, RenameFlags, CWD};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
-use std::fs::{self, File, OpenOptions};
-use std::io::{self, Write};
+use std::io;
+use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use self::store::{Component, DirHandle};
 use super::{
     coverage_address, target_address, COVERAGE_REPLICATES, COVERAGE_RUNS,
     COVERAGE_TRAJECTORIES_PER_RUN, RARE_EVENT_PURPOSE_TAG, RARE_EVENT_ROOT_SEED, TARGET_BLOCK_SIZE,
     TARGET_RUNS, TARGET_TRAJECTORIES_PER_RUN,
+};
+
+/// Runtime facts observed from the operating system at the instant of use.
+pub mod observe;
+/// Exact reduction of published checkpoints into final result payloads.
+pub mod result;
+mod store;
+
+#[cfg(feature = "test-support")]
+pub use observe::process_liveness_evidence_fixture;
+pub use observe::{
+    observe_host, observe_process_identity, observe_process_liveness, observe_self_identity,
+    ObservedProcessIdentityV1, ProcessLivenessObservationV1, ProcessOccupantV1,
 };
 
 /// The only accepted envelope schema.
@@ -942,66 +967,6 @@ pub enum AttemptOutcomeV1 {
     TerminationUnobservedOnResume {},
 }
 
-/// PID-reuse-safe runtime observation used to recover an open attempt.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ProcessLivenessObservationV1 {
-    /// Recorded child PID being checked.
-    pub recorded_process_id: u32,
-    /// Current occupant of that PID, when one exists.
-    pub observed_process_id: Option<u32>,
-    /// Current occupant's OS process-start token.
-    pub observed_process_start_token: Option<String>,
-    /// Current occupant's boot/container identity.
-    pub observed_boot_identity: Option<String>,
-    /// Exact launcher-observed liveness evidence.
-    pub evidence: ObservationEvidenceV1,
-}
-
-#[derive(Serialize, Deserialize, Eq, PartialEq)]
-#[serde(deny_unknown_fields)]
-struct ProcessLivenessEvidenceV1 {
-    recorded_process_id: u32,
-    observed_process_id: Option<u32>,
-    observed_process_start_token: Option<String>,
-    observed_boot_identity: Option<String>,
-}
-
-/// Inputs observed by the resuming launcher after an open attempt.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct RecoveryTerminalV1 {
-    /// UTC at which absence of the recorded identity was observed.
-    pub observation_utc: String,
-    /// Resuming launcher executable SHA-256.
-    pub launcher_sha256: String,
-    /// PID-reuse-safe liveness observation.
-    pub liveness: ProcessLivenessObservationV1,
-}
-
-/// Builds a PID-reuse-safe observation and its canonical collector evidence.
-///
-/// The recovery validator decodes the evidence again and rejects any mismatch
-/// between these normalized fields and the immutable collector record.
-pub fn process_liveness_observation(
-    recorded_process_id: u32,
-    observed_process_id: Option<u32>,
-    observed_process_start_token: Option<String>,
-    observed_boot_identity: Option<String>,
-) -> Result<ProcessLivenessObservationV1, ArtifactError> {
-    let normalized = ProcessLivenessEvidenceV1 {
-        recorded_process_id,
-        observed_process_id,
-        observed_process_start_token: observed_process_start_token.clone(),
-        observed_boot_identity: observed_boot_identity.clone(),
-    };
-    Ok(ProcessLivenessObservationV1 {
-        recorded_process_id,
-        observed_process_id,
-        observed_process_start_token,
-        observed_boot_identity,
-        evidence: evidence_from_value("gf2.process-liveness-observation-json/v1", &normalized)?,
-    })
-}
-
 /// One immutable checkpoint reference.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -1062,7 +1027,10 @@ impl ValidatedCheckpointSet {
     }
 }
 
-/// Opaque checkpoint handle created only after full schema/address validation.
+/// Opaque checkpoint handle proving valid bytes, not durable publication.
+///
+/// Lifecycle entry requires the publication proof [`PublishedCheckpoint`],
+/// which only the strict published directories can produce.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ValidatedCheckpoint {
     dataset_id: String,
@@ -1094,6 +1062,24 @@ impl ValidatedAttemptArtifact {
     #[must_use]
     pub fn digest(&self) -> &str {
         &self.digest
+    }
+
+    /// Returns the recomputed attempt ID this phase belongs to.
+    #[must_use]
+    pub fn attempt_id(&self) -> &str {
+        &self.payload.attempt_id
+    }
+
+    /// Returns the gap-free zero-based ordinal of this attempt.
+    #[must_use]
+    pub fn attempt_ordinal(&self) -> u64 {
+        self.payload.attempt_ordinal
+    }
+
+    /// Returns the immutable attempt receipt these bytes decoded to.
+    #[must_use]
+    pub fn payload(&self) -> &ExecutionAttemptReceiptV1 {
+        &self.payload
     }
 }
 
@@ -1476,9 +1462,9 @@ pub fn attempt_id(
 ///
 /// For a final receipt this checks closed fields, identity, result arithmetic,
 /// and embedded reference shape, but deliberately does not confer scientific
-/// validity. Scientific acceptance requires opaque checkpoint handles and a
-/// [`ValidatedExecutionLineage`] through the final reducers or strict
-/// directory verification.
+/// validity. Scientific acceptance requires the durable publication proofs and
+/// [`ValidatedExecutionLineage`] that [`reconstruct_execution_lineage`] builds
+/// from the strict published directories.
 pub fn decode_envelope(bytes: &[u8]) -> Result<RareEventArtifactEnvelopeV1, ArtifactError> {
     let envelope: RareEventArtifactEnvelopeV1 = serde_json::from_slice(bytes)?;
     if canonical_bytes(&envelope)? != bytes {
@@ -1568,6 +1554,294 @@ pub enum PublicationCutPoint {
 
 static PUBLICATION_NONCE: AtomicU64 = AtomicU64::new(0);
 
+mod sealed {
+    /// Closes the publishable-artifact and attempt-phase bindings to this module.
+    pub trait Sealed {}
+}
+
+/// Total binding from one payload to the destination it owns.
+///
+/// A destination is derived from the payload itself, so publication takes no
+/// caller-chosen name and one kind's payload cannot reach another kind's or
+/// another phase's directory. The trait is sealed: its implementors are the
+/// closed set of publishable artifacts.
+pub trait PublishableArtifact: sealed::Sealed {
+    /// Closed artifact kind this payload always carries.
+    const ARTIFACT_KIND: ArtifactKindV1;
+
+    /// Returns the dataset-relative destination components this payload owns.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a payload whose address or ordinal leaves its closed grammar.
+    fn destination(&self) -> Result<Vec<String>, ArtifactError>;
+
+    /// Returns the exact envelope this payload always produces.
+    fn envelope(&self) -> RareEventArtifactEnvelopeV1;
+
+    /// Returns the identity every published copy must embed.
+    fn identity(&self) -> &RareEventDatasetIdentityV1;
+}
+
+/// One schema-valid checkpoint bound to the block directory its address names.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CheckpointArtifactV1(Box<TrajectoryCheckpointV1>);
+
+impl CheckpointArtifactV1 {
+    /// Accepts one checkpoint payload after full schema validation.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a payload that fails checkpoint schema or identity validation.
+    pub fn new(payload: TrajectoryCheckpointV1) -> Result<Self, ArtifactError> {
+        let bound = Self(Box::new(payload));
+        validate_envelope(&bound.envelope())?;
+        Ok(bound)
+    }
+
+    /// Returns the bound checkpoint payload.
+    #[must_use]
+    pub fn payload(&self) -> &TrajectoryCheckpointV1 {
+        &self.0
+    }
+}
+
+impl sealed::Sealed for CheckpointArtifactV1 {}
+
+impl PublishableArtifact for CheckpointArtifactV1 {
+    const ARTIFACT_KIND: ArtifactKindV1 = ArtifactKindV1::TrajectoryCheckpoint;
+
+    fn destination(&self) -> Result<Vec<String>, ArtifactError> {
+        block_destination(&checkpoint_block_address(&self.0))
+    }
+
+    fn envelope(&self) -> RareEventArtifactEnvelopeV1 {
+        RareEventArtifactEnvelopeV1 {
+            envelope_schema: ENVELOPE_SCHEMA_V1.into(),
+            artifact_kind: ArtifactKindV1::TrajectoryCheckpoint,
+            payload: RareEventPayloadV1::TrajectoryCheckpoint(self.0.clone()),
+        }
+    }
+
+    fn identity(&self) -> &RareEventDatasetIdentityV1 {
+        &self.0.dataset_identity
+    }
+}
+
+/// Compile-time attempt-phase selector bound to one destination name.
+pub trait AttemptPhaseKind: sealed::Sealed {
+    /// Destination directory name this phase always occupies.
+    const DESTINATION: &'static str;
+
+    /// Reports whether `phase` is this phase.
+    fn matches(phase: &AttemptPhaseV1) -> bool;
+}
+
+/// Launcher-observed start phase.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct StartPhase;
+
+/// Launcher- or resumer-observed terminal phase.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TerminalPhase;
+
+impl sealed::Sealed for StartPhase {}
+
+impl AttemptPhaseKind for StartPhase {
+    const DESTINATION: &'static str = "start";
+
+    fn matches(phase: &AttemptPhaseV1) -> bool {
+        matches!(phase, AttemptPhaseV1::Start { .. })
+    }
+}
+
+impl sealed::Sealed for TerminalPhase {}
+
+impl AttemptPhaseKind for TerminalPhase {
+    const DESTINATION: &'static str = "terminal";
+
+    fn matches(phase: &AttemptPhaseV1) -> bool {
+        matches!(phase, AttemptPhaseV1::Terminal { .. })
+    }
+}
+
+/// One attempt receipt whose phase is fixed by its type parameter.
+///
+/// The phase parameter selects the destination name at compile time and the
+/// constructor refuses a receipt carrying the other phase, so a terminal can
+/// never occupy a start directory or the reverse.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AttemptArtifactV1<K: AttemptPhaseKind> {
+    payload: Box<ExecutionAttemptReceiptV1>,
+    phase: PhantomData<K>,
+}
+
+/// One attempt start receipt bound to the `start` destination.
+pub type AttemptStartArtifactV1 = AttemptArtifactV1<StartPhase>;
+
+/// One attempt terminal receipt bound to the `terminal` destination.
+pub type AttemptTerminalArtifactV1 = AttemptArtifactV1<TerminalPhase>;
+
+impl<K: AttemptPhaseKind> AttemptArtifactV1<K> {
+    /// Accepts one attempt receipt whose phase matches `K`.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a receipt in the other phase or failing schema validation.
+    pub fn new(payload: ExecutionAttemptReceiptV1) -> Result<Self, ArtifactError> {
+        if !K::matches(&payload.phase) {
+            return Err(ArtifactError::Schema(format!(
+                "attempt receipt is not the {} phase",
+                K::DESTINATION
+            )));
+        }
+        let bound = Self {
+            payload: Box::new(payload),
+            phase: PhantomData,
+        };
+        validate_envelope(&bound.envelope())?;
+        Ok(bound)
+    }
+
+    /// Returns the bound attempt receipt.
+    #[must_use]
+    pub fn payload(&self) -> &ExecutionAttemptReceiptV1 {
+        &self.payload
+    }
+}
+
+impl<K: AttemptPhaseKind> sealed::Sealed for AttemptArtifactV1<K> {}
+
+impl<K: AttemptPhaseKind> PublishableArtifact for AttemptArtifactV1<K> {
+    const ARTIFACT_KIND: ArtifactKindV1 = ArtifactKindV1::ExecutionAttempt;
+
+    fn destination(&self) -> Result<Vec<String>, ArtifactError> {
+        Ok(vec![
+            ATTEMPTS_DIRECTORY.to_owned(),
+            attempt_ordinal_name(self.payload.attempt_ordinal)?,
+            K::DESTINATION.to_owned(),
+        ])
+    }
+
+    fn envelope(&self) -> RareEventArtifactEnvelopeV1 {
+        RareEventArtifactEnvelopeV1 {
+            envelope_schema: ENVELOPE_SCHEMA_V1.into(),
+            artifact_kind: ArtifactKindV1::ExecutionAttempt,
+            payload: RareEventPayloadV1::ExecutionAttempt(self.payload.clone()),
+        }
+    }
+
+    fn identity(&self) -> &RareEventDatasetIdentityV1 {
+        &self.payload.dataset_identity
+    }
+}
+
+/// One target final receipt bound to the `target-receipt` destination.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TargetReceiptArtifactV1(Box<TargetCrossCheckReceiptV1>);
+
+impl TargetReceiptArtifactV1 {
+    /// Accepts one target final receipt after schema validation.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a receipt failing target schema or result validation.
+    pub fn new(receipt: TargetCrossCheckReceiptV1) -> Result<Self, ArtifactError> {
+        let bound = Self(Box::new(receipt));
+        validate_envelope(&bound.envelope())?;
+        Ok(bound)
+    }
+}
+
+impl sealed::Sealed for TargetReceiptArtifactV1 {}
+
+impl PublishableArtifact for TargetReceiptArtifactV1 {
+    const ARTIFACT_KIND: ArtifactKindV1 = ArtifactKindV1::TargetCrossCheck;
+
+    fn destination(&self) -> Result<Vec<String>, ArtifactError> {
+        Ok(vec![TARGET_RECEIPT_DIRECTORY.to_owned()])
+    }
+
+    fn envelope(&self) -> RareEventArtifactEnvelopeV1 {
+        RareEventArtifactEnvelopeV1 {
+            envelope_schema: ENVELOPE_SCHEMA_V1.into(),
+            artifact_kind: ArtifactKindV1::TargetCrossCheck,
+            payload: RareEventPayloadV1::TargetCrossCheck(self.0.clone()),
+        }
+    }
+
+    fn identity(&self) -> &RareEventDatasetIdentityV1 {
+        &self.0.dataset_identity
+    }
+}
+
+/// One coverage final receipt bound to the `coverage-validation-receipt` destination.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoverageReceiptArtifactV1(Box<CoverageValidationReceiptV1>);
+
+impl CoverageReceiptArtifactV1 {
+    /// Accepts one coverage final receipt after schema validation.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a receipt failing coverage schema or result validation.
+    pub fn new(receipt: CoverageValidationReceiptV1) -> Result<Self, ArtifactError> {
+        let bound = Self(Box::new(receipt));
+        validate_envelope(&bound.envelope())?;
+        Ok(bound)
+    }
+}
+
+impl sealed::Sealed for CoverageReceiptArtifactV1 {}
+
+impl PublishableArtifact for CoverageReceiptArtifactV1 {
+    const ARTIFACT_KIND: ArtifactKindV1 = ArtifactKindV1::CoverageValidation;
+
+    fn destination(&self) -> Result<Vec<String>, ArtifactError> {
+        Ok(vec![COVERAGE_RECEIPT_DIRECTORY.to_owned()])
+    }
+
+    fn envelope(&self) -> RareEventArtifactEnvelopeV1 {
+        RareEventArtifactEnvelopeV1 {
+            envelope_schema: ENVELOPE_SCHEMA_V1.into(),
+            artifact_kind: ArtifactKindV1::CoverageValidation,
+            payload: RareEventPayloadV1::CoverageValidation(self.0.clone()),
+        }
+    }
+
+    fn identity(&self) -> &RareEventDatasetIdentityV1 {
+        &self.0.dataset_identity
+    }
+}
+
+/// Dataset-relative directory holding every published checkpoint block.
+pub const BLOCKS_DIRECTORY: &str = "blocks";
+/// Dataset-relative directory holding every published attempt ordinal.
+pub const ATTEMPTS_DIRECTORY: &str = "attempts";
+/// Dataset-relative directory holding the published target final receipt.
+pub const TARGET_RECEIPT_DIRECTORY: &str = "target-receipt";
+/// Dataset-relative directory holding the published coverage final receipt.
+pub const COVERAGE_RECEIPT_DIRECTORY: &str = "coverage-validation-receipt";
+
+/// Returns the destination components of one canonical block address.
+fn block_destination(block_address: &str) -> Result<Vec<String>, ArtifactError> {
+    let mut destination = vec![BLOCKS_DIRECTORY.to_owned()];
+    for component in block_address.split('/') {
+        destination.push(Component::new(component)?.as_str().to_owned());
+    }
+    Ok(destination)
+}
+
+/// Renders one attempt ordinal as its fixed twelve-digit directory name.
+fn attempt_ordinal_name(ordinal: u64) -> Result<String, ArtifactError> {
+    if ordinal >= 1_000_000_000_000 {
+        return Err(ArtifactError::Identity(
+            "attempt ordinal is outside twelve digits".into(),
+        ));
+    }
+    Ok(format!("{ordinal:012}"))
+}
+
 /// Encodes and validates the two files of one artifact directory.
 pub fn encode_artifact_files(
     envelope: &RareEventArtifactEnvelopeV1,
@@ -1584,41 +1858,33 @@ pub fn encode_artifact_files(
 }
 
 /// Strictly verifies one published directory and its exact two-file contract.
+///
+/// The directory is pinned by descriptor before its entries are listed, so the
+/// verified bytes always come from the inode this call checked.
 pub fn verify_artifact_dir(
     path: &Path,
     expected_identity: &RareEventDatasetIdentityV1,
 ) -> Result<ValidatedArtifactDirectory, ArtifactError> {
-    let metadata = fs::symlink_metadata(path)?;
-    if !metadata.file_type().is_dir() || metadata.file_type().is_symlink() {
-        return Err(ArtifactError::Publication(
-            "published artifact path is not a real directory".into(),
-        ));
-    }
-    let mut names = Vec::new();
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
-        let file_type = entry.file_type()?;
-        if !file_type.is_file() || file_type.is_symlink() {
-            return Err(ArtifactError::Publication(
-                "published artifact contains a non-file entry".into(),
-            ));
-        }
-        let name = entry.file_name().into_string().map_err(|_| {
-            ArtifactError::Publication("published artifact has a non-UTF-8 filename".into())
-        })?;
-        names.push(name);
-    }
-    names.sort();
+    verify_dir_handle(&DirHandle::open_root(path)?, expected_identity)
+}
+
+/// Verifies the two-file contract of one already pinned artifact directory.
+fn verify_dir_handle(
+    directory: &DirHandle,
+    expected_identity: &RareEventDatasetIdentityV1,
+) -> Result<ValidatedArtifactDirectory, ArtifactError> {
+    let entries = directory.entries()?;
+    let names: Vec<_> = entries.iter().map(|entry| entry.name.clone()).collect();
     if names != [ARTIFACT_JSON.to_owned(), ARTIFACT_SIDECAR.to_owned()] {
         return Err(ArtifactError::Publication(
             "published artifact directory does not contain exactly the two schema files".into(),
         ));
     }
-    let artifact_json = fs::read(path.join(ARTIFACT_JSON))?;
-    let artifact_sha256 = fs::read(path.join(ARTIFACT_SIDECAR))?;
+    let artifact_json = directory.read_regular_file(Component::new(ARTIFACT_JSON)?)?;
+    let artifact_sha256 = directory.read_regular_file(Component::new(ARTIFACT_SIDECAR)?)?;
     let envelope = verify_artifact_files(&artifact_json, &artifact_sha256, expected_identity)?;
     Ok(ValidatedArtifactDirectory {
-        path: path.to_owned(),
+        path: directory.path().to_owned(),
         files: ArtifactFileBytes {
             digest: sha256_hex(&artifact_json),
             artifact_json,
@@ -1628,97 +1894,104 @@ pub fn verify_artifact_dir(
     })
 }
 
-/// Publishes an immutable artifact directory with synchronized no-replace rename.
-pub fn publish_artifact_dir(
-    parent: &Path,
-    final_name: &str,
-    envelope: &RareEventArtifactEnvelopeV1,
+/// Publishes one typed artifact into the destination its payload owns.
+///
+/// Every intermediate directory is opened or created through the pinned
+/// dataset descriptor, and the two immutable files are written, synchronized,
+/// and atomically renamed inside that pinned parent.
+///
+/// # Errors
+///
+/// Refuses an invalid payload, a dataset root that is not a real directory, a
+/// filesystem without atomic no-replace rename, and a colliding destination
+/// holding different immutable bytes.
+pub fn publish_artifact<A: PublishableArtifact>(
+    dataset_dir: &Path,
+    artifact: &A,
 ) -> Result<ValidatedArtifactDirectory, ArtifactError> {
-    publish_artifact_dir_inner(parent, final_name, envelope, None)
+    publish_artifact_inner(&DirHandle::open_root(dataset_dir)?, artifact, None)
 }
 
-/// Probes same-filesystem atomic no-replace directory publication before work starts.
-pub fn verify_atomic_publication_support(parent: &Path) -> Result<(), ArtifactError> {
-    let source = create_staging_directory(parent, "start")?;
-    let destination = create_staging_directory(parent, "terminal")?;
-    let collision = renameat_with(CWD, &source, CWD, &destination, RenameFlags::NOREPLACE);
-    if collision != Err(rustix::io::Errno::EXIST) || !source.is_dir() || !destination.is_dir() {
-        return Err(ArtifactError::Publication(
-            "filesystem does not preserve an existing directory under no-replace rename".into(),
-        ));
-    }
-    fs::remove_dir(&destination)?;
-    renameat_with(CWD, &source, CWD, &destination, RenameFlags::NOREPLACE).map_err(|error| {
-        ArtifactError::Publication(format!(
-            "filesystem does not support atomic no-replace directory rename: {error}"
-        ))
-    })?;
-    File::open(parent)?.sync_all()?;
-    fs::remove_dir(&destination)?;
-    File::open(parent)?.sync_all()?;
-    Ok(())
-}
-
-/// Publishes through one deterministic simulated crash cut point.
+/// Publishes one typed artifact through a deterministic simulated crash cut point.
 #[cfg(feature = "test-support")]
-pub fn publish_artifact_dir_at_cutpoint(
-    parent: &Path,
-    final_name: &str,
-    envelope: &RareEventArtifactEnvelopeV1,
+pub fn publish_artifact_at_cutpoint<A: PublishableArtifact>(
+    dataset_dir: &Path,
+    artifact: &A,
     cut_point: PublicationCutPoint,
 ) -> Result<ValidatedArtifactDirectory, ArtifactError> {
-    publish_artifact_dir_inner(parent, final_name, envelope, Some(cut_point))
+    publish_artifact_inner(
+        &DirHandle::open_root(dataset_dir)?,
+        artifact,
+        Some(cut_point),
+    )
 }
 
-fn publish_artifact_dir_inner(
-    parent: &Path,
-    final_name: &str,
-    envelope: &RareEventArtifactEnvelopeV1,
+fn publish_artifact_inner<A: PublishableArtifact>(
+    dataset: &DirHandle,
+    artifact: &A,
+    cut_point: Option<PublicationCutPoint>,
+) -> Result<ValidatedArtifactDirectory, ArtifactError> {
+    let envelope = artifact.envelope();
+    if envelope.artifact_kind != A::ARTIFACT_KIND {
+        return Err(ArtifactError::Schema(
+            "payload kind differs from its bound destination kind".into(),
+        ));
+    }
+    validate_dataset_directory(dataset.path(), &dataset_id(artifact.identity())?)?;
+    let destination = artifact.destination()?;
+    let (leaf, parents) = destination
+        .split_last()
+        .ok_or_else(|| ArtifactError::Publication("destination has no leaf name".into()))?;
+    let mut parent = dataset.open_or_create_dir(Component::new(&parents[0])?)?;
+    for component in &parents[1..] {
+        parent = parent.open_or_create_dir(Component::new(component)?)?;
+    }
+    let files = encode_artifact_files(&envelope)?;
+    publish_into_parent(
+        &parent,
+        Component::new(leaf)?,
+        &files,
+        artifact.identity(),
+        cut_point,
+    )
+}
+
+/// Publishes one immutable directory into a pinned parent descriptor.
+fn publish_into_parent(
+    parent: &DirHandle,
+    final_name: Component<'_>,
+    files: &ArtifactFileBytes,
+    expected_identity: &RareEventDatasetIdentityV1,
     #[cfg_attr(not(feature = "test-support"), allow(unused_variables))] cut_point: Option<
         PublicationCutPoint,
     >,
 ) -> Result<ValidatedArtifactDirectory, ArtifactError> {
-    validate_publication_name(final_name)?;
-    let parent_metadata = fs::symlink_metadata(parent)?;
-    if !parent_metadata.file_type().is_dir() || parent_metadata.file_type().is_symlink() {
-        return Err(ArtifactError::Publication(
-            "publication parent is not a real directory".into(),
-        ));
-    }
-    let files = encode_artifact_files(envelope)?;
-    let staging = create_staging_directory(parent, final_name)?;
-    let destination = parent.join(final_name);
+    let staging_name = create_staging_directory(parent, final_name)?;
+    let staging = parent.open_dir(Component::new(&staging_name)?)?;
     publication_cut(cut_point, PublicationCutPoint::BeforeFileCreation)?;
 
-    let mut json = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(staging.join(ARTIFACT_JSON))?;
-    json.write_all(&files.artifact_json)?;
+    let json =
+        staging.write_new_regular_file(Component::new(ARTIFACT_JSON)?, &files.artifact_json)?;
     publication_cut(cut_point, PublicationCutPoint::AfterJsonWrite)?;
     json.sync_all()?;
     publication_cut(cut_point, PublicationCutPoint::AfterJsonSync)?;
-
-    let mut sidecar = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(staging.join(ARTIFACT_SIDECAR))?;
-    sidecar.write_all(&files.artifact_sha256)?;
+    let sidecar = staging
+        .write_new_regular_file(Component::new(ARTIFACT_SIDECAR)?, &files.artifact_sha256)?;
     publication_cut(cut_point, PublicationCutPoint::AfterSidecarWrite)?;
     sidecar.sync_all()?;
     publication_cut(cut_point, PublicationCutPoint::AfterSidecarSync)?;
-    File::open(&staging)?.sync_all()?;
+    staging.sync()?;
     publication_cut(cut_point, PublicationCutPoint::AfterStagingDirectorySync)?;
     publication_cut(cut_point, PublicationCutPoint::BeforeNoReplace)?;
 
-    match renameat_with(CWD, &staging, CWD, &destination, RenameFlags::NOREPLACE) {
+    match parent.rename_no_replace(Component::new(&staging_name)?, final_name) {
         Ok(()) => {
             publication_cut(cut_point, PublicationCutPoint::AfterNoReplace)?;
-            File::open(parent)?.sync_all()?;
-            verify_artifact_dir(&destination, payload_identity(&envelope.payload))
+            parent.sync()?;
+            verify_dir_handle(&parent.open_dir(final_name)?, expected_identity)
         }
-        Err(error) if error == rustix::io::Errno::EXIST => {
-            let winner = verify_artifact_dir(&destination, payload_identity(&envelope.payload))
+        Err(rustix::io::Errno::EXIST) => {
+            let winner = verify_dir_handle(&parent.open_dir(final_name)?, expected_identity)
                 .map_err(|winner_error| {
                     ArtifactError::Publication(format!(
                         "concurrent destination exists but is invalid: {winner_error}"
@@ -1727,8 +2000,8 @@ fn publish_artifact_dir_inner(
             if winner.files.artifact_json == files.artifact_json
                 && winner.files.artifact_sha256 == files.artifact_sha256
             {
-                fs::remove_dir_all(&staging)?;
-                File::open(parent)?.sync_all()?;
+                parent.remove_staging_tree(Component::new(&staging_name)?)?;
+                parent.sync()?;
                 Ok(winner)
             } else {
                 Err(ArtifactError::Publication(
@@ -1743,7 +2016,41 @@ fn publish_artifact_dir_inner(
     }
 }
 
-fn create_staging_directory(parent: &Path, final_name: &str) -> Result<PathBuf, ArtifactError> {
+/// Probes same-filesystem atomic no-replace directory publication before work starts.
+pub fn verify_atomic_publication_support(parent: &Path) -> Result<(), ArtifactError> {
+    let parent = DirHandle::open_root(parent)?;
+    let source_name = create_staging_directory(&parent, Component::new("start")?)?;
+    let destination_name = create_staging_directory(&parent, Component::new("terminal")?)?;
+    let source = Component::new(&source_name)?;
+    let destination = Component::new(&destination_name)?;
+    let collision = parent.rename_no_replace(source, destination);
+    if collision != Err(rustix::io::Errno::EXIST)
+        || parent.try_open_dir(source)?.is_none()
+        || parent.try_open_dir(destination)?.is_none()
+    {
+        return Err(ArtifactError::Publication(
+            "filesystem does not preserve an existing directory under no-replace rename".into(),
+        ));
+    }
+    parent.remove_dir(destination)?;
+    parent
+        .rename_no_replace(source, destination)
+        .map_err(|error| {
+            ArtifactError::Publication(format!(
+                "filesystem does not support atomic no-replace directory rename: {error}"
+            ))
+        })?;
+    parent.sync()?;
+    parent.remove_dir(destination)?;
+    parent.sync()?;
+    Ok(())
+}
+
+/// Creates one uniquely named staging directory inside a pinned parent.
+fn create_staging_directory(
+    parent: &DirHandle,
+    final_name: Component<'_>,
+) -> Result<String, ArtifactError> {
     for _ in 0..16 {
         let nonce = PUBLICATION_NONCE.fetch_add(1, AtomicOrdering::Relaxed);
         let timestamp = SystemTime::now()
@@ -1755,11 +2062,10 @@ fn create_staging_directory(parent: &Path, final_name: &str) -> Result<PathBuf, 
         hasher.update(nonce.to_le_bytes());
         hasher.update(timestamp.to_le_bytes());
         let suffix = format!("{:x}", hasher.finalize());
-        let staging = parent.join(format!(".{final_name}.staging-{}", &suffix[..32]));
-        match fs::create_dir(&staging) {
-            Ok(()) => return Ok(staging),
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
-            Err(error) => return Err(error.into()),
+        let staging = format!(".{}.staging-{}", final_name.as_str(), &suffix[..32]);
+        if parent.create_dir(Component::new(&staging)?)? {
+            parent.sync()?;
+            return Ok(staging);
         }
     }
     Err(ArtifactError::Publication(
@@ -1789,49 +2095,50 @@ pub fn recover_artifact_parent(
     expected_final_names: &[String],
     expected_identity: &RareEventDatasetIdentityV1,
 ) -> Result<Vec<ValidatedArtifactDirectory>, ArtifactError> {
+    let parent = DirHandle::open_root(parent)?;
+    Ok(
+        scan_publication_parent(&parent, expected_final_names, expected_identity)?
+            .into_iter()
+            .map(|(_, published)| published)
+            .collect(),
+    )
+}
+
+/// Scans one pinned publication parent for its expected published directories.
+fn scan_publication_parent(
+    parent: &DirHandle,
+    expected_final_names: &[String],
+    expected_identity: &RareEventDatasetIdentityV1,
+) -> Result<Vec<(String, ValidatedArtifactDirectory)>, ArtifactError> {
     ensure_sorted_unique(expected_final_names, "expected publication names")?;
     for name in expected_final_names {
-        validate_publication_name(name)?;
+        Component::new(name)?;
     }
     let mut published = Vec::new();
-    for entry in fs::read_dir(parent)? {
-        let entry = entry?;
-        let name = entry.file_name().into_string().map_err(|_| {
-            ArtifactError::Publication("publication parent has a non-UTF-8 entry".into())
-        })?;
-        if expected_final_names.binary_search(&name).is_ok() {
-            published.push(verify_artifact_dir(&entry.path(), expected_identity)?);
+    for entry in parent.entries()? {
+        if expected_final_names.binary_search(&entry.name).is_ok() {
+            let directory = parent.open_dir(Component::new(&entry.name)?)?;
+            published.push((
+                entry.name.clone(),
+                verify_dir_handle(&directory, expected_identity)?,
+            ));
         } else if expected_final_names
             .iter()
-            .any(|final_name| is_staging_name(&name, final_name))
+            .any(|final_name| is_staging_name(&entry.name, final_name))
         {
-            if !entry.file_type()?.is_dir() {
+            if entry.file_type != rustix::fs::FileType::Directory {
                 return Err(ArtifactError::Publication(
                     "staging grammar names a non-directory entry".into(),
                 ));
             }
         } else {
             return Err(ArtifactError::Publication(format!(
-                "unexpected publication entry {name}"
+                "unexpected publication entry {}",
+                entry.name
             )));
         }
     }
-    published.sort_by(|left, right| left.path.cmp(&right.path));
     Ok(published)
-}
-
-fn validate_publication_name(name: &str) -> Result<(), ArtifactError> {
-    let fixed_name = matches!(
-        name,
-        "start" | "terminal" | "target-receipt" | "coverage-validation-receipt"
-    );
-    let block_name = name.len() == 4 && name.bytes().all(|byte| byte.is_ascii_digit());
-    if !fixed_name && !block_name {
-        return Err(ArtifactError::Publication(
-            "destination name is outside the closed final-name grammar".into(),
-        ));
-    }
-    Ok(())
 }
 
 fn is_staging_name(name: &str, final_name: &str) -> bool {
@@ -1844,32 +2151,325 @@ fn is_staging_name(name: &str, final_name: &str) -> bool {
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
-/// Publishes a launcher-observed start after validating the complete prior chain.
-pub fn begin_attempt(
+/// Opaque proof that one checkpoint is durably published under a dataset root.
+///
+/// The only constructors read the strict published directory, so this handle
+/// cannot describe a checkpoint that exists as bytes but never reached the
+/// filesystem.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PublishedCheckpoint {
+    validated: ValidatedCheckpoint,
+    destination: Vec<String>,
+}
+
+impl PublishedCheckpoint {
+    /// Returns the canonical immutable checkpoint reference.
+    #[must_use]
+    pub fn checkpoint_ref(&self) -> &CheckpointRefV1 {
+        &self.validated.reference
+    }
+
+    /// Returns the dataset-relative directory this checkpoint occupies.
+    #[must_use]
+    pub fn destination(&self) -> &[String] {
+        &self.destination
+    }
+
+    /// Returns the producing attempt ID recorded in the published bytes.
+    #[must_use]
+    pub fn attempt_id(&self) -> &str {
+        &self.validated.attempt_id
+    }
+}
+
+/// Every attempt phase reconstructed from one dataset's strict directories.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ReconstructedAttempts {
+    completed_phases: Vec<ValidatedAttemptArtifact>,
+    open_start: Option<ValidatedAttemptArtifact>,
+}
+
+impl ReconstructedAttempts {
+    /// Returns start/terminal pairs of every completed attempt in ordinal order.
+    #[must_use]
+    pub fn completed_phases(&self) -> &[ValidatedAttemptArtifact] {
+        &self.completed_phases
+    }
+
+    /// Returns the published start of an attempt with no published terminal.
+    #[must_use]
+    pub fn open_start(&self) -> Option<&ValidatedAttemptArtifact> {
+        self.open_start.as_ref()
+    }
+}
+
+/// Publishes one checkpoint block and returns its durable publication proof.
+///
+/// # Errors
+///
+/// Refuses an invalid payload, an unusable dataset root, or a colliding block
+/// directory holding different immutable bytes.
+pub fn publish_checkpoint(
     dataset_dir: &Path,
-    start_envelope: &RareEventArtifactEnvelopeV1,
-    prior_phases: &[ValidatedAttemptArtifact],
-    accepted_checkpoints: &[ValidatedCheckpoint],
-) -> Result<ValidatedAttemptArtifact, ArtifactError> {
-    let RareEventPayloadV1::ExecutionAttempt(start_payload) = &start_envelope.payload else {
-        return Err(ArtifactError::Schema(
-            "begin_attempt requires an execution-attempt start".into(),
-        ));
-    };
-    if !matches!(start_payload.phase, AttemptPhaseV1::Start { .. }) {
-        return Err(ArtifactError::Schema(
-            "begin_attempt requires a start phase".into(),
+    checkpoint: &CheckpointArtifactV1,
+) -> Result<PublishedCheckpoint, ArtifactError> {
+    let identity = checkpoint.identity().clone();
+    let destination = checkpoint.destination()?;
+    let published = publish_artifact(dataset_dir, checkpoint)?;
+    let validated = validate_checkpoint_artifact_files(
+        &published.files.artifact_json,
+        &published.files.artifact_sha256,
+        &identity,
+    )?;
+    bind_published_checkpoint(validated, destination)
+}
+
+/// Binds one validated checkpoint to the destination its address must name.
+fn bind_published_checkpoint(
+    validated: ValidatedCheckpoint,
+    destination: Vec<String>,
+) -> Result<PublishedCheckpoint, ArtifactError> {
+    if block_destination(&validated.reference.block_address)? != destination {
+        return Err(ArtifactError::AddressSet(
+            "published checkpoint occupies a directory other than its block address".into(),
         ));
     }
-    validate_dataset_directory(dataset_dir, &start_payload.dataset_id)?;
-    verify_prior_attempt_directories(dataset_dir, &start_payload.dataset_identity, prior_phases)?;
-    let accepted_refs = validate_attempt_prefix(
-        &start_payload.dataset_identity,
-        prior_phases,
-        accepted_checkpoints,
+    Ok(PublishedCheckpoint {
+        validated,
+        destination,
+    })
+}
+
+/// Reconstructs every published checkpoint block from the strict directories.
+///
+/// The scan walks only the closed address grammar of `identity`; any other
+/// entry beneath the block root refuses. Missing blocks are simply absent, so
+/// a partially completed dataset reconstructs its exact durable prefix.
+///
+/// # Errors
+///
+/// Refuses an unusable dataset root, an unexpected entry, a block whose bytes
+/// fail verification, and a block published outside its own address.
+pub fn reconstruct_published_checkpoints(
+    dataset_dir: &Path,
+    identity: &RareEventDatasetIdentityV1,
+) -> Result<Vec<PublishedCheckpoint>, ArtifactError> {
+    let dataset = DirHandle::open_root(dataset_dir)?;
+    let expected_addresses = expected_checkpoint_block_addresses(identity)?;
+    let leaf_depth = expected_addresses
+        .first()
+        .map(|address| address.split('/').count())
+        .unwrap_or(0);
+    let mut children: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    for address in &expected_addresses {
+        let components: Vec<_> = address.split('/').collect();
+        for depth in 0..components.len() {
+            children
+                .entry(components[..depth].join("/"))
+                .or_default()
+                .insert(components[depth].to_owned());
+        }
+    }
+    let Some(blocks) = dataset.try_open_dir(Component::new(BLOCKS_DIRECTORY)?)? else {
+        return Ok(Vec::new());
+    };
+    let mut found = Vec::new();
+    walk_block_tree(
+        &blocks,
+        &mut Vec::new(),
+        leaf_depth,
+        &children,
+        identity,
+        &mut found,
     )?;
-    let expected_ordinal = (prior_phases.len() / 2) as u64;
-    let predecessor = match prior_phases.last() {
+    let order: std::collections::BTreeMap<&str, usize> = expected_addresses
+        .iter()
+        .enumerate()
+        .map(|(index, address)| (address.as_str(), index))
+        .collect();
+    let mut ordered = Vec::with_capacity(found.len());
+    for checkpoint in found {
+        let position = *order
+            .get(checkpoint.validated.reference.block_address.as_str())
+            .ok_or_else(|| {
+                ArtifactError::AddressSet("published block is not an expected address".into())
+            })?;
+        ordered.push((position, checkpoint));
+    }
+    ordered.sort_by_key(|(position, _)| *position);
+    Ok(ordered
+        .into_iter()
+        .map(|(_, checkpoint)| checkpoint)
+        .collect())
+}
+
+/// Walks one level of the closed block-address tree through pinned descriptors.
+fn walk_block_tree(
+    directory: &DirHandle,
+    prefix: &mut Vec<String>,
+    leaf_depth: usize,
+    children: &BTreeMap<String, BTreeSet<String>>,
+    identity: &RareEventDatasetIdentityV1,
+    found: &mut Vec<PublishedCheckpoint>,
+) -> Result<(), ArtifactError> {
+    let empty = BTreeSet::new();
+    let accepted = children.get(&prefix.join("/")).unwrap_or(&empty);
+    for entry in directory.entries()? {
+        if !accepted.contains(&entry.name) {
+            // Only a staging directory of an accepted sibling may remain here.
+            let staging_sibling = accepted
+                .iter()
+                .any(|sibling| is_staging_name(&entry.name, sibling));
+            if staging_sibling && entry.file_type == rustix::fs::FileType::Directory {
+                continue;
+            }
+            return Err(ArtifactError::AddressSet(format!(
+                "unexpected block-tree entry {}",
+                entry.name
+            )));
+        }
+        let child = directory.open_dir(Component::new(&entry.name)?)?;
+        prefix.push(entry.name);
+        if prefix.len() == leaf_depth {
+            let published = verify_dir_handle(&child, identity)?;
+            let validated = validate_checkpoint_artifact_files(
+                &published.files.artifact_json,
+                &published.files.artifact_sha256,
+                identity,
+            )?;
+            let mut destination = vec![BLOCKS_DIRECTORY.to_owned()];
+            destination.extend(prefix.iter().cloned());
+            found.push(bind_published_checkpoint(validated, destination)?);
+        } else {
+            walk_block_tree(&child, prefix, leaf_depth, children, identity, found)?;
+        }
+        prefix.pop();
+    }
+    Ok(())
+}
+
+/// Reconstructs the published attempt chain from the strict directories.
+///
+/// # Errors
+///
+/// Refuses an unusable dataset root, a gapped or misnamed ordinal directory,
+/// a terminal without its start, and any phase whose bytes fail verification.
+pub fn reconstruct_attempt_chain(
+    dataset_dir: &Path,
+    identity: &RareEventDatasetIdentityV1,
+) -> Result<ReconstructedAttempts, ArtifactError> {
+    let dataset = DirHandle::open_root(dataset_dir)?;
+    let Some(attempts) = dataset.try_open_dir(Component::new(ATTEMPTS_DIRECTORY)?)? else {
+        return Ok(ReconstructedAttempts {
+            completed_phases: Vec::new(),
+            open_start: None,
+        });
+    };
+    let mut ordinals = Vec::new();
+    for entry in attempts.entries()? {
+        if entry.name.len() != 12 || !entry.name.bytes().all(|byte| byte.is_ascii_digit()) {
+            return Err(ArtifactError::Publication(format!(
+                "unexpected attempt directory entry {}",
+                entry.name
+            )));
+        }
+        if entry.file_type != rustix::fs::FileType::Directory {
+            return Err(ArtifactError::Publication(
+                "attempt ordinal path is not a real directory".into(),
+            ));
+        }
+        let ordinal: u64 = entry.name.parse().map_err(|_| {
+            ArtifactError::Publication("attempt directory ordinal is invalid".into())
+        })?;
+        ordinals.push((ordinal, entry.name));
+    }
+    ordinals.sort_by_key(|(ordinal, _)| *ordinal);
+    if ordinals
+        .iter()
+        .enumerate()
+        .any(|(index, (ordinal, _))| *ordinal != index as u64)
+    {
+        return Err(ArtifactError::Lineage(
+            "on-disk attempt ordinals are missing, duplicated, or reordered".into(),
+        ));
+    }
+    let expected_names = vec!["start".to_owned(), "terminal".to_owned()];
+    let mut completed_phases = Vec::new();
+    let mut open_start = None;
+    for (index, (_, name)) in ordinals.iter().enumerate() {
+        let ordinal_dir = attempts.open_dir(Component::new(name)?)?;
+        let published = scan_publication_parent(&ordinal_dir, &expected_names, identity)?;
+        let phase = |wanted: &str| {
+            published
+                .iter()
+                .find(|(name, _)| name == wanted)
+                .map(|(_, directory)| directory)
+        };
+        let (Some(start), terminal) = (phase("start"), phase("terminal")) else {
+            return Err(ArtifactError::Lineage(
+                "published attempt ordinal has a terminal without its start".into(),
+            ));
+        };
+        let start = validate_attempt_artifact_files(
+            &start.files.artifact_json,
+            &start.files.artifact_sha256,
+            identity,
+        )?;
+        match terminal {
+            Some(terminal) => {
+                let terminal = validate_attempt_artifact_files(
+                    &terminal.files.artifact_json,
+                    &terminal.files.artifact_sha256,
+                    identity,
+                )?;
+                completed_phases.push(start);
+                completed_phases.push(terminal);
+            }
+            None if index + 1 == ordinals.len() => open_start = Some(start),
+            None => {
+                return Err(ArtifactError::Lineage(
+                    "an attempt before the last ordinal remains open".into(),
+                ))
+            }
+        }
+    }
+    Ok(ReconstructedAttempts {
+        completed_phases,
+        open_start,
+    })
+}
+
+/// Publishes a launcher-observed start after reconstructing the prior chain.
+///
+/// The accepted prior attempts and resumable checkpoints come from the strict
+/// dataset directories, never from a caller-supplied handle, so a start cannot
+/// claim a chain or a checkpoint partition that was never published.
+///
+/// # Errors
+///
+/// Refuses a dataset root whose basename is not its dataset ID, an open prior
+/// attempt, and a start whose ordinal, predecessor, attempt ID, or resume set
+/// does not extend the reconstructed chain exactly.
+pub fn begin_attempt(
+    dataset_dir: &Path,
+    start: &AttemptStartArtifactV1,
+) -> Result<ValidatedAttemptArtifact, ArtifactError> {
+    let start_payload = start.payload();
+    validate_dataset_directory(dataset_dir, &start_payload.dataset_id)?;
+    let identity = &start_payload.dataset_identity;
+    let attempts = reconstruct_attempt_chain(dataset_dir, identity)?;
+    if attempts.open_start.is_some() {
+        return Err(ArtifactError::Lineage(
+            "a prior attempt remains open".into(),
+        ));
+    }
+    let accepted: Vec<_> = reconstruct_published_checkpoints(dataset_dir, identity)?
+        .into_iter()
+        .map(|checkpoint| checkpoint.validated)
+        .collect();
+    let accepted_refs = validate_attempt_prefix(identity, &attempts.completed_phases, &accepted)?;
+    let expected_ordinal = (attempts.completed_phases.len() / 2) as u64;
+    let predecessor = match attempts.completed_phases.last() {
         None => AttemptPredecessorV1::None {},
         Some(prior_terminal) => AttemptPredecessorV1::Terminal {
             terminal_sha256: prior_terminal.digest.clone(),
@@ -1880,37 +2480,38 @@ pub fn begin_attempt(
         ..
     } = &start_payload.phase
     else {
-        unreachable!()
+        unreachable!("a start artifact always carries the start phase")
     };
     if start_payload.attempt_ordinal != expected_ordinal
         || start_payload.predecessor != predecessor
-        || start_payload.attempt_id
-            != attempt_id(
-                &start_payload.dataset_identity,
-                expected_ordinal,
-                &predecessor,
-            )?
+        || start_payload.attempt_id != attempt_id(identity, expected_ordinal, &predecessor)?
         || resume_checkpoint_refs != &accepted_refs
     {
         return Err(ArtifactError::Lineage(
             "new start does not extend the complete prior attempt/checkpoint chain".into(),
         ));
     }
-    let attempt_parent = attempt_ordinal_directory(dataset_dir, expected_ordinal)?;
-    let published = publish_artifact_dir(&attempt_parent, "start", start_envelope)?;
+    let published = publish_artifact(dataset_dir, start)?;
     validate_attempt_artifact_files(
         &published.files.artifact_json,
         &published.files.artifact_sha256,
-        &start_payload.dataset_identity,
+        identity,
     )
 }
 
-/// Publishes a supervising-launcher terminal linked to one accepted start.
+/// Publishes a supervising-launcher terminal linked to one published start.
+///
+/// The produced checkpoint partition is reconstructed from the strict block
+/// directories; a terminal claiming any other partition refuses.
+///
+/// # Errors
+///
+/// Refuses a terminal that does not link its published start observation, or
+/// whose checkpoint references differ from the reconstructed durable set.
 pub fn finish_attempt(
     dataset_dir: &Path,
     start: &ValidatedAttemptArtifact,
-    terminal_envelope: &RareEventArtifactEnvelopeV1,
-    produced_checkpoints: &[ValidatedCheckpoint],
+    terminal: &AttemptTerminalArtifactV1,
 ) -> Result<ValidatedAttemptArtifact, ArtifactError> {
     let AttemptPhaseV1::Start {
         start_utc,
@@ -1924,11 +2525,8 @@ pub fn finish_attempt(
         ));
     };
     validate_dataset_directory(dataset_dir, &start.payload.dataset_id)?;
-    let RareEventPayloadV1::ExecutionAttempt(terminal_payload) = &terminal_envelope.payload else {
-        return Err(ArtifactError::Schema(
-            "finish_attempt requires an execution-attempt terminal".into(),
-        ));
-    };
+    let identity = &start.payload.dataset_identity;
+    let terminal_payload = terminal.payload();
     let AttemptPhaseV1::Terminal {
         attempt_start_sha256,
         start_utc: terminal_start_utc,
@@ -1938,13 +2536,15 @@ pub fn finish_attempt(
         ..
     } = &terminal_payload.phase
     else {
-        return Err(ArtifactError::Schema(
-            "finish_attempt requires a terminal phase".into(),
-        ));
+        unreachable!("a terminal artifact always carries the terminal phase")
     };
-    let produced_refs: Vec<_> = produced_checkpoints
+    let produced: Vec<_> = reconstruct_published_checkpoints(dataset_dir, identity)?
+        .into_iter()
+        .filter(|checkpoint| checkpoint.attempt_id() == start.payload.attempt_id)
+        .collect();
+    let produced_refs: Vec<_> = produced
         .iter()
-        .map(|checkpoint| checkpoint.reference.clone())
+        .map(|checkpoint| checkpoint.validated.reference.clone())
         .collect();
     if terminal_payload.dataset_id != start.payload.dataset_id
         || terminal_payload.attempt_id != start.payload.attempt_id
@@ -1955,42 +2555,48 @@ pub fn finish_attempt(
         || host_observation_sha256 != &sha256_hex(&canonical_bytes(host_observation)?)
         || accelerator_observation_sha256 != &sha256_hex(&canonical_bytes(accelerator_observation)?)
         || checkpoint_refs != &produced_refs
-        || produced_checkpoints.iter().any(|checkpoint| {
-            checkpoint.dataset_id != start.payload.dataset_id
-                || checkpoint.attempt_id != start.payload.attempt_id
-                || checkpoint.attempt_start_sha256 != start.digest
-                || checkpoint.accelerator_observation_sha256 != *accelerator_observation_sha256
-                || validate_producer(&checkpoint.producer, accelerator_observation).is_err()
+        || produced.iter().any(|checkpoint| {
+            checkpoint.validated.dataset_id != start.payload.dataset_id
+                || checkpoint.validated.attempt_start_sha256 != start.digest
+                || checkpoint.validated.accelerator_observation_sha256
+                    != *accelerator_observation_sha256
+                || validate_producer(&checkpoint.validated.producer, accelerator_observation)
+                    .is_err()
         })
     {
         return Err(ArtifactError::Lineage(
-            "terminal does not exactly link its start and produced checkpoints".into(),
+            "terminal does not exactly link its start and published checkpoints".into(),
         ));
     }
-    let attempt_parent = attempt_ordinal_directory(dataset_dir, start.payload.attempt_ordinal)?;
-    let published_start = verify_artifact_dir(
-        &attempt_parent.join("start"),
-        &start.payload.dataset_identity,
-    )?;
-    if published_start.digest() != start.digest {
+    let attempts = reconstruct_attempt_chain(dataset_dir, identity)?;
+    if attempts.open_start.as_ref().map(|open| &open.digest) != Some(&start.digest) {
         return Err(ArtifactError::Lineage(
-            "published start differs from supplied validated start".into(),
+            "published start differs from the supplied validated start".into(),
         ));
     }
-    let published = publish_artifact_dir(&attempt_parent, "terminal", terminal_envelope)?;
+    let published = publish_artifact(dataset_dir, terminal)?;
     validate_attempt_artifact_files(
         &published.files.artifact_json,
         &published.files.artifact_sha256,
-        &start.payload.dataset_identity,
+        identity,
     )
 }
 
-/// Recovers an open attempt only after proving the recorded process identity absent.
+/// Recovers an open attempt after observing the recorded identity absent.
+///
+/// The PID, its occupant's start token, the host boot identity, and the
+/// observation time are all read from the operating system inside this call,
+/// at the recovery barrier. No caller can supply them.
+///
+/// # Errors
+///
+/// Refuses while the recorded child identity is still live, when the kernel
+/// process interface is unobservable, and when the synthesized terminal does
+/// not link its published start and checkpoints.
 pub fn recover_interrupted_attempt(
     dataset_dir: &Path,
     start: &ValidatedAttemptArtifact,
-    recovery: RecoveryTerminalV1,
-    produced_checkpoints: &[ValidatedCheckpoint],
+    launcher_sha256: &str,
 ) -> Result<ValidatedAttemptArtifact, ArtifactError> {
     let AttemptPhaseV1::Start {
         start_utc,
@@ -2004,43 +2610,38 @@ pub fn recover_interrupted_attempt(
             "recovery received a non-start handle".into(),
         ));
     };
-    validate_timestamp(&recovery.observation_utc)?;
-    validate_digest(&recovery.launcher_sha256)?;
-    validate_process_liveness_observation(&recovery.liveness)?;
-    verify_process_identity_absent(invocation, &recovery.liveness.evidence)?;
-    let checkpoint_refs = produced_checkpoints
-        .iter()
-        .map(|checkpoint| checkpoint.reference.clone())
+    validate_digest(launcher_sha256)?;
+    let observation = observe::observe_process_liveness(invocation.process_id)?;
+    verify_process_identity_absent(invocation, observation.evidence())?;
+    let identity = &start.payload.dataset_identity;
+    let checkpoint_refs = reconstruct_published_checkpoints(dataset_dir, identity)?
+        .into_iter()
+        .filter(|checkpoint| checkpoint.attempt_id() == start.payload.attempt_id)
+        .map(|checkpoint| checkpoint.validated.reference)
         .collect();
-    let terminal = RareEventArtifactEnvelopeV1 {
-        envelope_schema: ENVELOPE_SCHEMA_V1.into(),
-        artifact_kind: ArtifactKindV1::ExecutionAttempt,
-        payload: RareEventPayloadV1::ExecutionAttempt(Box::new(ExecutionAttemptReceiptV1 {
-            dataset_identity: start.payload.dataset_identity.clone(),
-            dataset_id: start.payload.dataset_id.clone(),
-            attempt_id: start.payload.attempt_id.clone(),
-            attempt_ordinal: start.payload.attempt_ordinal,
-            predecessor: start.payload.predecessor.clone(),
-            phase: AttemptPhaseV1::Terminal {
-                attempt_start_sha256: start.digest.clone(),
-                start_utc: start_utc.clone(),
-                end_utc: recovery.observation_utc,
-                end_time_meaning: EndTimeMeaningV1::ResumeObservation,
-                monotonic_elapsed_ns: None,
-                host_observation_sha256: sha256_hex(&canonical_bytes(host_observation)?),
-                accelerator_observation_sha256: sha256_hex(&canonical_bytes(
-                    accelerator_observation,
-                )?),
-                outcome_observer: OutcomeObserverV1::ResumingLauncher {
-                    launcher_sha256: recovery.launcher_sha256,
-                    liveness_evidence: recovery.liveness.evidence,
-                },
-                outcome: AttemptOutcomeV1::TerminationUnobservedOnResume {},
-                checkpoint_refs,
+    let terminal = AttemptTerminalArtifactV1::new(ExecutionAttemptReceiptV1 {
+        dataset_identity: start.payload.dataset_identity.clone(),
+        dataset_id: start.payload.dataset_id.clone(),
+        attempt_id: start.payload.attempt_id.clone(),
+        attempt_ordinal: start.payload.attempt_ordinal,
+        predecessor: start.payload.predecessor.clone(),
+        phase: AttemptPhaseV1::Terminal {
+            attempt_start_sha256: start.digest.clone(),
+            start_utc: start_utc.clone(),
+            end_utc: observation.observed_at_utc().to_owned(),
+            end_time_meaning: EndTimeMeaningV1::ResumeObservation,
+            monotonic_elapsed_ns: None,
+            host_observation_sha256: sha256_hex(&canonical_bytes(host_observation)?),
+            accelerator_observation_sha256: sha256_hex(&canonical_bytes(accelerator_observation)?),
+            outcome_observer: OutcomeObserverV1::ResumingLauncher {
+                launcher_sha256: launcher_sha256.to_owned(),
+                liveness_evidence: observation.evidence().clone(),
             },
-        })),
-    };
-    finish_attempt(dataset_dir, start, &terminal, produced_checkpoints)
+            outcome: AttemptOutcomeV1::TerminationUnobservedOnResume {},
+            checkpoint_refs,
+        },
+    })?;
+    finish_attempt(dataset_dir, start, &terminal)
 }
 
 fn validate_attempt_prefix(
@@ -2155,118 +2756,8 @@ fn validate_dataset_directory(path: &Path, expected_dataset_id: &str) -> Result<
             "dataset directory basename differs from dataset ID".into(),
         ));
     }
-    let metadata = fs::symlink_metadata(path)?;
-    if !metadata.file_type().is_dir() || metadata.file_type().is_symlink() {
-        return Err(ArtifactError::Publication(
-            "dataset path is not a real directory".into(),
-        ));
-    }
+    DirHandle::open_root(path)?;
     Ok(())
-}
-
-fn verify_prior_attempt_directories(
-    dataset_dir: &Path,
-    identity: &RareEventDatasetIdentityV1,
-    prior_phases: &[ValidatedAttemptArtifact],
-) -> Result<(), ArtifactError> {
-    let attempts = dataset_dir.join("attempts");
-    if !attempts.exists() {
-        return if prior_phases.is_empty() {
-            Ok(())
-        } else {
-            Err(ArtifactError::Lineage(
-                "prior attempt receipts are absent from the dataset directory".into(),
-            ))
-        };
-    }
-    let metadata = fs::symlink_metadata(&attempts)?;
-    if !metadata.file_type().is_dir() || metadata.file_type().is_symlink() {
-        return Err(ArtifactError::Publication(
-            "attempts path is not a real directory".into(),
-        ));
-    }
-    let completed_attempts = prior_phases.len() / 2;
-    let mut ordinals = Vec::new();
-    for entry in fs::read_dir(&attempts)? {
-        let entry = entry?;
-        let name = entry.file_name().into_string().map_err(|_| {
-            ArtifactError::Publication("attempt directory has a non-UTF-8 name".into())
-        })?;
-        if name.len() != 12 || !name.bytes().all(|byte| byte.is_ascii_digit()) {
-            return Err(ArtifactError::Publication(format!(
-                "unexpected attempt directory entry {name}"
-            )));
-        }
-        let ordinal: usize = name.parse().map_err(|_| {
-            ArtifactError::Publication("attempt directory ordinal is invalid".into())
-        })?;
-        if ordinal > completed_attempts {
-            return Err(ArtifactError::Lineage(
-                "attempt directory creates an ordinal gap".into(),
-            ));
-        }
-        let entry_type = entry.file_type()?;
-        if !entry_type.is_dir() || entry_type.is_symlink() {
-            return Err(ArtifactError::Publication(
-                "attempt ordinal path is not a real directory".into(),
-            ));
-        }
-        let expected_names = vec!["start".to_owned(), "terminal".to_owned()];
-        let published = recover_artifact_parent(&entry.path(), &expected_names, identity)?;
-        if ordinal < completed_attempts {
-            if published.len() != 2
-                || published[0].digest() != prior_phases[ordinal * 2].digest
-                || published[1].digest() != prior_phases[ordinal * 2 + 1].digest
-            {
-                return Err(ArtifactError::Lineage(
-                    "on-disk attempt chain differs from supplied validated chain".into(),
-                ));
-            }
-        } else if !published.is_empty() {
-            return Err(ArtifactError::Lineage(
-                "next attempt ordinal already has a published phase".into(),
-            ));
-        }
-        ordinals.push(ordinal);
-    }
-    ordinals.sort_unstable();
-    let expected_completed: Vec<_> = (0..completed_attempts).collect();
-    if ordinals.len() < completed_attempts
-        || ordinals[..completed_attempts] != expected_completed
-        || ordinals.len() > completed_attempts + 1
-    {
-        return Err(ArtifactError::Lineage(
-            "on-disk attempt ordinals are missing, duplicated, or reordered".into(),
-        ));
-    }
-    Ok(())
-}
-
-fn attempt_ordinal_directory(dataset_dir: &Path, ordinal: u64) -> Result<PathBuf, ArtifactError> {
-    if ordinal >= 1_000_000_000_000 {
-        return Err(ArtifactError::Identity(
-            "attempt ordinal is outside twelve digits".into(),
-        ));
-    }
-    let attempts = dataset_dir.join("attempts");
-    if !attempts.exists() {
-        match fs::create_dir(&attempts) {
-            Ok(()) => {}
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
-            Err(error) => return Err(error.into()),
-        }
-        File::open(dataset_dir)?.sync_all()?;
-    }
-    let ordinal_dir = attempts.join(format!("{ordinal:012}"));
-    if !ordinal_dir.exists() {
-        match fs::create_dir(&ordinal_dir) {
-            Ok(()) => {}
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
-            Err(error) => return Err(error.into()),
-        }
-        File::open(&attempts)?.sync_all()?;
-    }
-    Ok(ordinal_dir)
 }
 
 /// Verifies exact JSON/sidecar bytes against an externally expected identity.
@@ -2366,7 +2857,29 @@ pub fn validate_attempt_artifact_files(
 }
 
 /// Validates the exact closed checkpoint block set in canonical order.
+///
+/// Every member carries durable publication proof, so a byte-valid checkpoint
+/// that never reached the filesystem cannot form a complete set.
+///
+/// # Errors
+///
+/// Refuses a set that is not exactly the closed address partition of
+/// `identity` in canonical order, or whose histograms leave their fixed range.
 pub fn validate_checkpoint_set(
+    identity: &RareEventDatasetIdentityV1,
+    published: Vec<PublishedCheckpoint>,
+) -> Result<ValidatedCheckpointSet, ArtifactError> {
+    validate_checkpoint_handles(
+        identity,
+        published
+            .into_iter()
+            .map(|checkpoint| checkpoint.validated)
+            .collect(),
+    )
+}
+
+/// Validates a closed checkpoint block set from already accepted handles.
+fn validate_checkpoint_handles(
     identity: &RareEventDatasetIdentityV1,
     checkpoints: Vec<ValidatedCheckpoint>,
 ) -> Result<ValidatedCheckpointSet, ArtifactError> {
@@ -2495,7 +3008,7 @@ pub fn validated_checkpoint_set_fixture_attempt_partitions(
             }
         })
         .collect();
-    validate_checkpoint_set(identity, checkpoints)
+    validate_checkpoint_handles(identity, checkpoints)
 }
 
 /// Relinks an already validated conformance set across deterministic attempts.
@@ -2542,8 +3055,55 @@ pub fn relink_validated_checkpoint_set_fixture(
     })
 }
 
+/// Reconstructs the complete execution lineage from the strict directories.
+///
+/// The attempt chain and the checkpoint partition both come from the published
+/// dataset directories, so a final receipt built on this lineage cites only
+/// durable evidence.
+///
+/// # Errors
+///
+/// Refuses an unusable dataset root, an incomplete or open attempt chain, and
+/// a checkpoint set that is not the exact closed partition of `identity`.
+pub fn reconstruct_execution_lineage(
+    dataset_dir: &Path,
+    identity: &RareEventDatasetIdentityV1,
+) -> Result<(ValidatedCheckpointSet, ValidatedExecutionLineage), ArtifactError> {
+    let attempts = reconstruct_attempt_chain(dataset_dir, identity)?;
+    if attempts.open_start.is_some() {
+        return Err(ArtifactError::Lineage(
+            "an attempt remains open; the dataset has no complete lineage".into(),
+        ));
+    }
+    let checkpoints = validate_checkpoint_set(
+        identity,
+        reconstruct_published_checkpoints(dataset_dir, identity)?,
+    )?;
+    let lineage = validate_execution_lineage(identity, &attempts.completed_phases, &checkpoints)?;
+    Ok((checkpoints, lineage))
+}
+
+/// Verifies a fixture attempt chain and checkpoint partition.
+///
+/// Production lineage comes from [`reconstruct_execution_lineage`]; this entry
+/// point exists so schema conformance tests can build a complete closed set
+/// without publishing every block.
+///
+/// # Errors
+///
+/// Refuses the same gapped, forked, or mispartitioned chains as the
+/// reconstructing path.
+#[cfg(feature = "test-support")]
+pub fn validate_execution_lineage_fixture(
+    identity: &RareEventDatasetIdentityV1,
+    phases: &[ValidatedAttemptArtifact],
+    checkpoints: &ValidatedCheckpointSet,
+) -> Result<ValidatedExecutionLineage, ArtifactError> {
+    validate_execution_lineage(identity, phases, checkpoints)
+}
+
 /// Verifies a gap-free start/terminal chain and exact checkpoint partition.
-pub fn validate_execution_lineage(
+fn validate_execution_lineage(
     identity: &RareEventDatasetIdentityV1,
     phases: &[ValidatedAttemptArtifact],
     checkpoints: &ValidatedCheckpointSet,
@@ -2755,6 +3315,45 @@ pub fn target_final_envelope(
     };
     validate_envelope(&envelope)?;
     Ok(envelope)
+}
+
+/// Builds one publishable target final receipt from checked inputs.
+///
+/// # Errors
+///
+/// Refuses inputs that do not share one validated checkpoint lineage, and a
+/// result payload that disagrees with the published checkpoints.
+pub fn target_final_artifact(
+    identity: RareEventDatasetIdentityV1,
+    result_payload: TargetResultPayloadV1,
+    checkpoints: &ValidatedCheckpointSet,
+    execution_lineage: &ValidatedExecutionLineage,
+) -> Result<TargetReceiptArtifactV1, ArtifactError> {
+    let envelope = target_final_envelope(identity, result_payload, checkpoints, execution_lineage)?;
+    let RareEventPayloadV1::TargetCrossCheck(receipt) = envelope.payload else {
+        unreachable!("the target final envelope always carries a target receipt")
+    };
+    TargetReceiptArtifactV1::new(*receipt)
+}
+
+/// Builds one publishable coverage final receipt from checked inputs.
+///
+/// # Errors
+///
+/// Refuses inputs that do not share one validated checkpoint lineage, and a
+/// result payload that disagrees with the published checkpoints.
+pub fn coverage_final_artifact(
+    identity: RareEventDatasetIdentityV1,
+    result_payload: CoverageResultPayloadV1,
+    checkpoints: &ValidatedCheckpointSet,
+    execution_lineage: &ValidatedExecutionLineage,
+) -> Result<CoverageReceiptArtifactV1, ArtifactError> {
+    let envelope =
+        coverage_final_envelope(identity, result_payload, checkpoints, execution_lineage)?;
+    let RareEventPayloadV1::CoverageValidation(receipt) = envelope.payload else {
+        unreachable!("the coverage final envelope always carries a coverage receipt")
+    };
+    CoverageReceiptArtifactV1::new(*receipt)
 }
 
 /// Wraps and validates a coverage final receipt from checked inputs.
@@ -3043,15 +3642,14 @@ fn interval_radius_squared(
         .divide(&ExactValue::from_integer(TARGET_RUNS))
 }
 
-fn validate_interval(
-    lower: &str,
-    upper: &str,
+/// Builds the preregistered scaled Student interval for one exact estimate.
+fn scaled_interval(
     center: &ExactValue,
     independent_run_variance: &ExactValue,
     scale_base: u32,
     scale_exponent: u32,
-) -> Result<(), ArtifactError> {
-    let interval = ScaledStudentInterval::from_exact_independent_runs(
+) -> Result<ScaledStudentInterval, ArtifactError> {
+    ScaledStudentInterval::from_exact_independent_runs(
         center.numerator.clone(),
         center.denominator.clone(),
         independent_run_variance.numerator.clone(),
@@ -3062,7 +3660,31 @@ fn validate_interval(
         scale_base,
         scale_exponent,
     )
-    .map_err(|error| ArtifactError::Schema(error.to_string()))?;
+    .map_err(|error| ArtifactError::Schema(error.to_string()))
+}
+
+/// Renders the preregistered interval outward to its fixed 18 digits.
+fn rendered_interval(
+    center: &ExactValue,
+    independent_run_variance: &ExactValue,
+    scale_base: u32,
+    scale_exponent: u32,
+) -> Result<(String, String), ArtifactError> {
+    let rendered = scaled_interval(center, independent_run_variance, scale_base, scale_exponent)?
+        .render_outward(18)
+        .map_err(|error| ArtifactError::Schema(error.to_string()))?;
+    Ok((rendered.lower, rendered.upper))
+}
+
+fn validate_interval(
+    lower: &str,
+    upper: &str,
+    center: &ExactValue,
+    independent_run_variance: &ExactValue,
+    scale_base: u32,
+    scale_exponent: u32,
+) -> Result<(), ArtifactError> {
+    let interval = scaled_interval(center, independent_run_variance, scale_base, scale_exponent)?;
     let rendered = interval
         .render_outward(18)
         .map_err(|error| ArtifactError::Schema(error.to_string()))?;
@@ -4193,18 +4815,19 @@ fn validate_evidence(evidence: &ObservationEvidenceV1) -> Result<(), ArtifactErr
     Ok(())
 }
 
-/// Verifies canonical raw collector evidence against normalized liveness fields.
+/// Verifies one liveness observation against its immutable collector evidence.
+///
+/// # Errors
+///
+/// Refuses evidence from another collector, non-canonical evidence bytes, and
+/// any disagreement with the observation's own OS-read fields.
 pub fn validate_process_liveness_observation(
     observation: &ProcessLivenessObservationV1,
 ) -> Result<(), ArtifactError> {
-    let raw = parse_process_liveness_evidence(&observation.evidence)?;
-    if raw.recorded_process_id != observation.recorded_process_id
-        || raw.observed_process_id != observation.observed_process_id
-        || raw.observed_process_start_token != observation.observed_process_start_token
-        || raw.observed_boot_identity != observation.observed_boot_identity
-    {
+    let raw = parse_process_liveness_evidence(observation.evidence())?;
+    if canonical_bytes(&raw)? != observe::liveness_evidence_record(observation)? {
         return Err(ArtifactError::Liveness(
-            "normalized liveness fields differ from immutable collector evidence".into(),
+            "observed liveness fields differ from immutable collector evidence".into(),
         ));
     }
     Ok(())
@@ -4212,20 +4835,21 @@ pub fn validate_process_liveness_observation(
 
 fn parse_process_liveness_evidence(
     evidence: &ObservationEvidenceV1,
-) -> Result<ProcessLivenessEvidenceV1, ArtifactError> {
+) -> Result<observe::ProcessLivenessEvidenceV1, ArtifactError> {
     validate_evidence(evidence)?;
-    if evidence.source != "gf2.process-liveness-observation-json/v1" {
+    if evidence.source != observe::PROCESS_LIVENESS_SOURCE_V1 {
         return Err(ArtifactError::Liveness(
             "liveness evidence uses an unknown collector source".into(),
         ));
     }
     let bytes = decode_hex(&evidence.evidence_hex)?;
-    let raw: ProcessLivenessEvidenceV1 = serde_json::from_slice(&bytes)?;
+    let raw: observe::ProcessLivenessEvidenceV1 = serde_json::from_slice(&bytes)?;
     if canonical_bytes(&raw)? != bytes {
         return Err(ArtifactError::Liveness(
             "liveness collector evidence is not canonical".into(),
         ));
     }
+    validate_timestamp(&raw.observed_at_utc)?;
     Ok(raw)
 }
 
@@ -4239,31 +4863,17 @@ fn verify_process_identity_absent(
             "liveness observation checked a different recorded PID".into(),
         ));
     }
-    match raw.observed_process_id {
-        None => {
-            if raw.observed_process_start_token.is_some() || raw.observed_boot_identity.is_some() {
-                return Err(ArtifactError::Liveness(
-                    "absent PID observation contains an occupant identity".into(),
-                ));
-            }
-        }
-        Some(observed_pid) => {
-            if observed_pid != invocation.process_id
-                || raw.observed_process_start_token.is_none()
-                || raw.observed_boot_identity.is_none()
-            {
-                return Err(ArtifactError::Liveness(
-                    "PID occupant observation is incomplete or addresses another PID".into(),
-                ));
-            }
-            if raw.observed_process_start_token.as_deref()
-                == Some(invocation.process_start_token.as_str())
-                && raw.observed_boot_identity.as_deref() == Some(invocation.boot_identity.as_str())
-            {
-                return Err(ArtifactError::Liveness(
-                    "recorded child identity is still live".into(),
-                ));
-            }
+    if let ProcessOccupantV1::Present {
+        process_start_token,
+        boot_identity,
+    } = &raw.occupant
+    {
+        if process_start_token == &invocation.process_start_token
+            && boot_identity == &invocation.boot_identity
+        {
+            return Err(ArtifactError::Liveness(
+                "recorded child identity is still live".into(),
+            ));
         }
     }
     Ok(())
