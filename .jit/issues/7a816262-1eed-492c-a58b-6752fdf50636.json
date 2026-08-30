@@ -128,12 +128,12 @@
   "gates_status": {
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-08-29T16:38:01.853905749Z",
+      "updated_at": "2026-08-30T00:58:49.573189509Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-08-29T17:06:46.161847627Z",
+      "updated_at": "2026-08-30T01:07:02.855494708Z",
       "updated_by": "auto:executor"
     }
   },
@@ -146,5 +146,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Frozen root manifest for the campaign",
-  "updated_at": "2026-08-29T21:38:29.685011636Z"
+  "updated_at": "2026-08-30T01:07:02.855494708Z"
 }
