@@ -50,6 +50,34 @@ slow-timeout = { period = "20s", terminate-after = 1 }
 gpu-serial = { max-threads = 1 }
 slow-serial = { max-threads = 1 }
 
+# Thread budget for the fast tier. `scripts/cargo-ci.sh` runs the workspace
+# nextest step under an exclusive host-wide lock, so the run owns every core;
+# the budget is then divided among the tests rather than multiplied by them.
+# The wrapper exports RAYON_NUM_THREADS (default 4) to bound each test
+# process's pool, and the override below reserves the same number of nextest
+# scheduler slots for every test binary that builds one. Product per parallel
+# test: 4 slots x 4 rayon threads = 4 CPUs. Scalar tests keep the default
+# reservation of one slot and one thread, so they still fill the machine.
+#
+# The two numbers are one setting expressed in two files, because nextest
+# config cannot read the environment. Changing CARGO_CI_RAYON_THREADS without
+# changing `threads-required` here restores the oversubscription this replaces:
+# nproc test binaries each opening an nproc-wide rayon pool, which is what the
+# gpu-serial group and the 20 s CPU-smoke overrides above were sized against.
+# Those two remain in force; re-measure before narrowing either.
+[[profile.ci.overrides]]
+filter = '''
+    package(gf2-sim) and (
+        binary(pipeline_run_cpu) or binary(preset_vs_graph)
+        or binary(preset_vs_graph_byte_identity) or binary(determinism)
+        or binary(parallel_determinism) or binary(channels_determinism)
+        or binary(campaign_cli_flags) or binary(permanent_campaign_bin)
+        or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
+        or binary(hybrid_scheduler) or binary(executor_oom_fallback_run)
+    )
+'''
+threads-required = 4
+
 [[profile.ci.overrides]]
 filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))'
 test-group = 'gpu-serial'
