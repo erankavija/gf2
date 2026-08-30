@@ -7,7 +7,68 @@
     "7a816262-1eed-492c-a58b-6752fdf50636"
   ],
   "description": "Freeze the production launch-cost table required to execute every accelerator-backed cell in the permanent zero-fraction campaign. The table derives only from committed same-cell measurements and is validated against the frozen manifest before any campaign arm uses it.\n\n## Background\n\nThe campaign scheduler sizes accelerator launches from a CSV row `q,n,per_matrix_us` and refuses an accelerator cell whose exact $(q,n)$ cost is absent. The frozen backend map selects accelerator execution for fifteen cells across $q=3$ and $q=7$. The immutable premeasurement cohort records the applicable per-process evaluation timings, but no production cost-table artifact currently binds their pooling and integer-rounding rule or proves exact agreement with the manifest's accelerator set.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed production CSV has header `q,n,per_matrix_us` and exactly one positive integer row for every accelerator-backed cell in the frozen manifest, with no row for a processor-backed cell.\n- [hard] REQ-02: Every table value is reproducibly derived from that same cell's committed eligible premeasurement outcomes by one documented, deterministic pooling and conservative integer-rounding rule; no representative-size interpolation or fabricated replacement enters the table.\n- [hard] REQ-03: A versioned receipt binds the frozen manifest and every timing input by repository-relative path and lowercase SHA-256, and records the source revision, executable identity, host and accelerator provenance, process count, finite/censored outcome counts, pooled arithmetic, and rounded value for each table row.\n- [hard] REQ-04: A fail-closed validator proves that the table's $(q,n)$ keys exactly equal the manifest's accelerator-backed keys, every key and input outcome is unique, every value recomputes from the bound receipts, and the rendered receipt agrees with the CSV.\n- [hard] REQ-05: Focused release-mode tests demonstrate that the campaign binary accepts the complete table and rejects a missing, duplicate, zero, malformed, processor-only, or wrong-cell row without drawing or emitting a shard.\n- [hard] REQ-06: Formatting, linting, focused tests, and all configured quality gates pass, and permanent documentation identifies the cost table as launch sizing evidence rather than backend-selection or scientific-result evidence.\n\n## Notes\n\nThe cost table is an execution input, not part of the strict campaign manifest schema. It preserves every censored premeasurement outcome in the bound evidence even though only complete eligible accelerator arms can contribute timing values.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Accelerator launch-cost receipt v1",
+      "path": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "research",
+      "label": "Production accelerator launch-cost table v1",
+      "path": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "label": "Launch-cost derivation and validator",
+      "path": "dev/benchmarks/permanent_campaign/accelerator_launch_costs_v1.py"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "398a1f9b0dfaf36d7b8e803bf294c767cc989e861a2fed8e666e279014800d50",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../benchmarks/permanent_campaign/accelerator-launch-costs-v1.md",
+          "resolved_path": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e8ab603f082dfc0c85c8a5f66af3c03e041f6c08236d6eb3172fac6e1889245f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "scheinerman2024-q3-targets-v1.csv",
+          "resolved_path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "protocol.md",
+          "resolved_path": "dev/simulation_results/permanent-zero-fraction/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d0cd531018573d3a4f47e5afc7e706e445e6811c1741d3c84bf5f7c5ccf6e917",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../benchmarks/permanent_campaign/accelerator_launch_costs_v1.py",
+          "resolved_path": "dev/benchmarks/permanent_campaign/accelerator_launch_costs_v1.py"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Permanent campaign dataset documentation",
+      "path": "dev/simulation_results/permanent-zero-fraction/README.md"
+    }
+  ],
   "first_ready_at": "2026-08-29T08:03:02.695225411Z",
   "gates_required": [
     "cargo-ci",
@@ -25,5 +86,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze accelerator launch-cost table for campaign cells",
-  "updated_at": "2026-08-30T01:33:17.917260157Z"
+  "updated_at": "2026-08-30T02:21:43.786224382Z"
 }

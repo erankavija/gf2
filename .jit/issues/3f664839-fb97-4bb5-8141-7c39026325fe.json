@@ -7,8 +7,34 @@
     "175972df-556d-437f-a9cd-10f08eed03d6",
     "7a816262-1eed-492c-a58b-6752fdf50636"
   ],
-  "description": "A preregistered design for exact compressed-state propagation and an independent importance-sampling cross-check of permanental rank deficiency for three-column matrices.\n\n## Background\n\nFor rows $u,v,w\\in\\mathbb{F}_q^3$, define\n\n$$\n\\phi(u,v)=\n(u_2v_3+u_3v_2,\\,\n u_1v_3+u_3v_1,\\,\n u_1v_2+u_2v_1),\n$$\n\nso $\\operatorname{per}(u,v,w)=\\phi(u,v)\\cdot w$. A valid row prefix is therefore summarized by the row span $U$ and the span $V$ of its pair contractions. A new row preserves permanental-rank deficiency exactly when it lies in $V^\\perp$.\n\nThis finite state permits exact dynamic programming. It also defines a full-support importance proposal that samples the next row uniformly from $V^\\perp$ and applies the exact likelihood ratio $q^{-\\dim V}$. The stochastic calculation is an independent uncertainty-bearing cross-check; the exact rational calculation is the primary scientific result.\n\nEmpirical usefulness in the target regime remains aspirational at the parent epic. This design's mathematical identities, validation protocol, provenance, and falsification rules are hard requirements. A cross-check that fails its preregistered usability threshold is an allowed outcome; weakening, replacing, or retuning the threshold after observing results is not.\n\n## Success Criteria\n\n- [hard] REQ-01: Specifies canonical representations of $U$ and $V$, proves the prefix-validity condition $x\\in V^\\perp$, and specifies the updates $U'=U+\\langle x\\rangle$ and $V'=V+\\phi(U,x)$.\n- [hard] REQ-02: Specifies an exact recurrence over compressed states whose summed integer count divided by $q^{3n}$ equals the permanental-rank-deficiency probability.\n- [hard] REQ-03: Specifies the independent proposal $x\\sim\\operatorname{Unif}(V^\\perp)$, the incremental weight $q^{-\\dim V}$, its full-support condition, and a self-contained unbiasedness argument.\n- [hard] REQ-04: Names $(q,n,k)=(3,1024,3)$ as the target, records that $0.1\\sqrt{1024}=3.2$, and quantifies why direct sampling cannot reach a probability of leading order $3^{-1023}$.\n- [hard] REQ-05: Fixes before implementation the finite exhaustive transition and matrix-validation domains for each supported field, names every fast-tier and ignored slow-tier case, and fixes the exact anchors, independent-run counts, nominal interval level, empirical coverage rule, and contradiction rule; no runtime notion of `tractable` chooses additional exhaustive cases.\n- [hard] REQ-06: Defines final-weight ESS, independent-run variance, extinction or degeneracy diagnostics, and the threshold that makes the stochastic cross-check unusable without invalidating the exact result.\n- [hard] REQ-07: Binds every stochastic draw to manifested rare-event purpose tag $4$ under fixed stream-index subdomains, separate from campaign and validation data.\n- [hard] REQ-08: States that the exact rational value is primary, the stochastic interval is a cross-check, and disagreement or failed coverage is preserved rather than reconciled through retuning.\n",
-  "documents": [],
+  "description": "A preregistered design for exact compressed-state propagation and an independent importance-sampling cross-check of permanental rank deficiency for three-column matrices.\n\n## Background\n\nFor rows $u,v,w\\in\\mathbb{F}_q^3$, define\n\n$$\n\\phi(u,v)=\n(u_2v_3+u_3v_2,\\,\n u_1v_3+u_3v_1,\\,\n u_1v_2+u_2v_1),\n$$\n\nso $\\operatorname{per}(u,v,w)=\\phi(u,v)\\cdot w$. A valid row prefix is therefore summarized by the row span $U$ and the span $V$ of its pair contractions. A new row preserves permanental-rank deficiency exactly when it lies in $V^\\perp$.\n\nThis finite state permits exact dynamic programming. It also defines a full-support importance proposal that samples the next row uniformly from $V^\\perp$ and applies the exact likelihood ratio $q^{-\\dim V}$. The stochastic calculation is an independent uncertainty-bearing cross-check; the exact rational calculation is the primary scientific result.\n\nEmpirical usefulness in the target regime remains aspirational at the parent epic. This design's mathematical identities, validation protocol, provenance, and falsification rules are hard requirements. A cross-check that fails its preregistered usability threshold is an allowed outcome; weakening, replacing, or retuning the threshold after observing results is not.\n\n## Success Criteria\n\n- [hard] REQ-01: Specifies canonical representations of $U$ and $V$, proves the prefix-validity condition $x\\in V^\\perp$, and specifies the updates $U'=U+\\langle x\\rangle$ and $V'=V+\\phi(U,x)$.\n- [hard] REQ-02: Specifies an exact recurrence over compressed states whose summed integer count divided by $q^{3n}$ equals the permanental-rank-deficiency probability.\n- [hard] REQ-03: Specifies the independent proposal $x\\sim\\operatorname{Unif}(V^\\perp)$, the incremental weight $q^{-\\dim V}$, its full-support condition, and a self-contained unbiasedness argument.\n- [hard] REQ-04: Names $(q,n,k)=(3,1024,3)$ as the target, records that $0.1\\sqrt{1024}=3.2$, and quantifies why direct sampling cannot reach a probability of leading order $3^{-1023}$.\n- [hard] REQ-05: Fixes before implementation the finite exhaustive transition and matrix-validation domains for each supported field, names every fast-tier and ignored slow-tier case, and fixes the exact anchors, independent-run counts, nominal interval level, empirical coverage rule, and contradiction rule; no runtime notion of `tractable` chooses additional exhaustive cases.\n- [hard] REQ-06: Defines final-weight ESS, independent-run variance, extinction or degeneracy diagnostics, and the threshold that makes the stochastic cross-check unusable without invalidating the exact result.\n- [hard] REQ-07: Binds every stochastic draw to manifested rare-event purpose tag $4$ under fixed stream-index subdomains, separate from campaign and validation data.\n- [hard] REQ-08: States that the exact rational value is primary, the stochastic interval is a cross-check, and disagreement or failed coverage is preserved rather than reconciled through retuning.\n\n\n## References\n\n- [GGK2025] Ghasemi, Gross, Kopparty — Permanental Rank versus Determinantal Rank of Random Matrices over Finite Fields. APPROX/RANDOM 2025. arXiv:2512.03221; ECCC TR25-206.\n",
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "/dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json",
+          "resolved_path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/simulation_results/permanent-zero-fraction/protocol.md",
+          "resolved_path": "dev/simulation_results/permanent-zero-fraction/protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Preregistered rare-event design",
+      "path": "dev/active/3f664839/design.md"
+    }
+  ],
   "first_ready_at": "2026-08-30T01:32:03.801186402Z",
   "gates_required": [
     "doc-review",
@@ -25,5 +51,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Preregistered compressed-state rare-event design",
-  "updated_at": "2026-08-30T01:33:26.653418716Z"
+  "updated_at": "2026-08-30T02:21:15.402097561Z"
 }
