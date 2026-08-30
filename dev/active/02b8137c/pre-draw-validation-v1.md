@@ -116,16 +116,28 @@ or interpretation sidecar.
 ## Execution
 
 ```console
-$ permanent_validation \
+$ cargo +1.95.0 build --release --features hip --bin permanent_validation
+$ ./target/release/permanent_validation \
     --preregistration dev/active/02b8137c/pre-draw-validation-v1-preregistration.json \
     --state-dir dev/active/02b8137c/validation-journal \
     --receipt dev/active/02b8137c/pre-draw-validation-v1-receipt.json \
     --workers N
 ```
 
-The binary must be built with the `hip` feature on a host with a usable
-accelerator device, because the frozen manifest's backend union includes the
-accelerator and an unavailable required backend fails validation.
+Three build and invocation conditions bind the run, and the runner enforces the
+first two before it opens any address:
+
+- The producing toolchain is Rust 1.95.0. A build from another compiler is
+  refused up front, because an address opened under a refused build could not
+  be redrawn.
+- The `hip` feature is enabled and the host has a usable accelerator device.
+  The frozen manifest's backend union includes the accelerator, so an
+  unavailable required backend fails validation.
+- A resumed run repeats the identical command from the identical clean source
+  closure. The journal binds the run to its observed producer identity,
+  including the argument tokens, and refuses to adopt a journal recorded under a
+  different one. Resuming with a changed worker count or argument order is
+  therefore not a redraw opportunity; it is a refusal.
 
 Exit status 0 records a passing receipt, 2 a preserved failure, and 1 an error
 that produced no verdict. `permanent_validation --verify-receipt PATH` re-reads a

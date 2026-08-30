@@ -464,7 +464,7 @@ fn backend_unavailable(q: u8, n: u16, backend: Backend) -> Result<ProcessorPath,
 /// does not inspect host capabilities, timing, sampled matrices, or any
 /// measurement result. [`backend_supports_cell`] states the mathematical
 /// domain; this function adds only the kernel mapping and the accelerator
-/// build-feature gate. Matrix distribution for `BatchParallel` remains a
+/// build-feature gate for that domain. Matrix distribution for `BatchParallel` remains a
 /// separate scheduling concern.
 pub(crate) fn resolve_processor_path(
     q: u8,
@@ -499,7 +499,7 @@ pub(crate) fn resolve_processor_path(
 /// Returns whether a campaign backend's mathematical kernel domain includes a
 /// cell, independently of build features and runtime device availability.
 ///
-/// This is the campaign's one domain rule: [`resolve_processor_path`] admits a
+/// This is the campaign's one domain rule: processor-path resolution admits a
 /// triple only when this predicate holds, so a kernel's `(q, n)` bounds are
 /// stated once. Validation consults it to distinguish an inapplicable backend
 /// from a supported backend that failed to build or execute. The latter is a

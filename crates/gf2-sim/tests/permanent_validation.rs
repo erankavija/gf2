@@ -18,13 +18,14 @@ use gf2_sim::permanent_campaign::provenance::repository_top_level;
 use gf2_sim::permanent_campaign::schedule::backend_supports_cell;
 use gf2_sim::permanent_campaign::schema::{read_manifest, ArtifactIdentity, Backend, Sha256Digest};
 use gf2_sim::permanent_campaign::validation::{
-    evaluate_validation_anchor, load_frozen_campaign_validation_preregistration,
-    load_validation_preregistration, publish_validation_receipt_atomic, read_validation_receipt,
-    run_validation, AnchorSpec, BackendAgreementStatus, DecisionRule, FrozenArtifactGuard,
-    FrozenArtifactSnapshot, PhaseStatus, ReplayMode, RetryRule, SampleOrigin,
-    ValidationAuthorities, ValidationFailure, ValidationPhase, ValidationPreregistration,
-    ValidationProtocol, ValidationReceipt, ValidationStreamPurpose, ValidationVerdict,
-    PREREGISTRATION_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION,
+    evaluate_validation_anchor, is_frozen_validation_toolchain,
+    load_frozen_campaign_validation_preregistration, load_validation_preregistration,
+    publish_validation_receipt_atomic, read_validation_receipt, run_validation, AnchorSpec,
+    BackendAgreementStatus, DecisionRule, FrozenArtifactGuard, FrozenArtifactSnapshot, PhaseStatus,
+    ReplayMode, RetryRule, SampleOrigin, ValidationAuthorities, ValidationFailure, ValidationPhase,
+    ValidationPreregistration, ValidationProtocol, ValidationReceipt, ValidationStreamPurpose,
+    ValidationVerdict, FROZEN_TOOLCHAIN_PREFIX, PREREGISTRATION_SCHEMA_VERSION,
+    RECEIPT_SCHEMA_VERSION,
 };
 use gf2_stats::binomial::two_sided_test;
 use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
@@ -40,6 +41,9 @@ const VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
 const FOCUSED_DRAWS: u64 = 4_096;
 
 static SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+/// One labelled single-field mutation of an otherwise valid artifact.
+type Mutation<T> = (&'static str, Box<dyn Fn(&mut T)>);
 
 fn unique_directory(label: &str) -> PathBuf {
     let unique = SystemTime::now()
@@ -622,7 +626,7 @@ fn receipt_validation_rejects_each_mutated_field() {
     }
     };
 
-    let mutations: Vec<(&str, Box<dyn Fn(&mut ValidationReceipt)>)> = vec![
+    let mutations: Vec<Mutation<ValidationReceipt>> = vec![
         (
             "receipt schema",
             Box::new(|r: &mut ValidationReceipt| r.schema_version += 1),
@@ -879,7 +883,7 @@ fn preregistration_validation_rejects_malformed_plans() {
         .validate()
         .expect("the focused plan is well formed");
 
-    let cases: Vec<(&str, Box<dyn Fn(&mut ValidationPreregistration)>)> = vec![
+    let cases: Vec<Mutation<ValidationPreregistration>> = vec![
         (
             "schema version",
             Box::new(|p: &mut ValidationPreregistration| p.schema_version += 1),
@@ -1145,4 +1149,20 @@ fn the_runner_refuses_an_incomplete_invocation_and_a_missing_receipt() {
         Some(1),
         "a preregistration is not a receipt"
     );
+}
+
+#[test]
+fn frozen_validation_evidence_is_pinned_to_its_producing_toolchain() {
+    assert_eq!(FROZEN_TOOLCHAIN_PREFIX, "rustc 1.95.0 ");
+    assert!(is_frozen_validation_toolchain(
+        "rustc 1.95.0 (59807616e 2026-04-14)"
+    ));
+    assert!(!is_frozen_validation_toolchain(
+        "rustc 1.97.0 (2d8144b78 2026-07-07)"
+    ));
+    assert!(
+        !is_frozen_validation_toolchain("rustc 1.95.0"),
+        "the prefix ends at the separator, so 1.95.01 cannot match"
+    );
+    assert!(!is_frozen_validation_toolchain(""));
 }
