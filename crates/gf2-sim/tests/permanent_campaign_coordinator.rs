@@ -15,7 +15,7 @@ use gf2_sim::permanent_campaign::schema::{
     shard_record_file, AcceptanceVerdict, ArtifactIdentity, Availability, Backend,
     CampaignManifest, CellSpec, CellTerminalState, DeterminantCount, DeterminantPlan, GitRevision,
     HaltReason, Provenance, RngAlgorithm, ShardRecord, ShardSpec, StreamAddress, StreamPurpose,
-    DATASET_HOME, SCHEMA_VERSION,
+    SCHEMA_VERSION,
 };
 use sha2::{Digest, Sha256};
 
@@ -144,21 +144,8 @@ fn fixture() -> (PathBuf, CampaignManifest, CampaignCoordinator) {
     fs::create_dir_all(&campaign_root).unwrap();
     let bytes = serde_json::to_vec_pretty(&manifest).unwrap();
     fs::write(campaign_root.join("manifest.json"), &bytes).unwrap();
-    let manifest_identity = ArtifactIdentity {
-        path: format!("{DATASET_HOME}/{}/manifest.json", manifest.campaign_id)
-            .parse()
-            .unwrap(),
-        sha256: format!("{:x}", Sha256::digest(&bytes)).parse().unwrap(),
-    };
-    let coordinator = CampaignCoordinator::new(
-        manifest.clone(),
-        manifest_identity,
-        artifact(
-            "dev/simulation_results/permanent-zero-fraction/protocol.md",
-            'd',
-        ),
-    )
-    .unwrap();
+    fs::write(root.join("protocol.md"), b"fixture frozen protocol\n").unwrap();
+    let coordinator = CampaignCoordinator::new(&campaign_root).unwrap();
     (root, manifest, coordinator)
 }
 
@@ -228,6 +215,7 @@ fn accept_cell(
     determinant_zeros: Option<u64>,
 ) {
     coordinator.authorize_arm(arm(q, n)).unwrap();
+    coordinator.persist(root).unwrap();
     write_shard(root, manifest, q, n, 0, permanent_zeros, determinant_zeros);
     coordinator.record_accepted(root, q, n, 0).unwrap();
     coordinator
@@ -332,14 +320,12 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
     duplicate_selector
         .argv
         .extend(["--q".to_owned(), "7".to_owned()]);
-    assert!(CampaignCoordinator::new(
-        campaign.clone(),
-        coordinator.receipt().manifest_identity.clone(),
-        coordinator.receipt().protocol_identity.clone(),
-    )
-    .unwrap()
-    .authorize_arm(duplicate_selector)
-    .is_err());
+    assert!(CampaignCoordinator::new(&campaign_root)
+        .unwrap()
+        .authorize_arm(duplicate_selector)
+        .is_err());
+
+    coordinator.persist(&campaign_root).unwrap();
 
     coordinator
         .record_quarantine(7, 20, 0, "mechanical fixture failure".to_owned())
@@ -385,7 +371,9 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
     ));
 
     let (second_root, _, mut second_failure) = fixture();
+    let second_campaign_root = second_root.join("coordinator-fixture");
     second_failure.authorize_arm(arm(7, 20)).unwrap();
+    second_failure.persist(&second_campaign_root).unwrap();
     second_failure
         .record_quarantine(7, 20, 0, "first mechanical failure".to_owned())
         .unwrap();
@@ -437,6 +425,7 @@ fn receipt_summary_and_sidecars_are_terminal_monotonic_and_closed() {
     );
 
     coordinator.authorize_arm(arm(5, 4)).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
     write_shard(&campaign_root, &campaign, 5, 4, 0, 10, Some(12));
     coordinator
         .record_accepted(&campaign_root, 5, 4, 0)
