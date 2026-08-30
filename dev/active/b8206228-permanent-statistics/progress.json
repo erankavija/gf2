@@ -239,7 +239,7 @@
           "short_id": "6639435f",
           "title": "Independent importance-sampling cross-check",
           "classification": "implementation",
-          "status": "blocked pending owner authorization after final audit at ordinary rework MAX: implementation through final-receipt regeneration is committed on clean branch worktree-agent-6639435f at 49b4d452, but publication commit c05b5f11 has four hard boundary findings (descriptor-relative symlink safety, typed destination/payload binding, OS-owned timed liveness observation, and proof of durable checkpoint publication). The thin production runner and full CI have not started."
+          "status": "done: owner-authorized bounded high-tier rework closed all four audit boundary findings (descriptor-pinned DirHandle store, sealed typed publication, OS-observed timed liveness, filesystem-reconstructed checkpoint proof) plus lead findings F-R1 (non-UTF-8 env recorded as unset), F-R2/F-R4 (phantom-path and blanket no-path doc claims), F-R3 (validation before any filesystem effect; descriptor-walked root creation). Thin runner real and resume-tested. Merged at 660b742b; cargo-ci clean-tree pass, code-review pass with zero findings, doc-review pass with one pre-existing advisory tracked by 049a89af. Lead six-tier review PASS; closed session 32."
         },
         {
           "id": "f27150a5-8713-4bce-b404-9e477937d498",
@@ -1006,6 +1006,16 @@
       "source": "doc-review final pass (low advisory, pre-existing)",
       "finding": "The gf2-algebra permanent module overview references two removed dev/plans design paths whose authoritative targets live under dev/archive/ae82bd73-gf2-algebra-permanent.",
       "disposition": "Filed as 049a89af under the gf2-algebra permanent epic before completing 8ec10dde; no issue-impact finding remains."
+    },
+    {
+      "issue": "6639435f",
+      "severity": "advisory",
+      "finding": "gf2-sim rare-event fast-tier headroom: rare_event_artifact_final_receipt_regeneration 3.7s and rare_event_artifact_partial_publish_recovery 3.5s sit near the 5s per-test kill on a contended host; next candidates to trip. Reported by the rework worker 2026-08-30."
+    },
+    {
+      "issue": "epic",
+      "severity": "advisory",
+      "finding": "Dispatch cost model: full CI in a fresh worktree hit 1.7% sccache Rust hit rate (9/519) against a 44 GiB cache on 2026-08-30; cause unestablished (peer measurement). The hardlinked cache pool, not sccache, carries cross-worktree reuse. Cold fresh-worktree CI: 661s; warm: 62s."
     }
   ],
   "started_at": "2026-08-09T12:20:30Z",
