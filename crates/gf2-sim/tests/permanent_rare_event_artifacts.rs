@@ -1,17 +1,10 @@
 use gf2_sim::permanent_rare_event::artifact::*;
+use gf2_stats::weighted::ScaledStudentInterval;
 use num_bigint::BigUint;
 use sha2::{Digest, Sha256};
 
 fn digest(byte: u8) -> String {
     format!("{byte:02x}").repeat(32)
-}
-
-fn evidence(source: &str, bytes: &[u8]) -> ObservationEvidenceV1 {
-    ObservationEvidenceV1 {
-        source: source.into(),
-        evidence_hex: bytes.iter().map(|byte| format!("{byte:02x}")).collect(),
-        evidence_sha256: sha256_hex(bytes),
-    }
 }
 
 fn behavior() -> BehaviorIdentityV1 {
@@ -99,7 +92,7 @@ fn identity(scientific: ScientificIdentityV1) -> RareEventDatasetIdentityV1 {
 }
 
 fn host() -> HostObservationV1 {
-    HostObservationV1 {
+    let mut host = HostObservationV1 {
         observation_utc: "2026-08-30T08:00:00.000000000Z".into(),
         cpu_architecture: "x86_64".into(),
         cpu_vendor: "fixture-vendor".into(),
@@ -115,35 +108,45 @@ fn host() -> HostObservationV1 {
         os_version: "1".into(),
         kernel_release: "fixture".into(),
         kernel_version: "fixture".into(),
-        evidence: vec![evidence("fixture-host-api", b"host")],
-    }
+        evidence: vec![],
+    };
+    host.evidence = vec![normalized_host_evidence(&host).unwrap()];
+    host
 }
 
 fn not_used() -> AcceleratorObservationV1 {
+    let reason = "configuration selected CPU";
     AcceleratorObservationV1::NotUsed {
-        reason: "configuration selected CPU".into(),
-        evidence: vec![evidence("fixture-selection-api", b"cpu")],
+        reason: reason.into(),
+        evidence: vec![normalized_accelerator_not_used_evidence(reason).unwrap()],
     }
 }
 
 fn used() -> AcceleratorObservationV1 {
+    let mut device = GpuObservationV1 {
+        model: "fixture-gpu".into(),
+        uuid: "GPU-0001".into(),
+        pci_address: "0000:01:00.0".into(),
+        architecture: "gfx-fixture".into(),
+        driver_version: "1".into(),
+        rocm_version: "1".into(),
+        hip_version: "1".into(),
+        kernel_name: "fixture_kernel".into(),
+        code_object_sha256: digest(0x20),
+        evidence: vec![],
+    };
+    device.evidence = vec![normalized_gpu_evidence(&device).unwrap()];
     AcceleratorObservationV1::Used {
-        devices: vec![GpuObservationV1 {
-            model: "fixture-gpu".into(),
-            uuid: "GPU-0001".into(),
-            pci_address: "0000:01:00.0".into(),
-            architecture: "gfx-fixture".into(),
-            driver_version: "1".into(),
-            rocm_version: "1".into(),
-            hip_version: "1".into(),
-            kernel_name: "fixture_kernel".into(),
-            code_object_sha256: digest(0x20),
-            evidence: vec![evidence("fixture-driver-api", b"gpu")],
-        }],
+        devices: vec![device],
     }
 }
 
 fn invocation(identity: &RareEventDatasetIdentityV1) -> InvocationV1 {
+    let worker = worker();
+    let scientific_mode = match identity.scientific {
+        ScientificIdentityV1::Target { .. } => "target",
+        ScientificIdentityV1::Coverage { .. } => "coverage",
+    };
     let effective_configuration = RareEventConfigurationV1 {
         configuration_schema: CONFIGURATION_SCHEMA_V1.into(),
         artifact_root: "dev/simulation_results/permanent-rare-event".into(),
@@ -153,7 +156,19 @@ fn invocation(identity: &RareEventDatasetIdentityV1) -> InvocationV1 {
     };
     let effective_configuration = canonical_bytes(&effective_configuration).unwrap();
     InvocationV1 {
-        argv: vec!["permanent_rare_event".into(), "worker".into()],
+        argv: vec![
+            "permanent_rare_event".into(),
+            "worker".into(),
+            "--accelerator-selection=none".into(),
+            "--block-assignment-policy=round-robin/v1".into(),
+            "--cpu-affinity=unpinned".into(),
+            "--effective-devices=".into(),
+            "--effective-workers=2".into(),
+            "--executor-mode=cpu".into(),
+            "--fallback-policy=safe-cpu/v1".into(),
+            "--requested-workers=2".into(),
+            "--work-queue-policy=canonical-block-queue/v1".into(),
+        ],
         executable_path: "target/release/permanent_rare_event".into(),
         executable_sha256: identity.behavior.executable_sha256.clone(),
         process_id: 123,
@@ -165,11 +180,63 @@ fn invocation(identity: &RareEventDatasetIdentityV1) -> InvocationV1 {
             .iter()
             .map(|byte| format!("{byte:02x}"))
             .collect(),
-        input_resolution: vec![InputResolutionV1 {
-            field: "scientific_identity".into(),
-            origin: InputOriginV1::Configuration,
-            value: "target".into(),
-        }],
+        input_resolution: vec![
+            InputResolutionV1 {
+                field: "accelerator_selection".into(),
+                origin: InputOriginV1::Argument,
+                value: worker.accelerator_selection,
+            },
+            InputResolutionV1 {
+                field: "artifact_root".into(),
+                origin: InputOriginV1::Configuration,
+                value: "dev/simulation_results/permanent-rare-event".into(),
+            },
+            InputResolutionV1 {
+                field: "block_assignment_policy".into(),
+                origin: InputOriginV1::Argument,
+                value: worker.block_assignment_policy,
+            },
+            InputResolutionV1 {
+                field: "cpu_affinity".into(),
+                origin: InputOriginV1::Argument,
+                value: worker.cpu_affinity,
+            },
+            InputResolutionV1 {
+                field: "effective_devices".into(),
+                origin: InputOriginV1::Argument,
+                value: String::new(),
+            },
+            InputResolutionV1 {
+                field: "effective_workers".into(),
+                origin: InputOriginV1::Argument,
+                value: worker.effective_workers.to_string(),
+            },
+            InputResolutionV1 {
+                field: "executor_mode".into(),
+                origin: InputOriginV1::Argument,
+                value: worker.executor_mode,
+            },
+            InputResolutionV1 {
+                field: "fallback_policy".into(),
+                origin: InputOriginV1::Argument,
+                value: worker.fallback_policy,
+            },
+            InputResolutionV1 {
+                field: "requested_workers".into(),
+                origin: InputOriginV1::Argument,
+                value: worker.requested_workers.to_string(),
+            },
+            InputResolutionV1 {
+                field: "scientific_identity".into(),
+                origin: InputOriginV1::Configuration,
+                value: scientific_mode.into(),
+            },
+            InputResolutionV1 {
+                field: "work_queue_policy".into(),
+                origin: InputOriginV1::Argument,
+                value: worker.work_queue_policy,
+            },
+        ],
     }
 }
 
@@ -209,6 +276,7 @@ fn terminal_envelope(
     identity: RareEventDatasetIdentityV1,
     start: &RareEventArtifactEnvelopeV1,
     failed: bool,
+    checkpoint_refs: Vec<CheckpointRefV1>,
 ) -> RareEventArtifactEnvelopeV1 {
     let RareEventPayloadV1::ExecutionAttempt(start_payload) = &start.payload else {
         unreachable!()
@@ -250,7 +318,7 @@ fn terminal_envelope(
             } else {
                 AttemptOutcomeV1::Completed {}
             },
-            checkpoint_refs: vec![],
+            checkpoint_refs,
         },
     };
     RareEventArtifactEnvelopeV1 {
@@ -362,9 +430,89 @@ fn checkpoint_refs_coverage() -> Vec<CheckpointRefV1> {
     refs
 }
 
+fn validated_final_inputs(
+    identity: &RareEventDatasetIdentityV1,
+    accelerator: AcceleratorObservationV1,
+    producer: ProducerBackendV1,
+    checkpoint_refs: Vec<CheckpointRefV1>,
+) -> (ValidatedCheckpointSet, ValidatedExecutionLineage) {
+    let start = start_envelope(identity.clone(), accelerator.clone());
+    let start_files = encode_artifact_files(&start).unwrap();
+    let validated_start = validate_attempt_artifact_files(
+        &start_files.artifact_json,
+        &start_files.artifact_sha256,
+        identity,
+    )
+    .unwrap();
+    let RareEventPayloadV1::ExecutionAttempt(start_payload) = &start.payload else {
+        unreachable!()
+    };
+    let accelerator_sha256 = sha256_hex(&canonical_bytes(&accelerator).unwrap());
+    let exponent_histograms = fixture_exponent_histograms(identity, checkpoint_refs.len());
+    let checkpoints = validated_checkpoint_set_fixture(
+        identity,
+        checkpoint_refs.clone(),
+        &start_payload.attempt_id,
+        &start_files.digest,
+        producer,
+        &accelerator_sha256,
+        exponent_histograms,
+    )
+    .unwrap();
+    let terminal = terminal_envelope(identity.clone(), &start, false, checkpoint_refs);
+    let terminal_files = encode_artifact_files(&terminal).unwrap();
+    let validated_terminal = validate_attempt_artifact_files(
+        &terminal_files.artifact_json,
+        &terminal_files.artifact_sha256,
+        identity,
+    )
+    .unwrap();
+    let lineage = validate_execution_lineage(
+        identity,
+        &[validated_start, validated_terminal],
+        &checkpoints,
+    )
+    .unwrap();
+    (checkpoints, lineage)
+}
+
+fn fixture_exponent_histograms(
+    identity: &RareEventDatasetIdentityV1,
+    checkpoint_count: usize,
+) -> Vec<Vec<ExponentBinV1>> {
+    match &identity.scientific {
+        ScientificIdentityV1::Target { .. } => vec![
+            vec![ExponentBinV1 {
+                exponent: 1,
+                count: 256,
+            }];
+            checkpoint_count
+        ],
+        ScientificIdentityV1::Coverage { .. } => (0..checkpoint_count)
+            .map(|index| {
+                let q = [3_u8, 5, 7][index / (200 * 32)];
+                let numerator = match q {
+                    3 => 907,
+                    5 => 17_581,
+                    7 => 126_295,
+                    _ => unreachable!(),
+                };
+                coverage_run_histogram(q, numerator)
+            })
+            .collect(),
+    }
+}
+
 fn target_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnvelopeV1 {
     let exact_raw_count = BigUint::from(3_u8).pow(3_071).to_string();
     let exact_total = BigUint::from(3_u8).pow(3_072).to_string();
+    let (checkpoints, lineage) = validated_final_inputs(
+        &identity,
+        not_used(),
+        ProducerBackendV1::Cpu {},
+        checkpoint_refs_target(),
+    );
+    let target_interval = zero_variance_interval(1, 3, 3, 1);
     target_final_envelope(
         identity,
         TargetResultPayloadV1 {
@@ -376,8 +524,8 @@ fn target_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnvelo
             exact_probability: ExactDecimalV1::new("1", "3"),
             cross_check_estimate: ExactDecimalV1::new("1", "3"),
             independent_run_variance: ExactDecimalV1::new("0", "1"),
-            interval_lower: "3.333333333333333330e-1".into(),
-            interval_upper: "3.333333333333333340e-1".into(),
+            interval_lower: target_interval.0,
+            interval_upper: target_interval.1,
             final_weight_ess: ExactDecimalV1::new("524288", "1"),
             per_run_ess: vec![ExactDecimalV1::new("16384", "1"); 32],
             ess_fraction: ExactDecimalV1::new("1", "1"),
@@ -394,10 +542,8 @@ fn target_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnvelo
             degeneracy: false,
             verdict: CrossCheckVerdictV1::Agreement,
         },
-        ValidatedExecutionLineage {
-            attempts: vec![],
-            checkpoint_refs: checkpoint_refs_target(),
-        },
+        &checkpoints,
+        &lineage,
     )
     .unwrap()
 }
@@ -419,7 +565,30 @@ fn exact_u128(numerator: u128, denominator: u128) -> ExactDecimalV1 {
     )
 }
 
-fn coverage_histogram(q: u8, anchor_numerator: u64) -> Vec<ExponentBinV1> {
+fn zero_variance_interval(
+    numerator: u64,
+    denominator: u64,
+    base: u32,
+    minimum_exponent: u32,
+) -> (String, String) {
+    let rendered = ScaledStudentInterval::from_exact_independent_runs(
+        numerator,
+        denominator,
+        0_u8,
+        1_u8,
+        1_019_756_723_u64,
+        500_000_000_u64,
+        32,
+        base,
+        minimum_exponent,
+    )
+    .unwrap()
+    .render_outward(18)
+    .unwrap();
+    (rendered.lower, rendered.upper)
+}
+
+fn coverage_run_histogram(q: u8, anchor_numerator: u64) -> Vec<ExponentBinV1> {
     const PER_RUN: u64 = 4_096;
     let mut remaining = PER_RUN * anchor_numerator * u64::from(q).pow(2) - PER_RUN;
     let mut used = 0_u64;
@@ -439,9 +608,16 @@ fn coverage_histogram(q: u8, anchor_numerator: u64) -> Vec<ExponentBinV1> {
     }
     per_run
         .into_iter()
-        .map(|(exponent, count)| ExponentBinV1 {
-            exponent,
-            count: count * 32,
+        .map(|(exponent, count)| ExponentBinV1 { exponent, count })
+        .collect()
+}
+
+fn coverage_histogram(q: u8, anchor_numerator: u64) -> Vec<ExponentBinV1> {
+    coverage_run_histogram(q, anchor_numerator)
+        .into_iter()
+        .map(|bin| ExponentBinV1 {
+            exponent: bin.exponent,
+            count: bin.count * 32,
         })
         .collect()
 }
@@ -467,6 +643,12 @@ fn coverage_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnve
         (7, "126295", "823543"),
     ] {
         let histogram = coverage_histogram(q, numerator.parse().unwrap());
+        let interval = zero_variance_interval(
+            numerator.parse().unwrap(),
+            denominator.parse().unwrap(),
+            u32::from(q),
+            histogram.first().unwrap().exponent,
+        );
         let final_weight_ess = histogram_ess(q, &histogram);
         let ess_numerator: u128 = final_weight_ess.numerator.parse().unwrap();
         let ess_denominator: u128 = final_weight_ess.denominator.parse().unwrap();
@@ -477,8 +659,8 @@ fn coverage_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnve
                 exact_anchor: ExactDecimalV1::new(numerator, denominator),
                 estimate: ExactDecimalV1::new(numerator, denominator),
                 independent_run_variance: ExactDecimalV1::new("0", "1"),
-                interval_lower: "0e+0".into(),
-                interval_upper: "1.00000000000000000e+0".into(),
+                interval_lower: interval.0.clone(),
+                interval_upper: interval.1.clone(),
                 contains_anchor: true,
                 ess_fraction: exact_u128(ess_numerator, ess_denominator * 131_072),
                 final_weight_ess: final_weight_ess.clone(),
@@ -489,6 +671,16 @@ fn coverage_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnve
             });
         }
     }
+    let (checkpoints, lineage) = validated_final_inputs(
+        &identity,
+        used(),
+        ProducerBackendV1::Gpu {
+            device_uuid: "GPU-0001".into(),
+            kernel_name: "fixture_kernel".into(),
+            code_object_sha256: digest(0x20),
+        },
+        checkpoint_refs_coverage(),
+    );
     coverage_final_envelope(
         identity,
         CoverageResultPayloadV1 {
@@ -501,10 +693,8 @@ fn coverage_final(identity: RareEventDatasetIdentityV1) -> RareEventArtifactEnve
             ],
             verdict: CoverageVerdictV1::Adequate,
         },
-        ValidatedExecutionLineage {
-            attempts: vec![],
-            checkpoint_refs: checkpoint_refs_coverage(),
-        },
+        &checkpoints,
+        &lineage,
     )
     .unwrap()
 }
@@ -520,12 +710,12 @@ fn all_envelopes() -> Vec<(RareEventDatasetIdentityV1, RareEventArtifactEnvelope
         (target.clone(), cpu_start.clone()),
         (
             target.clone(),
-            terminal_envelope(target.clone(), &cpu_start, false),
+            terminal_envelope(target.clone(), &cpu_start, false, vec![]),
         ),
         (coverage.clone(), gpu_start.clone()),
         (
             coverage.clone(),
-            terminal_envelope(coverage.clone(), &gpu_start, true),
+            terminal_envelope(coverage.clone(), &gpu_start, true, vec![]),
         ),
         (target.clone(), target_final(target)),
         (coverage.clone(), coverage_final(coverage)),
@@ -615,16 +805,16 @@ fn rare_event_artifact_schema_roundtrip_v1() {
                 "14d644ecf167427d22e10787bba99db67801154ef7d16df95bf6123d2a2fd3c9".into(),
             ),
             (
-                8_508,
-                "c76012c7989c486ab39f988696535b46924c32f3404bc680e64c035572d95145".into(),
+                10_334,
+                "d8fa41e55de0aeedaf65def3d544180ff86c73bdede829e01b6bcc98d93ea976".into(),
             ),
             (
-                259_322,
-                "ac1781364facdbde389dcd2966806f5c4493f07469a81f4a0eb93753c9fca604".into(),
+                259_584,
+                "65fa1e2ad195045f4cbbd3e59429057343dc5331c4b86438cdcaa0e483c26867".into(),
             ),
             (
-                3_841_041,
-                "e28b334ca916c5e17448d6cfa31e83424a49a47254709b779c411ab76d37164d".into(),
+                3_852_105,
+                "32b8f831d4b344b766a64799d7dc3a61864afdc09cefb5d419f9457fbaeaa712".into(),
             ),
         ]
     );
@@ -940,6 +1130,33 @@ fn rare_event_artifact_identity_mismatch_rejected() {
         };
         assert!(decode_envelope(&value_bytes(value)).is_err());
     }
+    for mutation in 0..4 {
+        let mut value = serde_json::to_value(&start).unwrap();
+        match mutation {
+            0 => {
+                value["payload"]["invocation"]["input_resolution"]
+                    .as_array_mut()
+                    .unwrap()
+                    .pop();
+            }
+            1 => {
+                value["payload"]["invocation"]["input_resolution"][0]["origin"] =
+                    serde_json::json!("configuration");
+            }
+            2 => {
+                value["payload"]["invocation"]["input_resolution"][0]["value"] =
+                    serde_json::json!("different");
+            }
+            3 => {
+                value["payload"]["invocation"]["argv"]
+                    .as_array_mut()
+                    .unwrap()
+                    .retain(|token| token != "--accelerator-selection=none");
+            }
+            _ => unreachable!(),
+        }
+        assert!(decode_envelope(&value_bytes(value)).is_err());
+    }
 
     let mut raw_root = config(ScientificIdentityV1::target());
     raw_root.artifact_root =
@@ -961,6 +1178,10 @@ fn rare_event_artifact_identity_mismatch_rejected() {
         (
             "interval_lower",
             serde_json::json!("3.40000000000000000e-1"),
+        ),
+        (
+            "interval_upper",
+            serde_json::json!("1.00000000000000000e-9223372036854775808"),
         ),
         (
             "final_weight_ess",
@@ -1067,4 +1288,270 @@ fn rare_event_artifact_identity_mismatch_rejected() {
     value["payload"]["dataset_identity"] = serde_json::to_value(&expected).unwrap();
     value["payload"]["dataset_id"] = serde_json::json!(dataset_id(&expected).unwrap());
     assert!(decode_envelope(&value_bytes(value)).is_err());
+}
+
+#[test]
+fn rare_event_artifact_address_sets_rejected() {
+    let target = identity(ScientificIdentityV1::target());
+    let checkpoint = target_checkpoint(target.clone());
+    let base = serde_json::to_value(&checkpoint).unwrap();
+    let mut mutations = Vec::new();
+
+    let mut value = base.clone();
+    value["payload"]["records"]["items"]
+        .as_array_mut()
+        .unwrap()
+        .pop();
+    mutations.push(value);
+    let mut value = base.clone();
+    let extra = value["payload"]["records"]["items"][0].clone();
+    value["payload"]["records"]["items"]
+        .as_array_mut()
+        .unwrap()
+        .push(extra);
+    mutations.push(value);
+    let mut value = base.clone();
+    value["payload"]["records"]["items"][1] = value["payload"]["records"]["items"][0].clone();
+    mutations.push(value);
+    let mut value = base.clone();
+    value["payload"]["records"]["items"]
+        .as_array_mut()
+        .unwrap()
+        .swap(0, 1);
+    mutations.push(value);
+    for (field, replacement) in [
+        ("trajectory", serde_json::json!(256)),
+        ("stream_index", serde_json::json!(999)),
+        ("run", serde_json::json!(1)),
+        ("exponent", serde_json::json!(3_073)),
+    ] {
+        let mut value = base.clone();
+        value["payload"]["records"]["items"][0][field] = replacement;
+        mutations.push(value);
+    }
+    let mut value = base.clone();
+    value["payload"]["records"]["items"][1]["trajectory"] = serde_json::json!(0);
+    value["payload"]["records"]["items"][1]["stream_index"] = serde_json::json!(0);
+    value["payload"]["records"]["items"][1]["exponent"] = serde_json::json!(2);
+    mutations.push(value);
+    for value in mutations {
+        let (json, sidecar) = files_from_json(value_bytes(value));
+        assert!(validate_checkpoint_artifact_files(&json, &sidecar, &target).is_err());
+    }
+
+    let coverage = identity(ScientificIdentityV1::coverage());
+    let coverage_checkpoint = coverage_checkpoint(coverage.clone());
+    let coverage_base = serde_json::to_value(&coverage_checkpoint).unwrap();
+    for (field, replacement) in [
+        ("trajectory", serde_json::json!(4_096)),
+        ("stream_index", serde_json::json!(0)),
+        ("q", serde_json::json!(5)),
+        ("exponent", serde_json::json!(10)),
+    ] {
+        let mut value = coverage_base.clone();
+        value["payload"]["records"]["items"][0][field] = replacement;
+        let (json, sidecar) = files_from_json(value_bytes(value));
+        assert!(validate_checkpoint_artifact_files(&json, &sidecar, &coverage).is_err());
+    }
+
+    let references = checkpoint_refs_target();
+    let summaries = fixture_exponent_histograms(&target, references.len());
+    for mutation in 0..4 {
+        let mut changed_refs = references.clone();
+        let mut changed_summaries = summaries.clone();
+        match mutation {
+            0 => {
+                changed_refs.pop();
+                changed_summaries.pop();
+            }
+            1 => {
+                changed_refs.push(changed_refs.last().unwrap().clone());
+                changed_summaries.push(changed_summaries.last().unwrap().clone());
+            }
+            2 => changed_refs[1] = changed_refs[0].clone(),
+            3 => changed_refs.swap(0, 1),
+            _ => unreachable!(),
+        }
+        assert!(validated_checkpoint_set_fixture(
+            &target,
+            changed_refs,
+            &digest(0x22),
+            &digest(0x23),
+            ProducerBackendV1::Cpu {},
+            &digest(0x24),
+            changed_summaries,
+        )
+        .is_err());
+    }
+
+    let final_receipt = target_final(target.clone());
+    let final_files = encode_artifact_files(&final_receipt).unwrap();
+    let (checkpoints, lineage) = validated_final_inputs(
+        &target,
+        not_used(),
+        ProducerBackendV1::Cpu {},
+        checkpoint_refs_target(),
+    );
+    validate_final_artifact_files(
+        &final_files.artifact_json,
+        &final_files.artifact_sha256,
+        &target,
+        &checkpoints,
+        &lineage,
+    )
+    .unwrap();
+    for mutation in 0..5 {
+        let mut value = serde_json::to_value(&final_receipt).unwrap();
+        let refs = value["payload"]["execution_provenance"]["checkpoint_refs"]
+            .as_array_mut()
+            .unwrap();
+        match mutation {
+            0 => {
+                refs.pop();
+            }
+            1 => refs.push(refs.last().unwrap().clone()),
+            2 => refs[1] = refs[0].clone(),
+            3 => refs.swap(0, 1),
+            4 => refs[0]["checkpoint_sha256"] = serde_json::json!(digest(0xee)),
+            _ => unreachable!(),
+        }
+        let (json, sidecar) = files_from_json(value_bytes(value));
+        assert!(
+            validate_final_artifact_files(&json, &sidecar, &target, &checkpoints, &lineage,)
+                .is_err()
+        );
+    }
+}
+
+fn validated_attempt(
+    envelope: &RareEventArtifactEnvelopeV1,
+    identity: &RareEventDatasetIdentityV1,
+) -> ValidatedAttemptArtifact {
+    let files = encode_artifact_files(envelope).unwrap();
+    validate_attempt_artifact_files(&files.artifact_json, &files.artifact_sha256, identity).unwrap()
+}
+
+#[test]
+fn rare_event_execution_attempt_lineage_rejected() {
+    let identity = identity(ScientificIdentityV1::target());
+    let start = start_envelope(identity.clone(), not_used());
+    let start_files = encode_artifact_files(&start).unwrap();
+    let RareEventPayloadV1::ExecutionAttempt(start_payload) = &start.payload else {
+        unreachable!()
+    };
+    let references = checkpoint_refs_target();
+    let accelerator_sha256 = sha256_hex(&canonical_bytes(&not_used()).unwrap());
+    let checkpoints = validated_checkpoint_set_fixture(
+        &identity,
+        references.clone(),
+        &start_payload.attempt_id,
+        &start_files.digest,
+        ProducerBackendV1::Cpu {},
+        &accelerator_sha256,
+        fixture_exponent_histograms(&identity, references.len()),
+    )
+    .unwrap();
+    let terminal = terminal_envelope(identity.clone(), &start, false, references.clone());
+    let valid_start = validated_attempt(&start, &identity);
+    let valid_terminal = validated_attempt(&terminal, &identity);
+    validate_execution_lineage(
+        &identity,
+        &[valid_start.clone(), valid_terminal.clone()],
+        &checkpoints,
+    )
+    .unwrap();
+
+    for phases in [
+        vec![valid_start.clone()],
+        vec![valid_terminal.clone(), valid_start.clone()],
+        vec![valid_start.clone(), valid_start.clone()],
+        vec![
+            valid_start.clone(),
+            valid_terminal.clone(),
+            valid_terminal.clone(),
+        ],
+        vec![
+            valid_start.clone(),
+            valid_terminal.clone(),
+            valid_start.clone(),
+            valid_terminal.clone(),
+        ],
+    ] {
+        assert!(validate_execution_lineage(&identity, &phases, &checkpoints).is_err());
+    }
+
+    let mut omitted_terminal = terminal_envelope(identity.clone(), &start, false, references);
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut omitted_terminal.payload else {
+        unreachable!()
+    };
+    let AttemptPhaseV1::Terminal {
+        checkpoint_refs, ..
+    } = &mut payload.phase
+    else {
+        unreachable!()
+    };
+    checkpoint_refs.pop();
+    assert!(validate_execution_lineage(
+        &identity,
+        &[
+            valid_start.clone(),
+            validated_attempt(&omitted_terminal, &identity)
+        ],
+        &checkpoints,
+    )
+    .is_err());
+
+    let mismatched_checkpoints = validated_checkpoint_set_fixture(
+        &identity,
+        checkpoint_refs_target(),
+        &start_payload.attempt_id,
+        &start_files.digest,
+        ProducerBackendV1::Gpu {
+            device_uuid: "GPU-0001".into(),
+            kernel_name: "fixture_kernel".into(),
+            code_object_sha256: digest(0x20),
+        },
+        &accelerator_sha256,
+        fixture_exponent_histograms(&identity, 2_048),
+    )
+    .unwrap();
+    assert!(validate_execution_lineage(
+        &identity,
+        &[valid_start.clone(), valid_terminal.clone()],
+        &mismatched_checkpoints,
+    )
+    .is_err());
+
+    let mut self_asserted = serde_json::to_value(&terminal).unwrap();
+    self_asserted["payload"]["outcome_observer"]["observer"] = serde_json::json!("child");
+    assert!(decode_envelope(&value_bytes(self_asserted)).is_err());
+
+    let mut normalized_host_mismatch = serde_json::to_value(&start).unwrap();
+    normalized_host_mismatch["payload"]["host_observation"]["cpu_model"] =
+        serde_json::json!("substituted-model");
+    assert!(decode_envelope(&value_bytes(normalized_host_mismatch)).is_err());
+    let gpu_start = start_envelope(crate::identity(ScientificIdentityV1::coverage()), used());
+    let mut normalized_gpu_mismatch = serde_json::to_value(gpu_start).unwrap();
+    normalized_gpu_mismatch["payload"]["accelerator_observation"]["devices"][0]["model"] =
+        serde_json::json!("substituted-gpu");
+    assert!(decode_envelope(&value_bytes(normalized_gpu_mismatch)).is_err());
+
+    let mut wrong_start_link = terminal.clone();
+    let RareEventPayloadV1::ExecutionAttempt(payload) = &mut wrong_start_link.payload else {
+        unreachable!()
+    };
+    let AttemptPhaseV1::Terminal {
+        attempt_start_sha256,
+        ..
+    } = &mut payload.phase
+    else {
+        unreachable!()
+    };
+    *attempt_start_sha256 = digest(0xfe);
+    assert!(validate_execution_lineage(
+        &identity,
+        &[valid_start, validated_attempt(&wrong_start_link, &identity)],
+        &checkpoints,
+    )
+    .is_err());
 }

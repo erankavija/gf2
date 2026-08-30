@@ -170,6 +170,8 @@ pub enum WeightedError {
     IncompatibleHistograms,
     /// Independent-run variance needs at least two runs.
     TooFewRuns,
+    /// An exact interval needs at least one independent run.
+    ZeroIndependentRuns,
     /// Decimal rendering requested fewer than two significant digits.
     InvalidPrecision(usize),
 }
@@ -189,6 +191,9 @@ impl fmt::Display for WeightedError {
                 formatter.write_str("weighted runs must share one base and exponent bound")
             }
             Self::TooFewRuns => formatter.write_str("run variance needs at least two runs"),
+            Self::ZeroIndependentRuns => {
+                formatter.write_str("an exact interval needs an independent run")
+            }
             Self::InvalidPrecision(digits) => write!(
                 formatter,
                 "outward rendering needs at least two digits, received {digits}"
@@ -507,6 +512,40 @@ pub struct ScaledStudentInterval {
 }
 
 impl ScaledStudentInterval {
+    /// Reconstructs an interval from exact center and independent-run variance pairs.
+    ///
+    /// This is the reusable validation path for a serialized summary whose
+    /// histogram reduction has already been checked. `scale_exponent` is the
+    /// minimum observed weight exponent and controls only underflow-safe
+    /// rendering, never the exact containment result.
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_exact_independent_runs(
+        center_numerator: impl Into<BigUint>,
+        center_denominator: impl Into<BigUint>,
+        run_variance_numerator: impl Into<BigUint>,
+        run_variance_denominator: impl Into<BigUint>,
+        critical_numerator: impl Into<BigUint>,
+        critical_denominator: impl Into<BigUint>,
+        independent_runs: usize,
+        scale_base: u32,
+        scale_exponent: u32,
+    ) -> Result<Self, WeightedError> {
+        if independent_runs == 0 {
+            return Err(WeightedError::ZeroIndependentRuns);
+        }
+        if scale_base < 2 {
+            return Err(WeightedError::InvalidBase(scale_base));
+        }
+        let run_variance = Ratio::new(run_variance_numerator, run_variance_denominator)?;
+        Ok(Self {
+            center: Ratio::new(center_numerator, center_denominator)?,
+            variance: &run_variance / &Ratio::from_integer(independent_runs),
+            critical: Ratio::new(critical_numerator, critical_denominator)?,
+            scale_base,
+            scale_exponent,
+        })
+    }
+
     /// Tests clipped interval containment by exact squared comparison.
     pub fn contains_exact(
         &self,

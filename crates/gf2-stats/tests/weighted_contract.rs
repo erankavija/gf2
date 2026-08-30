@@ -1,4 +1,4 @@
-use gf2_stats::weighted::{ExponentHistogram, WeightedRuns};
+use gf2_stats::weighted::{ExponentHistogram, ScaledStudentInterval, WeightedRuns};
 
 #[test]
 fn exact_exponent_histograms_drive_weighted_run_statistics() {
@@ -45,4 +45,23 @@ fn scaled_student_interval_contains_without_absolute_float_conversion() {
         )
         .unwrap());
     assert!(interval.render_outward(18).unwrap().lower.contains('e'));
+
+    let (variance_numerator, variance_denominator) =
+        summary.independent_run_variance_decimal().unwrap();
+    let reconstructed = ScaledStudentInterval::from_exact_independent_runs(
+        mean_numerator.parse::<num_bigint::BigUint>().unwrap(),
+        mean_denominator.parse::<num_bigint::BigUint>().unwrap(),
+        variance_numerator.parse::<num_bigint::BigUint>().unwrap(),
+        variance_denominator.parse::<num_bigint::BigUint>().unwrap(),
+        1_019_756_723_u64,
+        500_000_000_u64,
+        32,
+        3,
+        1_000,
+    )
+    .unwrap();
+    assert_eq!(
+        reconstructed.render_outward(18).unwrap(),
+        interval.render_outward(18).unwrap()
+    );
 }
