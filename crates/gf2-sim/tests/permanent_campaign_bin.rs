@@ -7,6 +7,11 @@ use gf2_sim::permanent_campaign::schema::{
     GitRevision, Provenance, RngAlgorithm, ShardSpec, StreamPurpose, SCHEMA_VERSION,
 };
 
+const INTERPRETATION_SOURCES: [&str; 2] = [
+    "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+    "dev/studies/b488f02c/literature-search-2026-08-08.md",
+];
+
 fn emitter_digest() -> String {
     let output = Command::new("sha256sum")
         .arg(env!("CARGO_BIN_EXE_permanent_campaign"))
@@ -208,6 +213,12 @@ fn campaign_checkout(parent: &Path, manifest: &Path) -> (PathBuf, PathBuf) {
         "fixture frozen protocol\n",
     )
     .unwrap();
+    let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for relative in INTERPRETATION_SOURCES {
+        let destination = checkout.join(relative);
+        fs::create_dir_all(destination.parent().unwrap()).unwrap();
+        fs::copy(repository.join(relative), destination).unwrap();
+    }
     commit_campaign_manifest(&checkout);
     (checkout, output)
 }

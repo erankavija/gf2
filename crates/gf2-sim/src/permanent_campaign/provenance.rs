@@ -1906,6 +1906,7 @@ mod tests {
         repo.write_dataset();
         repo.commit_all("publish the dataset");
         repo.write(SOURCE_FILE, "changed after the build\n");
+        fs::create_dir_all(repo.path(&format!("{DATASET_HOME}/Not_A_Campaign"))).unwrap();
 
         let campaign = format!("{DATASET_HOME}/{FIXTURE_CAMPAIGN_ID}");
         let rejected = [
