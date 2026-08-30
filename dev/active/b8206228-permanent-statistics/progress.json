@@ -206,7 +206,7 @@
      "short_id": "02b8137c",
      "title": "Execute frozen pre-draw validation anchors",
      "classification": "implementation",
-     "status": "ready: created during session 30 after the launch audit proved the committed 4,096-draw interval test does not satisfy the frozen protocol's 1,024-matrix replay plus 400,000-draw exact-test validation phase; all three campaign arms depend on this leaf."
+     "status": "in_progress: claimed by agent:codex-sol-validation after the launch audit proved the committed 4,096-draw interval test does not satisfy the frozen protocol's 1,024-matrix replay plus 400,000-draw exact-test validation phase; all three campaign arms depend on this leaf."
     },
     {
      "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -376,7 +376,7 @@
    "title": "permanent_dataset emission-check compares its own binary digest, never the pinned emitter",
    "reason": "Found during 7a816262 freeze validation: permanent_dataset emission-check calls approve_emission, which hashes the running executable, so it compares permanent_dataset's digest against the manifest's pinned permanent_campaign emitter and refuses for every valid frozen manifest. The writer path applies the same guard to its own matching digest, so execution is unaffected.",
    "wave": "8 (interleaved)",
-   "status": "ready"
+   "status": "in_progress"
   },
   {
    "short_id": "69e7d174",
