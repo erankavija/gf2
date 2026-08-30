@@ -5,11 +5,13 @@ use gf2_algebra::permanent::{
     Vector3,
 };
 use gf2_core::gfp::Fp;
+use gf2_sim::permanent_rare_event::artifact::sha256_hex;
 use gf2_sim::permanent_rare_event::{
-    coverage_address, deterministic_test_address, resume_trajectory, sample_trajectories_in_order,
-    sample_trajectory, target_address, ProposalSupport, COVERAGE_INDEX_START, COVERAGE_REPLICATES,
-    COVERAGE_RUNS, COVERAGE_TRAJECTORIES_PER_RUN, RARE_EVENT_ROOT_SEED, RESERVED_INDEX_START,
-    TARGET_RUNS, TARGET_TRAJECTORIES_PER_RUN, TEST_INDEX_START,
+    checkpoint_trajectory, coverage_address, deterministic_test_address, resume_trajectory,
+    sample_trajectories_in_order, sample_trajectory, target_address, ProposalSupport,
+    COVERAGE_INDEX_START, COVERAGE_REPLICATES, COVERAGE_RUNS, COVERAGE_TRAJECTORIES_PER_RUN,
+    RARE_EVENT_PURPOSE_TAG, RARE_EVENT_ROOT_SEED, RESERVED_INDEX_START, TARGET_RUNS,
+    TARGET_TRAJECTORIES_PER_RUN, TEST_INDEX_START,
 };
 use gf2_stats::sampler::{MatrixAddress, StreamIndex, StreamPurpose};
 use gf2_stats::weighted::{ExponentHistogram, WeightedRuns};
@@ -100,6 +102,18 @@ fn seed_words(address: MatrixAddress) -> [u64; 4] {
     std::array::from_fn(|word| u64::from_le_bytes(seed[word * 8..word * 8 + 8].try_into().unwrap()))
 }
 
+fn append_golden_trajectory<const Q: u64>(bytes: &mut Vec<u8>, address: MatrixAddress)
+where
+    Fp<Q>: SupportedPrimeField,
+{
+    let outcome = sample_trajectory::<Q>(3, address).unwrap();
+    bytes.extend_from_slice(&address.seed());
+    bytes.extend_from_slice(&outcome.exponent.to_le_bytes());
+    bytes.extend_from_slice(&(outcome.rows_completed as u64).to_le_bytes());
+    bytes.extend_from_slice(&outcome.stream_index.to_le_bytes());
+    bytes.extend_from_slice(&outcome.terminal_state);
+}
+
 #[test]
 fn rare_event_stream_partition_and_golden_vectors() {
     let first_target = target_address(0, 0).unwrap();
@@ -142,6 +156,7 @@ fn rare_event_stream_partition_and_golden_vectors() {
     }
 
     let mut golden_seeds = BTreeSet::new();
+    let mut golden_bytes = Vec::new();
     for (field_slot, q) in [3_u8, 5, 7].into_iter().enumerate() {
         for case in 0_u16..16 {
             let address = deterministic_test_address(q, 3, case).unwrap();
@@ -150,9 +165,19 @@ fn rare_event_stream_partition_and_golden_vectors() {
                 TEST_INDEX_START | ((field_slot as u64) << 16) | u64::from(case)
             );
             assert!(golden_seeds.insert(address.seed()));
+            match q {
+                3 => append_golden_trajectory::<3>(&mut golden_bytes, address),
+                5 => append_golden_trajectory::<5>(&mut golden_bytes, address),
+                7 => append_golden_trajectory::<7>(&mut golden_bytes, address),
+                _ => unreachable!(),
+            }
         }
     }
     assert_eq!(golden_seeds.len(), 48);
+    assert_eq!(
+        sha256_hex(&golden_bytes),
+        "7d1520598f7d0cd7d634007c4d54aa9c68a521403cbdf99b7f2d0bda995c034a"
+    );
     assert_eq!(
         seed_words(deterministic_test_address(3, 3, 0).unwrap()),
         [
@@ -162,6 +187,7 @@ fn rare_event_stream_partition_and_golden_vectors() {
             (4_u64 << 56) | TEST_INDEX_START,
         ]
     );
+    assert_eq!(RARE_EVENT_PURPOSE_TAG, 4);
     assert_eq!(RESERVED_INDEX_START, 3_u64 << 54);
 }
 
@@ -179,6 +205,13 @@ fn rare_event_worker_resume_determinism() {
     }
     for (address, outcome) in addresses.into_iter().zip(expected) {
         for boundary in [0, 1, 63, 64, 65, 511] {
+            let checkpoint = checkpoint_trajectory::<3>(1_024, address, boundary).unwrap();
+            assert_eq!(checkpoint.completed_prefix, boundary);
+            if boundary == 0 {
+                assert_eq!(checkpoint.exponent, 0);
+            } else {
+                assert_ne!(checkpoint.state, [0; 22]);
+            }
             assert_eq!(
                 resume_trajectory::<3>(1_024, address, boundary).unwrap(),
                 outcome
