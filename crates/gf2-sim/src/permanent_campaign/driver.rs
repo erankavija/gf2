@@ -33,7 +33,7 @@ use crate::permanent_campaign::schedule::{
     emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_cell_work_items,
     enumerate_work_items, evaluate_work_item_with_worker_count_and_accelerator,
     resolve_processor_path, shard_record_bytes, summarize_with_quarantine, AcceleratorCostTable,
-    EvaluatedShard, FieldRun, PhaseDurations, ScheduleError, ShardRun, WorkItem,
+    EvaluatedShard, PhaseDurations, ScheduleError, ShardRun, WorkItem,
 };
 use crate::permanent_campaign::schema::{
     field_summary_file, shard_record_file, Backend, CampaignManifest, QuarantinedShard, ShardRecord,
@@ -118,6 +118,42 @@ pub enum CampaignExecutionScope {
         /// Matrix order.
         n: u16,
     },
+}
+
+/// Completed checkpointed execution for one semantic campaign scope.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CheckpointedCampaignRun {
+    scope: CampaignExecutionScope,
+    shards: Vec<ShardRun>,
+    summary: crate::permanent_campaign::schema::FieldSummary,
+}
+
+impl CheckpointedCampaignRun {
+    /// Returns the exact field or cell scope executed by this run.
+    #[must_use]
+    pub const fn scope(&self) -> CampaignExecutionScope {
+        self.scope
+    }
+
+    /// Returns the field order containing the selected scope.
+    #[must_use]
+    pub const fn q(&self) -> u8 {
+        match self.scope {
+            CampaignExecutionScope::Field { q } | CampaignExecutionScope::ExactCell { q, .. } => q,
+        }
+    }
+
+    /// Returns durable shard results in deterministic order.
+    #[must_use]
+    pub fn shards(&self) -> &[ShardRun] {
+        &self.shards
+    }
+
+    /// Returns the rows and quarantine index for exactly this run's scope.
+    #[must_use]
+    pub const fn summary(&self) -> &crate::permanent_campaign::schema::FieldSummary {
+        &self.summary
+    }
 }
 
 impl CampaignExecutionScope {
@@ -275,7 +311,10 @@ pub fn run_cell_checkpointed_with_accelerator_config(
     checkpoint_path: &Path,
     worker_count: usize,
     accelerator: &AcceleratorCostTable,
-) -> Result<FieldRun, CampaignDriverError> {
+) -> Result<CheckpointedCampaignRun, CampaignDriverError> {
+    accelerator
+        .validate_manifest(manifest)
+        .map_err(CampaignDriverError::Schedule)?;
     let items = enumerate_cell_work_items(manifest, field, order)?;
     for item in &items {
         if item.backend == Backend::Accelerator {
@@ -284,12 +323,10 @@ pub fn run_cell_checkpointed_with_accelerator_config(
                 .map_err(CampaignDriverError::Schedule)?;
         }
     }
-    run_field_checkpointed_inner(
+    run_scope_checkpointed_inner(
         root,
         manifest,
-        field,
-        Some(order),
-        false,
+        CampaignExecutionScope::ExactCell { q: field, n: order },
         checkpoint_path,
         worker_count,
         |item| {
@@ -332,17 +369,15 @@ pub fn run_cell_checkpointed_with_evaluator<E>(
     checkpoint_path: &Path,
     worker_count: usize,
     mut evaluator: E,
-) -> Result<FieldRun, CampaignDriverError>
+) -> Result<CheckpointedCampaignRun, CampaignDriverError>
 where
     E: FnMut(&WorkItem) -> Result<EvaluatedShard, String>,
 {
     enumerate_cell_work_items(manifest, field, order)?;
-    run_field_checkpointed_inner(
+    run_scope_checkpointed_inner(
         root,
         manifest,
-        field,
-        Some(order),
-        false,
+        CampaignExecutionScope::ExactCell { q: field, n: order },
         checkpoint_path,
         worker_count,
         |item| evaluator(item),
@@ -376,7 +411,7 @@ pub fn run_field_checkpointed(
     field: u8,
     checkpoint_path: &Path,
     worker_count: usize,
-) -> Result<FieldRun, CampaignDriverError> {
+) -> Result<CheckpointedCampaignRun, CampaignDriverError> {
     run_field_checkpointed_with_accelerator_config(
         root,
         manifest,
@@ -425,7 +460,10 @@ pub fn run_field_checkpointed_with_accelerator_config(
     checkpoint_path: &Path,
     worker_count: usize,
     accelerator: &AcceleratorCostTable,
-) -> Result<FieldRun, CampaignDriverError> {
+) -> Result<CheckpointedCampaignRun, CampaignDriverError> {
+    accelerator
+        .validate_manifest(manifest)
+        .map_err(CampaignDriverError::Schedule)?;
     for item in enumerate_work_items(manifest, Some(field))? {
         if item.backend == Backend::Accelerator {
             accelerator
@@ -433,12 +471,10 @@ pub fn run_field_checkpointed_with_accelerator_config(
                 .map_err(CampaignDriverError::Schedule)?;
         }
     }
-    run_field_checkpointed_inner(
+    run_scope_checkpointed_inner(
         root,
         manifest,
-        field,
-        None,
-        true,
+        CampaignExecutionScope::Field { q: field },
         checkpoint_path,
         worker_count,
         |item| {
@@ -474,16 +510,14 @@ pub fn run_field_checkpointed_with_evaluator<E>(
     checkpoint_path: &Path,
     worker_count: usize,
     mut evaluator: E,
-) -> Result<FieldRun, CampaignDriverError>
+) -> Result<CheckpointedCampaignRun, CampaignDriverError>
 where
     E: FnMut(&WorkItem) -> Result<EvaluatedShard, String>,
 {
-    run_field_checkpointed_inner(
+    run_scope_checkpointed_inner(
         root,
         manifest,
-        field,
-        None,
-        true,
+        CampaignExecutionScope::Field { q: field },
         checkpoint_path,
         worker_count,
         |item| evaluator(item),
@@ -521,17 +555,15 @@ fn ignore_durable_path(_: &Path) {}
 
 fn ignore_checkpoint_fsync() {}
 
-fn run_field_checkpointed_inner<E, EError, S, M, C>(
+fn run_scope_checkpointed_inner<E, EError, S, M, C>(
     root: &Path,
     manifest: &CampaignManifest,
-    field: u8,
-    cell: Option<u16>,
-    emit_field_summary: bool,
+    scope: CampaignExecutionScope,
     checkpoint_path: &Path,
     worker_count: usize,
     mut evaluator: E,
     hooks: DurabilityHooks<S, M, C>,
-) -> Result<FieldRun, CampaignDriverError>
+) -> Result<CheckpointedCampaignRun, CampaignDriverError>
 where
     E: FnMut(&WorkItem) -> Result<EvaluatedShard, EError>,
     EError: EvaluationErrorDisposition,
@@ -549,19 +581,17 @@ where
             "worker_count must be non-zero".to_owned(),
         ));
     }
-    let items = match cell {
-        Some(order) => enumerate_cell_work_items(manifest, field, order)?,
-        None => enumerate_work_items(manifest, Some(field))?,
+    let (field, items, emit_field_summary) = match scope {
+        CampaignExecutionScope::Field { q } => (q, enumerate_work_items(manifest, Some(q))?, true),
+        CampaignExecutionScope::ExactCell { q, n } => {
+            (q, enumerate_cell_work_items(manifest, q, n)?, false)
+        }
     };
     for item in &items {
         resolve_processor_path(item.q, item.n, item.backend)
             .map(|_| ())
             .map_err(CampaignDriverError::Schedule)?;
     }
-    let scope = match cell {
-        Some(n) => CampaignExecutionScope::ExactCell { q: field, n },
-        None => CampaignExecutionScope::Field { q: field },
-    };
     let configuration = campaign_configuration(manifest, scope);
     let hash = campaign_config_hash(manifest, scope);
     let reader =
@@ -700,7 +730,7 @@ where
         )
     });
     let mut summary = summarize_with_quarantine(manifest, field, &shards, quarantined.clone());
-    if let Some(order) = cell {
+    if let CampaignExecutionScope::ExactCell { n: order, .. } = scope {
         summary.rows.retain(|row| row.n == order);
         summary.quarantined.retain(|item| item.n == order);
     }
@@ -724,7 +754,11 @@ where
         checkpoint_path,
         &mut on_checkpoint_fsync,
     )?;
-    Ok(FieldRun::from_parts(field, shards, summary))
+    Ok(CheckpointedCampaignRun {
+        scope,
+        shards,
+        summary,
+    })
 }
 
 fn persist_checkpoint<C>(
@@ -1015,6 +1049,43 @@ mod tests {
     }
 
     #[test]
+    fn exact_cell_driver_requires_costs_for_every_manifest_accelerator_cell() {
+        let directory = TestDir::new();
+        let mut campaign = manifest();
+        campaign.cells[0].backend = Backend::Accelerator;
+        let mut second = campaign.cells[0].clone();
+        second.n = 5;
+        for shard in &mut second.shards {
+            shard.stream_index += 100;
+        }
+        campaign.cells.push(second);
+        let mut costs = std::collections::BTreeMap::new();
+        costs.insert((3, 4), std::time::Duration::from_micros(10));
+        let costs = AcceleratorCostTable::new(costs, std::time::Duration::from_millis(500));
+        let checkpoint = cell_checkpoint_path(directory.root(), 3, 4);
+
+        let error = run_cell_checkpointed_with_accelerator_config(
+            directory.root(),
+            &campaign,
+            3,
+            4,
+            &checkpoint,
+            1,
+            &costs,
+        )
+        .unwrap_err();
+
+        assert!(matches!(
+            error,
+            CampaignDriverError::Schedule(ScheduleError::AcceleratorCostMissing { q: 3, n: 5 })
+        ));
+        assert!(
+            !checkpoint.exists(),
+            "manifest-wide cost validation must precede checkpoint creation"
+        );
+    }
+
+    #[test]
     fn shard_and_summary_durability_precede_checkpoint_recording() {
         let directory = TestDir::new();
         let campaign = manifest();
@@ -1024,12 +1095,10 @@ mod tests {
         let summary_events = Rc::clone(&events);
         let checkpoint_events = Rc::clone(&events);
 
-        run_field_checkpointed_inner(
+        run_scope_checkpointed_inner(
             directory.root(),
             &campaign,
-            3,
-            None,
-            true,
+            CampaignExecutionScope::Field { q: 3 },
             &checkpoint,
             1,
             |item| evaluate_work_item(&campaign, item),

@@ -224,12 +224,15 @@ fn run_with_cost_table(label: &str, table: &str) -> std::process::Output {
     fs::write(&table_path, table).unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
         .args([
+            "--dry-run-schedule",
             "--manifest",
             manifest_path.to_str().unwrap(),
             "--output",
             output_path.to_str().unwrap(),
             "--q",
             "5",
+            "--n",
+            "2",
             "--accelerator-cost-table",
             table_path.to_str().unwrap(),
         ])
@@ -303,6 +306,8 @@ fn binary_refuses_emission_before_writing_outside_repository() {
             output_path.to_str().unwrap(),
             "--q",
             "3",
+            "--n",
+            "2",
         ])
         .output()
         .unwrap();
@@ -346,6 +351,8 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
             output_path.to_str().unwrap(),
             "--q",
             "5",
+            "--n",
+            "20",
         ])
         .output()
         .unwrap();
@@ -363,7 +370,7 @@ fn binary_refuses_an_unavailable_backend_with_cell_and_backend() {
 }
 
 #[test]
-fn binary_requires_accelerator_costs_only_for_the_selected_field() {
+fn binary_requires_full_cost_table_even_for_a_processor_selected_cell() {
     let parent = temp_path("mixed-backend");
     let manifest_path = parent.join("manifest");
     let manifest_file = manifest_path.join("manifest.json");
@@ -384,28 +391,13 @@ fn binary_requires_accelerator_costs_only_for_the_selected_field() {
             output_path.to_str().unwrap(),
             "--q",
             "3",
+            "--n",
+            "2",
         ])
         .output()
         .unwrap();
-    assert!(
-        processor.status.success(),
-        "processor-only selected field must run without an accelerator cost table; stderr:\n{}",
-        String::from_utf8_lossy(&processor.stderr)
-    );
-
-    let accelerator = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
-        .args([
-            "--manifest",
-            manifest_path.to_str().unwrap(),
-            "--output",
-            output_path.to_str().unwrap(),
-            "--q",
-            "5",
-        ])
-        .output()
-        .unwrap();
-    let stderr = String::from_utf8_lossy(&accelerator.stderr);
-    assert!(!accelerator.status.success(), "stderr:\n{stderr}");
+    let stderr = String::from_utf8_lossy(&processor.stderr);
+    assert!(!processor.status.success(), "stderr:\n{stderr}");
     assert!(
         stderr.contains("--accelerator-cost-table is required"),
         "stderr:\n{stderr}"
@@ -418,11 +410,11 @@ fn binary_requires_accelerator_costs_only_for_the_selected_field() {
 fn binary_accepts_the_complete_exact_accelerator_key_set() {
     let result = run_with_cost_table("complete-cost-table", "q,n,per_matrix_us\n3,3,17\n5,2,19\n");
     let stderr = String::from_utf8_lossy(&result.stderr);
-    assert!(
-        !result.status.success(),
-        "the fixture output outside a repository must refuse emission"
+    assert!(result.status.success(), "stderr:\n{stderr}");
+    assert_eq!(
+        String::from_utf8(result.stdout).unwrap(),
+        "schedule q=5 n=2 shards=1\n"
     );
-    assert!(stderr.contains("emission refused"), "stderr:\n{stderr}");
     assert!(
         !stderr.contains("accelerator cost table"),
         "stderr:\n{stderr}"
@@ -491,6 +483,7 @@ fn production_table_is_accepted_by_the_production_cli_and_manifest() {
     let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
         .current_dir(repository)
         .args([
+            "--dry-run-schedule",
             "--manifest",
             campaign.to_str().unwrap(),
             "--output",
@@ -509,11 +502,7 @@ fn production_table_is_accepted_by_the_production_cli_and_manifest() {
         .output()
         .unwrap();
     let stderr = String::from_utf8_lossy(&result.stderr);
-    assert!(
-        !result.status.success(),
-        "the frozen emitter identity must remain binding"
-    );
-    assert!(stderr.contains("emission refused"), "stderr:\n{stderr}");
+    assert!(result.status.success(), "stderr:\n{stderr}");
     assert!(
         !stderr.contains("accelerator cost table"),
         "stderr:\n{stderr}"
@@ -521,7 +510,7 @@ fn production_table_is_accepted_by_the_production_cli_and_manifest() {
     assert_eq!(
         files_under(&campaign),
         before,
-        "production-table preflight must preserve zero-draw dataset bytes"
+        "production exact-cell dry preflight must preserve zero-draw dataset bytes"
     );
 }
 
@@ -569,6 +558,74 @@ fn exact_selector_dry_run_schedules_only_the_requested_cell() {
 }
 
 #[test]
+fn exact_selector_executes_only_target_shards_and_keeps_field_open() {
+    let parent = temp_path("exact-selector-execution");
+    let manifest_path = parent.join("manifest");
+    fs::create_dir_all(&manifest_path).unwrap();
+    let manifest_file = manifest_path.join("manifest.json");
+    fs::write(
+        &manifest_file,
+        serde_json::to_vec_pretty(&exact_selection_manifest()).unwrap(),
+    )
+    .unwrap();
+    let (_checkout, output_path) = campaign_checkout(&parent, &manifest_file);
+
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            output_path.to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "7",
+            "--n",
+            "20",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        result.status.success(),
+        "stderr:\n{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    assert!(output_path
+        .join("shards/q7/n20/shard-000000.json")
+        .is_file());
+    assert!(!output_path.join("shards/q7/n04").exists());
+    assert!(output_path
+        .join("campaign.q7.n20.checkpoint.json")
+        .is_file());
+    assert!(
+        !output_path.join("summaries/q7.json").exists(),
+        "one exact cell must not finalize the field summary"
+    );
+    fs::remove_dir_all(parent).unwrap();
+}
+
+#[test]
+fn q_only_execution_is_refused_before_manifest_or_output_io() {
+    let parent = temp_path("q-only-refusal");
+    let output_path = parent.join("campaign-bin-test");
+    let result = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"))
+        .args([
+            "--manifest",
+            parent.join("absent-manifest").to_str().unwrap(),
+            "--output",
+            output_path.to_str().unwrap(),
+            "--q",
+            "7",
+        ])
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&result.stderr);
+    assert!(!result.status.success());
+    assert!(stderr.contains("exact cell selector requires both --q and --n"));
+    assert!(!stderr.contains("required dataset file is missing"));
+    assert!(!output_path.exists());
+}
+
+#[test]
 fn invalid_exact_selector_fails_before_checkpoint_or_output_creation() {
     let parent = temp_path("invalid-exact-selector");
     let manifest_path = parent.join("manifest");
@@ -579,34 +636,38 @@ fn invalid_exact_selector_fails_before_checkpoint_or_output_creation() {
     )
     .unwrap();
 
-    for arguments in [
-        vec!["--q", "7", "--n", "19"],
-        vec!["--q", "5", "--n", "20"],
-        vec!["--n", "20"],
-    ] {
-        let output_path = parent.join(format!("output-{}", arguments.join("-")));
-        let mut command = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"));
-        command.args([
-            "--dry-run-schedule",
-            "--manifest",
-            manifest_path.to_str().unwrap(),
-            "--output",
-            output_path.to_str().unwrap(),
-        ]);
-        let result = command.args(arguments).output().unwrap();
-        let stderr = String::from_utf8_lossy(&result.stderr);
-        assert!(
-            !result.status.success(),
-            "invalid selection unexpectedly passed"
-        );
-        assert!(
-            stderr.contains("exact cell selector"),
-            "selector failure must be explicit; stderr:\n{stderr}"
-        );
-        assert!(
-            !output_path.exists(),
-            "invalid selection must fail before checkpoint or output creation"
-        );
+    for dry in [false, true] {
+        for arguments in [
+            vec!["--q", "7", "--n", "19"],
+            vec!["--q", "5", "--n", "20"],
+            vec!["--n", "20"],
+        ] {
+            let output_path = parent.join(format!("output-{dry}-{}", arguments.join("-")));
+            let mut command = Command::new(env!("CARGO_BIN_EXE_permanent_campaign"));
+            if dry {
+                command.arg("--dry-run-schedule");
+            }
+            command.args([
+                "--manifest",
+                manifest_path.to_str().unwrap(),
+                "--output",
+                output_path.to_str().unwrap(),
+            ]);
+            let result = command.args(arguments).output().unwrap();
+            let stderr = String::from_utf8_lossy(&result.stderr);
+            assert!(
+                !result.status.success(),
+                "invalid selection unexpectedly passed"
+            );
+            assert!(
+                stderr.contains("exact cell selector"),
+                "selector failure must be explicit; stderr:\n{stderr}"
+            );
+            assert!(
+                !output_path.exists(),
+                "invalid selection must fail before checkpoint or output creation"
+            );
+        }
     }
     fs::remove_dir_all(parent).unwrap();
 }

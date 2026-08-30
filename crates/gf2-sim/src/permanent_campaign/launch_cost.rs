@@ -4,14 +4,14 @@
 //! This module keeps its stable boundary in one place so callers cannot accept
 //! different row sets or silently size one cell from another cell's timing.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use super::schedule::AcceleratorCostTable;
-use super::schema::{Backend, CampaignManifest};
+use super::schedule::{AcceleratorCostTable, ScheduleError};
+use super::schema::CampaignManifest;
 
 /// Stable header of an accelerator launch-cost CSV.
 pub const ACCELERATOR_COST_CSV_HEADER: &str = "q,n,per_matrix_us";
@@ -206,17 +206,6 @@ pub fn read_accelerator_cost_table(
         });
     }
 
-    let manifest_backends: BTreeMap<(u8, u16), Backend> = manifest
-        .cells
-        .iter()
-        .map(|cell| ((cell.q, cell.n), cell.backend))
-        .collect();
-    let expected: BTreeSet<(u8, u16)> = manifest
-        .cells
-        .iter()
-        .filter(|cell| cell.backend == Backend::Accelerator)
-        .map(|cell| (cell.q, cell.n))
-        .collect();
     let mut costs = BTreeMap::new();
     for (index, row) in lines {
         let line = index + 1;
@@ -242,15 +231,25 @@ pub fn read_accelerator_cost_table(
         {
             return Err(AcceleratorCostTableError::Duplicate { q, n, line });
         }
-        match manifest_backends.get(&(q, n)) {
-            Some(Backend::Accelerator) => {}
-            Some(_) => return Err(AcceleratorCostTableError::ProcessorBacked { q, n }),
-            None => return Err(AcceleratorCostTableError::NotManifestCell { q, n }),
-        }
     }
-
-    if let Some(&(q, n)) = expected.iter().find(|key| !costs.contains_key(key)) {
-        return Err(AcceleratorCostTableError::Missing { q, n });
-    }
-    Ok(AcceleratorCostTable::new(costs, launch_cap))
+    let table = AcceleratorCostTable::new(costs, launch_cap);
+    table
+        .validate_manifest(manifest)
+        .map_err(|error| match error {
+            ScheduleError::AcceleratorCostMissing { q, n } => {
+                AcceleratorCostTableError::Missing { q, n }
+            }
+            ScheduleError::AcceleratorCostUnexpected {
+                q,
+                n,
+                backend: Some(_),
+            } => AcceleratorCostTableError::ProcessorBacked { q, n },
+            ScheduleError::AcceleratorCostUnexpected {
+                q,
+                n,
+                backend: None,
+            } => AcceleratorCostTableError::NotManifestCell { q, n },
+            _ => unreachable!("manifest cost validation returns only key-set errors"),
+        })?;
+    Ok(table)
 }
