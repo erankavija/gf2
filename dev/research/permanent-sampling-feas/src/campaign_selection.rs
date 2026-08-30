@@ -4,6 +4,12 @@
 //! grid and the configurations checked at each cell. It is embedded into the
 //! executable and parsed here; this harness never reconstructs a selection
 //! from the premeasurement rates.
+//!
+//! The probe-cost derivation record is the authority for the single-matrix
+//! latencies that size each cell's matrix corpus. It is embedded and parsed
+//! the same way; no probe figure is written into this source.
+
+use std::sync::OnceLock;
 
 use crate::backend::Backend;
 use crate::equivalence::reference_backend;
@@ -19,6 +25,17 @@ pub const SELECTION_AUTHORITY_SHA256: &str =
 
 const SELECTION_AUTHORITY: &str =
     include_str!("../../../benchmarks/permanent_campaign/backend-selection-v1.md");
+
+/// Repository path of the committed probe-cost derivation record.
+pub const PROBE_COSTS_PATH: &str = "dev/benchmarks/permanent_campaign/probe-costs-de5f7414.csv";
+
+/// SHA-256 of [`PROBE_COSTS_PATH`] at the harness revision that embeds it. The
+/// executable SHA-256 in each receipt pins these embedded bytes.
+pub const PROBE_COSTS_SHA256: &str =
+    "525100d986b8c2632b7c378c9059da8709f962c0d93d7b560b3393200debc3f0";
+
+const PROBE_COSTS: &str =
+    include_str!("../../../benchmarks/permanent_campaign/probe-costs-de5f7414.csv");
 
 /// Seconds available to one equivalence cell in the committed budget rule.
 pub const EQUIVALENCE_CELL_BUDGET_SECONDS: f64 = 240.0;
@@ -104,7 +121,8 @@ pub struct CellBudget {
     pub missing_backends: Vec<Backend>,
 }
 
-#[derive(Clone, Copy)]
+/// One probe observation parsed from the committed derivation record.
+#[derive(Clone, Copy, Debug, PartialEq)]
 struct CommittedProbe {
     q: u64,
     n: usize,
@@ -112,186 +130,107 @@ struct CommittedProbe {
     seconds: f64,
 }
 
-/// Finite `probe_matrix_s` observations from the three superseded grid
-/// receipts in the tree of commit `de5f7414`:
+/// Header line separating the derivation record's preamble from its rows.
+const PROBE_COSTS_HEADER: &str = "q,n,backend,probe_matrix_s";
+
+/// Parse every probe row of a derivation record in [`PROBE_COSTS_PATH`] form.
 ///
-/// - `dev/studies/047b62ed/*-q3-grid.csv`
-/// - `dev/studies/91605d4d/*-q5-grid.csv`
-/// - `dev/studies/6c7fcb38/*-q7-grid.csv`
+/// Comment lines and blank lines are skipped and the single header line is
+/// required. Every other line must be a four-column row naming a builtin
+/// backend and a finite, nonnegative latency.
 ///
-/// Only backends evaluated by the reference-plus-nomination schedule are
-/// retained. Fixed-batch GPU rows after order 12 carry `NaN`, not a probe, and
-/// are deliberately absent.
-const COMMITTED_PROBES: &[CommittedProbe] = &[
-    CommittedProbe {
-        q: 3,
-        n: 12,
-        backend: Backend::Scalar,
-        seconds: 0.000_025,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 16,
-        backend: Backend::Scalar,
-        seconds: 0.000_270,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 20,
-        backend: Backend::Scalar,
-        seconds: 0.004_144,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 24,
-        backend: Backend::Scalar,
-        seconds: 0.067_676,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 28,
-        backend: Backend::Scalar,
-        seconds: 1.065_811,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 12,
-        backend: Backend::Rayon,
-        seconds: 0.000_026,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 16,
-        backend: Backend::Rayon,
-        seconds: 0.000_273,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 12,
-        backend: Backend::RyserGeneric,
-        seconds: 0.000_188,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 16,
-        backend: Backend::RyserGeneric,
-        seconds: 0.003_321,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 16,
-        backend: Backend::RayonIntra,
-        seconds: 0.000_246,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 20,
-        backend: Backend::RayonIntra,
-        seconds: 0.000_470,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 24,
-        backend: Backend::RayonIntra,
-        seconds: 0.003_775,
-    },
-    CommittedProbe {
-        q: 3,
-        n: 28,
-        backend: Backend::RayonIntra,
-        seconds: 0.052_472,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 12,
-        backend: Backend::Scalar,
-        seconds: 0.000_157,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 16,
-        backend: Backend::Scalar,
-        seconds: 0.003_163,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 20,
-        backend: Backend::Scalar,
-        seconds: 0.062_510,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 24,
-        backend: Backend::Scalar,
-        seconds: 1.197_137,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 12,
-        backend: Backend::Rayon,
-        seconds: 0.000_161,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 16,
-        backend: Backend::Rayon,
-        seconds: 0.003_192,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 20,
-        backend: Backend::Rayon,
-        seconds: 0.062_734,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 24,
-        backend: Backend::Rayon,
-        seconds: 1.196_064,
-    },
-    CommittedProbe {
-        q: 5,
-        n: 12,
-        backend: Backend::Gpu,
-        seconds: 0.052_684,
-    },
-    CommittedProbe {
-        q: 7,
-        n: 12,
-        backend: Backend::Scalar,
-        seconds: 0.000_164,
-    },
-    CommittedProbe {
-        q: 7,
-        n: 16,
-        backend: Backend::Scalar,
-        seconds: 0.003_210,
-    },
-    CommittedProbe {
-        q: 7,
-        n: 12,
-        backend: Backend::Rayon,
-        seconds: 0.000_161,
-    },
-    CommittedProbe {
-        q: 7,
-        n: 16,
-        backend: Backend::Rayon,
-        seconds: 0.003_210,
-    },
-    CommittedProbe {
-        q: 7,
-        n: 12,
-        backend: Backend::Gpu,
-        seconds: 0.065_682,
-    },
-    CommittedProbe {
-        q: 7,
-        n: 20,
-        backend: Backend::RyserGeneric,
-        seconds: 0.064_976,
-    },
-];
+/// # Errors
+///
+/// Returns an error if the header is absent, repeated, or preceded by a row;
+/// if a row has the wrong column count, an unparsable number, a non-finite or
+/// negative latency, or an unknown backend name; if a `(q, n, backend)` key
+/// repeats; or if the record carries no row at all.
+fn parse_probe_costs(record: &str) -> Result<Vec<CommittedProbe>, String> {
+    let mut probes: Vec<CommittedProbe> = Vec::new();
+    let mut header_seen = false;
+    for line in record.lines() {
+        if line.starts_with('#') || line.trim().is_empty() {
+            continue;
+        }
+        if line == PROBE_COSTS_HEADER {
+            if header_seen {
+                return Err("probe-cost record repeats its header".to_string());
+            }
+            header_seen = true;
+            continue;
+        }
+        if !header_seen {
+            return Err(format!("probe-cost row precedes the header: {line}"));
+        }
+        let columns = line.split(',').collect::<Vec<_>>();
+        if columns.len() != 4 {
+            return Err(format!(
+                "probe-cost row has {} columns; expected 4: {line}",
+                columns.len()
+            ));
+        }
+        let q = columns[0]
+            .parse::<u64>()
+            .map_err(|error| format!("invalid probe-cost q in `{line}`: {error}"))?;
+        let n = columns[1]
+            .parse::<usize>()
+            .map_err(|error| format!("invalid probe-cost n in `{line}`: {error}"))?;
+        let backend = probe_backend(columns[2])?;
+        let seconds = columns[3]
+            .parse::<f64>()
+            .map_err(|error| format!("invalid probe-cost seconds in `{line}`: {error}"))?;
+        if !seconds.is_finite() || seconds < 0.0 {
+            return Err(format!(
+                "probe-cost seconds must be finite and nonnegative: {line}"
+            ));
+        }
+        if probes
+            .iter()
+            .any(|probe| probe.q == q && probe.n == n && probe.backend == backend)
+        {
+            return Err(format!(
+                "probe-cost record duplicates q={q}, n={n}, backend `{}`",
+                columns[2]
+            ));
+        }
+        probes.push(CommittedProbe {
+            q,
+            n,
+            backend,
+            seconds,
+        });
+    }
+    if !header_seen {
+        return Err(format!(
+            "probe-cost record has no `{PROBE_COSTS_HEADER}` header"
+        ));
+    }
+    if probes.is_empty() {
+        return Err("probe-cost record has no probe rows".to_string());
+    }
+    Ok(probes)
+}
+
+/// Resolve a derivation-record backend name against [`Backend::BUILTIN`].
+///
+/// The record uses the measurement vocabulary of [`Backend::name`], so the
+/// builtin list is the only name table; this function never adds a second one.
+fn probe_backend(name: &str) -> Result<Backend, String> {
+    Backend::BUILTIN
+        .iter()
+        .copied()
+        .find(|backend| backend.name() == name)
+        .ok_or_else(|| format!("unknown probe backend `{name}`"))
+}
+
+/// The probe observations of the embedded derivation record, parsed once.
+fn committed_probes() -> Result<&'static [CommittedProbe], String> {
+    static PROBES: OnceLock<Result<Vec<CommittedProbe>, String>> = OnceLock::new();
+    PROBES
+        .get_or_init(|| parse_probe_costs(PROBE_COSTS))
+        .as_deref()
+        .map_err(Clone::clone)
+}
 
 /// Parse the exact campaign cells and nominated configurations from the
 /// embedded selection receipt.
@@ -414,8 +353,13 @@ fn order_ceiling(n: usize) -> Result<usize, String> {
         .ok_or_else(|| format!("equivalence order {n} is outside the committed order table"))
 }
 
-fn conservative_probe(q: u64, n: usize, backend: Backend) -> Option<ProbeUse> {
-    COMMITTED_PROBES
+fn conservative_probe(
+    committed: &[CommittedProbe],
+    q: u64,
+    n: usize,
+    backend: Backend,
+) -> Option<ProbeUse> {
+    committed
         .iter()
         .filter(|probe| probe.q == q && probe.backend == backend && probe.n >= n)
         .min_by_key(|probe| probe.n)
@@ -463,9 +407,11 @@ pub fn derive_matrix_count(ceiling: usize, probe_sum_seconds: f64) -> usize {
 ///
 /// # Errors
 ///
-/// Returns an error if the cell order has no committed ceiling or if no
-/// reference implementation supports the cell.
+/// Returns an error if the embedded probe-cost record is malformed, if the
+/// cell order has no committed ceiling, or if no reference implementation
+/// supports the cell.
 pub fn cell_budget(cell: &CampaignCell) -> Result<CellBudget, String> {
+    let committed = committed_probes()?;
     let ceiling = order_ceiling(cell.n)?;
     let reference = reference_backend(cell.q, cell.n)
         .ok_or_else(|| format!("q={}, n={} has no reference backend", cell.q, cell.n))?;
@@ -479,7 +425,7 @@ pub fn cell_budget(cell: &CampaignCell) -> Result<CellBudget, String> {
     let mut probes = Vec::new();
     let mut missing_backends = Vec::new();
     for backend in backends {
-        match conservative_probe(cell.q, cell.n, backend) {
+        match conservative_probe(committed, cell.q, cell.n, backend) {
             Some(probe) => probes.push(probe),
             None => missing_backends.push(backend),
         }
@@ -589,6 +535,9 @@ mod tests {
     #[test]
     fn every_campaign_cell_has_the_expected_deterministic_budget() {
         let cells = campaign_cells().expect("valid embedded selection receipt");
+        assert_eq!(cells.len(), 63);
+        let mut at_ceiling = 0usize;
+        let mut at_floor = 0usize;
         for cell in &cells {
             let expected = match (cell.q, cell.n) {
                 (3, 4..=15) | (5, 4..=12) | (7, 4..=12) => 512,
@@ -602,6 +551,138 @@ mod tests {
                 cell.q,
                 cell.n
             );
+            at_ceiling += usize::from(expected == 512);
+            at_floor += usize::from(expected == EQUIVALENCE_MIN_MATRICES);
         }
+        assert_eq!(at_ceiling, 30);
+        assert_eq!(at_floor, 32);
+
+        // The floor cells are exactly q=3 n=16..28, q=5 n=13..23, q=7 n=13..20.
+        for (q, floor_orders) in [(3_u64, 16..=28), (5, 13..=23), (7, 13..=20)] {
+            for cell in cells.iter().filter(|cell| cell.q == q) {
+                let budget = cell_budget(cell).expect("budget");
+                assert_eq!(
+                    budget.matrices == EQUIVALENCE_MIN_MATRICES,
+                    floor_orders.contains(&cell.n),
+                    "q={q} n={} took {} matrices",
+                    cell.n,
+                    budget.matrices
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn embedded_probe_costs_match_the_committed_sha256() {
+        use std::io::Write as _;
+        use std::process::{Command, Stdio};
+
+        let mut child = Command::new("sha256sum")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("sha256sum is the digest tool this harness already uses for provenance");
+        child
+            .stdin
+            .take()
+            .expect("sha256sum stdin")
+            .write_all(PROBE_COSTS.as_bytes())
+            .expect("pipe the embedded record to sha256sum");
+        let output = child.wait_with_output().expect("sha256sum output");
+        assert!(
+            output.status.success(),
+            "sha256sum exited {}",
+            output.status
+        );
+        let printed = String::from_utf8(output.stdout).expect("sha256sum prints UTF-8");
+        let digest = printed
+            .split_whitespace()
+            .next()
+            .expect("sha256sum prints a digest");
+        assert_eq!(
+            digest, PROBE_COSTS_SHA256,
+            "{PROBE_COSTS_PATH} changed without its embedded SHA-256"
+        );
+    }
+
+    #[test]
+    fn the_derivation_record_parses_to_the_committed_probe_set() {
+        let probes = committed_probes().expect("valid embedded probe-cost record");
+        assert_eq!(probes.len(), 28);
+        for (q, expected) in [(3_u64, 13_usize), (5, 9), (7, 6)] {
+            assert_eq!(probes.iter().filter(|probe| probe.q == q).count(), expected);
+        }
+        for (q, n, backend, seconds) in [
+            (3_u64, 12_usize, Backend::Scalar, 0.000_025),
+            (3, 28, Backend::RayonIntra, 0.052_472),
+            (5, 12, Backend::Gpu, 0.052_684),
+            (5, 24, Backend::Rayon, 1.196_064),
+            (7, 20, Backend::RyserGeneric, 0.064_976),
+        ] {
+            let probe = probes
+                .iter()
+                .find(|probe| probe.q == q && probe.n == n && probe.backend == backend)
+                .unwrap_or_else(|| panic!("q={q}, n={n} probe for {}", backend.name()));
+            assert_eq!(probe.seconds, seconds);
+        }
+
+        // Fixed-batch GPU rows after order 12 carry NaN, not a probe, so the
+        // record holds no GPU observation above that order.
+        assert!(probes
+            .iter()
+            .all(|probe| probe.backend != Backend::Gpu || probe.n == 12));
+    }
+
+    #[test]
+    fn the_probe_cost_parser_rejects_malformed_records() {
+        let header = PROBE_COSTS_HEADER;
+        for (label, record) in [
+            ("short row", format!("{header}\n3,12,cpu_scalar\n")),
+            (
+                "long row",
+                format!("{header}\n3,12,cpu_scalar,0.000025,7\n"),
+            ),
+            (
+                "non-numeric n",
+                format!("{header}\n3,twelve,cpu_scalar,0.000025\n"),
+            ),
+            (
+                "non-numeric seconds",
+                format!("{header}\n3,12,cpu_scalar,fast\n"),
+            ),
+            (
+                "non-finite seconds",
+                format!("{header}\n3,12,cpu_scalar,NaN\n"),
+            ),
+            (
+                "negative seconds",
+                format!("{header}\n3,12,cpu_scalar,-0.1\n"),
+            ),
+            (
+                "duplicate key",
+                format!("{header}\n3,12,cpu_scalar,0.000025\n3,12,cpu_scalar,0.000026\n"),
+            ),
+            (
+                "row before header",
+                format!("3,12,cpu_scalar,0.000025\n{header}\n"),
+            ),
+            ("no header", "3,12,cpu_scalar,0.000025\n".to_string()),
+            ("no rows", format!("# preamble only\n{header}\n")),
+        ] {
+            assert!(
+                parse_probe_costs(&record).is_err(),
+                "parser accepted a record with a {label}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_probe_cost_parser_rejects_an_unknown_backend() {
+        let record = format!("{PROBE_COSTS_HEADER}\n3,12,cpu_quantum,0.000025\n");
+        let error = parse_probe_costs(&record).expect_err("unknown backend must be rejected");
+        assert!(
+            error.contains("cpu_quantum"),
+            "error must name the rejected backend: {error}"
+        );
     }
 }

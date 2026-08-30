@@ -1,7 +1,7 @@
 //! Host, toolchain, and thermal metadata captured alongside every measurement.
 //!
 //! The repository requires that a published number trace to an artifact
-//! recording seeds, git revision, hardware, and toolchain
+//! recording seeds, source identity, hardware, and toolchain
 //! (`@/inv/claims-trace-to-artifacts`). This module collects the non-seed part
 //! of that record; seeds come from [`crate::sampler`].
 
@@ -18,6 +18,11 @@ fn capture(program: &str, args: &[&str]) -> String {
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "unavailable".to_string())
+}
+
+/// The committed Git tree rooted at `directory`.
+fn git_tree(directory: &str) -> String {
+    capture("git", &["-C", directory, "rev-parse", "HEAD:./"])
 }
 
 fn read_file(path: &str) -> String {
@@ -45,27 +50,31 @@ fn cpuinfo(key: &str) -> String {
 /// Static host and toolchain facts, captured once per run.
 #[derive(Clone, Debug)]
 pub struct HostInfo {
+    /// Repository-wide commit observed at run start, retained as informational
+    /// context rather than binding provenance.
     pub git_sha: String,
+    /// Whether any repository path was dirty at run start, retained as
+    /// informational context rather than binding provenance.
     pub git_dirty: bool,
-    /// SHA of the most recent commit touching this crate's own source tree.
+    /// Git tree of this harness crate's committed source content.
     ///
-    /// `git_sha` alone does not identify the measured source: the repository
-    /// carries workflow state (`.jit/`) that other agents commit and modify
-    /// independently, so `git_dirty` can be true for reasons unrelated to the
-    /// harness. This field, with [`Self::harness_dirty`], pins the state of the
-    /// code that actually produced the numbers.
-    pub harness_sha: String,
+    /// This field, qualified by [`Self::harness_dirty`], identifies the harness
+    /// source content that produced the numbers.
+    pub harness_tree: String,
     /// Whether this crate's own source tree has uncommitted changes. A receipt
     /// with `harness_dirty: true` does not identify a reproducible source state
     /// and must not be published as evidence.
     pub harness_dirty: bool,
-    /// SHA of the most recent commit touching `crates/`, the path dependencies
-    /// the harness links. The harness SHA alone does not pin behaviour: the
-    /// kernels under measurement live there, so a change under `crates/` moves
-    /// the numbers without moving `harness_sha`.
-    pub deps_sha: String,
+    /// Git tree of committed `crates/` content, the workspace path dependencies
+    /// linked by the harness.
+    pub deps_tree: String,
     /// Whether `crates/` has uncommitted changes.
     pub deps_dirty: bool,
+    /// Git tree of committed `dev/research/permanent_wave_gpu` content, the
+    /// sibling path dependency containing measured prototype kernels.
+    pub wave_gpu_tree: String,
+    /// Whether `dev/research/permanent_wave_gpu` has uncommitted changes.
+    pub wave_gpu_dirty: bool,
     /// SHA-256 of the running executable. This is the one field that pins the
     /// measured artifact outright: it covers the harness, every path
     /// dependency, the toolchain, and the feature set actually compiled in,
@@ -92,21 +101,35 @@ impl HostInfo {
     /// failing, so a missing GPU never aborts a CPU-only run.
     #[must_use]
     pub fn probe() -> Self {
-        let git_status = capture("git", &["status", "--porcelain"]);
         let invocation = std::env::args().collect::<Vec<_>>().join(" ");
         // This crate's own directory, resolved at build time.
         let crate_dir = env!("CARGO_MANIFEST_DIR");
-        let harness_status = capture("git", &["status", "--porcelain", "--", crate_dir]);
+        let git_status = capture("git", &["-C", crate_dir, "status", "--porcelain"]);
+        let harness_status = capture(
+            "git",
+            &["-C", crate_dir, "status", "--porcelain", "--", "./"],
+        );
         // Path dependencies: the workspace crates this harness links.
         let deps_dir = format!("{crate_dir}/../../../crates");
-        let deps_status = capture("git", &["status", "--porcelain", "--", &deps_dir]);
+        let deps_status = capture(
+            "git",
+            &["-C", &deps_dir, "status", "--porcelain", "--", "./"],
+        );
+        // Research-only sibling path dependency containing measured kernels.
+        let wave_gpu_dir = format!("{crate_dir}/../permanent_wave_gpu");
+        let wave_gpu_status = capture(
+            "git",
+            &["-C", &wave_gpu_dir, "status", "--porcelain", "--", "./"],
+        );
         Self {
-            git_sha: capture("git", &["rev-parse", "HEAD"]),
+            git_sha: capture("git", &["-C", crate_dir, "rev-parse", "HEAD"]),
             git_dirty: git_status != "unavailable" && !git_status.is_empty(),
-            harness_sha: capture("git", &["log", "-1", "--format=%H", "--", crate_dir]),
+            harness_tree: git_tree(crate_dir),
             harness_dirty: harness_status != "unavailable" && !harness_status.is_empty(),
-            deps_sha: capture("git", &["log", "-1", "--format=%H", "--", &deps_dir]),
+            deps_tree: git_tree(&deps_dir),
             deps_dirty: deps_status != "unavailable" && !deps_status.is_empty(),
+            wave_gpu_tree: git_tree(&wave_gpu_dir),
+            wave_gpu_dirty: wave_gpu_status != "unavailable" && !wave_gpu_status.is_empty(),
             binary_sha256: binary_sha256(),
             rustc: capture("rustc", &["--version"]),
             cargo: capture("cargo", &["--version"]),
@@ -131,18 +154,20 @@ impl HostInfo {
         let mut s = String::new();
         let _ = writeln!(s, "# git_sha: {}", self.git_sha);
         let _ = writeln!(s, "# git_worktree_dirty: {}", self.git_dirty);
-        let _ = writeln!(s, "# harness_source_sha: {}", self.harness_sha);
-        let _ = writeln!(s, "# harness_source_dirty: {}", self.harness_dirty);
-        let _ = writeln!(s, "# deps_source_sha: {}", self.deps_sha);
-        let _ = writeln!(s, "# deps_source_dirty: {}", self.deps_dirty);
+        let _ = writeln!(s, "# harness_tree: {}", self.harness_tree);
+        let _ = writeln!(s, "# harness_dirty: {}", self.harness_dirty);
+        let _ = writeln!(s, "# deps_tree: {}", self.deps_tree);
+        let _ = writeln!(s, "# deps_dirty: {}", self.deps_dirty);
+        let _ = writeln!(s, "# wave_gpu_tree: {}", self.wave_gpu_tree);
+        let _ = writeln!(s, "# wave_gpu_dirty: {}", self.wave_gpu_dirty);
         let _ = writeln!(s, "# binary_sha256: {}", self.binary_sha256);
         let _ = writeln!(
             s,
-            "# note: git_worktree_dirty covers the whole repository, including .jit/ \
-workflow state other agents own. harness_source_* pin this crate; deps_source_* pin \
-crates/, where the measured kernels live and whose changes would move the numbers \
-without moving harness_source_sha. binary_sha256 pins the executable outright, \
-covering harness, path dependencies, toolchain and compiled feature set together."
+            "# note: BINDING provenance: harness_tree, deps_tree, wave_gpu_tree, and \
+binary_sha256; harness_dirty, deps_dirty, and wave_gpu_dirty qualify their respective \
+committed trees. INFORMATIONAL only: git_sha and git_worktree_dirty. binary_sha256 \
+pins the executable outright, covering harness, path dependencies, toolchain and \
+compiled feature set together."
         );
         let _ = writeln!(s, "# rustc: {}", self.rustc);
         let _ = writeln!(s, "# cargo: {}", self.cargo);
@@ -293,5 +318,98 @@ pub fn pin_thread(core: Option<usize>) -> bool {
             }
         }
         libc::sched_setaffinity(0, std::mem::size_of::<libc::cpu_set_t>(), &set) == 0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    fn command_stdout(mut command: Command) -> String {
+        let output = command.output().expect("run test command");
+        assert!(
+            output.status.success(),
+            "command failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8(output.stdout)
+            .expect("command stdout is UTF-8")
+            .trim()
+            .to_owned()
+    }
+
+    fn repository_root() -> String {
+        let mut command = Command::new("git");
+        command.args([
+            "-C",
+            env!("CARGO_MANIFEST_DIR"),
+            "rev-parse",
+            "--show-toplevel",
+        ]);
+        command_stdout(command)
+    }
+
+    fn independent_tree(relative_path: &str) -> String {
+        let revision = format!("HEAD:{relative_path}");
+        let mut command = Command::new("git");
+        command.args(["-C", &repository_root(), "rev-parse", &revision]);
+        command_stdout(command)
+    }
+
+    fn preamble_value<'a>(preamble: &'a str, key: &str) -> &'a str {
+        let prefix = format!("# {key}: ");
+        preamble
+            .lines()
+            .find_map(|line| line.strip_prefix(&prefix))
+            .unwrap_or_else(|| panic!("missing preamble field {key}"))
+    }
+
+    #[test]
+    fn emitted_tree_fields_match_committed_content() {
+        let preamble = HostInfo::probe().csv_preamble();
+
+        assert_eq!(
+            preamble_value(&preamble, "harness_tree"),
+            independent_tree("dev/research/permanent-sampling-feas")
+        );
+        assert_eq!(
+            preamble_value(&preamble, "deps_tree"),
+            independent_tree("crates")
+        );
+        assert_eq!(
+            preamble_value(&preamble, "wave_gpu_tree"),
+            independent_tree("dev/research/permanent_wave_gpu")
+        );
+    }
+
+    #[test]
+    fn preamble_labels_binding_and_informational_provenance() {
+        let preamble = HostInfo::probe().csv_preamble();
+
+        for key in [
+            "harness_tree",
+            "harness_dirty",
+            "deps_tree",
+            "deps_dirty",
+            "wave_gpu_tree",
+            "wave_gpu_dirty",
+            "binary_sha256",
+            "git_sha",
+            "git_worktree_dirty",
+        ] {
+            let _ = preamble_value(&preamble, key);
+        }
+        assert!(preamble.contains(
+            "# note: BINDING provenance: harness_tree, deps_tree, wave_gpu_tree, and \
+binary_sha256"
+        ));
+        assert!(preamble.contains("INFORMATIONAL only: git_sha and git_worktree_dirty"));
+    }
+
+    #[test]
+    fn tree_capture_degrades_to_unavailable_when_git_fails() {
+        let missing = Path::new(env!("CARGO_MANIFEST_DIR")).join("not-a-git-directory");
+        assert_eq!(git_tree(&missing.to_string_lossy()), "unavailable");
     }
 }

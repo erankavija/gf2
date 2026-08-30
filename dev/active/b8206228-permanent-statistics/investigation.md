@@ -110,7 +110,7 @@ nothing. The closest precedent is the DVB-T2 per-curve `README.md`
 `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:692`, which records invocation,
 configuration, host (`whoami` + `uname -a`, `:661`) and wall-clock — and
 **records no git revision and no toolchain version**. Since
-`@/inv/claims-trace-to-artifacts` demands seeds, git revision, hardware and
+`@/inv/claims-trace-to-artifacts` demands seeds, source identity, hardware and
 toolchain, the campaign's manifest is genuinely new work rather than an
 adaptation, and it is also a chance to fix that gap at its source.
 
@@ -641,7 +641,7 @@ plan should not describe it as "reusing existing conventions" (a reviewer will
 check), and the fields `@/inv/claims-trace-to-artifacts` requires — seeds, git
 revision, hardware, toolchain — must be enumerated in the criterion text rather
 than left to the implementer. The feasibility harness's own CSV preambles
-already carry most of them (`harness_source_sha`, `deps_source_sha`,
+already carry most of them (`harness_tree`, `deps_tree`, `wave_gpu_tree`,
 `binary_sha256`, rustc/ROCm versions, CPU/GPU model, governor, thread count) and
 are the better template — with RC1's caveat that they must carry no interpretive
 prose.
@@ -701,7 +701,7 @@ and CI; plots and tables carry error bars or interval columns. Binds every REQ-0
 artifact and the analysis report's figures.
 
 **`@/inv/claims-trace-to-artifacts`** — every published number traces to a
-committed artifact recording seeds, git revision, hardware, toolchain. This is
+committed artifact recording seeds, source identity, hardware, toolchain. This is
 what makes the manifest a hard requirement rather than a nicety, and what the
 DVB-T2 README convention does not currently satisfy.
 
