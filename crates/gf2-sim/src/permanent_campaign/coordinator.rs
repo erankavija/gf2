@@ -1340,6 +1340,7 @@ pub fn execute_campaign_cell(
 /// Adds `O(1)` dispatch overhead per authorized attempt to the evaluator's
 /// cost.
 #[cfg(any(test, feature = "test-support"))]
+#[allow(clippy::too_many_arguments)]
 pub fn execute_campaign_cell_with_evaluator<E, H>(
     campaign_root: &Path,
     scope: ExactCellScope,
