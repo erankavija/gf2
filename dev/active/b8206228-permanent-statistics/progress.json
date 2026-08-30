@@ -753,6 +753,18 @@
     "Leave the frozen artifacts and REQ-12 unchanged, which blocks the coordinator and all campaign arms."
    ],
    "lead_recommendation": "Authorize the narrow per-cell-selection extension and re-freeze before any draw. This preserves the scientific scheduling intent and creates a mechanically enforceable external coordinator boundary; weakening REQ-12 would discard the preregistered q7 n20 safety probe."
+  },
+  {
+   "issue": "6639435f",
+   "reason": "Independent final audit of publication commit c05b5f11 found four hard boundary defects after the issue exhausted its two ordinary rework cycles: path-based symlink checks can be swapped between validation and use; the generic publisher does not bind destination names to payload kinds/phases; recovery trusts caller-supplied liveness evidence rather than observing the OS at the recovery barrier; and validated checkpoint handles prove bytes but not durable publication, allowing terminals to claim unpublished blocks.",
+   "status": "pending",
+   "requested_at": "2026-08-30T09:44:00+03:00",
+   "options": [
+    "Authorize one bounded high-tier rework cycle covering all four findings, followed by fresh independent review and all configured gates.",
+    "Authorize only the cooperative-filesystem defects (typed publication, OS liveness collection, and durable checkpoint reconstruction) and accept path-based TOCTOU risk as outside the artifact threat model.",
+    "Leave the committed publication API unchanged, which blocks the thin production runner and issue completion."
+   ],
+   "lead_recommendation": "Authorize one bounded high-tier rework covering all four findings. The artifact contract promises fail-closed recovery and production-safe immutable publication; narrowing the threat model after implementation would weaken that reviewed contract, while descriptor-relative no-follow operations, typed publication, runtime liveness collection, and filesystem-derived checkpoint handles form one coherent repair."
   }
  ],
  "standing_rules": [
