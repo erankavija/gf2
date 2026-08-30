@@ -7,7 +7,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -18,7 +18,8 @@ use super::acceptance::{
     assess_completed_cell, AcceptanceError, AcceptanceFamily, AcceptancePlan,
     CompletedCellAssessment,
 };
-use super::launch_cost::read_accelerator_cost_table;
+use super::launch_cost::resolve_accelerator_cost_table;
+use super::provenance::{approve_emission, EmissionApproval};
 use super::schedule::CAMPAIGN_CELL_PURPOSE_TAG;
 use super::schedule::{
     emit_shard_with_durability_hook, enumerate_cell_work_items,
@@ -54,6 +55,8 @@ pub struct ArmInvocation {
     pub worker_count: usize,
     /// SHA-256 of the exact emitting executable.
     pub executable_sha256: Sha256Digest,
+    /// Canonical content identity of the accelerator cost input, when used.
+    pub accelerator_cost_table: Option<ArtifactIdentity>,
 }
 
 /// Exact manifested cell selected by one campaign-purpose arm.
@@ -360,7 +363,7 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C log C)` time and `O(C)` space for `C` manifest cells.
-    pub fn new(campaign_root: &Path) -> Result<Self, CoordinatorError> {
+    fn new_inner(campaign_root: &Path) -> Result<Self, CoordinatorError> {
         let manifest =
             super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
         validate_campaign_directory(campaign_root, &manifest.campaign_id)?;
@@ -409,6 +412,12 @@ impl CampaignCoordinator {
         Ok(Self { manifest, receipt })
     }
 
+    /// Constructs an empty coordinator for receipt-state integration tests.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn new(campaign_root: &Path) -> Result<Self, CoordinatorError> {
+        Self::new_inner(campaign_root)
+    }
+
     /// Returns the fixed shared acceptance plan.
     #[must_use]
     pub const fn acceptance_plan(&self) -> &AcceptancePlan {
@@ -452,7 +461,7 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C + A)` for `C` cells and `A` argument tokens.
-    pub fn authorize_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
+    fn authorize_arm_inner(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
         let ExactCellScope { q, n } = arm.scope;
         validate_arm(&self.manifest, &arm, q, n)?;
         if !matches!(self.receipt.halt, CampaignHaltState::Running) {
@@ -497,10 +506,13 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C + A)` for receipt cells and arguments.
-    pub fn authorize_or_resume_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
+    fn authorize_or_resume_arm_inner(
+        &mut self,
+        arm: ArmInvocation,
+    ) -> Result<(), CoordinatorError> {
         let scope = arm.scope;
         match self.cell_state(scope.q, scope.n) {
-            Some(CellExecutionState::Pending) => self.authorize_arm(arm),
+            Some(CellExecutionState::Pending) => self.authorize_arm_inner(arm),
             Some(CellExecutionState::Scheduled { arm_index }) => {
                 if self.receipt.arms.get(*arm_index) == Some(&arm) {
                     Ok(())
@@ -513,6 +525,18 @@ impl CampaignCoordinator {
             }
             None => refused("arm scope does not name a manifest cell"),
         }
+    }
+
+    /// Test-support admission of one exact arm.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn authorize_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
+        self.authorize_arm_inner(arm)
+    }
+
+    /// Test-support admission or identity check for one exact arm.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn authorize_or_resume_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
+        self.authorize_or_resume_arm_inner(arm)
     }
 
     /// Persists one exact shard-attempt authorization before sampler entry.
@@ -649,10 +673,7 @@ impl CampaignCoordinator {
             .ok_or_else(|| CoordinatorError::Refused("manifest shard not found".to_owned()))?;
         let relative = shard_record_file(q, n, shard_id);
         let path = campaign_root.join(&relative);
-        let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
-            path: path.clone(),
-            source,
-        })?;
+        let bytes = read_regular_file_nofollow(&path)?;
         let record: ShardRecord = serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)?;
         validate_raw_record(&self.manifest, &cell, shard_id, shard.stream_index, &record)?;
         let identity = ArtifactIdentity {
@@ -860,7 +881,7 @@ impl CampaignCoordinator {
     /// Test-support admission of one manifest-derived attempt authorization.
     ///
     /// Production campaign execution admits attempts only through
-    /// [`execute_scheduled_cell`].
+    /// [`execute_campaign_cell`].
     #[cfg(any(test, feature = "test-support"))]
     pub fn authorize_attempt(
         &mut self,
@@ -874,7 +895,7 @@ impl CampaignCoordinator {
     /// Test-support terminalization of an active mechanical attempt.
     ///
     /// Production campaign execution records this state only through
-    /// [`execute_scheduled_cell`].
+    /// [`execute_campaign_cell`].
     #[cfg(any(test, feature = "test-support"))]
     pub fn record_quarantine(
         &mut self,
@@ -889,7 +910,7 @@ impl CampaignCoordinator {
     /// Test-support adoption of one active attempt's canonical raw bytes.
     ///
     /// Production campaign execution records this state only through
-    /// [`execute_scheduled_cell`].
+    /// [`execute_campaign_cell`].
     #[cfg(any(test, feature = "test-support"))]
     pub fn record_accepted(
         &mut self,
@@ -904,7 +925,7 @@ impl CampaignCoordinator {
     /// Test-support assessment of counts pooled from accepted attempts.
     ///
     /// Production campaign execution assesses a complete cell only through
-    /// [`execute_scheduled_cell`].
+    /// [`execute_campaign_cell`].
     #[cfg(any(test, feature = "test-support"))]
     pub fn record_completed(
         &mut self,
@@ -979,22 +1000,23 @@ impl CampaignCoordinator {
             return refused("manifest has no requested field");
         }
         rows.sort_by_key(|row| row.n);
-        let quarantined = self
-            .receipt
-            .attempts
-            .iter()
-            .filter_map(|attempt| match &attempt.state {
-                ShardAttemptState::Quarantined { error } if attempt.stream_address.q == q => {
-                    Some(QuarantinedShard {
-                        q,
-                        n: attempt.stream_address.n,
-                        shard_id: attempt.shard_id,
-                        error: error.clone(),
-                    })
+        let mut quarantine_by_shard = BTreeMap::new();
+        for attempt in &self.receipt.attempts {
+            if let ShardAttemptState::Quarantined { error } = &attempt.state {
+                if attempt.stream_address.q == q {
+                    quarantine_by_shard.insert(
+                        (attempt.stream_address.n, attempt.shard_id),
+                        QuarantinedShard {
+                            q,
+                            n: attempt.stream_address.n,
+                            shard_id: attempt.shard_id,
+                            error: error.clone(),
+                        },
+                    );
                 }
-                _ => None,
-            })
-            .collect();
+            }
+        }
+        let quarantined = quarantine_by_shard.into_values().collect();
         Ok(FieldSummary {
             schema_version: SCHEMA_VERSION,
             q,
@@ -1021,7 +1043,13 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C + A + T + B)` for cells, arms, attempts, and serialized bytes.
+    #[cfg(any(test, feature = "test-support"))]
     pub fn persist(&self, campaign_root: &Path) -> Result<(), CoordinatorError> {
+        let _lock = acquire_execution_lock(campaign_root, &self.receipt.campaign_id)?;
+        self.persist_locked(campaign_root)
+    }
+
+    fn persist_locked(&self, campaign_root: &Path) -> Result<(), CoordinatorError> {
         validate_campaign_directory(campaign_root, &self.receipt.campaign_id)?;
         validate_receipt(&self.manifest, &self.receipt)?;
         validate_campaign_files(campaign_root, &self.manifest, &self.receipt)?;
@@ -1188,103 +1216,11 @@ pub fn coordinator_lock_path(campaign_root: &Path, campaign_id: &CampaignId) -> 
         .join("execution.lock")
 }
 
-/// Executes one persisted exact-cell arm through the canonical receipt state machine.
-///
-/// The function holds the campaign execution lock across receipt revalidation,
-/// attempt authorization, evaluation, durable raw emission, and attempt
-/// terminalization. Every attempt authorization is persisted and re-read
-/// before the sampler is entered. A durable raw shard left by an interrupted
-/// process is adopted without another sampler entry.
-///
-/// # Errors
-///
-/// Refuses an unpersisted or mismatched arm, lock contention, an invalid full
-/// accelerator-cost table, inconsistent durable raw evidence, or a receipt
-/// transition failure. Evaluation and raw-emission failures consume the fixed
-/// mechanical attempt and are preserved in the receipt.
-///
-/// # Panics
-///
-/// Does not intentionally panic.
-///
-/// # Complexity
-///
-/// Receipt work is `O(C + S + T)` for cells, selected shards, and attempts;
-/// each admitted shard has the permanent and determinant cost documented by
-/// [`evaluate_work_item_with_worker_count_and_accelerator`].
-pub fn execute_scheduled_cell(
+fn acquire_execution_lock(
     campaign_root: &Path,
-    scope: ExactCellScope,
-    worker_count: usize,
-) -> Result<ExactCellExecution, CoordinatorError> {
-    execute_scheduled_cell_inner(
-        campaign_root,
-        scope,
-        worker_count,
-        evaluate_work_item_with_worker_count_and_accelerator,
-    )
-}
-
-/// Deterministic evaluator seam for receipt-state-machine integration tests.
-///
-/// This entry point has the same persisted admission, locking, retry, and raw
-/// durability behavior as [`execute_scheduled_cell`]. Only shard evaluation is
-/// supplied by the test.
-///
-/// # Errors
-///
-/// Returns the same failures as [`execute_scheduled_cell`] plus failures from
-/// `evaluator`.
-///
-/// # Panics
-///
-/// Does not intentionally panic.
-///
-/// # Complexity
-///
-/// Adds `O(1)` dispatch overhead per authorized attempt to the evaluator's
-/// cost.
-#[cfg(any(test, feature = "test-support"))]
-pub fn execute_scheduled_cell_with_evaluator<E>(
-    campaign_root: &Path,
-    scope: ExactCellScope,
-    worker_count: usize,
-    evaluator: E,
-) -> Result<ExactCellExecution, CoordinatorError>
-where
-    E: FnMut(
-        &CampaignManifest,
-        &WorkItem,
-        usize,
-        Option<AcceleratorConfig>,
-    ) -> Result<EvaluatedShard, ScheduleError>,
-{
-    execute_scheduled_cell_inner(campaign_root, scope, worker_count, evaluator)
-}
-
-fn execute_scheduled_cell_inner<E>(
-    campaign_root: &Path,
-    scope: ExactCellScope,
-    worker_count: usize,
-    mut evaluator: E,
-) -> Result<ExactCellExecution, CoordinatorError>
-where
-    E: FnMut(
-        &CampaignManifest,
-        &WorkItem,
-        usize,
-        Option<AcceleratorConfig>,
-    ) -> Result<EvaluatedShard, ScheduleError>,
-{
-    let preflight = CampaignCoordinator::read(campaign_root)?;
-    let manifest = preflight.manifest.clone();
-    let preflight_arm = preflight.persisted_arm_authorization(scope)?;
-    if worker_count != preflight_arm.arm.worker_count {
-        return refused("runtime worker count differs from the persisted exact arm");
-    }
-    let accelerator_costs = accelerator_costs_for_arm(&manifest, &preflight_arm.arm)?;
-    accelerator_costs.validate_manifest(&manifest)?;
-    let lock_path = coordinator_lock_path(campaign_root, &manifest.campaign_id);
+    campaign_id: &CampaignId,
+) -> Result<fs::File, CoordinatorError> {
+    let lock_path = coordinator_lock_path(campaign_root, campaign_id);
     let lock_parent = lock_path
         .parent()
         .ok_or_else(|| CoordinatorError::Refused("execution lock has no parent".to_owned()))?;
@@ -1301,20 +1237,175 @@ where
             path: lock_path.clone(),
             source,
         })?;
-    if let Err(source) = lock_file.try_lock() {
-        return Err(CoordinatorError::Refused(format!(
+    lock_file.try_lock().map_err(|source| {
+        CoordinatorError::Refused(format!(
             "campaign execution lock is unavailable at {}: {source}",
             lock_path.display()
-        )));
-    }
+        ))
+    })?;
+    Ok(lock_file)
+}
 
-    let mut coordinator = CampaignCoordinator::read(campaign_root)?;
+/// Executes one exact campaign cell through the canonical receipt transaction.
+///
+/// The function holds the campaign execution lock across receipt revalidation,
+/// attempt authorization, evaluation, durable raw emission, and attempt
+/// terminalization. Every attempt authorization is persisted and re-read
+/// before the sampler is entered. A durable raw shard left by an interrupted
+/// process is adopted without another sampler entry.
+///
+/// # Errors
+///
+/// Refuses a non-live executable identity, lock contention, an invalid full
+/// accelerator-cost snapshot, inconsistent durable raw evidence, or a receipt
+/// transition failure. Evaluation and raw-emission failures consume the fixed
+/// mechanical attempt and are preserved in the receipt.
+///
+/// # Panics
+///
+/// Does not intentionally panic.
+///
+/// # Complexity
+///
+/// Receipt work is `O(C + S + T)` for cells, selected shards, and attempts;
+/// each admitted shard has the permanent and determinant cost documented by
+/// [`evaluate_work_item_with_worker_count_and_accelerator`].
+pub fn execute_campaign_cell(
+    campaign_root: &Path,
+    scope: ExactCellScope,
+    worker_count: usize,
+) -> Result<ExactCellExecution, CoordinatorError> {
+    let manifest = match super::schema::read_manifest(campaign_root) {
+        Ok(manifest) => manifest,
+        Err(manifest_error) => {
+            return match approve_emission(campaign_root) {
+                Err(error) => Err(CoordinatorError::Refused(format!(
+                    "emission refused: {error}"
+                ))),
+                Ok(_) => Err(CoordinatorError::Manifest(manifest_error)),
+            }
+        }
+    };
+    let _lock = acquire_execution_lock(campaign_root, &manifest.campaign_id)?;
+    let approval = approve_emission(campaign_root)
+        .map_err(|error| CoordinatorError::Refused(format!("emission refused: {error}")))?;
+    let effective_argv = std::env::args().collect();
+    execute_campaign_cell_locked(
+        campaign_root,
+        scope,
+        worker_count,
+        effective_argv,
+        approval,
+        evaluate_work_item_with_worker_count_and_accelerator,
+        |_| {},
+    )
+}
+
+/// Deterministic evaluator seam for receipt-state-machine integration tests.
+///
+/// This entry point has the same persisted admission, locking, retry, and raw
+/// durability behavior as [`execute_campaign_cell`]. The test supplies a real
+/// live approval, exact argv, evaluator, and post-durability observer.
+///
+/// # Errors
+///
+/// Returns the same failures as [`execute_campaign_cell`] plus failures from
+/// `evaluator`.
+///
+/// # Panics
+///
+/// Does not intentionally panic.
+///
+/// # Complexity
+///
+/// Adds `O(1)` dispatch overhead per authorized attempt to the evaluator's
+/// cost.
+#[cfg(any(test, feature = "test-support"))]
+pub fn execute_campaign_cell_with_evaluator<E, H>(
+    campaign_root: &Path,
+    scope: ExactCellScope,
+    worker_count: usize,
+    effective_argv: Vec<String>,
+    approval: EmissionApproval,
+    evaluator: E,
+    on_raw_durable: H,
+) -> Result<ExactCellExecution, CoordinatorError>
+where
+    E: FnMut(
+        &CampaignManifest,
+        &WorkItem,
+        usize,
+        Option<AcceleratorConfig>,
+    ) -> Result<EvaluatedShard, ScheduleError>,
+    H: FnMut(&Path),
+{
+    let manifest =
+        super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
+    let _lock = acquire_execution_lock(campaign_root, &manifest.campaign_id)?;
+    execute_campaign_cell_locked(
+        campaign_root,
+        scope,
+        worker_count,
+        effective_argv,
+        approval,
+        evaluator,
+        on_raw_durable,
+    )
+}
+
+fn execute_campaign_cell_locked<E, H>(
+    campaign_root: &Path,
+    scope: ExactCellScope,
+    worker_count: usize,
+    effective_argv: Vec<String>,
+    approval: EmissionApproval,
+    mut evaluator: E,
+    mut on_raw_durable: H,
+) -> Result<ExactCellExecution, CoordinatorError>
+where
+    E: FnMut(
+        &CampaignManifest,
+        &WorkItem,
+        usize,
+        Option<AcceleratorConfig>,
+    ) -> Result<EvaluatedShard, ScheduleError>,
+    H: FnMut(&Path),
+{
+    let canonical_campaign =
+        fs::canonicalize(campaign_root).map_err(|source| CoordinatorError::Io {
+            path: campaign_root.to_owned(),
+            source,
+        })?;
+    if canonical_campaign != approval.campaign_root() {
+        return refused("live emission approval names a different canonical campaign root");
+    }
+    let manifest_on_disk =
+        super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
+    let mut coordinator =
+        if coordinator_receipt_path(campaign_root, &manifest_on_disk.campaign_id).exists() {
+            CampaignCoordinator::read(campaign_root)?
+        } else {
+            CampaignCoordinator::new_inner(campaign_root)?
+        };
+    let manifest = coordinator.manifest.clone();
+    if coordinator.receipt.manifest_identity.sha256 != *approval.manifest_sha256() {
+        return refused("live emission approval names different committed manifest bytes");
+    }
+    let (accelerator_costs, accelerator_cost_table) =
+        accelerator_costs_for_argv(&manifest, &effective_argv, approval.repository_root())?;
+    accelerator_costs.validate_manifest(&manifest)?;
+    coordinator.authorize_or_resume_arm_inner(ArmInvocation {
+        scope,
+        argv: effective_argv,
+        worker_count,
+        executable_sha256: approval.binary_sha256().clone(),
+        accelerator_cost_table,
+    })?;
+    coordinator.persist_locked(campaign_root)?;
+    coordinator = CampaignCoordinator::read(campaign_root)?;
     let arm_authorization = coordinator.persisted_arm_authorization(scope)?;
-    if arm_authorization.scope != preflight_arm.scope
-        || arm_authorization.manifest_identity != preflight_arm.manifest_identity
-        || arm_authorization.arm != preflight_arm.arm
-    {
-        return refused("persisted exact arm changed while acquiring the execution lock");
+    if worker_count != arm_authorization.arm.worker_count {
+        return refused("runtime worker count differs from the persisted exact arm");
     }
     let items = enumerate_cell_work_items(&manifest, scope.q, scope.n)?;
     for item in &items {
@@ -1332,7 +1423,23 @@ where
             if let Some(active) = active_attempt(&coordinator.receipt, item).cloned() {
                 let raw_path =
                     campaign_root.join(shard_record_file(scope.q, scope.n, item.shard_id));
-                if raw_path.is_file() {
+                let raw_metadata = match fs::symlink_metadata(&raw_path) {
+                    Ok(metadata) => Some(metadata),
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+                    Err(source) => {
+                        return Err(CoordinatorError::Io {
+                            path: raw_path,
+                            source,
+                        })
+                    }
+                };
+                if raw_metadata
+                    .as_ref()
+                    .is_some_and(|metadata| !metadata.file_type().is_file())
+                {
+                    return refused("canonical raw shard path must be a regular file");
+                }
+                if raw_metadata.is_some() {
                     match coordinator.record_accepted_inner(
                         campaign_root,
                         scope.q,
@@ -1340,7 +1447,7 @@ where
                         item.shard_id,
                     ) {
                         Ok(()) => {
-                            coordinator.persist(campaign_root)?;
+                            coordinator.persist_locked(campaign_root)?;
                             continue;
                         }
                         Err(error) => {
@@ -1357,7 +1464,7 @@ where
                                 item.shard_id,
                                 format!("durable raw shard failed canonical validation: {error}"),
                             )?;
-                            coordinator.persist(campaign_root)?;
+                            coordinator.persist_locked(campaign_root)?;
                             continue;
                         }
                     }
@@ -1368,16 +1475,25 @@ where
                     item.shard_id,
                     "authorized attempt ended without a durable raw shard".to_owned(),
                 )?;
-                coordinator.persist(campaign_root)?;
+                coordinator.persist_locked(campaign_root)?;
                 continue;
             }
 
             let raw_path = campaign_root.join(shard_record_file(scope.q, scope.n, item.shard_id));
-            if raw_path.exists() {
-                return refused("raw shard exists without an active or accepted attempt");
+            match fs::symlink_metadata(&raw_path) {
+                Ok(_) => {
+                    return refused("raw shard path exists without an active or accepted attempt")
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(source) => {
+                    return Err(CoordinatorError::Io {
+                        path: raw_path,
+                        source,
+                    })
+                }
             }
             coordinator.authorize_attempt_inner(scope.q, scope.n, item.shard_id)?;
-            coordinator.persist(campaign_root)?;
+            coordinator.persist_locked(campaign_root)?;
             coordinator = CampaignCoordinator::read(campaign_root)?;
             let attempt_authorization =
                 coordinator.persisted_attempt_authorization(&arm_authorization, item)?;
@@ -1401,7 +1517,7 @@ where
                                 campaign_root,
                                 &manifest,
                                 &evaluated.run,
-                                |_| {},
+                                &mut on_raw_durable,
                             )
                             .map(|_| ())
                             .map_err(CoordinatorError::Schedule)
@@ -1414,7 +1530,7 @@ where
                                 scope.n,
                                 item.shard_id,
                             )?;
-                            coordinator.persist(campaign_root)?;
+                            coordinator.persist_locked(campaign_root)?;
                         }
                         Err(error) => {
                             let raw_path = campaign_root.join(shard_record_file(
@@ -1437,7 +1553,7 @@ where
                                 item.shard_id,
                                 error.to_string(),
                             )?;
-                            coordinator.persist(campaign_root)?;
+                            coordinator.persist_locked(campaign_root)?;
                         }
                     }
                 }
@@ -1448,13 +1564,13 @@ where
                         item.shard_id,
                         error.to_string(),
                     )?;
-                    coordinator.persist(campaign_root)?;
+                    coordinator.persist_locked(campaign_root)?;
                 }
             }
         }
     }
     coordinator.record_completed_from_attempts(scope.q, scope.n)?;
-    coordinator.persist(campaign_root)?;
+    coordinator.persist_locked(campaign_root)?;
     exact_execution(campaign_root, &coordinator, scope, &items)
 }
 
@@ -1477,11 +1593,12 @@ fn validate_evaluated_shard(
     )
 }
 
-fn accelerator_costs_for_arm(
+fn accelerator_costs_for_argv(
     manifest: &CampaignManifest,
-    arm: &ArmInvocation,
-) -> Result<AcceleratorCostTable, CoordinatorError> {
-    let launch_cap = match optional_unique_option(&arm.argv, "--accelerator-launch-cap-ms")? {
+    argv: &[String],
+    repository_root: &Path,
+) -> Result<(AcceleratorCostTable, Option<ArtifactIdentity>), CoordinatorError> {
+    let launch_cap = match optional_unique_option(argv, "--accelerator-launch-cap-ms")? {
         Some(value) => {
             let milliseconds = value.parse::<u64>().map_err(|_| {
                 CoordinatorError::Refused(
@@ -1495,16 +1612,67 @@ fn accelerator_costs_for_arm(
         }
         None => DEFAULT_ACCELERATOR_LAUNCH_CAP,
     };
-    match optional_unique_option(&arm.argv, "--accelerator-cost-table")? {
+    match optional_unique_option(argv, "--accelerator-cost-table")? {
         Some(path) => {
-            read_accelerator_cost_table(Path::new(&path), manifest, launch_cap).map_err(|error| {
+            let resolved = resolve_accelerator_cost_table(
+                repository_root,
+                Path::new(&path),
+                manifest,
+                launch_cap,
+            )
+            .map_err(|error| {
                 CoordinatorError::Refused(format!(
                     "persisted accelerator cost table {path} is invalid: {error}"
                 ))
-            })
+            })?;
+            Ok((resolved.table, Some(resolved.identity)))
         }
-        None => Ok(AcceleratorCostTable::default()),
+        None => Ok((AcceleratorCostTable::default(), None)),
     }
+}
+
+fn validate_accelerator_cost_identity(
+    campaign_root: &Path,
+    manifest: &CampaignManifest,
+    arm: &ArmInvocation,
+) -> Result<(), CoordinatorError> {
+    if optional_unique_option(&arm.argv, "--accelerator-cost-table")?.is_none()
+        && arm.accelerator_cost_table.is_none()
+    {
+        return Ok(());
+    }
+    let repository_root = repository_root_for_campaign(campaign_root)?;
+    let (_, observed) = accelerator_costs_for_argv(manifest, &arm.argv, &repository_root)?;
+    if observed != arm.accelerator_cost_table {
+        return refused("accelerator cost table identity differs from persisted arm evidence");
+    }
+    Ok(())
+}
+
+fn repository_root_for_campaign(campaign_root: &Path) -> Result<PathBuf, CoordinatorError> {
+    let campaign = fs::canonicalize(campaign_root).map_err(|source| CoordinatorError::Io {
+        path: campaign_root.to_owned(),
+        source,
+    })?;
+    let mut repository = campaign.as_path();
+    for _ in 0..=Path::new(DATASET_HOME).components().count() {
+        repository = repository.parent().ok_or_else(|| {
+            CoordinatorError::Refused(
+                "campaign path cannot resolve a canonical repository root".to_owned(),
+            )
+        })?;
+    }
+    let repository = repository.to_owned();
+    if repository
+        .join(DATASET_HOME)
+        .join(campaign.file_name().ok_or_else(|| {
+            CoordinatorError::Refused("campaign path has no directory name".to_owned())
+        })?)
+        != campaign
+    {
+        return refused("campaign path is not at the canonical dataset location");
+    }
+    Ok(repository)
 }
 
 fn evaluate_authorized_attempt<E>(
@@ -1573,10 +1741,7 @@ fn exact_execution(
         .filter(|item| accepted_attempt(&coordinator.receipt, item).is_some())
         .map(|item| {
             let path = campaign_root.join(shard_record_file(item.q, item.n, item.shard_id));
-            let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
-                path: path.clone(),
-                source,
-            })?;
+            let bytes = read_regular_file_nofollow(&path)?;
             serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -1827,6 +1992,9 @@ fn validate_campaign_files(
         || identity_for_protocol(campaign_root)? != receipt.protocol_identity
     {
         return refused("on-disk frozen manifest or protocol identity differs from the receipt");
+    }
+    for arm in &receipt.arms {
+        validate_accelerator_cost_identity(campaign_root, manifest, arm)?;
     }
     validate_on_disk_attempts(campaign_root, manifest, receipt)
 }
@@ -2439,10 +2607,7 @@ fn validate_on_disk_attempts(
                 CoordinatorError::Refused("attempt shard is not manifested".to_owned())
             })?;
         let path = campaign_root.join(shard_record_file(q, n, attempt.shard_id));
-        let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
-            path: path.clone(),
-            source,
-        })?;
+        let bytes = read_regular_file_nofollow(&path)?;
         if digest(&bytes) != record.sha256 {
             return refused("accepted attempt digest differs from raw shard bytes");
         }
@@ -2676,6 +2841,35 @@ fn digest(bytes: &[u8]) -> Sha256Digest {
     let text = format!("{:x}", Sha256::digest(bytes));
     text.parse()
         .expect("SHA-256 formatting produces a canonical lowercase digest")
+}
+
+fn read_regular_file_nofollow(path: &Path) -> Result<Vec<u8>, CoordinatorError> {
+    use rustix::fs::{open, Mode, OFlags};
+
+    let descriptor = open(
+        path,
+        OFlags::RDONLY | OFlags::CLOEXEC | OFlags::NOFOLLOW,
+        Mode::empty(),
+    )
+    .map_err(|source| CoordinatorError::Io {
+        path: path.to_owned(),
+        source: std::io::Error::from_raw_os_error(source.raw_os_error()),
+    })?;
+    let mut file = fs::File::from(descriptor);
+    let metadata = file.metadata().map_err(|source| CoordinatorError::Io {
+        path: path.to_owned(),
+        source,
+    })?;
+    if !metadata.file_type().is_file() {
+        return refused("canonical raw shard evidence must be a regular file");
+    }
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)
+        .map_err(|source| CoordinatorError::Io {
+            path: path.to_owned(),
+            source,
+        })?;
+    Ok(bytes)
 }
 
 fn atomic_json(path: &Path, value: &impl Serialize) -> Result<(), CoordinatorError> {

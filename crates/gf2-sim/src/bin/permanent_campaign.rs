@@ -3,11 +3,10 @@
 //! The manifest is read from `--manifest`; `--output` names the campaign
 //! directory, `--q FIELD --n ORDER` selects exactly one manifest cell, and
 //! `--workers N` selects the configured worker count (default: 1 when omitted).
-//! The binary persists coordinator admission before executing manifested shard
-//! attempts, then writes the selected cell's raw records through that receipt
-//! state machine. Before execution, it passes the output directory through
-//! `approve_emission`; the guard contract binds this writer to the frozen
-//! emitter identity.
+//! This thin CLI passes the parsed exact scope to the reusable `gf2-sim`
+//! campaign transaction. That library operation holds the execution lock while
+//! it verifies the live executable and committed manifest, persists admission,
+//! evaluates manifested attempts, and records terminal receipt evidence.
 //!
 //! ```console
 //! $ permanent_campaign --print-provenance --manifest <campaign-directory>
@@ -16,8 +15,8 @@
 //! `--print-provenance` observes and prints the provenance for this emitting
 //! executable without running a campaign or writing a dataset file.
 //!
-//! Exact execution does not write a field summary. The outside campaign
-//! coordinator assembles that summary only after every cell in the field is
+//! Exact execution does not write a field summary. The coordinator assembles
+//! that summary only after every cell in the field is
 //! terminal. `--dry-run-schedule` resolves the same selector and validates the
 //! complete manifest accelerator-cost input without opening the output
 //! directory, coordinator receipt, execution lock, or sampler.
@@ -27,13 +26,11 @@ use std::process::ExitCode;
 use std::time::Duration;
 
 use gf2_sim::permanent_campaign::coordinator::{
-    coordinator_receipt_path, execute_scheduled_cell, ArmInvocation, CampaignCoordinator,
-    CellExecutionState, ExactCellScope, ShardAttemptState,
+    execute_campaign_cell, CampaignCoordinator, CellExecutionState, ExactCellScope,
+    ShardAttemptState,
 };
-use gf2_sim::permanent_campaign::launch_cost::read_accelerator_cost_table;
-use gf2_sim::permanent_campaign::provenance::{
-    approve_emission, observe_provenance, repository_top_level,
-};
+use gf2_sim::permanent_campaign::launch_cost::resolve_accelerator_cost_table;
+use gf2_sim::permanent_campaign::provenance::{observe_provenance, repository_top_level};
 use gf2_sim::permanent_campaign::schedule::{
     enumerate_cell_work_items, AcceleratorCostTable, DEFAULT_ACCELERATOR_LAUNCH_CAP,
 };
@@ -54,8 +51,7 @@ Accelerator options:
 ";
 
 fn main() -> ExitCode {
-    let effective_argv: Vec<String> = std::env::args().collect();
-    let arguments = effective_argv[1..].to_vec();
+    let arguments: Vec<String> = std::env::args().skip(1).collect();
     let mut manifest_path = None;
     let mut output = None;
     let mut field = None;
@@ -183,8 +179,17 @@ fn main() -> ExitCode {
         }
         let accelerator = match accelerator_cost_table {
             Some(path) => {
-                match read_accelerator_cost_table(&path, &manifest, accelerator_launch_cap) {
-                    Ok(table) => table,
+                let repository = match repository_top_level(&manifest_path) {
+                    Ok(repository) => repository,
+                    Err(error) => return failure(error),
+                };
+                match resolve_accelerator_cost_table(
+                    &repository,
+                    &path,
+                    &manifest,
+                    accelerator_launch_cap,
+                ) {
+                    Ok(resolved) => resolved.table,
                     Err(error) => {
                         eprintln!("accelerator cost table {}: {error}", path.display());
                         return ExitCode::FAILURE;
@@ -199,42 +204,7 @@ fn main() -> ExitCode {
         println!("schedule q={field} n={order} shards={}", items.len());
         return ExitCode::SUCCESS;
     }
-    if let Err(refusal) = approve_emission(&output) {
-        eprintln!("emission refused: {refusal}");
-        return ExitCode::FAILURE;
-    }
-    let output_manifest = match read_manifest(&output) {
-        Ok(output_manifest) if output_manifest == manifest => output_manifest,
-        Ok(_) => return failure("output manifest differs from --manifest"),
-        Err(error) => return failure(error),
-    };
-    let receipt_path = coordinator_receipt_path(&output, &output_manifest.campaign_id);
-    let mut coordinator = if receipt_path.exists() {
-        match CampaignCoordinator::read(&output) {
-            Ok(coordinator) => coordinator,
-            Err(error) => return failure(error),
-        }
-    } else {
-        match CampaignCoordinator::new(&output) {
-            Ok(coordinator) => coordinator,
-            Err(error) => return failure(error),
-        }
-    };
-    let Some(executable_sha256) = output_manifest.provenance.binary_sha256.clone() else {
-        return failure("frozen manifest has no emitter executable digest");
-    };
-    if let Err(error) = coordinator.authorize_or_resume_arm(ArmInvocation {
-        scope,
-        argv: effective_argv,
-        worker_count: workers,
-        executable_sha256,
-    }) {
-        return failure(error);
-    }
-    if let Err(error) = coordinator.persist(&output) {
-        return failure(error);
-    }
-    let execution = match execute_scheduled_cell(&output, scope, workers) {
+    let execution = match execute_campaign_cell(&output, scope, workers) {
         Ok(execution) => execution,
         Err(error) => return failure(error),
     };
