@@ -1149,5 +1149,14 @@
   "state": "No active claims or campaign/toolchain processes. No campaign artifact beyond manifest.json, checksums.sha256, and freeze.md. Wave 10 remains the resumable frontier and no new work was dispatched.",
   "open_escalation": "6639435f still awaits owner authorization for one bounded high-tier repair cycle covering all four final audit findings.",
   "handoff": "handoff-24.md"
+ },
+ "session_29_state": {
+  "recorded_at": "2026-08-30T15:25:00+03:00",
+  "reason": "Owner-directed handoff during q=7 admission reconciliation; no campaign dispatch or draw began.",
+  "emitter_reconstruction": "The shared target emitter had digest 0b345f0c and was inadmissible. Rebuilding detached source revision 785e3146 with Rust 1.95, release, HIP, and the two recorded bins reproduced frozen emitter digest c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d exactly.",
+  "preserved_emitter": "/home/vkaskivuo/.local/state/gf2-frozen/permanent_campaign-c9b2307a; copied to target/release/permanent_campaign, but every later Cargo build requires hash revalidation/restoration.",
+  "admission": "Read-only supplied-emitter inspection passed and exact dry scheduling reported q=7 n=20 shards=3. The campaign directory remains manifest/checksum/freeze only.",
+  "frontier": "ed494117 remains ready and unclaimed; claim and execute exact q=7 n=20 first when resumed. 6639435f remains at its pending owner escalation.",
+  "handoff": "handoff-25.md"
  }
 }
