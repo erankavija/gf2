@@ -18,15 +18,14 @@
 //! `--print-provenance` observes and prints the provenance for this emitting
 //! executable without running a campaign or writing a dataset file.
 
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::Duration;
 
 use gf2_sim::permanent_campaign::driver::{
     field_checkpoint_path, run_field_checkpointed_with_accelerator_config,
 };
+use gf2_sim::permanent_campaign::launch_cost::read_accelerator_cost_table;
 use gf2_sim::permanent_campaign::provenance::{
     approve_emission, observe_provenance, repository_top_level,
 };
@@ -44,62 +43,6 @@ Accelerator options:
                                      q,n,per_matrix_us, one row per accelerator cell,
                                      each value taken from that cell's committed receipt
 ";
-
-/// Reads measured per-matrix accelerator costs from a CSV.
-///
-/// The file carries the header `q,n,per_matrix_us` and one row per accelerator
-/// cell. Each value is that cell's own measured cost, so a launch at one size
-/// is never sized by a number measured at another. A malformed or duplicated
-/// row is refused rather than skipped: a silently dropped row would leave its
-/// cell to fail later as a missing entry, naming the wrong cause.
-fn read_accelerator_cost_table(
-    path: &Path,
-    launch_cap: Duration,
-) -> Result<AcceleratorCostTable, String> {
-    let text = fs::read_to_string(path).map_err(|error| error.to_string())?;
-    let mut lines = text.lines().enumerate();
-    let (_, header) = lines.next().ok_or_else(|| "file is empty".to_owned())?;
-    if header.trim() != "q,n,per_matrix_us" {
-        return Err(format!(
-            "header is {:?}, expected \"q,n,per_matrix_us\"",
-            header.trim()
-        ));
-    }
-    let mut costs = BTreeMap::new();
-    for (index, line) in lines {
-        let row = line.trim();
-        if row.is_empty() {
-            continue;
-        }
-        let number = index + 1;
-        let fields: Vec<&str> = row.split(',').map(str::trim).collect();
-        let [q, n, per_matrix_us] = fields.as_slice() else {
-            return Err(format!(
-                "line {number}: expected 3 fields, found {}",
-                fields.len()
-            ));
-        };
-        let q: u8 = q
-            .parse()
-            .map_err(|_| format!("line {number}: q {q:?} is not an integer"))?;
-        let n: u16 = n
-            .parse()
-            .map_err(|_| format!("line {number}: n {n:?} is not an integer"))?;
-        let microseconds: u64 = per_matrix_us.parse().map_err(|_| {
-            format!("line {number}: per_matrix_us {per_matrix_us:?} is not an integer")
-        })?;
-        if microseconds == 0 {
-            return Err(format!("line {number}: per_matrix_us must be positive"));
-        }
-        if costs
-            .insert((q, n), Duration::from_micros(microseconds))
-            .is_some()
-        {
-            return Err(format!("line {number}: duplicate entry for q={q} n={n}"));
-        }
-    }
-    Ok(AcceleratorCostTable::new(costs, launch_cap))
-}
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -201,13 +144,8 @@ fn main() -> ExitCode {
             "--accelerator-cost-table is required for accelerator cells; supply each cell's measured per-matrix cost from its committed measurement receipt",
         );
     }
-    if let Err(refusal) = approve_emission(&output) {
-        eprintln!("emission refused: {refusal}");
-        return ExitCode::FAILURE;
-    }
-    let checkpoint = field_checkpoint_path(&output, field);
     let accelerator = match accelerator_cost_table {
-        Some(path) => match read_accelerator_cost_table(&path, accelerator_launch_cap) {
+        Some(path) => match read_accelerator_cost_table(&path, &manifest, accelerator_launch_cap) {
             Ok(table) => table,
             Err(error) => {
                 eprintln!("accelerator cost table {}: {error}", path.display());
@@ -216,6 +154,11 @@ fn main() -> ExitCode {
         },
         None => AcceleratorCostTable::default(),
     };
+    if let Err(refusal) = approve_emission(&output) {
+        eprintln!("emission refused: {refusal}");
+        return ExitCode::FAILURE;
+    }
+    let checkpoint = field_checkpoint_path(&output, field);
     let run = match run_field_checkpointed_with_accelerator_config(
         &output,
         &manifest,
