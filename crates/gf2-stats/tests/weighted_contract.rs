@@ -10,8 +10,20 @@ fn exact_exponent_histograms_drive_weighted_run_statistics() {
 
     let summary = WeightedRuns::from_histograms(vec![first, second]).unwrap();
     assert_eq!(summary.sample_count(), 8);
-    assert!(summary.weight_sum() > &ExactRatio::zero());
-    assert!(summary.final_weight_ess() <= ExactRatio::from_integer(8_u64));
+    assert_eq!(
+        summary.weight_sum().decimal_pair(),
+        ("118".into(), "243".into())
+    );
+    assert_eq!(
+        summary.squared_weight_sum().decimal_pair(),
+        ("2512".into(), "59049".into())
+    );
+    assert_eq!(summary.mean().decimal_pair(), ("59".into(), "972".into()));
+    assert_eq!(
+        summary.final_weight_ess().decimal_pair(),
+        ("3481".into(), "628".into())
+    );
+    assert!(*summary.final_weight_ess() <= ExactRatio::from_integer(8_u64));
     assert_eq!(summary.run_count(), 2);
 }
 
@@ -24,7 +36,9 @@ fn scaled_student_interval_contains_without_absolute_float_conversion() {
         runs.push(histogram);
     }
     let summary = WeightedRuns::from_histograms(runs).unwrap();
-    let interval = summary.student_interval(ExactRatio::new(1_019_756_723_u64, 500_000_000_u64).unwrap()).unwrap();
+    let interval = summary
+        .student_interval(ExactRatio::new(1_019_756_723_u64, 500_000_000_u64).unwrap())
+        .unwrap();
 
     assert!(interval.contains_exact(summary.mean()));
     assert!(interval.render_outward(18).unwrap().lower.contains('e'));
