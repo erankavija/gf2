@@ -247,6 +247,15 @@ fn accept_cell(
         .unwrap();
 }
 
+fn write_receipt(
+    campaign_root: &Path,
+    campaign_id: &gf2_sim::permanent_campaign::schema::CampaignId,
+    receipt: &gf2_sim::permanent_campaign::coordinator::CampaignCoordinatorReceipt,
+) {
+    let path = coordinator_receipt_path(campaign_root, campaign_id);
+    fs::write(path, serde_json::to_vec_pretty(receipt).unwrap()).unwrap();
+}
+
 #[test]
 fn acceptance_uses_one_budget_exact_log_tails_and_finite_n_determinants() {
     let campaign = manifest();
@@ -573,5 +582,61 @@ fn receipt_summary_and_sidecars_are_terminal_monotonic_and_closed() {
     )
     .is_err());
     assert_eq!(fs::read(&checksums).unwrap(), b"raw-checksum-fixture\n");
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn receipt_reload_and_persist_refuse_forged_evidence_and_lifecycle_rewrites() {
+    let (root, campaign, mut coordinator) = fixture();
+    let campaign_root = root.join(campaign.campaign_id.to_string());
+    accept_cell(&mut coordinator, &campaign_root, &campaign, 7, 20, 14, None);
+    coordinator.persist(&campaign_root).unwrap();
+    let canonical = coordinator.receipt().clone();
+
+    let mut forged_counts = canonical.clone();
+    let cell = campaign
+        .cells
+        .iter()
+        .find(|cell| (cell.q, cell.n) == (7, 20))
+        .unwrap();
+    let forged_assessment = assess_completed_cell(
+        coordinator.acceptance_plan(),
+        cell,
+        100,
+        15,
+        DeterminantCount::NotEvaluated,
+    )
+    .unwrap();
+    let completed = forged_counts
+        .cells
+        .iter_mut()
+        .find(|entry| (entry.q, entry.n) == (7, 20))
+        .unwrap();
+    completed.execution = CellExecutionState::Completed {
+        assessment: forged_assessment,
+        source_records: vec![artifact("forged/shard.json", '9')],
+    };
+    write_receipt(&campaign_root, &campaign.campaign_id, &forged_counts);
+    assert!(CampaignCoordinator::read(&campaign_root).is_err());
+
+    let mut forged_lifecycle = canonical.clone();
+    forged_lifecycle.cells[1].execution = CellExecutionState::Scheduled { arm_index: 99 };
+    write_receipt(&campaign_root, &campaign.campaign_id, &forged_lifecycle);
+    assert!(CampaignCoordinator::read(&campaign_root).is_err());
+    assert!(coordinator.persist(&campaign_root).is_err());
+
+    write_receipt(&campaign_root, &campaign.campaign_id, &canonical);
+    let manifest_path = campaign_root.join("manifest.json");
+    let manifest_bytes = fs::read(&manifest_path).unwrap();
+    let mut same_json_different_bytes = manifest_bytes.clone();
+    same_json_different_bytes.push(b'\n');
+    fs::write(&manifest_path, &same_json_different_bytes).unwrap();
+    assert!(coordinator.persist(&campaign_root).is_err());
+    fs::write(&manifest_path, manifest_bytes).unwrap();
+
+    let mut unbound_arm = canonical;
+    unbound_arm.arms.push(arm(3, 4));
+    write_receipt(&campaign_root, &campaign.campaign_id, &unbound_arm);
+    assert!(CampaignCoordinator::read(&campaign_root).is_err());
     fs::remove_dir_all(root).unwrap();
 }
