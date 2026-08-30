@@ -232,7 +232,7 @@
      "short_id": "6639435f",
      "title": "Independent importance-sampling cross-check",
      "classification": "implementation",
-     "status": "ready: exact propagation dependency 8ec10dde is done; held while the earlier campaign-coordinator scope escalation awaits owner direction."
+     "status": "in progress: exact propagation dependency 8ec10dde is done; claimed for a high-tier isolated worker because the stochastic cross-check is independent of the blocked campaign coordinator. No target or coverage estimating run is authorized during implementation."
     },
     {
      "id": "f27150a5-8713-4bce-b404-9e477937d498",
