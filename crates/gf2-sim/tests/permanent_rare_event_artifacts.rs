@@ -2439,10 +2439,15 @@ fn rare_event_publication_refuses_concurrent_symlink_swap() {
                     let _ = fs::remove_file(&ordinal);
                     let _ = fs::rename(&parked, &ordinal);
                 }
+                // Leave the publisher a core; a spinning swapper starves it.
+                std::thread::yield_now();
             }
         })
     };
-    for _ in 0..300 {
+    // Each publication synchronizes two files, its staging directory, and the
+    // parent, so the iteration count is what keeps this inside the fast tier.
+    // The swap runs continuously, so every iteration is a fresh interleaving.
+    for _ in 0..48 {
         let _ = publish_artifact(&dataset, &start);
     }
     stop.store(true, std::sync::atomic::Ordering::Relaxed);
