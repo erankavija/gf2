@@ -5,10 +5,11 @@
 //! `permanent_bipedal{3,5,7}` fast paths, and the rectangular
 //! [`permanental_rank_status`] predicate that decides permanental rank
 //! deficiency by conjunction over row submatrices, and the exact
-//! [`compressed_rank`] recurrence for the three-column case. See the epic design at
-//! `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §6 / §7.3 / §9 for the algorithm
-//! family, and `dev/plans/9fe275d3/d1b_packed_field_api.md` for the trait surface
-//! frozen at W6.
+//! [`compressed_rank`] recurrence for the three-column case. See the epic
+//! design at `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md`
+//! §6 / §7.3 / §9 for the algorithm family, and
+//! `dev/plans/9fe275d3/d1b_packed_field_api.md` for the trait surface frozen at
+//! W6.
 //!
 //! # Status
 //!
