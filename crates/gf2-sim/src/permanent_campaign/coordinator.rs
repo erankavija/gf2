@@ -27,10 +27,11 @@ use super::schedule::{
     EvaluatedShard, ScheduleError, WorkItem, DEFAULT_ACCELERATOR_LAUNCH_CAP,
 };
 use super::schema::{
-    shard_record_file, AcceptanceVerdict, ArtifactIdentity, Backend, CampaignId, CampaignManifest,
-    CellSpec, CellTerminalState, DeterminantCount, DeterminantPlan, FieldSummary, HaltReason,
-    QuarantinedShard, RngAlgorithm, Sha256Digest, ShardRecord, StreamAddress, SummaryRow,
-    DATASET_HOME, MANIFEST_FILE, SCHEMA_VERSION,
+    field_summary_file, shard_record_file, AcceptanceVerdict, ArtifactIdentity, ArtifactPath,
+    Backend, CampaignId, CampaignManifest, CellSpec, CellTerminalState, DeterminantCount,
+    DeterminantPlan, FieldSummary, HaltReason, Interval, QuarantinedShard, RngAlgorithm,
+    Sha256Digest, ShardRecord, StreamAddress, SummaryRow, DATASET_HOME, MANIFEST_FILE,
+    SCHEMA_VERSION,
 };
 
 const COORDINATOR_SCHEMA_VERSION: u32 = 1;
@@ -38,10 +39,59 @@ const FIRST_FIELD: u8 = 7;
 const FIRST_ORDER: u16 = 20;
 const COORDINATOR_DIRECTORY: &str = "campaign-coordinator";
 const COORDINATOR_RECEIPT_FILE: &str = "coordinator-receipt.json";
-const PROTOCOL_PATH: &str = "dev/simulation_results/permanent-zero-fraction/protocol.md";
-const Q3_TARGET_PATH: &str =
-    "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv";
-const SEARCH_RECEIPT_PATH: &str = "dev/studies/b488f02c/literature-search-2026-08-08.md";
+const Q3_TARGET_SCHEMA: &str = "scheinerman2024-q3-reproduction-targets-v1";
+const PROTOCOL_Z_95: f64 = 1.959_963_984_540_054;
+const Q3_TARGET_COMMENTS: [&str; 9] = [
+    "schema",
+    "source",
+    "transcription_cross_check",
+    "scope",
+    "p_hat_from_source_counts",
+    "reference_precision",
+    "reference_interval",
+    "interval_attribution",
+    "limitations",
+];
+const Q3_TARGET_FIELDS: [&str; 15] = [
+    "q",
+    "n",
+    "source_table",
+    "source_evidence",
+    "source_zero_count",
+    "source_n",
+    "source_reported_p_hat",
+    "p_hat_from_source_counts",
+    "source_reported_precision",
+    "reference_precision_kind",
+    "reference_precision_value",
+    "reference_interval_kind",
+    "reference_interval_level",
+    "reference_interval_lower",
+    "reference_interval_upper",
+];
+
+/// Normalized repository-relative paths to the two field-interpretation sources.
+///
+/// The campaign binary selects repository policy. The reusable coordinator
+/// validates and hashes the named bytes before it admits a sampler.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CoordinatorEvidenceSourcePaths {
+    /// Versioned exact q=3 target table.
+    pub q3_targets: ArtifactPath,
+    /// Recorded bounded q=5/q=7 literature search.
+    pub q5_q7_literature_search: ArtifactPath,
+}
+
+/// Content-bound identities of the validated interpretation sources.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CoordinatorEvidenceSources {
+    /// Versioned exact q=3 target table identity.
+    pub q3_targets: ArtifactIdentity,
+    /// Recorded bounded q=5/q=7 literature-search identity.
+    pub q5_q7_literature_search: ArtifactIdentity,
+}
 
 /// Exact effective invocation of one subordinate emitter arm.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -241,6 +291,8 @@ pub struct CampaignCoordinatorReceipt {
     pub manifest_identity: ArtifactIdentity,
     /// Exact frozen-protocol content identity.
     pub protocol_identity: ArtifactIdentity,
+    /// Validated field-interpretation sources bound before sampling.
+    pub evidence_sources: CoordinatorEvidenceSources,
     /// Shared pre-draw acceptance allocation.
     pub acceptance_plan: AcceptancePlan,
     /// Predeclared same-address retry rule.
@@ -363,7 +415,10 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C log C)` time and `O(C)` space for `C` manifest cells.
-    fn new_inner(campaign_root: &CampaignRoot) -> Result<Self, CoordinatorError> {
+    fn new_inner(
+        campaign_root: &CampaignRoot,
+        evidence_sources: CoordinatorEvidenceSources,
+    ) -> Result<Self, CoordinatorError> {
         let manifest = read_manifest_anchored(campaign_root)?;
         validate_campaign_directory(campaign_root.path(), &manifest.campaign_id)?;
         let manifest_identity =
@@ -386,6 +441,7 @@ impl CampaignCoordinator {
             campaign_id: manifest.campaign_id.clone(),
             manifest_identity,
             protocol_identity,
+            evidence_sources,
             acceptance_plan,
             retry_rule: RetryRule::OneSameAddressRecoveryNoAdditionalAlpha,
             arms: Vec::new(),
@@ -413,9 +469,13 @@ impl CampaignCoordinator {
 
     /// Constructs an empty coordinator for receipt-state integration tests.
     #[cfg(test)]
-    fn new(campaign_root: &Path) -> Result<Self, CoordinatorError> {
+    fn new(
+        campaign_root: &Path,
+        evidence_source_paths: &CoordinatorEvidenceSourcePaths,
+    ) -> Result<Self, CoordinatorError> {
         let root = open_campaign_root(campaign_root)?;
-        Self::new_inner(&root)
+        let evidence_sources = resolve_evidence_sources(&root, evidence_source_paths)?;
+        Self::new_inner(&root, evidence_sources)
     }
 
     /// Returns the fixed shared acceptance plan.
@@ -521,7 +581,11 @@ impl CampaignCoordinator {
                 }
             }
             Some(CellExecutionState::Completed { .. } | CellExecutionState::Halted { .. }) => {
-                refused("terminal cell cannot be executed again")
+                if self.receipt.arms.iter().find(|prior| prior.scope == scope) == Some(&arm) {
+                    Ok(())
+                } else {
+                    refused("terminal projection retry differs from its persisted exact arm")
+                }
             }
             None => refused("arm scope does not name a manifest cell"),
         }
@@ -940,7 +1004,7 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C + T)` for receipt cells and attempts.
-    pub fn assemble_field_summary(&self, q: u8) -> Result<FieldSummary, CoordinatorError> {
+    fn assemble_field_summary(&self, q: u8) -> Result<FieldSummary, CoordinatorError> {
         let mut rows = Vec::new();
         for cell in self.receipt.cells.iter().filter(|cell| cell.q == q) {
             let row = match &cell.execution {
@@ -1233,6 +1297,7 @@ pub fn execute_campaign_cell(
     campaign_root: &Path,
     scope: ExactCellScope,
     worker_count: usize,
+    evidence_source_paths: &CoordinatorEvidenceSourcePaths,
 ) -> Result<ExactCellExecution, CoordinatorError> {
     let approval = approve_emission(campaign_root)
         .map_err(|error| CoordinatorError::Refused(format!("emission refused: {error}")))?;
@@ -1251,11 +1316,14 @@ pub fn execute_campaign_cell(
     let _lock = acquire_execution_lock(&root, &manifest.campaign_id)?;
     let effective_argv = std::env::args().collect();
     execute_campaign_cell_locked(
-        &root,
-        scope,
-        worker_count,
-        effective_argv,
-        approval,
+        LockedCellRequest {
+            campaign_root: &root,
+            scope,
+            worker_count,
+            effective_argv,
+            approval,
+            evidence_source_paths,
+        },
         evaluate_work_item_with_worker_count_and_accelerator,
         |_| {},
     )
@@ -1287,6 +1355,7 @@ pub fn execute_campaign_cell_with_evaluator<E, H>(
     worker_count: usize,
     effective_argv: Vec<String>,
     approval: EmissionApproval,
+    evidence_source_paths: &CoordinatorEvidenceSourcePaths,
     evaluator: E,
     on_raw_durable: H,
 ) -> Result<ExactCellExecution, CoordinatorError>
@@ -1313,22 +1382,30 @@ where
     let manifest = read_manifest_anchored(&root)?;
     let _lock = acquire_execution_lock(&root, &manifest.campaign_id)?;
     execute_campaign_cell_locked(
-        &root,
-        scope,
-        worker_count,
-        effective_argv,
-        approval,
+        LockedCellRequest {
+            campaign_root: &root,
+            scope,
+            worker_count,
+            effective_argv,
+            approval,
+            evidence_source_paths,
+        },
         evaluator,
         on_raw_durable,
     )
 }
 
-fn execute_campaign_cell_locked<E, H>(
-    campaign_root: &CampaignRoot,
+struct LockedCellRequest<'a> {
+    campaign_root: &'a CampaignRoot,
     scope: ExactCellScope,
     worker_count: usize,
     effective_argv: Vec<String>,
     approval: EmissionApproval,
+    evidence_source_paths: &'a CoordinatorEvidenceSourcePaths,
+}
+
+fn execute_campaign_cell_locked<E, H>(
+    request: LockedCellRequest<'_>,
     mut evaluator: E,
     mut on_raw_durable: H,
 ) -> Result<ExactCellExecution, CoordinatorError>
@@ -1341,10 +1418,21 @@ where
     ) -> Result<EvaluatedShard, ScheduleError>,
     H: FnMut(&Path),
 {
+    let LockedCellRequest {
+        campaign_root,
+        scope,
+        worker_count,
+        effective_argv,
+        approval,
+        evidence_source_paths,
+    } = request;
     let manifest_on_disk = read_manifest_anchored(campaign_root)?;
+    let observed_sources = resolve_evidence_sources(campaign_root, evidence_source_paths)?;
     let receipt_relative = coordinator_receipt_relative(&manifest_on_disk.campaign_id);
     let mut coordinator = match campaign_root_entry(campaign_root, &receipt_relative)? {
-        EntryKind::Missing => CampaignCoordinator::new_inner(campaign_root)?,
+        EntryKind::Missing => {
+            CampaignCoordinator::new_inner(campaign_root, observed_sources.clone())?
+        }
         EntryKind::RegularFile => CampaignCoordinator::read_anchored(campaign_root)?,
         EntryKind::Other => return refused("coordinator receipt path is not a regular file"),
     };
@@ -1352,16 +1440,28 @@ where
     if coordinator.receipt.manifest_identity.sha256 != *approval.manifest_sha256() {
         return refused("live emission approval names different committed manifest bytes");
     }
+    if coordinator.receipt.evidence_sources != observed_sources {
+        return refused("execution interpretation sources differ from the persisted receipt");
+    }
+    publish_terminal_fields_locked(campaign_root, &coordinator)?;
     let (accelerator_costs, accelerator_cost_table) =
         accelerator_costs_for_argv(&manifest, &effective_argv, approval.repository_root())?;
     accelerator_costs.validate_manifest(&manifest)?;
-    coordinator.authorize_or_resume_arm_inner(ArmInvocation {
+    let requested_arm = ArmInvocation {
         scope,
         argv: effective_argv,
         worker_count,
         executable_sha256: approval.binary_sha256().clone(),
         accelerator_cost_table,
-    })?;
+    };
+    coordinator.authorize_or_resume_arm_inner(requested_arm)?;
+    if coordinator
+        .cell_state(scope.q, scope.n)
+        .is_some_and(is_terminal)
+    {
+        let items = enumerate_cell_work_items(&manifest, scope.q, scope.n)?;
+        return exact_execution(campaign_root, &coordinator, scope, &items);
+    }
     coordinator.persist_locked(campaign_root)?;
     coordinator = CampaignCoordinator::read_anchored(campaign_root)?;
     let arm_authorization = coordinator.persisted_arm_authorization(scope)?;
@@ -1378,6 +1478,7 @@ where
                 coordinator.cell_state(scope.q, scope.n),
                 Some(CellExecutionState::Scheduled { .. })
             ) {
+                publish_terminal_fields_locked(campaign_root, &coordinator)?;
                 return exact_execution(campaign_root, &coordinator, scope, &items);
             }
 
@@ -1510,6 +1611,7 @@ where
     }
     coordinator.record_completed_from_attempts(scope.q, scope.n)?;
     coordinator.persist_locked(campaign_root)?;
+    publish_terminal_fields_locked(campaign_root, &coordinator)?;
     exact_execution(campaign_root, &coordinator, scope, &items)
 }
 
@@ -1723,123 +1825,703 @@ pub enum LiteratureSearchClaim {
     NoLocatedQ5Q7NumericsSubjectToRecordedLimits,
 }
 
-/// Field-qualified interpretation represented by one derived sidecar.
+/// Evidence class of one published q=3 source row.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Q3SourceEvidence {
+    /// Exhaustive source enumeration with no sampling uncertainty.
+    ExactEnumeration,
+    /// Published source Monte Carlo counts.
+    MonteCarlo,
+}
+
+/// Source table containing a q=3 target row.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Q3SourceTable {
+    /// Exact-enumeration table.
+    Table3,
+    /// Monte Carlo table.
+    Table4,
+}
+
+/// Source-reported point estimate state.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Q3ReportedProbability {
+    /// A rounded point estimate printed by the source.
+    Reported {
+        /// Rounded value printed by the source.
+        value: f64,
+    },
+    /// The source count is primary and no separate point was printed.
+    NotSeparatelyReported,
+}
+
+/// Source-reported precision state.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Q3ReportedPrecision {
+    /// Exact enumeration.
+    ExactEnumeration,
+    /// The source did not report a sampling precision.
+    NotReported,
+}
+
+/// Typed source precision used by the comparison.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Q3SourcePrecision {
+    /// Exact source row with zero sampling error.
+    ExactSamplingError {
+        /// Zero source sampling error.
+        standard_error: f64,
+    },
+    /// Repository-derived plug-in binomial standard error.
+    DerivedBinomialStandardError {
+        /// Count-derived source standard error.
+        standard_error: f64,
+    },
+}
+
+/// Typed source interval used by the comparison.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Q3SourceInterval {
+    /// Degenerate exact interval without a confidence level.
+    ExactNoSamplingUncertainty {
+        /// Degenerate lower bound.
+        lower: f64,
+        /// Degenerate upper bound.
+        upper: f64,
+    },
+    /// Repository-derived Wilson score interval.
+    DerivedWilsonScore {
+        /// Nominal interval level.
+        level: f64,
+        /// Wilson lower bound.
+        lower: f64,
+        /// Wilson upper bound.
+        upper: f64,
+    },
+}
+
+/// Strict typed target transcribed from one canonical q=3 CSV row.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
-pub enum FieldInterpretation {
-    /// `q=3` comparison to the versioned Scheinerman target table.
+#[serde(deny_unknown_fields)]
+pub struct Q3SourceTarget {
+    /// Matrix order.
+    pub n: u16,
+    /// Source table.
+    pub table: Q3SourceTable,
+    /// Exact or Monte Carlo source evidence.
+    pub evidence: Q3SourceEvidence,
+    /// Published zero count.
+    pub zero_count: u64,
+    /// Published sample size.
+    pub sample_count: u64,
+    /// Separately printed point, when present.
+    pub reported_probability: Q3ReportedProbability,
+    /// Point recomputed from the published counts.
+    pub count_derived_probability: f64,
+    /// Source-reported precision state.
+    pub reported_precision: Q3ReportedPrecision,
+    /// Typed comparison precision.
+    pub precision: Q3SourcePrecision,
+    /// Typed comparison interval.
+    pub interval: Q3SourceInterval,
+}
+
+/// Count-derived campaign measurement for a completed q=3 row.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Q3CampaignMeasurement {
+    /// Observed zero count.
+    pub zero_count: u64,
+    /// Fixed campaign sample count.
+    pub sample_count: u64,
+    /// Count-derived point estimate.
+    pub estimate: f64,
+    /// Campaign 95% Wilson interval.
+    pub wilson_interval: Interval,
+    /// Count-derived plug-in binomial standard error.
+    pub plugin_standard_error: f64,
+}
+
+/// Closed relation between the source and campaign intervals.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Q3IntervalRelation {
+    /// Closed intervals intersect.
+    Overlap,
+    /// Closed intervals do not intersect.
+    Disjoint,
+}
+
+/// Protocol precision classification for a q=3 comparison.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Q3PrecisionClassification {
+    /// Source evidence is exact enumeration.
+    PriorExact,
+    /// Campaign standard error is below 0.9 times the source error.
+    ExceedsPriorPrecision,
+    /// Campaign standard error is within inclusive [0.9, 1.1] source error.
+    MatchesPriorPrecision,
+    /// Campaign standard error is above 1.1 times the source error.
+    BelowPriorPrecision,
+}
+
+/// One typed q=3 completed or halted comparison row.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "state", rename_all = "snake_case", deny_unknown_fields)]
+pub enum CoordinatorQ3ComparisonRow {
+    /// A completed campaign measurement and source comparison.
+    Completed {
+        /// Matrix order.
+        n: u16,
+        /// Typed source target.
+        source_target: Q3SourceTarget,
+        /// Count-derived campaign measurement.
+        campaign_measurement: Q3CampaignMeasurement,
+        /// Closed interval relation.
+        interval_relation: Q3IntervalRelation,
+        /// Whether the campaign interval excludes the source point.
+        interval_excludes_published: bool,
+        /// Protocol precision classification.
+        precision_classification: Q3PrecisionClassification,
+    },
+    /// Raw-only halted evidence; no estimate or comparison is constructed.
+    Halted {
+        /// Matrix order.
+        n: u16,
+        /// Raw matrices completed before the halt.
+        matrix_count: u64,
+        /// Raw zero permanents completed before the halt.
+        permanent_zero_count: u64,
+        /// Raw determinant companion counts.
+        determinant: DeterminantCount,
+        /// Closed mechanical halt reason.
+        reason: HaltReason,
+    },
+}
+
+/// Field-qualified interpretation represented by a coordinator projection.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum CoordinatorFieldInterpretation {
+    /// `q=3` comparison to the validated versioned target table.
     PublishedTargetComparison {
-        /// Versioned target-table content identity.
+        /// Validated target-table identity.
         target_table: ArtifactIdentity,
+        /// One typed row per terminal q=3 cell.
+        rows: Vec<CoordinatorQ3ComparisonRow>,
     },
     /// Conditional `q=5` or `q=7` literature-search basis.
-    LiteratureSearchBasis {
-        /// Recorded bounded search and limitations identity.
+    ConditionalLiteratureSearch {
+        /// Validated bounded-search identity.
         search_receipt: ArtifactIdentity,
-        /// Closed claim projected from the recorded search.
+        /// Closed claim licensed by that search.
         claim: LiteratureSearchClaim,
     },
 }
 
-/// Terminal availability state of one field-derived sidecar.
+/// Terminal availability state of one field projection.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum FieldSidecarStatus {
+pub enum CoordinatorFieldSidecarStatus {
     /// Every field cell completed.
     Completed,
     /// Every field cell is terminal and at least one halted.
     Halted,
 }
 
-#[derive(Serialize)]
+/// Canonical versioned field projection published by the coordinator.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct FieldSidecar<'a> {
-    schema_version: u32,
-    campaign_id: &'a CampaignId,
-    manifest_identity: &'a ArtifactIdentity,
-    q: u8,
-    source_records: Vec<ArtifactIdentity>,
-    status: FieldSidecarStatus,
-    interpretation: FieldInterpretation,
+pub struct CoordinatorFieldSidecar {
+    /// Sidecar schema version.
+    pub schema_version: u32,
+    /// Frozen campaign id.
+    pub campaign_id: CampaignId,
+    /// Exact root-manifest identity.
+    pub manifest_identity: ArtifactIdentity,
+    /// Actual atomically published field-summary identity.
+    pub field_summary: ArtifactIdentity,
+    /// Prime field order.
+    pub q: u8,
+    /// Canonical accepted raw identities in manifest order; may be empty.
+    pub source_records: Vec<ArtifactIdentity>,
+    /// Completed or halted field state.
+    pub status: CoordinatorFieldSidecarStatus,
+    /// Coordinator-derived typed interpretation.
+    pub interpretation: CoordinatorFieldInterpretation,
 }
 
-/// Emits one coordinator-owned field sidecar at its exact derived path.
-///
-/// # Errors
-///
-/// Refuses nonterminal fields, empty evidence, a field/interpretation mismatch,
-/// a noncanonical source identity, or a conflicting existing sidecar. An
-/// identical existing sidecar is adopted. The function never opens raw shard,
-/// summary, or checksum paths.
-///
-/// # Panics
-///
-/// Does not panic.
-///
-/// # Complexity
-///
-/// `O(F + B)` for receipt fields and serialized bytes.
-pub fn emit_field_sidecar(
+/// Returns the canonical read-only path of a coordinator field sidecar.
+#[must_use]
+pub fn coordinator_field_sidecar_path(
     campaign_root: &Path,
-    receipt: &CampaignCoordinatorReceipt,
+    campaign_id: &CampaignId,
     q: u8,
-    source_records: Vec<ArtifactIdentity>,
-    interpretation: FieldInterpretation,
-) -> Result<PathBuf, CoordinatorError> {
-    let root = open_campaign_root(campaign_root)?;
-    validate_campaign_directory(root.path(), &receipt.campaign_id)?;
-    validate_interpretation(q, &interpretation)?;
-    let field = receipt
-        .fields
-        .iter()
-        .find(|field| field.q == q)
-        .ok_or_else(|| CoordinatorError::Refused("sidecar field is not manifested".to_owned()))?;
-    let status = match field.execution {
-        FieldExecutionState::Completed => FieldSidecarStatus::Completed,
-        FieldExecutionState::Halted => FieldSidecarStatus::Halted,
-        FieldExecutionState::InProgress => {
-            return refused("sidecar requires a completed-or-halted field")
-        }
-    };
-    if source_records.is_empty() {
-        return refused("sidecar requires source-record identities");
-    }
-    let relative = PathBuf::from("derived")
-        .join(receipt.campaign_id.to_string())
+) -> PathBuf {
+    campaign_root.join(coordinator_field_sidecar_relative(campaign_id, q))
+}
+
+fn coordinator_field_sidecar_relative(campaign_id: &CampaignId, q: u8) -> PathBuf {
+    PathBuf::from("derived")
+        .join(campaign_id.to_string())
         .join(COORDINATOR_DIRECTORY)
         .join("field-sidecars")
-        .join(format!("q{q}.json"));
-    let sidecar = FieldSidecar {
-        schema_version: COORDINATOR_SCHEMA_VERSION,
-        campaign_id: &receipt.campaign_id,
-        manifest_identity: &receipt.manifest_identity,
-        q,
-        source_records,
-        status,
-        interpretation,
-    };
-    write_new_json(&root, &relative, &sidecar)?;
-    Ok(root.path().join(relative))
+        .join(format!("q{q}.json"))
 }
 
-fn validate_interpretation(
-    q: u8,
-    interpretation: &FieldInterpretation,
-) -> Result<(), CoordinatorError> {
-    match (q, interpretation) {
-        (3, FieldInterpretation::PublishedTargetComparison { target_table })
-            if target_table.path.as_str() == Q3_TARGET_PATH =>
-        {
-            Ok(())
+pub(crate) fn classify_q3_precision(
+    evidence: Q3SourceEvidence,
+    campaign_standard_error: f64,
+    source_standard_error: f64,
+) -> Q3PrecisionClassification {
+    if evidence == Q3SourceEvidence::ExactEnumeration {
+        Q3PrecisionClassification::PriorExact
+    } else if campaign_standard_error < 0.9 * source_standard_error {
+        Q3PrecisionClassification::ExceedsPriorPrecision
+    } else if campaign_standard_error <= 1.1 * source_standard_error {
+        Q3PrecisionClassification::MatchesPriorPrecision
+    } else {
+        Q3PrecisionClassification::BelowPriorPrecision
+    }
+}
+
+pub(crate) fn parse_q3_target_table(bytes: &[u8]) -> Result<Vec<Q3SourceTarget>, CoordinatorError> {
+    let text = std::str::from_utf8(bytes)
+        .map_err(|_| CoordinatorError::Refused("q=3 target table is not UTF-8".to_owned()))?;
+    let mut lines = text.lines();
+    for expected_key in Q3_TARGET_COMMENTS {
+        let line = lines.next().ok_or_else(|| {
+            CoordinatorError::Refused("q=3 target table preamble is incomplete".to_owned())
+        })?;
+        let (key, value) = line
+            .strip_prefix("# ")
+            .and_then(|comment| comment.split_once(": "))
+            .ok_or_else(|| {
+                CoordinatorError::Refused("q=3 target table comment is malformed".to_owned())
+            })?;
+        if key != expected_key || value.trim().is_empty() {
+            return refused("q=3 target table comment inventory is not canonical");
         }
-        (
-            5 | 7,
-            FieldInterpretation::LiteratureSearchBasis {
-                search_receipt,
-                claim: LiteratureSearchClaim::NoLocatedQ5Q7NumericsSubjectToRecordedLimits,
-            },
-        ) if search_receipt.path.as_str() == SEARCH_RECEIPT_PATH => Ok(()),
-        _ => refused("field interpretation does not bind its canonical source and semantics"),
+        if key == "schema" && value != Q3_TARGET_SCHEMA {
+            return refused("q=3 target table schema token is not supported");
+        }
+    }
+    let header = lines
+        .next()
+        .ok_or_else(|| CoordinatorError::Refused("q=3 target table has no header".to_owned()))?;
+    if header.split(',').collect::<Vec<_>>() != Q3_TARGET_FIELDS {
+        return refused("q=3 target table does not have the exact 15-column header");
+    }
+    let mut targets = Vec::new();
+    for (offset, line) in lines.enumerate() {
+        if line.is_empty() || line.starts_with('#') {
+            return refused("q=3 target table contains a non-row after its header");
+        }
+        let fields: Vec<_> = line.split(',').collect();
+        if fields.len() != Q3_TARGET_FIELDS.len() {
+            return refused("q=3 target table row does not have exactly 15 columns");
+        }
+        let expected_n = u16::try_from(offset)
+            .ok()
+            .and_then(|offset| 4_u16.checked_add(offset))
+            .ok_or_else(|| CoordinatorError::Refused("q=3 target order overflow".to_owned()))?;
+        targets.push(parse_q3_target_row(&fields, expected_n)?);
+    }
+    if targets.len() != 25 || targets.last().map(|target| target.n) != Some(28) {
+        return refused("q=3 target table must cover every order n=4..28 exactly once");
+    }
+    Ok(targets)
+}
+
+fn parse_q3_target_row(
+    fields: &[&str],
+    expected_n: u16,
+) -> Result<Q3SourceTarget, CoordinatorError> {
+    let q = parse_q3_integer::<u8>(fields[0], "q")?;
+    let n = parse_q3_integer::<u16>(fields[1], "n")?;
+    if q != 3 || n != expected_n {
+        return refused("q=3 target rows must be ordered exactly over n=4..28");
+    }
+    let table = match fields[2] {
+        "Table 3" => Q3SourceTable::Table3,
+        "Table 4" => Q3SourceTable::Table4,
+        _ => return refused("q=3 target source_table token is invalid"),
+    };
+    let evidence = match fields[3] {
+        "exact_enumeration" => Q3SourceEvidence::ExactEnumeration,
+        "monte_carlo" => Q3SourceEvidence::MonteCarlo,
+        _ => return refused("q=3 target source_evidence token is invalid"),
+    };
+    let zero_count = parse_q3_integer::<u64>(fields[4], "source_zero_count")?;
+    let sample_count = parse_q3_integer::<u64>(fields[5], "source_n")?;
+    if sample_count == 0 || zero_count > sample_count {
+        return refused("q=3 target source counts are invalid");
+    }
+    let reported_probability = if fields[6] == "not_separately_reported" {
+        Q3ReportedProbability::NotSeparatelyReported
+    } else {
+        Q3ReportedProbability::Reported {
+            value: parse_q3_probability(fields[6], "source_reported_p_hat")?,
+        }
+    };
+    let count_derived_probability = parse_q3_probability(fields[7], "p_hat_from_source_counts")?;
+    let reported_precision = match fields[8] {
+        "exact_enumeration" => Q3ReportedPrecision::ExactEnumeration,
+        "not_reported" => Q3ReportedPrecision::NotReported,
+        _ => return refused("q=3 target source_reported_precision token is invalid"),
+    };
+    let precision_value = parse_q3_nonnegative(fields[10], "reference_precision_value")?;
+    let precision = match fields[9] {
+        "exact_sampling_error" => Q3SourcePrecision::ExactSamplingError {
+            standard_error: precision_value,
+        },
+        "derived_binomial_standard_error" => Q3SourcePrecision::DerivedBinomialStandardError {
+            standard_error: precision_value,
+        },
+        _ => return refused("q=3 target reference_precision_kind token is invalid"),
+    };
+    let lower = parse_q3_probability(fields[13], "reference_interval_lower")?;
+    let upper = parse_q3_probability(fields[14], "reference_interval_upper")?;
+    if lower > upper {
+        return refused("q=3 target reference interval is reversed");
+    }
+    let interval = match (fields[11], fields[12]) {
+        ("exact_no_sampling_uncertainty", "not_applicable") => {
+            Q3SourceInterval::ExactNoSamplingUncertainty { lower, upper }
+        }
+        ("derived_wilson_score", level) => Q3SourceInterval::DerivedWilsonScore {
+            level: parse_q3_probability(level, "reference_interval_level")?,
+            lower,
+            upper,
+        },
+        _ => return refused("q=3 target reference interval tokens are invalid"),
+    };
+    let expected_probability = zero_count as f64 / sample_count as f64;
+    if !approximately_equal(count_derived_probability, expected_probability) {
+        return refused("q=3 target count-derived probability differs from its counts");
+    }
+    let expected_se =
+        (expected_probability * (1.0 - expected_probability) / sample_count as f64).sqrt();
+    let (expected_lower, expected_upper) =
+        gf2_stats::intervals::wilson_interval(zero_count, sample_count, PROTOCOL_Z_95);
+    let exact_semantics = evidence == Q3SourceEvidence::ExactEnumeration
+        && table == Q3SourceTable::Table3
+        && reported_precision == Q3ReportedPrecision::ExactEnumeration
+        && matches!(reported_probability, Q3ReportedProbability::Reported { .. })
+        && matches!(precision, Q3SourcePrecision::ExactSamplingError { standard_error } if standard_error == 0.0)
+        && matches!(interval, Q3SourceInterval::ExactNoSamplingUncertainty { lower, upper }
+            if approximately_equal(lower, expected_probability)
+                && approximately_equal(upper, expected_probability));
+    let monte_carlo_semantics = evidence == Q3SourceEvidence::MonteCarlo
+        && table == Q3SourceTable::Table4
+        && reported_precision == Q3ReportedPrecision::NotReported
+        && reported_probability == Q3ReportedProbability::NotSeparatelyReported
+        && matches!(precision, Q3SourcePrecision::DerivedBinomialStandardError { standard_error }
+            if approximately_equal(standard_error, expected_se))
+        && matches!(interval, Q3SourceInterval::DerivedWilsonScore { level, lower, upper }
+            if approximately_equal(level, 0.95)
+                && approximately_equal(lower, expected_lower)
+                && approximately_equal(upper, expected_upper));
+    if (n <= 5 && !exact_semantics) || (n >= 6 && !monte_carlo_semantics) {
+        return Err(CoordinatorError::Refused(format!(
+            "q=3 target row n={n} contradicts the n=4..5 exact and n=6..28 Monte Carlo semantics"
+        )));
+    }
+    Ok(Q3SourceTarget {
+        n,
+        table,
+        evidence,
+        zero_count,
+        sample_count,
+        reported_probability,
+        count_derived_probability,
+        reported_precision,
+        precision,
+        interval,
+    })
+}
+
+fn parse_q3_integer<T>(text: &str, field: &str) -> Result<T, CoordinatorError>
+where
+    T: std::str::FromStr + ToString,
+{
+    let value = text
+        .parse::<T>()
+        .map_err(|_| CoordinatorError::Refused(format!("q=3 target {field} is not an integer")))?;
+    if value.to_string() != text {
+        return refused("q=3 target integer is not canonically encoded");
+    }
+    Ok(value)
+}
+
+fn parse_q3_probability(text: &str, field: &str) -> Result<f64, CoordinatorError> {
+    let value = parse_q3_nonnegative(text, field)?;
+    if value > 1.0 {
+        return refused("q=3 target probability is outside [0,1]");
+    }
+    Ok(value)
+}
+
+fn parse_q3_nonnegative(text: &str, field: &str) -> Result<f64, CoordinatorError> {
+    let value = text
+        .parse::<f64>()
+        .map_err(|_| CoordinatorError::Refused(format!("q=3 target {field} is not numeric")))?;
+    if !value.is_finite() || value < 0.0 {
+        return refused("q=3 target numeric value is negative or non-finite");
+    }
+    Ok(value)
+}
+
+fn approximately_equal(left: f64, right: f64) -> bool {
+    (left - right).abs() <= 5e-12 * left.abs().max(right.abs()).max(1.0)
+}
+
+fn validate_literature_search(bytes: &[u8]) -> Result<(), CoordinatorError> {
+    let text = std::str::from_utf8(bytes).map_err(|_| {
+        CoordinatorError::Refused("literature-search receipt is not UTF-8".to_owned())
+    })?;
+    let sections: Vec<_> = text
+        .lines()
+        .filter_map(|line| line.strip_prefix("## "))
+        .collect();
+    if !sections.contains(&"Limitations") || !sections.contains(&"Conclusion") {
+        return refused("literature-search receipt lacks limitations or conclusion sections");
+    }
+    Ok(())
+}
+
+fn resolve_evidence_sources(
+    campaign_root: &CampaignRoot,
+    paths: &CoordinatorEvidenceSourcePaths,
+) -> Result<CoordinatorEvidenceSources, CoordinatorError> {
+    let repository = repository_root_for_campaign(campaign_root.path())?;
+    let (q3_targets, q3_bytes) = repository_artifact(&repository, &paths.q3_targets)?;
+    parse_q3_target_table(&q3_bytes)?;
+    let (q5_q7_literature_search, search_bytes) =
+        repository_artifact(&repository, &paths.q5_q7_literature_search)?;
+    validate_literature_search(&search_bytes)?;
+    Ok(CoordinatorEvidenceSources {
+        q3_targets,
+        q5_q7_literature_search,
+    })
+}
+
+fn repository_artifact(
+    repository: &Path,
+    relative: &ArtifactPath,
+) -> Result<(ArtifactIdentity, Vec<u8>), CoordinatorError> {
+    let path = repository.join(relative.as_str());
+    let bytes = super::root_fs::read_absolute(&path)
+        .map_err(|source| CoordinatorError::Io { path, source })?;
+    Ok((
+        ArtifactIdentity {
+            path: relative.clone(),
+            sha256: digest(&bytes),
+        },
+        bytes,
+    ))
+}
+
+fn publish_terminal_fields_locked(
+    campaign_root: &CampaignRoot,
+    coordinator: &CampaignCoordinator,
+) -> Result<(), CoordinatorError> {
+    validate_receipt(&coordinator.manifest, &coordinator.receipt)?;
+    validate_campaign_files(campaign_root, &coordinator.manifest, &coordinator.receipt)?;
+    let repository = repository_root_for_campaign(campaign_root.path())?;
+    for field in &coordinator.receipt.fields {
+        let status = match field.execution {
+            FieldExecutionState::InProgress => continue,
+            FieldExecutionState::Completed => CoordinatorFieldSidecarStatus::Completed,
+            FieldExecutionState::Halted => CoordinatorFieldSidecarStatus::Halted,
+        };
+        let summary = coordinator.assemble_field_summary(field.q)?;
+        let summary_relative = PathBuf::from(field_summary_file(field.q));
+        write_new_json(campaign_root, &summary_relative, &summary)?;
+        let summary_bytes = campaign_read(campaign_root, &summary_relative)?;
+        let actual_summary: FieldSummary =
+            serde_json::from_slice(&summary_bytes).map_err(CoordinatorError::Json)?;
+        if actual_summary != summary {
+            return refused("published field summary differs from terminal receipt evidence");
+        }
+        let field_summary = ArtifactIdentity {
+            path: format!(
+                "{DATASET_HOME}/{}/{}",
+                coordinator.receipt.campaign_id,
+                field_summary_file(field.q)
+            )
+            .parse()
+            .map_err(|error| {
+                CoordinatorError::Refused(format!("invalid field-summary path: {error}"))
+            })?,
+            sha256: digest(&summary_bytes),
+        };
+        let source_records = field_source_records(&coordinator.receipt, field.q);
+        let interpretation = field_interpretation(
+            &repository,
+            &coordinator.receipt.evidence_sources,
+            field.q,
+            &summary,
+        )?;
+        let sidecar = CoordinatorFieldSidecar {
+            schema_version: COORDINATOR_SCHEMA_VERSION,
+            campaign_id: coordinator.receipt.campaign_id.clone(),
+            manifest_identity: coordinator.receipt.manifest_identity.clone(),
+            field_summary,
+            q: field.q,
+            source_records,
+            status,
+            interpretation,
+        };
+        let relative =
+            coordinator_field_sidecar_relative(&coordinator.receipt.campaign_id, field.q);
+        write_new_json(campaign_root, &relative, &sidecar)?;
+    }
+    Ok(())
+}
+
+fn field_source_records(receipt: &CampaignCoordinatorReceipt, q: u8) -> Vec<ArtifactIdentity> {
+    receipt
+        .cells
+        .iter()
+        .filter(|cell| cell.q == q)
+        .flat_map(|cell| match &cell.execution {
+            CellExecutionState::Completed { source_records, .. }
+            | CellExecutionState::Halted { source_records, .. } => source_records.clone(),
+            CellExecutionState::Pending | CellExecutionState::Scheduled { .. } => Vec::new(),
+        })
+        .collect()
+}
+
+fn field_interpretation(
+    repository: &Path,
+    sources: &CoordinatorEvidenceSources,
+    q: u8,
+    summary: &FieldSummary,
+) -> Result<CoordinatorFieldInterpretation, CoordinatorError> {
+    match q {
+        3 => {
+            let (identity, bytes) = repository_artifact(repository, &sources.q3_targets.path)?;
+            if identity != sources.q3_targets {
+                return refused("q=3 target bytes differ from the receipt-bound identity");
+            }
+            let targets = parse_q3_target_table(&bytes)?;
+            Ok(CoordinatorFieldInterpretation::PublishedTargetComparison {
+                target_table: identity,
+                rows: build_q3_comparison_rows(summary, &targets)?,
+            })
+        }
+        5 | 7 => {
+            let (identity, bytes) =
+                repository_artifact(repository, &sources.q5_q7_literature_search.path)?;
+            if identity != sources.q5_q7_literature_search {
+                return refused("literature-search bytes differ from the receipt-bound identity");
+            }
+            validate_literature_search(&bytes)?;
+            Ok(
+                CoordinatorFieldInterpretation::ConditionalLiteratureSearch {
+                    search_receipt: identity,
+                    claim: LiteratureSearchClaim::NoLocatedQ5Q7NumericsSubjectToRecordedLimits,
+                },
+            )
+        }
+        _ => refused("terminal field has no canonical interpretation source"),
+    }
+}
+
+fn build_q3_comparison_rows(
+    summary: &FieldSummary,
+    targets: &[Q3SourceTarget],
+) -> Result<Vec<CoordinatorQ3ComparisonRow>, CoordinatorError> {
+    summary
+        .rows
+        .iter()
+        .map(|row| match &row.terminal_state {
+            CellTerminalState::Completed {
+                permanent_estimate, ..
+            } => {
+                let target = targets
+                    .iter()
+                    .find(|target| target.n == row.n)
+                    .cloned()
+                    .ok_or_else(|| {
+                        CoordinatorError::Refused(
+                            "completed q=3 row lacks its canonical target".to_owned(),
+                        )
+                    })?;
+                if row.matrix_count == 0 {
+                    return refused("completed q=3 row has no samples");
+                }
+                let plugin_standard_error = (permanent_estimate.point
+                    * (1.0 - permanent_estimate.point)
+                    / row.matrix_count as f64)
+                    .sqrt();
+                let (campaign_lower, campaign_upper) = gf2_stats::intervals::wilson_interval(
+                    row.permanent_zero_count,
+                    row.matrix_count,
+                    PROTOCOL_Z_95,
+                );
+                let campaign_interval = Interval {
+                    lower: campaign_lower,
+                    upper: campaign_upper,
+                };
+                let (source_lower, source_upper) = source_interval_bounds(target.interval);
+                let relation = if campaign_interval.upper >= source_lower
+                    && source_upper >= campaign_interval.lower
+                {
+                    Q3IntervalRelation::Overlap
+                } else {
+                    Q3IntervalRelation::Disjoint
+                };
+                let source_standard_error = match target.precision {
+                    Q3SourcePrecision::ExactSamplingError { standard_error }
+                    | Q3SourcePrecision::DerivedBinomialStandardError { standard_error } => {
+                        standard_error
+                    }
+                };
+                Ok(CoordinatorQ3ComparisonRow::Completed {
+                    n: row.n,
+                    source_target: target.clone(),
+                    campaign_measurement: Q3CampaignMeasurement {
+                        zero_count: row.permanent_zero_count,
+                        sample_count: row.matrix_count,
+                        estimate: permanent_estimate.point,
+                        wilson_interval: campaign_interval,
+                        plugin_standard_error,
+                    },
+                    interval_relation: relation,
+                    interval_excludes_published: target.count_derived_probability
+                        < campaign_interval.lower
+                        || target.count_derived_probability > campaign_interval.upper,
+                    precision_classification: classify_q3_precision(
+                        target.evidence,
+                        plugin_standard_error,
+                        source_standard_error,
+                    ),
+                })
+            }
+            CellTerminalState::Halted { reason } => Ok(CoordinatorQ3ComparisonRow::Halted {
+                n: row.n,
+                matrix_count: row.matrix_count,
+                permanent_zero_count: row.permanent_zero_count,
+                determinant: row.determinant.clone(),
+                reason: *reason,
+            }),
+        })
+        .collect()
+}
+
+fn source_interval_bounds(interval: Q3SourceInterval) -> (f64, f64) {
+    match interval {
+        Q3SourceInterval::ExactNoSamplingUncertainty { lower, upper }
+        | Q3SourceInterval::DerivedWilsonScore { lower, upper, .. } => (lower, upper),
     }
 }
 
@@ -1852,7 +2534,7 @@ fn validate_frozen_paths(
     if manifest_identity.path.as_str() != expected_manifest {
         return refused("manifest identity path differs from the frozen campaign path");
     }
-    if protocol_identity.path.as_str() != PROTOCOL_PATH {
+    if protocol_identity.path != protocol_artifact_path() {
         return refused("protocol identity path differs from the frozen protocol path");
     }
     Ok(())
@@ -1886,11 +2568,15 @@ fn identity_for_protocol(
         source,
     })?;
     Ok(ArtifactIdentity {
-        path: PROTOCOL_PATH
-            .parse()
-            .expect("canonical protocol path is normalized"),
+        path: protocol_artifact_path(),
         sha256: digest(&bytes),
     })
+}
+
+fn protocol_artifact_path() -> ArtifactPath {
+    format!("{DATASET_HOME}/protocol.md")
+        .parse()
+        .expect("dataset home plus protocol file is a normalized artifact path")
 }
 
 fn validate_campaign_files(
@@ -1905,6 +2591,20 @@ fn validate_campaign_files(
         || identity_for_protocol(campaign_root)? != receipt.protocol_identity
     {
         return refused("on-disk frozen manifest or protocol identity differs from the receipt");
+    }
+    let observed_sources = resolve_evidence_sources(
+        campaign_root,
+        &CoordinatorEvidenceSourcePaths {
+            q3_targets: receipt.evidence_sources.q3_targets.path.clone(),
+            q5_q7_literature_search: receipt
+                .evidence_sources
+                .q5_q7_literature_search
+                .path
+                .clone(),
+        },
+    )?;
+    if observed_sources != receipt.evidence_sources {
+        return refused("field-interpretation source bytes differ from the coordinator receipt");
     }
     for arm in &receipt.arms {
         validate_accelerator_cost_identity(campaign_root, manifest, arm)?;
@@ -2237,6 +2937,11 @@ fn validate_receipt(
     {
         return refused("coordinator receipt fixed identity or plan is invalid");
     }
+    if receipt.evidence_sources.q3_targets.path
+        == receipt.evidence_sources.q5_q7_literature_search.path
+    {
+        return refused("coordinator interpretation sources must be distinct artifacts");
+    }
     validate_frozen_paths(
         manifest,
         &receipt.manifest_identity,
@@ -2334,10 +3039,10 @@ fn validate_receipt(
             return refused("attempt history interleaves serial exact-cell arms");
         }
         preceding_arm_index = arm_index;
-        if matches!(attempt.state, ShardAttemptState::Authorized) {
-            if authorized_attempt.replace((attempt_index, q, n)).is_some() {
-                return refused("receipt contains more than one active authorized attempt");
-            }
+        if matches!(attempt.state, ShardAttemptState::Authorized)
+            && authorized_attempt.replace((attempt_index, q, n)).is_some()
+        {
+            return refused("receipt contains more than one active authorized attempt");
         }
         history.push(&attempt.state);
     }
@@ -2668,6 +3373,7 @@ fn validate_monotonic_transition(
         || prior.campaign_id != next.campaign_id
         || prior.manifest_identity != next.manifest_identity
         || prior.protocol_identity != next.protocol_identity
+        || prior.evidence_sources != next.evidence_sources
         || prior.acceptance_plan != next.acceptance_plan
         || prior.retry_rule != next.retry_rule
         || !next.arms.starts_with(&prior.arms)

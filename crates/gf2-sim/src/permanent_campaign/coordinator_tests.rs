@@ -13,8 +13,8 @@ use crate::permanent_campaign::coordinator::{
     coordinator_receipt_path, execute_campaign_cell_with_evaluator, parse_q3_target_table,
     ArmInvocation, CampaignCoordinator, CampaignHaltCause, CampaignHaltState, CellExecutionState,
     CoordinatorEvidenceSourcePaths, CoordinatorFieldInterpretation, CoordinatorFieldSidecar,
-    CoordinatorFieldSidecarStatus, CoordinatorQ3ComparisonRow, ExactCellScope,
-    FieldExecutionState, LiteratureSearchClaim, Q3PrecisionClassification, Q3SourceEvidence,
+    CoordinatorFieldSidecarStatus, CoordinatorQ3ComparisonRow, ExactCellScope, FieldExecutionState,
+    LiteratureSearchClaim, Q3IntervalRelation, Q3PrecisionClassification, Q3SourceEvidence,
     ShardAttemptState,
 };
 use crate::permanent_campaign::provenance::{approve_emission, EmissionApproval};
@@ -182,8 +182,7 @@ fn fixture_from_manifest(
     fs::write(campaign_root.join("manifest.json"), &bytes).unwrap();
     fs::write(root.join("protocol.md"), b"fixture frozen protocol\n").unwrap();
     write_evidence_sources(&repository);
-    let coordinator =
-        CampaignCoordinator::new(&campaign_root, &evidence_source_paths()).unwrap();
+    let coordinator = CampaignCoordinator::new(&campaign_root, &evidence_source_paths()).unwrap();
     (root, manifest, coordinator)
 }
 
@@ -210,11 +209,7 @@ fn write_evidence_sources(repository: &Path) {
         ),
     )
     .unwrap();
-    let search = repository.join(
-        evidence_source_paths()
-            .q5_q7_literature_search
-            .as_str(),
-    );
+    let search = repository.join(evidence_source_paths().q5_q7_literature_search.as_str());
     fs::create_dir_all(search.parent().unwrap()).unwrap();
     fs::write(
         search,
@@ -645,10 +640,12 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
     duplicate_selector
         .argv
         .extend(["--q".to_owned(), "7".to_owned()]);
-    assert!(CampaignCoordinator::new(&campaign_root, &evidence_source_paths())
-        .unwrap()
-        .authorize_arm(duplicate_selector)
-        .is_err());
+    assert!(
+        CampaignCoordinator::new(&campaign_root, &evidence_source_paths())
+            .unwrap()
+            .authorize_arm(duplicate_selector)
+            .is_err()
+    );
     let mut default_worker = arm(7, 20);
     let worker_option = default_worker
         .argv
@@ -743,6 +740,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         2,
         arm_for_manifest(&retry_manifest, 7, 20).argv,
         approval,
+        &evidence_source_paths(),
         |_, _, _, _| {
             mismatched_worker_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -760,6 +758,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         1,
         arm_for_manifest(&retry_manifest, 7, 20).argv,
         approve_emission(&retry_campaign).unwrap(),
+        &evidence_source_paths(),
         |_, item, _, _| {
             let persisted = CampaignCoordinator::read(&retry_campaign).unwrap();
             assert!(matches!(
@@ -794,6 +793,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         1,
         arm_for_manifest(&retry_manifest, 7, 20).argv,
         approve_emission(&retry_campaign).unwrap(),
+        &evidence_source_paths(),
         |_, _, _, _| {
             forbidden_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -802,12 +802,11 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         },
         |_| {},
     )
-    .is_err());
+    .is_ok());
     assert_eq!(forbidden_entries, 0);
 
     let (adopt_root, adopt_campaign, adopt_manifest, approval) = live_fixture();
-    let mut adopt =
-        CampaignCoordinator::new(&adopt_campaign, &evidence_source_paths()).unwrap();
+    let mut adopt = CampaignCoordinator::new(&adopt_campaign, &evidence_source_paths()).unwrap();
     adopt
         .authorize_arm(arm_for_manifest(&adopt_manifest, 7, 20))
         .unwrap();
@@ -822,6 +821,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         1,
         arm_for_manifest(&adopt_manifest, 7, 20).argv,
         approval,
+        &evidence_source_paths(),
         |_, _, _, _| {
             adopted_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -863,6 +863,7 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         1,
         arm_for_manifest(&invalid_manifest, 7, 20).argv,
         approval,
+        &evidence_source_paths(),
         |_, _, _, _| {
             recovery_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -908,6 +909,7 @@ fn canonical_transaction_persists_authorization_before_sampling_and_raw_before_a
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
+        &evidence_source_paths(),
         |manifest, item, _, _| {
             let persisted = CampaignCoordinator::read(&campaign_root).unwrap();
             assert!(matches!(
@@ -977,6 +979,7 @@ fn persisted_arm_binds_one_repository_relative_accelerator_cost_snapshot() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approve_emission(&campaign_root).unwrap(),
+        &evidence_source_paths(),
         |_, _, _, _| {
             first_entries += 1;
             fs::write(&table_path, b"q,n,per_matrix_us\n5,20,19\n").unwrap();
@@ -996,6 +999,7 @@ fn persisted_arm_binds_one_repository_relative_accelerator_cost_snapshot() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approve_emission(&campaign_root).unwrap(),
+        &evidence_source_paths(),
         |_, _, _, _| {
             refused_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1038,6 +1042,7 @@ fn exact_executor_lock_contention_has_zero_sampler_entry() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
+        &evidence_source_paths(),
         |_, _, _, _| {
             entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1249,6 +1254,7 @@ fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
+        &evidence_source_paths(),
         |_, _, _, _| {
             sampler_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1291,6 +1297,7 @@ fn transaction_refuses_symlinked_writer_ancestors_without_external_effects() {
             1,
             arm_for_manifest(&campaign, 7, 20).argv,
             approval,
+            &evidence_source_paths(),
             |manifest, item, _, _| {
                 sampler_entries += 1;
                 Ok(evaluated_shard(manifest, item, 14))
@@ -1335,6 +1342,7 @@ fn transaction_refuses_symlinked_lock_and_receipt_entries() {
             1,
             arm_for_manifest(&campaign, 7, 20).argv,
             approval,
+            &evidence_source_paths(),
             |manifest, item, _, _| {
                 sampler_entries += 1;
                 Ok(evaluated_shard(manifest, item, 14))
@@ -1473,6 +1481,7 @@ fn invalid_raw_refuses_symlinked_quarantine_ancestor() {
         1,
         arm_for_manifest(&campaign, 7, 20).argv,
         approval,
+        &evidence_source_paths(),
         |_, _, _, _| {
             sampler_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
@@ -1527,9 +1536,11 @@ fn q3_target_parser_is_exact_and_precision_boundaries_are_closed() {
     assert_eq!(targets[0].evidence, Q3SourceEvidence::ExactEnumeration);
     assert_eq!(targets[2].evidence, Q3SourceEvidence::MonteCarlo);
 
-    let malformed = String::from_utf8(canonical.to_vec())
-        .unwrap()
-        .replacen("q,n,source_table,", "q,n,unexpected,source_table,", 1);
+    let malformed = String::from_utf8(canonical.to_vec()).unwrap().replacen(
+        "q,n,source_table,",
+        "q,n,unexpected,source_table,",
+        1,
+    );
     assert!(parse_q3_target_table(malformed.as_bytes()).is_err());
     let missing_n = String::from_utf8(canonical.to_vec())
         .unwrap()
@@ -1567,6 +1578,9 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
     campaign
         .cells
         .push(cell(3, 4, DeterminantPlan::NotEvaluated));
+    campaign
+        .cells
+        .push(cell(5, 4, DeterminantPlan::NotEvaluated));
     let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
     let q7_argv = arm_for_manifest(&campaign, 7, 20).argv;
     execute_campaign_cell_with_evaluator(
@@ -1577,6 +1591,17 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         approval,
         &evidence_source_paths(),
         |manifest, item, _, _| Ok(evaluated_shard(manifest, item, 14)),
+        |_| {},
+    )
+    .unwrap();
+    execute_campaign_cell_with_evaluator(
+        &campaign_root,
+        ExactCellScope { q: 5, n: 4 },
+        1,
+        arm_for_manifest(&campaign, 5, 4).argv,
+        approve_emission(&campaign_root).unwrap(),
+        &evidence_source_paths(),
+        |manifest, item, _, _| Ok(evaluated_shard(manifest, item, 20)),
         |_| {},
     )
     .unwrap();
@@ -1599,15 +1624,16 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
     assert_eq!(q3.q, 3);
     assert_eq!(q3.source_records.len(), 1);
     let summary_bytes = fs::read(campaign_root.join(field_summary_file(3))).unwrap();
-    assert_eq!(q3.field_summary.path.as_str(), "summaries/q3.json");
+    assert_eq!(
+        q3.field_summary.path.as_str(),
+        "dev/simulation_results/permanent-zero-fraction/coordinator-fixture/summaries/q3.json"
+    );
     assert_eq!(
         q3.field_summary.sha256.as_str(),
         format!("{:x}", Sha256::digest(&summary_bytes))
     );
-    let CoordinatorFieldInterpretation::PublishedTargetComparison {
-        target_table,
-        rows,
-    } = q3.interpretation
+    let CoordinatorFieldInterpretation::PublishedTargetComparison { target_table, rows } =
+        q3.interpretation
     else {
         panic!("q=3 must carry the canonical target comparison");
     };
@@ -1624,7 +1650,7 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         panic!("completed q=3 receipt row must stay completed");
     };
     assert_eq!(n, 4);
-    assert_eq!(interval_relation.to_string(), "disjoint");
+    assert_eq!(interval_relation, Q3IntervalRelation::Disjoint);
     assert!(interval_excludes_published);
     assert_eq!(
         precision_classification,
@@ -1655,6 +1681,22 @@ fn transaction_derives_strict_q3_and_literature_sidecars_from_bound_sources() {
         claim,
         LiteratureSearchClaim::NoLocatedQ5Q7NumericsSubjectToRecordedLimits
     );
+    let q5: CoordinatorFieldSidecar = serde_json::from_slice(
+        &fs::read(coordinator_field_sidecar_path(
+            &campaign_root,
+            &campaign.campaign_id,
+            5,
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    assert!(matches!(
+        q5.interpretation,
+        CoordinatorFieldInterpretation::ConditionalLiteratureSearch {
+            search_receipt,
+            claim: LiteratureSearchClaim::NoLocatedQ5Q7NumericsSubjectToRecordedLimits,
+        } if search_receipt.path == evidence_source_paths().q5_q7_literature_search
+    ));
 
     let mut forged: serde_json::Value = serde_json::from_slice(&q3_bytes).unwrap();
     forged["forged"] = serde_json::json!(true);
@@ -1747,7 +1789,7 @@ fn terminal_projection_recovers_without_sampling_and_refuses_conflicts() {
 
 #[test]
 fn zero_evidence_halt_publishes_raw_only_halted_projection() {
-    let campaign = single_cell_manifest(7);
+    let campaign = manifest();
     let (root, campaign_root, campaign, approval) = live_fixture_from_manifest(campaign);
     let execution = execute_campaign_cell_with_evaluator(
         &campaign_root,
@@ -1769,8 +1811,10 @@ fn zero_evidence_halt_publishes_raw_only_halted_projection() {
         CellExecutionState::Halted { .. }
     ));
     let summary = read_field_summary(&campaign_root, 7).unwrap();
-    assert_eq!(summary.rows[0].matrix_count, 0);
-    assert_eq!(summary.rows[0].permanent_zero_count, 0);
+    assert!(summary
+        .rows
+        .iter()
+        .all(|row| row.matrix_count == 0 && row.permanent_zero_count == 0));
     let sidecar: CoordinatorFieldSidecar = serde_json::from_slice(
         &fs::read(coordinator_field_sidecar_path(
             &campaign_root,
@@ -1782,5 +1826,37 @@ fn zero_evidence_halt_publishes_raw_only_halted_projection() {
     .unwrap();
     assert_eq!(sidecar.status, CoordinatorFieldSidecarStatus::Halted);
     assert!(sidecar.source_records.is_empty());
+    let q3_bytes = fs::read(coordinator_field_sidecar_path(
+        &campaign_root,
+        &campaign.campaign_id,
+        3,
+    ))
+    .unwrap();
+    let q3: CoordinatorFieldSidecar = serde_json::from_slice(&q3_bytes).unwrap();
+    let CoordinatorFieldInterpretation::PublishedTargetComparison { rows, .. } = q3.interpretation
+    else {
+        panic!("halted q=3 field must retain the typed target-comparison container");
+    };
+    assert!(matches!(
+        rows.as_slice(),
+        [CoordinatorQ3ComparisonRow::Halted {
+            matrix_count: 0,
+            permanent_zero_count: 0,
+            ..
+        }]
+    ));
+    let q3_json = String::from_utf8(q3_bytes).unwrap();
+    for forbidden in [
+        "source_target",
+        "campaign_measurement",
+        "estimate",
+        "interval_relation",
+        "precision_classification",
+    ] {
+        assert!(
+            !q3_json.contains(forbidden),
+            "halted q=3 leaked {forbidden}"
+        );
+    }
     fs::remove_dir_all(root).unwrap();
 }

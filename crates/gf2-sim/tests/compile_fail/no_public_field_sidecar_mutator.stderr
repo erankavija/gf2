@@ -1,0 +1,5 @@
+error[E0432]: unresolved import `gf2_sim::permanent_campaign::coordinator::emit_field_sidecar`
+ --> tests/compile_fail/no_public_field_sidecar_mutator.rs:4:5
+  |
+4 | use gf2_sim::permanent_campaign::coordinator::emit_field_sidecar;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `emit_field_sidecar` in `permanent_campaign::coordinator`

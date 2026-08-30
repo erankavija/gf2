@@ -15,9 +15,9 @@
 //! `--print-provenance` observes and prints the provenance for this emitting
 //! executable without running a campaign or writing a dataset file.
 //!
-//! Exact execution does not write a field summary. The coordinator assembles
-//! that summary only after every cell in the field is
-//! terminal. `--dry-run-schedule` resolves the same selector and validates the
+//! Exact execution publishes the field summary and typed interpretation
+//! sidecar when every cell in the field is terminal. `--dry-run-schedule`
+//! resolves the same selector and validates the
 //! complete manifest accelerator-cost input without opening the output
 //! directory, coordinator receipt, execution lock, or sampler.
 
@@ -26,8 +26,8 @@ use std::process::ExitCode;
 use std::time::Duration;
 
 use gf2_sim::permanent_campaign::coordinator::{
-    execute_campaign_cell, CampaignCoordinator, CellExecutionState, ExactCellScope,
-    ShardAttemptState,
+    execute_campaign_cell, CampaignCoordinator, CellExecutionState, CoordinatorEvidenceSourcePaths,
+    ExactCellScope, ShardAttemptState,
 };
 use gf2_sim::permanent_campaign::launch_cost::resolve_accelerator_cost_table;
 use gf2_sim::permanent_campaign::provenance::{observe_provenance, repository_top_level};
@@ -49,6 +49,9 @@ Accelerator options:
                                      q,n,per_matrix_us, one row per accelerator cell,
                                      each value taken from that cell's committed receipt
 ";
+const Q3_TARGET_PATH: &str =
+    "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv";
+const Q5_Q7_SEARCH_PATH: &str = "dev/studies/b488f02c/literature-search-2026-08-08.md";
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -204,7 +207,15 @@ fn main() -> ExitCode {
         println!("schedule q={field} n={order} shards={}", items.len());
         return ExitCode::SUCCESS;
     }
-    let execution = match execute_campaign_cell(&output, scope, workers) {
+    let evidence_sources = CoordinatorEvidenceSourcePaths {
+        q3_targets: Q3_TARGET_PATH
+            .parse()
+            .expect("built-in q=3 target path is normalized"),
+        q5_q7_literature_search: Q5_Q7_SEARCH_PATH
+            .parse()
+            .expect("built-in literature-search path is normalized"),
+    };
+    let execution = match execute_campaign_cell(&output, scope, workers, &evidence_sources) {
         Ok(execution) => execution,
         Err(error) => return failure(error),
     };
