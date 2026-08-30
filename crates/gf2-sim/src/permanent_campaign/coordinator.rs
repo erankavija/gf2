@@ -6,8 +6,7 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::fs::{self, OpenOptions};
-use std::io::{Read, Write};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -20,6 +19,7 @@ use super::acceptance::{
 };
 use super::launch_cost::resolve_accelerator_cost_table;
 use super::provenance::{approve_emission, EmissionApproval};
+use super::root_fs::{CampaignRoot, EntryKind};
 use super::schedule::CAMPAIGN_CELL_PURPOSE_TAG;
 use super::schedule::{
     emit_shard_with_durability_hook, enumerate_cell_work_items,
@@ -363,10 +363,9 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C log C)` time and `O(C)` space for `C` manifest cells.
-    fn new_inner(campaign_root: &Path) -> Result<Self, CoordinatorError> {
-        let manifest =
-            super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
-        validate_campaign_directory(campaign_root, &manifest.campaign_id)?;
+    fn new_inner(campaign_root: &CampaignRoot) -> Result<Self, CoordinatorError> {
+        let manifest = read_manifest_anchored(campaign_root)?;
+        validate_campaign_directory(campaign_root.path(), &manifest.campaign_id)?;
         let manifest_identity =
             identity_for_campaign_file(campaign_root, &manifest.campaign_id, MANIFEST_FILE)?;
         let protocol_identity = identity_for_protocol(campaign_root)?;
@@ -413,9 +412,10 @@ impl CampaignCoordinator {
     }
 
     /// Constructs an empty coordinator for receipt-state integration tests.
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn new(campaign_root: &Path) -> Result<Self, CoordinatorError> {
-        Self::new_inner(campaign_root)
+    #[cfg(test)]
+    fn new(campaign_root: &Path) -> Result<Self, CoordinatorError> {
+        let root = open_campaign_root(campaign_root)?;
+        Self::new_inner(&root)
     }
 
     /// Returns the fixed shared acceptance plan.
@@ -528,15 +528,9 @@ impl CampaignCoordinator {
     }
 
     /// Test-support admission of one exact arm.
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn authorize_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
+    #[cfg(test)]
+    fn authorize_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
         self.authorize_arm_inner(arm)
-    }
-
-    /// Test-support admission or identity check for one exact arm.
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn authorize_or_resume_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
-        self.authorize_or_resume_arm_inner(arm)
     }
 
     /// Persists one exact shard-attempt authorization before sampler entry.
@@ -659,12 +653,12 @@ impl CampaignCoordinator {
     /// Refuses an absent active authorization or invalid raw evidence.
     fn record_accepted_inner(
         &mut self,
-        campaign_root: &Path,
+        campaign_root: &CampaignRoot,
         q: u8,
         n: u16,
         shard_id: u64,
     ) -> Result<(), CoordinatorError> {
-        validate_campaign_directory(campaign_root, &self.receipt.campaign_id)?;
+        validate_campaign_directory(campaign_root.path(), &self.receipt.campaign_id)?;
         let cell = self.manifest_cell(q, n)?.clone();
         let shard = cell
             .shards
@@ -672,8 +666,7 @@ impl CampaignCoordinator {
             .find(|shard| shard.shard_id == shard_id)
             .ok_or_else(|| CoordinatorError::Refused("manifest shard not found".to_owned()))?;
         let relative = shard_record_file(q, n, shard_id);
-        let path = campaign_root.join(&relative);
-        let bytes = read_regular_file_nofollow(&path)?;
+        let bytes = campaign_read(campaign_root, Path::new(&relative))?;
         let record: ShardRecord = serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)?;
         validate_raw_record(&self.manifest, &cell, shard_id, shard.stream_index, &record)?;
         let identity = ArtifactIdentity {
@@ -882,13 +875,8 @@ impl CampaignCoordinator {
     ///
     /// Production campaign execution admits attempts only through
     /// [`execute_campaign_cell`].
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn authorize_attempt(
-        &mut self,
-        q: u8,
-        n: u16,
-        shard_id: u64,
-    ) -> Result<(), CoordinatorError> {
+    #[cfg(test)]
+    fn authorize_attempt(&mut self, q: u8, n: u16, shard_id: u64) -> Result<(), CoordinatorError> {
         self.authorize_attempt_inner(q, n, shard_id)
     }
 
@@ -896,8 +884,8 @@ impl CampaignCoordinator {
     ///
     /// Production campaign execution records this state only through
     /// [`execute_campaign_cell`].
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn record_quarantine(
+    #[cfg(test)]
+    fn record_quarantine(
         &mut self,
         q: u8,
         n: u16,
@@ -911,23 +899,24 @@ impl CampaignCoordinator {
     ///
     /// Production campaign execution records this state only through
     /// [`execute_campaign_cell`].
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn record_accepted(
+    #[cfg(test)]
+    fn record_accepted(
         &mut self,
         campaign_root: &Path,
         q: u8,
         n: u16,
         shard_id: u64,
     ) -> Result<(), CoordinatorError> {
-        self.record_accepted_inner(campaign_root, q, n, shard_id)
+        let root = open_campaign_root(campaign_root)?;
+        self.record_accepted_inner(&root, q, n, shard_id)
     }
 
     /// Test-support assessment of counts pooled from accepted attempts.
     ///
     /// Production campaign execution assesses a complete cell only through
     /// [`execute_campaign_cell`].
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn record_completed(
+    #[cfg(test)]
+    fn record_completed(
         &mut self,
         q: u8,
         n: u16,
@@ -936,41 +925,6 @@ impl CampaignCoordinator {
         determinant: DeterminantCount,
     ) -> Result<(), CoordinatorError> {
         self.record_completed_inner(q, n, matrix_count, permanent_zero_count, determinant)
-    }
-
-    /// Records a backend-unavailable or fatal mechanical terminal path.
-    ///
-    /// Accepted shards remain pooled in the halted row and receipt. The halt
-    /// never produces an acceptance verdict and spends no error budget.
-    ///
-    /// # Errors
-    ///
-    /// Refuses an acceptance-failure reason or a cell that is not scheduled.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
-    /// # Complexity
-    ///
-    /// `O(CS)` in the worst case while terminalizing remaining cells.
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn record_terminal_failure(
-        &mut self,
-        q: u8,
-        n: u16,
-        reason: HaltReason,
-    ) -> Result<(), CoordinatorError> {
-        if reason == HaltReason::AcceptanceFailure {
-            return refused("acceptance failure is produced only by an exact decision");
-        }
-        if !matches!(
-            self.cell_state(q, n),
-            Some(CellExecutionState::Scheduled { .. })
-        ) {
-            return refused("mechanical halt requires a scheduled cell");
-        }
-        self.terminalize_mechanical(q, n, reason)
     }
 
     /// Builds a raw field summary only when every field cell is terminal.
@@ -1043,29 +997,27 @@ impl CampaignCoordinator {
     /// # Complexity
     ///
     /// `O(C + A + T + B)` for cells, arms, attempts, and serialized bytes.
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn persist(&self, campaign_root: &Path) -> Result<(), CoordinatorError> {
-        let _lock = acquire_execution_lock(campaign_root, &self.receipt.campaign_id)?;
-        self.persist_locked(campaign_root)
+    #[cfg(test)]
+    fn persist(&self, campaign_root: &Path) -> Result<(), CoordinatorError> {
+        let root = open_campaign_root(campaign_root)?;
+        let _lock = acquire_execution_lock(&root, &self.receipt.campaign_id)?;
+        self.persist_locked(&root)
     }
 
-    fn persist_locked(&self, campaign_root: &Path) -> Result<(), CoordinatorError> {
-        validate_campaign_directory(campaign_root, &self.receipt.campaign_id)?;
+    fn persist_locked(&self, campaign_root: &CampaignRoot) -> Result<(), CoordinatorError> {
+        validate_campaign_directory(campaign_root.path(), &self.receipt.campaign_id)?;
         validate_receipt(&self.manifest, &self.receipt)?;
         validate_campaign_files(campaign_root, &self.manifest, &self.receipt)?;
-        let path = coordinator_receipt_path(campaign_root, &self.receipt.campaign_id);
-        if path.exists() {
-            let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
-                path: path.clone(),
-                source,
-            })?;
+        let relative = coordinator_receipt_relative(&self.receipt.campaign_id);
+        if campaign_root_entry(campaign_root, &relative)? != EntryKind::Missing {
+            let bytes = campaign_read(campaign_root, &relative)?;
             let prior: CampaignCoordinatorReceipt =
                 serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)?;
             validate_receipt(&self.manifest, &prior)?;
             validate_on_disk_attempts(campaign_root, &self.manifest, &prior)?;
             validate_monotonic_transition(&prior, &self.receipt)?;
         }
-        atomic_json(&path, &self.receipt)
+        atomic_json(campaign_root, &relative, &self.receipt)
     }
 
     /// Reads and validates a manifest-bound canonical receipt.
@@ -1083,14 +1035,15 @@ impl CampaignCoordinator {
     ///
     /// `O(B + C + T)` for manifest bytes, cells, and attempts.
     pub fn read(campaign_root: &Path) -> Result<Self, CoordinatorError> {
-        let manifest =
-            super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
-        validate_campaign_directory(campaign_root, &manifest.campaign_id)?;
-        let path = coordinator_receipt_path(campaign_root, &manifest.campaign_id);
-        let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
-            path: path.clone(),
-            source,
-        })?;
+        let root = open_campaign_root(campaign_root)?;
+        Self::read_anchored(&root)
+    }
+
+    fn read_anchored(campaign_root: &CampaignRoot) -> Result<Self, CoordinatorError> {
+        let manifest = read_manifest_anchored(campaign_root)?;
+        validate_campaign_directory(campaign_root.path(), &manifest.campaign_id)?;
+        let relative = coordinator_receipt_relative(&manifest.campaign_id);
+        let bytes = campaign_read(campaign_root, &relative)?;
         let receipt: CampaignCoordinatorReceipt =
             serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)?;
         validate_receipt(&manifest, &receipt)?;
@@ -1196,8 +1149,11 @@ impl CampaignCoordinator {
 /// Returns the canonical coordinator receipt path for one campaign id.
 #[must_use]
 pub fn coordinator_receipt_path(campaign_root: &Path, campaign_id: &CampaignId) -> PathBuf {
-    campaign_root
-        .join("derived")
+    campaign_root.join(coordinator_receipt_relative(campaign_id))
+}
+
+fn coordinator_receipt_relative(campaign_id: &CampaignId) -> PathBuf {
+    PathBuf::from("derived")
         .join(campaign_id.to_string())
         .join(COORDINATOR_DIRECTORY)
         .join(COORDINATOR_RECEIPT_FILE)
@@ -1209,41 +1165,44 @@ pub fn coordinator_receipt_path(campaign_root: &Path, campaign_id: &CampaignId) 
 /// the coordinator receipt.
 #[must_use]
 pub fn coordinator_lock_path(campaign_root: &Path, campaign_id: &CampaignId) -> PathBuf {
-    campaign_root
-        .join("derived")
+    campaign_root.join(coordinator_lock_relative(campaign_id))
+}
+
+fn coordinator_lock_relative(campaign_id: &CampaignId) -> PathBuf {
+    PathBuf::from("derived")
         .join(campaign_id.to_string())
         .join(COORDINATOR_DIRECTORY)
         .join("execution.lock")
 }
 
 fn acquire_execution_lock(
-    campaign_root: &Path,
+    campaign_root: &CampaignRoot,
     campaign_id: &CampaignId,
-) -> Result<fs::File, CoordinatorError> {
-    let lock_path = coordinator_lock_path(campaign_root, campaign_id);
-    let lock_parent = lock_path
-        .parent()
-        .ok_or_else(|| CoordinatorError::Refused("execution lock has no parent".to_owned()))?;
-    fs::create_dir_all(lock_parent).map_err(|source| CoordinatorError::Io {
-        path: lock_parent.to_owned(),
-        source,
-    })?;
-    let lock_file = OpenOptions::new()
-        .create(true)
-        .read(true)
-        .write(true)
-        .open(&lock_path)
-        .map_err(|source| CoordinatorError::Io {
-            path: lock_path.clone(),
-            source,
-        })?;
+) -> Result<ExecutionLock, CoordinatorError> {
+    let relative = coordinator_lock_relative(campaign_id);
+    let lock_path = campaign_root.path().join(&relative);
+    let lock_file =
+        campaign_root
+            .open_lock_file(&relative)
+            .map_err(|source| CoordinatorError::Io {
+                path: lock_path.clone(),
+                source,
+            })?;
     lock_file.try_lock().map_err(|source| {
         CoordinatorError::Refused(format!(
             "campaign execution lock is unavailable at {}: {source}",
             lock_path.display()
         ))
     })?;
-    Ok(lock_file)
+    Ok(ExecutionLock(lock_file))
+}
+
+struct ExecutionLock(fs::File);
+
+impl Drop for ExecutionLock {
+    fn drop(&mut self) {
+        let _ = self.0.unlock();
+    }
 }
 
 /// Executes one exact campaign cell through the canonical receipt transaction.
@@ -1275,23 +1234,24 @@ pub fn execute_campaign_cell(
     scope: ExactCellScope,
     worker_count: usize,
 ) -> Result<ExactCellExecution, CoordinatorError> {
-    let manifest = match super::schema::read_manifest(campaign_root) {
-        Ok(manifest) => manifest,
-        Err(manifest_error) => {
-            return match approve_emission(campaign_root) {
-                Err(error) => Err(CoordinatorError::Refused(format!(
-                    "emission refused: {error}"
-                ))),
-                Ok(_) => Err(CoordinatorError::Manifest(manifest_error)),
-            }
-        }
-    };
-    let _lock = acquire_execution_lock(campaign_root, &manifest.campaign_id)?;
     let approval = approve_emission(campaign_root)
         .map_err(|error| CoordinatorError::Refused(format!("emission refused: {error}")))?;
+    if !approval
+        .campaign_root()
+        .matches_path(campaign_root)
+        .map_err(|source| CoordinatorError::Io {
+            path: campaign_root.to_owned(),
+            source,
+        })?
+    {
+        return refused("live emission approval names a different campaign directory identity");
+    }
+    let root = approval.campaign_root().clone();
+    let manifest = read_manifest_anchored(&root)?;
+    let _lock = acquire_execution_lock(&root, &manifest.campaign_id)?;
     let effective_argv = std::env::args().collect();
     execute_campaign_cell_locked(
-        campaign_root,
+        &root,
         scope,
         worker_count,
         effective_argv,
@@ -1339,11 +1299,21 @@ where
     ) -> Result<EvaluatedShard, ScheduleError>,
     H: FnMut(&Path),
 {
-    let manifest =
-        super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
-    let _lock = acquire_execution_lock(campaign_root, &manifest.campaign_id)?;
+    if !approval
+        .campaign_root()
+        .matches_path(campaign_root)
+        .map_err(|source| CoordinatorError::Io {
+            path: campaign_root.to_owned(),
+            source,
+        })?
+    {
+        return refused("live emission approval names a different campaign directory identity");
+    }
+    let root = approval.campaign_root().clone();
+    let manifest = read_manifest_anchored(&root)?;
+    let _lock = acquire_execution_lock(&root, &manifest.campaign_id)?;
     execute_campaign_cell_locked(
-        campaign_root,
+        &root,
         scope,
         worker_count,
         effective_argv,
@@ -1354,7 +1324,7 @@ where
 }
 
 fn execute_campaign_cell_locked<E, H>(
-    campaign_root: &Path,
+    campaign_root: &CampaignRoot,
     scope: ExactCellScope,
     worker_count: usize,
     effective_argv: Vec<String>,
@@ -1371,22 +1341,13 @@ where
     ) -> Result<EvaluatedShard, ScheduleError>,
     H: FnMut(&Path),
 {
-    let canonical_campaign =
-        fs::canonicalize(campaign_root).map_err(|source| CoordinatorError::Io {
-            path: campaign_root.to_owned(),
-            source,
-        })?;
-    if canonical_campaign != approval.campaign_root() {
-        return refused("live emission approval names a different canonical campaign root");
-    }
-    let manifest_on_disk =
-        super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
-    let mut coordinator =
-        if coordinator_receipt_path(campaign_root, &manifest_on_disk.campaign_id).exists() {
-            CampaignCoordinator::read(campaign_root)?
-        } else {
-            CampaignCoordinator::new_inner(campaign_root)?
-        };
+    let manifest_on_disk = read_manifest_anchored(campaign_root)?;
+    let receipt_relative = coordinator_receipt_relative(&manifest_on_disk.campaign_id);
+    let mut coordinator = match campaign_root_entry(campaign_root, &receipt_relative)? {
+        EntryKind::Missing => CampaignCoordinator::new_inner(campaign_root)?,
+        EntryKind::RegularFile => CampaignCoordinator::read_anchored(campaign_root)?,
+        EntryKind::Other => return refused("coordinator receipt path is not a regular file"),
+    };
     let manifest = coordinator.manifest.clone();
     if coordinator.receipt.manifest_identity.sha256 != *approval.manifest_sha256() {
         return refused("live emission approval names different committed manifest bytes");
@@ -1402,7 +1363,7 @@ where
         accelerator_cost_table,
     })?;
     coordinator.persist_locked(campaign_root)?;
-    coordinator = CampaignCoordinator::read(campaign_root)?;
+    coordinator = CampaignCoordinator::read_anchored(campaign_root)?;
     let arm_authorization = coordinator.persisted_arm_authorization(scope)?;
     if worker_count != arm_authorization.arm.worker_count {
         return refused("runtime worker count differs from the persisted exact arm");
@@ -1421,25 +1382,13 @@ where
             }
 
             if let Some(active) = active_attempt(&coordinator.receipt, item).cloned() {
-                let raw_path =
-                    campaign_root.join(shard_record_file(scope.q, scope.n, item.shard_id));
-                let raw_metadata = match fs::symlink_metadata(&raw_path) {
-                    Ok(metadata) => Some(metadata),
-                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
-                    Err(source) => {
-                        return Err(CoordinatorError::Io {
-                            path: raw_path,
-                            source,
-                        })
-                    }
-                };
-                if raw_metadata
-                    .as_ref()
-                    .is_some_and(|metadata| !metadata.file_type().is_file())
-                {
+                let raw_relative =
+                    PathBuf::from(shard_record_file(scope.q, scope.n, item.shard_id));
+                let raw_kind = campaign_root_entry(campaign_root, &raw_relative)?;
+                if raw_kind == EntryKind::Other {
                     return refused("canonical raw shard path must be a regular file");
                 }
-                if raw_metadata.is_some() {
+                if raw_kind == EntryKind::RegularFile {
                     match coordinator.record_accepted_inner(
                         campaign_root,
                         scope.q,
@@ -1456,7 +1405,7 @@ where
                                 &coordinator.receipt.campaign_id,
                                 item,
                                 active.attempt,
-                                &raw_path,
+                                &raw_relative,
                             )?;
                             coordinator.record_quarantine_inner(
                                 scope.q,
@@ -1479,22 +1428,13 @@ where
                 continue;
             }
 
-            let raw_path = campaign_root.join(shard_record_file(scope.q, scope.n, item.shard_id));
-            match fs::symlink_metadata(&raw_path) {
-                Ok(_) => {
-                    return refused("raw shard path exists without an active or accepted attempt")
-                }
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-                Err(source) => {
-                    return Err(CoordinatorError::Io {
-                        path: raw_path,
-                        source,
-                    })
-                }
+            let raw_relative = PathBuf::from(shard_record_file(scope.q, scope.n, item.shard_id));
+            if campaign_root_entry(campaign_root, &raw_relative)? != EntryKind::Missing {
+                return refused("raw shard path exists without an active or accepted attempt");
             }
             coordinator.authorize_attempt_inner(scope.q, scope.n, item.shard_id)?;
             coordinator.persist_locked(campaign_root)?;
-            coordinator = CampaignCoordinator::read(campaign_root)?;
+            coordinator = CampaignCoordinator::read_anchored(campaign_root)?;
             let attempt_authorization =
                 coordinator.persisted_attempt_authorization(&arm_authorization, item)?;
             let accelerator = if item.backend == Backend::Accelerator {
@@ -1533,18 +1473,17 @@ where
                             coordinator.persist_locked(campaign_root)?;
                         }
                         Err(error) => {
-                            let raw_path = campaign_root.join(shard_record_file(
-                                scope.q,
-                                scope.n,
-                                item.shard_id,
-                            ));
-                            if raw_path.exists() {
+                            let raw_relative =
+                                PathBuf::from(shard_record_file(scope.q, scope.n, item.shard_id));
+                            if campaign_root_entry(campaign_root, &raw_relative)?
+                                == EntryKind::RegularFile
+                            {
                                 preserve_invalid_raw(
                                     campaign_root,
                                     &coordinator.receipt.campaign_id,
                                     item,
                                     attempt_authorization.attempt.attempt,
-                                    &raw_path,
+                                    &raw_relative,
                                 )?;
                             }
                             coordinator.record_quarantine_inner(
@@ -1632,7 +1571,7 @@ fn accelerator_costs_for_argv(
 }
 
 fn validate_accelerator_cost_identity(
-    campaign_root: &Path,
+    campaign_root: &CampaignRoot,
     manifest: &CampaignManifest,
     arm: &ArmInvocation,
 ) -> Result<(), CoordinatorError> {
@@ -1641,7 +1580,7 @@ fn validate_accelerator_cost_identity(
     {
         return Ok(());
     }
-    let repository_root = repository_root_for_campaign(campaign_root)?;
+    let repository_root = repository_root_for_campaign(campaign_root.path())?;
     let (_, observed) = accelerator_costs_for_argv(manifest, &arm.argv, &repository_root)?;
     if observed != arm.accelerator_cost_table {
         return refused("accelerator cost table identity differs from persisted arm evidence");
@@ -1726,7 +1665,7 @@ fn accepted_attempt<'a>(
 }
 
 fn exact_execution(
-    campaign_root: &Path,
+    campaign_root: &CampaignRoot,
     coordinator: &CampaignCoordinator,
     scope: ExactCellScope,
     items: &[WorkItem],
@@ -1740,8 +1679,8 @@ fn exact_execution(
         .iter()
         .filter(|item| accepted_attempt(&coordinator.receipt, item).is_some())
         .map(|item| {
-            let path = campaign_root.join(shard_record_file(item.q, item.n, item.shard_id));
-            let bytes = read_regular_file_nofollow(&path)?;
+            let relative = PathBuf::from(shard_record_file(item.q, item.n, item.shard_id));
+            let bytes = campaign_read(campaign_root, &relative)?;
             serde_json::from_slice(&bytes).map_err(CoordinatorError::Json)
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -1753,14 +1692,13 @@ fn exact_execution(
 }
 
 fn preserve_invalid_raw(
-    campaign_root: &Path,
+    campaign_root: &CampaignRoot,
     campaign_id: &CampaignId,
     item: &WorkItem,
     attempt: u8,
-    raw_path: &Path,
+    raw_relative: &Path,
 ) -> Result<(), CoordinatorError> {
-    let path = campaign_root
-        .join("derived")
+    let relative = PathBuf::from("derived")
         .join(campaign_id.to_string())
         .join(COORDINATOR_DIRECTORY)
         .join("quarantine")
@@ -1768,33 +1706,10 @@ fn preserve_invalid_raw(
             "q{}-n{}-shard-{:06}-attempt-{attempt}.json",
             item.q, item.n, item.shard_id
         ));
-    let parent = path
-        .parent()
-        .ok_or_else(|| CoordinatorError::Refused("quarantine path has no parent".to_owned()))?;
-    fs::create_dir_all(parent).map_err(|source| CoordinatorError::Io {
-        path: parent.to_owned(),
-        source,
-    })?;
-    if path.exists() {
-        return refused("quarantine evidence path already exists");
-    }
-    fs::rename(raw_path, &path).map_err(|source| CoordinatorError::Io {
-        path: path.clone(),
-        source,
-    })?;
-    fs::File::open(parent)
-        .and_then(|directory| directory.sync_all())
+    campaign_root
+        .move_new(raw_relative, &relative)
         .map_err(|source| CoordinatorError::Io {
-            path: parent.to_owned(),
-            source,
-        })?;
-    let raw_parent = raw_path
-        .parent()
-        .ok_or_else(|| CoordinatorError::Refused("raw shard path has no parent".to_owned()))?;
-    fs::File::open(raw_parent)
-        .and_then(|directory| directory.sync_all())
-        .map_err(|source| CoordinatorError::Io {
-            path: raw_parent.to_owned(),
+            path: campaign_root.path().join(relative),
             source,
         })
 }
@@ -1853,8 +1768,9 @@ struct FieldSidecar<'a> {
 /// # Errors
 ///
 /// Refuses nonterminal fields, empty evidence, a field/interpretation mismatch,
-/// a noncanonical source identity, or an existing sidecar. The function never
-/// opens raw shard, summary, or checksum paths.
+/// a noncanonical source identity, or a conflicting existing sidecar. An
+/// identical existing sidecar is adopted. The function never opens raw shard,
+/// summary, or checksum paths.
 ///
 /// # Panics
 ///
@@ -1870,7 +1786,8 @@ pub fn emit_field_sidecar(
     source_records: Vec<ArtifactIdentity>,
     interpretation: FieldInterpretation,
 ) -> Result<PathBuf, CoordinatorError> {
-    validate_campaign_directory(campaign_root, &receipt.campaign_id)?;
+    let root = open_campaign_root(campaign_root)?;
+    validate_campaign_directory(root.path(), &receipt.campaign_id)?;
     validate_interpretation(q, &interpretation)?;
     let field = receipt
         .fields
@@ -1887,8 +1804,7 @@ pub fn emit_field_sidecar(
     if source_records.is_empty() {
         return refused("sidecar requires source-record identities");
     }
-    let path = campaign_root
-        .join("derived")
+    let relative = PathBuf::from("derived")
         .join(receipt.campaign_id.to_string())
         .join(COORDINATOR_DIRECTORY)
         .join("field-sidecars")
@@ -1902,8 +1818,8 @@ pub fn emit_field_sidecar(
         status,
         interpretation,
     };
-    write_new_json(&path, &sidecar)?;
-    Ok(path)
+    write_new_json(&root, &relative, &sidecar)?;
+    Ok(root.path().join(relative))
 }
 
 fn validate_interpretation(
@@ -1943,15 +1859,11 @@ fn validate_frozen_paths(
 }
 
 fn identity_for_campaign_file(
-    campaign_root: &Path,
+    campaign_root: &CampaignRoot,
     campaign_id: &CampaignId,
     relative: &str,
 ) -> Result<ArtifactIdentity, CoordinatorError> {
-    let path = campaign_root.join(relative);
-    let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
-        path: path.clone(),
-        source,
-    })?;
+    let bytes = campaign_read(campaign_root, Path::new(relative))?;
     Ok(ArtifactIdentity {
         path: format!("{DATASET_HOME}/{campaign_id}/{relative}")
             .parse()
@@ -1962,12 +1874,14 @@ fn identity_for_campaign_file(
     })
 }
 
-fn identity_for_protocol(campaign_root: &Path) -> Result<ArtifactIdentity, CoordinatorError> {
-    let dataset_root = campaign_root.parent().ok_or_else(|| {
+fn identity_for_protocol(
+    campaign_root: &CampaignRoot,
+) -> Result<ArtifactIdentity, CoordinatorError> {
+    let dataset_root = campaign_root.path().parent().ok_or_else(|| {
         CoordinatorError::Refused("campaign root has no dataset parent".to_owned())
     })?;
     let path = dataset_root.join("protocol.md");
-    let bytes = fs::read(&path).map_err(|source| CoordinatorError::Io {
+    let bytes = super::root_fs::read_absolute(&path).map_err(|source| CoordinatorError::Io {
         path: path.clone(),
         source,
     })?;
@@ -1980,12 +1894,11 @@ fn identity_for_protocol(campaign_root: &Path) -> Result<ArtifactIdentity, Coord
 }
 
 fn validate_campaign_files(
-    campaign_root: &Path,
+    campaign_root: &CampaignRoot,
     manifest: &CampaignManifest,
     receipt: &CampaignCoordinatorReceipt,
 ) -> Result<(), CoordinatorError> {
-    let on_disk =
-        super::schema::read_manifest(campaign_root).map_err(CoordinatorError::Manifest)?;
+    let on_disk = read_manifest_anchored(campaign_root)?;
     if on_disk != *manifest
         || identity_for_campaign_file(campaign_root, &manifest.campaign_id, MANIFEST_FILE)?
             != receipt.manifest_identity
@@ -2578,7 +2491,7 @@ fn validate_receipt(
 }
 
 fn validate_on_disk_attempts(
-    campaign_root: &Path,
+    campaign_root: &CampaignRoot,
     manifest: &CampaignManifest,
     receipt: &CampaignCoordinatorReceipt,
 ) -> Result<(), CoordinatorError> {
@@ -2606,8 +2519,8 @@ fn validate_on_disk_attempts(
             .ok_or_else(|| {
                 CoordinatorError::Refused("attempt shard is not manifested".to_owned())
             })?;
-        let path = campaign_root.join(shard_record_file(q, n, attempt.shard_id));
-        let bytes = read_regular_file_nofollow(&path)?;
+        let relative = PathBuf::from(shard_record_file(q, n, attempt.shard_id));
+        let bytes = campaign_read(campaign_root, &relative)?;
         if digest(&bytes) != record.sha256 {
             return refused("accepted attempt digest differs from raw shard bytes");
         }
@@ -2843,104 +2756,60 @@ fn digest(bytes: &[u8]) -> Sha256Digest {
         .expect("SHA-256 formatting produces a canonical lowercase digest")
 }
 
-fn read_regular_file_nofollow(path: &Path) -> Result<Vec<u8>, CoordinatorError> {
-    use rustix::fs::{open, Mode, OFlags};
-
-    let descriptor = open(
-        path,
-        OFlags::RDONLY | OFlags::CLOEXEC | OFlags::NOFOLLOW,
-        Mode::empty(),
-    )
-    .map_err(|source| CoordinatorError::Io {
-        path: path.to_owned(),
-        source: std::io::Error::from_raw_os_error(source.raw_os_error()),
-    })?;
-    let mut file = fs::File::from(descriptor);
-    let metadata = file.metadata().map_err(|source| CoordinatorError::Io {
-        path: path.to_owned(),
-        source,
-    })?;
-    if !metadata.file_type().is_file() {
-        return refused("canonical raw shard evidence must be a regular file");
-    }
-    let mut bytes = Vec::new();
-    file.read_to_end(&mut bytes)
-        .map_err(|source| CoordinatorError::Io {
-            path: path.to_owned(),
-            source,
-        })?;
-    Ok(bytes)
-}
-
-fn atomic_json(path: &Path, value: &impl Serialize) -> Result<(), CoordinatorError> {
-    let parent = path
-        .parent()
-        .ok_or_else(|| CoordinatorError::Refused("coordinator path has no parent".to_owned()))?;
-    fs::create_dir_all(parent).map_err(|source| CoordinatorError::Io {
-        path: parent.to_owned(),
-        source,
-    })?;
-    let temporary = parent.join(format!(
-        ".{COORDINATOR_RECEIPT_FILE}.{}.tmp",
-        std::process::id()
-    ));
-    if temporary.exists() {
-        return refused("coordinator temporary path already exists");
-    }
+fn atomic_json(
+    root: &CampaignRoot,
+    relative: &Path,
+    value: &impl Serialize,
+) -> Result<(), CoordinatorError> {
     let bytes = serde_json::to_vec_pretty(value).map_err(CoordinatorError::Json)?;
-    let mut file = OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .open(&temporary)
+    root.write_atomic_replace(relative, &bytes)
         .map_err(|source| CoordinatorError::Io {
-            path: temporary.clone(),
-            source,
-        })?;
-    file.write_all(&bytes)
-        .and_then(|()| file.sync_all())
-        .map_err(|source| CoordinatorError::Io {
-            path: temporary.clone(),
-            source,
-        })?;
-    fs::rename(&temporary, path).map_err(|source| CoordinatorError::Io {
-        path: path.to_owned(),
-        source,
-    })?;
-    fs::File::open(parent)
-        .and_then(|directory| directory.sync_all())
-        .map_err(|source| CoordinatorError::Io {
-            path: parent.to_owned(),
+            path: root.path().join(relative),
             source,
         })
 }
 
-fn write_new_json(path: &Path, value: &impl Serialize) -> Result<(), CoordinatorError> {
-    let parent = path
-        .parent()
-        .ok_or_else(|| CoordinatorError::Refused("sidecar path has no parent".to_owned()))?;
-    fs::create_dir_all(parent).map_err(|source| CoordinatorError::Io {
-        path: parent.to_owned(),
-        source,
-    })?;
+fn write_new_json(
+    root: &CampaignRoot,
+    relative: &Path,
+    value: &impl Serialize,
+) -> Result<(), CoordinatorError> {
     let bytes = serde_json::to_vec_pretty(value).map_err(CoordinatorError::Json)?;
-    let mut file = OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .open(path)
+    root.write_atomic_new_or_adopt(relative, &bytes)
         .map_err(|source| CoordinatorError::Io {
-            path: path.to_owned(),
+            path: root.path().join(relative),
             source,
-        })?;
-    file.write_all(&bytes)
-        .and_then(|()| file.sync_all())
+        })
+}
+
+fn open_campaign_root(path: &Path) -> Result<CampaignRoot, CoordinatorError> {
+    CampaignRoot::open(path).map_err(|source| CoordinatorError::Io {
+        path: path.to_owned(),
+        source,
+    })
+}
+
+fn read_manifest_anchored(root: &CampaignRoot) -> Result<CampaignManifest, CoordinatorError> {
+    let relative = Path::new(MANIFEST_FILE);
+    let bytes = campaign_read(root, relative)?;
+    super::schema::read_manifest_bytes(&bytes, &root.path().join(relative))
+        .map_err(CoordinatorError::Manifest)
+}
+
+fn campaign_read(root: &CampaignRoot, relative: &Path) -> Result<Vec<u8>, CoordinatorError> {
+    root.read(relative).map_err(|source| CoordinatorError::Io {
+        path: root.path().join(relative),
+        source,
+    })
+}
+
+fn campaign_root_entry(
+    root: &CampaignRoot,
+    relative: &Path,
+) -> Result<EntryKind, CoordinatorError> {
+    root.entry_kind(relative)
         .map_err(|source| CoordinatorError::Io {
-            path: path.to_owned(),
-            source,
-        })?;
-    fs::File::open(parent)
-        .and_then(|directory| directory.sync_all())
-        .map_err(|source| CoordinatorError::Io {
-            path: parent.to_owned(),
+            path: root.path().join(relative),
             source,
         })
 }
@@ -2948,3 +2817,7 @@ fn write_new_json(path: &Path, value: &impl Serialize) -> Result<(), Coordinator
 fn refused<T>(message: &str) -> Result<T, CoordinatorError> {
     Err(CoordinatorError::Refused(message.to_owned()))
 }
+
+#[cfg(test)]
+#[path = "coordinator_tests.rs"]
+mod tests;

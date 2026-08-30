@@ -16,5 +16,6 @@ pub mod coordinator;
 pub(crate) mod fixture;
 pub mod launch_cost;
 pub mod provenance;
+pub(crate) mod root_fs;
 pub mod schedule;
 pub mod schema;

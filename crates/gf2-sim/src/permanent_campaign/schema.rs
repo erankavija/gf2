@@ -1471,6 +1471,15 @@ pub fn read_manifest(root: &Path) -> Result<CampaignManifest, SchemaError> {
     read_json(&root.join(MANIFEST_FILE))
 }
 
+/// Strictly decodes manifest bytes read through a caller-held filesystem
+/// anchor.
+pub(crate) fn read_manifest_bytes(
+    bytes: &[u8],
+    diagnostic_path: &Path,
+) -> Result<CampaignManifest, SchemaError> {
+    read_json_bytes(bytes, diagnostic_path)
+}
+
 /// Strictly reads and validates one field arm's summary.
 ///
 /// The integrity layer needs each cell's recorded terminal state to tell a
@@ -1784,8 +1793,15 @@ where
         path: path.to_owned(),
         source,
     })?;
+    read_json_bytes(&bytes, path)
+}
+
+fn read_json_bytes<T>(bytes: &[u8], path: &Path) -> Result<T, SchemaError>
+where
+    T: DeserializeOwned + SchemaDocument,
+{
     let document: T =
-        serde_json::from_slice(&bytes).map_err(|source| SchemaError::InvalidDocument {
+        serde_json::from_slice(bytes).map_err(|source| SchemaError::InvalidDocument {
             path: path.to_owned(),
             message: source.to_string(),
         })?;
