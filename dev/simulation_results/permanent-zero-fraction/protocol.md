@@ -292,11 +292,9 @@ Within that cohort, selection proceeds in this order:
    the selection receipt records every excluded outcome rather than implying a
    timing comparison that did not occur.
 
-Timing fixtures use their own stream purpose. The campaign execution stream
-reports draw, pack, permanent evaluate, determinant, and count phases per
-shard; those timings remain outside dataset files. Permanent or determinant
-values, zero counts, zero fractions, intervals, or test outcomes never enter
-backend selection. A backend discovered to be faster after the freeze does not replace
+Timing fixtures use their own stream purpose. Permanent or determinant values,
+zero counts, zero fractions, intervals, or test outcomes never enter backend
+selection. A backend discovered to be faster after the freeze does not replace
 the manifest choice. A manifest-named backend that is absent or becomes unsafe
 halts the cell; the coordinator does not silently substitute another backend. This
 campaign-specific rule preserves the frozen selection and does not alter safe
@@ -316,9 +314,10 @@ The `permanent_campaign` invocation requires the exact selector `--q FIELD
 --n ORDER` and accepts `--workers N`, where $N$ is an integer of at least $1$
 and defaults to $1$ when the flag is omitted. The command records the effective
 configuration as `campaign q={field} n={order} workers={N}` after the
-transaction and its per-shard timing lines complete. The persisted arm receipt
-names the configured parallelism without relying on host probing. The
-coordinator persists the required $(7,20)$-first gate and admits
+transaction returns, then prints each accepted or adopted record's `q`, `n`,
+`shard`, `matrices`, and `zeros`, followed by the terminal message. The
+persisted arm receipt names the configured parallelism without relying on host
+probing. The coordinator persists the required $(7,20)$-first gate and admits
 campaign-purpose work serially.
 
 This claim is deliberately limited: the argument vector records how the
