@@ -39,6 +39,9 @@ blake3 = "1" # for v2 checkpoint config_hash
 # algorithm (`checksums.sha256`, `Sha256Digest`), so that layer cannot reuse the
 # blake3 checkpoint hash above.
 sha2 = "0.10"
+# Safe no-follow opens bind accepted raw evidence to regular files without
+# introducing unsafe code outside the isolated kernel crates.
+rustix = { version = "1.1", features = ["fs"] }
 
 [dev-dependencies]
 proptest = { workspace = true }

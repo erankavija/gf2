@@ -1,22 +1,27 @@
 use std::fs::{self, OpenOptions};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Duration;
 
 use gf2_sim::permanent_campaign::acceptance::{
     assess_completed_cell, AcceptanceFamily, AcceptancePlan,
 };
 use gf2_sim::permanent_campaign::coordinator::{
     coordinator_lock_path, coordinator_receipt_path, emit_field_sidecar,
-    execute_scheduled_cell_with_evaluator, ArmInvocation, CampaignCoordinator, CampaignHaltCause,
+    execute_campaign_cell_with_evaluator, ArmInvocation, CampaignCoordinator, CampaignHaltCause,
     CampaignHaltState, CellExecutionState, ExactCellScope, FieldExecutionState,
     FieldInterpretation, LiteratureSearchClaim, ShardAttemptState,
 };
-use gf2_sim::permanent_campaign::schedule::ScheduleError;
+use gf2_sim::permanent_campaign::provenance::{approve_emission, EmissionApproval};
+use gf2_sim::permanent_campaign::schedule::{
+    EvaluatedShard, PhaseDurations, ScheduleError, ShardRun, WorkItem,
+};
 use gf2_sim::permanent_campaign::schema::{
-    field_summary_file, read_field_summary, shard_record_file, AcceptanceVerdict,
-    ArtifactIdentity, Availability, Backend, CampaignManifest, CellSpec, CellTerminalState,
-    DeterminantCount, DeterminantPlan, GitRevision, HaltReason, Provenance, RngAlgorithm,
-    ShardRecord, ShardSpec, StreamAddress, StreamPurpose, SCHEMA_VERSION,
+    field_summary_file, read_field_summary, shard_record_file, AcceptanceVerdict, ArtifactIdentity,
+    Availability, Backend, CampaignManifest, CellSpec, CellTerminalState, DeterminantCount,
+    DeterminantPlan, GitRevision, HaltReason, Provenance, RngAlgorithm, ShardRecord, ShardSpec,
+    StreamAddress, StreamPurpose, SCHEMA_VERSION,
 };
 use sha2::{Digest, Sha256};
 
@@ -123,11 +128,32 @@ fn arm(q: u8, n: u16) -> ArmInvocation {
         ],
         worker_count: 1,
         executable_sha256: "b".repeat(64).parse().unwrap(),
+        accelerator_cost_table: None,
+    }
+}
+
+fn arm_for_manifest(manifest: &CampaignManifest, q: u8, n: u16) -> ArmInvocation {
+    let mut argv = manifest.provenance.invocation.clone();
+    let q_index = argv.iter().position(|token| token == "--q").unwrap();
+    argv[q_index + 1] = q.to_string();
+    let n_index = argv.iter().position(|token| token == "--n").unwrap();
+    argv[n_index + 1] = n.to_string();
+    ArmInvocation {
+        scope: ExactCellScope { q, n },
+        argv,
+        worker_count: 1,
+        executable_sha256: manifest.provenance.binary_sha256.clone().unwrap(),
+        accelerator_cost_table: None,
     }
 }
 
 fn fixture() -> (PathBuf, CampaignManifest, CampaignCoordinator) {
-    let manifest = manifest();
+    fixture_from_manifest(manifest())
+}
+
+fn fixture_from_manifest(
+    manifest: CampaignManifest,
+) -> (PathBuf, CampaignManifest, CampaignCoordinator) {
     let id = FIXTURE_ID.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!(
         "gf2-coordinator-fixture-{}-{id}",
@@ -140,6 +166,65 @@ fn fixture() -> (PathBuf, CampaignManifest, CampaignCoordinator) {
     fs::write(root.join("protocol.md"), b"fixture frozen protocol\n").unwrap();
     let coordinator = CampaignCoordinator::new(&campaign_root).unwrap();
     (root, manifest, coordinator)
+}
+
+fn live_fixture() -> (PathBuf, PathBuf, CampaignManifest, EmissionApproval) {
+    let mut manifest = manifest();
+    let executable = std::env::current_exe().unwrap();
+    manifest.provenance.binary_sha256 = Some(
+        format!("{:x}", Sha256::digest(fs::read(executable).unwrap()))
+            .parse()
+            .unwrap(),
+    );
+    let id = FIXTURE_ID.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "gf2-live-coordinator-fixture-{}-{id}",
+        std::process::id()
+    ));
+    let repository = root.join("checkout");
+    let dataset = repository.join("dev/simulation_results/permanent-zero-fraction");
+    let campaign_root = dataset.join(manifest.campaign_id.to_string());
+    fs::create_dir_all(&campaign_root).unwrap();
+    fs::write(
+        campaign_root.join("manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    fs::write(dataset.join("protocol.md"), b"fixture frozen protocol\n").unwrap();
+    assert!(Command::new("git")
+        .args(["init", "--quiet", "--initial-branch=main"])
+        .current_dir(&repository)
+        .status()
+        .unwrap()
+        .success());
+    commit_fixture(&repository, "freeze fixture");
+    let approval = approve_emission(&campaign_root).unwrap();
+    (root, campaign_root, manifest, approval)
+}
+
+fn commit_fixture(repository: &Path, message: &str) {
+    assert!(Command::new("git")
+        .args(["add", "--all"])
+        .current_dir(repository)
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new("git")
+        .args([
+            "-c",
+            "user.name=fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "--quiet",
+            "--no-gpg-sign",
+            "-m",
+            message,
+        ])
+        .current_dir(repository)
+        .status()
+        .unwrap()
+        .success());
 }
 
 fn write_shard(
@@ -196,6 +281,42 @@ fn write_shard(
     fs::create_dir_all(path.parent().unwrap()).unwrap();
     fs::write(path, &bytes).unwrap();
     bytes
+}
+
+fn evaluated_shard(
+    manifest: &CampaignManifest,
+    item: &WorkItem,
+    permanent_zeros: u64,
+) -> EvaluatedShard {
+    let mut histogram = vec![0; usize::from(item.q)];
+    histogram[0] = permanent_zeros;
+    histogram[1] = item.matrix_count - permanent_zeros;
+    EvaluatedShard {
+        run: ShardRun {
+            record: ShardRecord {
+                schema_version: SCHEMA_VERSION,
+                shard_id: item.shard_id,
+                stream_address: StreamAddress {
+                    root_seed: manifest.root_seed,
+                    q: item.q,
+                    n: item.n,
+                    purpose_tag: 3,
+                    stream_index: item.stream_index,
+                },
+                matrix_count: item.matrix_count,
+                permanent_zero_count: permanent_zeros,
+                permanent_histogram: histogram,
+                determinant: DeterminantCount::NotEvaluated,
+            },
+            timing: PhaseDurations {
+                draw: Duration::ZERO,
+                pack: Duration::ZERO,
+                evaluate: Duration::ZERO,
+                determinant: Duration::ZERO,
+                count: Duration::ZERO,
+            },
+        },
+    }
 }
 
 fn accept_cell(
@@ -298,6 +419,144 @@ fn acceptance_uses_one_budget_exact_log_tails_and_finite_n_determinants() {
     );
     assert!((finite_n - (1.0 - 0.56_f64)).abs() > 0.001);
     assert!(assess_completed_cell(&plan, q3, 100, 33, DeterminantCount::NotEvaluated).is_err());
+}
+
+fn million_sample_manifest(determinant_companion: DeterminantPlan) -> CampaignManifest {
+    let mut campaign = manifest();
+    campaign.cells = vec![cell(7, 20, determinant_companion)];
+    campaign.cells[0].matrix_count = 1_000_000;
+    campaign.cells[0].shard_size = 1_000_000;
+    campaign
+}
+
+fn persist_million_sample_assessment(
+    campaign: CampaignManifest,
+    permanent_zero_count: u64,
+    determinant_zero_count: Option<u64>,
+) -> (PathBuf, PathBuf, CampaignCoordinator) {
+    let (root, campaign, mut coordinator) = fixture_from_manifest(campaign);
+    let campaign_root = root.join(campaign.campaign_id.to_string());
+    coordinator
+        .authorize_arm(arm_for_manifest(&campaign, 7, 20))
+        .unwrap();
+    coordinator.persist(&campaign_root).unwrap();
+    coordinator.authorize_attempt(7, 20, 0).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
+    write_shard(
+        &campaign_root,
+        &campaign,
+        7,
+        20,
+        0,
+        permanent_zero_count,
+        determinant_zero_count,
+    );
+    coordinator
+        .record_accepted(&campaign_root, 7, 20, 0)
+        .unwrap();
+    let determinant = determinant_zero_count.map_or(DeterminantCount::NotEvaluated, |zero_count| {
+        DeterminantCount::Evaluated {
+            sample_count: 1_000_000,
+            zero_count,
+        }
+    });
+    coordinator
+        .record_completed(7, 20, 1_000_000, permanent_zero_count, determinant)
+        .unwrap();
+    coordinator.persist(&campaign_root).unwrap();
+    let reloaded = CampaignCoordinator::read(&campaign_root).unwrap();
+    (root, campaign_root, reloaded)
+}
+
+#[test]
+fn coordinator_persists_exact_underflow_pass_and_finite_n_determinant_rejection() {
+    let (underflow_root, _, underflow) = persist_million_sample_assessment(
+        million_sample_manifest(DeterminantPlan::NotEvaluated),
+        0,
+        None,
+    );
+    let CellExecutionState::Completed { assessment, .. } = underflow.cell_state(7, 20).unwrap()
+    else {
+        panic!("the underflow observation remains completed contradiction evidence");
+    };
+    assert_eq!(assessment.permanent.test.successes, 0);
+    assert_eq!(assessment.permanent.test.trials, 1_000_000);
+    assert_eq!(assessment.permanent.test.null_probability, 1.0 / 7.0);
+    assert!(assessment.permanent.test.log_p_value < -745.0);
+    assert_eq!(assessment.permanent.test.level, 0.025);
+    assert_eq!(
+        assessment.permanent.test.verdict,
+        AcceptanceVerdict::Rejected
+    );
+    assert_eq!(assessment.summary.matrix_count, 1_000_000);
+    assert_eq!(assessment.summary.permanent_zero_count, 0);
+    assert!(matches!(
+        assessment.summary.terminal_state,
+        CellTerminalState::Completed {
+            permanent_verdict: AcceptanceVerdict::Rejected,
+            ..
+        }
+    ));
+    assert!(matches!(
+        underflow.halt_state(),
+        CampaignHaltState::Halted {
+            cause: CampaignHaltCause::Acceptance {
+                q: 7,
+                n: 20,
+                rejected_families,
+            }
+        } if rejected_families == &[AcceptanceFamily::PermanentFloor]
+    ));
+
+    let (pass_root, _, pass) = persist_million_sample_assessment(
+        million_sample_manifest(DeterminantPlan::NotEvaluated),
+        142_857,
+        None,
+    );
+    let CellExecutionState::Completed { assessment, .. } = pass.cell_state(7, 20).unwrap() else {
+        panic!("the floor-conforming observation completes");
+    };
+    assert_eq!(assessment.permanent.test.successes, 142_857);
+    assert_eq!(assessment.permanent.test.trials, 1_000_000);
+    assert_eq!(assessment.permanent.test.level, 0.025);
+    assert_eq!(
+        assessment.permanent.test.verdict,
+        AcceptanceVerdict::Accepted
+    );
+    assert!(assessment.permanent.test.log_p_value.is_finite());
+    assert!(matches!(pass.halt_state(), CampaignHaltState::Running));
+
+    let (determinant_root, _, determinant) = persist_million_sample_assessment(
+        million_sample_manifest(DeterminantPlan::Evaluate),
+        142_857,
+        Some(0),
+    );
+    let CellExecutionState::Completed { assessment, .. } = determinant.cell_state(7, 20).unwrap()
+    else {
+        panic!("the determinant contradiction remains completed evidence");
+    };
+    let determinant_evidence = assessment.determinant.unwrap().test;
+    let finite_n = 1.0 - (1..=20).fold(1.0, |product, i| product * (1.0 - 7_f64.powi(-i)));
+    assert_eq!(determinant_evidence.successes, 0);
+    assert_eq!(determinant_evidence.trials, 1_000_000);
+    assert_eq!(determinant_evidence.null_probability, finite_n);
+    assert!(determinant_evidence.log_p_value < -745.0);
+    assert_eq!(determinant_evidence.level, 0.025);
+    assert_eq!(determinant_evidence.verdict, AcceptanceVerdict::Rejected);
+    assert!(matches!(
+        determinant.halt_state(),
+        CampaignHaltState::Halted {
+            cause: CampaignHaltCause::Acceptance {
+                q: 7,
+                n: 20,
+                rejected_families,
+            }
+        } if rejected_families == &[AcceptanceFamily::Determinant]
+    ));
+
+    fs::remove_dir_all(underflow_root).unwrap();
+    fs::remove_dir_all(pass_root).unwrap();
+    fs::remove_dir_all(determinant_root).unwrap();
 }
 
 #[test]
@@ -405,48 +664,45 @@ fn coordinator_enforces_first_cell_retry_and_contradiction_preservation() {
 fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
     let scope = ExactCellScope { q: 7, n: 20 };
 
-    let (unpersisted_root, unpersisted_manifest, _) = fixture();
-    let unpersisted_campaign = unpersisted_root.join(unpersisted_manifest.campaign_id.to_string());
-    let mut unpersisted_entries = 0_u8;
-    assert!(execute_scheduled_cell_with_evaluator(
-        &unpersisted_campaign,
-        scope,
-        1,
-        |_, _, _, _| {
-            unpersisted_entries += 1;
-            Err(ScheduleError::InvalidWorkItem(
-                "unreachable fixture evaluator".to_owned(),
-            ))
-        },
-    )
-    .is_err());
-    assert_eq!(unpersisted_entries, 0);
-    assert!(!unpersisted_campaign.join("derived").exists());
-
-    let (retry_root, retry_manifest, mut retry) = fixture();
-    let retry_campaign = retry_root.join(retry_manifest.campaign_id.to_string());
-    retry.authorize_arm(arm(7, 20)).unwrap();
-    retry.persist(&retry_campaign).unwrap();
+    let (retry_root, retry_campaign, retry_manifest, approval) = live_fixture();
     let mut mismatched_worker_entries = 0_u8;
-    assert!(
-        execute_scheduled_cell_with_evaluator(&retry_campaign, scope, 2, |_, _, _, _| {
+    assert!(execute_campaign_cell_with_evaluator(
+        &retry_campaign,
+        scope,
+        2,
+        arm_for_manifest(&retry_manifest, 7, 20).argv,
+        approval,
+        |_, _, _, _| {
             mismatched_worker_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
                 "mismatched worker evaluator must not run".to_owned(),
             ))
-        },)
-        .is_err()
-    );
+        },
+        |_| {},
+    )
+    .is_err());
     assert_eq!(mismatched_worker_entries, 0);
     let mut addresses = Vec::new();
-    let execution =
-        execute_scheduled_cell_with_evaluator(&retry_campaign, scope, 1, |_, item, _, _| {
+    let execution = execute_campaign_cell_with_evaluator(
+        &retry_campaign,
+        scope,
+        1,
+        arm_for_manifest(&retry_manifest, 7, 20).argv,
+        approve_emission(&retry_campaign).unwrap(),
+        |_, item, _, _| {
+            let persisted = CampaignCoordinator::read(&retry_campaign).unwrap();
+            assert!(matches!(
+                persisted.receipt().attempts.last().unwrap().state,
+                ShardAttemptState::Authorized
+            ));
             addresses.push((item.q, item.n, item.shard_id, item.stream_index));
             Err(ScheduleError::InvalidWorkItem(
                 "deterministic mechanical fixture".to_owned(),
             ))
-        })
-        .unwrap();
+        },
+        |_| {},
+    )
+    .unwrap();
     assert_eq!(addresses.len(), 2);
     assert_eq!(addresses[0], addresses[1]);
     assert!(matches!(
@@ -461,31 +717,47 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         .iter()
         .all(|attempt| matches!(attempt.state, ShardAttemptState::Quarantined { .. })));
     let mut forbidden_entries = 0_u8;
-    assert!(
-        execute_scheduled_cell_with_evaluator(&retry_campaign, scope, 1, |_, _, _, _| {
+    assert!(execute_campaign_cell_with_evaluator(
+        &retry_campaign,
+        scope,
+        1,
+        arm_for_manifest(&retry_manifest, 7, 20).argv,
+        approve_emission(&retry_campaign).unwrap(),
+        |_, _, _, _| {
             forbidden_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
                 "unreachable third attempt".to_owned(),
             ))
-        },)
-        .is_err()
-    );
+        },
+        |_| {},
+    )
+    .is_err());
     assert_eq!(forbidden_entries, 0);
 
-    let (adopt_root, adopt_manifest, mut adopt) = fixture();
-    let adopt_campaign = adopt_root.join(adopt_manifest.campaign_id.to_string());
-    adopt.authorize_arm(arm(7, 20)).unwrap();
+    let (adopt_root, adopt_campaign, adopt_manifest, approval) = live_fixture();
+    let mut adopt = CampaignCoordinator::new(&adopt_campaign).unwrap();
+    adopt
+        .authorize_arm(arm_for_manifest(&adopt_manifest, 7, 20))
+        .unwrap();
     adopt.persist(&adopt_campaign).unwrap();
     adopt.authorize_attempt(7, 20, 0).unwrap();
     adopt.persist(&adopt_campaign).unwrap();
     write_shard(&adopt_campaign, &adopt_manifest, 7, 20, 0, 14, None);
     let mut adopted_entries = 0_u8;
-    let adopted = execute_scheduled_cell_with_evaluator(&adopt_campaign, scope, 1, |_, _, _, _| {
-        adopted_entries += 1;
-        Err(ScheduleError::InvalidWorkItem(
-            "durable raw must be adopted".to_owned(),
-        ))
-    })
+    let adopted = execute_campaign_cell_with_evaluator(
+        &adopt_campaign,
+        scope,
+        1,
+        arm_for_manifest(&adopt_manifest, 7, 20).argv,
+        approval,
+        |_, _, _, _| {
+            adopted_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "durable raw must be adopted".to_owned(),
+            ))
+        },
+        |_| {},
+    )
     .unwrap();
     assert_eq!(adopted_entries, 0);
     assert_eq!(adopted.records.len(), 1);
@@ -500,9 +772,11 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         ShardAttemptState::Accepted { .. }
     ));
 
-    let (invalid_root, invalid_manifest, mut invalid) = fixture();
-    let invalid_campaign = invalid_root.join(invalid_manifest.campaign_id.to_string());
-    invalid.authorize_arm(arm(7, 20)).unwrap();
+    let (invalid_root, invalid_campaign, invalid_manifest, approval) = live_fixture();
+    let mut invalid = CampaignCoordinator::new(&invalid_campaign).unwrap();
+    invalid
+        .authorize_arm(arm_for_manifest(&invalid_manifest, 7, 20))
+        .unwrap();
     invalid.persist(&invalid_campaign).unwrap();
     invalid.authorize_attempt(7, 20, 0).unwrap();
     invalid.persist(&invalid_campaign).unwrap();
@@ -510,14 +784,21 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
     fs::create_dir_all(invalid_raw.parent().unwrap()).unwrap();
     fs::write(&invalid_raw, b"{invalid durable shard").unwrap();
     let mut recovery_entries = 0_u8;
-    let invalid_execution =
-        execute_scheduled_cell_with_evaluator(&invalid_campaign, scope, 1, |_, _, _, _| {
+    let invalid_execution = execute_campaign_cell_with_evaluator(
+        &invalid_campaign,
+        scope,
+        1,
+        arm_for_manifest(&invalid_manifest, 7, 20).argv,
+        approval,
+        |_, _, _, _| {
             recovery_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
                 "deterministic recovery failure".to_owned(),
             ))
-        })
-        .unwrap();
+        },
+        |_| {},
+    )
+    .unwrap();
     assert_eq!(recovery_entries, 1);
     assert!(matches!(
         invalid_execution.terminal_state,
@@ -538,18 +819,136 @@ fn exact_executor_requires_persisted_admission_retries_once_and_adopts_raw() {
         .iter()
         .all(|attempt| matches!(attempt.state, ShardAttemptState::Quarantined { .. })));
 
-    fs::remove_dir_all(unpersisted_root).unwrap();
     fs::remove_dir_all(retry_root).unwrap();
     fs::remove_dir_all(adopt_root).unwrap();
     fs::remove_dir_all(invalid_root).unwrap();
 }
 
 #[test]
+fn canonical_transaction_persists_authorization_before_sampling_and_raw_before_acceptance() {
+    let (root, campaign_root, campaign, approval) = live_fixture();
+    let mut evaluator_saw_authorized = false;
+    let mut durability_saw_authorized = false;
+    let execution = execute_campaign_cell_with_evaluator(
+        &campaign_root,
+        ExactCellScope { q: 7, n: 20 },
+        1,
+        arm_for_manifest(&campaign, 7, 20).argv,
+        approval,
+        |manifest, item, _, _| {
+            let persisted = CampaignCoordinator::read(&campaign_root).unwrap();
+            assert!(matches!(
+                persisted.receipt().attempts.last().unwrap().state,
+                ShardAttemptState::Authorized
+            ));
+            evaluator_saw_authorized = true;
+            Ok(evaluated_shard(manifest, item, 14))
+        },
+        |raw_path| {
+            assert!(raw_path.is_file());
+            let persisted = CampaignCoordinator::read(&campaign_root).unwrap();
+            assert!(matches!(
+                persisted.receipt().attempts.last().unwrap().state,
+                ShardAttemptState::Authorized
+            ));
+            durability_saw_authorized = true;
+        },
+    )
+    .unwrap();
+    assert!(evaluator_saw_authorized);
+    assert!(durability_saw_authorized);
+    assert!(matches!(
+        execution.terminal_state,
+        CellExecutionState::Completed { .. }
+    ));
+    let persisted = CampaignCoordinator::read(&campaign_root).unwrap();
+    assert!(matches!(
+        persisted.receipt().attempts.last().unwrap().state,
+        ShardAttemptState::Accepted { .. }
+    ));
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn persisted_arm_binds_one_repository_relative_accelerator_cost_snapshot() {
+    let (root, campaign_root, mut campaign, _) = live_fixture();
+    let repository = root.join("checkout");
+    let relative_table = "dev/benchmarks/permanent_campaign/coordinator-costs.csv";
+    let table_path = repository.join(relative_table);
+    fs::create_dir_all(table_path.parent().unwrap()).unwrap();
+    fs::write(&table_path, b"q,n,per_matrix_us\n5,20,17\n").unwrap();
+    let mut accelerator_cell = campaign.cells[0].clone();
+    accelerator_cell.q = 5;
+    accelerator_cell.n = 20;
+    accelerator_cell.shards[0].stream_index += 1;
+    accelerator_cell.backend = Backend::Accelerator;
+    campaign.cells.push(accelerator_cell);
+    campaign.provenance.invocation.extend([
+        "--accelerator-cost-table".to_owned(),
+        relative_table.to_owned(),
+        "--accelerator-launch-cap-ms".to_owned(),
+        "500".to_owned(),
+    ]);
+    fs::write(
+        campaign_root.join("manifest.json"),
+        serde_json::to_vec_pretty(&campaign).unwrap(),
+    )
+    .unwrap();
+    commit_fixture(&repository, "bind accelerator costs");
+
+    let original = fs::read(&table_path).unwrap();
+    let mut first_entries = 0_u8;
+    let first = execute_campaign_cell_with_evaluator(
+        &campaign_root,
+        ExactCellScope { q: 7, n: 20 },
+        1,
+        arm_for_manifest(&campaign, 7, 20).argv,
+        approve_emission(&campaign_root).unwrap(),
+        |_, _, _, _| {
+            first_entries += 1;
+            fs::write(&table_path, b"q,n,per_matrix_us\n5,20,19\n").unwrap();
+            Err(ScheduleError::InvalidWorkItem(
+                "stop after mutating the execution input".to_owned(),
+            ))
+        },
+        |_| {},
+    );
+    assert!(first.is_err());
+    assert_eq!(first_entries, 1);
+
+    let mut refused_entries = 0_u8;
+    assert!(execute_campaign_cell_with_evaluator(
+        &campaign_root,
+        ExactCellScope { q: 7, n: 20 },
+        1,
+        arm_for_manifest(&campaign, 7, 20).argv,
+        approve_emission(&campaign_root).unwrap(),
+        |_, _, _, _| {
+            refused_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "changed cost input must refuse before sampling".to_owned(),
+            ))
+        },
+        |_| {},
+    )
+    .is_err());
+    assert_eq!(refused_entries, 0);
+
+    fs::write(&table_path, original).unwrap();
+    let persisted = CampaignCoordinator::read(&campaign_root).unwrap();
+    let arm = &persisted.receipt().arms[0];
+    let identity = arm.accelerator_cost_table.as_ref().unwrap();
+    assert_eq!(identity.path.as_str(), relative_table);
+    assert!(matches!(
+        persisted.receipt().attempts[0].state,
+        ShardAttemptState::Authorized
+    ));
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn exact_executor_lock_contention_has_zero_sampler_entry() {
-    let (root, campaign, mut coordinator) = fixture();
-    let campaign_root = root.join(campaign.campaign_id.to_string());
-    coordinator.authorize_arm(arm(7, 20)).unwrap();
-    coordinator.persist(&campaign_root).unwrap();
+    let (root, campaign_root, campaign, approval) = live_fixture();
     let lock_path = coordinator_lock_path(&campaign_root, &campaign.campaign_id);
     fs::create_dir_all(lock_path.parent().unwrap()).unwrap();
     let lock = OpenOptions::new()
@@ -560,20 +959,65 @@ fn exact_executor_lock_contention_has_zero_sampler_entry() {
         .unwrap();
     lock.try_lock().unwrap();
     let mut entries = 0_u8;
-    assert!(execute_scheduled_cell_with_evaluator(
+    assert!(execute_campaign_cell_with_evaluator(
         &campaign_root,
         ExactCellScope { q: 7, n: 20 },
         1,
+        arm_for_manifest(&campaign, 7, 20).argv,
+        approval,
         |_, _, _, _| {
             entries += 1;
             Err(ScheduleError::InvalidWorkItem(
                 "contended evaluator must not run".to_owned(),
             ))
         },
+        |_| {},
     )
     .is_err());
     assert_eq!(entries, 0);
     drop(lock);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn stale_scheduled_snapshot_cannot_overwrite_authorized_accepted_or_completed() {
+    let (root, campaign, mut initial) = fixture();
+    let campaign_root = root.join(campaign.campaign_id.to_string());
+    initial.authorize_arm(arm(7, 20)).unwrap();
+    initial.persist(&campaign_root).unwrap();
+    let stale = CampaignCoordinator::read(&campaign_root).unwrap();
+
+    let mut current = CampaignCoordinator::read(&campaign_root).unwrap();
+    current.authorize_attempt(7, 20, 0).unwrap();
+    current.persist(&campaign_root).unwrap();
+    assert!(stale.persist(&campaign_root).is_err());
+    assert!(matches!(
+        CampaignCoordinator::read(&campaign_root)
+            .unwrap()
+            .receipt()
+            .attempts
+            .last()
+            .unwrap()
+            .state,
+        ShardAttemptState::Authorized
+    ));
+
+    write_shard(&campaign_root, &campaign, 7, 20, 0, 14, None);
+    current.record_accepted(&campaign_root, 7, 20, 0).unwrap();
+    current
+        .record_completed(7, 20, 100, 14, DeterminantCount::NotEvaluated)
+        .unwrap();
+    current.persist(&campaign_root).unwrap();
+    assert!(stale.persist(&campaign_root).is_err());
+    let terminal = CampaignCoordinator::read(&campaign_root).unwrap();
+    assert!(matches!(
+        terminal.receipt().attempts.last().unwrap().state,
+        ShardAttemptState::Accepted { .. }
+    ));
+    assert!(matches!(
+        terminal.cell_state(7, 20),
+        Some(CellExecutionState::Completed { .. })
+    ));
     fs::remove_dir_all(root).unwrap();
 }
 
@@ -782,9 +1226,11 @@ fn receipt_summary_and_sidecars_are_terminal_monotonic_and_closed() {
 fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
     use std::os::unix::fs::symlink;
 
-    let (root, campaign, mut coordinator) = fixture();
-    let campaign_root = root.join(campaign.campaign_id.to_string());
-    coordinator.authorize_arm(arm(7, 20)).unwrap();
+    let (root, campaign_root, campaign, approval) = live_fixture();
+    let mut coordinator = CampaignCoordinator::new(&campaign_root).unwrap();
+    coordinator
+        .authorize_arm(arm_for_manifest(&campaign, 7, 20))
+        .unwrap();
     coordinator.persist(&campaign_root).unwrap();
     coordinator.authorize_attempt(7, 20, 0).unwrap();
     coordinator.persist(&campaign_root).unwrap();
@@ -796,16 +1242,19 @@ fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
     symlink(&target, &raw_path).unwrap();
 
     let mut sampler_entries = 0_u8;
-    let result = execute_scheduled_cell_with_evaluator(
+    let result = execute_campaign_cell_with_evaluator(
         &campaign_root,
         ExactCellScope { q: 7, n: 20 },
         1,
+        arm_for_manifest(&campaign, 7, 20).argv,
+        approval,
         |_, _, _, _| {
             sampler_entries += 1;
             Err(ScheduleError::InvalidWorkItem(
                 "symlink evidence must refuse before recovery".to_owned(),
             ))
         },
+        |_| {},
     );
     assert!(result.is_err());
     assert_eq!(sampler_entries, 0);

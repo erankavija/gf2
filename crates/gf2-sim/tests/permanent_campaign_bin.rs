@@ -236,6 +236,13 @@ fn files_under(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
 
 fn run_with_cost_table(label: &str, table: &str) -> std::process::Output {
     let parent = temp_path(label);
+    fs::create_dir_all(&parent).unwrap();
+    assert!(Command::new("git")
+        .args(["init", "--quiet", "--initial-branch=main"])
+        .current_dir(&parent)
+        .status()
+        .unwrap()
+        .success());
     let manifest_path = parent.join("manifest");
     let manifest_file = manifest_path.join("manifest.json");
     let output_path = parent.join("campaign-bin-test");
