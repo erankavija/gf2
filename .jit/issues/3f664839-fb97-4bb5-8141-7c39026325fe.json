@@ -35,6 +35,7 @@
       "path": "dev/active/3f664839/design.md"
     }
   ],
+  "done_at": "2026-08-30T03:35:42.017497310Z",
   "first_ready_at": "2026-08-30T01:32:03.801186402Z",
   "gates_required": [
     "doc-review",
@@ -60,7 +61,7 @@
     "cites:GGK2025"
   ],
   "priority": "low",
-  "state": "in_progress",
+  "state": "done",
   "title": "Preregistered compressed-state rare-event design",
-  "updated_at": "2026-08-30T03:35:01.549482472Z"
+  "updated_at": "2026-08-30T03:35:42.017497310Z"
 }
