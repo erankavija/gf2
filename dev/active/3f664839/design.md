@@ -479,24 +479,25 @@ test table; no test takes an index from either scientific subdomain.
 
 ### Versioned artifact envelope and immutable identities
 
-The rare-event artifact boundary has one closed JSON envelope and three closed
+The rare-event artifact boundary has one closed JSON envelope and four closed
 payload schemas. These identifiers are exact, case-sensitive ASCII strings:
 
 | Role | `envelope_schema` or `payload_schema` |
 | --- | --- |
 | Common envelope | `gf2.rare-event-artifact-envelope/v1` |
 | Trajectory checkpoint | `gf2.rare-event-trajectory-checkpoint/v1` |
+| Execution-attempt receipt | `gf2.rare-event-execution-attempt/v1` |
 | Target cross-check final receipt | `gf2.rare-event-target-cross-check/v1` |
 | Coverage-validation final receipt | `gf2.rare-event-coverage-validation/v1` |
 
 The envelope contains exactly `envelope_schema`, `artifact_kind`, and
 `payload`. The closed `artifact_kind` values are `trajectory_checkpoint`,
-`target_cross_check`, and `coverage_validation`; each selects the one payload
-schema in the table. Every payload begins with its exact `payload_schema`.
-Deserialization denies unknown fields at every nesting level. There is no
-untagged, inferred, or compatibility representation alongside this envelope.
-The strict input configuration is likewise identified by
-`gf2.rare-event-configuration/v1` and denies unknown fields.
+`execution_attempt`, `target_cross_check`, and `coverage_validation`; each
+selects the one payload schema in the table. Every payload begins with its
+exact `payload_schema`. Deserialization denies unknown fields at every nesting
+level. There is no untagged, inferred, or compatibility representation
+alongside this envelope. The strict input configuration is likewise identified
+by `gf2.rare-event-configuration/v1` and denies unknown fields.
 
 Every payload embeds the complete closed `RareEventDatasetIdentityV1` object,
 not only its digest. Its fields are:
@@ -562,11 +563,10 @@ toolchain fields separately bind code generation. Verification recreates this
 descriptor from the producing build receipt rather than from a hand-maintained
 file inventory.
 
-Actual worker count, schedule, and interruption points belong to an attempt
-log outside this canonical artifact set because they do not alter scientific
-identity. This keeps receipt bytes invariant under the required worker/resume
-checks while the receipt still binds all behavior-affecting source, RNG,
-toolchain, design, and configuration identities.
+Worker count, scheduling configuration, execution hardware, and interruption
+points do not enter `dataset_id` because they do not change the scientific
+sampling contract. They belong to versioned execution-attempt receipts inside
+the artifact set and remain transitively linked from every final receipt.
 
 Let $I$ be the canonical bytes of the complete dataset-identity object. The
 lowercase 64-hex `dataset_id` is
@@ -596,6 +596,167 @@ build receipt; it never adopts an identity embedded in an artifact. Manifest,
 protocol, configuration, and pinned design-object bytes are rehashed and
 compared with that expected identity before any checkpoint is accepted.
 
+### Execution-attempt receipts and lineage
+
+An execution attempt is one process invocation and has two immutable envelope
+artifacts under the single
+`gf2.rare-event-execution-attempt/v1` payload schema. Its closed `phase`
+discriminant is `start` or `terminal`. Splitting the phases makes the start
+artifact digest available before a worker publishes a checkpoint while keeping
+the terminal time and outcome immutable. Both phases embed the complete
+dataset identity and `dataset_id`.
+
+For zero-based attempt ordinal $a$, let $A_a$ be its exact eight-byte
+little-endian unsigned encoding, let $D$ be the dataset digest bytes, and let
+$P_a$ be the predecessor tag. The attempt ID is
+
+$$
+\texttt{attempt_id}=\operatorname{hex}\!\left(\operatorname{SHA256}
+  (\texttt{gf2-rare-event-attempt-identity-v1}
+   \mathbin\Vert \mathtt{0x00}\mathbin\Vert D
+   \mathbin\Vert A_a\mathbin\Vert P_a)\right).
+$$
+
+For $a=0$, $P_a$ is the single byte $\mathtt{0x00}$. For $a>0$, it is
+$\mathtt{0x01}$ followed by the 32 decoded SHA-256 bytes of attempt $a-1$'s
+terminal artifact. Readers recompute the attempt ID and refuse a gap, fork,
+reordered ordinal, or predecessor mismatch.
+
+The `start` payload contains exactly the common schema and identity fields,
+`attempt_id`, `attempt_ordinal`, the tagged predecessor, the ordered
+`resume_checkpoint_refs` already accepted at process start, `start_utc`,
+`start_receipt_utc`, and the following closed execution objects:
+
+- `invocation` records the exact process argument vector as an ordered JSON
+  string array, including argument zero. Non-UTF-8 arguments are rejected
+  before attempt publication rather than lossily converted. It also records
+  the resolved executable path and SHA-256; the runtime child process ID,
+  operating-system process-start token, and boot or container identity that
+  together disambiguate process-ID reuse; the immutable configuration path,
+  content SHA-256, and canonical effective configuration bytes; and a
+  field-by-field input-resolution array naming whether each effective value
+  comes from configuration, an argument token, a declared environment input,
+  or a schema default.
+- `environment_inputs` records exactly once, in ascending name-byte order,
+  every behavior-affecting environment name declared by the producing
+  `gf2.rare-event-behavior-closure/v1` descriptor. Each entry is tagged
+  `unset` or contains the exact UTF-8 value; non-UTF-8 values are rejected.
+  All environment access that can affect execution passes through this
+  instrumented input layer. An undeclared behavior-affecting environment read
+  is a producer error and requires a behavior-closure change before execution.
+- `worker_configuration` records requested and effective worker counts,
+  executor/backend mode, CPU affinity or an explicit `unpinned` tag, work
+  queue and block-assignment policy identifiers, accelerator-selection and
+  fallback policy, and the ordered effective device selection. Worker and
+  schedule settings may differ between attempts, but no entry may override a
+  scientific identity field.
+- `host_observation` records the UTC observation time; CPU architecture,
+  vendor and runtime-reported model identity; socket, NUMA-node, physical-core,
+  logical-CPU and online-CPU topology; total and available RAM bytes; OS name
+  and version; and kernel release and version. Each group records the runtime
+  API, procfs, sysfs, or equivalent observation source used by the collector,
+  its exact returned evidence bytes encoded as lowercase hex, and a SHA-256
+  over the decoded evidence bytes. The normalized fields are deterministically
+  re-derived from that evidence during validation.
+- `accelerator_observation` is a closed tagged union. `not_used` means that no
+  accelerator is selected or loaded for the attempt and gives the
+  runtime-observed selection reason. `used` records every selected GPU's
+  model, UUID, PCI address, architecture, driver version, ROCm and HIP runtime
+  versions, and the producing GPU kernel name and code-object SHA-256. A
+  selected GPU remains `used` when the attempt fails or produces no accepted
+  checkpoint. The collector obtains these values from the process preflight,
+  driver, and loaded code object and records the observation sources, their
+  exact returned evidence bytes as lowercase hex, and SHA-256 values over the
+  decoded evidence. Validation re-derives the normalized accelerator fields
+  from that evidence. A required unavailable value aborts the attempt before
+  checkpoint publication.
+
+Hardware fields accept only collector-populated runtime observations. The
+configuration and source contain no hand-written machine inventory. UTC
+timestamps use exactly `YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`. A supervising
+launcher observes `start_utc` when the operating system reports successful
+child creation at a preflight barrier, collects the child's effective inputs
+and runtime observations, observes `start_receipt_utc` immediately before
+atomic start publication, and releases workers only after that publication
+succeeds.
+
+The `terminal` payload contains exactly the common schema and identity fields,
+the attempt ID and ordinal, `attempt_start_sha256`, the echoed start UTC,
+`end_utc`, a tagged end-time meaning, the optional monotonic elapsed
+nanoseconds, the start host- and accelerator-observation digests, a closed
+`outcome_observer`, a closed outcome, and the ordered checkpoint references
+produced by the attempt. `outcome_observer` contains the launcher executable
+digest and is tagged `supervising_launcher` for a normal terminal or
+`resuming_launcher` for recovery. The outcomes are `completed`, `failed`,
+`interrupted`, and `termination_unobserved_on_resume`. A normal terminal record
+uses `process_observed` end-time meaning. The supervising launcher obtains the exact child
+exit status or signal from the operating-system wait result and writes the
+terminal receipt after child termination; the child never asserts its own exit
+outcome. The launcher also records any structured failure category received
+before termination. `completed` requires a successful observed exit and
+completed contract, `failed` records an observed error exit or structured
+failure, and `interrupted` records an observed cancellation or termination
+signal. If an abrupt stop leaves no terminal record, the next resume first
+checks the recorded process identity. A matching live child blocks recovery.
+After runtime observation proves that identity is not live, the resumer records
+the liveness observation source and evidence and publishes a
+`termination_unobserved_on_resume` terminal record with
+`resume_observation` end-time meaning and the UTC at which the resumer observes
+the abandoned attempt; it never asserts whether or when the child terminated.
+Failed, interrupted, and termination-unobserved attempts remain in the lineage
+even when they contribute no checkpoint.
+
+Attempt directories are
+`<dataset_id>/attempts/<twelve-digit-ordinal>/start/` and
+`<dataset_id>/attempts/<twelve-digit-ordinal>/terminal/`. Each phase uses the
+same canonical JSON, sidecar, staging, synchronization, and atomic no-replace
+publication rules as checkpoints, with sibling staging names
+`.start.staging-<32-lowercase-hex>` and
+`.terminal.staging-<32-lowercase-hex>`. Attempt ordinals are contiguous from
+`000000000000` and are bounded by $0\le a<10^{12}$. A new start is admissible
+only after every earlier start has exactly one valid terminal. Resume
+reconstructs the complete ordered attempt chain and the exact accepted
+checkpoint set before it publishes the next start.
+
+Every checkpoint payload includes `attempt_id`,
+`attempt_start_sha256`, and a closed producer-backend observation. A CPU
+producer records `cpu`. A GPU producer records the device UUID, GPU kernel
+name, and code-object SHA-256 present in its start receipt. The checkpoint
+also records the matching accelerator-observation digest. Its digest therefore
+binds its producing invocation and observed hardware without putting worker or
+hardware facts into `dataset_id`. Its attempt terminal lists that checkpoint's
+block address and digest exactly once.
+
+Each final receipt has two closed objects and a sibling `result_sha256`.
+`result_payload` contains only the canonical scientific values and contains no
+digest field; `result_sha256` is recomputed over exactly the canonical bytes
+of that object, so it is non-self-referential.
+`execution_provenance` contains the exact ordinal-ordered triples
+`(attempt_id,attempt_start_sha256,attempt_terminal_sha256)` and the complete
+ordered checkpoint-reference list. The checkpoint list in
+`execution_provenance` is partitioned exactly by the terminal receipts: every
+accepted checkpoint has one linked start, appears in exactly one matching
+terminal, and appears exactly once in the final receipt. All attempt
+directories, including failed, interrupted, and termination-unobserved
+attempts, appear in the gap-free final lineage.
+
+Validation fails closed on a missing, extra, duplicate, unlinked, reordered,
+or corrupt attempt phase; a missing terminal; a checkpoint whose start digest
+is absent; a checkpoint omitted from or claimed by multiple terminal records;
+an invocation whose resolved scientific inputs differ from the dataset
+identity; an environment declaration mismatch; a worker/backend or GPU-kernel
+observation inconsistent with the checkpoint producer tag; or any dataset,
+source, executable, toolchain, hardware-field, lineage, or content-digest
+mismatch. Historical hardware is validated against its immutable observed
+receipt and links, not against the machine performing a later read.
+
+Different worker counts, hardware, timestamps, interruption patterns, or
+resume lineages legitimately produce different attempt bytes, checkpoint
+digests, execution-provenance objects, and outer final-receipt digests. For the
+same addressed trajectories, the canonical `result_payload` bytes and
+`result_sha256` remain identical. Rebuilding one fixed execution fixture
+reproduces its complete receipt bytes exactly.
+
 ### Canonical bytes, checksums, and closed reads
 
 The canonical serializer emits UTF-8 JSON with object keys sorted in ascending
@@ -610,8 +771,12 @@ without normalization. All identifiers, paths, digests, and exact numeric
 renderings in these schemas are ASCII. Arrays follow their schema order:
 fields by increasing $q$, replicates by increasing $(q,b)$, logical runs by
 increasing $(r)$ or $(q,b,r)$, checkpoint blocks by increasing block index,
-and trajectory records by increasing full semantic address. Maps or
-order-insensitive sets do not occur in a payload.
+trajectory records by increasing full semantic address, attempts by increasing
+ordinal, environment inputs by increasing name bytes, CPU topology entries by
+increasing logical identifier, and GPU observations by increasing UUID.
+Input-resolution entries use increasing field-name bytes. Argument tokens
+retain their original order. Maps or order-insensitive sets do not occur in a
+payload.
 
 Every published directory contains exactly `artifact.json` and
 `artifact.sha256`. The sidecar is one lowercase line
@@ -626,8 +791,9 @@ envelope, payload, configuration, sampler, address-partition, RNG, or
 serializer version; unknown `artifact_kind` or field; malformed UTF-8 or JSON;
 noncanonical encodings; invalid exact integers or rationals; missing or extra
 published files; missing, malformed, or mismatched sidecar; checksum mismatch;
-dataset- or run-ID recomputation mismatch; manifest, design, configuration,
-source-behavior, executable, RNG, or toolchain identity mismatch; or a dirty
+dataset-, run-, or attempt-ID recomputation mismatch; manifest, design,
+configuration, source-behavior, executable, RNG, toolchain, invocation,
+environment-input, worker, or hardware provenance mismatch; or a dirty
 producer. It also refuses a missing, extra, duplicate, overlapping, or
 out-of-order semantic address; a stream index that does not recompute from the
 declared tuple; a record outside its block; and two different exponents for
@@ -644,10 +810,10 @@ giving $16{,}384/256=64$ blocks per run and $32\cdot64=2048$ blocks. The
 immutable coverage block size is all $4096$ consecutive $j$ values in one
 $(q,b,r)$ run, giving $3\cdot200\cdot32=19{,}200$ blocks. A checkpoint payload
 contains its full dataset identity and ID, run address and ID, block index and
-half-open $j$ range, and the complete canonically ordered records
-$(r,j,s,E)$ for target or $(q,b,r,j,s,E)$ for coverage, where $s$ is the
-recomputed stream index. It is publishable only when every address in that
-block occurs exactly once.
+half-open $j$ range, the producing attempt and backend fields specified above,
+and the complete canonically ordered records $(r,j,s,E)$ for target or
+$(q,b,r,j,s,E)$ for coverage, where $s$ is the recomputed stream index. It is
+publishable only when every address in that block occurs exactly once.
 
 The repository-relative artifact root is supplied by the strict configuration
 and must lie outside raw campaign sample directories. Beneath it, a checkpoint
@@ -680,20 +846,23 @@ records in the canonical address order above, so worker assignment and
 interruption timing cannot change a draw, a sum order, or a reported bit
 pattern. The same ordering governs exact references and stochastic outputs.
 
-The target final receipt payload contains the complete target identity and
-dataset ID, the ordered list of all 2048 pairs
-`(block_address,checkpoint_sha256)`, the exact expected trajectory count
+The target final receipt contains the complete target identity and dataset ID.
+Its `result_payload` contains the exact expected trajectory count
 $524{,}288$, the primary exact result's repository-relative path and content
 SHA-256, its raw count, total $3^{3072}$, and reduced rational, and the
 cross-check estimate, interval, ESS, extinction, degeneracy, and usability
-fields already specified. The coverage final receipt contains the complete
-coverage identity and dataset ID, all 19,200 ordered checkpoint pairs, the
-exact expected total
-$3\cdot200\cdot32\cdot4096=78{,}643{,}200$, every exact anchor and
-replicate interval in canonical order, per-field coverage counts,
-ESS/extinction/degeneracy diagnostics, and the declared coverage verdict.
-Finalization refuses until that list is exactly the expected closed block set
-and every referenced digest, source identity, and record validates.
+fields already specified. Its `execution_provenance` contains all 2048 ordered
+`(block_address,checkpoint_sha256)` pairs and the complete attempt chain. The
+coverage final receipt contains the complete coverage identity and dataset ID.
+Its `result_payload` contains the exact expected total
+$3\cdot200\cdot32\cdot4096=78{,}643{,}200$, every exact anchor and replicate
+interval in canonical order, per-field coverage counts,
+ESS/extinction/degeneracy diagnostics, and the declared coverage verdict. Its
+`execution_provenance` contains all 19,200 ordered checkpoint pairs and the
+complete attempt chain. Finalization refuses until the checkpoint list is
+exactly the expected closed block set, the lineage accounts for every attempt
+and checkpoint exactly once, and every referenced digest, source identity,
+execution observation, and record validates.
 
 Each final receipt uses the same staged-directory publication protocol under
 `<dataset_id>/target-receipt/` or
@@ -702,10 +871,11 @@ exactly `.target-receipt.staging-<32-lowercase-hex>` and
 `.coverage-validation-receipt.staging-<32-lowercase-hex>`. Each receipt is
 immutable: an identical existing receipt is an idempotent success, and
 different bytes are a hard failure. The receipt digest therefore commits
-transitively to every accepted trajectory, the frozen manifest, the exact
-design and configuration, and the behavioral producer identity. No resume or
-finalization path can mix artifact sets or silently replace, omit, or repeat a
-completed trajectory.
+transitively to every accepted trajectory and execution attempt, the frozen
+manifest, the exact design and configuration, and the behavioral producer
+identity. No resume or finalization path can mix artifact sets or silently
+replace, omit, or repeat a completed trajectory or erase a failed,
+interrupted, or termination-unobserved attempt.
 
 ## Fixed validation protocol
 
@@ -834,13 +1004,14 @@ The implementation adds exactly these other fast tests:
 | `proposal_one_step_unbiasedness_q3_q5` | every subspace-pair state for $q\in\{3,5\}$, summing proposal mass times $q^{-\dim V}$ over all admissible rows |
 | `rare_event_stream_partition_and_golden_vectors` | manifested tags $1,2,3,4$; boundary indices for all four rare-event subdomains; fixed test cases $c=0,\ldots,15$ in each field slot |
 | `rare_event_worker_resume_determinism` | target-shaped $n=1024$, fixed test cases $c=16,\ldots,31$, worker counts $1,2,7$, interruption after prefix rows $0,1,63,64,65,511$, same-address trajectory restart, and resume |
-| `rare_event_artifact_schema_roundtrip_v1` | canonical configuration; target and coverage checkpoint payloads; target and coverage receipts; deserialize, reserialize, and compare exact bytes and sidecar digests |
-| `rare_event_artifact_unknown_versions_rejected` | envelope, each of the three payloads, configuration, address partition, sampler, RNG, and serializer identifiers each changed independently to `v0` and `v2`; unknown kind and unknown field at every nesting depth |
-| `rare_event_artifact_checksum_tamper_rejected` | one payload-byte change, sidecar-hex change, filename change, key reordering, inserted whitespace, removed final LF, and an extra published file, separately for checkpoint and both receipt kinds |
-| `rare_event_artifact_identity_mismatch_rejected` | campaign/manifest path and digest, seed/tag/partition, mode and $(q,n,k)$, allocation, statistical constants, RNG, behavior digest, executable/toolchain, design/blob/content digest, and configuration path/content digest each changed independently |
+| `rare_event_artifact_schema_roundtrip_v1` | canonical configuration; target and coverage checkpoints; CPU `not_used` start/terminal attempt phases; GPU `used` failed attempt with no checkpoint; target and coverage final receipts; deserialize, reserialize, and compare exact bytes and sidecar digests |
+| `rare_event_artifact_unknown_versions_rejected` | envelope, each of the four payloads, configuration, address partition, sampler, RNG, serializer, behavior closure, and input-resolution identifiers each changed independently to `v0` and `v2`; unknown kind, phase, outcome, and field at every nesting depth |
+| `rare_event_artifact_checksum_tamper_rejected` | one payload-byte change, sidecar-hex change, filename change, key reordering, inserted whitespace, removed final LF, and an extra published file, separately for checkpoint, attempt, and both final-receipt kinds |
+| `rare_event_artifact_identity_mismatch_rejected` | campaign/manifest path and digest, seed/tag/partition, mode and $(q,n,k)$, allocation, statistical constants, RNG, behavior digest, executable/toolchain, design/blob/content digest, configuration path/content digest, argv token/order, declared environment input, effective configuration, worker configuration, CPU/RAM/OS observation, and GPU selection/kernel identity each changed independently |
 | `rare_event_artifact_address_sets_rejected` | target and coverage fixtures with one missing, extra, duplicate, overlapping, out-of-block, out-of-order, wrong-stream, or conflicting-exponent trajectory; final receipts with one missing, extra, duplicate, reordered, or wrong-digest block reference |
-| `rare_event_artifact_partial_publish_recovery` | crash cut points before file creation, after JSON write, after JSON sync, after sidecar write, after sidecar sync, after staging-directory sync, and immediately before and after no-replace publication; two concurrent publishers with identical and different bytes; only a completely published winner is readable, while a corrupt or conflicting published directory refuses fallback |
-| `rare_event_artifact_final_receipt_regeneration` | all 2048 target and 19,200 coverage block-reference fixtures, worker counts $1,2,7$ and target resume boundaries $0,1,63,64,65,511,2047,2048$ plus coverage boundaries $0,1,199,200,201,2047,2048,19199,19200$; both final receipts and sidecar digests are byte-identical |
+| `rare_event_execution_attempt_lineage_rejected` | missing, extra, duplicate, gapped, reordered, forked, or replaced start/terminal phase; wrong predecessor or attempt ID; open prior attempt; matching live child or process-ID reuse; erased failed, interrupted, or termination-unobserved attempt; checkpoint with absent start; checkpoint absent from or duplicated across terminal lists; normalized/raw hardware-evidence mismatch; CPU/GPU producer mismatch; self-asserted rather than launcher-observed terminal outcome |
+| `rare_event_artifact_partial_publish_recovery` | checkpoint and attempt-phase crash cut points before file creation, after JSON write, after JSON sync, after sidecar write, after sidecar sync, after staging-directory sync, and immediately before and after no-replace publication; two concurrent publishers with identical and different bytes; only a completely published winner is readable, while a corrupt or conflicting published directory refuses fallback |
+| `rare_event_artifact_final_receipt_regeneration` | all 2048 target and 19,200 coverage block-reference fixtures, worker counts $1,2,7$ and target resume boundaries $0,1,63,64,65,511,2047,2048$ plus coverage boundaries $0,1,199,200,201,2047,2048,19199,19200$; canonical result payloads and result digests are identical, each fixed execution fixture regenerates byte-identical attempt/final receipts, and different execution fixtures retain their distinct provenance links |
 
 Together with the three transition tests and four matrix tests already named,
 the implementation adds `proposal_one_step_unbiasedness_q7_slow` as an ignored
@@ -853,17 +1024,19 @@ row. It adds exactly these ignored stochastic coverage tests:
 | `rare_event_coverage_q5_n3_k3_slow` | $17\,581/78\,125$ | $200$ | $32$ | $4\,096$ |
 | `rare_event_coverage_q7_n3_k3_slow` | $126\,295/823\,543$ | $200$ | $32$ | $4\,096$ |
 
-All seven artifact tests are fast, deterministic conformance tests. Their
+All eight artifact tests are fast, deterministic conformance tests. Their
 checkpoint and block-reference fixtures are constructed directly from the
 closed semantic address sets and fixed exact exponents; they execute no
 estimator and consume no stochastic stream. The final-receipt test presents
 the same fixture references in the deterministic scheduling permutations for
 worker counts $1,2,7$ and rebuilds after each declared resume boundary. It
-compares the complete canonical JSON bytes and sidecars, not only decoded
-fields. The checksum-tamper cases leave the sidecar unchanged when testing a
-checksum mismatch and recompute it when testing noncanonical bytes. Identity
-and address-set cases recompute all enclosing fixture digests, so they reach
-the intended semantic refusal rather than stopping at the outer checksum.
+compares canonical scientific result bytes and digests across all variants,
+then compares complete attempt and final-receipt bytes only for repeated
+construction of the same execution fixture. The checksum-tamper cases leave
+the sidecar unchanged when testing a checksum mismatch and recompute it when
+testing noncanonical bytes. Identity, address-set, and lineage cases recompute
+all enclosing fixture digests, so they reach the intended semantic refusal
+rather than stopping at the outer checksum.
 
 Each field therefore consumes exactly
 $200\cdot32\cdot4\,096=26\,214\,400$ validation trajectories. For field
@@ -931,11 +1104,14 @@ accepts only a frozen configuration, emits checkpoints and the final
 cross-check receipt, and owns no proposal, weight, interval, or ESS formula.
 The artifact submodule owns the sealed `RareEventArtifactEnvelopeV1`,
 `RareEventDatasetIdentityV1`, `TrajectoryCheckpointV1`,
+`ExecutionAttemptReceiptV1`, `ValidatedExecutionLineage`,
 `TargetCrossCheckReceiptV1`, and `CoverageValidationReceiptV1` types. Its
-`canonical_bytes`, `verify_artifact_dir`, and `publish_artifact_dir` APIs are
-the sole serialization, validation, and atomic-publication boundary. The
-receipt reducer accepts only validated checkpoint handles, never unchecked
-paths or decoded JSON values.
+`canonical_bytes`, `verify_artifact_dir`, `begin_attempt`,
+`finish_attempt`, `recover_interrupted_attempt`, and
+`publish_artifact_dir` APIs are the sole serialization, validation, lineage,
+and atomic-publication boundary. The receipt reducer accepts only validated
+checkpoint handles and a validated execution lineage, never unchecked paths
+or decoded JSON values.
 
 ## Implementation Steps
 
@@ -956,19 +1132,22 @@ paths or decoded JSON values.
    re-export the module from `crates/gf2-stats/src/lib.rs`.
 5. Add the addressed proposal and checkpointable trajectory/run composition
    in `crates/gf2-sim/src/permanent_rare_event/mod.rs`, add the sealed schema,
-   canonical serialization, identity/checksum verification, block-set
-   validation, and atomic publication APIs in
+   canonical serialization, identity/checksum verification, runtime-observed
+   invocation/hardware collection, attempt lineage, block-set validation, and
+   atomic publication APIs in
    `crates/gf2-sim/src/permanent_rare_event/artifact.rs`, and expose only the
    reusable module from `crates/gf2-sim/src/lib.rs`.
 6. Add the complete fast and ignored-slow suite in
    `crates/gf2-sim/tests/permanent_rare_event.rs`, with literal case tables and
-   no runtime case selector; place the seven fixed artifact conformance tests
+   no runtime case selector; place the eight fixed artifact conformance tests
    in `crates/gf2-sim/tests/permanent_rare_event_artifacts.rs`.
 7. Add a thin artifact consumer in
    `crates/gf2-sim/src/bin/permanent_rare_event.rs` that accepts the fixed
-   `gf2.rare-event-configuration/v1` contract, persists validated immutable
+   `gf2.rare-event-configuration/v1` contract, supervises the worker child
+   across the preflight/start/terminal boundaries, persists validated immutable
    checkpoint blocks through `publish_artifact_dir`, and emits the applicable
-   versioned final receipt with exact provenance and all contradiction fields.
+   versioned final receipt with exact execution provenance and all
+   contradiction fields.
 8. Run focused release-mode tests, the named ignored-slow tests only on the
    slow tier, the repository CI contract, rustdoc, and deterministic
    worker/resume regeneration before any target artifact is accepted.
@@ -1003,6 +1182,11 @@ paths or decoded JSON values.
   transitive checkpoint digests make malformed, stale, foreign, duplicated,
   or partial artifacts hard failures. Atomic directory publication leaves a
   crash fragment outside the readable namespace.
+- **Execution provenance loss or substitution:** immutable launcher-observed
+  start/terminal receipts, a gap-free digest chain, producing-attempt fields in
+  every checkpoint, and exact final provenance partitions preserve failed,
+  interrupted, termination-unobserved, CPU, and GPU attempts and reject
+  unlinked or rewritten execution history.
 
 ## Requirement evidence map
 
@@ -1014,5 +1198,5 @@ paths or decoded JSON values.
 | REQ-04 | [Registered target and direct-sampling bound](#registered-target-and-direct-sampling-bound) |
 | REQ-05 | [Fixed validation protocol](#fixed-validation-protocol) |
 | REQ-06 | [ESS, extinction, degeneracy, and usability](#ess-extinction-degeneracy-and-usability) |
-| REQ-07 | [Randomness, addressing, and restart contract](#randomness-addressing-and-restart-contract); [Versioned artifact envelope and immutable identities](#versioned-artifact-envelope-and-immutable-identities); [Atomic checkpoints and finalization](#atomic-checkpoints-and-finalization) |
-| REQ-08 | [Atomic checkpoints and finalization](#atomic-checkpoints-and-finalization); [Result precedence and contradiction handling](#result-precedence-and-contradiction-handling) |
+| REQ-07 | [Randomness, addressing, and restart contract](#randomness-addressing-and-restart-contract); [Versioned artifact envelope and immutable identities](#versioned-artifact-envelope-and-immutable-identities); [Execution-attempt receipts and lineage](#execution-attempt-receipts-and-lineage); [Atomic checkpoints and finalization](#atomic-checkpoints-and-finalization) |
+| REQ-08 | [Execution-attempt receipts and lineage](#execution-attempt-receipts-and-lineage); [Atomic checkpoints and finalization](#atomic-checkpoints-and-finalization); [Result precedence and contradiction handling](#result-precedence-and-contradiction-handling) |
