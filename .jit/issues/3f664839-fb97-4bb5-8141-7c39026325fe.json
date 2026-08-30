@@ -40,7 +40,18 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-30T02:41:27.586090810Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-08-30T02:47:11.889426016Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
   "labels": [
     "type:task",
@@ -51,5 +62,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Preregistered compressed-state rare-event design",
-  "updated_at": "2026-08-30T02:21:15.402097561Z"
+  "updated_at": "2026-08-30T02:47:11.889426016Z"
 }
