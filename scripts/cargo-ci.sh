@@ -199,7 +199,7 @@ run_step fmt    "$BUDGET" cargo fmt --all -- --check
 # target here. The frozen selector non-regression harness is excluded
 # deliberately: its self-tests bracket the default configuration's threshold
 # and are expected to report a re-pinning need under the baked cfg.
-run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "$BUDGET" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
+run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "$BUDGET" cargo test -p gf2-core --profile ci-test --features simd,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
 
 # Format-2 artifacts are opt-in I/O surfaces rather than ordinary feature
 # defaults. Validate each explicit owner and the mechanically composed complete

@@ -67,3 +67,10 @@ codegen-units = 1
 inherits = "release"
 lto = false
 codegen-units = 16
+# Tests that assert a `debug_assert!` fires are `cfg(debug_assertions)`-gated,
+# so an optimized profile compiles them out. Before this profile existed they
+# ran in exactly one place — the dev-profile `baked-core` step — and nowhere
+# else in the gate, because every other test step was `--release`. Keeping
+# assertions on makes that coverage deliberate instead of incidental, and lets
+# `baked-core` run optimized like the rest.
+debug-assertions = true
