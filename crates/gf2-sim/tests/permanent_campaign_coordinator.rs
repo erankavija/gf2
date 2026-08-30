@@ -13,10 +13,10 @@ use gf2_sim::permanent_campaign::coordinator::{
 };
 use gf2_sim::permanent_campaign::schedule::ScheduleError;
 use gf2_sim::permanent_campaign::schema::{
-    shard_record_file, AcceptanceVerdict, ArtifactIdentity, Availability, Backend,
-    CampaignManifest, CellSpec, CellTerminalState, DeterminantCount, DeterminantPlan, GitRevision,
-    HaltReason, Provenance, RngAlgorithm, ShardRecord, ShardSpec, StreamAddress, StreamPurpose,
-    SCHEMA_VERSION,
+    field_summary_file, read_field_summary, shard_record_file, AcceptanceVerdict,
+    ArtifactIdentity, Availability, Backend, CampaignManifest, CellSpec, CellTerminalState,
+    DeterminantCount, DeterminantPlan, GitRevision, HaltReason, Provenance, RngAlgorithm,
+    ShardRecord, ShardSpec, StreamAddress, StreamPurpose, SCHEMA_VERSION,
 };
 use sha2::{Digest, Sha256};
 
@@ -653,6 +653,17 @@ fn receipt_summary_and_sidecars_are_terminal_monotonic_and_closed() {
     assert!(coordinator_receipt_path(&campaign_root, &campaign.campaign_id).is_file());
     let reloaded = CampaignCoordinator::read(&campaign_root).unwrap();
     assert_eq!(reloaded.assemble_field_summary(7).unwrap(), q7);
+    let q5 = reloaded.assemble_field_summary(5).unwrap();
+    assert_eq!(q5.quarantined.len(), 1);
+    assert_eq!(q5.quarantined[0].error, "mechanical recovery");
+    let q5_path = campaign_root.join(field_summary_file(5));
+    fs::create_dir_all(q5_path.parent().unwrap()).unwrap();
+    fs::write(&q5_path, serde_json::to_vec_pretty(&q5).unwrap()).unwrap();
+    assert_eq!(
+        read_field_summary(&campaign_root, 5)
+            .expect("the terminal two-attempt quarantine projection is canonical"),
+        q5
+    );
     assert_eq!(reloaded.receipt().schema_version, 1);
     assert_eq!(reloaded.receipt().campaign_id, campaign.campaign_id);
     assert_eq!(
@@ -763,6 +774,50 @@ fn receipt_summary_and_sidecars_are_terminal_monotonic_and_closed() {
     )
     .is_err());
     assert_eq!(fs::read(&checksums).unwrap(), b"raw-checksum-fixture\n");
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn active_attempt_refuses_symlinked_raw_evidence_before_adoption() {
+    use std::os::unix::fs::symlink;
+
+    let (root, campaign, mut coordinator) = fixture();
+    let campaign_root = root.join(campaign.campaign_id.to_string());
+    coordinator.authorize_arm(arm(7, 20)).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
+    coordinator.authorize_attempt(7, 20, 0).unwrap();
+    coordinator.persist(&campaign_root).unwrap();
+
+    let raw_path = campaign_root.join(shard_record_file(7, 20, 0));
+    let target = root.join("symlink-target.json");
+    let bytes = write_shard(&campaign_root, &campaign, 7, 20, 0, 14, None);
+    fs::rename(&raw_path, &target).unwrap();
+    symlink(&target, &raw_path).unwrap();
+
+    let mut sampler_entries = 0_u8;
+    let result = execute_scheduled_cell_with_evaluator(
+        &campaign_root,
+        ExactCellScope { q: 7, n: 20 },
+        1,
+        |_, _, _, _| {
+            sampler_entries += 1;
+            Err(ScheduleError::InvalidWorkItem(
+                "symlink evidence must refuse before recovery".to_owned(),
+            ))
+        },
+    );
+    assert!(result.is_err());
+    assert_eq!(sampler_entries, 0);
+    assert_eq!(fs::read(&target).unwrap(), bytes);
+    assert!(matches!(
+        CampaignCoordinator::read(&campaign_root)
+            .unwrap()
+            .receipt()
+            .attempts[0]
+            .state,
+        ShardAttemptState::Authorized
+    ));
     fs::remove_dir_all(root).unwrap();
 }
 
