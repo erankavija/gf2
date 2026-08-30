@@ -180,7 +180,7 @@
      "short_id": "3f664839",
      "title": "Preregistered compressed-state rare-event design",
      "classification": "design",
-     "status": "rework-2 in progress: artifact schemas, checksums, and immutable identities closed prior F1 and doc-review passed at a3e5375d; research-review F2 requires exact invocation and execution hardware to be versioned, checksum-bound, and transitively linked into final stochastic receipts. Focused high-tier repair changes provenance only."
+     "status": "done: rework-2 bound exact invocation and runtime-observed hardware through immutable attempt/checkpoint/final-receipt lineage; cargo-ci, doc-review, and research-review passed at 0032051d with zero findings; lead six-tier review passed; issue completed at 29f0a1ee."
     },
     {
      "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
