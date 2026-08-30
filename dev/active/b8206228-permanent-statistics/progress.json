@@ -199,7 +199,7 @@
      "short_id": "8ec10dde",
      "title": "Exact compressed-state permanental-rank propagation",
      "classification": "implementation",
-     "status": "rework-2 in progress: RED/GREEN and panic-contract repair are merged at cbea8de0; combined CI plus registered cargo-ci and code-review pass. Doc-review accepted the public rustdoc and found this active status stale; the status is corrected here, with doc-review and research-review reruns pending."
+     "status": "done: exact propagation and panic-contract repair are merged; all four configured gates passed at 248220fb, doc-review F1 closed, lead six-tier review passed, and issue completed at 91b7eefa. The one pre-existing stale-link advisory is tracked by 049a89af."
     },
     {
      "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -232,7 +232,7 @@
      "short_id": "6639435f",
      "title": "Independent importance-sampling cross-check",
      "classification": "implementation",
-     "status": "pending: backlog behind 8ec10dde."
+     "status": "ready: exact propagation dependency 8ec10dde is done; held while the earlier campaign-coordinator scope escalation awaits owner direction."
     },
     {
      "id": "f27150a5-8713-4bce-b404-9e477937d498",
@@ -959,6 +959,12 @@
    "issue": "86185f88",
    "severity": "low",
    "summary": "Nine JIT issue descriptions quote claims-trace-to-artifacts' superseded field list ('seeds, git revision, hardware, toolchain'). Four are still backlog and will be worked in waves 10-13 with stale criteria text: 1d0b3ec4, 90a61cd4, ed494117, b05c908b, b5d45bcd. Editing an issue description is a scope change, so not done unilaterally."
+  },
+  {
+   "issue": "8ec10dde",
+   "source": "doc-review final pass (low advisory, pre-existing)",
+   "finding": "The gf2-algebra permanent module overview references two removed dev/plans design paths whose authoritative targets live under dev/archive/ae82bd73-gf2-algebra-permanent.",
+   "disposition": "Filed as 049a89af under the gf2-algebra permanent epic before completing 8ec10dde; no issue-impact finding remains."
   }
  ],
  "started_at": "2026-08-09T12:20:30Z",
