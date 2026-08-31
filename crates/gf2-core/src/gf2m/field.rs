@@ -871,6 +871,35 @@ impl<V: UintExt> Gf2mElement_<V> {
         self.value
     }
 
+    /// Returns the field this element belongs to.
+    ///
+    /// Elements carry their field parameters, so this recovers the extension
+    /// degree, the defining polynomial, and the ability to build sibling
+    /// elements from an element alone. The
+    /// [`FieldIdentity`](crate::field::extension::FieldIdentity)
+    /// implementation for this type reads its modulus through this accessor.
+    ///
+    /// # Complexity
+    ///
+    /// One `Arc` reference-count bump; the field parameters are shared, not
+    /// copied.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011);
+    /// let a = field.element(0b1010);
+    /// assert_eq!(a.field(), field);
+    /// assert_eq!(a.field().primitive_polynomial(), 0b10011);
+    /// ```
+    pub fn field(&self) -> Gf2mField_<V> {
+        Gf2mField_ {
+            params: Arc::clone(&self.params),
+        }
+    }
+
     /// Returns the Barrett reducer, if available (crate-internal).
     #[cfg(feature = "simd")]
     pub(crate) fn barrett_reducer(&self) -> Option<&BarrettReducer> {
