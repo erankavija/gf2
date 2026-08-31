@@ -28,30 +28,99 @@ Run after `aeneas` and `fix-aeneas-dupes.py`:
 
 import re
 import sys
+from collections import Counter
 
 
-OPAQUE_FP_WRAPPER_RE = re.compile(
-    r"@\[reducible, rust_trait_impl\s+\"([^\"]+)\"\]\s*\n"
-    r"def (gf2_core\.gfp\.Fp\.Insts\.CoreOps[A-Za-z0-9_]+) \(P : Std\.U64\) :\s*\n"
-    r"((?:[^=]+))\s*:= \{[\s\S]*?\n\}\n",
+OPAQUE_FP_WRAPPER_NAMES = (
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithSubFpFp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithMulFpFp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithDivFpFp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithAddAssignFp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithAddAssignShared0Fp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithAddShared0FpFp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithSubShared0FpFp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithMulShared0FpFp",
+    "gf2_core.gfp.Fp.Insts.CoreOpsArithDivShared0FpFp",
+)
+OPAQUE_FP_WRAPPER_SET = frozenset(OPAQUE_FP_WRAPPER_NAMES)
+TRANSPARENT_FP_WRAPPER_SET = frozenset(
+    {"gf2_core.gfp.Fp.Insts.CoreOpsArithNegFp"}
+)
+EXPECTED_FP_WRAPPER_SET = OPAQUE_FP_WRAPPER_SET | TRANSPARENT_FP_WRAPPER_SET
+
+FP_CORE_OPS_DEF_RE = re.compile(
+    r"^def (?P<name>gf2_core\.gfp\.Fp\.Insts\.CoreOps[A-Za-z0-9_]+)(?=\s)",
+    re.MULTILINE,
+)
+FP_CORE_OPS_WRAPPER_RE = re.compile(
+    r"@\[reducible, rust_trait_impl\s+\"(?P<marker>[^\"]+)\"\]\s*\n"
+    r"def (?P<name>gf2_core\.gfp\.Fp\.Insts\.CoreOps[A-Za-z0-9_]+) "
+    r"\(P : Std\.U64\)\s*:\s*"
+    r"(?P<sig>[^=]+?)\s*:= \{[\s\S]*?\n\}\n",
     re.MULTILINE,
 )
 
 
 def axiomatize_opaque_fp_wrappers(text: str) -> tuple[str, int]:
-    """Axiomatize only Fp operator wrappers whose bodies are opaque."""
+    """Axiomatize the exact known set of opaque Fp operator wrappers."""
+
+    declared = [m.group("name") for m in FP_CORE_OPS_DEF_RE.finditer(text)]
+    counts = Counter(declared)
+    missing = sorted(EXPECTED_FP_WRAPPER_SET - counts.keys())
+    duplicate = sorted(name for name, count in counts.items() if count != 1)
+    unexpected = sorted(counts.keys() - EXPECTED_FP_WRAPPER_SET)
+    if missing or duplicate or unexpected:
+        details = []
+        if missing:
+            details.append("missing: " + ", ".join(missing))
+        if duplicate:
+            details.append("duplicate: " + ", ".join(duplicate))
+        if unexpected:
+            details.append("unexpected: " + ", ".join(unexpected))
+        raise SystemExit(
+            "fix-aeneas-gf2algebra: Fp CoreOps wrapper set changed ("
+            + "; ".join(details)
+            + ")"
+        )
+
+    shaped = [
+        m.group("name") for m in FP_CORE_OPS_WRAPPER_RE.finditer(text)
+    ]
+    shape_counts = Counter(shaped)
+    malformed = sorted(
+        name
+        for name in EXPECTED_FP_WRAPPER_SET
+        if shape_counts.get(name) != 1
+    )
+    if malformed:
+        raise SystemExit(
+            "fix-aeneas-gf2algebra: unsupported Fp CoreOps wrapper shape: "
+            + ", ".join(malformed)
+        )
 
     def replace_def(m: "re.Match[str]") -> str:
-        marker = m.group(1)
-        name = m.group(2)
-        sig = m.group(3).rstrip()
+        nonlocal replaced
+        marker = m.group("marker")
+        name = m.group("name")
+        if name in TRANSPARENT_FP_WRAPPER_SET:
+            return m.group(0)
+        replaced += 1
+        sig = m.group("sig").rstrip()
         # Axioms cannot be `@[reducible]`; keep only `rust_trait_impl`.
         return (
             f"@[rust_trait_impl \"{marker}\"]\n"
             f"axiom {name} (P : Std.U64) :\n{sig}\n"
         )
 
-    return OPAQUE_FP_WRAPPER_RE.subn(replace_def, text)
+    replaced = 0
+    rewritten = FP_CORE_OPS_WRAPPER_RE.sub(replace_def, text)
+    if replaced != len(OPAQUE_FP_WRAPPER_NAMES):
+        raise SystemExit(
+            "fix-aeneas-gf2algebra: expected to axiomatize exactly "
+            f"{len(OPAQUE_FP_WRAPPER_NAMES)} Fp CoreOps wrappers, got {replaced}"
+        )
+    return rewritten, replaced
 
 
 def fixup_funs(path: str) -> None:
@@ -59,9 +128,9 @@ def fixup_funs(path: str) -> None:
         text = f.read()
 
     # ------------------------------------------------------------------
-    # 1) Replace each broken `def gf2_core.gfp.Fp.Insts.CoreOps{Arith,…}* (P)`
-    #    trait-impl wrapper (which references opaque .add / .sub / .mul /
-    #    .neg / .div / .add_assign / etc bodies) with an axiom. These
+    # 1) Replace the ten explicitly allowlisted broken Fp CoreOps trait-impl
+    #    wrappers (which reference opaque .add / .sub / .mul / .div /
+    #    .add_assign bodies) with axioms. These
     #    defs sit at lines 70..230 in the extraction; their bodies refer
     #    to `gf2_core.gfp.Fp.Insts.CoreOpsArith…FpFp.add` etc, which are
     #    not extracted as bodies. Axiomatising them eliminates the
@@ -69,8 +138,10 @@ def fixup_funs(path: str) -> None:
     #    proofs need (they never project these instances).
     #
     #    The post-seam FiniteField dictionary is an ordinary, non-recursive
-    #    `def` and remains intact. Restricting the pattern to `CoreOps*`
-    #    prevents the workaround from swallowing that generated dictionary.
+    #    `def` and remains intact. The Neg dictionary has a usable generated
+    #    body and also remains intact. Missing, duplicate, or newly introduced
+    #    Fp CoreOps dictionaries fail hard so extraction drift cannot silently
+    #    widen the workaround.
     # ------------------------------------------------------------------
     text, _ = axiomatize_opaque_fp_wrappers(text)
 
