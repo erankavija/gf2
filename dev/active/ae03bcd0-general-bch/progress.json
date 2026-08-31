@@ -20,7 +20,7 @@
           "title": "Add property tests for BCH encode and decode invariants",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "worker-done:awaiting-merge"
         },
         {
           "key": "ext-design",
@@ -28,7 +28,7 @@
           "title": "Design the relative field-extension abstraction and field identity",
           "classification": "design",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "review:gate-running"
         },
         {
           "key": "lcm-promotion",
@@ -549,5 +549,15 @@
       "announce before touching crates/gf2-sim (cutover-sim)"
     ]
   },
-  "started_at": "2026-08-31T16:14:25.273292+00:00"
+  "started_at": "2026-08-31T16:14:25.273292+00:00",
+  "lead_decisions": [
+    "R-01: ExtConfig irreducibility verification is in scope for irreducibility-validation (19fe9394) as a test-only conformance case over every in-tree ExtConfig implementor; bake into dispatch prompt.",
+    "R-02: design doc renamed to extension-design.md to match the manifest footprint (commit 254907d0).",
+    "R-03: footprint additions recorded \u2014 extension-trait (c3d5cea5) also touches crates/gf2-core/src/field/axiom_tests.rs; fieldmatrix-serialization (e992c5b0) also touches crates/gf2-core/src/io/error.rs and crates/gf2-core/Cargo.toml (BLAKE3 dep per D-10).",
+    "R-04: conway-registry (fa85c403) must construct relative tower presentations when the base is non-prime; bake into dispatch prompt."
+  ],
+  "traps": [
+    "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
+    "jit issue claim refuses reassignment: release with a reason first (jit issue release <id> <reason>), then claim as the new assignee."
+  ]
 }
