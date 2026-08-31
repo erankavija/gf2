@@ -8,18 +8,11 @@ methods. These are pure bitwise on `Std.U64` and do not reach into the
 extracts those trait impls transitively because they appear as type-level
 bounds on `PackedField<Fp<3>>`.
 
-The transitively-extracted `gf2_core` bodies have two problems Aeneas cannot
-resolve in a partial extraction:
+The transitively-extracted per-trait `add/sub/mul/...` Fp impls reference body
+definitions such as `gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp.add` that are
+opaque in this extraction, surfacing as `Unknown constant`.
 
-1. The `FiniteField` impl for `Fp<P>` uses `*.default` references that refer
-   recursively to the impl itself (`WINOGRAD_THRESHOLD.default (… P)`),
-   yielding `impl_def: could not resolve recursive fields`.
-
-2. The per-trait `add/sub/mul/...` Fp impls reference body-defs
-   (`gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp.add`) that are opaque
-   in our extraction, surfacing as `Unknown constant`.
-
-Neither of these gf2_core defs is exercised by the bipedal3 proofs.
+These gf2_core defs are not exercised by the bipedal3 proofs.
 The bipedal3 inherent / trait arithmetic operates purely on `Std.U64`
 words; the only thing the proofs care about is the body shape of the four
 `Insts.Gf2_algebraPackedPackedFieldFp3U64U128.{add,sub,mul,neg}` defs and
@@ -37,41 +30,36 @@ import re
 import sys
 
 
+OPAQUE_FP_WRAPPER_RE = re.compile(
+    r"@\[reducible, rust_trait_impl\s+\"([^\"]+)\"\]\s*\n"
+    r"def (gf2_core\.gfp\.Fp\.Insts\.CoreOps[A-Za-z0-9_]+) \(P : Std\.U64\) :\s*\n"
+    r"((?:[^=]+))\s*:= \{[\s\S]*?\n\}\n",
+    re.MULTILINE,
+)
+
+
+def axiomatize_opaque_fp_wrappers(text: str) -> tuple[str, int]:
+    """Axiomatize only Fp operator wrappers whose bodies are opaque."""
+
+    def replace_def(m: "re.Match[str]") -> str:
+        marker = m.group(1)
+        name = m.group(2)
+        sig = m.group(3).rstrip()
+        # Axioms cannot be `@[reducible]`; keep only `rust_trait_impl`.
+        return (
+            f"@[rust_trait_impl \"{marker}\"]\n"
+            f"axiom {name} (P : Std.U64) :\n{sig}\n"
+        )
+
+    return OPAQUE_FP_WRAPPER_RE.subn(replace_def, text)
+
+
 def fixup_funs(path: str) -> None:
     with open(path) as f:
         text = f.read()
 
     # ------------------------------------------------------------------
-    # 1) Replace the recursive `impl_def gf2_core.gfp.Fp.Insts.
-    #    Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) : ... := { … }`
-    #    block with a single axiom of the same signature.
-    # ------------------------------------------------------------------
-    impl_def_re = re.compile(
-        r"@\[reducible, rust_trait_impl\s+\"gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>\"\]\s*\n"
-        r"impl_def gf2_core\.gfp\.Fp\.Insts\.Gf2_coreFieldTraitsFiniteFieldU64U128 \(P :\s*\n"
-        r"  Std\.U64\) : gf2_core\.field\.traits\.FiniteField \(gf2_core\.gfp\.Fp P\) Std\.U64\s*\n"
-        r"  Std\.U128 := \{[\s\S]*?\n\}\n",
-        re.MULTILINE,
-    )
-    # `axiom` declarations cannot carry `@[reducible]`. Keep only the
-    # rust_trait_impl marker so the Aeneas trait-resolver still recognises
-    # this as the FiniteField<u64, u128> impl on Fp<@P>.
-    replacement = (
-        "@[rust_trait_impl\n"
-        "  \"gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>\"]\n"
-        "axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P :\n"
-        "  Std.U64) : gf2_core.field.traits.FiniteField (gf2_core.gfp.Fp P) Std.U64\n"
-        "  Std.U128\n"
-    )
-    new_text, n = impl_def_re.subn(replacement, text)
-    if n != 1:
-        raise SystemExit(
-            f"fix-aeneas-gf2algebra: expected exactly one FiniteField impl_def, got {n}"
-        )
-    text = new_text
-
-    # ------------------------------------------------------------------
-    # 2) Replace each broken `def gf2_core.gfp.Fp.Insts.CoreOps{Arith,…}* (P)`
+    # 1) Replace each broken `def gf2_core.gfp.Fp.Insts.CoreOps{Arith,…}* (P)`
     #    trait-impl wrapper (which references opaque .add / .sub / .mul /
     #    .neg / .div / .add_assign / etc bodies) with an axiom. These
     #    defs sit at lines 70..230 in the extraction; their bodies refer
@@ -79,28 +67,15 @@ def fixup_funs(path: str) -> None:
     #    not extracted as bodies. Axiomatising them eliminates the
     #    `Unknown constant` errors without losing anything the bipedal3
     #    proofs need (they never project these instances).
+    #
+    #    The post-seam FiniteField dictionary is an ordinary, non-recursive
+    #    `def` and remains intact. Restricting the pattern to `CoreOps*`
+    #    prevents the workaround from swallowing that generated dictionary.
     # ------------------------------------------------------------------
-    def_re = re.compile(
-        r"@\[reducible, rust_trait_impl\s+\"([^\"]+)\"\]\s*\n"
-        r"def (gf2_core\.gfp\.Fp\.Insts\.[A-Za-z0-9_]+) \(P : Std\.U64\) :\s*\n"
-        r"((?:[^=]+))\s*:= \{[\s\S]*?\n\}\n",
-        re.MULTILINE,
-    )
-
-    def replace_def(m: "re.Match[str]") -> str:
-        marker = m.group(1)
-        name = m.group(2)
-        sig = m.group(3).rstrip()
-        # axioms cannot be `@[reducible]`; keep only `rust_trait_impl`.
-        return (
-            f"@[rust_trait_impl \"{marker}\"]\n"
-            f"axiom {name} (P : Std.U64) :\n{sig}\n"
-        )
-
-    text = def_re.sub(replace_def, text)
+    text, _ = axiomatize_opaque_fp_wrappers(text)
 
     # ------------------------------------------------------------------
-    # 3) Axiomatise the malformed `Zip` iterator-adapter trait-impl
+    # 2) Axiomatise the malformed `Zip` iterator-adapter trait-impl
     #    instance.
     #
     #    The D5 packed5 extraction (`--features f5`, JIT 30e98ef1) pulls
@@ -157,7 +132,7 @@ def fixup_funs(path: str) -> None:
         )
 
     # ------------------------------------------------------------------
-    # 3b) Axiomatise the malformed `slice::iter::IterMut` Iterator
+    # 2b) Axiomatise the malformed `slice::iter::IterMut` Iterator
     #     trait-impl instance.
     #
     #     The D6 packed7 extraction (`--features f5,f7`, JIT 30e98ef1)
@@ -214,7 +189,7 @@ def fixup_funs(path: str) -> None:
         )
 
     # ------------------------------------------------------------------
-    # 4) Remove the no-arg axiom-equivalent `def gf2_core.gfp.Fp.Insts.
+    # 3) Remove the no-arg axiom-equivalent `def gf2_core.gfp.Fp.Insts.
     #    CoreCloneClone.clone` style body defs — these are referenced only
     #    by the trait impls above (now axioms), so they are unreachable.
     #    We leave them in place; they typically compile fine since their

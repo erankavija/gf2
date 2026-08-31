@@ -1292,7 +1292,8 @@ mod tests {
         // each recursive-multiply output is itself an intermediate at
         // this level. At the inner levels the base-case assertion
         // already fired; at the outermost level the base-case may not
-        // have been reached (when WINOGRAD_THRESHOLD > min dim) so we
+        // have been reached (when the resolved threshold exceeds the
+        // minimum dimension), so we
         // assert the M_i bound explicitly here too. The redundancy is
         // deliberate — the reviewer's strict "every intermediate"
         // reading requires the M_i to be named and bound-checked.
