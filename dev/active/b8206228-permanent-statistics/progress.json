@@ -206,7 +206,7 @@
           "short_id": "02b8137c",
           "title": "Execute frozen pre-draw validation anchors",
           "classification": "implementation",
-          "status": "in_progress: the 2026-08-31 02:00:30 validation run executed for 17m36s and durably published five passing terminals (q=3,n=1..4 and q=5,n=1) before the publisher rejected its own q=5 terminal after default serde_json parsing shifted two finite floats by one ULP. The partial journal is preserved at commit 3fd2893b. The float_roundtrip repair and three focused adoption/tamper regressions landed at merge 2e760af7; full permanent_validation release tests passed 25/25 and integrated cargo-ci passed 5,199 tests with zero failures. Resume is blocked on an owner-approved provenance-preserving journal continuation because run-state binds the old producer identity while remaining terminals require the repaired producer. No terminal may be redrawn, no journal may be overwritten, and no campaign-purpose draw is authorized."
+          "status": "in_progress: the owner-authorized two-segment continuation implementation merged at e0c3959a after independent rereview passed. It binds the exact 22-file producer-0 prefix, admits only the five missing anchors under one exact second producer, publishes the canonical schema-v2 receipt path, and preserves strict default producer mismatch and no-redraw behavior. Integrated cargo-ci passed 5,208 tests with zero failures. The preregistration and continuation authority are linked to the issue at 8ac6a9d3. The real continuation remains held for the post-02:00 device window; no campaign-purpose draw is authorized."
         },
         {
           "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -844,8 +844,8 @@
     "73317b2e": 2,
     "73317b2e_note": "Rework-2 is the execution-lead maximum. Rework-1 removed the public path-based sidecar mutator and completed coordinator-owned projection. Rework-2 closes the bounded interpretation and prose findings, exact-cell refreeze, and pre-gate canonical fixture/lint defects. Independent review and refreeze audit passed, followed by the complete raw cargo-ci contract on the clean branch.",
     "8ec10dde": 2,
-    "02b8137c": 1,
-    "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. The source defect is closed; an owner decision is required for the public journal/receipt provenance boundary before the remaining five validation anchors can run."
+    "02b8137c": 2,
+    "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. Rework-2 closed the continuation review's four findings: canonical schema-v2 cutover, exact-SHA separation of historical evidence decoding from temporary execution admission, a fresh schema-v2 runtime-mismatch no-mutation regression, and on-disk rehash tests for both producer states and both terminal segments. Independent rereview passed and integrated cargo-ci passed 5,208 tests with zero failures. MAX is reached; any further readiness defect escalates."
   },
   "surfaced_pitfalls": [
     {
@@ -1269,8 +1269,9 @@
     "diagnosis": "An exact Rust probe reproduced one-ULP serde_json default-parser shifts in both q5 probability fields. The hardlinked terminal bytes are correct and immutable; the earlier racing-writer hypothesis was falsified.",
     "preservation": "The complete partial journal is committed at 3fd2893b. No terminal was edited, removed, or redrawn.",
     "repair": "High-tier isolated rework 1acd2a3b enabled bit-exact float roundtripping and added publication/adoption/tamper regressions. It merged at 2e760af7; permanent_validation release tests passed 25/25 and the integrated repository CI contract passed 5,199 tests with zero failures.",
-    "blocker": "Resolved by owner at 2026-08-31T18:40:00+03:00: one exact producer is required per immutable ordered segment rather than for the complete cohort. High-tier implementation and independent design audit are active; no continuation draw begins before their code, tests, merge, and integrated verification pass.",
-    "authorization": "The authoritative 02b8137c criteria now preserve the original v1 preregistration while admitting one versioned two-segment continuation. Default producer mismatch still refuses; no third producer is authorized.",
+    "blocker": "Resolved by owner at 2026-08-31T18:40:00+03:00: one exact producer is required per immutable ordered segment rather than for the complete cohort. The continuation implementation merged at e0c3959a after independent rereview passed; integrated cargo-ci passed 5,208 tests with zero failures. The remaining hold is the required post-02:00 device window, not permission or provenance.",
+    "authorization": "The authoritative 02b8137c criteria preserve the original v1 preregistration while admitting one versioned two-segment continuation. Default producer mismatch still refuses; no third producer is authorized. Canonical-cutover requires removal of the temporary CLI and runnable continuation admission after the complete journal and schema-v2 receipt are committed and independently verified, while retaining only the private exact-SHA historical evidence decoder.",
+    "continuation_ready": "Merge e0c3959a; authority SHA-256 dd19bb60bf07510085ab1ec06581526df710f39dbea1236e2d67273b41186094; original run-state SHA-256 bd108332375684992b5be6830bf278c1dd8281cb1d4e1f272d0982e30c9d31a0; focused Rust 1.95 release tests 34/34; integrated cargo-ci 5,208/0; four preregistration/continuation artifacts linked at 8ac6a9d3.",
     "campaign_state": "No campaign-purpose draw occurred. All three campaign arms remain blocked on 02b8137c, and the prior separate-go requirement remains in force after validation closes.",
     "handoff": "handoff-29.md"
   },
