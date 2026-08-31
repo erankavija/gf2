@@ -1,0 +1,22 @@
+# gf2-side comparison harness for the external-baseline survey (jit:4e732b56).
+#
+# Standalone workspace so the survey adds no target, feature, or dependency to
+# the production workspace; it consumes `gf2-coding` by path exactly as an
+# external user would.
+
+[workspace]
+
+[package]
+name = "survey-gf2-side"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+gf2-coding = { path = "../../../../../crates/gf2-coding" }
+gf2-core = { path = "../../../../../crates/gf2-core" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
