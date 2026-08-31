@@ -201,18 +201,25 @@ compared on either workload because it implements neither.
 
 ### 3.6 kodo / steinwurf — rejected, not retrievable
 
-`https://github.com/steinwurf/kodo-rlnc` returns HTTP 404 to an unauthenticated
-request, and an anonymous `git clone` fails asking for credentials. No version
-of it could be pinned, built, or measured. Independently of retrievability, the
-kodo family implements random linear network coding over erasure channels
-rather than BCH encoding, so it has no comparable API for either workload.
+A fresh retrieval attempt is recorded in the [Kodo retrieval
+receipt](../../bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt):
+at 2026-09-01 00:05 EEST, an unauthenticated `curl` against the repository
+page returned HTTP 404, and the anonymous `git clone` exited 128, refusing to
+proceed because it needed a username with terminal prompts disabled. No
+version could therefore be pinned, built, or measured from this host without
+credentials this survey does not have.
+Independently of retrieval, the [Kodo documentation](https://kodo.steinwurf.com/)
+describes an erasure-coding library centered on random linear network coding,
+not BCH encoding or dense GF(2) generator-matrix materialization
+([KodoSteinwurf2026]). It has no comparable API for either workload.
 
 ## 4. Measurement protocol
 
 **Host and serialization.** All measurements run through
 `dev/scripts/ccx1-bench-flock.sh`, which holds the `/tmp/gf2-ccx1.lock` mutex
-exclusively for the child and pins it to the CCX1 cores (`taskset -c 6-11`,
-`nice -n -5`). Host model, microarchitecture, cache topology, frequency
+exclusively for the child and pins it to the CCX1 cores (`taskset -c 6-11`).
+The wrapper requested `nice -n -5`, but the request was denied; the child ran
+at the inherited default priority. Host model, microarchitecture, cache topology, frequency
 governor, OS, and compiler versions are captured by `run-survey.sh` into the
 `host.txt` of each run. Every committed figure was taken after the shared
 benchmark host was released; the harness-validation runs that preceded the
@@ -222,16 +229,20 @@ quoted.
 **Worker count.** Every figure in this survey is single-threaded, the worker
 count the contract fixes for baseline comparison. All four baselines are
 single-threaded as built: bchlib and the AFF3CT encoder kernels contain no
-threading, and M4RI was configured without OpenMP
-(`__M4RI_HAVE_OPENMP 0` in the installed `m4ri_config.h`, and the built
-`libm4ri.so` links no OpenMP runtime). No figure here may be read as a
-multi-threaded result.
+threading, and M4RI was configured without OpenMP. The committed [M4RI
+thread evidence](../../bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt)
+contains the installed `m4ri_config.h` (`__M4RI_HAVE_OPENMP 0`) and `ldd`/
+`readelf -d` output showing no OpenMP runtime dependency. No figure here may be
+read as a multi-threaded result.
 
 **Statistics.** Each cell takes up to 7 independent trials. A trial repeats the
 measured call enough times to span at least 5 ms, so a cell whose single call
 sits near the clock's resolution is still resolved, and the reported figure is
 always per one call. Results are reported as the median over trials with the
 observed minimum and maximum, and the spread as a percentage of the median.
+The AFF3CT and M4RI W2 B1–B3 cells were re-run with repetition counts chosen so
+the aggregate timed call spans at least 5 ms; those counts are recorded in
+their committed logs.
 Trial counts are reported per cell and are below 7 wherever a cell's wall
 budget cut it short.
 
@@ -246,7 +257,9 @@ measurement window.
 splitmix64 in the C and Rust harnesses and `std::mt19937_64` in the C++ one.
 Every row carries an FNV-1a digest of the cell's output, so a re-run that
 produces different numbers can be distinguished from one that produced
-different *results*.
+different *results*. A seeded AFF3CT rerun checked 98 W1 and 14 W2 B1/B2
+comparisons; every digest matched the original CSVs in the [determinism
+agreement receipt](../../bench_results/4e732b56/2026-08-31-4e732b56-determinism-agreement.txt).
 
 **Reproduction.**
 
@@ -270,12 +283,14 @@ from the committed CSVs. This section quotes only the cells the selection turns
 on.
 
 Dispersion across the 126 cells that took more than one trial has a median
-spread of 1.17% of the median. Twenty-two cells exceed 5% and eleven exceed
+spread of 1.17% of the median. Twenty-seven cells exceed 5% and nineteen exceed
 10%, and they concentrate in two places: the smallest shapes, where the call
 approaches the clock's resolution (every B1 W2 cell, several $B = 1$ cells),
 and M4RI's `echelonize` control at B2 and B3, which runs on a random matrix
-rather than a structured one. Every cell the selection rests on is tighter
-than 6%, and the DVB-T2 cells that carry the headline gaps are all under 1.2%.
+rather than a structured one. The selection-critical DVB-T2 W1 cells are under
+1.4%; the corresponding W2 M4RI `genmatrix-rref` spreads are 1.2% at T2S and
+3.8% at T2N. The broader W2 M4RI spreads are 22.9% at B2 and 16.4% at B3, so
+those rows are median comparisons with visibly wider trial dispersion.
 Per-cell spreads are in the receipt.
 
 Two cells are **estimates**, not measurements, and are marked as such
@@ -311,20 +326,26 @@ Median matrix bits per second for a full $k \times n$ systematic $G$.
 
 | Row | Dimensions | M4RI `genmatrix-rref` | AFF3CT `basis-encode-pack` | gf2 `generator_matrix` |
 |---|---|---|---|---|
-| B1 | $5 \times 15$ | 234.4 | 241.9 | 6.26 |
-| B2 | $64 \times 127$ | **1304.7** | 156.2 | 6.92 |
-| B3 | $223 \times 255$ | **1703.6** | 119.7 | 7.29 |
+| B1 | $5 \times 15$ | 281.0 | 264.0 | 6.26 |
+| B2 | $64 \times 127$ | **1291.1** | 150.7 | 6.92 |
+| B3 | $223 \times 255$ | **1733.7** | 100.3 | 7.29 |
 | T2S | $7032 \times 7200$ | **1754.2** | 48.3 | 1.58 |
 | T2N | $32208 \times 32400$ | **446.8** | 41.2 | 0.66 *(estimate)* |
 
 B1's row is not evidence for anything: at $5 \times 15$ the call sits near the
-clock's resolution, and its three W2 cells span 44–70% spread — wide enough
-that M4RI and AFF3CT cannot be ordered there at all. Every other row separates
-cleanly.
+clock's resolution, and the corrected M4RI and AFF3CT W2 cells span 33.1% and
+34.7%, respectively; gf2 is 1.2%. That remains too wide for a fine-grained B1
+ordering, while the medians provide a large separation. Every other row
+separates cleanly on its median.
 
-The two routes to the same matrix are not close. Reducing the polynomial-form
-generator matrix to reduced row echelon form beats encoding the $k$ basis
-vectors by **8.4× at B2, 14.2× at B3, 36.3× at T2S, and 10.8× at T2N**.
+The two routes to the same matrix are not close. A correctness-only check
+materializes the systematic generator matrix through the selected M4RI
+`genmatrix-rref` route and gf2 for B2, B3, and T2S, normalizes both to the
+repository's row-major `[message | parity]` layout, and finds bit-exact
+agreement in the [generator-matrix agreement receipt](../../bench_results/4e732b56/2026-08-31-4e732b56-generator-matrix-agreement.txt).
+Reducing the polynomial-form generator matrix to reduced row echelon form beats
+encoding the $k$ basis vectors by **8.6× at B2, 17.3× at B3, 36.3× at T2S,
+and 10.8× at T2N**.
 Against the current gf2 path the ratio is **1110× at T2S**.
 
 ### 5.3 Counter profile
@@ -332,9 +353,10 @@ Against the current gf2 path the ratio is **1110× at T2S**.
 `perf stat` over the AFF3CT W1 sweep records 168.4 G instructions in 58.8 G
 cycles — 2.86 instructions per cycle — with a 0.81% branch-miss rate and 4.5%
 of cache references missing. The bchlib T2N sweep records 0.02% branch misses
-and 1.4% cache misses. Neither baseline is branch- or memory-limited on this
-host, so the figures above are the implementations' compute cost rather than an
-artifact of the measurement shape.
+and 1.4% cache misses. The high IPC and low recorded branch/cache miss rates
+are consistent with compute-bound execution on this host, but these counters do
+not establish that either baseline is not memory-limited; no stall or memory-
+bandwidth counters were collected.
 
 ## 6. Algorithm-family evidence
 
@@ -382,7 +404,10 @@ It is the **fastest family measured at B3** — 7.2× the best LFSR there, and t
 only competitive option for a row bchlib cannot encode — and it edges bchlib at
 B2 (2580.9 against 2240.9). It then collapses by a factor of 50 relative to
 bchlib at T2N, where $G$ is 124 MiB and the product's work grows with $n \cdot k$
-while the LFSR's grows with $k \cdot \deg g$.
+while the LFSR's grows with $k \cdot \deg g$. The selected W2 route's matrix
+equivalence is the correctness-only, bit-exact result recorded in the
+[generator-matrix agreement receipt](../../bench_results/4e732b56/2026-08-31-4e732b56-generator-matrix-agreement.txt),
+not an assumption based only on matching dimensions.
 
 ### 6.4 The scalar reference
 
@@ -416,8 +441,10 @@ implementation of the interleaved family. Two baselines also keep a single
 library's quirks from defining the target.
 
 **Why M4RI is primary for W2.** It materializes the same matrix by a different
-algorithm and is faster at every row above B1. This reverses the ordering the
-contract predeclared; § 8.1 records that.
+algorithm, as confirmed for B2, B3, and T2S by the [normalized generator
+agreement receipt](../../bench_results/4e732b56/2026-08-31-4e732b56-generator-matrix-agreement.txt),
+and is faster at every row above B1. This reverses the ordering the contract
+predeclared; § 8.1 records that.
 
 **Like-for-like justification.** The W1 comparison at the DVB-T2 rows is
 between implementations of the *same code*, not merely codes of equal shape.
@@ -429,7 +456,9 @@ coefficient at degrees 168 and 192. The runner performs this check before measur
 to the runner after the measurement passes had started, so the committed
 output was produced by invoking the checker directly against the same
 `generators.txt` the harnesses consumed:
-`2026-08-31-4e732b56-generator-agreement.txt`. The B1/B2/B3 rows and the
+`2026-08-31-4e732b56-generator-agreement.txt`. The W2 matrix agreement check
+also covers B2, B3, and T2S through the normalized [generator-matrix receipt](../../bench_results/4e732b56/2026-08-31-4e732b56-generator-matrix-agreement.txt).
+The B1/B2/B3 rows and the
 IT++ rows are equal-shape comparisons only, because IT++ selects its own
 primitive polynomial.
 
@@ -491,6 +520,7 @@ overhead for the epic to preserve, and no existing parallelism to regress.
 
 Every work this survey cites resolves in `.jit/references.toml`: [Cassagne2019]
 (AFF3CT), [AlbrechtBard2026] (M4RI), [Djelic2011] (the kernel BCH library),
-[ITPP2013], [LiquidDSP2025], and [Etsi2015] (EN 302 755 V1.4.1, the edition
+[ITPP2013], [LiquidDSP2025], [Etsi2015] (EN 302 755 V1.4.1, the edition
 `crates/gf2-coding/src/ldpc/core.rs:213` pins). The registry holds the
-bibliographic data; this document does not restate it.
+bibliographic data; this document does not restate it. Kodo's scope is
+registered as [KodoSteinwurf2026].

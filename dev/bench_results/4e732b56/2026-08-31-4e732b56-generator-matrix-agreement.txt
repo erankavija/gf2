@@ -1,0 +1,10 @@
+# correctness-only systematic generator-matrix agreement
+# captured: 2026-08-31T20:14:46+00:00
+# rows: B2,B3,T2S
+# M4RI command: GF2_SURVEY_CODES=B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/bench_results/4e732b56/generators.txt generator-dump
+# gf2 command: GF2_SURVEY_CODES=B2,B3,T2S GF2_REV=e6c80f238931356d6988831e1deab8a63455f673 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/gf2-side/target/release/survey-gf2-side generator-dump
+# normalization: row-major columns 0..n-1 in repository [message | parity] layout
+B2: dimensions=64x127 dimensions_match=True m4ri_systematic=True gf2_systematic=True m4ri_sha256=7dc67788c88ba47effa597363dc6b9ae5030138309a825b34b27f110635e600a gf2_sha256=7dc67788c88ba47effa597363dc6b9ae5030138309a825b34b27f110635e600a bit_exact_identical=True
+B3: dimensions=223x255 dimensions_match=True m4ri_systematic=True gf2_systematic=True m4ri_sha256=b1693201c93ee6be7cd102ff1070615cbbc80bff73bcb38747858627864413b2 gf2_sha256=b1693201c93ee6be7cd102ff1070615cbbc80bff73bcb38747858627864413b2 bit_exact_identical=True
+T2S: dimensions=7032x7200 dimensions_match=True m4ri_systematic=True gf2_systematic=True m4ri_sha256=558f55ecd49ce750bea8cec3cbfdaaf89ec8d5d69ffa99b710ff3e2c7877e953 gf2_sha256=558f55ecd49ce750bea8cec3cbfdaaf89ec8d5d69ffa99b710ff3e2c7877e953 bit_exact_identical=True
+all 3 selected generator matrices agree bit-exactly
