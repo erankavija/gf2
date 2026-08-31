@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-31T16:18:12.982452713Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -20,7 +21,7 @@
     "satisfies:REQ-01"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Design the relative field-extension abstraction and field identity",
-  "updated_at": "2026-08-29T07:24:17.688913181Z"
+  "updated_at": "2026-08-31T16:18:12.982452713Z"
 }
