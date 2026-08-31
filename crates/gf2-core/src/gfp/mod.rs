@@ -882,30 +882,6 @@ impl<const P: u64> FiniteField for Fp<P> {
         crate::field::extension_wiedemann::try_extension_wiedemann_fp::<P>(a)
     }
 
-    /// Panelized PLE base-case width declared by `Fp<P>` (issues `6823c8a0`,
-    /// `68db401b`, design `2e8c5a29`).
-    ///
-    /// `FieldMatrix::ple` takes the live width from the active tuning
-    /// profile's per-lane fields, selected by the lane class
-    /// [`simd_ple_panel_lane`](FiniteField::simd_ple_panel_lane) reports, so
-    /// this override carries no dispatch. Issue `7d7c647c` task U8 removes it.
-    const PLE_PANEL_COLS: usize = {
-        if P <= 251 {
-            // KC = 256 (byte-lane panel kernel L1d-fit blocking
-            // factor; see `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:102`).
-            256
-        } else if P < 65536 {
-            // KC_U16 = 128 (medium-prime u16-lane PLE base-case
-            // kernel, issue `68db401b`).
-            128
-        } else {
-            // Default = PLE_BASE_COLS (=1) so the panel dispatch is
-            // disabled for large-prime fields; the recursive trsm+gemm
-            // path continues to drive these.
-            1
-        }
-    };
-
     /// Panelized PLE base-case fast path for `Fp<P>` (issues `6823c8a0`
     /// + `68db401b`, design `2e8c5a29`).
     ///
