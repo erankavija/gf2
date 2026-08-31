@@ -98,8 +98,16 @@ run_one() {
     shift
     echo "== ${label} (limit ${HARNESS_TIMEOUT}s) =="
     local rc=0
+    {
+        printf '# command:'
+        printf ' %q' "${FLOCK}" timeout --foreground "${HARNESS_TIMEOUT}" "$@"
+        printf '\n'
+        if [[ -n "${CODES}" ]]; then
+            printf '# environment: GF2_SURVEY_CODES=%q\n' "${CODES}"
+        fi
+    } >"${OUT}/${PREFIX}${label}.log"
     "${FLOCK}" timeout --foreground "${HARNESS_TIMEOUT}" "$@" \
-        >"${OUT}/${PREFIX}${label}.csv" 2>"${OUT}/${PREFIX}${label}.log" || rc=$?
+        >"${OUT}/${PREFIX}${label}.csv" 2>>"${OUT}/${PREFIX}${label}.log" || rc=$?
     local rows=$(( $(wc -l <"${OUT}/${PREFIX}${label}.csv") - 1 ))
     if [[ ${rc} -eq 124 ]]; then
         echo "   TIMED OUT after ${HARNESS_TIMEOUT}s; ${rows} rows kept" >&2
@@ -128,8 +136,17 @@ run_one gf2 "${EXT}/survey-target/release/survey-gf2-side" all
 # One representative cell per workload, so the receipt carries a hardware
 # counter profile alongside the wall-clock rows.
 if command -v perf >/dev/null 2>&1; then
-    "${FLOCK}" perf stat -e task-clock,cycles,instructions,branches,branch-misses,cache-references,cache-misses \
-        "${HERE}/aff3ct_bch_bench" w1 >/dev/null 2>"${OUT}/${PREFIX}aff3ct-perf-stat.txt" || true
+    PERF_EVENTS="task-clock,cycles,instructions,branches,branch-misses,cache-references,cache-misses"
+    {
+        printf '# command:'
+        printf ' %q' "${FLOCK}" perf stat -e "${PERF_EVENTS}" "${HERE}/aff3ct_bch_bench" w1
+        printf '\n'
+        if [[ -n "${CODES}" ]]; then
+            printf '# environment: GF2_SURVEY_CODES=%q\n' "${CODES}"
+        fi
+    } >"${OUT}/${PREFIX}aff3ct-perf-stat.txt"
+    "${FLOCK}" perf stat -e "${PERF_EVENTS}" \
+        "${HERE}/aff3ct_bch_bench" w1 >/dev/null 2>>"${OUT}/${PREFIX}aff3ct-perf-stat.txt" || true
     echo "perf -> ${OUT}/${PREFIX}aff3ct-perf-stat.txt"
 fi
 

@@ -22,3 +22,24 @@ nice: cannot set niceness: Permission denied
 #   T2S echelonize: 0.449 s of timed work
 #   T2S matmul-m4rm batch=256: 0.037 s of timed work
 #   T2S matmul-m4rm batch=4096: 0.441 s of timed work
+
+nice: cannot set niceness: Permission denied
+# harness: m4ri_genmatrix_bench
+# m4ri_version: 20260122
+# trials_per_cell: 7
+# cell_budget_s: 45.0
+# seed: 0x00000000ae03bcd0
+# codes_loaded: 5
+# codes_selected: B1,B2,B3
+#   B1 genmatrix-rref reps=5953: 0.012 s of timed work
+#   B1 echelonize reps=8334: 0.017 s of timed work
+#   B1 matmul-m4rm batch=256 reps=444: 0.037 s of timed work
+#   B1 matmul-m4rm batch=4096 reps=39: 0.040 s of timed work
+#   B2 genmatrix-rref reps=698: 0.032 s of timed work
+#   B2 echelonize reps=534: 0.021 s of timed work
+#   B2 matmul-m4rm batch=256 reps=629: 0.035 s of timed work
+#   B2 matmul-m4rm batch=4096 reps=52: 0.038 s of timed work
+#   B3 genmatrix-rref reps=143: 0.034 s of timed work
+#   B3 echelonize reps=82: 0.023 s of timed work
+#   B3 matmul-m4rm batch=256 reps=209: 0.036 s of timed work
+#   B3 matmul-m4rm batch=4096 reps=17: 0.039 s of timed work

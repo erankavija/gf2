@@ -232,3 +232,8 @@ url = "https://github.com/jgaeddert/liquid-dsp"
 [[references]]
 key = "Etsi2015"
 citation = "ETSI EN 302 755 V1.4.1 (2015-07) — Digital Video Broadcasting (DVB); Frame structure channel coding and modulation for a second generation digital terrestrial television broadcasting system (DVB-T2)."
+
+[[references]]
+key = "KodoSteinwurf2026"
+citation = "Steinwurf — Kodo software library documentation: erasure-correcting codes including Random Linear Network Coding (RLNC)."
+url = "https://kodo.steinwurf.com/"

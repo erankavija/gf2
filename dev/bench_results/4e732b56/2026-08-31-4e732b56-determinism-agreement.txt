@@ -1,0 +1,125 @@
+# seeded determinism rerun for survey digest agreement
+# original CSV: dev/bench_results/4e732b56/2026-08-31-4e732b56-small-aff3ct.csv
+# W1 rerun captured: 2026-08-31T23:21:13+03:00/2026-08-31T23:21:14+03:00
+# W1 command: GF2_SURVEY_CODES=B1,B2 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1
+# W2 rerun captured: 2026-08-31T23:17:01+03:00
+# W2 command: GF2_SURVEY_CODES=B1,B2,B3 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w2
+# filter: AFF3CT B1/B2, all emitted W1 cells and W2 materialization cells
+# seed: 0x00000000ae03bcd0
+## W1 digest comparisons
+W1 lfsr-scalar B1 batch=1 trial=0 original=752351a00bfce7a1 rerun=752351a00bfce7a1 match=True
+W1 lfsr-scalar B1 batch=1 trial=1 original=752351a00bfce7a1 rerun=752351a00bfce7a1 match=True
+W1 lfsr-scalar B1 batch=1 trial=2 original=752351a00bfce7a1 rerun=752351a00bfce7a1 match=True
+W1 lfsr-scalar B1 batch=1 trial=3 original=752351a00bfce7a1 rerun=752351a00bfce7a1 match=True
+W1 lfsr-scalar B1 batch=1 trial=4 original=752351a00bfce7a1 rerun=752351a00bfce7a1 match=True
+W1 lfsr-scalar B1 batch=1 trial=5 original=752351a00bfce7a1 rerun=752351a00bfce7a1 match=True
+W1 lfsr-scalar B1 batch=1 trial=6 original=752351a00bfce7a1 rerun=752351a00bfce7a1 match=True
+W1 lfsr-scalar B1 batch=16 trial=0 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-scalar B1 batch=16 trial=1 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-scalar B1 batch=16 trial=2 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-scalar B1 batch=16 trial=3 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-scalar B1 batch=16 trial=4 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-scalar B1 batch=16 trial=5 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-scalar B1 batch=16 trial=6 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-scalar B1 batch=256 trial=0 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-scalar B1 batch=256 trial=1 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-scalar B1 batch=256 trial=2 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-scalar B1 batch=256 trial=3 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-scalar B1 batch=256 trial=4 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-scalar B1 batch=256 trial=5 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-scalar B1 batch=256 trial=6 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-scalar B1 batch=4096 trial=0 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-scalar B1 batch=4096 trial=1 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-scalar B1 batch=4096 trial=2 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-scalar B1 batch=4096 trial=3 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-scalar B1 batch=4096 trial=4 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-scalar B1 batch=4096 trial=5 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-scalar B1 batch=4096 trial=6 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-scalar B2 batch=1 trial=0 original=4c1da96cd47bf27d rerun=4c1da96cd47bf27d match=True
+W1 lfsr-scalar B2 batch=1 trial=1 original=4c1da96cd47bf27d rerun=4c1da96cd47bf27d match=True
+W1 lfsr-scalar B2 batch=1 trial=2 original=4c1da96cd47bf27d rerun=4c1da96cd47bf27d match=True
+W1 lfsr-scalar B2 batch=1 trial=3 original=4c1da96cd47bf27d rerun=4c1da96cd47bf27d match=True
+W1 lfsr-scalar B2 batch=1 trial=4 original=4c1da96cd47bf27d rerun=4c1da96cd47bf27d match=True
+W1 lfsr-scalar B2 batch=1 trial=5 original=4c1da96cd47bf27d rerun=4c1da96cd47bf27d match=True
+W1 lfsr-scalar B2 batch=1 trial=6 original=4c1da96cd47bf27d rerun=4c1da96cd47bf27d match=True
+W1 lfsr-scalar B2 batch=16 trial=0 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-scalar B2 batch=16 trial=1 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-scalar B2 batch=16 trial=2 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-scalar B2 batch=16 trial=3 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-scalar B2 batch=16 trial=4 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-scalar B2 batch=16 trial=5 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-scalar B2 batch=16 trial=6 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-scalar B2 batch=256 trial=0 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-scalar B2 batch=256 trial=1 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-scalar B2 batch=256 trial=2 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-scalar B2 batch=256 trial=3 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-scalar B2 batch=256 trial=4 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-scalar B2 batch=256 trial=5 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-scalar B2 batch=256 trial=6 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-scalar B2 batch=4096 trial=0 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-scalar B2 batch=4096 trial=1 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-scalar B2 batch=4096 trial=2 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-scalar B2 batch=4096 trial=3 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-scalar B2 batch=4096 trial=4 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-scalar B2 batch=4096 trial=5 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-scalar B2 batch=4096 trial=6 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-simd-inter B1 batch=16 trial=0 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-simd-inter B1 batch=16 trial=1 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-simd-inter B1 batch=16 trial=2 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-simd-inter B1 batch=16 trial=3 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-simd-inter B1 batch=16 trial=4 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-simd-inter B1 batch=16 trial=5 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-simd-inter B1 batch=16 trial=6 original=a919058fb2d080e9 rerun=a919058fb2d080e9 match=True
+W1 lfsr-simd-inter B1 batch=256 trial=0 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-simd-inter B1 batch=256 trial=1 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-simd-inter B1 batch=256 trial=2 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-simd-inter B1 batch=256 trial=3 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-simd-inter B1 batch=256 trial=4 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-simd-inter B1 batch=256 trial=5 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-simd-inter B1 batch=256 trial=6 original=d85043a2d84c6771 rerun=d85043a2d84c6771 match=True
+W1 lfsr-simd-inter B1 batch=4096 trial=0 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-simd-inter B1 batch=4096 trial=1 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-simd-inter B1 batch=4096 trial=2 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-simd-inter B1 batch=4096 trial=3 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-simd-inter B1 batch=4096 trial=4 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-simd-inter B1 batch=4096 trial=5 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-simd-inter B1 batch=4096 trial=6 original=d556bbd516c8fad3 rerun=d556bbd516c8fad3 match=True
+W1 lfsr-simd-inter B2 batch=16 trial=0 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-simd-inter B2 batch=16 trial=1 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-simd-inter B2 batch=16 trial=2 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-simd-inter B2 batch=16 trial=3 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-simd-inter B2 batch=16 trial=4 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-simd-inter B2 batch=16 trial=5 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-simd-inter B2 batch=16 trial=6 original=51ceccbcb6cc9b73 rerun=51ceccbcb6cc9b73 match=True
+W1 lfsr-simd-inter B2 batch=256 trial=0 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-simd-inter B2 batch=256 trial=1 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-simd-inter B2 batch=256 trial=2 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-simd-inter B2 batch=256 trial=3 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-simd-inter B2 batch=256 trial=4 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-simd-inter B2 batch=256 trial=5 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-simd-inter B2 batch=256 trial=6 original=5002aa5925d0febd rerun=5002aa5925d0febd match=True
+W1 lfsr-simd-inter B2 batch=4096 trial=0 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-simd-inter B2 batch=4096 trial=1 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-simd-inter B2 batch=4096 trial=2 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-simd-inter B2 batch=4096 trial=3 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-simd-inter B2 batch=4096 trial=4 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-simd-inter B2 batch=4096 trial=5 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1 lfsr-simd-inter B2 batch=4096 trial=6 original=4a6d1e60d7927552 rerun=4a6d1e60d7927552 match=True
+W1: comparisons=98 mismatches=0
+## W2 digest comparisons
+W2 basis-encode-pack B1 batch=5 trial=0 original=2d43f6b2c34e62e8 rerun=2d43f6b2c34e62e8 match=True
+W2 basis-encode-pack B1 batch=5 trial=1 original=2d43f6b2c34e62e8 rerun=2d43f6b2c34e62e8 match=True
+W2 basis-encode-pack B1 batch=5 trial=2 original=2d43f6b2c34e62e8 rerun=2d43f6b2c34e62e8 match=True
+W2 basis-encode-pack B1 batch=5 trial=3 original=2d43f6b2c34e62e8 rerun=2d43f6b2c34e62e8 match=True
+W2 basis-encode-pack B1 batch=5 trial=4 original=2d43f6b2c34e62e8 rerun=2d43f6b2c34e62e8 match=True
+W2 basis-encode-pack B1 batch=5 trial=5 original=2d43f6b2c34e62e8 rerun=2d43f6b2c34e62e8 match=True
+W2 basis-encode-pack B1 batch=5 trial=6 original=2d43f6b2c34e62e8 rerun=2d43f6b2c34e62e8 match=True
+W2 basis-encode-pack B2 batch=64 trial=0 original=5d9913a92e7d30d9 rerun=5d9913a92e7d30d9 match=True
+W2 basis-encode-pack B2 batch=64 trial=1 original=5d9913a92e7d30d9 rerun=5d9913a92e7d30d9 match=True
+W2 basis-encode-pack B2 batch=64 trial=2 original=5d9913a92e7d30d9 rerun=5d9913a92e7d30d9 match=True
+W2 basis-encode-pack B2 batch=64 trial=3 original=5d9913a92e7d30d9 rerun=5d9913a92e7d30d9 match=True
+W2 basis-encode-pack B2 batch=64 trial=4 original=5d9913a92e7d30d9 rerun=5d9913a92e7d30d9 match=True
+W2 basis-encode-pack B2 batch=64 trial=5 original=5d9913a92e7d30d9 rerun=5d9913a92e7d30d9 match=True
+W2 basis-encode-pack B2 batch=64 trial=6 original=5d9913a92e7d30d9 rerun=5d9913a92e7d30d9 match=True
+W2: comparisons=14 mismatches=0
+all seeded rerun digests match the original CSVs
