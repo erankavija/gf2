@@ -790,7 +790,7 @@
       "issue": "02b8137c",
       "reason": "The armed validation service ran and immutably published five passing terminals with producer binary 76c778f1..., then stopped when default serde_json parsing changed two q=5 probability floats by one ULP during post-publication self-verification. The bit-exact parser repair is merged and CI-clean, but the existing run-state truthfully binds the old producer while the remaining five anchors require the repaired producer. Reusing one producer identity for both segments, overwriting the journal, or redrawing a terminal would violate the immutable no-redraw and runtime-observed-provenance contracts.",
       "status": "open",
-      "requested_at": "2026-08-31T03:00:00+03:00",
+      "requested_at": "2026-08-31T18:39:38+03:00",
       "options": [
         "Authorize a versioned provenance-preserving continuation: retain the original run-state and five terminal digests, add an immutable migration/continuation record binding the exact old and repaired producer identities plus the boundary, run only the five missing anchors, and make the final receipt report both producer segments.",
         "Authorize a newly preregistered validation cohort with a new journal root while preserving this failed attempt as falsification evidence; this changes the current no-redraw/cohort contract and repeats five already completed anchors.",
@@ -1262,7 +1262,7 @@
     "handoff": "handoff-27.md"
   },
   "session_33_state": {
-    "recorded_at": "2026-08-31T03:00:00+03:00",
+    "recorded_at": "2026-08-31T18:39:38+03:00",
     "run": "gf2-predraw-validation2.service started at 02:00:30 and ran for 17m36s; permission was not the failure. It published five passing terminals, q3 n1..4 and q5 n1, then exited on q5 journal self-verification.",
     "diagnosis": "An exact Rust probe reproduced one-ULP serde_json default-parser shifts in both q5 probability fields. The hardlinked terminal bytes are correct and immutable; the earlier racing-writer hypothesis was falsified.",
     "preservation": "The complete partial journal is committed at 3fd2893b. No terminal was edited, removed, or redrawn.",
