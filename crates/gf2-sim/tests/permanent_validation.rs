@@ -5,6 +5,7 @@
 //! The committed ten-anchor plan is loaded and content-verified here, but its
 //! 400,000-draw evidence run belongs to the execution lead, not to this tier.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -21,12 +22,13 @@ use gf2_sim::permanent_campaign::validation::{
     admit_validation_run, evaluate_validation_anchor, is_frozen_validation_toolchain,
     load_frozen_campaign_validation_preregistration, load_validation_continuation_authorization,
     load_validation_preregistration, preflight_required_backends,
-    publish_validation_receipt_atomic, read_validation_receipt, run_validation, AnchorReceipt,
-    AnchorSpec, BackendAgreementStatus, DecisionRule, FrozenArtifactGuard, FrozenArtifactSnapshot,
-    PhaseStatus, ReplayMode, RetryRule, SampleOrigin, ValidationAuthorities, ValidationFailure,
-    ValidationPhase, ValidationPreregistration, ValidationProducerSegment, ValidationProtocol,
-    ValidationReceipt, ValidationRunMode, ValidationStreamPurpose, ValidationVerdict,
-    CONTINUATION_STATE_FILE, FROZEN_TOOLCHAIN_PREFIX, PREREGISTRATION_SCHEMA_VERSION,
+    publish_validation_receipt_atomic, read_validation_receipt, run_validation,
+    verify_validation_receipt_journal, AnchorReceipt, AnchorSpec, BackendAgreementStatus,
+    DecisionRule, FrozenArtifactGuard, FrozenArtifactSnapshot, PhaseStatus, ReplayMode, RetryRule,
+    SampleOrigin, ValidationAuthorities, ValidationFailure, ValidationPhase,
+    ValidationPreregistration, ValidationProducerSegment, ValidationProtocol, ValidationReceipt,
+    ValidationRunMode, ValidationStreamPurpose, ValidationVerdict, CONTINUATION_STATE_FILE,
+    FROZEN_TOOLCHAIN_PREFIX, FROZEN_VALIDATION_RECEIPT_PATH, PREREGISTRATION_SCHEMA_VERSION,
     RECEIPT_SCHEMA_VERSION,
 };
 use gf2_stats::binomial::two_sided_test;
@@ -77,6 +79,12 @@ fn identity(path: &str, byte: char) -> ArtifactIdentity {
         path: path.parse().expect("fixture path is normalized"),
         sha256: digest(byte),
     }
+}
+
+fn content_digest(bytes: &[u8]) -> Sha256Digest {
+    format!("{:x}", <sha2::Sha256 as sha2::Digest>::digest(bytes))
+        .parse()
+        .expect("SHA-256 is canonical")
 }
 
 fn focused_authorities() -> ValidationAuthorities {
@@ -802,6 +810,44 @@ fn default_resume_refuses_the_original_producer_mismatch_without_opening_q5_n2()
 }
 
 #[test]
+fn canonical_v2_resume_refuses_runtime_drift_before_any_journal_change() {
+    let state = unique_directory("validation-v2-runtime-mismatch");
+    let plan = focused_plan();
+    run_validation(&plan, focused_identity(), 1, &state)
+        .expect("the canonical schema-v2 journal completes");
+    let snapshot = |directory: &Path| -> BTreeMap<String, Vec<u8>> {
+        fs::read_dir(directory)
+            .expect("the canonical journal reads")
+            .map(|entry| {
+                let entry = entry.expect("the canonical journal entry reads");
+                (
+                    entry.file_name().to_string_lossy().into_owned(),
+                    fs::read(entry.path()).expect("the canonical journal bytes read"),
+                )
+            })
+            .collect()
+    };
+    let before = snapshot(&state);
+    let run_state: serde_json::Value = serde_json::from_slice(
+        before
+            .get("run-state.json")
+            .expect("the canonical run state is present"),
+    )
+    .expect("the canonical run state decodes");
+    assert_eq!(run_state["schema_version"], 2);
+
+    let error = run_validation(&plan, focused_identity(), 2, &state)
+        .expect_err("worker-count drift changes canonical runtime identity");
+    assert!(error.to_string().contains("incompatible"), "{error}");
+    assert_eq!(
+        snapshot(&state),
+        before,
+        "runtime mismatch must precede every additional marker, terminal, or rewrite"
+    );
+    fs::remove_dir_all(state).expect("the canonical journal fixture is removable");
+}
+
+#[test]
 fn continuation_rejects_changed_prefix_bytes_gaps_and_preopened_suffixes() {
     for (label, alter) in [
         (
@@ -896,18 +942,7 @@ fn an_immutable_second_segment_refuses_a_third_runtime() {
 
 #[test]
 fn receipt_segments_and_terminal_identities_require_exact_ordered_coverage() {
-    let (mut receipt, state) = passing_receipt("validation-segment-receipt");
-    let mut second_runtime = receipt.producer_segments[0].runtime.clone();
-    second_runtime.worker_count += 1;
-    receipt.producer_segments[0].end_anchor_index = 1;
-    receipt.producer_segments.push(ValidationProducerSegment {
-        segment_index: 1,
-        first_anchor_index: 1,
-        end_anchor_index: 2,
-        runtime: second_runtime,
-        state: identity(CONTINUATION_STATE_FILE, 'f'),
-    });
-    receipt.anchor_producers[1].producer_segment = 1;
+    let (receipt, state) = two_segment_receipt_fixture("validation-segment-receipt");
     receipt
         .validate()
         .expect("two exact contiguous segments validate");
@@ -949,6 +984,60 @@ fn receipt_segments_and_terminal_identities_require_exact_ordered_coverage() {
         let mut altered = receipt.clone();
         alter(&mut altered);
         assert!(altered.validate().is_err(), "receipt accepted {label}");
+    }
+    fs::remove_dir_all(state).expect("the journal directory is removable");
+}
+
+fn two_segment_receipt_fixture(label: &str) -> (ValidationReceipt, PathBuf) {
+    let (mut receipt, state) = passing_receipt(label);
+    let mut second_runtime = receipt.producer_segments[0].runtime.clone();
+    second_runtime.worker_count += 1;
+    let segment_state_bytes = b"{\"schema_version\":2,\"fixture\":\"producer-two\"}\n";
+    fs::write(state.join(CONTINUATION_STATE_FILE), segment_state_bytes)
+        .expect("the fixture segment state is writable");
+    receipt.producer_segments[0].end_anchor_index = 1;
+    receipt.producer_segments.push(ValidationProducerSegment {
+        segment_index: 1,
+        first_anchor_index: 1,
+        end_anchor_index: 2,
+        runtime: second_runtime,
+        state: ArtifactIdentity {
+            path: CONTINUATION_STATE_FILE
+                .parse()
+                .expect("the segment-state path is canonical"),
+            sha256: content_digest(segment_state_bytes),
+        },
+    });
+    receipt.anchor_producers[1].producer_segment = 1;
+    (receipt, state)
+}
+
+#[test]
+fn journal_verifier_rehashes_each_segment_state_and_terminal_on_disk() {
+    let (receipt, state) = two_segment_receipt_fixture("validation-journal-rehash");
+    verify_validation_receipt_journal(&receipt, &state)
+        .expect("the unmodified two-segment journal verifies");
+
+    for file in [
+        "run-state.json",
+        CONTINUATION_STATE_FILE,
+        "q3-n02-s0.terminal.json",
+        "q5-n02-s0.terminal.json",
+    ] {
+        let path = state.join(file);
+        let original = fs::read(&path).expect("the immutable fixture artifact reads");
+        let mut altered = original.clone();
+        altered.push(b' ');
+        fs::write(&path, altered).expect("the temporary fixture artifact changes");
+        let error = verify_validation_receipt_journal(&receipt, &state)
+            .expect_err("on-disk identity drift must fail journal verification");
+        assert!(
+            error.to_string().contains("identity mismatch"),
+            "{file}: {error}"
+        );
+        fs::write(&path, original).expect("the temporary fixture artifact restores");
+        verify_validation_receipt_journal(&receipt, &state)
+            .expect("the restored journal verifies before the next mutation");
     }
     fs::remove_dir_all(state).expect("the journal directory is removable");
 }
@@ -1602,6 +1691,34 @@ fn the_runner_refuses_an_incomplete_invocation_and_a_missing_receipt() {
 }
 
 #[test]
+fn the_runner_refuses_the_superseded_v1_receipt_path_before_journal_creation() {
+    let state = unique_directory("validation-stale-receipt-path");
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_permanent_validation"))
+        .current_dir(repository())
+        .args([
+            "--preregistration",
+            FROZEN_PREREGISTRATION,
+            "--state-dir",
+            state.to_str().expect("the temporary journal path is UTF-8"),
+            "--receipt",
+            "dev/active/02b8137c/pre-draw-validation-v1-receipt.json",
+        ])
+        .output()
+        .expect("the runner executes");
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("canonical schema-v2"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        !state.exists(),
+        "a stale receipt destination is rejected before journal admission"
+    );
+}
+
+#[test]
 fn frozen_validation_evidence_is_pinned_to_its_producing_toolchain() {
     assert_eq!(FROZEN_TOOLCHAIN_PREFIX, "rustc 1.95.0 ");
     assert!(is_frozen_validation_toolchain(
@@ -1671,7 +1788,8 @@ fn the_frozen_runner_refuses_a_wrong_toolchain_before_creating_the_journal() {
         return;
     }
     let state = unique_directory("validation-frozen-refusal");
-    let receipt = unique_directory("validation-frozen-receipt").join("receipt.json");
+    let receipt = repository().join(FROZEN_VALIDATION_RECEIPT_PATH);
+    let receipt_before = fs::read(&receipt).ok();
     let output = std::process::Command::new(env!("CARGO_BIN_EXE_permanent_validation"))
         .current_dir(repository())
         .args([
@@ -1680,7 +1798,7 @@ fn the_frozen_runner_refuses_a_wrong_toolchain_before_creating_the_journal() {
             "--state-dir",
             state.to_str().expect("the journal path is UTF-8"),
             "--receipt",
-            receipt.to_str().expect("the receipt path is UTF-8"),
+            FROZEN_VALIDATION_RECEIPT_PATH,
         ])
         .output()
         .expect("the runner executes");
@@ -1692,5 +1810,9 @@ fn the_frozen_runner_refuses_a_wrong_toolchain_before_creating_the_journal() {
         !state.exists(),
         "the runner must refuse before it creates the journal"
     );
-    assert!(!receipt.exists(), "a refused run publishes no receipt");
+    assert_eq!(
+        fs::read(receipt).ok(),
+        receipt_before,
+        "a refused run leaves the canonical receipt unchanged"
+    );
 }

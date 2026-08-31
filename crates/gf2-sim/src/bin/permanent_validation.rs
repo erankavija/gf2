@@ -12,7 +12,7 @@
 //! $ permanent_validation \
 //!     --preregistration dev/active/02b8137c/pre-draw-validation-v1-preregistration.json \
 //!     --state-dir dev/active/02b8137c/validation-journal \
-//!     --receipt dev/active/02b8137c/pre-draw-validation-v1-receipt.json \
+//!     --receipt dev/active/02b8137c/pre-draw-validation-v2-receipt.json \
 //!     --workers 32
 //! ```
 //!
@@ -40,7 +40,7 @@
 //! opens the first address.
 //!
 //! ```console
-//! $ permanent_validation --verify-receipt dev/active/02b8137c/pre-draw-validation-v1-receipt.json
+//! $ permanent_validation --verify-receipt dev/active/02b8137c/pre-draw-validation-v2-receipt.json
 //! ```
 //!
 //! `--verify-receipt` re-reads a committed receipt, revalidates it against the
@@ -59,6 +59,7 @@ use gf2_sim::permanent_campaign::validation::{
     load_frozen_campaign_validation_preregistration, load_validation_continuation_authorization,
     publish_validation_receipt_atomic, read_frozen_validation_receipt,
     run_frozen_campaign_validation_with_mode, ValidationReceipt, ValidationRunMode,
+    FROZEN_VALIDATION_RECEIPT_PATH,
 };
 
 const USAGE: &str = "usage: permanent_validation --preregistration PATH --state-dir PATH --receipt PATH [--workers N] [--continue-producer-segment PATH]
@@ -67,7 +68,7 @@ const USAGE: &str = "usage: permanent_validation --preregistration PATH --state-
 
   --preregistration PATH  committed frozen ten-anchor preregistration, repository-relative
   --state-dir PATH        durable no-redraw journal directory
-  --receipt PATH          immutable receipt destination
+  --receipt PATH          canonical immutable schema-v2 receipt destination
   --workers N             worker count for production evaluation (default: 1)
   --continue-producer-segment PATH
                            committed schema-v2 owner authorization for one second producer
@@ -144,6 +145,9 @@ fn main() -> ExitCode {
     else {
         return usage("execution needs --preregistration, --state-dir, and --receipt");
     };
+    if receipt_path != Path::new(FROZEN_VALIDATION_RECEIPT_PATH) {
+        return usage("--receipt must name the canonical schema-v2 validation receipt");
+    }
 
     let (plan, identity) =
         match load_frozen_campaign_validation_preregistration(&repository, &preregistration) {
