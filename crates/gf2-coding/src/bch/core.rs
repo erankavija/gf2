@@ -215,20 +215,10 @@ impl BchCode {
         for _ in 2..=(2 * t) {
             alpha_power = &alpha_power * &alpha;
             let m_i = alpha_power.minimal_polynomial();
-            g = Self::lcm_poly(&g, &m_i);
+            g = Gf2mPoly::lcm(&g, &m_i);
         }
 
         g
-    }
-
-    /// Computes LCM of two polynomials: lcm(a, b) = a*b / gcd(a, b)
-    fn lcm_poly(a: &Gf2mPoly, b: &Gf2mPoly) -> Gf2mPoly {
-        let gcd = Gf2mPoly::gcd(a, b);
-        let product = a * b;
-        let (quotient, remainder) = product.div_rem(&gcd);
-
-        assert!(remainder.is_zero(), "Division must be exact for LCM");
-        quotient
     }
 
     /// Returns the codeword length.

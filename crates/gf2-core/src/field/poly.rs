@@ -68,6 +68,7 @@
 //! | [`FieldPoly::div_rem_fast`] (for `F: TwoAdicField`) | Newton iteration via reversed-divisor inverse | `O(M(n))` field ops | Dispatches via [`mul_fast`]. |
 //! | [`FieldPoly::div_rem_auto`] (for `F: TwoAdicField`) | Profile-driven dispatcher: schoolbook ⇄ Newton fast division | follows `polynomial.div_rem_fast_min_len()` | conservative default [`DIV_REM_THRESHOLD`] = 2048 |
 //! | [`FieldPoly::gcd`] | Euclidean algorithm over `div_rem` | `O(n · m · log(min(n, m)))` field ops | Monic-normalised result. |
+//! | [`FieldPoly::lcm`] | `a · b / gcd(a, b)` | `O(n · m · log(min(n, m)))` field ops | Monic-normalised result; `lcm` with the zero polynomial is zero. |
 //!
 //! There is no standalone `pub fn mul_karatsuba`: the schoolbook ⇄
 //! Karatsuba crossover is internal and selected by the `Mul` operator
@@ -179,8 +180,8 @@
 //!   [`KARATSUBA_THRESHOLD`]).
 //! - NTT convolution for `F: TwoAdicField` via [`FieldPoly::mul_ntt`]
 //!   and the free-function tuned dispatcher [`mul_fast`].
-//! - Euclidean division [`FieldPoly::div_rem`] and GCD
-//!   [`FieldPoly::gcd`].
+//! - Euclidean division [`FieldPoly::div_rem`], GCD
+//!   [`FieldPoly::gcd`], and LCM [`FieldPoly::lcm`].
 //! - Evaluation: [`FieldPoly::eval`] (Horner),
 //!   [`FieldPoly::eval_batch`] (naive per-point loop),
 //!   [`FieldPoly::batch_evaluate`] (generic auto-dispatcher,
@@ -1888,6 +1889,80 @@ impl<F: FiniteField> FieldPoly<F> {
             }
         }
         r0
+    }
+
+    /// Returns the monic least common multiple `lcm(a, b) = a·b /
+    /// gcd(a, b)`.
+    ///
+    /// By convention `lcm(a, 0) = lcm(0, b) = 0`: if either input is
+    /// the zero polynomial, the result is the zero polynomial.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` — first polynomial.
+    /// * `b` — second polynomial.
+    ///
+    /// # Panics
+    ///
+    /// Panics if both `a` and `b` are the zero polynomial and `F` is
+    /// a runtime-context field with no static zero witness
+    /// (`F::zero_hint()` returns `None`, e.g. `Gf2mElement`) — there
+    /// is no `F` value anywhere to seed the zero result. `ConstField`
+    /// types, and any call where at least one operand is non-zero,
+    /// never hit this path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// // Shared factor (x - 1): p1 = (x - 1)(x - 2), p2 = (x - 1)(x - 3).
+    /// let xm1 = FieldPoly::new(vec![-Fp::<7>::new(1), Fp::<7>::new(1)]);
+    /// let xm2 = FieldPoly::new(vec![-Fp::<7>::new(2), Fp::<7>::new(1)]);
+    /// let xm3 = FieldPoly::new(vec![-Fp::<7>::new(3), Fp::<7>::new(1)]);
+    /// let p1 = &xm1 * &xm2;
+    /// let p2 = &xm1 * &xm3;
+    /// let l = FieldPoly::lcm(&p1, &p2);
+    /// assert_eq!(l, &p1 * &xm3); // (x - 1)(x - 2)(x - 3)
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n²)` field operations in the worst case, where `n` is the
+    /// maximum degree.
+    pub fn lcm(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPoly<F> {
+        if a.is_zero() || b.is_zero() {
+            // Convention: lcm with zero is zero. Draw a witness element
+            // from whichever operand is non-zero, or F::zero_hint() as
+            // a last resort, to seed a zero polynomial in the right
+            // runtime context.
+            let sample = if let Some(c) = a.iter().next() {
+                c.clone()
+            } else if let Some(c) = b.iter().next() {
+                c.clone()
+            } else if let Some(z) = F::zero_hint() {
+                z
+            } else {
+                unreachable!(
+                    "FieldPoly::lcm: lcm of two zero polynomials over a \
+                     runtime-context field with no zero witness"
+                );
+            };
+            return FieldPoly::zero_like(&sample);
+        }
+        let g = FieldPoly::gcd(a, b);
+        let (q, _r) = (a * b).div_rem(&g);
+        // Make the result monic (leading coefficient = 1).
+        if let Some(lead) = q.coeffs.last() {
+            if !lead.is_one() {
+                if let Some(inv) = lead.inv() {
+                    let monic: Vec<F> = q.coeffs.iter().map(|c| c.clone() * inv.clone()).collect();
+                    return FieldPoly::new(monic);
+                }
+            }
+        }
+        q
     }
 
     // -----------------------------------------------------------------
@@ -4591,6 +4666,50 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_lcm_coprime_polynomials() {
+        // Coprime linear factors: lcm(x - 1, x - 2) = (x - 1)(x - 2).
+        let xm1 = FieldPoly::new(vec![-fp7(1), fp7(1)]);
+        let xm2 = FieldPoly::new(vec![-fp7(2), fp7(1)]);
+        let l = FieldPoly::lcm(&xm1, &xm2);
+        assert_eq!(l, &xm1 * &xm2);
+    }
+
+    #[test]
+    fn test_lcm_shared_linear_factor() {
+        // p1 = (x - 1)(x - 2), p2 = (x - 1)(x - 3); the shared factor
+        // (x - 1) is not duplicated in the LCM.
+        let xm1 = FieldPoly::new(vec![-fp7(1), fp7(1)]);
+        let xm2 = FieldPoly::new(vec![-fp7(2), fp7(1)]);
+        let xm3 = FieldPoly::new(vec![-fp7(3), fp7(1)]);
+        let p1 = &xm1 * &xm2;
+        let p2 = &xm1 * &xm3;
+        let l = FieldPoly::lcm(&p1, &p2);
+        assert_eq!(l, &p1 * &xm3);
+    }
+
+    #[test]
+    fn test_lcm_zero_arg_is_zero() {
+        let p = FieldPoly::new(vec![fp7(1), fp7(2)]);
+        let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
+        assert!(FieldPoly::lcm(&p, &z).is_zero());
+        assert!(FieldPoly::lcm(&z, &p).is_zero());
+        assert!(FieldPoly::lcm(&z, &z).is_zero());
+    }
+
+    #[test]
+    #[should_panic(expected = "lcm of two zero polynomials")]
+    fn test_lcm_both_zero_runtime_context_panics() {
+        // Gf2mElement is a runtime-context field (its zero carries no
+        // static witness); with both operands zero and no non-zero
+        // coefficient anywhere to borrow a witness from, there is no
+        // `Gf2mElement` value to build the zero result from.
+        let field = Gf2mField::new(4, 0b10011);
+        let sample = field.element(1);
+        let z: FieldPoly<Gf2mElement> = FieldPoly::zero_like(&sample);
+        let _ = FieldPoly::lcm(&z, &z);
     }
 
     // -----------------------------------------------------------------
