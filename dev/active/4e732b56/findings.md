@@ -120,7 +120,7 @@ not a measurement artifact, and § 5 reports it rather than normalizing it away.
 **Generator-polynomial agreement.** `tools::BCH_polynomial_generator<int>`
 accepts the primitive polynomial explicitly, so the harness supplies the same
 polynomial `gf2-core` uses. For the two DVB-T2 rows the resulting generator
-polynomial is **bit-identical to the ETSI EN 302 755 generator** [ETSI302755]:
+polynomial is **bit-identical to the ETSI EN 302 755 generator** [Etsi2015]:
 degree 168 for the short frame and 192 for the normal frame, equal
 coefficient-by-coefficient to the product of the twelve minimal polynomials
 tabulated at `crates/gf2-coding/src/bch/dvb_t2/generators.rs:14-46`. The
@@ -264,17 +264,10 @@ chose to move.
 
 *(filled from the committed receipts)*
 
-## 9. Citation entries required
+## 9. Citations
 
-These works are cited above and are not yet in `.jit/references.toml`. The
-registry is repository-owned; the entries below are the data to register, and
-the keys used in this document are the proposed keys.
-
-| Proposed key | Citation data |
-|---|---|
-| `Cassagne2019` | Cassagne, Hartmann, Léonardon, He, Leroux, Tajan, Aumage, Barthou, Tonnellier, Pignoly, Le Gal, Jégo — "AFF3CT: A Fast Forward Error Correction Toolbox!". Elsevier SoftwareX 10:100345, 2019. DOI `10.1016/j.softx.2019.100345`. Upstream-recommended citation per the project README. |
-| `AlbrechtBard2026` | Albrecht, Bard — "The M4RI Library, Version 20260122". The M4RI Team, 2026. URL `https://github.com/malb/m4ri`. Software citation in the form the project's own README specifies. |
-| `Djelic2011` | Djelic — "Generic binary BCH encoding/decoding library". Parrot S.A., 2011; distributed as `lib/bch.c` in the Linux kernel and packaged for userspace as bchlib v2.1.3, URL `https://github.com/jkent/python-bchlib`. |
-| `ITPP2013` | "IT++ — a C++ library of mathematical, signal processing and communication classes and functions", version 4.3.1. URL `https://itpp.sourceforge.net`. |
-| `LiquidDSP2025` | Gaeddert — "liquid-dsp: digital signal processing library for software-defined radios", version 1.8.2. URL `https://github.com/jgaeddert/liquid-dsp`. |
-| `ETSI302755` | ETSI EN 302 755 — "Digital Video Broadcasting (DVB); Frame structure channel coding and modulation for a second generation digital terrestrial television broadcasting system (DVB-T2)". Source of the T2S and T2N generator polynomials. |
+Every work this survey cites resolves in `.jit/references.toml`: [Cassagne2019]
+(AFF3CT), [AlbrechtBard2026] (M4RI), [Djelic2011] (the kernel BCH library),
+[ITPP2013], [LiquidDSP2025], and [Etsi2015] (EN 302 755 V1.4.1, the edition
+`crates/gf2-coding/src/ldpc/core.rs:213` pins). The registry holds the
+bibliographic data; this document does not restate it.
