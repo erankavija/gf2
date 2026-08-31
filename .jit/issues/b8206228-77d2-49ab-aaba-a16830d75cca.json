@@ -168,6 +168,13 @@
       "format": "markdown",
       "label": "Session-26 handoff",
       "path": "dev/active/b8206228-permanent-statistics/handoff-22.md"
+    },
+    {
+      "commit": "a25aa244",
+      "doc_type": "other",
+      "format": "markdown",
+      "label": "Session-33 handoff",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-29.md"
     }
   ],
   "first_ready_at": "2026-08-07T12:32:21.572267461Z",
@@ -189,5 +196,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-30T06:55:55.518663529Z"
+  "updated_at": "2026-08-31T15:38:54.561229454Z"
 }
