@@ -152,8 +152,12 @@ bitwise on `Std.U64`). Their bodies reference definitions such as
 extraction and would otherwise surface as `Unknown constant`.
 
 The `FiniteField` dictionary itself is a non-recursive generated `def` and is
-left intact. Only the unreachable `CoreOps*` wrappers are axiomatised; the
-bipedal3 proofs never project them.
+left intact. An explicit allowlist axiomatizes the ten wrappers whose method
+bodies are opaque: owned and shared add/sub/mul/div, plus owned and shared
+add-assign. The generated Neg wrapper remains a transparent `def`. Missing,
+duplicate, or unknown Fp `CoreOps` dictionaries stop post-processing so
+extraction drift cannot silently widen the workaround; the bipedal3 proofs
+never project the ten allowlisted dictionaries.
 
 The gf2-algebra `FunsExternal.lean` is always regenerated from the
 auto-generated template (no hand-edits are needed: bipedal3 uses only `&&&`,
