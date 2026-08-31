@@ -168,6 +168,27 @@ fn emit(
     );
 }
 
+/// Emits a cell the budget could not measure as a labelled projection rather
+/// than dropping it, so every contract cell appears in the CSV as either a
+/// measurement or an estimate. Projections carry trial `-1` and an
+/// `-projected` algorithm suffix; the aggregation groups them separately and
+/// never mixes them into a measured cell's statistics.
+#[allow(clippy::too_many_arguments)]
+fn emit_projection(
+    rev: &str,
+    workload: &str,
+    algorithm: &str,
+    cs: &CodeSpec,
+    batch: usize,
+    ns_per_frame: f64,
+    info_mbit_per_s: f64,
+) {
+    println!(
+        "gf2,{rev},{workload},{algorithm}-projected,{},{},{},{},{batch},-1,{ns_per_frame:.3},{info_mbit_per_s:.4},projection------",
+        cs.name, cs.n, cs.k, cs.t
+    );
+}
+
 /// Times `run` with enough inner repetitions to clear [`MIN_TIMED_NS`],
 /// returning the per-call nanoseconds of each trial. Stops early once the
 /// accumulated timed work passes [`CELL_BUDGET_S`].
@@ -257,6 +278,15 @@ fn main() {
                         "# PROJECTED-ONLY {} batch={}: one batch costs about {:.1} s, over the {:.0} s cell budget",
                         cs.name, batch, projected, CELL_BUDGET_S
                     );
+                    emit_projection(
+                        &rev,
+                        "W1",
+                        "encode-batch",
+                        cs,
+                        batch,
+                        per_frame_s * 1e9,
+                        cs.k as f64 / per_frame_s * 1e-6,
+                    );
                     continue;
                 }
 
@@ -327,6 +357,15 @@ fn main() {
                 eprintln!(
                     "# PROJECTED-ONLY {} W2: about {:.1} s per materialization, over the {:.0} s cell budget",
                     cs.name, projected, CELL_BUDGET_S
+                );
+                emit_projection(
+                    &rev,
+                    "W2",
+                    "generator-matrix",
+                    cs,
+                    cs.k,
+                    per_frame_s * 1e9,
+                    (cs.k * cs.n) as f64 / projected * 1e-6,
                 );
             } else {
                 // A fresh code per call: `generator_matrix` caches its result,

@@ -20,16 +20,9 @@ import statistics
 import sys
 
 # The two harness schemas differ: the encoder harnesses carry a `t` column and
-# report per-frame nanoseconds, while the M4RI harness reports whole-call
-# nanoseconds. Both name their throughput column last-but-one.
-ENCODER_FIELDS = [
-    "lib", "version", "workload", "algorithm", "code",
-    "n", "k", "t", "batch", "trial", "ns_per_frame", "info_mbit_per_s", "digest",
-]
-M4RI_FIELDS = [
-    "lib", "version", "workload", "algorithm", "code",
-    "n", "k", "batch", "trial", "ns_total", "bits_per_s_scaled", "digest",
-]
+# report per-frame nanoseconds under `info_mbit_per_s`, while the M4RI harness
+# reports whole-call nanoseconds under `bits_per_s_scaled`. `load` reads
+# whichever pair a file actually has, so neither schema is hard-coded here.
 
 
 def load(run_dir: pathlib.Path) -> list[dict]:
@@ -73,6 +66,10 @@ def summarize(rows: list[dict], workload: str | None) -> list[dict]:
                 "rate_min": rates[0], "rate_med": statistics.median(rates), "rate_max": rates[-1],
                 "ns_med": statistics.median(nss),
                 "spread_pct": (rates[-1] - rates[0]) / statistics.median(rates) * 100.0,
+                # Rows the harness could not measure inside its cell budget are
+                # emitted with an `-projected` algorithm and trial -1. They are
+                # estimates and are never merged into a measured cell.
+                "projected": key[4].endswith("-projected"),
                 "digest": digests.pop() if len(digests) == 1 else "VARIES",
             }
         )
@@ -96,18 +93,30 @@ def main() -> int:
         print("| Workload | Row | Batch | Library | Algorithm | Trials | Median | Min | Max | Spread |")
         print("|---|---|---|---|---|---|---|---|---|---|")
         for c in cells:
-            print(
-                f"| {c['workload']} | {c['code']} | {c['batch']} | {c['lib']} {c['version']} | `{c['algorithm']}` "
-                f"| {c['trials']} | {c['rate_med']:.1f} | {c['rate_min']:.1f} | {c['rate_max']:.1f} "
-                f"| {c['spread_pct']:.1f}% |"
-            )
+            if c["projected"]:
+                print(
+                    f"| {c['workload']} | {c['code']} | {c['batch']} | {c['lib']} {c['version']} "
+                    f"| `{c['algorithm']}` | *estimate* | {c['rate_med']:.1f} | — | — | — |"
+                )
+            else:
+                print(
+                    f"| {c['workload']} | {c['code']} | {c['batch']} | {c['lib']} {c['version']} | `{c['algorithm']}` "
+                    f"| {c['trials']} | {c['rate_med']:.1f} | {c['rate_min']:.1f} | {c['rate_max']:.1f} "
+                    f"| {c['spread_pct']:.1f}% |"
+                )
     else:
         for c in cells:
-            print(
-                f"{c['workload']:3} {c['code']:4} batch={c['batch']:<5} {c['lib']:7} {c['algorithm']:18} "
-                f"n={c['trials']} median={c['rate_med']:10.2f} Mbit/s "
-                f"[{c['rate_min']:.2f}, {c['rate_max']:.2f}] spread={c['spread_pct']:.1f}%"
-            )
+            if c["projected"]:
+                print(
+                    f"{c['workload']:3} {c['code']:4} batch={c['batch']:<5} {c['lib']:7} {c['algorithm']:28} "
+                    f"ESTIMATE  {c['rate_med']:10.2f} Mbit/s (not measured)"
+                )
+            else:
+                print(
+                    f"{c['workload']:3} {c['code']:4} batch={c['batch']:<5} {c['lib']:7} {c['algorithm']:28} "
+                    f"n={c['trials']} median={c['rate_med']:10.2f} Mbit/s "
+                    f"[{c['rate_min']:.2f}, {c['rate_max']:.2f}] spread={c['spread_pct']:.1f}%"
+                )
     return 0
 
 
