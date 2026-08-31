@@ -540,7 +540,18 @@
   "rework_counts": {
     "4e732b56": 3
   },
-  "surfaced_pitfalls": [],
+  "surfaced_pitfalls": [
+    {
+      "source": "c3d5cea5 worker sign-off",
+      "finding": "wide_config.rs:22 misstates leading-term convention (pre-existing, out of footprint)",
+      "disposition": "tracked as standalone bug issue (created 2026-09-01); not an epic criterion subject"
+    },
+    {
+      "source": "c3d5cea5 worker sign-off",
+      "finding": "proptest runner fix restores ~19 previously-unenforced field axioms crate-wide; future carriers that 'passed' may legitimately start failing \u2014 coverage changed, not contract",
+      "disposition": "informational; bake into dispatch prompts for later field-implementing waves (quotient-ext-runtime/const, conway-registry)"
+    }
+  ],
   "coordination": {
     "peer": "agent:codex epic b8206228",
     "lock": "/tmp/gf2-main-leads.lock",
@@ -550,7 +561,9 @@
       "88ca7d2f must land before the cutover wave merges",
       "announce before touching crates/gf2-sim (cutover-sim)",
       "88ca7d2f re-slotted from wave 1 to wave 11: runs whenever the CCX1 window opens, must land before cutover-benches (wave 12) merges",
-      "Peer validation gf2-predraw-validation3 armed for 2026-09-01 02:00:30 EEST; CCX1 embargo from 01:30 until codex reports it terminal."
+      "Peer validation gf2-predraw-validation3 armed for 2026-09-01 02:00:30 EEST; CCX1 embargo from 01:30 until codex reports it terminal.",
+      "Owner policy 2026-09-01: only critical serialization between the two leads \u2014 file-overlap main merges (lock+announce+rebase), flock-arbitrated hardware/test locks, .jit batches under the advisory lock. No courtesy holds or pre-negotiated windows in either direction.",
+      "Owner 2026-09-01: CCX1 calendar embargo dropped \u2014 the ccx1 flock alone arbitrates between our measurements and the peer's 02:00:30 validation; no stand-down windows."
     ]
   },
   "started_at": "2026-08-31T16:14:25.273292+00:00",
