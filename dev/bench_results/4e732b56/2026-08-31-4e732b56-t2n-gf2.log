@@ -1,0 +1,26 @@
+nice: cannot set niceness: Permission denied
+# harness: survey-gf2-side
+# gf2_revision: 08e42f096a75309d35255d831782ae38d291f632
+# trials_per_cell: 7
+# warmup_reps: 2
+# cell_budget_s: 90
+# seed: 0x00000000ae03bcd0
+# rayon_num_threads: None
+# codes_selected: T2N
+# code T2N: n=32400 k=32208 t=12
+#   T2N probe: 0.049268 s per single encode
+#   T2N encode-batch batch=1
+#   reps=1 spent=0.33s trials=7
+#   T2N encode-loop batch=1
+#   reps=1 spent=0.33s trials=7
+#   T2N encode-batch batch=16
+#   reps=1 spent=5.34s trials=7
+#   T2N encode-loop batch=16
+#   reps=1 spent=5.33s trials=7
+#   T2N encode-batch batch=256
+#   reps=1 spent=85.12s trials=7
+#   T2N encode-loop batch=256
+#   reps=1 spent=84.89s trials=7
+# PROJECTED-ONLY T2N batch=4096: one batch costs about 201.8 s, over the 90 s cell budget
+#   T2N W2 projected 1586.828 s per materialization
+# PROJECTED-ONLY T2N W2: about 1586.8 s per materialization, over the 90 s cell budget

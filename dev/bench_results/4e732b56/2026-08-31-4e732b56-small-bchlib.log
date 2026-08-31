@@ -1,0 +1,19 @@
+nice: cannot set niceness: Permission denied
+# harness: bchlib_bch_bench
+# bchlib_version: v2.1.3
+# trials_per_cell: 7
+# cell_budget_s: 90.0
+# seed: 0x00000000ae03bcd0
+# codes_selected: B1,B2,B3,T2S
+# SKIP B1: k=5 is not a whole number of bytes; bch_encode takes a byte length
+# code B2: ecc_bits=63 ecc_bytes=9 (contract n-k=63)
+#   B2 table-remainder batch=1     reps=16129 spent=0.00s
+#   B2 table-remainder batch=16    reps=9434 spent=0.03s
+#   B2 table-remainder batch=256   reps=691 spent=0.04s
+#   B2 table-remainder batch=4096  reps=44 spent=0.04s
+# SKIP B3: k=223 is not a whole number of bytes; bch_encode takes a byte length
+# code T2S: ecc_bits=168 ecc_bytes=21 (contract n-k=168)
+#   T2S table-remainder batch=1     reps=3165 spent=0.03s
+#   T2S table-remainder batch=16    reps=204 spent=0.04s
+#   T2S table-remainder batch=256   reps=13 spent=0.04s
+#   T2S table-remainder batch=4096  reps=1 spent=0.04s

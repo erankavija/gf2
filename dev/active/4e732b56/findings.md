@@ -8,7 +8,7 @@
 | Criteria | REQ-13, REQ-14 of the epic; D-04 (encoding families), D-07 (evidence protocol) |
 | Harness | `dev/active/4e732b56/baseline-survey/` |
 | Receipts | `dev/bench_results/4e732b56/` |
-| Status | *(filled at § 5)* |
+| Status | Complete. Both workloads measured, baselines selected, contract fixed. |
 
 ## 1. Question
 
@@ -250,19 +250,224 @@ chose to move.
 
 ## 5. Results
 
-*(filled from the committed receipts)*
+Full per-cell figures — 128 cells, every one with its trial count, median,
+minimum, maximum, and spread — are in the receipt at
+`/dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md`, rendered
+from the committed CSVs. This section quotes only the cells the selection turns
+on.
+
+Dispersion across the 126 cells that took more than one trial has a median
+spread of 1.17% of the median. Twenty-two cells exceed 5% and eleven exceed
+10%, and they concentrate in two places: the smallest shapes, where the call
+approaches the clock's resolution (every B1 W2 cell, several $B = 1$ cells),
+and M4RI's `echelonize` control at B2 and B3, which runs on a random matrix
+rather than a structured one. Every cell the selection rests on is tighter
+than 6%, and the DVB-T2 cells that carry the headline gaps are all under 1.2%.
+Per-cell spreads are in the receipt.
+
+Two cells are **estimates**, not measurements, and are marked as such
+throughout: the gf2 side could not run T2N at $B = 4096$ or materialize T2N's
+generator matrix inside its 90 s cell budget.
+
+### 5.1 W1 — large-batch encoding, $B = 4096$
+
+Median information bits per second over 7 trials.
+
+| Row | $\deg g$ | bchlib `table-remainder` | AFF3CT `bitslice-interleaved` | AFF3CT `poly-remainder-scalar` | IT++ `poly-remainder-gfx` | gf2 `encode_batch` |
+|---|---|---|---|---|---|---|
+| B1 | 10 | not byte-aligned | 370.2 | 99.9 | 6.22 | 6.14 |
+| B3 | 32 | not byte-aligned | 432.5 | 96.7 | 0.39 | 3.43 |
+| B2 | 63 | **2240.9** | 159.8 | 76.0 | 0.66 | 1.90 |
+| T2S | 168 | **4533.2** | 50.8 | 42.6 | shortened | 0.76 |
+| T2N | 192 | **4672.3** | 41.6 | 38.4 | shortened | 0.65 *(estimate)* |
+
+Rows are ordered by generator degree, which is what the families separate on.
+
+At the two DVB-T2 rows — the parameters the epic actually ships — the pinned
+baseline encodes **4533 and 4672 Mbit/s** where the current gf2 encoder reaches
+**0.76 and 0.68**. Comparing measured cell against measured cell — T2S at
+$B = 4096$ for both, T2N at $B = 256$ for both, since gf2's T2N $B = 4096$ cell
+is the estimate above — the baseline leads by a factor of **5949 at T2S** and
+**6851 at T2N**.
+
+### 5.2 W2 — generator-matrix materialization
+
+Median matrix bits per second for a full $k \times n$ systematic $G$.
+
+| Row | Dimensions | M4RI `genmatrix-rref` | AFF3CT `basis-encode-pack` | gf2 `generator_matrix` |
+|---|---|---|---|---|
+| B1 | $5 \times 15$ | 234.4 | 241.9 | 6.26 |
+| B2 | $64 \times 127$ | **1304.7** | 156.2 | 6.92 |
+| B3 | $223 \times 255$ | **1703.6** | 119.7 | 7.29 |
+| T2S | $7032 \times 7200$ | **1754.2** | 48.3 | 1.58 |
+| T2N | $32208 \times 32400$ | **446.8** | 41.2 | 0.66 *(estimate)* |
+
+B1's row is not evidence for anything: at $5 \times 15$ the call sits near the
+clock's resolution and its cells carry 44–70% spread, the only cells in the
+survey that do. Every other row separates cleanly.
+
+The two routes to the same matrix are not close. Reducing the polynomial-form
+generator matrix to reduced row echelon form beats encoding the $k$ basis
+vectors by **8.4× at B2, 14.2× at B3, 36.3× at T2S, and 10.8× at T2N**.
+Against the current gf2 path the ratio is **1110× at T2S**.
+
+### 5.3 Counter profile
+
+`perf stat` over the AFF3CT W1 sweep records 168.4 G instructions in 58.8 G
+cycles — 2.86 instructions per cycle — with a 0.81% branch-miss rate and 4.5%
+of cache references missing. The bchlib T2N sweep records 0.02% branch misses
+and 1.4% cache misses. Neither baseline is branch- or memory-limited on this
+host, so the figures above are the implementations' compute cost rather than an
+artifact of the measurement shape.
 
 ## 6. Algorithm-family evidence
 
-*(filled from the committed receipts)*
+This section is what decision D-04 asked the survey to supply: evidence for
+which families are worth registering, and where each one wins.
+
+### 6.1 `table-remainder` scales with $k$, not with $\deg g$
+
+bchlib's throughput is nearly flat across generator degrees that span 3×:
+2240.9 at $\deg g = 63$, 4533.2 at 168, 4672.3 at 192. It rises with $k$
+rather than falling with $\deg g$, because the method consumes 32 message bits
+per step through four lookup tables and its per-step cost depends on the parity
+word count, not on the tap count.
+
+Both LFSR families do the opposite, spending $O(k \cdot \deg g)$. So the gap
+widens exactly where the epic's workloads live — the table method leads the
+best LFSR family by **14.0× at $\deg g = 63$, 89.3× at 168, and 112.4× at
+192**.
+
+### 6.2 `bitslice-interleaved` pays off at short generators only
+
+AFF3CT's interleaved encoder over its own scalar encoder, at $B = 4096$:
+
+| $\deg g$ | 10 (B1) | 32 (B3) | 63 (B2) | 168 (T2S) | 192 (T2N) |
+|---|---|---|---|---|---|
+| Interleaved / scalar | 3.71× | **4.47×** | 2.10× | 1.19× | 1.08× |
+
+The advantage peaks near $\deg g = 32$ and has essentially vanished by the
+DVB-T2 rows. The arithmetic points at the scalar path improving rather than the
+interleaved path degrading: interleaved throughput $\times \deg g$ is roughly
+constant (13.8k, 10.1k, 8.6k at B3, B2, T2S) while scalar throughput
+$\times \deg g$ climbs steadily (3.1k, 4.8k, 7.2k). The plausible mechanism is
+that AFF3CT's scalar inner loop auto-vectorizes better as the loop lengthens,
+but this survey did not inspect the generated code, so the mechanism is an open
+question for `avx2-batch-kernels` rather than a finding. What is established is
+the shape: **an eight-lane interleaved encoder does not deliver an eight-fold
+speedup at DVB-T2 generator degrees.**
+
+### 6.3 `genmatrix-multiply` wins only while $G$ stays small
+
+M4RI's `mzd_mul_m4rm` at $B = 4096$, scaled to information bits so it compares
+directly with the W1 column: 2580.9 (B2), 3091.1 (B3), 457.5 (T2S), 93.6 (T2N).
+
+It is the **fastest family measured at B3** — 7.2× the best LFSR there, and the
+only competitive option for a row bchlib cannot encode — and it edges bchlib at
+B2 (2580.9 against 2240.9). It then collapses by a factor of 50 relative to
+bchlib at T2N, where $G$ is 124 MiB and the product's work grows with $n \cdot k$
+while the LFSR's grows with $k \cdot \deg g$.
+
+### 6.4 The scalar reference
+
+`poly-remainder-scalar` is required by D-04 as the reference every other family
+is checked against, not as a performance candidate. Two independent
+implementations of it bracket the current gf2 encoder: AFF3CT's, at 38–100
+Mbit/s, and IT++'s field-element form at 0.39–6.22 Mbit/s. gf2's current
+encoder sits with IT++, which is the expected place given both compute over
+$\mathrm{GF}(2^m)$ elements — and confirms the slowness is the algorithm and
+representation, not a defect peculiar to gf2.
 
 ## 7. Selection
 
-*(filled from the committed receipts)*
+| Workload | Role | Selection | Margin over the next candidate |
+|---|---|---|---|
+| W1 | Primary | **bchlib v2.1.3**, `table-remainder` | 89–112× at the DVB-T2 rows |
+| W1 | Secondary | **AFF3CT v4.7.0** `Encoder_BCH_inter` | strongest family bchlib cannot express |
+| W2 | Primary | **M4RI 20260122**, `mzd_echelonize_m4ri` route | 10.8–36.3× over basis-vector encoding |
+| W2 | Secondary | **AFF3CT v4.7.0** `Encoder_BCH`, basis-encode | same semantics as the current gf2 path |
+
+**Why bchlib is primary for W1 rather than AFF3CT.** It is faster by two orders
+of magnitude at the rows that matter, and it earns that on the representation
+gf2 already uses — packed bytes, not one machine word per bit. Choosing AFF3CT
+as the target would set a bar gf2 could clear without adopting the method that
+actually matters.
+
+**Why AFF3CT is retained as W1 secondary.** bchlib cannot encode a row whose
+$k$ is not a whole number of bytes, which excludes B1 and B3. AFF3CT covers
+every row, supplies the required scalar reference, and is the only measured
+implementation of the interleaved family. Two baselines also keep a single
+library's quirks from defining the target.
+
+**Why M4RI is primary for W2.** See § 8: this reverses the selection this
+document predeclared.
+
+**Like-for-like justification.** The W1 comparison at the DVB-T2 rows is
+between implementations of the *same code*, not merely codes of equal shape.
+`baseline-survey/verify-generators.py` recomputes the generator polynomial from
+the minimal-polynomial table at
+`crates/gf2-coding/src/bch/dvb_t2/generators.rs:14-46` and compares it against
+what the AFF3CT harness emits; both DVB-T2 rows agree coefficient by
+coefficient at degrees 168 and 192. The runner performs this check before measuring; on this run it was added
+to the runner after the measurement passes had started, so the committed
+output was produced by invoking the checker directly against the same
+`generators.txt` the harnesses consumed:
+`2026-08-31-4e732b56-generator-agreement.txt`. The B1/B2/B3 rows and the
+IT++ rows are equal-shape comparisons only, because IT++ selects its own
+primitive polynomial.
 
 ## 8. Falsification record and open questions
 
-*(filled from the committed receipts)*
+### 8.1 The predeclared W2 baseline was wrong
+
+Before measuring, § 8 of the workload-selection contract named **AFF3CT's
+basis-vector materialization** the primary W2 baseline and M4RI the secondary,
+reasoning that the same-semantics route was the fairer target. The measurement
+contradicts that: the M4RI route is faster at every row above B1, by 36.3× at
+T2S. The contract has been amended to make M4RI primary and AFF3CT secondary,
+and the original ordering is recorded here rather than quietly replaced.
+
+The substantive lesson for `genmatrix-perf` is larger than the swap: **building
+$G$ by encoding $k$ basis vectors is the wrong algorithm.** A structured fill
+followed by four-Russians elimination is over an order of magnitude better, and
+the current gf2 implementation
+(`crates/gf2-coding/src/bch/core.rs:270-294`) uses the basis-vector route.
+
+### 8.2 The host governor was `powersave`
+
+The run's host record shows every CPU under the `powersave` scaling governor,
+not `performance`. This is a deviation from the ideal benchmark posture and is
+recorded rather than corrected mid-survey. Its observable effect was small:
+every cell above B1 at $B \ge 16$ held a spread under 5% of its median. The
+absolute figures may still shift under a `performance` governor, so the
+`perf-receipts` task should re-establish its non-regression baseline on the
+governor it intends to keep rather than inheriting these numbers as absolutes.
+The *ratios* between implementations, which is what the selection rests on, are
+far too large to be explained by governor effects.
+
+### 8.3 `encode_batch` is a sequential map
+
+gf2's `encode_batch` and a plain loop over `encode` agree within noise at every
+one of the 19 measured cells. This is not a surprise —
+`crates/gf2-coding/src/bch/core.rs:396` is a `messages.iter().map(...)` under a
+`TODO` — but it fixes the pre-cutover baseline: there is no batch-specific
+overhead for the epic to preserve, and no existing parallelism to regress.
+
+### 8.4 Open questions
+
+* **The interleaved family's decay** (§ 6.2) is characterized but not
+  explained. `avx2-batch-kernels` should confirm from generated code whether
+  the scalar path is auto-vectorizing before assuming an interleaved kernel
+  will scale with register width at DVB-T2 generator degrees.
+* **No DRAM-bound cell exists** in the fixed batch ladder; the largest working
+  set is 31.5 MiB against a 32 MiB L3. A consumer that needs a memory-bound
+  measurement must amend the contract's ladder.
+* **Two gf2 cells are estimates.** T2N at $B = 4096$ and T2N's generator matrix
+  were projected from probe-measured per-unit costs of 49.3 ms per
+  frame and 1587 s per materialization. Once the encoder is faster they become
+  measurable and should be measured.
+* **bchlib's byte alignment** excludes B1 and B3 from the primary W1 baseline.
+  Those two rows are compared against AFF3CT and M4RI only.
 
 ## 9. Citations
 
