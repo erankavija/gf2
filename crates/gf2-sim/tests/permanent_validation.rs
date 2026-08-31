@@ -18,14 +18,16 @@ use gf2_sim::permanent_campaign::provenance::repository_top_level;
 use gf2_sim::permanent_campaign::schedule::backend_supports_cell;
 use gf2_sim::permanent_campaign::schema::{read_manifest, ArtifactIdentity, Backend, Sha256Digest};
 use gf2_sim::permanent_campaign::validation::{
-    evaluate_validation_anchor, is_frozen_validation_toolchain,
-    load_frozen_campaign_validation_preregistration, load_validation_preregistration,
-    preflight_required_backends, publish_validation_receipt_atomic, read_validation_receipt,
-    run_validation, AnchorReceipt, AnchorSpec, BackendAgreementStatus, DecisionRule,
-    FrozenArtifactGuard, FrozenArtifactSnapshot, PhaseStatus, ReplayMode, RetryRule, SampleOrigin,
-    ValidationAuthorities, ValidationFailure, ValidationPhase, ValidationPreregistration,
-    ValidationProtocol, ValidationReceipt, ValidationStreamPurpose, ValidationVerdict,
-    FROZEN_TOOLCHAIN_PREFIX, PREREGISTRATION_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION,
+    admit_validation_run, evaluate_validation_anchor, is_frozen_validation_toolchain,
+    load_frozen_campaign_validation_preregistration, load_validation_continuation_authorization,
+    load_validation_preregistration, preflight_required_backends,
+    publish_validation_receipt_atomic, read_validation_receipt, run_validation, AnchorReceipt,
+    AnchorSpec, BackendAgreementStatus, DecisionRule, FrozenArtifactGuard, FrozenArtifactSnapshot,
+    PhaseStatus, ReplayMode, RetryRule, SampleOrigin, ValidationAuthorities, ValidationFailure,
+    ValidationPhase, ValidationPreregistration, ValidationProducerSegment, ValidationProtocol,
+    ValidationReceipt, ValidationRunMode, ValidationStreamPurpose, ValidationVerdict,
+    CONTINUATION_STATE_FILE, FROZEN_TOOLCHAIN_PREFIX, PREREGISTRATION_SCHEMA_VERSION,
+    RECEIPT_SCHEMA_VERSION,
 };
 use gf2_stats::binomial::two_sided_test;
 use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
@@ -34,6 +36,7 @@ use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, 
 /// the execution lead consumes it.
 const FROZEN_PREREGISTRATION: &str =
     "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json";
+const FROZEN_CONTINUATION: &str = "dev/active/02b8137c/pre-draw-validation-v2-continuation.json";
 /// Established validation namespace recorded in `exact-anchors.csv`.
 const VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
 /// Focused draw count: large enough to exercise the exact test, small enough
@@ -339,6 +342,31 @@ fn every_required_backend_and_the_determinant_path_reproduce_the_oracle() {
 }
 
 #[test]
+fn fresh_validation_uses_the_single_canonical_schema_v2_state_model() {
+    let (receipt, state) = passing_receipt("validation-v2-cutover");
+    assert_eq!(receipt.schema_version, 2);
+    assert_eq!(receipt.producer_segments.len(), 1);
+    assert_eq!(receipt.producer_segments[0].first_anchor_index, 0);
+    assert_eq!(receipt.producer_segments[0].end_anchor_index, 2);
+    assert_eq!(receipt.anchor_producers.len(), 2);
+
+    for file in [
+        "run-state.json",
+        "q3-n02-s0.exact.started.json",
+        "q3-n02-s0.replay.started.json",
+        "q3-n02-s0.sample.started.json",
+    ] {
+        let value: serde_json::Value = serde_json::from_slice(
+            &fs::read(state.join(file)).expect("the canonical journal state reads"),
+        )
+        .expect("the canonical journal state decodes");
+        assert_eq!(value["schema_version"], 2, "{file} must use schema v2");
+    }
+    assert!(!state.join(CONTINUATION_STATE_FILE).exists());
+    fs::remove_dir_all(state).expect("the journal directory is removable");
+}
+
+#[test]
 fn replay_uses_two_fresh_instances_over_the_first_preregistered_matrices() {
     let (receipt, state) = passing_receipt("validation-replay");
     for anchor in &receipt.anchors {
@@ -603,6 +631,15 @@ fn the_receipt_round_trips_and_republishes_only_identical_evidence() {
 
     let mut altered = receipt.clone();
     altered.anchors[0].finished_at.nanoseconds ^= 1;
+    let mut terminal_bytes =
+        serde_json::to_vec_pretty(&altered.anchors[0]).expect("the altered terminal encodes");
+    terminal_bytes.push(b'\n');
+    altered.anchor_producers[0].terminal.sha256 = format!(
+        "{:x}",
+        <sha2::Sha256 as sha2::Digest>::digest(&terminal_bytes)
+    )
+    .parse()
+    .expect("the altered terminal digest is canonical");
     let error = publish_validation_receipt_atomic(&output, &altered)
         .expect_err("an immutable receipt is never overwritten");
     assert!(error.to_string().contains("incompatible"), "{error}");
@@ -647,6 +684,273 @@ fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, 
     fs::write(state.join("q5-n01-s0.terminal.json"), terminal_bytes)
         .expect("the committed terminal fixture is writable");
     (plan, state)
+}
+
+fn copy_committed_validation_journal(label: &str) -> PathBuf {
+    let destination = unique_directory(label);
+    fs::create_dir_all(&destination).expect("the journal fixture directory is creatable");
+    let source = repository().join("dev/active/02b8137c/validation-journal");
+    for entry in fs::read_dir(source).expect("the committed journal directory reads") {
+        let entry = entry.expect("the committed journal entry reads");
+        if entry
+            .file_type()
+            .expect("the journal entry has a type")
+            .is_file()
+        {
+            fs::copy(entry.path(), destination.join(entry.file_name()))
+                .expect("the immutable journal fixture copies");
+        }
+    }
+    destination
+}
+
+#[test]
+fn the_current_journal_admits_an_ordered_continuation_before_q5_n2_starts() {
+    let repository = repository();
+    let (plan, identity) = load_frozen_campaign_validation_preregistration(
+        &repository,
+        Path::new(FROZEN_PREREGISTRATION),
+    )
+    .expect("the committed frozen plan is valid");
+    let state = copy_committed_validation_journal("validation-current-continuation");
+    let preserved =
+        fs::read(state.join("q5-n01-s0.terminal.json")).expect("the last old terminal reads");
+
+    let authorization =
+        load_validation_continuation_authorization(&repository, Path::new(FROZEN_CONTINUATION))
+            .expect("the committed continuation authorization is valid");
+    let admission = admit_validation_run(
+        &plan,
+        identity,
+        24,
+        &state,
+        ValidationRunMode::ContinueWith(Box::new(authorization)),
+    )
+    .expect("the exact committed prefix admits its authorized continuation");
+
+    assert_eq!(admission.completed_anchor_count(), 5);
+    let next = admission.next_address().expect("five anchors remain");
+    assert_eq!((next.q, next.n, next.stream_index), (5, 2, 0));
+    assert!(state.join("producer-segment-state-v2.json").is_file());
+    assert!(
+        !state.join("q5-n02-s0.exact.started.json").exists(),
+        "admission publishes the continuation before the next address is opened"
+    );
+    assert_eq!(
+        fs::read(state.join("q5-n01-s0.terminal.json"))
+            .expect("the adopted old terminal still reads"),
+        preserved,
+        "continuation admission never executes or rewrites an old anchor"
+    );
+    for entry in fs::read_dir(&state).expect("the continued journal reads") {
+        let name = entry
+            .expect("the continued journal entry reads")
+            .file_name()
+            .to_string_lossy()
+            .into_owned();
+        assert!(
+            ![
+                "shard",
+                "coordinator",
+                "checkpoint",
+                "field-summary",
+                "pooled-summary",
+                "interpretation",
+            ]
+            .iter()
+            .any(|forbidden| name.contains(forbidden)),
+            "continuation published forbidden campaign artifact {name}"
+        );
+    }
+    fs::remove_dir_all(state).expect("the journal fixture is removable");
+}
+
+fn current_continuation_inputs(
+    label: &str,
+) -> (
+    ValidationPreregistration,
+    ArtifactIdentity,
+    PathBuf,
+    gf2_sim::permanent_campaign::validation::AuthorizedValidationContinuation,
+) {
+    let repository = repository();
+    let (plan, identity) = load_frozen_campaign_validation_preregistration(
+        &repository,
+        Path::new(FROZEN_PREREGISTRATION),
+    )
+    .expect("the frozen plan is valid");
+    let authorization =
+        load_validation_continuation_authorization(&repository, Path::new(FROZEN_CONTINUATION))
+            .expect("the continuation authorization is valid");
+    (
+        plan,
+        identity,
+        copy_committed_validation_journal(label),
+        authorization,
+    )
+}
+
+#[test]
+fn default_resume_refuses_the_original_producer_mismatch_without_opening_q5_n2() {
+    let (plan, identity, state, _) = current_continuation_inputs("validation-default-refusal");
+    let error = run_validation(&plan, identity, 24, &state)
+        .expect_err("default resume cannot weaken exact producer identity");
+    assert!(error.to_string().contains("incompatible"), "{error}");
+    assert!(!state.join(CONTINUATION_STATE_FILE).exists());
+    assert!(!state.join("q5-n02-s0.exact.started.json").exists());
+    fs::remove_dir_all(state).expect("the journal fixture is removable");
+}
+
+#[test]
+fn continuation_rejects_changed_prefix_bytes_gaps_and_preopened_suffixes() {
+    for (label, alter) in [
+        (
+            "run-state",
+            Box::new(|state: &Path| {
+                let path = state.join("run-state.json");
+                let mut bytes = fs::read(&path).expect("the run state reads");
+                bytes.push(b' ');
+                fs::write(path, bytes).expect("the fixture run state changes");
+            }) as Box<dyn Fn(&Path)>,
+        ),
+        (
+            "terminal",
+            Box::new(|state: &Path| {
+                let path = state.join("q3-n03-s0.terminal.json");
+                let mut bytes = fs::read(&path).expect("the terminal reads");
+                bytes.push(b' ');
+                fs::write(path, bytes).expect("the fixture terminal changes");
+            }),
+        ),
+        (
+            "started-without-terminal",
+            Box::new(|state: &Path| {
+                fs::remove_file(state.join("q3-n02-s0.terminal.json"))
+                    .expect("the fixture terminal is removable");
+            }),
+        ),
+        (
+            "preopened-suffix",
+            Box::new(|state: &Path| {
+                fs::copy(
+                    state.join("q5-n01-s0.exact.started.json"),
+                    state.join("q5-n02-s0.exact.started.json"),
+                )
+                .expect("the suffix fixture is creatable");
+            }),
+        ),
+    ] {
+        let (plan, identity, state, authorization) =
+            current_continuation_inputs(&format!("validation-reject-{label}"));
+        alter(&state);
+        let error = admit_validation_run(
+            &plan,
+            identity,
+            24,
+            &state,
+            ValidationRunMode::ContinueWith(Box::new(authorization)),
+        )
+        .expect_err("changed or non-prefix journal evidence is never admitted");
+        assert!(
+            !state.join(CONTINUATION_STATE_FILE).exists(),
+            "{label}: {error}"
+        );
+        assert!(!state.join("q5-n02-s0.sample.started.json").exists());
+        fs::remove_dir_all(state).expect("the journal fixture is removable");
+    }
+}
+
+#[test]
+fn an_immutable_second_segment_refuses_a_third_runtime() {
+    let (plan, identity, state, authorization) =
+        current_continuation_inputs("validation-third-producer");
+    let first = admit_validation_run(
+        &plan,
+        identity.clone(),
+        24,
+        &state,
+        ValidationRunMode::ContinueWith(Box::new(authorization.clone())),
+    )
+    .expect("the authorized second producer is admitted");
+    drop(first);
+    let state_before =
+        fs::read(state.join(CONTINUATION_STATE_FILE)).expect("the segment state reads");
+
+    let error = admit_validation_run(
+        &plan,
+        identity,
+        23,
+        &state,
+        ValidationRunMode::ContinueWith(Box::new(authorization)),
+    )
+    .expect_err("a different worker configuration is a third producer");
+    assert!(error.to_string().contains("incompatible"), "{error}");
+    assert_eq!(
+        fs::read(state.join(CONTINUATION_STATE_FILE)).expect("the segment state still reads"),
+        state_before,
+        "third-producer refusal cannot rewrite the admitted segment state"
+    );
+    assert!(!state.join("q5-n02-s0.exact.started.json").exists());
+    fs::remove_dir_all(state).expect("the journal fixture is removable");
+}
+
+#[test]
+fn receipt_segments_and_terminal_identities_require_exact_ordered_coverage() {
+    let (mut receipt, state) = passing_receipt("validation-segment-receipt");
+    let mut second_runtime = receipt.producer_segments[0].runtime.clone();
+    second_runtime.worker_count += 1;
+    receipt.producer_segments[0].end_anchor_index = 1;
+    receipt.producer_segments.push(ValidationProducerSegment {
+        segment_index: 1,
+        first_anchor_index: 1,
+        end_anchor_index: 2,
+        runtime: second_runtime,
+        state: identity(CONTINUATION_STATE_FILE, 'f'),
+    });
+    receipt.anchor_producers[1].producer_segment = 1;
+    receipt
+        .validate()
+        .expect("two exact contiguous segments validate");
+
+    for (label, alter) in [
+        (
+            "segment overlap",
+            Box::new(|r: &mut ValidationReceipt| {
+                r.producer_segments[0].end_anchor_index = 2;
+            }) as Box<dyn Fn(&mut ValidationReceipt)>,
+        ),
+        (
+            "segment reorder",
+            Box::new(|r: &mut ValidationReceipt| r.producer_segments.swap(0, 1)),
+        ),
+        (
+            "address mapping",
+            Box::new(|r: &mut ValidationReceipt| r.anchor_producers[1].address.n = 1),
+        ),
+        (
+            "producer mapping",
+            Box::new(|r: &mut ValidationReceipt| {
+                r.anchor_producers[1].producer_segment = 0;
+            }),
+        ),
+        (
+            "terminal digest",
+            Box::new(|r: &mut ValidationReceipt| {
+                r.anchor_producers[1].terminal.sha256 = digest('0');
+            }),
+        ),
+        (
+            "segment runtime",
+            Box::new(|r: &mut ValidationReceipt| {
+                r.producer_segments[1].runtime.worker_count = 0;
+            }),
+        ),
+    ] {
+        let mut altered = receipt.clone();
+        alter(&mut altered);
+        assert!(altered.validate().is_err(), "receipt accepted {label}");
+    }
+    fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
 #[test]
@@ -917,37 +1221,57 @@ fn receipt_validation_rejects_each_mutated_field() {
         ),
         (
             "worker count",
-            Box::new(|r: &mut ValidationReceipt| r.runtime.worker_count = 0),
+            Box::new(|r: &mut ValidationReceipt| r.producer_segments[0].runtime.worker_count = 0),
         ),
         (
             "binary identity",
-            Box::new(|r: &mut ValidationReceipt| r.runtime.provenance.binary_sha256 = None),
+            Box::new(|r: &mut ValidationReceipt| {
+                r.producer_segments[0].runtime.provenance.binary_sha256 = None;
+            }),
         ),
         (
             "source closure identity",
-            Box::new(|r: &mut ValidationReceipt| r.runtime.provenance.deps_source_revision = None),
+            Box::new(|r: &mut ValidationReceipt| {
+                r.producer_segments[0]
+                    .runtime
+                    .provenance
+                    .deps_source_revision = None;
+            }),
         ),
         (
             "source closure state",
-            Box::new(|r: &mut ValidationReceipt| r.runtime.provenance.deps_source_dirty = None),
+            Box::new(|r: &mut ValidationReceipt| {
+                r.producer_segments[0].runtime.provenance.deps_source_dirty = None;
+            }),
         ),
         (
             "toolchain identity",
-            Box::new(|r: &mut ValidationReceipt| r.runtime.provenance.compiler_version.clear()),
+            Box::new(|r: &mut ValidationReceipt| {
+                r.producer_segments[0]
+                    .runtime
+                    .provenance
+                    .compiler_version
+                    .clear();
+            }),
         ),
         (
             "rng identity",
             Box::new(|r: &mut ValidationReceipt| {
-                r.runtime.provenance.rng_version = "rand_chacha 0.0.0".to_owned();
+                r.producer_segments[0].runtime.provenance.rng_version =
+                    "rand_chacha 0.0.0".to_owned();
             }),
         ),
         (
             "hardware identity",
-            Box::new(|r: &mut ValidationReceipt| r.runtime.provenance.cpu_model.clear()),
+            Box::new(|r: &mut ValidationReceipt| {
+                r.producer_segments[0].runtime.provenance.cpu_model.clear();
+            }),
         ),
         (
             "invocation",
-            Box::new(|r: &mut ValidationReceipt| r.runtime.provenance.invocation.clear()),
+            Box::new(|r: &mut ValidationReceipt| {
+                r.producer_segments[0].runtime.provenance.invocation.clear();
+            }),
         ),
         (
             "reversed run timestamps",
@@ -1242,6 +1566,10 @@ fn the_runner_refuses_an_incomplete_invocation_and_a_missing_receipt() {
     assert!(
         String::from_utf8_lossy(&output.stderr).contains("--preregistration"),
         "an incomplete invocation names the required options"
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("--continue-producer-segment"),
+        "runner help exposes the explicit continuation authority flag"
     );
 
     let output = std::process::Command::new(binary)
