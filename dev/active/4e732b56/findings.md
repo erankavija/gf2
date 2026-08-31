@@ -31,7 +31,7 @@ them against the same codes, and fixing the result as the
 
 ## 2. Why the existing SOTA target matrix does not answer this
 
-The [SOTA target matrix](/dev/plans/sota_target_matrix.md) is the repository's reference-selection
+The [SOTA target matrix](../../plans/sota_target_matrix.md) is the repository's reference-selection
 keystone, and this survey follows its pinning and receipt conventions. It does
 not, however, contain a cell for either workload, for three reasons it records
 itself:
