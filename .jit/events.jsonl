@@ -10305,3 +10305,7 @@
 {"assignee":"agent:worker","id":"83ec82c5-73dc-4ddf-864d-1d07beb53bb3","issue_id":"7a3a6738-3ec0-42ea-86dd-c2d845689e1a","timestamp":"2026-08-31T20:03:02.674509634Z","type":"issue_claimed"}
 {"from":"ready","id":"847d6c27-5db7-4539-b433-4a8c00c5ae91","issue_id":"c3d5cea5-71ac-4cd8-bddf-40be7e243526","timestamp":"2026-08-31T20:03:12.343305721Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"5a5cdbfd-8942-4673-b54f-bfd7d627f177","issue_id":"c3d5cea5-71ac-4cd8-bddf-40be7e243526","timestamp":"2026-08-31T20:03:12.343305721Z","type":"issue_claimed"}
+{"from":"in_progress","id":"e3a9e5c9-e2c5-4a5d-a2a5-35308db30017","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T21:13:35.272555790Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"3693a300-f725-45c0-9dd6-2038e3e74f40","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","reason":"rework merged; lead runs gates","timestamp":"2026-08-31T21:13:35.272555790Z","type":"issue_released"}
+{"from":"ready","id":"07adbda7-977f-4ab6-847b-83ecf33a77d6","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T21:13:44.843206288Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"31e108e3-d109-4007-b9b2-a67c08a1f253","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T21:13:44.843206288Z","type":"issue_claimed"}

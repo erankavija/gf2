@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-08-31T16:18:55.132218983Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
@@ -96,5 +96,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-08-31T19:56:15.223142182Z"
+  "updated_at": "2026-08-31T21:13:44.843206288Z"
 }
