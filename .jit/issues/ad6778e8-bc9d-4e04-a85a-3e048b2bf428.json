@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-08-31T16:18:12.982452713Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
@@ -7,7 +7,33 @@
     "e3169db4-6c81-48de-9861-ea349e4e4f18"
   ],
   "description": "Author the design document fixing the canonical relative finite-field extension abstraction for gf2-core and the stable algebraic field identity shared by serialization validation and automatic field selection.\n\n## Background\n\ngf2-core has concrete extension configurations (`ExtConfig` binomial towers, runtime `Gf2mField`) but no canonical public relationship expressing that one field extends another: no relative degree, checked membership, restriction, or relative Frobenius across two field types. Compile-time and runtime quotient fields will coexist, so the design must fix one identity and conversion semantics between them. Field identity is algebraic — characteristic, base tower, modulus, basis semantics — and is distinct from the element wire representation, which serialized headers version separately.\n\n## Success Criteria\n\n- [hard] REQ-01: A design document in the epic's dev/active directory defines the extension trait surface (embedding, checked membership and restriction, relative degree, relative Frobenius, field-order relationships, validation certificates), citing the existing types it must cover.\n- [hard] REQ-02: The document fixes the algebraic field-identity representation, its distinctness from element wire representation, and the equivalence/conversion semantics between compile-time and runtime forms of the same field.\n- [hard] REQ-03: The document names which operations belong on the trait versus derived helpers, with a worked GF(2)/GF(2^m) and GF(p)/GF(p^r) example each, and preallocates the module layout for the foundation tasks that follow.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "3f4b16bd968e1b13ff45a6b5b887ebfa6a5e7dfd2cc608d6c027b05b01233bde",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Design: relative field-extension abstraction and field identity",
+      "path": "dev/active/ae03bcd0-general-bch/extension-design.md"
+    }
+  ],
   "first_ready_at": "2026-08-28T22:50:47.339714882Z",
   "gates_required": [
     "doc-review"
@@ -23,5 +49,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Design the relative field-extension abstraction and field identity",
-  "updated_at": "2026-08-31T16:18:12.982452713Z"
+  "updated_at": "2026-08-31T16:43:28.154098397Z"
 }
