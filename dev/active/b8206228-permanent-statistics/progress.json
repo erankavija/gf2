@@ -1293,5 +1293,13 @@
     "campaign_state": "No campaign-purpose draw occurred. All three campaign arms remain blocked on 02b8137c, and the prior separate-go requirement remains in force after validation closes.",
     "handoff": "handoff-29.md"
   },
-  "current_session": 33
+  "session_34_state": {
+    "recorded_at": "2026-08-31T22:00:29+03:00",
+    "reason": "Owner-directed handoff and stop after arming the schema-v2 validation continuation.",
+    "continuation": "Implementation merged at e0c3959a; independent rereview passed; integrated CI passed 5,208 tests with zero failures; authority documents linked at 8ac6a9d3. Canonical-cutover remains mandatory after the receipt lands.",
+    "scheduled_run": "gf2-predraw-validation3.timer is active and waiting for 2026-09-01 02:00:30 EEST; it is transient and does not survive reboot. The protected clean worktree is .agents/worktrees/agent-02b8137c-run at fa8a9d9c, dependency source c0db11e2, binary SHA-256 d0d674800f0d32778b3d50fd176d3e810daebc986620a537b437633a66ae788e, exact-tree CI 5,210/0, external log /home/vkaskivuo/.local/state/gf2-validation/validation-v2-continuation-20260901.log.",
+    "campaign_state": "No continuation or campaign-purpose draw occurred in session 34. Campaign arms remain blocked and a separate owner go remains required after validation closes.",
+    "handoff": "handoff-30.md"
+  },
+  "current_session": 34
 }
