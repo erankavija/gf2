@@ -1,0 +1,19 @@
+nice: cannot set niceness: Permission denied
+# harness: aff3ct_bch_bench
+# aff3ct_version: v4.7.0
+# mipp_lanes_int32: 8
+# mipp_instr_type: AVX2
+# trials_per_cell: 7
+# warmup_reps: 2
+# seed: 0x00000000ae03bcd0
+# codes_selected: T2N
+# code T2N: mother_n=65535 deg_g=192
+#   T2N lfsr-scalar      batch=1     reps=6 spent=0.04s
+# SKIP T2N batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
+#   T2N lfsr-scalar      batch=16    reps=1 spent=0.09s
+#   T2N lfsr-simd-inter  batch=16    reps=1 spent=0.09s
+#   T2N lfsr-scalar      batch=256   reps=1 spent=1.50s
+#   T2N lfsr-simd-inter  batch=256   reps=1 spent=1.39s
+#   T2N lfsr-scalar      batch=4096  reps=1 spent=24.08s
+#   T2N lfsr-simd-inter  batch=4096  reps=1 spent=22.19s
+#   T2N W2 estimated 23.408 s per materialization

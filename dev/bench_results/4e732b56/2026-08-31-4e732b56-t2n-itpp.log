@@ -1,0 +1,8 @@
+nice: cannot set niceness: Permission denied
+# harness: itpp_bch_bench
+# itpp_version: 4.3.1+soname8.2.1
+# trials_per_cell: 7
+# cell_budget_s: 90.0
+# seed: 0x00000000ae03bcd0
+# codes_selected: T2N
+# SKIP T2N: n=32400 is shortened; itpp::BCH requires n+1 to be a power of two

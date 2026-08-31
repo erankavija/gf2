@@ -1,0 +1,3 @@
+T2S: gf2 tree deg=168 aff3ct deg=168 identical=True
+T2N: gf2 tree deg=192 aff3ct deg=192 identical=True
+all 2 DVB-T2 rows agree; the encoding comparison is like-for-like

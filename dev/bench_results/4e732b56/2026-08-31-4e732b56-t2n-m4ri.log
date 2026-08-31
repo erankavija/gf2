@@ -1,0 +1,12 @@
+nice: cannot set niceness: Permission denied
+# harness: m4ri_genmatrix_bench
+# m4ri_version: 20260122
+# trials_per_cell: 7
+# cell_budget_s: 45.0
+# seed: 0x00000000ae03bcd0
+# codes_loaded: 5
+# codes_selected: T2N
+#   T2N genmatrix-rref: 16.468 s of timed work
+#   T2N echelonize: 41.850 s of timed work
+#   T2N matmul-m4rm batch=256: 0.682 s of timed work
+#   T2N matmul-m4rm batch=4096: 9.994 s of timed work
