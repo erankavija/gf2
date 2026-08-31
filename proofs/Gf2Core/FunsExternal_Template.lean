@@ -166,7 +166,7 @@ axiom
     F)
 
 /-- [gf2_core::field::traits::FiniteField::zero_hint]:
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 147:4-149:5
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 163:4-165:5
     Visibility: public -/
 axiom field.traits.FiniteField.zero_hint.default
   {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
@@ -175,7 +175,7 @@ axiom field.traits.FiniteField.zero_hint.default
   Result (Option Self)
 
 /-- [gf2_core::field::traits::FiniteField::cardinality_log2_hint]:
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 180:4-182:5
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 196:4-198:5
     Visibility: public -/
 axiom field.traits.FiniteField.cardinality_log2_hint.default
   {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
@@ -184,7 +184,7 @@ axiom field.traits.FiniteField.cardinality_log2_hint.default
   Result (Option Std.U32)
 
 /-- [gf2_core::field::traits::FiniteField::mul_product_sum_wide]:
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 270:4-272:5
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 286:4-288:5
     Visibility: public -/
 axiom field.traits.FiniteField.mul_product_sum_wide.default
   {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
@@ -193,7 +193,7 @@ axiom field.traits.FiniteField.mul_product_sum_wide.default
   Self → Self → Result Clause0_Wide
 
 /-- [gf2_core::field::traits::FiniteField::reduce_product_sum_wide]:
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 320:4-322:5
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 336:4-338:5
     Visibility: public -/
 axiom field.traits.FiniteField.reduce_product_sum_wide.default
   {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
@@ -202,49 +202,13 @@ axiom field.traits.FiniteField.reduce_product_sum_wide.default
   Clause0_Wide → Result Self
 
 /-- [gf2_core::field::traits::FiniteField::theorem_4_operand_bound]:
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 803:4-805:5
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 819:4-821:5
     Visibility: public -/
 axiom field.traits.FiniteField.theorem_4_operand_bound.default
   {Self : Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type}
   (FiniteFieldInst : field.traits.FiniteField Self Clause0_Characteristic
   Clause0_Wide) :
   Result Std.U128
-
-/-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 825:4-825:42
-    Visibility: public -/
-@[trait_default]
-axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self : Type}
-  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
-  field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
-  : Result Std.Usize
-
-/-- [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 858:4-858:40
-    Visibility: public -/
-@[trait_default]
-axiom field.traits.FiniteField.TRI_BASE_THRESHOLD.default {Self : Type}
-  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
-  field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
-  : Result Std.Usize
-
-/-- [gf2_core::field::traits::FiniteField::PLE_BASE_COLS]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 892:4-892:35
-    Visibility: public -/
-@[trait_default]
-axiom field.traits.FiniteField.PLE_BASE_COLS.default {Self : Type}
-  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
-  field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
-  : Result Std.Usize
-
-/-- [gf2_core::field::traits::FiniteField::PLE_PANEL_COLS]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 926:4-926:54
-    Visibility: public -/
-@[trait_default]
-axiom field.traits.FiniteField.PLE_PANEL_COLS.default {Self : Type}
-  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
-  field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
-  : Result Std.Usize
 
 /-- [gf2_core::gfp::specialized::batch_mul_mersenne31]:
     Source: 'crates/gf2-core/src/gfp/specialized.rs', lines 588:0-604:1
