@@ -789,14 +789,16 @@
     {
       "issue": "02b8137c",
       "reason": "The armed validation service ran and immutably published five passing terminals with producer binary 76c778f1..., then stopped when default serde_json parsing changed two q=5 probability floats by one ULP during post-publication self-verification. The bit-exact parser repair is merged and CI-clean, but the existing run-state truthfully binds the old producer while the remaining five anchors require the repaired producer. Reusing one producer identity for both segments, overwriting the journal, or redrawing a terminal would violate the immutable no-redraw and runtime-observed-provenance contracts.",
-      "status": "open",
+      "status": "approved",
       "requested_at": "2026-08-31T18:39:38+03:00",
       "options": [
         "Authorize a versioned provenance-preserving continuation: retain the original run-state and five terminal digests, add an immutable migration/continuation record binding the exact old and repaired producer identities plus the boundary, run only the five missing anchors, and make the final receipt report both producer segments.",
         "Authorize a newly preregistered validation cohort with a new journal root while preserving this failed attempt as falsification evidence; this changes the current no-redraw/cohort contract and repeats five already completed anchors.",
         "Stop execution and leave the validation issue, campaign arms, and epic blocked with the partial journal preserved."
       ],
-      "lead_recommendation": "Authorize the versioned provenance-preserving continuation. It preserves every terminal, performs no redraw, leaves the preregistered scientific addresses and decisions unchanged, and makes the unavoidable producer transition explicit instead of disguising it."
+      "lead_recommendation": "Authorize the versioned provenance-preserving continuation. It preserves every terminal, performs no redraw, leaves the preregistered scientific addresses and decisions unchanged, and makes the unavoidable producer transition explicit instead of disguising it.",
+      "resolved_at": "2026-08-31T18:40:00+03:00",
+      "decision": "Owner authorized weakening one exact producer for the complete cohort to one exact producer per immutable ordered segment. The original journal remains immutable; the continuation must explicitly bind both exact runtime-observed producers and the terminal boundary before another address opens. No redraw, third producer, scientific-protocol change, or campaign draw is authorized."
     }
   ],
   "standing_rules": [
@@ -1267,7 +1269,8 @@
     "diagnosis": "An exact Rust probe reproduced one-ULP serde_json default-parser shifts in both q5 probability fields. The hardlinked terminal bytes are correct and immutable; the earlier racing-writer hypothesis was falsified.",
     "preservation": "The complete partial journal is committed at 3fd2893b. No terminal was edited, removed, or redrawn.",
     "repair": "High-tier isolated rework 1acd2a3b enabled bit-exact float roundtripping and added publication/adoption/tamper regressions. It merged at 2e760af7; permanent_validation release tests passed 25/25 and the integrated repository CI contract passed 5,199 tests with zero failures.",
-    "blocker": "The old run-state binds binary 76c778f1... and revision 397520d6..., while the remaining anchors require the repaired producer. A public journal/receipt schema decision is required to encode the producer transition without lying, redrawing, or overwriting evidence.",
+    "blocker": "Resolved by owner at 2026-08-31T18:40:00+03:00: one exact producer is required per immutable ordered segment rather than for the complete cohort. High-tier implementation and independent design audit are active; no continuation draw begins before their code, tests, merge, and integrated verification pass.",
+    "authorization": "The authoritative 02b8137c criteria now preserve the original v1 preregistration while admitting one versioned two-segment continuation. Default producer mismatch still refuses; no third producer is authorized.",
     "campaign_state": "No campaign-purpose draw occurred. All three campaign arms remain blocked on 02b8137c, and the prior separate-go requirement remains in force after validation closes.",
     "handoff": "handoff-29.md"
   },
