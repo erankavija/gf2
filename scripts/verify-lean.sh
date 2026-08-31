@@ -46,10 +46,6 @@
 #     `specialized` module — its scalar reductions are called by transparent
 #     gfp code) keeps the extraction clean. Minor coverage delta vs the prior
 #     trio, which extracted them transparently.
-#   * `DEFAULT_CONST_BODIES['PLE_PANEL_COLS']` in fix-aeneas-dupes.py (150d7d79):
-#     `const PLE_PANEL_COLS: usize = Self::PLE_BASE_COLS` (= 1 by default) is
-#     referenced via the unemitted `.default` sibling for non-overriding
-#     instances; inlined the same way as PLE_BASE_COLS.
 #   * `proofs/Gf2Core/FunsExternal.lean` (150d7d79): the hand-written
 #     `core.num.U64.overflowing_sub` override was REMOVED — Aeneas 0f99a049 now
 #     provides it natively as a pure `U64 → U64 → (U64 × Bool)` (consumed via
@@ -107,6 +103,7 @@ charon cargo \
   --start-from 'gf2_core::gfpn' \
   --start-from 'gf2_core::gf2m::mul_raw' \
   --opaque 'gf2_core::field' \
+  --opaque 'gf2_core::tuning' \
   --opaque 'gf2_core::gf2m::field' \
   --opaque 'gf2_core::gf2m::generation' \
   --opaque 'gf2_core::gf2m::uint_ext' \
@@ -188,6 +185,7 @@ charon cargo \
   --opaque 'gf2_core::gfp' \
   --opaque 'gf2_core::gfpn' \
   --opaque 'gf2_core::field' \
+  --opaque 'gf2_core::tuning' \
   --opaque 'gf2_core::gf2m' \
   --opaque 'gf2_core::bitvec' \
   --opaque 'gf2_core::bitslice' \

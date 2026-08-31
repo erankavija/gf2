@@ -739,9 +739,9 @@ mod tests {
 
     const MERSENNE_31: u64 = 2_147_483_647;
 
-    /// Threshold used throughout the test module. Reads the per-field
-    /// trait default so the tests track any future override.
-    const TEST_THRESHOLD: usize = <Fp<65_521> as FiniteField>::WINOGRAD_THRESHOLD;
+    /// Threshold used throughout the test module. Names the conservative
+    /// source constant used by `gemm.winograd_min_dim`.
+    const TEST_THRESHOLD: usize = WINOGRAD_MIN_DIM_DEFAULT;
 
     fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
@@ -1481,18 +1481,4 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_winograd_threshold_trait_default() {
-        // Mersenne-31 + Gf2m8 inherit the default 128.
-        assert_eq!(
-            <Fp<MERSENNE_31> as FiniteField>::WINOGRAD_THRESHOLD,
-            128,
-            "Mersenne-31 uses default threshold"
-        );
-        assert_eq!(
-            <WinoGf2m8 as FiniteField>::WINOGRAD_THRESHOLD,
-            128,
-            "Gf2m8 uses default threshold"
-        );
-    }
 }

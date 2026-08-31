@@ -173,18 +173,6 @@ DEFAULT_METHOD_BODIES = {
     'try_simd_mul_vec':                (['a', 'b'], 'ok none'),
 }
 
-# Map of associated-const defaults that Aeneas references via `.default` suffix.
-# Each entry: const_name -> literal default value.
-DEFAULT_CONST_BODIES = {
-    'PLE_BASE_COLS': 'ok 1#usize',
-    # `const PLE_PANEL_COLS: usize = Self::PLE_BASE_COLS;` (field/traits.rs).
-    # Instances that do not override it inherit the trait default, which
-    # resolves to the default PLE_BASE_COLS = 1. Aeneas (5220259c) references
-    # it via the `.default` sibling for those instances without emitting a def.
-    'PLE_PANEL_COLS': 'ok 1#usize',
-}
-
-
 def _lambda(arg_names: list, body: str) -> str:
     """Build `fun <names> => <body>` or just `<body>` if no args."""
     if not arg_names:
@@ -193,8 +181,8 @@ def _lambda(arg_names: list, body: str) -> str:
 
 
 def inline_default_methods(filepath):
-    """Replace references to non-existent default-method sibling defs with the
-    inline default body. See DEFAULT_METHOD_BODIES for the catalogue.
+    """Replace references to non-existent default-method sibling defs with
+    inline method bodies. See DEFAULT_METHOD_BODIES for the catalogue.
 
     Pattern (3-line, in instance dictionary):
         <method_name> :=
@@ -239,21 +227,6 @@ def inline_default_methods(filepath):
             continue
 
         indent, name, rest = m.group(1), m.group(2), m.group(3)
-
-        # Const-default rewrite: `PLE_BASE_COLS := field.traits.FiniteField.PLE_BASE_COLS.default`
-        if name in DEFAULT_CONST_BODIES and 'field.traits.FiniteField.' in rest \
-                and rest.endswith('.default'):
-            out.append(f'{indent}{name} := {DEFAULT_CONST_BODIES[name]}')
-            # Skip the receiver continuation line(s) until next field
-            # assignment, comma, or block-closing brace.
-            i += 1
-            while i < n:
-                nxt = lines[i]
-                # Stop at next field-assignment-looking line, or '}' close.
-                if re.match(r'^\s+\w+\s*:=', nxt) or re.match(r'^\s*\}', nxt):
-                    break
-                i += 1
-            continue
 
         # Method-default rewrite: fire if the method is in our table AND the
         # rhs references a specific `<Ns>.<method>` whose qualified form is
