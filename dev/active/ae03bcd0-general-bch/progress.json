@@ -12,7 +12,7 @@
           "title": "Reproducible external-baseline survey and workload selection",
           "classification": "research",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "rework-pending: research-review R1 FAIL (4 blocking + 5 advisory; see review-4e732b56-research-r1.json); doc-review passed R3; branch merged to main"
         },
         {
           "key": "bch-property-tests",
@@ -20,7 +20,7 @@
           "title": "Add property tests for BCH encode and decode invariants",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "worker-done:awaiting-merge"
+          "status": "done"
         },
         {
           "key": "ext-design",
@@ -36,7 +36,7 @@
           "title": "Promote polynomial LCM to a public FieldPoly method and drop the BCH copy",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -537,7 +537,9 @@
   ],
   "created_during_execution": [],
   "escalations": [],
-  "rework_counts": {},
+  "rework_counts": {
+    "4e732b56": 0
+  },
   "surfaced_pitfalls": [],
   "coordination": {
     "peer": "agent:codex epic b8206228",
@@ -547,7 +549,8 @@
       "hold 88ca7d2f + survey measurements until CCX1 window confirmed",
       "88ca7d2f must land before the cutover wave merges",
       "announce before touching crates/gf2-sim (cutover-sim)",
-      "88ca7d2f re-slotted from wave 1 to wave 11: runs whenever the CCX1 window opens, must land before cutover-benches (wave 12) merges"
+      "88ca7d2f re-slotted from wave 1 to wave 11: runs whenever the CCX1 window opens, must land before cutover-benches (wave 12) merges",
+      "Peer validation gf2-predraw-validation3 armed for 2026-09-01 02:00:30 EEST; CCX1 embargo from 01:30 until codex reports it terminal."
     ]
   },
   "started_at": "2026-08-31T16:14:25.273292+00:00",
@@ -559,6 +562,9 @@
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
-    "jit issue claim refuses reassignment: release with a reason first (jit issue release <id> <reason>), then claim as the new assignee."
+    "jit issue claim refuses reassignment: release with a reason first (jit issue release <id> <reason>), then claim as the new assignee.",
+    "codex exec intermittently deadlocks at startup (futex wait, no session rollout, own arg0 lock) under concurrent codex launches; probe for the session rollout within ~3 min of any codex dispatch/gate and kill+retry or fall back to a native agent.",
+    "jit gate evaluate wraps checker execution in with_mutation_attempts (gate_check.rs:903): input-evidence drift during a long checker run silently discards the completed verdict and re-runs the checker. Reported to the just-in-time session for immediate fix (no automatic retry). Until fixed: freeze all repo writes during long gate runs, and salvage discarded verdicts from ~/.codex/sessions rollouts.",
+    "Survey worktree agent-4e732b56 must NOT be reclaimed: it holds the built external baselines (AFF3CT/bchlib/M4RI/IT++) the research-review rework needs for the F2 matrix-equality check."
   ]
 }
