@@ -50,7 +50,11 @@ use super::schema::{
 /// Schema written by the committed preregistration.
 pub const PREREGISTRATION_SCHEMA_VERSION: u32 = 1;
 /// Schema written by the immutable validation receipt.
-pub const RECEIPT_SCHEMA_VERSION: u32 = 1;
+pub const RECEIPT_SCHEMA_VERSION: u32 = 2;
+/// Schema written by an owner-authorized producer-continuation envelope.
+pub const CONTINUATION_SCHEMA_VERSION: u32 = 2;
+/// Immutable runtime segment state published before the second producer opens an address.
+pub const CONTINUATION_STATE_FILE: &str = "producer-segment-state-v2.json";
 /// RNG implementation linked by the workspace sampler.
 pub const RNG_VERSION: &str = "rand_chacha 0.9.0";
 /// Established validation namespace from the exact-anchor evidence.
@@ -60,6 +64,11 @@ pub const FROZEN_TOOLCHAIN_PREFIX: &str = "rustc 1.95.0 ";
 /// Frozen campaign directory whose payload and inventory must not change.
 pub const FROZEN_CAMPAIGN_DIRECTORY: &str =
     "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829";
+/// Frozen validation journal whose immutable evidence feeds the launch receipt.
+pub const FROZEN_VALIDATION_JOURNAL_DIRECTORY: &str = "dev/active/02b8137c/validation-journal";
+/// Committed owner authorization for the sole v1-to-v2 producer boundary.
+pub const FROZEN_CONTINUATION_AUTHORIZATION_PATH: &str =
+    "dev/active/02b8137c/pre-draw-validation-v2-continuation.json";
 
 const FROZEN_PROTOCOL_PATH: &str = "dev/simulation_results/permanent-zero-fraction/protocol.md";
 const FROZEN_MANIFEST_PATH: &str =
@@ -67,6 +76,16 @@ const FROZEN_MANIFEST_PATH: &str =
 const EXACT_ANCHORS_PATH: &str = "dev/benchmarks/permanent_campaign/exact-anchors.csv";
 const BACKEND_EQUIVALENCE_PATH: &str =
     "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv";
+const RUN_STATE_SCHEMA_VERSION: u32 = 2;
+const PHASE_START_SCHEMA_VERSION: u32 = 2;
+const AUTHORIZED_LEGACY_RUN_STATE_SCHEMA_VERSION: u32 = 1;
+const AUTHORIZED_LEGACY_RUN_STATE_SHA256: &str =
+    "bd108332375684992b5be6830bf278c1dd8281cb1d4e1f272d0982e30c9d31a0";
+const AUTHORIZED_LEGACY_PREREGISTRATION_SHA256: &str =
+    "38cc7c11498c749f9dc9098e1ff0cf2ed48127ad75a7caad932a0d921f5030aa";
+const AUTHORIZED_LEGACY_PREFIX_ARTIFACT_COUNT: usize = 22;
+const FROZEN_CONTINUATION_AUTHORIZATION_SHA256: &str =
+    "dd19bb60bf07510085ab1ec06581526df710f39dbea1236e2d67273b41186094";
 /// The protocol's ten validation anchors, in address order.
 ///
 /// These cells are a protocol constant. Their enumerated counts are not: those
@@ -324,6 +343,108 @@ pub struct ValidationRuntime {
     pub worker_count: usize,
 }
 
+/// Authorized relaxation of the single-producer resume envelope.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ValidationContinuationContract {
+    /// Exactly two immutable, ordered, disjoint producer segments under receipt schema v2.
+    OwnerAuthorizedOrderedProducerSegmentsV2,
+}
+
+/// Falsification-preserving reason for the authorized producer boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ValidationContinuationReason {
+    /// The first producer exposed non-bit-exact JSON float adoption after five terminals.
+    CorrectBitExactJsonTerminalAdoption,
+}
+
+/// Exact address and immutable terminal identity for one completed anchor.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ValidationTerminalIdentity {
+    /// Zero-based position in preregistered address order.
+    pub anchor_index: usize,
+    /// Exact validation-purpose address.
+    pub address: StreamAddress,
+    /// Content identity relative to the journal directory.
+    pub artifact: ArtifactIdentity,
+}
+
+/// Committed authorization for one producer boundary in an existing journal.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ValidationContinuationAuthorization {
+    /// Authorization schema; aligned with receipt schema v2.
+    pub schema_version: u32,
+    /// Closed continuation contract authorized by the owner.
+    pub contract: ValidationContinuationContract,
+    /// Preserved reason for the producer correction.
+    pub reason: ValidationContinuationReason,
+    /// Frozen preregistration content identity.
+    pub preregistration_identity: ArtifactIdentity,
+    /// Original immutable run-state identity, relative to the journal.
+    pub original_run_state: ArtifactIdentity,
+    /// Original immutable frozen-artifact snapshot identity, relative to the journal.
+    pub frozen_artifacts_start: ArtifactIdentity,
+    /// Complete immutable journal inventory at the producer boundary.
+    pub prefix_artifacts: Vec<ArtifactIdentity>,
+    /// Completed terminal prefix in exact address order.
+    pub completed_terminals: Vec<ValidationTerminalIdentity>,
+    /// Half-open boundary: producer two starts at this anchor index.
+    pub boundary_anchor_index: usize,
+    /// First address producer two is permitted to open.
+    pub next_address: StreamAddress,
+    /// Total producer count authorized for this validation cohort.
+    pub authorized_producer_count: u8,
+}
+
+/// A continuation whose authorization bytes were loaded and content-addressed.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuthorizedValidationContinuation {
+    authorization: ValidationContinuationAuthorization,
+    identity: ArtifactIdentity,
+}
+
+/// Explicit producer-admission choice for a validation run.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ValidationRunMode {
+    /// Require the current runtime to equal the original run-state runtime exactly.
+    ExactProducer,
+    /// Admit the one committed, owner-authorized second producer.
+    ContinueWith(Box<AuthorizedValidationContinuation>),
+}
+
+/// One half-open producer range recorded by a schema-v2 receipt.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ValidationProducerSegment {
+    /// Zero-based segment ordinal.
+    pub segment_index: u8,
+    /// Inclusive first preregistered anchor index.
+    pub first_anchor_index: usize,
+    /// Exclusive final preregistered anchor index.
+    pub end_anchor_index: usize,
+    /// Runtime observed for this exact segment.
+    pub runtime: ValidationRuntime,
+    /// Immutable run-state or producer-two segment-state identity.
+    pub state: ArtifactIdentity,
+}
+
+/// Receipt mapping from one anchor to its producer and terminal bytes.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ValidationAnchorProducer {
+    /// Zero-based preregistered anchor index.
+    pub anchor_index: usize,
+    /// Exact validation-purpose address.
+    pub address: StreamAddress,
+    /// Producer segment ordinal.
+    pub producer_segment: u8,
+    /// Immutable terminal identity relative to the journal directory.
+    pub terminal: ArtifactIdentity,
+}
+
 /// UTC-independent lossless system timestamp.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -545,8 +666,12 @@ pub struct ValidationReceipt {
     pub preregistration_identity: ArtifactIdentity,
     /// Exact protocol constants consumed by the run.
     pub preregistration: ValidationPreregistration,
-    /// Runtime-observed producer identity.
-    pub runtime: ValidationRuntime,
+    /// Ordered, contiguous producer ranges covering every anchor exactly once.
+    pub producer_segments: Vec<ValidationProducerSegment>,
+    /// Per-anchor producer and immutable terminal-byte mapping.
+    pub anchor_producers: Vec<ValidationAnchorProducer>,
+    /// Repository-relative journal directory for a frozen receipt.
+    pub journal_directory: Option<ArtifactPath>,
     /// Earliest journaled start.
     pub started_at: UnixTimestamp,
     /// Latest terminal anchor timestamp.
@@ -572,10 +697,10 @@ impl ValidationReceipt {
             return invalid("unsupported validation receipt schema");
         }
         self.preregistration.validate()?;
-        validate_runtime(&self.runtime)?;
         if self.anchors.len() != self.preregistration.anchors.len() {
             return invalid("receipt does not contain every preregistered anchor");
         }
+        validate_receipt_producer_segments(self)?;
         if self.started_at > self.finished_at {
             return invalid("receipt timestamps are reversed");
         }
@@ -697,6 +822,34 @@ pub fn load_validation_preregistration(
     Ok((plan, identity))
 }
 
+/// Loads and content-addresses a committed producer-continuation authorization.
+///
+/// Loading proves the supplied bytes exist below `repository`; admission later
+/// rehashes every journal artifact named by the authorization before it can
+/// publish segment state or open the next address.
+pub fn load_validation_continuation_authorization(
+    repository: &Path,
+    path: &Path,
+) -> Result<AuthorizedValidationContinuation, ValidationError> {
+    if path != Path::new(FROZEN_CONTINUATION_AUTHORIZATION_PATH) {
+        return invalid("continuation authorization must be the committed 02b8137c authority");
+    }
+    let bytes = read_bytes(&repository.join(path))?;
+    if digest(&bytes).to_string() != FROZEN_CONTINUATION_AUTHORIZATION_SHA256 {
+        return invalid("committed continuation authorization identity mismatch");
+    }
+    let authorization: ValidationContinuationAuthorization =
+        serde_json::from_slice(&bytes).map_err(ValidationError::Json)?;
+    validate_continuation_authorization_shape(&authorization)?;
+    Ok(AuthorizedValidationContinuation {
+        authorization,
+        identity: ArtifactIdentity {
+            path: artifact_path(path)?,
+            sha256: digest(&bytes),
+        },
+    })
+}
+
 /// Evaluates one anchor over the natural const-generic prime-field domain.
 ///
 /// This reusable computation does not persist state. Launch tooling should use
@@ -712,63 +865,188 @@ pub fn evaluate_validation_anchor<const Q: u64>(
     evaluate_validation_anchor_with_hook::<Q, _>(protocol, spec, worker_count, |_| Ok(()))
 }
 
-/// Runs or adopts every anchor through a durable no-redraw journal.
+/// Durable admission returned before any missing address is opened.
 ///
-/// Runtime provenance is observed internally from the running executable,
-/// source closure, build compiler, hardware, invocation, and linked RNG. A
-/// caller can choose worker count but cannot inject provenance. If a prior
-/// invocation left a phase marker without a terminal record, this invocation
-/// preserves an interruption failure and does not reopen the address.
+/// For an authorized continuation, construction publishes and fsyncs the
+/// immutable producer-two segment state. Callers may inspect the boundary and
+/// then consume the admission with [`ValidationRunAdmission::execute`].
+#[derive(Debug)]
+pub struct ValidationRunAdmission {
+    preregistration: ValidationPreregistration,
+    preregistration_identity: ArtifactIdentity,
+    state_directory: PathBuf,
+    run_state: RunState,
+    current_runtime: ValidationRuntime,
+    boundary_anchor_index: usize,
+    segment_state: Option<(ValidationContinuationState, ArtifactIdentity)>,
+}
+
+impl ValidationRunAdmission {
+    /// Number of immutable terminals assigned to producer one.
+    #[must_use]
+    pub const fn completed_anchor_count(&self) -> usize {
+        self.boundary_anchor_index
+    }
+
+    /// First address the admitted producer may open, or `None` after completion.
+    #[must_use]
+    pub fn next_address(&self) -> Option<StreamAddress> {
+        self.preregistration
+            .anchors
+            .get(self.boundary_anchor_index)
+            .map(|spec| address(&self.preregistration.protocol, spec))
+    }
+
+    /// Executes missing anchors and reconstructs a schema-v2 immutable receipt.
+    ///
+    /// Existing terminal bytes are read and validated; they are never passed
+    /// to an evaluator or rewritten. The journal and any continuation state
+    /// are revalidated immediately before execution.
+    pub fn execute(self) -> Result<ValidationReceipt, ValidationError> {
+        execute_admitted_validation(self)
+    }
+}
+
+/// Admits an exact producer or one explicitly authorized second producer.
+///
+/// Runtime provenance is observed internally. [`ValidationRunMode::ExactProducer`]
+/// remains the default contract and rejects every runtime mismatch. The
+/// continuation mode accepts only a loaded, content-addressed authorization,
+/// a complete terminal prefix, and no previously opened suffix address.
+pub fn admit_validation_run(
+    preregistration: &ValidationPreregistration,
+    preregistration_identity: ArtifactIdentity,
+    worker_count: usize,
+    state_directory: &Path,
+    mode: ValidationRunMode,
+) -> Result<ValidationRunAdmission, ValidationError> {
+    preregistration.validate()?;
+    let runtime = observe_validation_runtime(worker_count)?;
+    create_directory_durable(state_directory)?;
+    let proposed = RunState {
+        schema_version: RUN_STATE_SCHEMA_VERSION,
+        preregistration_identity: preregistration_identity.clone(),
+        preregistration: preregistration.clone(),
+        runtime: runtime.clone(),
+        started_at: now()?,
+    };
+    let run_state_path = state_directory.join("run-state.json");
+    match mode {
+        ValidationRunMode::ExactProducer => {
+            if state_directory.join(CONTINUATION_STATE_FILE).exists() {
+                return invalid("default exact-producer resume refuses a continued journal");
+            }
+            let run_state = publish_or_adopt(&run_state_path, &proposed, |existing| {
+                existing.schema_version == proposed.schema_version
+                    && existing.preregistration_identity == proposed.preregistration_identity
+                    && existing.preregistration == proposed.preregistration
+                    && existing.runtime == proposed.runtime
+            })?;
+            Ok(ValidationRunAdmission {
+                preregistration: preregistration.clone(),
+                preregistration_identity,
+                state_directory: state_directory.to_owned(),
+                run_state,
+                current_runtime: runtime,
+                boundary_anchor_index: 0,
+                segment_state: None,
+            })
+        }
+        ValidationRunMode::ContinueWith(authorized) => {
+            if !run_state_path.is_file() {
+                return invalid("producer continuation requires an existing immutable run state");
+            }
+            let run_state_bytes = read_bytes(&run_state_path)?;
+            let run_state: RunState =
+                serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
+            validate_authorized_legacy_run_state(
+                &run_state,
+                preregistration,
+                &preregistration_identity,
+            )?;
+            if run_state.runtime == runtime {
+                return invalid("producer continuation requires a changed runtime identity");
+            }
+            let authorization = &authorized.authorization;
+            validate_continuation_authorization(
+                authorization,
+                preregistration,
+                &preregistration_identity,
+                &run_state,
+                &run_state_bytes,
+                state_directory,
+            )?;
+            let proposed_state = ValidationContinuationState {
+                schema_version: CONTINUATION_SCHEMA_VERSION,
+                contract: authorization.contract,
+                reason: authorization.reason,
+                authorization_identity: authorized.identity,
+                authorization: authorization.clone(),
+                original_run_state: authorization.original_run_state.clone(),
+                original_runtime: run_state.runtime.clone(),
+                continued_runtime: runtime.clone(),
+                boundary_anchor_index: authorization.boundary_anchor_index,
+                published_at: now()?,
+            };
+            let state_path = state_directory.join(CONTINUATION_STATE_FILE);
+            let state = publish_or_adopt(&state_path, &proposed_state, |existing| {
+                continuation_states_compatible(existing, &proposed_state)
+            })?;
+            validate_continuation_state(
+                &state,
+                preregistration,
+                &preregistration_identity,
+                &run_state,
+                &run_state_bytes,
+                state_directory,
+            )?;
+            let state_identity =
+                journal_artifact_identity(state_directory, CONTINUATION_STATE_FILE)?;
+            Ok(ValidationRunAdmission {
+                preregistration: preregistration.clone(),
+                preregistration_identity,
+                state_directory: state_directory.to_owned(),
+                run_state,
+                current_runtime: runtime,
+                boundary_anchor_index: authorization.boundary_anchor_index,
+                segment_state: Some((state, state_identity)),
+            })
+        }
+    }
+}
+
+/// Runs under the default exact-producer contract.
 pub fn run_validation(
     preregistration: &ValidationPreregistration,
     preregistration_identity: ArtifactIdentity,
     worker_count: usize,
     state_directory: &Path,
 ) -> Result<ValidationReceipt, ValidationError> {
-    preregistration.validate()?;
-    let runtime = observe_validation_runtime(worker_count)?;
-    create_directory_durable(state_directory)?;
-    let proposed = RunState {
-        schema_version: RECEIPT_SCHEMA_VERSION,
-        preregistration_identity: preregistration_identity.clone(),
-        preregistration: preregistration.clone(),
-        runtime: runtime.clone(),
-        started_at: now()?,
-    };
-    let run_state = publish_or_adopt(
-        &state_directory.join("run-state.json"),
-        &proposed,
-        |existing| {
-            existing.schema_version == proposed.schema_version
-                && existing.preregistration_identity == proposed.preregistration_identity
-                && existing.preregistration == proposed.preregistration
-                && existing.runtime == proposed.runtime
-        },
-    )?;
-
-    let mut anchors = Vec::with_capacity(preregistration.anchors.len());
-    for spec in &preregistration.anchors {
-        anchors.push(run_or_adopt_anchor(&run_state, spec, state_directory)?);
-    }
-    let finished_at = anchors
-        .iter()
-        .map(|anchor| anchor.finished_at)
-        .max()
-        .unwrap_or(run_state.started_at);
-    let overall_verdict = combined_verdict(&anchors, true);
-    let receipt = ValidationReceipt {
-        schema_version: RECEIPT_SCHEMA_VERSION,
+    run_validation_with_mode(
+        preregistration,
         preregistration_identity,
-        preregistration: preregistration.clone(),
-        runtime,
-        started_at: run_state.started_at,
-        finished_at,
-        anchors,
-        frozen_artifacts: None,
-        overall_verdict,
-    };
-    receipt.validate()?;
-    Ok(receipt)
+        worker_count,
+        state_directory,
+        ValidationRunMode::ExactProducer,
+    )
+}
+
+/// Runs under an explicit producer-admission choice.
+pub fn run_validation_with_mode(
+    preregistration: &ValidationPreregistration,
+    preregistration_identity: ArtifactIdentity,
+    worker_count: usize,
+    state_directory: &Path,
+    mode: ValidationRunMode,
+) -> Result<ValidationReceipt, ValidationError> {
+    admit_validation_run(
+        preregistration,
+        preregistration_identity,
+        worker_count,
+        state_directory,
+        mode,
+    )?
+    .execute()
 }
 
 /// Confirms every required backend can execute before an address is opened.
@@ -856,9 +1134,31 @@ pub fn run_frozen_campaign_validation(
     worker_count: usize,
     state_directory: &Path,
 ) -> Result<ValidationReceipt, ValidationError> {
+    run_frozen_campaign_validation_with_mode(
+        repository,
+        preregistration,
+        preregistration_identity,
+        worker_count,
+        state_directory,
+        ValidationRunMode::ExactProducer,
+    )
+}
+
+/// Executes the frozen plan under an explicit producer-admission choice.
+pub fn run_frozen_campaign_validation_with_mode(
+    repository: &Path,
+    preregistration: &ValidationPreregistration,
+    preregistration_identity: ArtifactIdentity,
+    worker_count: usize,
+    state_directory: &Path,
+    mode: ValidationRunMode,
+) -> Result<ValidationReceipt, ValidationError> {
     validate_frozen_plan(repository, preregistration)?;
     validate_frozen_toolchain(env!("GF2_BUILD_RUSTC_VERSION"))?;
     preflight_required_backends(preregistration, worker_count)?;
+    if state_directory != repository.join(FROZEN_VALIDATION_JOURNAL_DIRECTORY) {
+        return invalid("frozen validation must use its preregistered journal directory");
+    }
     create_directory_durable(state_directory)?;
     let observed_before = snapshot_frozen_campaign(repository)?;
     let before = publish_or_adopt(
@@ -866,12 +1166,19 @@ pub fn run_frozen_campaign_validation(
         &observed_before,
         |existing| existing == &observed_before,
     )?;
-    let mut receipt = run_validation(
+    let mut receipt = run_validation_with_mode(
         preregistration,
         preregistration_identity,
         worker_count,
         state_directory,
+        mode,
     )?;
+    let journal_relative = state_directory.strip_prefix(repository).map_err(|_| {
+        ValidationError::InvalidPlan(
+            "frozen validation journal must be inside the repository".into(),
+        )
+    })?;
+    receipt.journal_directory = Some(artifact_path(journal_relative)?);
     let after = snapshot_frozen_campaign(repository)?;
     let guard_status = if before == after {
         PhaseStatus::Passed
@@ -931,6 +1238,517 @@ struct RunState {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+struct ValidationContinuationState {
+    schema_version: u32,
+    contract: ValidationContinuationContract,
+    reason: ValidationContinuationReason,
+    authorization_identity: ArtifactIdentity,
+    authorization: ValidationContinuationAuthorization,
+    original_run_state: ArtifactIdentity,
+    original_runtime: ValidationRuntime,
+    continued_runtime: ValidationRuntime,
+    boundary_anchor_index: usize,
+    published_at: UnixTimestamp,
+}
+
+fn validate_run_state(
+    run_state: &RunState,
+    preregistration: &ValidationPreregistration,
+    preregistration_identity: &ArtifactIdentity,
+) -> Result<(), ValidationError> {
+    if run_state.schema_version != RUN_STATE_SCHEMA_VERSION
+        || run_state.preregistration_identity != *preregistration_identity
+        || run_state.preregistration != *preregistration
+    {
+        return invalid("existing run state changes the preregistration or journal schema");
+    }
+    validate_runtime(&run_state.runtime)
+}
+
+fn validate_authorized_legacy_run_state(
+    run_state: &RunState,
+    preregistration: &ValidationPreregistration,
+    preregistration_identity: &ArtifactIdentity,
+) -> Result<(), ValidationError> {
+    if run_state.schema_version != AUTHORIZED_LEGACY_RUN_STATE_SCHEMA_VERSION
+        || run_state.preregistration_identity != *preregistration_identity
+        || run_state.preregistration != *preregistration
+        || preregistration_identity.path.as_str()
+            != "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json"
+        || preregistration_identity.sha256.to_string() != AUTHORIZED_LEGACY_PREREGISTRATION_SHA256
+    {
+        return invalid("legacy run-state admission is limited to the authorized 02b8137c prefix");
+    }
+    validate_runtime(&run_state.runtime)
+}
+
+fn validate_continuation_authorization_shape(
+    authorization: &ValidationContinuationAuthorization,
+) -> Result<(), ValidationError> {
+    if authorization.schema_version != CONTINUATION_SCHEMA_VERSION
+        || authorization.contract
+            != ValidationContinuationContract::OwnerAuthorizedOrderedProducerSegmentsV2
+        || authorization.reason != ValidationContinuationReason::CorrectBitExactJsonTerminalAdoption
+        || authorization.authorized_producer_count != 2
+        || authorization.boundary_anchor_index == 0
+        || authorization.completed_terminals.len() != authorization.boundary_anchor_index
+        || authorization.boundary_anchor_index != 5
+        || authorization.prefix_artifacts.len() != AUTHORIZED_LEGACY_PREFIX_ARTIFACT_COUNT
+        || authorization.original_run_state.sha256.to_string() != AUTHORIZED_LEGACY_RUN_STATE_SHA256
+        || authorization.preregistration_identity.sha256.to_string()
+            != AUTHORIZED_LEGACY_PREREGISTRATION_SHA256
+    {
+        return invalid("continuation authorization has an unsupported contract or boundary");
+    }
+    if journal_relative_name(&authorization.original_run_state)? != "run-state.json"
+        || journal_relative_name(&authorization.frozen_artifacts_start)?
+            != "frozen-artifacts-start.json"
+    {
+        return invalid("continuation authorization names the wrong fixed journal state");
+    }
+    let mut previous = None;
+    let mut paths = BTreeSet::new();
+    for artifact in &authorization.prefix_artifacts {
+        let name = journal_relative_name(artifact)?;
+        if previous.as_deref().is_some_and(|prior| prior >= name) || !paths.insert(name.to_owned())
+        {
+            return invalid("continuation prefix inventory must be unique and path-sorted");
+        }
+        previous = Some(name.to_owned());
+    }
+    if !authorization
+        .prefix_artifacts
+        .contains(&authorization.original_run_state)
+        || !authorization
+            .prefix_artifacts
+            .contains(&authorization.frozen_artifacts_start)
+    {
+        return invalid("continuation prefix inventory omits fixed journal state");
+    }
+    for (index, terminal) in authorization.completed_terminals.iter().enumerate() {
+        if terminal.anchor_index != index
+            || !authorization.prefix_artifacts.contains(&terminal.artifact)
+        {
+            return invalid("continuation terminal inventory is not an ordered complete prefix");
+        }
+        journal_relative_name(&terminal.artifact)?;
+    }
+    Ok(())
+}
+
+fn validate_continuation_authorization(
+    authorization: &ValidationContinuationAuthorization,
+    preregistration: &ValidationPreregistration,
+    preregistration_identity: &ArtifactIdentity,
+    run_state: &RunState,
+    run_state_bytes: &[u8],
+    state_directory: &Path,
+) -> Result<(), ValidationError> {
+    validate_continuation_authorization_shape(authorization)?;
+    if authorization.preregistration_identity != *preregistration_identity
+        || authorization.boundary_anchor_index >= preregistration.anchors.len()
+        || authorization.original_run_state.sha256 != digest(run_state_bytes)
+        || authorization.next_address
+            != address(
+                &preregistration.protocol,
+                &preregistration.anchors[authorization.boundary_anchor_index],
+            )
+    {
+        return invalid("continuation authorization disagrees with the frozen plan or run state");
+    }
+    validate_authorized_legacy_run_state(run_state, preregistration, preregistration_identity)?;
+    for artifact in &authorization.prefix_artifacts {
+        verify_journal_identity(state_directory, artifact)?;
+    }
+    for (spec, terminal) in preregistration
+        .anchors
+        .iter()
+        .zip(&authorization.completed_terminals)
+    {
+        let expected_address = address(&preregistration.protocol, spec);
+        let expected_name = terminal_file_name(spec);
+        if terminal.address != expected_address
+            || journal_relative_name(&terminal.artifact)? != expected_name
+        {
+            return invalid("continuation terminal address or file order differs from the plan");
+        }
+        let receipt: AnchorReceipt =
+            read_json(&state_directory.join(journal_relative_name(&terminal.artifact)?))?;
+        validate_anchor_receipt(&preregistration.protocol, spec, &receipt)?;
+        if receipt.address != terminal.address {
+            return invalid("continuation terminal bytes name a different address");
+        }
+    }
+    validate_journal_boundary(
+        preregistration,
+        authorization.boundary_anchor_index,
+        state_directory,
+        state_directory.join(CONTINUATION_STATE_FILE).exists(),
+        authorization,
+    )
+}
+
+fn validate_journal_boundary(
+    preregistration: &ValidationPreregistration,
+    boundary: usize,
+    state_directory: &Path,
+    continued: bool,
+    authorization: &ValidationContinuationAuthorization,
+) -> Result<(), ValidationError> {
+    let authorized = authorization
+        .prefix_artifacts
+        .iter()
+        .map(|artifact| Ok(journal_relative_name(artifact)?.to_owned()))
+        .collect::<Result<BTreeSet<_>, ValidationError>>()?;
+    let mut actual_prefix = BTreeSet::new();
+    let mut suffix_terminals = BTreeSet::new();
+    let mut suffix_starts = BTreeSet::new();
+    for entry in fs::read_dir(state_directory).map_err(|source| ValidationError::Io {
+        path: state_directory.to_owned(),
+        source,
+    })? {
+        let entry = entry.map_err(|source| ValidationError::Io {
+            path: state_directory.to_owned(),
+            source,
+        })?;
+        if !entry
+            .file_type()
+            .map_err(|source| ValidationError::Io {
+                path: entry.path(),
+                source,
+            })?
+            .is_file()
+        {
+            return invalid("validation journal contains a non-regular entry");
+        }
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if name.contains(".tmp-") {
+            continue;
+        }
+        if name == CONTINUATION_STATE_FILE {
+            if !continued {
+                return invalid("unapproved continuation state already exists");
+            }
+            continue;
+        }
+        let mut matched = name == "run-state.json" || name == "frozen-artifacts-start.json";
+        for (index, spec) in preregistration.anchors.iter().enumerate() {
+            let stem = anchor_stem(spec);
+            let terminal = format!("{stem}.terminal.json");
+            let starts = [
+                format!("{stem}.exact.started.json"),
+                format!("{stem}.replay.started.json"),
+                format!("{stem}.sample.started.json"),
+            ];
+            if name == terminal || starts.contains(&name) {
+                matched = true;
+                if index < boundary {
+                    actual_prefix.insert(name.clone());
+                    if !state_directory.join(&terminal).is_file() {
+                        return invalid("continuation rejects a started prefix without a terminal");
+                    }
+                } else if !continued {
+                    return invalid("continuation rejects every pre-opened suffix artifact");
+                } else if name == terminal {
+                    suffix_terminals.insert(index);
+                } else {
+                    suffix_starts.insert(index);
+                }
+                break;
+            }
+        }
+        if !matched {
+            return invalid(format!(
+                "validation journal contains unexpected artifact {name}"
+            ));
+        }
+        if authorized.contains(&name) {
+            actual_prefix.insert(name);
+        }
+    }
+    let suffix_is_prefix = suffix_terminals
+        .iter()
+        .copied()
+        .eq(boundary..boundary + suffix_terminals.len());
+    let next_missing = boundary + suffix_terminals.len();
+    let starts_are_prefix = suffix_starts
+        .iter()
+        .all(|index| suffix_terminals.contains(index) || *index == next_missing);
+    if actual_prefix != authorized || !suffix_is_prefix || !starts_are_prefix {
+        return invalid("journal artifacts do not form the authorized immutable prefix");
+    }
+    Ok(())
+}
+
+fn continuation_states_compatible(
+    existing: &ValidationContinuationState,
+    proposed: &ValidationContinuationState,
+) -> bool {
+    existing.schema_version == proposed.schema_version
+        && existing.contract == proposed.contract
+        && existing.reason == proposed.reason
+        && existing.authorization_identity == proposed.authorization_identity
+        && existing.authorization == proposed.authorization
+        && existing.original_run_state == proposed.original_run_state
+        && existing.original_runtime == proposed.original_runtime
+        && existing.continued_runtime == proposed.continued_runtime
+        && existing.boundary_anchor_index == proposed.boundary_anchor_index
+}
+
+fn validate_continuation_state(
+    state: &ValidationContinuationState,
+    preregistration: &ValidationPreregistration,
+    preregistration_identity: &ArtifactIdentity,
+    run_state: &RunState,
+    run_state_bytes: &[u8],
+    state_directory: &Path,
+) -> Result<(), ValidationError> {
+    if state.schema_version != CONTINUATION_SCHEMA_VERSION
+        || state.contract != state.authorization.contract
+        || state.reason != state.authorization.reason
+        || state.original_run_state != state.authorization.original_run_state
+        || state.original_runtime != run_state.runtime
+        || state.boundary_anchor_index != state.authorization.boundary_anchor_index
+        || state.original_runtime == state.continued_runtime
+    {
+        return invalid("producer segment state is inconsistent or admits a third producer");
+    }
+    validate_runtime(&state.original_runtime)?;
+    validate_runtime(&state.continued_runtime)?;
+    validate_continuation_authorization(
+        &state.authorization,
+        preregistration,
+        preregistration_identity,
+        run_state,
+        run_state_bytes,
+        state_directory,
+    )
+}
+
+fn execute_admitted_validation(
+    admission: ValidationRunAdmission,
+) -> Result<ValidationReceipt, ValidationError> {
+    let run_state_bytes = read_bytes(&admission.state_directory.join("run-state.json"))?;
+    let observed_run_state: RunState =
+        serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
+    if observed_run_state != admission.run_state {
+        return invalid("run state changed after validation admission");
+    }
+    let segment_state_identity = if let Some((state, identity)) = &admission.segment_state {
+        let observed: ValidationContinuationState =
+            read_json(&admission.state_directory.join(CONTINUATION_STATE_FILE))?;
+        if observed != *state || observed.continued_runtime != admission.current_runtime {
+            return invalid("producer segment state changed after validation admission");
+        }
+        validate_continuation_state(
+            &observed,
+            &admission.preregistration,
+            &admission.preregistration_identity,
+            &admission.run_state,
+            &run_state_bytes,
+            &admission.state_directory,
+        )?;
+        Some(identity.clone())
+    } else {
+        None
+    };
+
+    let mut anchors = Vec::with_capacity(admission.preregistration.anchors.len());
+    for (index, spec) in admission.preregistration.anchors.iter().enumerate() {
+        if index < admission.boundary_anchor_index {
+            let receipt: AnchorReceipt =
+                read_json(&admission.state_directory.join(terminal_file_name(spec)))?;
+            validate_anchor_receipt(&admission.preregistration.protocol, spec, &receipt)?;
+            anchors.push(receipt);
+        } else {
+            anchors.push(run_or_adopt_anchor(
+                &admission.preregistration,
+                &admission.current_runtime,
+                spec,
+                &admission.state_directory,
+            )?);
+        }
+    }
+    let mut anchor_producers = Vec::with_capacity(anchors.len());
+    for (index, spec) in admission.preregistration.anchors.iter().enumerate() {
+        anchor_producers.push(ValidationAnchorProducer {
+            anchor_index: index,
+            address: address(&admission.preregistration.protocol, spec),
+            producer_segment: u8::from(
+                index >= admission.boundary_anchor_index && admission.segment_state.is_some(),
+            ),
+            terminal: journal_artifact_identity(
+                &admission.state_directory,
+                &terminal_file_name(spec),
+            )?,
+        });
+    }
+    let producer_segments = if let Some(state_identity) = segment_state_identity {
+        let run_state_identity =
+            journal_artifact_identity(&admission.state_directory, "run-state.json")?;
+        vec![
+            ValidationProducerSegment {
+                segment_index: 0,
+                first_anchor_index: 0,
+                end_anchor_index: admission.boundary_anchor_index,
+                runtime: admission.run_state.runtime.clone(),
+                state: run_state_identity,
+            },
+            ValidationProducerSegment {
+                segment_index: 1,
+                first_anchor_index: admission.boundary_anchor_index,
+                end_anchor_index: anchors.len(),
+                runtime: admission.current_runtime,
+                state: state_identity,
+            },
+        ]
+    } else {
+        let run_state_identity =
+            journal_artifact_identity(&admission.state_directory, "run-state.json")?;
+        vec![ValidationProducerSegment {
+            segment_index: 0,
+            first_anchor_index: 0,
+            end_anchor_index: anchors.len(),
+            runtime: admission.run_state.runtime.clone(),
+            state: run_state_identity,
+        }]
+    };
+    let finished_at = anchors
+        .iter()
+        .map(|anchor| anchor.finished_at)
+        .max()
+        .unwrap_or(admission.run_state.started_at);
+    let overall_verdict = combined_verdict(&anchors, true);
+    let receipt = ValidationReceipt {
+        schema_version: RECEIPT_SCHEMA_VERSION,
+        preregistration_identity: admission.preregistration_identity,
+        preregistration: admission.preregistration,
+        producer_segments,
+        anchor_producers,
+        journal_directory: None,
+        started_at: admission.run_state.started_at,
+        finished_at,
+        anchors,
+        frozen_artifacts: None,
+        overall_verdict,
+    };
+    receipt.validate()?;
+    Ok(receipt)
+}
+
+fn validate_receipt_producer_segments(receipt: &ValidationReceipt) -> Result<(), ValidationError> {
+    if !(1..=2).contains(&receipt.producer_segments.len())
+        || receipt.anchor_producers.len() != receipt.anchors.len()
+    {
+        return invalid("receipt must contain one or two complete producer segments");
+    }
+    let mut cursor = 0;
+    for (expected_index, segment) in receipt.producer_segments.iter().enumerate() {
+        if usize::from(segment.segment_index) != expected_index
+            || segment.first_anchor_index != cursor
+            || segment.end_anchor_index <= segment.first_anchor_index
+            || segment.end_anchor_index > receipt.anchors.len()
+        {
+            return invalid("producer segments are not ordered contiguous half-open ranges");
+        }
+        validate_runtime(&segment.runtime)?;
+        let expected_state = if expected_index == 0 {
+            "run-state.json"
+        } else {
+            CONTINUATION_STATE_FILE
+        };
+        if journal_relative_name(&segment.state)? != expected_state {
+            return invalid("producer segment names the wrong immutable state artifact");
+        }
+        cursor = segment.end_anchor_index;
+    }
+    if cursor != receipt.anchors.len() {
+        return invalid("producer segments do not cover every anchor exactly once");
+    }
+    if receipt.producer_segments.len() == 2
+        && receipt.producer_segments[0].runtime == receipt.producer_segments[1].runtime
+    {
+        return invalid("two receipt segments cannot name the same producer");
+    }
+    for (index, ((spec, anchor), binding)) in receipt
+        .preregistration
+        .anchors
+        .iter()
+        .zip(&receipt.anchors)
+        .zip(&receipt.anchor_producers)
+        .enumerate()
+    {
+        let segment = receipt
+            .producer_segments
+            .iter()
+            .find(|segment| segment.first_anchor_index <= index && index < segment.end_anchor_index)
+            .ok_or_else(|| ValidationError::InvalidPlan("anchor has no producer segment".into()))?;
+        if binding.anchor_index != index
+            || binding.address != address(&receipt.preregistration.protocol, spec)
+            || binding.address != anchor.address
+            || binding.producer_segment != segment.segment_index
+            || journal_relative_name(&binding.terminal)? != terminal_file_name(spec)
+            || binding.terminal.sha256 != published_json_digest(anchor)?
+        {
+            return invalid(
+                "anchor producer mapping disagrees with address order or terminal identity",
+            );
+        }
+    }
+    Ok(())
+}
+
+fn journal_relative_name(identity: &ArtifactIdentity) -> Result<&str, ValidationError> {
+    let name = identity.path.as_str();
+    if Path::new(name).components().count() != 1 || name.is_empty() {
+        return invalid("journal artifact identity must name one relative file");
+    }
+    Ok(name)
+}
+
+fn verify_journal_identity(
+    state_directory: &Path,
+    identity: &ArtifactIdentity,
+) -> Result<(), ValidationError> {
+    let name = journal_relative_name(identity)?;
+    let bytes = read_bytes(&state_directory.join(name))?;
+    if digest(&bytes) != identity.sha256 {
+        return invalid(format!("journal artifact identity mismatch for {name}"));
+    }
+    Ok(())
+}
+
+fn journal_artifact_identity(
+    state_directory: &Path,
+    name: &str,
+) -> Result<ArtifactIdentity, ValidationError> {
+    let path: ArtifactPath = name
+        .parse()
+        .map_err(|error: super::schema::ArtifactPathError| {
+            ValidationError::InvalidPlan(error.to_string())
+        })?;
+    Ok(ArtifactIdentity {
+        path,
+        sha256: digest(&read_bytes(&state_directory.join(name))?),
+    })
+}
+
+fn published_json_digest<T: Serialize>(value: &T) -> Result<Sha256Digest, ValidationError> {
+    let mut bytes = serde_json::to_vec_pretty(value).map_err(ValidationError::Json)?;
+    bytes.push(b'\n');
+    Ok(digest(&bytes))
+}
+
+fn anchor_stem(spec: &AnchorSpec) -> String {
+    format!("q{}-n{:02}-s{}", spec.q, spec.n, spec.stream_index)
+}
+
+fn terminal_file_name(spec: &AnchorSpec) -> String {
+    format!("{}.terminal.json", anchor_stem(spec))
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct PhaseStart {
     schema_version: u32,
     address: StreamAddress,
@@ -939,7 +1757,8 @@ struct PhaseStart {
 }
 
 fn run_or_adopt_anchor(
-    run: &RunState,
+    preregistration: &ValidationPreregistration,
+    runtime: &ValidationRuntime,
     spec: &AnchorSpec,
     state_directory: &Path,
 ) -> Result<AnchorReceipt, ValidationError> {
@@ -947,13 +1766,15 @@ fn run_or_adopt_anchor(
     let terminal_path = state_directory.join(format!("{stem}.terminal.json"));
     if terminal_path.exists() {
         let receipt: AnchorReceipt = read_json(&terminal_path)?;
-        validate_anchor_receipt(&run.preregistration.protocol, spec, &receipt)?;
+        validate_anchor_receipt(&preregistration.protocol, spec, &receipt)?;
         return Ok(receipt);
     }
     let start_path = state_directory.join(format!("{stem}.exact.started.json"));
     if start_path.exists() {
         let start: PhaseStart = read_json(&start_path)?;
-        if start.address != address(&run.preregistration.protocol, spec) {
+        if start.schema_version != PHASE_START_SCHEMA_VERSION
+            || start.address != address(&preregistration.protocol, spec)
+        {
             return invalid("existing anchor start marker names a different address");
         }
         let phase = latest_started_phase(state_directory, &stem, &start.address)?;
@@ -964,8 +1785,8 @@ fn run_or_adopt_anchor(
     }
 
     let start = PhaseStart {
-        schema_version: RECEIPT_SCHEMA_VERSION,
-        address: address(&run.preregistration.protocol, spec),
+        schema_version: PHASE_START_SCHEMA_VERSION,
+        address: address(&preregistration.protocol, spec),
         started_at: now()?,
         phase: ValidationPhase::ExactOracle,
     };
@@ -975,7 +1796,7 @@ fn run_or_adopt_anchor(
             return Ok(());
         }
         let phase_start = PhaseStart {
-            schema_version: RECEIPT_SCHEMA_VERSION,
+            schema_version: PHASE_START_SCHEMA_VERSION,
             address: start.address.clone(),
             started_at: now()?,
             phase,
@@ -985,21 +1806,21 @@ fn run_or_adopt_anchor(
     };
     let outcome = match spec.q {
         3 => evaluate_validation_anchor_with_hook::<3, _>(
-            &run.preregistration.protocol,
+            &preregistration.protocol,
             spec,
-            run.runtime.worker_count,
+            runtime.worker_count,
             marker,
         ),
         5 => evaluate_validation_anchor_with_hook::<5, _>(
-            &run.preregistration.protocol,
+            &preregistration.protocol,
             spec,
-            run.runtime.worker_count,
+            runtime.worker_count,
             marker,
         ),
         7 => evaluate_validation_anchor_with_hook::<7, _>(
-            &run.preregistration.protocol,
+            &preregistration.protocol,
             spec,
-            run.runtime.worker_count,
+            runtime.worker_count,
             marker,
         ),
         _ => unreachable!("preregistration bounds the field"),
@@ -1715,7 +2536,79 @@ fn validate_frozen_receipt(
     {
         return invalid("frozen artifact guard names the wrong directory");
     }
-    validate_frozen_toolchain(&receipt.runtime.provenance.compiler_version)?;
+    let journal_relative = receipt.journal_directory.as_ref().ok_or_else(|| {
+        ValidationError::InvalidPlan("frozen receipt lacks its journal directory".into())
+    })?;
+    if journal_relative.as_str() != FROZEN_VALIDATION_JOURNAL_DIRECTORY {
+        return invalid("frozen receipt names the wrong validation journal");
+    }
+    let journal = repository.join(journal_relative.as_str());
+    let run_state_bytes = read_bytes(&journal.join("run-state.json"))?;
+    let run_state: RunState =
+        serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
+    if receipt.producer_segments.len() == 2 {
+        validate_authorized_legacy_run_state(
+            &run_state,
+            &receipt.preregistration,
+            &receipt.preregistration_identity,
+        )?;
+    } else {
+        validate_run_state(
+            &run_state,
+            &receipt.preregistration,
+            &receipt.preregistration_identity,
+        )?;
+    }
+    if receipt.started_at != run_state.started_at
+        || receipt.producer_segments[0].runtime != run_state.runtime
+    {
+        return invalid("receipt producer one disagrees with immutable run state");
+    }
+    let frozen_start: FrozenArtifactSnapshot =
+        read_json(&journal.join("frozen-artifacts-start.json"))?;
+    if frozen_start != guard.before {
+        return invalid("frozen artifact guard disagrees with its immutable start snapshot");
+    }
+    for segment in &receipt.producer_segments {
+        validate_frozen_toolchain(&segment.runtime.provenance.compiler_version)?;
+        verify_journal_identity(&journal, &segment.state)?;
+    }
+    if receipt.producer_segments.len() == 2 {
+        let state: ValidationContinuationState = read_json(&journal.join(CONTINUATION_STATE_FILE))?;
+        verify_identity(repository, &state.authorization_identity)?;
+        let loaded = load_validation_continuation_authorization(
+            repository,
+            Path::new(state.authorization_identity.path.as_str()),
+        )?;
+        if loaded.authorization != state.authorization
+            || loaded.identity != state.authorization_identity
+            || state.continued_runtime != receipt.producer_segments[1].runtime
+        {
+            return invalid("receipt producer two disagrees with committed authorization");
+        }
+        validate_continuation_state(
+            &state,
+            &receipt.preregistration,
+            &receipt.preregistration_identity,
+            &run_state,
+            &run_state_bytes,
+            &journal,
+        )?;
+    }
+    for ((binding, anchor), spec) in receipt
+        .anchor_producers
+        .iter()
+        .zip(&receipt.anchors)
+        .zip(&receipt.preregistration.anchors)
+    {
+        verify_journal_identity(&journal, &binding.terminal)?;
+        let observed: AnchorReceipt =
+            read_json(&journal.join(journal_relative_name(&binding.terminal)?))?;
+        if observed != *anchor {
+            return invalid("receipt anchor differs from its immutable terminal bytes");
+        }
+        validate_anchor_receipt(&receipt.preregistration.protocol, spec, &observed)?;
+    }
     Ok(())
 }
 
@@ -1906,7 +2799,10 @@ fn latest_started_phase(
         let path = state_directory.join(format!("{stem}.{}.started.json", phase_file_token(phase)));
         if path.exists() {
             let marker: PhaseStart = read_json(&path)?;
-            if marker.phase != phase || marker.address != *expected_address {
+            if marker.schema_version != PHASE_START_SCHEMA_VERSION
+                || marker.phase != phase
+                || marker.address != *expected_address
+            {
                 return invalid("phase marker disagrees with its anchor");
             }
             return Ok(phase);
