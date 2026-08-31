@@ -1437,6 +1437,19 @@ impl OrderCertificate {
     /// - [`FieldError::OrderFactorizationUnavailable`] when `prime_factors`
     ///   is not a strictly ascending, complete factor list for `order`.
     ///
+    /// # What this does not check
+    ///
+    /// Primality of the recorded factors stays the caller's contract, exactly
+    /// as it does for [`Fp`]. Ascending order, divisibility, and completeness
+    /// together admit a composite entry whose powers exhaust `order`, and
+    /// [`divisor`](Self::divisor) would then filter against a factor that is
+    /// not prime.
+    ///
+    /// The certificate also records evidence rather than producing it: it
+    /// asserts that a check ran, and neither exhibits an element of `order`
+    /// nor verifies that `field_id` names a field whose modulus is
+    /// irreducible.
+    ///
     /// # Complexity
     ///
     /// `O(k log order)` for `k` recorded factors.
