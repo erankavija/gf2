@@ -1,0 +1,553 @@
+{
+  "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
+  "epic_short_id": "ae03bcd0",
+  "current_wave": 1,
+  "waves": [
+    {
+      "wave_number": 1,
+      "issues": [
+        {
+          "key": "baseline-survey",
+          "short_id": "4e732b56",
+          "title": "Reproducible external-baseline survey and workload selection",
+          "classification": "research",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "bch-property-tests",
+          "short_id": "3243bc1f",
+          "title": "Add property tests for BCH encode and decode invariants",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "ext-design",
+          "short_id": "ad6778e8",
+          "title": "Design the relative field-extension abstraction and field identity",
+          "classification": "design",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "lcm-promotion",
+          "short_id": "8f51d6cf",
+          "title": "Promote polynomial LCM to a public FieldPoly method and drop the BCH copy",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "pin-baseline-receipt",
+          "short_id": "88ca7d2f",
+          "title": "Pin the pre-cutover BCH throughput baseline receipt",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 2,
+      "issues": [
+        {
+          "key": "bch-api-design",
+          "short_id": "7a3a6738",
+          "title": "Design BchSpec, the code-trait generalization, and the compatibility boundary",
+          "classification": "design",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "extension-trait",
+          "short_id": "c3d5cea5",
+          "title": "Implement the relative field-extension abstraction in gf2-core",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 3,
+      "issues": [
+        {
+          "key": "coding-error-surface",
+          "short_id": "ebdbd228",
+          "title": "Implement the layered typed error surface for coding APIs",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "exact-order",
+          "short_id": "fc2fa0b6",
+          "title": "Deterministic derivation of elements with exact multiplicative order",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "followup-tracking",
+          "short_id": "997f0ab9",
+          "title": "Create the tracked follow-up issues against the canonical interfaces",
+          "classification": "lead-direct",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "generic-traits-core",
+          "short_id": "0c4d84cf",
+          "title": "Introduce field-generic block-code traits with binary specializations",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "irreducibility-validation",
+          "short_id": "19fe9394",
+          "title": "Generic irreducibility validation with reusable certificates",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 4,
+      "issues": [
+        {
+          "key": "coordinate-provenance",
+          "short_id": "33812b86",
+          "title": "Implement the coordinate-map provenance abstraction",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "minpoly-subfield",
+          "short_id": "6aac5c44",
+          "title": "Minimal polynomials of extension elements over an arbitrary base field",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "quotient-ext-runtime",
+          "short_id": "769c3144",
+          "title": "Implement runtime-configured polynomial quotient extension fields",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "type-erased-handles",
+          "short_id": "992c6c6e",
+          "title": "Add runtime type-erased code handles for exploratory workflows",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 5,
+      "issues": [
+        {
+          "key": "conway-registry",
+          "short_id": "fa85c403",
+          "title": "Automatic modulus selection: Conway registry plus deterministic verified search",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "cyclotomic-closure",
+          "short_id": "217deff3",
+          "title": "Implement q-cyclotomic coset closure over extension fields",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "fieldmatrix-serialization",
+          "short_id": "e992c5b0",
+          "title": "Canonical checksummed FieldMatrix serialization with atomic replacement",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "quotient-ext-const",
+          "short_id": "0e706bf5",
+          "title": "Implement compile-time configured quotient extensions with equivalence evidence",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "shorten-transform",
+          "short_id": "8aa98a25",
+          "title": "Generic shortening over arbitrary coordinate sets",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 6,
+      "issues": [
+        {
+          "key": "bch-construct-core",
+          "short_id": "230dd84d",
+          "title": "Implement BchSpec and the consecutive-root construction path",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "puncture-transform",
+          "short_id": "5233867e",
+          "title": "Generic puncturing over arbitrary coordinate sets",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 7,
+      "issues": [
+        {
+          "key": "bch-construct-seedset",
+          "short_id": "37c288cf",
+          "title": "Construction from arbitrary seed sets, including boundary codes",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "decoder-outcomes",
+          "short_id": "88f0bb88",
+          "title": "Harden the binary decoder: canonical model, typed outcomes, verified corrections",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "extend-transform",
+          "short_id": "981c5ae3",
+          "title": "Generic one-symbol extension transformation",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "matrix-materialize",
+          "short_id": "d54cf660",
+          "title": "Reference matrix materialization: compact access, caller buffers, opt-in caching",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "systematic-encode",
+          "short_id": "6a1b2404",
+          "title": "General systematic BCH encoding across supported base fields",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 8,
+      "issues": [
+        {
+          "key": "bch-construct-generator",
+          "short_id": "18a160f5",
+          "title": "Construction from explicitly supplied generator polynomials",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "ebch-migration",
+          "short_id": "6d67e57e",
+          "title": "Migrate library eBCH consumers to the generic extension",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "encode-batch-workspace",
+          "short_id": "8f68699b",
+          "title": "Allocation-free single, workspace batch, and parallel batch encoding",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "hip-equivalence",
+          "short_id": "c3cc5226",
+          "title": "Migrate HIP syndrome/decode support behaviorally intact",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "proof-sketch",
+          "short_id": "64fd3afd",
+          "title": "Author the formal-proof sketch for the algebraic foundations",
+          "classification": "design",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 9,
+      "issues": [
+        {
+          "key": "bch-construct-nonprimitive",
+          "short_id": "571aaf80",
+          "title": "Construction at non-primitive lengths with both root conventions",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "cutover-hip-tests",
+          "short_id": "5cbdec87",
+          "title": "Migrate gf2-kernels-hip BCH test consumers",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "encode-dispatch",
+          "short_id": "177bdc85",
+          "title": "Profile-driven dispatch among equivalent batch-encoding algorithms",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "lean-ext-laws",
+          "short_id": "41090b8d",
+          "title": "Lean proofs: extension embedding, restriction, and relative Frobenius laws",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 10,
+      "issues": [
+        {
+          "key": "avx2-batch-kernels",
+          "short_id": "2b6968d3",
+          "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "bch-convenience-ctors",
+          "short_id": "1c9a0f9f",
+          "title": "Add delegating convenience constructors with automatic field selection",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "genmatrix-perf",
+          "short_id": "bd0edfa2",
+          "title": "Optimize the reference generator-matrix materialization",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "lean-quotient-reduction",
+          "short_id": "32f53280",
+          "title": "Lean proofs: quotient reduction preserves the represented element",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 11,
+      "issues": [
+        {
+          "key": "conformance-suites",
+          "short_id": "e1e0e7ff",
+          "title": "Shared property and conformance suites across field classes",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "cutover-components",
+          "short_id": "5ee83cd3",
+          "title": "Migrate the component-code BCH consumers to the canonical model",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "cutover-dvbt2",
+          "short_id": "97410c80",
+          "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "lean-closure",
+          "short_id": "d7749931",
+          "title": "Lean proofs: q-cyclotomic seed closure",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        },
+        {
+          "key": "oracle-agreement",
+          "short_id": "3f7edef1",
+          "title": "External oracle and standards-vector agreement",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 12,
+      "issues": [
+        {
+          "key": "cutover-benches",
+          "short_id": "591a1c5e",
+          "title": "Migrate gf2-coding benchmarks",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "cutover-bins-examples",
+          "short_id": "ef8ff9c4",
+          "title": "Migrate gf2-coding binaries and examples",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "cutover-sim",
+          "short_id": "0c21cb1e",
+          "title": "Migrate gf2-sim BCH consumers",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "cutover-test-suite",
+          "short_id": "227ac5c8",
+          "title": "Migrate gf2-coding integration tests",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "lean-generator",
+          "short_id": "b1bd75ca",
+          "title": "Lean proofs: generator base-field membership and root correctness",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 13,
+      "issues": [
+        {
+          "key": "bench-extension",
+          "short_id": "d1b4f85e",
+          "title": "Extend Criterion benchmarks to the selected workloads",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "cutover-removal",
+          "short_id": "4a2baa12",
+          "title": "Delete the superseded BCH code surface",
+          "classification": "implementation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "lean-encoding",
+          "short_id": "94597a51",
+          "title": "Lean proofs: systematic encoding correctness",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 14,
+      "issues": [
+        {
+          "key": "legacy-reference-sweep",
+          "short_id": "f759d724",
+          "title": "Sweep stale prose references to the removed BCH surface",
+          "classification": "documentation",
+          "difficulty": "easy",
+          "status": "pending"
+        },
+        {
+          "key": "perf-receipts",
+          "short_id": "fd9d5416",
+          "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 15,
+      "issues": [
+        {
+          "key": "researcher-docs",
+          "short_id": "4ad869d6",
+          "title": "Researcher-oriented rustdoc and runnable examples",
+          "classification": "documentation",
+          "difficulty": "easy",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "created_during_execution": [],
+  "escalations": [],
+  "rework_counts": {},
+  "surfaced_pitfalls": [],
+  "coordination": {
+    "peer": "agent:codex epic b8206228",
+    "lock": "/tmp/gf2-main-leads.lock",
+    "notes": [
+      "announce main/JIT write batches on forum",
+      "hold 88ca7d2f + survey measurements until CCX1 window confirmed",
+      "88ca7d2f must land before the cutover wave merges",
+      "announce before touching crates/gf2-sim (cutover-sim)"
+    ]
+  },
+  "started_at": "2026-08-31T16:14:25.273292+00:00"
+}
