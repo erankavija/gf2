@@ -427,50 +427,6 @@ axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.zip
     (core.slice.iter.IterMut T) Clause0_IntoIter) × (core.iter.adapters.zip.Zip
     (core.slice.iter.IterMut T) Clause0_IntoIter → core.slice.iter.IterMut T))
 
-/-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 825:4-825:35
-    Name pattern: [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
-    Visibility: public -/
-@[trait_default, rust_const
-  "gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD"]
-axiom gf2_core.field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self :
-  Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst
-  : gf2_core.field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
-  : Result Std.Usize
-
-/-- [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 858:4-858:35
-    Name pattern: [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
-    Visibility: public -/
-@[trait_default, rust_const
-  "gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD"]
-axiom gf2_core.field.traits.FiniteField.TRI_BASE_THRESHOLD.default {Self :
-  Type} {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst
-  : gf2_core.field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
-  : Result Std.Usize
-
-/-- [gf2_core::field::traits::FiniteField::PLE_BASE_COLS]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 892:4-892:30
-    Name pattern: [gf2_core::field::traits::FiniteField::PLE_BASE_COLS]
-    Visibility: public -/
-@[trait_default, rust_const
-  "gf2_core::field::traits::FiniteField::PLE_BASE_COLS"]
-axiom gf2_core.field.traits.FiniteField.PLE_BASE_COLS.default {Self : Type}
-  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
-  gf2_core.field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
-  : Result Std.Usize
-
-/-- [gf2_core::field::traits::FiniteField::PLE_PANEL_COLS]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 926:4-926:31
-    Name pattern: [gf2_core::field::traits::FiniteField::PLE_PANEL_COLS]
-    Visibility: public -/
-@[trait_default, rust_const
-  "gf2_core::field::traits::FiniteField::PLE_PANEL_COLS"]
-axiom gf2_core.field.traits.FiniteField.PLE_PANEL_COLS.default {Self : Type}
-  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
-  gf2_core.field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
-  : Result Std.Usize
-
 /-- [gf2_core::gfp::{impl core::clone::Clone for gf2_core::gfp::Fp<P>}::clone]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:9-133:14
     Name pattern: [gf2_core::gfp::{core::clone::Clone<gf2_core::gfp::Fp<@P>>}::clone]
@@ -639,16 +595,6 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithDivShared0FpFp.div
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::PLE_PANEL_COLS]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 903:4-903:31
-    Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::PLE_PANEL_COLS]
-    Visibility: public -/
-@[rust_const
-  "gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::PLE_PANEL_COLS"]
-axiom
-  gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.PLE_PANEL_COLS (P
-  : Std.U64) : Result Std.Usize
-
 /-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::max_unreduced_additions]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 675:4-675:41
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::max_unreduced_additions]
@@ -752,19 +698,19 @@ axiom
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Std.U64
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3}::assert_fields_are_eq]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 137:0-137:23
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 145:0-145:23
     Visibility: public -/
 axiom packed.bipedal3.Bipedal3.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.bipedal3.Bipedal3 → Result Unit
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Vec}::assert_fields_are_eq]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1769:0-1769:26
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1816:0-1816:26
     Visibility: public -/
 axiom packed.bipedal3.Bipedal3Vec.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.bipedal3.Bipedal3Vec → Result Unit
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::assert_fields_are_eq]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2912:0-2912:29
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2959:0-2959:29
     Visibility: public -/
 axiom packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.bipedal3.Bipedal3Matrix → Result Unit
@@ -776,13 +722,13 @@ axiom packed.packed5.Packed5.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.packed5.Packed5 → Result Unit
 
 /-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Vec}::assert_fields_are_eq]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 939:0-939:25
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 960:0-960:25
     Visibility: public -/
 axiom packed.packed5.Packed5Vec.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.packed5.Packed5Vec → Result Unit
 
 /-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Matrix}::assert_fields_are_eq]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1417:0-1417:28
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1438:0-1438:28
     Visibility: public -/
 axiom packed.packed5.Packed5Matrix.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.packed5.Packed5Matrix → Result Unit
