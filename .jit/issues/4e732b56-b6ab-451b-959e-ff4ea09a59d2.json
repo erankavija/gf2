@@ -71,7 +71,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-31T17:57:16.911981985Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "4e732b56-b6ab-451b-959e-ff4ea09a59d2",
   "labels": [
     "type:task",
@@ -82,5 +88,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-08-31T17:49:42.648978349Z"
+  "updated_at": "2026-08-31T17:57:16.911981985Z"
 }
