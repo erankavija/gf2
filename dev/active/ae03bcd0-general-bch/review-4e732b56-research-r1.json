@@ -1,0 +1,123 @@
+{
+  "gate": "research-review",
+  "issue": "4e732b56",
+  "round": 1,
+  "note": "Verdict completed 2026-08-31T21:35 EEST but was discarded unrecorded by jit's gate-evaluation retry (reported to the jit session); preserved here from the codex session rollout rollout-2026-08-31T21-19-59-01a0590c.",
+  "verdict": "fail",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "high",
+      "disposition": "blocking",
+      "origin": "issue-impact",
+      "summary": "The receipt omits exact invocations and combines T2N gf2 data from a later revision without a matching host manifest.",
+      "file": "dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md",
+      "line": 209,
+      "references": [
+        "@/inv/claims-trace-to-artifacts",
+        "@/inv/runtime-observed-provenance",
+        "@/inv/benchmark-backed-performance"
+      ]
+    },
+    {
+      "id": "F2",
+      "severity": "high",
+      "disposition": "blocking",
+      "origin": "issue-impact",
+      "summary": "No normalized output check proves that the selected M4RI route materializes the same repository-layout generator matrix as gf2 or AFF3CT.",
+      "file": "dev/active/4e732b56/findings.md",
+      "line": 325,
+      "references": [
+        "@/inv/benchmark-backed-performance",
+        "@/inv/backend-behavioral-equivalence"
+      ]
+    },
+    {
+      "id": "F3",
+      "severity": "medium",
+      "disposition": "advisory",
+      "origin": "issue-impact",
+      "summary": "AFF3CT and M4RI W2 trials do not satisfy the stated five-millisecond repetition rule for small rows.",
+      "file": "dev/active/4e732b56/findings.md",
+      "line": 230,
+      "references": [
+        "@/inv/benchmark-backed-performance"
+      ]
+    },
+    {
+      "id": "F4",
+      "severity": "high",
+      "disposition": "blocking",
+      "origin": "issue-impact",
+      "summary": "The kodo/steinwurf exclusion is supported by neither a registry citekey nor a committed retrieval receipt.",
+      "file": "dev/active/4e732b56/findings.md",
+      "line": 202,
+      "references": [
+        "@/inv/external-claims-cited"
+      ]
+    },
+    {
+      "id": "F5",
+      "severity": "medium",
+      "disposition": "blocking",
+      "origin": "issue-impact",
+      "summary": "The claimed single-thread M4RI configuration is based on uncommitted generated and linkage evidence.",
+      "file": "dev/active/4e732b56/findings.md",
+      "line": 222,
+      "references": [
+        "@/inv/claims-trace-to-artifacts",
+        "@/inv/runtime-observed-provenance",
+        "@/inv/benchmark-backed-performance"
+      ]
+    },
+    {
+      "id": "F6",
+      "severity": "low",
+      "disposition": "advisory",
+      "origin": "issue-impact",
+      "summary": "The logs show that nice -n -5 was denied although the receipt reports it as the runtime posture.",
+      "file": "dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md",
+      "line": 12,
+      "references": [
+        "@/inv/runtime-observed-provenance",
+        "@/inv/falsification-preserved"
+      ]
+    },
+    {
+      "id": "F7",
+      "severity": "low",
+      "disposition": "advisory",
+      "origin": "issue-impact",
+      "summary": "The stated maximum dispersion for headline DVB-T2 cells contradicts the receipt's T2N W2 spreads.",
+      "file": "dev/active/4e732b56/findings.md",
+      "line": 272,
+      "references": [
+        "@/inv/benchmark-backed-performance"
+      ]
+    },
+    {
+      "id": "F8",
+      "severity": "medium",
+      "disposition": "advisory",
+      "origin": "issue-impact",
+      "summary": "The recorded PMU counters do not support the causal claim that neither baseline is memory-limited.",
+      "file": "dev/active/4e732b56/findings.md",
+      "line": 332,
+      "references": [
+        "@/inv/benchmark-backed-performance"
+      ]
+    },
+    {
+      "id": "F9",
+      "severity": "low",
+      "disposition": "advisory",
+      "origin": "issue-impact",
+      "summary": "No cheap seeded rerun cross-checks deterministic reproduction of the small survey cells.",
+      "file": "dev/active/4e732b56/findings.md",
+      "line": 245,
+      "references": [
+        "@/inv/deterministic-seeded-execution"
+      ]
+    }
+  ]
+}
