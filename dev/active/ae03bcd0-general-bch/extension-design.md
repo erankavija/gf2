@@ -1094,13 +1094,6 @@ certificates are checked in CI even though they are unchecked at runtime.
 **The lead decides whether that case is in scope for
 `irreducibility-validation` or a separate tracked issue.**
 
-**R-02 — document path disagrees with the manifest.** The `ext-design`
-footprint records
-`dev/active/ae03bcd0-general-bch/extension-design.md`
-(`breakdown.json`), and this document is at `ext-design.md` as dispatched.
-REQ-01 is satisfied either way; the lead resolves which path the manifest
-carries before the next footprint audit.
-
 **R-03 — footprint additions the manifest does not record.** Three tasks need
 files outside their recorded footprints: `extension-trait` needs
 `crates/gf2-core/src/field/axiom_tests.rs` for the extension-law cases its own
