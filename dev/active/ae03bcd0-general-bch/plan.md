@@ -358,7 +358,7 @@ flowchart LR
 |---|---|
 | D-01 flat decomposition | Chosen flat tasks with landing groups, matching prior epic manifests; rejected story containers as adding tier without review value |
 | D-02 external prerequisites | `8f51d6cf` re-homes to `bch-construct-core` (public LCM), `3243bc1f` to `conformance-suites` (pre-cutover baseline), `88ca7d2f` to `bench-extension`; all three stay in current narrow scope as protective baselines, expansion subsumed by the new children |
-| D-03 shared trait-cutover child | Story `3931ac6f` gets a dependency edge onto `generic-traits-core` at breakdown; no `3931ac6f` → epic edge (owner-approved graph shape) |
+| D-03 shared trait-cutover child | Story `3931ac6f` waits on the whole epic via a `3931ac6f` → `ae03bcd0` dependency edge (owner-approved 2026-08-31, superseding the earlier edge onto `generic-traits-core`): the trait-interface unification starts only after this epic stops reshaping the encode/decode surface |
 | D-04 encoding families | Dispatch seam is required with ≥1 scalar reference and ≥2 registered families; the family set comes from the survey's `workload-selection` contract, upstream of dispatch, kernels, and benches; rejected mandating all three interview-named families as evidence-free scope |
 | D-05 eBCH disposition | `ExtendedBchCode` is replaced by the generic extension transform and removed; its consumers migrate in `ebch-migration` (REQ-10 treats eBCH as a direct consumer) |
 | D-06 field identity | One stable identity shared by serialization and selection, fixed in `ext-design`; rejected per-format ad-hoc identity |
