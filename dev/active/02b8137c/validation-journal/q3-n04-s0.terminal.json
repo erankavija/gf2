@@ -1,0 +1,82 @@
+{
+  "address": {
+    "root_seed": 4923361482881630209,
+    "q": 3,
+    "n": 4,
+    "purpose_tag": 1,
+    "stream_index": 0
+  },
+  "started_at": {
+    "seconds": 1788130832,
+    "nanoseconds": 709874532
+  },
+  "finished_at": {
+    "seconds": 1788131886,
+    "nanoseconds": 661609720
+  },
+  "exact": {
+    "enumerated_matrix_count": 43046721,
+    "oracle_permanent_zero_count": 17116353,
+    "production_determinant_zero_count": 18785601,
+    "backend_agreements": [
+      {
+        "backend": "batch_parallel",
+        "status": "identical",
+        "matrices_compared": 43046721,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 17116353,
+        "diagnostic": null
+      },
+      {
+        "backend": "intra_matrix_parallel",
+        "status": "identical",
+        "matrices_compared": 43046721,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 17116353,
+        "diagnostic": null
+      },
+      {
+        "backend": "generic_ryser",
+        "status": "identical",
+        "matrices_compared": 43046721,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 17116353,
+        "diagnostic": null
+      },
+      {
+        "backend": "accelerator",
+        "status": "identical",
+        "matrices_compared": 43046721,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 17116353,
+        "diagnostic": null
+      }
+    ]
+  },
+  "replay": {
+    "mode": "two_fresh_serial",
+    "matrix_count": 1024,
+    "mismatch_count": 0,
+    "identical": true,
+    "first_sha256": "620d2436468cece4deaeb6b5b0d01c6c4f6dfe426f9ff7052b52d911fd23de49",
+    "second_sha256": "620d2436468cece4deaeb6b5b0d01c6c4f6dfe426f9ff7052b52d911fd23de49"
+  },
+  "sample": {
+    "stream_purpose": "validation",
+    "origin": "fresh_address_start",
+    "matrix_count": 400000,
+    "permanent_zero_count": 159316,
+    "null_numerator": "17116353",
+    "null_denominator": "43046721",
+    "log_p_value": -0.9458329770993752,
+    "p_value": 0.3883559445255893,
+    "verdict": "passed"
+  },
+  "exact_oracle_status": "passed",
+  "backend_status": "passed",
+  "determinant_status": "passed",
+  "replay_status": "passed",
+  "statistical_status": "passed",
+  "failure": null,
+  "verdict": "passed"
+}

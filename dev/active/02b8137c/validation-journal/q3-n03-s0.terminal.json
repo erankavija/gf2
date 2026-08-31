@@ -1,0 +1,82 @@
+{
+  "address": {
+    "root_seed": 4923361482881630209,
+    "q": 3,
+    "n": 3,
+    "purpose_tag": 1,
+    "stream_index": 0
+  },
+  "started_at": {
+    "seconds": 1788130831,
+    "nanoseconds": 481547370
+  },
+  "finished_at": {
+    "seconds": 1788130832,
+    "nanoseconds": 700994719
+  },
+  "exact": {
+    "enumerated_matrix_count": 19683,
+    "oracle_permanent_zero_count": 8163,
+    "production_determinant_zero_count": 8451,
+    "backend_agreements": [
+      {
+        "backend": "batch_parallel",
+        "status": "identical",
+        "matrices_compared": 19683,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 8163,
+        "diagnostic": null
+      },
+      {
+        "backend": "intra_matrix_parallel",
+        "status": "identical",
+        "matrices_compared": 19683,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 8163,
+        "diagnostic": null
+      },
+      {
+        "backend": "generic_ryser",
+        "status": "identical",
+        "matrices_compared": 19683,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 8163,
+        "diagnostic": null
+      },
+      {
+        "backend": "accelerator",
+        "status": "identical",
+        "matrices_compared": 19683,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 8163,
+        "diagnostic": null
+      }
+    ]
+  },
+  "replay": {
+    "mode": "two_fresh_serial",
+    "matrix_count": 1024,
+    "mismatch_count": 0,
+    "identical": true,
+    "first_sha256": "7f47dd525e65ea5730d76330b9d8012f5399dcd7e0e0f023b6c3eef488829f83",
+    "second_sha256": "7f47dd525e65ea5730d76330b9d8012f5399dcd7e0e0f023b6c3eef488829f83"
+  },
+  "sample": {
+    "stream_purpose": "validation",
+    "origin": "fresh_address_start",
+    "matrix_count": 400000,
+    "permanent_zero_count": 166206,
+    "null_numerator": "8163",
+    "null_denominator": "19683",
+    "log_p_value": -1.1719834989995892,
+    "p_value": 0.30975193887792163,
+    "verdict": "passed"
+  },
+  "exact_oracle_status": "passed",
+  "backend_status": "passed",
+  "determinant_status": "passed",
+  "replay_status": "passed",
+  "statistical_status": "passed",
+  "failure": null,
+  "verdict": "passed"
+}

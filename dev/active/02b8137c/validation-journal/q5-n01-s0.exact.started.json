@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "address": {
+    "root_seed": 4923361482881630209,
+    "q": 5,
+    "n": 1,
+    "purpose_tag": 1,
+    "stream_index": 0
+  },
+  "started_at": {
+    "seconds": 1788131886,
+    "nanoseconds": 670499212
+  },
+  "phase": "exact_oracle"
+}

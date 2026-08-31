@@ -1,0 +1,17 @@
+{
+  "root": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
+  "artifacts": [
+    {
+      "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/checksums.sha256",
+      "sha256": "fbd2605b9fe939f9f6817665d87f378d4951123903eddf933cc73614c9b1358c"
+    },
+    {
+      "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md",
+      "sha256": "ccf183133d8a9f0f9bed4d926f39cbda27d72bec0558f222533fdbdc661c9502"
+    },
+    {
+      "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json",
+      "sha256": "1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2"
+    }
+  ]
+}
