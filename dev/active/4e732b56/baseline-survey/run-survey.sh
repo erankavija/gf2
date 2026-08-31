@@ -114,6 +114,10 @@ run_one() {
 "${HERE}/aff3ct_bch_bench" gdump >"${OUT}/generators.txt" 2>/dev/null
 echo "generators -> ${OUT}/generators.txt"
 
+# The encoding comparison is only like-for-like if the baseline builds the same
+# generator polynomial gf2 does. Check it before spending the window measuring.
+"${HERE}/verify-generators.py" "${OUT}/generators.txt" | tee "${OUT}/${PREFIX}generator-agreement.txt"
+
 run_one aff3ct "${HERE}/aff3ct_bch_bench" all
 run_one bchlib "${HERE}/bchlib_bch_bench"
 run_one itpp "${HERE}/itpp_bch_bench"
