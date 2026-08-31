@@ -3,6 +3,7 @@
 aff3ct_bch_bench
 bchlib_bch_bench
 m4ri_genmatrix_bench
+itpp_bch_bench
 gdump.txt
 gf2-side/target/
 
