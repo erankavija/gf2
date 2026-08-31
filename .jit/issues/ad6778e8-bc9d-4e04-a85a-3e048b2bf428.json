@@ -34,11 +34,18 @@
       "path": "dev/active/ae03bcd0-general-bch/extension-design.md"
     }
   ],
+  "done_at": "2026-08-31T16:50:50.664735861Z",
   "first_ready_at": "2026-08-28T22:50:47.339714882Z",
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-31T16:50:33.309900705Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "ad6778e8-bc9d-4e04-a85a-3e048b2bf428",
   "labels": [
     "type:task",
@@ -47,7 +54,7 @@
     "satisfies:REQ-01"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Design the relative field-extension abstraction and field identity",
-  "updated_at": "2026-08-31T16:43:28.154098397Z"
+  "updated_at": "2026-08-31T16:50:50.664735861Z"
 }

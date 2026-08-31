@@ -7,6 +7,7 @@
   ],
   "description": "Author the design document fixing the canonical `BchSpec` model, the static-generic versus type-erased code type split, the field-generic block-code trait surface (including parity-check access), and the named, versioned compatibility boundary for code families that migrate later.\n\n## Background\n\nThe planning brief fixes the semantic shape: `BchSpec` variants carrying only independent inputs, one `BchCode::construct` path, convenience constructors that delegate, and derived codes as generic wrappers. Today `BlockEncoder` is `BitVec`-bound, `GeneratorMatrixAccess` returns `BitMatrix`, and parity-check access is inherent per type, so the generic trait shape and the migration boundary must be fixed before construction or trait work fans out. The document also preallocates module layout for the trait, transform, and encoding tasks so parallel waves write disjoint files.\n\n## Success Criteria\n\n- [hard] REQ-01: A design document fixes the `BchSpec` variant set with exact independent inputs, the construct/derivation pipeline stages, and the static/erased type split.\n- [hard] REQ-02: The document fixes the field-generic block-code, encoder, generator-matrix, and parity-check trait surface with its `BitVec`/`BitMatrix` specializations, and names the compatibility boundary (name, version, removal condition) for unmigrated families.\n- [hard] REQ-03: The document maps each current consumer family from the linked investigation inventory to immediate migration or the boundary, and preallocates the new module layout.\n",
   "documents": [],
+  "first_ready_at": "2026-08-31T16:50:59.494695447Z",
   "gates_required": [
     "doc-review"
   ],
@@ -20,7 +21,7 @@
     "satisfies:REQ-06"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Design BchSpec, the code-trait generalization, and the compatibility boundary",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-08-31T16:50:59.494695447Z"
 }

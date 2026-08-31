@@ -7,6 +7,7 @@
   ],
   "description": "Implement the canonical relative finite-field extension abstraction designed for gf2-core, covering base-field embedding, checked membership and restriction, relative degree, relative Frobenius, field-order relationships, and reusable validation certificates.\n\n## Background\n\nThe abstraction realizes the approved extension design. Existing pairs must be covered: GF(2) into runtime `Gf2mField`, and `ConstField` bases into the binomial towers. Validation work performed once (irreducibility, compatibility, order facts) is captured in a reusable certificate value so repeated constructions do not revalidate.\n\n## Success Criteria\n\n- [hard] REQ-01: gf2-core exposes the designed extension abstraction implemented for the existing binary and tower field pairs, with embedding, membership, restriction, relative degree, relative Frobenius, and order relationships behaving per the field-law conformance style of the crate.\n- [hard] REQ-02: Validation certificates are constructed once, are reusable across constructions, and invalid pairs report typed errors from the core-owned error types.\n- [hard] REQ-03: The shared field axiom/conformance harness gains extension-law cases exercised for the implemented pairs.\n",
   "documents": [],
+  "first_ready_at": "2026-08-31T16:51:08.262400375Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -21,7 +22,7 @@
     "satisfies:REQ-01"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Implement the relative field-extension abstraction in gf2-core",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-08-31T16:51:08.262400375Z"
 }
