@@ -14,7 +14,6 @@
     "9a5662ff-c56c-4ec5-95f2-3586e35a0844",
     "9d8cb409-2b60-4039-bd83-6f8cf8e1a2bb",
     "adc75ba7-4c60-4302-ad9a-1bc368dfb5ab",
-    "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
     "ae82bd73-741d-4007-811f-914dac00bae8",
     "b117c95e-3d65-4474-af7c-709a8c08bdc5",
     "b81c239c-952c-4017-85fb-629dc8965410",
@@ -41,5 +40,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "gf2 1.0 release",
-  "updated_at": "2026-08-28T21:15:39.213098495Z"
+  "updated_at": "2026-08-31T16:39:58.348855972Z"
 }

@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-02-21T19:35:51.723398998Z",
   "dependencies": [
-    "0c4d84cf-fd75-459f-bdd1-0087d8269a9a"
+    "ae03bcd0-8881-4308-99f5-cad2b3c717d1"
   ],
   "description": "Refine trait system to provide clean unification between streaming and batch encode/decode operations. Currently these are somewhat separate APIs. Part of ongoing ergonomics polish.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Unify streaming and batch encode/decode trait interfaces” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
@@ -23,5 +23,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Unify streaming and batch encode/decode trait interfaces",
-  "updated_at": "2026-08-28T22:52:22.493869386Z"
+  "updated_at": "2026-08-31T16:39:58.348855972Z"
 }
