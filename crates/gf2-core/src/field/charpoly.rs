@@ -2636,26 +2636,11 @@ impl<F: FiniteField> FieldMatrix<F> {
 // ─── Refinement to canonical Frobenius form ──────────────────────────────────
 
 /// Returns the monic `lcm(a, b) = a · b / gcd(a, b)`.
+///
+/// Delegates to [`FieldPoly::lcm`]; see its rustdoc for the zero-input
+/// convention and panic condition.
 pub(crate) fn poly_lcm<F: FiniteField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPoly<F> {
-    if a.is_zero() || b.is_zero() {
-        // Convention: lcm with zero is zero.
-        let sample = if let Some(c) = a.iter().next() {
-            c.clone()
-        } else if let Some(c) = b.iter().next() {
-            c.clone()
-        } else if let Some(z) = F::zero_hint() {
-            z
-        } else {
-            // No witness available; cannot produce a runtime-context
-            // zero polynomial. Callers in this module always feed
-            // non-zero polynomials so this branch is unreachable.
-            unreachable!("poly_lcm: lcm of two zero polynomials over a runtime-context field");
-        };
-        return FieldPoly::zero_like(&sample);
-    }
-    let g = FieldPoly::gcd(a, b);
-    let (q, _r) = (a * b).div_rem(&g);
-    monic(q)
+    FieldPoly::lcm(a, b)
 }
 
 /// Returns the monic representative of `p` (divides by its leading
