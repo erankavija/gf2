@@ -1448,3 +1448,172 @@ mod batch_api_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use crate::traits::{BlockEncoder, HardDecisionDecoder};
+    use proptest::prelude::*;
+
+    #[derive(Clone, Copy, Debug)]
+    enum BchParameterSet {
+        Bch7_4,
+        Bch15_11,
+        Bch15_7,
+        Bch31_26,
+        Bch63_57,
+    }
+
+    impl BchParameterSet {
+        fn code(self) -> BchCode {
+            match self {
+                Self::Bch7_4 => BchCode::new(7, 4, 1, Gf2mField::new(3, 0b1011).with_tables()),
+                Self::Bch15_11 => BchCode::new(15, 11, 1, Gf2mField::new(4, 0b10011).with_tables()),
+                Self::Bch15_7 => BchCode::new(15, 7, 2, Gf2mField::new(4, 0b10011).with_tables()),
+                Self::Bch31_26 => {
+                    BchCode::new(31, 26, 1, Gf2mField::new(5, 0b100101).with_tables())
+                }
+                Self::Bch63_57 => {
+                    BchCode::new(63, 57, 1, Gf2mField::new(6, 0b1000011).with_tables())
+                }
+            }
+        }
+    }
+
+    fn bch_message_cases() -> impl Strategy<Value = (BchParameterSet, Vec<bool>)> {
+        prop_oneof![
+            (
+                Just(BchParameterSet::Bch7_4),
+                prop::collection::vec(any::<bool>(), 4)
+            ),
+            (
+                Just(BchParameterSet::Bch15_11),
+                prop::collection::vec(any::<bool>(), 11)
+            ),
+            (
+                Just(BchParameterSet::Bch15_7),
+                prop::collection::vec(any::<bool>(), 7)
+            ),
+            (
+                Just(BchParameterSet::Bch31_26),
+                prop::collection::vec(any::<bool>(), 26)
+            ),
+            (
+                Just(BchParameterSet::Bch63_57),
+                prop::collection::vec(any::<bool>(), 57)
+            ),
+        ]
+    }
+
+    fn bch_recovery_cases() -> impl Strategy<Value = (BchParameterSet, Vec<bool>, Vec<usize>)> {
+        prop_oneof![
+            (
+                Just(BchParameterSet::Bch7_4),
+                prop::collection::vec(any::<bool>(), 4),
+                prop::collection::vec(0usize..7, 1)
+            ),
+            (
+                Just(BchParameterSet::Bch15_11),
+                prop::collection::vec(any::<bool>(), 11),
+                prop::collection::vec(0usize..15, 1)
+            ),
+            (
+                Just(BchParameterSet::Bch15_7),
+                prop::collection::vec(any::<bool>(), 7),
+                prop::collection::vec(0usize..15, 2)
+            ),
+            (
+                Just(BchParameterSet::Bch31_26),
+                prop::collection::vec(any::<bool>(), 26),
+                prop::collection::vec(0usize..31, 1)
+            ),
+            (
+                Just(BchParameterSet::Bch63_57),
+                prop::collection::vec(any::<bool>(), 57),
+                prop::collection::vec(0usize..63, 1)
+            ),
+        ]
+    }
+
+    fn distinct_error_positions(seeds: &[usize], n: usize, count: usize) -> Vec<usize> {
+        let mut positions = Vec::with_capacity(count);
+
+        for &seed in seeds {
+            let position = seed % n;
+            if !positions.contains(&position) {
+                positions.push(position);
+            }
+        }
+
+        for position in 0..n {
+            if positions.len() == count {
+                break;
+            }
+            if !positions.contains(&position) {
+                positions.push(position);
+            }
+        }
+
+        positions
+    }
+
+    proptest! {
+        #[test]
+        fn prop_bch_encode_decode_roundtrip_within_correction_capability(
+            (parameter_set, msg_bits, error_seeds) in bch_recovery_cases()
+        ) {
+            let code = parameter_set.code();
+            let encoder = BchEncoder::new(code.clone());
+            let decoder = BchDecoder::new(code.clone());
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let codeword = encoder.encode(&msg);
+            let error_positions = distinct_error_positions(&error_seeds, code.n(), code.t());
+
+            // Testing every prefix makes the correction boundary explicit:
+            // each generated case includes 0, 1, ..., t distinct errors.
+            for error_count in 0..=code.t() {
+                let mut received = codeword.clone();
+                for &error_position in error_positions.iter().take(error_count) {
+                    received.set(error_position, !received.get(error_position));
+                }
+
+                let decoded = decoder.decode(&received);
+                prop_assert_eq!(
+                    &decoded,
+                    &msg,
+                    "failed for {:?} with {} errors",
+                    parameter_set,
+                    error_count
+                );
+            }
+        }
+
+        #[test]
+        fn prop_bch_valid_codeword_has_zero_syndrome(
+            (parameter_set, msg_bits) in bch_message_cases()
+        ) {
+            let code = parameter_set.code();
+            let encoder = BchEncoder::new(code.clone());
+            let decoder = BchDecoder::new(code);
+
+            let mut msg = BitVec::new();
+            for bit in msg_bits {
+                msg.push_bit(bit);
+            }
+
+            let codeword = encoder.encode(&msg);
+            let syndrome = decoder.compute_syndromes(&codeword);
+
+            prop_assert!(
+                syndrome.iter().all(|value| value.is_zero()),
+                "valid {:?} codeword must have zero syndrome",
+                parameter_set
+            );
+        }
+    }
+}
