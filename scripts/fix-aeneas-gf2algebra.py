@@ -110,7 +110,7 @@ def axiomatize_opaque_fp_wrappers(text: str) -> tuple[str, int]:
         # Axioms cannot be `@[reducible]`; keep only `rust_trait_impl`.
         return (
             f"@[rust_trait_impl \"{marker}\"]\n"
-            f"axiom {name} (P : Std.U64) :\n{sig}\n"
+            f"axiom {name} (P : Std.U64) :\n  {sig}\n"
         )
 
     replaced = 0

@@ -61,7 +61,11 @@ class OpaqueFpWrapperTests(unittest.TestCase):
 
         self.assertEqual(replaced, 10)
         for name in OPAQUE_WRAPPERS:
-            self.assertIn(f"axiom {PREFIX}{name}", actual)
+            self.assertIn(
+                f"axiom {PREFIX}{name} (P : Std.U64) :\n"
+                "  core.ops.arith.Add",
+                actual,
+            )
             self.assertNotIn(f"def {PREFIX}{name}", actual)
 
     def test_finite_field_and_known_transparent_wrapper_survive(self) -> None:
