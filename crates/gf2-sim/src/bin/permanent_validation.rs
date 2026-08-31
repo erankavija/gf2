@@ -12,7 +12,7 @@
 //! $ permanent_validation \
 //!     --preregistration dev/active/02b8137c/pre-draw-validation-v1-preregistration.json \
 //!     --state-dir dev/active/02b8137c/validation-journal \
-//!     --receipt dev/active/02b8137c/pre-draw-validation-v1-receipt.json \
+//!     --receipt dev/active/02b8137c/pre-draw-validation-v2-receipt.json \
 //!     --workers 32
 //! ```
 //!
@@ -28,6 +28,11 @@
 //! resumed run repeats the identical command from the identical source closure:
 //! the journal binds itself to the producer identity it observed, argument
 //! tokens included, and refuses a journal recorded under a different one.
+//! The sole exception is explicit `--continue-producer-segment PATH`: `PATH`
+//! must be the committed schema-v2 owner authorization for one immutable
+//! ordered boundary. The library rehashes the complete authorized prefix and
+//! durably publishes the observed second-producer state before opening the
+//! next address. No third producer is admitted.
 //!
 //! The frozen plan pins its producing toolchain and requires every backend the
 //! frozen manifest selects. The runner refuses a build from another compiler,
@@ -35,7 +40,7 @@
 //! opens the first address.
 //!
 //! ```console
-//! $ permanent_validation --verify-receipt dev/active/02b8137c/pre-draw-validation-v1-receipt.json
+//! $ permanent_validation --verify-receipt dev/active/02b8137c/pre-draw-validation-v2-receipt.json
 //! ```
 //!
 //! `--verify-receipt` re-reads a committed receipt, revalidates it against the
@@ -51,18 +56,22 @@ use std::process::ExitCode;
 
 use gf2_sim::permanent_campaign::provenance::repository_top_level;
 use gf2_sim::permanent_campaign::validation::{
-    load_frozen_campaign_validation_preregistration, publish_validation_receipt_atomic,
-    read_frozen_validation_receipt, run_frozen_campaign_validation, ValidationReceipt,
+    load_frozen_campaign_validation_preregistration, load_validation_continuation_authorization,
+    publish_validation_receipt_atomic, read_frozen_validation_receipt,
+    run_frozen_campaign_validation_with_mode, ValidationReceipt, ValidationRunMode,
+    FROZEN_VALIDATION_RECEIPT_PATH,
 };
 
-const USAGE: &str = "usage: permanent_validation --preregistration PATH --state-dir PATH --receipt PATH [--workers N]
+const USAGE: &str = "usage: permanent_validation --preregistration PATH --state-dir PATH --receipt PATH [--workers N] [--continue-producer-segment PATH]
 
        permanent_validation --verify-receipt PATH
 
   --preregistration PATH  committed frozen ten-anchor preregistration, repository-relative
   --state-dir PATH        durable no-redraw journal directory
-  --receipt PATH          immutable receipt destination
+  --receipt PATH          canonical immutable schema-v2 receipt destination
   --workers N             worker count for production evaluation (default: 1)
+  --continue-producer-segment PATH
+                           committed schema-v2 owner authorization for one second producer
   --verify-receipt PATH   revalidate a committed receipt against the frozen plan
 ";
 
@@ -74,6 +83,7 @@ fn main() -> ExitCode {
     let mut state_directory: Option<PathBuf> = None;
     let mut receipt: Option<PathBuf> = None;
     let mut verify_receipt: Option<PathBuf> = None;
+    let mut continuation: Option<PathBuf> = None;
     let mut workers = 1_usize;
     let mut index = 0;
     while index < arguments.len() {
@@ -96,6 +106,10 @@ fn main() -> ExitCode {
                 verify_receipt = Some(PathBuf::from(path));
                 index += 2;
             }
+            ("--continue-producer-segment", Some(path)) => {
+                continuation = Some(PathBuf::from(path));
+                index += 2;
+            }
             ("--workers", Some(value)) => match value.parse::<usize>() {
                 Ok(parsed) if parsed >= 1 => {
                     workers = parsed;
@@ -113,7 +127,11 @@ fn main() -> ExitCode {
     };
 
     if let Some(path) = verify_receipt {
-        if preregistration.is_some() || state_directory.is_some() || receipt.is_some() {
+        if preregistration.is_some()
+            || state_directory.is_some()
+            || receipt.is_some()
+            || continuation.is_some()
+        {
             return usage("--verify-receipt cannot be combined with execution options");
         }
         return match read_frozen_validation_receipt(&repository, &repository.join(path)) {
@@ -127,18 +145,29 @@ fn main() -> ExitCode {
     else {
         return usage("execution needs --preregistration, --state-dir, and --receipt");
     };
+    if receipt_path != Path::new(FROZEN_VALIDATION_RECEIPT_PATH) {
+        return usage("--receipt must name the canonical schema-v2 validation receipt");
+    }
 
     let (plan, identity) =
         match load_frozen_campaign_validation_preregistration(&repository, &preregistration) {
             Ok(loaded) => loaded,
             Err(error) => return failure(&error),
         };
-    let receipt = match run_frozen_campaign_validation(
+    let mode = match continuation {
+        Some(path) => match load_validation_continuation_authorization(&repository, &path) {
+            Ok(authorization) => ValidationRunMode::ContinueWith(Box::new(authorization)),
+            Err(error) => return failure(&error),
+        },
+        None => ValidationRunMode::ExactProducer,
+    };
+    let receipt = match run_frozen_campaign_validation_with_mode(
         &repository,
         &plan,
         identity,
         workers,
         &repository.join(state_directory),
+        mode,
     ) {
         Ok(receipt) => receipt,
         Err(error) => return failure(&error),
