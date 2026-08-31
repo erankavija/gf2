@@ -219,6 +219,14 @@ benchmark host was released; the harness-validation runs that preceded the
 release were bounded to seconds and none of their output is committed or
 quoted.
 
+**Worker count.** Every figure in this survey is single-threaded, the worker
+count the contract fixes for baseline comparison. All four baselines are
+single-threaded as built: bchlib and the AFF3CT encoder kernels contain no
+threading, and M4RI was configured without OpenMP
+(`__M4RI_HAVE_OPENMP 0` in the installed `m4ri_config.h`, and the built
+`libm4ri.so` links no OpenMP runtime). No figure here may be read as a
+multi-threaded result.
+
 **Statistics.** Each cell takes up to 7 independent trials. A trial repeats the
 measured call enough times to span at least 5 ms, so a cell whose single call
 sits near the clock's resolution is still resolved, and the reported figure is

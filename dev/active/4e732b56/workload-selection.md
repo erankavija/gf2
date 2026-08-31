@@ -109,16 +109,24 @@ consumer only needs $P$.
 
 ## 5. Cache state
 
-Two declared states. Every measured cell names which one it used.
+Two declared states. Which one a cell is in follows from the API it measures,
+not from a per-cell choice:
 
-* **`warm-reuse`** (default for W1). Input and output buffers are allocated
-  once outside the timed region and reused by every repetition. Steady-state
-  throughput; the first-touch page faults and allocator work are excluded.
-* **`fresh-alloc`** (required for W2, and for any W1 cell whose API allocates
-  its result). The measured call performs its own allocation. This is the
-  state the current `BchEncoder::encode_batch` and
-  `GeneratorMatrixAccess::generator_matrix` are in, so a like-for-like
-  non-regression comparison against the pre-cutover receipt uses it.
+* **`warm-reuse`** — input and output buffers are allocated once outside the
+  timed region and reused by every repetition. Steady-state throughput;
+  first-touch page faults and allocator work are excluded. This is the state
+  of every workspace-style API: the bchlib, AFF3CT and M4RI W1 cells, and
+  M4RI's `matmul-m4rm`.
+* **`fresh-alloc`** — the measured call allocates its own result, so allocation
+  is inside the timed region. This is the state of every W2 materialization
+  and of any W1 API returning an owned collection, which includes the current
+  `BchEncoder::encode_batch` and `GeneratorMatrixAccess::generator_matrix`.
+  A like-for-like non-regression comparison against the pre-cutover receipt
+  uses it.
+
+A consumer that adds an allocation-free encoding path measures it as
+`warm-reuse` and keeps the allocating path's `fresh-alloc` cell alongside, so
+the pre-cutover comparison stays like-for-like.
 
 No cell flushes the cache between repetitions. A family whose advantage
 depends on a cold cache declares that as an amendment here before measuring
