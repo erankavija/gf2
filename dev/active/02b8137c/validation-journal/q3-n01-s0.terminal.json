@@ -1,0 +1,82 @@
+{
+  "address": {
+    "root_seed": 4923361482881630209,
+    "q": 3,
+    "n": 1,
+    "purpose_tag": 1,
+    "stream_index": 0
+  },
+  "started_at": {
+    "seconds": 1788130830,
+    "nanoseconds": 462912049
+  },
+  "finished_at": {
+    "seconds": 1788130830,
+    "nanoseconds": 903384455
+  },
+  "exact": {
+    "enumerated_matrix_count": 3,
+    "oracle_permanent_zero_count": 1,
+    "production_determinant_zero_count": 1,
+    "backend_agreements": [
+      {
+        "backend": "batch_parallel",
+        "status": "identical",
+        "matrices_compared": 3,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 1,
+        "diagnostic": null
+      },
+      {
+        "backend": "intra_matrix_parallel",
+        "status": "identical",
+        "matrices_compared": 3,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 1,
+        "diagnostic": null
+      },
+      {
+        "backend": "generic_ryser",
+        "status": "identical",
+        "matrices_compared": 3,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 1,
+        "diagnostic": null
+      },
+      {
+        "backend": "accelerator",
+        "status": "identical",
+        "matrices_compared": 3,
+        "mismatch_count": 0,
+        "production_permanent_zero_count": 1,
+        "diagnostic": null
+      }
+    ]
+  },
+  "replay": {
+    "mode": "two_fresh_serial",
+    "matrix_count": 1024,
+    "mismatch_count": 0,
+    "identical": true,
+    "first_sha256": "a97c98677811c4c74ce0c3370bc9c4dbadc86ca9c785727c8f57520e086ccc96",
+    "second_sha256": "a97c98677811c4c74ce0c3370bc9c4dbadc86ca9c785727c8f57520e086ccc96"
+  },
+  "sample": {
+    "stream_purpose": "validation",
+    "origin": "fresh_address_start",
+    "matrix_count": 400000,
+    "permanent_zero_count": 133774,
+    "null_numerator": "1",
+    "null_denominator": "3",
+    "log_p_value": -1.969357162508782,
+    "p_value": 0.13954653313138715,
+    "verdict": "passed"
+  },
+  "exact_oracle_status": "passed",
+  "backend_status": "passed",
+  "determinant_status": "passed",
+  "replay_status": "passed",
+  "statistical_status": "passed",
+  "failure": null,
+  "verdict": "passed"
+}
