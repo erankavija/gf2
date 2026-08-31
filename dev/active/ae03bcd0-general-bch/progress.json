@@ -12,7 +12,7 @@
           "title": "Reproducible external-baseline survey and workload selection",
           "classification": "research",
           "difficulty": "hard",
-          "status": "rework-2-dispatched: native Sonnet (codex sandbox has no network for the kodo retrieval redo); attempt-1 verdict FAIL on 2 evidence-integrity items only, see review-4e732b56-lead-r2.md; F1-F9 otherwise closed"
+          "status": "rework-3-dispatched (final attempt): Luna xhigh; R2 findings = provenance-complete re-run of both survey stages through the header-emitting runner (before 01:15 EEST CCX1 cutoff) + equality check must dump the timed genmatrix-rref route (bench column reversal removed). doc-review PASSED and recorded; rework merged to main 78663182, CI green."
         },
         {
           "key": "bch-property-tests",
@@ -538,7 +538,7 @@
   "created_during_execution": [],
   "escalations": [],
   "rework_counts": {
-    "4e732b56": 2
+    "4e732b56": 3
   },
   "surfaced_pitfalls": [],
   "coordination": {
