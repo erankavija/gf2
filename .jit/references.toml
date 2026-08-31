@@ -203,3 +203,32 @@ citation = "Isaka, Morelos-Zaragoza, Fossorier, Lin, Imai — Soft Decision Deco
 key = "MaurerPontil2009"
 citation = "Maurer, Pontil — Empirical Bernstein Bounds and Sample Variance Penalization. COLT 2009. arXiv:0907.3740."
 arxiv = "0907.3740"
+
+[[references]]
+key = "Cassagne2019"
+citation = "Cassagne, Hartmann, Léonardon, He, Leroux, Tajan, Aumage, Barthou, Tonnellier, Pignoly, Le Gal, Jégo — AFF3CT: A Fast Forward Error Correction Toolbox!. Elsevier SoftwareX 10:100345, 2019."
+doi = "10.1016/j.softx.2019.100345"
+
+[[references]]
+key = "AlbrechtBard2026"
+citation = "Albrecht, Bard — The M4RI Library, Version 20260122. The M4RI Team, 2026."
+url = "https://github.com/malb/m4ri"
+
+[[references]]
+key = "Djelic2011"
+citation = "Djelic — Generic binary BCH encoding/decoding library. Parrot S.A., 2011; distributed as lib/bch.c in the Linux kernel, packaged for userspace as bchlib v2.1.3."
+url = "https://github.com/jkent/python-bchlib"
+
+[[references]]
+key = "ITPP2013"
+citation = "IT++ — a C++ library of mathematical, signal processing and communication classes and functions, version 4.3.1."
+url = "https://itpp.sourceforge.net"
+
+[[references]]
+key = "LiquidDSP2025"
+citation = "Gaeddert — liquid-dsp: digital signal processing library for software-defined radios, version 1.8.2."
+url = "https://github.com/jgaeddert/liquid-dsp"
+
+[[references]]
+key = "Etsi2015"
+citation = "ETSI EN 302 755 V1.4.1 (2015-07) — Digital Video Broadcasting (DVB); Frame structure channel coding and modulation for a second generation digital terrestrial television broadcasting system (DVB-T2)."
