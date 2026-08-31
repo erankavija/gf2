@@ -18,6 +18,11 @@
       "updated_at": "2026-08-31T17:47:34.059593790Z",
       "updated_by": "auto:executor"
     },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-31T17:49:46.506111503Z",
+      "updated_by": "auto:executor"
+    },
     "doc-review": {
       "status": "passed",
       "updated_at": "2026-08-31T17:43:39.071239449Z",
@@ -35,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Add property tests for BCH encode and decode invariants",
-  "updated_at": "2026-08-31T17:47:34.059593790Z"
+  "updated_at": "2026-08-31T17:49:46.506111503Z"
 }
