@@ -881,8 +881,9 @@ impl<V: UintExt> Gf2mElement_<V> {
     ///
     /// # Complexity
     ///
-    /// One `Arc` reference-count bump; the field parameters are shared, not
-    /// copied.
+    /// `O(1)`: the returned field clones the shared `Arc` holding the
+    /// parameters, so the call is one reference-count bump and copies neither
+    /// the defining polynomial nor the log and exponential tables.
     ///
     /// # Examples
     ///
