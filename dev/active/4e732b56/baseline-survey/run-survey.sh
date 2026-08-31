@@ -29,6 +29,14 @@ FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
 OUT="${1:?usage: run-survey.sh <output-dir> [codes] [prefix]}"
 CODES="${2:-}"
 PREFIX="${3:-}"
+
+# Wall-clock ceiling per harness. A harness that is still running when this
+# expires is killed and its partial CSV kept; the survey reports the cell as
+# measurement-incomplete rather than losing the whole run to one shape.
+HARNESS_TIMEOUT="${GF2_SURVEY_TIMEOUT:-1800}"
+# Which M4RI cell groups to run: all | genmatrix | substrate. The substrate
+# cells are the expensive ones at the largest shape.
+M4RI_SEL="${GF2_SURVEY_M4RI_SEL:-all}"
 mkdir -p "${OUT}"
 
 GF2_REV="$(git -C "${REPO}" rev-parse HEAD)"
@@ -88,12 +96,19 @@ echo "provenance -> ${OUT}/${PREFIX}host.txt"
 run_one() {
     local label="$1"
     shift
-    echo "== ${label} =="
-    "${FLOCK}" "$@" >"${OUT}/${PREFIX}${label}.csv" 2>"${OUT}/${PREFIX}${label}.log" || {
-        echo "!! ${label} exited non-zero; see ${OUT}/${PREFIX}${label}.log" >&2
-        return 1
-    }
-    echo "   rows: $(( $(wc -l <"${OUT}/${PREFIX}${label}.csv") - 1 ))"
+    echo "== ${label} (limit ${HARNESS_TIMEOUT}s) =="
+    local rc=0
+    "${FLOCK}" timeout --foreground "${HARNESS_TIMEOUT}" "$@" \
+        >"${OUT}/${PREFIX}${label}.csv" 2>"${OUT}/${PREFIX}${label}.log" || rc=$?
+    local rows=$(( $(wc -l <"${OUT}/${PREFIX}${label}.csv") - 1 ))
+    if [[ ${rc} -eq 124 ]]; then
+        echo "   TIMED OUT after ${HARNESS_TIMEOUT}s; ${rows} rows kept" >&2
+        echo "# harness killed by the ${HARNESS_TIMEOUT}s wall limit" >>"${OUT}/${PREFIX}${label}.log"
+    elif [[ ${rc} -ne 0 ]]; then
+        echo "   exited ${rc}; ${rows} rows kept; see ${OUT}/${PREFIX}${label}.log" >&2
+    fi
+    echo "   rows: ${rows}"
+    return 0
 }
 
 "${HERE}/aff3ct_bch_bench" gdump >"${OUT}/generators.txt" 2>/dev/null
@@ -102,7 +117,7 @@ echo "generators -> ${OUT}/generators.txt"
 run_one aff3ct "${HERE}/aff3ct_bch_bench" all
 run_one bchlib "${HERE}/bchlib_bch_bench"
 run_one itpp "${HERE}/itpp_bch_bench"
-run_one m4ri "${HERE}/m4ri_genmatrix_bench" "${OUT}/generators.txt" all
+run_one m4ri "${HERE}/m4ri_genmatrix_bench" "${OUT}/generators.txt" "${M4RI_SEL}"
 run_one gf2 "${EXT}/survey-target/release/survey-gf2-side" all
 
 # ---------------------------------------------------------------- perf record
