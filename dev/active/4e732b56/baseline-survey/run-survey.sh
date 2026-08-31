@@ -69,6 +69,8 @@ export GF2_REV
     echo "m4ri tarball sha256: $(sha256sum "${EXT}/m4ri-20260122.tar.gz" | cut -d' ' -f1)"
     echo "bchlib tag: $(git -C "${EXT}/bchlib" describe --tags 2>/dev/null || echo '?')"
     echo "bchlib commit: $(git -C "${EXT}/bchlib" rev-parse HEAD 2>/dev/null || echo '?')"
+    echo "itpp release: 4.3.1 (tarball sha256 $(sha256sum "${EXT}/itpp-4.3.1.tar.bz2" 2>/dev/null | cut -d' ' -f1))"
+    echo "itpp soname: $(readlink -f "${EXT}/prefix/lib/libitpp.so" 2>/dev/null | sed 's/.*libitpp\.so\.//')"
     echo
     echo "## reference build flags"
     echo "aff3ct library: $(grep -m1 '^CXX_FLAGS' "${EXT}/aff3ct/build/CMakeFiles/aff3ct-obj.dir/flags.make" | cut -d= -f2-)"
@@ -99,6 +101,7 @@ echo "generators -> ${OUT}/generators.txt"
 
 run_one aff3ct "${HERE}/aff3ct_bch_bench" all
 run_one bchlib "${HERE}/bchlib_bch_bench"
+run_one itpp "${HERE}/itpp_bch_bench"
 run_one m4ri "${HERE}/m4ri_genmatrix_bench" "${OUT}/generators.txt" all
 run_one gf2 "${EXT}/survey-target/release/survey-gf2-side" all
 

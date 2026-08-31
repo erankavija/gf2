@@ -31,6 +31,8 @@ M4RI_SHA256="7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404"
 # same version rather than at whatever upstream has become.
 LIQUID_TAG="v1.8.2"
 LIQUID_COMMIT="03d052b89b543e6d5f9a882139ba19f7683bcd29"
+ITPP_RELEASE="4.3.1"
+ITPP_SHA256="50717621c5dfb5ed22f8492f8af32b17776e6e06641dfe3a3a8f82c8d353b877"
 
 mkdir -p "${EXT}"
 cd "${EXT}"
@@ -87,6 +89,31 @@ if [[ ! -f "prefix/lib/libm4ri.so" ]]; then
     (
         cd m4ri-src
         CFLAGS="-O3 -march=native -fPIC" ./configure --prefix="${EXT}/prefix" --disable-static
+        make -j"$(nproc)"
+        make install
+    )
+fi
+
+# --------------------------------------------------------------------- itpp
+# IT++ encodes BCH by polynomial remainder over GF(2^m) field elements, the
+# same algorithmic shape the pre-cutover gf2 encoder uses. Its CMake files
+# predate CMake 3.5, hence the policy override.
+if [[ ! -f "prefix/lib/libitpp.so" ]]; then
+    tarball="itpp-${ITPP_RELEASE}.tar.bz2"
+    [[ -f "${tarball}" ]] || curl -fsSL -o "${tarball}" \
+        "https://sourceforge.net/projects/itpp/files/itpp/${ITPP_RELEASE}/${tarball}/download"
+    echo "${ITPP_SHA256}  ${tarball}" | sha256sum -c -
+    mkdir -p itpp-src
+    tar -C itpp-src --strip-components=1 -xf "${tarball}"
+    mkdir -p itpp-src/build
+    (
+        cd itpp-src/build
+        cmake .. \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="${EXT}/prefix" \
+            -DCMAKE_CXX_FLAGS="-O3 -march=native" \
+            -DHTML_DOCS=off -DLATEX_DOCS=off
         make -j"$(nproc)"
         make install
     )

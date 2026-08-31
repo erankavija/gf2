@@ -45,7 +45,17 @@ BCHLIB      ?= $(EXT)/bchlib
 BCHLIB_VER  := $(shell git -C $(BCHLIB) describe --tags 2>/dev/null)
 BCHLIB_CFLAGS := -I$(BCHLIB)/src -DBCHLIB_VERSION_STR='"$(BCHLIB_VER)"'
 
-BINS := aff3ct_bch_bench m4ri_genmatrix_bench bchlib_bch_bench
+ITPP_PFX     ?= $(M4RI_PFX)
+# The installed headers carry no version constant and the soname tracks the ABI
+# rather than the release, so the reported string pairs the pinned release from
+# fetch-build.sh with the soname actually linked against.
+ITPP_RELEASE ?= 4.3.1
+ITPP_SONAME  := $(shell readlink -f $(ITPP_PFX)/lib/libitpp.so 2>/dev/null | sed 's/.*libitpp\.so\.//')
+ITPP_VER     := $(ITPP_RELEASE)+soname$(ITPP_SONAME)
+ITPP_CFLAGS  := -I$(ITPP_PFX)/include -DITPP_VERSION_STR='"$(ITPP_VER)"'
+ITPP_LIBS    := -L$(ITPP_PFX)/lib -litpp -Wl,-rpath,$(ITPP_PFX)/lib
+
+BINS := aff3ct_bch_bench m4ri_genmatrix_bench bchlib_bch_bench itpp_bch_bench
 
 .PHONY: all clean
 all: $(BINS)
@@ -58,6 +68,9 @@ m4ri_genmatrix_bench: m4ri_genmatrix_bench.c
 
 bchlib_bch_bench: bchlib_bch_bench.c
 	$(CC) $(CSTD) $(OPT) $(BCHLIB_CFLAGS) -o $@ $< $(BCHLIB)/src/bch.c
+
+itpp_bch_bench: itpp_bch_bench.cpp
+	$(CXX) -std=c++11 $(OPT) $(ITPP_CFLAGS) -o $@ $< $(ITPP_LIBS)
 
 clean:
 	rm -f $(BINS)
