@@ -206,7 +206,7 @@
           "short_id": "02b8137c",
           "title": "Execute frozen pre-draw validation anchors",
           "classification": "implementation",
-          "status": "in_progress: implementation complete and merged at d06d6fe3 (resumed WIP 783d4abb; worker fixed four latent defects incl. post-draw toolchain gate; thin runner + committed preregistration dev/active/02b8137c/pre-draw-validation-v1*.{json,md}; 22 release tests). cargo-ci gate PASSED. code/doc/research-review each FAIL solely on the not-yet-existing receipt (REQ-05/09 run evidence) \u2014 re-evaluate after the run. Evidence run armed: systemd user timer gf2-predraw-validation fires 2026-08-31 02:00:30, runbook scratchpad/run-validation-0200.sh, binary 76c778f1\u2026 built at 660b742b, ccx1-bench-flock --full-host, --workers 24. Owner requires a separate go before any campaign-purpose draw."
+          "status": "in_progress: the 2026-08-31 02:00:30 validation run executed for 17m36s and durably published five passing terminals (q=3,n=1..4 and q=5,n=1) before the publisher rejected its own q=5 terminal after default serde_json parsing shifted two finite floats by one ULP. The partial journal is preserved at commit 3fd2893b. The float_roundtrip repair and three focused adoption/tamper regressions landed at merge 2e760af7; full permanent_validation release tests passed 25/25 and integrated cargo-ci passed 5,199 tests with zero failures. Resume is blocked on an owner-approved provenance-preserving journal continuation because run-state binds the old producer identity while remaining terminals require the repaired producer. No terminal may be redrawn, no journal may be overwritten, and no campaign-purpose draw is authorized."
         },
         {
           "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -417,7 +417,7 @@
       "wave": "10 (pre-draw prerequisite)",
       "reason": "Session-30 launch audit found no committed evidence for the frozen protocol's complete ten-anchor 1,024-matrix regeneration and 400,000-draw exact two-sided validation phase. Existing 44534b2f covers 4,096 draws with a Clopper-Pearson interval instead. All three campaign arms are wired behind this leaf.",
       "status": "ready",
-      "note": "Session 31 resumed a high-tier worker and an independent read-only design audit. Owner then ordered an immediate stop. Lead-preserve commit 783d4abb contains an uncompiled 2,506-line WIP diff: independent exhaustive visitor, semantic validation-purpose schedule refactor, backend inventory/support, sealed provenance observers, validation API/journal, and focused test scaffold. Thin runner and committed strict preregistration are absent; no final WIP compile/test, gate, validation run, or review occurred. Resume in the existing worktree and review/fix before any merge."
+      "note": "Session 33 preserved the five-terminal failed validation journal at 3fd2893b and merged the bit-exact JSON repair at 2e760af7. The timer ran; this was not a permission or scheduling failure. Integrated cargo-ci passed. The issue remains in_progress pending an owner-approved versioned continuation that truthfully records the old-producer/new-producer boundary without redrawing or overwriting any terminal."
     }
   ],
   "escalations": [
@@ -785,6 +785,18 @@
       "lead_recommendation": "Authorize one bounded high-tier rework covering all four findings. The artifact contract promises fail-closed recovery and production-safe immutable publication; narrowing the threat model after implementation would weaken that reviewed contract, while descriptor-relative no-follow operations, typed publication, runtime liveness collection, and filesystem-derived checkpoint handles form one coherent repair.",
       "resolved_at": "2026-08-30T21:40:00+03:00",
       "decision": "Owner authorized one bounded high-tier rework cycle covering all four findings, followed by fresh independent review and all configured gates. Owner also authorized arming the 02b8137c validation run tonight post-02:00 if implementation merges and gates in time; a campaign-purpose draw still requires a separate owner confirmation."
+    },
+    {
+      "issue": "02b8137c",
+      "reason": "The armed validation service ran and immutably published five passing terminals with producer binary 76c778f1..., then stopped when default serde_json parsing changed two q=5 probability floats by one ULP during post-publication self-verification. The bit-exact parser repair is merged and CI-clean, but the existing run-state truthfully binds the old producer while the remaining five anchors require the repaired producer. Reusing one producer identity for both segments, overwriting the journal, or redrawing a terminal would violate the immutable no-redraw and runtime-observed-provenance contracts.",
+      "status": "open",
+      "requested_at": "2026-08-31T03:00:00+03:00",
+      "options": [
+        "Authorize a versioned provenance-preserving continuation: retain the original run-state and five terminal digests, add an immutable migration/continuation record binding the exact old and repaired producer identities plus the boundary, run only the five missing anchors, and make the final receipt report both producer segments.",
+        "Authorize a newly preregistered validation cohort with a new journal root while preserving this failed attempt as falsification evidence; this changes the current no-redraw/cohort contract and repeats five already completed anchors.",
+        "Stop execution and leave the validation issue, campaign arms, and epic blocked with the partial journal preserved."
+      ],
+      "lead_recommendation": "Authorize the versioned provenance-preserving continuation. It preserves every terminal, performs no redraw, leaves the preregistered scientific addresses and decisions unchanged, and makes the unavoidable producer transition explicit instead of disguising it."
     }
   ],
   "standing_rules": [
@@ -829,7 +841,9 @@
     "3f664839": 2,
     "73317b2e": 2,
     "73317b2e_note": "Rework-2 is the execution-lead maximum. Rework-1 removed the public path-based sidecar mutator and completed coordinator-owned projection. Rework-2 closes the bounded interpretation and prose findings, exact-cell refreeze, and pre-gate canonical fixture/lint defects. Independent review and refreeze audit passed, followed by the complete raw cargo-ci contract on the clean branch.",
-    "8ec10dde": 2
+    "8ec10dde": 2,
+    "02b8137c": 1,
+    "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. The source defect is closed; an owner decision is required for the public journal/receipt provenance boundary before the remaining five validation anchors can run."
   },
   "surfaced_pitfalls": [
     {
@@ -838,6 +852,13 @@
       "issue": "02b8137c",
       "finding": "The frozen protocol requires ten anchors, 1,024-matrix deterministic regeneration, 400,000 validation-purpose draws per anchor, a probability-ordering exact two-sided decision at 0.001, and no redraw. Issue 44534b2f instead commits a 4,096-draw Clopper-Pearson coverage test; the older study receipt has 400,000 draws only at n=3 for three fields. Neither is launch evidence for the complete frozen validation phase.",
       "disposition": "Created 02b8137c and wired ed494117, 1d0b3ec4, and 90a61cd4 behind it before any campaign draw. Do not launch from dry-schedule evidence alone."
+    },
+    {
+      "id": "validation-json-float-roundtrip",
+      "surfaced_at": "2026-08-31",
+      "issue": "02b8137c",
+      "finding": "The validation publisher hardlinks immutable terminal bytes and then deserializes them for equality verification. With serde_json 1.0.151 default features, the q=5,n=1 terminal's log_p_value and p_value deserialize one ULP away from the in-memory values, so a valid terminal is rejected after publication. An exact Rust probe reproduced both bit shifts; this is not a racing writer or timer-permission failure.",
+      "disposition": "Enabled serde_json float_roundtrip for gf2-sim, added bit-exact q=5 publication, committed-terminal adoption, and tamper-rejection regressions, and passed integrated cargo-ci at merge 2e760af7. The existing old-producer journal still requires an owner-approved provenance-preserving continuation before execution resumes."
     },
     "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
     "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
@@ -1133,6 +1154,31 @@
       },
       "committed_receipt": "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv",
       "note": "A prior attempt at 02:00:30 build-failed: systemd user units do not source /etc/profile.d/rocm.sh, so hipcc omitted -I$ROCM_PATH/include."
+    },
+    {
+      "ran_at": "2026-08-31T02:00:30+03:00",
+      "issue": "02b8137c",
+      "unit": "gf2-predraw-validation2.service",
+      "status": "failed_after_partial_terminal_publication",
+      "wall_seconds": 1056,
+      "cpu_time": "6h26m",
+      "producer_revision": "397520d64551",
+      "binary_sha256": "76c778f1e3e90530c3db39b26d8954642b601a17d1050144929270e48c59297e",
+      "journal": "dev/active/02b8137c/validation-journal",
+      "terminal_receipts": {
+        "passed": 5,
+        "remaining": 5,
+        "addresses": [
+          "q3-n01-s0",
+          "q3-n02-s0",
+          "q3-n03-s0",
+          "q3-n04-s0",
+          "q5-n01-s0"
+        ]
+      },
+      "failure": "Post-publication equality check rejected q5-n01-s0 because default serde_json parsing changed log_p_value and p_value by one ULP; the published bytes and science verdict are intact.",
+      "preservation_commit": "3fd2893b",
+      "repair_merge": "2e760af7"
     }
   ],
   "session_23_state": {
@@ -1215,5 +1261,15 @@
     "open_escalation": "6639435f still awaits owner authorization for one bounded high-tier repair cycle covering all four final audit findings.",
     "handoff": "handoff-27.md"
   },
-  "current_session": 32
+  "session_33_state": {
+    "recorded_at": "2026-08-31T03:00:00+03:00",
+    "run": "gf2-predraw-validation2.service started at 02:00:30 and ran for 17m36s; permission was not the failure. It published five passing terminals, q3 n1..4 and q5 n1, then exited on q5 journal self-verification.",
+    "diagnosis": "An exact Rust probe reproduced one-ULP serde_json default-parser shifts in both q5 probability fields. The hardlinked terminal bytes are correct and immutable; the earlier racing-writer hypothesis was falsified.",
+    "preservation": "The complete partial journal is committed at 3fd2893b. No terminal was edited, removed, or redrawn.",
+    "repair": "High-tier isolated rework 1acd2a3b enabled bit-exact float roundtripping and added publication/adoption/tamper regressions. It merged at 2e760af7; permanent_validation release tests passed 25/25 and the integrated repository CI contract passed 5,199 tests with zero failures.",
+    "blocker": "The old run-state binds binary 76c778f1... and revision 397520d6..., while the remaining anchors require the repaired producer. A public journal/receipt schema decision is required to encode the producer transition without lying, redrawing, or overwriting evidence.",
+    "campaign_state": "No campaign-purpose draw occurred. All three campaign arms remain blocked on 02b8137c, and the prior separate-go requirement remains in force after validation closes.",
+    "handoff": "handoff-29.md"
+  },
+  "current_session": 33
 }
