@@ -39,7 +39,7 @@ The thin runner makes the exception explicit:
 permanent_validation \
   --preregistration dev/active/02b8137c/pre-draw-validation-v1-preregistration.json \
   --state-dir dev/active/02b8137c/validation-journal \
-  --receipt dev/active/02b8137c/pre-draw-validation-v1-receipt.json \
+  --receipt dev/active/02b8137c/pre-draw-validation-v2-receipt.json \
   --workers 24 \
   --continue-producer-segment dev/active/02b8137c/pre-draw-validation-v2-continuation.json
 ```
@@ -51,8 +51,17 @@ records and every terminal, revalidates address order and segment coverage,
 and rechecks the frozen-artifact before/after guard. This evidence contains no
 campaign-purpose draw or scientific campaign estimate.
 
-The v1 run-state reader is a private migration boundary restricted to the
-content identity and complete prefix named by this authorization. Fresh runs,
-phase markers, receipts, publication, and verification use schema v2; no new
-v1 state is created or generally admitted. This migration boundary is removed
-after the `02b8137c` final receipt is published and independently verified.
+The v1 execution admission branch is a versioned migration boundary restricted
+to the content identity and complete prefix named by this authorization. Fresh
+runs, phase markers, receipts, publication, and verification use schema v2; no
+new v1 state is created or generally admitted. After the complete journal and
+schema-v2 receipt are committed and independently verified, the CLI
+continuation flag, public continuation admission choice, and runnable v1
+admission branch are removed. The rebuilt verifier then revalidates the
+committed receipt before `02b8137c` closes.
+
+Receipt verification permanently retains the private, read-only
+`FrozenProducer0RunStateV1Evidence` decoder pinned to the original run-state
+SHA-256. It also retains the schema-v2 authorization and segment-state decoders
+cited by the final receipt. Removing execution admission does not remove the
+ability to rehash and interpret producer 0's immutable historical evidence.

@@ -1,5 +1,12 @@
 # Pre-draw validation preregistration v1
 
+> **Schema-v2 output supersession.** This document remains the immutable v1
+> scientific preregistration and producer-0 history. Its schema-v1 receipt
+> destination below is historical and unused after the owner-authorized
+> continuation. The current envelope and canonical output are defined by
+> [`pre-draw-validation-v2-continuation.md`](pre-draw-validation-v2-continuation.md)
+> and `dev/active/02b8137c/pre-draw-validation-v2-receipt.json`.
+
 This document fixes the permanent-zero-fraction campaign's validation phase
 before its first validation draw. Its machine-readable form is
 [`pre-draw-validation-v1-preregistration.json`](pre-draw-validation-v1-preregistration.json),

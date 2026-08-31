@@ -66,6 +66,9 @@ pub const FROZEN_CAMPAIGN_DIRECTORY: &str =
     "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829";
 /// Frozen validation journal whose immutable evidence feeds the launch receipt.
 pub const FROZEN_VALIDATION_JOURNAL_DIRECTORY: &str = "dev/active/02b8137c/validation-journal";
+/// Canonical schema-v2 frozen validation receipt.
+pub const FROZEN_VALIDATION_RECEIPT_PATH: &str =
+    "dev/active/02b8137c/pre-draw-validation-v2-receipt.json";
 /// Committed owner authorization for the sole v1-to-v2 producer boundary.
 pub const FROZEN_CONTINUATION_AUTHORIZATION_PATH: &str =
     "dev/active/02b8137c/pre-draw-validation-v2-continuation.json";
@@ -875,7 +878,7 @@ pub struct ValidationRunAdmission {
     preregistration: ValidationPreregistration,
     preregistration_identity: ArtifactIdentity,
     state_directory: PathBuf,
-    run_state: RunState,
+    run_state: AdmittedProducer0RunState,
     current_runtime: ValidationRuntime,
     boundary_anchor_index: usize,
     segment_state: Option<(ValidationContinuationState, ArtifactIdentity)>,
@@ -923,7 +926,7 @@ pub fn admit_validation_run(
     preregistration.validate()?;
     let runtime = observe_validation_runtime(worker_count)?;
     create_directory_durable(state_directory)?;
-    let proposed = RunState {
+    let proposed = ValidationRunStateV2 {
         schema_version: RUN_STATE_SCHEMA_VERSION,
         preregistration_identity: preregistration_identity.clone(),
         preregistration: preregistration.clone(),
@@ -946,7 +949,7 @@ pub fn admit_validation_run(
                 preregistration: preregistration.clone(),
                 preregistration_identity,
                 state_directory: state_directory.to_owned(),
-                run_state,
+                run_state: AdmittedProducer0RunState::CanonicalV2(run_state),
                 current_runtime: runtime,
                 boundary_anchor_index: 0,
                 segment_state: None,
@@ -957,9 +960,8 @@ pub fn admit_validation_run(
                 return invalid("producer continuation requires an existing immutable run state");
             }
             let run_state_bytes = read_bytes(&run_state_path)?;
-            let run_state: RunState =
-                serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
-            validate_authorized_legacy_run_state(
+            let run_state = decode_frozen_producer0_run_state_v1_evidence(&run_state_bytes)?;
+            validate_frozen_producer0_evidence(
                 &run_state,
                 preregistration,
                 &preregistration_identity,
@@ -968,7 +970,7 @@ pub fn admit_validation_run(
                 return invalid("producer continuation requires a changed runtime identity");
             }
             let authorization = &authorized.authorization;
-            validate_continuation_authorization(
+            verify_frozen_continuation_authorization_v2(
                 authorization,
                 preregistration,
                 &preregistration_identity,
@@ -992,7 +994,7 @@ pub fn admit_validation_run(
             let state = publish_or_adopt(&state_path, &proposed_state, |existing| {
                 continuation_states_compatible(existing, &proposed_state)
             })?;
-            validate_continuation_state(
+            verify_frozen_continuation_state_v2_evidence(
                 &state,
                 preregistration,
                 &preregistration_identity,
@@ -1006,7 +1008,7 @@ pub fn admit_validation_run(
                 preregistration: preregistration.clone(),
                 preregistration_identity,
                 state_directory: state_directory.to_owned(),
-                run_state,
+                run_state: AdmittedProducer0RunState::FrozenV1Continuation(run_state),
                 current_runtime: runtime,
                 boundary_anchor_index: authorization.boundary_anchor_index,
                 segment_state: Some((state, state_identity)),
@@ -1216,11 +1218,45 @@ pub fn read_validation_receipt(path: &Path) -> Result<ValidationReceipt, Validat
     Ok(receipt)
 }
 
+/// Rehashes every state and terminal file cited by a validation receipt.
+///
+/// This is the canonical journal-content verification layer shared by generic
+/// and frozen receipts. It validates the receipt's segment/address mapping,
+/// compares every immutable state identity with disk, decodes every terminal,
+/// and requires its semantic contents to equal the embedded anchor receipt.
+pub fn verify_validation_receipt_journal(
+    receipt: &ValidationReceipt,
+    journal: &Path,
+) -> Result<(), ValidationError> {
+    receipt.validate()?;
+    for segment in &receipt.producer_segments {
+        verify_journal_identity(journal, &segment.state)?;
+    }
+    for ((binding, anchor), spec) in receipt
+        .anchor_producers
+        .iter()
+        .zip(&receipt.anchors)
+        .zip(&receipt.preregistration.anchors)
+    {
+        verify_journal_identity(journal, &binding.terminal)?;
+        let observed: AnchorReceipt =
+            read_json(&journal.join(journal_relative_name(&binding.terminal)?))?;
+        if observed != *anchor {
+            return invalid("receipt anchor differs from its immutable terminal bytes");
+        }
+        validate_anchor_receipt(&receipt.preregistration.protocol, spec, &observed)?;
+    }
+    Ok(())
+}
+
 /// Reads a final receipt and rechecks its binding to the frozen committed plan.
 pub fn read_frozen_validation_receipt(
     repository: &Path,
     path: &Path,
 ) -> Result<ValidationReceipt, ValidationError> {
+    if path != repository.join(FROZEN_VALIDATION_RECEIPT_PATH) {
+        return invalid("frozen validation receipt must use its canonical schema-v2 path");
+    }
     let receipt = read_validation_receipt(path)?;
     validate_frozen_receipt(repository, &receipt)?;
     Ok(receipt)
@@ -1228,12 +1264,62 @@ pub fn read_frozen_validation_receipt(
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct RunState {
+struct ValidationRunStateV2 {
     schema_version: u32,
     preregistration_identity: ArtifactIdentity,
     preregistration: ValidationPreregistration,
     runtime: ValidationRuntime,
     started_at: UnixTimestamp,
+}
+
+/// Read-only decoder for the exact immutable producer-0 schema-v1 evidence.
+///
+/// This is not an executable resume state. It remains after continuation
+/// admission is removed so schema-v2 receipts can always interpret and verify
+/// the historical producer-0 state they cite.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FrozenProducer0RunStateV1Evidence {
+    schema_version: u32,
+    preregistration_identity: ArtifactIdentity,
+    preregistration: ValidationPreregistration,
+    runtime: ValidationRuntime,
+    started_at: UnixTimestamp,
+}
+
+/// Decodes only the one immutable producer-0 state authorized by 02b8137c.
+///
+/// Keeping the content-identity check in this read-only decoder prevents
+/// runnable migration cleanup from weakening permanent receipt verification.
+fn decode_frozen_producer0_run_state_v1_evidence(
+    bytes: &[u8],
+) -> Result<FrozenProducer0RunStateV1Evidence, ValidationError> {
+    if digest(bytes).to_string() != AUTHORIZED_LEGACY_RUN_STATE_SHA256 {
+        return invalid("producer-0 schema-v1 evidence has the wrong content identity");
+    }
+    serde_json::from_slice(bytes).map_err(ValidationError::Json)
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum AdmittedProducer0RunState {
+    CanonicalV2(ValidationRunStateV2),
+    FrozenV1Continuation(FrozenProducer0RunStateV1Evidence),
+}
+
+impl AdmittedProducer0RunState {
+    fn runtime(&self) -> &ValidationRuntime {
+        match self {
+            Self::CanonicalV2(state) => &state.runtime,
+            Self::FrozenV1Continuation(state) => &state.runtime,
+        }
+    }
+
+    fn started_at(&self) -> UnixTimestamp {
+        match self {
+            Self::CanonicalV2(state) => state.started_at,
+            Self::FrozenV1Continuation(state) => state.started_at,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -1252,7 +1338,7 @@ struct ValidationContinuationState {
 }
 
 fn validate_run_state(
-    run_state: &RunState,
+    run_state: &ValidationRunStateV2,
     preregistration: &ValidationPreregistration,
     preregistration_identity: &ArtifactIdentity,
 ) -> Result<(), ValidationError> {
@@ -1265,8 +1351,8 @@ fn validate_run_state(
     validate_runtime(&run_state.runtime)
 }
 
-fn validate_authorized_legacy_run_state(
-    run_state: &RunState,
+fn validate_frozen_producer0_evidence(
+    run_state: &FrozenProducer0RunStateV1Evidence,
     preregistration: &ValidationPreregistration,
     preregistration_identity: &ArtifactIdentity,
 ) -> Result<(), ValidationError> {
@@ -1277,7 +1363,7 @@ fn validate_authorized_legacy_run_state(
             != "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json"
         || preregistration_identity.sha256.to_string() != AUTHORIZED_LEGACY_PREREGISTRATION_SHA256
     {
-        return invalid("legacy run-state admission is limited to the authorized 02b8137c prefix");
+        return invalid("producer-0 schema-v1 evidence differs from the frozen 02b8137c identity");
     }
     validate_runtime(&run_state.runtime)
 }
@@ -1336,11 +1422,11 @@ fn validate_continuation_authorization_shape(
     Ok(())
 }
 
-fn validate_continuation_authorization(
+fn verify_frozen_continuation_authorization_v2(
     authorization: &ValidationContinuationAuthorization,
     preregistration: &ValidationPreregistration,
     preregistration_identity: &ArtifactIdentity,
-    run_state: &RunState,
+    run_state: &FrozenProducer0RunStateV1Evidence,
     run_state_bytes: &[u8],
     state_directory: &Path,
 ) -> Result<(), ValidationError> {
@@ -1356,7 +1442,7 @@ fn validate_continuation_authorization(
     {
         return invalid("continuation authorization disagrees with the frozen plan or run state");
     }
-    validate_authorized_legacy_run_state(run_state, preregistration, preregistration_identity)?;
+    validate_frozen_producer0_evidence(run_state, preregistration, preregistration_identity)?;
     for artifact in &authorization.prefix_artifacts {
         verify_journal_identity(state_directory, artifact)?;
     }
@@ -1495,11 +1581,11 @@ fn continuation_states_compatible(
         && existing.boundary_anchor_index == proposed.boundary_anchor_index
 }
 
-fn validate_continuation_state(
+fn verify_frozen_continuation_state_v2_evidence(
     state: &ValidationContinuationState,
     preregistration: &ValidationPreregistration,
     preregistration_identity: &ArtifactIdentity,
-    run_state: &RunState,
+    run_state: &FrozenProducer0RunStateV1Evidence,
     run_state_bytes: &[u8],
     state_directory: &Path,
 ) -> Result<(), ValidationError> {
@@ -1515,7 +1601,7 @@ fn validate_continuation_state(
     }
     validate_runtime(&state.original_runtime)?;
     validate_runtime(&state.continued_runtime)?;
-    validate_continuation_authorization(
+    verify_frozen_continuation_authorization_v2(
         &state.authorization,
         preregistration,
         preregistration_identity,
@@ -1529,10 +1615,20 @@ fn execute_admitted_validation(
     admission: ValidationRunAdmission,
 ) -> Result<ValidationReceipt, ValidationError> {
     let run_state_bytes = read_bytes(&admission.state_directory.join("run-state.json"))?;
-    let observed_run_state: RunState =
-        serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
-    if observed_run_state != admission.run_state {
-        return invalid("run state changed after validation admission");
+    match &admission.run_state {
+        AdmittedProducer0RunState::CanonicalV2(expected) => {
+            let observed: ValidationRunStateV2 =
+                serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
+            if observed != *expected {
+                return invalid("run state changed after validation admission");
+            }
+        }
+        AdmittedProducer0RunState::FrozenV1Continuation(expected) => {
+            let observed = decode_frozen_producer0_run_state_v1_evidence(&run_state_bytes)?;
+            if observed != *expected {
+                return invalid("producer-0 evidence changed after continuation admission");
+            }
+        }
     }
     let segment_state_identity = if let Some((state, identity)) = &admission.segment_state {
         let observed: ValidationContinuationState =
@@ -1540,11 +1636,15 @@ fn execute_admitted_validation(
         if observed != *state || observed.continued_runtime != admission.current_runtime {
             return invalid("producer segment state changed after validation admission");
         }
-        validate_continuation_state(
+        let AdmittedProducer0RunState::FrozenV1Continuation(producer0) = &admission.run_state
+        else {
+            return invalid("continuation state cannot accompany a canonical one-producer run");
+        };
+        verify_frozen_continuation_state_v2_evidence(
             &observed,
             &admission.preregistration,
             &admission.preregistration_identity,
-            &admission.run_state,
+            producer0,
             &run_state_bytes,
             &admission.state_directory,
         )?;
@@ -1591,7 +1691,7 @@ fn execute_admitted_validation(
                 segment_index: 0,
                 first_anchor_index: 0,
                 end_anchor_index: admission.boundary_anchor_index,
-                runtime: admission.run_state.runtime.clone(),
+                runtime: admission.run_state.runtime().clone(),
                 state: run_state_identity,
             },
             ValidationProducerSegment {
@@ -1609,7 +1709,7 @@ fn execute_admitted_validation(
             segment_index: 0,
             first_anchor_index: 0,
             end_anchor_index: anchors.len(),
-            runtime: admission.run_state.runtime.clone(),
+            runtime: admission.run_state.runtime().clone(),
             state: run_state_identity,
         }]
     };
@@ -1617,7 +1717,7 @@ fn execute_admitted_validation(
         .iter()
         .map(|anchor| anchor.finished_at)
         .max()
-        .unwrap_or(admission.run_state.started_at);
+        .unwrap_or(admission.run_state.started_at());
     let overall_verdict = combined_verdict(&anchors, true);
     let receipt = ValidationReceipt {
         schema_version: RECEIPT_SCHEMA_VERSION,
@@ -1626,7 +1726,7 @@ fn execute_admitted_validation(
         producer_segments,
         anchor_producers,
         journal_directory: None,
-        started_at: admission.run_state.started_at,
+        started_at: admission.run_state.started_at(),
         finished_at,
         anchors,
         frozen_artifacts: None,
@@ -2543,25 +2643,35 @@ fn validate_frozen_receipt(
         return invalid("frozen receipt names the wrong validation journal");
     }
     let journal = repository.join(journal_relative.as_str());
+    verify_validation_receipt_journal(receipt, &journal)?;
     let run_state_bytes = read_bytes(&journal.join("run-state.json"))?;
-    let run_state: RunState =
-        serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
-    if receipt.producer_segments.len() == 2 {
-        validate_authorized_legacy_run_state(
+    let historical_producer0 = if receipt.producer_segments.len() == 2 {
+        let run_state = decode_frozen_producer0_run_state_v1_evidence(&run_state_bytes)?;
+        validate_frozen_producer0_evidence(
             &run_state,
             &receipt.preregistration,
             &receipt.preregistration_identity,
         )?;
+        Some(run_state)
     } else {
+        let run_state: ValidationRunStateV2 =
+            serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
         validate_run_state(
             &run_state,
             &receipt.preregistration,
             &receipt.preregistration_identity,
         )?;
-    }
-    if receipt.started_at != run_state.started_at
-        || receipt.producer_segments[0].runtime != run_state.runtime
-    {
+        if receipt.started_at != run_state.started_at
+            || receipt.producer_segments[0].runtime != run_state.runtime
+        {
+            return invalid("receipt producer one disagrees with immutable run state");
+        }
+        None
+    };
+    if historical_producer0.as_ref().is_some_and(|run_state| {
+        receipt.started_at != run_state.started_at
+            || receipt.producer_segments[0].runtime != run_state.runtime
+    }) {
         return invalid("receipt producer one disagrees with immutable run state");
     }
     let frozen_start: FrozenArtifactSnapshot =
@@ -2571,7 +2681,6 @@ fn validate_frozen_receipt(
     }
     for segment in &receipt.producer_segments {
         validate_frozen_toolchain(&segment.runtime.provenance.compiler_version)?;
-        verify_journal_identity(&journal, &segment.state)?;
     }
     if receipt.producer_segments.len() == 2 {
         let state: ValidationContinuationState = read_json(&journal.join(CONTINUATION_STATE_FILE))?;
@@ -2586,28 +2695,18 @@ fn validate_frozen_receipt(
         {
             return invalid("receipt producer two disagrees with committed authorization");
         }
-        validate_continuation_state(
+        verify_frozen_continuation_state_v2_evidence(
             &state,
             &receipt.preregistration,
             &receipt.preregistration_identity,
-            &run_state,
+            historical_producer0.as_ref().ok_or_else(|| {
+                ValidationError::InvalidPlan(
+                    "continued receipt lacks producer-0 schema-v1 evidence".into(),
+                )
+            })?,
             &run_state_bytes,
             &journal,
         )?;
-    }
-    for ((binding, anchor), spec) in receipt
-        .anchor_producers
-        .iter()
-        .zip(&receipt.anchors)
-        .zip(&receipt.preregistration.anchors)
-    {
-        verify_journal_identity(&journal, &binding.terminal)?;
-        let observed: AnchorReceipt =
-            read_json(&journal.join(journal_relative_name(&binding.terminal)?))?;
-        if observed != *anchor {
-            return invalid("receipt anchor differs from its immutable terminal bytes");
-        }
-        validate_anchor_receipt(&receipt.preregistration.protocol, spec, &observed)?;
     }
     Ok(())
 }
