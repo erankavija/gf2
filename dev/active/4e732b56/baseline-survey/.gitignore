@@ -10,3 +10,4 @@ gf2-side/target/
 # The harness crate's lock file pins the dependency graph a receipt was
 # taken against, so it is committed despite the repository-wide rule.
 !gf2-side/Cargo.lock
+__pycache__/
