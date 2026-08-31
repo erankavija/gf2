@@ -4,7 +4,7 @@
 |---|---|
 | JIT issue | `4e732b56` (Reproducible external-baseline survey and workload selection) |
 | Epic | `ae03bcd0` (Harden and generalize BCH codes over finite fields) |
-| Contract slot | `workload-selection` of [plan.md](plan.md) § *Shared architectural contracts* |
+| Contract slot | `workload-selection` of [plan.md](../ae03bcd0-general-bch/plan.md) § *Shared architectural contracts* |
 | Evidence | [findings.md](findings.md) |
 | Consumers | `encode-dispatch`, `avx2-batch-kernels`, `genmatrix-perf`, `bench-extension`, `perf-receipts` |
 
@@ -17,7 +17,7 @@ amends it here first.
 
 The statistical acceptance rule, the conformance corpus, and the host
 conventions are not restated here; they are the `evidence-protocol` section of
-[plan.md](plan.md), which this document completes rather than replaces.
+[plan.md](../ae03bcd0-general-bch/plan.md), which this document completes rather than replaces.
 
 ## 1. Workloads
 
