@@ -265,7 +265,7 @@ chose to move.
 
 Full per-cell figures — 128 cells, every one with its trial count, median,
 minimum, maximum, and spread — are in the receipt at
-`/dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md`, rendered
+[`dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md`](../../bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md), rendered
 from the committed CSVs. This section quotes only the cells the selection turns
 on.
 
