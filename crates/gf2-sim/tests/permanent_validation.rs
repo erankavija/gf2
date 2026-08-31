@@ -21,8 +21,8 @@ use gf2_sim::permanent_campaign::validation::{
     evaluate_validation_anchor, is_frozen_validation_toolchain,
     load_frozen_campaign_validation_preregistration, load_validation_preregistration,
     preflight_required_backends, publish_validation_receipt_atomic, read_validation_receipt,
-    run_validation, AnchorSpec, BackendAgreementStatus, DecisionRule, FrozenArtifactGuard,
-    FrozenArtifactSnapshot, PhaseStatus, ReplayMode, RetryRule, SampleOrigin,
+    run_validation, AnchorReceipt, AnchorSpec, BackendAgreementStatus, DecisionRule,
+    FrozenArtifactGuard, FrozenArtifactSnapshot, PhaseStatus, ReplayMode, RetryRule, SampleOrigin,
     ValidationAuthorities, ValidationFailure, ValidationPhase, ValidationPreregistration,
     ValidationProtocol, ValidationReceipt, ValidationStreamPurpose, ValidationVerdict,
     FROZEN_TOOLCHAIN_PREFIX, PREREGISTRATION_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION,
@@ -606,6 +606,128 @@ fn the_receipt_round_trips_and_republishes_only_identical_evidence() {
     let error = publish_validation_receipt_atomic(&output, &altered)
         .expect_err("an immutable receipt is never overwritten");
     assert!(error.to_string().contains("incompatible"), "{error}");
+    fs::remove_dir_all(state).expect("the journal directory is removable");
+}
+
+fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, PathBuf) {
+    let state = unique_directory(label);
+    let mut bootstrap = focused_plan();
+    bootstrap.anchors = vec![focused_anchor(3, 1, 0)];
+    run_validation(&bootstrap, focused_identity(), 1, &state)
+        .expect("the exact-failing bootstrap records current runtime without sampling");
+
+    let repository = repository();
+    let (mut plan, _) = load_frozen_campaign_validation_preregistration(
+        &repository,
+        Path::new(FROZEN_PREREGISTRATION),
+    )
+    .expect("the committed frozen plan is valid");
+    plan.anchors.retain(|anchor| (anchor.q, anchor.n) == (5, 1));
+
+    let terminal_source =
+        repository.join("dev/active/02b8137c/validation-journal/q5-n01-s0.terminal.json");
+    let terminal_bytes = fs::read(&terminal_source).expect("the committed q=5 n=1 terminal reads");
+    let terminal: AnchorReceipt =
+        serde_json::from_slice(&terminal_bytes).expect("the committed terminal decodes");
+
+    let run_state_path = state.join("run-state.json");
+    let mut run_state: serde_json::Value =
+        serde_json::from_slice(&fs::read(&run_state_path).expect("the bootstrap run state reads"))
+            .expect("the bootstrap run state decodes");
+    run_state["preregistration"] = serde_json::to_value(&plan).expect("the q=5 n=1 plan encodes");
+    run_state["preregistration_identity"] =
+        serde_json::to_value(focused_identity()).expect("the focused identity encodes");
+    run_state["started_at"] =
+        serde_json::to_value(terminal.started_at).expect("the terminal timestamp encodes");
+    fs::write(
+        run_state_path,
+        serde_json::to_vec_pretty(&run_state).expect("the q=5 n=1 run state encodes"),
+    )
+    .expect("the q=5 n=1 run state is writable");
+    fs::write(state.join("q5-n01-s0.terminal.json"), terminal_bytes)
+        .expect("the committed terminal fixture is writable");
+    (plan, state)
+}
+
+#[test]
+fn q5_exact_test_values_survive_json_publication_bit_exact() {
+    let recomputed = two_sided_test(80_029, 400_000, 0.2);
+    let values = (recomputed.log_p_value(), recomputed.log_p_value().exp());
+    let encoded = serde_json::to_vec(&values).expect("the exact-test values encode");
+    let decoded: (f64, f64) =
+        serde_json::from_slice(&encoded).expect("the exact-test values decode");
+
+    assert_eq!(values.0.to_bits(), 0xbfb8_7fcf_b6c9_e338);
+    assert_eq!(values.1.to_bits(), 0x3fed_145e_4cad_104e);
+    assert_eq!(
+        (decoded.0.to_bits(), decoded.1.to_bits()),
+        (values.0.to_bits(), values.1.to_bits()),
+        "publication must preserve the exact values used by bitwise receipt validation"
+    );
+}
+
+#[test]
+fn the_committed_q5_terminal_is_adopted_without_float_drift_or_redraw() {
+    let (plan, state) = state_with_committed_q5_terminal("validation-q5-adoption");
+    let terminal_path = state.join("q5-n01-s0.terminal.json");
+    let before = fs::read(&terminal_path).expect("the terminal fixture reads");
+    let terminal: AnchorReceipt =
+        serde_json::from_slice(&before).expect("the terminal fixture decodes");
+    let sample = terminal
+        .sample
+        .as_ref()
+        .expect("the terminal has sample evidence");
+    let recomputed = two_sided_test(80_029, 400_000, 0.2);
+
+    assert_eq!(recomputed.log_p_value().to_bits(), 0xbfb8_7fcf_b6c9_e338);
+    assert_eq!(
+        recomputed.log_p_value().exp().to_bits(),
+        0x3fed_145e_4cad_104e
+    );
+    assert_eq!(
+        sample.log_p_value.to_bits(),
+        recomputed.log_p_value().to_bits()
+    );
+    assert_eq!(
+        sample.p_value.to_bits(),
+        recomputed.log_p_value().exp().to_bits()
+    );
+
+    let receipt = run_validation(&plan, focused_identity(), 1, &state)
+        .expect("the valid committed terminal is adopted without recomputation");
+    assert_eq!(receipt.anchors, vec![terminal]);
+    assert_eq!(
+        fs::read(&terminal_path).expect("the adopted terminal still reads"),
+        before,
+        "adoption never rewrites immutable journal bytes"
+    );
+    fs::remove_dir_all(state).expect("the journal directory is removable");
+}
+
+#[test]
+fn a_genuinely_altered_committed_terminal_is_rejected_without_overwrite() {
+    let (plan, state) = state_with_committed_q5_terminal("validation-q5-altered");
+    let terminal_path = state.join("q5-n01-s0.terminal.json");
+    let mut altered: serde_json::Value =
+        serde_json::from_slice(&fs::read(&terminal_path).expect("the terminal fixture reads"))
+            .expect("the terminal fixture decodes");
+    altered["sample"]["permanent_zero_count"] = serde_json::json!(80_030);
+    let altered_bytes = serde_json::to_vec_pretty(&altered).expect("altered evidence encodes");
+    fs::write(&terminal_path, &altered_bytes).expect("the altered fixture is writable");
+
+    let error = run_validation(&plan, focused_identity(), 1, &state)
+        .expect_err("different scientific evidence is rejected without sampling");
+    assert!(
+        error
+            .to_string()
+            .contains("sample p-value or strict decision is inconsistent"),
+        "{error}"
+    );
+    assert_eq!(
+        fs::read(&terminal_path).expect("the rejected terminal still reads"),
+        altered_bytes,
+        "rejection never overwrites journal bytes"
+    );
     fs::remove_dir_all(state).expect("the journal directory is removable");
 }
 
