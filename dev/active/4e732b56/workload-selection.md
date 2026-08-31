@@ -56,9 +56,10 @@ the in-tree table at `crates/gf2-coding/src/bch/dvb_t2/params.rs:69`.
 
 T2S is the one row this contract adds beyond the corpus. It is a shortened
 code over a *different* mother field ($m = 14$) whose message fits in 879
-bytes rather than 4026, so the batch ladder below reaches DRAM on T2N while
-staying cache-resident on T2S at the same batch size. Without it, every
-large-code cell would share one mother field and one working-set regime.
+bytes rather than 4026, so at a fixed batch size its working set sits a factor
+of 4.5 below T2N's — L2-resident at $B = 256$ where T2N is already L3-resident.
+Without it, every large-code cell would share one mother field and one
+working-set regime.
 
 T2S and T2N are shortened codes: $n < 2^m - 1$. Their generator polynomials
 are those of the mother codes of length $2^m - 1$, and their $\delta = 25$ is
@@ -72,29 +73,32 @@ $B \in \{1,\ 16,\ 256,\ 4096\}$.
 |---|---|
 | 1 | Per-call cost: construction, dispatch, and allocation that does not amortize. A SIMD-interleaved family cannot fill a wave here, which is itself the measurement. |
 | 16 | One full SIMD wave at 16 lanes and two at 8, so a lane-parallel family is exercised at its minimum useful width. |
-| 256 | Steady state with the working set inside L2/L3 on every row. |
-| 4096 | Steady state with the working set past L3 on the largest rows, so memory traffic rather than the LFSR recurrence dominates. |
+| 256 | Steady state with the working set L2-resident on every row but T2N, which is L3-resident. |
+| 4096 | The largest working sets the ladder reaches: 31.5 MiB on T2N, against a 32 MiB L3. Memory traffic competes with the LFSR recurrence here in a way it does not at $B = 256$. |
 
-Derived working sets, as packed bits ($B(k+n)/8$ bytes), against this host's
-32 MB L3 per CCX and 512 KB L2 per core:
+Derived working sets, message plus codeword packed ($B(k+n)/8$ bytes),
+against this host's 512 KiB L2 per core and 32 MiB L3 per CCX:
 
 | Row | $B = 1$ | $B = 16$ | $B = 256$ | $B = 4096$ |
 |---|---|---|---|---|
-| B1 | 3 B | 40 B | 640 B | 10 KB |
-| B2 | 24 B | 382 B | 6 KB | 98 KB |
-| B3 | 60 B | 956 B | 15 KB | 245 KB |
-| T2S | 1.7 KB | 28 KB | 445 KB | 7.1 MB |
-| T2N | 7.9 KB | 126 KB | 2.0 MB | 32 MB |
+| B1 | 2 B | 40 B | 640 B | 10 KiB |
+| B2 | 24 B | 382 B | 6 KiB | 96 KiB |
+| B3 | 60 B | 956 B | 15 KiB | 239 KiB |
+| T2S | 2 KiB | 28 KiB | 445 KiB | 6.9 MiB |
+| T2N | 8 KiB | 126 KiB | 2.0 MiB | 31.5 MiB |
 
-Only T2N at $B = 4096$ reaches the L3 capacity boundary. A consumer that
-needs a DRAM-resident cell on a smaller row extends the ladder here rather
-than in its own bench.
+Every row through $B = 256$ is L2-resident except T2N, which is L3-resident
+there. At $B = 4096$ only T2N approaches the L3 capacity boundary, at 31.5 MiB
+against 32 MiB. No cell in this ladder is reliably DRAM-bound: a consumer that
+needs one extends the ladder here rather than in its own bench, and this
+document records that as an open gap rather than claiming coverage the sizes
+do not support.
 
 ## 4. Matrix dimensions (W2)
 
 $G$ is $k \times n$ for each row of § 2: $5 \times 15$, $64 \times 127$,
 $223 \times 255$, $7032 \times 7200$, and $32208 \times 32400$. The last is
-1.04 Gbit, 130 MB packed, and is the row that decides whether materialization
+1.04 Gbit, 124 MiB packed, and is the row that decides whether materialization
 is viable at DVB-T2 normal-frame scale at all.
 
 Materialization output is the systematic $G = [\,I_k \mid P\,]$ in the
@@ -125,8 +129,8 @@ it.
 $W \in \{1,\ 6\}$.
 
 * $W = 1$ — every external-baseline comparison. The SOTA reference acceptance
-  protocol requires single-thread references, and all three selected baselines
-  are single-threaded, so a multi-threaded gf2 figure has nothing to compare
+  protocol requires single-thread references, and every selected baseline is
+  single-threaded, so a multi-threaded gf2 figure has nothing to compare
   against.
 * $W = 6$ — the parallel batch-encoding path. Six is the width of the CCX1
   core pin (`taskset -c 6-11`) that `dev/scripts/ccx1-bench-flock.sh` applies,
