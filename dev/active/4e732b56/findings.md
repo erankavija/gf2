@@ -54,8 +54,9 @@ itself:
 What the matrix does supply, and this survey reuses rather than re-litigates,
 is the canonical dense GF(2) reference: **M4RI 20260122**, canonical for
 `matmul`, `echelon`, `invert`, `solve`, and `pluq` over $\mathrm{GF}(2)$
-(§ 5.1–§ 5.5). Workload W2's output is a dense GF(2) matrix, so M4RI is the
-natural secondary reference for it, at the pin the matrix already carries.
+(§ 5.1–§ 5.5). Workload W2's output is a dense GF(2) matrix, so M4RI is a
+natural candidate for it, at the pin the matrix already carries; § 7 records
+where the measurement placed it.
 
 ## 3. Candidate roster
 
@@ -115,7 +116,9 @@ AFF3CT is the reference open-source forward-error-correction toolbox
 
 Both store **one 32-bit word per bit**, so their memory traffic is 32× a
 packed representation at the same code. This is a property of the baseline,
-not a measurement artifact, and § 5 reports it rather than normalizing it away.
+not a measurement artifact. The throughput unit counts information bits rather
+than the words a library moves, and § 7 weighs the representation difference
+explicitly rather than normalizing it away.
 
 **Generator-polynomial agreement.** `tools::BCH_polynomial_generator<int>`
 accepts the primitive polynomial explicitly, so the harness supplies the same
@@ -211,8 +214,10 @@ rather than BCH encoding, so it has no comparable API for either workload.
 exclusively for the child and pins it to the CCX1 cores (`taskset -c 6-11`,
 `nice -n -5`). Host model, microarchitecture, cache topology, frequency
 governor, OS, and compiler versions are captured by `run-survey.sh` into the
-`host.txt` of each run. The survey did not begin measuring until the shared
-benchmark host was released.
+`host.txt` of each run. Every committed figure was taken after the shared
+benchmark host was released; the harness-validation runs that preceded the
+release were bounded to seconds and none of their output is committed or
+quoted.
 
 **Statistics.** Each cell takes up to 7 independent trials. A trial repeats the
 measured call enough times to span at least 5 ms, so a cell whose single call
@@ -271,7 +276,9 @@ generator matrix inside its 90 s cell budget.
 
 ### 5.1 W1 — large-batch encoding, $B = 4096$
 
-Median information bits per second over 7 trials.
+Median information bits per second. Most cells took the full 7 trials; a few
+of the slowest took 3 when their wall budget ran out, and the receipt records
+the count per cell.
 
 | Row | $\deg g$ | bchlib `table-remainder` | AFF3CT `bitslice-interleaved` | AFF3CT `poly-remainder-scalar` | IT++ `poly-remainder-gfx` | gf2 `encode_batch` |
 |---|---|---|---|---|---|---|
@@ -303,8 +310,9 @@ Median matrix bits per second for a full $k \times n$ systematic $G$.
 | T2N | $32208 \times 32400$ | **446.8** | 41.2 | 0.66 *(estimate)* |
 
 B1's row is not evidence for anything: at $5 \times 15$ the call sits near the
-clock's resolution and its cells carry 44–70% spread, the only cells in the
-survey that do. Every other row separates cleanly.
+clock's resolution, and its three W2 cells span 44–70% spread — wide enough
+that M4RI and AFF3CT cannot be ordered there at all. Every other row separates
+cleanly.
 
 The two routes to the same matrix are not close. Reducing the polynomial-form
 generator matrix to reduced row echelon form beats encoding the $k$ basis
@@ -399,8 +407,9 @@ every row, supplies the required scalar reference, and is the only measured
 implementation of the interleaved family. Two baselines also keep a single
 library's quirks from defining the target.
 
-**Why M4RI is primary for W2.** See § 8: this reverses the selection this
-document predeclared.
+**Why M4RI is primary for W2.** It materializes the same matrix by a different
+algorithm and is faster at every row above B1. This reverses the ordering the
+contract predeclared; § 8.1 records that.
 
 **Like-for-like justification.** The W1 comparison at the DVB-T2 rows is
 between implementations of the *same code*, not merely codes of equal shape.
@@ -420,7 +429,8 @@ primitive polynomial.
 
 ### 8.1 The predeclared W2 baseline was wrong
 
-Before measuring, § 8 of the workload-selection contract named **AFF3CT's
+Before measuring, the selection section of the workload-selection contract
+named **AFF3CT's
 basis-vector materialization** the primary W2 baseline and M4RI the secondary,
 reasoning that the same-semantics route was the fairer target. The measurement
 contradicts that: the M4RI route is faster at every row above B1, by 36.3× at
