@@ -190,7 +190,9 @@ against AFF3CT alone would credit it for one it does not need.
 
 The two W2 entries produce the same matrix by different algorithms — one
 Gaussian elimination of the polynomial-form matrix versus one encode per basis
-vector — so a consumer has an independent check on the shape of the cost curve.
+vector — as confirmed for B2, B3, and T2S by the [normalized generator-matrix
+agreement receipt](../../bench_results/4e732b56/2026-08-31-4e732b56-generator-matrix-agreement.txt).
+This gives a consumer an independent check on the shape of the cost curve.
 The elimination route is primary because it is measurably faster at every row
 above B1, by 36.3× at T2S; the basis-vector route is retained as secondary
 because it is the route the current gf2 implementation takes, which makes it

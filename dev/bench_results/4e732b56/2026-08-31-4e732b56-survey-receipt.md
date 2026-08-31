@@ -7,9 +7,9 @@ figure below is read out of the committed CSVs at render time.
 |---|---|
 | Issue | `4e732b56` |
 | Run timestamps (UTC) | 2026-08-31T17:02:00Z, 2026-08-31T17:18:55Z |
-| gf2 revision | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` |
+| gf2 revision | recorded per stage below; T2N gf2 is an explicitly separate revision |
 | Host | AMD Ryzen 9 5900X 12-Core Processor |
-| Cores pinned | CCX1 via `dev/scripts/ccx1-bench-flock.sh` (`taskset -c 6-11`, `nice -n -5`) |
+| Cores pinned | CCX1 via `dev/scripts/ccx1-bench-flock.sh` (`taskset -c 6-11`; nice -n -5 requested, denied, and the child ran at inherited default priority) |
 | Governor | powersave |
 | Kernel | Linux fraktaali 7.1.11-arch1-1 #1 SMP PREEMPT_DYNAMIC Fri, 28 Aug 2026 03:36:07 +0000 x86_64 GNU/Linux |
 | C compiler | gcc (GCC) 16.2.1 20260810 |
@@ -34,6 +34,33 @@ figure below is read out of the committed CSVs at render time.
 * `aff3ct library:  -O3 -march=native -funroll-loops -O3 -DNDEBUG -std=gnu++11 -fPIC`
 * `aff3ct defines:  -DAFF3CT_EXT_STRINGS -DAFF3CT_MULTI_PREC -DAFF3CT_POLAR_BIT_PACKING -DMIPP_ENABLE_BACKTRACE -DSPU_COLORS -DSPU_STACKTRACE`
 * `m4ri library: CFLAGS='-O3 -march=native -fPIC'`
+
+## Per-stage provenance
+
+Each row identifies the committed output, the stage's invocation(s), the basis for
+each invocation, the gf2 revision supplying that stage's data, and the host manifest
+covering it. Basis is `recorded (log header)` when the tool's own log carries a
+`# command:`/`# environment:` header; for a stage whose log predates header emission,
+it is `reconstructed` (derived from the runner's argument construction, cited from the
+committed invocation-derivation record) or `session-recorded` (executed directly by an
+agent session, also cited from that record). For non-gf2 stages the revision is
+inherited from the host manifest; a differing data revision is shown as
+`data (host: manifest)` in the same row.
+
+| Stage | Output | Provenance log | Exact invocation(s) | Basis | gf2 revision for this stage | Host manifest |
+|---|---|---|---|---|---|---|
+| `2026-08-31-4e732b56-small-aff3ct` | [2026-08-31-4e732b56-small-aff3ct.csv](2026-08-31-4e732b56-small-aff3ct.csv) | [2026-08-31-4e732b56-small-aff3ct.log](2026-08-31-4e732b56-small-aff3ct.log) | `GF2_SURVEY_CODES=B1,B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench all`<br>`GF2_SURVEY_CODES=B1,B2,B3 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w2` | reconstructed<br>session-recorded | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-small-host.txt](2026-08-31-4e732b56-small-host.txt) |
+| `2026-08-31-4e732b56-small-bchlib` | [2026-08-31-4e732b56-small-bchlib.csv](2026-08-31-4e732b56-small-bchlib.csv) | [2026-08-31-4e732b56-small-bchlib.log](2026-08-31-4e732b56-small-bchlib.log) | `GF2_SURVEY_CODES=B1,B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/bchlib_bch_bench` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-small-host.txt](2026-08-31-4e732b56-small-host.txt) |
+| `2026-08-31-4e732b56-small-gf2` | [2026-08-31-4e732b56-small-gf2.csv](2026-08-31-4e732b56-small-gf2.csv) | [2026-08-31-4e732b56-small-gf2.log](2026-08-31-4e732b56-small-gf2.log) | `GF2_SURVEY_CODES=B1,B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/.agents/ext/survey-target/release/survey-gf2-side all` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-small-host.txt](2026-08-31-4e732b56-small-host.txt) |
+| `2026-08-31-4e732b56-small-itpp` | [2026-08-31-4e732b56-small-itpp.csv](2026-08-31-4e732b56-small-itpp.csv) | [2026-08-31-4e732b56-small-itpp.log](2026-08-31-4e732b56-small-itpp.log) | `GF2_SURVEY_CODES=B1,B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/itpp_bch_bench` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-small-host.txt](2026-08-31-4e732b56-small-host.txt) |
+| `2026-08-31-4e732b56-small-m4ri` | [2026-08-31-4e732b56-small-m4ri.csv](2026-08-31-4e732b56-small-m4ri.csv) | [2026-08-31-4e732b56-small-m4ri.log](2026-08-31-4e732b56-small-m4ri.log) | `GF2_SURVEY_CODES=B1,B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/bench_results/4e732b56/generators.txt all`<br>`GF2_SURVEY_CODES=B1,B2,B3 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/bench_results/4e732b56/generators.txt all` | reconstructed<br>session-recorded | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-small-host.txt](2026-08-31-4e732b56-small-host.txt) |
+| `2026-08-31-4e732b56-t2n-aff3ct` | [2026-08-31-4e732b56-t2n-aff3ct.csv](2026-08-31-4e732b56-t2n-aff3ct.csv) | [2026-08-31-4e732b56-t2n-aff3ct.log](2026-08-31-4e732b56-t2n-aff3ct.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench all` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-t2n-host.txt](2026-08-31-4e732b56-t2n-host.txt) |
+| `2026-08-31-4e732b56-t2n-bchlib` | [2026-08-31-4e732b56-t2n-bchlib.csv](2026-08-31-4e732b56-t2n-bchlib.csv) | [2026-08-31-4e732b56-t2n-bchlib.log](2026-08-31-4e732b56-t2n-bchlib.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/bchlib_bch_bench` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-t2n-host.txt](2026-08-31-4e732b56-t2n-host.txt) |
+| `2026-08-31-4e732b56-t2n-gf2` | [2026-08-31-4e732b56-t2n-gf2.csv](2026-08-31-4e732b56-t2n-gf2.csv) | [2026-08-31-4e732b56-t2n-gf2.log](2026-08-31-4e732b56-t2n-gf2.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/.agents/ext/survey-target/release/survey-gf2-side all` | reconstructed | `08e42f096a75309d35255d831782ae38d291f632 (host: 3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e)` | [2026-08-31-4e732b56-t2n-host.txt](2026-08-31-4e732b56-t2n-host.txt) |
+| `2026-08-31-4e732b56-t2n-itpp` | [2026-08-31-4e732b56-t2n-itpp.csv](2026-08-31-4e732b56-t2n-itpp.csv) | [2026-08-31-4e732b56-t2n-itpp.log](2026-08-31-4e732b56-t2n-itpp.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/itpp_bch_bench` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-t2n-host.txt](2026-08-31-4e732b56-t2n-host.txt) |
+| `2026-08-31-4e732b56-t2n-m4ri` | [2026-08-31-4e732b56-t2n-m4ri.csv](2026-08-31-4e732b56-t2n-m4ri.csv) | [2026-08-31-4e732b56-t2n-m4ri.log](2026-08-31-4e732b56-t2n-m4ri.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/bench_results/4e732b56/generators.txt all` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-t2n-host.txt](2026-08-31-4e732b56-t2n-host.txt) |
+| `2026-08-31-4e732b56-small-aff3ct-perf` | (perf counters) | [2026-08-31-4e732b56-small-aff3ct-perf-stat.txt](2026-08-31-4e732b56-small-aff3ct-perf-stat.txt) | `GF2_SURVEY_CODES=B1,B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh perf stat -e task-clock,cycles,instructions,branches,branch-misses,cache-references,cache-misses /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-small-host.txt](2026-08-31-4e732b56-small-host.txt) |
+| `2026-08-31-4e732b56-t2n-bchlib-perf` | (perf counters) | [2026-08-31-4e732b56-t2n-bchlib-perf-stat.txt](2026-08-31-4e732b56-t2n-bchlib-perf-stat.txt) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh perf stat -e task-clock,cycles,instructions,branches,branch-misses,cache-references,cache-misses /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/bchlib_bch_bench` | reconstructed | `3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e` | [2026-08-31-4e732b56-t2n-host.txt](2026-08-31-4e732b56-t2n-host.txt) |
 
 ## Measured cells
 
@@ -142,24 +169,24 @@ and was never run at that size.
 | W1 | T2S | 4096 | bchlib v2.1.3 | `table-remainder` | 7 | 4533.24 | 4529.20 | 4559.91 | 0.7% |
 | W1 | T2S | 4096 | gf2 3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e | `encode-batch` | 3 | 0.76 | 0.76 | 0.76 | 0.1% |
 | W1 | T2S | 4096 | gf2 3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e | `encode-loop` | 3 | 0.76 | 0.76 | 0.76 | 0.1% |
-| W2 | B1 | 5 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 241.94 | 138.89 | 250.00 | 45.9% |
+| W2 | B1 | 5 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 264.05 | 174.08 | 265.75 | 34.7% |
 | W2 | B1 | 5 | gf2 3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e | `generator-matrix` | 7 | 6.26 | 6.22 | 6.29 | 1.2% |
-| W2 | B1 | 5 | m4ri 20260122 | `echelonize` | 7 | 234.38 | 138.89 | 241.95 | 44.0% |
-| W2 | B1 | 5 | m4ri 20260122 | `genmatrix-rref` | 7 | 234.38 | 87.21 | 250.00 | 69.5% |
-| W2 | B1 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 108.20 | 72.89 | 108.66 | 33.1% |
-| W2 | B1 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 140.61 | 112.78 | 147.92 | 25.0% |
-| W2 | B2 | 64 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 156.22 | 142.17 | 156.46 | 9.1% |
+| W2 | B1 | 5 | m4ri 20260122 | `echelonize` | 7 | 276.45 | 189.56 | 279.06 | 32.4% |
+| W2 | B1 | 5 | m4ri 20260122 | `genmatrix-rref` | 7 | 281.03 | 215.86 | 308.84 | 33.1% |
+| W2 | B1 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 112.73 | 85.25 | 115.94 | 27.2% |
+| W2 | B1 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 141.30 | 120.26 | 156.58 | 25.7% |
+| W2 | B2 | 64 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 150.65 | 119.47 | 160.68 | 27.4% |
 | W2 | B2 | 64 | gf2 3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e | `generator-matrix` | 7 | 6.92 | 6.91 | 6.98 | 1.1% |
-| W2 | B2 | 64 | m4ri 20260122 | `echelonize` | 7 | 1443.70 | 856.48 | 1456.63 | 41.6% |
-| W2 | B2 | 64 | m4ri 20260122 | `genmatrix-rref` | 7 | 1304.66 | 1177.97 | 1306.75 | 9.9% |
-| W2 | B2 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 2035.28 | 1945.84 | 2040.35 | 4.6% |
-| W2 | B2 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 2580.92 | 2467.47 | 2596.51 | 5.0% |
-| W2 | B3 | 223 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 119.72 | 117.39 | 120.78 | 2.8% |
+| W2 | B2 | 64 | m4ri 20260122 | `echelonize` | 7 | 1491.07 | 1212.18 | 1507.50 | 19.8% |
+| W2 | B2 | 64 | m4ri 20260122 | `genmatrix-rref` | 7 | 1291.09 | 1056.08 | 1351.13 | 22.9% |
+| W2 | B2 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 2147.38 | 1792.16 | 2174.08 | 17.8% |
+| W2 | B2 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 2549.66 | 2353.84 | 2672.81 | 12.5% |
+| W2 | B3 | 223 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 100.25 | 71.92 | 114.02 | 42.0% |
 | W2 | B3 | 223 | gf2 3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e | `generator-matrix` | 7 | 7.29 | 7.23 | 7.47 | 3.3% |
-| W2 | B3 | 223 | m4ri 20260122 | `echelonize` | 7 | 1477.40 | 964.14 | 1562.22 | 40.5% |
-| W2 | B3 | 223 | m4ri 20260122 | `genmatrix-rref` | 7 | 1703.57 | 1599.58 | 1720.05 | 7.1% |
-| W2 | B3 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 2391.62 | 2363.89 | 2410.81 | 2.0% |
-| W2 | B3 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 3091.06 | 3015.34 | 3141.13 | 4.1% |
+| W2 | B3 | 223 | m4ri 20260122 | `echelonize` | 7 | 1476.09 | 1286.47 | 1551.60 | 18.0% |
+| W2 | B3 | 223 | m4ri 20260122 | `genmatrix-rref` | 7 | 1733.73 | 1500.88 | 1785.68 | 16.4% |
+| W2 | B3 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 2347.16 | 2110.56 | 2397.10 | 12.2% |
+| W2 | B3 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 2918.71 | 2378.27 | 2990.96 | 21.0% |
 | W2 | T2N | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 84.66 | 84.24 | 85.04 | 0.9% |
 | W2 | T2N | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 93.62 | 90.06 | 93.87 | 4.1% |
 | W2 | T2N | 32208 | aff3ct v4.7.0 | `basis-encode-pack` | 4 | 41.23 | 41.17 | 41.27 | 0.2% |
@@ -177,10 +204,15 @@ and was never run at that size.
 
 | File | SHA-256 | Bytes |
 |---|---|---|
+| `2026-08-31-4e732b56-determinism-agreement.txt` | `6af6b89771a8854b…` | 11975 |
 | `2026-08-31-4e732b56-generator-agreement.txt` | `ccd3474e8296a67e…` | 170 |
+| `2026-08-31-4e732b56-generator-matrix-agreement.txt` | `209a7faba6396fea…` | 1566 |
+| `2026-08-31-4e732b56-invocation-derivation.md` | `193da0ae8c2915cc…` | 7261 |
+| `2026-08-31-4e732b56-kodo-retrieval.txt` | `cecfeef3993e7730…` | 6679 |
+| `2026-08-31-4e732b56-m4ri-thread-evidence.txt` | `f6ecb9472812db92…` | 3258 |
 | `2026-08-31-4e732b56-small-aff3ct-perf-stat.txt` | `c5444ff8a39b37c9…` | 3213 |
-| `2026-08-31-4e732b56-small-aff3ct.csv` | `0c9410478f7898d8…` | 18979 |
-| `2026-08-31-4e732b56-small-aff3ct.log` | `c06bf9f3852c4dc4…` | 2420 |
+| `2026-08-31-4e732b56-small-aff3ct.csv` | `1a590dd775613b35…` | 18976 |
+| `2026-08-31-4e732b56-small-aff3ct.log` | `e50f696856fd3508…` | 3062 |
 | `2026-08-31-4e732b56-small-bchlib.csv` | `ae2f68ed79a55681…` | 5046 |
 | `2026-08-31-4e732b56-small-bchlib.log` | `b5ef3a892b1d30bd…` | 919 |
 | `2026-08-31-4e732b56-small-gf2.csv` | `ed806f9235b0dd41…` | 27312 |
@@ -188,8 +220,8 @@ and was never run at that size.
 | `2026-08-31-4e732b56-small-host.txt` | `48d874f6602133c5…` | 6947 |
 | `2026-08-31-4e732b56-small-itpp.csv` | `144d658f7610b981…` | 8175 |
 | `2026-08-31-4e732b56-small-itpp.log` | `d73de26d9321da47…` | 1053 |
-| `2026-08-31-4e732b56-small-m4ri.csv` | `1a65df2601a97b07…` | 9406 |
-| `2026-08-31-4e732b56-small-m4ri.log` | `c1f653058eae71da…` | 989 |
+| `2026-08-31-4e732b56-small-m4ri.csv` | `55fe110f555e4892…` | 9407 |
+| `2026-08-31-4e732b56-small-m4ri.log` | `022e9707c7bb5c52…` | 1886 |
 | `2026-08-31-4e732b56-t2n-aff3ct.csv` | `68dac5879e0c5d61…` | 4962 |
 | `2026-08-31-4e732b56-t2n-aff3ct.log` | `2b23d6cdad68bcc3…` | 780 |
 | `2026-08-31-4e732b56-t2n-bchlib-perf-stat.txt` | `41549b5083a6a249…` | 1393 |

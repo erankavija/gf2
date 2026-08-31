@@ -1,0 +1,79 @@
+# M4RI single-thread build evidence
+# captured: 2026-08-31T23:15:58+03:00
+# installed header: .agents/ext/prefix/include/m4ri/m4ri_config.h
+$ sed -n '1,240p' .agents/ext/prefix/include/m4ri/m4ri_config.h
+#ifndef M4RI_M4RI_CONFIG_H
+#define M4RI_M4RI_CONFIG_H
+
+// Defines determined during configuration of m4ri.
+#define __M4RI_HAVE_MM_MALLOC		1
+#define __M4RI_HAVE_POSIX_MEMALIGN	1
+#define __M4RI_HAVE_SSE2		0
+#if 1 && defined(__SSE2__) && __SSE2__
+#undef __M4RI_HAVE_SSE2
+#define __M4RI_HAVE_SSE2		1
+#endif
+#define __M4RI_HAVE_OPENMP		0
+#define __M4RI_CPU_L1_CACHE		32768
+#define __M4RI_CPU_L2_CACHE		524288
+#define __M4RI_CPU_L3_CACHE		33554432
+#define __M4RI_DEBUG_DUMP		(0 || 0)
+#define __M4RI_DEBUG_MZD		0
+#define __M4RI_HAVE_LIBPNG              1
+
+#define __M4RI_CC                       "gcc"
+#define __M4RI_CFLAGS                   " -O3 -march=native -fPIC"
+#define __M4RI_OPENMP_CFLAGS            ""
+
+// Helper macros.
+#define __M4RI_USE_MM_MALLOC		(__M4RI_HAVE_MM_MALLOC && __M4RI_HAVE_SSE2)
+#define __M4RI_USE_POSIX_MEMALIGN	(__M4RI_HAVE_POSIX_MEMALIGN && __M4RI_HAVE_SSE2)
+#define __M4RI_DD_QUIET			(0 && !0)
+
+#define __M4RI_ENABLE_MZD_CACHE         1
+#define __M4RI_ENABLE_MMC               1
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#define random rand
+#define srandom srand
+#endif
+
+#endif // M4RI_M4RI_CONFIG_H
+$ ldd .agents/ext/prefix/lib/libm4ri.so
+	linux-vdso.so.1 (0x00007fd6358a0000)
+	libpng16.so.16 => /usr/lib/libpng16.so.16 (0x00007fd6357e0000)
+	libm.so.6 => /usr/lib/libm.so.6 (0x00007fd6356a9000)
+	libc.so.6 => /usr/lib/libc.so.6 (0x00007fd635400000)
+	libz.so.1 => /usr/lib/libz.so.1 (0x00007fd63568e000)
+	/usr/lib64/ld-linux-x86-64.so.2 (0x00007fd6358a2000)
+$ readelf -d .agents/ext/prefix/lib/libm4ri.so
+
+Dynamic section at offset 0x43db8 contains 27 entries:
+  Tag        Type                         Name/Value
+ 0x0000000000000001 (NEEDED)             Shared library: [libpng16.so.16]
+ 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x000000000000000e (SONAME)             Library soname: [libm4ri.so.2]
+ 0x000000000000000c (INIT)               0x4000
+ 0x000000000000000d (FINI)               0x3e048
+ 0x0000000000000019 (INIT_ARRAY)         0x44d88
+ 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0x44d98
+ 0x000000000000001c (FINI_ARRAYSZ)       16 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x2d0
+ 0x0000000000000005 (STRTAB)             0x1c50
+ 0x0000000000000006 (SYMTAB)             0x7e0
+ 0x000000000000000a (STRSZ)              3253 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000003 (PLTGOT)             0x44fe8
+ 0x0000000000000002 (PLTRELSZ)           4104 (bytes)
+ 0x0000000000000014 (PLTREL)             RELA
+ 0x0000000000000017 (JMPREL)             0x2ce0
+ 0x0000000000000007 (RELA)               0x2b60
+ 0x0000000000000008 (RELASZ)             384 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x000000006ffffffe (VERNEED)            0x2ac0
+ 0x000000006fffffff (VERNEEDNUM)         3
+ 0x000000006ffffff0 (VERSYM)             0x2906
+ 0x000000006ffffff9 (RELACOUNT)           6
+ 0x0000000000000000 (NULL)               0x0
