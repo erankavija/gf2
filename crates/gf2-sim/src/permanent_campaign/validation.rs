@@ -241,8 +241,9 @@ impl ValidationPreregistration {
         {
             return invalid("replay, sample, and backend batch counts must be nonzero");
         }
-        if !self.protocol.exact_test_level.is_finite()
-            || !(0.0 < self.protocol.exact_test_level && self.protocol.exact_test_level <= 1.0)
+        if !(self.protocol.exact_test_level.is_finite()
+            && 0.0 < self.protocol.exact_test_level
+            && self.protocol.exact_test_level <= 1.0)
         {
             return invalid("exact test level must be finite and in (0, 1]");
         }
