@@ -206,7 +206,7 @@
           "short_id": "02b8137c",
           "title": "Execute frozen pre-draw validation anchors",
           "classification": "implementation",
-          "status": "in_progress: the owner-authorized two-segment continuation implementation merged at e0c3959a after independent rereview passed. It binds the exact 22-file producer-0 prefix, admits only the five missing anchors under one exact second producer, publishes the canonical schema-v2 receipt path, and preserves strict default producer mismatch and no-redraw behavior. Integrated cargo-ci passed 5,208 tests with zero failures. The preregistration and continuation authority are linked to the issue at 8ac6a9d3. The real continuation remains held for the post-02:00 device window; no campaign-purpose draw is authorized."
+          "status": "in_progress: the owner-authorized two-segment continuation implementation merged at e0c3959a after independent rereview passed. It binds the exact 22-file producer-0 prefix, admits only the five missing anchors under one exact second producer, publishes the canonical schema-v2 receipt path, and preserves strict default producer mismatch and no-redraw behavior. Integrated cargo-ci passed 5,208 tests with zero failures. A clean pinned execution tree at fa8a9d9c passed cargo-ci with 5,210 tests and produced Rust 1.95 release+HIP validator d0d67480...; gf2-predraw-validation3.timer is active and waiting for 2026-09-01 02:00:30 EEST. No campaign-purpose draw is authorized."
         },
         {
           "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -1181,6 +1181,23 @@
       "failure": "Post-publication equality check rejected q5-n01-s0 because default serde_json parsing changed log_p_value and p_value by one ULP; the published bytes and science verdict are intact.",
       "preservation_commit": "3fd2893b",
       "repair_merge": "2e760af7"
+    },
+    {
+      "armed_at": "2026-08-31T20:58:50+03:00",
+      "issue": "02b8137c",
+      "unit": "gf2-predraw-validation3.timer",
+      "service": "gf2-predraw-validation3.service",
+      "fires": "2026-09-01T02:00:30+03:00",
+      "command": "dev/active/02b8137c/run-validation-v2-continuation.sh",
+      "worktree": ".agents/worktrees/agent-02b8137c-run",
+      "source_revision": "fa8a9d9cd89dcc2fccb3dde8d67366e42730f3ed",
+      "deps_source_revision": "c0db11e25936ceb8323d864b88de54923281c0a5",
+      "binary_sha256": "d0d674800f0d32778b3d50fd176d3e810daebc986620a537b437633a66ae788e",
+      "continuation_authority_sha256": "dd19bb60bf07510085ab1ec06581526df710f39dbea1236e2d67273b41186094",
+      "producer0_run_state_sha256": "bd108332375684992b5be6830bf278c1dd8281cb1d4e1f272d0982e30c9d31a0",
+      "log": "/home/vkaskivuo/.local/state/gf2-validation/validation-v2-continuation-20260901.log",
+      "status": "active_waiting",
+      "note": "Transient user timer with AccuracySec=1s; it does not survive reboot. The checked runner refuses any source, dependency, binary, authority, producer-0 prefix, receipt-presence, dirty-tree, or pre-02:00 mismatch before the validator opens an address. It executes only the five missing validation anchors under the full-host lock."
     }
   ],
   "session_23_state": {
@@ -1272,6 +1289,7 @@
     "blocker": "Resolved by owner at 2026-08-31T18:40:00+03:00: one exact producer is required per immutable ordered segment rather than for the complete cohort. The continuation implementation merged at e0c3959a after independent rereview passed; integrated cargo-ci passed 5,208 tests with zero failures. The remaining hold is the required post-02:00 device window, not permission or provenance.",
     "authorization": "The authoritative 02b8137c criteria preserve the original v1 preregistration while admitting one versioned two-segment continuation. Default producer mismatch still refuses; no third producer is authorized. Canonical-cutover requires removal of the temporary CLI and runnable continuation admission after the complete journal and schema-v2 receipt are committed and independently verified, while retaining only the private exact-SHA historical evidence decoder.",
     "continuation_ready": "Merge e0c3959a; authority SHA-256 dd19bb60bf07510085ab1ec06581526df710f39dbea1236e2d67273b41186094; original run-state SHA-256 bd108332375684992b5be6830bf278c1dd8281cb1d4e1f272d0982e30c9d31a0; focused Rust 1.95 release tests 34/34; integrated cargo-ci 5,208/0; four preregistration/continuation artifacts linked at 8ac6a9d3.",
+    "continuation_scheduled": "gf2-predraw-validation3.timer is active and waiting for 2026-09-01 02:00:30 EEST with AccuracySec=1s. Pinned source fa8a9d9c, dependency source c0db11e2, Rust 1.95 release+HIP binary SHA-256 d0d674800f0d32778b3d50fd176d3e810daebc986620a537b437633a66ae788e, clean-tree cargo-ci 5,210/0, external log /home/vkaskivuo/.local/state/gf2-validation/validation-v2-continuation-20260901.log. Claude confirmed no host work and the 01:30 CCX1 embargo.",
     "campaign_state": "No campaign-purpose draw occurred. All three campaign arms remain blocked on 02b8137c, and the prior separate-go requirement remains in force after validation closes.",
     "handoff": "handoff-29.md"
   },
