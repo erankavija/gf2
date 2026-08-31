@@ -12,7 +12,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-31T17:47:34.059593790Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-31T17:43:39.071239449Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "3243bc1f-83ce-48e3-9cc2-9f8b45038624",
   "labels": [
     "type:task",
@@ -24,5 +35,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Add property tests for BCH encode and decode invariants",
-  "updated_at": "2026-08-31T17:42:19.538090434Z"
+  "updated_at": "2026-08-31T17:47:34.059593790Z"
 }

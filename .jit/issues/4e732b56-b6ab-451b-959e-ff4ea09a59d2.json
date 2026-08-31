@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-08-31T16:18:55.132218983Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
@@ -7,7 +7,65 @@
     "e3169db4-6c81-48de-9861-ea349e4e4f18"
   ],
   "description": "Survey external implementations of large-batch BCH encoding and generator-matrix materialization, select the strongest available baselines reproducibly, and fix the exact workload-selection contract the encoding and benchmark tasks consume.\n\n## Background\n\nThe SOTA target-matrix conventions supply the pinning and receipt format; its coverage is linear-algebra-centric and records GF(2^m) gaps, so BCH-encoder baselines must be established. The survey fixes, before any optimization work: the exact benchmark codes, batch sizes, matrix dimensions, cache state, worker counts, the encoding algorithm families to register, and the baseline library versions and build flags — completing the plan's evidence-protocol skeleton into the concrete workload-selection contract.\n\n## Success Criteria\n\n- [hard] REQ-01: A survey document pins candidate libraries with versions and build configuration, measures the two workloads under a stated protocol, and selects the strongest baseline per workload with committed receipts.\n- [hard] REQ-02: The workload-selection contract is fixed: exact codes, batch sizes, matrix dimensions, cache state, worker counts, and algorithm families, predeclared before optimization tasks consume them.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "b21ea63c84889e0fc20ef4303439d4ea3c4e10393a704b5780eb084b8c6e005d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "/dev/plans/sota_target_matrix.md",
+          "resolved_path": "dev/plans/sota_target_matrix.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a7ca4d87214e38380279ceb013ecd5b591954d2497f30339ddef03aed2388bb0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "workload-selection.md",
+          "resolved_path": "dev/active/4e732b56/workload-selection.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Survey: external BCH/genmatrix baselines",
+      "path": "dev/active/4e732b56/findings.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c282a7b01e5d0dcaaa98ee76eaef82078255c356470e63f76b245a51642175f5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "findings.md",
+          "resolved_path": "dev/active/4e732b56/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../ae03bcd0-general-bch/plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Contract: workload-selection",
+      "path": "dev/active/4e732b56/workload-selection.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark-receipt",
+      "format": "markdown",
+      "label": "Receipt: baseline survey (128 cells)",
+      "path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md"
+    }
+  ],
   "first_ready_at": "2026-08-28T22:50:47.339714882Z",
   "gates_required": [
     "doc-review",
@@ -24,5 +82,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-08-31T16:18:55.132218983Z"
+  "updated_at": "2026-08-31T17:49:42.648978349Z"
 }
