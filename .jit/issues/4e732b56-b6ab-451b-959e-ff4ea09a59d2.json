@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:jit-execution-lead",
+  "assignee": "agent:worker",
   "claimed_at": "2026-08-31T16:18:55.132218983Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
@@ -15,7 +15,7 @@
           "content_hash": "b21ea63c84889e0fc20ef4303439d4ea3c4e10393a704b5780eb084b8c6e005d",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "/dev/plans/sota_target_matrix.md",
+          "original_path": "../../plans/sota_target_matrix.md",
           "resolved_path": "dev/plans/sota_target_matrix.md"
         },
         {
@@ -25,24 +25,24 @@
           "mime_type": "text/markdown",
           "original_path": "workload-selection.md",
           "resolved_path": "dev/active/4e732b56/workload-selection.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "207f15bb0e8576932b8908bf9ab7f53a7ebc9d5f3bc3f7cb5300427e75b0b468",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md",
+          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md"
         }
       ],
       "commit": null,
-      "doc_type": "research",
+      "doc_type": "report",
       "format": "markdown",
-      "label": "Survey: external BCH/genmatrix baselines",
+      "label": "Baseline survey findings",
       "path": "dev/active/4e732b56/findings.md"
     },
     {
       "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "c282a7b01e5d0dcaaa98ee76eaef82078255c356470e63f76b245a51642175f5",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "findings.md",
-          "resolved_path": "dev/active/4e732b56/findings.md"
-        },
         {
           "asset_type": "local",
           "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
@@ -50,19 +50,27 @@
           "mime_type": "text/markdown",
           "original_path": "../ae03bcd0-general-bch/plan.md",
           "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e855445358a5915a7f43c062ed48c1bc354bf0968928fd6f03ae25880da2b64d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "findings.md",
+          "resolved_path": "dev/active/4e732b56/findings.md"
         }
       ],
       "commit": null,
-      "doc_type": "design",
+      "doc_type": "report",
       "format": "markdown",
-      "label": "Contract: workload-selection",
+      "label": "Workload-selection contract",
       "path": "dev/active/4e732b56/workload-selection.md"
     },
     {
       "commit": null,
-      "doc_type": "benchmark-receipt",
+      "doc_type": "report",
       "format": "markdown",
-      "label": "Receipt: baseline survey (128 cells)",
+      "label": "Survey benchmark receipt",
       "path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md"
     }
   ],
@@ -88,5 +96,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-08-31T18:02:09.810513084Z"
+  "updated_at": "2026-08-31T19:56:15.223142182Z"
 }

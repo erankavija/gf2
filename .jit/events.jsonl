@@ -10293,3 +10293,11 @@
 {"id":"3b3b1c6e-ccba-4ba4-9a15-c44c6c4e1820","issue_id":"8f51d6cf-873a-4b30-8f98-58875cfd79d2","timestamp":"2026-08-31T17:58:44.186310414Z","type":"issue_completed"}
 {"gate_key":"doc-review","id":"56266147-13ee-464f-96b1-fd7e6cdff99d","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T18:02:09.810513084Z","type":"gate_passed","updated_by":"auto:executor"}
 {"fields":["documents"],"id":"61b781fe-a540-4c67-b306-de58fc01e3b3","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-31T19:01:31.028552436Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"4dde4d9a-e587-403d-966f-5dc0fe4079b0","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T19:55:44.854072353Z","type":"issue_updated","updated_by":"doc-update"}
+{"assignee":"agent:jit-execution-lead","id":"f0868179-0c3c-4592-bed4-7b2dc8aa2eed","issue_id":"ae03bcd0-8881-4308-99f5-cad2b3c717d1","timestamp":"2026-08-31T19:55:55.933119803Z","type":"issue_claimed"}
+{"from":"in_progress","id":"53a7209e-7c20-4ad1-9d0b-4ae0bbc58a0c","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T19:56:01.910985023Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"7e2407cd-a012-4d47-925d-5b38d1f2852c","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","reason":"rework dispatch: reassigning to worker","timestamp":"2026-08-31T19:56:01.910985023Z","type":"issue_released"}
+{"from":"ready","id":"ee44e3bf-0b38-4eb5-a975-d2b71dec626c","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T19:56:11.424414235Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"82eb2c2d-6c47-4c2d-98fb-085e53bb2846","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T19:56:11.424414235Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"f18b548b-cb0c-4eab-afbb-b9e5f7fab00e","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T19:56:15.080573911Z","type":"issue_updated","updated_by":"doc-update"}
+{"fields":["documents"],"id":"1367eb81-7e37-4846-99e7-b79097bbabb9","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T19:56:15.223142182Z","type":"issue_updated","updated_by":"doc-update"}
