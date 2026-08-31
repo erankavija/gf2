@@ -160,41 +160,51 @@ pub fn test_field_axioms_with_cases<F: FiniteField + Debug>(
 ) where
     F::Characteristic: Into<u64>,
 {
-    let mut runner = TestRunner::new(ProptestConfig::with_cases(cases));
-
     // Additive group
-    check_additive_associativity(&mut runner, &strategy);
-    check_additive_commutativity(&mut runner, &strategy);
-    check_additive_identity(&mut runner, &strategy);
-    check_additive_inverse(&mut runner, &strategy);
-    check_subtraction_consistency(&mut runner, &strategy);
+    check_additive_associativity(&mut runner(cases), &strategy);
+    check_additive_commutativity(&mut runner(cases), &strategy);
+    check_additive_identity(&mut runner(cases), &strategy);
+    check_additive_inverse(&mut runner(cases), &strategy);
+    check_subtraction_consistency(&mut runner(cases), &strategy);
 
     // Multiplicative group
-    check_multiplicative_associativity(&mut runner, &strategy);
-    check_multiplicative_commutativity(&mut runner, &strategy);
-    check_multiplicative_identity(&mut runner, &strategy);
-    check_multiplicative_inverse(&mut runner, &strategy);
-    check_division_consistency(&mut runner, &strategy);
+    check_multiplicative_associativity(&mut runner(cases), &strategy);
+    check_multiplicative_commutativity(&mut runner(cases), &strategy);
+    check_multiplicative_identity(&mut runner(cases), &strategy);
+    check_multiplicative_inverse(&mut runner(cases), &strategy);
+    check_division_consistency(&mut runner(cases), &strategy);
 
     // Ring axioms
-    check_distributivity(&mut runner, &strategy);
-    check_zero_annihilation(&mut runner, &strategy);
+    check_distributivity(&mut runner(cases), &strategy);
+    check_zero_annihilation(&mut runner(cases), &strategy);
 
     // Characteristic
-    check_characteristic(&mut runner, &strategy, characteristic);
+    check_characteristic(&mut runner(cases), &strategy, characteristic);
 
     // Hash consistency
-    check_hash_consistency(&mut runner, &strategy);
+    check_hash_consistency(&mut runner(cases), &strategy);
 
     // Wide accumulator
-    check_wide_roundtrip(&mut runner, &strategy);
-    check_mul_wide_consistency(&mut runner, &strategy);
+    check_wide_roundtrip(&mut runner(cases), &strategy);
+    check_mul_wide_consistency(&mut runner(cases), &strategy);
 
     // FiniteFieldExt convenience methods
-    check_square_consistency(&mut runner, &strategy);
-    check_pow_consistency(&mut runner, &strategy);
-    check_frobenius_consistency(&mut runner, &strategy, characteristic);
-    check_freshman_dream(&mut runner, &strategy, characteristic);
+    check_square_consistency(&mut runner(cases), &strategy);
+    check_pow_consistency(&mut runner(cases), &strategy);
+    check_frobenius_consistency(&mut runner(cases), &strategy, characteristic);
+    check_freshman_dream(&mut runner(cases), &strategy, characteristic);
+}
+
+/// Builds a [`TestRunner`] budgeted for one law.
+///
+/// A runner counts successes cumulatively across
+/// [`TestRunner::run`](proptest::test_runner::TestRunner::run) calls and stops
+/// generating once the count reaches its configured case budget, so a runner
+/// shared by several laws executes cases for the first one only and returns
+/// success for the rest without sampling. Every law therefore gets its own
+/// runner, and `cases` is a per-law budget.
+fn runner(cases: u32) -> TestRunner {
+    TestRunner::new(ProptestConfig::with_cases(cases))
 }
 
 /// Run the full axiom suite for a [`ConstField`] implementation.
