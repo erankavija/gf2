@@ -160,7 +160,7 @@ echo "=== Step 1b: Charon extraction (gf2-algebra) ==="
 # gf2_core::* is opaque too: the bipedal3 / packed5 / packed7 arithmetic
 # does not reach into Fp / FiniteField machinery at runtime, but Charon
 # would otherwise transitively extract those trait impls and surface
-# unresolvable recursive defaults.
+# operator wrappers whose bodies are opaque to this narrow extraction.
 charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
@@ -351,10 +351,10 @@ python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" \
   "$LEAN_DIR_ALGEBRA/Types.lean" "$LEAN_DIR_ALGEBRA/Funs.lean"
 
 # Replace the transitively-extracted but unresolvable gf2_core::gfp::Fp
-# trait-impl wrappers with axioms. The bipedal3 V1 proofs never project
-# these instances; axiomatising them eliminates `Unknown constant` /
-# `could not resolve recursive fields` errors on the imports. See the
-# script's docstring for the full reasoning.
+# operator wrappers with axioms. The bipedal3 V1 proofs never project
+# these instances; axiomatising them eliminates `Unknown constant` errors
+# on the imports. The ordinary FiniteField dictionary remains generated.
+# See the script's docstring for the full reasoning.
 python3 "$REPO_ROOT/scripts/fix-aeneas-gf2algebra.py" "$LEAN_DIR_ALGEBRA/Funs.lean"
 
 # TypesExternal / FunsExternal seed (no hand-edits required for the
