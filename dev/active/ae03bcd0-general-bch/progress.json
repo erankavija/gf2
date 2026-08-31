@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 1,
+  "current_wave": 2,
   "waves": [
     {
       "wave_number": 1,
@@ -12,7 +12,7 @@
           "title": "Reproducible external-baseline survey and workload selection",
           "classification": "research",
           "difficulty": "hard",
-          "status": "rework-pending: research-review R1 FAIL (4 blocking + 5 advisory; see review-4e732b56-research-r1.json); doc-review passed R3; branch merged to main"
+          "status": "rework-1-dispatched: Luna xhigh in worktree agent-4e732b56, all 9 findings; gates doc-review+research-review to re-run after (prior doc-review R3 pass orphaned by gate-retry bug, docs relinked e6c80f23)"
         },
         {
           "key": "bch-property-tests",
@@ -49,7 +49,7 @@
           "title": "Design BchSpec, the code-trait generalization, and the compatibility boundary",
           "classification": "design",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "dispatched: Sol xhigh codex in worktree agent-7a3a6738 (doc-only, no-commit sandbox; lead commits)"
         },
         {
           "key": "extension-trait",
@@ -57,7 +57,7 @@
           "title": "Implement the relative field-extension abstraction in gf2-core",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "dispatched: native Opus agent worker-c3d5cea5 in worktree agent-c3d5cea5"
         }
       ]
     },
@@ -538,7 +538,7 @@
   "created_during_execution": [],
   "escalations": [],
   "rework_counts": {
-    "4e732b56": 0
+    "4e732b56": 1
   },
   "surfaced_pitfalls": [],
   "coordination": {
@@ -558,13 +558,15 @@
     "R-01: ExtConfig irreducibility verification is in scope for irreducibility-validation (19fe9394) as a test-only conformance case over every in-tree ExtConfig implementor; bake into dispatch prompt.",
     "R-02: design doc renamed to extension-design.md to match the manifest footprint (commit 254907d0).",
     "R-03: footprint additions recorded \u2014 extension-trait (c3d5cea5) also touches crates/gf2-core/src/field/axiom_tests.rs; fieldmatrix-serialization (e992c5b0) also touches crates/gf2-core/src/io/error.rs and crates/gf2-core/Cargo.toml (BLAKE3 dep per D-10).",
-    "R-04: conway-registry (fa85c403) must construct relative tower presentations when the base is non-prime; bake into dispatch prompt."
+    "R-04: conway-registry (fa85c403) must construct relative tower presentations when the base is non-prime; bake into dispatch prompt.",
+    "R-05: invoker approved dispatching wave 2 while the 4e732b56 rework completes (survey rework touches only dev/ survey docs + receipts; wave-2 footprints crates/gf2-core/src/field/ and dev/active/ae03bcd0-general-bch/bch-api-design.md are disjoint). Wave-1 close checklist still runs before wave 2 merges."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
     "jit issue claim refuses reassignment: release with a reason first (jit issue release <id> <reason>), then claim as the new assignee.",
     "codex exec intermittently deadlocks at startup (futex wait, no session rollout, own arg0 lock) under concurrent codex launches; probe for the session rollout within ~3 min of any codex dispatch/gate and kill+retry or fall back to a native agent.",
     "jit gate evaluate wraps checker execution in with_mutation_attempts (gate_check.rs:903): input-evidence drift during a long checker run silently discards the completed verdict and re-runs the checker. Reported to the just-in-time session for immediate fix (no automatic retry). Until fixed: freeze all repo writes during long gate runs, and salvage discarded verdicts from ~/.codex/sessions rollouts.",
-    "Survey worktree agent-4e732b56 must NOT be reclaimed: it holds the built external baselines (AFF3CT/bchlib/M4RI/IT++) the research-review rework needs for the F2 matrix-equality check."
+    "Survey worktree agent-4e732b56 must NOT be reclaimed: it holds the built external baselines (AFF3CT/bchlib/M4RI/IT++) the research-review rework needs for the F2 matrix-equality check.",
+    "codex rollout probe: find -newermt relative to dispatch under ~/.codex/sessions/YYYY/MM/DD returned a false negative once while the rollout existed; verify with pgrep + a direct ls of the session dir before declaring a deadlock."
   ]
 }
