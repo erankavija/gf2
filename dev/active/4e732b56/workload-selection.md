@@ -171,8 +171,8 @@ Selection rationale, per-cell numbers, and the rejected candidates are in
 |---|---|---|---|---|---|
 | W1 | Primary | bchlib (userspace `lib/bch.c`, Ivan Djelic / Parrot S.A.) | v2.1.3 | `8d0656ab8f37e734428635501738d360ad80eebd` | `gcc -std=c11 -O3 -march=native`, `bch_init(m, t, prim, swap_bits=false)` |
 | W1 | Secondary | AFF3CT `Encoder_BCH_inter<int>` | v4.7.0 | `e8a65c5047262d97a15563b9edc961f69b2792cc` | `g++ -std=gnu++11 -O3 -march=native -funroll-loops`, `-DAFF3CT_MULTI_PREC -DAFF3CT_EXT_STRINGS -DAFF3CT_POLAR_BIT_PACKING -DMIPP_ENABLE_BACKTRACE -DSPU_COLORS -DSPU_STACKTRACE -DNDEBUG` |
-| W2 | Primary | AFF3CT `Encoder_BCH<int>`, basis-vector materialization | v4.7.0 | `e8a65c5047262d97a15563b9edc961f69b2792cc` | as above |
-| W2 | Secondary | M4RI `mzd_echelonize_m4ri` | 20260122 | tarball sha256 `7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404` | `./configure --disable-static`, `CFLAGS="-O3 -march=native -fPIC"` |
+| W2 | Primary | M4RI `mzd_echelonize_m4ri` over the polynomial-form generator matrix | 20260122 | tarball sha256 `7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404` | `./configure --disable-static`, `CFLAGS="-O3 -march=native -fPIC"` |
+| W2 | Secondary | AFF3CT `Encoder_BCH<int>`, basis-vector materialization | v4.7.0 | `e8a65c5047262d97a15563b9edc961f69b2792cc` | as above |
 
 The two W1 entries measure different representations and are both retained:
 bchlib encodes packed bytes, which is the representation `BitVec` uses, while
@@ -181,9 +181,18 @@ would credit gf2 for a representation advantage it does not have; comparing
 against AFF3CT alone would credit it for one it does not need.
 
 The two W2 entries produce the same matrix by different algorithms — one
-encode per basis vector versus one Gaussian elimination of the polynomial-form
-matrix — so a consumer has an independent check on the shape of the cost
-curve.
+Gaussian elimination of the polynomial-form matrix versus one encode per basis
+vector — so a consumer has an independent check on the shape of the cost curve.
+The elimination route is primary because it is measurably faster at every row
+above B1, by 36.3× at T2S; the basis-vector route is retained as secondary
+because it is the route the current gf2 implementation takes, which makes it
+the like-for-like comparison point for a non-regression receipt.
+
+**Amendment, 2026-08-31 (`4e732b56`).** This document predeclared the
+basis-vector route as the W2 primary and the elimination route as secondary.
+The survey's measurement reversed that ordering and the table above records
+the corrected selection; the original is preserved in
+[findings.md](findings.md) § 8.1 rather than silently replaced.
 
 ## 9. Amendment
 
