@@ -216,12 +216,35 @@ fn time_cell(mut run: impl FnMut()) -> Vec<f64> {
     out
 }
 
+fn dump_generators(rev: &str, only: &str) {
+    println!("# gf2 generator dump revision: {rev}");
+    for cs in CODES {
+        if !only.is_empty() && !only.split(',').any(|s| s == cs.name) {
+            continue;
+        }
+        let g = cs.build().generator_matrix();
+        println!("code {} n={} k={}", cs.name, cs.n, cs.k);
+        for i in 0..cs.k {
+            for j in 0..cs.n {
+                print!("{}", if g.get(i, j) { '1' } else { '0' });
+            }
+            println!();
+        }
+        println!("end {}", cs.name);
+    }
+}
+
 fn main() {
     let rev = env::var("GF2_REV").unwrap_or_else(|_| "unknown".into());
     let only = env::var("GF2_SURVEY_CODES").unwrap_or_default();
     let selector = env::args().nth(1).unwrap_or_else(|| "all".into());
     let do_w1 = selector == "all" || selector == "w1";
     let do_w2 = selector == "all" || selector == "w2";
+
+    if selector == "generator-dump" {
+        dump_generators(&rev, &only);
+        return;
+    }
 
     eprintln!("# harness: survey-gf2-side");
     eprintln!("# gf2_revision: {rev}");

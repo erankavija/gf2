@@ -46,6 +46,7 @@ enum
  * this budget, so one oversized shape cannot consume the measurement window.
  * Trials actually completed are reported per row; the survey states the count. */
 static const double CELL_BUDGET_S = 45.0;
+static const double MIN_TIMED_NS = 5e6;
 static const uint64_t SEED = 0xAE03BCD0ull;
 /* Batch heights for the matmul-m4rm substrate cell. */
 static const int MATMUL_BATCHES[] = { 256, 4096 };
@@ -148,6 +149,31 @@ fill_poly_form(mzd_t* G, const Code* c)
                 mzd_write_bit(G, i, (rci_t)(i + j), 1);
 }
 
+/* Correctness-only output for verify-generator-matrices.py. Reorder the
+ * polynomial coefficients into the repository's codeword order before the
+ * same M4RI RREF route is applied, so the emitted matrix is [I | P]. */
+static void
+dump_systematic_matrix(const Code* c)
+{
+    mzd_t* polynomial = mzd_init(c->k, c->n);
+    mzd_t* G = mzd_init(c->k, c->n);
+    fill_poly_form(polynomial, c);
+    for (rci_t i = 0; i < G->nrows; i++)
+        for (rci_t j = 0; j < G->ncols; j++)
+            mzd_write_bit(G, i, j, mzd_read_bit(polynomial, i, c->n - 1 - j));
+    mzd_echelonize_m4ri(G, 1, 0);
+    printf("code %s n=%d k=%d\n", c->name, c->n, c->k);
+    for (rci_t i = 0; i < G->nrows; i++)
+    {
+        for (rci_t j = 0; j < G->ncols; j++)
+            putchar(mzd_read_bit(G, i, j) ? '1' : '0');
+        putchar('\n');
+    }
+    printf("end %s\n", c->name);
+    mzd_free(polynomial);
+    mzd_free(G);
+}
+
 int
 main(int argc, char** argv)
 {
@@ -157,6 +183,7 @@ main(int argc, char** argv)
         return 2;
     }
     const char* selector = (argc > 2) ? argv[2] : "all";
+    const int do_dump = !strcmp(selector, "generator-dump");
     const int do_gen = (!strcmp(selector, "all") || !strcmp(selector, "genmatrix"));
     const int do_sub = (!strcmp(selector, "all") || !strcmp(selector, "substrate"));
 
@@ -195,13 +222,25 @@ main(int argc, char** argv)
     fprintf(stderr, "# seed: 0x%016llx\n", (unsigned long long)SEED);
     fprintf(stderr, "# codes_loaded: %d\n", n_codes);
 
-    printf("lib,version,workload,algorithm,code,n,k,batch,trial,ns_total,bits_per_s_scaled,digest\n");
-
     /* Optional comma-separated allowlist of contract rows, so a run can be
      * bounded to the shapes that fit the available measurement window. */
     const char* only = getenv("GF2_SURVEY_CODES");
     if (only && *only)
         fprintf(stderr, "# codes_selected: %s\n", only);
+
+    if (do_dump)
+    {
+        for (int ci = 0; ci < n_codes; ci++)
+        {
+            const Code* c = &codes[ci];
+            if (only && *only && !strstr(only, c->name))
+                continue;
+            dump_systematic_matrix(c);
+        }
+        return 0;
+    }
+
+    printf("lib,version,workload,algorithm,code,n,k,batch,trial,ns_total,bits_per_s_scaled,digest\n");
 
     for (int ci = 0; ci < n_codes; ci++)
     {
@@ -222,17 +261,28 @@ main(int argc, char** argv)
                 digest = digest_matrix(G);
             }
 
+            const double c0 = now_s();
+            fill_poly_form(G, c);
+            mzd_echelonize_m4ri(G, 1, 0);
+            const double one_ns = (now_s() - c0) * 1e9;
+            long reps = (long)(MIN_TIMED_NS / (one_ns > 0.0 ? one_ns : 1.0)) + 1;
+            if (reps < 1)
+                reps = 1;
+
             for (int trial = 0; trial < TRIALS && spent < CELL_BUDGET_S; trial++)
             {
                 const double t0 = now_s();
-                fill_poly_form(G, c);
-                mzd_echelonize_m4ri(G, 1, 0);
+                for (long rep = 0; rep < reps; rep++)
+                {
+                    fill_poly_form(G, c);
+                    mzd_echelonize_m4ri(G, 1, 0);
+                }
                 const double t1 = now_s();
                 spent += t1 - t0;
-                emit(M4RI_VERSION_STR, "genmatrix-rref", c, c->k, trial, (t1 - t0) * 1e9,
+                emit(M4RI_VERSION_STR, "genmatrix-rref", c, c->k, trial, (t1 - t0) * 1e9 / reps,
                      (double)c->k * (double)c->n, digest);
             }
-            fprintf(stderr, "#   %s genmatrix-rref: %.3f s of timed work\n", c->name, spent);
+            fprintf(stderr, "#   %s genmatrix-rref reps=%ld: %.3f s of timed work\n", c->name, reps, spent);
             mzd_free(G);
             fflush(stdout);
         }
@@ -249,18 +299,30 @@ main(int argc, char** argv)
             const uint64_t ech_digest = digest_matrix(work);
             mzd_free(work);
 
+            const double c0 = now_s();
+            mzd_t* probe = mzd_copy(NULL, R);
+            mzd_echelonize_m4ri(probe, 1, 0);
+            const double one_ns = (now_s() - c0) * 1e9;
+            mzd_free(probe);
+            long reps = (long)(MIN_TIMED_NS / (one_ns > 0.0 ? one_ns : 1.0)) + 1;
+            if (reps < 1)
+                reps = 1;
+
             for (int trial = 0; trial < TRIALS && spent < CELL_BUDGET_S; trial++)
             {
-                mzd_t* A = mzd_copy(NULL, R);
                 const double t0 = now_s();
-                mzd_echelonize_m4ri(A, 1, 0);
+                for (long rep = 0; rep < reps; rep++)
+                {
+                    mzd_t* A = mzd_copy(NULL, R);
+                    mzd_echelonize_m4ri(A, 1, 0);
+                    mzd_free(A);
+                }
                 const double t1 = now_s();
                 spent += t1 - t0;
-                emit(M4RI_VERSION_STR, "echelonize", c, c->k, trial, (t1 - t0) * 1e9,
+                emit(M4RI_VERSION_STR, "echelonize", c, c->k, trial, (t1 - t0) * 1e9 / reps,
                      (double)c->k * (double)c->n, ech_digest);
-                mzd_free(A);
             }
-            fprintf(stderr, "#   %s echelonize: %.3f s of timed work\n", c->name, spent);
+            fprintf(stderr, "#   %s echelonize reps=%ld: %.3f s of timed work\n", c->name, reps, spent);
             mzd_free(R);
 
             for (int bi = 0; bi < N_MATMUL_BATCHES; bi++)
@@ -275,21 +337,32 @@ main(int argc, char** argv)
                 const uint64_t mm_digest = digest_matrix(C);
                 mzd_free(C);
 
+                const double c0 = now_s();
+                mzd_t* probe = mzd_mul_m4rm(NULL, M, G, 0);
+                const double one_ns = (now_s() - c0) * 1e9;
+                mzd_free(probe);
+                long reps = (long)(MIN_TIMED_NS / (one_ns > 0.0 ? one_ns : 1.0)) + 1;
+                if (reps < 1)
+                    reps = 1;
+
                 double mspent = 0.0;
                 for (int trial = 0; trial < TRIALS && mspent < CELL_BUDGET_S; trial++)
                 {
                     const double t0 = now_s();
-                    mzd_t* out = mzd_mul_m4rm(NULL, M, G, 0);
+                    for (long rep = 0; rep < reps; rep++)
+                    {
+                        mzd_t* out = mzd_mul_m4rm(NULL, M, G, 0);
+                        mzd_free(out);
+                    }
                     const double t1 = now_s();
                     mspent += t1 - t0;
                     /* Scaled per information bit of the batch, matching the W1
                      * throughput unit, so the genmatrix-multiply family is
                      * directly comparable with the LFSR families. */
-                    emit(M4RI_VERSION_STR, "matmul-m4rm", c, batch, trial, (t1 - t0) * 1e9,
+                    emit(M4RI_VERSION_STR, "matmul-m4rm", c, batch, trial, (t1 - t0) * 1e9 / reps,
                          (double)batch * (double)c->k, mm_digest);
-                    mzd_free(out);
                 }
-                fprintf(stderr, "#   %s matmul-m4rm batch=%d: %.3f s of timed work\n", c->name, batch, mspent);
+                fprintf(stderr, "#   %s matmul-m4rm batch=%d reps=%ld: %.3f s of timed work\n", c->name, batch, reps, mspent);
                 mzd_free(M);
                 mzd_free(G);
             }

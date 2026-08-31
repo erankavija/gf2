@@ -277,15 +277,26 @@ run_w2(ScalarBCH& enc, const CodeSpec& cs, std::vector<Row>& out)
         digest *= 1099511628211ull;
     }
 
+    // Calibrate the inner repetition count just as W1 does. Small generator
+    // matrices otherwise fall below the protocol's minimum timed region.
+    const auto c0 = std::chrono::steady_clock::now();
+    materialize();
+    const auto c1 = std::chrono::steady_clock::now();
+    const double one_ns = std::chrono::duration<double, std::nano>(c1 - c0).count();
+    long reps = (long)(MIN_TIMED_NS / (one_ns > 0.0 ? one_ns : 1.0)) + 1;
+    if (reps < 1) reps = 1;
+
     double spent = 0.0;
     for (int trial = 0; trial < TRIALS && spent < CELL_BUDGET_S; trial++)
     {
         const auto t0 = std::chrono::steady_clock::now();
-        materialize();
+        for (long rep = 0; rep < reps; rep++)
+            materialize();
         const auto t1 = std::chrono::steady_clock::now();
 
-        const double ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
-        spent += ns * 1e-9;
+        const double total_ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
+        spent += total_ns * 1e-9;
+        const double ns = total_ns / (double)reps;
         Row r;
         r.workload = "W2";
         r.algorithm = "basis-encode-pack";
@@ -300,6 +311,7 @@ run_w2(ScalarBCH& enc, const CodeSpec& cs, std::vector<Row>& out)
         r.digest = digest;
         out.push_back(r);
     }
+    std::fprintf(stderr, "#   %s basis-encode-pack batch=%d reps=%ld spent=%.2fs\n", cs.name, k, reps, spent);
 }
 
 // ---------------------------------------------------------------------- main
