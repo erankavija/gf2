@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-31T22:03:44.315143174Z",
+  "dependencies": [],
+  "description": "crates/gf2-core/src/gf2m/wide_config.rs:22 claims the implicit-leading-bit convention matches Gf2mField_::new, but that carrier stores the leading term explicitly (BinaryPrimeExt::new in field/extension.rs now depends on the explicit form). Fix the comment to state the actual convention.\n\n## Success Criteria\n\n- [hard] REQ-01: The wide_config.rs convention comment states the explicit-leading-term behavior consistent with Gf2mField_::new and the extension-trait usage, verified against the code.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-31T22:03:44.315143174Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "b438e7de-5001-4d68-9ba5-ab27453cb7a0",
+  "labels": [
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "wide_config.rs comment misstates the leading-term convention",
+  "updated_at": "2026-08-31T22:03:44.315143174Z"
+}
