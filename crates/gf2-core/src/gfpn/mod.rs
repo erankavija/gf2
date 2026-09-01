@@ -57,8 +57,10 @@ pub mod batch;
 mod cubic;
 mod ext_config;
 mod quadratic;
+pub mod quotient;
 
 pub use batch::{BatchExtField, SimdKaratsubaHook};
 pub use cubic::{CubicExt, CubicExtWide};
 pub use ext_config::ExtConfig;
 pub use quadratic::{QuadraticExt, QuadraticExtWide};
+pub use quotient::{QuotientElement, QuotientExt, QuotientField};
