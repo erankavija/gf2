@@ -12,7 +12,7 @@
           "title": "Reproducible external-baseline survey and workload selection",
           "classification": "research",
           "difficulty": "hard",
-          "status": "doc-review R2 FAIL fixed lead-direct: F1 receipt relinked (801d8985); F2 M4RI route now fills+RREFs in repository order, output bit-identical to gf2 (verifier rc=0); full re-measurement of both stages running; then prose/number sync, doc-review R3, research-review R3"
+          "status": "done: doc-review + research-review passed after 3 rework rounds + lead-direct closures (repository-order W2 route, fresh-alloc cells, committed-revision re-measurement); merged bcad5063"
         },
         {
           "key": "bch-property-tests",
