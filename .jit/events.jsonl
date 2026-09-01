@@ -10312,3 +10312,4 @@
 {"gate_key":"doc-review","id":"0df086b8-7b55-41a2-98d9-bc34a9987056","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T21:16:02.766897978Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"3769f222-0dbd-41af-9f0c-9312155badc7","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-08-31T21:28:08.513934896Z","type":"gate_failed","updated_by":"auto:executor"}
 {"id":"644ee09a-ee7c-41d2-9065-843614c08f3b","issue_id":"b438e7de-5001-4d68-9ba5-ab27453cb7a0","priority":"low","timestamp":"2026-08-31T22:03:44.315143174Z","title":"wide_config.rs comment misstates the leading-term convention","type":"issue_created"}
+{"fields":["description"],"id":"c918b0e2-29c3-4dc7-9772-55c3c1ba5956","issue_id":"5bdc9552-0290-4dca-b0a6-bc7009837875","timestamp":"2026-09-01T01:35:23.521919785Z","type":"issue_updated","updated_by":"issue-update"}
