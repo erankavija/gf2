@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:codex",
+  "claimed_at": "2026-09-01T07:23:17.902848351Z",
   "context": {},
   "created_at": "2026-08-22T21:29:27.371031186Z",
   "dependencies": [
@@ -97,7 +98,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-01T07:22:16.716996416Z"
+  "updated_at": "2026-09-01T07:23:17.902848351Z"
 }
