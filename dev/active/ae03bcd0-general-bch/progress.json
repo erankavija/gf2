@@ -271,7 +271,7 @@
           "title": "Migrate library eBCH consumers to the generic extension",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "rework attempt 1 in flight (Luna xhigh, worktree agent-6d67e57e-r2): code-review R1 FAIL F1 duplicated eBCH construction/parity materialization across product/GRAND/fading; canonical ParityCheckMatrixAccess for Extended<C> + shared fixture; prior session died mid-rework (WIP preserved 37074ddf)"
+          "status": "done: rework R1 (Luna xhigh finished killed-session draft), merged fb095d61, cargo-ci + code-review R2 passed"
         },
         {
           "key": "encode-batch-workspace",
@@ -279,7 +279,7 @@
           "title": "Allocation-free single, workspace batch, and parallel batch encoding",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework attempt 1 in flight (native Opus, fresh worktree at dbb28407): code-review R1 FAIL \u2014 BlockEncoder::encode_into allocates via encode_systematic_into default (encode.rs:1314/588); REQ-01 unmet"
+          "status": "rework attempt 2 in flight (live Opus teammate): R1 alloc-free encode_into merged 67d35782 + cargo-ci passed; code-review R2 FAIL new finding \u2014 encode_partitions fewer chunks than workspaces on non-divisible batches (encode.rs:1366)"
         },
         {
           "key": "hip-equivalence",
@@ -549,7 +549,7 @@
     "0c4d84cf": 1,
     "981c5ae3": 1,
     "6d67e57e": 1,
-    "8f68699b": 1,
+    "8f68699b": 2,
     "c3cc5226": 1
   },
   "surfaced_pitfalls": [
