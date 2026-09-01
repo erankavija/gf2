@@ -108,8 +108,10 @@
 //! The `_unchecked` suffix carries the contract, as it does elsewhere in
 //! Rust: no memory safety is at stake and no `unsafe` is involved, but the
 //! caller promises the memo really does stand for the pair the witness names.
-//! Both reuse paths check only that the certificate's identities match, which
-//! is `O(1)` and catches an honest mix-up; neither re-derives. A memo of
+//! Both reuse paths check only that the certificate's identities match —
+//! a structural comparison linear in the modulus degree, and in particular
+//! free of any decision procedure — which catches an honest mix-up; neither
+//! re-derives. A memo of
 //! something else yields a mathematically invalid witness, the same way wrong
 //! parameters do anywhere else. This is the shape
 //! `@/inv/caller-trusted-fast-paths` fixes for the whole project: validation
@@ -1393,6 +1395,12 @@ impl ExtensionCertificate {
     /// Validates that the characteristics agree and that `ext` reaches `base`
     /// through its base chain, then records the pair.
     ///
+    /// The `basis` is caller-asserted provenance, recorded as given: this
+    /// constructor validates the identity relationship only, never the claim
+    /// the basis makes about how the pair was validated. A certificate built
+    /// here feeds the `_unchecked` reuse constructors on the caller's own
+    /// responsibility (`@/inv/caller-trusted-fast-paths`).
+    ///
     /// # Errors
     ///
     /// - [`FieldError::CharacteristicMismatch`] when the two characteristics
@@ -2215,7 +2223,8 @@ impl<V: UintExt> BinaryPrimeExt<V> {
     /// irreducibility decision that [`new`](Self::new) runs is `O(m³)`, so a
     /// caller constructing repeatedly over one presentation runs it once and
     /// presents the result here. This method skips that decision entirely:
-    /// its only check is the `O(1)` identity comparison below, which is there
+    /// its only check is the identity comparison below — structural, linear
+    /// in the modulus degree, free of any decision procedure — which is there
     /// to catch an honest mix-up, not to re-derive anything.
     ///
     /// # Contract
@@ -2428,9 +2437,10 @@ impl<E: ConstSimpleExtension> ConstExt<E> {
     ///
     /// As with [`BinaryPrimeExt::from_certificate_unchecked`], the certificate
     /// is a memo of validation performed earlier and the caller promises it
-    /// memoizes the pair `E` and its base name. Only the `O(1)` identity
-    /// comparison runs; a memo of something else yields a witness over a
-    /// carrier that is not a field. See `@/inv/caller-trusted-fast-paths`.
+    /// memoizes the pair `E` and its base name. Only the structural identity
+    /// comparison runs — linear in the modulus degree, no decision procedure;
+    /// a memo of something else yields a witness over a carrier that is not
+    /// a field. See `@/inv/caller-trusted-fast-paths`.
     ///
     /// # Errors
     ///
