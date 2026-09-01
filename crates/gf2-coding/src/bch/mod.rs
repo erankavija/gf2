@@ -48,7 +48,10 @@ pub mod extended;
 pub mod matrix;
 pub mod spec;
 
-pub use core::{BchCode, BchDecoder, BchEncoder, CodeRate};
+pub use core::{
+    BchCode, BchDecodeOutcome, BchDecodeReport, BchDecodeWorkspace, BchDecoder, BchEncoder,
+    BinaryBchDecoder, CodeRate,
+};
 pub use matrix::CachedMatrices;
 // The canonical code type keeps its module path while `core::BchCode` still
 // occupies this name; `spec::BchCode` is reachable as `spec::DenseBchCode` or
