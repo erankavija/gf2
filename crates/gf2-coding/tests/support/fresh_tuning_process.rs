@@ -11,6 +11,7 @@ use std::process::{Command, Stdio};
 
 use gf2_coding::bch::encode::{EncodeFamily, SystematicLayout, TABLE_REMAINDER_BLOCK_BITS};
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+use gf2_coding::test_support;
 use gf2_coding::tuning::{self, CodingTuning, EncodeSelectors};
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::gf2m::Gf2mField;
@@ -39,6 +40,9 @@ pub enum FreshProcessCase {
     ConservativeDefault,
     /// A programmatically compiled envelope admitting the table family.
     TableRemainderCompiled,
+    /// The same selectors, with the buffer shapes watched across repeated
+    /// batches rather than the codewords compared.
+    TableRemainderAllocation,
     /// The same selectors carried through the owner codec's canonical JSON.
     #[cfg(feature = "tuning-profile")]
     TableRemainderEncoded,
@@ -49,6 +53,7 @@ impl FreshProcessCase {
         match self {
             Self::ConservativeDefault => "conservative-default",
             Self::TableRemainderCompiled => "table-remainder-compiled",
+            Self::TableRemainderAllocation => "table-remainder-allocation",
             #[cfg(feature = "tuning-profile")]
             Self::TableRemainderEncoded => "table-remainder-encoded",
         }
@@ -68,6 +73,7 @@ impl FreshProcessCase {
         match object.get("case").and_then(serde_json::Value::as_str) {
             Some("conservative-default") => Ok(Self::ConservativeDefault),
             Some("table-remainder-compiled") => Ok(Self::TableRemainderCompiled),
+            Some("table-remainder-allocation") => Ok(Self::TableRemainderAllocation),
             #[cfg(feature = "tuning-profile")]
             Some("table-remainder-encoded") => Ok(Self::TableRemainderEncoded),
             _ => Err("fresh-process case has an unknown case name".to_owned()),
@@ -200,6 +206,7 @@ pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
         FreshProcessCase::TableRemainderCompiled => {
             execute_install_child(compiled_envelope(selectors_admitting_the_table_family()))
         }
+        FreshProcessCase::TableRemainderAllocation => execute_allocation_child(),
         #[cfg(feature = "tuning-profile")]
         FreshProcessCase::TableRemainderEncoded => {
             execute_install_child(encoded_envelope(selectors_admitting_the_table_family()))
@@ -278,6 +285,58 @@ fn execute_install_child(prepared: PreparedEnvelope) -> serde_json::Value {
     serde_json::json!({
         "family": selected.name(),
         "agrees_with_reference": agrees,
+        "resolution": "installed",
+    })
+}
+
+/// Watches the buffers each batch path owns while the installed profile has
+/// the table family selected.
+///
+/// The workspace claim is the strict one: its shape is read before any
+/// encode, so an equal shape after the first batch witnesses that the family
+/// preparation happened when the workspace was built, not when the batch
+/// selected it. The thread scratch is the entry point that allocates its own
+/// result, so its claim is steady state: it sizes on the first batch in this
+/// family and reuses that sizing afterwards.
+fn execute_allocation_child() -> serde_json::Value {
+    gf2_core::tuning::install(compiled_envelope(selectors_admitting_the_table_family())).unwrap();
+    let code = corpus_row_b3();
+    let layout = SystematicLayout::default();
+    assert_eq!(
+        code.selected_encode_family(layout, BATCH),
+        EncodeFamily::TableRemainder,
+        "this case is only evidence while the table family is the selected one"
+    );
+
+    let messages: Vec<BitVec> = (0..BATCH)
+        .map(|index| BitVec::random_seeded(code.k(), index as u64 + 1))
+        .collect();
+    let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+
+    let mut workspace = code.encode_workspace();
+    let built = test_support::encode_workspace_shape(&workspace);
+    let mut workspace_stable = !workspace.registers().tables.is_empty();
+    for _ in 0..8 {
+        code.encode_batch_into(&messages, layout, &mut workspace, &mut codewords)
+            .expect("a validated batch encodes");
+        workspace_stable &= test_support::encode_workspace_shape(&workspace) == built;
+    }
+
+    code.encode_batch(&messages, layout)
+        .expect("a validated batch encodes");
+    let sized = test_support::encode_scratch_shape::<u64>()
+        .expect("the first packed batch sizes this thread's scratch");
+    let mut scratch_stable = true;
+    for _ in 0..8 {
+        code.encode_batch(&messages, layout)
+            .expect("a validated batch encodes");
+        scratch_stable &= test_support::encode_scratch_shape::<u64>().as_ref() == Some(&sized);
+    }
+
+    serde_json::json!({
+        "family": code.selected_encode_family(layout, BATCH).name(),
+        "workspace_shape_stable_from_creation": workspace_stable,
+        "scratch_shape_stable_after_first_batch": scratch_stable,
         "resolution": "installed",
     })
 }

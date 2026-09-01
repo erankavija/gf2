@@ -110,6 +110,15 @@
 //! thread holds one pair per register word type until it exits, keeping the
 //! allocation of the largest redundancy it has encoded in that type.
 //!
+//! A workspace is prepared for every family its code's representation
+//! implements, at the moment it is built. The profile then chooses among
+//! families whose storage already exists, so a batch over a workspace
+//! reaches no allocator on its first call any more than on its later ones,
+//! and a workspace built before a profile is installed serves the selection
+//! made after it. The entry points that own no workspace prepare the
+//! selected family alone, over scratch their thread keeps and resizes in
+//! place.
+//!
 //! Resetting a pair rewrites the low coefficients, which is $O(r)$ per call.
 //! [`BchCode::encode_workspace`] pays that once for a whole sequence instead
 //! and hands the pair to the caller.
@@ -692,12 +701,15 @@ pub struct EncodeRegisters<W> {
     /// recurrence.
     pub low: Vec<W>,
 
-    /// The selected family's precomputed reduction table.
+    /// Precomputed reduction tables for the families that read one.
     ///
-    /// [`SystematicKernel::reset_family`] fills this for a family that
-    /// reduces through a table and leaves it empty for one that does not, so
-    /// [`EncodeFamily::REFERENCE`] carries no table storage. Its length and
-    /// layout belong to the family that wrote it.
+    /// [`SystematicKernel::registers`] fills this for every family the
+    /// representation implements for the plan, so a batch call selects a
+    /// prepared family whichever one the profile admits and never sizes this
+    /// buffer itself. It stays empty when no available family reduces
+    /// through a table, which is the case for
+    /// [`EncodeFamily::REFERENCE`] alone. Its length and layout belong to
+    /// the families that read it.
     pub tables: Vec<W>,
 }
 
@@ -818,6 +830,38 @@ where
     })
 }
 
+/// The address, length, and capacity of every buffer `registers` holds.
+///
+/// The encoding paths size these buffers once and overwrite them in place
+/// afterwards, so two equal snapshots witness that the encodes between them
+/// reached no allocator. Exposed to tests through
+/// [`crate::test_support`].
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn register_shape<W>(registers: &EncodeRegisters<W>) -> Vec<(usize, usize, usize)> {
+    [&registers.register, &registers.low, &registers.tables]
+        .into_iter()
+        .map(|buffer| (buffer.as_ptr() as usize, buffer.len(), buffer.capacity()))
+        .collect()
+}
+
+/// [`register_shape`] for the scratch registers the calling thread holds for
+/// `W`, or `None` before this thread has encoded in that word type.
+///
+/// These are the only buffers an entry point that owns no workspace can
+/// allocate, so this is what witnesses that such a path reuses its scratch.
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> {
+    ENCODE_SCRATCH.with_borrow(|scratch| {
+        let word = TypeId::of::<W>();
+        let entry = scratch.iter().find(|entry| entry.word == word)?;
+        let registers = entry
+            .registers
+            .downcast_ref::<EncodeRegisters<W>>()
+            .expect("the entry a word type's TypeId selects holds that word type's registers");
+        Some(register_shape(registers))
+    })
+}
+
 // ---------------------------------------------------------------------------
 // The representation-specific kernels
 // ---------------------------------------------------------------------------
@@ -868,11 +912,21 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     fn reset_registers(plan: &SystematicPlan<'_, F>, registers: &mut EncodeRegisters<Self::Word>);
 
     /// Builds the registers `plan`'s recurrence runs over, sized from its
-    /// redundancy and carrying its generator's low coefficients.
+    /// redundancy, carrying its generator's low coefficients, and prepared
+    /// for every family this representation implements for `plan`.
+    ///
+    /// Preparing every available family here rather than the selected one
+    /// later is what keeps a batch call allocation-free on its first
+    /// iteration as well as its later ones: the profile chooses among
+    /// families whose storage already exists, so no selection can reach the
+    /// allocator. It also makes the buffers a function of the plan alone,
+    /// so a workspace built before a profile is installed serves the
+    /// selection made after it.
     ///
     /// # Complexity
     ///
-    /// Two allocations, together $O(r)$ words.
+    /// Two allocations, together $O(r)$ words, plus each available family's
+    /// own preparation.
     fn registers(plan: &SystematicPlan<'_, F>) -> EncodeRegisters<Self::Word> {
         let mut registers = EncodeRegisters {
             register: Vec::new(),
@@ -880,6 +934,11 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
             tables: Vec::new(),
         };
         Self::reset_registers(plan, &mut registers);
+        for &family in EncodeFamily::REGISTERED {
+            if Self::family_available(family, plan) {
+                Self::reset_family(family, plan, &mut registers);
+            }
+        }
         registers
     }
 
@@ -899,14 +958,20 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     /// Prepares `registers` for `family` beyond what
     /// [`reset_registers`](Self::reset_registers) established.
     ///
-    /// A batch call runs this once per workspace before its first message,
-    /// so a family whose step reads precomputed state builds that state here
-    /// rather than per message. The default implementation does nothing,
-    /// which is what [`EncodeFamily::REFERENCE`] needs.
+    /// A family whose step reads precomputed state builds that state here
+    /// rather than per message. [`registers`](Self::registers) runs it for
+    /// every available family when it builds the buffers, so a workspace
+    /// batch never runs it at all; the entry points that own no workspace
+    /// run it for the selected family alone, over scratch their thread
+    /// keeps. The default implementation does nothing, which is what
+    /// [`EncodeFamily::REFERENCE`] needs.
+    ///
+    /// An implementation resizes rather than reallocates, so a second call
+    /// over buffers this one already prepared reaches no allocator.
     ///
     /// # Complexity
     ///
-    /// Family-dependent, and paid once per batch call rather than per
+    /// Family-dependent, and paid per buffer preparation rather than per
     /// message.
     fn reset_family(
         family: EncodeFamily,
@@ -1146,11 +1211,15 @@ impl SystematicKernel<Fp<2>> for BitVec {
 
     /// Builds the reduction tables [`EncodeFamily::TableRemainder`] reads.
     ///
+    /// The buffer is cleared and resized rather than replaced, so preparing
+    /// registers that already carry tables of this length reaches no
+    /// allocator.
+    ///
     /// # Complexity
     ///
     /// $O(\lceil r/64 \rceil)$ words per table entry, so
-    /// $O(1024 \lceil r/64 \rceil)$ word writes once per batch call, against
-    /// the batch's $O(m k \lceil r/64 \rceil)$ reduction.
+    /// $O(1024 \lceil r/64 \rceil)$ word writes per preparation, against a
+    /// batch's $O(m k \lceil r/64 \rceil)$ reduction.
     fn reset_family(
         family: EncodeFamily,
         plan: &SystematicPlan<'_, Fp<2>>,
@@ -1172,7 +1241,9 @@ impl SystematicKernel<Fp<2>> for BitVec {
     /// # Errors
     ///
     /// Returns [`CodeError::BufferLengthMismatch`] for a message, codeword,
-    /// or register buffer of the wrong length.
+    /// or register buffer of the wrong length, and for registers that
+    /// [`reset_family`](Self::reset_family) has not prepared for a family
+    /// that reduces through a table.
     ///
     /// # Complexity
     ///
@@ -1194,7 +1265,15 @@ impl SystematicKernel<Fp<2>> for BitVec {
         }
 
         plan.validate_lengths(message.len(), codeword.len())?;
-        validate_registers(redundancy.div_ceil(64), registers)?;
+        let words = redundancy.div_ceil(64);
+        validate_registers(words, registers)?;
+        let expected = TABLE_REMAINDER_TABLES * TABLE_REMAINDER_ENTRIES * words;
+        if registers.tables.len() != expected {
+            return Err(CodeError::BufferLengthMismatch {
+                expected,
+                actual: registers.tables.len(),
+            });
+        }
         let EncodeRegisters {
             register,
             low,
@@ -1661,7 +1740,6 @@ where
             return Err(BchError::EncodeFamilyUnavailable { family });
         }
         validate_batch(&plan, messages, codewords)?;
-        S::reset_family(family, &plan, &mut workspace.registers);
         encode_partition(family, &plan, messages, &mut workspace.registers, codewords);
         Ok(())
     }
@@ -1700,10 +1778,19 @@ where
     /// [`encode_systematic_into`](Self::encode_systematic_into) reports for a
     /// message this code does not encode.
     ///
+    /// This is the entry point that allocates its own result, so it is the
+    /// one batch path whose scratch is the calling thread's rather than a
+    /// caller's workspace. The selected family's state is prepared over that
+    /// scratch, which sizes it on the thread's first batch in this family
+    /// and reuses it afterwards; a caller that wants the whole path free of
+    /// the allocator uses
+    /// [`encode_batch_into`](Self::encode_batch_into) with a workspace.
+    ///
     /// # Complexity
     ///
-    /// One recurrence per message over the calling thread's scratch
-    /// registers, plus the output vector.
+    /// One reduction per message in the selected family over the calling
+    /// thread's scratch registers, plus that family's preparation and the
+    /// output vector.
     pub fn encode_batch(
         &self,
         messages: &[S],
@@ -1954,10 +2041,9 @@ where
 
 /// Encodes one worker's contiguous partition in index order under `family`.
 ///
-/// Every argument has already passed [`validate_batch`], `registers` has the
-/// geometry [`SystematicKernel::registers`] gives this plan, and it has
-/// passed [`SystematicKernel::reset_family`] for `family`, so the kernel
-/// cannot reject anything here.
+/// Every argument has already passed [`validate_batch`], and `registers` has
+/// the geometry and family state [`SystematicKernel::registers`] gives this
+/// plan, so the kernel cannot reject anything here.
 fn encode_partition<F, S>(
     family: EncodeFamily,
     plan: &SystematicPlan<'_, F>,
@@ -2077,9 +2163,6 @@ fn encode_partitions<F, S>(
     let workers = workspaces.len().min(messages.len());
     if workers == 0 {
         return;
-    }
-    for workspace in workspaces.iter_mut().take(workers) {
-        S::reset_family(family, plan, &mut workspace.registers);
     }
     encode_partitions_over(
         family,
@@ -3027,15 +3110,13 @@ mod tests {
 
     // -- REQ-01: an encode reaches no allocator --------------------------
 
-    /// The address, length, and capacity of each register buffer. The code
-    /// sizes both once and only overwrites them afterwards, so an unchanged
-    /// snapshot witnesses that neither buffer moved or grew, and therefore
-    /// that the encodes between two reads reallocated nothing.
+    /// The address, length, and capacity of each register buffer, including
+    /// the reduction tables an algorithm family reads. The code sizes them
+    /// once and only overwrites them afterwards, so an unchanged snapshot
+    /// witnesses that no buffer moved or grew, and therefore that the
+    /// encodes between two reads reallocated nothing.
     fn register_shape<W>(registers: &EncodeRegisters<W>) -> Vec<(usize, usize, usize)> {
-        [&registers.register, &registers.low]
-            .into_iter()
-            .map(|buffer| (buffer.as_ptr() as usize, buffer.len(), buffer.capacity()))
-            .collect()
+        crate::bch::encode::register_shape(registers)
     }
 
     /// That snapshot for the buffers a caller's workspace owns.
@@ -3050,15 +3131,7 @@ mod tests {
     /// workspace: those registers are the only buffers such an encode can
     /// allocate.
     fn scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> {
-        ENCODE_SCRATCH.with_borrow(|scratch| {
-            let word = TypeId::of::<W>();
-            let entry = scratch.iter().find(|entry| entry.word == word)?;
-            let registers = entry
-                .registers
-                .downcast_ref::<EncodeRegisters<W>>()
-                .expect("the entry a word type's TypeId selects holds that word type's registers");
-            Some(register_shape(registers))
-        })
+        crate::bch::encode::encode_scratch_shape::<W>()
     }
 
     #[test]
@@ -3225,6 +3298,90 @@ mod tests {
                 "no workspace buffer moved or grew during a batch"
             );
         }
+    }
+
+    #[test]
+    fn a_workspace_is_prepared_for_every_family_before_its_first_batch() {
+        // B3's redundancy makes a second family available, so the workspace
+        // carries that family's reduction tables from the moment it is
+        // built. The first batch under it must therefore find every buffer
+        // it needs already sized: the shape read before any encode has to
+        // survive the first call, not only the calls after it.
+        let code = binary_narrow_sense(8, 0b100011101, 9);
+        let layout = SystematicLayout::default();
+        assert!(code.encode_family_available(EncodeFamily::TableRemainder, layout));
+
+        let mut workspace = code.encode_workspace();
+        let shape = buffer_shape(&workspace);
+        assert!(
+            !workspace.registers().tables.is_empty(),
+            "building a workspace prepares the families its code can run"
+        );
+
+        let messages = seeded_bit_batch(code.k(), 16, 0x177B_DC85);
+        let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+        for round in 0..8 {
+            for &family in EncodeFamily::REGISTERED {
+                if !code.encode_family_available(family, layout) {
+                    continue;
+                }
+                for &layout in LAYOUTS {
+                    code.encode_batch_family_into(
+                        family,
+                        &messages,
+                        layout,
+                        &mut workspace,
+                        &mut codewords,
+                    )
+                    .expect("an available family encodes a validated batch");
+                    assert_eq!(
+                        buffer_shape(&workspace),
+                        shape,
+                        "{family} moved or grew a workspace buffer on round {round}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn a_workspace_without_a_second_family_carries_no_table_storage() {
+        // B1's redundancy leaves the reference the only available family, so
+        // the workspace pays no table storage for a family it cannot run.
+        let code = binary_narrow_sense(4, 0b10011, 7);
+        let layout = SystematicLayout::default();
+        assert!(!code.encode_family_available(EncodeFamily::TableRemainder, layout));
+        assert!(code.encode_workspace().registers().tables.is_empty());
+    }
+
+    #[test]
+    fn a_table_family_rejects_registers_it_was_not_prepared_for() {
+        // The kernel entry is public, so registers assembled without the
+        // family's preparation reach it. That is caller error with a typed
+        // answer, not a panic.
+        let code = binary_narrow_sense(8, 0b100011101, 9);
+        let plan = code.systematic_plan(SystematicLayout::default());
+        let mut registers = EncodeRegisters::<u64> {
+            register: Vec::new(),
+            low: Vec::new(),
+            tables: Vec::new(),
+        };
+        BitVec::reset_registers(&plan, &mut registers);
+
+        let message = seeded_bits(plan.dimension(), 3);
+        let mut codeword = BitVec::zeros(plan.length());
+        let error = BitVec::encode_systematic_family(
+            EncodeFamily::TableRemainder,
+            &plan,
+            &message,
+            &mut registers,
+            &mut codeword,
+        )
+        .expect_err("unprepared registers carry no reduction tables");
+        assert!(matches!(
+            error,
+            CodeError::BufferLengthMismatch { actual: 0, .. }
+        ));
     }
 
     #[test]
