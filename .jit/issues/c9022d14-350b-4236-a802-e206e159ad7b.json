@@ -17,7 +17,7 @@
     "type:enhancement"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Name or wrap the validation-skipping ConstExt::new per caller-trusted-fast-paths",
-  "updated_at": "2026-09-01T10:52:35.748778849Z"
+  "updated_at": "2026-09-01T12:06:56.886681260Z"
 }
