@@ -588,6 +588,8 @@
     "codex exec intermittently deadlocks at startup (futex wait, no session rollout, own arg0 lock) under concurrent codex launches; probe for the session rollout within ~3 min of any codex dispatch/gate and kill+retry or fall back to a native agent.",
     "jit gate evaluate wraps checker execution in with_mutation_attempts (gate_check.rs:903): input-evidence drift during a long checker run silently discards the completed verdict and re-runs the checker. Reported to the just-in-time session for immediate fix (no automatic retry). Until fixed: freeze all repo writes during long gate runs, and salvage discarded verdicts from ~/.codex/sessions rollouts.",
     "Survey worktree agent-4e732b56 must NOT be reclaimed: it holds the built external baselines (AFF3CT/bchlib/M4RI/IT++) the research-review rework needs for the F2 matrix-equality check.",
-    "codex rollout probe: find -newermt relative to dispatch under ~/.codex/sessions/YYYY/MM/DD returned a false negative once while the rollout existed; verify with pgrep + a direct ls of the session dir before declaring a deadlock."
+    "codex rollout probe: find -newermt relative to dispatch under ~/.codex/sessions/YYYY/MM/DD returned a false negative once while the rollout existed; verify with pgrep + a direct ls of the session dir before declaring a deadlock.",
+    "jit issue claim silently no-ops via tail-swallowed error on dep-blocked issues (they refuse in_progress); use jit issue assign for advisory ownership of blocked issues and verify assignee afterward.",
+    "git add .jit sweeps OTHER leads' unstaged gate/issue writes (peer gate evaluations write .jit outside their lock window; incident 692f0653). Under the lock: verify git status --porcelain .jit is clean BEFORE your own jit writes, commit immediately after, and never use commit -am."
   ]
 }

@@ -10335,3 +10335,7 @@
 {"id":"62f0526b-2655-435d-9ac8-2669eac3be70","issue_id":"b4d7a25d-0843-46e5-8792-2034f7ce53ee","priority":"high","timestamp":"2026-09-01T02:28:05.872543Z","title":"GPU batch encoding behind the canonical encoding interfaces","type":"issue_created"}
 {"from":"ready","id":"fe053bb2-ceca-4c0b-b4e0-418ccfdb60ce","issue_id":"06ba0418-f933-4037-b3d2-bd2b6dc6a1d5","timestamp":"2026-09-01T02:31:30.104059631Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:codex","id":"c9b678e9-ce2f-4f71-8515-aae4d63a5b8f","issue_id":"06ba0418-f933-4037-b3d2-bd2b6dc6a1d5","timestamp":"2026-09-01T02:31:30.104059631Z","type":"issue_claimed"}
+{"assignee":"agent:worker","id":"fa7a91c5-a157-4b58-bd81-192de0c44126","issue_id":"ebdbd228-cc01-4b49-b961-cda8b32a7935","timestamp":"2026-09-01T02:33:33.317850413Z","type":"issue_claimed"}
+{"assignee":"agent:worker","id":"e8bd13a8-aed5-4a88-9097-a893861ac868","issue_id":"19fe9394-5220-4f74-adb9-34280ecd6fc1","timestamp":"2026-09-01T02:33:33.644783667Z","type":"issue_claimed"}
+{"assignee":"agent:worker","id":"84a2f0d5-256d-4294-9d48-fb36eada543a","issue_id":"fc2fa0b6-d169-4741-918d-d690c0f06333","timestamp":"2026-09-01T02:33:33.938846561Z","type":"issue_claimed"}
+{"assignee":"agent:worker","id":"b182d5d9-630c-4af0-9283-ff8823f4d17d","issue_id":"997f0ab9-c591-4bfb-ad3b-b2b48336fe35","timestamp":"2026-09-01T02:33:34.241526317Z","type":"issue_claimed"}
