@@ -38,24 +38,64 @@
 //!
 //! # Representations
 //!
-//! Encoding runs the same shift-register recurrence in two representations,
-//! selected at compile time by the code's symbol storage: a packed binary
-//! path over `u64` words for [`BitVec`], and the field-generic path over base
-//! field elements for [`FieldVec`]. The packed path never materializes
-//! `FieldVec<Fp<2>>`. [`SystematicKernel`] is the contract those two paths
-//! implement.
+//! Encoding runs in two representations, selected at compile time by the
+//! code's symbol storage: a packed binary path over `u64` words for
+//! [`BitVec`], and the field-generic path over base field elements for
+//! [`FieldVec`]. The packed path never materializes `FieldVec<Fp<2>>`.
+//! [`SystematicKernel`] is the contract those two paths implement.
+//!
+//! # Algorithm families
+//!
+//! Within one representation, a batch encode chooses among the registered
+//! algorithm families of [`EncodeFamily`]. They are mathematically
+//! equivalent: each computes the remainder of $x^r m(x)$ modulo the
+//! generator, so a batch encoded under any two of them is bit-identical, and
+//! they differ only in how many message coefficients one reduction step
+//! consumes and in what precomputation that step reads.
+//!
+//! Selection is a conjunction of two independent decisions, and neither can
+//! overrule the other:
+//!
+//! - **availability** — [`SystematicKernel::family_available`] answers
+//!   whether the representation implements a family for the plan at hand.
+//!   [`EncodeFamily::REFERENCE`] is available for every plan in every
+//!   representation, which is what makes the dispatch total;
+//! - **admission** — the `encode` selector family of
+//!   [`crate::tuning::CodingTuning`] answers whether the active profile
+//!   admits it at this redundancy and batch length. The conservative section
+//!   admits only the reference, so a process that installs no profile
+//!   encodes exactly as it did before any family beyond the reference was
+//!   registered.
+//!
+//! The seam walks [`EncodeFamily::REGISTERED`] in order and takes the first
+//! entry both decisions accept, which the reference always terminates. A
+//! caller that needs a named family rather than the selected one, as a
+//! differential check does, calls
+//! [`encode_batch_family_into`](BchCode::encode_batch_family_into) and
+//! receives [`BchError::EncodeFamilyUnavailable`] rather than a silent
+//! substitution.
+//!
+//! This is not the SIMD feature-detection seam. That one chooses an
+//! instruction-set implementation of a fixed algorithm inside a family; this
+//! one chooses the algorithm, and a family may use the other seam internally.
 //!
 //! # Complexity
 //!
-//! Let $r = n - k$. Encoding one message costs $O(k r)$ base-field
-//! multiply-adds in the field-generic path and $O(k \lceil r/64 \rceil)$ word
-//! operations plus $O(n)$ bit writes in the packed binary path.
+//! Let $r = n - k$. Encoding one message under
+//! [`EncodeFamily::REFERENCE`] costs $O(k r)$ base-field multiply-adds in
+//! the field-generic path and $O(k \lceil r/64 \rceil)$ word operations plus
+//! $O(n)$ bit writes in the packed binary path.
+//! [`EncodeFamily::TableRemainder`] runs
+//! $O((k / 32) \lceil r/64 \rceil)$ word operations over the same $O(n)$ bit
+//! writes, after a table build of $O(1024 \lceil r/64 \rceil)$ word writes
+//! paid once per batch call.
 //!
 //! # Workspaces
 //!
-//! The recurrence runs over two buffers, held together by
-//! [`EncodeRegisters`]: an $r$-symbol shift register and the generator's low
-//! $r$ coefficients in the same words. The entry points that take no
+//! The recurrence runs over the buffers [`EncodeRegisters`] holds together:
+//! an $r$-symbol shift register, the generator's low $r$ coefficients in the
+//! same words, and whatever reduction table the selected family reads. The
+//! entry points that take no
 //! workspace — [`encode_systematic`](BchCode::encode_systematic),
 //! [`encode_systematic_into`](BchCode::encode_systematic_into),
 //! [`BlockEncoder::encode_into`], and
@@ -90,8 +130,8 @@
 //!
 //! # Batch encoding
 //!
-//! [`encode_batch_into`](BchCode::encode_batch_into) runs the recurrence over
-//! a slice of messages with one workspace.
+//! [`encode_batch_into`](BchCode::encode_batch_into) runs the selected
+//! family over a slice of messages with one workspace.
 //! [`encode_batch_parallel_into`](BchCode::encode_batch_parallel_into) splits
 //! the same slice into one contiguous partition per supplied workspace and
 //! encodes the partitions concurrently. The split is balanced: with $m$
@@ -107,6 +147,12 @@
 //! - the bytes are identical across worker counts, because the worker count
 //!   chooses partition boundaries and each message's codeword is a function of
 //!   that message alone.
+//!
+//! The family is selected once for the whole batch, from the message count
+//! rather than from any partition's length, and every worker then runs that
+//! one family over its own registers. The bytes are therefore identical
+//! across worker counts and across families alike, and a worker count never
+//! changes which algorithm the batch runs.
 //!
 //! One worker runs the whole batch directly on the calling thread, so a
 //! one-worker dispatch pays no fan-out cost and is the honest sequential
@@ -236,6 +282,7 @@ use crate::bch::spec::BchCode;
 use crate::error::CodeError;
 use crate::traits::block::{BlockCode, BlockEncoder, SymbolMatrix, SymbolSequence};
 use crate::transform::CoordinateMap;
+use crate::tuning::EncodeSelectors;
 
 // ---------------------------------------------------------------------------
 // The layout contract
@@ -443,10 +490,182 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
 }
 
 // ---------------------------------------------------------------------------
+// The registered algorithm families
+// ---------------------------------------------------------------------------
+
+/// One registered batch-encoding algorithm family.
+///
+/// Every family computes the same systematic codeword — the one the
+/// [module level](self#coordinate-convention) defines — so a batch encoded
+/// under any two of them is bit-identical. They differ in how many message
+/// coefficients one reduction step consumes and in what precomputation that
+/// step needs, which is what makes the choice between them a profile
+/// question rather than a semantic one.
+///
+/// [`REGISTERED`](Self::REGISTERED) is the registry: the dispatch seam walks
+/// it in order and takes the first entry the representation implements for
+/// the plan and the active profile admits. [`REFERENCE`](Self::REFERENCE)
+/// closes it and is implemented for every plan in every representation, so
+/// the walk always terminates on an available family.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[non_exhaustive]
+pub enum EncodeFamily {
+    /// The bit-serial shift-register recurrence, one message coefficient per
+    /// step.
+    ///
+    /// This is the reference: every representation implements it for every
+    /// plan, and every other family is checked bit-identical against it.
+    PolyRemainderScalar,
+
+    /// Table-driven remainder, consuming
+    /// [`TABLE_REMAINDER_BLOCK_BITS`] message coefficients per step through
+    /// four 256-entry reduction tables.
+    ///
+    /// A step costs one packed shift and four table reads whatever the
+    /// generator degree is, against one shift and one conditional
+    /// generator XOR per coefficient in the reference. The tables are a
+    /// function of the generator alone and are built once per batch call.
+    TableRemainder,
+}
+
+impl EncodeFamily {
+    /// The family every representation implements for every plan.
+    pub const REFERENCE: Self = Self::PolyRemainderScalar;
+
+    /// Every registered family, in the order the dispatch seam considers
+    /// them.
+    ///
+    /// The seam takes the first entry that is both available for the plan's
+    /// representation and admitted by the active profile, so a family placed
+    /// earlier is preferred wherever both admit it. [`REFERENCE`](Self::REFERENCE)
+    /// is last because it is the fallback the walk is guaranteed to reach.
+    pub const REGISTERED: &'static [Self] = &[Self::TableRemainder, Self::REFERENCE];
+
+    /// Returns this family's stable spelling, the one the workload-selection
+    /// contract registers it under.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::PolyRemainderScalar => "poly-remainder-scalar",
+            Self::TableRemainder => "table-remainder",
+        }
+    }
+
+    /// Returns the family a stable spelling names, or `None` for a spelling
+    /// no registered family carries.
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        Self::REGISTERED
+            .iter()
+            .copied()
+            .find(|family| family.name() == name)
+    }
+}
+
+impl core::fmt::Display for EncodeFamily {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        formatter.write_str(self.name())
+    }
+}
+
+/// Message coefficients [`EncodeFamily::TableRemainder`] consumes per step.
+pub const TABLE_REMAINDER_BLOCK_BITS: usize = 32;
+
+/// Block coefficients one reduction table is indexed by.
+const TABLE_REMAINDER_TABLE_BITS: usize = 8;
+
+/// Reduction tables [`EncodeFamily::TableRemainder`] reads per step, one per
+/// [`TABLE_REMAINDER_TABLE_BITS`]-coefficient slice of a
+/// [`TABLE_REMAINDER_BLOCK_BITS`]-bit block.
+const TABLE_REMAINDER_TABLES: usize = TABLE_REMAINDER_BLOCK_BITS / TABLE_REMAINDER_TABLE_BITS;
+
+/// Entries in one reduction table, one per value of the slice it reads.
+const TABLE_REMAINDER_ENTRIES: usize = 1 << TABLE_REMAINDER_TABLE_BITS;
+
+/// Conservative minimum redundancy at which [`EncodeFamily::TableRemainder`]
+/// is selected.
+///
+/// [`usize::MAX`] keeps every code on [`EncodeFamily::REFERENCE`] under the
+/// conservative profile: the crossover between the two families is a
+/// measurement, and no committed receipt has made it on this repository's
+/// implementations. Installing a profile with a lower
+/// `encode.table_remainder_min_redundancy` moves the boundary; the selected
+/// codewords are the same bytes either way.
+pub const TABLE_REMAINDER_MIN_REDUNDANCY: usize = usize::MAX;
+
+/// Conservative minimum batch length at which
+/// [`EncodeFamily::TableRemainder`] is selected.
+///
+/// One is the neutral bound: it excludes no batch. The table family's
+/// per-call table build is the cost this bound exists to amortize, and what
+/// batch length repays it is the same unmeasured crossover
+/// [`TABLE_REMAINDER_MIN_REDUNDANCY`] describes.
+pub const TABLE_REMAINDER_MIN_BATCH: usize = 1;
+
+/// Decides whether the active selectors admit `family` for a plan of
+/// redundancy `redundancy` over a batch of `batch_len` messages.
+///
+/// Admission is the profile's half of the decision. It composes with, and
+/// never overrides, the availability
+/// [`SystematicKernel::family_available`] reports, so no selector value
+/// selects a family a representation cannot run.
+fn family_admitted(
+    selectors: &EncodeSelectors,
+    family: EncodeFamily,
+    redundancy: usize,
+    batch_len: usize,
+) -> bool {
+    match family {
+        EncodeFamily::PolyRemainderScalar => true,
+        EncodeFamily::TableRemainder => {
+            redundancy >= selectors.table_remainder_min_redundancy()
+                && batch_len >= selectors.table_remainder_min_batch()
+        }
+    }
+}
+
+/// Reports the family the seam selects from already-resolved selectors.
+///
+/// `available` answers [`SystematicKernel::family_available`] for the plan
+/// being encoded under. The walk is over [`EncodeFamily::REGISTERED`] in
+/// order and ends at [`EncodeFamily::REFERENCE`], which every representation
+/// makes available, so the result is always a family the caller can run.
+fn select_family_resolved(
+    selectors: &EncodeSelectors,
+    redundancy: usize,
+    batch_len: usize,
+    available: impl Fn(EncodeFamily) -> bool,
+) -> EncodeFamily {
+    EncodeFamily::REGISTERED
+        .iter()
+        .copied()
+        .find(|&family| {
+            available(family) && family_admitted(selectors, family, redundancy, batch_len)
+        })
+        .unwrap_or(EncodeFamily::REFERENCE)
+}
+
+/// Reports the family the seam selects for `plan` over `batch_len` messages
+/// under the process-wide profile.
+///
+/// This is the one place a batch entry point reads the profile. It resolves
+/// the coding tuning section once per batch call, never per message.
+fn select_family<F, S>(plan: &SystematicPlan<'_, F>, batch_len: usize) -> EncodeFamily
+where
+    F: FieldIdentity,
+    S: SystematicKernel<F>,
+{
+    let active = crate::tuning::active();
+    select_family_resolved(active.encode(), plan.redundancy(), batch_len, |family| {
+        S::family_available(family, plan)
+    })
+}
+
+// ---------------------------------------------------------------------------
 // The reusable registers and the workspace that owns them
 // ---------------------------------------------------------------------------
 
-/// The two buffers a systematic recurrence runs over.
+/// The buffers a systematic recurrence runs over.
 ///
 /// A representation fixes the word type $W$: base-field elements for the
 /// field-generic path, packed `u64` words for the packed binary path. The
@@ -472,6 +691,14 @@ pub struct EncodeRegisters<W> {
     /// exactly these, so the monic leading coefficient never enters the
     /// recurrence.
     pub low: Vec<W>,
+
+    /// The selected family's precomputed reduction table.
+    ///
+    /// [`SystematicKernel::reset_family`] fills this for a family that
+    /// reduces through a table and leaves it empty for one that does not, so
+    /// [`EncodeFamily::REFERENCE`] carries no table storage. Its length and
+    /// layout belong to the family that wrote it.
+    pub tables: Vec<W>,
 }
 
 /// The reusable scratch one code's systematic encoding needs.
@@ -578,6 +805,7 @@ where
                     registers: Box::new(EncodeRegisters::<W> {
                         register: Vec::new(),
                         low: Vec::new(),
+                        tables: Vec::new(),
                     }),
                 });
                 scratch.len() - 1
@@ -646,9 +874,71 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
         let mut registers = EncodeRegisters {
             register: Vec::new(),
             low: Vec::new(),
+            tables: Vec::new(),
         };
         Self::reset_registers(plan, &mut registers);
         registers
+    }
+
+    /// Decides whether this representation implements `family` for `plan`.
+    ///
+    /// This is the representation's half of the dispatch decision; the
+    /// active profile supplies the other half, and neither can select a
+    /// family the other rejects. [`EncodeFamily::REFERENCE`] is available for
+    /// every plan, which the default implementation reports and an override
+    /// preserves, so a representation that adds no family of its own stays on
+    /// the reference recurrence.
+    fn family_available(family: EncodeFamily, plan: &SystematicPlan<'_, F>) -> bool {
+        let _ = plan;
+        family == EncodeFamily::REFERENCE
+    }
+
+    /// Prepares `registers` for `family` beyond what
+    /// [`reset_registers`](Self::reset_registers) established.
+    ///
+    /// A batch call runs this once per workspace before its first message,
+    /// so a family whose step reads precomputed state builds that state here
+    /// rather than per message. The default implementation does nothing,
+    /// which is what [`EncodeFamily::REFERENCE`] needs.
+    ///
+    /// # Complexity
+    ///
+    /// Family-dependent, and paid once per batch call rather than per
+    /// message.
+    fn reset_family(
+        family: EncodeFamily,
+        plan: &SystematicPlan<'_, F>,
+        registers: &mut EncodeRegisters<Self::Word>,
+    ) {
+        let _ = (family, plan, registers);
+    }
+
+    /// Writes the systematic codeword of `message` into `codeword` under
+    /// `family`.
+    ///
+    /// Every family writes the codeword
+    /// [`encode_systematic_with`](Self::encode_systematic_with) writes, so
+    /// this is a choice of algorithm and never a choice of result. The
+    /// default implementation runs the reference recurrence whatever the
+    /// family is, which is what makes an unimplemented family degrade to the
+    /// reference rather than to a wrong answer.
+    ///
+    /// `registers` has passed [`reset_family`](Self::reset_family) for the
+    /// same `family` and `plan`.
+    ///
+    /// # Errors
+    ///
+    /// The errors of
+    /// [`encode_systematic_with`](Self::encode_systematic_with).
+    fn encode_systematic_family(
+        family: EncodeFamily,
+        plan: &SystematicPlan<'_, F>,
+        message: &Self,
+        registers: &mut EncodeRegisters<Self::Word>,
+        codeword: &mut Self,
+    ) -> Result<(), CodeError> {
+        let _ = family;
+        Self::encode_systematic_with(plan, message, registers, codeword)
     }
 
     /// Writes the systematic codeword of `message` into `codeword`, using
@@ -756,7 +1046,7 @@ impl<F: FieldIdentity + 'static> SystematicKernel<F> for FieldVec<F> {
 
         let redundancy = plan.redundancy();
         validate_registers(redundancy, registers)?;
-        let EncodeRegisters { register, low } = registers;
+        let EncodeRegisters { register, low, .. } = registers;
 
         // Reduce x^r m(x) modulo g one message degree at a time, highest
         // first: the feedback symbol is the register's top coefficient plus
@@ -830,50 +1120,314 @@ impl SystematicKernel<Fp<2>> for BitVec {
         plan.validate_lengths(message.len(), codeword.len())?;
 
         let redundancy = plan.redundancy();
-        let words = redundancy.div_ceil(64);
-        validate_registers(words, registers)?;
-        let EncodeRegisters { register, low } = registers;
+        validate_registers(redundancy.div_ceil(64), registers)?;
+        let EncodeRegisters { register, low, .. } = registers;
 
         if redundancy > 0 {
-            register.fill(0);
-            // The shift moves the top coefficient out of the register, and
-            // masking keeps the words above degree r - 1 clear so the next
-            // feedback bit reads the top coefficient alone.
-            let top = redundancy - 1;
-            let tail = if redundancy.is_multiple_of(64) {
-                u64::MAX
-            } else {
-                (1u64 << (redundancy % 64)) - 1
-            };
+            packed_serial_reduce(plan, message, register, low);
+        }
+        packed_write_codeword(plan, message, register, codeword);
+        Ok(())
+    }
 
-            for degree in (0..plan.dimension()).rev() {
-                let symbol = message.get(plan.message_at(degree));
-                let feedback = ((register[top / 64] >> (top % 64)) & 1 == 1) != symbol;
-                for word in (1..words).rev() {
-                    register[word] = (register[word] << 1) | (register[word - 1] >> 63);
-                }
-                register[0] <<= 1;
-                register[words - 1] &= tail;
-                if feedback {
-                    for (accumulator, coefficients) in register.iter_mut().zip(low.iter()) {
-                        *accumulator ^= *coefficients;
-                    }
-                }
+    /// The packed representation adds [`EncodeFamily::TableRemainder`] for
+    /// every plan whose redundancy holds a whole
+    /// [`TABLE_REMAINDER_BLOCK_BITS`]-bit block, which is what a step's
+    /// shift-out is read from.
+    fn family_available(family: EncodeFamily, plan: &SystematicPlan<'_, Fp<2>>) -> bool {
+        match family {
+            EncodeFamily::PolyRemainderScalar => true,
+            EncodeFamily::TableRemainder => plan.redundancy() >= TABLE_REMAINDER_BLOCK_BITS,
+        }
+    }
+
+    /// Builds the reduction tables [`EncodeFamily::TableRemainder`] reads.
+    ///
+    /// # Complexity
+    ///
+    /// $O(\lceil r/64 \rceil)$ words per table entry, so
+    /// $O(1024 \lceil r/64 \rceil)$ word writes once per batch call, against
+    /// the batch's $O(m k \lceil r/64 \rceil)$ reduction.
+    fn reset_family(
+        family: EncodeFamily,
+        plan: &SystematicPlan<'_, Fp<2>>,
+        registers: &mut EncodeRegisters<u64>,
+    ) {
+        let redundancy = plan.redundancy();
+        match family {
+            EncodeFamily::PolyRemainderScalar => {}
+            EncodeFamily::TableRemainder if redundancy >= TABLE_REMAINDER_BLOCK_BITS => {
+                let EncodeRegisters { low, tables, .. } = registers;
+                packed_build_tables(redundancy, low, tables);
+            }
+            EncodeFamily::TableRemainder => {}
+        }
+    }
+
+    /// Runs `family`'s reduction over packed `u64` words.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::BufferLengthMismatch`] for a message, codeword,
+    /// or register buffer of the wrong length.
+    ///
+    /// # Complexity
+    ///
+    /// $O(k \lceil r/64 \rceil)$ word operations for
+    /// [`EncodeFamily::REFERENCE`] and
+    /// $O((k / 32) \lceil r/64 \rceil)$ for
+    /// [`EncodeFamily::TableRemainder`], both plus $O(n)$ bit writes, over
+    /// the caller's registers and with no allocation.
+    fn encode_systematic_family(
+        family: EncodeFamily,
+        plan: &SystematicPlan<'_, Fp<2>>,
+        message: &Self,
+        registers: &mut EncodeRegisters<u64>,
+        codeword: &mut Self,
+    ) -> Result<(), CodeError> {
+        let redundancy = plan.redundancy();
+        if family != EncodeFamily::TableRemainder || redundancy < TABLE_REMAINDER_BLOCK_BITS {
+            return Self::encode_systematic_with(plan, message, registers, codeword);
+        }
+
+        plan.validate_lengths(message.len(), codeword.len())?;
+        validate_registers(redundancy.div_ceil(64), registers)?;
+        let EncodeRegisters {
+            register,
+            low,
+            tables,
+        } = registers;
+        packed_table_reduce(plan, message, register, low, tables);
+        packed_write_codeword(plan, message, register, codeword);
+        Ok(())
+    }
+}
+
+/// The mask keeping a packed remainder of degree below `redundancy` clear
+/// above its top coefficient.
+fn packed_tail_mask(redundancy: usize) -> u64 {
+    if redundancy.is_multiple_of(64) {
+        u64::MAX
+    } else {
+        (1u64 << (redundancy % 64)) - 1
+    }
+}
+
+/// Advances the packed remainder in `register` by one degree, injecting
+/// `symbol` as the next message coefficient.
+///
+/// The shift moves the top coefficient out of the register, and masking
+/// keeps the words above degree $r - 1$ clear so the next feedback bit reads
+/// the top coefficient alone. With `symbol` false this is multiplication by
+/// $x$ modulo the generator, which is how the reduction tables' powers are
+/// derived.
+fn packed_step(register: &mut [u64], low: &[u64], top: usize, tail: u64, symbol: bool) {
+    let words = register.len();
+    let feedback = ((register[top / 64] >> (top % 64)) & 1 == 1) != symbol;
+    for word in (1..words).rev() {
+        register[word] = (register[word] << 1) | (register[word - 1] >> 63);
+    }
+    register[0] <<= 1;
+    register[words - 1] &= tail;
+    if feedback {
+        for (accumulator, coefficients) in register.iter_mut().zip(low.iter()) {
+            *accumulator ^= *coefficients;
+        }
+    }
+}
+
+/// Multiplies the packed remainder in `register` by
+/// $x^{\text{TABLE\_REMAINDER\_BLOCK\_BITS}}$, dropping the coefficients
+/// that leave the register.
+///
+/// The caller reads those coefficients first and folds them back through the
+/// reduction tables, which is what makes the drop exact rather than lossy.
+fn packed_shift_block(register: &mut [u64], tail: u64) {
+    let words = register.len();
+    let block = TABLE_REMAINDER_BLOCK_BITS as u32;
+    for word in (1..words).rev() {
+        register[word] = (register[word] << block) | (register[word - 1] >> (64 - block));
+    }
+    register[0] <<= block;
+    register[words - 1] &= tail;
+}
+
+/// Reads the [`TABLE_REMAINDER_BLOCK_BITS`] packed bits starting at `offset`,
+/// bit $j$ of the result carrying the bit at `offset + j`.
+///
+/// Bits above the buffer read as zero, which is the zero tail padding a
+/// packed buffer maintains.
+fn packed_read_block(words: &[u64], offset: usize) -> u32 {
+    let word = offset / 64;
+    let bit = offset % 64;
+    let low = words[word] >> bit;
+    let high = if bit == 0 || word + 1 >= words.len() {
+        0
+    } else {
+        words[word + 1] << (64 - bit)
+    };
+    ((low | high) & u64::from(u32::MAX)) as u32
+}
+
+/// Reads the message coefficients of degrees `degree` to
+/// `degree + TABLE_REMAINDER_BLOCK_BITS`, bit $j$ carrying the coefficient
+/// of $x^{degree + j}$.
+///
+/// Both declared layouts carry those coefficients in one contiguous run of
+/// user coordinates, ascending for
+/// [`SystematicLayout::MessageParityAscending`] and descending for
+/// [`SystematicLayout::MessageParityDescending`], so the block is one packed
+/// read and, for the descending layout, one bit reversal.
+fn packed_message_block(plan: &SystematicPlan<'_, Fp<2>>, message: &[u64], degree: usize) -> u32 {
+    match plan.layout() {
+        SystematicLayout::MessageParityAscending => packed_read_block(message, degree),
+        SystematicLayout::MessageParityDescending => {
+            let offset = plan.dimension() - degree - TABLE_REMAINDER_BLOCK_BITS;
+            packed_read_block(message, offset).reverse_bits()
+        }
+    }
+}
+
+/// Reduces $x^r m(x)$ modulo the generator one message degree at a time,
+/// highest first, leaving the remainder in `register`.
+fn packed_serial_reduce(
+    plan: &SystematicPlan<'_, Fp<2>>,
+    message: &BitVec,
+    register: &mut [u64],
+    low: &[u64],
+) {
+    let redundancy = plan.redundancy();
+    let top = redundancy - 1;
+    let tail = packed_tail_mask(redundancy);
+    register.fill(0);
+    for degree in (0..plan.dimension()).rev() {
+        let symbol = message.get(plan.message_at(degree));
+        packed_step(register, low, top, tail, symbol);
+    }
+}
+
+/// Reduces $x^r m(x)$ modulo the generator
+/// [`TABLE_REMAINDER_BLOCK_BITS`] message degrees at a time, leaving the
+/// remainder in `register`.
+///
+/// One step splits the register into the coefficients that survive the shift
+/// and the block that leaves it, adds the next message block to the latter,
+/// and folds the sum back through the tables: for a remainder
+/// $s = s_L + s_H x^{r-w}$ and a message block $c$,
+/// $s x^{w} + c x^{r} \equiv s_L x^{w} + (s_H + c) x^{r}$, and the tables
+/// carry $v x^{r} \bmod g$ for every byte $v$ of that sum. Degrees above the
+/// last whole block run through [`packed_serial_reduce`]'s step, so a
+/// dimension that is not a multiple of the block width needs no padding.
+fn packed_table_reduce(
+    plan: &SystematicPlan<'_, Fp<2>>,
+    message: &BitVec,
+    register: &mut [u64],
+    low: &[u64],
+    tables: &[u64],
+) {
+    let redundancy = plan.redundancy();
+    let dimension = plan.dimension();
+    let words = register.len();
+    let top = redundancy - 1;
+    let tail = packed_tail_mask(redundancy);
+    let blocks = dimension / TABLE_REMAINDER_BLOCK_BITS;
+
+    register.fill(0);
+    for degree in (blocks * TABLE_REMAINDER_BLOCK_BITS..dimension).rev() {
+        let symbol = message.get(plan.message_at(degree));
+        packed_step(register, low, top, tail, symbol);
+    }
+
+    let coefficients = message.words();
+    for block in (0..blocks).rev() {
+        let degree = block * TABLE_REMAINDER_BLOCK_BITS;
+        let leaving = packed_read_block(register, redundancy - TABLE_REMAINDER_BLOCK_BITS);
+        let folded = leaving ^ packed_message_block(plan, coefficients, degree);
+        packed_shift_block(register, tail);
+        for table in 0..TABLE_REMAINDER_TABLES {
+            let slice =
+                (folded >> (TABLE_REMAINDER_TABLE_BITS * table)) as usize % TABLE_REMAINDER_ENTRIES;
+            let entry = (table * TABLE_REMAINDER_ENTRIES + slice) * words;
+            for (offset, accumulator) in register.iter_mut().enumerate() {
+                *accumulator ^= tables[entry + offset];
             }
         }
+    }
+}
 
-        for user in 0..plan.dimension() {
-            codeword.set(user, message.get(user));
-        }
-        for user in plan.dimension()..plan.length() {
-            let parity = plan.internal_at(user);
-            debug_assert!(
-                parity < redundancy,
-                "a systematic layout carries the coordinates above k onto the parity degrees"
+/// Builds the reduction tables of [`EncodeFamily::TableRemainder`]: entry
+/// $v$ of table $t$ is $v x^{r + 8t} \bmod g$, packed like the register.
+///
+/// The entries are linear in the byte value, so a power-of-two entry is the
+/// previous one multiplied by $x$ and every other entry is the exclusive or
+/// of two entries already written.
+fn packed_build_tables(redundancy: usize, low: &[u64], tables: &mut Vec<u64>) {
+    let words = low.len();
+    let top = redundancy - 1;
+    let tail = packed_tail_mask(redundancy);
+
+    tables.clear();
+    tables.resize(TABLE_REMAINDER_TABLES * TABLE_REMAINDER_ENTRIES * words, 0);
+    for table in 0..TABLE_REMAINDER_TABLES {
+        let base = table * TABLE_REMAINDER_ENTRIES * words;
+        // The entry for value 1 carries x^{r + 8t}: that is x^r for the first
+        // table, and for every later one the previous table's top-bit entry,
+        // which carries x^{r + 8t - 1}, multiplied by x.
+        if table == 0 {
+            tables[base + words..base + 2 * words].copy_from_slice(low);
+        } else {
+            let top_bit_entry = TABLE_REMAINDER_ENTRIES / 2;
+            let previous = base - (TABLE_REMAINDER_ENTRIES - top_bit_entry) * words;
+            tables.copy_within(previous..previous + words, base + words);
+            packed_step(
+                &mut tables[base + words..base + 2 * words],
+                low,
+                top,
+                tail,
+                false,
             );
-            codeword.set(user, (register[parity / 64] >> (parity % 64)) & 1 == 1);
         }
-        Ok(())
+        for bit in 1..TABLE_REMAINDER_TABLE_BITS {
+            let source = base + (1 << (bit - 1)) * words;
+            let target = base + (1 << bit) * words;
+            tables.copy_within(source..source + words, target);
+            packed_step(&mut tables[target..target + words], low, top, tail, false);
+        }
+        for value in 2..TABLE_REMAINDER_ENTRIES {
+            if value.is_power_of_two() {
+                continue;
+            }
+            let target = base + value * words;
+            let rest = base + (value & (value - 1)) * words;
+            let lowest = base + (1 << value.trailing_zeros()) * words;
+            for offset in 0..words {
+                tables[target + offset] = tables[rest + offset] ^ tables[lowest + offset];
+            }
+        }
+    }
+}
+
+/// Writes the systematic codeword of `message` from the reduced `register`.
+///
+/// The message occupies the first $k$ user coordinates under every declared
+/// layout, and the layout decides which parity degree each remaining
+/// coordinate carries.
+fn packed_write_codeword(
+    plan: &SystematicPlan<'_, Fp<2>>,
+    message: &BitVec,
+    register: &[u64],
+    codeword: &mut BitVec,
+) {
+    for user in 0..plan.dimension() {
+        codeword.set(user, message.get(user));
+    }
+    for user in plan.dimension()..plan.length() {
+        let parity = plan.internal_at(user);
+        debug_assert!(
+            parity < plan.redundancy(),
+            "a systematic layout carries the coordinates above k onto the parity degrees"
+        );
+        codeword.set(user, (register[parity / 64] >> (parity % 64)) & 1 == 1);
     }
 }
 
@@ -1034,6 +1588,13 @@ where
     /// Encodes every message of `messages` into the matching position of
     /// `codewords`, reusing one `workspace`.
     ///
+    /// The algorithm family comes from the batch length and the active
+    /// profile, through the seam described at the
+    /// [module level](self#algorithm-families). It is a family this code's
+    /// representation makes available, so the family error
+    /// [`encode_batch_family_into`](Self::encode_batch_family_into) can
+    /// report is unreachable from here.
+    ///
     /// # Errors
     ///
     /// - [`BchError::WorkspaceMismatch`] when `workspace` was built by another
@@ -1049,8 +1610,8 @@ where
     ///
     /// # Complexity
     ///
-    /// One [`encode_systematic_with`](Self::encode_systematic_with)
-    /// recurrence per message, with the workspace check paid once.
+    /// One reduction per message in the selected family, with the workspace
+    /// check and the family's preparation each paid once.
     pub fn encode_batch_into(
         &self,
         messages: &[S],
@@ -1058,11 +1619,71 @@ where
         workspace: &mut BchEncodeWorkspace<S::Word>,
         codewords: &mut [S],
     ) -> Result<(), BchError> {
+        let plan = self.systematic_plan(layout);
+        let family = select_family::<X::Base, S>(&plan, messages.len());
+        self.encode_batch_family_into(family, messages, layout, workspace, codewords)
+    }
+
+    /// Encodes every message of `messages` under an explicitly named
+    /// `family`, reusing one `workspace`.
+    ///
+    /// [`encode_batch_into`](Self::encode_batch_into) is this method with the
+    /// family taken from the active profile. Naming one is what a
+    /// differential check between two families needs; the codewords are the
+    /// same bytes whichever family writes them.
+    ///
+    /// # Errors
+    ///
+    /// - [`BchError::EncodeFamilyUnavailable`] when this code's
+    ///   representation does not implement `family` for this plan, decided
+    ///   before any output symbol is written.
+    /// - Otherwise the errors of
+    ///   [`encode_batch_into`](Self::encode_batch_into).
+    ///
+    /// # Complexity
+    ///
+    /// One reduction per message in `family`, with the workspace check and
+    /// the family's preparation each paid once.
+    pub fn encode_batch_family_into(
+        &self,
+        family: EncodeFamily,
+        messages: &[S],
+        layout: SystematicLayout,
+        workspace: &mut BchEncodeWorkspace<S::Word>,
+        codewords: &mut [S],
+    ) -> Result<(), BchError> {
         self.validate_workspaces(slice::from_ref(workspace))?;
         let plan = self.systematic_plan(layout);
+        if !S::family_available(family, &plan) {
+            return Err(BchError::EncodeFamilyUnavailable { family });
+        }
         validate_batch(&plan, messages, codewords)?;
-        encode_partition(&plan, messages, &mut workspace.registers, codewords);
+        S::reset_family(family, &plan, &mut workspace.registers);
+        encode_partition(family, &plan, messages, &mut workspace.registers, codewords);
         Ok(())
+    }
+
+    /// Decides whether this code's representation implements `family` under
+    /// `layout`.
+    ///
+    /// [`EncodeFamily::REFERENCE`] is available for every code; the families
+    /// beyond it depend on the representation and on the plan's shape.
+    pub fn encode_family_available(&self, family: EncodeFamily, layout: SystematicLayout) -> bool {
+        S::family_available(family, &self.systematic_plan(layout))
+    }
+
+    /// Reports the family the batch entry points select for a batch of
+    /// `batch_len` messages under `layout`.
+    ///
+    /// The report is the selection itself, not a prediction of it: the batch
+    /// entry points resolve the same active profile through the same walk
+    /// over [`EncodeFamily::REGISTERED`].
+    pub fn selected_encode_family(
+        &self,
+        layout: SystematicLayout,
+        batch_len: usize,
+    ) -> EncodeFamily {
+        select_family::<X::Base, S>(&self.systematic_plan(layout), batch_len)
     }
 
     /// Encodes every message of `messages` into a new vector of codewords.
@@ -1088,9 +1709,11 @@ where
         let plan = self.systematic_plan(layout);
         let mut codewords = vec![S::zeroed(plan.length(), plan.symbol_zero()); messages.len()];
         validate_batch(&plan, messages, &codewords)?;
+        let family = select_family::<X::Base, S>(&plan, messages.len());
         with_encode_scratch(|registers: &mut EncodeRegisters<S::Word>| {
             S::reset_registers(&plan, registers);
-            encode_partition(&plan, messages, registers, &mut codewords);
+            S::reset_family(family, &plan, registers);
+            encode_partition(family, &plan, messages, registers, &mut codewords);
         });
         Ok(codewords)
     }
@@ -1147,7 +1770,8 @@ where
         self.validate_workspaces(workspaces)?;
         let plan = self.systematic_plan(layout);
         validate_batch(&plan, messages, codewords)?;
-        encode_partitions(&plan, messages, workspaces, codewords);
+        let family = select_family::<X::Base, S>(&plan, messages.len());
+        encode_partitions(family, &plan, messages, workspaces, codewords);
         Ok(())
     }
 
@@ -1182,8 +1806,9 @@ where
         let plan = self.systematic_plan(layout);
         let mut codewords = vec![S::zeroed(plan.length(), plan.symbol_zero()); messages.len()];
         validate_batch(&plan, messages, &codewords)?;
+        let family = select_family::<X::Base, S>(&plan, messages.len());
         let mut workspaces = self.encode_workspaces(workers);
-        encode_partitions(&plan, messages, &mut workspaces, &mut codewords);
+        encode_partitions(family, &plan, messages, &mut workspaces, &mut codewords);
         Ok(codewords)
     }
 
@@ -1324,12 +1949,14 @@ where
     Ok(())
 }
 
-/// Encodes one worker's contiguous partition in index order.
+/// Encodes one worker's contiguous partition in index order under `family`.
 ///
-/// Every argument has already passed [`validate_batch`], and `registers` has
-/// the geometry [`SystematicKernel::registers`] gives this plan, so the
-/// kernel cannot reject anything here.
+/// Every argument has already passed [`validate_batch`], `registers` has the
+/// geometry [`SystematicKernel::registers`] gives this plan, and it has
+/// passed [`SystematicKernel::reset_family`] for `family`, so the kernel
+/// cannot reject anything here.
 fn encode_partition<F, S>(
+    family: EncodeFamily,
     plan: &SystematicPlan<'_, F>,
     messages: &[S],
     registers: &mut EncodeRegisters<S::Word>,
@@ -1339,7 +1966,7 @@ fn encode_partition<F, S>(
     S: SystematicKernel<F>,
 {
     for (message, codeword) in messages.iter().zip(codewords.iter_mut()) {
-        S::encode_systematic_with(plan, message, registers, codeword)
+        S::encode_systematic_family(family, plan, message, registers, codeword)
             .expect("a validated batch encodes under its own plan");
     }
 }
@@ -1371,6 +1998,7 @@ fn partition_offset(messages: usize, workers: usize, index: usize) -> usize {
 /// without it they run left before right on the calling thread. One workspace
 /// runs its partition directly, so a one-worker dispatch reaches no pool.
 fn encode_partitions_over<F, S>(
+    family: EncodeFamily,
     plan: &SystematicPlan<'_, F>,
     messages: &[S],
     workspaces: &mut [BchEncodeWorkspace<S::Word>],
@@ -1381,7 +2009,13 @@ fn encode_partitions_over<F, S>(
     S::Word: Send,
 {
     if workspaces.len() < 2 {
-        encode_partition(plan, messages, &mut workspaces[0].registers, codewords);
+        encode_partition(
+            family,
+            plan,
+            messages,
+            &mut workspaces[0].registers,
+            codewords,
+        );
         return;
     }
 
@@ -1393,18 +2027,33 @@ fn encode_partitions_over<F, S>(
 
     #[cfg(feature = "parallel")]
     rayon::join(
-        || encode_partitions_over(plan, left_messages, left_workspaces, left_codewords),
-        || encode_partitions_over(plan, right_messages, right_workspaces, right_codewords),
+        || encode_partitions_over(family, plan, left_messages, left_workspaces, left_codewords),
+        || {
+            encode_partitions_over(
+                family,
+                plan,
+                right_messages,
+                right_workspaces,
+                right_codewords,
+            )
+        },
     );
     #[cfg(not(feature = "parallel"))]
     {
-        encode_partitions_over(plan, left_messages, left_workspaces, left_codewords);
-        encode_partitions_over(plan, right_messages, right_workspaces, right_codewords);
+        encode_partitions_over(family, plan, left_messages, left_workspaces, left_codewords);
+        encode_partitions_over(
+            family,
+            plan,
+            right_messages,
+            right_workspaces,
+            right_codewords,
+        );
     }
 }
 
 /// Encodes `messages` into `codewords` across one contiguous partition per
-/// workspace.
+/// workspace, every partition running the family the seam selected for the
+/// whole batch.
 ///
 /// Every workspace up to the batch length receives a partition, balanced to
 /// within one message by [`partition_offset`]; workspaces beyond the batch
@@ -1412,6 +2061,7 @@ fn encode_partitions_over<F, S>(
 /// output is in input order and independent of both the workspace count and
 /// the order the partitions happen to run in.
 fn encode_partitions<F, S>(
+    family: EncodeFamily,
     plan: &SystematicPlan<'_, F>,
     messages: &[S],
     workspaces: &mut [BchEncodeWorkspace<S::Word>],
@@ -1425,7 +2075,16 @@ fn encode_partitions<F, S>(
     if workers == 0 {
         return;
     }
-    encode_partitions_over(plan, messages, &mut workspaces[..workers], codewords);
+    for workspace in workspaces.iter_mut().take(workers) {
+        S::reset_family(family, plan, &mut workspace.registers);
+    }
+    encode_partitions_over(
+        family,
+        plan,
+        messages,
+        &mut workspaces[..workers],
+        codewords,
+    );
 }
 
 /// Decides that a message's symbols come from the code's own field.
@@ -2804,5 +3463,124 @@ mod tests {
         let alphabet: Vec<Fp<5>> = (0..5).map(Fp::<5>::new).collect();
         let message = seeded_symbols(&alphabet, prime.k(), 23);
         conformance::block_encoder_contract(&prime, &message);
+    }
+
+    // -----------------------------------------------------------------
+    // The dispatch seam, decided without resolving the process profile
+    // -----------------------------------------------------------------
+
+    /// Selectors admitting the table family from `redundancy` and `batch` up.
+    fn admitting(redundancy: usize, batch: usize) -> EncodeSelectors {
+        EncodeSelectors::try_new(redundancy, batch).expect("every bound is admissible")
+    }
+
+    /// Availability reporting every registered family.
+    fn everything_available(_: EncodeFamily) -> bool {
+        true
+    }
+
+    #[test]
+    fn the_conservative_selectors_hold_every_code_on_the_reference() {
+        let conservative = crate::tuning::CodingTuning::CONSERVATIVE;
+        for redundancy in [0, 1, 32, 63, 64, 65, 192, 4096] {
+            for batch in [0, 1, 16, 4096] {
+                assert_eq!(
+                    select_family_resolved(
+                        conservative.encode(),
+                        redundancy,
+                        batch,
+                        everything_available
+                    ),
+                    EncodeFamily::REFERENCE,
+                    "redundancy {redundancy}, batch {batch}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn an_admitting_profile_moves_the_selection_off_the_reference() {
+        let selectors = admitting(32, 16);
+        assert_eq!(
+            select_family_resolved(&selectors, 32, 16, everything_available),
+            EncodeFamily::TableRemainder
+        );
+        assert_eq!(
+            select_family_resolved(&selectors, 31, 16, everything_available),
+            EncodeFamily::REFERENCE,
+            "a redundancy below the bound stays on the reference"
+        );
+        assert_eq!(
+            select_family_resolved(&selectors, 32, 15, everything_available),
+            EncodeFamily::REFERENCE,
+            "a batch below the bound stays on the reference"
+        );
+    }
+
+    #[test]
+    fn availability_overrides_an_admitting_profile() {
+        let selectors = admitting(0, 0);
+        assert_eq!(
+            select_family_resolved(&selectors, 192, 4096, |family| family
+                == EncodeFamily::REFERENCE),
+            EncodeFamily::REFERENCE,
+            "a profile cannot select a family the representation does not implement"
+        );
+    }
+
+    #[test]
+    fn the_registry_ends_at_the_reference() {
+        assert_eq!(
+            EncodeFamily::REGISTERED.last().copied(),
+            Some(EncodeFamily::REFERENCE),
+            "the walk must terminate on the family every representation implements"
+        );
+        let mut sorted = EncodeFamily::REGISTERED.to_vec();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(
+            sorted.len(),
+            EncodeFamily::REGISTERED.len(),
+            "a family is registered once"
+        );
+    }
+
+    #[test]
+    fn the_field_generic_representation_offers_only_the_reference() {
+        let code = dense_binary_narrow_sense(8, 0b100011101, 9);
+        let plan = code.systematic_plan(SystematicLayout::default());
+        assert!(plan.redundancy() >= TABLE_REMAINDER_BLOCK_BITS);
+        for &family in EncodeFamily::REGISTERED {
+            assert_eq!(
+                FieldVec::<Fp<2>>::family_available(family, &plan),
+                family == EncodeFamily::REFERENCE,
+                "{family} availability in the field-generic representation"
+            );
+        }
+    }
+
+    #[test]
+    fn a_message_block_carries_the_coefficients_its_degrees_name() {
+        // Both declared layouts run the message degrees over one contiguous
+        // coordinate range, in opposite directions; the block read is where
+        // that direction is resolved.
+        let code = binary_narrow_sense(8, 0b100011101, 9);
+        for &layout in LAYOUTS {
+            let plan = code.systematic_plan(layout);
+            let message = seeded_bits(plan.dimension(), 41);
+            let coefficients = message.words();
+            for block in 0..plan.dimension() / TABLE_REMAINDER_BLOCK_BITS {
+                let degree = block * TABLE_REMAINDER_BLOCK_BITS;
+                let packed = packed_message_block(&plan, coefficients, degree);
+                for offset in 0..TABLE_REMAINDER_BLOCK_BITS {
+                    assert_eq!(
+                        (packed >> offset) & 1 == 1,
+                        message.get(plan.message_at(degree + offset)),
+                        "{layout:?} degree {}",
+                        degree + offset
+                    );
+                }
+            }
+        }
     }
 }

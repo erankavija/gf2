@@ -70,6 +70,11 @@ sim-observability = [
     "dep:rand_chacha", "dep:blake3", "dep:ctrlc",
     "dep:tracing", "dep:tracing-subscriber",
 ]
+# Strict format-2 owner codec for coding-owned tuning. The typed selector
+# section and active accessor are always available; only JSON support is
+# gated. `serde` is already an unconditional dependency here, so this feature
+# adds only the generic profile mechanism's own optional surface.
+tuning-profile = ["gf2-core/tuning-profile"]
 # Exposes `gf2_coding::test_support` to integration tests that need to
 # share helpers with crate-internal unit tests (e.g., the ETSI CSP
 # test-point parser used by both `concat.rs` and the bit-interleaver
