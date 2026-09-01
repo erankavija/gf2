@@ -13,7 +13,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T10:53:18.383246717Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T10:56:38.189281222Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "217deff3-904b-42ba-b14d-bd89344761d2",
   "labels": [
     "type:task",
@@ -24,5 +35,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement q-cyclotomic coset closure over extension fields",
-  "updated_at": "2026-09-01T09:58:21.056518264Z"
+  "updated_at": "2026-09-01T10:56:38.189281222Z"
 }

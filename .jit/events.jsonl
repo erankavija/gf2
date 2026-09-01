@@ -10492,3 +10492,8 @@
 {"gate_key":"code-review","id":"24f779bd-6ebd-4572-8a83-602e882d5530","issue_id":"fa85c403-1166-4578-a9b3-ed58d4d1f870","timestamp":"2026-09-01T10:45:14.599950995Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"40f0f6b1-e440-4d3d-ba4b-e577373753a5","issue_id":"fa85c403-1166-4578-a9b3-ed58d4d1f870","timestamp":"2026-09-01T10:45:27.779568666Z","to":"done","type":"issue_state_changed"}
 {"id":"34a33a4a-bbf1-431a-952d-0433e50868de","issue_id":"fa85c403-1166-4578-a9b3-ed58d4d1f870","timestamp":"2026-09-01T10:45:27.779568666Z","type":"issue_completed"}
+{"id":"607033a4-b16c-4a43-9e27-c3c337cc270f","issue_id":"c9022d14-350b-4236-a802-e206e159ad7b","priority":"normal","timestamp":"2026-09-01T10:52:19.382288726Z","title":"Name or wrap the validation-skipping ConstExt::new per caller-trusted-fast-paths","type":"issue_created"}
+{"from":"ready","id":"b8edad0c-54a8-4a76-ae8f-90f3fe5e4cef","issue_id":"c9022d14-350b-4236-a802-e206e159ad7b","timestamp":"2026-09-01T10:52:35.748778849Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"4264de94-ebe9-426a-8d83-83c252610110","issue_id":"c9022d14-350b-4236-a802-e206e159ad7b","timestamp":"2026-09-01T10:52:35.748778849Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"c4e5326b-c483-4484-9683-4a01be59f2d3","issue_id":"217deff3-904b-42ba-b14d-bd89344761d2","timestamp":"2026-09-01T10:53:18.383246717Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"33c70bf7-ad2e-4982-902a-aea1a695125b","issue_id":"217deff3-904b-42ba-b14d-bd89344761d2","timestamp":"2026-09-01T10:56:38.189281222Z","type":"gate_failed","updated_by":"auto:executor"}
