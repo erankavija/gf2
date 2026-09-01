@@ -64,6 +64,7 @@ pub mod convolutional;
 pub mod crc;
 pub mod drm;
 pub mod dvb_t2_bicm_harness;
+pub mod error;
 pub mod fading;
 pub mod gldpc;
 pub mod grand;
@@ -85,6 +86,7 @@ pub mod traits;
 pub use bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
 pub use channel::AwgnChannel;
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
+pub use error::{Capability, CodeCapability, CodeError, RepresentationId};
 pub use ldpc::{
     CirculantMatrix, DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc,
 };
