@@ -160,7 +160,7 @@ Always use `--release`: debug mode is 10–100× slower on LDPC and simulation c
 - [`docs/PARALLELIZATION.md`](docs/PARALLELIZATION.md) — Rayon batch strategy
 - [`docs/LDPC_PERFORMANCE.md`](docs/LDPC_PERFORMANCE.md), [`docs/LDPC_VERIFICATION_TESTS.md`](docs/LDPC_VERIFICATION_TESTS.md)
 - [`docs/SDR_INTEGRATION.md`](docs/SDR_INTEGRATION.md) — using the modem from an SDR stack
-- [`docs/SYSTEMATIC_ENCODING_CONVENTION.md`](docs/SYSTEMATIC_ENCODING_CONVENTION.md) — bit-order and systematic form conventions
+- [`docs/SYSTEMATIC_ENCODING_CONVENTION.md`](docs/SYSTEMATIC_ENCODING_CONVENTION.md) — coordinate, layout, and systematic form conventions
 - `src/modem/mod.rs` — module-level modem-framework guide
 - Workspace overview: [`../../README.md`](../../README.md)
 
