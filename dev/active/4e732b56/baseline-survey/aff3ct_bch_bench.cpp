@@ -231,11 +231,14 @@ run_w2(ScalarBCH& enc, const CodeSpec& cs, std::vector<Row>& out)
     const size_t words_per_row = (size_t)((n + 63) / 64);
 
     std::vector<int> U((size_t)k), X((size_t)n);
-    std::vector<uint64_t> G((size_t)k * words_per_row);
 
-    auto materialize = [&]()
+    // fresh-alloc cell per the workload-selection cache-state contract: the
+    // measured materialization allocates and returns its own packed result,
+    // matching the gf2 side's owned-return generator_matrix. The encoder
+    // scratch U/X stays outside as encoder-internal workspace.
+    auto materialize = [&]() -> std::vector<uint64_t>
     {
-        std::fill(G.begin(), G.end(), 0ull);
+        std::vector<uint64_t> G((size_t)k * words_per_row, 0ull);
         for (int i = 0; i < k; i++)
         {
             std::fill(U.begin(), U.end(), 0);
@@ -246,6 +249,7 @@ run_w2(ScalarBCH& enc, const CodeSpec& cs, std::vector<Row>& out)
                 if (X[j])
                     row[j >> 6] |= 1ull << (j & 63);
         }
+        return G;
     };
 
     // Probe the per-row cost on a 64-row prefix and extrapolate, so a cell
@@ -265,22 +269,29 @@ run_w2(ScalarBCH& enc, const CodeSpec& cs, std::vector<Row>& out)
     std::fprintf(stderr, "#   %s W2 estimated %.3f s per materialization\n", cs.name, est_s);
 
     const int warmups = (est_s < 2.0) ? WARMUP_REPS : 0;
+    std::vector<uint64_t> last;
     for (int w = 0; w < warmups; w++)
-        materialize();
+        last = materialize();
     if (warmups == 0)
-        materialize(); // one pass so G is populated for the digest
+        last = materialize(); // one pass so the digest has a populated G
 
     uint64_t digest = 1469598103934665603ull;
-    for (uint64_t word : G)
+    for (uint64_t word : last)
     {
         digest ^= word;
         digest *= 1099511628211ull;
     }
+    last.clear();
+    last.shrink_to_fit();
+
+    // Keeps every timed materialization observable so the compiler cannot
+    // elide the fresh allocation or the row stores.
+    uint64_t sink = 0;
 
     // Calibrate the inner repetition count just as W1 does. Small generator
     // matrices otherwise fall below the protocol's minimum timed region.
     const auto c0 = std::chrono::steady_clock::now();
-    materialize();
+    sink ^= materialize().front();
     const auto c1 = std::chrono::steady_clock::now();
     const double one_ns = std::chrono::duration<double, std::nano>(c1 - c0).count();
     long reps = (long)(MIN_TIMED_NS / (one_ns > 0.0 ? one_ns : 1.0)) + 1;
@@ -291,7 +302,7 @@ run_w2(ScalarBCH& enc, const CodeSpec& cs, std::vector<Row>& out)
     {
         const auto t0 = std::chrono::steady_clock::now();
         for (long rep = 0; rep < reps; rep++)
-            materialize();
+            sink ^= materialize().front();
         const auto t1 = std::chrono::steady_clock::now();
 
         const double total_ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
@@ -311,7 +322,8 @@ run_w2(ScalarBCH& enc, const CodeSpec& cs, std::vector<Row>& out)
         r.digest = digest;
         out.push_back(r);
     }
-    std::fprintf(stderr, "#   %s basis-encode-pack batch=%d reps=%ld spent=%.2fs\n", cs.name, k, reps, spent);
+    std::fprintf(stderr, "#   %s basis-encode-pack batch=%d reps=%ld spent=%.2fs sink=%016llx\n",
+                 cs.name, k, reps, spent, (unsigned long long)sink);
 }
 
 // ---------------------------------------------------------------------- main

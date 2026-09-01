@@ -1,8 +1,8 @@
 # correctness-only systematic generator-matrix agreement
-# captured: 2026-09-01T02:40:36+00:00
+# captured: 2026-09-01T04:36:10+00:00
 # rows: B2,B3,T2S
 # M4RI command: GF2_SURVEY_CODES=B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/bench_results/4e732b56/generators.txt generator-dump
-# gf2 command: GF2_SURVEY_CODES=B2,B3,T2S GF2_REV=801d89852847afc789e9ddf26c1f1ebd3efb2a8b target/survey-target/release/survey-gf2-side generator-dump
+# gf2 command: GF2_SURVEY_CODES=B2,B3,T2S GF2_REV=38e0335a092bb1d7dc851ff91ee7d156d1c72996 target/survey-target/release/survey-gf2-side generator-dump
 # normalization: none — the M4RI route fills and reduces in the repository column order, so both dumps are already row-major [message | parity]
 # same-code criterion: full rank and identical canonical GF(2) RREF of both normalized matrices under the repository column order (row-space equality)
 B2: dimensions=64x127 dimensions_match=True m4ri_raw_systematic=True m4ri_normalized_systematic=True gf2_systematic=True m4ri_sha256=7dc67788c88ba47effa597363dc6b9ae5030138309a825b34b27f110635e600a gf2_sha256=7dc67788c88ba47effa597363dc6b9ae5030138309a825b34b27f110635e600a bit_exact_identical=True m4ri_rank=64 gf2_rank=64 same_code=True
