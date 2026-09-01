@@ -67,13 +67,6 @@
       "path": "dev/active/4e732b56/workload-selection.md"
     },
     {
-      "commit": null,
-      "doc_type": "report",
-      "format": "markdown",
-      "label": "Survey benchmark receipt",
-      "path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-survey-receipt.md"
-    },
-    {
       "assets": [
         {
           "asset_type": "local",
@@ -283,7 +276,7 @@
   "gates_status": {
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-09-01T02:36:54.549173576Z",
+      "updated_at": "2026-09-01T03:33:37.877931896Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -302,5 +295,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-01T02:38:38.364955008Z"
+  "updated_at": "2026-09-01T03:34:08.416845683Z"
 }
