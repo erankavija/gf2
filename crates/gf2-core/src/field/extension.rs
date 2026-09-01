@@ -1532,6 +1532,300 @@ impl OrderCertificate {
 }
 
 // ---------------------------------------------------------------------------
+// Exact multiplicative orders
+// ---------------------------------------------------------------------------
+
+/// Returns the canonical-index element with the requested index.
+fn element_at_canonical_index<X: FieldExtension>(
+    ext: &X,
+    index: u128,
+) -> Result<X::Ext, FieldError> {
+    let characteristic = u128::from(ext.characteristic());
+    let mut remaining = index;
+    let mut coordinates = Vec::with_capacity(ext.ext_degree());
+    for _ in 0..ext.ext_degree() {
+        coordinates.push((remaining % characteristic) as u64);
+        remaining /= characteristic;
+    }
+    debug_assert_eq!(remaining, 0, "canonical index exceeds the field order");
+    ext.ext_zero().from_prime_coords(&coordinates)
+}
+
+/// Checks exact multiplicative order using a complete distinct-prime list.
+fn has_exact_order<F: FiniteField>(element: &F, order: u64, prime_factors: &[u64]) -> bool {
+    element.pow(order).is_one()
+        && prime_factors
+            .iter()
+            .all(|&prime| !element.pow(order / prime).is_one())
+}
+
+/// Multiplies modulo `modulus` without overflowing a `u64` intermediate.
+fn modular_mul(lhs: u64, rhs: u64, modulus: u64) -> u64 {
+    (u128::from(lhs) * u128::from(rhs) % u128::from(modulus)) as u64
+}
+
+/// Adds modulo `modulus` without overflowing a `u64` intermediate.
+fn modular_add(lhs: u64, rhs: u64, modulus: u64) -> u64 {
+    ((u128::from(lhs) + u128::from(rhs)) % u128::from(modulus)) as u64
+}
+
+/// Raises a `u64` to a power modulo `modulus`.
+fn modular_pow(mut base: u64, mut exponent: u64, modulus: u64) -> u64 {
+    let mut result = 1u64 % modulus;
+    base %= modulus;
+    while exponent != 0 {
+        if exponent & 1 == 1 {
+            result = modular_mul(result, base, modulus);
+        }
+        exponent >>= 1;
+        if exponent != 0 {
+            base = modular_mul(base, base, modulus);
+        }
+    }
+    result
+}
+
+/// Returns the greatest common divisor of two `u64`s.
+fn gcd_u64(mut lhs: u64, mut rhs: u64) -> u64 {
+    while rhs != 0 {
+        let remainder = lhs % rhs;
+        lhs = rhs;
+        rhs = remainder;
+    }
+    lhs
+}
+
+/// Deterministic Miller–Rabin primality test for a `u64`.
+fn is_prime_u64(value: u64) -> bool {
+    if value < 2 {
+        return false;
+    }
+    for prime in [2u64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37] {
+        if value == prime {
+            return true;
+        }
+        if value.is_multiple_of(prime) {
+            return false;
+        }
+    }
+
+    let mut odd_part = value - 1;
+    let mut powers_of_two = 0;
+    while odd_part.is_multiple_of(2) {
+        odd_part /= 2;
+        powers_of_two += 1;
+    }
+
+    // These bases are deterministic for every n < 2^64.
+    for base in [2u64, 325, 9_375, 28_178, 450_775, 9_780_504, 1_795_265_022] {
+        if base.is_multiple_of(value) {
+            continue;
+        }
+        let mut witness = modular_pow(base, odd_part, value);
+        if witness == 1 || witness == value - 1 {
+            continue;
+        }
+        let mut probably_prime = false;
+        for _ in 1..powers_of_two {
+            witness = modular_mul(witness, witness, value);
+            if witness == value - 1 {
+                probably_prime = true;
+                break;
+            }
+        }
+        if !probably_prime {
+            return false;
+        }
+    }
+    true
+}
+
+/// Finds one non-trivial factor with a deterministic, bounded Pollard-rho
+/// search. The bound is deliberate: an unexpectedly difficult `u64`
+/// factorization reports [`FieldError::OrderFactorizationUnavailable`] instead
+/// of making canonical selection loop without a limit.
+fn pollard_rho_factor(value: u64) -> Option<u64> {
+    if value.is_multiple_of(2) {
+        return Some(2);
+    }
+    if value.is_multiple_of(3) {
+        return Some(3);
+    }
+
+    const MAX_SEEDS: u64 = 128;
+    const MAX_ITERATIONS: usize = 100_000;
+    for seed in 1..=MAX_SEEDS {
+        let constant = seed;
+        let mut tortoise = 2u64;
+        let mut hare = 2u64;
+        for _ in 0..MAX_ITERATIONS {
+            tortoise = modular_add(modular_mul(tortoise, tortoise, value), constant, value);
+            hare = modular_add(modular_mul(hare, hare, value), constant, value);
+            hare = modular_add(modular_mul(hare, hare, value), constant, value);
+            let difference = tortoise.abs_diff(hare);
+            let factor = gcd_u64(difference, value);
+            if factor > 1 && factor < value {
+                return Some(factor);
+            }
+        }
+    }
+    None
+}
+
+/// Recursively factors a `u64`, returning distinct factors after sorting.
+fn factor_u64_rec(value: u64, factors: &mut Vec<u64>) -> bool {
+    if value == 1 {
+        return true;
+    }
+    if is_prime_u64(value) {
+        factors.push(value);
+        return true;
+    }
+    let Some(factor) = pollard_rho_factor(value) else {
+        return false;
+    };
+    factor_u64_rec(factor, factors) && factor_u64_rec(value / factor, factors)
+}
+
+/// Factors a supported order into distinct ascending prime factors.
+fn factor_order(order: u64) -> Option<Vec<u64>> {
+    if order == 0 {
+        return None;
+    }
+    let mut factors = Vec::new();
+    if !factor_u64_rec(order, &mut factors) {
+        return None;
+    }
+    factors.sort_unstable();
+    factors.dedup();
+    Some(factors)
+}
+
+/// The canonical generator of $E^{*}$: the element of least canonical index
+/// $\iota$ whose multiplicative order is exactly $|E^{*}|$.
+///
+/// The scan is normative: candidates are considered in the order
+/// $\iota = 2, 3, 4, \ldots$, where $\iota$ is the base-$p$ index emitted by
+/// [`FieldIdentity::write_prime_coords`]. Index `0` is zero and index `1` is
+/// one, so neither is considered; for $|E^{*}| = 1$, the result is one.
+/// Every candidate is checked as $x^N = 1$ and
+/// $x^{N/q} \ne 1$ for every distinct prime $q \mid N$.
+///
+/// # Errors
+///
+/// - [`FieldError::OrderFactorizationUnavailable`] when $|E^{*}|$ does not
+///   fit the supported `u64` certificate/factorization range, or its bounded
+///   factorization cannot complete.
+/// - [`FieldError::NoElementOfOrder`] when the carrier reports an invalid
+///   zero unit-group order.
+///
+/// # Complexity
+///
+/// Factoring costs the bounded deterministic `u64` factorization procedure.
+/// The candidate search costs $O(|E^{*}|)$ candidates, each requiring
+/// $O(\log |E^{*}|)$ field multiplications per order check and
+/// $O([E:\mathbb{F}_p])$ coordinate conversion.
+pub fn canonical_generator<X: FieldExtension>(
+    ext: &X,
+) -> Result<(X::Ext, OrderCertificate), FieldError> {
+    let unit_group_order = ext
+        .ext_unit_group_order()
+        .ok_or(FieldError::OrderFactorizationUnavailable { order: u128::MAX })?;
+    let order =
+        u64::try_from(unit_group_order).map_err(|_| FieldError::OrderFactorizationUnavailable {
+            order: unit_group_order,
+        })?;
+    if order == 0 {
+        return Err(FieldError::NoElementOfOrder {
+            requested: order,
+            unit_group_order,
+        });
+    }
+    let prime_factors = factor_order(order).ok_or(FieldError::OrderFactorizationUnavailable {
+        order: unit_group_order,
+    })?;
+    let certificate = OrderCertificate::new(ext.ext_id().clone(), order, prime_factors)?;
+
+    if order == 1 {
+        let element = ext.ext_one();
+        debug_assert!(has_exact_order(
+            &element,
+            order,
+            certificate.prime_factors()
+        ));
+        return Ok((element, certificate));
+    }
+
+    for index in 2..=u128::from(order) {
+        let candidate = element_at_canonical_index(ext, index)?;
+        if has_exact_order(&candidate, order, certificate.prime_factors()) {
+            return Ok((candidate, certificate));
+        }
+    }
+
+    // A finite field's multiplicative group is cyclic. Reaching this branch
+    // means the FieldExtension carrier did not model the field named by its
+    // certificate, so report the failed exact-order request without panicking.
+    Err(FieldError::NoElementOfOrder {
+        requested: order,
+        unit_group_order,
+    })
+}
+
+/// Derives the deterministic element of exact multiplicative order `n`.
+///
+/// Let $N = |E^{*}|$. The operation requires $n \mid N$, obtains the
+/// canonical generator $g$ from [`canonical_generator`], and returns
+/// $g^{N/n}$. It validates the result exactly as $x^n = 1$ and
+/// $x^{n/q} \ne 1$ for every distinct prime $q \mid n$. The returned
+/// [`OrderCertificate`] carries that complete factor list.
+///
+/// # Errors
+///
+/// - [`FieldError::NoElementOfOrder`] when `n` is zero or does not divide
+///   $|E^{*}|$.
+/// - [`FieldError::OrderFactorizationUnavailable`] when the relevant unit
+///   group order cannot be represented or factored by the supported
+///   deterministic procedure.
+///
+/// # Complexity
+///
+/// Includes [`canonical_generator`] and one additional exponentiation taking
+/// $O(\log N)$ field multiplications.
+pub fn element_of_exact_order<X: FieldExtension>(
+    ext: &X,
+    n: u64,
+) -> Result<(X::Ext, OrderCertificate), FieldError> {
+    let unit_group_order = ext
+        .ext_unit_group_order()
+        .ok_or(FieldError::OrderFactorizationUnavailable { order: u128::MAX })?;
+    if n == 0 || !unit_group_order.is_multiple_of(u128::from(n)) {
+        return Err(FieldError::NoElementOfOrder {
+            requested: n,
+            unit_group_order,
+        });
+    }
+
+    let (generator, full_certificate) = canonical_generator(ext)?;
+    let certificate = full_certificate
+        .divisor(n)
+        .ok_or(FieldError::NoElementOfOrder {
+            requested: n,
+            unit_group_order,
+        })?;
+    let element = generator.pow(full_certificate.order() / n);
+    let exact = has_exact_order(&element, n, certificate.prime_factors());
+    debug_assert!(exact);
+    if !exact {
+        return Err(FieldError::NoElementOfOrder {
+            requested: n,
+            unit_group_order,
+        });
+    }
+    Ok((element, certificate))
+}
+
+// ---------------------------------------------------------------------------
 // The extension relation
 // ---------------------------------------------------------------------------
 
@@ -2632,6 +2926,142 @@ mod tests {
         assert_eq!(certificate.divisor(15).unwrap(), certificate);
         assert!(certificate.divisor(2).is_none());
         assert!(certificate.divisor(0).is_none());
+    }
+
+    // -----------------------------------------------------------------------
+    // Exact multiplicative orders
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn exact_order_derivation_validates_order_exactness() {
+        let field = Gf2mField::new(4, 0b10011);
+        let ext = BinaryPrimeExt::new(field.clone()).unwrap();
+
+        let (element, certificate) = element_of_exact_order(&ext, 5).unwrap();
+        assert_eq!(certificate.order(), 5);
+        assert_eq!(certificate.prime_factors(), &[5]);
+        assert!(element.pow(5).is_one());
+        assert!(!element.pow(5 / 5).is_one());
+
+        // The full-order helper uses the same exact-order validation and
+        // agrees with the existing table-backed primitive for this field.
+        let (generator, certificate) = canonical_generator(&ext).unwrap();
+        assert_eq!(generator, field.element(2));
+        assert_eq!(certificate.order(), 15);
+        assert!(generator.pow(15).is_one());
+        for &prime in certificate.prime_factors() {
+            assert!(!generator.pow(15 / prime).is_one());
+        }
+    }
+
+    proptest::proptest! {
+        #[test]
+        fn prop_exact_order_binary(n in proptest::sample::select(vec![1u64, 3, 5, 15])) {
+            let field = Gf2mField::new(4, 0b10011);
+            let ext = BinaryPrimeExt::new(field).unwrap();
+            let (element, certificate) = element_of_exact_order(&ext, n).unwrap();
+
+            proptest::prop_assert_eq!(certificate.order(), n);
+            proptest::prop_assert!(element.pow(n).is_one());
+            for &prime in certificate.prime_factors() {
+                proptest::prop_assert!(!element.pow(n / prime).is_one());
+            }
+
+            let (again, again_certificate) = element_of_exact_order(&ext, n).unwrap();
+            proptest::prop_assert_eq!(again, element);
+            proptest::prop_assert_eq!(again_certificate, certificate);
+        }
+
+        #[test]
+        fn prop_exact_order_nonbinary(n in proptest::sample::select(
+            vec![1u64, 2, 3, 4, 6, 8, 12, 16, 24, 48]
+        )) {
+            let ext = ConstExt::<QuadraticExt<Gf49Config>>::new();
+            let (element, certificate) = element_of_exact_order(&ext, n).unwrap();
+
+            proptest::prop_assert_eq!(certificate.order(), n);
+            proptest::prop_assert!(element.pow(n).is_one());
+            for &prime in certificate.prime_factors() {
+                proptest::prop_assert!(!element.pow(n / prime).is_one());
+            }
+
+            let (again, again_certificate) = element_of_exact_order(&ext, n).unwrap();
+            proptest::prop_assert_eq!(again, element);
+            proptest::prop_assert_eq!(again_certificate, certificate);
+        }
+    }
+
+    #[test]
+    fn exact_order_selection_is_deterministic_across_carriers() {
+        let narrow = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
+        let wide = BinaryPrimeExt::new(Gf2mField_::<u128>::new(4, 0b10011u128)).unwrap();
+
+        let (narrow_element, narrow_certificate) = element_of_exact_order(&narrow, 5).unwrap();
+        let (wide_element, wide_certificate) = element_of_exact_order(&wide, 5).unwrap();
+        let mut narrow_coords = Vec::new();
+        let mut wide_coords = Vec::new();
+        narrow_element.write_prime_coords(&mut narrow_coords);
+        wide_element.write_prime_coords(&mut wide_coords);
+
+        assert_eq!(narrow_coords, wide_coords);
+        assert_eq!(narrow_certificate, wide_certificate);
+
+        let (again, again_certificate) = element_of_exact_order(&narrow, 5).unwrap();
+        assert_eq!(again, narrow_element);
+        assert_eq!(again_certificate, narrow_certificate);
+
+        // The same rule is deterministic for a nonbinary carrier as well.
+        let first = ConstExt::<QuadraticExt<Gf49Config>>::new();
+        let second = TrivialExt::new(QuadraticExt::<Gf49Config>::new(Fp::new(0), Fp::new(0)));
+        let (first_element, first_certificate) = element_of_exact_order(&first, 8).unwrap();
+        let (second_element, second_certificate) = element_of_exact_order(&second, 8).unwrap();
+        assert_eq!(first_element, second_element);
+        assert_eq!(first_certificate, second_certificate);
+    }
+
+    #[test]
+    fn exact_order_supports_the_u64_unit_group_boundary() {
+        let ext = TrivialExt::new(Gf2mWide::<1, Gf2m64TestConfig>::zero());
+        let (generator, certificate) = canonical_generator(&ext).unwrap();
+
+        assert_eq!(certificate.order(), u64::MAX);
+        assert_eq!(generator, Gf2mWide::<1, Gf2m64TestConfig>::from_u64(2));
+        assert!(generator.pow(u64::MAX).is_one());
+        for &prime in certificate.prime_factors() {
+            assert!(!generator.pow(u64::MAX / prime).is_one());
+        }
+    }
+
+    #[test]
+    fn exact_order_reports_no_such_order() {
+        let ext = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
+        assert_eq!(
+            element_of_exact_order(&ext, 2),
+            Err(FieldError::NoElementOfOrder {
+                requested: 2,
+                unit_group_order: 15,
+            })
+        );
+    }
+
+    #[test]
+    fn exact_order_reports_factorization_unavailable() {
+        struct Gf2m128TestConfig;
+
+        impl Gf2mWideConfig<2> for Gf2m128TestConfig {
+            const M: usize = 128;
+            const MODULUS: [u64; 2] = [0x87, 0];
+        }
+
+        let ext = TrivialExt::new(Gf2mWide::<2, Gf2m128TestConfig>::zero());
+        assert_eq!(
+            canonical_generator(&ext),
+            Err(FieldError::OrderFactorizationUnavailable { order: u128::MAX })
+        );
+        assert_eq!(
+            element_of_exact_order(&ext, 1),
+            Err(FieldError::OrderFactorizationUnavailable { order: u128::MAX })
+        );
     }
 
     // -----------------------------------------------------------------------
