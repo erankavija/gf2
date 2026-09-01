@@ -45,13 +45,14 @@
 //! - $n > 0$;
 //! - $\gcd(n, q) = 1$, decided as $\gcd(n, p) = 1$ for the characteristic $p$,
 //!   because $q$ is a power of $p$;
-//! - $n$ divides $|E^{*}|$;
+//! - $n$ divides $|E^{*}|$, and additionally $n < |E^{*}|$ for
+//!   [`BchSpec::NonPrimitiveConsecutive`], whose length is a *proper* divisor;
 //! - the order-$n$ root exists: derived canonically under
 //!   [`RootSelection::Canonical`], or validated (identity match against the
 //!   witness, exact order $n$) when a variant exposing [`RootSelection`] —
-//!   currently [`BchSpec::RootSeeds`] — supplies an explicit root; the
-//!   primitive and generator variants always construct with the canonical
-//!   root;
+//!   [`BchSpec::NonPrimitiveConsecutive`] or [`BchSpec::RootSeeds`] — supplies
+//!   an explicit root; the primitive and generator variants always construct
+//!   with the canonical root;
 //! - every caller-supplied first-root exponent satisfies $0 \le b < n$; seed
 //!   exponents are reduced modulo $n$;
 //! - the designed distance satisfies $1 \le \delta \le n + 1$.
@@ -314,6 +315,65 @@ where
         designed_distance: DesignedDistance,
     },
 
+    /// Consecutive roots at a proper non-primitive length.
+    ///
+    /// The length is an independent input: it is a proper divisor of
+    /// $|E^{*}|$ coprime to the characteristic, so the code is cyclic of that
+    /// shorter length inside the same splitting field. A primitive length
+    /// belongs to the two primitive variants, which derive it instead of
+    /// accepting it, so this variant rejects $n = |E^{*}|$ with
+    /// [`BchError::LengthNotProperlyNonPrimitive`].
+    ///
+    /// [`RootSelection`] chooses between the derived canonical element of
+    /// exact order $n$ and a caller-supplied $n$-th root of unity. Supplying
+    /// the canonical element explicitly constructs the same code as deriving
+    /// it. Everything after the root — the closure, the generator, $k$, the
+    /// witnessed bound and the radius — is the shared consecutive-root
+    /// derivation the primitive variants use.
+    ///
+    /// # Example
+    ///
+    /// Length 23 divides $|\mathrm{GF}(2^{11})^{*}| = 2047$. The 2-cyclotomic
+    /// coset of one modulo 23 holds eleven exponents, so the construction is
+    /// the $(23, 12)$ binary Golay code, witnessing the run $1, 2, 3, 4$:
+    ///
+    /// ```
+    /// use gf2_coding::bch::spec::{
+    ///     BchLength, BchSpec, BinaryBchCode, DesignedDistance, RootExponent,
+    ///     RootSelection,
+    /// };
+    /// use gf2_core::field::extension::BinaryPrimeExt;
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let extension = BinaryPrimeExt::new(Gf2mField::new(11, 0b100000000101))?;
+    /// let code = BinaryBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+    ///     extension,
+    ///     length: BchLength::try_from(23)?,
+    ///     root: RootSelection::Canonical,
+    ///     first_root: RootExponent::from(1),
+    ///     designed_distance: DesignedDistance::try_from(5)?,
+    /// })?;
+    ///
+    /// assert_eq!(code.n(), 23);
+    /// assert_eq!(code.k(), 12);
+    /// assert_eq!(code.distance_bound().consecutive_root_count(), 4);
+    /// assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 5);
+    /// assert_eq!(code.correction_radius(), 2);
+    /// # Ok::<(), gf2_coding::bch::error::BchError>(())
+    /// ```
+    NonPrimitiveConsecutive {
+        /// Witness relating the code-symbol field to the splitting field.
+        extension: X,
+        /// Code length, a proper divisor of the splitting field's unit group.
+        length: BchLength,
+        /// Canonical or explicitly validated order-`length` root.
+        root: RootSelection<X::Ext>,
+        /// Exponent $b$ of the first requested consecutive root.
+        first_root: RootExponent,
+        /// Requested classical BCH bound $\delta$.
+        designed_distance: DesignedDistance,
+    },
+
     /// BCH code from an arbitrary root seed set.
     ///
     /// The seeds need not be closed under multiplication by the base-field
@@ -529,6 +589,11 @@ where
     ///   $\gcd(n, q) \ne 1$, which would define a repeated-root cyclic code.
     /// - [`BchError::LengthDoesNotDivideUnitGroup`] when $n \nmid |E^{*}|$, so
     ///   no element of exact order $n$ exists.
+    /// - [`BchError::LengthNotProperlyNonPrimitive`] when
+    ///   [`BchSpec::NonPrimitiveConsecutive`] receives the primitive length
+    ///   $n = |E^{*}|$ rather than a proper divisor of it.
+    /// - [`BchError::RootOrderMismatch`] when an explicitly supplied root does
+    ///   not have exact multiplicative order $n$.
     /// - [`BchError::RootExponentOutOfRange`] when a supplied first root
     ///   exponent is not in `0..n`.
     /// - [`BchError::DesignedDistanceOutOfRange`] when $\delta > n + 1$.
@@ -668,6 +733,13 @@ fn normalize<X: FieldExtension>(spec: BchSpec<X>) -> Result<DerivedInputs<X>, Bc
             first_root,
             designed_distance,
         } => normalize_primitive(extension, Some(first_root), designed_distance),
+        BchSpec::NonPrimitiveConsecutive {
+            extension,
+            length,
+            root,
+            first_root,
+            designed_distance,
+        } => normalize_non_primitive(extension, length, root, first_root, designed_distance),
         BchSpec::RootSeeds {
             extension,
             length,
@@ -684,8 +756,10 @@ fn normalize<X: FieldExtension>(spec: BchSpec<X>) -> Result<DerivedInputs<X>, Bc
 
 /// Normalizes a primitive consecutive-root request.
 ///
-/// `first_root` of `None` selects the narrow-sense convention, whose first
-/// root exponent is the residue of one modulo the derived length.
+/// The length is derived as $|E^{*}|$ and the root is always canonical, so
+/// neither is a caller input. `first_root` of `None` selects the narrow-sense
+/// convention, whose first root exponent is the residue of one modulo the
+/// derived length.
 fn normalize_primitive<X: FieldExtension>(
     extension: X,
     first_root: Option<RootExponent>,
@@ -694,8 +768,55 @@ fn normalize_primitive<X: FieldExtension>(
     let length = primitive_length(&extension)?;
     validate_length_coprime_to_characteristic(extension.characteristic(), length)?;
     validate_length_divides_unit_group(&extension, length)?;
+    normalize_consecutive(
+        extension,
+        length,
+        &RootSelection::Canonical,
+        first_root,
+        designed_distance,
+    )
+}
 
-    let root = resolve_root(&extension, length, &RootSelection::Canonical)?;
+/// Normalizes a consecutive-root request at a proper non-primitive length.
+///
+/// The caller's length is validated as a proper divisor of $|E^{*}|$ that is
+/// coprime to the characteristic, and the order-`length` root is either
+/// derived or validated according to `root_selection`. The request then enters
+/// the same consecutive-root normalization the primitive variants use, so the
+/// length and the root parameterize one algorithm rather than selecting
+/// another.
+fn normalize_non_primitive<X: FieldExtension>(
+    extension: X,
+    length: BchLength,
+    root_selection: RootSelection<X::Ext>,
+    first_root: RootExponent,
+    designed_distance: DesignedDistance,
+) -> Result<DerivedInputs<X>, BchError> {
+    validate_length_coprime_to_characteristic(extension.characteristic(), length)?;
+    validate_length_divides_unit_group(&extension, length)?;
+    validate_length_is_proper_divisor(&extension, length)?;
+    normalize_consecutive(
+        extension,
+        length,
+        &root_selection,
+        Some(first_root),
+        designed_distance,
+    )
+}
+
+/// Resolves the root and expands a consecutive-root request into its seeds.
+///
+/// This is the shared tail of every consecutive-root variant; its callers
+/// differ only in how they obtain and validate `length`. `first_root` of
+/// `None` selects the narrow-sense first exponent $1 \bmod n$.
+fn normalize_consecutive<X: FieldExtension>(
+    extension: X,
+    length: BchLength,
+    root_selection: &RootSelection<X::Ext>,
+    first_root: Option<RootExponent>,
+    designed_distance: DesignedDistance,
+) -> Result<DerivedInputs<X>, BchError> {
+    let root = resolve_root(&extension, length, root_selection)?;
     let first_root = match first_root {
         Some(exponent) => validate_root_exponent(exponent, length)?,
         None => RootExponent(1 % length.get()),
@@ -889,6 +1010,33 @@ fn validate_length_divides_unit_group<X: FieldExtension>(
         Ok(())
     } else {
         Err(BchError::LengthDoesNotDivideUnitGroup {
+            length: length.get(),
+            unit_group_order,
+        })
+    }
+}
+
+/// Decides $n < |E^{*}|$, the condition separating a non-primitive length
+/// from the primitive one.
+///
+/// The primitive length is derived rather than supplied, so a non-primitive
+/// spec carrying it names a construction that already has an unambiguous
+/// variant.
+fn validate_length_is_proper_divisor<X: FieldExtension>(
+    extension: &X,
+    length: BchLength,
+) -> Result<(), BchError> {
+    let unit_group_order =
+        extension
+            .ext_unit_group_order()
+            .ok_or_else(|| FieldError::UnsupportedSize {
+                degree: extension.ext_degree(),
+                characteristic: extension.characteristic(),
+            })?;
+    if u128::from(length.get()) < unit_group_order {
+        Ok(())
+    } else {
+        Err(BchError::LengthNotProperlyNonPrimitive {
             length: length.get(),
             unit_group_order,
         })
@@ -1461,6 +1609,248 @@ mod tests {
         assert_eq!(narrow, explicit);
     }
 
+    // -- Non-primitive consecutive-root flavor -----------------------------
+
+    /// Builds a non-primitive consecutive-root code over a binary field.
+    fn binary_non_primitive(
+        m: usize,
+        modulus: u64,
+        length: u64,
+        root: RootSelection<Gf2mElement>,
+        first_root: u64,
+        designed_distance: u64,
+    ) -> Result<BinaryBchCode, BchError> {
+        BinaryBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+            extension: binary_extension(m, modulus),
+            length: BchLength::try_from(length)?,
+            root,
+            first_root: RootExponent::from(first_root),
+            designed_distance: DesignedDistance::try_from(designed_distance)?,
+        })
+    }
+
+    #[test]
+    fn non_primitive_construction_derives_the_canonical_order_n_root() {
+        // 23 divides |GF(2^11)*| = 2047, and the 2-cyclotomic coset of one
+        // modulo 23 holds eleven exponents, so this is the (23, 12) binary
+        // Golay code. Its longest run of consecutive exponents is 1, 2, 3, 4.
+        let code = binary_non_primitive(11, 0b100000000101, 23, RootSelection::Canonical, 1, 5)
+            .expect("a valid non-primitive spec");
+
+        assert_eq!(code.n(), 23);
+        assert_eq!(code.k(), 12);
+        assert_eq!(code.generator().degree(), Some(11));
+        assert_eq!(
+            code.defining_set(),
+            &root_seeds([1, 2, 3, 4, 6, 8, 9, 12, 13, 16, 18])[..]
+        );
+        assert_eq!(
+            code.distance_bound().first_root(),
+            Some(RootExponent::from(1))
+        );
+        assert_eq!(code.distance_bound().consecutive_root_count(), 4);
+        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 5);
+        assert_eq!(code.correction_radius(), 2);
+        assert_construction_is_consistent(&code, 2);
+    }
+
+    #[test]
+    fn the_derived_non_primitive_root_has_exact_order_n() {
+        let extension = binary_extension(11, 0b100000000101);
+        let length = BchLength::try_from(23).expect("positive");
+        let code = binary_non_primitive(11, 0b100000000101, 23, RootSelection::Canonical, 1, 5)
+            .expect("a valid non-primitive spec");
+
+        assert_eq!(
+            multiplicative_order(&extension, code.root()).expect("a factorable unit group"),
+            u128::from(length.get())
+        );
+    }
+
+    #[test]
+    fn a_derived_and_an_explicitly_supplied_canonical_root_agree_over_a_binary_field() {
+        for (m, modulus, length) in [(4usize, 0b10011u64, 5u64), (11, 0b100000000101, 23)] {
+            let extension = binary_extension(m, modulus);
+            let canonical = resolve_root(
+                &extension,
+                BchLength::try_from(length).expect("positive"),
+                &RootSelection::Canonical,
+            )
+            .expect("a canonical root of exact order n");
+
+            let derived = binary_non_primitive(m, modulus, length, RootSelection::Canonical, 1, 3)
+                .expect("a valid derived-root spec");
+            let explicit =
+                binary_non_primitive(m, modulus, length, RootSelection::Explicit(canonical), 1, 3)
+                    .expect("a valid explicit-root spec");
+
+            assert_eq!(derived, explicit, "agreement at length {length}");
+        }
+    }
+
+    #[test]
+    fn a_derived_and_an_explicitly_supplied_canonical_root_agree_over_a_prime_field() {
+        let length = BchLength::try_from(12).expect("positive");
+        let canonical = resolve_root(&gf25(), length, &RootSelection::Canonical)
+            .expect("a canonical order-12 root");
+
+        let derived = DenseBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+            extension: gf25(),
+            length,
+            root: RootSelection::Canonical,
+            first_root: RootExponent::from(1),
+            designed_distance: DesignedDistance::try_from(5).expect("positive"),
+        })
+        .expect("a valid derived-root spec");
+        let explicit = DenseBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+            extension: gf25(),
+            length,
+            root: RootSelection::Explicit(canonical),
+            first_root: RootExponent::from(1),
+            designed_distance: DesignedDistance::try_from(5).expect("positive"),
+        })
+        .expect("a valid explicit-root spec");
+
+        assert_eq!(derived, explicit);
+    }
+
+    #[test]
+    fn an_explicit_root_outside_the_canonical_frobenius_orbit_builds_its_own_code() {
+        // The 22 elements of order 23 in GF(2^11) form two Frobenius orbits.
+        // Exponent 5 lies outside the canonical root's orbit, so it names a
+        // 23rd root of unity that is not a power of the canonical root under
+        // the base-field Frobenius. It builds the other (23, 12) code: the
+        // same exponent bookkeeping over a different generator polynomial.
+        let extension = binary_extension(11, 0b100000000101);
+        let canonical = resolve_root(
+            &extension,
+            BchLength::try_from(23).expect("positive"),
+            &RootSelection::Canonical,
+        )
+        .expect("a canonical order-23 root");
+
+        let derived = binary_non_primitive(11, 0b100000000101, 23, RootSelection::Canonical, 1, 5)
+            .expect("a valid derived-root spec");
+        let other = binary_non_primitive(
+            11,
+            0b100000000101,
+            23,
+            RootSelection::Explicit(canonical.pow(5)),
+            1,
+            5,
+        )
+        .expect("a valid explicit-root spec");
+
+        assert_eq!(other.n(), 23);
+        assert_eq!(other.k(), 12);
+        assert_eq!(other.defining_set(), derived.defining_set());
+        assert_eq!(other.distance_bound(), derived.distance_bound());
+        assert_ne!(other.generator(), derived.generator());
+        assert_construction_is_consistent(&other, 2);
+    }
+
+    #[test]
+    fn non_primitive_prime_base_construction_uses_the_shorter_cyclic_length() {
+        // The 5-cyclotomic cosets meeting {1, 2, 3, 4} modulo 12 are {1, 5},
+        // {2, 10}, {3} and {4, 8}, so the generator has degree seven and the
+        // closure extends the requested run to 1..=5.
+        let code = DenseBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+            extension: gf25(),
+            length: BchLength::try_from(12).expect("positive"),
+            root: RootSelection::Canonical,
+            first_root: RootExponent::from(1),
+            designed_distance: DesignedDistance::try_from(5).expect("positive"),
+        })
+        .expect("a valid GF(5) non-primitive spec");
+
+        assert_eq!(code.n(), 12);
+        assert_eq!(code.k(), 5);
+        assert_eq!(code.defining_set(), &root_seeds([1, 2, 3, 4, 5, 8, 10])[..]);
+        assert_eq!(code.base_field_id(), &Fp::<5>::new(0).field_id());
+        assert_eq!(code.distance_bound().consecutive_root_count(), 5);
+        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 6);
+        assert_eq!(code.correction_radius(), 2);
+        assert_construction_is_consistent(&code, 5);
+    }
+
+    #[test]
+    fn non_primitive_construction_spans_the_word_boundary_lengths() {
+        // 63 and 65 both divide |GF(2^12)*| = 4095. The 2-cyclotomic cosets
+        // meeting {1, 2, 3, 4} have six members modulo 63 and twelve modulo
+        // 65, so the generators have degree 12 and 24.
+        for (length, dimension) in [(63u64, 51usize), (65, 41)] {
+            let code =
+                binary_non_primitive(12, 0b1000001010011, length, RootSelection::Canonical, 1, 5)
+                    .expect("a valid non-primitive spec");
+
+            assert_eq!(code.n(), length as usize, "length {length}");
+            assert_eq!(code.k(), dimension, "dimension at length {length}");
+            assert_eq!(code.distance_bound().consecutive_root_count(), 4);
+            assert_construction_is_consistent(&code, 2);
+        }
+    }
+
+    #[test]
+    fn the_unit_length_is_a_valid_non_primitive_construction() {
+        let full_space = binary_non_primitive(4, 0b10011, 1, RootSelection::Canonical, 0, 1)
+            .expect("length one requesting no roots is the full-space code");
+        assert_eq!(full_space.n(), 1);
+        assert_eq!(full_space.k(), 1);
+        assert!(full_space.defining_set().is_empty());
+        assert_eq!(full_space.distance_bound().first_root(), None);
+
+        let zero_dimensional = binary_non_primitive(4, 0b10011, 1, RootSelection::Canonical, 0, 2)
+            .expect("length one requesting its single root is the zero-dimensional code");
+        assert_eq!(zero_dimensional.k(), 0);
+        assert_eq!(zero_dimensional.generator().degree(), Some(1));
+        assert_eq!(zero_dimensional.defining_set(), &root_seeds([0])[..]);
+        assert_eq!(
+            zero_dimensional.distance_bound().consecutive_root_count(),
+            1
+        );
+    }
+
+    #[test]
+    fn non_primitive_boundary_codes_are_constructed_rather_than_rejected() {
+        let full_space = binary_non_primitive(4, 0b10011, 5, RootSelection::Canonical, 0, 1)
+            .expect("a designed distance of one requests no roots");
+        assert_eq!(full_space.n(), 5);
+        assert_eq!(full_space.k(), 5);
+        assert_eq!(full_space.generator().degree(), Some(0));
+        assert!(full_space.defining_set().is_empty());
+        assert_eq!(
+            full_space.distance_bound().minimum_distance_lower_bound(),
+            1
+        );
+
+        let zero_dimensional = binary_non_primitive(4, 0b10011, 5, RootSelection::Canonical, 0, 6)
+            .expect("a run covering every exponent is the zero-dimensional code");
+        assert_eq!(zero_dimensional.k(), 0);
+        assert_eq!(zero_dimensional.generator().degree(), Some(5));
+        assert!(generator_divides_cyclic_polynomial(&zero_dimensional));
+        assert_eq!(zero_dimensional.defining_set().len(), 5);
+        assert_eq!(
+            zero_dimensional
+                .distance_bound()
+                .minimum_distance_lower_bound(),
+            6
+        );
+    }
+
+    #[test]
+    fn a_non_primitive_length_shortens_the_primitive_code_of_the_same_field() {
+        // The same field and designed distance at a proper divisor of the
+        // primitive length is a different, shorter cyclic code.
+        let primitive = binary_narrow_sense(4, 0b10011, 3);
+        let non_primitive = binary_non_primitive(4, 0b10011, 5, RootSelection::Canonical, 1, 3)
+            .expect("a valid non-primitive spec");
+
+        assert_eq!(primitive.n(), 15);
+        assert_eq!(non_primitive.n(), 5);
+        assert_ne!(primitive.generator(), non_primitive.generator());
+        assert_construction_is_consistent(&non_primitive, 2);
+    }
+
     // -- Arbitrary root-seed flavor ----------------------------------------
 
     #[test]
@@ -1996,6 +2386,143 @@ mod tests {
     }
 
     #[test]
+    fn a_non_primitive_root_of_the_wrong_order_is_rejected() {
+        let extension = binary_extension(4, 0b10011);
+        let primitive_root = resolve_root(
+            &extension,
+            BchLength::try_from(15).expect("positive"),
+            &RootSelection::Canonical,
+        )
+        .expect("a canonical order-15 root");
+
+        let error = binary_non_primitive(
+            4,
+            0b10011,
+            5,
+            RootSelection::Explicit(primitive_root.clone()),
+            1,
+            3,
+        )
+        .expect_err("a primitive element does not have order five");
+        assert_eq!(
+            error,
+            BchError::RootOrderMismatch {
+                expected: 5,
+                actual: 15,
+            }
+        );
+
+        let error = binary_non_primitive(
+            4,
+            0b10011,
+            5,
+            RootSelection::Explicit(primitive_root.pow(5)),
+            1,
+            3,
+        )
+        .expect_err("the fifth power of a primitive element has order three");
+        assert_eq!(
+            error,
+            BchError::RootOrderMismatch {
+                expected: 5,
+                actual: 3,
+            }
+        );
+    }
+
+    #[test]
+    fn a_non_primitive_root_from_another_presentation_is_rejected() {
+        let other: Gf2mElement = Gf2mField::new(4, 0b11001).element(2);
+        let error = binary_non_primitive(4, 0b10011, 5, RootSelection::Explicit(other), 1, 3)
+            .expect_err("a different defining polynomial is a different field");
+
+        assert!(matches!(
+            error,
+            BchError::Field(FieldError::IdentityMismatch { .. })
+        ));
+    }
+
+    #[test]
+    fn a_non_primitive_length_sharing_a_factor_with_the_characteristic_is_rejected() {
+        let error = binary_non_primitive(12, 0b1000001010011, 64, RootSelection::Canonical, 1, 3)
+            .expect_err("gcd(64, 2) is not one");
+        assert_eq!(
+            error,
+            BchError::LengthNotCoprimeToCharacteristic {
+                length: 64,
+                characteristic: 2,
+            }
+        );
+
+        let error = DenseBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+            extension: gf25(),
+            length: BchLength::try_from(10).expect("positive"),
+            root: RootSelection::Canonical,
+            first_root: RootExponent::from(1),
+            designed_distance: DesignedDistance::try_from(3).expect("positive"),
+        })
+        .expect_err("gcd(10, 5) is not one");
+        assert_eq!(
+            error,
+            BchError::LengthNotCoprimeToCharacteristic {
+                length: 10,
+                characteristic: 5,
+            }
+        );
+    }
+
+    #[test]
+    fn a_non_primitive_length_that_does_not_divide_the_unit_group_is_rejected() {
+        let error = binary_non_primitive(4, 0b10011, 7, RootSelection::Canonical, 1, 3)
+            .expect_err("7 does not divide 15");
+
+        assert_eq!(
+            error,
+            BchError::LengthDoesNotDivideUnitGroup {
+                length: 7,
+                unit_group_order: 15,
+            }
+        );
+    }
+
+    #[test]
+    fn the_primitive_length_is_rejected_by_the_non_primitive_variant() {
+        let error = binary_non_primitive(4, 0b10011, 15, RootSelection::Canonical, 1, 3)
+            .expect_err("15 is the primitive length of GF(2^4)");
+
+        assert_eq!(
+            error,
+            BchError::LengthNotProperlyNonPrimitive {
+                length: 15,
+                unit_group_order: 15,
+            }
+        );
+    }
+
+    #[test]
+    fn non_primitive_exponent_and_designed_distance_ranges_use_the_shorter_length() {
+        let error = binary_non_primitive(4, 0b10011, 5, RootSelection::Canonical, 5, 3)
+            .expect_err("the exponent range is 0..n");
+        assert_eq!(
+            error,
+            BchError::RootExponentOutOfRange {
+                exponent: 5,
+                length: 5,
+            }
+        );
+
+        let error = binary_non_primitive(4, 0b10011, 5, RootSelection::Canonical, 1, 7)
+            .expect_err("delta must not exceed n + 1");
+        assert_eq!(
+            error,
+            BchError::DesignedDistanceOutOfRange {
+                designed_distance: 7,
+                length: 5,
+            }
+        );
+    }
+
+    #[test]
     fn root_seed_sets_reuse_typed_explicit_root_validation() {
         let extension = binary_extension(4, 0b10011);
         let length = BchLength::try_from(15).expect("positive");
@@ -2084,8 +2611,86 @@ mod tests {
         })
     }
 
+    /// Draws a valid binary non-primitive request as
+    /// `(m, primitive polynomial, length, first root, designed distance)`.
+    ///
+    /// Each drawn length is a proper divisor of the field's primitive length,
+    /// and the exponent and designed distance stay inside the ranges that
+    /// length admits, so every generated request is accepted.
+    fn binary_non_primitive_requests() -> impl Strategy<Value = (usize, u64, u64, u64, u64)> {
+        prop_oneof![
+            Just((4usize, 0b10011u64, 3u64)),
+            Just((4, 0b10011, 5)),
+            Just((6, 0b1000011, 7)),
+            Just((6, 0b1000011, 9)),
+            Just((6, 0b1000011, 21)),
+        ]
+        .prop_flat_map(|(m, modulus, length)| {
+            (
+                Just(m),
+                Just(modulus),
+                Just(length),
+                0..length,
+                1..=length + 1,
+            )
+        })
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(24))]
+
+        #[test]
+        fn prop_non_primitive_construction_is_internally_consistent(
+            (m, modulus, length, first_root, designed_distance)
+                in binary_non_primitive_requests(),
+        ) {
+            let code = binary_non_primitive(
+                m,
+                modulus,
+                length,
+                RootSelection::Canonical,
+                first_root,
+                designed_distance,
+            )
+            .expect("a valid non-primitive spec");
+
+            prop_assert_eq!(code.n(), length as usize);
+            assert_construction_is_consistent(&code, 2);
+        }
+
+        #[test]
+        fn prop_non_primitive_root_conventions_agree_on_the_canonical_root(
+            (m, modulus, length, first_root, designed_distance)
+                in binary_non_primitive_requests(),
+        ) {
+            let canonical = resolve_root(
+                &binary_extension(m, modulus),
+                BchLength::try_from(length).expect("positive"),
+                &RootSelection::Canonical,
+            )
+            .expect("a canonical root of exact order n");
+
+            let derived = binary_non_primitive(
+                m,
+                modulus,
+                length,
+                RootSelection::Canonical,
+                first_root,
+                designed_distance,
+            )
+            .expect("a valid derived-root spec");
+            let explicit = binary_non_primitive(
+                m,
+                modulus,
+                length,
+                RootSelection::Explicit(canonical),
+                first_root,
+                designed_distance,
+            )
+            .expect("a valid explicit-root spec");
+
+            prop_assert_eq!(derived, explicit);
+        }
 
         #[test]
         fn prop_binary_construction_is_internally_consistent(
