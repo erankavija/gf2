@@ -350,3 +350,50 @@ the `tuning-calibration-v2` behavior token; it is not a global loader token.
 The resulting core-owner artifact contains no algebra vocabulary. The exact
 v1 evidence is archived without retagging, and neither a compatibility reader
 nor dual write is part of this follow-on calibration.
+
+## Prepared pre-measurement protocol correction (2026-09-01)
+
+This is a protocol note, not a measurement record. No `GF2_BENCH=1` action,
+host calibration, artifact cutover, supersession-block application, or reader
+change is represented here.
+
+The prepared harness keeps the core behavior token exactly
+`tuning-calibration-v2`: no valid v2 measurement artifact exists yet, and the
+correction completes that producer identity rather than replacing established
+v2 evidence. Its structured raw-sample records preserve, in acquisition order,
+every `(execution, repetition, calls, elapsed_ns)` observation and pin profile
+format 2, `gf2-core/selectors`, section schema 1, and the v2 token. Aggregates
+and selection remain derived from those integer observations.
+
+Fixture provenance uses an explicit stable tag for each of the five pilot
+fields and named role/stream values under `gf2-calibration-seed-v1`. The
+harness emits the root, derivation constants, field tag, grid size, role, and
+derived seed for every fixture stream, including all bit-buffer banks, so each
+fresh child can be reconstructed without depending on enum declaration order.
+
+Every successful forced child reports the requested and production-observed
+route, exact installed threshold, `SectionResolution::Installed`, inherited
+section measurement kind, profile and section identities, strict format-2
+content and canonical section-wrapper digests, the v2 protocol identity, and
+its raw samples. The parent recomputes and validates those facts before it
+prints the verified observation. A nonzero child, malformed output, wrong
+route/value/digest, missing or frozen section, or invalid sample sequence stays
+fatal.
+
+The runnable procedure now records a clean build-time HEAD, builds both release
+executables outside the benchmark lock through `cargo-budget` and Rust 1.95,
+rechecks the same clean HEAD, and compares the in-lock revision with that build
+identity. One outer `--full-host` lock span runs the binaries directly and
+composes the complete envelope. The harness independently treats a dirty tree
+as a hard error before protocol, grid, seed, probe, or timing output. Runtime
+provenance requires `RUSTUP_TOOLCHAIN=1.95.0` and verifies `rustc 1.95.0`; the
+lock probe matches the exact `GF2_CCX1_LOCK` path (or
+`/tmp/gf2-ccx1.lock`) by device and inode.
+All owner, complete, stdout, stderr, composer-log, and hash destinations must
+be absent before the run, and post-run SHA-256 records cover both executables,
+both artifacts, and all diagnostics.
+
+Publication is conditional on the codec-derived inventory being exactly five
+measured fields and the 32-field complement of the current 37-field core
+schema. A build without a comparable SIMD arm therefore cannot publish a 4/33
+artifact.
