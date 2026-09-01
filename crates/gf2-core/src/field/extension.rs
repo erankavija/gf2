@@ -2165,22 +2165,28 @@ pub fn cyclotomic_closure<X: FieldExtension>(
     seeds: &[u64],
 ) -> Result<CosetPartition, FieldError> {
     let full_partition = cyclotomic_cosets(ext, n)?;
-    let cosets = full_partition
-        .cosets
-        .iter()
-        .filter(|coset| {
-            coset
-                .iter()
-                .any(|&member| seeds.iter().any(|&seed| seed % full_partition.n == member))
-        })
-        .cloned()
-        .collect();
+    let CosetPartition {
+        n,
+        q_mod_n,
+        cosets: all_cosets,
+    } = full_partition;
+    let too_large = |_| FieldError::CyclotomicModulusTooLarge { modulus: n };
 
-    Ok(CosetPartition {
-        n: full_partition.n,
-        q_mod_n: full_partition.q_mod_n,
-        cosets,
-    })
+    // Selected cosets are moved out of the owned full partition, so no
+    // element storage is reallocated; only the outer vector grows, and it
+    // grows fallibly per the too-large contract.
+    let mut cosets: Vec<Vec<u64>> = Vec::new();
+    for coset in all_cosets {
+        let selected = coset
+            .iter()
+            .any(|&member| seeds.iter().any(|&seed| seed % n == member));
+        if selected {
+            cosets.try_reserve(1).map_err(too_large)?;
+            cosets.push(coset);
+        }
+    }
+
+    Ok(CosetPartition { n, q_mod_n, cosets })
 }
 
 /// Returns the `q`-cyclotomic cosets modulo `n` from an already reduced
