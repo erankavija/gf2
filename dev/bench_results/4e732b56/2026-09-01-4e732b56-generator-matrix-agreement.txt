@@ -1,0 +1,11 @@
+# correctness-only systematic generator-matrix agreement
+# captured: 2026-09-01T01:40:37+00:00
+# rows: B2,B3,T2S
+# M4RI command: GF2_SURVEY_CODES=B2,B3,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/bench_results/4e732b56/generators.txt generator-dump
+# gf2 command: GF2_SURVEY_CODES=B2,B3,T2S GF2_REV=c155b1b0c32e073cd0c4dd52d7ca52b169fba9ae target/survey-target/release/survey-gf2-side generator-dump
+# normalization: M4RI post-RREF columns reversed by j -> n-1-j from polynomial order to repository [message | parity]; gf2 columns unchanged
+# same-code criterion: full rank and identical canonical GF(2) RREF of both normalized matrices under the repository column order (row-space equality)
+B2: dimensions=64x127 dimensions_match=True m4ri_raw_systematic=True m4ri_normalized_systematic=False gf2_systematic=True m4ri_sha256=7b1fdf03a0077e76aeb0d48f342c9a51a833ed94f80c388c9a48d92b8f379771 gf2_sha256=7dc67788c88ba47effa597363dc6b9ae5030138309a825b34b27f110635e600a bit_exact_identical=False m4ri_rank=64 gf2_rank=64 same_code=True
+B3: dimensions=223x255 dimensions_match=True m4ri_raw_systematic=True m4ri_normalized_systematic=False gf2_systematic=True m4ri_sha256=16161b60d1452e2d46b3d326f8a37eed5b9c8f7707a8beac137dd207f033f12c gf2_sha256=b1693201c93ee6be7cd102ff1070615cbbc80bff73bcb38747858627864413b2 bit_exact_identical=False m4ri_rank=223 gf2_rank=223 same_code=True
+T2S: dimensions=7032x7200 dimensions_match=True m4ri_raw_systematic=True m4ri_normalized_systematic=False gf2_systematic=True m4ri_sha256=fcef1c53976a9b18f14b9f9b60afae378b8fad77e344d86f86f2781228ebcb94 gf2_sha256=558f55ecd49ce750bea8cec3cbfdaaf89ec8d5d69ffa99b710ff3e2c7877e953 bit_exact_identical=False m4ri_rank=7032 gf2_rank=7032 same_code=True
+all 3 rows: full rank and identical canonical RREF under the repository column order — both routes generate the same code; bit_exact_identical above reports whether the systematic forms also coincide

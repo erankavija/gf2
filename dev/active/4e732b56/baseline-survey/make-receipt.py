@@ -179,7 +179,7 @@ def main() -> int:
     print("|---|---|")
     print("| Issue | `4e732b56` |")
     print(f"| Run timestamps (UTC) | {', '.join(generated)} |")
-    print("| gf2 revision | recorded per stage below; T2N gf2 is an explicitly separate revision |")
+    print("| gf2 revision | recorded per stage below |")
     print(f"| Host | {host_field(host_files, r'Model name:').split(':', 1)[-1].strip()} |")
     posture = "nice -n -5 requested, denied, and the child ran at inherited default priority" if nice_denied else "nice -n -5 requested"
     print(f"| Cores pinned | CCX1 via `dev/scripts/ccx1-bench-flock.sh` (`taskset -c 6-11`; {posture}) |")
