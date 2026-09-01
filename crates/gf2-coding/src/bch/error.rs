@@ -25,6 +25,13 @@ pub enum BchError {
     /// A BCH decoder received a buffer or erased value that failed generic
     /// code validation.
     Decode(CodeError),
+    /// A decode workspace was built by a decoder for a different code.
+    WorkspaceMismatch {
+        /// Fingerprint of the decoder's own code.
+        expected_stamp: u64,
+        /// Fingerprint carried by the supplied workspace.
+        actual_stamp: u64,
+    },
     /// A length conversion received zero, which cannot define a cyclic code.
     InvalidLength {
         /// The rejected length.
@@ -103,6 +110,14 @@ impl fmt::Display for BchError {
             Self::Field(error) => write!(formatter, "BCH field operation failed: {error}"),
             Self::Code(error) => write!(formatter, "BCH code validation failed: {error}"),
             Self::Decode(error) => write!(formatter, "BCH decode input failed validation: {error}"),
+            Self::WorkspaceMismatch {
+                expected_stamp,
+                actual_stamp,
+            } => write!(
+                formatter,
+                "BCH decode workspace was built for a different code \
+                 (expected fingerprint {expected_stamp:#018x}, found {actual_stamp:#018x})"
+            ),
             Self::InvalidLength { length } => {
                 write!(formatter, "BCH length {length} is not positive")
             }
