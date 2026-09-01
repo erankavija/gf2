@@ -2,7 +2,9 @@
   "assignee": null,
   "context": {},
   "created_at": "2026-09-01T02:27:56.898606713Z",
-  "dependencies": [],
+  "dependencies": [
+    "ae03bcd0-8881-4308-99f5-cad2b3c717d1"
+  ],
   "description": "Implement decoding for the generic derived-code transformations of epic ae03bcd0: shortened, punctured, and one-symbol-extended codes wrap a mother code and carry an explicit coordinate map and derived information-set structure (transform layer of bch-api-design; coordinate-map provenance abstraction of issue 33812b86). Decoding must translate received coordinates through that map, delegate to the mother-code decoder, and report the same typed NoErrors/Corrected/Uncorrectable outcomes.\n\n## Success Criteria\n\n- [hard] REQ-01: Shortened, punctured, and extended wrappers decode through their coordinate maps for every mother code with a canonical decoder, preserving the typed outcome contract.\n- [hard] REQ-02: Property suites verify decode correctness across transformation compositions, including derived-dimension and information-set edge cases.\n",
   "documents": [],
   "first_ready_at": "2026-09-01T02:27:56.898606713Z",
@@ -14,7 +16,7 @@
     "type:enhancement"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "backlog",
   "title": "Decode shortened, punctured, and extended derived codes",
-  "updated_at": "2026-09-01T02:27:56.898606713Z"
+  "updated_at": "2026-09-01T06:30:27.299492095Z"
 }
