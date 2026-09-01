@@ -14,7 +14,13 @@
     "code-review",
     "gf2-kernels-hip-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T16:38:11.266757746Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c3cc5226-2edf-40f7-a95d-b35bdcc1da57",
   "labels": [
     "type:task",
@@ -26,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Migrate HIP syndrome/decode support behaviorally intact",
-  "updated_at": "2026-09-01T15:13:49.437203856Z"
+  "updated_at": "2026-09-01T16:38:11.266757746Z"
 }
