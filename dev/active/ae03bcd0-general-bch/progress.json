@@ -345,7 +345,7 @@
           "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "dispatched (session 6)"
         },
         {
           "key": "bch-convenience-ctors",
@@ -353,7 +353,7 @@
           "title": "Add delegating convenience constructors with automatic field selection",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "dispatched (session 6)"
         },
         {
           "key": "matrix-systematic-layout",
@@ -361,7 +361,7 @@
           "title": "Canonical BCH matrices use the systematic user layout",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending (bug filed session 6, prerequisite of bd0edfa2; same Opus worker, sequential)"
+          "status": "dispatched (session 6; Part 1 of worker-bd0edfa2)"
         },
         {
           "key": "genmatrix-perf",
@@ -369,7 +369,7 @@
           "title": "Optimize the reference generator-matrix materialization",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending (blocked on 444c06bc; dispatched to the same worker as a sequential second issue)"
+          "status": "dispatched (session 6; Part 2 of worker-bd0edfa2, after 444c06bc)"
         },
         {
           "key": "lean-quotient-reduction",
@@ -377,7 +377,7 @@
           "title": "Lean proofs: quotient reduction preserves the represented element",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "dispatched (session 6)"
         }
       ]
     },
@@ -680,6 +680,7 @@
     "Lead ruling R-30: workload-selection.md §9 amendment accepted (T2S/T2N differential at mother length until 97410c80); 4e732b56 doc link refreshed."
   ],
   "session_notes_s6": [
-    "Session 6 (2026-09-02 00:30): resumed at wave 10; pool purged of gf2pow32_* (72 files); bug 444c06bc filed and wired; labels normalized; wave 10 claims recorded."
+    "Session 6 (2026-09-02 00:30): resumed at wave 10; pool purged of gf2pow32_* (72 files); bug 444c06bc filed and wired; labels normalized; wave 10 claims recorded.",
+    "Wave 10 dispatched 2026-09-01T21:40Z at main 6a2394fb: worktrees agent-{2b6968d3,1c9a0f9f,bd0edfa2,32f53280}; 2b6968d3/32f53280 → native Opus subagents (worker-<id>); 444c06bc+bd0edfa2 → one native Opus subagent (worker-bd0edfa2) sequentially in agent-bd0edfa2; 1c9a0f9f → codex exec gpt-5.6-luna xhigh (detached, setsid; done-file + Monitor; lead commits its tree). Snapshot /tmp/lead-pre-dispatch-20260901-214030.txt."
   ]
 }
