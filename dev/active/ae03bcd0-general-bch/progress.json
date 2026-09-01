@@ -308,7 +308,7 @@
           "title": "Construction at non-primitive lengths with both root conventions",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "done: native Opus, all gates first-pass (NonPrimitiveConsecutive variant + shared normalize_consecutive tail, merged 3720ebc5); README BCH-row staleness closed lead-direct; convenience ctors stay with 1c9a0f9f per design"
         },
         {
           "key": "cutover-hip-tests",
