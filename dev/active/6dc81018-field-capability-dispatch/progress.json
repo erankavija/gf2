@@ -2,15 +2,8 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 25 is complete. Wave 26 preflight is blocked before claim: eaae1b56's governing design classifies eleven follow-on thresholds as sweepable, but m4rm.tiled_min_stride_words has admissible floor and conservative default 4 while the standing rule requires a below/above-default straddling grid with both arms reachable at every point. No numeric grids or representative fixtures are predeclared for any of the eleven. Awaiting an owner decision before issue claim or implementation.",
-  "open_escalations": [
-    {
-      "kind": "plan-contradiction",
-      "issue": "eaae1b56",
-      "date": "2026-09-01",
-      "question": "Choose a reviewed plan correction before claim. Recommended: amend the shared sweepability rule to allow a domain-clipped grid beginning at the admissible/default boundary when both arms remain forceable, retain all eleven fields, and predeclare every numeric grid and fixture. Alternatives: reclassify tiled_min_stride_words as non-sweepable and reduce the action to ten, or separately redesign its production admissibility contract."
-    }
-  ],
+  "wave_notes": "Wave 25 is complete. Wave 26 is in owner-approved plan repair before claim. The invoker selected option A: amend the shared sweepability rule so a threshold whose conservative default equals its admissible boundary may use a domain-clipped grid beginning at that boundary when both arms remain forceable; retain all eleven eaae1b56 fields and predeclare every numeric grid and representative fixture before implementation or measurement.",
+  "open_escalations": [],
   "waves": [
     {
       "wave_number": 1,
@@ -639,8 +632,8 @@
           "title": "Extend the calibration sweep to the follow-on threshold fields",
           "classification": "implementation",
           "model": "opus",
-          "status": "blocked-owner-decision-before-claim",
-          "notes": "All nine dependencies are met, but read-only preflight found a governing-design contradiction. m4rm.tiled_min_stride_words has floor/default 4, so values 1-3 are rejected and no admissible grid can both straddle the default and offer the tiled arm at every point. The issue also lacks predeclared numeric grids and representative fixture shapes for all eleven selectors. No claim, lease, worktree, code edit, or JIT issue mutation has occurred."
+          "status": "owner-approved-plan-repair-before-claim",
+          "notes": "All nine dependencies are met. The invoker selected option A: retain all eleven selectors by amending the convention source for admissible-boundary defaults, then predeclare and independently review each numeric grid, fixture, forced-arm value, route witness, seed domain, and execution budget before claim or implementation. No measurement or JIT issue mutation has occurred."
         }
       ]
     },
@@ -1148,6 +1141,12 @@
       "issue": "eaae1b56",
       "date": "2026-09-01",
       "decision": "OPEN BEFORE CLAIM: design §5.1 requires every sweepable field to have a grid straddling its conservative default and both arms reachable at every point, while §3.3 and the codec set m4rm.tiled_min_stride_words' admissible floor and default to 4. Values below 4 are rejected, so the field cannot satisfy the declared rule. Numeric grids and representative fixtures for all eleven are also absent. Awaiting owner choice among a boundary-clipped rule amendment, a ten-field reclassification, or a separately designed production-contract change."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "eaae1b56",
+      "date": "2026-09-01",
+      "decision": "The invoker selected option A. Amend the shared sweepability rule at its convention source so a threshold whose conservative default equals its admissible boundary may use a domain-clipped grid beginning at that boundary when both arms remain forceable. Retain all eleven fields. Predeclare and independently review every numeric grid and representative fixture before issue claim, implementation, or measurement."
     }
   ],
   "rework_counts": {
