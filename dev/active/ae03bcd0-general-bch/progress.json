@@ -332,7 +332,7 @@
           "title": "Lean proofs: extension embedding, restriction, and relative Frobenius laws",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "done: native Opus, all three gates first-pass (RelativeExtension.lean, 60 declarations, 0 sorry, inherited Formatter axiom only on extracted carriers; merged 82937a1d)"
         }
       ]
     },
