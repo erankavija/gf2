@@ -37,6 +37,7 @@
 
 mod core;
 pub mod dvb_t2;
+pub mod error;
 pub mod extended;
 
 pub use core::{BchCode, BchDecoder, BchEncoder, CodeRate};
