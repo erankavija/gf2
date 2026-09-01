@@ -1882,10 +1882,17 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     ///
     /// # Errors
     ///
-    /// Returns [`HipError`](gf2_kernels_hip::HipError) on any device failure
-    /// during either syndrome pass. A failed second pass leaves the candidate
-    /// corrections of that batch applied and unverified, so a caller that
-    /// retries decodes the original words.
+    /// Returns [`HipError`](gf2_kernels_hip::HipError) for a device failure in
+    /// either syndrome pass that
+    /// [`is_recoverable`](gf2_kernels_hip::HipError::is_recoverable) rejects —
+    /// a missing device, an unreadable kernel blob, or a raw driver status —
+    /// with every entry of `received` holding exactly the word the caller
+    /// passed. A recoverable failure, an exhausted device or an arch this
+    /// build carries no kernel blob for, returns no error at all: the batch is
+    /// restored and decoded on the CPU path, the safe fallback of
+    /// `@/inv/accelerator-safe-fallback`, whose outcomes this path reproduces
+    /// anyway. No path leaves an altered, unverified word behind, so a caller
+    /// that retries decodes the words it started with.
     ///
     /// # Panics
     ///
@@ -1944,22 +1951,16 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
         }
 
         let frames: Vec<&BitVec> = received.iter().collect();
-        let evaluated = self.syndromes_on_device(&frames)?;
+        let evaluated = self.syndromes_on_device(&frames);
+        // The frames borrow the batch the recovery arm corrects in place.
+        drop(frames);
+        let evaluated = match evaluated {
+            Ok(evaluated) => evaluated,
+            // No candidate is applied yet, so there is nothing to restore.
+            Err(error) => return self.recover_from_device_error(received, &[], error),
+        };
 
-        let mut workspace = self.workspace();
-        let mut candidates: Vec<(usize, Vec<usize>)> = Vec::new();
-        for (index, row) in evaluated.chunks_exact(points).enumerate() {
-            if row.iter().all(|value| value.is_zero()) {
-                continue;
-            }
-            workspace.syndromes.clone_from_slice(row);
-            if !self.locate_candidate(&mut workspace) {
-                outcomes[index] = BchDecodeOutcome::Uncorrectable;
-                continue;
-            }
-            flip(&mut received[index], &workspace.positions);
-            candidates.push((index, workspace.positions.clone()));
-        }
+        let candidates = self.apply_candidates(received, &evaluated, &mut outcomes);
         if candidates.is_empty() {
             return Ok(outcomes);
         }
@@ -1970,7 +1971,13 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
             .iter()
             .map(|&(index, _)| &received[index])
             .collect();
-        let verification = self.syndromes_on_device(&corrected)?;
+        let verification = self.syndromes_on_device(&corrected);
+        // As above: the recovery arm restores the very words these borrow.
+        drop(corrected);
+        let verification = match verification {
+            Ok(verification) => verification,
+            Err(error) => return self.recover_from_device_error(received, &candidates, error),
+        };
         for ((index, positions), row) in candidates.iter().zip(verification.chunks_exact(points)) {
             if row.iter().all(|value| value.is_zero()) {
                 outcomes[*index] = BchDecodeOutcome::Corrected {
@@ -1982,6 +1989,88 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
             }
         }
         Ok(outcomes)
+    }
+
+    /// Applies the located candidate of every frame whose syndrome row is
+    /// nonzero and returns the coordinates it applied, indexed by frame.
+    ///
+    /// Those coordinates are what verification decides on and what a failed
+    /// device pass rolls back, so this is the whole record of the batch's
+    /// applied-but-unverified state. A row admitting no candidate inside the
+    /// radius is [`BchDecodeOutcome::Uncorrectable`] without any flip, exactly
+    /// as [`correct_nonzero_syndrome`](Self::correct_nonzero_syndrome) decides
+    /// it per word; an all-zero row keeps the caller's
+    /// [`BchDecodeOutcome::NoErrors`].
+    ///
+    /// `evaluated` holds the batch's syndromes row-major, one row per frame in
+    /// the layout [`syndromes_on_device`](Self::syndromes_on_device) returns.
+    fn apply_candidates(
+        &self,
+        received: &mut [BitVec],
+        evaluated: &[Gf2mElement_<V>],
+        outcomes: &mut [BchDecodeOutcome],
+    ) -> Vec<(usize, Vec<usize>)> {
+        let mut workspace = self.workspace();
+        let mut candidates: Vec<(usize, Vec<usize>)> = Vec::new();
+        for (index, row) in evaluated
+            .chunks_exact(self.syndrome_points.len())
+            .enumerate()
+        {
+            if row.iter().all(|value| value.is_zero()) {
+                continue;
+            }
+            workspace.syndromes.clone_from_slice(row);
+            if !self.locate_candidate(&mut workspace) {
+                outcomes[index] = BchDecodeOutcome::Uncorrectable;
+                continue;
+            }
+            flip(&mut received[index], &workspace.positions);
+            candidates.push((index, workspace.positions.clone()));
+        }
+        candidates
+    }
+
+    /// Answers a device failure raised partway through
+    /// [`correct_batch_gpu`](Self::correct_batch_gpu).
+    ///
+    /// Undoes every applied candidate first — `flip` is an involution and
+    /// `candidates` carries the coordinates — so `received` holds the caller's
+    /// own words again before either arm decides anything. A recoverable
+    /// failure then decodes that restored batch on the CPU, the tested safe
+    /// fallback of `@/inv/accelerator-safe-fallback`, which reports the very
+    /// outcomes the device path reproduces; a failure that stays explicit
+    /// propagates, with the batch as the caller passed it.
+    fn recover_from_device_error(
+        &self,
+        received: &mut [BitVec],
+        candidates: &[(usize, Vec<usize>)],
+        error: gf2_kernels_hip::HipError,
+    ) -> Result<Vec<BchDecodeOutcome>, gf2_kernels_hip::HipError> {
+        for (index, positions) in candidates {
+            flip(&mut received[*index], positions);
+        }
+        if error.is_recoverable() {
+            Ok(self.correct_batch_cpu(received))
+        } else {
+            Err(error)
+        }
+    }
+
+    /// Corrects a whole batch on the per-word CPU path, over one workspace.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a frame is not `n` coordinates long, which the device pass
+    /// asserts before it can fail into this fallback.
+    fn correct_batch_cpu(&self, received: &mut [BitVec]) -> Vec<BchDecodeOutcome> {
+        let mut workspace = self.workspace();
+        received
+            .iter_mut()
+            .map(|word| {
+                self.correct_in_place(word, &mut workspace)
+                    .expect("every frame of the batch is n coordinates long")
+            })
+            .collect()
     }
 }
 
@@ -3060,8 +3149,25 @@ mod canonical_decoder_tests {
     mod gpu {
         use super::*;
 
+        use gf2_kernels_hip::HipError;
+
         fn device_present() -> bool {
             gf2_kernels_hip::host::device_mem_info().is_ok()
+        }
+
+        /// Every weight-three word of a length-`length` code.
+        fn weight_three_words(length: usize) -> Vec<BitVec> {
+            let mut frames = Vec::new();
+            for first in 0..length {
+                for second in (first + 1)..length {
+                    for third in (second + 1)..length {
+                        let mut word = BitVec::zeros(length);
+                        flip(&mut word, &[first, second, third]);
+                        frames.push(word);
+                    }
+                }
+            }
+            frames
         }
 
         /// A mixed batch over four messages: the codeword itself, then every
@@ -3189,18 +3295,7 @@ mod canonical_decoder_tests {
             }
             let code = narrow_sense(4, 0b10011, 5);
             let decoder = BinaryBchDecoder::new(&code);
-            let length = code.n();
-
-            let mut frames = Vec::new();
-            for first in 0..length {
-                for second in (first + 1)..length {
-                    for third in (second + 1)..length {
-                        let mut word = BitVec::zeros(length);
-                        flip(&mut word, &[first, second, third]);
-                        frames.push(word);
-                    }
-                }
-            }
+            let frames = weight_three_words(code.n());
 
             let (expected, expected_words) = cpu_reference(&decoder, &frames);
             let mut words = frames.clone();
@@ -3236,6 +3331,132 @@ mod canonical_decoder_tests {
                 "the device path rejects unverified candidates"
             );
             assert!(miscorrected > 0, "the device path accepts verified ones");
+        }
+
+        // -- The device-failure paths ------------------------------------
+        //
+        // These drive the host bookkeeping of `correct_batch_gpu` — the
+        // candidates it applies before verification, and the recovery it runs
+        // when a syndrome pass fails — with a synthesized `HipError` standing
+        // for the failure. They need no device, and so carry no skip.
+
+        /// A batch's syndromes in the row-major layout the device pass returns,
+        /// evaluated on the CPU: the device multiply is the CPU multiply, so
+        /// the bookkeeping sees the same rows either way.
+        fn host_syndromes(decoder: &BinaryBchDecoder<'_>, frames: &[BitVec]) -> Vec<Gf2mElement> {
+            let mut row = vec![decoder.zero.clone(); decoder.syndrome_points.len()];
+            let mut evaluated = Vec::with_capacity(frames.len() * row.len());
+            for frame in frames {
+                decoder.evaluate_syndromes(frame, &mut row);
+                evaluated.extend(row.iter().cloned());
+            }
+            evaluated
+        }
+
+        /// The caller's frames, the batch holding the applied candidates, and
+        /// the coordinates applied to it.
+        type AppliedBatch = (Vec<BitVec>, Vec<BitVec>, Vec<(usize, Vec<usize>)>);
+
+        /// A batch of weight-three words with every candidate applied, as the
+        /// verification pass finds it.
+        fn applied_batch(decoder: &BinaryBchDecoder<'_>) -> AppliedBatch {
+            let frames = weight_three_words(decoder.code.n());
+            let mut words = frames.clone();
+            let evaluated = host_syndromes(decoder, &words);
+            let mut outcomes = vec![BchDecodeOutcome::NoErrors; words.len()];
+            let candidates = decoder.apply_candidates(&mut words, &evaluated, &mut outcomes);
+            assert!(
+                !candidates.is_empty(),
+                "a weight-three word of BCH(15, 7) carries a candidate"
+            );
+            assert_ne!(words, frames, "the candidates are applied");
+            (frames, words, candidates)
+        }
+
+        /// A device failure that stays explicit propagates with the caller's
+        /// batch restored: the applied candidates are rolled back first, so a
+        /// retry decodes the original words rather than altered, unverified
+        /// ones.
+        #[test]
+        fn a_fatal_verification_failure_restores_the_batch() {
+            let code = narrow_sense(4, 0b10011, 5);
+            let decoder = BinaryBchDecoder::new(&code);
+            let (frames, mut words, candidates) = applied_batch(&decoder);
+
+            let result = decoder.recover_from_device_error(
+                &mut words,
+                &candidates,
+                HipError::Hip {
+                    code: 700,
+                    context: "hipStreamSynchronize",
+                },
+            );
+
+            assert!(
+                matches!(result, Err(HipError::Hip { code: 700, .. })),
+                "a raw driver status stays explicit"
+            );
+            assert_eq!(words, frames, "the batch is the caller's own again");
+        }
+
+        /// A recoverable device failure selects the CPU path instead of
+        /// erroring: the batch is restored and decoded there, so the caller
+        /// sees exactly the outcomes and words of the pure CPU path.
+        #[test]
+        fn a_recoverable_verification_failure_falls_back_to_the_cpu() {
+            let code = narrow_sense(4, 0b10011, 5);
+            let decoder = BinaryBchDecoder::new(&code);
+            let (frames, mut words, candidates) = applied_batch(&decoder);
+            let (expected, expected_words) = cpu_reference(&decoder, &frames);
+
+            let outcomes = decoder
+                .recover_from_device_error(
+                    &mut words,
+                    &candidates,
+                    HipError::OutOfMemory {
+                        device_id: 0,
+                        bytes_requested: 1 << 40,
+                    },
+                )
+                .expect("an exhausted device falls back to the CPU path");
+
+            assert_eq!(outcomes, expected);
+            assert_eq!(words, expected_words);
+            assert!(
+                outcomes
+                    .iter()
+                    .any(|outcome| matches!(outcome, BchDecodeOutcome::Corrected { .. }))
+                    && outcomes.contains(&BchDecodeOutcome::Uncorrectable),
+                "the fallback covers both verification arms"
+            );
+        }
+
+        /// The first syndrome pass fails before any candidate is applied.
+        /// Neither arm alters the batch on its way: the fatal one returns it
+        /// untouched, and the recoverable one decodes the caller's own words.
+        #[test]
+        fn a_first_pass_failure_never_alters_the_batch() {
+            let code = narrow_sense(4, 0b10011, 5);
+            let decoder = BinaryBchDecoder::new(&code);
+            let frames = weight_three_words(code.n());
+            let (expected, expected_words) = cpu_reference(&decoder, &frames);
+
+            let mut words = frames.clone();
+            let result = decoder.recover_from_device_error(&mut words, &[], HipError::NoDevice);
+            assert!(matches!(result, Err(HipError::NoDevice)));
+            assert_eq!(words, frames);
+
+            let outcomes = decoder
+                .recover_from_device_error(
+                    &mut words,
+                    &[],
+                    HipError::UnsupportedArch {
+                        gcn_arch_name: "gfx900".to_owned(),
+                    },
+                )
+                .expect("an arch without a kernel blob falls back to the CPU path");
+            assert_eq!(outcomes, expected);
+            assert_eq!(words, expected_words);
         }
     }
 }

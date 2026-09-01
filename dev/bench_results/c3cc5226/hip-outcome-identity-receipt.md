@@ -11,9 +11,9 @@ earlier run.
 
 | Item | Value |
 |------|-------|
-| Revision measured | `3e0030c263ba9845eebfe90fbd1d7ae4edcffb83` |
+| Revision measured | `b3679e50dfc77093f6c3b26b0698cb8f69c8c0e5` |
 | Branch | `worktree-agent-c3cc5226` |
-| Working tree at each measurement | clean apart from this receipt (`git status --short`) |
+| Working tree at each measurement | clean (`git status --short`), apart from this receipt and from the two deliberate mutants named below, each reverted after its run |
 
 The revision contains the measured source: the implementation commit landed
 before the suites ran, so the code under test is the code the revision names.
@@ -38,17 +38,26 @@ outcome identity: for every received word, `BinaryBchDecoder::correct_batch_gpu`
 reports the outcome and leaves the corrected word that the per-word CPU
 `BinaryBchDecoder::correct_in_place` produces. GF(2^m) arithmetic is exact
 integer arithmetic over the uploaded CPU `exp`/`log` tables, so the comparison
-is equality with zero tolerance.
+is equality with zero tolerance. The identity covers the device-failure paths
+as well: a failed syndrome pass restores the batch, and a recoverable failure
+decodes it on the CPU rather than erroring.
 
 | Suite | Point | What it pins |
 |-------|-------|--------------|
 | gf2-coding, in-crate | six primitive narrow-sense codes, radii 1-3, lengths 7-63 | device syndromes equal the CPU evaluator value for value; GPU-assisted outcomes and corrected words equal the CPU path's |
 | gf2-coding, in-crate | BCH(15, 7), all 455 weight-three words | the verification arm: each word one past the radius resolves to the same `Uncorrectable` or verified miscorrection on both paths, and a rejected candidate is rolled back |
+| gf2-coding, in-crate | the same 455 words with every candidate applied, against a synthesized `HipError` | the device-failure arms: a failure that stays explicit restores the batch word for word, and a recoverable one returns the CPU path's outcomes and words over both verification arms |
 | gf2-sim, rungs 4-5 | DVB-T2 Short GF(2^14) and Normal GF(2^16), 200 mixed frames each | all `2t` u16 syndromes byte-identical to the CPU `BchDecoder::compute_syndromes` |
 | gf2-sim, rung 5 | the primitive narrow-sense mother codes of those two configurations — BCH(16383, 16215) and BCH(65535, 65343), t = 12 — 200 mixed frames each | outcome identity across all three outcomes |
 
 The mixed populations hold one third valid codewords, one third with `1..=t`
 errors, and one third with `t+1..=2t+1` errors, at fixed seeds.
+
+The failure-path tests synthesize the `HipError` rather than provoking a device
+fault, so they need no device and run wherever the `hip` feature builds; the
+`gf2-sim` boundary test `test_stage_error_split_matches_the_kernel_predicate`
+holds the pipeline's `StageError` mapping and `HipError::is_recoverable` to one
+split of `@/inv/accelerator-safe-fallback`.
 
 ## Exact commands
 
@@ -80,16 +89,33 @@ errors, and one third with `t+1..=2t+1` errors, at fixed seeds.
 ### gf2-coding — canonical-model device tests
 
 ```text
-        PASS [   0.072s] (1/3) gf2-coding bch::core::canonical_decoder_tests::gpu::a_candidate_failing_verification_is_uncorrectable_on_both_paths
-        PASS [   0.068s] (2/3) gf2-coding bch::core::canonical_decoder_tests::gpu::device_syndromes_equal_the_cpu_evaluator
-        PASS [   0.076s] (3/3) gf2-coding bch::core::canonical_decoder_tests::gpu::gpu_assisted_correction_reports_the_cpu_outcomes
+        PASS [   0.069s] (1/6) gf2-coding bch::core::canonical_decoder_tests::gpu::a_candidate_failing_verification_is_uncorrectable_on_both_paths
+        PASS [   0.017s] (2/6) gf2-coding bch::core::canonical_decoder_tests::gpu::a_fatal_verification_failure_restores_the_batch
+        PASS [   0.017s] (3/6) gf2-coding bch::core::canonical_decoder_tests::gpu::a_first_pass_failure_never_alters_the_batch
+        PASS [   0.018s] (4/6) gf2-coding bch::core::canonical_decoder_tests::gpu::a_recoverable_verification_failure_falls_back_to_the_cpu
+        PASS [   0.065s] (5/6) gf2-coding bch::core::canonical_decoder_tests::gpu::device_syndromes_equal_the_cpu_evaluator
+        PASS [   0.066s] (6/6) gf2-coding bch::core::canonical_decoder_tests::gpu::gpu_assisted_correction_reports_the_cpu_outcomes
 ────────────
-     Summary [   0.217s] 3 tests run: 3 passed, 1586 skipped
+     Summary [   0.254s] 6 tests run: 6 passed, 1611 skipped
 ```
 
-These tests self-gate on `device_mem_info()` and skip without a usable device;
-on this host they ran, as the timings above show. They carry no ignore tier, so
-the repository CI contract runs them too.
+The three device tests self-gate on `device_mem_info()` and skip without a
+usable device; on this host they ran, as the timings above show. The three
+failure-path tests need no device. None carries an ignore tier, so the
+repository CI contract runs all six.
+
+Each new failure-path test was run against two mutants of the pinned source —
+the revision above with one named change, reverted after each run — so none of
+them is a test that cannot fail. Both runs used the `gf2-coding` command above
+without `--no-capture`:
+
+| Mutant | Result |
+|--------|--------|
+| `recover_from_device_error` drops its rollback loop | `6 tests run: 4 passed, 2 failed` — `a_fatal_verification_failure_restores_the_batch` and `a_recoverable_verification_failure_falls_back_to_the_cpu` fail; the applied candidates survive, and the CPU pass then decodes the altered words |
+| `HipError::is_recoverable` answers `false` for `OutOfMemory` and `UnsupportedArch` | `6 tests run: 4 passed, 2 failed` — `a_recoverable_verification_failure_falls_back_to_the_cpu` and `a_first_pass_failure_never_alters_the_batch` fail; the fallback never runs and the error propagates instead |
+
+The three device tests pass under both mutants, which is why the failure paths
+needed coverage of their own.
 
 ### gf2-sim — correctness ladder rungs 4-5
 
@@ -104,7 +130,7 @@ test test_gpu_assisted_decode_outcome_identical_to_cpu_gf16 ... ok
 dvb-t2-normal-r1/2-gf16: 200 frames, 24 syndromes/frame, byte-identical (CPU==GPU)
 test test_gpu_bch_syndrome_normal_byte_identical_to_cpu ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.06s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.42s
 ```
 
 Each of the two outcome-identity legs reaches all three outcomes — 67 words
@@ -113,15 +139,15 @@ the identity is pinned on every arm rather than on the error-free one.
 
 ### Feature gating, without `hip`
 
-Clippy over both crates: no warnings. Tests: 2009 passed, 0 failed, 132
-skipped.
+Clippy over both crates: no warnings. Tests: `2034 tests run: 2034 passed, 132
+skipped`.
 
 ### Repository gates
 
-`./scripts/cargo-ci.sh`: every step passed, `test: 5511 passed, 0 failed, 241
+`./scripts/cargo-ci.sh`: every step passed, `test: 5540 passed, 0 failed, 241
 skipped`. The `hip` feature is in that run's feature set, because `hipcc`
 resolves on this host.
 
 The ROCm-only `gf2-kernels-hip` gate passed all three of its legs: its release
-test run totalled 124 passed, 0 failed, 29 ignored across its binaries, and its
-formatting and Clippy checks were clean.
+test run totalled 125 passed, 0 failed, 29 ignored across its binaries and
+doctests, and its formatting and Clippy checks were clean.
