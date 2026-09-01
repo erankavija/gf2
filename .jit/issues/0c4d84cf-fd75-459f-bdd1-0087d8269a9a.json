@@ -24,6 +24,11 @@
       "status": "passed",
       "updated_at": "2026-09-01T07:22:54.199343400Z",
       "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T07:24:45.193754236Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "0c4d84cf-fd75-459f-bdd1-0087d8269a9a",
@@ -37,5 +42,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Introduce field-generic block-code traits with binary specializations",
-  "updated_at": "2026-09-01T07:22:54.199343400Z"
+  "updated_at": "2026-09-01T07:24:45.193754236Z"
 }
