@@ -15,7 +15,7 @@ Finite-field and GF(2) linear-algebra primitives in safe Rust: dense and sparse 
 | `field/` | `FiniteField`, `ConstField` traits; axiom-test harness; `FieldVec` |
 | `gf2m/` | GF(2^m) arithmetic generic over storage width (sealed `UintExt` trait); Barrett, Karatsuba, table and SIMD strategies |
 | `gfp/` | `Fp<const P: u64>` Montgomery multiplication, plus a specialized module for Mersenne/Proth primes |
-| `gfpn/` | `QuadraticExt<C>`, `CubicExt<C>` tower extensions over `ExtConfig` |
+| `gfpn/` | `QuadraticExt<C>`, `CubicExt<C>` tower extensions over `ExtConfig`; `QuotientField` runtime polynomial quotient extensions |
 | `primitive_polys` | Static database of primitive polynomials for m = 2..16, plus verification and generation |
 | `kernels/` | Runtime dispatch to scalar or SIMD backends |
 | `compute/` | Parallel/batch operations (Rayon, feature-gated) |
@@ -93,7 +93,7 @@ let b = F::new(67890);
 let _ = a * b + a;               // Montgomery multiplication + modular add
 ```
 
-`gfpn::QuadraticExt<C>` and `gfpn::CubicExt<C>` build tower extensions on top of any prime-field base through the `ExtConfig` trait. Both levels are covered by Lean4 proofs — see [`proofs/`](../../proofs/).
+`gfpn::QuadraticExt<C>` and `gfpn::CubicExt<C>` build tower extensions on top of any prime-field base through the `ExtConfig` trait. Both tower levels are covered by Lean4 proofs — see [`proofs/`](../../proofs/). `gfpn::QuotientField` constructs extensions of arbitrary degree from a runtime, certificate-validated irreducible modulus; it is the reference semantics for the quotient-extension surface and sits outside the current Lean extraction.
 
 ### Primitive polynomials
 
