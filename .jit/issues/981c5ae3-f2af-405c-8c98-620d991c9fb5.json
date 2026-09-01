@@ -13,7 +13,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T14:28:59.518899234Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "981c5ae3-f2af-405c-8c98-620d991c9fb5",
   "labels": [
     "type:task",
@@ -24,5 +30,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Generic one-symbol extension transformation",
-  "updated_at": "2026-09-01T13:15:34.518919554Z"
+  "updated_at": "2026-09-01T14:28:59.518899234Z"
 }
