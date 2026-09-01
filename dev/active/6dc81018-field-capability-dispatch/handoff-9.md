@@ -108,3 +108,12 @@ the older 8-word result is reported separately from the Criterion
 `simd_vs_scalar` benchmark and is not reproduced or reconciled by this
 receipt. Do not claim a call-path difference or invent a causal
 reconciliation. Measured artifacts and production behavior remain immutable.
+
+## Closure
+
+The corrected documentation merged at `a35b0bf2`. Independent re-review and
+the configured doc-review gate pass with zero findings. The configured
+cargo-ci gate passes 5,299 tests with zero failures, and code-review passes
+with zero findings. The three measured artifacts retain their committed
+SHA-256 values. Issue `389aa4de` is done; the next dependency chain begins
+with `eaae1b56`.
