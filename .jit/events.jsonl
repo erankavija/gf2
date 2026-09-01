@@ -10460,3 +10460,7 @@
 {"from":"in_progress","id":"2e97a6d6-b897-41c5-ba6e-e8cedc9d16a3","issue_id":"33812b86-ce1e-419e-9c96-c782fd1def8d","timestamp":"2026-09-01T09:18:04.084638493Z","to":"done","type":"issue_state_changed"}
 {"id":"3a53871b-9d74-4ce8-a216-616b8c3ecd83","issue_id":"33812b86-ce1e-419e-9c96-c782fd1def8d","timestamp":"2026-09-01T09:18:04.084638493Z","type":"issue_completed"}
 {"from":"backlog","id":"88b7bed5-9e3a-4599-9a52-22fe36e47f7a","issue_id":"8aa98a25-9c61-4f26-87d1-3b65f8324bd8","timestamp":"2026-09-01T09:18:13.122192649Z","to":"ready","type":"issue_state_changed"}
+{"gate_key":"cargo-ci","id":"dcbd8215-592d-468d-8477-1ed23ab557c1","issue_id":"992c6c6e-47a6-4e9b-9393-d9dfe33fab3e","timestamp":"2026-09-01T09:20:42.216058865Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"5dac8d2b-274f-4984-85bb-90a49b2de894","issue_id":"992c6c6e-47a6-4e9b-9393-d9dfe33fab3e","timestamp":"2026-09-01T09:24:46.407774299Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"7699fe75-4bee-4bfe-a69e-01e6b851bbdb","issue_id":"992c6c6e-47a6-4e9b-9393-d9dfe33fab3e","timestamp":"2026-09-01T09:25:21.082827249Z","to":"done","type":"issue_state_changed"}
+{"id":"872e7d44-5dd1-49fa-9e5e-3b44a8c807bf","issue_id":"992c6c6e-47a6-4e9b-9393-d9dfe33fab3e","timestamp":"2026-09-01T09:25:21.082827249Z","type":"issue_completed"}
