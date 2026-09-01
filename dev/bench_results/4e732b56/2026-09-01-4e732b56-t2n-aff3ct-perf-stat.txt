@@ -10,28 +10,28 @@ nice: cannot set niceness: Permission denied
 # seed: 0x00000000ae03bcd0
 # codes_selected: T2N
 # code T2N: mother_n=65535 deg_g=192
-#   T2N lfsr-scalar      batch=1     reps=6 spent=0.04s
+#   T2N lfsr-scalar      batch=1     reps=6 spent=0.03s
 # SKIP T2N batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
-#   T2N lfsr-scalar      batch=16    reps=1 spent=0.10s
-#   T2N lfsr-simd-inter  batch=16    reps=1 spent=0.06s
-#   T2N lfsr-scalar      batch=256   reps=1 spent=1.59s
-#   T2N lfsr-simd-inter  batch=256   reps=1 spent=0.99s
-#   T2N lfsr-scalar      batch=4096  reps=1 spent=25.21s
-#   T2N lfsr-simd-inter  batch=4096  reps=1 spent=21.55s
+#   T2N lfsr-scalar      batch=16    reps=1 spent=0.09s
+#   T2N lfsr-simd-inter  batch=16    reps=1 spent=0.05s
+#   T2N lfsr-scalar      batch=256   reps=1 spent=1.50s
+#   T2N lfsr-simd-inter  batch=256   reps=1 spent=0.76s
+#   T2N lfsr-scalar      batch=4096  reps=1 spent=24.13s
+#   T2N lfsr-simd-inter  batch=4096  reps=1 spent=12.15s
 
  Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1':
 
-         69,911.93 msec task-clock:u                                                          
-   307,674,656,780      cycles:u                                                                (83.33%)
-   810,255,895,140      instructions:u                                                          (83.33%)
-   101,634,091,462      branches:u                                                              (83.33%)
-       707,119,546      branch-misses:u                                                         (83.33%)
-     2,308,622,705      cache-references:u                                                      (83.33%)
-       101,258,580      cache-misses:u                                                          (83.34%)
+         56,745.10 msec task-clock:u                                                          
+   258,853,715,697      cycles:u                                                                (83.34%)
+   810,181,126,856      instructions:u                                                          (83.33%)
+   101,655,034,129      branches:u                                                              (83.34%)
+       706,704,429      branch-misses:u                                                         (83.33%)
+     2,048,165,562      cache-references:u                                                      (83.34%)
+        53,795,050      cache-misses:u                                                          (83.33%)
 
-      70.159067572 seconds time elapsed
+      56.755832408 seconds time elapsed
 
-      69.030849000 seconds user
-       0.141180000 seconds sys
+      56.168353000 seconds user
+       0.087158000 seconds sys
 
 
