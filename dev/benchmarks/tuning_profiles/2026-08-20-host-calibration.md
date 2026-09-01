@@ -502,3 +502,36 @@ where a conservative value happens to equal a value recorded here. A future
 `389aa4de` receipt may supersede this run with measured format-2 core-section
 evidence; until then, baked measurements cite the archived bytes and digest
 above. This section changes no prior measurement, conclusion, or quoted byte.
+
+## Amendment — issue `389aa4de` (2026-09-01)
+
+This section is appended and changes no line or figure above it.
+
+F2 records `polynomial.karatsuba_min_degree` as uncalibrated at this receipt's
+revision. That condition is discharged. The polynomial cutover makes
+`FieldPoly::mul` profile-steerable, and the calibration harness reaches both
+arms in verified fresh child processes. The schoolbook child installs the top
+of the admissible range; the Karatsuba child installs the grid point itself,
+so `mul_karatsuba_raw` performs the one split over schoolbook base cases that a
+threshold at that point produces. This DEC-B16 forcing replaces the earlier
+minimal-against-maximal description.
+
+[`2026-09-01-389aa4de.md`](2026-09-01-389aa4de.md) records the five-field
+format-2 sweep. It selects `karatsuba_min_degree = 31`, so the field is
+sweepable and no longer omitted. The codec-derived result is five measured and
+32 omitted fields from the 37-field core inventory; 33 is the historical
+four-field omission count, not the current count. DEC-G's baked
+`simd_min_words` value remains 4 and is re-pinned to that measured format-2
+core section without changing the boundary.
+
+The paragraph above §Result saying no calibrated profile was committed was
+true at this receipt's revision. Later history first committed and then
+archived this run's exact format-1 bytes. Issue `389aa4de` cuts the last live
+reader and citation over to
+`crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`;
+after that cutover the uncited archived file is deleted. The historical path,
+1,087-byte digest
+`674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`,
+dirty source revision `e202c08089210f98842558bf1336143e6b6962d1`, the emitted
+document quoted above, and every measured figure remain the exact record of
+this run. No format-1 reader, compatibility alias, or dual token remains.

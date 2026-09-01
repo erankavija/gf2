@@ -7,12 +7,10 @@
 //! (`RUSTFLAGS="--cfg gf2_tuning_baked"`); the default build's conservative
 //! length is asserted by `field_vec_dot_chunk.rs`.
 //!
-//! The format-1 calibration archived at
-//! `dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
-//! (SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`)
-//! cites `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` but
-//! omits `field_vec`. The baked field therefore retains its conservative
-//! default until measured format-2 evidence supersedes that anchor, as
+//! The measured format-2 core owner at
+//! `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
+//! cites `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md` and omits
+//! `field_vec`. The baked field therefore retains its conservative default, as
 //! `dev/active/3fa7c9d0/design.md` §7.1 requires.
 //!
 //! The observation is a process-wide maximum, so exactly one test per binary
@@ -24,19 +22,18 @@ use gf2_core::field::FieldVec;
 use gf2_core::gf2m::{Gf2mElement, Gf2mField};
 use gf2_core::tuning::{self, CoreTuning};
 
-#[path = "support/historical_v1.rs"]
-mod historical_v1;
+#[path = "support/measured_format2.rs"]
+mod measured_format2;
 #[path = "support/core_tuning.rs"]
 mod support;
 
-/// Returns the default justified by the archived calibration's omission.
-fn archived_default_section() -> CoreTuning {
-    historical_v1::assert_family_was_omitted("field_vec");
-    CoreTuning::CONSERVATIVE
+/// Returns the default resolved from the measured owner's omission.
+fn measured_default_section() -> CoreTuning {
+    measured_format2::omitted_family_section("field_vec")
 }
 
 support::fresh_tuning_test!(
-    baked_build_walks_the_dot_product_by_the_archived_default_chunk_length,
+    baked_build_walks_the_dot_product_by_the_measured_default_chunk_length,
     {
         // Installing a chunk length the walk would have to honour if it read the
         // runtime profile: the field is baked, so the walk keeps its compile-time
@@ -46,7 +43,7 @@ support::fresh_tuning_test!(
         tuning::install(installed).expect("profile has not been resolved");
         assert_eq!(tuning::active().field_vec().dot_chunk_len(), 3);
 
-        let chunk = archived_default_section().field_vec().dot_chunk_len();
+        let chunk = measured_default_section().field_vec().dot_chunk_len();
         let field = Gf2mField::gf256();
         let n = 2 * chunk as u64 + 1;
         let a: FieldVec<Gf2mElement> = (0..n).map(|i| field.element((i * 37 + 13) % 256)).collect();

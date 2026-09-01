@@ -403,7 +403,7 @@ Tests performed:
    - ✅ 8-word SIMD threshold confirmed appropriate
 
    The committed host-calibration receipt at
-   [`dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`](../../../dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md)
+   [`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md)
    records a contradictory selected value of **4** for
    `bit_backend.simd_min_words`. These measurements are not directly
    interchangeable: the receipt measures `gf2_core::kernels::ScalarBackend`

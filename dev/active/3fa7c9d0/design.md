@@ -973,3 +973,22 @@ stated in §§2–6.
 | REQ-03 | §§1–2.3, §§7.2–7.3 | crate-owned API, symbol/reader/prose inventory, dependency amendments |
 | REQ-04 | §§3, 6, 8 | JSON example, encoder-owned digest, owner section identity checks, two provenance layers, feature/storage layout, composite lock |
 | REQ-05 | §7, §10 | owner and complete envelope migration, exact v1 digest treatment, append-only supersession, ordered no-compatibility cutover |
+
+## Amendment — measured owner cutover (2026-09-01, issue `389aa4de`)
+
+The retention condition in implementation-plan step 6 is satisfied. The
+strict measured core owner is
+`crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`,
+and the mechanically composed complete envelope is
+`dev/reference_data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`.
+Their core wrapper is byte-identical, and the complete envelope preserves the
+inherited algebra wrapper from its conservative owner.
+
+The core codec derives 37 fields; the five-field calibrated section states
+five leaves and omits exactly 32. All live readers, baked witnesses, and
+citations use this format-2 owner and `tuning-calibration-v2`. The last raw
+format-1 test reader is removed, then the uncited archived bytes are deleted.
+The append-only 2026-08-20 receipt continues to record the historical path,
+digest, producing revision, and figures without requiring a compatibility
+loader or retained repository copy. This is the ordered canonical cutover
+required by steps 7–9, not a second representation.
