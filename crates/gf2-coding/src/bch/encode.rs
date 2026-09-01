@@ -49,10 +49,58 @@
 //!
 //! Let $r = n - k$. Encoding one message costs $O(k r)$ base-field
 //! multiply-adds in the field-generic path and $O(k \lceil r/64 \rceil)$ word
-//! operations plus $O(n)$ bit writes in the packed binary path. Each call
-//! allocates one $r$-symbol shift register and one copy of the generator's
-//! low $r$ coefficients; the codeword buffer is the caller's in
-//! [`encode_systematic_into`](BchCode::encode_systematic_into).
+//! operations plus $O(n)$ bit writes in the packed binary path.
+//!
+//! # Workspaces
+//!
+//! The recurrence runs over two buffers, held together by
+//! [`EncodeRegisters`]: an $r$-symbol shift register and the generator's low
+//! $r$ coefficients in the same words. The one-shot entry points
+//! [`encode_systematic`](BchCode::encode_systematic),
+//! [`encode_systematic_into`](BchCode::encode_systematic_into), and
+//! [`BlockEncoder::encode_into`] build both per call, which is the whole heap
+//! traffic of an encode.
+//!
+//! [`BchCode::encode_workspace`] builds them once instead.
+//! [`encode_systematic_with`](BchCode::encode_systematic_with) then reuses the
+//! same [`BchEncodeWorkspace`] for every message: the register is overwritten
+//! in place and the coefficients are read, so neither is resized, replaced, or
+//! pushed to, and no other value on the path outlives a call — the plan is
+//! `usize` arithmetic over a borrowed generator, and base-field elements share
+//! their field by reference count rather than by allocating. The caller
+//! therefore owns the one allocation an encoding sequence performs.
+//!
+//! A workspace belongs to the code that produced it. It carries a fingerprint
+//! of that code, and an encode rejects a foreign workspace with
+//! [`BchError::WorkspaceMismatch`] even when its buffer lengths happen to
+//! match. The fingerprint covers the dimensions, the presentations of the base
+//! and splitting fields, and the defining set; a layout does not enter it,
+//! because the layout is coordinate arithmetic outside the registers, so one
+//! workspace serves every [`SystematicLayout`] of its code.
+//!
+//! # Batch encoding
+//!
+//! [`encode_batch_into`](BchCode::encode_batch_into) runs the recurrence over
+//! a slice of messages with one workspace.
+//! [`encode_batch_parallel_into`](BchCode::encode_batch_parallel_into) splits
+//! the same slice into one contiguous partition per supplied workspace and
+//! encodes the partitions concurrently. Each worker owns its workspace and
+//! writes only its own output positions, so:
+//!
+//! - the output is in input order for every worker count, because a partition
+//!   writes the codeword of message $i$ at position $i$ and nothing reassembles
+//!   the results afterwards;
+//! - the bytes are identical across worker counts, because the worker count
+//!   chooses partition boundaries and each message's codeword is a function of
+//!   that message alone.
+//!
+//! One worker runs the whole batch directly on the calling thread, so a
+//! one-worker dispatch pays no fan-out cost and is the honest sequential
+//! reference for a speedup measurement. Above one, the partitions go to the
+//! rayon pool, whose width is [`max_parallel_batch_workers`]; a larger worker
+//! count is still valid and still produces those bytes, its partitions sharing
+//! the threads there are. Without the `parallel` feature every worker count
+//! runs its partitions in index order on the calling thread.
 //!
 //! # Examples
 //!
@@ -122,12 +170,51 @@
 //! );
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
+//!
+//! The performance path over a batch: one workspace per worker, allocated
+//! once, and an output slice the caller owns.
+//!
+//! ```
+//! use gf2_coding::bch::encode::SystematicLayout;
+//! use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+//! use gf2_coding::traits::block::BlockEncoder;
+//! use gf2_core::field::extension::BinaryPrimeExt;
+//! use gf2_core::gf2m::Gf2mField;
+//! use gf2_core::BitVec;
+//! use std::num::NonZeroUsize;
+//!
+//! let extension = BinaryPrimeExt::new(Gf2mField::new(5, 0b100101))?;
+//! let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+//!     extension,
+//!     designed_distance: DesignedDistance::try_from(7)?,
+//! })?;
+//! let layout = SystematicLayout::default();
+//!
+//! let messages: Vec<BitVec> = (0..64)
+//!     .map(|seed| BitVec::random_seeded(code.k(), seed))
+//!     .collect();
+//! let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+//!
+//! let workers = NonZeroUsize::new(4).expect("four is nonzero");
+//! let mut workspaces = code.encode_workspaces(workers);
+//! code.encode_batch_parallel_into(&messages, layout, &mut workspaces, &mut codewords)?;
+//!
+//! // Input order, and the same bytes the one-shot path produces.
+//! for (message, codeword) in messages.iter().zip(&codewords) {
+//!     assert_eq!(*codeword, code.encode(message)?);
+//! }
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
 
-use gf2_core::field::extension::{FieldExtension, FieldIdentity};
+use std::num::NonZeroUsize;
+use std::slice;
+
+use gf2_core::field::extension::{FieldExtension, FieldId, FieldIdentity};
 use gf2_core::field::{FieldPoly, FieldVec, FiniteField};
 use gf2_core::gfp::Fp;
 use gf2_core::BitVec;
 
+use crate::bch::error::BchError;
 use crate::bch::spec::BchCode;
 use crate::error::CodeError;
 use crate::traits::block::{BlockCode, BlockEncoder, SymbolMatrix, SymbolSequence};
@@ -330,15 +417,98 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
         self.user_at(self.redundancy() + degree)
     }
 
-    /// The generator's low $r$ coefficients, in ascending degree order.
-    ///
-    /// The reduction $x^r \equiv -(g_{r-1}x^{r-1} + \cdots + g_0)$ uses
-    /// exactly these, so the leading coefficient of the monic generator never
-    /// enters the recurrence.
+    /// The generator's low $r$ coefficients, the form
+    /// [`EncodeRegisters::low`] holds them in.
     fn low_coefficients(&self) -> Vec<F> {
         (0..self.redundancy())
             .map(|degree| self.generator.coeff_or_zero(degree, &self.zero))
             .collect()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The reusable registers and the workspace that owns them
+// ---------------------------------------------------------------------------
+
+/// The two buffers a systematic recurrence runs over.
+///
+/// A representation fixes the word type $W$: base-field elements for the
+/// field-generic path, packed `u64` words for the packed binary path. The
+/// buffers are sized from the plan's redundancy $r$ and are only ever
+/// overwritten in place afterwards, which is what makes an encode that owns
+/// them allocation-free.
+///
+/// Build these through [`BchCode::encode_workspace`], which pairs them with
+/// the fingerprint of the code they were derived from;
+/// [`SystematicKernel::registers`] is the representation-specific half a
+/// kernel supplies.
+#[derive(Clone, Debug)]
+pub struct EncodeRegisters<W> {
+    /// The shift register, holding the running remainder.
+    ///
+    /// The recurrence resets it before the first message degree, so its
+    /// contents on entry carry no meaning.
+    pub register: Vec<W>,
+
+    /// The generator's low $r$ coefficients, in ascending degree order.
+    ///
+    /// The reduction $x^r \equiv -(g_{r-1}x^{r-1} + \cdots + g_0)$ uses
+    /// exactly these, so the monic leading coefficient never enters the
+    /// recurrence.
+    pub low: Vec<W>,
+}
+
+/// The reusable scratch one code's systematic encoding needs.
+///
+/// A workspace pairs one representation's [`EncodeRegisters`] with a
+/// fingerprint of the code that built them. Allocate it once with
+/// [`BchCode::encode_workspace`] and pass the same value to every
+/// [`encode_systematic_with`](BchCode::encode_systematic_with) or
+/// [`encode_batch_into`](BchCode::encode_batch_into) call: the buffers are
+/// sized there and only overwritten afterwards, so the per-message path
+/// touches no allocator. See the [module level](self#workspaces) for the whole
+/// no-allocation argument and for why one workspace serves every layout of its
+/// code.
+#[derive(Clone, Debug)]
+pub struct BchEncodeWorkspace<W> {
+    /// Fingerprint of the producing code, checked on every encode.
+    stamp: u64,
+    /// The buffers the recurrence runs over.
+    registers: EncodeRegisters<W>,
+}
+
+impl<W> BchEncodeWorkspace<W> {
+    /// Returns the fingerprint of the code this workspace was built for.
+    ///
+    /// Two workspaces are interchangeable exactly when this value agrees;
+    /// an encode reports [`BchError::WorkspaceMismatch`] carrying both
+    /// fingerprints otherwise.
+    pub fn code_stamp(&self) -> u64 {
+        self.stamp
+    }
+
+    /// Returns the buffers the recurrence runs over.
+    pub fn registers(&self) -> &EncodeRegisters<W> {
+        &self.registers
+    }
+}
+
+/// Returns how many workers a parallel batch encode can occupy here.
+///
+/// This is the rayon pool's width with the `parallel` feature, and one
+/// without it. A larger worker count remains valid and produces the same
+/// bytes: it fixes the partition boundaries and the workspace count, and the
+/// partitions then share the threads available. See the
+/// [module level](self#batch-encoding).
+#[must_use]
+pub fn max_parallel_batch_workers() -> NonZeroUsize {
+    #[cfg(feature = "parallel")]
+    {
+        NonZeroUsize::new(rayon::current_num_threads()).unwrap_or(NonZeroUsize::MIN)
+    }
+    #[cfg(not(feature = "parallel"))]
+    {
+        NonZeroUsize::MIN
     }
 }
 
@@ -359,8 +529,50 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
 /// An implementation writes every codeword coordinate, so a buffer holding a
 /// previous result needs no clearing, and it produces the same codeword as
 /// the reference recurrence stated at the [module level](self).
+///
+/// [`encode_systematic_with`](Self::encode_systematic_with) is the primitive:
+/// it runs the recurrence over registers the caller owns and allocates
+/// nothing. [`encode_systematic_into`](Self::encode_systematic_into) is the
+/// one-shot form, and builds one set of registers per call.
 pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
+    /// The word this representation's shift register is stored in.
+    type Word: Clone + core::fmt::Debug;
+
+    /// Builds the registers `plan`'s recurrence runs over, sized from its
+    /// redundancy and carrying its generator's low coefficients.
+    ///
+    /// # Complexity
+    ///
+    /// Two allocations, together $O(r)$ words.
+    fn registers(plan: &SystematicPlan<'_, F>) -> EncodeRegisters<Self::Word>;
+
+    /// Writes the systematic codeword of `message` into `codeword`, using
+    /// `registers` as its whole working storage.
+    ///
+    /// The register is reset before the first message degree, so registers
+    /// left behind by a previous encode need no clearing.
+    ///
+    /// # Errors
+    ///
+    /// Returns the [`CodeError`] reported by
+    /// [`SystematicPlan::validate_lengths`] when `message` does not hold
+    /// `plan.dimension()` symbols or `codeword` does not hold
+    /// `plan.length()`, and [`CodeError::BufferLengthMismatch`] when either
+    /// buffer of `registers` is not the length
+    /// [`registers`](Self::registers) gives it for this plan. No output
+    /// symbol is written in either case.
+    fn encode_systematic_with(
+        plan: &SystematicPlan<'_, F>,
+        message: &Self,
+        registers: &mut EncodeRegisters<Self::Word>,
+        codeword: &mut Self,
+    ) -> Result<(), CodeError>;
+
     /// Writes the systematic codeword of `message` into `codeword`.
+    ///
+    /// This is the one-shot form: it builds one set of registers and drops
+    /// them again, which is the whole heap traffic of an encode. Reuse them
+    /// through [`BchCode::encode_workspace`] to remove it.
     ///
     /// # Errors
     ///
@@ -372,35 +584,69 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
         plan: &SystematicPlan<'_, F>,
         message: &Self,
         codeword: &mut Self,
-    ) -> Result<(), CodeError>;
+    ) -> Result<(), CodeError> {
+        let mut registers = Self::registers(plan);
+        Self::encode_systematic_with(plan, message, &mut registers, codeword)
+    }
+}
+
+/// Decides that both buffers of `registers` hold `words` entries, the length
+/// [`SystematicKernel::registers`] gives them for the plan being encoded
+/// under.
+fn validate_registers<W>(words: usize, registers: &EncodeRegisters<W>) -> Result<(), CodeError> {
+    for buffer in [&registers.register, &registers.low] {
+        if buffer.len() != words {
+            return Err(CodeError::BufferLengthMismatch {
+                expected: words,
+                actual: buffer.len(),
+            });
+        }
+    }
+    Ok(())
 }
 
 impl<F: FieldIdentity + 'static> SystematicKernel<F> for FieldVec<F> {
+    /// The recurrence runs over base-field elements themselves.
+    type Word = F;
+
+    fn registers(plan: &SystematicPlan<'_, F>) -> EncodeRegisters<F> {
+        EncodeRegisters {
+            register: vec![plan.symbol_zero().clone(); plan.redundancy()],
+            low: plan.low_coefficients(),
+        }
+    }
+
     /// Runs the shift-register recurrence over base-field elements.
     ///
     /// # Errors
     ///
-    /// Returns [`CodeError::BufferLengthMismatch`] for a message or codeword
-    /// buffer of the wrong length.
+    /// Returns [`CodeError::BufferLengthMismatch`] for a message, codeword,
+    /// or register buffer of the wrong length.
     ///
     /// # Complexity
     ///
-    /// $O(k r)$ field multiply-adds and one $r$-element register.
-    fn encode_systematic_into(
+    /// $O(k r)$ field multiply-adds over the caller's $r$-element register,
+    /// with no allocation.
+    fn encode_systematic_with(
         plan: &SystematicPlan<'_, F>,
         message: &Self,
+        registers: &mut EncodeRegisters<F>,
         codeword: &mut Self,
     ) -> Result<(), CodeError> {
         plan.validate_lengths(message.len(), codeword.len())?;
 
         let redundancy = plan.redundancy();
-        let low = plan.low_coefficients();
-        let mut register = vec![plan.symbol_zero().clone(); redundancy];
+        validate_registers(redundancy, registers)?;
+        let EncodeRegisters { register, low } = registers;
 
         // Reduce x^r m(x) modulo g one message degree at a time, highest
         // first: the feedback symbol is the register's top coefficient plus
         // the message coefficient entering it.
         if redundancy > 0 {
+            let zero = plan.symbol_zero();
+            for slot in register.iter_mut() {
+                slot.clone_from(zero);
+            }
             for degree in (0..plan.dimension()).rev() {
                 let symbol = &message.as_slice()[plan.message_at(degree)];
                 let feedback = register[redundancy - 1].clone() + symbol;
@@ -427,6 +673,23 @@ impl<F: FieldIdentity + 'static> SystematicKernel<F> for FieldVec<F> {
 }
 
 impl SystematicKernel<Fp<2>> for BitVec {
+    /// The recurrence runs over packed `u64` words, one bit per coefficient.
+    type Word = u64;
+
+    fn registers(plan: &SystematicPlan<'_, Fp<2>>) -> EncodeRegisters<u64> {
+        let words = plan.redundancy().div_ceil(64);
+        let mut low = vec![0u64; words];
+        for (degree, coefficient) in plan.low_coefficients().iter().enumerate() {
+            if coefficient.is_one() {
+                low[degree / 64] |= 1u64 << (degree % 64);
+            }
+        }
+        EncodeRegisters {
+            register: vec![0u64; words],
+            low,
+        }
+    }
+
     /// Runs the shift-register recurrence over packed `u64` words.
     ///
     /// Negation is the identity over `GF(2)`, so the register holds the
@@ -434,30 +697,28 @@ impl SystematicKernel<Fp<2>> for BitVec {
     ///
     /// # Errors
     ///
-    /// Returns [`CodeError::BufferLengthMismatch`] for a message or codeword
-    /// buffer of the wrong length.
+    /// Returns [`CodeError::BufferLengthMismatch`] for a message, codeword,
+    /// or register buffer of the wrong length.
     ///
     /// # Complexity
     ///
-    /// $O(k \lceil r/64 \rceil)$ word operations and $O(n)$ bit writes.
-    fn encode_systematic_into(
+    /// $O(k \lceil r/64 \rceil)$ word operations and $O(n)$ bit writes over
+    /// the caller's registers, with no allocation.
+    fn encode_systematic_with(
         plan: &SystematicPlan<'_, Fp<2>>,
         message: &Self,
+        registers: &mut EncodeRegisters<u64>,
         codeword: &mut Self,
     ) -> Result<(), CodeError> {
         plan.validate_lengths(message.len(), codeword.len())?;
 
         let redundancy = plan.redundancy();
         let words = redundancy.div_ceil(64);
-        let mut register = vec![0u64; words];
+        validate_registers(words, registers)?;
+        let EncodeRegisters { register, low } = registers;
 
         if redundancy > 0 {
-            let mut low = vec![0u64; words];
-            for (degree, coefficient) in plan.low_coefficients().iter().enumerate() {
-                if coefficient.is_one() {
-                    low[degree / 64] |= 1u64 << (degree % 64);
-                }
-            }
+            register.fill(0);
             // The shift moves the top coefficient out of the register, and
             // masking keeps the words above degree r - 1 clear so the next
             // feedback bit reads the top coefficient alone.
@@ -569,6 +830,281 @@ where
         Ok(codeword)
     }
 
+    // -- The reusable-workspace and batch surface --------------------------
+
+    /// Allocates the scratch one systematic encode needs.
+    ///
+    /// Build this once and pass the same value to every
+    /// [`encode_systematic_with`](Self::encode_systematic_with) or
+    /// [`encode_batch_into`](Self::encode_batch_into) call: the buffers are
+    /// sized here and only overwritten afterwards, so the per-message path
+    /// performs no allocation. The workspace serves every
+    /// [`SystematicLayout`] of this code.
+    ///
+    /// # Complexity
+    ///
+    /// Two allocations, together $O(r)$ words, plus the $O(r)$ fingerprint of
+    /// [`code_stamp`](BchEncodeWorkspace::code_stamp).
+    pub fn encode_workspace(&self) -> BchEncodeWorkspace<S::Word> {
+        BchEncodeWorkspace {
+            stamp: self.encode_stamp(),
+            registers: S::registers(&self.systematic_plan(SystematicLayout::default())),
+        }
+    }
+
+    /// Allocates one workspace per worker for a parallel batch encode.
+    ///
+    /// The length of the result is the worker count
+    /// [`encode_batch_parallel_into`](Self::encode_batch_parallel_into) reads:
+    /// each worker owns one of these and shares none of it.
+    ///
+    /// # Complexity
+    ///
+    /// `workers` times [`encode_workspace`](Self::encode_workspace).
+    pub fn encode_workspaces(&self, workers: NonZeroUsize) -> Vec<BchEncodeWorkspace<S::Word>> {
+        let stamp = self.encode_stamp();
+        let plan = self.systematic_plan(SystematicLayout::default());
+        (0..workers.get())
+            .map(|_| BchEncodeWorkspace {
+                stamp,
+                registers: S::registers(&plan),
+            })
+            .collect()
+    }
+
+    /// Encodes `message` under `layout` into the caller's buffer, reusing
+    /// `workspace`.
+    ///
+    /// The codeword is the one
+    /// [`encode_systematic_into`](Self::encode_systematic_into) writes; this
+    /// path differs only in owning no buffers of its own.
+    ///
+    /// # Errors
+    ///
+    /// - [`BchError::WorkspaceMismatch`] when `workspace` was built by another
+    ///   code, decided before any output symbol is written.
+    /// - [`BchError::Code`] wrapping [`CodeError::BufferLengthMismatch`] when
+    ///   `message` does not hold $k$ symbols or `codeword` does not hold $n$,
+    ///   and [`CodeError::FieldMismatch`] when the message symbols carry a
+    ///   runtime field identity other than this code's.
+    ///
+    /// # Complexity
+    ///
+    /// That of [`encode_systematic_into`](Self::encode_systematic_into),
+    /// without its two allocations, plus $O(r)$ mixing steps to decide the
+    /// workspace fingerprint. A batch pays that check once for the whole
+    /// batch.
+    pub fn encode_systematic_with(
+        &self,
+        message: &S,
+        layout: SystematicLayout,
+        workspace: &mut BchEncodeWorkspace<S::Word>,
+        codeword: &mut S,
+    ) -> Result<(), BchError> {
+        self.validate_workspaces(slice::from_ref(workspace))?;
+        let plan = self.systematic_plan(layout);
+        plan.validate_lengths(message.len(), codeword.len())?;
+        validate_symbol_field(&plan, message)?;
+        S::encode_systematic_with(&plan, message, &mut workspace.registers, codeword)?;
+        Ok(())
+    }
+
+    /// Encodes every message of `messages` into the matching position of
+    /// `codewords`, reusing one `workspace`.
+    ///
+    /// # Errors
+    ///
+    /// - [`BchError::WorkspaceMismatch`] when `workspace` was built by another
+    ///   code.
+    /// - [`BchError::Code`] wrapping [`CodeError::BufferLengthMismatch`] when
+    ///   `codewords` does not have one entry per message, when a message does
+    ///   not hold $k$ symbols, or when a codeword buffer does not hold $n$,
+    ///   and [`CodeError::FieldMismatch`] for a message whose symbols carry a
+    ///   foreign field identity.
+    ///
+    /// Every message is decided before the first is encoded, so a rejected
+    /// batch leaves `codewords` untouched.
+    ///
+    /// # Complexity
+    ///
+    /// One [`encode_systematic_with`](Self::encode_systematic_with)
+    /// recurrence per message, with the workspace check paid once.
+    pub fn encode_batch_into(
+        &self,
+        messages: &[S],
+        layout: SystematicLayout,
+        workspace: &mut BchEncodeWorkspace<S::Word>,
+        codewords: &mut [S],
+    ) -> Result<(), BchError> {
+        self.validate_workspaces(slice::from_ref(workspace))?;
+        let plan = self.systematic_plan(layout);
+        validate_batch(&plan, messages, codewords)?;
+        encode_partition(&plan, messages, &mut workspace.registers, codewords);
+        Ok(())
+    }
+
+    /// Encodes every message of `messages` into a new vector of codewords.
+    ///
+    /// The result is in input order and holds one codeword per message; the
+    /// empty batch produces the empty vector.
+    ///
+    /// # Errors
+    ///
+    /// Propagates the [`CodeError`] that
+    /// [`encode_systematic_into`](Self::encode_systematic_into) reports for a
+    /// message this code does not encode.
+    ///
+    /// # Complexity
+    ///
+    /// One recurrence per message over one internally allocated workspace,
+    /// plus the output vector.
+    pub fn encode_batch(
+        &self,
+        messages: &[S],
+        layout: SystematicLayout,
+    ) -> Result<Vec<S>, CodeError> {
+        let plan = self.systematic_plan(layout);
+        let mut codewords = vec![S::zeroed(plan.length(), plan.symbol_zero()); messages.len()];
+        validate_batch(&plan, messages, &codewords)?;
+        let mut registers = S::registers(&plan);
+        encode_partition(&plan, messages, &mut registers, &mut codewords);
+        Ok(codewords)
+    }
+
+    /// Encodes `messages` into `codewords` across `workspaces.len()` workers.
+    ///
+    /// The batch is split into one contiguous partition per workspace, and
+    /// each worker encodes its own partition into the matching positions of
+    /// `codewords`. The output is therefore in input order, and identical for
+    /// every worker count; see the [module level](self#batch-encoding) for
+    /// that argument and for what runs where.
+    ///
+    /// A workspace count above the batch length leaves the surplus workspaces
+    /// unused.
+    ///
+    /// # Errors
+    ///
+    /// - [`BchError::WorkspaceMismatch`] when any workspace was built by
+    ///   another code.
+    /// - [`BchError::Code`] wrapping [`CodeError::BufferLengthMismatch`] when
+    ///   `workspaces` is empty, when `codewords` does not have one entry per
+    ///   message, when a message does not hold $k$ symbols, or when a codeword
+    ///   buffer does not hold $n$, and [`CodeError::FieldMismatch`] for a
+    ///   message whose symbols carry a foreign field identity.
+    ///
+    /// Every argument is decided before the first message is encoded, so a
+    /// rejected batch leaves `codewords` untouched.
+    ///
+    /// # Complexity
+    ///
+    /// One recurrence per message, spread over the partitions, plus one
+    /// workspace check per workspace.
+    pub fn encode_batch_parallel_into(
+        &self,
+        messages: &[S],
+        layout: SystematicLayout,
+        workspaces: &mut [BchEncodeWorkspace<S::Word>],
+        codewords: &mut [S],
+    ) -> Result<(), BchError>
+    where
+        X::Base: Send + Sync,
+        S: Send + Sync,
+        S::Word: Send,
+    {
+        if workspaces.is_empty() {
+            return Err(CodeError::BufferLengthMismatch {
+                expected: 1,
+                actual: 0,
+            }
+            .into());
+        }
+        self.validate_workspaces(workspaces)?;
+        let plan = self.systematic_plan(layout);
+        validate_batch(&plan, messages, codewords)?;
+        encode_partitions(&plan, messages, workspaces, codewords);
+        Ok(())
+    }
+
+    /// Encodes `messages` across `workers` workers into a new vector of
+    /// codewords.
+    ///
+    /// This is [`encode_batch_parallel_into`](Self::encode_batch_parallel_into)
+    /// with the workspaces and the output allocated for the caller, and
+    /// carries the same ordering and worker-count guarantees.
+    ///
+    /// # Errors
+    ///
+    /// Propagates the [`CodeError`] that
+    /// [`encode_systematic_into`](Self::encode_systematic_into) reports for a
+    /// message this code does not encode.
+    ///
+    /// # Complexity
+    ///
+    /// One recurrence per message spread over `workers` partitions, plus
+    /// `workers` workspaces and the output vector.
+    pub fn encode_batch_parallel(
+        &self,
+        messages: &[S],
+        layout: SystematicLayout,
+        workers: NonZeroUsize,
+    ) -> Result<Vec<S>, CodeError>
+    where
+        X::Base: Send + Sync,
+        S: Send + Sync,
+        S::Word: Send,
+    {
+        let plan = self.systematic_plan(layout);
+        let mut codewords = vec![S::zeroed(plan.length(), plan.symbol_zero()); messages.len()];
+        validate_batch(&plan, messages, &codewords)?;
+        let mut workspaces = self.encode_workspaces(workers);
+        encode_partitions(&plan, messages, &mut workspaces, &mut codewords);
+        Ok(codewords)
+    }
+
+    /// Fingerprints this code for an encode workspace: the dimensions, the
+    /// presentations of the base and splitting fields, and the defining set,
+    /// which together fix the generator the registers carry (FNV-1a).
+    ///
+    /// The field presentations have to be there. A defining set names root
+    /// exponents, not roots, so two presentations of one splitting field
+    /// carry the same exponents at the same dimensions while their generators
+    /// over the base field differ; the moduli are what separates them.
+    fn encode_stamp(&self) -> u64 {
+        const OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+        const PRIME: u64 = 0x0000_0100_0000_01b3;
+        let mut hash = OFFSET;
+        let mut mix = |value: u64| {
+            hash ^= value;
+            hash = hash.wrapping_mul(PRIME);
+        };
+        mix(self.n() as u64);
+        mix(self.k() as u64);
+        mix_field_presentation(&mut mix, self.extension().base_id());
+        mix_field_presentation(&mut mix, self.extension().ext_id());
+        mix(self.defining_set().len() as u64);
+        for exponent in self.defining_set() {
+            mix(exponent.get());
+        }
+        hash
+    }
+
+    /// Rejects a workspace built for another code, whatever its geometry.
+    fn validate_workspaces(
+        &self,
+        workspaces: &[BchEncodeWorkspace<S::Word>],
+    ) -> Result<(), BchError> {
+        let expected_stamp = self.encode_stamp();
+        for workspace in workspaces {
+            if workspace.stamp != expected_stamp {
+                return Err(BchError::WorkspaceMismatch {
+                    expected_stamp,
+                    actual_stamp: workspace.stamp,
+                });
+            }
+        }
+        Ok(())
+    }
+
     /// Reads the message back out of a codeword written under `layout`.
     ///
     /// The systematic coordinates of every declared layout are the first $k$,
@@ -608,6 +1144,129 @@ where
             message.set(user, symbol)?;
         }
         Ok(message)
+    }
+}
+
+/// Mixes a field presentation into a fingerprint: its characteristic and
+/// absolute degree, then every modulus of its tower, lowest coordinate first.
+///
+/// The moduli separate two presentations of one field size, which the
+/// characteristic and degree alone cannot.
+fn mix_field_presentation(mix: &mut impl FnMut(u64), id: &FieldId) {
+    mix(id.characteristic());
+    mix(id.degree() as u64);
+    let mut node = Some(id);
+    while let Some(current) = node {
+        if let Some(modulus) = current.modulus() {
+            mix(modulus.coefficients().len() as u64);
+            for &coordinate in modulus.coefficients() {
+                mix(coordinate);
+            }
+        }
+        node = current.base();
+    }
+}
+
+/// Decides that a whole batch is one this plan encodes, before any codeword
+/// is written.
+///
+/// # Errors
+///
+/// [`CodeError::BufferLengthMismatch`] when `codewords` does not have one
+/// entry per message, or when a message or codeword buffer has the wrong
+/// length, and [`CodeError::FieldMismatch`] for a message whose symbols carry
+/// a foreign field identity. The first rejected message decides.
+fn validate_batch<F, S>(
+    plan: &SystematicPlan<'_, F>,
+    messages: &[S],
+    codewords: &[S],
+) -> Result<(), CodeError>
+where
+    F: FieldIdentity,
+    S: SystematicKernel<F>,
+{
+    if codewords.len() != messages.len() {
+        return Err(CodeError::BufferLengthMismatch {
+            expected: messages.len(),
+            actual: codewords.len(),
+        });
+    }
+    for (message, codeword) in messages.iter().zip(codewords) {
+        plan.validate_lengths(message.len(), codeword.len())?;
+        validate_symbol_field(plan, message)?;
+    }
+    Ok(())
+}
+
+/// Encodes one worker's contiguous partition in index order.
+///
+/// Every argument has already passed [`validate_batch`], and `registers` has
+/// the geometry [`SystematicKernel::registers`] gives this plan, so the
+/// kernel cannot reject anything here.
+fn encode_partition<F, S>(
+    plan: &SystematicPlan<'_, F>,
+    messages: &[S],
+    registers: &mut EncodeRegisters<S::Word>,
+    codewords: &mut [S],
+) where
+    F: FieldIdentity,
+    S: SystematicKernel<F>,
+{
+    for (message, codeword) in messages.iter().zip(codewords.iter_mut()) {
+        S::encode_systematic_with(plan, message, registers, codeword)
+            .expect("a validated batch encodes under its own plan");
+    }
+}
+
+/// Encodes `messages` into `codewords` across one contiguous partition per
+/// workspace.
+///
+/// Partition $w$ covers the messages `w * partition .. (w + 1) * partition`
+/// and writes exactly those positions of `codewords`, so the output is in
+/// input order and independent of both the workspace count and the order the
+/// partitions happen to run in. Surplus workspaces beyond the batch length go
+/// unused, and a single worker runs the whole batch on the calling thread.
+fn encode_partitions<F, S>(
+    plan: &SystematicPlan<'_, F>,
+    messages: &[S],
+    workspaces: &mut [BchEncodeWorkspace<S::Word>],
+    codewords: &mut [S],
+) where
+    F: FieldIdentity + Send + Sync,
+    S: SystematicKernel<F> + Send + Sync,
+    S::Word: Send,
+{
+    let workers = workspaces.len().min(messages.len());
+    if workers == 0 {
+        return;
+    }
+    if workers == 1 {
+        encode_partition(plan, messages, &mut workspaces[0].registers, codewords);
+        return;
+    }
+    let partition = messages.len().div_ceil(workers);
+
+    #[cfg(feature = "parallel")]
+    {
+        use rayon::prelude::*;
+
+        codewords
+            .par_chunks_mut(partition)
+            .zip(messages.par_chunks(partition))
+            .zip(workspaces.par_iter_mut())
+            .for_each(|((codewords, messages), workspace)| {
+                encode_partition(plan, messages, &mut workspace.registers, codewords);
+            });
+    }
+    #[cfg(not(feature = "parallel"))]
+    {
+        codewords
+            .chunks_mut(partition)
+            .zip(messages.chunks(partition))
+            .zip(workspaces.iter_mut())
+            .for_each(|((codewords, messages), workspace)| {
+                encode_partition(plan, messages, &mut workspace.registers, codewords);
+            });
     }
 }
 
@@ -1197,6 +1856,538 @@ mod tests {
         }
         BlockEncoder::encode_into(&prime, &message, &mut buffer).expect("a sized buffer accepts");
         assert_eq!(buffer, expected, "a dirty buffer is overwritten, not mixed");
+    }
+
+    // -- REQ-01/REQ-02: the workspace, batch, and parallel batch paths ------
+
+    /// The worker counts the determinism claim covers: one, two, and the
+    /// widest this process supports.
+    fn worker_counts() -> Vec<NonZeroUsize> {
+        let mut counts = vec![
+            NonZeroUsize::MIN,
+            NonZeroUsize::new(2).expect("two is nonzero"),
+            max_parallel_batch_workers(),
+        ];
+        counts.sort_unstable();
+        counts.dedup();
+        counts
+    }
+
+    /// A batch of `count` deterministic messages, pairwise distinct so that a
+    /// reordered result is observable.
+    fn seeded_bit_batch(dimension: usize, count: usize, seed: u64) -> Vec<BitVec> {
+        (0..count)
+            .map(|index| {
+                seeded_bits(
+                    dimension,
+                    seed.wrapping_mul(0x9E37_79B9).wrapping_add(index as u64) | 1,
+                )
+            })
+            .collect()
+    }
+
+    /// Asserts that every encoding path of `code` writes the codewords the
+    /// allocating single-message path writes, in input order.
+    ///
+    /// This is the REQ-01 identity together with the REQ-02 worker-count
+    /// invariance: the allocating reference, the workspace single path, the
+    /// two batch paths, and the parallel batch path at each supported worker
+    /// count must agree symbol for symbol.
+    fn assert_every_path_agrees<X, S, M>(
+        code: &BchCode<X, S, M>,
+        messages: &[S],
+        layout: SystematicLayout,
+    ) where
+        X: FieldExtension,
+        X::Base: Send + Sync,
+        S: SystematicKernel<X::Base> + Send + Sync,
+        S::Word: Send,
+        M: SymbolMatrix<X::Base>,
+    {
+        let zero = BlockCode::symbol_zero(code);
+        let expected: Vec<S> = messages
+            .iter()
+            .map(|message| {
+                code.encode_systematic(message, layout)
+                    .expect("a k-symbol message encodes")
+            })
+            .collect();
+
+        let mut workspace = code.encode_workspace();
+        let mut buffer = S::zeroed(code.n(), &zero);
+        for (message, want) in messages.iter().zip(&expected) {
+            code.encode_systematic_with(message, layout, &mut workspace, &mut buffer)
+                .expect("a k-symbol message encodes with its own workspace");
+            assert_eq!(
+                &buffer, want,
+                "the workspace path must match the allocating path"
+            );
+
+            if layout == SystematicLayout::default() {
+                BlockEncoder::encode_into(code, message, &mut buffer)
+                    .expect("a k-symbol message encodes");
+                assert_eq!(
+                    &buffer, want,
+                    "the canonical encode_into must match the allocating path"
+                );
+            }
+        }
+
+        let mut codewords = vec![S::zeroed(code.n(), &zero); messages.len()];
+        code.encode_batch_into(messages, layout, &mut workspace, &mut codewords)
+            .expect("a validated batch encodes");
+        assert_eq!(
+            codewords, expected,
+            "the workspace batch must match message by message"
+        );
+
+        assert_eq!(
+            code.encode_batch(messages, layout)
+                .expect("a validated batch encodes"),
+            expected,
+            "the allocating batch must match message by message"
+        );
+
+        for workers in worker_counts() {
+            assert_eq!(
+                code.encode_batch_parallel(messages, layout, workers)
+                    .expect("a validated batch encodes"),
+                expected,
+                "the allocating parallel batch must match at {workers} workers"
+            );
+
+            let mut codewords = vec![S::zeroed(code.n(), &zero); messages.len()];
+            let mut workspaces = code.encode_workspaces(workers);
+            code.encode_batch_parallel_into(messages, layout, &mut workspaces, &mut codewords)
+                .expect("a validated batch encodes");
+            assert_eq!(
+                codewords, expected,
+                "the parallel batch must match at {workers} workers"
+            );
+        }
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(8))]
+
+        #[test]
+        fn prop_every_binary_path_writes_one_codeword(
+            point in 0usize..LEGACY_BINARY_POINTS.len(),
+            seed: u64,
+        ) {
+            let (m, modulus, _, _, t) = LEGACY_BINARY_POINTS[point];
+            let code = binary_narrow_sense(m, modulus, 2 * t as u64 + 1);
+            let messages = seeded_bit_batch(code.k(), 9, seed);
+            for &layout in LAYOUTS {
+                assert_every_path_agrees(&code, &messages, layout);
+            }
+        }
+
+        #[test]
+        fn prop_every_prime_base_path_writes_one_codeword(
+            designed_distance in 1u64..=6,
+            seed: u64,
+        ) {
+            let code = gf5_code(designed_distance);
+            let alphabet: Vec<Fp<5>> = (0..5).map(Fp::<5>::new).collect();
+            let messages: Vec<FieldVec<Fp<5>>> = (0..9)
+                .map(|index| seeded_symbols(&alphabet, code.k(), seed.wrapping_add(index) | 1))
+                .collect();
+            for &layout in LAYOUTS {
+                assert_every_path_agrees(&code, &messages, layout);
+            }
+        }
+    }
+
+    #[test]
+    fn the_extension_base_paths_write_one_codeword() {
+        let code = gf9_base_code(4);
+        let alphabet = gf9().elements().expect("GF(9) is enumerable");
+        let messages: Vec<FieldVec<QuotientElement<Fp<3>>>> = (0..5)
+            .map(|index| seeded_symbols(&alphabet, code.k(), index | 1))
+            .collect();
+        for &layout in LAYOUTS {
+            assert_every_path_agrees(&code, &messages, layout);
+        }
+    }
+
+    #[test]
+    fn the_packed_workspace_path_holds_at_the_word_boundaries() {
+        // The same redundancies 0, 1, 63, 64, and 65 the one-shot packed path
+        // pins: the register is empty, one bit, one word short, exactly one
+        // word, and one bit into a second word.
+        let codes = [
+            binary_narrow_sense(4, 0b10011, 1),
+            binary_first_root(4, 0b10011, 0, 2),
+            binary_narrow_sense(7, 0b10000011, 21),
+            BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                designed_distance: DesignedDistance::try_from(17).expect("positive"),
+            })
+            .expect("a valid GF(2^8) narrow-sense spec"),
+            BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                first_root: RootExponent::from(0),
+                designed_distance: DesignedDistance::try_from(18).expect("positive"),
+            })
+            .expect("a valid GF(2^8) first-root spec"),
+        ];
+
+        for (code, redundancy) in codes.iter().zip([0usize, 1, 63, 64, 65]) {
+            assert_eq!(BlockCode::redundancy(code), redundancy);
+            let messages = seeded_bit_batch(code.k(), 4, redundancy as u64 + 1);
+            for &layout in LAYOUTS {
+                assert_every_path_agrees(code, &messages, layout);
+            }
+        }
+    }
+
+    // -- REQ-02: worker counts choose a schedule, never a result -----------
+
+    #[test]
+    fn a_batch_keeps_its_input_order_at_every_worker_count() {
+        let code = binary_narrow_sense(6, 0b1000011, 7);
+        let messages = seeded_bit_batch(code.k(), 37, 0xAE03_BCD0);
+        let reversed: Vec<BitVec> = messages.iter().rev().cloned().collect();
+        let layout = SystematicLayout::default();
+
+        let sequential = code
+            .encode_batch(&messages, layout)
+            .expect("a validated batch encodes");
+
+        for workers in worker_counts() {
+            let parallel = code
+                .encode_batch_parallel(&messages, layout, workers)
+                .expect("a validated batch encodes");
+            assert_eq!(
+                parallel, sequential,
+                "byte equality must hold at {workers} workers"
+            );
+
+            let reversed_out = code
+                .encode_batch_parallel(&reversed, layout, workers)
+                .expect("a validated batch encodes");
+            let expected: Vec<BitVec> = sequential.iter().rev().cloned().collect();
+            assert_eq!(
+                reversed_out, expected,
+                "position i must carry the codeword of message i at {workers} workers"
+            );
+        }
+    }
+
+    #[test]
+    fn a_batch_beyond_the_worker_count_covers_every_message() {
+        // A worker count above the batch length leaves the surplus workspaces
+        // unused, and a batch shorter than the partition still covers every
+        // message exactly once.
+        let code = binary_narrow_sense(4, 0b10011, 5);
+        let layout = SystematicLayout::default();
+        for count in [0usize, 1, 2, 3, 5, 8, 13] {
+            let messages = seeded_bit_batch(code.k(), count, count as u64 + 1);
+            let expected = code
+                .encode_batch(&messages, layout)
+                .expect("a validated batch encodes");
+            assert_eq!(expected.len(), count);
+            for workers in worker_counts()
+                .into_iter()
+                .chain([NonZeroUsize::new(16).expect("sixteen is nonzero")])
+            {
+                assert_eq!(
+                    code.encode_batch_parallel(&messages, layout, workers)
+                        .expect("a validated batch encodes"),
+                    expected,
+                    "a {count}-message batch at {workers} workers"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn the_full_space_code_batches_the_identity() {
+        let code = binary_narrow_sense(4, 0b10011, 1);
+        assert_eq!((code.n(), code.k()), (15, 15));
+        let messages = seeded_bit_batch(code.k(), 4, 3);
+        let layout = SystematicLayout::default();
+
+        let codewords = code
+            .encode_batch_parallel(&messages, layout, NonZeroUsize::new(3).expect("three"))
+            .expect("a validated batch encodes");
+        assert_eq!(codewords, messages, "k = n batches the messages unchanged");
+    }
+
+    // -- REQ-01: the workspace owns the only allocation --------------------
+
+    /// The address, length, and capacity of each workspace buffer. The code
+    /// sizes both once and only overwrites them afterwards, so an unchanged
+    /// snapshot witnesses that neither buffer moved or grew, and therefore
+    /// that the per-message path reallocated nothing.
+    fn buffer_shape<W>(workspace: &BchEncodeWorkspace<W>) -> Vec<(usize, usize, usize)> {
+        let registers = workspace.registers();
+        [&registers.register, &registers.low]
+            .into_iter()
+            .map(|buffer| (buffer.as_ptr() as usize, buffer.len(), buffer.capacity()))
+            .collect()
+    }
+
+    #[test]
+    fn repeated_encodes_reuse_one_workspace() {
+        let code = binary_narrow_sense(7, 0b10000011, 21);
+        let mut workspace = code.encode_workspace();
+        let shape = buffer_shape(&workspace);
+        let mut codeword = BitVec::zeros(code.n());
+
+        for round in 0..64u64 {
+            let message = seeded_bits(code.k(), round | 1);
+            for &layout in LAYOUTS {
+                code.encode_systematic_with(&message, layout, &mut workspace, &mut codeword)
+                    .expect("a k-bit message encodes");
+                assert_eq!(
+                    buffer_shape(&workspace),
+                    shape,
+                    "no workspace buffer moved or grew during encoding"
+                );
+            }
+        }
+
+        let messages = seeded_bit_batch(code.k(), 16, 5);
+        let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+        for &layout in LAYOUTS {
+            code.encode_batch_into(&messages, layout, &mut workspace, &mut codewords)
+                .expect("a validated batch encodes");
+            assert_eq!(
+                buffer_shape(&workspace),
+                shape,
+                "no workspace buffer moved or grew during a batch"
+            );
+        }
+    }
+
+    #[test]
+    fn a_field_generic_workspace_is_reused_too() {
+        let code = gf5_code(5);
+        let alphabet: Vec<Fp<5>> = (0..5).map(Fp::<5>::new).collect();
+        let mut workspace = code.encode_workspace();
+        let shape = buffer_shape(&workspace);
+        let mut codeword = FieldVec::zeros_from(code.n(), &Fp::<5>::new(0));
+
+        for round in 0..32u64 {
+            let message = seeded_symbols(&alphabet, code.k(), round | 1);
+            code.encode_systematic_with(
+                &message,
+                SystematicLayout::MessageParityDescending,
+                &mut workspace,
+                &mut codeword,
+            )
+            .expect("a k-symbol message encodes");
+            assert_eq!(buffer_shape(&workspace), shape, "no buffer moved or grew");
+        }
+    }
+
+    // -- Typed errors on the workspace and batch paths ---------------------
+
+    #[test]
+    fn a_foreign_encode_workspace_is_rejected() {
+        // Two primitive presentations of GF(16). The codes share their
+        // dimensions, their defining set, their base field, and their buffer
+        // geometry, so the field presentation inside the stamp is the only
+        // thing that can tell the two workspaces apart.
+        let code_a = binary_narrow_sense(4, 0b10011, 3);
+        let code_b = binary_narrow_sense(4, 0b11001, 3);
+        assert_eq!((code_a.n(), code_a.k()), (code_b.n(), code_b.k()));
+        assert_eq!(code_a.defining_set(), code_b.defining_set());
+
+        let workspace_a = code_a.encode_workspace();
+        let mut foreign = code_b.encode_workspace();
+        assert_eq!(
+            buffer_shape(&workspace_a)
+                .iter()
+                .map(|&(_, len, _)| len)
+                .collect::<Vec<_>>(),
+            buffer_shape(&foreign)
+                .iter()
+                .map(|&(_, len, _)| len)
+                .collect::<Vec<_>>(),
+            "matching buffer lengths must not be what rejects the foreign workspace"
+        );
+
+        let message = seeded_bits(code_a.k(), 7);
+        let mut codeword = BitVec::zeros(code_a.n());
+        let error = code_a
+            .encode_systematic_with(
+                &message,
+                SystematicLayout::default(),
+                &mut foreign,
+                &mut codeword,
+            )
+            .expect_err("a workspace built for another code is not this code's");
+        assert!(matches!(
+            error,
+            BchError::WorkspaceMismatch { expected_stamp, actual_stamp }
+                if expected_stamp != actual_stamp
+        ));
+
+        let mut own = code_a.encode_workspace();
+        assert!(code_a
+            .encode_systematic_with(
+                &message,
+                SystematicLayout::default(),
+                &mut own,
+                &mut codeword
+            )
+            .is_ok());
+
+        // The batch paths reject it before writing anything.
+        let messages = vec![message];
+        let mut codewords = vec![BitVec::zeros(code_a.n())];
+        assert!(matches!(
+            code_a.encode_batch_into(
+                &messages,
+                SystematicLayout::default(),
+                &mut foreign,
+                &mut codewords,
+            ),
+            Err(BchError::WorkspaceMismatch { .. })
+        ));
+        let mut foreign_batch = code_b.encode_workspaces(NonZeroUsize::new(2).expect("two"));
+        assert!(matches!(
+            code_a.encode_batch_parallel_into(
+                &messages,
+                SystematicLayout::default(),
+                &mut foreign_batch,
+                &mut codewords,
+            ),
+            Err(BchError::WorkspaceMismatch { .. })
+        ));
+        assert_eq!(
+            codewords,
+            vec![BitVec::zeros(code_a.n())],
+            "a rejected batch writes nothing"
+        );
+    }
+
+    #[test]
+    fn wrong_buffer_lengths_are_typed_errors_on_every_batch_path() {
+        let code = binary_narrow_sense(4, 0b10011, 5);
+        let layout = SystematicLayout::default();
+        let message = BitVec::zeros(code.k());
+        let mut workspace = code.encode_workspace();
+
+        let mismatch = |expected, actual| CodeError::BufferLengthMismatch { expected, actual };
+
+        // The single workspace path decides both buffers.
+        let mut codeword = BitVec::zeros(code.n() + 1);
+        assert_eq!(
+            code.encode_systematic_with(&message, layout, &mut workspace, &mut codeword),
+            Err(BchError::Code(mismatch(15, 16)))
+        );
+        let mut codeword = BitVec::zeros(code.n());
+        assert_eq!(
+            code.encode_systematic_with(
+                &BitVec::zeros(code.k() + 1),
+                layout,
+                &mut workspace,
+                &mut codeword
+            ),
+            Err(BchError::Code(mismatch(7, 8)))
+        );
+
+        // A batch names the count first, then the offending message.
+        let messages = vec![message.clone(), message.clone()];
+        let mut codewords = vec![BitVec::zeros(code.n())];
+        assert_eq!(
+            code.encode_batch_into(&messages, layout, &mut workspace, &mut codewords),
+            Err(BchError::Code(mismatch(2, 1)))
+        );
+        assert_eq!(
+            code.encode_batch(&[BitVec::zeros(code.k() + 1)], layout),
+            Err(mismatch(7, 8))
+        );
+        assert_eq!(
+            code.encode_batch_parallel(
+                &[BitVec::zeros(code.k() + 1)],
+                layout,
+                NonZeroUsize::new(2).expect("two")
+            ),
+            Err(mismatch(7, 8))
+        );
+
+        // A parallel batch needs at least one workspace to run on.
+        let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+        assert_eq!(
+            code.encode_batch_parallel_into(&messages, layout, &mut [], &mut codewords),
+            Err(BchError::Code(mismatch(1, 0)))
+        );
+
+        // The kernel decides its registers, whatever built them.
+        let plan = code.systematic_plan(layout);
+        let mut registers = BitVec::registers(&plan);
+        registers.register.push(0);
+        assert_eq!(
+            BitVec::encode_systematic_with(&plan, &message, &mut registers, &mut codeword),
+            Err(mismatch(1, 2))
+        );
+    }
+
+    #[test]
+    fn a_batch_message_from_another_presentation_is_rejected() {
+        let code = gf9_base_code(4);
+        let other_modulus = FieldPoly::new(vec![Fp::<3>::new(2), Fp::new(1), Fp::new(1)]);
+        let other =
+            QuotientField::new(Fp::<3>::zero(), other_modulus).expect("x^2 + x + 2 over GF(3)");
+        let foreign = other.ext_zero();
+
+        let mut message = FieldVec::zeros_from(code.k(), &BlockCode::symbol_zero(&code));
+        message.set(0, foreign.clone());
+
+        let expected = Err(CodeError::FieldMismatch {
+            expected: BlockCode::symbol_zero(&code).field_id(),
+            found: foreign.field_id(),
+        });
+        assert_eq!(
+            code.encode_batch(&[message.clone()], SystematicLayout::default()),
+            expected
+        );
+        assert_eq!(
+            code.encode_batch_parallel(
+                &[message],
+                SystematicLayout::default(),
+                NonZeroUsize::new(2).expect("two")
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn the_empty_batch_encodes_to_the_empty_result() {
+        let code = binary_narrow_sense(4, 0b10011, 5);
+        let layout = SystematicLayout::default();
+        let mut workspace = code.encode_workspace();
+
+        assert_eq!(code.encode_batch(&[], layout), Ok(Vec::new()));
+        for workers in worker_counts() {
+            assert_eq!(
+                code.encode_batch_parallel(&[], layout, workers),
+                Ok(Vec::new())
+            );
+        }
+        assert_eq!(
+            code.encode_batch_into(&[], layout, &mut workspace, &mut []),
+            Ok(())
+        );
+        let mut workspaces = code.encode_workspaces(NonZeroUsize::new(4).expect("four"));
+        assert_eq!(
+            code.encode_batch_parallel_into(&[], layout, &mut workspaces, &mut []),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn the_supported_worker_count_is_positive() {
+        let workers = max_parallel_batch_workers();
+        assert!(
+            workers.get() >= 1,
+            "at least the calling thread is a worker"
+        );
     }
 
     #[test]
