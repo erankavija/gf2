@@ -43,9 +43,11 @@
 
 mod core;
 pub mod dvb_t2;
+pub mod encode;
 pub mod error;
 pub mod extended;
 pub mod spec;
+pub use encode::SystematicLayout;
 
 pub use core::{BchCode, BchDecoder, BchEncoder, CodeRate};
 // The canonical code type keeps its module path while `core::BchCode` still
