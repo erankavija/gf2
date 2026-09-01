@@ -521,9 +521,24 @@ name = "tuning_calibration"
 harness = false
 required-features = ["parallel", "simd", "test-support", "tuning-profile"]
 
+# Normal binary built in a separate target directory with no default features
+# and without `test-support`; this guarantees timed production calls contain no
+# route/effective-observer atomics. It shares the canonical case, fixture,
+# digest, install, and timing implementation with the controller bench.
+[[bin]]
+name = "tuning_calibration_timed"
+path = "src/bin/tuning_calibration_timed.rs"
+required-features = ["parallel", "simd", "tuning-profile"]
+test = false
+bench = false
+
 # Runs the calibration harness's own `#[cfg(test)]` module, which a
 # `harness = false` bench target does not otherwise execute. It uses the exact
 # same four-feature protocol configuration as the producer.
 [[test]]
 name = "tuning_calibration_harness"
 required-features = ["parallel", "simd", "test-support", "tuning-profile"]
+
+[[test]]
+name = "ple_panel_effective_no_simd"
+required-features = ["test-support", "tuning-profile"]

@@ -3290,18 +3290,20 @@ pub(crate) fn gemm_axpy_into_view<F>(
     }
 }
 
-/// Runs the production GEMM AXPY dispatcher as `out ← a · b` for
-/// test-support route observation.
+/// Runs the production GEMM AXPY dispatcher as `out ← a · b` for profile
+/// calibration and route observation.
 ///
-/// This thin test-support entry exists so integration tests can observe the
-/// route consumed inside the crate-private `gemm_axpy_into_view` dispatcher.
+/// This thin entry lets the calibration timing binary call the same
+/// crate-private dispatcher without compiling test-support observers into the
+/// measured library bytes. Test-support builds additionally use it with the
+/// route observer above.
 ///
 /// # Panics
 ///
 /// Panics when either operand is empty, when their inner dimensions differ,
 /// or when `out` does not have the product shape.
-#[cfg(any(test, feature = "test-support"))]
-pub fn run_gemm_axpy_dispatch_for_test<F: FiniteField>(
+#[cfg(any(test, feature = "test-support", feature = "tuning-profile"))]
+pub fn run_gemm_axpy_dispatch<F: FiniteField>(
     a: &FieldMatrix<F>,
     b: &FieldMatrix<F>,
     out: &mut FieldMatrix<F>,

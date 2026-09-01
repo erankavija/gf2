@@ -35,22 +35,25 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use gf2_core::alg::gauss::{invert, invert_route, InvertRoute};
+use gf2_core::alg::m4rm::{m4rm_schedule_route, multiply as m4rm_multiply, M4rmScheduleTier};
+#[cfg(feature = "test-support")]
 use gf2_core::alg::m4rm::{
-    m4rm_schedule_route, m4rm_tiled_effective_observation, multiply as m4rm_multiply,
-    reset_m4rm_tiled_effective_observation, M4rmScheduleTier, M4rmTiledEffectiveObservation,
+    m4rm_tiled_effective_observation, reset_m4rm_tiled_effective_observation,
+    M4rmTiledEffectiveObservation,
 };
-use gf2_core::compute::field::{
-    last_effective_soa_chunk, reset_last_effective_soa_chunk, run_in_dedicated_parallel_pool,
-    soa_parallel_route, SoaParallelRoute,
-};
+#[cfg(feature = "test-support")]
+use gf2_core::compute::field::{last_effective_soa_chunk, reset_last_effective_soa_chunk};
+use gf2_core::compute::field::{soa_parallel_route, SoaParallelRoute};
 use gf2_core::field::inverse::{inv_route, InvRoute};
 use gf2_core::field::matrix::{
-    gemm_axpy_route, last_gemm_axpy_dispatch_route, reset_last_gemm_axpy_dispatch_route,
-    run_gemm_axpy_dispatch_for_test, FieldMatrix, GemmAxpyRoute,
+    gemm_axpy_route, run_gemm_axpy_dispatch, FieldMatrix, GemmAxpyRoute,
 };
+#[cfg(feature = "test-support")]
+use gf2_core::field::matrix::{last_gemm_axpy_dispatch_route, reset_last_gemm_axpy_dispatch_route};
+use gf2_core::field::ple::{back_sub_route, ple_panel_route, BackSubRoute, PlePanelRoute};
+#[cfg(feature = "test-support")]
 use gf2_core::field::ple::{
-    back_sub_route, max_effective_panel_dispatch_cols, ple_panel_route,
-    reset_max_effective_panel_dispatch_cols, BackSubRoute, PlePanelRoute,
+    max_effective_panel_dispatch_cols, reset_max_effective_panel_dispatch_cols,
 };
 use gf2_core::field::poly::{
     batch_evaluate_auto_route, div_rem_auto_route, mul_fast, mul_fast_route, mul_route,
@@ -59,9 +62,11 @@ use gf2_core::field::poly::{
 use gf2_core::field::poly_interpolate::{
     interpolate_auto, interpolate_auto_two_adic, interpolate_route, InterpolateRoute,
 };
+#[cfg(feature = "test-support")]
 use gf2_core::field::triangular::{
-    last_effective_trsm_panel_rows, reset_last_effective_trsm_panel_rows, trsm_route, TrsmRoute,
+    last_effective_trsm_panel_rows, reset_last_effective_trsm_panel_rows,
 };
+use gf2_core::field::triangular::{trsm_route, TrsmRoute};
 use gf2_core::field::{FiniteField, PlePanelLane};
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{BatchExtField, ExtConfig};
@@ -69,10 +74,12 @@ use gf2_core::kernels::{Backend, ScalarBackend};
 use gf2_core::matrix::{transpose_route, TransposeRoute};
 use gf2_core::rng::Lcg;
 use gf2_core::tuning;
+#[cfg(feature = "test-support")]
+use gf2_core::tuning::HarnessSchema;
 use gf2_core::tuning::{
     AssemblyProvenance, BitBackendSelectors, BitMatrixSelectors, CanonicalValue,
     CompiledProfileProvenance, CoreSelectors, CoreTuning, CoreTuningCodec, DenseInverseSelectors,
-    GemmSelectors, GitRevision, HarnessSchema, M4rmSelectors, MeasurementProvenance, PleSelectors,
+    GemmSelectors, GitRevision, M4rmSelectors, MeasurementProvenance, PleSelectors,
     PolynomialSelectors, PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder,
     RepoRelPath, Rfc3339Utc, SectionCodec, Sha256, SoaBatchSelectors, TriangularSelectors,
     TuningSection, PROFILE_FORMAT_VERSION,
@@ -195,6 +202,7 @@ const FRESH_CASE_VAR: &str = "GF2_TUNING_FRESH_CASE";
 const FRESH_CASE_VALUE: &str = "child-v2";
 const FRESH_RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";
 const CHILD_OBSERVATION_PREFIX: &str = "GF2_TUNING_CHILD_OBSERVATION=";
+const TIMED_WORKER_IDENTITY_PREFIX: &str = "GF2_TUNING_TIMED_WORKER=";
 const INTERPOLATION_RECONCILIATION_PREFIX: &str = "GF2_TUNING_INTERPOLATION=";
 const SAMPLE_PREFIX: &str = "GF2_TUNING_SAMPLES=";
 const SEED_PREFIX: &str = "GF2_TUNING_SEEDS=";
@@ -272,8 +280,8 @@ const FOLLOW_ON_ROLES: &[(CalibratedField, &[(&str, u64)])] = &[
     (
         CalibratedField::PleBlockedBackSubMinDim,
         &[
-            ("row_space", 0x800),
-            ("free_columns", 0x801),
+            ("designated_nonzero", 0x800),
+            ("non_designated", 0x801),
             ("row_mix", 0x802),
         ],
     ),
@@ -718,9 +726,11 @@ enum Mode {
         profile_id: Option<String>,
         lock_wrapper: String,
         receipt: String,
+        timed_worker: PathBuf,
     },
     SelfCheck,
     ListGrid,
+    CapabilityReport,
     /// Fixed private entry mode; the guarded case arrives canonically on stdin.
     FreshChild,
 }
@@ -739,8 +749,10 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
     let mut profile_id: Option<String> = None;
     let mut lock_wrapper: Option<String> = None;
     let mut receipt: Option<String> = None;
+    let mut timed_worker: Option<PathBuf> = None;
     let mut self_check = false;
     let mut list_grid = false;
+    let mut capability_report = false;
     let mut fresh_child = false;
     let mut protocol_override = false;
     let mut iter = args;
@@ -762,8 +774,12 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
             "--profile-id" => profile_id = Some(next_value(&mut iter, &arg)?),
             "--lock-wrapper" => lock_wrapper = Some(next_value(&mut iter, &arg)?),
             "--receipt" => receipt = Some(next_value(&mut iter, &arg)?),
+            "--timed-worker" => {
+                timed_worker = Some(PathBuf::from(next_value(&mut iter, &arg)?));
+            }
             "--self-check" => self_check = true,
             "--list-grid" => list_grid = true,
+            "--capability-report" => capability_report = true,
             "--fresh-tuning-process-child" => {
                 if fresh_child {
                     return Err("duplicate --fresh-tuning-process-child".to_owned());
@@ -783,14 +799,14 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
             return Err(format!("{flag} must be positive"));
         }
     }
-    if [self_check, list_grid, fresh_child]
+    if [self_check, list_grid, capability_report, fresh_child]
         .into_iter()
         .filter(|selected| *selected)
         .count()
         > 1
     {
         return Err(
-            "--self-check, --list-grid and --fresh-tuning-process-child are separate modes".into(),
+            "--self-check, --list-grid, --capability-report and --fresh-tuning-process-child are separate modes".into(),
         );
     }
     let protocol = Protocol {
@@ -802,12 +818,15 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
         Mode::SelfCheck
     } else if list_grid {
         Mode::ListGrid
+    } else if capability_report {
+        Mode::CapabilityReport
     } else if fresh_child {
         if protocol_override
             || out.is_some()
             || profile_id.is_some()
             || lock_wrapper.is_some()
             || receipt.is_some()
+            || timed_worker.is_some()
         {
             return Err(
                 "the fresh tuning child accepts its complete case only on standard input".into(),
@@ -823,6 +842,8 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
             )?,
             receipt: receipt
                 .ok_or("--receipt is required; name the receipt this run will be committed as")?,
+            timed_worker: timed_worker
+                .ok_or("--timed-worker is required; name the separately built normal binary")?,
         }
     };
     Ok(Args { protocol, mode })
@@ -933,6 +954,103 @@ struct HostFacts {
     governor: String,
     lock_file: String,
     cpu_affinity: String,
+}
+
+#[derive(Clone, Debug)]
+struct TimedWorkerFacts {
+    path: PathBuf,
+    binary_sha256: Sha256,
+}
+
+fn sha256_file(path: &Path) -> Result<Sha256, String> {
+    let bytes = fs::read(path)
+        .map_err(|error| format!("cannot read {} for hashing: {error}", path.display()))?;
+    Sha256::parse(&format!("{:x}", Sha256Hasher::digest(bytes)))
+        .map_err(|error| format!("cannot represent {} digest: {error}", path.display()))
+}
+
+fn require_unchanged_binary(path: &Path, expected: &Sha256, role: &str) -> Result<(), String> {
+    let observed = sha256_file(path)?;
+    if &observed != expected {
+        return Err(format!(
+            "{role} binary changed during the campaign: expected {}, observed {}",
+            expected.as_str(),
+            observed.as_str()
+        ));
+    }
+    Ok(())
+}
+
+fn validate_timed_worker(
+    path: &Path,
+    source_revision: &GitRevision,
+) -> Result<TimedWorkerFacts, String> {
+    if !path.is_absolute() {
+        return Err(format!(
+            "--timed-worker must be an absolute path, found {}",
+            path.display()
+        ));
+    }
+    let path = fs::canonicalize(path).map_err(|error| {
+        format!(
+            "cannot canonicalize timed worker {}: {error}",
+            path.display()
+        )
+    })?;
+    let controller = fs::canonicalize(
+        env::current_exe()
+            .map_err(|error| format!("controller has no executable path: {error}"))?,
+    )
+    .map_err(|error| format!("cannot canonicalize controller executable: {error}"))?;
+    let worker_metadata = fs::metadata(&path)
+        .map_err(|error| format!("cannot inspect timed worker {}: {error}", path.display()))?;
+    let controller_metadata = fs::metadata(&controller).map_err(|error| {
+        format!(
+            "cannot inspect controller {}: {error}",
+            controller.display()
+        )
+    })?;
+    if (worker_metadata.dev(), worker_metadata.ino())
+        == (controller_metadata.dev(), controller_metadata.ino())
+    {
+        return Err("--timed-worker resolves to the controller binary".to_owned());
+    }
+    let output = Command::new(&path)
+        .arg("--self-check")
+        .output()
+        .map_err(|error| format!("cannot run timed-worker self-check: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "timed-worker self-check failed with {}: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let stdout = String::from_utf8(output.stdout)
+        .map_err(|_| "timed-worker self-check emitted non-UTF-8 output".to_owned())?;
+    let line = stdout
+        .strip_suffix('\n')
+        .unwrap_or(&stdout)
+        .strip_prefix(TIMED_WORKER_IDENTITY_PREFIX)
+        .ok_or("timed-worker self-check lacks its identity prefix")?;
+    let identity: TimedWorkerIdentity = serde_json::from_str(line)
+        .map_err(|error| format!("timed-worker identity is invalid: {error}"))?;
+    let expected = TimedWorkerIdentity {
+        binary_role: ChildBinaryRole::ReporterFreeTiming,
+        test_support_enabled: false,
+        harness_schema: CoreTuningCodec::HARNESS_SCHEMA.to_owned(),
+        fresh_case_schema: FRESH_CASE_VALUE.to_owned(),
+        build_head: source_revision.as_str().to_owned(),
+    };
+    if identity != expected {
+        return Err(format!(
+            "timed-worker identity {identity:?} does not match {expected:?}"
+        ));
+    }
+    Ok(TimedWorkerFacts {
+        binary_sha256: sha256_file(&path)?,
+        path,
+    })
 }
 
 fn command_output(program: &str, args: &[&str]) -> io::Result<String> {
@@ -1503,6 +1621,19 @@ fn bank_seed(field: CalibratedField, size: usize, role: u64, bank: usize) -> u64
     seed_for(field, size, role.wrapping_add((bank as u64) << 16))
 }
 
+/// Partner bank for every binary fixture, predeclared as `b + 3 (mod 8)`.
+fn paired_bank(bank: usize) -> usize {
+    (bank + 3) & (BIT_FIXTURES - 1)
+}
+
+fn run_in_four_thread_pool<R: Send>(f: impl FnOnce() -> R + Send) -> R {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(4)
+        .build()
+        .expect("the predeclared four-thread calibration pool builds")
+        .install(f)
+}
+
 fn bit_matrix_from_words(rows: usize, cols: usize, seed: u64) -> BitMatrix {
     let mut rng = Lcg::new(seed);
     let mut matrix = BitMatrix::zeros(rows, cols);
@@ -1524,12 +1655,13 @@ fn bit_lu_fixture(size: usize, field: CalibratedField, bank: usize) -> BitMatrix
     let mut lower = BitMatrix::identity(size);
     let mut upper = BitMatrix::identity(size);
     for row in 0..size {
-        for col in 0..size {
-            if row > col {
-                lower.set(row, col, lower_rng.next_u64() & 1 != 0);
-            } else if row < col {
-                upper.set(row, col, upper_rng.next_u64() & 1 != 0);
-            }
+        for col in 0..row {
+            lower.set(row, col, lower_rng.next_u64() & 1 != 0);
+        }
+    }
+    for row in 0..size {
+        for col in (row + 1)..size {
+            upper.set(row, col, upper_rng.next_u64() & 1 != 0);
         }
     }
     scalar_bit_matmul(&lower, &upper)
@@ -1598,12 +1730,13 @@ fn field_lu_parts(
     let mut lower = FieldMatrix::<Fp251>::identity(size);
     let mut upper = FieldMatrix::<Fp251>::identity(size);
     for row in 0..size {
-        for col in 0..size {
-            if row > col {
-                lower.set(row, col, Fp251::new(lower_rng.next_u64() % 251));
-            } else if row < col {
-                upper.set(row, col, Fp251::new(upper_rng.next_u64() % 251));
-            }
+        for col in 0..row {
+            lower.set(row, col, Fp251::new(lower_rng.next_u64() % 251));
+        }
+    }
+    for row in 0..size {
+        for col in (row + 1)..size {
+            upper.set(row, col, Fp251::new(upper_rng.next_u64() % 251));
         }
     }
     (lower, upper)
@@ -1636,16 +1769,21 @@ fn filled_field_matrix(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp251
 
 fn exact_back_sub_fixture(size: usize, field: CalibratedField, bank: usize) -> FieldMatrix<Fp251> {
     let rank = size / 2;
-    let mut pivot_rng = Lcg::new(bank_seed(field, size, 0x800, bank));
-    let mut free_rng = Lcg::new(bank_seed(field, size, 0x801, bank));
+    let mut designated_rng = Lcg::new(bank_seed(field, size, 0x800, bank));
+    let mut non_designated_rng = Lcg::new(bank_seed(field, size, 0x801, bank));
     let mut mix_rng = Lcg::new(bank_seed(field, size, 0x802, bank));
     let mut embedded = FieldMatrix::<Fp251>::zeros(size, size);
     for row in 0..rank {
+        embedded.set(
+            row,
+            2 * row,
+            Fp251::new(1 + designated_rng.next_u64() % 250),
+        );
+    }
+    for row in 0..rank {
         for col in 0..size {
-            if col == 2 * row {
-                embedded.set(row, col, Fp251::new(1 + pivot_rng.next_u64() % 250));
-            } else if !col.is_multiple_of(2) || col >= 2 * rank {
-                embedded.set(row, col, Fp251::new(free_rng.next_u64() % 251));
+            if !col.is_multiple_of(2) || col >= 2 * rank {
+                embedded.set(row, col, Fp251::new(non_designated_rng.next_u64() % 251));
             }
         }
     }
@@ -1700,23 +1838,24 @@ fn build_follow_on_fixture(field: CalibratedField, size: usize) -> Result<Follow
                 })
                 .collect(),
         ),
-        CalibratedField::SoaParallelMinLen => FollowOnFixture::Soa {
-            quadratic_lhs: banks
-                .clone()
-                .map(|bank| soa_batch(size, bank_seed(field, size, 0x200, bank)))
-                .collect(),
-            quadratic_rhs: banks
-                .clone()
-                .map(|bank| soa_batch(size, bank_seed(field, size, 0x201, bank)))
-                .collect(),
-            cubic_lhs: banks
-                .clone()
-                .map(|bank| soa_batch(size, bank_seed(field, size, 0x202, bank)))
-                .collect(),
-            cubic_rhs: banks
-                .map(|bank| soa_batch(size, bank_seed(field, size, 0x203, bank)))
-                .collect(),
-        },
+        CalibratedField::SoaParallelMinLen => {
+            let mut quadratic_lhs = Vec::with_capacity(BIT_FIXTURES);
+            let mut quadratic_rhs = Vec::with_capacity(BIT_FIXTURES);
+            let mut cubic_lhs = Vec::with_capacity(BIT_FIXTURES);
+            let mut cubic_rhs = Vec::with_capacity(BIT_FIXTURES);
+            for bank in banks {
+                quadratic_lhs.push(soa_batch(size, bank_seed(field, size, 0x200, bank)));
+                quadratic_rhs.push(soa_batch(size, bank_seed(field, size, 0x201, bank)));
+                cubic_lhs.push(soa_batch(size, bank_seed(field, size, 0x202, bank)));
+                cubic_rhs.push(soa_batch(size, bank_seed(field, size, 0x203, bank)));
+            }
+            FollowOnFixture::Soa {
+                quadratic_lhs,
+                quadratic_rhs,
+                cubic_lhs,
+                cubic_rhs,
+            }
+        }
         CalibratedField::M4rmWideTierMinStrideWords | CalibratedField::M4rmTiledMinStrideWords => {
             FollowOnFixture::M4rm(
                 banks
@@ -2146,7 +2285,18 @@ fn execute_direct(
             let (lhs, rhs) = bank_indices(bank);
             let backend: &dyn Backend = match arm {
                 Arm::Conservative => &ScalarBackend,
-                Arm::Asymptotic => simd_backend().ok_or("no concrete SIMD backend is available")?,
+                Arm::Asymptotic => match simd_backend() {
+                    Some(backend) => backend,
+                    None => {
+                        observation.observed_route = "unavailable_before_dispatch".to_owned();
+                        observation.effective_observation = "unavailable".to_owned();
+                        observation.capability_observation = "simd_backend=none".to_owned();
+                        observation.availability = ChildAvailability::Unavailable {
+                            omission: CapabilityOmission::SimdBackendUnavailable,
+                        };
+                        return Ok(observation);
+                    }
+                },
             };
             observation.capability_observation = match arm {
                 Arm::Conservative => "scalar_backend".to_owned(),
@@ -2256,40 +2406,63 @@ fn execute_follow_on(
             }
             .to_owned();
             let pool_width = rayon::current_num_threads();
+            if pool_width != 4 {
+                observation.observed_route = "unavailable_before_dispatch".to_owned();
+                observation.effective_observation = "unavailable".to_owned();
+                observation.capability_observation = format!("dedicated_pool_width={pool_width}");
+                observation.availability = ChildAvailability::Unavailable {
+                    omission: CapabilityOmission::SoaPoolWidth {
+                        observed: pool_width,
+                    },
+                };
+                return Ok(observation);
+            }
+            #[cfg(feature = "test-support")]
             let mut effective = Vec::new();
+            #[cfg(feature = "test-support")]
             reset_last_effective_soa_chunk();
             let q_mul = quadratic_lhs[bank]
-                .batch_mul_quadratic::<QuadraticBeta3>(&quadratic_rhs[(bank + 3) & 7]);
+                .batch_mul_quadratic::<QuadraticBeta3>(&quadratic_rhs[paired_bank(bank)]);
+            #[cfg(feature = "test-support")]
             effective.push(last_effective_soa_chunk());
+            #[cfg(feature = "test-support")]
             reset_last_effective_soa_chunk();
             let q_square = quadratic_lhs[bank].batch_square_quadratic::<QuadraticBeta3>();
+            #[cfg(feature = "test-support")]
             effective.push(last_effective_soa_chunk());
+            #[cfg(feature = "test-support")]
             reset_last_effective_soa_chunk();
-            let c_mul = cubic_lhs[bank].batch_mul_cubic::<CubicBeta3>(&cubic_rhs[(bank + 3) & 7]);
+            let c_mul =
+                cubic_lhs[bank].batch_mul_cubic::<CubicBeta3>(&cubic_rhs[paired_bank(bank)]);
+            #[cfg(feature = "test-support")]
             effective.push(last_effective_soa_chunk());
+            #[cfg(feature = "test-support")]
             reset_last_effective_soa_chunk();
             let c_square = cubic_lhs[bank].batch_square_cubic::<CubicBeta3>();
+            #[cfg(feature = "test-support")]
             effective.push(last_effective_soa_chunk());
-            if pool_width != 4 {
-                return Err(format!(
-                    "dedicated SoA pool reported width {pool_width}, expected 4"
-                ));
+            #[cfg(feature = "test-support")]
+            {
+                let expected = if spec.arm == Arm::Asymptotic {
+                    vec![Some(REQUIRED_SOA_PARALLEL_CHUNK_LEN); 4]
+                } else {
+                    vec![None; 4]
+                };
+                if effective != expected {
+                    return Err(format!(
+                        "SoA effective chunks {effective:?}, expected {expected:?}"
+                    ));
+                }
+                observation.effective_observation = if spec.arm == Arm::Asymptotic {
+                    format!("parallel_chunk={}", expected[0].unwrap())
+                } else {
+                    "sequential_no_chunk".to_owned()
+                };
             }
-            let expected = if spec.arm == Arm::Asymptotic {
-                vec![Some(REQUIRED_SOA_PARALLEL_CHUNK_LEN); 4]
-            } else {
-                vec![None; 4]
-            };
-            if effective != expected {
-                return Err(format!(
-                    "SoA effective chunks {effective:?}, expected {expected:?}"
-                ));
+            #[cfg(not(feature = "test-support"))]
+            {
+                observation.effective_observation = "reporters_not_compiled".to_owned();
             }
-            observation.effective_observation = if spec.arm == Arm::Asymptotic {
-                format!("parallel_chunk={}", expected[0].unwrap())
-            } else {
-                "sequential_no_chunk".to_owned()
-            };
             observation.capability_observation = format!("dedicated_pool_width={pool_width}");
             digest_tuple(
                 b"gf2-calibration-soa-result-v1",
@@ -2306,9 +2479,6 @@ fn execute_follow_on(
             | CalibratedField::M4rmTiledMinStrideWords),
             FollowOnFixture::M4rm(banks),
         ) => {
-            if field == CalibratedField::M4rmTiledMinStrideWords && simd_backend().is_none() {
-                return Err("the M4RM register-tiled SIMD capability is unavailable".to_owned());
-            }
             let route = m4rm_schedule_route(512, 64 * spec.size);
             observation.observed_route = if field == CalibratedField::M4rmWideTierMinStrideWords {
                 match route.tier() {
@@ -2321,23 +2491,44 @@ fn execute_follow_on(
                 "row_wise"
             }
             .to_owned();
+            #[cfg(feature = "test-support")]
             reset_m4rm_tiled_effective_observation();
-            let result = m4rm_multiply(&banks[bank].0, &banks[(bank + 3) & 7].1);
+            let result = m4rm_multiply(&banks[bank].0, &banks[paired_bank(bank)].1);
+            #[cfg(feature = "test-support")]
             let effective = m4rm_tiled_effective_observation();
-            if result != scalar_m4rm_oracle(&banks[bank].0, &banks[(bank + 3) & 7].1) {
+            if result != scalar_m4rm_oracle(&banks[bank].0, &banks[paired_bank(bank)].1) {
                 return Err("M4RM result differs from scalar multiplication".to_owned());
             }
             if field == CalibratedField::M4rmTiledMinStrideWords {
-                let expected = match spec.arm {
-                    Arm::Conservative => M4rmTiledEffectiveObservation::RowWise,
-                    Arm::Asymptotic => M4rmTiledEffectiveObservation::RegisterTiled,
-                };
-                if effective != expected {
-                    return Err(format!(
-                        "M4RM effective observation {effective:?}, expected {expected:?}"
-                    ));
+                #[cfg(feature = "test-support")]
+                {
+                    let expected = match spec.arm {
+                        Arm::Conservative => M4rmTiledEffectiveObservation::RowWise,
+                        Arm::Asymptotic => M4rmTiledEffectiveObservation::RegisterTiled,
+                    };
+                    if effective != expected {
+                        if spec.arm == Arm::Asymptotic
+                            && effective == M4rmTiledEffectiveObservation::RowWise
+                        {
+                            observation.observed_route = "row_wise".to_owned();
+                            observation.effective_observation = "RowWise".to_owned();
+                            observation.capability_observation =
+                                "simd_tile8xn=unavailable".to_owned();
+                            observation.availability = ChildAvailability::Unavailable {
+                                omission: CapabilityOmission::M4rmRegisterTiledUnavailable,
+                            };
+                            return Ok(observation);
+                        }
+                        return Err(format!(
+                            "M4RM effective observation {effective:?}, expected {expected:?}"
+                        ));
+                    }
+                    observation.effective_observation = format!("{effective:?}");
                 }
-                observation.effective_observation = format!("{effective:?}");
+                #[cfg(not(feature = "test-support"))]
+                {
+                    observation.effective_observation = "reporters_not_compiled".to_owned();
+                }
                 observation.capability_observation = "simd_tile8xn=resolved".to_owned();
             } else {
                 observation.effective_observation = format!("panel_width={}", route.panel_width());
@@ -2371,36 +2562,66 @@ fn execute_follow_on(
             digest_field_matrix(&result)
         }
         (CalibratedField::TrsmBlockedMinDim, FollowOnFixture::Trsm(banks)) => {
-            if !<Fp251 as FiniteField>::has_simd_gemm_classical() {
-                return Err("Fp251 whole-GEMM capability is unavailable".to_owned());
+            let whole_gemm_available = <Fp251 as FiniteField>::has_simd_gemm_classical();
+            if spec.arm == Arm::Asymptotic && !whole_gemm_available {
+                observation.observed_route = "unavailable_before_dispatch".to_owned();
+                observation.effective_observation = "unavailable".to_owned();
+                observation.capability_observation = "fp251_whole_gemm_available=false".to_owned();
+                observation.availability = ChildAvailability::Unavailable {
+                    omission: CapabilityOmission::Fp251WholeGemmUnavailable,
+                };
+                return Ok(observation);
             }
             observation.observed_route = match trsm_route(spec.size) {
                 TrsmRoute::Recursive => "recursive",
                 TrsmRoute::Blocked => "blocked",
             }
             .to_owned();
+            #[cfg(feature = "test-support")]
             reset_last_effective_trsm_panel_rows();
             let a = &banks[bank].0;
-            let b = &banks[(bank + 3) & 7].1;
+            let b = &banks[paired_bank(bank)].1;
             let result = a
                 .solve_batch(b)
                 .ok_or("generated TRSM matrix is singular")?;
+            #[cfg(feature = "test-support")]
             let effective = last_effective_trsm_panel_rows();
-            let expected = if spec.arm == Arm::Asymptotic {
-                Some(64)
-            } else {
-                None
-            };
-            if effective != expected {
-                return Err(format!(
-                    "TRSM panel observation {effective:?}, expected {expected:?}"
-                ));
+            #[cfg(feature = "test-support")]
+            {
+                let expected = if spec.arm == Arm::Asymptotic {
+                    Some(64)
+                } else {
+                    None
+                };
+                if effective != expected {
+                    if spec.arm == Arm::Asymptotic && effective.is_none() {
+                        observation.effective_observation = "panel_rows=None".to_owned();
+                        observation.observed_route = "blocked_callee_declined".to_owned();
+                        observation.capability_observation =
+                            "fp251_whole_gemm_available=true".to_owned();
+                        observation.availability = ChildAvailability::Unavailable {
+                            omission: CapabilityOmission::TrsmBlockedCalleeDeclined,
+                        };
+                        return Ok(observation);
+                    }
+                    return Err(format!(
+                        "TRSM panel observation {effective:?}, expected {expected:?}"
+                    ));
+                }
+                if scalar_field_matmul(a, &result) != *b {
+                    return Err("TRSM failed A*X=B".to_owned());
+                }
+                observation.effective_observation = format!("panel_rows={effective:?}");
             }
-            if scalar_field_matmul(a, &result) != *b {
-                return Err("TRSM failed A*X=B".to_owned());
+            #[cfg(not(feature = "test-support"))]
+            {
+                if scalar_field_matmul(a, &result) != *b {
+                    return Err("TRSM failed A*X=B".to_owned());
+                }
+                observation.effective_observation = "reporters_not_compiled".to_owned();
             }
-            observation.effective_observation = format!("panel_rows={effective:?}");
-            observation.capability_observation = "fp251_whole_gemm_available=true".to_owned();
+            observation.capability_observation =
+                format!("fp251_whole_gemm_available={whole_gemm_available}");
             digest_field_matrix(&result)
         }
         (CalibratedField::PlePanelBaseMaxCols, FollowOnFixture::PlePanel(banks)) => {
@@ -2411,21 +2632,55 @@ fn execute_follow_on(
                 PlePanelRoute::RecursiveSplit => "recursive_split",
             }
             .to_owned();
+            if lane != Some(PlePanelLane::Byte) {
+                observation.observed_route = "unavailable_before_dispatch".to_owned();
+                observation.effective_observation = "unavailable".to_owned();
+                observation.capability_observation = format!("carrier_lane={lane:?}");
+                observation.availability = ChildAvailability::Unavailable {
+                    omission: CapabilityOmission::PleByteLaneUnavailable,
+                };
+                return Ok(observation);
+            }
+            #[cfg(feature = "test-support")]
             reset_max_effective_panel_dispatch_cols();
             let (p, l, e, rank) = banks[bank].ple();
+            #[cfg(feature = "test-support")]
             let effective = max_effective_panel_dispatch_cols();
-            let expected = Some(match spec.arm {
-                Arm::Conservative => spec.size,
-                Arm::Asymptotic => spec.size - 1,
-            });
-            if lane != Some(PlePanelLane::Byte) || effective != expected {
-                return Err(format!("PLE lane/effective observation {lane:?}/{effective:?}, expected Byte/{expected:?}"));
+            #[cfg(feature = "test-support")]
+            {
+                let expected = Some(match spec.arm {
+                    Arm::Conservative => spec.size,
+                    Arm::Asymptotic => spec.size - 1,
+                });
+                if effective.is_none() {
+                    observation.observed_route = "kernel_declined".to_owned();
+                    observation.effective_observation = "max_panel_cols=None".to_owned();
+                    observation.capability_observation = format!(
+                    "carrier_lane=byte panel_byte_lane_max_cols={REQUIRED_PLE_BYTE_LANE_MAX_COLS}"
+                );
+                    observation.availability = ChildAvailability::Unavailable {
+                        omission: CapabilityOmission::PlePanelKernelDeclined,
+                    };
+                    return Ok(observation);
+                }
+                if effective != expected {
+                    return Err(format!("PLE lane/effective observation {lane:?}/{effective:?}, expected Byte/{expected:?}"));
+                }
+                let le = scalar_field_matmul(&l, &e);
+                if p.apply(&le) != banks[bank] || rank != spec.size {
+                    return Err("PLE failed P*(L*E)=A or full-rank contract".to_owned());
+                }
+                observation.effective_observation =
+                    format!("max_panel_cols={}", effective.unwrap());
             }
-            let le = scalar_field_matmul(&l, &e);
-            if p.apply(&le) != banks[bank] || rank != spec.size {
-                return Err("PLE failed P*(L*E)=A or full-rank contract".to_owned());
+            #[cfg(not(feature = "test-support"))]
+            {
+                let le = scalar_field_matmul(&l, &e);
+                if p.apply(&le) != banks[bank] || rank != spec.size {
+                    return Err("PLE failed P*(L*E)=A or full-rank contract".to_owned());
+                }
+                observation.effective_observation = "reporters_not_compiled".to_owned();
             }
-            observation.effective_observation = format!("max_panel_cols={}", effective.unwrap());
             observation.capability_observation = format!(
                 "carrier_lane=byte panel_byte_lane_max_cols={REQUIRED_PLE_BYTE_LANE_MAX_COLS}"
             );
@@ -2465,8 +2720,15 @@ fn execute_follow_on(
             )
         }
         (CalibratedField::GemmAxpyFastPathMinVolume, FollowOnFixture::Gemm(banks)) => {
-            if !<Fp251 as FiniteField>::has_simd_gemm_classical() {
-                return Err("Fp251 whole-GEMM capability is unavailable".to_owned());
+            let whole_gemm_available = <Fp251 as FiniteField>::has_simd_gemm_classical();
+            if spec.arm == Arm::Asymptotic && !whole_gemm_available {
+                observation.observed_route = "unavailable_before_dispatch".to_owned();
+                observation.effective_observation = "unavailable".to_owned();
+                observation.capability_observation = "fp251_whole_gemm_available=false".to_owned();
+                observation.availability = ChildAvailability::Unavailable {
+                    omission: CapabilityOmission::Fp251WholeGemmUnavailable,
+                };
+                return Ok(observation);
             }
             let d = cube_dim(spec.size)?;
             observation.observed_route = match gemm_axpy_route(d, d, d) {
@@ -2474,24 +2736,36 @@ fn execute_follow_on(
                 GemmAxpyRoute::WholeGemm => "whole_gemm",
             }
             .to_owned();
+            #[cfg(feature = "test-support")]
             reset_last_gemm_axpy_dispatch_route();
             let mut result = FieldMatrix::<Fp251>::zeros(d, d);
-            run_gemm_axpy_dispatch_for_test(&banks[bank].0, &banks[(bank + 3) & 7].1, &mut result);
+            run_gemm_axpy_dispatch(&banks[bank].0, &banks[paired_bank(bank)].1, &mut result);
+            #[cfg(feature = "test-support")]
             let effective = last_gemm_axpy_dispatch_route();
+            #[cfg(feature = "test-support")]
             let expected = match spec.arm {
                 Arm::Conservative => GemmAxpyRoute::PerCell,
                 Arm::Asymptotic => GemmAxpyRoute::WholeGemm,
             };
+            #[cfg(feature = "test-support")]
             if effective != Some(expected) {
                 return Err(format!(
                     "GEMM effective route {effective:?}, expected {expected:?}"
                 ));
             }
-            if result != scalar_field_matmul(&banks[bank].0, &banks[(bank + 3) & 7].1) {
+            if result != scalar_field_matmul(&banks[bank].0, &banks[paired_bank(bank)].1) {
                 return Err("GEMM result differs from scalar product".to_owned());
             }
-            observation.effective_observation = format!("{expected:?}");
-            observation.capability_observation = "fp251_whole_gemm_available=true".to_owned();
+            #[cfg(feature = "test-support")]
+            {
+                observation.effective_observation = format!("{expected:?}");
+            }
+            #[cfg(not(feature = "test-support"))]
+            {
+                observation.effective_observation = "reporters_not_compiled".to_owned();
+            }
+            observation.capability_observation =
+                format!("fp251_whole_gemm_available={whole_gemm_available}");
             digest_field_matrix(&result)
         }
         (CalibratedField::InterpolateFastMinPoints, FollowOnFixture::Interpolation(banks)) => {
@@ -2566,17 +2840,17 @@ fn execute_follow_on_timed(spec: ChildSpec, fixture: &FollowOnFixture, logical_i
         ) => {
             black_box(
                 quadratic_lhs[bank]
-                    .batch_mul_quadratic::<QuadraticBeta3>(&quadratic_rhs[(bank + 3) & 7]),
+                    .batch_mul_quadratic::<QuadraticBeta3>(&quadratic_rhs[paired_bank(bank)]),
             );
             black_box(quadratic_lhs[bank].batch_square_quadratic::<QuadraticBeta3>());
-            black_box(cubic_lhs[bank].batch_mul_cubic::<CubicBeta3>(&cubic_rhs[(bank + 3) & 7]));
+            black_box(cubic_lhs[bank].batch_mul_cubic::<CubicBeta3>(&cubic_rhs[paired_bank(bank)]));
             black_box(cubic_lhs[bank].batch_square_cubic::<CubicBeta3>());
         }
         (
             CalibratedField::M4rmWideTierMinStrideWords | CalibratedField::M4rmTiledMinStrideWords,
             FollowOnFixture::M4rm(banks),
         ) => {
-            black_box(m4rm_multiply(&banks[bank].0, &banks[(bank + 3) & 7].1));
+            black_box(m4rm_multiply(&banks[bank].0, &banks[paired_bank(bank)].1));
         }
         (CalibratedField::DenseInverseM4riMinDim, FollowOnFixture::BitInverse(banks)) => {
             black_box(invert(&banks[bank]).expect("preflight proved GF(2) fixture invertible"));
@@ -2592,7 +2866,7 @@ fn execute_follow_on_timed(spec: ChildSpec, fixture: &FollowOnFixture, logical_i
             black_box(
                 banks[bank]
                     .0
-                    .solve_batch(&banks[(bank + 3) & 7].1)
+                    .solve_batch(&banks[paired_bank(bank)].1)
                     .expect("preflight proved TRSM fixture invertible"),
             );
         }
@@ -2723,31 +2997,42 @@ fn calibrated_calls(target: Duration, mut call: impl FnMut(usize)) -> u64 {
 struct ChildReport {
     /// Protocol identities and sampling dimensions the child observed.
     protocol: ChildProtocolIdentity,
-    /// Production route requested by the parent.
-    requested_route: String,
-    /// Arm the production selector picked under the installed profile.
-    observed_route: String,
     /// Exact installed value and strict format-2 section identities.
     installed: InstalledEvidence,
-    /// Closed effective-execution observation emitted by the production path.
-    effective_observation: String,
-    /// Required carrier/kernel/worker witness, or `not_required`.
-    capability_observation: String,
     /// Exact fixture shape predeclared for the scalar grid value.
     fixture_shape: String,
     /// Complete deterministic seed inventory for this fixture.
     seed_inventory: SeedInventory,
     /// Domain-separated SHA-256 of all ordered operands.
     operand_digest: String,
-    /// Domain-separated SHA-256 of the operation result.
-    result_digest: String,
-    /// Digest of the semantic equivalence relation checked by the child.
-    equivalence_digest: String,
-    /// Raw timed windows in acquisition order, empty for a probe.
-    samples: Vec<TimingSample>,
+    /// Either complete arm evidence or a closed capability omission.
+    outcome: ChildOutcome,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+/// Evidence emitted by a child after common install/fixture validation.
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case", tag = "status", deny_unknown_fields)]
+enum ChildOutcome {
+    Complete {
+        requested_route: String,
+        observed_route: String,
+        /// Present only in the controller/probe binary.
+        effective_observation: Option<String>,
+        /// Present only in the controller/probe binary.
+        capability_observation: Option<String>,
+        result_digest: String,
+        equivalence_digest: String,
+        samples: Vec<TimingSample>,
+    },
+    Unavailable {
+        requested_route: String,
+        observed_route: String,
+        omission: CapabilityOmission,
+        capability_observation: String,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct OperationObservation {
     observed_route: String,
     effective_observation: String,
@@ -2756,6 +3041,41 @@ struct OperationObservation {
     operand_digest: String,
     result_digest: String,
     equivalence_digest: String,
+    availability: ChildAvailability,
+}
+
+impl Default for OperationObservation {
+    fn default() -> Self {
+        Self {
+            observed_route: String::new(),
+            effective_observation: String::new(),
+            capability_observation: String::new(),
+            fixture_shape: String::new(),
+            operand_digest: String::new(),
+            result_digest: String::new(),
+            equivalence_digest: String::new(),
+            availability: ChildAvailability::Available,
+        }
+    }
+}
+
+/// Closed reasons a predeclared comparison can be unavailable on a host.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case", tag = "reason", deny_unknown_fields)]
+enum CapabilityOmission {
+    SimdBackendUnavailable,
+    SoaPoolWidth { observed: usize },
+    M4rmRegisterTiledUnavailable,
+    PleByteLaneUnavailable,
+    PlePanelKernelDeclined,
+    Fp251WholeGemmUnavailable,
+    TrsmBlockedCalleeDeclined,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum ChildAvailability {
+    Available,
+    Unavailable { omission: CapabilityOmission },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
@@ -2767,11 +3087,21 @@ struct ChildProtocolIdentity {
     section_schema_version: u32,
     harness_schema: String,
     raw_sample_schema: String,
+    binary_role: ChildBinaryRole,
+    test_support_observers: bool,
+    build_head: String,
     timing: Protocol,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+enum ChildBinaryRole {
+    ProbeController,
+    ReporterFreeTiming,
+}
+
 impl ChildProtocolIdentity {
-    fn current(protocol: &Protocol) -> Self {
+    fn current(protocol: &Protocol, binary_role: ChildBinaryRole) -> Self {
         Self {
             fresh_case_schema: FRESH_CASE_VALUE.to_owned(),
             profile_format_version: PROFILE_FORMAT_VERSION,
@@ -2779,9 +3109,16 @@ impl ChildProtocolIdentity {
             section_schema_version: CoreTuningCodec::SCHEMA_VERSION,
             harness_schema: CoreTuningCodec::HARNESS_SCHEMA.to_owned(),
             raw_sample_schema: RAW_SAMPLE_SCHEMA.to_owned(),
+            binary_role,
+            test_support_observers: matches!(binary_role, ChildBinaryRole::ProbeController),
+            build_head: embedded_build_head().to_owned(),
             timing: protocol.clone(),
         }
     }
+}
+
+fn embedded_build_head() -> &'static str {
+    option_env!("GF2_TUNING_BUILD_HEAD").unwrap_or("unbound-build-head")
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
@@ -3249,7 +3586,28 @@ fn install_forced_profile(spec: ChildSpec) -> Result<InstalledEvidence, String> 
 /// so `tuning::install` cannot fail on an already-resolved profile. The arm is
 /// then read back from the production selector rather than assumed from the
 /// value installed.
+fn compiled_binary_role() -> ChildBinaryRole {
+    if cfg!(feature = "test-support") {
+        ChildBinaryRole::ProbeController
+    } else {
+        ChildBinaryRole::ReporterFreeTiming
+    }
+}
+
 fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String> {
+    let binary_role = compiled_binary_role();
+    match (binary_role, spec.task) {
+        (ChildBinaryRole::ProbeController, ChildTask::Probe)
+        | (ChildBinaryRole::ReporterFreeTiming, ChildTask::Measure { .. }) => {}
+        (ChildBinaryRole::ProbeController, ChildTask::Measure { .. }) => {
+            return Err(
+                "timed work cannot run in bytes compiled with test-support observers".into(),
+            )
+        }
+        (ChildBinaryRole::ReporterFreeTiming, ChildTask::Probe) => {
+            return Err("the reporter-free timing worker cannot claim probe evidence".into())
+        }
+    }
     if spec.field == CalibratedField::InterpolateFastMinPoints {
         if spec.variant == SweepVariant::Standard {
             return Err("interpolation requires generic or two_adic variant".to_owned());
@@ -3276,17 +3634,35 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
             ChildFixture::FollowOn(fixture) => execute_follow_on(spec, fixture, 0)?,
         };
         let expected_route = spec.field.arm_name(spec.arm);
+        Sha256::parse(&observation.operand_digest)
+            .map_err(|_| format!("{spec} emitted malformed operand digest"))?;
+        if let ChildAvailability::Unavailable { omission } = observation.availability {
+            if !matches!(spec.task, ChildTask::Probe) {
+                return Err(format!(
+                    "the reporter-free timed worker became unavailable after a successful probe: {omission:?}"
+                ));
+            }
+            return Ok(ChildReport {
+                protocol: ChildProtocolIdentity::current(protocol, binary_role),
+                installed,
+                fixture_shape: observation.fixture_shape,
+                seed_inventory: seed_inventory(spec.field, spec.size),
+                operand_digest: observation.operand_digest,
+                outcome: ChildOutcome::Unavailable {
+                    requested_route: expected_route.to_owned(),
+                    observed_route: observation.observed_route,
+                    omission,
+                    capability_observation: observation.capability_observation,
+                },
+            });
+        }
         if observation.observed_route != expected_route {
             return Err(format!(
                 "{} observed route {}, expected {expected_route}",
                 spec, observation.observed_route
             ));
         }
-        for digest in [
-            &observation.operand_digest,
-            &observation.result_digest,
-            &observation.equivalence_digest,
-        ] {
+        for digest in [&observation.result_digest, &observation.equivalence_digest] {
             Sha256::parse(digest)
                 .map_err(|_| format!("{spec} emitted malformed digest {digest}"))?;
         }
@@ -3319,9 +3695,9 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
                         .collect();
                     execution_windows(protocol, execution, |index| {
                         let bank = index & (BIT_FIXTURES - 1);
-                        run_gemm_axpy_dispatch_for_test(
+                        run_gemm_axpy_dispatch(
                             &banks[bank].0,
-                            &banks[(bank + 3) & 7].1,
+                            &banks[paired_bank(bank)].1,
                             &mut outputs[bank],
                         );
                         black_box(&outputs[bank]);
@@ -3340,40 +3716,49 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
         } else {
             Vec::new()
         };
+        let (effective_observation, capability_observation) = match binary_role {
+            ChildBinaryRole::ProbeController => (
+                Some(observation.effective_observation),
+                Some(observation.capability_observation),
+            ),
+            ChildBinaryRole::ReporterFreeTiming => (None, None),
+        };
         Ok(ChildReport {
-            protocol: ChildProtocolIdentity::current(protocol),
-            requested_route: expected_route.to_owned(),
-            observed_route: observation.observed_route,
+            protocol: ChildProtocolIdentity::current(protocol, binary_role),
             installed,
-            effective_observation: observation.effective_observation,
-            capability_observation: observation.capability_observation,
             fixture_shape: observation.fixture_shape,
             seed_inventory: seed_inventory(spec.field, spec.size),
             operand_digest: observation.operand_digest,
-            result_digest: observation.result_digest,
-            equivalence_digest: observation.equivalence_digest,
-            samples,
+            outcome: ChildOutcome::Complete {
+                requested_route: expected_route.to_owned(),
+                observed_route: observation.observed_route,
+                effective_observation,
+                capability_observation,
+                result_digest: observation.result_digest,
+                equivalence_digest: observation.equivalence_digest,
+                samples,
+            },
         })
     };
     if spec.field == CalibratedField::SoaParallelMinLen {
-        run_in_dedicated_parallel_pool(4, || finish(&mut fixture))
+        run_in_four_thread_pool(|| finish(&mut fixture))
     } else {
         finish(&mut fixture)
     }
 }
 
-/// Re-executes this binary for one guarded forced-tuning case.
-fn fresh_tuning_process(case: FreshProcessCase) -> Result<ChildReport, String> {
-    if env::var(BENCH_MODE_VAR).as_deref() != Ok("1") {
+/// Executes the selected role binary for one guarded forced-tuning case.
+fn fresh_tuning_process(executable: &Path, case: FreshProcessCase) -> Result<ChildReport, String> {
+    if matches!(case.spec.task, ChildTask::Measure { .. })
+        && env::var(BENCH_MODE_VAR).as_deref() != Ok("1")
+    {
         return Err(format!(
-            "forced calibration children require {BENCH_MODE_VAR}=1 in the parent"
+            "timed calibration children require {BENCH_MODE_VAR}=1 in the parent"
         ));
     }
-    let executable =
-        env::current_exe().map_err(|error| format!("this binary has no path: {error}"))?;
     let input = serde_json::to_string(&case)
         .map_err(|error| format!("cannot encode the fresh tuning case: {error}"))?;
-    let mut child = Command::new(&executable)
+    let mut child = Command::new(executable)
         .arg("--fresh-tuning-process-child")
         .env(FRESH_CASE_VAR, FRESH_CASE_VALUE)
         .stdin(Stdio::piped())
@@ -3475,24 +3860,15 @@ fn verify_child_report(
     report: &ChildReport,
 ) -> Result<(), String> {
     let expected_arm = spec.field.arm_name(spec.arm);
-    let expected_protocol = ChildProtocolIdentity::current(protocol);
+    let expected_role = match spec.task {
+        ChildTask::Probe => ChildBinaryRole::ProbeController,
+        ChildTask::Measure { .. } => ChildBinaryRole::ReporterFreeTiming,
+    };
+    let expected_protocol = ChildProtocolIdentity::current(protocol, expected_role);
     if report.protocol != expected_protocol {
         return Err(format!(
             "the child for {spec} reported protocol {:?}, expected {expected_protocol:?}",
             report.protocol
-        ));
-    }
-    if report.requested_route != expected_arm {
-        return Err(format!(
-            "the child for {spec} reported requested route `{}`, expected `{expected_arm}`",
-            report.requested_route
-        ));
-    }
-    if report.observed_route != expected_arm {
-        return Err(format!(
-            "the child for {spec} installed its forced selector values and the production selector \
-             then picked the `{}` arm rather than `{expected_arm}`",
-            report.observed_route
         ));
     }
     let (_, forced_values) = forced_profile_for(spec)?;
@@ -3533,67 +3909,226 @@ fn verify_child_report(
             report.fixture_shape
         ));
     }
-    let (expected_effective, expected_capability) = expected_observation_contract(spec)?;
-    let effective_matches = if expected_effective == "panel_width" {
-        report
-            .effective_observation
-            .strip_prefix("panel_width=")
-            .and_then(|value| value.parse::<usize>().ok())
-            .is_some_and(|value| value > 0)
-    } else {
-        report.effective_observation == expected_effective
-    };
-    if !effective_matches || report.capability_observation != expected_capability {
-        return Err(format!(
-            "the child for {spec} reported effective/capability {:?}/{:?}, expected {:?}/{:?}",
-            report.effective_observation,
-            report.capability_observation,
-            expected_effective,
-            expected_capability
-        ));
-    }
-    for (name, digest) in [
-        ("operand", report.operand_digest.as_str()),
-        ("result", report.result_digest.as_str()),
-        ("equivalence", report.equivalence_digest.as_str()),
-    ] {
-        Sha256::parse(digest)
-            .map_err(|_| format!("the child for {spec} reported malformed {name} digest"))?;
-    }
+    Sha256::parse(&report.operand_digest)
+        .map_err(|_| format!("the child for {spec} reported malformed operand digest"))?;
     if report.operand_digest != expected_operand_digest {
         return Err(format!(
             "the child for {spec} built operands outside the parent's deterministic fixture"
         ));
     }
-    let (expected_execution, expected_windows) = match spec.task {
-        ChildTask::Probe => (None, 0),
-        ChildTask::Measure { execution } => {
-            if execution >= protocol.executions {
+    match &report.outcome {
+        ChildOutcome::Unavailable {
+            requested_route,
+            observed_route,
+            omission,
+            capability_observation,
+        } => {
+            if !matches!(spec.task, ChildTask::Probe) {
                 return Err(format!(
-                    "the child for {spec} names execution {execution} outside {} executions",
-                    protocol.executions
+                    "timed child for {spec} reported capability omission {omission:?}"
                 ));
             }
-            (Some(execution), protocol.repetitions as usize)
+            verify_unavailable_routes(
+                spec,
+                expected_arm,
+                requested_route,
+                observed_route,
+                omission,
+            )?;
+            verify_capability_omission(spec, omission, capability_observation)?;
         }
-    };
-    if report.samples.len() != expected_windows {
+        ChildOutcome::Complete {
+            requested_route,
+            observed_route,
+            effective_observation,
+            capability_observation,
+            result_digest,
+            equivalence_digest,
+            samples,
+        } => {
+            verify_routes(spec, expected_arm, requested_route, observed_route)?;
+            for (name, digest) in [
+                ("result", result_digest.as_str()),
+                ("equivalence", equivalence_digest.as_str()),
+            ] {
+                Sha256::parse(digest).map_err(|_| {
+                    format!("the child for {spec} reported malformed {name} digest")
+                })?;
+            }
+            match expected_role {
+                ChildBinaryRole::ProbeController => {
+                    let effective = effective_observation.as_deref().ok_or_else(|| {
+                        format!("probe child for {spec} omitted effective evidence")
+                    })?;
+                    let capability = capability_observation.as_deref().ok_or_else(|| {
+                        format!("probe child for {spec} omitted capability evidence")
+                    })?;
+                    verify_probe_observations(spec, effective, capability)?;
+                }
+                ChildBinaryRole::ReporterFreeTiming => {
+                    if effective_observation.is_some() || capability_observation.is_some() {
+                        return Err(format!(
+                            "reporter-free timed child for {spec} claimed observer evidence"
+                        ));
+                    }
+                }
+            }
+            let (expected_execution, expected_windows) = match spec.task {
+                ChildTask::Probe => (None, 0),
+                ChildTask::Measure { execution } => {
+                    if execution >= protocol.executions {
+                        return Err(format!(
+                            "the child for {spec} names execution {execution} outside {} executions",
+                            protocol.executions
+                        ));
+                    }
+                    (Some(execution), protocol.repetitions as usize)
+                }
+            };
+            if samples.len() != expected_windows {
+                return Err(format!(
+                    "the child for {spec} timed {} windows rather than {expected_windows}",
+                    samples.len()
+                ));
+            }
+            for (index, sample) in samples.iter().enumerate() {
+                if Some(sample.execution) != expected_execution
+                    || sample.repetition != index as u64
+                    || sample.calls == 0
+                    || sample.calls > MAX_CALLS
+                    || sample.elapsed_ns == 0
+                {
+                    return Err(format!(
+                        "the child for {spec} reported invalid raw sample {index}: {sample:?}"
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn verify_routes(
+    spec: ChildSpec,
+    expected: &str,
+    requested: &str,
+    observed: &str,
+) -> Result<(), String> {
+    if requested != expected || observed != expected {
         return Err(format!(
-            "the child for {spec} timed {} windows rather than {expected_windows}",
-            report.samples.len()
+            "the child for {spec} reported requested/observed routes {requested:?}/{observed:?}, expected {expected:?}"
         ));
     }
-    for (index, sample) in report.samples.iter().enumerate() {
-        if Some(sample.execution) != expected_execution
-            || sample.repetition != index as u64
-            || sample.calls == 0
-            || sample.calls > MAX_CALLS
-            || sample.elapsed_ns == 0
-        {
-            return Err(format!(
-                "the child for {spec} reported invalid raw sample {index}: {sample:?}"
-            ));
+    Ok(())
+}
+
+fn verify_unavailable_routes(
+    spec: ChildSpec,
+    expected: &str,
+    requested: &str,
+    observed: &str,
+    omission: &CapabilityOmission,
+) -> Result<(), String> {
+    let expected_observed = match omission {
+        CapabilityOmission::M4rmRegisterTiledUnavailable => "row_wise",
+        CapabilityOmission::PlePanelKernelDeclined => "kernel_declined",
+        CapabilityOmission::TrsmBlockedCalleeDeclined => "blocked_callee_declined",
+        CapabilityOmission::SimdBackendUnavailable
+        | CapabilityOmission::SoaPoolWidth { .. }
+        | CapabilityOmission::PleByteLaneUnavailable
+        | CapabilityOmission::Fp251WholeGemmUnavailable => "unavailable_before_dispatch",
+    };
+    if requested != expected || observed != expected_observed {
+        return Err(format!(
+            "the unavailable probe for {spec} reported requested/observed routes {requested:?}/{observed:?}, expected {expected:?}/{expected_observed:?} for {omission:?}"
+        ));
+    }
+    Ok(())
+}
+
+fn verify_probe_observations(
+    spec: ChildSpec,
+    effective: &str,
+    capability: &str,
+) -> Result<(), String> {
+    let (expected_effective, expected_capability) = expected_observation_contract(spec)?;
+    let effective_matches = if expected_effective == "panel_width" {
+        effective
+            .strip_prefix("panel_width=")
+            .and_then(|value| value.parse::<usize>().ok())
+            .is_some_and(|value| value > 0)
+    } else {
+        effective == expected_effective
+    };
+    let capability_matches = if spec.arm == Arm::Conservative
+        && matches!(
+            spec.field,
+            CalibratedField::TrsmBlockedMinDim | CalibratedField::GemmAxpyFastPathMinVolume
+        ) {
+        matches!(
+            capability,
+            "fp251_whole_gemm_available=true" | "fp251_whole_gemm_available=false"
+        )
+    } else {
+        capability == expected_capability
+    };
+    if !effective_matches || !capability_matches {
+        return Err(format!(
+            "the probe for {spec} reported effective/capability {effective:?}/{capability:?}, expected {expected_effective:?}/{expected_capability:?}"
+        ));
+    }
+    Ok(())
+}
+
+fn verify_capability_omission(
+    spec: ChildSpec,
+    omission: &CapabilityOmission,
+    capability: &str,
+) -> Result<(), String> {
+    let valid = match omission {
+        CapabilityOmission::SimdBackendUnavailable => {
+            spec.field == CalibratedField::SimdMinWords
+                && spec.arm == Arm::Asymptotic
+                && capability == "simd_backend=none"
         }
+        CapabilityOmission::SoaPoolWidth { observed } => {
+            spec.field == CalibratedField::SoaParallelMinLen
+                && *observed != 4
+                && capability == format!("dedicated_pool_width={observed}")
+        }
+        CapabilityOmission::M4rmRegisterTiledUnavailable => {
+            spec.field == CalibratedField::M4rmTiledMinStrideWords
+                && spec.arm == Arm::Asymptotic
+                && capability == "simd_tile8xn=unavailable"
+        }
+        CapabilityOmission::PleByteLaneUnavailable => {
+            spec.field == CalibratedField::PlePanelBaseMaxCols
+                && capability.starts_with("carrier_lane=")
+        }
+        CapabilityOmission::PlePanelKernelDeclined => {
+            spec.field == CalibratedField::PlePanelBaseMaxCols
+                && capability
+                    == format!(
+                    "carrier_lane=byte panel_byte_lane_max_cols={REQUIRED_PLE_BYTE_LANE_MAX_COLS}"
+                )
+        }
+        CapabilityOmission::Fp251WholeGemmUnavailable => {
+            matches!(
+                spec.field,
+                CalibratedField::TrsmBlockedMinDim | CalibratedField::GemmAxpyFastPathMinVolume
+            ) && spec.arm == Arm::Asymptotic
+                && capability == "fp251_whole_gemm_available=false"
+        }
+        CapabilityOmission::TrsmBlockedCalleeDeclined => {
+            spec.field == CalibratedField::TrsmBlockedMinDim
+                && spec.arm == Arm::Asymptotic
+                && capability == "fp251_whole_gemm_available=true"
+        }
+    };
+    if !valid {
+        return Err(format!(
+            "the probe for {spec} reported invalid capability omission {omission:?}/{capability:?}"
+        ));
     }
     Ok(())
 }
@@ -3610,10 +4145,26 @@ fn verify_matching_evidence(
     if observed.operand_digest != expected.operand_digest {
         return Err(format!("{context} built different operands"));
     }
-    if observed.result_digest != expected.result_digest {
+    let ChildOutcome::Complete {
+        result_digest: expected_result,
+        equivalence_digest: expected_equivalence,
+        ..
+    } = &expected.outcome
+    else {
+        return Err(format!("{context} expected evidence is unavailable"));
+    };
+    let ChildOutcome::Complete {
+        result_digest: observed_result,
+        equivalence_digest: observed_equivalence,
+        ..
+    } = &observed.outcome
+    else {
+        return Err(format!("{context} observed evidence is unavailable"));
+    };
+    if observed_result != expected_result {
         return Err(format!("{context} produced a different result"));
     }
-    if observed.equivalence_digest != expected.equivalence_digest {
+    if observed_equivalence != expected_equivalence {
         return Err(format!("{context} reported a different equivalence digest"));
     }
     Ok(())
@@ -3636,14 +4187,70 @@ fn launch_verified_child(
     spec: ChildSpec,
     expected_operand_digest: &str,
     protocol: &Protocol,
+    executable: &Path,
 ) -> Result<ChildReport, String> {
-    let report = fresh_tuning_process(FreshProcessCase {
-        spec,
-        protocol: protocol.clone(),
-    })?;
+    let report = fresh_tuning_process(
+        executable,
+        FreshProcessCase {
+            spec,
+            protocol: protocol.clone(),
+        },
+    )?;
     verify_child_report(spec, expected_operand_digest, protocol, &report)?;
     println!("{}", child_observation_line(spec, &report)?);
     Ok(report)
+}
+
+/// Runs the smallest preregistered probe for every host capability that can
+/// omit a comparison. This mode performs no timed windows and writes no
+/// profile; its structured child observations are suitable for preparing the
+/// host before the authoritative campaign.
+#[cfg(feature = "test-support")]
+fn run_capability_report(protocol: &Protocol) -> Result<(), String> {
+    validate_campaign_accounting(protocol)?;
+    print_protocol(protocol);
+    let controller = env::current_exe()
+        .map_err(|error| format!("controller has no executable path: {error}"))?;
+    let capability_fields = [
+        CalibratedField::SimdMinWords,
+        CalibratedField::SoaParallelMinLen,
+        CalibratedField::M4rmTiledMinStrideWords,
+        CalibratedField::TrsmBlockedMinDim,
+        CalibratedField::PlePanelBaseMaxCols,
+        CalibratedField::GemmAxpyFastPathMinVolume,
+    ];
+    let mut unavailable = 0_usize;
+    for field in capability_fields {
+        let size = field.grid()[0];
+        let expected_operands = expected_operand_digest(field, size)?;
+        for arm in Arm::BOTH {
+            let spec = ChildSpec {
+                field,
+                variant: SweepVariant::Standard,
+                size,
+                arm,
+                task: ChildTask::Probe,
+            };
+            let report = launch_verified_child(spec, &expected_operands, protocol, &controller)?;
+            match report.outcome {
+                ChildOutcome::Complete { .. } => println!(
+                    "capability_report: field={field} size={size} arm={arm} outcome=complete"
+                ),
+                ChildOutcome::Unavailable { omission, .. } => {
+                    unavailable += 1;
+                    println!(
+                        "capability_report: field={field} size={size} arm={arm} outcome=unavailable reason={omission:?}"
+                    );
+                }
+            }
+        }
+    }
+    println!(
+        "capability_report_summary: probes={} unavailable={} timed=0 writes=0",
+        capability_fields.len() * Arm::BOTH.len(),
+        unavailable
+    );
+    Ok(())
 }
 
 // ---------------------------------------------------------------------
@@ -3963,6 +4570,7 @@ fn build_profile(
     id: ProfileId,
     measurement: MeasurementProvenance,
     assembled_at: Rfc3339Utc,
+    controller_binary_sha256: &Sha256,
     selected: &SelectedValues,
 ) -> Result<ProducedCoreProfile, String> {
     let simd_min_words: usize = selected.simd_min_words;
@@ -4035,14 +4643,13 @@ fn build_profile(
             source_revision,
             source_dirty,
             harness,
-            binary_sha256,
             ..
         } => AssemblyProvenance {
             assembled_at,
             source_revision: source_revision.clone(),
             source_dirty: *source_dirty,
             tool: harness.clone(),
-            tool_sha256: binary_sha256.clone(),
+            tool_sha256: controller_binary_sha256.clone(),
         },
         MeasurementProvenance::Inherited => {
             return Err("the measurement harness cannot emit inherited evidence".to_owned())
@@ -4656,9 +5263,61 @@ fn require_campaign_environment() -> Result<(), String> {
 // Entry point
 // ---------------------------------------------------------------------
 
+#[derive(Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct TimedWorkerIdentity {
+    binary_role: ChildBinaryRole,
+    test_support_enabled: bool,
+    harness_schema: String,
+    fresh_case_schema: String,
+    build_head: String,
+}
+
+impl TimedWorkerIdentity {
+    fn reporter_free() -> Self {
+        Self {
+            binary_role: ChildBinaryRole::ReporterFreeTiming,
+            test_support_enabled: cfg!(feature = "test-support"),
+            harness_schema: CoreTuningCodec::HARNESS_SCHEMA.to_owned(),
+            fresh_case_schema: FRESH_CASE_VALUE.to_owned(),
+            build_head: embedded_build_head().to_owned(),
+        }
+    }
+}
+
+/// Entry point shared by the normal reporter-free timed-worker binary.
+pub fn timed_worker_main() -> Result<(), Box<dyn std::error::Error>> {
+    if cfg!(feature = "test-support") {
+        return Err(
+            "the timed worker was compiled with test-support observers; rebuild it separately with --no-default-features --features parallel,simd,tuning-profile"
+                .into(),
+        );
+    }
+    let args = parse_args(env::args().skip(1))?;
+    match args.mode {
+        Mode::FreshChild => {
+            run_fresh_child()?;
+            Ok(())
+        }
+        Mode::SelfCheck => {
+            validate_campaign_accounting(&args.protocol)?;
+            let identity = TimedWorkerIdentity::reporter_free();
+            println!(
+                "{TIMED_WORKER_IDENTITY_PREFIX}{}",
+                serde_json::to_string(&identity)?
+            );
+            Ok(())
+        }
+        _ => {
+            Err("the timed worker accepts only --self-check or its guarded fresh-child mode".into())
+        }
+    }
+}
+
+#[cfg(feature = "test-support")]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = parse_args(env::args().skip(1))?;
-    let (out, profile_id, lock_wrapper, receipt) = match &args.mode {
+    let (out, profile_id, lock_wrapper, receipt, timed_worker) = match &args.mode {
         Mode::ListGrid => {
             validate_campaign_accounting(&args.protocol)?;
             print_protocol(&args.protocol);
@@ -4675,6 +5334,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             return Ok(());
         }
+        Mode::CapabilityReport => {
+            run_capability_report(&args.protocol)?;
+            return Ok(());
+        }
         // The guarded case contains the complete child protocol. The parent is
         // already behind the prepared-host gate and lock probe, so the child
         // consults neither of those ambient inputs.
@@ -4687,7 +5350,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             profile_id,
             lock_wrapper,
             receipt,
-        } => (out, profile_id, lock_wrapper, receipt),
+            timed_worker,
+        } => (out, profile_id, lock_wrapper, receipt, timed_worker),
     };
 
     if env::var(BENCH_MODE_VAR).as_deref() != Ok("1") {
@@ -4716,9 +5380,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let facts = collect_host_facts()?;
     require_clean_source(facts.source_dirty, &facts.source_revision)?;
+    if embedded_build_head() != facts.source_revision.as_str() {
+        return Err(format!(
+            "controller build head {} does not match clean runtime head {}",
+            embedded_build_head(),
+            facts.source_revision.as_str()
+        )
+        .into());
+    }
+    let timed_worker = validate_timed_worker(timed_worker, &facts.source_revision)?;
+    let controller_executable = env::current_exe()?;
 
     print_protocol(&args.protocol);
     print_host_facts(&facts);
+    println!("controller_binary_sha256: {}", facts.binary_sha256.as_str());
+    println!("timed_worker: {}", timed_worker.path.display());
+    println!(
+        "timed_worker_binary_sha256: {}",
+        timed_worker.binary_sha256.as_str()
+    );
     println!("lock_wrapper: {}", lock_wrapper_path.as_str());
     print_grid();
     print_seed_inventory()?;
@@ -4743,6 +5423,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut probe_children = 0_usize;
     let mut timed_children = 0_usize;
     let mut raw_windows = 0_usize;
+    let mut capability_omissions = Vec::new();
     for field in CalibratedField::ALL {
         let mut variant_sweeps = Vec::new();
         for &variant in field.variants() {
@@ -4761,10 +5442,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         },
                         &expected_operands,
                         &args.protocol,
+                        &controller_executable,
                     )?;
                     probe_children += 1;
                     fresh_children += 1;
                     probes.push(report);
+                }
+                let complete_pair = probes
+                    .iter()
+                    .all(|report| matches!(&report.outcome, ChildOutcome::Complete { .. }));
+                if !complete_pair {
+                    for (arm, report) in Arm::BOTH.into_iter().zip(&probes) {
+                        if let ChildOutcome::Unavailable { omission, .. } = &report.outcome {
+                            capability_omissions.push((
+                                field,
+                                variant,
+                                size,
+                                arm,
+                                omission.clone(),
+                            ));
+                        }
+                    }
+                    points.push(GridPoint {
+                        size,
+                        conservative: None,
+                        asymptotic: None,
+                    });
+                    continue;
                 }
                 verify_matching_evidence(
                     &format!("paired probe evidence for {field}/{variant} at {size}"),
@@ -4788,10 +5492,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             },
                             &expected_operands,
                             &args.protocol,
+                            &timed_worker.path,
                         )?;
                         timed_children += 1;
                         fresh_children += 1;
-                        raw_windows += report.samples.len();
+                        let ChildOutcome::Complete {
+                            samples: child_samples,
+                            ..
+                        } = &report.outcome
+                        else {
+                            return Err(format!(
+                                "timed worker became unavailable for {field}/{variant} at {size}/{arm}/{execution}"
+                            )
+                            .into());
+                        };
+                        raw_windows += child_samples.len();
                         verify_matching_evidence(
                             &format!(
                                 "timed child for {field}/{variant} at {size}/{arm}/{execution}"
@@ -4799,16 +5514,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             probe,
                             &report,
                         )?;
-                        if report.effective_observation != probe.effective_observation
-                            || report.capability_observation != probe.capability_observation
-                        {
-                            return Err(format!(
-                                "timed child changed effective/capability evidence from its probe \
-                                 for {field}/{variant} at {size}/{arm}/{execution}"
-                            )
-                            .into());
-                        }
-                        samples.extend(report.samples);
+                        samples.extend(child_samples.iter().cloned());
                     }
                 }
                 points.push(GridPoint {
@@ -4853,17 +5559,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into_iter()
         .map(|field| field.grid().len() * field.variants().len() * Arm::BOTH.len())
         .sum();
-    if grid_arm_cells != EXPECTED_GRID_ARM_CELLS
-        || probe_children != EXPECTED_PROBE_CHILDREN
-        || timed_children != EXPECTED_TIMED_CHILDREN
-        || fresh_children != EXPECTED_FRESH_CHILDREN
-        || raw_windows != EXPECTED_RAW_WINDOWS
+    if grid_arm_cells != EXPECTED_GRID_ARM_CELLS || probe_children != EXPECTED_PROBE_CHILDREN {
+        return Err(format!(
+            "probe campaign accounting is cells={grid_arm_cells} probes={probe_children}, expected 306/306"
+        )
+        .into());
+    }
+    if capability_omissions.is_empty()
+        && (timed_children != EXPECTED_TIMED_CHILDREN
+            || fresh_children != EXPECTED_FRESH_CHILDREN
+            || raw_windows != EXPECTED_RAW_WINDOWS)
     {
         return Err(format!(
             "campaign accounting is cells={grid_arm_cells} probes={probe_children} timed={timed_children} launches={fresh_children} windows={raw_windows}, expected 306/306/1530/1836/7650"
         ).into());
     }
     println!("campaign_accounting: cells={grid_arm_cells} probes={probe_children} timed={timed_children} launches={fresh_children} windows={raw_windows}");
+    require_unchanged_binary(
+        &controller_executable,
+        &facts.binary_sha256,
+        "probe/controller",
+    )?;
+    require_unchanged_binary(
+        &timed_worker.path,
+        &timed_worker.binary_sha256,
+        "reporter-free timed worker",
+    )?;
+    for (field, variant, size, arm, omission) in &capability_omissions {
+        println!(
+            "capability_omission: field={field} variant={variant} size={size} arm={arm} reason={omission:?}"
+        );
+    }
+    if !capability_omissions.is_empty() {
+        return Err(format!(
+            "authoritative publication aborted: {} predeclared comparisons are unavailable",
+            capability_omissions.len()
+        )
+        .into());
+    }
     println!("\ntimed work: {:.1} s", started.elapsed().as_secs_f64());
 
     let selected = SelectedValues::from_sweeps(&sweeps);
@@ -4874,7 +5607,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         source_dirty: facts.source_dirty,
         harness: facts.harness.clone(),
         harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA)?,
-        binary_sha256: facts.binary_sha256.clone(),
+        binary_sha256: timed_worker.binary_sha256.clone(),
         toolchain: facts.toolchain.clone(),
         host: facts.host.clone(),
         cpu_model: facts.cpu_model.clone(),
@@ -4883,7 +5616,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         governor: facts.governor.clone(),
         receipt: receipt_path,
     };
-    let profile = build_profile(id, provenance, assembled_at, &selected)?;
+    let profile = build_profile(
+        id,
+        provenance,
+        assembled_at,
+        &facts.binary_sha256,
+        &selected,
+    )?;
     let complete_document = profile.to_json();
     let omitted = omitted_fields(&complete_document, &sweeps)?;
     let coverage = validate_campaign_coverage(&complete_document, &sweeps, &omitted)?;
@@ -4975,12 +5714,17 @@ mod tests {
         Rfc3339Utc::parse("2026-08-20T01:00:00Z").unwrap()
     }
 
+    fn controller_binary_sha256() -> Sha256 {
+        Sha256::parse(&"c".repeat(64)).unwrap()
+    }
+
     #[allow(dead_code)]
     fn profile_from(selected: &SelectedValues) -> ProducedCoreProfile {
         build_profile(
             ProfileId::parse("test-profile").unwrap(),
             calibrated_provenance(),
             assembly_instant(),
+            &controller_binary_sha256(),
             selected,
         )
         .expect("the swept values are in range")
@@ -5182,6 +5926,7 @@ mod tests {
             ProfileId::parse("test-profile").unwrap(),
             provenance,
             assembly_instant(),
+            &controller_binary_sha256(),
             &DISTINCT,
         )
         .unwrap();
@@ -6064,10 +6809,12 @@ mod tests {
                 })
                 .collect(),
         };
+        let binary_role = match spec.task {
+            ChildTask::Probe => ChildBinaryRole::ProbeController,
+            ChildTask::Measure { .. } => ChildBinaryRole::ReporterFreeTiming,
+        };
         ChildReport {
-            protocol: ChildProtocolIdentity::current(protocol),
-            requested_route: spec.field.arm_name(spec.arm).to_owned(),
-            observed_route: spec.field.arm_name(spec.arm).to_owned(),
+            protocol: ChildProtocolIdentity::current(protocol, binary_role),
             installed: InstalledEvidence {
                 profile_id: FORCED_ARM_PROFILE_ID.to_owned(),
                 section_id: CoreTuning::ID.as_str().to_owned(),
@@ -6077,14 +6824,20 @@ mod tests {
                 section_sha256: digests.section_sha256,
                 envelope_content_sha256: digests.envelope_content_sha256,
             },
-            effective_observation,
-            capability_observation,
             fixture_shape: expected_fixture_shape(spec.field, spec.size).unwrap(),
             seed_inventory: seed_inventory(spec.field, spec.size),
             operand_digest: expected_operand_digest(spec.field, spec.size).unwrap(),
-            result_digest: "2".repeat(64),
-            equivalence_digest: "3".repeat(64),
-            samples,
+            outcome: ChildOutcome::Complete {
+                requested_route: spec.field.arm_name(spec.arm).to_owned(),
+                observed_route: spec.field.arm_name(spec.arm).to_owned(),
+                effective_observation: matches!(spec.task, ChildTask::Probe)
+                    .then_some(effective_observation),
+                capability_observation: matches!(spec.task, ChildTask::Probe)
+                    .then_some(capability_observation),
+                result_digest: "2".repeat(64),
+                equivalence_digest: "3".repeat(64),
+                samples,
+            },
         }
     }
 
@@ -6171,7 +6924,10 @@ mod tests {
         };
         let protocol = child_protocol(1);
         let mut report = child_report(spec, &protocol);
-        report.observed_route = "schoolbook".to_owned();
+        let ChildOutcome::Complete { observed_route, .. } = &mut report.outcome else {
+            unreachable!()
+        };
+        *observed_route = "schoolbook".to_owned();
         let error =
             verify_child_report(spec, &report.operand_digest, &protocol, &report).unwrap_err();
         assert!(error.contains("schoolbook"), "{error}");
@@ -6196,8 +6952,21 @@ mod tests {
             let mut changed = expected.clone();
             match field {
                 "operand" => changed.operand_digest = "4".repeat(64),
-                "result" => changed.result_digest = "4".repeat(64),
-                "equivalence" => changed.equivalence_digest = "4".repeat(64),
+                "result" => {
+                    let ChildOutcome::Complete { result_digest, .. } = &mut changed.outcome else {
+                        unreachable!()
+                    };
+                    *result_digest = "4".repeat(64);
+                }
+                "equivalence" => {
+                    let ChildOutcome::Complete {
+                        equivalence_digest, ..
+                    } = &mut changed.outcome
+                    else {
+                        unreachable!()
+                    };
+                    *equivalence_digest = "4".repeat(64);
+                }
                 _ => unreachable!(),
             }
             assert!(
@@ -6260,18 +7029,44 @@ mod tests {
             verify_child_report(spec, &report.operand_digest, &protocol, &wrong_shape).is_err()
         );
 
-        let mut wrong_effective = report.clone();
-        wrong_effective.effective_observation = "stale".to_owned();
-        assert!(
-            verify_child_report(spec, &report.operand_digest, &protocol, &wrong_effective).is_err()
-        );
+        let probe_spec = ChildSpec {
+            task: ChildTask::Probe,
+            ..spec
+        };
+        let probe = child_report(probe_spec, &protocol);
+        let mut wrong_effective = probe.clone();
+        let ChildOutcome::Complete {
+            effective_observation,
+            ..
+        } = &mut wrong_effective.outcome
+        else {
+            unreachable!()
+        };
+        *effective_observation = Some("stale".to_owned());
+        assert!(verify_child_report(
+            probe_spec,
+            &probe.operand_digest,
+            &protocol,
+            &wrong_effective
+        )
+        .is_err());
 
-        let mut wrong_capability = report.clone();
-        wrong_capability.capability_observation = "stale".to_owned();
-        assert!(
-            verify_child_report(spec, &report.operand_digest, &protocol, &wrong_capability)
-                .is_err()
-        );
+        let mut wrong_capability = probe.clone();
+        let ChildOutcome::Complete {
+            capability_observation,
+            ..
+        } = &mut wrong_capability.outcome
+        else {
+            unreachable!()
+        };
+        *capability_observation = Some("stale".to_owned());
+        assert!(verify_child_report(
+            probe_spec,
+            &probe.operand_digest,
+            &protocol,
+            &wrong_capability
+        )
+        .is_err());
     }
 
     #[test]
@@ -6284,15 +7079,24 @@ mod tests {
         let report = child_report(spec, &protocol);
 
         let mut duplicate = report.clone();
-        duplicate.samples[1].repetition = 0;
+        let ChildOutcome::Complete { samples, .. } = &mut duplicate.outcome else {
+            unreachable!()
+        };
+        samples[1].repetition = 0;
         assert!(verify_child_report(spec, &report.operand_digest, &protocol, &duplicate).is_err());
 
         let mut zero_calls = report.clone();
-        zero_calls.samples[0].calls = 0;
+        let ChildOutcome::Complete { samples, .. } = &mut zero_calls.outcome else {
+            unreachable!()
+        };
+        samples[0].calls = 0;
         assert!(verify_child_report(spec, &report.operand_digest, &protocol, &zero_calls).is_err());
 
         let mut wrong_execution = report.clone();
-        wrong_execution.samples[0].execution = 1;
+        let ChildOutcome::Complete { samples, .. } = &mut wrong_execution.outcome else {
+            unreachable!()
+        };
+        samples[0].execution = 1;
         assert!(
             verify_child_report(spec, &report.operand_digest, &protocol, &wrong_execution).is_err()
         );
