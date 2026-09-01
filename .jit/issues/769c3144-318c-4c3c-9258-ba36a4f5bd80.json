@@ -14,7 +14,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:42:33.809506265Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:46:16.962779719Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T09:48:27.295495788Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "769c3144-318c-4c3c-9258-ba36a4f5bd80",
   "labels": [
     "type:task",
@@ -25,5 +41,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement runtime-configured polynomial quotient extension fields",
-  "updated_at": "2026-09-01T08:27:50.555980916Z"
+  "updated_at": "2026-09-01T09:48:27.295495788Z"
 }
