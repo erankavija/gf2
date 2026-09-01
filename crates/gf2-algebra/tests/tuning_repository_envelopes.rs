@@ -178,14 +178,11 @@ fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
         &AlgebraTuning::CONSERVATIVE
     );
 
-    let measured = complete.section::<CoreTuning>().unwrap().unwrap();
-    assert_eq!(measured.section.bit_backend().simd_min_words(), 4);
-    assert_eq!(measured.section.polynomial().karatsuba_min_degree(), 31);
-    assert_eq!(measured.section.polynomial().karatsuba_max_out_len(), 383);
-    assert_eq!(measured.section.polynomial().div_rem_fast_min_len(), 1024);
-    assert_eq!(measured.section.polynomial().subproduct_min_len(), 512);
-
     let core = core.section::<CoreTuning>().unwrap().unwrap();
+    let complete_core = complete.section::<CoreTuning>().unwrap().unwrap();
+    assert_eq!(complete_core.section, core.section);
+    assert_eq!(complete_core.measurement, core.measurement);
+
     let algebra = algebra.section::<AlgebraTuning>().unwrap().unwrap();
     let id = complete.profile_id().clone();
     let composed =

@@ -3,7 +3,8 @@
 use std::collections::BTreeSet;
 
 use gf2_core::tuning::{
-    CoreTuning, CoreTuningCodec, MeasurementProvenance, ProfileRegistryBuilder, TuningSection,
+    CoreTuning, CoreTuningCodec, MeasurementProvenance, ProfileRegistryBuilder, SectionCodec,
+    TuningSection,
 };
 
 const CONSERVATIVE_OWNER: &str = include_str!("../data/tuning-profiles/conservative.json");
@@ -18,9 +19,8 @@ fn registry() -> gf2_core::tuning::ProfileRegistry {
         .unwrap()
 }
 
-fn stated_selector_fields(text: &str) -> BTreeSet<String> {
-    let document: serde_json::Value = serde_json::from_str(text).unwrap();
-    document["sections"][CoreTuning::ID.as_str()]["selectors"]
+fn selector_fields(selectors: &serde_json::Value) -> BTreeSet<String> {
+    selectors
         .as_object()
         .unwrap()
         .iter()
@@ -32,6 +32,16 @@ fn stated_selector_fields(text: &str) -> BTreeSet<String> {
                 .map(move |field| format!("{family}.{field}"))
         })
         .collect()
+}
+
+fn stated_selector_fields(text: &str) -> BTreeSet<String> {
+    let document: serde_json::Value = serde_json::from_str(text).unwrap();
+    selector_fields(&document["sections"][CoreTuning::ID.as_str()]["selectors"])
+}
+
+fn codec_selector_fields() -> BTreeSet<String> {
+    let encoded = CoreTuningCodec::encode_body(&CoreTuning::CONSERVATIVE).unwrap();
+    selector_fields(&serde_json::to_value(encoded).unwrap())
 }
 
 #[test]
@@ -107,7 +117,7 @@ fn committed_measured_owner_is_canonical_and_states_exactly_the_five_field_pilot
     assert_eq!(polynomial.div_rem_fast_min_len(), 1024);
     assert_eq!(polynomial.subproduct_min_len(), 512);
 
-    let inventory = stated_selector_fields(CONSERVATIVE_OWNER);
+    let inventory = codec_selector_fields();
     let stated = stated_selector_fields(MEASURED_OWNER);
     let expected = BTreeSet::from([
         "bit_backend.simd_min_words".to_owned(),
