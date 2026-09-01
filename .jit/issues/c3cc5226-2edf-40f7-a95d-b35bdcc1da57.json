@@ -7,6 +7,7 @@
   ],
   "description": "Migrate the HIP GPU syndrome path and batch decode integration to the canonical construction model and typed decoder outcomes, preserving behavioral equivalence with the CPU path, with a committed HIP-host receipt.\n\n## Background\n\nThe HIP path computes syndromes on device with BM/Chien/correction on CPU; existing byte-identity simulation tests pin CPU-versus-GPU agreement for the current status-less behavior and are the equivalence baseline for the migration. Self-gated tests that never ran cannot establish the equivalence criterion, so a committed receipt from a HIP-capable host is required.\n\n## Success Criteria\n\n- [hard] REQ-01: GPU-assisted decoding consumes the canonical model, returns the same typed outcomes as the CPU decoder, and the existing byte-identity suites pass updated to the new result type.\n- [hard] REQ-02: A committed receipt records the CPU-versus-GPU outcome-identity suite passing on a named HIP-capable host at a pinned revision.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T15:11:16.097494145Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -22,7 +23,7 @@
     "satisfies:REQ-09"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Migrate HIP syndrome/decode support behaviorally intact",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T15:11:16.097494145Z"
 }

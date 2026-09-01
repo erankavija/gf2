@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the gf2-coding library consumers of `ExtendedBchCode` — the GRAND, fading, and product paths — to the generic one-symbol extension of canonical BCH codes.\n\n## Background\n\n`ExtendedBchCode` is a binary, matrix-materializing wrapper coupled to the legacy `BchCode`. Behavioral pins: the extended parity-check agreement fixtures from the extension-transformation task and the existing eBCH reference-vector tests. The wrapper type itself is deleted in the final removal sweep once external consumers are migrated.\n\n## Success Criteria\n\n- [hard] REQ-01: The GRAND, fading, and product library paths consume the generic extension with unchanged observable results, including the eBCH reference-vector tests.\n- [hard] REQ-02: No gf2-coding library path constructs `ExtendedBchCode` any longer.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T15:11:07.235742630Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -21,7 +22,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Migrate library eBCH consumers to the generic extension",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T15:11:07.235742630Z"
 }

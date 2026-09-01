@@ -8,12 +8,18 @@
   ],
   "description": "Implement the canonical one-symbol extension as a generic transformation: the added coordinate makes the total symbol sum zero over the base field, with coordinate provenance preserved.\n\n## Success Criteria\n\n- [hard] REQ-01: Extension of any generic linear code adds the zero-sum coordinate, derives the resulting parameters, and preserves the coordinate map.\n- [hard] REQ-02: For binary BCH mothers, extended results agree with the existing `ExtendedBchCode` parity-check semantics on representative parameters.\n",
   "documents": [],
+  "done_at": "2026-09-01T15:10:40.360009730Z",
   "first_ready_at": "2026-09-01T12:41:07.519082931Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T15:08:20.425199655Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
       "updated_at": "2026-09-01T14:58:45.883032547Z",
@@ -28,7 +34,7 @@
     "satisfies:REQ-05"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Generic one-symbol extension transformation",
-  "updated_at": "2026-09-01T14:58:45.883032547Z"
+  "updated_at": "2026-09-01T15:10:40.360009730Z"
 }
