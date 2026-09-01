@@ -115,7 +115,7 @@
           "title": "Implement the coordinate-map provenance abstraction",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "dispatched (Luna xhigh, worktree agent-33812b86 @ a5c8a886)"
         },
         {
           "key": "minpoly-subfield",
@@ -123,7 +123,7 @@
           "title": "Minimal polynomials of extension elements over an arbitrary base field",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "dispatched (Luna xhigh, worktree agent-6aac5c44 @ a5c8a886)"
         },
         {
           "key": "quotient-ext-runtime",
@@ -131,7 +131,7 @@
           "title": "Implement runtime-configured polynomial quotient extension fields",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "dispatched (Sol xhigh, worktree agent-769c3144 @ a5c8a886)"
         },
         {
           "key": "type-erased-handles",
@@ -139,7 +139,7 @@
           "title": "Add runtime type-erased code handles for exploratory workflows",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "dispatched (Luna xhigh, worktree agent-992c6c6e @ a5c8a886)"
         }
       ]
     },
@@ -598,6 +598,8 @@
     "R-14: 19fe9394's R-01 ExtConfig conformance test covers every FIELD-BEARING in-tree ExtConfig implementor; arithmetic-only test fixtures with deliberately reducible moduli are excluded (they are not field configurations). Ratified.",
     "R-15: from_certificate trusting its input (a Declared certificate for an unproven modulus constructs without revalidation) is ratified as the CertificateBasis contract per the extension design's certificate section \u2014 an honest recorded trust level, documented plainly on the methods and walkthrough.",
     "R-16: R-15 superseded by code-review R2 per no-argue \u2014 REQ-02 requires typed errors on every construction path, so BinaryPrimeExt::from_certificate (runtime) accepts Proved-basis certificates only and rejects Declared with a typed error; ConstExt keeps its design-fixed compile-time Declared basis unless the reviewer extends the finding.",
+    "R-18: footprint additions for wave 4 — 33812b86 also creates minimal crates/gf2-coding/src/transform/mod.rs (pub mod coordinate_map + re-exports only) and touches crates/gf2-coding/src/lib.rs (pub mod transform), serialized against shorten-transform (8aa98a25, dep chain) and cutover-components (dependency-distant); 769c3144 also touches crates/gf2-core/src/field/axiom_tests.rs (carrier registration only, REQ-01 conformance), disjoint from 6aac5c44's extension.rs edit.",
+    "R-19: session-3 open: 19fe9394 done-transition was missed at session-2 close (gates had passed); recorded done at session start, commit e364b4cb.",
     "R-17 (OWNER RULING at escalation): extension certificates are HPC validation-cost memoization, not a security boundary ('We do HPC. Not security.'). The reuse path is an explicitly-named unchecked fast path in Rust convention (from_certificate_unchecked), documented as trusting the caller (GIGO); REQ-02's typed-error requirement governs the validating constructors. Supersedes the R2/R3 evidence-policing direction; basis-policy machinery may be simplified away. c3d5cea5 rework counter reset by this guidance."
   ],
   "traps": [
