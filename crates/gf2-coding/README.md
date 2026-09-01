@@ -9,7 +9,7 @@ Error-correcting codes and coding-theory primitives built on [`gf2-core`](../gf2
 | Family | Module | Parameters | Notes |
 |---|---|---|---|
 | Hamming | `linear` | (2^r − 1, 2^r − r − 1) | Syndrome-table decoder |
-| BCH | `bch` | field-generic construction over GF(2), GF(p), GF(p^r); k, distance bound, and t derived from the extension witness, designed distance δ, and optional first root b | Canonical `BchSpec` construction (`bch::spec`); binary Berlekamp–Massey + Chien decoding; extended BCH; DVB-T2 profiles validated against ETSI EN 302 755 (202/202) |
+| BCH | `bch` | field-generic construction over GF(2), GF(p), GF(p^r); k, distance bound, and t derived from the extension witness, the length (primitive or non-primitive with a derived or supplied order-n root), designed distance δ, and optional first root b | Canonical `BchSpec` construction (`bch::spec`); binary Berlekamp–Massey + Chien decoding; extended BCH; DVB-T2 profiles validated against ETSI EN 302 755 (202/202) |
 | LDPC | `ldpc` | quasi-cyclic (n, k) | Belief propagation; DVB-T2 (all 12 rates, 202/202) and 5G NR (BG1/BG2 with per-i_LS shift tables); Richardson–Urbanke encoding with file cache |
 | Product | `product` | N₁ × N₂ | Row/column iteration |
 | Generalized LDPC | `gldpc` | — | Chase–Pyndiah product decoder |
