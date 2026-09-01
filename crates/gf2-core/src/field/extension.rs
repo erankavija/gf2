@@ -1913,6 +1913,230 @@ pub fn element_of_exact_order<X: FieldExtension>(
 }
 
 // ---------------------------------------------------------------------------
+// Relative-field derived operations
+// ---------------------------------------------------------------------------
+
+/// Returns the conjugate orbit of `x` under the relative Frobenius.
+///
+/// The returned orbit starts with `x` and contains each distinct element in
+/// ascending Frobenius-step order. Its length is the degree of the minimal
+/// polynomial of `x` over the base field. The input must be an element of the
+/// extension field named by `ext`.
+///
+/// # Complexity
+///
+/// `O(r²)` equality checks and `O(r)` relative-Frobenius applications, where
+/// `r = ext.relative_degree()`; the orbit length is at most `r`.
+///
+/// # Panics
+///
+/// Panics if the relative Frobenius repeats an element other than the initial
+/// element or does not return to it within `r` steps. Either case means the
+/// `FieldExtension` witness violates its finite-field orbit contract.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{conjugates, BinaryPrimeExt, FieldExtension};
+/// use gf2_core::field::FiniteFieldExt;
+/// use gf2_core::gf2m::Gf2mField;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field.clone())?;
+/// let orbit = conjugates(&ext, &field.element(2));
+/// assert_eq!(orbit.len(), 4);
+/// assert_eq!(orbit[0], field.element(2));
+/// assert_eq!(orbit[1], field.element(2).square());
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn conjugates<X: FieldExtension>(ext: &X, x: &X::Ext) -> Vec<X::Ext> {
+    let relative_degree = ext.relative_degree();
+    let mut orbit = Vec::with_capacity(relative_degree);
+    let mut current = x.clone();
+
+    for _ in 0..=relative_degree {
+        if let Some(first_repeat) = orbit.iter().position(|conjugate| conjugate == &current) {
+            assert_eq!(
+                first_repeat, 0,
+                "FieldExtension invariant violated: relative Frobenius orbit is not cyclic"
+            );
+            return orbit;
+        }
+        orbit.push(current.clone());
+        current = ext.relative_frobenius(&current, 1);
+    }
+
+    panic!("FieldExtension invariant violated: relative Frobenius orbit exceeded relative degree");
+}
+
+/// Returns the monic minimal polynomial of `x` over the base field.
+///
+/// The polynomial is formed as
+/// `Π (T - φ_B^i(x))` over the distinct conjugate orbit and each coefficient
+/// is checked and restricted into `B`. Its degree is the relative-Frobenius
+/// orbit size, so it is minimal over the base field. The input must be an
+/// element of the extension field named by `ext`.
+///
+/// # Errors
+///
+/// Returns [`FieldError::IdentityMismatch`] when `x` does not belong to the
+/// extension field named by `ext`.
+///
+/// # Panics
+///
+/// Panics if a product coefficient cannot be restricted to the base field.
+/// Frobenius invariance makes that failure an internal `FieldExtension`
+/// invariant violation, not a recoverable algebraic result.
+///
+/// # Complexity
+///
+/// `O(r²)` extension-field operations with the generic polynomial product,
+/// plus `O(r)` checked restrictions, where `r = ext.relative_degree()`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{minimal_polynomial, BinaryPrimeExt};
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::gfp::Fp;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field.clone())?;
+/// let polynomial = minimal_polynomial(&ext, &field.element(2))?;
+/// let coefficients: Vec<_> = (0..=polynomial.degree().unwrap())
+///     .map(|i| polynomial.coeff(i))
+///     .collect();
+/// assert_eq!(coefficients, vec![Fp::<2>::new(1), Fp::<2>::new(1),
+///     Fp::<2>::new(0), Fp::<2>::new(0), Fp::<2>::new(1)]);
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn minimal_polynomial<X: FieldExtension>(
+    ext: &X,
+    x: &X::Ext,
+) -> Result<FieldPoly<X::Base>, FieldError> {
+    ensure_extension_element(ext, x)?;
+    let orbit = conjugates(ext, x);
+    let product = FieldPoly::from_roots(&orbit);
+    let coefficients = (0..=orbit.len())
+        .map(|index| restrict_invariant(ext, &product.coeff(index)))
+        .collect();
+    Ok(FieldPoly::new(coefficients))
+}
+
+/// Returns the relative field trace of `x` from `E` to `B`.
+///
+/// Computes `Tr_{E/B}(x) = Σ_{i=0}^{r-1} φ_B^i(x)`, including repeated
+/// conjugates when `x` lies in a proper intermediate subfield, and restricts
+/// the result to `B`. The input must be an element of the extension field
+/// named by `ext`.
+///
+/// # Errors
+///
+/// Returns [`FieldError::IdentityMismatch`] when `x` does not belong to the
+/// extension field named by `ext`.
+///
+/// # Panics
+///
+/// Panics if the trace is not restrictable to the base field. That is an
+/// internal `FieldExtension` invariant violation because the trace is fixed
+/// by the relative Frobenius.
+///
+/// # Complexity
+///
+/// `O(r)` relative-Frobenius applications and extension-field additions, plus
+/// one checked restriction, where `r = ext.relative_degree()`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{relative_trace, BinaryPrimeExt};
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::gfp::Fp;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field.clone())?;
+/// let trace = relative_trace(&ext, &field.element(2))?;
+/// assert_eq!(trace, Fp::<2>::new(0));
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn relative_trace<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<X::Base, FieldError> {
+    ensure_extension_element(ext, x)?;
+    let mut trace = x.zero_like();
+    let mut current = x.clone();
+    for _ in 0..ext.relative_degree() {
+        trace += current.clone();
+        current = ext.relative_frobenius(&current, 1);
+    }
+    Ok(restrict_invariant(ext, &trace))
+}
+
+/// Returns the relative field norm of `x` from `E` to `B`.
+///
+/// Computes `N_{E/B}(x) = Π_{i=0}^{r-1} φ_B^i(x)`, including repeated
+/// conjugates when `x` lies in a proper intermediate subfield, and restricts
+/// the result to `B`. The input must be an element of the extension field
+/// named by `ext`.
+///
+/// # Errors
+///
+/// Returns [`FieldError::IdentityMismatch`] when `x` does not belong to the
+/// extension field named by `ext`.
+///
+/// # Panics
+///
+/// Panics if the norm is not restrictable to the base field. That is an
+/// internal `FieldExtension` invariant violation because the norm is fixed by
+/// the relative Frobenius.
+///
+/// # Complexity
+///
+/// `O(r)` relative-Frobenius applications and extension-field multiplications,
+/// plus one checked restriction, where `r = ext.relative_degree()`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{relative_norm, BinaryPrimeExt};
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::gfp::Fp;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field.clone())?;
+/// let norm = relative_norm(&ext, &field.element(2))?;
+/// assert_eq!(norm, Fp::<2>::new(1));
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn relative_norm<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<X::Base, FieldError> {
+    ensure_extension_element(ext, x)?;
+    let mut norm = x.one_like();
+    let mut current = x.clone();
+    for _ in 0..ext.relative_degree() {
+        norm = norm * current.clone();
+        current = ext.relative_frobenius(&current, 1);
+    }
+    Ok(restrict_invariant(ext, &norm))
+}
+
+fn ensure_extension_element<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<(), FieldError> {
+    let expected = ext.ext_id().clone();
+    let found = x.field_id();
+    if expected == found {
+        Ok(())
+    } else {
+        Err(FieldError::IdentityMismatch { expected, found })
+    }
+}
+
+fn restrict_invariant<X: FieldExtension>(ext: &X, x: &X::Ext) -> X::Base {
+    match ext.restrict(x) {
+        Ok(value) => value,
+        Err(error) => panic!(
+            "FieldExtension invariant violated: Frobenius-fixed value is not in the base field: {error}"
+        ),
+    }
+}
+
+// ---------------------------------------------------------------------------
 // The extension relation
 // ---------------------------------------------------------------------------
 
@@ -3280,6 +3504,143 @@ mod tests {
             element_of_exact_order(&ext, 1),
             Err(FieldError::OrderFactorizationUnavailable { order: u128::MAX })
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // Relative-field derived operations
+    // -----------------------------------------------------------------------
+
+    fn assert_minimal_polynomial_properties<X: FieldExtension>(ext: &X, x: &X::Ext) {
+        let orbit = conjugates(ext, x);
+        let polynomial = minimal_polynomial(ext, x).unwrap();
+        let degree = polynomial.degree().unwrap();
+
+        // The orbit-size characterization is the minimality check: a proper
+        // base-field divisor would have smaller degree and still vanish at x.
+        assert_eq!(degree, orbit.len());
+        assert!(polynomial.leading_coeff().unwrap().is_one());
+
+        let embedded: FieldPoly<X::Ext> = FieldPoly::new(
+            (0..=degree)
+                .map(|index| ext.embed(&polynomial.coeff(index)))
+                .collect(),
+        );
+        assert!(embedded.eval(x).is_zero());
+        for conjugate in orbit {
+            assert!(embedded.eval(&conjugate).is_zero());
+        }
+
+        for index in 0..=degree {
+            let coefficient = polynomial.coeff(index);
+            assert_eq!(
+                ext.try_restrict(&ext.embed(&coefficient)),
+                Some(coefficient)
+            );
+        }
+    }
+
+    fn assert_trace_norm_laws<X: FieldExtension>(ext: &X, x: &X::Ext, y: &X::Ext) {
+        let trace_x = relative_trace(ext, x).unwrap();
+        let trace_y = relative_trace(ext, y).unwrap();
+        let norm_x = relative_norm(ext, x).unwrap();
+        let norm_y = relative_norm(ext, y).unwrap();
+
+        assert_eq!(
+            ext.try_restrict(&ext.embed(&trace_x)),
+            Some(trace_x.clone())
+        );
+        assert_eq!(
+            ext.try_restrict(&ext.embed(&trace_y)),
+            Some(trace_y.clone())
+        );
+        assert_eq!(
+            relative_trace(ext, &(x.clone() + y.clone())).unwrap(),
+            trace_x + trace_y
+        );
+        assert_eq!(
+            relative_norm(ext, &(x.clone() * y.clone())).unwrap(),
+            norm_x * norm_y
+        );
+    }
+
+    fn gf81_element(value: u64) -> Gf81 {
+        let lower = value % 9;
+        let upper = value / 9;
+        let lower = Gf9::new(Fp::new(lower % 3), Fp::new(lower / 3));
+        let upper = Gf9::new(Fp::new(upper % 3), Fp::new(upper / 3));
+        Gf81::new(lower, upper)
+    }
+
+    type Gf81 = QuadraticExt<Gf81Config>;
+
+    proptest::proptest! {
+        #![proptest_config(proptest::test_runner::Config::with_cases(64))]
+
+        #[test]
+        fn prop_binary_minimal_polynomial_and_relative_laws(
+            value in 0u64..16,
+            other in 0u64..16,
+        ) {
+            let field = Gf2mField::new(4, 0b10011);
+            let ext = BinaryPrimeExt::new(field.clone()).unwrap();
+            let x = field.element(value);
+            let y = field.element(other);
+
+            assert_minimal_polynomial_properties(&ext, &x);
+            assert_trace_norm_laws(&ext, &x, &y);
+
+            let generic = minimal_polynomial(&ext, &x).unwrap();
+            let legacy = x.minimal_polynomial();
+            proptest::prop_assert_eq!(generic.degree(), legacy.degree());
+            for index in 0..=generic.degree().unwrap() {
+                proptest::prop_assert_eq!(
+                    ext.embed(&generic.coeff(index)),
+                    legacy.coeff(index)
+                );
+            }
+        }
+
+        #[test]
+        fn prop_odd_prime_minimal_polynomial_and_relative_laws(
+            value in 0u64..49,
+            other in 0u64..49,
+        ) {
+            let ext = ConstExt::<QuadraticExt<Gf49Config>>::new();
+            let x = QuadraticExt::new(Fp::new(value % 7), Fp::new(value / 7));
+            let y = QuadraticExt::new(Fp::new(other % 7), Fp::new(other / 7));
+
+            assert_minimal_polynomial_properties(&ext, &x);
+            assert_trace_norm_laws(&ext, &x, &y);
+        }
+
+        #[test]
+        fn prop_odd_tower_minimal_polynomial(
+            value in 0u64..81,
+        ) {
+            let ext = ConstExt::<Gf81>::new();
+            let x = gf81_element(value);
+
+            assert_minimal_polynomial_properties(&ext, &x);
+        }
+    }
+
+    #[test]
+    fn derived_operations_reject_an_element_from_another_extension() {
+        let ext = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
+        let foreign = Gf2mField::new(4, 0b11001).element(2);
+
+        assert!(matches!(
+            minimal_polynomial(&ext, &foreign),
+            Err(FieldError::IdentityMismatch { .. })
+        ));
+        assert!(matches!(
+            relative_trace(&ext, &foreign),
+            Err(FieldError::IdentityMismatch { .. })
+        ));
+        assert!(matches!(
+            relative_norm(&ext, &foreign),
+            Err(FieldError::IdentityMismatch { .. })
+        ));
     }
 
     // -----------------------------------------------------------------------
