@@ -31,9 +31,9 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T22:17:17.525378902Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-09-01T01:59:16.578422165Z",
+      "updated_by": "auto:executor"
     },
     "lake-build": {
       "status": "passed",
@@ -56,5 +56,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Remove the trait selectors and regenerate the proof surface",
-  "updated_at": "2026-09-01T01:55:15.532406282Z"
+  "updated_at": "2026-09-01T01:59:16.578422165Z"
 }
