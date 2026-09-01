@@ -8,12 +8,24 @@
   ],
   "description": "Implement the coordinate-map abstraction recording, for every derived-code transformation, the explicit mapping between derived and mother-code coordinates, with compact representations for regular patterns.\n\n## Success Criteria\n\n- [hard] REQ-01: A coordinate-map type maps derived positions to mother positions and composes across chained transformations, with compact range/permutation representations avoiding full vectors for regular cases.\n- [hard] REQ-02: Property tests cover composition associativity and round-trip consistency.\n",
   "documents": [],
+  "done_at": "2026-09-01T09:18:04.084638493Z",
   "first_ready_at": "2026-09-01T07:45:17.074246749Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:13:49.640803386Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:17:35.565864364Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "33812b86-ce1e-419e-9c96-c782fd1def8d",
   "labels": [
     "type:task",
@@ -22,7 +34,7 @@
     "satisfies:REQ-05"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Implement the coordinate-map provenance abstraction",
-  "updated_at": "2026-09-01T08:27:23.566990524Z"
+  "updated_at": "2026-09-01T09:18:04.084638493Z"
 }
