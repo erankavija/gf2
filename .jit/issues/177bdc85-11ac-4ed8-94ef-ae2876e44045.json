@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-01T19:38:29.673463457Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
@@ -14,7 +14,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T20:34:11.604680311Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T20:37:14.872370014Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "177bdc85-11ac-4ed8-94ef-ae2876e44045",
   "labels": [
     "type:task",
@@ -25,5 +36,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile-driven dispatch among equivalent batch-encoding algorithms",
-  "updated_at": "2026-09-01T19:38:29.673463457Z"
+  "updated_at": "2026-09-01T20:37:14.872370014Z"
 }

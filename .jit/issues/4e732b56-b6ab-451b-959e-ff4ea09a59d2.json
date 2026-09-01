@@ -85,39 +85,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../ae03bcd0-general-bch/plan.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7215489ea32a6cf3268c10c7e1bf5cdd9e90356db7ff06d0d4ed7e9ec6823b87",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "findings.md",
-          "resolved_path": "dev/active/4e732b56/findings.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
-        }
-      ],
-      "commit": null,
-      "doc_type": "report",
-      "format": "markdown",
-      "label": "Workload-selection contract",
-      "path": "dev/active/4e732b56/workload-selection.md"
-    },
-    {
-      "assets": [
-        {
-          "asset_type": "local",
           "content_hash": "78997130a40ef02b52f244fb4e23dcf421eacaebe80c1af377037a63b57c6045",
           "is_shared": false,
           "mime_type": null,
@@ -314,6 +281,39 @@
       "format": "markdown",
       "label": "Survey benchmark receipt",
       "path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../ae03bcd0-general-bch/plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7215489ea32a6cf3268c10c7e1bf5cdd9e90356db7ff06d0d4ed7e9ec6823b87",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "findings.md",
+          "resolved_path": "dev/active/4e732b56/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Workload-selection contract (amended §9 by 177bdc85)",
+      "path": "dev/active/4e732b56/workload-selection.md"
     }
   ],
   "done_at": "2026-09-01T05:06:03.514876505Z",
@@ -344,5 +344,5 @@
   "priority": "high",
   "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-01T05:06:03.514876505Z"
+  "updated_at": "2026-09-01T20:32:06.064951873Z"
 }
