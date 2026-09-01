@@ -5,6 +5,7 @@
 //! and buffer failures remain [`CodeError`] sources, and the variants in this
 //! module add only BCH mathematical validation context.
 
+use crate::bch::encode::EncodeFamily;
 use crate::error::CodeError;
 use gf2_core::field::extension::FieldError;
 use std::fmt;
@@ -31,6 +32,12 @@ pub enum BchError {
         expected_stamp: u64,
         /// Fingerprint carried by the supplied workspace.
         actual_stamp: u64,
+    },
+    /// An explicitly named encoding family is one this code's representation
+    /// does not implement for its plan.
+    EncodeFamilyUnavailable {
+        /// The family the caller named.
+        family: EncodeFamily,
     },
     /// A length conversion received zero, which cannot define a cyclic code.
     InvalidLength {
@@ -117,6 +124,10 @@ impl fmt::Display for BchError {
                 formatter,
                 "BCH workspace was built for a different code \
                  (expected fingerprint {expected_stamp:#018x}, found {actual_stamp:#018x})"
+            ),
+            Self::EncodeFamilyUnavailable { family } => write!(
+                formatter,
+                "encoding family {family} is not available for this code's representation"
             ),
             Self::InvalidLength { length } => {
                 write!(formatter, "BCH length {length} is not positive")
@@ -270,6 +281,9 @@ mod tests {
             BchError::GeneratorPolynomialNotMonic,
             BchError::GeneratorCoefficientNotInBase { index: 2 },
             BchError::GeneratorNotDivisorOfCyclicPolynomial { length: 15 },
+            BchError::EncodeFamilyUnavailable {
+                family: EncodeFamily::TableRemainder,
+            },
         ];
 
         for error in errors {
