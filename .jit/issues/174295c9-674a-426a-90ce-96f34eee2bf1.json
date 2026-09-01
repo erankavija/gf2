@@ -16,7 +16,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Flaky: symlinked-writer-ancestor coordinator test failed once (61ms assertion) in a merged-tree CI run",
-  "updated_at": "2026-09-01T12:36:17.335379619Z"
+  "updated_at": "2026-09-01T12:40:58.612508743Z"
 }
