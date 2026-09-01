@@ -331,13 +331,17 @@ impl crate::traits::GeneratorMatrixAccess for BchCode {
 
 /// Systematic encoder for BCH codes.
 ///
-/// # Systematic Encoding Convention
+/// # Systematic Encoding Convention (legacy binary surface)
 ///
-/// **All BCH codes in this codebase use systematic encoding in [message | parity] format:**
+/// **This legacy encoder produces systematic codewords in [message | parity] format:**
 /// - Bits 0..(k-1): Original message bits (unchanged)
 /// - Bits k..(n-1): Computed parity bits
 ///
-/// This matches the DVB-T2 standard and common convention for systematic codes.
+/// with bit position 0 holding the highest polynomial coefficient (the
+/// DVB-T2 transmission order). The canonical construction model in
+/// [`crate::bch::encode`] generalizes this: the internal convention is
+/// coordinate `i` ↔ coefficient of `x^i`, and user layouts — including this
+/// descending order — are explicit declared mappings.
 ///
 /// # Encoding Algorithm
 ///

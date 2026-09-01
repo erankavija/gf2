@@ -10,6 +10,10 @@
 //! - `core`: Core BCH types and algorithms
 //! - [`spec`]: the construction model, its validating pipeline, and the
 //!   canonical code type over any supported base field
+//! - [`encode`]: systematic encoding over any supported base field, with the
+//!   explicit user-layout contract
+//! - [`matrix`]: reference generator/parity materialization with caller
+//!   buffers and explicit opt-in caching
 //! - [`error`]: the BCH construction and decoding error surface
 //! - [`extended`]: extended BCH codes
 //! - [`dvb_t2`]: DVB-T2 standard BCH outer codes
