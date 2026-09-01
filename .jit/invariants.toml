@@ -150,3 +150,9 @@ enforced-by = "@/gate/code-review"
 id = "runtime-observed-provenance"
 kind = "enforced"
 statement = "Measurement-tool source and emitted preambles state only runtime-observed facts, the tool's own protocol constants, and identity-based citations of committed derivation records; a hand-written figure, file inventory, or prior-run narrative embedded in a tool is a staleness defect."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "caller-trusted-fast-paths"
+kind = "enforced"
+statement = "API contracts trust the caller: validation exists to catch mistakes and to amortize cost, never to defend against an adversary. A path that skips validation for performance is a distinct method under the _unchecked naming convention with its precondition documented, and violating that precondition is caller error with unspecified mathematical results — never grounds for sealing types, policing evidence provenance, or other adversarial hardening in a library that does HPC, not security."
