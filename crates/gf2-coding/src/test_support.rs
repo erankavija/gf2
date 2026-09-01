@@ -10,8 +10,20 @@
 
 #![cfg(any(test, feature = "test-support"))]
 
+use crate::bch::spec::BinaryBchCode;
+use crate::product::ExtendedBchComponent;
+use crate::transform::Extended;
 use gf2_core::BitVec;
 use std::path::{Path, PathBuf};
+
+/// Builds the generic eBCH(16,11) fixture used by library tests.
+///
+/// The production [`ExtendedBchComponent::ebch_16_11`] constructor owns the
+/// BCH parameters; this helper exposes its generic extension for tests that
+/// exercise the canonical transform traits directly.
+pub fn generic_ebch_16_11() -> Extended<BinaryBchCode> {
+    ExtendedBchComponent::ebch_16_11().into_code_for_test()
+}
 
 /// Parses an ETSI CSP test-point file into a sequence of `BitVec` blocks.
 ///

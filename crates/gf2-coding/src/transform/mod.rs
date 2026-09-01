@@ -35,7 +35,8 @@ pub use coordinate_map::CoordinateMap;
 
 use crate::error::CodeError;
 use crate::traits::block::{
-    BlockCode, BlockEncoder, GeneratorMatrixAccess, SymbolMatrix, SymbolSequence,
+    BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
+    SymbolSequence,
 };
 use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::{FieldIdentity, FieldVec, FiniteField};
@@ -309,6 +310,56 @@ where
 
     fn is_systematic(&self) -> Result<bool, CodeError> {
         self.mother.is_systematic()
+    }
+}
+
+/// Provides the canonical parity-check matrix for a zero-sum extension.
+///
+/// Each mother parity-check row is copied into the inherited coordinates and
+/// receives a zero in the fresh final coordinate.  The final row contains
+/// the multiplicative identity of the symbol field in every coordinate, so
+/// it checks the zero-sum extension constraint.  The result therefore has
+/// the same coordinate convention as [`Extended::encode_into`]: the fresh
+/// extension coordinate is at position `self.mother.n()`, the final position
+/// (`self.n() - 1`) of the derived code.
+impl<C> ParityCheckMatrixAccess for Extended<C>
+where
+    C: BlockCode + ParityCheckMatrixAccess,
+{
+    type ParityCheckMatrix = C::ParityCheckMatrix;
+
+    fn parity_check_rows(&self) -> usize {
+        self.mother.parity_check_rows() + 1
+    }
+
+    fn parity_check_matrix_into(&self, out: &mut Self::ParityCheckMatrix) -> Result<(), CodeError> {
+        if out.rows() != self.parity_check_rows() || out.cols() != self.n() {
+            return Err(CodeError::ShapeMismatch {
+                expected_rows: self.parity_check_rows(),
+                expected_cols: self.n(),
+                actual_rows: out.rows(),
+                actual_cols: out.cols(),
+            });
+        }
+
+        let mother_parity = self.mother.parity_check_matrix()?;
+        let zero = self.symbol_zero();
+        for row in 0..self.mother.parity_check_rows() {
+            for column in 0..self.mother.n() {
+                let value = mother_parity
+                    .get(row, column)
+                    .expect("mother parity-check shape matches its contract");
+                out.set(row, column, value)?;
+            }
+            out.set(row, self.extension_position(), zero.zero_like())?;
+        }
+
+        let one = zero.one_like();
+        let extension_row = self.mother.parity_check_rows();
+        for column in 0..self.n() {
+            out.set(extension_row, column, one.clone())?;
+        }
+        Ok(())
     }
 }
 
@@ -1212,7 +1263,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::traits::block::{BlockCode, GeneratorMatrixAccess};
+    use crate::traits::block::{
+        BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess,
+    };
     use crate::LinearBlockCode;
     use gf2_core::field::matrix::FieldMatrix;
     use gf2_core::field::FieldVec;
@@ -1485,6 +1538,65 @@ mod tests {
             let actual = extended.encode(&message).unwrap();
             let expected = crate::traits::BlockEncoder::encode(&legacy, &message);
             assert_eq!(actual, expected, "message {raw_message}");
+        }
+    }
+
+    #[test]
+    fn extended_parity_check_matches_legacy_extended_bch() {
+        use crate::bch::extended::ExtendedBchCode;
+        let legacy = ExtendedBchCode::ebch_16_11();
+        let legacy_generator = crate::traits::GeneratorMatrixAccess::generator_matrix(&legacy);
+        let legacy_parity = legacy.parity_check();
+
+        let mut mother_generator = BitMatrix::zeros(legacy.k(), legacy.n() - 1);
+        for row in 0..mother_generator.rows() {
+            for column in 0..mother_generator.cols() {
+                mother_generator.set(row, column, legacy_generator.get(row, column));
+            }
+        }
+        let mut mother_parity =
+            BitMatrix::zeros(legacy_parity.rows() - 1, legacy_parity.cols() - 1);
+        for row in 0..mother_parity.rows() {
+            for column in 0..mother_parity.cols() {
+                mother_parity.set(row, column, legacy_parity.get(row, column));
+            }
+        }
+        let mother = LinearBlockCode::new_systematic(mother_generator, Some(mother_parity));
+        let extended = Extended::new(mother).expect("an extended BCH code fits in memory");
+
+        assert_eq!(
+            extended.parity_check_matrix().unwrap(),
+            *legacy.parity_check()
+        );
+    }
+
+    #[test]
+    fn nonbinary_extension_parity_check_annihilates_every_codeword() {
+        let zero = Fp::<5>::new(0);
+        let mother = crate::traits::block::conformance::RepetitionCode::new(3, zero);
+        let extended = Extended::new(mother).unwrap();
+        let parity_check = extended.parity_check_matrix().unwrap();
+
+        assert_eq!(parity_check.rows(), 3);
+        assert_eq!(parity_check.cols(), 4);
+        for value in 0..5 {
+            let message = FieldVec::from(vec![Fp::<5>::new(value)]);
+            let codeword = extended.encode(&message).unwrap();
+            for row in 0..parity_check.rows() {
+                let mut syndrome = zero.zero_like();
+                for column in 0..parity_check.cols() {
+                    let coefficient = parity_check.get(row, column);
+                    let symbol = *codeword
+                        .as_slice()
+                        .get(column)
+                        .expect("encoded codeword has the declared length");
+                    syndrome += coefficient * symbol;
+                }
+                assert!(
+                    syndrome.is_zero(),
+                    "nonzero syndrome at row {row}, value {value}"
+                );
+            }
         }
     }
 
