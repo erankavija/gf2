@@ -13,7 +13,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T16:34:01.105814625Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "8f68699b-d66a-45f2-a276-b8700bd4cc65",
   "labels": [
     "type:task",
@@ -24,5 +30,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Allocation-free single, workspace batch, and parallel batch encoding",
-  "updated_at": "2026-09-01T15:13:39.392161112Z"
+  "updated_at": "2026-09-01T16:34:01.105814625Z"
 }
