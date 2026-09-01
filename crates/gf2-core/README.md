@@ -129,7 +129,7 @@ Validated speedups on large operands (>512 bytes): 3.4–3.6× for bulk logical 
 | Feature | Default | Effect |
 |---|---|---|
 | `rand` | ✅ | Random `BitVec` / `BitMatrix` / field elements |
-| `io` | ✅ | Serde serialization of bit containers |
+| `io` | ✅ | Serde serialization of bit containers; canonical checksummed `FieldMatrix` files with atomic replacement |
 | `simd` | — | Route through `gf2-kernels-simd` (AVX2 / AVX-512) |
 | `parallel` | — | Rayon batch algorithms |
 | `visualization` | — | Save `BitMatrix` as PNG |
