@@ -27,6 +27,18 @@
 //! 3. **Chien search**: Find roots of error locator (error positions)
 //! 4. **Correction**: Flip bits at error positions
 //!
+//! # Hardened decoding over the canonical model
+//!
+//! [`BinaryBchDecoder`] runs that same algebra against the canonical
+//! [`BinaryBchCode`](crate::bch::spec::BinaryBchCode) and reports a
+//! [`BchDecodeOutcome`] instead of message bits: it verifies every candidate
+//! correction by recomputing the corrected word's syndrome, keeps its
+//! workspace allocation outside the per-word path, and exposes the corrected
+//! codeword, information word, and error positions only through the opt-in
+//! [`BinaryBchDecoder::decode`] diagnostic path. It uses the construction
+//! model's ascending-degree coordinate convention rather than the DVB-T2
+//! systematic layout the types above carry.
+//!
 //! # Examples
 //!
 //! ```
@@ -54,8 +66,13 @@
 //! assert_eq!(decoded, msg);
 //! ```
 
+use crate::bch::error::BchError;
+use crate::bch::spec::BinaryBchCode;
+use crate::error::CodeError;
 use crate::traits::{BlockEncoder, HardDecisionDecoder};
-use gf2_core::gf2m::{Gf2mElement, Gf2mField, Gf2mPoly};
+use gf2_core::field::extension::FieldExtension;
+use gf2_core::field::{FieldPoly, FiniteField, FiniteFieldExt};
+use gf2_core::gf2m::{Gf2mElement, Gf2mElement_, Gf2mField, Gf2mPoly, UintExt};
 use gf2_core::BitVec;
 
 /// Code rates for DVB-T2 standard.
@@ -1138,6 +1155,640 @@ impl BchDecoder {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Hardened binary decoder over the canonical construction model
+// ---------------------------------------------------------------------------
+
+/// What one bounded-distance decode established about a received word.
+///
+/// The three variants are exhaustive and mutually exclusive. They describe
+/// the *procedure's* result, never the channel: see
+/// [`BinaryBchDecoder`] for the exact guarantee each one carries.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum BchDecodeOutcome {
+    /// The received word is a codeword, so no coordinate was changed.
+    NoErrors,
+    /// A candidate correction was found and verified: flipping these
+    /// coordinates produces a codeword.
+    Corrected {
+        /// Number of flipped coordinates, at most the correction radius.
+        count: usize,
+    },
+    /// The procedure found no verified correction.
+    ///
+    /// This is a statement about the bounded-distance procedure, not about
+    /// the transmitted word: the received word may still be a corrupted
+    /// codeword that lies beyond the correction radius.
+    Uncorrectable,
+}
+
+impl BchDecodeOutcome {
+    /// Returns the number of corrected coordinates, or `None` when no
+    /// verified correction was found.
+    pub fn corrected_count(self) -> Option<usize> {
+        match self {
+            Self::NoErrors => Some(0),
+            Self::Corrected { count } => Some(count),
+            Self::Uncorrectable => None,
+        }
+    }
+}
+
+/// The reusable scratch space one [`BinaryBchDecoder`] needs per word.
+///
+/// Every buffer is sized once, by [`BinaryBchDecoder::workspace`], from the
+/// code's syndrome count and correction radius, and is only ever overwritten
+/// in place afterwards; none is ever pushed to, resized, or replaced. Together
+/// with two further facts that gives
+/// [`correct_in_place`](BinaryBchDecoder::correct_in_place) its
+/// no-heap-allocation contract: the decoder itself precomputes its evaluation
+/// points and root powers at construction and holds no interior mutability,
+/// and $\mathrm{GF}(2^m)$ element arithmetic produces values that share their
+/// field by reference count rather than by allocating. The buffers here are
+/// therefore the only heap a decode could want, and the caller owns their one
+/// allocation.
+///
+/// A workspace belongs to the decoder that produced it. Passing one built for
+/// a different code is a caller mistake the decoder reports rather than a
+/// condition it defends against.
+#[derive(Clone, Debug)]
+pub struct BchDecodeWorkspace<V: UintExt = u64> {
+    /// Syndrome values, one per evaluation exponent of the decoder.
+    syndromes: Vec<Gf2mElement_<V>>,
+    /// Error-locator coefficients in ascending degree order.
+    locator: Vec<Gf2mElement_<V>>,
+    /// The Berlekamp-Massey auxiliary polynomial `B(x)`.
+    previous: Vec<Gf2mElement_<V>>,
+    /// A copy of the locator taken before each Berlekamp-Massey update.
+    scratch: Vec<Gf2mElement_<V>>,
+    /// Running locator-coefficient values for the Chien search.
+    chien: Vec<Gf2mElement_<V>>,
+    /// Ascending error positions of the last candidate correction.
+    positions: Vec<usize>,
+}
+
+/// A bounded-distance decoder for a canonical binary BCH code.
+///
+/// The decoder borrows the constructed
+/// [`BinaryBchCode`](crate::bch::spec::BinaryBchCode) and reads its length,
+/// order-$n$ root, defining set, and witnessed distance bound; it derives
+/// nothing the construction already fixed. Coordinate $i$ of a received word
+/// is the coefficient of $x^i$, matching the construction model's convention.
+///
+/// # Guarantee
+///
+/// Write $t$ for [`correction_radius`](crate::bch::spec::BchCode::correction_radius),
+/// the radius the code's witnessed bound implies.
+///
+/// - At most $t$ errors: the decode returns [`BchDecodeOutcome::NoErrors`] or
+///   [`BchDecodeOutcome::Corrected`], and the corrected word is the
+///   transmitted codeword. Bounded-distance decoding is exact inside the
+///   radius because a codeword within distance $t$ of the received word is
+///   unique.
+/// - More than $t$ errors: the decode returns either
+///   [`BchDecodeOutcome::Uncorrectable`], or
+///   [`BchDecodeOutcome::Corrected`] naming a *different* codeword that
+///   happens to lie within distance $t$ of the received word. That
+///   miscorrection is inherent to bounded-distance decoding, and this decoder
+///   cannot distinguish it from a genuine correction: both produce a verified
+///   codeword. The reported outcome is always sound about the *word* it
+///   produces and never a claim about the transmitted word.
+/// - [`BchDecodeOutcome::Uncorrectable`] therefore means "this procedure
+///   found no verified correction", not "the received word is beyond
+///   repair".
+///
+/// Verification is what makes the `Corrected` claim checkable: a candidate is
+/// accepted only after the corrected word's syndrome is recomputed and found
+/// zero, which is equivalent to codeword membership (see
+/// [`workspace`](Self::workspace) for why the evaluated exponents suffice).
+/// No received word makes a decode panic.
+///
+/// # Paths
+///
+/// [`correct_in_place`](Self::correct_in_place) is the fast path: it corrects
+/// the caller's packed storage and returns status and count, with no heap
+/// allocation. [`decode`](Self::decode) is the opt-in diagnostic path: it may
+/// allocate, and returns the corrected codeword, the information word, the
+/// sorted error positions, and the count.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+/// use gf2_coding::bch::{BchDecodeOutcome, BinaryBchDecoder};
+/// use gf2_core::field::extension::BinaryPrimeExt;
+/// use gf2_core::field::FiniteField;
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::BitVec;
+///
+/// // BCH(15, 7) with a witnessed run of four consecutive roots, so t = 2.
+/// let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())?;
+/// let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+///     extension,
+///     designed_distance: DesignedDistance::try_from(5)?,
+/// })?;
+/// assert_eq!(code.correction_radius(), 2);
+///
+/// // The generator polynomial is itself a codeword, and coordinate i carries
+/// // the coefficient of x^i.
+/// let mut word = BitVec::zeros(code.n());
+/// for i in 0..=code.generator().degree().expect("a nonzero generator") {
+///     word.set(i, code.generator().coeff(i).is_one());
+/// }
+///
+/// let decoder = BinaryBchDecoder::new(&code);
+/// let mut workspace = decoder.workspace();
+///
+/// // Two errors are inside the radius, so the fast path recovers the word.
+/// word.set(0, !word.get(0));
+/// word.set(9, !word.get(9));
+/// let outcome = decoder.correct_in_place(&mut word, &mut workspace)?;
+/// assert_eq!(outcome, BchDecodeOutcome::Corrected { count: 2 });
+///
+/// // The diagnostic path names the evidence; the repaired word is clean.
+/// let report = decoder.decode(&word)?;
+/// assert_eq!(report.outcome(), BchDecodeOutcome::NoErrors);
+/// assert!(report.error_positions().is_empty());
+/// # Ok::<(), gf2_coding::bch::error::BchError>(())
+/// ```
+#[derive(Clone, Debug)]
+pub struct BinaryBchDecoder<'code, V: UintExt = u64> {
+    code: &'code BinaryBchCode<V>,
+    /// Evaluation points `β^e`, the witnessed consecutive run first.
+    syndrome_points: Box<[Gf2mElement_<V>]>,
+    /// How many leading syndrome points form the consecutive run.
+    run_length: usize,
+    /// The correction radius the code's witnessed bound implies.
+    radius: usize,
+    /// `β^{-j}` for `j` up to the radius, for the Chien update step.
+    inverse_root_powers: Box<[Gf2mElement_<V>]>,
+    zero: Gf2mElement_<V>,
+    one: Gf2mElement_<V>,
+}
+
+/// Structured evidence from one [`BinaryBchDecoder::decode`].
+///
+/// The report carries the [`outcome`](Self::outcome) the fast path would have
+/// returned, plus the words and coordinates behind it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BchDecodeReport {
+    outcome: BchDecodeOutcome,
+    recovered: Option<RecoveredWord>,
+    error_positions: Vec<usize>,
+}
+
+/// The verified codeword a decode produced, with its information word.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct RecoveredWord {
+    codeword: BitVec,
+    message: BitVec,
+}
+
+impl BchDecodeReport {
+    /// Returns the decode outcome.
+    pub fn outcome(&self) -> BchDecodeOutcome {
+        self.outcome
+    }
+
+    /// Returns the verified codeword, or `None` when the outcome is
+    /// [`BchDecodeOutcome::Uncorrectable`].
+    pub fn codeword(&self) -> Option<&BitVec> {
+        self.recovered.as_ref().map(|word| &word.codeword)
+    }
+
+    /// Returns the information word `m` with `c = m * g`, or `None` when the
+    /// outcome is [`BchDecodeOutcome::Uncorrectable`].
+    ///
+    /// The construction model defines a codeword as the coefficient vector of
+    /// a multiple of the generator, so dividing by the generator is the
+    /// inverse of that encoding. A systematic user layout is a separate
+    /// coordinate map above this convention.
+    pub fn message(&self) -> Option<&BitVec> {
+        self.recovered.as_ref().map(|word| &word.message)
+    }
+
+    /// Returns the corrected coordinates in ascending order, empty when the
+    /// decode changed nothing.
+    pub fn error_positions(&self) -> &[usize] {
+        &self.error_positions
+    }
+
+    /// Returns the number of corrected coordinates, or `None` when no
+    /// verified correction was found.
+    pub fn error_count(&self) -> Option<usize> {
+        self.outcome.corrected_count()
+    }
+}
+
+impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
+    /// Builds a decoder for `code`.
+    ///
+    /// The evaluation points, their inverses, and the field constants are
+    /// derived once here so that decoding a word touches no allocator.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the code's order-$n$ root is not invertible, which a
+    /// completed [`construct`](crate::bch::spec::BchCode::construct) rules
+    /// out; reaching it means an internal invariant broke.
+    ///
+    /// # Complexity
+    ///
+    /// $O(n)$ modular exponent bookkeeping plus one exponentiation per
+    /// evaluation point.
+    pub fn new(code: &'code BinaryBchCode<V>) -> Self {
+        let extension = code.extension();
+        let root = code.root();
+        let length = code.n();
+        let radius = code.correction_radius();
+        let bound = code.distance_bound();
+        let run_length = bound.consecutive_root_count();
+        let run_start = bound.first_root().map_or(0, |exponent| exponent.get());
+
+        // The witnessed consecutive run comes first: Berlekamp-Massey reads
+        // exactly those syndromes, in that order. The remaining exponents are
+        // the defining-set members the run does not already imply. Over
+        // GF(2), r(β^e) = 0 forces r(β^{2e}) = 0, so evaluating one exponent
+        // per Frobenius orbit decides membership in the whole defining set,
+        // and a zero syndrome is therefore equivalent to being a codeword.
+        // A constructed length is positive, so the modulus below is nonzero.
+        let modulus = u128::from(length as u64);
+        let mut exponents: Vec<u64> = Vec::with_capacity(run_length + code.defining_set().len());
+        let mut implied = vec![false; length];
+        for offset in 0..run_length {
+            let exponent = ((u128::from(run_start) + offset as u128) % modulus) as u64;
+            exponents.push(exponent);
+            mark_frobenius_orbit(&mut implied, exponent, modulus);
+        }
+        for exponent in code.defining_set() {
+            let exponent = exponent.get();
+            if !implied[exponent as usize] {
+                exponents.push(exponent);
+                mark_frobenius_orbit(&mut implied, exponent, modulus);
+            }
+        }
+
+        let syndrome_points: Box<[Gf2mElement_<V>]> = exponents
+            .iter()
+            .map(|&exponent| root.pow(exponent))
+            .collect();
+
+        let inverse = root
+            .inv()
+            .expect("a constructed code's order-n root is nonzero and therefore invertible");
+        let mut inverse_root_powers = Vec::with_capacity(radius + 1);
+        let mut power = extension.ext_one();
+        for _ in 0..=radius {
+            inverse_root_powers.push(power.clone());
+            power = &power * &inverse;
+        }
+
+        Self {
+            code,
+            syndrome_points,
+            run_length,
+            radius,
+            inverse_root_powers: inverse_root_powers.into_boxed_slice(),
+            zero: extension.ext_zero(),
+            one: extension.ext_one(),
+        }
+    }
+
+    /// Returns the code this decoder was built for.
+    pub fn code(&self) -> &'code BinaryBchCode<V> {
+        self.code
+    }
+
+    /// Returns the correction radius the code's witnessed bound implies.
+    pub fn correction_radius(&self) -> usize {
+        self.radius
+    }
+
+    /// Allocates the scratch space one decode needs.
+    ///
+    /// Build this once and pass the same value to every
+    /// [`correct_in_place`](Self::correct_in_place) call: the buffers are
+    /// sized here for the worst case and are only overwritten afterwards, so
+    /// the per-word path performs no allocation.
+    ///
+    /// # Complexity
+    ///
+    /// One allocation per buffer, together $O(r + t)$ field elements for a
+    /// witnessed run of length $r$ and radius $t$.
+    pub fn workspace(&self) -> BchDecodeWorkspace<V> {
+        BchDecodeWorkspace {
+            syndromes: vec![self.zero.clone(); self.syndrome_points.len()],
+            locator: vec![self.zero.clone(); self.run_length + 1],
+            previous: vec![self.zero.clone(); self.run_length + 1],
+            scratch: vec![self.zero.clone(); self.run_length + 1],
+            chien: vec![self.zero.clone(); self.radius + 1],
+            positions: Vec::with_capacity(self.radius),
+        }
+    }
+
+    /// Corrects `received` in place and reports the outcome.
+    ///
+    /// This is the fast path: it returns status and count, performs no heap
+    /// allocation on any path (see [`BchDecodeWorkspace`]), and leaves
+    /// `received` untouched unless it returns
+    /// [`BchDecodeOutcome::Corrected`]. A candidate correction is applied,
+    /// then verified by recomputing the corrected word's syndrome; a
+    /// candidate that fails verification is rolled back and reported as
+    /// [`BchDecodeOutcome::Uncorrectable`].
+    ///
+    /// See the [type documentation](Self) for what each outcome guarantees.
+    ///
+    /// # Errors
+    ///
+    /// [`BchError::Decode`] wrapping
+    /// [`CodeError::BufferLengthMismatch`](crate::error::CodeError::BufferLengthMismatch)
+    /// when `received` is not `n` coordinates long, or when `workspace` was
+    /// built for a different code. Both are rejected before any decoding, so
+    /// no partial correction is observable.
+    ///
+    /// # Complexity
+    ///
+    /// $O(sn)$ field multiplications for $s$ syndrome evaluations, plus
+    /// $O(tn)$ for the Chien search and $O(r^2)$ for Berlekamp-Massey.
+    pub fn correct_in_place(
+        &self,
+        received: &mut BitVec,
+        workspace: &mut BchDecodeWorkspace<V>,
+    ) -> Result<BchDecodeOutcome, BchError> {
+        self.validate(received.len(), workspace)?;
+
+        self.evaluate_syndromes(received, &mut workspace.syndromes);
+        if workspace.syndromes.iter().all(|value| value.is_zero()) {
+            return Ok(BchDecodeOutcome::NoErrors);
+        }
+        Ok(self.correct_nonzero_syndrome(received, workspace))
+    }
+
+    /// Decodes `received` and returns the full evidence.
+    ///
+    /// This is the opt-in diagnostic path. It allocates its own workspace and
+    /// working copy, so it neither borrows nor disturbs the caller's storage;
+    /// use [`correct_in_place`](Self::correct_in_place) when only the status
+    /// and count are wanted.
+    ///
+    /// # Errors
+    ///
+    /// [`BchError::Decode`] when `received` is not `n` coordinates long.
+    ///
+    /// # Complexity
+    ///
+    /// That of [`correct_in_place`](Self::correct_in_place), plus one
+    /// polynomial division by the generator to recover the information word.
+    pub fn decode(&self, received: &BitVec) -> Result<BchDecodeReport, BchError> {
+        let mut workspace = self.workspace();
+        let mut corrected = received.clone();
+        let outcome = self.correct_in_place(&mut corrected, &mut workspace)?;
+
+        if outcome == BchDecodeOutcome::Uncorrectable {
+            return Ok(BchDecodeReport {
+                outcome,
+                recovered: None,
+                error_positions: Vec::new(),
+            });
+        }
+
+        let message = self.extract_message(&corrected);
+        let error_positions = match outcome {
+            BchDecodeOutcome::Corrected { .. } => workspace.positions.clone(),
+            _ => Vec::new(),
+        };
+        Ok(BchDecodeReport {
+            outcome,
+            recovered: Some(RecoveredWord {
+                codeword: corrected,
+                message,
+            }),
+            error_positions,
+        })
+    }
+
+    /// Rejects a received word or workspace that does not match this code.
+    fn validate(&self, length: usize, workspace: &BchDecodeWorkspace<V>) -> Result<(), BchError> {
+        let mismatch = |expected: usize, actual: usize| {
+            BchError::Decode(CodeError::BufferLengthMismatch { expected, actual })
+        };
+        if length != self.code.n() {
+            return Err(mismatch(self.code.n(), length));
+        }
+        if workspace.syndromes.len() != self.syndrome_points.len() {
+            return Err(mismatch(
+                self.syndrome_points.len(),
+                workspace.syndromes.len(),
+            ));
+        }
+        if workspace.locator.len() != self.run_length + 1 {
+            return Err(mismatch(self.run_length + 1, workspace.locator.len()));
+        }
+        if workspace.chien.len() != self.radius + 1 {
+            return Err(mismatch(self.radius + 1, workspace.chien.len()));
+        }
+        Ok(())
+    }
+
+    /// Runs the locator search and verification for a nonzero syndrome.
+    fn correct_nonzero_syndrome(
+        &self,
+        received: &mut BitVec,
+        workspace: &mut BchDecodeWorkspace<V>,
+    ) -> BchDecodeOutcome {
+        let Some(degree) = self.berlekamp_massey(workspace) else {
+            return BchDecodeOutcome::Uncorrectable;
+        };
+        if degree == 0 || degree > self.radius {
+            return BchDecodeOutcome::Uncorrectable;
+        }
+        if !self.chien_search(workspace, degree) {
+            return BchDecodeOutcome::Uncorrectable;
+        }
+
+        flip(received, &workspace.positions);
+        self.evaluate_syndromes(received, &mut workspace.syndromes);
+        if workspace.syndromes.iter().all(|value| value.is_zero()) {
+            BchDecodeOutcome::Corrected {
+                count: workspace.positions.len(),
+            }
+        } else {
+            flip(received, &workspace.positions);
+            BchDecodeOutcome::Uncorrectable
+        }
+    }
+
+    /// Writes `word(β^e)` for every evaluation exponent into `out`.
+    fn evaluate_syndromes(&self, word: &BitVec, out: &mut [Gf2mElement_<V>]) {
+        let Some(top) = word.find_last_set() else {
+            for slot in out.iter_mut() {
+                *slot = self.zero.clone();
+            }
+            return;
+        };
+        for (slot, point) in out.iter_mut().zip(self.syndrome_points.iter()) {
+            // Horner from the highest set coordinate downwards.
+            let mut accumulator = self.zero.clone();
+            for index in (0..=top).rev() {
+                accumulator = &accumulator * point;
+                if word.get(index) {
+                    accumulator = &accumulator + &self.one;
+                }
+            }
+            *slot = accumulator;
+        }
+    }
+
+    /// Finds the error-locator polynomial of the run syndromes and returns its
+    /// degree, or `None` when the recurrence outgrows the workspace.
+    ///
+    /// The locator is left in `workspace.locator` in ascending degree order,
+    /// with a constant term of one.
+    fn berlekamp_massey(&self, workspace: &mut BchDecodeWorkspace<V>) -> Option<usize> {
+        let BchDecodeWorkspace {
+            syndromes,
+            locator,
+            previous,
+            scratch,
+            ..
+        } = workspace;
+        let capacity = locator.len();
+
+        for coefficient in locator.iter_mut().chain(previous.iter_mut()) {
+            *coefficient = self.zero.clone();
+        }
+        locator[0] = self.one.clone();
+        previous[0] = self.one.clone();
+        let mut locator_len = 1usize;
+        let mut previous_len = 1usize;
+        let mut order = 0usize;
+        let mut shift = 1usize;
+
+        for index in 0..self.run_length {
+            let mut discrepancy = syndromes[index].clone();
+            for offset in 1..=order.min(locator_len.saturating_sub(1)).min(index) {
+                discrepancy = &discrepancy + &(&locator[offset] * &syndromes[index - offset]);
+            }
+            if discrepancy.is_zero() {
+                shift += 1;
+                continue;
+            }
+
+            let updated_len = locator_len.max(previous_len + shift);
+            if updated_len > capacity {
+                // Unreachable for a genuine Berlekamp-Massey trace, where the
+                // locator degree stays below the syndrome count; bailing out
+                // keeps a corrupt trace from indexing out of bounds.
+                return None;
+            }
+            scratch[..locator_len].clone_from_slice(&locator[..locator_len]);
+            let scratch_len = locator_len;
+
+            // Λ(x) ← Λ(x) + δ · x^shift · B(x); in GF(2^m) that is also the
+            // subtraction the algorithm calls for.
+            for (offset, coefficient) in previous[..previous_len].iter().enumerate() {
+                let target = offset + shift;
+                let updated = &locator[target] + &(&discrepancy * coefficient);
+                locator[target] = updated;
+            }
+            locator_len = updated_len;
+
+            if 2 * order <= index {
+                order = index + 1 - order;
+                let inverse = discrepancy.inv()?;
+                for (slot, coefficient) in previous.iter_mut().zip(scratch[..scratch_len].iter()) {
+                    *slot = coefficient * &inverse;
+                }
+                for slot in previous[scratch_len..].iter_mut() {
+                    *slot = self.zero.clone();
+                }
+                previous_len = scratch_len;
+                shift = 1;
+            } else {
+                shift += 1;
+            }
+        }
+
+        while locator_len > 1 && locator[locator_len - 1].is_zero() {
+            locator_len -= 1;
+        }
+        Some(locator_len - 1)
+    }
+
+    /// Collects the ascending coordinates where the locator vanishes.
+    ///
+    /// Returns `true` when the locator has exactly `degree` distinct roots
+    /// among the code's coordinates, which is the condition for the candidate
+    /// error pattern to be well defined.
+    fn chien_search(&self, workspace: &mut BchDecodeWorkspace<V>, degree: usize) -> bool {
+        let BchDecodeWorkspace {
+            locator,
+            chien,
+            positions,
+            ..
+        } = workspace;
+        positions.clear();
+        chien[..=degree].clone_from_slice(&locator[..=degree]);
+
+        for position in 0..self.code.n() {
+            // Λ(β^{-position}) is the running sum of the scaled coefficients.
+            let mut value = self.zero.clone();
+            for coefficient in chien[..=degree].iter() {
+                value = &value + coefficient;
+            }
+            if value.is_zero() {
+                if positions.len() == degree {
+                    return false;
+                }
+                positions.push(position);
+            }
+            for (coefficient, power) in chien[..=degree]
+                .iter_mut()
+                .zip(self.inverse_root_powers.iter())
+            {
+                *coefficient = &*coefficient * power;
+            }
+        }
+
+        positions.len() == degree
+    }
+
+    /// Returns the information word `m` of the codeword `c`, with `c = m * g`.
+    fn extract_message(&self, codeword: &BitVec) -> BitVec {
+        let extension = self.code.extension();
+        let zero = extension.base_zero();
+        let one = extension.base_one();
+        let coefficients = (0..self.code.n())
+            .map(|index| if codeword.get(index) { one } else { zero })
+            .collect();
+        let (quotient, _) = FieldPoly::new(coefficients).div_rem(self.code.generator());
+
+        let mut message = BitVec::zeros(self.code.k());
+        for index in 0..self.code.k() {
+            if quotient.coeff_or_zero(index, &zero).is_one() {
+                message.set(index, true);
+            }
+        }
+        message
+    }
+}
+
+/// Flips every listed coordinate of `word`.
+fn flip(word: &mut BitVec, positions: &[usize]) {
+    for &position in positions {
+        word.set(position, !word.get(position));
+    }
+}
+
+/// Marks the Frobenius orbit `e, 2e, 4e, ...` of `exponent` modulo `modulus`.
+fn mark_frobenius_orbit(marked: &mut [bool], exponent: u64, modulus: u128) {
+    let mut current = u128::from(exponent) % modulus;
+    while !marked[current as usize] {
+        marked[current as usize] = true;
+        current = (current * 2) % modulus;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1607,6 +2258,557 @@ mod proptests {
                 "valid {:?} codeword must have zero syndrome",
                 parameter_set
             );
+        }
+    }
+}
+
+#[cfg(test)]
+mod canonical_decoder_tests {
+    use super::*;
+    use crate::bch::spec::{BchSpec, DesignedDistance, RootExponent};
+    use gf2_core::field::extension::BinaryPrimeExt;
+    use gf2_core::gfp::Fp;
+    use proptest::prelude::*;
+    use std::sync::OnceLock;
+
+    /// Representative binary narrow-sense points as
+    /// `(m, primitive polynomial, designed distance)`, covering radii one
+    /// through three and four block lengths.
+    const POINTS: &[(usize, u64, u64)] = &[
+        (3, 0b1011, 3),    // BCH(7, 4), t = 1
+        (4, 0b10011, 3),   // BCH(15, 11), t = 1
+        (4, 0b10011, 5),   // BCH(15, 7), t = 2
+        (4, 0b10011, 7),   // BCH(15, 5), t = 3
+        (5, 0b100101, 7),  // BCH(31, 21), t = 3
+        (6, 0b1000011, 7), // BCH(63, 45), t = 3
+    ];
+
+    fn narrow_sense(m: usize, modulus: u64, designed_distance: u64) -> BinaryBchCode {
+        BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: BinaryPrimeExt::new(Gf2mField::new(m, modulus).with_tables())
+                .expect("a primitive modulus"),
+            designed_distance: DesignedDistance::try_from(designed_distance)
+                .expect("a positive designed distance"),
+        })
+        .expect("a valid primitive narrow-sense spec")
+    }
+
+    /// The parameter points, constructed once for the whole suite.
+    fn codes() -> &'static [BinaryBchCode] {
+        static CODES: OnceLock<Vec<BinaryBchCode>> = OnceLock::new();
+        CODES.get_or_init(|| {
+            POINTS
+                .iter()
+                .map(|&(m, modulus, designed_distance)| narrow_sense(m, modulus, designed_distance))
+                .collect()
+        })
+    }
+
+    /// Reads a word as the polynomial whose degree-`i` coefficient is
+    /// coordinate `i`, the construction model's convention.
+    fn as_polynomial(code: &BinaryBchCode, word: &BitVec) -> FieldPoly<Fp<2>> {
+        let extension = code.extension();
+        let zero = extension.base_zero();
+        let one = extension.base_one();
+        FieldPoly::new(
+            (0..word.len())
+                .map(|index| if word.get(index) { one } else { zero })
+                .collect(),
+        )
+    }
+
+    /// Encodes `message` as the coefficient vector of `m(x) * g(x)`.
+    ///
+    /// This is the encoding the construction model defines, and the inverse
+    /// of the information word [`BchDecodeReport::message`] reports.
+    fn encode(code: &BinaryBchCode, message: &[bool]) -> BitVec {
+        assert_eq!(message.len(), code.k(), "a message has k coordinates");
+        let word = bits_to_word(message);
+        let product = as_polynomial(code, &word).mul(code.generator());
+        let zero = code.extension().base_zero();
+
+        let mut codeword = BitVec::zeros(code.n());
+        for index in 0..code.n() {
+            if product.coeff_or_zero(index, &zero).is_one() {
+                codeword.set(index, true);
+            }
+        }
+        codeword
+    }
+
+    fn bits_to_word(bits: &[bool]) -> BitVec {
+        let mut word = BitVec::zeros(bits.len());
+        for (index, &bit) in bits.iter().enumerate() {
+            word.set(index, bit);
+        }
+        word
+    }
+
+    fn is_codeword(code: &BinaryBchCode, word: &BitVec) -> bool {
+        as_polynomial(code, word)
+            .div_rem(code.generator())
+            .1
+            .is_zero()
+    }
+
+    fn distance(left: &BitVec, right: &BitVec) -> usize {
+        (0..left.len())
+            .filter(|&index| left.get(index) != right.get(index))
+            .count()
+    }
+
+    /// Turns arbitrary seeds into `count` distinct coordinates below `length`,
+    /// filling from the low coordinates when the seeds collide.
+    fn distinct_positions(seeds: &[usize], length: usize, count: usize) -> Vec<usize> {
+        let mut positions = Vec::with_capacity(count);
+        for &seed in seeds {
+            if positions.len() == count {
+                break;
+            }
+            let position = seed % length;
+            if !positions.contains(&position) {
+                positions.push(position);
+            }
+        }
+        for position in 0..length {
+            if positions.len() == count {
+                break;
+            }
+            if !positions.contains(&position) {
+                positions.push(position);
+            }
+        }
+        positions
+    }
+
+    fn sorted(positions: &[usize]) -> Vec<usize> {
+        let mut sorted = positions.to_vec();
+        sorted.sort_unstable();
+        sorted
+    }
+
+    // -- REQ-01/REQ-02: the error-free outcome and the two paths -----------
+
+    #[test]
+    fn a_codeword_decodes_to_its_information_word() {
+        for code in codes() {
+            let decoder = BinaryBchDecoder::new(code);
+            let mut workspace = decoder.workspace();
+            let message: Vec<bool> = (0..code.k()).map(|index| index % 3 == 0).collect();
+            let codeword = encode(code, &message);
+            assert!(is_codeword(code, &codeword), "the test encoder is faithful");
+
+            let mut storage = codeword.clone();
+            assert_eq!(
+                decoder
+                    .correct_in_place(&mut storage, &mut workspace)
+                    .expect("the received word has length n"),
+                BchDecodeOutcome::NoErrors
+            );
+            assert_eq!(storage, codeword, "an error-free word is left untouched");
+
+            let report = decoder.decode(&codeword).expect("the word has length n");
+            assert_eq!(report.outcome(), BchDecodeOutcome::NoErrors);
+            assert_eq!(report.codeword(), Some(&codeword));
+            assert_eq!(report.message(), Some(&bits_to_word(&message)));
+            assert!(report.error_positions().is_empty());
+            assert_eq!(report.error_count(), Some(0));
+        }
+    }
+
+    // -- REQ-03: every error count at and beyond the radius ----------------
+
+    fn error_cases() -> impl Strategy<Value = (usize, Vec<bool>, Vec<usize>)> {
+        (
+            0..POINTS.len(),
+            prop::collection::vec(any::<bool>(), 45),
+            prop::collection::vec(any::<usize>(), 6),
+        )
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(32))]
+
+        /// Every error count from zero to the radius is corrected, and the
+        /// diagnostic path names exactly the injected coordinates.
+        #[test]
+        fn prop_errors_within_the_radius_are_corrected_at_their_exact_positions(
+            (index, bits, seeds) in error_cases(),
+        ) {
+            let code = &codes()[index];
+            let decoder = BinaryBchDecoder::new(code);
+            let mut workspace = decoder.workspace();
+
+            let message = &bits[..code.k()];
+            let codeword = encode(code, message);
+            let injected =
+                distinct_positions(&seeds, code.n(), code.correction_radius());
+
+            for error_count in 0..=code.correction_radius() {
+                let mut received = codeword.clone();
+                flip(&mut received, &injected[..error_count]);
+                prop_assert_eq!(distance(&received, &codeword), error_count);
+
+                let expected = if error_count == 0 {
+                    BchDecodeOutcome::NoErrors
+                } else {
+                    BchDecodeOutcome::Corrected { count: error_count }
+                };
+
+                let expected_positions = sorted(&injected[..error_count]);
+                let report = decoder.decode(&received).expect("the word has length n");
+                prop_assert_eq!(report.outcome(), expected);
+                prop_assert_eq!(report.codeword(), Some(&codeword));
+                prop_assert_eq!(report.message(), Some(&bits_to_word(message)));
+                prop_assert_eq!(report.error_positions(), expected_positions.as_slice());
+
+                let mut storage = received.clone();
+                let outcome = decoder
+                    .correct_in_place(&mut storage, &mut workspace)
+                    .expect("the received word has length n");
+                prop_assert_eq!(outcome, expected);
+                prop_assert_eq!(&storage, &codeword);
+            }
+        }
+
+        /// One error past the radius leaves exactly two possibilities: no
+        /// verified correction, or a correction to a codeword other than the
+        /// transmitted one. Nothing the decoder reports is ever a false claim
+        /// about the word it produces.
+        #[test]
+        fn prop_one_error_beyond_the_radius_is_uncorrectable_or_a_verified_codeword(
+            (index, bits, seeds) in error_cases(),
+        ) {
+            let code = &codes()[index];
+            let decoder = BinaryBchDecoder::new(code);
+            let mut workspace = decoder.workspace();
+
+            let codeword = encode(code, &bits[..code.k()]);
+            let injected =
+                distinct_positions(&seeds, code.n(), code.correction_radius() + 1);
+            let mut received = codeword.clone();
+            flip(&mut received, &injected);
+            let original = received.clone();
+            prop_assert_eq!(
+                distance(&received, &codeword),
+                code.correction_radius() + 1
+            );
+
+            let outcome = decoder
+                .correct_in_place(&mut received, &mut workspace)
+                .expect("the received word has length n");
+            match outcome {
+                BchDecodeOutcome::NoErrors => {
+                    prop_assert!(false, "t + 1 errors cannot leave a codeword")
+                }
+                BchDecodeOutcome::Uncorrectable => prop_assert_eq!(&received, &original),
+                BchDecodeOutcome::Corrected { count } => {
+                    prop_assert!(count <= code.correction_radius());
+                    prop_assert!(is_codeword(code, &received));
+                    prop_assert_eq!(distance(&original, &received), count);
+                    prop_assert_ne!(&received, &codeword);
+                }
+            }
+        }
+
+        /// An arbitrary word never panics, and each outcome means what the
+        /// contract says: `NoErrors` exactly for codewords, `Corrected` only
+        /// for a verified codeword inside the radius, `Uncorrectable` only
+        /// with the caller's storage left intact.
+        #[test]
+        fn prop_arbitrary_words_decode_soundly(
+            (index, bits) in (0..POINTS.len(), prop::collection::vec(any::<bool>(), 63)),
+        ) {
+            let code = &codes()[index];
+            let decoder = BinaryBchDecoder::new(code);
+            let mut workspace = decoder.workspace();
+
+            let received = bits_to_word(&bits[..code.n()]);
+            let mut storage = received.clone();
+            let outcome = decoder
+                .correct_in_place(&mut storage, &mut workspace)
+                .expect("the received word has length n");
+
+            match outcome {
+                BchDecodeOutcome::NoErrors => {
+                    prop_assert!(is_codeword(code, &received));
+                    prop_assert_eq!(&storage, &received);
+                }
+                BchDecodeOutcome::Uncorrectable => {
+                    prop_assert!(!is_codeword(code, &received));
+                    prop_assert_eq!(&storage, &received);
+                }
+                BchDecodeOutcome::Corrected { count } => {
+                    prop_assert!(count >= 1 && count <= code.correction_radius());
+                    prop_assert!(is_codeword(code, &storage));
+                    prop_assert_eq!(distance(&received, &storage), count);
+                }
+            }
+        }
+    }
+
+    /// One error beyond the radius leaves exactly two possibilities, and both
+    /// occur for BCH(15, 7): the procedure reports no verified correction, or
+    /// it miscorrects to a different codeword within the radius.
+    #[test]
+    fn beyond_the_radius_the_outcome_is_uncorrectable_or_a_verified_miscorrection() {
+        let code = narrow_sense(4, 0b10011, 5);
+        let decoder = BinaryBchDecoder::new(&code);
+        let mut workspace = decoder.workspace();
+        let length = code.n();
+        let radius = code.correction_radius();
+        let zero_codeword = BitVec::zeros(length);
+
+        let mut uncorrectable = 0usize;
+        let mut miscorrected = 0usize;
+        for first in 0..length {
+            for second in (first + 1)..length {
+                for third in (second + 1)..length {
+                    let mut received = zero_codeword.clone();
+                    flip(&mut received, &[first, second, third]);
+                    let original = received.clone();
+
+                    let outcome = decoder
+                        .correct_in_place(&mut received, &mut workspace)
+                        .expect("the received word has length n");
+                    match outcome {
+                        BchDecodeOutcome::NoErrors => {
+                            panic!("a weight-three word is not a codeword of BCH(15, 7)")
+                        }
+                        BchDecodeOutcome::Uncorrectable => {
+                            assert_eq!(received, original, "a rejected candidate is rolled back");
+                            uncorrectable += 1;
+                        }
+                        BchDecodeOutcome::Corrected { count } => {
+                            assert!(count <= radius, "a correction stays inside the radius");
+                            assert_eq!(distance(&original, &received), count);
+                            assert!(
+                                is_codeword(&code, &received),
+                                "a reported correction is always a codeword"
+                            );
+                            assert_ne!(
+                                received, zero_codeword,
+                                "three errors cannot resolve to the transmitted word"
+                            );
+                            miscorrected += 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        assert!(uncorrectable > 0, "the uncorrectable arm is exercised");
+        assert!(miscorrected > 0, "the miscorrection arm is exercised");
+    }
+
+    /// A word whose whole coset has weight above the radius has no codeword
+    /// within the radius at all, so no bounded-distance procedure can produce
+    /// a verified correction for it.
+    #[test]
+    fn a_coset_leader_beyond_the_radius_is_uncorrectable() {
+        let code = narrow_sense(4, 0b10011, 5);
+        let decoder = BinaryBchDecoder::new(&code);
+        let mut workspace = decoder.workspace();
+        let length = code.n();
+        let radius = code.correction_radius();
+
+        let codewords: Vec<BitVec> = (0..1u32 << code.k())
+            .map(|value| {
+                let bits: Vec<bool> = (0..code.k()).map(|index| value >> index & 1 == 1).collect();
+                encode(&code, &bits)
+            })
+            .collect();
+
+        let mut leader = None;
+        'search: for first in 0..length {
+            for second in (first + 1)..length {
+                for third in (second + 1)..length {
+                    let mut candidate = BitVec::zeros(length);
+                    flip(&mut candidate, &[first, second, third]);
+                    if codewords
+                        .iter()
+                        .all(|codeword| distance(&candidate, codeword) > radius)
+                    {
+                        leader = Some(candidate);
+                        break 'search;
+                    }
+                }
+            }
+        }
+        let received = leader.expect("BCH(15, 7) has covering radius three, so such a word exists");
+
+        let mut storage = received.clone();
+        assert_eq!(
+            decoder
+                .correct_in_place(&mut storage, &mut workspace)
+                .expect("the received word has length n"),
+            BchDecodeOutcome::Uncorrectable
+        );
+        assert_eq!(storage, received, "the caller's storage is left intact");
+
+        let report = decoder.decode(&received).expect("the word has length n");
+        assert_eq!(report.outcome(), BchDecodeOutcome::Uncorrectable);
+        assert_eq!(report.codeword(), None);
+        assert_eq!(report.message(), None);
+        assert_eq!(report.error_count(), None);
+        assert!(report.error_positions().is_empty());
+    }
+
+    // -- REQ-02: the fast path reuses one workspace ------------------------
+
+    /// The lengths and capacities of every workspace buffer after a mixed run
+    /// of decodes. The decoder sizes each buffer once and only overwrites it
+    /// afterwards, so an unchanged snapshot witnesses that no buffer grew and
+    /// therefore that the per-word path reallocated nothing.
+    fn buffer_shape(workspace: &BchDecodeWorkspace) -> Vec<(usize, usize)> {
+        vec![
+            (workspace.syndromes.len(), workspace.syndromes.capacity()),
+            (workspace.locator.len(), workspace.locator.capacity()),
+            (workspace.previous.len(), workspace.previous.capacity()),
+            (workspace.scratch.len(), workspace.scratch.capacity()),
+            (workspace.chien.len(), workspace.chien.capacity()),
+            (0, workspace.positions.capacity()),
+        ]
+    }
+
+    #[test]
+    fn repeated_decodes_reuse_one_workspace() {
+        let code = narrow_sense(4, 0b10011, 5);
+        let decoder = BinaryBchDecoder::new(&code);
+        let mut workspace = decoder.workspace();
+        let shape = buffer_shape(&workspace);
+
+        let message: Vec<bool> = (0..code.k()).map(|index| index % 2 == 0).collect();
+        let codeword = encode(&code, &message);
+
+        for round in 0..64 {
+            for error_count in 0..=code.correction_radius() + 1 {
+                let mut received = codeword.clone();
+                let positions: Vec<usize> = (0..error_count)
+                    .map(|offset| (round + 3 * offset) % code.n())
+                    .collect();
+                let unique: Vec<usize> = sorted(&positions);
+                if unique.windows(2).any(|pair| pair[0] == pair[1]) {
+                    continue;
+                }
+                flip(&mut received, &positions);
+
+                let outcome = decoder
+                    .correct_in_place(&mut received, &mut workspace)
+                    .expect("the received word has length n");
+                assert!(matches!(
+                    outcome.corrected_count(),
+                    None | Some(0..=2) // at most the radius
+                ));
+                assert_eq!(
+                    buffer_shape(&workspace),
+                    shape,
+                    "no workspace buffer grew during decoding"
+                );
+            }
+        }
+    }
+
+    // -- Input validation --------------------------------------------------
+
+    #[test]
+    fn a_mismatched_buffer_is_rejected_before_decoding() {
+        let code = narrow_sense(4, 0b10011, 5);
+        let decoder = BinaryBchDecoder::new(&code);
+        let mut workspace = decoder.workspace();
+
+        let mut short = BitVec::zeros(code.n() - 1);
+        assert_eq!(
+            decoder
+                .correct_in_place(&mut short, &mut workspace)
+                .expect_err("a received word has n coordinates"),
+            BchError::Decode(CodeError::BufferLengthMismatch {
+                expected: code.n(),
+                actual: code.n() - 1,
+            })
+        );
+        assert!(decoder.decode(&short).is_err());
+
+        // A workspace sized for a different code is a caller mistake the
+        // decoder reports instead of indexing past a buffer.
+        let other = narrow_sense(4, 0b10011, 7);
+        let mut foreign = BinaryBchDecoder::new(&other).workspace();
+        let mut word = BitVec::zeros(code.n());
+        assert!(decoder.correct_in_place(&mut word, &mut foreign).is_err());
+    }
+
+    // -- Boundary and non-narrow-sense constructions -----------------------
+
+    #[test]
+    fn the_full_space_code_reports_every_word_as_a_codeword() {
+        let code = narrow_sense(4, 0b10011, 1);
+        assert_eq!(code.correction_radius(), 0);
+        assert_eq!(code.k(), code.n());
+
+        let decoder = BinaryBchDecoder::new(&code);
+        let mut workspace = decoder.workspace();
+        for value in 0..1u32 << 8 {
+            let bits: Vec<bool> = (0..code.n()).map(|index| value >> index & 1 == 1).collect();
+            let received = bits_to_word(&bits);
+            let mut storage = received.clone();
+            assert_eq!(
+                decoder
+                    .correct_in_place(&mut storage, &mut workspace)
+                    .expect("the received word has length n"),
+                BchDecodeOutcome::NoErrors
+            );
+            assert_eq!(storage, received);
+        }
+
+        let ones = BitVec::ones(code.n());
+        let report = decoder.decode(&ones).expect("the word has length n");
+        assert_eq!(report.message(), Some(&ones), "the generator is one");
+    }
+
+    /// The decoder reads the witnessed run rather than assuming the
+    /// narrow-sense start: seeds `{2, 3, 4, 5}` close to a run of six that
+    /// starts at exponent one, so the radius is three.
+    #[test]
+    fn a_first_root_code_corrects_within_its_witnessed_radius() {
+        let code = BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+            extension: BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())
+                .expect("a primitive modulus"),
+            first_root: RootExponent::from(2),
+            designed_distance: DesignedDistance::try_from(5).expect("positive"),
+        })
+        .expect("a valid primitive first-root spec");
+        assert_eq!(code.correction_radius(), 3);
+        assert_eq!(code.k(), 5);
+
+        let decoder = BinaryBchDecoder::new(&code);
+        let mut workspace = decoder.workspace();
+        let message = [true, false, true, true, false];
+        let codeword = encode(&code, &message);
+
+        for positions in [&[3usize][..], &[0, 11][..], &[2, 7, 13][..]] {
+            let mut received = codeword.clone();
+            flip(&mut received, positions);
+
+            let report = decoder.decode(&received).expect("the word has length n");
+            assert_eq!(
+                report.outcome(),
+                BchDecodeOutcome::Corrected {
+                    count: positions.len()
+                }
+            );
+            assert_eq!(report.error_positions(), sorted(positions).as_slice());
+            assert_eq!(report.message(), Some(&bits_to_word(&message)));
+
+            let mut storage = received;
+            assert_eq!(
+                decoder
+                    .correct_in_place(&mut storage, &mut workspace)
+                    .expect("the received word has length n"),
+                BchDecodeOutcome::Corrected {
+                    count: positions.len()
+                }
+            );
+            assert_eq!(storage, codeword);
         }
     }
 }
