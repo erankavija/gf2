@@ -551,6 +551,11 @@
       "source": "c3d5cea5 worker sign-off",
       "finding": "proptest runner fix restores ~19 previously-unenforced field axioms crate-wide; future carriers that 'passed' may legitimately start failing \u2014 coverage changed, not contract",
       "disposition": "informational; bake into dispatch prompts for later field-implementing waves (quotient-ext-runtime/const, conway-registry)"
+    },
+    {
+      "source": "c3d5cea5 final sign-off",
+      "finding": "Design risk R-01 residual: an out-of-tree ExtConfig implementor with a wrong non-residue builds a ConstExt witness over a non-field; neither the type system nor 19fe9394's in-tree conformance case reaches it. Closing requires making ConstExt::new fallible (design amendment).",
+      "disposition": "epic REQ-02 (compile-time quotient forms) reconciliation must face this; bake into the 0e706bf5 quotient-ext-const dispatch prompt \u2014 address or explicitly scope with owner approval"
     }
   ],
   "coordination": {
