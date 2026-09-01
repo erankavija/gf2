@@ -55,20 +55,30 @@
 //!
 //! The recurrence runs over two buffers, held together by
 //! [`EncodeRegisters`]: an $r$-symbol shift register and the generator's low
-//! $r$ coefficients in the same words. The one-shot entry points
-//! [`encode_systematic`](BchCode::encode_systematic),
-//! [`encode_systematic_into`](BchCode::encode_systematic_into), and
-//! [`BlockEncoder::encode_into`] build both per call, which is the whole heap
-//! traffic of an encode.
+//! $r$ coefficients in the same words. The entry points that take no
+//! workspace — [`encode_systematic`](BchCode::encode_systematic),
+//! [`encode_systematic_into`](BchCode::encode_systematic_into),
+//! [`BlockEncoder::encode_into`], and
+//! [`encode_batch`](BchCode::encode_batch) — run over a pair the calling
+//! thread keeps for the register word type they encode in. That pair is sized
+//! on the thread's first such encode and reset in place on every one
+//! afterwards, so the buffers reach the allocator once per thread and a
+//! repeated encode reaches it only through whatever result the caller asked
+//! the code to allocate. Thread-local storage is what keeps those entry
+//! points lock-free: concurrent encodes over one shared code borrow registers
+//! no other thread can reach, so they neither serialize nor share a buffer. A
+//! thread holds one pair per register word type until it exits, keeping the
+//! allocation of the largest redundancy it has encoded in that type.
 //!
-//! [`BchCode::encode_workspace`] builds them once instead.
+//! Resetting a pair rewrites the low coefficients, which is $O(r)$ per call.
+//! [`BchCode::encode_workspace`] pays that once for a whole sequence instead
+//! and hands the pair to the caller.
 //! [`encode_systematic_with`](BchCode::encode_systematic_with) then reuses the
 //! same [`BchEncodeWorkspace`] for every message: the register is overwritten
 //! in place and the coefficients are read, so neither is resized, replaced, or
 //! pushed to, and no other value on the path outlives a call — the plan is
 //! `usize` arithmetic over a borrowed generator, and base-field elements share
-//! their field by reference count rather than by allocating. The caller
-//! therefore owns the one allocation an encoding sequence performs.
+//! their field by reference count rather than by allocating.
 //!
 //! A workspace belongs to the code that produced it. It carries a fingerprint
 //! of that code, and an encode rejects a foreign workspace with
@@ -199,13 +209,15 @@
 //! let mut workspaces = code.encode_workspaces(workers);
 //! code.encode_batch_parallel_into(&messages, layout, &mut workspaces, &mut codewords)?;
 //!
-//! // Input order, and the same bytes the one-shot path produces.
+//! // Input order, and the same bytes the single-message path produces.
 //! for (message, codeword) in messages.iter().zip(&codewords) {
 //!     assert_eq!(*codeword, code.encode(message)?);
 //! }
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+use std::any::{Any, TypeId};
+use std::cell::RefCell;
 use std::num::NonZeroUsize;
 use std::slice;
 
@@ -417,12 +429,11 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
         self.user_at(self.redundancy() + degree)
     }
 
-    /// The generator's low $r$ coefficients, the form
-    /// [`EncodeRegisters::low`] holds them in.
-    fn low_coefficients(&self) -> Vec<F> {
-        (0..self.redundancy())
-            .map(|degree| self.generator.coeff_or_zero(degree, &self.zero))
-            .collect()
+    /// The generator's coefficient of $x^{degree}$, for a `degree` below the
+    /// redundancy, which is the form [`EncodeRegisters::low`] holds the low
+    /// coefficients in.
+    fn low_coefficient(&self, degree: usize) -> &F {
+        self.generator.try_coeff(degree).unwrap_or(&self.zero)
     }
 }
 
@@ -513,6 +524,68 @@ pub fn max_parallel_batch_workers() -> NonZeroUsize {
 }
 
 // ---------------------------------------------------------------------------
+// The calling thread's scratch registers
+// ---------------------------------------------------------------------------
+
+/// One thread's scratch [`EncodeRegisters`] for one register word type.
+struct ScratchRegisters {
+    /// The [`SystematicKernel::Word`] the erased registers are stored in.
+    word: TypeId,
+    /// The `EncodeRegisters<W>` of the `W` that `word` names.
+    registers: Box<dyn Any>,
+}
+
+thread_local! {
+    /// The registers the entry points that take no workspace run over, one
+    /// entry per register word type this thread has encoded in.
+    ///
+    /// A `thread_local!` item cannot be generic, and a `static` inside a
+    /// generic function is one item every monomorphization shares, so an
+    /// entry carries its word type as a [`TypeId`] and erases the registers
+    /// to `dyn Any`. A thread encodes in a handful of word types — this crate
+    /// implements two — so selecting an entry by scanning for its `TypeId`
+    /// costs less than hashing one.
+    static ENCODE_SCRATCH: RefCell<Vec<ScratchRegisters>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Runs `encode` over the calling thread's scratch registers for `W`.
+///
+/// The entry the thread's first call for `W` creates is the entry every later
+/// call borrows, so the buffers are allocated once per thread and word type.
+/// `encode` receives them in the state the previous encode left them in and
+/// sizes them itself, which [`SystematicKernel::reset_registers`] does.
+///
+/// The borrow is held for the whole of `encode`. Nothing a kernel reaches
+/// encodes, so nothing re-enters this function while its registers are
+/// borrowed.
+fn with_encode_scratch<W, R>(encode: impl FnOnce(&mut EncodeRegisters<W>) -> R) -> R
+where
+    W: 'static,
+{
+    ENCODE_SCRATCH.with_borrow_mut(|scratch| {
+        let word = TypeId::of::<W>();
+        let index = scratch
+            .iter()
+            .position(|entry| entry.word == word)
+            .unwrap_or_else(|| {
+                scratch.push(ScratchRegisters {
+                    word,
+                    registers: Box::new(EncodeRegisters::<W> {
+                        register: Vec::new(),
+                        low: Vec::new(),
+                    }),
+                });
+                scratch.len() - 1
+            });
+        let registers = scratch[index]
+            .registers
+            .downcast_mut::<EncodeRegisters<W>>()
+            .expect("the entry a word type's TypeId selects holds that word type's registers");
+        encode(registers)
+    })
+}
+
+// ---------------------------------------------------------------------------
 // The representation-specific kernels
 // ---------------------------------------------------------------------------
 
@@ -533,10 +606,30 @@ pub fn max_parallel_batch_workers() -> NonZeroUsize {
 /// [`encode_systematic_with`](Self::encode_systematic_with) is the primitive:
 /// it runs the recurrence over registers the caller owns and allocates
 /// nothing. [`encode_systematic_into`](Self::encode_systematic_into) is the
-/// one-shot form, and builds one set of registers per call.
+/// form that takes no workspace, and runs over the calling thread's scratch
+/// registers.
 pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     /// The word this representation's shift register is stored in.
-    type Word: Clone + core::fmt::Debug;
+    ///
+    /// The bound is `'static` because the entry points that take no workspace
+    /// select their scratch registers by this type's [`TypeId`].
+    type Word: Clone + core::fmt::Debug + 'static;
+
+    /// Sizes `registers` for `plan` and writes its generator's low
+    /// coefficients into them.
+    ///
+    /// Both buffers come back at the length this plan's recurrence reads,
+    /// with `low` carrying the generator's low $r$ coefficients in this
+    /// representation's words. The register's contents carry no meaning on
+    /// entry to an encode, so only its length is established here. A buffer
+    /// that is already long enough is rewritten in place and keeps its
+    /// allocation.
+    ///
+    /// # Complexity
+    ///
+    /// $O(r)$ words, allocating only to reach a length the buffers have not
+    /// held before.
+    fn reset_registers(plan: &SystematicPlan<'_, F>, registers: &mut EncodeRegisters<Self::Word>);
 
     /// Builds the registers `plan`'s recurrence runs over, sized from its
     /// redundancy and carrying its generator's low coefficients.
@@ -544,7 +637,14 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     /// # Complexity
     ///
     /// Two allocations, together $O(r)$ words.
-    fn registers(plan: &SystematicPlan<'_, F>) -> EncodeRegisters<Self::Word>;
+    fn registers(plan: &SystematicPlan<'_, F>) -> EncodeRegisters<Self::Word> {
+        let mut registers = EncodeRegisters {
+            register: Vec::new(),
+            low: Vec::new(),
+        };
+        Self::reset_registers(plan, &mut registers);
+        registers
+    }
 
     /// Writes the systematic codeword of `message` into `codeword`, using
     /// `registers` as its whole working storage.
@@ -570,9 +670,12 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
 
     /// Writes the systematic codeword of `message` into `codeword`.
     ///
-    /// This is the one-shot form: it builds one set of registers and drops
-    /// them again, which is the whole heap traffic of an encode. Reuse them
-    /// through [`BchCode::encode_workspace`] to remove it.
+    /// This is the form that takes no workspace: it runs over the calling
+    /// thread's scratch registers, which are allocated on that thread's first
+    /// encode in this word type and reset in place on every one afterwards,
+    /// so a repeated encode performs no allocation of its own. Concurrent
+    /// encodes borrow one pair of registers per thread and never wait on each
+    /// other.
     ///
     /// # Errors
     ///
@@ -580,13 +683,21 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     /// [`SystematicPlan::validate_lengths`] when `message` does not hold
     /// `plan.dimension()` symbols or `codeword` does not hold
     /// `plan.length()`; no output symbol is written in that case.
+    ///
+    /// # Complexity
+    ///
+    /// That of [`encode_systematic_with`](Self::encode_systematic_with) plus
+    /// the $O(r)$ reset, which [`BchCode::encode_workspace`] pays once for a
+    /// whole sequence instead.
     fn encode_systematic_into(
         plan: &SystematicPlan<'_, F>,
         message: &Self,
         codeword: &mut Self,
     ) -> Result<(), CodeError> {
-        let mut registers = Self::registers(plan);
-        Self::encode_systematic_with(plan, message, &mut registers, codeword)
+        with_encode_scratch(|registers: &mut EncodeRegisters<Self::Word>| {
+            Self::reset_registers(plan, registers);
+            Self::encode_systematic_with(plan, message, registers, codeword)
+        })
     }
 }
 
@@ -609,10 +720,13 @@ impl<F: FieldIdentity + 'static> SystematicKernel<F> for FieldVec<F> {
     /// The recurrence runs over base-field elements themselves.
     type Word = F;
 
-    fn registers(plan: &SystematicPlan<'_, F>) -> EncodeRegisters<F> {
-        EncodeRegisters {
-            register: vec![plan.symbol_zero().clone(); plan.redundancy()],
-            low: plan.low_coefficients(),
+    fn reset_registers(plan: &SystematicPlan<'_, F>, registers: &mut EncodeRegisters<F>) {
+        let redundancy = plan.redundancy();
+        let zero = plan.symbol_zero();
+        registers.register.resize_with(redundancy, || zero.clone());
+        registers.low.resize_with(redundancy, || zero.clone());
+        for (degree, slot) in registers.low.iter_mut().enumerate() {
+            slot.clone_from(plan.low_coefficient(degree));
         }
     }
 
@@ -676,17 +790,15 @@ impl SystematicKernel<Fp<2>> for BitVec {
     /// The recurrence runs over packed `u64` words, one bit per coefficient.
     type Word = u64;
 
-    fn registers(plan: &SystematicPlan<'_, Fp<2>>) -> EncodeRegisters<u64> {
+    fn reset_registers(plan: &SystematicPlan<'_, Fp<2>>, registers: &mut EncodeRegisters<u64>) {
         let words = plan.redundancy().div_ceil(64);
-        let mut low = vec![0u64; words];
-        for (degree, coefficient) in plan.low_coefficients().iter().enumerate() {
-            if coefficient.is_one() {
-                low[degree / 64] |= 1u64 << (degree % 64);
+        registers.register.resize(words, 0);
+        registers.low.clear();
+        registers.low.resize(words, 0);
+        for degree in 0..plan.redundancy() {
+            if plan.low_coefficient(degree).is_one() {
+                registers.low[degree / 64] |= 1u64 << (degree % 64);
             }
-        }
-        EncodeRegisters {
-            register: vec![0u64; words],
-            low,
         }
     }
 
@@ -790,6 +902,10 @@ where
     /// systematic coordinates the layout declares. Every coordinate of
     /// `codeword` is written.
     ///
+    /// The recurrence runs over the calling thread's scratch registers, so
+    /// the call allocates nothing once that thread has encoded in this code's
+    /// word type; see the [module level](self#workspaces).
+    ///
     /// # Errors
     ///
     /// - [`CodeError::BufferLengthMismatch`] when `message` does not hold
@@ -837,9 +953,10 @@ where
     /// Build this once and pass the same value to every
     /// [`encode_systematic_with`](Self::encode_systematic_with) or
     /// [`encode_batch_into`](Self::encode_batch_into) call: the buffers are
-    /// sized here and only overwritten afterwards, so the per-message path
-    /// performs no allocation. The workspace serves every
-    /// [`SystematicLayout`] of this code.
+    /// sized and filled here and only overwritten afterwards, so the
+    /// per-message path neither allocates nor pays the $O(r)$ reset the
+    /// entry points that take no workspace pay per call. The workspace serves
+    /// every [`SystematicLayout`] of this code.
     ///
     /// # Complexity
     ///
@@ -891,8 +1008,8 @@ where
     /// # Complexity
     ///
     /// That of [`encode_systematic_into`](Self::encode_systematic_into),
-    /// without its two allocations, plus $O(r)$ mixing steps to decide the
-    /// workspace fingerprint. A batch pays that check once for the whole
+    /// without its $O(r)$ register reset, plus $O(r)$ mixing steps to decide
+    /// the workspace fingerprint. A batch pays that check once for the whole
     /// batch.
     pub fn encode_systematic_with(
         &self,
@@ -956,8 +1073,8 @@ where
     ///
     /// # Complexity
     ///
-    /// One recurrence per message over one internally allocated workspace,
-    /// plus the output vector.
+    /// One recurrence per message over the calling thread's scratch
+    /// registers, plus the output vector.
     pub fn encode_batch(
         &self,
         messages: &[S],
@@ -966,8 +1083,10 @@ where
         let plan = self.systematic_plan(layout);
         let mut codewords = vec![S::zeroed(plan.length(), plan.symbol_zero()); messages.len()];
         validate_batch(&plan, messages, &codewords)?;
-        let mut registers = S::registers(&plan);
-        encode_partition(&plan, messages, &mut registers, &mut codewords);
+        with_encode_scratch(|registers: &mut EncodeRegisters<S::Word>| {
+            S::reset_registers(&plan, registers);
+            encode_partition(&plan, messages, registers, &mut codewords);
+        });
         Ok(codewords)
     }
 
@@ -1305,6 +1424,11 @@ where
 {
     /// Encodes under the default layout, `[message | parity]` in ascending
     /// degree order.
+    ///
+    /// The call owns no buffers: it writes the caller's `codeword` and runs
+    /// the recurrence over the calling thread's scratch registers, so a
+    /// repeated encode reaches no allocator. See the
+    /// [module level](self#workspaces).
     ///
     /// # Errors
     ///
@@ -2013,9 +2137,9 @@ mod tests {
 
     #[test]
     fn the_packed_workspace_path_holds_at_the_word_boundaries() {
-        // The same redundancies 0, 1, 63, 64, and 65 the one-shot packed path
-        // pins: the register is empty, one bit, one word short, exactly one
-        // word, and one bit into a second word.
+        // The same redundancies 0, 1, 63, 64, and 65 the single-message
+        // packed path pins: the register is empty, one bit, one word short,
+        // exactly one word, and one bit into a second word.
         let codes = [
             binary_narrow_sense(4, 0b10011, 1),
             binary_first_root(4, 0b10011, 0, 2),
@@ -2115,18 +2239,173 @@ mod tests {
         assert_eq!(codewords, messages, "k = n batches the messages unchanged");
     }
 
-    // -- REQ-01: the workspace owns the only allocation --------------------
+    // -- REQ-01: an encode reaches no allocator --------------------------
 
-    /// The address, length, and capacity of each workspace buffer. The code
+    /// The address, length, and capacity of each register buffer. The code
     /// sizes both once and only overwrites them afterwards, so an unchanged
     /// snapshot witnesses that neither buffer moved or grew, and therefore
-    /// that the per-message path reallocated nothing.
-    fn buffer_shape<W>(workspace: &BchEncodeWorkspace<W>) -> Vec<(usize, usize, usize)> {
-        let registers = workspace.registers();
+    /// that the encodes between two reads reallocated nothing.
+    fn register_shape<W>(registers: &EncodeRegisters<W>) -> Vec<(usize, usize, usize)> {
         [&registers.register, &registers.low]
             .into_iter()
             .map(|buffer| (buffer.as_ptr() as usize, buffer.len(), buffer.capacity()))
             .collect()
+    }
+
+    /// That snapshot for the buffers a caller's workspace owns.
+    fn buffer_shape<W>(workspace: &BchEncodeWorkspace<W>) -> Vec<(usize, usize, usize)> {
+        register_shape(workspace.registers())
+    }
+
+    /// That snapshot for the scratch registers the calling thread holds for
+    /// `W`, or `None` before this thread has encoded in that word type.
+    ///
+    /// This is what witnesses REQ-01 for the entry points that take no
+    /// workspace: those registers are the only buffers such an encode can
+    /// allocate.
+    fn scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> {
+        ENCODE_SCRATCH.with_borrow(|scratch| {
+            let word = TypeId::of::<W>();
+            let entry = scratch.iter().find(|entry| entry.word == word)?;
+            let registers = entry
+                .registers
+                .downcast_ref::<EncodeRegisters<W>>()
+                .expect("the entry a word type's TypeId selects holds that word type's registers");
+            Some(register_shape(registers))
+        })
+    }
+
+    #[test]
+    fn repeated_encodes_without_a_workspace_reuse_one_scratch() {
+        let code = binary_narrow_sense(7, 0b10000011, 21);
+        let mut codeword = BitVec::zeros(code.n());
+
+        // The first encode on this thread sizes the scratch; every one after
+        // it finds the buffers it needs already there.
+        BlockEncoder::encode_into(&code, &seeded_bits(code.k(), 1), &mut codeword)
+            .expect("a k-bit message encodes");
+        let shape = scratch_shape::<u64>().expect("the first packed encode sizes the scratch");
+
+        for round in 0..64u64 {
+            let message = seeded_bits(code.k(), round | 1);
+            BlockEncoder::encode_into(&code, &message, &mut codeword)
+                .expect("a k-bit message encodes");
+            assert_eq!(
+                scratch_shape::<u64>().as_ref(),
+                Some(&shape),
+                "encode_into must not move or grow the thread's scratch"
+            );
+
+            for &layout in LAYOUTS {
+                code.encode_systematic_into(&message, layout, &mut codeword)
+                    .expect("a k-bit message encodes");
+                code.encode_systematic(&message, layout)
+                    .expect("a k-bit message encodes");
+                assert_eq!(
+                    scratch_shape::<u64>().as_ref(),
+                    Some(&shape),
+                    "no workspace-free entry point may move or grow the thread's scratch"
+                );
+            }
+        }
+
+        let messages = seeded_bit_batch(code.k(), 16, 5);
+        code.encode_batch(&messages, SystematicLayout::default())
+            .expect("a validated batch encodes");
+        assert_eq!(
+            scratch_shape::<u64>().as_ref(),
+            Some(&shape),
+            "the allocating batch must not move or grow the thread's scratch"
+        );
+    }
+
+    #[test]
+    fn a_field_generic_scratch_is_reused_too() {
+        let code = gf5_code(5);
+        let alphabet: Vec<Fp<5>> = (0..5).map(Fp::<5>::new).collect();
+        let mut codeword = FieldVec::zeros_from(code.n(), &Fp::<5>::new(0));
+
+        BlockEncoder::encode_into(
+            &code,
+            &seeded_symbols(&alphabet, code.k(), 1),
+            &mut codeword,
+        )
+        .expect("a k-symbol message encodes");
+        let shape =
+            scratch_shape::<Fp<5>>().expect("the first field-generic encode sizes the scratch");
+
+        for round in 0..32u64 {
+            let message = seeded_symbols(&alphabet, code.k(), round | 1);
+            for &layout in LAYOUTS {
+                code.encode_systematic_into(&message, layout, &mut codeword)
+                    .expect("a k-symbol message encodes");
+                assert_eq!(
+                    scratch_shape::<Fp<5>>().as_ref(),
+                    Some(&shape),
+                    "no buffer moved or grew"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn interleaved_codes_reset_the_shared_scratch() {
+        // One thread's scratch serves every code it encodes, so an encode
+        // that reused another code's coefficients or register length instead
+        // of resetting them shows up as a wrong codeword here. The oracle is
+        // the workspace path, which owns registers of its own.
+        let codes = [
+            binary_narrow_sense(4, 0b10011, 5),
+            binary_narrow_sense(7, 0b10000011, 21),
+            binary_first_root(4, 0b10011, 0, 2),
+        ];
+        let layout = SystematicLayout::default();
+
+        for round in 0..4u64 {
+            for code in &codes {
+                let message = seeded_bits(code.k(), round | 1);
+                let mut workspace = code.encode_workspace();
+                let mut expected = BitVec::zeros(code.n());
+                code.encode_systematic_with(&message, layout, &mut workspace, &mut expected)
+                    .expect("a k-bit message encodes with its own workspace");
+
+                let mut codeword = BitVec::zeros(code.n());
+                BlockEncoder::encode_into(code, &message, &mut codeword)
+                    .expect("a k-bit message encodes");
+                assert_eq!(
+                    codeword, expected,
+                    "the shared scratch must be reset to the encoding code's registers"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn concurrent_encodes_without_a_workspace_agree() {
+        // `encode_into` takes `&self` and the scratch it runs over lives in
+        // thread-local storage, so threads sharing one code neither wait on
+        // each other nor read each other's registers.
+        let code = binary_narrow_sense(6, 0b1000011, 7);
+        let messages = seeded_bit_batch(code.k(), 24, 0x8F68_699B);
+        let expected = code
+            .encode_batch(&messages, SystematicLayout::default())
+            .expect("a validated batch encodes");
+
+        std::thread::scope(|scope| {
+            for _ in 0..4 {
+                scope.spawn(|| {
+                    let mut codeword = BitVec::zeros(code.n());
+                    for (message, want) in messages.iter().zip(&expected) {
+                        BlockEncoder::encode_into(&code, message, &mut codeword)
+                            .expect("a k-bit message encodes");
+                        assert_eq!(
+                            &codeword, want,
+                            "a concurrent encode_into writes the codeword of its own message"
+                        );
+                    }
+                });
+            }
+        });
     }
 
     #[test]
