@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 24,
-  "wave_notes": "Recovery wave 24 serializes the two inherited active roots. Issue 5bdc9552 is merged and all executable gates plus code-review pass, but doc-review found three blocking stale selector references after the maximum two rework retries; invoker guidance is required before a further correction. Issue 389aa4de remains in progress and its format-2 pre-measurement patch plan is ready, but wave discipline holds dispatch until 5bdc9552 closes.",
+  "wave_notes": "Recovery wave 24 serializes the two inherited active roots. Issue 5bdc9552 is merged and all executable gates plus code-review pass. The invoker selected option A after doc-review found three blocking stale selector references and two adjacent advisory comments: targeted guidance resets the rework counter, and one comprehensive present-tense sweep is in progress before the full affected gate chain is rerun. Issue 389aa4de remains in progress and its format-2 pre-measurement patch plan is ready, but wave discipline holds dispatch until 5bdc9552 closes.",
   "open_escalations": [],
   "waves": [
     {
@@ -586,8 +586,8 @@
           "title": "Remove the trait selectors and regenerate the proof surface",
           "classification": "implementation",
           "model": "opus",
-          "status": "escalated-after-rework-cap",
-          "notes": "Seam U8 is merged on main. cargo-ci, verify-lean, lake-build and code-review pass. User-approved REQ-03A permits the sole pre-existing Packed5::to_raw_planes regeneration drift and the second regeneration is byte-identical. Rework 1 made the proof postprocessor fail closed on an exact ten-wrapper allowlist. Rework 2 fixed the first present-tense review finding. Doc-review then found three blocking stale selector references plus two advisory historical comments; MAX_REWORK_ATTEMPTS=2 is exhausted and invoker guidance is pending."
+          "status": "guided-rework-in-progress",
+          "notes": "Seam U8 is merged on main. cargo-ci, verify-lean, lake-build and code-review pass. User-approved REQ-03A permits the sole pre-existing Packed5::to_raw_planes regeneration drift and the second regeneration is byte-identical. Rework 1 made the proof postprocessor fail closed on an exact ten-wrapper allowlist. Rework 2 fixed the first present-tense review finding. Doc-review then found three blocking stale selector references plus two advisory historical comments. The invoker selected option A, resetting the rework counter and authorizing one guided comprehensive present-tense sweep across all five sites; this dispatch is retry 1 after the reset."
         },
         {
           "id": "dbd8787d",
@@ -1070,6 +1070,12 @@
       "issue": "5bdc9552",
       "date": "2026-09-01",
       "decision": "OPEN: two rework retries are exhausted. The merged implementation, proof regeneration, cargo-ci, verify-lean, lake-build and code-review pass. Doc-review still reports three blocking current-documentation references to removed selectors (strassen_threshold_results.md, field/charpoly.rs, benches/triangular.rs) and two advisory historical test comments (field/ple.rs, field/inverse.rs). Awaiting invoker choice: targeted guidance that resets the counter, manual takeover, or rejection."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "5bdc9552",
+      "date": "2026-09-01",
+      "decision": "The invoker selected option A. Targeted guidance resets the rework counter and authorizes one comprehensive present-tense documentation sweep covering all three blocking doc-review findings and both adjacent advisory comments before the complete affected gate chain is rerun. This guided dispatch is retry 1 after the reset."
     }
   ],
   "rework_counts": {
@@ -1104,13 +1110,13 @@
     "88441adb": 0,
     "e8a727ff": 1,
     "e2744fcf": 0,
-    "5bdc9552": 2
+    "5bdc9552": 1
   },
   "surfaced_pitfalls": [
     {
       "issue": "5bdc9552",
       "finding": "Removing selector declarations is not a complete canonical cutover while current benchmark documentation and public rustdoc still name the retired constants. Code-review and doc-review found the stale prose in separate rounds after the implementation and proof gates passed.",
-      "disposition": "OPEN escalation after two rework retries. Resolve every blocking doc-review finding and the two adjacent advisory test comments in one present-tense sweep before rerunning doc-review."
+      "disposition": "REMEDIATION IN PROGRESS: the invoker selected option A, resetting the rework counter. Guided retry 1 covers every blocking doc-review finding and both adjacent advisory test comments in one present-tense sweep before the affected gates are rerun."
     },
     {
       "issue": "34d85cb9",
