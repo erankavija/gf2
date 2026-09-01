@@ -8,6 +8,7 @@
   ],
   "description": "Implement $q$-cyclotomic coset computation and seed-set closure in gf2-core: given a seed set of root exponents modulo $n$, derive the closed defining set under multiplication by $q$, partitioned into cosets.\n\n## Background\n\nGeneral BCH construction accepts seed sets that are not already closed and derives the closure itself. Coset partitions also drive generator-polynomial assembly (one minimal polynomial per coset) and are a named Lean proof obligation, so the operation lives in gf2-core where the proof surface can reach it.\n\n## Success Criteria\n\n- [hard] REQ-01: gf2-core computes the $q$-cyclotomic closure and coset partition of any seed set modulo $n$ with $\\gcd(n,q)=1$, deterministically ordered.\n- [hard] REQ-02: Property tests verify closure idempotence, coset disjointness, and agreement between coset unions and closure over binary and nonbinary cases.\n",
   "documents": [],
+  "done_at": "2026-09-01T11:05:45.936888013Z",
   "first_ready_at": "2026-09-01T09:35:26.135766066Z",
   "gates_required": [
     "cargo-ci",
@@ -20,8 +21,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-01T11:01:27.674382324Z",
+      "status": "passed",
+      "updated_at": "2026-09-01T11:05:31.406185136Z",
       "updated_by": "auto:executor"
     }
   },
@@ -33,7 +34,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Implement q-cyclotomic coset closure over extension fields",
-  "updated_at": "2026-09-01T11:01:27.674382324Z"
+  "updated_at": "2026-09-01T11:05:45.936888013Z"
 }
