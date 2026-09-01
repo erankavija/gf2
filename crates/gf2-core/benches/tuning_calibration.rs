@@ -197,6 +197,7 @@ const REQUIRED_RAYON_THREADS: &str = "4";
 const REQUIRED_FEATURES: &str = "parallel,simd,test-support,tuning-profile";
 const REQUIRED_SOA_PARALLEL_CHUNK_LEN: usize = 16_384;
 const REQUIRED_PLE_BYTE_LANE_MAX_COLS: usize = 256;
+const REQUIRED_TRSM_PANEL_ROWS: usize = 64;
 /// Private guard for every forced tuning child.
 const FRESH_CASE_VAR: &str = "GF2_TUNING_FRESH_CASE";
 const FRESH_CASE_VALUE: &str = "child-v2";
@@ -539,8 +540,8 @@ impl CalibratedField {
     ///
     /// Ordinary grids straddle `conservative_default`. The M4RM tiled grid is
     /// domain-clipped to begin at its boundary default of four words, where
-    /// both arms remain forceable. Every grid is capped where the slower arm's
-    /// cost per call would dominate the run without adding crossover evidence.
+    /// both arms remain forceable. The complete grids and fixtures are
+    /// preregistered in `dev/active/eaae1b56/premeasurement-protocol.md` §3.
     ///
     /// `karatsuba_max_out_len` counts product lengths, and a product of two
     /// equal-length operands has odd length `2n - 1`; its grid therefore uses
@@ -1714,7 +1715,7 @@ fn scalar_m4rm_oracle(lhs: &BitMatrix, rhs: &BitMatrix) -> BitMatrix {
     out
 }
 
-fn rref_pivot_columns(matrix: &FieldMatrix<Fp251>) -> Vec<usize> {
+fn rref_nonzero_row_leads(matrix: &FieldMatrix<Fp251>) -> Vec<usize> {
     (0..matrix.rows())
         .filter_map(|row| (0..matrix.cols()).find(|&col| matrix.get(row, col) != Fp251::new(0)))
         .collect()
@@ -2704,16 +2705,16 @@ fn execute_follow_on(
                 return Err("RREF failed X*A=R".to_owned());
             }
             let expected_rank = spec.size / 2;
-            let pivots = rref_pivot_columns(&r);
-            if pivots.len() != expected_rank {
+            let nonzero_row_leads = rref_nonzero_row_leads(&r);
+            if nonzero_row_leads.len() != expected_rank {
                 return Err(format!(
-                    "RREF observed {} nonzero rows, expected {expected_rank}: {pivots:?}",
-                    pivots.len()
+                    "RREF observed {} nonzero rows, expected {expected_rank}: {nonzero_row_leads:?}",
+                    nonzero_row_leads.len()
                 ));
             }
-            let free_cols = spec.size - pivots.len();
+            let free_cols = spec.size - nonzero_row_leads.len();
             observation.effective_observation =
-                format!("rank={} free_cols={free_cols}", pivots.len());
+                format!("rank={} free_cols={free_cols}", nonzero_row_leads.len());
             digest_tuple(
                 b"gf2-calibration-rref-result-v1",
                 [digest_field_matrix(&x), digest_field_matrix(&r)],
@@ -3199,6 +3200,12 @@ fn forced_profile_for(spec: ChildSpec) -> Result<(PreparedEnvelope, Vec<ForcedVa
             selectors.ple.panel_byte_lane_max_cols()
         ));
     }
+    if selectors.triangular.trsm_panel_rows() != REQUIRED_TRSM_PANEL_ROWS {
+        return Err(format!(
+            "the conservative TRSM panel is {}, protocol requires {REQUIRED_TRSM_PANEL_ROWS}",
+            selectors.triangular.trsm_panel_rows()
+        ));
+    }
     let forced = |below: usize, above: usize| match spec.arm {
         Arm::Conservative => below,
         Arm::Asymptotic => above,
@@ -3364,7 +3371,7 @@ fn forced_profile_for(spec: ChildSpec) -> Result<(PreparedEnvelope, Vec<ForcedVa
         CalibratedField::TrsmBlockedMinDim => {
             let value = forced(spec.size + 1, spec.size);
             let p = &selectors.triangular;
-            let panel_rows = p.trsm_panel_rows();
+            let panel_rows = REQUIRED_TRSM_PANEL_ROWS;
             selectors.triangular =
                 TriangularSelectors::try_new(value, panel_rows, p.base_case_max_dim())
                     .map_err(|error| error.to_string())?;
@@ -6204,6 +6211,7 @@ mod tests {
         let profile = profile_from(&DISTINCT);
         let MeasurementProvenance::Calibrated {
             harness_schema,
+            binary_sha256,
             toolchain,
             host,
             ..
@@ -6214,6 +6222,9 @@ mod tests {
         assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
         assert_eq!(toolchain, "rustc 1.95.0");
         assert_eq!(host, "test-host");
+        assert_eq!(binary_sha256.as_str(), "b".repeat(64));
+        assert_eq!(profile.assembly.tool_sha256.as_str(), "c".repeat(64));
+        assert_ne!(binary_sha256, &profile.assembly.tool_sha256);
     }
 
     #[test]
@@ -6238,6 +6249,310 @@ mod tests {
         ] {
             assert!(validate_rayon_threads(value).is_err(), "accepted {value:?}");
         }
+    }
+
+    #[allow(dead_code)]
+    type SweepManifestRow = (CalibratedField, SweepVariant, &'static [usize]);
+
+    #[allow(dead_code)]
+    const SWEEP_MANIFEST: &[SweepManifestRow] = &[
+        (
+            CalibratedField::SimdMinWords,
+            SweepVariant::Standard,
+            &[1, 2, 4, 7, 8, 9, 16, 32, 64],
+        ),
+        (
+            CalibratedField::KaratsubaMinDegree,
+            SweepVariant::Standard,
+            &[4, 8, 16, 31, 32, 33, 64, 128, 256],
+        ),
+        (
+            CalibratedField::KaratsubaMaxOutLen,
+            SweepVariant::Standard,
+            &[15, 31, 63, 127, 129, 191, 255, 383, 511],
+        ),
+        (
+            CalibratedField::DivRemFastMinLen,
+            SweepVariant::Standard,
+            &[64, 128, 256, 512, 1024, 2047, 2048, 2049, 4096],
+        ),
+        (
+            CalibratedField::SubproductMinLen,
+            SweepVariant::Standard,
+            &[128, 256, 512, 1024, 2048, 4095, 4096, 4097, 8192],
+        ),
+        (
+            CalibratedField::TransposeSimpleMaxBlocks,
+            SweepVariant::Standard,
+            &[2, 4, 8, 15, 16, 17, 32, 64, 128],
+        ),
+        (
+            CalibratedField::SoaParallelMinLen,
+            SweepVariant::Standard,
+            &[
+                4096, 8192, 16_384, 32_767, 32_768, 32_769, 65_536, 131_072, 262_144,
+            ],
+        ),
+        (
+            CalibratedField::M4rmWideTierMinStrideWords,
+            SweepVariant::Standard,
+            &[2, 4, 8, 15, 16, 17, 32, 64, 128],
+        ),
+        (
+            CalibratedField::M4rmTiledMinStrideWords,
+            SweepVariant::Standard,
+            &[4, 5, 6, 8, 12, 16, 24, 32, 64],
+        ),
+        (
+            CalibratedField::DenseInverseM4riMinDim,
+            SweepVariant::Standard,
+            &[1, 2, 4, 7, 8, 9, 16, 32, 64],
+        ),
+        (
+            CalibratedField::DenseInverseBlockedMinDim,
+            SweepVariant::Standard,
+            &[2, 4, 8, 15, 16, 17, 32, 64, 128],
+        ),
+        (
+            CalibratedField::TrsmBlockedMinDim,
+            SweepVariant::Standard,
+            &[8, 16, 32, 63, 64, 65, 96, 128, 256],
+        ),
+        (
+            CalibratedField::PlePanelBaseMaxCols,
+            SweepVariant::Standard,
+            &[16, 32, 64, 96, 127, 128, 129, 160, 256],
+        ),
+        (
+            CalibratedField::PleBlockedBackSubMinDim,
+            SweepVariant::Standard,
+            &[16, 32, 64, 96, 127, 128, 129, 192, 256],
+        ),
+        (
+            CalibratedField::GemmAxpyFastPathMinVolume,
+            SweepVariant::Standard,
+            &[64, 512, 1728, 3375, 4096, 4913, 8000, 13_824, 32_768],
+        ),
+        (
+            CalibratedField::InterpolateFastMinPoints,
+            SweepVariant::GenericInterpolation,
+            &[2, 4, 8, 15, 16, 17, 32, 64, 128],
+        ),
+        (
+            CalibratedField::InterpolateFastMinPoints,
+            SweepVariant::TwoAdicInterpolation,
+            &[2, 4, 8, 15, 16, 17, 32, 64, 128],
+        ),
+    ];
+
+    #[test]
+    fn canonical_manifest_pins_all_16_fields_17_sweeps_and_306_cells() {
+        assert_eq!(SWEEP_MANIFEST.len(), 17);
+        for field in CalibratedField::ALL {
+            let rows: Vec<_> = SWEEP_MANIFEST
+                .iter()
+                .filter(|(candidate, _, _)| *candidate == field)
+                .collect();
+            assert_eq!(rows.len(), field.variants().len(), "{field}");
+            for (variant, grid) in field.variants().iter().zip(rows) {
+                assert_eq!(&grid.1, variant, "{field}");
+                assert_eq!(grid.2, field.grid(), "{field}/{variant}");
+            }
+        }
+        let arm_cells: usize = SWEEP_MANIFEST
+            .iter()
+            .map(|(_, _, grid)| grid.len() * Arm::BOTH.len())
+            .sum();
+        let grid_points: usize = SWEEP_MANIFEST.iter().map(|(_, _, grid)| grid.len()).sum();
+        assert_eq!(CalibratedField::ALL.len(), 16);
+        assert_eq!(grid_points, 153);
+        assert_eq!(arm_cells, 306);
+        let protocol = Protocol {
+            executions: 5,
+            repetitions: 5,
+            target_ms: 250,
+        };
+        assert_eq!(
+            planned_campaign_accounting(&protocol),
+            CampaignAccounting {
+                cells: 306,
+                probes: 306,
+                timed: 1530,
+                launches: 1836,
+                windows: 7650,
+            }
+        );
+        assert_eq!(7650_u64 * protocol.target_ms, 1_912_500);
+    }
+
+    #[allow(dead_code)]
+    fn forced_values_oracle(spec: ChildSpec) -> Vec<ForcedValue> {
+        let lower = match spec.arm {
+            Arm::Conservative => spec.size + 1,
+            Arm::Asymptotic => spec.size,
+        };
+        let upper = match spec.arm {
+            Arm::Conservative => spec.size,
+            Arm::Asymptotic => spec.size - 1,
+        };
+        match spec.field {
+            CalibratedField::SimdMinWords => {
+                vec![ForcedValue::new("bit_backend", "simd_min_words", spec.size)]
+            }
+            CalibratedField::KaratsubaMinDegree => vec![ForcedValue::new(
+                "polynomial",
+                "karatsuba_min_degree",
+                match spec.arm {
+                    Arm::Conservative => usize::MAX,
+                    Arm::Asymptotic => spec.size,
+                },
+            )],
+            CalibratedField::KaratsubaMaxOutLen => vec![ForcedValue::new(
+                "polynomial",
+                "karatsuba_max_out_len",
+                upper,
+            )],
+            CalibratedField::DivRemFastMinLen => vec![ForcedValue::new(
+                "polynomial",
+                "div_rem_fast_min_len",
+                lower,
+            )],
+            CalibratedField::SubproductMinLen => {
+                vec![ForcedValue::new("polynomial", "subproduct_min_len", lower)]
+            }
+            CalibratedField::InterpolateFastMinPoints => vec![ForcedValue::new(
+                "polynomial",
+                "interpolate_fast_min_points",
+                lower,
+            )],
+            CalibratedField::TransposeSimpleMaxBlocks => vec![ForcedValue::new(
+                "bit_matrix",
+                "transpose_simple_max_blocks",
+                upper,
+            )],
+            CalibratedField::SoaParallelMinLen => vec![
+                ForcedValue::new("soa_batch", "parallel_min_len", lower),
+                ForcedValue::new("soa_batch", "parallel_chunk_len", 16_384),
+            ],
+            CalibratedField::M4rmWideTierMinStrideWords => vec![
+                ForcedValue::new("m4rm", "wide_tier_min_stride_words", lower),
+                ForcedValue::new("m4rm", "tiled_min_stride_words", usize::MAX),
+            ],
+            CalibratedField::M4rmTiledMinStrideWords => {
+                vec![ForcedValue::new("m4rm", "tiled_min_stride_words", lower)]
+            }
+            CalibratedField::DenseInverseM4riMinDim => {
+                vec![ForcedValue::new("dense_inverse", "m4ri_min_dim", lower)]
+            }
+            CalibratedField::DenseInverseBlockedMinDim => {
+                vec![ForcedValue::new("dense_inverse", "blocked_min_dim", lower)]
+            }
+            CalibratedField::TrsmBlockedMinDim => vec![
+                ForcedValue::new("triangular", "trsm_blocked_min_dim", lower),
+                ForcedValue::new("triangular", "trsm_panel_rows", 64),
+            ],
+            CalibratedField::PlePanelBaseMaxCols => vec![
+                ForcedValue::new("ple", "panel_base_max_cols", upper),
+                ForcedValue::new("ple", "panel_byte_lane_max_cols", 256),
+            ],
+            CalibratedField::PleBlockedBackSubMinDim => {
+                vec![ForcedValue::new("ple", "blocked_back_sub_min_dim", lower)]
+            }
+            CalibratedField::GemmAxpyFastPathMinVolume => {
+                vec![ForcedValue::new("gemm", "axpy_fast_path_min_volume", lower)]
+            }
+        }
+    }
+
+    #[allow(dead_code)]
+    fn assert_forcing_and_codec(fields: &[CalibratedField]) {
+        let conservative = complete_selector_value(&CoreTuning::CONSERVATIVE).unwrap();
+        for &(field, variant, grid) in SWEEP_MANIFEST {
+            if !fields.contains(&field) {
+                continue;
+            }
+            for &size in grid {
+                for arm in Arm::BOTH {
+                    let spec = ChildSpec {
+                        field,
+                        variant,
+                        size,
+                        arm,
+                        task: ChildTask::Probe,
+                    };
+                    let (prepared, active_values) = forced_profile_for(spec).unwrap();
+                    let expected_values = forced_values_oracle(spec);
+                    assert_eq!(active_values, expected_values, "{spec}");
+                    let projection = prepared.section::<CoreTuning>().unwrap().unwrap();
+                    let forced = complete_selector_value(projection.section).unwrap();
+                    for expected in &expected_values {
+                        assert_eq!(
+                            forced
+                                .pointer(&format!("/{}/{}", expected.family, expected.field))
+                                .and_then(serde_json::Value::as_u64),
+                            Some(expected.value as u64),
+                            "{spec}: {}/{}",
+                            expected.family,
+                            expected.field
+                        );
+                    }
+                    for (family, conservative_fields) in conservative.as_object().unwrap() {
+                        for (name, conservative_value) in conservative_fields.as_object().unwrap() {
+                            let forced_value = &forced[family][name];
+                            if forced_value != conservative_value {
+                                assert!(
+                                    expected_values.iter().any(|expected| {
+                                        expected.family == *family && expected.field == *name
+                                    }),
+                                    "{spec} changed undeclared {family}/{name}"
+                                );
+                            }
+                        }
+                    }
+                    forced_profile_digests(&prepared).unwrap();
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn direct_selector_forcing_and_codec_are_exact_at_every_grid_arm() {
+        assert_forcing_and_codec(&[
+            CalibratedField::SimdMinWords,
+            CalibratedField::KaratsubaMinDegree,
+            CalibratedField::KaratsubaMaxOutLen,
+            CalibratedField::DivRemFastMinLen,
+            CalibratedField::SubproductMinLen,
+        ]);
+    }
+
+    #[test]
+    fn bit_and_parallel_forcing_and_codec_are_exact_at_every_grid_arm() {
+        assert_forcing_and_codec(&[
+            CalibratedField::TransposeSimpleMaxBlocks,
+            CalibratedField::SoaParallelMinLen,
+            CalibratedField::M4rmWideTierMinStrideWords,
+            CalibratedField::M4rmTiledMinStrideWords,
+            CalibratedField::DenseInverseM4riMinDim,
+        ]);
+    }
+
+    #[test]
+    fn field_matrix_forcing_and_codec_are_exact_at_every_grid_arm() {
+        assert_forcing_and_codec(&[
+            CalibratedField::DenseInverseBlockedMinDim,
+            CalibratedField::TrsmBlockedMinDim,
+            CalibratedField::PlePanelBaseMaxCols,
+            CalibratedField::PleBlockedBackSubMinDim,
+        ]);
+    }
+
+    #[test]
+    fn gemm_and_interpolation_forcing_and_codec_are_exact_at_every_grid_arm() {
+        assert_forcing_and_codec(&[
+            CalibratedField::GemmAxpyFastPathMinVolume,
+            CalibratedField::InterpolateFastMinPoints,
+        ]);
     }
 
     #[test]
@@ -6740,9 +7055,92 @@ mod tests {
         assert!(line.contains("\"name\":\"rhs\",\"role\":11,\"seed\":"));
     }
 
+    #[allow(dead_code)]
+    fn seed_oracle(field_tag: u64, size: usize, role: u64) -> u64 {
+        let mut value = 0x5ecc_9bf8_0000_0000 ^ role.wrapping_mul(0x9e37_79b9_7f4a_7c15);
+        for word in [field_tag, size as u64] {
+            value ^= word;
+            value = value
+                .wrapping_mul(0xbf58_476d_1ce4_e5b9)
+                .rotate_left(27)
+                .wrapping_add(0x94d0_49bb_1331_11eb);
+        }
+        value ^ (value >> 31)
+    }
+
+    #[allow(dead_code)]
+    fn follow_on_roles_oracle(field: CalibratedField) -> &'static [(&'static str, u64)] {
+        match field {
+            CalibratedField::TransposeSimpleMaxBlocks => &[("matrix", 0x100)],
+            CalibratedField::SoaParallelMinLen => &[
+                ("quadratic_lhs", 0x200),
+                ("quadratic_rhs", 0x201),
+                ("cubic_lhs", 0x202),
+                ("cubic_rhs", 0x203),
+            ],
+            CalibratedField::M4rmWideTierMinStrideWords => &[("lhs", 0x300), ("rhs", 0x301)],
+            CalibratedField::M4rmTiledMinStrideWords => &[("lhs", 0x310), ("rhs", 0x311)],
+            CalibratedField::DenseInverseM4riMinDim => {
+                &[("unit_lower", 0x400), ("unit_upper", 0x401)]
+            }
+            CalibratedField::DenseInverseBlockedMinDim => {
+                &[("unit_lower", 0x500), ("unit_upper", 0x501)]
+            }
+            CalibratedField::TrsmBlockedMinDim => {
+                &[("unit_lower", 0x600), ("unit_upper", 0x601), ("rhs", 0x602)]
+            }
+            CalibratedField::PlePanelBaseMaxCols => &[("unit_lower", 0x700), ("unit_upper", 0x701)],
+            CalibratedField::PleBlockedBackSubMinDim => &[
+                ("designated_nonzero", 0x800),
+                ("non_designated", 0x801),
+                ("row_mix", 0x802),
+            ],
+            CalibratedField::GemmAxpyFastPathMinVolume => &[("lhs", 0x900), ("rhs", 0x901)],
+            CalibratedField::InterpolateFastMinPoints => {
+                &[("coefficients", 0xa00), ("point_offset", 0xa01)]
+            }
+            _ => unreachable!("direct fields have separate seed roles"),
+        }
+    }
+
+    #[test]
+    fn every_follow_on_seed_inventory_is_bank_major_then_role_major() {
+        for &(field, _, grid) in SWEEP_MANIFEST {
+            if field.seed_tag() <= 4 {
+                continue;
+            }
+            let roles = follow_on_roles_oracle(field);
+            for &size in grid {
+                let inventory = seed_inventory(field, size);
+                assert_eq!(inventory.streams.len(), 8 * roles.len(), "{field}/{size}");
+                for bank in 0..8 {
+                    for (role_index, &(name, role)) in roles.iter().enumerate() {
+                        let stream = &inventory.streams[bank * roles.len() + role_index];
+                        let banked_role = role + ((bank as u64) << 16);
+                        assert_eq!(stream.name, format!("{name}[{bank}]"));
+                        assert_eq!(stream.role, banked_role);
+                        assert_eq!(
+                            stream.seed,
+                            seed_oracle(field.seed_tag(), size, banked_role),
+                            "{field}/{size}/{name}/{bank}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn every_binary_fixture_uses_the_predeclared_plus_three_bank() {
+        assert_eq!(
+            (0..8).map(paired_bank).collect::<Vec<_>>(),
+            vec![3, 4, 5, 6, 7, 0, 1, 2]
+        );
+    }
+
     #[test]
     fn the_calibrate_mode_requires_its_output_and_provenance_paths() {
-        for missing in ["--lock-wrapper", "--receipt", "--out"] {
+        for missing in ["--lock-wrapper", "--receipt", "--out", "--timed-worker"] {
             let args: Vec<String> = [
                 "--out",
                 "/tmp/x.json",
@@ -6750,6 +7148,8 @@ mod tests {
                 "w",
                 "--receipt",
                 "r",
+                "--timed-worker",
+                "/tmp/tuning-calibration-timed",
             ]
             .chunks(2)
             .filter(|pair| pair[0] != missing)
@@ -6760,6 +7160,26 @@ mod tests {
                 "{missing} is required"
             );
         }
+        let valid = parse_args(
+            [
+                "--out",
+                "/tmp/x.json",
+                "--lock-wrapper",
+                "w",
+                "--receipt",
+                "r",
+                "--timed-worker",
+                "/tmp/tuning-calibration-timed",
+            ]
+            .map(str::to_owned)
+            .into_iter(),
+        )
+        .unwrap();
+        assert!(matches!(
+            valid.mode,
+            Mode::Calibrate { timed_worker, .. }
+                if timed_worker == Path::new("/tmp/tuning-calibration-timed")
+        ));
     }
 
     #[test]
@@ -6779,6 +7199,35 @@ mod tests {
         assert_eq!(self_check.mode, Mode::SelfCheck);
         let list_grid = parse_args(["--list-grid".to_owned()].into_iter()).unwrap();
         assert_eq!(list_grid.mode, Mode::ListGrid);
+        let capabilities = parse_args(["--capability-report".to_owned()].into_iter()).unwrap();
+        assert_eq!(capabilities.mode, Mode::CapabilityReport);
+    }
+
+    #[test]
+    fn controller_and_timed_worker_protocol_identities_are_distinct_and_closed() {
+        let protocol = child_protocol(1);
+        let probe = ChildProtocolIdentity::current(&protocol, ChildBinaryRole::ProbeController);
+        let timed = ChildProtocolIdentity::current(&protocol, ChildBinaryRole::ReporterFreeTiming);
+        assert_eq!(probe.binary_role, ChildBinaryRole::ProbeController);
+        assert!(probe.test_support_observers);
+        assert_eq!(timed.binary_role, ChildBinaryRole::ReporterFreeTiming);
+        assert!(!timed.test_support_observers);
+        assert_eq!(probe.build_head, embedded_build_head());
+        assert_eq!(timed.build_head, embedded_build_head());
+        assert_eq!(compiled_binary_role(), ChildBinaryRole::ProbeController);
+
+        let identity = TimedWorkerIdentity {
+            binary_role: ChildBinaryRole::ReporterFreeTiming,
+            test_support_enabled: false,
+            harness_schema: "tuning-calibration-v3".to_owned(),
+            fresh_case_schema: "child-v2".to_owned(),
+            build_head: "a".repeat(40),
+        };
+        let encoded = serde_json::to_string(&identity).unwrap();
+        assert_eq!(
+            serde_json::from_str::<TimedWorkerIdentity>(&encoded).unwrap(),
+            identity
+        );
     }
 
     /// A spec whose four components are pairwise distinguishable, so a
@@ -6839,6 +7288,25 @@ mod tests {
                 samples,
             },
         }
+    }
+
+    #[allow(dead_code)]
+    fn unavailable_report(
+        spec: ChildSpec,
+        protocol: &Protocol,
+        observed_route: &str,
+        omission: CapabilityOmission,
+        capability_observation: &str,
+    ) -> ChildReport {
+        assert!(matches!(spec.task, ChildTask::Probe));
+        let mut report = child_report(spec, protocol);
+        report.outcome = ChildOutcome::Unavailable {
+            requested_route: spec.field.arm_name(spec.arm).to_owned(),
+            observed_route: observed_route.to_owned(),
+            omission,
+            capability_observation: capability_observation.to_owned(),
+        };
+        report
     }
 
     #[allow(dead_code)]
@@ -6931,6 +7399,103 @@ mod tests {
         let error =
             verify_child_report(spec, &report.operand_digest, &protocol, &report).unwrap_err();
         assert!(error.contains("schoolbook"), "{error}");
+    }
+
+    #[test]
+    fn every_closed_capability_omission_is_accepted_only_on_its_probe_contract() {
+        let protocol = child_protocol(1);
+        let cases = [
+            (
+                CalibratedField::SimdMinWords,
+                1,
+                Arm::Asymptotic,
+                "unavailable_before_dispatch",
+                CapabilityOmission::SimdBackendUnavailable,
+                "simd_backend=none",
+            ),
+            (
+                CalibratedField::SoaParallelMinLen,
+                4096,
+                Arm::Asymptotic,
+                "unavailable_before_dispatch",
+                CapabilityOmission::SoaPoolWidth { observed: 3 },
+                "dedicated_pool_width=3",
+            ),
+            (
+                CalibratedField::M4rmTiledMinStrideWords,
+                4,
+                Arm::Asymptotic,
+                "row_wise",
+                CapabilityOmission::M4rmRegisterTiledUnavailable,
+                "simd_tile8xn=unavailable",
+            ),
+            (
+                CalibratedField::PlePanelBaseMaxCols,
+                16,
+                Arm::Asymptotic,
+                "unavailable_before_dispatch",
+                CapabilityOmission::PleByteLaneUnavailable,
+                "carrier_lane=None",
+            ),
+            (
+                CalibratedField::PlePanelBaseMaxCols,
+                16,
+                Arm::Asymptotic,
+                "kernel_declined",
+                CapabilityOmission::PlePanelKernelDeclined,
+                "carrier_lane=byte panel_byte_lane_max_cols=256",
+            ),
+            (
+                CalibratedField::GemmAxpyFastPathMinVolume,
+                64,
+                Arm::Asymptotic,
+                "unavailable_before_dispatch",
+                CapabilityOmission::Fp251WholeGemmUnavailable,
+                "fp251_whole_gemm_available=false",
+            ),
+            (
+                CalibratedField::TrsmBlockedMinDim,
+                8,
+                Arm::Asymptotic,
+                "blocked_callee_declined",
+                CapabilityOmission::TrsmBlockedCalleeDeclined,
+                "fp251_whole_gemm_available=true",
+            ),
+        ];
+        for (field, size, arm, observed, omission, capability) in cases {
+            let spec = ChildSpec {
+                field,
+                variant: SweepVariant::Standard,
+                size,
+                arm,
+                task: ChildTask::Probe,
+            };
+            let report = unavailable_report(spec, &protocol, observed, omission, capability);
+            verify_child_report(spec, &report.operand_digest, &protocol, &report)
+                .unwrap_or_else(|error| panic!("{spec}: {error}"));
+        }
+
+        let conservative_spec = ChildSpec {
+            field: CalibratedField::GemmAxpyFastPathMinVolume,
+            variant: SweepVariant::Standard,
+            size: 64,
+            arm: Arm::Conservative,
+            task: ChildTask::Probe,
+        };
+        let false_omission = unavailable_report(
+            conservative_spec,
+            &protocol,
+            "unavailable_before_dispatch",
+            CapabilityOmission::Fp251WholeGemmUnavailable,
+            "fp251_whole_gemm_available=false",
+        );
+        assert!(verify_child_report(
+            conservative_spec,
+            &false_omission.operand_digest,
+            &protocol,
+            &false_omission
+        )
+        .is_err());
     }
 
     #[test]
