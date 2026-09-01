@@ -2,8 +2,15 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 25,
-  "wave_notes": "Wave 25 runs two file-independent tasks. Issue 06ba0418 is done: the standing design, epic classification, and proof-sketch current-state prose record the executed U5-U8 seam, historical evidence remains pinned, merged-tree cargo-ci passes, and doc-review passes. Issue 389aa4de continues in its fresh pre-measurement correction worktree; its host-owning measured session remains held until that patch is merged and coordinated with Claude.",
-  "open_escalations": [],
+  "wave_notes": "Wave 25 has one closed task and one owner escalation. Issue 06ba0418 is done. Issue 389aa4de has valid measured evidence and a clean unmerged publication commit c746072b; pre-merge review found three test-contract defects after the two approved protocol retries exhausted the rework limit. The measured artifacts remain valid, but the branch cannot merge until the invoker chooses a counter reset, lead takeover, or rejection.",
+  "open_escalations": [
+    {
+      "kind": "rework-exhausted",
+      "issue": "389aa4de",
+      "date": "2026-09-01",
+      "question": "Choose targeted guidance with a counter reset, manual lead takeover, or rejection. Recommended: reset and authorize one narrow test-only retry deriving inventory from CoreTuningCodec, making the baked constant relational to the strict measured owner, and removing duplicated literals from the composition test."
+    }
+  ],
   "waves": [
     {
       "wave_number": 1,
@@ -609,8 +616,8 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus",
-          "status": "pre-measurement-rework-in-progress",
-          "notes": "Fresh worktree after the format-2 cutover. Implement the audit plan without measuring: preserve tuning-calibration-v2, emit raw samples and stable seed provenance, verify every child route and installed threshold, strengthen envelope tests, and prepare receipt notes. Measurement and composition wait for merged review plus coordinated full-host ownership."
+          "status": "blocked-owner-decision-after-max-rework",
+          "notes": "The third coordinated attempt produced valid 5x5x250ms evidence at clean 501fe8b2 and publication commit c746072b is clean and unmerged. Rework 1 removed cargo bench's invalid --release; rework 2 replaced jq parsing of raw executable paths with cat and added fail-closed preflight. Independent pre-merge review then found three blocking test semantics defects: codec inventory derived from conservative.json rather than CoreTuningCodec; baked SIMD evidence hashed but not strictly reopened/relationally compared; algebra composition test duplicated the five measured literals. Awaiting invoker decision under the two-retry policy."
         },
         {
           "id": "06ba0418",
@@ -1085,6 +1092,12 @@
       "issue": "5bdc9552",
       "date": "2026-09-01",
       "decision": "The invoker selected option A. Targeted guidance resets the rework counter and authorizes one comprehensive present-tense documentation sweep covering all three blocking doc-review findings and both adjacent advisory comments before the complete affected gate chain is rerun. This guided dispatch is retry 1 after the reset."
+    },
+    {
+      "kind": "rework-exhausted",
+      "issue": "389aa4de",
+      "date": "2026-09-01",
+      "decision": "OPEN: two approved pre-measurement protocol retries are exhausted. Attempt 1 removed cargo bench's invalid --release; attempt 2 replaced jq parsing of raw executable paths with cat and made preflight fail closed. Attempt 3 measured successfully and c746072b publishes valid evidence, but pre-merge review found three blocking test-contract defects: the 37-field inventory guard is artifact-derived instead of codec-derived, the baked SIMD constant is not relationally checked against a strict owner reopen, and the algebra composition suite duplicates five volatile literals. Awaiting invoker choice: targeted guidance that resets the counter, manual takeover, or rejection."
     }
   ],
   "rework_counts": {
@@ -1120,7 +1133,7 @@
     "e8a727ff": 1,
     "e2744fcf": 0,
     "5bdc9552": 1,
-    "389aa4de": 0,
+    "389aa4de": 2,
     "06ba0418": 0
   },
   "surfaced_pitfalls": [
