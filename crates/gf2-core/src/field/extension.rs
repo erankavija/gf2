@@ -106,6 +106,17 @@
 //!   validation entirely. This is what makes repeated construction over one
 //!   presentation cheap.
 //!
+//! Which evidence a reuse path accepts follows the guarantee its carrier
+//! lacks. [`BinaryPrimeExt::from_certificate`] requires a basis that records
+//! verification — `Proved`, `Registry`, or `Identity` where the two
+//! identities coincide — and rejects [`CertificateBasis::Declared`] with
+//! [`FieldError::UnverifiedCertificate`], because a runtime modulus is
+//! user-supplied and nothing else would decide it.
+//! [`ConstExt::from_certificate`] accepts `Declared`, because a compile-time
+//! [`ExtConfig`] modulus is fixed by the type and this repository's
+//! conformance suite decides every one of them. Both paths are `O(1)` in the
+//! extension degree and contain no decision procedure.
+//!
 //! [`crate::field::irreducibility`] is the other producer: proving a
 //! polynomial irreducible yields an [`IrreducibilityCertificate`](crate::field::irreducibility::IrreducibilityCertificate), and
 //! [`IrreducibilityCertificate::extension_certificate`](crate::field::irreducibility::IrreducibilityCertificate::extension_certificate) promotes it to the
@@ -252,6 +263,19 @@ pub enum FieldError {
         /// Characteristic of the field.
         characteristic: u64,
     },
+    /// A certificate recording no verification was offered where the
+    /// construction requires verified evidence.
+    ///
+    /// Produced by [`BinaryPrimeExt::from_certificate`], whose runtime modulus
+    /// carries no compile-time guarantee, when the certificate's basis does
+    /// not establish that the modulus was decided: either
+    /// [`CertificateBasis::Declared`], which records that nothing was checked,
+    /// or [`CertificateBasis::Identity`] on a pair whose two identities
+    /// differ, where the claim $E = B$ is itself false.
+    UnverifiedCertificate {
+        /// The basis the rejected certificate records.
+        basis: CertificateBasis,
+    },
     /// An encoded identity carrying an unknown version byte.
     EncodingVersionUnsupported {
         /// The version byte found in the stream.
@@ -330,6 +354,10 @@ impl fmt::Display for FieldError {
             } => write!(
                 f,
                 "a field of degree {degree} over characteristic {characteristic} is too large to materialize"
+            ),
+            Self::UnverifiedCertificate { basis } => write!(
+                f,
+                "a certificate recording {basis:?} evidence cannot stand in for a verified modulus"
             ),
             Self::EncodingVersionUnsupported { found } => {
                 write!(f, "unsupported field identity encoding version {found}")
@@ -1908,14 +1936,32 @@ impl<V: UintExt> BinaryPrimeExt<V> {
     /// This is the reuse path [`CertificateBasis`] exists for: the
     /// irreducibility decision that [`new`](Self::new) runs is `O(m³)`, and a
     /// caller constructing repeatedly over one presentation pays it once and
-    /// presents the resulting certificate here. Verification is an identity
-    /// comparison against the pair `field` names, never a re-derivation.
+    /// presents the resulting certificate here.
     ///
-    /// The certificate is taken as evidence. Supplying one whose basis is
-    /// [`CertificateBasis::Declared`] for a modulus that is not irreducible
-    /// yields a witness over a carrier that is not a field, exactly as the
-    /// declaration claims; that is what makes the variant honest rather than
-    /// safe.
+    /// # Which evidence is accepted
+    ///
+    /// A runtime [`Gf2mField_`] carries no compile-time guarantee about its
+    /// defining polynomial, so the certificate has to establish that the
+    /// modulus was decided. Two checks run, in order, and both are
+    /// comparisons:
+    ///
+    /// 1. The certificate's two identities must equal the pair `field` names.
+    /// 2. Its basis must record verification: [`CertificateBasis::Proved`],
+    ///    from a decision procedure, or [`CertificateBasis::Registry`], from
+    ///    the verified polynomial registry. [`CertificateBasis::Identity`] is
+    ///    accepted only when the two identities coincide, which for this
+    ///    witness is the $m = 1$ collapse onto $\mathrm{GF}(2)$, where there
+    ///    is nothing to decide. [`CertificateBasis::Declared`] records that
+    ///    nothing was checked and is rejected.
+    ///
+    /// Both checks are `O(1)` in the extension degree, and this method
+    /// contains no decision procedure: reuse is what the certificate buys,
+    /// and the basis is what makes reusing it sound.
+    ///
+    /// The policy is asymmetric with [`ConstExt::from_certificate`], which
+    /// accepts `Declared` because a compile-time [`ExtConfig`] modulus is
+    /// fixed by the type and checked in this repository's conformance suite.
+    /// A runtime modulus is neither.
     ///
     /// # Errors
     ///
@@ -1923,6 +1969,8 @@ impl<V: UintExt> BinaryPrimeExt<V> {
     ///   has no term of degree `m`.
     /// - [`FieldError::IdentityMismatch`] when the certificate covers a
     ///   different pair than the one `field` names.
+    /// - [`FieldError::UnverifiedCertificate`] when the certificate's basis
+    ///   does not establish that the modulus was decided.
     pub fn from_certificate(
         field: Gf2mField_<V>,
         certificate: ExtensionCertificate,
@@ -1940,6 +1988,17 @@ impl<V: UintExt> BinaryPrimeExt<V> {
                 expected: ext,
                 found: certificate.ext_id().clone(),
             });
+        }
+        let basis = certificate.basis();
+        let verified = match basis {
+            CertificateBasis::Proved | CertificateBasis::Registry => true,
+            // `Identity` asserts E = B, which is evidence only when the two
+            // identities actually coincide.
+            CertificateBasis::Identity => certificate.base_id() == certificate.ext_id(),
+            CertificateBasis::Declared => false,
+        };
+        if !verified {
+            return Err(FieldError::UnverifiedCertificate { basis });
         }
         Ok(Self { field, certificate })
     }
@@ -2106,6 +2165,13 @@ impl<E: ConstSimpleExtension> ConstExt<E> {
     /// [`prove_irreducible`], or through a verified registry — presents the
     /// resulting certificate here instead, so the witness carries the stronger
     /// basis and the structural checks are not repeated.
+    ///
+    /// Every basis is accepted, unlike
+    /// [`BinaryPrimeExt::from_certificate`], which rejects `Declared`. The
+    /// asymmetry is the difference between the two carriers: a compile-time
+    /// modulus is fixed by the type and decided for every in-tree
+    /// [`ExtConfig`] by this repository's conformance suite, so `Declared` is
+    /// backed by evidence that a runtime modulus has no counterpart for.
     ///
     /// # Errors
     ///
@@ -2884,27 +2950,83 @@ mod tests {
         assert_eq!(reused, BinaryPrimeExt::new(field).unwrap());
     }
 
+    /// Builds a certificate for `field`'s pair carrying an arbitrary basis,
+    /// so the acceptance policy can be exercised across the vocabulary
+    /// without a decision procedure fixing the basis for us.
+    fn labelled_certificate(field: &Gf2mField, basis: CertificateBasis) -> ExtensionCertificate {
+        let base = FieldId::prime(2).unwrap();
+        let ext = gf2m_field_id(field).unwrap();
+        ExtensionCertificate::from_parts(base, ext, basis).unwrap()
+    }
+
     #[test]
-    fn from_certificate_skips_revalidation() {
-        // A certificate is evidence that a check already ran, so the reuse
-        // path performs no decision procedure of its own. Handing it evidence
-        // that `new` would reject proves the validation is genuinely skipped
-        // rather than repeated.
+    fn from_certificate_accepts_only_verified_evidence() {
+        let field = Gf2mField::new(4, 0b10011);
+
+        // Proved and Registry both record that the modulus was decided, one
+        // by a decision procedure and one by the verified registry.
+        for basis in [CertificateBasis::Proved, CertificateBasis::Registry] {
+            let witness = BinaryPrimeExt::from_certificate(
+                field.clone(),
+                labelled_certificate(&field, basis),
+            )
+            .unwrap();
+            assert_eq!(witness.certificate().basis(), basis);
+        }
+
+        // Declared records that nothing was checked, so it cannot stand in for
+        // the decision `new` would run on a runtime modulus.
+        assert_eq!(
+            BinaryPrimeExt::from_certificate(
+                field.clone(),
+                labelled_certificate(&field, CertificateBasis::Declared)
+            ),
+            Err(FieldError::UnverifiedCertificate {
+                basis: CertificateBasis::Declared,
+            })
+        );
+
+        // Identity claims E = B, which is false for a degree-four quotient.
+        assert_eq!(
+            BinaryPrimeExt::from_certificate(
+                field,
+                labelled_certificate(&Gf2mField::new(4, 0b10011), CertificateBasis::Identity)
+            ),
+            Err(FieldError::UnverifiedCertificate {
+                basis: CertificateBasis::Identity,
+            })
+        );
+    }
+
+    #[test]
+    fn from_certificate_round_trips_every_certificate_new_produces() {
+        // Whatever basis `new` records must be reusable, or the reuse path
+        // cannot serve the constructor it exists to amortise. `new` records
+        // Proved for a genuine extension and Identity for the m = 1 collapse.
+        for field in [Gf2mField::new(4, 0b10011), Gf2mField::new(1, 0b11)] {
+            let decided = BinaryPrimeExt::new(field.clone()).unwrap();
+            let reused =
+                BinaryPrimeExt::from_certificate(field, decided.certificate().clone()).unwrap();
+            assert_eq!(reused, decided);
+        }
+    }
+
+    #[test]
+    fn from_certificate_rejects_declared_evidence_for_a_reducible_modulus() {
+        // The path a user-created certificate would otherwise take to
+        // construct a non-field: x^4 + 1 = (x + 1)^4.
         let reducible = Gf2mField::new(4, 0b10001);
         assert!(BinaryPrimeExt::new(reducible.clone()).is_err());
 
-        let base = FieldId::prime(2).unwrap();
-        let ext_id = FieldId::quotient(
-            base.clone(),
-            ModulusId::new(&base, vec![1, 0, 0, 0, 1]).unwrap(),
-            Basis::Polynomial,
-        )
-        .unwrap();
-        let declared =
-            ExtensionCertificate::from_parts(base, ext_id, CertificateBasis::Declared).unwrap();
-
-        let witness = BinaryPrimeExt::from_certificate(reducible, declared).unwrap();
-        assert_eq!(witness.certificate().basis(), CertificateBasis::Declared);
+        assert_eq!(
+            BinaryPrimeExt::from_certificate(
+                reducible.clone(),
+                labelled_certificate(&reducible, CertificateBasis::Declared)
+            ),
+            Err(FieldError::UnverifiedCertificate {
+                basis: CertificateBasis::Declared,
+            })
+        );
     }
 
     #[test]
