@@ -12,7 +12,7 @@
           "title": "Reproducible external-baseline survey and workload selection",
           "classification": "research",
           "difficulty": "hard",
-          "status": "rework-3 + lead same-code witness fix committed on branch 4b831776; awaiting peer gate-batch SHA, then merge + CI + research-review R3"
+          "status": "doc-review R2 FAIL fixed lead-direct: F1 receipt relinked (801d8985); F2 M4RI route now fills+RREFs in repository order, output bit-identical to gf2 (verifier rc=0); full re-measurement of both stages running; then prose/number sync, doc-review R3, research-review R3"
         },
         {
           "key": "bch-property-tests",
@@ -70,7 +70,7 @@
           "title": "Implement the layered typed error surface for coding APIs",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched: Luna xhigh, worktree agent-ebdbd228 anchored at 9499fbdc (c3d5cea5 tip)"
+          "status": "worker-complete: committed 1fcc1702 on branch (4-file footprint exact, focused checks green; full-CI GPU test + crates.io fetch flakes environmental, settle at merged-tree CI); merge + gates queued"
         },
         {
           "key": "exact-order",
@@ -94,7 +94,7 @@
           "title": "Introduce field-generic block-code traits with binary specializations",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "held: serializes behind ebdbd228 (CodeError consumer, lib.rs chain per R-08); dispatch when error surface is reviewed"
+          "status": "dispatched: native Opus worker-0c4d84cf, worktree agent-0c4d84cf anchored at 1fcc1702 (error-surface tip); footprint traits.rs + linear.rs"
         },
         {
           "key": "irreducibility-validation",
