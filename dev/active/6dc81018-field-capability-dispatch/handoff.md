@@ -78,3 +78,18 @@
 - Calibration receipt: `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`
 - Proof sketch: linked to `1ac74567`
 - Out-of-epic follow-ons: `a6636671`, `4dd5372a`, `99c92597`, `389aa4de` (all under `86b9c719`)
+
+## Measured supersession — issue `389aa4de` (2026-09-01)
+
+This append-only update preserves handoff sessions 6 and 7 as historical
+records. DEC-B6's `karatsuba_min_degree` limitation is discharged after the
+polynomial cutover. A fresh child installs `usize::MAX` for schoolbook or the
+grid point itself for Karatsuba, and the parent accepts timing only after the
+production route reporter confirms the requested arm and the installed core
+section resolves as `Installed`.
+
+[`2026-09-01-389aa4de.md`](../../benchmarks/tuning_profiles/2026-09-01-389aa4de.md)
+records the full sweep and selected value 31. The format-2 core owner states
+five measured fields and the codec-derived 32-of-37 omission complement.
+DEC-G remains `simd_min_words = 4`; only its evidence citation moves to the
+new measured core section.

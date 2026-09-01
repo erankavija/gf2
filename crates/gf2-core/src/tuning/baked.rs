@@ -10,10 +10,10 @@
 //! compile-time wiring; this module owns the values.
 
 /// Calibrated bit-backend threshold (`simd_min_words = 4`) recorded in
-/// `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`. The exact
-/// format-1 evidence is archived at
-/// `dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
-/// with SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`.
+/// `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`. The exact measured
+/// format-2 core owner is
+/// `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
+/// with SHA-256 `e1cc82ab17db7d0226d5c55ad4c029fad072edd66ac3c18b2ea74e97f2f39045`.
 pub(crate) const SIMD_MIN_WORDS: usize = 4;
 
 /// Baked value for `bit_matrix.matvec_simd_min_words`, mirroring
@@ -82,11 +82,12 @@ pub(crate) const F64_MIN_COLS: usize = 512;
 mod tests {
     use super::*;
     use crate::tuning::CoreTuning;
+    #[cfg(feature = "tuning-profile")]
+    use crate::tuning::{CoreTuningCodec, ProfileRegistryBuilder};
     use sha2::{Digest, Sha256};
 
-    const HISTORICAL_V1: &[u8] = include_bytes!(
-        "../../../../dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json"
-    );
+    const MEASURED_FORMAT2: &[u8] =
+        include_bytes!("../../data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json");
 
     #[test]
     fn default_constant_matches_conservative_table() {
@@ -97,11 +98,29 @@ mod tests {
     }
 
     #[test]
-    fn baked_constant_cites_the_exact_historical_measurement() {
-        assert_eq!(SIMD_MIN_WORDS, 4);
+    fn current_measured_owner_has_the_pinned_content_hash() {
         assert_eq!(
-            format!("{:x}", Sha256::digest(HISTORICAL_V1)),
-            "674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb"
+            format!("{:x}", Sha256::digest(MEASURED_FORMAT2)),
+            "e1cc82ab17db7d0226d5c55ad4c029fad072edd66ac3c18b2ea74e97f2f39045"
+        );
+    }
+
+    #[cfg(feature = "tuning-profile")]
+    #[test]
+    fn baked_simd_threshold_matches_the_strict_measured_owner() {
+        let registry = ProfileRegistryBuilder::new()
+            .register::<CoreTuning, CoreTuningCodec>()
+            .unwrap()
+            .build()
+            .unwrap();
+        let owner = registry
+            .from_json(std::str::from_utf8(MEASURED_FORMAT2).unwrap())
+            .unwrap();
+        let measured = owner.section::<CoreTuning>().unwrap().unwrap();
+
+        assert_eq!(
+            SIMD_MIN_WORDS,
+            measured.section.bit_backend().simd_min_words()
         );
     }
 

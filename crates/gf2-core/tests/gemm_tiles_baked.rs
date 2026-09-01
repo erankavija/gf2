@@ -1,16 +1,14 @@
 //! Production-site witnesses for the baked GEMM row and column tiles.
 //!
-//! The format-1 calibration archived at
-//! `dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
-//! (SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`)
-//! cites `dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` but
-//! omits `gemm`. These extent fields therefore retain their conservative
-//! defaults until measured format-2 evidence supersedes that anchor, as
-//! `dev/active/3fa7c9d0/design.md` §7.1 requires.
+//! The measured format-2 core owner at
+//! `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
+//! cites `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md` and omits
+//! `gemm`. These extent fields therefore retain their conservative defaults,
+//! as `dev/active/3fa7c9d0/design.md` §7.1 requires.
 #![cfg(gf2_tuning_baked)]
 
-#[path = "support/historical_v1.rs"]
-mod historical_v1;
+#[path = "support/measured_format2.rs"]
+mod measured_format2;
 #[path = "support/core_tuning.rs"]
 mod support;
 
@@ -19,7 +17,7 @@ use gf2_core::field::matrix::{
 };
 use gf2_core::field::triangular::trtrm;
 use gf2_core::gfp::Fp;
-use gf2_core::tuning::{self, CoreTuning};
+use gf2_core::tuning;
 
 support::fresh_tuning_test!(baked_tiles_reach_all_seven_blocked_loops, {
     let profile = support::prepared_core_json(
@@ -52,9 +50,9 @@ support::fresh_tuning_test!(baked_tiles_reach_all_seven_blocked_loops, {
     let one = Fp::<65537>::new(1);
     let _: FieldMatrix<Fp<65537>> = ((one * a.t()) * &b + one * &c).into();
 
-    historical_v1::assert_family_was_omitted("gemm");
-    let expected_row_tile = CoreTuning::CONSERVATIVE.gemm().row_tile();
-    let expected_col_tile = CoreTuning::CONSERVATIVE.gemm().col_tile();
+    let measured = measured_format2::omitted_family_section("gemm");
+    let expected_row_tile = measured.gemm().row_tile();
+    let expected_col_tile = measured.gemm().col_tile();
 
     let observations = gemm_tile_observations();
     assert_eq!(observations.len(), GemmTileSite::ALL.len());
