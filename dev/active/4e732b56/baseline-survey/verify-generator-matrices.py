@@ -151,7 +151,7 @@ def main() -> int:
     print(f"# rows: {codes}")
     print(f"# M4RI command: {shlex.join(['GF2_SURVEY_CODES=' + codes, *m4ri_command])}")
     print(f"# gf2 command: {shlex.join(['GF2_SURVEY_CODES=' + codes, 'GF2_REV=' + gf2_rev, *gf2_command])}")
-    print("# normalization: M4RI post-RREF columns reversed by j -> n-1-j from polynomial order to repository [message | parity]; gf2 columns unchanged")
+    print("# normalization: none — the M4RI route fills and reduces in the repository column order, so both dumps are already row-major [message | parity]")
     print("# same-code criterion: full rank and identical canonical GF(2) RREF of both normalized matrices under the repository column order (row-space equality)")
 
     failures = 0
@@ -163,7 +163,7 @@ def main() -> int:
         m4ri_n, m4ri_k, m4ri_rows = m4ri[name]
         gf2_n, gf2_k, gf2_rows = gf2[name]
         m4ri_raw = normalize(m4ri_n, m4ri_k, m4ri_rows, reverse_columns=False)
-        m4ri_normal = normalize(m4ri_n, m4ri_k, m4ri_rows, reverse_columns=True)
+        m4ri_normal = m4ri_raw
         gf2_normal = normalize(gf2_n, gf2_k, gf2_rows, reverse_columns=False)
         dimensions_match = (m4ri_n, m4ri_k) == (gf2_n, gf2_k)
         identical = dimensions_match and m4ri_normal == gf2_normal
