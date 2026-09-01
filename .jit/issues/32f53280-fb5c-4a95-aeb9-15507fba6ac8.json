@@ -7,6 +7,7 @@
   ],
   "description": "Implement the sketch's Lean obligation that polynomial-quotient reduction preserves the represented field element, with its extraction or refinement evidence.\n\n## Success Criteria\n\n- [hard] REQ-01: The quotient-reduction lemmas are proven and `lake build` passes with no new untracked assumptions.\n- [hard] REQ-02: The obligation binds to the quotient-field production path exactly as the approved sketch assigns.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T20:11:57.410049454Z",
   "gates_required": [
     "code-review",
     "doc-review",
@@ -21,7 +22,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Lean proofs: quotient reduction preserves the represented element",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T20:11:57.410049454Z"
 }
