@@ -36,10 +36,11 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-core",
-    "satisfies:REQ-01"
+    "satisfies:REQ-01",
+    "enforces:@/inv/caller-trusted-fast-paths"
   ],
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the relative field-extension abstraction in gf2-core",
-  "updated_at": "2026-09-01T06:51:39.142664182Z"
+  "updated_at": "2026-09-01T07:01:28.326712739Z"
 }
