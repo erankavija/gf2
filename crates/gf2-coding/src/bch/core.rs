@@ -39,6 +39,11 @@
 //! model's ascending-degree coordinate convention rather than the DVB-T2
 //! systematic layout the types above carry.
 //!
+//! Under `--features hip`, `BinaryBchDecoder::correct_batch_gpu` runs the
+//! syndrome evaluations of a whole batch on a HIP device and the locator
+//! search on the CPU, reporting the same [`BchDecodeOutcome`] values, and
+//! leaving the same corrected words, as the per-word CPU path.
+//!
 //! # Examples
 //!
 //! ```
@@ -846,108 +851,6 @@ impl BchDecoder {
         }
         Ok(out)
     }
-
-    /// Decodes a batch of received words by computing the syndromes on the GPU
-    /// and feeding them into the CPU Berlekamp-Massey + Chien search pipeline.
-    ///
-    /// This is the GPU counterpart of the per-frame CPU
-    /// [`decode`](HardDecisionDecoder::decode): syndromes come from
-    /// [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu), then
-    /// the IDENTICAL post-syndrome path (zero-syndrome short-circuit,
-    /// [`berlekamp_massey`](Self::berlekamp_massey),
-    /// [`chien_search`](Self::chien_search), bit-position correction, message
-    /// extraction) runs on the CPU. Because the GPU syndromes are byte-identical
-    /// to the CPU syndromes (design doc §5), the decoded messages are identical
-    /// to the CPU-only [`decode_batch`](Self::decode_batch) (issue criterion 5).
-    ///
-    /// Only compiled under `--features hip`.
-    ///
-    /// # Arguments
-    ///
-    /// * `received` — the batch of received codewords (each of length `n`).
-    ///
-    /// # Returns
-    ///
-    /// One decoded message [`BitVec`] of length `k` per frame, in input order.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`HipError`](gf2_kernels_hip::HipError) on any GPU failure during
-    /// syndrome evaluation.
-    ///
-    /// # Panics
-    ///
-    /// Panics under the same conditions as
-    /// [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu).
-    ///
-    /// # Complexity
-    ///
-    /// O(`batch * 2t * n`) device syndrome work plus the per-frame CPU
-    /// Berlekamp-Massey + Chien search (O(`batch * t * n`)).
-    ///
-    /// # Examples
-    ///
-    /// Requires a HIP/ROCm GPU at runtime, so this is `no_run`. The body is
-    /// compiled only under `--features hip` (the method exists only there); the
-    /// hidden `cfg` gate keeps the doctest a no-op on the default build.
-    ///
-    /// ```no_run
-    /// # #[cfg(feature = "hip")]
-    /// # fn demo() {
-    /// use gf2_coding::bch::{BchCode, BchEncoder, BchDecoder};
-    /// use gf2_coding::traits::BlockEncoder;
-    /// use gf2_core::gf2m::Gf2mField;
-    /// use gf2_core::BitVec;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011).with_tables();
-    /// let code = BchCode::new(15, 11, 1, field);
-    /// let encoder = BchEncoder::new(code.clone());
-    /// let decoder = BchDecoder::new(code);
-    ///
-    /// // Encode messages, then decode the batch via GPU syndromes + CPU BM/Chien.
-    /// let messages: Vec<BitVec> = (0..4)
-    ///     .map(|i| {
-    ///         let mut msg = BitVec::with_capacity(11);
-    ///         for j in 0..11 {
-    ///             msg.push_bit((i + j) % 2 == 0);
-    ///         }
-    ///         msg
-    ///     })
-    ///     .collect();
-    /// let received: Vec<BitVec> = messages.iter().map(|m| encoder.encode(m)).collect();
-    ///
-    /// let decoded = decoder.decode_batch_gpu(&received).unwrap();
-    /// // Byte-identical to the CPU-only `decode_batch` on valid codewords.
-    /// assert_eq!(decoded, messages);
-    /// # }
-    /// ```
-    #[cfg(feature = "hip")]
-    pub fn decode_batch_gpu(
-        &self,
-        received: &[BitVec],
-    ) -> Result<Vec<BitVec>, gf2_kernels_hip::HipError> {
-        let all_syndromes = self.compute_syndromes_batch_gpu(received)?;
-        let mut out = Vec::with_capacity(received.len());
-        for (frame, syndromes) in received.iter().zip(all_syndromes.iter()) {
-            // Identical post-syndrome path to the CPU `decode`.
-            if syndromes.iter().all(|s| s.is_zero()) {
-                out.push(self.extract_message(frame));
-                continue;
-            }
-            let lambda = self.berlekamp_massey(syndromes);
-            let error_positions = self.chien_search(&lambda);
-            let mut corrected = frame.clone();
-            for poly_pos in error_positions {
-                // Both parity (poly_pos < r) and message (poly_pos >= r)
-                // degrees map to the same systematic position in the CPU
-                // `decode`, so a single formula covers both.
-                let sys_pos = self.code.n - 1 - poly_pos;
-                corrected.set(sys_pos, !corrected.get(sys_pos));
-            }
-            out.push(self.extract_message(&corrected));
-        }
-        Ok(out)
-    }
 }
 
 impl HardDecisionDecoder for BchDecoder {
@@ -1269,7 +1172,10 @@ pub struct BchDecodeWorkspace<V: UintExt = u64> {
 /// the caller's packed storage and returns status and count, with no heap
 /// allocation. [`decode`](Self::decode) is the opt-in diagnostic path: it may
 /// allocate, and returns the corrected codeword, the information word, the
-/// sorted error positions, and the count.
+/// sorted error positions, and the count. Under `--features hip`,
+/// `correct_batch_gpu` is the fast path over a whole batch, with the syndrome
+/// evaluations on a device; it reports the same outcomes and leaves the same
+/// corrected words.
 ///
 /// # Examples
 ///
@@ -1629,13 +1535,7 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
         received: &mut BitVec,
         workspace: &mut BchDecodeWorkspace<V>,
     ) -> BchDecodeOutcome {
-        let Some(degree) = self.berlekamp_massey(workspace) else {
-            return BchDecodeOutcome::Uncorrectable;
-        };
-        if degree == 0 || degree > self.radius {
-            return BchDecodeOutcome::Uncorrectable;
-        }
-        if !self.chien_search(workspace, degree) {
+        if !self.locate_candidate(workspace) {
             return BchDecodeOutcome::Uncorrectable;
         }
 
@@ -1649,6 +1549,23 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
             flip(received, &workspace.positions);
             BchDecodeOutcome::Uncorrectable
         }
+    }
+
+    /// Searches for a candidate error pattern behind a nonzero syndrome,
+    /// leaving its ascending coordinates in `workspace.positions`.
+    ///
+    /// Returns `false` when the syndrome admits no well-defined candidate
+    /// inside the radius, which is [`BchDecodeOutcome::Uncorrectable`] before
+    /// any verification. A `true` result is a candidate, not yet a decision:
+    /// only recomputing the corrected word's syndrome settles that.
+    fn locate_candidate(&self, workspace: &mut BchDecodeWorkspace<V>) -> bool {
+        let Some(degree) = self.berlekamp_massey(workspace) else {
+            return false;
+        };
+        if degree == 0 || degree > self.radius {
+            return false;
+        }
+        self.chien_search(workspace, degree)
     }
 
     /// Writes `word(β^e)` for every evaluation exponent into `out`.
@@ -1803,6 +1720,268 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
             }
         }
         message
+    }
+}
+
+// ---------------------------------------------------------------------------
+// GPU-assisted decoding over the canonical model
+// ---------------------------------------------------------------------------
+
+/// GPU-assisted batch decoding, compiled only under `--features hip`.
+///
+/// The device evaluates syndromes; the locator search, the verification
+/// decision, and the correction stay on the CPU. Syndrome evaluation is the
+/// part that scales with `n` per point, and the device multiply *is* the
+/// uploaded CPU `exp`/`log` table, so a device syndrome equals the CPU
+/// syndrome exactly — every outcome below is the one
+/// [`correct_in_place`](BinaryBchDecoder::correct_in_place) reports for the
+/// same word.
+#[cfg(feature = "hip")]
+impl<V: UintExt> BinaryBchDecoder<'_, V> {
+    /// Evaluates every syndrome point of `frames` on the HIP device.
+    ///
+    /// Returns the values row-major, one row of `self.syndrome_points.len()`
+    /// per frame in the decoder's own evaluation order, so a row holds exactly
+    /// what [`evaluate_syndromes`](Self::evaluate_syndromes) writes for that
+    /// word. Callers guarantee a nonempty point set.
+    fn syndromes_on_device(
+        &self,
+        frames: &[&BitVec],
+    ) -> Result<Vec<Gf2mElement_<V>>, gf2_kernels_hip::HipError> {
+        use gf2_kernels_hip::{BchFieldTables, GpuBchSyndrome};
+
+        let length = self.code.n();
+        let points = self.syndrome_points.len();
+        let words_per_frame = length.div_ceil(64);
+        let field = self.code.extension().field();
+
+        // The exact CPU tables, so the device multiply is the CPU multiply.
+        let exp = field
+            .exp_table()
+            .expect("a BCH splitting field carries precomputed tables")
+            .to_vec();
+        let log = field
+            .log_table()
+            .expect("a BCH splitting field carries precomputed tables")
+            .to_vec();
+        let tables = BchFieldTables::new(field.degree(), exp, log);
+
+        // The evaluator takes its points in pairs, the `2t` of a narrow-sense
+        // code. A defining set whose orbit representatives make the count odd
+        // is padded with a repeat of the last point, whose column is dropped
+        // below; the repeat changes no other value.
+        let mut device_points: Vec<u16> = self
+            .syndrome_points
+            .iter()
+            .map(|point| point.value().as_u64_truncated() as u16)
+            .collect();
+        if points % 2 == 1 {
+            device_points.push(device_points[points - 1]);
+        }
+        let stride = device_points.len();
+
+        // Coordinate `i` is the coefficient of `x^i` in both the construction
+        // model and the device coefficient stream, so a canonical word is
+        // already packed: its words are the stream, with no host-side reorder.
+        let mut streams: Vec<u64> = Vec::with_capacity(frames.len() * words_per_frame);
+        for (index, frame) in frames.iter().enumerate() {
+            assert_eq!(
+                frame.len(),
+                length,
+                "frame {index} has length {}, expected n = {length}",
+                frame.len()
+            );
+            streams.extend_from_slice(&frame.words()[..words_per_frame]);
+        }
+
+        let mut evaluator =
+            GpuBchSyndrome::new(&tables, &device_points, length, stride / 2, frames.len(), 0)?;
+        let evaluated = evaluator.evaluate_batch(&streams, frames.len())?;
+
+        let mut out = Vec::with_capacity(frames.len() * points);
+        for row in evaluated.chunks_exact(stride) {
+            out.extend(
+                row[..points]
+                    .iter()
+                    .map(|&value| field.element(V::from_u16(value))),
+            );
+        }
+        Ok(out)
+    }
+
+    /// Evaluates the syndromes of a batch of received words on the GPU.
+    ///
+    /// Each returned row holds one value per evaluation point of this decoder,
+    /// in its evaluation order: the witnessed consecutive run first, then one
+    /// representative per remaining Frobenius orbit of the defining set. An
+    /// all-zero row is therefore equivalent to the word being a codeword, the
+    /// same equivalence the CPU path decides on.
+    ///
+    /// # Arguments
+    ///
+    /// * `received` — the batch of received words, each of `n` coordinates.
+    ///
+    /// # Returns
+    ///
+    /// One row per frame, in input order. An empty batch yields no rows, and a
+    /// code with an empty defining set yields empty rows.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`](gf2_kernels_hip::HipError) on device allocation,
+    /// transfer, launch, or synchronization failure; an exhausted device is the
+    /// distinguished [`HipError::OutOfMemory`](gf2_kernels_hip::HipError::OutOfMemory).
+    ///
+    /// # Panics
+    ///
+    /// Panics if a frame is not `n` coordinates long, or if the splitting
+    /// field carries no precomputed tables, which a constructed code rules out.
+    ///
+    /// # Complexity
+    ///
+    /// $O(bsn)$ device work for a batch of $b$ frames and $s$ evaluation
+    /// points, plus the host transfer of $b \lceil n/64 \rceil$ words up and
+    /// $bs$ values back. The field tables upload once per call.
+    pub fn compute_syndromes_batch_gpu(
+        &self,
+        received: &[BitVec],
+    ) -> Result<Vec<Vec<Gf2mElement_<V>>>, gf2_kernels_hip::HipError> {
+        let points = self.syndrome_points.len();
+        if received.is_empty() || points == 0 {
+            return Ok(vec![Vec::new(); received.len()]);
+        }
+        let frames: Vec<&BitVec> = received.iter().collect();
+        let evaluated = self.syndromes_on_device(&frames)?;
+        Ok(evaluated.chunks_exact(points).map(<[_]>::to_vec).collect())
+    }
+
+    /// Corrects a batch of received words in place and reports one outcome per
+    /// word.
+    ///
+    /// This is the batch counterpart of
+    /// [`correct_in_place`](Self::correct_in_place) and carries its contract
+    /// word for word, verification included: a candidate correction is applied,
+    /// then checked by recomputing the corrected word's syndrome on the device,
+    /// and a candidate that fails that check is rolled back and reported as
+    /// [`BchDecodeOutcome::Uncorrectable`]. Every entry of `received` is left
+    /// exactly as the per-word CPU path would leave it. See the
+    /// [type documentation](Self) for what each outcome guarantees.
+    ///
+    /// Unlike the per-word path this one allocates: it owns one workspace for
+    /// the whole batch, holds the coordinates of each applied candidate until
+    /// verification, and stages the batch's coefficient streams.
+    ///
+    /// # Arguments
+    ///
+    /// * `received` — the batch of received words, each of `n` coordinates,
+    ///   corrected in place.
+    ///
+    /// # Returns
+    ///
+    /// One outcome per frame, in input order.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`](gf2_kernels_hip::HipError) on any device failure
+    /// during either syndrome pass. A failed second pass leaves the candidate
+    /// corrections of that batch applied and unverified, so a caller that
+    /// retries decodes the original words.
+    ///
+    /// # Panics
+    ///
+    /// Panics under the same conditions as
+    /// [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu).
+    ///
+    /// # Complexity
+    ///
+    /// The device syndrome work of
+    /// [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu) over
+    /// the batch and again over its candidates, plus the per-word host cost of
+    /// [`correct_in_place`](Self::correct_in_place) without its two syndrome
+    /// evaluations.
+    ///
+    /// # Examples
+    ///
+    /// Requires a HIP/ROCm device at run time, so this is `no_run`; the body is
+    /// gated so the doctest is a no-op on a build without the feature.
+    ///
+    /// ```no_run
+    /// # #[cfg(feature = "hip")]
+    /// # fn demo() -> Result<(), gf2_coding::bch::error::BchError> {
+    /// use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+    /// use gf2_coding::bch::{BchDecodeOutcome, BinaryBchDecoder};
+    /// use gf2_core::field::extension::BinaryPrimeExt;
+    /// use gf2_core::gf2m::Gf2mField;
+    /// use gf2_core::BitVec;
+    ///
+    /// // BCH(15, 7), so the radius is two.
+    /// let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())?;
+    /// let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+    ///     extension,
+    ///     designed_distance: DesignedDistance::try_from(5)?,
+    /// })?;
+    /// let decoder = BinaryBchDecoder::new(&code);
+    ///
+    /// // The all-zero word is a codeword; give the second frame one error.
+    /// let mut batch = vec![BitVec::zeros(code.n()); 2];
+    /// batch[1].set(3, true);
+    ///
+    /// let outcomes = decoder.correct_batch_gpu(&mut batch).expect("a working device");
+    /// assert_eq!(outcomes[0], BchDecodeOutcome::NoErrors);
+    /// assert_eq!(outcomes[1], BchDecodeOutcome::Corrected { count: 1 });
+    /// assert_eq!(batch[1], BitVec::zeros(code.n()));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn correct_batch_gpu(
+        &self,
+        received: &mut [BitVec],
+    ) -> Result<Vec<BchDecodeOutcome>, gf2_kernels_hip::HipError> {
+        let points = self.syndrome_points.len();
+        let mut outcomes = vec![BchDecodeOutcome::NoErrors; received.len()];
+        if received.is_empty() || points == 0 {
+            return Ok(outcomes);
+        }
+
+        let frames: Vec<&BitVec> = received.iter().collect();
+        let evaluated = self.syndromes_on_device(&frames)?;
+
+        let mut workspace = self.workspace();
+        let mut candidates: Vec<(usize, Vec<usize>)> = Vec::new();
+        for (index, row) in evaluated.chunks_exact(points).enumerate() {
+            if row.iter().all(|value| value.is_zero()) {
+                continue;
+            }
+            workspace.syndromes.clone_from_slice(row);
+            if !self.locate_candidate(&mut workspace) {
+                outcomes[index] = BchDecodeOutcome::Uncorrectable;
+                continue;
+            }
+            flip(&mut received[index], &workspace.positions);
+            candidates.push((index, workspace.positions.clone()));
+        }
+        if candidates.is_empty() {
+            return Ok(outcomes);
+        }
+
+        // Verification: the corrected words' syndromes, in one further device
+        // batch, deciding exactly what the CPU path's second evaluation does.
+        let corrected: Vec<&BitVec> = candidates
+            .iter()
+            .map(|&(index, _)| &received[index])
+            .collect();
+        let verification = self.syndromes_on_device(&corrected)?;
+        for ((index, positions), row) in candidates.iter().zip(verification.chunks_exact(points)) {
+            if row.iter().all(|value| value.is_zero()) {
+                outcomes[*index] = BchDecodeOutcome::Corrected {
+                    count: positions.len(),
+                };
+            } else {
+                flip(&mut received[*index], positions);
+                outcomes[*index] = BchDecodeOutcome::Uncorrectable;
+            }
+        }
+        Ok(outcomes)
     }
 }
 
@@ -2866,6 +3045,197 @@ mod canonical_decoder_tests {
                 }
             );
             assert_eq!(storage, codeword);
+        }
+    }
+
+    // -- GPU-assisted decoding over the same model -------------------------
+
+    /// The device path, held against the CPU path it reproduces.
+    ///
+    /// Each test self-gates on a usable device and skips without one, and each
+    /// runs in about a tenth of a second on the small parameter points, so
+    /// they stay in the fast tier rather than behind an ignore. The committed
+    /// receipt of issue `c3cc5226` records a run on a named HIP host.
+    #[cfg(feature = "hip")]
+    mod gpu {
+        use super::*;
+
+        fn device_present() -> bool {
+            gf2_kernels_hip::host::device_mem_info().is_ok()
+        }
+
+        /// A mixed batch over four messages: the codeword itself, then every
+        /// error count from one up to one past the radius.
+        fn population(code: &BinaryBchCode) -> Vec<BitVec> {
+            let mut frames = Vec::new();
+            for round in 0..4 {
+                let message: Vec<bool> = (0..code.k())
+                    .map(|index| (index + round) % 3 == 0)
+                    .collect();
+                let codeword = encode(code, &message);
+                for errors in 0..=code.correction_radius() + 1 {
+                    let seeds: Vec<usize> = (0..errors)
+                        .map(|offset| 5 * offset + 3 * round + errors)
+                        .collect();
+                    let mut word = codeword.clone();
+                    flip(&mut word, &distinct_positions(&seeds, code.n(), errors));
+                    frames.push(word);
+                }
+            }
+            frames
+        }
+
+        /// The outcomes and corrected words of the per-word CPU fast path.
+        fn cpu_reference(
+            decoder: &BinaryBchDecoder<'_>,
+            frames: &[BitVec],
+        ) -> (Vec<BchDecodeOutcome>, Vec<BitVec>) {
+            let mut workspace = decoder.workspace();
+            let mut words = frames.to_vec();
+            let outcomes = words
+                .iter_mut()
+                .map(|word| {
+                    decoder
+                        .correct_in_place(word, &mut workspace)
+                        .expect("the received word has length n")
+                })
+                .collect();
+            (outcomes, words)
+        }
+
+        #[test]
+        fn device_syndromes_equal_the_cpu_evaluator() {
+            if !device_present() {
+                eprintln!("skipping device_syndromes_equal_the_cpu_evaluator: no usable GPU");
+                return;
+            }
+            for code in codes() {
+                let decoder = BinaryBchDecoder::new(code);
+                let frames = population(code);
+                let device = decoder
+                    .compute_syndromes_batch_gpu(&frames)
+                    .expect("a working device");
+                assert_eq!(device.len(), frames.len());
+
+                let mut host = vec![decoder.zero.clone(); decoder.syndrome_points.len()];
+                for (index, frame) in frames.iter().enumerate() {
+                    decoder.evaluate_syndromes(frame, &mut host);
+                    let evaluated: Vec<u64> =
+                        device[index].iter().map(|value| value.value()).collect();
+                    let expected: Vec<u64> = host.iter().map(|value| value.value()).collect();
+                    assert_eq!(
+                        evaluated,
+                        expected,
+                        "BCH({}, {}) frame {index}: device syndromes differ from the CPU",
+                        code.n(),
+                        code.k()
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn gpu_assisted_correction_reports_the_cpu_outcomes() {
+            if !device_present() {
+                eprintln!(
+                    "skipping gpu_assisted_correction_reports_the_cpu_outcomes: no usable GPU"
+                );
+                return;
+            }
+            let mut corrections = 0usize;
+            for code in codes() {
+                let decoder = BinaryBchDecoder::new(code);
+                let frames = population(code);
+                let (expected, expected_words) = cpu_reference(&decoder, &frames);
+
+                let mut words = frames.clone();
+                let outcomes = decoder
+                    .correct_batch_gpu(&mut words)
+                    .expect("a working device");
+                assert_eq!(
+                    outcomes,
+                    expected,
+                    "BCH({}, {}): device outcomes differ from the CPU",
+                    code.n(),
+                    code.k()
+                );
+                assert_eq!(
+                    words,
+                    expected_words,
+                    "BCH({}, {}): device corrections differ from the CPU",
+                    code.n(),
+                    code.k()
+                );
+                corrections += outcomes
+                    .iter()
+                    .filter(|outcome| matches!(outcome, BchDecodeOutcome::Corrected { .. }))
+                    .count();
+            }
+            assert!(corrections > 0, "the population exercises corrections");
+        }
+
+        /// Every weight-three word of BCH(15, 7) lies one past the radius, and
+        /// both arms occur there: a candidate that verifies as a different
+        /// codeword, and one that fails verification. The device path must
+        /// report each exactly as the CPU path does, rolling back the words it
+        /// rejects.
+        #[test]
+        fn a_candidate_failing_verification_is_uncorrectable_on_both_paths() {
+            if !device_present() {
+                eprintln!(
+                    "skipping a_candidate_failing_verification_is_uncorrectable_on_both_paths: no usable GPU"
+                );
+                return;
+            }
+            let code = narrow_sense(4, 0b10011, 5);
+            let decoder = BinaryBchDecoder::new(&code);
+            let length = code.n();
+
+            let mut frames = Vec::new();
+            for first in 0..length {
+                for second in (first + 1)..length {
+                    for third in (second + 1)..length {
+                        let mut word = BitVec::zeros(length);
+                        flip(&mut word, &[first, second, third]);
+                        frames.push(word);
+                    }
+                }
+            }
+
+            let (expected, expected_words) = cpu_reference(&decoder, &frames);
+            let mut words = frames.clone();
+            let outcomes = decoder
+                .correct_batch_gpu(&mut words)
+                .expect("a working device");
+            assert_eq!(outcomes, expected);
+            assert_eq!(words, expected_words);
+
+            let mut rejected = 0usize;
+            let mut miscorrected = 0usize;
+            for (index, outcome) in outcomes.iter().enumerate() {
+                match outcome {
+                    BchDecodeOutcome::NoErrors => {
+                        panic!("a weight-three word is not a codeword of BCH(15, 7)")
+                    }
+                    BchDecodeOutcome::Uncorrectable => {
+                        assert_eq!(
+                            words[index], frames[index],
+                            "a rejected candidate is rolled back"
+                        );
+                        rejected += 1;
+                    }
+                    BchDecodeOutcome::Corrected { count } => {
+                        assert!(*count <= code.correction_radius());
+                        assert!(is_codeword(&code, &words[index]));
+                        miscorrected += 1;
+                    }
+                }
+            }
+            assert!(
+                rejected > 0,
+                "the device path rejects unverified candidates"
+            );
+            assert!(miscorrected > 0, "the device path accepts verified ones");
         }
     }
 }
