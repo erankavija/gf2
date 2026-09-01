@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:codex",
+  "claimed_at": "2026-09-01T02:31:30.104059631Z",
   "context": {},
   "created_at": "2026-08-22T22:17:20.429066412Z",
   "dependencies": [
@@ -26,7 +27,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Record the executed seam at the convention sources",
-  "updated_at": "2026-09-01T02:26:49.828414674Z"
+  "updated_at": "2026-09-01T02:31:30.104059631Z"
 }

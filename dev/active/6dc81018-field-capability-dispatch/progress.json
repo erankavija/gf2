@@ -1,8 +1,8 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 24,
-  "wave_notes": "Recovery wave 24 serializes the two inherited active roots. Issue 5bdc9552 is done after the invoker selected option A: guided retry 1 removed every current crate-level retired-selector reference, and cargo-ci, verify-lean, lake-build, code-review, and doc-review all pass on the final tree. Issue 389aa4de remains in progress; its format-2 pre-measurement patch plan is ready and is the next dispatch.",
+  "current_wave": 25,
+  "wave_notes": "Wave 25 runs two file-independent tasks in parallel. Issue 389aa4de receives a fresh pre-measurement correction worktree for the format-2 harness, raw samples, stable seed and child-route protocol; its host-owning measured session remains held until that patch is merged and coordinated with Claude. Issue 06ba0418 records the already executed seam in the convention-source documents. Both start from the same clean main commit and workers do not mutate JIT or main.",
   "open_escalations": [],
   "waves": [
     {
@@ -604,13 +604,22 @@
       "wave_number": 25,
       "issues": [
         {
+          "id": "389aa4de",
+          "short_id": "389aa4de",
+          "title": "Extend the calibration sweep to karatsuba_min_degree",
+          "classification": "implementation",
+          "model": "opus",
+          "status": "pre-measurement-rework-in-progress",
+          "notes": "Fresh worktree after the format-2 cutover. Implement the audit plan without measuring: preserve tuning-calibration-v2, emit raw samples and stable seed provenance, verify every child route and installed threshold, strengthen envelope tests, and prepare receipt notes. Measurement and composition wait for merged review plus coordinated full-host ownership."
+        },
+        {
           "id": "06ba0418",
           "short_id": "06ba0418",
           "title": "Record the executed seam at the convention sources",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "planned",
-          "notes": "Seam U9. Docs-only, after u8."
+          "status": "in-progress",
+          "notes": "Seam U9. Docs-only audit of the executed U5-U8 seam after 5bdc9552 closed; updates the design, proof sketch, and epic classification without touching calibration code."
         }
       ]
     },
@@ -1110,7 +1119,9 @@
     "88441adb": 0,
     "e8a727ff": 1,
     "e2744fcf": 0,
-    "5bdc9552": 1
+    "5bdc9552": 1,
+    "389aa4de": 0,
+    "06ba0418": 0
   },
   "surfaced_pitfalls": [
     {

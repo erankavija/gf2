@@ -10333,3 +10333,5 @@
 {"id":"bef77d19-c503-45ee-b16d-69e395b60c5c","issue_id":"1642af1c-dfeb-4d48-a5f7-f97afb4971a8","priority":"high","timestamp":"2026-09-01T02:27:47.995631886Z","title":"Generalized nonbinary BCH decoding against the canonical model","type":"issue_created"}
 {"id":"d99d058b-da3b-494e-8caf-4f35a40233a7","issue_id":"1a8f6acd-a299-4f4f-8ddd-28cc5a13e1a9","priority":"high","timestamp":"2026-09-01T02:27:56.898606713Z","title":"Decode shortened, punctured, and extended derived codes","type":"issue_created"}
 {"id":"62f0526b-2655-435d-9ac8-2669eac3be70","issue_id":"b4d7a25d-0843-46e5-8792-2034f7ce53ee","priority":"high","timestamp":"2026-09-01T02:28:05.872543Z","title":"GPU batch encoding behind the canonical encoding interfaces","type":"issue_created"}
+{"from":"ready","id":"fe053bb2-ceca-4c0b-b4e0-418ccfdb60ce","issue_id":"06ba0418-f933-4037-b3d2-bd2b6dc6a1d5","timestamp":"2026-09-01T02:31:30.104059631Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex","id":"c9b678e9-ce2f-4f71-8515-aae4d63a5b8f","issue_id":"06ba0418-f933-4037-b3d2-bd2b6dc6a1d5","timestamp":"2026-09-01T02:31:30.104059631Z","type":"issue_claimed"}
