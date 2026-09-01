@@ -8,7 +8,7 @@ nice: cannot set niceness: Permission denied
 # seed: 0x00000000ae03bcd0
 # codes_loaded: 5
 # codes_selected: T2N
-#   T2N genmatrix-rref reps=1: 21.175 s of timed work
-#   T2N echelonize reps=1: 51.144 s of timed work
-#   T2N matmul-m4rm batch=256 reps=1: 0.783 s of timed work
-#   T2N matmul-m4rm batch=4096 reps=1: 11.282 s of timed work
+#   T2N genmatrix-rref reps=1: 24.508 s of timed work
+#   T2N echelonize reps=1: 50.731 s of timed work
+#   T2N matmul-m4rm batch=256 reps=1: 0.914 s of timed work
+#   T2N matmul-m4rm batch=4096 reps=1: 12.999 s of timed work

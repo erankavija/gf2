@@ -8,7 +8,7 @@ nice: cannot set niceness: Permission denied
 # seed: 0x00000000ae03bcd0
 # codes_selected: T2N
 # code T2N: ecc_bits=192 ecc_bytes=24 (contract n-k=192)
-#   T2N table-remainder batch=1     reps=678 spent=0.04s
-#   T2N table-remainder batch=16    reps=45 spent=0.04s
+#   T2N table-remainder batch=1     reps=677 spent=0.03s
+#   T2N table-remainder batch=16    reps=44 spent=0.03s
 #   T2N table-remainder batch=256   reps=3 spent=0.04s
-#   T2N table-remainder batch=4096  reps=1 spent=0.23s
+#   T2N table-remainder batch=4096  reps=1 spent=0.20s
