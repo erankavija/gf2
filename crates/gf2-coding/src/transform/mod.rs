@@ -126,10 +126,10 @@ where
     /// # Errors
     ///
     /// Returns [`CodeError::CoordinateOutOfRange`] for an out-of-range
-    /// position, [`CodeError::DuplicateCoordinate`] for a repeated position,
-    /// and [`CodeError::CoordinateCountMismatch`] when no coordinate would
-    /// remain after shortening.  Matrix-access errors from the mother code
-    /// are propagated unchanged.
+    /// position and [`CodeError::DuplicateCoordinate`] for a repeated
+    /// position.  The complete coordinate set is valid and produces the
+    /// zero-length, zero-dimensional boundary code.  Matrix-access errors
+    /// from the mother code are propagated unchanged.
     pub fn new(mother: C, coordinates: impl IntoIterator<Item = usize>) -> Result<Self, CodeError> {
         let provenance = CoordinateMap::identity(mother.n());
         build_shortened(mother, coordinates, provenance)
@@ -539,15 +539,17 @@ fn reduce_to_rref_basis<F>(candidate: FieldMatrix<F>, zero: &F) -> DerivedLinear
 where
     F: FiniteField,
 {
-    if candidate.rows() == 0 {
+    if candidate.rows() == 0 || candidate.cols() == 0 {
+        // A candidate with no rows has nothing to reduce; one with no
+        // columns (full-coordinate shortening, including rank-deficient
+        // mothers with a nonempty nullspace) has rank zero regardless of
+        // its row count. Both yield the zero-dimensional boundary data.
         return DerivedLinearData {
             generator: FieldMatrix::new(0, candidate.cols(), zero.clone()),
             information_set: Box::new([]),
         };
     }
 
-    // `kept` is guaranteed non-empty by coordinate-set validation, so RREF
-    // has a field witness even for runtime-configured fields.
     let (_transform, rref) = candidate.rref();
     let rref_zero = rref.get(0, 0).zero_like();
     let mut pivot_columns = Vec::new();
@@ -805,6 +807,23 @@ mod tests {
         ));
         // Shortening on the complete coordinate set is VALID: it produces the
         // zero-length, zero-dimensional boundary code.
+        let boundary = Shortened::new(code, [0, 1, 2, 3]).unwrap();
+        assert_eq!(boundary.n(), 0);
+        assert_eq!(boundary.k(), 0);
+        assert!(boundary.information_set().is_empty());
+    }
+
+    #[test]
+    fn full_coordinate_shortening_of_a_rank_deficient_generic_code_is_the_boundary_code() {
+        // A rank-deficient generator leaves a nonempty nullspace, so the
+        // constraint solve produces candidate rows even though no column
+        // survives; the result must still be the zero-dimensional code.
+        let values = [1u8, 2, 0, 1, 2, 4, 0, 2, 3, 1, 0, 3];
+        let generator = fp5_matrix(3, 4, &values);
+        let code = DenseTestCode {
+            generator,
+            zero: Fp::<5>::new(0),
+        };
         let boundary = Shortened::new(code, [0, 1, 2, 3]).unwrap();
         assert_eq!(boundary.n(), 0);
         assert_eq!(boundary.k(), 0);
