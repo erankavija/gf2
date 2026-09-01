@@ -86,57 +86,59 @@
 //!
 //! # Certificates
 //!
-//! A certificate is evidence that a check has already run.
-//! [`ExtensionCertificate`] is `Arc`-backed, carries the two [`FieldId`]s it
-//! covers, and decides reuse by identity comparison
-//! ([`ExtensionCertificate::matches`]) rather than by re-derivation.
-//! [`CertificateBasis`] records what the validity rests on.
+//! Validating a field presentation is expensive, and callers construct over
+//! the same presentation again and again. A certificate is the **memo** of
+//! that validation: [`ExtensionCertificate`] is `Arc`-backed, carries the two
+//! [`FieldId`]s it covers, and is matched by identity comparison
+//! ([`ExtensionCertificate::matches`]) rather than by re-deriving anything.
+//! [`CertificateBasis`] records which validation the memo stands for.
 //!
-//! Two constructors produce evidence, and two consume it:
+//! Two constructors validate, and two reuse the memo:
 //!
 //! - [`BinaryPrimeExt::new`] decides the runtime field's defining polynomial
 //!   with [`prove_irreducible`] and records
 //!   [`CertificateBasis::Proved`]. Deciding is `O(m³)`.
-//! - [`ConstExt::new`] records [`CertificateBasis::Declared`], the honest
-//!   basis for an [`ExtConfig`] non-residue, which is trusted at the type
-//!   level rather than verified.
-//! - [`BinaryPrimeExt::from_certificate`] and
-//!   [`ConstExt::from_certificate`] take a certificate a caller already
-//!   holds, verify it against the pair the witness names, and skip the
-//!   validation entirely. This is what makes repeated construction over one
-//!   presentation cheap.
+//! - [`ConstExt::new`] records [`CertificateBasis::Declared`], the basis for
+//!   an [`ExtConfig`] non-residue, which the type fixes rather than decides.
+//! - [`BinaryPrimeExt::from_certificate_unchecked`] and
+//!   [`ConstExt::from_certificate_unchecked`] take a memo the caller already
+//!   holds and skip the validation entirely. This is what makes repeated
+//!   construction over one presentation cheap.
 //!
-//! Which evidence a reuse path accepts follows the guarantee its carrier
-//! lacks. [`BinaryPrimeExt::from_certificate`] requires a basis that records
-//! verification — `Proved`, `Registry`, or `Identity` where the two
-//! identities coincide — and rejects [`CertificateBasis::Declared`] with
-//! [`FieldError::UnverifiedCertificate`], because a runtime modulus is
-//! user-supplied and nothing else would decide it.
-//! [`ConstExt::from_certificate`] accepts `Declared`, because a compile-time
-//! [`ExtConfig`] modulus is fixed by the type and this repository's
-//! conformance suite decides every one of them. Both paths are `O(1)` in the
-//! extension degree and contain no decision procedure.
+//! The `_unchecked` suffix carries the contract, as it does elsewhere in
+//! Rust: no memory safety is at stake and no `unsafe` is involved, but the
+//! caller promises the memo really does stand for the pair the witness names.
+//! Both reuse paths check only that the certificate's identities match —
+//! a structural comparison linear in the modulus degree, and in particular
+//! free of any decision procedure — which catches an honest mix-up; neither
+//! re-derives. A memo of
+//! something else yields a mathematically invalid witness, the same way wrong
+//! parameters do anywhere else. This is the shape
+//! `@/inv/caller-trusted-fast-paths` fixes for the whole project: validation
+//! catches mistakes and amortizes cost, a path that skips it for performance
+//! is a distinct `_unchecked` method with its precondition documented, and a
+//! violated precondition is caller error rather than grounds for hardening.
 //!
 //! [`crate::field::irreducibility`] is the other producer: proving a
 //! polynomial irreducible yields an [`IrreducibilityCertificate`](crate::field::irreducibility::IrreducibilityCertificate), and
 //! [`IrreducibilityCertificate::extension_certificate`](crate::field::irreducibility::IrreducibilityCertificate::extension_certificate) promotes it to the
-//! `Proved` evidence the two `from_certificate` constructors accept.
-//! [`TrivialExt`] has no such constructor because it performs no validation
-//! to reuse: $E = B$ holds for any carrier by construction.
+//! memo the two reuse constructors take. [`TrivialExt`] has no such
+//! constructor because it performs no validation to memoize: $E = B$ holds
+//! for any carrier by construction.
 //!
 //! ```
 //! use gf2_core::field::extension::{BinaryPrimeExt, CertificateBasis, FieldExtension};
 //! use gf2_core::gf2m::Gf2mField;
 //!
-//! // Deciding happens once.
+//! // Validation happens once.
 //! let field = Gf2mField::new(4, 0b10011);
 //! let decided = BinaryPrimeExt::new(field.clone())?;
 //! assert_eq!(decided.certificate().basis(), CertificateBasis::Proved);
 //!
-//! // Every later construction over the same presentation reuses the evidence.
-//! let held = decided.certificate().clone();
-//! assert!(held.matches(decided.base_id(), decided.ext_id()));
-//! let reused = BinaryPrimeExt::from_certificate(field, held)?;
+//! // Every later construction over the same presentation reuses the memo.
+//! let memo = decided.certificate().clone();
+//! assert!(memo.matches(decided.base_id(), decided.ext_id()));
+//! let reused = BinaryPrimeExt::from_certificate_unchecked(field, memo)?;
 //! assert_eq!(reused, decided);
 //! # Ok::<(), gf2_core::field::extension::FieldError>(())
 //! ```
@@ -263,19 +265,6 @@ pub enum FieldError {
         /// Characteristic of the field.
         characteristic: u64,
     },
-    /// A certificate recording no verification was offered where the
-    /// construction requires verified evidence.
-    ///
-    /// Produced by [`BinaryPrimeExt::from_certificate`], whose runtime modulus
-    /// carries no compile-time guarantee, when the certificate's basis does
-    /// not establish that the modulus was decided: either
-    /// [`CertificateBasis::Declared`], which records that nothing was checked,
-    /// or [`CertificateBasis::Identity`] on a pair whose two identities
-    /// differ, where the claim $E = B$ is itself false.
-    UnverifiedCertificate {
-        /// The basis the rejected certificate records.
-        basis: CertificateBasis,
-    },
     /// An encoded identity carrying an unknown version byte.
     EncodingVersionUnsupported {
         /// The version byte found in the stream.
@@ -354,10 +343,6 @@ impl fmt::Display for FieldError {
             } => write!(
                 f,
                 "a field of degree {degree} over characteristic {characteristic} is too large to materialize"
-            ),
-            Self::UnverifiedCertificate { basis } => write!(
-                f,
-                "a certificate recording {basis:?} evidence cannot stand in for a verified modulus"
             ),
             Self::EncodingVersionUnsupported { found } => {
                 write!(f, "unsupported field identity encoding version {found}")
@@ -1410,6 +1395,12 @@ impl ExtensionCertificate {
     /// Validates that the characteristics agree and that `ext` reaches `base`
     /// through its base chain, then records the pair.
     ///
+    /// The `basis` is caller-asserted provenance, recorded as given: this
+    /// constructor validates the identity relationship only, never the claim
+    /// the basis makes about how the pair was validated. A certificate built
+    /// here feeds the `_unchecked` reuse constructors on the caller's own
+    /// responsibility (`@/inv/caller-trusted-fast-paths`).
+    ///
     /// # Errors
     ///
     /// - [`FieldError::CharacteristicMismatch`] when the two characteristics
@@ -2186,9 +2177,10 @@ impl<V: UintExt> BinaryPrimeExt<V> {
     /// [`CertificateBasis::Identity`] and has nothing to decide.
     ///
     /// Deciding costs `O(m³)` polynomial-coefficient operations. Repeated
-    /// construction over one presentation should hold the certificate and go
-    /// through [`from_certificate`](Self::from_certificate), which skips the
-    /// decision entirely.
+    /// construction over one presentation should hold the resulting
+    /// certificate and go through
+    /// [`from_certificate_unchecked`](Self::from_certificate_unchecked),
+    /// which skips the decision entirely.
     ///
     /// # Errors
     ///
@@ -2224,48 +2216,39 @@ impl<V: UintExt> BinaryPrimeExt<V> {
         Ok(Self { field, certificate })
     }
 
-    /// Builds the witness from evidence that has already been established,
-    /// performing no decision procedure of its own.
+    /// Builds the witness from a certificate the caller already holds, doing
+    /// no validation of its own.
     ///
-    /// This is the reuse path [`CertificateBasis`] exists for: the
-    /// irreducibility decision that [`new`](Self::new) runs is `O(m³)`, and a
-    /// caller constructing repeatedly over one presentation pays it once and
-    /// presents the resulting certificate here.
+    /// The certificate is a **memo** of validation performed earlier. The
+    /// irreducibility decision that [`new`](Self::new) runs is `O(m³)`, so a
+    /// caller constructing repeatedly over one presentation runs it once and
+    /// presents the result here. This method skips that decision entirely:
+    /// its only check is the identity comparison below — structural, linear
+    /// in the modulus degree, free of any decision procedure — which is there
+    /// to catch an honest mix-up, not to re-derive anything.
     ///
-    /// # Which evidence is accepted
+    /// # Contract
     ///
-    /// A runtime [`Gf2mField_`] carries no compile-time guarantee about its
-    /// defining polynomial, so the certificate has to establish that the
-    /// modulus was decided. Two checks run, in order, and both are
-    /// comparisons:
+    /// The caller promises that the certificate really does memoize a
+    /// validation of the pair `field` names. Nothing here confirms it. A
+    /// certificate that memoizes something else — a modulus that was never
+    /// decided, or one that was decided and found reducible — produces a
+    /// witness over a carrier that is not a field, and every result computed
+    /// through it is meaningless. That is caller error in the same way that
+    /// passing wrong parameters to any other `_unchecked` API is: nothing in
+    /// this crate can detect it after the fact, which is precisely why the
+    /// name says so. `@/inv/caller-trusted-fast-paths` fixes this contract
+    /// shape project-wide.
     ///
-    /// 1. The certificate's two identities must equal the pair `field` names.
-    /// 2. Its basis must record verification: [`CertificateBasis::Proved`],
-    ///    from a decision procedure, or [`CertificateBasis::Registry`], from
-    ///    the verified polynomial registry. [`CertificateBasis::Identity`] is
-    ///    accepted only when the two identities coincide, which for this
-    ///    witness is the $m = 1$ collapse onto $\mathrm{GF}(2)$, where there
-    ///    is nothing to decide. [`CertificateBasis::Declared`] records that
-    ///    nothing was checked and is rejected.
-    ///
-    /// Both checks are `O(1)` in the extension degree, and this method
-    /// contains no decision procedure: reuse is what the certificate buys,
-    /// and the basis is what makes reusing it sound.
-    ///
-    /// The policy is asymmetric with [`ConstExt::from_certificate`], which
-    /// accepts `Declared` because a compile-time [`ExtConfig`] modulus is
-    /// fixed by the type and checked in this repository's conformance suite.
-    /// A runtime modulus is neither.
+    /// Use [`new`](Self::new) when the modulus has not already been decided.
     ///
     /// # Errors
     ///
     /// - [`FieldError::NonMonicModulus`] when the field's defining polynomial
     ///   has no term of degree `m`.
-    /// - [`FieldError::IdentityMismatch`] when the certificate covers a
-    ///   different pair than the one `field` names.
-    /// - [`FieldError::UnverifiedCertificate`] when the certificate's basis
-    ///   does not establish that the modulus was decided.
-    pub fn from_certificate(
+    /// - [`FieldError::IdentityMismatch`] when the certificate names a
+    ///   different pair than `field` does.
+    pub fn from_certificate_unchecked(
         field: Gf2mField_<V>,
         certificate: ExtensionCertificate,
     ) -> Result<Self, FieldError> {
@@ -2282,17 +2265,6 @@ impl<V: UintExt> BinaryPrimeExt<V> {
                 expected: ext,
                 found: certificate.ext_id().clone(),
             });
-        }
-        let basis = certificate.basis();
-        let verified = match basis {
-            CertificateBasis::Proved | CertificateBasis::Registry => true,
-            // `Identity` asserts E = B, which is evidence only when the two
-            // identities actually coincide.
-            CertificateBasis::Identity => certificate.base_id() == certificate.ext_id(),
-            CertificateBasis::Declared => false,
-        };
-        if !verified {
-            return Err(FieldError::UnverifiedCertificate { basis });
         }
         Ok(Self { field, certificate })
     }
@@ -2451,27 +2423,32 @@ impl<E: ConstSimpleExtension> ConstExt<E> {
         }
     }
 
-    /// Builds the witness from evidence that has already been established.
+    /// Builds the witness from a certificate the caller already holds, doing
+    /// no validation of its own.
     ///
     /// [`new`](Self::new) records [`CertificateBasis::Declared`], because an
-    /// [`ExtConfig`] non-residue is trusted at the type level rather than
-    /// verified. A caller that has decided the binomial modulus — through
+    /// [`ExtConfig`] non-residue is fixed by the type rather than decided. A
+    /// caller that has decided the binomial modulus — through
     /// [`prove_irreducible`], or through a verified registry — presents the
     /// resulting certificate here instead, so the witness carries the stronger
     /// basis and the structural checks are not repeated.
     ///
-    /// Every basis is accepted, unlike
-    /// [`BinaryPrimeExt::from_certificate`], which rejects `Declared`. The
-    /// asymmetry is the difference between the two carriers: a compile-time
-    /// modulus is fixed by the type and decided for every in-tree
-    /// [`ExtConfig`] by this repository's conformance suite, so `Declared` is
-    /// backed by evidence that a runtime modulus has no counterpart for.
+    /// # Contract
+    ///
+    /// As with [`BinaryPrimeExt::from_certificate_unchecked`], the certificate
+    /// is a memo of validation performed earlier and the caller promises it
+    /// memoizes the pair `E` and its base name. Only the structural identity
+    /// comparison runs — linear in the modulus degree, no decision procedure;
+    /// a memo of something else yields a witness over a carrier that is not
+    /// a field. See `@/inv/caller-trusted-fast-paths`.
     ///
     /// # Errors
     ///
-    /// [`FieldError::IdentityMismatch`] when the certificate covers a
-    /// different pair than the one `E` and its base name.
-    pub fn from_certificate(certificate: ExtensionCertificate) -> Result<Self, FieldError> {
+    /// [`FieldError::IdentityMismatch`] when the certificate names a different
+    /// pair than `E` and its base do.
+    pub fn from_certificate_unchecked(
+        certificate: ExtensionCertificate,
+    ) -> Result<Self, FieldError> {
         let base = <E::ConstBase as ConstField>::zero().field_id();
         if certificate.base_id() != &base {
             return Err(FieldError::IdentityMismatch {
@@ -3369,126 +3346,63 @@ mod tests {
     }
 
     #[test]
-    fn from_certificate_reuses_proved_evidence() {
+    fn from_certificate_unchecked_skips_the_decision() {
         let field = Gf2mField::new(4, 0b10011);
-        let certificate = BinaryPrimeExt::new(field.clone())
+        let memo = BinaryPrimeExt::new(field.clone())
             .unwrap()
             .certificate()
             .clone();
 
-        let reused = BinaryPrimeExt::from_certificate(field.clone(), certificate).unwrap();
+        let reused = BinaryPrimeExt::from_certificate_unchecked(field.clone(), memo).unwrap();
         assert_eq!(reused, BinaryPrimeExt::new(field).unwrap());
     }
 
-    /// Builds a certificate for `field`'s pair carrying an arbitrary basis,
-    /// so the acceptance policy can be exercised across the vocabulary
-    /// without a decision procedure fixing the basis for us.
-    fn labelled_certificate(field: &Gf2mField, basis: CertificateBasis) -> ExtensionCertificate {
-        let base = FieldId::prime(2).unwrap();
-        let ext = gf2m_field_id(field).unwrap();
-        ExtensionCertificate::from_parts(base, ext, basis).unwrap()
-    }
-
     #[test]
-    fn from_certificate_accepts_only_verified_evidence() {
-        let field = Gf2mField::new(4, 0b10011);
-
-        // Proved and Registry both record that the modulus was decided, one
-        // by a decision procedure and one by the verified registry.
-        for basis in [CertificateBasis::Proved, CertificateBasis::Registry] {
-            let witness = BinaryPrimeExt::from_certificate(
-                field.clone(),
-                labelled_certificate(&field, basis),
-            )
-            .unwrap();
-            assert_eq!(witness.certificate().basis(), basis);
-        }
-
-        // Declared records that nothing was checked, so it cannot stand in for
-        // the decision `new` would run on a runtime modulus.
-        assert_eq!(
-            BinaryPrimeExt::from_certificate(
-                field.clone(),
-                labelled_certificate(&field, CertificateBasis::Declared)
-            ),
-            Err(FieldError::UnverifiedCertificate {
-                basis: CertificateBasis::Declared,
-            })
-        );
-
-        // Identity claims E = B, which is false for a degree-four quotient.
-        assert_eq!(
-            BinaryPrimeExt::from_certificate(
-                field,
-                labelled_certificate(&Gf2mField::new(4, 0b10011), CertificateBasis::Identity)
-            ),
-            Err(FieldError::UnverifiedCertificate {
-                basis: CertificateBasis::Identity,
-            })
-        );
-    }
-
-    #[test]
-    fn from_certificate_round_trips_every_certificate_new_produces() {
-        // Whatever basis `new` records must be reusable, or the reuse path
-        // cannot serve the constructor it exists to amortise. `new` records
-        // Proved for a genuine extension and Identity for the m = 1 collapse.
+    fn from_certificate_unchecked_round_trips_every_certificate_new_produces() {
+        // `new` records Proved for a genuine extension and Identity for the
+        // m = 1 collapse; the memo path has to accept both, or it cannot
+        // serve the constructor whose cost it exists to amortise.
         for field in [Gf2mField::new(4, 0b10011), Gf2mField::new(1, 0b11)] {
             let decided = BinaryPrimeExt::new(field.clone()).unwrap();
             let reused =
-                BinaryPrimeExt::from_certificate(field, decided.certificate().clone()).unwrap();
+                BinaryPrimeExt::from_certificate_unchecked(field, decided.certificate().clone())
+                    .unwrap();
             assert_eq!(reused, decided);
         }
     }
 
     #[test]
-    fn from_certificate_rejects_declared_evidence_for_a_reducible_modulus() {
-        // The path a user-created certificate would otherwise take to
-        // construct a non-field: x^4 + 1 = (x + 1)^4.
-        let reducible = Gf2mField::new(4, 0b10001);
-        assert!(BinaryPrimeExt::new(reducible.clone()).is_err());
-
-        assert_eq!(
-            BinaryPrimeExt::from_certificate(
-                reducible.clone(),
-                labelled_certificate(&reducible, CertificateBasis::Declared)
-            ),
-            Err(FieldError::UnverifiedCertificate {
-                basis: CertificateBasis::Declared,
-            })
-        );
-    }
-
-    #[test]
-    fn from_certificate_rejects_a_certificate_for_another_pair() {
-        let certificate = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011))
+    fn from_certificate_unchecked_rejects_a_certificate_for_another_pair() {
+        let memo = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011))
             .unwrap()
             .certificate()
             .clone();
 
-        // Same size, different presentation.
+        // Same size, different presentation: an honest mix-up the identity
+        // match catches without any arithmetic.
         assert!(matches!(
-            BinaryPrimeExt::from_certificate(Gf2mField::new(4, 0b11001), certificate),
+            BinaryPrimeExt::from_certificate_unchecked(Gf2mField::new(4, 0b11001), memo),
             Err(FieldError::IdentityMismatch { .. })
         ));
     }
 
     #[test]
-    fn const_ext_from_certificate_reuses_evidence() {
+    fn const_ext_from_certificate_unchecked_reuses_the_memo() {
         let ext = ConstExt::<QuadraticExt<Gf49Config>>::new();
-        let reused =
-            ConstExt::<QuadraticExt<Gf49Config>>::from_certificate(ext.certificate().clone())
-                .unwrap();
+        let reused = ConstExt::<QuadraticExt<Gf49Config>>::from_certificate_unchecked(
+            ext.certificate().clone(),
+        )
+        .unwrap();
         assert_eq!(reused, ext);
     }
 
     #[test]
-    fn const_ext_from_certificate_rejects_a_certificate_for_another_pair() {
+    fn const_ext_from_certificate_unchecked_rejects_a_certificate_for_another_pair() {
         let foreign = ConstExt::<CubicExt<Gf343Config>>::new()
             .certificate()
             .clone();
         assert!(matches!(
-            ConstExt::<QuadraticExt<Gf49Config>>::from_certificate(foreign),
+            ConstExt::<QuadraticExt<Gf49Config>>::from_certificate_unchecked(foreign),
             Err(FieldError::IdentityMismatch { .. })
         ));
     }
