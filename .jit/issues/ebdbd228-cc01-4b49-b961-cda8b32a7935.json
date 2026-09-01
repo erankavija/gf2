@@ -8,6 +8,7 @@
   ],
   "description": "Implement the coding-side typed error layers: general code/transform errors (invalid coordinates, buffer and shape mismatches, dynamic type mismatches) and the BCH construction/decoding errors that compose or wrap them.\n\n## Background\n\nError ownership follows crate direction: gf2-core owns its field and matrix-IO error types; gf2-coding owns generic code and transform errors plus BCH-specific errors that wrap or compose the general layers. Generic APIs never expose BCH-specific types. Panics remain reserved for violated internal invariants.\n\n## Success Criteria\n\n- [hard] REQ-01: A coding-general error layer covers transform coordinate errors, buffer/shape mismatches, and dynamic type mismatches, free of BCH-specific types.\n- [hard] REQ-02: BCH construction and decoding errors are structured, carry the mathematically relevant context, compose the general layer where applicable, and are documented with their production conditions.\n",
   "documents": [],
+  "done_at": "2026-09-01T07:03:22.433333555Z",
   "first_ready_at": "2026-09-01T05:09:37.954873697Z",
   "gates_required": [
     "cargo-ci",
@@ -33,7 +34,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "done",
   "title": "Implement the layered typed error surface for coding APIs",
-  "updated_at": "2026-09-01T06:59:08.325854084Z"
+  "updated_at": "2026-09-01T07:03:22.433333555Z"
 }
