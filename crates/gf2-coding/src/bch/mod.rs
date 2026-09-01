@@ -1,11 +1,17 @@
 //! BCH (Bose-Chaudhuri-Hocquenghem) codes.
 //!
 //! BCH codes are a family of cyclic error-correcting codes that can correct
-//! multiple random errors using algebraic decoding over extension fields GF(2^m).
+//! multiple random errors using algebraic decoding over a splitting field of
+//! the code-symbol field. [`spec`] constructs them over any supported base
+//! field; the decoding path in this module is binary, over GF(2^m).
 //!
 //! # Organization
 //!
 //! - `core`: Core BCH types and algorithms
+//! - [`spec`]: the construction model, its validating pipeline, and the
+//!   canonical code type over any supported base field
+//! - [`error`]: the BCH construction and decoding error surface
+//! - [`extended`]: extended BCH codes
 //! - [`dvb_t2`]: DVB-T2 standard BCH outer codes
 //!
 //! # Examples
@@ -39,5 +45,13 @@ mod core;
 pub mod dvb_t2;
 pub mod error;
 pub mod extended;
+pub mod spec;
 
 pub use core::{BchCode, BchDecoder, BchEncoder, CodeRate};
+// The canonical code type keeps its module path while `core::BchCode` still
+// occupies this name; `spec::BchCode` is reachable as `spec::DenseBchCode` or
+// `spec::BinaryBchCode` for the two standard representations.
+pub use spec::{
+    BchDistanceBound, BchLength, BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance,
+    RootExponent, RootSelection,
+};
