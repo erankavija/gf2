@@ -1,0 +1,22 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-01T12:35:59.639076976Z",
+  "dependencies": [
+    "5233867e-19bb-4b9f-a308-ee49c2578dde"
+  ],
+  "description": "gf2-sim permanent_campaign::coordinator::tests::transaction_refuses_symlinked_writer_ancestors_without_external_effects failed once with a fast (61ms) assertion failure during the merged-tree CI for the 5233867e merge (2026-09-01, tree 612a1519), then passed on immediate isolated re-run under the same ci-test/ci profiles (51ms). The raw assertion text was lost because cargo-ci.sh keeps step logs in a mktemp dir removed on exit. Two observations for the investigator: (a) under the plain debug profile the test appears to hang, which is only unoptimized SHA-256 of the large debug test binary in the fixture (current_exe hashing) hitting nextest's 10s slow-timeout — raise the per-test timeout or precompute; (b) the transient ran concurrently with an unrelated worktree build on the same host.\n\n## Success Criteria\n\n- [hard] REQ-01: The flake's root cause is identified and fixed, or the test is made robust against the identified environmental condition, with the reasoning recorded.\n- [hard] REQ-02: cargo-ci.sh preserves failing-step raw output beyond process exit so future one-shot failures keep their assertion text.",
+  "documents": [],
+  "first_ready_at": "2026-09-01T12:35:59.639076976Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "174295c9-674a-426a-90ce-96f34eee2bf1",
+  "labels": [
+    "component:gf2-sim",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Flaky: symlinked-writer-ancestor coordinator test failed once (61ms assertion) in a merged-tree CI run",
+  "updated_at": "2026-09-01T12:36:17.335379619Z"
+}
