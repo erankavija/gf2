@@ -15,7 +15,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T15:01:29.819455800Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6a1b2404-1241-4f0e-b471-7f619cadbd9f",
   "labels": [
     "type:task",
@@ -26,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "General systematic BCH encoding across supported base fields",
-  "updated_at": "2026-09-01T13:15:52.587865784Z"
+  "updated_at": "2026-09-01T15:01:29.819455800Z"
 }
