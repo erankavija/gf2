@@ -14,6 +14,11 @@
 //! - [`QuotientField`]/[`QuotientElement`]: GF(q^d) as base-field polynomials
 //!   modulo a runtime, certificate-validated irreducible modulus, with the
 //!   extension relation exposed through [`QuotientExt`].
+//! - [`ConstQuotientConfig`]/[`ConstQuotient`]: the same quotient with the base,
+//!   degree, and modulus fixed by the type, so the arithmetic monomorphizes and
+//!   no element stores a modulus; the extension relation is
+//!   [`ConstQuotientExt`]. Both quotient forms of one declaration share a single
+//!   algebraic field identity.
 //!
 //! # Wide accumulator types
 //!
@@ -67,4 +72,7 @@ pub use batch::{BatchExtField, SimdKaratsubaHook};
 pub use cubic::{CubicExt, CubicExtWide};
 pub use ext_config::ExtConfig;
 pub use quadratic::{QuadraticExt, QuadraticExtWide};
-pub use quotient::{QuotientElement, QuotientExt, QuotientField};
+pub use quotient::{
+    ConstQuotient, ConstQuotientConfig, ConstQuotientExt, QuotientElement, QuotientExt,
+    QuotientField,
+};
