@@ -824,23 +824,26 @@ where
 
 /// The systematic encoding kernel of one symbol representation.
 ///
-/// The trait exists because a systematic encoder is one recurrence with two
-/// storage strategies: packed `u64` words for a binary code and base-field
-/// elements for a code over any other field. Implementing it for a
-/// representation is what makes [`BchCode::encode_systematic`] and the
-/// canonical [`BlockEncoder`] available for codes stored that way. This crate
-/// implements it for [`FieldVec`] over every base field and for [`BitVec`]
-/// over `GF(2)`.
+/// The trait exists because a systematic encoder has two storage strategies:
+/// packed `u64` words for a binary code and base-field elements for a code
+/// over any other field. Implementing it for a representation is what makes
+/// [`BchCode::encode_systematic`] and the canonical [`BlockEncoder`]
+/// available for codes stored that way. This crate implements it for
+/// [`FieldVec`] over every base field and for [`BitVec`] over `GF(2)`.
 ///
 /// An implementation writes every codeword coordinate, so a buffer holding a
 /// previous result needs no clearing, and it produces the same codeword as
 /// the reference recurrence stated at the [module level](self).
 ///
 /// [`encode_systematic_with`](Self::encode_systematic_with) is the primitive:
-/// it runs the recurrence over registers the caller owns and allocates
-/// nothing. [`encode_systematic_into`](Self::encode_systematic_into) is the
-/// form that takes no workspace, and runs over the calling thread's scratch
-/// registers.
+/// it runs the reference recurrence over registers the caller owns and
+/// allocates nothing. [`encode_systematic_into`](Self::encode_systematic_into)
+/// is the form that takes no workspace, and runs over the calling thread's
+/// scratch registers. A representation that implements an algorithm family
+/// beyond the reference declares it through
+/// [`family_available`](Self::family_available) and runs it from
+/// [`encode_systematic_family`](Self::encode_systematic_family); see the
+/// [module level](self#algorithm-families).
 pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     /// The word this representation's shift register is stored in.
     ///
