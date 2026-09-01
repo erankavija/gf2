@@ -17,7 +17,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T13:00:54.241703695Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T13:05:34.588906353Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T13:07:46.527855551Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "230dd84d-de00-4d79-b74b-f1a8d244da48",
   "labels": [
     "type:task",
@@ -29,5 +45,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement BchSpec and the consecutive-root construction path",
-  "updated_at": "2026-09-01T12:13:14.271044821Z"
+  "updated_at": "2026-09-01T13:07:46.527855551Z"
 }

@@ -10542,3 +10542,6 @@
 {"id":"7af0caa3-1d7d-4785-b038-ae378f327b99","issue_id":"dfd9e0c5-3368-4389-a4bd-a2195f7514c6","priority":"normal","timestamp":"2026-09-01T12:58:59.466368877Z","title":"Promote integer gcd and the cyclic polynomial x^n-1 helper to gf2-core","type":"issue_created"}
 {"from":"ready","id":"7ce233d8-3d34-4817-b44e-8ed7761b266b","issue_id":"dfd9e0c5-3368-4389-a4bd-a2195f7514c6","timestamp":"2026-09-01T12:59:23.624458069Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"e20083f8-6281-420e-8782-438872b76eef","issue_id":"dfd9e0c5-3368-4389-a4bd-a2195f7514c6","timestamp":"2026-09-01T12:59:23.624458069Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"8515895b-c6d0-4fdd-bbeb-b353f7814f21","issue_id":"230dd84d-de00-4d79-b74b-f1a8d244da48","timestamp":"2026-09-01T13:00:54.241703695Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"9fe1f97d-b9d2-4cdd-a576-3dfbc9ac2bd1","issue_id":"230dd84d-de00-4d79-b74b-f1a8d244da48","timestamp":"2026-09-01T13:05:34.588906353Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"deac60b3-95ab-47f8-8696-7d9500be7423","issue_id":"230dd84d-de00-4d79-b74b-f1a8d244da48","timestamp":"2026-09-01T13:07:46.527855551Z","type":"gate_failed","updated_by":"auto:executor"}
