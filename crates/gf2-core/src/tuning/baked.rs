@@ -82,6 +82,8 @@ pub(crate) const F64_MIN_COLS: usize = 512;
 mod tests {
     use super::*;
     use crate::tuning::CoreTuning;
+    #[cfg(feature = "tuning-profile")]
+    use crate::tuning::{CoreTuningCodec, ProfileRegistryBuilder};
     use sha2::{Digest, Sha256};
 
     const MEASURED_FORMAT2: &[u8] =
@@ -96,11 +98,29 @@ mod tests {
     }
 
     #[test]
-    fn baked_constant_cites_the_current_measured_owner() {
-        assert_eq!(SIMD_MIN_WORDS, 4);
+    fn current_measured_owner_has_the_pinned_content_hash() {
         assert_eq!(
             format!("{:x}", Sha256::digest(MEASURED_FORMAT2)),
             "e1cc82ab17db7d0226d5c55ad4c029fad072edd66ac3c18b2ea74e97f2f39045"
+        );
+    }
+
+    #[cfg(feature = "tuning-profile")]
+    #[test]
+    fn baked_simd_threshold_matches_the_strict_measured_owner() {
+        let registry = ProfileRegistryBuilder::new()
+            .register::<CoreTuning, CoreTuningCodec>()
+            .unwrap()
+            .build()
+            .unwrap();
+        let owner = registry
+            .from_json(std::str::from_utf8(MEASURED_FORMAT2).unwrap())
+            .unwrap();
+        let measured = owner.section::<CoreTuning>().unwrap().unwrap();
+
+        assert_eq!(
+            SIMD_MIN_WORDS,
+            measured.section.bit_backend().simd_min_words()
         );
     }
 
