@@ -13,8 +13,8 @@
     "component:gf2-core",
     "type:bug"
   ],
-  "priority": "low",
+  "priority": "high",
   "state": "ready",
   "title": "wide_config.rs comment misstates the leading-term convention",
-  "updated_at": "2026-08-31T22:03:44.315143174Z"
+  "updated_at": "2026-09-01T06:29:01.231229620Z"
 }

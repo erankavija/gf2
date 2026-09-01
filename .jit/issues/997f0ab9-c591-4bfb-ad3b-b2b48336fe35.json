@@ -12,7 +12,13 @@
   "gates_required": [
     "repo-validate"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "repo-validate": {
+      "status": "failed",
+      "updated_at": "2026-09-01T06:28:43.591390204Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "997f0ab9-c591-4bfb-ad3b-b2b48336fe35",
   "labels": [
     "type:task",
@@ -21,7 +27,7 @@
     "satisfies:REQ-16"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "gated",
   "title": "Create the tracked follow-up issues against the canonical interfaces",
-  "updated_at": "2026-09-01T05:09:29.222793408Z"
+  "updated_at": "2026-09-01T06:28:52.412061617Z"
 }
