@@ -6,11 +6,13 @@
 //! function convention.  For `outer.compose(&inner)`, `inner` is applied
 //! first and `outer` second, so the result is `outer \u{2218} inner`.
 //!
-//! Maps whose coordinates are an increasing contiguous range are stored as a
-//! start and length, including identity maps (which use start `0`).  Every
-//! other valid map is stored as an explicit injective coordinate vector.  The
-//! vector constructor applies the same rule automatically, and composition
-//! canonicalizes its result, so a regular result remains a compact range.
+//! Maps whose mapped coordinates are an increasing contiguous range are stored
+//! as a start and length, including identity maps (which use start `0`).
+//! Other all-mapped maps are stored as an explicit injective coordinate
+//! vector.  Maps containing fresh coordinates use an explicit vector of
+//! [`Option`] values: `None` means that the derived coordinate has no mother
+//! preimage.  Constructors and composition canonicalize all-mapped results,
+//! so a regular result remains a compact range.
 //!
 //! # Examples
 //!
@@ -35,16 +37,19 @@ use std::collections::HashSet;
 enum Representation {
     Range { start: usize, length: usize },
     Permutation(Vec<usize>),
+    WithFresh(Vec<Option<usize>>),
 }
 
 /// A checked mapping from derived-code coordinates to mother-code coordinates.
 ///
-/// A map is injective: a mother coordinate cannot be the provenance of two
-/// derived positions.  This is the coordinate contract needed by shortening,
-/// puncturing, and coordinate reordering.  The map stores both the mother
-/// length and the derived length, so trailing mother coordinates that are not
-/// present in a derived code remain distinguishable from a shorter mother
-/// code.
+/// A map is injective for mapped coordinates: a mother coordinate cannot
+/// be the provenance of two derived positions.  A fresh coordinate has no
+/// mother preimage and is represented by `None` in the explicit
+/// representation.  This is the coordinate contract needed by
+/// shortening, puncturing, and coordinate reordering.  The map stores
+/// both the mother length and the derived length, so trailing mother
+/// coordinates that are not present in a derived code remain
+/// distinguishable from a shorter mother code.
 #[derive(Clone, Debug)]
 pub struct CoordinateMap {
     mother_length: usize,
@@ -133,6 +138,68 @@ impl CoordinateMap {
         }
     }
 
+    /// Creates a map from mapped and fresh mother positions.
+    ///
+    /// `coordinates` contains one entry for every derived position.  `Some`
+    /// entries must be distinct mother positions below `mother_length`; a
+    /// `None` entry is a fresh coordinate with no mother preimage.  An
+    /// all-mapped increasing contiguous input is stored as a compact range;
+    /// maps containing fresh coordinates retain an explicit `Option` vector.
+    /// Returns a typed [`CodeError`] for invalid mapped positions and does not
+    /// panic on caller input.
+    pub fn from_optional_positions(
+        mother_length: usize,
+        coordinates: impl AsRef<[Option<usize>]>,
+    ) -> Result<Self, CodeError> {
+        let coordinates = coordinates.as_ref();
+        let mut seen = HashSet::with_capacity(coordinates.len());
+        for &coordinate in coordinates.iter().flatten() {
+            if coordinate >= mother_length {
+                return Err(CodeError::CoordinateOutOfRange {
+                    coordinate,
+                    length: mother_length,
+                });
+            }
+            if !seen.insert(coordinate) {
+                return Err(CodeError::DuplicateCoordinate { coordinate });
+            }
+        }
+
+        if coordinates.iter().all(Option::is_some) {
+            let mapped = coordinates.iter().copied().flatten().collect();
+            Ok(Self::canonicalize_mapped(mother_length, mapped))
+        } else {
+            Ok(Self {
+                mother_length,
+                representation: Representation::WithFresh(coordinates.to_vec()),
+            })
+        }
+    }
+
+    /// Appends `count` fresh coordinates to this map.
+    ///
+    /// Every appended coordinate is represented by `None`.  The existing
+    /// mapped coordinates are preserved in order, and all-mapped inputs still
+    /// canonicalize to their compact representation when `count` is zero.
+    /// Returns [`CodeError::UnsupportedSize`] if the derived length cannot be
+    /// represented by `usize`.
+    pub fn append_fresh(self, count: usize) -> Result<Self, CodeError> {
+        let new_length =
+            self.derived_len()
+                .checked_add(count)
+                .ok_or(CodeError::UnsupportedSize {
+                    size: self.derived_len() as u128 + count as u128,
+                })?;
+        let mut coordinates = Vec::with_capacity(new_length);
+        for position in 0..self.derived_len() {
+            coordinates.push(self.mother_position_opt(position)?);
+        }
+        for _ in 0..count {
+            coordinates.push(None);
+        }
+        Self::from_optional_positions(self.mother_length, coordinates)
+    }
+
     /// Returns the number of coordinates in the derived code.
     ///
     /// This is an O(1) operation for both compact and explicit maps and does
@@ -141,6 +208,7 @@ impl CoordinateMap {
         match &self.representation {
             Representation::Range { length, .. } => *length,
             Representation::Permutation(coordinates) => coordinates.len(),
+            Representation::WithFresh(coordinates) => coordinates.len(),
         }
     }
 
@@ -154,9 +222,27 @@ impl CoordinateMap {
     /// Looks up the mother-code coordinate for a derived-code position.
     ///
     /// Returns [`CodeError::CoordinateOutOfRange`] when `derived_position` is
-    /// not in `0..self.derived_len()`.  Valid lookups are O(1) for both
-    /// representations.  This method does not panic on caller input.
+    /// not in `0..self.derived_len()`.  For a fresh coordinate, this
+    /// all-mapped accessor also returns `CoordinateOutOfRange`; use
+    /// [`Self::mother_position_opt`] when fresh coordinates must be
+    /// distinguished from invalid positions.  Mapped lookups are O(1) for
+    /// every representation.  This method does not panic on caller input.
     pub fn mother_position(&self, derived_position: usize) -> Result<usize, CodeError> {
+        self.mother_position_opt(derived_position)?
+            .ok_or(CodeError::CoordinateOutOfRange {
+                coordinate: derived_position,
+                length: self.derived_len(),
+            })
+    }
+
+    /// Looks up a derived coordinate, preserving whether it is fresh.
+    ///
+    /// Returns `Ok(Some(mother_position))` for an inherited coordinate and
+    /// `Ok(None)` for a fresh coordinate.  Returns
+    /// [`CodeError::CoordinateOutOfRange`] only when `derived_position` is not
+    /// in `0..self.derived_len()`.  This checked operation is O(1) and does
+    /// not panic on caller input.
+    pub fn mother_position_opt(&self, derived_position: usize) -> Result<Option<usize>, CodeError> {
         if derived_position >= self.derived_len() {
             return Err(CodeError::CoordinateOutOfRange {
                 coordinate: derived_position,
@@ -164,7 +250,7 @@ impl CoordinateMap {
             });
         }
 
-        Ok(self.mother_position_unchecked(derived_position))
+        Ok(self.mother_position_opt_unchecked(derived_position))
     }
 
     /// Composes this map after `inner`, returning `self \u{2218} inner`.
@@ -204,16 +290,29 @@ impl CoordinateMap {
 
         let coordinates = (0..inner.derived_len())
             .map(|position| {
-                let intermediate = inner.mother_position_unchecked(position);
-                self.mother_position_unchecked(intermediate)
+                let Some(intermediate) = inner.mother_position_opt(position)? else {
+                    return Ok(None);
+                };
+                self.mother_position_opt(intermediate)
             })
-            .collect::<Vec<_>>();
+            .collect::<Result<Vec<_>, CodeError>>()?;
 
-        // Both operands are injective and their lengths are compatible, so
-        // this cannot fail unless an internal representation invariant has
-        // been violated.  Keeping the checked constructor here makes that
-        // invariant explicit and avoids an unchecked public construction path.
-        Self::from_permutation(self.mother_length, coordinates)
+        // Both operands are injective for mapped coordinates and their
+        // lengths are compatible, so the checked constructor can only fail if
+        // an internal representation invariant has been violated.  Fresh
+        // coordinates are deliberately retained as None.
+        Self::from_optional_positions(self.mother_length, coordinates)
+    }
+
+    fn canonicalize_mapped(mother_length: usize, coordinates: Vec<usize>) -> Self {
+        if let Some(start) = contiguous_start(&coordinates) {
+            Self::new_range(mother_length, start, coordinates.len())
+        } else {
+            Self {
+                mother_length,
+                representation: Representation::Permutation(coordinates),
+            }
+        }
     }
 
     fn new_range(mother_length: usize, start: usize, length: usize) -> Self {
@@ -223,14 +322,18 @@ impl CoordinateMap {
         }
     }
 
-    fn mother_position_unchecked(&self, derived_position: usize) -> usize {
+    fn mother_position_opt_unchecked(&self, derived_position: usize) -> Option<usize> {
         match &self.representation {
             Representation::Range { start, length } => {
                 debug_assert!(derived_position < *length);
                 debug_assert!(start.checked_add(derived_position).is_some());
-                start + derived_position
+                Some(start + derived_position)
             }
             Representation::Permutation(coordinates) => {
+                debug_assert!(derived_position < coordinates.len());
+                Some(coordinates[derived_position])
+            }
+            Representation::WithFresh(coordinates) => {
                 debug_assert!(derived_position < coordinates.len());
                 coordinates[derived_position]
             }
@@ -243,8 +346,8 @@ impl PartialEq for CoordinateMap {
         self.mother_length == other.mother_length
             && self.derived_len() == other.derived_len()
             && (0..self.derived_len()).all(|position| {
-                self.mother_position_unchecked(position)
-                    == other.mother_position_unchecked(position)
+                self.mother_position_opt_unchecked(position)
+                    == other.mother_position_opt_unchecked(position)
             })
     }
 }
@@ -308,6 +411,38 @@ mod tests {
         }
     }
 
+    fn mixed_map_with_fresh(
+        derived_length: usize,
+        mother_length: usize,
+        fresh_mask: u64,
+        regular: bool,
+    ) -> CoordinateMap {
+        let fresh_count = (0..derived_length)
+            .filter(|&position| fresh_mask & (1 << position) != 0)
+            .count();
+        let mapped = if regular {
+            (0..mother_length)
+                .take(derived_length - fresh_count)
+                .collect::<Vec<_>>()
+        } else {
+            (0..mother_length)
+                .rev()
+                .take(derived_length - fresh_count)
+                .collect::<Vec<_>>()
+        };
+        let mut mapped = mapped.into_iter();
+        let coordinates = (0..derived_length)
+            .map(|position| {
+                if fresh_mask & (1 << position) != 0 {
+                    None
+                } else {
+                    Some(mapped.next().expect("the map has enough mother positions"))
+                }
+            })
+            .collect::<Vec<_>>();
+        CoordinateMap::from_optional_positions(mother_length, coordinates).unwrap()
+    }
+
     #[test]
     fn identity_and_contiguous_vectors_use_the_range_representation() {
         let identity = CoordinateMap::identity(7);
@@ -329,6 +464,13 @@ mod tests {
         assert!(matches!(
             non_regular.representation,
             Representation::Permutation(_)
+        ));
+
+        let with_fresh =
+            CoordinateMap::from_optional_positions(10, [Some(3), None, Some(4)]).unwrap();
+        assert!(matches!(
+            with_fresh.representation,
+            Representation::WithFresh(_)
         ));
 
         let empty = CoordinateMap::from_permutation(10, []).unwrap();
@@ -355,6 +497,127 @@ mod tests {
                 explicit.mother_position(position)
             );
         }
+    }
+
+    proptest! {
+        #[test]
+        fn composition_is_associative_over_maps_with_fresh_coordinates(
+            (mother_length, middle_length, inner_length, derived_length) in chain_dimensions(),
+            fresh_masks in prop::array::uniform3(any::<u64>()),
+            regular in prop::array::uniform3(any::<bool>()),
+        ) {
+            let outer = mixed_map_with_fresh(
+                middle_length,
+                mother_length,
+                fresh_masks[0],
+                regular[0],
+            );
+            let middle = mixed_map_with_fresh(
+                inner_length,
+                middle_length,
+                fresh_masks[1],
+                regular[1],
+            );
+            let inner = mixed_map_with_fresh(
+                derived_length,
+                inner_length,
+                fresh_masks[2],
+                regular[2],
+            );
+
+            let left = outer.compose(&middle).unwrap().compose(&inner).unwrap();
+            let right = outer.compose(&middle.compose(&inner).unwrap()).unwrap();
+
+            prop_assert_eq!(&left, &right);
+            for position in 0..derived_length {
+                prop_assert_eq!(
+                    left.mother_position_opt(position).unwrap(),
+                    right.mother_position_opt(position).unwrap()
+                );
+            }
+        }
+
+        #[test]
+        fn composed_lookup_preserves_fresh_coordinates(
+            (mother_length, middle_length, _inner_length, derived_length) in chain_dimensions(),
+            fresh_masks in prop::array::uniform2(any::<u64>()),
+            regular in prop::array::uniform2(any::<bool>()),
+        ) {
+            let outer = mixed_map_with_fresh(
+                middle_length,
+                mother_length,
+                fresh_masks[0],
+                regular[0],
+            );
+            let inner = mixed_map_with_fresh(
+                derived_length,
+                middle_length,
+                fresh_masks[1],
+                regular[1],
+            );
+            let composed = outer.compose(&inner).unwrap();
+
+            for position in 0..derived_length {
+                let stepwise = match inner.mother_position_opt(position).unwrap() {
+                    Some(intermediate) => outer.mother_position_opt(intermediate).unwrap(),
+                    None => None,
+                };
+                prop_assert_eq!(composed.mother_position_opt(position).unwrap(), stepwise);
+            }
+        }
+
+        #[test]
+        fn fresh_coordinate_composition_is_deterministic(
+            (mother_length, middle_length, _inner_length, derived_length) in chain_dimensions(),
+            fresh_masks in prop::array::uniform2(any::<u64>()),
+        ) {
+            let outer = mixed_map_with_fresh(middle_length, mother_length, fresh_masks[0], true);
+            let inner = mixed_map_with_fresh(derived_length, middle_length, fresh_masks[1], false);
+
+            let first = outer.compose(&inner).unwrap();
+            let second = outer.compose(&inner).unwrap();
+            prop_assert_eq!(first, second);
+        }
+    }
+
+    #[test]
+    fn fresh_coordinates_are_counted_and_distinguished_from_invalid_positions() {
+        let map = CoordinateMap::from_optional_positions(4, [Some(0), None, Some(2)]).unwrap();
+
+        assert_eq!(map.derived_len(), 3);
+        assert_eq!(map.mother_position_opt(0), Ok(Some(0)));
+        assert_eq!(map.mother_position_opt(1), Ok(None));
+        assert_eq!(map.mother_position_opt(2), Ok(Some(2)));
+        assert_eq!(
+            map.mother_position_opt(3),
+            Err(CodeError::CoordinateOutOfRange {
+                coordinate: 3,
+                length: 3,
+            })
+        );
+        assert_eq!(
+            map.mother_position(1),
+            Err(CodeError::CoordinateOutOfRange {
+                coordinate: 1,
+                length: 3,
+            })
+        );
+    }
+
+    #[test]
+    fn appending_fresh_coordinates_keeps_existing_positions_and_length() {
+        let map = CoordinateMap::range(4, 1, 2)
+            .unwrap()
+            .append_fresh(2)
+            .unwrap();
+
+        assert_eq!(map.derived_len(), 4);
+        assert_eq!(
+            (0..map.derived_len())
+                .map(|position| map.mother_position_opt(position).unwrap())
+                .collect::<Vec<_>>(),
+            vec![Some(1), Some(2), None, None]
+        );
     }
 
     proptest! {
@@ -435,6 +698,17 @@ mod tests {
         );
         assert_eq!(
             CoordinateMap::from_permutation(4, [4]),
+            Err(CodeError::CoordinateOutOfRange {
+                coordinate: 4,
+                length: 4,
+            })
+        );
+        assert_eq!(
+            CoordinateMap::from_optional_positions(4, [Some(0), Some(0)]),
+            Err(CodeError::DuplicateCoordinate { coordinate: 0 })
+        );
+        assert_eq!(
+            CoordinateMap::from_optional_positions(4, [None, Some(4)]),
             Err(CodeError::CoordinateOutOfRange {
                 coordinate: 4,
                 length: 4,
