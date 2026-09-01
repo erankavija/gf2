@@ -56,12 +56,11 @@ use std::fmt;
 /// can stay the same or increase by one; for a binary mother with odd minimum
 /// distance, the even-weight extension increases it by one.
 ///
-/// `CoordinateMap` cannot represent a fresh derived coordinate because it is
-/// an injective map whose every derived position has a mother preimage.  The
-/// map returned by [`Self::coordinate_map`] therefore contains exactly the
-/// `n` inherited positions, in order; the appended position is deliberately
-/// omitted and is identified by [`Self::extension_position`].  This convention
-/// also lets callers supply a provenance map from another derived wrapper via
+/// The returned [`Self::coordinate_map`] is complete: it contains all `n + 1`
+/// derived positions in order.  The appended position is represented as a
+/// fresh coordinate (`None`) because it has no mother preimage; query it with
+/// [`CoordinateMap::mother_position_opt`].  This complete representation also
+/// lets callers compose provenance through another derived wrapper via
 /// [`Self::with_coordinate_map`].
 ///
 /// # Examples
@@ -123,8 +122,7 @@ where
     ///
     /// The constructor rejects a mother length that cannot be increased by
     /// one in the `usize` representation.  The coordinate map is the
-    /// identity over the mother's positions; see the type-level rustdoc for
-    /// why the fresh coordinate is not an entry in that map.
+    /// identity over the mother's positions followed by one fresh position.
     pub fn new(mother: C) -> Result<Self, CodeError> {
         mother
             .n()
@@ -133,7 +131,7 @@ where
                 size: mother.n() as u128 + 1,
             })?;
         Ok(Self {
-            map: CoordinateMap::identity(mother.n()),
+            map: CoordinateMap::identity(mother.n()).append_fresh(1)?,
             mother,
         })
     }
@@ -142,8 +140,8 @@ where
     /// to an ultimate ancestor coordinate space.
     ///
     /// `mother_map` must contain one entry for every inherited mother
-    /// coordinate.  Its derived length is therefore `mother.n()`; the fresh
-    /// extension coordinate is not included.
+    /// coordinate.  Its derived length must therefore be `mother.n()` before
+    /// the fresh extension coordinate is appended to it.
     pub fn with_coordinate_map(mother: C, mother_map: CoordinateMap) -> Result<Self, CodeError> {
         mother
             .n()
@@ -159,7 +157,7 @@ where
         }
         Ok(Self {
             mother,
-            map: mother_map,
+            map: mother_map.append_fresh(1)?,
         })
     }
 
@@ -173,12 +171,9 @@ where
         self.mother
     }
 
-    /// Returns the map for the inherited positions.
-    ///
-    /// The map has `derived_len() == mother.n()`, rather than `self.n()`:
-    /// [`CoordinateMap`] has no representation for the fresh extension
-    /// position.  Querying [`Self::extension_position`] on this map therefore
-    /// returns [`CodeError::CoordinateOutOfRange`].
+    /// Returns the complete map from derived coordinates to mother
+    /// coordinates.  The extension position is included and is fresh, so
+    /// [`CoordinateMap::mother_position_opt`] returns `Ok(None)` for it.
     pub fn coordinate_map(&self) -> &CoordinateMap {
         &self.map
     }
@@ -188,12 +183,8 @@ where
         self.mother.n()
     }
 
-    /// Shortens the extended code and composes provenance for its inherited
-    /// coordinates.
-    ///
-    /// The fresh extension coordinate is omitted from the resulting ultimate
-    /// map if it remains in the exposed codeword, because it has no mother
-    /// preimage.  Remove that coordinate to obtain a fully mapped result.
+    /// Shortens the extended code and composes complete coordinate
+    /// provenance, retaining any fresh coordinates that remain exposed.
     pub fn shorten(
         self,
         coordinates: impl IntoIterator<Item = usize>,
@@ -202,15 +193,11 @@ where
         C: GeneratorMatrixAccess,
     {
         let provenance = self.map.clone();
-        build_shortened_with_incomplete_provenance(self, coordinates, provenance)
+        build_shortened(self, coordinates, provenance)
     }
 
-    /// Punctures the extended code and composes provenance for its inherited
-    /// coordinates.
-    ///
-    /// The fresh extension coordinate is omitted from the resulting ultimate
-    /// map if it remains in the exposed codeword, because it has no mother
-    /// preimage.  Remove that coordinate to obtain a fully mapped result.
+    /// Punctures the extended code and composes complete coordinate
+    /// provenance, retaining any fresh coordinates that remain exposed.
     pub fn puncture(
         self,
         coordinates: impl IntoIterator<Item = usize>,
@@ -219,7 +206,7 @@ where
         C: GeneratorMatrixAccess,
     {
         let provenance = self.map.clone();
-        build_punctured_with_incomplete_provenance(self, coordinates, provenance)
+        build_punctured(self, coordinates, provenance)
     }
 }
 
@@ -346,8 +333,7 @@ where
 /// resulting wrapper owns its generator and therefore encodes through the
 /// generic symbol representation supplied by `C`, including nonbinary fields.
 /// When an extension coordinate is retained while shortening an [`Extended`]
-/// value, the map follows the inherited-coordinate convention documented on
-/// [`Extended::coordinate_map`].
+/// value, its map entry is preserved as a fresh (`None`) coordinate.
 ///
 /// Use [`Self::new`] for a base code.  To shorten an already shortened code,
 /// consume it with [`Self::shorten`]; that operation composes the new map
@@ -494,11 +480,8 @@ where
         Self::shorten_last(mother, count)
     }
 
-    /// Extends this shortened code while retaining its coordinate provenance.
-    ///
-    /// If the shortened code itself contains a fresh coordinate from an
-    /// earlier extension, that coordinate must first be removed because the
-    /// map convention cannot provide it with an ancestor preimage.
+    /// Extends this shortened code while retaining its complete coordinate
+    /// provenance, including any fresh coordinates from an earlier extension.
     pub fn extend(self) -> Result<Extended<Self>, CodeError> {
         let provenance = self.map.clone();
         Extended::with_coordinate_map(self, provenance)
@@ -682,8 +665,8 @@ where
 /// generic symbol representation supplied by `C`, including nonbinary
 /// fields.  Its coordinate map preserves the original order of the kept
 /// coordinates and composes through [`Self::puncture`].  When the mother is
-/// an [`Extended`] value, the map can omit that mother's fresh coordinate
-/// under the convention documented on [`Extended::coordinate_map`].
+/// an [`Extended`] value, a retained fresh coordinate remains explicitly
+/// represented in the map.
 ///
 /// The complete coordinate set is valid: it produces the zero-length,
 /// zero-dimensional boundary code with an empty information set.
@@ -824,11 +807,8 @@ where
         Self::puncture_last(mother, count)
     }
 
-    /// Extends this punctured code while retaining its coordinate provenance.
-    ///
-    /// If the punctured code itself contains a fresh coordinate from an
-    /// earlier extension, that coordinate must first be removed because the
-    /// map convention cannot provide it with an ancestor preimage.
+    /// Extends this punctured code while retaining its complete coordinate
+    /// provenance, including any fresh coordinates from an earlier extension.
     pub fn extend(self) -> Result<Extended<Self>, CodeError> {
         let provenance = self.map.clone();
         Extended::with_coordinate_map(self, provenance)
@@ -1000,43 +980,6 @@ where
     })
 }
 
-fn build_shortened_with_incomplete_provenance<C>(
-    mother: C,
-    coordinates: impl IntoIterator<Item = usize>,
-    provenance: CoordinateMap,
-) -> Result<Shortened<C>, CodeError>
-where
-    C: BlockCode + GeneratorMatrixAccess,
-{
-    if provenance.derived_len() > mother.n() {
-        return Err(CodeError::CoordinateCountMismatch {
-            expected: mother.n(),
-            actual: provenance.derived_len(),
-        });
-    }
-
-    let removed = validate_coordinate_set(mother.n(), coordinates)?;
-    let kept = (0..mother.n())
-        .filter(|position| removed.binary_search(position).is_err())
-        .collect::<Vec<_>>();
-    let local_map = CoordinateMap::from_permutation(mother.n(), &kept)?;
-    let map = map_inherited_positions(&provenance, &kept)?;
-
-    let mother_generator = mother.generator_matrix()?;
-    let zero = mother.symbol_zero();
-    let generator = materialize_generator(&mother_generator, &zero);
-    let data = derive_shortened_data(&generator, &removed, &kept, &zero);
-
-    Ok(Shortened {
-        mother,
-        map,
-        local_map,
-        removed: removed.into_boxed_slice(),
-        generator: data.generator,
-        information_set: data.information_set,
-    })
-}
-
 fn build_punctured<C>(
     mother: C,
     coordinates: impl IntoIterator<Item = usize>,
@@ -1071,54 +1014,6 @@ where
         generator: data.generator,
         information_set: data.information_set,
     })
-}
-
-fn build_punctured_with_incomplete_provenance<C>(
-    mother: C,
-    coordinates: impl IntoIterator<Item = usize>,
-    provenance: CoordinateMap,
-) -> Result<Punctured<C>, CodeError>
-where
-    C: BlockCode + GeneratorMatrixAccess,
-{
-    if provenance.derived_len() > mother.n() {
-        return Err(CodeError::CoordinateCountMismatch {
-            expected: mother.n(),
-            actual: provenance.derived_len(),
-        });
-    }
-
-    let removed = validate_coordinate_set(mother.n(), coordinates)?;
-    let kept = (0..mother.n())
-        .filter(|position| removed.binary_search(position).is_err())
-        .collect::<Vec<_>>();
-    let map = map_inherited_positions(&provenance, &kept)?;
-
-    let mother_generator = mother.generator_matrix()?;
-    let zero = mother.symbol_zero();
-    let generator = materialize_generator(&mother_generator, &zero);
-    let data = derive_punctured_data(&generator, &kept, &zero);
-
-    Ok(Punctured {
-        mother,
-        map,
-        removed: removed.into_boxed_slice(),
-        generator: data.generator,
-        information_set: data.information_set,
-    })
-}
-
-fn map_inherited_positions(
-    provenance: &CoordinateMap,
-    positions: &[usize],
-) -> Result<CoordinateMap, CodeError> {
-    let inherited = positions
-        .iter()
-        .copied()
-        .filter(|&position| position < provenance.derived_len())
-        .map(|position| provenance.mother_position(position))
-        .collect::<Result<Vec<_>, _>>()?;
-    CoordinateMap::from_permutation(provenance.mother_len(), inherited)
 }
 
 fn validate_coordinate_set(
@@ -1493,11 +1388,15 @@ mod tests {
         assert!(extended.is_systematic().unwrap());
         assert_eq!(extended.extension_position(), mother.n());
         assert_eq!(extended.coordinate_map().mother_len(), mother.n());
-        assert_eq!(extended.coordinate_map().derived_len(), mother.n());
-        for position in 0..mother.n() {
+        assert_eq!(extended.coordinate_map().derived_len(), extended.n());
+        for position in 0..extended.n() {
             assert_eq!(
-                extended.coordinate_map().mother_position(position),
-                Ok(position)
+                extended.coordinate_map().mother_position_opt(position),
+                if position < mother.n() {
+                    Ok(Some(position))
+                } else {
+                    Ok(None)
+                }
             );
         }
         assert_eq!(
@@ -1506,7 +1405,7 @@ mod tests {
                 .mother_position(extended.extension_position()),
             Err(CodeError::CoordinateOutOfRange {
                 coordinate: mother.n(),
-                length: mother.n(),
+                length: extended.n(),
             })
         );
 
@@ -1601,13 +1500,26 @@ mod tests {
         let provenance = shortened.coordinate_map().clone();
         let extended = shortened.extend().unwrap();
 
-        assert_eq!(extended.coordinate_map(), &provenance);
+        assert_eq!(
+            extended.coordinate_map().mother_len(),
+            provenance.mother_len()
+        );
+        assert_eq!(
+            extended.coordinate_map().derived_len(),
+            provenance.derived_len() + 1
+        );
         for position in 0..provenance.derived_len() {
             assert_eq!(
                 extended.coordinate_map().mother_position(position),
                 provenance.mother_position(position)
             );
         }
+        assert_eq!(
+            extended
+                .coordinate_map()
+                .mother_position_opt(provenance.derived_len()),
+            Ok(None)
+        );
 
         let mut generator = BitMatrix::zeros(2, 4);
         generator.set(0, 0, true);
@@ -1618,7 +1530,20 @@ mod tests {
         let punctured = Punctured::new(mother, [1]).unwrap();
         let provenance = punctured.coordinate_map().clone();
         let extended = punctured.extend().unwrap();
-        assert_eq!(extended.coordinate_map(), &provenance);
+        assert_eq!(
+            extended.coordinate_map().mother_len(),
+            provenance.mother_len()
+        );
+        assert_eq!(
+            extended.coordinate_map().derived_len(),
+            provenance.derived_len() + 1
+        );
+        assert_eq!(
+            extended
+                .coordinate_map()
+                .mother_position_opt(provenance.derived_len()),
+            Ok(None)
+        );
     }
 
     #[test]
@@ -1643,7 +1568,7 @@ mod tests {
     }
 
     #[test]
-    fn extend_then_puncture_composes_inherited_provenance() {
+    fn extend_then_puncture_retains_parity_coordinate_and_complete_map() {
         let mut generator = BitMatrix::zeros(2, 4);
         generator.set(0, 0, true);
         generator.set(0, 2, true);
@@ -1653,10 +1578,91 @@ mod tests {
         let punctured = Extended::new(mother).unwrap().puncture([0]).unwrap();
 
         assert_eq!(punctured.coordinate_map().mother_len(), 4);
-        assert_eq!(punctured.coordinate_map().derived_len(), 3);
-        assert_eq!(punctured.coordinate_map().mother_position(0), Ok(1));
-        assert_eq!(punctured.coordinate_map().mother_position(1), Ok(2));
-        assert_eq!(punctured.coordinate_map().mother_position(2), Ok(3));
+        assert_eq!(punctured.coordinate_map().derived_len(), punctured.n());
+        assert_eq!(
+            punctured.coordinate_map().mother_position_opt(0),
+            Ok(Some(1))
+        );
+        assert_eq!(
+            punctured.coordinate_map().mother_position_opt(1),
+            Ok(Some(2))
+        );
+        assert_eq!(
+            punctured.coordinate_map().mother_position_opt(2),
+            Ok(Some(3))
+        );
+        assert_eq!(punctured.coordinate_map().mother_position_opt(3), Ok(None));
+    }
+
+    #[test]
+    fn extend_then_shorten_retains_parity_coordinate_and_complete_map() {
+        let mut generator = BitMatrix::zeros(2, 4);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(1, 1, true);
+        generator.set(1, 3, true);
+        let mother = LinearBlockCode::new_systematic(generator, None);
+        let shortened = Extended::new(mother).unwrap().shorten([0]).unwrap();
+
+        assert_eq!(shortened.coordinate_map().mother_len(), 4);
+        assert_eq!(shortened.coordinate_map().derived_len(), shortened.n());
+        assert_eq!(
+            shortened.coordinate_map().mother_position_opt(0),
+            Ok(Some(1))
+        );
+        assert_eq!(
+            shortened.coordinate_map().mother_position_opt(1),
+            Ok(Some(2))
+        );
+        assert_eq!(
+            shortened.coordinate_map().mother_position_opt(2),
+            Ok(Some(3))
+        );
+        assert_eq!(shortened.coordinate_map().mother_position_opt(3), Ok(None));
+    }
+
+    #[test]
+    fn extend_then_puncture_on_parity_has_the_mother_equivalent_map() {
+        let mut generator = BitMatrix::zeros(2, 4);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(1, 1, true);
+        generator.set(1, 3, true);
+        let mother = LinearBlockCode::new_systematic(generator, None);
+        let punctured = Extended::new(mother.clone())
+            .unwrap()
+            .puncture([mother.n()])
+            .unwrap();
+
+        assert_eq!(punctured.coordinate_map().mother_len(), mother.n());
+        assert_eq!(punctured.coordinate_map().derived_len(), mother.n());
+        for position in 0..mother.n() {
+            assert_eq!(
+                punctured.coordinate_map().mother_position_opt(position),
+                Ok(Some(position))
+            );
+        }
+    }
+
+    #[test]
+    fn extending_an_extended_code_has_a_complete_map() {
+        let mother = LinearBlockCode::hamming(3);
+        let first = Extended::new(mother.clone()).unwrap();
+        let second = Extended::new(first).unwrap();
+
+        assert_eq!(second.n(), mother.n() + 2);
+        assert_eq!(second.coordinate_map().mother_len(), mother.n() + 1);
+        assert_eq!(second.coordinate_map().derived_len(), second.n());
+        for position in 0..second.n() {
+            assert_eq!(
+                second.coordinate_map().mother_position_opt(position),
+                if position < second.n() - 1 {
+                    Ok(Some(position))
+                } else {
+                    Ok(None)
+                }
+            );
+        }
     }
 
     #[test]
