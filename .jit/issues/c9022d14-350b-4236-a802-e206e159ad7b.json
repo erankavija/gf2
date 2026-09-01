@@ -13,11 +13,11 @@
   "id": "c9022d14-350b-4236-a802-e206e159ad7b",
   "labels": [
     "component:gf2-core",
-    "enforces:@/inv/caller-trusted-fast-paths",
-    "type:enhancement"
+    "type:enhancement",
+    "enforces:@/invariant/caller-trusted-fast-paths"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Name or wrap the validation-skipping ConstExt::new per caller-trusted-fast-paths",
-  "updated_at": "2026-09-01T12:06:56.886681260Z"
+  "updated_at": "2026-09-01T21:39:13.807851499Z"
 }

@@ -10718,3 +10718,18 @@
 {"id":"aabe9290-1127-4e80-b974-0e41e965464e","issue_id":"177bdc85-11ac-4ed8-94ef-ae2876e44045","timestamp":"2026-09-01T20:56:10.320863788Z","type":"issue_completed"}
 {"from":"backlog","id":"ddb379b7-79b6-4cf6-9bd6-d6a7ec21e18c","issue_id":"2b6968d3-1a00-4958-bdd0-4c86d548be00","timestamp":"2026-09-01T20:56:19.202678809Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"7b866374-1b21-4037-98c3-d7199452bacf","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-01T20:56:28.035859056Z","to":"ready","type":"issue_state_changed"}
+{"id":"734b2f25-96ba-4050-8770-367b10b9ab01","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","priority":"high","timestamp":"2026-09-01T21:37:21.957829629Z","title":"Canonical BCH matrices use the systematic user layout","type":"issue_created"}
+{"fields":["dependencies"],"id":"ed8cf072-cea1-46e6-a304-b9760d572d49","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-01T21:37:41.414610226Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"24c67e68-d5ce-4b8f-98b9-ca9189b571cb","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-01T21:38:18.776802775Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"0bb7cd8e-ad85-4888-bebd-2b600c6f8c19","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-01T21:38:18.776802775Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["labels"],"id":"18906432-ee2f-43cd-a8c1-6991bb91566e","issue_id":"c3d5cea5-71ac-4cd8-bddf-40be7e243526","timestamp":"2026-09-01T21:39:04.947203584Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["labels"],"id":"87c00d18-e15e-4808-aaf2-7519f3f67925","issue_id":"c9022d14-350b-4236-a802-e206e159ad7b","timestamp":"2026-09-01T21:39:13.807851499Z","type":"issue_updated","updated_by":"issue-update"}
+{"from":"ready","id":"14eba01a-9727-483b-8210-8ffaae74eada","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-01T21:39:26.770373738Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"4a22b96a-8762-45f3-b829-3810eba0de06","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-01T21:39:26.770373738Z","type":"issue_claimed"}
+{"from":"ready","id":"9148e2cb-33f1-4055-8db9-02e16a7f36ba","issue_id":"2b6968d3-1a00-4958-bdd0-4c86d548be00","timestamp":"2026-09-01T21:39:35.674191525Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"1ae2cce3-42e3-4fa1-917b-85402ea0d941","issue_id":"2b6968d3-1a00-4958-bdd0-4c86d548be00","timestamp":"2026-09-01T21:39:35.674191525Z","type":"issue_claimed"}
+{"from":"ready","id":"18823b16-e6eb-44fc-8128-4fb1adce854c","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-01T21:39:44.602959210Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"c1ec7d1d-bca1-43f0-a26b-4abda7cb3835","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-01T21:39:44.602959210Z","type":"issue_claimed"}
+{"from":"ready","id":"62d38362-5326-4f6b-ab3b-d93d59704d2c","issue_id":"32f53280-fb5c-4a95-aeb9-15507fba6ac8","timestamp":"2026-09-01T21:39:53.529728594Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"b4e744e9-30f7-419c-a1c0-3b55cc4d40f6","issue_id":"32f53280-fb5c-4a95-aeb9-15507fba6ac8","timestamp":"2026-09-01T21:39:53.529728594Z","type":"issue_claimed"}
+{"assignee":"agent:worker","id":"623cff42-0bde-422f-b399-49712231dc41","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-01T21:39:56.948735762Z","type":"issue_claimed"}
