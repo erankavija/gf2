@@ -8,6 +8,7 @@
   ],
   "description": "Implement complete, eager irreducibility validation for polynomials over arbitrary supported finite fields, producing the reusable validation certificates the quotient fields consume.\n\n## Background\n\nRuntime quotient construction must fully validate its modulus; validation cost is paid once and captured in a certificate. The existing registry verifies binary irreducibility for specific entries; this operation is field-generic.\n\n## Success Criteria\n\n- [hard] REQ-01: gf2-core decides irreducibility for polynomials over supported base fields with a complete algorithm, returning a reusable certificate on success and a typed error naming a witness factor class on failure.\n- [hard] REQ-02: Tests cover known irreducible and reducible cases over GF(2), GF(p), and GF(p^r) bases, within fast-tier budgets.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T07:44:23.080409352Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -32,7 +33,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Generic irreducibility validation with reusable certificates",
-  "updated_at": "2026-09-01T06:22:23.690282503Z"
+  "updated_at": "2026-09-01T07:44:23.080409352Z"
 }

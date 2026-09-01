@@ -8,6 +8,8 @@
   ],
   "description": "Add the reusable gf2-core operation deriving an element of exact multiplicative order $n$ in an extension field, with deterministic canonical selection.\n\n## Background\n\n`Gf2mField::primitive_element` requires tables and there is no generic exact-order constructor. Non-primitive BCH lengths need an order-$n$ root of unity, and reproducibility requires that the same field and $n$ select the same element deterministically, not merely some element.\n\n## Success Criteria\n\n- [hard] REQ-01: gf2-core derives an element of exact multiplicative order $n$ for supported extension fields, validating the order exactly, with a documented deterministic canonical selection rule.\n- [hard] REQ-02: A typed error reports the case where no order-$n$ element exists, and property tests cover order exactness plus selection determinism over binary and nonbinary fields.\n",
   "documents": [],
+  "done_at": "2026-09-01T07:44:49.977765917Z",
+  "first_ready_at": "2026-09-01T07:44:40.926706267Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -32,7 +34,7 @@
     "satisfies:REQ-01"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Deterministic derivation of elements with exact multiplicative order",
-  "updated_at": "2026-09-01T06:55:35.919913574Z"
+  "updated_at": "2026-09-01T07:44:49.977765917Z"
 }

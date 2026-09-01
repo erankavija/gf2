@@ -8,6 +8,7 @@
   ],
   "description": "Add the type-erased/runtime code handle layer over the generic traits so exploratory workflows can hold heterogeneous codes without naming their field types.\n\n## Success Criteria\n\n- [hard] REQ-01: A type-erased handle wraps any static generic code and exposes the shared trait operations, reporting dynamic field/type mismatches through the coding-general error layer.\n- [hard] REQ-02: A doctest-backed example demonstrates an exploratory flow constructing and encoding through the erased handle.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T07:45:26.067680142Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -21,7 +22,7 @@
     "satisfies:REQ-06"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Add runtime type-erased code handles for exploratory workflows",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T07:45:26.067680142Z"
 }
