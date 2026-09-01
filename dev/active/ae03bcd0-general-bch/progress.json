@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 6,
+  "current_wave": 7,
   "waves": [
     {
       "wave_number": 1,
@@ -197,7 +197,7 @@
           "title": "Implement BchSpec and the consecutive-root construction path",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "done: native Opus, cargo-ci+code-review first-pass, doc-review R2 (explicit-root prose + bracket links) lead-direct; two scope rulings accepted (variants arrive with constructions; convenience ctors deferred to 1c9a0f9f)"
         },
         {
           "key": "puncture-transform",
@@ -205,7 +205,7 @@
           "title": "Generic puncturing over arbitrary coordinate sets",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done: Luna xhigh, all gates first-pass (one merged-tree CI transient: flaky gf2-sim symlink test, filed 174295c9)"
         }
       ]
     },
@@ -606,7 +606,8 @@
     "R-21: 769c3144 doc-review R1 fixed lead-direct: gfpn/mod.rs prose, gf2-core README, lean4-verification-pipeline.md; gfpn::quotient opaqued in scripts/verify-lean.sh and full verify-lean.sh re-run green (runtime Vec storage, same class as gf2m).",
     "R-22: OWNER ORDER mid-wave-5 \u2014 the Opus worker on 0e706bf5 sub-delegated implementation to codex (following the global CLAUDE.md Luna-delegation rule); owner ordered it stopped immediately. Lead killed the codex child (it had written zero edits in ~16 min), ordered native implementation; worker complied and delivered natively. STANDING RULE: every hard-task dispatch prompt must carry an explicit no-delegation clause overriding the global delegation rule.",
     "R-23: 0e706bf5 findings \u2014 footprint finding on un-suffixed ConstExt::new tracked as enhancement c9022d14 (dep-wired to 0e706bf5); extension-design.md R-01 residual amended with the const-quotient resolution (validating ctor + harness registration through it); doc link refresh required after amendment.",
-    "R-24: 8aa98a25 dispatch prompt wrongly listed the full coordinate set as an error case; the epic's boundary-code contract (REQ-04/REQ-05) makes it the zero-length zero-dimensional code. Fixed lead-direct through code-review R1+R2. Check future transform prompts (puncture 5233867e, extend 981c5ae3) against the boundary-code contract before dispatch."
+    "R-24: 8aa98a25 dispatch prompt wrongly listed the full coordinate set as an error case; the epic's boundary-code contract (REQ-04/REQ-05) makes it the zero-length zero-dimensional code. Fixed lead-direct through code-review R1+R2. Check future transform prompts (puncture 5233867e, extend 981c5ae3) against the boundary-code contract before dispatch.",
+    "R-25: 230dd84d scope rulings \u2014 BchSpec declares only the two primitive consecutive-root variants (later flavor tasks add their variants with their constructions; five-variant stub enum rejected as in-scope-deferral); resolve_root already implements both RootSelection arms. bch::BchCode short name stays with the legacy type until cutover-removal claims it. Filed dfd9e0c5 (promote integer gcd + x^n-1 helper to gf2-core) and 174295c9 (flaky symlink test + CI log retention)."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
@@ -620,6 +621,8 @@
     "codex sandbox_workspace_write.writable_roots=[.git/worktrees/<name>] is NOT enough for worker commits: commits also write .git/objects and refs/heads (shared, read-only to the sandbox). Workers may leave a stale index citing never-written blobs \u2014 git reset before git add -A when committing on their behalf.",
     "A `static` inside a generic fn or generic inherent impl is SHARED across all monomorphizations in Rust \u2014 a naive once-per-type OnceLock validation cache memoizes the FIRST type's answer for every type (silent wrong-field bug). Verified empirically by worker-0e706bf5. Use a per-instance certificate/memo value instead.",
     "Native subagents inherit the user's global CLAUDE.md, including its delegate-to-codex rule; a hard task assigned to a native model needs an explicit no-delegation clause in the dispatch prompt or the subagent will sub-delegate (R-22 incident).",
-    "The unidentified external process-killer now also kills the lead's harness background tasks (three kills in ~15 min: one CI twice, one poller). Mitigation that works: setsid-detached nohup process writing a done-file, watched by a Monitor tool loop that checks the done-file AND process liveness."
+    "The unidentified external process-killer now also kills the lead's harness background tasks (three kills in ~15 min: one CI twice, one poller). Mitigation that works: setsid-detached nohup process writing a done-file, watched by a Monitor tool loop that checks the done-file AND process liveness.",
+    "The shared cache pool can carry STALE FINGERPRINTS whose artifacts are gone (harvest raced/partial): cargo believes units fresh, skips rebuilds, and E0463 surfaces at a distant consumer (gf2-kernels-hip). Symptom of debug: many conflicting rmeta candidates listed by rustc are the search residue, not the cause. Fix: prune the affected crates' .fingerprint trees AND deps artifacts together in the pool (done for gf2-core/simd/hip/coding, both profiles).",
+    "SendMessage teammate reports truncate around ~3KB; long worker reports need chunked retrieval (three round-trips for 230dd84d). Ask workers to lead with actionable items, details after."
   ]
 }
