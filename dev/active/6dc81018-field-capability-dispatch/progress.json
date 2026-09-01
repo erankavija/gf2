@@ -1,8 +1,8 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 23.6,
-  "wave_notes": "DEC-W supersedes D4/DEC-B10 item 2/DEC-B11: tuning vocabulary belongs to the crate that owns the algorithm. Independent architecture review passed a profile-format-2 typed-section envelope with shared mechanism in gf2-core and permanent semantics in gf2-algebra. Issues 3fa7c9d0 (design) and b749bdfc (implementation) precede 389aa4de and the remaining calibration/proof waves. The reserved benchmark window was cancelled; no measurement resumes until the clean canonical producer exists.",
+  "current_wave": 24,
+  "wave_notes": "Recovery wave 24 serializes the two inherited active roots. Issue 5bdc9552 is merged and all executable gates plus code-review pass, but doc-review found three blocking stale selector references after the maximum two rework retries; invoker guidance is required before a further correction. Issue 389aa4de remains in progress and its format-2 pre-measurement patch plan is ready, but wave discipline holds dispatch until 5bdc9552 closes.",
   "open_escalations": [],
   "waves": [
     {
@@ -586,8 +586,8 @@
           "title": "Remove the trait selectors and regenerate the proof surface",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
-          "notes": "Seam U8. The one surface-moving task; gates include verify-lean and lake-build. Solo."
+          "status": "escalated-after-rework-cap",
+          "notes": "Seam U8 is merged on main. cargo-ci, verify-lean, lake-build and code-review pass. User-approved REQ-03A permits the sole pre-existing Packed5::to_raw_planes regeneration drift and the second regeneration is byte-identical. Rework 1 made the proof postprocessor fail closed on an exact ten-wrapper allowlist. Rework 2 fixed the first present-tense review finding. Doc-review then found three blocking stale selector references plus two advisory historical comments; MAX_REWORK_ATTEMPTS=2 is exhausted and invoker guidance is pending."
         },
         {
           "id": "dbd8787d",
@@ -1064,6 +1064,12 @@
       "issue": "3fa7c9d0/b749bdfc",
       "date": "2026-08-25",
       "decision": "DEC-W supersedes D4, DEC-B10 item 2, and DEC-B11 as the durable convention. Tuning vocabulary, defaults, validation, codec, baked values, and calibration logic belong to the crate that owns the algorithm; gf2-core retains the one generic envelope/registry/install mechanism and its own typed section. The final cutover removes core permanent semantics and all flat-format/compatibility residue under @/invariant/canonical-cutover and @/invariant/convention-convergence. Independent review PASS followed two blocking-review corrections and three provenance/versioning corrections."
+    },
+    {
+      "kind": "rework-exhausted",
+      "issue": "5bdc9552",
+      "date": "2026-09-01",
+      "decision": "OPEN: two rework retries are exhausted. The merged implementation, proof regeneration, cargo-ci, verify-lean, lake-build and code-review pass. Doc-review still reports three blocking current-documentation references to removed selectors (strassen_threshold_results.md, field/charpoly.rs, benches/triangular.rs) and two advisory historical test comments (field/ple.rs, field/inverse.rs). Awaiting invoker choice: targeted guidance that resets the counter, manual takeover, or rejection."
     }
   ],
   "rework_counts": {
@@ -1097,9 +1103,15 @@
     "d0365895": 0,
     "88441adb": 0,
     "e8a727ff": 1,
-    "e2744fcf": 0
+    "e2744fcf": 0,
+    "5bdc9552": 2
   },
   "surfaced_pitfalls": [
+    {
+      "issue": "5bdc9552",
+      "finding": "Removing selector declarations is not a complete canonical cutover while current benchmark documentation and public rustdoc still name the retired constants. Code-review and doc-review found the stale prose in separate rounds after the implementation and proof gates passed.",
+      "disposition": "OPEN escalation after two rework retries. Resolve every blocking doc-review finding and the two adjacent advisory test comments in one present-tense sweep before rerunning doc-review."
+    },
     {
       "issue": "34d85cb9",
       "finding": "research-review advisories (4, low): stopping-rule pre-declaration unattested; LLBC datasets lack checksums; 311/428 non-comment-line counts lack a committed regeneration command; upgrade matrix omits P1/AP1/A9 rows",
