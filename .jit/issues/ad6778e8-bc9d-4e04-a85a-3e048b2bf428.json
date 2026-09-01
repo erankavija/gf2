@@ -12,19 +12,19 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "3f4b16bd968e1b13ff45a6b5b887ebfa6a5e7dfd2cc608d6c027b05b01233bde",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "investigation.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/investigation.md"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "plan.md",
           "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3f4b16bd968e1b13ff45a6b5b887ebfa6a5e7dfd2cc608d6c027b05b01233bde",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/investigation.md"
         }
       ],
       "commit": null,
@@ -56,5 +56,5 @@
   "priority": "high",
   "state": "done",
   "title": "Design the relative field-extension abstraction and field identity",
-  "updated_at": "2026-08-31T16:50:50.664735861Z"
+  "updated_at": "2026-09-01T11:06:49.389899948Z"
 }
