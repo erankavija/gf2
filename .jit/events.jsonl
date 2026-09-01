@@ -10607,3 +10607,6 @@
 {"assignee":"agent:worker","id":"399f0012-501e-455a-86ad-84cfefebfd2d","issue_id":"c3cc5226-2edf-40f7-a95d-b35bdcc1da57","timestamp":"2026-09-01T15:13:49.437203856Z","type":"issue_claimed"}
 {"from":"ready","id":"b2b9fd77-cf2a-4038-adf1-94b6210f623e","issue_id":"64fd3afd-98c0-4a21-b225-43c612d1ea82","timestamp":"2026-09-01T15:13:59.213571343Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"6350234d-3f69-4261-b918-5cbcc68d0f70","issue_id":"64fd3afd-98c0-4a21-b225-43c612d1ea82","timestamp":"2026-09-01T15:13:59.213571343Z","type":"issue_claimed"}
+{"id":"1e04163d-f798-425c-ac9b-abbfd719593e","issue_id":"501cf341-7774-4747-8727-b7b6fac722da","priority":"normal","timestamp":"2026-09-01T15:40:08.623191014Z","title":"Prove the Vandermonde step: witnessed BCH bound implies the minimum-distance claim","type":"issue_created"}
+{"from":"ready","id":"d46e792e-b78c-4c4f-9293-603ca568ebea","issue_id":"501cf341-7774-4747-8727-b7b6fac722da","timestamp":"2026-09-01T15:40:25.309878279Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"637edb9a-56d1-4cb8-9396-f6a16b1672c8","issue_id":"501cf341-7774-4747-8727-b7b6fac722da","timestamp":"2026-09-01T15:40:25.309878279Z","type":"issue_updated","updated_by":"dependency-add"}
