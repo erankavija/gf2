@@ -111,8 +111,6 @@ pub struct BchCode {
     field: Gf2mField,         // Extension field GF(2^m)
     generator: Gf2mPoly,      // Generator polynomial g(x)
     designed_distance: usize, // δ = 2t + 1
-    #[allow(clippy::type_complexity)]
-    cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::BitMatrix>>>,
 }
 
 impl BchCode {
@@ -164,7 +162,6 @@ impl BchCode {
             field,
             generator,
             designed_distance,
-            cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
         }
     }
 
@@ -214,7 +211,6 @@ impl BchCode {
             field,
             generator,
             designed_distance,
-            cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
         }
     }
 
@@ -314,14 +310,11 @@ impl crate::traits::GeneratorMatrixAccess for BchCode {
     }
 
     fn generator_matrix(&self) -> gf2_core::BitMatrix {
-        let mut cache = self.cached_generator.lock().unwrap();
-        if let Some(ref g) = *cache {
-            g.clone()
-        } else {
-            let g = self.compute_generator_matrix();
-            *cache = Some(g.clone());
-            g
-        }
+        // Deliberately uncached: matrix access materializes on request, and
+        // caching is an explicit opt-in through the canonical
+        // `bch::matrix::CachedMatrices` wrapper. Consumers snapshot at
+        // construction.
+        self.compute_generator_matrix()
     }
 
     fn is_systematic(&self) -> bool {
