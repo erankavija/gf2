@@ -22,7 +22,6 @@
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
-use gf2_coding::bch::extended::ExtendedBchCode;
 use gf2_coding::crc::CrcCode;
 use gf2_coding::drm::DrmCode;
 use gf2_coding::fading::{QpskRicianChannelModel, RicianConfig};
@@ -31,7 +30,8 @@ use gf2_coding::grand::OrbGrandConfig;
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
 use gf2_coding::ldpc::{DecoderAlgorithm, QuasiCyclicLdpc};
 use gf2_coding::product::{
-    ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode, TurboDecoder, TurboDecoderConfig,
+    ChasePyndiahConfig, ChasePyndiahDecoder, ExtendedBchComponent, ProductCode, TurboDecoder,
+    TurboDecoderConfig,
 };
 use gf2_coding::simulation::{
     BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationResults, SimulationRunner,
@@ -476,32 +476,32 @@ fn run_curve(
             // ProductCode encoder and one for the TurboDecoder.
             match comp_name {
                 "ebch_16_11" => run_product(
-                    ExtendedBchCode::ebch_16_11(),
-                    ExtendedBchCode::ebch_16_11(),
+                    ExtendedBchComponent::ebch_16_11(),
+                    ExtendedBchComponent::ebch_16_11(),
                     turbo_cfg,
                     &channel,
                     &config,
                     parallel,
                 ),
                 "ebch_16_7" => run_product(
-                    ExtendedBchCode::ebch_16_7(),
-                    ExtendedBchCode::ebch_16_7(),
+                    ExtendedBchComponent::ebch_16_7(),
+                    ExtendedBchComponent::ebch_16_7(),
                     turbo_cfg,
                     &channel,
                     &config,
                     parallel,
                 ),
                 "ebch_32_26" => run_product(
-                    ExtendedBchCode::ebch_32_26(),
-                    ExtendedBchCode::ebch_32_26(),
+                    ExtendedBchComponent::ebch_32_26(),
+                    ExtendedBchComponent::ebch_32_26(),
                     turbo_cfg,
                     &channel,
                     &config,
                     parallel,
                 ),
                 "ebch_64_57" => run_product(
-                    ExtendedBchCode::ebch_64_57(),
-                    ExtendedBchCode::ebch_64_57(),
+                    ExtendedBchComponent::ebch_64_57(),
+                    ExtendedBchComponent::ebch_64_57(),
                     turbo_cfg,
                     &channel,
                     &config,
