@@ -9,13 +9,13 @@ nice: cannot set niceness: Permission denied
 # codes_selected: B1,B2,B3,T2S
 # SKIP B1: k=5 is not a whole number of bytes; bch_encode takes a byte length
 # code B2: ecc_bits=63 ecc_bytes=9 (contract n-k=63)
-#   B2 table-remainder batch=1     reps=35717 spent=0.01s
-#   B2 table-remainder batch=16    reps=7937 spent=0.03s
-#   B2 table-remainder batch=256   reps=666 spent=0.04s
-#   B2 table-remainder batch=4096  reps=43 spent=0.04s
+#   B2 table-remainder batch=1     reps=31248 spent=0.01s
+#   B2 table-remainder batch=16    reps=10205 spent=0.03s
+#   B2 table-remainder batch=256   reps=678 spent=0.04s
+#   B2 table-remainder batch=4096  reps=42 spent=0.03s
 # SKIP B3: k=223 is not a whole number of bytes; bch_encode takes a byte length
 # code T2S: ecc_bits=168 ecc_bytes=21 (contract n-k=168)
-#   T2S table-remainder batch=1     reps=3087 spent=0.04s
-#   T2S table-remainder batch=16    reps=199 spent=0.04s
-#   T2S table-remainder batch=256   reps=10 spent=0.03s
-#   T2S table-remainder batch=4096  reps=1 spent=0.05s
+#   T2S table-remainder batch=1     reps=3165 spent=0.03s
+#   T2S table-remainder batch=16    reps=204 spent=0.04s
+#   T2S table-remainder batch=256   reps=13 spent=0.04s
+#   T2S table-remainder batch=4096  reps=1 spent=0.04s

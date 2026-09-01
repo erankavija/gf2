@@ -10,46 +10,46 @@ nice: cannot set niceness: Permission denied
 # seed: 0x00000000ae03bcd0
 # codes_selected: B1,B2,B3,T2S
 # code B1: mother_n=15 deg_g=10
-#   B1 lfsr-scalar      batch=1     reps=33334 spent=0.01s
+#   B1 lfsr-scalar      batch=1     reps=38462 spent=0.02s
 # SKIP B1 batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
-#   B1 lfsr-scalar      batch=16    reps=6098 spent=0.04s
-#   B1 lfsr-simd-inter  batch=16    reps=17858 spent=0.03s
-#   B1 lfsr-scalar      batch=256   reps=393 spent=0.04s
-#   B1 lfsr-simd-inter  batch=256   reps=1544 spent=0.04s
+#   B1 lfsr-scalar      batch=16    reps=4902 spent=0.03s
+#   B1 lfsr-simd-inter  batch=16    reps=19231 spent=0.03s
+#   B1 lfsr-scalar      batch=256   reps=394 spent=0.03s
+#   B1 lfsr-simd-inter  batch=256   reps=1475 spent=0.04s
 #   B1 lfsr-scalar      batch=4096  reps=25 spent=0.04s
-#   B1 lfsr-simd-inter  batch=4096  reps=95 spent=0.04s
+#   B1 lfsr-simd-inter  batch=4096  reps=93 spent=0.04s
 #   B1 W2 estimated 0.000 s per materialization
-#   B1 basis-encode-pack batch=5 reps=9091 spent=0.02s
+#   B1 basis-encode-pack batch=5 reps=9260 spent=0.02s
 # code B2: mother_n=127 deg_g=63
-#   B2 lfsr-scalar      batch=1     reps=6945 spent=0.04s
+#   B2 lfsr-scalar      batch=1     reps=7043 spent=0.03s
 # SKIP B2 batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
 #   B2 lfsr-scalar      batch=16    reps=444 spent=0.04s
-#   B2 lfsr-simd-inter  batch=16    reps=955 spent=0.04s
-#   B2 lfsr-scalar      batch=256   reps=26 spent=0.04s
-#   B2 lfsr-simd-inter  batch=256   reps=59 spent=0.04s
+#   B2 lfsr-simd-inter  batch=16    reps=977 spent=0.04s
+#   B2 lfsr-scalar      batch=256   reps=26 spent=0.03s
+#   B2 lfsr-simd-inter  batch=256   reps=61 spent=0.04s
 #   B2 lfsr-scalar      batch=4096  reps=2 spent=0.05s
-#   B2 lfsr-simd-inter  batch=4096  reps=3 spent=0.03s
+#   B2 lfsr-simd-inter  batch=4096  reps=4 spent=0.04s
 #   B2 W2 estimated 0.000 s per materialization
-#   B2 basis-encode-pack batch=64 reps=92 spent=0.04s
+#   B2 basis-encode-pack batch=64 reps=92 spent=0.03s
 # code B3: mother_n=255 deg_g=32
-#   B3 lfsr-scalar      batch=1     reps=2428 spent=0.04s
+#   B3 lfsr-scalar      batch=1     reps=2476 spent=0.03s
 # SKIP B3 batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
-#   B3 lfsr-scalar      batch=16    reps=137 spent=0.04s
-#   B3 lfsr-simd-inter  batch=16    reps=633 spent=0.04s
+#   B3 lfsr-scalar      batch=16    reps=138 spent=0.04s
+#   B3 lfsr-simd-inter  batch=16    reps=587 spent=0.04s
 #   B3 lfsr-scalar      batch=256   reps=9 spent=0.04s
-#   B3 lfsr-simd-inter  batch=256   reps=31 spent=0.03s
-#   B3 lfsr-scalar      batch=4096  reps=1 spent=0.08s
+#   B3 lfsr-simd-inter  batch=256   reps=37 spent=0.04s
+#   B3 lfsr-scalar      batch=4096  reps=1 spent=0.07s
 #   B3 lfsr-simd-inter  batch=4096  reps=3 spent=0.05s
 #   B3 W2 estimated 0.000 s per materialization
-#   B3 basis-encode-pack batch=223 reps=11 spent=0.04s
+#   B3 basis-encode-pack batch=223 reps=10 spent=0.04s
 # code T2S: mother_n=16383 deg_g=168
-#   T2S lfsr-scalar      batch=1     reps=32 spent=0.04s
+#   T2S lfsr-scalar      batch=1     reps=31 spent=0.03s
 # SKIP T2S batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
 #   T2S lfsr-scalar      batch=16    reps=2 spent=0.04s
 #   T2S lfsr-simd-inter  batch=16    reps=4 spent=0.05s
-#   T2S lfsr-scalar      batch=256   reps=1 spent=0.33s
-#   T2S lfsr-simd-inter  batch=256   reps=1 spent=0.20s
-#   T2S lfsr-scalar      batch=4096  reps=1 spent=5.27s
-#   T2S lfsr-simd-inter  batch=4096  reps=1 spent=3.34s
-#   T2S W2 estimated 1.052 s per materialization
-#   T2S basis-encode-pack batch=7032 reps=1 spent=8.29s
+#   T2S lfsr-scalar      batch=256   reps=1 spent=0.30s
+#   T2S lfsr-simd-inter  batch=256   reps=1 spent=0.19s
+#   T2S lfsr-scalar      batch=4096  reps=1 spent=4.80s
+#   T2S lfsr-simd-inter  batch=4096  reps=1 spent=4.14s
+#   T2S W2 estimated 1.008 s per materialization
+#   T2S basis-encode-pack batch=7032 reps=1 spent=7.46s

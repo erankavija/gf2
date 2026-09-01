@@ -3,10 +3,11 @@
  * Workload W2 of the ae03bcd0 workload-selection contract, by an algorithm
  * independent of the encode-each-basis-vector route:
  *
- *   genmatrix-rref : fill the k x n polynomial-form generator matrix (row i is
- *                    g(x) shifted by i) and reduce it to reduced row echelon
- *                    form with mzd_echelonize_m4ri, yielding the systematic
- *                    [I | P] generator matrix.
+ *   genmatrix-rref : fill the k x n generator matrix (row i is g(x) shifted
+ *                    by i, written in the repository codeword column order)
+ *                    and reduce it to reduced row echelon form with
+ *                    mzd_echelonize_m4ri, yielding the contract's systematic
+ *                    [I | P] generator matrix in repository layout.
  *
  * Two dense GF(2) substrate cells are measured at the same shapes so the
  * survey records what the pinned reference costs for the primitives a
@@ -137,29 +138,32 @@ emit(const char* version,
            (unsigned long long)digest);
 }
 
-/* Fill row i of G with g(x) shifted by i: the polynomial-form generator
- * matrix of the cyclic code. */
+/* Fill row i of G with g(x) shifted by i, written in the repository's
+ * codeword coordinate order (repository column r holds polynomial
+ * coordinate n-1-r), so the matrix is the generator matrix of the cyclic
+ * code as the contract's [message | parity] layout indexes it. */
 static void
-fill_poly_form(mzd_t* G, const Code* c)
+fill_repo_form(mzd_t* G, const Code* c)
 {
     mzd_set_ui(G, 0);
     for (rci_t i = 0; i < G->nrows; i++)
         for (int j = 0; j <= c->deg; j++)
             if (c->g[j])
-                mzd_write_bit(G, i, (rci_t)(i + j), 1);
+                mzd_write_bit(G, i, (rci_t)(c->n - 1 - (i + j)), 1);
 }
 
-/* The exact genmatrix-rref route used by the timed cell. */
+/* The exact genmatrix-rref route used by the timed cell: canonical RREF
+ * under the repository column order yields the contract's systematic
+ * G = [I_k | P] directly. */
 static void
 genmatrix_rref(mzd_t* G, const Code* c)
 {
-    fill_poly_form(G, c);
+    fill_repo_form(G, c);
     mzd_echelonize_m4ri(G, 1, 0);
 }
 
-/* Correctness-only output for verify-generator-matrices.py. Keep this dump on
- * the same polynomial-coordinate route as the timed genmatrix-rref cell;
- * layout normalization belongs to the verifier. */
+/* Correctness-only output for verify-generator-matrices.py. The dump is the
+ * timed route's matrix verbatim; no layout normalization exists anywhere. */
 static void
 dump_genmatrix_rref(const Code* c)
 {
@@ -330,7 +334,7 @@ main(int argc, char** argv)
                 mzd_t* M = mzd_init(batch, c->k);
                 mzd_t* G = mzd_init(c->k, c->n);
                 fill_random(M, &s);
-                fill_poly_form(G, c);
+                fill_repo_form(G, c);
 
                 mzd_t* C = mzd_mul_m4rm(NULL, M, G, 0);
                 const uint64_t mm_digest = digest_matrix(C);

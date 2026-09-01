@@ -2,7 +2,7 @@
 # environment: GF2_SURVEY_CODES=B1\,B2\,B3\,T2S
 nice: cannot set niceness: Permission denied
 # harness: survey-gf2-side
-# gf2_revision: c155b1b0c32e073cd0c4dd52d7ca52b169fba9ae
+# gf2_revision: 801d89852847afc789e9ddf26c1f1ebd3efb2a8b
 # trials_per_cell: 7
 # warmup_reps: 2
 # cell_budget_s: 90
@@ -12,84 +12,84 @@ nice: cannot set niceness: Permission denied
 # code B1: n=15 k=5 t=3
 #   B1 probe: 0.000002 s per single encode
 #   B1 encode-batch batch=1
-#   reps=3049 spent=0.03s trials=7
+#   reps=3817 spent=0.03s trials=7
 #   B1 encode-loop batch=1
-#   reps=3760 spent=0.03s trials=7
+#   reps=3847 spent=0.03s trials=7
 #   B1 encode-batch batch=16
-#   reps=420 spent=0.04s trials=7
+#   reps=413 spent=0.03s trials=7
 #   B1 encode-loop batch=16
-#   reps=392 spent=0.04s trials=7
+#   reps=409 spent=0.03s trials=7
 #   B1 encode-batch batch=256
-#   reps=23 spent=0.04s trials=7
+#   reps=23 spent=0.03s trials=7
 #   B1 encode-loop batch=256
-#   reps=23 spent=0.04s trials=7
+#   reps=23 spent=0.03s trials=7
 #   B1 encode-batch batch=4096
 #   reps=2 spent=0.05s trials=7
 #   B1 encode-loop batch=4096
 #   reps=2 spent=0.05s trials=7
 #   B1 W2 projected 0.000 s per materialization
 #   B1 generator-matrix
-#   reps=396 spent=0.04s trials=7
+#   reps=395 spent=0.03s trials=7
 # code B2: n=127 k=64 t=10
-#   B2 probe: 0.000040 s per single encode
+#   B2 probe: 0.000034 s per single encode
 #   B2 encode-batch batch=1
-#   reps=133 spent=0.04s trials=7
+#   reps=137 spent=0.03s trials=7
 #   B2 encode-loop batch=1
-#   reps=83 spent=0.02s trials=7
+#   reps=129 spent=0.03s trials=7
 #   B2 encode-batch batch=16
 #   reps=10 spent=0.04s trials=7
 #   B2 encode-loop batch=16
-#   reps=8 spent=0.03s trials=7
+#   reps=10 spent=0.04s trials=7
 #   B2 encode-batch batch=256
-#   reps=1 spent=0.07s trials=7
+#   reps=1 spent=0.06s trials=7
 #   B2 encode-loop batch=256
-#   reps=1 spent=0.07s trials=7
+#   reps=1 spent=0.06s trials=7
 #   B2 encode-batch batch=4096
-#   reps=1 spent=1.08s trials=7
+#   reps=1 spent=0.96s trials=7
 #   B2 encode-loop batch=4096
-#   reps=1 spent=1.09s trials=7
-#   B2 W2 projected 0.003 s per materialization
+#   reps=1 spent=0.97s trials=7
+#   B2 W2 projected 0.002 s per materialization
 #   B2 generator-matrix
-#   reps=5 spent=0.05s trials=7
+#   reps=5 spent=0.04s trials=7
 # code B3: n=255 k=223 t=4
-#   B3 probe: 0.000080 s per single encode
+#   B3 probe: 0.000069 s per single encode
 #   B3 encode-batch batch=1
-#   reps=73 spent=0.04s trials=7
+#   reps=73 spent=0.03s trials=7
 #   B3 encode-loop batch=1
-#   reps=72 spent=0.04s trials=7
+#   reps=72 spent=0.03s trials=7
 #   B3 encode-batch batch=16
 #   reps=5 spent=0.04s trials=7
 #   B3 encode-loop batch=16
 #   reps=5 spent=0.04s trials=7
 #   B3 encode-batch batch=256
-#   reps=1 spent=0.13s trials=7
+#   reps=1 spent=0.12s trials=7
 #   B3 encode-loop batch=256
-#   reps=1 spent=0.13s trials=7
+#   reps=1 spent=0.12s trials=7
 #   B3 encode-batch batch=4096
-#   reps=1 spent=2.06s trials=7
+#   reps=1 spent=1.85s trials=7
 #   B3 encode-loop batch=4096
-#   reps=1 spent=2.06s trials=7
-#   B3 W2 projected 0.018 s per materialization
+#   reps=1 spent=1.85s trials=7
+#   B3 W2 projected 0.015 s per materialization
 #   B3 generator-matrix
-#   reps=1 spent=0.06s trials=7
+#   reps=1 spent=0.05s trials=7
 # code T2S: n=7200 k=7032 t=12
-#   T2S probe: 0.010325 s per single encode
+#   T2S probe: 0.008849 s per single encode
 #   T2S encode-batch batch=1
-#   reps=1 spent=0.07s trials=7
+#   reps=1 spent=0.06s trials=7
 #   T2S encode-loop batch=1
-#   reps=1 spent=0.07s trials=7
+#   reps=1 spent=0.06s trials=7
 #   T2S encode-batch batch=16
-#   reps=1 spent=1.17s trials=7
+#   reps=1 spent=1.02s trials=7
 #   T2S encode-loop batch=16
-#   reps=1 spent=1.16s trials=7
+#   reps=1 spent=1.03s trials=7
 #   T2S encode-batch batch=256
-#   reps=1 spent=18.39s trials=7
+#   reps=1 spent=18.08s trials=7
 #   T2S encode-loop batch=256
-#   reps=1 spent=18.40s trials=7
+#   reps=1 spent=16.51s trials=7
 #   T2S encode-batch batch=4096
-#   reps=1 spent=126.07s trials=3
+#   reps=1 spent=117.30s trials=3
 #   T2S encode-loop batch=4096
-#   reps=1 spent=126.22s trials=3
-#   T2S W2 projected 72.608 s per materialization
+#   reps=1 spent=91.22s trials=2
+#   T2S W2 projected 62.227 s per materialization
 #   T2S generator-matrix
-#   reps=1 spent=114.93s trials=3
+#   reps=1 spent=100.81s trials=3
