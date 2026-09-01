@@ -1,11 +1,10 @@
 # Strassen-Winograd threshold sweep and classical-vs-Winograd speedup
 
-Issue `ad597ede`, story `d48a3cfd/T3`. Evidence for the chosen Winograd
-base-case default — today `WINOGRAD_MIN_DIM_DEFAULT`, the conservative
-default of the `gemm.winograd_min_dim` tuning-profile field that live
-dispatch reads (at measurement time the value was carried by
-`FiniteField::WINOGRAD_THRESHOLD`) — and for the `[aspirational]`
-criterion "Winograd beats classical at the chosen threshold by ≥ 1.2×".
+Issue `ad597ede`, story `d48a3cfd/T3`. Evidence for
+`WINOGRAD_MIN_DIM_DEFAULT`, the conservative default of the host-level
+`gemm.winograd_min_dim` tuning-profile field that live dispatch reads, and
+for the `[aspirational]` criterion "Winograd beats classical at the chosen
+threshold by ≥ 1.2×".
 
 Reproduce with:
 
@@ -29,7 +28,11 @@ CPU. Numbers in this document are single-shot wall-clock elapsed from
 uses; Criterion adds warm-up + sampled averaging but does not change
 the qualitative ranking.
 
-## Chosen default threshold: 128 (recorded as `FiniteField::WINOGRAD_THRESHOLD`; today `WINOGRAD_MIN_DIM_DEFAULT`, the conservative default of `gemm.winograd_min_dim`)
+## Chosen default threshold: `WINOGRAD_MIN_DIM_DEFAULT = 128`
+
+Live dispatch reads the host-level `gemm.winograd_min_dim` profile field.
+Without an installed profile, that field resolves to
+`WINOGRAD_MIN_DIM_DEFAULT`.
 
 The sweep below at `n = 2048`, Mersenne-31, measures the one-shot
 runtime of `gemm_winograd_with_threshold` with different base-case
@@ -55,15 +58,10 @@ Mersenne-31 blocks fit comfortably in L2, and (c) the shorter
 recursion tree reduces heap traffic without giving up the measured
 crossover.
 
-At record time the trait default could be overridden per field if
-empirical evidence called for it — for example `Goldilocks` (128-bit
-path) or GF(2) bit-packed storage. Today live dispatch reads the
-single host-level `gemm.winograd_min_dim` profile value (overriding
-the trait constant no longer affects dispatch, jit:e2744fcf); a
-calibrated profile records one host-wide threshold, and per-field
-crossover control has no live carrier. The measured Mersenne-31 and
-`Gf2mWide<1, Gf2m8>` crossover is ≈ 128 on both fields, matching the
-conservative default.
+Live dispatch reads one host-level `gemm.winograd_min_dim` profile value. A
+calibrated profile records one host-wide threshold; no per-field carrier or
+control exists. The measured Mersenne-31 and `Gf2mWide<1, Gf2m8>` crossover
+is ≈ 128 on both fields, matching the conservative default.
 
 ## Classical vs Winograd at the chosen default threshold
 

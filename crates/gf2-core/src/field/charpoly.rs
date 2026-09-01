@@ -56,8 +56,9 @@
 //! ## Empirical crossover (Mersenne-31, `Fp<2^31 − 1>`)
 //!
 //! **Latest measurement: 2026-05-07** (issue `4a59d1f9`, post-Wave-9
-//! kernels: `TRI_BASE_THRESHOLD = 8`, `PLE_BASE_COLS = 1`, delayed-u128
-//! GEMM). Criterion group `charpoly/dispatch`, 10 samples, AMD Ryzen 9
+//! kernels: `triangular.base_case_max_dim = 8`,
+//! `ple.scalar_base_max_cols = 1`, delayed-u128 GEMM). Criterion group
+//! `charpoly/dispatch`, 10 samples, AMD Ryzen 9
 //! 5900X (Zen 3), `rustc 1.95.0`, `RUSTFLAGS="-C target-cpu=native"`:
 //!
 //! ```text

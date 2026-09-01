@@ -1497,15 +1497,13 @@ mod tests {
     //
     //   det(n × n) = ple                   // L is dropped
     //
-    // The empirical numbers are the sum of these per-call costs at
-    // the chosen recursion thresholds. Numbers below match the
-    // post-c3f8c1cb PLE budget plus the small additions above. The
-    // jit:73ec5da3 R1 rework dropped TRI_BASE_THRESHOLD from 32 to 8
-    // (selected by Criterion sweep on Mersenne-31; see the evidence
-    // doc); the deeper trsm recursion at threshold=8 inflates the
-    // allocation counts at small n by ~4–30% versus the threshold=32
-    // baseline, in exchange for 1–7% wall-time gains on the target
-    // PLE/TRSM cells.
+    // The empirical numbers are the sum of these per-call costs at the
+    // active recursion thresholds. Numbers below comprise the c3f8c1cb PLE
+    // budget plus the small additions above. The active
+    // `triangular.base_case_max_dim = 8` profile value is selected by the
+    // jit:73ec5da3 Criterion sweep on Mersenne-31. Its evidence records
+    // ~4–30% more allocations at small n than the threshold-32 comparison,
+    // together with 1–7% lower wall time on the target PLE/TRSM cells.
     //
     // d1a5fea8 (in-place compose):
     //   - n=4 dropped 19 → 17: trtrm at base case (no scratch) replaces
