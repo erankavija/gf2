@@ -271,7 +271,7 @@
           "title": "Migrate library eBCH consumers to the generic extension",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "worker-complete (Luna), merged e585f47c, gates pending"
         },
         {
           "key": "encode-batch-workspace",
@@ -295,7 +295,7 @@
           "title": "Author the formal-proof sketch for the algebraic foundations",
           "classification": "design",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "done: native Opus architect, doc-review R2 + research-review R2 after one rework (anchor honesty + pipeline-doc rewrite); sketch at dev/active/64fd3afd/proof-sketch.md"
         }
       ]
     },
@@ -564,6 +564,11 @@
       "source": "c3d5cea5 final sign-off",
       "finding": "Design risk R-01 residual: an out-of-tree ExtConfig implementor with a wrong non-residue builds a ConstExt witness over a non-field; neither the type system nor 19fe9394's in-tree conformance case reaches it. Closing requires making ConstExt::new fallible (design amendment).",
       "disposition": "CLOSED for the compile-time quotient form by 0e706bf5 (validating constructor + harness registration through it; extension-design R-01 amended, R-23). Generic un-suffixed ConstExt::new tracked as enhancement c9022d14 outside the epic."
+    },
+    {
+      "source": "64fd3afd rework",
+      "finding": "scripts/verify-lean.sh:36-40 header claims 11 SIMD fast-path overrides; grep counts 16 cfg(not(verify_lean)) sites in gfp/mod.rs \u2014 the header number is stale or a subset",
+      "disposition": "cosmetic script-comment drift; fold into any verify-lean.sh-touching task or lead-direct at epic close"
     }
   ],
   "coordination": {
@@ -609,7 +614,8 @@
     "R-23: 0e706bf5 findings \u2014 footprint finding on un-suffixed ConstExt::new tracked as enhancement c9022d14 (dep-wired to 0e706bf5); extension-design.md R-01 residual amended with the const-quotient resolution (validating ctor + harness registration through it); doc link refresh required after amendment.",
     "R-24: 8aa98a25 dispatch prompt wrongly listed the full coordinate set as an error case; the epic's boundary-code contract (REQ-04/REQ-05) makes it the zero-length zero-dimensional code. Fixed lead-direct through code-review R1+R2. Check future transform prompts (puncture 5233867e, extend 981c5ae3) against the boundary-code contract before dispatch.",
     "R-25: 230dd84d scope rulings \u2014 BchSpec declares only the two primitive consecutive-root variants (later flavor tasks add their variants with their constructions; five-variant stub enum rejected as in-scope-deferral); resolve_root already implements both RootSelection arms. bch::BchCode short name stays with the legacy type until cutover-removal claims it. Filed dfd9e0c5 (promote integer gcd + x^n-1 helper to gf2-core) and 174295c9 (flaky symlink test + CI log retention).",
-    "R-26: wave-7 lead-direct closures \u2014 legacy generator_matrix cache removed early (reviewer cited canonical-cutover; consumers snapshot at construction); BchError::WorkspaceMismatch variant added to bch/error.rs (lead-owned footprint extension); SYSTEMATIC_ENCODING_CONVENTION.md rewritten from 6a1b2404's spec; bch/mod.rs Organization updated; single authoritative merged-tree CI covered the five-merge batch plus fixes (per-merge CI skipped under load after per-issue full-suite evidence \u2014 deviation recorded)."
+    "R-26: wave-7 lead-direct closures \u2014 legacy generator_matrix cache removed early (reviewer cited canonical-cutover; consumers snapshot at construction); BchError::WorkspaceMismatch variant added to bch/error.rs (lead-owned footprint extension); SYSTEMATIC_ENCODING_CONVENTION.md rewritten from 6a1b2404's spec; bch/mod.rs Organization updated; single authoritative merged-tree CI covered the five-merge batch plus fixes (per-merge CI skipped under load after per-issue full-suite evidence \u2014 deviation recorded).",
+    "R-27: proof-sketch rulings baked for lean waves \u2014 layout: all five proof modules under proofs/Gf2Core/Proofs/ (existing sorry-filter gate covers them; no gate-script edit); footprint delta per lean task: its module file + one import line in proofs/Gf2Core.lean; REQUIRED new tests: d7749931 adds base_order_mod_matches_the_hand_computed_multiplier (GF(81)/GF(9) and TrivialExt d_B=64 witnesses); 32f53280 adds canonical_index_decodes_to_its_prime_coordinates (GF(16),GF(125),GF(81)/GF(9)) + reduction_is_invariant_under_multiples_of_the_modulus + tower_coordinates_vary_the_base_coordinate_fastest; b1bd75ca adds the_generator_vanishes_at_every_defining_set_root. Vandermonde minimum-distance step tracked as 501cf341, out of b1bd75ca scope."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
