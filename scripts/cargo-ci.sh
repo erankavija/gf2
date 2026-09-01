@@ -208,7 +208,7 @@ run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "$BUDGET" cargo test 
 # repository envelope without filesystem discovery.
 run_step tuning-core-artifact "$BUDGET" cargo test -p gf2-core --profile ci-test --features tuning-profile --test tuning_profile_committed
 run_step tuning-algebra-artifacts "$BUDGET" cargo test -p gf2-algebra --profile ci-test --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
-run_step tuning-coding-codec "$BUDGET" cargo test -p gf2-coding --profile ci-test --features parallel,tuning-profile --test bch_encode_dispatch_profile
+run_step tuning-coding-codec "$BUDGET" cargo test -p gf2-coding --profile ci-test --features parallel,tuning-profile --test bch_encode_dispatch_profile --test bch_encode_dispatch_allocation
 run_step tuning-composer "$BUDGET" cargo test --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml
 
 echo "$summary"
