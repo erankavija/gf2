@@ -86,14 +86,53 @@
 //!
 //! # Certificates
 //!
-//! A certificate is evidence that a check has already run. Constructors that
-//! need a validated fact take a certificate instead of re-deriving it, which
-//! is what makes repeated construction cheap: certificates are `Arc`-backed,
-//! carry [`FieldId`]s, and decide reuse by comparison
+//! A certificate is evidence that a check has already run.
+//! [`ExtensionCertificate`] is `Arc`-backed, carries the two [`FieldId`]s it
+//! covers, and decides reuse by identity comparison
 //! ([`ExtensionCertificate::matches`]) rather than by re-derivation.
-//! [`CertificateBasis`] records what the validity rests on, including the
-//! honest [`CertificateBasis::Declared`] for an [`ExtConfig`] non-residue,
-//! which is trusted at the type level rather than verified.
+//! [`CertificateBasis`] records what the validity rests on.
+//!
+//! Two constructors produce evidence, and two consume it:
+//!
+//! - [`BinaryPrimeExt::new`] decides the runtime field's defining polynomial
+//!   with [`prove_irreducible`] and records
+//!   [`CertificateBasis::Proved`]. Deciding is `O(m³)`.
+//! - [`ConstExt::new`] records [`CertificateBasis::Declared`], the honest
+//!   basis for an [`ExtConfig`] non-residue, which is trusted at the type
+//!   level rather than verified.
+//! - [`BinaryPrimeExt::from_certificate`] and
+//!   [`ConstExt::from_certificate`] take a certificate a caller already
+//!   holds, verify it against the pair the witness names, and skip the
+//!   validation entirely. This is what makes repeated construction over one
+//!   presentation cheap.
+//!
+//! [`crate::field::irreducibility`] is the other producer: proving a
+//! polynomial irreducible yields an [`IrreducibilityCertificate`](crate::field::irreducibility::IrreducibilityCertificate), and
+//! [`IrreducibilityCertificate::extension_certificate`](crate::field::irreducibility::IrreducibilityCertificate::extension_certificate) promotes it to the
+//! `Proved` evidence the two `from_certificate` constructors accept.
+//! [`TrivialExt`] has no such constructor because it performs no validation
+//! to reuse: $E = B$ holds for any carrier by construction.
+//!
+//! ```
+//! use gf2_core::field::extension::{BinaryPrimeExt, CertificateBasis, FieldExtension};
+//! use gf2_core::gf2m::Gf2mField;
+//!
+//! // Deciding happens once.
+//! let field = Gf2mField::new(4, 0b10011);
+//! let decided = BinaryPrimeExt::new(field.clone())?;
+//! assert_eq!(decided.certificate().basis(), CertificateBasis::Proved);
+//!
+//! // Every later construction over the same presentation reuses the evidence.
+//! let held = decided.certificate().clone();
+//! assert!(held.matches(decided.base_id(), decided.ext_id()));
+//! let reused = BinaryPrimeExt::from_certificate(field, held)?;
+//! assert_eq!(reused, decided);
+//! # Ok::<(), gf2_core::field::extension::FieldError>(())
+//! ```
+//!
+//! [`OrderCertificate`] follows the same shape for multiplicative order:
+//! factoring $|E^{*}|$ once serves every divisor, through
+//! [`OrderCertificate::divisor`].
 //!
 //! # Errors
 //!
