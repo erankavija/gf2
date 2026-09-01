@@ -256,18 +256,26 @@ main(int argc, char** argv)
 
         if (do_gen)
         {
-            mzd_t* G = mzd_init(c->k, c->n);
+            /* fresh-alloc cell per the workload-selection cache-state
+             * contract: the measured region allocates and frees its own
+             * result, matching the gf2 side's owned-return materialization. */
             double spent = 0.0;
             uint64_t digest = 0;
 
             for (int w = 0; w < WARMUP_REPS; w++)
             {
+                mzd_t* G = mzd_init(c->k, c->n);
                 genmatrix_rref(G, c);
                 digest = digest_matrix(G);
+                mzd_free(G);
             }
 
             const double c0 = now_s();
-            genmatrix_rref(G, c);
+            {
+                mzd_t* G = mzd_init(c->k, c->n);
+                genmatrix_rref(G, c);
+                mzd_free(G);
+            }
             const double one_ns = (now_s() - c0) * 1e9;
             long reps = (long)(MIN_TIMED_NS / (one_ns > 0.0 ? one_ns : 1.0)) + 1;
             if (reps < 1)
@@ -278,7 +286,9 @@ main(int argc, char** argv)
                 const double t0 = now_s();
                 for (long rep = 0; rep < reps; rep++)
                 {
+                    mzd_t* G = mzd_init(c->k, c->n);
                     genmatrix_rref(G, c);
+                    mzd_free(G);
                 }
                 const double t1 = now_s();
                 spent += t1 - t0;
@@ -286,7 +296,6 @@ main(int argc, char** argv)
                      (double)c->k * (double)c->n, digest);
             }
             fprintf(stderr, "#   %s genmatrix-rref reps=%ld: %.3f s of timed work\n", c->name, reps, spent);
-            mzd_free(G);
             fflush(stdout);
         }
 
