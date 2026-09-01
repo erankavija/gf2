@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 8,
+  "current_wave": 9,
   "waves": [
     {
       "wave_number": 1,
@@ -287,7 +287,7 @@
           "title": "Migrate HIP syndrome/decode support behaviorally intact",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework attempt 2 in flight (live Opus teammate): R1 restore+CPU-fallback merged 63952bf2, cargo-ci + hip-ci passed, receipt repinned b3679e50 + doc-linked; code-review R2 FAIL new finding \u2014 exp/log table expect panics on canonical fields without u16 tables (core.rs:1760)"
+          "status": "done: rework R1 (restore+CPU fallback, 63952bf2) + R2 (unsupported-presentation CPU fallback, 3ec41ce9); receipt repinned 489e85ef and doc-linked; cargo-ci + hip-ci + code-review R3 passed"
         },
         {
           "key": "proof-sketch",
