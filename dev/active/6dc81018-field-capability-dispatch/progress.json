@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 25 is complete. Wave 26 is in owner-approved plan repair before claim. The invoker selected option A: amend the shared sweepability rule so a threshold whose conservative default equals its admissible boundary may use a domain-clipped grid beginning at that boundary when both arms remain forceable; retain all eleven eaae1b56 fields and predeclare every numeric grid and representative fixture before implementation or measurement.",
+  "wave_notes": "Wave 25 is complete. Wave 26 is in implementation after the owner-approved option A plan repair passed independent review. The shared sweepability rule permits the domain-clipped tiled-M4RM grid; the authoritative eaae1b56 protocol predeclares all eleven follow-on selectors, five pilot reruns, exact fixtures, fresh-child route evidence, and the one-lock campaign before implementation or measurement.",
   "open_escalations": [],
   "waves": [
     {
@@ -632,8 +632,8 @@
           "title": "Extend the calibration sweep to the follow-on threshold fields",
           "classification": "implementation",
           "model": "opus",
-          "status": "owner-approved-plan-repair-before-claim",
-          "notes": "All nine dependencies are met. The invoker selected option A: retain all eleven selectors by amending the convention source for admissible-boundary defaults, then predeclare and independently review each numeric grid, fixture, forced-arm value, route witness, seed domain, and execution budget before claim or implementation. No measurement or JIT issue mutation has occurred."
+      "status": "in_progress",
+      "notes": "All nine dependencies are met. The invoker selected option A and the premeasurement plan merged at 3514d75d, with JIT document pins at f7ca7550. Independent review passed after two bounded planning corrections: exact comparable-versus-uncalibrated fallback semantics, exact eight-bank fixtures, a pool-width-only SoA witness, and a deterministic no-SIMD M4RM fallback gate. The issue was claimed at c6970540. Harness and M4RM-observer implementation are isolated in non-overlapping worktrees; no measurement or publication has started."
         }
       ]
     },
