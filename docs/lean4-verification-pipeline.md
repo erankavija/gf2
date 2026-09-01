@@ -20,7 +20,7 @@ The pipeline is automated via `scripts/verify-lean.sh`.
 | Module | Status | Notes |
 |--------|--------|-------|
 | `gfp/` (prime field `Fp<P>`) | Verified | Montgomery multiplication, field ops, const generics |
-| `gfpn/` (`QuadraticExt`, `CubicExt`) | Verified | Tower extensions over `ExtConfig` trait |
+| `gfpn/` (`QuadraticExt`, `CubicExt`) | Verified | Tower extensions over `ExtConfig` trait; `gfpn::quotient` is opaque, see below |
 | `field/traits` | Extracted (opaque bodies) | `FiniteField`, `ConstField` trait declarations |
 | Everything else | Excluded | Out of scope (bitvec, matrix, SIMD, etc.) |
 
@@ -101,11 +101,12 @@ charon cargo \
   --opaque 'gf2_core::primitive_polys' \
   --opaque 'gf2_core::io' \
   --opaque 'gf2_core::macros' \
+  --opaque 'gf2_core::gfpn::quotient' \
   --dest-file target/charon/gf2_core.llbc \
   -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features
 ```
 
-**Transparent modules** (fully extracted): `gfp/`, `gfpn/`
+**Transparent modules** (fully extracted): `gfp/`, `gfpn/` except `gfpn::quotient`
 
 **Opaque modules** (declarations only, no bodies):
 
@@ -113,6 +114,7 @@ charon cargo \
 |--------|------------|
 | `field` | Trait declarations extracted; bodies contain HRTB `for<'a>` bounds |
 | `gf2m` | Runtime field parameters, `Vec<u64>` storage |
+| `gfpn::quotient` | Runtime modulus, `Vec` coefficient storage |
 | `bitvec`, `bitslice`, `matrix`, `sparse`, `alg` | Out of scope |
 | `compute` | Rayon parallelism, unsupported by Aeneas |
 | `kernels` | SIMD dispatch, unsupported by Aeneas |
