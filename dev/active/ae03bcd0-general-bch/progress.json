@@ -536,10 +536,16 @@
     }
   ],
   "created_during_execution": [],
-  "escalations": [],
+  "escalations": [
+    {
+      "issue": "c3d5cea5",
+      "trigger": "rework cap + same-root-cause x3 (certificate trust)",
+      "resolution": "owner ruling R-17: unchecked-fast-path idiom, counter reset"
+    }
+  ],
   "rework_counts": {
     "4e732b56": 3,
-    "c3d5cea5": 2
+    "c3d5cea5": 0
   },
   "surfaced_pitfalls": [
     {
@@ -590,7 +596,8 @@
     "R-13: wave-3 workers (ebdbd228, 19fe9394, fc2fa0b6) dispatched with owner approval before wave-2 formal close; their worktrees anchor at 9499fbdc (reviewed CI-green c3d5cea5 tip, not main) because they build on field/extension.rs; merges serialize after c3d5cea5 lands on main. Cache seeding skipped (manual worktree add).",
     "R-14: 19fe9394's R-01 ExtConfig conformance test covers every FIELD-BEARING in-tree ExtConfig implementor; arithmetic-only test fixtures with deliberately reducible moduli are excluded (they are not field configurations). Ratified.",
     "R-15: from_certificate trusting its input (a Declared certificate for an unproven modulus constructs without revalidation) is ratified as the CertificateBasis contract per the extension design's certificate section \u2014 an honest recorded trust level, documented plainly on the methods and walkthrough.",
-    "R-16: R-15 superseded by code-review R2 per no-argue \u2014 REQ-02 requires typed errors on every construction path, so BinaryPrimeExt::from_certificate (runtime) accepts Proved-basis certificates only and rejects Declared with a typed error; ConstExt keeps its design-fixed compile-time Declared basis unless the reviewer extends the finding."
+    "R-16: R-15 superseded by code-review R2 per no-argue \u2014 REQ-02 requires typed errors on every construction path, so BinaryPrimeExt::from_certificate (runtime) accepts Proved-basis certificates only and rejects Declared with a typed error; ConstExt keeps its design-fixed compile-time Declared basis unless the reviewer extends the finding.",
+    "R-17 (OWNER RULING at escalation): extension certificates are HPC validation-cost memoization, not a security boundary ('We do HPC. Not security.'). The reuse path is an explicitly-named unchecked fast path in Rust convention (from_certificate_unchecked), documented as trusting the caller (GIGO); REQ-02's typed-error requirement governs the validating constructors. Supersedes the R2/R3 evidence-policing direction; basis-policy machinery may be simplified away. c3d5cea5 rework counter reset by this guidance."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
