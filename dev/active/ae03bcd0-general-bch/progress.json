@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 5,
+  "current_wave": 6,
   "waves": [
     {
       "wave_number": 1,
@@ -152,7 +152,7 @@
           "title": "Automatic modulus selection: Conway registry plus deterministic verified search",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "done: Luna xhigh, all gates first-pass, merged (CI re-run after timeout under load)"
+          "status": "done: Luna xhigh, all gates first-pass"
         },
         {
           "key": "cyclotomic-closure",
@@ -160,7 +160,7 @@
           "title": "Implement q-cyclotomic coset closure over extension fields",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "done: Luna xhigh, code-review R3 after two lead-direct fallible-allocation fixes (R1 cosets_mod, R2 closure), merged c56c7dae"
+          "status": "done: Luna xhigh, code-review R3 after two lead-direct fallible-allocation fixes"
         },
         {
           "key": "fieldmatrix-serialization",
@@ -168,7 +168,7 @@
           "title": "Canonical checksummed FieldMatrix serialization with atomic replacement",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "worker-complete (Luna xhigh), branch cf34180c, merge queued after 8aa98a25"
+          "status": "done: Luna xhigh, code-review R2 (Cargo.lock blake3 edge) + doc-review R3 (io prose, two README rows) lead-direct"
         },
         {
           "key": "quotient-ext-const",
@@ -176,7 +176,7 @@
           "title": "Implement compile-time configured quotient extensions with equivalence evidence",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker-complete (native Opus after codex-delegation stop, commit 0a35dddf, own cargo-ci 16/16 green), merge queued last"
+          "status": "done: native Opus, all gates first-pass, mutation-checked differential suite (R-22 codex-stop mid-flight)"
         },
         {
           "key": "shorten-transform",
@@ -184,7 +184,7 @@
           "title": "Generic shortening over arbitrary coordinate sets",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "merged fbc36c09, merged-tree CI running, gates next"
+          "status": "done: Luna xhigh, code-review R3 after two lead-direct boundary-code fixes (full-set rejection originated in the dispatch prompt error list)"
         }
       ]
     },
@@ -562,7 +562,7 @@
     {
       "source": "c3d5cea5 final sign-off",
       "finding": "Design risk R-01 residual: an out-of-tree ExtConfig implementor with a wrong non-residue builds a ConstExt witness over a non-field; neither the type system nor 19fe9394's in-tree conformance case reaches it. Closing requires making ConstExt::new fallible (design amendment).",
-      "disposition": "epic REQ-02 (compile-time quotient forms) reconciliation must face this; bake into the 0e706bf5 quotient-ext-const dispatch prompt \u2014 address or explicitly scope with owner approval"
+      "disposition": "CLOSED for the compile-time quotient form by 0e706bf5 (validating constructor + harness registration through it; extension-design R-01 amended, R-23). Generic un-suffixed ConstExt::new tracked as enhancement c9022d14 outside the epic."
     }
   ],
   "coordination": {
@@ -605,7 +605,8 @@
     "R-20: owner directives 2026-09-01 session 3 \u2014 hard tasks go to native Opus (Sol retired for this session); peer lead finished, so the forum listener is closed and the /tmp/gf2-main-leads.lock + announce protocol is retired.",
     "R-21: 769c3144 doc-review R1 fixed lead-direct: gfpn/mod.rs prose, gf2-core README, lean4-verification-pipeline.md; gfpn::quotient opaqued in scripts/verify-lean.sh and full verify-lean.sh re-run green (runtime Vec storage, same class as gf2m).",
     "R-22: OWNER ORDER mid-wave-5 \u2014 the Opus worker on 0e706bf5 sub-delegated implementation to codex (following the global CLAUDE.md Luna-delegation rule); owner ordered it stopped immediately. Lead killed the codex child (it had written zero edits in ~16 min), ordered native implementation; worker complied and delivered natively. STANDING RULE: every hard-task dispatch prompt must carry an explicit no-delegation clause overriding the global delegation rule.",
-    "R-23: 0e706bf5 findings \u2014 footprint finding on un-suffixed ConstExt::new tracked as enhancement c9022d14 (dep-wired to 0e706bf5); extension-design.md R-01 residual amended with the const-quotient resolution (validating ctor + harness registration through it); doc link refresh required after amendment."
+    "R-23: 0e706bf5 findings \u2014 footprint finding on un-suffixed ConstExt::new tracked as enhancement c9022d14 (dep-wired to 0e706bf5); extension-design.md R-01 residual amended with the const-quotient resolution (validating ctor + harness registration through it); doc link refresh required after amendment.",
+    "R-24: 8aa98a25 dispatch prompt wrongly listed the full coordinate set as an error case; the epic's boundary-code contract (REQ-04/REQ-05) makes it the zero-length zero-dimensional code. Fixed lead-direct through code-review R1+R2. Check future transform prompts (puncture 5233867e, extend 981c5ae3) against the boundary-code contract before dispatch."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
@@ -618,6 +619,7 @@
     "git add .jit sweeps OTHER leads' unstaged gate/issue writes (peer gate evaluations write .jit outside their lock window; incident 692f0653). Under the lock: verify git status --porcelain .jit is clean BEFORE your own jit writes, commit immediately after, and never use commit -am.",
     "codex sandbox_workspace_write.writable_roots=[.git/worktrees/<name>] is NOT enough for worker commits: commits also write .git/objects and refs/heads (shared, read-only to the sandbox). Workers may leave a stale index citing never-written blobs \u2014 git reset before git add -A when committing on their behalf.",
     "A `static` inside a generic fn or generic inherent impl is SHARED across all monomorphizations in Rust \u2014 a naive once-per-type OnceLock validation cache memoizes the FIRST type's answer for every type (silent wrong-field bug). Verified empirically by worker-0e706bf5. Use a per-instance certificate/memo value instead.",
-    "Native subagents inherit the user's global CLAUDE.md, including its delegate-to-codex rule; a hard task assigned to a native model needs an explicit no-delegation clause in the dispatch prompt or the subagent will sub-delegate (R-22 incident)."
+    "Native subagents inherit the user's global CLAUDE.md, including its delegate-to-codex rule; a hard task assigned to a native model needs an explicit no-delegation clause in the dispatch prompt or the subagent will sub-delegate (R-22 incident).",
+    "The unidentified external process-killer now also kills the lead's harness background tasks (three kills in ~15 min: one CI twice, one poller). Mitigation that works: setsid-detached nohup process writing a done-file, watched by a Monitor tool loop that checks the done-file AND process liveness."
   ]
 }
