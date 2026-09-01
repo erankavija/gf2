@@ -263,7 +263,7 @@
           "title": "Construction from explicitly supplied generator polynomials",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done: Luna xhigh, code-review R2 after external-SIGTERM worker kill (WIP preserved 922dc509), cargo-ci passed, done dbb28407"
         },
         {
           "key": "ebch-migration",
@@ -271,7 +271,7 @@
           "title": "Migrate library eBCH consumers to the generic extension",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "worker-complete (Luna), merged e585f47c, gates pending"
+          "status": "rework attempt 1 in flight (Luna xhigh, worktree agent-6d67e57e-r2): code-review R1 FAIL F1 duplicated eBCH construction/parity materialization across product/GRAND/fading; canonical ParityCheckMatrixAccess for Extended<C> + shared fixture; prior session died mid-rework (WIP preserved 37074ddf)"
         },
         {
           "key": "encode-batch-workspace",
@@ -279,7 +279,7 @@
           "title": "Allocation-free single, workspace batch, and parallel batch encoding",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "rework attempt 1 in flight (native Opus, fresh worktree at dbb28407): code-review R1 FAIL \u2014 BlockEncoder::encode_into allocates via encode_systematic_into default (encode.rs:1314/588); REQ-01 unmet"
         },
         {
           "key": "hip-equivalence",
@@ -287,7 +287,7 @@
           "title": "Migrate HIP syndrome/decode support behaviorally intact",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "rework attempt 1 in flight (native Opus, fresh worktree at dbb28407): code-review R1 FAIL \u2014 correct_batch_gpu leaves mutated unverified candidates on verification-pass HIP error (core.rs:1960/1973); receipt must re-pin post-fix"
         },
         {
           "key": "proof-sketch",
@@ -547,7 +547,10 @@
     "4e732b56": 3,
     "c3d5cea5": "2+owner-reset+1 guided (all passed)",
     "0c4d84cf": 1,
-    "981c5ae3": 1
+    "981c5ae3": 1,
+    "6d67e57e": 1,
+    "8f68699b": 1,
+    "c3cc5226": 1
   },
   "surfaced_pitfalls": [
     {
@@ -634,5 +637,10 @@
     "SendMessage teammate reports truncate around ~3KB; long worker reports need chunked retrieval (three round-trips for 230dd84d). Ask workers to lead with actionable items, details after.",
     "A doc fix that scopes a claim to 'current public variants' goes stale one wave later when the next variant lands \u2014 write doc claims against the design's END state or name the variant explicitly (37c288cf R1 was the lead's own 230dd84d fix).",
     "cargo-budget.sh:71-74 asserts workspace crates never hit across worktrees \u2014 false for pooled/hardlinked artifacts (path-baked env!(CARGO_MANIFEST_DIR) test binaries). Purge such binaries from the pool (done for gf2pow32_*); tool fix belongs upstream."
+  ],
+  "session_notes_s5": [
+    "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
+    "Reclaimed merged worktrees agent-{18a160f5,64fd3afd,6d67e57e,8f68699b,c3cc5226}; deleted their merged branches; agent-6d67e57e-r2 kept (rework), agent-4e732b56 kept (baselines).",
+    "c3cc5226 receipt dev/bench_results/c3cc5226/hip-outcome-identity-receipt.md is NOT yet jit-doc-linked; link after rework merges."
   ]
 }
