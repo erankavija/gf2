@@ -97,8 +97,8 @@ Each surface appears in exactly one subsection.
 | Bit-buffer backend selector | `crates/gf2-core/src/kernels/backend.rs:63` and `:95` | `select_backend_for_size` | A size predicate choosing between scalar and SIMD execution. |
 | Deprecated bit-buffer kernel surface | `crates/gf2-core/src/kernels/mod.rs:41`, bridge impl `:57`, selector `:81` | `Backend` | A parallel surface over the same operations; disposition in §5. |
 | Accelerator hooks on the field trait | `crates/gf2-core/src/field/traits.rs:339`, `:372`, `:396`, `:411`, `:444`, `:474`, `:510`, `:536`, `:556`, `:594`, `:614`, `:651`, `:683`, `:722`, `:961`, `:986` | the `#[doc(hidden)]` `try_*` / `has_*` hook family on `FiniteField` | Each hook offers an accelerated path and defaults to `None`/`false`, leaving the law-level path to the caller. |
-| Trait-associated algorithm thresholds | `crates/gf2-core/src/field/traits.rs:825`, `:858`, `:892`, `:926` | the same `FiniteField` trait | Per-field selection between procedures with equal results; scope disposition in §4.3. |
-| Prime-field PLE panel width override | `crates/gf2-core/src/gfp/mod.rs:903` | `Fp<P>`'s `PLE_PANEL_COLS` | Chooses a panel kernel by field family. |
+| Profile-backed Winograd, triangular, and PLE route selectors | Executed shape and anchored evidence: [`7d7c647c`](../7d7c647c/design.md) §§3–4 | the `CoreTuning` selector families and the production route reporters | Host-level values select between procedures with equal results; each public operation resolves once and threads the value. |
+| PLE panel-kernel lane capability | [`7d7c647c`](../7d7c647c/design.md) §3.1; `FiniteField::simd_ple_panel_lane` | `PlePanelLane` plus the PLE profile family | The carrier identifies its registered kernel class; the host profile supplies that class's panel width. |
 | GF($2^m$) cached strategy state and priority ladder | `crates/gf2-core/src/gf2m/field.rs:169`, selection `:268-310`, table build `:401`, ordering `:1103-1190` | `FieldParams_` together with the `Mul` ladder | Per-field cached function pointers plus a fixed tier order over the §2.2 procedures. |
 | Prime-field route selectors | `crates/gf2-core/src/gfp/simd_ops.rs:562` and `:1621` | `select_f32_path` / `select_f64_path` | Predicates over $P$ and $n$ choosing a packed float route. |
 | Kernel feature detection | `crates/gf2-kernels-simd/src/lib.rs:102`, `gf2m.rs:78`, `gf2m_batch.rs:79`, `gf2m_wide.rs:85`, `gf2m_gemm.rs:72` | each module's `detect*` returning `Option<FnTable>` | Runtime CPU-feature probes; the returned table is what the core accessors cache. |
@@ -203,33 +203,20 @@ under the schema's extensibility rule.
 | $n \ge 512$ guard in `select_f64_path` | `crates/gf2-core/src/gfp/simd_ops.rs:1628` | Same crossover for the f64 cascade. |
 | `CHUNK_SUBSETS` = $2^{16}$ | `crates/gf2-algebra/src/permanent/parallel_bipedal3.rs:49` | Gray-walk chunk size for the parallel permanent, chosen by sweep. |
 
-### 4.3 Profile-scoped — deferred
+### 4.3 Profile-scoped — proof-surface seam
 
-These four are host-tuning crossovers and belong in a profile, and they are
-excluded from the pilot cutover.
+The four host-tuning selectors in this family are represented by host-level
+`CoreTuning` fields and, for PLE panel kernels, a carrier-declared lane tag.
+The Winograd, triangular, and PLE drivers resolve their profile values once at
+public entry points and thread them through recursive work. `FiniteField`
+declares no numeric selector in this family, and the generated dictionaries
+carry none.
 
-| Constant | Defining code | Reason |
-|---|---|---|
-| `WINOGRAD_THRESHOLD` = 128 | `crates/gf2-core/src/field/traits.rs:825` | Classical-to-Winograd GEMM crossover, per field. |
-| `TRI_BASE_THRESHOLD` = 8 | `crates/gf2-core/src/field/traits.rs:858` | Base-case size for triangular solve, per field. |
-| `PLE_BASE_COLS` = 1 | `crates/gf2-core/src/field/traits.rs:892` | PLE base-case column count; a performance-dependent field-level knob. |
-| `PLE_PANEL_COLS` | `crates/gf2-core/src/field/traits.rs:926`, `Fp<P>` override `crates/gf2-core/src/gfp/mod.rs:903` | Panel-dispatch column window; the override's 256/128/1 field-family values are the same knob resolved per prime. |
-
-The exclusion has one cause. These constants are associated constants on
-`FiniteField`, which is an extraction root for the Lean proof surface, and
-trait-associated thresholds have already caused single-source-of-truth
-synchronization defects between Rust and the generated proofs — recorded at
-`dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-10.md:41`,
-which also records that a sweep selected the `TRI_BASE_THRESHOLD` value. The
-selected `PLE_BASE_COLS` value carries the same measured provenance at
-`dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md:146`,
-and the constants' place in the PLE/TRSM recursion is described at
-`dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md:45-50`.
-Moving them to profile data changes the trait surface that extraction reads, so
-the pilot keeps proof-surface churn out of the cutover. Their migration
-requires the proof surface to be re-derived or the constants to be read through
-a non-extracted seam; either resolution is separate work, and until it lands the
-values stay where they are defined.
+[`dev/active/7d7c647c/design.md`](../7d7c647c/design.md) is the single source
+for the source-selector inventory, field mapping, default provenance,
+read-site obligations, and probe-verified proof-surface delta. Its U5–U8 seam
+is executed; this classification records the kernel-strategy disposition
+without duplicating those details.
 
 ### 4.4 Out of scope
 
@@ -257,6 +244,7 @@ values stay where they are defined.
 |---|---|---|---|
 | Research-stub declarations of `PackedField` and `PackedFieldVec`, with stub implementations and zero-returning `fold_mul` | `dev/archive/packed_field_stub/src/lib.rs:80`, `:331`, `:774`, `:968`, `:938` | Superseded by the production traits at `crates/gf2-algebra/src/packed/mod.rs:88` and `:374`. | Executed: archived at `dev/archive/packed_field_stub` with a pointer to the production home; its D1b design-record linkage is preserved. Issue `7f818151`. |
 | Deprecated bit-buffer kernel surface: the `Kernel` trait, its `ScalarBackend` bridge, and `select_kernel()` | `crates/gf2-core/src/kernels/mod.rs:41`, `:57`, `:81` (anchor-commit tree) | Superseded by `Backend` and `select_backend_for_size`. | Executed: all three removed by issue `a6636671` (commit `a8d07ab2`), no consumer remaining; `canonical-cutover` is satisfied for this surface. |
+| Numeric tuning selectors on `FiniteField` and the prime-field numeric PLE panel override | Historical source inventory and extraction evidence: [`7d7c647c`](../7d7c647c/design.md) §§1–3 | The canonical surface is the `CoreTuning` selector families plus the `PlePanelLane` capability tag. | Executed by seam U5–U8 (`e2744fcf`, `88441adb`, `e8a727ff`, `5bdc9552`); the trait and generated dictionaries carry no numeric tuning selectors. |
 | Inherent arithmetic wrappers `add_inherent`, `sub_inherent`, `mul_inherent`, `neg_inherent` on the three packed element types | `crates/gf2-algebra/src/packed/bipedal3.rs:417`, `:436`, `:455`, `:473`; `packed5.rs:363`, `:382`, `:401`, `:419`; `packed7.rs:516`, `:535`, `:554`, `:572` | Retained parallel surface over the trait methods, each a verbatim tail call with no algorithmic divergence (`crates/gf2-algebra/src/packed/bipedal3.rs:387-405`). | Named tracked exception `packed-inherent-proof-targets`: the wrappers exist so Charon extraction has a fixed surface free of trait-dispatch indirection, per `dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md:1-20`. Convergence condition: extraction of a trait-generic algorithm succeeds, which issue `34d85cb9` establishes or falsifies. |
 | Legacy SIMD multiply tier inside the GF($2^m$) ladder | `crates/gf2-core/src/gf2m/field.rs:1155` | Retained tier below the combined and split CLMUL-with-Barrett tiers; it is a strategy alternative under the one canonical ladder, not a second abstraction. | No cutover. Its position becomes profile data when the trait-adjacent selection families migrate (§4.2); the tier order stays a single ordering in one place. |
 | Wide-kernel compatibility detectors `detect()` and `detect_571()` alongside `detect_wide()` | `crates/gf2-kernels-simd/src/gf2m_wide.rs:98` and `:104` against `:85` | Retained projections: both are `detect_wide().map(...)` with no independent detection logic, and both have live callers in the crate's tests and in `crates/gf2-core/benches/gf2m_wide_mul.rs:115`. | Named tracked exception `wide-kernel-detect-projections`: they remain pure projections of `detect_wide`. Acquiring independent feature-detection logic in either is a defect, since `crates/gf2-core/src/lib.rs:369` caches only `detect_wide`. |
