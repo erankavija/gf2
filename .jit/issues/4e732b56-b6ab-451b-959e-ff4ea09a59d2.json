@@ -316,7 +316,7 @@
   "gates_status": {
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-09-01T03:36:39.446895423Z",
+      "updated_at": "2026-09-01T03:40:00.939340820Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -335,5 +335,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-01T03:36:58.631580222Z"
+  "updated_at": "2026-09-01T03:40:00.939340820Z"
 }
