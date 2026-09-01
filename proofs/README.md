@@ -38,6 +38,7 @@ Hand-written proofs under `Gf2Core/Proofs/`:
 | `MontgomeryRoundtrip.lean` | Headline theorems on the Rust source: `redc_value_spec`, `montgomery_roundtrip`, `fp_add_correct`, `fp_mul_correct`, `p_inv_value_spec` |
 | `FpField.lean` | `CommRing` / `Field` instance for `FpVal P` via equivalence with `ZMod P.val` |
 | `ExtDefs.lean`, `ExtAlgebra.lean`, `QuadraticExtField.lean`, `CubicExtField.lean` | Tower extensions — ring and field structure |
+| `RelativeExtension.lean` | Relative extension `B ⊆ E`: embedding and restriction laws, the relative Frobenius and its fixed field, conjugate orbits, trace and norm |
 | `Gf2mDefs.lean`, `Gf2mAddition.lean`, `Gf2mMulRaw.lean`, `Gf2mInverse.lean` | GF(2^m) correctness (addition = XOR, multiplication spec, inverse via extended Euclidean) |
 
 Post-processing quirks are documented in [`WORKAROUNDS.md`](WORKAROUNDS.md).
