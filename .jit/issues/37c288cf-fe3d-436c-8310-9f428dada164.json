@@ -13,7 +13,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T14:18:45.834407308Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T14:22:13.138749238Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "37c288cf-fe3d-436c-8310-9f428dada164",
   "labels": [
     "type:task",
@@ -25,5 +36,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Construction from arbitrary seed sets, including boundary codes",
-  "updated_at": "2026-09-01T13:15:12.988533634Z"
+  "updated_at": "2026-09-01T14:22:13.138749238Z"
 }
