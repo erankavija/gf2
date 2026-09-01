@@ -14,7 +14,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T14:32:35.724377421Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "d54cf660-6839-41cd-9637-18bb290da6ca",
   "labels": [
     "type:task",
@@ -25,5 +31,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reference matrix materialization: compact access, caller buffers, opt-in caching",
-  "updated_at": "2026-09-01T13:15:43.536508724Z"
+  "updated_at": "2026-09-01T14:32:35.724377421Z"
 }
