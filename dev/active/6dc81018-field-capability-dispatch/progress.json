@@ -2,15 +2,8 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 25,
-  "wave_notes": "Wave 25 has one closed task and one owner escalation. Issue 06ba0418 is done. Issue 389aa4de is merged at 561b0d71; merged-tree cargo-ci and code-review pass. Doc-review found two stale receipt citations. Rework 2 created resolving links, but independent review proved the new explanation factually false because both the older simd_vs_scalar benchmark and current calibrator call the backends directly. The rework limit is exhausted; commit 66123a77 remains clean and unmerged pending invoker direction.",
-  "open_escalations": [
-    {
-      "kind": "rework-exhausted",
-      "issue": "389aa4de",
-      "date": "2026-09-01",
-      "question": "Choose targeted guidance with another counter reset, manual lead takeover, or rejection. Recommended: reset for one documentation-only correction that removes the false dispatcher distinction and states only the evidence-backed protocol/revision scope of the 4-word and 8-word results."
-    }
-  ],
+  "wave_notes": "Wave 25 has one closed task and one guided documentation retry. Issue 06ba0418 is done. Issue 389aa4de is merged at 561b0d71; merged-tree cargo-ci and code-review pass. The invoker selected option A and reset the counter for one documentation-only correction to clean unmerged commit 66123a77: remove the false dispatcher distinction and state only the evidence-backed protocol and producing-revision scope of the 4-word and 8-word results.",
+  "open_escalations": [],
   "waves": [
     {
       "wave_number": 1,
@@ -616,8 +609,8 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus",
-          "status": "blocked-owner-decision-after-max-rework",
-          "notes": "The measured publication and guided test rework merged at 561b0d71. Full merged-tree cargo-ci passes with 5,299 tests and code-review passes with zero findings. Doc-review found two stale receipt citations. Rework 2 produced clean unmerged commit 66123a77, but independent review proved its replacement explanation false: benches/simd_vs_scalar.rs and tuning_calibration.rs both directly call ScalarBackend and the detected SIMD backend. Awaiting invoker choice after the reset rework allowance was exhausted. Measured bytes and production behavior remain fixed."
+          "status": "guided-doc-rework-1-after-second-reset",
+          "notes": "The measured publication and guided test rework merged at 561b0d71. Full merged-tree cargo-ci passes with 5,299 tests and code-review passes with zero findings. The invoker selected option A after independent review proved commit 66123a77's dispatcher explanation false. Guided retry 1 after the second reset is documentation-only: preserve the resolving heading and links, remove the invented call-path distinction, and state only the evidence-backed protocol and producing-revision scope of the two result sets. Measured bytes and production behavior remain fixed."
         },
         {
           "id": "06ba0418",
@@ -1116,6 +1109,12 @@
       "issue": "389aa4de",
       "date": "2026-09-01",
       "decision": "OPEN: rework 2 after the invoker reset resolved the broken anchors in clean unmerged commit 66123a77, but independent review proved the replacement scope statement false. The older simd_vs_scalar benchmark and the current calibration harness both call ScalarBackend and the detected SIMD backend directly, so their 8-word and 4-word results cannot be distinguished by an ops.rs dispatch path. Awaiting invoker choice: targeted guidance that resets the counter for one evidence-backed documentation correction, manual lead takeover, or rejection."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "389aa4de",
+      "date": "2026-09-01",
+      "decision": "The invoker selected option A. Targeted guidance resets the counter and authorizes one documentation-only retry: retain the resolving receipt heading and links, remove the false ops.rs dispatcher distinction, and state only the evidence-backed protocol and producing-revision scope of the 4-word and 8-word result sets. This is guided retry 1 after the second reset; measured artifacts and production behavior remain immutable."
     }
   ],
   "rework_counts": {
@@ -1151,7 +1150,7 @@
     "e8a727ff": 1,
     "e2744fcf": 0,
     "5bdc9552": 1,
-    "389aa4de": 2,
+    "389aa4de": 1,
     "06ba0418": 0
   },
   "surfaced_pitfalls": [
