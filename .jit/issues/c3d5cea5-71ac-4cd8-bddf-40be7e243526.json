@@ -24,6 +24,11 @@
       "status": "failed",
       "updated_at": "2026-09-01T05:20:18.841369126Z",
       "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T05:23:05.964063130Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "c3d5cea5-71ac-4cd8-bddf-40be7e243526",
@@ -36,5 +41,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement the relative field-extension abstraction in gf2-core",
-  "updated_at": "2026-09-01T05:20:18.841369126Z"
+  "updated_at": "2026-09-01T05:23:05.964063130Z"
 }

@@ -12,7 +12,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T05:34:33.449288661Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "19fe9394-5220-4f74-adb9-34280ecd6fc1",
   "labels": [
     "type:task",
@@ -23,5 +29,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Generic irreducibility validation with reusable certificates",
-  "updated_at": "2026-09-01T02:33:33.644783667Z"
+  "updated_at": "2026-09-01T05:34:33.449288661Z"
 }
