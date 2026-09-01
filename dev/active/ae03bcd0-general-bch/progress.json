@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 9,
+  "current_wave": 10,
   "waves": [
     {
       "wave_number": 1,
@@ -324,7 +324,7 @@
           "title": "Profile-driven dispatch among equivalent batch-encoding algorithms",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "done: native Opus, cargo-ci first-pass, code-review R2 after rework R1 (workspace-time family table prep); EncodeFamily seam + table-remainder family, CodingTuning section, 3 new cargo-ci tuning-coding steps, workload-selection \u00a79 amendment (T2S/T2N mother-length differential until 97410c80)"
         },
         {
           "key": "lean-ext-laws",
@@ -550,7 +550,8 @@
     "981c5ae3": 1,
     "6d67e57e": 1,
     "8f68699b": 2,
-    "c3cc5226": 2
+    "c3cc5226": 2,
+    "177bdc85": 1
   },
   "surfaced_pitfalls": [
     {
@@ -572,6 +573,16 @@
       "source": "64fd3afd rework",
       "finding": "scripts/verify-lean.sh:36-40 header claims 11 SIMD fast-path overrides; grep counts 16 cfg(not(verify_lean)) sites in gfp/mod.rs \u2014 the header number is stale or a subset",
       "disposition": "cosmetic script-comment drift; fold into any verify-lean.sh-touching task or lead-direct at epic close"
+    },
+    {
+      "source": "177bdc85 worker sign-off",
+      "finding": "dev/tools/tuning-profile-compose hardcodes core+algebra owners; first calibrated gf2-coding measurement needs a coding-owner mode there",
+      "disposition": "bake into perf-receipts (fd9d5416) / bench-extension (d1b4f85e) dispatch prompts"
+    },
+    {
+      "source": "177bdc85 worker sign-off",
+      "finding": "stale pooled artifact (gf2pow32_constant_drift baked with another worktree path) resurfaced from cache pool; worker forced rebuild",
+      "disposition": "re-purge gf2pow32_* from the pool after each harvest until the cargo-budget.sh upstream fix lands"
     }
   ],
   "coordination": {
@@ -641,6 +652,10 @@
   "session_notes_s5": [
     "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
     "Reclaimed merged worktrees agent-{18a160f5,64fd3afd,6d67e57e,8f68699b,c3cc5226}; deleted their merged branches; agent-6d67e57e-r2 kept (rework), agent-4e732b56 kept (baselines).",
-    "c3cc5226 receipt dev/bench_results/c3cc5226/hip-outcome-identity-receipt.md is NOT yet jit-doc-linked; link after rework merges."
+    "c3cc5226 receipt dev/bench_results/c3cc5226/hip-outcome-identity-receipt.md is NOT yet jit-doc-linked; link after rework merges.",
+    "Wave 9 closed: all four issues done. Worktrees reclaimed, branches deleted, leak checks clean.",
+    "Lead ruling R-28: 6d67e57e rework may migrate sim_runner (binary) to ExtendedBchComponent \u2014 mechanical swap on existing API, shrinks ef8ff9c4.",
+    "Lead ruling R-29: 177bdc85 cargo-ci.sh extension accepted (3 steps: tuning-coding-no-default/codec-only/codec) \u2014 mechanical mirror of the gf2-core/gf2-algebra tuning rows; validated by the 19-step gate run.",
+    "Lead ruling R-30: workload-selection.md \u00a79 amendment accepted (T2S/T2N differential at mother length until 97410c80); 4e732b56 doc link refreshed."
   ]
 }
