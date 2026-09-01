@@ -13,7 +13,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T06:47:12.283214513Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "ebdbd228-cc01-4b49-b961-cda8b32a7935",
   "labels": [
     "type:task",
@@ -24,5 +30,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Implement the layered typed error surface for coding APIs",
-  "updated_at": "2026-09-01T05:09:37.954873697Z"
+  "updated_at": "2026-09-01T06:47:12.283214513Z"
 }
