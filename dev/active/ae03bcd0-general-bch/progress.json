@@ -94,7 +94,7 @@
           "title": "Introduce field-generic block-code traits with binary specializations",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched: native Opus worker-0c4d84cf, worktree agent-0c4d84cf anchored at 1fcc1702 (error-surface tip); footprint traits.rs + linear.rs"
+          "status": "worker-complete: bec5a0be on branch (traits.rs + linear.rs only); full 16-step CI green incl. GPU + tuning-composer; conformance suite shared across files; decisions list requested (truncated report); merge + gates queued"
         },
         {
           "key": "irreducibility-validation",
