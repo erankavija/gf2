@@ -3186,16 +3186,15 @@ mod tests {
     // The 4736 count at n=1024 is dominated by the trsm_lower's recursive
     // gemm_axpy_into_view calls (each pays 2 transpose bumps: to_owned +
     // transpose). PLE has log₂(1024)=10 column-halving levels; trsm at
-    // each level recurses deeper at threshold=8 than it did at threshold=32,
-    // contributing more bumps. The observed 4736 is the empirical reality
-    // at TRI_BASE_THRESHOLD=8 (selected by jit:73ec5da3 sweep); every
-    // byte of intermediate storage is documented and accounted for here.
+    // each level uses the active `triangular.base_case_max_dim = 8` profile
+    // value selected by the jit:73ec5da3 sweep. The resulting recursion
+    // contributes the measured 4736 bumps; every byte of intermediate
+    // storage is documented and accounted for here.
     //
-    // Counts updated 2026-05-07 from threshold=32 baseline as part of
-    // jit:73ec5da3 R1 rework: the deeper trsm recursion at threshold=8
-    // adds ~13% more allocations at n=1024 (4192 → 4736) but reduces
-    // wall-time by 1–7% on the target Mersenne-31 cells (see the sweep
-    // table in dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md).
+    // The 2026-05-07 jit:73ec5da3 evidence records ~13% more allocations
+    // at n=1024 than its threshold-32 comparison (4192 → 4736), together
+    // with 1–7% lower wall time on the target Mersenne-31 cells (see the
+    // sweep table in dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md).
     const EXPECTED_PLE_N4: u64 = 14;
     const EXPECTED_PLE_N64: u64 = 264;
     const EXPECTED_PLE_N1024: u64 = 4736;

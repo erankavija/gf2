@@ -1,7 +1,7 @@
 //! Block-recursive triangular primitives — `trsm`, `trmm`, `trtri`, `trtrm`.
 //!
 //! Issues `83b1ad8b` (initial harness) and `73ec5da3` (TRSM coverage +
-//! `TRI_BASE_THRESHOLD` sweep). Measures five primitives (`trsm_upper`,
+//! `triangular.base_case_max_dim` sweep). Measures five primitives (`trsm_upper`,
 //! `trsm_lower`, `trmm_upper`, `trtri_upper`, `trtrm`) at
 //! `n ∈ {64, 256, 1024}` for `Fp<7>`, `Fp<MERSENNE_31>`, and
 //! `Gf2mWide<1, AES>`. Each primitive lives in its own Criterion group so
@@ -27,9 +27,8 @@
 //!
 //! All benches run with no profile installed, so the live
 //! `triangular.base_case_max_dim` bound resolves to its conservative
-//! default (8, selected by the Criterion sweep in jit:73ec5da3, recorded
-//! at measurement time as the per-field `TRI_BASE_THRESHOLD`). A future
-//! calibrated profile propagates here without bench code changes.
+//! default of 8, selected by the Criterion sweep in jit:73ec5da3. An
+//! installed calibrated profile propagates here without bench code changes.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
