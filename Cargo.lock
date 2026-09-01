@@ -522,6 +522,7 @@ dependencies = [
 name = "gf2-core"
 version = "0.1.0"
 dependencies = [
+ "blake3",
  "criterion",
  "gf2-core",
  "gf2-kernels-simd",
