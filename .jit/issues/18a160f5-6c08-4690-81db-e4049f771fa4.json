@@ -13,7 +13,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T16:26:48.791300509Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "18a160f5-6c08-4690-81db-e4049f771fa4",
   "labels": [
     "type:task",
@@ -25,5 +31,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Construction from explicitly supplied generator polynomials",
-  "updated_at": "2026-09-01T15:13:01.417882087Z"
+  "updated_at": "2026-09-01T16:26:48.791300509Z"
 }

@@ -10624,3 +10624,4 @@
 {"id":"d5380d72-a7fd-47a6-af6b-90c95a2fecef","issue_id":"32a8bc0e-8e17-4eec-80a8-92ea6f8fa54a","priority":"normal","timestamp":"2026-09-01T16:15:03.087261215Z","title":"Lift the index-ordered parallel dispatch primitive from gf2-sim into gf2-core compute","type":"issue_created"}
 {"from":"ready","id":"2c153cd6-c773-4110-9824-76e9878938e4","issue_id":"32a8bc0e-8e17-4eec-80a8-92ea6f8fa54a","timestamp":"2026-09-01T16:15:22.492274257Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"6417db92-47f1-49e2-a7bb-9406494b983a","issue_id":"32a8bc0e-8e17-4eec-80a8-92ea6f8fa54a","timestamp":"2026-09-01T16:15:22.492274257Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"code-review","id":"f113f9f7-7f51-43e4-a1e6-19036dfa7f43","issue_id":"18a160f5-6c08-4690-81db-e4049f771fa4","timestamp":"2026-09-01T16:26:48.791300509Z","type":"gate_passed","updated_by":"auto:executor"}
