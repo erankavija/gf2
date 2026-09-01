@@ -111,7 +111,11 @@
 //! Both reuse paths check only that the certificate's identities match, which
 //! is `O(1)` and catches an honest mix-up; neither re-derives. A memo of
 //! something else yields a mathematically invalid witness, the same way wrong
-//! parameters do anywhere else.
+//! parameters do anywhere else. This is the shape
+//! `@/inv/caller-trusted-fast-paths` fixes for the whole project: validation
+//! catches mistakes and amortizes cost, a path that skips it for performance
+//! is a distinct `_unchecked` method with its precondition documented, and a
+//! violated precondition is caller error rather than grounds for hardening.
 //!
 //! [`crate::field::irreducibility`] is the other producer: proving a
 //! polynomial irreducible yields an [`IrreducibilityCertificate`](crate::field::irreducibility::IrreducibilityCertificate), and
@@ -2224,7 +2228,8 @@ impl<V: UintExt> BinaryPrimeExt<V> {
     /// through it is meaningless. That is caller error in the same way that
     /// passing wrong parameters to any other `_unchecked` API is: nothing in
     /// this crate can detect it after the fact, which is precisely why the
-    /// name says so.
+    /// name says so. `@/inv/caller-trusted-fast-paths` fixes this contract
+    /// shape project-wide.
     ///
     /// Use [`new`](Self::new) when the modulus has not already been decided.
     ///
@@ -2425,7 +2430,7 @@ impl<E: ConstSimpleExtension> ConstExt<E> {
     /// is a memo of validation performed earlier and the caller promises it
     /// memoizes the pair `E` and its base name. Only the `O(1)` identity
     /// comparison runs; a memo of something else yields a witness over a
-    /// carrier that is not a field.
+    /// carrier that is not a field. See `@/inv/caller-trusted-fast-paths`.
     ///
     /// # Errors
     ///
