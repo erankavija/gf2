@@ -331,6 +331,7 @@ Hand-written proofs live under `proofs/Gf2Core/Proofs/` and
 | `ExtAlgebra.lean` | Pure `CommRing`/`Field` for the `QExt F β` / `CExt F β` pair and triple types |
 | `ExtProgress.lean` | `@[progress]` lemmas for the `QuadraticExt`/`CubicExt` operations |
 | `QuadraticExtField.lean`, `CubicExtField.lean` | `CommRing`/`Field` for the Aeneas types, plus Karatsuba, inverse, and order theorems |
+| `RelativeExtension.lean` | The relative extension `B ⊆ E` behind `FieldExtension`: embedding and restriction laws, the relative Frobenius, its fixed field and period, conjugate orbits, trace and norm; instantiated at the extracted `QuadraticExt`/`CubicExt` carriers |
 | `Gf2mDefs.lean`, `Gf2mProgress.lean`, `Gf2mMulRaw.lean`, `Gf2mAddition.lean`, `Gf2mInverse.lean` | GF(2^m) correctness: addition as XOR, the raw multiplication spec, inversion by extended Euclid |
 
 All prime-field results apply to `ValidPrime P` (odd prime, `P ≤ 2^63`). The
