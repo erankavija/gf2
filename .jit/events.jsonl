@@ -10348,3 +10348,4 @@
 {"assignee":"agent:worker","id":"be04fbb6-f996-4dae-9c42-19dc0ce10f1b","issue_id":"0c4d84cf-fd75-459f-bdd1-0087d8269a9a","timestamp":"2026-09-01T03:07:12.641844526Z","type":"issue_claimed"}
 {"gate_key":"doc-review","id":"c4a9c2ab-69ea-45cb-a728-84d25287f63a","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T03:33:37.877931896Z","type":"gate_failed","updated_by":"auto:executor"}
 {"fields":["documents"],"id":"668b0312-133c-4899-94d2-8237c12dec9d","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T03:34:08.416845683Z","type":"issue_updated","updated_by":"doc-remove"}
+{"gate_key":"doc-review","id":"56e034ac-c398-461e-9d3c-bad68b0ce51f","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T03:36:39.446895423Z","type":"gate_failed","updated_by":"auto:executor"}
