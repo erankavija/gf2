@@ -8,12 +8,24 @@
   ],
   "description": "Add the reusable gf2-core operation computing the minimal polynomial of an extension element over an arbitrary base field through the extension abstraction.\n\n## Background\n\nThe existing element operation is specialized to GF(2). General BCH generator assembly needs minimal polynomials over the actual base field; the operation belongs to the extension surface, not BCH-private code.\n\n## Success Criteria\n\n- [hard] REQ-01: gf2-core computes minimal polynomials of extension elements over an arbitrary base field, agreeing with the existing GF(2)-specialized operation on its domain.\n- [hard] REQ-02: Property tests verify minimality, base-coefficient membership, and vanishing at the element plus its conjugates, over binary and nonbinary pairs.\n",
   "documents": [],
+  "done_at": "2026-09-01T09:35:17.267397709Z",
   "first_ready_at": "2026-09-01T07:44:58.968760869Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:32:06.747013351Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:35:01.097457183Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6aac5c44-c545-4f4f-bbd1-87c90588953c",
   "labels": [
     "type:task",
@@ -22,7 +34,7 @@
     "satisfies:REQ-01"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Minimal polynomials of extension elements over an arbitrary base field",
-  "updated_at": "2026-09-01T08:27:32.558258827Z"
+  "updated_at": "2026-09-01T09:35:17.267397709Z"
 }
