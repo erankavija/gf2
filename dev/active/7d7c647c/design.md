@@ -702,3 +702,20 @@ kernels: `crates/gf2-kernels-simd/src/fp_small_ple.rs` and
 kernels' own scratch arrays and asserts). The conservative defaults
 remain the tuned blocking factors `KC` = 256 and `KC_U16` = 128; the
 enforced admissible ranges are $1 \le t \le 256$ for both lane fields.
+
+## Amendment A2 (2026-09-01, approved for issue 5bdc9552 / seam U8)
+
+§3.3 remains the exact contract for the seam-attributable extraction
+delta. U8 additionally reconciles one pre-existing committed-tree mismatch:
+the pinned pipeline generates
+`packed.packed5.Packed5.to_raw_planes` in
+`proofs/Gf2Algebra/Funs.lean` from the Rust method introduced by commit
+`9b78666c`, while the committed algebra tree predates that method.
+`dev/active/34d85cb9/findings.md` records this as the pipeline's sole
+non-comment Gf2Algebra drift.
+
+This exception permits exactly that generated definition, requires the
+resulting committed trees to reproduce byte-for-byte on a second
+regeneration, and permits no other generated declaration or
+issue-attributable surface change beyond §3.3 and generator-maintained
+`Source:` metadata.
