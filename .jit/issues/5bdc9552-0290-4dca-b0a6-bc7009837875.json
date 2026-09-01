@@ -22,7 +22,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-01T01:42:03.211317277Z",
+      "updated_at": "2026-09-01T01:51:07.305739773Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -56,5 +56,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Remove the trait selectors and regenerate the proof surface",
-  "updated_at": "2026-09-01T01:47:22.488608973Z"
+  "updated_at": "2026-09-01T01:51:07.305739773Z"
 }
