@@ -895,16 +895,16 @@ is tracked as issue `99c92597`.
   modifying the project. The follow-on round needs §6.5's items 3 and 4 before
   a `lake build` is meaningful.
 
-Nothing in `dev/active/6dc81018-field-capability-dispatch/classification.md` is
-contradicted by this work. Its §4.3 exclusion of the four trait-associated
-threshold constants on a Lean synchronization hazard
-(`dev/active/6dc81018-field-capability-dispatch/classification.md:210-237`) is
-consistent with what §4 assumes: the refinement obligations rest on the
-dictionary's arithmetic fields, never on `WINOGRAD_THRESHOLD`,
-`TRI_BASE_THRESHOLD`, `PLE_BASE_COLS` or `PLE_PANEL_COLS`, which are declared
-in the extracted structure
-(`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:74-77`) but referenced by
-no lemma in §3.
+The executed proof-surface seam leaves every obligation in §3 unchanged. The
+pinned A8b artifact at this sketch's anchor contains four tuning-selector
+members in its historical generated structure
+(`dev/active/34d85cb9/extraction/A8b_lean/Types.lean:74-77`), but no lemma in
+§3 projects them. The current `FiniteField` extraction and generated
+dictionaries contain no tuning-selector member; the active profile is kept
+outside the proof surface through the opaque seam. The exact generated-tree
+delta and its pinned probes are recorded in
+`dev/active/7d7c647c/design.md` §3.3, and the current classification records
+the resulting kernel-strategy surface in §2.4 and §4.3.
 
 ---
 

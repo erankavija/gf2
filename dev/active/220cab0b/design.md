@@ -679,26 +679,38 @@ atomic load and a branch on every node of the recursion tree. `mul_impl`
 call from `mul_impl` at `:2640` supplies it. The other four sites are
 non-recursive gates and read `active()` directly.
 
-### 4.3 Families explicitly out of this design's scope
+### 4.3 Trait-selector families behind the proof-surface seam
 
-The classification's §4.2 constants are profile-scoped follow-on work and are
-admitted later under §5's rule. The §4.3 constants —
-`WINOGRAD_THRESHOLD` (`crates/gf2-core/src/field/traits.rs:825`),
-`TRI_BASE_THRESHOLD` (`:858`), `PLE_BASE_COLS` (`:892`), and `PLE_PANEL_COLS`
-(`:926`) — are excluded, and §5 keeps them inadmissible until their recorded
-Lean extraction-surface hazard is resolved. §4.4 constants are never
-admissible: they are not host-tuning crossovers.
+The classification's §4.3 family is admitted through the executed seam in
+[`dev/active/7d7c647c/design.md`](../7d7c647c/design.md) §§3–6. Its standing
+shape is:
+
+- `CoreTuning` owns the host-level Winograd, triangular-base, scalar-PLE, and
+  lane-specific PLE panel thresholds;
+- a PLE carrier declares its registered kernel lane through
+  `FiniteField::simd_ple_panel_lane`, while the profile supplies the host-level
+  width for that lane;
+- each public Winograd, triangular, or PLE entry resolves the active profile
+  once and threads the selected value through its recursion; and
+- `FiniteField` dictionaries contain no tuning-selector fields, while both
+  proof-generation invocations keep `gf2_core::tuning` opaque.
+
+The seam design is the single source for the field mapping, ranges, default
+sources, route-observation obligations, and probe-verified extraction delta.
+The classification's §4.4 constants remain inadmissible because they are not
+host-tuning crossovers.
 
 ## 5. Extensibility rule
 
 A further selector family is admitted to the schema when all five conditions
 hold.
 
-1. **The classification marks its constants profile-scoped.** §4.1 and §4.2 are
-   admissible. §4.3 stays inadmissible until the trait-associated thresholds
-   are either re-derived through the proof surface or read through a
-   non-extracted seam, which classification §4.3 records as separate work.
-   §4.4 is never admissible.
+1. **The classification marks its constants profile-scoped.** §4.1 and §4.2
+   are admissible. The §4.3 family is admissible through the proof-surface seam
+   recorded in §4.3 above and fixed in `dev/active/7d7c647c/design.md`; any
+   future selector whose declaration reaches an extracted trait requires the
+   same kind of anchored seam decision before admission. §4.4 is never
+   admissible.
 2. **The family arrives as a new object under `selectors`, with a new
    sub-struct and accessor on `TuningProfile`.** An absent object resolves to
    that family's conservative defaults, so `schema_version` does not move
@@ -874,3 +886,18 @@ compatibility alias, or dual representation survives the cutover.
 identity for artifact bytes. Owner and complete envelopes may share it when
 they represent one logical configuration; path, canonical content digest, and
 provenance identify the exact artifact.
+
+## Amendment — executed proof-surface seam (2026-09-01, issue `06ba0418`)
+
+The standing convention includes the proof-surface seam fixed by
+`dev/active/7d7c647c/design.md`. U5–U7 (`e2744fcf`, `88441adb`, and
+`e8a727ff`) comprise the live read side and consume the carrier lane tag fixed
+by the seam; U8 (`5bdc9552`) closes the trait and extraction boundary. §4.3
+summarizes that standing shape. The exact schema mapping, default provenance,
+route obligations, and generated-tree delta remain defined and evidenced only
+by the seam design.
+
+This amendment discharges §5 condition 1 for the classification's §4.3
+family. It introduces no second extensibility rule: future proof-visible
+selector families still require their extraction treatment to be fixed before
+the standing profile convention admits them.
