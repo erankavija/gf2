@@ -26,12 +26,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-23T19:11:59.918289821Z",
+      "updated_at": "2026-09-01T05:46:53.078084210Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-23T19:15:33.298285003Z",
+      "updated_at": "2026-09-01T05:49:17.383528996Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
-  "updated_at": "2026-08-26T04:01:52.254572092Z"
+  "updated_at": "2026-09-01T05:49:17.383528996Z"
 }
