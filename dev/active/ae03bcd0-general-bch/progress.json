@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 7,
+  "current_wave": 8,
   "waves": [
     {
       "wave_number": 1,
@@ -218,7 +218,7 @@
           "title": "Construction from arbitrary seed sets, including boundary codes",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done: Luna xhigh, code-review R2 (lead-direct prose fix \u2014 my own 230dd84d fix went stale when RootSeeds exposed explicit roots)"
         },
         {
           "key": "decoder-outcomes",
@@ -226,7 +226,7 @@
           "title": "Harden the binary decoder: canonical model, typed outcomes, verified corrections",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "done: native Opus, code-review R3 (lead-direct workspace fingerprint: R1 identity enforcement, R2 presentation-in-stamp + BchError::WorkspaceMismatch variant), doc-review first-pass"
         },
         {
           "key": "extend-transform",
@@ -234,7 +234,7 @@
           "title": "Generic one-symbol extension transformation",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done: Luna xhigh, code-review R2 after rework attempt 1 (Luna: CoordinateMap WithFresh representation, complete (n+1)-maps for Extended)"
         },
         {
           "key": "matrix-materialize",
@@ -242,7 +242,7 @@
           "title": "Reference matrix materialization: compact access, caller buffers, opt-in caching",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done: Luna xhigh, code-review R2 (lead-direct: legacy BchCode mutex cache removed ahead of cutover per reviewer)"
         },
         {
           "key": "systematic-encode",
@@ -250,7 +250,7 @@
           "title": "General systematic BCH encoding across supported base fields",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "done: native Opus, all three gates first-pass; handed complete SYSTEMATIC_ENCODING_CONVENTION rewrite spec (folded lead-direct pre-gate)"
         }
       ]
     },
@@ -546,7 +546,8 @@
   "rework_counts": {
     "4e732b56": 3,
     "c3d5cea5": "2+owner-reset+1 guided (all passed)",
-    "0c4d84cf": 1
+    "0c4d84cf": 1,
+    "981c5ae3": 1
   },
   "surfaced_pitfalls": [
     {
@@ -607,7 +608,8 @@
     "R-22: OWNER ORDER mid-wave-5 \u2014 the Opus worker on 0e706bf5 sub-delegated implementation to codex (following the global CLAUDE.md Luna-delegation rule); owner ordered it stopped immediately. Lead killed the codex child (it had written zero edits in ~16 min), ordered native implementation; worker complied and delivered natively. STANDING RULE: every hard-task dispatch prompt must carry an explicit no-delegation clause overriding the global delegation rule.",
     "R-23: 0e706bf5 findings \u2014 footprint finding on un-suffixed ConstExt::new tracked as enhancement c9022d14 (dep-wired to 0e706bf5); extension-design.md R-01 residual amended with the const-quotient resolution (validating ctor + harness registration through it); doc link refresh required after amendment.",
     "R-24: 8aa98a25 dispatch prompt wrongly listed the full coordinate set as an error case; the epic's boundary-code contract (REQ-04/REQ-05) makes it the zero-length zero-dimensional code. Fixed lead-direct through code-review R1+R2. Check future transform prompts (puncture 5233867e, extend 981c5ae3) against the boundary-code contract before dispatch.",
-    "R-25: 230dd84d scope rulings \u2014 BchSpec declares only the two primitive consecutive-root variants (later flavor tasks add their variants with their constructions; five-variant stub enum rejected as in-scope-deferral); resolve_root already implements both RootSelection arms. bch::BchCode short name stays with the legacy type until cutover-removal claims it. Filed dfd9e0c5 (promote integer gcd + x^n-1 helper to gf2-core) and 174295c9 (flaky symlink test + CI log retention)."
+    "R-25: 230dd84d scope rulings \u2014 BchSpec declares only the two primitive consecutive-root variants (later flavor tasks add their variants with their constructions; five-variant stub enum rejected as in-scope-deferral); resolve_root already implements both RootSelection arms. bch::BchCode short name stays with the legacy type until cutover-removal claims it. Filed dfd9e0c5 (promote integer gcd + x^n-1 helper to gf2-core) and 174295c9 (flaky symlink test + CI log retention).",
+    "R-26: wave-7 lead-direct closures \u2014 legacy generator_matrix cache removed early (reviewer cited canonical-cutover; consumers snapshot at construction); BchError::WorkspaceMismatch variant added to bch/error.rs (lead-owned footprint extension); SYSTEMATIC_ENCODING_CONVENTION.md rewritten from 6a1b2404's spec; bch/mod.rs Organization updated; single authoritative merged-tree CI covered the five-merge batch plus fixes (per-merge CI skipped under load after per-issue full-suite evidence \u2014 deviation recorded)."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
@@ -623,6 +625,8 @@
     "Native subagents inherit the user's global CLAUDE.md, including its delegate-to-codex rule; a hard task assigned to a native model needs an explicit no-delegation clause in the dispatch prompt or the subagent will sub-delegate (R-22 incident).",
     "The unidentified external process-killer now also kills the lead's harness background tasks (three kills in ~15 min: one CI twice, one poller). Mitigation that works: setsid-detached nohup process writing a done-file, watched by a Monitor tool loop that checks the done-file AND process liveness.",
     "The shared cache pool can carry STALE FINGERPRINTS whose artifacts are gone (harvest raced/partial): cargo believes units fresh, skips rebuilds, and E0463 surfaces at a distant consumer (gf2-kernels-hip). Symptom of debug: many conflicting rmeta candidates listed by rustc are the search residue, not the cause. Fix: prune the affected crates' .fingerprint trees AND deps artifacts together in the pool (done for gf2-core/simd/hip/coding, both profiles).",
-    "SendMessage teammate reports truncate around ~3KB; long worker reports need chunked retrieval (three round-trips for 230dd84d). Ask workers to lead with actionable items, details after."
+    "SendMessage teammate reports truncate around ~3KB; long worker reports need chunked retrieval (three round-trips for 230dd84d). Ask workers to lead with actionable items, details after.",
+    "A doc fix that scopes a claim to 'current public variants' goes stale one wave later when the next variant lands \u2014 write doc claims against the design's END state or name the variant explicitly (37c288cf R1 was the lead's own 230dd84d fix).",
+    "cargo-budget.sh:71-74 asserts workspace crates never hit across worktrees \u2014 false for pooled/hardlinked artifacts (path-baked env!(CARGO_MANIFEST_DIR) test binaries). Purge such binaries from the pool (done for gf2pow32_*); tool fix belongs upstream."
   ]
 }
