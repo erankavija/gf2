@@ -94,8 +94,12 @@
 //! a slice of messages with one workspace.
 //! [`encode_batch_parallel_into`](BchCode::encode_batch_parallel_into) splits
 //! the same slice into one contiguous partition per supplied workspace and
-//! encodes the partitions concurrently. Each worker owns its workspace and
-//! writes only its own output positions, so:
+//! encodes the partitions concurrently. The split is balanced: with $m$
+//! messages over $w \le m$ workspaces each partition holds
+//! $\lfloor m/w \rfloor$ messages and the first $m \bmod w$ hold one more, so
+//! every workspace receives a non-empty partition whether or not $w$ divides
+//! $m$. Each worker owns its workspace and writes only its own output
+//! positions, so:
 //!
 //! - the output is in input order for every worker count, because a partition
 //!   writes the codeword of message $i$ at position $i$ and nothing reassembles
@@ -106,11 +110,12 @@
 //!
 //! One worker runs the whole batch directly on the calling thread, so a
 //! one-worker dispatch pays no fan-out cost and is the honest sequential
-//! reference for a speedup measurement. Above one, the partitions go to the
-//! rayon pool, whose width is [`max_parallel_batch_workers`]; a larger worker
-//! count is still valid and still produces those bytes, its partitions sharing
-//! the threads there are. Without the `parallel` feature every worker count
-//! runs its partitions in index order on the calling thread.
+//! reference for a speedup measurement. Above one, the workspaces are halved
+//! until each half holds one and the halves go to the rayon pool, whose width
+//! is [`max_parallel_batch_workers`]; a larger worker count is still valid and
+//! still produces those bytes, its partitions sharing the threads there are.
+//! Without the `parallel` feature every worker count runs its partitions in
+//! index order on the calling thread.
 //!
 //! # Examples
 //!
@@ -1098,8 +1103,10 @@ where
     /// every worker count; see the [module level](self#batch-encoding) for
     /// that argument and for what runs where.
     ///
-    /// A workspace count above the batch length leaves the surplus workspaces
-    /// unused.
+    /// The split is balanced to within one message, so every workspace up to
+    /// the batch length receives a non-empty partition whether or not the
+    /// workspace count divides the batch. A workspace count above the batch
+    /// length leaves the surplus workspaces unused.
     ///
     /// # Errors
     ///
@@ -1337,14 +1344,73 @@ fn encode_partition<F, S>(
     }
 }
 
+/// The first message index of partition `index` when `messages` messages are
+/// split over `workers` contiguous partitions.
+///
+/// The split is balanced: each partition holds $\lfloor m/w \rfloor$
+/// messages and the first $m \bmod w$ hold one more, so no two partitions
+/// differ by more than one message and none is empty for $w \le m$. The
+/// offset is a function of the two counts alone, which is what makes a
+/// partition the same messages however the recursion below reaches it: a
+/// sub-range of $w'$ workers holding the messages this rule gives them
+/// re-derives exactly the same boundaries inside itself.
+fn partition_offset(messages: usize, workers: usize, index: usize) -> usize {
+    index * (messages / workers) + index.min(messages % workers)
+}
+
+/// Encodes `messages` into `codewords` across exactly one contiguous
+/// partition per workspace of `workspaces`, splitting the workspaces in half
+/// until each half holds one.
+///
+/// Partition boundaries come from [`partition_offset`] and so depend only on
+/// the message and workspace counts, never on which thread reaches a half
+/// first. A workspace encodes only the messages of its own partition and
+/// writes only their positions of `codewords`, so the output is in input
+/// order whatever the worker count is. With the `parallel` feature the two
+/// halves go to [`rayon::join`], which runs both however many threads it has;
+/// without it they run left before right on the calling thread. One workspace
+/// runs its partition directly, so a one-worker dispatch reaches no pool.
+fn encode_partitions_over<F, S>(
+    plan: &SystematicPlan<'_, F>,
+    messages: &[S],
+    workspaces: &mut [BchEncodeWorkspace<S::Word>],
+    codewords: &mut [S],
+) where
+    F: FieldIdentity + Send + Sync,
+    S: SystematicKernel<F> + Send + Sync,
+    S::Word: Send,
+{
+    if workspaces.len() < 2 {
+        encode_partition(plan, messages, &mut workspaces[0].registers, codewords);
+        return;
+    }
+
+    let left_workers = workspaces.len() / 2;
+    let at = partition_offset(messages.len(), workspaces.len(), left_workers);
+    let (left_messages, right_messages) = messages.split_at(at);
+    let (left_codewords, right_codewords) = codewords.split_at_mut(at);
+    let (left_workspaces, right_workspaces) = workspaces.split_at_mut(left_workers);
+
+    #[cfg(feature = "parallel")]
+    rayon::join(
+        || encode_partitions_over(plan, left_messages, left_workspaces, left_codewords),
+        || encode_partitions_over(plan, right_messages, right_workspaces, right_codewords),
+    );
+    #[cfg(not(feature = "parallel"))]
+    {
+        encode_partitions_over(plan, left_messages, left_workspaces, left_codewords);
+        encode_partitions_over(plan, right_messages, right_workspaces, right_codewords);
+    }
+}
+
 /// Encodes `messages` into `codewords` across one contiguous partition per
 /// workspace.
 ///
-/// Partition $w$ covers the messages `w * partition .. (w + 1) * partition`
-/// and writes exactly those positions of `codewords`, so the output is in
-/// input order and independent of both the workspace count and the order the
-/// partitions happen to run in. Surplus workspaces beyond the batch length go
-/// unused, and a single worker runs the whole batch on the calling thread.
+/// Every workspace up to the batch length receives a partition, balanced to
+/// within one message by [`partition_offset`]; workspaces beyond the batch
+/// length go unused, because a partition of no messages is not work. The
+/// output is in input order and independent of both the workspace count and
+/// the order the partitions happen to run in.
 fn encode_partitions<F, S>(
     plan: &SystematicPlan<'_, F>,
     messages: &[S],
@@ -1359,34 +1425,7 @@ fn encode_partitions<F, S>(
     if workers == 0 {
         return;
     }
-    if workers == 1 {
-        encode_partition(plan, messages, &mut workspaces[0].registers, codewords);
-        return;
-    }
-    let partition = messages.len().div_ceil(workers);
-
-    #[cfg(feature = "parallel")]
-    {
-        use rayon::prelude::*;
-
-        codewords
-            .par_chunks_mut(partition)
-            .zip(messages.par_chunks(partition))
-            .zip(workspaces.par_iter_mut())
-            .for_each(|((codewords, messages), workspace)| {
-                encode_partition(plan, messages, &mut workspace.registers, codewords);
-            });
-    }
-    #[cfg(not(feature = "parallel"))]
-    {
-        codewords
-            .chunks_mut(partition)
-            .zip(messages.chunks(partition))
-            .zip(workspaces.iter_mut())
-            .for_each(|((codewords, messages), workspace)| {
-                encode_partition(plan, messages, &mut workspace.registers, codewords);
-            });
-    }
+    encode_partitions_over(plan, messages, &mut workspaces[..workers], codewords);
 }
 
 /// Decides that a message's symbols come from the code's own field.
@@ -2223,6 +2262,91 @@ mod tests {
                     "a {count}-message batch at {workers} workers"
                 );
             }
+        }
+    }
+
+    #[test]
+    fn every_supplied_workspace_encodes_its_own_partition() {
+        // Batch lengths the worker count does not divide: a partition of
+        // ceil(count / workers) messages yields fewer partitions than there
+        // are workspaces and leaves the last ones idle.
+        let code = binary_narrow_sense(6, 0b1000011, 7);
+        let layout = SystematicLayout::default();
+
+        for (count, workers) in [(6usize, 4usize), (7, 3), (37, 8), (5, 5), (9, 2), (13, 4)] {
+            let messages = seeded_bit_batch(code.k(), count, count as u64 * 31 + workers as u64);
+            let expected = code
+                .encode_batch(&messages, layout)
+                .expect("a validated batch encodes");
+            let workers = NonZeroUsize::new(workers).expect("a positive worker count");
+
+            let mut workspaces = code.encode_workspaces(workers);
+            let mut codewords = vec![BitVec::zeros(code.n()); count];
+            code.encode_batch_parallel_into(&messages, layout, &mut workspaces, &mut codewords)
+                .expect("a validated batch encodes");
+            assert_eq!(
+                codewords, expected,
+                "a {count}-message batch at {workers} workers must match the sequential path"
+            );
+
+            // A worker whose low coefficients are cleared runs the recurrence
+            // with no feedback and writes zero parity, so the positions that
+            // differ from the reference are exactly the ones it wrote. Reading
+            // a partition off the output that way needs every reference parity
+            // to be nonzero.
+            for codeword in &expected {
+                assert!(
+                    (code.k()..code.n()).any(|user| codeword.get(user)),
+                    "a cleared worker's output is distinguishable only where the \
+                     reference parity is nonzero"
+                );
+            }
+
+            let mut partitions: Vec<std::ops::Range<usize>> = Vec::with_capacity(workers.get());
+            for worker in 0..workers.get() {
+                let mut workspaces = code.encode_workspaces(workers);
+                workspaces[worker].registers.low.fill(0);
+                let mut codewords = vec![BitVec::zeros(code.n()); count];
+                code.encode_batch_parallel_into(&messages, layout, &mut workspaces, &mut codewords)
+                    .expect("a validated batch encodes");
+
+                let written: Vec<usize> = (0..count)
+                    .filter(|&index| codewords[index] != expected[index])
+                    .collect();
+                let (Some(&first), Some(&last)) = (written.first(), written.last()) else {
+                    panic!("workspace {worker} of {workers} encoded no message of {count}");
+                };
+                assert_eq!(
+                    last - first + 1,
+                    written.len(),
+                    "workspace {worker} of {workers} wrote a discontiguous set of positions"
+                );
+                partitions.push(first..last + 1);
+            }
+
+            // Consecutive, disjoint, covering the batch, and balanced.
+            assert_eq!(
+                partitions[0].start, 0,
+                "the first partition starts the batch"
+            );
+            assert_eq!(
+                partitions[workers.get() - 1].end,
+                count,
+                "the last partition ends the batch"
+            );
+            for pair in partitions.windows(2) {
+                assert_eq!(
+                    pair[0].end, pair[1].start,
+                    "partitions must abut: {partitions:?}"
+                );
+            }
+            let lengths: Vec<usize> = partitions.iter().map(|range| range.len()).collect();
+            let longest = lengths.iter().max().expect("a positive worker count");
+            let shortest = lengths.iter().min().expect("a positive worker count");
+            assert!(
+                longest - shortest <= 1,
+                "a {count}-message batch over {workers} workers must be balanced, got {lengths:?}"
+            );
         }
     }
 
