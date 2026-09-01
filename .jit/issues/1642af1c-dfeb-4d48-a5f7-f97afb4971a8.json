@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-01T02:27:47.995631886Z",
+  "dependencies": [],
+  "description": "Implement bounded-distance decoding for nonbinary BCH codes against the canonical interfaces from epic ae03bcd0: constructions come from BchSpec / BchCode::construct over any FieldExtension base (crates/gf2-coding, per dev/active/ae03bcd0-general-bch/bch-api-design.md), and decoding reports the typed NoErrors/Corrected/Uncorrectable outcome contract with verified corrections, matching the binary decoder's guarantees (REQ-09 of ae03bcd0).\n\n## Success Criteria\n\n- [hard] REQ-01: Decoding operates over every supported base field of the canonical construction, using the field-generic traits::block surface, with typed outcomes and verified candidate corrections.\n- [hard] REQ-02: The bounded-distance guarantee and beyond-radius behavior are documented, and shared property suites cover binary and nonbinary cases against reference decodings.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-01T02:27:47.995631886Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "1642af1c-dfeb-4d48-a5f7-f97afb4971a8",
+  "labels": [
+    "component:gf2-coding",
+    "type:enhancement"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Generalized nonbinary BCH decoding against the canonical model",
+  "updated_at": "2026-09-01T02:27:47.995631886Z"
+}

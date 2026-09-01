@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:codex",
+  "assignee": null,
   "claimed_at": "2026-08-26T04:09:59.218953634Z",
   "context": {},
   "created_at": "2026-08-22T22:17:14.094352974Z",
@@ -11,6 +11,7 @@
   ],
   "description": "Remove the four associated constants and the per-prime override, delete their hand-carried proof literals, pin the tuning module opaque, and regenerate the committed proof trees.\n\n## Background\n\nThe proof-surface seam design (dev/active/7d7c647c/design.md) governs this task; read it in full. Its §3 fixes the three-part seam with probe-verified surface claims, §4 gives each field its name, kind, range, default-naming constant, mechanism and route-observation obligation, §5 records the decisions (D1 direct removal, D2 lane split, D3 opaque pin, D4 default naming, D5 public reporters, D6 source-level convention amendments), §6 enumerates the post-processing deletions, and §8 scopes the tasks. The follow-on migration design (dev/active/7d824b2f/design.md) supplies the shared field-kind, mechanism and test conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: FiniteField declares none of the four constants, Fp<P> carries no PLE_PANEL_COLS override, and no workspace consumer references them.\n- [hard] REQ-02: The four literal substitutions in scripts/fix-aeneas-sorrys.py and scripts/fix-aeneas-dupes.py, the two orphan axioms in proofs/Gf2Core/FunsExternal.lean, and the verify-lean workaround note are deleted; both verify-lean invocations carry --opaque gf2_core::tuning.\n- [hard] REQ-03: The regenerated proofs/Gf2Core/ and proofs/Gf2Algebra/ trees are committed, ./scripts/verify-lean.sh passes, and (cd proofs && lake build) passes; the surface delta equals what the seam design §3.3 verifies (four structure fields, four axioms, the dictionary entries and the override gone; nothing else).\n\n## Approved Success-Criteria Amendment (2026-09-01)\n\n- [hard] REQ-03A: REQ-03's \"nothing else\" clause means that the seam-attributable surface delta is exactly what `dev/active/7d7c647c/design.md` §3.3 verifies: four structure fields, four axioms, the dictionary entries and the override gone, plus generator-maintained `Source:` metadata. The sole additional non-metadata reconciliation permitted is the generated `packed.packed5.Packed5.to_raw_planes` definition in `proofs/Gf2Algebra/Funs.lean`; its Rust source predates this issue in commit `9b78666c`, and its pinned-pipeline regeneration drift is documented in `dev/active/34d85cb9/findings.md`. The resulting committed proof trees must reproduce byte-for-byte on a second regeneration. No other generated declaration or issue-attributable surface delta is permitted.\n",
   "documents": [],
+  "done_at": "2026-09-01T02:26:40.930452768Z",
   "first_ready_at": "2026-08-22T22:17:14.094352974Z",
   "gates_required": [
     "cargo-ci",
@@ -54,7 +55,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Remove the trait selectors and regenerate the proof surface",
-  "updated_at": "2026-09-01T02:25:26.066422609Z"
+  "updated_at": "2026-09-01T02:26:40.930452768Z"
 }

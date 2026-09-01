@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-01T02:28:05.872543Z",
+  "dependencies": [],
+  "description": "Implement GPU (HIP) batch encoding as a backend behind the canonical encoding surface of epic ae03bcd0: the allocation-free single/workspace/batch encoding APIs (issue 8f68699b) and field-generic traits::block encoders of bch-api-design, with the packed binary BitVec/BitMatrix specializations. Behavioral equivalence with the CPU paths follows the shared conformance suites (backend-behavioral-equivalence); deterministic seeded execution and tested fallback selection apply.\n\n## Success Criteria\n\n- [hard] REQ-01: GPU batch encoding implements the canonical encoding interfaces with bit-identical results to the CPU reference across the shared conformance suite.\n- [hard] REQ-02: Capability detection selects a tested CPU fallback when the GPU is unavailable, and benchmark receipts document the crossover against the optimized CPU path.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-01T02:28:05.872543Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "b4d7a25d-0843-46e5-8792-2034f7ce53ee",
+  "labels": [
+    "component:gf2-coding",
+    "component:gf2-kernels-hip",
+    "type:enhancement"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "GPU batch encoding behind the canonical encoding interfaces",
+  "updated_at": "2026-09-01T02:28:05.872543Z"
+}
