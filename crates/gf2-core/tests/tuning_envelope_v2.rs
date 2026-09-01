@@ -485,29 +485,53 @@ fn selector_changes_without_reassembly_fail_the_content_digest() {
 }
 
 #[test]
-fn calibrated_core_measurement_rejects_an_unknown_harness_token() {
+fn calibrated_core_format_two_identity_is_exactly_tuning_calibration_v2() {
+    assert_eq!(
+        CoreTuningCodec::HARNESS_SCHEMA,
+        "tuning-calibration-v2",
+        "issue 389aa4de completes the first v2 evidence producer and must not bump its token"
+    );
     let registry = core_registry();
+    let measurement = calibrated_core_measurement();
     let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
         .insert_measured::<CoreTuning, CoreTuningCodec>(
             CoreTuning::CONSERVATIVE,
-            calibrated_core_measurement(),
+            measurement.clone(),
         )
         .unwrap()
         .build()
         .unwrap();
     let json = registry.to_json(&prepared, &assembly()).unwrap();
-    let unknown = "unknown-core-harness-v9";
-    let changed = json.replacen(CoreTuningCodec::HARNESS_SCHEMA, unknown, 1);
-    let changed = recompute_content_digest(&changed);
+    let reopened = registry.from_json(&json).unwrap();
+    assert_eq!(
+        reopened.section_ids().collect::<Vec<_>>(),
+        [CoreTuning::ID.as_str()]
+    );
+    assert_eq!(
+        reopened
+            .section::<CoreTuning>()
+            .unwrap()
+            .unwrap()
+            .measurement,
+        &measurement
+    );
 
-    assert!(matches!(
-        registry.from_json(&changed),
-        Err(ProfileError::UnsupportedHarnessSchema {
-            id,
-            found,
-            supported: CoreTuningCodec::HARNESS_SCHEMA,
-        }) if id == CoreTuning::ID.as_str() && found == unknown
-    ));
+    for rejected in [
+        "tuning-calibration-v1",
+        "tuning-calibration-v3",
+        "unknown-core-harness-v9",
+    ] {
+        let changed = json.replacen(CoreTuningCodec::HARNESS_SCHEMA, rejected, 1);
+        let changed = recompute_content_digest(&changed);
+        assert!(matches!(
+            registry.from_json(&changed),
+            Err(ProfileError::UnsupportedHarnessSchema {
+                id,
+                found,
+                supported: CoreTuningCodec::HARNESS_SCHEMA,
+            }) if id == CoreTuning::ID.as_str() && found == rejected
+        ));
+    }
 }
 
 #[test]
