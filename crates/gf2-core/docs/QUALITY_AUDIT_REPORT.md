@@ -404,11 +404,11 @@ Tests performed:
 
    The committed host-calibration receipt at
    [`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md)
-   records a contradictory selected value of **4** for
+   records a different selected value of **4** for
    `bit_backend.simd_min_words`. The receipt's
    [**SIMD pilot scope**](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md#simd-pilot-scope)
-   defines the call-path distinction and why the two result sets are not
-   directly interchangeable.
+   defines the evidence boundary for that value and the Criterion result
+   summarized here.
    - ⏸️ Full benchmark baseline (deferred - optional)
 
 6. **Complete Manual Code Review**

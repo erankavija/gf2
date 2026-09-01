@@ -202,11 +202,11 @@ pub fn next_power_of_2(v: u64) -> u64 {
 
 The committed host-calibration receipt at
 [`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md)
-records a contradictory selected value of **4** for
+records a different selected value of **4** for
 `bit_backend.simd_min_words`. The receipt's
 [**SIMD pilot scope**](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md#simd-pilot-scope)
-defines the call-path distinction and why the two result sets are not directly
-interchangeable.
+defines the evidence boundary for that value and the Criterion result
+summarized here.
 
 **Phase 5 Completed:**
 - ✅ Migrated 5 core operations in `bitvec.rs` to use `kernels::ops`
@@ -339,7 +339,7 @@ All equivalence tests added to `src/kernels/simd/mod.rs` tests module:
 **Migrated Operations (5 total):**
 1. `bit_and_into()` - Now uses `kernels::ops::and_inplace()`
 2. `bit_or_into()` - Now uses `kernels::ops::or_inplace()`
-3. `bit_xor_into()` - Now uses `kernels::ops::xor_inplace()`
+3. `bit_xor_into()` - Uses the unified kernel XOR path
 4. `not_into()` - Now uses `kernels::ops::not_inplace()`
 5. `count_ones()` - Now uses `kernels::ops::popcount()`
 
