@@ -91,6 +91,8 @@
 //! contributes one minimal polynomial at $O(r^2)$ extension-field operations;
 //! the least-common-multiple fold and the divisibility check are quadratic in
 //! $\deg g \le n$ base-field operations; the bound witness costs $O(n)$.
+//! Explicit-generator root discovery adds $O(n \deg g)$ extension-field
+//! operations for the $n$ Horner evaluations and $O(n)$ temporary storage.
 //!
 //! # Examples
 //!
@@ -816,8 +818,9 @@ fn restrict_generator_polynomial<X: FieldExtension>(
 
 /// Returns the exponents whose powers of `root` are roots of `generator`.
 ///
-/// Starting at one and multiplying by `root` keeps the scan linear in the
-/// length apart from the `O(deg(g))` Horner evaluation at each exponent.
+/// Starting at one and multiplying by `root` visits every power in one pass.
+/// Each visit performs one `O(deg(g))` Horner evaluation, so the complete scan
+/// costs `O(n * deg(g))` extension-field operations and `O(n)` storage.
 fn generator_root_exponents<E: FieldIdentity>(
     generator: &FieldPoly<E>,
     root: &E,
@@ -1559,6 +1562,25 @@ mod tests {
         assert_eq!(rebuilt.generator(), original.generator());
         assert_eq!(rebuilt.defining_set(), original.defining_set());
         assert_eq!(rebuilt.distance_bound(), original.distance_bound());
+        assert_eq!(rebuilt, original);
+    }
+
+    #[test]
+    fn explicit_generator_round_trips_binary_first_root() {
+        let extension = binary_extension(4, 0b10011);
+        let original = BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+            extension: extension.clone(),
+            first_root: RootExponent::from(4),
+            designed_distance: DesignedDistance::try_from(5).expect("positive"),
+        })
+        .expect("a valid first-root spec");
+        let rebuilt = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length: BchLength::try_from(15).expect("positive"),
+            generator: lift_generator(&extension, original.generator()),
+        })
+        .expect("the generated polynomial is valid");
+
         assert_eq!(rebuilt, original);
     }
 
