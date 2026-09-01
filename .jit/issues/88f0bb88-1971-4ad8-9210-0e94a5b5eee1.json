@@ -19,6 +19,11 @@
       "status": "passed",
       "updated_at": "2026-09-01T14:55:04.245041286Z",
       "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T15:03:37.295473301Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "88f0bb88-1971-4ad8-9210-0e94a5b5eee1",
@@ -31,5 +36,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Harden the binary decoder: canonical model, typed outcomes, verified corrections",
-  "updated_at": "2026-09-01T14:55:04.245041286Z"
+  "updated_at": "2026-09-01T15:03:37.295473301Z"
 }
