@@ -221,11 +221,60 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithDivShared0FpFp (P : Std.U64) :
 /-- Trait implementation: [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}]
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-511:40
     Name pattern: [gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>] -/
-@[rust_trait_impl
+@[reducible, rust_trait_impl
   "gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>"]
-axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P :
-  Std.U64) : gf2_core.field.traits.FiniteField (gf2_core.gfp.Fp P) Std.U64
-  Std.U128
+def gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
+  gf2_core.field.traits.FiniteField (gf2_core.gfp.Fp P) Std.U64 Std.U128 := {
+  corecloneCloneInst := gf2_core.gfp.Fp.Insts.CoreCloneClone P
+  corecmpPartialEqInst := gf2_core.gfp.Fp.Insts.CoreCmpPartialEqFp P
+  corecmpEqInst := gf2_core.gfp.Fp.Insts.CoreCmpEq P
+  corehashHashInst := gf2_core.gfp.Fp.Insts.CoreHashHash P
+  corefmtDebugInst := gf2_core.gfp.Fp.Insts.CoreFmtDebug P
+  coreopsarithAddInst := gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp P
+  coreopsarithAddSelfSharedSelfSelfInst :=
+    gf2_core.gfp.Fp.Insts.CoreOpsArithAddShared0FpFp P
+  coreopsarithSubInst := gf2_core.gfp.Fp.Insts.CoreOpsArithSubFpFp P
+  coreopsarithSubSelfSharedSelfSelfInst :=
+    gf2_core.gfp.Fp.Insts.CoreOpsArithSubShared0FpFp P
+  coreopsarithMulInst := gf2_core.gfp.Fp.Insts.CoreOpsArithMulFpFp P
+  coreopsarithMulSelfSharedSelfSelfInst :=
+    gf2_core.gfp.Fp.Insts.CoreOpsArithMulShared0FpFp P
+  coreopsarithDivInst := gf2_core.gfp.Fp.Insts.CoreOpsArithDivFpFp P
+  coreopsarithDivSelfSharedSelfSelfInst :=
+    gf2_core.gfp.Fp.Insts.CoreOpsArithDivShared0FpFp P
+  coreopsarithNegInst := gf2_core.gfp.Fp.Insts.CoreOpsArithNegFp P
+  coreopsarithAddAssignInst := gf2_core.gfp.Fp.Insts.CoreOpsArithAddAssignFp P
+  coreopsarithAddAssignSelfSharedSelfInst :=
+    gf2_core.gfp.Fp.Insts.CoreOpsArithAddAssignShared0Fp P
+  corecloneCloneCharacteristicInst := core.clone.CloneU64
+  corefmtDebugCharacteristicInst := core.fmt.DebugU64
+  corecmpPartialEqCharacteristicInst := core.cmp.PartialEqU64
+  corecmpEqCharacteristicInst := core.cmp.EqU64
+  corecloneCloneWideInst := core.clone.CloneU128
+  coreopsarithAddWideInst := U128.Insts.CoreOpsArithAddU128U128
+  coreopsarithAddAssignWideInst := U128.Insts.CoreOpsArithAddAssignU128
+  characteristic :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic
+  extension_degree :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.extension_degree
+  is_zero :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.is_zero
+  is_one := gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.is_one
+  inv := gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv
+  zero_like :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.zero_like
+  one_like :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.one_like
+  to_wide :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.to_wide
+  mul_to_wide :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.mul_to_wide
+  reduce_wide :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.reduce_wide P
+  max_unreduced_additions :=
+    gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
+    P
+}
 
 /-- [gf2_algebra::gray::gray_code_index_to_subset]:
     Source: 'crates/gf2-algebra/src/gray.rs', lines 48:0-50:1
@@ -315,14 +364,14 @@ def gray.gray_code_iter
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::clone::Clone for gf2_algebra::packed::bipedal3::Bipedal3}::clone]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 84:9-84:14
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 92:9-92:14
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.CoreCloneClone.clone
   (self : packed.bipedal3.Bipedal3) : Result packed.bipedal3.Bipedal3 := do
   ok self
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::clone::Clone for gf2_algebra::packed::bipedal3::Bipedal3}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 84:9-84:14 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 92:9-92:14 -/
 @[reducible]
 def packed.bipedal3.Bipedal3.Insts.CoreCloneClone : core.clone.Clone
   packed.bipedal3.Bipedal3 := {
@@ -330,7 +379,7 @@ def packed.bipedal3.Bipedal3.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::marker::Copy for gf2_algebra::packed::bipedal3::Bipedal3}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 84:16-84:20 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 92:16-92:20 -/
 @[reducible]
 def packed.bipedal3.Bipedal3.Insts.CoreMarkerCopy : core.marker.Copy
   packed.bipedal3.Bipedal3 := {
@@ -338,7 +387,7 @@ def packed.bipedal3.Bipedal3.Insts.CoreMarkerCopy : core.marker.Copy
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::cmp::PartialEq<gf2_algebra::packed::bipedal3::Bipedal3> for gf2_algebra::packed::bipedal3::Bipedal3}::eq]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 127:4-134:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 135:4-142:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.CoreCmpPartialEqBipedal3.eq
   (self : packed.bipedal3.Bipedal3) (other : packed.bipedal3.Bipedal3) :
@@ -352,7 +401,7 @@ def packed.bipedal3.Bipedal3.Insts.CoreCmpPartialEqBipedal3.eq
     ok (i1 = 0#u64)
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::cmp::PartialEq<gf2_algebra::packed::bipedal3::Bipedal3> for gf2_algebra::packed::bipedal3::Bipedal3}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 105:0-135:1 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 113:0-143:1 -/
 @[reducible]
 def packed.bipedal3.Bipedal3.Insts.CoreCmpPartialEqBipedal3 :
   core.cmp.PartialEq packed.bipedal3.Bipedal3 packed.bipedal3.Bipedal3 := {
@@ -360,7 +409,7 @@ def packed.bipedal3.Bipedal3.Insts.CoreCmpPartialEqBipedal3 :
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 137:0-137:23 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 145:0-145:23 -/
 @[reducible]
 def packed.bipedal3.Bipedal3.Insts.CoreCmpEq : core.cmp.Eq
   packed.bipedal3.Bipedal3 := {
@@ -370,7 +419,7 @@ def packed.bipedal3.Bipedal3.Insts.CoreCmpEq : core.cmp.Eq
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::closure<'_0>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 164:52-174:17 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 172:52-182:17 -/
 def
   packed.bipedal3.DebugBipedal3.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
   (c : packed.bipedal3.DebugBipedal3.fmt.closure) (tupled_args : Std.Usize) :
@@ -387,7 +436,7 @@ def
        else ok (2#u64, c)
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::closure<'_0>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 164:52-174:17 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 172:52-182:17 -/
 def
   packed.bipedal3.DebugBipedal3.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : packed.bipedal3.DebugBipedal3.fmt.closure) (i : Std.Usize) :
@@ -399,7 +448,7 @@ def
   ok i1
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 164:52-174:17 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 172:52-182:17 -/
 @[reducible]
 def
   packed.bipedal3.DebugBipedal3.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64
@@ -410,7 +459,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 164:52-174:17 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 172:52-182:17 -/
 @[reducible]
 def
   packed.bipedal3.DebugBipedal3.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64
@@ -423,7 +472,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 160:4-177:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 168:4-185:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.CoreFmtDebug.fmt
   (self : packed.bipedal3.Bipedal3) (f : core.fmt.Formatter) :
@@ -432,7 +481,7 @@ def packed.bipedal3.Bipedal3.Insts.CoreFmtDebug.fmt
   sorry
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 143:0-178:1 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 151:0-186:1 -/
 @[reducible]
 def packed.bipedal3.Bipedal3.Insts.CoreFmtDebug : core.fmt.Debug
   packed.bipedal3.Bipedal3 := {
@@ -440,28 +489,28 @@ def packed.bipedal3.Bipedal3.Insts.CoreFmtDebug : core.fmt.Debug
 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::from_raw]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 213:4-215:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 221:4-223:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.from_raw
   (mag : Std.U64) (sgn : Std.U64) : Result packed.bipedal3.Bipedal3 := do
   ok { mag, sgn }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::mag]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 239:4-241:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 247:4-249:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.impl.mag
   (self : packed.bipedal3.Bipedal3) : Result Std.U64 := do
   ok self.mag
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::sgn]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 265:4-267:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 273:4-275:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.impl.sgn
   (self : packed.bipedal3.Bipedal3) : Result Std.U64 := do
   ok self.sgn
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::splat_raw]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 300:4-305:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 308:4-313:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.splat_raw
   (mag_bit : Std.U64) (sgn_bit : Std.U64) :
@@ -474,7 +523,7 @@ def packed.bipedal3.Bipedal3.splat_raw
   ok { mag := i1, sgn := i3 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::fold_mul_first_n]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 360:8-364:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 368:8-372:9
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3.fold_mul_first_n_loop.body
@@ -492,7 +541,7 @@ def packed.bipedal3.Bipedal3.fold_mul_first_n_loop.body
   else ok (done (acc_m, acc_s))
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::fold_mul_first_n]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 360:8-364:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 368:8-372:9
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3.fold_mul_first_n_loop
@@ -505,7 +554,7 @@ def packed.bipedal3.Bipedal3.fold_mul_first_n_loop
     (acc_m, acc_s, step)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::fold_mul_first_n]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 346:4-377:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 354:4-385:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.fold_mul_first_n
   (self : packed.bipedal3.Bipedal3) (n : Std.Usize) :
@@ -553,7 +602,7 @@ def packed.bipedal3.Bipedal3.fold_mul_first_n
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::add]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 581:4-593:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 589:4-601:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.add
   (self : packed.bipedal3.Bipedal3) (rhs : packed.bipedal3.Bipedal3) :
@@ -568,7 +617,7 @@ def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.add
   ok { mag := i2, sgn := i3 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::add_inherent]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 409:4-411:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 417:4-419:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.add_inherent
   (self : packed.bipedal3.Bipedal3) (rhs : packed.bipedal3.Bipedal3) :
@@ -578,7 +627,7 @@ def packed.bipedal3.Bipedal3.add_inherent
     self rhs
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::sub]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 620:4-632:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 628:4-640:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.sub
   (self : packed.bipedal3.Bipedal3) (rhs : packed.bipedal3.Bipedal3) :
@@ -593,7 +642,7 @@ def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.sub
   ok { mag := i1, sgn := i3 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::sub_inherent]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 428:4-430:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 436:4-438:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.sub_inherent
   (self : packed.bipedal3.Bipedal3) (rhs : packed.bipedal3.Bipedal3) :
@@ -603,7 +652,7 @@ def packed.bipedal3.Bipedal3.sub_inherent
     self rhs
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::mul]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 680:4-685:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 688:4-693:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.mul
   (self : packed.bipedal3.Bipedal3) (rhs : packed.bipedal3.Bipedal3) :
@@ -614,7 +663,7 @@ def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.mul
   ok { mag := i, sgn := i1 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::mul_inherent]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 447:4-449:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 455:4-457:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.mul_inherent
   (self : packed.bipedal3.Bipedal3) (rhs : packed.bipedal3.Bipedal3) :
@@ -624,7 +673,7 @@ def packed.bipedal3.Bipedal3.mul_inherent
     self rhs
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::neg]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 652:4-657:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 660:4-665:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.neg
   (self : packed.bipedal3.Bipedal3) : Result packed.bipedal3.Bipedal3 := do
@@ -632,7 +681,7 @@ def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.neg
   ok { self with sgn := i }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3}::neg_inherent]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 465:4-467:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 473:4-475:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.neg_inherent
   (self : packed.bipedal3.Bipedal3) : Result packed.bipedal3.Bipedal3 := do
@@ -640,7 +689,7 @@ def packed.bipedal3.Bipedal3.neg_inherent
     self
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::all_zero]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 811:4-813:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 819:4-821:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.all_zero
@@ -648,7 +697,7 @@ def
   ok (self.mag = 0#u64)
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::LANES]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 486:4-486:28
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 494:4-494:28
     Visibility: public -/
 @[global_simps, irreducible]
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.LANES
@@ -656,7 +705,7 @@ def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.LANES
   64#usize
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::with_lane]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 767:4-783:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 775:4-791:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.with_lane
@@ -703,7 +752,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::lane]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 715:4-734:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 723:4-742:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.lane
   (self : packed.bipedal3.Bipedal3) (i : Std.Usize) :
@@ -740,7 +789,7 @@ def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.lane
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::splat]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 552:4-558:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 560:4-566:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.splat
   (x : gf2_core.gfp.Fp 3#u64) : Result packed.bipedal3.Bipedal3 := do
@@ -754,21 +803,21 @@ def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.splat
   packed.bipedal3.Bipedal3.splat_raw mag_bit sgn_bit
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::one]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 525:4-530:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 533:4-538:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.one
   : Result packed.bipedal3.Bipedal3 := do
   ok { mag := core.num.U64.MAX, sgn := 0#u64 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}::zero]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 505:4-507:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 513:4-515:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.zero
   : Result packed.bipedal3.Bipedal3 := do
   ok { mag := 0#u64, sgn := 0#u64 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<3u64>, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 474:0-814:1 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 482:0-822:1 -/
 @[reducible]
 def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128 :
   packed.PackedField packed.bipedal3.Bipedal3 (gf2_core.gfp.Fp 3#u64) Std.U64
@@ -803,7 +852,7 @@ def packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128 :
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::clone::Clone for gf2_algebra::packed::bipedal3::Bipedal3Vec}::clone]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1505:9-1505:14
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1552:9-1552:14
     Visibility: public -/
 def packed.bipedal3.Bipedal3Vec.Insts.CoreCloneClone.clone
   (self : packed.bipedal3.Bipedal3Vec) :
@@ -815,7 +864,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreCloneClone.clone
   ok { mag := v, sgn := v1, len_lanes := i }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::clone::Clone for gf2_algebra::packed::bipedal3::Bipedal3Vec}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1505:9-1505:14 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1552:9-1552:14 -/
 @[reducible]
 def packed.bipedal3.Bipedal3Vec.Insts.CoreCloneClone : core.clone.Clone
   packed.bipedal3.Bipedal3Vec := {
@@ -823,7 +872,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::mask_tail]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1530:4-1543:5 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1577:4-1590:5 -/
 def packed.bipedal3.Bipedal3Vec.mask_tail
   (self : packed.bipedal3.Bipedal3Vec) :
   Result packed.bipedal3.Bipedal3Vec
@@ -853,7 +902,7 @@ def packed.bipedal3.Bipedal3Vec.mask_tail
       ok { self with mag := v, sgn := v1 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::fold_mul]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1590:8-1593:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1637:8-1640:9
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3Vec.fold_mul_loop0.body
@@ -877,7 +926,7 @@ def packed.bipedal3.Bipedal3Vec.fold_mul_loop0.body
     ok (cont (iter1, acc_mag1, acc_sgn1))
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::fold_mul]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1590:8-1593:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1637:8-1640:9
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3Vec.fold_mul_loop0
@@ -892,7 +941,7 @@ def packed.bipedal3.Bipedal3Vec.fold_mul_loop0
     (iter, acc_mag, acc_sgn)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::fold_mul]: loop body 1:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1612:8-1623:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1659:8-1670:9
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3Vec.fold_mul_loop1.body
@@ -926,7 +975,7 @@ def packed.bipedal3.Bipedal3Vec.fold_mul_loop1.body
     ok (cont (iter2, result2))
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::fold_mul]: loop 1:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1612:8-1623:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1659:8-1670:9
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3Vec.fold_mul_loop1
@@ -940,7 +989,7 @@ def packed.bipedal3.Bipedal3Vec.fold_mul_loop1
     (iter, result1)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::fold_mul]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1579:4-1625:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1626:4-1672:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Vec.fold_mul
   (self : packed.bipedal3.Bipedal3Vec) : Result (gf2_core.gfp.Fp 3#u64) := do
@@ -978,7 +1027,7 @@ def packed.bipedal3.Bipedal3Vec.fold_mul
       { start := 0#u64, «end» := 64#u64 } acc_mag1 acc_sgn1 result
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::neg_assign]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1655:8-1658:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1702:8-1705:9
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3Vec.neg_assign_loop.body
@@ -1002,7 +1051,7 @@ def packed.bipedal3.Bipedal3Vec.neg_assign_loop.body
     ok (cont (iter1, v2))
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::neg_assign]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1655:8-1658:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1702:8-1705:9
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3Vec.neg_assign_loop
@@ -1016,7 +1065,7 @@ def packed.bipedal3.Bipedal3Vec.neg_assign_loop
     (iter, v1)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::neg_assign]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1654:4-1660:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1701:4-1707:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Vec.neg_assign
   (self : packed.bipedal3.Bipedal3Vec) :
@@ -1029,21 +1078,21 @@ def packed.bipedal3.Bipedal3Vec.neg_assign
   packed.bipedal3.Bipedal3Vec.mask_tail { self with sgn := v }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::raw_mag]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1688:4-1690:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1735:4-1737:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Vec.raw_mag
   (self : packed.bipedal3.Bipedal3Vec) : Result (Slice Std.U64) := do
   ok (alloc.vec.Vec.deref self.mag)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Vec}::raw_sgn]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1718:4-1720:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1765:4-1767:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Vec.raw_sgn
   (self : packed.bipedal3.Bipedal3Vec) : Result (Slice Std.U64) := do
   ok (alloc.vec.Vec.deref self.sgn)
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::cmp::PartialEq<gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::eq]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1757:8-1766:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1804:8-1813:5
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpPartialEqBipedal3Vec.eq_loop.body
@@ -1077,7 +1126,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpPartialEqBipedal3Vec.eq_loop.body
       else ok (cont iter1)
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::cmp::PartialEq<gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::eq]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1757:8-1766:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1804:8-1813:5
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpPartialEqBipedal3Vec.eq_loop
@@ -1093,7 +1142,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpPartialEqBipedal3Vec.eq_loop
     iter
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::cmp::PartialEq<gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::eq]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1753:4-1766:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1800:4-1813:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpPartialEqBipedal3Vec.eq
   (self : packed.bipedal3.Bipedal3Vec) (other : packed.bipedal3.Bipedal3Vec) :
@@ -1107,7 +1156,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpPartialEqBipedal3Vec.eq
       { start := 0#usize, «end» := i } self.mag self.sgn other.mag other.sgn
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::cmp::PartialEq<gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::Bipedal3Vec}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1727:0-1767:1 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1774:0-1814:1 -/
 @[reducible]
 def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpPartialEqBipedal3Vec :
   core.cmp.PartialEq packed.bipedal3.Bipedal3Vec packed.bipedal3.Bipedal3Vec
@@ -1116,7 +1165,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpPartialEqBipedal3Vec :
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Vec}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1769:0-1769:26 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1816:0-1816:26 -/
 @[reducible]
 def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpEq : core.cmp.Eq
   packed.bipedal3.Bipedal3Vec := {
@@ -1127,7 +1176,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreCmpEq : core.cmp.Eq
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::closure<'_0>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1792:17-1804:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1839:17-1851:13 -/
 def
   packed.bipedal3.DebugBipedal3Vec.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
   (c : packed.bipedal3.DebugBipedal3Vec.fmt.closure) (tupled_args : Std.Usize)
@@ -1151,7 +1200,7 @@ def
        else ok (2#u64, c)
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::closure<'_0>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1792:17-1804:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1839:17-1851:13 -/
 def
   packed.bipedal3.DebugBipedal3Vec.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : packed.bipedal3.DebugBipedal3Vec.fmt.closure) (i : Std.Usize) :
@@ -1163,7 +1212,7 @@ def
   ok i1
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1792:17-1804:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1839:17-1851:13 -/
 @[reducible]
 def
   packed.bipedal3.DebugBipedal3Vec.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64
@@ -1174,7 +1223,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1792:17-1804:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1839:17-1851:13 -/
 @[reducible]
 def
   packed.bipedal3.DebugBipedal3Vec.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64
@@ -1187,7 +1236,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1790:4-1809:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1837:4-1856:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Vec.Insts.CoreFmtDebug.fmt
   (self : packed.bipedal3.Bipedal3Vec) (f : core.fmt.Formatter) :
@@ -1196,7 +1245,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreFmtDebug.fmt
   sorry
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1775:0-1810:1 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1822:0-1857:1 -/
 @[reducible]
 def packed.bipedal3.Bipedal3Vec.Insts.CoreFmtDebug : core.fmt.Debug
   packed.bipedal3.Bipedal3Vec := {
@@ -1204,7 +1253,7 @@ def packed.bipedal3.Bipedal3Vec.Insts.CoreFmtDebug : core.fmt.Debug
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::{impl core::ops::function::FnMut<(&'_ u64,), bool> for gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::closure}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2124:28-2124:39 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2171:28-2171:39 -/
 def
   packed.bipedal3.PackedFieldVecBipedal3VecFp3Bipedal3U64U128U64U128.all_zero.closure.Insts.CoreOpsFunctionFnMutTupleSharedU64Bool.call_mut
   (c :
@@ -1216,7 +1265,7 @@ def
   ok (tupled_args = 0#u64, c)
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::{impl core::ops::function::FnOnce<(&'_ u64,), bool> for gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::closure}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2124:28-2124:39 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2171:28-2171:39 -/
 def
   packed.bipedal3.PackedFieldVecBipedal3VecFp3Bipedal3U64U128U64U128.all_zero.closure.Insts.CoreOpsFunctionFnOnceTupleSharedU64Bool.call_once
   (c :
@@ -1230,7 +1279,7 @@ def
   ok b
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::{impl core::ops::function::FnOnce<(&'_ u64,), bool> for gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::closure}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2124:28-2124:39 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2171:28-2171:39 -/
 @[reducible]
 def
   packed.bipedal3.PackedFieldVecBipedal3VecFp3Bipedal3U64U128U64U128.all_zero.closure.Insts.CoreOpsFunctionFnOnceTupleSharedU64Bool
@@ -1242,7 +1291,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::{impl core::ops::function::FnMut<(&'_ u64,), bool> for gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::closure}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2124:28-2124:39 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2171:28-2171:39 -/
 @[reducible]
 def
   packed.bipedal3.PackedFieldVecBipedal3VecFp3Bipedal3U64U128U64U128.all_zero.closure.Insts.CoreOpsFunctionFnMutTupleSharedU64Bool
@@ -1256,7 +1305,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2123:4-2125:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2170:4-2172:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.all_zero
@@ -1270,7 +1319,7 @@ def
   ok b
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::mul_assign]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2093:8-2097:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2140:8-2144:9
     Visibility: public -/
 @[rust_loop_body]
 def
@@ -1304,7 +1353,7 @@ def
     ok (cont (iter1, v5, v4))
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::mul_assign]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2093:8-2097:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2140:8-2144:9
     Visibility: public -/
 @[rust_loop]
 def
@@ -1321,7 +1370,7 @@ def
     (iter, v, v1)
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::mul_assign]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2087:4-2099:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2134:4-2146:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.mul_assign
@@ -1354,7 +1403,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::sub_assign]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2045:8-2055:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2092:8-2102:9
     Visibility: public -/
 @[rust_loop_body]
 def
@@ -1396,7 +1445,7 @@ def
     ok (cont (iter1, v5, v4))
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::sub_assign]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2045:8-2055:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2092:8-2102:9
     Visibility: public -/
 @[rust_loop]
 def
@@ -1413,7 +1462,7 @@ def
     (iter, v, v1)
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::sub_assign]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2039:4-2057:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2086:4-2104:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.sub_assign
@@ -1446,7 +1495,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::add_assign]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1997:8-2007:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2044:8-2054:9
     Visibility: public -/
 @[rust_loop_body]
 def
@@ -1488,7 +1537,7 @@ def
     ok (cont (iter1, v5, v4))
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::add_assign]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1997:8-2007:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2044:8-2054:9
     Visibility: public -/
 @[rust_loop]
 def
@@ -1505,7 +1554,7 @@ def
     (iter, v, v1)
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::add_assign]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1991:4-2009:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2038:4-2056:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.add_assign
@@ -1538,7 +1587,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::get]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1942:4-1960:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1989:4-2007:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.get
@@ -1583,7 +1632,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::len]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1912:4-1914:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1959:4-1961:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.len
@@ -1591,7 +1640,7 @@ def
   ok self.len_lanes
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::from_field_slice]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1879:8-1889:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1926:8-1936:9
     Visibility: public -/
 @[rust_loop_body]
 def
@@ -1638,7 +1687,7 @@ def
     else ok (cont (iter1, mag1, sgn))
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::from_field_slice]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1879:8-1889:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1926:8-1936:9
     Visibility: public -/
 @[rust_loop]
 def
@@ -1655,7 +1704,7 @@ def
     (iter, mag, sgn)
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::from_field_slice]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1874:4-1897:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1921:4-1944:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.from_field_slice
@@ -1673,7 +1722,7 @@ def
   packed.bipedal3.Bipedal3Vec.mask_tail { mag := mag1, sgn, len_lanes := len }
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::zeros]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1838:4-1845:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1885:4-1892:5
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.zeros
@@ -1683,7 +1732,7 @@ def
   ok { mag := v, sgn := v, len_lanes := len }
 
 /-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::is_empty]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1816:0-2126:1
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1863:0-2173:1
     Visibility: public -/
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128.is_empty
@@ -1694,7 +1743,7 @@ def
   ok (i = 0#usize)
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1816:0-2126:1 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1863:0-2173:1 -/
 @[reducible]
 def
   packed.bipedal3.Bipedal3Vec.Insts.Gf2_algebraPackedPackedFieldVecFp3Bipedal3U64U128U64U128
@@ -1728,7 +1777,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::clone::Clone for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::clone]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2873:9-2873:14
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2920:9-2920:14
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.Insts.CoreCloneClone.clone
   (self : packed.bipedal3.Bipedal3Matrix) :
@@ -1742,7 +1791,7 @@ def packed.bipedal3.Bipedal3Matrix.Insts.CoreCloneClone.clone
   ok { columns := v, rows := i, cols := i1 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::clone::Clone for gf2_algebra::packed::bipedal3::Bipedal3Matrix}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2873:9-2873:14 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2920:9-2920:14 -/
 @[reducible]
 def packed.bipedal3.Bipedal3Matrix.Insts.CoreCloneClone : core.clone.Clone
   packed.bipedal3.Bipedal3Matrix := {
@@ -1750,7 +1799,7 @@ def packed.bipedal3.Bipedal3Matrix.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::cmp::PartialEq<gf2_algebra::packed::bipedal3::Bipedal3Matrix> for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::eq]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2907:4-2909:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2954:4-2956:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpPartialEqBipedal3Matrix.eq
   (self : packed.bipedal3.Bipedal3Matrix)
@@ -1768,7 +1817,7 @@ def packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpPartialEqBipedal3Matrix.eq
   else ok false
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::cmp::PartialEq<gf2_algebra::packed::bipedal3::Bipedal3Matrix> for gf2_algebra::packed::bipedal3::Bipedal3Matrix}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2885:0-2910:1 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2932:0-2957:1 -/
 @[reducible]
 def packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpPartialEqBipedal3Matrix :
   core.cmp.PartialEq packed.bipedal3.Bipedal3Matrix
@@ -1777,7 +1826,7 @@ def packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpPartialEqBipedal3Matrix :
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Matrix}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2912:0-2912:29 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2959:0-2959:29 -/
 @[reducible]
 def packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpEq : core.cmp.Eq
   packed.bipedal3.Bipedal3Matrix := {
@@ -1788,7 +1837,7 @@ def packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpEq : core.cmp.Eq
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::closure<'_0, '_1>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2942:25-2942:59 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2989:25-2989:59 -/
 def
   packed.bipedal3.DebugBipedal3Matrix.fmt.closure.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
   (c : packed.bipedal3.DebugBipedal3Matrix.fmt.closure.closure)
@@ -1806,7 +1855,7 @@ def
   ok (i1, c)
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::closure<'_0, '_1>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2942:25-2942:59 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2989:25-2989:59 -/
 def
   packed.bipedal3.DebugBipedal3Matrix.fmt.closure.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : packed.bipedal3.DebugBipedal3Matrix.fmt.closure.closure) (i : Std.Usize)
@@ -1819,7 +1868,7 @@ def
   ok i1
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::closure<'_0, '_1>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2942:25-2942:59 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2989:25-2989:59 -/
 @[reducible]
 def
   packed.bipedal3.DebugBipedal3Matrix.fmt.closure.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64
@@ -1831,7 +1880,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::closure<'_0, '_1>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2942:25-2942:59 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2989:25-2989:59 -/
 @[reducible]
 def
   packed.bipedal3.DebugBipedal3Matrix.fmt.closure.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64
@@ -1845,7 +1894,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::{impl core::ops::function::FnMut<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure<'_0>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2940:17-2944:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2987:17-2991:13 -/
 def
   packed.bipedal3.DebugBipedal3Matrix.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeVecU64.call_mut
   (c : packed.bipedal3.DebugBipedal3Matrix.fmt.closure)
@@ -1856,7 +1905,7 @@ def
   sorry
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::{impl core::ops::function::FnOnce<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure<'_0>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2940:17-2944:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2987:17-2991:13 -/
 def
   packed.bipedal3.DebugBipedal3Matrix.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeVecU64.call_once
   (c : packed.bipedal3.DebugBipedal3Matrix.fmt.closure) (i : Std.Usize) :
@@ -1868,7 +1917,7 @@ def
   ok v
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::{impl core::ops::function::FnOnce<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2940:17-2944:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2987:17-2991:13 -/
 @[reducible]
 def
   packed.bipedal3.DebugBipedal3Matrix.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeVecU64
@@ -1879,7 +1928,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::{impl core::ops::function::FnMut<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2940:17-2944:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2987:17-2991:13 -/
 @[reducible]
 def
   packed.bipedal3.DebugBipedal3Matrix.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeVecU64
@@ -1892,7 +1941,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2937:4-2951:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2984:4-2998:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.Insts.CoreFmtDebug.fmt
   (self : packed.bipedal3.Bipedal3Matrix) (f : core.fmt.Formatter) :
@@ -1901,7 +1950,7 @@ def packed.bipedal3.Bipedal3Matrix.Insts.CoreFmtDebug.fmt
   sorry
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2918:0-2952:1 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2965:0-2999:1 -/
 @[reducible]
 def packed.bipedal3.Bipedal3Matrix.Insts.CoreFmtDebug : core.fmt.Debug
   packed.bipedal3.Bipedal3Matrix := {
@@ -1909,7 +1958,7 @@ def packed.bipedal3.Bipedal3Matrix.Insts.CoreFmtDebug : core.fmt.Debug
 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure::{impl core::ops::function::FnMut<(usize,), gf2_core::gfp::Fp<3u64>> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure::closure<'_0, '_1, '_2>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3012:57-3012:79 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3059:57-3059:79 -/
 def
   packed.bipedal3.Bipedal3Matrix.from_row_major.closure.closure.Insts.CoreOpsFunctionFnMutTupleUsizeFp3.call_mut
   (c : packed.bipedal3.Bipedal3Matrix.from_row_major.closure.closure)
@@ -1924,7 +1973,7 @@ def
   ok (f, c)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure::{impl core::ops::function::FnOnce<(usize,), gf2_core::gfp::Fp<3u64>> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure::closure<'_0, '_1, '_2>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3012:57-3012:79 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3059:57-3059:79 -/
 def
   packed.bipedal3.Bipedal3Matrix.from_row_major.closure.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeFp3.call_once
   (c : packed.bipedal3.Bipedal3Matrix.from_row_major.closure.closure)
@@ -1937,7 +1986,7 @@ def
   ok f
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure::{impl core::ops::function::FnOnce<(usize,), gf2_core::gfp::Fp<3u64>> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure::closure<'_0, '_1, '_2>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3012:57-3012:79 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3059:57-3059:79 -/
 @[reducible]
 def
   packed.bipedal3.Bipedal3Matrix.from_row_major.closure.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeFp3
@@ -1949,7 +1998,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure::{impl core::ops::function::FnMut<(usize,), gf2_core::gfp::Fp<3u64>> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure::closure<'_0, '_1, '_2>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3012:57-3012:79 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3059:57-3059:79 -/
 @[reducible]
 def
   packed.bipedal3.Bipedal3Matrix.from_row_major.closure.closure.Insts.CoreOpsFunctionFnMutTupleUsizeFp3
@@ -1963,7 +2012,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3011:17-3014:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13 -/
 def
   packed.bipedal3.Bipedal3Matrix.from_row_major.closure.Insts.CoreOpsFunctionFnMutTupleUsizeBipedal3Vec.call_mut
   (c : packed.bipedal3.Bipedal3Matrix.from_row_major.closure)
@@ -1974,7 +2023,7 @@ def
   sorry
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::{impl core::ops::function::FnOnce<(usize,), gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3011:17-3014:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13 -/
 def
   packed.bipedal3.Bipedal3Matrix.from_row_major.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeBipedal3Vec.call_once
   (c : packed.bipedal3.Bipedal3Matrix.from_row_major.closure) (i : Std.Usize) :
@@ -1986,7 +2035,7 @@ def
   ok bv
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::{impl core::ops::function::FnOnce<(usize,), gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure<'_0, '_1, '_2>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3011:17-3014:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13 -/
 @[reducible]
 def
   packed.bipedal3.Bipedal3Matrix.from_row_major.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeBipedal3Vec
@@ -1998,7 +2047,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::bipedal3::Bipedal3Vec> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major::closure<'_0, '_1, '_2>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3011:17-3014:13 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3058:17-3061:13 -/
 @[reducible]
 def
   packed.bipedal3.Bipedal3Matrix.from_row_major.closure.Insts.CoreOpsFunctionFnMutTupleUsizeBipedal3Vec
@@ -2012,7 +2061,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::from_row_major]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3000:4-3021:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3047:4-3068:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.from_row_major
   (data : Slice (gf2_core.gfp.Fp 3#u64)) (rows : Std.Usize) (cols : Std.Usize)
@@ -2022,7 +2071,7 @@ def packed.bipedal3.Bipedal3Matrix.from_row_major
   sorry
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::to_row_major]: loop body 1:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3047:12-3049:13
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3094:12-3096:13
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3Matrix.to_row_major_loop0_loop0.body
@@ -2047,7 +2096,7 @@ def packed.bipedal3.Bipedal3Matrix.to_row_major_loop0_loop0.body
     ok (cont (iter1, out1))
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::to_row_major]: loop 1:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3047:12-3049:13
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3094:12-3096:13
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3Matrix.to_row_major_loop0_loop0
@@ -2063,7 +2112,7 @@ def packed.bipedal3.Bipedal3Matrix.to_row_major_loop0_loop0
     (iter, out)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::to_row_major]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3046:8-3050:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3093:8-3097:9
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3Matrix.to_row_major_loop0.body
@@ -2084,7 +2133,7 @@ def packed.bipedal3.Bipedal3Matrix.to_row_major_loop0.body
     ok (cont (iter1, out1))
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::to_row_major]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3046:8-3050:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3093:8-3097:9
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3Matrix.to_row_major_loop0
@@ -2099,7 +2148,7 @@ def packed.bipedal3.Bipedal3Matrix.to_row_major_loop0
     (iter, out)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::to_row_major]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3044:4-3052:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3091:4-3099:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.to_row_major
   (self : packed.bipedal3.Bipedal3Matrix) :
@@ -2111,21 +2160,21 @@ def packed.bipedal3.Bipedal3Matrix.to_row_major
     { start := 0#usize, «end» := self.rows } self.columns self.cols out
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::rows]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3074:4-3076:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3121:4-3123:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.impl.rows
   (self : packed.bipedal3.Bipedal3Matrix) : Result Std.Usize := do
   ok self.rows
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::cols]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3098:4-3100:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3145:4-3147:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.impl.cols
   (self : packed.bipedal3.Bipedal3Matrix) : Result Std.Usize := do
   ok self.cols
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::column]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3136:4-3144:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3183:4-3191:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.column
   (self : packed.bipedal3.Bipedal3Matrix) (j : Std.Usize) :
@@ -2153,7 +2202,7 @@ def packed.bipedal3.Bipedal3Matrix.column
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row::{impl core::ops::function::FnMut<(usize,), gf2_core::gfp::Fp<3u64>> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row::closure<'_0, '_1>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3187:54-3187:80 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3234:54-3234:80 -/
 def
   packed.bipedal3.Bipedal3Matrix.row.closure.Insts.CoreOpsFunctionFnMutTupleUsizeFp3.call_mut
   (c : packed.bipedal3.Bipedal3Matrix.row.closure) (tupled_args : Std.Usize) :
@@ -2169,7 +2218,7 @@ def
   ok (f, c)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row::{impl core::ops::function::FnOnce<(usize,), gf2_core::gfp::Fp<3u64>> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row::closure<'_0, '_1>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3187:54-3187:80 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3234:54-3234:80 -/
 def
   packed.bipedal3.Bipedal3Matrix.row.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeFp3.call_once
   (c : packed.bipedal3.Bipedal3Matrix.row.closure) (i : Std.Usize) :
@@ -2181,7 +2230,7 @@ def
   ok f
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row::{impl core::ops::function::FnOnce<(usize,), gf2_core::gfp::Fp<3u64>> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row::closure<'_0, '_1>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3187:54-3187:80 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3234:54-3234:80 -/
 @[reducible]
 def
   packed.bipedal3.Bipedal3Matrix.row.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeFp3
@@ -2192,7 +2241,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row::{impl core::ops::function::FnMut<(usize,), gf2_core::gfp::Fp<3u64>> for gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row::closure<'_0, '_1>}]
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3187:54-3187:80 -/
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3234:54-3234:80 -/
 @[reducible]
 def
   packed.bipedal3.Bipedal3Matrix.row.closure.Insts.CoreOpsFunctionFnMutTupleUsizeFp3
@@ -2205,7 +2254,7 @@ def
 }
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::row]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3180:4-3189:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3227:4-3236:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.row
   (self : packed.bipedal3.Bipedal3Matrix) (i : Std.Usize) :
@@ -2214,7 +2263,7 @@ def packed.bipedal3.Bipedal3Matrix.row
   sorry
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::get]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3222:4-3236:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3269:4-3283:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.get
   (self : packed.bipedal3.Bipedal3Matrix) (i : Std.Usize) (j : Std.Usize) :
@@ -2263,7 +2312,7 @@ def packed.bipedal3.Bipedal3Matrix.get
     fail panic
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::transpose]: loop body 1:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3275:12-3277:13
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3322:12-3324:13
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3Matrix.transpose_loop0_loop0.body
@@ -2287,7 +2336,7 @@ def packed.bipedal3.Bipedal3Matrix.transpose_loop0_loop0.body
     ok (cont (iter1, tm1))
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::transpose]: loop 1:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3275:12-3277:13
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3322:12-3324:13
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3Matrix.transpose_loop0_loop0
@@ -2303,7 +2352,7 @@ def packed.bipedal3.Bipedal3Matrix.transpose_loop0_loop0
     (iter, tm)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::transpose]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3274:8-3278:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3321:8-3325:9
     Visibility: public -/
 @[rust_loop_body]
 def packed.bipedal3.Bipedal3Matrix.transpose_loop0.body
@@ -2324,7 +2373,7 @@ def packed.bipedal3.Bipedal3Matrix.transpose_loop0.body
     ok (cont (iter1, tm1))
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::transpose]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3274:8-3278:9
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3321:8-3325:9
     Visibility: public -/
 @[rust_loop]
 def packed.bipedal3.Bipedal3Matrix.transpose_loop0
@@ -2339,7 +2388,7 @@ def packed.bipedal3.Bipedal3Matrix.transpose_loop0
     (iter, tm)
 
 /-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::bipedal3::Bipedal3Matrix}::transpose]:
-    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3271:4-3280:5
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 3318:4-3327:5
     Visibility: public -/
 def packed.bipedal3.Bipedal3Matrix.transpose
   (self : packed.bipedal3.Bipedal3Matrix) :
@@ -2623,7 +2672,7 @@ def packed.packed5.Packed5.Insts.CoreCmpEq : core.cmp.Eq packed.packed5.Packed5
 }
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::LANES]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 419:4-419:28
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 440:4-440:28
     Visibility: public -/
 @[global_simps, irreducible]
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.LANES
@@ -2631,7 +2680,7 @@ def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.LANES
   64#usize
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::lane]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 659:4-676:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 680:4-697:5
     Visibility: public -/
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.lane
   (self : packed.packed5.Packed5) (i : Std.Usize) :
@@ -2730,7 +2779,7 @@ def packed.packed5.Packed5.Insts.CoreHashHash : core.hash.Hash
 }
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::zero]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 438:4-444:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 459:4-465:5
     Visibility: public -/
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.zero
   : Result packed.packed5.Packed5 := do
@@ -2817,8 +2866,15 @@ def packed.packed5.Packed5.Insts.CoreFmtDebug : core.fmt.Debug
   fmt := packed.packed5.Packed5.Insts.CoreFmtDebug.fmt
 }
 
+/-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5}::to_raw_planes]:
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 344:4-346:5
+    Visibility: public -/
+def packed.packed5.Packed5.to_raw_planes
+  (self : packed.packed5.Packed5) : Result (Std.U64 × Std.U64 × Std.U64) := do
+  ok (self.b0, self.b1, self.b2)
+
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::add]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 525:4-534:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 546:4-555:5
     Visibility: public -/
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.add
   (self : packed.packed5.Packed5) (rhs : packed.packed5.Packed5) :
@@ -2830,7 +2886,7 @@ def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.add
   ok { b0 := c0, b1 := c1, b2 := c2 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5}::add_inherent]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 342:4-344:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 363:4-365:5
     Visibility: public -/
 def packed.packed5.Packed5.add_inherent
   (self : packed.packed5.Packed5) (rhs : packed.packed5.Packed5) :
@@ -2840,7 +2896,7 @@ def packed.packed5.Packed5.add_inherent
     rhs
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::sub]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 557:4-566:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 578:4-587:5
     Visibility: public -/
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.sub
   (self : packed.packed5.Packed5) (rhs : packed.packed5.Packed5) :
@@ -2852,7 +2908,7 @@ def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.sub
   ok { b0 := c0, b1 := c1, b2 := c2 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5}::sub_inherent]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 361:4-363:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 382:4-384:5
     Visibility: public -/
 def packed.packed5.Packed5.sub_inherent
   (self : packed.packed5.Packed5) (rhs : packed.packed5.Packed5) :
@@ -2862,7 +2918,7 @@ def packed.packed5.Packed5.sub_inherent
     rhs
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::mul]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 621:4-630:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 642:4-651:5
     Visibility: public -/
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.mul
   (self : packed.packed5.Packed5) (rhs : packed.packed5.Packed5) :
@@ -2874,7 +2930,7 @@ def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.mul
   ok { b0 := c0, b1 := c1, b2 := c2 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5}::mul_inherent]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 380:4-382:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 401:4-403:5
     Visibility: public -/
 def packed.packed5.Packed5.mul_inherent
   (self : packed.packed5.Packed5) (rhs : packed.packed5.Packed5) :
@@ -2884,7 +2940,7 @@ def packed.packed5.Packed5.mul_inherent
     rhs
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::neg]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 587:4-598:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 608:4-619:5
     Visibility: public -/
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.neg
   (self : packed.packed5.Packed5) : Result packed.packed5.Packed5 := do
@@ -2899,14 +2955,14 @@ def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.neg
   ok { b0 := c0, b1 := c1, b2 := c2 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5}::neg_inherent]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 398:4-400:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 419:4-421:5
     Visibility: public -/
 def packed.packed5.Packed5.neg_inherent
   (self : packed.packed5.Packed5) : Result packed.packed5.Packed5 := do
   packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.neg self
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::all_zero]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 746:4-751:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 767:4-772:5
     Visibility: public -/
 def
   packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.all_zero
@@ -2922,7 +2978,7 @@ def
   ok (i6 = 0#u64)
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::with_lane]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 705:4-722:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 726:4-743:5
     Visibility: public -/
 def
   packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.with_lane
@@ -2969,7 +3025,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::splat]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 491:4-502:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 512:4-523:5
     Visibility: public -/
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.splat
   (x : gf2_core.gfp.Fp 5#u64) : Result packed.packed5.Packed5 := do
@@ -2988,14 +3044,14 @@ def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.splat
   else ok { b0 := b0_bit, b1 := b1_bit, b2 := 0#u64 }
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}::one]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 462:4-469:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 483:4-490:5
     Visibility: public -/
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128.one
   : Result packed.packed5.Packed5 := do
   ok { b0 := core.num.U64.MAX, b1 := 0#u64, b2 := 0#u64 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedField<gf2_core::gfp::Fp<5u64>, u64, u128> for gf2_algebra::packed::packed5::Packed5}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 407:0-752:1 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 428:0-773:1 -/
 @[reducible]
 def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128 :
   packed.PackedField packed.packed5.Packed5 (gf2_core.gfp.Fp 5#u64) Std.U64
@@ -3030,7 +3086,7 @@ def packed.packed5.Packed5.Insts.Gf2_algebraPackedPackedFieldFp5U64U128 :
 }
 
 /-- [gf2_algebra::packed::packed5::{impl core::clone::Clone for gf2_algebra::packed::packed5::Packed5Vec}::clone]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 787:9-787:14
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 808:9-808:14
     Visibility: public -/
 def packed.packed5.Packed5Vec.Insts.CoreCloneClone.clone
   (self : packed.packed5.Packed5Vec) : Result packed.packed5.Packed5Vec := do
@@ -3041,7 +3097,7 @@ def packed.packed5.Packed5Vec.Insts.CoreCloneClone.clone
   ok { b0 := v, b1 := v1, b2 := v2, len_lanes := i }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::clone::Clone for gf2_algebra::packed::packed5::Packed5Vec}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 787:9-787:14 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 808:9-808:14 -/
 @[reducible]
 def packed.packed5.Packed5Vec.Insts.CoreCloneClone : core.clone.Clone
   packed.packed5.Packed5Vec := {
@@ -3049,7 +3105,7 @@ def packed.packed5.Packed5Vec.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Vec}::mask_tail]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 810:4-824:5 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 831:4-845:5 -/
 def packed.packed5.Packed5Vec.mask_tail
   (self : packed.packed5.Packed5Vec) : Result packed.packed5.Packed5Vec := do
   let n_words := alloc.vec.Vec.len self.b0
@@ -3082,7 +3138,7 @@ def packed.packed5.Packed5Vec.mask_tail
       ok { self with b0 := v, b1 := v1, b2 := v2 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Vec}::neg_assign]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 880:8-887:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 901:8-908:9
     Visibility: public -/
 @[rust_loop_body]
 def packed.packed5.Packed5Vec.neg_assign_loop.body
@@ -3127,7 +3183,7 @@ def packed.packed5.Packed5Vec.neg_assign_loop.body
     ok (cont (iter1, v5, v4, v3))
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Vec}::neg_assign]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 880:8-887:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 901:8-908:9
     Visibility: public -/
 @[rust_loop]
 def packed.packed5.Packed5Vec.neg_assign_loop
@@ -3142,7 +3198,7 @@ def packed.packed5.Packed5Vec.neg_assign_loop
     (iter, v, v1, v2)
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Vec}::neg_assign]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 853:4-889:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 874:4-910:5
     Visibility: public -/
 def packed.packed5.Packed5Vec.neg_assign
   (self : packed.packed5.Packed5Vec) : Result packed.packed5.Packed5Vec := do
@@ -3153,7 +3209,7 @@ def packed.packed5.Packed5Vec.neg_assign
   packed.packed5.Packed5Vec.mask_tail { self with b0 := v, b1 := v1, b2 := v2 }
 
 /-- [gf2_algebra::packed::packed5::{impl core::cmp::PartialEq<gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::Packed5Vec}::eq]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 928:8-936:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 949:8-957:5
     Visibility: public -/
 @[rust_loop_body]
 def packed.packed5.Packed5Vec.Insts.CoreCmpPartialEqPacked5Vec.eq_loop.body
@@ -3204,7 +3260,7 @@ def packed.packed5.Packed5Vec.Insts.CoreCmpPartialEqPacked5Vec.eq_loop.body
           else ok (cont iter1)
 
 /-- [gf2_algebra::packed::packed5::{impl core::cmp::PartialEq<gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::Packed5Vec}::eq]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 928:8-936:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 949:8-957:5
     Visibility: public -/
 @[rust_loop]
 def packed.packed5.Packed5Vec.Insts.CoreCmpPartialEqPacked5Vec.eq_loop
@@ -3221,7 +3277,7 @@ def packed.packed5.Packed5Vec.Insts.CoreCmpPartialEqPacked5Vec.eq_loop
     iter
 
 /-- [gf2_algebra::packed::packed5::{impl core::cmp::PartialEq<gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::Packed5Vec}::eq]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 916:4-936:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 937:4-957:5
     Visibility: public -/
 def packed.packed5.Packed5Vec.Insts.CoreCmpPartialEqPacked5Vec.eq
   (self : packed.packed5.Packed5Vec) (other : packed.packed5.Packed5Vec) :
@@ -3236,7 +3292,7 @@ def packed.packed5.Packed5Vec.Insts.CoreCmpPartialEqPacked5Vec.eq
       other.b1 other.b2
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::cmp::PartialEq<gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::Packed5Vec}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 896:0-937:1 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 917:0-958:1 -/
 @[reducible]
 def packed.packed5.Packed5Vec.Insts.CoreCmpPartialEqPacked5Vec :
   core.cmp.PartialEq packed.packed5.Packed5Vec packed.packed5.Packed5Vec := {
@@ -3244,7 +3300,7 @@ def packed.packed5.Packed5Vec.Insts.CoreCmpPartialEqPacked5Vec :
 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Vec}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 939:0-939:25 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 960:0-960:25 -/
 @[reducible]
 def packed.packed5.Packed5Vec.Insts.CoreCmpEq : core.cmp.Eq
   packed.packed5.Packed5Vec := {
@@ -3254,7 +3310,7 @@ def packed.packed5.Packed5Vec.Insts.CoreCmpEq : core.cmp.Eq
 }
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::get]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1098:4-1116:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1119:4-1137:5
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.get
@@ -3305,7 +3361,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::closure<'_0>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 959:54-959:77 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 980:54-980:77 -/
 def
   packed.packed5.DebugPacked5Vec.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
   (c : packed.packed5.DebugPacked5Vec.fmt.closure) (tupled_args : Std.Usize) :
@@ -3318,7 +3374,7 @@ def
   ok (i, c)
 
 /-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::closure<'_0>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 959:54-959:77 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 980:54-980:77 -/
 def
   packed.packed5.DebugPacked5Vec.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : packed.packed5.DebugPacked5Vec.fmt.closure) (i : Std.Usize) :
@@ -3330,7 +3386,7 @@ def
   ok i1
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 959:54-959:77 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 980:54-980:77 -/
 @[reducible]
 def
   packed.packed5.DebugPacked5Vec.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64
@@ -3341,7 +3397,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 959:54-959:77 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 980:54-980:77 -/
 @[reducible]
 def
   packed.packed5.DebugPacked5Vec.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64
@@ -3354,7 +3410,7 @@ def
 }
 
 /-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 958:4-961:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 979:4-982:5
     Visibility: public -/
 def packed.packed5.Packed5Vec.Insts.CoreFmtDebug.fmt
   (self : packed.packed5.Packed5Vec) (f : core.fmt.Formatter) :
@@ -3363,7 +3419,7 @@ def packed.packed5.Packed5Vec.Insts.CoreFmtDebug.fmt
   sorry
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 945:0-962:1 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 966:0-983:1 -/
 @[reducible]
 def packed.packed5.Packed5Vec.Insts.CoreFmtDebug : core.fmt.Debug
   packed.packed5.Packed5Vec := {
@@ -3371,7 +3427,7 @@ def packed.packed5.Packed5Vec.Insts.CoreFmtDebug : core.fmt.Debug
 }
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::{impl core::ops::function::FnMut<(((&'_ u64, &'_ u64), &'_ u64),), bool> for gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::closure}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1278:17-1281:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1299:17-1302:13 -/
 def
   packed.packed5.PackedFieldVecPacked5VecFp5Packed5U64U128U64U128.all_zero.closure.Insts.CoreOpsFunctionFnMutTuplePairPairSharedU64SharedU64SharedU64Bool.call_mut
   (c :
@@ -3392,7 +3448,7 @@ def
   ok (i6 = 0#u64, c)
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::{impl core::ops::function::FnOnce<(((&'_ u64, &'_ u64), &'_ u64),), bool> for gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::closure}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1278:17-1281:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1299:17-1302:13 -/
 def
   packed.packed5.PackedFieldVecPacked5VecFp5Packed5U64U128U64U128.all_zero.closure.Insts.CoreOpsFunctionFnOnceTuplePairPairSharedU64SharedU64SharedU64Bool.call_once
   (c :
@@ -3406,7 +3462,7 @@ def
   ok b
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::{impl core::ops::function::FnOnce<(((&'_ u64, &'_ u64), &'_ u64),), bool> for gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::closure}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1278:17-1281:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1299:17-1302:13 -/
 @[reducible]
 def
   packed.packed5.PackedFieldVecPacked5VecFp5Packed5U64U128U64U128.all_zero.closure.Insts.CoreOpsFunctionFnOnceTuplePairPairSharedU64SharedU64SharedU64Bool
@@ -3418,7 +3474,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::{impl core::ops::function::FnMut<(((&'_ u64, &'_ u64), &'_ u64),), bool> for gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::closure}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1278:17-1281:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1299:17-1302:13 -/
 @[reducible]
 def
   packed.packed5.PackedFieldVecPacked5VecFp5Packed5U64U128U64U128.all_zero.closure.Insts.CoreOpsFunctionFnMutTuplePairPairSharedU64SharedU64SharedU64Bool
@@ -3432,7 +3488,7 @@ def
 }
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1267:4-1282:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1288:4-1303:5
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.all_zero
@@ -3440,7 +3496,7 @@ def
   sorry
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::mul_assign]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1234:8-1241:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1255:8-1262:9
     Visibility: public -/
 @[rust_loop_body]
 def
@@ -3489,7 +3545,7 @@ def
     ok (cont (iter1, v8, v7, v6))
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::mul_assign]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1234:8-1241:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1255:8-1262:9
     Visibility: public -/
 @[rust_loop]
 def
@@ -3508,7 +3564,7 @@ def
     (iter, v, v1, v2)
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::mul_assign]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1228:4-1243:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1249:4-1264:5
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.mul_assign
@@ -3543,7 +3599,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::sub_assign]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1192:8-1199:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1213:8-1220:9
     Visibility: public -/
 @[rust_loop_body]
 def
@@ -3592,7 +3648,7 @@ def
     ok (cont (iter1, v8, v7, v6))
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::sub_assign]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1192:8-1199:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1213:8-1220:9
     Visibility: public -/
 @[rust_loop]
 def
@@ -3611,7 +3667,7 @@ def
     (iter, v, v1, v2)
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::sub_assign]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1186:4-1201:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1207:4-1222:5
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.sub_assign
@@ -3646,7 +3702,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::add_assign]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1150:8-1157:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1171:8-1178:9
     Visibility: public -/
 @[rust_loop_body]
 def
@@ -3695,7 +3751,7 @@ def
     ok (cont (iter1, v8, v7, v6))
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::add_assign]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1150:8-1157:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1171:8-1178:9
     Visibility: public -/
 @[rust_loop]
 def
@@ -3714,7 +3770,7 @@ def
     (iter, v, v1, v2)
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::add_assign]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1144:4-1159:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1165:4-1180:5
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.add_assign
@@ -3749,7 +3805,7 @@ def
     fail panic
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::len]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1069:4-1071:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1090:4-1092:5
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.len
@@ -3757,7 +3813,7 @@ def
   ok self.len_lanes
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::from_field_slice]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1032:8-1045:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1053:8-1066:9
     Visibility: public -/
 @[rust_loop_body]
 def
@@ -3818,7 +3874,7 @@ def
     else ok (cont (iter1, b01, b11, b2))
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::from_field_slice]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1032:8-1045:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1053:8-1066:9
     Visibility: public -/
 @[rust_loop]
 def
@@ -3836,7 +3892,7 @@ def
     (iter, b0, b1, b2)
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::from_field_slice]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1026:4-1054:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1047:4-1075:5
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.from_field_slice
@@ -3852,7 +3908,7 @@ def
   packed.packed5.Packed5Vec.mask_tail { b0 := b01, b1, b2, len_lanes := len }
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::zeros]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 990:4-998:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1011:4-1019:5
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.zeros
@@ -3862,7 +3918,7 @@ def
   ok { b0 := v, b1 := v, b2 := v, len_lanes := len }
 
 /-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::is_empty]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 968:0-1283:1
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 989:0-1304:1
     Visibility: public -/
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128.is_empty
@@ -3873,7 +3929,7 @@ def
   ok (i = 0#usize)
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 968:0-1283:1 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 989:0-1304:1 -/
 @[reducible]
 def
   packed.packed5.Packed5Vec.Insts.Gf2_algebraPackedPackedFieldVecFp5Packed5U64U128U64U128
@@ -3907,7 +3963,7 @@ def
 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5}::fold_mul_first_n]: loop body 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1346:8-1349:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1367:8-1370:9
     Visibility: public -/
 @[rust_loop_body]
 def packed.packed5.Packed5.fold_mul_first_n_loop.body
@@ -3928,7 +3984,7 @@ def packed.packed5.Packed5.fold_mul_first_n_loop.body
     ok (cont (iter1, acc1))
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5}::fold_mul_first_n]: loop 0:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1346:8-1349:9
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1367:8-1370:9
     Visibility: public -/
 @[rust_loop]
 def packed.packed5.Packed5.fold_mul_first_n_loop
@@ -3942,7 +3998,7 @@ def packed.packed5.Packed5.fold_mul_first_n_loop
     (iter, acc)
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5}::fold_mul_first_n]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1333:4-1351:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1354:4-1372:5
     Visibility: public -/
 def packed.packed5.Packed5.fold_mul_first_n
   (self : packed.packed5.Packed5) (n : Std.Usize) :
@@ -3974,7 +4030,7 @@ def packed.packed5.Packed5.fold_mul_first_n
     fail panic
 
 /-- [gf2_algebra::packed::packed5::{impl core::cmp::PartialEq<gf2_algebra::packed::packed5::Packed5Matrix> for gf2_algebra::packed::packed5::Packed5Matrix}::eq]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1412:4-1414:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1433:4-1435:5
     Visibility: public -/
 def packed.packed5.Packed5Matrix.Insts.CoreCmpPartialEqPacked5Matrix.eq
   (self : packed.packed5.Packed5Matrix) (other : packed.packed5.Packed5Matrix)
@@ -3992,7 +4048,7 @@ def packed.packed5.Packed5Matrix.Insts.CoreCmpPartialEqPacked5Matrix.eq
   else ok false
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::cmp::PartialEq<gf2_algebra::packed::packed5::Packed5Matrix> for gf2_algebra::packed::packed5::Packed5Matrix}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1410:0-1415:1 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1431:0-1436:1 -/
 @[reducible]
 def packed.packed5.Packed5Matrix.Insts.CoreCmpPartialEqPacked5Matrix :
   core.cmp.PartialEq packed.packed5.Packed5Matrix packed.packed5.Packed5Matrix
@@ -4001,7 +4057,7 @@ def packed.packed5.Packed5Matrix.Insts.CoreCmpPartialEqPacked5Matrix :
 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Matrix}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1417:0-1417:28 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1438:0-1438:28 -/
 @[reducible]
 def packed.packed5.Packed5Matrix.Insts.CoreCmpEq : core.cmp.Eq
   packed.packed5.Packed5Matrix := {
@@ -4012,7 +4068,7 @@ def packed.packed5.Packed5Matrix.Insts.CoreCmpEq : core.cmp.Eq
 }
 
 /-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::closure<'_0, '_1>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1428:25-1428:59 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1449:25-1449:59 -/
 def
   packed.packed5.DebugPacked5Matrix.fmt.closure.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64.call_mut
   (c : packed.packed5.DebugPacked5Matrix.fmt.closure.closure)
@@ -4030,7 +4086,7 @@ def
   ok (i1, c)
 
 /-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::closure<'_0, '_1>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1428:25-1428:59 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1449:25-1449:59 -/
 def
   packed.packed5.DebugPacked5Matrix.fmt.closure.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64.call_once
   (c : packed.packed5.DebugPacked5Matrix.fmt.closure.closure) (i : Std.Usize) :
@@ -4042,7 +4098,7 @@ def
   ok i1
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::{impl core::ops::function::FnOnce<(usize,), u64> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::closure<'_0, '_1>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1428:25-1428:59 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1449:25-1449:59 -/
 @[reducible]
 def
   packed.packed5.DebugPacked5Matrix.fmt.closure.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeU64
@@ -4053,7 +4109,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::{impl core::ops::function::FnMut<(usize,), u64> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::closure<'_0, '_1>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1428:25-1428:59 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1449:25-1449:59 -/
 @[reducible]
 def
   packed.packed5.DebugPacked5Matrix.fmt.closure.closure.Insts.CoreOpsFunctionFnMutTupleUsizeU64
@@ -4066,7 +4122,7 @@ def
 }
 
 /-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::{impl core::ops::function::FnMut<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure<'_0>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1426:17-1430:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1447:17-1451:13 -/
 def
   packed.packed5.DebugPacked5Matrix.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeVecU64.call_mut
   (c : packed.packed5.DebugPacked5Matrix.fmt.closure) (tupled_args : Std.Usize)
@@ -4077,7 +4133,7 @@ def
   sorry
 
 /-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::{impl core::ops::function::FnOnce<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure<'_0>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1426:17-1430:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1447:17-1451:13 -/
 def
   packed.packed5.DebugPacked5Matrix.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeVecU64.call_once
   (c : packed.packed5.DebugPacked5Matrix.fmt.closure) (i : Std.Usize) :
@@ -4089,7 +4145,7 @@ def
   ok v
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::{impl core::ops::function::FnOnce<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1426:17-1430:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1447:17-1451:13 -/
 @[reducible]
 def
   packed.packed5.DebugPacked5Matrix.fmt.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeVecU64
@@ -4100,7 +4156,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::{impl core::ops::function::FnMut<(usize,), alloc::vec::Vec<u64>> for gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure<'_0>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1426:17-1430:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1447:17-1451:13 -/
 @[reducible]
 def
   packed.packed5.DebugPacked5Matrix.fmt.closure.Insts.CoreOpsFunctionFnMutTupleUsizeVecU64
@@ -4113,7 +4169,7 @@ def
 }
 
 /-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1424:4-1437:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1445:4-1458:5
     Visibility: public -/
 def packed.packed5.Packed5Matrix.Insts.CoreFmtDebug.fmt
   (self : packed.packed5.Packed5Matrix) (f : core.fmt.Formatter) :
@@ -4122,7 +4178,7 @@ def packed.packed5.Packed5Matrix.Insts.CoreFmtDebug.fmt
   sorry
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1423:0-1438:1 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1444:0-1459:1 -/
 @[reducible]
 def packed.packed5.Packed5Matrix.Insts.CoreFmtDebug : core.fmt.Debug
   packed.packed5.Packed5Matrix := {
@@ -4130,7 +4186,7 @@ def packed.packed5.Packed5Matrix.Insts.CoreFmtDebug : core.fmt.Debug
 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure::{impl core::ops::function::FnMut<(usize,), gf2_core::gfp::Fp<5u64>> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure::closure<'_0, '_1, '_2>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1495:57-1495:79 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1516:57-1516:79 -/
 def
   packed.packed5.Packed5Matrix.from_row_major.closure.closure.Insts.CoreOpsFunctionFnMutTupleUsizeFp5.call_mut
   (c : packed.packed5.Packed5Matrix.from_row_major.closure.closure)
@@ -4145,7 +4201,7 @@ def
   ok (f, c)
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure::{impl core::ops::function::FnOnce<(usize,), gf2_core::gfp::Fp<5u64>> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure::closure<'_0, '_1, '_2>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1495:57-1495:79 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1516:57-1516:79 -/
 def
   packed.packed5.Packed5Matrix.from_row_major.closure.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeFp5.call_once
   (c : packed.packed5.Packed5Matrix.from_row_major.closure.closure)
@@ -4158,7 +4214,7 @@ def
   ok f
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure::{impl core::ops::function::FnOnce<(usize,), gf2_core::gfp::Fp<5u64>> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure::closure<'_0, '_1, '_2>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1495:57-1495:79 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1516:57-1516:79 -/
 @[reducible]
 def
   packed.packed5.Packed5Matrix.from_row_major.closure.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeFp5
@@ -4170,7 +4226,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure::{impl core::ops::function::FnMut<(usize,), gf2_core::gfp::Fp<5u64>> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure::closure<'_0, '_1, '_2>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1495:57-1495:79 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1516:57-1516:79 -/
 @[reducible]
 def
   packed.packed5.Packed5Matrix.from_row_major.closure.closure.Insts.CoreOpsFunctionFnMutTupleUsizeFp5
@@ -4184,7 +4240,7 @@ def
 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_mut]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1494:17-1497:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13 -/
 def
   packed.packed5.Packed5Matrix.from_row_major.closure.Insts.CoreOpsFunctionFnMutTupleUsizePacked5Vec.call_mut
   (c : packed.packed5.Packed5Matrix.from_row_major.closure)
@@ -4195,7 +4251,7 @@ def
   sorry
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{impl core::ops::function::FnOnce<(usize,), gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'_0, '_1, '_2>}::call_once]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1494:17-1497:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13 -/
 def
   packed.packed5.Packed5Matrix.from_row_major.closure.Insts.CoreOpsFunctionFnOnceTupleUsizePacked5Vec.call_once
   (c : packed.packed5.Packed5Matrix.from_row_major.closure) (i : Std.Usize) :
@@ -4207,7 +4263,7 @@ def
   ok pv
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{impl core::ops::function::FnOnce<(usize,), gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'_0, '_1, '_2>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1494:17-1497:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13 -/
 @[reducible]
 def
   packed.packed5.Packed5Matrix.from_row_major.closure.Insts.CoreOpsFunctionFnOnceTupleUsizePacked5Vec
@@ -4219,7 +4275,7 @@ def
 }
 
 /-- Trait implementation: [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::{impl core::ops::function::FnMut<(usize,), gf2_algebra::packed::packed5::Packed5Vec> for gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major::closure<'_0, '_1, '_2>}]
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1494:17-1497:13 -/
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1515:17-1518:13 -/
 @[reducible]
 def
   packed.packed5.Packed5Matrix.from_row_major.closure.Insts.CoreOpsFunctionFnMutTupleUsizePacked5Vec
@@ -4232,7 +4288,7 @@ def
 }
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::from_row_major]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1484:4-1504:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1505:4-1525:5
     Visibility: public -/
 def packed.packed5.Packed5Matrix.from_row_major
   (data : Slice (gf2_core.gfp.Fp 5#u64)) (rows : Std.Usize) (cols : Std.Usize)
@@ -4242,21 +4298,21 @@ def packed.packed5.Packed5Matrix.from_row_major
   sorry
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::rows]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1522:4-1524:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1543:4-1545:5
     Visibility: public -/
 def packed.packed5.Packed5Matrix.impl.rows
   (self : packed.packed5.Packed5Matrix) : Result Std.Usize := do
   ok self.rows
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::cols]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1542:4-1544:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1563:4-1565:5
     Visibility: public -/
 def packed.packed5.Packed5Matrix.impl.cols
   (self : packed.packed5.Packed5Matrix) : Result Std.Usize := do
   ok self.cols
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::column]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1578:4-1586:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1599:4-1607:5
     Visibility: public -/
 def packed.packed5.Packed5Matrix.column
   (self : packed.packed5.Packed5Matrix) (j : Std.Usize) :
@@ -4284,7 +4340,7 @@ def packed.packed5.Packed5Matrix.column
     fail panic
 
 /-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::packed5::Packed5Matrix}::get]:
-    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1617:4-1625:5
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1638:4-1646:5
     Visibility: public -/
 def packed.packed5.Packed5Matrix.get
   (self : packed.packed5.Packed5Matrix) (i : Std.Usize) (j : Std.Usize) :

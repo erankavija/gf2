@@ -541,18 +541,6 @@ def patch_trait_default_fields(lines: list[str]) -> tuple[list[str], int]:
     patched = 0
     replacements = [
         (
-            r"WINOGRAD_THRESHOLD := field\.traits\.FiniteField\.WINOGRAD_THRESHOLD\.default\n"
-            r"    \(?[^\n]+\n(?:    [^\n]+\n)?",
-            "WINOGRAD_THRESHOLD := ok 32#usize\n",
-        ),
-        (
-            r"TRI_BASE_THRESHOLD := field\.traits\.FiniteField\.TRI_BASE_THRESHOLD\.default\n"
-            r"    \(?[^\n]+\n(?:    [^\n]+\n)?",
-            # Mirrors the Rust SSOT in crates/gf2-core/src/field/traits.rs.
-            # Updated to 8 by jit:73ec5da3 R3 after the empirical sweep.
-            "TRI_BASE_THRESHOLD := ok 8#usize\n",
-        ),
-        (
             r"theorem_4_operand_bound :=\n"
             r"    [^\n]+\.theorem_4_operand_bound\n"
             r"(?:    [^\n]+\n)?",

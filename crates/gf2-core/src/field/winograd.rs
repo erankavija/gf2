@@ -739,9 +739,9 @@ mod tests {
 
     const MERSENNE_31: u64 = 2_147_483_647;
 
-    /// Threshold used throughout the test module. Reads the per-field
-    /// trait default so the tests track any future override.
-    const TEST_THRESHOLD: usize = <Fp<65_521> as FiniteField>::WINOGRAD_THRESHOLD;
+    /// Threshold used throughout the test module. Names the conservative
+    /// source constant used by `gemm.winograd_min_dim`.
+    const TEST_THRESHOLD: usize = WINOGRAD_MIN_DIM_DEFAULT;
 
     fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
@@ -1292,7 +1292,8 @@ mod tests {
         // each recursive-multiply output is itself an intermediate at
         // this level. At the inner levels the base-case assertion
         // already fired; at the outermost level the base-case may not
-        // have been reached (when WINOGRAD_THRESHOLD > min dim) so we
+        // have been reached (when the resolved threshold exceeds the
+        // minimum dimension), so we
         // assert the M_i bound explicitly here too. The redundancy is
         // deliberate — the reviewer's strict "every intermediate"
         // reading requires the M_i to be named and bound-checked.
@@ -1479,20 +1480,5 @@ mod tests {
             let got = gemm_winograd_with_threshold(&a, &b, threshold);
             assert_eq!(got, expected, "threshold = {}", threshold);
         }
-    }
-
-    #[test]
-    fn test_winograd_threshold_trait_default() {
-        // Mersenne-31 + Gf2m8 inherit the default 128.
-        assert_eq!(
-            <Fp<MERSENNE_31> as FiniteField>::WINOGRAD_THRESHOLD,
-            128,
-            "Mersenne-31 uses default threshold"
-        );
-        assert_eq!(
-            <WinoGf2m8 as FiniteField>::WINOGRAD_THRESHOLD,
-            128,
-            "Gf2m8 uses default threshold"
-        );
     }
 }

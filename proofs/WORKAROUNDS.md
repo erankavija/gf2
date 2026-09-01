@@ -144,22 +144,20 @@ arithmetic formula lives in the trait impl. Targeting the inherent wrappers
 gives a stable, non-dispatch-indirected proof target (D2 sketch §5, Option A).
 
 `scripts/fix-aeneas-gf2algebra.py` rewrites the transitively-extracted
-`gf2_core::gfp::Fp` trait-impl wrappers as `axiom`s. These impls are pulled in
-by Charon because `PackedField<Fp<3>>` has `Fp<3> : FiniteField` as a parent
-bound, but they are never elaborated at runtime by the bipedal3 ops (which are
-pure bitwise on `Std.U64`). Without this rewrite, Aeneas produces unresolvable
-references in two ways:
+`gf2_core::gfp::Fp` operator wrappers as `axiom`s. These impls are pulled in by
+Charon because `PackedField<Fp<3>>` has `Fp<3> : FiniteField` as a parent bound,
+but they are never elaborated at runtime by the bipedal3 ops (which are pure
+bitwise on `Std.U64`). Their bodies reference definitions such as
+`gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp.add` that are opaque in the narrow
+extraction and would otherwise surface as `Unknown constant`.
 
-1. The `FiniteField` impl on `Fp<P>` uses `*.default` field values that refer
-   recursively to the impl itself
-   (`WINOGRAD_THRESHOLD.default (… P)`), surfacing as
-   `impl_def: could not resolve recursive fields`.
-2. The per-trait `add/sub/mul/…` Fp impls reference body-defs
-   (`gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp.add`) that are opaque in our
-   narrow extraction, surfacing as `Unknown constant`.
-
-Both are eliminated by axiomatising the impl wrappers — the bipedal3 proofs
-never project them.
+The `FiniteField` dictionary itself is a non-recursive generated `def` and is
+left intact. An explicit allowlist axiomatizes the ten wrappers whose method
+bodies are opaque: owned and shared add/sub/mul/div, plus owned and shared
+add-assign. The generated Neg wrapper remains a transparent `def`. Missing,
+duplicate, or unknown Fp `CoreOps` dictionaries stop post-processing so
+extraction drift cannot silently widen the workaround; the bipedal3 proofs
+never project the ten allowlisted dictionaries.
 
 The gf2-algebra `FunsExternal.lean` is always regenerated from the
 auto-generated template (no hand-edits are needed: bipedal3 uses only `&&&`,

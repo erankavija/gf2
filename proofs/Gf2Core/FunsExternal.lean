@@ -93,11 +93,6 @@ axiom core.num.U64.BITS : Result Std.U32
 @[rust_fun "core::num::{u128}::saturating_mul"]
 axiom core.num.U128.saturating_mul : Std.U128 → Std.U128 → Result Std.U128
 
-axiom field.traits.FiniteField.WINOGRAD_THRESHOLD.default
-  {Self Char Wide : Type} : field.traits.FiniteField Self Char Wide → Result Std.Usize
-axiom field.traits.FiniteField.TRI_BASE_THRESHOLD.default
-  {Self Char Wide : Type} : field.traits.FiniteField Self Char Wide → Result Std.Usize
-
 @[rust_fun "core::option::{core::option::Option<@T>}::and_then"]
 axiom core.option.Option.and_then
   {T U F : Type} (opsfunctionFnOnceFTupleTOptionUInst :
