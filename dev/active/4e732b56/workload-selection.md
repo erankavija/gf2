@@ -208,7 +208,7 @@ receipt](../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agree
 records matching dimensions, `bit_exact_identical=True`, and `same_code=True`.
 This gives a consumer an independent check on the shape of the cost curve.
 The elimination route is primary because it is measurably faster at every row
-above B1, by 27.9× at T2S; the basis-vector route is retained as secondary
+above B1, by 28.2× at T2S; the basis-vector route is retained as secondary
 because it is the route the current gf2 implementation takes, which makes it
 the like-for-like comparison point for a non-regression receipt.
 

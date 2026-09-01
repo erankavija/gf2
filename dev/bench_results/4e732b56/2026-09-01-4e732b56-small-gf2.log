@@ -2,7 +2,7 @@
 # environment: GF2_SURVEY_CODES=B1\,B2\,B3\,T2S
 nice: cannot set niceness: Permission denied
 # harness: survey-gf2-side
-# gf2_revision: 801d89852847afc789e9ddf26c1f1ebd3efb2a8b
+# gf2_revision: 38e0335a092bb1d7dc851ff91ee7d156d1c72996
 # trials_per_cell: 7
 # warmup_reps: 2
 # cell_budget_s: 90
@@ -10,32 +10,32 @@ nice: cannot set niceness: Permission denied
 # rayon_num_threads: None
 # codes_selected: B1,B2,B3,T2S
 # code B1: n=15 k=5 t=3
-#   B1 probe: 0.000002 s per single encode
+#   B1 probe: 0.000001 s per single encode
 #   B1 encode-batch batch=1
-#   reps=3817 spent=0.03s trials=7
+#   reps=3788 spent=0.03s trials=7
 #   B1 encode-loop batch=1
-#   reps=3847 spent=0.03s trials=7
+#   reps=3732 spent=0.03s trials=7
 #   B1 encode-batch batch=16
-#   reps=413 spent=0.03s trials=7
+#   reps=429 spent=0.03s trials=7
 #   B1 encode-loop batch=16
-#   reps=409 spent=0.03s trials=7
+#   reps=403 spent=0.03s trials=7
 #   B1 encode-batch batch=256
-#   reps=23 spent=0.03s trials=7
+#   reps=24 spent=0.04s trials=7
 #   B1 encode-loop batch=256
-#   reps=23 spent=0.03s trials=7
+#   reps=24 spent=0.04s trials=7
 #   B1 encode-batch batch=4096
 #   reps=2 spent=0.05s trials=7
 #   B1 encode-loop batch=4096
 #   reps=2 spent=0.05s trials=7
 #   B1 W2 projected 0.000 s per materialization
 #   B1 generator-matrix
-#   reps=395 spent=0.03s trials=7
+#   reps=391 spent=0.03s trials=7
 # code B2: n=127 k=64 t=10
 #   B2 probe: 0.000034 s per single encode
 #   B2 encode-batch batch=1
 #   reps=137 spent=0.03s trials=7
 #   B2 encode-loop batch=1
-#   reps=129 spent=0.03s trials=7
+#   reps=138 spent=0.03s trials=7
 #   B2 encode-batch batch=16
 #   reps=10 spent=0.04s trials=7
 #   B2 encode-loop batch=16
@@ -47,7 +47,7 @@ nice: cannot set niceness: Permission denied
 #   B2 encode-batch batch=4096
 #   reps=1 spent=0.96s trials=7
 #   B2 encode-loop batch=4096
-#   reps=1 spent=0.97s trials=7
+#   reps=1 spent=0.95s trials=7
 #   B2 W2 projected 0.002 s per materialization
 #   B2 generator-matrix
 #   reps=5 spent=0.04s trials=7
@@ -56,7 +56,7 @@ nice: cannot set niceness: Permission denied
 #   B3 encode-batch batch=1
 #   reps=73 spent=0.03s trials=7
 #   B3 encode-loop batch=1
-#   reps=72 spent=0.03s trials=7
+#   reps=74 spent=0.03s trials=7
 #   B3 encode-batch batch=16
 #   reps=5 spent=0.04s trials=7
 #   B3 encode-loop batch=16
@@ -64,16 +64,16 @@ nice: cannot set niceness: Permission denied
 #   B3 encode-batch batch=256
 #   reps=1 spent=0.12s trials=7
 #   B3 encode-loop batch=256
-#   reps=1 spent=0.12s trials=7
+#   reps=1 spent=0.11s trials=7
 #   B3 encode-batch batch=4096
 #   reps=1 spent=1.85s trials=7
 #   B3 encode-loop batch=4096
-#   reps=1 spent=1.85s trials=7
+#   reps=1 spent=1.84s trials=7
 #   B3 W2 projected 0.015 s per materialization
 #   B3 generator-matrix
 #   reps=1 spent=0.05s trials=7
 # code T2S: n=7200 k=7032 t=12
-#   T2S probe: 0.008849 s per single encode
+#   T2S probe: 0.008936 s per single encode
 #   T2S encode-batch batch=1
 #   reps=1 spent=0.06s trials=7
 #   T2S encode-loop batch=1
@@ -83,13 +83,13 @@ nice: cannot set niceness: Permission denied
 #   T2S encode-loop batch=16
 #   reps=1 spent=1.03s trials=7
 #   T2S encode-batch batch=256
-#   reps=1 spent=18.08s trials=7
+#   reps=1 spent=16.35s trials=7
 #   T2S encode-loop batch=256
-#   reps=1 spent=16.51s trials=7
+#   reps=1 spent=16.37s trials=7
 #   T2S encode-batch batch=4096
-#   reps=1 spent=117.30s trials=3
+#   reps=1 spent=112.55s trials=3
 #   T2S encode-loop batch=4096
-#   reps=1 spent=91.22s trials=2
-#   T2S W2 projected 62.227 s per materialization
+#   reps=1 spent=112.45s trials=3
+#   T2S W2 projected 62.839 s per materialization
 #   T2S generator-matrix
-#   reps=1 spent=100.81s trials=3
+#   reps=1 spent=95.06s trials=3
