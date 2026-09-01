@@ -27,7 +27,7 @@
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-01T01:55:15.532406282Z",
+      "updated_at": "2026-09-01T02:23:12.241238182Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -56,5 +56,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Remove the trait selectors and regenerate the proof surface",
-  "updated_at": "2026-09-01T02:18:10.608103864Z"
+  "updated_at": "2026-09-01T02:23:12.241238182Z"
 }
