@@ -1,6 +1,6 @@
 //! Reference generator and parity-check matrix materialization for BCH codes.
 //!
-//! The construction uses the coefficient-vector convention from [`spec`]:
+//! The construction uses the coefficient-vector convention from [`crate::bch::spec`]:
 //! coordinate `i` is the coefficient of `x^i`. The generator row at message
 //! coordinate `i` is therefore the coefficient vector of `x^i g(x)`. The
 //! parity-check rows are the non-wrapping shifts of the reversed quotient
