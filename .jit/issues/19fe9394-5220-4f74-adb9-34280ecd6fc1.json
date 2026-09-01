@@ -17,6 +17,11 @@
       "status": "passed",
       "updated_at": "2026-09-01T05:34:33.449288661Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T06:22:23.690282503Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "19fe9394-5220-4f74-adb9-34280ecd6fc1",
@@ -29,5 +34,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Generic irreducibility validation with reusable certificates",
-  "updated_at": "2026-09-01T05:34:33.449288661Z"
+  "updated_at": "2026-09-01T06:22:23.690282503Z"
 }
