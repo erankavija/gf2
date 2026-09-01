@@ -86,14 +86,53 @@
 //!
 //! # Certificates
 //!
-//! A certificate is evidence that a check has already run. Constructors that
-//! need a validated fact take a certificate instead of re-deriving it, which
-//! is what makes repeated construction cheap: certificates are `Arc`-backed,
-//! carry [`FieldId`]s, and decide reuse by comparison
+//! A certificate is evidence that a check has already run.
+//! [`ExtensionCertificate`] is `Arc`-backed, carries the two [`FieldId`]s it
+//! covers, and decides reuse by identity comparison
 //! ([`ExtensionCertificate::matches`]) rather than by re-derivation.
-//! [`CertificateBasis`] records what the validity rests on, including the
-//! honest [`CertificateBasis::Declared`] for an [`ExtConfig`] non-residue,
-//! which is trusted at the type level rather than verified.
+//! [`CertificateBasis`] records what the validity rests on.
+//!
+//! Two constructors produce evidence, and two consume it:
+//!
+//! - [`BinaryPrimeExt::new`] decides the runtime field's defining polynomial
+//!   with [`prove_irreducible`] and records
+//!   [`CertificateBasis::Proved`]. Deciding is `O(m³)`.
+//! - [`ConstExt::new`] records [`CertificateBasis::Declared`], the honest
+//!   basis for an [`ExtConfig`] non-residue, which is trusted at the type
+//!   level rather than verified.
+//! - [`BinaryPrimeExt::from_certificate`] and
+//!   [`ConstExt::from_certificate`] take a certificate a caller already
+//!   holds, verify it against the pair the witness names, and skip the
+//!   validation entirely. This is what makes repeated construction over one
+//!   presentation cheap.
+//!
+//! [`crate::field::irreducibility`] is the other producer: proving a
+//! polynomial irreducible yields an [`IrreducibilityCertificate`](crate::field::irreducibility::IrreducibilityCertificate), and
+//! [`IrreducibilityCertificate::extension_certificate`](crate::field::irreducibility::IrreducibilityCertificate::extension_certificate) promotes it to the
+//! `Proved` evidence the two `from_certificate` constructors accept.
+//! [`TrivialExt`] has no such constructor because it performs no validation
+//! to reuse: $E = B$ holds for any carrier by construction.
+//!
+//! ```
+//! use gf2_core::field::extension::{BinaryPrimeExt, CertificateBasis, FieldExtension};
+//! use gf2_core::gf2m::Gf2mField;
+//!
+//! // Deciding happens once.
+//! let field = Gf2mField::new(4, 0b10011);
+//! let decided = BinaryPrimeExt::new(field.clone())?;
+//! assert_eq!(decided.certificate().basis(), CertificateBasis::Proved);
+//!
+//! // Every later construction over the same presentation reuses the evidence.
+//! let held = decided.certificate().clone();
+//! assert!(held.matches(decided.base_id(), decided.ext_id()));
+//! let reused = BinaryPrimeExt::from_certificate(field, held)?;
+//! assert_eq!(reused, decided);
+//! # Ok::<(), gf2_core::field::extension::FieldError>(())
+//! ```
+//!
+//! [`OrderCertificate`] follows the same shape for multiplicative order:
+//! factoring $|E^{*}|$ once serves every divisor, through
+//! [`OrderCertificate::divisor`].
 //!
 //! # Errors
 //!
@@ -106,7 +145,8 @@ use std::fmt;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use crate::field::{ConstField, FiniteField, FiniteFieldExt};
+use crate::field::irreducibility::prove_irreducible;
+use crate::field::{ConstField, FieldPoly, FiniteField, FiniteFieldExt};
 use crate::gf2m::{Gf2mElement_, Gf2mField_, Gf2mWide, Gf2mWideConfig, UintExt};
 use crate::gfp::Fp;
 use crate::gfpn::{CubicExt, ExtConfig, QuadraticExt};
@@ -951,8 +991,13 @@ pub trait FieldIdentity: FiniteField<Characteristic = u64> {
 /// coefficient bits of $f$, lowest first.
 fn binary_field_id(coefficients: Vec<u64>) -> Result<FieldId, FieldError> {
     let base = FieldId::prime(2)?;
-    let modulus = ModulusId::new(&base, coefficients)?;
-    FieldId::quotient(base, modulus, Basis::Polynomial)
+    binary_field_id_from_modulus(ModulusId::new(&base, coefficients)?)
+}
+
+/// Builds the identity of $\mathrm{GF}(2)\lbrack x\rbrack/(f)$ from an already
+/// validated modulus.
+fn binary_field_id_from_modulus(modulus: ModulusId) -> Result<FieldId, FieldError> {
+    FieldId::quotient(FieldId::prime(2)?, modulus, Basis::Polynomial)
 }
 
 /// Returns the identity of a runtime binary extension field.
@@ -963,13 +1008,36 @@ fn binary_field_id(coefficients: Vec<u64>) -> Result<FieldId, FieldError> {
 /// of degree `field.degree()`, which violates the contract of
 /// [`Gf2mField_::new`].
 fn gf2m_field_id<V: UintExt>(field: &Gf2mField_<V>) -> Result<FieldId, FieldError> {
+    binary_field_id_from_modulus(gf2m_modulus_id(field)?)
+}
+
+/// Returns the defining polynomial of a runtime binary extension field in
+/// canonical coordinates.
+///
+/// # Errors
+///
+/// [`FieldError::NonMonicModulus`] when the polynomial has no term of degree
+/// `field.degree()`, which violates the contract of [`Gf2mField_::new`].
+fn gf2m_modulus_id<V: UintExt>(field: &Gf2mField_<V>) -> Result<ModulusId, FieldError> {
     let degree = field.degree();
     let polynomial = field.primitive_polynomial();
     let mut coefficients = Vec::with_capacity(degree + 1);
     for i in 0..=degree {
         coefficients.push(u64::from(polynomial.bit(i as u32)));
     }
-    binary_field_id(coefficients)
+    ModulusId::new(&FieldId::prime(2)?, coefficients)
+}
+
+/// Reads a binary modulus back as a polynomial over $\mathrm{GF}(2)$, the
+/// form [`prove_irreducible`] decides.
+fn binary_modulus_polynomial(modulus: &ModulusId) -> FieldPoly<Fp<2>> {
+    FieldPoly::new(
+        modulus
+            .coefficients()
+            .iter()
+            .map(|&coordinate| Fp::<2>::new(coordinate))
+            .collect(),
+    )
 }
 
 /// Returns the identity of a compile-time multi-word binary extension field.
@@ -1785,26 +1853,94 @@ pub struct BinaryPrimeExt<V: UintExt = u64> {
 }
 
 impl<V: UintExt> BinaryPrimeExt<V> {
-    /// Builds the witness for $\mathrm{GF}(2) \subset \mathrm{GF}(2^m)$.
+    /// Builds the witness for $\mathrm{GF}(2) \subset \mathrm{GF}(2^m)$,
+    /// deciding the defining polynomial's irreducibility.
     ///
-    /// The certificate records [`CertificateBasis::Declared`], because
-    /// [`Gf2mField_::new`] takes the irreducibility of its defining
-    /// polynomial on trust, and [`CertificateBasis::Identity`] when $m = 1$,
-    /// where the degree-one quotient collapses onto $\mathrm{GF}(2)$ itself.
+    /// [`Gf2mField_::new`] takes irreducibility on trust, so a runtime field
+    /// can name a quotient ring that is not a field. This constructor settles
+    /// the question with [`prove_irreducible`] and records the answer as
+    /// [`CertificateBasis::Proved`]. When $m = 1$ the degree-one quotient
+    /// collapses onto $\mathrm{GF}(2)$ itself, which is
+    /// [`CertificateBasis::Identity`] and has nothing to decide.
+    ///
+    /// Deciding costs `O(m³)` polynomial-coefficient operations. Repeated
+    /// construction over one presentation should hold the certificate and go
+    /// through [`from_certificate`](Self::from_certificate), which skips the
+    /// decision entirely.
     ///
     /// # Errors
     ///
-    /// [`FieldError::NonMonicModulus`] when the field's defining polynomial
-    /// has no term of degree `m`, violating the contract of
-    /// [`Gf2mField_::new`].
+    /// - [`FieldError::NonMonicModulus`] when the field's defining polynomial
+    ///   has no term of degree `m`, violating the contract of
+    ///   [`Gf2mField_::new`].
+    /// - [`FieldError::ReducibleModulus`] with a [`FactorWitness`] when the
+    ///   defining polynomial factors, so the carrier is not a field.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::extension::{BinaryPrimeExt, FieldError};
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// // x^4 + 1 = (x + 1)^4 is monic of degree four, and not a field modulus.
+    /// assert!(matches!(
+    ///     BinaryPrimeExt::new(Gf2mField::new(4, 0b10001)),
+    ///     Err(FieldError::ReducibleModulus { .. })
+    /// ));
+    /// ```
     pub fn new(field: Gf2mField_<V>) -> Result<Self, FieldError> {
         let base = FieldId::prime(2)?;
-        let ext = gf2m_field_id(&field)?;
-        let certificate = if ext == base {
+        let modulus = gf2m_modulus_id(&field)?;
+        let certificate = if modulus.degree() == 1 {
+            // The quotient collapses onto GF(2); every monic linear modulus
+            // is irreducible, so there is nothing to decide.
             ExtensionCertificate::trivial(base)
         } else {
-            ExtensionCertificate::from_parts(base, ext, CertificateBasis::Declared)?
+            prove_irreducible(&binary_modulus_polynomial(&modulus), &Fp::<2>::new(0))?
+                .extension_certificate()
         };
+        Ok(Self { field, certificate })
+    }
+
+    /// Builds the witness from evidence that has already been established,
+    /// performing no decision procedure of its own.
+    ///
+    /// This is the reuse path [`CertificateBasis`] exists for: the
+    /// irreducibility decision that [`new`](Self::new) runs is `O(m³)`, and a
+    /// caller constructing repeatedly over one presentation pays it once and
+    /// presents the resulting certificate here. Verification is an identity
+    /// comparison against the pair `field` names, never a re-derivation.
+    ///
+    /// The certificate is taken as evidence. Supplying one whose basis is
+    /// [`CertificateBasis::Declared`] for a modulus that is not irreducible
+    /// yields a witness over a carrier that is not a field, exactly as the
+    /// declaration claims; that is what makes the variant honest rather than
+    /// safe.
+    ///
+    /// # Errors
+    ///
+    /// - [`FieldError::NonMonicModulus`] when the field's defining polynomial
+    ///   has no term of degree `m`.
+    /// - [`FieldError::IdentityMismatch`] when the certificate covers a
+    ///   different pair than the one `field` names.
+    pub fn from_certificate(
+        field: Gf2mField_<V>,
+        certificate: ExtensionCertificate,
+    ) -> Result<Self, FieldError> {
+        let base = FieldId::prime(2)?;
+        if certificate.base_id() != &base {
+            return Err(FieldError::IdentityMismatch {
+                expected: base,
+                found: certificate.base_id().clone(),
+            });
+        }
+        let ext = gf2m_field_id(&field)?;
+        if certificate.ext_id() != &ext {
+            return Err(FieldError::IdentityMismatch {
+                expected: ext,
+                found: certificate.ext_id().clone(),
+            });
+        }
         Ok(Self { field, certificate })
     }
 
@@ -1961,6 +2097,40 @@ impl<E: ConstSimpleExtension> ConstExt<E> {
             marker: PhantomData,
         }
     }
+
+    /// Builds the witness from evidence that has already been established.
+    ///
+    /// [`new`](Self::new) records [`CertificateBasis::Declared`], because an
+    /// [`ExtConfig`] non-residue is trusted at the type level rather than
+    /// verified. A caller that has decided the binomial modulus — through
+    /// [`prove_irreducible`], or through a verified registry — presents the
+    /// resulting certificate here instead, so the witness carries the stronger
+    /// basis and the structural checks are not repeated.
+    ///
+    /// # Errors
+    ///
+    /// [`FieldError::IdentityMismatch`] when the certificate covers a
+    /// different pair than the one `E` and its base name.
+    pub fn from_certificate(certificate: ExtensionCertificate) -> Result<Self, FieldError> {
+        let base = <E::ConstBase as ConstField>::zero().field_id();
+        if certificate.base_id() != &base {
+            return Err(FieldError::IdentityMismatch {
+                expected: base,
+                found: certificate.base_id().clone(),
+            });
+        }
+        let ext = <E as ConstField>::zero().field_id();
+        if certificate.ext_id() != &ext {
+            return Err(FieldError::IdentityMismatch {
+                expected: ext,
+                found: certificate.ext_id().clone(),
+            });
+        }
+        Ok(Self {
+            certificate,
+            marker: PhantomData,
+        })
+    }
 }
 
 impl<E: ConstSimpleExtension> Default for ConstExt<E> {
@@ -2022,6 +2192,11 @@ impl<F: FieldIdentity> TrivialExt<F> {
     /// Builds the trivial extension of the field `witness` belongs to.
     ///
     /// The value of `witness` is ignored; only its field matters.
+    ///
+    /// There is no certificate-consuming counterpart, because there is no
+    /// validation to reuse: $E = B$ holds for any carrier by construction, so
+    /// [`ExtensionCertificate::trivial`] decides nothing and the witness makes
+    /// no claim about the irreducibility of whatever modulus `F` presents.
     pub fn new(witness: F) -> Self {
         let certificate = ExtensionCertificate::trivial(witness.field_id());
         Self {
@@ -2657,7 +2832,7 @@ mod tests {
             ),
             (Some(2), Some(16), Some(15))
         );
-        assert_eq!(ext.certificate().basis(), CertificateBasis::Declared);
+        assert_eq!(ext.certificate().basis(), CertificateBasis::Proved);
         assert_eq!(ext.field(), &field);
 
         assert_eq!(ext.embed(&Fp::<2>::new(1)), field.one());
@@ -2670,6 +2845,100 @@ mod tests {
         let a = field.element(0b1011);
         assert_eq!(ext.relative_frobenius(&a, 1), a.clone() * a.clone());
         assert_eq!(ext.relative_frobenius(&a, 5), ext.relative_frobenius(&a, 1));
+    }
+
+    #[test]
+    fn binary_prime_ext_rejects_a_reducible_runtime_modulus() {
+        // x^4 + 1 = (x + 1)^4 over GF(2): monic of degree four, so it passes
+        // the identity checks, but it has a base-field root.
+        assert_eq!(
+            BinaryPrimeExt::new(Gf2mField::new(4, 0b10001)),
+            Err(FieldError::ReducibleModulus {
+                witness: FactorWitness::BaseFieldRoot,
+            })
+        );
+
+        // x^4 + x^2 + 1 = (x^2 + x + 1)^2 has no root but is still reducible.
+        assert!(matches!(
+            BinaryPrimeExt::new(Gf2mField::new(4, 0b10101)),
+            Err(FieldError::ReducibleModulus { .. })
+        ));
+    }
+
+    #[test]
+    fn binary_prime_ext_records_proved_evidence() {
+        let ext = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
+        assert_eq!(ext.certificate().basis(), CertificateBasis::Proved);
+        assert_eq!(ext.ext_id(), &gf16_id());
+    }
+
+    #[test]
+    fn from_certificate_reuses_proved_evidence() {
+        let field = Gf2mField::new(4, 0b10011);
+        let certificate = BinaryPrimeExt::new(field.clone())
+            .unwrap()
+            .certificate()
+            .clone();
+
+        let reused = BinaryPrimeExt::from_certificate(field.clone(), certificate).unwrap();
+        assert_eq!(reused, BinaryPrimeExt::new(field).unwrap());
+    }
+
+    #[test]
+    fn from_certificate_skips_revalidation() {
+        // A certificate is evidence that a check already ran, so the reuse
+        // path performs no decision procedure of its own. Handing it evidence
+        // that `new` would reject proves the validation is genuinely skipped
+        // rather than repeated.
+        let reducible = Gf2mField::new(4, 0b10001);
+        assert!(BinaryPrimeExt::new(reducible.clone()).is_err());
+
+        let base = FieldId::prime(2).unwrap();
+        let ext_id = FieldId::quotient(
+            base.clone(),
+            ModulusId::new(&base, vec![1, 0, 0, 0, 1]).unwrap(),
+            Basis::Polynomial,
+        )
+        .unwrap();
+        let declared =
+            ExtensionCertificate::from_parts(base, ext_id, CertificateBasis::Declared).unwrap();
+
+        let witness = BinaryPrimeExt::from_certificate(reducible, declared).unwrap();
+        assert_eq!(witness.certificate().basis(), CertificateBasis::Declared);
+    }
+
+    #[test]
+    fn from_certificate_rejects_a_certificate_for_another_pair() {
+        let certificate = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011))
+            .unwrap()
+            .certificate()
+            .clone();
+
+        // Same size, different presentation.
+        assert!(matches!(
+            BinaryPrimeExt::from_certificate(Gf2mField::new(4, 0b11001), certificate),
+            Err(FieldError::IdentityMismatch { .. })
+        ));
+    }
+
+    #[test]
+    fn const_ext_from_certificate_reuses_evidence() {
+        let ext = ConstExt::<QuadraticExt<Gf49Config>>::new();
+        let reused =
+            ConstExt::<QuadraticExt<Gf49Config>>::from_certificate(ext.certificate().clone())
+                .unwrap();
+        assert_eq!(reused, ext);
+    }
+
+    #[test]
+    fn const_ext_from_certificate_rejects_a_certificate_for_another_pair() {
+        let foreign = ConstExt::<CubicExt<Gf343Config>>::new()
+            .certificate()
+            .clone();
+        assert!(matches!(
+            ConstExt::<QuadraticExt<Gf49Config>>::from_certificate(foreign),
+            Err(FieldError::IdentityMismatch { .. })
+        ));
     }
 
     #[test]
