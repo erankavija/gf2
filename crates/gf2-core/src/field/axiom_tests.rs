@@ -39,6 +39,8 @@ use crate::field::{ConstField, FiniteField, FiniteFieldExt};
 use crate::gf2m::{Gf2mElement, Gf2mElement_, Gf2mField, Gf2mField_, Gf2mWide, Gf2mWideConfig};
 use crate::gfp::Fp;
 use crate::gfpn::{CubicExt, ExtConfig, QuadraticExt};
+#[cfg(test)]
+use crate::gfpn::{QuotientElement, QuotientField};
 
 /// Number of random test cases per axiom for the default entry points
 /// [`test_field_axioms`] and [`test_const_field_axioms`]. Specialised
@@ -1161,6 +1163,25 @@ where
         .boxed()
 }
 
+#[cfg(test)]
+fn quotient_strategy<F>(
+    field: &QuotientField<F>,
+    base: BoxedStrategy<F>,
+) -> BoxedStrategy<QuotientElement<F>>
+where
+    F: FieldIdentity + 'static,
+{
+    let field = field.clone();
+    let degree = field.relative_degree();
+    proptest::collection::vec(base, degree)
+        .prop_map(move |coefficients| {
+            field
+                .element(coefficients)
+                .expect("the strategy draws coefficients from the field's base")
+        })
+        .boxed()
+}
+
 // ---------------------------------------------------------------------------
 // Field-identity laws
 // ---------------------------------------------------------------------------
@@ -1700,6 +1721,66 @@ impl ExtConfig for Gf81Config {
     const NON_RESIDUE: Gf9 = QuadraticExt::new(Fp::<3>::new(1), Fp::<3>::new(1));
 }
 
+#[cfg(test)]
+fn quotient_gf16() -> QuotientField<Fp<2>> {
+    QuotientField::new(
+        Fp::<2>::new(0),
+        crate::field::FieldPoly::new(vec![
+            Fp::new(1),
+            Fp::new(1),
+            Fp::new(0),
+            Fp::new(0),
+            Fp::new(1),
+        ]),
+    )
+    .expect("x^4 + x + 1 is irreducible over GF(2)")
+}
+
+#[cfg(test)]
+fn quotient_gf125() -> QuotientField<Fp<5>> {
+    QuotientField::new(
+        Fp::<5>::new(0),
+        crate::field::FieldPoly::new(vec![Fp::new(1), Fp::new(1), Fp::new(0), Fp::new(1)]),
+    )
+    .expect("x^3 + x + 1 is irreducible over GF(5)")
+}
+
+#[cfg(test)]
+fn quotient_gf81() -> QuotientField<Gf9> {
+    let base = Gf9::zero();
+    let beta = Gf9::new(Fp::<3>::new(1), Fp::<3>::new(1));
+    QuotientField::new(
+        base,
+        crate::field::FieldPoly::new(vec![-beta, base, Gf9::one()]),
+    )
+    .expect("y^2 - (1 + u) is irreducible over GF(9)")
+}
+
+// ---------------------------------------------------------------------------
+// Runtime quotient field-law coverage
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_quotient_gf16_field_axioms() {
+    let field = quotient_gf16();
+    test_field_axioms(quotient_strategy(&field, fp_strategy::<2>()), 2);
+}
+
+#[test]
+fn test_quotient_gf125_field_axioms() {
+    let field = quotient_gf125();
+    test_field_axioms(quotient_strategy(&field, fp_strategy::<5>()), 5);
+}
+
+#[test]
+fn test_quotient_gf81_over_gf9_field_axioms() {
+    let field = quotient_gf81();
+    test_field_axioms(
+        quotient_strategy(&field, quadratic_strategy::<Gf9Config>(fp_strategy::<3>())),
+        3,
+    );
+}
+
 // ---------------------------------------------------------------------------
 // Field-identity law coverage
 // ---------------------------------------------------------------------------
@@ -1788,6 +1869,27 @@ fn test_identity_laws_nested_tower_gf81() {
     >(fp_strategy::<3>())));
 }
 
+#[test]
+fn test_identity_laws_quotient_gf16() {
+    let field = quotient_gf16();
+    test_field_identity_laws(quotient_strategy(&field, fp_strategy::<2>()));
+}
+
+#[test]
+fn test_identity_laws_quotient_gf125() {
+    let field = quotient_gf125();
+    test_field_identity_laws(quotient_strategy(&field, fp_strategy::<5>()));
+}
+
+#[test]
+fn test_identity_laws_quotient_gf81_over_gf9() {
+    let field = quotient_gf81();
+    test_field_identity_laws(quotient_strategy(
+        &field,
+        quadratic_strategy::<Gf9Config>(fp_strategy::<3>()),
+    ));
+}
+
 // ---------------------------------------------------------------------------
 // Extension law coverage
 // ---------------------------------------------------------------------------
@@ -1862,6 +1964,36 @@ fn test_extension_laws_gf9_in_gf81() {
         &ext,
         quadratic_strategy::<Gf9Config>(fp_strategy::<3>()),
         quadratic_strategy::<Gf81Config>(quadratic_strategy::<Gf9Config>(fp_strategy::<3>())),
+    );
+}
+
+#[test]
+fn test_extension_laws_fp2_in_quotient_gf16() {
+    let field = quotient_gf16();
+    test_extension_laws(
+        &field,
+        fp_strategy::<2>(),
+        quotient_strategy(&field, fp_strategy::<2>()),
+    );
+}
+
+#[test]
+fn test_extension_laws_fp5_in_quotient_gf125() {
+    let field = quotient_gf125();
+    test_extension_laws(
+        &field,
+        fp_strategy::<5>(),
+        quotient_strategy(&field, fp_strategy::<5>()),
+    );
+}
+
+#[test]
+fn test_extension_laws_gf9_in_quotient_gf81() {
+    let field = quotient_gf81();
+    test_extension_laws(
+        &field,
+        quadratic_strategy::<Gf9Config>(fp_strategy::<3>()),
+        quotient_strategy(&field, quadratic_strategy::<Gf9Config>(fp_strategy::<3>())),
     );
 }
 
