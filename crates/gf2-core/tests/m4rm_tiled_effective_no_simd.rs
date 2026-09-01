@@ -1,4 +1,8 @@
-#![cfg(all(feature = "tuning-profile", feature = "test-support"))]
+#![cfg(all(
+    feature = "tuning-profile",
+    feature = "test-support",
+    not(feature = "simd")
+))]
 
 #[path = "support/core_tuning.rs"]
 mod support;
