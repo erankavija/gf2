@@ -1,0 +1,14 @@
+# command: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench dev/bench_results/4e732b56/generators.txt all
+# environment: GF2_SURVEY_CODES=T2N
+nice: cannot set niceness: Permission denied
+# harness: m4ri_genmatrix_bench
+# m4ri_version: 20260122
+# trials_per_cell: 7
+# cell_budget_s: 45.0
+# seed: 0x00000000ae03bcd0
+# codes_loaded: 5
+# codes_selected: T2N
+#   T2N genmatrix-rref reps=1: 21.175 s of timed work
+#   T2N echelonize reps=1: 51.144 s of timed work
+#   T2N matmul-m4rm batch=256 reps=1: 0.783 s of timed work
+#   T2N matmul-m4rm batch=4096 reps=1: 11.282 s of timed work

@@ -149,19 +149,22 @@ fill_poly_form(mzd_t* G, const Code* c)
                 mzd_write_bit(G, i, (rci_t)(i + j), 1);
 }
 
-/* Correctness-only output for verify-generator-matrices.py. Reorder the
- * polynomial coefficients into the repository's codeword order before the
- * same M4RI RREF route is applied, so the emitted matrix is [I | P]. */
+/* The exact genmatrix-rref route used by the timed cell. */
 static void
-dump_systematic_matrix(const Code* c)
+genmatrix_rref(mzd_t* G, const Code* c)
 {
-    mzd_t* polynomial = mzd_init(c->k, c->n);
-    mzd_t* G = mzd_init(c->k, c->n);
-    fill_poly_form(polynomial, c);
-    for (rci_t i = 0; i < G->nrows; i++)
-        for (rci_t j = 0; j < G->ncols; j++)
-            mzd_write_bit(G, i, j, mzd_read_bit(polynomial, i, c->n - 1 - j));
+    fill_poly_form(G, c);
     mzd_echelonize_m4ri(G, 1, 0);
+}
+
+/* Correctness-only output for verify-generator-matrices.py. Keep this dump on
+ * the same polynomial-coordinate route as the timed genmatrix-rref cell;
+ * layout normalization belongs to the verifier. */
+static void
+dump_genmatrix_rref(const Code* c)
+{
+    mzd_t* G = mzd_init(c->k, c->n);
+    genmatrix_rref(G, c);
     printf("code %s n=%d k=%d\n", c->name, c->n, c->k);
     for (rci_t i = 0; i < G->nrows; i++)
     {
@@ -170,7 +173,6 @@ dump_systematic_matrix(const Code* c)
         putchar('\n');
     }
     printf("end %s\n", c->name);
-    mzd_free(polynomial);
     mzd_free(G);
 }
 
@@ -235,7 +237,7 @@ main(int argc, char** argv)
             const Code* c = &codes[ci];
             if (only && *only && !strstr(only, c->name))
                 continue;
-            dump_systematic_matrix(c);
+            dump_genmatrix_rref(c);
         }
         return 0;
     }
@@ -256,14 +258,12 @@ main(int argc, char** argv)
 
             for (int w = 0; w < WARMUP_REPS; w++)
             {
-                fill_poly_form(G, c);
-                mzd_echelonize_m4ri(G, 1, 0);
+                genmatrix_rref(G, c);
                 digest = digest_matrix(G);
             }
 
             const double c0 = now_s();
-            fill_poly_form(G, c);
-            mzd_echelonize_m4ri(G, 1, 0);
+            genmatrix_rref(G, c);
             const double one_ns = (now_s() - c0) * 1e9;
             long reps = (long)(MIN_TIMED_NS / (one_ns > 0.0 ? one_ns : 1.0)) + 1;
             if (reps < 1)
@@ -274,8 +274,7 @@ main(int argc, char** argv)
                 const double t0 = now_s();
                 for (long rep = 0; rep < reps; rep++)
                 {
-                    fill_poly_form(G, c);
-                    mzd_echelonize_m4ri(G, 1, 0);
+                    genmatrix_rref(G, c);
                 }
                 const double t1 = now_s();
                 spent += t1 - t0;
