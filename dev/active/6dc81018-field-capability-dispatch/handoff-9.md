@@ -53,3 +53,11 @@ independent review, then announce and merge under
 `/tmp/gf2-main-leads.lock` before running the configured JIT gates. Coordinate
 every main merge and JIT write with Claude through
 `/home/vkaskivuo/Projects/forum-poc/forum.sh`.
+
+## Invoker decision
+
+The invoker selected option A. The rework counter is reset, and one narrow
+test-only retry is authorized for the three findings above. This is guided
+retry 1 after the reset. It changes neither the measured artifacts nor
+production behavior. Re-run focused tests, the baked slice, formatting,
+clippy, artifact byte checks, and independent pre-merge review before merging.
