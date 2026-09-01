@@ -12,10 +12,11 @@
       "commit": null,
       "doc_type": null,
       "format": "markdown",
-      "label": "HIP outcome-identity receipt (repinned at b3679e50)",
+      "label": "HIP outcome-identity receipt (repinned at 489e85ef)",
       "path": "dev/bench_results/c3cc5226/hip-outcome-identity-receipt.md"
     }
   ],
+  "done_at": "2026-09-01T19:32:16.558460278Z",
   "first_ready_at": "2026-09-01T15:11:16.097494145Z",
   "gates_required": [
     "cargo-ci",
@@ -25,17 +26,17 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-01T18:44:54.659074164Z",
+      "updated_at": "2026-09-01T19:28:05.839361446Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-01T18:49:20.934556536Z",
+      "status": "passed",
+      "updated_at": "2026-09-01T19:32:05.148855993Z",
       "updated_by": "auto:executor"
     },
     "gf2-kernels-hip-ci": {
       "status": "passed",
-      "updated_at": "2026-09-01T18:45:34.716673074Z",
+      "updated_at": "2026-09-01T19:28:25.774900040Z",
       "updated_by": "auto:executor"
     }
   },
@@ -48,7 +49,7 @@
     "satisfies:REQ-09"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Migrate HIP syndrome/decode support behaviorally intact",
-  "updated_at": "2026-09-01T18:49:20.934556536Z"
+  "updated_at": "2026-09-01T19:32:16.558460278Z"
 }
