@@ -1,0 +1,398 @@
+# Complete core tuning calibration: premeasurement protocol
+
+Status: authoritative campaign declaration for issue `eaae1b56`.
+
+This document fixes the campaign before implementation or timing. It applies
+the calibration convention in
+[`7d824b2f/design.md`](../7d824b2f/design.md), including Amendment A7, and
+extends the executed pilot recorded in
+[`2026-09-01-389aa4de.md`](../../benchmarks/tuning_profiles/2026-09-01-389aa4de.md).
+The current harness and composer remain the only calibration and publication
+tools. The campaign adds no loader, forcing hook, artifact representation, or
+parallel-execution convention.
+
+## 1. Fixed protocol and accounting
+
+Every grid/arm cell runs one untimed equivalence-and-route probe followed by
+five independent timed executions. Each timed execution contains five 250 ms
+target windows. Fixtures are built before timing and paired arms receive
+identical inputs. The current 5 executions x 5 repetitions x 250 ms choice is
+retained because it already produced auditable pilot evidence on the target
+host.
+
+Fifteen selectors contribute `15 x 9 x 2 = 270` grid/arm cells. The shared
+interpolation selector contributes two separately timed dispatcher variants,
+or `2 x 9 x 2 = 36` cells. The exact campaign therefore has 306 cells, 306
+probe children, 1,530 timed children, 1,836 total fresh-process launches, and
+`1,530 x 5 = 7,650` raw windows. Nominal target-window time is
+`7,650 x 250 ms = 1,912.5 s = 31 min 52.5 s`. The calibrator has a hard
+3,600 s wall-clock budget under one outer full-host lock; composition follows
+under the same lock. Expected calibration elapsed time is 38--55 minutes after
+child startup, call calibration, fixture setup, validation, and serialization.
+A timeout invalidates the campaign and emits no publishable partial result.
+
+Measurements use Rust 1.95, explicit Cargo features
+`parallel,simd,tuning-profile,test-support`, and `RAYON_NUM_THREADS=4`, matching
+the repository's four-thread contract. A directly executed binary receives the
+thread setting explicitly. `test-support` exposes observations only; it does
+not change a production dispatcher. `Fp<251>` is the byte-lane matrix carrier,
+`Fp<65537>` is the polynomial and SoA carrier, and bit-matrix fixtures have no
+field carrier.
+
+## 2. Deterministic fixtures
+
+The seed root and derivation remain the pilot protocol:
+
+```text
+root = 0x5ecc9bf800000000
+value = root XOR (role * 0x9e3779b97f4a7c15 modulo 2^64)
+for word in [field_tag, scalar_grid_value]:
+    value = value XOR word
+    value = rotl(value * 0xbf58476d1ce4e5b9 modulo 2^64, 27)
+            + 0x94d049bb133111eb modulo 2^64
+seed = value XOR (value >> 31)
+```
+
+Pilot tags 0--4 and their role values stay unchanged. Follow-on tags 5--15
+are assigned in selector order below. Their stream roles are fixed:
+
+| Tag | Fixture streams and role values |
+|---:|---|
+| 5 | transpose matrix `0x100` |
+| 6 | quadratic lhs/rhs `0x200`/`0x201`; cubic lhs/rhs `0x202`/`0x203` |
+| 7 | M4RM-wide lhs/rhs `0x300`/`0x301` |
+| 8 | M4RM-tiled lhs/rhs `0x310`/`0x311` |
+| 9 | GF(2) unit-lower/unit-upper `0x400`/`0x401` |
+| 10 | field unit-lower/unit-upper `0x500`/`0x501` |
+| 11 | solve unit-lower/unit-upper/rhs `0x600`/`0x601`/`0x602` |
+| 12 | PLE unit-lower/unit-upper `0x700`/`0x701` |
+| 13 | back-sub row-space/free-columns/row-mix `0x800`/`0x801`/`0x802` |
+| 14 | GEMM lhs/rhs `0x900`/`0x901` |
+| 15 | interpolation coefficients/point offset `0xa00`/`0xa01` |
+
+The scalar seed input is the listed selector value; GEMM uses volume rather
+than cube dimension. Each seed initializes the existing
+`gf2_core::rng::Lcg`. No ambient entropy, repetition, execution, process, or
+worker identity enters seed derivation. Repetitions select deterministic
+fixture banks from the emitted seed inventory.
+
+Unit-triangular constructors put one on the diagonal and seeded values only on
+the named strict triangle; their product is invertible. Bit matrices clear tail
+padding. Back-sub fixtures have exact rank `floor(x/2)` with both pivot and free
+columns. Interpolation uses a degree-`x-1` polynomial with nonzero leading
+coefficient and the first `x` distinct nonzero `Fp<65537>` values after the
+seeded offset.
+
+## 3. Follow-on selector matrix
+
+Unless a row names a companion control, only the studied selector differs from
+`CoreTuning::CONSERVATIVE`. `x` is the listed scalar grid value and `d` the
+listed GEMM cube dimension. All forcing values are within current codec ranges.
+
+| Selector (tag) | Ordered grid; exact fixture shape | Production entry point | Exact forced arms, route, and exclusion |
+|---|---|---|---|
+| `bit_matrix.transpose_simple_max_blocks` (5) | `[2, 4, 8, 15, 16, 17, 32, 64, 128]`; square `(64x) x (64x)` seeded `BitMatrix` | `BitMatrix::transpose` | Simple threshold `x`; MacroTiled `x-1`. `transpose_route(x,x)` is exactly `Simple`/`MacroTiled`; macro extent stays conservative. |
+| `soa_batch.parallel_min_len` (6) | `[4096, 8192, 16384, 32767, 32768, 32769, 65536, 131072, 262144]`; length-`x` quadratic and cubic SoA batches over `Fp<65537>` | In fixed order, `BatchExtField::batch_mul_quadratic`, `batch_square_quadratic`, `batch_mul_cubic`, `batch_square_cubic`, inside the existing dedicated-pool test-support bridge | Sequential `x+1`; Parallel `x`. `soa_parallel_route(x)` is exactly `Sequential`/`Parallel`; parallel observes four actual workers and `last_effective_soa_chunk=16384` after each call, sequential observes none. Chunk length stays conservative. |
+| `m4rm.wide_tier_min_stride_words` (7) | `[2, 4, 8, 15, 16, 17, 32, 64, 128]`; `64 x 512` by `512 x (64x)` bit matrices | `alg::m4rm::multiply` | SmallN `x+1`; Wide `x`. `m4rm_schedule_route(512,64x)` reports the exact tier and panel width. Both arms set tiled threshold to `usize::MAX` as a recorded companion control, excluding tiled execution. |
+| `m4rm.tiled_min_stride_words` (8) | domain-clipped `[4, 5, 6, 8, 12, 16, 24, 32, 64]`; `64 x 512` by `512 x (64x)` bit matrices | `alg::m4rm::multiply` | RowWise `x+1`; RegisterTiled `x`. Reporter admission must be false/true and the authorized test-support effective observer must report exactly RowWise/RegisterTiled. `m=64>=8`; the existing SIMD tile capability is required. |
+| `dense_inverse.m4ri_min_dim` (9) | `[1, 2, 4, 7, 8, 9, 16, 32, 64]`; GF(2) `A=L*U`, shape `x x x` | `alg::gauss::invert` | Scalar `x+1`; M4ri `x`. `invert_route(x)` is exactly `Scalar`/`M4ri`. |
+| `dense_inverse.blocked_min_dim` (10) | `[2, 4, 8, 15, 16, 17, 32, 64, 128]`; `Fp<251>` `A=L*U`, shape `x x x` | `FieldMatrix::inv` | ScalarPle `x+1`; BlockedPanelized `x`. `inv_route(x)` is exactly the named arm. |
+| `triangular.trsm_blocked_min_dim` (11) | `[8, 16, 32, 63, 64, 65, 96, 128, 256]`; invertible `Fp<251>` `A=L*U` and dense rhs `B`, each `x x x` | `FieldMatrix::solve_batch` | Recursive `x+1`; Blocked `x`. `trsm_route(x)` is exact; blocked observes `last_effective_trsm_panel_rows=64`, recursive none. The child requires the Fp251 whole-GEMM capability; panel rows stay conservative. |
+| `ple.panel_base_max_cols` (12) | `[16, 32, 64, 96, 127, 128, 129, 160, 256]`; full-rank `Fp<251>` `A=L*U`, shape `x x x` | `FieldMatrix::ple` | PanelBase `x`; SubPanelRecursion `x-1`. Carrier lane is `Byte`, lane ceiling is 256, and `ple_panel_route(Byte,x)` is exact. `RecursiveSplit` is forbidden. Reset/read `max_effective_panel_dispatch_cols` must report exactly `x`/`x-1`. |
+| `ple.blocked_back_sub_min_dim` (13) | `[16, 32, 64, 96, 127, 128, 129, 192, 256]`; exact-rank `Fp<251>` matrix, shape `x x x` | `FieldMatrix::rref` | Scalar `x+1`; Blocked `x`. `back_sub_route(x,x)` is exact. Empty-pivot and free-column-free bypasses are forbidden. |
+| `gemm.axpy_fast_path_min_volume` (14) | volumes `[64, 512, 1728, 3375, 4096, 4913, 8000, 13824, 32768]`, mapped from `d=[4,8,12,15,16,17,20,24,32]` to `Fp<251>` `d x d` by `d x d` | Existing GEMM test-support bridge `run_gemm_axpy_dispatch_for_test` | PerCell `d^3+1`; WholeGemm `d^3`. `gemm_axpy_route(d,d,d)` and `last_gemm_axpy_dispatch_route` are exactly the named arm. Fp251 whole-GEMM capability is required; fallback is forbidden. |
+| `polynomial.interpolate_fast_min_points` (15) | `[2, 4, 8, 15, 16, 17, 32, 64, 128]`; degree-`x-1` `Fp<65537>` polynomial sampled at `x` distinct points | Separately, `interpolate_auto` and `interpolate_auto_two_adic` | For each variant: Barycentric `x+1`; SubproductTree `x`; `interpolate_route(x)` is exact. Each variant has its own samples and crossover. Publish the smallest point from which both fast arms win monotonically; invalidity in either invokes the standing keep-default rule. |
+
+The SoA cell is one composite timed operation containing the four public batch
+dispatchers in table order; its digest is the ordered result tuple. The two
+interpolation variants are not composite: they are independently probed and
+timed because generic `interpolate_fast` and two-adic `interpolate_fast_auto`
+have different work. Neither represents the other.
+
+The M4RM tiled effective observer is evidence instrumentation at the existing
+`multiply_with_k_block` branch. It is compiled only for `cfg(test)` or feature
+`test-support`, has reset/read semantics for one fresh-child call, reports
+`RegisterTiled` only after `resolve_m4rm_tile8xn()` returns a kernel and the
+tiled callee is selected, and otherwise reports `RowWise`. A focused test
+forces an admitted stride with a declined capability and requires `RowWise`.
+It is not a selector, route reporter, forcing hook, or normal-build API.
+
+Every named route is a closed vocabulary. Missing, stale, unexpected, or third
+routes fail before timing. M4RM tiled, PLE panel, TRSM, GEMM, and SoA preflights
+run in each probe child. An unavailable required carrier/kernel/worker condition
+is recorded as an omission with its observation and receives no timing. The
+authoritative prepared-host campaign publishes only when all sixteen selectors
+are measured; reporting mode on another host may describe omissions but cannot
+emit the owner.
+
+## 4. Pilot rerun
+
+The authoritative core section has one measurement provenance. All five pilot
+values are selected from this campaign's samples, using their existing tags,
+roles, fixtures, and exact grids:
+
+| Selector | Exact grid | Production comparison and forcing |
+|---|---|---|
+| `bit_backend.simd_min_words` | `[1, 2, 4, 7, 8, 9, 16, 32, 64]` | Direct `ScalarBackend` versus detected concrete SIMD backend in separate children, both installing value `x`; because this selector is baked, exact backend/capability identity replaces runtime route evidence. |
+| `polynomial.karatsuba_min_degree` | `[4, 8, 16, 31, 32, 33, 64, 128, 256]` | `FieldPoly::mul`: Schoolbook `usize::MAX`, Karatsuba `x`; `mul_route(x,x)` is exactly the named arm, preserving the pilot's single-split production shape. |
+| `polynomial.karatsuba_max_out_len` | `[15, 31, 63, 127, 129, 191, 255, 383, 511]` | `field::poly::mul_fast`: Karatsuba `x`, NTT `x-1`; `mul_fast_route(x)` is exact, and balanced operand lengths sum minus one to the grid output length. |
+| `polynomial.div_rem_fast_min_len` | `[64, 128, 256, 512, 1024, 2047, 2048, 2049, 4096]` | `FieldPoly::div_rem_auto`: Schoolbook `x+1`, Fast `x`; `div_rem_auto_route` is exactly the named arm for the emitted dividend/divisor shape. |
+| `polynomial.subproduct_min_len` | `[128, 256, 512, 1024, 2048, 4095, 4096, 4097, 8192]` | `FieldPoly::batch_evaluate_auto`: Horner `x+1`, SubproductTree `x`; `batch_evaluate_auto_route(x,x)` is exactly the named arm. |
+
+The raw receipt records derived operand dimensions rather than mislabelling a
+scalar selector as an operand length.
+
+Per-field fallback is explicit. Transpose, M4RM wide, both inverse fields,
+back-substitution, and the four polynomial pilot dispatchers admit no third
+arm: any mismatch is invalid evidence. SoA omits when four actual Rayon workers
+cannot execute; M4RM tiled omits when the tile kernel is unavailable; PLE panel
+omits when `Fp<251>` lacks the Byte lane or its panel kernel declines; TRSM and
+GEMM omit when the `Fp<251>` whole-GEMM kernel is unavailable or declines; the
+baked SIMD pilot omits when no concrete SIMD backend exists. Interpolation
+keeps the conservative default when either separately measured variant fails
+the standing crossover rule. Each omission aborts authoritative publication,
+while reporting mode records the capability and reason.
+
+## 5. Fresh-child and digest contract
+
+All 1,836 launches are fresh OS processes. The parent sends one canonical case
+on standard input to the existing guarded child mode; the command line accepts
+no case body. Before any dispatcher, each child:
+
+1. constructs the forced typed `CoreTuning` from the conservative codec value;
+2. canonically encodes a format-2 envelope, strictly reopens it through the
+   current registry, and verifies canonical re-encoding;
+3. installs the reopened `PreparedEnvelope`, never the pre-serialization value;
+4. reads every forced/control field from `tuning::active()`, requires
+   resolution `Installed`, and compares the active values to the case;
+5. builds the deterministic fixture and passes equivalence, route, carrier,
+   and effective-execution probes before entering any timed window.
+
+The child emits profile/section/schema/harness IDs, all active values,
+section-wrapper and envelope-content SHA-256, route and effective observation,
+carrier/capability/worker observation, fixture shape, seed inventory, calibrated
+call count, raw windows, operand digest, result digest, and equivalence digest.
+The parent accepts one canonical prefixed result. The parent and composer never
+install.
+
+Paired arms have identical operand digests and semantically equal results.
+Domain-separated SHA-256 covers carrier, shape, and canonical elements.
+Compound outputs use ordered length-prefixed tuples: PLE covers `P,L,E,rank`,
+RREF `X,R`, division quotient/remainder, and SoA all four results. Checks include
+`A*A^-1=I`, `A*X=B`, `P*(L*E)=A`, `X*A=R`, reconstruction of both interpolation
+variants, and exact arm equality elsewhere. A route without result equivalence,
+or equivalence without route/effective evidence, is invalid.
+
+The harness schema bumps from `tuning-calibration-v2` because process, fixture,
+seed-inventory, output, and publication-coverage semantics change. Serialized
+raw-sample and fresh-child schemas bump when their shapes change. Historical
+bytes remain evidence but are not accepted as output from the current harness.
+
+## 6. Selection and publication
+
+The standing rule selects the smallest point from which the asymptotic arm wins
+every remaining comparison; an upper-bound selector applies the existing
+reversed direction. A tie, non-monotone sweep, failed uncertainty rule, missing
+arm, or invalid interpolation variant retains the conservative default. Raw
+samples, median, dispersion/confidence interval, selecting margin, ties,
+non-monotone results, fallback, seed, route, and omission decisions are retained
+in the log and receipt.
+
+The exact inventory derives from
+`CoreTuningCodec::encode_body(CoreTuning::CONSERVATIVE)` through `SectionCodec`.
+The measured set equals the codec-derived sixteen names here; omissions are its
+exact 21-field complement in the current 37-field codec. Missing, duplicate,
+unknown, defaulted, frozen, malformed,
+zero-call, zero-duration, non-finite, route-mismatched, result-mismatched, or
+noncanonical evidence fails closed.
+
+Core owner and complete envelope reopen strictly and canonically. The
+complete envelope's `gf2-core/selectors` raw wrapper is byte-identical to the
+owner wrapper. Its typed and raw `gf2-algebra/selectors` section is byte-identical
+to `crates/gf2-algebra/data/tuning-profiles/conservative.json`. The composer
+changes assembly provenance only and never installs. The receipt records owner
+and complete wrapper/content hashes separately, source revision and clean
+status, tool/binary hashes, host facts, feature/thread configuration, every
+route/selection/fallback/omission decision, uncertainty, raw-log hash, and the
+M4RM boundary clipping.
+
+## 7. Build, run, copy, and checksum
+
+Implementation and premeasurement tests precede this exact procedure. Builds
+finish before the exclusive lock; the locked driver contains no Cargo command.
+
+```sh
+set -eu
+RUN_STAMP=$(date -u +%Y%m%d-%H%M%S)-$$
+STAGE=/tmp/gf2-eaae1b56-$RUN_STAMP
+mkdir "$STAGE"
+BUILD_HEAD=$(git rev-parse HEAD)
+export BUILD_HEAD
+test -z "$(git status --porcelain --untracked-files=all)"
+printf '%s\n' "$BUILD_HEAD" >"$STAGE/build-head"
+./scripts/cargo-budget.sh cargo +1.95.0 bench -p gf2-core \
+  --features parallel,simd,tuning-profile,test-support \
+  --bench tuning_calibration --no-run --message-format=json \
+  >"$STAGE/calibrator-build.json" 2>"$STAGE/calibrator-build.stderr"
+jq -r -s '[.[] | select(.reason == "compiler-artifact" and
+  .target.name == "tuning_calibration" and .executable != null) |
+  .executable] | unique | if length == 1 then .[0] else
+  error("expected exactly one calibration executable") end' \
+  "$STAGE/calibrator-build.json" >"$STAGE/calibrator-path"
+./scripts/cargo-budget.sh cargo +1.95.0 build --release \
+  --manifest-path dev/tools/tuning-profile-compose/Cargo.toml \
+  --message-format=json >"$STAGE/composer-build.json" \
+  2>"$STAGE/composer-build.stderr"
+jq -r -s '[.[] | select(.reason == "compiler-artifact" and
+  .target.name == "tuning-profile-compose" and .executable != null) |
+  .executable] | unique | if length == 1 then .[0] else
+  error("expected exactly one composer executable") end' \
+  "$STAGE/composer-build.json" >"$STAGE/composer-path"
+CALIBRATOR=$(cat "$STAGE/calibrator-path")
+COMPOSER=$(cat "$STAGE/composer-path")
+test -n "$CALIBRATOR" && test -x "$CALIBRATOR"
+test -n "$COMPOSER" && test -x "$COMPOSER"
+sha256sum "$CALIBRATOR" "$COMPOSER" >"$STAGE/binaries-sha256.txt"
+test "$(git rev-parse HEAD)" = "$BUILD_HEAD"
+test -z "$(git status --porcelain --untracked-files=all)"
+test "$(cat "$STAGE/build-head")" = "$BUILD_HEAD"
+```
+
+`cargo bench --no-run` intentionally has no redundant `--release`. The path
+files contain plain text read with `cat`; they are never parsed as JSON.
+
+```sh
+RUN_ID=gf2-eaae1b56-$RUN_STAMP
+RECEIPT=dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md
+CORE_OUT="$STAGE/$RUN_ID-core.json"
+COMPLETE_OUT="$STAGE/$RUN_ID-complete.json"
+RAW_LOG="$STAGE/$RUN_ID-calibration.log"
+STDERR_LOG="$STAGE/$RUN_ID-calibration.stderr"
+COMPOSER_LOG="$STAGE/$RUN_ID-composer.log"
+COMPOSER_STDERR="$STAGE/$RUN_ID-composer.stderr"
+HASHES="$STAGE/$RUN_ID-sha256.txt"
+env GF2_BENCH=1 RUSTUP_TOOLCHAIN=1.95.0 RAYON_NUM_THREADS=4 \
+  BUILD_HEAD="$BUILD_HEAD" RUN_ID="$RUN_ID" RECEIPT="$RECEIPT" \
+  CALIBRATOR="$CALIBRATOR" COMPOSER="$COMPOSER" CORE_OUT="$CORE_OUT" \
+  COMPLETE_OUT="$COMPLETE_OUT" RAW_LOG="$RAW_LOG" \
+  STDERR_LOG="$STDERR_LOG" COMPOSER_LOG="$COMPOSER_LOG" \
+  COMPOSER_STDERR="$COMPOSER_STDERR" HASHES="$HASHES" \
+  ./dev/scripts/ccx1-bench-flock.sh --full-host sh -eu -c '
+    expected_head=$BUILD_HEAD
+    test "$(git rev-parse HEAD)" = "$expected_head"
+    test -z "$(git status --porcelain --untracked-files=all)"
+    for path in "$CORE_OUT" "$COMPLETE_OUT" "$RAW_LOG" "$STDERR_LOG" \
+      "$COMPOSER_LOG" "$COMPOSER_STDERR" "$HASHES"; do test ! -e "$path"; done
+    timeout -k 30s 3600s "$CALIBRATOR" \
+      --executions 5 --repetitions 5 --target-ms 250 \
+      --out "$CORE_OUT" --profile-id "$RUN_ID" \
+      --lock-wrapper dev/scripts/ccx1-bench-flock.sh --receipt "$RECEIPT" \
+      >"$RAW_LOG" 2>"$STDERR_LOG"
+    test "$(git rev-parse HEAD)" = "$expected_head"
+    test -z "$(git status --porcelain --untracked-files=all)"
+    assembled_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    composer_sha=$(sha256sum "$COMPOSER" | cut -d " " -f 1)
+    "$COMPOSER" complete "$CORE_OUT" \
+      crates/gf2-algebra/data/tuning-profiles/conservative.json \
+      "$COMPLETE_OUT" "$RUN_ID" "$assembled_at" "$expected_head" \
+      false "$composer_sha" >"$COMPOSER_LOG" 2>"$COMPOSER_STDERR"
+    test "$(git rev-parse HEAD)" = "$expected_head"
+    test -z "$(git status --porcelain --untracked-files=all)"
+    sha256sum "$CALIBRATOR" "$COMPOSER" "$CORE_OUT" "$COMPLETE_OUT" \
+      "$RAW_LOG" "$STDERR_LOG" "$COMPOSER_LOG" "$COMPOSER_STDERR" \
+      >"$HASHES"
+  '
+```
+
+After independent validation of hashes, strict reopens, wrapper identity,
+coverage, routes, samples, source binding, and receipt arithmetic, publication
+copies only to unique absent destinations:
+
+```sh
+CORE_DST="crates/gf2-core/data/tuning-profiles/$RUN_ID.json"
+COMPLETE_DST="dev/reference_data/tuning-profiles/$RUN_ID.json"
+RAW_DST="dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56-calibration.log"
+MANIFEST_DST="dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.sha256"
+for path in "$CORE_DST" "$COMPLETE_DST" "$RAW_DST" "$MANIFEST_DST"; do
+  test ! -e "$path"
+done
+cp --no-clobber "$CORE_OUT" "$CORE_DST"
+cp --no-clobber "$COMPLETE_OUT" "$COMPLETE_DST"
+cp --no-clobber "$RAW_LOG" "$RAW_DST"
+cmp "$CORE_OUT" "$CORE_DST"
+cmp "$COMPLETE_OUT" "$COMPLETE_DST"
+cmp "$RAW_LOG" "$RAW_DST"
+sha256sum "$CORE_DST" "$COMPLETE_DST" "$RAW_DST" >"$MANIFEST_DST"
+sha256sum -c "$MANIFEST_DST"
+```
+
+The receipt is authored from the validated log and committed with exact
+artifacts, manifest, code, and tests. Every live reader and baked citation cuts
+over only when the candidate bytes and validation tests are present in the same
+commit. The 389 core-owner and complete JSON bytes remain at their committed
+paths with their receipt, raw log, and manifest as immutable historical
+evidence; they are not a compatibility alias or a current representation.
+
+## 8. Ownership and gates
+
+Issue `eaae1b56` owns the harness and bench metadata; the harness-schema token;
+focused route, installation, child, and artifact tests; the M4RM effective
+observation at the existing branch under `cfg(test)` or feature `test-support`;
+the authoritative owner, complete envelope, raw log, manifest, and receipt; and
+exact current-reader cutover. Production dispatch behavior, generic registry,
+composer, algebra owner, and kernel interfaces remain unchanged. A falsified
+reachability premise stops and preserves evidence for owner review.
+
+The source-path boundary is exact:
+
+- harness behavior and schema:
+  `crates/gf2-core/benches/tuning_calibration.rs`,
+  `crates/gf2-core/Cargo.toml`, and
+  `crates/gf2-core/src/tuning/mod.rs`;
+- effective M4RM evidence only:
+  `crates/gf2-core/src/alg/m4rm.rs`;
+- current measured-owner readers and baked-value consumers:
+  `crates/gf2-core/src/tuning/baked.rs`,
+  `crates/gf2-core/src/kernels/backend.rs`,
+  `crates/gf2-core/tests/support/measured_format2.rs`,
+  `crates/gf2-core/tests/tuning_profile_committed.rs`,
+  `crates/gf2-core/tests/backend_selection_baked.rs`,
+  `crates/gf2-core/tests/field_vec_baked.rs`,
+  `crates/gf2-core/tests/gemm_tiles_baked.rs`, and
+  `crates/gf2-core/tests/prime_route_baked.rs`;
+- complete-envelope composition and raw-wrapper validation:
+  `crates/gf2-algebra/tests/tuning_repository_envelopes.rs`;
+- the current permanent citation:
+  `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md`;
+- append-only executed-state projection at the convention source:
+  `dev/active/7d824b2f/design.md`;
+- generated evidence destinations under
+  `crates/gf2-core/data/tuning-profiles/`,
+  `dev/reference_data/tuning-profiles/`, and
+  `dev/benchmarks/tuning_profiles/`.
+
+The baked-test support changes from whole-family omission to codec-derived
+per-field omission because the measured `gemm` family contains the runtime
+volume selector while its tile extents stay omitted. Dated receipts, raw logs,
+manifests, active-design amendments, probe material, and archive records remain
+immutable historical evidence. In particular,
+`crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
+and
+`dev/reference_data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
+remain byte-identical and resolvable by the 389 receipt and manifest. A
+current-reader grep classifies rather than rewrites historical hits.
+
+Before measurement, committed tests cover every exact grid and forcing value,
+codec admissibility, deterministic fixtures, strict reopen-before-install,
+`Installed` resolution, routes and forbidden thirds, effective/capability
+observations, paired result equality, seed inventory, exact campaign arithmetic,
+schema bump, malformed/defaulted/frozen/nonzero fail-closed behavior,
+codec-derived inventory/complement, absent destinations, and raw-wrapper
+identity. The M4RM observer test includes admitted stride plus declined kernel
+capability and requires RowWise.
+
+Premeasurement validation runs harness self-check/list-grid without measuring,
+then `git diff --check`, wrapped `cargo fmt`, focused harness/composer/artifact
+tests through `cargo-budget --test`, wrapped
+`cargo doc --workspace --all-features --no-deps`, and `./scripts/cargo-ci.sh`.
+The measurement runs once only after these gates pass.

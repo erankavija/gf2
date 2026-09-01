@@ -861,3 +861,33 @@ format-1 reader is removed and the no-longer-cited archived bytes are deleted.
 The 2026-08-20 receipt retains their exact historical path, digest, source
 revision, and figures; deleting an uncited repository copy does not relabel or
 rewrite that evidence.
+
+## Amendment A7 (2026-09-01, owner-approved boundary grid)
+
+This amendment changes §5.1 condition 3 at the convention source and leaves
+the other sweepability conditions unchanged. Ordinarily, a selector's ordered
+grid contains admissible points below and above its conservative default. When
+the conservative default is itself an admissible-domain boundary, the grid may
+be clipped to begin at that boundary provided both compared arms are forceable
+at every listed point and the measurement receipt explicitly reports the
+boundary clipping. The selection and tie rules still operate only on the
+predeclared ordered grid; clipping creates no implicit point and does not relax
+the requirement to execute both arms.
+
+`m4rm.tiled_min_stride_words` is the instance that requires this rule. Its
+conservative default, `M4RM_TILE_WORDS = 4`, is also its codec-enforced lower
+bound. It remains one of §5.2's eleven sweepable fields and uses the
+domain-clipped grid predeclared by
+`dev/active/eaae1b56/premeasurement-protocol.md`. Each point keeps the row
+dimension and SIMD tile capability admissible, forces both the row-wise and
+tiled schedules through the existing profile-installation seam, and records
+both the effective executed schedule and the clipping in the receipt.
+
+The shared `polynomial.interpolate_fast_min_points` selector governs the
+generic and two-adic dispatchers, whose fast arms are materially different.
+Its one selected lower bound is therefore the smallest grid point from which
+both independently measured fast arms win monotonically, equivalently the
+larger of two valid per-dispatcher lower-bound crossovers. A tie, non-monotone
+result, unreachable arm, or failed uncertainty rule in either dispatcher
+retains the conservative default under §5.1; neither dispatcher represents
+the other.
