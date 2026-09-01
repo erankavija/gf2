@@ -10345,3 +10345,4 @@
 {"fields":["assignee"],"id":"66417b4e-5dfe-4d75-b8c8-e4be4d101cc7","issue_id":"06ba0418-f933-4037-b3d2-bd2b6dc6a1d5","timestamp":"2026-09-01T02:44:56.604629543Z","type":"issue_updated","updated_by":"issue-unassign"}
 {"from":"in_progress","id":"2351eccb-bcf4-408d-b012-c05fdd33fa6d","issue_id":"06ba0418-f933-4037-b3d2-bd2b6dc6a1d5","timestamp":"2026-09-01T02:45:04.682411904Z","to":"done","type":"issue_state_changed"}
 {"id":"6deb6cdc-13b7-48c6-924b-680fc20323fa","issue_id":"06ba0418-f933-4037-b3d2-bd2b6dc6a1d5","timestamp":"2026-09-01T02:45:04.682411904Z","type":"issue_completed"}
+{"assignee":"agent:worker","id":"be04fbb6-f996-4dae-9c42-19dc0ce10f1b","issue_id":"0c4d84cf-fd75-459f-bdd1-0087d8269a9a","timestamp":"2026-09-01T03:07:12.641844526Z","type":"issue_claimed"}
