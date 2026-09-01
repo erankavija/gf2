@@ -42,7 +42,7 @@
     },
     "verify-lean": {
       "status": "passed",
-      "updated_at": "2026-09-01T01:43:04.503269053Z",
+      "updated_at": "2026-09-01T02:17:48.722276922Z",
       "updated_by": "auto:executor"
     }
   },
@@ -56,5 +56,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Remove the trait selectors and regenerate the proof surface",
-  "updated_at": "2026-09-01T02:17:19.986369291Z"
+  "updated_at": "2026-09-01T02:17:48.722276922Z"
 }
