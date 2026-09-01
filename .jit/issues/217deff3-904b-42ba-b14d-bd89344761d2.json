@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-01T09:58:21.056518264Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -21,7 +22,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Implement q-cyclotomic coset closure over extension fields",
-  "updated_at": "2026-09-01T09:35:26.135766066Z"
+  "updated_at": "2026-09-01T09:58:21.056518264Z"
 }

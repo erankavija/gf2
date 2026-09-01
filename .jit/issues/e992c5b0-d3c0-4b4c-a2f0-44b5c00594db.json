@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-01T09:58:30.155434207Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -22,7 +23,7 @@
     "satisfies:REQ-08"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Canonical checksummed FieldMatrix serialization with atomic replacement",
-  "updated_at": "2026-09-01T09:53:47.614903482Z"
+  "updated_at": "2026-09-01T09:58:30.155434207Z"
 }
