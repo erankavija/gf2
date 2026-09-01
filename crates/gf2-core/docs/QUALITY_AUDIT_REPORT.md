@@ -405,11 +405,10 @@ Tests performed:
    The committed host-calibration receipt at
    [`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md)
    records a contradictory selected value of **4** for
-   `bit_backend.simd_min_words`. These measurements are not directly
-   interchangeable: the receipt measures `gf2_core::kernels::ScalarBackend`
-   against the detected SIMD backend directly, whereas this earlier validation
-   measured the `ops.rs` dispatcher, which resolves a backend per call. The
-   receipt records this limitation under **“What this receipt does not claim”**.
+   `bit_backend.simd_min_words`. The receipt's
+   [**SIMD pilot scope**](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md#simd-pilot-scope)
+   defines the call-path distinction and why the two result sets are not
+   directly interchangeable.
    - ⏸️ Full benchmark baseline (deferred - optional)
 
 6. **Complete Manual Code Review**
