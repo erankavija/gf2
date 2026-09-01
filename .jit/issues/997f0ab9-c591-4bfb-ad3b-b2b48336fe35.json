@@ -8,6 +8,7 @@
   ],
   "description": "Create the separate tracked follow-up issues the epic requires, defined against the canonical interfaces: generalized/nonbinary decoding, decoding of shortened/punctured/extended codes, and GPU encoding.\n\n## Success Criteria\n\n- [hard] REQ-01: Three follow-up issues exist with standalone contracts naming the canonical interfaces they build on, wired into the tracker outside this epic's completion path.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T05:09:29.222793408Z",
   "gates_required": [
     "repo-validate"
   ],
@@ -20,7 +21,7 @@
     "satisfies:REQ-16"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Create the tracked follow-up issues against the canonical interfaces",
-  "updated_at": "2026-09-01T02:33:34.241526317Z"
+  "updated_at": "2026-09-01T05:09:29.222793408Z"
 }
