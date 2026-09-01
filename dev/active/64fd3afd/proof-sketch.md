@@ -123,8 +123,16 @@ flowchart TD
 | O-1 extension embedding, restriction, relative Frobenius | `41090b8d` | `proofs/Gf2Core/Proofs/RelativeExtension.lean` | `crates/gf2-core/src/field/extension.rs` |
 | O-2 quotient reduction preserves the represented element | `32f53280` | `proofs/Gf2Core/Proofs/QuotientReduction.lean` | `crates/gf2-core/src/gfpn/quotient.rs` |
 | O-3 $q$-cyclotomic seed closure | `d7749931` | `proofs/Gf2Core/Proofs/CyclotomicClosure.lean` | `crates/gf2-core/src/field/extension.rs` |
-| O-4 generator base-field membership and root correctness | `b1bd75ca` | `proofs/Gf2Coding/Proofs/BchGenerator.lean` | `crates/gf2-coding/src/bch/spec.rs` |
-| O-5 systematic encoding correctness | `94597a51` | `proofs/Gf2Coding/Proofs/BchSystematicEncoding.lean` | `crates/gf2-coding/src/bch/encode.rs` |
+| O-4 generator base-field membership and root correctness | `b1bd75ca` | `proofs/Gf2Core/Proofs/BchGenerator.lean` | `crates/gf2-coding/src/bch/spec.rs` |
+| O-5 systematic encoding correctness | `94597a51` | `proofs/Gf2Core/Proofs/BchSystematicEncoding.lean` | `crates/gf2-coding/src/bch/encode.rs` |
+
+All five modules live under `proofs/Gf2Core/Proofs/` and reach the build through
+one added import line each in `proofs/Gf2Core.lean`, the serialized "Lean root"
+D-13 names (lead decision, 2026-09-01). The coding-side models are pure Lean over
+Mathlib and over the core-side models, so they compile inside the existing
+`Gf2Core` target, and `scripts/lake-build-strict.sh:47` already fails the
+`lake-build` gate on a `sorry` anywhere under `Gf2Core/Proofs/`.
+`proofs/lakefile.lean` and `scripts/lake-build-strict.sh` stay as they are.
 
 The partition follows the issue titles literally. Two boundary calls that the
 titles leave open:
@@ -839,8 +847,9 @@ $\text{run} \ge \delta - 1$ and the reported bound is at least $\delta$.
 the *witnessed run*, a combinatorial property of $T$. The step from "$T$ contains
 $\delta-1$ cyclic-consecutive exponents" to "the code's minimum distance is at
 least $\delta$" is the classical BCH bound, a Vandermonde argument that none of
-the five downstream issues names. Register row **A-09** tracks it and the Risks
-section proposes a follow-up.
+the five downstream issues names. It is out of scope for `b1bd75ca` by lead
+decision and carries a tracked follow-up issue of its own; register row **A-09**
+and risk **R-02** record that.
 
 ### 3. Binding
 
@@ -1158,49 +1167,35 @@ tracking status. Nothing outside this table is assumed by any section above.
 | Id | Assumption | Where it bites | Justification and tracking |
 |---|---|---|---|
 | A-01 | Model-to-production correspondence is by named refinement anchor, not by extraction | O-1 … O-5 | Forced by the extraction surface: `gf2_core::field` and `gf2_core::gfpn::quotient` are `--opaque` and `gf2-coding` is unextracted, and D-08 forbids expanding the pipeline in this epic. Discharged per lemma by the anchor tables, which name an executable Rust check for every lemma. Precedent: the Path-B axiom-plus-exhaustive-test pattern at `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean:162-186`. Each Lean lemma's doc comment cites its anchor. |
-| A-02 | `ExtConfig` non-residues are declared, not verified | O-1's extracted-carrier instance | Pre-existing gap recorded as `CertificateBasis::Declared` (`crates/gf2-core/src/field/extension.rs:1366`) and as R-01 in [extension-design.md](../ae03bcd0-general-bch/extension-design.md). Carried in Lean as the explicit hypothesis `ValidExtConfig` (`proofs/Gf2Core/Proofs/ExtDefs.lean:65`), never as an axiom. Partly closed in production for the quotient form: every in-tree `ConstQuotientConfig` is decided through `ConstQuotient::extension` in the axiom harness (`crates/gf2-core/src/field/axiom_tests.rs:1816-1843`). |
+| A-02 | `ExtConfig` non-residues are declared, not verified | O-1's extracted-carrier instance | Pre-existing gap recorded as `CertificateBasis::Declared` (`crates/gf2-core/src/field/extension.rs:1366`) and as risk R-01 of [extension-design.md](../ae03bcd0-general-bch/extension-design.md), a separate register from this sketch's. Carried in Lean as the explicit hypothesis `ValidExtConfig` (`proofs/Gf2Core/Proofs/ExtDefs.lean:65`), never as an axiom. Partly closed in production for the quotient form: every in-tree `ConstQuotientConfig` is decided through `ConstQuotient::extension` in the axiom harness (`crates/gf2-core/src/field/axiom_tests.rs:1816-1843`). |
 | A-03 | Caller-trusted constructors are outside every model | O-1, O-2 | `BinaryPrimeExt::from_certificate_unchecked` (`crates/gf2-core/src/field/extension.rs:2852`), `ConstExt::from_certificate_unchecked` (`:3050`), `QuotientField::from_certificate_unchecked` (`crates/gf2-core/src/gfpn/quotient.rs:357`), `ConstQuotient::extension_unchecked` (`:1511`). All are the named trust path under `@/inv/caller-trusted-fast-paths`, all document GIGO, and O-2's L2.6 converse states what "garbage out" means precisely. Lemmas are scoped to the deciding constructors. |
 | A-04 | Charon and Aeneas translate Rust to Lean faithfully | every obligation with an extracted anchor | The pipeline's foundational assumption, pre-existing and repository-wide; documented in `docs/lean4-verification-pipeline.md`. Not introduced by this sketch. |
-| A-05 | Extraction-artefact `sorry`s are tolerated; hand-written proof `sorry`s are not | every obligation | `scripts/fix-aeneas-dupes.py:276` injects `set_option warn.sorry false` into the generated `proofs/Gf2Core/Funs.lean`; `scripts/lake-build-strict.sh:47` fails the `lake-build` gate on `declaration uses 'sorry'` in `Gf2Core/Proofs/` and `Gf2Algebra/Proofs/`. **The alternation does not cover a new `Gf2Coding/Proofs/` directory** — see Risk R-02. |
+| A-05 | Extraction-artefact `sorry`s are tolerated; hand-written proof `sorry`s are not | every obligation | `scripts/fix-aeneas-dupes.py:276` injects `set_option warn.sorry false` into the generated `proofs/Gf2Core/Funs.lean`; `scripts/lake-build-strict.sh:47` fails the `lake-build` gate on `declaration uses 'sorry'` in `Gf2Core/Proofs/` and `Gf2Algebra/Proofs/`. All five modules of this sketch land under `Gf2Core/Proofs/`, so the filter covers each of them as landed. |
 | A-06 | The extracted base-carrier anchor for O-2 covers odd primes only | O-2 | `FpVal`'s field instance requires $P \ne 2$, inherent to Montgomery arithmetic with $R = 2^{64}$ (`proofs/README.md:13`). The abstract instantiation of the same model covers $p = 2$; only the extraction anchor is restricted. |
 | A-07 | $\alpha$ has exact multiplicative order $n$ | O-4 | Hypothesis of the model. Production discharges it through `validate_length_divides_unit_group` (`crates/gf2-coding/src/bch/spec.rs:694`), `resolve_root` (`:716`), `multiplicative_order` (`:750`), and `has_exact_order` (`crates/gf2-core/src/field/extension.rs:1678`). Determinism of `canonical_generator` (`:1867`) is named by no downstream issue and is not claimed. |
 | A-08 | Cyclotomic parameters are in the representable range | O-3 | $n = 0$ and $n$ beyond `usize` are rejected with `FieldError::InvalidCyclotomicModulus` and `FieldError::CyclotomicModulusTooLarge` (`crates/gf2-core/src/field/extension.rs:2222-2243`). The model assumes $n \ge 1$ and is representation-free. |
-| A-09 | The classical BCH bound is out of scope | O-4 | L4.7 and L4.8 characterise the witnessed run; the step to a minimum-distance claim is a separate Vandermonde argument named by no downstream issue. `BchDistanceBound::minimum_distance_lower_bound` (`crates/gf2-coding/src/bch/spec.rs:394`) is defined as run length plus one, which the sketch does prove. Risk R-03 proposes a tracked follow-up. |
+| A-09 | The classical BCH bound is out of scope | O-4 | L4.7 and L4.8 characterise the witnessed run; the step to a minimum-distance claim is a separate Vandermonde argument named by no downstream issue. `BchDistanceBound::minimum_distance_lower_bound` (`crates/gf2-coding/src/bch/spec.rs:394`) is defined as run length plus one, which the sketch does prove. The Vandermonde step is out of scope for `b1bd75ca` by lead decision and carries a tracked follow-up issue of its own. |
 | A-10 | Code parameters are in the representable range | O-4 | `CodeError::UnsupportedSize` at `crates/gf2-coding/src/bch/spec.rs:667`, `:851`, `:894`; `FieldError::UnsupportedSize` at `:663`. The model is representation-free. |
 | A-11 | Buffer shape and symbol identity are decided outside the model | O-5 | `SystematicPlan::validate_lengths` (`crates/gf2-coding/src/bch/encode.rs:261`) and `validate_symbol_field` (`:621`) reject caller errors; the model's message is $k$ coefficients over $B$ by typing. |
 
 ## Risks and open questions
 
-**R-01 — Footprint additions the manifest does not record.** The epic manifest
+**R-01 — Footprint delta the manifest does not record.** The epic manifest
 records `touches 1` for each of the five `lean-*` tasks, matching D-13's "Lean
-root chain". Each obligation in fact lands one new Lean module *and* touches a
-root file. O-4 and O-5 additionally need a `Gf2Coding` library target in
-`proofs/lakefile.lean` and a new `proofs/Gf2Coding.lean` root. **The lead should
-record the footprint delta before dispatching `41090b8d`.** The fallback, if the
-lead prefers zero build-configuration change, is to place all five modules under
-`proofs/Gf2Core/Proofs/` with `Bch`-prefixed names; the gate already covers that
-directory and no lakefile edit is needed, at the cost of a core-named library
-holding coding-layer proofs.
+root chain". Each obligation in fact lands one new Lean module under
+`proofs/Gf2Core/Proofs/` *and* edits one import line in `proofs/Gf2Core.lean`,
+so the recorded footprint is one file short per task. The decided layout confines
+the delta to exactly those two files.
 
-**R-02 — The strict-build gate does not watch a new `Gf2Coding/Proofs/`
-directory.** `scripts/lake-build-strict.sh:47` filters `sorry` warnings with
-`grep -E "^warning: (Gf2Core|Gf2Algebra)/Proofs/"`. A `sorry` in
-`Gf2Coding/Proofs/` would pass the `lake-build` gate silently. If R-01 resolves
-toward a `Gf2Coding` library, `b1bd75ca` must extend that alternation in the
-same change that creates the directory, and the change is a prerequisite of its
-own gate rather than an afterthought. **Lead decision required**, because it
-couples a gate-script edit to a proof issue.
+**R-02 — The BCH bound is a separate obligation.** A-09 records that the step
+from the witnessed run to a minimum-distance claim is out of scope for
+`b1bd75ca`. `BchDistanceBound` names its accessor
+`minimum_distance_lower_bound` (`crates/gf2-coding/src/bch/spec.rs:394`), so the
+claim reaches the public API while the Vandermonde argument behind it stays
+unproven across these five issues. A tracked follow-up issue owns that argument,
+alongside the other follow-ups `followup-tracking` creates.
 
-**R-03 — The BCH bound has no owner.** A-09 records that the step from the
-witnessed run to a minimum-distance claim is out of scope. `BchDistanceBound`
-names its accessor `minimum_distance_lower_bound`
-(`crates/gf2-coding/src/bch/spec.rs:394`), so the claim is in the public API
-while its justification is unproven in this epic. Recommendation: a tracked
-follow-up issue for the Vandermonde argument, authored alongside the other
-follow-ups `followup-tracking` creates. The alternative — widening `b1bd75ca` —
-would roughly double that issue's proof budget.
-
-**R-04 — Two obligations need a new Rust test before their Lean lemma is
+**R-03 — Two obligations need a new Rust test before their Lean lemma is
 anchored.** O-2's `reduction_is_invariant_under_multiples_of_the_modulus` and
 O-4's `the_generator_vanishes_at_every_defining_set_root`. Both are small and
 both belong in the module's own `#[cfg(test)]` block per
@@ -1208,7 +1203,7 @@ both belong in the module's own `#[cfg(test)]` block per
 in the tree currently decides that the constructed generator vanishes at the
 requested roots, which is half of `b1bd75ca`'s own title.
 
-**R-05 — The pipeline documentation is behind `scripts/verify-lean.sh`.**
+**R-04 — The pipeline documentation is behind `scripts/verify-lean.sh`.**
 `docs/lean4-verification-pipeline.md:38-60` describes Charon at `e069223a` with
 four local patches and Aeneas at `0f99a049`, while `scripts/verify-lean.sh:16-32`
 documents Charon `487f0320` with one patch and Aeneas `5220259c`. The doc's
@@ -1220,7 +1215,7 @@ in this sketch changes either way; the drift is a separate documentation defect,
 flagged because a Lean worker who reads the older page will misjudge which
 toolchain the proofs build against.
 
-**R-06 — Proof-effort asymmetry across the five issues.** O-1 and O-3 lean
+**R-05 — Proof-effort asymmetry across the five issues.** O-1 and O-3 lean
 heavily on existing Mathlib machinery and should land quickly. O-4 and O-5 carry
 the genuinely long proofs (L4.5's separability descent, L5.3's recurrence,
 L5.6's bit-level readout). The issues are serialized `41090b8d` →
