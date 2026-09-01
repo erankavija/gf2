@@ -79,3 +79,32 @@ production behavior. Re-run formatting, link/heading checks, the checksum
 manifest, independent documentation review, and the configured doc-review
 gate. Any further blocking finding exhausts the reset rework allowance and
 requires invoker escalation.
+
+## Rework 2 review result
+
+Worker commit `66123a77` adds a resolving **“SIMD pilot scope”** heading and
+repoints both permanent documents. It is clean and unmerged. Independent
+review found one blocking factual defect: the new scope paragraph says the
+older 8-word result used `ops::xor_inplace`, but
+`benches/simd_vs_scalar.rs` directly calls `ScalarBackend::xor` and the
+detected SIMD backend, just as the current calibration harness does. The
+replacement explanation therefore invents a call-path distinction.
+
+The reset rework allowance is exhausted. Do not merge `66123a77`. The invoker
+must choose targeted guidance with another counter reset, manual lead
+takeover, or rejection. The lead recommends one documentation-only reset:
+remove the false dispatcher distinction and state only the evidence-backed
+protocol and producing-revision scope of the two result sets, then rerun
+independent documentation review and the configured doc-review gate.
+
+## Second invoker decision
+
+The invoker selected option A. The counter is reset and one
+documentation-only retry is authorized. Preserve the resolving **“SIMD pilot
+scope”** heading and both links, but replace the false `ops.rs` distinction
+with only evidence-backed scope: the 2026-09-01 value comes from the receipt's
+preregistered fixed-window protocol at its pinned producing revision, while
+the older 8-word result is reported separately from the Criterion
+`simd_vs_scalar` benchmark and is not reproduced or reconciled by this
+receipt. Do not claim a call-path difference or invent a causal
+reconciliation. Measured artifacts and production behavior remain immutable.
