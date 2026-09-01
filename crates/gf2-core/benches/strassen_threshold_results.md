@@ -128,7 +128,7 @@ step produces, not just the final output:
    the U-assembly sums of products are all covered.
 
 A second case in the same proptest also exercises the production
-path at `n = 4 · WINOGRAD_THRESHOLD = 512` on Mersenne-31 and
+path at `n = 4 · WINOGRAD_MIN_DIM_DEFAULT = 512` on Mersenne-31 and
 confirms bit-exact equality with the classical `gemm`.
 
 ## Odd-dimension coverage
@@ -154,6 +154,6 @@ round-trip is additionally checked in
 | `[hard]` theorem-4 bound verified across levels | Pass — `prop_winograd_bound_propagates_across_levels_fp31`. |
 | `[hard]` threshold picked from bench at n = 2048 | Pass — sweep table above. |
 | `[hard]` n = 2048 and n = 4096 measured | Pass — M31 and GF(2^8) both measured at both sizes via the Criterion bench `benches/strassen_threshold.rs`. GF(2^8) `n = 4096` requires ≈ 15 h of wall-clock (Criterion `sample_size = 10` × ≈ 91 min/sample) and must be invoked explicitly with a bench filter. The recorded numbers below are from a dedicated overnight run. |
-| `[hard]` per-field configurable threshold | Pass at record time via the `FiniteField::WINOGRAD_THRESHOLD` trait associated const. Superseded: live dispatch reads the single host-level `gemm.winograd_min_dim` profile value, per-field crossover control has no live carrier, and the trait constant is absent from the production and extraction surfaces (jit:5bdc9552). |
+| `[hard]` host-level configurable threshold | Pass — live dispatch reads the host-level `gemm.winograd_min_dim` profile value; no per-field carrier or control exists. |
 | `[hard]` odd-dim coverage | Pass — 5 dedicated tests. |
 | `[aspirational]` ≥ 1.2× speedup | **Met** on both fields at `n ≥ 256`. 1.21×–2.22× measured (M31 peaks 1.96× at `n = 4096`; GF(2^8) peaks 2.215× at `n = 4096` — Criterion 95% CI: 3705.1–3706.1 s classical, 1668.4–1679.1 s winograd, 1 high-severe outlier of 10 samples). |
