@@ -41,6 +41,290 @@ use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::{FieldIdentity, FieldVec, FiniteField};
 use std::fmt;
 
+/// A linear code obtained by appending one coordinate whose value makes the
+/// complete symbol sum zero.
+///
+/// The appended coordinate is the final coordinate, at position `n` in the
+/// derived coordinate space.  Encoding first delegates to the mother and
+/// then appends `-sum(codeword)`.  Thus the binary specialization appends the
+/// overall parity bit and agrees with the legacy extended-BCH convention,
+/// whose parity bit is the last `[message | parity | overall-parity]`
+/// coordinate.
+///
+/// The wrapper preserves the mother's dimension: its parameters are
+/// `(n + 1, k)`.  It does not compute a minimum distance.  Hamming distance
+/// can stay the same or increase by one; for a binary mother with odd minimum
+/// distance, the even-weight extension increases it by one.
+///
+/// `CoordinateMap` cannot represent a fresh derived coordinate because it is
+/// an injective map whose every derived position has a mother preimage.  The
+/// map returned by [`Self::coordinate_map`] therefore contains exactly the
+/// `n` inherited positions, in order; the appended position is deliberately
+/// omitted and is identified by [`Self::extension_position`].  This convention
+/// also lets callers supply a provenance map from another derived wrapper via
+/// [`Self::with_coordinate_map`].
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::transform::Extended;
+/// use gf2_coding::traits::block::{BlockCode, BlockEncoder};
+/// use gf2_coding::{CodeError, LinearBlockCode};
+/// use gf2_core::BitVec;
+///
+/// let mother = LinearBlockCode::hamming(3);
+/// let extended = Extended::new(mother)?;
+/// let message = BitVec::ones(extended.k());
+/// let codeword = extended.encode(&message)?;
+/// assert_eq!(codeword.len(), extended.n());
+/// assert_eq!(codeword.count_ones() % 2, 0);
+/// assert_eq!(extended.extension_position(), extended.n() - 1);
+/// # Ok::<(), CodeError>(())
+/// ```
+pub struct Extended<C>
+where
+    C: BlockCode,
+{
+    mother: C,
+    map: CoordinateMap,
+}
+
+impl<C> Clone for Extended<C>
+where
+    C: BlockCode + Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            mother: self.mother.clone(),
+            map: self.map.clone(),
+        }
+    }
+}
+
+impl<C> fmt::Debug for Extended<C>
+where
+    C: BlockCode + fmt::Debug,
+    C::Symbol: fmt::Debug,
+{
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("Extended")
+            .field("mother", &self.mother)
+            .field("map", &self.map)
+            .finish()
+    }
+}
+
+impl<C> Extended<C>
+where
+    C: BlockCode,
+{
+    /// Extends `mother` by one final zero-sum coordinate.
+    ///
+    /// The constructor rejects a mother length that cannot be increased by
+    /// one in the `usize` representation.  The coordinate map is the
+    /// identity over the mother's positions; see the type-level rustdoc for
+    /// why the fresh coordinate is not an entry in that map.
+    pub fn new(mother: C) -> Result<Self, CodeError> {
+        mother
+            .n()
+            .checked_add(1)
+            .ok_or(CodeError::UnsupportedSize {
+                size: mother.n() as u128 + 1,
+            })?;
+        Ok(Self {
+            map: CoordinateMap::identity(mother.n()),
+            mother,
+        })
+    }
+
+    /// Extends `mother` using an existing map from the mother's coordinates
+    /// to an ultimate ancestor coordinate space.
+    ///
+    /// `mother_map` must contain one entry for every inherited mother
+    /// coordinate.  Its derived length is therefore `mother.n()`; the fresh
+    /// extension coordinate is not included.
+    pub fn with_coordinate_map(mother: C, mother_map: CoordinateMap) -> Result<Self, CodeError> {
+        mother
+            .n()
+            .checked_add(1)
+            .ok_or(CodeError::UnsupportedSize {
+                size: mother.n() as u128 + 1,
+            })?;
+        if mother_map.derived_len() != mother.n() {
+            return Err(CodeError::CoordinateCountMismatch {
+                expected: mother.n(),
+                actual: mother_map.derived_len(),
+            });
+        }
+        Ok(Self {
+            mother,
+            map: mother_map,
+        })
+    }
+
+    /// Returns the mother code by shared reference.
+    pub fn mother(&self) -> &C {
+        &self.mother
+    }
+
+    /// Consumes the wrapper and returns its immediate mother code.
+    pub fn into_mother(self) -> C {
+        self.mother
+    }
+
+    /// Returns the map for the inherited positions.
+    ///
+    /// The map has `derived_len() == mother.n()`, rather than `self.n()`:
+    /// [`CoordinateMap`] has no representation for the fresh extension
+    /// position.  Querying [`Self::extension_position`] on this map therefore
+    /// returns [`CodeError::CoordinateOutOfRange`].
+    pub fn coordinate_map(&self) -> &CoordinateMap {
+        &self.map
+    }
+
+    /// Returns the final coordinate containing the zero-sum symbol.
+    pub fn extension_position(&self) -> usize {
+        self.mother.n()
+    }
+
+    /// Shortens the extended code and composes provenance for its inherited
+    /// coordinates.
+    ///
+    /// The fresh extension coordinate is omitted from the resulting ultimate
+    /// map if it remains in the exposed codeword, because it has no mother
+    /// preimage.  Remove that coordinate to obtain a fully mapped result.
+    pub fn shorten(
+        self,
+        coordinates: impl IntoIterator<Item = usize>,
+    ) -> Result<Shortened<Self>, CodeError>
+    where
+        C: GeneratorMatrixAccess,
+    {
+        let provenance = self.map.clone();
+        build_shortened_with_incomplete_provenance(self, coordinates, provenance)
+    }
+
+    /// Punctures the extended code and composes provenance for its inherited
+    /// coordinates.
+    ///
+    /// The fresh extension coordinate is omitted from the resulting ultimate
+    /// map if it remains in the exposed codeword, because it has no mother
+    /// preimage.  Remove that coordinate to obtain a fully mapped result.
+    pub fn puncture(
+        self,
+        coordinates: impl IntoIterator<Item = usize>,
+    ) -> Result<Punctured<Self>, CodeError>
+    where
+        C: GeneratorMatrixAccess,
+    {
+        let provenance = self.map.clone();
+        build_punctured_with_incomplete_provenance(self, coordinates, provenance)
+    }
+}
+
+impl<C> BlockCode for Extended<C>
+where
+    C: BlockCode,
+{
+    type Symbol = C::Symbol;
+    type Symbols = C::Symbols;
+
+    fn symbol_zero(&self) -> Self::Symbol {
+        self.mother.symbol_zero()
+    }
+
+    fn k(&self) -> usize {
+        self.mother.k()
+    }
+
+    fn n(&self) -> usize {
+        self.mother.n() + 1
+    }
+}
+
+impl<C> BlockEncoder for Extended<C>
+where
+    C: BlockCode + BlockEncoder,
+{
+    /// Encodes with the mother and appends the additive inverse of its symbol
+    /// sum.
+    ///
+    /// # Complexity
+    ///
+    /// O(`mother.encode` + `n`) field operations and one temporary `n`-symbol
+    /// buffer.
+    fn encode_into(
+        &self,
+        message: &Self::Symbols,
+        codeword: &mut Self::Symbols,
+    ) -> Result<(), CodeError> {
+        if message.len() != self.k() {
+            return Err(CodeError::BufferLengthMismatch {
+                expected: self.k(),
+                actual: message.len(),
+            });
+        }
+        if codeword.len() != self.n() {
+            return Err(CodeError::BufferLengthMismatch {
+                expected: self.n(),
+                actual: codeword.len(),
+            });
+        }
+
+        let zero = self.symbol_zero();
+        let mut mother_codeword = C::Symbols::zeroed(self.mother.n(), &zero);
+        self.mother.encode_into(message, &mut mother_codeword)?;
+
+        let mut sum = zero.zero_like();
+        for position in 0..self.mother.n() {
+            let symbol = mother_codeword
+                .get(position)
+                .expect("validated mother codeword length");
+            sum += &symbol;
+            codeword.set(position, symbol)?;
+        }
+        codeword.set(self.extension_position(), -sum)?;
+        Ok(())
+    }
+}
+
+impl<C> GeneratorMatrixAccess for Extended<C>
+where
+    C: BlockCode + GeneratorMatrixAccess,
+{
+    type GeneratorMatrix = C::GeneratorMatrix;
+
+    fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {
+        if out.rows() != self.k() || out.cols() != self.n() {
+            return Err(CodeError::ShapeMismatch {
+                expected_rows: self.k(),
+                expected_cols: self.n(),
+                actual_rows: out.rows(),
+                actual_cols: out.cols(),
+            });
+        }
+
+        let mother_generator = self.mother.generator_matrix()?;
+        for row in 0..self.k() {
+            let mut sum = self.symbol_zero().zero_like();
+            for column in 0..self.mother.n() {
+                let value = mother_generator
+                    .get(row, column)
+                    .expect("validated mother generator shape");
+                sum += &value;
+                out.set(row, column, value)?;
+            }
+            out.set(row, self.extension_position(), -sum)?;
+        }
+        Ok(())
+    }
+
+    fn is_systematic(&self) -> Result<bool, CodeError> {
+        self.mother.is_systematic()
+    }
+}
+
 /// A linear code obtained by shortening a mother code on a coordinate set.
 ///
 /// For a mother generator matrix `G` and a selected set `S`, the shortened
@@ -61,6 +345,9 @@ use std::fmt;
 /// `C` needs the canonical block-code and generator-matrix traits.  The
 /// resulting wrapper owns its generator and therefore encodes through the
 /// generic symbol representation supplied by `C`, including nonbinary fields.
+/// When an extension coordinate is retained while shortening an [`Extended`]
+/// value, the map follows the inherited-coordinate convention documented on
+/// [`Extended::coordinate_map`].
 ///
 /// Use [`Self::new`] for a base code.  To shorten an already shortened code,
 /// consume it with [`Self::shorten`]; that operation composes the new map
@@ -205,6 +492,16 @@ where
     /// Alias for [`Self::shorten_last`].
     pub fn from_systematic_suffix(mother: C, count: usize) -> Result<Self, CodeError> {
         Self::shorten_last(mother, count)
+    }
+
+    /// Extends this shortened code while retaining its coordinate provenance.
+    ///
+    /// If the shortened code itself contains a fresh coordinate from an
+    /// earlier extension, that coordinate must first be removed because the
+    /// map convention cannot provide it with an ancestor preimage.
+    pub fn extend(self) -> Result<Extended<Self>, CodeError> {
+        let provenance = self.map.clone();
+        Extended::with_coordinate_map(self, provenance)
     }
 
     /// Returns the mother code by shared reference.
@@ -384,7 +681,9 @@ where
 /// resulting wrapper owns its generator and therefore encodes through the
 /// generic symbol representation supplied by `C`, including nonbinary
 /// fields.  Its coordinate map preserves the original order of the kept
-/// coordinates and composes through [`Self::puncture`].
+/// coordinates and composes through [`Self::puncture`].  When the mother is
+/// an [`Extended`] value, the map can omit that mother's fresh coordinate
+/// under the convention documented on [`Extended::coordinate_map`].
 ///
 /// The complete coordinate set is valid: it produces the zero-length,
 /// zero-dimensional boundary code with an empty information set.
@@ -523,6 +822,16 @@ where
     /// Alias for [`Self::puncture_last`].
     pub fn from_systematic_suffix(mother: C, count: usize) -> Result<Self, CodeError> {
         Self::puncture_last(mother, count)
+    }
+
+    /// Extends this punctured code while retaining its coordinate provenance.
+    ///
+    /// If the punctured code itself contains a fresh coordinate from an
+    /// earlier extension, that coordinate must first be removed because the
+    /// map convention cannot provide it with an ancestor preimage.
+    pub fn extend(self) -> Result<Extended<Self>, CodeError> {
+        let provenance = self.map.clone();
+        Extended::with_coordinate_map(self, provenance)
     }
 
     /// Returns the mother code by shared reference.
@@ -691,6 +1000,43 @@ where
     })
 }
 
+fn build_shortened_with_incomplete_provenance<C>(
+    mother: C,
+    coordinates: impl IntoIterator<Item = usize>,
+    provenance: CoordinateMap,
+) -> Result<Shortened<C>, CodeError>
+where
+    C: BlockCode + GeneratorMatrixAccess,
+{
+    if provenance.derived_len() > mother.n() {
+        return Err(CodeError::CoordinateCountMismatch {
+            expected: mother.n(),
+            actual: provenance.derived_len(),
+        });
+    }
+
+    let removed = validate_coordinate_set(mother.n(), coordinates)?;
+    let kept = (0..mother.n())
+        .filter(|position| removed.binary_search(position).is_err())
+        .collect::<Vec<_>>();
+    let local_map = CoordinateMap::from_permutation(mother.n(), &kept)?;
+    let map = map_inherited_positions(&provenance, &kept)?;
+
+    let mother_generator = mother.generator_matrix()?;
+    let zero = mother.symbol_zero();
+    let generator = materialize_generator(&mother_generator, &zero);
+    let data = derive_shortened_data(&generator, &removed, &kept, &zero);
+
+    Ok(Shortened {
+        mother,
+        map,
+        local_map,
+        removed: removed.into_boxed_slice(),
+        generator: data.generator,
+        information_set: data.information_set,
+    })
+}
+
 fn build_punctured<C>(
     mother: C,
     coordinates: impl IntoIterator<Item = usize>,
@@ -725,6 +1071,54 @@ where
         generator: data.generator,
         information_set: data.information_set,
     })
+}
+
+fn build_punctured_with_incomplete_provenance<C>(
+    mother: C,
+    coordinates: impl IntoIterator<Item = usize>,
+    provenance: CoordinateMap,
+) -> Result<Punctured<C>, CodeError>
+where
+    C: BlockCode + GeneratorMatrixAccess,
+{
+    if provenance.derived_len() > mother.n() {
+        return Err(CodeError::CoordinateCountMismatch {
+            expected: mother.n(),
+            actual: provenance.derived_len(),
+        });
+    }
+
+    let removed = validate_coordinate_set(mother.n(), coordinates)?;
+    let kept = (0..mother.n())
+        .filter(|position| removed.binary_search(position).is_err())
+        .collect::<Vec<_>>();
+    let map = map_inherited_positions(&provenance, &kept)?;
+
+    let mother_generator = mother.generator_matrix()?;
+    let zero = mother.symbol_zero();
+    let generator = materialize_generator(&mother_generator, &zero);
+    let data = derive_punctured_data(&generator, &kept, &zero);
+
+    Ok(Punctured {
+        mother,
+        map,
+        removed: removed.into_boxed_slice(),
+        generator: data.generator,
+        information_set: data.information_set,
+    })
+}
+
+fn map_inherited_positions(
+    provenance: &CoordinateMap,
+    positions: &[usize],
+) -> Result<CoordinateMap, CodeError> {
+    let inherited = positions
+        .iter()
+        .copied()
+        .filter(|&position| position < provenance.derived_len())
+        .map(|position| provenance.mother_position(position))
+        .collect::<Result<Vec<_>, _>>()?;
+    CoordinateMap::from_permutation(provenance.mother_len(), inherited)
 }
 
 fn validate_coordinate_set(
@@ -954,6 +1348,41 @@ mod tests {
         }
     }
 
+    impl<F: FieldIdentity + 'static> BlockEncoder for DenseTestCode<F> {
+        fn encode_into(
+            &self,
+            message: &Self::Symbols,
+            codeword: &mut Self::Symbols,
+        ) -> Result<(), CodeError> {
+            if message.len() != self.k() {
+                return Err(CodeError::BufferLengthMismatch {
+                    expected: self.k(),
+                    actual: message.len(),
+                });
+            }
+            if codeword.len() != self.n() {
+                return Err(CodeError::BufferLengthMismatch {
+                    expected: self.n(),
+                    actual: codeword.len(),
+                });
+            }
+
+            for column in 0..self.n() {
+                let mut value = self.zero.zero_like();
+                for row in 0..self.k() {
+                    value += self.generator.get(row, column).clone()
+                        * message
+                            .as_slice()
+                            .get(row)
+                            .expect("validated message length")
+                            .clone();
+                }
+                SymbolSequence::set(codeword, column, value)?;
+            }
+            Ok(())
+        }
+    }
+
     impl<F: FieldIdentity + 'static> GeneratorMatrixAccess for DenseTestCode<F> {
         type GeneratorMatrix = FieldMatrix<F>;
 
@@ -1053,6 +1482,181 @@ mod tests {
             }
         }
         matrix
+    }
+
+    #[test]
+    fn extension_preserves_parameters_systematic_information_and_map() {
+        let mother = LinearBlockCode::hamming(3);
+        let extended = Extended::new(mother.clone()).unwrap();
+
+        assert_eq!((extended.n(), extended.k()), (mother.n() + 1, mother.k()));
+        assert!(extended.is_systematic().unwrap());
+        assert_eq!(extended.extension_position(), mother.n());
+        assert_eq!(extended.coordinate_map().mother_len(), mother.n());
+        assert_eq!(extended.coordinate_map().derived_len(), mother.n());
+        for position in 0..mother.n() {
+            assert_eq!(
+                extended.coordinate_map().mother_position(position),
+                Ok(position)
+            );
+        }
+        assert_eq!(
+            extended
+                .coordinate_map()
+                .mother_position(extended.extension_position()),
+            Err(CodeError::CoordinateOutOfRange {
+                coordinate: mother.n(),
+                length: mother.n(),
+            })
+        );
+
+        let generator = extended.generator_matrix().unwrap();
+        for row in 0..extended.k() {
+            let mut parity = false;
+            for column in 0..extended.n() {
+                parity ^= generator.get(row, column);
+            }
+            assert!(!parity);
+        }
+    }
+
+    #[test]
+    fn binary_extension_has_zero_sum_for_every_message() {
+        let mother = LinearBlockCode::hamming(3);
+        let extended = Extended::new(mother).unwrap();
+
+        for raw_message in 0..(1usize << extended.k()) {
+            let mut message = BitVec::zeros(extended.k());
+            for position in 0..extended.k() {
+                message.set(position, (raw_message >> position) & 1 == 1);
+            }
+            let codeword = extended.encode(&message).unwrap();
+            assert_eq!(codeword.count_ones() % 2, 0, "message {raw_message}");
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn nonbinary_extension_has_zero_symbol_sum(
+            values in prop::array::uniform6(0u8..5),
+            message_values in prop::array::uniform2(0u8..5),
+        ) {
+            let mother = DenseTestCode {
+                generator: fp5_matrix(2, 3, &values),
+                zero: Fp::<5>::new(0),
+            };
+            let extended = Extended::new(mother).unwrap();
+            let message: FieldVec<Fp<5>> = message_values
+                .into_iter()
+                .map(|value| Fp::<5>::new(value as u64))
+                .collect();
+            let codeword = extended.encode(&message).unwrap();
+
+            let mut sum = Fp::<5>::new(0);
+            for position in 0..codeword.len() {
+                sum += *codeword
+                    .as_slice()
+                    .get(position)
+                    .expect("encoded length is validated");
+            }
+            prop_assert!(sum.is_zero());
+        }
+    }
+
+    #[test]
+    fn extension_matches_legacy_extended_bch_parity_position() {
+        use crate::bch::extended::ExtendedBchCode;
+        use crate::bch::BchCode;
+        use gf2_core::gf2m::Gf2mField;
+
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let base = BchCode::new(15, 11, 1, field);
+        let mother = LinearBlockCode::new_systematic(
+            crate::traits::GeneratorMatrixAccess::generator_matrix(&base),
+            None,
+        );
+        let extended = Extended::new(mother).unwrap();
+        let legacy = ExtendedBchCode::from_bch(&base);
+
+        for raw_message in [0usize, 1, 0x155, 0x2aa, 0x7ff] {
+            let mut message = BitVec::zeros(extended.k());
+            for position in 0..extended.k() {
+                message.set(position, (raw_message >> position) & 1 == 1);
+            }
+            let actual = extended.encode(&message).unwrap();
+            let expected = crate::traits::BlockEncoder::encode(&legacy, &message);
+            assert_eq!(actual, expected, "message {raw_message}");
+        }
+    }
+
+    #[test]
+    fn extension_map_composes_when_shortened_provenance_is_supplied() {
+        let mut generator = BitMatrix::zeros(2, 4);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(1, 1, true);
+        generator.set(1, 3, true);
+        let mother = LinearBlockCode::new_systematic(generator, None);
+        let shortened = Shortened::new(mother, [1]).unwrap();
+        let provenance = shortened.coordinate_map().clone();
+        let extended = shortened.extend().unwrap();
+
+        assert_eq!(extended.coordinate_map(), &provenance);
+        for position in 0..provenance.derived_len() {
+            assert_eq!(
+                extended.coordinate_map().mother_position(position),
+                provenance.mother_position(position)
+            );
+        }
+
+        let mut generator = BitMatrix::zeros(2, 4);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(1, 1, true);
+        generator.set(1, 3, true);
+        let mother = LinearBlockCode::new_systematic(generator, None);
+        let punctured = Punctured::new(mother, [1]).unwrap();
+        let provenance = punctured.coordinate_map().clone();
+        let extended = punctured.extend().unwrap();
+        assert_eq!(extended.coordinate_map(), &provenance);
+    }
+
+    #[test]
+    fn extend_then_shorten_keeps_the_mother_coordinate_order() {
+        let mut generator = BitMatrix::zeros(2, 4);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(1, 1, true);
+        generator.set(1, 3, true);
+        let mother = LinearBlockCode::new_systematic(generator, None);
+        let extended = Extended::new(mother.clone()).unwrap();
+        let shortened = extended.shorten([mother.n()]).unwrap();
+
+        assert_eq!(shortened.n(), mother.n());
+        assert_eq!(shortened.coordinate_map().mother_len(), mother.n());
+        for position in 0..mother.n() {
+            assert_eq!(
+                shortened.coordinate_map().mother_position(position),
+                Ok(position)
+            );
+        }
+    }
+
+    #[test]
+    fn extend_then_puncture_composes_inherited_provenance() {
+        let mut generator = BitMatrix::zeros(2, 4);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(1, 1, true);
+        generator.set(1, 3, true);
+        let mother = LinearBlockCode::new_systematic(generator, None);
+        let punctured = Extended::new(mother).unwrap().puncture([0]).unwrap();
+
+        assert_eq!(punctured.coordinate_map().mother_len(), 4);
+        assert_eq!(punctured.coordinate_map().derived_len(), 3);
+        assert_eq!(punctured.coordinate_map().mother_position(0), Ok(1));
+        assert_eq!(punctured.coordinate_map().mother_position(1), Ok(2));
+        assert_eq!(punctured.coordinate_map().mother_position(2), Ok(3));
     }
 
     #[test]
