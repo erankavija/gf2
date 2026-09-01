@@ -71,17 +71,71 @@ are assigned in selector order below. Their stream roles are fixed:
 | 15 | interpolation coefficients/point offset `0xa00`/`0xa01` |
 
 The scalar seed input is the listed selector value; GEMM uses volume rather
-than cube dimension. Each seed initializes the existing
-`gf2_core::rng::Lcg`. No ambient entropy, repetition, execution, process, or
-worker identity enters seed derivation. Repetitions select deterministic
-fixture banks from the emitted seed inventory.
+than cube dimension. Every follow-on stream has exactly eight banks. Bank `b`
+uses `seed(field, scalar_grid_value, role + (b << 16))` for `0 <= b < 8`;
+the addition is wrapping `u64` arithmetic. The pilot keeps its existing seed
+and bank derivation byte-for-byte. No ambient entropy, repetition, execution,
+process, or worker identity enters seed derivation.
 
-Unit-triangular constructors put one on the diagonal and seeded values only on
-the named strict triangle; their product is invertible. Bit matrices clear tail
-padding. Back-sub fixtures have exact rank `floor(x/2)` with both pivot and free
-columns. Interpolation uses a degree-`x-1` polynomial with nonzero leading
-coefficient and the first `x` distinct nonzero `Fp<65537>` values after the
-seeded offset.
+Each seed initializes `gf2_core::rng::Lcg`. One draw first updates
+`state = state * 6364136223846793005 + 1442695040888963407` modulo `2^64` and
+then returns that state. Consumers traverse banks ascending, then the stream
+order in the role table, then components ascending, then row-major matrix cells
+or low-to-high polynomial coefficients. A bit-matrix row consumes one draw per
+stored `u64` word; the returned word is stored directly and the final word is
+masked to zero tail padding. A scalar GF(2) triangular entry uses
+`draw & 1`. An `Fp<P>` cell uses `Fp::new(draw % P)`; a required nonzero cell
+uses `Fp::new(1 + draw % (P-1))`. No rejection sampling or unused draw is
+permitted.
+
+Call-count calibration begins at logical index zero. For a timed window,
+`start = (execution * 5 + repetition) & 7`; call `c` uses logical index
+`start + c`. Unary fixtures use bank `index & 7`. Binary fixtures use lhs bank
+`index & 7` and rhs bank `(index + 3) & 7`. An SoA composite uses that same
+bank pair for all four calls. The untimed probe uses the corresponding index
+zero banks. Both arm children reconstruct these banks independently and must
+emit identical operand digests before comparison.
+
+### 2.1 Exact follow-on constructions
+
+- **Transpose:** fill each `(64x) x (64x)` `BitMatrix` bank by stored words in
+  row-major order from role `0x100`.
+- **SoA:** use `Fp<65537>` with quadratic and cubic `ExtConfig::NON_RESIDUE = 3`.
+  For each of the four roles, consume coefficients component-major and element
+  ascending to build length-`x` `BatchExtField` banks. A composite returns, in
+  order, quadratic multiply(lhs,rhs), quadratic square(lhs), cubic
+  multiply(lhs,rhs), and cubic square(lhs).
+- **M4RM wide and tiled:** independently fill lhs `64 x 512` and rhs
+  `512 x (64x)` bit matrices by stored words in row-major order from the row's
+  two roles.
+- **GF(2) inverse:** construct unit-lower `L` and unit-upper `U` in row-major
+  order, drawing one bit only for each strict-triangle cell. Form `A=L*U` with
+  the harness's scalar loops ordered row, column, inner index; fixture
+  construction calls no production dispatcher.
+- **Field inverse:** construct `Fp<251>` unit-lower `L` and unit-upper `U` in
+  the same order with `draw % 251`, then form `A=L*U` with scalar field loops in
+  row, column, inner-index order.
+- **TRSM:** construct `A=L*U` by the field-inverse rule and fill rhs `B` as an
+  `x x x` row-major `Fp<251>` matrix from role `0x602`.
+- **PLE panel:** construct the full-rank `Fp<251>` matrix `A=L*U` by the
+  field-inverse rule using roles `0x700` and `0x701`.
+- **PLE back-substitution:** let `r=floor(x/2)` and pivot columns
+  `p_i=2i`, `0 <= i < r`. Build an `r x x` echelon seed matrix `E`: each
+  `E[i,p_i]` is a nonzero draw from role `0x800`; every nonpivot column cell is
+  a `draw % 251` from role `0x801`, traversed row then column; all other pivot
+  column cells are zero. Embed `E` in the first `r` rows of an `x x x` zero
+  matrix. Build an `x x x` unit-lower row mixer `L` from role `0x802` and set
+  `A=L*E` using scalar row, column, inner-index loops. The nonzero diagonal on
+  distinct `p_i` proves `rank(A)=r`; since `0<r<x`, every fixture has pivots
+  and free columns and cannot take the pivot-free bypass.
+- **GEMM:** fill `Fp<251>` lhs and rhs `d x d` matrices row-major from roles
+  `0x900` and `0x901`; `d` is the cube dimension mapped from the volume grid.
+- **Interpolation:** consume `x` nonzero coefficient draws from role `0xa00`
+  in low-to-high degree order. One role-`0xa01` draw supplies
+  `offset = draw % 65536`; point `i` is
+  `Fp<65537>::new((offset + i*1000003) % 65536 + 1)`. Compute each ordinate by
+  descending-coefficient Horner evaluation. This gives a degree-`x-1`
+  polynomial and `x` distinct nonzero points.
 
 ## 3. Follow-on selector matrix
 
@@ -92,7 +146,7 @@ listed GEMM cube dimension. All forcing values are within current codec ranges.
 | Selector (tag) | Ordered grid; exact fixture shape | Production entry point | Exact forced arms, route, and exclusion |
 |---|---|---|---|
 | `bit_matrix.transpose_simple_max_blocks` (5) | `[2, 4, 8, 15, 16, 17, 32, 64, 128]`; square `(64x) x (64x)` seeded `BitMatrix` | `BitMatrix::transpose` | Simple threshold `x`; MacroTiled `x-1`. `transpose_route(x,x)` is exactly `Simple`/`MacroTiled`; macro extent stays conservative. |
-| `soa_batch.parallel_min_len` (6) | `[4096, 8192, 16384, 32767, 32768, 32769, 65536, 131072, 262144]`; length-`x` quadratic and cubic SoA batches over `Fp<65537>` | In fixed order, `BatchExtField::batch_mul_quadratic`, `batch_square_quadratic`, `batch_mul_cubic`, `batch_square_cubic`, inside the existing dedicated-pool test-support bridge | Sequential `x+1`; Parallel `x`. `soa_parallel_route(x)` is exactly `Sequential`/`Parallel`; parallel observes four actual workers and `last_effective_soa_chunk=16384` after each call, sequential observes none. Chunk length stays conservative. |
+| `soa_batch.parallel_min_len` (6) | `[4096, 8192, 16384, 32767, 32768, 32769, 65536, 131072, 262144]`; length-`x` quadratic and cubic SoA batches over `Fp<65537>` | In fixed order, `BatchExtField::batch_mul_quadratic`, `batch_square_quadratic`, `batch_mul_cubic`, `batch_square_cubic`, inside the existing dedicated-pool test-support bridge | Sequential `x+1`; Parallel `x`. `soa_parallel_route(x)` is exactly `Sequential`/`Parallel`. Inside the dedicated pool, `rayon::current_num_threads()` is exactly 4, the production gate fact. Parallel records `last_effective_soa_chunk=16384` after each call; sequential records none. Chunk length stays conservative. |
 | `m4rm.wide_tier_min_stride_words` (7) | `[2, 4, 8, 15, 16, 17, 32, 64, 128]`; `64 x 512` by `512 x (64x)` bit matrices | `alg::m4rm::multiply` | SmallN `x+1`; Wide `x`. `m4rm_schedule_route(512,64x)` reports the exact tier and panel width. Both arms set tiled threshold to `usize::MAX` as a recorded companion control, excluding tiled execution. |
 | `m4rm.tiled_min_stride_words` (8) | domain-clipped `[4, 5, 6, 8, 12, 16, 24, 32, 64]`; `64 x 512` by `512 x (64x)` bit matrices | `alg::m4rm::multiply` | RowWise `x+1`; RegisterTiled `x`. Reporter admission must be false/true and the authorized test-support effective observer must report exactly RowWise/RegisterTiled. `m=64>=8`; the existing SIMD tile capability is required. |
 | `dense_inverse.m4ri_min_dim` (9) | `[1, 2, 4, 7, 8, 9, 16, 32, 64]`; GF(2) `A=L*U`, shape `x x x` | `alg::gauss::invert` | Scalar `x+1`; M4ri `x`. `invert_route(x)` is exactly `Scalar`/`M4ri`. |
@@ -114,8 +168,23 @@ The M4RM tiled effective observer is evidence instrumentation at the existing
 `test-support`, has reset/read semantics for one fresh-child call, reports
 `RegisterTiled` only after `resolve_m4rm_tile8xn()` returns a kernel and the
 tiled callee is selected, and otherwise reports `RowWise`. A focused test
-forces an admitted stride with a declined capability and requires `RowWise`.
-It is not a selector, route reporter, forcing hook, or normal-build API.
+target, `crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs`, installs
+`tiled_min_stride_words=4`, multiplies `64 x 512` by `512 x 256`, requires the
+reporter's stride admission, and requires the effective observation
+`RowWise`. It runs exactly as:
+
+```sh
+./scripts/cargo-budget.sh --test cargo +1.95.0 nextest run -p gf2-core \
+  --no-default-features \
+  --features tuning-profile,test-support \
+  --test m4rm_tiled_effective_no_simd \
+  --cargo-profile ci-test --profile ci
+```
+
+The command omits the `simd` feature, so `resolve_m4rm_tile8xn()` compiles to
+`None` deterministically even though the stride predicate is true. It uses no
+setter or capability-forcing hook. The observer is not a selector, route
+reporter, forcing hook, or normal-build API.
 
 Every named route is a closed vocabulary. Missing, stale, unexpected, or third
 routes fail before timing. M4RM tiled, PLE panel, TRSM, GEMM, and SoA preflights
@@ -144,14 +213,18 @@ scalar selector as an operand length.
 
 Per-field fallback is explicit. Transpose, M4RM wide, both inverse fields,
 back-substitution, and the four polynomial pilot dispatchers admit no third
-arm: any mismatch is invalid evidence. SoA omits when four actual Rayon workers
-cannot execute; M4RM tiled omits when the tile kernel is unavailable; PLE panel
+arm: any mismatch is invalid evidence. SoA omits when the dedicated pool does
+not report `rayon::current_num_threads() == 4`; this asserts the production
+thread gate and makes no claim about per-call worker participation. Its receipt
+records pool width and effective chunk, while the scalar arm records no chunk.
+M4RM tiled omits when the tile kernel is unavailable; PLE panel
 omits when `Fp<251>` lacks the Byte lane or its panel kernel declines; TRSM and
 GEMM omit when the `Fp<251>` whole-GEMM kernel is unavailable or declines; the
 baked SIMD pilot omits when no concrete SIMD backend exists. Interpolation
-keeps the conservative default when either separately measured variant fails
-the standing crossover rule. Each omission aborts authoritative publication,
-while reporting mode records the capability and reason.
+keeps the conservative default when either fully comparable variant has a
+measured-default outcome, but is uncalibrated when either variant lacks a
+comparison. Each omission aborts authoritative publication, while reporting
+mode records the capability and reason.
 
 ## 5. Fresh-child and digest contract
 
@@ -190,20 +263,45 @@ bytes remain evidence but are not accepted as output from the current harness.
 
 ## 6. Selection and publication
 
-The standing rule selects the smallest point from which the asymptotic arm wins
-every remaining comparison; an upper-bound selector applies the existing
-reversed direction. A tie, non-monotone sweep, failed uncertainty rule, missing
-arm, or invalid interpolation variant retains the conservative default. Raw
-samples, median, dispersion/confidence interval, selecting margin, ties,
-non-monotone results, fallback, seed, route, and omission decisions are retained
-in the log and receipt.
+The standing lower-bound crossover scans the ordered grid from small to large.
+A tie, conservative-arm win, or uncertainty failure is a non-qualifying point
+permitted before the first strict, uncertainty-qualified asymptotic-arm win.
+That first win is a candidate only if every later comparison is also a strict,
+uncertainty-qualified asymptotic-arm win. A tie, loss, or uncertainty failure
+at or after the first win makes the sweep non-monotone. If no qualified win
+appears, including an all-tie grid, a fully comparable sweep has a measured
+no-win outcome and retains the default. An upper-bound selector applies the
+same rule in its existing reversed selection direction.
+
+A field is fully comparable when both arms execute with valid route,
+equivalence, nonzero timing, and raw-sample evidence at every predeclared point.
+A fully comparable no-win sweep, or a candidate invalidated by a later tie,
+loss, or uncertainty failure, is a measured outcome: it retains the
+conservative default and the campaign records that fallback under this run's
+measurement provenance. An unreachable arm, missing child/result/comparison,
+or any other absence of comparable evidence makes the field uncalibrated. An
+uncalibrated field is omitted rather than filled with the default, and the
+authoritative campaign aborts publication.
+
+A missing comparison anywhere, including after a candidate win, therefore
+invalidates the candidate and makes the field uncalibrated rather than a
+measured non-monotone outcome.
+
+For interpolation, both dispatcher variants must be fully comparable. If
+either has a measured-default outcome, the shared selector has a measured
+default outcome; if either is uncalibrated, the shared selector is
+uncalibrated. Raw samples, median, dispersion/confidence interval, selecting
+margin, ties, no-win and non-monotone outcomes, measured fallback, seeds,
+routes, and omissions are retained in the log and receipt.
 
 The exact inventory derives from
 `CoreTuningCodec::encode_body(CoreTuning::CONSERVATIVE)` through `SectionCodec`.
-The measured set equals the codec-derived sixteen names here; omissions are its
-exact 21-field complement in the current 37-field codec. Missing, duplicate,
-unknown, defaulted, frozen, malformed,
-zero-call, zero-duration, non-finite, route-mismatched, result-mismatched, or
+For a publishable run, the measured set equals the codec-derived sixteen names
+here, including any fully comparable measured-default outcome; omissions are
+its exact 21-field complement in the current 37-field codec. An uncalibrated
+campaign has no authoritative owner output. Missing, duplicate, unknown,
+defaulted, frozen, malformed, zero-call, zero-duration, non-finite,
+route-mismatched, result-mismatched, or
 noncanonical evidence fails closed.
 
 Core owner and complete envelope reopen strictly and canonically. The
@@ -350,7 +448,8 @@ The source-path boundary is exact:
   `crates/gf2-core/Cargo.toml`, and
   `crates/gf2-core/src/tuning/mod.rs`;
 - effective M4RM evidence only:
-  `crates/gf2-core/src/alg/m4rm.rs`;
+  `crates/gf2-core/src/alg/m4rm.rs` and
+  `crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs`;
 - current measured-owner readers and baked-value consumers:
   `crates/gf2-core/src/tuning/baked.rs`,
   `crates/gf2-core/src/kernels/backend.rs`,

@@ -887,7 +887,12 @@ The shared `polynomial.interpolate_fast_min_points` selector governs the
 generic and two-adic dispatchers, whose fast arms are materially different.
 Its one selected lower bound is therefore the smallest grid point from which
 both independently measured fast arms win monotonically, equivalently the
-larger of two valid per-dispatcher lower-bound crossovers. A tie, non-monotone
-result, unreachable arm, or failed uncertainty rule in either dispatcher
-retains the conservative default under §5.1; neither dispatcher represents
-the other.
+larger of two valid per-dispatcher lower-bound crossovers. For each dispatcher,
+ties, losses, and uncertainty failures are permitted as non-qualifying points
+before its first strict, uncertainty-qualified fast-arm win; that first win and
+every later grid comparison must be strict qualified wins. A later tie, loss,
+or failed uncertainty test makes a fully comparable sweep non-monotone. A
+fully comparable tie-only/no-win or non-monotone outcome is a measured outcome
+that retains the conservative default. An unreachable arm or absent comparison
+instead makes the field uncalibrated and omitted; the authoritative campaign
+does not publish. Neither dispatcher represents the other.
