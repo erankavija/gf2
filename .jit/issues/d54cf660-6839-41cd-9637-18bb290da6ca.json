@@ -16,8 +16,8 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-01T14:32:35.724377421Z",
+      "status": "passed",
+      "updated_at": "2026-09-01T14:38:37.369850979Z",
       "updated_by": "auto:executor"
     }
   },
@@ -31,5 +31,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reference matrix materialization: compact access, caller buffers, opt-in caching",
-  "updated_at": "2026-09-01T14:32:35.724377421Z"
+  "updated_at": "2026-09-01T14:38:37.369850979Z"
 }

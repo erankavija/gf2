@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T14:41:58.269755057Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "88f0bb88-1971-4ad8-9210-0e94a5b5eee1",
   "labels": [
     "type:task",
@@ -25,5 +31,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Harden the binary decoder: canonical model, typed outcomes, verified corrections",
-  "updated_at": "2026-09-01T13:15:25.528291172Z"
+  "updated_at": "2026-09-01T14:41:58.269755057Z"
 }
