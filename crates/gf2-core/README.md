@@ -19,7 +19,7 @@ Finite-field and GF(2) linear-algebra primitives in safe Rust: dense and sparse 
 | `primitive_polys` | Static database of primitive polynomials for m = 2..16, plus verification and generation |
 | `kernels/` | Runtime dispatch to scalar or SIMD backends |
 | `compute/` | Parallel/batch operations (Rayon, feature-gated) |
-| `io/` | Serde serialization (feature-gated) |
+| `io/` | Serde serialization (feature-gated); canonical checksummed `FieldMatrix` format with atomic replacement |
 | `rng` | Deterministic random bit generators |
 
 ## Install
