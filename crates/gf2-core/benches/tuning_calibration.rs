@@ -30,16 +30,93 @@
 //! the same mutex and omits `taskset`, for a benchmark whose named
 //! configuration needs the whole processor.
 //!
-//! ## 2. Run the action
+//! ## 2. Build the two executables outside the measurement lock
 //!
 //! ```sh
-//! GF2_BENCH=1 ./dev/scripts/ccx1-bench-flock.sh \
-//!   cargo bench -p gf2-core --features tuning-profile \
-//!   --bench tuning_calibration -- \
-//!   --executions 5 --repetitions 5 --target-ms 250 \
-//!   --out /tmp/<unique-absent-path>.json \
-//!   --lock-wrapper dev/scripts/ccx1-bench-flock.sh \
-//!   --receipt dev/benchmarks/tuning_profiles/<date>-<name>.md
+//! RUN_STAMP=$(date -u +%Y%m%d-%H%M%S)-$$
+//! STAGE=/tmp/gf2-389aa4de-$RUN_STAMP
+//! mkdir "$STAGE"
+//! export BUILD_HEAD=$(git rev-parse HEAD)
+//! test -z "$(git status --porcelain --untracked-files=all)"
+//! printf '%s\n' "$BUILD_HEAD" >"$STAGE/build-head"
+//! ./scripts/cargo-budget.sh cargo +1.95.0 bench --release -p gf2-core \
+//!   --features tuning-profile,simd --bench tuning_calibration --no-run \
+//!   --message-format=json >"$STAGE/calibrator-build.json"
+//! jq -rs '[.[] | select(.reason == "compiler-artifact" and
+//!   .target.name == "tuning_calibration" and .executable != null) |
+//!   .executable] | unique | if length == 1 then .[0] else error(
+//!   "expected exactly one calibration executable") end' \
+//!   "$STAGE/calibrator-build.json" >"$STAGE/calibrator-path.json"
+//! ./scripts/cargo-budget.sh cargo +1.95.0 build --release \
+//!   --manifest-path dev/tools/tuning-profile-compose/Cargo.toml \
+//!   --message-format=json >"$STAGE/composer-build.json"
+//! jq -rs '[.[] | select(.reason == "compiler-artifact" and
+//!   .target.name == "tuning-profile-compose" and .executable != null) |
+//!   .executable] | unique | if length == 1 then .[0] else error(
+//!   "expected exactly one composer executable") end' \
+//!   "$STAGE/composer-build.json" >"$STAGE/composer-path.json"
+//! test "$(git rev-parse HEAD)" = "$BUILD_HEAD"
+//! test -z "$(git status --porcelain --untracked-files=all)"
+//! test "$(cat "$STAGE/build-head")" = "$BUILD_HEAD"
+//! ```
+//!
+//! These are repository Cargo commands, so they go through `cargo-budget` and
+//! the Rust 1.95 toolchain. Both builds finish before the exclusive host lock
+//! is taken. Keep `STAGE` and every generated file under `/tmp`; writing into
+//! the checkout after the harness's clean-tree observation would invalidate
+//! that observation.
+//!
+//! ## 3. Run and compose under one outer full-host lock
+//!
+//! Set `RUN_ID` to one unique kebab-case identifier, then run the already-built
+//! executables. The driver contains no Cargo command. It guards the clean
+//! revision before measurement, between measurement and composition, and after
+//! composition; it also preserves the harness's complete structured stdout,
+//! including every raw sample and verified child observation.
+//!
+//! ```sh
+//! RUN_ID=gf2-389aa4de-$RUN_STAMP
+//! RECEIPT=dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md
+//! CALIBRATOR=$(jq -r . "$STAGE/calibrator-path.json")
+//! COMPOSER=$(jq -r . "$STAGE/composer-path.json")
+//! CORE_OUT="$STAGE/$RUN_ID-core.json"
+//! COMPLETE_OUT="$STAGE/$RUN_ID-complete.json"
+//! RAW_LOG="$STAGE/$RUN_ID-calibration.log"
+//! STDERR_LOG="$STAGE/$RUN_ID-calibration.stderr"
+//! COMPOSER_LOG="$STAGE/$RUN_ID-composer.log"
+//! COMPOSER_STDERR="$STAGE/$RUN_ID-composer.stderr"
+//! HASHES="$STAGE/$RUN_ID-sha256.txt"
+//! env GF2_BENCH=1 RUSTUP_TOOLCHAIN=1.95.0 BUILD_HEAD="$BUILD_HEAD" \
+//!   RUN_ID="$RUN_ID" RECEIPT="$RECEIPT" CALIBRATOR="$CALIBRATOR" \
+//!   COMPOSER="$COMPOSER" CORE_OUT="$CORE_OUT" \
+//!   COMPLETE_OUT="$COMPLETE_OUT" RAW_LOG="$RAW_LOG" \
+//!   STDERR_LOG="$STDERR_LOG" COMPOSER_LOG="$COMPOSER_LOG" \
+//!   COMPOSER_STDERR="$COMPOSER_STDERR" HASHES="$HASHES" \
+//!   ./dev/scripts/ccx1-bench-flock.sh --full-host sh -eu -c '
+//!     expected_head=$BUILD_HEAD
+//!     test "$(git rev-parse HEAD)" = "$expected_head"
+//!     test -z "$(git status --porcelain --untracked-files=all)"
+//!     for path in "$CORE_OUT" "$COMPLETE_OUT" "$RAW_LOG" "$STDERR_LOG" \
+//!       "$COMPOSER_LOG" "$COMPOSER_STDERR" "$HASHES"; do test ! -e "$path"; done
+//!     "$CALIBRATOR" --executions 5 --repetitions 5 --target-ms 250 \
+//!       --out "$CORE_OUT" --profile-id "$RUN_ID" \
+//!       --lock-wrapper dev/scripts/ccx1-bench-flock.sh \
+//!       --receipt "$RECEIPT" \
+//!       >"$RAW_LOG" 2>"$STDERR_LOG"
+//!     test "$(git rev-parse HEAD)" = "$expected_head"
+//!     test -z "$(git status --porcelain --untracked-files=all)"
+//!     assembled_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+//!     composer_sha=$(sha256sum "$COMPOSER" | cut -d " " -f 1)
+//!     "$COMPOSER" complete "$CORE_OUT" \
+//!       crates/gf2-algebra/data/tuning-profiles/conservative.json \
+//!       "$COMPLETE_OUT" "$RUN_ID" "$assembled_at" "$expected_head" \
+//!       false "$composer_sha" >"$COMPOSER_LOG" 2>"$COMPOSER_STDERR"
+//!     test "$(git rev-parse HEAD)" = "$expected_head"
+//!     test -z "$(git status --porcelain --untracked-files=all)"
+//!     sha256sum "$CALIBRATOR" "$COMPOSER" "$CORE_OUT" "$COMPLETE_OUT" \
+//!       "$RAW_LOG" "$STDERR_LOG" "$COMPOSER_LOG" "$COMPOSER_STDERR" \
+//!       >"$HASHES"
+//!   '
 //! ```
 //!
 //! `--lock-wrapper` and `--receipt` name the wrapper that was invoked and the
@@ -50,12 +127,14 @@
 //! identifier, which otherwise comes from the emitted file's own basename and
 //! must be kebab-case.
 //!
-//! Add `simd` to the feature list to calibrate `bit_backend.simd_min_words`
+//! The `simd` feature is required to calibrate `bit_backend.simd_min_words`
 //! against a real SIMD arm. Without that feature `SelectedBackend::Simd` does
 //! not exist, the scalar arm is the only reachable one, and a profile's
 //! `simd_min_words` is inert on the resulting build — the documented
-//! `@/inv/accelerator-safe-fallback` behaviour. The sweep then reports the
-//! field as having no comparable grid point and keeps the conservative default.
+//! `@/inv/accelerator-safe-fallback` behaviour. Reporting modes can describe
+//! that state, but a calibration run with fewer than all five comparable pilot
+//! fields aborts before publication; the required artifact is exactly five
+//! measured and 32 omitted fields from the codec-derived 37-field inventory.
 //!
 //! `--self-check` prints the protocol constants and the observed host facts
 //! without measuring or emitting; `--list-grid` prints the grid, the
@@ -68,7 +147,7 @@
 //! prefixed `GF2_TUNING_RESULT=`. The child mode accepts no case data on its
 //! command line and does not consult the prepared-host marker.
 //!
-//! ## 3. Commit the emitted profile
+//! ## 4. Commit the emitted profile
 //!
 //! The action writes a temporary file beside the `--out` path, reads it back
 //! through [`ProducedCoreProfile::from_json`], and compares the parsed value
@@ -88,9 +167,9 @@
 //! carries the provenance table, the protocol, the per-field grid with the
 //! selecting margin, and every tie or non-monotone case, following the
 //! committed-receipt conventions of the sibling receipts under
-//! `dev/benchmarks/tuning_profiles/`. A profile whose provenance records
-//! `source_dirty: true` is not committable: the revision it names does not
-//! reproduce the binary that produced the numbers.
+//! `dev/benchmarks/tuning_profiles/`. A dirty source tree aborts before the
+//! protocol, grid, seed inventory, first equivalence probe, or timed call, and
+//! emits no profile: the named revision must reproduce the producing binary.
 //!
 //! Nothing in the library reads a profile from the filesystem. A committed
 //! profile reaches a process only when a caller parses it and calls
@@ -218,8 +297,9 @@ use gf2_core::tuning::{
     AssemblyProvenance, BitBackendSelectors, CanonicalValue, CompiledProfileProvenance,
     CoreSelectors, CoreTuning, CoreTuningCodec, GitRevision, HarnessSchema, MeasurementProvenance,
     PolynomialSelectors, PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder,
-    RepoRelPath, Rfc3339Utc, SectionCodec, Sha256,
+    RepoRelPath, Rfc3339Utc, SectionCodec, Sha256, TuningSection, PROFILE_FORMAT_VERSION,
 };
+use sha2::{Digest, Sha256 as Sha256Hasher};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct ProducedCoreProfile {
@@ -330,11 +410,22 @@ const BENCH_MODE_VAR: &str = "GF2_BENCH";
 const FRESH_CASE_VAR: &str = "GF2_TUNING_FRESH_CASE";
 const FRESH_CASE_VALUE: &str = "child-v1";
 const FRESH_RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";
+const CHILD_OBSERVATION_PREFIX: &str = "GF2_TUNING_CHILD_OBSERVATION=";
+const SAMPLE_PREFIX: &str = "GF2_TUNING_SAMPLES=";
+const SEED_PREFIX: &str = "GF2_TUNING_SEEDS=";
+const RAW_SAMPLE_SCHEMA: &str = "raw-timing-samples-v1";
+const SEED_SCHEMA: &str = "fixture-seeds-v1";
+const SEED_DERIVATION: &str = "gf2-calibration-seed-v1";
 /// Wrapper-overridable mutex path, read only to explain a failed lock probe.
 const LOCK_PATH_VAR: &str = "GF2_CCX1_LOCK";
+const DEFAULT_LOCK_PATH: &str = "/tmp/gf2-ccx1.lock";
+const REQUIRED_RUSTUP_TOOLCHAIN: &str = "1.95.0";
 const DEFAULT_EXECUTIONS: u64 = 5;
 const DEFAULT_REPETITIONS: u64 = 5;
 const DEFAULT_TARGET_MS: u64 = 250;
+const EXPECTED_PILOT_FIELDS: usize = 5;
+const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;
+const EXPECTED_OMITTED_FIELDS: usize = 32;
 /// Upper bound on the calibrated call count of one timed window.
 const MAX_CALLS: u64 = 1 << 32;
 /// Fixture bank depth for the bit-backend arms, matching the sibling harness.
@@ -342,6 +433,14 @@ const BIT_FIXTURES: usize = 8;
 /// `u64` words per 64-byte cache line on the supported targets.
 const WORDS_PER_LINE: usize = 8;
 const SEED_ROOT: u64 = 0x5ecc_9bf8_0000_0000;
+const SEED_ROLE_BIT_DST: u64 = 0xD000_0000;
+const SEED_ROLE_BIT_SRC: u64 = 0xA000_0000;
+const SEED_ROLE_POLY_LHS: u64 = 0xA;
+const SEED_ROLE_POLY_RHS: u64 = 0xB;
+const SEED_ROLE_DIVIDEND: u64 = 0xD;
+const SEED_ROLE_DIVISOR: u64 = 0xE;
+const SEED_ROLE_EVAL_POLY: u64 = 0xC;
+const SEED_ROLE_EVAL_POINTS: u64 = 0xF;
 const GIT_STATUS_ARGS: &[&str] = &["status", "--porcelain", "--untracked-files=all"];
 /// `polynomial.karatsuba_min_degree` a child installs to force the schoolbook
 /// arm.
@@ -385,6 +484,21 @@ impl CalibratedField {
         Self::DivRemFastMinLen,
         Self::SubproductMinLen,
     ];
+
+    /// Stable input to [`seed_for`], independent of enum declaration order.
+    ///
+    /// These tags preserve the streams used by the original five-field pilot.
+    /// Adding or reordering a variant therefore cannot silently change any
+    /// existing fixture.
+    fn seed_tag(self) -> u64 {
+        match self {
+            Self::SimdMinWords => 0,
+            Self::KaratsubaMinDegree => 1,
+            Self::KaratsubaMaxOutLen => 2,
+            Self::DivRemFastMinLen => 3,
+            Self::SubproductMinLen => 4,
+        }
+    }
 
     fn family(self) -> &'static str {
         match self {
@@ -966,16 +1080,17 @@ fn governor(affinity: &str) -> io::Result<String> {
     .to_owned())
 }
 
-/// The mutex path of the exclusive `flock` this process inherited, if any.
+/// Whether this process inherited the exclusive `flock` on the expected mutex.
 ///
 /// `dev/scripts/ccx1-bench-flock.sh` takes the lock with `flock -x` and does
 /// not pass `-o`, so the locked descriptor stays open across the exec chain and
 /// is inherited by every descendant, this binary included. Matching an open
-/// descriptor of ours against the kernel's lock table therefore establishes
-/// that the run really is serialised, and yields the mutex path as an observed
-/// fact rather than a claim. The lock's owning PID is the wrapper's, not ours,
-/// so the match is on the locked file's device and inode.
-fn observed_lock_file() -> io::Result<Option<String>> {
+/// descriptor of ours against the expected path's exact device and inode in
+/// the kernel lock table therefore establishes that this run is serialised by
+/// the repository mutex, rather than by some unrelated inherited lock. The
+/// lock's owning PID is the wrapper's, not ours, so the match is on device and
+/// inode rather than PID.
+fn observed_lock_file(expected_path: &Path) -> io::Result<Option<String>> {
     let mut locked: Vec<(u64, u64)> = Vec::new();
     for line in fs::read_to_string("/proc/locks")?.lines() {
         let fields: Vec<&str> = line.split_whitespace().collect();
@@ -991,15 +1106,22 @@ fn observed_lock_file() -> io::Result<Option<String>> {
             locked.push((makedev(major, minor), inode));
         }
     }
+    let expected = fs::metadata(expected_path)?;
+    let expected_identity = (expected.dev(), expected.ino());
+    if !expected.is_file() || !locked.contains(&expected_identity) {
+        return Ok(None);
+    }
     for entry in fs::read_dir("/proc/self/fd")? {
-        let Ok(target) = fs::read_link(entry?.path()) else {
+        let entry = entry?;
+        let Ok(metadata) = fs::metadata(entry.path()) else {
             continue;
         };
-        let Ok(metadata) = fs::metadata(&target) else {
-            continue;
-        };
-        if metadata.is_file() && locked.contains(&(metadata.dev(), metadata.ino())) {
-            return Ok(Some(target.to_string_lossy().into_owned()));
+        if metadata.is_file() && (metadata.dev(), metadata.ino()) == expected_identity {
+            return Ok(Some(
+                fs::canonicalize(expected_path)?
+                    .to_string_lossy()
+                    .into_owned(),
+            ));
         }
     }
     Ok(None)
@@ -1022,19 +1144,37 @@ fn collect_host_facts() -> io::Result<HostFacts> {
         .ok_or_else(|| io::Error::other("sha256sum printed no digest"))?;
     let affinity = cpu_affinity()?;
     let cpuinfo = fs::read_to_string("/proc/cpuinfo")?;
-    let lock_file = observed_lock_file()?.ok_or_else(|| {
-        let expected = env::var(LOCK_PATH_VAR).unwrap_or_else(|_| "the wrapper's mutex".to_owned());
+    let expected_lock =
+        PathBuf::from(env::var(LOCK_PATH_VAR).unwrap_or_else(|_| DEFAULT_LOCK_PATH.to_owned()));
+    let lock_file = observed_lock_file(&expected_lock)?.ok_or_else(|| {
         io::Error::other(format!(
             "no inherited exclusive flock: run this action through the repository lock wrapper, \
-             which holds {expected} for the whole run"
+             which holds {} for the whole run",
+            expected_lock.display()
         ))
     })?;
+    let selected_toolchain = env::var("RUSTUP_TOOLCHAIN").map_err(|_| {
+        io::Error::other(format!(
+            "RUSTUP_TOOLCHAIN must be set to {REQUIRED_RUSTUP_TOOLCHAIN} for calibration"
+        ))
+    })?;
+    if selected_toolchain != REQUIRED_RUSTUP_TOOLCHAIN {
+        return Err(io::Error::other(format!(
+            "RUSTUP_TOOLCHAIN is {selected_toolchain:?}, expected {REQUIRED_RUSTUP_TOOLCHAIN:?}"
+        )));
+    }
+    let toolchain = command_output("rustc", &["--version", "--verbose"])?;
+    if !toolchain.starts_with("rustc 1.95.0") {
+        return Err(io::Error::other(format!(
+            "runtime rustc is not the required 1.95.0 compiler: {toolchain}"
+        )));
+    }
     Ok(HostFacts {
         source_revision: GitRevision::parse(&revision).map_err(io::Error::other)?,
         source_dirty: !command_output("git", GIT_STATUS_ARGS)?.is_empty(),
         harness: RepoRelPath::parse(&harness_path(&repo_root)?).map_err(io::Error::other)?,
         binary_sha256: Sha256::parse(digest).map_err(io::Error::other)?,
-        toolchain: command_output("rustc", &["--version"])?,
+        toolchain,
         host: command_output("hostname", &[])?,
         cpu_model: cpuinfo
             .lines()
@@ -1047,6 +1187,18 @@ fn collect_host_facts() -> io::Result<HostFacts> {
         lock_file,
         cpu_affinity: affinity,
     })
+}
+
+/// Refuses to start a calibration whose named revision cannot reproduce its binary.
+fn require_clean_source(source_dirty: bool, source_revision: &GitRevision) -> Result<(), String> {
+    if source_dirty {
+        Err(format!(
+            "the source tree is dirty at {}; calibration aborted before any probe or timed call",
+            source_revision.as_str()
+        ))
+    } else {
+        Ok(())
+    }
 }
 
 /// Formats a UTC instant in the RFC 3339 form `Rfc3339Utc::parse` accepts.
@@ -1174,14 +1326,87 @@ enum Fixture {
 
 fn seed_for(field: CalibratedField, size: usize, role: u64) -> u64 {
     let mut value = SEED_ROOT ^ role.wrapping_mul(0x9e37_79b9_7f4a_7c15);
-    for word in [field as usize, size] {
-        value ^= word as u64;
+    for word in [field.seed_tag(), size as u64] {
+        value ^= word;
         value = value
             .wrapping_mul(0xbf58_476d_1ce4_e5b9)
             .rotate_left(27)
             .wrapping_add(0x94d0_49bb_1331_11eb);
     }
     value ^ (value >> 31)
+}
+
+/// One named deterministic fixture stream.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+struct SeedStream {
+    name: String,
+    role: u64,
+    seed: u64,
+}
+
+/// Complete seed inventory for one field/grid fixture.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+struct SeedInventory {
+    schema: &'static str,
+    derivation: &'static str,
+    seed_root: u64,
+    field: CalibratedField,
+    field_tag: u64,
+    size: usize,
+    streams: Vec<SeedStream>,
+}
+
+fn seed_inventory(field: CalibratedField, size: usize) -> SeedInventory {
+    let stream = |name: String, role: u64| SeedStream {
+        name,
+        role,
+        seed: seed_for(field, size, role),
+    };
+    let streams = match field {
+        CalibratedField::SimdMinWords => {
+            let mut streams = Vec::with_capacity(BIT_FIXTURES * 2);
+            for bank in 0..BIT_FIXTURES {
+                streams.push(stream(
+                    format!("dst[{bank}]"),
+                    SEED_ROLE_BIT_DST + bank as u64,
+                ));
+            }
+            for bank in 0..BIT_FIXTURES {
+                streams.push(stream(
+                    format!("src[{bank}]"),
+                    SEED_ROLE_BIT_SRC + bank as u64,
+                ));
+            }
+            streams
+        }
+        CalibratedField::KaratsubaMinDegree | CalibratedField::KaratsubaMaxOutLen => vec![
+            stream("lhs".to_owned(), SEED_ROLE_POLY_LHS),
+            stream("rhs".to_owned(), SEED_ROLE_POLY_RHS),
+        ],
+        CalibratedField::DivRemFastMinLen => vec![
+            stream("dividend".to_owned(), SEED_ROLE_DIVIDEND),
+            stream("divisor".to_owned(), SEED_ROLE_DIVISOR),
+        ],
+        CalibratedField::SubproductMinLen => vec![
+            stream("polynomial".to_owned(), SEED_ROLE_EVAL_POLY),
+            stream("points".to_owned(), SEED_ROLE_EVAL_POINTS),
+        ],
+    };
+    SeedInventory {
+        schema: SEED_SCHEMA,
+        derivation: SEED_DERIVATION,
+        seed_root: SEED_ROOT,
+        field,
+        field_tag: field.seed_tag(),
+        size,
+        streams,
+    }
+}
+
+fn seed_inventory_line(field: CalibratedField, size: usize) -> Result<String, String> {
+    serde_json::to_string(&seed_inventory(field, size))
+        .map(|json| format!("{SEED_PREFIX}{json}"))
+        .map_err(|error| format!("cannot encode the seed inventory: {error}"))
 }
 
 /// Builds a deterministic polynomial holding exactly `len` coefficients.
@@ -1227,28 +1452,28 @@ fn build_fixture(field: CalibratedField, size: usize) -> Fixture {
                 BitBank::new(size, move |bank, _| rngs[bank].next_u64())
             };
             Fixture::Bit {
-                dst: fill(0xD000_0000),
-                src: fill(0xA000_0000),
+                dst: fill(SEED_ROLE_BIT_DST),
+                src: fill(SEED_ROLE_BIT_SRC),
             }
         }
         CalibratedField::KaratsubaMinDegree => Fixture::Mul {
-            a: make_poly(size + 1, seed_for(field, size, 0xA)),
-            b: make_poly(size + 1, seed_for(field, size, 0xB)),
+            a: make_poly(size + 1, seed_for(field, size, SEED_ROLE_POLY_LHS)),
+            b: make_poly(size + 1, seed_for(field, size, SEED_ROLE_POLY_RHS)),
         },
         CalibratedField::KaratsubaMaxOutLen => {
             let len = operand_len_for_product(size);
             Fixture::Mul {
-                a: make_poly(len, seed_for(field, size, 0xA)),
-                b: make_poly(len, seed_for(field, size, 0xB)),
+                a: make_poly(len, seed_for(field, size, SEED_ROLE_POLY_LHS)),
+                b: make_poly(len, seed_for(field, size, SEED_ROLE_POLY_RHS)),
             }
         }
         CalibratedField::DivRemFastMinLen => Fixture::DivRem {
-            dividend: make_poly(2 * size, seed_for(field, size, 0xD)),
-            divisor: make_poly(size, seed_for(field, size, 0xE)),
+            dividend: make_poly(2 * size, seed_for(field, size, SEED_ROLE_DIVIDEND)),
+            divisor: make_poly(size, seed_for(field, size, SEED_ROLE_DIVISOR)),
         },
         CalibratedField::SubproductMinLen => Fixture::BatchEval {
-            poly: make_poly(size, seed_for(field, size, 0xC)),
-            points: make_points(size, seed_for(field, size, 0xF)),
+            poly: make_poly(size, seed_for(field, size, SEED_ROLE_EVAL_POLY)),
+            points: make_points(size, seed_for(field, size, SEED_ROLE_EVAL_POINTS)),
         },
     }
 }
@@ -1379,6 +1604,27 @@ fn simd_backend() -> Option<&'static dyn Backend> {
 // Timing
 // ---------------------------------------------------------------------
 
+/// One timed window in acquisition order.
+///
+/// Integer call and elapsed counts are the durable observation. Nanoseconds
+/// per call and every aggregate below are derived from these fields, so a
+/// receipt can recompute the selection without recovering data from rounded
+/// display values.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct TimingSample {
+    execution: u64,
+    repetition: u64,
+    calls: u64,
+    elapsed_ns: u64,
+}
+
+impl TimingSample {
+    fn ns_per_call(&self) -> f64 {
+        self.elapsed_ns as f64 / self.calls as f64
+    }
+}
+
 /// Destination and source bank indices for call number `index`, offset so a
 /// call never reads and writes the same buffer.
 fn bank_indices(index: usize) -> (usize, usize) {
@@ -1400,7 +1646,7 @@ fn measure_arm_execution(
     fixture: &mut Fixture,
     protocol: &Protocol,
     execution: u64,
-) -> Option<Vec<f64>> {
+) -> Option<Vec<TimingSample>> {
     match (field, arm, fixture) {
         (CalibratedField::SimdMinWords, Arm::Conservative, Fixture::Bit { dst, src }) => {
             Some(execution_windows(protocol, execution, |index| {
@@ -1443,7 +1689,7 @@ fn measure_arm_execution(
                 arm,
                 task: ChildTask::Measure { execution },
             };
-            Some(checked_child_report(spec, operand_digest(a, b), protocol).rates)
+            Some(checked_child_report(spec, operand_digest(a, b), protocol).samples)
         }
         (CalibratedField::KaratsubaMaxOutLen, Arm::Conservative, Fixture::Mul { a, b }) => {
             Some(execution_windows(protocol, execution, |_| {
@@ -1492,16 +1738,27 @@ fn measure_arm_execution(
 
 /// Calibrates one call count against the target duration, then records
 /// `repetitions` timed windows of exactly that many calls.
-fn execution_windows(protocol: &Protocol, execution: u64, mut body: impl FnMut(usize)) -> Vec<f64> {
+fn execution_windows(
+    protocol: &Protocol,
+    execution: u64,
+    mut body: impl FnMut(usize),
+) -> Vec<TimingSample> {
     let calls = calibrated_calls(protocol.target(), &mut body);
-    let mut rates = Vec::with_capacity(protocol.repetitions as usize);
+    let mut samples = Vec::with_capacity(protocol.repetitions as usize);
     for repetition in 0..protocol.repetitions {
         let start_index =
             ((execution * protocol.repetitions + repetition) as usize) & (BIT_FIXTURES - 1);
         let elapsed = time_calls(calls, start_index, &mut body);
-        rates.push(elapsed.as_nanos() as f64 / calls as f64);
+        let elapsed_ns = u64::try_from(elapsed.as_nanos())
+            .expect("one calibration window cannot span more than u64 nanoseconds");
+        samples.push(TimingSample {
+            execution,
+            repetition,
+            calls,
+            elapsed_ns,
+        });
     }
-    rates
+    samples
 }
 
 fn time_calls(calls: u64, start_index: usize, mut body: impl FnMut(usize)) -> Duration {
@@ -1538,14 +1795,70 @@ fn calibrated_calls(target: Duration, mut call: impl FnMut(usize)) -> u64 {
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 struct ChildReport {
+    /// Protocol identities and sampling dimensions the child observed.
+    protocol: ChildProtocolIdentity,
+    /// Production route requested by the parent.
+    requested_route: String,
     /// Arm the production selector picked under the installed profile.
-    route: String,
+    observed_route: String,
+    /// Exact installed value and strict format-2 section identities.
+    installed: InstalledEvidence,
     /// Digest of the operands the child built.
     operands: u64,
     /// Digest of the product the child's arm computed.
     product: u64,
-    /// Nanoseconds per call of each timed window, empty for a probe.
-    rates: Vec<f64>,
+    /// Raw timed windows in acquisition order, empty for a probe.
+    samples: Vec<TimingSample>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct ChildProtocolIdentity {
+    fresh_case_schema: String,
+    profile_format_version: u32,
+    section_id: String,
+    section_schema_version: u32,
+    harness_schema: String,
+    raw_sample_schema: String,
+    timing: Protocol,
+}
+
+impl ChildProtocolIdentity {
+    fn current(protocol: &Protocol) -> Self {
+        Self {
+            fresh_case_schema: FRESH_CASE_VALUE.to_owned(),
+            profile_format_version: PROFILE_FORMAT_VERSION,
+            section_id: CoreTuning::ID.as_str().to_owned(),
+            section_schema_version: CoreTuningCodec::SCHEMA_VERSION,
+            harness_schema: CoreTuningCodec::HARNESS_SCHEMA.to_owned(),
+            raw_sample_schema: RAW_SAMPLE_SCHEMA.to_owned(),
+            timing: protocol.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+enum ObservedResolution {
+    Installed,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+enum ObservedMeasurement {
+    Inherited,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct InstalledEvidence {
+    profile_id: String,
+    section_id: String,
+    resolution: ObservedResolution,
+    measurement: ObservedMeasurement,
+    karatsuba_min_degree: usize,
+    section_sha256: String,
+    envelope_content_sha256: String,
 }
 
 /// The `karatsuba_min_degree` a child installs to reach `arm` at `size`.
@@ -1567,14 +1880,12 @@ fn forced_karatsuba_min_degree(arm: Arm, size: usize) -> usize {
     }
 }
 
-/// Installs the profile that forces one arm of the multiplication dispatcher.
+/// Builds the profile that forces one arm of the multiplication dispatcher.
 ///
 /// Only `karatsuba_min_degree` moves; every other selector keeps its
-/// conservative value, so the child differs from an ordinary process in exactly
-/// the one comparison under study. The installed value is read back through
-/// `tuning::active`, because an install that silently lost a race would leave
-/// the child measuring the conservative default and reporting it as an arm.
-fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
+/// conservative value, so the child differs from an ordinary process in
+/// exactly the one comparison under study.
+fn forced_profile(karatsuba_min_degree: usize) -> Result<PreparedEnvelope, String> {
     let inherited = &CoreTuning::CONSERVATIVE;
     let conservative = inherited.polynomial();
     let polynomial = PolynomialSelectors::try_new(
@@ -1593,22 +1904,109 @@ fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
         polynomial,
         ..CoreSelectors::CONSERVATIVE
     });
-    let profile =
-        PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
-            .insert(section)
-            .map_err(|error| format!("the arm-forcing section does not prepare: {error}"))?
-            .build()
-            .map_err(|error| format!("the arm-forcing envelope does not build: {error}"))?;
+    PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
+        .insert(section)
+        .map_err(|error| format!("the arm-forcing section does not prepare: {error}"))?
+        .build()
+        .map_err(|error| format!("the arm-forcing envelope does not build: {error}"))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ForcedProfileDigests {
+    section_sha256: String,
+    envelope_content_sha256: String,
+}
+
+/// Computes strict format-2 identity for the exact typed value that is installed.
+///
+/// `ProfileRegistry::to_json` needs assembly provenance even though the
+/// format-2 content digest excludes assembly. These constants are an
+/// identity-only encoding scaffold and are never emitted as observed
+/// provenance. The returned envelope digest is the registry's verified
+/// format-2 digest, while the section digest is SHA-256 over the canonical
+/// `sections["gf2-core/selectors"]` wire value.
+fn forced_profile_digests(profile: &PreparedEnvelope) -> Result<ForcedProfileDigests, String> {
+    let identity_assembly = AssemblyProvenance {
+        assembled_at: Rfc3339Utc::parse("1970-01-01T00:00:00Z")
+            .map_err(|error| format!("identity timestamp is invalid: {error}"))?,
+        source_revision: GitRevision::parse(&"0".repeat(40))
+            .map_err(|error| format!("identity revision is invalid: {error}"))?,
+        source_dirty: false,
+        tool: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
+            .map_err(|error| format!("identity tool path is invalid: {error}"))?,
+        tool_sha256: Sha256::parse(&"0".repeat(64))
+            .map_err(|error| format!("identity tool digest is invalid: {error}"))?,
+    };
+    let registry = core_registry().map_err(|error| format!("core registry is invalid: {error}"))?;
+    let document = registry
+        .to_json(profile, &identity_assembly)
+        .map_err(|error| format!("the forced profile does not encode: {error}"))?;
+    let reopened = registry
+        .from_json(&document)
+        .map_err(|error| format!("the forced profile does not strictly reopen: {error}"))?;
+    let ids: Vec<&str> = reopened.section_ids().collect();
+    if ids != [CoreTuning::ID.as_str()] {
+        return Err(format!("the forced profile has section IDs {ids:?}"));
+    }
+    let envelope_content_sha256 = reopened
+        .verified_assembly()
+        .ok_or("the forced format-2 profile has no verified assembly")?
+        .content_sha256
+        .as_str()
+        .to_owned();
+    let wire: serde_json::Value = serde_json::from_str(&document)
+        .map_err(|error| format!("the forced profile is not JSON: {error}"))?;
+    let section = wire
+        .pointer("/sections/gf2-core~1selectors")
+        .ok_or("the forced profile has no core section wrapper")?;
+    let section_bytes = serde_json::to_vec(section)
+        .map_err(|error| format!("the forced section wrapper is not canonical JSON: {error}"))?;
+    let section_sha256 = format!("{:x}", Sha256Hasher::digest(section_bytes));
+    Ok(ForcedProfileDigests {
+        section_sha256,
+        envelope_content_sha256,
+    })
+}
+
+/// Installs and reads back the exact profile that forces one multiplication arm.
+///
+/// The resolution and installed value are observed through `tuning::active`.
+/// A lost install, missing section, frozen process, wrong measurement kind, or
+/// identity mismatch fails before the child can report a successful result.
+fn install_forced_profile(karatsuba_min_degree: usize) -> Result<InstalledEvidence, String> {
+    let profile = forced_profile(karatsuba_min_degree)?;
+    let digests = forced_profile_digests(&profile)?;
     tuning::install(profile)
         .map_err(|error| format!("the arm-forcing profile was not installed: {error}"))?;
     let active_tuning = tuning::active();
-    if !matches!(
-        active_tuning.resolution,
-        tuning::SectionResolution::Installed { .. }
-    ) {
+    let (profile_id, section_id, measurement) = match active_tuning.resolution {
+        tuning::SectionResolution::Installed {
+            profile_id,
+            section_id,
+            measurement,
+        } => (profile_id, section_id, measurement),
+        other => {
+            return Err(format!(
+                "the arm-forcing core section did not resolve as Installed: {other:?}"
+            ))
+        }
+    };
+    if profile_id.as_str() != FORCED_ARM_PROFILE_ID {
         return Err(format!(
-            "the arm-forcing core section did not resolve as Installed: {:?}",
-            active_tuning.resolution
+            "the installed profile is {}, not {FORCED_ARM_PROFILE_ID}",
+            profile_id.as_str()
+        ));
+    }
+    if section_id != CoreTuning::ID {
+        return Err(format!(
+            "the installed section is {}, not {}",
+            section_id.as_str(),
+            CoreTuning::ID.as_str()
+        ));
+    }
+    if measurement != &MeasurementProvenance::Inherited {
+        return Err(format!(
+            "the forced section carries unexpected measurement provenance: {measurement:?}"
         ));
     }
     let active = active_tuning.polynomial().karatsuba_min_degree();
@@ -1617,7 +2015,15 @@ fn install_forced_profile(karatsuba_min_degree: usize) -> Result<(), String> {
             "the active karatsuba_min_degree is {active}, not the forced {karatsuba_min_degree}"
         ));
     }
-    Ok(())
+    Ok(InstalledEvidence {
+        profile_id: profile_id.as_str().to_owned(),
+        section_id: section_id.as_str().to_owned(),
+        resolution: ObservedResolution::Installed,
+        measurement: ObservedMeasurement::Inherited,
+        karatsuba_min_degree: active,
+        section_sha256: digests.section_sha256,
+        envelope_content_sha256: digests.envelope_content_sha256,
+    })
 }
 
 /// Runs one child task and returns its structured report.
@@ -1633,10 +2039,10 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
             spec.field
         ));
     }
-    install_forced_profile(forced_karatsuba_min_degree(spec.arm, spec.size))?;
+    let installed = install_forced_profile(forced_karatsuba_min_degree(spec.arm, spec.size))?;
 
     let degree = spec.size;
-    let route = match mul_route(degree, degree) {
+    let observed_route = match mul_route(degree, degree) {
         MulRoute::Schoolbook => "schoolbook",
         MulRoute::Karatsuba => "karatsuba",
     }
@@ -1646,17 +2052,20 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
     };
     let operands = operand_digest(&a, &b);
     let product = poly_digest(&a.mul(&b));
-    let rates = match spec.task {
+    let samples = match spec.task {
         ChildTask::Probe => Vec::new(),
         ChildTask::Measure { execution } => execution_windows(protocol, execution, |_| {
             black_box(black_box(&a).mul(black_box(&b)));
         }),
     };
     Ok(ChildReport {
-        route,
+        protocol: ChildProtocolIdentity::current(protocol),
+        requested_route: spec.field.arm_name(spec.arm).to_owned(),
+        observed_route,
+        installed,
         operands,
         product,
-        rates,
+        samples,
     })
 }
 
@@ -1773,31 +2182,102 @@ fn verify_child_report(
     report: &ChildReport,
 ) -> Result<(), String> {
     let expected_arm = spec.field.arm_name(spec.arm);
-    if report.route != expected_arm {
+    let expected_protocol = ChildProtocolIdentity::current(protocol);
+    if report.protocol != expected_protocol {
+        return Err(format!(
+            "the child for {spec} reported protocol {:?}, expected {expected_protocol:?}",
+            report.protocol
+        ));
+    }
+    if report.requested_route != expected_arm {
+        return Err(format!(
+            "the child for {spec} reported requested route `{}`, expected `{expected_arm}`",
+            report.requested_route
+        ));
+    }
+    if report.observed_route != expected_arm {
         return Err(format!(
             "the child for {spec} forced karatsuba_min_degree={} and the production selector then \
              picked the `{}` arm rather than `{expected_arm}`",
             forced_karatsuba_min_degree(spec.arm, spec.size),
-            report.route
+            report.observed_route
         ));
     }
+    let forced = forced_karatsuba_min_degree(spec.arm, spec.size);
+    if report.installed.profile_id != FORCED_ARM_PROFILE_ID
+        || report.installed.section_id != CoreTuning::ID.as_str()
+        || report.installed.resolution != ObservedResolution::Installed
+        || report.installed.measurement != ObservedMeasurement::Inherited
+        || report.installed.karatsuba_min_degree != forced
+    {
+        return Err(format!(
+            "the child for {spec} did not report the exact Installed forced section: {:?}",
+            report.installed
+        ));
+    }
+    let expected_digests = forced_profile_digests(&forced_profile(forced)?)?;
+    if report.installed.section_sha256 != expected_digests.section_sha256
+        || report.installed.envelope_content_sha256 != expected_digests.envelope_content_sha256
+    {
+        return Err(format!(
+            "the child for {spec} reported forced-profile digests {:?}, expected {expected_digests:?}",
+            report.installed
+        ));
+    }
+    Sha256::parse(&report.installed.section_sha256)
+        .map_err(|_| format!("the child for {spec} reported a malformed section digest"))?;
+    Sha256::parse(&report.installed.envelope_content_sha256)
+        .map_err(|_| format!("the child for {spec} reported a malformed envelope digest"))?;
     if report.operands != operands {
         return Err(format!(
             "the child for {spec} built operands digesting to {} against this process's {operands}",
             report.operands
         ));
     }
-    let expected_windows = match spec.task {
-        ChildTask::Probe => 0,
-        ChildTask::Measure { .. } => protocol.repetitions as usize,
+    let (expected_execution, expected_windows) = match spec.task {
+        ChildTask::Probe => (None, 0),
+        ChildTask::Measure { execution } => {
+            if execution >= protocol.executions {
+                return Err(format!(
+                    "the child for {spec} names execution {execution} outside {} executions",
+                    protocol.executions
+                ));
+            }
+            (Some(execution), protocol.repetitions as usize)
+        }
     };
-    if report.rates.len() != expected_windows {
+    if report.samples.len() != expected_windows {
         return Err(format!(
             "the child for {spec} timed {} windows rather than {expected_windows}",
-            report.rates.len()
+            report.samples.len()
         ));
     }
+    for (index, sample) in report.samples.iter().enumerate() {
+        if Some(sample.execution) != expected_execution
+            || sample.repetition != index as u64
+            || sample.calls == 0
+            || sample.calls > MAX_CALLS
+            || sample.elapsed_ns == 0
+        {
+            return Err(format!(
+                "the child for {spec} reported invalid raw sample {index}: {sample:?}"
+            ));
+        }
+    }
     Ok(())
+}
+
+#[derive(serde::Serialize)]
+struct VerifiedChildObservation<'a> {
+    spec: ChildSpec,
+    report: &'a ChildReport,
+}
+
+fn child_observation_line(spec: ChildSpec, report: &ChildReport) -> Result<String, String> {
+    let observation = VerifiedChildObservation { spec, report };
+    serde_json::to_string(&observation)
+        .map(|json| format!("{CHILD_OBSERVATION_PREFIX}{json}"))
+        .map_err(|error| format!("cannot encode the verified child observation: {error}"))
 }
 
 /// One child's verified report, or an abort.
@@ -1816,26 +2296,31 @@ fn checked_child_report(spec: ChildSpec, operands: u64, protocol: &Protocol) -> 
         verify_child_report(spec, operands, protocol, &report)?;
         Ok(report)
     });
-    report.unwrap_or_else(|error| panic!("{error}"))
+    let report = report.unwrap_or_else(|error| panic!("{error}"));
+    println!(
+        "{}",
+        child_observation_line(spec, &report).unwrap_or_else(|error| panic!("{error}"))
+    );
+    report
 }
 
 // ---------------------------------------------------------------------
 // Statistics and the selection rule
 // ---------------------------------------------------------------------
 
-/// One arm's timed windows at one grid point, reduced to the statistics the
-/// selection rule reads.
+/// One arm's timed windows at one grid point and the statistics derived from
+/// them by the selection rule.
 #[derive(Clone, Debug, PartialEq)]
 struct ArmStat {
     median: f64,
     /// Interquartile range relative to the median.
     spread: f64,
-    windows: usize,
+    samples: Vec<TimingSample>,
 }
 
 impl ArmStat {
-    fn from_rates(rates: &[f64]) -> Self {
-        let mut sorted = rates.to_vec();
+    fn from_samples(samples: Vec<TimingSample>) -> Self {
+        let mut sorted: Vec<f64> = samples.iter().map(TimingSample::ns_per_call).collect();
         sorted.sort_by(f64::total_cmp);
         let median = quantile(&sorted, 0.5);
         let spread = if median > 0.0 {
@@ -1846,8 +2331,12 @@ impl ArmStat {
         Self {
             median,
             spread,
-            windows: sorted.len(),
+            samples,
         }
+    }
+
+    fn windows(&self) -> usize {
+        self.samples.len()
     }
 }
 
@@ -2119,14 +2608,35 @@ fn print_grid() {
     }
 }
 
+fn print_seed_inventory() -> Result<(), String> {
+    for field in CalibratedField::ALL {
+        for size in field.grid() {
+            println!("{}", seed_inventory_line(field, size)?);
+        }
+    }
+    Ok(())
+}
+
 fn print_protocol(protocol: &Protocol) {
     println!(
-        "protocol: harness_schema={} executions={} repetitions={} target_ms={} windows_per_arm={}",
+        "protocol: profile_format_version={} section_id={} section_schema_version={} \
+         harness_schema={} fresh_case_schema={} raw_sample_schema={} executions={} repetitions={} \
+         target_ms={} windows_per_arm={}",
+        PROFILE_FORMAT_VERSION,
+        CoreTuning::ID.as_str(),
+        CoreTuningCodec::SCHEMA_VERSION,
         CoreTuningCodec::HARNESS_SCHEMA,
+        FRESH_CASE_VALUE,
+        RAW_SAMPLE_SCHEMA,
         protocol.executions,
         protocol.repetitions,
         protocol.target_ms,
         protocol.windows()
+    );
+    println!(
+        "seed_protocol: schema={SEED_SCHEMA} derivation={SEED_DERIVATION} root={SEED_ROOT} \
+         role_mix=0x9e3779b97f4a7c15 word_mix=0xbf58476d1ce4e5b9 rotate_left=27 \
+         add=0x94d049bb133111eb final_xor_shift=31 words=field_tag,size"
     );
 }
 
@@ -2155,7 +2665,42 @@ fn print_host_facts(facts: &HostFacts) {
     );
 }
 
-fn print_sweep(sweep: &FieldSweep) {
+#[derive(serde::Serialize)]
+struct SampleRecord<'a> {
+    schema: &'static str,
+    profile_format_version: u32,
+    section_id: &'static str,
+    section_schema_version: u32,
+    harness_schema: &'static str,
+    field: CalibratedField,
+    size: usize,
+    arm: Arm,
+    samples: &'a [TimingSample],
+}
+
+fn sample_record_line(
+    field: CalibratedField,
+    size: usize,
+    arm: Arm,
+    samples: &[TimingSample],
+) -> Result<String, String> {
+    let record = SampleRecord {
+        schema: RAW_SAMPLE_SCHEMA,
+        profile_format_version: PROFILE_FORMAT_VERSION,
+        section_id: CoreTuning::ID.as_str(),
+        section_schema_version: CoreTuningCodec::SCHEMA_VERSION,
+        harness_schema: CoreTuningCodec::HARNESS_SCHEMA,
+        field,
+        size,
+        arm,
+        samples,
+    };
+    serde_json::to_string(&record)
+        .map(|json| format!("{SAMPLE_PREFIX}{json}"))
+        .map_err(|error| format!("cannot encode raw timing samples: {error}"))
+}
+
+fn print_sweep(sweep: &FieldSweep) -> Result<(), String> {
     let field = sweep.field;
     println!(
         "\n{field} ({}): default {} in {}; arms {} vs {}",
@@ -2192,7 +2737,7 @@ fn print_sweep(sweep: &FieldSweep) {
             .conservative
             .as_ref()
             .or(point.asymptotic.as_ref())
-            .map_or(0, |stat| stat.windows);
+            .map_or(0, ArmStat::windows);
         let (margin, band, verdict) = match point.comparison() {
             Some((band, margin)) => (
                 format!("{margin:.4}"),
@@ -2209,6 +2754,17 @@ fn print_sweep(sweep: &FieldSweep) {
             "{}\t{conservative_ns}\t{conservative_spread}\t{asymptotic_ns}\t{asymptotic_spread}\t{windows}\t{margin}\t{band}\t{verdict}",
             point.size
         );
+        for (arm, stat) in [
+            (Arm::Conservative, point.conservative.as_ref()),
+            (Arm::Asymptotic, point.asymptotic.as_ref()),
+        ] {
+            if let Some(stat) = stat {
+                println!(
+                    "{}",
+                    sample_record_line(field, point.size, arm, &stat.samples)?
+                );
+            }
+        }
     }
     match &sweep.selection {
         Selection::Crossover {
@@ -2223,6 +2779,7 @@ fn print_sweep(sweep: &FieldSweep) {
             println!("selected: {field}={value} (conservative default kept: {reason})");
         }
     }
+    Ok(())
 }
 
 /// Prints the omission set with each field's inherited value and why it is
@@ -2344,6 +2901,60 @@ fn omitted_fields(document: &str, sweeps: &[FieldSweep]) -> Result<Vec<SchemaFie
         .into_iter()
         .filter(|field| !measured.contains(field))
         .collect())
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct PilotCoverage {
+    measured: usize,
+    omitted: usize,
+    total: usize,
+}
+
+/// Rejects publication unless the codec-derived inventory is exactly the
+/// issue's five-field pilot and its 32-of-37 omission complement.
+fn validate_pilot_coverage(
+    complete_document: &str,
+    sweeps: &[FieldSweep],
+    omitted: &[SchemaField],
+) -> Result<PilotCoverage, String> {
+    let schema = schema_fields(complete_document)?;
+    let measured = measured_fields(sweeps);
+    let expected_measured: Vec<SchemaField> = CalibratedField::ALL
+        .into_iter()
+        .map(CalibratedField::schema_field)
+        .collect();
+    if measured != expected_measured {
+        return Err(format!(
+            "the run measured {measured:?}, not all five preregistered pilot fields"
+        ));
+    }
+    if schema.len() != EXPECTED_CORE_SCHEMA_FIELDS
+        || measured.len() != EXPECTED_PILOT_FIELDS
+        || omitted.len() != EXPECTED_OMITTED_FIELDS
+        || measured.len() + omitted.len() != schema.len()
+    {
+        return Err(format!(
+            "the CoreTuningCodec inventory yielded measured={} omitted={} total={}, expected \
+             {EXPECTED_PILOT_FIELDS}/{EXPECTED_OMITTED_FIELDS}/{EXPECTED_CORE_SCHEMA_FIELDS}",
+            measured.len(),
+            omitted.len(),
+            schema.len()
+        ));
+    }
+    if measured
+        .iter()
+        .any(|field| omitted.contains(field) || !schema.contains(field))
+        || omitted.iter().any(|field| !schema.contains(field))
+    {
+        return Err(
+            "the measured/omitted complement does not partition the codec inventory".into(),
+        );
+    }
+    Ok(PilotCoverage {
+        measured: measured.len(),
+        omitted: omitted.len(),
+        total: schema.len(),
+    })
 }
 
 /// Re-encodes `profile` after omitting fields this run did not measure.
@@ -2496,6 +3107,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Mode::ListGrid => {
             print_protocol(&args.protocol);
             print_grid();
+            print_seed_inventory()?;
             return Ok(());
         }
         Mode::SelfCheck => {
@@ -2545,11 +3157,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into());
     }
     let facts = collect_host_facts()?;
+    require_clean_source(facts.source_dirty, &facts.source_revision)?;
 
     print_protocol(&args.protocol);
     print_host_facts(&facts);
     println!("lock_wrapper: {}", lock_wrapper_path.as_str());
     print_grid();
+    print_seed_inventory()?;
 
     let measured_at = rfc3339_utc(SystemTime::now())?;
     let started = Instant::now();
@@ -2559,12 +3173,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for size in field.grid() {
             let mut fixture = build_fixture(field, size);
             equivalence_probe(field, size, &fixture, &args.protocol);
-            let mut conservative_rates: Option<Vec<f64>> = None;
-            let mut asymptotic_rates: Option<Vec<f64>> = None;
+            let mut conservative_samples: Option<Vec<TimingSample>> = None;
+            let mut asymptotic_samples: Option<Vec<TimingSample>> = None;
             for execution in 0..args.protocol.executions {
-                for (arm, rates) in [
-                    (Arm::Conservative, &mut conservative_rates),
-                    (Arm::Asymptotic, &mut asymptotic_rates),
+                for (arm, samples) in [
+                    (Arm::Conservative, &mut conservative_samples),
+                    (Arm::Asymptotic, &mut asymptotic_samples),
                 ] {
                     if let Some(window) = measure_arm_execution(
                         field,
@@ -2574,14 +3188,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         &args.protocol,
                         execution,
                     ) {
-                        rates.get_or_insert_with(Vec::new).extend(window);
+                        samples.get_or_insert_with(Vec::new).extend(window);
                     }
                 }
             }
             points.push(GridPoint {
                 size,
-                conservative: conservative_rates.as_deref().map(ArmStat::from_rates),
-                asymptotic: asymptotic_rates.as_deref().map(ArmStat::from_rates),
+                conservative: conservative_samples.map(ArmStat::from_samples),
+                asymptotic: asymptotic_samples.map(ArmStat::from_samples),
             });
         }
         let selection = select(field, &points);
@@ -2590,7 +3204,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             points,
             selection,
         };
-        print_sweep(&sweep);
+        print_sweep(&sweep)?;
         sweeps.push(sweep);
     }
     println!("\ntimed work: {:.1} s", started.elapsed().as_secs_f64());
@@ -2613,19 +3227,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         receipt: receipt_path,
     };
     let profile = build_profile(id, provenance, assembled_at, &selected)?;
-    let omitted = omitted_fields(&profile.to_json(), &sweeps)?;
+    let complete_document = profile.to_json();
+    let omitted = omitted_fields(&complete_document, &sweeps)?;
+    let coverage = validate_pilot_coverage(&complete_document, &sweeps, &omitted)?;
+    println!(
+        "codec_coverage: measured={} omitted={} total={} derived_by=CoreTuningCodec",
+        coverage.measured, coverage.omitted, coverage.total
+    );
     print_omitted(&omitted, &sweeps)?;
     let document = calibrated_document(&profile, &omitted)?;
     let json = emit_profile(out, &document)?;
 
     println!("\nemitted and re-loaded {}", out.display());
     println!("{json}");
-    if facts.source_dirty {
-        println!(
-            "\nthe source tree is dirty, so this profile is not committable: the revision it \
-             names does not reproduce the binary that produced these numbers"
-        );
-    }
     Ok(())
 }
 
@@ -2712,12 +3326,12 @@ mod tests {
             conservative: Some(ArmStat {
                 median: conservative,
                 spread,
-                windows: 25,
+                samples: Vec::new(),
             }),
             asymptotic: Some(ArmStat {
                 median: asymptotic,
                 spread,
-                windows: 25,
+                samples: Vec::new(),
             }),
         }
     }
@@ -3049,6 +3663,36 @@ mod tests {
     }
 
     #[test]
+    fn pilot_publication_requires_five_measured_and_32_of_37_omitted() {
+        let document = profile_from(&DISTINCT).to_json();
+        let sweeps = measured_sweeps();
+        let omitted = omitted_fields(&document, &sweeps).unwrap();
+        assert_eq!(
+            validate_pilot_coverage(&document, &sweeps, &omitted),
+            Ok(PilotCoverage {
+                measured: 5,
+                omitted: 32,
+                total: 37,
+            })
+        );
+    }
+
+    #[test]
+    fn a_four_field_run_cannot_publish_a_33_field_omission_set() {
+        let document = profile_from(&DISTINCT).to_json();
+        let mut sweeps = measured_sweeps();
+        sweeps.retain(|sweep| sweep.field != CalibratedField::SimdMinWords);
+        sweeps.push(concluded(
+            CalibratedField::SimdMinWords,
+            Fallback::NoComparableGridPoint,
+        ));
+        let omitted = omitted_fields(&document, &sweeps).unwrap();
+        assert_eq!(measured_fields(&sweeps).len(), 4);
+        assert_eq!(omitted.len(), 33);
+        assert!(validate_pilot_coverage(&document, &sweeps, &omitted).is_err());
+    }
+
+    #[test]
     fn a_swept_field_without_a_comparison_joins_the_unswept_fields_in_the_omission_set() {
         let profile = profile_from(&DISTINCT);
         let mut sweeps = measured_sweeps();
@@ -3154,6 +3798,15 @@ mod tests {
         assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
         assert_eq!(toolchain, "rustc 1.95.0");
         assert_eq!(host, "test-host");
+    }
+
+    #[test]
+    fn dirty_source_is_rejected_before_calibration_can_start() {
+        let revision = GitRevision::parse("0123456789abcdef0123456789abcdef01234567").unwrap();
+        assert_eq!(require_clean_source(false, &revision), Ok(()));
+        let error = require_clean_source(true, &revision).unwrap_err();
+        assert!(error.contains(revision.as_str()));
+        assert!(error.contains("before any probe or timed call"));
     }
 
     #[test]
@@ -3264,7 +3917,7 @@ mod tests {
                 conservative: Some(ArmStat {
                     median: 100.0,
                     spread: 0.01,
-                    windows: 25,
+                    samples: Vec::new(),
                 }),
                 asymptotic: None,
             })
@@ -3304,16 +3957,124 @@ mod tests {
 
     #[test]
     fn statistics_summarise_a_window_sample() {
-        let stat = ArmStat::from_rates(&[10.0, 12.0, 8.0, 11.0, 9.0]);
+        let samples = [10_u64, 12, 8, 11, 9]
+            .into_iter()
+            .enumerate()
+            .map(|(repetition, elapsed_ns)| TimingSample {
+                execution: 0,
+                repetition: repetition as u64,
+                calls: 1,
+                elapsed_ns,
+            })
+            .collect();
+        let stat = ArmStat::from_samples(samples);
         assert_eq!(stat.median, 10.0);
-        assert_eq!(stat.windows, 5);
+        assert_eq!(stat.windows(), 5);
+        assert_eq!(
+            stat.samples
+                .iter()
+                .map(|sample| sample.elapsed_ns)
+                .collect::<Vec<_>>(),
+            [10, 12, 8, 11, 9],
+            "statistics must retain raw acquisition order"
+        );
         // Nearest-rank quartiles of the five windows are 9 and 11.
         assert!((stat.spread - 0.2).abs() < 1e-12);
     }
 
     #[test]
     fn an_even_sample_medians_between_its_central_windows() {
-        assert_eq!(ArmStat::from_rates(&[10.0, 20.0]).median, 15.0);
+        let samples = vec![
+            TimingSample {
+                execution: 0,
+                repetition: 0,
+                calls: 1,
+                elapsed_ns: 10,
+            },
+            TimingSample {
+                execution: 0,
+                repetition: 1,
+                calls: 1,
+                elapsed_ns: 20,
+            },
+        ];
+        assert_eq!(ArmStat::from_samples(samples).median, 15.0);
+    }
+
+    #[test]
+    fn raw_sample_line_is_canonical_and_pins_format_two_identity() {
+        let samples = [
+            TimingSample {
+                execution: 0,
+                repetition: 0,
+                calls: 4,
+                elapsed_ns: 40,
+            },
+            TimingSample {
+                execution: 0,
+                repetition: 1,
+                calls: 4,
+                elapsed_ns: 44,
+            },
+        ];
+        assert_eq!(
+            sample_record_line(
+                CalibratedField::KaratsubaMinDegree,
+                31,
+                Arm::Asymptotic,
+                &samples,
+            )
+            .unwrap(),
+            "GF2_TUNING_SAMPLES={\"schema\":\"raw-timing-samples-v1\",\"profile_format_version\":2,\"section_id\":\"gf2-core/selectors\",\"section_schema_version\":1,\"harness_schema\":\"tuning-calibration-v2\",\"field\":\"karatsuba_min_degree\",\"size\":31,\"arm\":\"asymptotic\",\"samples\":[{\"execution\":0,\"repetition\":0,\"calls\":4,\"elapsed_ns\":40},{\"execution\":0,\"repetition\":1,\"calls\":4,\"elapsed_ns\":44}]}"
+        );
+    }
+
+    #[test]
+    fn seed_tags_and_streams_are_stable_and_explicit() {
+        assert_eq!(
+            CalibratedField::ALL.map(CalibratedField::seed_tag),
+            [0, 1, 2, 3, 4]
+        );
+        for (field, size, role, expected) in [
+            (
+                CalibratedField::SimdMinWords,
+                1,
+                SEED_ROLE_BIT_DST,
+                0x6bca_b429_7aa0_dfbc,
+            ),
+            (
+                CalibratedField::KaratsubaMinDegree,
+                4,
+                SEED_ROLE_POLY_LHS,
+                0x35af_77d8_8d1e_27e1,
+            ),
+            (
+                CalibratedField::KaratsubaMaxOutLen,
+                15,
+                SEED_ROLE_POLY_RHS,
+                0x3c26_d083_d284_6ea3,
+            ),
+            (
+                CalibratedField::DivRemFastMinLen,
+                64,
+                SEED_ROLE_DIVIDEND,
+                0xed46_bff6_1b47_ac5f,
+            ),
+            (
+                CalibratedField::SubproductMinLen,
+                128,
+                SEED_ROLE_EVAL_POINTS,
+                0xf137_5a83_95b8_3f18,
+            ),
+        ] {
+            assert_eq!(seed_for(field, size, role), expected, "{field}:{size}");
+        }
+        let line = seed_inventory_line(CalibratedField::KaratsubaMinDegree, 31).unwrap();
+        assert!(line.starts_with(SEED_PREFIX));
+        assert!(line.contains("\"derivation\":\"gf2-calibration-seed-v1\""));
+        assert!(line.contains("\"field_tag\":1"));
+        assert!(line.contains("\"name\":\"lhs\",\"role\":10,\"seed\":"));
+        assert!(line.contains("\"name\":\"rhs\",\"role\":11,\"seed\":"));
     }
 
     #[test]
@@ -3368,19 +4129,43 @@ mod tests {
     };
 
     #[allow(dead_code)]
-    fn child_report(rates: usize) -> ChildReport {
+    fn child_report(spec: ChildSpec, protocol: &Protocol) -> ChildReport {
+        let forced = forced_karatsuba_min_degree(spec.arm, spec.size);
+        let digests = forced_profile_digests(&forced_profile(forced).unwrap()).unwrap();
+        let samples = match spec.task {
+            ChildTask::Probe => Vec::new(),
+            ChildTask::Measure { execution } => (0..protocol.repetitions)
+                .map(|repetition| TimingSample {
+                    execution,
+                    repetition,
+                    calls: 10,
+                    elapsed_ns: 100 + repetition,
+                })
+                .collect(),
+        };
         ChildReport {
-            route: "karatsuba".to_owned(),
+            protocol: ChildProtocolIdentity::current(protocol),
+            requested_route: spec.field.arm_name(spec.arm).to_owned(),
+            observed_route: spec.field.arm_name(spec.arm).to_owned(),
+            installed: InstalledEvidence {
+                profile_id: FORCED_ARM_PROFILE_ID.to_owned(),
+                section_id: CoreTuning::ID.as_str().to_owned(),
+                resolution: ObservedResolution::Installed,
+                measurement: ObservedMeasurement::Inherited,
+                karatsuba_min_degree: forced,
+                section_sha256: digests.section_sha256,
+                envelope_content_sha256: digests.envelope_content_sha256,
+            },
             operands: 0x1111,
             product: 0x2222,
-            rates: vec![10.0; rates],
+            samples,
         }
     }
 
     #[allow(dead_code)]
     fn child_protocol(repetitions: u64) -> Protocol {
         Protocol {
-            executions: 1,
+            executions: 3,
             repetitions,
             target_ms: 1,
         }
@@ -3395,7 +4180,7 @@ mod tests {
         let encoded = serde_json::to_string(&case).unwrap();
         assert_eq!(
             encoded,
-            r#"{"spec":{"field":"karatsuba_min_degree","size":31,"arm":"asymptotic","task":{"kind":"measure","execution":2}},"protocol":{"executions":1,"repetitions":3,"target_ms":1}}"#
+            r#"{"spec":{"field":"karatsuba_min_degree","size":31,"arm":"asymptotic","task":{"kind":"measure","execution":2}},"protocol":{"executions":3,"repetitions":3,"target_ms":1}}"#
         );
         assert_eq!(decode_fresh_case(&encoded), Ok(case));
         assert!(decode_fresh_case(&format!("{encoded}\n")).is_err());
@@ -3420,17 +4205,21 @@ mod tests {
 
     #[test]
     fn a_child_report_is_one_canonical_prefixed_json_line() {
-        let report = ChildReport {
-            route: "karatsuba".to_owned(),
-            operands: 4369,
-            product: 8738,
-            rates: vec![10.0, 12.5],
-        };
+        let protocol = child_protocol(2);
+        let report = child_report(CHILD_SPEC, &protocol);
         let text = format!(
             "{FRESH_RESULT_PREFIX}{}\n",
             serde_json::to_string(&report).unwrap()
         );
         assert_eq!(parse_child_report(&text), Ok(report));
+        assert!(text.contains("\"profile_format_version\":2"));
+        assert!(text.contains("\"section_id\":\"gf2-core/selectors\""));
+        assert!(text.contains("\"section_schema_version\":1"));
+        assert!(text.contains("\"harness_schema\":\"tuning-calibration-v2\""));
+        assert!(text.contains("\"resolution\":\"installed\""));
+        assert!(text.contains(
+            "\"samples\":[{\"execution\":2,\"repetition\":0,\"calls\":10,\"elapsed_ns\":100}"
+        ));
     }
 
     #[test]
@@ -3450,45 +4239,96 @@ mod tests {
 
     #[test]
     fn a_child_that_took_the_other_arm_is_rejected() {
-        let mut report = child_report(1);
-        report.route = "schoolbook".to_owned();
-        let error = verify_child_report(
-            ChildSpec {
-                task: ChildTask::Measure { execution: 0 },
-                ..CHILD_SPEC
-            },
-            report.operands,
-            &child_protocol(1),
-            &report,
-        )
-        .unwrap_err();
+        let spec = ChildSpec {
+            task: ChildTask::Measure { execution: 0 },
+            ..CHILD_SPEC
+        };
+        let protocol = child_protocol(1);
+        let mut report = child_report(spec, &protocol);
+        report.observed_route = "schoolbook".to_owned();
+        let error = verify_child_report(spec, report.operands, &protocol, &report).unwrap_err();
         assert!(error.contains("schoolbook"), "{error}");
     }
 
     #[test]
     fn a_child_that_built_other_operands_is_rejected() {
-        let report = child_report(1);
-        assert!(verify_child_report(
-            ChildSpec {
-                task: ChildTask::Measure { execution: 0 },
-                ..CHILD_SPEC
-            },
-            report.operands ^ 1,
-            &child_protocol(1),
-            &report,
-        )
-        .is_err());
-    }
-
-    #[test]
-    fn a_child_that_timed_the_wrong_number_of_windows_is_rejected() {
-        let report = child_report(2);
         let spec = ChildSpec {
             task: ChildTask::Measure { execution: 0 },
             ..CHILD_SPEC
         };
+        let protocol = child_protocol(1);
+        let report = child_report(spec, &protocol);
+        assert!(verify_child_report(spec, report.operands ^ 1, &protocol, &report,).is_err());
+    }
+
+    #[test]
+    fn a_child_that_timed_the_wrong_number_of_windows_is_rejected() {
+        let spec = ChildSpec {
+            task: ChildTask::Measure { execution: 0 },
+            ..CHILD_SPEC
+        };
+        let protocol = child_protocol(2);
+        let report = child_report(spec, &protocol);
         assert!(verify_child_report(spec, report.operands, &child_protocol(3), &report).is_err());
-        assert!(verify_child_report(spec, report.operands, &child_protocol(2), &report).is_ok());
+        assert!(verify_child_report(spec, report.operands, &protocol, &report).is_ok());
+    }
+
+    #[test]
+    fn a_child_with_wrong_protocol_or_installed_identity_is_rejected() {
+        let spec = ChildSpec {
+            task: ChildTask::Measure { execution: 0 },
+            ..CHILD_SPEC
+        };
+        let protocol = child_protocol(2);
+        let report = child_report(spec, &protocol);
+
+        let mut wrong_protocol = report.clone();
+        wrong_protocol.protocol.harness_schema = "tuning-calibration-v1".to_owned();
+        assert!(verify_child_report(spec, report.operands, &protocol, &wrong_protocol).is_err());
+
+        let mut wrong_install = report.clone();
+        wrong_install.installed.karatsuba_min_degree += 1;
+        assert!(verify_child_report(spec, report.operands, &protocol, &wrong_install).is_err());
+
+        let mut wrong_digest = report.clone();
+        wrong_digest.installed.section_sha256 = "a".repeat(64);
+        assert!(verify_child_report(spec, report.operands, &protocol, &wrong_digest).is_err());
+    }
+
+    #[test]
+    fn duplicate_or_invalid_raw_child_samples_are_rejected() {
+        let spec = ChildSpec {
+            task: ChildTask::Measure { execution: 0 },
+            ..CHILD_SPEC
+        };
+        let protocol = child_protocol(2);
+        let report = child_report(spec, &protocol);
+
+        let mut duplicate = report.clone();
+        duplicate.samples[1].repetition = 0;
+        assert!(verify_child_report(spec, report.operands, &protocol, &duplicate).is_err());
+
+        let mut zero_calls = report.clone();
+        zero_calls.samples[0].calls = 0;
+        assert!(verify_child_report(spec, report.operands, &protocol, &zero_calls).is_err());
+
+        let mut wrong_execution = report.clone();
+        wrong_execution.samples[0].execution = 1;
+        assert!(verify_child_report(spec, report.operands, &protocol, &wrong_execution).is_err());
+    }
+
+    #[test]
+    fn verified_child_observation_is_one_canonical_v2_line() {
+        let protocol = child_protocol(2);
+        let report = child_report(CHILD_SPEC, &protocol);
+        verify_child_report(CHILD_SPEC, report.operands, &protocol, &report).unwrap();
+        let line = child_observation_line(CHILD_SPEC, &report).unwrap();
+        assert!(line.starts_with(CHILD_OBSERVATION_PREFIX));
+        assert!(line.contains("\"requested_route\":\"karatsuba\""));
+        assert!(line.contains("\"observed_route\":\"karatsuba\""));
+        assert!(line.contains("\"resolution\":\"installed\""));
+        assert!(line.contains("\"profile_format_version\":2"));
+        assert!(line.contains("\"harness_schema\":\"tuning-calibration-v2\""));
     }
 
     #[test]
@@ -3497,12 +4337,15 @@ mod tests {
             task: ChildTask::Probe,
             ..CHILD_SPEC
         };
-        let report = child_report(0);
-        assert!(verify_child_report(spec, report.operands, &child_protocol(5), &report).is_ok());
-        assert!(
-            verify_child_report(spec, report.operands, &child_protocol(5), &child_report(5))
-                .is_err()
-        );
+        let protocol = child_protocol(5);
+        let report = child_report(spec, &protocol);
+        assert!(verify_child_report(spec, report.operands, &protocol, &report).is_ok());
+        let measured_spec = ChildSpec {
+            task: ChildTask::Measure { execution: 0 },
+            ..spec
+        };
+        let measured = child_report(measured_spec, &protocol);
+        assert!(verify_child_report(spec, measured.operands, &protocol, &measured).is_err());
     }
 
     #[test]
