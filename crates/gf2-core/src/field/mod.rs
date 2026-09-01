@@ -57,6 +57,7 @@ pub mod expr;
 pub mod extension;
 pub mod extension_wiedemann;
 pub mod inverse;
+pub mod irreducibility;
 pub mod matrix;
 pub mod ntt;
 pub mod ple;
@@ -85,6 +86,7 @@ pub use extension::{
     FieldExtension, FieldId, FieldIdentity, ModulusId, OrderCertificate, TrivialExt,
     ELEMENT_REPR_VERSION, FIELD_ID_ENCODING_VERSION,
 };
+pub use irreducibility::{prove_irreducible, IrreducibilityCertificate, IrreducibilityMethod};
 pub use ntt::ntt_inplace;
 pub use ple::Permutation;
 pub use poly::FieldPoly;
