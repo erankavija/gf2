@@ -68,14 +68,10 @@ structure core.ops.arith.AddAssign (Self : Type) (Rhs : Type) where
   add_assign : Self → Rhs → Result Self
 
 /-- Trait declaration: [gf2_core::field::traits::FiniteField]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 44:0-989:1
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 60:0-887:1
     Visibility: public -/
 structure field.traits.FiniteField (Self : Type) (Self_Characteristic : Type)
   (Self_Wide : Type) where
-  WINOGRAD_THRESHOLD : Result Std.Usize
-  TRI_BASE_THRESHOLD : Result Std.Usize
-  PLE_BASE_COLS : Result Std.Usize
-  PLE_PANEL_COLS : Result Std.Usize
   corecloneCloneInst : core.clone.Clone Self
   corecmpPartialEqInst : core.cmp.PartialEq Self Self
   corecmpEqInst : core.cmp.Eq Self
@@ -118,7 +114,7 @@ structure field.traits.FiniteField (Self : Type) (Self_Characteristic : Type)
   theorem_4_operand_bound : Result Std.U128
 
 /-- Trait declaration: [gf2_core::field::traits::ConstField]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 995:0-1034:1
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 893:0-932:1
     Visibility: public -/
 structure field.traits.ConstField (Self : Type) (Self_Clause0_Characteristic :
   Type) (Self_Clause0_Wide : Type) where

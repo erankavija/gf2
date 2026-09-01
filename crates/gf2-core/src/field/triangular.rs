@@ -1889,18 +1889,6 @@ mod tests {
 
     // ─── Threshold sanity ────────────────────────────────────────────────
 
-    #[test]
-    fn test_tri_threshold_default() {
-        // Selected to 8 by `73ec5da3` Criterion sweep on Mersenne-31
-        // over candidate values {4, 8, 16, 32, 64}; see the
-        // conservative `triangular.base_case_max_dim()` default and the sweep
-        // table in
-        // `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md`.
-        assert_eq!(<Fp<7> as FiniteField>::TRI_BASE_THRESHOLD, 8);
-        assert_eq!(<Fp<MERSENNE_31> as FiniteField>::TRI_BASE_THRESHOLD, 8);
-        assert_eq!(<TriGf2m8 as FiniteField>::TRI_BASE_THRESHOLD, 8);
-    }
-
     // ─── trsm_upper / trsm_lower correctness ─────────────────────────────
 
     fn check_trsm_upper_fp<const P: u64>(m: usize, n: usize, seed: u64) {
@@ -2900,7 +2888,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_trtri_at_threshold_one_allocation() {
-        let m = <Fp<MERSENNE_31> as FiniteField>::TRI_BASE_THRESHOLD;
+        let m = TRI_BASE_MAX_DIM_DEFAULT;
         let a = random_upper_fp::<MERSENNE_31>(m, 0xA3FC);
         let mut a_inv = a.clone();
         reset_fieldmatrix_new_count();
@@ -2970,7 +2958,7 @@ mod tests {
     /// base case; just above it, the recursion peels at least once.
     #[test]
     fn test_recursive_split_just_above_threshold() {
-        let m = <Fp<MERSENNE_31> as FiniteField>::TRI_BASE_THRESHOLD + 1;
+        let m = TRI_BASE_MAX_DIM_DEFAULT + 1;
         check_trsm_upper_fp::<MERSENNE_31>(m, 4, 0xABCD);
         check_trsm_lower_fp::<MERSENNE_31>(m, 4, 0xABCE);
         check_trmm_upper_fp::<MERSENNE_31>(m, 4, 0xABCF);

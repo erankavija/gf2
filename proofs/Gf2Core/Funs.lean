@@ -1200,18 +1200,6 @@ def Shared0Fp.Insts.CoreOpsArithNegFp (P : Std.U64) : core.ops.arith.Neg
   neg := Shared0Fp.Insts.CoreOpsArithNegFp.neg
 }
 
-/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::PLE_PANEL_COLS]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 903:4-918:6
-    Visibility: public -/
-@[global_simps, irreducible]
-def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.PLE_PANEL_COLS (P :
-  Std.U64) : Std.Usize :=
-  if P <= 251#u64
-  then 256#usize
-  else if P < 65536#u64
-       then 128#usize
-       else 1#usize
-
 /-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::theorem_4_operand_bound]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 693:4-695:5
     Visibility: public -/
@@ -1365,15 +1353,10 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic
   {P : Std.U64} (self : gfp.Fp P) : Result Std.U64 := by
   sorry
 /-- Trait implementation: [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-966:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-933:1 -/
 @[reducible]
-impl_def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
+def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
   field.traits.FiniteField (gfp.Fp P) Std.U64 Std.U128 := {
-  WINOGRAD_THRESHOLD := ok 32#usize
-  TRI_BASE_THRESHOLD := ok 8#usize
-  PLE_BASE_COLS := ok 1#usize
-  PLE_PANEL_COLS := ok
-    (gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.PLE_PANEL_COLS P)
   corecloneCloneInst := gfp.Fp.Insts.CoreCloneClone P
   corecmpPartialEqInst := gfp.Fp.Insts.CoreCmpPartialEqFp P
   corecmpEqInst := gfp.Fp.Insts.CoreCmpEq P
@@ -1430,14 +1413,14 @@ impl_def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{impl gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::order]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 992:4-994:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 959:4-961:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.order
   (P : Std.U64) : Result Std.U128 := do
   ok (UScalar.cast .U128 P)
 
 /-- [gf2_core::gfp::{impl gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::one]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 981:4-989:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 948:4-956:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.one
   (P : Std.U64) : Result (gfp.Fp P) := do
@@ -1452,7 +1435,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.one
          ok i
 
 /-- [gf2_core::gfp::{impl gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::zero]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 974:4-978:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 941:4-945:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.zero
   (P : Std.U64) : Result (gfp.Fp P) := do
@@ -1460,7 +1443,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.zero
   ok 0#u64
 
 /-- Trait implementation: [gf2_core::gfp::{impl gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 972:0-995:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 939:0-962:1 -/
 @[reducible]
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128 (P : Std.U64) :
   field.traits.ConstField (gfp.Fp P) Std.U64 Std.U128 := {
@@ -2304,13 +2287,8 @@ def
 /-- Trait implementation: [gf2_core::gfp::specialized::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::specialized::GoldilocksFp}]
     Source: 'crates/gf2-core/src/gfp/specialized.rs', lines 986:0-1103:1 -/
 @[reducible]
-impl_def
-  gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 :
+def gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 :
   field.traits.FiniteField gfp.specialized.GoldilocksFp Std.U64 Std.U128 := {
-  WINOGRAD_THRESHOLD := ok 32#usize
-  TRI_BASE_THRESHOLD := ok 8#usize
-  PLE_BASE_COLS := ok 1#usize
-  PLE_PANEL_COLS := ok 1#usize
   corecloneCloneInst := gfp.specialized.GoldilocksFp.Insts.CoreCloneClone
   corecmpPartialEqInst :=
     gfp.specialized.GoldilocksFp.Insts.CoreCmpPartialEqGoldilocksFp
