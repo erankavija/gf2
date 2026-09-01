@@ -10539,3 +10539,6 @@
 {"id":"587b56e1-ee60-4aa6-9c49-28c9f690a27d","issue_id":"5233867e-19bb-4b9f-a308-ee49c2578dde","timestamp":"2026-09-01T12:40:49.709307425Z","type":"issue_completed"}
 {"from":"backlog","id":"ca032b7a-ff98-44ee-8503-7054d31ee26b","issue_id":"174295c9-674a-426a-90ce-96f34eee2bf1","timestamp":"2026-09-01T12:40:58.612508743Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"2b39b42a-1550-4854-b8df-4a51c043c740","issue_id":"981c5ae3-f2af-405c-8c98-620d991c9fb5","timestamp":"2026-09-01T12:41:07.519082931Z","to":"ready","type":"issue_state_changed"}
+{"id":"7af0caa3-1d7d-4785-b038-ae378f327b99","issue_id":"dfd9e0c5-3368-4389-a4bd-a2195f7514c6","priority":"normal","timestamp":"2026-09-01T12:58:59.466368877Z","title":"Promote integer gcd and the cyclic polynomial x^n-1 helper to gf2-core","type":"issue_created"}
+{"from":"ready","id":"7ce233d8-3d34-4817-b44e-8ed7761b266b","issue_id":"dfd9e0c5-3368-4389-a4bd-a2195f7514c6","timestamp":"2026-09-01T12:59:23.624458069Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"e20083f8-6281-420e-8782-438872b76eef","issue_id":"dfd9e0c5-3368-4389-a4bd-a2195f7514c6","timestamp":"2026-09-01T12:59:23.624458069Z","type":"issue_updated","updated_by":"dependency-add"}
