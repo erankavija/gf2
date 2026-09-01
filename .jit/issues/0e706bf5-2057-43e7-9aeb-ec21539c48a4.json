@@ -7,6 +7,7 @@
   ],
   "description": "Implement the compile-time configured form of arbitrary polynomial quotient extensions and demonstrate observable equivalence with the runtime form of the same field.\n\n## Background\n\nPerformance-critical paths use compile-time configured fields in the style of the existing `ExtConfig` towers; exploratory use needs the runtime form. Both forms of the same field must be observably equivalent and share one algebraic field identity.\n\n## Success Criteria\n\n- [hard] REQ-01: A compile-time configured quotient extension implements the same field and extension contracts as the runtime form and passes the shared field-law conformance suite.\n- [hard] REQ-02: A shared differential suite shows observable equivalence between compile-time and runtime forms of representative fields, including identity equality.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T09:53:38.788216137Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -20,7 +21,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Implement compile-time configured quotient extensions with equivalence evidence",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T09:53:38.788216137Z"
 }

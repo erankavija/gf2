@@ -8,6 +8,7 @@
   ],
   "description": "Implement arbitrary-degree polynomial quotient extension fields in gf2-core with a runtime-configured modulus, defining the reference semantics of the pair.\n\n## Background\n\nThe current tower types support only binomial moduli of degree two and three. The runtime form defines `quotient-extension-api`: representation, reduction, inversion, Frobenius, base embedding, and the algebraic field identity. Irreducibility validation and certificates come from the dedicated validation operation. Materialization beyond `usize`/`u128` limits returns a typed unsupported-size error.\n\n## Success Criteria\n\n- [hard] REQ-01: A runtime quotient extension over supported base fields constructs from a certificate-validated modulus and satisfies the shared field-law conformance suite.\n- [hard] REQ-02: The type implements the extension abstraction and carries the algebraic field identity fixed by the extension design.\n- [hard] REQ-03: Materialization beyond `usize`/`u128` limits reports the typed unsupported-size error.\n",
   "documents": [],
+  "done_at": "2026-09-01T09:53:29.909815327Z",
   "first_ready_at": "2026-09-01T08:25:25.860612628Z",
   "gates_required": [
     "cargo-ci",
@@ -26,8 +27,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-01T09:48:27.295495788Z",
+      "status": "passed",
+      "updated_at": "2026-09-01T09:53:05.902183248Z",
       "updated_by": "auto:executor"
     }
   },
@@ -39,7 +40,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Implement runtime-configured polynomial quotient extension fields",
-  "updated_at": "2026-09-01T09:48:27.295495788Z"
+  "updated_at": "2026-09-01T09:53:29.909815327Z"
 }

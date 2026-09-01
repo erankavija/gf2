@@ -7,6 +7,7 @@
   ],
   "description": "Implement the canonical serialization format for `FieldMatrix` carrying the algebraic field identity and a separately versioned element-representation header field, with checksummed payloads, atomic file replacement, and validated load-back, using core-owned IO error types.\n\n## Background\n\nThe existing `.gf2` BitMatrix format has no checksum, non-atomic writes, and no field identity; its only production round trip is the LDPC cache and it stays untouched. The new format is field-generic, reuses the repository's atomic write-rename pattern and BLAKE3 integrity precedent, and deliberately carries no code-specific metadata. Errors are gf2-core IO types; coding-side errors never appear here.\n\n## Success Criteria\n\n- [hard] REQ-01: Saving a `FieldMatrix` writes a versioned format carrying the algebraic field identity and the element-representation header with a checksummed payload, via write-temp, sync, atomic rename.\n- [hard] REQ-02: Loading validates identity, representation, and checksum, returns the saved matrix losslessly, and reports any mismatch or corruption as a typed core-owned error.\n- [hard] REQ-03: Round-trip and corruption tests cover binary and nonbinary fields, including a runtime/compile-time identity match case.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T09:53:47.614903482Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -21,7 +22,7 @@
     "satisfies:REQ-08"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Canonical checksummed FieldMatrix serialization with atomic replacement",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T09:53:47.614903482Z"
 }
