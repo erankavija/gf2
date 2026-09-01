@@ -43,11 +43,11 @@
 //! - $\gcd(n, q) = 1$, decided as $\gcd(n, p) = 1$ for the characteristic $p$,
 //!   because $q$ is a power of $p$;
 //! - $n$ divides $|E^{*}|$;
-//! - the order-$n$ root exists and is derived canonically; the internal
-//!   resolver additionally validates explicitly supplied roots (identity
-//!   match against the witness, exact order $n$) for the non-primitive
-//!   spec variants that will expose them, though every current public
-//!   variant constructs with the canonical root;
+//! - the order-$n$ root exists: derived canonically under
+//!   [`RootSelection::Canonical`], or validated (identity match against the
+//!   witness, exact order $n$) when a variant exposing [`RootSelection`] —
+//!   currently [`BchSpec::RootSeeds`] — supplies an explicit root; the
+//!   primitive variants always construct with the canonical root;
 //! - every caller-supplied first-root exponent satisfies $0 \le b < n$; seed
 //!   exponents are reduced modulo $n$;
 //! - the designed distance satisfies $1 \le \delta \le n + 1$.
