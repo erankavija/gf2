@@ -119,14 +119,14 @@ emit identical operand digests before comparison.
   `x x x` row-major `Fp<251>` matrix from role `0x602`.
 - **PLE panel:** construct the full-rank `Fp<251>` matrix `A=L*U` by the
   field-inverse rule using roles `0x700` and `0x701`.
-- **PLE back-substitution:** let `r=floor(x/2)` and pivot columns
-  `p_i=2i`, `0 <= i < r`. Build an `r x x` echelon seed matrix `E`: each
-  `E[i,p_i]` is a nonzero draw from role `0x800`; every nonpivot column cell is
-  a `draw % 251` from role `0x801`, traversed row then column; all other pivot
-  column cells are zero. Embed `E` in the first `r` rows of an `x x x` zero
+- **PLE back-substitution:** let `r=floor(x/2)` and designated independent
+  columns `p_i=2i`, `0 <= i < r`. Build an `r x x` rank-seed matrix `E`: each
+  `E[i,p_i]` is a nonzero draw from role `0x800`; every non-designated column
+  cell is a `draw % 251` from role `0x801`, traversed row then column; all other
+  designated-column cells are zero. Embed `E` in the first `r` rows of an `x x x` zero
   matrix. Build an `x x x` unit-lower row mixer `L` from role `0x802` and set
-  `A=L*E` using scalar row, column, inner-index loops. The nonzero diagonal on
-  distinct `p_i` proves `rank(A)=r`; since `0<r<x`, every fixture has pivots
+  `A=L*E` using scalar row, column, inner-index loops. The nonzero entries on
+  distinct `p_i` prove `rank(A)=r`; since `0<r<x`, every fixture has pivots
   and free columns and cannot take the pivot-free bypass.
 - **GEMM:** fill `Fp<251>` lhs and rhs `d x d` matrices row-major from roles
   `0x900` and `0x901`; `d` is the cube dimension mapped from the volume grid.

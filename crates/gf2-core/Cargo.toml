@@ -510,20 +510,20 @@ required-features = ["tuning-profile"]
 name = "gemm_tiles_baked"
 required-features = ["tuning-profile"]
 
-# ── Issue `5ecc9bf8` (epic `6dc81018`) — explicit host-calibration action ──
+# ── Issue `eaae1b56` — explicit host-calibration action ─────────────────
 #
-# `harness = false` is the shape every bench target above uses. The
-# `tuning-profile` requirement is real rather than defensive: without the
-# feature the target has no strict format-2 registry and so cannot emit or
-# validate the core-owner envelope it exists to produce.
+# `harness = false` keeps calibration an explicit action. `tuning-profile`
+# supplies strict format-2 reopen/install, `parallel` supplies the SoA worker
+# gate, `simd` supplies the compared accelerated arms, and `test-support`
+# supplies the bounded effective-route witnesses required by the protocol.
 [[bench]]
 name = "tuning_calibration"
 harness = false
-required-features = ["tuning-profile"]
+required-features = ["parallel", "simd", "test-support", "tuning-profile"]
 
 # Runs the calibration harness's own `#[cfg(test)]` module, which a
-# `harness = false` bench target does not otherwise execute. Gated on the same
-# feature as the bench.
+# `harness = false` bench target does not otherwise execute. It uses the exact
+# same four-feature protocol configuration as the producer.
 [[test]]
 name = "tuning_calibration_harness"
-required-features = ["tuning-profile"]
+required-features = ["parallel", "simd", "test-support", "tuning-profile"]

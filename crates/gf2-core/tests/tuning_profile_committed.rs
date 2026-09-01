@@ -97,7 +97,11 @@ fn committed_measured_owner_is_canonical_and_states_exactly_the_five_field_pilot
                 harness.as_str(),
                 "crates/gf2-core/benches/tuning_calibration.rs"
             );
-            assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
+            assert_eq!(
+                harness_schema.as_str(),
+                "tuning-calibration-v2",
+                "the live 389 owner remains readable during the named eaae1b56 prepublication migration"
+            );
             assert_eq!(
                 binary_sha256.as_str(),
                 "d1582f69ee17c379e47060f3f8b2b832061832de1fd4303376d75cc4a04eaca2"
