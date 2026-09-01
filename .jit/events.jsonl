@@ -10358,3 +10358,4 @@
 {"fields":["documents"],"id":"25b58fe3-f7af-4e4f-a1bf-121e88bfe8af","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T03:40:25.295357239Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"8f5b25d5-5843-44eb-9c82-4bc366f48501","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T03:40:25.601291416Z","type":"issue_updated","updated_by":"doc-remove"}
 {"fields":["documents"],"id":"616a6c38-ee30-46d2-8673-8c891340428a","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T03:40:25.932799311Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"b4c6cd44-1e42-483d-b3af-6e2568096aef","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T03:43:29.989621070Z","type":"gate_failed","updated_by":"auto:executor"}
