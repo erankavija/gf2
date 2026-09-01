@@ -225,3 +225,42 @@ measuring against a different one, and records the amendment as a dated
 subsection naming the JIT issue that triggered it. Silently measuring a cell
 this contract does not name leaves the resulting receipt outside the
 `evidence-protocol`.
+
+### Amendment, 2026-09-01 (`177bdc85`) — differential corpus at mother length
+
+`encode-dispatch` registers the families of § 7 on the canonical construction
+model (`crates/gf2-coding/src/bch/spec.rs`, reached through
+`crates/gf2-coding/src/bch/encode.rs`). That model constructs a cyclic code
+whose length divides its splitting field's unit group, so it expresses B1, B2
+and B3 at exactly the lengths § 2 fixes and does not yet express T2S and T2N,
+whose lengths 7200 and 32400 are shortened from $2^{14}-1$ and $2^{16}-1$.
+The shortened presentations reach the canonical model with `97410c80`
+(*Migrate the DVB-T2 BCH consumers to the canonical model*), which is
+sequenced after this consumer.
+
+The differential equivalence evidence for the two DVB-T2 rows therefore runs
+on their **mother codes**: the primitive narrow-sense codes over the same
+mother fields and the same `prim` column at $\delta = 25$, of lengths 16383
+and 65535. § 2 already states that T2S and T2N carry their mother codes'
+generator polynomials, so the generator, its degree (168 and 192), and the
+reduction each family performs per message coefficient are the row's, and
+only $n$ and $k$ are the mother's. The witness is
+`crates/gf2-coding/tests/bch_encode_dispatch.rs`, whose row table cites this
+subsection.
+
+Two further points this amendment records rather than leaves implicit:
+
+* **Which families this consumer registers.** `poly-remainder-scalar` and
+  `table-remainder`, both under the § 7 spellings.
+  `bitslice-interleaved` belongs to `avx2-batch-kernels` (`2b6968d3`) and
+  `genmatrix-multiply` to `genmatrix-perf`; the seam's registration surface
+  admits them without rework, and § 7 fixes their names and contracts ahead
+  of that.
+* **No selection is fixed here.** The conservative tuning section admits only
+  `poly-remainder-scalar`, so the crossover § 7 leaves to `encode-dispatch`
+  remains an unmeasured cell of this contract until `perf-receipts` measures
+  it and a calibrated profile carries the result.
+
+Nothing in §§ 2–8 is superseded: this subsection names where the
+conformance-shaped evidence for two rows is taken, and changes no measurement
+cell.
