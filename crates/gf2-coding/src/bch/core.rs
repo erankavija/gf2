@@ -1501,11 +1501,11 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
     ///
     /// # Errors
     ///
-    /// [`BchError::Decode`] wrapping
+    /// [`BchError::WorkspaceMismatch`] for a workspace built by a decoder
+    /// for a different code, and [`BchError::Decode`] wrapping
     /// [`CodeError::BufferLengthMismatch`](crate::error::CodeError::BufferLengthMismatch)
-    /// when `received` is not `n` coordinates long, or when `workspace` was
-    /// built for a different code. Both are rejected before any decoding, so
-    /// no partial correction is observable.
+    /// when `received` is not `n` coordinates long. Both are rejected before
+    /// any decoding, so no partial correction is observable.
     ///
     /// # Complexity
     ///
@@ -1582,6 +1582,12 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
         mix(self.code.n() as u64);
         mix(self.run_length as u64);
         mix(self.radius as u64);
+        // The field presentation itself: raw point values coincide across
+        // presentations for low-degree points (x and x^2 reduce nowhere), so
+        // the modulus and degree must enter the stamp.
+        let field = self.zero.field();
+        mix(field.degree() as u64);
+        mix(field.primitive_polynomial().as_u64_truncated());
         for point in self.syndrome_points.iter() {
             mix(point.value().as_u64_truncated());
         }
@@ -2325,8 +2331,11 @@ mod canonical_decoder_tests {
         // Two distinct primitive presentations of the same (n, delta) give
         // decoders with identical buffer geometry; the stamp must still tell
         // them apart.
-        let code_a = narrow_sense(4, 0b10011, 5);
-        let code_b = narrow_sense(4, 0b11001, 5);
+        // Designed distance 3 (t = 1) is the reviewer's sharpest case: the
+        // syndrome points x, x^2 have identical raw values in every degree-4
+        // presentation, so only the modulus separates the stamps.
+        let code_a = narrow_sense(4, 0b10011, 3);
+        let code_b = narrow_sense(4, 0b11001, 3);
         let decoder_a = BinaryBchDecoder::new(&code_a);
         let decoder_b = BinaryBchDecoder::new(&code_b);
         let mut foreign = decoder_b.workspace();
