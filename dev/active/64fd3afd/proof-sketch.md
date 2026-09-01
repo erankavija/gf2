@@ -473,11 +473,12 @@ $\Rightarrow$ $Q$ has a nonzero non-unit. The converse is what makes the GIGO
 contract of `extension_unchecked` (`:1511`) a stated consequence rather than an
 unexamined caveat.
 
-**L2.7 (canonical coordinates).** The coordinate vector of $\kappa(c)$ is the
-concatenation $[\mathrm{coords}(c_0), \ldots, \mathrm{coords}(c_{r-1})]$, so
-coordinate index $i\,d_B + j$ carries the $j$-th base coordinate of $c_i$, and
-$\mathrm{idx}(\kappa(c)) = \sum_k \mathrm{coord}_k \, p^{k}$. This is the statement
-that `write_prime_coords` and `element_at_canonical_index` (`:554`) are mutually
+**L2.7 (canonical coordinates).** Two halves, anchored separately below.
+*Flattening:* the coordinate vector of $\kappa(c)$ is the concatenation
+$[\mathrm{coords}(c_0), \ldots, \mathrm{coords}(c_{r-1})]$, so coordinate index
+$i\,d_B + j$ carries the $j$-th base coordinate of $c_i$. *Canonical index:*
+$\mathrm{idx}(\kappa(c)) = \sum_k \mathrm{coord}_k \, p^{k}$, so
+`write_prime_coords` and `element_at_canonical_index` (`:554`) are mutually
 inverse.
 
 **L2.8 (Frobenius on the quotient).** `QuotientElement::frobenius(k)` computes
@@ -509,11 +510,12 @@ names another file:
 | L2.4 | `assert_forms_agree` (`crates/gf2-core/src/gfpn/quotient.rs:2290`), driven by `const_and_runtime_forms_agree_on_gf16` (`:2370`), `..._on_gf125` (`:2375`), `..._on_gf81_over_gf9` (`:2380`) |
 | L2.5 | `sampled_nonzero_elements_have_multiplicative_inverses` (`crates/gf2-core/src/gfpn/quotient.rs:2267`), `assert_forms_agree`'s `inv` case (`:2354`) |
 | L2.6 | `validating_construction_rejects_reducible_modulus` (`:2051`), `const_validation_rejects_a_reducible_declaration` (`:2387`), and the axiom-harness registrations that build every in-tree declaration through `ConstQuotient::extension` (`crates/gf2-core/src/field/axiom_tests.rs:1816-1843`) |
-| L2.7 | `assert_forms_agree`'s coordinate-agreement case (`crates/gf2-core/src/gfpn/quotient.rs:2336-2348`), `const_quotient_coordinates_round_trip_through_the_runtime_carrier` (`:2474`) |
+| L2.7, flattening half | `assert_forms_agree`'s coordinate-agreement case (`crates/gf2-core/src/gfpn/quotient.rs:2336-2348`), `const_quotient_coordinates_round_trip_through_the_runtime_carrier` (`:2474`), and `tower_coordinates_vary_the_base_coordinate_fastest` (`crates/gf2-core/src/field/extension.rs:3543`) for the $d_B > 1$ ordering |
+| L2.7, canonical-index half | **new test required**, see below |
 | L2.8 | `frobenius_has_absolute_and_relative_orders` (`:2147`) |
 
-**Test the Lean issue must add**, in `crates/gf2-core/src/gfpn/quotient.rs`'s
-own `#[cfg(test)] mod tests`:
+**Tests the Lean issue must add**, both in
+`crates/gf2-core/src/gfpn/quotient.rs`'s own `#[cfg(test)] mod tests`:
 
 > `reduction_is_invariant_under_multiples_of_the_modulus` — a proptest drawing a
 > coefficient vector $a$ of length up to $2r$ and a cofactor $h$ of length up to
@@ -523,9 +525,27 @@ own `#[cfg(test)] mod tests`:
 > GF(125), and GF(81) over GF(9), matching the three existing differential
 > rows.
 
-That test is the executable form of L2.1, which no current test decides:
+> `canonical_index_decodes_to_its_prime_coordinates` — for `gf16()` (`:2046`),
+> `ConstGf125::runtime_field()` (`:2010`), and `ConstGf81::runtime_field()`
+> (`:2013`), enumerate `elements()` and assert that the element at position $i$
+> writes exactly `field_id().degree()` coordinates, each below $p$, satisfying
+> $\sum_k c_k p^{k} = i$; assert the enumeration holds $\lvert E \rvert$ distinct
+> members. It follows the shape of
+> `canonical_index_of_a_gf2m_element_is_its_stored_value`
+> (`crates/gf2-core/src/field/extension.rs:3529`), which pins the same
+> correspondence for the GF(2^m) carrier.
+
+The first test is the executable form of L2.1, which no current test decides:
 `QuotientField::element`'s existing coverage checks a single worked reduction
-(`:422-423`) rather than the invariance property.
+(`:422-423`) rather than the invariance property. The second closes the
+canonical-index half of L2.7. `element_at_canonical_index` (`:554`) is private
+and reachable only through `elements()` (`:530`), and the successful uses of
+`elements()` — the module doctest (`:525`), the coordinate round trip (`:2474`),
+and the GF(9) alphabet in `crates/gf2-coding/src/bch/encode.rs:869` — assert
+element count, zero at index 0, and coordinate round trips, never that position
+$i$ decodes the base-$p$ digits of $i$. The two remaining callers
+(`crates/gf2-core/src/gfpn/quotient.rs:2197`, `:2227`) exercise only the
+oversize error paths.
 
 ### 4. Proof strategy
 
@@ -572,7 +592,7 @@ offset `high - degree` (`crates/gf2-core/src/gfpn/quotient.rs:912`).
 
 ### 5. Assumptions
 
-- **A-01** applies; the anchor table plus the one new test is the discharge.
+- **A-01** applies; the anchor table plus the two new tests is the discharge.
 - **A-06** (odd-prime base for the extracted anchor) is this obligation's own
   row. The abstract instantiation covers $p = 2$; only the extraction anchor
   does not.
@@ -678,14 +698,43 @@ gap between model and code is the `u64`/`usize` representation.
 | L3.4 | `cyclotomic_coset_order_is_deterministic` (`:4041`), `cyclotomic_cosets_match_the_worked_binary_vector_and_pure_form` (`:3935`) |
 | L3.5 | `iterative_closure` (`:3917`) as the naive oracle, driven by `prop_binary_cyclotomic_closure_laws` (`:3976`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`); `cyclotomic_closure_selects_complete_seed_cosets` (`:3956`) |
 | L3.6 | `prop_binary_cyclotomic_closure_laws` (`:3976`), which draws seeds outside $[0,n)$ |
-| L3.7 | `prop_nonbinary_cyclotomic_closure_laws` (`:3997`), whose bases have $d_B > 1$ |
-| L3.8 | `assert_coset_partition_properties` (`:3890`) |
+| L3.7 | `cyclotomic_coset_order_is_deterministic` (`:4041`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`) pin $d_B = 1$, where $q$ is the characteristic itself; `extension_base_primitive_construction_derives_a_base_field_generator` (`crates/gf2-coding/src/bch/spec.rs:1209`) pins $d_B = 2$ indirectly, through a defining set the test checks closed under $q = 9$ over a $\mathrm{GF}(9)$ base. **New test required**, see below |
+| L3.8 | `assert_coset_partition_properties` (`crates/gf2-core/src/field/extension.rs:3890`) |
 
 `iterative_closure` (`:3917`) deserves the emphasis: it is an independent
 fixed-point implementation of the closure, and the property tests compare the
 production result against it. That is the strongest refinement evidence in the
 whole sketch — a differential test against a second implementation, not merely a
-law check. **No new Rust test is required for O-3.**
+law check. It covers L3.2 through L3.6 completely.
+
+L3.7 is the exception. Both cyclotomic witnesses in
+`crates/gf2-core/src/field/extension.rs` have a prime base:
+`prop_binary_cyclotomic_closure_laws` (`:3976`) uses `BinaryPrimeExt` over
+$\mathrm{GF}(2)$, and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`) and
+`cyclotomic_coset_order_is_deterministic` (`:4041`) use
+`ConstExt<QuadraticExt<Gf49Config>>`, whose base is $\mathrm{GF}(7)$. Both have
+$d_B = 1$, so they exercise `base_order_mod` only where $p^{d_B} = p$ and the
+exponentiation is trivial. The one existing $d_B > 1$ exercise is indirect and
+lives in the other crate.
+
+**Test the Lean issue must add**, in `crates/gf2-core/src/field/extension.rs`'s
+own `#[cfg(test)] mod tests`:
+
+> `base_order_mod_matches_the_hand_computed_multiplier` — for each of a set of
+> $n$ coprime to the characteristic, assert
+> `cyclotomic_cosets(&ext, n) == cyclotomic_cosets_mod(q, n)` for the
+> hand-computed $q = p^{d_B} \bmod n$, over two witnesses that the surrounding
+> module already builds elsewhere: `ConstExt::<Gf81>::new()` (`:4160`, over the
+> `Gf81` alias at `:4114`), whose base $\mathrm{GF}(9)$ gives $p = 3$,
+> $d_B = 2$, and $q \equiv 9$; and
+> `TrivialExt::new(Gf2mField_::<u128>::new(64, (1u128 << 64) | 0x1b).zero())`
+> (the field of `:3620`), whose base $\mathrm{GF}(2^{64})$ gives $d_B = 64$ and
+> $q = 2^{64}$, one past `u64::MAX`.
+
+The second witness is the one that matters: it is the only case in which
+`base_order_mod`'s reason for existing — computing $\lvert B \rvert \bmod n$
+without materializing $\lvert B \rvert$ — is load-bearing rather than
+incidental.
 
 ### 4. Proof strategy
 
@@ -727,8 +776,9 @@ invariant.
 
 ### 5. Assumptions
 
-- **A-01** applies; the anchor table, with `iterative_closure` as an independent
-  oracle, is the discharge.
+- **A-01** applies; the anchor table is the discharge, with `iterative_closure`
+  as an independent oracle for L3.2 through L3.6 and the new
+  `base_order_mod_matches_the_hand_computed_multiplier` for L3.7.
 - **A-08** (representation bound): the production functions reject $n$ that
   exceeds `usize` with `FieldError::CyclotomicModulusTooLarge` and reject $n=0$
   with `FieldError::InvalidCyclotomicModulus`. The model assumes $n \ge 1$ and
@@ -1195,27 +1245,20 @@ claim reaches the public API while the Vandermonde argument behind it stays
 unproven across these five issues. A tracked follow-up issue owns that argument,
 alongside the other follow-ups `followup-tracking` creates.
 
-**R-03 — Two obligations need a new Rust test before their Lean lemma is
-anchored.** O-2's `reduction_is_invariant_under_multiples_of_the_modulus` and
-O-4's `the_generator_vanishes_at_every_defining_set_root`. Both are small and
-both belong in the module's own `#[cfg(test)]` block per
-`@/inv/shared-test-contracts`. The O-4 test is the more consequential: nothing
+**R-03 — Four new Rust tests are prerequisites of three obligations.** O-2
+adds `reduction_is_invariant_under_multiples_of_the_modulus` and
+`canonical_index_decodes_to_its_prime_coordinates`; O-3 adds
+`base_order_mod_matches_the_hand_computed_multiplier`; O-4 adds
+`the_generator_vanishes_at_every_defining_set_root`. Each is small and each
+belongs in the owning module's `#[cfg(test)]` block per
+`@/inv/shared-test-contracts`. The O-4 test is the most consequential: nothing
 in the tree currently decides that the constructed generator vanishes at the
-requested roots, which is half of `b1bd75ca`'s own title.
+requested roots, which is half of `b1bd75ca`'s own title. The other three close
+anchor gaps that research review R1 found in the first draft of this sketch —
+a canonical-index correspondence with no assertion behind it, and a
+`base_order_mod` claim whose cited evidence had $d_B = 1$.
 
-**R-04 — The pipeline documentation is behind `scripts/verify-lean.sh`.**
-`docs/lean4-verification-pipeline.md:38-60` describes Charon at `e069223a` with
-four local patches and Aeneas at `0f99a049`, while `scripts/verify-lean.sh:16-32`
-documents Charon `487f0320` with one patch and Aeneas `5220259c`. The doc's
-Stage-1 command (`docs/lean4-verification-pipeline.md:90-106`) also omits the
-`--start-from` roots and the `gfpn::batch`, `gfp::simd_ops`, and
-`gfp::specialized::batch_*` carve-outs the script carries. The opaque status of
-`gf2_core::field` and `gf2_core::gfpn::quotient` agrees in both, so no binding
-in this sketch changes either way; the drift is a separate documentation defect,
-flagged because a Lean worker who reads the older page will misjudge which
-toolchain the proofs build against.
-
-**R-05 — Proof-effort asymmetry across the five issues.** O-1 and O-3 lean
+**R-04 — Proof-effort asymmetry across the five issues.** O-1 and O-3 lean
 heavily on existing Mathlib machinery and should land quickly. O-4 and O-5 carry
 the genuinely long proofs (L4.5's separability descent, L5.3's recurrence,
 L5.6's bit-level readout). The issues are serialized `41090b8d` →
