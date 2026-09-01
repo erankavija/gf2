@@ -170,6 +170,7 @@ facts. See `@/inv/single-source-prose`.
 - **campaign-resumability** — A simulation campaign is a resumable sequence of bounded runs: completed cells persist as durable checkpointed evidence, an interrupted, censored, or budget-exhausted run continues without repeating completed work, and no protocol step requires one uninterrupted session.
 - **behavioral-evidence-validity** — Committed measurement evidence is invalidated only by a change to the producing tool's measurement behavior — sampling, evaluation, timing, or output semantics — never by a documentation, narrative, or review-artifact change; the tool pins its behavioral identity so the two are distinguishable.
 - **runtime-observed-provenance** — Measurement-tool source and emitted preambles state only runtime-observed facts, the tool's own protocol constants, and identity-based citations of committed derivation records; a hand-written figure, file inventory, or prior-run narrative embedded in a tool is a staleness defect.
+- **caller-trusted-fast-paths** — API contracts trust the caller: validation exists to catch mistakes and to amortize cost, never to defend against an adversary. A path that skips validation for performance is a distinct method under the _unchecked naming convention with its precondition documented, and violating that precondition is caller error with unspecified mathematical results — never grounds for sealing types, policing evidence provenance, or other adversarial hardening in a library that does HPC, not security.
 <!-- jit:invariants:end -->
 
 ## JIT workflow
