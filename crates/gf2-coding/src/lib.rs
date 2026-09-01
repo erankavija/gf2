@@ -81,6 +81,7 @@ pub mod simulation;
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;
 pub mod traits;
+pub mod transform;
 
 // Re-export main types
 pub use bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
