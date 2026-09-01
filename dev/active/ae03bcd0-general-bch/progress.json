@@ -57,7 +57,7 @@
           "title": "Implement the relative field-extension abstraction in gf2-core",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged aa0aecad; cargo-ci gate PASSED; code-review R1 FAIL (F1 reducible runtime moduli accepted; F2 no certificate-consuming constructor) + doc-review R1 FAIL (rustdoc promises unexposed certificate path, same root as F2); rework attempt 1 dispatched to live teammate worker-c3d5cea5 (merge main first, use 19fe9394 prove_irreducible)"
+          "status": "rework accepted: 8005c138+8d28e88a on branch close all 3 findings (Proved-basis validation via prove_irreducible, from_certificate consumers, doctest-guarded walkthrough); merge + code-review/doc-review re-run queued behind peer CI window"
         }
       ]
     },
@@ -583,7 +583,8 @@
     "R-11: declined peer lead's forum request to inspect/own work for epic 6dc81018 (single-epic invariant); coordination-only reply with our footprints and CCX1 window sent.",
     "R-12: the two untracked 4e732b56 review-verdict files moved out of the repo to ~/.local/state/gf2-lead/ae03bcd0/ (peer's worktree protocol requires byte-clean main); delete them there once 4e732b56 passes its gates.",
     "R-13: wave-3 workers (ebdbd228, 19fe9394, fc2fa0b6) dispatched with owner approval before wave-2 formal close; their worktrees anchor at 9499fbdc (reviewed CI-green c3d5cea5 tip, not main) because they build on field/extension.rs; merges serialize after c3d5cea5 lands on main. Cache seeding skipped (manual worktree add).",
-    "R-14: 19fe9394's R-01 ExtConfig conformance test covers every FIELD-BEARING in-tree ExtConfig implementor; arithmetic-only test fixtures with deliberately reducible moduli are excluded (they are not field configurations). Ratified."
+    "R-14: 19fe9394's R-01 ExtConfig conformance test covers every FIELD-BEARING in-tree ExtConfig implementor; arithmetic-only test fixtures with deliberately reducible moduli are excluded (they are not field configurations). Ratified.",
+    "R-15: from_certificate trusting its input (a Declared certificate for an unproven modulus constructs without revalidation) is ratified as the CertificateBasis contract per the extension design's certificate section \u2014 an honest recorded trust level, documented plainly on the methods and walkthrough."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
