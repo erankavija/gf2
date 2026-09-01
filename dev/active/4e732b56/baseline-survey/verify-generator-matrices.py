@@ -55,15 +55,45 @@ def parse_dump(path: pathlib.Path) -> dict[str, tuple[int, int, list[str]]]:
     return result
 
 
-def normalize(n: int, k: int, rows: list[str]) -> tuple[str, ...]:
-    """Copy row i, column j into the common [message | parity] layout."""
+def normalize(n: int, k: int, rows: list[str], *, reverse_columns: bool) -> tuple[str, ...]:
+    """Copy row-major bits into the comparison layout.
+
+    M4RI's timed route uses polynomial-coordinate columns, whose coordinate
+    order is the reverse of gf2's codeword order. The verifier reverses those
+    columns after RREF; gf2's dump is already in repository order.
+    """
     if len(rows) != k or any(len(row) != n for row in rows):
         raise ValueError("matrix dimensions do not match its header")
-    return tuple("".join(row[j] for j in range(n)) for row in rows)
+    normalized = tuple("".join(row[j] for j in range(n)) for row in rows)
+    return tuple(row[::-1] for row in normalized) if reverse_columns else normalized
 
 
 def digest(rows: tuple[str, ...]) -> str:
     return hashlib.sha256(("\n".join(rows) + "\n").encode()).hexdigest()
+
+
+def rref(n: int, rows: tuple[str, ...]) -> tuple[int, tuple[int, ...]]:
+    """Canonical GF(2) reduced row echelon form under the given column order.
+
+    Rows are bitstrings with column 0 leftmost. Returns ``(rank, rref_rows)``
+    with each row as an integer whose most significant bit is column 0. Two
+    full-rank generator matrices span the same code exactly when their
+    canonical RREFs under one shared column order are identical.
+    """
+    pivots: dict[int, int] = {}
+    for row in rows:
+        vec = int(row, 2)
+        for pivot_col, pivot_vec in pivots.items():
+            if (vec >> (n - 1 - pivot_col)) & 1:
+                vec ^= pivot_vec
+        if not vec:
+            continue
+        col = n - vec.bit_length()
+        for pivot_col, pivot_vec in pivots.items():
+            if (pivot_vec >> (n - 1 - col)) & 1:
+                pivots[pivot_col] = pivot_vec ^ vec
+        pivots[col] = vec
+    return len(pivots), tuple(pivots[col] for col in sorted(pivots))
 
 
 def systematic(n: int, k: int, rows: tuple[str, ...]) -> bool:
@@ -121,7 +151,8 @@ def main() -> int:
     print(f"# rows: {codes}")
     print(f"# M4RI command: {shlex.join(['GF2_SURVEY_CODES=' + codes, *m4ri_command])}")
     print(f"# gf2 command: {shlex.join(['GF2_SURVEY_CODES=' + codes, 'GF2_REV=' + gf2_rev, *gf2_command])}")
-    print("# normalization: row-major columns 0..n-1 in repository [message | parity] layout")
+    print("# normalization: M4RI post-RREF columns reversed by j -> n-1-j from polynomial order to repository [message | parity]; gf2 columns unchanged")
+    print("# same-code criterion: full rank and identical canonical GF(2) RREF of both normalized matrices under the repository column order (row-space equality)")
 
     failures = 0
     for name in ROWS:
@@ -131,24 +162,39 @@ def main() -> int:
             continue
         m4ri_n, m4ri_k, m4ri_rows = m4ri[name]
         gf2_n, gf2_k, gf2_rows = gf2[name]
-        m4ri_normal = normalize(m4ri_n, m4ri_k, m4ri_rows)
-        gf2_normal = normalize(gf2_n, gf2_k, gf2_rows)
+        m4ri_raw = normalize(m4ri_n, m4ri_k, m4ri_rows, reverse_columns=False)
+        m4ri_normal = normalize(m4ri_n, m4ri_k, m4ri_rows, reverse_columns=True)
+        gf2_normal = normalize(gf2_n, gf2_k, gf2_rows, reverse_columns=False)
         dimensions_match = (m4ri_n, m4ri_k) == (gf2_n, gf2_k)
         identical = dimensions_match and m4ri_normal == gf2_normal
+        m4ri_rank, m4ri_rref = rref(m4ri_n, m4ri_normal)
+        gf2_rank, gf2_rref = rref(gf2_n, gf2_normal)
+        same_code = (
+            dimensions_match
+            and m4ri_rank == m4ri_k
+            and gf2_rank == gf2_k
+            and m4ri_rref == gf2_rref
+        )
         print(
             f"{name}: dimensions={m4ri_k}x{m4ri_n} dimensions_match={dimensions_match} "
-            f"m4ri_systematic={systematic(m4ri_n, m4ri_k, m4ri_normal)} "
+            f"m4ri_raw_systematic={systematic(m4ri_n, m4ri_k, m4ri_raw)} "
+            f"m4ri_normalized_systematic={systematic(m4ri_n, m4ri_k, m4ri_normal)} "
             f"gf2_systematic={systematic(gf2_n, gf2_k, gf2_normal)} "
             f"m4ri_sha256={digest(m4ri_normal)} gf2_sha256={digest(gf2_normal)} "
-            f"bit_exact_identical={identical}"
+            f"bit_exact_identical={identical} "
+            f"m4ri_rank={m4ri_rank} gf2_rank={gf2_rank} same_code={same_code}"
         )
-        if not identical:
+        if not same_code:
             failures += 1
 
     if failures:
-        print(f"{failures} generator-matrix comparison(s) failed", file=sys.stderr)
+        print(f"{failures} generator-matrix comparison(s) failed row-space equality", file=sys.stderr)
         return 1
-    print(f"all {len(ROWS)} selected generator matrices agree bit-exactly")
+    print(
+        f"all {len(ROWS)} rows: full rank and identical canonical RREF under the "
+        "repository column order — both routes generate the same code; "
+        "bit_exact_identical above reports whether the systematic forms also coincide"
+    )
     return 0
 
 

@@ -1,9 +1,9 @@
 # seeded determinism rerun for survey digest agreement
-# original CSV: dev/bench_results/4e732b56/2026-08-31-4e732b56-small-aff3ct.csv
-# W1 rerun captured: 2026-08-31T23:21:13+03:00/2026-08-31T23:21:14+03:00
-# W1 command: GF2_SURVEY_CODES=B1,B2 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1
-# W2 rerun captured: 2026-08-31T23:17:01+03:00
-# W2 command: GF2_SURVEY_CODES=B1,B2,B3 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w2
+# original CSV: dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct.csv
+# W1 rerun captured: 2026-09-01T01:01:51+03:00
+# W1 command: GF2_SURVEY_CODES=B1,B2,B3 dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1
+# W2 rerun captured: 2026-09-01T01:01:51+03:00/2026-09-01T01:01:52+03:00
+# W2 command: GF2_SURVEY_CODES=B1,B2,B3 dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w2
 # filter: AFF3CT B1/B2, all emitted W1 cells and W2 materialization cells
 # seed: 0x00000000ae03bcd0
 ## W1 digest comparisons

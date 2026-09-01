@@ -1,6 +1,6 @@
 # survey host record — captured by run-survey.sh
-# generated: 2026-08-31T17:18:55Z
-# gf2 revision: 3eaa7c7530e8762303e8962e7ee38c5f6eb60f0e
+# generated: 2026-08-31T21:33:28Z
+# gf2 revision: c155b1b0c32e073cd0c4dd52d7ca52b169fba9ae
 # codes selected: T2N
 
 ## uname
@@ -36,7 +36,7 @@ Socket(s):                               1
 Stepping:                                2
 Microcode version:                       0xa201211
 Frequency boost:                         enabled
-CPU(s) scaling MHz:                      67%
+CPU(s) scaling MHz:                      82%
 CPU max MHz:                             4954.5649
 CPU min MHz:                             567.0890
 BogoMIPS:                                7400.41
@@ -69,6 +69,7 @@ Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspa
 
 ## CPU frequency governor
 /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor: powersave
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu10/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu11/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu12/cpufreq/scaling_governor: powersave
@@ -79,12 +80,11 @@ Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspa
 /sys/devices/system/cpu/cpu17/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu18/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu19/cpufreq/scaling_governor: powersave
-/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor: powersave
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu20/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu21/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu22/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu23/cpufreq/scaling_governor: powersave
-/sys/devices/system/cpu/cpu2/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor: powersave
 /sys/devices/system/cpu/cpu5/cpufreq/scaling_governor: powersave

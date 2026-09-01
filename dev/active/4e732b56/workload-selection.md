@@ -188,13 +188,17 @@ AFF3CT stores one 32-bit word per bit. Comparing gf2 against bchlib alone
 would credit gf2 for a representation advantage it does not have; comparing
 against AFF3CT alone would credit it for one it does not need.
 
-The two W2 entries produce the same matrix by different algorithms — one
-Gaussian elimination of the polynomial-form matrix versus one encode per basis
-vector — as confirmed for B2, B3, and T2S by the [normalized generator-matrix
-agreement receipt](../../bench_results/4e732b56/2026-08-31-4e732b56-generator-matrix-agreement.txt).
+The two W2 entries are independent materialization routes — one Gaussian
+elimination of the polynomial-form matrix versus one encode per basis vector.
+The timed-route check shares M4RI's dump helper with the timed route and then
+reverses M4RI columns after RREF by $j \mapsto n-1-j$ in the verifier to compare
+against the repository's row-major `[message | parity]` convention. For B2, B3,
+and T2S, the [generator-matrix agreement receipt](../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt)
+records matching dimensions but `bit_exact_identical=False` after that honest
+normalization.
 This gives a consumer an independent check on the shape of the cost curve.
 The elimination route is primary because it is measurably faster at every row
-above B1, by 36.3× at T2S; the basis-vector route is retained as secondary
+above B1, by 36.5× at T2S; the basis-vector route is retained as secondary
 because it is the route the current gf2 implementation takes, which makes it
 the like-for-like comparison point for a non-regression receipt.
 
