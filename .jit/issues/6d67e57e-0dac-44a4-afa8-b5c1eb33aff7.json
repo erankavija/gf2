@@ -14,7 +14,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T16:30:03.986772525Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6d67e57e-0dac-44a4-afa8-b5c1eb33aff7",
   "labels": [
     "type:task",
@@ -25,5 +31,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Migrate library eBCH consumers to the generic extension",
-  "updated_at": "2026-09-01T15:13:23.183370985Z"
+  "updated_at": "2026-09-01T16:30:03.986772525Z"
 }
