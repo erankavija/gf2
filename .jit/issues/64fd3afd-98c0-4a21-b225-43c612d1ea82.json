@@ -7,7 +7,33 @@
     "6a1b2404-1241-4f0e-b471-7f619cadbd9f"
   ],
   "description": "Author the formal-proof sketch naming, for each obligation, the exact production path, lemma statements, and proof strategy: extension embedding/restriction and relative-Frobenius laws, quotient reduction, cyclotomic closure, generator base-field/root correctness, and systematic encoding correctness.\n\n## Background\n\nThe repository requires an approved sketch before proof code, and the sketch must name exact production files and functions — so it lands after the semantic production paths exist. The current extraction surface makes raw bounded gf2m paths transparent while runtime field-carrying code and the polynomial module are opaque; the sketch therefore assigns each obligation to direct extraction or to an abstract Lean model with tested refinement to the optimized Rust paths, per the plan's refinement-boundary contract.\n\n## Success Criteria\n\n- [hard] REQ-01: The sketch names, per obligation, the production path (file and function), the lemma statements, the proof strategy, and whether it binds by extraction or by model-plus-refinement, consistent with the current extraction surface.\n- [hard] REQ-02: Refinement obligations name their equivalence evidence (differential test or extracted witness) and no obligation rests on an untracked assumption.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "aef9f6ce1c2e57de466fc2736ac006263afb08611c83a767b197e7b7bed15560",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../ae03bcd0-general-bch/extension-design.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../ae03bcd0-general-bch/plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Formal-proof sketch: algebraic foundations",
+      "path": "dev/active/64fd3afd/proof-sketch.md"
+    }
+  ],
   "first_ready_at": "2026-09-01T15:11:33.836203560Z",
   "gates_required": [
     "doc-review",
@@ -24,5 +50,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Author the formal-proof sketch for the algebraic foundations",
-  "updated_at": "2026-09-01T15:13:59.213571343Z"
+  "updated_at": "2026-09-01T15:42:49.674735612Z"
 }
