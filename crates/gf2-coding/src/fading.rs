@@ -1324,6 +1324,43 @@ mod channel_model_tests {
     use crate::grand::{OrbGrand, OrbGrandConfig};
     use crate::simulation::{SimulationConfig, SimulationRunner};
 
+    fn generic_ebch_16_11() -> crate::transform::Extended<crate::bch::spec::BinaryBchCode> {
+        use crate::bch::spec::{BchSpec, DesignedDistance};
+        use gf2_core::field::extension::BinaryPrimeExt;
+        use gf2_core::gf2m::Gf2mField;
+
+        let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())
+            .expect("a valid binary BCH extension");
+        let base = crate::bch::spec::BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(3)
+                .expect("a positive BCH designed distance"),
+        })
+        .expect("a valid binary BCH construction");
+        crate::transform::Extended::new(base).expect("an extended BCH code fits in memory")
+    }
+
+    fn generic_extended_parity_check(
+        code: &crate::transform::Extended<crate::bch::spec::BinaryBchCode>,
+    ) -> gf2_core::BitMatrix {
+        use crate::bch::matrix::CachedMatrices;
+        use crate::traits::block::ParityCheckMatrixAccess;
+
+        let cached = CachedMatrices::new(code.mother().clone());
+        let base_h =
+            ParityCheckMatrixAccess::parity_check_matrix(&cached).expect("BCH parity matrix");
+        let mut h = gf2_core::BitMatrix::zeros(base_h.rows() + 1, base_h.cols() + 1);
+        for row in 0..base_h.rows() {
+            for column in 0..base_h.cols() {
+                h.set(row, column, base_h.get(row, column));
+            }
+        }
+        for column in 0..h.cols() {
+            h.set(base_h.rows(), column, true);
+        }
+        h
+    }
+
     #[test]
     fn test_qpsk_rician_channel_model_preconditions() {
         let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
@@ -1345,10 +1382,8 @@ mod channel_model_tests {
         // Use Hamming(7,4) extended to (8,4) so codeword length is even
         // Actually, use a small systematic code with even n.
         // Hamming(15,11) has n=15 (odd). Let's use eBCH(16,11) with ORBGRAND.
-        use crate::bch::extended::ExtendedBchCode;
-
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.parity_check().clone();
+        let ebch = generic_ebch_16_11();
+        let h = generic_extended_parity_check(&ebch);
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
         // fig9 has frame_bits = 2 * 2 * 256 = 1024, n=16 fits
@@ -1378,6 +1413,43 @@ mod channel_model_tests {
 #[cfg(test)]
 mod modem_framework_calibration_tests {
     use super::*;
+
+    fn generic_ebch_16_11() -> crate::transform::Extended<crate::bch::spec::BinaryBchCode> {
+        use crate::bch::spec::{BchSpec, DesignedDistance};
+        use gf2_core::field::extension::BinaryPrimeExt;
+        use gf2_core::gf2m::Gf2mField;
+
+        let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())
+            .expect("a valid binary BCH extension");
+        let base = crate::bch::spec::BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(3)
+                .expect("a positive BCH designed distance"),
+        })
+        .expect("a valid binary BCH construction");
+        crate::transform::Extended::new(base).expect("an extended BCH code fits in memory")
+    }
+
+    fn generic_extended_parity_check(
+        code: &crate::transform::Extended<crate::bch::spec::BinaryBchCode>,
+    ) -> gf2_core::BitMatrix {
+        use crate::bch::matrix::CachedMatrices;
+        use crate::traits::block::ParityCheckMatrixAccess;
+
+        let cached = CachedMatrices::new(code.mother().clone());
+        let base_h =
+            ParityCheckMatrixAccess::parity_check_matrix(&cached).expect("BCH parity matrix");
+        let mut h = gf2_core::BitMatrix::zeros(base_h.rows() + 1, base_h.cols() + 1);
+        for row in 0..base_h.rows() {
+            for column in 0..base_h.cols() {
+                h.set(row, column, base_h.get(row, column));
+            }
+        }
+        for column in 0..h.cols() {
+            h.set(base_h.rows(), column, true);
+        }
+        h
+    }
 
     /// Shared-formula calibration lock for the fading path.
     ///
@@ -1461,12 +1533,11 @@ mod modem_framework_calibration_tests {
 
     #[test]
     fn test_interleaver_still_composes() {
-        use crate::bch::extended::ExtendedBchCode;
         use crate::grand::{OrbGrand, OrbGrandConfig};
         use crate::simulation::{SimulationConfig, SimulationRunner};
 
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.parity_check().clone();
+        let ebch = generic_ebch_16_11();
+        let h = generic_extended_parity_check(&ebch);
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
         let channel = QpskRicianChannelModel::new(RicianConfig::fig9());
 

@@ -32,12 +32,12 @@
 //!
 //! ```
 //! use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode};
-//! use gf2_coding::bch::extended::ExtendedBchCode;
+//! use gf2_coding::product::ExtendedBchComponent;
 //! use gf2_coding::traits::BlockEncoder;
 //! use gf2_coding::llr::Llr;
 //! use gf2_core::BitVec;
 //!
-//! let component = ExtendedBchCode::ebch_16_11();
+//! let component = ExtendedBchComponent::ebch_16_11();
 //! let product = ProductCode::new(component.clone());
 //! let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
 //!
@@ -141,12 +141,12 @@ impl Default for ChasePyndiahConfig {
 ///
 /// ```
 /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode};
-/// use gf2_coding::bch::extended::ExtendedBchCode;
+/// use gf2_coding::product::ExtendedBchComponent;
 /// use gf2_coding::traits::BlockEncoder;
 /// use gf2_coding::llr::Llr;
 /// use gf2_core::BitVec;
 ///
-/// let component = ExtendedBchCode::ebch_16_11();
+/// let component = ExtendedBchComponent::ebch_16_11();
 /// let product = ProductCode::new(component.clone());
 /// let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
 ///
@@ -199,9 +199,9 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
     /// ```
     ///
@@ -266,12 +266,12 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     /// use gf2_coding::traits::BlockEncoder;
     /// use gf2_coding::llr::Llr;
     /// use gf2_core::BitVec;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let product = ProductCode::new(component.clone());
     /// let config = ChasePyndiahConfig { max_iterations: 3, ..ChasePyndiahConfig::default() };
     /// let decoder = ChasePyndiahDecoder::new(component, config);
@@ -622,9 +622,9 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
     /// assert_eq!(decoder.config().max_iterations, 8);
     /// ```
@@ -638,9 +638,9 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder, ProductComponent};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
     /// assert_eq!(decoder.component().comp_n(), 16);
     /// ```
@@ -652,7 +652,7 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bch::extended::ExtendedBchCode;
+    use crate::product::ExtendedBchComponent;
     use crate::traits::BlockEncoder;
 
     #[test]
@@ -672,7 +672,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "reliability magnitude cannot be NaN")]
     fn test_siso_uses_canonical_reliability_input_contract() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
 
         let mut input = vec![1.0; 16];
@@ -682,7 +682,7 @@ mod tests {
 
     #[test]
     fn test_extract_message_uses_canonical_hard_decision_for_signed_zero_and_infinity() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
 
         let mut matrix = vec![vec![f32::INFINITY; 16]; 16];
@@ -696,7 +696,7 @@ mod tests {
 
     #[test]
     fn test_syndrome_check_valid_codeword() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let decoder = ChasePyndiahDecoder::new(component.clone(), ChasePyndiahConfig::default());
 
         // Encode a message and verify zero syndrome
@@ -722,7 +722,7 @@ mod tests {
 
     #[test]
     fn test_chase_search_noiseless() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let decoder = ChasePyndiahDecoder::new(
             component.clone(),
             ChasePyndiahConfig {
@@ -746,7 +746,7 @@ mod tests {
 
     #[test]
     fn test_decode_all_zeros_high_snr() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
         let config = ChasePyndiahConfig {
             max_iterations: 4,

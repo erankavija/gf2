@@ -1177,6 +1177,43 @@ mod tests {
         ]
     }
 
+    fn generic_ebch_16_11() -> crate::transform::Extended<crate::bch::spec::BinaryBchCode> {
+        use crate::bch::spec::{BchSpec, DesignedDistance};
+        use gf2_core::field::extension::BinaryPrimeExt;
+        use gf2_core::gf2m::Gf2mField;
+
+        let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())
+            .expect("a valid binary BCH extension");
+        let base = crate::bch::spec::BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(3)
+                .expect("a positive BCH designed distance"),
+        })
+        .expect("a valid binary BCH construction");
+        crate::transform::Extended::new(base).expect("an extended BCH code fits in memory")
+    }
+
+    fn generic_extended_parity_check(
+        code: &crate::transform::Extended<crate::bch::spec::BinaryBchCode>,
+    ) -> BitMatrix {
+        use crate::bch::matrix::CachedMatrices;
+        use crate::traits::block::ParityCheckMatrixAccess;
+
+        let cached = CachedMatrices::new(code.mother().clone());
+        let base_h =
+            ParityCheckMatrixAccess::parity_check_matrix(&cached).expect("BCH parity matrix");
+        let mut h = BitMatrix::zeros(base_h.rows() + 1, base_h.cols() + 1);
+        for row in 0..base_h.rows() {
+            for column in 0..base_h.cols() {
+                h.set(row, column, base_h.get(row, column));
+            }
+        }
+        for column in 0..h.cols() {
+            h.set(base_h.rows(), column, true);
+        }
+        h
+    }
+
     #[test]
     fn test_decode_finite_reliability_order_preserves_query_and_stopping_behavior() {
         // This one-check code accepts every word whose first bit is zero.
@@ -2057,11 +2094,10 @@ mod tests {
 
     #[test]
     fn test_decode_ebch_16_11_single_error() {
-        use crate::bch::extended::ExtendedBchCode;
         use crate::traits::BlockEncoder;
 
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.parity_check().clone();
+        let ebch = generic_ebch_16_11();
+        let h = generic_extended_parity_check(&ebch);
 
         let config = OrbGrandConfig {
             max_queries: 10_000,
@@ -2126,11 +2162,10 @@ mod tests {
     /// and the recovered codeword must still match the transmitted one.
     #[test]
     fn test_list_bler_stop_threshold_reduces_queries_at_high_snr() {
-        use crate::bch::extended::ExtendedBchCode;
         use crate::traits::BlockEncoder;
 
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.parity_check().clone();
+        let ebch = generic_ebch_16_11();
+        let h = generic_extended_parity_check(&ebch);
 
         let msg = BitVec::zeros(11);
         let codeword = ebch.encode(&msg);

@@ -27,18 +27,18 @@
 //! The [`ProductComponent`] trait abstracts over component codes. Any code that
 //! provides a parity-check matrix, n/k dimensions, an even-code flag, and a
 //! [`BlockEncoder`] implementation can be used as a component. Built-in
-//! implementations exist for [`ExtendedBchCode`](crate::bch::extended::ExtendedBchCode)
+//! implementations exist for [`ExtendedBchComponent`](crate::product::ExtendedBchComponent)
 //! and [`CrcCode`](crate::crc::CrcCode).
 //!
 //! # Examples
 //!
 //! ```
 //! use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
-//! use gf2_coding::bch::extended::ExtendedBchCode;
+//! use gf2_coding::product::ExtendedBchComponent;
 //! use gf2_coding::traits::BlockEncoder;
 //! use gf2_core::BitVec;
 //!
-//! let component = ExtendedBchCode::ebch_16_11();
+//! let component = ExtendedBchComponent::ebch_16_11();
 //! let product = ProductCode::new(component);
 //! assert_eq!(product.n(), 16 * 16);
 //! assert_eq!(product.k(), 11 * 11);
@@ -59,10 +59,18 @@ pub mod chase_pyndiah;
 
 pub use chase_pyndiah::{ChasePyndiahConfig, ChasePyndiahDecoder};
 
+use crate::bch::matrix::CachedMatrices;
+use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use crate::bcjr::BcjrDecoder;
 use crate::grand::{OneLineIntercept, OrbGrand, OrbGrandConfig, SisoResult, SoGrand};
 use crate::llr::Llr;
+use crate::traits::block::{
+    BlockCode as CanonicalBlockCode, BlockEncoder as CanonicalBlockEncoder, ParityCheckMatrixAccess,
+};
 use crate::traits::BlockEncoder;
+use crate::transform::Extended;
+use gf2_core::field::extension::BinaryPrimeExt;
+use gf2_core::gf2m::Gf2mField;
 use gf2_core::{BitMatrix, BitVec};
 
 /// Internal SISO engine dispatch: SOGRAND, BCJR, or GPU-batched BCJR.
@@ -71,6 +79,98 @@ enum SisoEngine {
     Bcjr(BcjrDecoder),
     #[cfg(feature = "hip")]
     GpuBcjr(gf2_kernels_hip::GpuBcjrBatch),
+}
+
+/// Product-code component adapter for an extended canonical binary BCH code.
+///
+/// [`Extended`] owns the canonical encoding behavior. Product decoding also
+/// needs a borrowed parity-check matrix, so this adapter materializes the
+/// mother BCH parity matrix through the explicit [`CachedMatrices`] wrapper,
+/// appends the extension row and coordinate once, and retains the result for
+/// the component's lifetime.
+#[derive(Debug, Clone)]
+pub struct ExtendedBchComponent {
+    code: Extended<BinaryBchCode>,
+    parity_check: BitMatrix,
+}
+
+impl ExtendedBchComponent {
+    fn from_parameters(degree: usize, primitive_polynomial: u64, designed_distance: u64) -> Self {
+        let extension =
+            BinaryPrimeExt::new(Gf2mField::new(degree, primitive_polynomial).with_tables())
+                .expect("a valid binary BCH extension");
+        let base = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(designed_distance)
+                .expect("a positive BCH designed distance"),
+        })
+        .expect("a valid binary BCH construction");
+
+        let cached = CachedMatrices::new(base.clone());
+        let base_parity =
+            ParityCheckMatrixAccess::parity_check_matrix(&cached).expect("BCH parity matrix");
+        let mut parity_check = BitMatrix::zeros(base_parity.rows() + 1, base_parity.cols() + 1);
+        for row in 0..base_parity.rows() {
+            for column in 0..base_parity.cols() {
+                parity_check.set(row, column, base_parity.get(row, column));
+            }
+        }
+        for column in 0..parity_check.cols() {
+            parity_check.set(base_parity.rows(), column, true);
+        }
+
+        Self {
+            code: Extended::new(base).expect("an extended BCH code fits in memory"),
+            parity_check,
+        }
+    }
+
+    /// Creates the canonical eBCH(16,11) product component.
+    pub fn ebch_16_11() -> Self {
+        Self::from_parameters(4, 0b10011, 3)
+    }
+
+    /// Creates the canonical eBCH(16,7) product component.
+    pub fn ebch_16_7() -> Self {
+        Self::from_parameters(4, 0b10011, 5)
+    }
+
+    /// Creates the canonical eBCH(32,26) product component.
+    pub fn ebch_32_26() -> Self {
+        Self::from_parameters(5, 0b100101, 3)
+    }
+
+    /// Creates the canonical eBCH(64,57) product component.
+    pub fn ebch_64_57() -> Self {
+        Self::from_parameters(6, 0b1000011, 3)
+    }
+}
+
+impl CanonicalBlockCode for ExtendedBchComponent {
+    type Symbol = <Extended<BinaryBchCode> as CanonicalBlockCode>::Symbol;
+    type Symbols = <Extended<BinaryBchCode> as CanonicalBlockCode>::Symbols;
+
+    fn symbol_zero(&self) -> Self::Symbol {
+        CanonicalBlockCode::symbol_zero(&self.code)
+    }
+
+    fn k(&self) -> usize {
+        CanonicalBlockCode::k(&self.code)
+    }
+
+    fn n(&self) -> usize {
+        CanonicalBlockCode::n(&self.code)
+    }
+}
+
+impl CanonicalBlockEncoder for ExtendedBchComponent {
+    fn encode_into(
+        &self,
+        message: &Self::Symbols,
+        codeword: &mut Self::Symbols,
+    ) -> Result<(), crate::CodeError> {
+        CanonicalBlockEncoder::encode_into(&self.code, message, codeword)
+    }
 }
 
 impl SisoEngine {
@@ -156,9 +256,9 @@ impl SisoEngine {
 ///
 /// ```
 /// use gf2_coding::product::ProductComponent;
-/// use gf2_coding::bch::extended::ExtendedBchCode;
+/// use gf2_coding::product::ExtendedBchComponent;
 ///
-/// let code = ExtendedBchCode::ebch_16_11();
+/// let code = ExtendedBchComponent::ebch_16_11();
 /// assert_eq!(ProductComponent::comp_n(&code), 16);
 /// assert_eq!(ProductComponent::comp_k(&code), 11);
 /// assert!(ProductComponent::comp_is_even(&code));
@@ -170,9 +270,9 @@ pub trait ProductComponent: BlockEncoder {
     ///
     /// ```
     /// use gf2_coding::product::ProductComponent;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let code = ExtendedBchCode::ebch_16_11();
+    /// let code = ExtendedBchComponent::ebch_16_11();
     /// assert_eq!(code.comp_n(), 16);
     /// ```
     fn comp_n(&self) -> usize;
@@ -183,9 +283,9 @@ pub trait ProductComponent: BlockEncoder {
     ///
     /// ```
     /// use gf2_coding::product::ProductComponent;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let code = ExtendedBchCode::ebch_16_11();
+    /// let code = ExtendedBchComponent::ebch_16_11();
     /// assert_eq!(code.comp_k(), 11);
     /// ```
     fn comp_k(&self) -> usize;
@@ -199,9 +299,9 @@ pub trait ProductComponent: BlockEncoder {
     ///
     /// ```
     /// use gf2_coding::product::ProductComponent;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let code = ExtendedBchCode::ebch_16_11();
+    /// let code = ExtendedBchComponent::ebch_16_11();
     /// assert!(code.comp_is_even());
     /// ```
     fn comp_is_even(&self) -> bool;
@@ -214,9 +314,9 @@ pub trait ProductComponent: BlockEncoder {
     ///
     /// ```
     /// use gf2_coding::product::ProductComponent;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let code = ExtendedBchCode::ebch_16_11();
+    /// let code = ExtendedBchComponent::ebch_16_11();
     /// let h = code.comp_parity_check();
     /// assert_eq!(h.rows(), 5);
     /// assert_eq!(h.cols(), 16);
@@ -224,6 +324,27 @@ pub trait ProductComponent: BlockEncoder {
     fn comp_parity_check(&self) -> &BitMatrix;
 }
 
+impl ProductComponent for ExtendedBchComponent {
+    fn comp_n(&self) -> usize {
+        CanonicalBlockCode::n(self)
+    }
+
+    fn comp_k(&self) -> usize {
+        CanonicalBlockCode::k(self)
+    }
+
+    fn comp_is_even(&self) -> bool {
+        true
+    }
+
+    fn comp_parity_check(&self) -> &BitMatrix {
+        &self.parity_check
+    }
+}
+
+// Keep the version-1 component adapter available until the out-of-scope
+// binaries complete their own cutover. No migrated product path constructs
+// this legacy type.
 impl ProductComponent for crate::bch::extended::ExtendedBchCode {
     fn comp_n(&self) -> usize {
         self.n()
@@ -290,11 +411,11 @@ impl ProductComponent for crate::drm::DrmCode {
 ///
 /// ```
 /// use gf2_coding::product::ProductCode;
-/// use gf2_coding::bch::extended::ExtendedBchCode;
+/// use gf2_coding::product::ExtendedBchComponent;
 /// use gf2_coding::traits::BlockEncoder;
 /// use gf2_core::BitVec;
 ///
-/// let component = ExtendedBchCode::ebch_16_11();
+/// let component = ExtendedBchComponent::ebch_16_11();
 /// let product = ProductCode::new(component);
 ///
 /// assert_eq!(product.n(), 256);
@@ -325,9 +446,9 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// assert_eq!(product.n(), 256);
     /// assert_eq!(product.k(), 121);
     /// ```
@@ -351,9 +472,9 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// assert_eq!(product.n(), 256);
     /// ```
     pub fn n(&self) -> usize {
@@ -366,9 +487,9 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// assert_eq!(product.k(), 121);
     /// ```
     pub fn k(&self) -> usize {
@@ -381,10 +502,10 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     /// use gf2_coding::product::ProductComponent;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// assert_eq!(product.component().comp_n(), 16);
     /// ```
     pub fn component(&self) -> &C {
@@ -415,11 +536,11 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     /// use gf2_coding::traits::BlockEncoder;
     /// use gf2_core::BitVec;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// let msg = BitVec::zeros(121);
     /// let cw = product.encode(&msg);
     /// assert_eq!(cw.len(), 256);
@@ -498,11 +619,11 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     /// use gf2_coding::traits::BlockEncoder;
     /// use gf2_core::BitVec;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// let msg = BitVec::zeros(121);
     /// let cw = product.encode(&msg);
     ///
@@ -565,10 +686,10 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     /// use gf2_core::BitVec;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// let flat = BitVec::zeros(256);
     /// let matrix = product.flat_to_matrix(&flat);
     /// assert_eq!(matrix.rows(), 16);
@@ -614,10 +735,10 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     /// use gf2_core::BitMatrix;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// let matrix = BitMatrix::zeros(16, 16);
     /// let flat = product.matrix_to_flat(&matrix);
     /// assert_eq!(flat.len(), 256);
@@ -659,11 +780,11 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// ```
     /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     /// use gf2_coding::traits::BlockEncoder;
     /// use gf2_core::BitVec;
     ///
-    /// let product = ProductCode::new(ExtendedBchCode::ebch_16_11());
+    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
     /// let msg = BitVec::zeros(121);
     /// let cw = product.encode(&msg);
     /// let matrix = product.flat_to_matrix(&cw);
@@ -931,12 +1052,12 @@ impl From<TurboDecoderResult> for crate::traits::DecoderResult {
 ///
 /// ```
 /// use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
-/// use gf2_coding::bch::extended::ExtendedBchCode;
+/// use gf2_coding::product::ExtendedBchComponent;
 /// use gf2_coding::traits::BlockEncoder;
 /// use gf2_coding::llr::Llr;
 /// use gf2_core::BitVec;
 ///
-/// let component = ExtendedBchCode::ebch_16_11();
+/// let component = ExtendedBchComponent::ebch_16_11();
 /// let product = ProductCode::new(component.clone());
 ///
 /// let config = TurboDecoderConfig {
@@ -984,9 +1105,9 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{TurboDecoder, TurboDecoderConfig};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let decoder = TurboDecoder::new(component, TurboDecoderConfig::default());
     /// ```
     ///
@@ -1063,12 +1184,12 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     /// use gf2_coding::traits::BlockEncoder;
     /// use gf2_coding::llr::Llr;
     /// use gf2_core::BitVec;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let product = ProductCode::new(component.clone());
     /// let config = TurboDecoderConfig {
     ///     max_iterations: 3,
@@ -1316,9 +1437,9 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{TurboDecoder, TurboDecoderConfig};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let decoder = TurboDecoder::new(component, TurboDecoderConfig::default());
     /// assert_eq!(decoder.sogrand().n(), 16);
     /// ```
@@ -1339,9 +1460,9 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{TurboDecoder, TurboDecoderConfig};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let config = TurboDecoderConfig { use_bcjr: true, ..TurboDecoderConfig::default() };
     /// let decoder = TurboDecoder::new(component, config);
     /// assert_eq!(decoder.bcjr().n(), 16);
@@ -1359,9 +1480,9 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     ///
     /// ```
     /// use gf2_coding::product::{TurboDecoder, TurboDecoderConfig};
-    /// use gf2_coding::bch::extended::ExtendedBchCode;
+    /// use gf2_coding::product::ExtendedBchComponent;
     ///
-    /// let component = ExtendedBchCode::ebch_16_11();
+    /// let component = ExtendedBchComponent::ebch_16_11();
     /// let decoder = TurboDecoder::new(component, TurboDecoderConfig::default());
     /// assert_eq!(decoder.config().max_iterations, 20);
     /// ```
@@ -1373,8 +1494,8 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bch::extended::ExtendedBchCode;
     use crate::crc::CrcCode;
+    use crate::product::ExtendedBchComponent;
     use crate::traits::BlockEncoder;
 
     // =====================================================================
@@ -1383,7 +1504,7 @@ mod tests {
 
     #[test]
     fn test_product_code_parameters_16_11() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         assert_eq!(product.n(), 256);
         assert_eq!(product.k(), 121);
@@ -1393,7 +1514,7 @@ mod tests {
 
     #[test]
     fn test_product_code_parameters_16_7() {
-        let component = ExtendedBchCode::ebch_16_7();
+        let component = ExtendedBchComponent::ebch_16_7();
         let product = ProductCode::new(component);
         assert_eq!(product.n(), 256);
         assert_eq!(product.k(), 49);
@@ -1411,7 +1532,7 @@ mod tests {
 
     #[test]
     fn test_product_code_block_encoder_trait() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         // Test through BlockEncoder trait
         let encoder: &dyn BlockEncoder = &product;
@@ -1425,7 +1546,7 @@ mod tests {
 
     #[test]
     fn test_encode_all_zeros() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         let msg = BitVec::zeros(product.k());
         let cw = product.encode(&msg);
@@ -1436,7 +1557,7 @@ mod tests {
 
     #[test]
     fn test_encode_produces_valid_codeword() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         // Encode a message with some ones
         let mut msg = BitVec::zeros(product.k());
@@ -1456,7 +1577,7 @@ mod tests {
 
     #[test]
     fn test_encode_systematic_message_recovery() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
 
         let mut msg = BitVec::zeros(product.k());
@@ -1475,7 +1596,7 @@ mod tests {
 
     #[test]
     fn test_encode_all_ones_message() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         let msg = BitVec::ones(product.k());
         let cw = product.encode(&msg);
@@ -1489,7 +1610,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Message length")]
     fn test_encode_wrong_message_length_panics() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         let msg = BitVec::zeros(100); // wrong length
         product.encode(&msg);
@@ -1501,7 +1622,7 @@ mod tests {
 
     #[test]
     fn test_encode_ebch_16_7_all_zeros() {
-        let component = ExtendedBchCode::ebch_16_7();
+        let component = ExtendedBchComponent::ebch_16_7();
         let product = ProductCode::new(component);
         let msg = BitVec::zeros(product.k());
         let cw = product.encode(&msg);
@@ -1511,7 +1632,7 @@ mod tests {
 
     #[test]
     fn test_encode_ebch_16_7_produces_valid_codeword() {
-        let component = ExtendedBchCode::ebch_16_7();
+        let component = ExtendedBchComponent::ebch_16_7();
         let product = ProductCode::new(component);
         let mut msg = BitVec::zeros(product.k());
         msg.set(0, true);
@@ -1526,7 +1647,7 @@ mod tests {
 
     #[test]
     fn test_encode_ebch_16_7_systematic_roundtrip() {
-        let component = ExtendedBchCode::ebch_16_7();
+        let component = ExtendedBchComponent::ebch_16_7();
         let product = ProductCode::new(component);
         let mut msg = BitVec::zeros(product.k());
         for i in (0..product.k()).step_by(2) {
@@ -1588,7 +1709,7 @@ mod tests {
 
     #[test]
     fn test_is_valid_codeword_all_zeros() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         let matrix = BitMatrix::zeros(16, 16);
         assert!(product.is_valid_codeword(&matrix));
@@ -1596,7 +1717,7 @@ mod tests {
 
     #[test]
     fn test_is_valid_codeword_invalid() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         let mut matrix = BitMatrix::zeros(16, 16);
         matrix.set(0, 0, true); // single bit flip invalidates both row 0 and col 0
@@ -1609,7 +1730,7 @@ mod tests {
 
     #[test]
     fn test_flat_to_matrix_roundtrip() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
 
         let mut flat = BitVec::zeros(256);
@@ -1629,7 +1750,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Flat vector length")]
     fn test_flat_to_matrix_wrong_length_panics() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component);
         let flat = BitVec::zeros(100);
         product.flat_to_matrix(&flat);
@@ -1665,7 +1786,7 @@ mod tests {
 
     #[test]
     fn test_turbo_decoder_construction() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let config = TurboDecoderConfig {
             max_iterations: 5,
             list_size: 2,
@@ -1679,7 +1800,7 @@ mod tests {
 
     #[test]
     fn test_turbo_decoder_bcjr_construction() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let config = TurboDecoderConfig {
             max_iterations: 5,
             use_bcjr: true,
@@ -1696,7 +1817,7 @@ mod tests {
 
     #[test]
     fn test_decode_bcjr_all_zeros_high_snr() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 5,
@@ -1724,7 +1845,7 @@ mod tests {
 
     #[test]
     fn test_decode_bcjr_nonzero_message_high_snr() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 5,
@@ -1795,7 +1916,7 @@ mod tests {
 
     #[test]
     fn test_decode_all_zeros_high_snr() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 5,
@@ -1825,7 +1946,7 @@ mod tests {
 
     #[test]
     fn test_decode_nonzero_message_high_snr() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 5,
@@ -1866,7 +1987,7 @@ mod tests {
 
     #[test]
     fn test_decode_tracks_iteration_count() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 3,
@@ -1886,7 +2007,7 @@ mod tests {
 
     #[test]
     fn test_decode_early_termination() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
 
         // Use many iterations to confirm early termination kicks in
@@ -1913,7 +2034,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Channel LLR length")]
     fn test_decode_wrong_llr_length_panics() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let config = TurboDecoderConfig::default();
         let decoder = TurboDecoder::new(component, config);
         let llrs: Vec<Llr> = vec![Llr::new(1.0); 100];
@@ -1922,7 +2043,7 @@ mod tests {
 
     #[test]
     fn test_decode_queries_increase_with_noise() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 3,
@@ -1955,7 +2076,7 @@ mod tests {
 
     #[test]
     fn test_queries_per_bit_computed_correctly() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 3,
@@ -1983,7 +2104,7 @@ mod tests {
 
     #[test]
     fn test_list_bler_threshold_early_termination() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
 
         // Without threshold: many iterations allowed
@@ -2030,7 +2151,7 @@ mod tests {
         // BCJR always returns list_bler_prediction=0.0. A threshold check
         // must be skipped in BCJR mode, otherwise any threshold > 0 would
         // trigger immediate early termination after the first half-iteration.
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
 
         let config = TurboDecoderConfig {
@@ -2060,7 +2181,7 @@ mod tests {
 
     #[test]
     fn test_decode_ebch_16_7_all_zeros_high_snr() {
-        let component = ExtendedBchCode::ebch_16_7();
+        let component = ExtendedBchComponent::ebch_16_7();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 5,
@@ -2084,7 +2205,7 @@ mod tests {
 
     #[test]
     fn test_decode_ebch_16_7_nonzero_message() {
-        let component = ExtendedBchCode::ebch_16_7();
+        let component = ExtendedBchComponent::ebch_16_7();
         let product = ProductCode::new(component.clone());
         let config = TurboDecoderConfig {
             max_iterations: 5,
@@ -2193,7 +2314,7 @@ mod tests {
 
     #[test]
     fn test_ber_improves_over_iterations() {
-        let component = ExtendedBchCode::ebch_16_11();
+        let component = ExtendedBchComponent::ebch_16_11();
         let product = ProductCode::new(component.clone());
 
         // Encode a known message
@@ -2252,8 +2373,8 @@ mod tests {
 #[cfg(test)]
 mod proptests {
     use super::*;
-    use crate::bch::extended::ExtendedBchCode;
     use crate::crc::CrcCode;
+    use crate::product::ExtendedBchComponent;
     use crate::traits::BlockEncoder;
     use proptest::prelude::*;
 
@@ -2264,7 +2385,7 @@ mod proptests {
         fn prop_encode_produces_valid_codeword_and_roundtrips(
             msg_bits in prop::collection::vec(any::<bool>(), 121)
         ) {
-            let component = ExtendedBchCode::ebch_16_11();
+            let component = ExtendedBchComponent::ebch_16_11();
             let product = ProductCode::new(component);
             let mut msg = BitVec::new();
             for bit in msg_bits {
@@ -2282,7 +2403,7 @@ mod proptests {
         fn prop_ebch_16_7_encode_roundtrip(
             msg_bits in prop::collection::vec(any::<bool>(), 49)
         ) {
-            let component = ExtendedBchCode::ebch_16_7();
+            let component = ExtendedBchComponent::ebch_16_7();
             let product = ProductCode::new(component);
             let mut msg = BitVec::new();
             for bit in msg_bits {
@@ -2318,13 +2439,13 @@ mod proptests {
 #[cfg(test)]
 mod additional_component_tests {
     use super::*;
-    use crate::bch::extended::ExtendedBchCode;
     use crate::drm::DrmCode;
+    use crate::product::ExtendedBchComponent;
     use crate::traits::BlockEncoder;
 
     #[test]
     fn test_product_code_parameters_ebch_32_26() {
-        let comp = ExtendedBchCode::ebch_32_26();
+        let comp = ExtendedBchComponent::ebch_32_26();
         let product = ProductCode::new(comp);
         assert_eq!(product.n(), 32 * 32);
         assert_eq!(product.k(), 26 * 26);
@@ -2332,7 +2453,7 @@ mod additional_component_tests {
 
     #[test]
     fn test_encode_ebch_32_26_all_zeros() {
-        let comp = ExtendedBchCode::ebch_32_26();
+        let comp = ExtendedBchComponent::ebch_32_26();
         let product = ProductCode::new(comp);
         let msg = BitVec::zeros(26 * 26);
         let cw = product.encode(&msg);
@@ -2342,7 +2463,7 @@ mod additional_component_tests {
 
     #[test]
     fn test_product_code_parameters_ebch_64_57() {
-        let comp = ExtendedBchCode::ebch_64_57();
+        let comp = ExtendedBchComponent::ebch_64_57();
         let product = ProductCode::new(comp);
         assert_eq!(product.n(), 64 * 64);
         assert_eq!(product.k(), 57 * 57);
@@ -2350,7 +2471,7 @@ mod additional_component_tests {
 
     #[test]
     fn test_encode_ebch_64_57_all_zeros() {
-        let comp = ExtendedBchCode::ebch_64_57();
+        let comp = ExtendedBchComponent::ebch_64_57();
         let product = ProductCode::new(comp);
         let msg = BitVec::zeros(57 * 57);
         let cw = product.encode(&msg);
