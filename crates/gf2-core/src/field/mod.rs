@@ -10,6 +10,19 @@
 //! - [`FiniteFieldExt`] — Blanket convenience methods: `square`, `pow`, `frobenius`.
 //! - [`TwoAdicField`] — Fields with a large power-of-two subgroup of `F^*`,
 //!   enabling radix-2 NTT butterflies.
+//! - [`FieldIdentity`] — Carriers that name their algebraic identity
+//!   ([`FieldId`]) and their canonical prime-field coordinates.
+//! - [`FieldExtension`] — The relation "E is an extension of B", witnessed by
+//!   a value: embedding, checked restriction, relative degree, relative
+//!   Frobenius, and the order relationships between the two fields.
+//!
+//! # Extensions and identity
+//!
+//! - [`extension`] — [`FieldId`], [`FieldIdentity`], [`FieldExtension`], the
+//!   validation certificates that make repeated construction cheap, and the
+//!   concrete witnesses [`BinaryPrimeExt`], [`ConstExt`], and [`TrivialExt`]
+//!   covering GF(2) inside a runtime GF(2^m), the compile-time binomial
+//!   towers, and the trivial extension of any carrier.
 //!
 //! # Batch operations
 //!
@@ -41,6 +54,7 @@
 pub mod batch_ops;
 pub mod charpoly;
 pub mod expr;
+pub mod extension;
 pub mod extension_wiedemann;
 pub mod inverse;
 pub mod matrix;
@@ -64,6 +78,12 @@ pub mod test_random_matrix;
 pub use batch_ops::{
     batch_inverse, batch_inverse_in_place, batch_inverse_skip_zeros,
     batch_inverse_skip_zeros_in_place, batch_inverse_with_scratch,
+};
+pub use extension::{
+    convert_element, convert_into_const, Basis, BinaryPrimeExt, CertificateBasis, ConstExt,
+    ConstSimpleExtension, ElementRepr, ExtensionCertificate, FactorWitness, FieldError,
+    FieldExtension, FieldId, FieldIdentity, ModulusId, OrderCertificate, TrivialExt,
+    ELEMENT_REPR_VERSION, FIELD_ID_ENCODING_VERSION,
 };
 pub use ntt::ntt_inplace;
 pub use ple::Permutation;
