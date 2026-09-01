@@ -2,8 +2,15 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 25,
-  "wave_notes": "Wave 25 has one closed task and one final documentation rework. Issue 06ba0418 is done. Issue 389aa4de is merged at 561b0d71; merged-tree cargo-ci and code-review pass. Doc-review found two permanent documents citing a nonexistent receipt section title. Rework 2 after the invoker reset is limited to making those two citations resolve to an authoritative receipt scope statement; measured artifacts and production behavior remain unchanged.",
-  "open_escalations": [],
+  "wave_notes": "Wave 25 has one closed task and one owner escalation. Issue 06ba0418 is done. Issue 389aa4de is merged at 561b0d71; merged-tree cargo-ci and code-review pass. Doc-review found two stale receipt citations. Rework 2 created resolving links, but independent review proved the new explanation factually false because both the older simd_vs_scalar benchmark and current calibrator call the backends directly. The rework limit is exhausted; commit 66123a77 remains clean and unmerged pending invoker direction.",
+  "open_escalations": [
+    {
+      "kind": "rework-exhausted",
+      "issue": "389aa4de",
+      "date": "2026-09-01",
+      "question": "Choose targeted guidance with another counter reset, manual lead takeover, or rejection. Recommended: reset for one documentation-only correction that removes the false dispatcher distinction and states only the evidence-backed protocol/revision scope of the 4-word and 8-word results."
+    }
+  ],
   "waves": [
     {
       "wave_number": 1,
@@ -609,8 +616,8 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus",
-          "status": "doc-rework-2-after-reset",
-          "notes": "The measured publication and guided test rework merged at 561b0d71. Full merged-tree cargo-ci passes with 5,299 tests and code-review passes with zero findings. Doc-review found two blocking single-source-prose defects: KERNEL_OPTIMIZATION.md and QUALITY_AUDIT_REPORT.md cite a nonexistent 'What this receipt does not claim' section. Rework 2 after reset is limited to grounding both citations in an explicit authoritative scope statement in the receipt. Measured bytes and production behavior remain fixed."
+          "status": "blocked-owner-decision-after-max-rework",
+          "notes": "The measured publication and guided test rework merged at 561b0d71. Full merged-tree cargo-ci passes with 5,299 tests and code-review passes with zero findings. Doc-review found two stale receipt citations. Rework 2 produced clean unmerged commit 66123a77, but independent review proved its replacement explanation false: benches/simd_vs_scalar.rs and tuning_calibration.rs both directly call ScalarBackend and the detected SIMD backend. Awaiting invoker choice after the reset rework allowance was exhausted. Measured bytes and production behavior remain fixed."
         },
         {
           "id": "06ba0418",
@@ -1103,6 +1110,12 @@
       "issue": "389aa4de",
       "date": "2026-09-01",
       "decision": "Merged-tree cargo-ci and code-review pass. Doc-review failed with two blocking citations in KERNEL_OPTIMIZATION.md and QUALITY_AUDIT_REPORT.md to a nonexistent receipt section title. Rework 2 after the reset is limited to adding or citing one explicit authoritative receipt scope statement for the direct-backend-versus-dispatcher distinction, then rerunning documentation review."
+    },
+    {
+      "kind": "rework-exhausted",
+      "issue": "389aa4de",
+      "date": "2026-09-01",
+      "decision": "OPEN: rework 2 after the invoker reset resolved the broken anchors in clean unmerged commit 66123a77, but independent review proved the replacement scope statement false. The older simd_vs_scalar benchmark and the current calibration harness both call ScalarBackend and the detected SIMD backend directly, so their 8-word and 4-word results cannot be distinguished by an ops.rs dispatch path. Awaiting invoker choice: targeted guidance that resets the counter for one evidence-backed documentation correction, manual lead takeover, or rejection."
     }
   ],
   "rework_counts": {
