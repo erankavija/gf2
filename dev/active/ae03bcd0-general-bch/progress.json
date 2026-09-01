@@ -57,7 +57,7 @@
           "title": "Implement the relative field-extension abstraction in gf2-core",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework accepted: 8005c138+8d28e88a on branch close all 3 findings (Proved-basis validation via prove_irreducible, from_certificate consumers, doctest-guarded walkthrough); merge + code-review/doc-review re-run queued behind peer CI window"
+          "status": "code-review R2 FAIL (from_certificate accepts Declared cert for reducible runtime modulus \u2014 overturns R-15); rework 2/2 dispatched: runtime path accepts Proved-basis only, typed error for Declared, test matrix replaces the loophole-based no-revalidation proof"
         }
       ]
     },
@@ -539,7 +539,7 @@
   "escalations": [],
   "rework_counts": {
     "4e732b56": 3,
-    "c3d5cea5": 1
+    "c3d5cea5": 2
   },
   "surfaced_pitfalls": [
     {
@@ -584,7 +584,8 @@
     "R-12: the two untracked 4e732b56 review-verdict files moved out of the repo to ~/.local/state/gf2-lead/ae03bcd0/ (peer's worktree protocol requires byte-clean main); delete them there once 4e732b56 passes its gates.",
     "R-13: wave-3 workers (ebdbd228, 19fe9394, fc2fa0b6) dispatched with owner approval before wave-2 formal close; their worktrees anchor at 9499fbdc (reviewed CI-green c3d5cea5 tip, not main) because they build on field/extension.rs; merges serialize after c3d5cea5 lands on main. Cache seeding skipped (manual worktree add).",
     "R-14: 19fe9394's R-01 ExtConfig conformance test covers every FIELD-BEARING in-tree ExtConfig implementor; arithmetic-only test fixtures with deliberately reducible moduli are excluded (they are not field configurations). Ratified.",
-    "R-15: from_certificate trusting its input (a Declared certificate for an unproven modulus constructs without revalidation) is ratified as the CertificateBasis contract per the extension design's certificate section \u2014 an honest recorded trust level, documented plainly on the methods and walkthrough."
+    "R-15: from_certificate trusting its input (a Declared certificate for an unproven modulus constructs without revalidation) is ratified as the CertificateBasis contract per the extension design's certificate section \u2014 an honest recorded trust level, documented plainly on the methods and walkthrough.",
+    "R-16: R-15 superseded by code-review R2 per no-argue \u2014 REQ-02 requires typed errors on every construction path, so BinaryPrimeExt::from_certificate (runtime) accepts Proved-basis certificates only and rejects Declared with a typed error; ConstExt keeps its design-fixed compile-time Declared basis unless the reviewer extends the finding."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
