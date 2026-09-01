@@ -10,11 +10,36 @@
 
 #![cfg(any(test, feature = "test-support"))]
 
+use crate::bch::encode::{BchEncodeWorkspace, EncodeRegisters};
 use crate::bch::spec::BinaryBchCode;
 use crate::product::ExtendedBchComponent;
 use crate::transform::Extended;
 use gf2_core::BitVec;
 use std::path::{Path, PathBuf};
+
+/// The address, length, and capacity of every buffer `registers` holds.
+///
+/// The encoding paths size these buffers once and overwrite them in place
+/// afterwards, so two equal snapshots witness that the encodes between them
+/// reached no allocator.
+pub fn encode_register_shape<W>(registers: &EncodeRegisters<W>) -> Vec<(usize, usize, usize)> {
+    crate::bch::encode::register_shape(registers)
+}
+
+/// [`encode_register_shape`] for the buffers a caller's workspace owns.
+pub fn encode_workspace_shape<W>(workspace: &BchEncodeWorkspace<W>) -> Vec<(usize, usize, usize)> {
+    encode_register_shape(workspace.registers())
+}
+
+/// [`encode_register_shape`] for the scratch registers the calling thread
+/// holds for the register word type `W`, or `None` before this thread has
+/// encoded in that word type.
+///
+/// These are the only buffers an entry point that owns no workspace can
+/// allocate.
+pub fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> {
+    crate::bch::encode::encode_scratch_shape::<W>()
+}
 
 /// Builds the generic eBCH(16,11) fixture used by library tests.
 ///
