@@ -24,12 +24,15 @@
 //! 1. **Validate and normalize.** Derive the length, decide coprimality and
 //!    divisibility, obtain the order-$n$ root, range-check a caller's first
 //!    root and designed distance, and expand the request into an unclosed seed
-//!    sequence. Arbitrary seed exponents are interpreted modulo $n$.
-//! 2. **Close.** Take the $q$-cyclotomic closure of the seeds modulo $n$; its
-//!    sorted union is the defining set.
+//!    sequence. An explicit generator instead supplies the exponents found by
+//!    evaluating it at every power of the canonical root.
+//! 2. **Close.** Take the $q$-cyclotomic closure of the seed or root
+//!    exponents modulo $n$; its sorted union is the defining set.
 //! 3. **Generate.** Take one representative per coset, form its monic minimal
 //!    polynomial over $B$, and combine the factors with the polynomial least
-//!    common multiple. Validate that the result divides $x^n - 1$.
+//!    common multiple. For an explicit generator, independently check that
+//!    this shared result equals the supplied candidate. Validate that the
+//!    result divides $x^n - 1$.
 //! 4. **Derive.** Set $k = n - \deg g$, witness the classical BCH bound from
 //!    the longest cyclic run of consecutive roots, and take the correction
 //!    radius that bound implies.
@@ -47,7 +50,8 @@
 //!   [`RootSelection::Canonical`], or validated (identity match against the
 //!   witness, exact order $n$) when a variant exposing [`RootSelection`] —
 //!   currently [`BchSpec::RootSeeds`] — supplies an explicit root; the
-//!   primitive variants always construct with the canonical root;
+//!   primitive and generator variants always construct with the canonical
+//!   root;
 //! - every caller-supplied first-root exponent satisfies $0 \le b < n$; seed
 //!   exponents are reduced modulo $n$;
 //! - the designed distance satisfies $1 \le \delta \le n + 1$.
@@ -59,7 +63,9 @@
 //! element. Coefficient restriction is likewise discharged by construction for
 //! root-derived generators: every factor comes from
 //! [`minimal_polynomial`], which returns a `FieldPoly<X::Base>`, so the
-//! generator's coefficients lie in $B$ by type.
+//! generator's coefficients lie in $B$ by type. The explicit-generator
+//! variant checks coefficient identities and restricts every coefficient
+//! before it enters the shared generator/divisibility path.
 //!
 //! Stage 3 validates $g(x) \mid x^n - 1$. Every failure in stages 1 to 3 is a
 //! [`BchError`]; no invalid input panics. A panic after stage 1 denotes a
@@ -353,6 +359,58 @@ where
         /// Seed exponents; construction derives and stores their closed set.
         seeds: Box<[RootExponent]>,
     },
+
+    /// BCH code from an explicitly supplied generator polynomial.
+    ///
+    /// The polynomial is presented in the splitting-field carrier so
+    /// construction can check both its field identity and coefficient
+    /// membership in the base field. It must be nonzero and monic. The
+    /// canonical order-`length` root is evaluated at every exponent; the
+    /// resulting defining set, closure, dimension, and witnessed bound all
+    /// go through the same derivation pipeline as [`Self::RootSeeds`].
+    ///
+    /// # Example
+    ///
+    /// A generator from a binary narrow-sense construction can be supplied
+    /// again in the splitting-field carrier and reconstructs the same code:
+    ///
+    /// ```
+    /// use gf2_coding::bch::spec::{
+    ///     BchLength, BchSpec, BinaryBchCode, DesignedDistance,
+    /// };
+    /// use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension};
+    /// use gf2_core::field::FieldPoly;
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011))?;
+    /// let original = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+    ///     extension: extension.clone(),
+    ///     designed_distance: DesignedDistance::try_from(5)?,
+    /// })?;
+    /// let generator = FieldPoly::new(
+    ///     original
+    ///         .generator()
+    ///         .iter()
+    ///         .map(|coefficient| extension.embed(coefficient))
+    ///         .collect(),
+    /// );
+    /// let rebuilt = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+    ///     extension,
+    ///     length: BchLength::try_from(15)?,
+    ///     generator,
+    /// })?;
+    ///
+    /// assert_eq!(rebuilt, original);
+    /// # Ok::<(), gf2_coding::bch::error::BchError>(())
+    /// ```
+    GeneratorPolynomial {
+        /// Witness relating the code-symbol field to the splitting field.
+        extension: X,
+        /// Code length, which must divide the splitting field's unit group.
+        length: BchLength,
+        /// Candidate generator in the splitting-field carrier.
+        generator: FieldPoly<X::Ext>,
+    },
 }
 
 // ---------------------------------------------------------------------------
@@ -472,8 +530,16 @@ where
     /// - [`BchError::RootExponentOutOfRange`] when a supplied first root
     ///   exponent is not in `0..n`.
     /// - [`BchError::DesignedDistanceOutOfRange`] when $\delta > n + 1$.
-    /// - [`BchError::GeneratorNotDivisorOfCyclicPolynomial`] when the derived
-    ///   generator does not divide $x^n - 1$.
+    /// - [`BchError::GeneratorPolynomialZero`] when an explicit generator is
+    ///   the zero polynomial.
+    /// - [`BchError::GeneratorPolynomialNotMonic`] when an explicit generator
+    ///   is not monic.
+    /// - [`BchError::GeneratorCoefficientNotInBase`] when an explicit
+    ///   coefficient does not restrict to the code-symbol field.
+    /// - [`BchError::Field`] wrapping [`FieldError::IdentityMismatch`] when an
+    ///   explicit coefficient comes from another splitting-field presentation.
+    /// - [`BchError::GeneratorNotDivisorOfCyclicPolynomial`] when a supplied
+    ///   or derived generator does not divide $x^n - 1$.
     /// - [`BchError::Field`] wrapping the failure reported by the extension
     ///   surface while deriving the root or the cyclotomic closure.
     ///
@@ -483,8 +549,21 @@ where
     pub fn construct(spec: BchSpec<X>) -> Result<Self, BchError> {
         let derived = normalize(spec)?;
         let closure = cyclotomic_closure(&derived.extension, derived.length.get(), &derived.seeds)?;
+        if derived.explicit_generator.is_some() {
+            assert_eq!(
+                derived.seeds.as_slice(),
+                closure.defining_set(),
+                "a base-field generator must have a Frobenius-closed root set"
+            );
+        }
         let generator =
             derive_generator(&derived.extension, &derived.root, &closure, derived.length)?;
+        if let Some(candidate) = derived.explicit_generator.as_ref() {
+            assert_eq!(
+                candidate, &generator,
+                "a validated explicit generator must equal its root-derived generator"
+            );
+        }
         assemble(derived, &closure, generator)
     }
 
@@ -573,6 +652,7 @@ struct DerivedInputs<X: FieldExtension> {
     length: BchLength,
     root: X::Ext,
     seeds: Vec<u64>,
+    explicit_generator: Option<FieldPoly<X::Base>>,
 }
 
 fn normalize<X: FieldExtension>(spec: BchSpec<X>) -> Result<DerivedInputs<X>, BchError> {
@@ -592,6 +672,11 @@ fn normalize<X: FieldExtension>(spec: BchSpec<X>) -> Result<DerivedInputs<X>, Bc
             root,
             seeds,
         } => normalize_root_seeds(extension, length, root, seeds),
+        BchSpec::GeneratorPolynomial {
+            extension,
+            length,
+            generator,
+        } => normalize_generator_polynomial(extension, length, generator),
     }
 }
 
@@ -621,6 +706,7 @@ fn normalize_primitive<X: FieldExtension>(
         length,
         root,
         seeds,
+        explicit_generator: None,
     })
 }
 
@@ -652,7 +738,101 @@ fn normalize_root_seeds<X: FieldExtension>(
         length,
         root,
         seeds,
+        explicit_generator: None,
     })
+}
+
+/// Normalizes an explicitly supplied generator polynomial.
+///
+/// The candidate is checked in the order required by the construction
+/// contract: its coefficients must belong to the extension presentation and
+/// restrict to the base field, then it must be nonzero and monic, and finally
+/// the restricted polynomial must divide `x^n - 1`. Its roots are found by
+/// evaluating the original extension-carrier polynomial at every power of the
+/// canonical order-`n` root. The resulting exponents become the input to the
+/// shared cyclotomic-closure and generator derivation stages.
+fn normalize_generator_polynomial<X: FieldExtension>(
+    extension: X,
+    length: BchLength,
+    generator: FieldPoly<X::Ext>,
+) -> Result<DerivedInputs<X>, BchError> {
+    validate_length_coprime_to_characteristic(extension.characteristic(), length)?;
+    validate_length_divides_unit_group(&extension, length)?;
+
+    let root = resolve_root(&extension, length, &RootSelection::Canonical)?;
+    let in_memory_length =
+        usize::try_from(length.get()).map_err(|_| CodeError::UnsupportedSize {
+            size: u128::from(length.get()),
+        })?;
+    let restricted = restrict_generator_polynomial(&extension, &generator)?;
+    let cyclic = cyclic_polynomial(&extension.base_zero(), in_memory_length);
+    let (_, remainder) = cyclic.div_rem(&restricted);
+    if !remainder.is_zero() {
+        return Err(BchError::GeneratorNotDivisorOfCyclicPolynomial {
+            length: length.get(),
+        });
+    }
+
+    let seeds = generator_root_exponents(&generator, &root, length, in_memory_length);
+
+    Ok(DerivedInputs {
+        extension,
+        length,
+        root,
+        seeds,
+        explicit_generator: Some(restricted),
+    })
+}
+
+/// Checks the extension identity and restricts an explicit generator to the
+/// code-symbol field.
+fn restrict_generator_polynomial<X: FieldExtension>(
+    extension: &X,
+    generator: &FieldPoly<X::Ext>,
+) -> Result<FieldPoly<X::Base>, BchError> {
+    if generator.is_zero() {
+        return Err(BchError::GeneratorPolynomialZero);
+    }
+
+    let expected = extension.ext_id().clone();
+    let mut restricted = Vec::with_capacity(generator.len());
+    for (index, coefficient) in generator.iter().enumerate() {
+        let found = coefficient.field_id();
+        if expected != found {
+            return Err(FieldError::IdentityMismatch { expected, found }.into());
+        }
+        let coefficient = extension
+            .try_restrict(coefficient)
+            .ok_or(BchError::GeneratorCoefficientNotInBase { index })?;
+        restricted.push(coefficient);
+    }
+
+    if !generator.leading_coeff().is_some_and(FiniteField::is_one) {
+        return Err(BchError::GeneratorPolynomialNotMonic);
+    }
+
+    Ok(FieldPoly::new(restricted))
+}
+
+/// Returns the exponents whose powers of `root` are roots of `generator`.
+///
+/// Starting at one and multiplying by `root` keeps the scan linear in the
+/// length apart from the `O(deg(g))` Horner evaluation at each exponent.
+fn generator_root_exponents<E: FieldIdentity>(
+    generator: &FieldPoly<E>,
+    root: &E,
+    length: BchLength,
+    in_memory_length: usize,
+) -> Vec<u64> {
+    let mut exponents = Vec::with_capacity(in_memory_length);
+    let mut power = root.one_like();
+    for exponent in 0..length.get() {
+        if generator.eval(&power).is_zero() {
+            exponents.push(exponent);
+        }
+        power = power * root.clone();
+    }
+    exponents
 }
 
 /// Derives the primitive length $n = |E^{*}|$.
@@ -1013,6 +1193,18 @@ mod tests {
             .into_boxed_slice()
     }
 
+    fn lift_generator<X: FieldExtension>(
+        extension: &X,
+        generator: &FieldPoly<X::Base>,
+    ) -> FieldPoly<X::Ext> {
+        FieldPoly::new(
+            generator
+                .iter()
+                .map(|coefficient| extension.embed(coefficient))
+                .collect(),
+        )
+    }
+
     /// GF(25) = GF(5)[x] / (x^2 + x + 1).
     fn gf25() -> QuotientField<Fp<5>> {
         let modulus = FieldPoly::new(vec![Fp::<5>::new(1), Fp::new(1), Fp::new(1)]);
@@ -1347,6 +1539,120 @@ mod tests {
         assert_eq!(seeded.defining_set(), narrow.defining_set());
     }
 
+    // -- Explicit-generator flavor ----------------------------------------
+
+    #[test]
+    fn explicit_generator_round_trips_binary_narrow_sense() {
+        let extension = binary_extension(4, 0b10011);
+        let original = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: extension.clone(),
+            designed_distance: DesignedDistance::try_from(5).expect("positive"),
+        })
+        .expect("a valid narrow-sense spec");
+        let rebuilt = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length: BchLength::try_from(15).expect("positive"),
+            generator: lift_generator(&extension, original.generator()),
+        })
+        .expect("the generated polynomial is valid");
+
+        assert_eq!(rebuilt.generator(), original.generator());
+        assert_eq!(rebuilt.defining_set(), original.defining_set());
+        assert_eq!(rebuilt.distance_bound(), original.distance_bound());
+        assert_eq!(rebuilt, original);
+    }
+
+    #[test]
+    fn explicit_generator_round_trips_binary_seed_set() {
+        let extension = binary_extension(5, 0b100101);
+        let original = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension: extension.clone(),
+            length: BchLength::try_from(31).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds([1, 4, 9]),
+        })
+        .expect("a valid binary seed-set spec");
+        let rebuilt = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length: BchLength::try_from(31).expect("positive"),
+            generator: lift_generator(&extension, original.generator()),
+        })
+        .expect("the generated polynomial is valid");
+
+        assert_eq!(rebuilt, original);
+    }
+
+    #[test]
+    fn explicit_generator_round_trips_nonbinary_narrow_sense() {
+        let extension = gf25();
+        let original = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: extension.clone(),
+            designed_distance: DesignedDistance::try_from(5).expect("positive"),
+        })
+        .expect("a valid GF(5) narrow-sense spec");
+        let rebuilt = DenseBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length: BchLength::try_from(24).expect("positive"),
+            generator: lift_generator(&extension, original.generator()),
+        })
+        .expect("the generated polynomial is valid");
+
+        assert_eq!(rebuilt, original);
+    }
+
+    #[test]
+    fn explicit_generator_round_trips_nonbinary_seed_set() {
+        let extension = gf25();
+        let original = DenseBchCode::construct(BchSpec::RootSeeds {
+            extension: extension.clone(),
+            length: BchLength::try_from(24).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds([1, 3, 7]),
+        })
+        .expect("a valid GF(5) seed-set spec");
+        let generator = lift_generator(&extension, original.generator());
+        let rebuilt = DenseBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length: BchLength::try_from(24).expect("positive"),
+            generator,
+        })
+        .expect("the generated polynomial is valid");
+
+        assert_eq!(rebuilt, original);
+    }
+
+    #[test]
+    fn explicit_generator_accepts_the_full_space_and_zero_dimensional_boundaries() {
+        let extension = binary_extension(4, 0b10011);
+        let full_space = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length: BchLength::try_from(15).expect("positive"),
+            generator: FieldPoly::one_like(&extension.ext_zero()),
+        })
+        .expect("one is the full-space generator");
+        assert_eq!(full_space.k(), 15);
+        assert!(full_space.defining_set().is_empty());
+        assert_eq!(full_space.distance_bound().first_root(), None);
+
+        let cyclic = cyclic_polynomial(&extension.ext_zero(), 15);
+        let zero_dimensional = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension,
+            length: BchLength::try_from(15).expect("positive"),
+            generator: cyclic,
+        })
+        .expect("x^n - 1 is the zero-dimensional generator");
+        assert_eq!(zero_dimensional.k(), 0);
+        assert_eq!(zero_dimensional.defining_set().len(), 15);
+        assert_eq!(
+            zero_dimensional.distance_bound().consecutive_root_count(),
+            15
+        );
+        assert_eq!(
+            zero_dimensional.distance_bound().first_root(),
+            Some(RootExponent(0))
+        );
+    }
+
     // -- Bound witness -----------------------------------------------------
 
     #[test]
@@ -1438,6 +1744,86 @@ mod tests {
     }
 
     // -- Typed errors ------------------------------------------------------
+
+    #[test]
+    fn an_explicit_generator_from_another_field_presentation_is_rejected() {
+        let extension = binary_extension(4, 0b10011);
+        let wrong_field = Gf2mField::new(4, 0b11001).element(1);
+        let error = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension,
+            length: BchLength::try_from(15).expect("positive"),
+            generator: FieldPoly::new(vec![wrong_field]),
+        })
+        .expect_err("the generator must use the extension presentation");
+
+        assert!(matches!(
+            error,
+            BchError::Field(FieldError::IdentityMismatch { .. })
+        ));
+    }
+
+    #[test]
+    fn an_explicit_generator_with_a_nonbase_coefficient_is_rejected() {
+        let extension = binary_extension(4, 0b10011);
+        let length = BchLength::try_from(15).expect("positive");
+        let root = resolve_root(&extension, length, &RootSelection::Canonical)
+            .expect("a canonical order-15 root");
+        let error = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length,
+            generator: FieldPoly::new(vec![root, extension.ext_one()]),
+        })
+        .expect_err("the constant coefficient is outside GF(2)");
+
+        assert_eq!(error, BchError::GeneratorCoefficientNotInBase { index: 0 });
+    }
+
+    #[test]
+    fn an_explicit_generator_that_is_not_a_cyclic_divisor_is_rejected() {
+        let extension = binary_extension(4, 0b10011);
+        let error = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length: BchLength::try_from(15).expect("positive"),
+            generator: FieldPoly::new(vec![extension.ext_zero(), extension.ext_one()]),
+        })
+        .expect_err("x does not divide x^15 - 1");
+
+        assert_eq!(
+            error,
+            BchError::GeneratorNotDivisorOfCyclicPolynomial { length: 15 }
+        );
+    }
+
+    #[test]
+    fn degenerate_explicit_generators_are_rejected_with_typed_errors() {
+        let extension = binary_extension(4, 0b10011);
+        let length = BchLength::try_from(15).expect("positive");
+        let zero = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length,
+            generator: FieldPoly::zero_like(&extension.ext_zero()),
+        })
+        .expect_err("the zero polynomial is not a generator");
+        assert_eq!(zero, BchError::GeneratorPolynomialZero);
+
+        let nonmonic = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length,
+            generator: FieldPoly::constant(extension.ext_zero()),
+        })
+        .expect_err("a zero leading coefficient is not a monic generator");
+        assert_eq!(nonmonic, BchError::GeneratorPolynomialZero);
+
+        let extension = gf25();
+        let nonmonic_lead = extension.ext_one() + extension.ext_one();
+        let nonmonic = DenseBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension: extension.clone(),
+            length: BchLength::try_from(24).expect("positive"),
+            generator: FieldPoly::new(vec![extension.ext_one(), nonmonic_lead]),
+        })
+        .expect_err("a nonzero leading coefficient must still be one");
+        assert_eq!(nonmonic, BchError::GeneratorPolynomialNotMonic);
+    }
 
     #[test]
     fn a_designed_distance_above_the_length_bound_is_rejected() {
@@ -1723,6 +2109,28 @@ mod tests {
             .expect("a valid binary seed-set spec");
 
             assert_construction_is_consistent(&code, 2);
+        }
+
+        #[test]
+        fn prop_explicit_generators_round_trip_random_seed_sets(
+            (m, modulus, seeds) in binary_seed_requests(),
+        ) {
+            let extension = binary_extension(m, modulus);
+            let code = BinaryBchCode::construct(BchSpec::RootSeeds {
+                extension: extension.clone(),
+                length: BchLength::try_from((1u64 << m) - 1).expect("positive"),
+                root: RootSelection::Canonical,
+                seeds: root_seeds(seeds),
+            })
+            .expect("a valid binary seed-set spec");
+            let rebuilt = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+                extension: extension.clone(),
+                length: BchLength::try_from((1u64 << m) - 1).expect("positive"),
+                generator: lift_generator(&extension, code.generator()),
+            })
+            .expect("a generated polynomial is valid");
+
+            prop_assert_eq!(rebuilt, code);
         }
     }
 }
