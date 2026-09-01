@@ -10375,3 +10375,4 @@
 {"from":"in_progress","id":"9d245421-4d66-437b-bee9-22712f3d7f95","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T05:06:03.514876505Z","to":"done","type":"issue_state_changed"}
 {"id":"6f3beeda-f6c5-4f31-8462-309ea8d1a82c","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-01T05:06:03.514876505Z","type":"issue_completed"}
 {"fields":["documents"],"id":"0a0062c8-2702-427a-8c43-f63dc86cee53","issue_id":"7a3a6738-3ec0-42ea-86dd-c2d845689e1a","timestamp":"2026-09-01T05:06:40.512718480Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"f539d660-ba7b-4b16-8048-358d32d5c932","issue_id":"7a3a6738-3ec0-42ea-86dd-c2d845689e1a","timestamp":"2026-09-01T05:08:53.551606603Z","type":"gate_passed","updated_by":"auto:executor"}

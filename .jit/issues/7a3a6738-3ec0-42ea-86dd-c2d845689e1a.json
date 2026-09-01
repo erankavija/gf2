@@ -54,7 +54,13 @@
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T05:08:53.551606603Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "7a3a6738-3ec0-42ea-86dd-c2d845689e1a",
   "labels": [
     "type:task",
@@ -66,5 +72,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Design BchSpec, the code-trait generalization, and the compatibility boundary",
-  "updated_at": "2026-09-01T05:06:40.512718480Z"
+  "updated_at": "2026-09-01T05:08:53.551606603Z"
 }
