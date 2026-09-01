@@ -1524,7 +1524,6 @@ mod fig2_validation {
     /// Word-boundary test: exercise SOGRAND with code length near 64 bits.
     #[test]
     fn test_sogrand_near_64_bit_boundary() {
-        use crate::bch::matrix::CachedMatrices;
         use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
         use crate::traits::block::ParityCheckMatrixAccess;
         use crate::transform::Extended;
@@ -1540,18 +1539,9 @@ mod fig2_validation {
         })
         .expect("a valid binary BCH construction");
         let ebch = Extended::new(base).expect("an extended BCH code fits in memory");
-        let cached = CachedMatrices::new(ebch.mother().clone());
-        let base_h =
-            ParityCheckMatrixAccess::parity_check_matrix(&cached).expect("BCH parity matrix");
-        let mut h = gf2_core::BitMatrix::zeros(base_h.rows() + 1, base_h.cols() + 1);
-        for row in 0..base_h.rows() {
-            for column in 0..base_h.cols() {
-                h.set(row, column, base_h.get(row, column));
-            }
-        }
-        for column in 0..h.cols() {
-            h.set(base_h.rows(), column, true);
-        }
+        let h = ebch
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
 
         let config = OrbGrandConfig {
             max_queries: 50_000,

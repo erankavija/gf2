@@ -1165,6 +1165,8 @@ impl Iterator for LogisticWeightPatternIter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::generic_ebch_16_11;
+    use crate::traits::block::ParityCheckMatrixAccess;
 
     // =====================================================================
     // Helper: Hamming(7,4) parity-check matrix
@@ -1175,43 +1177,6 @@ mod tests {
             1, 0, 1, 1, 0, 1, 0;
             0, 1, 1, 1, 0, 0, 1
         ]
-    }
-
-    fn generic_ebch_16_11() -> crate::transform::Extended<crate::bch::spec::BinaryBchCode> {
-        use crate::bch::spec::{BchSpec, DesignedDistance};
-        use gf2_core::field::extension::BinaryPrimeExt;
-        use gf2_core::gf2m::Gf2mField;
-
-        let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())
-            .expect("a valid binary BCH extension");
-        let base = crate::bch::spec::BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
-            extension,
-            designed_distance: DesignedDistance::try_from(3)
-                .expect("a positive BCH designed distance"),
-        })
-        .expect("a valid binary BCH construction");
-        crate::transform::Extended::new(base).expect("an extended BCH code fits in memory")
-    }
-
-    fn generic_extended_parity_check(
-        code: &crate::transform::Extended<crate::bch::spec::BinaryBchCode>,
-    ) -> BitMatrix {
-        use crate::bch::matrix::CachedMatrices;
-        use crate::traits::block::ParityCheckMatrixAccess;
-
-        let cached = CachedMatrices::new(code.mother().clone());
-        let base_h =
-            ParityCheckMatrixAccess::parity_check_matrix(&cached).expect("BCH parity matrix");
-        let mut h = BitMatrix::zeros(base_h.rows() + 1, base_h.cols() + 1);
-        for row in 0..base_h.rows() {
-            for column in 0..base_h.cols() {
-                h.set(row, column, base_h.get(row, column));
-            }
-        }
-        for column in 0..h.cols() {
-            h.set(base_h.rows(), column, true);
-        }
-        h
     }
 
     #[test]
@@ -2097,7 +2062,9 @@ mod tests {
         use crate::traits::BlockEncoder;
 
         let ebch = generic_ebch_16_11();
-        let h = generic_extended_parity_check(&ebch);
+        let h = ebch
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
 
         let config = OrbGrandConfig {
             max_queries: 10_000,
@@ -2165,7 +2132,9 @@ mod tests {
         use crate::traits::BlockEncoder;
 
         let ebch = generic_ebch_16_11();
-        let h = generic_extended_parity_check(&ebch);
+        let h = ebch
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
 
         let msg = BitVec::zeros(11);
         let codeword = ebch.encode(&msg);
