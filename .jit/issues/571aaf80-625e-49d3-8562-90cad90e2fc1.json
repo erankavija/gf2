@@ -7,6 +7,7 @@
   ],
   "description": "Extend the canonical construction path to non-primitive lengths: callers supply only $n$ for a derived canonical element of order $n$, or supply an explicit $n$-th root of unity.\n\n## Success Criteria\n\n- [hard] REQ-01: Non-primitive construction works with the derived canonical order-$n$ element and with an explicitly supplied root of unity, and the two agree when the explicit root is the canonical one.\n- [hard] REQ-02: Roots of wrong order and lengths violating $\\gcd(n,q)=1$ report typed errors.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T16:39:23.922689084Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -20,7 +21,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Construction at non-primitive lengths with both root conventions",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T16:39:23.922689084Z"
 }
