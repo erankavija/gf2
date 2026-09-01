@@ -14,7 +14,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T11:35:51.108251317Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-01T11:39:03.366055792Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "e992c5b0-d3c0-4b4c-a2f0-44b5c00594db",
   "labels": [
     "type:task",
@@ -25,5 +36,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Canonical checksummed FieldMatrix serialization with atomic replacement",
-  "updated_at": "2026-09-01T09:58:30.155434207Z"
+  "updated_at": "2026-09-01T11:39:03.366055792Z"
 }
