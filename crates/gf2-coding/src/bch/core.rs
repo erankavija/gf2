@@ -2,8 +2,11 @@
 //!
 //! # Mathematical Background
 //!
-//! A BCH code is defined by its generator polynomial g(x), which has consecutive
-//! powers of a primitive element α as roots in the extension field GF(2^m):
+//! This module is the binary (GF(2)) implementation; the field-generic
+//! construction model lives in [`crate::bch::spec`]. In the binary primitive
+//! narrow-sense case implemented here, the code is defined by its generator
+//! polynomial g(x), which has consecutive powers of a primitive element α as
+//! roots in the extension field GF(2^m):
 //!
 //! g(x) = LCM(m₁(x), m₂(x), ..., m₂ₜ(x))
 //!
