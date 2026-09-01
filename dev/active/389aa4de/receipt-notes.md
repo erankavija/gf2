@@ -397,3 +397,34 @@ Publication is conditional on the codec-derived inventory being exactly five
 measured fields and the 32-field complement of the current 37-field core
 schema. A build without a comparable SIMD arm therefore cannot publish a 4/33
 artifact.
+
+## Executed state and publication corrections (2026-09-01)
+
+The measured run exists at
+`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`. Blocks A through D are
+applied as append-only, format-2-aware amendments: F2 and DEC-B6 are discharged
+at `karatsuba_min_degree = 31`; DEC-B16's grid-point forcing is explicit; the
+current omission count is 32 rather than the pre-pilot count 33; and DEC-G
+remains 4 with v2 provenance. The measured core owner, complete envelope, raw
+log, and repository-relative SHA-256 manifest are committed under the paths
+named by that receipt.
+
+Block E's transitional flat-profile mechanics are not applied. The live
+reader is `CoreTuningCodec`, the owner and complete envelopes share one
+logical profile ID, and the core wrapper is preserved byte-for-byte through
+composition. The three baked omission witnesses strictly reopen the measured
+owner. After the reader/citation sweep finds no remaining crate consumer, the
+test-only format-1 helper and archived v1 bytes are deleted. The old receipt
+retains their exact historical path and digest without a v1 loader.
+
+The first execution attempt passed unsupported `--release` to `cargo bench`
+and then exposed that the driver did not propagate the failed build; it
+produced no evidence. The second attempt built successfully but applied
+`jq -r .` to a bare path file, failed its guarded preflight, and stopped before
+the measured span; it also produced no evidence. The approved third attempt
+removed the invalid bench flag, used `cat` for both raw path files, propagated
+build/extractor failures, checked nonempty executable paths and hashes, bound
+the clean build HEAD, and rejected all seven pre-existing destinations. The
+harness module prose is corrected to document that executed driver. These are
+documentation-only corrections and do not change the v2 binary's sampling,
+timing, evaluation, or output behavior.

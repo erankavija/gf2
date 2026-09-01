@@ -901,3 +901,21 @@ This amendment discharges §5 condition 1 for the classification's §4.3
 family. It introduces no second extensibility rule: future proof-visible
 selector families still require their extraction treatment to be fixed before
 the standing profile convention admits them.
+
+## Amendment — measured core pilot (2026-09-01, issue `389aa4de`)
+
+The explicit calibration action now records a clean format-2 core section at
+`crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
+and the receipt
+`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`. The five stated fields
+have the codec-derived 32-field omission complement of the current 37-field
+inventory. `karatsuba_min_degree` is sweepable through the one fresh-process
+profile-steering mechanism and selects 31, discharging DEC-B6/F2.
+
+DEC-G's bake mechanism remains unchanged at `simd_min_words = 4`; the measured
+format-2 section becomes its evidence anchor without a routing-boundary
+change. Every live reader uses the current crate-owned codec. The final
+format-1 test reader and archive citation are cut over atomically, after which
+the uncited archived bytes are deleted. The earlier receipt still states the
+historical path, digest, dirty producing revision, and measurements exactly as
+recorded; no compatibility reader or dual representation survives.
