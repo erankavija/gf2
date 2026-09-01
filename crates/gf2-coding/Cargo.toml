@@ -55,7 +55,7 @@ llr-f64 = []
 # HIP/ROCm GPU acceleration (requires hipcc and AMD GPU). Propagates the
 # `hip` feature into gf2-kernels-hip so the BCH syndrome wrappers
 # (`GpuBchSyndrome` / `BchFieldTables`), gated behind that feature there,
-# resolve for the `compute_syndromes_batch_gpu` / `decode_batch_gpu` hook.
+# resolve for the `compute_syndromes_batch_gpu` / `correct_batch_gpu` hooks.
 hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
 # Bench-csv emitter support (jit:47698404). Pulls in `gf2-core/test-support`
 # which exposes the `bench_seed` module used by the sparse CSV harness.
