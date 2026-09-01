@@ -78,7 +78,7 @@
           "title": "Deterministic derivation of elements with exact multiplicative order",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched: Luna xhigh, worktree agent-fc2fa0b6 anchored at 9499fbdc; touches field/extension.rs only"
+          "status": "worker-complete: committed on branch (extension.rs only); deterministic canonical-index selection, typed NoElementOfOrder/OrderFactorizationUnavailable; budget-locked checks ran unlocked due to my full-host window (noted); merge + gates queued"
         },
         {
           "key": "followup-tracking",
