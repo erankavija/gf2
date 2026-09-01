@@ -279,7 +279,7 @@
           "title": "Allocation-free single, workspace batch, and parallel batch encoding",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework attempt 2 in flight (live Opus teammate): R1 alloc-free encode_into merged 67d35782 + cargo-ci passed; code-review R2 FAIL new finding \u2014 encode_partitions fewer chunks than workspaces on non-divisible batches (encode.rs:1366)"
+          "status": "done: rework R1 (thread-scratch alloc-free encode_into, 67d35782) + R2 (balanced per-worker partitions, 0c4830e0); cargo-ci + code-review R3 passed"
         },
         {
           "key": "hip-equivalence",
