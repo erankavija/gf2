@@ -35,3 +35,16 @@ committed before timing; a worker must not select them during a producing run.
 Do not add a private forcing hook, bypass `M4rmSelectors::try_new`, silently
 publish ten fields while claiming eleven, or start measurement before the
 grids and fixtures are predeclared.
+
+## Invoker decision
+
+The invoker selected option A. Amend the shared rule at its convention source:
+when a threshold's conservative default equals an admissible boundary, a
+domain-clipped grid may begin at that boundary if both arms remain forceable at
+every point. Retain all eleven selectors.
+
+Before claim or implementation, commit and independently review the exact
+numeric grids, representative fixture shapes, forced-arm values, route
+witnesses, seed domains, feature/thread requirements, and execution budget.
+This approval does not authorize a private forcing hook, a validation bypass,
+or a producing measurement from an unreviewed protocol.
