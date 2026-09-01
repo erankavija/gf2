@@ -123,7 +123,7 @@ impl<F: FieldIdentity> FieldMatrix<F> {
     ///
     /// The complete byte stream is written to a PID-tagged sibling temporary
     /// file, synced, renamed into place, and followed by a directory sync. A
-    /// A failure before rename removes the temporary file and leaves the
+    /// failure before rename removes the temporary file and leaves the
     /// destination at its prior state. A directory-sync failure is reported
     /// after the complete replacement has already been renamed into place.
     ///
