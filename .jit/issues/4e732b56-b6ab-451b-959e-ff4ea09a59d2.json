@@ -12,51 +12,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "f6ecb9472812db92482462f495258928a3ecb22f3d4d885e2eefbdaba9000caf",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "4eed0ba8fbf72be5494afc279d49cd597aae8fd0b9175128a1723d020ae3abf2",
+          "content_hash": "b21ea63c84889e0fc20ef4303439d4ea3c4e10393a704b5780eb084b8c6e005d",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "workload-selection.md",
-          "resolved_path": "dev/active/4e732b56/workload-selection.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "8b7a94fcdbb6a3750cefb82f8128b6ef02a5763c2892be44cf9429f28dabd7ac",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c75ee73f5a158eda1183c7265f3207f23f7387af5e2b684ce93e5ba34f38b053",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "314382095ab548804cbd7a34641c14261732a8896ded2dc04b843534d4c2296d",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "cecfeef3993e773024ede3b670fbaf0b006c5f9462cf78b469fb12a2e0b3be84",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt"
+          "original_path": "../../plans/sota_target_matrix.md",
+          "resolved_path": "dev/plans/sota_target_matrix.md"
         },
         {
           "asset_type": "external",
@@ -68,11 +28,51 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "b21ea63c84889e0fc20ef4303439d4ea3c4e10393a704b5780eb084b8c6e005d",
+          "content_hash": "cecfeef3993e773024ede3b670fbaf0b006c5f9462cf78b469fb12a2e0b3be84",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ae2c7a9e0d27851a87946111875557ca983aabaec1a177f1cc76e4348ce76041",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../plans/sota_target_matrix.md",
-          "resolved_path": "dev/plans/sota_target_matrix.md"
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "306e7e625ada99772fd588e6279c3a61c164f12bd442f3f1f29b12393d4acd4b",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f6ecb9472812db92482462f495258928a3ecb22f3d4d885e2eefbdaba9000caf",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a96b5fa1097a530beac0c73afc74eec0d6a3d9ee4a1a8fc9b8f0ed07c2c12d00",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "workload-selection.md",
+          "resolved_path": "dev/active/4e732b56/workload-selection.md"
         }
       ],
       "commit": null,
@@ -93,7 +93,7 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "1242bc1e2b2aa69bf03be1a539aa95863f67cdce5f4ad71a260f0efad02ffccf",
+          "content_hash": "7215489ea32a6cf3268c10c7e1bf5cdd9e90356db7ff06d0d4ed7e9ec6823b87",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "findings.md",
@@ -101,7 +101,7 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "8b7a94fcdbb6a3750cefb82f8128b6ef02a5763c2892be44cf9429f28dabd7ac",
+          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
           "is_shared": false,
           "mime_type": "text/plain",
           "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
@@ -118,15 +118,47 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "6caa631f35e3ec417e3ff967b458e33b6931b7915b38e31f2988c52dd7c739e6",
+          "content_hash": "78997130a40ef02b52f244fb4e23dcf421eacaebe80c1af377037a63b57c6045",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-itpp.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-itpp.csv"
+          "original_path": "2026-09-01-4e732b56-small-aff3ct.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct.csv"
         },
         {
           "asset_type": "local",
-          "content_hash": "a7aba073dac40aa7ba238be2336b3bfa54f0f3eee6ad01e44937b6ffc403d0f6",
+          "content_hash": "8a02846e9622618cebd32ee2187824be7197e8967d5d383058a2e1028bdfe6b0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-small-itpp.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-itpp.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e5cd4e65ba7bca40b83ac84731b5698917999a6ca07efb2eb3d71bc50799b6c",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "2026-09-01-4e732b56-small-aff3ct-perf-stat.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct-perf-stat.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9b36595cea87b1e090829a0e74fc587c4c8c2791333fae2599069fde6ab157f6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-small-gf2.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-gf2.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "114480a34021422501256152222fba7de373b471ea9e3f936fab6a3ed6689d40",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-small-gf2.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-gf2.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b1cd28210a86d6a56a4c31ba8c56628168f584385588cf684d1177318c35089c",
           "is_shared": false,
           "mime_type": null,
           "original_path": "2026-09-01-4e732b56-t2n-bchlib.csv",
@@ -134,19 +166,59 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "0094031cd0b79e91021e916111320b5f3c0b7f6bdd52540e69126d0d5b48bc6c",
+          "content_hash": "466a6bb1e607c8bcd59ab1836668bf0a12c6fd1aa469cc57100df74bacbb3fa6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-small-bchlib.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-bchlib.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73e8f203ceac9f17f741f2d1657bd8561cb2bba613fe4e836cc27b55a2f63bd2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "2026-09-01-4e732b56-t2n-host.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-host.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9a23de2050cc37f19ac3fc95f31fcad4c976f6eabd92107ad14ff8957aa4f898",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-m4ri.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-m4ri.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c84e385bfcb94111d01774f818bf1fd3d2fd966b6309313a94aeed7fef13ba4e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-gf2.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-gf2.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e6f98d1e119844478c3456f65aa630dde84cd46c63a11ef63f314a3e9afd2d6e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-small-aff3ct.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b7a0fca5f3692e3d47d204b52227c2c8baa3ca60fc9c758309021359cd93bc6b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-small-itpp.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-itpp.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "adf8679b1e1472d2b916c8d080946cf36462ac5e251eee27a835d70e8b0af217",
           "is_shared": false,
           "mime_type": null,
           "original_path": "2026-09-01-4e732b56-t2n-bchlib.log",
           "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-bchlib.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e941c35b0084f0a36f369c8b532fa6e74ecb81ca27486aa5515c0539191f6085",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-m4ri.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-m4ri.csv"
         },
         {
           "asset_type": "local",
@@ -158,86 +230,6 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "a6bc902e6feafa84e33292bde028553ace21b044916bd7f287fd41efa0bfa878",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-gf2.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-gf2.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "aef2ed476ff63eec2b1c9543794557b421fc5231b5f53afc08ee8f2c7d51ec29",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-aff3ct.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b32b948b4266b30d07bf437bb5fb2d3bb86e03f316ba34e4b512222cb8dcd48a",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-aff3ct.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "bc9d492ca85d55ee4b90dbc428896aa49355462f0978b3aca4ae0f8469a1a93e",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-aff3ct.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a20b446e8c5f8a8c5126aae205bb8fe88bca781480045347425fd31b581a15ea",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-m4ri.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-m4ri.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "fd0dd4d593e816000eb767f2f9bd4935074b81989752015c2a1845fd39a5c6a3",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "032d8511328851bf0cd8e39b64d87dcb9740168a845b2ea0e85cb5e4ca192d15",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-gf2.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-gf2.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "1c721047ffb73d9dc0ae52265415dffcf0445faf074b97050552190225253063",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "2026-09-01-4e732b56-small-host.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-host.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "483f9a398da9353ded879577ee0ba2b9fbe719cbb7e71da89268cfa785430e8d",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-itpp.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-itpp.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "477b2c45da937a649ba8bfb6ea7d804afe3095c80411033d79edcf2c1bdc1188",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "2026-09-01-4e732b56-small-aff3ct-perf-stat.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct-perf-stat.txt"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "35e605e3c1dd47ad71cdceae5d996ee72ff58aab587c6fc3967efa0251e732a5",
           "is_shared": false,
           "mime_type": null,
@@ -246,31 +238,31 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "03be44fa1b4b46b8e78ca94f7906c5f5bf3d838f7079ebfd2a6bdcd7acd22485",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-gf2.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-gf2.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "50255cbfa6e6564786fc959f04b7140e4fc7ecca659a9a51bc8a173633b8f9e0",
+          "content_hash": "4b7f34cce073151270ce82db6502aa691cd153e523df257a55ef4c599ff3431a",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "2026-09-01-4e732b56-t2n-host.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-host.txt"
+          "original_path": "2026-09-01-4e732b56-small-host.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-host.txt"
         },
         {
           "asset_type": "local",
-          "content_hash": "66c70e11ac5a72d2a71541a59ba7d54f8fcc9cb7f7b252e5f617330a8d9366c2",
+          "content_hash": "aed2248704efb36617489d661c022fe423726a66da155b9b9c0c0903650c34e6",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-m4ri.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-m4ri.csv"
+          "original_path": "2026-09-01-4e732b56-t2n-gf2.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-gf2.log"
         },
         {
           "asset_type": "local",
-          "content_hash": "d7fa607d46c7c7b11cb2c6ae00ac1c365fb6c7227be0a6e1eae32f355565f037",
+          "content_hash": "665d243751078c6364c226f0130f728bb44aa7d2da37d262c2e33522fed4d0e1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-m4ri.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-m4ri.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "62e962aca5491a42d3fa313a5297348c4c01d46f3e2fa02757cd9e627048ddbd",
           "is_shared": false,
           "mime_type": null,
           "original_path": "2026-09-01-4e732b56-small-bchlib.csv",
@@ -278,35 +270,43 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "6ee59a4016952ca50b628da0c858c7d69b1991d064f41cb44010e159a20b2847",
+          "content_hash": "e489581831e20c8ebeba10bdc6fa18f9e000ded3af03f2807c00ad4cfb1f25d8",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-aff3ct.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct.log"
+          "original_path": "2026-09-01-4e732b56-small-m4ri.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-m4ri.csv"
         },
         {
           "asset_type": "local",
-          "content_hash": "3a451148acfc4a026b925ab868969b519639b550701a92ebc37c00c6ca0c92e1",
+          "content_hash": "73c6f7a976b649e1a4a26cc4be715c578288fada4a8d780b18309456da584e29",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-bchlib.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-bchlib.log"
+          "mime_type": "text/plain",
+          "original_path": "2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt"
         },
         {
           "asset_type": "local",
-          "content_hash": "9ee2a9679682f025628b25237a91cc99cf7931155a787e7289440fb7212564a9",
+          "content_hash": "0c2f937df8c69be5effb382abeb5f8aa9cb551b1041abc0248c483fa4fa857b1",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-gf2.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-gf2.csv"
+          "original_path": "2026-09-01-4e732b56-t2n-aff3ct.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct.csv"
         },
         {
           "asset_type": "local",
-          "content_hash": "1be06c301303bd35ea160adf5bd793475258cb137356d3c7897b1281cc718eda",
+          "content_hash": "f495baa983deb07584ca4d1f1f31e79939766249b230c860cb76b8f5ea606616",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-m4ri.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-m4ri.log"
+          "original_path": "2026-09-01-4e732b56-small-m4ri.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-m4ri.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0556a6b7dcd68b916f01afc0553e1128d4df33d5aa7ab08f4f56f941f836011b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-aff3ct.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct.log"
         }
       ],
       "commit": null,
@@ -316,6 +316,7 @@
       "path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md"
     }
   ],
+  "done_at": "2026-09-01T05:06:03.514876505Z",
   "first_ready_at": "2026-08-28T22:50:47.339714882Z",
   "gates_required": [
     "doc-review",
@@ -324,12 +325,12 @@
   "gates_status": {
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-01T03:47:07.401426372Z",
+      "updated_at": "2026-09-01T04:58:45.574792869Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-01T03:55:38.026284253Z",
+      "status": "passed",
+      "updated_at": "2026-09-01T05:05:33.713656949Z",
       "updated_by": "auto:executor"
     }
   },
@@ -341,7 +342,7 @@
     "satisfies:REQ-13"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-01T03:55:38.026284253Z"
+  "updated_at": "2026-09-01T05:06:03.514876505Z"
 }

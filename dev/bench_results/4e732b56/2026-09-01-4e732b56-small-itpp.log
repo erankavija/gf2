@@ -8,18 +8,18 @@ nice: cannot set niceness: Permission denied
 # seed: 0x00000000ae03bcd0
 # codes_selected: B1,B2,B3,T2S
 # code B1: n=15 k=5 t=3
-#   B1 poly-remainder-gfx batch=1     reps=2809 spent=0.03s
-#   B1 poly-remainder-gfx batch=16    reps=341 spent=0.03s
-#   B1 poly-remainder-gfx batch=256   reps=24 spent=0.04s
+#   B1 poly-remainder-gfx batch=1     reps=2703 spent=0.02s
+#   B1 poly-remainder-gfx batch=16    reps=345 spent=0.03s
+#   B1 poly-remainder-gfx batch=256   reps=25 spent=0.04s
 #   B1 poly-remainder-gfx batch=4096  reps=2 spent=0.05s
 # code B2: n=127 k=64 t=10
-#   B2 poly-remainder-gfx batch=1     reps=57 spent=0.04s
+#   B2 poly-remainder-gfx batch=1     reps=58 spent=0.04s
 #   B2 poly-remainder-gfx batch=16    reps=4 spent=0.04s
 #   B2 poly-remainder-gfx batch=256   reps=1 spent=0.17s
-#   B2 poly-remainder-gfx batch=4096  reps=1 spent=2.81s
+#   B2 poly-remainder-gfx batch=4096  reps=1 spent=2.79s
 # code B3: n=255 k=223 t=4
 #   B3 poly-remainder-gfx batch=1     reps=9 spent=0.04s
 #   B3 poly-remainder-gfx batch=16    reps=1 spent=0.06s
-#   B3 poly-remainder-gfx batch=256   reps=1 spent=1.03s
-#   B3 poly-remainder-gfx batch=4096  reps=1 spent=16.57s
+#   B3 poly-remainder-gfx batch=256   reps=1 spent=1.02s
+#   B3 poly-remainder-gfx batch=4096  reps=1 spent=16.47s
 # SKIP T2S: n=7200 is shortened; itpp::BCH requires n+1 to be a power of two

@@ -1,6 +1,6 @@
 # survey host record — captured by run-survey.sh
-# generated: 2026-09-01T02:41:47Z
-# gf2 revision: 801d89852847afc789e9ddf26c1f1ebd3efb2a8b
+# generated: 2026-09-01T04:13:04Z
+# gf2 revision: 38e0335a092bb1d7dc851ff91ee7d156d1c72996
 # codes selected: B1,B2,B3,T2S
 
 ## uname
@@ -36,7 +36,7 @@ Socket(s):                               1
 Stepping:                                2
 Microcode version:                       0xa201211
 Frequency boost:                         enabled
-CPU(s) scaling MHz:                      77%
+CPU(s) scaling MHz:                      58%
 CPU max MHz:                             4954.5649
 CPU min MHz:                             567.0890
 BogoMIPS:                                7400.41

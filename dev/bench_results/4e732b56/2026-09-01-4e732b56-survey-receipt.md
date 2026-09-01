@@ -6,7 +6,7 @@ figure below is read out of the committed CSVs at render time.
 | Field | Value |
 |---|---|
 | Issue | `4e732b56` |
-| Run timestamps (UTC) | 2026-09-01T02:41:47Z, 2026-09-01T02:53:03Z |
+| Run timestamps (UTC) | 2026-09-01T04:13:04Z, 2026-09-01T04:23:21Z |
 | gf2 revision | recorded per stage below |
 | Host | AMD Ryzen 9 5900X 12-Core Processor |
 | Cores pinned | CCX1 via `dev/scripts/ccx1-bench-flock.sh` (`taskset -c 6-11`; nice -n -5 requested, denied, and the child ran at inherited default priority) |
@@ -49,156 +49,159 @@ inherited from the host manifest; a differing data revision is shown as
 
 | Stage | Output | Provenance log | Exact invocation(s) | Basis | gf2 revision for this stage | Host manifest |
 |---|---|---|---|---|---|---|
-| `2026-09-01-4e732b56-small-aff3ct` | [2026-09-01-4e732b56-small-aff3ct.csv](2026-09-01-4e732b56-small-aff3ct.csv) | [2026-09-01-4e732b56-small-aff3ct.log](2026-09-01-4e732b56-small-aff3ct.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench all` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
-| `2026-09-01-4e732b56-small-bchlib` | [2026-09-01-4e732b56-small-bchlib.csv](2026-09-01-4e732b56-small-bchlib.csv) | [2026-09-01-4e732b56-small-bchlib.log](2026-09-01-4e732b56-small-bchlib.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/bchlib_bch_bench` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
-| `2026-09-01-4e732b56-small-gf2` | [2026-09-01-4e732b56-small-gf2.csv](2026-09-01-4e732b56-small-gf2.csv) | [2026-09-01-4e732b56-small-gf2.log](2026-09-01-4e732b56-small-gf2.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/target/survey-target/release/survey-gf2-side all` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
-| `2026-09-01-4e732b56-small-itpp` | [2026-09-01-4e732b56-small-itpp.csv](2026-09-01-4e732b56-small-itpp.csv) | [2026-09-01-4e732b56-small-itpp.log](2026-09-01-4e732b56-small-itpp.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/itpp_bch_bench` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
-| `2026-09-01-4e732b56-small-m4ri` | [2026-09-01-4e732b56-small-m4ri.csv](2026-09-01-4e732b56-small-m4ri.csv) | [2026-09-01-4e732b56-small-m4ri.log](2026-09-01-4e732b56-small-m4ri.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench dev/bench_results/4e732b56/generators.txt all` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
-| `2026-09-01-4e732b56-t2n-aff3ct` | [2026-09-01-4e732b56-t2n-aff3ct.csv](2026-09-01-4e732b56-t2n-aff3ct.csv) | [2026-09-01-4e732b56-t2n-aff3ct.log](2026-09-01-4e732b56-t2n-aff3ct.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench all` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
-| `2026-09-01-4e732b56-t2n-bchlib` | [2026-09-01-4e732b56-t2n-bchlib.csv](2026-09-01-4e732b56-t2n-bchlib.csv) | [2026-09-01-4e732b56-t2n-bchlib.log](2026-09-01-4e732b56-t2n-bchlib.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/bchlib_bch_bench` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
-| `2026-09-01-4e732b56-t2n-gf2` | [2026-09-01-4e732b56-t2n-gf2.csv](2026-09-01-4e732b56-t2n-gf2.csv) | [2026-09-01-4e732b56-t2n-gf2.log](2026-09-01-4e732b56-t2n-gf2.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/target/survey-target/release/survey-gf2-side all` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
-| `2026-09-01-4e732b56-t2n-itpp` | [2026-09-01-4e732b56-t2n-itpp.csv](2026-09-01-4e732b56-t2n-itpp.csv) | [2026-09-01-4e732b56-t2n-itpp.log](2026-09-01-4e732b56-t2n-itpp.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/itpp_bch_bench` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
-| `2026-09-01-4e732b56-t2n-m4ri` | [2026-09-01-4e732b56-t2n-m4ri.csv](2026-09-01-4e732b56-t2n-m4ri.csv) | [2026-09-01-4e732b56-t2n-m4ri.log](2026-09-01-4e732b56-t2n-m4ri.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench dev/bench_results/4e732b56/generators.txt all` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
-| `2026-09-01-4e732b56-small-aff3ct-perf` | (perf counters) | [2026-09-01-4e732b56-small-aff3ct-perf-stat.txt](2026-09-01-4e732b56-small-aff3ct-perf-stat.txt) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh perf stat -e task-clock\,cycles\,instructions\,branches\,branch-misses\,cache-references\,cache-misses /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
-| `2026-09-01-4e732b56-t2n-aff3ct-perf` | (perf counters) | [2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt](2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh perf stat -e task-clock\,cycles\,instructions\,branches\,branch-misses\,cache-references\,cache-misses /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1` | recorded (log header) | `801d89852847afc789e9ddf26c1f1ebd3efb2a8b` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
+| `2026-09-01-4e732b56-small-aff3ct` | [2026-09-01-4e732b56-small-aff3ct.csv](2026-09-01-4e732b56-small-aff3ct.csv) | [2026-09-01-4e732b56-small-aff3ct.log](2026-09-01-4e732b56-small-aff3ct.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench all` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
+| `2026-09-01-4e732b56-small-bchlib` | [2026-09-01-4e732b56-small-bchlib.csv](2026-09-01-4e732b56-small-bchlib.csv) | [2026-09-01-4e732b56-small-bchlib.log](2026-09-01-4e732b56-small-bchlib.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/bchlib_bch_bench` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
+| `2026-09-01-4e732b56-small-gf2` | [2026-09-01-4e732b56-small-gf2.csv](2026-09-01-4e732b56-small-gf2.csv) | [2026-09-01-4e732b56-small-gf2.log](2026-09-01-4e732b56-small-gf2.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/target/survey-target/release/survey-gf2-side all` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
+| `2026-09-01-4e732b56-small-itpp` | [2026-09-01-4e732b56-small-itpp.csv](2026-09-01-4e732b56-small-itpp.csv) | [2026-09-01-4e732b56-small-itpp.log](2026-09-01-4e732b56-small-itpp.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/itpp_bch_bench` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
+| `2026-09-01-4e732b56-small-m4ri` | [2026-09-01-4e732b56-small-m4ri.csv](2026-09-01-4e732b56-small-m4ri.csv) | [2026-09-01-4e732b56-small-m4ri.log](2026-09-01-4e732b56-small-m4ri.log) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench dev/bench_results/4e732b56/generators.txt all` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
+| `2026-09-01-4e732b56-t2n-aff3ct` | [2026-09-01-4e732b56-t2n-aff3ct.csv](2026-09-01-4e732b56-t2n-aff3ct.csv) | [2026-09-01-4e732b56-t2n-aff3ct.log](2026-09-01-4e732b56-t2n-aff3ct.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench all` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
+| `2026-09-01-4e732b56-t2n-bchlib` | [2026-09-01-4e732b56-t2n-bchlib.csv](2026-09-01-4e732b56-t2n-bchlib.csv) | [2026-09-01-4e732b56-t2n-bchlib.log](2026-09-01-4e732b56-t2n-bchlib.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/bchlib_bch_bench` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
+| `2026-09-01-4e732b56-t2n-gf2` | [2026-09-01-4e732b56-t2n-gf2.csv](2026-09-01-4e732b56-t2n-gf2.csv) | [2026-09-01-4e732b56-t2n-gf2.log](2026-09-01-4e732b56-t2n-gf2.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/target/survey-target/release/survey-gf2-side all` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
+| `2026-09-01-4e732b56-t2n-itpp` | [2026-09-01-4e732b56-t2n-itpp.csv](2026-09-01-4e732b56-t2n-itpp.csv) | [2026-09-01-4e732b56-t2n-itpp.log](2026-09-01-4e732b56-t2n-itpp.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/itpp_bch_bench` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
+| `2026-09-01-4e732b56-t2n-m4ri` | [2026-09-01-4e732b56-t2n-m4ri.csv](2026-09-01-4e732b56-t2n-m4ri.csv) | [2026-09-01-4e732b56-t2n-m4ri.log](2026-09-01-4e732b56-t2n-m4ri.log) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh timeout --foreground 1800 /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench dev/bench_results/4e732b56/generators.txt all` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
+| `2026-09-01-4e732b56-small-aff3ct-perf` | (perf counters) | [2026-09-01-4e732b56-small-aff3ct-perf-stat.txt](2026-09-01-4e732b56-small-aff3ct-perf-stat.txt) | `GF2_SURVEY_CODES=B1\,B2\,B3\,T2S /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh perf stat -e task-clock\,cycles\,instructions\,branches\,branch-misses\,cache-references\,cache-misses /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-small-host.txt](2026-09-01-4e732b56-small-host.txt) |
+| `2026-09-01-4e732b56-t2n-aff3ct-perf` | (perf counters) | [2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt](2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt) | `GF2_SURVEY_CODES=T2N /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh perf stat -e task-clock\,cycles\,instructions\,branches\,branch-misses\,cache-references\,cache-misses /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1` | recorded (log header) | `38e0335a092bb1d7dc851ff91ee7d156d1c72996` | [2026-09-01-4e732b56-t2n-host.txt](2026-09-01-4e732b56-t2n-host.txt) |
 
 ## Measured cells
 
-Throughput is information bits per second for W1 and matrix bits per second
-for W2. `Trials` is the number of independent trials the cell's wall budget
-allowed; a cell marked *estimate* was projected from a measured per-unit cost
-and was never run at that size.
+Throughput is information bits per second for W1 and for the W2
+`matmul-m4rm` substrate rows (scaled by batch times k so the multiply
+family compares directly with the W1 encoders), and matrix bits per
+second for the W2 materialization rows. `Trials` is the number of
+independent trials the cell's wall budget allowed; a cell marked
+*estimate* was projected from a measured per-unit cost and was never
+run at that size.
 
 | Workload | Row | Batch | Library | Algorithm | Trials | Median | Min | Max | Spread |
 |---|---|---|---|---|---|---|---|---|---|
-| W1 | B1 | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 84.93 | 73.42 | 89.99 | 19.5% |
-| W1 | B1 | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 4.55 | 4.06 | 4.66 | 13.0% |
-| W1 | B1 | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 4.53 | 4.51 | 4.54 | 0.6% |
-| W1 | B1 | 1 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 3.83 | 3.65 | 3.90 | 6.6% |
-| W1 | B1 | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 101.23 | 83.25 | 101.40 | 17.9% |
-| W1 | B1 | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 374.33 | 358.10 | 385.65 | 7.4% |
-| W1 | B1 | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 7.04 | 6.80 | 7.06 | 3.7% |
-| W1 | B1 | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 6.82 | 6.80 | 6.87 | 1.0% |
-| W1 | B1 | 16 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 5.46 | 5.45 | 5.46 | 0.3% |
-| W1 | B1 | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 100.91 | 100.76 | 101.23 | 0.5% |
-| W1 | B1 | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 366.03 | 358.33 | 370.28 | 3.3% |
-| W1 | B1 | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 5.91 | 5.89 | 5.92 | 0.5% |
-| W1 | B1 | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 5.91 | 5.90 | 5.95 | 0.7% |
-| W1 | B1 | 256 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 6.12 | 6.11 | 6.12 | 0.3% |
-| W1 | B1 | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 99.70 | 99.10 | 99.93 | 0.8% |
-| W1 | B1 | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 364.21 | 361.71 | 365.59 | 1.1% |
-| W1 | B1 | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 6.17 | 6.16 | 6.22 | 1.0% |
-| W1 | B1 | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 6.08 | 5.91 | 6.10 | 3.0% |
-| W1 | B1 | 4096 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 6.08 | 6.07 | 6.09 | 0.4% |
-| W1 | B2 | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 92.75 | 92.15 | 93.02 | 0.9% |
-| W1 | B2 | 1 | bchlib v2.1.3 | `table-remainder` | 7 | 2001.39 | 1943.43 | 2128.18 | 9.2% |
-| W1 | B2 | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 1.76 | 1.73 | 1.77 | 2.1% |
-| W1 | B2 | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 1.77 | 1.76 | 1.77 | 1.0% |
-| W1 | B2 | 1 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.73 | 0.72 | 0.73 | 1.0% |
-| W1 | B2 | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 90.89 | 90.77 | 91.18 | 0.4% |
-| W1 | B2 | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 170.96 | 170.54 | 199.19 | 16.8% |
-| W1 | B2 | 16 | bchlib v2.1.3 | `table-remainder` | 7 | 2177.28 | 2025.19 | 2218.41 | 8.9% |
-| W1 | B2 | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 1.97 | 1.84 | 1.98 | 7.2% |
-| W1 | B2 | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 1.98 | 1.97 | 1.98 | 0.1% |
-| W1 | B2 | 16 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.67 | 0.66 | 0.67 | 0.7% |
-| W1 | B2 | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 85.53 | 84.56 | 86.00 | 1.7% |
-| W1 | B2 | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 195.71 | 177.96 | 197.29 | 9.9% |
-| W1 | B2 | 256 | bchlib v2.1.3 | `table-remainder` | 7 | 2210.77 | 2204.97 | 2220.03 | 0.7% |
-| W1 | B2 | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 1.88 | 1.77 | 1.90 | 7.3% |
-| W1 | B2 | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 1.89 | 1.65 | 1.89 | 12.4% |
-| W1 | B2 | 256 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.66 | 0.65 | 0.66 | 0.8% |
-| W1 | B2 | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 80.85 | 80.50 | 81.32 | 1.0% |
-| W1 | B2 | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 181.30 | 178.26 | 184.24 | 3.3% |
-| W1 | B2 | 4096 | bchlib v2.1.3 | `table-remainder` | 7 | 2233.08 | 2222.67 | 2241.20 | 0.8% |
-| W1 | B2 | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 1.91 | 1.90 | 1.92 | 1.1% |
-| W1 | B2 | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 1.90 | 1.88 | 1.91 | 1.6% |
-| W1 | B2 | 4096 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.65 | 0.64 | 0.65 | 1.8% |
-| W1 | B3 | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 110.85 | 110.11 | 111.10 | 0.9% |
-| W1 | B3 | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 3.26 | 3.20 | 3.30 | 3.1% |
-| W1 | B3 | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 3.22 | 3.21 | 3.25 | 1.0% |
-| W1 | B3 | 1 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.38 | 0.38 | 0.38 | 0.5% |
-| W1 | B3 | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 97.23 | 96.96 | 97.54 | 0.6% |
-| W1 | B3 | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 414.63 | 413.44 | 416.64 | 0.8% |
-| W1 | B3 | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 3.50 | 3.47 | 3.50 | 0.9% |
-| W1 | B3 | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 3.50 | 3.48 | 3.52 | 1.0% |
-| W1 | B3 | 16 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.40 | 0.40 | 0.40 | 0.6% |
-| W1 | B3 | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 96.07 | 95.66 | 96.18 | 0.5% |
-| W1 | B3 | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 410.57 | 409.82 | 412.32 | 0.6% |
-| W1 | B3 | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 3.43 | 3.42 | 3.46 | 1.1% |
-| W1 | B3 | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 3.44 | 3.43 | 3.46 | 1.0% |
-| W1 | B3 | 256 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.39 | 0.38 | 0.39 | 1.8% |
-| W1 | B3 | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 96.42 | 96.26 | 96.47 | 0.2% |
-| W1 | B3 | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 410.83 | 410.41 | 411.29 | 0.2% |
-| W1 | B3 | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 3.45 | 3.44 | 3.47 | 0.9% |
-| W1 | B3 | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 3.46 | 3.45 | 3.47 | 0.6% |
-| W1 | B3 | 4096 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.39 | 0.38 | 0.39 | 0.9% |
-| W1 | T2N | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 38.65 | 38.62 | 38.66 | 0.1% |
-| W1 | T2N | 1 | bchlib v2.1.3 | `table-remainder` | 7 | 4586.98 | 4387.54 | 4596.68 | 4.6% |
-| W1 | T2N | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 0.66 | 0.66 | 0.66 | 0.5% |
-| W1 | T2N | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 0.66 | 0.66 | 0.66 | 0.3% |
-| W1 | T2N | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 38.46 | 38.36 | 38.67 | 0.8% |
-| W1 | T2N | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 62.62 | 60.22 | 64.66 | 7.1% |
-| W1 | T2N | 16 | bchlib v2.1.3 | `table-remainder` | 7 | 4569.42 | 4548.49 | 4575.00 | 0.6% |
-| W1 | T2N | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 0.62 | 0.47 | 0.66 | 30.0% |
-| W1 | T2N | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 0.65 | 0.64 | 0.67 | 3.1% |
-| W1 | T2N | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 38.23 | 38.15 | 38.30 | 0.4% |
-| W1 | T2N | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 61.65 | 60.97 | 62.53 | 2.5% |
-| W1 | T2N | 256 | bchlib v2.1.3 | `table-remainder` | 7 | 4302.23 | 4222.99 | 4603.97 | 8.9% |
-| W1 | T2N | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 0.62 | 0.48 | 0.67 | 31.7% |
-| W1 | T2N | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 0.67 | 0.59 | 0.67 | 12.8% |
-| W1 | T2N | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 38.26 | 38.08 | 38.37 | 0.8% |
-| W1 | T2N | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 61.45 | 61.05 | 61.60 | 0.9% |
-| W1 | T2N | 4096 | bchlib v2.1.3 | `table-remainder` | 7 | 4589.92 | 4563.36 | 4595.97 | 0.7% |
-| W1 | T2N | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch-projected` | *estimate* | 0.64 | — | — | — |
-| W1 | T2S | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 44.19 | 44.11 | 44.24 | 0.3% |
-| W1 | T2S | 1 | bchlib v2.1.3 | `table-remainder` | 7 | 4576.20 | 4543.51 | 4597.41 | 1.2% |
-| W1 | T2S | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 0.78 | 0.77 | 0.79 | 2.2% |
-| W1 | T2S | 1 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 0.78 | 0.77 | 0.79 | 2.0% |
-| W1 | T2S | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 42.30 | 42.26 | 42.43 | 0.4% |
-| W1 | T2S | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 67.46 | 67.40 | 67.61 | 0.3% |
-| W1 | T2S | 16 | bchlib v2.1.3 | `table-remainder` | 7 | 4548.67 | 4527.30 | 4561.70 | 0.8% |
-| W1 | T2S | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 0.77 | 0.76 | 0.78 | 2.1% |
-| W1 | T2S | 16 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 0.77 | 0.76 | 0.77 | 1.3% |
-| W1 | T2S | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 41.95 | 39.49 | 42.01 | 6.0% |
-| W1 | T2S | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 67.48 | 66.86 | 67.57 | 1.0% |
-| W1 | T2S | 256 | bchlib v2.1.3 | `table-remainder` | 7 | 4554.24 | 4545.02 | 4564.36 | 0.4% |
-| W1 | T2S | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 7 | 0.76 | 0.54 | 0.76 | 29.2% |
-| W1 | T2S | 256 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 7 | 0.76 | 0.76 | 0.77 | 0.6% |
-| W1 | T2S | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 41.96 | 41.86 | 42.26 | 0.9% |
-| W1 | T2S | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 48.70 | 48.67 | 48.86 | 0.4% |
-| W1 | T2S | 4096 | bchlib v2.1.3 | `table-remainder` | 7 | 4515.39 | 4505.84 | 4518.40 | 0.3% |
-| W1 | T2S | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-batch` | 3 | 0.73 | 0.72 | 0.76 | 4.6% |
-| W1 | T2S | 4096 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `encode-loop` | 2 | 0.64 | 0.57 | 0.71 | 21.5% |
-| W2 | B1 | 5 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 261.82 | 258.41 | 263.34 | 1.9% |
-| W2 | B1 | 5 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `generator-matrix` | 7 | 6.30 | 6.15 | 6.31 | 2.7% |
-| W2 | B1 | 5 | m4ri 20260122 | `echelonize` | 7 | 279.45 | 277.34 | 282.12 | 1.7% |
-| W2 | B1 | 5 | m4ri 20260122 | `genmatrix-rref` | 7 | 270.00 | 235.99 | 288.08 | 19.3% |
-| W2 | B1 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 116.34 | 116.02 | 116.61 | 0.5% |
-| W2 | B1 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 158.34 | 157.20 | 158.45 | 0.8% |
-| W2 | B2 | 64 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 160.00 | 159.45 | 161.47 | 1.3% |
-| W2 | B2 | 64 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `generator-matrix` | 7 | 6.99 | 6.93 | 7.04 | 1.5% |
-| W2 | B2 | 64 | m4ri 20260122 | `echelonize` | 7 | 1522.31 | 1515.08 | 1529.93 | 1.0% |
-| W2 | B2 | 64 | m4ri 20260122 | `genmatrix-rref` | 7 | 1161.54 | 1148.70 | 1171.65 | 2.0% |
-| W2 | B2 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 2109.07 | 2103.10 | 2113.43 | 0.5% |
-| W2 | B2 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 2686.64 | 2677.58 | 2699.63 | 0.8% |
-| W2 | B3 | 223 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 111.63 | 110.94 | 115.82 | 4.4% |
-| W2 | B3 | 223 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `generator-matrix` | 7 | 7.32 | 7.26 | 7.53 | 3.6% |
-| W2 | B3 | 223 | m4ri 20260122 | `echelonize` | 7 | 1564.15 | 1549.28 | 1575.07 | 1.6% |
-| W2 | B3 | 223 | m4ri 20260122 | `genmatrix-rref` | 7 | 1493.91 | 1481.91 | 1505.71 | 1.6% |
-| W2 | B3 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 2461.16 | 2445.10 | 2478.89 | 1.4% |
-| W2 | B3 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 2981.71 | 2959.79 | 2994.46 | 1.2% |
-| W2 | T2N | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 56.92 | 54.96 | 77.97 | 40.4% |
-| W2 | T2N | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 70.96 | 54.72 | 87.81 | 46.6% |
-| W2 | T2N | 32208 | aff3ct v4.7.0 | `basis-encode-pack` | 3 | 28.24 | 27.13 | 40.49 | 47.3% |
-| W2 | T2N | 32208 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `generator-matrix-projected` | *estimate* | 0.64 | — | — | — |
-| W2 | T2N | 32208 | m4ri 20260122 | `echelonize` | 7 | 157.16 | 120.70 | 164.79 | 28.1% |
-| W2 | T2N | 32208 | m4ri 20260122 | `genmatrix-rref` | 7 | 307.76 | 217.45 | 387.73 | 55.3% |
-| W2 | T2S | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 336.78 | 331.07 | 339.92 | 2.6% |
-| W2 | T2S | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 450.59 | 434.63 | 453.63 | 4.2% |
-| W2 | T2S | 7032 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 47.53 | 47.02 | 47.85 | 1.7% |
-| W2 | T2S | 7032 | gf2 801d89852847afc789e9ddf26c1f1ebd3efb2a8b | `generator-matrix` | 3 | 1.55 | 1.42 | 1.56 | 9.3% |
-| W2 | T2S | 7032 | m4ri 20260122 | `echelonize` | 7 | 790.81 | 788.49 | 794.30 | 0.7% |
-| W2 | T2S | 7032 | m4ri 20260122 | `genmatrix-rref` | 7 | 1325.36 | 1319.49 | 1330.15 | 0.8% |
+| W1 | B1 | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 111.49 | 101.00 | 111.78 | 9.7% |
+| W1 | B1 | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 4.64 | 4.34 | 4.67 | 7.1% |
+| W1 | B1 | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 4.56 | 4.53 | 4.58 | 1.2% |
+| W1 | B1 | 1 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 3.89 | 3.50 | 3.91 | 10.4% |
+| W1 | B1 | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 102.43 | 102.27 | 102.76 | 0.5% |
+| W1 | B1 | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 421.22 | 400.49 | 431.78 | 7.4% |
+| W1 | B1 | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 7.02 | 6.88 | 7.13 | 3.5% |
+| W1 | B1 | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 6.84 | 6.81 | 6.90 | 1.3% |
+| W1 | B1 | 16 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 5.57 | 5.53 | 5.57 | 0.7% |
+| W1 | B1 | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 103.98 | 103.24 | 104.32 | 1.0% |
+| W1 | B1 | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 426.63 | 422.97 | 432.46 | 2.2% |
+| W1 | B1 | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 5.92 | 5.89 | 6.00 | 1.9% |
+| W1 | B1 | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 5.99 | 5.96 | 6.00 | 0.7% |
+| W1 | B1 | 256 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 6.29 | 6.24 | 6.30 | 1.0% |
+| W1 | B1 | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 101.01 | 100.73 | 101.39 | 0.6% |
+| W1 | B1 | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 413.44 | 408.88 | 416.84 | 1.9% |
+| W1 | B1 | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 6.19 | 6.18 | 6.21 | 0.4% |
+| W1 | B1 | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 6.21 | 6.18 | 6.23 | 0.7% |
+| W1 | B1 | 4096 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 6.29 | 6.27 | 6.30 | 0.4% |
+| W1 | B2 | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 93.27 | 92.93 | 94.53 | 1.7% |
+| W1 | B2 | 1 | bchlib v2.1.3 | `table-remainder` | 7 | 2005.79 | 1914.13 | 2111.61 | 9.8% |
+| W1 | B2 | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 1.79 | 1.79 | 1.81 | 0.8% |
+| W1 | B2 | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 1.79 | 1.78 | 1.80 | 1.2% |
+| W1 | B2 | 1 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.74 | 0.74 | 0.74 | 0.2% |
+| W1 | B2 | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 95.34 | 94.99 | 95.42 | 0.4% |
+| W1 | B2 | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 206.10 | 184.18 | 206.97 | 11.1% |
+| W1 | B2 | 16 | bchlib v2.1.3 | `table-remainder` | 7 | 2230.97 | 2016.53 | 2240.37 | 10.0% |
+| W1 | B2 | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 1.99 | 1.98 | 1.99 | 0.5% |
+| W1 | B2 | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 1.98 | 1.98 | 1.99 | 0.5% |
+| W1 | B2 | 16 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.67 | 0.67 | 0.68 | 0.5% |
+| W1 | B2 | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 83.86 | 82.74 | 84.06 | 1.6% |
+| W1 | B2 | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 203.14 | 194.81 | 204.26 | 4.7% |
+| W1 | B2 | 256 | bchlib v2.1.3 | `table-remainder` | 7 | 2257.44 | 2243.69 | 2265.62 | 1.0% |
+| W1 | B2 | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 1.91 | 1.90 | 1.92 | 0.9% |
+| W1 | B2 | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 1.92 | 1.84 | 1.92 | 4.0% |
+| W1 | B2 | 256 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.66 | 0.66 | 0.67 | 1.0% |
+| W1 | B2 | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 80.20 | 79.79 | 80.38 | 0.7% |
+| W1 | B2 | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 184.03 | 177.09 | 188.03 | 5.9% |
+| W1 | B2 | 4096 | bchlib v2.1.3 | `table-remainder` | 7 | 2269.18 | 2246.35 | 2273.85 | 1.2% |
+| W1 | B2 | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 1.91 | 1.88 | 1.93 | 2.2% |
+| W1 | B2 | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 1.93 | 1.92 | 1.93 | 0.6% |
+| W1 | B2 | 4096 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.66 | 0.65 | 0.66 | 0.8% |
+| W1 | B3 | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 111.89 | 111.43 | 112.41 | 0.9% |
+| W1 | B3 | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 3.31 | 3.29 | 3.32 | 0.7% |
+| W1 | B3 | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 3.30 | 3.29 | 3.32 | 0.8% |
+| W1 | B3 | 1 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.38 | 0.38 | 0.39 | 0.4% |
+| W1 | B3 | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 98.73 | 98.41 | 99.27 | 0.9% |
+| W1 | B3 | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 435.52 | 433.88 | 437.45 | 0.8% |
+| W1 | B3 | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 3.57 | 3.53 | 3.58 | 1.2% |
+| W1 | B3 | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 3.54 | 3.53 | 3.55 | 0.6% |
+| W1 | B3 | 16 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.40 | 0.39 | 0.40 | 0.9% |
+| W1 | B3 | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 97.24 | 96.86 | 97.33 | 0.5% |
+| W1 | B3 | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 429.65 | 427.78 | 430.61 | 0.7% |
+| W1 | B3 | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 3.47 | 3.45 | 3.49 | 0.9% |
+| W1 | B3 | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 3.48 | 3.47 | 3.49 | 0.5% |
+| W1 | B3 | 256 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.39 | 0.39 | 0.39 | 0.6% |
+| W1 | B3 | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 97.93 | 96.15 | 98.44 | 2.3% |
+| W1 | B3 | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 430.38 | 429.24 | 431.86 | 0.6% |
+| W1 | B3 | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 3.46 | 3.45 | 3.48 | 0.9% |
+| W1 | B3 | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 3.47 | 3.46 | 3.48 | 0.6% |
+| W1 | B3 | 4096 | itpp 4.3.1+soname8.2.1 | `poly-remainder-gfx` | 7 | 0.39 | 0.38 | 0.39 | 1.2% |
+| W1 | T2N | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 39.00 | 38.74 | 39.22 | 1.2% |
+| W1 | T2N | 1 | bchlib v2.1.3 | `table-remainder` | 7 | 4653.66 | 4519.40 | 4661.75 | 3.1% |
+| W1 | T2N | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 0.68 | 0.67 | 0.68 | 1.0% |
+| W1 | T2N | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 0.68 | 0.67 | 0.68 | 0.7% |
+| W1 | T2N | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 38.65 | 38.45 | 38.87 | 1.1% |
+| W1 | T2N | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 78.72 | 77.66 | 78.96 | 1.6% |
+| W1 | T2N | 16 | bchlib v2.1.3 | `table-remainder` | 7 | 4675.59 | 4640.03 | 4686.60 | 1.0% |
+| W1 | T2N | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 0.68 | 0.68 | 0.68 | 0.2% |
+| W1 | T2N | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 0.68 | 0.68 | 0.68 | 0.4% |
+| W1 | T2N | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 38.46 | 38.39 | 38.70 | 0.8% |
+| W1 | T2N | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 77.86 | 77.30 | 78.07 | 1.0% |
+| W1 | T2N | 256 | bchlib v2.1.3 | `table-remainder` | 7 | 4677.70 | 4645.85 | 4693.63 | 1.0% |
+| W1 | T2N | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 0.68 | 0.68 | 0.68 | 0.4% |
+| W1 | T2N | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 0.68 | 0.68 | 0.68 | 0.2% |
+| W1 | T2N | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 38.61 | 38.59 | 38.64 | 0.1% |
+| W1 | T2N | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 77.84 | 77.75 | 77.98 | 0.3% |
+| W1 | T2N | 4096 | bchlib v2.1.3 | `table-remainder` | 7 | 4683.90 | 4679.02 | 4688.86 | 0.2% |
+| W1 | T2N | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch-projected` | *estimate* | 0.65 | — | — | — |
+| W1 | T2S | 1 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 44.04 | 43.68 | 44.06 | 0.9% |
+| W1 | T2S | 1 | bchlib v2.1.3 | `table-remainder` | 7 | 4598.06 | 4541.23 | 4614.51 | 1.6% |
+| W1 | T2S | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 0.78 | 0.78 | 0.79 | 0.8% |
+| W1 | T2S | 1 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 0.79 | 0.78 | 0.79 | 1.8% |
+| W1 | T2S | 16 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 42.88 | 42.77 | 43.26 | 1.2% |
+| W1 | T2S | 16 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 69.05 | 68.81 | 69.20 | 0.6% |
+| W1 | T2S | 16 | bchlib v2.1.3 | `table-remainder` | 7 | 4552.85 | 4541.80 | 4599.31 | 1.3% |
+| W1 | T2S | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 0.77 | 0.76 | 0.78 | 2.6% |
+| W1 | T2S | 16 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 0.76 | 0.76 | 0.77 | 0.6% |
+| W1 | T2S | 256 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 42.59 | 42.55 | 42.78 | 0.6% |
+| W1 | T2S | 256 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 46.94 | 46.66 | 47.04 | 0.8% |
+| W1 | T2S | 256 | bchlib v2.1.3 | `table-remainder` | 7 | 4587.41 | 4565.85 | 4590.47 | 0.5% |
+| W1 | T2S | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 7 | 0.77 | 0.77 | 0.77 | 0.2% |
+| W1 | T2S | 256 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 7 | 0.77 | 0.77 | 0.77 | 0.4% |
+| W1 | T2S | 4096 | aff3ct v4.7.0 | `lfsr-scalar` | 7 | 42.37 | 42.30 | 42.48 | 0.4% |
+| W1 | T2S | 4096 | aff3ct v4.7.0 | `lfsr-simd-inter` | 7 | 68.12 | 67.98 | 68.19 | 0.3% |
+| W1 | T2S | 4096 | bchlib v2.1.3 | `table-remainder` | 7 | 4581.15 | 4569.83 | 4594.38 | 0.5% |
+| W1 | T2S | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-batch` | 3 | 0.77 | 0.77 | 0.77 | 0.1% |
+| W1 | T2S | 4096 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `encode-loop` | 3 | 0.77 | 0.77 | 0.77 | 0.2% |
+| W2 | B1 | 5 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 297.72 | 296.60 | 298.96 | 0.8% |
+| W2 | B1 | 5 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `generator-matrix` | 7 | 6.40 | 6.35 | 6.41 | 0.9% |
+| W2 | B1 | 5 | m4ri 20260122 | `echelonize` | 7 | 279.99 | 270.63 | 283.77 | 4.7% |
+| W2 | B1 | 5 | m4ri 20260122 | `genmatrix-rref` | 7 | 247.12 | 204.68 | 255.75 | 20.7% |
+| W2 | B1 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 117.41 | 116.80 | 117.59 | 0.7% |
+| W2 | B1 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 159.15 | 158.01 | 160.68 | 1.7% |
+| W2 | B2 | 64 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 168.05 | 165.24 | 168.48 | 1.9% |
+| W2 | B2 | 64 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `generator-matrix` | 7 | 7.02 | 6.81 | 7.08 | 3.7% |
+| W2 | B2 | 64 | m4ri 20260122 | `echelonize` | 7 | 1441.38 | 1427.62 | 1450.11 | 1.6% |
+| W2 | B2 | 64 | m4ri 20260122 | `genmatrix-rref` | 7 | 1067.28 | 1060.11 | 1075.01 | 1.4% |
+| W2 | B2 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 2213.42 | 2201.04 | 2221.68 | 0.9% |
+| W2 | B2 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 2733.66 | 2730.47 | 2739.80 | 0.3% |
+| W2 | B3 | 223 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 118.43 | 115.88 | 121.36 | 4.6% |
+| W2 | B3 | 223 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `generator-matrix` | 7 | 7.37 | 7.35 | 7.52 | 2.3% |
+| W2 | B3 | 223 | m4ri 20260122 | `echelonize` | 7 | 1590.02 | 1585.34 | 1601.18 | 1.0% |
+| W2 | B3 | 223 | m4ri 20260122 | `genmatrix-rref` | 7 | 1464.47 | 1453.37 | 1476.70 | 1.6% |
+| W2 | B3 | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 2477.23 | 2465.61 | 2491.04 | 1.0% |
+| W2 | B3 | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 3013.48 | 3003.21 | 3050.10 | 1.6% |
+| W2 | T2N | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 83.60 | 83.41 | 83.85 | 0.5% |
+| W2 | T2N | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 92.49 | 92.32 | 92.59 | 0.3% |
+| W2 | T2N | 32208 | aff3ct v4.7.0 | `basis-encode-pack` | 4 | 41.37 | 41.33 | 41.39 | 0.1% |
+| W2 | T2N | 32208 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `generator-matrix-projected` | *estimate* | 0.65 | — | — | — |
+| W2 | T2N | 32208 | m4ri 20260122 | `echelonize` | 7 | 173.58 | 166.40 | 175.23 | 5.1% |
+| W2 | T2N | 32208 | m4ri 20260122 | `genmatrix-rref` | 7 | 391.99 | 383.41 | 395.55 | 3.1% |
+| W2 | T2S | 256 | m4ri 20260122 | `matmul-m4rm` | 7 | 339.48 | 337.55 | 341.10 | 1.0% |
+| W2 | T2S | 4096 | m4ri 20260122 | `matmul-m4rm` | 7 | 457.20 | 454.51 | 457.99 | 0.8% |
+| W2 | T2S | 7032 | aff3ct v4.7.0 | `basis-encode-pack` | 7 | 47.64 | 47.52 | 47.82 | 0.6% |
+| W2 | T2S | 7032 | gf2 38e0335a092bb1d7dc851ff91ee7d156d1c72996 | `generator-matrix` | 3 | 1.60 | 1.60 | 1.60 | 0.1% |
+| W2 | T2S | 7032 | m4ri 20260122 | `echelonize` | 7 | 807.27 | 766.08 | 808.89 | 5.3% |
+| W2 | T2S | 7032 | m4ri 20260122 | `genmatrix-rref` | 7 | 1344.98 | 1266.02 | 1351.45 | 6.4% |
 
 ## Files
 
@@ -207,34 +210,34 @@ and was never run at that size.
 | `2026-08-31-4e732b56-generator-agreement.txt` | `ccd3474e8296a67e…` | 170 |
 | `2026-08-31-4e732b56-kodo-retrieval.txt` | `cecfeef3993e7730…` | 6679 |
 | `2026-08-31-4e732b56-m4ri-thread-evidence.txt` | `f6ecb9472812db92…` | 3258 |
-| `2026-09-01-4e732b56-determinism-agreement.txt` | `314382095ab54880…` | 11640 |
-| `2026-09-01-4e732b56-generator-matrix-agreement.txt` | `8b7a94fcdbb6a375…` | 2072 |
-| `2026-09-01-4e732b56-small-aff3ct-perf-stat.txt` | `477b2c45da937a64…` | 3587 |
-| `2026-09-01-4e732b56-small-aff3ct.csv` | `bc9d492ca85d55ee…` | 18975 |
-| `2026-09-01-4e732b56-small-aff3ct.log` | `6ee59a4016952ca5…` | 2938 |
-| `2026-09-01-4e732b56-small-bchlib.csv` | `d7fa607d46c7c7b1…` | 5046 |
-| `2026-09-01-4e732b56-small-bchlib.log` | `3a451148acfc4a02…` | 1214 |
+| `2026-09-01-4e732b56-determinism-agreement.txt` | `306e7e625ada9977…` | 11701 |
+| `2026-09-01-4e732b56-generator-matrix-agreement.txt` | `bb5ce6c27b5c44c0…` | 2072 |
+| `2026-09-01-4e732b56-small-aff3ct-perf-stat.txt` | `7e5cd4e65ba7bca4…` | 3589 |
+| `2026-09-01-4e732b56-small-aff3ct.csv` | `78997130a40ef02b…` | 18990 |
+| `2026-09-01-4e732b56-small-aff3ct.log` | `e6f98d1e11984447…` | 3028 |
+| `2026-09-01-4e732b56-small-bchlib.csv` | `62e962aca5491a42…` | 5046 |
+| `2026-09-01-4e732b56-small-bchlib.log` | `466a6bb1e607c8bc…` | 1213 |
 | `2026-09-01-4e732b56-small-generator-agreement.txt` | `ccd3474e8296a67e…` | 170 |
-| `2026-09-01-4e732b56-small-gf2.csv` | `9ee2a9679682f025…` | 27195 |
-| `2026-09-01-4e732b56-small-gf2.log` | `03be44fa1b4b46b8…` | 3251 |
-| `2026-09-01-4e732b56-small-host.txt` | `1c721047ffb73d9d…` | 6947 |
-| `2026-09-01-4e732b56-small-itpp.csv` | `6caa631f35e3ec41…` | 8175 |
-| `2026-09-01-4e732b56-small-itpp.log` | `483f9a398da9353d…` | 1345 |
-| `2026-09-01-4e732b56-small-m4ri.csv` | `e941c35b0084f0a3…` | 9403 |
-| `2026-09-01-4e732b56-small-m4ri.log` | `a20b446e8c5f8a8c…` | 1467 |
-| `2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt` | `fd0dd4d593e81600…` | 2078 |
-| `2026-09-01-4e732b56-t2n-aff3ct.csv` | `aef2ed476ff63eec…` | 4866 |
-| `2026-09-01-4e732b56-t2n-aff3ct.log` | `b32b948b4266b30d…` | 1125 |
-| `2026-09-01-4e732b56-t2n-bchlib.csv` | `a7aba073dac40aa7…` | 2708 |
-| `2026-09-01-4e732b56-t2n-bchlib.log` | `0094031cd0b79e91…` | 752 |
+| `2026-09-01-4e732b56-small-gf2.csv` | `114480a340214225…` | 27312 |
+| `2026-09-01-4e732b56-small-gf2.log` | `9b36595cea87b1e0…` | 3251 |
+| `2026-09-01-4e732b56-small-host.txt` | `4b7f34cce0731512…` | 6947 |
+| `2026-09-01-4e732b56-small-itpp.csv` | `b7a0fca5f3692e3d…` | 8175 |
+| `2026-09-01-4e732b56-small-itpp.log` | `8a02846e9622618c…` | 1345 |
+| `2026-09-01-4e732b56-small-m4ri.csv` | `e489581831e20c8e…` | 9403 |
+| `2026-09-01-4e732b56-small-m4ri.log` | `f495baa983deb075…` | 1467 |
+| `2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt` | `73c6f7a976b649e1…` | 2078 |
+| `2026-09-01-4e732b56-t2n-aff3ct.csv` | `0c2f937df8c69be5…` | 4962 |
+| `2026-09-01-4e732b56-t2n-aff3ct.log` | `0556a6b7dcd68b91…` | 1147 |
+| `2026-09-01-4e732b56-t2n-bchlib.csv` | `b1cd28210a86d6a5…` | 2708 |
+| `2026-09-01-4e732b56-t2n-bchlib.log` | `adf8679b1e1472d2…` | 752 |
 | `2026-09-01-4e732b56-t2n-generator-agreement.txt` | `ccd3474e8296a67e…` | 170 |
-| `2026-09-01-4e732b56-t2n-gf2.csv` | `a6bc902e6feafa84…` | 5468 |
-| `2026-09-01-4e732b56-t2n-gf2.log` | `032d8511328851bf…` | 1217 |
-| `2026-09-01-4e732b56-t2n-host.txt` | `50255cbfa6e65647…` | 6938 |
+| `2026-09-01-4e732b56-t2n-gf2.csv` | `c84e385bfcb94111…` | 5468 |
+| `2026-09-01-4e732b56-t2n-gf2.log` | `aed2248704efb366…` | 1217 |
+| `2026-09-01-4e732b56-t2n-host.txt` | `73e8f203ceac9f17…` | 6938 |
 | `2026-09-01-4e732b56-t2n-itpp.csv` | `eebab57153ce9b42…` | 90 |
 | `2026-09-01-4e732b56-t2n-itpp.log` | `35e605e3c1dd47ad…` | 555 |
-| `2026-09-01-4e732b56-t2n-m4ri.csv` | `66c70e11ac5a72d2…` | 2690 |
-| `2026-09-01-4e732b56-t2n-m4ri.log` | `1be06c301303bd35…` | 770 |
+| `2026-09-01-4e732b56-t2n-m4ri.csv` | `9a23de2050cc37f1…` | 2683 |
+| `2026-09-01-4e732b56-t2n-m4ri.log` | `665d243751078c63…` | 769 |
 | `generators.txt` | `612d5c84ee02ff69…` | 551 |
 
 ## Reproduction

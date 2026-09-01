@@ -8,6 +8,7 @@
   ],
   "description": "Implement the designed field-generic block-code, encoding, generator-matrix, and parity-check trait surface with packed `BitVec`/`BitMatrix` binary specializations, and stand up the named compatibility boundary so existing code families compile unchanged.\n\n## Background\n\nThis is the trait cutover child shared with the streaming/batch unification story: that story builds on these traits rather than designing a competing surface. Existing families (LDPC, CRC, product, GRAND consumers) remain on the compatibility boundary until their own migrations; BCH migrates within this epic.\n\n## Success Criteria\n\n- [hard] REQ-01: The designed generic traits exist with binary specializations preserving packed behavior, and static generic implementations dispatch with zero-cost monomorphization.\n- [hard] REQ-02: The named, versioned compatibility boundary keeps existing consumer families compiling and passing tests unchanged, with its removal condition recorded.\n- [hard] REQ-03: Workspace tests, clippy with warnings denied, and formatting pass.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T05:09:20.461340032Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -23,7 +24,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Introduce field-generic block-code traits with binary specializations",
-  "updated_at": "2026-09-01T03:07:12.641844526Z"
+  "updated_at": "2026-09-01T05:09:20.461340032Z"
 }
