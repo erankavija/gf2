@@ -1,0 +1,37 @@
+# command: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/scripts/ccx1-bench-flock.sh perf stat -e task-clock\,cycles\,instructions\,branches\,branch-misses\,cache-references\,cache-misses /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1
+# environment: GF2_SURVEY_CODES=T2N
+nice: cannot set niceness: Permission denied
+# harness: aff3ct_bch_bench
+# aff3ct_version: v4.7.0
+# mipp_lanes_int32: 8
+# mipp_instr_type: AVX2
+# trials_per_cell: 7
+# warmup_reps: 2
+# seed: 0x00000000ae03bcd0
+# codes_selected: T2N
+# code T2N: mother_n=65535 deg_g=192
+#   T2N lfsr-scalar      batch=1     reps=6 spent=0.04s
+# SKIP T2N batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
+#   T2N lfsr-scalar      batch=16    reps=1 spent=0.10s
+#   T2N lfsr-simd-inter  batch=16    reps=1 spent=0.07s
+#   T2N lfsr-scalar      batch=256   reps=1 spent=1.70s
+#   T2N lfsr-simd-inter  batch=256   reps=1 spent=1.06s
+#   T2N lfsr-scalar      batch=4096  reps=1 spent=27.06s
+#   T2N lfsr-simd-inter  batch=4096  reps=1 spent=17.07s
+
+ Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1':
+
+          63308.16 msec task-clock:u                                                          
+      280359584192      cycles:u                                                                (83.36%)
+      810309592264      instructions:u                                                          (83.31%)
+      101625334402      branches:u                                                              (83.33%)
+         707380826      branch-misses:u                                                         (83.29%)
+        2126727942      cache-references:u                                                      (83.31%)
+          59359367      cache-misses:u                                                          (83.39%)
+
+      68.949209687 seconds time elapsed
+
+      62.240879000 seconds user
+       0.428442000 seconds sys
+
+

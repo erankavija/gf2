@@ -37,6 +37,7 @@ HARNESS_TIMEOUT="${GF2_SURVEY_TIMEOUT:-1800}"
 # Which M4RI cell groups to run: all | genmatrix | substrate. The substrate
 # cells are the expensive ones at the largest shape.
 M4RI_SEL="${GF2_SURVEY_M4RI_SEL:-all}"
+GF2_BIN="${GF2_SURVEY_GF2_BIN:-${EXT}/survey-target/release/survey-gf2-side}"
 mkdir -p "${OUT}"
 
 GF2_REV="$(git -C "${REPO}" rev-parse HEAD)"
@@ -130,7 +131,7 @@ run_one aff3ct "${HERE}/aff3ct_bch_bench" all
 run_one bchlib "${HERE}/bchlib_bch_bench"
 run_one itpp "${HERE}/itpp_bch_bench"
 run_one m4ri "${HERE}/m4ri_genmatrix_bench" "${OUT}/generators.txt" "${M4RI_SEL}"
-run_one gf2 "${EXT}/survey-target/release/survey-gf2-side" all
+run_one gf2 "${GF2_BIN}" all
 
 # ---------------------------------------------------------------- perf record
 # One representative cell per workload, so the receipt carries a hardware
