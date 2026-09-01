@@ -61,3 +61,21 @@ test-only retry is authorized for the three findings above. This is guided
 retry 1 after the reset. It changes neither the measured artifacts nor
 production behavior. Re-run focused tests, the baked slice, formatting,
 clippy, artifact byte checks, and independent pre-merge review before merging.
+
+## Post-merge gate finding
+
+Guided retry 1 passed independent review and merged at `561b0d71`. The exact
+merged tree passes `./scripts/cargo-ci.sh` with 5,299 tests and the configured
+code-review gate with zero findings. The configured doc-review gate found two
+blocking single-source-prose defects: `KERNEL_OPTIMIZATION.md` and
+`QUALITY_AUDIT_REPORT.md` both say the new receipt records the direct-backend
+versus dispatcher distinction under a section named **“What this receipt does
+not claim”**, but the receipt has no such section.
+
+Rework 2 after the reset is limited to making those citations resolve to one
+explicit authoritative scope statement in the receipt. It must not alter the
+measured owner, complete envelope, raw log, checksum manifest, harness, or
+production behavior. Re-run formatting, link/heading checks, the checksum
+manifest, independent documentation review, and the configured doc-review
+gate. Any further blocking finding exhausts the reset rework allowance and
+requires invoker escalation.

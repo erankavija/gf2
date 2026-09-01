@@ -35,9 +35,9 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:29:38.794332686Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-09-01T05:59:05.257371228Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "389aa4de-e6dc-4adb-a2e8-03153192b8cc",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
-  "updated_at": "2026-09-01T05:54:54.574604497Z"
+  "updated_at": "2026-09-01T05:59:05.257371228Z"
 }
