@@ -287,7 +287,7 @@
           "title": "Migrate HIP syndrome/decode support behaviorally intact",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework attempt 1 in flight (native Opus, fresh worktree at dbb28407): code-review R1 FAIL \u2014 correct_batch_gpu leaves mutated unverified candidates on verification-pass HIP error (core.rs:1960/1973); receipt must re-pin post-fix"
+          "status": "rework attempt 2 in flight (live Opus teammate): R1 restore+CPU-fallback merged 63952bf2, cargo-ci + hip-ci passed, receipt repinned b3679e50 + doc-linked; code-review R2 FAIL new finding \u2014 exp/log table expect panics on canonical fields without u16 tables (core.rs:1760)"
         },
         {
           "key": "proof-sketch",
@@ -550,7 +550,7 @@
     "981c5ae3": 1,
     "6d67e57e": 1,
     "8f68699b": 2,
-    "c3cc5226": 1
+    "c3cc5226": 2
   },
   "surfaced_pitfalls": [
     {
