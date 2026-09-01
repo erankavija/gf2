@@ -14,7 +14,58 @@
     "fbe66a7a-454c-459a-a231-63f4adcf3dcb"
   ],
   "description": "Extend the explicit calibration action to the eleven sweepable follow-on core threshold fields.\n\n## Background\n\nThe follow-on selector migration design at `dev/active/7d824b2f/design.md` fixes the sweepability test and field set. The strict format-2 mechanism and the pilot measured core-owner envelope are inputs. This task reuses the one fresh-process steering protocol and `CoreTuningCodec`; it creates no second loader, forcing hook, or artifact representation.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration action sweeps the eleven sweepable follow-on threshold fields through the standing crossover rule. Every timed route runs in a fresh child that installs a strict prepared core section and asserts `Installed` for every steered field before public production dispatch. The parent and composer never install a profile; a nonzero exit, malformed result, `DefaultedMissing`, or `FrozenBeforeInstall` invalidates the run without publishing an artifact.\n- [hard] REQ-02: The receipt records every field's grid, timing samples and uncertainty, route observations, selection and fallback rule, and outcome—measured, tie, non-monotone, or uncalibrated—together with clean source revision, seed, host, toolchain, and separate section-measurement versus envelope-assembly provenance. A non-sweepable or invalid result remains omitted under the core codec's section-local omission rule and is never filled with an estimate.\n- [hard] REQ-03: The authoritative core-owner envelope is updated atomically and strictly reopened and contains no algebra vocabulary. Its one section-level measurement provenance and receipt cover every retained measured selector; values not covered by the run are explicitly superseded or omitted rather than copied beneath unrelated evidence.\n- [hard] REQ-04: Calibration remains an explicit action under one outer benchmark lock with no build side effect. The both-codec composer regenerates and strictly reopens the complete repository envelope while preserving the canonical core wrapper and leaving the algebra wrapper unchanged.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ea4dc1bb84ed41dde5981b3e675a37739796c9c7f65ca64ddac8cbcabc2eb527",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../7d824b2f/design.md",
+          "resolved_path": "dev/active/7d824b2f/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e189214622a59b9f8bb2d2148062b058aeed82ec80c8c3bfc4005145939dec08",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../benchmarks/tuning_profiles/2026-09-01-389aa4de.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md"
+        }
+      ],
+      "commit": "3514d75db0bdbec797f1345d8b0519c47619b472",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Authoritative premeasurement protocol",
+      "path": "dev/active/eaae1b56/premeasurement-protocol.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7f93ba16aef30dda33c21a3e2fee82f16f663b657154b904dce5cd6cbc813b8f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c0cb1f00c67275e08f6c8e2cc30e610273532db6eab3a1bb6ef90edfdbdee54c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../220cab0b/design.md",
+          "resolved_path": "dev/active/220cab0b/design.md"
+        }
+      ],
+      "commit": "3514d75db0bdbec797f1345d8b0519c47619b472",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Governing selector migration design with Amendment A7",
+      "path": "dev/active/7d824b2f/design.md"
+    }
+  ],
   "first_ready_at": "2026-08-22T21:29:27.371031186Z",
   "gates_required": [
     "cargo-ci",
@@ -48,5 +99,5 @@
   "priority": "normal",
   "state": "ready",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-01T06:27:43.436955063Z"
+  "updated_at": "2026-09-01T07:22:16.716996416Z"
 }
