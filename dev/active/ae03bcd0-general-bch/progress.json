@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 2,
+  "current_wave": 4,
   "waves": [
     {
       "wave_number": 1,
@@ -57,7 +57,7 @@
           "title": "Implement the relative field-extension abstraction in gf2-core",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "owner-guided round in flight (R-17 unchecked idiom + cite new invariant); prior merges landed through rework-2"
+          "status": "done: all gates passed after owner ruling R-17 (unchecked certificate fast path, invariant-cited) + lead-direct doc-accuracy round"
         }
       ]
     },
@@ -78,7 +78,7 @@
           "title": "Deterministic derivation of elements with exact multiplicative order",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "done: merged, cargo-ci + code-review passed"
+          "status": "done"
         },
         {
           "key": "followup-tracking",
@@ -94,7 +94,7 @@
           "title": "Introduce field-generic block-code traits with binary specializations",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged, cargo-ci passed; code-review R1 FAIL (encode_into allocates two temporaries in the allocation-free primitive, linear.rs:351); rework 1/2 dispatched to worker-0c4d84cf"
+          "status": "done: allocation-free canonical encoder rework passed all gates"
         },
         {
           "key": "irreducibility-validation",
@@ -545,7 +545,7 @@
   ],
   "rework_counts": {
     "4e732b56": 3,
-    "c3d5cea5": 0,
+    "c3d5cea5": "2+owner-reset+1 guided (all passed)",
     "0c4d84cf": 1
   },
   "surfaced_pitfalls": [
