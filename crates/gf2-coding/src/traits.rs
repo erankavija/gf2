@@ -1,110 +1,962 @@
 //! Traits for error-correcting codes.
 //!
-//! This module defines the core traits for encoding and decoding operations
-//! in error-correcting codes, supporting both block codes and streaming codes.
+//! The module holds three groups of interfaces:
+//!
+//! - [`block`] is the canonical block-code surface. It is generic over the
+//!   symbol field and over the representation that stores symbols and
+//!   matrices, and it carries packed `BitVec`/`BitMatrix` specializations for
+//!   codes over `GF(2)`.
+//! - [`compat::binary_v1`] is the named, versioned `binary-code-v1`
+//!   compatibility boundary holding the bit-only encoder and generator-matrix
+//!   contracts that code families outside the canonical surface implement
+//!   directly. Its two traits are re-exported at this module's root, so
+//!   `crate::traits::BlockEncoder` and `crate::traits::GeneratorMatrixAccess`
+//!   name the version-1 contracts.
+//! - The decoder and streaming traits ([`HardDecisionDecoder`],
+//!   [`SoftDecoder`], [`IterativeSoftDecoder`], [`StreamingEncoder`],
+//!   [`StreamingDecoder`]) together with [`DecoderResult`].
 
 use crate::llr::Llr;
-use gf2_core::BitMatrix;
 use gf2_core::BitVec;
 
-/// Access to the generator matrix of a linear block code.
-///
-/// This trait provides on-demand access to the generator matrix G (k×n)
-/// of a linear (n,k) code. The matrix satisfies:
-/// - For any message m (1×k), the codeword is c = m·G (1×n)
-/// - For systematic codes, G = [I_k | P] where I_k is the k×k identity
-///
-/// # Performance Considerations
-///
-/// Generator matrix access is intended for:
-/// - Code analysis and validation
-/// - Educational purposes
-/// - Debugging and testing
-/// - Non-performance-critical encoding
-///
-/// For high-performance encoding, use the `BlockEncoder` trait methods
-/// which leverage optimized representations (polynomial division for BCH,
-/// systematic H for LDPC, direct matrix for linear codes).
-///
-/// # Implementation Notes
-///
-/// Implementations may:
-/// - Compute the matrix lazily on first access
-/// - Cache the result for subsequent calls
-/// - Return a reference to pre-stored matrix (e.g., LinearBlockCode)
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::LinearBlockCode;
-/// use gf2_coding::traits::GeneratorMatrixAccess;
-///
-/// let code = LinearBlockCode::hamming(3);
-/// let g = code.generator_matrix();
-/// assert_eq!(g.rows(), code.k());
-/// assert_eq!(g.cols(), code.n());
-/// ```
-pub trait GeneratorMatrixAccess {
-    /// Returns the number of message bits.
-    fn k(&self) -> usize;
+pub mod block {
+    //! The canonical static block-code interfaces.
+    //!
+    //! A code declares its symbol field through [`BlockCode::Symbol`] and its
+    //! storage through [`BlockCode::Symbols`]; the capability traits
+    //! [`BlockEncoder`], [`GeneratorMatrixAccess`], and
+    //! [`ParityCheckMatrixAccess`] refine it, each owning exactly the
+    //! representation its own result needs. A code over `GF(2)` selects
+    //! `Fp<2>` with [`BitVec`] and [`BitMatrix`] and is then recognized by the
+    //! marker traits [`BinaryBlockCode`], [`BinaryGeneratorMatrixAccess`], and
+    //! [`BinaryParityCheckMatrixAccess`], which give binary algorithms the
+    //! packed types directly rather than through a parallel trait hierarchy.
+    //!
+    //! # Dispatch
+    //!
+    //! These traits are the static half of the static/erased split fixed by
+    //! the epic `ae03bcd0` BCH API design document (`bch-api-design.md`,
+    //! sections "Static and erased type split" and "Canonical trait surface").
+    //! A generic function bounded by them monomorphizes to one concrete symbol
+    //! type and one concrete representation per instantiation, so selecting
+    //! the representation costs nothing at run time and no encoding or matrix
+    //! path acquires a virtual call. Runtime exploration uses the separate
+    //! erased handles described there, and no trait in this module accepts an
+    //! erased value.
+    //!
+    //! # Examples
+    //!
+    //! One generic encoder serves every code; the call site fixes the field
+    //! and the representation.
+    //!
+    //! ```
+    //! use gf2_coding::traits::block::{
+    //!     BlockCode, BlockEncoder, GeneratorMatrixAccess, SymbolSequence,
+    //! };
+    //! use gf2_coding::LinearBlockCode;
+    //! use gf2_core::field::FiniteField;
+    //!
+    //! fn encode_basis_word<C: BlockEncoder>(code: &C, index: usize) -> C::Symbols {
+    //!     let zero = code.symbol_zero();
+    //!     let one = zero.one_like();
+    //!     let mut message = C::Symbols::zeroed(code.k(), &zero);
+    //!     message.set(index, one).expect("index below k");
+    //!     code.encode(&message).expect("a k-symbol message encodes")
+    //! }
+    //!
+    //! let code = LinearBlockCode::hamming(3);
+    //! let codeword = encode_basis_word(&code, 0);
+    //!
+    //! // Row i of the generator is the encoding of message basis vector i.
+    //! let generator = code.generator_matrix().expect("the code stores a generator");
+    //! for col in 0..BlockCode::n(&code) {
+    //!     assert_eq!(codeword.get(col), generator.get(0, col));
+    //! }
+    //! ```
 
-    /// Returns the number of codeword bits.
-    fn n(&self) -> usize;
+    use crate::error::CodeError;
+    use gf2_core::field::extension::{FieldId, FieldIdentity};
+    use gf2_core::field::matrix::FieldMatrix;
+    use gf2_core::field::{FieldVec, FiniteField};
+    use gf2_core::gfp::Fp;
+    use gf2_core::{BitMatrix, BitVec};
 
-    /// Computes or retrieves the generator matrix G (k×n).
+    /// Storage contract for a sequence of symbols from `F`.
     ///
-    /// This may be an expensive operation for large codes. The result
-    /// may be cached internally for subsequent calls.
-    ///
-    /// # Returns
-    ///
-    /// A `BitMatrix` of dimension k×n representing the generator matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::LinearBlockCode;
-    /// use gf2_coding::traits::GeneratorMatrixAccess;
-    ///
-    /// let code = LinearBlockCode::hamming(3);
-    /// let g = code.generator_matrix();
-    /// assert_eq!(g.rows(), 4);
-    /// assert_eq!(g.cols(), 7);
-    /// ```
-    fn generator_matrix(&self) -> BitMatrix;
+    /// Implementations preserve the field identity represented by `zero` and
+    /// expose symbols in their canonical order. A packed binary sequence uses
+    /// little-endian bit indexing and zero tail padding.
+    pub trait SymbolSequence<F>: Clone + core::fmt::Debug + Eq + 'static
+    where
+        F: FieldIdentity,
+    {
+        /// Creates a zero-filled sequence of `len` symbols.
+        fn zeroed(len: usize, zero: &F) -> Self;
 
-    /// Checks if the code is systematic.
-    ///
-    /// A systematic code has the property that the first k bits of
-    /// the codeword equal the message bits: G = [I_k | P].
-    ///
-    /// Default implementation checks if G[:k, :k] is the identity matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::LinearBlockCode;
-    /// use gf2_coding::traits::GeneratorMatrixAccess;
-    ///
-    /// let code = LinearBlockCode::hamming(3);
-    /// assert!(code.is_systematic());
-    /// ```
-    fn is_systematic(&self) -> bool {
-        let g = self.generator_matrix();
-        if g.rows() != self.k() || g.cols() < self.k() {
-            return false;
+        /// Returns the number of symbols in the sequence.
+        fn len(&self) -> usize;
+
+        /// Returns whether the sequence contains no symbols.
+        fn is_empty(&self) -> bool {
+            self.len() == 0
         }
 
-        // Check if first k columns form identity
-        for i in 0..self.k() {
-            for j in 0..self.k() {
-                let expected = i == j;
-                if g.get(i, j) != expected {
-                    return false;
+        /// Returns a copy of the symbol at `index`, or `None` when out of range.
+        fn get(&self, index: usize) -> Option<F>;
+
+        /// Stores a symbol at `index`.
+        ///
+        /// The method validates only the sequence index. Field identity of a
+        /// stored symbol is a [`BlockCode`] conformance law, not an input
+        /// check performed by this representation contract.
+        ///
+        /// # Errors
+        ///
+        /// Returns [`CodeError::IndexOutOfBounds`] when `index` is not in the
+        /// sequence.
+        fn set(&mut self, index: usize, value: F) -> Result<(), CodeError>;
+    }
+
+    /// Storage contract for a rectangular matrix of symbols from `F`.
+    ///
+    /// Implementations expose canonical row-major coordinates. A packed
+    /// binary matrix uses little-endian bit indexing and zero tail padding.
+    pub trait SymbolMatrix<F>: Clone + core::fmt::Debug + Eq + 'static
+    where
+        F: FieldIdentity,
+    {
+        /// Creates a zero-filled matrix with the requested shape.
+        fn zeroed(rows: usize, cols: usize, zero: &F) -> Self;
+
+        /// Returns the number of rows.
+        fn rows(&self) -> usize;
+
+        /// Returns the number of columns.
+        fn cols(&self) -> usize;
+
+        /// Returns a copy of a cell, or `None` when its coordinates are out of range.
+        fn get(&self, row: usize, col: usize) -> Option<F>;
+
+        /// Stores a symbol at `(row, col)`.
+        ///
+        /// The method validates only the matrix coordinates. Field identity
+        /// of a stored symbol is a [`BlockCode`] conformance law, not an input
+        /// check performed by this representation contract.
+        ///
+        /// # Errors
+        ///
+        /// Returns [`CodeError::IndexOutOfBounds`] when either coordinate is
+        /// outside the matrix shape.
+        fn set(&mut self, row: usize, col: usize, value: F) -> Result<(), CodeError>;
+    }
+
+    impl<F> SymbolSequence<F> for FieldVec<F>
+    where
+        F: FieldIdentity + 'static,
+    {
+        fn zeroed(len: usize, zero: &F) -> Self {
+            Self::zeros_from(len, zero)
+        }
+
+        fn len(&self) -> usize {
+            FieldVec::len(self)
+        }
+
+        fn get(&self, index: usize) -> Option<F> {
+            self.as_slice().get(index).cloned()
+        }
+
+        fn set(&mut self, index: usize, value: F) -> Result<(), CodeError> {
+            if index >= self.len() {
+                return Err(CodeError::IndexOutOfBounds {
+                    index,
+                    length: self.len(),
+                });
+            }
+            FieldVec::set(self, index, value);
+            Ok(())
+        }
+    }
+
+    impl<F> SymbolMatrix<F> for FieldMatrix<F>
+    where
+        F: FieldIdentity + 'static,
+    {
+        fn zeroed(rows: usize, cols: usize, zero: &F) -> Self {
+            Self::new(rows, cols, zero.clone())
+        }
+
+        fn rows(&self) -> usize {
+            FieldMatrix::rows(self)
+        }
+
+        fn cols(&self) -> usize {
+            FieldMatrix::cols(self)
+        }
+
+        fn get(&self, row: usize, col: usize) -> Option<F> {
+            if row >= self.rows() || col >= self.cols() {
+                None
+            } else {
+                Some(FieldMatrix::get(self, row, col))
+            }
+        }
+
+        fn set(&mut self, row: usize, col: usize, value: F) -> Result<(), CodeError> {
+            if row >= self.rows() {
+                return Err(CodeError::IndexOutOfBounds {
+                    index: row,
+                    length: self.rows(),
+                });
+            }
+            if col >= self.cols() {
+                return Err(CodeError::IndexOutOfBounds {
+                    index: col,
+                    length: self.cols(),
+                });
+            }
+            FieldMatrix::set(self, row, col, value);
+            Ok(())
+        }
+    }
+
+    impl SymbolSequence<Fp<2>> for BitVec {
+        fn zeroed(len: usize, _zero: &Fp<2>) -> Self {
+            Self::zeros(len)
+        }
+
+        fn len(&self) -> usize {
+            BitVec::len(self)
+        }
+
+        fn get(&self, index: usize) -> Option<Fp<2>> {
+            (index < self.len()).then(|| Fp::<2>::new(self.get(index) as u64))
+        }
+
+        fn set(&mut self, index: usize, value: Fp<2>) -> Result<(), CodeError> {
+            if index >= self.len() {
+                return Err(CodeError::IndexOutOfBounds {
+                    index,
+                    length: self.len(),
+                });
+            }
+            BitVec::set(self, index, value.is_one());
+            Ok(())
+        }
+    }
+
+    impl SymbolMatrix<Fp<2>> for BitMatrix {
+        fn zeroed(rows: usize, cols: usize, _zero: &Fp<2>) -> Self {
+            Self::zeros(rows, cols)
+        }
+
+        fn rows(&self) -> usize {
+            BitMatrix::rows(self)
+        }
+
+        fn cols(&self) -> usize {
+            BitMatrix::cols(self)
+        }
+
+        fn get(&self, row: usize, col: usize) -> Option<Fp<2>> {
+            (row < self.rows() && col < self.cols())
+                .then(|| Fp::<2>::new(self.get(row, col) as u64))
+        }
+
+        fn set(&mut self, row: usize, col: usize, value: Fp<2>) -> Result<(), CodeError> {
+            if row >= self.rows() {
+                return Err(CodeError::IndexOutOfBounds {
+                    index: row,
+                    length: self.rows(),
+                });
+            }
+            if col >= self.cols() {
+                return Err(CodeError::IndexOutOfBounds {
+                    index: col,
+                    length: self.cols(),
+                });
+            }
+            BitMatrix::set(self, row, col, value.is_one());
+            Ok(())
+        }
+    }
+
+    /// Common code dimensions and symbol-field contract.
+    pub trait BlockCode {
+        /// The field element type used by the code.
+        type Symbol: FieldIdentity;
+        /// The sequence representation used for messages and codewords.
+        type Symbols: SymbolSequence<Self::Symbol>;
+
+        /// Returns a zero witness for the code-symbol field.
+        fn symbol_zero(&self) -> Self::Symbol;
+
+        /// Returns the message dimension `k`.
+        fn k(&self) -> usize;
+
+        /// Returns the codeword length `n`.
+        fn n(&self) -> usize;
+
+        /// Returns the redundancy `n - k`.
+        ///
+        /// # Panics
+        ///
+        /// Panics if an implementor violates the `k <= n` block-code law.
+        fn redundancy(&self) -> usize {
+            self.n() - self.k()
+        }
+
+        /// Returns the mathematical identity of the symbol field.
+        fn symbol_field_id(&self) -> FieldId {
+            self.symbol_zero().field_id()
+        }
+    }
+
+    /// Encodes canonical symbol sequences for a block code.
+    pub trait BlockEncoder: BlockCode {
+        /// Encodes into an already sized `n()`-symbol buffer.
+        ///
+        /// This is the primitive operation: the caller owns the output
+        /// buffer, so encoding allocates no result. Implementations validate
+        /// `message.len() == k()`, `codeword.len() == n()`, and any
+        /// layout-specific precondition before writing any output symbol.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`CodeError`] when the message or output buffer has the
+        /// wrong length or a code-specific precondition is not met.
+        fn encode_into(
+            &self,
+            message: &Self::Symbols,
+            codeword: &mut Self::Symbols,
+        ) -> Result<(), CodeError>;
+
+        /// Encodes a message into a newly allocated symbol sequence.
+        ///
+        /// # Errors
+        ///
+        /// Propagates the [`CodeError`] returned by [`Self::encode_into`].
+        fn encode(&self, message: &Self::Symbols) -> Result<Self::Symbols, CodeError> {
+            let mut codeword = Self::Symbols::zeroed(self.n(), &self.symbol_zero());
+            self.encode_into(message, &mut codeword)?;
+            Ok(codeword)
+        }
+    }
+
+    /// Provides a canonical generator matrix.
+    pub trait GeneratorMatrixAccess: BlockCode {
+        /// The matrix representation used for the generator.
+        type GeneratorMatrix: SymbolMatrix<Self::Symbol>;
+
+        /// Writes the `k() x n()` generator matrix into `out`.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`CodeError`] when `out` has the wrong shape or the
+        /// generator is unavailable.
+        fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError>;
+
+        /// Materializes the generator matrix.
+        ///
+        /// # Errors
+        ///
+        /// Propagates the [`CodeError`] returned by
+        /// [`Self::generator_matrix_into`].
+        fn generator_matrix(&self) -> Result<Self::GeneratorMatrix, CodeError> {
+            let mut out = Self::GeneratorMatrix::zeroed(self.k(), self.n(), &self.symbol_zero());
+            self.generator_matrix_into(&mut out)?;
+            Ok(out)
+        }
+
+        /// Reports whether the generator is the identity on the code's
+        /// message coordinates in the exposed user layout.
+        ///
+        /// A code in canonical systematic form has those coordinates at
+        /// columns `0..k()`. A code that records another message-coordinate
+        /// order answers for that order, which is the equivalent cheap fact
+        /// for its own layout.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`CodeError`] when the implementation cannot determine
+        /// the property.
+        fn is_systematic(&self) -> Result<bool, CodeError>;
+    }
+
+    /// Provides a canonical full-rank parity-check matrix.
+    pub trait ParityCheckMatrixAccess: BlockCode {
+        /// The matrix representation used for the parity check.
+        type ParityCheckMatrix: SymbolMatrix<Self::Symbol>;
+
+        /// Returns the number of parity-check rows.
+        fn parity_check_rows(&self) -> usize {
+            self.redundancy()
+        }
+
+        /// Writes the parity-check matrix into `out`.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`CodeError`] when the matrix is unavailable or `out`
+        /// has the wrong shape.
+        fn parity_check_matrix_into(
+            &self,
+            out: &mut Self::ParityCheckMatrix,
+        ) -> Result<(), CodeError>;
+
+        /// Materializes the parity-check matrix.
+        ///
+        /// # Errors
+        ///
+        /// Propagates the [`CodeError`] returned by
+        /// [`Self::parity_check_matrix_into`].
+        fn parity_check_matrix(&self) -> Result<Self::ParityCheckMatrix, CodeError> {
+            let mut out = Self::ParityCheckMatrix::zeroed(
+                self.parity_check_rows(),
+                self.n(),
+                &self.symbol_zero(),
+            );
+            self.parity_check_matrix_into(&mut out)?;
+            Ok(out)
+        }
+    }
+
+    /// Identifies a code whose canonical symbol representation is packed binary.
+    pub trait BinaryBlockCode: BlockCode<Symbol = Fp<2>, Symbols = BitVec> {}
+
+    impl<T> BinaryBlockCode for T where T: BlockCode<Symbol = Fp<2>, Symbols = BitVec> {}
+
+    /// Identifies a binary code with a packed canonical generator matrix.
+    pub trait BinaryGeneratorMatrixAccess:
+        BinaryBlockCode + GeneratorMatrixAccess<GeneratorMatrix = BitMatrix>
+    {
+    }
+
+    impl<T> BinaryGeneratorMatrixAccess for T where
+        T: BinaryBlockCode + GeneratorMatrixAccess<GeneratorMatrix = BitMatrix>
+    {
+    }
+
+    /// Identifies a binary code with a packed canonical parity-check matrix.
+    pub trait BinaryParityCheckMatrixAccess:
+        BinaryBlockCode + ParityCheckMatrixAccess<ParityCheckMatrix = BitMatrix>
+    {
+    }
+
+    impl<T> BinaryParityCheckMatrixAccess for T where
+        T: BinaryBlockCode + ParityCheckMatrixAccess<ParityCheckMatrix = BitMatrix>
+    {
+    }
+
+    /// Shared behavioral checks for canonical representations and code capabilities.
+    #[cfg(test)]
+    pub(crate) mod conformance {
+        use super::*;
+        use crate::error::RepresentationId;
+        use crate::traits::compat::binary_v1;
+
+        pub(crate) fn symbol_sequence_contract<F, S>(zero: &F, one: &F)
+        where
+            F: FieldIdentity + 'static,
+            S: SymbolSequence<F>,
+        {
+            for &len in &[0usize, 1, 63, 64, 65] {
+                let mut sequence = S::zeroed(len, zero);
+                assert_eq!(sequence.len(), len);
+                assert_eq!(sequence.is_empty(), len == 0);
+                for index in 0..len {
+                    assert_eq!(sequence.get(index), Some(zero.clone()));
+                }
+                assert_eq!(sequence.get(len), None);
+                assert_eq!(
+                    sequence.set(len, one.clone()),
+                    Err(CodeError::IndexOutOfBounds {
+                        index: len,
+                        length: len
+                    })
+                );
+                if len != 0 {
+                    let mut indices = vec![0, len / 2, len - 1];
+                    indices.dedup();
+                    for index in indices {
+                        sequence.set(index, one.clone()).unwrap();
+                        for position in 0..len {
+                            assert_eq!(
+                                sequence.get(position),
+                                Some(if position == index {
+                                    one.clone()
+                                } else {
+                                    zero.clone()
+                                })
+                            );
+                        }
+                        sequence.set(index, zero.clone()).unwrap();
+                    }
                 }
             }
         }
-        true
+
+        pub(crate) fn symbol_matrix_contract<F, M>(zero: &F, one: &F)
+        where
+            F: FieldIdentity + 'static,
+            M: SymbolMatrix<F>,
+        {
+            for &(rows, cols) in &[(0usize, 0usize), (1, 1), (2, 63), (3, 64), (4, 65)] {
+                let mut matrix = M::zeroed(rows, cols, zero);
+                assert_eq!(matrix.rows(), rows);
+                assert_eq!(matrix.cols(), cols);
+                for row in 0..rows {
+                    for col in 0..cols {
+                        assert_eq!(matrix.get(row, col), Some(zero.clone()));
+                    }
+                }
+                assert_eq!(matrix.get(rows, 0), None);
+                assert_eq!(matrix.get(0, cols), None);
+                assert_eq!(
+                    matrix.set(rows, 0, one.clone()),
+                    Err(CodeError::IndexOutOfBounds {
+                        index: rows,
+                        length: rows
+                    })
+                );
+                assert_eq!(
+                    matrix.set(0, cols, one.clone()),
+                    Err(CodeError::IndexOutOfBounds {
+                        index: cols,
+                        length: cols
+                    })
+                );
+                if rows != 0 && cols != 0 {
+                    let row_targets = [0, rows / 2, rows - 1];
+                    let col_targets = [0, cols / 2, cols - 1];
+                    for &row in &row_targets {
+                        for &col in &col_targets {
+                            matrix.set(row, col, one.clone()).unwrap();
+                            for current_row in 0..rows {
+                                for current_col in 0..cols {
+                                    assert_eq!(
+                                        matrix.get(current_row, current_col),
+                                        Some(if (current_row, current_col) == (row, col) {
+                                            one.clone()
+                                        } else {
+                                            zero.clone()
+                                        })
+                                    );
+                                }
+                            }
+                            matrix.set(row, col, zero.clone()).unwrap();
+                        }
+                    }
+                }
+            }
+        }
+
+        pub(crate) fn block_encoder_contract<C>(code: &C, message: &C::Symbols)
+        where
+            C: BlockEncoder,
+        {
+            assert!(code.k() <= code.n());
+            assert_eq!(code.redundancy(), code.n() - code.k());
+            let expected = code.encode(message).unwrap();
+            let mut actual = C::Symbols::zeroed(code.n(), &code.symbol_zero());
+            code.encode_into(message, &mut actual).unwrap();
+            assert_eq!(actual, expected);
+
+            let wrong_message = C::Symbols::zeroed(code.k() + 1, &code.symbol_zero());
+            assert!(code.encode(&wrong_message).is_err());
+            let mut wrong_output = C::Symbols::zeroed(code.n() + 1, &code.symbol_zero());
+            assert!(code.encode_into(message, &mut wrong_output).is_err());
+        }
+
+        pub(crate) fn generator_matrix_contract<C>(code: &C)
+        where
+            C: GeneratorMatrixAccess,
+        {
+            let expected = code.generator_matrix().unwrap();
+            assert_eq!(expected.rows(), code.k());
+            assert_eq!(expected.cols(), code.n());
+            let mut actual = C::GeneratorMatrix::zeroed(code.k(), code.n(), &code.symbol_zero());
+            code.generator_matrix_into(&mut actual).unwrap();
+            assert_eq!(actual, expected);
+        }
+
+        pub(crate) fn generator_rows_encode_basis<C>(code: &C, one: &C::Symbol)
+        where
+            C: BlockEncoder + GeneratorMatrixAccess,
+        {
+            let generator = code.generator_matrix().unwrap();
+            for row in 0..code.k() {
+                let mut basis = C::Symbols::zeroed(code.k(), &code.symbol_zero());
+                basis.set(row, one.clone()).unwrap();
+                let encoded = code.encode(&basis).unwrap();
+                for col in 0..code.n() {
+                    assert_eq!(encoded.get(col), generator.get(row, col));
+                }
+            }
+        }
+
+        pub(crate) fn parity_check_matrix_contract<C>(code: &C)
+        where
+            C: ParityCheckMatrixAccess,
+        {
+            let allocated = code.parity_check_matrix();
+            let mut caller = C::ParityCheckMatrix::zeroed(
+                code.parity_check_rows(),
+                code.n(),
+                &code.symbol_zero(),
+            );
+            let written = code.parity_check_matrix_into(&mut caller);
+            match (allocated, written) {
+                (
+                    Err(CodeError::CapabilityUnavailable { capability: left }),
+                    Err(CodeError::CapabilityUnavailable { capability: right }),
+                ) => assert_eq!(left, right),
+                (Ok(expected), Ok(())) => {
+                    assert_eq!(expected.rows(), code.parity_check_rows());
+                    assert_eq!(expected.cols(), code.n());
+                    assert_eq!(caller, expected);
+                }
+                _ => panic!("parity-check access disagrees"),
+            }
+        }
+
+        /// Asserts `G · Hᵀ = 0` for a code exposing both matrices.
+        ///
+        /// A code without a parity-check capability satisfies the law
+        /// vacuously and the check returns.
+        pub(crate) fn generator_parity_orthogonality<C>(code: &C)
+        where
+            C: GeneratorMatrixAccess + ParityCheckMatrixAccess,
+        {
+            let Ok(parity) = code.parity_check_matrix() else {
+                return;
+            };
+            let generator = code.generator_matrix().unwrap();
+            for row in 0..generator.rows() {
+                for check in 0..parity.rows() {
+                    let mut sum = code.symbol_zero();
+                    for col in 0..code.n() {
+                        let left = generator.get(row, col).expect("generator cell");
+                        let right = parity.get(check, col).expect("parity cell");
+                        sum += left * right;
+                    }
+                    assert!(
+                        sum.is_zero(),
+                        "G · Hᵀ must vanish at row {row}, check {check}"
+                    );
+                }
+            }
+        }
+
+        pub(crate) fn binary_v1_encoder_agrees<C>(code: &C, message: &BitVec)
+        where
+            C: BinaryBlockCode + BlockEncoder,
+        {
+            let canonical = code.encode(message).unwrap();
+            let v1 = binary_v1::BlockEncoder::encode(code, message);
+            assert_eq!(binary_v1::BlockEncoder::k(code), code.k());
+            assert_eq!(binary_v1::BlockEncoder::n(code), code.n());
+            assert_eq!(v1, canonical);
+        }
+
+        pub(crate) fn symbol_representation_of<C: BlockCode>() -> RepresentationId {
+            RepresentationId::of::<C::Symbols>()
+        }
+
+        #[derive(Clone, Debug)]
+        pub(crate) struct RepetitionCode<F: FieldIdentity + 'static> {
+            repetitions: usize,
+            zero: F,
+        }
+
+        impl<F: FieldIdentity + 'static> RepetitionCode<F> {
+            pub(crate) fn new(repetitions: usize, zero: F) -> Self {
+                assert!(repetitions > 0);
+                Self { repetitions, zero }
+            }
+        }
+
+        impl<F: FieldIdentity + 'static> BlockCode for RepetitionCode<F> {
+            type Symbol = F;
+            type Symbols = FieldVec<F>;
+
+            fn symbol_zero(&self) -> Self::Symbol {
+                self.zero.clone()
+            }
+
+            fn k(&self) -> usize {
+                1
+            }
+
+            fn n(&self) -> usize {
+                self.repetitions
+            }
+        }
+
+        impl<F: FieldIdentity + 'static> BlockEncoder for RepetitionCode<F> {
+            fn encode_into(
+                &self,
+                message: &Self::Symbols,
+                codeword: &mut Self::Symbols,
+            ) -> Result<(), CodeError> {
+                if message.len() != self.k() {
+                    return Err(CodeError::BufferLengthMismatch {
+                        expected: self.k(),
+                        actual: message.len(),
+                    });
+                }
+                if codeword.len() != self.n() {
+                    return Err(CodeError::BufferLengthMismatch {
+                        expected: self.n(),
+                        actual: codeword.len(),
+                    });
+                }
+                let value = <FieldVec<F> as SymbolSequence<F>>::get(message, 0)
+                    .expect("validated message length");
+                for index in 0..self.n() {
+                    <FieldVec<F> as SymbolSequence<F>>::set(codeword, index, value.clone())?;
+                }
+                Ok(())
+            }
+        }
+
+        impl<F: FieldIdentity + 'static> GeneratorMatrixAccess for RepetitionCode<F> {
+            type GeneratorMatrix = FieldMatrix<F>;
+
+            fn generator_matrix_into(
+                &self,
+                out: &mut Self::GeneratorMatrix,
+            ) -> Result<(), CodeError> {
+                if out.rows() != self.k() || out.cols() != self.n() {
+                    return Err(CodeError::ShapeMismatch {
+                        expected_rows: self.k(),
+                        expected_cols: self.n(),
+                        actual_rows: out.rows(),
+                        actual_cols: out.cols(),
+                    });
+                }
+                let one = self.zero.one_like();
+                for col in 0..self.n() {
+                    <FieldMatrix<F> as SymbolMatrix<F>>::set(out, 0, col, one.clone())?;
+                }
+                Ok(())
+            }
+
+            fn is_systematic(&self) -> Result<bool, CodeError> {
+                Ok(self.n() == 1)
+            }
+        }
+
+        impl<F: FieldIdentity + 'static> ParityCheckMatrixAccess for RepetitionCode<F> {
+            type ParityCheckMatrix = FieldMatrix<F>;
+
+            fn parity_check_matrix_into(
+                &self,
+                out: &mut Self::ParityCheckMatrix,
+            ) -> Result<(), CodeError> {
+                if out.rows() != self.parity_check_rows() || out.cols() != self.n() {
+                    return Err(CodeError::ShapeMismatch {
+                        expected_rows: self.parity_check_rows(),
+                        expected_cols: self.n(),
+                        actual_rows: out.rows(),
+                        actual_cols: out.cols(),
+                    });
+                }
+                let one = self.zero.one_like();
+                let minus_one = -one.clone();
+                for row in 0..self.parity_check_rows() {
+                    <FieldMatrix<F> as SymbolMatrix<F>>::set(out, row, 0, one.clone())?;
+                    <FieldMatrix<F> as SymbolMatrix<F>>::set(out, row, row + 1, minus_one.clone())?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+/// The versioned binary compatibility boundary.
+pub mod compat {
+    pub mod binary_v1 {
+        //! The `binary-code-v1` compatibility boundary, version
+        //! [`BINARY_CODE_COMPAT_VERSION`].
+        //!
+        //! The module holds the two bit-only contracts that code families
+        //! outside the canonical [`crate::traits::block`] surface implement
+        //! directly, plus the root shims that keep
+        //! `crate::traits::BlockEncoder`,
+        //! `crate::traits::GeneratorMatrixAccess`, and their trait-object uses
+        //! naming those contracts. A code that implements the canonical traits
+        //! over `Fp<2>`, [`BitVec`], and [`BitMatrix`] reaches this boundary
+        //! through the blanket adapters instead, which are the only place a
+        //! canonical [`CodeError`](crate::error::CodeError) becomes version-1
+        //! panic behavior. A family therefore has either a direct version-1
+        //! implementation or the adapter, never both.
+        //!
+        //! The boundary is closed: no further code family or public API enters
+        //! it.
+        //!
+        //! # Removal condition
+        //!
+        //! Story `3931ac6f` owns removal after epic `ae03bcd0`. Its
+        //! mechanical, auditable condition — every boundary family migrated,
+        //! no remaining reference to this module or the root shims, and the
+        //! shared binary suites passing through the canonical packed
+        //! specialization — is recorded in that epic's BCH API design document
+        //! (`bch-api-design.md`, section "Removal condition"), authored under
+        //! JIT issue `7a3a6738`, which is its single source of truth.
+
+        use gf2_core::{BitMatrix, BitVec};
+
+        /// Version of the binary compatibility boundary.
+        pub const BINARY_CODE_COMPAT_VERSION: u16 = 1;
+
+        /// Version-1 bit-only block encoder contract.
+        ///
+        /// The encoder maps a `k`-bit message to an `n`-bit codeword and
+        /// reports an invalid message length by panicking. The canonical
+        /// replacement is [`crate::traits::block::BlockEncoder`], whose
+        /// `encode` returns a typed error instead.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use gf2_coding::traits::BlockEncoder;
+        /// use gf2_coding::LinearBlockCode;
+        /// use gf2_core::BitVec;
+        ///
+        /// let code = LinearBlockCode::hamming(3);
+        /// let mut message = BitVec::zeros(code.k());
+        /// message.set(0, true);
+        /// assert_eq!(code.encode(&message).len(), code.n());
+        /// ```
+        pub trait BlockEncoder {
+            /// Returns the message dimension.
+            fn k(&self) -> usize;
+
+            /// Returns the codeword length.
+            fn n(&self) -> usize;
+
+            /// Encodes a bit message, panicking on invalid input.
+            ///
+            /// # Panics
+            ///
+            /// Panics when `message.len() != k()` or canonical encoding
+            /// reports another error.
+            fn encode(&self, message: &BitVec) -> BitVec;
+        }
+
+        /// Version-1 bit-only generator-matrix contract.
+        ///
+        /// Materializing the `k × n` generator is intended for code analysis,
+        /// validation, and teaching rather than for a hot encoding path,
+        /// which uses [`BlockEncoder`] instead. The canonical replacement is
+        /// [`crate::traits::block::GeneratorMatrixAccess`], whose methods
+        /// return typed errors and admit a matrix representation other than
+        /// [`BitMatrix`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use gf2_coding::traits::GeneratorMatrixAccess;
+        /// use gf2_coding::LinearBlockCode;
+        ///
+        /// let code = LinearBlockCode::hamming(3);
+        /// let g = code.generator_matrix();
+        /// assert_eq!(g.rows(), code.k());
+        /// assert_eq!(g.cols(), code.n());
+        /// assert!(code.is_systematic());
+        /// ```
+        pub trait GeneratorMatrixAccess {
+            /// Returns the message dimension.
+            fn k(&self) -> usize;
+
+            /// Returns the codeword length.
+            fn n(&self) -> usize;
+
+            /// Materializes the generator matrix, panicking on failure.
+            ///
+            /// # Panics
+            ///
+            /// Panics when canonical matrix access reports an error.
+            fn generator_matrix(&self) -> BitMatrix;
+
+            /// Reports whether the code exposes a systematic generator.
+            ///
+            /// The default implementation materializes the generator and
+            /// tests whether its first `k` columns form the identity, which
+            /// costs O(k²) bit reads on top of that materialization. An
+            /// implementation that knows the answer overrides it.
+            ///
+            /// # Panics
+            ///
+            /// Panics when canonical systematicity access reports an error.
+            fn is_systematic(&self) -> bool {
+                let g = self.generator_matrix();
+                if g.rows() != self.k() || g.cols() < self.k() {
+                    return false;
+                }
+
+                for i in 0..self.k() {
+                    for j in 0..self.k() {
+                        if g.get(i, j) != (i == j) {
+                            return false;
+                        }
+                    }
+                }
+                true
+            }
+        }
+    }
+}
+
+/// Source-compatible binary-code-v1 shims.
+pub use compat::binary_v1::{BlockEncoder, GeneratorMatrixAccess};
+
+impl<T> compat::binary_v1::BlockEncoder for T
+where
+    T: block::BinaryBlockCode + block::BlockEncoder,
+{
+    fn k(&self) -> usize {
+        block::BlockCode::k(self)
+    }
+
+    fn n(&self) -> usize {
+        block::BlockCode::n(self)
+    }
+
+    fn encode(&self, message: &BitVec) -> BitVec {
+        match block::BlockEncoder::encode(self, message) {
+            Ok(codeword) => codeword,
+            Err(crate::error::CodeError::BufferLengthMismatch { expected, actual })
+                if expected == self.k() =>
+            {
+                panic!("Message length must be k = {} (got {})", expected, actual)
+            }
+            Err(error) => panic!("canonical binary encoding failed: {error}"),
+        }
+    }
+}
+
+impl<T> compat::binary_v1::GeneratorMatrixAccess for T
+where
+    T: block::BinaryGeneratorMatrixAccess,
+{
+    fn k(&self) -> usize {
+        block::BlockCode::k(self)
+    }
+
+    fn n(&self) -> usize {
+        block::BlockCode::n(self)
+    }
+
+    fn generator_matrix(&self) -> gf2_core::BitMatrix {
+        block::GeneratorMatrixAccess::generator_matrix(self)
+            .unwrap_or_else(|error| panic!("canonical generator access failed: {error}"))
+    }
+
+    fn is_systematic(&self) -> bool {
+        block::GeneratorMatrixAccess::is_systematic(self)
+            .unwrap_or_else(|error| panic!("canonical systematicity access failed: {error}"))
     }
 }
 
@@ -186,36 +1038,6 @@ impl DecoderResult {
             queries: None,
         }
     }
-}
-
-/// Encoder for block codes.
-///
-/// A block encoder transforms fixed-length message blocks into fixed-length codewords.
-/// The encoder is characterized by:
-/// - `k`: the number of message bits
-/// - `n`: the number of codeword bits
-/// - The code rate is `k/n`
-pub trait BlockEncoder {
-    /// Returns the number of message bits (dimension).
-    fn k(&self) -> usize;
-
-    /// Returns the number of codeword bits (length).
-    fn n(&self) -> usize;
-
-    /// Encodes a message into a codeword.
-    ///
-    /// # Arguments
-    ///
-    /// * `message` - A bit vector of length `k` containing the message bits
-    ///
-    /// # Returns
-    ///
-    /// A bit vector of length `n` containing the encoded codeword
-    ///
-    /// # Panics
-    ///
-    /// Panics if `message.len() != k()`
-    fn encode(&self, message: &BitVec) -> BitVec;
 }
 
 /// Hard-decision decoder for block codes.
@@ -687,5 +1509,125 @@ mod generator_matrix_tests {
         // Missing g.set(2, 2, true);
         let code = MockLinearCode { k: 3, n: 5, g };
         assert!(!code.is_systematic());
+    }
+}
+
+#[cfg(test)]
+mod block_conformance_tests {
+    use super::block;
+    use super::block::conformance::{self, RepetitionCode};
+    use super::block::BlockCode;
+    use super::compat::binary_v1::BINARY_CODE_COMPAT_VERSION;
+    use super::BlockEncoder as V1BlockEncoder;
+    use crate::linear::LinearBlockCode;
+    use crate::traits::GeneratorMatrixAccess as V1GeneratorMatrixAccess;
+    use gf2_core::field::matrix::FieldMatrix;
+    use gf2_core::field::FieldVec;
+    use gf2_core::gfp::Fp;
+    use gf2_core::{BitMatrix, BitVec};
+
+    #[test]
+    fn packed_bitvec_satisfies_symbol_sequence_contract() {
+        conformance::symbol_sequence_contract::<Fp<2>, BitVec>(&Fp::<2>::new(0), &Fp::<2>::new(1));
+    }
+
+    #[test]
+    fn packed_bitmatrix_satisfies_symbol_matrix_contract() {
+        conformance::symbol_matrix_contract::<Fp<2>, BitMatrix>(&Fp::<2>::new(0), &Fp::<2>::new(1));
+    }
+
+    #[test]
+    fn field_vec_satisfies_symbol_sequence_contract() {
+        conformance::symbol_sequence_contract::<Fp<2>, FieldVec<Fp<2>>>(
+            &Fp::<2>::new(0),
+            &Fp::<2>::new(1),
+        );
+        conformance::symbol_sequence_contract::<Fp<7>, FieldVec<Fp<7>>>(
+            &Fp::<7>::new(0),
+            &Fp::<7>::new(1),
+        );
+    }
+
+    #[test]
+    fn field_matrix_satisfies_symbol_matrix_contract() {
+        conformance::symbol_matrix_contract::<Fp<2>, FieldMatrix<Fp<2>>>(
+            &Fp::<2>::new(0),
+            &Fp::<2>::new(1),
+        );
+        conformance::symbol_matrix_contract::<Fp<7>, FieldMatrix<Fp<7>>>(
+            &Fp::<7>::new(0),
+            &Fp::<7>::new(1),
+        );
+    }
+
+    #[test]
+    fn repetition_code_satisfies_block_code_contracts() {
+        fn check<F: gf2_core::field::extension::FieldIdentity + 'static>(zero: F) {
+            let code = RepetitionCode::new(3, zero);
+            let one = code.symbol_zero().one_like();
+            let message = FieldVec::from(vec![one.clone()]);
+            conformance::block_encoder_contract(&code, &message);
+            conformance::generator_matrix_contract(&code);
+            conformance::generator_rows_encode_basis(&code, &one);
+            conformance::parity_check_matrix_contract(&code);
+            conformance::generator_parity_orthogonality(&code);
+        }
+
+        check(Fp::<2>::new(0));
+        check(Fp::<7>::new(0));
+    }
+
+    #[test]
+    fn binary_code_compat_version_is_one() {
+        assert_eq!(BINARY_CODE_COMPAT_VERSION, 1);
+    }
+
+    #[test]
+    fn static_dispatch_selects_representation_by_monomorphization() {
+        let packed = conformance::symbol_representation_of::<LinearBlockCode>();
+        let field = conformance::symbol_representation_of::<RepetitionCode<Fp<2>>>();
+        assert_eq!(packed, crate::error::RepresentationId::of::<BitVec>());
+        assert_eq!(
+            field,
+            crate::error::RepresentationId::of::<FieldVec<Fp<2>>>()
+        );
+    }
+
+    #[test]
+    fn binary_v1_adapter_is_exercised_by_shared_contract() {
+        let code = LinearBlockCode::hamming(3);
+        let mut message = BitVec::zeros(code.k());
+        for index in [0, 2, 3] {
+            message.set(index, true);
+        }
+        conformance::binary_v1_encoder_agrees(&code, &message);
+    }
+
+    /// Version-1 consumers keep passing codes as trait objects, so the
+    /// boundary's two traits stay object-safe.
+    #[allow(dead_code)]
+    fn _assert_v1_traits_are_object_safe(
+        encoder: &dyn V1BlockEncoder,
+        generator: &dyn V1GeneratorMatrixAccess,
+    ) {
+        let _ = (encoder.k(), encoder.n(), generator.k(), generator.n());
+    }
+
+    /// The canonical capabilities reach a caller through static bounds, with
+    /// the representation fixed by monomorphization rather than by a vtable.
+    #[allow(dead_code)]
+    fn _assert_canonical_capabilities_are_statically_bound<C>(code: &C)
+    where
+        C: block::BinaryBlockCode
+            + block::BlockEncoder
+            + block::BinaryGeneratorMatrixAccess
+            + block::BinaryParityCheckMatrixAccess,
+    {
+        let _ = (BlockCode::k(code), BlockCode::n(code));
+    }
+
+    #[allow(dead_code)]
+    fn _linear_block_code_satisfies_the_static_bounds(code: &LinearBlockCode) {
+        _assert_canonical_capabilities_are_statically_bound(code);
     }
 }
