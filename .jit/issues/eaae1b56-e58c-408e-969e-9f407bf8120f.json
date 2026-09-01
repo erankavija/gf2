@@ -46,7 +46,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-08-25T23:27:54.304839658Z"
+  "updated_at": "2026-09-01T06:27:43.436955063Z"
 }

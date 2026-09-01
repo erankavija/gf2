@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 25,
-  "wave_notes": "Wave 25 has one closed task and one guided documentation retry. Issue 06ba0418 is done. Issue 389aa4de is merged at 561b0d71; merged-tree cargo-ci and code-review pass. The invoker selected option A and reset the counter for one documentation-only correction to clean unmerged commit 66123a77: remove the false dispatcher distinction and state only the evidence-backed protocol and producing-revision scope of the 4-word and 8-word results.",
+  "wave_notes": "Wave 25 is complete. Issue 06ba0418 is done. Issue 389aa4de published the five-field format-2 calibration, passed merged-tree cargo-ci with 5,299 tests, code-review, and doc-review, and closed the final documentation findings with centralized evidence-backed SIMD protocol scope at merge a35b0bf2. The next dependency chain begins with eaae1b56.",
   "open_escalations": [],
   "waves": [
     {
@@ -609,8 +609,8 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus",
-          "status": "guided-doc-rework-1-after-second-reset",
-          "notes": "The measured publication and guided test rework merged at 561b0d71. Full merged-tree cargo-ci passes with 5,299 tests and code-review passes with zero findings. The invoker selected option A after independent review proved commit 66123a77's dispatcher explanation false. Guided retry 1 after the second reset is documentation-only: preserve the resolving heading and links, remove the invented call-path distinction, and state only the evidence-backed protocol and producing-revision scope of the two result sets. Measured bytes and production behavior remain fixed."
+          "status": "done",
+          "notes": "The measured publication and guided test rework merged at 561b0d71. Full merged-tree cargo-ci passes with 5,299 tests and code-review passes with zero findings. Final documentation merge a35b0bf2 centralizes accurate SIMD protocol scope, acknowledges both direct call paths, and makes no causal reconciliation of the earlier Criterion result. Independent re-review and configured doc-review pass with zero findings; all three measured artifact hashes remain unchanged."
         },
         {
           "id": "06ba0418",
@@ -1115,6 +1115,12 @@
       "issue": "389aa4de",
       "date": "2026-09-01",
       "decision": "The invoker selected option A. Targeted guidance resets the counter and authorizes one documentation-only retry: retain the resolving receipt heading and links, remove the false ops.rs dispatcher distinction, and state only the evidence-backed protocol and producing-revision scope of the 4-word and 8-word result sets. This is guided retry 1 after the second reset; measured artifacts and production behavior remain immutable."
+    },
+    {
+      "kind": "gate-result",
+      "issue": "389aa4de",
+      "date": "2026-09-01",
+      "decision": "DONE: publication merge 561b0d71 and documentation merge a35b0bf2 pass the configured gate chain. Cargo-ci passed 5,299 tests with zero failures; code-review and doc-review passed with zero findings. The authoritative format-2 artifacts retain their committed hashes, and the SIMD scope statement records protocol limits without inventing a call-path or causal distinction."
     }
   ],
   "rework_counts": {
