@@ -102,7 +102,7 @@
           "title": "Generic irreducibility validation with reusable certificates",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched: Luna xhigh, worktree agent-19fe9394 anchored at 9499fbdc; R-01 ExtConfig conformance case baked in"
+          "status": "worker-complete: committed 85c85258 (footprint exact: irreducibility.rs + mod.rs); Rabin complete test, R-01 ExtConfig case covers every field-bearing implementor; merge + gates queued"
         }
       ]
     },
@@ -580,7 +580,8 @@
     "R-10: c3d5cea5 worker found and fixed a latent shared-harness defect \u2014 one proptest TestRunner was reused across all field-axiom checks, so only the first law consumed the case budget and the other nineteen ran zero samples for every carrier (fix 6c0a705e gives each check its own runner; mutation-tested both ways; full workspace green after restoration). In-footprint (axiom_tests.rs), kept.",
     "R-11: declined peer lead's forum request to inspect/own work for epic 6dc81018 (single-epic invariant); coordination-only reply with our footprints and CCX1 window sent.",
     "R-12: the two untracked 4e732b56 review-verdict files moved out of the repo to ~/.local/state/gf2-lead/ae03bcd0/ (peer's worktree protocol requires byte-clean main); delete them there once 4e732b56 passes its gates.",
-    "R-13: wave-3 workers (ebdbd228, 19fe9394, fc2fa0b6) dispatched with owner approval before wave-2 formal close; their worktrees anchor at 9499fbdc (reviewed CI-green c3d5cea5 tip, not main) because they build on field/extension.rs; merges serialize after c3d5cea5 lands on main. Cache seeding skipped (manual worktree add)."
+    "R-13: wave-3 workers (ebdbd228, 19fe9394, fc2fa0b6) dispatched with owner approval before wave-2 formal close; their worktrees anchor at 9499fbdc (reviewed CI-green c3d5cea5 tip, not main) because they build on field/extension.rs; merges serialize after c3d5cea5 lands on main. Cache seeding skipped (manual worktree add).",
+    "R-14: 19fe9394's R-01 ExtConfig conformance test covers every FIELD-BEARING in-tree ExtConfig implementor; arithmetic-only test fixtures with deliberately reducible moduli are excluded (they are not field configurations). Ratified."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
