@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 25,
-  "wave_notes": "Wave 25 runs two file-independent tasks in parallel. Issue 389aa4de receives a fresh pre-measurement correction worktree for the format-2 harness, raw samples, stable seed and child-route protocol; its host-owning measured session remains held until that patch is merged and coordinated with Claude. Issue 06ba0418 records the already executed seam in the convention-source documents. Both start from the same clean main commit and workers do not mutate JIT or main.",
+  "wave_notes": "Wave 25 runs two file-independent tasks. Issue 06ba0418 is done: the standing design, epic classification, and proof-sketch current-state prose record the executed U5-U8 seam, historical evidence remains pinned, merged-tree cargo-ci passes, and doc-review passes. Issue 389aa4de continues in its fresh pre-measurement correction worktree; its host-owning measured session remains held until that patch is merged and coordinated with Claude.",
   "open_escalations": [],
   "waves": [
     {
@@ -618,8 +618,8 @@
           "title": "Record the executed seam at the convention sources",
           "classification": "implementation",
           "model": "sonnet",
-          "status": "in-progress",
-          "notes": "Seam U9. Docs-only audit of the executed U5-U8 seam after 5bdc9552 closed; updates the design, proof sketch, and epic classification without touching calibration code."
+          "status": "done",
+          "notes": "Seam U9 closed with zero rework. The standing design §4.3/§5 and appended amendment, epic classification §2.4/§4.3/§5, and proof-sketch current-state paragraph record the executed U5-U8 seam while preserving anchored historical evidence. Merged-tree cargo-ci passes (5212 tests) and the required doc-review passes; lead review found both hard criteria satisfied."
         }
       ]
     },
