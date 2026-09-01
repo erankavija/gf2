@@ -8,6 +8,7 @@
   ],
   "description": "Add the ergonomic constructors (`primitive_narrow_sense`, `primitive`, defining-set, non-primitive forms) that build the corresponding `BchSpec` and delegate to the canonical path, accepting either an explicit splitting-field representation or automatic selection.\n\n## Background\n\nConstructors accept only independent mathematical inputs; derived quantities are validated on request, never supplied. Automatic selection uses the deterministic registry/search policy. The designed distance is presented as a guaranteed lower bound, never as the minimum distance.\n\n## Success Criteria\n\n- [hard] REQ-01: Each convenience constructor delegates to the canonical path, accepts only independent inputs, and supports explicit and automatic field selection.\n- [hard] REQ-02: Doctests cover the concise binary primitive case deriving $(n, k, t)$ from the field and designed distance alone.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T20:02:41.969519222Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -22,7 +23,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Add delegating convenience constructors with automatic field selection",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T20:02:41.969519222Z"
 }

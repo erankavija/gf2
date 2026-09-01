@@ -10685,3 +10685,12 @@
 {"gate_key":"code-review","id":"6c4e556f-53de-448d-8c0e-20e2c6948733","issue_id":"5cbdec87-a157-4b20-8766-6d24400b0184","timestamp":"2026-09-01T19:55:45.065539105Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"a107dc8b-1007-408a-b270-4bf3cfc4bc2e","issue_id":"5cbdec87-a157-4b20-8766-6d24400b0184","timestamp":"2026-09-01T19:55:58.854746140Z","to":"done","type":"issue_state_changed"}
 {"id":"6f268888-f33f-482d-98a5-7887e59b3d91","issue_id":"5cbdec87-a157-4b20-8766-6d24400b0184","timestamp":"2026-09-01T19:55:58.854746140Z","type":"issue_completed"}
+{"from":"in_progress","id":"2bfbe9a7-6b1b-4942-9b57-0f0872d90c1a","issue_id":"571aaf80-625e-49d3-8562-90cad90e2fc1","timestamp":"2026-09-01T19:57:22.207723097Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"ac2c481f-dbe4-4a7c-a804-424f90567d91","issue_id":"571aaf80-625e-49d3-8562-90cad90e2fc1","reason":"lead takes over for gate evaluation","timestamp":"2026-09-01T19:57:22.207723097Z","type":"issue_released"}
+{"from":"ready","id":"598986dd-90a8-4154-9cf7-eaeb5c4b24bc","issue_id":"571aaf80-625e-49d3-8562-90cad90e2fc1","timestamp":"2026-09-01T19:57:31.308936201Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"a1c36c63-c883-4991-a95d-e03ae3d193aa","issue_id":"571aaf80-625e-49d3-8562-90cad90e2fc1","timestamp":"2026-09-01T19:57:31.308936201Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"3d30c1c4-7eee-4cf5-8edd-9dc81c37c1a7","issue_id":"571aaf80-625e-49d3-8562-90cad90e2fc1","timestamp":"2026-09-01T19:59:03.937544352Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"f54dc6bf-0561-4f0b-9486-c199ed857a4b","issue_id":"571aaf80-625e-49d3-8562-90cad90e2fc1","timestamp":"2026-09-01T20:02:18.437701549Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"6d651f78-4518-43b4-ab30-3d5210cfd603","issue_id":"571aaf80-625e-49d3-8562-90cad90e2fc1","timestamp":"2026-09-01T20:02:33.035780066Z","to":"done","type":"issue_state_changed"}
+{"id":"f5baceaf-7d5f-4d79-9696-b6b228156d1e","issue_id":"571aaf80-625e-49d3-8562-90cad90e2fc1","timestamp":"2026-09-01T20:02:33.035780066Z","type":"issue_completed"}
+{"from":"backlog","id":"7e2faded-fea5-42da-b06a-946d117485a5","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-01T20:02:41.969519222Z","to":"ready","type":"issue_state_changed"}
