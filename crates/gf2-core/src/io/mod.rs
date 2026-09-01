@@ -109,6 +109,7 @@
 
 mod bitvec;
 mod error;
+pub mod field_matrix;
 mod format;
 mod formats;
 mod header;
@@ -116,5 +117,6 @@ mod matrix;
 mod sparse;
 
 pub use error::{IoError, Result};
+pub use field_matrix::{FIELD_MATRIX_FORMAT_VERSION, FIELD_MATRIX_HEADER_SIZE, FIELD_MATRIX_MAGIC};
 pub use format::{Flags, Header, TypeTag, FORMAT_VERSION, HEADER_SIZE, MAGIC_BYTES};
 pub use formats::SerializationFormat;

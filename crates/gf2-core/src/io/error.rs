@@ -1,6 +1,8 @@
-//! Error types for GF(2) data structure I/O operations.
+//! Error types for gf2-core data-structure and field-matrix I/O operations.
 
 use std::io;
+
+use crate::field::extension::{ElementRepr, FieldError, FieldId};
 
 /// Errors that can occur during serialization or deserialization.
 #[derive(Debug)]
@@ -17,6 +19,39 @@ pub enum IoError {
     /// Checksum verification failed
     ChecksumMismatch,
 
+    /// The file names a different algebraic field than the caller expects.
+    FieldIdentityMismatch {
+        /// Algebraic identity requested by the caller.
+        expected: FieldId,
+        /// Algebraic identity stored in the file.
+        found: FieldId,
+    },
+
+    /// The file uses an element representation other than the supported one.
+    ElementRepresentationMismatch {
+        /// Representation required by the current loader.
+        expected: ElementRepr,
+        /// Representation stored in the file.
+        found: ElementRepr,
+    },
+
+    /// Element-representation vocabulary version is not supported.
+    UnsupportedElementRepresentationVersion(u8),
+
+    /// Field-identity wire-encoding version is not supported.
+    UnsupportedFieldIdEncodingVersion(u8),
+
+    /// Element payload length does not agree with the stored dimensions.
+    DimensionMismatch {
+        /// Payload length implied by the dimensions and representation.
+        expected: u64,
+        /// Payload length stored in the header.
+        found: u64,
+    },
+
+    /// An algebraic field operation rejected decoded data.
+    Field(FieldError),
+
     /// Underlying I/O error
     Io(io::Error),
 
@@ -31,6 +66,28 @@ impl std::fmt::Display for IoError {
             IoError::UnsupportedVersion(v) => write!(f, "Unsupported format version: {}", v),
             IoError::UnknownType(t) => write!(f, "Unknown type tag: {}", t),
             IoError::ChecksumMismatch => write!(f, "Checksum mismatch"),
+            IoError::FieldIdentityMismatch { expected, found } => write!(
+                f,
+                "field identity mismatch: loaded {found:?}, expected {expected:?}"
+            ),
+            IoError::ElementRepresentationMismatch { expected, found } => write!(
+                f,
+                "element representation mismatch: loaded {found:?}, expected {expected:?}"
+            ),
+            IoError::UnsupportedElementRepresentationVersion(version) => {
+                write!(f, "Unsupported element representation version: {}", version)
+            }
+            IoError::UnsupportedFieldIdEncodingVersion(version) => write!(
+                f,
+                "Unsupported field identity encoding version: {}",
+                version
+            ),
+            IoError::DimensionMismatch { expected, found } => write!(
+                f,
+                "matrix payload length mismatch: expected {} bytes, found {} bytes",
+                expected, found
+            ),
+            IoError::Field(error) => write!(f, "field error: {}", error),
             IoError::Io(e) => write!(f, "I/O error: {}", e),
             IoError::InvalidData(msg) => write!(f, "Invalid data: {}", msg),
         }
@@ -41,6 +98,7 @@ impl std::error::Error for IoError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             IoError::Io(e) => Some(e),
+            IoError::Field(error) => Some(error),
             _ => None,
         }
     }
