@@ -34,6 +34,7 @@
       "path": "dev/active/64fd3afd/proof-sketch.md"
     }
   ],
+  "done_at": "2026-09-01T16:12:47.805870501Z",
   "first_ready_at": "2026-09-01T15:11:33.836203560Z",
   "gates_required": [
     "doc-review",
@@ -46,8 +47,8 @@
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-01T15:53:25.719747346Z",
+      "status": "passed",
+      "updated_at": "2026-09-01T16:12:21.084631126Z",
       "updated_by": "auto:executor"
     }
   },
@@ -59,7 +60,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Author the formal-proof sketch for the algebraic foundations",
-  "updated_at": "2026-09-01T16:07:24.257042723Z"
+  "updated_at": "2026-09-01T16:12:47.805870501Z"
 }
