@@ -8,7 +8,7 @@ use gf2_coding::drm::DrmCode;
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::BlockEncoder;
 use gf2_core::BitVec;
-use gf2_kernels_hip::{extract_h_cols, GpuBcjrBatch};
+use gf2_kernels_hip::{extract_h_cols, host::device_mem_info, GpuBcjrBatch};
 
 #[test]
 fn test_gpu_cpu_hamming74_crosscheck() {
@@ -235,10 +235,16 @@ fn test_gpu_batch64_matches_serial_cpu() {
 
 #[test]
 fn test_gpu_turbo_ebch16_convergence() {
-    use gf2_coding::bch::extended::ExtendedBchCode;
-    use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
+    use gf2_coding::product::{
+        ExtendedBchComponent, ProductCode, TurboDecoder, TurboDecoderConfig,
+    };
 
-    let component = ExtendedBchCode::ebch_16_11();
+    if device_mem_info().is_err() {
+        eprintln!("skipping test_gpu_turbo_ebch16_convergence: no usable GPU");
+        return;
+    }
+
+    let component = ExtendedBchComponent::ebch_16_11();
     let product = ProductCode::new(component.clone());
     // gf2-coding is compiled with feature "hip" here (see Cargo.toml dev-dep),
     // so use_gpu_bcjr is available and routes through SisoEngine::GpuBcjr.
