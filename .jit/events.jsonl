@@ -10640,3 +10640,9 @@
 {"gate_key":"code-review","id":"6b2bb2b4-ca26-41b2-b2e7-6620c41da27a","issue_id":"6d67e57e-0dac-44a4-afa8-b5c1eb33aff7","timestamp":"2026-09-01T18:21:39.205229791Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"d181adb1-253b-4acb-9117-7fcea57e32ac","issue_id":"6d67e57e-0dac-44a4-afa8-b5c1eb33aff7","timestamp":"2026-09-01T18:21:54.414121663Z","to":"done","type":"issue_state_changed"}
 {"id":"55b94047-9b53-4493-abcb-e71610ffcc5e","issue_id":"6d67e57e-0dac-44a4-afa8-b5c1eb33aff7","timestamp":"2026-09-01T18:21:54.414121663Z","type":"issue_completed"}
+{"from":"in_progress","id":"e74daa03-6622-4a8b-bf97-ae6e4b284db4","issue_id":"8f68699b-d66a-45f2-a276-b8700bd4cc65","timestamp":"2026-09-01T18:29:04.867662526Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"527cb795-c317-44ad-b7e1-6470ac5d917f","issue_id":"8f68699b-d66a-45f2-a276-b8700bd4cc65","reason":"lead takes over for gate evaluation","timestamp":"2026-09-01T18:29:04.867662526Z","type":"issue_released"}
+{"from":"ready","id":"cb1280d6-5568-40bb-8660-40f0757e2603","issue_id":"8f68699b-d66a-45f2-a276-b8700bd4cc65","timestamp":"2026-09-01T18:29:16.026641209Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"2738824b-e566-4370-b07b-36d566e080db","issue_id":"8f68699b-d66a-45f2-a276-b8700bd4cc65","timestamp":"2026-09-01T18:29:16.026641209Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"b15491bf-4f33-4524-8d08-4f180b89a80d","issue_id":"8f68699b-d66a-45f2-a276-b8700bd4cc65","timestamp":"2026-09-01T18:30:52.279873117Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"37690d93-bad0-4ee7-8a8a-dde3f883c3e9","issue_id":"8f68699b-d66a-45f2-a276-b8700bd4cc65","timestamp":"2026-09-01T18:34:02.935560164Z","type":"gate_failed","updated_by":"auto:executor"}
