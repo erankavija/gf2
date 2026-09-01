@@ -57,7 +57,7 @@
           "title": "Implement the relative field-extension abstraction in gf2-core",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "code-review R2 FAIL (from_certificate accepts Declared cert for reducible runtime modulus \u2014 overturns R-15); rework 2/2 dispatched: runtime path accepts Proved-basis only, typed error for Declared, test matrix replaces the loophole-based no-revalidation proof"
+          "status": "owner-guided round in flight (R-17 unchecked idiom + cite new invariant); prior merges landed through rework-2"
         }
       ]
     },
@@ -70,7 +70,7 @@
           "title": "Implement the layered typed error surface for coding APIs",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "worker-complete on branch 1fcc1702; merge + cargo-ci + code-review gates pending"
+          "status": "done: merged, cargo-ci + code-review passed"
         },
         {
           "key": "exact-order",
@@ -78,7 +78,7 @@
           "title": "Deterministic derivation of elements with exact multiplicative order",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "worker-complete on branch 97535714; merge + cargo-ci + code-review gates pending"
+          "status": "done: merged, cargo-ci + code-review passed"
         },
         {
           "key": "followup-tracking",
@@ -94,7 +94,7 @@
           "title": "Introduce field-generic block-code traits with binary specializations",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker-complete on branch bec5a0be (base contains ebdbd228 tip); merge AFTER ebdbd228; gates cargo-ci + code-review + doc-review pending"
+          "status": "merged, cargo-ci passed; code-review R1 FAIL (encode_into allocates two temporaries in the allocation-free primitive, linear.rs:351); rework 1/2 dispatched to worker-0c4d84cf"
         },
         {
           "key": "irreducibility-validation",
@@ -545,7 +545,8 @@
   ],
   "rework_counts": {
     "4e732b56": 3,
-    "c3d5cea5": 0
+    "c3d5cea5": 0,
+    "0c4d84cf": 1
   },
   "surfaced_pitfalls": [
     {
