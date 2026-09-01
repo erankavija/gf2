@@ -830,3 +830,34 @@ and SHA-256
 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`;
 the inherited format-2 conservative envelopes are not calibration evidence.
 No format-1 reader is retained to support those historical citations.
+
+## Amendment A6 (2026-09-01, measured issue `389aa4de`)
+
+This amendment changes no preceding line. The profile-steered calibration
+mechanism described prospectively in §5.1 is executed and remains the one
+canonical mechanism. For `polynomial.karatsuba_min_degree`, each fresh child
+installs a profile before any selection boundary, reports the production route
+reached through `FieldPoly::mul`, and supplies the parent with verified section
+resolution, threshold, operand/product digests, protocol identity, and raw
+samples.
+
+DEC-B16 corrects the earlier minimal-against-maximal forcing description. The
+schoolbook arm installs `usize::MAX`; the Karatsuba arm installs the grid point
+itself. That choice measures the single Karatsuba split over schoolbook base
+cases that a threshold at the grid point produces. The measured crossover is
+31, recorded in
+`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`; the field is no longer
+an instance of §5.2's non-sweepable rule and F2/DEC-B6 are discharged.
+
+The current `CoreTuningCodec` inventory has 37 fields. The measured five-field
+pilot therefore omits 32, not the stale four-field count of 33. The exact
+format-2 core owner is
+`crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`.
+DEC-G remains `simd_min_words = 4`: its compile-time boundary does not move,
+and its provenance is re-pinned to this v2 measurement.
+
+All live readers and baked citations use the strict format-2 owner. The last
+format-1 reader is removed and the no-longer-cited archived bytes are deleted.
+The 2026-08-20 receipt retains their exact historical path, digest, source
+revision, and figures; deleting an uncited repository copy does not relabel or
+rewrite that evidence.

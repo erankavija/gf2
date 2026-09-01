@@ -201,7 +201,7 @@ pub fn next_power_of_2(v: u64) -> u64 {
 - ✅ Benchmark suite: `benches/simd_vs_scalar.rs`
 
 The committed host-calibration receipt at
-[`dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md`](../../../dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md)
+[`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md)
 records a contradictory selected value of **4** for
 `bit_backend.simd_min_words`. These measurements are not directly
 interchangeable: the receipt measures `gf2_core::kernels::ScalarBackend`
@@ -243,9 +243,10 @@ Backend selection is implemented by `select_backend_for_size` in
 buffer's `u64` word count with the conservative compile-time threshold
 `SIMD_MIN_WORDS_DEFAULT`; building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
 substitutes the four-word value recorded by
-`dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md` and archived at
-`dev/archive/3fa7c9d0/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080-v1.json`
-(SHA-256 `674eea65379d1c814cd54584ad1ea4517fc3f2adbef3d5229d58593e9aad63bb`).
+`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md` in the measured
+format-2 core owner
+`crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
+(SHA-256 `e1cc82ab17db7d0226d5c55ad4c029fad072edd66ac3c18b2ea74e97f2f39045`).
 The selector uses SIMD when the feature is available and otherwise falls back
 to the scalar backend. The core format-2 section encodes the corresponding
 field, while this routing boundary stays compile-time (DEC-G).

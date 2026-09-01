@@ -33,28 +33,37 @@
 //! ## 2. Build the two executables outside the measurement lock
 //!
 //! ```sh
+//! set -eu
 //! RUN_STAMP=$(date -u +%Y%m%d-%H%M%S)-$$
 //! STAGE=/tmp/gf2-389aa4de-$RUN_STAMP
 //! mkdir "$STAGE"
-//! export BUILD_HEAD=$(git rev-parse HEAD)
+//! BUILD_HEAD=$(git rev-parse HEAD)
+//! export BUILD_HEAD
 //! test -z "$(git status --porcelain --untracked-files=all)"
 //! printf '%s\n' "$BUILD_HEAD" >"$STAGE/build-head"
-//! ./scripts/cargo-budget.sh cargo +1.95.0 bench --release -p gf2-core \
+//! ./scripts/cargo-budget.sh cargo +1.95.0 bench -p gf2-core \
 //!   --features tuning-profile,simd --bench tuning_calibration --no-run \
-//!   --message-format=json >"$STAGE/calibrator-build.json"
-//! jq -rs '[.[] | select(.reason == "compiler-artifact" and
+//!   --message-format=json >"$STAGE/calibrator-build.json" \
+//!   2>"$STAGE/calibrator-build.stderr"
+//! jq -r -s '[.[] | select(.reason == "compiler-artifact" and
 //!   .target.name == "tuning_calibration" and .executable != null) |
 //!   .executable] | unique | if length == 1 then .[0] else error(
 //!   "expected exactly one calibration executable") end' \
 //!   "$STAGE/calibrator-build.json" >"$STAGE/calibrator-path.json"
 //! ./scripts/cargo-budget.sh cargo +1.95.0 build --release \
 //!   --manifest-path dev/tools/tuning-profile-compose/Cargo.toml \
-//!   --message-format=json >"$STAGE/composer-build.json"
-//! jq -rs '[.[] | select(.reason == "compiler-artifact" and
+//!   --message-format=json >"$STAGE/composer-build.json" \
+//!   2>"$STAGE/composer-build.stderr"
+//! jq -r -s '[.[] | select(.reason == "compiler-artifact" and
 //!   .target.name == "tuning-profile-compose" and .executable != null) |
 //!   .executable] | unique | if length == 1 then .[0] else error(
 //!   "expected exactly one composer executable") end' \
 //!   "$STAGE/composer-build.json" >"$STAGE/composer-path.json"
+//! CALIBRATOR=$(cat "$STAGE/calibrator-path.json")
+//! COMPOSER=$(cat "$STAGE/composer-path.json")
+//! test -n "$CALIBRATOR" && test -x "$CALIBRATOR"
+//! test -n "$COMPOSER" && test -x "$COMPOSER"
+//! sha256sum "$CALIBRATOR" "$COMPOSER" >"$STAGE/binaries-sha256.txt"
 //! test "$(git rev-parse HEAD)" = "$BUILD_HEAD"
 //! test -z "$(git status --porcelain --untracked-files=all)"
 //! test "$(cat "$STAGE/build-head")" = "$BUILD_HEAD"
@@ -77,8 +86,10 @@
 //! ```sh
 //! RUN_ID=gf2-389aa4de-$RUN_STAMP
 //! RECEIPT=dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md
-//! CALIBRATOR=$(jq -r . "$STAGE/calibrator-path.json")
-//! COMPOSER=$(jq -r . "$STAGE/composer-path.json")
+//! CALIBRATOR=$(cat "$STAGE/calibrator-path.json")
+//! COMPOSER=$(cat "$STAGE/composer-path.json")
+//! test -n "$CALIBRATOR" && test -x "$CALIBRATOR"
+//! test -n "$COMPOSER" && test -x "$COMPOSER"
 //! CORE_OUT="$STAGE/$RUN_ID-core.json"
 //! COMPLETE_OUT="$STAGE/$RUN_ID-complete.json"
 //! RAW_LOG="$STAGE/$RUN_ID-calibration.log"
