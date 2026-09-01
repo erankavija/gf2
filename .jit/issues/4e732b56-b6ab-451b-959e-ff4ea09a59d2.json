@@ -329,7 +329,7 @@
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-08-31T21:28:08.513934896Z",
+      "updated_at": "2026-09-01T03:55:38.026284253Z",
       "updated_by": "auto:executor"
     }
   },
@@ -343,5 +343,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-01T03:47:07.401426372Z"
+  "updated_at": "2026-09-01T03:55:38.026284253Z"
 }
