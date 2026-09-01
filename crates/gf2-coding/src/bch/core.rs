@@ -1743,7 +1743,15 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// Returns the values row-major, one row of `self.syndrome_points.len()`
     /// per frame in the decoder's own evaluation order, so a row holds exactly
     /// what [`evaluate_syndromes`](Self::evaluate_syndromes) writes for that
-    /// word. Callers guarantee a nonempty point set.
+    /// word.
+    ///
+    /// # Panics
+    ///
+    /// Callers guarantee a nonempty point set and a device-supported
+    /// presentation: this evaluates
+    /// [`device_syndromes_supported`](Self::device_syndromes_supported) as an
+    /// internal invariant and panics through the field tables or the kernel's
+    /// own assertions when it does not hold.
     fn syndromes_on_device(
         &self,
         frames: &[&BitVec],
@@ -1758,11 +1766,11 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
         // The exact CPU tables, so the device multiply is the CPU multiply.
         let exp = field
             .exp_table()
-            .expect("a BCH splitting field carries precomputed tables")
+            .expect("the caller checked device_syndromes_supported")
             .to_vec();
         let log = field
             .log_table()
-            .expect("a BCH splitting field carries precomputed tables")
+            .expect("the caller checked device_syndromes_supported")
             .to_vec();
         let tables = BchFieldTables::new(field.degree(), exp, log);
 
@@ -1826,22 +1834,29 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// One row per frame, in input order. An empty batch yields no rows, and a
     /// code with an empty defining set yields empty rows.
     ///
+    /// Rows the device cannot produce come from the CPU evaluator instead: a
+    /// presentation
+    /// [the device does not support](Self::device_syndromes_supported) and a
+    /// recoverable device failure both fall back to
+    /// [`evaluate_syndromes`](Self::evaluate_syndromes), which is the value the
+    /// device reproduces anyway.
+    ///
     /// # Errors
     ///
-    /// Returns [`HipError`](gf2_kernels_hip::HipError) on device allocation,
-    /// transfer, launch, or synchronization failure; an exhausted device is the
-    /// distinguished [`HipError::OutOfMemory`](gf2_kernels_hip::HipError::OutOfMemory).
+    /// Returns [`HipError`](gf2_kernels_hip::HipError) for a device failure
+    /// [`is_recoverable`](gf2_kernels_hip::HipError::is_recoverable) rejects: a
+    /// missing device, an unreadable kernel blob, or a raw driver status.
     ///
     /// # Panics
     ///
-    /// Panics if a frame is not `n` coordinates long, or if the splitting
-    /// field carries no precomputed tables, which a constructed code rules out.
+    /// Panics if a frame is not `n` coordinates long.
     ///
     /// # Complexity
     ///
     /// $O(bsn)$ device work for a batch of $b$ frames and $s$ evaluation
     /// points, plus the host transfer of $b \lceil n/64 \rceil$ words up and
-    /// $bs$ values back. The field tables upload once per call.
+    /// $bs$ values back. The field tables upload once per call. The CPU
+    /// fallback is $O(bsn)$ field multiplications on the host.
     pub fn compute_syndromes_batch_gpu(
         &self,
         received: &[BitVec],
@@ -1850,9 +1865,15 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
         if received.is_empty() || points == 0 {
             return Ok(vec![Vec::new(); received.len()]);
         }
+        if !self.device_syndromes_supported() {
+            return Ok(self.syndromes_batch_cpu(received));
+        }
         let frames: Vec<&BitVec> = received.iter().collect();
-        let evaluated = self.syndromes_on_device(&frames)?;
-        Ok(evaluated.chunks_exact(points).map(<[_]>::to_vec).collect())
+        match self.syndromes_on_device(&frames) {
+            Ok(evaluated) => Ok(evaluated.chunks_exact(points).map(<[_]>::to_vec).collect()),
+            Err(error) if error.is_recoverable() => Ok(self.syndromes_batch_cpu(received)),
+            Err(error) => Err(error),
+        }
     }
 
     /// Corrects a batch of received words in place and reports one outcome per
@@ -1893,6 +1914,11 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// `@/inv/accelerator-safe-fallback`, whose outcomes this path reproduces
     /// anyway. No path leaves an altered, unverified word behind, so a caller
     /// that retries decodes the words it started with.
+    ///
+    /// A presentation
+    /// [the device does not support](Self::device_syndromes_supported) takes
+    /// the same CPU path before any device work, so a valid code the kernel
+    /// cannot carry decodes rather than failing.
     ///
     /// # Panics
     ///
@@ -1949,6 +1975,9 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
         if received.is_empty() || points == 0 {
             return Ok(outcomes);
         }
+        if !self.device_syndromes_supported() {
+            return Ok(self.correct_batch_cpu(received));
+        }
 
         let frames: Vec<&BitVec> = received.iter().collect();
         let evaluated = self.syndromes_on_device(&frames);
@@ -1989,6 +2018,63 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
             }
         }
         Ok(outcomes)
+    }
+
+    /// Reports whether the device syndrome evaluator supports this decoder's
+    /// field presentation and evaluation points.
+    ///
+    /// The kernel crosses the host boundary in u16:
+    /// [`BchFieldTables`](gf2_kernels_hip::BchFieldTables) asserts an `exp` of
+    /// `2^m - 1` and a `log` of `2^m` entries, and every evaluation point
+    /// uploads as a u16 field value. A splitting field carrying no precomputed
+    /// tables — `Gf2mField_::with_tables` builds none above degree 16, and a
+    /// runtime-configured presentation need never have asked for them — and a
+    /// presentation whose values outrun that width are unsupported device
+    /// capabilities rather than decoding failures, so the public paths answer
+    /// them with the CPU path (`@/inv/accelerator-safe-fallback`) instead of
+    /// panicking on a valid code.
+    fn device_syndromes_supported(&self) -> bool {
+        let field = self.code.extension().field();
+        let (Some(exp), Some(log)) = (field.exp_table(), field.log_table()) else {
+            return false;
+        };
+        // The degree bound decides first: it is what lets a u16 carry every
+        // field value, and `1 << degree` is only a table length below it.
+        let degree = field.degree();
+        degree <= 16
+            && exp.len() == (1usize << degree) - 1
+            && log.len() == 1usize << degree
+            && self
+                .syndrome_points
+                .iter()
+                .all(|point| point.value().as_u64_truncated() <= u64::from(u16::MAX))
+    }
+
+    /// Evaluates the batch's syndromes on the CPU, in the row shape
+    /// [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu)
+    /// returns.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a frame is not `n` coordinates long, the same condition the
+    /// device path asserts on.
+    fn syndromes_batch_cpu(&self, received: &[BitVec]) -> Vec<Vec<Gf2mElement_<V>>> {
+        let length = self.code.n();
+        let mut row = vec![self.zero.clone(); self.syndrome_points.len()];
+        received
+            .iter()
+            .enumerate()
+            .map(|(index, frame)| {
+                assert_eq!(
+                    frame.len(),
+                    length,
+                    "frame {index} has length {}, expected n = {length}",
+                    frame.len()
+                );
+                self.evaluate_syndromes(frame, &mut row);
+                row.clone()
+            })
+            .collect()
     }
 
     /// Applies the located candidate of every frame whose syndrome row is
@@ -3429,6 +3515,92 @@ mod canonical_decoder_tests {
                     && outcomes.contains(&BchDecodeOutcome::Uncorrectable),
                 "the fallback covers both verification arms"
             );
+        }
+
+        /// The same code over a presentation that never built the `exp`/`log`
+        /// tables the device uploads: `Gf2mField::new` leaves them out, and
+        /// `BinaryPrimeExt::new` decides irreducibility itself, so this is a
+        /// valid canonical model the kernel cannot carry.
+        fn table_free_code() -> BinaryBchCode {
+            let field = Gf2mField::new(4, 0b10011);
+            assert!(!field.has_tables(), "the presentation carries no tables");
+            BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+                extension: BinaryPrimeExt::new(field).expect("a primitive modulus"),
+                designed_distance: DesignedDistance::try_from(5).expect("positive"),
+            })
+            .expect("a valid primitive narrow-sense spec")
+        }
+
+        /// A valid code whose field carries no device tables is an unsupported
+        /// device capability, not a decoding failure: GPU-assisted correction
+        /// answers it on the CPU path rather than panicking.
+        #[test]
+        fn an_unsupported_presentation_corrects_on_the_cpu() {
+            let code = table_free_code();
+            let decoder = BinaryBchDecoder::new(&code);
+            assert!(!decoder.device_syndromes_supported());
+
+            let frames = weight_three_words(code.n());
+            let (expected, expected_words) = cpu_reference(&decoder, &frames);
+
+            let mut words = frames.clone();
+            let outcomes = decoder
+                .correct_batch_gpu(&mut words)
+                .expect("an unsupported presentation decodes rather than failing");
+
+            assert_eq!(outcomes, expected);
+            assert_eq!(words, expected_words);
+            assert!(
+                outcomes
+                    .iter()
+                    .any(|outcome| matches!(outcome, BchDecodeOutcome::Corrected { .. }))
+                    && outcomes.contains(&BchDecodeOutcome::Uncorrectable),
+                "the fallback covers both verification arms"
+            );
+        }
+
+        /// The syndrome-only API answers the same presentation with the CPU
+        /// evaluator's rows, which is the value the device reproduces.
+        #[test]
+        fn an_unsupported_presentation_evaluates_syndromes_on_the_cpu() {
+            let code = table_free_code();
+            let decoder = BinaryBchDecoder::new(&code);
+            let frames = weight_three_words(code.n());
+
+            let rows = decoder
+                .compute_syndromes_batch_gpu(&frames)
+                .expect("an unsupported presentation evaluates rather than failing");
+
+            let mut expected = vec![decoder.zero.clone(); decoder.syndrome_points.len()];
+            assert_eq!(rows.len(), frames.len());
+            for (row, frame) in rows.iter().zip(frames.iter()) {
+                decoder.evaluate_syndromes(frame, &mut expected);
+                assert_eq!(row, &expected);
+            }
+            assert!(
+                rows.iter().flatten().any(|value| !value.is_zero()),
+                "a weight-three word is not a codeword"
+            );
+        }
+
+        /// The supported presentations stay on the device, so the fallback is
+        /// selected by capability rather than taken always: the tabled
+        /// counterpart of the code above, and GF(2^16) — the DVB-T2 normal
+        /// frame's field, and the widest the kernel's u16 boundary carries,
+        /// whose device path the committed receipt measures.
+        #[test]
+        fn a_tabled_presentation_is_device_supported() {
+            for code in [
+                narrow_sense(4, 0b10011, 5),
+                narrow_sense(16, 0b10000000000101101, 3),
+            ] {
+                let decoder = BinaryBchDecoder::new(&code);
+                assert!(
+                    decoder.device_syndromes_supported(),
+                    "GF(2^{}) is inside the device boundary",
+                    code.extension().field().degree()
+                );
+            }
         }
 
         /// The first syndrome pass fails before any candidate is applied.
