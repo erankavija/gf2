@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Compare systematic generator matrices from M4RI and gf2 (jit:4e732b56).
 
-This is a correctness-only check. The M4RI helper fills the polynomial-form
-matrix, normalizes its coordinates, and applies the selected ``genmatrix-rref``
-route; the gf2 helper calls ``GeneratorMatrixAccess::generator_matrix``. Both
-helpers emit row-major bits in the repository's ``[message | parity]`` order.
-``normalize`` validates and copies that common layout before comparison, and
-the receipt records a digest of the normalized output.
+This is a correctness-only check. The M4RI helper runs the timed
+``genmatrix-rref`` route — fill in the repository column order, reduce with
+``mzd_echelonize_m4ri`` — and dumps its output verbatim; the gf2 helper calls
+``GeneratorMatrixAccess::generator_matrix``. Both dumps are row-major bits in
+the repository's ``[message | parity]`` order, so the comparison applies no
+column normalization. ``normalize`` only validates dimensions and copies rows,
+and the receipt records a digest of each side's output.
 
 Usage:
     ./verify-generator-matrices.py [--generators PATH] [--m4ri-bin PATH]

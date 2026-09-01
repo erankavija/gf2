@@ -87,12 +87,22 @@ against this host's 512 KiB L2 per core and 32 MiB L3 per CCX:
 | T2S | 2 KiB | 28 KiB | 445 KiB | 6.9 MiB |
 | T2N | 8 KiB | 126 KiB | 2.0 MiB | 31.5 MiB |
 
-Every row through $B = 256$ is L2-resident except T2N, which is L3-resident
-there. At $B = 4096$ only T2N approaches the L3 capacity boundary, at 31.5 MiB
-against 32 MiB. No cell in this ladder is reliably DRAM-bound: a consumer that
-needs one extends the ladder here rather than in its own bench, and this
-document records that as an open gap rather than claiming coverage the sizes
-do not support.
+These sizes describe the packed representation the contract's throughput unit
+counts, which is the working set of the packed-byte implementations (bchlib,
+the gf2 side, and the packed W2 matrices). For them, every row through
+$B = 256$ is L2-resident except T2N, which is L3-resident there, and at
+$B = 4096$ only T2N approaches the L3 capacity boundary, at 31.5 MiB against
+32 MiB. An implementation with a wider storage representation scales this
+table by its own factor: AFF3CT stores one 32-bit word per bit, so its
+working sets are 32× these figures — its T2N rows leave L3 at $B = 256$
+(64 MiB), its T2S rows stay L3-resident through $B = 256$ (13.9 MiB), and
+both are DRAM-backed at $B = 4096$ (222 MiB and 1008 MiB). Residency claims in this
+document are therefore per-representation: the packed ladder supports no
+reliably DRAM-bound cell, while the AFF3CT large-frame cells at high $B$ are
+DRAM-backed by size, and any conclusion drawn from them must account for
+that. A consumer that needs a packed DRAM-bound cell extends the ladder here
+rather than in its own bench; this document records that as an open gap
+rather than claiming coverage the sizes do not support.
 
 ## 4. Matrix dimensions (W2)
 

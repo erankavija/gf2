@@ -522,9 +522,12 @@ overhead for the epic to preserve, and no existing parallelism to regress.
   explained. `avx2-batch-kernels` should confirm from generated code whether
   the scalar path is auto-vectorizing before assuming an interleaved kernel
   will scale with register width at DVB-T2 generator degrees.
-* **No DRAM-bound cell exists** in the fixed batch ladder; the largest working
-  set is 31.5 MiB against a 32 MiB L3. A consumer that needs a memory-bound
-  measurement must amend the contract's ladder.
+* **No packed-representation cell is DRAM-bound** in the fixed batch ladder;
+  the largest packed working set is 31.5 MiB against a 32 MiB L3. The
+  residency claim is per-representation: AFF3CT's 32-bit-per-bit storage puts
+  its large-frame high-$B$ cells DRAM-backed by size (contract § 3). A
+  consumer that needs a packed memory-bound measurement must amend the
+  contract's ladder.
 * **Two gf2 cells are estimates.** T2N at $B = 4096$ and T2N's generator matrix
   were projected from probe-measured per-unit costs of 50.7 ms per frame and
   1633.6 s per materialization. They remain estimates under the fixed cell
