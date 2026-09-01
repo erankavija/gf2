@@ -17,7 +17,7 @@
     "type:enhancement"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Lift the index-ordered parallel dispatch primitive from gf2-sim into gf2-core compute",
-  "updated_at": "2026-09-01T16:15:22.492274257Z"
+  "updated_at": "2026-09-01T18:54:42.568408216Z"
 }
