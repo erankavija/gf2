@@ -22,9 +22,9 @@
 //! Every spec enters the same four stages.
 //!
 //! 1. **Validate and normalize.** Derive the length, decide coprimality and
-//!    divisibility, obtain the order-$n$ root, range-check the caller's
-//!    exponent and designed distance, and expand the request into an unclosed
-//!    seed sequence.
+//!    divisibility, obtain the order-$n$ root, range-check a caller's first
+//!    root and designed distance, and expand the request into an unclosed seed
+//!    sequence. Arbitrary seed exponents are interpreted modulo $n$.
 //! 2. **Close.** Take the $q$-cyclotomic closure of the seeds modulo $n$; its
 //!    sorted union is the defining set.
 //! 3. **Generate.** Take one representative per coset, form its monic minimal
@@ -48,7 +48,8 @@
 //!   match against the witness, exact order $n$) for the non-primitive
 //!   spec variants that will expose them, though every current public
 //!   variant constructs with the canonical root;
-//! - every caller-supplied root exponent satisfies $0 \le b < n$;
+//! - every caller-supplied first-root exponent satisfies $0 \le b < n$; seed
+//!   exponents are reduced modulo $n$;
 //! - the designed distance satisfies $1 \le \delta \le n + 1$.
 //!
 //! Base/splitting-field compatibility is carried by the
@@ -226,8 +227,9 @@ impl TryFrom<u64> for DesignedDistance {
 
 /// An exponent of the selected order-$n$ root, naming the element $\beta^i$.
 ///
-/// The type cannot validate its contextual upper bound alone, so construction
-/// requires $0 \le i < n$ rather than silently reducing modulo $n$.
+/// The type cannot validate its contextual upper bound alone. Construction
+/// requires $0 \le i < n$ for a first-root parameter; seed-set parameters
+/// interpret the exponent modulo $n$ instead.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct RootExponent(u64);
@@ -302,6 +304,54 @@ where
         first_root: RootExponent,
         /// Requested classical BCH bound $\delta$.
         designed_distance: DesignedDistance,
+    },
+
+    /// BCH code from an arbitrary root seed set.
+    ///
+    /// The seeds need not be closed under multiplication by the base-field
+    /// order: [`BchCode::construct`] derives that cyclotomic closure before
+    /// deriving the generator. Each exponent is interpreted modulo `length`,
+    /// so duplicate and out-of-range representatives have no special effect.
+    /// The selected root may be derived canonically or supplied explicitly
+    /// through [`RootSelection`].
+    ///
+    /// # Example
+    ///
+    /// An unclosed seed set over $\mathrm{GF}(5)$, with $\mathrm{GF}(25)$ as
+    /// its splitting field:
+    ///
+    /// ```
+    /// use gf2_coding::bch::error::BchError;
+    /// use gf2_coding::bch::spec::{
+    ///     BchLength, BchSpec, DenseBchCode, RootExponent, RootSelection,
+    /// };
+    /// use gf2_core::field::{ConstField, FieldPoly};
+    /// use gf2_core::gfp::Fp;
+    /// use gf2_core::gfpn::QuotientField;
+    ///
+    /// let modulus = FieldPoly::new(vec![Fp::<5>::new(1), Fp::new(1), Fp::new(1)]);
+    /// let extension = QuotientField::new(Fp::<5>::zero(), modulus)?;
+    /// let code = DenseBchCode::construct(BchSpec::RootSeeds {
+    ///     extension,
+    ///     length: BchLength::try_from(24)?,
+    ///     root: RootSelection::Canonical,
+    ///     seeds: vec![RootExponent::from(1), RootExponent::from(2)]
+    ///         .into_boxed_slice(),
+    /// })?;
+    ///
+    /// assert_eq!(code.n(), 24);
+    /// assert!(!code.defining_set().is_empty());
+    /// # Ok::<(), BchError>(())
+    /// ```
+    RootSeeds {
+        /// Witness relating the code-symbol field to the splitting field.
+        extension: X,
+        /// Code length, which must divide the splitting field's unit group.
+        length: BchLength,
+        /// Canonical or explicitly validated order-`length` root.
+        root: RootSelection<X::Ext>,
+        /// Seed exponents; construction derives and stores their closed set.
+        seeds: Box<[RootExponent]>,
     },
 }
 
@@ -536,6 +586,12 @@ fn normalize<X: FieldExtension>(spec: BchSpec<X>) -> Result<DerivedInputs<X>, Bc
             first_root,
             designed_distance,
         } => normalize_primitive(extension, Some(first_root), designed_distance),
+        BchSpec::RootSeeds {
+            extension,
+            length,
+            root,
+            seeds,
+        } => normalize_root_seeds(extension, length, root, seeds),
     }
 }
 
@@ -559,6 +615,37 @@ fn normalize_primitive<X: FieldExtension>(
     };
     validate_designed_distance(designed_distance, length)?;
     let seeds = consecutive_seeds(first_root, designed_distance, length);
+
+    Ok(DerivedInputs {
+        extension,
+        length,
+        root,
+        seeds,
+    })
+}
+
+/// Normalizes an arbitrary root-seed request.
+///
+/// Seed exponents are reduced modulo the selected length before the shared
+/// closure stage. This makes duplicate and out-of-range representatives
+/// equivalent to their residue-class representatives without weakening the
+/// contextual range validation of `first_root` in consecutive variants.
+fn normalize_root_seeds<X: FieldExtension>(
+    extension: X,
+    length: BchLength,
+    root_selection: RootSelection<X::Ext>,
+    seeds: Box<[RootExponent]>,
+) -> Result<DerivedInputs<X>, BchError> {
+    validate_length_coprime_to_characteristic(extension.characteristic(), length)?;
+    validate_length_divides_unit_group(&extension, length)?;
+
+    let root = resolve_root(&extension, length, &root_selection)?;
+    let modulus = length.get();
+    let seeds = seeds
+        .into_vec()
+        .into_iter()
+        .map(|seed| seed.get() % modulus)
+        .collect();
 
     Ok(DerivedInputs {
         extension,
@@ -918,6 +1005,14 @@ mod tests {
         .expect("a valid primitive narrow-sense spec")
     }
 
+    fn root_seeds(values: impl IntoIterator<Item = u64>) -> Box<[RootExponent]> {
+        values
+            .into_iter()
+            .map(RootExponent::from)
+            .collect::<Vec<_>>()
+            .into_boxed_slice()
+    }
+
     /// GF(25) = GF(5)[x] / (x^2 + x + 1).
     fn gf25() -> QuotientField<Fp<5>> {
         let modulus = FieldPoly::new(vec![Fp::<5>::new(1), Fp::new(1), Fp::new(1)]);
@@ -1171,6 +1266,87 @@ mod tests {
         assert_eq!(narrow, explicit);
     }
 
+    // -- Arbitrary root-seed flavor ----------------------------------------
+
+    #[test]
+    fn root_seed_sets_derive_the_same_code_from_unclosed_and_closed_input() {
+        let unclosed = DenseBchCode::construct(BchSpec::RootSeeds {
+            extension: gf25(),
+            length: BchLength::try_from(24).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds([1, 2, 3, 4]),
+        })
+        .expect("a valid unclosed seed set");
+        let closed = DenseBchCode::construct(BchSpec::RootSeeds {
+            extension: gf25(),
+            length: BchLength::try_from(24).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds([1, 2, 3, 4, 5, 10, 15, 20]),
+        })
+        .expect("a valid closed seed set");
+
+        assert_eq!(unclosed, closed);
+        assert_construction_is_consistent(&unclosed, 5);
+    }
+
+    #[test]
+    fn root_seed_witness_uses_the_longest_run_created_by_closure() {
+        let code = DenseBchCode::construct(BchSpec::RootSeeds {
+            extension: gf25(),
+            length: BchLength::try_from(24).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds(1..=4),
+        })
+        .expect("a valid GF(5) seed-set spec");
+
+        assert_eq!(
+            code.defining_set(),
+            &root_seeds([1, 2, 3, 4, 5, 10, 15, 20])[..]
+        );
+        assert_eq!(
+            code.distance_bound().first_root(),
+            Some(RootExponent::from(1))
+        );
+        assert_eq!(code.distance_bound().consecutive_root_count(), 5);
+        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 6);
+        assert_eq!(code.correction_radius(), 2);
+    }
+
+    #[test]
+    fn root_seed_sets_reduce_duplicate_and_out_of_range_representatives() {
+        let represented = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension: binary_extension(4, 0b10011),
+            length: BchLength::try_from(15).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds([0, 15, 16, 15]),
+        })
+        .expect("out-of-range representatives are reduced modulo n");
+        let residues = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension: binary_extension(4, 0b10011),
+            length: BchLength::try_from(15).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds([0, 1]),
+        })
+        .expect("the residue representatives are valid");
+
+        assert_eq!(represented, residues);
+    }
+
+    #[test]
+    fn root_seed_set_with_the_narrow_sense_range_has_the_same_generator() {
+        let narrow = binary_narrow_sense(4, 0b10011, 6);
+        let seeded = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension: binary_extension(4, 0b10011),
+            length: BchLength::try_from(15).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds(1..=5),
+        })
+        .expect("a valid narrow-sense seed range");
+
+        assert_eq!(seeded.generator(), narrow.generator());
+        assert_eq!(seeded.defining_set(), narrow.defining_set());
+    }
+
     // -- Bound witness -----------------------------------------------------
 
     #[test]
@@ -1209,6 +1385,53 @@ mod tests {
         assert!(generator_divides_cyclic_polynomial(&code));
         assert_eq!(code.defining_set().len(), 15);
         assert_eq!(code.distance_bound().first_root(), Some(RootExponent(0)));
+        assert_eq!(code.distance_bound().consecutive_root_count(), 15);
+        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 16);
+        assert_eq!(code.correction_radius(), 7);
+    }
+
+    #[test]
+    fn an_empty_root_seed_set_yields_the_full_space_code() {
+        let code = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension: binary_extension(4, 0b10011),
+            length: BchLength::try_from(15).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds(Vec::<u64>::new()),
+        })
+        .expect("an empty seed set is the full-space code");
+
+        assert_eq!(code.n(), 15);
+        assert_eq!(code.k(), 15);
+        assert_eq!(code.generator().degree(), Some(0));
+        assert!(code.defining_set().is_empty());
+        assert_eq!(code.distance_bound().first_root(), None);
+        assert_eq!(code.distance_bound().consecutive_root_count(), 0);
+        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 1);
+        assert_eq!(code.correction_radius(), 0);
+    }
+
+    #[test]
+    fn a_complete_root_seed_set_yields_the_zero_dimensional_code() {
+        let code = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension: binary_extension(4, 0b10011),
+            length: BchLength::try_from(15).expect("positive"),
+            root: RootSelection::Canonical,
+            seeds: root_seeds(0..15),
+        })
+        .expect("a complete seed set is the zero-dimensional code");
+
+        assert_eq!(code.n(), 15);
+        assert_eq!(code.k(), 0);
+        assert_eq!(code.generator().degree(), Some(15));
+        assert_eq!(
+            code.defining_set(),
+            &(0..15).map(RootExponent::from).collect::<Vec<_>>()[..]
+        );
+        assert!(generator_divides_cyclic_polynomial(&code));
+        assert_eq!(
+            code.distance_bound().first_root(),
+            Some(RootExponent::from(0))
+        );
         assert_eq!(code.distance_bound().consecutive_root_count(), 15);
         assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 16);
         assert_eq!(code.correction_radius(), 7);
@@ -1316,6 +1539,21 @@ mod tests {
                 actual: 5,
             }
         );
+
+        let extension = binary_extension(4, 0b10011);
+        let other: Gf2mElement = Gf2mField::new(4, 0b11001).element(2);
+        let error = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension,
+            length,
+            root: RootSelection::Explicit(other),
+            seeds: root_seeds([1]),
+        })
+        .expect_err("the seed-set root must belong to the extension witness");
+
+        assert!(matches!(
+            error,
+            BchError::Field(FieldError::IdentityMismatch { .. })
+        ));
     }
 
     #[test]
@@ -1347,6 +1585,30 @@ mod tests {
         .expect("the canonical root has exact order 15");
 
         assert_eq!(canonical, explicit);
+    }
+
+    #[test]
+    fn root_seed_sets_reuse_typed_explicit_root_validation() {
+        let extension = binary_extension(4, 0b10011);
+        let length = BchLength::try_from(15).expect("positive");
+        let canonical = resolve_root(&extension, length, &RootSelection::Canonical)
+            .expect("a canonical order-15 root");
+
+        let error = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension,
+            length,
+            root: RootSelection::Explicit(canonical.pow(3)),
+            seeds: root_seeds([1]),
+        })
+        .expect_err("the explicit seed-set root must have exact order n");
+
+        assert_eq!(
+            error,
+            BchError::RootOrderMismatch {
+                expected: 15,
+                actual: 5,
+            }
+        );
     }
 
     // -- Block-code contract -----------------------------------------------
@@ -1396,6 +1658,24 @@ mod tests {
         })
     }
 
+    /// Draws arbitrary binary seed sets, including duplicates and
+    /// out-of-range representatives, for small valid cyclic lengths.
+    fn binary_seed_requests() -> impl Strategy<Value = (usize, u64, Vec<u64>)> {
+        prop_oneof![
+            Just((3usize, 0b1011u64)),
+            Just((4, 0b10011)),
+            Just((5, 0b100101)),
+        ]
+        .prop_flat_map(|(m, modulus)| {
+            let length = (1u64 << m) - 1;
+            (
+                Just(m),
+                Just(modulus),
+                prop::collection::vec(0u64..(2 * length), 0..=2 * length as usize),
+            )
+        })
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(24))]
 
@@ -1428,6 +1708,21 @@ mod tests {
             .expect("a valid GF(5) primitive first-root spec");
 
             assert_construction_is_consistent(&code, 5);
+        }
+
+        #[test]
+        fn prop_root_seed_construction_is_internally_consistent(
+            (m, modulus, seeds) in binary_seed_requests(),
+        ) {
+            let code = BinaryBchCode::construct(BchSpec::RootSeeds {
+                extension: binary_extension(m, modulus),
+                length: BchLength::try_from((1u64 << m) - 1).expect("positive"),
+                root: RootSelection::Canonical,
+                seeds: root_seeds(seeds),
+            })
+            .expect("a valid binary seed-set spec");
+
+            assert_construction_is_consistent(&code, 2);
         }
     }
 }
