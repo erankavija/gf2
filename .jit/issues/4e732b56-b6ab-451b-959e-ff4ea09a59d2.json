@@ -316,6 +316,7 @@
       "path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md"
     }
   ],
+  "done_at": "2026-09-01T05:06:03.514876505Z",
   "first_ready_at": "2026-08-28T22:50:47.339714882Z",
   "gates_required": [
     "doc-review",
@@ -341,7 +342,7 @@
     "satisfies:REQ-13"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-01T05:05:33.713656949Z"
+  "updated_at": "2026-09-01T05:06:03.514876505Z"
 }
