@@ -96,3 +96,15 @@ takeover, or rejection. The lead recommends one documentation-only reset:
 remove the false dispatcher distinction and state only the evidence-backed
 protocol and producing-revision scope of the two result sets, then rerun
 independent documentation review and the configured doc-review gate.
+
+## Second invoker decision
+
+The invoker selected option A. The counter is reset and one
+documentation-only retry is authorized. Preserve the resolving **“SIMD pilot
+scope”** heading and both links, but replace the false `ops.rs` distinction
+with only evidence-backed scope: the 2026-09-01 value comes from the receipt's
+preregistered fixed-window protocol at its pinned producing revision, while
+the older 8-word result is reported separately from the Criterion
+`simd_vs_scalar` benchmark and is not reproduced or reconciled by this
+receipt. Do not claim a call-path difference or invent a causal
+reconciliation. Measured artifacts and production behavior remain immutable.
