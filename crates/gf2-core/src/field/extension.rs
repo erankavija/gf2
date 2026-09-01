@@ -2229,21 +2229,41 @@ pub fn cyclotomic_cosets_mod(q_mod_n: u64, n: u64) -> Result<CosetPartition, Fie
 
     let residue_count =
         usize::try_from(n).map_err(|_| FieldError::CyclotomicModulusTooLarge { modulus: n })?;
-    let mut visited = vec![false; residue_count];
-    let mut cosets = Vec::new();
+    let too_large = |_| FieldError::CyclotomicModulusTooLarge { modulus: n };
+    let mut visited = Vec::new();
+    visited
+        .try_reserve_exact(residue_count)
+        .map_err(too_large)?;
+    visited.resize(residue_count, false);
+    let mut cosets: Vec<Vec<u64>> = Vec::new();
 
     for representative in 0..residue_count {
         if visited[representative] {
             continue;
         }
 
+        // First orbit pass counts the coset so its storage can be reserved
+        // fallibly; every allocation scaling with `n` reports the typed
+        // too-large error instead of aborting.
+        let mut coset_len = 0usize;
+        let mut current = representative as u64;
+        loop {
+            coset_len += 1;
+            current = modular_mul(current, q_mod_n, n);
+            if current as usize == representative {
+                break;
+            }
+        }
+
         let mut coset = Vec::new();
+        coset.try_reserve_exact(coset_len).map_err(too_large)?;
         let mut current = representative as u64;
         while !visited[current as usize] {
             visited[current as usize] = true;
             coset.push(current);
             current = modular_mul(current, q_mod_n, n);
         }
+        cosets.try_reserve(1).map_err(too_large)?;
         cosets.push(coset);
     }
 
@@ -4001,6 +4021,13 @@ mod tests {
                 modulus: 4,
                 gcd: 2,
             })
+        );
+
+        // A valid coprime modulus whose visited table can never be allocated
+        // reports the typed too-large error instead of aborting.
+        assert_eq!(
+            cyclotomic_cosets_mod(2, u64::MAX),
+            Err(FieldError::CyclotomicModulusTooLarge { modulus: u64::MAX })
         );
     }
 
