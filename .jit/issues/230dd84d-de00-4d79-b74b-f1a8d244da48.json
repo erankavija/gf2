@@ -11,6 +11,7 @@
   ],
   "description": "Implement the `BchSpec` model types and the canonical construction path for the consecutive-root flavors: primitive narrow-sense and primitive with arbitrary first root, over any supported base field.\n\n## Background\n\nConstruction derives the generator polynomial from coset minimal polynomials via the public polynomial LCM, dimension $k$, a witnessed classical BCH bound from the longest consecutive root run, and the correction radius that bound implies; it validates $\\gcd(n,q)=1$, exact root order, base/splitting-field compatibility, and coefficient restriction, reporting failures through the layered error surface. Remaining flavors (seed sets, explicit generators, non-primitive conventions, degenerate codes) land in the follow-on flavor task on this same pipeline.\n\n## Success Criteria\n\n- [hard] REQ-01: `BchSpec` types exist per the approved design, and primitive consecutive-root specs construct through one path deriving generator, dimension, witnessed bound, and radius with the listed validations as typed errors.\n- [hard] REQ-02: Binary primitive narrow-sense results agree with the current implementation's generator polynomials on representative parameters.\n- [hard] REQ-03: Nonbinary primitive construction works over GF(p) and GF(p^r) bases with base-coefficient generators dividing $x^n-1$.\n",
   "documents": [],
+  "done_at": "2026-09-01T13:13:01.088235997Z",
   "first_ready_at": "2026-09-01T11:05:54.761096898Z",
   "gates_required": [
     "cargo-ci",
@@ -20,7 +21,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-01T13:00:54.241703695Z",
+      "updated_at": "2026-09-01T13:12:55.485344114Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -29,8 +30,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-01T13:07:46.527855551Z",
+      "status": "passed",
+      "updated_at": "2026-09-01T13:11:22.317620869Z",
       "updated_by": "auto:executor"
     }
   },
@@ -43,7 +44,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Implement BchSpec and the consecutive-root construction path",
-  "updated_at": "2026-09-01T13:07:46.527855551Z"
+  "updated_at": "2026-09-01T13:13:01.088235997Z"
 }

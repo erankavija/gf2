@@ -7,6 +7,7 @@
   ],
   "description": "Extend the canonical construction path to seed-set `BchSpec` flavors: arbitrary root seed sets whose $q$-cyclotomic closure the construction derives, including the mathematically valid boundary codes.\n\n## Success Criteria\n\n- [hard] REQ-01: Seed-set specs accept unclosed input, derive the closure, and construct with the witnessed bound from the longest consecutive run in the closed set.\n- [hard] REQ-02: Empty seed sets yield the full-space code and complete defining sets yield the zero-dimensional code, each with correct derived parameters.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T13:13:09.869024549Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -21,7 +22,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Construction from arbitrary seed sets, including boundary codes",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T13:13:09.869024549Z"
 }

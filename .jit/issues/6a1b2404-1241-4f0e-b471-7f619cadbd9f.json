@@ -8,6 +8,7 @@
   ],
   "description": "Implement general BCH encoding over supported base fields with the canonical coordinate convention: coordinate $i \\leftrightarrow x^i$ internally, `[message | parity]` as the default systematic user layout through an explicit zero-cost coordinate mapping, and declared standards-specific layouts.\n\n## Success Criteria\n\n- [hard] REQ-01: Encoding produces valid codewords ($g(x) \\mid c(x)$) over binary and nonbinary base fields with the message preserved in the systematic positions of the default layout.\n- [hard] REQ-02: The internal cyclic convention and user layout are connected by an explicit mapping consumed from the shared layout contract, and a declared alternative layout round-trips.\n- [hard] REQ-03: Binary results agree with the current encoder on representative primitive codes.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T13:13:18.577443791Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -22,7 +23,7 @@
     "satisfies:REQ-07"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "General systematic BCH encoding across supported base fields",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T13:13:18.577443791Z"
 }

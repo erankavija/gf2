@@ -17,7 +17,7 @@
     "type:enhancement"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Promote integer gcd and the cyclic polynomial x^n-1 helper to gf2-core",
-  "updated_at": "2026-09-01T12:59:23.624458069Z"
+  "updated_at": "2026-09-01T13:13:44.633292166Z"
 }
