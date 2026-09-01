@@ -3,7 +3,9 @@
 //! This module provides implementations of linear block codes, including systematic codes
 //! and syndrome-based decoding.
 
-use crate::traits::{BlockEncoder, HardDecisionDecoder};
+use crate::error::{CodeCapability, CodeError};
+use crate::traits::{block, HardDecisionDecoder};
+use gf2_core::gfp::Fp;
 use gf2_core::BitMatrix;
 use gf2_core::BitVec;
 use std::collections::HashMap;
@@ -11,8 +13,8 @@ use std::collections::HashMap;
 /// A linear block code defined by generator and parity-check matrices.
 ///
 /// A linear [n, k] block code encodes k message bits into n codeword bits using
-/// a generator matrix G (k × n). For systematic codes, the first k bits of the
-/// codeword are the message bits.
+/// a generator matrix G (k × n). For systematic codes, the positions recorded
+/// in the code's user layout contain the message bits.
 ///
 /// # Examples
 ///
@@ -304,52 +306,142 @@ impl LinearBlockCode {
     }
 }
 
-impl crate::traits::GeneratorMatrixAccess for LinearBlockCode {
+impl block::BlockCode for LinearBlockCode {
+    type Symbol = Fp<2>;
+    type Symbols = BitVec;
+
+    fn symbol_zero(&self) -> Self::Symbol {
+        Fp::<2>::new(0)
+    }
+
     fn k(&self) -> usize {
         self.k
     }
 
     fn n(&self) -> usize {
         self.n
-    }
-
-    fn generator_matrix(&self) -> BitMatrix {
-        self.g.clone()
-    }
-
-    fn is_systematic(&self) -> bool {
-        true // Hamming codes are always systematic
     }
 }
 
-impl BlockEncoder for LinearBlockCode {
-    fn k(&self) -> usize {
-        self.k
-    }
-
-    fn n(&self) -> usize {
-        self.n
-    }
-
-    fn encode(&self, message: &BitVec) -> BitVec {
-        assert_eq!(
-            message.len(),
-            self.k,
-            "Message length must be k = {}",
-            self.k
-        );
-
-        // Convert message to 1 × k matrix
-        let mut msg_matrix = BitMatrix::zeros(1, self.k);
-        for i in 0..self.k {
-            msg_matrix.set(0, i, message.get(i));
+impl block::BlockEncoder for LinearBlockCode {
+    /// Computes `codeword = message · G` through the packed matrix product.
+    ///
+    /// # Complexity
+    ///
+    /// O(k · n / 64) word operations plus one `1 × k` and one `1 × n`
+    /// intermediate matrix; the codeword buffer itself belongs to the caller.
+    fn encode_into(
+        &self,
+        message: &Self::Symbols,
+        codeword: &mut Self::Symbols,
+    ) -> Result<(), CodeError> {
+        if message.len() != self.k {
+            return Err(CodeError::BufferLengthMismatch {
+                expected: self.k,
+                actual: message.len(),
+            });
+        }
+        if codeword.len() != self.n {
+            return Err(CodeError::BufferLengthMismatch {
+                expected: self.n,
+                actual: codeword.len(),
+            });
         }
 
-        // Compute codeword = message * G
-        let codeword_matrix = &msg_matrix * &self.g;
+        let mut message_matrix = BitMatrix::zeros(1, self.k);
+        for index in 0..self.k {
+            message_matrix.set(0, index, message.get(index));
+        }
+        let encoded_matrix = &message_matrix * &self.g;
+        for index in 0..self.n {
+            codeword.set(index, encoded_matrix.get(0, index));
+        }
+        Ok(())
+    }
+}
 
-        // Extract codeword as BitVec (row 0 of result matrix)
-        codeword_matrix.row_as_bitvec(0)
+impl block::GeneratorMatrixAccess for LinearBlockCode {
+    type GeneratorMatrix = BitMatrix;
+
+    /// Copies the stored generator into `out`.
+    ///
+    /// # Complexity
+    ///
+    /// O(k · n / 64) word copies: `out` and `G` share a shape, hence a row
+    /// stride, so each row transfers as one packed word slice.
+    fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {
+        if out.rows() != self.k || out.cols() != self.n {
+            return Err(CodeError::ShapeMismatch {
+                expected_rows: self.k,
+                expected_cols: self.n,
+                actual_rows: out.rows(),
+                actual_cols: out.cols(),
+            });
+        }
+        for row in 0..self.k {
+            out.row_words_mut(row)
+                .copy_from_slice(self.g.row_words(row));
+        }
+        Ok(())
+    }
+
+    /// Tests the generator restricted to the code's message coordinates.
+    ///
+    /// The message coordinates are the positions recorded in
+    /// `systematic_positions`, in message order, so the answer stays `true`
+    /// for a code whose identity block sits away from columns `0..k`.
+    ///
+    /// # Complexity
+    ///
+    /// O(k²) bit reads.
+    fn is_systematic(&self) -> Result<bool, CodeError> {
+        if self.g.rows() != self.k
+            || self.g.cols() != self.n
+            || self.systematic_positions.len() != self.k
+        {
+            return Ok(false);
+        }
+        for row in 0..self.k {
+            for (message_index, &position) in self.systematic_positions.iter().enumerate() {
+                if position >= self.n || self.g.get(row, position) != (row == message_index) {
+                    return Ok(false);
+                }
+            }
+        }
+        Ok(true)
+    }
+}
+
+impl block::ParityCheckMatrixAccess for LinearBlockCode {
+    type ParityCheckMatrix = BitMatrix;
+
+    /// Copies the stored parity-check matrix into `out`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::CapabilityUnavailable`] for a code constructed
+    /// without a parity-check matrix, and [`CodeError::ShapeMismatch`] when
+    /// `out` is not `parity_check_rows() × n()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(r · n / 64) word copies, one packed word slice per row.
+    fn parity_check_matrix_into(&self, out: &mut Self::ParityCheckMatrix) -> Result<(), CodeError> {
+        let h = self.h.as_ref().ok_or(CodeError::CapabilityUnavailable {
+            capability: CodeCapability::ParityCheckMatrix,
+        })?;
+        if out.rows() != self.parity_check_rows() || out.cols() != self.n {
+            return Err(CodeError::ShapeMismatch {
+                expected_rows: self.parity_check_rows(),
+                expected_cols: self.n,
+                actual_rows: out.rows(),
+                actual_cols: out.cols(),
+            });
+        }
+        for row in 0..h.rows() {
+            out.row_words_mut(row).copy_from_slice(h.row_words(row));
+        }
+        Ok(())
     }
 }
 
@@ -675,7 +767,7 @@ mod tests {
     #[test]
     fn test_empty_message() {
         // Edge case: if we had a code with k=0, encoding should produce consistent output
-        // For now, test that Hamming codes handle minimum sizes properly
+        // Test that Hamming codes handle minimum sizes properly.
         let code = LinearBlockCode::hamming(2);
         assert_eq!(code.k(), 1);
         assert_eq!(code.n(), 3);
@@ -1112,6 +1204,95 @@ mod generator_matrix_access_tests {
             assert_eq!(g.rows(), code.k());
             assert_eq!(g.cols(), code.n());
             assert!(code.is_systematic());
+        }
+    }
+}
+
+#[cfg(test)]
+mod canonical_traits_tests {
+    use super::*;
+    use crate::traits::block;
+    use crate::traits::block::conformance;
+    use crate::traits::{BlockEncoder as V1BlockEncoder, GeneratorMatrixAccess as V1Generator};
+
+    #[test]
+    fn linear_code_satisfies_block_encoder_contract() {
+        let code = LinearBlockCode::hamming(3);
+        let mut message = BitVec::zeros(code.k());
+        for index in [0, 2, 3] {
+            message.set(index, true);
+        }
+        conformance::block_encoder_contract(&code, &message);
+    }
+
+    #[test]
+    fn linear_code_generator_rows_encode_message_basis() {
+        let code = LinearBlockCode::hamming(3);
+        conformance::generator_rows_encode_basis(&code, &Fp::<2>::new(1));
+        conformance::generator_matrix_contract(&code);
+        conformance::generator_parity_orthogonality(&code);
+    }
+
+    #[test]
+    fn linear_code_parity_check_matrix_matches_stored_h() {
+        let code = LinearBlockCode::hamming(3);
+        let expected = code.parity_check().unwrap();
+        let actual = block::ParityCheckMatrixAccess::parity_check_matrix(&code).unwrap();
+        assert_eq!(&actual, expected);
+        conformance::parity_check_matrix_contract(&code);
+    }
+
+    #[test]
+    fn linear_code_without_parity_reports_capability_unavailable() {
+        let code = LinearBlockCode::new_systematic(BitMatrix::zeros(1, 3), None);
+        let expected = CodeError::CapabilityUnavailable {
+            capability: CodeCapability::ParityCheckMatrix,
+        };
+        assert_eq!(
+            block::ParityCheckMatrixAccess::parity_check_matrix(&code),
+            Err(expected.clone())
+        );
+
+        let mut output = BitMatrix::zeros(code.n() - code.k(), code.n());
+        assert_eq!(
+            block::ParityCheckMatrixAccess::parity_check_matrix_into(&code, &mut output),
+            Err(CodeError::CapabilityUnavailable {
+                capability: CodeCapability::ParityCheckMatrix,
+            })
+        );
+    }
+
+    #[test]
+    fn linear_code_binary_v1_adapter_preserves_version_1_results() {
+        let code = LinearBlockCode::hamming(3);
+        let mut message = BitVec::zeros(code.k());
+        message.set(0, true);
+        let canonical = block::BlockEncoder::encode(&code, &message).unwrap();
+        let v1 = V1BlockEncoder::encode(&code, &message);
+        assert_eq!(v1, canonical);
+        assert_eq!(V1BlockEncoder::k(&code), code.k());
+        assert_eq!(V1BlockEncoder::n(&code), code.n());
+
+        let canonical_generator = block::GeneratorMatrixAccess::generator_matrix(&code).unwrap();
+        let v1_generator = V1Generator::generator_matrix(&code);
+        assert_eq!(v1_generator, canonical_generator);
+        assert!(V1Generator::is_systematic(&code));
+    }
+
+    #[test]
+    fn linear_code_packed_word_boundary_encoding() {
+        let code = LinearBlockCode::hamming(7);
+        let mut message = BitVec::zeros(code.k());
+        for index in [0, 63, 64, 65, 119] {
+            message.set(index, true);
+        }
+
+        let canonical = block::BlockEncoder::encode(&code, &message).unwrap();
+        let v1 = V1BlockEncoder::encode(&code, &message);
+        assert_eq!(canonical, v1);
+        assert_eq!(canonical.len(), 127);
+        for (message_index, &codeword_index) in code.systematic_positions.iter().enumerate() {
+            assert_eq!(message.get(message_index), canonical.get(codeword_index));
         }
     }
 }
