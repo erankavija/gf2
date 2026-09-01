@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-01T19:38:13.985705848Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -21,7 +22,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Construction at non-primitive lengths with both root conventions",
-  "updated_at": "2026-09-01T16:39:23.922689084Z"
+  "updated_at": "2026-09-01T19:38:13.985705848Z"
 }
