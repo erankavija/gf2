@@ -370,6 +370,290 @@ where
     }
 }
 
+/// A linear code obtained by puncturing a mother code on a coordinate set.
+///
+/// For a mother generator matrix `G` and a selected set `S`, the punctured
+/// code is the projection of the mother code onto the coordinates not in
+/// `S`.  The projected generator is reduced to RREF, so its rank is the
+/// derived dimension and [`Self::information_set`] reports pivots of the
+/// projected code rather than the mother's systematic positions.  In
+/// particular, puncturing can reduce the dimension when distinct mother
+/// messages have the same projection.
+///
+/// `C` needs the canonical block-code and generator-matrix traits.  The
+/// resulting wrapper owns its generator and therefore encodes through the
+/// generic symbol representation supplied by `C`, including nonbinary
+/// fields.  Its coordinate map preserves the original order of the kept
+/// coordinates and composes through [`Self::puncture`].
+///
+/// The complete coordinate set is valid: it produces the zero-length,
+/// zero-dimensional boundary code with an empty information set.
+pub struct Punctured<C>
+where
+    C: BlockCode,
+{
+    mother: C,
+    map: CoordinateMap,
+    removed: Box<[usize]>,
+    generator: FieldMatrix<C::Symbol>,
+    information_set: Box<[usize]>,
+}
+
+impl<C> Clone for Punctured<C>
+where
+    C: BlockCode + Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            mother: self.mother.clone(),
+            map: self.map.clone(),
+            removed: self.removed.clone(),
+            generator: self.generator.clone(),
+            information_set: self.information_set.clone(),
+        }
+    }
+}
+
+impl<C> fmt::Debug for Punctured<C>
+where
+    C: BlockCode + fmt::Debug,
+    C::Symbol: fmt::Debug,
+{
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("Punctured")
+            .field("mother", &self.mother)
+            .field("map", &self.map)
+            .field("removed", &self.removed)
+            .field("generator", &self.generator)
+            .field("information_set", &self.information_set)
+            .finish()
+    }
+}
+
+impl<C> Punctured<C>
+where
+    C: BlockCode + GeneratorMatrixAccess,
+{
+    /// Punctures `mother` on `coordinates`.
+    ///
+    /// `coordinates` is an arbitrary set of positions in `mother`, not a
+    /// count and not necessarily a systematic prefix.  Coordinates are
+    /// sorted for the deletion map, so their input order has no semantic
+    /// effect.  The resulting projected generator is an RREF basis, and
+    /// [`Self::information_set`] contains its pivot columns in derived-code
+    /// coordinates.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::CoordinateOutOfRange`] for an out-of-range
+    /// position and [`CodeError::DuplicateCoordinate`] for a repeated
+    /// position.  The complete coordinate set is valid and produces the
+    /// zero-length, zero-dimensional boundary code.  Matrix-access errors
+    /// from the mother code are propagated unchanged.
+    pub fn new(mother: C, coordinates: impl IntoIterator<Item = usize>) -> Result<Self, CodeError> {
+        let provenance = CoordinateMap::identity(mother.n());
+        build_punctured(mother, coordinates, provenance)
+    }
+
+    /// Punctures `mother` using an already-known map from `mother` to an
+    /// ultimate ancestor coordinate space.
+    ///
+    /// `mother_map.derived_len()` must equal `mother.n()`; the resulting map
+    /// is `mother_map` composed with the deletion map.  [`Self::puncture`] is
+    /// the convenient form for chaining `Punctured` values.
+    pub fn with_coordinate_map(
+        mother: C,
+        mother_map: CoordinateMap,
+        coordinates: impl IntoIterator<Item = usize>,
+    ) -> Result<Self, CodeError> {
+        if mother_map.derived_len() != mother.n() {
+            return Err(CodeError::CoordinateCountMismatch {
+                expected: mother.n(),
+                actual: mother_map.derived_len(),
+            });
+        }
+        build_punctured(mother, coordinates, mother_map)
+    }
+
+    /// Punctures an existing punctured code and composes coordinate
+    /// provenance.
+    ///
+    /// The positions are in the current (inner) code coordinate space.  The
+    /// returned map points directly to the original mother of the chain.
+    pub fn puncture(
+        self,
+        coordinates: impl IntoIterator<Item = usize>,
+    ) -> Result<Punctured<Self>, CodeError> {
+        let provenance = self.map.clone();
+        build_punctured(self, coordinates, provenance)
+    }
+
+    /// Punctures the first `count` conventional systematic positions.
+    ///
+    /// The conventional layout is positions `0..k`; this helper is a
+    /// shorthand for [`Self::new`] with the set `0..count`.  It delegates to
+    /// the coordinate-set constructor, including its validation.
+    pub fn puncture_first(mother: C, count: usize) -> Result<Self, CodeError> {
+        let coordinates = conventional_prefix(&mother, count)?;
+        Self::new(mother, coordinates)
+    }
+
+    /// Punctures the last `count` conventional systematic positions.
+    ///
+    /// The conventional layout is positions `0..k`; this helper is a
+    /// shorthand for [`Self::new`] with the set `k-count..k`.  It delegates
+    /// to the coordinate-set constructor, including its validation.
+    pub fn puncture_last(mother: C, count: usize) -> Result<Self, CodeError> {
+        let coordinates = conventional_suffix(&mother, count)?;
+        Self::new(mother, coordinates)
+    }
+
+    /// Alias for [`Self::puncture_last`], the usual count-based puncturing
+    /// convention.
+    pub fn by_count(mother: C, count: usize) -> Result<Self, CodeError> {
+        Self::puncture_last(mother, count)
+    }
+
+    /// Alias for [`Self::puncture_first`].
+    pub fn from_systematic_prefix(mother: C, count: usize) -> Result<Self, CodeError> {
+        Self::puncture_first(mother, count)
+    }
+
+    /// Alias for [`Self::puncture_last`].
+    pub fn from_systematic_suffix(mother: C, count: usize) -> Result<Self, CodeError> {
+        Self::puncture_last(mother, count)
+    }
+
+    /// Returns the mother code by shared reference.
+    pub fn mother(&self) -> &C {
+        &self.mother
+    }
+
+    /// Consumes the wrapper and returns its immediate mother code.
+    pub fn into_mother(self) -> C {
+        self.mother
+    }
+
+    /// Returns the map from derived coordinates to the original mother
+    /// coordinates.
+    pub fn coordinate_map(&self) -> &CoordinateMap {
+        &self.map
+    }
+
+    /// Returns the positions removed from the immediate mother coordinate
+    /// space, in ascending order.
+    pub fn punctured_positions(&self) -> &[usize] {
+        &self.removed
+    }
+
+    /// Returns the derived coordinates that form an information set.
+    ///
+    /// The positions are in ascending pivot order and are coordinates of the
+    /// punctured code, not positions in the mother code.  Restricting the
+    /// RREF generator to these columns gives the identity matrix.
+    pub fn information_set(&self) -> &[usize] {
+        &self.information_set
+    }
+
+    /// Alias for [`Self::information_set`].
+    pub fn information_positions(&self) -> &[usize] {
+        self.information_set()
+    }
+}
+
+impl<C> BlockCode for Punctured<C>
+where
+    C: BlockCode,
+{
+    type Symbol = C::Symbol;
+    type Symbols = C::Symbols;
+
+    fn symbol_zero(&self) -> Self::Symbol {
+        self.mother.symbol_zero()
+    }
+
+    fn k(&self) -> usize {
+        self.generator.rows()
+    }
+
+    fn n(&self) -> usize {
+        self.generator.cols()
+    }
+}
+
+impl<C> BlockEncoder for Punctured<C>
+where
+    C: BlockCode,
+{
+    /// Encodes a message with the punctured code's RREF generator.
+    ///
+    /// # Complexity
+    ///
+    /// O(`k · n`) field operations.
+    fn encode_into(
+        &self,
+        message: &Self::Symbols,
+        codeword: &mut Self::Symbols,
+    ) -> Result<(), CodeError> {
+        if message.len() != self.k() {
+            return Err(CodeError::BufferLengthMismatch {
+                expected: self.k(),
+                actual: message.len(),
+            });
+        }
+        if codeword.len() != self.n() {
+            return Err(CodeError::BufferLengthMismatch {
+                expected: self.n(),
+                actual: codeword.len(),
+            });
+        }
+
+        let zero = self.symbol_zero();
+        for column in 0..self.n() {
+            let mut value = zero.zero_like();
+            for row in 0..self.k() {
+                let message_symbol = message
+                    .get(row)
+                    .expect("validated punctured message length");
+                value += self.generator.get(row, column) * message_symbol;
+            }
+            codeword.set(column, value)?;
+        }
+        Ok(())
+    }
+}
+
+impl<C> GeneratorMatrixAccess for Punctured<C>
+where
+    C: BlockCode + GeneratorMatrixAccess,
+{
+    type GeneratorMatrix = C::GeneratorMatrix;
+
+    fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {
+        if out.rows() != self.k() || out.cols() != self.n() {
+            return Err(CodeError::ShapeMismatch {
+                expected_rows: self.k(),
+                expected_cols: self.n(),
+                actual_rows: out.rows(),
+                actual_cols: out.cols(),
+            });
+        }
+
+        for row in 0..self.k() {
+            for column in 0..self.n() {
+                let value = self.generator.get(row, column);
+                out.set(row, column, value)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn is_systematic(&self) -> Result<bool, CodeError> {
+        Ok(self.information_set.iter().copied().eq(0..self.k()))
+    }
+}
+
 fn build_shortened<C>(
     mother: C,
     coordinates: impl IntoIterator<Item = usize>,
@@ -401,6 +685,42 @@ where
         mother,
         map,
         local_map,
+        removed: removed.into_boxed_slice(),
+        generator: data.generator,
+        information_set: data.information_set,
+    })
+}
+
+fn build_punctured<C>(
+    mother: C,
+    coordinates: impl IntoIterator<Item = usize>,
+    provenance: CoordinateMap,
+) -> Result<Punctured<C>, CodeError>
+where
+    C: BlockCode + GeneratorMatrixAccess,
+{
+    if provenance.derived_len() != mother.n() {
+        return Err(CodeError::CoordinateCountMismatch {
+            expected: mother.n(),
+            actual: provenance.derived_len(),
+        });
+    }
+
+    let removed = validate_coordinate_set(mother.n(), coordinates)?;
+    let kept = (0..mother.n())
+        .filter(|position| removed.binary_search(position).is_err())
+        .collect::<Vec<_>>();
+    let local_map = CoordinateMap::from_permutation(mother.n(), &kept)?;
+    let map = provenance.compose(&local_map)?;
+
+    let mother_generator = mother.generator_matrix()?;
+    let zero = mother.symbol_zero();
+    let generator = materialize_generator(&mother_generator, &zero);
+    let data = derive_punctured_data(&generator, &kept, &zero);
+
+    Ok(Punctured {
+        mother,
+        map,
         removed: removed.into_boxed_slice(),
         generator: data.generator,
         information_set: data.information_set,
@@ -515,6 +835,28 @@ where
                     * mother_generator.get(message_row, mother_column);
             }
             candidate.set(basis_row, derived_column, value);
+        }
+    }
+
+    reduce_to_rref_basis(candidate, zero)
+}
+
+fn derive_punctured_data<F>(
+    mother_generator: &FieldMatrix<F>,
+    kept: &[usize],
+    zero: &F,
+) -> DerivedLinearData<F>
+where
+    F: FiniteField,
+{
+    let mut candidate = FieldMatrix::new(mother_generator.rows(), kept.len(), zero.clone());
+    for row in 0..mother_generator.rows() {
+        for (derived_column, &mother_column) in kept.iter().enumerate() {
+            candidate.set(
+                row,
+                derived_column,
+                mother_generator.get(row, mother_column),
+            );
         }
     }
 
@@ -674,6 +1016,31 @@ mod tests {
         result.rank()
     }
 
+    fn direct_punctured_rank<F>(generator: &FieldMatrix<F>, removed: &[usize]) -> usize
+    where
+        F: FiniteField,
+    {
+        let zero = if generator.rows() > 0 && generator.cols() > 0 {
+            generator.get(0, 0).zero_like()
+        } else {
+            F::zero_hint().expect("test fields have a static zero")
+        };
+        let kept = (0..generator.cols())
+            .filter(|column| !removed.contains(column))
+            .collect::<Vec<_>>();
+        let mut projected = FieldMatrix::new(generator.rows(), kept.len(), zero.clone());
+        for row in 0..generator.rows() {
+            for (column, &mother_column) in kept.iter().enumerate() {
+                projected.set(row, column, generator.get(row, mother_column));
+            }
+        }
+        if projected.cols() == 0 {
+            0
+        } else {
+            projected.rank()
+        }
+    }
+
     fn fp5_matrix(rows: usize, cols: usize, values: &[u8]) -> FieldMatrix<Fp<5>> {
         let mut matrix = FieldMatrix::zeros(rows, cols);
         for row in 0..rows {
@@ -830,6 +1197,172 @@ mod tests {
         assert!(boundary.information_set().is_empty());
     }
 
+    #[test]
+    fn puncturing_can_drop_dimension_when_messages_collide() {
+        let mut generator = BitMatrix::zeros(2, 3);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(1, 1, true);
+        generator.set(1, 2, true);
+        let mother = LinearBlockCode::new_systematic(generator.clone(), None);
+        let punctured = Punctured::new(mother, [0, 1]).unwrap();
+
+        assert_eq!(punctured.n(), 1);
+        assert_eq!(punctured.k(), 1);
+        assert_eq!(punctured.information_set(), &[0]);
+        assert_eq!(punctured.coordinate_map().mother_position(0).unwrap(), 2);
+
+        let mut dense = FieldMatrix::zeros(2, 3);
+        for row in 0..2 {
+            for column in 0..3 {
+                dense.set(row, column, Fp::<2>::new(generator.get(row, column) as u64));
+            }
+        }
+        assert_eq!(punctured.k(), direct_punctured_rank(&dense, &[0, 1]));
+    }
+
+    #[test]
+    fn chained_puncturing_composes_maps_and_matches_combined_set() {
+        let mut generator = BitMatrix::zeros(3, 6);
+        generator.set(0, 0, true);
+        generator.set(0, 3, true);
+        generator.set(1, 1, true);
+        generator.set(1, 3, true);
+        generator.set(1, 4, true);
+        generator.set(2, 2, true);
+        generator.set(2, 4, true);
+        generator.set(2, 5, true);
+        let mother = LinearBlockCode::new_systematic(generator, None);
+        let first = Punctured::new(mother.clone(), [1]).unwrap();
+        let chained = first.puncture([2]).unwrap();
+        let combined = Punctured::new(mother, [1, 3]).unwrap();
+
+        assert_eq!(chained.n(), combined.n());
+        assert_eq!(chained.k(), combined.k());
+        assert_eq!(chained.information_set(), combined.information_set());
+        for position in 0..chained.n() {
+            assert_eq!(
+                chained.coordinate_map().mother_position(position),
+                combined.coordinate_map().mother_position(position)
+            );
+        }
+    }
+
+    #[test]
+    fn puncturing_count_helpers_delegate_to_coordinate_sets() {
+        let mut generator = BitMatrix::zeros(3, 5);
+        for diagonal in 0..3 {
+            generator.set(diagonal, diagonal, true);
+        }
+        let first =
+            Punctured::puncture_first(LinearBlockCode::new_systematic(generator.clone(), None), 2)
+                .unwrap();
+        let explicit_first = Punctured::new(
+            LinearBlockCode::new_systematic(generator.clone(), None),
+            [0, 1],
+        )
+        .unwrap();
+        let last =
+            Punctured::puncture_last(LinearBlockCode::new_systematic(generator.clone(), None), 2)
+                .unwrap();
+        let explicit_last =
+            Punctured::new(LinearBlockCode::new_systematic(generator, None), [1, 2]).unwrap();
+
+        assert_eq!(
+            first.generator_matrix().unwrap(),
+            explicit_first.generator_matrix().unwrap()
+        );
+        assert_eq!(
+            last.generator_matrix().unwrap(),
+            explicit_last.generator_matrix().unwrap()
+        );
+        assert!(Punctured::by_count(
+            LinearBlockCode::new_systematic(BitMatrix::zeros(3, 5), None),
+            0
+        )
+        .unwrap()
+        .punctured_positions()
+        .is_empty());
+    }
+
+    #[test]
+    fn puncturing_preserves_kept_coordinate_order() {
+        let mut generator = BitMatrix::zeros(2, 5);
+        generator.set(0, 0, true);
+        generator.set(1, 1, true);
+        let code = LinearBlockCode::new_systematic(generator, None);
+        let punctured = Punctured::new(code, [3, 1]).unwrap();
+
+        assert_eq!(punctured.n(), 3);
+        assert_eq!(punctured.punctured_positions(), &[1, 3]);
+        assert_eq!(
+            (0..punctured.n())
+                .map(|position| punctured
+                    .coordinate_map()
+                    .mother_position(position)
+                    .unwrap())
+                .collect::<Vec<_>>(),
+            vec![0, 2, 4]
+        );
+        assert!((0..punctured.n()).all(|position| {
+            !punctured.punctured_positions().contains(
+                &punctured
+                    .coordinate_map()
+                    .mother_position(position)
+                    .unwrap(),
+            )
+        }));
+    }
+
+    #[test]
+    fn puncturing_and_shortening_have_expected_subspace_dimensions() {
+        let mut generator = BitMatrix::zeros(2, 4);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(1, 1, true);
+        generator.set(1, 2, true);
+        let mother = LinearBlockCode::new_systematic(generator, None);
+        let shortened = Shortened::new(mother.clone(), [0]).unwrap();
+        let punctured = Punctured::new(mother, [0]).unwrap();
+
+        assert!(shortened.k() <= punctured.k());
+    }
+
+    #[test]
+    fn invalid_puncturing_coordinate_sets_use_code_errors() {
+        let mut generator = BitMatrix::zeros(1, 4);
+        generator.set(0, 0, true);
+        let code = LinearBlockCode::new_systematic(generator, None);
+
+        assert!(matches!(
+            Punctured::new(code.clone(), [4]),
+            Err(CodeError::CoordinateOutOfRange { .. })
+        ));
+        assert!(matches!(
+            Punctured::new(code.clone(), [1, 1]),
+            Err(CodeError::DuplicateCoordinate { .. })
+        ));
+        let boundary = Punctured::new(code, [0, 1, 2, 3]).unwrap();
+        assert_eq!(boundary.n(), 0);
+        assert_eq!(boundary.k(), 0);
+        assert!(boundary.information_set().is_empty());
+    }
+
+    #[test]
+    fn full_coordinate_puncturing_of_a_rank_deficient_nonbinary_code_is_boundary() {
+        let values = [1u8, 2, 0, 1, 2, 4, 0, 2, 3, 1, 0, 3];
+        let generator = fp5_matrix(3, 4, &values);
+        let code = DenseTestCode {
+            generator,
+            zero: Fp::<5>::new(0),
+        };
+        let boundary = Punctured::new(code, [0, 1, 2, 3]).unwrap();
+
+        assert_eq!(boundary.n(), 0);
+        assert_eq!(boundary.k(), 0);
+        assert!(boundary.information_set().is_empty());
+    }
+
     proptest! {
         #[test]
         fn binary_dimension_matches_direct_generator_computation(
@@ -876,6 +1409,51 @@ mod tests {
             let code = DenseTestCode { generator: generator.clone(), zero: Fp::<5>::new(0) };
             let shortened = Shortened::new(code, removed.clone()).unwrap();
             prop_assert_eq!(shortened.k(), direct_shortened_rank(&generator, &removed));
+        }
+
+        #[test]
+        fn binary_puncturing_dimension_matches_direct_projected_rank(
+            rows in 1usize..=4,
+            cols in 2usize..=7,
+            values in prop::collection::vec(any::<bool>(), 8..=28),
+            mask in any::<u8>(),
+        ) {
+            let mut generator = BitMatrix::zeros(rows, cols);
+            for row in 0..rows {
+                for column in 0..cols {
+                    generator.set(row, column, values[(row * cols + column) % values.len()]);
+                }
+            }
+            let removed = (0..cols)
+                .filter(|column| (mask >> (column % 8)) & 1 == 1)
+                .collect::<Vec<_>>();
+            let code = LinearBlockCode::new_systematic(generator.clone(), None);
+            let punctured = Punctured::new(code, removed.clone()).unwrap();
+            let mut dense = FieldMatrix::zeros(rows, cols);
+            for row in 0..rows {
+                for column in 0..cols {
+                    dense.set(row, column, Fp::<2>::new(generator.get(row, column) as u64));
+                }
+            }
+            prop_assert_eq!(punctured.k(), direct_punctured_rank(&dense, &removed));
+        }
+
+        #[test]
+        fn nonbinary_puncturing_dimension_matches_direct_projected_rank(
+            rows in 1usize..=4,
+            cols in 2usize..=7,
+            values in prop::collection::vec(0u8..5, 8..=28),
+            mask in any::<u8>(),
+        ) {
+            let mut values = values;
+            values.resize(rows * cols, 0);
+            let generator = fp5_matrix(rows, cols, &values);
+            let removed = (0..cols)
+                .filter(|column| (mask >> (column % 8)) & 1 == 1)
+                .collect::<Vec<_>>();
+            let code = DenseTestCode { generator: generator.clone(), zero: Fp::<5>::new(0) };
+            let punctured = Punctured::new(code, removed.clone()).unwrap();
+            prop_assert_eq!(punctured.k(), direct_punctured_rank(&generator, &removed));
         }
     }
 }
