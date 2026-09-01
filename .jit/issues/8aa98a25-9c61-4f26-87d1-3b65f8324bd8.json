@@ -22,7 +22,7 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-09-01T11:17:39.018004868Z",
+      "updated_at": "2026-09-01T11:22:10.359139659Z",
       "updated_by": "auto:executor"
     }
   },
@@ -36,5 +36,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Generic shortening over arbitrary coordinate sets",
-  "updated_at": "2026-09-01T11:17:39.018004868Z"
+  "updated_at": "2026-09-01T11:22:10.359139659Z"
 }
