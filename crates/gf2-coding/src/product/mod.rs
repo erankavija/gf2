@@ -59,7 +59,6 @@ pub mod chase_pyndiah;
 
 pub use chase_pyndiah::{ChasePyndiahConfig, ChasePyndiahDecoder};
 
-use crate::bch::matrix::CachedMatrices;
 use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use crate::bcjr::BcjrDecoder;
 use crate::grand::{OneLineIntercept, OrbGrand, OrbGrandConfig, SisoResult, SoGrand};
@@ -85,9 +84,8 @@ enum SisoEngine {
 ///
 /// [`Extended`] owns the canonical encoding behavior. Product decoding also
 /// needs a borrowed parity-check matrix, so this adapter materializes the
-/// mother BCH parity matrix through the explicit [`CachedMatrices`] wrapper,
-/// appends the extension row and coordinate once, and retains the result for
-/// the component's lifetime.
+/// extension's canonical [`ParityCheckMatrixAccess`] result once and retains
+/// the materialization for the component's lifetime.
 #[derive(Debug, Clone)]
 pub struct ExtendedBchComponent {
     code: Extended<BinaryBchCode>,
@@ -106,23 +104,16 @@ impl ExtendedBchComponent {
         })
         .expect("a valid binary BCH construction");
 
-        let cached = CachedMatrices::new(base.clone());
-        let base_parity =
-            ParityCheckMatrixAccess::parity_check_matrix(&cached).expect("BCH parity matrix");
-        let mut parity_check = BitMatrix::zeros(base_parity.rows() + 1, base_parity.cols() + 1);
-        for row in 0..base_parity.rows() {
-            for column in 0..base_parity.cols() {
-                parity_check.set(row, column, base_parity.get(row, column));
-            }
-        }
-        for column in 0..parity_check.cols() {
-            parity_check.set(base_parity.rows(), column, true);
-        }
+        let code = Extended::new(base).expect("an extended BCH code fits in memory");
+        let parity_check =
+            ParityCheckMatrixAccess::parity_check_matrix(&code).expect("BCH parity matrix");
 
-        Self {
-            code: Extended::new(base).expect("an extended BCH code fits in memory"),
-            parity_check,
-        }
+        Self { code, parity_check }
+    }
+
+    #[cfg(any(test, feature = "test-support"))]
+    pub(crate) fn into_code_for_test(self) -> Extended<BinaryBchCode> {
+        self.code
     }
 
     /// Creates the canonical eBCH(16,11) product component.
@@ -342,9 +333,9 @@ impl ProductComponent for ExtendedBchComponent {
     }
 }
 
-// Keep the version-1 component adapter available until the out-of-scope
-// binaries complete their own cutover. No migrated product path constructs
-// this legacy type.
+// Keep the version-1 component adapter as a named migration boundary until
+// the legacy eBCH removal sweep. No migrated product path constructs this
+// legacy type.
 impl ProductComponent for crate::bch::extended::ExtendedBchCode {
     fn comp_n(&self) -> usize {
         self.n()
