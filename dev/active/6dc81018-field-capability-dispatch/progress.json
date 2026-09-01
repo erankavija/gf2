@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 24,
-  "wave_notes": "Recovery wave 24 serializes the two inherited active roots. Issue 5bdc9552 is merged and all executable gates plus code-review pass. The invoker selected option A after doc-review found three blocking stale selector references and two adjacent advisory comments: targeted guidance resets the rework counter, and one comprehensive present-tense sweep is in progress before the full affected gate chain is rerun. Issue 389aa4de remains in progress and its format-2 pre-measurement patch plan is ready, but wave discipline holds dispatch until 5bdc9552 closes.",
+  "wave_notes": "Recovery wave 24 serializes the two inherited active roots. Issue 5bdc9552 is done after the invoker selected option A: guided retry 1 removed every current crate-level retired-selector reference, and cargo-ci, verify-lean, lake-build, code-review, and doc-review all pass on the final tree. Issue 389aa4de remains in progress; its format-2 pre-measurement patch plan is ready and is the next dispatch.",
   "open_escalations": [],
   "waves": [
     {
@@ -586,8 +586,8 @@
           "title": "Remove the trait selectors and regenerate the proof surface",
           "classification": "implementation",
           "model": "opus",
-          "status": "guided-rework-in-progress",
-          "notes": "Seam U8 is merged on main. cargo-ci, verify-lean, lake-build and code-review pass. User-approved REQ-03A permits the sole pre-existing Packed5::to_raw_planes regeneration drift and the second regeneration is byte-identical. Rework 1 made the proof postprocessor fail closed on an exact ten-wrapper allowlist. Rework 2 fixed the first present-tense review finding. Doc-review then found three blocking stale selector references plus two advisory historical comments. The invoker selected option A, resetting the rework counter and authorizing one guided comprehensive present-tense sweep across all five sites; this dispatch is retry 1 after the reset."
+          "status": "done",
+          "notes": "Closed after the invoker selected option A and reset the rework counter. Guided retry 1 removed all current crate-level retired-selector references across the three blocking and two advisory doc-review sites. REQ-01 and REQ-02 are satisfied by the direct trait/override and postprocessor/axiom cutover; REQ-03/REQ-03A are satisfied by the exact seam delta, the sole approved pre-existing Packed5::to_raw_planes reconciliation, and byte-identical second regeneration. Final-tree cargo-ci, verify-lean, lake-build, code-review, and doc-review all pass; lead six-tier review passed."
         },
         {
           "id": "dbd8787d",
@@ -1116,7 +1116,12 @@
     {
       "issue": "5bdc9552",
       "finding": "Removing selector declarations is not a complete canonical cutover while current benchmark documentation and public rustdoc still name the retired constants. Code-review and doc-review found the stale prose in separate rounds after the implementation and proof gates passed.",
-      "disposition": "REMEDIATION IN PROGRESS: the invoker selected option A, resetting the rework counter. Guided retry 1 covers every blocking doc-review finding and both adjacent advisory test comments in one present-tense sweep before the affected gates are rerun."
+      "disposition": "CLOSED: the invoker selected option A and reset the rework counter. Guided retry 1 removed every current crate-level retired-selector reference across all five sites; the full final-tree gate chain and lead six-tier review pass."
+    },
+    {
+      "issue": "6dc81018",
+      "finding": "A concurrent main lead committed the unstaged 5bdc9552 doc-review gate update in commit 692f0653 under an unrelated subject despite the announced main/JIT reservation.",
+      "disposition": "CLOSED without history rewrite: the captured diff is exactly the intact passing 5bdc9552 gate event and issue record, main remained clean, and the overlap was reported through the coordination forum with an explicit pause request before subsequent main/JIT writes."
     },
     {
       "issue": "34d85cb9",
