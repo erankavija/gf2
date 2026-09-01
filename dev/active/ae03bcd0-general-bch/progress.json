@@ -316,7 +316,7 @@
           "title": "Migrate gf2-kernels-hip BCH test consumers",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done: Luna xhigh, all gates first-pass (single legacy consumer migrated + device self-gate added), merged 58a8bd72"
         },
         {
           "key": "encode-dispatch",
