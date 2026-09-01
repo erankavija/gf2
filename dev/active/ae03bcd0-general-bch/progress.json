@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 4,
+  "current_wave": 5,
   "waves": [
     {
       "wave_number": 1,
@@ -115,7 +115,7 @@
           "title": "Implement the coordinate-map provenance abstraction",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched (Luna xhigh, worktree agent-33812b86 @ a5c8a886)"
+          "status": "done: Luna xhigh, all gates first-pass, merged 1899d359"
         },
         {
           "key": "minpoly-subfield",
@@ -123,7 +123,7 @@
           "title": "Minimal polynomials of extension elements over an arbitrary base field",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched (Luna xhigh, worktree agent-6aac5c44 @ a5c8a886)"
+          "status": "done: Luna xhigh, all gates first-pass, merged 640aaec5"
         },
         {
           "key": "quotient-ext-runtime",
@@ -131,7 +131,7 @@
           "title": "Implement runtime-configured polynomial quotient extension fields",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (Sol xhigh, worktree agent-769c3144 @ a5c8a886)"
+          "status": "done: Sol xhigh, cargo-ci+code-review first-pass, doc-review R2 after lead-direct doc-accuracy round (3 stale surfaces outside worker fence), merged 2345f93a"
         },
         {
           "key": "type-erased-handles",
@@ -139,7 +139,7 @@
           "title": "Add runtime type-erased code handles for exploratory workflows",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched (Luna xhigh, worktree agent-992c6c6e @ a5c8a886)"
+          "status": "done: Luna xhigh, all gates first-pass, merged fdcd1e78"
         }
       ]
     },
@@ -577,7 +577,8 @@
       "Peer validation gf2-predraw-validation3 armed for 2026-09-01 02:00:30 EEST; CCX1 embargo from 01:30 until codex reports it terminal.",
       "Owner policy 2026-09-01: only critical serialization between the two leads \u2014 file-overlap main merges (lock+announce+rebase), flock-arbitrated hardware/test locks, .jit batches under the advisory lock. No courtesy holds or pre-negotiated windows in either direction.",
       "Owner 2026-09-01: CCX1 calendar embargo dropped \u2014 the ccx1 flock alone arbitrates between our measurements and the peer's 02:00:30 validation; no stand-down windows.",
-      "2026-09-01 ~08:45: granted codex a clean merge window at cc081f10 for their 389aa4de merge + merged-tree CI; my queue resumes on their completion message."
+      "2026-09-01 ~08:45: granted codex a clean merge window at cc081f10 for their 389aa4de merge + merged-tree CI; my queue resumes on their completion message.",
+      "2026-09-01 session 3: owner confirmed peer lead finished; lock/forum coordination retired (R-20)."
     ]
   },
   "started_at": "2026-08-31T16:14:25.273292+00:00",
@@ -598,9 +599,11 @@
     "R-14: 19fe9394's R-01 ExtConfig conformance test covers every FIELD-BEARING in-tree ExtConfig implementor; arithmetic-only test fixtures with deliberately reducible moduli are excluded (they are not field configurations). Ratified.",
     "R-15: from_certificate trusting its input (a Declared certificate for an unproven modulus constructs without revalidation) is ratified as the CertificateBasis contract per the extension design's certificate section \u2014 an honest recorded trust level, documented plainly on the methods and walkthrough.",
     "R-16: R-15 superseded by code-review R2 per no-argue \u2014 REQ-02 requires typed errors on every construction path, so BinaryPrimeExt::from_certificate (runtime) accepts Proved-basis certificates only and rejects Declared with a typed error; ConstExt keeps its design-fixed compile-time Declared basis unless the reviewer extends the finding.",
-    "R-18: footprint additions for wave 4 — 33812b86 also creates minimal crates/gf2-coding/src/transform/mod.rs (pub mod coordinate_map + re-exports only) and touches crates/gf2-coding/src/lib.rs (pub mod transform), serialized against shorten-transform (8aa98a25, dep chain) and cutover-components (dependency-distant); 769c3144 also touches crates/gf2-core/src/field/axiom_tests.rs (carrier registration only, REQ-01 conformance), disjoint from 6aac5c44's extension.rs edit.",
+    "R-18: footprint additions for wave 4 \u2014 33812b86 also creates minimal crates/gf2-coding/src/transform/mod.rs (pub mod coordinate_map + re-exports only) and touches crates/gf2-coding/src/lib.rs (pub mod transform), serialized against shorten-transform (8aa98a25, dep chain) and cutover-components (dependency-distant); 769c3144 also touches crates/gf2-core/src/field/axiom_tests.rs (carrier registration only, REQ-01 conformance), disjoint from 6aac5c44's extension.rs edit.",
     "R-19: session-3 open: 19fe9394 done-transition was missed at session-2 close (gates had passed); recorded done at session start, commit e364b4cb.",
-    "R-17 (OWNER RULING at escalation): extension certificates are HPC validation-cost memoization, not a security boundary ('We do HPC. Not security.'). The reuse path is an explicitly-named unchecked fast path in Rust convention (from_certificate_unchecked), documented as trusting the caller (GIGO); REQ-02's typed-error requirement governs the validating constructors. Supersedes the R2/R3 evidence-policing direction; basis-policy machinery may be simplified away. c3d5cea5 rework counter reset by this guidance."
+    "R-17 (OWNER RULING at escalation): extension certificates are HPC validation-cost memoization, not a security boundary ('We do HPC. Not security.'). The reuse path is an explicitly-named unchecked fast path in Rust convention (from_certificate_unchecked), documented as trusting the caller (GIGO); REQ-02's typed-error requirement governs the validating constructors. Supersedes the R2/R3 evidence-policing direction; basis-policy machinery may be simplified away. c3d5cea5 rework counter reset by this guidance.",
+    "R-20: owner directives 2026-09-01 session 3 \u2014 hard tasks go to native Opus (Sol retired for this session); peer lead finished, so the forum listener is closed and the /tmp/gf2-main-leads.lock + announce protocol is retired.",
+    "R-21: 769c3144 doc-review R1 fixed lead-direct: gfpn/mod.rs prose, gf2-core README, lean4-verification-pipeline.md; gfpn::quotient opaqued in scripts/verify-lean.sh and full verify-lean.sh re-run green (runtime Vec storage, same class as gf2m)."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
@@ -610,6 +613,7 @@
     "Survey worktree agent-4e732b56 must NOT be reclaimed: it holds the built external baselines (AFF3CT/bchlib/M4RI/IT++) the research-review rework needs for the F2 matrix-equality check.",
     "codex rollout probe: find -newermt relative to dispatch under ~/.codex/sessions/YYYY/MM/DD returned a false negative once while the rollout existed; verify with pgrep + a direct ls of the session dir before declaring a deadlock.",
     "jit issue claim silently no-ops via tail-swallowed error on dep-blocked issues (they refuse in_progress); use jit issue assign for advisory ownership of blocked issues and verify assignee afterward.",
-    "git add .jit sweeps OTHER leads' unstaged gate/issue writes (peer gate evaluations write .jit outside their lock window; incident 692f0653). Under the lock: verify git status --porcelain .jit is clean BEFORE your own jit writes, commit immediately after, and never use commit -am."
+    "git add .jit sweeps OTHER leads' unstaged gate/issue writes (peer gate evaluations write .jit outside their lock window; incident 692f0653). Under the lock: verify git status --porcelain .jit is clean BEFORE your own jit writes, commit immediately after, and never use commit -am.",
+    "codex sandbox_workspace_write.writable_roots=[.git/worktrees/<name>] is NOT enough for worker commits: commits also write .git/objects and refs/heads (shared, read-only to the sandbox). Workers may leave a stale index citing never-written blobs \u2014 git reset before git add -A when committing on their behalf."
   ]
 }
