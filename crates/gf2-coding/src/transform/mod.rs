@@ -425,12 +425,9 @@ fn validate_coordinate_set(
             });
         }
     }
-    if coordinates.len() >= length {
-        return Err(CodeError::CoordinateCountMismatch {
-            expected: length.saturating_sub(1),
-            actual: coordinates.len(),
-        });
-    }
+    // The full coordinate set is valid: it yields the zero-length,
+    // zero-dimensional boundary code. Out-of-range and duplicate checks
+    // above already cap the count at `length`.
     Ok(coordinates)
 }
 
@@ -806,10 +803,12 @@ mod tests {
             Shortened::new(code.clone(), [1, 1]),
             Err(CodeError::DuplicateCoordinate { .. })
         ));
-        assert!(matches!(
-            Shortened::new(code, [0, 1, 2, 3]),
-            Err(CodeError::CoordinateCountMismatch { .. })
-        ));
+        // Shortening on the complete coordinate set is VALID: it produces the
+        // zero-length, zero-dimensional boundary code.
+        let boundary = Shortened::new(code, [0, 1, 2, 3]).unwrap();
+        assert_eq!(boundary.n(), 0);
+        assert_eq!(boundary.k(), 0);
+        assert!(boundary.information_set().is_empty());
     }
 
     proptest! {
