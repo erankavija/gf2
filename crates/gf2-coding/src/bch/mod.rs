@@ -45,9 +45,11 @@ mod core;
 pub mod dvb_t2;
 pub mod error;
 pub mod extended;
+pub mod matrix;
 pub mod spec;
 
 pub use core::{BchCode, BchDecoder, BchEncoder, CodeRate};
+pub use matrix::CachedMatrices;
 // The canonical code type keeps its module path while `core::BchCode` still
 // occupies this name; `spec::BchCode` is reachable as `spec::DenseBchCode` or
 // `spec::BinaryBchCode` for the two standard representations.

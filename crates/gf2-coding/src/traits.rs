@@ -444,6 +444,10 @@ pub mod block {
 
         /// Materializes the generator matrix.
         ///
+        /// This default allocates a fresh matrix for every call. Matrix
+        /// access is deliberately uncached; use an explicit cache wrapper
+        /// when retaining a materialization is wanted.
+        ///
         /// # Errors
         ///
         /// Propagates the [`CodeError`] returned by
@@ -491,6 +495,10 @@ pub mod block {
         ) -> Result<(), CodeError>;
 
         /// Materializes the parity-check matrix.
+        ///
+        /// This default allocates a fresh matrix for every call. Matrix
+        /// access is deliberately uncached; use an explicit cache wrapper
+        /// when retaining a materialization is wanted.
         ///
         /// # Errors
         ///
