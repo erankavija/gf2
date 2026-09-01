@@ -118,11 +118,35 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "03be44fa1b4b46b8e78ca94f7906c5f5bf3d838f7079ebfd2a6bdcd7acd22485",
+          "content_hash": "6caa631f35e3ec417e3ff967b458e33b6931b7915b38e31f2988c52dd7c739e6",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-gf2.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-gf2.log"
+          "original_path": "2026-09-01-4e732b56-small-itpp.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-itpp.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a7aba073dac40aa7ba238be2336b3bfa54f0f3eee6ad01e44937b6ffc403d0f6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-bchlib.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-bchlib.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0094031cd0b79e91021e916111320b5f3c0b7f6bdd52540e69126d0d5b48bc6c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-bchlib.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-bchlib.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e941c35b0084f0a36f369c8b532fa6e74ecb81ca27486aa5515c0539191f6085",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-small-m4ri.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-m4ri.csv"
         },
         {
           "asset_type": "local",
@@ -142,19 +166,19 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "6ee59a4016952ca50b628da0c858c7d69b1991d064f41cb44010e159a20b2847",
+          "content_hash": "aef2ed476ff63eec2b1c9543794557b421fc5231b5f53afc08ee8f2c7d51ec29",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-aff3ct.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct.log"
+          "original_path": "2026-09-01-4e732b56-t2n-aff3ct.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct.csv"
         },
         {
           "asset_type": "local",
-          "content_hash": "9ee2a9679682f025628b25237a91cc99cf7931155a787e7289440fb7212564a9",
+          "content_hash": "b32b948b4266b30d07bf437bb5fb2d3bb86e03f316ba34e4b512222cb8dcd48a",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-gf2.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-gf2.csv"
+          "original_path": "2026-09-01-4e732b56-t2n-aff3ct.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct.log"
         },
         {
           "asset_type": "local",
@@ -174,19 +198,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "50255cbfa6e6564786fc959f04b7140e4fc7ecca659a9a51bc8a173633b8f9e0",
+          "content_hash": "fd0dd4d593e816000eb767f2f9bd4935074b81989752015c2a1845fd39a5c6a3",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "2026-09-01-4e732b56-t2n-host.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-host.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "1c721047ffb73d9dc0ae52265415dffcf0445faf074b97050552190225253063",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "2026-09-01-4e732b56-small-host.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-host.txt"
+          "original_path": "2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt"
         },
         {
           "asset_type": "local",
@@ -198,75 +214,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "1be06c301303bd35ea160adf5bd793475258cb137356d3c7897b1281cc718eda",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-m4ri.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-m4ri.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "fd0dd4d593e816000eb767f2f9bd4935074b81989752015c2a1845fd39a5c6a3",
+          "content_hash": "1c721047ffb73d9dc0ae52265415dffcf0445faf074b97050552190225253063",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct-perf-stat.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e941c35b0084f0a36f369c8b532fa6e74ecb81ca27486aa5515c0539191f6085",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-m4ri.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-m4ri.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "66c70e11ac5a72d2a71541a59ba7d54f8fcc9cb7f7b252e5f617330a8d9366c2",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-m4ri.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-m4ri.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "3a451148acfc4a026b925ab868969b519639b550701a92ebc37c00c6ca0c92e1",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-bchlib.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-bchlib.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "6caa631f35e3ec417e3ff967b458e33b6931b7915b38e31f2988c52dd7c739e6",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-small-itpp.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-itpp.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b32b948b4266b30d07bf437bb5fb2d3bb86e03f316ba34e4b512222cb8dcd48a",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-aff3ct.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "35e605e3c1dd47ad71cdceae5d996ee72ff58aab587c6fc3967efa0251e732a5",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-itpp.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-itpp.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "477b2c45da937a649ba8bfb6ea7d804afe3095c80411033d79edcf2c1bdc1188",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "2026-09-01-4e732b56-small-aff3ct-perf-stat.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct-perf-stat.txt"
+          "original_path": "2026-09-01-4e732b56-small-host.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-host.txt"
         },
         {
           "asset_type": "local",
@@ -278,6 +230,46 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "477b2c45da937a649ba8bfb6ea7d804afe3095c80411033d79edcf2c1bdc1188",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "2026-09-01-4e732b56-small-aff3ct-perf-stat.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct-perf-stat.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "35e605e3c1dd47ad71cdceae5d996ee72ff58aab587c6fc3967efa0251e732a5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-itpp.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-itpp.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "03be44fa1b4b46b8e78ca94f7906c5f5bf3d838f7079ebfd2a6bdcd7acd22485",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-small-gf2.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-gf2.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "50255cbfa6e6564786fc959f04b7140e4fc7ecca659a9a51bc8a173633b8f9e0",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "2026-09-01-4e732b56-t2n-host.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-host.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "66c70e11ac5a72d2a71541a59ba7d54f8fcc9cb7f7b252e5f617330a8d9366c2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-m4ri.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-m4ri.csv"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "d7fa607d46c7c7b11cb2c6ae00ac1c365fb6c7227be0a6e1eae32f355565f037",
           "is_shared": false,
           "mime_type": null,
@@ -286,27 +278,35 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "0094031cd0b79e91021e916111320b5f3c0b7f6bdd52540e69126d0d5b48bc6c",
+          "content_hash": "6ee59a4016952ca50b628da0c858c7d69b1991d064f41cb44010e159a20b2847",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-bchlib.log",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-bchlib.log"
+          "original_path": "2026-09-01-4e732b56-small-aff3ct.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-aff3ct.log"
         },
         {
           "asset_type": "local",
-          "content_hash": "aef2ed476ff63eec2b1c9543794557b421fc5231b5f53afc08ee8f2c7d51ec29",
+          "content_hash": "3a451148acfc4a026b925ab868969b519639b550701a92ebc37c00c6ca0c92e1",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-aff3ct.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-aff3ct.csv"
+          "original_path": "2026-09-01-4e732b56-small-bchlib.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-bchlib.log"
         },
         {
           "asset_type": "local",
-          "content_hash": "a7aba073dac40aa7ba238be2336b3bfa54f0f3eee6ad01e44937b6ffc403d0f6",
+          "content_hash": "9ee2a9679682f025628b25237a91cc99cf7931155a787e7289440fb7212564a9",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "2026-09-01-4e732b56-t2n-bchlib.csv",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-bchlib.csv"
+          "original_path": "2026-09-01-4e732b56-small-gf2.csv",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-small-gf2.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1be06c301303bd35ea160adf5bd793475258cb137356d3c7897b1281cc718eda",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-4e732b56-t2n-m4ri.log",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-t2n-m4ri.log"
         }
       ],
       "commit": null,
@@ -343,5 +343,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-01T03:43:29.989621070Z"
+  "updated_at": "2026-09-01T03:44:40.547412757Z"
 }
