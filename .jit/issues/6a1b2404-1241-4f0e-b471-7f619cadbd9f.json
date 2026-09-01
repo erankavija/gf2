@@ -20,6 +20,11 @@
       "status": "passed",
       "updated_at": "2026-09-01T15:01:29.819455800Z",
       "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T15:05:33.035862654Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "6a1b2404-1241-4f0e-b471-7f619cadbd9f",
@@ -32,5 +37,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "General systematic BCH encoding across supported base fields",
-  "updated_at": "2026-09-01T15:01:29.819455800Z"
+  "updated_at": "2026-09-01T15:05:33.035862654Z"
 }
