@@ -25,7 +25,7 @@ pub enum BchError {
     /// A BCH decoder received a buffer or erased value that failed generic
     /// code validation.
     Decode(CodeError),
-    /// A decode workspace was built by a decoder for a different code.
+    /// A workspace was built for a different code than the one using it.
     WorkspaceMismatch {
         /// Fingerprint of the decoder's own code.
         expected_stamp: u64,
@@ -115,7 +115,7 @@ impl fmt::Display for BchError {
                 actual_stamp,
             } => write!(
                 formatter,
-                "BCH decode workspace was built for a different code \
+                "BCH workspace was built for a different code \
                  (expected fingerprint {expected_stamp:#018x}, found {actual_stamp:#018x})"
             ),
             Self::InvalidLength { length } => {

@@ -57,8 +57,10 @@
 - Runtime CPU detection with safe wrappers
 - 178 SIMD instructions active in optimized builds
 
-**Other Codes** (Serial - planned for Phase 2):
-- BCH: Sequential encoding/decoding (no batch API yet)
+**Other Codes**:
+- BCH: canonical parallel batch encoding (`bch::encode` — workspace batch and
+  rayon-parallel paths with deterministic input-ordered output); decoding is
+  sequential per word
 - Viterbi: Single-threaded trellis decoding
 - Block codes: No parallel primitives
 
@@ -73,7 +75,8 @@
 
 **Integration**:
 - LDPC encoder uses `ComputeBackend::batch_matvec_transpose`
-- BCH encoder batch API: `BchEncoder::encode_batch()`
+- BCH encoder batch APIs: legacy `BchEncoder::encode_batch()`; canonical
+  `BchCode::{encode_batch, encode_batch_parallel}` in `bch::encode`
 - Richardson-Urbanke encoding uses backend for parallel operations
 - Zero breaking changes (all 221 tests pass)
 
@@ -275,10 +278,9 @@ xdg-open target/criterion/report/index.html
 
 ### ⏸️ GF(2^m) Thread Safety (Prerequisite for BCH/RS)
 
-**Status**: Blocked on gf2-core Phase 15  
-**Problem**: `Gf2mField` uses `Rc<FieldParams>` (not `Send + Sync`)  
-**Impact**: BCH/RS batch operations cannot use rayon  
-**Solution**: Replace `Rc` with `Arc` in gf2-core
+**Status**: Resolved — `Gf2mField` is `Send + Sync`, and the canonical BCH
+batch encoding (`bch::encode::encode_batch_parallel*`) runs under rayon behind
+the `parallel` feature with a same-bytes sequential fallback.
 
 ### GPU/FPGA Exploration
 
