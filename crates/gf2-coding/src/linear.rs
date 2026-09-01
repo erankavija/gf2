@@ -324,12 +324,22 @@ impl block::BlockCode for LinearBlockCode {
 }
 
 impl block::BlockEncoder for LinearBlockCode {
-    /// Computes `codeword = message · G` through the packed matrix product.
+    /// Writes `codeword = message · G` into the caller's buffer.
+    ///
+    /// The accumulation walks one output word at a time and XOR-s together the
+    /// packed generator rows the message selects, so the only mutable state is
+    /// a single `u64` and the caller's buffer: the method performs no heap
+    /// allocation. Every codeword position is written, so a buffer holding a
+    /// previous result needs no clearing.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::BufferLengthMismatch`] when `message` does not
+    /// hold `k` symbols or `codeword` does not hold `n` symbols.
     ///
     /// # Complexity
     ///
-    /// O(k · n / 64) word operations plus one `1 × k` and one `1 × n`
-    /// intermediate matrix; the codeword buffer itself belongs to the caller.
+    /// O(k · n / 64) word operations and `n` bit writes.
     fn encode_into(
         &self,
         message: &Self::Symbols,
@@ -348,13 +358,18 @@ impl block::BlockEncoder for LinearBlockCode {
             });
         }
 
-        let mut message_matrix = BitMatrix::zeros(1, self.k);
-        for index in 0..self.k {
-            message_matrix.set(0, index, message.get(index));
-        }
-        let encoded_matrix = &message_matrix * &self.g;
-        for index in 0..self.n {
-            codeword.set(index, encoded_matrix.get(0, index));
+        for word in 0..self.n.div_ceil(64) {
+            let mut accumulator = 0u64;
+            for row in 0..self.k {
+                if message.get(row) {
+                    accumulator ^= self.g.row_words(row)[word];
+                }
+            }
+
+            let base = word * 64;
+            for offset in 0..(self.n - base).min(64) {
+                codeword.set(base + offset, (accumulator >> offset) & 1 == 1);
+            }
         }
         Ok(())
     }
@@ -1214,6 +1229,66 @@ mod canonical_traits_tests {
     use crate::traits::block;
     use crate::traits::block::conformance;
     use crate::traits::{BlockEncoder as V1BlockEncoder, GeneratorMatrixAccess as V1Generator};
+
+    /// Encodes through the textbook `message · G` matrix product, which is
+    /// independent of the packed word accumulation inside `encode_into`.
+    fn reference_encode(code: &LinearBlockCode, message: &BitVec) -> BitVec {
+        let mut message_matrix = BitMatrix::zeros(1, code.k());
+        for index in 0..code.k() {
+            message_matrix.set(0, index, message.get(index));
+        }
+        (&message_matrix * code.generator()).row_as_bitvec(0)
+    }
+
+    /// Messages covering the empty, full, single-position, word-boundary, and
+    /// alternating patterns for a `k`-bit message.
+    fn probe_messages(k: usize) -> Vec<BitVec> {
+        let mut messages = vec![BitVec::zeros(k)];
+
+        let mut all_ones = BitVec::zeros(k);
+        let mut alternating = BitVec::zeros(k);
+        for index in 0..k {
+            all_ones.set(index, true);
+            alternating.set(index, index % 2 == 0);
+        }
+        messages.push(all_ones);
+        messages.push(alternating);
+
+        for index in [0, 63, 64, 65, k / 2, k - 1] {
+            if index < k {
+                let mut single = BitVec::zeros(k);
+                single.set(index, true);
+                messages.push(single);
+            }
+        }
+        messages
+    }
+
+    #[test]
+    fn linear_code_encode_into_matches_matrix_product_reference() {
+        for r in 2..=7 {
+            let code = LinearBlockCode::hamming(r);
+            for message in probe_messages(code.k()) {
+                let encoded = block::BlockEncoder::encode(&code, &message).unwrap();
+                assert_eq!(encoded, reference_encode(&code, &message), "r = {r}");
+            }
+        }
+    }
+
+    #[test]
+    fn linear_code_encode_into_overwrites_the_caller_buffer() {
+        let code = LinearBlockCode::hamming(7);
+        for message in probe_messages(code.k()) {
+            let expected = block::BlockEncoder::encode(&code, &message).unwrap();
+
+            let mut buffer = BitVec::zeros(code.n());
+            for index in 0..code.n() {
+                buffer.set(index, true);
+            }
+            block::BlockEncoder::encode_into(&code, &message, &mut buffer).unwrap();
+            assert_eq!(buffer, expected, "a dirty buffer is overwritten, not mixed");
+        }
+    }
 
     #[test]
     fn linear_code_satisfies_block_encoder_contract() {
