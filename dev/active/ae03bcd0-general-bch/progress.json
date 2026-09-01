@@ -49,7 +49,7 @@
           "title": "Design BchSpec, the code-trait generalization, and the compatibility boundary",
           "classification": "design",
           "difficulty": "hard",
-          "status": "lead-review-passed: doc committed on branch (c5572cb5); merge + doc-review gate + jit doc add after wave-1 close"
+          "status": "done: merged, design doc linked, doc-review passed"
         },
         {
           "key": "extension-trait",
@@ -57,7 +57,7 @@
           "title": "Implement the relative field-extension abstraction in gf2-core",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker-complete: 3 commits on branch (e23395fb feat, 6c0a705e harness-runner fix, e6b53a31 extension-law cases); worker-run fmt/clippy/full-CI/doc all green; lead spot-check passed (footprint exact incl. approved R-06 accessor); merge + gates after wave-1 close"
+          "status": "merged aa0aecad; cargo-ci gate PASSED; code-review R1 FAIL (F1 reducible runtime moduli accepted; F2 no certificate-consuming constructor) + doc-review R1 FAIL (rustdoc promises unexposed certificate path, same root as F2); rework attempt 1 dispatched to live teammate worker-c3d5cea5 (merge main first, use 19fe9394 prove_irreducible)"
         }
       ]
     },
@@ -70,7 +70,7 @@
           "title": "Implement the layered typed error surface for coding APIs",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "worker-complete: committed 1fcc1702 on branch (4-file footprint exact, focused checks green; full-CI GPU test + crates.io fetch flakes environmental, settle at merged-tree CI); merge + gates queued"
+          "status": "worker-complete on branch 1fcc1702; merge + cargo-ci + code-review gates pending"
         },
         {
           "key": "exact-order",
@@ -78,7 +78,7 @@
           "title": "Deterministic derivation of elements with exact multiplicative order",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "worker-complete: committed on branch (extension.rs only); deterministic canonical-index selection, typed NoElementOfOrder/OrderFactorizationUnavailable; budget-locked checks ran unlocked due to my full-host window (noted); merge + gates queued"
+          "status": "worker-complete on branch 97535714; merge + cargo-ci + code-review gates pending"
         },
         {
           "key": "followup-tracking",
@@ -86,7 +86,7 @@
           "title": "Create the tracked follow-up issues against the canonical interfaces",
           "classification": "lead-direct",
           "difficulty": "easy",
-          "status": "work-done lead-direct: follow-ups created as orphan enhancements 1642af1c (nonbinary decoding), 1a8f6acd (derived-code decoding), b4d7a25d (GPU encoding) in 5e7367f5; state transition + repo-validate gate after wave-2 closes"
+          "status": "work done (follow-ups 1642af1c, 1a8f6acd, b4d7a25d); dep 7a3a6738 now done -> claim, repo-validate gate, state done pending"
         },
         {
           "key": "generic-traits-core",
@@ -94,7 +94,7 @@
           "title": "Introduce field-generic block-code traits with binary specializations",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker-complete: bec5a0be on branch (traits.rs + linear.rs only); full 16-step CI green incl. GPU + tuning-composer; conformance suite shared across files; decisions list requested (truncated report); merge + gates queued"
+          "status": "worker-complete on branch bec5a0be (base contains ebdbd228 tip); merge AFTER ebdbd228; gates cargo-ci + code-review + doc-review pending"
         },
         {
           "key": "irreducibility-validation",
@@ -102,7 +102,7 @@
           "title": "Generic irreducibility validation with reusable certificates",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "worker-complete: committed 85c85258 (footprint exact: irreducibility.rs + mod.rs); Rabin complete test, R-01 ExtConfig case covers every field-bearing implementor; merge + gates queued"
+          "status": "merged b9311d2b; cargo-ci gate passed; code-review gate NEXT in queue"
         }
       ]
     },
@@ -538,7 +538,8 @@
   "created_during_execution": [],
   "escalations": [],
   "rework_counts": {
-    "4e732b56": 3
+    "4e732b56": 3,
+    "c3d5cea5": 1
   },
   "surfaced_pitfalls": [
     {
@@ -563,7 +564,8 @@
       "88ca7d2f re-slotted from wave 1 to wave 11: runs whenever the CCX1 window opens, must land before cutover-benches (wave 12) merges",
       "Peer validation gf2-predraw-validation3 armed for 2026-09-01 02:00:30 EEST; CCX1 embargo from 01:30 until codex reports it terminal.",
       "Owner policy 2026-09-01: only critical serialization between the two leads \u2014 file-overlap main merges (lock+announce+rebase), flock-arbitrated hardware/test locks, .jit batches under the advisory lock. No courtesy holds or pre-negotiated windows in either direction.",
-      "Owner 2026-09-01: CCX1 calendar embargo dropped \u2014 the ccx1 flock alone arbitrates between our measurements and the peer's 02:00:30 validation; no stand-down windows."
+      "Owner 2026-09-01: CCX1 calendar embargo dropped \u2014 the ccx1 flock alone arbitrates between our measurements and the peer's 02:00:30 validation; no stand-down windows.",
+      "2026-09-01 ~08:45: granted codex a clean merge window at cc081f10 for their 389aa4de merge + merged-tree CI; my queue resumes on their completion message."
     ]
   },
   "started_at": "2026-08-31T16:14:25.273292+00:00",
