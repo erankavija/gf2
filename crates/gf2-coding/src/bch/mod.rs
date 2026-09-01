@@ -11,7 +11,8 @@
 //! - [`spec`]: the construction model, its validating pipeline, and the
 //!   canonical code type over any supported base field
 //! - [`encode`]: systematic encoding over any supported base field, with the
-//!   explicit user-layout contract
+//!   explicit user-layout contract and the profile-driven dispatch among
+//!   equivalent batch-encoding algorithm families
 //! - [`matrix`]: reference generator/parity materialization with caller
 //!   buffers and explicit opt-in caching
 //! - [`error`]: the BCH construction and decoding error surface
