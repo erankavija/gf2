@@ -1205,11 +1205,14 @@ impl BchDecodeOutcome {
 /// therefore the only heap a decode could want, and the caller owns their one
 /// allocation.
 ///
-/// A workspace belongs to the decoder that produced it. Passing one built for
-/// a different code is a caller mistake the decoder reports rather than a
-/// condition it defends against.
+/// A workspace belongs to the decoder that produced it. Every workspace
+/// carries a fingerprint of the code it was built for, and the decoder
+/// rejects a foreign workspace with a typed error even when its buffer
+/// lengths happen to match.
 #[derive(Clone, Debug)]
 pub struct BchDecodeWorkspace<V: UintExt = u64> {
+    /// Fingerprint of the producing decoder's code, checked on every decode.
+    code_stamp: u64,
     /// Syndrome values, one per evaluation exponent of the decoder.
     syndromes: Vec<Gf2mElement_<V>>,
     /// Error-locator coefficients in ascending degree order.
@@ -1474,6 +1477,7 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
     /// witnessed run of length $r$ and radius $t$.
     pub fn workspace(&self) -> BchDecodeWorkspace<V> {
         BchDecodeWorkspace {
+            code_stamp: self.code_stamp(),
             syndromes: vec![self.zero.clone(); self.syndrome_points.len()],
             locator: vec![self.zero.clone(); self.run_length + 1],
             previous: vec![self.zero.clone(); self.run_length + 1],
@@ -1564,8 +1568,34 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
         })
     }
 
+    /// Fingerprints this decoder's code: length, radius, and the exact
+    /// syndrome evaluation points, which encode the root, the witnessed run,
+    /// and the field presentation together (FNV-1a).
+    fn code_stamp(&self) -> u64 {
+        const OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+        const PRIME: u64 = 0x0000_0100_0000_01b3;
+        let mut hash = OFFSET;
+        let mut mix = |value: u64| {
+            hash ^= value;
+            hash = hash.wrapping_mul(PRIME);
+        };
+        mix(self.code.n() as u64);
+        mix(self.run_length as u64);
+        mix(self.radius as u64);
+        for point in self.syndrome_points.iter() {
+            mix(point.value().as_u64_truncated());
+        }
+        hash
+    }
+
     /// Rejects a received word or workspace that does not match this code.
     fn validate(&self, length: usize, workspace: &BchDecodeWorkspace<V>) -> Result<(), BchError> {
+        if workspace.code_stamp != self.code_stamp() {
+            return Err(BchError::WorkspaceMismatch {
+                expected_stamp: self.code_stamp(),
+                actual_stamp: workspace.code_stamp,
+            });
+        }
         let mismatch = |expected: usize, actual: usize| {
             BchError::Decode(CodeError::BufferLengthMismatch { expected, actual })
         };
@@ -2288,6 +2318,27 @@ mod canonical_decoder_tests {
                 .expect("a positive designed distance"),
         })
         .expect("a valid primitive narrow-sense spec")
+    }
+
+    #[test]
+    fn a_foreign_workspace_is_rejected_even_with_matching_buffer_lengths() {
+        // Two distinct primitive presentations of the same (n, delta) give
+        // decoders with identical buffer geometry; the stamp must still tell
+        // them apart.
+        let code_a = narrow_sense(4, 0b10011, 5);
+        let code_b = narrow_sense(4, 0b11001, 5);
+        let decoder_a = BinaryBchDecoder::new(&code_a);
+        let decoder_b = BinaryBchDecoder::new(&code_b);
+        let mut foreign = decoder_b.workspace();
+        let mut received = BitVec::zeros(15);
+        let result = decoder_a.correct_in_place(&mut received, &mut foreign);
+        assert!(matches!(
+            result,
+            Err(BchError::WorkspaceMismatch { expected_stamp, actual_stamp })
+                if expected_stamp != actual_stamp
+        ));
+        let mut own = decoder_a.workspace();
+        assert!(decoder_a.correct_in_place(&mut received, &mut own).is_ok());
     }
 
     /// The parameter points, constructed once for the whole suite.
