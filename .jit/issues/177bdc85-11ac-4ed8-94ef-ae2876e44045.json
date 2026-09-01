@@ -9,6 +9,7 @@
   ],
   "description": "Implement the profile-driven selector dispatching among mathematically equivalent batch-encoding algorithm families, preserving at least one scalar reference encoder.\n\n## Background\n\nThe dispatch mechanism is required; the concrete family set (polynomial remainder, precomputed linear recurrences, matrix-based kernels) follows the survey's workload-selection contract rather than being mandated up front. The selector composes with, and is distinct from, the SIMD feature-dispatch seam.\n\n## Success Criteria\n\n- [hard] REQ-01: A dispatch seam selects among registered encoding algorithm families per profile, with the scalar reference always available and selected results bit-identical across families.\n- [hard] REQ-02: At least two families are registered, chosen per the workload-selection contract, with differential tests proving equivalence on the predeclared corpus rows.\n",
   "documents": [],
+  "done_at": "2026-09-01T20:56:10.320863788Z",
   "first_ready_at": "2026-09-01T18:54:33.654575946Z",
   "gates_required": [
     "cargo-ci",
@@ -17,12 +18,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-01T20:34:11.604680311Z",
+      "updated_at": "2026-09-01T20:51:13.644789218Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-01T20:37:14.872370014Z",
+      "status": "passed",
+      "updated_at": "2026-09-01T20:55:55.076740027Z",
       "updated_by": "auto:executor"
     }
   },
@@ -34,7 +35,7 @@
     "satisfies:REQ-07"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Profile-driven dispatch among equivalent batch-encoding algorithms",
-  "updated_at": "2026-09-01T20:37:14.872370014Z"
+  "updated_at": "2026-09-01T20:56:10.320863788Z"
 }

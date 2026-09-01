@@ -8,6 +8,7 @@
   ],
   "description": "Optimize the reference generator- and parity-check materialization for the survey's selected workload dimensions, keeping results bit-identical to the reference implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: The optimized path produces results equal to the reference materialization on the workload-selection dimensions, packed binary and field-generic.\n- [hard] REQ-02: The caller-buffer path avoids intermediate allocation, verified by tests, and throughput on the selected workload improves over the unoptimized reference measurably on the bench harness.\n",
   "documents": [],
+  "first_ready_at": "2026-09-01T20:56:28.035859056Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -22,7 +23,7 @@
     "satisfies:REQ-13"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Optimize the reference generator-matrix materialization",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T20:56:28.035859056Z"
 }
