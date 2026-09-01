@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 25,
-  "wave_notes": "Wave 25 has one closed task and one guided retry. Issue 06ba0418 is done. Issue 389aa4de has valid measured evidence and clean unmerged publication commit c746072b. The invoker selected option A, reset the rework counter, and authorized one narrow test-only retry: codec-derived inventory, relational baked-owner drift guard, and owner-relative composition assertions. No measured artifact or production behavior changes.",
+  "wave_notes": "Wave 25 has one closed task and one final documentation rework. Issue 06ba0418 is done. Issue 389aa4de is merged at 561b0d71; merged-tree cargo-ci and code-review pass. Doc-review found two permanent documents citing a nonexistent receipt section title. Rework 2 after the invoker reset is limited to making those two citations resolve to an authoritative receipt scope statement; measured artifacts and production behavior remain unchanged.",
   "open_escalations": [],
   "waves": [
     {
@@ -609,8 +609,8 @@
           "title": "Extend the calibration sweep to karatsuba_min_degree",
           "classification": "implementation",
           "model": "opus",
-          "status": "guided-test-rework-1-after-reset",
-          "notes": "The third coordinated attempt produced valid 5x5x250ms evidence at clean 501fe8b2 and publication commit c746072b is clean and unmerged. After the two protocol retries exhausted the counter, the invoker selected option A and authorized guided retry 1 after reset. Scope is exactly three test-contract fixes: derive the 37-field inventory from CoreTuningCodec; strictly reopen the measured owner and relationally compare the baked SIMD constant; replace the algebra composition suite's five duplicated literals with typed owner-versus-complete section and measurement equality. Measured bytes and production behavior remain fixed."
+          "status": "doc-rework-2-after-reset",
+          "notes": "The measured publication and guided test rework merged at 561b0d71. Full merged-tree cargo-ci passes with 5,299 tests and code-review passes with zero findings. Doc-review found two blocking single-source-prose defects: KERNEL_OPTIMIZATION.md and QUALITY_AUDIT_REPORT.md cite a nonexistent 'What this receipt does not claim' section. Rework 2 after reset is limited to grounding both citations in an explicit authoritative scope statement in the receipt. Measured bytes and production behavior remain fixed."
         },
         {
           "id": "06ba0418",
@@ -1097,6 +1097,12 @@
       "issue": "389aa4de",
       "date": "2026-09-01",
       "decision": "The invoker selected option A. Targeted guidance resets the rework counter and authorizes one narrow test-only retry closing all three pre-merge findings: codec-derived 37-field inventory, strict relational baked-owner drift evidence, and owner-relative composition assertions without duplicated measured literals. Measured artifacts and production behavior must remain byte-identical. This guided dispatch is retry 1 after the reset."
+    },
+    {
+      "kind": "gate-finding",
+      "issue": "389aa4de",
+      "date": "2026-09-01",
+      "decision": "Merged-tree cargo-ci and code-review pass. Doc-review failed with two blocking citations in KERNEL_OPTIMIZATION.md and QUALITY_AUDIT_REPORT.md to a nonexistent receipt section title. Rework 2 after the reset is limited to adding or citing one explicit authoritative receipt scope statement for the direct-backend-versus-dispatcher distinction, then rerunning documentation review."
     }
   ],
   "rework_counts": {
@@ -1132,7 +1138,7 @@
     "e8a727ff": 1,
     "e2744fcf": 0,
     "5bdc9552": 1,
-    "389aa4de": 1,
+    "389aa4de": 2,
     "06ba0418": 0
   },
   "surfaced_pitfalls": [
