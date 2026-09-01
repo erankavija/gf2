@@ -10,55 +10,55 @@ nice: cannot set niceness: Permission denied
 # seed: 0x00000000ae03bcd0
 # codes_selected: B1,B2,B3,T2S
 # code B1: mother_n=15 deg_g=10
-#   B1 lfsr-scalar      batch=1     reps=23810 spent=0.01s
+#   B1 lfsr-scalar      batch=1     reps=29412 spent=0.01s
 # SKIP B1 batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
-#   B1 lfsr-scalar      batch=16    reps=6173 spent=0.04s
-#   B1 lfsr-simd-inter  batch=16    reps=20001 spent=0.03s
-#   B1 lfsr-scalar      batch=256   reps=393 spent=0.04s
-#   B1 lfsr-simd-inter  batch=256   reps=1530 spent=0.04s
+#   B1 lfsr-scalar      batch=16    reps=6251 spent=0.03s
+#   B1 lfsr-simd-inter  batch=16    reps=20834 spent=0.03s
+#   B1 lfsr-scalar      batch=256   reps=397 spent=0.03s
+#   B1 lfsr-simd-inter  batch=256   reps=1544 spent=0.04s
 #   B1 lfsr-scalar      batch=4096  reps=25 spent=0.04s
-#   B1 lfsr-simd-inter  batch=4096  reps=29 spent=0.01s
+#   B1 lfsr-simd-inter  batch=4096  reps=97 spent=0.04s
 # code B2: mother_n=127 deg_g=63
-#   B2 lfsr-scalar      batch=1     reps=6850 spent=0.04s
+#   B2 lfsr-scalar      batch=1     reps=7143 spent=0.04s
 # SKIP B2 batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
-#   B2 lfsr-scalar      batch=16    reps=443 spent=0.04s
-#   B2 lfsr-simd-inter  batch=16    reps=897 spent=0.04s
-#   B2 lfsr-scalar      batch=256   reps=20 spent=0.03s
+#   B2 lfsr-scalar      batch=16    reps=406 spent=0.03s
+#   B2 lfsr-simd-inter  batch=16    reps=340 spent=0.01s
+#   B2 lfsr-scalar      batch=256   reps=26 spent=0.03s
 #   B2 lfsr-simd-inter  batch=256   reps=60 spent=0.04s
-#   B2 lfsr-scalar      batch=4096  reps=2 spent=0.05s
+#   B2 lfsr-scalar      batch=4096  reps=2 spent=0.04s
 #   B2 lfsr-simd-inter  batch=4096  reps=4 spent=0.04s
 # code B3: mother_n=255 deg_g=32
-#   B3 lfsr-scalar      batch=1     reps=2381 spent=0.04s
+#   B3 lfsr-scalar      batch=1     reps=1931 spent=0.03s
 # SKIP B3 batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
-#   B3 lfsr-scalar      batch=16    reps=137 spent=0.04s
-#   B3 lfsr-simd-inter  batch=16    reps=587 spent=0.04s
+#   B3 lfsr-scalar      batch=16    reps=138 spent=0.04s
+#   B3 lfsr-simd-inter  batch=16    reps=634 spent=0.04s
 #   B3 lfsr-scalar      batch=256   reps=9 spent=0.04s
-#   B3 lfsr-simd-inter  batch=256   reps=36 spent=0.04s
+#   B3 lfsr-simd-inter  batch=256   reps=40 spent=0.04s
 #   B3 lfsr-scalar      batch=4096  reps=1 spent=0.07s
-#   B3 lfsr-simd-inter  batch=4096  reps=2 spent=0.03s
+#   B3 lfsr-simd-inter  batch=4096  reps=3 spent=0.04s
 # code T2S: mother_n=16383 deg_g=168
-#   T2S lfsr-scalar      batch=1     reps=31 spent=0.04s
+#   T2S lfsr-scalar      batch=1     reps=32 spent=0.04s
 # SKIP T2S batch=1 lfsr-simd-inter: batch not a multiple of 8 lanes
 #   T2S lfsr-scalar      batch=16    reps=2 spent=0.04s
-#   T2S lfsr-simd-inter  batch=16    reps=3 spent=0.04s
-#   T2S lfsr-scalar      batch=256   reps=1 spent=0.33s
-#   T2S lfsr-simd-inter  batch=256   reps=1 spent=0.21s
-#   T2S lfsr-scalar      batch=4096  reps=1 spent=5.34s
-#   T2S lfsr-simd-inter  batch=4096  reps=1 spent=4.66s
+#   T2S lfsr-simd-inter  batch=16    reps=4 spent=0.05s
+#   T2S lfsr-scalar      batch=256   reps=1 spent=0.30s
+#   T2S lfsr-simd-inter  batch=256   reps=1 spent=0.19s
+#   T2S lfsr-scalar      batch=4096  reps=1 spent=5.24s
+#   T2S lfsr-simd-inter  batch=4096  reps=1 spent=3.35s
 
  Performance counter stats for '/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-4e732b56/dev/active/4e732b56/baseline-survey/aff3ct_bch_bench w1':
 
-          14948.51 msec task-clock:u                                                          
-       66141214633      cycles:u                                                                (83.36%)
-      167149385273      instructions:u                                                          (83.42%)
-       20448931517      branches:u                                                              (83.32%)
-         169122178      branch-misses:u                                                         (83.38%)
-         389617516      cache-references:u                                                      (83.24%)
-          17948821      cache-misses:u                                                          (83.29%)
+         14,034.19 msec task-clock:u                                                          
+    61,968,033,266      cycles:u                                                                (83.33%)
+   167,878,462,215      instructions:u                                                          (83.33%)
+    20,548,367,820      branches:u                                                              (83.33%)
+       167,983,689      branch-misses:u                                                         (83.34%)
+       417,467,987      cache-references:u                                                      (83.34%)
+        23,646,212      cache-misses:u                                                          (83.34%)
 
-      16.300831643 seconds time elapsed
+      14.042574127 seconds time elapsed
 
-      14.678339000 seconds user
-       0.112939000 seconds sys
+      13.867286000 seconds user
+       0.023787000 seconds sys
 
 
