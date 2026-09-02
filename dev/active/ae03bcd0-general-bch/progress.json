@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework 1 part 2 complete (worker-3f7edef1-3, tip 1b8bc76e: oracle identities, bounded GUAVA attempts under -T, Amendment 1+2, DvbVerification2010 cited, TP04->TP05 808/808 in 2.42 s); lead review PASS Tiers 1.5-3; merging + 4 gates (session 9)"
+          "status": "rework 1 merged 93f08af2 (session 9); cargo-ci R1 failed on a transient GPU smoke SIGABRT under load (passes isolated; rerun armed); code-review R2 FAIL F1 = same root cause x3 (B4 GUAVA code object) -> ESCALATED; doc-review + research-review R2 running"
         },
         {
           "key": "lean-closure",
@@ -587,6 +587,11 @@
       "issue": "3f7edef1",
       "trigger": "B4 GUAVA retry (owner decision 'retry idle, then amend')",
       "resolution": "retry on the idle host at -o 50g / 52G scope failed after 9m17s (peak 54.4 GB RSS, 15.6 GB swap); the amend branch is being executed by the part-2 worker (session 9)"
+    },
+    {
+      "issue": "3f7edef1",
+      "trigger": "same root-cause finding x3 (code-review R1 F1, research-review R1 F1, code-review R2 F1: B4 has no GUAVA BCHCode code-object result) after the owner's retry-then-amend decision was executed; the reviewer holds the issue's own text ('a row where an oracle fails to produce a result is a blocking finding, not a recorded gap') above plan Amendment 2 -> the fix is an issue-text change (policy category 3/4) or a larger GAP retry the host cannot back",
+      "resolution": "PENDING owner input (session 9)"
     }
   ],
   "rework_counts": {
