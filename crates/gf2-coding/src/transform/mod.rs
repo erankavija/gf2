@@ -406,10 +406,12 @@ enum ShortenedData<F: FiniteField> {
 /// ```
 ///
 /// Two derivations produce that code.  [`Self::derivation`] reports which one
-/// a value holds, and both agree on every observable: coordinate map,
-/// dimension, information set, generator, parity-check matrix, and encoded
-/// codewords.  The stored map uses derived-to-mother positions and retains
-/// the original order of the remaining coordinates.
+/// a value holds, and both agree on the coordinate map, the dimension, the
+/// information set, the generator, and every encoded codeword; their
+/// parity-check matrices are bases of one dual space, equal whenever the
+/// mother's own check matrix is the canonical one.  The stored map uses
+/// derived-to-mother positions and retains the original order of the
+/// remaining coordinates.
 ///
 /// [`ShortenedDerivation::SystematicRestriction`] applies when the mother
 /// carries message symbol `i` at coordinate `i` — it reports both
@@ -888,6 +890,12 @@ where
 /// [`ShortenedDerivation::RankDerived`] builds the dual of its own RREF
 /// generator: one row per non-pivot column `j`, carrying the field identity
 /// at `j` and the negated generator column `j` at the pivot coordinates.
+///
+/// Each derivation writes a basis of the same dual space.  The two bases
+/// coincide when the mother's check matrix is the canonical
+/// `[-Pᵀ | I]`, as the repository's matrix contract writes it; a mother
+/// carrying another basis passes that basis on to the systematic
+/// restriction.
 impl<C> ParityCheckMatrixAccess for Shortened<C>
 where
     C: ParityCheckMatrixAccess,
@@ -1813,6 +1821,12 @@ mod tests {
 
     /// Asserts that both derivations produce the same parity-check matrix,
     /// and that it annihilates every generator row.
+    ///
+    /// The two matrices coincide for a mother whose check matrix is the
+    /// canonical `[-Pᵀ | I]`, which every fixture here supplies.  A mother
+    /// carrying another basis of the same dual space would give the
+    /// systematic restriction an equally valid matrix in that basis, so the
+    /// annihilation law rather than the entries is what generalizes.
     fn assert_parity_derivations_agree<C>(code: C, coordinates: &[usize])
     where
         C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,
@@ -1947,6 +1961,41 @@ mod tests {
         for coordinates in [vec![], vec![0], vec![1], vec![0, 1]] {
             assert_derivations_agree(mother.clone(), &coordinates);
         }
+    }
+
+    #[test]
+    fn both_derivations_satisfy_the_shared_code_contracts() {
+        use crate::traits::block::conformance;
+
+        let mother = binary_systematic_mother();
+        let fast = Shortened::new(mother.clone(), [0]).unwrap();
+        let rank = Shortened::new(RankDerivedMother(mother), [0]).unwrap();
+        let one = fast.symbol_zero().one_like();
+        let message = basis_message(&fast, 0);
+
+        conformance::block_encoder_contract(&fast, &message);
+        conformance::block_encoder_contract(&rank, &message);
+        conformance::generator_matrix_contract(&fast);
+        conformance::generator_matrix_contract(&rank);
+        conformance::generator_rows_encode_basis(&fast, &one);
+        conformance::generator_rows_encode_basis(&rank, &one);
+        conformance::parity_check_matrix_contract(&fast);
+        conformance::parity_check_matrix_contract(&rank);
+        conformance::generator_parity_orthogonality(&fast);
+        conformance::generator_parity_orthogonality(&rank);
+
+        let mother = nonbinary_systematic_mother();
+        let fast = Shortened::new(mother.clone(), [0]).unwrap();
+        let rank = Shortened::new(RankDerivedMother(mother), [0]).unwrap();
+        let one = fast.symbol_zero().one_like();
+        let message = basis_message(&fast, 0);
+
+        conformance::block_encoder_contract(&fast, &message);
+        conformance::block_encoder_contract(&rank, &message);
+        conformance::generator_matrix_contract(&fast);
+        conformance::generator_matrix_contract(&rank);
+        conformance::generator_rows_encode_basis(&fast, &one);
+        conformance::generator_rows_encode_basis(&rank, &one);
     }
 
     #[test]

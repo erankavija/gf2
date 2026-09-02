@@ -474,10 +474,12 @@ mother-sized buffer and copies the kept rows and columns out of it. Without
 that condition the wrapper takes `RankDerived`: it materializes the mother
 generator, solves the nullspace of the removed-coordinate constraints, and
 reduces the result to RREF, whose rank is the derived dimension and whose
-pivots are the information set. Both derivations agree on every observable,
-and the DVB-T2 rows are constructible only through the first: their $16215
-\times 16383$ and $65343 \times 65535$ mothers put a dense generator out of
-reach.
+pivots are the information set. The two agree on the coordinate map,
+dimension, information set, generator, and every codeword, and their
+parity-check matrices are bases of one dual space, equal whenever the
+mother's own check matrix is the canonical $[-P^{\mathsf T} \mid I]$. The
+DVB-T2 rows are constructible only through the first: their $16215 \times
+16383$ and $65343 \times 65535$ mothers put a dense generator out of reach.
 
 `has_canonical_message_order` is the layout half of the systematic report on
 `GeneratorMatrixAccess`: `is_systematic` answers for whatever message
