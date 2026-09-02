@@ -41,7 +41,8 @@
 mod test_vectors;
 
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::fs::File;
+use std::path::{Path, PathBuf};
 
 use gf2_coding::bch::dvb_t2::generators::{product_of_generators, NORMAL_GENERATORS};
 use gf2_coding::bch::dvb_t2::{DvbBchParams, FrameSize};
@@ -62,11 +63,12 @@ use gf2_core::field::{ConstField, FieldPoly};
 use gf2_core::gfp::Fp;
 use gf2_core::BitVec;
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use test_vectors::{test_vectors_available, test_vectors_path, TestVectorSet};
 
 /// Length at or below which rows are compared symbol by symbol together; a
 /// longer row is compared in its own case. Amendment 1 of the plan's
-/// `evidence-protocol` section predeclares this threshold.
+/// `evidence-protocol` section fixes this threshold.
 const FAST_TIER_LENGTH: usize = 4096;
 
 /// The seed the shortened-payload check draws its DVB-T2 payloads from.
@@ -796,11 +798,21 @@ fn the_oracle_fixtures_record_their_identities_and_self_checks() {
         );
 
         // Every row calls GUAVA's own `BCHCode` and records what that attempt
-        // observed, so whether a code object exists is a fact of the run.
+        // observed, so whether a code object exists is a fact of the run. The
+        // two marks are samples of one process-wide high-water mark, the first
+        // taken after the `BCHCode` attempt and the second after the row's
+        // `GeneratorPolCode` attempt, so the second covers both and neither
+        // can fall below the other.
         recorded(row, "bchcode_attempt_heap");
+        let bchcode_peak = number(row, "bchcode_attempt_peak_rss_kib");
+        let row_peak = number(row, "row_attempts_peak_rss_kib");
         assert!(
-            number(row, "bchcode_attempt_peak_rss_kib") > 0,
-            "row {id} records the resident memory its attempt reached"
+            bchcode_peak > 0,
+            "row {id} records the mark its `BCHCode` attempt is bounded by"
+        );
+        assert!(
+            row_peak >= bchcode_peak,
+            "row {id} samples one monotone mark, so the second sample is at least the first"
         );
 
         // GUAVA's `BCHCode` builds on `PrimitiveUnityRoot`. Its generator
@@ -876,7 +888,11 @@ fn a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt() {
         );
         assert!(
             number(row, "bchcode_attempt_peak_rss_kib") > 0,
-            "row {id} records the resident memory its attempt reached"
+            "row {id} records the mark its `BCHCode` attempt is bounded by"
+        );
+        assert!(
+            number(row, "row_attempts_peak_rss_kib") > 0,
+            "row {id} records the mark both of its attempts are bounded by"
         );
     }
     assert_eq!(
@@ -1000,19 +1016,60 @@ const ETSI_STREAM_FRAMES: usize = 4;
 /// Blocks each VV001-CR35 frame carries.
 const ETSI_STREAM_BLOCKS_PER_FRAME: usize = 202;
 
+/// Prefix of every line this case prints as an observed fact of its run.
+///
+/// `oracle/run.sh` copies these lines into the run receipt verbatim, so the
+/// receipt's standards-vector figures come from the run rather than from
+/// prose. See `@/inv/claims-trace-to-artifacts`.
+const ETSI_FACT: &str = "dvb-vectors:";
+
+/// Returns the SHA-256 of `path` as lowercase hex.
+fn sha256_of(path: &Path) -> String {
+    let mut file = File::open(path).expect("a stream file the loader read");
+    let mut hasher = Sha256::new();
+    std::io::copy(&mut file, &mut hasher).expect("the stream file digests");
+    format!("{:x}", hasher.finalize())
+}
+
+/// Returns `path` relative to `base` when it lies under it, and `path` itself
+/// otherwise.
+fn under<'a>(path: &'a Path, base: &Path) -> &'a Path {
+    path.strip_prefix(base).unwrap_or(path)
+}
+
+/// Describes the first coordinate at which an encoded block differs from its
+/// verified counterpart, or `None` when the two agree.
+fn first_difference(
+    expected: &BitVec,
+    payload: &BitVec,
+    encoded: &BitVec,
+    params: DvbBchParams,
+    mother_k: usize,
+) -> Option<String> {
+    for bit in 0..params.k {
+        if expected.get(bit) != payload.get(bit) {
+            return Some(format!("message bit {bit}"));
+        }
+    }
+    for parity in 0..params.m {
+        if expected.get(params.k + parity) != encoded.get(mother_k + parity) {
+            return Some(format!("parity bit {parity}"));
+        }
+    }
+    None
+}
+
 #[test]
 fn the_etsi_dvb_t2_streams_encode_to_their_verified_codewords() {
+    let base = test_vectors_path();
     if !test_vectors_available() {
-        eprintln!(
-            "skipping: the ETSI DVB-T2 streams are absent from {}",
-            test_vectors_path().display()
-        );
+        println!("{ETSI_FACT} streams absent, comparison not run");
+        println!("{ETSI_FACT} resolved_directory={}", base.display());
         eprintln!("set DVB_TEST_VECTORS_PATH to the directory holding VV001-CR35_CSP");
         return;
     }
 
-    let set = TestVectorSet::load(&test_vectors_path(), ETSI_STREAM_SET)
-        .expect("the VV001-CR35 stream set loads");
+    let set = TestVectorSet::load(&base, ETSI_STREAM_SET).expect("the VV001-CR35 stream set loads");
     let params = DvbBchParams::for_code(FrameSize::Normal, set.config.code_rate);
     let mother = dvb_mother_code_for(params);
     let shortening = mother.k() - params.k;
@@ -1031,6 +1088,8 @@ fn the_etsi_dvb_t2_streams_encode_to_their_verified_codewords() {
     );
 
     let mut compared = 0usize;
+    let mut agreeing = 0usize;
+    let mut mismatches: Vec<String> = Vec::new();
     for frame in 0..ETSI_STREAM_FRAMES {
         let payloads = tp04.frame(frame);
         let codewords = tp05.frame(frame);
@@ -1069,24 +1128,37 @@ fn the_etsi_dvb_t2_streams_encode_to_their_verified_codewords() {
                 .encode_systematic(&padded, SystematicLayout::MessageParityDescending)
                 .expect("a validated message encodes");
 
-            for bit in 0..params.k {
-                assert_eq!(
-                    expected.get(bit),
-                    payload.data.get(bit),
-                    "frame {frame} block {block} message bit {bit} differs from TP04"
-                );
-            }
-            for parity in 0..params.m {
-                assert_eq!(
-                    expected.get(params.k + parity),
-                    full.get(mother.k() + parity),
-                    "frame {frame} block {block} parity bit {parity} differs from TP05"
-                );
-            }
             compared += 1;
+            match first_difference(expected, &payload.data, &full, params, mother.k()) {
+                Some(where_) => {
+                    mismatches.push(format!("frame {frame} block {block} differs at {where_}"))
+                }
+                None => agreeing += 1,
+            }
         }
     }
 
+    // The facts the run receipt quotes, printed before the verdict so a
+    // failing run still says what it read and how far the agreement went.
+    println!("{ETSI_FACT} resolved_directory={}", base.display());
+    println!("{ETSI_FACT} stream_set={ETSI_STREAM_SET}");
+    for (label, stream) in [("tp04", tp04), ("tp05", tp05)] {
+        println!(
+            "{ETSI_FACT} {label}={} sha256={}",
+            under(&stream.path, &base).display(),
+            sha256_of(&stream.path)
+        );
+    }
+    println!(
+        "{ETSI_FACT} frames={ETSI_STREAM_FRAMES} blocks_per_frame={ETSI_STREAM_BLOCKS_PER_FRAME}"
+    );
+    println!("{ETSI_FACT} blocks_compared={compared} blocks_agreeing={agreeing}");
+
+    assert!(
+        mismatches.is_empty(),
+        "{} of {compared} VV001-CR35 blocks differ from their verified codewords; first: {}",
+        mismatches.len(),
+        mismatches[0]
+    );
     assert_eq!(compared, ETSI_STREAM_FRAMES * ETSI_STREAM_BLOCKS_PER_FRAME);
-    println!("compared {compared} VV001-CR35 TP04 payloads against TP05");
 }
