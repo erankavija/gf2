@@ -10838,3 +10838,5 @@
 {"assignee":"agent:jit-execution-lead","id":"cdfe75c1-bbe3-478e-b61a-425cd3cf5248","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","reason":"rework 2 dispatch","timestamp":"2026-09-02T16:48:08.458092975Z","type":"issue_released"}
 {"from":"ready","id":"da5c8541-3344-4bbf-88ce-f96145189dc2","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T16:48:17.511891756Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"e715d006-6e43-48e1-a88f-2a7d6d127b5a","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T16:48:17.511891756Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"1630e733-cad9-49bf-986a-bdcf7868f465","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T16:48:54.140868225Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"5f13f05a-cea6-4ddd-9bd0-ba46be7266b4","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T16:48:54.503026679Z","type":"issue_updated","updated_by":"doc-add"}

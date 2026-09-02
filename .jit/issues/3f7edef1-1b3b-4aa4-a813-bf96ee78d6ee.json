@@ -8,7 +8,146 @@
     "6a1b2404-1241-4f0e-b471-7f619cadbd9f"
   ],
   "description": "Establish agreement of the predeclared corpus's construction and encoding results with the two named external oracles and with authoritative standards vectors, committing the fixtures with provenance.\n\n## Background\n\nThe evidence-protocol contract predeclares the corpus rows and the two oracles (SageMath `codes.BCHCode`; GAP with GUAVA `BCHCode`), both applicable to the full corpus by their documented domains; exact oracle versions are recorded in the provenance document at fixture generation. Existing DVB-T2 verification vectors remain in place. Both oracles are required on every corpus row; a row where an oracle fails to produce a result is a blocking finding, not a recorded gap.\n\n## Success Criteria\n\n- [hard] REQ-01: Committed fixtures record generator polynomials and codewords from both named oracles agreeing with this implementation across the predeclared corpus, with generation scripts, versions, and provenance.\n- [hard] REQ-02: Authoritative standards vectors are wired into the suite where the protocol names them.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "4861230ac64ab7d5a3fb8f696925ecb9db0decc95c1d31529c5570022d717f52",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/sage.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/sage.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ce148bc055f8b55e5157946375255128250bd521c553c64d1cdbe6103ccec9f3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/bch_oracle_agreement.rs",
+          "resolved_path": "crates/gf2-coding/tests/bch_oracle_agreement.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f6de3f09e5801e2e81149b8200725e23d1644afdd0fe2557c21a7720f3eb3e62",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/test_vectors/mod.rs",
+          "resolved_path": "crates/gf2-coding/tests/test_vectors/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d1fca6e15573ce9f4a96c5bee6c41ef4b65ca838a77d1803125692602ca9b150",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1bdfc0be40281bf3ffa41720856209855d1d09b86ec9055b2ddc84051965d8b0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "oracle-receipt.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle-receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "79469f78c2d921bc3e92d0a77c74aeb095bbf97bbfe82024ef069fa985c9148c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/examples/bch_oracle_messages.rs",
+          "resolved_path": "crates/gf2-coding/examples/bch_oracle_messages.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "08aa8b0722678cee1714b3ad63ae749cf49d0fc2e838c8413e21b4edc96a6bda",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "oracle/run.sh",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/run.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4f8f05e5b07597ad0c375075dff2c2bcb37d0ac4d17c35f1052ffcb10db30899",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "oracle/gap_oracle.g",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "55f8856ffa9077c56d8a103b0056224381534d66238a856fa73d7016b87e69b3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/gap.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/gap.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "02d195b78fe82c8cc784c79b1adf5f7b02e381d5e43de8aa7266b4a7c7f3db05",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/corpus.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3dd7d7ef3addb690d8644ed2a6ffb2ddd3c37bef29925d2716b681be4a8bab5a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "oracle/sage_oracle.py",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/sage_oracle.py"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "External oracle provenance: corpus, transport, agreement, standards vectors",
+      "path": "dev/active/ae03bcd0-general-bch/oracle-provenance.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "08aa8b0722678cee1714b3ad63ae749cf49d0fc2e838c8413e21b4edc96a6bda",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "oracle/run.sh",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/run.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4861230ac64ab7d5a3fb8f696925ecb9db0decc95c1d31529c5570022d717f52",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/sage.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/sage.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "02d195b78fe82c8cc784c79b1adf5f7b02e381d5e43de8aa7266b4a7c7f3db05",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/corpus.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "55f8856ffa9077c56d8a103b0056224381534d66238a856fa73d7016b87e69b3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/gap.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/gap.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "External oracle fixture-generation receipt",
+      "path": "dev/active/ae03bcd0-general-bch/oracle-receipt.md"
+    }
+  ],
   "first_ready_at": "2026-09-02T05:46:01.370786388Z",
   "gates_required": [
     "cargo-ci",
@@ -43,5 +182,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-02T11:19:16.024243982Z"
+  "updated_at": "2026-09-02T16:48:54.503026679Z"
 }
