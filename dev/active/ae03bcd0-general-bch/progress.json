@@ -345,7 +345,7 @@
           "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework 1 complete (worker-2b6968d3-3 cut off before reporting; cargo-ci green in its worktree log); lead review PASS Tiers 1.5-3 + lead-direct findings.md fix b2ea0cb6; merged f5efb7cc (session 9); cargo-ci + code-review R2 queued behind the B4 GAP probe"
+          "status": "done (session 9): rework 1 (R-36 clmul-fold family + combined avx2&&pclmulqdq&&sse4.1 predicate) merged f5efb7cc; cargo-ci + code-review R2 passed first time after rework; 4e732b56 doc links refreshed"
         },
         {
           "key": "bch-convenience-ctors",
@@ -483,7 +483,7 @@
           "title": "Lean proofs: generator base-field membership and root correctness",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "early start (session 9, R-35 grounds: only dep d7749931 done, footprint disjoint): Opus worker-b1bd75ca dispatched 16:20Z from main 188c8717 with the O-4 spec, R-27 anchor test, R-43 sketch-update rule"
         }
       ]
     },
