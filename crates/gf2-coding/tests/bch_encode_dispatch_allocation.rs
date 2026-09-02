@@ -46,6 +46,14 @@ fn a_selected_bit_sliced_family_allocates_nothing_over_a_workspace() {
 }
 
 #[test]
+fn a_selected_fold_family_allocates_nothing_over_a_workspace() {
+    assert_allocation_free(
+        fresh::FreshProcessCase::ClmulFoldAllocation,
+        EncodeFamily::ClmulFold,
+    );
+}
+
+#[test]
 fn fresh_tuning_process_child() {
     let Some(case) = fresh::child_case().expect("fresh-process protocol is valid") else {
         return;

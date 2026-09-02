@@ -366,16 +366,17 @@ fn registered_families_agree_across_lane_group_boundaries() {
     }
 }
 
-/// The bit-sliced family runs its accelerated kernels where the host detects
-/// them, so the fallback arm needs forcing to be reached at all. Both arms
-/// compute the same words, and this is where that is checked on whatever host
-/// runs the suite.
+/// The kernel-dispatched families run their accelerated kernels where the
+/// host detects them, so the fallback arm needs forcing to be reached at all.
+/// One switch covers the whole bundle, so this reaches the portable arm of
+/// both of them; every arm computes the same words, and this is where that is
+/// checked on whatever host runs the suite.
 #[test]
 fn the_forced_scalar_kernels_write_the_reference_bytes() {
-    let restore = test_support::force_scalar_bitslice_encode(true);
+    let restore = test_support::force_scalar_encode_kernels(true);
     assert_eq!(
-        test_support::selected_bitslice_encode_kernel(),
-        "scalar-bitslice",
+        test_support::selected_encode_kernel(),
+        "scalar",
         "forcing the fallback selects the portable kernels"
     );
     let outcome = std::panic::catch_unwind(|| {
@@ -386,48 +387,46 @@ fn the_forced_scalar_kernels_write_the_reference_bytes() {
                     let batch_messages = messages(&code, batch);
                     let reference =
                         encode_under(&code, EncodeFamily::REFERENCE, &batch_messages, layout);
-                    let bitsliced = encode_under(
-                        &code,
-                        EncodeFamily::BitsliceInterleaved,
-                        &batch_messages,
-                        layout,
-                    );
-                    assert_eq!(
-                        bitsliced, reference,
-                        "{} at batch {batch} under {layout:?} on the portable kernels",
-                        row.name
-                    );
+                    for family in [EncodeFamily::BitsliceInterleaved, EncodeFamily::ClmulFold] {
+                        assert_eq!(
+                            encode_under(&code, family, &batch_messages, layout),
+                            reference,
+                            "{} under {family} at batch {batch}, {layout:?}, portable kernels",
+                            row.name
+                        );
+                    }
                 }
             }
         }
     });
-    test_support::force_scalar_bitslice_encode(restore);
+    test_support::force_scalar_encode_kernels(restore);
     if let Err(payload) = outcome {
         std::panic::resume_unwind(payload);
     }
 }
 
 /// A partition boundary and a lane-group boundary are independent: the batch
-/// entry points cut a batch into worker partitions and the family groups
-/// frames inside each one, so splitting a batch anywhere writes the codewords
-/// the whole batch writes.
+/// entry points cut a batch into worker partitions and a family groups frames
+/// inside each one, so splitting a batch anywhere writes the codewords the
+/// whole batch writes.
 #[test]
-fn the_bit_sliced_family_ignores_partition_boundaries() {
+fn the_kernel_families_ignore_partition_boundaries() {
     let row = &ROWS[2];
     let code = build(row);
-    let family = EncodeFamily::BitsliceInterleaved;
-    for &layout in LAYOUTS {
-        assert!(code.encode_family_available(family, layout));
-        let batch_messages = messages(&code, 257);
-        let whole = encode_under(&code, family, &batch_messages, layout);
-        for &at in &[0usize, 1, 63, 64, 65, 128, 192, 256, 257] {
-            let mut split = encode_under(&code, family, &batch_messages[..at], layout);
-            split.extend(encode_under(&code, family, &batch_messages[at..], layout));
-            assert_eq!(
-                split, whole,
-                "{} under {layout:?}: a partition boundary at {at} moved a codeword",
-                row.name
-            );
+    for family in [EncodeFamily::BitsliceInterleaved, EncodeFamily::ClmulFold] {
+        for &layout in LAYOUTS {
+            assert!(code.encode_family_available(family, layout));
+            let batch_messages = messages(&code, 257);
+            let whole = encode_under(&code, family, &batch_messages, layout);
+            for &at in &[0usize, 1, 63, 64, 65, 128, 192, 256, 257] {
+                let mut split = encode_under(&code, family, &batch_messages[..at], layout);
+                split.extend(encode_under(&code, family, &batch_messages[at..], layout));
+                assert_eq!(
+                    split, whole,
+                    "{} under {family}, {layout:?}: a boundary at {at} moved a codeword",
+                    row.name
+                );
+            }
         }
     }
 }
