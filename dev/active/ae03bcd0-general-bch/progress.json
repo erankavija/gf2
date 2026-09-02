@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework 1 part 1 at 7f32f4fd; part-2 draft (research-review F2-F5) lead-preserved as d6f03947; B4 GAP retry running (session 9, 50g heap, 52G scope, 20 min); part-2 worker dispatched after the result"
+          "status": "rework 1: part 1 at 7f32f4fd; part-2 draft lead-preserved d6f03947; B4 GAP retry FAILED at -o 50g under a 52G scope (9m17s wall, 54.4 GB peak RSS, 15.6 GB swap, \"reached the pre-set memory limit\") so the owner's amend branch applies; part-2 Opus worker-3f7edef1-3 dispatched 16:11Z (session 9)"
         },
         {
           "key": "lean-closure",
@@ -393,7 +393,7 @@
           "title": "Lean proofs: q-cyclotomic seed closure",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged f916e070; lake-build PASSED (session 9); code-review + doc-review running"
+          "status": "done (session 9): lake-build + code-review first-pass; doc-review R3 after two lead-direct proof-sketch fixes (7a380646, 3c744093: landed O-2/O-3 anchor tests named at their lines, shifted extension.rs citations remapped); 64fd3afd link refreshed"
         }
       ]
     },
@@ -582,6 +582,11 @@
       "issue": "3f7edef1",
       "trigger": "blocker on an external oracle (category 7): GUAVA BCHCode on B4 needs an uncompressed 65343x65535 FFE matrix (~34 GB); 4 GB heap exhausted, 40 GB probe at 25.7 GB and growing, stopped to protect measurements",
       "resolution": "owner: retry on the idle host with ~56 GB heap bounded to 20 min; if it fails, amend the plan's evidence-protocol so B4's GUAVA result is its BCHCode generator derivation plus polynomial encoding map with the observed failure recorded"
+    },
+    {
+      "issue": "3f7edef1",
+      "trigger": "B4 GUAVA retry (owner decision 'retry idle, then amend')",
+      "resolution": "retry on the idle host at -o 50g / 52G scope failed after 9m17s (peak 54.4 GB RSS, 15.6 GB swap); the amend branch is being executed by the part-2 worker (session 9)"
     }
   ],
   "rework_counts": {
@@ -637,7 +642,7 @@
     {
       "source": "1c9a0f9f worker (Luna) sign-off",
       "finding": "dev/active/64fd3afd/proof-sketch.md:922 still says the L4.3 test is required although it is implemented",
-      "disposition": "linked artifact of done issue 64fd3afd; amend lead-direct with the next lean-wave doc refresh"
+      "disposition": "closed session 9: the L4.3 test (the_generator_vanishes_at_every_defining_set_root) does not exist in the tree (grep), so the sketch line is correct and the Luna report was wrong; b1bd75ca adds it"
     },
     {
       "source": "lead review of bd0edfa2 code-review R1 (session 8)",
@@ -702,7 +707,8 @@
     "R-39 (session 8, owner-approved): Shortened<C> gains a systematic fast path (task 203ee826): when the mother reports is_systematic() and every removed coordinate lies in 0..k, no dense generator/nullspace/RREF; encode delegates to the mother with zeros at removed positions; matrices are the mother's kept rows/columns. General rank path unchanged. 97410c80 waits on it.",
     "R-40 (session 9): codex weekly quota at 94% (resets Mon 2026-09-07 17:56 EEST) is reserved for AI gate runs (~0.25%/run); every worker this session is native (hard -> Opus, easy -> Sonnet) despite the invoker's Luna-for-easy-tasks preference. Revisit after the reset.",
     "R-41 (session 9): 88ca7d2f's first measurement (11:44:59-11:52:32Z) opened at 1-minute load 7.96 and closed at 1.93 while other workers ran; @/invariant/benchmark-backed-performance requires an uncontended host, so the lead re-ran the worker's committed run.sh at 74871c6b on the idle host (load 0.2) and commits its outputs on the worker branch; run-1 outputs kept in the session scratchpad only.",
-    "R-42 (session 9): lead-direct doc fix on the 2b6968d3 branch (b2ea0cb6): survey findings.md \u00a7 6.2 said the auto-vectorization mechanism 'is an open question for avx2-batch-kernels'; it now points at the kernel rustdoc's Generated code section, which answers it. 4e732b56's doc links need a refresh after the merge (findings.md and workload-selection.md both change)."
+    "R-42 (session 9): lead-direct doc fix on the 2b6968d3 branch (b2ea0cb6): survey findings.md \u00a7 6.2 said the auto-vectorization mechanism 'is an open question for avx2-batch-kernels'; it now points at the kernel rustdoc's Generated code section, which answers it. 4e732b56's doc links need a refresh after the merge (findings.md and workload-selection.md both change).",
+    "R-43 (session 9): the O-3 proof sketch (64fd3afd's linked design doc) went stale when d7749931's anchor test landed ('must add', 'New test required', extension.rs citations shifted by 51 lines); fixed lead-direct in the sketch for O-2 and O-3 alike (7a380646, 3c744093), link refreshed. Standing rule for b1bd75ca/94597a51: the lean worker updates the sketch's own obligation section (anchor rows, 'must add' paragraph, R-03) and remaps citations shifted by its test insertion in the same submission; bake into their dispatch prompts."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
