@@ -299,6 +299,28 @@ Every convenience method above is exactly
 validation, generator construction, parameter derivation, caching, or fallback
 logic.
 
+Automatic field selection (ruling R-32) reuses those methods rather than
+adding a parallel constructor family. `gf2_core::field::modulus_select`
+declares
+
+```rust
+pub trait SelectExtension: FieldExtension + Sized {
+    fn select(base: Self::Base, degree: usize) -> Result<Self, ModulusSelectionError>;
+}
+```
+
+implemented for `QuotientField<B>` and `BinaryPrimeExt<V>` through the
+deterministic registry-then-verified-search policy of that module, and
+`BchError::ModulusSelection(ModulusSelectionError)` carries its failure. The
+four variants whose inputs lie in the base field have `_auto` counterparts
+bounded by `X: SelectExtension` that take the base witness and relative degree
+and are exactly `Self::<explicit method>(X::select(base, degree)?, ...)` with
+`RootSelection::Canonical` where a root selection is needed:
+`primitive_narrow_sense_auto`, `primitive_auto`, `consecutive_roots_auto`, and
+`from_root_seeds_auto`. `from_generator` has no automatic form because its
+generator coefficients live in the splitting-field carrier; callers compose
+`X::select` with it.
+
 The bound records the longest cyclic consecutive run in the closed defining
 set. Ties select the least starting exponent, which makes the witness
 reproducible. If the run has length $r$, the classical BCH bound is

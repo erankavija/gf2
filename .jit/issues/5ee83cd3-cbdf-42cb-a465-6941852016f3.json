@@ -4,6 +4,7 @@
   "created_at": "2026-08-28T23:04:06.062337929Z",
   "dependencies": [
     "1c9a0f9f-3fa5-4728-85b7-5354448af01f",
+    "444c06bc-7a0a-4e00-899a-c74815793fe9",
     "6d67e57e-0dac-44a4-afa8-b5c1eb33aff7",
     "8f68699b-d66a-45f2-a276-b8700bd4cc65"
   ],
@@ -25,5 +26,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Migrate the component-code BCH consumers to the canonical model",
-  "updated_at": "2026-08-28T23:04:28.095222602Z"
+  "updated_at": "2026-09-02T05:47:01.010525511Z"
 }
