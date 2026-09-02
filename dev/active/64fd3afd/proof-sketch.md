@@ -699,7 +699,7 @@ gap between model and code is the `u64`/`usize` representation.
 | L3.4 | `cyclotomic_coset_order_is_deterministic` (`:4041`), `cyclotomic_cosets_match_the_worked_binary_vector_and_pure_form` (`:3935`) |
 | L3.5 | `iterative_closure` (`:3917`) as the naive oracle, driven by `prop_binary_cyclotomic_closure_laws` (`:3976`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`); `cyclotomic_closure_selects_complete_seed_cosets` (`:3956`) |
 | L3.6 | `prop_binary_cyclotomic_closure_laws` (`:3976`), which draws seeds outside $[0,n)$ |
-| L3.7 | `cyclotomic_coset_order_is_deterministic` (`:4041`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`) pin $d_B = 1$, where $q$ is the characteristic itself; `extension_base_primitive_construction_derives_a_base_field_generator` (`crates/gf2-coding/src/bch/spec.rs:1209`) pins $d_B = 2$ indirectly, through a defining set the test checks closed under $q = 9$ over a $\mathrm{GF}(9)$ base; `base_order_mod_matches_the_hand_computed_multiplier` (`:4062`) pins $d_B = 2$ and $d_B = 64$ directly, see below |
+| L3.7 | `cyclotomic_coset_order_is_deterministic` (`:4041`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`) pin $d_B = 1$, where $q$ is the characteristic itself; `extension_base_primitive_construction_derives_a_base_field_generator` (`crates/gf2-coding/src/bch/spec.rs:2071`) pins $d_B = 2$ indirectly, through a defining set the test checks closed under $q = 9$ over a $\mathrm{GF}(9)$ base; `base_order_mod_matches_the_hand_computed_multiplier` (`:4062`) pins $d_B = 2$ and $d_B = 64$ directly, see below |
 | L3.8 | `assert_coset_partition_properties` (`crates/gf2-core/src/field/extension.rs:3890`) |
 
 `iterative_closure` (`:3917`) deserves the emphasis: it is an independent
