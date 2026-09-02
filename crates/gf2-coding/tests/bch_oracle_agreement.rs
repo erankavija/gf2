@@ -13,6 +13,12 @@
 //! against the gf2 code carrying that root instead. The fixtures record which
 //! presentation each oracle used and both roots in gf2's coordinates.
 //!
+//! The GAP script calls `BCHCode` on every row as an attempt bounded by the
+//! run's heap and records what that attempt observed, so a row's code object
+//! is a fact of the run. Amendment 2 of the plan's `evidence-protocol`
+//! section names the rows whose GUAVA result is the `BCHCode` generator
+//! derivation and the cyclic-code polynomial map instead of a code object.
+//!
 //! Every comparison here is between the fixture and a code this suite
 //! constructs: the corpus rows from
 //! `gf2_coding::test_support::visit_bch_corpus`, which is the same
@@ -532,7 +538,8 @@ impl BchCorpusVisitor for GuavaCodeObjectAgreement {
         if !flag(record, "bchcode_built") {
             // The run's heap did not admit this row's code object;
             // `a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt`
-            // asserts what the row carries instead.
+            // asserts what the row carries instead and that it is a row
+            // Amendment 2 of the plan's `evidence-protocol` section names.
             return;
         }
         self.visited.push(row.id.to_owned());
@@ -594,6 +601,24 @@ impl BchCorpusVisitor for GuavaCodeObjectAgreement {
 
 /// Every corpus row the protocol predeclares.
 const CORPUS_IDS: &[&str] = &["B1", "B2", "B3", "B4", "N1", "N2", "N3", "N4"];
+
+/// The rows on which Amendment 2 of the plan's `evidence-protocol` section
+/// admits a GUAVA result derived without a code object, because the generator
+/// matrix `BCHCode` materializes does not fit the run's heap at that length.
+/// Naming them here is what keeps the admission specific: a run that builds a
+/// code object on one of these rows, or fails to build one on any other row,
+/// fails `a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt`
+/// and `guava_bchcode_objects_agree_at_their_own_root`.
+const ROWS_WITHOUT_A_GUAVA_CODE_OBJECT: &[&str] = &["B4"];
+
+/// The corpus rows that carry GUAVA's own `BCHCode` object, in corpus order.
+fn rows_with_a_guava_code_object() -> Vec<&'static str> {
+    CORPUS_IDS
+        .iter()
+        .copied()
+        .filter(|id| !ROWS_WITHOUT_A_GUAVA_CODE_OBJECT.contains(id))
+        .collect()
+}
 
 #[test]
 fn the_corpus_fixture_records_the_constructed_rows() {
@@ -670,7 +695,7 @@ fn guava_bchcode_objects_agree_at_their_own_root() {
         visited: Vec::new(),
     };
     visit_bch_corpus(&mut visitor);
-    assert_eq!(visitor.visited, ["B1", "B2", "B3", "N1", "N2", "N3", "N4"]);
+    assert_eq!(visitor.visited, rows_with_a_guava_code_object());
 }
 
 /// The DVB-T2 mother row is compared separately because its codewords are
@@ -700,7 +725,7 @@ fn both_oracle_fixtures_cover_every_corpus_row() {
 }
 
 /// Asserts that `key` holds a non-empty string.
-fn recorded(record: &Value, key: &str) -> &str {
+fn recorded<'a>(record: &'a Value, key: &str) -> &'a str {
     let value = record[key]
         .as_str()
         .unwrap_or_else(|| panic!("member {key} is a string"));
@@ -813,15 +838,19 @@ const GUAVA_POLYNOMIAL_ENCODER: &str = "GUAVA cyclic-code encoding map c(x) = m(
 /// A row whose `BCHCode` attempt exceeded the run's heap carries GUAVA's own
 /// generator derivation and its cyclic-code polynomial encoding map, together
 /// with what the attempt observed. This is the whole of the admitted shape:
-/// there is no state in which a row simply has no GUAVA result.
+/// there is no state in which a row simply has no GUAVA result, and the rows
+/// that may take this shape are exactly the ones Amendment 2 of the plan's
+/// `evidence-protocol` section names.
 #[test]
 fn a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt() {
     let gap = fixture("gap.json");
+    let mut without: Vec<&str> = Vec::new();
     for row in gap["rows"].as_array().expect("rows") {
+        let id = row["id"].as_str().expect("an identifier");
         if flag(row, "bchcode_built") {
             continue;
         }
-        let id = row["id"].as_str().expect("an identifier");
+        without.push(id);
         assert!(
             row["bchcode_generator"].is_null(),
             "row {id} builds no code object, so it records no code-object generator"
@@ -837,11 +866,23 @@ fn a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt() {
         let native = strings(row, "codewords_native");
         assert!(!native.is_empty(), "row {id} carries codewords");
         assert_eq!(strings(row, "codewords_systematic").len(), native.len());
+
+        // What the bounded attempt itself observed, so the absence of a code
+        // object is a measurement rather than an assertion.
+        recorded(row, "bchcode_attempt_heap");
         assert!(
             number(row, "bchcode_attempt_cpu_ms") > 0,
             "row {id} records an attempt that actually ran"
         );
+        assert!(
+            number(row, "bchcode_attempt_peak_rss_kib") > 0,
+            "row {id} records the resident memory its attempt reached"
+        );
     }
+    assert_eq!(
+        without, ROWS_WITHOUT_A_GUAVA_CODE_OBJECT,
+        "the rows without a GUAVA code object are exactly the amended ones"
+    );
 }
 
 // ---------------------------------------------------------------------------
