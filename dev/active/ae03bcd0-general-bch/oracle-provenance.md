@@ -447,5 +447,7 @@ DVB_TEST_VECTORS_PATH=<the directory holding VV001-CR35_CSP> \
     --cargo-profile ci-test --profile ci -E 'binary(bch_oracle_agreement)'
 ```
 
-No case carries an `#[ignore]` tier, so the fast tier runs the suite whole and
-the fast tier's budgets are the ones that apply to it.
+No agreement case carries an `#[ignore]` tier, so the fast tier runs them all
+and the fast tier's budgets are the ones that apply. The three cases the run
+reports as skipped are the ignored unit tests of the shared stream reader in
+`tests/test_vectors/`, which every suite including that module compiles in.
