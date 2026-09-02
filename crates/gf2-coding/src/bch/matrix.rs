@@ -23,12 +23,38 @@
 //! generator and parity-check materializations independently, while its
 //! allocating access still returns a fresh matrix on every call.
 //!
+//! # Algorithm
+//!
+//! Both matrices follow from one recurrence on the parity block. Row $i$ of
+//! $P$ is $-(x^{\,r+i} \bmod g)$ in ascending degree for $r = n - k$, so row
+//! $0$ is the generator's low $r$ coefficients and every later row is its
+//! predecessor shifted one degree with one conditional subtraction of $g$:
+//! $P_{i,j} = P_{i-1,\,j-1} - P_{i-1,\,r-1}\,g_j$. Column $i$ of $H$ is
+//! $-P_i$, which is the same recurrence read on columns.
+//!
+//! Each writer carries the recurrence in its own output — the generator in
+//! the parity block of the row before, the parity check in the column before
+//! — so neither materializes the other matrix, neither holds a register
+//! beside the caller's buffer, and the caller-buffer path reaches no
+//! allocator. For the packed binary representation the generator step is one
+//! word-level shift and one conditional exclusive-or of row zero.
+//!
+//! # Representation
+//!
+//! [`SymbolMatrix`] exposes single-coordinate accessors, which the packed
+//! word-level step cannot be written through, so materialization dispatches
+//! through a private trait that each canonical matrix representation
+//! implements over its own storage. That keeps one canonical trait set: the
+//! specialization is by matrix representation, as the packed binary storage
+//! decision states, rather than a second public matrix hierarchy.
+//!
 //! # Complexity
 //!
-//! Both writers encode the $k$ message basis vectors, so each costs $O(k^2 r)$
-//! base-field multiply-adds in the field-generic representation and
-//! $O(k^2 \lceil r/64 \rceil)$ word operations in the packed binary one, for
-//! $r = n - k$, over the $O(kn)$ cell writes the output shape requires.
+//! The generator costs $O(k \lceil n/64 \rceil)$ word operations packed, and
+//! $O(kn)$ cell writes with $O(kr)$ base-field multiply-adds field-generic;
+//! both are the size of the output. The parity check transposes the same
+//! recurrence one coordinate at a time, so it costs $O(kr)$ coordinate writes
+//! over its $O(rn)$ output.
 //!
 //! # Examples
 //!
@@ -63,13 +89,19 @@ use std::any::Any;
 use std::sync::Mutex;
 
 use gf2_core::field::extension::{FieldExtension, FieldIdentity};
-use gf2_core::field::FiniteField;
+use gf2_core::field::matrix::FieldMatrix;
+use gf2_core::field::{FieldPoly, FiniteField};
+use gf2_core::gfp::Fp;
+use gf2_core::BitMatrix;
 
+#[cfg(any(test, feature = "test-support"))]
 use crate::bch::encode::SystematicKernel;
 use crate::bch::spec::BchCode;
 use crate::error::CodeError;
+#[cfg(any(test, feature = "test-support"))]
+use crate::traits::block::BlockEncoder;
 use crate::traits::block::{
-    BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
+    BlockCode, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix, SymbolSequence,
 };
 
 /// Ensures that a caller-provided matrix has the shape required by a code.
@@ -109,13 +141,201 @@ where
     Ok(())
 }
 
+/// Materialization of the canonical matrices over one matrix representation.
+///
+/// A caller checks the output shape before dispatching here, so an
+/// implementation writes only in-range coordinates, overwrites every
+/// coordinate of its output, and cannot fail. `dimension` is the code's $k$;
+/// the redundancy and the length follow from the output's own shape.
+trait MatrixFill<F>: SymbolMatrix<F>
+where
+    F: FieldIdentity,
+{
+    /// Writes $G = [\,I_k \mid P\,]$.
+    fn fill_generator(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F);
+
+    /// Writes $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$.
+    fn fill_parity_check(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F);
+}
+
+impl MatrixFill<Fp<2>> for BitMatrix {
+    fn fill_generator(&mut self, generator: &FieldPoly<Fp<2>>, dimension: usize, _zero: &Fp<2>) {
+        let length = BitMatrix::cols(self);
+        let redundancy = length - dimension;
+        for row in 0..BitMatrix::rows(self) {
+            self.row_words_mut(row).fill(0);
+        }
+        if dimension == 0 {
+            return;
+        }
+
+        // Row zero carries $P_0 = g$. The identity column enters after the
+        // recurrence, so every row the recurrence reads holds its parity
+        // block alone and the step is a whole-row shift.
+        for degree in 0..redundancy {
+            if generator.coeff(degree).is_one() {
+                self.set(0, dimension + degree, true);
+            }
+        }
+
+        let stride = self.stride_words();
+        let first = dimension >> 6;
+        let tail = length & 63;
+        for row in 1..dimension {
+            let reduce = self.get(row - 1, length - 1);
+            let mut upper = self.row_words(row - 1)[stride - 1];
+            for word in (first..stride).rev() {
+                let lower = if word > first {
+                    self.row_words(row - 1)[word - 1]
+                } else {
+                    0
+                };
+                self.row_words_mut(row)[word] = (upper << 1) | (lower >> 63);
+                upper = lower;
+            }
+            if tail != 0 {
+                self.row_words_mut(row)[stride - 1] &= (1u64 << tail) - 1;
+            }
+            if reduce {
+                for word in first..stride {
+                    let low = self.row_words(0)[word];
+                    self.row_words_mut(row)[word] ^= low;
+                }
+            }
+        }
+
+        for row in 0..dimension {
+            self.set(row, row, true);
+        }
+    }
+
+    fn fill_parity_check(&mut self, generator: &FieldPoly<Fp<2>>, dimension: usize, _zero: &Fp<2>) {
+        let redundancy = BitMatrix::rows(self);
+        for row in 0..redundancy {
+            self.row_words_mut(row).fill(0);
+            self.set(row, dimension + row, true);
+        }
+        if dimension == 0 || redundancy == 0 {
+            return;
+        }
+
+        for degree in 0..redundancy {
+            if generator.coeff(degree).is_one() {
+                self.set(degree, 0, true);
+            }
+        }
+        for column in 1..dimension {
+            let reduce = self.get(redundancy - 1, column - 1);
+            for degree in (1..redundancy).rev() {
+                let value =
+                    self.get(degree - 1, column - 1) ^ (reduce && generator.coeff(degree).is_one());
+                self.set(degree, column, value);
+            }
+            self.set(0, column, reduce && generator.coeff(0).is_one());
+        }
+    }
+}
+
+impl<F> MatrixFill<F> for FieldMatrix<F>
+where
+    F: FieldIdentity + 'static,
+{
+    fn fill_generator(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F) {
+        let length = FieldMatrix::cols(self);
+        let redundancy = length - dimension;
+        for row in 0..FieldMatrix::rows(self) {
+            self.row_mut(row).fill(zero.clone());
+        }
+        if dimension == 0 {
+            return;
+        }
+
+        for degree in 0..redundancy {
+            let coefficient = generator.coeff(degree);
+            self.set(0, dimension + degree, coefficient);
+        }
+        for row in 1..dimension {
+            if redundancy == 0 {
+                break;
+            }
+            let reduce = self.get(row - 1, length - 1);
+            for degree in (1..redundancy).rev() {
+                let value = self.get(row - 1, dimension + degree - 1)
+                    - reduce.clone() * generator.coeff(degree);
+                self.set(row, dimension + degree, value);
+            }
+            let value = -(reduce * generator.coeff(0));
+            self.set(row, dimension, value);
+        }
+
+        let one = zero.one_like();
+        for row in 0..dimension {
+            self.set(row, row, one.clone());
+        }
+    }
+
+    fn fill_parity_check(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F) {
+        let redundancy = FieldMatrix::rows(self);
+        let one = zero.one_like();
+        for row in 0..redundancy {
+            self.row_mut(row).fill(zero.clone());
+            self.set(row, dimension + row, one.clone());
+        }
+        if dimension == 0 || redundancy == 0 {
+            return;
+        }
+
+        for degree in 0..redundancy {
+            let value = -generator.coeff(degree);
+            self.set(degree, 0, value);
+        }
+        for column in 1..dimension {
+            let reduce = self.get(redundancy - 1, column - 1);
+            for degree in (1..redundancy).rev() {
+                let value =
+                    self.get(degree - 1, column - 1) - reduce.clone() * generator.coeff(degree);
+                self.set(degree, column, value);
+            }
+            let value = -(reduce * generator.coeff(0));
+            self.set(0, column, value);
+        }
+    }
+}
+
+/// Writes the systematic generator matrix of `code` into `out`.
+fn write_generator<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>
+where
+    X: FieldExtension,
+    S: SymbolSequence<X::Base>,
+    M: MatrixFill<X::Base>,
+{
+    check_shape(out, code.k(), code.n())?;
+    out.fill_generator(code.generator(), code.k(), &code.symbol_zero());
+    Ok(())
+}
+
+/// Writes the full-row-rank parity-check matrix of `code` into `out`.
+fn write_parity_check<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>
+where
+    X: FieldExtension,
+    S: SymbolSequence<X::Base>,
+    M: MatrixFill<X::Base>,
+{
+    check_shape(out, code.redundancy(), code.n())?;
+    out.fill_parity_check(code.generator(), code.k(), &code.symbol_zero());
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// The straightforward materialization, kept as an oracle
+// ---------------------------------------------------------------------------
+
 /// Encodes each message basis vector in turn and hands its row index and
 /// codeword to `write_row`.
 ///
-/// This is the definition the matrix contract states: row $i$ of the generator
-/// is the codeword of message basis vector $i$ under the default layout. The
-/// parity check reads the same walk transposed, so both writers share it. The
-/// message and codeword buffers are allocated once and reused for every row.
+/// The message and codeword buffers are allocated once and reused for every
+/// row.
+#[cfg(any(test, feature = "test-support"))]
 fn for_each_generator_row<X, S, M>(
     code: &BchCode<X, S, M>,
     mut write_row: impl FnMut(usize, &S) -> Result<(), CodeError>,
@@ -138,8 +358,24 @@ where
     Ok(())
 }
 
-/// Writes the systematic generator matrix of `code` into `out`.
-fn write_generator<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>
+/// Writes the generator matrix by encoding the $k$ message basis vectors.
+///
+/// This reads the contract literally rather than deriving it: it costs
+/// $O(k^2 r)$ base-field operations where the materialization costs $O(kr)$,
+/// and it consults the encoder where the materialization consults only the
+/// generator polynomial. It is the oracle the module's equality tests and the
+/// `bch_genmatrix` bench compare the materialization against, reachable
+/// through [`crate::test_support`].
+///
+/// # Errors
+///
+/// Returns [`CodeError::ShapeMismatch`] when `out` is not $k \times n$, and
+/// propagates the encoder's own errors.
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn write_generator_by_encoding<X, S, M>(
+    code: &BchCode<X, S, M>,
+    out: &mut M,
+) -> Result<(), CodeError>
 where
     X: FieldExtension,
     S: SystematicKernel<X::Base>,
@@ -158,12 +394,18 @@ where
     })
 }
 
-/// Writes the full-row-rank parity-check matrix of `code` into `out`.
+/// Writes the parity-check matrix from the codewords of the message basis
+/// vectors, the transpose of [`write_generator_by_encoding`]'s parity block.
 ///
-/// The parity block of generator row $i$ is column $i$ of $-H$, so the walk
-/// over the generator rows scatters each row's parity symbols down one column
-/// of the output and no generator matrix is materialized.
-fn write_parity_check<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>
+/// # Errors
+///
+/// Returns [`CodeError::ShapeMismatch`] when `out` is not $(n-k) \times n$,
+/// and propagates the encoder's own errors.
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn write_parity_check_by_encoding<X, S, M>(
+    code: &BchCode<X, S, M>,
+    out: &mut M,
+) -> Result<(), CodeError>
 where
     X: FieldExtension,
     S: SystematicKernel<X::Base>,
@@ -201,8 +443,8 @@ where
 impl<X, S, M> GeneratorMatrixAccess for BchCode<X, S, M>
 where
     X: FieldExtension,
-    S: SystematicKernel<X::Base>,
-    M: SymbolMatrix<X::Base>,
+    S: SymbolSequence<X::Base>,
+    M: MatrixFill<X::Base>,
 {
     type GeneratorMatrix = M;
 
@@ -224,8 +466,8 @@ where
 impl<X, S, M> ParityCheckMatrixAccess for BchCode<X, S, M>
 where
     X: FieldExtension,
-    S: SystematicKernel<X::Base>,
-    M: SymbolMatrix<X::Base>,
+    S: SymbolSequence<X::Base>,
+    M: MatrixFill<X::Base>,
 {
     type ParityCheckMatrix = M;
 
@@ -595,13 +837,31 @@ mod tests {
         }
     }
 
+    /// Asserts that the materialized matrices equal the ones the
+    /// basis-vector oracle writes.
+    fn assert_matches_oracle<X, S, M>(code: &BchCode<X, S, M>, generator: &M, parity: &M)
+    where
+        X: FieldExtension,
+        S: SystematicKernel<X::Base>,
+        M: SymbolMatrix<X::Base>,
+    {
+        let zero = code.symbol_zero();
+        let mut oracle_generator = M::zeroed(code.k(), code.n(), &zero);
+        write_generator_by_encoding(code, &mut oracle_generator).expect("oracle generator");
+        assert_eq!(generator, &oracle_generator, "generator against the oracle");
+
+        let mut oracle_parity = M::zeroed(code.redundancy(), code.n(), &zero);
+        write_parity_check_by_encoding(code, &mut oracle_parity).expect("oracle parity check");
+        assert_eq!(parity, &oracle_parity, "parity check against the oracle");
+    }
+
     /// Checks the whole matrix contract of one code over the caller-buffer,
     /// allocating, and explicit-cache access paths.
     fn assert_matrix_contract<X, S, M>(code: &BchCode<X, S, M>)
     where
         X: FieldExtension,
         S: SystematicKernel<X::Base>,
-        M: SymbolMatrix<X::Base> + Send + Sync,
+        M: MatrixFill<X::Base> + Send + Sync,
         BchCode<X, S, M>: Clone,
     {
         let zero = code.symbol_zero();
@@ -621,6 +881,7 @@ mod tests {
         assert_rows_are_codewords(code, &generator);
         assert_full_row_rank(&parity);
         assert_orthogonal(&generator, &parity, &zero);
+        assert_matches_oracle(code, &generator, &parity);
 
         let mut generator_buffer = M::zeroed(code.k(), code.n(), &zero);
         code.generator_matrix_into(&mut generator_buffer)
@@ -759,6 +1020,69 @@ mod tests {
         .expect("a valid primitive code with the zero exponent as first root");
         assert_eq!((redundancy_65.k(), redundancy_65.n()), (190, 255));
         assert_matrix_contract(&redundancy_65);
+    }
+
+    /// The workload contract's binary rows B1, B2 and B3 at the exact lengths
+    /// it fixes (`dev/active/4e732b56/workload-selection.md` § 2).
+    #[test]
+    fn workload_rows_follow_the_contract_and_match_the_oracle() {
+        const ROWS: &[(usize, u64, u64, usize, usize)] = &[
+            (4, 0b1_0011, 7, 5, 15),
+            (7, 0b1000_0011, 21, 64, 127),
+            (8, 0b1_0001_1101, 9, 223, 255),
+        ];
+        for &(degree, modulus, distance, dimension, length) in ROWS {
+            let packed = primitive_binary(degree, modulus, distance);
+            assert_eq!((packed.k(), packed.n()), (dimension, length));
+            assert_matrix_contract(&packed);
+        }
+
+        // B1 field-generic, so the row is covered in both representations.
+        let dense = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: binary_extension(),
+            designed_distance: DesignedDistance::try_from(7).expect("positive distance"),
+        })
+        .expect("the field-generic B1 row");
+        assert_eq!((dense.k(), dense.n()), (5, 15));
+        assert_matrix_contract(&dense);
+    }
+
+    /// The workload contract's T2S row at its mother length, the largest W2
+    /// cell the fast tier materializes: a $16215 \times 16383$ generator.
+    ///
+    /// The mother length is what § 9's amendment of 2026-09-01 measures the
+    /// DVB-T2 rows on until the shortened presentations reach the canonical
+    /// construction model.
+    #[test]
+    fn t2s_mother_row_matches_the_oracle_generator() {
+        let code = primitive_binary(14, 0b100_0000_0010_1011, 25);
+        assert_eq!((code.k(), code.n()), (16215, 16383));
+        let generator = code.generator_matrix().expect("generator materialization");
+        let mut oracle = BitMatrix::zeros(code.k(), code.n());
+        write_generator_by_encoding(&code, &mut oracle).expect("oracle generator");
+        assert_eq!(generator, oracle);
+    }
+
+    /// Both DVB-T2 rows at their mother lengths, generator and parity check.
+    ///
+    /// The oracle costs $O(k^2 r)$, which puts the $65343 \times 65535$ row
+    /// far outside the fast tier; the T2S generator alone stays in it above.
+    #[test]
+    #[ignore = "slow: the DVB-T2 mother rows materialize up to a 512 MiB generator"]
+    fn dvb_t2_mother_rows_match_the_oracle() {
+        const ROWS: &[(usize, u64, usize, usize)] = &[
+            (14, 0b100_0000_0010_1011, 16215, 16383),
+            (16, 0b1_0000_0000_0010_1101, 65343, 65535),
+        ];
+        for &(degree, modulus, dimension, length) in ROWS {
+            let code = primitive_binary(degree, modulus, 25);
+            assert_eq!((code.k(), code.n()), (dimension, length));
+            assert_matches_oracle(
+                &code,
+                &code.generator_matrix().expect("generator materialization"),
+                &code.parity_check_matrix().expect("parity materialization"),
+            );
+        }
     }
 
     #[test]

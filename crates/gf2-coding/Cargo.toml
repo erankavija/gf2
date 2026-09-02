@@ -144,6 +144,10 @@ name = "bch_parallel"
 harness = false
 
 [[bench]]
+name = "bch_genmatrix"
+harness = false
+
+[[bench]]
 name = "ldpc_decode"
 harness = false
 
