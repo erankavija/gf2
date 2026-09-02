@@ -921,8 +921,8 @@ epic.
 | L4.4 | covered indirectly by the closure assertion in `assert_construction_is_consistent` (`:1948-1954`); the L4.3 test decides it directly |
 | L4.5 | `generator_divides_cyclic_polynomial` (`:1893`) via `assert_construction_is_consistent` (`:1921`), and `binary_generators_divide_the_cyclic_polynomial` (`:2041`) |
 | L4.6 | `assert_construction_is_consistent` (`:1929`, `:1940`) |
-| L4.7 | `assert_witnessed_run_is_maximal` (`:1960`), `the_witnessed_run_is_present_and_maximal_in_the_defining_set` (`:2646`) |
-| L4.8 | `narrow_sense_is_the_first_root_flavor_at_exponent_one` (`:2175`), `first_root_flavor_witnesses_the_run_it_actually_has` (`:2150`), `primitive_narrow_sense_agrees_with_the_current_binary_generators` (`:2009`) |
+| L4.7 | `assert_witnessed_run_is_maximal` (`:1960`), `the_witnessed_run_is_present_and_maximal_in_the_defining_set` (`:2646`); the two base-case branches by `a_full_defining_set_yields_the_zero_dimensional_code` (`:2673`) and `a_designed_distance_of_one_yields_the_full_space_code` (`:2659`) |
+| L4.8 | `narrow_sense_is_the_first_root_flavor_at_exponent_one` (`:2175`), `first_root_flavor_witnesses_the_run_it_actually_has` (`:2150`), `primitive_narrow_sense_agrees_with_the_current_binary_generators` (`:2009`); the full defining set, whose designed distance is $n+1$, by `a_full_defining_set_yields_the_zero_dimensional_code` (`:2673`) |
 
 **Anchor test for L4.3**, in `crates/gf2-coding/src/bch/spec.rs`'s
 `#[cfg(test)] mod tests`:
