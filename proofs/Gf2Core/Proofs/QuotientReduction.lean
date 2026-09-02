@@ -461,6 +461,129 @@ theorem foldDown_pad_mul (hf : f.Monic) (hr : 0 < f.natDegree)
   rw [foldDown_eq_modByMonic hf _ _ hdeg, vmul, pad_red hf]
 
 
+/-! ### L2.4 — the compile-time Horner form -/
+
+/-- One step of the Horner loop in `ConstQuotient::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:1551`): multiply the accumulator by `x` —
+a shift plus the rewrite `x^R = -∑_{i<R} f_i x^i`, which is division by the monic
+`f` — and add a scalar multiple of the right operand. -/
+def hornerStep (f b acc : B[X]) (c : B) : B[X] := (acc * X) %ₘ f + C c * b
+
+/-- The Horner loop of `ConstQuotient::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:1551`), which walks the left operand's
+coefficient indices downward. `hornerLoop f b n a` runs the `n` steps for
+indices `n - 1, …, 0`, so the accumulator never leaves its `R`-wide array and no
+`2R - 1` convolution buffer is formed. -/
+def hornerLoop (f b : B[X]) : ℕ → B[X] → B[X]
+  | 0, _ => 0
+  | (n + 1), a => hornerStep f b (hornerLoop f b n a.divX) (a.coeff 0)
+
+theorem hornerLoop_zero (b a : B[X]) : hornerLoop f b 0 a = 0 := rfl
+
+theorem hornerLoop_succ (b : B[X]) (n : ℕ) (a : B[X]) :
+    hornerLoop f b (n + 1) a = hornerStep f b (hornerLoop f b n a.divX) (a.coeff 0) := rfl
+
+theorem trunc_zero (p : B[X]) : trunc 0 p = 0 := by
+  simp [trunc, ofCoeffs]
+
+/-- The Horner invariant: after `n` steps the accumulator represents the class of
+`trunc n a · b`. Each step shifts by `x` and folds in one more coefficient. -/
+theorem hornerLoop_mk (b : B[X]) :
+    ∀ (n : ℕ) (a : B[X]), AdjoinRoot.mk f (hornerLoop f b n a) =
+      AdjoinRoot.mk f (trunc n a) * AdjoinRoot.mk f b := by
+  intro n
+  induction n with
+  | zero => intro a; rw [hornerLoop_zero, trunc_zero]; simp
+  | succ m ih =>
+      intro a
+      rw [hornerLoop_succ, hornerStep, map_add, mk_modByMonic, map_mul, ih, map_mul,
+        trunc_succ, map_add, map_mul]
+      ring
+
+theorem degree_hornerStep_lt (hf : f.Monic) {b : B[X]} (hb : b.degree < f.degree)
+    (acc : B[X]) (c : B) : (hornerStep f b acc c).degree < f.degree := by
+  refine lt_of_le_of_lt (degree_add_le _ _) (max_lt (degree_modByMonic_lt _ hf) ?_)
+  rw [← smul_eq_C_mul]
+  exact lt_of_le_of_lt (degree_smul_le c b) hb
+
+theorem degree_hornerLoop_lt (hf : f.Monic) {b : B[X]} (hb : b.degree < f.degree) :
+    ∀ (n : ℕ) (a : B[X]), (hornerLoop f b n a).degree < f.degree := by
+  intro n a
+  cases n with
+  | zero =>
+      rw [hornerLoop_zero, degree_zero, degree_eq_natDegree hf.ne_zero]
+      exact WithBot.bot_lt_coe _
+  | succ m => exact degree_hornerStep_lt hf hb _ _
+
+/-- **L2.4 (the Horner form computes the residue).** The accumulator after `r`
+steps is exactly the residue of the product, so `ConstQuotient::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:1551`) and `QuotientElement::multiply`
+(`:896`) agree on every pair of operands.
+
+Refinement anchor: `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2290`), driven by
+`const_and_runtime_forms_agree_on_gf16` (`:2370`), `..._on_gf125` (`:2375`) and
+`..._on_gf81_over_gf9` (`:2380`). -/
+theorem hornerLoop_eq_modByMonic (hf : f.Monic) {a b : B[X]}
+    (ha : a.natDegree < f.natDegree) (hb : b.degree < f.degree) :
+    hornerLoop f b f.natDegree a = (a * b) %ₘ f := by
+  refine eq_of_degree_lt_of_mk_eq (degree_hornerLoop_lt hf hb _ _)
+    (degree_modByMonic_lt _ hf) ?_
+  rw [hornerLoop_mk, trunc_eq_self ha, mk_modByMonic, map_mul]
+
+/-- **L2.4 (the two carriers agree).** For one declaration, the Horner loop of
+`ConstQuotient::multiply` (`crates/gf2-core/src/gfpn/quotient.rs:1551`) and the
+convolve-and-fold loop of `QuotientElement::multiply` (`:896`) produce one
+polynomial, hence one stored vector.
+
+Refinement anchor: `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2290`), driven by
+`const_and_runtime_forms_agree_on_gf16` (`:2370`), `..._on_gf125` (`:2375`) and
+`..._on_gf81_over_gf9` (`:2380`). -/
+theorem hornerLoop_eq_foldDown (hf : f.Monic) (hr : 0 < f.natDegree)
+    (x y : Fin f.natDegree → B) :
+    hornerLoop f (pad f y) f.natDegree (pad f x) =
+      foldDown f (f.natDegree - 1) (pad f x * pad f y) := by
+  rw [foldDown_pad_mul hf hr, hornerLoop_eq_modByMonic hf (natDegree_pad_lt hr x)
+    (degree_pad_lt_degree hf y), vmul, pad_red hf]
+
+/-- The modulus a compile-time declaration materializes:
+`ConstQuotientConfig::MODULUS` (`crates/gf2-core/src/gfpn/quotient.rs:1294`)
+stores the `R` low coefficients and `ConstQuotient::modulus` (`:1398`) restores
+the implicit leading one. -/
+def constModulus (R : ℕ) (m : Fin R → B) : B[X] := X ^ R + ofCoeffs R (extend m)
+
+/-- **L2.4 (the declared modulus is monic).** The implicit leading one makes
+every declaration monic, so every lemma of this section applies to the
+compile-time carrier.
+
+Production path: `ConstQuotientConfig::MODULUS`
+(`crates/gf2-core/src/gfpn/quotient.rs:1294`), whose documentation states the
+monicity this lemma proves.
+
+Refinement anchor: `const_quotient_modulus_and_indeterminate_match_the_declaration`
+(`crates/gf2-core/src/gfpn/quotient.rs:2441`). -/
+theorem constModulus_monic (R : ℕ) (m : Fin R → B) : (constModulus R m).Monic :=
+  monic_X_pow_add (degree_ofCoeffs_lt R (extend m))
+
+/-- **L2.4 (the declared width is the relative degree).** A declaration of `R`
+low coefficients has relative degree `R`, so the compile-time `R`-wide array and
+the runtime `relative_degree()` slots are one width and
+`ConstQuotient::runtime_field` (`crates/gf2-core/src/gfpn/quotient.rs:1530`)
+bridges without reshaping.
+
+Refinement anchor: `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2290`), whose `relative_degree` assertion
+sits at `:2308`. -/
+theorem natDegree_constModulus (R : ℕ) (m : Fin R → B) :
+    (constModulus R m).natDegree = R := by
+  have hdeg : (constModulus R m).degree = (R : WithBot ℕ) := by
+    rw [constModulus, degree_add_eq_left_of_degree_lt, degree_X_pow]
+    rw [degree_X_pow]
+    exact degree_ofCoeffs_lt R (extend m)
+  exact natDegree_eq_of_degree_eq_some hdeg
+
+
 end QuotientReduction
 
 end
