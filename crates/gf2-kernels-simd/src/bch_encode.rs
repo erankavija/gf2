@@ -835,6 +835,33 @@ mod tests {
         }
     }
 
+    /// [`detect`] publishes the accelerated bundle exactly under the module's
+    /// combined predicate, so dropping a feature from it fails here rather
+    /// than reaching a kernel whose instructions the host lacks.
+    #[test]
+    fn the_accelerated_bundle_is_published_only_under_its_whole_feature_set() {
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        let complete = {
+            use std::arch::is_x86_feature_detected;
+            is_x86_feature_detected!("avx2")
+                && is_x86_feature_detected!("pclmulqdq")
+                && is_x86_feature_detected!("sse4.1")
+        };
+        #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+        let complete = false;
+
+        assert_eq!(
+            detect().map(|fns| fns.name),
+            complete.then_some("avx2-pclmul"),
+            "the bundle is published exactly under `avx2 && pclmulqdq && sse4.1`"
+        );
+        assert_eq!(
+            scalar().name,
+            "scalar",
+            "the portable bundle needs no processor feature"
+        );
+    }
+
     #[test]
     fn the_scalar_bundle_matches_the_per_frame_reference() {
         check_bundle(&scalar());
