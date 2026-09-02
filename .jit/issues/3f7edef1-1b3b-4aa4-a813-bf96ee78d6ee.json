@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-02T05:47:19.320779400Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
@@ -16,7 +16,23 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-02T11:04:50.579341997Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-02T11:07:31.773243865Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-02T11:19:16.024243982Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee",
   "labels": [
     "type:task",
@@ -27,5 +43,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-02T05:47:19.320779400Z"
+  "updated_at": "2026-09-02T11:19:16.024243982Z"
 }
