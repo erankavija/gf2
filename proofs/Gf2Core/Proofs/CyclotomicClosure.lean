@@ -96,6 +96,7 @@ Refinement anchor: `assert_coset_partition_properties`
 `:3905-3906` recomputes `modular_mul` on every stored member. -/
 def mu (q : ℕ) (x : ZMod n) : ZMod n := (q : ZMod n) * x
 
+/-- `μ_q` is multiplication by the residue of `q`. -/
 @[simp]
 theorem mu_apply (q : ℕ) (x : ZMod n) : mu q x = (q : ZMod n) * x := rfl
 
@@ -103,7 +104,7 @@ theorem mu_apply (q : ℕ) (x : ZMod n) : mu q x = (q : ZMod n) * x := rfl
 leaves `μ_q` unchanged.
 
 Production path: `cyclotomic_cosets_mod` normalizes its argument once more with
-`q_mod_n % n` (`crates/gf2-core/src/field/extension.rs:2233`), and
+`q_mod_n % n` (`crates/gf2-core/src/field/extension.rs:2226`), and
 `cyclotomic_cosets` (`:2129`) feeds it the already reduced `base_order_mod`
 result.
 
@@ -121,10 +122,11 @@ variable {q : ℕ}
 /-- `q` as a unit of `ZMod n`, available exactly under `gcd(q, n) = 1`.
 
 Production path: the `gcd_u64` decision at
-`crates/gf2-core/src/field/extension.rs:2234-2241`, which rejects a non-coprime
+`crates/gf2-core/src/field/extension.rs:2227-2234`, which rejects a non-coprime
 multiplier with `FieldError::NonCoprimeCyclotomicParameters`. -/
 def qUnit (hq : Nat.Coprime q n) : (ZMod n)ˣ := ZMod.unitOfCoprime q hq
 
+/-- The unit's value is the residue of `q`. -/
 @[simp]
 theorem qUnit_val (hq : Nat.Coprime q n) : ((qUnit hq : (ZMod n)ˣ) : ZMod n) = (q : ZMod n) := rfl
 
@@ -137,7 +139,7 @@ partition exist at all.
 
 Production path: `cyclotomic_cosets_mod`
 (`crates/gf2-core/src/field/extension.rs:2221`) returns a partition only past
-the `gcd` check at `:2234`.
+the `gcd` check at `:2228`.
 
 Refinement anchor: `cyclotomic_cosets_reject_invalid_moduli_and_non_coprime_parameters`
 (`crates/gf2-core/src/field/extension.rs:4018`). -/
@@ -279,6 +281,7 @@ Refinement anchor: `assert_coset_partition_properties`
 length. -/
 def cosetLen (hq : Nat.Coprime q n) (c : ZMod n) : ℕ := Nat.find (exists_return_time hq c)
 
+/-- A coset is nonempty: the counting pass runs at least one step. -/
 theorem cosetLen_pos (hq : Nat.Coprime q n) (c : ZMod n) : 0 < cosetLen hq c :=
   (Nat.find_spec (exists_return_time hq c)).1
 
@@ -371,11 +374,14 @@ each coset in exactly this order. -/
 def cosetList (hq : Nat.Coprime q n) (c : ZMod n) : List (ZMod n) :=
   (List.range (cosetLen hq c)).map fun t => (q : ZMod n) ^ t * c
 
+/-- The emitted coset has the length the counting pass reserved for it
+(`crates/gf2-core/src/field/extension.rs:2265`). -/
 @[simp]
 theorem cosetList_length (hq : Nat.Coprime q n) (c : ZMod n) :
     (cosetList hq c).length = cosetLen hq c := by
   simp [cosetList]
 
+/-- The member at index `i` is `q ^ i · c`. -/
 theorem cosetList_getElem (hq : Nat.Coprime q n) (c : ZMod n) (i : ℕ)
     (hi : i < (cosetList hq c).length) :
     (cosetList hq c)[i] = (q : ZMod n) ^ i * c := by
@@ -501,10 +507,12 @@ enters the coset (`crates/gf2-core/src/field/extension.rs:2246`). -/
 def orbitMin (hq : Nat.Coprime q n) (x : ZMod n) : ℕ :=
   Nat.find (exists_natCast_mem_orbit hq x)
 
+/-- The entry representative lies in the orbit it enters. -/
 theorem orbitMin_mem (hq : Nat.Coprime q n) (x : ZMod n) :
     ((orbitMin hq x : ℕ) : ZMod n) ∈ orbit hq x :=
   Nat.find_spec (exists_natCast_mem_orbit hq x)
 
+/-- No member of the orbit carries a smaller residue. -/
 theorem orbitMin_le (hq : Nat.Coprime q n) {x y : ZMod n} (hy : y ∈ orbit hq x) :
     orbitMin hq x ≤ y.val := by
   have hp : ((y.val : ℕ) : ZMod n) ∈ orbit hq x := by
@@ -512,6 +520,7 @@ theorem orbitMin_le (hq : Nat.Coprime q n) {x y : ZMod n} (hy : y ∈ orbit hq x
     exact hy
   exact Nat.find_le hp
 
+/-- The entry representative is a legal scan index. -/
 theorem orbitMin_lt (hq : Nat.Coprime q n) (x : ZMod n) : orbitMin hq x < n :=
   lt_of_le_of_lt (orbitMin_le hq (mem_orbit_self hq x)) (ZMod.val_lt x)
 
@@ -565,6 +574,7 @@ def scanHeads (hq : Nat.Coprime q n) : List ℕ :=
 def scanCosets (hq : Nat.Coprime q n) : List (List (ZMod n)) :=
   (scanHeads hq).map fun j => cosetList hq ((j : ℕ) : ZMod n)
 
+/-- The scan enters a coset at exactly the least members of the orbits. -/
 theorem mem_scanHeads_iff (hq : Nat.Coprime q n) (j : ℕ) :
     j ∈ scanHeads hq ↔ j < n ∧ orbitMin hq ((j : ℕ) : ZMod n) = j := by
   simp [scanHeads, List.mem_filter, List.mem_range]
@@ -579,6 +589,7 @@ theorem scanHeads_sortedLT (hq : Nat.Coprime q n) : (scanHeads hq).SortedLT := b
   rw [List.sortedLT_iff_pairwise]
   exact List.Pairwise.filter _ List.pairwise_lt_range
 
+/-- No representative enters two cosets. -/
 theorem scanHeads_nodup (hq : Nat.Coprime q n) : (scanHeads hq).Nodup :=
   (List.sortedLT_iff_pairwise.1 (scanHeads_sortedLT hq)).imp Nat.ne_of_lt
 
@@ -617,6 +628,7 @@ def seedSet (S : Set ℕ) : Set (ZMod n) := (fun s : ℕ => (s : ZMod n)) '' S
 def closure (hq : Nat.Coprime q n) (S : Set ℕ) : Set (ZMod n) :=
   ⋃ s ∈ seedSet (n := n) S, orbit hq s
 
+/-- Closure membership unfolds to lying in the orbit of some seed. -/
 theorem mem_closure_iff (hq : Nat.Coprime q n) (S : Set ℕ) (x : ZMod n) :
     x ∈ closure hq S ↔ ∃ s ∈ seedSet (n := n) S, x ∈ orbit hq s := by
   simp [closure]
@@ -689,6 +701,8 @@ theorem seedSet_mod (S : Set ℕ) : seedSet (n := n) ((· % n) '' S) = seedSet (
   · rintro ⟨s, hs, rfl⟩
     exact ⟨s % n, ⟨s, hs, rfl⟩, by rw [ZMod.natCast_mod]⟩
 
+/-- **L3.6.** Closing the reduced seeds gives the same set, on the anchors
+`seedSet_mod` names. -/
 theorem closure_mod (hq : Nat.Coprime q n) (S : Set ℕ) :
     closure hq ((· % n) '' S) = closure hq S := by
   rw [closure, closure, seedSet_mod]
@@ -747,7 +761,7 @@ theorem natCast_eq_pow {N p dB : ℕ} (hcard : N = p ^ dB) :
 
 /-- The reduced multiplier is coprime to `n` exactly when `|B|` is, so the
 production `gcd` check on `q_mod_n`
-(`crates/gf2-core/src/field/extension.rs:2234-2241`) decides the model's
+(`crates/gf2-core/src/field/extension.rs:2226-2234`) decides the model's
 hypothesis. -/
 theorem coprime_mod_iff (m : ℕ) : Nat.Coprime (m % n) n ↔ Nat.Coprime m n :=
   ZMod.coprime_mod_iff_coprime m n
@@ -759,6 +773,8 @@ theorem coprime_mod_iff (m : ℕ) : Nat.Coprime (m % n) n ↔ Nat.Coprime m n :=
 def closureCosets (hq : Nat.Coprime q n) (S : Set ℕ) : List (List (ZMod n)) :=
   (scanCosets hq).filter fun l => decide (∃ x ∈ l, x ∈ seedSet (n := n) S)
 
+/-- A coset is selected exactly when a seed lands in it
+(`crates/gf2-core/src/field/extension.rs:2180-2182`). -/
 theorem mem_closureCosets_iff (hq : Nat.Coprime q n) (S : Set ℕ) (l : List (ZMod n)) :
     l ∈ closureCosets hq S ↔ l ∈ scanCosets hq ∧ ∃ x ∈ l, x ∈ seedSet (n := n) S := by
   simp [closureCosets, List.mem_filter]
@@ -807,7 +823,7 @@ theorem notMem_closureCosets (hq : Nat.Coprime q n) (S : Set ℕ) {x : ZMod n}
   hx ((mem_closure_iff_mem_closureCosets hq S x).2 ⟨l, hl, hxl⟩)
 
 /-- The exponents of the closure, as the `u64` residues the production returns
-(`crates/gf2-core/src/field/extension.rs:2036-2048`). -/
+(`crates/gf2-core/src/field/extension.rs:2036-2044`). -/
 def definingFinset (hq : Nat.Coprime q n) (S : Set ℕ) : Finset ℕ :=
   (Finset.range n).filter fun m => ((m : ℕ) : ZMod n) ∈ closure hq S
 
@@ -817,6 +833,7 @@ selected cosets. -/
 def definingList (hq : Nat.Coprime q n) (S : Set ℕ) : List ℕ :=
   (definingFinset hq S).sort
 
+/-- The defining set holds exactly the closure's residues below `n`. -/
 theorem mem_definingFinset_iff (hq : Nat.Coprime q n) (S : Set ℕ) (m : ℕ) :
     m ∈ definingFinset hq S ↔ m < n ∧ ((m : ℕ) : ZMod n) ∈ closure hq S := by
   simp [definingFinset, Finset.mem_filter, Finset.mem_range]
@@ -832,10 +849,12 @@ theorem definingList_sortedLT (hq : Nat.Coprime q n) (S : Set ℕ) :
     (definingList hq S).SortedLT :=
   Finset.sortedLT_sort _
 
+/-- The defining set carries no repeat. -/
 theorem definingList_nodup (hq : Nat.Coprime q n) (S : Set ℕ) :
     (definingList hq S).Nodup :=
   Finset.sort_nodup _ _
 
+/-- Membership in the sorted defining set is closure membership. -/
 theorem mem_definingList_iff (hq : Nat.Coprime q n) (S : Set ℕ) (m : ℕ) :
     m ∈ definingList hq S ↔ m < n ∧ ((m : ℕ) : ZMod n) ∈ closure hq S := by
   rw [definingList, Finset.mem_sort, mem_definingFinset_iff]
