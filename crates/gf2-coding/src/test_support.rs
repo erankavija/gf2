@@ -54,6 +54,25 @@ pub fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> 
     crate::bch::encode::encode_scratch_shape::<W>()
 }
 
+/// Holds [`EncodeFamily::BitsliceInterleaved`][family] on the portable
+/// bit-sliced kernels, or releases it back to runtime detection, and reports
+/// the previous setting.
+///
+/// A differential check runs the accelerated arm of the kernel dispatch by
+/// default and this one on demand, so the fallback is exercised whatever the
+/// host detects. Both arms compute the same words.
+///
+/// [family]: crate::bch::encode::EncodeFamily::BitsliceInterleaved
+pub fn force_scalar_bitslice_encode(forced: bool) -> bool {
+    crate::bch::encode::force_scalar_bitslice_kernels(forced)
+}
+
+/// The name of the bit-sliced kernel bundle a batch encode would run now,
+/// `"avx2-bitslice"` or `"scalar-bitslice"`.
+pub fn selected_bitslice_encode_kernel() -> &'static str {
+    crate::bch::encode::selected_bitslice_kernels()
+}
+
 /// Builds the generic eBCH(16,11) fixture used by library tests.
 ///
 /// The production [`ExtendedBchComponent::ebch_16_11`] constructor owns the

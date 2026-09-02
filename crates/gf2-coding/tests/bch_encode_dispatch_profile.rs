@@ -20,15 +20,25 @@ fn an_encoded_profile_selects_the_table_family() {
 }
 
 #[test]
+fn an_encoded_profile_selects_the_bit_sliced_family() {
+    let result =
+        fresh::fresh_tuning_process(fresh::FreshProcessCase::BitsliceInterleavedEncoded).unwrap();
+    assert_eq!(result["family"], EncodeFamily::BitsliceInterleaved.name());
+    assert_eq!(result["agrees_with_reference"], true);
+    assert_eq!(result["resolution"], "installed");
+}
+
+#[test]
 fn the_owner_codec_round_trips_its_selectors() {
     let section = CodingTuning::from_selectors(
-        EncodeSelectors::try_new(32, 16).expect("every selector bound is admissible"),
+        EncodeSelectors::try_new(32, 16, 64).expect("every selector bound is admissible"),
     );
     let body = CodingTuningCodec::encode_body(&section).expect("a complete section encodes");
     let decoded = CodingTuningCodec::decode_body(body).expect("the canonical body decodes");
     assert_eq!(decoded, section);
     assert_eq!(decoded.encode().table_remainder_min_redundancy(), 32);
     assert_eq!(decoded.encode().table_remainder_min_batch(), 16);
+    assert_eq!(decoded.encode().bitslice_interleaved_min_batch(), 64);
 }
 
 #[test]
@@ -37,13 +47,16 @@ fn a_partial_body_defaults_the_absent_selectors() {
         serde_json::from_str(r#"{"encode": {"table_remainder_min_batch": 4}}"#)
             .expect("a canonical selector body");
     let decoded = CodingTuningCodec::decode_body(body).expect("a partial body decodes");
+    let conservative = CodingTuning::CONSERVATIVE;
     assert_eq!(
         decoded.encode().table_remainder_min_redundancy(),
-        CodingTuning::CONSERVATIVE
-            .encode()
-            .table_remainder_min_redundancy()
+        conservative.encode().table_remainder_min_redundancy()
     );
     assert_eq!(decoded.encode().table_remainder_min_batch(), 4);
+    assert_eq!(
+        decoded.encode().bitslice_interleaved_min_batch(),
+        conservative.encode().bitslice_interleaved_min_batch()
+    );
 }
 
 #[test]

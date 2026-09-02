@@ -18,3 +18,4 @@ import Gf2Core.Proofs.Gf2mMulRaw
 import Gf2Core.Proofs.Gf2mAddition
 import Gf2Core.Proofs.Gf2mInverse
 import Gf2Core.Proofs.RelativeExtension
+import Gf2Core.Proofs.QuotientReduction

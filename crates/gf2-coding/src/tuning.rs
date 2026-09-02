@@ -15,29 +15,35 @@ use std::fmt;
 
 use gf2_core::tuning::{active_section, ActiveSection, SectionError, SectionId, TuningSection};
 
-pub use crate::bch::encode::{TABLE_REMAINDER_MIN_BATCH, TABLE_REMAINDER_MIN_REDUNDANCY};
+pub use crate::bch::encode::{
+    BITSLICE_INTERLEAVED_MIN_BATCH, TABLE_REMAINDER_MIN_BATCH, TABLE_REMAINDER_MIN_REDUNDANCY,
+};
 
 /// Validated selectors for batch-encoding family dispatch.
 ///
-/// Both fields are lower bounds a plan and batch must clear before
+/// Every field is a lower bound a plan or batch must clear before the family
+/// it names is selected: the first two before
 /// [`EncodeFamily::TableRemainder`](crate::bch::encode::EncodeFamily::TableRemainder)
-/// is selected. They compose with, and never override, the representation
-/// availability the kernels report, so no selector value can select a family
-/// that cannot run.
+/// and the last before
+/// [`EncodeFamily::BitsliceInterleaved`](crate::bch::encode::EncodeFamily::BitsliceInterleaved).
+/// They compose with, and never override, the representation availability the
+/// kernels report, so no selector value can select a family that cannot run.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EncodeSelectors {
     table_remainder_min_redundancy: usize,
     table_remainder_min_batch: usize,
+    bitslice_interleaved_min_batch: usize,
 }
 
 impl EncodeSelectors {
     /// Builds the encode selector family.
     ///
-    /// Every `usize` pair is admissible, because a bound decides only which
-    /// of two equivalent algorithms runs: zero opens the table arm at every
-    /// redundancy or batch length the representation implements it for, and
-    /// [`usize::MAX`] closes it, which is the value the conservative section
-    /// carries for the redundancy bound.
+    /// Every `usize` combination is admissible, because a bound decides only
+    /// which of several equivalent algorithms runs: zero opens an arm at
+    /// every redundancy or batch length the representation implements it for,
+    /// and [`usize::MAX`] closes it, which is the value the conservative
+    /// section carries for the table family's redundancy bound and for the
+    /// bit-sliced family's batch bound.
     ///
     /// # Errors
     ///
@@ -47,10 +53,12 @@ impl EncodeSelectors {
     pub fn try_new(
         table_remainder_min_redundancy: usize,
         table_remainder_min_batch: usize,
+        bitslice_interleaved_min_batch: usize,
     ) -> Result<Self, SectionError> {
         Ok(Self {
             table_remainder_min_redundancy,
             table_remainder_min_batch,
+            bitslice_interleaved_min_batch,
         })
     }
 
@@ -65,6 +73,13 @@ impl EncodeSelectors {
     pub const fn table_remainder_min_batch(&self) -> usize {
         self.table_remainder_min_batch
     }
+
+    /// Returns the minimum batch length at which the bit-sliced interleaved
+    /// family is selected.
+    #[must_use]
+    pub const fn bitslice_interleaved_min_batch(&self) -> usize {
+        self.bitslice_interleaved_min_batch
+    }
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -73,6 +88,7 @@ struct CodingPresence {
     encode: bool,
     table_remainder_min_redundancy: bool,
     table_remainder_min_batch: bool,
+    bitslice_interleaved_min_batch: bool,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -81,6 +97,7 @@ impl CodingPresence {
         encode: true,
         table_remainder_min_redundancy: true,
         table_remainder_min_batch: true,
+        bitslice_interleaved_min_batch: true,
     };
 }
 
@@ -95,14 +112,17 @@ pub struct CodingTuning {
 impl CodingTuning {
     /// Complete parser-free conservative coding section.
     ///
-    /// The redundancy bound is [`TABLE_REMAINDER_MIN_REDUNDANCY`], so the
-    /// conservative section selects the scalar reference for every code: the
-    /// crossover between the families is a measurement no committed receipt
-    /// has made yet.
+    /// The table family's redundancy bound is
+    /// [`TABLE_REMAINDER_MIN_REDUNDANCY`] and the bit-sliced family's batch
+    /// bound is [`BITSLICE_INTERLEAVED_MIN_BATCH`], so the conservative
+    /// section selects the scalar reference for every code: the crossover
+    /// between the families is a measurement no committed receipt has made
+    /// yet.
     pub const CONSERVATIVE: Self = Self {
         encode: EncodeSelectors {
             table_remainder_min_redundancy: TABLE_REMAINDER_MIN_REDUNDANCY,
             table_remainder_min_batch: TABLE_REMAINDER_MIN_BATCH,
+            bitslice_interleaved_min_batch: BITSLICE_INTERLEAVED_MIN_BATCH,
         },
         #[cfg(feature = "tuning-profile")]
         presence: CodingPresence::COMPLETE,
@@ -133,7 +153,8 @@ impl fmt::Debug for CodingTuning {
         {
             let declared_families = usize::from(self.presence.encode);
             let declared_fields = usize::from(self.presence.table_remainder_min_redundancy)
-                + usize::from(self.presence.table_remainder_min_batch);
+                + usize::from(self.presence.table_remainder_min_batch)
+                + usize::from(self.presence.bitslice_interleaved_min_batch);
             debug
                 .field("declared_families", &declared_families)
                 .field("declared_fields", &declared_fields);
@@ -234,15 +255,27 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                 ))
             }
         };
+        let (bitslice_present, bitslice_interleaved_min_batch) =
+            match encode.bitslice_interleaved_min_batch {
+                Present::Missing => (false, BITSLICE_INTERLEAVED_MIN_BATCH),
+                Present::Value(Some(value)) => (true, value),
+                Present::Value(None) => {
+                    return Err(SectionError::InvalidBody(
+                        "null bitslice_interleaved_min_batch selector".to_owned(),
+                    ))
+                }
+            };
         Ok(CodingTuning {
             encode: EncodeSelectors::try_new(
                 table_remainder_min_redundancy,
                 table_remainder_min_batch,
+                bitslice_interleaved_min_batch,
             )?,
             presence: CodingPresence {
                 encode: encode_present,
                 table_remainder_min_redundancy: redundancy_present,
                 table_remainder_min_batch: batch_present,
+                bitslice_interleaved_min_batch: bitslice_present,
             },
         })
     }
@@ -267,6 +300,12 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                     section.encode.table_remainder_min_batch(),
                 );
             }
+            if section.presence.bitslice_interleaved_min_batch {
+                encode.insert(
+                    "bitslice_interleaved_min_batch",
+                    section.encode.bitslice_interleaved_min_batch(),
+                );
+            }
             selectors.insert("encode", encode);
         }
         gf2_core::tuning::CanonicalValue::serialize(&selectors)
@@ -289,6 +328,8 @@ struct JsonEncode {
     table_remainder_min_redundancy: Present<usize>,
     #[serde(default)]
     table_remainder_min_batch: Present<usize>,
+    #[serde(default)]
+    bitslice_interleaved_min_batch: Present<usize>,
 }
 
 #[cfg(feature = "tuning-profile")]
