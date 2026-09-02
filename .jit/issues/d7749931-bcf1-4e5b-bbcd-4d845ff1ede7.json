@@ -15,6 +15,16 @@
     "lake-build"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-02T16:04:37.677732965Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-02T16:07:27.075317730Z",
+      "updated_by": "auto:executor"
+    },
     "lake-build": {
       "status": "passed",
       "updated_at": "2026-09-02T15:59:56.777124029Z",
@@ -31,5 +41,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Lean proofs: q-cyclotomic seed closure",
-  "updated_at": "2026-09-02T15:59:56.777124029Z"
+  "updated_at": "2026-09-02T16:07:27.075317730Z"
 }
