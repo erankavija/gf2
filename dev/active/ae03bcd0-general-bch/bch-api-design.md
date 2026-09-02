@@ -434,7 +434,10 @@ pub type BinaryBchCode<V = u64> = BchCode<
 through `FieldVec<Fp<2>>` or `FieldMatrix<Fp<2>>`. Monomorphization selects the
 representation and encoder kernels without a virtual call. BCH uses `M` for
 both its generator and parity-check associated types; the shared traits permit
-other code families to choose distinct matrix representations.
+other code families to choose distinct matrix representations. Canonical-matrix
+access binds `M` to `MatrixFill`, the materialization contract the
+representation-contracts section fixes, whose provided bodies make an empty
+implementation a complete opt-in for any `SymbolMatrix`.
 
 Shortening, puncturing, and one-symbol extension are code wrappers, not
 `BchSpec` variants or flags:
@@ -606,6 +609,41 @@ The packed implementations preserve canonical little-endian bit indexing:
 symbol $i$ uses word $i\mathbin{\gg}6$ and mask
 $1\mathrm{u64}\ll(i\mathbin{\&}63)$, and tail padding remains zero
 (`@/inv/canonical-bit-indexing`). Shape and index failures use `CodeError`.
+
+`SymbolMatrix` describes storage; `MatrixFill` describes canonical-matrix
+materialization over that storage:
+
+```rust
+pub trait MatrixFill<F>: SymbolMatrix<F>
+where
+    F: FieldIdentity,
+{
+    /// Writes G = [I_k | P]; `dimension` is k.
+    fn fill_generator(
+        &mut self,
+        generator: &FieldPoly<F>,
+        dimension: usize,
+        zero: &F,
+    ) { /* provided */ }
+
+    /// Writes H = [-P^T | I_{n-k}].
+    fn fill_parity_check(
+        &mut self,
+        generator: &FieldPoly<F>,
+        dimension: usize,
+        zero: &F,
+    ) { /* provided */ }
+}
+```
+
+Both bodies are provided: they run the parity recurrence one coordinate at a
+time through `SymbolMatrix::get` and `SymbolMatrix::set`, so every
+representation opts in with an empty implementation. The two canonical
+implementations override them as a performance choice: `FieldMatrix<F>` with a
+row-slice path, and `BitMatrix` with the packed word-level path K-09's
+associated-type specialization names, which single-coordinate accessors cannot
+express. The caller checks the output shape, so an implementation writes only
+in-range coordinates, overwrites every coordinate, and cannot fail.
 
 ### Block-code and encoder contracts
 
