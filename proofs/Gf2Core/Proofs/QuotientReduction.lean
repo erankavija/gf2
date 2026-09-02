@@ -141,6 +141,326 @@ theorem pad_red_of_degree_lt {a : B[X]} (h : a.degree < (f.natDegree : WithBot �
   · rfl
   · exact ((degree_lt_iff_coeff_zero a f.natDegree).mp h j (Nat.not_lt.mp ‹¬ j < _›)).symm
 
+/-! ### L2.1 — reduction is the residue -/
+
+/-- Reducing before taking the class changes nothing: `π(a %ₘ f) = π(a)`. -/
+theorem mk_modByMonic (a : B[X]) : AdjoinRoot.mk f (a %ₘ f) = AdjoinRoot.mk f a :=
+  AdjoinRoot.mk_eq_mk.mpr ⟨-(a /ₘ f), by rw [modByMonic_eq_sub_mul_div]; ring⟩
+
+theorem degree_modByMonic_lt_natDegree (hf : f.Monic) (a : B[X]) :
+    (a %ₘ f).degree < (f.natDegree : WithBot ℕ) := by
+  have h := degree_modByMonic_lt a hf
+  rwa [degree_eq_natDegree hf.ne_zero] at h
+
+/-- `pad` is a left inverse of coefficient extraction on the residue: the `r`
+stored slots hold exactly the residue's coefficients.
+
+Production path: `QuotientField::element`
+(`crates/gf2-core/src/gfpn/quotient.rs:426`) divides by the modulus and hands the
+remainder to `element_from_remainder` (`:543`). -/
+theorem pad_red (hf : f.Monic) (a : B[X]) : pad f (red f a) = a %ₘ f := by
+  refine Polynomial.ext fun j => ?_
+  rw [coeff_pad]
+  split
+  · rfl
+  · exact ((degree_lt_iff_coeff_zero _ f.natDegree).mp (degree_modByMonic_lt_natDegree hf a) j
+      (Nat.not_lt.mp ‹¬ j < _›)).symm
+
+/-- **L2.1 (reduction is the residue).** The stored vector `ρ(a)` differs from
+`a` by a multiple of `f`, and its polynomial has degree below `r`.
+
+Production path: `QuotientField::element`
+(`crates/gf2-core/src/gfpn/quotient.rs:426`) and `ConstQuotient::reduce`
+(`:1378`), which both call `FieldPoly::div_rem`
+(`crates/gf2-core/src/field/poly.rs:1779`) and keep the remainder.
+
+Refinement anchor: `reduction_is_invariant_under_multiples_of_the_modulus`
+(`crates/gf2-core/src/gfpn/quotient.rs:2265`), which draws a coefficient vector
+`a` and a cofactor `h` and checks that `a` and `a + h · f` reduce to one stored
+vector of exactly `relative_degree()` entries. -/
+theorem dvd_sub_pad_red (hf : f.Monic) (a : B[X]) : f ∣ a - pad f (red f a) := by
+  rw [pad_red hf, modByMonic_eq_sub_mul_div]
+  exact ⟨a /ₘ f, by ring⟩
+
+/-- **L2.1 (degree bound).** The padded residue has degree below `r`, so it fits
+the `r` stored slots. -/
+theorem degree_pad_red_lt (hf : f.Monic) (a : B[X]) :
+    (pad f (red f a)).degree < f.degree := by
+  rw [pad_red hf]
+  exact degree_modByMonic_lt a hf
+
+/-- **L2.1 in one line.** `κ(ρ(a)) = a + (f)`: the stored vector represents the
+class of its input.
+
+Refinement anchor: `reduction_is_invariant_under_multiples_of_the_modulus`
+(`crates/gf2-core/src/gfpn/quotient.rs:2265`). -/
+theorem cls_red (hf : f.Monic) (a : B[X]) : cls f (red f a) = AdjoinRoot.mk f a := by
+  rw [cls, pad_red hf, mk_modByMonic]
+
+/-! ### L2.2 — canonical representatives -/
+
+/-- Two polynomials of degree below `r` in one class are equal. This is the
+uniqueness half of the canonical-representative claim. -/
+theorem eq_of_degree_lt_of_mk_eq {p q : B[X]} (hp : p.degree < f.degree)
+    (hq : q.degree < f.degree) (h : AdjoinRoot.mk f p = AdjoinRoot.mk f q) : p = q :=
+  sub_eq_zero.mp
+    (eq_zero_of_dvd_of_degree_lt (AdjoinRoot.mk_eq_mk.mp h)
+      (lt_of_le_of_lt (degree_sub_le p q) (max_lt hp hq)))
+
+theorem degree_pad_lt_degree (hf : f.Monic) (c : Fin f.natDegree → B) :
+    (pad f c).degree < f.degree := by
+  rw [degree_eq_natDegree hf.ne_zero]
+  exact degree_pad_lt c
+
+/-- **L2.2 (reduction fixes stored vectors).** `ρ` is the identity on vectors
+already of length `r`, so a stored vector is its own canonical representative.
+
+Production path: `ConstQuotient::new`
+(`crates/gf2-core/src/gfpn/quotient.rs:1364`) states this as its contract —
+every array of `R` base coefficients is canonical, so no reduction runs.
+
+Refinement anchor: `identity_is_structural_across_instances_and_presentations`
+(`crates/gf2-core/src/gfpn/quotient.rs:2236`). -/
+theorem red_pad (hf : f.Monic) (c : Fin f.natDegree → B) : red f (pad f c) = c := by
+  have hmod : pad f c %ₘ f = pad f c :=
+    (modByMonic_eq_self_iff hf).mpr (degree_pad_lt_degree hf c)
+  funext i
+  simp [red, hmod, coeff_pad, i.isLt]
+
+/-- **L2.2 (injectivity).** Distinct stored vectors name distinct classes. -/
+theorem cls_injective (hf : f.Monic) : Function.Injective (cls f) := by
+  intro c c' h
+  have hpad : pad f c = pad f c' :=
+    eq_of_degree_lt_of_mk_eq (degree_pad_lt_degree hf c) (degree_pad_lt_degree hf c') h
+  rw [← red_pad hf c, ← red_pad hf c', hpad]
+
+/-- **L2.2 (surjectivity).** Every class has a stored vector. -/
+theorem cls_surjective (hf : f.Monic) : Function.Surjective (cls f) := by
+  intro q
+  obtain ⟨a, rfl⟩ := AdjoinRoot.mk_surjective q
+  exact ⟨red f a, cls_red hf a⟩
+
+/-- **L2.2 (canonical representatives).** `κ : B^r → Q` is a bijection: one
+class, one stored vector.
+
+Production path: `QuotientElement` (`crates/gf2-core/src/gfpn/quotient.rs:749`)
+stores exactly the `r` coefficients and nothing else.
+
+Refinement anchor: `identity_is_structural_across_instances_and_presentations`
+(`crates/gf2-core/src/gfpn/quotient.rs:2236`), which pins that one algebraic
+field has one stored presentation across descriptor instances. -/
+theorem cls_bijective (hf : f.Monic) : Function.Bijective (cls f) :=
+  ⟨cls_injective hf, cls_surjective hf⟩
+
+/-- The bijection `B^r ≃ Q` of L2.2, with `ρ` as its inverse. -/
+def clsEquiv (hf : f.Monic) : (Fin f.natDegree → B) ≃ AdjoinRoot f where
+  toFun := cls f
+  invFun q := red f (AdjoinRoot.mk_surjective q).choose
+  left_inv c := cls_injective hf (by
+    rw [cls_red hf, (AdjoinRoot.mk_surjective (cls f c)).choose_spec])
+  right_inv q := by
+    rw [cls_red hf, (AdjoinRoot.mk_surjective q).choose_spec]
+
+/-- **L2.2 (derived equality decides the quotient).** Two polynomials reduce to
+one stored vector exactly when they name one class, so `QuotientElement`'s
+derived `PartialEq` on coefficients
+(`crates/gf2-core/src/gfpn/quotient.rs:774`) decides equality in `Q`.
+
+Refinement anchor: `identity_is_structural_across_instances_and_presentations`
+(`crates/gf2-core/src/gfpn/quotient.rs:2236`). -/
+theorem red_eq_iff_mk_eq (hf : f.Monic) (a b : B[X]) :
+    red f a = red f b ↔ AdjoinRoot.mk f a = AdjoinRoot.mk f b := by
+  constructor
+  · intro h
+    rw [← cls_red hf a, ← cls_red hf b, h]
+  · intro h
+    exact cls_injective hf (by rw [cls_red hf, cls_red hf, h])
+
+
+/-! ### L2.3 — reduction is a ring homomorphism -/
+
+/-- Stored-vector addition: `QuotientElement`'s `Add`
+(`crates/gf2-core/src/gfpn/quotient.rs:982`) adds coefficient-wise without
+reducing. -/
+def vadd (f : B[X]) (x y : Fin f.natDegree → B) : Fin f.natDegree → B := fun i => x i + y i
+
+/-- Stored-vector multiplication: `QuotientElement::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:896`) convolves and reduces. -/
+def vmul (f : B[X]) (x y : Fin f.natDegree → B) : Fin f.natDegree → B :=
+  red f (pad f x * pad f y)
+
+theorem pad_vadd (x y : Fin f.natDegree → B) : pad f (vadd f x y) = pad f x + pad f y := by
+  refine Polynomial.ext fun j => ?_
+  by_cases h : j < f.natDegree <;> simp [coeff_pad, vadd, h]
+
+theorem degree_lt_of_natDegree_lt {p : B[X]} {n : ℕ} (h : p.natDegree < n) :
+    p.degree < (n : WithBot ℕ) := by
+  rcases eq_or_ne p 0 with rfl | hp
+  · exact lt_of_le_of_lt (le_of_eq degree_zero) (WithBot.bot_lt_coe n)
+  · exact (natDegree_lt_iff_degree_lt hp).mp h
+
+theorem natDegree_lt_of_degree_lt {p : B[X]} {n : ℕ} (hn : 0 < n)
+    (h : p.degree < (n : WithBot ℕ)) : p.natDegree < n := by
+  rcases eq_or_ne p 0 with rfl | hp
+  · simpa using hn
+  · exact (natDegree_lt_iff_degree_lt hp).mpr h
+
+theorem natDegree_pad_lt (hr : 0 < f.natDegree) (c : Fin f.natDegree → B) :
+    (pad f c).natDegree < f.natDegree :=
+  natDegree_lt_of_degree_lt hr (degree_pad_lt c)
+
+/-- Two polynomials in one class have one residue. -/
+theorem modByMonic_eq_of_mk_eq (hf : f.Monic) {p q : B[X]}
+    (h : AdjoinRoot.mk f p = AdjoinRoot.mk f q) : p %ₘ f = q %ₘ f :=
+  eq_of_degree_lt_of_mk_eq (degree_modByMonic_lt p hf) (degree_modByMonic_lt q hf)
+    (by rw [mk_modByMonic, mk_modByMonic, h])
+
+/-- **L2.3 (additive).** `ρ(a + b) = ρ(a) ⊕ ρ(b)`.
+
+Production path: `QuotientElement`'s `Add`
+(`crates/gf2-core/src/gfpn/quotient.rs:982`).
+
+Refinement anchors: the addition case of `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2351`) and the field-law registrations
+`test_quotient_gf125_field_axioms`
+(`crates/gf2-core/src/field/axiom_tests.rs:1793`) and
+`test_quotient_gf81_over_gf9_field_axioms` (`:1799`). -/
+theorem red_add (a b : B[X]) : red f (a + b) = vadd f (red f a) (red f b) := by
+  funext i
+  simp [red, vadd, add_modByMonic]
+
+/-- **L2.3 (multiplicative).** `ρ(a · b) = ρ(a) ⊗ ρ(b)`: reducing the operands
+first is sound.
+
+Production path: `QuotientElement::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:896`), which convolves the two stored
+vectors and folds the high terms.
+
+Refinement anchors: the multiplication case of `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2353`) and the field-law registrations
+`test_quotient_gf125_field_axioms`
+(`crates/gf2-core/src/field/axiom_tests.rs:1793`) and
+`test_quotient_gf81_over_gf9_field_axioms` (`:1799`). -/
+theorem red_mul (hf : f.Monic) (a b : B[X]) : red f (a * b) = vmul f (red f a) (red f b) := by
+  rw [vmul, pad_red hf, pad_red hf]
+  refine (red_eq_iff_mk_eq hf _ _).mpr ?_
+  rw [map_mul, map_mul, mk_modByMonic, mk_modByMonic]
+
+/-- **L2.3 (the class map is additive).** -/
+theorem cls_vadd (x y : Fin f.natDegree → B) :
+    cls f (vadd f x y) = cls f x + cls f y := by
+  rw [cls, pad_vadd, map_add, cls, cls]
+
+/-- **L2.3 (the class map is multiplicative).** -/
+theorem cls_vmul (hf : f.Monic) (x y : Fin f.natDegree → B) :
+    cls f (vmul f x y) = cls f x * cls f y := by
+  rw [vmul, cls_red hf, map_mul, cls, cls]
+
+/-! ### L2.3 — the production-shaped high-to-low fold -/
+
+/-- One iteration of the fold in `QuotientElement::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:907-917`): the coefficient at high index
+`r + d` is cleared by subtracting `c · X^d · f`, where `d = high - degree` is the
+production offset (`:912`). -/
+def foldStep (f : B[X]) (p : B[X]) (d : ℕ) : B[X] :=
+  p - C (p.coeff (f.natDegree + d)) * (X ^ d * f)
+
+/-- The fold loop of `QuotientElement::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:907`), which visits the offsets
+`n - 1, n - 2, …, 0` in that decreasing order. -/
+def foldDown (f : B[X]) : ℕ → B[X] → B[X]
+  | 0, p => p
+  | (n + 1), p => foldDown f n (foldStep f p n)
+
+theorem foldDown_zero (p : B[X]) : foldDown f 0 p = p := rfl
+
+theorem foldDown_succ (n : ℕ) (p : B[X]) :
+    foldDown f (n + 1) p = foldDown f n (foldStep f p n) := rfl
+
+/-- Each iteration subtracts a multiple of `f`, so the class is a loop
+invariant. -/
+theorem foldStep_mk (p : B[X]) (d : ℕ) :
+    AdjoinRoot.mk f (foldStep f p d) = AdjoinRoot.mk f p := by
+  rw [foldStep, map_sub, sub_eq_self]
+  exact AdjoinRoot.mk_eq_zero.mpr ⟨C (p.coeff (f.natDegree + d)) * X ^ d, by ring⟩
+
+/-- Each iteration drops the working degree by at least one, the second half of
+the loop invariant. -/
+theorem degree_foldStep_lt (hf : f.Monic) {p : B[X]} {d : ℕ}
+    (hp : p.degree < ((f.natDegree + d + 1 : ℕ) : WithBot ℕ)) :
+    (foldStep f p d).degree < ((f.natDegree + d : ℕ) : WithBot ℕ) := by
+  have hxf : (X ^ d * f).Monic := (monic_X_pow (R := B) d).mul hf
+  have hnd : (X ^ d * f).natDegree = f.natDegree + d := by
+    rw [natDegree_mul (pow_ne_zero d X_ne_zero) hf.ne_zero, natDegree_X_pow]
+    exact Nat.add_comm d f.natDegree
+  have htop : (X ^ d * f).coeff (f.natDegree + d) = 1 := by
+    have := hxf.coeff_natDegree
+    rwa [hnd] at this
+  have hpz : ∀ k, f.natDegree + d + 1 ≤ k → p.coeff k = 0 :=
+    (degree_lt_iff_coeff_zero p _).mp hp
+  refine (degree_lt_iff_coeff_zero _ _).mpr fun m hm => ?_
+  simp only [foldStep, coeff_sub, coeff_C_mul]
+  rcases Nat.eq_or_lt_of_le hm with h | h
+  · rw [← h, htop, mul_one, sub_self]
+  · have hzero : (X ^ d * f).coeff m = 0 :=
+      coeff_eq_zero_of_natDegree_lt (by rw [hnd]; exact h)
+    rw [hpz m h, hzero, mul_zero, sub_zero]
+
+/-- **L2.3 (the fold computes the residue).** Running the production fold over
+the `n` high offsets of a working polynomial of degree below `r + n` yields the
+residue `p %ₘ f`. The loop invariant is exactly the pair of lemmas above: the
+working polynomial stays in the class of the input, and its degree falls below
+the current high index.
+
+Production path: the fold of `QuotientElement::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:907-917`).
+
+Refinement anchors: the multiplication case of `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2353`) and the field-law registrations
+`test_quotient_gf125_field_axioms`
+(`crates/gf2-core/src/field/axiom_tests.rs:1793`) and
+`test_quotient_gf81_over_gf9_field_axioms` (`:1799`). -/
+theorem foldDown_eq_modByMonic (hf : f.Monic) :
+    ∀ (n : ℕ) (p : B[X]), p.degree < ((f.natDegree + n : ℕ) : WithBot ℕ) →
+      foldDown f n p = p %ₘ f := by
+  intro n
+  induction n with
+  | zero =>
+      intro p hp
+      rw [foldDown_zero]
+      refine ((modByMonic_eq_self_iff hf).mpr ?_).symm
+      rw [degree_eq_natDegree hf.ne_zero]
+      simpa using hp
+  | succ m ih =>
+      intro p hp
+      rw [foldDown_succ]
+      have hstep : (foldStep f p m).degree < ((f.natDegree + m : ℕ) : WithBot ℕ) :=
+        degree_foldStep_lt hf hp
+      rw [ih _ hstep]
+      exact modByMonic_eq_of_mk_eq hf (foldStep_mk p m)
+
+/-- **L2.3 (the production multiply).** Convolving two stored vectors into the
+`2r - 1` buffer and running the fold over its `r - 1` high offsets produces the
+padded stored product `⊗`. This is the loop `QuotientElement::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:896`) runs, offsets and all.
+
+Refinement anchors: the multiplication case of `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2353`) and the field-law registrations
+`test_quotient_gf125_field_axioms`
+(`crates/gf2-core/src/field/axiom_tests.rs:1793`) and
+`test_quotient_gf81_over_gf9_field_axioms` (`:1799`). -/
+theorem foldDown_pad_mul (hf : f.Monic) (hr : 0 < f.natDegree)
+    (x y : Fin f.natDegree → B) :
+    foldDown f (f.natDegree - 1) (pad f x * pad f y) = pad f (vmul f x y) := by
+  have hdeg : (pad f x * pad f y).degree <
+      ((f.natDegree + (f.natDegree - 1) : ℕ) : WithBot ℕ) := by
+    refine degree_lt_of_natDegree_lt (lt_of_le_of_lt (natDegree_mul_le) ?_)
+    have hx := natDegree_pad_lt hr x
+    have hy := natDegree_pad_lt hr y
+    omega
+  rw [foldDown_eq_modByMonic hf _ _ hdeg, vmul, pad_red hf]
+
+
 end QuotientReduction
 
 end
