@@ -633,7 +633,7 @@ mod tests {
     use gf2_core::gf2m::Gf2mField;
     use gf2_core::gfp::Fp;
     use gf2_core::gfpn::{QuotientElement, QuotientField};
-    use gf2_core::BitMatrix;
+    use gf2_core::{BitMatrix, BitVec};
 
     fn binary_extension() -> BinaryPrimeExt {
         BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).expect("a valid binary extension")
@@ -1063,20 +1063,70 @@ mod tests {
         assert_matrix_contract(&dense);
     }
 
-    /// The workload contract's T2S row at its mother length, the largest W2
-    /// cell the fast tier materializes: a $16215 \times 16383$ generator.
+    /// A deterministic sample of generator rows for a code whose full row
+    /// walk is too heavy for the fast tier.
     ///
-    /// The mother length is what § 9's amendment of 2026-09-01 measures the
-    /// DVB-T2 rows on until the shortened presentations reach the canonical
-    /// construction model.
+    /// The first 32 rows carry the seed row and the first reductions. The
+    /// last 32 carry the rows whose identity coordinate shares a packed word
+    /// with the start of the parity block, which for the DVB-T2 mother codes
+    /// is the final $k \bmod 64$ block of rows. A contiguous run of 32 in the
+    /// middle straddles a word boundary of the row index. Together the sample
+    /// meets every packed transition the row walk has.
+    fn sampled_rows(dimension: usize) -> Vec<usize> {
+        assert!(dimension > 128, "the sample assumes three disjoint blocks");
+        let middle = ((dimension / 2) & !63) + 48;
+        (0..32)
+            .chain(middle..middle + 32)
+            .chain(dimension - 32..dimension)
+            .collect()
+    }
+
+    /// Asserts that the sampled generator rows are the systematic encodings
+    /// of their basis vectors and that the parity check annihilates them.
+    ///
+    /// Comparing sampled rows against the encoder and against
+    /// $G H^{\mathsf T} = 0$ decides the same contract the full comparison
+    /// does on the rows it covers, at a cost the fast tier carries. The
+    /// complete comparison of both DVB-T2 mother rows lives in the slow tier.
+    fn assert_sampled_rows_are_systematic(
+        code: &BinaryBchCode,
+        generator: &BitMatrix,
+        parity: &BitMatrix,
+    ) {
+        assert_eq!((generator.rows(), generator.cols()), (code.k(), code.n()));
+        assert_eq!(
+            (parity.rows(), parity.cols()),
+            (code.redundancy(), code.n())
+        );
+        for row in sampled_rows(code.k()) {
+            let mut message = BitVec::zeros(code.k());
+            message.set(row, true);
+            let codeword = code.encode(&message).expect("a basis vector encodes");
+            let materialized = generator.row_as_bitvec(row);
+            assert_eq!(materialized, codeword, "generator row {row}");
+            let syndrome = parity.matvec(&materialized);
+            assert_eq!(
+                syndrome.count_ones(),
+                0,
+                "parity check does not annihilate generator row {row}"
+            );
+        }
+    }
+
+    /// The workload contract's T2S row at its mother length, the largest W2
+    /// cell the fast tier reaches: a $16215 \times 16383$ generator and its
+    /// $168 \times 16383$ parity check, witnessed on sampled rows.
+    ///
+    /// The canonical model reaches the DVB-T2 rows at mother length, which
+    /// `dev/active/4e732b56/workload-selection.md` § 9 fixes as the length
+    /// this consumer measures and compares them at.
     #[test]
-    fn t2s_mother_row_matches_the_oracle_generator() {
+    fn t2s_mother_sampled_rows_are_systematic() {
         let code = primitive_binary(14, 0b100_0000_0010_1011, 25);
         assert_eq!((code.k(), code.n()), (16215, 16383));
         let generator = code.generator_matrix().expect("generator materialization");
-        let mut oracle = BitMatrix::zeros(code.k(), code.n());
-        write_generator_by_encoding(&code, &mut oracle).expect("oracle generator");
-        assert_eq!(generator, oracle);
+        let parity = code.parity_check_matrix().expect("parity materialization");
+        assert_sampled_rows_are_systematic(&code, &generator, &parity);
     }
 
     /// Both DVB-T2 rows at their mother lengths, generator and parity check.
