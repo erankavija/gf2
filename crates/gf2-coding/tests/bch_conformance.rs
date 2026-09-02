@@ -188,9 +188,23 @@ where
     conformance::generator_parity_orthogonality(code);
     matrix_shape_rejection_contract(code);
     cached_matrices_contract(code.clone());
+    generator_has_full_row_rank(code);
     parity_check_has_full_row_rank(code);
     code.is_systematic()
         .expect("a code reports its message-coordinate layout");
+}
+
+/// Asserts that the generator's $k$ rows are independent, so the code has the
+/// dimension it reports.
+fn generator_has_full_row_rank<C>(code: &C)
+where
+    C: GeneratorMatrixAccess,
+{
+    assert_eq!(
+        test_support::field_matrix_rank(&test_support::generator_as_field_matrix(code)),
+        code.k(),
+        "the generator has one independent row per dimension"
+    );
 }
 
 /// [`full_capability_cases`] plus the canonical `[message | parity]` layout.
