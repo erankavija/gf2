@@ -11,6 +11,13 @@ SageMath library on the interpreter's path. The ``sage`` launcher of SageMath
 10.9 forwards no arguments to a script, so the interpreter is invoked directly
 and the SageMath version is read at run time from the library itself.
 
+Oracle identity
+---------------
+A version label does not name a build, so the fixture's ``oracle`` object
+carries ``sage.version.banner``, ``sage.version.version``, the interpreter's
+own version, and ``sys.executable``, the path of the interpreter that produced
+the fixture. ``run.sh`` hashes that executable into the receipt.
+
 Field transport
 ---------------
 gf2 pins a code by the base field ``B``, the splitting field ``E``, and the
@@ -49,7 +56,8 @@ the two systems exactly when the presentations are.
 import json
 import sys
 
-from sage.all import GF, Hom, PolynomialRing, version
+import sage.version
+from sage.all import GF, Hom, PolynomialRing
 
 NATIVE_ENCODER = "sage.coding.cyclic_code.CyclicCodePolynomialEncoder"
 SYSTEMATIC_RULE = "x^r*m(x) - (x^r*m(x) mod g) over Sage's own generator"
@@ -280,8 +288,10 @@ def main():
     fixture = {
         "oracle": {
             "system": "SageMath",
-            "version": version(),
+            "version": sage.version.banner,
+            "library_version": sage.version.version,
             "interpreter": sys.version.split()[0],
+            "interpreter_executable": sys.executable,
             "entry_point": "sage.coding.bch_code.BCHCode",
         },
         "seed": corpus["seed"],

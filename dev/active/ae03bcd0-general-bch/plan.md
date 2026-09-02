@@ -132,6 +132,52 @@ before optimization work begins. Hosts follow the receipt conventions of the
 SOTA target matrix (uncontended, pinned toolchain, committed
 seeds/revision/host).
 
+#### Amendment 1 (2026-09-02, `3f7edef1`) — sampling rule
+
+The protocol above fixes the corpus rows, the message seed, the two oracles,
+and the authoritative vectors. This amendment predeclares the sampling the
+conformance suites draw under them, so the counts are a protocol input rather
+than an implementation choice.
+
+- **Messages per corpus row.** Four seeded messages for a row of length at most
+  4096 and two above it, keeping the committed fixture proportionate to the row
+  it carries.
+- **Coordinate comparison.** Rows of length at most 4096 are compared symbol by
+  symbol together; a longer row is compared in its own case. Both run in the
+  fast tier, and the threshold is a fixture-size and runtime bound with no
+  mathematical content: a row's agreement claim does not depend on which side
+  of it the row falls.
+- **Shortened DVB-T2 payloads.** Three seeded payloads of the standard's
+  $K_{\mathrm{bch}}$ witness that shortening leaves the mother code's parity
+  unchanged.
+- **Standards vectors.** The ETSI DVB-T2 verification and validation reference
+  streams, set VV001-CR35, are compared exhaustively rather than sampled: every
+  block of every frame the set carries, its test point 04 payload encoded
+  through the canonical mother code and asserted equal to its test point 05
+  block.
+
+#### Amendment 2 (2026-09-02, `3f7edef1`) — the GUAVA oracle result at B4
+
+Both oracles remain required on every corpus row. This amendment fixes what
+the GAP/GUAVA oracle result *is* on row B4, whose length makes the code object
+GUAVA's `BCHCode` returns a host-memory question rather than a mathematical
+one: `BCHCode` reaches `GeneratorPolCode`, which materializes the whole
+$65343 \times 65535$ generator matrix.
+
+- **B4.** The GUAVA result is GUAVA's own `BCHCode` generator derivation —
+  `PrimitiveUnityRoot` and the cyclotomic-coset loop over `MinimalPolynomial`
+  that `BCHCode` performs before it materializes a code object — together
+  with GUAVA's cyclic-code polynomial encoding map $c(x) = m(x)\,G(x)$. The
+  run's own bounded `BCHCode` attempt and the outcome it observed are recorded
+  in the fixture and in the run receipt.
+- **Every other row.** The result is the full `BCHCode` code object, from
+  which the generator, dimension, defining set and codewords are read.
+
+The bound is the GAP heap the generating run sets, so the outcome is an
+observation of that run rather than a threshold. A run that yields a code
+object on B4, or fails to yield one on another row, is a change the
+conformance suite fails on rather than absorbs.
+
 ### `workload-selection` [implementation-produced] — selected baselines and workloads
 
 The survey's concrete completion of the evidence protocol: selected external

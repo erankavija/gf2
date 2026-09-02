@@ -2,7 +2,9 @@
   "oracle": {
     "system": "SageMath",
     "version": "SageMath version 10.9, Release Date: 2026-05-04",
+    "library_version": "10.9",
     "interpreter": "3.14.7",
+    "interpreter_executable": "/usr/bin/python3",
     "entry_point": "sage.coding.bch_code.BCHCode"
   },
   "seed": "0xAE03BCD0",
