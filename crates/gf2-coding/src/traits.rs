@@ -543,13 +543,29 @@ pub mod block {
     }
 
     /// Shared behavioral checks for canonical representations and code capabilities.
-    #[cfg(test)]
-    pub(crate) mod conformance {
+    ///
+    /// Each function is one law of the traits in this module, written once and
+    /// applied to every implementor. Crate-internal unit tests call them on
+    /// their own module's fixtures; the integration suite
+    /// `tests/bch_conformance.rs` calls the same functions over the
+    /// predeclared BCH conformance corpus and the whole implementor roster,
+    /// which is what `@/invariant/shared-test-contracts` asks of a shared
+    /// interface. Reaching the second consumer is why the module is public
+    /// under the `test-support` feature; it carries no production code.
+    #[cfg(any(test, feature = "test-support"))]
+    pub mod conformance {
         use super::*;
         use crate::error::RepresentationId;
         use crate::traits::compat::binary_v1;
 
-        pub(crate) fn symbol_sequence_contract<F, S>(zero: &F, one: &F)
+        /// Asserts the [`SymbolSequence`] storage contract for `S` at the
+        /// word-boundary lengths 0, 1, 63, 64, and 65.
+        ///
+        /// # Panics
+        ///
+        /// Panics when a length, an accessor, or an out-of-range rejection
+        /// departs from the contract.
+        pub fn symbol_sequence_contract<F, S>(zero: &F, one: &F)
         where
             F: FieldIdentity + 'static,
             S: SymbolSequence<F>,
@@ -590,7 +606,14 @@ pub mod block {
             }
         }
 
-        pub(crate) fn symbol_matrix_contract<F, M>(zero: &F, one: &F)
+        /// Asserts the [`SymbolMatrix`] storage contract for `M` at shapes
+        /// whose column counts cross the 64-bit word boundary.
+        ///
+        /// # Panics
+        ///
+        /// Panics when a shape, an accessor, or an out-of-range rejection
+        /// departs from the contract.
+        pub fn symbol_matrix_contract<F, M>(zero: &F, one: &F)
         where
             F: FieldIdentity + 'static,
             M: SymbolMatrix<F>,
@@ -645,7 +668,14 @@ pub mod block {
             }
         }
 
-        pub(crate) fn block_encoder_contract<C>(code: &C, message: &C::Symbols)
+        /// Asserts that `code` reports consistent dimensions, that
+        /// [`BlockEncoder::encode`] and [`BlockEncoder::encode_into`] write
+        /// the same codeword, and that both reject a wrong-length buffer.
+        ///
+        /// # Panics
+        ///
+        /// Panics when either path departs from the encoder contract.
+        pub fn block_encoder_contract<C>(code: &C, message: &C::Symbols)
         where
             C: BlockEncoder,
         {
@@ -662,7 +692,13 @@ pub mod block {
             assert!(code.encode_into(message, &mut wrong_output).is_err());
         }
 
-        pub(crate) fn generator_matrix_contract<C>(code: &C)
+        /// Asserts that the allocating and caller-buffer generator accessors
+        /// agree and that the result has the declared $k \times n$ shape.
+        ///
+        /// # Panics
+        ///
+        /// Panics when the two accessors disagree or the shape is wrong.
+        pub fn generator_matrix_contract<C>(code: &C)
         where
             C: GeneratorMatrixAccess,
         {
@@ -674,7 +710,13 @@ pub mod block {
             assert_eq!(actual, expected);
         }
 
-        pub(crate) fn generator_rows_encode_basis<C>(code: &C, one: &C::Symbol)
+        /// Asserts that generator row $i$ is the codeword of message basis
+        /// vector $i$, which is the matrix contract's defining statement.
+        ///
+        /// # Panics
+        ///
+        /// Panics when a row differs from the encoding of its basis vector.
+        pub fn generator_rows_encode_basis<C>(code: &C, one: &C::Symbol)
         where
             C: BlockEncoder + GeneratorMatrixAccess,
         {
@@ -689,7 +731,14 @@ pub mod block {
             }
         }
 
-        pub(crate) fn parity_check_matrix_contract<C>(code: &C)
+        /// Asserts that the allocating and caller-buffer parity-check
+        /// accessors agree, including on reporting the same missing
+        /// capability.
+        ///
+        /// # Panics
+        ///
+        /// Panics when the two accessors disagree.
+        pub fn parity_check_matrix_contract<C>(code: &C)
         where
             C: ParityCheckMatrixAccess,
         {
@@ -718,7 +767,7 @@ pub mod block {
         ///
         /// A code without a parity-check capability satisfies the law
         /// vacuously and the check returns.
-        pub(crate) fn generator_parity_orthogonality<C>(code: &C)
+        pub fn generator_parity_orthogonality<C>(code: &C)
         where
             C: GeneratorMatrixAccess + ParityCheckMatrixAccess,
         {
@@ -742,7 +791,13 @@ pub mod block {
             }
         }
 
-        pub(crate) fn binary_v1_encoder_agrees<C>(code: &C, message: &BitVec)
+        /// Asserts that the version-1 binary compatibility encoder writes the
+        /// bits the canonical encoder writes, at the same dimensions.
+        ///
+        /// # Panics
+        ///
+        /// Panics when the boundary and the canonical path disagree.
+        pub fn binary_v1_encoder_agrees<C>(code: &C, message: &BitVec)
         where
             C: BinaryBlockCode + BlockEncoder,
         {
@@ -753,18 +808,27 @@ pub mod block {
             assert_eq!(v1, canonical);
         }
 
-        pub(crate) fn symbol_representation_of<C: BlockCode>() -> RepresentationId {
+        /// Returns the process-local identity of `C`'s symbol representation.
+        pub fn symbol_representation_of<C: BlockCode>() -> RepresentationId {
             RepresentationId::of::<C::Symbols>()
         }
 
         #[derive(Clone, Debug)]
-        pub(crate) struct RepetitionCode<F: FieldIdentity + 'static> {
+        /// The length-`repetitions` repetition code over `F`, a minimal
+        /// implementor of the canonical traits for conformance coverage over
+        /// a non-BCH code.
+        pub struct RepetitionCode<F: FieldIdentity + 'static> {
             repetitions: usize,
             zero: F,
         }
 
         impl<F: FieldIdentity + 'static> RepetitionCode<F> {
-            pub(crate) fn new(repetitions: usize, zero: F) -> Self {
+            /// Creates the repetition code of length `repetitions`.
+            ///
+            /// # Panics
+            ///
+            /// Panics unless `repetitions` is positive.
+            pub fn new(repetitions: usize, zero: F) -> Self {
                 assert!(repetitions > 0);
                 Self { repetitions, zero }
             }
