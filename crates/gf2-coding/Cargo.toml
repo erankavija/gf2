@@ -111,6 +111,13 @@ required-features = ["bench-csv"]
 name = "gf2pow32_smoke_emit_expected"
 required-features = ["bench-csv"]
 
+# Corpus emitter for the external BCH oracles (jit:3f7edef1). The corpus
+# construction lives in `test_support`, which both this emitter and the
+# `bch_oracle_agreement` suite consume, so the emitter needs that feature.
+[[example]]
+name = "bch_oracle_messages"
+required-features = ["test-support"]
+
 [[bench]]
 name = "linear_codes"
 harness = false
@@ -141,6 +148,10 @@ harness = false
 
 [[bench]]
 name = "bch_parallel"
+harness = false
+
+[[bench]]
+name = "bch_genmatrix"
 harness = false
 
 [[bench]]

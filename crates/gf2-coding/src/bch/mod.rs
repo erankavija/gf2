@@ -13,8 +13,8 @@
 //! - [`encode`]: systematic encoding over any supported base field, with the
 //!   explicit user-layout contract and the profile-driven dispatch among
 //!   equivalent batch-encoding algorithm families
-//! - [`matrix`]: reference generator/parity materialization with caller
-//!   buffers and explicit opt-in caching
+//! - [`matrix`]: generator and parity-check materialization in the default
+//!   user layout, with caller buffers and explicit opt-in caching
 //! - [`error`]: the BCH construction and decoding error surface
 //! - [`extended`]: extended BCH codes
 //! - [`dvb_t2`]: DVB-T2 standard BCH outer codes
