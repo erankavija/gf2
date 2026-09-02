@@ -2551,22 +2551,25 @@ mod tests {
     /// below the characteristic, whose base-`p` value is `i`.
     fn assert_canonical_index_decodes<F: FieldIdentity>(field: &QuotientField<F>) {
         let order = field.order().expect("the field order is representable");
+        let identity = field.ext_id().clone();
+        let characteristic = u128::from(identity.characteristic());
         let elements = field.elements().expect("the field enumerates");
-        assert_eq!(u128::try_from(elements.len()), Ok(order));
+        assert_eq!(u128::try_from(elements.len()).unwrap(), order);
 
         let mut seen = std::collections::HashSet::new();
         for (index, element) in elements.iter().enumerate() {
-            let identity = element.field_id();
-            let characteristic = u128::from(identity.characteristic());
+            assert_eq!(element.field_id(), identity);
             let mut coordinates = Vec::new();
             element.write_prime_coords(&mut coordinates);
             assert_eq!(coordinates.len(), identity.degree());
 
             let mut value = 0u128;
-            for (position, coordinate) in coordinates.iter().enumerate() {
+            let mut place = 1u128;
+            for coordinate in &coordinates {
                 let coordinate = u128::from(*coordinate);
                 assert!(coordinate < characteristic);
-                value += coordinate * characteristic.pow(u32::try_from(position).unwrap());
+                value += coordinate * place;
+                place *= characteristic;
             }
             assert_eq!(value, u128::try_from(index).unwrap());
             assert!(seen.insert(coordinates));

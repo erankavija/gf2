@@ -228,7 +228,7 @@ theorem red_pad (hf : f.Monic) (c : Fin f.natDegree → B) : red f (pad f c) = c
 /-- **L2.2 (injectivity).** Distinct stored vectors name distinct classes.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2578`), whose distinctness assertion over
+(`crates/gf2-core/src/gfpn/quotient.rs:2581`), whose distinctness assertion over
 the whole enumeration is the executable form of this claim. -/
 theorem cls_injective (hf : f.Monic) : Function.Injective (cls f) := by
   intro c c' h
@@ -239,7 +239,7 @@ theorem cls_injective (hf : f.Monic) : Function.Injective (cls f) := by
 /-- **L2.2 (surjectivity).** Every class has a stored vector.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2578`), which checks that `elements()`
+(`crates/gf2-core/src/gfpn/quotient.rs:2581`), which checks that `elements()`
 (`:530`) materializes `|E|` members. -/
 theorem cls_surjective (hf : f.Monic) : Function.Surjective (cls f) := by
   intro q
@@ -773,7 +773,7 @@ theorem digit_succ (p k m : ℕ) : digit p (k + 1) m = digit p k (m / p) := by
 exactly the base-`p` digits, in the order it divides.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2578`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2581`). -/
 theorem divLoop_eq_ofFn (p : ℕ) :
     ∀ (d m : ℕ), divLoop p d m = List.ofFn (fun k : Fin d => digit p (k : ℕ) m) := by
   intro d
@@ -789,7 +789,7 @@ theorem divLoop_eq_ofFn (p : ℕ) :
 its `d` canonical coordinates.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2578`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2581`). -/
 theorem coordValue_digit (p : ℕ) (hp : 0 < p) :
     ∀ (d m : ℕ), m < p ^ d → coordValue p (fun k : Fin d => digit p (k : ℕ) m) = m := by
   intro d
@@ -820,7 +820,7 @@ theorem coordValue_digit (p : ℕ) (hp : 0 < p) :
 below `p` is recovered from its canonical index.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2578`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2581`). -/
 theorem digit_coordValue (p : ℕ) (hp : 0 < p) :
     ∀ (d : ℕ) (c : Fin d → ℕ), (∀ k, c k < p) →
       ∀ k : Fin d, digit p (k : ℕ) (coordValue p c) = c k := by
@@ -882,7 +882,7 @@ Refinement anchors: `const_quotient_coordinates_round_trip_through_the_runtime_c
 `tower_coordinates_vary_the_base_coordinate_fastest`
 (`crates/gf2-core/src/field/extension.rs:3543`) and
 `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2578`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2581`). -/
 theorem coordValue_flatten (p : ℕ) {r dB : ℕ} (C : Fin r → Fin dB → ℕ) :
     coordValue p (flatten C) = ∑ i : Fin r, coordValue p (C i) * (p ^ dB) ^ (i : ℕ) := by
   rw [coordValue, ← Equiv.sum_comp (finProdFinEquiv (m := r) (n := dB))
