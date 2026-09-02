@@ -24,12 +24,14 @@
   obligation: `reduction_is_invariant_under_multiples_of_the_modulus` and
   `canonical_index_decodes_to_its_prime_coordinates`.
 
-  Axiom footprint: this module declares no axiom and contains no `sorry`. The
-  Section 1 model rests on Lean's `propext`, `Classical.choice`, and `Quot.sound`
-  alone. The Section 2 instantiations additionally carry
-  `Aeneas.Std.core.fmt.Formatter`, the opaque external type axiom that
-  `Gf2Core/TypesExternal.lean` regenerates each extraction run and that the
-  `FpField` instances they build on already carry.
+  Axiom footprint: this module declares no axiom and contains no `sorry`. Every
+  declaration in both sections rests on `propext`, `Classical.choice` and
+  `Quot.sound` alone, and several on fewer. The Section 2 instantiations add
+  none: `FpVal` (`Gf2Core/Proofs/Defs.lean:23`) is a structure over `Std.U64`
+  and `Gf2Core.Proofs.FpField` transfers its `Field` structure across
+  `fpValRingEquiv` from `ZMod P`, so the external-type axiom
+  `Aeneas.Std.core.fmt.Formatter` that `Gf2Core/TypesExternal.lean` regenerates
+  each extraction run does not reach them.
 -/
 import Mathlib.Algebra.Polynomial.Degree.Domain
 import Mathlib.Algebra.Polynomial.Div
@@ -175,7 +177,7 @@ Production path: `QuotientField::element`
 (`crates/gf2-core/src/field/poly.rs:1779`) and keep the remainder.
 
 Refinement anchor: `reduction_is_invariant_under_multiples_of_the_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2265`), which draws a coefficient vector
+(`crates/gf2-core/src/gfpn/quotient.rs:2541`), which draws a coefficient vector
 `a` and a cofactor `h` and checks that `a` and `a + h · f` reduce to one stored
 vector of exactly `relative_degree()` entries. -/
 theorem dvd_sub_pad_red (hf : f.Monic) (a : B[X]) : f ∣ a - pad f (red f a) := by
@@ -193,7 +195,7 @@ theorem degree_pad_red_lt (hf : f.Monic) (a : B[X]) :
 class of its input.
 
 Refinement anchor: `reduction_is_invariant_under_multiples_of_the_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2265`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2541`). -/
 theorem cls_red (hf : f.Monic) (a : B[X]) : cls f (red f a) = AdjoinRoot.mk f a := by
   rw [cls, pad_red hf, mk_modByMonic]
 
@@ -261,10 +263,10 @@ def clsEquiv (hf : f.Monic) : (Fin f.natDegree → B) ≃ AdjoinRoot f where
   right_inv q := by
     rw [cls_red hf, (AdjoinRoot.mk_surjective q).choose_spec]
 
-/-- **L2.2 (derived equality decides the quotient).** Two polynomials reduce to
+/-- **L2.2 (stored equality decides the quotient).** Two polynomials reduce to
 one stored vector exactly when they name one class, so `QuotientElement`'s
-derived `PartialEq` on coefficients
-(`crates/gf2-core/src/gfpn/quotient.rs:774`) decides equality in `Q`.
+`PartialEq` (`crates/gf2-core/src/gfpn/quotient.rs:773`), which compares the
+field identity and the coefficient vector, decides equality in `Q`.
 
 Refinement anchor: `identity_is_structural_across_instances_and_presentations`
 (`crates/gf2-core/src/gfpn/quotient.rs:2236`). -/
@@ -748,7 +750,7 @@ theorem digit_succ (p k m : ℕ) : digit p (k + 1) m = digit p k (m / p) := by
 exactly the base-`p` digits, in the order it divides.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2500`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2578`). -/
 theorem divLoop_eq_ofFn (p : ℕ) :
     ∀ (d m : ℕ), divLoop p d m = List.ofFn (fun k : Fin d => digit p (k : ℕ) m) := by
   intro d
@@ -764,7 +766,7 @@ theorem divLoop_eq_ofFn (p : ℕ) :
 its `d` canonical coordinates.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2500`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2578`). -/
 theorem coordValue_digit (p : ℕ) (hp : 0 < p) :
     ∀ (d m : ℕ), m < p ^ d → coordValue p (fun k : Fin d => digit p (k : ℕ) m) = m := by
   intro d
@@ -795,7 +797,7 @@ theorem coordValue_digit (p : ℕ) (hp : 0 < p) :
 below `p` is recovered from its canonical index.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2500`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2578`). -/
 theorem digit_coordValue (p : ℕ) (hp : 0 < p) :
     ∀ (d : ℕ) (c : Fin d → ℕ), (∀ k, c k < p) →
       ∀ k : Fin d, digit p (k : ℕ) (coordValue p c) = c k := by
@@ -857,7 +859,7 @@ Refinement anchors: `const_quotient_coordinates_round_trip_through_the_runtime_c
 `tower_coordinates_vary_the_base_coordinate_fastest`
 (`crates/gf2-core/src/field/extension.rs:3543`) and
 `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2500`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs:2578`). -/
 theorem coordValue_flatten (p : ℕ) {r dB : ℕ} (C : Fin r → Fin dB → ℕ) :
     coordValue p (flatten C) = ∑ i : Fin r, coordValue p (C i) * (p ^ dB) ^ (i : ℕ) := by
   rw [coordValue, ← Equiv.sum_comp (finProdFinEquiv (m := r) (n := dB))
@@ -940,10 +942,11 @@ instantiation covers odd prime bases only (assumptions-register row A-06). The
 Section 1 statements themselves hold at every `[Field B]`, characteristic two
 included.
 
-Instantiating here makes the base-field arithmetic under the quotient
-extraction-bound: `+`, `*` and `⁻¹` on `FpVal P` are the extracted Montgomery
-operations, not an axiomatised stand-in. The quotient layer above them stays
-refinement-bound, because `gf2_core::gfpn::quotient` is `--opaque` to
+Instantiating here binds the quotient model to the carrier type the extraction
+produces, the Montgomery value `FpVal P`; its `CommRing` and `Field` structure
+is the one `Gf2Core.Proofs.FpField` transfers across `fpValRingEquiv`
+(`Gf2Core/Proofs/FpField.lean:136`) from `ZMod P`. The quotient layer above it
+stays refinement-bound, because `gf2_core::gfpn::quotient` is `--opaque` to
 `scripts/verify-lean.sh`.
 
 L2.7 is arithmetic on ℕ and carries no base carrier, so it needs no
@@ -978,7 +981,7 @@ Production path: `QuotientField::element`
 (`crates/gf2-core/src/gfpn/quotient.rs:426`) over an `Fp<P>` base.
 
 Refinement anchors: `reduction_is_invariant_under_multiples_of_the_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2500`) and
+(`crates/gf2-core/src/gfpn/quotient.rs:2541`) and
 `identity_is_structural_across_instances_and_presentations` (`:2236`), whose
 GF(125) row has an `Fp<5>` base. -/
 theorem fpVal_reduction_laws (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
