@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 10,
+  "current_wave": 11,
   "waves": [
     {
       "wave_number": 1,
@@ -406,7 +406,7 @@
           "title": "Systematic fast path for the generic shortening wrapper",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "created session 8 (R-39, owner-approved option A); deps 8aa98a25 done + 444c06bc (rework); 97410c80 now depends on it"
+          "status": "READY TO DISPATCH (session 9 end): 444c06bc done; prompt in dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-<id>.md (patched with the stale-pool remedy and report routing); create the worktree with dispatch-worker-worktree.sh and prefix its header"
         },
         {
           "key": "conformance-suites",
@@ -414,7 +414,7 @@
           "title": "Shared property and conformance suites across field classes",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "READY TO DISPATCH (session 9 end): 444c06bc done; prompt in dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-<id>.md (patched with the stale-pool remedy and report routing); create the worktree with dispatch-worker-worktree.sh and prefix its header"
         },
         {
           "key": "cutover-components",
@@ -422,7 +422,7 @@
           "title": "Migrate the component-code BCH consumers to the canonical model",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "READY TO DISPATCH (session 9 end): 444c06bc done; prompt in dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-<id>.md (patched with the stale-pool remedy and report routing); create the worktree with dispatch-worker-worktree.sh and prefix its header"
         },
         {
           "key": "cutover-dvbt2",
@@ -779,6 +779,7 @@
     "Host config: symlink /home/vkaskivuo/dvb_test_vectors -> /home/vkaskivuo/Projects/dvb_test_vectors created 2026-09-02 14:50 EEST so tests/test_vectors/mod.rs's default path resolves the ETSI VV001-CR35 streams on this host (gate runs then need no DVB_TEST_VECTORS_PATH). Remove the symlink to restore the previous host state."
   ],
   "session_notes_s9": [
-    "Session 9 (2026-09-02 18:45 EEST): session 8 died at the Claude session limit at 15:08 EEST with all five workers mid-flight (no final reports). State reconstructed from progress.json, handoff-5, worker transcripts and their CI logs: 2b6968d3 rework complete on branch (2506c42b, worker cargo-ci green 5657 passed); bd0edfa2/444c06bc rework complete (01d3dfab, worker cargo-ci green 5649 passed); 3f7edef1 part-2 draft uncommitted -> lead-preserved d6f03947; 88ca7d2f receipt rendered but uncommitted, measured at load 7.96 -> re-measured on the idle host with the committed runner; d7749931 merged, gates pending."
+    "Session 9 (2026-09-02 18:45 EEST): session 8 died at the Claude session limit at 15:08 EEST with all five workers mid-flight (no final reports). State reconstructed from progress.json, handoff-5, worker transcripts and their CI logs: 2b6968d3 rework complete on branch (2506c42b, worker cargo-ci green 5657 passed); bd0edfa2/444c06bc rework complete (01d3dfab, worker cargo-ci green 5649 passed); 3f7edef1 part-2 draft uncommitted -> lead-preserved d6f03947; 88ca7d2f receipt rendered but uncommitted, measured at load 7.96 -> re-measured on the idle host with the committed runner; d7749931 merged, gates pending.",
+    "Session 9 end (2026-09-02 17:30Z, owner asked for the handoff): wave 10 closed except 3f7edef1 (B4 escalation pending; rework-2 branch 115ce492 unmerged, unreviewed by the lead); b1bd75ca merged with lake-build passed and code-review/doc-review running detached (chain d log in the session scratchpad; its .jit records land uncommitted on main when it finishes); wave 11 ready to dispatch. Prompts copied into dev/active/ae03bcd0-general-bch/session-9-prompts/."
   ]
 }

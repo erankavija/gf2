@@ -25,7 +25,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Shared property and conformance suites across field classes",
-  "updated_at": "2026-09-02T05:47:39.056317556Z"
+  "updated_at": "2026-09-02T17:28:45.986108788Z"
 }
