@@ -14,7 +14,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-02T07:16:16.535477728Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-02T07:19:22.969323048Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "bd0edfa2-092e-4844-9291-3dd8fbd43d3e",
   "labels": [
     "type:task",
@@ -26,5 +37,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Optimize the reference generator-matrix materialization",
-  "updated_at": "2026-09-02T07:00:55.900256043Z"
+  "updated_at": "2026-09-02T07:19:22.969323048Z"
 }
