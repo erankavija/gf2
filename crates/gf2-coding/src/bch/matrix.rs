@@ -679,6 +679,22 @@ mod tests {
         .expect("a valid primitive narrow-sense code")
     }
 
+    /// [`primitive_binary`]'s code in the field-generic representation.
+    fn primitive_dense(
+        degree: usize,
+        modulus: u64,
+        designed_distance: u64,
+    ) -> DenseBchCode<BinaryPrimeExt> {
+        let extension = BinaryPrimeExt::new(Gf2mField::new(degree, modulus))
+            .expect("a primitive polynomial of the requested degree");
+        DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(designed_distance)
+                .expect("positive distance"),
+        })
+        .expect("a valid primitive narrow-sense code")
+    }
+
     fn gf25() -> QuotientField<Fp<5>> {
         let modulus = FieldPoly::new(vec![Fp::<5>::new(1), Fp::new(1), Fp::new(1)]);
         QuotientField::new(Fp::<5>::zero(), modulus).expect("a valid GF(25)")
@@ -1039,7 +1055,12 @@ mod tests {
     }
 
     /// The workload contract's binary rows B1, B2 and B3 at the exact lengths
-    /// it fixes (`dev/active/4e732b56/workload-selection.md` § 2).
+    /// `dev/active/4e732b56/workload-selection.md` § 2 fixes, in both
+    /// canonical representations.
+    ///
+    /// Each row runs the whole matrix contract, which includes equality with
+    /// the by-encoding oracle, so every contract row the fast tier reaches
+    /// has a packed and a field-generic equality witness.
     #[test]
     fn workload_rows_follow_the_contract_and_match_the_oracle() {
         const ROWS: &[(usize, u64, u64, usize, usize)] = &[
@@ -1051,16 +1072,11 @@ mod tests {
             let packed = primitive_binary(degree, modulus, distance);
             assert_eq!((packed.k(), packed.n()), (dimension, length));
             assert_matrix_contract(&packed);
-        }
 
-        // B1 field-generic, so the row is covered in both representations.
-        let dense = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
-            extension: binary_extension(),
-            designed_distance: DesignedDistance::try_from(7).expect("positive distance"),
-        })
-        .expect("the field-generic B1 row");
-        assert_eq!((dense.k(), dense.n()), (5, 15));
-        assert_matrix_contract(&dense);
+            let dense = primitive_dense(degree, modulus, distance);
+            assert_eq!((dense.k(), dense.n()), (dimension, length));
+            assert_matrix_contract(&dense);
+        }
     }
 
     /// A deterministic sample of generator rows for a code whose full row
@@ -1135,6 +1151,12 @@ mod tests {
     ///
     /// The by-encoding oracle costs $O(k^2 r)$, which is a slow-tier cost at
     /// these dimensions; the fast tier witnesses the T2S row on a sample.
+    /// This is the packed representation of both rows. The field-generic
+    /// representation reaches the T2S row in
+    /// [`t2s_mother_row_matches_the_oracle_field_generic`]; a
+    /// `FieldMatrix<Fp<2>>` stores eight bytes per coordinate, so the T2N row
+    /// is $65343 \times 65535 \times 8 = 34$ GB per matrix and the equality
+    /// witness would need two of them.
     #[test]
     #[ignore = "slow: the DVB-T2 mother rows materialize up to a 512 MiB generator"]
     fn dvb_t2_mother_rows_match_the_oracle() {
@@ -1151,6 +1173,24 @@ mod tests {
                 &code.parity_check_matrix().expect("parity materialization"),
             );
         }
+    }
+
+    /// The T2S row at its mother length in the field-generic representation,
+    /// against the by-encoding oracle over every row.
+    ///
+    /// A `FieldMatrix<Fp<2>>` stores one element per coordinate, so this
+    /// generator is 2.1 GB where the packed one is 33 MB, and the oracle
+    /// spends $O(k^2 r)$ base-field operations reaching it.
+    #[test]
+    #[ignore = "slow: the T2S mother row materializes a 2.1 GB field-generic generator"]
+    fn t2s_mother_row_matches_the_oracle_field_generic() {
+        let code = primitive_dense(14, 0b100_0000_0010_1011, 25);
+        assert_eq!((code.k(), code.n()), (16215, 16383));
+        assert_matches_oracle(
+            &code,
+            &code.generator_matrix().expect("generator materialization"),
+            &code.parity_check_matrix().expect("parity materialization"),
+        );
     }
 
     #[test]
