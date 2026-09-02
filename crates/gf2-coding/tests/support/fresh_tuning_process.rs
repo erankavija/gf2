@@ -10,8 +10,8 @@ use std::num::NonZeroUsize;
 use std::process::{Command, Stdio};
 
 use gf2_coding::bch::encode::{
-    EncodeFamily, SystematicLayout, BITSLICE_INTERLEAVED_MIN_BATCH, TABLE_REMAINDER_BLOCK_BITS,
-    TABLE_REMAINDER_MIN_BATCH, TABLE_REMAINDER_MIN_REDUNDANCY,
+    EncodeFamily, SystematicLayout, BITSLICE_INTERLEAVED_MIN_BATCH, CLMUL_FOLD_MIN_BATCH,
+    TABLE_REMAINDER_BLOCK_BITS, TABLE_REMAINDER_MIN_BATCH, TABLE_REMAINDER_MIN_REDUNDANCY,
 };
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::test_support;
@@ -62,6 +62,13 @@ pub enum FreshProcessCase {
     /// the owner codec's canonical JSON.
     #[cfg(feature = "tuning-profile")]
     BitsliceInterleavedEncoded,
+    /// A compiled envelope admitting the carry-less-multiply fold family,
+    /// with the buffer shapes watched across repeated batches.
+    ClmulFoldAllocation,
+    /// Selectors admitting the carry-less-multiply fold family, carried
+    /// through the owner codec's canonical JSON.
+    #[cfg(feature = "tuning-profile")]
+    ClmulFoldEncoded,
 }
 
 impl FreshProcessCase {
@@ -75,6 +82,9 @@ impl FreshProcessCase {
             Self::BitsliceInterleavedAllocation => "bitslice-interleaved-allocation",
             #[cfg(feature = "tuning-profile")]
             Self::BitsliceInterleavedEncoded => "bitslice-interleaved-encoded",
+            Self::ClmulFoldAllocation => "clmul-fold-allocation",
+            #[cfg(feature = "tuning-profile")]
+            Self::ClmulFoldEncoded => "clmul-fold-encoded",
         }
     }
 
@@ -98,6 +108,9 @@ impl FreshProcessCase {
             Some("bitslice-interleaved-allocation") => Ok(Self::BitsliceInterleavedAllocation),
             #[cfg(feature = "tuning-profile")]
             Some("bitslice-interleaved-encoded") => Ok(Self::BitsliceInterleavedEncoded),
+            Some("clmul-fold-allocation") => Ok(Self::ClmulFoldAllocation),
+            #[cfg(feature = "tuning-profile")]
+            Some("clmul-fold-encoded") => Ok(Self::ClmulFoldEncoded),
             _ => Err("fresh-process case has an unknown case name".to_owned()),
         }
     }
@@ -187,16 +200,30 @@ fn selectors_admitting_the_table_family() -> EncodeSelectors {
         TABLE_REMAINDER_BLOCK_BITS,
         BATCH,
         BITSLICE_INTERLEAVED_MIN_BATCH,
+        CLMUL_FOLD_MIN_BATCH,
     )
     .expect("every selector bound is admissible")
 }
 
-/// Selectors admitting the bit-sliced interleaved family, with the table
-/// family left on its conservative exclusion.
+/// Selectors admitting the bit-sliced interleaved family, with the others
+/// left on their conservative exclusions.
 fn selectors_admitting_the_bitslice_family() -> EncodeSelectors {
     EncodeSelectors::try_new(
         TABLE_REMAINDER_MIN_REDUNDANCY,
         TABLE_REMAINDER_MIN_BATCH,
+        BATCH,
+        CLMUL_FOLD_MIN_BATCH,
+    )
+    .expect("every selector bound is admissible")
+}
+
+/// Selectors admitting the carry-less-multiply fold family, with the others
+/// left on their conservative exclusions.
+fn selectors_admitting_the_clmul_family() -> EncodeSelectors {
+    EncodeSelectors::try_new(
+        TABLE_REMAINDER_MIN_REDUNDANCY,
+        TABLE_REMAINDER_MIN_BATCH,
+        BITSLICE_INTERLEAVED_MIN_BATCH,
         BATCH,
     )
     .expect("every selector bound is admissible")
@@ -260,6 +287,14 @@ pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
         #[cfg(feature = "tuning-profile")]
         FreshProcessCase::BitsliceInterleavedEncoded => {
             execute_install_child(encoded_envelope(selectors_admitting_the_bitslice_family()))
+        }
+        FreshProcessCase::ClmulFoldAllocation => execute_allocation_child(
+            selectors_admitting_the_clmul_family(),
+            EncodeFamily::ClmulFold,
+        ),
+        #[cfg(feature = "tuning-profile")]
+        FreshProcessCase::ClmulFoldEncoded => {
+            execute_install_child(encoded_envelope(selectors_admitting_the_clmul_family()))
         }
     }
 }
@@ -381,6 +416,7 @@ fn execute_allocation_child(
     let built = test_support::encode_workspace_shape(&workspace);
     let prepared = match expected {
         EncodeFamily::BitsliceInterleaved => !workspace.registers().lanes.is_empty(),
+        EncodeFamily::ClmulFold => !workspace.registers().fold.is_empty(),
         _ => !workspace.registers().tables.is_empty(),
     };
     let mut workspace_stable = prepared;
