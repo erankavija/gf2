@@ -373,7 +373,14 @@ theorem cls_vmul (hf : f.Monic) (x y : Fin f.natDegree → B) :
 /-- One iteration of the fold in `QuotientElement::multiply`
 (`crates/gf2-core/src/gfpn/quotient.rs:907-917`): the coefficient at high index
 `r + d` is cleared by subtracting `c · X^d · f`, where `d = high - degree` is the
-production offset (`:912`). -/
+production offset (`:912`).
+
+The production step subtracts only the `r` low modulus coefficients (`:913`),
+which touches slots `d` through `r + d - 1` and leaves slot `r + d` for the
+final `truncate` (`:918`) to discard. Subtracting the whole monic `f` clears
+that slot instead. The two steps agree on every slot below `r + d`, no later
+iteration reads a slot at or above its own high index, and `truncate` keeps only
+slots below `r`, so the loops produce one stored vector. -/
 def foldStep (f : B[X]) (p : B[X]) (d : ℕ) : B[X] :=
   p - C (p.coeff (f.natDegree + d)) * (X ^ d * f)
 
