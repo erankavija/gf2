@@ -179,7 +179,7 @@ family's shape, its evidence is in [findings.md](findings.md) § 6.
 | `genmatrix-multiply` | Materializes $G$ (or $P$) once and encodes by dense GF(2) matrix product. | Registered. Amortizes only when one code encodes many batches; `genmatrix-perf` owns its materialization cost. |
 
 Registering a family fixes its name and its contract, not its selection: the
-crossover between them is `encode-dispatch`'s measurement to make, over the
+crossovers among them are `encode-dispatch`'s measurement to make, over the
 cells this document fixes.
 
 ## 8. Selected external baseline per workload
