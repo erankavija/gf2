@@ -392,10 +392,12 @@ AFF3CT's interleaved encoder over its own scalar encoder, at $B = 4096$:
 
 The advantage peaks near $\deg g = 32$ and is smaller by the DVB-T2 rows. The
 plausible mechanism is that AFF3CT's scalar inner loop auto-vectorizes better as
-the loop lengthens, but this survey did not inspect the generated code, so the
-mechanism is an open question for `avx2-batch-kernels` rather than a finding.
-What is established is the shape: **an eight-lane interleaved encoder does not
-deliver an eight-fold speedup at DVB-T2 generator degrees.**
+the loop lengthens. This survey did not inspect the generated code; the
+*Generated code* section of the `gf2_kernels_simd::bch_encode` rustdoc settles
+the question for this repository's kernels from the committed assembly
+artefact. What this survey establishes is the shape: **an eight-lane
+interleaved encoder does not deliver an eight-fold speedup at DVB-T2 generator
+degrees.**
 
 ### 6.3 `genmatrix-multiply` wins only while $G$ stays small
 
