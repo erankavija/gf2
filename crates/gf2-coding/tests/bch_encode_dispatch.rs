@@ -11,9 +11,15 @@ use std::num::NonZeroUsize;
 use gf2_coding::bch::encode::{max_parallel_batch_workers, EncodeFamily, SystematicLayout};
 use gf2_coding::bch::error::BchError;
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+use gf2_coding::test_support;
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::gf2m::Gf2mField;
 use gf2_core::BitVec;
+
+/// Batch lengths either side of the lane width a bit-sliced family groups
+/// frames in, so a partial final group, an exact fill, and several whole
+/// groups each run.
+const LANE_GROUP_BATCHES: &[usize] = &[1, 63, 64, 65, 255, 256, 257];
 
 /// One corpus row: the code a cell encodes, and the batch lengths it is
 /// encoded at.
@@ -151,9 +157,15 @@ fn encode_under(
 /// Checks every registered family this code makes available against the
 /// reference, on every declared layout and every batch length of `row`.
 fn check_families_agree(row: &Row) {
+    check_families_agree_at(row, row.batches);
+}
+
+/// Checks every available family against the reference at every batch length
+/// of `batches`, on every declared layout.
+fn check_families_agree_at(row: &Row, batches: &[usize]) {
     let code = build(row);
     for &layout in LAYOUTS {
-        for &batch in row.batches {
+        for &batch in batches {
             let batch_messages = messages(&code, batch);
             let reference = encode_under(&code, EncodeFamily::REFERENCE, &batch_messages, layout);
             for &family in EncodeFamily::REGISTERED {
@@ -338,6 +350,84 @@ fn an_empty_batch_encodes_under_every_available_family() {
             let mut workspace = code.encode_workspace();
             code.encode_batch_family_into(family, &[], layout, &mut workspace, &mut [])
                 .expect("the empty batch is a valid batch");
+        }
+    }
+}
+
+/// The batch ladder of the workload-selection contract steps over the lane
+/// width a bit-sliced family groups frames in without landing either side of
+/// it, so the crossings get their own cells: B2 and B3 of the corpus and every
+/// word-boundary row, at one frame, a group less one, an exact group, a group
+/// and one, and the same three around four groups.
+#[test]
+fn registered_families_agree_across_lane_group_boundaries() {
+    for row in ROWS[1..3].iter().chain(WORD_BOUNDARY_ROWS) {
+        check_families_agree_at(row, LANE_GROUP_BATCHES);
+    }
+}
+
+/// The bit-sliced family runs its accelerated kernels where the host detects
+/// them, so the fallback arm needs forcing to be reached at all. Both arms
+/// compute the same words, and this is where that is checked on whatever host
+/// runs the suite.
+#[test]
+fn the_forced_scalar_kernels_write_the_reference_bytes() {
+    let restore = test_support::force_scalar_bitslice_encode(true);
+    assert_eq!(
+        test_support::selected_bitslice_encode_kernel(),
+        "scalar-bitslice",
+        "forcing the fallback selects the portable kernels"
+    );
+    let outcome = std::panic::catch_unwind(|| {
+        for row in ROWS[1..3].iter().chain(WORD_BOUNDARY_ROWS) {
+            let code = build(row);
+            for &layout in LAYOUTS {
+                for &batch in &[1usize, 64, 257] {
+                    let batch_messages = messages(&code, batch);
+                    let reference =
+                        encode_under(&code, EncodeFamily::REFERENCE, &batch_messages, layout);
+                    let bitsliced = encode_under(
+                        &code,
+                        EncodeFamily::BitsliceInterleaved,
+                        &batch_messages,
+                        layout,
+                    );
+                    assert_eq!(
+                        bitsliced, reference,
+                        "{} at batch {batch} under {layout:?} on the portable kernels",
+                        row.name
+                    );
+                }
+            }
+        }
+    });
+    test_support::force_scalar_bitslice_encode(restore);
+    if let Err(payload) = outcome {
+        std::panic::resume_unwind(payload);
+    }
+}
+
+/// A partition boundary and a lane-group boundary are independent: the batch
+/// entry points cut a batch into worker partitions and the family groups
+/// frames inside each one, so splitting a batch anywhere writes the codewords
+/// the whole batch writes.
+#[test]
+fn the_bit_sliced_family_ignores_partition_boundaries() {
+    let row = &ROWS[2];
+    let code = build(row);
+    let family = EncodeFamily::BitsliceInterleaved;
+    for &layout in LAYOUTS {
+        assert!(code.encode_family_available(family, layout));
+        let batch_messages = messages(&code, 257);
+        let whole = encode_under(&code, family, &batch_messages, layout);
+        for &at in &[0usize, 1, 63, 64, 65, 128, 192, 256, 257] {
+            let mut split = encode_under(&code, family, &batch_messages[..at], layout);
+            split.extend(encode_under(&code, family, &batch_messages[at..], layout));
+            assert_eq!(
+                split, whole,
+                "{} under {layout:?}: a partition boundary at {at} moved a codeword",
+                row.name
+            );
         }
     }
 }
