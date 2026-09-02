@@ -150,14 +150,26 @@ const IN_RANGE: &str = "the caller has checked the output shape";
 
 /// Materialization of the canonical matrices over one matrix representation.
 ///
-/// A caller checks the output shape before dispatching here, so an
-/// implementation writes only in-range coordinates, overwrites every
+/// The canonical accessors ([`GeneratorMatrixAccess`] and
+/// [`ParityCheckMatrixAccess`] on [`BchCode`]) check the output shape and
+/// report a mismatch as [`CodeError::ShapeMismatch`] before dispatching here,
+/// so an implementation writes only in-range coordinates, overwrites every
 /// coordinate of its output, and cannot fail. `dimension` is the code's $k$;
-/// the redundancy and the length follow from the output's own shape.
-/// [`fill_generator`](Self::fill_generator) writes $G = [\,I_k \mid P\,]$ and
+/// the redundancy $r = n - k$ and the length $n$ follow from the output's own
+/// shape. [`fill_generator`](Self::fill_generator) writes
+/// $G = [\,I_k \mid P\,]$ into a $k \times n$ output and
 /// [`fill_parity_check`](Self::fill_parity_check) writes
-/// $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$, both in the default user layout
-/// this module documents.
+/// $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$ into an $(n - k) \times n$
+/// output, both in the default user layout this module documents.
+///
+/// # Panics
+///
+/// The methods are caller-trusted fast paths: they perform no shape check of
+/// their own. Called directly on an output whose shape is not the one stated
+/// on the method, a provided body panics (an underflowing redundancy, or a
+/// coordinate outside the output), and an override may panic or write a
+/// matrix that is not the canonical one. Reach them through the canonical
+/// accessors, which check the shape first, unless the shape is already known.
 ///
 /// Both methods carry provided bodies that run the module's recurrence one
 /// coordinate at a time through [`SymbolMatrix::get`] and
@@ -247,6 +259,10 @@ where
 {
     /// Writes $G = [\,I_k \mid P\,]$.
     ///
+    /// The output must have exactly `dimension` rows and $n \ge$ `dimension`
+    /// columns, where $n - {}$`dimension` is the degree of `generator`; see
+    /// the trait's *Panics* section for a shape that is not.
+    ///
     /// The provided body seeds the parity block of row zero with $g$,
     /// advances $P_{i,j} = P_{i-1,\,j-1} - P_{i-1,\,r-1}\,g_j$ inside the
     /// output, and writes the identity column last, so every row the
@@ -291,6 +307,10 @@ where
     }
 
     /// Writes $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$.
+    ///
+    /// The output must have exactly $n - {}$`dimension` rows, the degree of
+    /// `generator`, and $n$ columns; see the trait's *Panics* section for a
+    /// shape that is not.
     ///
     /// The provided body reads the same recurrence on columns: column $i$ of
     /// the leading block is $-P_i$, so the output is the only state the walk
