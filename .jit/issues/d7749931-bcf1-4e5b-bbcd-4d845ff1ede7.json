@@ -8,6 +8,7 @@
   ],
   "description": "Implement the sketch's Lean obligation for $q$-cyclotomic seed closure: the derived set is the smallest superset of the seed closed under multiplication by $q$ modulo $n$.\n\n## Success Criteria\n\n- [hard] REQ-01: The closure lemmas are proven and `lake build` passes with no new untracked assumptions.\n- [hard] REQ-02: The obligation binds to the closure production path exactly as the approved sketch assigns.\n",
   "documents": [],
+  "done_at": "2026-09-02T16:16:51.438218316Z",
   "first_ready_at": "2026-09-02T06:55:04.643807057Z",
   "gates_required": [
     "code-review",
@@ -21,8 +22,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-02T16:12:50.782351214Z",
+      "status": "passed",
+      "updated_at": "2026-09-02T16:16:08.298707544Z",
       "updated_by": "auto:executor"
     },
     "lake-build": {
@@ -39,7 +40,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Lean proofs: q-cyclotomic seed closure",
-  "updated_at": "2026-09-02T16:12:50.782351214Z"
+  "updated_at": "2026-09-02T16:16:51.438218316Z"
 }
