@@ -59,8 +59,8 @@ pub fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> 
 ///
 /// # Complexity
 ///
-/// $O(k^2 r)$ base-field operations for $r = n - k$, against the
-/// materialization's $O(kr)$.
+/// $O(k^2 r)$ base-field operations for $r = n - k$, where the canonical
+/// materialization walks the output once.
 pub fn bch_generator_matrix_by_encoding<X, S, M>(
     code: &BchCode<X, S, M>,
     out: &mut M,
