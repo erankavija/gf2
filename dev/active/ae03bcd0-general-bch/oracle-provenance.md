@@ -243,7 +243,9 @@ root, and wraps the result with GUAVA's `GeneratorPolCode`. The fixture keeps
 both: `generator` is the polynomial at gf2's root, `bchcode_generator` is the
 one GUAVA's unaided `BCHCode` returns, and `bchcode_generator_matches` says
 whether they are equal. The suite asserts the implication that they agree
-whenever the roots agree, which holds on all six coinciding rows.
+whenever the roots agree; it holds on the five coinciding rows that also build
+a code object, and B4, the sixth coinciding row, builds none for the reason
+below.
 
 **GUAVA cannot build a code object at the DVB-T2 mother length.** GUAVA's
 `GeneratorPolCode` reaches `GeneratorMatrixFromPoly`, which materializes the
@@ -253,9 +255,13 @@ runs normally at that size, so the B4 row records the generator that derivation
 produces, encodes through the same cyclic-code polynomial map, and states the
 limitation in `bchcode_unavailable`. The claim that skipping the wrapper
 changes nothing is checked rather than assumed: on the seven rows where the
-wrapper does build, the fixture records that its generator equals the one the
-loop derived. GAP additionally verifies at B4 that the derived generator
-divides $x^{n} - 1$, recorded as `generator_divides_x_n_minus_one`.
+wrapper does build, the fixture records in `native_encoder_cross_checked` that
+encoding a message through the GUAVA code object gives the same word as the
+polynomial map used at B4, and on the five rows where GUAVA's own root
+coincides with gf2's it records in `bchcode_generator_matches` that GUAVA's
+unaided `BCHCode` returns the generator the loop derived. GAP additionally
+verifies at B4 that the derived generator divides $x^{n} - 1$, recorded as
+`generator_divides_x_n_minus_one`.
 
 SageMath needed no non-default construction on any row. It accepts a
 `primitive_root` argument directly, and its lazy code objects handle the mother
