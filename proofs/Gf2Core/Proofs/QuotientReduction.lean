@@ -50,8 +50,9 @@ open Polynomial
 
 /-! ## Section 1 — the abstract quotient model
 
-The model fixes a field `B`, a monic modulus `f : B[X]` with
-`r = f.natDegree ≥ 1`, and the quotient `Q = AdjoinRoot f`. The stored
+The model fixes a field `B`, a monic modulus `f : B[X]`, and the quotient
+`Q = AdjoinRoot f`; `r = f.natDegree` is the relative degree, and the lemmas
+that need `r ≥ 1` carry it as a hypothesis. The stored
 coefficient vector of `QuotientElement` (`crates/gf2-core/src/gfpn/quotient.rs:749`)
 is modelled by `Fin r → B`, constant coefficient first, exactly as the
 production layout stores it. -/
@@ -134,15 +135,6 @@ theorem degree_pad_lt (c : Fin f.natDegree → B) :
     (pad f c).degree < (f.natDegree : WithBot ℕ) :=
   degree_ofCoeffs_lt _ _
 
-/-- `pad` restores a polynomial that already has degree below `r`. -/
-theorem pad_red_of_degree_lt {a : B[X]} (h : a.degree < (f.natDegree : WithBot ℕ)) :
-    ofCoeffs f.natDegree a.coeff = a := by
-  refine Polynomial.ext fun j => ?_
-  rw [coeff_ofCoeffs]
-  split
-  · rfl
-  · exact ((degree_lt_iff_coeff_zero a f.natDegree).mp h j (Nat.not_lt.mp ‹¬ j < _›)).symm
-
 /-! ### L2.1 — reduction is the residue -/
 
 /-- Reducing before taking the class changes nothing: `π(a %ₘ f) = π(a)`. -/
@@ -185,7 +177,11 @@ theorem dvd_sub_pad_red (hf : f.Monic) (a : B[X]) : f ∣ a - pad f (red f a) :=
   exact ⟨a /ₘ f, by ring⟩
 
 /-- **L2.1 (degree bound).** The padded residue has degree below `r`, so it fits
-the `r` stored slots. -/
+the `r` stored slots.
+
+Refinement anchor: `reduction_is_invariant_under_multiples_of_the_modulus`
+(`crates/gf2-core/src/gfpn/quotient.rs:2541`), whose length assertion pins the
+stored vector at exactly `relative_degree()` entries. -/
 theorem degree_pad_red_lt (hf : f.Monic) (a : B[X]) :
     (pad f (red f a)).degree < f.degree := by
   rw [pad_red hf]
@@ -229,14 +225,22 @@ theorem red_pad (hf : f.Monic) (c : Fin f.natDegree → B) : red f (pad f c) = c
   funext i
   simp [red, hmod, coeff_pad, i.isLt]
 
-/-- **L2.2 (injectivity).** Distinct stored vectors name distinct classes. -/
+/-- **L2.2 (injectivity).** Distinct stored vectors name distinct classes.
+
+Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
+(`crates/gf2-core/src/gfpn/quotient.rs:2578`), whose distinctness assertion over
+the whole enumeration is the executable form of this claim. -/
 theorem cls_injective (hf : f.Monic) : Function.Injective (cls f) := by
   intro c c' h
   have hpad : pad f c = pad f c' :=
     eq_of_degree_lt_of_mk_eq (degree_pad_lt_degree hf c) (degree_pad_lt_degree hf c') h
   rw [← red_pad hf c, ← red_pad hf c', hpad]
 
-/-- **L2.2 (surjectivity).** Every class has a stored vector. -/
+/-- **L2.2 (surjectivity).** Every class has a stored vector.
+
+Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
+(`crates/gf2-core/src/gfpn/quotient.rs:2578`), which checks that `elements()`
+(`:530`) materializes `|E|` members. -/
 theorem cls_surjective (hf : f.Monic) : Function.Surjective (cls f) := by
   intro q
   obtain ⟨a, rfl⟩ := AdjoinRoot.mk_surjective q
@@ -348,12 +352,18 @@ theorem red_mul (hf : f.Monic) (a b : B[X]) : red f (a * b) = vmul f (red f a) (
   refine (red_eq_iff_mk_eq hf _ _).mpr ?_
   rw [map_mul, map_mul, mk_modByMonic, mk_modByMonic]
 
-/-- **L2.3 (the class map is additive).** -/
+/-- **L2.3 (the class map is additive).**
+
+Refinement anchor: the addition case of `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2351`). -/
 theorem cls_vadd (x y : Fin f.natDegree → B) :
     cls f (vadd f x y) = cls f x + cls f y := by
   rw [cls, pad_vadd, map_add, cls, cls]
 
-/-- **L2.3 (the class map is multiplicative).** -/
+/-- **L2.3 (the class map is multiplicative).**
+
+Refinement anchor: the multiplication case of `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2353`). -/
 theorem cls_vmul (hf : f.Monic) (x y : Fin f.natDegree → B) :
     cls f (vmul f x y) = cls f x * cls f y := by
   rw [vmul, cls_red hf, map_mul, cls, cls]
@@ -705,6 +715,19 @@ theorem exists_ne_zero_not_isUnit_of_not_irreducible (hf : f.Monic) (hr : 0 < f.
       simpa using dvd_sub (Dvd.intro w rfl) h2
     exact hau (isUnit_of_dvd_one hone)
 
+/-- **L2.6 (irreducible exactly when the quotient is a field).** With the
+converse above, the deciding constructors' precondition is necessary as well as
+sufficient.
+
+Production path: `QuotientField::new`
+(`crates/gf2-core/src/gfpn/quotient.rs:251`) and `ConstQuotient::extension`
+(`:1464`).
+
+Refinement anchors: `validating_construction_rejects_reducible_modulus`
+(`crates/gf2-core/src/gfpn/quotient.rs:2051`),
+`const_validation_rejects_a_reducible_declaration` (`:2387`) and the
+axiom-harness registrations at
+`crates/gf2-core/src/field/axiom_tests.rs:1817`, `:1826` and `:1835`. -/
 theorem irreducible_iff_forall_isUnit (hf : f.Monic) (hr : 0 < f.natDegree) :
     Irreducible f ↔ ∀ z : AdjoinRoot f, z ≠ 0 → IsUnit z := by
   constructor
