@@ -929,4 +929,173 @@ theorem adjoinRoot_frobenius_iterate_mod [Finite B] (hf : f.Monic) (hirr : Irred
 
 end QuotientReduction
 
+/-! ## Section 2 — the extracted base-carrier instantiation
+
+The model of Section 1 is parameterised over the base field `B`, so it
+instantiates at the one base carrier the Charon/Aeneas pipeline extracts
+transparently, `gfp::Fp<P>` in its Lean form `FpVal P`. The `Field` instance is
+the transferred one from `Gf2Core.Proofs.FpField`; it carries the hypothesis
+`P ≠ 2`, inherent to Montgomery arithmetic with `R = 2^64`, so this
+instantiation covers odd prime bases only (assumptions-register row A-06). The
+Section 1 statements themselves hold at every `[Field B]`, characteristic two
+included.
+
+Instantiating here makes the base-field arithmetic under the quotient
+extraction-bound: `+`, `*` and `⁻¹` on `FpVal P` are the extracted Montgomery
+operations, not an axiomatised stand-in. The quotient layer above them stays
+refinement-bound, because `gf2_core::gfpn::quotient` is `--opaque` to
+`scripts/verify-lean.sh`.
+
+L2.7 is arithmetic on ℕ and carries no base carrier, so it needs no
+instantiation. -/
+
+namespace ExtractedQuotient
+
+open Aeneas Aeneas.Std Polynomial
+
+variable {P : Std.U64}
+
+/-- The extracted base carrier is finite, through the ring equivalence with
+`ZMod P` (`Gf2Core/Proofs/FpField.lean:136`). -/
+theorem finite_fpVal (hP : ValidPrime P) (hP2 : P.val ≠ 2) : Finite (FpVal P) := by
+  haveI : NeZero P.val := ⟨by have := hP.2.1; omega⟩
+  letI := FpField.FpVal.instCommRing hP hP2
+  exact Finite.of_equiv (ZMod P.val) (FpField.fpValRingEquiv hP hP2).toEquiv.symm
+
+/-- `|B| = P` for the extracted base carrier, so its absolute base degree is one
+and the quotient's absolute degree is its relative degree. -/
+theorem card_fpVal (hP : ValidPrime P) (hP2 : P.val ≠ 2) : Nat.card (FpVal P) = P.val := by
+  haveI : NeZero P.val := ⟨by have := hP.2.1; omega⟩
+  letI := FpField.FpVal.instCommRing hP hP2
+  rw [Nat.card_congr (FpField.fpValRingEquiv hP hP2).toEquiv, Nat.card_eq_fintype_card,
+    ZMod.card]
+
+/-- **L2.1 and L2.2 at the extracted base carrier.** The stored vector
+represents the class of its input, its polynomial has degree below `r`, reduction
+fixes vectors already of length `r`, and the class map is a bijection.
+
+Production path: `QuotientField::element`
+(`crates/gf2-core/src/gfpn/quotient.rs:426`) over an `Fp<P>` base.
+
+Refinement anchors: `reduction_is_invariant_under_multiples_of_the_modulus`
+(`crates/gf2-core/src/gfpn/quotient.rs:2500`) and
+`identity_is_structural_across_instances_and_presentations` (`:2236`), whose
+GF(125) row has an `Fp<5>` base. -/
+theorem fpVal_reduction_laws (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
+    letI := FpField.FpVal.instField hP hP2
+    ∀ (f : Polynomial (FpVal P)), f.Monic →
+      (∀ a, QuotientReduction.cls f (QuotientReduction.red f a) = AdjoinRoot.mk f a) ∧
+      (∀ a, f ∣ a - QuotientReduction.pad f (QuotientReduction.red f a)) ∧
+      (∀ c, QuotientReduction.red f (QuotientReduction.pad f c) = c) ∧
+      Function.Bijective (QuotientReduction.cls f) := by
+  letI := FpField.FpVal.instField hP hP2
+  exact fun f hf => ⟨QuotientReduction.cls_red hf, QuotientReduction.dvd_sub_pad_red hf,
+    QuotientReduction.red_pad hf, QuotientReduction.cls_bijective hf⟩
+
+/-- **L2.3 at the extracted base carrier.** Reduction is a ring homomorphism, and
+the production high-to-low fold computes the stored product.
+
+Production path: `QuotientElement`'s `Add`
+(`crates/gf2-core/src/gfpn/quotient.rs:982`) and `QuotientElement::multiply`
+(`:896`) over an `Fp<P>` base.
+
+Refinement anchors: the addition and multiplication cases of `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2351`, `:2353`) and
+`test_quotient_gf125_field_axioms`
+(`crates/gf2-core/src/field/axiom_tests.rs:1793`). -/
+theorem fpVal_hom_laws (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
+    letI := FpField.FpVal.instField hP hP2
+    ∀ (f : Polynomial (FpVal P)), f.Monic → 0 < f.natDegree →
+      (∀ a b, QuotientReduction.red f (a + b) =
+        QuotientReduction.vadd f (QuotientReduction.red f a) (QuotientReduction.red f b)) ∧
+      (∀ a b, QuotientReduction.red f (a * b) =
+        QuotientReduction.vmul f (QuotientReduction.red f a) (QuotientReduction.red f b)) ∧
+      (∀ x y, QuotientReduction.foldDown f (f.natDegree - 1)
+          (QuotientReduction.pad f x * QuotientReduction.pad f y) =
+        QuotientReduction.pad f (QuotientReduction.vmul f x y)) := by
+  letI := FpField.FpVal.instField hP hP2
+  exact fun f hf hr => ⟨QuotientReduction.red_add, QuotientReduction.red_mul hf,
+    QuotientReduction.foldDown_pad_mul hf hr⟩
+
+/-- **L2.4 at the extracted base carrier.** The compile-time Horner loop and the
+runtime convolve-and-fold loop produce one polynomial, and a declaration's
+materialized modulus is monic of the declared degree.
+
+Production path: `ConstQuotient::multiply`
+(`crates/gf2-core/src/gfpn/quotient.rs:1551`) against `QuotientElement::multiply`
+(`:896`) over an `Fp<P>` base.
+
+Refinement anchors: `const_and_runtime_forms_agree_on_gf125`
+(`crates/gf2-core/src/gfpn/quotient.rs:2375`) and
+`const_and_runtime_forms_agree_on_gf16` (`:2370`). -/
+theorem fpVal_horner_agrees (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
+    letI := FpField.FpVal.instField hP hP2
+    ∀ (f : Polynomial (FpVal P)), f.Monic → 0 < f.natDegree →
+      ∀ x y, QuotientReduction.hornerLoop f (QuotientReduction.pad f y) f.natDegree
+          (QuotientReduction.pad f x) =
+        QuotientReduction.foldDown f (f.natDegree - 1)
+          (QuotientReduction.pad f x * QuotientReduction.pad f y) := by
+  letI := FpField.FpVal.instField hP hP2
+  exact fun f hf hr => QuotientReduction.hornerLoop_eq_foldDown hf hr
+
+/-- **L2.5 at the extracted base carrier.** Inversion has one reduced answer.
+
+Production path: `euclid_inverse`
+(`crates/gf2-core/src/gfpn/quotient.rs:950`) over an `Fp<P>` base.
+
+Refinement anchors: `sampled_nonzero_elements_have_multiplicative_inverses`
+(`crates/gf2-core/src/gfpn/quotient.rs:2267`) and the `inv` case of
+`assert_forms_agree` (`:2354`). -/
+theorem fpVal_inverse (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
+    letI := FpField.FpVal.instField hP hP2
+    ∀ (f : Polynomial (FpVal P)), f.Monic → Irreducible f → ∀ v, ¬ f ∣ v →
+      ∃! u : Polynomial (FpVal P), u.degree < f.degree ∧ AdjoinRoot.mk f (u * v) = 1 := by
+  letI := FpField.FpVal.instField hP hP2
+  exact fun f hf hirr _ hv => QuotientReduction.existsUnique_inverse_residue hf hirr hv
+
+/-- **L2.6 at the extracted base carrier.** The quotient has order `P ^ r`, and
+it is a field exactly when the modulus is irreducible.
+
+Production path: `QuotientField::order`
+(`crates/gf2-core/src/gfpn/quotient.rs:491`), `QuotientField::new` (`:251`) and
+`ConstQuotient::extension_unchecked` (`:1511`) over an `Fp<P>` base.
+
+Refinement anchors: `validating_construction_rejects_reducible_modulus`
+(`crates/gf2-core/src/gfpn/quotient.rs:2051`),
+`const_validation_rejects_a_reducible_declaration` (`:2387`) and
+`test_const_quotient_gf125_const_field_axioms`
+(`crates/gf2-core/src/field/axiom_tests.rs:1826`). -/
+theorem fpVal_field_structure (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
+    letI := FpField.FpVal.instField hP hP2
+    ∀ (f : Polynomial (FpVal P)), f.Monic → 0 < f.natDegree →
+      Nat.card (AdjoinRoot f) = P.val ^ f.natDegree ∧
+      (Irreducible f ↔ ∀ z : AdjoinRoot f, z ≠ 0 → IsUnit z) := by
+  letI := FpField.FpVal.instField hP hP2
+  haveI := finite_fpVal hP hP2
+  refine fun f hf hr => ⟨?_, QuotientReduction.irreducible_iff_forall_isUnit hf hr⟩
+  rw [QuotientReduction.card_adjoinRoot hf, card_fpVal hP hP2]
+
+/-- **L2.8 at the extracted base carrier.** The extracted base has absolute
+degree one, so the quotient's absolute degree is its relative degree `r` and
+`QuotientElement::frobenius` (`crates/gf2-core/src/gfpn/quotient.rs:865`) may
+reduce `k` modulo `r`.
+
+Refinement anchor: `frobenius_has_absolute_and_relative_orders`
+(`crates/gf2-core/src/gfpn/quotient.rs:2147`). -/
+theorem fpVal_frobenius_period (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
+    letI := FpField.FpVal.instField hP hP2
+    ∀ (f : Polynomial (FpVal P)), f.Monic → ∀ hirr : Irreducible f,
+      ∀ (k : ℕ) (x : AdjoinRoot f),
+        letI := QuotientReduction.adjoinRootField hirr
+        (fun y : AdjoinRoot f => y ^ P.val)^[k] x =
+          (fun y : AdjoinRoot f => y ^ P.val)^[k % f.natDegree] x := by
+  letI := FpField.FpVal.instField hP hP2
+  haveI := finite_fpVal hP hP2
+  intro f hf hirr k x
+  have hcard : Nat.card (FpVal P) = P.val ^ 1 := by rw [pow_one]; exact card_fpVal hP hP2
+  have := QuotientReduction.adjoinRoot_frobenius_iterate_mod hf hirr hcard k x
+  rwa [Nat.one_mul] at this
+
+end ExtractedQuotient
+
 end
