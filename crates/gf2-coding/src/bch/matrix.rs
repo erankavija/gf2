@@ -798,6 +798,7 @@ mod tests {
     use gf2_core::field::modulus_select::select_modulus;
     use gf2_core::field::ConstField;
     use gf2_core::field::FieldPoly;
+    use gf2_core::field::FieldVec;
     use gf2_core::gf2m::Gf2mField;
     use gf2_core::gfp::Fp;
     use gf2_core::gfpn::{QuotientElement, QuotientField};
@@ -899,6 +900,140 @@ mod tests {
             designed_distance: DesignedDistance::try_from(5).expect("positive distance"),
         })
         .expect("a valid dense binary BCH code")
+    }
+
+    /// A row-major representation standing in for one an out-of-tree crate
+    /// defines: it implements the storage contract and nothing else.
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    struct RowMajorMatrix<F> {
+        cells: Vec<Vec<F>>,
+        cols: usize,
+    }
+
+    impl<F> SymbolMatrix<F> for RowMajorMatrix<F>
+    where
+        F: FieldIdentity + 'static,
+    {
+        fn zeroed(rows: usize, cols: usize, zero: &F) -> Self {
+            Self {
+                cells: vec![vec![zero.clone(); cols]; rows],
+                cols,
+            }
+        }
+
+        fn rows(&self) -> usize {
+            self.cells.len()
+        }
+
+        fn cols(&self) -> usize {
+            self.cols
+        }
+
+        fn get(&self, row: usize, col: usize) -> Option<F> {
+            self.cells
+                .get(row)
+                .and_then(|values| values.get(col))
+                .cloned()
+        }
+
+        fn set(&mut self, row: usize, col: usize, value: F) -> Result<(), CodeError> {
+            let rows = self.cells.len();
+            let values = self.cells.get_mut(row).ok_or(CodeError::IndexOutOfBounds {
+                index: row,
+                length: rows,
+            })?;
+            let cols = values.len();
+            let cell = values.get_mut(col).ok_or(CodeError::IndexOutOfBounds {
+                index: col,
+                length: cols,
+            })?;
+            *cell = value;
+            Ok(())
+        }
+    }
+
+    /// The whole opt-in: every canonical matrix this representation exposes
+    /// comes from [`MatrixFill`]'s provided bodies.
+    impl<F> MatrixFill<F> for RowMajorMatrix<F> where F: FieldIdentity + 'static {}
+
+    /// A code whose matrices are the opting-in representation's.
+    type RowMajorBchCode<X> = BchCode<
+        X,
+        FieldVec<<X as FieldExtension>::Base>,
+        RowMajorMatrix<<X as FieldExtension>::Base>,
+    >;
+
+    fn row_major_code<X>(extension: X, designed_distance: u64) -> RowMajorBchCode<X>
+    where
+        X: FieldExtension,
+        X::Base: 'static,
+    {
+        BchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(designed_distance)
+                .expect("positive distance"),
+        })
+        .expect("a valid BCH code in the opting-in representation")
+    }
+
+    /// Asserts that two representations hold the same shape and the same
+    /// coordinate at every position.
+    fn assert_same_coordinates<F, A, B>(left: &A, right: &B)
+    where
+        F: FieldIdentity,
+        A: SymbolMatrix<F>,
+        B: SymbolMatrix<F>,
+    {
+        assert_eq!(
+            (left.rows(), left.cols()),
+            (right.rows(), right.cols()),
+            "matrix shapes"
+        );
+        for row in 0..left.rows() {
+            for col in 0..left.cols() {
+                assert_eq!(
+                    left.get(row, col),
+                    right.get(row, col),
+                    "coordinate ({row}, {col})"
+                );
+            }
+        }
+    }
+
+    /// Asserts that the opting-in representation's canonical matrices carry
+    /// the same coordinates as the field-generic representation's.
+    fn assert_agrees_with_field_generic<X>(opting_in: &RowMajorBchCode<X>, dense: &DenseBchCode<X>)
+    where
+        X: FieldExtension,
+        X::Base: 'static,
+        FieldVec<X::Base>: SystematicKernel<X::Base>,
+    {
+        assert_eq!((opting_in.k(), opting_in.n()), (dense.k(), dense.n()));
+        assert_same_coordinates(
+            &opting_in.generator_matrix().expect("opting-in generator"),
+            &dense.generator_matrix().expect("field-generic generator"),
+        );
+        assert_same_coordinates(
+            &opting_in.parity_check_matrix().expect("opting-in parity"),
+            &dense.parity_check_matrix().expect("field-generic parity"),
+        );
+    }
+
+    /// Asserts that the opting-in representation's canonical matrices carry
+    /// the same coordinates as the packed binary representation's.
+    fn assert_agrees_with_packed(
+        opting_in: &RowMajorBchCode<BinaryPrimeExt>,
+        packed: &BinaryBchCode,
+    ) {
+        assert_eq!((opting_in.k(), opting_in.n()), (packed.k(), packed.n()));
+        assert_same_coordinates(
+            &opting_in.generator_matrix().expect("opting-in generator"),
+            &packed.generator_matrix().expect("packed generator"),
+        );
+        assert_same_coordinates(
+            &opting_in.parity_check_matrix().expect("opting-in parity"),
+            &packed.parity_check_matrix().expect("packed parity"),
+        );
     }
 
     /// Asserts that row `i` of `generator` is the codeword the default-layout
@@ -1244,6 +1379,85 @@ mod tests {
             let dense = primitive_dense(degree, modulus, distance);
             assert_eq!((dense.k(), dense.n()), (dimension, length));
             assert_matrix_contract(&dense);
+        }
+    }
+
+    /// A representation that carries only the storage contract and an empty
+    /// materialization opt-in reaches both canonical matrices, and its
+    /// matrices are the canonical representations' coordinate by coordinate.
+    #[test]
+    fn an_opting_in_representation_follows_the_contract_over_every_base_field() {
+        let binary = row_major_code(binary_extension(), 5);
+        assert_matrix_contract(&binary);
+        assert_agrees_with_field_generic(&binary, &binary_code_as_dense());
+        assert_agrees_with_packed(&binary, &binary_code());
+
+        let gf5 = row_major_code(gf25(), 5);
+        assert_matrix_contract(&gf5);
+        assert_agrees_with_field_generic(&gf5, &gf5_code(5));
+
+        let gf81 = row_major_code(gf81_over_gf9(), 4);
+        assert_matrix_contract(&gf81);
+        assert_agrees_with_field_generic(&gf81, &gf81_code(4));
+    }
+
+    /// The opting-in representation over the two boundary codes: the
+    /// full-space code, whose generator is the identity and whose parity
+    /// check is empty, and the zero-dimensional code, the reverse.
+    #[test]
+    fn an_opting_in_representation_follows_the_contract_at_both_boundaries() {
+        let full_space = row_major_code(binary_extension(), 1);
+        assert_eq!((full_space.k(), full_space.n()), (15, 15));
+        assert_matrix_contract(&full_space);
+        assert_agrees_with_packed(&full_space, &binary_full_space());
+
+        let zero_dimensional = row_major_code(binary_extension(), 16);
+        assert_eq!((zero_dimensional.k(), zero_dimensional.n()), (0, 15));
+        assert_matrix_contract(&zero_dimensional);
+        assert_agrees_with_packed(&zero_dimensional, &binary_zero_dimensional());
+
+        let gf5_full_space = row_major_code(gf25(), 1);
+        assert_matrix_contract(&gf5_full_space);
+        assert_agrees_with_field_generic(&gf5_full_space, &gf5_code(1));
+
+        let gf81_full_space = row_major_code(gf81_over_gf9(), 1);
+        assert_matrix_contract(&gf81_full_space);
+        assert_agrees_with_field_generic(&gf81_full_space, &gf81_code(1));
+    }
+
+    /// The provided bodies and the field-generic override write the same
+    /// generator and the same parity check on the workload contract's binary
+    /// rows B1, B2 and B3.
+    ///
+    /// Calling both through the same code isolates the two materialization
+    /// paths from the access paths [`assert_matrix_contract`] exercises.
+    #[test]
+    fn the_provided_bodies_and_the_field_generic_override_agree_on_the_workload_rows() {
+        const ROWS: &[(usize, u64, u64, usize, usize)] = &[
+            (4, 0b1_0011, 7, 5, 15),
+            (7, 0b1000_0011, 21, 64, 127),
+            (8, 0b1_0001_1101, 9, 223, 255),
+        ];
+        for &(degree, modulus, distance, dimension, length) in ROWS {
+            let code = primitive_dense(degree, modulus, distance);
+            assert_eq!((code.k(), code.n()), (dimension, length));
+            let zero = code.symbol_zero();
+            let redundancy = code.redundancy();
+
+            let mut provided: RowMajorMatrix<Fp<2>> =
+                SymbolMatrix::zeroed(dimension, length, &zero);
+            provided.fill_generator(code.generator(), dimension, &zero);
+            let mut overridden: FieldMatrix<Fp<2>> = SymbolMatrix::zeroed(dimension, length, &zero);
+            overridden.fill_generator(code.generator(), dimension, &zero);
+            assert_same_coordinates(&provided, &overridden);
+
+            let mut provided: RowMajorMatrix<Fp<2>> =
+                SymbolMatrix::zeroed(redundancy, length, &zero);
+            provided.fill_parity_check(code.generator(), dimension, &zero);
+            let mut overridden: FieldMatrix<Fp<2>> =
+                SymbolMatrix::zeroed(redundancy, length, &zero);
+            overridden.fill_parity_check(code.generator(), dimension, &zero);
+            assert_same_coordinates(&provided, &overridden);
         }
     }
 
