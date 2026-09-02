@@ -1,17 +1,34 @@
-//! Reference generator and parity-check matrix materialization for BCH codes.
+//! Generator and parity-check matrix materialization for BCH codes.
 //!
-//! The construction uses the coefficient-vector convention from [`crate::bch::spec`]:
-//! coordinate `i` is the coefficient of `x^i`. The generator row at message
-//! coordinate `i` is therefore the coefficient vector of `x^i g(x)`. The
-//! parity-check rows are the non-wrapping shifts of the reversed quotient
-//! `((x^n - 1) / g(x))^*`. This is the dense, full-rank reference form; it is
-//! intentionally separate from encoding and does not retain an implicit
-//! matrix cache.
+//! Both matrices are written in the default user layout,
+//! [`MessageParityAscending`](crate::bch::encode::SystematicLayout::MessageParityAscending):
+//! user coordinate $u$ carries the coefficient of $x^{(u + n - k) \bmod n}$,
+//! so the first $k$ coordinates carry the message in ascending degree and the
+//! remaining $n - k$ carry the parity in ascending degree. Row $i$ of the
+//! generator matrix is the codeword the systematic encoder writes for message
+//! basis vector $i$, so the generator is $G = [\,I_k \mid P\,]$ and
+//! [`is_systematic`](GeneratorMatrixAccess::is_systematic) holds. The
+//! parity-check matrix is $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$: it has full
+//! row rank $n - k$ and satisfies $G H^{\mathsf T} = 0$.
 //!
-//! [`CachedMatrices`] is the explicit opt-in cache for callers that need to
-//! reuse these reference matrices. It caches successful generator and
-//! parity-check materializations independently, while its allocating access
-//! still returns a fresh matrix on every call.
+//! That layout is the matrix contract rather than a per-call option.
+//! [`MessageParityDescending`](crate::bch::encode::SystematicLayout::MessageParityDescending)
+//! selects a transmission order for an encode call, and no matrix is
+//! materialized under it; a consumer needing another coordinate order composes
+//! these matrices with
+//! [`SystematicPlan::to_coordinate_map`](crate::bch::encode::SystematicPlan::to_coordinate_map).
+//!
+//! Materialization holds no implicit cache. [`CachedMatrices`] is the explicit
+//! opt-in cache for callers that reuse these matrices. It caches successful
+//! generator and parity-check materializations independently, while its
+//! allocating access still returns a fresh matrix on every call.
+//!
+//! # Complexity
+//!
+//! Both writers encode the $k$ message basis vectors, so each costs $O(k^2 r)$
+//! base-field multiply-adds in the field-generic representation and
+//! $O(k^2 \lceil r/64 \rceil)$ word operations in the packed binary one, for
+//! $r = n - k$, over the $O(kn)$ cell writes the output shape requires.
 //!
 //! # Examples
 //!
@@ -33,18 +50,26 @@
 //!
 //! assert_eq!(generator.rows(), cached.k());
 //! assert_eq!(generator.cols(), cached.n());
+//! assert!(cached.is_systematic().unwrap());
+//! // The first k columns are the identity, so row i carries message bit i.
+//! for row in 0..cached.k() {
+//!     for col in 0..cached.k() {
+//!         assert_eq!(generator.get(row, col), row == col);
+//!     }
+//! }
 //! ```
 
 use std::any::Any;
 use std::sync::Mutex;
 
 use gf2_core::field::extension::{FieldExtension, FieldIdentity};
-use gf2_core::field::{FieldPoly, FiniteField};
+use gf2_core::field::FiniteField;
 
+use crate::bch::encode::SystematicKernel;
 use crate::bch::spec::BchCode;
 use crate::error::CodeError;
 use crate::traits::block::{
-    BlockCode, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix, SymbolSequence,
+    BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
 };
 
 /// Ensures that a caller-provided matrix has the shape required by a code.
@@ -84,133 +109,114 @@ where
     Ok(())
 }
 
-/// Writes the coefficient-vector generator matrix for `generator` into `out`.
-fn write_generator<F, M>(
-    generator: &FieldPoly<F>,
-    rows: usize,
-    cols: usize,
-    out: &mut M,
-    zero: &F,
+/// Encodes each message basis vector in turn and hands its row index and
+/// codeword to `write_row`.
+///
+/// This is the definition the matrix contract states: row $i$ of the generator
+/// is the codeword of message basis vector $i$ under the default layout. The
+/// parity check reads the same walk transposed, so both writers share it. The
+/// message and codeword buffers are allocated once and reused for every row.
+fn for_each_generator_row<X, S, M>(
+    code: &BchCode<X, S, M>,
+    mut write_row: impl FnMut(usize, &S) -> Result<(), CodeError>,
 ) -> Result<(), CodeError>
 where
-    F: FieldIdentity,
-    M: SymbolMatrix<F>,
+    X: FieldExtension,
+    S: SystematicKernel<X::Base>,
+    M: SymbolMatrix<X::Base>,
 {
-    check_shape(out, rows, cols)?;
-    let degree = generator
-        .degree()
-        .expect("a constructed BCH code has a nonzero generator");
-
-    for row in 0..rows {
-        for col in 0..cols {
-            let value = if col >= row {
-                let offset = col - row;
-                if offset <= degree {
-                    generator.coeff(offset)
-                } else {
-                    zero.clone()
-                }
-            } else {
-                zero.clone()
-            };
-            out.set(row, col, value)?;
-        }
+    let zero = code.symbol_zero();
+    let one = zero.one_like();
+    let mut message = S::zeroed(code.k(), &zero);
+    let mut codeword = S::zeroed(code.n(), &zero);
+    for row in 0..code.k() {
+        message.set(row, one.clone())?;
+        code.encode_into(&message, &mut codeword)?;
+        message.set(row, zero.clone())?;
+        write_row(row, &codeword)?;
     }
     Ok(())
 }
 
-/// Writes the full-rank parity-check matrix associated with `generator`.
-fn write_parity_check<F, M>(
-    generator: &FieldPoly<F>,
-    rows: usize,
-    cols: usize,
-    out: &mut M,
-    zero: &F,
-) -> Result<(), CodeError>
+/// Writes the systematic generator matrix of `code` into `out`.
+fn write_generator<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>
 where
-    F: FieldIdentity,
-    M: SymbolMatrix<F>,
+    X: FieldExtension,
+    S: SystematicKernel<X::Base>,
+    M: SymbolMatrix<X::Base>,
 {
-    check_shape(out, rows, cols)?;
-    if rows == 0 {
-        return Ok(());
-    }
-
-    let generator_degree = generator
-        .degree()
-        .expect("a constructed BCH code has a nonzero generator");
-    debug_assert_eq!(generator_degree, rows);
-    let quotient_degree = cols - rows;
-
-    // Solve g(x)h(x) = x^n - 1 from the highest coefficient down. At
-    // reversed offset `d`, h[k - d] depends only on reversed offsets below
-    // it; those values are kept in row zero of the caller-owned output while
-    // the remaining rows are still untouched. The leading coefficient of g
-    // is one, so no inverse or temporary quotient is needed.
-    for reversed_offset in 0..=quotient_degree {
-        let mut value = if reversed_offset == 0 {
-            zero.one_like()
-        } else {
-            zero.clone()
-        };
-        let first_generator_offset = rows.saturating_sub(reversed_offset);
-        for generator_offset in first_generator_offset..rows {
-            let known_offset = reversed_offset + generator_offset - rows;
-            let known = out
-                .get(0, known_offset)
-                .expect("the quotient prefix is stored in row zero");
-            value = value - generator.coeff(generator_offset) * known;
+    let length = code.n();
+    check_shape(out, code.k(), length)?;
+    for_each_generator_row(code, |row, codeword| {
+        for col in 0..length {
+            let value = codeword
+                .get(col)
+                .expect("an encoded codeword has the code's length");
+            out.set(row, col, value)?;
         }
-        out.set(0, reversed_offset, value)?;
-    }
+        Ok(())
+    })
+}
 
-    for col in quotient_degree + 1..cols {
-        out.set(0, col, zero.clone())?;
-    }
-    for row in 1..rows {
-        for col in 0..cols {
-            let value = if col >= row && col - row <= quotient_degree {
-                out.get(0, col - row)
-                    .expect("the reversed quotient is stored in row zero")
+/// Writes the full-row-rank parity-check matrix of `code` into `out`.
+///
+/// The parity block of generator row $i$ is column $i$ of $-H$, so the walk
+/// over the generator rows scatters each row's parity symbols down one column
+/// of the output and no generator matrix is materialized.
+fn write_parity_check<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>
+where
+    X: FieldExtension,
+    S: SystematicKernel<X::Base>,
+    M: SymbolMatrix<X::Base>,
+{
+    let dimension = code.k();
+    let length = code.n();
+    let redundancy = code.redundancy();
+    check_shape(out, redundancy, length)?;
+
+    let zero = code.symbol_zero();
+    let one = zero.one_like();
+    for row in 0..redundancy {
+        for col in dimension..length {
+            let value = if col - dimension == row {
+                one.clone()
             } else {
                 zero.clone()
             };
             out.set(row, col, value)?;
         }
     }
-    Ok(())
+
+    for_each_generator_row(code, |col, codeword| {
+        for row in 0..redundancy {
+            let parity = codeword
+                .get(dimension + row)
+                .expect("a codeword carries the parity above its message coordinates");
+            out.set(row, col, -parity)?;
+        }
+        Ok(())
+    })
 }
 
 impl<X, S, M> GeneratorMatrixAccess for BchCode<X, S, M>
 where
     X: FieldExtension,
-    S: SymbolSequence<X::Base>,
+    S: SystematicKernel<X::Base>,
     M: SymbolMatrix<X::Base>,
 {
     type GeneratorMatrix = M;
 
     fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {
-        write_generator(
-            self.generator(),
-            self.k(),
-            self.n(),
-            out,
-            &self.symbol_zero(),
-        )
+        write_generator(self, out)
     }
 
+    /// Reports `true` without materializing anything.
+    ///
+    /// The materialization writes $G = [\,I_k \mid P\,]$ in the default user
+    /// layout, so the message coordinates are the columns $0$ to $k - 1$ by
+    /// construction. This is the equivalent cheap fact the trait admits in
+    /// place of a materialize-and-inspect answer.
     fn is_systematic(&self) -> Result<bool, CodeError> {
-        let generator = self.generator_matrix()?;
-        for row in 0..self.k() {
-            for col in 0..self.k() {
-                let value = generator
-                    .get(row, col)
-                    .expect("the materialized generator has its declared shape");
-                if (row == col && !value.is_one()) || (row != col && !value.is_zero()) {
-                    return Ok(false);
-                }
-            }
-        }
         Ok(true)
     }
 }
@@ -218,19 +224,13 @@ where
 impl<X, S, M> ParityCheckMatrixAccess for BchCode<X, S, M>
 where
     X: FieldExtension,
-    S: SymbolSequence<X::Base>,
+    S: SystematicKernel<X::Base>,
     M: SymbolMatrix<X::Base>,
 {
     type ParityCheckMatrix = M;
 
     fn parity_check_matrix_into(&self, out: &mut Self::ParityCheckMatrix) -> Result<(), CodeError> {
-        write_parity_check(
-            self.generator(),
-            self.redundancy(),
-            self.n(),
-            out,
-            &self.symbol_zero(),
-        )
+        write_parity_check(self, out)
     }
 }
 
@@ -362,8 +362,11 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
 
-    use crate::bch::spec::{BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance};
-    use crate::traits::block::{BlockCode, GeneratorMatrixAccess, ParityCheckMatrixAccess};
+    use crate::bch::encode::SystematicLayout;
+    use crate::bch::spec::{
+        BchLength, BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent,
+        RootSelection,
+    };
     use gf2_core::field::extension::BinaryPrimeExt;
     use gf2_core::field::matrix::FieldMatrix;
     use gf2_core::field::modulus_select::select_modulus;
@@ -386,6 +389,38 @@ mod tests {
         .expect("a valid binary BCH code")
     }
 
+    /// The $\delta = 1$ boundary: no roots, so $g = 1$, $k = n$ and the
+    /// parity check is empty.
+    fn binary_full_space() -> BinaryBchCode {
+        BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: binary_extension(),
+            designed_distance: DesignedDistance::try_from(1).expect("positive distance"),
+        })
+        .expect("the full-space boundary code")
+    }
+
+    /// The $\delta = n + 1$ boundary: the defining set closes over every
+    /// exponent, so $g = x^n - 1$, $k = 0$ and the generator is empty.
+    fn binary_zero_dimensional() -> BinaryBchCode {
+        BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: binary_extension(),
+            designed_distance: DesignedDistance::try_from(16).expect("positive distance"),
+        })
+        .expect("the zero-dimensional boundary code")
+    }
+
+    /// A primitive narrow-sense binary code over `GF(2^degree)`.
+    fn primitive_binary(degree: usize, modulus: u64, designed_distance: u64) -> BinaryBchCode {
+        let extension = BinaryPrimeExt::new(Gf2mField::new(degree, modulus))
+            .expect("a primitive polynomial of the requested degree");
+        BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(designed_distance)
+                .expect("positive distance"),
+        })
+        .expect("a valid primitive narrow-sense code")
+    }
+
     fn gf25() -> QuotientField<Fp<5>> {
         let modulus = FieldPoly::new(vec![Fp::<5>::new(1), Fp::new(1), Fp::new(1)]);
         QuotientField::new(Fp::<5>::zero(), modulus).expect("a valid GF(25)")
@@ -398,6 +433,24 @@ mod tests {
         QuotientField::new(gf9.ext_zero(), gf81_modulus).expect("GF(81) over GF(9)")
     }
 
+    fn gf5_code(designed_distance: u64) -> DenseBchCode<QuotientField<Fp<5>>> {
+        DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: gf25(),
+            designed_distance: DesignedDistance::try_from(designed_distance)
+                .expect("positive distance"),
+        })
+        .expect("a valid GF(5) BCH code")
+    }
+
+    fn gf81_code(designed_distance: u64) -> DenseBchCode<QuotientField<QuotientElement<Fp<3>>>> {
+        DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: gf81_over_gf9(),
+            designed_distance: DesignedDistance::try_from(designed_distance)
+                .expect("positive distance"),
+        })
+        .expect("a valid GF(9) BCH code")
+    }
+
     fn binary_code_as_dense() -> DenseBchCode<BinaryPrimeExt> {
         DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
             extension: binary_extension(),
@@ -406,87 +459,77 @@ mod tests {
         .expect("a valid dense binary BCH code")
     }
 
-    fn expected_generator<F: FieldIdentity>(
-        generator: &FieldPoly<F>,
-        rows: usize,
-        cols: usize,
-        zero: &F,
-    ) -> Vec<Vec<F>> {
-        let degree = generator.degree().expect("nonzero generator");
-        (0..rows)
-            .map(|row| {
-                (0..cols)
-                    .map(|col| {
-                        if col >= row && col - row <= degree {
-                            generator.coeff(col - row)
-                        } else {
-                            zero.clone()
-                        }
-                    })
-                    .collect()
-            })
-            .collect()
-    }
-
-    fn expected_parity<F: FieldIdentity>(
-        generator: &FieldPoly<F>,
-        rows: usize,
-        cols: usize,
-        zero: &F,
-    ) -> Vec<Vec<F>> {
-        // Keep this polynomial construction independent from the production
-        // helper so the expected matrix remains a direct oracle.
-        let mut cyclic_coefficients = vec![zero.zero_like(); cols + 1];
-        cyclic_coefficients[0] = -zero.one_like();
-        cyclic_coefficients[cols] = zero.one_like();
-        let cyclic = FieldPoly::new(cyclic_coefficients);
-        let (quotient, remainder) = cyclic.div_rem(generator);
-        assert!(remainder.is_zero());
-        let degree = quotient.degree().expect("nonzero quotient");
-        (0..rows)
-            .map(|row| {
-                (0..cols)
-                    .map(|col| {
-                        if col >= row && col - row <= degree {
-                            quotient.coeff(degree - (col - row))
-                        } else {
-                            zero.clone()
-                        }
-                    })
-                    .collect()
-            })
-            .collect()
-    }
-
-    fn assert_matrix_matches<F, M>(matrix: &M, expected: &[Vec<F>])
+    /// Asserts that row `i` of `generator` is the codeword the default-layout
+    /// systematic encoder writes for message basis vector `i`.
+    fn assert_rows_encode_basis_vectors<X, S, M>(code: &BchCode<X, S, M>, generator: &M)
     where
-        F: FieldIdentity,
-        M: SymbolMatrix<F>,
+        X: FieldExtension,
+        S: SystematicKernel<X::Base>,
+        M: SymbolMatrix<X::Base>,
     {
-        assert_eq!(matrix.rows(), expected.len());
-        assert_eq!(matrix.cols(), expected.first().map_or(0, Vec::len));
-        for (row, values) in expected.iter().enumerate() {
-            for (col, expected_value) in values.iter().enumerate() {
-                assert_eq!(matrix.get(row, col), Some(expected_value.clone()));
+        let zero = code.symbol_zero();
+        let one = zero.one_like();
+        for row in 0..code.k() {
+            let mut message = S::zeroed(code.k(), &zero);
+            message.set(row, one.clone()).expect("a row below k");
+            let codeword = code.encode(&message).expect("a basis vector encodes");
+            for col in 0..code.n() {
+                assert_eq!(
+                    generator.get(row, col),
+                    codeword.get(col),
+                    "generator row {row}, column {col}"
+                );
             }
         }
     }
 
-    fn assert_rows_are_codewords<F, M>(generator_matrix: &M, generator: &FieldPoly<F>)
+    /// Asserts that the first `k` columns of `generator` are the identity.
+    fn assert_identity_prefix<X, S, M>(code: &BchCode<X, S, M>, generator: &M)
     where
-        F: FieldIdentity,
-        M: SymbolMatrix<F>,
+        X: FieldExtension,
+        S: SystematicKernel<X::Base>,
+        M: SymbolMatrix<X::Base>,
     {
-        for row in 0..generator_matrix.rows() {
-            let coefficients = (0..generator_matrix.cols())
-                .map(|col| {
-                    generator_matrix
-                        .get(row, col)
-                        .expect("valid matrix coordinate")
-                })
-                .collect();
+        for row in 0..code.k() {
+            for col in 0..code.k() {
+                let value = generator
+                    .get(row, col)
+                    .expect("the materialized generator has its declared shape");
+                if row == col {
+                    assert!(value.is_one(), "generator diagonal at {row}");
+                } else {
+                    assert!(value.is_zero(), "generator off-diagonal at ({row}, {col})");
+                }
+            }
+        }
+    }
+
+    /// Asserts that every row of `matrix`, read back through the layout into
+    /// internal coordinates, is a multiple of the generator polynomial.
+    ///
+    /// This is the polynomial-form membership oracle: it decides code
+    /// membership without consulting the encoder the matrix is defined by.
+    fn assert_rows_are_codewords<X, S, M>(code: &BchCode<X, S, M>, matrix: &M)
+    where
+        X: FieldExtension,
+        S: SystematicKernel<X::Base>,
+        M: SymbolMatrix<X::Base>,
+    {
+        let plan = code.systematic_plan(SystematicLayout::default());
+        let zero = code.symbol_zero();
+        for row in 0..matrix.rows() {
+            let mut coefficients = vec![zero.clone(); code.n()];
+            for user in 0..code.n() {
+                let internal = plan
+                    .internal_coordinate(user)
+                    .expect("a user coordinate below n");
+                coefficients[internal] = matrix.get(row, user).expect("valid matrix coordinate");
+            }
             let row_polynomial = FieldPoly::new(coefficients);
-            assert!(row_polynomial.div_rem(generator).1.is_zero());
+            assert!(
+                row_polynomial.div_rem(code.generator()).1.is_zero(),
+                "row {row} is not a multiple of the generator"
+            );
         }
     }
 
@@ -552,75 +595,170 @@ mod tests {
         }
     }
 
-    #[test]
-    fn packed_binary_materialization_matches_polynomial_references() {
-        let code = binary_code();
+    /// Checks the whole matrix contract of one code over the caller-buffer,
+    /// allocating, and explicit-cache access paths.
+    fn assert_matrix_contract<X, S, M>(code: &BchCode<X, S, M>)
+    where
+        X: FieldExtension,
+        S: SystematicKernel<X::Base>,
+        M: SymbolMatrix<X::Base> + Send + Sync,
+        BchCode<X, S, M>: Clone,
+    {
+        let zero = code.symbol_zero();
         let generator = code.generator_matrix().expect("generator materialization");
         let parity = code.parity_check_matrix().expect("parity materialization");
-        let zero = code.symbol_zero();
 
-        assert_matrix_matches(
-            &generator,
-            &expected_generator(code.generator(), code.k(), code.n(), &zero),
+        assert_eq!((generator.rows(), generator.cols()), (code.k(), code.n()));
+        assert_eq!(
+            (parity.rows(), parity.cols()),
+            (code.redundancy(), code.n())
         );
-        assert_matrix_matches(
-            &parity,
-            &expected_parity(code.generator(), code.redundancy(), code.n(), &zero),
-        );
-        assert_rows_are_codewords(&generator, code.generator());
-        assert_full_row_rank(&generator);
+        assert_eq!(code.parity_check_rows(), code.n() - code.k());
+
+        assert_rows_encode_basis_vectors(code, &generator);
+        assert_identity_prefix(code, &generator);
+        assert!(code.is_systematic().expect("a systematic report"));
+        assert_rows_are_codewords(code, &generator);
         assert_full_row_rank(&parity);
         assert_orthogonal(&generator, &parity, &zero);
+
+        let mut generator_buffer = M::zeroed(code.k(), code.n(), &zero);
+        code.generator_matrix_into(&mut generator_buffer)
+            .expect("caller generator buffer");
+        assert_eq!(generator_buffer, generator);
+
+        let mut parity_buffer = M::zeroed(code.redundancy(), code.n(), &zero);
+        code.parity_check_matrix_into(&mut parity_buffer)
+            .expect("caller parity buffer");
+        assert_eq!(parity_buffer, parity);
+
+        let cached = CachedMatrices::new(code.clone());
+        assert_eq!(
+            cached.generator_matrix().expect("cached generator"),
+            generator
+        );
+        assert_eq!(cached.parity_check_matrix().expect("cached parity"), parity);
+        let mut cached_buffer = M::zeroed(code.k(), code.n(), &zero);
+        cached
+            .generator_matrix_into(&mut cached_buffer)
+            .expect("cached generator caller buffer");
+        assert_eq!(cached_buffer, generator);
+        let mut cached_parity_buffer = M::zeroed(code.redundancy(), code.n(), &zero);
+        cached
+            .parity_check_matrix_into(&mut cached_parity_buffer)
+            .expect("cached parity caller buffer");
+        assert_eq!(cached_parity_buffer, parity);
     }
 
     #[test]
-    fn gf5_materialization_has_full_rank_and_orthogonal_checks() {
-        let code = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
-            extension: gf25(),
+    fn packed_binary_matrices_follow_the_user_layout_contract() {
+        assert_matrix_contract(&binary_code());
+    }
+
+    #[test]
+    fn dense_binary_matrices_follow_the_user_layout_contract() {
+        assert_matrix_contract(&binary_code_as_dense());
+    }
+
+    #[test]
+    fn gf5_matrices_follow_the_user_layout_contract() {
+        assert_matrix_contract(&gf5_code(5));
+    }
+
+    #[test]
+    fn quotient_base_matrices_follow_the_user_layout_contract() {
+        assert_matrix_contract(&gf81_code(4));
+    }
+
+    #[test]
+    fn full_space_boundary_codes_materialize_an_identity_generator() {
+        let packed = binary_full_space();
+        assert_eq!((packed.k(), packed.n()), (15, 15));
+        assert_eq!(packed.redundancy(), 0);
+        assert_matrix_contract(&packed);
+
+        let generator = packed.generator_matrix().expect("full-space generator");
+        assert_eq!(generator, BitMatrix::identity(15));
+        let parity = packed.parity_check_matrix().expect("full-space parity");
+        assert_eq!((parity.rows(), parity.cols()), (0, 15));
+
+        assert_matrix_contract(&gf5_code(1));
+        assert_matrix_contract(&gf81_code(1));
+    }
+
+    #[test]
+    fn zero_dimensional_boundary_codes_materialize_an_identity_parity_check() {
+        let packed = binary_zero_dimensional();
+        assert_eq!((packed.k(), packed.n()), (0, 15));
+        assert_matrix_contract(&packed);
+
+        let generator = packed
+            .generator_matrix()
+            .expect("zero-dimensional generator");
+        assert_eq!((generator.rows(), generator.cols()), (0, 15));
+        let parity = packed
+            .parity_check_matrix()
+            .expect("zero-dimensional parity");
+        assert_eq!(parity, BitMatrix::identity(15));
+
+        let dense = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: binary_extension(),
+            designed_distance: DesignedDistance::try_from(16).expect("positive distance"),
+        })
+        .expect("the dense zero-dimensional boundary code");
+        assert_matrix_contract(&dense);
+    }
+
+    /// The packed word boundaries the codeword length reaches.
+    ///
+    /// A binary cyclic length is odd, so $n = 64$ is unreachable and the
+    /// column boundaries a packed row meets are $63$ and $65$.
+    #[test]
+    fn packed_word_boundary_lengths_follow_the_contract() {
+        let length_63 = primitive_binary(6, 0b100_0011, 17);
+        assert_eq!((length_63.k(), length_63.n()), (18, 63));
+        assert_matrix_contract(&length_63);
+
+        // Length 65 is a proper divisor of $|GF(2^{12})^{*}| = 4095$.
+        let extension = BinaryPrimeExt::new(Gf2mField::new(12, 0b1_0000_0101_0011))
+            .expect("a primitive polynomial of degree twelve");
+        let length_65 = BinaryBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+            extension,
+            length: BchLength::try_from(65).expect("a positive length"),
+            root: RootSelection::Canonical,
+            first_root: RootExponent::from(1),
             designed_distance: DesignedDistance::try_from(5).expect("positive distance"),
         })
-        .expect("a valid GF(5) BCH code");
-        let generator = code.generator_matrix().expect("generator materialization");
-        let parity = code.parity_check_matrix().expect("parity materialization");
-        let zero = code.symbol_zero();
-
-        assert_matrix_matches(
-            &generator,
-            &expected_generator(code.generator(), code.k(), code.n(), &zero),
-        );
-        assert_matrix_matches(
-            &parity,
-            &expected_parity(code.generator(), code.redundancy(), code.n(), &zero),
-        );
-        assert_rows_are_codewords(&generator, code.generator());
-        assert_full_row_rank(&generator);
-        assert_full_row_rank(&parity);
-        assert_orthogonal(&generator, &parity, &zero);
+        .expect("a valid non-primitive code of length 65");
+        assert_eq!((length_65.k(), length_65.n()), (41, 65));
+        assert_matrix_contract(&length_65);
     }
 
+    /// The packed word boundaries the redundancy reaches: the parity block of
+    /// a generator row, and the row count of the parity check, at $63$, $64$
+    /// and $65$.
     #[test]
-    fn quotient_base_materialization_is_field_generic() {
-        let code = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
-            extension: gf81_over_gf9(),
-            designed_distance: DesignedDistance::try_from(4).expect("positive distance"),
-        })
-        .expect("a valid GF(9) BCH code");
-        let generator = code.generator_matrix().expect("generator materialization");
-        let parity = code.parity_check_matrix().expect("parity materialization");
-        let zero = code.symbol_zero();
+    fn packed_word_boundary_redundancies_follow_the_contract() {
+        let redundancy_63 = primitive_binary(7, 0b1000_0011, 21);
+        assert_eq!((redundancy_63.k(), redundancy_63.n()), (64, 127));
+        assert_matrix_contract(&redundancy_63);
 
-        assert_matrix_matches(
-            &generator,
-            &expected_generator(code.generator(), code.k(), code.n(), &zero),
-        );
-        assert_matrix_matches(
-            &parity,
-            &expected_parity(code.generator(), code.redundancy(), code.n(), &zero),
-        );
-        assert_rows_are_codewords(&generator, code.generator());
-        assert_full_row_rank(&generator);
-        assert_full_row_rank(&parity);
-        assert_orthogonal(&generator, &parity, &zero);
+        let redundancy_64 = primitive_binary(8, 0b1_0001_1101, 17);
+        assert_eq!((redundancy_64.k(), redundancy_64.n()), (191, 255));
+        assert_matrix_contract(&redundancy_64);
+
+        // Adjoining the zero exponent to eight full cyclotomic cosets of
+        // GF(2^8) closes a defining set of 65 exponents.
+        let extension = BinaryPrimeExt::new(Gf2mField::new(8, 0b1_0001_1101))
+            .expect("a primitive polynomial of degree eight");
+        let redundancy_65 = BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+            extension,
+            first_root: RootExponent::from(0),
+            designed_distance: DesignedDistance::try_from(18).expect("positive distance"),
+        })
+        .expect("a valid primitive code with the zero exponent as first root");
+        assert_eq!((redundancy_65.k(), redundancy_65.n()), (190, 255));
+        assert_matrix_contract(&redundancy_65);
     }
 
     #[test]
@@ -685,6 +823,24 @@ mod tests {
                 actual_cols: code.n() - 1,
             })
         );
+    }
+
+    /// A dirty caller buffer is overwritten rather than merged into.
+    #[test]
+    fn caller_buffers_are_overwritten_from_any_prior_contents() {
+        let code = binary_code();
+        let generator = code.generator_matrix().expect("allocating generator");
+        let parity = code.parity_check_matrix().expect("allocating parity");
+
+        let mut dirty_generator = BitMatrix::ones(code.k(), code.n());
+        code.generator_matrix_into(&mut dirty_generator)
+            .expect("caller generator buffer");
+        assert_eq!(dirty_generator, generator);
+
+        let mut dirty_parity = BitMatrix::ones(code.redundancy(), code.n());
+        code.parity_check_matrix_into(&mut dirty_parity)
+            .expect("caller parity buffer");
+        assert_eq!(dirty_parity, parity);
     }
 
     #[derive(Clone)]
@@ -813,11 +969,7 @@ mod tests {
         let generator_calls = Arc::new(AtomicUsize::new(0));
         let parity_calls = Arc::new(AtomicUsize::new(0));
         let counted = CountingCode {
-            code: DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
-                extension: gf25(),
-                designed_distance: DesignedDistance::try_from(5).expect("positive distance"),
-            })
-            .expect("a valid GF(5) BCH code"),
+            code: gf5_code(5),
             generator_calls: generator_calls.clone(),
             parity_calls: parity_calls.clone(),
         };
