@@ -23,6 +23,8 @@ in. The run that produced the committed fixtures is recorded in
 | SageMath fixture | [`../../../crates/gf2-coding/tests/data/bch_oracle/sage.json`](../../../crates/gf2-coding/tests/data/bch_oracle/sage.json) |
 | GAP/GUAVA fixture | [`../../../crates/gf2-coding/tests/data/bch_oracle/gap.json`](../../../crates/gf2-coding/tests/data/bch_oracle/gap.json) |
 | Agreement suite | [`../../../crates/gf2-coding/tests/bch_oracle_agreement.rs`](../../../crates/gf2-coding/tests/bch_oracle_agreement.rs) |
+| Stream reader | [`../../../crates/gf2-coding/tests/test_vectors/mod.rs`](../../../crates/gf2-coding/tests/test_vectors/mod.rs) |
+| ETSI verification streams | host data under `VV001-CR35_CSP/TestPoint04` and `TestPoint05`, located by `DVB_TEST_VECTORS_PATH` |
 | Run receipt | [`oracle-receipt.md`](oracle-receipt.md) |
 
 Every number below is read out of those fixtures or out of the receipt. The
@@ -116,9 +118,10 @@ A BCH code is determined by $(q, n, b, \delta)$ **and** the primitive $n$-th
 root of unity $\alpha$: a different $\alpha$ gives a different, equivalent
 generator polynomial. gf2 takes $\alpha$ as the deterministic element of exact
 order $n$ derived by `element_of_exact_order` from the canonical generator of
-the selected splitting field. Both oracles are therefore run on gf2's $\alpha$
-rather than on the root they would pick unaided, and gf2 is never adjusted to
-match an oracle.
+the selected splitting field. Each oracle is run on gf2's $\alpha$, and gf2 is
+never adjusted to match an oracle. GUAVA's `BCHCode` also picks a root of its
+own, and the section below compares that code object against a gf2 code built
+on the root it picked.
 
 Per row the suite checks four equalities against each oracle.
 
@@ -234,26 +237,39 @@ because GAP's canonical basis is $1, Z(2^{8}), \dots, Z(2^{8})^{7}$, and is
 SageMath's `e.polynomial().list()` order because SageMath's $B$ carries the
 same modulus.
 
-## Where an oracle needed a non-default construction
+## GUAVA's two witnesses
 
-Two situations arise. Both are recorded in `gap.json` per row rather than
-worked around.
+GUAVA's `BCHCode(n, b, delta, F)` builds on `PrimitiveUnityRoot(q, n)`, which
+is $Z(q^{s})^{(q^{s}-1)/n}$, so its root is GUAVA's own choice rather than an
+argument. Each row therefore carries two GUAVA results in `gap.json`, and both
+are compared against a gf2 code.
 
-**GUAVA's default root differs from gf2's on N2 and N3.** GUAVA's `BCHCode`
-builds on `PrimitiveUnityRoot(q, n)`, which is $Z(q^{s})^{(q^{s}-1)/n}$. On the
-six other rows that element is exactly the transported gf2 root, and
-`BCHCode(n, b, delta, F)` therefore already constructs gf2's code. On N2 and
-N3 it is a different element of order $n$: index 60 against 91, and index 14
-against 16. For those rows the script runs GUAVA's own `BCHCode` generator
-derivation, the cyclotomic-coset loop over `MinimalPolynomial(F, alpha^j)`
-from `codegen.gi`, with `PrimitiveUnityRoot` replaced by the transported gf2
-root, and wraps the result with GUAVA's `GeneratorPolCode`. The fixture keeps
-both: `generator` is the polynomial at gf2's root, `bchcode_generator` is the
-one GUAVA's unaided `BCHCode` returns, and `bchcode_generator_matches` says
-whether they are equal. The suite asserts the implication that they agree
-whenever the roots agree; it holds on the five coinciding rows that also build
-a code object, and B4, the sixth coinciding row, builds none for the reason
-below.
+**The unaided `BCHCode` object.** `bchcode_generator`, `bchcode_k`,
+`bchcode_defining_set`, `bchcode_codewords_native` and
+`bchcode_codewords_systematic` come from the object `BCHCode(n, b, delta, F)`
+returns: `GeneratorPol` and `Dimension` read off that object, the defining set
+as the exponents of GUAVA's own root that its generator annihilates, and the
+codewords from `CodewordVector` on it together with the systematic reduction
+$x^{r}m(x) - (x^{r}m(x) \bmod g)$ against its generator. `guava_root_gf2_index`
+writes GUAVA's root back in gf2's coordinates, and
+`guava_bchcode_objects_agree_at_their_own_root` compares each of them with the
+gf2 code carrying that root: the corpus row itself where the two roots
+coincide, and, on N2 and N3, a `BchSpec::NonPrimitiveConsecutive` construction
+with `RootSelection::Explicit` on GUAVA's root, which is gf2 index 6 against
+$\alpha = 20$ on N2 and 13 against $\alpha = 43$ on N3.
+
+**The derivation at gf2's root.** `generator`, `defining_set`, `k` and
+`codewords_*` come from GUAVA's `BCHCode` derivation with `PrimitiveUnityRoot`
+replaced by the transported gf2 root: the cyclotomic-coset loop over
+`MinimalPolynomial(F, alpha^j)` from `codegen.gi`, wrapped by GUAVA's
+`GeneratorPolCode`. `bchcode_generator_matches` records whether the two
+witnesses derive the same generator, which they do exactly where the two roots
+coincide.
+
+The inverse of the isomorphism is validated before `guava_root_gf2_index` is
+read out of it: the script carries gf2's own $\alpha$ back through it as
+`alpha_gf2_index` and stops with an error unless that reproduces the corpus's
+`alpha`.
 
 **GUAVA cannot build a code object at the DVB-T2 mother length.** GUAVA's
 `GeneratorPolCode` reaches `GeneratorMatrixFromPoly`, which materializes the
@@ -261,24 +277,31 @@ whole generator matrix. At B4 that matrix is $65343 \times 65535$ and exhausts
 memory before any code object exists. The generator derivation inside `BCHCode`
 runs normally at that size, so the B4 row records the generator that derivation
 produces, encodes through the same cyclic-code polynomial map, and states the
-limitation in `bchcode_unavailable`. The claim that skipping the wrapper
-changes nothing is checked rather than assumed: on the seven rows where the
-wrapper does build, the fixture records in `native_encoder_cross_checked` that
-encoding a message through the GUAVA code object gives the same word as the
-polynomial map used at B4, and on the five rows where GUAVA's own root
-coincides with gf2's it records in `bchcode_generator_matches` that GUAVA's
-unaided `BCHCode` returns the generator the loop derived. GAP additionally
-verifies at B4 that the derived generator divides $x^{n} - 1$, recorded as
+limitation in `bchcode_unavailable`. `ORACLE_GAP_HEAP` sets the heap the oracle
+runs under and the receipt records the invocation it was used in. The claim
+that skipping the wrapper changes nothing is checked rather than assumed: on
+the seven rows where the wrapper does build, the fixture records in
+`native_encoder_cross_checked` that encoding a message through the GUAVA code
+object gives the same word as the polynomial map used at B4, and
+`guava_bchcode_objects_agree_at_their_own_root` checks the unaided `BCHCode`
+object on each of those seven rows. GAP additionally verifies at B4 that the
+derived generator divides $x^{n} - 1$, recorded as
 `generator_divides_x_n_minus_one`.
 
-SageMath needed no non-default construction on any row. It accepts a
+SageMath needs no non-default construction on any row. It accepts a
 `primitive_root` argument directly, and its lazy code objects handle the mother
 length without materializing a generator matrix.
 
 ## Standards vectors
 
-The in-tree DVB-T2 verification material is the ETSI EN 302 755 [Etsi2015]
-data committed under `crates/gf2-coding/src/bch/dvb_t2/`: the parameter table
+Two authoritative ETSI sources are wired in: the committed EN 302 755
+[Etsi2015] tables, and the DVB-T2 verification and validation reference
+streams, which are host data rather than repository content.
+
+### The committed ETSI tables
+
+The in-tree DVB-T2 material is the ETSI EN 302 755 [Etsi2015] data committed
+under `crates/gf2-coding/src/bch/dvb_t2/`: the parameter table
 `DvbBchParams::for_code`, carrying Tables 6a and 6b, and the generator-polynomial
 table `NORMAL_GENERATORS`, carrying $g_{1}(x)$ through $g_{12}(x)$ for the
 normal frame. The suite wires both in.
@@ -299,18 +322,51 @@ normal frame. The suite wires both in.
   descending transmission layout, which leaves the message polynomial and hence
   the parity unchanged.
 
-The ETSI conformance streams `VV001-CR35_CSP` and its siblings, which carry
-payload and parity test points TP04 and TP05, are not committed to this
-repository. The existing tests that consume them are host-gated on
-`DVB_TEST_VECTORS_PATH` and remain untouched. The committed ETSI material named
-above is therefore the whole of the in-tree DVB-T2 evidence this suite can wire
-in, and the four checks above are what it supports.
+### The DVB-T2 verification streams
+
+The DVB-T2 verification and validation working group publishes modulator
+reference streams produced on the Common Simulation Platform, one file per test
+point of a named configuration. Set `VV001-CR35` is the normal frame at code
+rate 3/5; its test point 04 carries the BCH input blocks and test point 05 the
+BCH output blocks. The streams are distributed with the standard's conformance
+material rather than committed here, so the suite reads them from the host
+directory `DVB_TEST_VECTORS_PATH` names, defaulting to `$HOME/dvb_test_vectors`.
+
+`the_etsi_dvb_t2_streams_encode_to_their_verified_codewords` loads the set
+through `TestVectorSet::load` and, for every block of every frame, encodes the
+test point 04 payload through the **canonical model** — the mother
+`BinaryBchCode` of `DvbBchParams::for_code(FrameSize::Normal, ...)` at the code
+rate the set's configuration name fixes, zero symbols at the shortened message
+coordinates, and the standard's descending transmission layout — then asserts
+the resulting codeword equals the test point 05 block bit for bit, message bits
+against test point 04 and parity bits against the mother code's. The test
+prints the resolved path and returns when the streams are absent, so a host
+without them runs the rest of the suite.
+
+The run behind this document observed:
+
+| Property | Value |
+|---|---|
+| Stream set | `VV001-CR35`, normal frame, rate 3/5 |
+| Frames compared | 4 |
+| Blocks per frame | 202 |
+| Blocks compared | 808 |
+| Blocks agreeing bit for bit | 808 |
+| Test point 04 SHA-256 | `c658dc04cacebe24a86a42a89f8ffe588f1e269506b6da05eae7d6582d8570b8` |
+| Test point 05 SHA-256 | `f4aaf105b01768b1269d21accef923de09d0040cba073a73909d8f814f3ed929` |
+| Wall clock, `ci-test` profile | 1.95 s |
+
+The wall clock is inside the fast tier's per-test kill, so the case carries no
+ignore tier.
 
 ## Citations
 
 Every work this document names resolves in `.jit/references.toml`:
-[SageMath2026], [GapGroup2026], [Joyner2026], and [Etsi2015] for ETSI
-EN 302 755 V1.4.1, the edition the in-tree parameter and generator tables cite.
+[SageMath2026], [GapGroup2026], [Joyner2026] and [Etsi2015].
+
+The DVB-T2 verification streams are identified by their set name and by the
+SHA-256 of each file in the table above, which is what the run observed on the
+host the receipt names.
 
 ## Reproduction
 
@@ -327,10 +383,12 @@ timestamps.
 The suite is then
 
 ```bash
-./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding --all-features \
+DVB_TEST_VECTORS_PATH=<the directory holding VV001-CR35_CSP> \
+  ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding --all-features \
     --cargo-profile ci-test --profile ci -E 'binary(bch_oracle_agreement)'
 ```
 
-Its thirteen cases run in about a quarter of a second in the `ci-test` profile,
-so none carries an ignore tier. The heaviest, the codeword comparison at the
-mother length $n = 65535$, measures 0.09 s in release.
+Every case runs inside the fast tier's budgets and none carries an ignore tier.
+The heaviest is the stream comparison in the table above; the codeword
+comparison at the mother length $n = 65535$ measures 0.18 s in the same
+profile.
