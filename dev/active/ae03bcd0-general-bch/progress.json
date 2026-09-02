@@ -361,7 +361,7 @@
           "title": "Canonical BCH matrices use the systematic user layout",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework 1 merged 8754afc8; cargo-ci + doc-review R2 passed; code-review R1 FAIL F1 (private MatrixFill bound blocks external representations, REQ-06) -> rework 2 (R-45 public trait with provided bodies) dispatched to Opus worker-444c06bc-r2 (session 9)"
+          "status": "done (session 9): rework 1 (sampled T2S witness, bench rustdoc) + rework 2 (R-45 public MatrixFill contract, merged 0cb1025a); cargo-ci, code-review R2, doc-review R4 (lead-direct panic docs 3b839a80) passed"
         },
         {
           "key": "genmatrix-perf",
@@ -369,7 +369,7 @@
           "title": "Optimize the reference generator-matrix materialization",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework 1 merged 8754afc8; cargo-ci + code-review R2 PASSED; done blocked by 444c06bc (DAG); shares the R-45 trait fix, code-review re-run after it merges"
+          "status": "done (session 9): rework 1 merged 8754afc8 (contract amendment, both-representation witnesses, receipt at load 1.16); code-review R4 after the receipt link; receipt doc-linked"
         },
         {
           "key": "lean-quotient-reduction",
@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework 1 merged 93f08af2; cargo-ci passed on rerun; code-review R2 + research-review R2 F1 = B4 root cause x3 -> ESCALATED (owner input pending); doc-review R2 F1 closed lead-direct e899f8c8; research R2 F2-F5 (attempt artifacts, stream-test receipt, predeclared wording, peak sampling) -> rework 2 dispatched to Opus worker-3f7edef1-4 (session 9)"
+          "status": "rework 2 complete on branch 115ce492 (research R2 F2-F5 closed: attempt artifacts committed, stream-test receipt stage, wording, two peak members); F1 escalated; lead merges + cargo-ci, AI reviews deferred until the owner decides B4 (session 9)"
         },
         {
           "key": "lean-closure",
@@ -483,7 +483,7 @@
           "title": "Lean proofs: generator base-field membership and root correctness",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "early start (session 9, R-35 grounds: only dep d7749931 done, footprint disjoint): Opus worker-b1bd75ca dispatched 16:20Z from main 188c8717 with the O-4 spec, R-27 anchor test, R-43 sketch-update rule"
+          "status": "worker-b1bd75ca complete (84 decls, 0 sorry, 4 recorded Mathlib-route deviations, load-bearing anchor test, O-4 sketch section remapped); lead review PASS; merged 531a2039 + lead-direct O-3 citation fix 6f94277e; lake-build passed; code-review + doc-review running (session 9)"
         }
       ]
     },
@@ -605,7 +605,7 @@
     "177bdc85": 1,
     "2b6968d3": 1,
     "bd0edfa2": "1 + shared R-45 fix",
-    "444c06bc": 2,
+    "444c06bc": "2 (+ lead-direct panic docs)",
     "3f7edef1": 2,
     "88ca7d2f": "0 + lead-direct (runner collection fix)"
   },
@@ -654,6 +654,16 @@
       "source": "lead review of bd0edfa2 code-review R1 (session 8)",
       "finding": "Shortened<C> (transform/mod.rs) materializes an owned dense FieldMatrix generator by RREF at construction; for the DVB-T2 rows that is a 16215\u00d716383 dense RREF (T2S) and a 65343\u00d765535 dense matrix (4.3 GB, T2N). The design (bch-api-design.md \u00a7Derived-code transformations, consumer table row 858) routes DVB-T2 through the generic wrapper, so cutover-dvbt2 (97410c80), perf-receipts (fd9d5416: contract-dimension W1/W2 cells, REQ-13 non-regression vs the legacy shortened LFSR) cannot meet their criteria on the wrapper as it stands.",
       "disposition": "ESCALATE before wave 11 dispatch (architectural: a systematic-mother fast path in Shortened<C>, or a BCH-owned shortened presentation); criterion subjects: epic REQ-13/REQ-14/REQ-05."
+    },
+    {
+      "source": "worker-444c06bc-r2 sign-off",
+      "finding": "scripts/cargo-ci.sh runs no `cargo test --doc` step, so rustdoc examples (e.g. the MatrixFill opt-in example) are not gated by the pipeline",
+      "disposition": "shared infrastructure (escalation category 8); report to the owner at close; not an epic criterion subject"
+    },
+    {
+      "source": "worker-b1bd75ca sign-off",
+      "finding": "cache-pool seeded target/ carried a gf2-kernels-simd rlib predating b6da5a81 -> 'unresolved import gf2_kernels_simd::bch_encode' in a fresh worktree; cargo clean -p gf2-kernels-simd fixed it",
+      "disposition": "pool artifacts for gf2-kernels-simd purged 2026-09-02 17:20Z (99 entries); wave-11 prompts carry the remedy"
     }
   ],
   "coordination": {
