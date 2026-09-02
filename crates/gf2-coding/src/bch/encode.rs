@@ -1140,10 +1140,7 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
         registers: &mut EncodeRegisters<Self::Word>,
         codewords: &mut [Self],
     ) -> Result<(), CodeError> {
-        for (message, codeword) in messages.iter().zip(codewords.iter_mut()) {
-            Self::encode_systematic_family(family, plan, message, registers, codeword)?;
-        }
-        Ok(())
+        encode_each_message::<F, Self>(family, plan, messages, registers, codewords)
     }
 
     /// Writes the systematic codeword of `message` into `codeword`, using
@@ -1199,6 +1196,34 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
             Self::encode_systematic_with(plan, message, registers, codeword)
         })
     }
+}
+
+/// Encodes a batch one message at a time under `family`.
+///
+/// This is the granularity every family reduces at unless it overrides
+/// [`SystematicKernel::encode_batch_family`], and the arm a lane-parallel
+/// family falls back to for the families it does not implement, so both
+/// reach it here rather than each writing the loop.
+///
+/// # Errors
+///
+/// The errors of [`SystematicKernel::encode_systematic_family`]. The first
+/// rejected message decides, and a message already written stays written.
+fn encode_each_message<F, S>(
+    family: EncodeFamily,
+    plan: &SystematicPlan<'_, F>,
+    messages: &[S],
+    registers: &mut EncodeRegisters<S::Word>,
+    codewords: &mut [S],
+) -> Result<(), CodeError>
+where
+    F: FieldIdentity,
+    S: SystematicKernel<F>,
+{
+    for (message, codeword) in messages.iter().zip(codewords.iter_mut()) {
+        S::encode_systematic_family(family, plan, message, registers, codeword)?;
+    }
+    Ok(())
 }
 
 /// Decides that both buffers of `registers` hold `words` entries, the length
@@ -1471,10 +1496,9 @@ impl SystematicKernel<Fp<2>> for BitVec {
     ) -> Result<(), CodeError> {
         let redundancy = plan.redundancy();
         if family != EncodeFamily::BitsliceInterleaved || redundancy == 0 {
-            for (message, codeword) in messages.iter().zip(codewords.iter_mut()) {
-                Self::encode_systematic_family(family, plan, message, registers, codeword)?;
-            }
-            return Ok(());
+            return encode_each_message::<Fp<2>, Self>(
+                family, plan, messages, registers, codewords,
+            );
         }
 
         for (message, codeword) in messages.iter().zip(codewords.iter()) {
