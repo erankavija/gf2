@@ -34,8 +34,11 @@ file.
 
 ## Oracles
 
-Both oracles run on every corpus row. A row an oracle cannot produce is a
-blocking finding, not a recorded gap.
+Both oracles produce a result on every corpus row. A row an oracle cannot
+produce is a blocking finding, not a recorded gap. Amendment 2 of the plan's
+`evidence-protocol` section fixes what the GAP/GUAVA result is on B4, where
+the code object `BCHCode` returns needs more heap than the host the receipt
+names can back.
 
 | Oracle | Entry point | Identity |
 |---|---|---|
