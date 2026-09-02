@@ -168,6 +168,12 @@ impl MatrixFill<Fp<2>> for BitMatrix {
         if dimension == 0 {
             return;
         }
+        if redundancy == 0 {
+            for row in 0..dimension {
+                self.set(row, row, true);
+            }
+            return;
+        }
 
         // Row zero carries $P_0 = g$. The identity column enters after the
         // recurrence, so every row the recurrence reads holds its parity
@@ -178,6 +184,9 @@ impl MatrixFill<Fp<2>> for BitMatrix {
             }
         }
 
+        // The shift and the reduction touch only the words the parity block
+        // reaches, and row zero holds $g$ at the same bit offset, so the
+        // reduction is an exclusive-or of that row over the same words.
         let stride = self.stride_words();
         let first = dimension >> 6;
         let tail = length & 63;
@@ -198,8 +207,8 @@ impl MatrixFill<Fp<2>> for BitMatrix {
             }
             if reduce {
                 for word in first..stride {
-                    let low = self.row_words(0)[word];
-                    self.row_words_mut(row)[word] ^= low;
+                    let coefficients = self.row_words(0)[word];
+                    self.row_words_mut(row)[word] ^= coefficients;
                 }
             }
         }
@@ -219,6 +228,8 @@ impl MatrixFill<Fp<2>> for BitMatrix {
             return;
         }
 
+        // Column $i$ holds $-P_i$, so the recurrence advances one column at a
+        // time and the output is the only state it needs.
         for degree in 0..redundancy {
             if generator.coeff(degree).is_one() {
                 self.set(degree, 0, true);
@@ -249,15 +260,19 @@ where
         if dimension == 0 {
             return;
         }
+        let one = zero.one_like();
+        if redundancy == 0 {
+            for row in 0..dimension {
+                self.set(row, row, one.clone());
+            }
+            return;
+        }
 
         for degree in 0..redundancy {
             let coefficient = generator.coeff(degree);
             self.set(0, dimension + degree, coefficient);
         }
         for row in 1..dimension {
-            if redundancy == 0 {
-                break;
-            }
             let reduce = self.get(row - 1, length - 1);
             for degree in (1..redundancy).rev() {
                 let value = self.get(row - 1, dimension + degree - 1)
@@ -268,7 +283,6 @@ where
             self.set(row, dimension, value);
         }
 
-        let one = zero.one_like();
         for row in 0..dimension {
             self.set(row, row, one.clone());
         }
@@ -285,6 +299,8 @@ where
             return;
         }
 
+        // Column $i$ holds $-P_i$, so the recurrence advances one column at a
+        // time and the output is the only state it needs.
         for degree in 0..redundancy {
             let value = -generator.coeff(degree);
             self.set(degree, 0, value);
@@ -360,12 +376,12 @@ where
 
 /// Writes the generator matrix by encoding the $k$ message basis vectors.
 ///
-/// This reads the contract literally rather than deriving it: it costs
-/// $O(k^2 r)$ base-field operations where the materialization costs $O(kr)$,
-/// and it consults the encoder where the materialization consults only the
-/// generator polynomial. It is the oracle the module's equality tests and the
-/// `bch_genmatrix` bench compare the materialization against, reachable
-/// through [`crate::test_support`].
+/// This reads the contract literally rather than deriving it: it spends
+/// $O(k^2 r)$ base-field operations where the materialization walks the
+/// output once, and it consults the encoder where the materialization
+/// consults only the generator polynomial. It is the oracle the module's
+/// equality tests and the `bch_genmatrix` bench compare the materialization
+/// against, reachable through [`crate::test_support`].
 ///
 /// # Errors
 ///
