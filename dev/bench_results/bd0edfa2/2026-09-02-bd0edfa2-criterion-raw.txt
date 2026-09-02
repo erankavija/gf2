@@ -1,0 +1,262 @@
+# Criterion raw output, jit:bd0edfa2 W2 receipt
+# revision 5847c2e0b4b83e90afde080723648dd032a8c808
+# host AMD Ryzen 9 5900X, governor powersave, pinned to cores 6-11 by dev/scripts/ccx1-bench-flock.sh
+# rustc 1.97.0, --release (bench profile)
+# START 2026-09-02T11:27:33Z
+# loadavg at start: 1.17 4.46 4.51
+
+nice: cannot set niceness: Permission denied
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B1
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B1: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B1: Collecting 100 samples in estimated 5.0002 s (114M iterations)
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B1: Analyzing
+bch_genmatrix_w2/materialize/fresh-alloc/B1
+                        time:   [43.695 ns 43.745 ns 43.794 ns]
+                        thrpt:  [1.7125 Gelem/s 1.7145 Gelem/s 1.7165 Gelem/s]
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B1
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B1: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B1: Collecting 100 samples in estimated 5.0006 s (11M iterations)
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B1: Analyzing
+bch_genmatrix_w2/reference/fresh-alloc/B1
+                        time:   [456.15 ns 456.43 ns 456.73 ns]
+                        thrpt:  [164.21 Melem/s 164.32 Melem/s 164.42 Melem/s]
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B1
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B1: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B1: Collecting 100 samples in estimated 5.0001 s (136M iterations)
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B1: Analyzing
+bch_genmatrix_w2/materialize/warm-reuse/B1
+                        time:   [36.730 ns 36.761 ns 36.795 ns]
+                        thrpt:  [2.0383 Gelem/s 2.0402 Gelem/s 2.0419 Gelem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B1
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B1: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B1: Collecting 100 samples in estimated 5.0005 s (11M iterations)
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B1: Analyzing
+bch_genmatrix_w2/reference/warm-reuse/B1
+                        time:   [451.90 ns 452.19 ns 452.51 ns]
+                        thrpt:  [165.74 Melem/s 165.86 Melem/s 165.97 Melem/s]
+Found 6 outliers among 100 measurements (6.00%)
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B2
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B2: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B2: Collecting 100 samples in estimated 5.0016 s (10M iterations)
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B2: Analyzing
+bch_genmatrix_w2/materialize/fresh-alloc/B2
+                        time:   [484.08 ns 484.42 ns 484.78 ns]
+                        thrpt:  [16.766 Gelem/s 16.779 Gelem/s 16.791 Gelem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B2
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B2: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B2: Collecting 100 samples in estimated 5.0713 s (121k iterations)
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B2: Analyzing
+bch_genmatrix_w2/reference/fresh-alloc/B2
+                        time:   [41.834 µs 41.865 µs 41.900 µs]
+                        thrpt:  [193.99 Melem/s 194.15 Melem/s 194.29 Melem/s]
+Found 7 outliers among 100 measurements (7.00%)
+  7 (7.00%) high mild
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B2
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B2: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B2: Collecting 100 samples in estimated 5.0004 s (11M iterations)
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B2: Analyzing
+bch_genmatrix_w2/materialize/warm-reuse/B2
+                        time:   [475.72 ns 475.98 ns 476.29 ns]
+                        thrpt:  [17.065 Gelem/s 17.076 Gelem/s 17.086 Gelem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B2
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B2: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B2: Collecting 100 samples in estimated 5.0801 s (121k iterations)
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B2: Analyzing
+bch_genmatrix_w2/reference/warm-reuse/B2
+                        time:   [42.071 µs 42.114 µs 42.166 µs]
+                        thrpt:  [192.76 Melem/s 193.00 Melem/s 193.20 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B3
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B3: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B3: Collecting 100 samples in estimated 5.0029 s (3.2M iterations)
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/B3: Analyzing
+bch_genmatrix_w2/materialize/fresh-alloc/B3
+                        time:   [1.5211 µs 1.5219 µs 1.5227 µs]
+                        thrpt:  [37.344 Gelem/s 37.365 Gelem/s 37.384 Gelem/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B3
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B3: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B3: Collecting 100 samples in estimated 5.9790 s (20k iterations)
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/B3: Analyzing
+bch_genmatrix_w2/reference/fresh-alloc/B3
+                        time:   [296.31 µs 296.47 µs 296.63 µs]
+                        thrpt:  [191.70 Melem/s 191.81 Melem/s 191.91 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  5 (5.00%) high mild
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B3
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B3: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B3: Collecting 100 samples in estimated 5.0049 s (3.4M iterations)
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/B3: Analyzing
+bch_genmatrix_w2/materialize/warm-reuse/B3
+                        time:   [1.4659 µs 1.4669 µs 1.4680 µs]
+                        thrpt:  [38.736 Gelem/s 38.765 Gelem/s 38.792 Gelem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) high mild
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B3
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B3: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B3: Collecting 100 samples in estimated 5.9575 s (20k iterations)
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/B3: Analyzing
+bch_genmatrix_w2/reference/warm-reuse/B3
+                        time:   [294.27 µs 294.38 µs 294.50 µs]
+                        thrpt:  [193.09 Melem/s 193.17 Melem/s 193.24 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/T2S-mother
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/T2S-mother: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/T2S-mother: Collecting 10 samples in estimated 5.0579 s (2090 iterations)
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/T2S-mother: Analyzing
+bch_genmatrix_w2/materialize/fresh-alloc/T2S-mother
+                        time:   [2.4171 ms 2.4191 ms 2.4213 ms]
+                        thrpt:  [109.72 Gelem/s 109.82 Gelem/s 109.90 Gelem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/T2S-mother
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/T2S-mother: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 20.6s.
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/T2S-mother: Collecting 10 samples in estimated 20.638 s (10 iterations)
+Benchmarking bch_genmatrix_w2/reference/fresh-alloc/T2S-mother: Analyzing
+bch_genmatrix_w2/reference/fresh-alloc/T2S-mother
+                        time:   [2.0726 s 2.0733 s 2.0741 s]
+                        thrpt:  [128.08 Melem/s 128.13 Melem/s 128.17 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/T2S-mother
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/T2S-mother: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/T2S-mother: Collecting 10 samples in estimated 5.0217 s (7315 iterations)
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/T2S-mother: Analyzing
+bch_genmatrix_w2/materialize/warm-reuse/T2S-mother
+                        time:   [681.24 µs 684.63 µs 687.34 µs]
+                        thrpt:  [386.49 Gelem/s 388.02 Gelem/s 389.95 Gelem/s]
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/T2S-mother
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/T2S-mother: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 20.5s.
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/T2S-mother: Collecting 10 samples in estimated 20.454 s (10 iterations)
+Benchmarking bch_genmatrix_w2/reference/warm-reuse/T2S-mother: Analyzing
+bch_genmatrix_w2/reference/warm-reuse/T2S-mother
+                        time:   [2.0444 s 2.0450 s 2.0456 s]
+                        thrpt:  [129.87 Melem/s 129.90 Melem/s 129.94 Melem/s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking bch_paritycheck/materialize/warm-reuse/B1
+Benchmarking bch_paritycheck/materialize/warm-reuse/B1: Warming up for 3.0000 s
+Benchmarking bch_paritycheck/materialize/warm-reuse/B1: Collecting 100 samples in estimated 5.0001 s (53M iterations)
+Benchmarking bch_paritycheck/materialize/warm-reuse/B1: Analyzing
+bch_paritycheck/materialize/warm-reuse/B1
+                        time:   [94.726 ns 94.789 ns 94.855 ns]
+                        thrpt:  [1.5814 Gelem/s 1.5825 Gelem/s 1.5835 Gelem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+Benchmarking bch_paritycheck/reference/warm-reuse/B1
+Benchmarking bch_paritycheck/reference/warm-reuse/B1: Warming up for 3.0000 s
+Benchmarking bch_paritycheck/reference/warm-reuse/B1: Collecting 100 samples in estimated 5.0015 s (10M iterations)
+Benchmarking bch_paritycheck/reference/warm-reuse/B1: Analyzing
+bch_paritycheck/reference/warm-reuse/B1
+                        time:   [495.10 ns 495.42 ns 495.76 ns]
+                        thrpt:  [302.57 Melem/s 302.77 Melem/s 302.97 Melem/s]
+Benchmarking bch_paritycheck/materialize/warm-reuse/B2
+Benchmarking bch_paritycheck/materialize/warm-reuse/B2: Warming up for 3.0000 s
+Benchmarking bch_paritycheck/materialize/warm-reuse/B2: Collecting 100 samples in estimated 5.0187 s (894k iterations)
+Benchmarking bch_paritycheck/materialize/warm-reuse/B2: Analyzing
+bch_paritycheck/materialize/warm-reuse/B2
+                        time:   [5.6112 µs 5.6159 µs 5.6211 µs]
+                        thrpt:  [1.4234 Gelem/s 1.4247 Gelem/s 1.4259 Gelem/s]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking bch_paritycheck/reference/warm-reuse/B2
+Benchmarking bch_paritycheck/reference/warm-reuse/B2: Warming up for 3.0000 s
+Benchmarking bch_paritycheck/reference/warm-reuse/B2: Collecting 100 samples in estimated 5.0713 s (146k iterations)
+Benchmarking bch_paritycheck/reference/warm-reuse/B2: Analyzing
+bch_paritycheck/reference/warm-reuse/B2
+                        time:   [34.312 µs 34.339 µs 34.367 µs]
+                        thrpt:  [232.81 Melem/s 233.00 Melem/s 233.18 Melem/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  3 (3.00%) high severe
+Benchmarking bch_paritycheck/materialize/warm-reuse/B3
+Benchmarking bch_paritycheck/materialize/warm-reuse/B3: Warming up for 3.0000 s
+Benchmarking bch_paritycheck/materialize/warm-reuse/B3: Collecting 100 samples in estimated 5.0162 s (500k iterations)
+Benchmarking bch_paritycheck/materialize/warm-reuse/B3: Analyzing
+bch_paritycheck/materialize/warm-reuse/B3
+                        time:   [10.017 µs 10.025 µs 10.033 µs]
+                        thrpt:  [813.29 Melem/s 813.97 Melem/s 814.59 Melem/s]
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) high mild
+Benchmarking bch_paritycheck/reference/warm-reuse/B3
+Benchmarking bch_paritycheck/reference/warm-reuse/B3: Warming up for 3.0000 s
+Benchmarking bch_paritycheck/reference/warm-reuse/B3: Collecting 100 samples in estimated 5.1810 s (30k iterations)
+Benchmarking bch_paritycheck/reference/warm-reuse/B3: Analyzing
+bch_paritycheck/reference/warm-reuse/B3
+                        time:   [171.54 µs 171.86 µs 172.23 µs]
+                        thrpt:  [47.380 Melem/s 47.481 Melem/s 47.568 Melem/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+Benchmarking bch_paritycheck/materialize/warm-reuse/T2S-mother
+Benchmarking bch_paritycheck/materialize/warm-reuse/T2S-mother: Warming up for 3.0000 s
+Benchmarking bch_paritycheck/materialize/warm-reuse/T2S-mother: Collecting 10 samples in estimated 5.2613 s (440 iterations)
+Benchmarking bch_paritycheck/materialize/warm-reuse/T2S-mother: Analyzing
+bch_paritycheck/materialize/warm-reuse/T2S-mother
+                        time:   [12.184 ms 12.199 ms 12.222 ms]
+                        thrpt:  [225.20 Melem/s 225.61 Melem/s 225.90 Melem/s]
+Found 3 outliers among 10 measurements (30.00%)
+  2 (20.00%) low severe
+  1 (10.00%) high severe
+Benchmarking bch_paritycheck/reference/warm-reuse/T2S-mother
+Benchmarking bch_paritycheck/reference/warm-reuse/T2S-mother: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 14.6s.
+Benchmarking bch_paritycheck/reference/warm-reuse/T2S-mother: Collecting 10 samples in estimated 14.618 s (10 iterations)
+Benchmarking bch_paritycheck/reference/warm-reuse/T2S-mother: Analyzing
+bch_paritycheck/reference/warm-reuse/T2S-mother
+                        time:   [1.4821 s 1.4857 s 1.4894 s]
+                        thrpt:  [1.8480 Melem/s 1.8526 Melem/s 1.8571 Melem/s]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) low mild
+  1 (10.00%) high mild
+
+
+# === GF2_BENCH=1, T2N-mother materialize cells ===
+nice: cannot set niceness: Permission denied
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/T2N-mother
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/T2N-mother: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/T2N-mother: Collecting 10 samples in estimated 6.0070 s (165 iterations)
+Benchmarking bch_genmatrix_w2/materialize/fresh-alloc/T2N-mother: Analyzing
+bch_genmatrix_w2/materialize/fresh-alloc/T2N-mother
+                        time:   [36.399 ms 36.446 ms 36.483 ms]
+                        thrpt:  [117.38 Gelem/s 117.50 Gelem/s 117.65 Gelem/s]
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/T2N-mother
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/T2N-mother: Warming up for 3.0000 s
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/T2N-mother: Collecting 10 samples in estimated 6.0622 s (220 iterations)
+Benchmarking bch_genmatrix_w2/materialize/warm-reuse/T2N-mother: Analyzing
+bch_genmatrix_w2/materialize/warm-reuse/T2N-mother
+                        time:   [27.547 ms 27.608 ms 27.641 ms]
+                        thrpt:  [154.92 Gelem/s 155.11 Gelem/s 155.45 Gelem/s]
+
+Benchmarking bch_paritycheck/materialize/warm-reuse/T2N-mother
+Benchmarking bch_paritycheck/materialize/warm-reuse/T2N-mother: Warming up for 3.0000 s
+Benchmarking bch_paritycheck/materialize/warm-reuse/T2N-mother: Collecting 10 samples in estimated 8.6387 s (110 iterations)
+Benchmarking bch_paritycheck/materialize/warm-reuse/T2N-mother: Analyzing
+bch_paritycheck/materialize/warm-reuse/T2N-mother
+                        time:   [78.682 ms 78.904 ms 79.047 ms]
+                        thrpt:  [159.18 Melem/s 159.47 Melem/s 159.92 Melem/s]
+
+# END 2026-09-02T11:33:02Z
+# loadavg at end: 1.10 2.28 3.52

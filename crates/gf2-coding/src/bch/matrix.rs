@@ -633,7 +633,7 @@ mod tests {
     use gf2_core::gf2m::Gf2mField;
     use gf2_core::gfp::Fp;
     use gf2_core::gfpn::{QuotientElement, QuotientField};
-    use gf2_core::BitMatrix;
+    use gf2_core::{BitMatrix, BitVec};
 
     fn binary_extension() -> BinaryPrimeExt {
         BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).expect("a valid binary extension")
@@ -672,6 +672,22 @@ mod tests {
         let extension = BinaryPrimeExt::new(Gf2mField::new(degree, modulus))
             .expect("a primitive polynomial of the requested degree");
         BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(designed_distance)
+                .expect("positive distance"),
+        })
+        .expect("a valid primitive narrow-sense code")
+    }
+
+    /// [`primitive_binary`]'s code in the field-generic representation.
+    fn primitive_dense(
+        degree: usize,
+        modulus: u64,
+        designed_distance: u64,
+    ) -> DenseBchCode<BinaryPrimeExt> {
+        let extension = BinaryPrimeExt::new(Gf2mField::new(degree, modulus))
+            .expect("a primitive polynomial of the requested degree");
+        DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
             extension,
             designed_distance: DesignedDistance::try_from(designed_distance)
                 .expect("positive distance"),
@@ -1039,7 +1055,12 @@ mod tests {
     }
 
     /// The workload contract's binary rows B1, B2 and B3 at the exact lengths
-    /// it fixes (`dev/active/4e732b56/workload-selection.md` § 2).
+    /// `dev/active/4e732b56/workload-selection.md` § 2 fixes, in both
+    /// canonical representations.
+    ///
+    /// Each row runs the whole matrix contract, which includes equality with
+    /// the by-encoding oracle, so every contract row the fast tier reaches
+    /// has a packed and a field-generic equality witness.
     #[test]
     fn workload_rows_follow_the_contract_and_match_the_oracle() {
         const ROWS: &[(usize, u64, u64, usize, usize)] = &[
@@ -1051,38 +1072,91 @@ mod tests {
             let packed = primitive_binary(degree, modulus, distance);
             assert_eq!((packed.k(), packed.n()), (dimension, length));
             assert_matrix_contract(&packed);
-        }
 
-        // B1 field-generic, so the row is covered in both representations.
-        let dense = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
-            extension: binary_extension(),
-            designed_distance: DesignedDistance::try_from(7).expect("positive distance"),
-        })
-        .expect("the field-generic B1 row");
-        assert_eq!((dense.k(), dense.n()), (5, 15));
-        assert_matrix_contract(&dense);
+            let dense = primitive_dense(degree, modulus, distance);
+            assert_eq!((dense.k(), dense.n()), (dimension, length));
+            assert_matrix_contract(&dense);
+        }
+    }
+
+    /// A deterministic sample of generator rows for a code whose full row
+    /// walk is too heavy for the fast tier.
+    ///
+    /// The first 32 rows carry the seed row and the first reductions. The
+    /// last 32 carry the rows whose identity coordinate shares a packed word
+    /// with the start of the parity block, which for the DVB-T2 mother codes
+    /// is the final $k \bmod 64$ block of rows. A contiguous run of 32 in the
+    /// middle straddles a word boundary of the row index. Together the sample
+    /// meets every packed transition the row walk has.
+    fn sampled_rows(dimension: usize) -> Vec<usize> {
+        assert!(dimension > 128, "the sample assumes three disjoint blocks");
+        let middle = ((dimension / 2) & !63) + 48;
+        (0..32)
+            .chain(middle..middle + 32)
+            .chain(dimension - 32..dimension)
+            .collect()
+    }
+
+    /// Asserts that the sampled generator rows are the systematic encodings
+    /// of their basis vectors and that the parity check annihilates them.
+    ///
+    /// Comparing sampled rows against the encoder and against
+    /// $G H^{\mathsf T} = 0$ decides the same contract the full comparison
+    /// does on the rows it covers, at a cost the fast tier carries. The
+    /// complete comparison of both DVB-T2 mother rows lives in the slow tier.
+    fn assert_sampled_rows_are_systematic(
+        code: &BinaryBchCode,
+        generator: &BitMatrix,
+        parity: &BitMatrix,
+    ) {
+        assert_eq!((generator.rows(), generator.cols()), (code.k(), code.n()));
+        assert_eq!(
+            (parity.rows(), parity.cols()),
+            (code.redundancy(), code.n())
+        );
+        for row in sampled_rows(code.k()) {
+            let mut message = BitVec::zeros(code.k());
+            message.set(row, true);
+            let codeword = code.encode(&message).expect("a basis vector encodes");
+            let materialized = generator.row_as_bitvec(row);
+            assert_eq!(materialized, codeword, "generator row {row}");
+            let syndrome = parity.matvec(&materialized);
+            assert_eq!(
+                syndrome.count_ones(),
+                0,
+                "parity check does not annihilate generator row {row}"
+            );
+        }
     }
 
     /// The workload contract's T2S row at its mother length, the largest W2
-    /// cell the fast tier materializes: a $16215 \times 16383$ generator.
+    /// cell the fast tier reaches: a $16215 \times 16383$ generator and its
+    /// $168 \times 16383$ parity check, witnessed on sampled rows.
     ///
-    /// The mother length is what § 9's amendment of 2026-09-01 measures the
-    /// DVB-T2 rows on until the shortened presentations reach the canonical
-    /// construction model.
+    /// The canonical model reaches the DVB-T2 rows at mother length, which
+    /// `dev/active/4e732b56/workload-selection.md` § 9 fixes as the length
+    /// this consumer measures and compares them at.
     #[test]
-    fn t2s_mother_row_matches_the_oracle_generator() {
+    fn t2s_mother_sampled_rows_are_systematic() {
         let code = primitive_binary(14, 0b100_0000_0010_1011, 25);
         assert_eq!((code.k(), code.n()), (16215, 16383));
         let generator = code.generator_matrix().expect("generator materialization");
-        let mut oracle = BitMatrix::zeros(code.k(), code.n());
-        write_generator_by_encoding(&code, &mut oracle).expect("oracle generator");
-        assert_eq!(generator, oracle);
+        let parity = code.parity_check_matrix().expect("parity materialization");
+        assert_sampled_rows_are_systematic(&code, &generator, &parity);
     }
 
-    /// Both DVB-T2 rows at their mother lengths, generator and parity check.
+    /// Both DVB-T2 rows at the mother lengths
+    /// `dev/active/4e732b56/workload-selection.md` § 9 fixes, generator and
+    /// parity check, over every row.
     ///
-    /// The oracle costs $O(k^2 r)$, which puts the $65343 \times 65535$ row
-    /// far outside the fast tier; the T2S generator alone stays in it above.
+    /// The by-encoding oracle costs $O(k^2 r)$, which is a slow-tier cost at
+    /// these dimensions; the fast tier witnesses the T2S row on a sample.
+    /// This is the packed representation of both rows. The field-generic
+    /// representation reaches the T2S row in
+    /// [`t2s_mother_row_matches_the_oracle_field_generic`]; a
+    /// `FieldMatrix<Fp<2>>` stores eight bytes per coordinate, so the T2N row
+    /// is $65343 \times 65535 \times 8 = 34$ GB per matrix and the equality
+    /// witness would need two of them.
     #[test]
     #[ignore = "slow: the DVB-T2 mother rows materialize up to a 512 MiB generator"]
     fn dvb_t2_mother_rows_match_the_oracle() {
@@ -1099,6 +1173,24 @@ mod tests {
                 &code.parity_check_matrix().expect("parity materialization"),
             );
         }
+    }
+
+    /// The T2S row at its mother length in the field-generic representation,
+    /// against the by-encoding oracle over every row.
+    ///
+    /// A `FieldMatrix<Fp<2>>` stores one element per coordinate, so this
+    /// generator is 2.1 GB where the packed one is 33 MB, and the oracle
+    /// spends $O(k^2 r)$ base-field operations reaching it.
+    #[test]
+    #[ignore = "slow: the T2S mother row materializes a 2.1 GB field-generic generator"]
+    fn t2s_mother_row_matches_the_oracle_field_generic() {
+        let code = primitive_dense(14, 0b100_0000_0010_1011, 25);
+        assert_eq!((code.k(), code.n()), (16215, 16383));
+        assert_matches_oracle(
+            &code,
+            &code.generator_matrix().expect("generator materialization"),
+            &code.parity_check_matrix().expect("parity materialization"),
+        );
     }
 
     #[test]
