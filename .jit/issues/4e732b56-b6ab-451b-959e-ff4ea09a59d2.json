@@ -213,14 +213,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
           "is_shared": false,
           "mime_type": "text/markdown",
@@ -229,7 +221,15 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "018346ccda33194869fdec92fad233d74831aa53567ff528f5cd2f5601c4ff32",
+          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4d40491d78a2524a2fefe03eb1cd60522bd1953a0cc35d7ab0cc5665e2794e2b",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "findings.md",
@@ -245,14 +245,6 @@
     {
       "assets": [
         {
-          "asset_type": "local",
-          "content_hash": "cecfeef3993e773024ede3b670fbaf0b006c5f9462cf78b469fb12a2e0b3be84",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt"
-        },
-        {
           "asset_type": "external",
           "content_hash": null,
           "is_shared": false,
@@ -262,11 +254,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "f6ecb9472812db92482462f495258928a3ecb22f3d4d885e2eefbdaba9000caf",
+          "content_hash": "cecfeef3993e773024ede3b670fbaf0b006c5f9462cf78b469fb12a2e0b3be84",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt"
+          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt"
         },
         {
           "asset_type": "local",
@@ -286,7 +278,23 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "85b362f8c5d7971316502803d08805ae1a3a759c7f0a882014f82a9564a5a6dc",
+          "content_hash": "306e7e625ada99772fd588e6279c3a61c164f12bd442f3f1f29b12393d4acd4b",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f6ecb9472812db92482462f495258928a3ecb22f3d4d885e2eefbdaba9000caf",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "185c30e17d5f8d7eea01fd43eb9c48d724cb1a61e1636acd52b04e30b600f27b",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "workload-selection.md",
@@ -299,14 +307,6 @@
           "mime_type": "text/plain",
           "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
           "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "306e7e625ada99772fd588e6279c3a61c164f12bd442f3f1f29b12393d4acd4b",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt"
         }
       ],
       "commit": null,
@@ -344,5 +344,5 @@
   "priority": "high",
   "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-02T07:02:32.545683203Z"
+  "updated_at": "2026-09-02T16:23:42.225919883Z"
 }
