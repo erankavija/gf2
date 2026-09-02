@@ -14,7 +14,13 @@
     "doc-review",
     "lake-build"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "lake-build": {
+      "status": "passed",
+      "updated_at": "2026-09-02T17:23:24.118743021Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "b1bd75ca-5003-4597-87c0-0f9808a7b760",
   "labels": [
     "type:task",
@@ -26,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Lean proofs: generator base-field membership and root correctness",
-  "updated_at": "2026-09-02T17:22:43.444395824Z"
+  "updated_at": "2026-09-02T17:23:24.118743021Z"
 }
