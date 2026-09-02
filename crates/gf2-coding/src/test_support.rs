@@ -10,10 +10,13 @@
 
 #![cfg(any(test, feature = "test-support"))]
 
-use crate::bch::encode::{BchEncodeWorkspace, EncodeRegisters};
-use crate::bch::spec::BinaryBchCode;
+use crate::bch::encode::{BchEncodeWorkspace, EncodeRegisters, SystematicKernel};
+use crate::bch::spec::{BchCode, BinaryBchCode};
+use crate::error::CodeError;
 use crate::product::ExtendedBchComponent;
+use crate::traits::block::SymbolMatrix;
 use crate::transform::Extended;
+use gf2_core::field::extension::FieldExtension;
 use gf2_core::BitVec;
 use std::path::{Path, PathBuf};
 
@@ -39,6 +42,59 @@ pub fn encode_workspace_shape<W>(workspace: &BchEncodeWorkspace<W>) -> Vec<(usiz
 /// allocate.
 pub fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> {
     crate::bch::encode::encode_scratch_shape::<W>()
+}
+
+/// Writes `code`'s generator matrix by encoding the $k$ message basis
+/// vectors, one row per encode.
+///
+/// This is the straightforward reading of the matrix contract. The canonical
+/// materialization derives the same matrix from the generator polynomial's
+/// recurrence instead, and this is the oracle its equality tests and the
+/// `bch_genmatrix` bench measure it against.
+///
+/// # Errors
+///
+/// Returns [`CodeError::ShapeMismatch`] when `out` is not $k \times n$, and
+/// propagates the encoder's own errors.
+///
+/// # Complexity
+///
+/// $O(k^2 r)$ base-field operations for $r = n - k$, against the
+/// materialization's $O(kr)$.
+pub fn bch_generator_matrix_by_encoding<X, S, M>(
+    code: &BchCode<X, S, M>,
+    out: &mut M,
+) -> Result<(), CodeError>
+where
+    X: FieldExtension,
+    S: SystematicKernel<X::Base>,
+    M: SymbolMatrix<X::Base>,
+{
+    crate::bch::matrix::write_generator_by_encoding(code, out)
+}
+
+/// Writes `code`'s parity-check matrix as the transpose of the parity block
+/// [`bch_generator_matrix_by_encoding`] produces, negated, beside the
+/// identity.
+///
+/// # Errors
+///
+/// Returns [`CodeError::ShapeMismatch`] when `out` is not $(n-k) \times n$,
+/// and propagates the encoder's own errors.
+///
+/// # Complexity
+///
+/// $O(k^2 r)$ base-field operations for $r = n - k$.
+pub fn bch_parity_check_matrix_by_encoding<X, S, M>(
+    code: &BchCode<X, S, M>,
+    out: &mut M,
+) -> Result<(), CodeError>
+where
+    X: FieldExtension,
+    S: SystematicKernel<X::Base>,
+    M: SymbolMatrix<X::Base>,
+{
+    crate::bch::matrix::write_parity_check_by_encoding(code, out)
 }
 
 /// Builds the generic eBCH(16,11) fixture used by library tests.
