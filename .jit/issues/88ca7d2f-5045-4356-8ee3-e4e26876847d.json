@@ -17,6 +17,16 @@
       "status": "passed",
       "updated_at": "2026-09-02T16:18:31.216593973Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-02T16:27:07.248815711Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-02T16:28:50.362637302Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "88ca7d2f-5045-4356-8ee3-e4e26876847d",
@@ -28,5 +38,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Pin the pre-cutover BCH throughput baseline receipt",
-  "updated_at": "2026-09-02T16:18:31.216593973Z"
+  "updated_at": "2026-09-02T16:28:50.362637302Z"
 }
