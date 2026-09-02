@@ -17,12 +17,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-02T16:36:28.633459074Z",
+      "updated_at": "2026-09-02T17:12:30.913259667Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-02T16:43:31.169059392Z",
+      "status": "passed",
+      "updated_at": "2026-09-02T17:15:45.946271347Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -42,5 +42,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Canonical BCH matrices use the systematic user layout",
-  "updated_at": "2026-09-02T17:10:11.413729736Z"
+  "updated_at": "2026-09-02T17:15:45.946271347Z"
 }

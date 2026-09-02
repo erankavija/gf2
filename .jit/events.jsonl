@@ -10850,3 +10850,7 @@
 {"assignee":"agent:worker","id":"19fd1d27-89af-4c3a-8813-5ffb9866c03b","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","reason":"worker complete at debc2eb1; lead takes over for merge and gates","timestamp":"2026-09-02T17:10:02.310761562Z","type":"issue_released"}
 {"from":"ready","id":"b8143cb8-580f-406a-a09b-88f4722fc583","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T17:10:11.413729736Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:jit-execution-lead","id":"8df67a3a-664a-4cf9-ae07-0f23ca190379","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T17:10:11.413729736Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"cdf4b715-f2b1-420f-ab74-bf23b328509d","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T17:12:30.913259667Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"aa40d6f0-efb2-4489-b7c3-f4ca14a59ae2","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T17:15:45.946271347Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"165e8354-db90-4fc8-b1ed-d536368de8f7","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-02T17:18:47.644733231Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"a83121c0-9303-48c7-8cee-7051c2494a68","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-02T17:19:40.957360954Z","type":"issue_updated","updated_by":"doc-add"}

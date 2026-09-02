@@ -8,7 +8,25 @@
     "444c06bc-7a0a-4e00-899a-c74815793fe9"
   ],
   "description": "Optimize the reference generator- and parity-check materialization for the survey's selected workload dimensions, keeping results bit-identical to the reference implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: The optimized path produces results equal to the reference materialization on the workload-selection dimensions, packed binary and field-generic.\n- [hard] REQ-02: The caller-buffer path avoids intermediate allocation, verified by tests, and throughput on the selected workload improves over the unoptimized reference measurably on the bench harness.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "0ec529cfd7aea9a9590eeec555f506af57bf1842a0b1ec190639934e6814dca6",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "2026-09-02-bd0edfa2-criterion-raw.txt",
+          "resolved_path": "dev/bench_results/bd0edfa2/2026-09-02-bd0edfa2-criterion-raw.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "W2 generator-matrix materialization receipt",
+      "path": "dev/bench_results/bd0edfa2/2026-09-02-bd0edfa2-genmatrix-receipt.md"
+    }
+  ],
   "first_ready_at": "2026-09-01T20:56:28.035859056Z",
   "gates_required": [
     "cargo-ci",
@@ -21,8 +39,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "passed",
-      "updated_at": "2026-09-02T16:47:12.491223653Z",
+      "status": "failed",
+      "updated_at": "2026-09-02T17:18:47.644733231Z",
       "updated_by": "auto:executor"
     }
   },
@@ -37,5 +55,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Optimize the reference generator-matrix materialization",
-  "updated_at": "2026-09-02T16:47:12.491223653Z"
+  "updated_at": "2026-09-02T17:19:40.957360954Z"
 }
