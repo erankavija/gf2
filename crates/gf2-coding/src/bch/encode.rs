@@ -653,9 +653,9 @@ const TABLE_REMAINDER_ENTRIES: usize = 1 << TABLE_REMAINDER_TABLE_BITS;
 /// is selected.
 ///
 /// [`usize::MAX`] keeps every code on [`EncodeFamily::REFERENCE`] under the
-/// conservative profile: the crossover between the two families is a
-/// measurement, and no committed receipt has made it on this repository's
-/// implementations. Installing a profile with a lower
+/// conservative profile: the crossover between the table family and the
+/// reference is a measurement, and no committed receipt has made it on this
+/// repository's implementations. Installing a profile with a lower
 /// `encode.table_remainder_min_redundancy` moves the boundary; the selected
 /// codewords are the same bytes either way.
 pub const TABLE_REMAINDER_MIN_REDUNDANCY: usize = usize::MAX;
@@ -3305,6 +3305,82 @@ mod tests {
             let messages = seeded_bit_batch(code.k(), 4, redundancy as u64 + 1);
             for &layout in LAYOUTS {
                 assert_every_path_agrees(code, &messages, layout);
+            }
+        }
+    }
+
+    /// Every message and codeword of `messages` under `family`, over one
+    /// workspace.
+    fn batch_under(
+        code: &BinaryBchCode,
+        family: EncodeFamily,
+        messages: &[BitVec],
+        layout: SystematicLayout,
+    ) -> Vec<BitVec> {
+        let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+        let mut workspace = code.encode_workspace();
+        code.encode_batch_family_into(family, messages, layout, &mut workspace, &mut codewords)
+            .expect("an available family encodes a validated batch");
+        codewords
+    }
+
+    #[test]
+    fn the_bit_sliced_family_holds_at_the_word_boundaries() {
+        // A zero-dimensional code, then the redundancies 0, 1, 63, 64, and
+        // 65: no message degree at all, an empty register, one bit, one word
+        // short, exactly one word, and one bit into a second word. The
+        // dimensions 64 and 190 put the message's own word boundary in the
+        // same cells, and the batch ladder crosses the family's lane width in
+        // every one of them.
+        let codes = [
+            binary_narrow_sense(4, 0b10011, 16),
+            binary_narrow_sense(4, 0b10011, 1),
+            binary_first_root(4, 0b10011, 0, 2),
+            binary_narrow_sense(7, 0b10000011, 21),
+            BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                designed_distance: DesignedDistance::try_from(17).expect("positive"),
+            })
+            .expect("a valid GF(2^8) narrow-sense spec"),
+            BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                first_root: RootExponent::from(0),
+                designed_distance: DesignedDistance::try_from(18).expect("positive"),
+            })
+            .expect("a valid GF(2^8) first-root spec"),
+        ];
+        // (k, r) of each code above.
+        let shapes = [
+            (0usize, 15usize),
+            (15, 0),
+            (14, 1),
+            (64, 63),
+            (191, 64),
+            (190, 65),
+        ];
+
+        for (code, (dimension, redundancy)) in codes.iter().zip(shapes) {
+            assert_eq!(
+                (code.k(), BlockCode::redundancy(code)),
+                (dimension, redundancy)
+            );
+            let family = EncodeFamily::BitsliceInterleaved;
+            for &layout in LAYOUTS {
+                if !code.encode_family_available(family, layout) {
+                    assert_eq!(
+                        redundancy, 0,
+                        "only a parity-free plan withholds the family"
+                    );
+                    continue;
+                }
+                for batch in [0usize, 1, 63, 64, 65, 129] {
+                    let messages = seeded_bit_batch(code.k(), batch, redundancy as u64 + 1);
+                    assert_eq!(
+                        batch_under(code, family, &messages, layout),
+                        batch_under(code, EncodeFamily::REFERENCE, &messages, layout),
+                        "r = {redundancy} at batch {batch} under {layout:?}"
+                    );
+                }
             }
         }
     }
