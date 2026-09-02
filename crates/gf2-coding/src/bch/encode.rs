@@ -78,11 +78,14 @@
 //! This is not the SIMD feature-detection seam. That one chooses an
 //! instruction-set implementation of a fixed algorithm inside a family; this
 //! one chooses the algorithm, and a family may use the other seam internally.
-//! [`EncodeFamily::BitsliceInterleaved`] is the family that does: it runs
-//! [`gf2_kernels_simd::bch_encode`]'s AVX2 kernels where the host detects
-//! them and that module's portable kernels where it does not, and the two
-//! write the same bits, so the instruction set decides the speed of a batch
-//! and never its bytes.
+//! [`EncodeFamily::BitsliceInterleaved`] and [`EncodeFamily::ClmulFold`] are
+//! the families that do, and one bundle carries the kernels of both: they run
+//! [`gf2_kernels_simd::bch_encode`]'s accelerated kernels where the host has
+//! every processor feature
+//! [`gf2_kernels_simd::bch_encode::detect`]'s combined predicate names, and
+//! that module's portable kernels where it does not. Both arms write the same
+//! bits, so the instruction set decides the speed of a batch and never its
+//! bytes.
 //!
 //! A family whose step advances several frames at once cannot be expressed
 //! one message at a time, so the batch entry points call
@@ -108,14 +111,21 @@
 //! word-equivalents per message plus the same $O(n)$ bit writes. A batch
 //! shorter than the lane width still pays a whole group, which is what makes
 //! its admission a batch-length question.
+//! [`EncodeFamily::ClmulFold`] spends
+//! $O((k / 64)(1 + \lceil r/64 \rceil))$ carry-less multiplies per message
+//! over the same $O(n)$ bit writes, after a Barrett constant of
+//! $O(\lceil r/64 \rceil)$ word operations over 64 division steps. It
+//! reduces one message at a time, so a batch changes none of that and its
+//! admission bound exists to amortize that constant alone.
 //!
 //! # Workspaces
 //!
 //! The recurrence runs over the buffers [`EncodeRegisters`] holds together:
 //! an $r$-symbol shift register, the generator's low $r$ coefficients in the
-//! same words, and whatever reduction table or lane-group scratch the
-//! selected family reads. Every one of them is a function of the plan and a
-//! fixed lane width, never of a batch's length. The
+//! same words, and whatever reduction table, lane-group scratch, or
+//! reduction constant the selected family reads. Every one of them is a
+//! function of the plan and a fixed lane width, never of a batch's length.
+//! The
 //! entry points that take no
 //! workspace — [`encode_systematic`](BchCode::encode_systematic),
 //! [`encode_systematic_into`](BchCode::encode_systematic_into),
@@ -1275,6 +1285,22 @@ where
     Ok(())
 }
 
+/// Decides that a family's precomputed buffer holds the `expected` words
+/// [`SystematicKernel::reset_family`] gives it for the plan being encoded
+/// under.
+///
+/// Every family that reads precomputed state checks it here, so registers
+/// prepared for another family are reported as
+/// [`CodeError::BufferLengthMismatch`] before a codeword is written rather
+/// than read as that family's own state.
+fn validate_prepared(expected: usize, actual: usize) -> Result<(), CodeError> {
+    if actual == expected {
+        Ok(())
+    } else {
+        Err(CodeError::BufferLengthMismatch { expected, actual })
+    }
+}
+
 /// Decides that both buffers of `registers` hold `words` entries, the length
 /// [`SystematicKernel::registers`] gives them for the plan being encoded
 /// under.
@@ -1504,48 +1530,41 @@ impl SystematicKernel<Fp<2>> for BitVec {
         codeword: &mut Self,
     ) -> Result<(), CodeError> {
         let redundancy = plan.redundancy();
-        if family == EncodeFamily::ClmulFold && redundancy > 0 {
-            plan.validate_lengths(message.len(), codeword.len())?;
-            validate_registers(redundancy.div_ceil(64), registers)?;
-            if registers.fold.len() != FOLD_CONSTANT_WORDS {
-                return Err(CodeError::BufferLengthMismatch {
-                    expected: FOLD_CONSTANT_WORDS,
-                    actual: registers.fold.len(),
-                });
-            }
-            let EncodeRegisters {
-                register,
-                low,
-                fold,
-                ..
-            } = registers;
-            packed_fold_reduce(plan, message, register, low, fold[0]);
-            packed_write_codeword(plan, message, register, codeword);
-            return Ok(());
-        }
-        if family != EncodeFamily::TableRemainder || redundancy < TABLE_REMAINDER_BLOCK_BITS {
-            return Self::encode_systematic_with(plan, message, registers, codeword);
-        }
-
-        plan.validate_lengths(message.len(), codeword.len())?;
         let words = redundancy.div_ceil(64);
-        validate_registers(words, registers)?;
-        let expected = TABLE_REMAINDER_TABLES * TABLE_REMAINDER_ENTRIES * words;
-        if registers.tables.len() != expected {
-            return Err(CodeError::BufferLengthMismatch {
-                expected,
-                actual: registers.tables.len(),
-            });
+        match family {
+            EncodeFamily::TableRemainder if redundancy >= TABLE_REMAINDER_BLOCK_BITS => {
+                plan.validate_lengths(message.len(), codeword.len())?;
+                validate_registers(words, registers)?;
+                validate_prepared(
+                    TABLE_REMAINDER_TABLES * TABLE_REMAINDER_ENTRIES * words,
+                    registers.tables.len(),
+                )?;
+                let EncodeRegisters {
+                    register,
+                    low,
+                    tables,
+                    ..
+                } = registers;
+                packed_table_reduce(plan, message, register, low, tables);
+                packed_write_codeword(plan, message, register, codeword);
+                Ok(())
+            }
+            EncodeFamily::ClmulFold if redundancy > 0 => {
+                plan.validate_lengths(message.len(), codeword.len())?;
+                validate_registers(words, registers)?;
+                validate_prepared(FOLD_CONSTANT_WORDS, registers.fold.len())?;
+                let EncodeRegisters {
+                    register,
+                    low,
+                    fold,
+                    ..
+                } = registers;
+                packed_fold_reduce(plan, message, register, low, fold[0]);
+                packed_write_codeword(plan, message, register, codeword);
+                Ok(())
+            }
+            _ => Self::encode_systematic_with(plan, message, registers, codeword),
         }
-        let EncodeRegisters {
-            register,
-            low,
-            tables,
-            ..
-        } = registers;
-        packed_table_reduce(plan, message, register, low, tables);
-        packed_write_codeword(plan, message, register, codeword);
-        Ok(())
     }
 
     /// Runs [`EncodeFamily::BitsliceInterleaved`] over whole lane groups of
@@ -1588,13 +1607,10 @@ impl SystematicKernel<Fp<2>> for BitVec {
             plan.validate_lengths(message.len(), codeword.len())?;
         }
         validate_registers(redundancy.div_ceil(64), registers)?;
-        let expected = bch_encode::bitslice_scratch_words(redundancy);
-        if registers.lanes.len() != expected {
-            return Err(CodeError::BufferLengthMismatch {
-                expected,
-                actual: registers.lanes.len(),
-            });
-        }
+        validate_prepared(
+            bch_encode::bitslice_scratch_words(redundancy),
+            registers.lanes.len(),
+        )?;
         packed_bitslice_batch(plan, messages, &mut registers.lanes, codewords);
         Ok(())
     }
@@ -1916,8 +1932,8 @@ fn encode_kernels() -> BchEncodeFns {
     *DETECTED.get_or_init(|| bch_encode::detect().unwrap_or_else(bch_encode::scalar))
 }
 
-/// Whether the test hook is holding this process on the portable bit-sliced
-/// kernels.
+/// Whether the test hook is holding this process on the portable kernel
+/// bundle.
 #[cfg(any(test, feature = "test-support"))]
 fn force_scalar_encode_kernels_active() -> bool {
     FORCE_SCALAR_ENCODE_KERNELS.load(std::sync::atomic::Ordering::Relaxed)
@@ -1927,20 +1943,20 @@ fn force_scalar_encode_kernels_active() -> bool {
 static FORCE_SCALAR_ENCODE_KERNELS: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
-/// Holds [`EncodeFamily::BitsliceInterleaved`] on the portable kernels, or
-/// releases it back to detection, and reports the previous setting.
+/// Holds every kernel-dispatched family on the portable bundle, or releases
+/// them back to detection, and reports the previous setting.
 ///
-/// This is what lets a differential check exercise the fallback arm of the
-/// kernel dispatch on a host that has the accelerated one. The two arms
-/// compute the same words, so a concurrent encode that observes the switch
-/// writes the same bytes either way. Exposed to tests through
-/// [`crate::test_support`].
+/// One switch covers the whole bundle, so it exercises the fallback arm of
+/// [`EncodeFamily::BitsliceInterleaved`] and [`EncodeFamily::ClmulFold`]
+/// alike on a host that has the accelerated one. Every arm computes the same
+/// words, so a concurrent encode that observes the switch writes the same
+/// bytes either way. Exposed to tests through [`crate::test_support`].
 #[cfg(any(test, feature = "test-support"))]
 pub(crate) fn force_scalar_encode_kernels(forced: bool) -> bool {
     FORCE_SCALAR_ENCODE_KERNELS.swap(forced, std::sync::atomic::Ordering::Relaxed)
 }
 
-/// The name of the bit-sliced kernel bundle an encode would run now.
+/// The name of the kernel bundle an encode would run now.
 ///
 /// Exposed to tests through [`crate::test_support`] so a forced-fallback case
 /// can witness which arm it exercised.
