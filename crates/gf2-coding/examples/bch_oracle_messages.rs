@@ -22,7 +22,7 @@
 //! # Usage
 //!
 //! ```text
-//! cargo run --release --features test-support \
+//! ./scripts/cargo-budget.sh cargo run --release --features test-support \
 //!     --example bch_oracle_messages -- <output.json>
 //! ```
 
