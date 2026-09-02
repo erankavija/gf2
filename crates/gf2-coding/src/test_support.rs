@@ -1,5 +1,10 @@
-//! Test helpers for integration tests that consume ETSI DVB-T2 verified
-//! vectors (the `VV001-CR35_CSP/TestPoint*/...CSP.txt` files).
+//! Test helpers shared between crate-internal unit tests, the integration
+//! tests under `tests/`, and the bench targets.
+//!
+//! The helpers are allocation witnesses over the encoding workspaces, the
+//! basis-vector matrix oracles the canonical materialization is measured and
+//! compared against, and a reader for the ETSI DVB-T2 verified vectors (the
+//! `VV001-CR35_CSP/TestPoint*/...CSP.txt` files).
 //!
 //! Gated behind `cfg(any(test, feature = "test-support"))` so the helpers
 //! are reachable from both unit tests inside the crate and integration
