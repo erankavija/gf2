@@ -21,6 +21,11 @@
       "status": "failed",
       "updated_at": "2026-09-02T11:04:50.579341997Z",
       "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-02T11:07:31.773243865Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee",
@@ -33,5 +38,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-02T11:04:50.579341997Z"
+  "updated_at": "2026-09-02T11:07:31.773243865Z"
 }
