@@ -247,8 +247,8 @@ pub const BCH_CORPUS_SEED: u64 = 0xAE03_BCD0;
 /// Messages a corpus row carries at or below [`BCH_CORPUS_LARGE_LENGTH`].
 ///
 /// Amendment 1 of the `evidence-protocol` section of
-/// `dev/active/ae03bcd0-general-bch/plan.md` predeclares this count, the one
-/// below it, and the threshold between them.
+/// `dev/active/ae03bcd0-general-bch/plan.md` fixes this count, the one below
+/// it, and the threshold between them.
 pub const BCH_CORPUS_MESSAGES_SMALL: usize = 4;
 
 /// Messages a corpus row carries above [`BCH_CORPUS_LARGE_LENGTH`], which
