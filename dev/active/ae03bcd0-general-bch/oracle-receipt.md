@@ -6,10 +6,10 @@ Every value below was observed during that run.
 | Field | Value |
 |---|---|
 | Issue | `3f7edef1` |
-| Run start (UTC) | 2026-09-02T16:25:42Z |
-| Run end (UTC) | 2026-09-02T16:26:50Z |
-| gf2 revision | `17111e89b09c299959129c944034d311e1d8cbc6` |
-| Working tree at generation | modified |
+| Run start (UTC) | 2026-09-02T16:27:29Z |
+| Run end (UTC) | 2026-09-02T16:28:39Z |
+| gf2 revision | `d8d31c71ecdf2563b48f11c96ebacc65c38a4440` |
+| Working tree at generation | clean |
 | Host CPU | AMD Ryzen 9 5900X 12-Core Processor |
 | Kernel | Linux 7.1.11-arch1-1 x86_64 GNU/Linux |
 | Rust | rustc 1.97.0 (2d8144b78 2026-07-07) |
@@ -44,7 +44,7 @@ Every value below was observed during that run.
 | build | `./scripts/cargo-budget.sh cargo build --release -p gf2-coding --features test-support --example bch_oracle_messages` | 0 | `./target/release/examples/bch_oracle_messages` |
 | corpus | `./target/release/examples/bch_oracle_messages crates/gf2-coding/tests/data/bch_oracle/corpus.json` | 0 | [corpus.json](../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json) |
 | SageMath | `python3 dev/active/ae03bcd0-general-bch/oracle/sage_oracle.py crates/gf2-coding/tests/data/bch_oracle/corpus.json crates/gf2-coding/tests/data/bch_oracle/sage.json` | 2 | [sage.json](../../../crates/gf2-coding/tests/data/bch_oracle/sage.json) |
-| GAP with GUAVA | `gap -q -A -T -o 4g -c 'CORPUS:="crates/gf2-coding/tests/data/bch_oracle/corpus.json"; OUTPUT:="crates/gf2-coding/tests/data/bch_oracle/gap.json";' dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g` | 66 | [gap.json](../../../crates/gf2-coding/tests/data/bch_oracle/gap.json) |
+| GAP with GUAVA | `gap -q -A -T -o 4g -c 'CORPUS:="crates/gf2-coding/tests/data/bch_oracle/corpus.json"; OUTPUT:="crates/gf2-coding/tests/data/bch_oracle/gap.json";' dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g` | 68 | [gap.json](../../../crates/gf2-coding/tests/data/bch_oracle/gap.json) |
 
 ## GUAVA code-object attempts
 
@@ -58,14 +58,14 @@ rise over the row before it.
 
 | Row | Code object built | `BCHCode` attempt CPU (s) | Process peak RSS after this row (KiB) |
 |---|---|---|---|
-| B1 | yes | 0.0 | 151788 |
-| B2 | yes | 0.0 | 151788 |
-| B3 | yes | 0.0 | 151788 |
-| B4 | no | 22.9 | 4174060 |
-| N1 | yes | 0.0 | 7610604 |
-| N2 | yes | 0.0 | 7612652 |
-| N3 | yes | 0.0 | 7614700 |
-| N4 | yes | 0.0 | 7622892 |
+| B1 | yes | 0.0 | 151656 |
+| B2 | yes | 0.0 | 151656 |
+| B3 | yes | 0.0 | 151656 |
+| B4 | no | 23.4 | 4173928 |
+| N1 | yes | 0.0 | 7610472 |
+| N2 | yes | 0.0 | 7612520 |
+| N3 | yes | 0.0 | 7614568 |
+| N4 | yes | 0.0 | 7622760 |
 
 Diagnostics GAP printed during the stage, one message per attempt that
 exceeded the heap:
@@ -83,7 +83,7 @@ Error, reached the pre-set memory limit
 |---|---|---|
 | `crates/gf2-coding/tests/data/bch_oracle/corpus.json` | `02d195b78fe82c8cc784c79b1adf5f7b02e381d5e43de8aa7266b4a7c7f3db05` | 40729 |
 | `crates/gf2-coding/tests/data/bch_oracle/sage.json` | `4861230ac64ab7d5a3fb8f696925ecb9db0decc95c1d31529c5570022d717f52` | 89342 |
-| `crates/gf2-coding/tests/data/bch_oracle/gap.json` | `a36df8d3261bc675cc6afe9a189138395d46c20951b143f0cc22600e1566e7cd` | 90999 |
+| `crates/gf2-coding/tests/data/bch_oracle/gap.json` | `55f8856ffa9077c56d8a103b0056224381534d66238a856fa73d7016b87e69b3` | 90999 |
 
 ## Generating source
 
