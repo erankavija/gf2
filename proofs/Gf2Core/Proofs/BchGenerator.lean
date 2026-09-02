@@ -75,7 +75,7 @@
   * L4.7 — the sketch names `Fin n` combinatorics. `runLen` is `Nat.find` on the
     scan's own stopping condition over `ZMod n`, mirroring
     `CyclotomicClosure.cosetLen`, because the production loop computes exactly
-    that minimum (`crates/gf2-coding/src/bch/spec.rs:1554-1556`).
+    that minimum (`crates/gf2-coding/src/bch/spec.rs:1560-1563`).
 
   Every line this module cites under `crates/gf2-core/` is also the line the
   sketch cites. The `crates/gf2-coding/src/bch/spec.rs` citations have drifted by several
@@ -154,7 +154,7 @@ to each coset representative and hands the result to `minimal_polynomial`
 Frobenius.
 
 Refinement anchor: the closure assertion of `assert_construction_is_consistent`
-(`crates/gf2-coding/src/bch/spec.rs:1948-1953`), which recomputes `exponent * q mod n` for every
+(`crates/gf2-coding/src/bch/spec.rs:1948-1954`), which recomputes `exponent * q mod n` for every
 member of the defining set, and `the_generator_vanishes_at_every_defining_set_root`
 (`crates/gf2-coding/src/bch/spec.rs:2129`), which decides the field statement directly. -/
 theorem relFrobenius_alphaPow {α : E} (hord : orderOf α = n) (j : ZMod n) :
@@ -493,7 +493,7 @@ theorem cosetFinset_pairwiseDisjoint {q : ℕ} (hq : Nat.Coprime q n) (T : Finse
   rw [← ((mem_reps hq T a).1 ha).2, ← ((mem_reps hq T b).1 hb).2, hmin]
 
 /-- The defining set is the disjoint union of the cosets of its representatives, which is what
-`derive_generator` (`crates/gf2-coding/src/bch/spec.rs:1444`) iterates over. -/
+`derive_generator` (`crates/gf2-coding/src/bch/spec.rs:1446`) iterates over. -/
 theorem biUnion_cosetFinset_reps {q : ℕ} (hq : Nat.Coprime q n) {T : Finset (ZMod n)}
     (hclosed : ∀ j ∈ T, CyclotomicClosure.mu q j ∈ T) :
     (reps hq T).biUnion (cosetFinset hq) = T := by
@@ -595,7 +595,7 @@ generator, so the generator is a common multiple of the family — the first hal
 of the `lcm` contract.
 
 Production path: the `FieldPoly::lcm` fold of `derive_generator`
-(`crates/gf2-coding/src/bch/spec.rs:1439-1447`).
+(`crates/gf2-coding/src/bch/spec.rs:1445-1452`).
 
 Refinement anchor: `the_generator_vanishes_at_every_defining_set_root`
 (`crates/gf2-coding/src/bch/spec.rs:2129`), which fails as soon as one coset's roots are missing
@@ -644,7 +644,7 @@ theorem generator_dvd_of_forall_minpoly_dvd (hord : orderOf α = n)
 /-- **L4.5 (divisibility).** The generator divides `X ^ n - 1` over the base field.
 
 Production path: `derive_generator` re-checks exactly this at run time
-(`crates/gf2-coding/src/bch/spec.rs:1458-1465`) against `cyclic_polynomial` (`:1470`) and
+(`crates/gf2-coding/src/bch/spec.rs:1459-1466`) against `cyclic_polynomial` (`:1470`) and
 reports `BchError::GeneratorNotDivisorOfCyclicPolynomial` when it fails.
 
 Refinement anchors: `generator_divides_cyclic_polynomial`
@@ -718,7 +718,7 @@ theorem exists_run_stop (s : ZMod n) : ∃ r : ℕ, r = n ∨ (s + (r : ZMod n))
 at `n`.
 
 Production path: the inner loop of `witness_longest_run`
-(`crates/gf2-coding/src/bch/spec.rs:1554-1556`), whose guard `run < length && present[(start +
+(`crates/gf2-coding/src/bch/spec.rs:1560-1563`), whose guard `run < length && present[(start +
 run) % length]` stops at the first absent exponent or at `length`. -/
 def runLen (s : ZMod n) : ℕ := Nat.find (exists_run_stop T s)
 
@@ -763,12 +763,12 @@ theorem runLen_eq_length_of_univ (hT : ∀ x : ZMod n, x ∈ T) (s : ZMod n) : r
 /-- The scan's guard: `s` starts a run when `s` is present and `s - 1` is not.
 
 Production path: the `continue` guard of `witness_longest_run`
-(`crates/gf2-coding/src/bch/spec.rs:1552`), `!present[start] || present[(start + length - 1) %
-length]`. -/
+(`crates/gf2-coding/src/bch/spec.rs:1557-1559`), `!present[start] || present[(start + length -
+1) % length]`. -/
 def IsRunStart (s : ZMod n) : Prop := s ∈ T ∧ s - 1 ∉ T
 
 /-- The exponents at which the scan opens a run: the candidates the outer loop
-of `witness_longest_run` (`crates/gf2-coding/src/bch/spec.rs:1551`) does not skip. -/
+of `witness_longest_run` (`crates/gf2-coding/src/bch/spec.rs:1556`) does not skip. -/
 def runStarts : Finset (ZMod n) := Finset.univ.filter fun s => IsRunStart T s
 
 /-- Membership in the candidate set is the scan's guard. -/
@@ -776,7 +776,7 @@ theorem mem_runStarts {s : ZMod n} : s ∈ runStarts T ↔ IsRunStart T s := by
   simp [runStarts]
 
 /-- The longest cyclic run of consecutive members of `T`: the `best_run` the
-scan accumulates (`crates/gf2-coding/src/bch/spec.rs:1558-1562`).
+scan accumulates (`crates/gf2-coding/src/bch/spec.rs:1564-1567`).
 
 Refinement anchor: `assert_witnessed_run_is_maximal` (`crates/gf2-coding/src/bch/spec.rs:1960`),
 whose closing sweep at `:1994-2003` recomputes the run from every present
@@ -837,7 +837,7 @@ theorem exists_bestRun_start (hs : (runStarts T).Nonempty) :
 
 /-- The witnessed start: the least exponent that opens a longest run, which is
 the tie-break the scan's strict `run > best_run` comparison implements
-(`crates/gf2-coding/src/bch/spec.rs:1563`). -/
+(`crates/gf2-coding/src/bch/spec.rs:1564`). -/
 def bestStart (hs : (runStarts T).Nonempty) : ℕ := Nat.find (exists_bestRun_start T hs)
 
 /-- The witnessed start opens a run. -/
