@@ -10845,3 +10845,8 @@
 {"gate_key":"doc-review","id":"df627d2a-848f-4339-be8d-148254873673","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T16:55:19.600171556Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"b7a84c4c-1d00-4b95-ac99-855e00969225","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T17:02:43.635257686Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"cargo-ci","id":"13f36790-5e18-4a46-af3b-2fa322a0d78d","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T17:03:33.085036453Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"e4ed7304-7dc7-4eb8-a93d-7de8ee273fa6","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T17:05:53.078159166Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"cc50c2d8-58f0-49a3-a693-ee288561008f","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T17:10:02.310761562Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"19fd1d27-89af-4c3a-8813-5ffb9866c03b","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","reason":"worker complete at debc2eb1; lead takes over for merge and gates","timestamp":"2026-09-02T17:10:02.310761562Z","type":"issue_released"}
+{"from":"ready","id":"b8143cb8-580f-406a-a09b-88f4722fc583","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T17:10:11.413729736Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"8df67a3a-664a-4cf9-ae07-0f23ca190379","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T17:10:11.413729736Z","type":"issue_claimed"}

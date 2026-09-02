@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-01T21:39:26.770373738Z",
   "context": {},
   "created_at": "2026-09-01T21:37:21.957829629Z",
@@ -42,5 +42,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Canonical BCH matrices use the systematic user layout",
-  "updated_at": "2026-09-02T16:48:17.511891756Z"
+  "updated_at": "2026-09-02T17:10:11.413729736Z"
 }
