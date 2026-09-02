@@ -132,6 +132,30 @@ before optimization work begins. Hosts follow the receipt conventions of the
 SOTA target matrix (uncontended, pinned toolchain, committed
 seeds/revision/host).
 
+#### Amendment 1 (2026-09-02, `3f7edef1`) — sampling rule
+
+The protocol above fixes the corpus rows, the message seed, the two oracles,
+and the authoritative vectors. This amendment predeclares the sampling the
+conformance suites draw under them, so the counts are a protocol input rather
+than an implementation choice.
+
+- **Messages per corpus row.** Four seeded messages for a row of length at most
+  4096 and two above it, keeping the committed fixture proportionate to the row
+  it carries.
+- **Coordinate comparison.** Rows of length at most 4096 are compared symbol by
+  symbol together; a longer row is compared in its own case. Both run in the
+  fast tier, and the threshold is a fixture-size and runtime bound with no
+  mathematical content: a row's agreement claim does not depend on which side
+  of it the row falls.
+- **Shortened DVB-T2 payloads.** Three seeded payloads of the standard's
+  $K_{\mathrm{bch}}$ witness that shortening leaves the mother code's parity
+  unchanged.
+- **Standards vectors.** The ETSI DVB-T2 verification and validation reference
+  streams, set VV001-CR35, are compared exhaustively rather than sampled: every
+  block of every frame the set carries, its test point 04 payload encoded
+  through the canonical mother code and asserted equal to its test point 05
+  block.
+
 ### `workload-selection` [implementation-produced] — selected baselines and workloads
 
 The survey's concrete completion of the evidence protocol: selected external

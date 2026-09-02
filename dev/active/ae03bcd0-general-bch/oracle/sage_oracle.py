@@ -9,7 +9,9 @@ and codewords SageMath derives.
 Run it as ``python3 sage_oracle.py <corpus.json> <output.json>`` with the
 SageMath library on the interpreter's path. The ``sage`` launcher of SageMath
 10.9 forwards no arguments to a script, so the interpreter is invoked directly
-and the SageMath version is read at run time from the library itself.
+and the SageMath version is read at run time from the library itself. The
+fixture records ``sage.version.version`` and the interpreter's own executable
+path beside the banner, so the runner can hash the binary that produced it.
 
 Field transport
 ---------------
@@ -49,6 +51,7 @@ the two systems exactly when the presentations are.
 import json
 import sys
 
+import sage.version
 from sage.all import GF, Hom, PolynomialRing, version
 
 NATIVE_ENCODER = "sage.coding.cyclic_code.CyclicCodePolynomialEncoder"
@@ -281,7 +284,9 @@ def main():
         "oracle": {
             "system": "SageMath",
             "version": version(),
+            "library_version": sage.version.version,
             "interpreter": sys.version.split()[0],
+            "interpreter_executable": sys.executable,
             "entry_point": "sage.coding.bch_code.BCHCode",
         },
         "seed": corpus["seed"],

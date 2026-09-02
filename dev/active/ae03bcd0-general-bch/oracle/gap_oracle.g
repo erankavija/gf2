@@ -24,8 +24,8 @@
 ##  `bchcode_generator_matches` records.
 ##
 ##  Run it as
-##      gap -q -A -o 4g -c 'CORPUS:="<corpus.json>"; OUTPUT:="<output.json>";' \
-##          gap_oracle.g
+##      gap -q -A -T -o <heap> \
+##          -c 'CORPUS:="<corpus.json>"; OUTPUT:="<output.json>";' gap_oracle.g
 ##
 ##  Field transport
 ##  ---------------
@@ -60,25 +60,25 @@
 ##  the corpus's own `alpha`, which is the round trip that validates the
 ##  inverse map before `guava_root_gf2_index` is read out of it.
 ##
-##  Scale limit
-##  -----------
+##  Bounded code-object attempts
+##  ----------------------------
 ##  GUAVA's `BCHCode` reaches `GeneratorPolCode`, which materializes the whole
-##  generator matrix through `GeneratorMatrixFromPoly`. At the DVB-T2 mother
-##  length that matrix is 65343 x 65535 and exhausts memory before any code
-##  object exists. That row therefore runs GUAVA's `BCHCode` generator
-##  derivation -- `PrimitiveUnityRoot` replaced by gf2's root, then the same
-##  cyclotomic-coset loop over `MinimalPolynomial` -- without the code-object
-##  wrapper, and the fixture records that. Every other row builds the wrapper
-##  too and checks that its generator is the one the loop derived.
+##  generator matrix through `GeneratorMatrixFromPoly`, so at a long length the
+##  code object can need more heap than the run has. Both wrapper calls are
+##  therefore made through `CALL_WITH_CATCH` under `-T`: exceeding the heap
+##  `-o` sets returns to the caller instead of ending the run. Whether a row
+##  has a code object is thus an observation of this run, recorded per row as
+##  `bchcode_built` beside the heap the attempt ran under, its processor time,
+##  and GAP's own heap statistics after it. `ORACLE_GAP_HEAP` in `run.sh` sets
+##  that heap and the receipt records the invocation.
 ##
-##  `ORACLE_GAP_HEAP` in `run.sh` sets the GAP heap this script runs under and
-##  the receipt records the value used.
+##  Running the script without `-T` turns a heap exhaustion into a break loop
+##  and no fixture is written.
 ##
 
 LoadPackage("guava");;
 
 HEX := "0123456789abcdef";;
-NATIVE_CODE_LIMIT := 4096;;
 
 #############################################################################
 ##  A minimal reader for the corpus subset of JSON: objects, arrays,
@@ -189,6 +189,25 @@ BaseIndexOfFFE := function(e, p, dB, basis)
         index := index * p + IntFFE(coefficients[i]);
     od;
     return index;
+end;;
+
+##  This process's peak resident set size in KiB, read from the kernel. The
+##  value is monotone over the run, so a row's attempt cost shows as the rise
+##  over the row before it.
+PeakRssKib := function()
+    local stream, line, value;
+    stream := InputTextFile("/proc/self/status");
+    if stream = fail then return fail; fi;
+    value := fail;
+    line := ReadLine(stream);
+    while line <> fail do
+        if PositionSublist(line, "VmHWM:") <> fail then
+            value := Int(Filtered(line, c -> c in "0123456789"));
+        fi;
+        line := ReadLine(stream);
+    od;
+    CloseStream(stream);
+    return value;
 end;;
 
 ##  Returns the canonical index of a splitting-field element in *gf2's*
@@ -327,12 +346,13 @@ BuildRow := function(row)
     local p, dB, dE, r, q, n, delta, b0, F, Fs, x, conwayBase, baseGen,
           basePresentation, extGen, extPresentation, conwayExt, modulus,
           poly, alpha, pur, G, powerSet, test, t, coset, cosets, definingSet,
-          j, k, code, nativeCode, bchGenerator, bchMatches, unavailable,
+          j, k, code, nativeCode, bchGenerator, bchMatches,
           messages, native, systematic, symbols, message, product, shifted,
           remainder, systematicPoly, coefficients, out, i, encoderNote,
           crossChecked, checkWord, divides, rootsChecked, baseBasis,
           messageFFE, gf2Basis, alphaGf2Index, guavaRootGf2Index, bchPoly,
-          bchK, bchDefiningSet, bchNative, bchSystematic;
+          bchK, bchDefiningSet, bchNative, bchSystematic, attempt,
+          attemptCpu, attemptStart, attemptPeak, nativeAttempt;
 
     p := row.characteristic;
     dB := row.base_degree;
@@ -442,19 +462,22 @@ BuildRow := function(row)
             t := (q * t) mod n;
         until t = (j mod n);
     od;
-    rootsChecked := fail;
-    if n <= NATIVE_CODE_LIMIT then
-        rootsChecked := ForAll(definingSet, e -> IsZero(Value(G, alpha ^ e)))
-            and Number([0 .. n - 1], e -> IsZero(Value(G, alpha ^ e)))
-                = Length(definingSet);
-    fi;
+    rootsChecked := ForAll(definingSet, e -> IsZero(Value(G, alpha ^ e)))
+        and Number([0 .. n - 1], e -> IsZero(Value(G, alpha ^ e)))
+            = Length(definingSet);
 
-    #  GUAVA's own `BCHCode`, at GUAVA's own root, where the generator matrix
-    #  fits. Its dimension and defining set are read off the object itself,
-    #  the defining set as the exponents of GUAVA's root that its generator
-    #  annihilates.
-    if n <= NATIVE_CODE_LIMIT then
-        code := BCHCode(n, b0, delta, F);
+    #  GUAVA's own `BCHCode`, at GUAVA's own root. The call is a real attempt
+    #  bounded by the heap `run.sh` sets: under `-T` a heap the code object
+    #  does not fit in returns here rather than ending the run, so whether a
+    #  row has a code object is an observation of this run and not a threshold
+    #  written into the script. Every attempt records the heap it ran under,
+    #  the processor time it used, and GAP's own heap statistics after it.
+    attemptStart := Runtime();
+    attempt := CALL_WITH_CATCH(BCHCode, [n, b0, delta, F]);
+    attemptCpu := Runtime() - attemptStart;
+    attemptPeak := PeakRssKib();
+    if attempt[1] then
+        code := attempt[2];
         bchPoly := GeneratorPol(code);
         bchGenerator := List(
             CoefficientsOfUnivariatePolynomial(bchPoly),
@@ -463,9 +486,6 @@ BuildRow := function(row)
         bchK := Dimension(code);
         bchDefiningSet := Filtered([0 .. n - 1],
             e -> IsZero(Value(bchPoly, pur ^ e)));
-        nativeCode := GeneratorPolCode(G, n, F);
-        unavailable := fail;
-        encoderNote := "GUAVA CodewordVector on GeneratorPolCode(G, n, F)";
     else
         code := fail;
         bchPoly := fail;
@@ -473,10 +493,16 @@ BuildRow := function(row)
         bchMatches := fail;
         bchK := fail;
         bchDefiningSet := fail;
+    fi;
+
+    #  The wrapper the transported-root derivation is encoded through, under
+    #  the same bound.
+    nativeAttempt := CALL_WITH_CATCH(GeneratorPolCode, [G, n, F]);
+    if nativeAttempt[1] then
+        nativeCode := nativeAttempt[2];
+        encoderNote := "GUAVA CodewordVector on GeneratorPolCode(G, n, F)";
+    else
         nativeCode := fail;
-        unavailable := Concatenation(
-            "GUAVA GeneratorPolCode materializes a ", String(k), " x ",
-            String(n), " generator matrix, which exhausts memory");
         encoderNote := "GUAVA cyclic-code encoding map c(x) = m(x) * G(x)";
     fi;
 
@@ -554,7 +580,15 @@ BuildRow := function(row)
     Append(out, Concatenation("      \"generator_divides_x_n_minus_one\": ",
         JsonBool(divides), ",\n"));
     Append(out, Concatenation("      \"defining_set_root_checked\": ",
-        JsonMaybeBool(rootsChecked), ",\n"));
+        JsonBool(rootsChecked), ",\n"));
+    Append(out, Concatenation("      \"bchcode_built\": ",
+        JsonBool(attempt[1]), ",\n"));
+    Append(out, Concatenation("      \"bchcode_attempt_heap\": ",
+        JsonQuote(GAPInfo.CommandLineOptions.o), ",\n"));
+    Append(out, Concatenation("      \"bchcode_attempt_cpu_ms\": ",
+        String(attemptCpu), ",\n"));
+    Append(out, Concatenation("      \"bchcode_attempt_peak_rss_kib\": ",
+        JsonMaybeInt(attemptPeak), ",\n"));
     if bchGenerator = fail then
         Append(out, "      \"bchcode_generator\": null,\n");
         Append(out, "      \"bchcode_generator_matches\": null,\n");
@@ -562,8 +596,6 @@ BuildRow := function(row)
         Append(out, "      \"bchcode_defining_set\": null,\n");
         Append(out, "      \"bchcode_codewords_native\": null,\n");
         Append(out, "      \"bchcode_codewords_systematic\": null,\n");
-        Append(out, Concatenation("      \"bchcode_unavailable\": ",
-            JsonQuote(unavailable), ",\n"));
     else
         Append(out, Concatenation("      \"bchcode_generator\": ",
             JsonInts(bchGenerator), ",\n"));
@@ -577,7 +609,6 @@ BuildRow := function(row)
             JsonStrings(bchNative), ",\n"));
         Append(out, Concatenation("      \"bchcode_codewords_systematic\": ",
             JsonStrings(bchSystematic), ",\n"));
-        Append(out, "      \"bchcode_unavailable\": null,\n");
     fi;
     Append(out, Concatenation("      \"native_encoder\": ",
         JsonQuote(encoderNote), ",\n"));
@@ -603,10 +634,26 @@ Main := function()
     Append(out, Concatenation("    \"system\": ", JsonQuote("GAP with GUAVA"), ",\n"));
     Append(out, Concatenation("    \"gap_version\": ",
         JsonQuote(GAPInfo.Version), ",\n"));
+    Append(out, Concatenation("    \"gap_kernel_version\": ",
+        JsonQuote(GAPInfo.KernelInfo.KERNEL_VERSION), ",\n"));
+    Append(out, Concatenation("    \"gap_build_version\": ",
+        JsonQuote(GAPInfo.KernelInfo.BUILD_VERSION), ",\n"));
+    Append(out, Concatenation("    \"gap_build_datetime\": ",
+        JsonQuote(GAPInfo.KernelInfo.BUILD_DATETIME), ",\n"));
+    Append(out, Concatenation("    \"gap_architecture\": ",
+        JsonQuote(GAPInfo.KernelInfo.GAP_ARCHITECTURE), ",\n"));
+    Append(out, Concatenation("    \"gmp_version\": ",
+        JsonQuote(GAPInfo.KernelInfo.GMP_VERSION), ",\n"));
+    Append(out, Concatenation("    \"heap\": ",
+        JsonQuote(GAPInfo.CommandLineOptions.o), ",\n"));
     Append(out, Concatenation("    \"guava_version\": ",
         JsonQuote(InstalledPackageVersion("guava")), ",\n"));
+    Append(out, Concatenation("    \"guava_path\": ",
+        JsonQuote(GAPInfo.PackagesInfo.guava[1].InstallationPath), ",\n"));
     Append(out, Concatenation("    \"sonata_version\": ",
         JsonQuote(InstalledPackageVersion("sonata")), ",\n"));
+    Append(out, Concatenation("    \"sonata_path\": ",
+        JsonQuote(GAPInfo.PackagesInfo.sonata[1].InstallationPath), ",\n"));
     Append(out, Concatenation("    \"entry_point\": ",
         JsonQuote("GUAVA BCHCode(n, b, delta, F)"), "\n  },\n"));
     Append(out, Concatenation("  \"seed\": ", JsonQuote(corpus.seed), ",\n"));
