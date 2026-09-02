@@ -7,6 +7,7 @@
   ],
   "description": "Implement the sketch's Lean obligation that the constructed generator polynomial lies in the base field and vanishes on every requested root.\n\n## Success Criteria\n\n- [hard] REQ-01: The generator-correctness lemmas are proven and `lake build` passes with no new untracked assumptions.\n- [hard] REQ-02: The obligation binds to the construction production path exactly as the approved sketch assigns, with refinement evidence landed where assigned.\n",
   "documents": [],
+  "first_ready_at": "2026-09-02T16:17:00.030601274Z",
   "gates_required": [
     "code-review",
     "doc-review",
@@ -22,7 +23,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Lean proofs: generator base-field membership and root correctness",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-02T16:17:00.030601274Z"
 }
