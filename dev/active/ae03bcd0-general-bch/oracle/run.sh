@@ -231,10 +231,12 @@ ATTEMPTS
   echo
   echo "## Standards vectors"
   echo
-  echo "\`$vectors_case\` encodes every block of the ETSI DVB-T2 verification"
-  echo "streams through the canonical mother code and compares it with the"
-  echo "verified codeword. The case prints what it read and how far the"
-  echo "agreement went; those lines are quoted below as it printed them."
+  echo "The case"
+  echo "\`$vectors_case\`"
+  echo "encodes every block of the ETSI DVB-T2 verification streams through the"
+  echo "canonical mother code and compares it with the verified codeword. It"
+  echo "prints what it read and how far the agreement went, and those lines are"
+  echo "quoted below as it printed them."
   echo
   echo "| Property | Value |"
   echo "|---|---|"
