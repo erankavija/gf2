@@ -345,7 +345,7 @@
           "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged 9b660ee0; code-review R1 FAIL F1; rework 1 (R-36 clmul-fold) resumed by fresh Opus worker-2b6968d3-3 from the session-7 draft (session 8)"
+          "status": "rework 1 complete (worker-2b6968d3-3 cut off before reporting; cargo-ci green in its worktree log); lead review PASS Tiers 1.5-3 + lead-direct findings.md fix b2ea0cb6; merged f5efb7cc (session 9); cargo-ci + code-review R2 queued behind the B4 GAP probe"
         },
         {
           "key": "bch-convenience-ctors",
@@ -361,7 +361,7 @@
           "title": "Canonical BCH matrices use the systematic user layout",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged 64818484; cargo-ci FAIL (t2s test 7.85s vs 8s kill) + doc-review R1 FAIL (bench rustdoc narration); rework 1 dispatched to live worker-bd0edfa2-2 with bd0edfa2 (session 8)"
+          "status": "rework 1 complete on branch 01d3dfab with bd0edfa2 (sampled T2S fast-tier witness b1d710c5, bench rustdoc c1ff3365); lead review PASS; merge + cargo-ci + doc-review R2 + code-review R1 queued (session 9)"
         },
         {
           "key": "genmatrix-perf",
@@ -369,7 +369,7 @@
           "title": "Optimize the reference generator-matrix materialization",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged 64818484; cargo-ci passed; code-review R1 FAIL F1 contract cells / F2 field-generic coverage / F3 receipt; rework 1 dispatched to live worker-bd0edfa2-2 (session 8, R-37)"
+          "status": "rework 1 complete on branch 01d3dfab (receipt 24563a1c at measured revision 5847c2e0, load 1.16); lead review PASS; merge + cargo-ci + code-review R2 queued after 2b6968d3 gates (session 9)"
         },
         {
           "key": "lean-quotient-reduction",
@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework 1 part 1 at 7f32f4fd: code-review F1 closed for N2/N3 (gf2 at GUAVA root via RootSelection::Explicit vs unaided BCHCode), F2 closed (TP04->TP05 808/808 blocks, 2.68 s fast tier), F3 verified; B4 awaits the lead idle-host GAP retry; research-review findings re-sent (first message never arrived); lead links docs post-merge"
+          "status": "rework 1 part 1 at 7f32f4fd; part-2 draft (research-review F2-F5) lead-preserved as d6f03947; B4 GAP retry running (session 9, 50g heap, 52G scope, 20 min); part-2 worker dispatched after the result"
         },
         {
           "key": "lean-closure",
@@ -393,7 +393,7 @@
           "title": "Lean proofs: q-cyclotomic seed closure",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker-d7749931-2 complete (77 decls, 0 sorry, axiom audit clean, 3 recorded Mathlib-route deviations, footprint exact); lead review PASS on Tiers 2-3; merged f916e070; lake-build + code-review + doc-review gates queued behind the 88ca7d2f measurement window (session 8)"
+          "status": "merged f916e070; lake-build PASSED (session 9); code-review + doc-review running"
         }
       ]
     },
@@ -438,7 +438,7 @@
           "title": "Pin the pre-cutover BCH throughput baseline receipt",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched early (session 8, Sonnet worker-88ca7d2f; no deps; measurement serialized by the ccx1 flock)"
+          "status": "runner committed by the Sonnet worker (74871c6b); lead re-measured on the idle host per R-41 and committed the receipt (51f11e22); merged 0b408133 (session 9); cargo-ci + code-review + doc-review queued"
         }
       ]
     },
@@ -726,7 +726,9 @@
     "Pool-seeded target/ hardlinks share cargo fingerprints across worktrees: cargo can report a stale gf2-kernels-simd rlib as fresh under ci-test and a dependent crate then fails to resolve a new module. `find crates/<crate>/src -name '*.rs' -exec touch {} +` forces the rebuild (2b6968d3 worker, session 7).",
     "dev/tools/tuning-profile-compose/Cargo.lock is gitignored, so a fresh worktree lacks it and cargo-ci.sh's tuning-composer step tries the network (fails in a sandbox, slow elsewhere). Copy main's lockfile into each new worktree at dispatch (done for 3f7edef1/d7749931 in session 7) or run `cargo generate-lockfile --offline` there.",
     "Teammate replies can arrive ~60 min late in a resumed session: the session-7 workers' status reports (sent 10:45-10:58Z) reached the lead at ~11:50Z, after they had been stopped and re-dispatched. Before stopping an unresponsive teammate, wait for at least one wake cycle; if re-dispatching anyway, forward any late report to the successor (done for 2b6968d3).",
-    "SendMessage to a RUNNING teammate can be lost or delayed for a long time (the 3f7edef1 rework worker never received the research-review findings sent 30 min earlier while it was mid-task). For anything the worker must act on, also write it to a file the worker is told to read, and re-send the pointer when the worker's report shows the item missing."
+    "SendMessage to a RUNNING teammate can be lost or delayed for a long time (the 3f7edef1 rework worker never received the research-review findings sent 30 min earlier while it was mid-task). For anything the worker must act on, also write it to a file the worker is told to read, and re-send the pointer when the worker's report shows the item missing.",
+    "An sccache server spawned by cargo UNDER the CCX1 flock (ccx1-bench-flock.sh --full-host ... cargo-budget.sh cargo bench) inherits the lock fd and keeps /tmp/gf2-ccx1.lock held after the bench exits; the next flock -x (or cargo-budget's shared lock) blocks forever. Seen 2026-09-02 15:52Z on the 88ca7d2f re-measurement. Check `lslocks | grep ccx1` after every locked bench run and `sccache --stop-server` (or kill the holder); start sccache before taking the lock, or set CARGO_CI_NO_SCCACHE=1 for locked runs.",
+    "/tmp is a 32 GB tmpfs; earlier Luna sandbox workers left ~17 GB of cargo target dirs there (gf2-target-992c6c6e, gf2-coding-981c5ae3-target, gf2-18a160f5-target, gf2-transform-target), which counted as used RAM and swap. Deleted 2026-09-02 (all four issues done). Check `du -sh /tmp/gf2-*` before any memory-heavy run and keep worker caches inside worktrees."
   ],
   "session_notes_s5": [
     "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
