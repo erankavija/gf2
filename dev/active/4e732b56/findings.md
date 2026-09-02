@@ -482,8 +482,13 @@ and the original ordering is recorded here rather than quietly replaced.
 The substantive lesson for `genmatrix-perf` is larger than the swap: **building
 $G$ by encoding $k$ basis vectors is the wrong algorithm.** A structured fill
 followed by four-Russians elimination is over an order of magnitude better, and
-the current gf2 implementation
-(`crates/gf2-coding/src/bch/core.rs:270-294`) uses the basis-vector route.
+the legacy gf2 implementation
+(`crates/gf2-coding/src/bch/core.rs:270-294`) uses the basis-vector route. The
+canonical model's `crates/gf2-coding/src/bch/matrix.rs` (`genmatrix-perf`,
+`bd0edfa2`) derives $G$ from the parity recurrence instead, one row shift and
+one conditional subtraction of $g$ per row, and keeps the basis-vector writer
+only as the test-support oracle its equality tests and `bch_genmatrix` bench
+compare against.
 
 ### 8.2 The predeclared M4RI output failed the layout contract
 
