@@ -2,7 +2,7 @@
 //! tests under `tests/`, and the bench targets.
 //!
 //! The helpers are allocation witnesses over the encoding workspaces, the
-//! kernel-selection controls of the bit-sliced encode family, the
+//! kernel-selection controls of the kernel-dispatched encode families, the
 //! basis-vector matrix oracles the canonical materialization is measured and
 //! compared against, the predeclared BCH conformance corpus with its seeded
 //! messages, and a reader for the ETSI DVB-T2 verified vectors (the
