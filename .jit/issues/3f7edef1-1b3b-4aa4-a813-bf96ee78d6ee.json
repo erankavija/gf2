@@ -16,7 +16,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-02T11:04:50.579341997Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee",
   "labels": [
     "type:task",
@@ -27,5 +33,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-02T10:59:17.122308494Z"
+  "updated_at": "2026-09-02T11:04:50.579341997Z"
 }
