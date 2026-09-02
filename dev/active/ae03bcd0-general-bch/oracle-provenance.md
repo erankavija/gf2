@@ -354,10 +354,11 @@ The run behind this document observed:
 | Blocks agreeing bit for bit | 808 |
 | Test point 04 SHA-256 | `c658dc04cacebe24a86a42a89f8ffe588f1e269506b6da05eae7d6582d8570b8` |
 | Test point 05 SHA-256 | `f4aaf105b01768b1269d21accef923de09d0040cba073a73909d8f814f3ed929` |
-| Wall clock, `ci-test` profile | 1.95 s |
+| Wall clock, `ci-test` profile | 2.7 s |
 
-The wall clock is inside the fast tier's per-test kill, so the case carries no
-ignore tier.
+The wall clock is the slower of two observations on the receipt's host, taken
+while other work ran on it, and is inside the fast tier's per-test kill, so the
+case carries no ignore tier.
 
 ## Citations
 
