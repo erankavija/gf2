@@ -46,7 +46,7 @@ emitter="./target/release/examples/bch_oracle_messages"
 build_cmd="./scripts/cargo-budget.sh cargo build --release -p gf2-coding --features test-support --example bch_oracle_messages"
 emit_cmd="$emitter $corpus"
 sage_cmd="python3 $sage_script $corpus $sage_out"
-gap_cmd="gap -q -A -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\";' $gap_script"
+gap_cmd="gap -q -A -T -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\";' $gap_script"
 
 echo "== build =="
 build_start=$SECONDS
@@ -63,18 +63,50 @@ sage_start=$SECONDS
 eval "$sage_cmd"
 sage_seconds=$((SECONDS - sage_start))
 
+# `-T` keeps a code-object attempt that exceeds the heap from ending the run,
+# so the oracle records the attempt instead. GAP then exits zero either way and
+# the fixture's presence is what says the run produced a result.
 echo "== GAP with GUAVA =="
+gap_log="target/bch-oracle-gap.log"
+mkdir -p target
+rm -f "$gap_out"
 gap_start=$SECONDS
-eval "$gap_cmd"
+eval "$gap_cmd" 2>&1 | tee "$gap_log"
 gap_seconds=$((SECONDS - gap_start))
+if [ ! -f "$gap_out" ]; then
+  echo "the GAP oracle wrote no fixture; see $gap_log" >&2
+  exit 1
+fi
 
 finished="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-sage_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["oracle"]["version"])' "$sage_out")"
-sage_interpreter="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["oracle"]["interpreter"])' "$sage_out")"
-gap_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["oracle"]["gap_version"])' "$gap_out")"
-guava_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["oracle"]["guava_version"])' "$gap_out")"
-sonata_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["oracle"]["sonata_version"])' "$gap_out")"
+# Oracle identity, read back from what each oracle recorded about itself.
+field() {
+  python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["oracle"][sys.argv[2]])' "$1" "$2"
+}
+digest() {
+  if [ -e "$1" ]; then sha256sum "$1" | cut -d' ' -f1; else echo "absent"; fi
+}
+
+sage_version="$(field "$sage_out" version)"
+sage_library="$(field "$sage_out" library_version)"
+sage_interpreter="$(field "$sage_out" interpreter)"
+sage_exe="$(field "$sage_out" interpreter_executable)"
+sage_exe_real="$(readlink -f "$sage_exe")"
+
+gap_version="$(field "$gap_out" gap_version)"
+gap_kernel="$(field "$gap_out" gap_kernel_version)"
+gap_build="$(field "$gap_out" gap_build_version)"
+gap_build_datetime="$(field "$gap_out" gap_build_datetime)"
+gap_arch="$(field "$gap_out" gap_architecture)"
+gmp_version="$(field "$gap_out" gmp_version)"
+gap_heap_observed="$(field "$gap_out" heap)"
+guava_version="$(field "$gap_out" guava_version)"
+guava_path="$(field "$gap_out" guava_path)"
+sonata_version="$(field "$gap_out" sonata_version)"
+sonata_path="$(field "$gap_out" sonata_path)"
+gap_exe_real="$(readlink -f "$(command -v gap)")"
+
 cpu="$(awk -F': ' '/^model name/ {print $2; exit}' /proc/cpuinfo)"
 kernel="$(uname -srmo)"
 rust_version="$(rustc --version)"
@@ -95,11 +127,29 @@ rust_version="$(rustc --version)"
   echo "| Host CPU | $cpu |"
   echo "| Kernel | $kernel |"
   echo "| Rust | $rust_version |"
+  echo
+  echo "## Oracle identity"
+  echo
+  echo "| Property | Value |"
+  echo "|---|---|"
   echo "| SageMath | $sage_version |"
+  echo "| SageMath library version | $sage_library |"
   echo "| SageMath interpreter | CPython $sage_interpreter |"
-  echo "| GAP | $gap_version |"
+  echo "| SageMath interpreter executable | \`$sage_exe_real\` |"
+  echo "| SageMath interpreter SHA-256 | \`$(digest "$sage_exe_real")\` |"
+  echo "| GAP version label | $gap_version |"
+  echo "| GAP kernel version | $gap_kernel |"
+  echo "| GAP build version | $gap_build |"
+  echo "| GAP build datetime | $gap_build_datetime |"
+  echo "| GAP architecture | $gap_arch |"
+  echo "| GMP | $gmp_version |"
+  echo "| GAP executable | \`$gap_exe_real\` |"
+  echo "| GAP executable SHA-256 | \`$(digest "$gap_exe_real")\` |"
+  echo "| GAP heap | $gap_heap_observed |"
   echo "| GUAVA | $guava_version |"
+  echo "| GUAVA PackageInfo.g SHA-256 | \`$(digest "$guava_path/PackageInfo.g")\` |"
   echo "| SONATA | $sonata_version |"
+  echo "| SONATA PackageInfo.g SHA-256 | \`$(digest "$sonata_path/PackageInfo.g")\` |"
   echo
   echo "## Stages"
   echo
@@ -109,6 +159,32 @@ rust_version="$(rustc --version)"
   echo "| corpus | \`$emit_cmd\` | $emit_seconds | [corpus.json](../../../$corpus) |"
   echo "| SageMath | \`$sage_cmd\` | $sage_seconds | [sage.json](../../../$sage_out) |"
   echo "| GAP with GUAVA | \`$gap_cmd\` | $gap_seconds | [gap.json](../../../$gap_out) |"
+  echo
+  echo "## GUAVA code-object attempts"
+  echo
+  echo "Each row calls \`BCHCode(n, b, delta, F)\` under the heap above; the"
+  echo "oracle catches an attempt that exceeds it and records what it observed."
+  echo
+  python3 - "$gap_out" <<'ATTEMPTS'
+import json, sys
+rows = json.load(open(sys.argv[1]))["rows"]
+print("| Row | Code object built | Attempt CPU (s) | Process peak RSS after attempt (KiB) |")
+print("|---|---|---|---|")
+for row in rows:
+    peak = row["bchcode_attempt_peak_rss_kib"]
+    print("| {} | {} | {:.1f} | {} |".format(
+        row["id"],
+        "yes" if row["bchcode_built"] else "no",
+        row["bchcode_attempt_cpu_ms"] / 1000.0,
+        "unavailable" if peak is None else peak,
+    ))
+ATTEMPTS
+  echo
+  echo "Diagnostics GAP printed during the stage:"
+  echo
+  echo '```'
+  if grep -q . "$gap_log"; then cat "$gap_log"; else echo "(none)"; fi
+  echo '```'
   echo
   echo "## Fixture hashes"
   echo

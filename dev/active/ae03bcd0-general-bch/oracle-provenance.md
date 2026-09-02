@@ -37,15 +37,26 @@ file.
 Both oracles run on every corpus row. A row an oracle cannot produce is a
 blocking finding, not a recorded gap.
 
-| Oracle | Entry point | Version |
+| Oracle | Entry point | Identity |
 |---|---|---|
-| SageMath [SageMath2026] | `codes.BCHCode` | recorded in `sage.json`, field `oracle.version` |
-| GAP [GapGroup2026] with GUAVA [Joyner2026] | `BCHCode(n, b, delta, F)` | recorded in `gap.json`, fields `oracle.gap_version`, `oracle.guava_version`, `oracle.sonata_version` |
+| SageMath [SageMath2026] | `codes.BCHCode` | `sage.json`, object `oracle` |
+| GAP [GapGroup2026] with GUAVA [Joyner2026] | `BCHCode(n, b, delta, F)` | `gap.json`, object `oracle` |
+
+A version label alone does not name a build, so each oracle records what it
+observes about itself and the runner turns that into an exact identity in the
+receipt's **Oracle identity** section: for SageMath the library version, the
+interpreter and its executable path, and the SHA-256 of that executable; for
+GAP the kernel and build version, the build datetime, the architecture, the
+GMP version, the heap the run used, the SHA-256 of the `gap` binary actually
+invoked, and the SHA-256 of the `PackageInfo.g` of the GUAVA and SONATA
+installations that loaded. `the_oracle_fixtures_record_their_identities_and_self_checks`
+asserts that every one of those members reached the fixture.
 
 The SageMath launcher of the pinned release forwards no arguments to a script,
 so the oracle script is run under the interpreter that carries the SageMath
 library and reads the library version at run time. The GAP script is invoked
-with `-A` so no package beyond GUAVA and its SONATA dependency loads.
+with `-A` so no package beyond GUAVA and its SONATA dependency loads, and with
+`-T` so a code-object attempt that exceeds the heap returns to the script.
 
 ## The corpus
 
@@ -271,22 +282,29 @@ read out of it: the script carries gf2's own $\alpha$ back through it as
 `alpha_gf2_index` and stops with an error unless that reproduces the corpus's
 `alpha`.
 
-**GUAVA cannot build a code object at the DVB-T2 mother length.** GUAVA's
-`GeneratorPolCode` reaches `GeneratorMatrixFromPoly`, which materializes the
-whole generator matrix. At B4 that matrix is $65343 \times 65535$ and exhausts
-memory before any code object exists. The generator derivation inside `BCHCode`
-runs normally at that size, so the B4 row records the generator that derivation
-produces, encodes through the same cyclic-code polynomial map, and states the
-limitation in `bchcode_unavailable`. `ORACLE_GAP_HEAP` sets the heap the oracle
-runs under and the receipt records the invocation it was used in. The claim
-that skipping the wrapper changes nothing is checked rather than assumed: on
-the seven rows where the wrapper does build, the fixture records in
-`native_encoder_cross_checked` that encoding a message through the GUAVA code
-object gives the same word as the polynomial map used at B4, and
-`guava_bchcode_objects_agree_at_their_own_root` checks the unaided `BCHCode`
-object on each of those seven rows. GAP additionally verifies at B4 that the
-derived generator divides $x^{n} - 1$, recorded as
-`generator_divides_x_n_minus_one`.
+**Whether a row has a code object is an observation, not a threshold.** GUAVA's
+`BCHCode` reaches `GeneratorPolCode`, which materializes the whole generator
+matrix through `GeneratorMatrixFromPoly`, so at a long length the object can
+need more heap than the run has: at B4 that matrix is $65343 \times 65535$.
+The script therefore calls `BCHCode` on every row through `CALL_WITH_CATCH`
+under `-T`, where exceeding the heap `-o` sets returns to the caller instead of
+ending the run. Each row records the outcome as `bchcode_built` beside the heap
+the attempt ran under, its processor time, and the process's peak resident set
+size after it, read from the kernel. `ORACLE_GAP_HEAP` sets that heap and the
+receipt tabulates every attempt together with the diagnostics GAP printed.
+
+A row whose attempt does not yield a code object still carries a GUAVA result:
+its `BCHCode` generator derivation, and its codewords through GUAVA's
+cyclic-code polynomial map $c(x) = m(x)\,G(x)$.
+`a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt`
+asserts exactly that shape, so there is no state in which a row simply has no
+GUAVA result. That the map agrees with a code object where one exists is
+checked rather than assumed: `native_encoder_cross_checked` records, on every
+row whose wrapper does build, that encoding through the GUAVA code object gives
+the same word as the polynomial map. GAP verifies on every row that the derived
+generator divides $x^{n} - 1$ and that the defining set is exactly the set of
+exponents its generator annihilates, recorded as
+`generator_divides_x_n_minus_one` and `defining_set_root_checked`.
 
 SageMath needs no non-default construction on any row. It accepts a
 `primitive_root` argument directly, and its lazy code objects handle the mother
@@ -329,8 +347,10 @@ reference streams produced on the Common Simulation Platform, one file per test
 point of a named configuration. Set `VV001-CR35` is the normal frame at code
 rate 3/5; its test point 04 carries the BCH input blocks and test point 05 the
 BCH output blocks. The streams are distributed with the standard's conformance
-material rather than committed here, so the suite reads them from the host
-directory `DVB_TEST_VECTORS_PATH` names, defaulting to `$HOME/dvb_test_vectors`.
+material rather than committed here, so the suite locates them through
+`test_vectors_path()`, which reads `DVB_TEST_VECTORS_PATH` and otherwise falls
+back to `dvb_test_vectors` under the invoking user's home directory. The test
+prints the path it resolved.
 
 `the_etsi_dvb_t2_streams_encode_to_their_verified_codewords` loads the set
 through `TestVectorSet::load` and, for every block of every frame, encodes the
@@ -343,7 +363,9 @@ against test point 04 and parity bits against the mother code's. The test
 prints the resolved path and returns when the streams are absent, so a host
 without them runs the rest of the suite.
 
-The run behind this document observed:
+The comparison is exhaustive rather than sampled, which Amendment 1 of the
+plan's `evidence-protocol` section predeclares. The run behind this document
+observed:
 
 | Property | Value |
 |---|---|
@@ -354,11 +376,9 @@ The run behind this document observed:
 | Blocks agreeing bit for bit | 808 |
 | Test point 04 SHA-256 | `c658dc04cacebe24a86a42a89f8ffe588f1e269506b6da05eae7d6582d8570b8` |
 | Test point 05 SHA-256 | `f4aaf105b01768b1269d21accef923de09d0040cba073a73909d8f814f3ed929` |
-| Wall clock, `ci-test` profile | 2.7 s |
 
-The wall clock is the slower of two observations on the receipt's host, taken
-while other work ran on it, and is inside the fast tier's per-test kill, so the
-case carries no ignore tier.
+The frame and block counts are asserted, so a truncated copy of the streams
+fails the case rather than comparing fewer blocks in silence.
 
 ## Citations
 
@@ -389,7 +409,5 @@ DVB_TEST_VECTORS_PATH=<the directory holding VV001-CR35_CSP> \
     --cargo-profile ci-test --profile ci -E 'binary(bch_oracle_agreement)'
 ```
 
-Every case runs inside the fast tier's budgets and none carries an ignore tier.
-The heaviest is the stream comparison in the table above; the codeword
-comparison at the mother length $n = 65535$ measures 0.18 s in the same
-profile.
+No case carries an `#[ignore]` tier, so the fast tier runs the suite whole and
+the fast tier's budgets are the ones that apply to it.

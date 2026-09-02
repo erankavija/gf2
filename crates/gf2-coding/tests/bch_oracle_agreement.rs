@@ -58,14 +58,16 @@ use gf2_core::BitVec;
 use serde_json::Value;
 use test_vectors::{test_vectors_available, test_vectors_path, TestVectorSet};
 
-/// Rows longer than this are compared coordinate by coordinate only in the
-/// slow tier; their generator polynomials are compared in every tier.
+/// Length at or below which rows are compared symbol by symbol together; a
+/// longer row is compared in its own case. Amendment 1 of the plan's
+/// `evidence-protocol` section predeclares this threshold.
 const FAST_TIER_LENGTH: usize = 4096;
 
 /// The seed the shortened-payload check draws its DVB-T2 payloads from.
 const DVB_PAYLOAD_SEED: u64 = 0xAE03_BCD0;
 
-/// Payloads the shortened-parity check encodes.
+/// Payloads the shortened-parity check encodes, per Amendment 1 of the plan's
+/// `evidence-protocol` section.
 const DVB_PAYLOADS: usize = 3;
 
 // ---------------------------------------------------------------------------
@@ -527,12 +529,10 @@ impl BchCorpusVisitor for GuavaCodeObjectAgreement {
         M: SymbolMatrix<X::Base>,
     {
         let record = &self.rows[row.id];
-        if record["bchcode_generator"].is_null() {
-            assert!(
-                record["bchcode_unavailable"].is_string(),
-                "row {} states why GUAVA's code object was unavailable",
-                row.id
-            );
+        if !flag(record, "bchcode_built") {
+            // The run's heap did not admit this row's code object;
+            // `a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt`
+            // asserts what the row carries instead.
             return;
         }
         self.visited.push(row.id.to_owned());
@@ -674,8 +674,7 @@ fn guava_bchcode_objects_agree_at_their_own_root() {
 }
 
 /// The DVB-T2 mother row is compared separately because its codewords are
-/// 65535 coordinates wide. Measured at 0.09 s in release, it stays well inside
-/// the fast tier's per-test budget and needs no ignore tier.
+/// 65535 coordinates wide.
 #[test]
 fn oracle_codewords_match_the_encoder_at_the_mother_length() {
     for (oracle, name) in [("SageMath", "sage.json"), ("GAP with GUAVA", "gap.json")] {
@@ -700,16 +699,50 @@ fn both_oracle_fixtures_cover_every_corpus_row() {
     }
 }
 
+/// Asserts that `key` holds a non-empty string.
+fn recorded(record: &Value, key: &str) -> &str {
+    let value = record[key]
+        .as_str()
+        .unwrap_or_else(|| panic!("member {key} is a string"));
+    assert!(!value.is_empty(), "member {key} is recorded");
+    value
+}
+
+/// Members through which each oracle states the exact build it ran as. The
+/// values are the run's own observations and live in the receipt; the suite
+/// asserts that every one of them reached the fixture.
+const SAGE_IDENTITY: &[&str] = &[
+    "version",
+    "library_version",
+    "interpreter",
+    "interpreter_executable",
+];
+
+/// [`SAGE_IDENTITY`] for GAP with GUAVA.
+const GAP_IDENTITY: &[&str] = &[
+    "gap_version",
+    "gap_kernel_version",
+    "gap_build_version",
+    "gap_build_datetime",
+    "gap_architecture",
+    "gmp_version",
+    "heap",
+    "guava_version",
+    "guava_path",
+    "sonata_version",
+    "sonata_path",
+];
+
 #[test]
-fn the_oracle_fixtures_record_their_versions_and_self_checks() {
+fn the_oracle_fixtures_record_their_identities_and_self_checks() {
     let sage = fixture("sage.json");
     assert_eq!(sage["oracle"]["system"], "SageMath");
+    for key in SAGE_IDENTITY {
+        recorded(&sage["oracle"], key);
+    }
     assert!(
-        sage["oracle"]["version"]
-            .as_str()
-            .expect("a recorded version")
-            .contains("SageMath version"),
-        "the SageMath fixture records the library version it ran under"
+        recorded(&sage["oracle"], "version").contains("SageMath version"),
+        "the SageMath fixture records the library banner it ran under"
     );
     for row in sage["rows"].as_array().expect("rows") {
         let id = row["id"].as_str().expect("an identifier");
@@ -722,44 +755,92 @@ fn the_oracle_fixtures_record_their_versions_and_self_checks() {
     }
 
     let gap = fixture("gap.json");
-    assert_eq!(gap["oracle"]["gap_version"], "4.16dev");
-    assert_eq!(gap["oracle"]["guava_version"], "3.21");
+    assert_eq!(gap["oracle"]["system"], "GAP with GUAVA");
+    for key in GAP_IDENTITY {
+        recorded(&gap["oracle"], key);
+    }
     for row in gap["rows"].as_array().expect("rows") {
         let id = row["id"].as_str().expect("an identifier");
         assert!(
             flag(row, "generator_divides_x_n_minus_one"),
             "GUAVA checked divisibility on row {id}"
         );
-        // GUAVA's own `BCHCode` builds on `PrimitiveUnityRoot`. Its generator
+        assert!(
+            flag(row, "defining_set_root_checked"),
+            "GUAVA checked the defining set against the derived generator on row {id}"
+        );
+
+        // Every row calls GUAVA's own `BCHCode` and records what that attempt
+        // observed, so whether a code object exists is a fact of the run.
+        recorded(row, "bchcode_attempt_heap");
+        assert!(
+            number(row, "bchcode_attempt_peak_rss_kib") > 0,
+            "row {id} records the resident memory its attempt reached"
+        );
+
+        // GUAVA's `BCHCode` builds on `PrimitiveUnityRoot`. Its generator
         // equals the one derived at gf2's root exactly when the two roots
         // agree; where they differ the fixture carries both roots and both
         // generators, and `guava_bchcode_objects_agree_at_their_own_root`
         // compares the `BCHCode` object with the gf2 code on GUAVA's root.
-        if row["bchcode_generator_matches"].is_boolean() {
-            let matches = flag(row, "bchcode_generator_matches");
-            if flag(row, "alpha_matches_guava_default") {
-                assert!(
-                    matches,
-                    "row {id} uses GUAVA's own root, so its own generator must agree"
-                );
-                assert_eq!(
-                    numbers(row, "bchcode_generator"),
-                    numbers(row, "generator"),
-                    "row {id}"
-                );
-            } else {
-                assert_ne!(
-                    number(row, "alpha_index"),
-                    number(row, "guava_default_root_index"),
-                    "row {id} records a distinct root"
-                );
-            }
-        } else {
+        if !flag(row, "bchcode_built") {
+            continue;
+        }
+        if flag(row, "alpha_matches_guava_default") {
             assert!(
-                row["bchcode_unavailable"].is_string(),
-                "row {id} states why GUAVA's code object was unavailable"
+                flag(row, "bchcode_generator_matches"),
+                "row {id} uses GUAVA's own root, so its own generator must agree"
+            );
+            assert_eq!(
+                numbers(row, "bchcode_generator"),
+                numbers(row, "generator"),
+                "row {id}"
+            );
+        } else {
+            assert_ne!(
+                number(row, "alpha_index"),
+                number(row, "guava_default_root_index"),
+                "row {id} records a distinct root"
             );
         }
+    }
+}
+
+/// The encoding map the oracle records for a row whose code object the run's
+/// heap did not admit.
+const GUAVA_POLYNOMIAL_ENCODER: &str = "GUAVA cyclic-code encoding map c(x) = m(x) * G(x)";
+
+/// A row whose `BCHCode` attempt exceeded the run's heap carries GUAVA's own
+/// generator derivation and its cyclic-code polynomial encoding map, together
+/// with what the attempt observed. This is the whole of the admitted shape:
+/// there is no state in which a row simply has no GUAVA result.
+#[test]
+fn a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt() {
+    let gap = fixture("gap.json");
+    for row in gap["rows"].as_array().expect("rows") {
+        if flag(row, "bchcode_built") {
+            continue;
+        }
+        let id = row["id"].as_str().expect("an identifier");
+        assert!(
+            row["bchcode_generator"].is_null(),
+            "row {id} builds no code object, so it records no code-object generator"
+        );
+        assert!(
+            !numbers(row, "generator").is_empty(),
+            "row {id} records GUAVA's generator derivation"
+        );
+        assert_eq!(
+            row["native_encoder"], GUAVA_POLYNOMIAL_ENCODER,
+            "row {id} encodes through GUAVA's cyclic-code polynomial map"
+        );
+        let native = strings(row, "codewords_native");
+        assert!(!native.is_empty(), "row {id} carries codewords");
+        assert_eq!(strings(row, "codewords_systematic").len(), native.len());
+        assert!(
+            number(row, "bchcode_attempt_cpu_ms") > 0,
+            "row {id} records an attempt that actually ran"
+        );
     }
 }
 
