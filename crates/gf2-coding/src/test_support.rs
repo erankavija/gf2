@@ -41,23 +41,25 @@ pub fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> 
     crate::bch::encode::encode_scratch_shape::<W>()
 }
 
-/// Holds [`EncodeFamily::BitsliceInterleaved`][family] on the portable
-/// bit-sliced kernels, or releases it back to runtime detection, and reports
-/// the previous setting.
+/// Holds every kernel-dispatched encoding family on the portable kernel
+/// bundle, or releases them back to runtime detection, and reports the
+/// previous setting.
 ///
-/// A differential check runs the accelerated arm of the kernel dispatch by
-/// default and this one on demand, so the fallback is exercised whatever the
-/// host detects. Both arms compute the same words.
+/// One switch covers the whole bundle, so forcing it exercises the fallback
+/// arm of both [`EncodeFamily::BitsliceInterleaved`][bitslice] and
+/// [`EncodeFamily::ClmulFold`][fold] whatever the host detects. Every arm
+/// computes the same words.
 ///
-/// [family]: crate::bch::encode::EncodeFamily::BitsliceInterleaved
-pub fn force_scalar_bitslice_encode(forced: bool) -> bool {
-    crate::bch::encode::force_scalar_bitslice_kernels(forced)
+/// [bitslice]: crate::bch::encode::EncodeFamily::BitsliceInterleaved
+/// [fold]: crate::bch::encode::EncodeFamily::ClmulFold
+pub fn force_scalar_encode_kernels(forced: bool) -> bool {
+    crate::bch::encode::force_scalar_encode_kernels(forced)
 }
 
-/// The name of the bit-sliced kernel bundle a batch encode would run now,
-/// `"avx2-bitslice"` or `"scalar-bitslice"`.
-pub fn selected_bitslice_encode_kernel() -> &'static str {
-    crate::bch::encode::selected_bitslice_kernels()
+/// The name of the kernel bundle a batch encode would run now,
+/// `"avx2-pclmul"` or `"scalar"`.
+pub fn selected_encode_kernel() -> &'static str {
+    crate::bch::encode::selected_encode_kernels()
 }
 
 /// Builds the generic eBCH(16,11) fixture used by library tests.
