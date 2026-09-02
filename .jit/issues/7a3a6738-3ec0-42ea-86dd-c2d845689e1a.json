@@ -12,22 +12,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "7aab1cb5d93d183098a2289902e8133c24df21a1b49f732c64f889a914a9e0ab",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "breakdown.json",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/breakdown.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "8d8d6a6e79961ba33ae7829d0e7ef39ceb6ca7bb8e0a1c8a00ca1b083c539c26",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "extension-design.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
           "is_shared": false,
           "mime_type": "text/markdown",
@@ -36,11 +20,27 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "7aab1cb5d93d183098a2289902e8133c24df21a1b49f732c64f889a914a9e0ab",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/breakdown.json"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "3f4b16bd968e1b13ff45a6b5b887ebfa6a5e7dfd2cc608d6c027b05b01233bde",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "investigation.md",
           "resolved_path": "dev/active/ae03bcd0-general-bch/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "aef9f6ce1c2e57de466fc2736ac006263afb08611c83a767b197e7b7bed15560",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "extension-design.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
         }
       ],
       "commit": null,
@@ -73,5 +73,5 @@
   "priority": "high",
   "state": "done",
   "title": "Design BchSpec, the code-trait generalization, and the compatibility boundary",
-  "updated_at": "2026-09-01T05:09:11.709334128Z"
+  "updated_at": "2026-09-02T05:37:58.718253780Z"
 }
