@@ -167,8 +167,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-02T16:55:19.600171556Z",
+      "status": "passed",
+      "updated_at": "2026-09-02T17:05:53.078159166Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -187,5 +187,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-02T17:03:33.085036453Z"
+  "updated_at": "2026-09-02T17:05:53.078159166Z"
 }
