@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged fd8bc3d9 (lead resolved a test_support.rs import conflict); code-review R1 FAIL (F1 GUAVA BCHCode not direct on N2/N3/B4, F2 TP04/TP05 vectors not wired canonically, F3 citekeys) + doc-review R1 FAIL (docs unlinked); research-review R1 pending; rework 1 to a fresh Opus worker (session 8)"
+          "status": "merged fd8bc3d9; R1: code-review FAIL(3), doc-review FAIL(1, lead links docs post-rework), research-review FAIL(5: GUAVA BCHCode on N2/N3/B4, GAP/Sage exact identity, B4 memory claim unobserved, timing numbers unreceipted, sampling not predeclared); rework 1 dispatched to Opus worker-3f7edef1-2 (session 8); B4 pending the lead idle-host retry (56 GB heap) then protocol amendment per owner"
         },
         {
           "key": "lean-closure",
@@ -577,6 +577,11 @@
       "issue": "97410c80 / 203ee826",
       "trigger": "architectural gap: generic Shortened<C> cannot carry the DVB-T2 rows (category 6/8)",
       "resolution": "owner chose option A (generic systematic fast path in Shortened<C>, new task 203ee826 before cutover-dvbt2); B (BCH-owned shortened presentation) and C (re-scope performance) rejected"
+    },
+    {
+      "issue": "3f7edef1",
+      "trigger": "blocker on an external oracle (category 7): GUAVA BCHCode on B4 needs an uncompressed 65343x65535 FFE matrix (~34 GB); 4 GB heap exhausted, 40 GB probe at 25.7 GB and growing, stopped to protect measurements",
+      "resolution": "owner: retry on the idle host with ~56 GB heap bounded to 20 min; if it fails, amend the plan's evidence-protocol so B4's GUAVA result is its BCHCode generator derivation plus polynomial encoding map with the observed failure recorded"
     }
   ],
   "rework_counts": {
@@ -738,6 +743,7 @@
   ],
   "session_notes_s8": [
     "Session 8 (2026-09-02 13:40 EEST): session 7 died at the rate limit ~10:20 EEST with no handoff-5; state reconstructed from progress.json, git log, gate records, and the eight still-live idle teammates (worker-* from sessions 6/7). Uncommitted session-7 gate records committed (28fbb090). Live workers queried for status; bd0edfa2+444c06bc rework 1 dispatched to worker-bd0edfa2-2 via prompt file in the scratchpad.",
-    "3f7edef1 merged fd8bc3d9; AI gates: code-review FAIL(3), doc-review FAIL(1, docs unlinked \u2014 lead links after rework), research-review pending. Citekeys SageMath2026/GapGroup2026/Joyner2026 registered lead-direct (aa56c3cb). DVB-T2 ETSI streams exist on this host at ~/Projects/dvb_test_vectors/VV001-CR35_CSP (TP04/TP05 present), default path of tests/test_vectors/mod.rs. Codex quota 93% before and after three gate runs: gate runs are cheap; Luna workers are not \u2014 native workers only until the 2026-09-07 reset."
+    "3f7edef1 merged fd8bc3d9; AI gates: code-review FAIL(3), doc-review FAIL(1, docs unlinked \u2014 lead links after rework), research-review pending. Citekeys SageMath2026/GapGroup2026/Joyner2026 registered lead-direct (aa56c3cb). DVB-T2 ETSI streams exist on this host at ~/Projects/dvb_test_vectors/VV001-CR35_CSP (TP04/TP05 present), default path of tests/test_vectors/mod.rs. Codex quota 93% before and after three gate runs: gate runs are cheap; Luna workers are not \u2014 native workers only until the 2026-09-07 reset.",
+    "Rework prompt files live in the session scratchpad (rework-bd0edfa2-444c06bc-r1.md, rework-2b6968d3-r1.md, dispatch-d7749931.md, rework-3f7edef1-r1.md + -research.md); workers read them by path. Session-7 idle teammates worker-2b6968d3-2/worker-3f7edef1/worker-d7749931 never answered status requests and were stopped; fresh Opus workers took over from their worktrees."
   ]
 }
