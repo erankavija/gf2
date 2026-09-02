@@ -202,9 +202,11 @@ BaseIndexOfFFE := function(e, p, dB, basis)
 end;;
 
 ##  This process's peak resident set size in KiB, read from the kernel. The
-##  value is monotone over the run, so a row's attempt cost shows as the rise
-##  over the row before it. A kernel that does not report it stops the run,
-##  because every attempt records what it cost.
+##  mark is a process-wide high-water mark, monotone over the run, so a
+##  sample taken after an attempt bounds that attempt from above and a rise
+##  between two samples bounds from below what the work between them cost. A
+##  kernel that does not report it stops the run, because every attempt
+##  records what it cost.
 PeakRssKib := function()
     local stream, line, value;
     stream := InputTextFile("/proc/self/status");
@@ -368,7 +370,7 @@ BuildRow := function(row)
           crossChecked, checkWord, divides, rootsChecked, baseBasis,
           messageFFE, gf2Basis, alphaGf2Index, guavaRootGf2Index, bchPoly,
           bchK, bchDefiningSet, bchNative, bchSystematic, attempt,
-          attemptCpu, attemptStart, attemptPeak, nativeAttempt;
+          attemptCpu, attemptStart, attemptPeak, rowPeak, nativeAttempt;
 
     p := row.characteristic;
     dB := row.base_degree;
@@ -486,9 +488,9 @@ BuildRow := function(row)
     #  bounded by the heap `run.sh` sets: under `-T` a heap the code object
     #  does not fit in returns here rather than ending the run, so whether a
     #  row has a code object is an observation of this run and not a threshold
-    #  written into the script. Every attempt records the heap it ran under,
-    #  the processor time it used, and the process's peak resident set size
-    #  after it.
+    #  written into the script. The attempt records the heap it ran under, the
+    #  processor time it used, and the high-water mark sampled once it
+    #  returned, which bounds it from above.
     attemptStart := Runtime();
     attempt := CALL_WITH_CATCH(BCHCode, [n, b0, delta, F]);
     attemptCpu := Runtime() - attemptStart;
@@ -513,8 +515,11 @@ BuildRow := function(row)
     fi;
 
     #  The wrapper the transported-root derivation is encoded through, under
-    #  the same bound.
+    #  the same bound. The second sample of the high-water mark is taken once
+    #  this attempt has returned, so it covers both of the row's attempts and
+    #  no allocation of this row is first seen in the row after it.
     nativeAttempt := CALL_WITH_CATCH(GeneratorPolCode, [G, n, F]);
+    rowPeak := PeakRssKib();
     if nativeAttempt[1] then
         nativeCode := nativeAttempt[2];
         encoderNote := "GUAVA CodewordVector on GeneratorPolCode(G, n, F)";
@@ -606,6 +611,8 @@ BuildRow := function(row)
         String(attemptCpu), ",\n"));
     Append(out, Concatenation("      \"bchcode_attempt_peak_rss_kib\": ",
         String(attemptPeak), ",\n"));
+    Append(out, Concatenation("      \"row_attempts_peak_rss_kib\": ",
+        String(rowPeak), ",\n"));
     if bchGenerator = fail then
         Append(out, "      \"bchcode_generator\": null,\n");
         Append(out, "      \"bchcode_generator_matches\": null,\n");
