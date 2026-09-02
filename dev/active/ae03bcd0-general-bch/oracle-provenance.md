@@ -328,12 +328,15 @@ attempt is recorded separately, outside the fixture generation, under
 It runs on `fraktaali`, the host the receipt names, through that host's `gap`,
 whose SHA-256 the receipt's **Oracle identity** section records. Its whole GAP
 program is the `-c` string of the recorded invocation, so the attempt reads no
-repository source and its outcome turns on GUAVA and the heap alone. Every
+repository source and its outcome turns on GUAVA and the heap alone. The script
+is the one that ran, so the `peak_rss_kib` line it prints is the fourth line of
+`gap.out`; that line is empty in this run, and the peak below comes from
+`rss.log`. Every
 figure below is read from that record.
 
 | Property | Observation | Record |
 |---|---|---|
-| Invocation | `systemd-run --user --scope -p MemoryMax=52G timeout 1200 gap -q -A -T -o 50g -c '...CALL_WITH_CATCH(BCHCode,[65535,1,25,GF(2)])...'` | [`command.sh`](oracle/attempts/2026-09-02-b4-heap-50g/command.sh) |
+| Invocation | `systemd-run --user --scope -p MemoryMax=52G --unit=gf2-gap-b4-$$ timeout 1200 gap -q -A -T -o 50g -c '...CALL_WITH_CATCH(BCHCode,[65535,1,25,GF(2)])...'` | [`gap-b4-probe.sh`](oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh) |
 | Outcome | `built=false` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
 | GAP diagnostic | `Error, reached the pre-set memory limit` and `(change it with the -o command line option)` | [`gap.err`](oracle/attempts/2026-09-02-b4-heap-50g/gap.err) |
 | GAP processor time | `cpu_ms=273885` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
