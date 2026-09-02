@@ -8,6 +8,7 @@
   ],
   "description": "Bring the canonical BCH generator and parity-check materialization into conformance with the approved matrix contract: row $i$ of the generator matrix is the systematic encoding of message basis vector $i$ in the default user layout, and the parity-check matrix is a full-rank matrix in that same layout.\n\n## Background\n\nThe reference materialization writes the polynomial-form generator (row $i$ is the coefficient vector of $x^i g(x)$) and a parity-check matrix built from the reversed quotient $(x^n - 1)/g(x)$, both in internal coordinate order, so the canonical code reports `is_systematic() == false`. The approved code-trait contract fixes the generator matrix in the user layout with row $i$ equal to the encoding of message basis vector $i$; the GLDPC component consumer reads $G = [\\,I_k \\mid P\\,]$ directly, and the generator-matrix materialization workload of the benchmark contract is defined on that systematic form. For a cyclic code the systematic form is cheap to derive: parity row $i$ is the coefficient vector of $x^{r+i} \\bmod g(x)$ with $r = n - k$, and $H = [\\,-P^{\\mathsf T} \\mid I_r\\,]$ is a full-row-rank check matrix satisfying $G H^{\\mathsf T} = 0$.\n\n## Success Criteria\n\n- [hard] REQ-01: For every canonical BCH code, packed binary and field-generic, `generator_matrix_into` writes the $k \\times n$ matrix whose row $i$ equals the codeword the default-layout systematic encoder produces for message basis vector $i$, so the first $k$ columns form the identity and `is_systematic()` reports true.\n- [hard] REQ-02: `parity_check_matrix_into` writes a full-row-rank $(n - k) \\times n$ matrix in the same user layout with $G H^{\\mathsf T} = 0$; the module's tests witness both properties over $\\mathrm{GF}(2)$, $\\mathrm{GF}(p)$, and $\\mathrm{GF}(p^r)$ fixtures, including the full-space and zero-dimensional boundary codes.\n- [hard] REQ-03: The caller-buffer, allocating, and explicit-cache access paths keep their typed shape-error and caching contracts, and the module documentation states the user-layout contract in place of the polynomial-form description.\n\n## Notes\n\nPolynomial-form matrices may remain as test oracles for row membership in the code; they are not a public materialization. Optimizing the materialization for the benchmark workload dimensions is separate work that builds on this corrected reference.",
   "documents": [],
+  "done_at": "2026-09-02T17:28:09.432778910Z",
   "first_ready_at": "2026-09-01T21:37:21.957829629Z",
   "gates_required": [
     "cargo-ci",
@@ -26,8 +27,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-02T17:21:33.961446774Z",
+      "status": "passed",
+      "updated_at": "2026-09-02T17:27:33.304100823Z",
       "updated_by": "auto:executor"
     }
   },
@@ -40,7 +41,7 @@
     "satisfies:REQ-08"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Canonical BCH matrices use the systematic user layout",
-  "updated_at": "2026-09-02T17:21:33.961446774Z"
+  "updated_at": "2026-09-02T17:28:09.432778910Z"
 }

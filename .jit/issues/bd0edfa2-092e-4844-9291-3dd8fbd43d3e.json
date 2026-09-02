@@ -27,6 +27,7 @@
       "path": "dev/bench_results/bd0edfa2/2026-09-02-bd0edfa2-genmatrix-receipt.md"
     }
   ],
+  "done_at": "2026-09-02T17:28:55.242769466Z",
   "first_ready_at": "2026-09-01T20:56:28.035859056Z",
   "gates_required": [
     "cargo-ci",
@@ -53,7 +54,7 @@
     "satisfies:REQ-13"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Optimize the reference generator-matrix materialization",
-  "updated_at": "2026-09-02T17:25:28.741186865Z"
+  "updated_at": "2026-09-02T17:28:55.242769466Z"
 }
