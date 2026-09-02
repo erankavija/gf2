@@ -10801,3 +10801,4 @@
 {"from":"ready","id":"b4af5224-ca90-4645-af3e-b796500416cb","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","timestamp":"2026-09-02T11:05:28.132810131Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["dependencies"],"id":"15040c24-bbdb-4e32-a7c2-bf387ba414b0","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","timestamp":"2026-09-02T11:05:28.132810131Z","type":"issue_updated","updated_by":"dependency-add"}
 {"gate_key":"doc-review","id":"a82c6c5c-323a-49ac-8e80-e504caf6926e","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T11:07:31.773243865Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"cf444c30-ae20-4f85-aca0-a4490370cca4","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T11:19:16.024243982Z","type":"gate_failed","updated_by":"auto:executor"}
