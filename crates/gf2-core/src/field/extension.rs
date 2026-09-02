@@ -4050,6 +4050,57 @@ mod tests {
         assert_eq!(from_extension, cyclotomic_cosets(&ext, 48).unwrap());
     }
 
+    /// Pins the multiplier `base_order_mod` derives against hand-computed
+    /// values of $q = p^{d_B} \bmod n$ for two bases of degree $d_B > 1$.
+    ///
+    /// [`CosetPartition`] carries its multiplier, so equality between the
+    /// extension-derived partition and the pure-form one decides
+    /// $\lvert B \rvert \bmod n$ itself rather than only the orbit shapes.
+    /// The GF(2^64) base is the load-bearing witness: $q = 2^{64}$ is one past
+    /// `u64::MAX`, so the multiplier exists only as a residue.
+    #[test]
+    fn base_order_mod_matches_the_hand_computed_multiplier() {
+        // GF(81) over GF(9): p = 3 and d_B = 2 give q = 9.
+        let gf81_over_gf9 = ConstExt::<Gf81>::new();
+        assert_eq!(gf81_over_gf9.characteristic(), 3);
+        assert_eq!(gf81_over_gf9.base_degree(), 2);
+        for (n, q) in [
+            (5u64, 4u64),
+            (7, 2),
+            (8, 1),
+            (11, 9),
+            (13, 9),
+            (16, 9),
+            (20, 9),
+            (35, 9),
+        ] {
+            let from_extension = cyclotomic_cosets(&gf81_over_gf9, n).unwrap();
+            assert_eq!(from_extension, cyclotomic_cosets_mod(q, n).unwrap());
+            assert_coset_partition_properties(&from_extension, true);
+        }
+
+        // GF(2^64) as its own base: p = 2 and d_B = 64 give q = 2^64.
+        let gf2_64 = TrivialExt::new(Gf2mField_::<u128>::new(64, (1u128 << 64) | 0x1b).zero());
+        assert_eq!(gf2_64.characteristic(), 2);
+        assert_eq!(gf2_64.base_degree(), 64);
+        for (n, q) in [
+            (7u64, 2u64),
+            (9, 7),
+            (11, 5),
+            (13, 3),
+            (17, 1),
+            (23, 6),
+            (25, 16),
+            (31, 16),
+            (63, 16),
+            (127, 2),
+        ] {
+            let from_extension = cyclotomic_cosets(&gf2_64, n).unwrap();
+            assert_eq!(from_extension, cyclotomic_cosets_mod(q, n).unwrap());
+            assert_coset_partition_properties(&from_extension, true);
+        }
+    }
+
     fn assert_minimal_polynomial_properties<X: FieldExtension>(ext: &X, x: &X::Ext) {
         let orbit = conjugates(ext, x);
         let polynomial = minimal_polynomial(ext, x).unwrap();
