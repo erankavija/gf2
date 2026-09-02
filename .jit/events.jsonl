@@ -10733,3 +10733,7 @@
 {"from":"ready","id":"62d38362-5326-4f6b-ab3b-d93d59704d2c","issue_id":"32f53280-fb5c-4a95-aeb9-15507fba6ac8","timestamp":"2026-09-01T21:39:53.529728594Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"b4e744e9-30f7-419c-a1c0-3b55cc4d40f6","issue_id":"32f53280-fb5c-4a95-aeb9-15507fba6ac8","timestamp":"2026-09-01T21:39:53.529728594Z","type":"issue_claimed"}
 {"assignee":"agent:worker","id":"623cff42-0bde-422f-b399-49712231dc41","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-01T21:39:56.948735762Z","type":"issue_claimed"}
+{"from":"in_progress","id":"646fd5ce-9082-4cec-a8eb-2e2fce5ea19e","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-02T05:29:09.075791838Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"0fe0c5f0-59cf-437a-a598-288317070649","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","reason":"worker finished; lead takes over for merge and gates","timestamp":"2026-09-02T05:29:09.075791838Z","type":"issue_released"}
+{"from":"ready","id":"bf53d3c7-4ed7-4eda-9e37-89f2f69d455b","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-02T05:29:18.001390632Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"68a77aa5-58a2-4553-a23d-44ba9b987df6","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-02T05:29:18.001390632Z","type":"issue_claimed"}
