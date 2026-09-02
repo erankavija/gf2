@@ -891,9 +891,12 @@ first root, a run of `0` and a bound of `1`.
 Refinement anchor: `assert_witnessed_run_is_maximal`
 (`crates/gf2-coding/src/bch/spec.rs:1973-1976`), the branch that asserts an empty defining set
 against a `None` first root. -/
-theorem run_of_empty (h : T = ∅) : runStarts T = ∅ ∧ ∀ s : ZMod n, runLen T s = 0 := by
+theorem run_of_empty (h : T = ∅) :
+    runStarts T = ∅ ∧ bestRun T = 0 ∧ ∀ s : ZMod n, runLen T s = 0 := by
   subst h
-  exact ⟨by simp [runStarts, IsRunStart], fun s => runLen_eq_zero_of_notMem _ (by simp)⟩
+  have hempty : runStarts (∅ : Finset (ZMod n)) = ∅ := by simp [runStarts, IsRunStart]
+  exact ⟨hempty, by rw [bestRun, hempty, Finset.sup_empty]; rfl,
+    fun s => runLen_eq_zero_of_notMem _ (by simp)⟩
 
 /-- **L4.7 (base case `|T| = n`).** With every exponent present the whole cycle is one run, so
 the canonical witness is start `0` with run `n`. No exponent opens a run, which is why the
@@ -904,12 +907,13 @@ Refinement anchor: `assert_witnessed_run_is_maximal`
 (`crates/gf2-coding/src/bch/spec.rs:1978-1981`), which finds every witnessed exponent present.
 -/
 theorem run_of_univ (h : ∀ x : ZMod n, x ∈ T) :
-    T.card = n ∧ runStarts T = ∅ ∧ (∀ i < n, (0 : ZMod n) + (i : ZMod n) ∈ T) ∧
-      ∀ s : ZMod n, runLen T s ≤ n := by
-  refine ⟨?_, ?_, fun i _ => h _, runLen_le T⟩
-  · rw [Finset.eq_univ_iff_forall.2 h, Finset.card_univ, ZMod.card]
-  · refine Finset.eq_empty_of_forall_notMem fun s hs => ?_
-    exact ((mem_runStarts T).1 hs).2 (h _)
+    T.card = n ∧ runStarts T = ∅ ∧ bestRun T = 0 ∧
+      (∀ i < n, (0 : ZMod n) + (i : ZMod n) ∈ T) ∧ ∀ s : ZMod n, runLen T s ≤ n := by
+  have hempty : runStarts T = ∅ :=
+    Finset.eq_empty_of_forall_notMem fun s hs => ((mem_runStarts T).1 hs).2 (h _)
+  refine ⟨?_, hempty, by rw [bestRun, hempty, Finset.sup_empty]; rfl,
+    fun i _ => h _, runLen_le T⟩
+  rw [Finset.eq_univ_iff_forall.2 h, Finset.card_univ, ZMod.card]
 
 /-- **L4.8 (consecutive flavors).** A run of `δ - 1` consecutive seeds inside the defining set
 forces the witnessed run to be at least that long, so the reported bound `run + 1`
@@ -925,6 +929,40 @@ theorem le_bestRun_of_consecutive (hne : ∃ y : ZMod n, y ∉ T) (b : ZMod n) {
     (hm : m ≤ n) (hseeds : ∀ i < m, b + (i : ZMod n) ∈ T) : m ≤ bestRun T := by
   have h1 := le_runLen_of_forall T hseeds
   have h2 := runLen_le_bestRun T hne b
+  omega
+
+/-- The reported minimum-distance lower bound: the witnessed run plus one
+(`crates/gf2-coding/src/bch/spec.rs:531`). -/
+def reportedBound : ℕ := bestRun T + 1
+
+/-- The reported correction radius: half the witnessed run, the
+`consecutive_root_count / 2` of `assemble` (`crates/gf2-coding/src/bch/spec.rs:1514`). -/
+def correctionRadius : ℕ := bestRun T / 2
+
+/-- **L4.7 (bound and radius agree).** The reported radius is the one the
+reported bound supports: correcting `t` errors needs a distance of at least
+`2t + 1`, and the witnessed pair satisfies exactly that. This is a statement
+about the witnessed run alone; the step from it to the code's true minimum
+distance is the Vandermonde argument the sketch's row A-09 places out of scope.
+
+Refinement anchor: `assert_witnessed_run_is_maximal`
+(`crates/gf2-coding/src/bch/spec.rs:1970-1971`), which recomputes both fields
+from the run. -/
+theorem two_mul_correctionRadius_lt_reportedBound :
+    2 * correctionRadius T + 1 ≤ reportedBound T := by
+  rw [correctionRadius, reportedBound]
+  omega
+
+/-- **L4.8 (the reported bound).** A designed distance whose `δ - 1`
+consecutive seeds land in the defining set is reached by the reported bound.
+
+Refinement anchor: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
+(`crates/gf2-coding/src/bch/spec.rs:2009`), which compares the reported bound
+against the designed distance of every pinned binary parameter point. -/
+theorem le_reportedBound_of_consecutive (hne : ∃ y : ZMod n, y ∉ T) (b : ZMod n) {d : ℕ}
+    (hd : d - 1 ≤ n) (hseeds : ∀ i < d - 1, b + (i : ZMod n) ∈ T) : d ≤ reportedBound T := by
+  have := le_bestRun_of_consecutive T hne b hd hseeds
+  rw [reportedBound]
   omega
 
 end Run
