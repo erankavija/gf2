@@ -377,7 +377,7 @@
           "title": "Lean proofs: quotient reduction preserves the represented element",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker complete; merging + gates (session 7)"
+          "status": "done (session 7; all gates first-pass; 87 decls, 37 anchors)"
         },
         {
           "key": "oracle-agreement",
@@ -600,6 +600,16 @@
       "source": "177bdc85 worker sign-off",
       "finding": "stale pooled artifact (gf2pow32_constant_drift baked with another worktree path) resurfaced from cache pool; worker forced rebuild",
       "disposition": "re-purge gf2pow32_* from the pool after each harvest until the cargo-budget.sh upstream fix lands"
+    },
+    {
+      "source": "32f53280 worker sign-off",
+      "finding": "proofs/Gf2Core/Proofs/FpField.lean proves no link between FpVal.mul'/add' (progress-derived from the extraction) and instCommRing's operations (transferred from ZMod); the sketch's extracted base-carrier anchor for O-2 rests on that link",
+      "disposition": "pre-existing, outside 32f53280; bake into the remaining lean waves (d7749931, b1bd75ca, 94597a51) as a known gap and reconcile against epic criteria at close"
+    },
+    {
+      "source": "1c9a0f9f worker (Luna) sign-off",
+      "finding": "dev/active/64fd3afd/proof-sketch.md:922 still says the L4.3 test is required although it is implemented",
+      "disposition": "linked artifact of done issue 64fd3afd; amend lead-direct with the next lean-wave doc refresh"
     }
   ],
   "coordination": {
@@ -672,7 +682,8 @@
     "A doc fix that scopes a claim to 'current public variants' goes stale one wave later when the next variant lands — write doc claims against the design's END state or name the variant explicitly (37c288cf R1 was the lead's own 230dd84d fix).",
     "cargo-budget.sh:71-74 asserts workspace crates never hit across worktrees — false for pooled/hardlinked artifacts (path-baked env!(CARGO_MANIFEST_DIR) test binaries). Purge such binaries from the pool (done for gf2pow32_*); tool fix belongs upstream.",
     "`jit validate`'s dangling-item-link rule rejects the `@/inv/` alias in `enforces:` labels even though `jit item show @/inv/...` resolves it; use the full kind name `@/invariant/` in labels (R-34).",
-    "RESOLVED 2026-09-02: the jit gate-evaluate checker re-run defect is fixed in the installed binary (~/.cargo/bin/jit built 2026-08-31 22:34 EEST, after just-in-time commit 64473d04f 'execute a gate checker at most once per evaluation' at 22:19). Keep main's working tree clean during a gate run because the cargo-ci gate judges the tree, but a verdict is no longer discarded on input drift."
+    "RESOLVED 2026-09-02: the jit gate-evaluate checker re-run defect is fixed in the installed binary (~/.cargo/bin/jit built 2026-08-31 22:34 EEST, after just-in-time commit 64473d04f 'execute a gate checker at most once per evaluation' at 22:19). Keep main's working tree clean during a gate run because the cargo-ci gate judges the tree, but a verdict is no longer discarded on input drift.",
+    "Pool-seeded target/ hardlinks share cargo fingerprints across worktrees: cargo can report a stale gf2-kernels-simd rlib as fresh under ci-test and a dependent crate then fails to resolve a new module. `find crates/<crate>/src -name '*.rs' -exec touch {} +` forces the rebuild (2b6968d3 worker, session 7)."
   ],
   "session_notes_s5": [
     "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
