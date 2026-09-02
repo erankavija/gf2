@@ -504,14 +504,14 @@ names another file:
 
 | Lemma | Refinement anchor |
 |---|---|
-| L2.1 | **new test required**, see below |
+| L2.1 | `reduction_is_invariant_under_multiples_of_the_modulus` (`crates/gf2-core/src/gfpn/quotient.rs:2541`), see below |
 | L2.2 | `identity_is_structural_across_instances_and_presentations` (`crates/gf2-core/src/gfpn/quotient.rs:2236`) |
 | L2.3 | `assert_forms_agree` addition and multiplication cases (`crates/gf2-core/src/gfpn/quotient.rs:2351-2353`); field-law coverage via `test_quotient_gf125_field_axioms` and siblings (`crates/gf2-core/src/field/axiom_tests.rs:1793-1805`) |
 | L2.4 | `assert_forms_agree` (`crates/gf2-core/src/gfpn/quotient.rs:2290`), driven by `const_and_runtime_forms_agree_on_gf16` (`:2370`), `..._on_gf125` (`:2375`), `..._on_gf81_over_gf9` (`:2380`) |
 | L2.5 | `sampled_nonzero_elements_have_multiplicative_inverses` (`crates/gf2-core/src/gfpn/quotient.rs:2267`), `assert_forms_agree`'s `inv` case (`:2354`) |
 | L2.6 | `validating_construction_rejects_reducible_modulus` (`:2051`), `const_validation_rejects_a_reducible_declaration` (`:2387`), and the axiom-harness registrations that build every in-tree declaration through `ConstQuotient::extension` (`crates/gf2-core/src/field/axiom_tests.rs:1816-1843`) |
 | L2.7, flattening half | `assert_forms_agree`'s coordinate-agreement case (`crates/gf2-core/src/gfpn/quotient.rs:2336-2348`), `const_quotient_coordinates_round_trip_through_the_runtime_carrier` (`:2474`), and `tower_coordinates_vary_the_base_coordinate_fastest` (`crates/gf2-core/src/field/extension.rs:3543`) for the $d_B > 1$ ordering |
-| L2.7, canonical-index half | **new test required**, see below |
+| L2.7, canonical-index half | `canonical_index_decodes_to_its_prime_coordinates` (`crates/gf2-core/src/gfpn/quotient.rs:2581`), see below |
 | L2.8 | `frobenius_has_absolute_and_relative_orders` (`:2147`) |
 
 **Anchor tests for O-2**, both in `crates/gf2-core/src/gfpn/quotient.rs`'s own
@@ -593,7 +593,7 @@ offset `high - degree` (`crates/gf2-core/src/gfpn/quotient.rs:912`).
 
 ### 5. Assumptions
 
-- **A-01** applies; the anchor table plus the two new tests is the discharge.
+- **A-01** applies; the anchor table, including the two O-2 anchor tests, is the discharge.
 - **A-06** (odd-prime base for the extracted anchor) is this obligation's own
   row. The abstract instantiation covers $p = 2$; only the extraction anchor
   does not.
@@ -699,7 +699,7 @@ gap between model and code is the `u64`/`usize` representation.
 | L3.4 | `cyclotomic_coset_order_is_deterministic` (`:4041`), `cyclotomic_cosets_match_the_worked_binary_vector_and_pure_form` (`:3935`) |
 | L3.5 | `iterative_closure` (`:3917`) as the naive oracle, driven by `prop_binary_cyclotomic_closure_laws` (`:3976`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`); `cyclotomic_closure_selects_complete_seed_cosets` (`:3956`) |
 | L3.6 | `prop_binary_cyclotomic_closure_laws` (`:3976`), which draws seeds outside $[0,n)$ |
-| L3.7 | `cyclotomic_coset_order_is_deterministic` (`:4041`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`) pin $d_B = 1$, where $q$ is the characteristic itself; `extension_base_primitive_construction_derives_a_base_field_generator` (`crates/gf2-coding/src/bch/spec.rs:1209`) pins $d_B = 2$ indirectly, through a defining set the test checks closed under $q = 9$ over a $\mathrm{GF}(9)$ base. **New test required**, see below |
+| L3.7 | `cyclotomic_coset_order_is_deterministic` (`:4041`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`) pin $d_B = 1$, where $q$ is the characteristic itself; `extension_base_primitive_construction_derives_a_base_field_generator` (`crates/gf2-coding/src/bch/spec.rs:1209`) pins $d_B = 2$ indirectly, through a defining set the test checks closed under $q = 9$ over a $\mathrm{GF}(9)$ base; `base_order_mod_matches_the_hand_computed_multiplier` (`:4062`) pins $d_B = 2$ and $d_B = 64$ directly, see below |
 | L3.8 | `assert_coset_partition_properties` (`crates/gf2-core/src/field/extension.rs:3890`) |
 
 `iterative_closure` (`:3917`) deserves the emphasis: it is an independent
