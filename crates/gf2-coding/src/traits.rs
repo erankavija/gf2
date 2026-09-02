@@ -464,7 +464,8 @@ pub mod block {
         /// A code in canonical systematic form has those coordinates at
         /// columns `0..k()`. A code that records another message-coordinate
         /// order answers for that order, which is the equivalent cheap fact
-        /// for its own layout.
+        /// for its own layout, and
+        /// [`Self::has_canonical_message_order`] separates the two cases.
         ///
         /// # Errors
         ///
@@ -483,9 +484,11 @@ pub mod block {
         /// message coordinate — a derived code restricting its mother to the
         /// messages that vanish on chosen coordinates, for one.
         ///
-        /// The default reports the canonical order, the layout the
-        /// repository's matrix contract writes. A code that records another
-        /// message-coordinate order overrides this.
+        /// The answer is about the layout alone and says nothing about
+        /// systematicity, so a code that is not systematic still answers for
+        /// the order it would record. The default reports the canonical
+        /// order, the layout the repository's matrix contract writes; a code
+        /// that records another message-coordinate order overrides this.
         ///
         /// # Errors
         ///
