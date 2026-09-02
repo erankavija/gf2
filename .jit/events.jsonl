@@ -10834,3 +10834,7 @@
 {"gate_key":"doc-review","id":"cc4962ea-c827-4285-82ef-0d246e7e876a","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T16:39:08.082321643Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"4268ff28-a12a-46d7-8976-8976ab9a2f7f","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T16:43:31.169059392Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"a399a6f5-f2ba-4e15-a96a-327bdfe628d4","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-02T16:47:12.491223653Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"c101cc23-9a17-411b-adfa-e27c2a7c2545","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T16:48:08.458092975Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"cdfe75c1-bbe3-478e-b61a-425cd3cf5248","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","reason":"rework 2 dispatch","timestamp":"2026-09-02T16:48:08.458092975Z","type":"issue_released"}
+{"from":"ready","id":"da5c8541-3344-4bbf-88ce-f96145189dc2","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T16:48:17.511891756Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"e715d006-6e43-48e1-a88f-2a7d6d127b5a","issue_id":"444c06bc-7a0a-4e00-899a-c74815793fe9","timestamp":"2026-09-02T16:48:17.511891756Z","type":"issue_claimed"}
