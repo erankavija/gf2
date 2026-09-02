@@ -10,11 +10,14 @@
 #
 # Every figure in the receipt is read back from the artifacts this run wrote or
 # from the host at run time; nothing is hand-maintained. Re-running from the
-# recorded revision rewrites the three fixtures byte for byte, so `git status`
-# reports only the receipt's own timestamp.
+# recorded revision rewrites the corpus and the SageMath fixture byte for byte
+# and the GAP fixture byte for byte apart from what each bounded code-object
+# attempt observed of its own cost, which is a fact of the run.
 #
-# `ORACLE_GAP_HEAP` sets the GAP heap the oracle runs under; the receipt records
-# the invocation it was used in.
+# `ORACLE_GAP_HEAP` sets the GAP heap the oracle runs under, and so the bound
+# every code-object attempt is made under; the receipt records the invocation
+# it was used in. The default is a heap an ordinary host can back, which is
+# what keeps regeneration reproducible off this host.
 #
 # Usage: dev/active/ae03bcd0-general-bch/oracle/run.sh
 set -euo pipefail
@@ -162,25 +165,30 @@ rust_version="$(rustc --version)"
   echo
   echo "## GUAVA code-object attempts"
   echo
-  echo "Each row calls \`BCHCode(n, b, delta, F)\` under the heap above; the"
-  echo "oracle catches an attempt that exceeds it and records what it observed."
+  echo "Each row calls \`BCHCode(n, b, delta, F)\` for GUAVA's own code object"
+  echo "and \`GeneratorPolCode(G, n, F)\` for the derivation at gf2's root, both"
+  echo "under the heap above; the oracle catches an attempt that exceeds it and"
+  echo "records what it observed. The peak resident set is the kernel's"
+  echo "high-water mark for the whole process, which is monotone over the run,"
+  echo "so it bounds an attempt from above and a row's own cost shows as its"
+  echo "rise over the row before it."
   echo
   python3 - "$gap_out" <<'ATTEMPTS'
 import json, sys
 rows = json.load(open(sys.argv[1]))["rows"]
-print("| Row | Code object built | Attempt CPU (s) | Process peak RSS after attempt (KiB) |")
+print("| Row | Code object built | `BCHCode` attempt CPU (s) | Process peak RSS after this row (KiB) |")
 print("|---|---|---|---|")
 for row in rows:
-    peak = row["bchcode_attempt_peak_rss_kib"]
     print("| {} | {} | {:.1f} | {} |".format(
         row["id"],
         "yes" if row["bchcode_built"] else "no",
         row["bchcode_attempt_cpu_ms"] / 1000.0,
-        "unavailable" if peak is None else peak,
+        row["bchcode_attempt_peak_rss_kib"],
     ))
 ATTEMPTS
   echo
-  echo "Diagnostics GAP printed during the stage:"
+  echo "Diagnostics GAP printed during the stage, one message per attempt that"
+  echo "exceeded the heap:"
   echo
   echo '```'
   if grep -q . "$gap_log"; then cat "$gap_log"; else echo "(none)"; fi
