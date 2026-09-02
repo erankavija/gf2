@@ -345,7 +345,7 @@
           "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "re-dispatched session 7 (Opus, resume from WIP)"
+          "status": "merged 9b660ee0; cargo-ci passed; code-review R1 FAIL F1 (PCLMUL path + combined predicate); rework 1 dispatched to live worker (session 7)"
         },
         {
           "key": "bch-convenience-ctors",
@@ -377,7 +377,7 @@
           "title": "Lean proofs: quotient reduction preserves the represented element",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "re-dispatched session 7 (Opus, resume from WIP)"
+          "status": "worker complete; merging + gates (session 7)"
         },
         {
           "key": "oracle-agreement",
@@ -567,7 +567,8 @@
     "6d67e57e": 1,
     "8f68699b": 2,
     "c3cc5226": 2,
-    "177bdc85": 1
+    "177bdc85": 1,
+    "2b6968d3": 1
   },
   "surfaced_pitfalls": [
     {
@@ -650,7 +651,8 @@
     "R-32 (session 6): automatic field selection API for 1c9a0f9f — gf2-core gains `SelectExtension` (trait in field/modulus_select.rs: `fn select(base: Self::Base, degree: usize) -> Result<Self, ModulusSelectionError>`) implemented for QuotientField<B> and BinaryPrimeExt<V>; spec.rs adds the five design-exact explicit conveniences plus `_auto` counterparts for the four base-field-only-input variants (primitive_narrow_sense_auto, primitive_auto, consecutive_roots_auto, from_root_seeds_auto; root = Canonical); from_generator composes with select. BchError gains ModulusSelection(ModulusSelectionError). Footprint additions: crates/gf2-core/src/field/modulus_select.rs, crates/gf2-coding/src/bch/error.rs.",
     "R-33 (session 6): R-27 over-listed 32f53280's required tests — `tower_coordinates_vary_the_base_coordinate_fastest` already exists (extension.rs:3543) and is an L2.7 anchor; the proof sketch (O-2 §3) requires exactly two new tests: reduction_is_invariant_under_multiples_of_the_modulus and canonical_index_decodes_to_its_prime_coordinates. Dispatch follows the sketch.",
     "R-34 (session 6): `jit validate` failed on two labels `enforces:@/inv/caller-trusted-fast-paths` (c3d5cea5, c9022d14): the dangling-item-link rule does not honor the `inv` alias that `jit item show` accepts. Labels normalized to `enforces:@/invariant/caller-trusted-fast-paths`; validate green. Alias defect belongs to jit (report upstream).",
-    "R-35 (session 7): 3f7edef1 (oracle-agreement) re-slotted from wave 11 into wave 10 as a late addition once its last dependency 1c9a0f9f reached done: its footprint (new tests/bch_oracle_agreement.rs, tests/data fixtures, dev/ oracle scripts + provenance doc) is disjoint from the three running wave-10 workers, it is the longest wave-11 item (two external oracles across the corpus plus research-review), and waiting for the wave-10 close would idle it for hours. Wave 10 now closes only when it is done too. Hidden dependencies wired: 5ee83cd3 and e1e0e7ff now depend on 444c06bc (GLDPC reads G=[I|P]; the conformance suite's matrix invariants assert the systematic contract)."
+    "R-35 (session 7): 3f7edef1 (oracle-agreement) re-slotted from wave 11 into wave 10 as a late addition once its last dependency 1c9a0f9f reached done: its footprint (new tests/bch_oracle_agreement.rs, tests/data fixtures, dev/ oracle scripts + provenance doc) is disjoint from the three running wave-10 workers, it is the longest wave-11 item (two external oracles across the corpus plus research-review), and waiting for the wave-10 close would idle it for hours. Wave 10 now closes only when it is done too. Hidden dependencies wired: 5ee83cd3 and e1e0e7ff now depend on 444c06bc (GLDPC reads G=[I|P]; the conformance suite's matrix invariants assert the systematic contract).",
+    "R-36 (session 7): 2b6968d3 code-review R1 F1 read the issue text literally (kernels through the existing carry-less-multiply primitives; one combined predicate covering AVX2 plus carry-less multiply). The bit-sliced family the survey assigned needs AVX2 alone, so the rework ADDS a second packed family `clmul-fold` (64 message bits per step; Barrett quotient by one carry-less multiply with mu = floor(x^(r+64)/g), then ceil(r/64) multiplies by g's words) behind one combined bundle predicate `avx2 && pclmulqdq && sse4.1`, with a scalar-clmul twin, rather than amending the issue description (invariant 4) or dropping the survey's family. The survey contract §7 gains a `clmul-fold` row when the rework lands."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
