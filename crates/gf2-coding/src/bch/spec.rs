@@ -803,6 +803,12 @@ where
     /// selection and all code quantities are delegated to the explicit
     /// constructor. The designed distance is a guaranteed lower bound on
     /// minimum distance, never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BchError::ModulusSelection`] when extension selection fails;
+    /// otherwise see [`Self::construct`] for the complete construction error
+    /// list.
     pub fn primitive_narrow_sense_auto(
         base: X::Base,
         degree: usize,
@@ -820,6 +826,12 @@ where
     /// independent inputs; selection and all code quantities are delegated to
     /// [`Self::primitive`]. The designed distance is a guaranteed lower bound
     /// on minimum distance, never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BchError::ModulusSelection`] when extension selection fails;
+    /// otherwise see [`Self::construct`] for the complete construction error
+    /// list.
     pub fn primitive_auto(
         base: X::Base,
         degree: usize,
@@ -840,6 +852,12 @@ where
     /// delegated to [`Self::consecutive_roots`]. The designed distance is a
     /// guaranteed lower bound on minimum distance, never the minimum distance
     /// itself.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BchError::ModulusSelection`] when extension selection fails;
+    /// otherwise see [`Self::construct`] for the complete construction error
+    /// list.
     pub fn consecutive_roots_auto(
         base: X::Base,
         degree: usize,
@@ -866,6 +884,12 @@ where
     /// inputs; selection and all code quantities are delegated to
     /// [`Self::from_root_seeds`]. The distance bound is a guaranteed lower
     /// bound on minimum distance, never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BchError::ModulusSelection`] when extension selection fails;
+    /// otherwise see [`Self::construct`] for the complete construction error
+    /// list.
     pub fn from_root_seeds_auto(
         base: X::Base,
         degree: usize,
