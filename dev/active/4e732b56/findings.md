@@ -526,6 +526,15 @@ overhead for the epic to preserve, and no existing parallelism to regress.
   explained. `avx2-batch-kernels` should confirm from generated code whether
   the scalar path is auto-vectorizing before assuming an interleaved kernel
   will scale with register width at DVB-T2 generator degrees.
+  *Answered by `avx2-batch-kernels` (`2b6968d3`):* the committed artefact
+  `crates/gf2-kernels-simd/src/x86/asm/bch_encode.asm.txt` shows the portable
+  bit-sliced reduction compiling to a `mov`/`and`/`xor`/`mov` chain over
+  general-purpose registers with no vector instruction, and the packed
+  per-frame recurrence carries the same word-to-word dependence, so the
+  scalar path does not auto-vectorize; the decay is the reduction's word
+  count growing with $\deg g$ against a per-frame codeword write that does
+  not (rustdoc of `gf2_kernels_simd::bch_encode`, "Generated code of the
+  scalar path").
 * **No packed-representation cell is DRAM-bound** in the fixed batch ladder;
   the largest packed working set is 31.5 MiB against a 32 MiB L3. The
   residency claim is per-representation: AFF3CT's 32-bit-per-bit storage puts

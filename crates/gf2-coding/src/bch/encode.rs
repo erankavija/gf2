@@ -78,6 +78,19 @@
 //! This is not the SIMD feature-detection seam. That one chooses an
 //! instruction-set implementation of a fixed algorithm inside a family; this
 //! one chooses the algorithm, and a family may use the other seam internally.
+//! [`EncodeFamily::BitsliceInterleaved`] is the family that does: it runs
+//! [`gf2_kernels_simd::bch_encode`]'s AVX2 kernels where the host detects
+//! them and that module's portable kernels where it does not, and the two
+//! write the same bits, so the instruction set decides the speed of a batch
+//! and never its bytes.
+//!
+//! A family whose step advances several frames at once cannot be expressed
+//! one message at a time, so the batch entry points call
+//! [`SystematicKernel::encode_batch_family`] and a family that has nothing
+//! to gain from a batch inherits its per-message default. The parallel
+//! halving hands each partition to that method, and lane grouping is
+//! internal to a partition, so neither a worker count nor a partition
+//! boundary reaches the bytes.
 //!
 //! # Complexity
 //!
@@ -88,13 +101,21 @@
 //! [`EncodeFamily::TableRemainder`] runs
 //! $O((k / 32) \lceil r/64 \rceil)$ word operations over the same $O(n)$ bit
 //! writes, after a table build of $O(1024 \lceil r/64 \rceil)$ word writes
-//! paid once per batch call.
+//! paid once per batch call. [`EncodeFamily::BitsliceInterleaved`] spends
+//! $O(k r)$ word operations, or $O(k r / 4)$ 256-bit operations under its
+//! AVX2 kernels, on a whole lane group of
+//! [`gf2_kernels_simd::bch_encode::BITSLICE_LANES`] frames, so $O(k r / 64)$
+//! word-equivalents per message plus the same $O(n)$ bit writes. A batch
+//! shorter than the lane width still pays a whole group, which is what makes
+//! its admission a batch-length question.
 //!
 //! # Workspaces
 //!
 //! The recurrence runs over the buffers [`EncodeRegisters`] holds together:
 //! an $r$-symbol shift register, the generator's low $r$ coefficients in the
-//! same words, and whatever reduction table the selected family reads. The
+//! same words, and whatever reduction table or lane-group scratch the
+//! selected family reads. Every one of them is a function of the plan and a
+//! fixed lane width, never of a batch's length. The
 //! entry points that take no
 //! workspace — [`encode_systematic`](BchCode::encode_systematic),
 //! [`encode_systematic_into`](BchCode::encode_systematic_into),
@@ -280,11 +301,13 @@ use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::num::NonZeroUsize;
 use std::slice;
+use std::sync::OnceLock;
 
 use gf2_core::field::extension::{FieldExtension, FieldId, FieldIdentity};
 use gf2_core::field::{FieldPoly, FieldVec, FiniteField};
 use gf2_core::gfp::Fp;
 use gf2_core::BitVec;
+use gf2_kernels_simd::bch_encode::{self, BchEncodeFns, BITSLICE_LANES};
 
 use crate::bch::error::BchError;
 use crate::bch::spec::BchCode;
@@ -535,6 +558,25 @@ pub enum EncodeFamily {
     /// generator XOR per coefficient in the reference. The tables are a
     /// function of the generator alone and are built once per batch call.
     TableRemainder,
+
+    /// Bit-sliced interleaved reduction, advancing
+    /// [`gf2_kernels_simd::bch_encode::BITSLICE_LANES`] frames of a batch per
+    /// step.
+    ///
+    /// The batch is transposed into bit-slices — one word per register
+    /// coefficient, one bit of that word per frame — and the shift-register
+    /// recurrence then advances every frame of a lane group in the same word
+    /// operations. A step costs one word per register coefficient for the
+    /// whole group, so the per-message coefficient cost falls with the
+    /// register width the kernel reduces in rather than with the generator
+    /// degree, and a lane group's transposes are amortized over all $k$
+    /// message degrees.
+    ///
+    /// The kernels are
+    /// [`gf2_kernels_simd::bch_encode`]'s: its AVX2 bundle where the host
+    /// detects the features that module names, and its portable bundle
+    /// otherwise. Both write the same bits.
+    BitsliceInterleaved,
 }
 
 impl EncodeFamily {
@@ -548,7 +590,22 @@ impl EncodeFamily {
     /// representation and admitted by the active profile, so a family placed
     /// earlier is preferred wherever both admit it. [`REFERENCE`](Self::REFERENCE)
     /// is last because it is the fallback the walk is guaranteed to reach.
-    pub const REGISTERED: &'static [Self] = &[Self::TableRemainder, Self::REFERENCE];
+    ///
+    /// [`BitsliceInterleaved`](Self::BitsliceInterleaved) precedes
+    /// [`TableRemainder`](Self::TableRemainder) because its admission is a
+    /// batch-length question: a profile that admits it has already said the
+    /// batches are long enough to fill lane groups, which is the regime where
+    /// it reduces a whole group in the word operations the table family
+    /// spends on one message. The table family then holds the batches too
+    /// short to fill a group. Neither ordering is a measurement: the
+    /// crossover between the two is an unmeasured cell of the
+    /// workload-selection contract, and the conservative profile admits
+    /// neither.
+    pub const REGISTERED: &'static [Self] = &[
+        Self::BitsliceInterleaved,
+        Self::TableRemainder,
+        Self::REFERENCE,
+    ];
 
     /// Returns this family's stable spelling, the one the workload-selection
     /// contract registers it under.
@@ -557,6 +614,7 @@ impl EncodeFamily {
         match self {
             Self::PolyRemainderScalar => "poly-remainder-scalar",
             Self::TableRemainder => "table-remainder",
+            Self::BitsliceInterleaved => "bitslice-interleaved",
         }
     }
 
@@ -595,9 +653,9 @@ const TABLE_REMAINDER_ENTRIES: usize = 1 << TABLE_REMAINDER_TABLE_BITS;
 /// is selected.
 ///
 /// [`usize::MAX`] keeps every code on [`EncodeFamily::REFERENCE`] under the
-/// conservative profile: the crossover between the two families is a
-/// measurement, and no committed receipt has made it on this repository's
-/// implementations. Installing a profile with a lower
+/// conservative profile: the crossover between the table family and the
+/// reference is a measurement, and no committed receipt has made it on this
+/// repository's implementations. Installing a profile with a lower
 /// `encode.table_remainder_min_redundancy` moves the boundary; the selected
 /// codewords are the same bytes either way.
 pub const TABLE_REMAINDER_MIN_REDUNDANCY: usize = usize::MAX;
@@ -610,6 +668,21 @@ pub const TABLE_REMAINDER_MIN_REDUNDANCY: usize = usize::MAX;
 /// batch length repays it is the same unmeasured crossover
 /// [`TABLE_REMAINDER_MIN_REDUNDANCY`] describes.
 pub const TABLE_REMAINDER_MIN_BATCH: usize = 1;
+
+/// Conservative minimum batch length at which
+/// [`EncodeFamily::BitsliceInterleaved`] is selected.
+///
+/// [`usize::MAX`] keeps every code on [`EncodeFamily::REFERENCE`] under the
+/// conservative profile, the same exclusion
+/// [`TABLE_REMAINDER_MIN_REDUNDANCY`] carries for the table family. Batch
+/// length is the bound this family's cost model turns on: a lane group of
+/// [`gf2_kernels_simd::bch_encode::BITSLICE_LANES`] frames costs the same
+/// whether the batch fills it or not, so the crossover is where the batch
+/// covers enough of a group to repay it. Where that is remains a measurement
+/// no committed receipt has made on this repository's kernels. Installing a
+/// profile with a lower `encode.bitslice_interleaved_min_batch` moves the
+/// boundary; the selected codewords are the same bytes either way.
+pub const BITSLICE_INTERLEAVED_MIN_BATCH: usize = usize::MAX;
 
 /// Decides whether the active selectors admit `family` for a plan of
 /// redundancy `redundancy` over a batch of `batch_len` messages.
@@ -629,6 +702,9 @@ fn family_admitted(
         EncodeFamily::TableRemainder => {
             redundancy >= selectors.table_remainder_min_redundancy()
                 && batch_len >= selectors.table_remainder_min_batch()
+        }
+        EncodeFamily::BitsliceInterleaved => {
+            batch_len >= selectors.bitslice_interleaved_min_batch()
         }
     }
 }
@@ -711,6 +787,18 @@ pub struct EncodeRegisters<W> {
     /// [`EncodeFamily::REFERENCE`] alone. Its length and layout belong to
     /// the families that read it.
     pub tables: Vec<W>,
+
+    /// Lane-group scratch for the families that reduce a whole batch slice
+    /// at once.
+    ///
+    /// [`EncodeFamily::BitsliceInterleaved`] is the family that reads it, and
+    /// [`gf2_kernels_simd::bch_encode::bitslice_split`] is what carves it
+    /// into the generator masks, the bit-sliced register, and the per-lane
+    /// parity runs. Its length is a function of the plan's redundancy and the
+    /// kernel's fixed lane width, so one lane group of any batch reduces over
+    /// the same buffer. It stays empty when no available family reduces in
+    /// lanes.
+    pub lanes: Vec<W>,
 }
 
 /// The reusable scratch one code's systematic encoding needs.
@@ -818,6 +906,7 @@ where
                         register: Vec::new(),
                         low: Vec::new(),
                         tables: Vec::new(),
+                        lanes: Vec::new(),
                     }),
                 });
                 scratch.len() - 1
@@ -838,10 +927,15 @@ where
 /// [`crate::test_support`].
 #[cfg(any(test, feature = "test-support"))]
 pub(crate) fn register_shape<W>(registers: &EncodeRegisters<W>) -> Vec<(usize, usize, usize)> {
-    [&registers.register, &registers.low, &registers.tables]
-        .into_iter()
-        .map(|buffer| (buffer.as_ptr() as usize, buffer.len(), buffer.capacity()))
-        .collect()
+    [
+        &registers.register,
+        &registers.low,
+        &registers.tables,
+        &registers.lanes,
+    ]
+    .into_iter()
+    .map(|buffer| (buffer.as_ptr() as usize, buffer.len(), buffer.capacity()))
+    .collect()
 }
 
 /// [`register_shape`] for the scratch registers the calling thread holds for
@@ -932,6 +1026,7 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
             register: Vec::new(),
             low: Vec::new(),
             tables: Vec::new(),
+            lanes: Vec::new(),
         };
         Self::reset_registers(plan, &mut registers);
         for &family in EncodeFamily::REGISTERED {
@@ -1009,6 +1104,45 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
         Self::encode_systematic_with(plan, message, registers, codeword)
     }
 
+    /// Writes the systematic codeword of every message of `messages` into the
+    /// matching entry of `codewords`, under `family`.
+    ///
+    /// This is the granularity a family whose step advances several frames at
+    /// once needs: a lane-parallel reduction cannot be expressed one message
+    /// at a time, and the per-message method cannot express it either. The
+    /// default implementation is that per-message loop, so a family with
+    /// nothing to gain from a batch inherits it and writes the same bytes.
+    ///
+    /// The batch is a partition of a larger one whenever more than one
+    /// workspace encodes it, so an implementation groups frames inside the
+    /// slice it is given and never across it. Every grouping writes the same
+    /// bits — a partial final group runs with its unfilled lanes carrying
+    /// zeros — which is what keeps a partition boundary out of the output.
+    ///
+    /// `registers` has passed [`reset_family`](Self::reset_family) for the
+    /// same `family` and `plan`.
+    ///
+    /// # Errors
+    ///
+    /// The errors of
+    /// [`encode_systematic_family`](Self::encode_systematic_family). The
+    /// first rejected message decides, and a message already written stays
+    /// written.
+    ///
+    /// # Complexity
+    ///
+    /// One reduction per message in `family`, at whatever granularity that
+    /// family reduces.
+    fn encode_batch_family(
+        family: EncodeFamily,
+        plan: &SystematicPlan<'_, F>,
+        messages: &[Self],
+        registers: &mut EncodeRegisters<Self::Word>,
+        codewords: &mut [Self],
+    ) -> Result<(), CodeError> {
+        encode_each_message::<F, Self>(family, plan, messages, registers, codewords)
+    }
+
     /// Writes the systematic codeword of `message` into `codeword`, using
     /// `registers` as its whole working storage.
     ///
@@ -1062,6 +1196,34 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
             Self::encode_systematic_with(plan, message, registers, codeword)
         })
     }
+}
+
+/// Encodes a batch one message at a time under `family`.
+///
+/// This is the granularity every family reduces at unless it overrides
+/// [`SystematicKernel::encode_batch_family`], and the arm a lane-parallel
+/// family falls back to for the families it does not implement, so both
+/// reach it here rather than each writing the loop.
+///
+/// # Errors
+///
+/// The errors of [`SystematicKernel::encode_systematic_family`]. The first
+/// rejected message decides, and a message already written stays written.
+fn encode_each_message<F, S>(
+    family: EncodeFamily,
+    plan: &SystematicPlan<'_, F>,
+    messages: &[S],
+    registers: &mut EncodeRegisters<S::Word>,
+    codewords: &mut [S],
+) -> Result<(), CodeError>
+where
+    F: FieldIdentity,
+    S: SystematicKernel<F>,
+{
+    for (message, codeword) in messages.iter().zip(codewords.iter_mut()) {
+        S::encode_systematic_family(family, plan, message, registers, codeword)?;
+    }
+    Ok(())
 }
 
 /// Decides that both buffers of `registers` hold `words` entries, the length
@@ -1201,25 +1363,38 @@ impl SystematicKernel<Fp<2>> for BitVec {
     /// The packed representation adds [`EncodeFamily::TableRemainder`] for
     /// every plan whose redundancy holds a whole
     /// [`TABLE_REMAINDER_BLOCK_BITS`]-bit block, which is what a step's
-    /// shift-out is read from.
+    /// shift-out is read from, and
+    /// [`EncodeFamily::BitsliceInterleaved`] for every plan that has parity
+    /// to compute at all.
+    ///
+    /// Neither answer consults the host's processor features. The bit-sliced
+    /// family runs the kernel bundle
+    /// [`gf2_kernels_simd::bch_encode::detect`] publishes where the host has
+    /// the features it names and
+    /// [`gf2_kernels_simd::bch_encode::scalar`] where it does not, so the
+    /// family is available, and writes the same bits, on every host.
     fn family_available(family: EncodeFamily, plan: &SystematicPlan<'_, Fp<2>>) -> bool {
         match family {
             EncodeFamily::PolyRemainderScalar => true,
             EncodeFamily::TableRemainder => plan.redundancy() >= TABLE_REMAINDER_BLOCK_BITS,
+            EncodeFamily::BitsliceInterleaved => plan.redundancy() > 0,
         }
     }
 
-    /// Builds the reduction tables [`EncodeFamily::TableRemainder`] reads.
+    /// Builds the reduction tables [`EncodeFamily::TableRemainder`] reads and
+    /// the lane-group scratch [`EncodeFamily::BitsliceInterleaved`] reduces
+    /// over.
     ///
-    /// The buffer is cleared and resized rather than replaced, so preparing
-    /// registers that already carry tables of this length reaches no
+    /// Each buffer is cleared and resized rather than replaced, so preparing
+    /// registers that already carry storage of this length reaches no
     /// allocator.
     ///
     /// # Complexity
     ///
     /// $O(\lceil r/64 \rceil)$ words per table entry, so
-    /// $O(1024 \lceil r/64 \rceil)$ word writes per preparation, against a
-    /// batch's $O(m k \lceil r/64 \rceil)$ reduction.
+    /// $O(1024 \lceil r/64 \rceil)$ word writes per table preparation,
+    /// against a batch's $O(m k \lceil r/64 \rceil)$ reduction, and $O(r)$
+    /// words for the lane-group scratch.
     fn reset_family(
         family: EncodeFamily,
         plan: &SystematicPlan<'_, Fp<2>>,
@@ -1233,6 +1408,11 @@ impl SystematicKernel<Fp<2>> for BitVec {
                 packed_build_tables(redundancy, low, tables);
             }
             EncodeFamily::TableRemainder => {}
+            EncodeFamily::BitsliceInterleaved if redundancy > 0 => {
+                let EncodeRegisters { low, lanes, .. } = registers;
+                packed_build_lanes(redundancy, low, lanes);
+            }
+            EncodeFamily::BitsliceInterleaved => {}
         }
     }
 
@@ -1278,9 +1458,61 @@ impl SystematicKernel<Fp<2>> for BitVec {
             register,
             low,
             tables,
+            ..
         } = registers;
         packed_table_reduce(plan, message, register, low, tables);
         packed_write_codeword(plan, message, register, codeword);
+        Ok(())
+    }
+
+    /// Runs [`EncodeFamily::BitsliceInterleaved`] over whole lane groups of
+    /// the batch, and every other family one message at a time.
+    ///
+    /// The lane groups are cut from `messages` alone, so a partition of a
+    /// larger batch groups only its own frames and a final group shorter than
+    /// the lane width runs with its unfilled lanes carrying zeros. Both write
+    /// the bits the reference writes.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::BufferLengthMismatch`] for a message, codeword,
+    /// or register buffer of the wrong length, and for registers that
+    /// [`reset_family`](Self::reset_family) has not prepared for a family
+    /// that reduces in lanes. Every buffer is decided before the first
+    /// codeword is written.
+    ///
+    /// # Complexity
+    ///
+    /// $O(k r)$ word operations per lane group of
+    /// [`gf2_kernels_simd::bch_encode::BITSLICE_LANES`] frames, plus
+    /// $O(k / 64 + \lceil r/64 \rceil)$ bit-block transposes per group and
+    /// $O(n)$ bit writes per message.
+    fn encode_batch_family(
+        family: EncodeFamily,
+        plan: &SystematicPlan<'_, Fp<2>>,
+        messages: &[Self],
+        registers: &mut EncodeRegisters<u64>,
+        codewords: &mut [Self],
+    ) -> Result<(), CodeError> {
+        let redundancy = plan.redundancy();
+        if family != EncodeFamily::BitsliceInterleaved || redundancy == 0 {
+            return encode_each_message::<Fp<2>, Self>(
+                family, plan, messages, registers, codewords,
+            );
+        }
+
+        for (message, codeword) in messages.iter().zip(codewords.iter()) {
+            plan.validate_lengths(message.len(), codeword.len())?;
+        }
+        validate_registers(redundancy.div_ceil(64), registers)?;
+        let expected = bch_encode::bitslice_scratch_words(redundancy);
+        if registers.lanes.len() != expected {
+            return Err(CodeError::BufferLengthMismatch {
+                expected,
+                actual: registers.lanes.len(),
+            });
+        }
+        packed_bitslice_batch(plan, messages, &mut registers.lanes, codewords);
         Ok(())
     }
 }
@@ -1334,40 +1566,77 @@ fn packed_shift_block(register: &mut [u64], tail: u64) {
     register[words - 1] &= tail;
 }
 
-/// Reads the [`TABLE_REMAINDER_BLOCK_BITS`] packed bits starting at `offset`,
-/// bit $j$ of the result carrying the bit at `offset + j`.
+/// Reads the 64 packed bits starting at `offset`, bit $j$ of the result
+/// carrying the bit at `offset + j`.
 ///
 /// Bits above the buffer read as zero, which is the zero tail padding a
 /// packed buffer maintains.
-fn packed_read_block(words: &[u64], offset: usize) -> u32 {
+fn packed_read_window(words: &[u64], offset: usize) -> u64 {
     let word = offset / 64;
     let bit = offset % 64;
-    let low = words[word] >> bit;
-    let high = if bit == 0 || word + 1 >= words.len() {
+    let low = words.get(word).copied().unwrap_or(0) >> bit;
+    let high = if bit == 0 {
         0
     } else {
-        words[word + 1] << (64 - bit)
+        words.get(word + 1).copied().unwrap_or(0) << (64 - bit)
     };
-    ((low | high) & u64::from(u32::MAX)) as u32
+    low | high
+}
+
+/// Reads the [`TABLE_REMAINDER_BLOCK_BITS`] packed bits starting at `offset`,
+/// bit $j$ of the result carrying the bit at `offset + j`.
+fn packed_read_block(words: &[u64], offset: usize) -> u32 {
+    (packed_read_window(words, offset) & u64::from(u32::MAX)) as u32
+}
+
+/// Reads the message coefficients of degrees `degree` to `degree + count`,
+/// bit $j$ carrying the coefficient of $x^{degree + j}$ and the bits from
+/// `count` up reading zero.
+///
+/// Both declared layouts carry those coefficients in one contiguous run of
+/// user coordinates, ascending for
+/// [`SystematicLayout::MessageParityAscending`] and descending for
+/// [`SystematicLayout::MessageParityDescending`], so the window is one packed
+/// read and, for the descending layout, one bit reversal.
+///
+/// # Panics
+///
+/// Panics when `count` is zero or above 64, or when
+/// `degree + count` exceeds the plan's dimension.
+fn packed_message_window(
+    plan: &SystematicPlan<'_, Fp<2>>,
+    message: &[u64],
+    degree: usize,
+    count: usize,
+) -> u64 {
+    debug_assert!(
+        (1..=64).contains(&count) && degree + count <= plan.dimension(),
+        "a message window covers 1 to 64 degrees below the dimension"
+    );
+    match plan.layout() {
+        SystematicLayout::MessageParityAscending => {
+            let raw = packed_read_window(message, degree);
+            if count == 64 {
+                raw
+            } else {
+                raw & ((1u64 << count) - 1)
+            }
+        }
+        SystematicLayout::MessageParityDescending => {
+            // Degree $d$ is user coordinate $k - 1 - d$, so the window's
+            // degrees are one descending run of coordinates and reversing the
+            // read puts them back in ascending degree order.
+            let offset = plan.dimension() - degree - count;
+            packed_read_window(message, offset).reverse_bits() >> (64 - count)
+        }
+    }
 }
 
 /// Reads the message coefficients of degrees `degree` to
 /// `degree + TABLE_REMAINDER_BLOCK_BITS`, bit $j$ carrying the coefficient
 /// of $x^{degree + j}$.
-///
-/// Both declared layouts carry those coefficients in one contiguous run of
-/// user coordinates, ascending for
-/// [`SystematicLayout::MessageParityAscending`] and descending for
-/// [`SystematicLayout::MessageParityDescending`], so the block is one packed
-/// read and, for the descending layout, one bit reversal.
 fn packed_message_block(plan: &SystematicPlan<'_, Fp<2>>, message: &[u64], degree: usize) -> u32 {
-    match plan.layout() {
-        SystematicLayout::MessageParityAscending => packed_read_block(message, degree),
-        SystematicLayout::MessageParityDescending => {
-            let offset = plan.dimension() - degree - TABLE_REMAINDER_BLOCK_BITS;
-            packed_read_block(message, offset).reverse_bits()
-        }
-    }
+    packed_message_window(plan, message, degree, TABLE_REMAINDER_BLOCK_BITS) as u32
 }
 
 /// Reduces $x^r m(x)$ modulo the generator one message degree at a time,
@@ -1485,6 +1754,117 @@ fn packed_build_tables(redundancy: usize, low: &[u64], tables: &mut Vec<u64>) {
             for offset in 0..words {
                 tables[target + offset] = tables[rest + offset] ^ tables[lowest + offset];
             }
+        }
+    }
+}
+
+/// Sizes the lane-group scratch [`EncodeFamily::BitsliceInterleaved`]
+/// reduces over and writes the generator masks into it.
+///
+/// The buffer is cleared and resized rather than replaced, so preparing
+/// registers that already carry scratch of this length reaches no allocator.
+/// Its length is [`gf2_kernels_simd::bch_encode::bitslice_scratch_words`] of
+/// the redundancy, which is where the geometry the kernels read is defined.
+fn packed_build_lanes(redundancy: usize, low: &[u64], lanes: &mut Vec<u64>) {
+    lanes.clear();
+    lanes.resize(bch_encode::bitslice_scratch_words(redundancy), 0);
+    let parts = bch_encode::bitslice_split(lanes, redundancy);
+    bch_encode::bitslice_masks(low, parts.masks);
+}
+
+/// The bit-sliced kernel bundle this process encodes with.
+///
+/// The detection is one process-wide decision rather than a per-batch one:
+/// the host's feature set does not change, and the two bundles compute the
+/// same words, so which one runs is a question of speed alone.
+fn bitslice_kernels() -> BchEncodeFns {
+    #[cfg(any(test, feature = "test-support"))]
+    if force_scalar_bitslice_kernels_active() {
+        return bch_encode::scalar();
+    }
+    static DETECTED: OnceLock<BchEncodeFns> = OnceLock::new();
+    *DETECTED.get_or_init(|| bch_encode::detect().unwrap_or_else(bch_encode::scalar))
+}
+
+/// Whether the test hook is holding this process on the portable bit-sliced
+/// kernels.
+#[cfg(any(test, feature = "test-support"))]
+fn force_scalar_bitslice_kernels_active() -> bool {
+    FORCE_SCALAR_BITSLICE.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static FORCE_SCALAR_BITSLICE: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
+/// Holds [`EncodeFamily::BitsliceInterleaved`] on the portable kernels, or
+/// releases it back to detection, and reports the previous setting.
+///
+/// This is what lets a differential check exercise the fallback arm of the
+/// kernel dispatch on a host that has the accelerated one. The two arms
+/// compute the same words, so a concurrent encode that observes the switch
+/// writes the same bytes either way. Exposed to tests through
+/// [`crate::test_support`].
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn force_scalar_bitslice_kernels(forced: bool) -> bool {
+    FORCE_SCALAR_BITSLICE.swap(forced, std::sync::atomic::Ordering::Relaxed)
+}
+
+/// The name of the bit-sliced kernel bundle an encode would run now.
+///
+/// Exposed to tests through [`crate::test_support`] so a forced-fallback case
+/// can witness which arm it exercised.
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn selected_bitslice_kernels() -> &'static str {
+    bitslice_kernels().name
+}
+
+/// Reduces a whole batch in lane groups of
+/// [`gf2_kernels_simd::bch_encode::BITSLICE_LANES`] frames and writes each
+/// frame's codeword.
+///
+/// One group runs the message degrees from the highest down in blocks of at
+/// most the lane width, bit-slicing each block through the kernel bundle's
+/// transpose and advancing every lane of the group over it. The reduced
+/// slices come back as one packed parity run per lane, which
+/// [`packed_write_codeword`] then reads exactly as the per-frame families'
+/// register.
+///
+/// A group shorter than the lane width leaves its unfilled lanes' windows
+/// zero, so those lanes reduce the zero message and write nothing anyone
+/// reads.
+fn packed_bitslice_batch(
+    plan: &SystematicPlan<'_, Fp<2>>,
+    messages: &[BitVec],
+    lanes: &mut [u64],
+    codewords: &mut [BitVec],
+) {
+    let redundancy = plan.redundancy();
+    let dimension = plan.dimension();
+    let words = redundancy.div_ceil(64);
+    let fns = bitslice_kernels();
+
+    for (group, frames) in messages.chunks(BITSLICE_LANES).enumerate() {
+        // Splitting per group is what resets the register between groups.
+        let parts = bch_encode::bitslice_split(lanes, redundancy);
+        let mut degree = dimension;
+        while degree > 0 {
+            let count = ((degree - 1) % BITSLICE_LANES) + 1;
+            degree -= count;
+            let mut windows = [0u64; BITSLICE_LANES];
+            for (window, message) in windows.iter_mut().zip(frames) {
+                *window = packed_message_window(plan, message.words(), degree, count);
+            }
+            fns.absorb_block(parts.register, parts.masks, &windows, count);
+        }
+        fns.unpack_parity(parts.register, redundancy, parts.parity);
+
+        let base = group * BITSLICE_LANES;
+        for (lane, (message, codeword)) in
+            frames.iter().zip(codewords[base..].iter_mut()).enumerate()
+        {
+            let parity = &parts.parity[lane * words..(lane + 1) * words];
+            packed_write_codeword(plan, message, parity, codeword);
         }
     }
 }
@@ -2039,11 +2419,16 @@ where
     Ok(())
 }
 
-/// Encodes one worker's contiguous partition in index order under `family`.
+/// Encodes one worker's contiguous partition under `family`.
 ///
 /// Every argument has already passed [`validate_batch`], and `registers` has
 /// the geometry and family state [`SystematicKernel::registers`] gives this
 /// plan, so the kernel cannot reject anything here.
+///
+/// The whole partition goes to
+/// [`SystematicKernel::encode_batch_family`] in one call, which is what lets
+/// a family group frames; the codeword of message $i$ still lands at position
+/// $i$ whatever grouping it chooses.
 fn encode_partition<F, S>(
     family: EncodeFamily,
     plan: &SystematicPlan<'_, F>,
@@ -2054,10 +2439,8 @@ fn encode_partition<F, S>(
     F: FieldIdentity,
     S: SystematicKernel<F>,
 {
-    for (message, codeword) in messages.iter().zip(codewords.iter_mut()) {
-        S::encode_systematic_family(family, plan, message, registers, codeword)
-            .expect("a validated batch encodes under its own plan");
-    }
+    S::encode_batch_family(family, plan, messages, registers, codewords)
+        .expect("a validated batch encodes under its own plan");
 }
 
 /// The first message index of partition `index` when `messages` messages are
@@ -2950,6 +3333,82 @@ mod tests {
         }
     }
 
+    /// Every message and codeword of `messages` under `family`, over one
+    /// workspace.
+    fn batch_under(
+        code: &BinaryBchCode,
+        family: EncodeFamily,
+        messages: &[BitVec],
+        layout: SystematicLayout,
+    ) -> Vec<BitVec> {
+        let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+        let mut workspace = code.encode_workspace();
+        code.encode_batch_family_into(family, messages, layout, &mut workspace, &mut codewords)
+            .expect("an available family encodes a validated batch");
+        codewords
+    }
+
+    #[test]
+    fn the_bit_sliced_family_holds_at_the_word_boundaries() {
+        // A zero-dimensional code, then the redundancies 0, 1, 63, 64, and
+        // 65: no message degree at all, an empty register, one bit, one word
+        // short, exactly one word, and one bit into a second word. The
+        // dimensions 64 and 190 put the message's own word boundary in the
+        // same cells, and the batch ladder crosses the family's lane width in
+        // every one of them.
+        let codes = [
+            binary_narrow_sense(4, 0b10011, 16),
+            binary_narrow_sense(4, 0b10011, 1),
+            binary_first_root(4, 0b10011, 0, 2),
+            binary_narrow_sense(7, 0b10000011, 21),
+            BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                designed_distance: DesignedDistance::try_from(17).expect("positive"),
+            })
+            .expect("a valid GF(2^8) narrow-sense spec"),
+            BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                first_root: RootExponent::from(0),
+                designed_distance: DesignedDistance::try_from(18).expect("positive"),
+            })
+            .expect("a valid GF(2^8) first-root spec"),
+        ];
+        // (k, r) of each code above.
+        let shapes = [
+            (0usize, 15usize),
+            (15, 0),
+            (14, 1),
+            (64, 63),
+            (191, 64),
+            (190, 65),
+        ];
+
+        for (code, (dimension, redundancy)) in codes.iter().zip(shapes) {
+            assert_eq!(
+                (code.k(), BlockCode::redundancy(code)),
+                (dimension, redundancy)
+            );
+            let family = EncodeFamily::BitsliceInterleaved;
+            for &layout in LAYOUTS {
+                if !code.encode_family_available(family, layout) {
+                    assert_eq!(
+                        redundancy, 0,
+                        "only a parity-free plan withholds the family"
+                    );
+                    continue;
+                }
+                for batch in [0usize, 1, 63, 64, 65, 129] {
+                    let messages = seeded_bit_batch(code.k(), batch, redundancy as u64 + 1);
+                    assert_eq!(
+                        batch_under(code, family, &messages, layout),
+                        batch_under(code, EncodeFamily::REFERENCE, &messages, layout),
+                        "r = {redundancy} at batch {batch} under {layout:?}"
+                    );
+                }
+            }
+        }
+    }
+
     // -- REQ-02: worker counts choose a schedule, never a result -----------
 
     #[test]
@@ -3302,9 +3761,9 @@ mod tests {
 
     #[test]
     fn a_workspace_is_prepared_for_every_family_before_its_first_batch() {
-        // B3's redundancy makes a second family available, so the workspace
-        // carries that family's reduction tables from the moment it is
-        // built. The first batch under it must therefore find every buffer
+        // B3's redundancy makes the table family available, so the workspace
+        // carries its reduction tables, and the bit-sliced family's lane
+        // scratch, from the moment it is built. The first batch under it must therefore find every buffer
         // it needs already sized: the shape read before any encode has to
         // survive the first call, not only the calls after it.
         let code = binary_narrow_sense(8, 0b100011101, 9);
@@ -3314,7 +3773,7 @@ mod tests {
         let mut workspace = code.encode_workspace();
         let shape = buffer_shape(&workspace);
         assert!(
-            !workspace.registers().tables.is_empty(),
+            !workspace.registers().tables.is_empty() && !workspace.registers().lanes.is_empty(),
             "building a workspace prepares the families its code can run"
         );
 
@@ -3346,12 +3805,16 @@ mod tests {
 
     #[test]
     fn a_workspace_without_a_second_family_carries_no_table_storage() {
-        // B1's redundancy leaves the reference the only available family, so
-        // the workspace pays no table storage for a family it cannot run.
+        // B1's redundancy is below the block width the table family reduces
+        // in, so the workspace pays no table storage for a family it cannot
+        // run; the bit-sliced family it can run carries its own scratch.
         let code = binary_narrow_sense(4, 0b10011, 7);
         let layout = SystematicLayout::default();
         assert!(!code.encode_family_available(EncodeFamily::TableRemainder, layout));
-        assert!(code.encode_workspace().registers().tables.is_empty());
+        assert!(code.encode_family_available(EncodeFamily::BitsliceInterleaved, layout));
+        let workspace = code.encode_workspace();
+        assert!(workspace.registers().tables.is_empty());
+        assert!(!workspace.registers().lanes.is_empty());
     }
 
     #[test]
@@ -3365,6 +3828,7 @@ mod tests {
             register: Vec::new(),
             low: Vec::new(),
             tables: Vec::new(),
+            lanes: Vec::new(),
         };
         BitVec::reset_registers(&plan, &mut registers);
 
@@ -3629,9 +4093,23 @@ mod tests {
     // The dispatch seam, decided without resolving the process profile
     // -----------------------------------------------------------------
 
-    /// Selectors admitting the table family from `redundancy` and `batch` up.
+    /// Selectors admitting the table family from `redundancy` and `batch` up,
+    /// with the bit-sliced family left excluded so the table arm is the
+    /// subject.
     fn admitting(redundancy: usize, batch: usize) -> EncodeSelectors {
-        EncodeSelectors::try_new(redundancy, batch).expect("every bound is admissible")
+        EncodeSelectors::try_new(redundancy, batch, BITSLICE_INTERLEAVED_MIN_BATCH)
+            .expect("every bound is admissible")
+    }
+
+    /// Selectors admitting the bit-sliced family from `batch` up, with the
+    /// table family left excluded so the bit-sliced arm is the subject.
+    fn admitting_bitslice(batch: usize) -> EncodeSelectors {
+        EncodeSelectors::try_new(
+            TABLE_REMAINDER_MIN_REDUNDANCY,
+            TABLE_REMAINDER_MIN_BATCH,
+            batch,
+        )
+        .expect("every bound is admissible")
     }
 
     /// Availability reporting every registered family.
@@ -3674,6 +4152,31 @@ mod tests {
             select_family_resolved(&selectors, 32, 15, everything_available),
             EncodeFamily::REFERENCE,
             "a batch below the bound stays on the reference"
+        );
+    }
+
+    #[test]
+    fn an_admitting_profile_reaches_the_bit_sliced_family() {
+        let selectors = admitting_bitslice(64);
+        assert_eq!(
+            select_family_resolved(&selectors, 192, 64, everything_available),
+            EncodeFamily::BitsliceInterleaved
+        );
+        assert_eq!(
+            select_family_resolved(&selectors, 192, 63, everything_available),
+            EncodeFamily::REFERENCE,
+            "a batch below the bound stays on the reference"
+        );
+    }
+
+    #[test]
+    fn the_bit_sliced_family_is_preferred_over_the_table_family() {
+        // The registry order decides when a profile admits both, and the
+        // codewords are the same bytes whichever one it reaches.
+        let selectors = EncodeSelectors::try_new(32, 16, 16).expect("every bound is admissible");
+        assert_eq!(
+            select_family_resolved(&selectors, 192, 16, everything_available),
+            EncodeFamily::BitsliceInterleaved
         );
     }
 
