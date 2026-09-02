@@ -392,10 +392,12 @@ AFF3CT's interleaved encoder over its own scalar encoder, at $B = 4096$:
 
 The advantage peaks near $\deg g = 32$ and is smaller by the DVB-T2 rows. The
 plausible mechanism is that AFF3CT's scalar inner loop auto-vectorizes better as
-the loop lengthens, but this survey did not inspect the generated code, so the
-mechanism is an open question for `avx2-batch-kernels` rather than a finding.
-What is established is the shape: **an eight-lane interleaved encoder does not
-deliver an eight-fold speedup at DVB-T2 generator degrees.**
+the loop lengthens. This survey did not inspect the generated code; the
+*Generated code* section of the `gf2_kernels_simd::bch_encode` rustdoc settles
+the question for this repository's kernels from the committed assembly
+artefact. What this survey establishes is the shape: **an eight-lane
+interleaved encoder does not deliver an eight-fold speedup at DVB-T2 generator
+degrees.**
 
 ### 6.3 `genmatrix-multiply` wins only while $G$ stays small
 
@@ -521,7 +523,7 @@ far too large to be explained by governor effects.
 
 gf2's `encode_batch` and a plain loop over `encode` agree within noise at every
 one of the 19 measured cells. This is not a surprise —
-`crates/gf2-coding/src/bch/core.rs:396` is a `messages.iter().map(...)` under a
+`crates/gf2-coding/src/bch/core.rs:408` is a `messages.iter().map(...)` under a
 `TODO` — but it fixes the pre-cutover baseline: there is no batch-specific
 overhead for the epic to preserve, and no existing parallelism to regress.
 
@@ -538,8 +540,7 @@ overhead for the epic to preserve, and no existing parallelism to regress.
   per-frame recurrence carries the same word-to-word dependence, so the
   scalar path does not auto-vectorize; the decay is the reduction's word
   count growing with $\deg g$ against a per-frame codeword write that does
-  not (rustdoc of `gf2_kernels_simd::bch_encode`, "Generated code of the
-  scalar path").
+  not (rustdoc of `gf2_kernels_simd::bch_encode`, "Generated code").
 * **No packed-representation cell is DRAM-bound** in the fixed batch ladder;
   the largest packed working set is 31.5 MiB against a 32 MiB L3. The
   residency claim is per-representation: AFF3CT's 32-bit-per-bit storage puts

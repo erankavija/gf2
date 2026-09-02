@@ -316,10 +316,10 @@ the production witnesses:
 | L1.3, L1.4 | `check_relative_frobenius` (`:1643`) |
 | L1.5 | `check_relative_frobenius` (`:1679`, the `phi_x == x` versus `contains(x)` assertion) |
 | L1.6 | `check_restriction_round_trip` (`:1588`), `check_membership_matches_restriction` (`:1610`) |
-| L1.7 | `test_extension_laws_gf9_in_gf81` (`:2042`) and `tower_relative_frobenius_takes_two_absolute_steps` (`crates/gf2-core/src/field/extension.rs:4353`), the two cases with $d_B > 1$ |
-| L1.8 | `assert_minimal_polynomial_properties` (`crates/gf2-core/src/field/extension.rs:4053`) and `const_ext_relative_frobenius_agrees_with_the_conjugate` (`:4340`) |
-| L1.9 | `assert_trace_norm_laws` (`crates/gf2-core/src/field/extension.rs:4082`) |
-| L1.10 | `test_extension_laws_trivial_fp7` (`crates/gf2-core/src/field/axiom_tests.rs:2124`), `trivial_ext_is_the_identity_on_every_operation` (`crates/gf2-core/src/field/extension.rs:4365`) |
+| L1.7 | `test_extension_laws_gf9_in_gf81` (`:2042`) and `tower_relative_frobenius_takes_two_absolute_steps` (`crates/gf2-core/src/field/extension.rs:4404`), the two cases with $d_B > 1$ |
+| L1.8 | `assert_minimal_polynomial_properties` (`crates/gf2-core/src/field/extension.rs:4104`) and `const_ext_relative_frobenius_agrees_with_the_conjugate` (`:4391`) |
+| L1.9 | `assert_trace_norm_laws` (`crates/gf2-core/src/field/extension.rs:4133`) |
+| L1.10 | `test_extension_laws_trivial_fp7` (`crates/gf2-core/src/field/axiom_tests.rs:2124`), `trivial_ext_is_the_identity_on_every_operation` (`crates/gf2-core/src/field/extension.rs:4416`) |
 
 The harness entry point is `test_extension_laws`
 (`crates/gf2-core/src/field/axiom_tests.rs:1458`); sixteen witnesses are
@@ -514,10 +514,11 @@ names another file:
 | L2.7, canonical-index half | **new test required**, see below |
 | L2.8 | `frobenius_has_absolute_and_relative_orders` (`:2147`) |
 
-**Tests the Lean issue must add**, both in
-`crates/gf2-core/src/gfpn/quotient.rs`'s own `#[cfg(test)] mod tests`:
+**Anchor tests for O-2**, both in `crates/gf2-core/src/gfpn/quotient.rs`'s own
+`#[cfg(test)] mod tests`:
 
-> `reduction_is_invariant_under_multiples_of_the_modulus` — a proptest drawing a
+> `reduction_is_invariant_under_multiples_of_the_modulus`
+> (`crates/gf2-core/src/gfpn/quotient.rs:2541`) — a proptest drawing a
 > coefficient vector $a$ of length up to $2r$ and a cofactor $h$ of length up to
 > $r$, asserting `field.element(a) == field.element(a + h·f)` after polynomial
 > multiplication and addition in `FieldPoly<F>`, and asserting the returned
@@ -525,7 +526,7 @@ names another file:
 > GF(125), and GF(81) over GF(9), matching the three existing differential
 > rows.
 
-> `canonical_index_decodes_to_its_prime_coordinates` — for `gf16()` (`:2046`),
+> `canonical_index_decodes_to_its_prime_coordinates` (`:2581`) — for `gf16()` (`:2046`),
 > `ConstGf125::runtime_field()` (`:2010`), and `ConstGf81::runtime_field()`
 > (`:2013`), enumerate `elements()` and assert that the element at position $i$
 > writes exactly `field_id().degree()` coordinates, each below $p$, satisfying
@@ -717,19 +718,20 @@ $d_B = 1$, so they exercise `base_order_mod` only where $p^{d_B} = p$ and the
 exponentiation is trivial. The one existing $d_B > 1$ exercise is indirect and
 lives in the other crate.
 
-**Test the Lean issue must add**, in `crates/gf2-core/src/field/extension.rs`'s
-own `#[cfg(test)] mod tests`:
+**Anchor test for L3.7**, in `crates/gf2-core/src/field/extension.rs`'s own
+`#[cfg(test)] mod tests`:
 
-> `base_order_mod_matches_the_hand_computed_multiplier` — for each of a set of
-> $n$ coprime to the characteristic, assert
+> `base_order_mod_matches_the_hand_computed_multiplier`
+> (`crates/gf2-core/src/field/extension.rs:4062`) — for each of a set of $n$
+> coprime to the characteristic, asserts
 > `cyclotomic_cosets(&ext, n) == cyclotomic_cosets_mod(q, n)` for the
-> hand-computed $q = p^{d_B} \bmod n$, over two witnesses that the surrounding
-> module already builds elsewhere: `ConstExt::<Gf81>::new()` (`:4160`, over the
-> `Gf81` alias at `:4114`), whose base $\mathrm{GF}(9)$ gives $p = 3$,
-> $d_B = 2$, and $q \equiv 9$; and
+> hand-computed $q = p^{d_B} \bmod n$, over two witnesses the surrounding
+> module builds: `ConstExt::<Gf81>::new()` (`:4064`, over the `Gf81` alias at
+> `:4165`), whose base $\mathrm{GF}(9)$ gives $p = 3$, $d_B = 2$, and
+> $q \equiv 9$; and
 > `TrivialExt::new(Gf2mField_::<u128>::new(64, (1u128 << 64) | 0x1b).zero())`
-> (the field of `:3620`), whose base $\mathrm{GF}(2^{64})$ gives $d_B = 64$ and
-> $q = 2^{64}$, one past `u64::MAX`.
+> (`:4083`, the field of `:3620`), whose base $\mathrm{GF}(2^{64})$ gives
+> $d_B = 64$ and $q = 2^{64}$, one past `u64::MAX`.
 
 The second witness is the one that matters: it is the only case in which
 `base_order_mod`'s reason for existing — computing $\lvert B \rvert \bmod n$
@@ -777,7 +779,7 @@ invariant.
 ### 5. Assumptions
 
 - **A-01** applies; the anchor table is the discharge, with `iterative_closure`
-  as an independent oracle for L3.2 through L3.6 and the new
+  as an independent oracle for L3.2 through L3.6 and
   `base_order_mod_matches_the_hand_computed_multiplier` for L3.7.
 - **A-08** (representation bound): the production functions reject $n$ that
   exceeds `usize` with `FieldError::CyclotomicModulusTooLarge` and reject $n=0$
@@ -912,7 +914,7 @@ epic.
 
 | Lemma | Refinement anchor |
 |---|---|
-| L4.1 | `assert_minimal_polynomial_properties` (`crates/gf2-core/src/field/extension.rs:4053`), driven by `prop_binary_minimal_polynomial_and_relative_laws` (`:4120`), `prop_odd_prime_...` (`:4144`), `prop_odd_tower_minimal_polynomial` (`:4157`) |
+| L4.1 | `assert_minimal_polynomial_properties` (`crates/gf2-core/src/field/extension.rs:4104`), driven by `prop_binary_minimal_polynomial_and_relative_laws` (`:4171`), `prop_odd_prime_...` (`:4195`), `prop_odd_tower_minimal_polynomial` (`:4208`) |
 | L4.2 | `prime_base_primitive_construction_derives_a_base_field_generator` (`crates/gf2-coding/src/bch/spec.rs:1189`), `extension_base_primitive_construction_derives_a_base_field_generator` (`:1209`) — both assert `base_field_id()` against the intended base |
 | L4.3 | **new test required**, see below |
 | L4.4 | covered indirectly by the closure assertion in `assert_construction_is_consistent` (`:1086-1092`); the new L4.3 test decides it directly |
@@ -1245,10 +1247,12 @@ claim reaches the public API while the Vandermonde argument behind it stays
 unproven across these five issues. A tracked follow-up issue owns that argument,
 alongside the other follow-ups `followup-tracking` creates.
 
-**R-03 — Four new Rust tests are prerequisites of three obligations.** O-2
-adds `reduction_is_invariant_under_multiples_of_the_modulus` and
-`canonical_index_decodes_to_its_prime_coordinates`; O-3 adds
-`base_order_mod_matches_the_hand_computed_multiplier`; O-4 adds
+**R-03 — Four Rust tests are prerequisites of three obligations.** O-2's
+are `reduction_is_invariant_under_multiples_of_the_modulus` and
+`canonical_index_decodes_to_its_prime_coordinates`
+(`crates/gf2-core/src/gfpn/quotient.rs:2541`, `:2581`); O-3's is
+`base_order_mod_matches_the_hand_computed_multiplier`
+(`crates/gf2-core/src/field/extension.rs:4062`); O-4 adds
 `the_generator_vanishes_at_every_defining_set_root`. Each is small and each
 belongs in the owning module's `#[cfg(test)]` block per
 `@/inv/shared-test-contracts`. The O-4 test is the most consequential: nothing

@@ -1,8 +1,11 @@
-//! AVX2 bit-sliced BCH batch-encoding kernels.
+//! Accelerated BCH batch-encoding kernels.
 //!
-//! The algorithm is the one `crate::bch_encode` states: a shift register held
-//! one word per coefficient, bit `l` of a word carrying lane `l`, advanced one
-//! message degree per step across all lanes at once.
+//! Two kernels of `crate::bch_encode`'s bundle live here, each under the
+//! processor features it alone needs; the bundle's predicate is their union.
+//!
+//! `bitslice_reduce_avx2` runs the algorithm `crate::bch_encode` states: a
+//! shift register held one word per coefficient, bit `l` of a word carrying
+//! lane `l`, advanced one message degree per step across all lanes at once.
 //!
 //! The step writes coefficient slice `j` from coefficient slice `j - 1`, so
 //! four consecutive slices are one unaligned 256-bit load and one unaligned
@@ -20,6 +23,13 @@
 //! the top of the register downwards and loads before it stores. The word
 //! below coefficient zero is the register's leading pad, which the store
 //! never reaches.
+//!
+//! `fold_block_pclmul` runs the carry-less-multiply fold. Its arithmetic is
+//! `crate::bch_encode::fold_block_over`, the one definition of that step,
+//! instantiated over `crate::x86::clmul`'s PCLMULQDQ primitive rather than a
+//! second wrapper around the same instruction. The step is inlined into this
+//! function, so the artefact shows `pclmulqdq` in the loop rather than a call
+//! through a function pointer per multiply.
 
 use core::arch::x86_64::*;
 
@@ -91,4 +101,57 @@ pub(crate) unsafe fn bitslice_reduce_avx2(register: &mut [u64], masks: &[u64], s
                 *register_ptr.add(degree) ^ (*masks_ptr.add(degree) & feedback);
         }
     }
+}
+
+/// PCLMULQDQ lane: folds one 64-degree message block into one frame's packed
+/// remainder.
+///
+/// The arguments are the `crate::bch_encode::BchFoldBlockFn` contract:
+/// `register` holds the running remainder in `redundancy.div_ceil(64)` packed
+/// words, `low` the generator's low coefficients in the same packing,
+/// `barrett` the constant `crate::bch_encode::fold_barrett_constant` derives,
+/// and `block` the 64 message coefficients entering at $x^r$.
+///
+/// # Safety
+///
+/// The caller must ensure the `pclmulqdq` and `sse4.1` processor features are
+/// available at runtime; that pair is this function's whole safety condition,
+/// and the complete feature set its instructions need. It is the same pair
+/// `crate::x86::clmul::clmul_u64` demands, which is the only intrinsic this
+/// kernel reaches. `crate::bch_encode::detect` publishes a pointer to this
+/// kernel only when `is_x86_feature_detected!("pclmulqdq")` and
+/// `is_x86_feature_detected!("sse4.1")` both return true, so a caller
+/// reaching it through that bundle upholds the condition by construction. The
+/// buffer geometry is not a safety condition: the shared step decides it and
+/// panics rather than reading out of bounds.
+///
+/// # Panics
+///
+/// Panics when `register` and `low` are not both `redundancy.div_ceil(64)`
+/// words, or when `redundancy` is zero.
+///
+/// # Complexity
+///
+/// $1 + \lceil r/64 \rceil$ `pclmulqdq` instructions and
+/// $O(\lceil r/64 \rceil)$ word operations, for 64 message coefficients of
+/// one frame, where $r$ is `redundancy`.
+#[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
+pub(crate) unsafe fn fold_block_pclmul(
+    register: &mut [u64],
+    low: &[u64],
+    redundancy: usize,
+    barrett: u64,
+    block: u64,
+) {
+    crate::bch_encode::fold_block_over(
+        // SAFETY: this closure is reached only from this function's body, and
+        // this function's safety condition is exactly what
+        // `crate::x86::clmul::clmul_u64` requires.
+        |a, b| unsafe { crate::x86::clmul::clmul_u64(a, b) },
+        register,
+        low,
+        redundancy,
+        barrett,
+        block,
+    );
 }

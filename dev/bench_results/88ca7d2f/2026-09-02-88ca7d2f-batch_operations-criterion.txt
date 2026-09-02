@@ -1,0 +1,62 @@
+# command: CARGO_CI_NO_LOCK=1 ./dev/scripts/ccx1-bench-flock.sh --full-host ./scripts/cargo-budget.sh cargo bench -p gf2-coding --bench batch_operations -- bch_
+# started_utc: 2026-09-02T15:52:20Z
+# load_avg_start:  18:52:20 up 3 days, 18:58,  2 users,  load average: 1.16, 0.55, 0.27
+bch_batch/1             time:   [107.64 µs 107.71 µs 107.81 µs]
+                        thrpt:  [17.701 MiB/s 17.717 MiB/s 17.729 MiB/s]
+                 change:
+                        time:   [-0.8573% -0.6633% -0.4358%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.4378% +0.6678% +0.8647%]
+                        Change within noise threshold.
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+bch_batch/10            time:   [1.2307 ms 1.2499 ms 1.2647 ms]
+                        thrpt:  [15.089 MiB/s 15.268 MiB/s 15.506 MiB/s]
+                 change:
+                        time:   [+5.8086% +7.5916% +9.5195%] (p = 0.00 < 0.05)
+                        thrpt:  [-8.6920% -7.0559% -5.4898%]
+                        Performance has regressed.
+bch_batch/50            time:   [5.3960 ms 5.4044 ms 5.4142 ms]
+                        thrpt:  [17.623 MiB/s 17.655 MiB/s 17.682 MiB/s]
+                 change:
+                        time:   [-0.0708% +0.1171% +0.3143%] (p = 0.24 > 0.05)
+                        thrpt:  [-0.3134% -0.1169% +0.0708%]
+                        No change in performance detected.
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+bch_batch/100           time:   [10.808 ms 10.855 ms 10.920 ms]
+                        thrpt:  [17.476 MiB/s 17.580 MiB/s 17.657 MiB/s]
+                 change:
+                        time:   [-0.0371% +0.4225% +1.1043%] (p = 0.13 > 0.05)
+                        thrpt:  [-1.0923% -0.4207% +0.0371%]
+                        No change in performance detected.
+Found 16 outliers among 100 measurements (16.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  9 (9.00%) high severe
+
+bch_sequential_vs_batch/sequential_loop
+                        time:   [108.19 µs 108.36 µs 108.59 µs]
+                        thrpt:  [1.2032 MiB/s 1.2057 MiB/s 1.2077 MiB/s]
+                 change:
+                        time:   [+0.0937% +0.2987% +0.5048%] (p = 0.01 < 0.05)
+                        thrpt:  [-0.5022% -0.2978% -0.0936%]
+                        Change within noise threshold.
+Found 17 outliers among 100 measurements (17.00%)
+  1 (1.00%) high mild
+  16 (16.00%) high severe
+bch_sequential_vs_batch/batch_operation
+                        time:   [107.78 µs 107.86 µs 107.98 µs]
+                        thrpt:  [1.2100 MiB/s 1.2113 MiB/s 1.2123 MiB/s]
+                 change:
+                        time:   [-0.1831% -0.0231% +0.1594%] (p = 0.82 > 0.05)
+                        thrpt:  [-0.1592% +0.0231% +0.1835%]
+                        No change in performance detected.
+Found 17 outliers among 100 measurements (17.00%)
+  2 (2.00%) low mild
+  3 (3.00%) high mild
+  12 (12.00%) high severe
+
+# finished_utc: 2026-09-02T15:58:28Z
+# load_avg_end:  18:58:28 up 3 days, 19:04,  2 users,  load average: 0.93, 0.51, 0.32

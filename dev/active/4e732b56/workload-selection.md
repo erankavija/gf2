@@ -166,18 +166,20 @@ seed produces the same codewords at both worker counts.
 ## 7. Encoding algorithm families to register
 
 Decision D-04 requires the dispatch seam to carry at least one scalar
-reference and at least two registered families. Four are registered; the
-survey's evidence for each is in [findings.md](findings.md) § 6.
+reference and at least two registered families. The table below fixes each
+family's name and contract; where the survey measured a candidate of a
+family's shape, its evidence is in [findings.md](findings.md) § 6.
 
 | Family | Description | Role |
 |---|---|---|
 | `poly-remainder-scalar` | One message at a time, remainder of $x^{r} m(x)$ modulo $g(x)$ by the bit-serial LFSR recurrence. | **Required scalar reference.** Every other family is checked bit-identical against it. |
 | `table-remainder` | Consumes 32 message bits per step through four 256-entry remainder tables over packed bytes. | Registered. The strongest measured single-frame family. |
 | `bitslice-interleaved` | Transposes a batch into bit-slices and advances the LFSR across lanes, one register bit per frame. | Registered. Scales with register width rather than with $\deg g$. |
+| `clmul-fold` | Consumes 64 message bits per step of one frame: one Barrett quotient by carry-less multiplication with $\mu = \lfloor x^{r+64}/g \rfloor$, then $\lceil r/64 \rceil$ carry-less products with the generator's words. | Registered. Its per-step cost follows the carry-less multiplier width rather than the tap count or a table's index width, and it reduces one frame at a time, so a batch amortizes only its Barrett constant. The survey measured no candidate of this shape. |
 | `genmatrix-multiply` | Materializes $G$ (or $P$) once and encodes by dense GF(2) matrix product. | Registered. Amortizes only when one code encodes many batches; `genmatrix-perf` owns its materialization cost. |
 
 Registering a family fixes its name and its contract, not its selection: the
-crossover between them is `encode-dispatch`'s measurement to make, over the
+crossovers among them are `encode-dispatch`'s measurement to make, over the
 cells this document fixes.
 
 ## 8. Selected external baseline per workload
@@ -251,9 +253,8 @@ subsection.
 Two further points this amendment records rather than leaves implicit:
 
 * **Which families this consumer registers.** `poly-remainder-scalar`,
-  `table-remainder`, and `bitslice-interleaved`, all under the § 7 spellings;
-  `encode-dispatch` registered the first two and `avx2-batch-kernels`
-  (`2b6968d3`) the third through the seam's registration surface.
+  `table-remainder`, `bitslice-interleaved`, and `clmul-fold`, all through
+  the seam's registration surface and all under the § 7 spellings.
   `genmatrix-multiply` belongs to `genmatrix-perf`, and § 7 fixes its name
   and contract ahead of that.
 * **No selection is fixed here.** The conservative tuning section admits only
