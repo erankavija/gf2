@@ -6,6 +6,7 @@ use crate::LogicalFns;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
 
+pub(crate) mod bch_encode;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(crate) mod bipedal_avx2;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
