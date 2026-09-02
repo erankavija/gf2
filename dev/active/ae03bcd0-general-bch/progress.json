@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "rework 1 merged 93f08af2 (session 9); cargo-ci R1 failed on a transient GPU smoke SIGABRT under load (passes isolated; rerun armed); code-review R2 FAIL F1 = same root cause x3 (B4 GUAVA code object) -> ESCALATED; doc-review + research-review R2 running"
+          "status": "rework 1 merged 93f08af2; cargo-ci passed on rerun; code-review R2 + research-review R2 F1 = B4 root cause x3 -> ESCALATED (owner input pending); doc-review R2 F1 closed lead-direct e899f8c8; research R2 F2-F5 (attempt artifacts, stream-test receipt, predeclared wording, peak sampling) -> rework 2 dispatched to Opus worker-3f7edef1-4 (session 9)"
         },
         {
           "key": "lean-closure",
@@ -606,7 +606,7 @@
     "2b6968d3": 1,
     "bd0edfa2": "1 + shared R-45 fix",
     "444c06bc": 2,
-    "3f7edef1": 1,
+    "3f7edef1": 2,
     "88ca7d2f": "0 + lead-direct (runner collection fix)"
   },
   "surfaced_pitfalls": [
