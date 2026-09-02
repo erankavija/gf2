@@ -149,8 +149,10 @@ Per row the suite checks four equalities against each oracle.
    layout's coordinate map takes user coordinate $u$ to polynomial degree
    $(u + n - k) \bmod n$.
 
-All four hold on all eight rows for both oracles. No disagreement is recorded,
-because none was observed.
+All four hold on all eight rows for both oracles, against the derivation each
+oracle runs at gf2's $\alpha$. GUAVA's unaided `BCHCode` object carries the
+same four against a gf2 code built on the root GUAVA chose, on the rows where
+that object exists. No disagreement is recorded, because none was observed.
 
 The oracle encoder used for equality 3 is SageMath's
 `CyclicCodePolynomialEncoder` and GUAVA's `CodewordVector`, which is the map
@@ -224,7 +226,7 @@ Each script checks the transport it built rather than assuming it:
 root satisfies the transported modulus, and `transport_checks.alpha_order`,
 that the transported $\alpha$ has exact order $n$; the GAP script raises an
 error and produces no fixture if either fails. The suite case
-`the_oracle_fixtures_record_their_versions_and_self_checks` asserts that the
+`the_oracle_fixtures_record_their_identities_and_self_checks` asserts that the
 recorded order equals the row's $n$.
 
 For N2 both oracles independently chose the same isomorphism, sending gf2's
@@ -290,21 +292,46 @@ The script therefore calls `BCHCode` on every row through `CALL_WITH_CATCH`
 under `-T`, where exceeding the heap `-o` sets returns to the caller instead of
 ending the run. Each row records the outcome as `bchcode_built` beside the heap
 the attempt ran under, its processor time, and the process's peak resident set
-size after it, read from the kernel. `ORACLE_GAP_HEAP` sets that heap and the
-receipt tabulates every attempt together with the diagnostics GAP printed.
+size after it, read from the kernel. That mark is monotone over the run, so it
+bounds an attempt from above and a row's own cost shows as its rise over the
+row before it. `ORACLE_GAP_HEAP` sets the heap, and the receipt tabulates every
+attempt together with the diagnostics GAP printed.
 
 A row whose attempt does not yield a code object still carries a GUAVA result:
 its `BCHCode` generator derivation, and its codewords through GUAVA's
-cyclic-code polynomial map $c(x) = m(x)\,G(x)$.
+cyclic-code polynomial map $c(x) = m(x)\,G(x)$. Amendment 2 of the plan's
+`evidence-protocol` section fixes that as the GUAVA result on B4 and requires
+the full code object on every other row.
 `a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt`
-asserts exactly that shape, so there is no state in which a row simply has no
-GUAVA result. That the map agrees with a code object where one exists is
-checked rather than assumed: `native_encoder_cross_checked` records, on every
-row whose wrapper does build, that encoding through the GUAVA code object gives
-the same word as the polynomial map. GAP verifies on every row that the derived
-generator divides $x^{n} - 1$ and that the defining set is exactly the set of
-exponents its generator annihilates, recorded as
-`generator_divides_x_n_minus_one` and `defining_set_root_checked`.
+asserts that shape and that the rows taking it are exactly the amended ones,
+so there is no state in which a row simply has no GUAVA result. That the map
+agrees with a code object where one exists is checked rather than assumed:
+`native_encoder_cross_checked` records, on every row whose wrapper does build,
+that encoding through the GUAVA code object gives the same word as the
+polynomial map. GAP verifies on every row that the derived generator divides
+$x^{n} - 1$ and that the defining set is exactly the set of exponents its
+generator annihilates, recorded as `generator_divides_x_n_minus_one` and
+`defining_set_root_checked`.
+
+The fixture generation runs its B4 attempt at the `ORACLE_GAP_HEAP` default,
+which keeps regeneration reproducible on an ordinary host. The largest attempt
+made on the host the receipt names is a separate bounded invocation outside
+the fixture generation, at the largest heap that host can back:
+
+| Property | Observation |
+|---|---|
+| Invocation | `systemd-run --user --scope -p MemoryMax=52G timeout 1200 gap -q -A -T -o 50g`, calling `CALL_WITH_CATCH(BCHCode, [65535, 1, 25, GF(2)])` |
+| Outcome | the call returned `false` |
+| GAP diagnostic | `Error, reached the pre-set memory limit (change it with the -o command line option)` |
+| Wall clock | 9 min 17 s |
+| Processor time | 273885 ms |
+| Peak resident set | 54428680 KiB |
+| Scope memory and swap peaks | 52 GiB and 15.6 GiB |
+
+The host carries 64196 MiB of memory, of which 48.6 GiB was free when that
+attempt started, so a 50 GiB heap is the largest it can back and the attempt
+swapped 15.6 GiB before reaching the limit. That observation is why Amendment 2
+names B4 rather than raising the heap the fixture generation uses.
 
 SageMath needs no non-default construction on any row. It accepts a
 `primitive_root` argument directly, and its lazy code objects handle the mother
@@ -343,10 +370,10 @@ normal frame. The suite wires both in.
 ### The DVB-T2 verification streams
 
 The DVB-T2 verification and validation working group publishes modulator
-reference streams produced on the Common Simulation Platform, one file per test
-point of a named configuration. Set `VV001-CR35` is the normal frame at code
-rate 3/5; its test point 04 carries the BCH input blocks and test point 05 the
-BCH output blocks. The streams are distributed with the standard's conformance
+reference streams produced on the Common Simulation Platform
+[DvbVerification2010], one file per test point of a named configuration. Set
+`VV001-CR35` is the normal frame at code rate 3/5; its test point 04 carries
+the BCH input blocks and test point 05 the BCH output blocks. The streams are distributed with the standard's conformance
 material rather than committed here, so the suite locates them through
 `test_vectors_path()`, which reads `DVB_TEST_VECTORS_PATH` and otherwise falls
 back to `dvb_test_vectors` under the invoking user's home directory. The test
@@ -365,7 +392,7 @@ without them runs the rest of the suite.
 
 The comparison is exhaustive rather than sampled, which Amendment 1 of the
 plan's `evidence-protocol` section predeclares. The run behind this document
-observed:
+observed the following of the [DvbVerification2010] streams:
 
 | Property | Value |
 |---|---|
@@ -383,11 +410,12 @@ fails the case rather than comparing fewer blocks in silence.
 ## Citations
 
 Every work this document names resolves in `.jit/references.toml`:
-[SageMath2026], [GapGroup2026], [Joyner2026] and [Etsi2015].
+[SageMath2026], [GapGroup2026], [Joyner2026], [Etsi2015] and
+[DvbVerification2010].
 
-The DVB-T2 verification streams are identified by their set name and by the
-SHA-256 of each file in the table above, which is what the run observed on the
-host the receipt names.
+The copy of the [DvbVerification2010] streams this suite consumes is pinned by
+the SHA-256 of each file in the table above, which is what the run observed on
+the host the receipt names.
 
 ## Reproduction
 
@@ -397,9 +425,16 @@ dev/active/ae03bcd0-general-bch/oracle/run.sh
 
 The runner builds the corpus emitter, runs both oracles over the corpus it
 writes, and rewrites [`oracle-receipt.md`](oracle-receipt.md) from what the run
-observed. Re-running from the revision the receipt names rewrites the three
-fixtures byte for byte, so `git status` reports only the receipt's own
-timestamps.
+observed. Re-running from the revision the receipt names rewrites `corpus.json`
+and `sage.json` byte for byte, and rewrites `gap.json` byte for byte apart from
+`bchcode_attempt_cpu_ms` and `bchcode_attempt_peak_rss_kib`, which are what
+each bounded attempt cost on the run that wrote them. The receipt's timestamps,
+stage wall clocks and attempt table move with the run for the same reason.
+
+`ORACLE_GAP_HEAP` sets the heap every code-object attempt is bounded by. Its
+default is a heap an ordinary host can back, so the derived quantities are
+reproducible away from the host the receipt names; a run at a larger heap
+records the larger bound it used, in the fixture and in the receipt.
 
 The suite is then
 

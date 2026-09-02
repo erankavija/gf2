@@ -156,6 +156,28 @@ than an implementation choice.
   through the canonical mother code and asserted equal to its test point 05
   block.
 
+#### Amendment 2 (2026-09-02, `3f7edef1`) — the GUAVA oracle result at B4
+
+Both oracles remain required on every corpus row. This amendment fixes what
+the GAP/GUAVA oracle result *is* on row B4, whose length makes the code object
+GUAVA's `BCHCode` returns a host-memory question rather than a mathematical
+one: `BCHCode` reaches `GeneratorPolCode`, which materializes the whole
+$65343 \times 65535$ generator matrix.
+
+- **B4.** The GUAVA result is GUAVA's own `BCHCode` generator derivation —
+  `PrimitiveUnityRoot` and the cyclotomic-coset loop over `MinimalPolynomial`
+  that `BCHCode` performs before it materializes a code object — together
+  with GUAVA's cyclic-code polynomial encoding map $c(x) = m(x)\,G(x)$. The
+  run's own bounded `BCHCode` attempt and the outcome it observed are recorded
+  in the fixture and in the run receipt.
+- **Every other row.** The result is the full `BCHCode` code object, from
+  which the generator, dimension, defining set and codewords are read.
+
+The bound is the GAP heap the generating run sets, so the outcome is an
+observation of that run rather than a threshold. A run that yields a code
+object on B4, or fails to yield one on another row, is a change the
+conformance suite fails on rather than absorbs.
+
 ### `workload-selection` [implementation-produced] — selected baselines and workloads
 
 The survey's concrete completion of the evidence protocol: selected external
