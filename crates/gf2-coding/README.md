@@ -99,6 +99,7 @@ use gf2_coding::grand::OrbGrandDecoder;
 ## Acceleration
 
 - **SIMD** (default): bit-level and RREF-stage operations go through AVX2 / AVX-512 via `gf2-core`'s SIMD layer. Word-level (64×) × SIMD (4–8×) ≈ 256–512× over naïve Gaussian elimination for LDPC preprocessing.
+- **Batch BCH encoding**: `bch::encode` dispatches a batch among registered algorithm families, one of which bit-slices the batch and advances the shift register across 64 frames at a time through `gf2-kernels-simd`'s AVX2 kernels, falling back to portable kernels that write the same bits. Every family is bit-identical to the scalar reference; which one runs is a tuning-profile decision, and a process that installs no profile stays on the reference.
 - **Parallel** (opt-in, `--features parallel`): Rayon-backed batch encode/decode across frames.
 
   ```bash
