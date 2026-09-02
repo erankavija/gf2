@@ -5,7 +5,34 @@
   "created_at": "2026-02-21T19:35:51.733318957Z",
   "dependencies": [],
   "description": "Produce the committed pre-cutover BCH throughput baseline that later non-regression evidence compares against.\n\n## Background\n\nCriterion BCH benches already exist (`crates/gf2-coding/benches/bch_parallel.rs`, `crates/gf2-coding/benches/batch_operations.rs`); what is missing is a pinned baseline: a committed receipt of their results on a suitable uncontended host at a recorded revision, before the BCH surface is reworked. This issue previously claimed the suite needed creating; that premise is stale.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt under `dev/bench_results/` records the existing BCH encode and decode Criterion results at a pinned git revision, with host, toolchain, seeds, and invocation recorded per the repository benchmark-receipt conventions.\n- [hard] REQ-02: The receipt names the exact benchmark IDs measured so a later run can compare like for like.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7d089945672698cb12494227825ff45cf39999ac210ce9899288713d44061a73",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/benches/bch_parallel.rs",
+          "resolved_path": "crates/gf2-coding/benches/bch_parallel.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cd6103f392c5faa27291ca6da2286a7ac581d7c3432c565af7972c87cf326c9a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/benches/batch_operations.rs",
+          "resolved_path": "crates/gf2-coding/benches/batch_operations.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Pre-cutover BCH throughput baseline receipt",
+      "path": "dev/bench_results/88ca7d2f/2026-09-02-88ca7d2f-precutover-bch-baseline.md"
+    }
+  ],
+  "done_at": "2026-09-02T16:32:52.400855449Z",
   "first_ready_at": "2026-02-21T19:49:04.354655073Z",
   "gates_required": [
     "cargo-ci",
@@ -19,8 +46,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-02T16:27:07.248815711Z",
+      "status": "passed",
+      "updated_at": "2026-09-02T16:32:11.208361704Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -36,7 +63,7 @@
     "epic:quality-documentation-tech-debt"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Pin the pre-cutover BCH throughput baseline receipt",
-  "updated_at": "2026-09-02T16:28:50.362637302Z"
+  "updated_at": "2026-09-02T16:32:52.400855449Z"
 }
