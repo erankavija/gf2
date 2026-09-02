@@ -10790,3 +10790,7 @@
 {"gate_key":"code-review","id":"cab937f8-4521-41bc-a316-f5958d6834bc","issue_id":"bd0edfa2-092e-4844-9291-3dd8fbd43d3e","timestamp":"2026-09-02T07:19:22.969323048Z","type":"gate_failed","updated_by":"auto:executor"}
 {"from":"ready","id":"2e2b6a98-b90a-4534-995f-52be1c50c9ac","issue_id":"88ca7d2f-5045-4356-8ee3-e4e26876847d","timestamp":"2026-09-02T10:56:10.616506964Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"bd059aba-e934-4010-913e-dcb9f0e8cab8","issue_id":"88ca7d2f-5045-4356-8ee3-e4e26876847d","timestamp":"2026-09-02T10:56:10.616506964Z","type":"issue_claimed"}
+{"from":"in_progress","id":"9286d802-6d23-43f1-b368-26fd725124c9","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T10:59:08.295243769Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"91501f99-7ed6-4aa8-bc00-6c4c9dc40676","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","reason":"worker complete on branch 33f625ea; lead takes over for merge and gates","timestamp":"2026-09-02T10:59:08.295243769Z","type":"issue_released"}
+{"from":"ready","id":"82a0d71d-2cda-4019-8788-2a1cb77d3623","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T10:59:17.122308494Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"18ef14e1-728e-4f1f-9a34-72159e8fd5aa","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-02T10:59:17.122308494Z","type":"issue_claimed"}
