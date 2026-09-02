@@ -584,6 +584,137 @@ theorem natDegree_constModulus (R : ℕ) (m : Fin R → B) :
   exact natDegree_eq_of_degree_eq_some hdeg
 
 
+/-! ### L2.5 — inversion through Bezout -/
+
+/-- Bezout for an irreducible modulus: the extended-Euclid run of
+`euclid_inverse` (`crates/gf2-core/src/gfpn/quotient.rs:950`) computes exactly
+this pair of coefficients, normalised so that the gcd is one. -/
+theorem exists_bezout (hirr : Irreducible f) {v : B[X]} (hv : ¬ f ∣ v) :
+    ∃ a b : B[X], a * f + b * v = 1 := by
+  obtain ⟨a, b, hab⟩ := (hirr.coprime_iff_not_dvd).mpr hv
+  exact ⟨a, b, hab⟩
+
+/-- **L2.5 (inversion).** For an irreducible modulus and a representative `v`
+outside `(f)`, there is exactly one residue `u` of degree below `r` with
+`u · v ≡ 1 (mod f)`. The Bezout coefficient of `v`, reduced modulo `f`, is that
+residue.
+
+Production path: `euclid_inverse`
+(`crates/gf2-core/src/gfpn/quotient.rs:950`), the single extended-Euclid
+implementation both carriers use; `QuotientElement::inverse_euclid` (`:925`) and
+`ConstQuotient::inverse` (`:1577`) each store its reduced output in their own
+layout.
+
+Refinement anchors: `sampled_nonzero_elements_have_multiplicative_inverses`
+(`crates/gf2-core/src/gfpn/quotient.rs:2267`) and the `inv` case of
+`assert_forms_agree` (`:2354`). -/
+theorem existsUnique_inverse_residue (hf : f.Monic) (hirr : Irreducible f) {v : B[X]}
+    (hv : ¬ f ∣ v) :
+    ∃! u : B[X], u.degree < f.degree ∧ AdjoinRoot.mk f (u * v) = 1 := by
+  obtain ⟨a, b, hab⟩ := exists_bezout hirr hv
+  have hb1 : AdjoinRoot.mk f (b %ₘ f * v) = 1 := by
+    rw [map_mul, mk_modByMonic, ← map_mul]
+    have h : AdjoinRoot.mk f (a * f + b * v) = 1 := by rw [hab, map_one]
+    rwa [map_add, map_mul, AdjoinRoot.mk_self, mul_zero, zero_add] at h
+  refine ⟨b %ₘ f, ⟨degree_modByMonic_lt _ hf, hb1⟩, ?_⟩
+  rintro u ⟨hdeg, hu⟩
+  have hdvd : f ∣ (u - b %ₘ f) * v := by
+    refine AdjoinRoot.mk_eq_zero.mp ?_
+    have hsplit : (u - b %ₘ f) * v = u * v - b %ₘ f * v := by ring
+    rw [hsplit, map_sub, hu, hb1, sub_self]
+  rcases hirr.prime.dvd_mul.mp hdvd with h | h
+  · exact sub_eq_zero.mp
+      (eq_zero_of_dvd_of_degree_lt h
+        (lt_of_le_of_lt (degree_sub_le _ _) (max_lt hdeg (degree_modByMonic_lt _ hf))))
+  · exact absurd h hv
+
+/-! ### L2.6 — field structure and its converse -/
+
+/-- **L2.6 (field structure).** An irreducible modulus makes `Q` a field.
+
+Production path: `QuotientField::new`
+(`crates/gf2-core/src/gfpn/quotient.rs:251`) and `ConstQuotient::extension`
+(`:1464`), which decide irreducibility before issuing a witness.
+
+Refinement anchors: the axiom-harness registrations that build every in-tree
+compile-time declaration through `ConstQuotient::extension`
+(`crates/gf2-core/src/field/axiom_tests.rs:1817`, `:1826`, `:1835`) and run the
+shared field-law suite against it. -/
+@[reducible] def adjoinRootField (hirr : Irreducible f) : Field (AdjoinRoot f) :=
+  haveI : Fact (Irreducible f) := ⟨hirr⟩
+  AdjoinRoot.instField
+
+/-- **L2.6 (order).** `|Q| = |B|^r`, from the bijection of L2.2.
+
+Production path: `QuotientField::order`
+(`crates/gf2-core/src/gfpn/quotient.rs:491`), which reads `|B|^r` off the
+identity metadata.
+
+Refinement anchor: `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2290`), whose identity assertions pin the
+same `FieldId` on both carriers. -/
+theorem card_adjoinRoot [Finite B] (hf : f.Monic) :
+    Nat.card (AdjoinRoot f) = Nat.card B ^ f.natDegree := by
+  rw [← Nat.card_congr (clsEquiv hf), Nat.card_fun]
+  simp
+
+/-- **L2.6 (converse).** A reducible modulus leaves a nonzero non-unit in `Q`,
+so the quotient is not a field. This is what the GIGO contract of
+`ConstQuotient::extension_unchecked`
+(`crates/gf2-core/src/gfpn/quotient.rs:1511`) and
+`QuotientField::from_certificate_unchecked` (`:357`) means precisely: a caller
+that declares a reducible modulus gets a ring in which some nonzero element has
+no inverse.
+
+Refinement anchors: `validating_construction_rejects_reducible_modulus`
+(`crates/gf2-core/src/gfpn/quotient.rs:2051`) and
+`const_validation_rejects_a_reducible_declaration` (`:2387`). -/
+theorem exists_ne_zero_not_isUnit_of_not_irreducible (hf : f.Monic) (hr : 0 < f.natDegree)
+    (hirr : ¬ Irreducible f) : ∃ z : AdjoinRoot f, z ≠ 0 ∧ ¬ IsUnit z := by
+  have hfu : ¬ IsUnit f := fun h => absurd (natDegree_eq_zero_of_isUnit h) (by omega)
+  rw [irreducible_iff, not_and_or] at hirr
+  rcases hirr with h | h
+  · exact absurd hfu h
+  simp only [not_forall, not_or] at h
+  obtain ⟨a, b, hfab, hau, hbu⟩ := h
+  have hane : a ≠ 0 := by rintro rfl; exact hf.ne_zero (by simpa using hfab)
+  have hbne : b ≠ 0 := by rintro rfl; exact hf.ne_zero (by simpa using hfab)
+  have hbdeg : 0 < b.natDegree := by
+    by_contra hcon
+    exact hbu (isUnit_iff_degree_eq_zero.mpr (by
+      rw [degree_eq_natDegree hbne]
+      exact_mod_cast Nat.le_zero.mp (Nat.not_lt.mp hcon)))
+  have hnd : f.natDegree = a.natDegree + b.natDegree := by
+    rw [hfab, natDegree_mul hane hbne]
+  have hadeg : a.degree < f.degree := by
+    rw [degree_eq_natDegree hf.ne_zero]
+    exact degree_lt_of_natDegree_lt (by omega)
+  refine ⟨AdjoinRoot.mk f a, ?_, ?_⟩
+  · intro hz
+    exact hane (eq_zero_of_dvd_of_degree_lt (AdjoinRoot.mk_eq_zero.mp hz) hadeg)
+  · rintro ⟨u, hu⟩
+    obtain ⟨w, hw⟩ := AdjoinRoot.mk_surjective (↑u⁻¹ : AdjoinRoot f)
+    have hmk : AdjoinRoot.mk f (a * w) = AdjoinRoot.mk f 1 := by
+      rw [map_mul, hw, ← hu, map_one]
+      exact u.mul_inv
+    have hdvd : f ∣ a * w - 1 := AdjoinRoot.mk_eq_mk.mp hmk
+    have hone : a ∣ 1 := by
+      have h2 : a ∣ a * w - 1 := (Dvd.intro b hfab.symm).trans hdvd
+      simpa using dvd_sub (Dvd.intro w rfl) h2
+    exact hau (isUnit_of_dvd_one hone)
+
+theorem irreducible_iff_forall_isUnit (hf : f.Monic) (hr : 0 < f.natDegree) :
+    Irreducible f ↔ ∀ z : AdjoinRoot f, z ≠ 0 → IsUnit z := by
+  constructor
+  · intro hirr z hz
+    letI := adjoinRootField hirr
+    exact isUnit_iff_ne_zero.mpr hz
+  · intro hall
+    by_contra hirr
+    obtain ⟨z, hz, hzu⟩ := exists_ne_zero_not_isUnit_of_not_irreducible hf hr hirr
+    exact hzu (hall z hz)
+
+
 end QuotientReduction
 
 end
