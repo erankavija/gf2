@@ -32,9 +32,14 @@
 
 use std::fmt;
 
-use crate::field::extension::{FieldError, FieldId, FieldIdentity, ModulusId};
+use crate::field::extension::{
+    BinaryPrimeExt, FieldError, FieldExtension, FieldId, FieldIdentity, ModulusId,
+};
 use crate::field::irreducibility::prove_irreducible;
-use crate::field::FieldPoly;
+use crate::field::{FieldPoly, FiniteField};
+use crate::gf2m::{Gf2mField_, UintExt};
+use crate::gfp::Fp;
+use crate::gfpn::QuotientField;
 
 /// The provenance class of a registry modulus.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -182,6 +187,16 @@ pub enum ModulusSelectionError {
         /// Error returned by the complete irreducibility decision.
         error: FieldError,
     },
+    /// The selected modulus could not be materialized as the requested
+    /// validated extension witness.
+    ExtensionConstruction {
+        /// Identity of the coefficient field.
+        base: FieldId,
+        /// Requested relative extension degree.
+        degree: usize,
+        /// Validation failure returned by the extension constructor.
+        error: FieldError,
+    },
 }
 
 /// Reasons a coefficient carrier is rejected before candidate enumeration.
@@ -254,7 +269,115 @@ impl fmt::Display for ModulusSelectionError {
             Self::Verification { rank, error, .. } => {
                 write!(f, "candidate rank {rank} could not be verified: {error}")
             }
+            Self::ExtensionConstruction { degree, error, .. } => write!(
+                f,
+                "selected modulus for degree {degree} could not construct an extension: {error}"
+            ),
         }
+    }
+}
+
+impl std::error::Error for ModulusSelectionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::InvalidRegistryEntry { error, .. }
+            | Self::RegistryMaterialization { error, .. }
+            | Self::CandidateMaterialization { error, .. }
+            | Self::Verification { error, .. }
+            | Self::ExtensionConstruction { error, .. } => Some(error),
+            _ => None,
+        }
+    }
+}
+
+/// A field extension constructible from its base witness and relative degree
+/// by deterministic modulus selection.
+pub trait SelectExtension: FieldExtension + Sized {
+    /// Selects the modulus for the degree-`degree` extension of the field
+    /// `base` witnesses and constructs the validated extension witness.
+    ///
+    /// The same base presentation and degree always produce the same modulus
+    /// presentation. The selection follows the Conway, verified-registry, and
+    /// deterministic verified-search rule documented at the top of this
+    /// module.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ModulusSelectionError`] when selection or extension
+    /// validation fails, including [`ModulusSelectionError::NoCandidates`]
+    /// for degree zero and [`ModulusSelectionError::UnsupportedSize`] when
+    /// the requested presentation cannot be represented.
+    ///
+    /// # Complexity
+    ///
+    /// Registry selection is linear in the selected modulus coordinates. A
+    /// fallback selection additionally performs the complete irreducibility
+    /// search described by [`select_modulus`], and extension construction runs
+    /// its validating field decision once.
+    fn select(base: Self::Base, degree: usize) -> Result<Self, ModulusSelectionError>;
+}
+
+impl<F: FieldIdentity> SelectExtension for QuotientField<F> {
+    /// Selects and validates a relative quotient-field presentation.
+    ///
+    /// Equal base identities and degrees select equal presentations, following
+    /// the deterministic rule documented at the top of this module. The
+    /// selected modulus and quotient validation are linear in the modulus
+    /// coordinates outside the irreducibility decision.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ModulusSelectionError`] when selection or quotient-field
+    /// validation rejects the requested presentation.
+    fn select(base: F, degree: usize) -> Result<Self, ModulusSelectionError> {
+        let base_id = base.field_id();
+        let modulus = select_modulus(&base, degree)?;
+        Self::new(base, modulus).map_err(|error| ModulusSelectionError::ExtensionConstruction {
+            base: base_id,
+            degree,
+            error,
+        })
+    }
+}
+
+impl<V: UintExt> SelectExtension for BinaryPrimeExt<V> {
+    /// Selects and validates a binary extension presentation.
+    ///
+    /// Equal base identities and degrees select equal binary moduli, following
+    /// the deterministic rule documented at the top of this module. The
+    /// selected modulus is packed in linear time before the extension witness
+    /// performs its irreducibility validation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ModulusSelectionError`] when selection cannot produce a
+    /// representable modulus or the binary extension validation fails.
+    fn select(base: Fp<2>, degree: usize) -> Result<Self, ModulusSelectionError> {
+        let base_id = base.field_id();
+        if degree >= V::BITS as usize {
+            return Err(ModulusSelectionError::UnsupportedSize {
+                base: base_id,
+                degree,
+            });
+        }
+
+        let modulus = select_modulus(&base, degree)?;
+        let packed = modulus
+            .iter()
+            .enumerate()
+            .fold(V::ZERO, |packed, (index, coefficient)| {
+                if coefficient.is_one() {
+                    packed | (V::ONE << index as u32)
+                } else {
+                    packed
+                }
+            });
+        let field = Gf2mField_::<V>::new(degree, packed);
+        Self::new(field).map_err(|error| ModulusSelectionError::ExtensionConstruction {
+            base: base_id,
+            degree,
+            error,
+        })
     }
 }
 
@@ -653,6 +776,49 @@ mod tests {
             Some(value),
             crate::primitive_polys::PrimitivePolynomialDatabase::standard(8)
         );
+    }
+
+    #[test]
+    fn selected_binary_extension_matches_the_registry_modulus() {
+        let degree_four = <BinaryPrimeExt as SelectExtension>::select(Fp::<2>::zero(), 4)
+            .expect("the registry supplies the GF(16) modulus");
+        assert_eq!(degree_four.field().primitive_polynomial(), 0b10011);
+        assert_eq!(degree_four.ext_unit_group_order(), Some(15));
+
+        let degree_eight = <BinaryPrimeExt as SelectExtension>::select(Fp::<2>::zero(), 8)
+            .expect("the registry supplies the GF(256) modulus");
+        assert_eq!(degree_eight.field().primitive_polynomial(), 0b1_0001_1101);
+        assert_eq!(degree_eight.ext_unit_group_order(), Some(255));
+    }
+
+    #[test]
+    fn selected_quotient_extension_is_deterministic_over_prime_and_tower_bases() {
+        let prime_first = <QuotientField<Fp<5>> as SelectExtension>::select(Fp::<5>::zero(), 2)
+            .expect("a GF(25) presentation");
+        let prime_second = <QuotientField<Fp<5>> as SelectExtension>::select(Fp::<5>::zero(), 2)
+            .expect("the same GF(25) presentation");
+        assert_eq!(prime_first.ext_id(), prime_second.ext_id());
+
+        let gf9_modulus = select_modulus(&Fp::<3>::zero(), 2).expect("a GF(9) modulus");
+        let gf9 = QuotientField::new(Fp::<3>::zero(), gf9_modulus).expect("a GF(9) base");
+        let tower_first = <QuotientField<_> as SelectExtension>::select(gf9.ext_zero(), 2)
+            .expect("a relative GF(81) presentation");
+        let tower_second = <QuotientField<_> as SelectExtension>::select(gf9.ext_zero(), 2)
+            .expect("the same relative GF(81) presentation");
+        assert_eq!(tower_first.base_id(), gf9.ext_id());
+        assert_eq!(tower_first.ext_id(), tower_second.ext_id());
+    }
+
+    #[test]
+    fn selection_reports_typed_errors() {
+        assert!(matches!(
+            <BinaryPrimeExt as SelectExtension>::select(Fp::<2>::zero(), 0),
+            Err(ModulusSelectionError::NoCandidates { degree: 0, .. })
+        ));
+        assert!(matches!(
+            <BinaryPrimeExt as SelectExtension>::select(Fp::<2>::zero(), u64::BITS as usize),
+            Err(ModulusSelectionError::UnsupportedSize { .. })
+        ));
     }
 
     #[test]
