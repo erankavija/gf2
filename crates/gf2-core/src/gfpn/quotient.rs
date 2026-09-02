@@ -2493,4 +2493,94 @@ mod tests {
             })
         );
     }
+    /// Checks that reduction depends only on the class of its input: adding any
+    /// multiple of the modulus leaves the stored vector unchanged, and the
+    /// stored vector always has exactly `relative_degree()` entries.
+    ///
+    /// The cofactor is drawn independently of the coefficient vector, so the
+    /// property covers inputs both below and above the modulus degree.
+    fn assert_reduction_is_invariant<const R: usize, C>(base: BoxedStrategy<C::BaseField>)
+    where
+        C: ConstQuotientConfig<R> + 'static,
+        C::BaseField: 'static,
+    {
+        /// Case budget for the invariance property. Each case runs two
+        /// divisions and one polynomial product, so it affords more cases than
+        /// the differential suite.
+        const INVARIANCE_CASES: u32 = 96;
+
+        let field = ConstQuotient::<R, C>::runtime_field().expect("the declaration is irreducible");
+        let modulus = ConstQuotient::<R, C>::modulus();
+        let strategy = (
+            proptest::collection::vec(base.clone(), 0..=2 * R),
+            proptest::collection::vec(base, 0..=R),
+        );
+        TestRunner::new(ProptestConfig::with_cases(INVARIANCE_CASES))
+            .run(&strategy, |(coefficients, cofactor)| {
+                let reduced = field
+                    .element(coefficients.clone())
+                    .expect("the strategy draws base-field coefficients");
+                prop_assert_eq!(reduced.coefficients().len(), field.relative_degree());
+
+                let shifted =
+                    &FieldPoly::new(coefficients) + &(&FieldPoly::new(cofactor) * &modulus);
+                let shifted_reduced = field
+                    .element(shifted.iter().cloned().collect())
+                    .expect("polynomial arithmetic stays in the base field");
+                prop_assert_eq!(
+                    shifted_reduced.coefficients().len(),
+                    field.relative_degree()
+                );
+                prop_assert_eq!(reduced, shifted_reduced);
+                Ok(())
+            })
+            .expect("reduction depends only on the class of its input");
+    }
+
+    #[test]
+    fn reduction_is_invariant_under_multiples_of_the_modulus() {
+        assert_reduction_is_invariant::<4, Gf16QuotientConfig>(fp_strategy::<2>());
+        assert_reduction_is_invariant::<3, Gf125QuotientConfig>(fp_strategy::<5>());
+        assert_reduction_is_invariant::<2, Gf81QuotientConfig>(quadratic_strategy::<Gf9Config>(
+            fp_strategy::<3>(),
+        ));
+    }
+
+    /// Checks that `elements()` is indexed by the canonical index: the element
+    /// at position `i` writes `field_id().degree()` prime coordinates, each
+    /// below the characteristic, whose base-`p` value is `i`.
+    fn assert_canonical_index_decodes<F: FieldIdentity>(field: &QuotientField<F>) {
+        let order = field.order().expect("the field order is representable");
+        let identity = field.ext_id().clone();
+        let characteristic = u128::from(identity.characteristic());
+        let elements = field.elements().expect("the field enumerates");
+        assert_eq!(u128::try_from(elements.len()).unwrap(), order);
+
+        let mut seen = std::collections::HashSet::new();
+        for (index, element) in elements.iter().enumerate() {
+            assert_eq!(element.field_id(), identity);
+            let mut coordinates = Vec::new();
+            element.write_prime_coords(&mut coordinates);
+            assert_eq!(coordinates.len(), identity.degree());
+
+            let mut value = 0u128;
+            let mut place = 1u128;
+            for coordinate in &coordinates {
+                let coordinate = u128::from(*coordinate);
+                assert!(coordinate < characteristic);
+                value += coordinate * place;
+                place *= characteristic;
+            }
+            assert_eq!(value, u128::try_from(index).unwrap());
+            assert!(seen.insert(coordinates));
+        }
+        assert_eq!(seen.len(), elements.len());
+    }
+
+    #[test]
+    fn canonical_index_decodes_to_its_prime_coordinates() {
+        assert_canonical_index_decodes(&gf16());
+        assert_canonical_index_decodes(&ConstGf125::runtime_field().unwrap());
+        assert_canonical_index_decodes(&ConstGf81::runtime_field().unwrap());
+    }
 }

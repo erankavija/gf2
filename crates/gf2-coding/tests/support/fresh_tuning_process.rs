@@ -9,7 +9,10 @@ use std::io::Write;
 use std::num::NonZeroUsize;
 use std::process::{Command, Stdio};
 
-use gf2_coding::bch::encode::{EncodeFamily, SystematicLayout, TABLE_REMAINDER_BLOCK_BITS};
+use gf2_coding::bch::encode::{
+    EncodeFamily, SystematicLayout, BITSLICE_INTERLEAVED_MIN_BATCH, TABLE_REMAINDER_BLOCK_BITS,
+    TABLE_REMAINDER_MIN_BATCH, TABLE_REMAINDER_MIN_REDUNDANCY,
+};
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::test_support;
 use gf2_coding::tuning::{self, CodingTuning, EncodeSelectors};
@@ -29,9 +32,15 @@ const SENTINEL: &str = "GF2_TUNING_FRESH_CASE";
 const SENTINEL_VALUE: &str = "child-v1";
 const RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";
 
-/// The batch length every case encodes, from the workload-selection
+/// The batch length every case's selectors admit from, and the shorter of the
+/// two lengths every case encodes; it is a rung of the workload-selection
 /// contract's ladder.
 const BATCH: usize = 16;
+
+/// The longer length every case encodes, four whole lane groups and one frame
+/// of a bit-sliced family, so a partition of it crosses lane groups at every
+/// worker count.
+const LANE_GROUP_BATCH: usize = 257;
 
 /// One named scenario of the protocol.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -46,6 +55,13 @@ pub enum FreshProcessCase {
     /// The same selectors carried through the owner codec's canonical JSON.
     #[cfg(feature = "tuning-profile")]
     TableRemainderEncoded,
+    /// A compiled envelope admitting the bit-sliced interleaved family, with
+    /// the buffer shapes watched across repeated batches.
+    BitsliceInterleavedAllocation,
+    /// Selectors admitting the bit-sliced interleaved family, carried through
+    /// the owner codec's canonical JSON.
+    #[cfg(feature = "tuning-profile")]
+    BitsliceInterleavedEncoded,
 }
 
 impl FreshProcessCase {
@@ -56,6 +72,9 @@ impl FreshProcessCase {
             Self::TableRemainderAllocation => "table-remainder-allocation",
             #[cfg(feature = "tuning-profile")]
             Self::TableRemainderEncoded => "table-remainder-encoded",
+            Self::BitsliceInterleavedAllocation => "bitslice-interleaved-allocation",
+            #[cfg(feature = "tuning-profile")]
+            Self::BitsliceInterleavedEncoded => "bitslice-interleaved-encoded",
         }
     }
 
@@ -76,6 +95,9 @@ impl FreshProcessCase {
             Some("table-remainder-allocation") => Ok(Self::TableRemainderAllocation),
             #[cfg(feature = "tuning-profile")]
             Some("table-remainder-encoded") => Ok(Self::TableRemainderEncoded),
+            Some("bitslice-interleaved-allocation") => Ok(Self::BitsliceInterleavedAllocation),
+            #[cfg(feature = "tuning-profile")]
+            Some("bitslice-interleaved-encoded") => Ok(Self::BitsliceInterleavedEncoded),
             _ => Err("fresh-process case has an unknown case name".to_owned()),
         }
     }
@@ -158,9 +180,26 @@ fn corpus_row_b3() -> BinaryBchCode {
     .expect("a narrow-sense construction over GF(2^8)")
 }
 
+/// Selectors admitting the table family, with the bit-sliced family left on
+/// its conservative exclusion so the table arm is the one the seam reaches.
 fn selectors_admitting_the_table_family() -> EncodeSelectors {
-    EncodeSelectors::try_new(TABLE_REMAINDER_BLOCK_BITS, BATCH)
-        .expect("every selector bound is admissible")
+    EncodeSelectors::try_new(
+        TABLE_REMAINDER_BLOCK_BITS,
+        BATCH,
+        BITSLICE_INTERLEAVED_MIN_BATCH,
+    )
+    .expect("every selector bound is admissible")
+}
+
+/// Selectors admitting the bit-sliced interleaved family, with the table
+/// family left on its conservative exclusion.
+fn selectors_admitting_the_bitslice_family() -> EncodeSelectors {
+    EncodeSelectors::try_new(
+        TABLE_REMAINDER_MIN_REDUNDANCY,
+        TABLE_REMAINDER_MIN_BATCH,
+        BATCH,
+    )
+    .expect("every selector bound is admissible")
 }
 
 fn compiled_envelope(selectors: EncodeSelectors) -> PreparedEnvelope {
@@ -206,10 +245,21 @@ pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
         FreshProcessCase::TableRemainderCompiled => {
             execute_install_child(compiled_envelope(selectors_admitting_the_table_family()))
         }
-        FreshProcessCase::TableRemainderAllocation => execute_allocation_child(),
+        FreshProcessCase::TableRemainderAllocation => execute_allocation_child(
+            selectors_admitting_the_table_family(),
+            EncodeFamily::TableRemainder,
+        ),
         #[cfg(feature = "tuning-profile")]
         FreshProcessCase::TableRemainderEncoded => {
             execute_install_child(encoded_envelope(selectors_admitting_the_table_family()))
+        }
+        FreshProcessCase::BitsliceInterleavedAllocation => execute_allocation_child(
+            selectors_admitting_the_bitslice_family(),
+            EncodeFamily::BitsliceInterleaved,
+        ),
+        #[cfg(feature = "tuning-profile")]
+        FreshProcessCase::BitsliceInterleavedEncoded => {
+            execute_install_child(encoded_envelope(selectors_admitting_the_bitslice_family()))
         }
     }
 }
@@ -226,10 +276,21 @@ const WORKERS: &[usize] = &[1, 2, 6, 7];
 /// family nor the bytes it writes.
 fn encode_and_compare(code: &BinaryBchCode) -> (EncodeFamily, bool) {
     let layout = SystematicLayout::default();
-    let messages: Vec<BitVec> = (0..BATCH)
+    let selected = code.selected_encode_family(layout, BATCH);
+    let mut agrees = selected == code.selected_encode_family(layout, LANE_GROUP_BATCH);
+    for length in [BATCH, LANE_GROUP_BATCH] {
+        agrees &= encode_and_compare_at(code, length);
+    }
+    (selected, agrees)
+}
+
+/// One batch length of [`encode_and_compare`], through every batch entry
+/// point and every declared worker count.
+fn encode_and_compare_at(code: &BinaryBchCode, length: usize) -> bool {
+    let layout = SystematicLayout::default();
+    let messages: Vec<BitVec> = (0..length)
         .map(|index| BitVec::random_seeded(code.k(), index as u64 + 1))
         .collect();
-    let selected = code.selected_encode_family(layout, messages.len());
 
     let mut reference = vec![BitVec::zeros(code.n()); messages.len()];
     let mut workspace = code.encode_workspace();
@@ -253,7 +314,7 @@ fn encode_and_compare(code: &BinaryBchCode) -> (EncodeFamily, bool) {
             .expect("a validated batch encodes")
             == reference;
     }
-    (selected, agrees)
+    agrees
 }
 
 fn execute_conservative_child() -> serde_json::Value {
@@ -290,7 +351,7 @@ fn execute_install_child(prepared: PreparedEnvelope) -> serde_json::Value {
 }
 
 /// Watches the buffers each batch path owns while the installed profile has
-/// the table family selected.
+/// `expected` selected.
 ///
 /// The workspace claim is the strict one: its shape is read before any
 /// encode, so an equal shape after the first batch witnesses that the family
@@ -298,14 +359,17 @@ fn execute_install_child(prepared: PreparedEnvelope) -> serde_json::Value {
 /// selected it. The thread scratch is the entry point that allocates its own
 /// result, so its claim is steady state: it sizes on the first batch in this
 /// family and reuses that sizing afterwards.
-fn execute_allocation_child() -> serde_json::Value {
-    gf2_core::tuning::install(compiled_envelope(selectors_admitting_the_table_family())).unwrap();
+fn execute_allocation_child(
+    selectors: EncodeSelectors,
+    expected: EncodeFamily,
+) -> serde_json::Value {
+    gf2_core::tuning::install(compiled_envelope(selectors)).unwrap();
     let code = corpus_row_b3();
     let layout = SystematicLayout::default();
     assert_eq!(
         code.selected_encode_family(layout, BATCH),
-        EncodeFamily::TableRemainder,
-        "this case is only evidence while the table family is the selected one"
+        expected,
+        "this case is only evidence while {expected} is the selected family"
     );
 
     let messages: Vec<BitVec> = (0..BATCH)
@@ -315,7 +379,11 @@ fn execute_allocation_child() -> serde_json::Value {
 
     let mut workspace = code.encode_workspace();
     let built = test_support::encode_workspace_shape(&workspace);
-    let mut workspace_stable = !workspace.registers().tables.is_empty();
+    let prepared = match expected {
+        EncodeFamily::BitsliceInterleaved => !workspace.registers().lanes.is_empty(),
+        _ => !workspace.registers().tables.is_empty(),
+    };
+    let mut workspace_stable = prepared;
     for _ in 0..8 {
         code.encode_batch_into(&messages, layout, &mut workspace, &mut codewords)
             .expect("a validated batch encodes");
