@@ -63,6 +63,11 @@ from the deterministic registry and search policy in
 | N3 | $\mathrm{GF}(9)$ | 10 | 3 | $\mathrm{GF}(3^{4})$ | 6 | 4 |
 | N4 | $\mathrm{GF}(2^{8})$ | 255 | 33 | $\mathrm{GF}(2^{8})$ | 223 | 32 |
 
+The $k$ and $\deg g$ columns are read from `corpus.json`, and
+`the_corpus_fixture_records_the_constructed_rows` asserts them against the
+codes the construction derives; the remaining columns are the protocol's own
+predeclared inputs.
+
 B4 is the DVB-T2 normal-frame mother code. Its field polynomial, its
 correction radius $t = 12$, and hence $\delta = 2t + 1 = 25$ come from
 `DvbBchParams::for_code(FrameSize::Normal, ...)`, which carries ETSI EN 302 755
@@ -166,9 +171,11 @@ with `splitting_field_matches_gf2`, and `gap.json` records
 `splitting_presentation` as `conway` exactly when gf2's splitting-field modulus
 equals GAP's `ConwayPolynomial(p, d)`, and `base_presentation` as `conway` on
 the same test for the base field, which is where N4's coincidence is recorded
-because its splitting field is its base field. For B4 the coincidence is threefold: the registry's
-degree-16 selection, the Conway polynomial for $\mathrm{GF}(2^{16})$, and the
-ETSI EN 302 755 normal-frame field polynomial are the same polynomial.
+because its splitting field is its base field.
+
+For B4 the coincidence is threefold: the registry's degree-16 selection, the
+Conway polynomial for $\mathrm{GF}(2^{16})$, and the ETSI EN 302 755
+normal-frame field polynomial are the same polynomial.
 `the_registry_selects_the_etsi_normal_frame_field_polynomial` asserts the
 registry half of that.
 
@@ -218,10 +225,11 @@ N4 needs no root transport, because its splitting field is its base field and
 gf2's $\mathrm{GF}(2^{8})$ presentation is the Conway one. `sage.json` records
 that SageMath's `Hom(B, B)[0]` is the identity on this row rather than a
 Frobenius power, by recording the image of the base generator at its own
-index 2. Its coefficient
-canonicalization is still explicit: a $\mathrm{GF}(2^{8})$ symbol is written as
-the integer whose bits are its polynomial-basis coordinates over the registry
-modulus, which is GAP's `Coefficients(CanonicalBasis(GF(256)), e)` order
+index 2.
+
+Its coefficient canonicalization is still explicit: a $\mathrm{GF}(2^{8})$
+symbol is written as the integer whose bits are its polynomial-basis
+coordinates over the registry modulus, which is GAP's `Coefficients(CanonicalBasis(GF(256)), e)` order
 because GAP's canonical basis is $1, Z(2^{8}), \dots, Z(2^{8})^{7}$, and is
 SageMath's `e.polynomial().list()` order because SageMath's $B$ carries the
 same modulus.
@@ -234,10 +242,10 @@ worked around.
 **GUAVA's default root differs from gf2's on N2 and N3.** GUAVA's `BCHCode`
 builds on `PrimitiveUnityRoot(q, n)`, which is $Z(q^{s})^{(q^{s}-1)/n}$. On the
 six other rows that element is exactly the transported gf2 root, and
-`BCHCode(n, b, \delta, F)` therefore already constructs gf2's code. On N2 and
+`BCHCode(n, b, delta, F)` therefore already constructs gf2's code. On N2 and
 N3 it is a different element of order $n$: index 60 against 91, and index 14
 against 16. For those rows the script runs GUAVA's own `BCHCode` generator
-derivation, the cyclotomic-coset loop over `MinimalPolynomial(F, \alpha^{j})`
+derivation, the cyclotomic-coset loop over `MinimalPolynomial(F, alpha^j)`
 from `codegen.gi`, with `PrimitiveUnityRoot` replaced by the transported gf2
 root, and wraps the result with GUAVA's `GeneratorPolCode`. The fixture keeps
 both: `generator` is the polynomial at gf2's root, `bchcode_generator` is the
