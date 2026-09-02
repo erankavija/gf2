@@ -4,7 +4,7 @@
 //! here, and one dispatch bundle carries both. The bit-sliced one advances
 //! [`BITSLICE_LANES`] frames of a batch per step and is described first; the
 //! carry-less-multiply fold reduces one frame 64 message coefficients at a
-//! time and is described under [`BchEncodeFns::fold_block`].
+//! time and is described under [`BchFoldBlockFn`] and [`fold_block_scalar`].
 //!
 //! A systematic BCH encode reduces $x^r m(x)$ modulo the generator $g$ with a
 //! shift register of $r$ binary coefficients, one message coefficient per
@@ -27,7 +27,7 @@
 //! # Surface
 //!
 //! [`BchEncodeFns`] bundles the primitives both reductions need, and its
-//! methods are the driver a caller runs:
+//! entries are the driver a caller runs:
 //!
 //! - [`absorb_block`](BchEncodeFns::absorb_block) takes one 64-degree window
 //!   of each lane's message, bit-slices it through a 64×64 bit-block
