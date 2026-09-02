@@ -483,7 +483,7 @@
           "title": "Lean proofs: generator base-field membership and root correctness",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker-b1bd75ca complete (84 decls, 0 sorry, 4 recorded Mathlib-route deviations, load-bearing anchor test, O-4 sketch section remapped); lead review PASS; merged 531a2039 + lead-direct O-3 citation fix 6f94277e; lake-build passed; code-review + doc-review running (session 9)"
+          "status": "merged 531a2039; lake-build passed; code-review R1 FAIL F1 (witnessed-run model: full-defining-set branch modelled as a zero-length scan, production reports run = n, bound = n + 1); doc-review R1 running detached at session end -> rework 1 next session"
         }
       ]
     },
@@ -607,7 +607,8 @@
     "bd0edfa2": "1 + shared R-45 fix",
     "444c06bc": "2 (+ lead-direct panic docs)",
     "3f7edef1": 2,
-    "88ca7d2f": "0 + lead-direct (runner collection fix)"
+    "88ca7d2f": "0 + lead-direct (runner collection fix)",
+    "b1bd75ca": 0
   },
   "surfaced_pitfalls": [
     {
