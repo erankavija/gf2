@@ -60,6 +60,16 @@
 ##  the corpus's own `alpha`, which is the round trip that validates the
 ##  inverse map before `guava_root_gf2_index` is read out of it.
 ##
+##  Oracle identity
+##  ---------------
+##  A version label does not name a build, so the fixture's `oracle` object
+##  carries what the running kernel reports about itself -- the kernel and
+##  build version, the build datetime, the architecture, the GMP version, the
+##  heap of this invocation -- and the installation path and version of the
+##  GUAVA and SONATA packages that actually loaded, taken from
+##  `GAPInfo.PackagesLoaded`. `run.sh` hashes the executable and those
+##  installations into the receipt.
+##
 ##  Bounded code-object attempts
 ##  ----------------------------
 ##  GUAVA's `BCHCode` reaches `GeneratorPolCode`, which materializes the whole
@@ -69,8 +79,8 @@
 ##  `-o` sets returns to the caller instead of ending the run. Whether a row
 ##  has a code object is thus an observation of this run, recorded per row as
 ##  `bchcode_built` beside the heap the attempt ran under, its processor time,
-##  and GAP's own heap statistics after it. `ORACLE_GAP_HEAP` in `run.sh` sets
-##  that heap and the receipt records the invocation.
+##  and the process's peak resident set size after it. `ORACLE_GAP_HEAP` in
+##  `run.sh` sets that heap and the receipt records the invocation.
 ##
 ##  Running the script without `-T` turns a heap exhaustion into a break loop
 ##  and no fixture is written.
@@ -193,11 +203,14 @@ end;;
 
 ##  This process's peak resident set size in KiB, read from the kernel. The
 ##  value is monotone over the run, so a row's attempt cost shows as the rise
-##  over the row before it.
+##  over the row before it. A kernel that does not report it stops the run,
+##  because every attempt records what it cost.
 PeakRssKib := function()
     local stream, line, value;
     stream := InputTextFile("/proc/self/status");
-    if stream = fail then return fail; fi;
+    if stream = fail then
+        Error("the kernel does not expose /proc/self/status");
+    fi;
     value := fail;
     line := ReadLine(stream);
     while line <> fail do
@@ -207,6 +220,9 @@ PeakRssKib := function()
         line := ReadLine(stream);
     od;
     CloseStream(stream);
+    if value = fail then
+        Error("/proc/self/status carries no VmHWM line");
+    fi;
     return value;
 end;;
 
@@ -471,7 +487,8 @@ BuildRow := function(row)
     #  does not fit in returns here rather than ending the run, so whether a
     #  row has a code object is an observation of this run and not a threshold
     #  written into the script. Every attempt records the heap it ran under,
-    #  the processor time it used, and GAP's own heap statistics after it.
+    #  the processor time it used, and the process's peak resident set size
+    #  after it.
     attemptStart := Runtime();
     attempt := CALL_WITH_CATCH(BCHCode, [n, b0, delta, F]);
     attemptCpu := Runtime() - attemptStart;
@@ -588,7 +605,7 @@ BuildRow := function(row)
     Append(out, Concatenation("      \"bchcode_attempt_cpu_ms\": ",
         String(attemptCpu), ",\n"));
     Append(out, Concatenation("      \"bchcode_attempt_peak_rss_kib\": ",
-        JsonMaybeInt(attemptPeak), ",\n"));
+        String(attemptPeak), ",\n"));
     if bchGenerator = fail then
         Append(out, "      \"bchcode_generator\": null,\n");
         Append(out, "      \"bchcode_generator_matches\": null,\n");
@@ -649,11 +666,11 @@ Main := function()
     Append(out, Concatenation("    \"guava_version\": ",
         JsonQuote(InstalledPackageVersion("guava")), ",\n"));
     Append(out, Concatenation("    \"guava_path\": ",
-        JsonQuote(GAPInfo.PackagesInfo.guava[1].InstallationPath), ",\n"));
+        JsonQuote(GAPInfo.PackagesLoaded.guava[1]), ",\n"));
     Append(out, Concatenation("    \"sonata_version\": ",
         JsonQuote(InstalledPackageVersion("sonata")), ",\n"));
     Append(out, Concatenation("    \"sonata_path\": ",
-        JsonQuote(GAPInfo.PackagesInfo.sonata[1].InstallationPath), ",\n"));
+        JsonQuote(GAPInfo.PackagesLoaded.sonata[1]), ",\n"));
     Append(out, Concatenation("    \"entry_point\": ",
         JsonQuote("GUAVA BCHCode(n, b, delta, F)"), "\n  },\n"));
     Append(out, Concatenation("  \"seed\": ", JsonQuote(corpus.seed), ",\n"));
