@@ -715,6 +715,218 @@ theorem irreducible_iff_forall_isUnit (hf : f.Monic) (hr : 0 < f.natDegree) :
     exact hzu (hall z hz)
 
 
+/-! ### L2.7 — canonical coordinates
+
+The canonical index and the canonical prime coordinates are pure arithmetic on
+ℕ, so this subsection is stated over ℕ and applies to both quotient carriers.
+`p` is the characteristic, `dB` the absolute base degree, and `r` the relative
+degree, so the absolute degree is `dB · r` exactly as `checked_degrees`
+(`crates/gf2-core/src/gfpn/quotient.rs:633`) computes it. -/
+
+/-- The repeated-division loop of `QuotientField::element_at_canonical_index`
+(`crates/gf2-core/src/gfpn/quotient.rs:554`): `d` iterations, each pushing
+`index % p` and then dividing `index` by `p`. -/
+def divLoop (p : ℕ) : ℕ → ℕ → List ℕ
+  | 0, _ => []
+  | (d + 1), m => (m % p) :: divLoop p d (m / p)
+
+/-- The `k`-th canonical prime coordinate of an index. -/
+def digit (p k m : ℕ) : ℕ := m / p ^ k % p
+
+/-- The canonical index of a coordinate vector, `∑_k c_k · p^k`. This is the
+value `canonical_index_of_a_gf2m_element_is_its_stored_value`
+(`crates/gf2-core/src/field/extension.rs:3529`) folds for the GF(2^m) carrier. -/
+def coordValue (p : ℕ) {d : ℕ} (c : Fin d → ℕ) : ℕ := ∑ k : Fin d, c k * p ^ (k : ℕ)
+
+theorem digit_zero (p m : ℕ) : digit p 0 m = m % p := by simp [digit]
+
+theorem digit_succ (p k m : ℕ) : digit p (k + 1) m = digit p k (m / p) := by
+  rw [digit, digit, pow_succ', Nat.div_div_eq_div_mul]
+
+/-- **L2.7 (the division loop is base-`p` decoding).** The loop of
+`element_at_canonical_index` (`crates/gf2-core/src/gfpn/quotient.rs:554`) writes
+exactly the base-`p` digits, in the order it divides.
+
+Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
+(`crates/gf2-core/src/gfpn/quotient.rs:2500`). -/
+theorem divLoop_eq_ofFn (p : ℕ) :
+    ∀ (d m : ℕ), divLoop p d m = List.ofFn (fun k : Fin d => digit p (k : ℕ) m) := by
+  intro d
+  induction d with
+  | zero => intro m; rfl
+  | succ n ih =>
+      intro m
+      rw [divLoop, ih, List.ofFn_succ]
+      simp only [Fin.val_zero, Fin.val_succ, digit_zero]
+      exact congrArg _ (by simp only [digit_succ])
+
+/-- **L2.7 (decoding inverts encoding).** An index below `p^d` is recovered from
+its `d` canonical coordinates.
+
+Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
+(`crates/gf2-core/src/gfpn/quotient.rs:2500`). -/
+theorem coordValue_digit (p : ℕ) (hp : 0 < p) :
+    ∀ (d m : ℕ), m < p ^ d → coordValue p (fun k : Fin d => digit p (k : ℕ) m) = m := by
+  intro d
+  induction d with
+  | zero =>
+      intro m hm
+      simp only [pow_zero, Nat.lt_one_iff] at hm
+      simp [coordValue, hm]
+  | succ n ih =>
+      intro m hm
+      have hdiv : m / p < p ^ n := by
+        rw [Nat.div_lt_iff_lt_mul hp]
+        rwa [pow_succ] at hm
+      have hstep : ∀ k : Fin n,
+          digit p ((k.succ : Fin (n + 1)) : ℕ) m * p ^ ((k.succ : Fin (n + 1)) : ℕ) =
+            p * (digit p (k : ℕ) (m / p) * p ^ (k : ℕ)) := by
+        intro k
+        rw [Fin.val_succ, digit_succ, pow_succ']
+        ring
+      rw [coordValue, Fin.sum_univ_succ]
+      simp only [Fin.val_zero, pow_zero, mul_one, digit_zero]
+      rw [Finset.sum_congr rfl fun k _ => hstep k, ← Finset.mul_sum,
+        show (∑ k : Fin n, digit p (k : ℕ) (m / p) * p ^ (k : ℕ)) =
+          coordValue p (fun k : Fin n => digit p (k : ℕ) (m / p)) from rfl,
+        ih _ hdiv, Nat.mod_add_div]
+
+/-- **L2.7 (encoding inverts decoding).** A coordinate vector with every entry
+below `p` is recovered from its canonical index.
+
+Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
+(`crates/gf2-core/src/gfpn/quotient.rs:2500`). -/
+theorem digit_coordValue (p : ℕ) (hp : 0 < p) :
+    ∀ (d : ℕ) (c : Fin d → ℕ), (∀ k, c k < p) →
+      ∀ k : Fin d, digit p (k : ℕ) (coordValue p c) = c k := by
+  intro d
+  induction d with
+  | zero => intro c _ k; exact k.elim0
+  | succ n ih =>
+      intro c hc k
+      set t : Fin n → ℕ := fun k => c k.succ with ht
+      have hsplit : coordValue p c = c 0 + p * coordValue p t := by
+        rw [coordValue, Fin.sum_univ_succ, coordValue, Finset.mul_sum]
+        simp only [Fin.val_zero, pow_zero, mul_one, Fin.val_succ, ht]
+        exact congrArg _ (Finset.sum_congr rfl fun j _ => by rw [pow_succ']; ring)
+      have hdiv : (c 0 + p * coordValue p t) / p = coordValue p t := by
+        rw [Nat.add_mul_div_left _ _ hp, Nat.div_eq_of_lt (hc 0), Nat.zero_add]
+      refine Fin.cases ?_ ?_ k
+      · rw [Fin.val_zero, digit_zero, hsplit, Nat.add_mul_mod_self_left,
+          Nat.mod_eq_of_lt (hc 0)]
+      · intro j
+        rw [Fin.val_succ, digit_succ, hsplit, hdiv]
+        exact ih t (fun j => hc j.succ) j
+
+/-- The flattening of `QuotientElement::write_prime_coords`
+(`crates/gf2-core/src/gfpn/quotient.rs:1205`): the `r · dB` absolute coordinates
+are the `r` base blocks in stored order. -/
+def flatten {r dB : ℕ} (C : Fin r → Fin dB → ℕ) : Fin (r * dB) → ℕ :=
+  fun k => C (finProdFinEquiv.symm k).1 (finProdFinEquiv.symm k).2
+
+/-- **L2.7 (flattening).** Absolute coordinate index `i · dB + j` carries the
+`j`-th base coordinate of the `i`-th stored coefficient, so the base coordinate
+varies fastest.
+
+Production path: `QuotientElement::write_prime_coords`
+(`crates/gf2-core/src/gfpn/quotient.rs:1205`), which concatenates the base
+blocks, and `QuotientField::element_from_prime_coords` (`:568`), which splits
+them back with `chunks_exact`.
+
+Refinement anchors: the coordinate-agreement case of `assert_forms_agree`
+(`crates/gf2-core/src/gfpn/quotient.rs:2336-2341`),
+`const_quotient_coordinates_round_trip_through_the_runtime_carrier` (`:2474`)
+and `tower_coordinates_vary_the_base_coordinate_fastest`
+(`crates/gf2-core/src/field/extension.rs:3543`) for the `dB > 1` ordering. -/
+theorem flatten_apply {r dB : ℕ} (C : Fin r → Fin dB → ℕ) (i : Fin r) (j : Fin dB) :
+    flatten C (finProdFinEquiv (i, j)) = C i j := by
+  simp [flatten]
+
+theorem flatten_index {r dB : ℕ} (i : Fin r) (j : Fin dB) :
+    ((finProdFinEquiv (i, j) : Fin (r * dB)) : ℕ) = (j : ℕ) + dB * (i : ℕ) :=
+  finProdFinEquiv_apply_val _
+
+/-- **L2.7 (canonical index of a quotient element).** The absolute index of a
+stored vector is `∑_i idx_B(c_i) · q^i` for `q = p^{dB}`, the base-`q`
+value of its coefficient indices. Together with the two round-trip lemmas this
+makes `write_prime_coords` (`crates/gf2-core/src/gfpn/quotient.rs:1205`) and
+`element_at_canonical_index` (`:554`) mutually inverse.
+
+Refinement anchors: `const_quotient_coordinates_round_trip_through_the_runtime_carrier`
+(`crates/gf2-core/src/gfpn/quotient.rs:2474`),
+`tower_coordinates_vary_the_base_coordinate_fastest`
+(`crates/gf2-core/src/field/extension.rs:3543`) and
+`canonical_index_decodes_to_its_prime_coordinates`
+(`crates/gf2-core/src/gfpn/quotient.rs:2500`). -/
+theorem coordValue_flatten (p : ℕ) {r dB : ℕ} (C : Fin r → Fin dB → ℕ) :
+    coordValue p (flatten C) = ∑ i : Fin r, coordValue p (C i) * (p ^ dB) ^ (i : ℕ) := by
+  rw [coordValue, ← Equiv.sum_comp (finProdFinEquiv (m := r) (n := dB))
+    (fun k => flatten C k * p ^ (k : ℕ)), Fintype.sum_prod_type]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [coordValue, Finset.sum_mul]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  rw [flatten_apply, flatten_index, pow_add, pow_mul]
+  ring
+
+/-! ### L2.8 — Frobenius on the quotient -/
+
+/-- **L2.8 (absolute period).** In a finite field of order `p^d` the `d`-fold
+absolute Frobenius is the identity, so `QuotientElement::frobenius`
+(`crates/gf2-core/src/gfpn/quotient.rs:865`) may reduce `k` modulo the absolute
+degree before raising to the characteristic that many times.
+
+Refinement anchor: `frobenius_has_absolute_and_relative_orders`
+(`crates/gf2-core/src/gfpn/quotient.rs:2147`). -/
+theorem absFrobenius_iterate_mod {E : Type*} [Field E] [Fintype E] {p d : ℕ}
+    (hcard : Fintype.card E = p ^ d) (k : ℕ) (x : E) :
+    (fun y : E => y ^ p)^[k] x = (fun y : E => y ^ p)^[k % d] x := by
+  have hone : ∀ y : E, (fun y : E => y ^ p)^[d] y = y := by
+    intro y
+    rw [RelativeExtension.iterate_pow_apply, ← hcard]
+    exact FiniteField.pow_card y
+  have hid : ∀ (j : ℕ) (y : E), (fun y : E => y ^ p)^[d * j] y = y := by
+    intro j
+    induction j with
+    | zero => intro y; simp
+    | succ m ih =>
+        intro y
+        rw [Nat.mul_succ, Function.iterate_add_apply, hone, ih]
+  conv_lhs => rw [← Nat.mod_add_div k d]
+  rw [Function.iterate_add_apply, hid]
+
+/-- **L2.8 (relative agreement).** `dB` absolute steps make one relative step:
+the production loop that applies `pow (characteristic)` `dB · j` times computes
+`x ↦ x^{q^j}` for `q = p^{dB}`, which is
+`FieldExtension::relative_frobenius` at `j`.
+
+Production path: `QuotientElement::frobenius`
+(`crates/gf2-core/src/gfpn/quotient.rs:865`).
+
+Refinement anchor: `frobenius_has_absolute_and_relative_orders`
+(`crates/gf2-core/src/gfpn/quotient.rs:2147`). -/
+theorem absFrobenius_iterate_baseDegree {E : Type*} [Monoid E] (p dB j : ℕ) (x : E) :
+    (fun y : E => y ^ p)^[dB * j] x = x ^ (p ^ dB) ^ j := by
+  rw [RelativeExtension.iterate_pow_apply, pow_mul]
+
+/-- **L2.8 at the quotient.** An irreducible modulus makes `Q` a finite field of
+order `|B|^r = p^{dB · r}`, so its absolute degree is `dB · r` — the product
+`checked_degrees` (`crates/gf2-core/src/gfpn/quotient.rs:633`) computes — and
+reducing `k` modulo it before iterating is sound.
+
+Refinement anchor: `frobenius_has_absolute_and_relative_orders`
+(`crates/gf2-core/src/gfpn/quotient.rs:2147`). -/
+theorem adjoinRoot_frobenius_iterate_mod [Finite B] (hf : f.Monic) (hirr : Irreducible f)
+    {p dB : ℕ} (hcard : Nat.card B = p ^ dB) (k : ℕ) (x : AdjoinRoot f) :
+    letI := adjoinRootField hirr
+    (fun y : AdjoinRoot f => y ^ p)^[k] x =
+      (fun y : AdjoinRoot f => y ^ p)^[k % (dB * f.natDegree)] x := by
+  letI := adjoinRootField hirr
+  haveI : Finite (AdjoinRoot f) := Finite.of_equiv _ (clsEquiv hf)
+  haveI : Fintype (AdjoinRoot f) := Fintype.ofFinite _
+  refine absFrobenius_iterate_mod ?_ k x
+  rw [← Nat.card_eq_fintype_card, card_adjoinRoot hf, hcard, ← pow_mul]
+
+
 end QuotientReduction
 
 end
