@@ -3,15 +3,15 @@
 //! The cells are the workload-selection contract's
 //! (`dev/active/4e732b56/workload-selection.md`) W2 workload on the canonical
 //! construction model: § 2's binary rows at the lengths it fixes, the two
-//! DVB-T2 rows at their mother lengths per the § 9 amendment of 2026-09-01,
-//! § 4's systematic `[message | parity]` output, and § 5's two cache states.
+//! DVB-T2 rows at the mother lengths § 9 fixes for this consumer, § 4's
+//! systematic `[message | parity]` output, and § 5's two cache states.
 //! Throughput is reported per matrix bit, so the elements-per-second figure
 //! Criterion prints is § 1's matrix bits per second.
 //!
 //! Every row runs the canonical materialization beside the basis-vector
-//! reference `gf2_coding::test_support` exposes, so one run carries the pair
-//! a before-and-after comparison needs. The parity-check group repeats the
-//! pair for `parity_check_matrix_into`.
+//! reference the `gf2_coding::test_support` oracle exposes, so one run
+//! carries both. The parity-check group runs the same pair for
+//! `parity_check_matrix_into`.
 //!
 //! `T2N-mother` materializes a 512 MiB generator and its reference costs
 //! $O(k^2 r)$, so it runs only under `GF2_BENCH=1` on a prepared host.
@@ -68,6 +68,7 @@ const ROWS: &[Row] = &[
         samples: 100,
         bench_mode_only: false,
     },
+    // The DVB-T2 rows at the mother lengths § 9 fixes for this consumer.
     Row {
         name: "T2S-mother",
         degree: 14,

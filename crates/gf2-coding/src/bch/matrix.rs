@@ -1129,10 +1129,12 @@ mod tests {
         assert_sampled_rows_are_systematic(&code, &generator, &parity);
     }
 
-    /// Both DVB-T2 rows at their mother lengths, generator and parity check.
+    /// Both DVB-T2 rows at the mother lengths
+    /// `dev/active/4e732b56/workload-selection.md` § 9 fixes, generator and
+    /// parity check, over every row.
     ///
-    /// The oracle costs $O(k^2 r)$, which puts the $65343 \times 65535$ row
-    /// far outside the fast tier; the T2S generator alone stays in it above.
+    /// The by-encoding oracle costs $O(k^2 r)$, which is a slow-tier cost at
+    /// these dimensions; the fast tier witnesses the T2S row on a sample.
     #[test]
     #[ignore = "slow: the DVB-T2 mother rows materialize up to a 512 MiB generator"]
     fn dvb_t2_mother_rows_match_the_oracle() {
