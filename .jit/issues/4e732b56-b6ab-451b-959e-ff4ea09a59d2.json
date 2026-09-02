@@ -213,79 +213,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "306e7e625ada99772fd588e6279c3a61c164f12bd442f3f1f29b12393d4acd4b",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "cecfeef3993e773024ede3b670fbaf0b006c5f9462cf78b469fb12a2e0b3be84",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b21ea63c84889e0fc20ef4303439d4ea3c4e10393a704b5780eb084b8c6e005d",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../plans/sota_target_matrix.md",
-          "resolved_path": "dev/plans/sota_target_matrix.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "f6ecb9472812db92482462f495258928a3ecb22f3d4d885e2eefbdaba9000caf",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "85b362f8c5d7971316502803d08805ae1a3a759c7f0a882014f82a9564a5a6dc",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "workload-selection.md",
-          "resolved_path": "dev/active/4e732b56/workload-selection.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ae2c7a9e0d27851a87946111875557ca983aabaec1a177f1cc76e4348ce76041",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md"
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://kodo.steinwurf.com/",
-          "resolved_path": null
-        }
-      ],
-      "commit": null,
-      "doc_type": "report",
-      "format": "markdown",
-      "label": "Baseline survey findings",
-      "path": "dev/active/4e732b56/findings.md"
-    },
-    {
-      "assets": [
-        {
-          "asset_type": "local",
           "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
           "is_shared": false,
           "mime_type": "text/plain",
@@ -314,6 +241,79 @@
       "format": "markdown",
       "label": "Workload-selection contract (§9 amended by 177bdc85, 2b6968d3)",
       "path": "dev/active/4e732b56/workload-selection.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "cecfeef3993e773024ede3b670fbaf0b006c5f9462cf78b469fb12a2e0b3be84",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://kodo.steinwurf.com/",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f6ecb9472812db92482462f495258928a3ecb22f3d4d885e2eefbdaba9000caf",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b21ea63c84889e0fc20ef4303439d4ea3c4e10393a704b5780eb084b8c6e005d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../plans/sota_target_matrix.md",
+          "resolved_path": "dev/plans/sota_target_matrix.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ae2c7a9e0d27851a87946111875557ca983aabaec1a177f1cc76e4348ce76041",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "85b362f8c5d7971316502803d08805ae1a3a759c7f0a882014f82a9564a5a6dc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "workload-selection.md",
+          "resolved_path": "dev/active/4e732b56/workload-selection.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "306e7e625ada99772fd588e6279c3a61c164f12bd442f3f1f29b12393d4acd4b",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Baseline survey findings",
+      "path": "dev/active/4e732b56/findings.md"
     }
   ],
   "done_at": "2026-09-01T05:06:03.514876505Z",
@@ -344,5 +344,5 @@
   "priority": "high",
   "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-02T06:30:27.974653539Z"
+  "updated_at": "2026-09-02T07:02:32.545683203Z"
 }

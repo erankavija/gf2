@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-02T10:56:10.616506964Z",
   "context": {},
   "created_at": "2026-02-21T19:35:51.733318957Z",
   "dependencies": [],
@@ -19,7 +20,7 @@
     "epic:quality-documentation-tech-debt"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Pin the pre-cutover BCH throughput baseline receipt",
-  "updated_at": "2026-08-28T22:20:18.339261701Z"
+  "updated_at": "2026-09-02T10:56:10.616506964Z"
 }

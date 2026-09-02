@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-09-02T05:47:19.320779400Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
@@ -27,5 +27,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-02T05:47:19.320779400Z"
+  "updated_at": "2026-09-02T10:59:17.122308494Z"
 }
