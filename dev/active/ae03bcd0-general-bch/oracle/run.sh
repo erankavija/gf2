@@ -13,8 +13,13 @@
 # recorded revision rewrites the three fixtures byte for byte, so `git status`
 # reports only the receipt's own timestamp.
 #
+# `ORACLE_GAP_HEAP` sets the GAP heap the oracle runs under; the receipt records
+# the invocation it was used in.
+#
 # Usage: dev/active/ae03bcd0-general-bch/oracle/run.sh
 set -euo pipefail
+
+gap_heap="${ORACLE_GAP_HEAP:-4g}"
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 root="$(git -C "$script_dir" rev-parse --show-toplevel)"
@@ -37,13 +42,16 @@ else
   tree_state="modified"
 fi
 
+emitter="./target/release/examples/bch_oracle_messages"
 build_cmd="./scripts/cargo-budget.sh cargo build --release -p gf2-coding --features test-support --example bch_oracle_messages"
-emit_cmd="./target/release/examples/bch_oracle_messages $corpus"
+emit_cmd="$emitter $corpus"
 sage_cmd="python3 $sage_script $corpus $sage_out"
-gap_cmd="gap -q -A -o 4g -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\";' $gap_script"
+gap_cmd="gap -q -A -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\";' $gap_script"
 
 echo "== build =="
+build_start=$SECONDS
 eval "$build_cmd"
+build_seconds=$((SECONDS - build_start))
 
 echo "== corpus =="
 emit_start=$SECONDS
@@ -97,7 +105,7 @@ rust_version="$(rustc --version)"
   echo
   echo "| Stage | Exact invocation | Wall clock (s) | Output |"
   echo "|---|---|---|---|"
-  echo "| build | \`$build_cmd\` | | |"
+  echo "| build | \`$build_cmd\` | $build_seconds | \`$emitter\` |"
   echo "| corpus | \`$emit_cmd\` | $emit_seconds | [corpus.json](../../../$corpus) |"
   echo "| SageMath | \`$sage_cmd\` | $sage_seconds | [sage.json](../../../$sage_out) |"
   echo "| GAP with GUAVA | \`$gap_cmd\` | $gap_seconds | [gap.json](../../../$gap_out) |"
