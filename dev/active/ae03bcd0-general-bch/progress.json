@@ -483,7 +483,7 @@
           "title": "Lean proofs: generator base-field membership and root correctness",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged 531a2039; lake-build passed; code-review R1 FAIL F1 (witnessed-run model: full-defining-set branch modelled as a zero-length scan, production reports run = n, bound = n + 1); doc-review R1 running detached at session end -> rework 1 next session"
+          "status": "merged 531a2039; lake-build + doc-review R1 passed; code-review R1 FAIL F1 (witnessed-run model: full-defining-set branch modelled as a zero-length scan, production reports run = n, bound = n + 1) -> rework 1 next session"
         }
       ]
     },
