@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-02T23:07:17.084555978Z",
   "context": {},
   "created_at": "2026-08-28T23:04:06.062337929Z",
   "dependencies": [
@@ -24,7 +25,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Migrate the component-code BCH consumers to the canonical model",
-  "updated_at": "2026-09-02T17:28:27.714200810Z"
+  "updated_at": "2026-09-02T23:07:17.084555978Z"
 }
