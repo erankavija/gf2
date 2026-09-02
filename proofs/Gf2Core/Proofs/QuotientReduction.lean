@@ -658,9 +658,12 @@ Production path: `QuotientField::new`
 (`:1464`), which decide irreducibility before issuing a witness.
 
 Refinement anchors: the axiom-harness registrations that build every in-tree
-compile-time declaration through `ConstQuotient::extension`
-(`crates/gf2-core/src/field/axiom_tests.rs:1817`, `:1826`, `:1835`) and run the
-shared field-law suite against it. -/
+compile-time declaration through `ConstQuotient::extension` and then run the
+shared field-law suite against it —
+`test_const_quotient_gf16_const_field_axioms`
+(`crates/gf2-core/src/field/axiom_tests.rs:1817`),
+`test_const_quotient_gf125_const_field_axioms` (`:1826`) and
+`test_const_quotient_gf81_over_gf9_const_field_axioms` (`:1835`). -/
 @[reducible] def adjoinRootField (hirr : Irreducible f) : Field (AdjoinRoot f) :=
   haveI : Fact (Irreducible f) := ⟨hirr⟩
   AdjoinRoot.instField
