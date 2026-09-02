@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged fd8bc3d9; R1: code-review FAIL(3), doc-review FAIL(1, lead links docs post-rework), research-review FAIL(5: GUAVA BCHCode on N2/N3/B4, GAP/Sage exact identity, B4 memory claim unobserved, timing numbers unreceipted, sampling not predeclared); rework 1 dispatched to Opus worker-3f7edef1-2 (session 8); B4 pending the lead idle-host retry (56 GB heap) then protocol amendment per owner"
+          "status": "rework 1 part 1 at 7f32f4fd: code-review F1 closed for N2/N3 (gf2 at GUAVA root via RootSelection::Explicit vs unaided BCHCode), F2 closed (TP04->TP05 808/808 blocks, 2.68 s fast tier), F3 verified; B4 awaits the lead idle-host GAP retry; research-review findings re-sent (first message never arrived); lead links docs post-merge"
         },
         {
           "key": "lean-closure",
@@ -722,7 +722,8 @@
     "RESOLVED 2026-09-02: the jit gate-evaluate checker re-run defect is fixed in the installed binary (~/.cargo/bin/jit built 2026-08-31 22:34 EEST, after just-in-time commit 64473d04f 'execute a gate checker at most once per evaluation' at 22:19). Keep main's working tree clean during a gate run because the cargo-ci gate judges the tree, but a verdict is no longer discarded on input drift.",
     "Pool-seeded target/ hardlinks share cargo fingerprints across worktrees: cargo can report a stale gf2-kernels-simd rlib as fresh under ci-test and a dependent crate then fails to resolve a new module. `find crates/<crate>/src -name '*.rs' -exec touch {} +` forces the rebuild (2b6968d3 worker, session 7).",
     "dev/tools/tuning-profile-compose/Cargo.lock is gitignored, so a fresh worktree lacks it and cargo-ci.sh's tuning-composer step tries the network (fails in a sandbox, slow elsewhere). Copy main's lockfile into each new worktree at dispatch (done for 3f7edef1/d7749931 in session 7) or run `cargo generate-lockfile --offline` there.",
-    "Teammate replies can arrive ~60 min late in a resumed session: the session-7 workers' status reports (sent 10:45-10:58Z) reached the lead at ~11:50Z, after they had been stopped and re-dispatched. Before stopping an unresponsive teammate, wait for at least one wake cycle; if re-dispatching anyway, forward any late report to the successor (done for 2b6968d3)."
+    "Teammate replies can arrive ~60 min late in a resumed session: the session-7 workers' status reports (sent 10:45-10:58Z) reached the lead at ~11:50Z, after they had been stopped and re-dispatched. Before stopping an unresponsive teammate, wait for at least one wake cycle; if re-dispatching anyway, forward any late report to the successor (done for 2b6968d3).",
+    "SendMessage to a RUNNING teammate can be lost or delayed for a long time (the 3f7edef1 rework worker never received the research-review findings sent 30 min earlier while it was mid-task). For anything the worker must act on, also write it to a file the worker is told to read, and re-send the pointer when the worker's report shows the item missing."
   ],
   "session_notes_s5": [
     "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
@@ -745,6 +746,7 @@
   "session_notes_s8": [
     "Session 8 (2026-09-02 13:40 EEST): session 7 died at the rate limit ~10:20 EEST with no handoff-5; state reconstructed from progress.json, git log, gate records, and the eight still-live idle teammates (worker-* from sessions 6/7). Uncommitted session-7 gate records committed (28fbb090). Live workers queried for status; bd0edfa2+444c06bc rework 1 dispatched to worker-bd0edfa2-2 via prompt file in the scratchpad.",
     "3f7edef1 merged fd8bc3d9; AI gates: code-review FAIL(3), doc-review FAIL(1, docs unlinked \u2014 lead links after rework), research-review pending. Citekeys SageMath2026/GapGroup2026/Joyner2026 registered lead-direct (aa56c3cb). DVB-T2 ETSI streams exist on this host at ~/Projects/dvb_test_vectors/VV001-CR35_CSP (TP04/TP05 present), default path of tests/test_vectors/mod.rs. Codex quota 93% before and after three gate runs: gate runs are cheap; Luna workers are not \u2014 native workers only until the 2026-09-07 reset.",
-    "Rework prompt files live in the session scratchpad (rework-bd0edfa2-444c06bc-r1.md, rework-2b6968d3-r1.md, dispatch-d7749931.md, rework-3f7edef1-r1.md + -research.md); workers read them by path. Session-7 idle teammates worker-2b6968d3-2/worker-3f7edef1/worker-d7749931 never answered status requests and were stopped; fresh Opus workers took over from their worktrees."
+    "Rework prompt files live in the session scratchpad (rework-bd0edfa2-444c06bc-r1.md, rework-2b6968d3-r1.md, dispatch-d7749931.md, rework-3f7edef1-r1.md + -research.md); workers read them by path. Session-7 idle teammates worker-2b6968d3-2/worker-3f7edef1/worker-d7749931 never answered status requests and were stopped; fresh Opus workers took over from their worktrees.",
+    "Host config: symlink /home/vkaskivuo/dvb_test_vectors -> /home/vkaskivuo/Projects/dvb_test_vectors created 2026-09-02 14:50 EEST so tests/test_vectors/mod.rs's default path resolves the ETSI VV001-CR35 streams on this host (gate runs then need no DVB_TEST_VECTORS_PATH). Remove the symlink to restore the previous host state."
   ]
 }
