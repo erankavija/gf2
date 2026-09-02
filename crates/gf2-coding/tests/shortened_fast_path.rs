@@ -392,12 +392,12 @@ fn both_derivations_agree_on_a_gf9_bch_mother() {
 /// Materializes the shortened DVB-T2 matrices and checks the systematic
 /// prefix and orthogonality on sampled rows.
 ///
-/// The generator alone is 32208 × 32400 bits, and writing it materializes
-/// the mother's 65343 × 65535 generator first, so this belongs to the
-/// nightly tier rather than beside the construction witness above.
+/// Writing the derived generator materializes the mother's first, so the
+/// call holds both at once. That memory, not its wall time, is why this sits
+/// in the nightly tier rather than beside the construction witness above.
 #[test]
-#[ignore = "slow: materializes the 32208 x 32400 shortened DVB-T2 generator \
-            from the 65343 x 65535 mother"]
+#[ignore = "slow: holds the 65343 x 65535 DVB-T2 mother generator and the \
+            32208 x 32400 derived one at once"]
 fn the_shortened_dvb_t2_matrices_are_systematic_and_orthogonal() {
     let mother = dvb_t2_normal_mother();
     let shortened = Shortened::shorten_first(mother.clone(), DVB_T2_SHORTENING)
