@@ -3761,9 +3761,9 @@ mod tests {
 
     #[test]
     fn a_workspace_is_prepared_for_every_family_before_its_first_batch() {
-        // B3's redundancy makes a second family available, so the workspace
-        // carries that family's reduction tables from the moment it is
-        // built. The first batch under it must therefore find every buffer
+        // B3's redundancy makes the table family available, so the workspace
+        // carries its reduction tables, and the bit-sliced family's lane
+        // scratch, from the moment it is built. The first batch under it must therefore find every buffer
         // it needs already sized: the shape read before any encode has to
         // survive the first call, not only the calls after it.
         let code = binary_narrow_sense(8, 0b100011101, 9);
