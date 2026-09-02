@@ -26,8 +26,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "passed",
-      "updated_at": "2026-09-02T16:39:08.082321643Z",
+      "status": "failed",
+      "updated_at": "2026-09-02T17:21:33.961446774Z",
       "updated_by": "auto:executor"
     }
   },
@@ -42,5 +42,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Canonical BCH matrices use the systematic user layout",
-  "updated_at": "2026-09-02T17:15:45.946271347Z"
+  "updated_at": "2026-09-02T17:21:33.961446774Z"
 }
