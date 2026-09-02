@@ -8,6 +8,7 @@
   ],
   "description": "Establish agreement of the predeclared corpus's construction and encoding results with the two named external oracles and with authoritative standards vectors, committing the fixtures with provenance.\n\n## Background\n\nThe evidence-protocol contract predeclares the corpus rows and the two oracles (SageMath `codes.BCHCode`; GAP with GUAVA `BCHCode`), both applicable to the full corpus by their documented domains; exact oracle versions are recorded in the provenance document at fixture generation. Existing DVB-T2 verification vectors remain in place. Both oracles are required on every corpus row; a row where an oracle fails to produce a result is a blocking finding, not a recorded gap.\n\n## Success Criteria\n\n- [hard] REQ-01: Committed fixtures record generator polynomials and codewords from both named oracles agreeing with this implementation across the predeclared corpus, with generation scripts, versions, and provenance.\n- [hard] REQ-02: Authoritative standards vectors are wired into the suite where the protocol names them.\n",
   "documents": [],
+  "first_ready_at": "2026-09-02T05:46:01.370786388Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -23,7 +24,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-02T05:46:01.370786388Z"
 }
