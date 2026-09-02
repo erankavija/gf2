@@ -135,9 +135,9 @@ seeds/revision/host).
 #### Amendment 1 (2026-09-02, `3f7edef1`) — sampling rule
 
 The protocol above fixes the corpus rows, the message seed, the two oracles,
-and the authoritative vectors. This amendment predeclares the sampling the
-conformance suites draw under them, so the counts are a protocol input rather
-than an implementation choice.
+and the authoritative vectors. This amendment fixes the sampling the
+conformance suites draw under them from its own date forward, so the counts are
+a protocol input rather than an implementation choice.
 
 - **Messages per corpus row.** Four seeded messages for a row of length at most
   4096 and two above it, keeping the committed fixture proportionate to the row

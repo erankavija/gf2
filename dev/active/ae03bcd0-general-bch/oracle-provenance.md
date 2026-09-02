@@ -19,6 +19,7 @@ in. The run that produced the committed fixtures is recorded in
 | SageMath oracle | [`oracle/sage_oracle.py`](oracle/sage_oracle.py) |
 | GAP/GUAVA oracle | [`oracle/gap_oracle.g`](oracle/gap_oracle.g) |
 | Runner | [`oracle/run.sh`](oracle/run.sh) |
+| B4 code-object attempt at a 50 GiB heap | [`oracle/attempts/2026-09-02-b4-heap-50g/`](oracle/attempts/2026-09-02-b4-heap-50g/) |
 | Corpus fixture | [`../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json`](../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json) |
 | SageMath fixture | [`../../../crates/gf2-coding/tests/data/bch_oracle/sage.json`](../../../crates/gf2-coding/tests/data/bch_oracle/sage.json) |
 | GAP/GUAVA fixture | [`../../../crates/gf2-coding/tests/data/bch_oracle/gap.json`](../../../crates/gf2-coding/tests/data/bch_oracle/gap.json) |
@@ -294,11 +295,15 @@ need more heap than the run has: at B4 that matrix is $65343 \times 65535$.
 The script therefore calls `BCHCode` on every row through `CALL_WITH_CATCH`
 under `-T`, where exceeding the heap `-o` sets returns to the caller instead of
 ending the run. Each row records the outcome as `bchcode_built` beside the heap
-the attempt ran under, its processor time, and the process's peak resident set
-size after it, read from the kernel. That mark is monotone over the run, so it
-bounds an attempt from above and a row's own cost shows as its rise over the
-row before it. `ORACLE_GAP_HEAP` sets the heap, and the receipt tabulates every
-attempt together with the diagnostics GAP printed.
+the attempt ran under, its processor time, and two samples of the kernel's
+peak-resident-set mark for the whole process: `bchcode_attempt_peak_rss_kib`
+taken once the `BCHCode` attempt returned, and `row_attempts_peak_rss_kib`
+taken once the `GeneratorPolCode` attempt after it returned, so the second
+covers both of the row's attempts. The mark is a monotone high-water mark, so
+a sample says the attempts before it did not exceed it, and a rise from one
+row's sample to the next says the later row's attempts cost at least that much.
+`ORACLE_GAP_HEAP` sets the heap, and the receipt tabulates every attempt
+together with the diagnostics GAP printed.
 
 A row whose attempt does not yield a code object still carries a GUAVA result:
 its `BCHCode` generator derivation, and its codewords through GUAVA's
@@ -317,24 +322,37 @@ generator annihilates, recorded as `generator_divides_x_n_minus_one` and
 `defining_set_root_checked`.
 
 The fixture generation runs its B4 attempt at the `ORACLE_GAP_HEAP` default,
-which keeps regeneration reproducible on an ordinary host. The largest attempt
-made on the host the receipt names is a separate bounded invocation outside
-the fixture generation, at the largest heap that host can back:
+which keeps regeneration reproducible on an ordinary host. A larger bounded
+attempt is recorded separately, outside the fixture generation, under
+[`oracle/attempts/2026-09-02-b4-heap-50g/`](oracle/attempts/2026-09-02-b4-heap-50g/).
+It runs on `fraktaali`, the host the receipt names, through that host's `gap`,
+whose SHA-256 the receipt's **Oracle identity** section records. Its whole GAP
+program is the `-c` string of the recorded invocation, so the attempt reads no
+repository source and its outcome turns on GUAVA and the heap alone. The script
+is the one that ran, so the `peak_rss_kib` line it prints is the fourth line of
+`gap.out`; that line is empty in this run, and the peak below comes from
+`rss.log`. Every
+figure below is read from that record.
 
-| Property | Observation |
-|---|---|
-| Invocation | `systemd-run --user --scope -p MemoryMax=52G timeout 1200 gap -q -A -T -o 50g`, calling `CALL_WITH_CATCH(BCHCode, [65535, 1, 25, GF(2)])` |
-| Outcome | the call returned `false` |
-| GAP diagnostic | `Error, reached the pre-set memory limit (change it with the -o command line option)` |
-| Wall clock | 9 min 17 s |
-| Processor time | 273885 ms |
-| Peak resident set | 54428680 KiB |
-| Scope memory and swap peaks | 52 GiB and 15.6 GiB |
+| Property | Observation | Record |
+|---|---|---|
+| Invocation | `systemd-run --user --scope -p MemoryMax=52G --unit=gf2-gap-b4-$$ timeout 1200 gap -q -A -T -o 50g -c '...CALL_WITH_CATCH(BCHCode,[65535,1,25,GF(2)])...'` | [`gap-b4-probe.sh`](oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh) |
+| Outcome | `built=false` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
+| GAP diagnostic | `Error, reached the pre-set memory limit` and `(change it with the -o command line option)` | [`gap.err`](oracle/attempts/2026-09-02-b4-heap-50g/gap.err) |
+| GAP processor time | `cpu_ms=273885` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
+| Memory free at launch, MiB | `total=64196 used=15544 avail=48651` | [`timeline.txt`](oracle/attempts/2026-09-02-b4-heap-50g/timeline.txt) |
+| Peak resident set, largest of the samples | `hwm_kib=54428680` | [`rss.log`](oracle/attempts/2026-09-02-b4-heap-50g/rss.log) |
+| Scope processor time and wall clock | `9min 14.018s CPU time over 9min 17.296s wall clock time` | [`scope.txt`](oracle/attempts/2026-09-02-b4-heap-50g/scope.txt) |
+| Scope memory and swap peaks | `52G memory peak, 15.6G memory swap peak` | [`scope.txt`](oracle/attempts/2026-09-02-b4-heap-50g/scope.txt) |
 
-The host carries 64196 MiB of memory, of which 48.6 GiB was free when that
-attempt started, so a 50 GiB heap is the largest it can back and the attempt
-swapped 15.6 GiB before reaching the limit. That observation is why Amendment 2
-names B4 rather than raising the heap the fixture generation uses.
+`rss.log` samples `VmRSS` and `VmHWM` from `/proc/<pid>/status` every five
+seconds, and `timeline.txt` carries the attempt's start and end stamps beside
+the free-memory line.
+
+The host reported 48651 MiB available when the attempt started, so its 50 GiB
+heap already exceeded free memory, and the scope's peaks record 52G resident
+with 15.6G swapped before GAP reached the limit. That is why Amendment 2 names
+B4 rather than raising the heap the fixture generation uses.
 
 SageMath needs no non-default construction on any row. It accepts a
 `primitive_root` argument directly, and its lazy code objects handle the mother
@@ -379,8 +397,8 @@ reference streams produced on the Common Simulation Platform
 the BCH input blocks and test point 05 the BCH output blocks. The streams are distributed with the standard's conformance
 material rather than committed here, so the suite locates them through
 `test_vectors_path()`, which reads `DVB_TEST_VECTORS_PATH` and otherwise falls
-back to `dvb_test_vectors` under the invoking user's home directory. The test
-prints the path it resolved.
+back to `dvb_test_vectors` under the invoking user's home directory. The case
+prints the directory it resolved and the SHA-256 of each file it read.
 
 `the_etsi_dvb_t2_streams_encode_to_their_verified_codewords` loads the set
 through `TestVectorSet::load` and, for every block of every frame, encodes the
@@ -389,23 +407,22 @@ test point 04 payload through the **canonical model** — the mother
 rate the set's configuration name fixes, zero symbols at the shortened message
 coordinates, and the standard's descending transmission layout — then asserts
 the resulting codeword equals the test point 05 block bit for bit, message bits
-against test point 04 and parity bits against the mother code's. The test
+against test point 04 and parity bits against the mother code's. The case
 prints the resolved path and returns when the streams are absent, so a host
 without them runs the rest of the suite.
 
 The comparison is exhaustive rather than sampled, which Amendment 1 of the
-plan's `evidence-protocol` section predeclares. The run behind this document
-observed the following of the [DvbVerification2010] streams:
+plan's `evidence-protocol` section fixes.
 
-| Property | Value |
-|---|---|
-| Stream set | `VV001-CR35`, normal frame, rate 3/5 |
-| Frames compared | 4 |
-| Blocks per frame | 202 |
-| Blocks compared | 808 |
-| Blocks agreeing bit for bit | 808 |
-| Test point 04 SHA-256 | `c658dc04cacebe24a86a42a89f8ffe588f1e269506b6da05eae7d6582d8570b8` |
-| Test point 05 SHA-256 | `f4aaf105b01768b1269d21accef923de09d0040cba073a73909d8f814f3ed929` |
+[`oracle/run.sh`](oracle/run.sh) runs this case as a stage of its own, so the
+figures it observes reach a committed record instead of this prose. The
+receipt's [**Standards vectors**](oracle-receipt.md#standards-vectors) section
+carries that stage's exact invocation, its wall clock, nextest's verdict, and
+the lines the case printed: the directory it resolved, the SHA-256 of each of
+the two [DvbVerification2010] stream files it read, the frame and per-frame
+block counts, the number of blocks it compared, and the number that agreed.
+Where the streams are absent from a host, the case prints that and the receipt
+records that the comparison did not run.
 
 The frame and block counts are asserted, so a truncated copy of the streams
 fails the case rather than comparing fewer blocks in silence.
@@ -417,8 +434,8 @@ Every work this document names resolves in `.jit/references.toml`:
 [DvbVerification2010].
 
 The copy of the [DvbVerification2010] streams this suite consumes is pinned by
-the SHA-256 of each file in the table above, which is what the run observed on
-the host the receipt names.
+the SHA-256 the receipt records for each file, which is the digest the case
+took of the bytes it read.
 
 ## Reproduction
 
@@ -427,12 +444,15 @@ dev/active/ae03bcd0-general-bch/oracle/run.sh
 ```
 
 The runner builds the corpus emitter, runs both oracles over the corpus it
-writes, and rewrites [`oracle-receipt.md`](oracle-receipt.md) from what the run
-observed. Re-running from the revision the receipt names rewrites `corpus.json`
-and `sage.json` byte for byte, and rewrites `gap.json` byte for byte apart from
-`bchcode_attempt_cpu_ms` and `bchcode_attempt_peak_rss_kib`, which are what
-each bounded attempt cost on the run that wrote them. The receipt's timestamps,
-stage wall clocks and attempt table move with the run for the same reason.
+writes, runs the standards-vector case against the streams
+`test_vectors_path()` resolves, and rewrites
+[`oracle-receipt.md`](oracle-receipt.md) from what the run observed.
+Re-running from the revision the receipt names rewrites `corpus.json` and
+`sage.json` byte for byte, and rewrites `gap.json` byte for byte apart from
+`bchcode_attempt_cpu_ms`, `bchcode_attempt_peak_rss_kib` and
+`row_attempts_peak_rss_kib`, which are what each bounded attempt cost on the
+run that wrote them. The receipt's timestamps, stage wall clocks, attempt table
+and standards-vector section move with the run for the same reason.
 
 `ORACLE_GAP_HEAP` sets the heap every code-object attempt is bounded by. Its
 default is a heap an ordinary host can back, so the derived quantities are

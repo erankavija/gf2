@@ -6,7 +6,14 @@
 #   1. build and run the corpus emitter, producing `corpus.json`;
 #   2. run the SageMath oracle over that corpus, producing `sage.json`;
 #   3. run the GAP/GUAVA oracle over that corpus, producing `gap.json`;
-#   4. render `oracle-receipt.md` from what this run observed.
+#   4. run the standards-vector case against the ETSI DVB-T2 verification
+#      streams, whose printed facts the receipt quotes;
+#   5. render `oracle-receipt.md` from what this run observed.
+#
+# The standards-vector stage locates the streams through the suite's own
+# `test_vectors_path()` resolver, which reads `DVB_TEST_VECTORS_PATH`. On a
+# host without them the case prints that and returns, and the receipt records
+# that the comparison did not run rather than a block count.
 #
 # Every figure in the receipt is read back from the artifacts this run wrote or
 # from the host at run time; nothing is hand-maintained. Re-running from the
@@ -37,6 +44,11 @@ corpus="$fixtures/corpus.json"
 sage_out="$fixtures/sage.json"
 gap_out="$fixtures/gap.json"
 
+# The line prefix `the_etsi_dvb_t2_streams_encode_to_their_verified_codewords`
+# marks each fact it observed with; the receipt quotes those lines verbatim.
+vectors_fact="dvb-vectors:"
+vectors_case="the_etsi_dvb_t2_streams_encode_to_their_verified_codewords"
+
 started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 revision="$(git rev-parse HEAD)"
 if [ -z "$(git status --porcelain)" ]; then
@@ -50,6 +62,9 @@ build_cmd="./scripts/cargo-budget.sh cargo build --release -p gf2-coding --featu
 emit_cmd="$emitter $corpus"
 sage_cmd="python3 $sage_script $corpus $sage_out"
 gap_cmd="gap -q -A -T -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\";' $gap_script"
+vectors_cmd="./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding \
+--features test-support --test bch_oracle_agreement --cargo-profile ci-test \
+--profile ci -E 'test($vectors_case)' --no-capture"
 
 echo "== build =="
 build_start=$SECONDS
@@ -78,6 +93,21 @@ eval "$gap_cmd" 2>&1 | tee "$gap_log"
 gap_seconds=$((SECONDS - gap_start))
 if [ ! -f "$gap_out" ]; then
   echo "the GAP oracle wrote no fixture; see $gap_log" >&2
+  exit 1
+fi
+
+# The standards-vector case, run through the budget wrapper like every other
+# cargo invocation in this repository. `--no-capture` is what puts the facts
+# the case prints into this run's log, and so into the receipt.
+echo "== standards vectors =="
+vectors_log="target/bch-oracle-vectors.log"
+vectors_start=$SECONDS
+eval "$vectors_cmd" 2>&1 | tee "$vectors_log"
+vectors_seconds=$((SECONDS - vectors_start))
+vectors_facts="$(grep -F "$vectors_fact" "$vectors_log" || true)"
+vectors_summary="$(grep -E '^[[:space:]]*Summary' "$vectors_log" | tail -n 1 || true)"
+if [ -z "$vectors_facts" ]; then
+  echo "the standards-vector case printed no facts; see $vectors_log" >&2
   exit 1
 fi
 
@@ -168,22 +198,27 @@ rust_version="$(rustc --version)"
   echo "Each row calls \`BCHCode(n, b, delta, F)\` for GUAVA's own code object"
   echo "and \`GeneratorPolCode(G, n, F)\` for the derivation at gf2's root, both"
   echo "under the heap above; the oracle catches an attempt that exceeds it and"
-  echo "records what it observed. The peak resident set is the kernel's"
-  echo "high-water mark for the whole process, which is monotone over the run,"
-  echo "so it bounds an attempt from above and a row's own cost shows as its"
-  echo "rise over the row before it."
+  echo "records what it observed. The two marks are samples of the kernel's"
+  echo "high-water mark for the whole process, taken after the \`BCHCode\`"
+  echo "attempt and after the \`GeneratorPolCode\` attempt that follows it. That"
+  echo "mark is monotone over the run, so a sample says the attempts before it"
+  echo "did not exceed it, and a rise from one row to the next says the later"
+  echo "row's attempts cost at least that much."
   echo
   python3 - "$gap_out" <<'ATTEMPTS'
 import json, sys
 rows = json.load(open(sys.argv[1]))["rows"]
-print("| Row | Code object built | `BCHCode` attempt CPU (s) | Process peak RSS after this row (KiB) |")
-print("|---|---|---|---|")
+print("| Row | Code object built | `BCHCode` attempt CPU (s) "
+      "| Mark after the `BCHCode` attempt (KiB) "
+      "| Mark after both attempts (KiB) |")
+print("|---|---|---|---|---|")
 for row in rows:
-    print("| {} | {} | {:.1f} | {} |".format(
+    print("| {} | {} | {:.1f} | {} | {} |".format(
         row["id"],
         "yes" if row["bchcode_built"] else "no",
         row["bchcode_attempt_cpu_ms"] / 1000.0,
         row["bchcode_attempt_peak_rss_kib"],
+        row["row_attempts_peak_rss_kib"],
     ))
 ATTEMPTS
   echo
@@ -192,6 +227,25 @@ ATTEMPTS
   echo
   echo '```'
   if grep -q . "$gap_log"; then cat "$gap_log"; else echo "(none)"; fi
+  echo '```'
+  echo
+  echo "## Standards vectors"
+  echo
+  echo "The case"
+  echo "\`$vectors_case\`"
+  echo "encodes every block of the ETSI DVB-T2 verification streams through the"
+  echo "canonical mother code and compares it with the verified codeword. It"
+  echo "prints what it read and how far the agreement went, and those lines are"
+  echo "quoted below as it printed them."
+  echo
+  echo "| Property | Value |"
+  echo "|---|---|"
+  echo "| Exact invocation | \`$vectors_cmd\` |"
+  echo "| Wall clock (s) | $vectors_seconds |"
+  echo "| nextest summary | \`$(echo "$vectors_summary" | sed 's/^[[:space:]]*//')\` |"
+  echo
+  echo '```'
+  echo "$vectors_facts"
   echo '```'
   echo
   echo "## Fixture hashes"
@@ -211,7 +265,12 @@ ATTEMPTS
     "crates/gf2-coding/examples/bch_oracle_messages.rs" \
     "crates/gf2-coding/src/test_support.rs" \
     "$sage_script" "$gap_script" \
-    "dev/active/ae03bcd0-general-bch/oracle/run.sh"; do
+    "dev/active/ae03bcd0-general-bch/oracle/run.sh" \
+    "crates/gf2-coding/tests/bch_oracle_agreement.rs" \
+    "crates/gf2-coding/tests/test_vectors/mod.rs" \
+    "crates/gf2-coding/tests/test_vectors/config.rs" \
+    "crates/gf2-coding/tests/test_vectors/loader.rs" \
+    "crates/gf2-coding/tests/test_vectors/parser.rs"; do
     printf '| `%s` | `%s` |\n' "$file" "$(sha256sum "$file" | cut -d' ' -f1)"
   done
 } > "$receipt"
