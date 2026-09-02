@@ -252,3 +252,7 @@ url = "https://www.gap-system.org"
 key = "Joyner2026"
 citation = "Joyner, D., Cramwinckel, J., Baart, R., Minkes, E., Ruscio, L., Boothby, T., Tjhai, C.-J. — GUAVA: a GAP package for computing with error-correcting codes, Version 3.21 (2026). The oracle uses BCHCode, GeneratorPolCode, MinimalPolynomial, and CodewordVector."
 url = "https://gap-packages.github.io/guava/"
+
+[[references]]
+key = "DvbVerification2010"
+citation = "DVB-T2 Verification and Validation Group — DVB-T2 modulator reference streams, configuration VV001-CR35, generated on the Common Simulation Platform (2010); distributed as DVB-T2 conformance material, copyright Digital Video Broadcasting Project. Test points TP04 (BCH input) and TP05 (BCH output) are the standards vectors the BCH conformance evidence consumes."

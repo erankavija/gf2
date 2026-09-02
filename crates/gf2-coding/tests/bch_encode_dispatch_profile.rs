@@ -29,9 +29,17 @@ fn an_encoded_profile_selects_the_bit_sliced_family() {
 }
 
 #[test]
+fn an_encoded_profile_selects_the_fold_family() {
+    let result = fresh::fresh_tuning_process(fresh::FreshProcessCase::ClmulFoldEncoded).unwrap();
+    assert_eq!(result["family"], EncodeFamily::ClmulFold.name());
+    assert_eq!(result["agrees_with_reference"], true);
+    assert_eq!(result["resolution"], "installed");
+}
+
+#[test]
 fn the_owner_codec_round_trips_its_selectors() {
     let section = CodingTuning::from_selectors(
-        EncodeSelectors::try_new(32, 16, 64).expect("every selector bound is admissible"),
+        EncodeSelectors::try_new(32, 16, 64, 8).expect("every selector bound is admissible"),
     );
     let body = CodingTuningCodec::encode_body(&section).expect("a complete section encodes");
     let decoded = CodingTuningCodec::decode_body(body).expect("the canonical body decodes");
@@ -39,6 +47,7 @@ fn the_owner_codec_round_trips_its_selectors() {
     assert_eq!(decoded.encode().table_remainder_min_redundancy(), 32);
     assert_eq!(decoded.encode().table_remainder_min_batch(), 16);
     assert_eq!(decoded.encode().bitslice_interleaved_min_batch(), 64);
+    assert_eq!(decoded.encode().clmul_fold_min_batch(), 8);
 }
 
 #[test]
@@ -56,6 +65,10 @@ fn a_partial_body_defaults_the_absent_selectors() {
     assert_eq!(
         decoded.encode().bitslice_interleaved_min_batch(),
         conservative.encode().bitslice_interleaved_min_batch()
+    );
+    assert_eq!(
+        decoded.encode().clmul_fold_min_batch(),
+        conservative.encode().clmul_fold_min_batch()
     );
 }
 
