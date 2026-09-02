@@ -218,7 +218,7 @@
           "title": "Construction from arbitrary seed sets, including boundary codes",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "done: Luna xhigh, code-review R2 (lead-direct prose fix — my own 230dd84d fix went stale when RootSeeds exposed explicit roots)"
+          "status": "done: Luna xhigh, code-review R2 (lead-direct prose fix \u2014 my own 230dd84d fix went stale when RootSeeds exposed explicit roots)"
         },
         {
           "key": "decoder-outcomes",
@@ -324,7 +324,7 @@
           "title": "Profile-driven dispatch among equivalent batch-encoding algorithms",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "done: native Opus, cargo-ci first-pass, code-review R2 after rework R1 (workspace-time family table prep); EncodeFamily seam + table-remainder family, CodingTuning section, 3 new cargo-ci tuning-coding steps, workload-selection §9 amendment (T2S/T2N mother-length differential until 97410c80)"
+          "status": "done: native Opus, cargo-ci first-pass, code-review R2 after rework R1 (workspace-time family table prep); EncodeFamily seam + table-remainder family, CodingTuning section, 3 new cargo-ci tuning-coding steps, workload-selection \u00a79 amendment (T2S/T2N mother-length differential until 97410c80)"
         },
         {
           "key": "lean-ext-laws",
@@ -345,7 +345,7 @@
           "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "merged 9b660ee0; cargo-ci passed; code-review R1 FAIL F1 (PCLMUL path + combined predicate); rework 1 dispatched to live worker (session 7)"
+          "status": "merged 9b660ee0; cargo-ci passed; code-review R1 FAIL F1; rework 1 in progress in worktree (commit 7d545c26 + uncommitted gf2-coding edits); worker status requested (session 8)"
         },
         {
           "key": "bch-convenience-ctors",
@@ -361,7 +361,7 @@
           "title": "Canonical BCH matrices use the systematic user layout",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker complete; merged 64818484; gates running (session 7)"
+          "status": "merged 64818484; cargo-ci FAIL (t2s test 7.85s vs 8s kill) + doc-review R1 FAIL (bench rustdoc narration); rework 1 dispatched to live worker-bd0edfa2-2 with bd0edfa2 (session 8)"
         },
         {
           "key": "genmatrix-perf",
@@ -369,7 +369,7 @@
           "title": "Optimize the reference generator-matrix materialization",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "worker complete; merged 64818484; gates running (session 7)"
+          "status": "merged 64818484; cargo-ci passed; code-review R1 FAIL F1 contract cells / F2 field-generic coverage / F3 receipt; rework 1 dispatched to live worker-bd0edfa2-2 (session 8, R-37)"
         },
         {
           "key": "lean-quotient-reduction",
@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched session 7 (Opus; late wave-10 addition per R-35)"
+          "status": "worker complete on branch 33f625ea (7 commits, clean); lead review + merge + gates pending (session 8)"
         },
         {
           "key": "lean-closure",
@@ -393,7 +393,7 @@
           "title": "Lean proofs: q-cyclotomic seed closure",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched session 7 (Opus; late wave-10 addition per R-35 reasoning, sole dep 32f53280 done)"
+          "status": "dispatched session 7; worktree has no commits; worker status requested (session 8)"
         }
       ]
     },
@@ -547,8 +547,8 @@
     {
       "short_id": "444c06bc",
       "type": "bug",
-      "reason": "d54cf660 landed polynomial-form matrices in internal coordinates; bch-api-design.md:687 fixes row i = systematic encoding of basis vector i in the user layout; GLDPC consumer (gldpc/mod.rs:118-130) reads G=[I|P]; W2 workload (workload-selection §4) is the systematic form",
-      "wired": "444c06bc→d54cf660, bd0edfa2→444c06bc (--reduce dropped bd0edfa2→d54cf660)",
+      "reason": "d54cf660 landed polynomial-form matrices in internal coordinates; bch-api-design.md:687 fixes row i = systematic encoding of basis vector i in the user layout; GLDPC consumer (gldpc/mod.rs:118-130) reads G=[I|P]; W2 workload (workload-selection \u00a74) is the systematic form",
+      "wired": "444c06bc\u2192d54cf660, bd0edfa2\u2192444c06bc (--reduce dropped bd0edfa2\u2192d54cf660)",
       "wave": 10
     }
   ],
@@ -568,7 +568,9 @@
     "8f68699b": 2,
     "c3cc5226": 2,
     "177bdc85": 1,
-    "2b6968d3": 1
+    "2b6968d3": 1,
+    "bd0edfa2": 1,
+    "444c06bc": 1
   },
   "surfaced_pitfalls": [
     {
@@ -578,7 +580,7 @@
     },
     {
       "source": "c3d5cea5 worker sign-off",
-      "finding": "proptest runner fix restores ~19 previously-unenforced field axioms crate-wide; future carriers that 'passed' may legitimately start failing — coverage changed, not contract",
+      "finding": "proptest runner fix restores ~19 previously-unenforced field axioms crate-wide; future carriers that 'passed' may legitimately start failing \u2014 coverage changed, not contract",
       "disposition": "informational; bake into dispatch prompts for later field-implementing waves (quotient-ext-runtime/const, conway-registry)"
     },
     {
@@ -588,7 +590,7 @@
     },
     {
       "source": "64fd3afd rework",
-      "finding": "scripts/verify-lean.sh:36-40 header claims 11 SIMD fast-path overrides; grep counts 16 cfg(not(verify_lean)) sites in gfp/mod.rs — the header number is stale or a subset",
+      "finding": "scripts/verify-lean.sh:36-40 header claims 11 SIMD fast-path overrides; grep counts 16 cfg(not(verify_lean)) sites in gfp/mod.rs \u2014 the header number is stale or a subset",
       "disposition": "cosmetic script-comment drift; fold into any verify-lean.sh-touching task or lead-direct at epic close"
     },
     {
@@ -610,6 +612,11 @@
       "source": "1c9a0f9f worker (Luna) sign-off",
       "finding": "dev/active/64fd3afd/proof-sketch.md:922 still says the L4.3 test is required although it is implemented",
       "disposition": "linked artifact of done issue 64fd3afd; amend lead-direct with the next lean-wave doc refresh"
+    },
+    {
+      "source": "lead review of bd0edfa2 code-review R1 (session 8)",
+      "finding": "Shortened<C> (transform/mod.rs) materializes an owned dense FieldMatrix generator by RREF at construction; for the DVB-T2 rows that is a 16215\u00d716383 dense RREF (T2S) and a 65343\u00d765535 dense matrix (4.3 GB, T2N). The design (bch-api-design.md \u00a7Derived-code transformations, consumer table row 858) routes DVB-T2 through the generic wrapper, so cutover-dvbt2 (97410c80), perf-receipts (fd9d5416: contract-dimension W1/W2 cells, REQ-13 non-regression vs the legacy shortened LFSR) cannot meet their criteria on the wrapper as it stands.",
+      "disposition": "ESCALATE before wave 11 dispatch (architectural: a systematic-mother fast path in Shortened<C>, or a BCH-owned shortened presentation); criterion subjects: epic REQ-13/REQ-14/REQ-05."
     }
   ],
   "coordination": {
@@ -622,8 +629,8 @@
       "announce before touching crates/gf2-sim (cutover-sim)",
       "88ca7d2f re-slotted from wave 1 to wave 11: runs whenever the CCX1 window opens, must land before cutover-benches (wave 12) merges",
       "Peer validation gf2-predraw-validation3 armed for 2026-09-01 02:00:30 EEST; CCX1 embargo from 01:30 until codex reports it terminal.",
-      "Owner policy 2026-09-01: only critical serialization between the two leads — file-overlap main merges (lock+announce+rebase), flock-arbitrated hardware/test locks, .jit batches under the advisory lock. No courtesy holds or pre-negotiated windows in either direction.",
-      "Owner 2026-09-01: CCX1 calendar embargo dropped — the ccx1 flock alone arbitrates between our measurements and the peer's 02:00:30 validation; no stand-down windows.",
+      "Owner policy 2026-09-01: only critical serialization between the two leads \u2014 file-overlap main merges (lock+announce+rebase), flock-arbitrated hardware/test locks, .jit batches under the advisory lock. No courtesy holds or pre-negotiated windows in either direction.",
+      "Owner 2026-09-01: CCX1 calendar embargo dropped \u2014 the ccx1 flock alone arbitrates between our measurements and the peer's 02:00:30 validation; no stand-down windows.",
       "2026-09-01 ~08:45: granted codex a clean merge window at cc081f10 for their 389aa4de merge + merged-tree CI; my queue resumes on their completion message.",
       "2026-09-01 session 3: owner confirmed peer lead finished; lock/forum coordination retired (R-20)."
     ]
@@ -632,38 +639,40 @@
   "lead_decisions": [
     "R-01: ExtConfig irreducibility verification is in scope for irreducibility-validation (19fe9394) as a test-only conformance case over every in-tree ExtConfig implementor; bake into dispatch prompt.",
     "R-02: design doc renamed to extension-design.md to match the manifest footprint (commit 254907d0).",
-    "R-03: footprint additions recorded — extension-trait (c3d5cea5) also touches crates/gf2-core/src/field/axiom_tests.rs; fieldmatrix-serialization (e992c5b0) also touches crates/gf2-core/src/io/error.rs and crates/gf2-core/Cargo.toml (BLAKE3 dep per D-10).",
+    "R-03: footprint additions recorded \u2014 extension-trait (c3d5cea5) also touches crates/gf2-core/src/field/axiom_tests.rs; fieldmatrix-serialization (e992c5b0) also touches crates/gf2-core/src/io/error.rs and crates/gf2-core/Cargo.toml (BLAKE3 dep per D-10).",
     "R-04: conway-registry (fa85c403) must construct relative tower presentations when the base is non-prime; bake into dispatch prompt.",
     "R-05: invoker approved dispatching wave 2 while the 4e732b56 rework completes (survey rework touches only dev/ survey docs + receipts; wave-2 footprints crates/gf2-core/src/field/ and dev/active/ae03bcd0-general-bch/bch-api-design.md are disjoint). Wave-1 close checklist still runs before wave 2 merges.",
-    "R-06: c3d5cea5 footprint expanded by one accessor — public Gf2mElement_::field() returning Gf2mField_ via Arc clone in crates/gf2-core/src/gf2m/field.rs (Rust privacy blocks field/extension.rs from params; matches the type's accessor convention; distinct from the design-R-06 OnceLock cache, which stays deferred). Also approved: public OrderCertificate::new(field_id, order, prime_factors), and FIELD_ID_ENCODING_VERSION/ELEMENT_REPR_VERSION constants placed in extension.rs.",
+    "R-06: c3d5cea5 footprint expanded by one accessor \u2014 public Gf2mElement_::field() returning Gf2mField_ via Arc clone in crates/gf2-core/src/gf2m/field.rs (Rust privacy blocks field/extension.rs from params; matches the type's accessor convention; distinct from the design-R-06 OnceLock cache, which stays deferred). Also approved: public OrderCertificate::new(field_id, order, prime_factors), and FIELD_ID_ENCODING_VERSION/ELEMENT_REPR_VERSION constants placed in extension.rs.",
     "R-07: rework-2 for 4e732b56 went to a native Sonnet agent instead of Luna because the kodo retrieval redo needs real network access, which the codex exec sandbox lacks (its first attempt recorded a DNS failure as evidence).",
-    "R-08: bch-api-design fixes two manifest-footprint additions for coding-error-surface (ebdbd228) — crates/gf2-coding/src/lib.rs and crates/gf2-coding/src/bch/mod.rs declaration touches; serialized against later writers of those files by the existing dependency chain (coding-error-surface -> bch-construct-core -> systematic-encode -> cutover tasks). Bake into the ebdbd228 dispatch prompt.",
-    "R-09: review verdicts are untracked local files in the epic artifact dir (owner: committing them is clutter); rework prompts carry the content, handoffs reference the paths. review-4e732b56-lead-r2.md and review-4e732b56-research-r1.json untracked but kept on disk (r1 remains the only record of the discarded gate verdict until research-review passes). Owner: DELETE both files once 4e732b56 passes doc-review and research-review — part of the wave-1 close checklist.",
-    "R-10: c3d5cea5 worker found and fixed a latent shared-harness defect — one proptest TestRunner was reused across all field-axiom checks, so only the first law consumed the case budget and the other nineteen ran zero samples for every carrier (fix 6c0a705e gives each check its own runner; mutation-tested both ways; full workspace green after restoration). In-footprint (axiom_tests.rs), kept.",
+    "R-08: bch-api-design fixes two manifest-footprint additions for coding-error-surface (ebdbd228) \u2014 crates/gf2-coding/src/lib.rs and crates/gf2-coding/src/bch/mod.rs declaration touches; serialized against later writers of those files by the existing dependency chain (coding-error-surface -> bch-construct-core -> systematic-encode -> cutover tasks). Bake into the ebdbd228 dispatch prompt.",
+    "R-09: review verdicts are untracked local files in the epic artifact dir (owner: committing them is clutter); rework prompts carry the content, handoffs reference the paths. review-4e732b56-lead-r2.md and review-4e732b56-research-r1.json untracked but kept on disk (r1 remains the only record of the discarded gate verdict until research-review passes). Owner: DELETE both files once 4e732b56 passes doc-review and research-review \u2014 part of the wave-1 close checklist.",
+    "R-10: c3d5cea5 worker found and fixed a latent shared-harness defect \u2014 one proptest TestRunner was reused across all field-axiom checks, so only the first law consumed the case budget and the other nineteen ran zero samples for every carrier (fix 6c0a705e gives each check its own runner; mutation-tested both ways; full workspace green after restoration). In-footprint (axiom_tests.rs), kept.",
     "R-11: declined peer lead's forum request to inspect/own work for epic 6dc81018 (single-epic invariant); coordination-only reply with our footprints and CCX1 window sent.",
     "R-12: the two untracked 4e732b56 review-verdict files moved out of the repo to ~/.local/state/gf2-lead/ae03bcd0/ (peer's worktree protocol requires byte-clean main); delete them there once 4e732b56 passes its gates.",
     "R-13: wave-3 workers (ebdbd228, 19fe9394, fc2fa0b6) dispatched with owner approval before wave-2 formal close; their worktrees anchor at 9499fbdc (reviewed CI-green c3d5cea5 tip, not main) because they build on field/extension.rs; merges serialize after c3d5cea5 lands on main. Cache seeding skipped (manual worktree add).",
     "R-14: 19fe9394's R-01 ExtConfig conformance test covers every FIELD-BEARING in-tree ExtConfig implementor; arithmetic-only test fixtures with deliberately reducible moduli are excluded (they are not field configurations). Ratified.",
-    "R-15: from_certificate trusting its input (a Declared certificate for an unproven modulus constructs without revalidation) is ratified as the CertificateBasis contract per the extension design's certificate section — an honest recorded trust level, documented plainly on the methods and walkthrough.",
-    "R-16: R-15 superseded by code-review R2 per no-argue — REQ-02 requires typed errors on every construction path, so BinaryPrimeExt::from_certificate (runtime) accepts Proved-basis certificates only and rejects Declared with a typed error; ConstExt keeps its design-fixed compile-time Declared basis unless the reviewer extends the finding.",
-    "R-18: footprint additions for wave 4 — 33812b86 also creates minimal crates/gf2-coding/src/transform/mod.rs (pub mod coordinate_map + re-exports only) and touches crates/gf2-coding/src/lib.rs (pub mod transform), serialized against shorten-transform (8aa98a25, dep chain) and cutover-components (dependency-distant); 769c3144 also touches crates/gf2-core/src/field/axiom_tests.rs (carrier registration only, REQ-01 conformance), disjoint from 6aac5c44's extension.rs edit.",
+    "R-15: from_certificate trusting its input (a Declared certificate for an unproven modulus constructs without revalidation) is ratified as the CertificateBasis contract per the extension design's certificate section \u2014 an honest recorded trust level, documented plainly on the methods and walkthrough.",
+    "R-16: R-15 superseded by code-review R2 per no-argue \u2014 REQ-02 requires typed errors on every construction path, so BinaryPrimeExt::from_certificate (runtime) accepts Proved-basis certificates only and rejects Declared with a typed error; ConstExt keeps its design-fixed compile-time Declared basis unless the reviewer extends the finding.",
+    "R-18: footprint additions for wave 4 \u2014 33812b86 also creates minimal crates/gf2-coding/src/transform/mod.rs (pub mod coordinate_map + re-exports only) and touches crates/gf2-coding/src/lib.rs (pub mod transform), serialized against shorten-transform (8aa98a25, dep chain) and cutover-components (dependency-distant); 769c3144 also touches crates/gf2-core/src/field/axiom_tests.rs (carrier registration only, REQ-01 conformance), disjoint from 6aac5c44's extension.rs edit.",
     "R-19: session-3 open: 19fe9394 done-transition was missed at session-2 close (gates had passed); recorded done at session start, commit e364b4cb.",
     "R-17 (OWNER RULING at escalation): extension certificates are HPC validation-cost memoization, not a security boundary ('We do HPC. Not security.'). The reuse path is an explicitly-named unchecked fast path in Rust convention (from_certificate_unchecked), documented as trusting the caller (GIGO); REQ-02's typed-error requirement governs the validating constructors. Supersedes the R2/R3 evidence-policing direction; basis-policy machinery may be simplified away. c3d5cea5 rework counter reset by this guidance.",
-    "R-20: owner directives 2026-09-01 session 3 — hard tasks go to native Opus (Sol retired for this session); peer lead finished, so the forum listener is closed and the /tmp/gf2-main-leads.lock + announce protocol is retired.",
+    "R-20: owner directives 2026-09-01 session 3 \u2014 hard tasks go to native Opus (Sol retired for this session); peer lead finished, so the forum listener is closed and the /tmp/gf2-main-leads.lock + announce protocol is retired.",
     "R-21: 769c3144 doc-review R1 fixed lead-direct: gfpn/mod.rs prose, gf2-core README, lean4-verification-pipeline.md; gfpn::quotient opaqued in scripts/verify-lean.sh and full verify-lean.sh re-run green (runtime Vec storage, same class as gf2m).",
-    "R-22: OWNER ORDER mid-wave-5 — the Opus worker on 0e706bf5 sub-delegated implementation to codex (following the global CLAUDE.md Luna-delegation rule); owner ordered it stopped immediately. Lead killed the codex child (it had written zero edits in ~16 min), ordered native implementation; worker complied and delivered natively. STANDING RULE: every hard-task dispatch prompt must carry an explicit no-delegation clause overriding the global delegation rule.",
-    "R-23: 0e706bf5 findings — footprint finding on un-suffixed ConstExt::new tracked as enhancement c9022d14 (dep-wired to 0e706bf5); extension-design.md R-01 residual amended with the const-quotient resolution (validating ctor + harness registration through it); doc link refresh required after amendment.",
+    "R-22: OWNER ORDER mid-wave-5 \u2014 the Opus worker on 0e706bf5 sub-delegated implementation to codex (following the global CLAUDE.md Luna-delegation rule); owner ordered it stopped immediately. Lead killed the codex child (it had written zero edits in ~16 min), ordered native implementation; worker complied and delivered natively. STANDING RULE: every hard-task dispatch prompt must carry an explicit no-delegation clause overriding the global delegation rule.",
+    "R-23: 0e706bf5 findings \u2014 footprint finding on un-suffixed ConstExt::new tracked as enhancement c9022d14 (dep-wired to 0e706bf5); extension-design.md R-01 residual amended with the const-quotient resolution (validating ctor + harness registration through it); doc link refresh required after amendment.",
     "R-24: 8aa98a25 dispatch prompt wrongly listed the full coordinate set as an error case; the epic's boundary-code contract (REQ-04/REQ-05) makes it the zero-length zero-dimensional code. Fixed lead-direct through code-review R1+R2. Check future transform prompts (puncture 5233867e, extend 981c5ae3) against the boundary-code contract before dispatch.",
-    "R-25: 230dd84d scope rulings — BchSpec declares only the two primitive consecutive-root variants (later flavor tasks add their variants with their constructions; five-variant stub enum rejected as in-scope-deferral); resolve_root already implements both RootSelection arms. bch::BchCode short name stays with the legacy type until cutover-removal claims it. Filed dfd9e0c5 (promote integer gcd + x^n-1 helper to gf2-core) and 174295c9 (flaky symlink test + CI log retention).",
-    "R-26: wave-7 lead-direct closures — legacy generator_matrix cache removed early (reviewer cited canonical-cutover; consumers snapshot at construction); BchError::WorkspaceMismatch variant added to bch/error.rs (lead-owned footprint extension); SYSTEMATIC_ENCODING_CONVENTION.md rewritten from 6a1b2404's spec; bch/mod.rs Organization updated; single authoritative merged-tree CI covered the five-merge batch plus fixes (per-merge CI skipped under load after per-issue full-suite evidence — deviation recorded).",
-    "R-27: proof-sketch rulings baked for lean waves — layout: all five proof modules under proofs/Gf2Core/Proofs/ (existing sorry-filter gate covers them; no gate-script edit); footprint delta per lean task: its module file + one import line in proofs/Gf2Core.lean; REQUIRED new tests: d7749931 adds base_order_mod_matches_the_hand_computed_multiplier (GF(81)/GF(9) and TrivialExt d_B=64 witnesses); 32f53280 adds canonical_index_decodes_to_its_prime_coordinates (GF(16),GF(125),GF(81)/GF(9)) + reduction_is_invariant_under_multiples_of_the_modulus + tower_coordinates_vary_the_base_coordinate_fastest; b1bd75ca adds the_generator_vanishes_at_every_defining_set_root. Vandermonde minimum-distance step tracked as 501cf341, out of b1bd75ca scope.",
-    "R-31 (session 6): d54cf660's matrix.rs deviates from the approved matrix contract (bch-api-design.md §Generator and parity-check contracts: 'row i is the encoding of message basis vector i' in the user layout). Filed bug 444c06bc inside the epic as bd0edfa2's prerequisite; bd0edfa2 optimizes the corrected (systematic user-layout) reference. One Opus worker delivers both sequentially in worktree agent-bd0edfa2 with per-issue-tagged commits; gates evaluated per issue on the merged tree.",
-    "R-32 (session 6): automatic field selection API for 1c9a0f9f — gf2-core gains `SelectExtension` (trait in field/modulus_select.rs: `fn select(base: Self::Base, degree: usize) -> Result<Self, ModulusSelectionError>`) implemented for QuotientField<B> and BinaryPrimeExt<V>; spec.rs adds the five design-exact explicit conveniences plus `_auto` counterparts for the four base-field-only-input variants (primitive_narrow_sense_auto, primitive_auto, consecutive_roots_auto, from_root_seeds_auto; root = Canonical); from_generator composes with select. BchError gains ModulusSelection(ModulusSelectionError). Footprint additions: crates/gf2-core/src/field/modulus_select.rs, crates/gf2-coding/src/bch/error.rs.",
-    "R-33 (session 6): R-27 over-listed 32f53280's required tests — `tower_coordinates_vary_the_base_coordinate_fastest` already exists (extension.rs:3543) and is an L2.7 anchor; the proof sketch (O-2 §3) requires exactly two new tests: reduction_is_invariant_under_multiples_of_the_modulus and canonical_index_decodes_to_its_prime_coordinates. Dispatch follows the sketch.",
+    "R-25: 230dd84d scope rulings \u2014 BchSpec declares only the two primitive consecutive-root variants (later flavor tasks add their variants with their constructions; five-variant stub enum rejected as in-scope-deferral); resolve_root already implements both RootSelection arms. bch::BchCode short name stays with the legacy type until cutover-removal claims it. Filed dfd9e0c5 (promote integer gcd + x^n-1 helper to gf2-core) and 174295c9 (flaky symlink test + CI log retention).",
+    "R-26: wave-7 lead-direct closures \u2014 legacy generator_matrix cache removed early (reviewer cited canonical-cutover; consumers snapshot at construction); BchError::WorkspaceMismatch variant added to bch/error.rs (lead-owned footprint extension); SYSTEMATIC_ENCODING_CONVENTION.md rewritten from 6a1b2404's spec; bch/mod.rs Organization updated; single authoritative merged-tree CI covered the five-merge batch plus fixes (per-merge CI skipped under load after per-issue full-suite evidence \u2014 deviation recorded).",
+    "R-27: proof-sketch rulings baked for lean waves \u2014 layout: all five proof modules under proofs/Gf2Core/Proofs/ (existing sorry-filter gate covers them; no gate-script edit); footprint delta per lean task: its module file + one import line in proofs/Gf2Core.lean; REQUIRED new tests: d7749931 adds base_order_mod_matches_the_hand_computed_multiplier (GF(81)/GF(9) and TrivialExt d_B=64 witnesses); 32f53280 adds canonical_index_decodes_to_its_prime_coordinates (GF(16),GF(125),GF(81)/GF(9)) + reduction_is_invariant_under_multiples_of_the_modulus + tower_coordinates_vary_the_base_coordinate_fastest; b1bd75ca adds the_generator_vanishes_at_every_defining_set_root. Vandermonde minimum-distance step tracked as 501cf341, out of b1bd75ca scope.",
+    "R-31 (session 6): d54cf660's matrix.rs deviates from the approved matrix contract (bch-api-design.md \u00a7Generator and parity-check contracts: 'row i is the encoding of message basis vector i' in the user layout). Filed bug 444c06bc inside the epic as bd0edfa2's prerequisite; bd0edfa2 optimizes the corrected (systematic user-layout) reference. One Opus worker delivers both sequentially in worktree agent-bd0edfa2 with per-issue-tagged commits; gates evaluated per issue on the merged tree.",
+    "R-32 (session 6): automatic field selection API for 1c9a0f9f \u2014 gf2-core gains `SelectExtension` (trait in field/modulus_select.rs: `fn select(base: Self::Base, degree: usize) -> Result<Self, ModulusSelectionError>`) implemented for QuotientField<B> and BinaryPrimeExt<V>; spec.rs adds the five design-exact explicit conveniences plus `_auto` counterparts for the four base-field-only-input variants (primitive_narrow_sense_auto, primitive_auto, consecutive_roots_auto, from_root_seeds_auto; root = Canonical); from_generator composes with select. BchError gains ModulusSelection(ModulusSelectionError). Footprint additions: crates/gf2-core/src/field/modulus_select.rs, crates/gf2-coding/src/bch/error.rs.",
+    "R-33 (session 6): R-27 over-listed 32f53280's required tests \u2014 `tower_coordinates_vary_the_base_coordinate_fastest` already exists (extension.rs:3543) and is an L2.7 anchor; the proof sketch (O-2 \u00a73) requires exactly two new tests: reduction_is_invariant_under_multiples_of_the_modulus and canonical_index_decodes_to_its_prime_coordinates. Dispatch follows the sketch.",
     "R-34 (session 6): `jit validate` failed on two labels `enforces:@/inv/caller-trusted-fast-paths` (c3d5cea5, c9022d14): the dangling-item-link rule does not honor the `inv` alias that `jit item show` accepts. Labels normalized to `enforces:@/invariant/caller-trusted-fast-paths`; validate green. Alias defect belongs to jit (report upstream).",
     "R-35 (session 7): 3f7edef1 (oracle-agreement) re-slotted from wave 11 into wave 10 as a late addition once its last dependency 1c9a0f9f reached done: its footprint (new tests/bch_oracle_agreement.rs, tests/data fixtures, dev/ oracle scripts + provenance doc) is disjoint from the three running wave-10 workers, it is the longest wave-11 item (two external oracles across the corpus plus research-review), and waiting for the wave-10 close would idle it for hours. Wave 10 now closes only when it is done too. Hidden dependencies wired: 5ee83cd3 and e1e0e7ff now depend on 444c06bc (GLDPC reads G=[I|P]; the conformance suite's matrix invariants assert the systematic contract).",
-    "R-36 (session 7): 2b6968d3 code-review R1 F1 read the issue text literally (kernels through the existing carry-less-multiply primitives; one combined predicate covering AVX2 plus carry-less multiply). The bit-sliced family the survey assigned needs AVX2 alone, so the rework ADDS a second packed family `clmul-fold` (64 message bits per step; Barrett quotient by one carry-less multiply with mu = floor(x^(r+64)/g), then ceil(r/64) multiplies by g's words) behind one combined bundle predicate `avx2 && pclmulqdq && sse4.1`, with a scalar-clmul twin, rather than amending the issue description (invariant 4) or dropping the survey's family. The survey contract §7 gains a `clmul-fold` row when the rework lands.",
-    "R-35b (session 7): d7749931 (lean-closure) pulled into wave 10 on the same grounds as R-35 once 32f53280 reached done: footprint proofs/Gf2Core/Proofs/CyclotomicClosure.lean + one import line + gf2-core extension.rs tests, disjoint from every running worker."
+    "R-36 (session 7): 2b6968d3 code-review R1 F1 read the issue text literally (kernels through the existing carry-less-multiply primitives; one combined predicate covering AVX2 plus carry-less multiply). The bit-sliced family the survey assigned needs AVX2 alone, so the rework ADDS a second packed family `clmul-fold` (64 message bits per step; Barrett quotient by one carry-less multiply with mu = floor(x^(r+64)/g), then ceil(r/64) multiplies by g's words) behind one combined bundle predicate `avx2 && pclmulqdq && sse4.1`, with a scalar-clmul twin, rather than amending the issue description (invariant 4) or dropping the survey's family. The survey contract \u00a77 gains a `clmul-fold` row when the rework lands.",
+    "R-35b (session 7): d7749931 (lean-closure) pulled into wave 10 on the same grounds as R-35 once 32f53280 reached done: footprint proofs/Gf2Core/Proofs/CyclotomicClosure.lean + one import line + gf2-core extension.rs tests, disjoint from every running worker.",
+    "R-37 (session 8): bd0edfa2 code-review R1 F1 (bench measures the DVB-T2 W2 rows at mother length, contract \u00a7 9's 177bdc85 amendment covers only differential evidence). The canonical model has no shortened presentation before cutover-dvbt2 (97410c80) and Shortened<C> materializes a dense generator by RREF at construction, so the 7032\u00d77200 and 32208\u00d732400 cells are unworkable for genmatrix-perf today. Resolution through the contract's own rule (\u00a7 9: a consumer that finds a cell unworkable amends the document as a dated subsection naming the issue): the rework adds a dated bd0edfa2 amendment declaring the T2 rows measured at mother length for genmatrix-perf's REQ-02 improvement evidence only, with the perf-receipts (fd9d5416) and external-comparison cells unchanged. Same root cause failing again \u2192 escalate (MAX_SAME_FINDING_REPEATS).",
+    "R-38 (session 8): 444c06bc cargo-ci failure root-caused to t2s_mother_row_matches_the_oracle_generator at 7.854 s isolated on an idle host against the 8 s fast-tier kill (test-tier-budgets); the rework replaces it with a sampled-row fast-tier witness and keeps the full T2S/T2N mother comparison in the ignored slow tier. The five gf2-algebra timeouts in the same run are pre-existing load artifacts, not attributable."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
@@ -674,14 +683,14 @@
     "codex rollout probe: find -newermt relative to dispatch under ~/.codex/sessions/YYYY/MM/DD returned a false negative once while the rollout existed; verify with pgrep + a direct ls of the session dir before declaring a deadlock.",
     "jit issue claim silently no-ops via tail-swallowed error on dep-blocked issues (they refuse in_progress); use jit issue assign for advisory ownership of blocked issues and verify assignee afterward.",
     "git add .jit sweeps OTHER leads' unstaged gate/issue writes (peer gate evaluations write .jit outside their lock window; incident 692f0653). Under the lock: verify git status --porcelain .jit is clean BEFORE your own jit writes, commit immediately after, and never use commit -am.",
-    "codex sandbox_workspace_write.writable_roots=[.git/worktrees/<name>] is NOT enough for worker commits: commits also write .git/objects and refs/heads (shared, read-only to the sandbox). Workers may leave a stale index citing never-written blobs — git reset before git add -A when committing on their behalf.",
-    "A `static` inside a generic fn or generic inherent impl is SHARED across all monomorphizations in Rust — a naive once-per-type OnceLock validation cache memoizes the FIRST type's answer for every type (silent wrong-field bug). Verified empirically by worker-0e706bf5. Use a per-instance certificate/memo value instead.",
+    "codex sandbox_workspace_write.writable_roots=[.git/worktrees/<name>] is NOT enough for worker commits: commits also write .git/objects and refs/heads (shared, read-only to the sandbox). Workers may leave a stale index citing never-written blobs \u2014 git reset before git add -A when committing on their behalf.",
+    "A `static` inside a generic fn or generic inherent impl is SHARED across all monomorphizations in Rust \u2014 a naive once-per-type OnceLock validation cache memoizes the FIRST type's answer for every type (silent wrong-field bug). Verified empirically by worker-0e706bf5. Use a per-instance certificate/memo value instead.",
     "Native subagents inherit the user's global CLAUDE.md, including its delegate-to-codex rule; a hard task assigned to a native model needs an explicit no-delegation clause in the dispatch prompt or the subagent will sub-delegate (R-22 incident).",
     "The unidentified external process-killer now also kills the lead's harness background tasks (three kills in ~15 min: one CI twice, one poller). Mitigation that works: setsid-detached nohup process writing a done-file, watched by a Monitor tool loop that checks the done-file AND process liveness.",
     "The shared cache pool can carry STALE FINGERPRINTS whose artifacts are gone (harvest raced/partial): cargo believes units fresh, skips rebuilds, and E0463 surfaces at a distant consumer (gf2-kernels-hip). Symptom of debug: many conflicting rmeta candidates listed by rustc are the search residue, not the cause. Fix: prune the affected crates' .fingerprint trees AND deps artifacts together in the pool (done for gf2-core/simd/hip/coding, both profiles).",
     "SendMessage teammate reports truncate around ~3KB; long worker reports need chunked retrieval (three round-trips for 230dd84d). Ask workers to lead with actionable items, details after.",
-    "A doc fix that scopes a claim to 'current public variants' goes stale one wave later when the next variant lands — write doc claims against the design's END state or name the variant explicitly (37c288cf R1 was the lead's own 230dd84d fix).",
-    "cargo-budget.sh:71-74 asserts workspace crates never hit across worktrees — false for pooled/hardlinked artifacts (path-baked env!(CARGO_MANIFEST_DIR) test binaries). Purge such binaries from the pool (done for gf2pow32_*); tool fix belongs upstream.",
+    "A doc fix that scopes a claim to 'current public variants' goes stale one wave later when the next variant lands \u2014 write doc claims against the design's END state or name the variant explicitly (37c288cf R1 was the lead's own 230dd84d fix).",
+    "cargo-budget.sh:71-74 asserts workspace crates never hit across worktrees \u2014 false for pooled/hardlinked artifacts (path-baked env!(CARGO_MANIFEST_DIR) test binaries). Purge such binaries from the pool (done for gf2pow32_*); tool fix belongs upstream.",
     "`jit validate`'s dangling-item-link rule rejects the `@/inv/` alias in `enforces:` labels even though `jit item show @/inv/...` resolves it; use the full kind name `@/invariant/` in labels (R-34).",
     "RESOLVED 2026-09-02: the jit gate-evaluate checker re-run defect is fixed in the installed binary (~/.cargo/bin/jit built 2026-08-31 22:34 EEST, after just-in-time commit 64473d04f 'execute a gate checker at most once per evaluation' at 22:19). Keep main's working tree clean during a gate run because the cargo-ci gate judges the tree, but a verdict is no longer discarded on input drift.",
     "Pool-seeded target/ hardlinks share cargo fingerprints across worktrees: cargo can report a stale gf2-kernels-simd rlib as fresh under ci-test and a dependent crate then fails to resolve a new module. `find crates/<crate>/src -name '*.rs' -exec touch {} +` forces the rebuild (2b6968d3 worker, session 7).",
@@ -692,17 +701,20 @@
     "Reclaimed merged worktrees agent-{18a160f5,64fd3afd,6d67e57e,8f68699b,c3cc5226}; deleted their merged branches; agent-6d67e57e-r2 kept (rework), agent-4e732b56 kept (baselines).",
     "c3cc5226 receipt dev/bench_results/c3cc5226/hip-outcome-identity-receipt.md is NOT yet jit-doc-linked; link after rework merges.",
     "Wave 9 closed: all four issues done. Worktrees reclaimed, branches deleted, leak checks clean.",
-    "Lead ruling R-28: 6d67e57e rework may migrate sim_runner (binary) to ExtendedBchComponent — mechanical swap on existing API, shrinks ef8ff9c4.",
-    "Lead ruling R-29: 177bdc85 cargo-ci.sh extension accepted (3 steps: tuning-coding-no-default/codec-only/codec) — mechanical mirror of the gf2-core/gf2-algebra tuning rows; validated by the 19-step gate run.",
-    "Lead ruling R-30: workload-selection.md §9 amendment accepted (T2S/T2N differential at mother length until 97410c80); 4e732b56 doc link refreshed."
+    "Lead ruling R-28: 6d67e57e rework may migrate sim_runner (binary) to ExtendedBchComponent \u2014 mechanical swap on existing API, shrinks ef8ff9c4.",
+    "Lead ruling R-29: 177bdc85 cargo-ci.sh extension accepted (3 steps: tuning-coding-no-default/codec-only/codec) \u2014 mechanical mirror of the gf2-core/gf2-algebra tuning rows; validated by the 19-step gate run.",
+    "Lead ruling R-30: workload-selection.md \u00a79 amendment accepted (T2S/T2N differential at mother length until 97410c80); 4e732b56 doc link refreshed."
   ],
   "session_notes_s6": [
     "Session 6 (2026-09-02 00:30): resumed at wave 10; pool purged of gf2pow32_* (72 files); bug 444c06bc filed and wired; labels normalized; wave 10 claims recorded.",
-    "Wave 10 dispatched 2026-09-01T21:40Z at main 6a2394fb: worktrees agent-{2b6968d3,1c9a0f9f,bd0edfa2,32f53280}; 2b6968d3/32f53280 → native Opus subagents (worker-<id>); 444c06bc+bd0edfa2 → one native Opus subagent (worker-bd0edfa2) sequentially in agent-bd0edfa2; 1c9a0f9f → codex exec gpt-5.6-luna xhigh (detached, setsid; done-file + Monitor; lead commits its tree). Snapshot /tmp/lead-pre-dispatch-20260901-214030.txt."
+    "Wave 10 dispatched 2026-09-01T21:40Z at main 6a2394fb: worktrees agent-{2b6968d3,1c9a0f9f,bd0edfa2,32f53280}; 2b6968d3/32f53280 \u2192 native Opus subagents (worker-<id>); 444c06bc+bd0edfa2 \u2192 one native Opus subagent (worker-bd0edfa2) sequentially in agent-bd0edfa2; 1c9a0f9f \u2192 codex exec gpt-5.6-luna xhigh (detached, setsid; done-file + Monitor; lead commits its tree). Snapshot /tmp/lead-pre-dispatch-20260901-214030.txt."
   ],
   "session_notes_s7": [
     "Session 7 (2026-09-02 08:20 EEST): session 6 died at the Claude session limit ~25 min after wave-10 dispatch (no handoff-5); state reconstructed from progress.json, the session-6 transcript (dispatch prompts recovered), worker transcripts, and the codex rollout. Luna had finished 1c9a0f9f (report in its rollout); the three Opus workers left uncommitted early WIP. Lead committed Luna's tree (7d85e5d3) plus a lead-direct `# Errors` rustdoc addition on the four _auto constructors (af5f8d3e), merged 398bc940, claimed as lead; re-dispatched 2b6968d3, 444c06bc+bd0edfa2, 32f53280 to fresh native Opus subagents with a resume preface (review the WIP as a colleague's draft, commit early), main bc951ba3 merged into every wave-10 branch first.",
-    "codex weekly quota was at 92% at 2026-09-01T22:30Z (resets 2026-09-07 17:56 EEST); Luna dispatches may be refused — fall back to native Sonnet for easy tasks if codex errors on quota.",
+    "codex weekly quota was at 92% at 2026-09-01T22:30Z (resets 2026-09-07 17:56 EEST); Luna dispatches may be refused \u2014 fall back to native Sonnet for easy tasks if codex errors on quota.",
     "Environment: GAP GUAVA was not installed (LoadPackage failed; needs SONATA). Installed user-locally into ~/.gap/pkg: guava-3.21 + sonata-2.9.8 from gap-packages GitHub releases; GAP 4.16dev + GUAVA 3.21 BCHCode(15,1,7,GF(2)) agrees with SageMath 10.9 codes.BCHCode(GF(2),15,7) (g = x^10+x^8+x^5+x^4+x^2+x+1, k=5). GUAVA C binaries not compiled (only IsEquivalent-class functions unavailable)."
+  ],
+  "session_notes_s8": [
+    "Session 8 (2026-09-02 13:40 EEST): session 7 died at the rate limit ~10:20 EEST with no handoff-5; state reconstructed from progress.json, git log, gate records, and the eight still-live idle teammates (worker-* from sessions 6/7). Uncommitted session-7 gate records committed (28fbb090). Live workers queried for status; bd0edfa2+444c06bc rework 1 dispatched to worker-bd0edfa2-2 via prompt file in the scratchpad."
   ]
 }
