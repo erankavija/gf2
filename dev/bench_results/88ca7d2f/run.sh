@@ -22,9 +22,21 @@ RECEIPT_FILE="${OUT_DIR}/${DATE_UTC}-${ISSUE}-precutover-bch-baseline.md"
 
 # Bench target -> criterion filter regex. Both files' non-BCH groups (the two
 # `ldpc_*` groups in batch_operations.rs) are excluded by the filter so only
-# legacy-BCH groups are measured and copied.
+# legacy-BCH groups are measured.
 BENCH_TARGETS=(bch_parallel batch_operations)
 BENCH_FILTER='bch_'
+
+# The exact Criterion benchmark IDs this receipt records, as Criterion names
+# them (`<group>/<function-or-parameter>`). Only these are collected, each from
+# its own `target/criterion/<id>/new/` directory, so a stale artifact of any
+# other benchmark on the host (for example the canonical-model groups of
+# `bch_genmatrix.rs`, which also start with `bch_`) never reaches the receipt.
+BENCH_IDS=(
+  bch_batch/1 bch_batch/10 bch_batch/50 bch_batch/100
+  bch_batch_decode/1 bch_batch_decode/10 bch_batch_decode/50 bch_batch_decode/100
+  bch_sequential_vs_batch/batch_operation bch_sequential_vs_batch/sequential_loop
+  bch_single_vs_batch/batch_api bch_single_vs_batch/single_loop
+)
 
 if [[ -n "$(git status --porcelain)" ]]; then
   echo "ERROR: working tree is dirty; commit or stash before running the baseline." >&2
@@ -34,6 +46,9 @@ fi
 
 REVISION="$(git rev-parse HEAD)"
 
+# Start from an empty sample directory so a rerun carries only this run's
+# artifacts.
+rm -rf "$SAMPLES_DIR"
 mkdir -p "$SAMPLES_DIR"
 
 MEASUREMENT_START_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -90,26 +105,28 @@ MEASUREMENT_END_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "end_utc: ${MEASUREMENT_END_UTC}"
 } >>"$HOST_FILE"
 
-# Copy each measured benchmark's Criterion JSON output. Criterion's directory
-# layout mirrors the benchmark id's slashes (target/criterion/<group>/<param>
-# for a parameterized id, target/criterion/<group>/<function> otherwise), so
-# walk for benchmark.json under a `new/` leaf and sanitize the id for the
-# destination directory name.
-find target/criterion -mindepth 1 -type f -name benchmark.json -path '*/new/benchmark.json' -print0 |
-  while IFS= read -r -d '' bench_json; do
-    src_dir="$(dirname "$bench_json")"
-    full_id="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['full_id'])" "$bench_json")"
-    case "$full_id" in
-      bch_*)
-        sanitized="${full_id//\//_}"
-        dest_dir="${SAMPLES_DIR}/${sanitized}"
-        mkdir -p "$dest_dir"
-        cp "$src_dir/estimates.json" "$src_dir/sample.json" "$src_dir/benchmark.json" "$dest_dir/"
-        ;;
-      *)
-        ;;
-    esac
-  done
+# Copy exactly the enumerated benchmarks' Criterion JSON output. Criterion's
+# directory layout mirrors the benchmark id's slashes
+# (target/criterion/<group>/<param> for a parameterized id,
+# target/criterion/<group>/<function> otherwise), and `new/` is the leaf this
+# run wrote. A missing or mislabelled artifact fails the run rather than
+# leaving a gap in the receipt.
+for full_id in "${BENCH_IDS[@]}"; do
+  src_dir="target/criterion/${full_id}/new"
+  bench_json="${src_dir}/benchmark.json"
+  if [[ ! -f "$bench_json" ]]; then
+    echo "ERROR: no Criterion output for ${full_id} at ${src_dir}" >&2
+    exit 1
+  fi
+  recorded_id="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['full_id'])" "$bench_json")"
+  if [[ "$recorded_id" != "$full_id" ]]; then
+    echo "ERROR: ${bench_json} records benchmark id ${recorded_id}, expected ${full_id}" >&2
+    exit 1
+  fi
+  dest_dir="${SAMPLES_DIR}/${full_id//\//_}"
+  mkdir -p "$dest_dir"
+  cp "$src_dir/estimates.json" "$src_dir/sample.json" "$src_dir/benchmark.json" "$dest_dir/"
+done
 
 python3 "${OUT_DIR}/render_receipt.py" "$OUT_DIR" "$ISSUE" "$DATE_UTC" >"$RECEIPT_FILE"
 
