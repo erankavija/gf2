@@ -41,12 +41,15 @@
 //!
 //! # Representation
 //!
-//! [`SymbolMatrix`] exposes single-coordinate accessors, which the packed
-//! word-level step cannot be written through, so materialization dispatches
-//! through a private trait that each canonical matrix representation
-//! implements over its own storage. That keeps one canonical trait set: the
-//! specialization is by matrix representation, as the packed binary storage
-//! decision states, rather than a second public matrix hierarchy.
+//! [`SymbolMatrix`] is the storage contract and [`MatrixFill`] is the
+//! materialization contract over it. [`MatrixFill`] carries provided bodies
+//! that write both canonical matrices through the storage accessors alone, so
+//! a representation opts into canonical-matrix access with an empty
+//! implementation. The two canonical representations override them:
+//! [`BitMatrix`] with the packed word-level path that single-coordinate
+//! accessors cannot express, and [`FieldMatrix`] with a row-slice path. One
+//! canonical trait set covers both, and the specialization is by matrix
+//! representation, as the packed binary storage decision states.
 //!
 //! # Complexity
 //!
@@ -141,21 +144,186 @@ where
     Ok(())
 }
 
+/// The panic message for a coordinate the caller's shape check has already
+/// placed in range.
+const IN_RANGE: &str = "the caller has checked the output shape";
+
 /// Materialization of the canonical matrices over one matrix representation.
 ///
 /// A caller checks the output shape before dispatching here, so an
 /// implementation writes only in-range coordinates, overwrites every
 /// coordinate of its output, and cannot fail. `dimension` is the code's $k$;
 /// the redundancy and the length follow from the output's own shape.
-trait MatrixFill<F>: SymbolMatrix<F>
+/// [`fill_generator`](Self::fill_generator) writes $G = [\,I_k \mid P\,]$ and
+/// [`fill_parity_check`](Self::fill_parity_check) writes
+/// $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$, both in the default user layout
+/// this module documents.
+///
+/// Both methods carry provided bodies that run the module's recurrence one
+/// coordinate at a time through [`SymbolMatrix::get`] and
+/// [`SymbolMatrix::set`] with base-field arithmetic. They are correct over
+/// every representation, so a representation opts into canonical-matrix
+/// access with an empty implementation. Overriding is a performance choice:
+/// [`BitMatrix`] overrides both with the packed word-level path that
+/// single-coordinate accessors cannot express, and [`FieldMatrix`] with a
+/// row-slice path.
+///
+/// # Examples
+///
+/// A row-major representation reaches both canonical matrices through an
+/// empty implementation:
+///
+/// ```
+/// use gf2_coding::bch::matrix::MatrixFill;
+/// use gf2_coding::bch::spec::{BchCode, BchSpec, DesignedDistance};
+/// use gf2_coding::error::CodeError;
+/// use gf2_coding::traits::block::{BlockCode, GeneratorMatrixAccess, SymbolMatrix};
+/// use gf2_core::field::extension::{BinaryPrimeExt, FieldIdentity};
+/// use gf2_core::field::{FieldVec, FiniteField};
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::gfp::Fp;
+///
+/// #[derive(Clone, Debug, PartialEq, Eq)]
+/// struct RowMajor<F> {
+///     cells: Vec<Vec<F>>,
+///     cols: usize,
+/// }
+///
+/// impl<F: FieldIdentity + 'static> SymbolMatrix<F> for RowMajor<F> {
+///     fn zeroed(rows: usize, cols: usize, zero: &F) -> Self {
+///         RowMajor { cells: vec![vec![zero.clone(); cols]; rows], cols }
+///     }
+///
+///     fn rows(&self) -> usize {
+///         self.cells.len()
+///     }
+///
+///     fn cols(&self) -> usize {
+///         self.cols
+///     }
+///
+///     fn get(&self, row: usize, col: usize) -> Option<F> {
+///         self.cells.get(row).and_then(|values| values.get(col)).cloned()
+///     }
+///
+///     fn set(&mut self, row: usize, col: usize, value: F) -> Result<(), CodeError> {
+///         let rows = self.cells.len();
+///         let values = self.cells.get_mut(row).ok_or(CodeError::IndexOutOfBounds {
+///             index: row,
+///             length: rows,
+///         })?;
+///         let cols = values.len();
+///         let cell = values.get_mut(col).ok_or(CodeError::IndexOutOfBounds {
+///             index: col,
+///             length: cols,
+///         })?;
+///         *cell = value;
+///         Ok(())
+///     }
+/// }
+///
+/// // The whole opt-in.
+/// impl<F: FieldIdentity + 'static> MatrixFill<F> for RowMajor<F> {}
+///
+/// let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
+/// let code: BchCode<_, FieldVec<Fp<2>>, RowMajor<Fp<2>>> =
+///     BchCode::construct(BchSpec::PrimitiveNarrowSense {
+///         extension,
+///         designed_distance: DesignedDistance::try_from(5).unwrap(),
+///     })
+///     .unwrap();
+///
+/// let generator = code.generator_matrix().unwrap();
+/// assert_eq!((generator.rows(), generator.cols()), (code.k(), code.n()));
+/// for row in 0..code.k() {
+///     for col in 0..code.k() {
+///         assert_eq!(generator.get(row, col).unwrap().is_one(), row == col);
+///     }
+/// }
+/// ```
+pub trait MatrixFill<F>: SymbolMatrix<F>
 where
     F: FieldIdentity,
 {
     /// Writes $G = [\,I_k \mid P\,]$.
-    fn fill_generator(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F);
+    ///
+    /// The provided body seeds the parity block of row zero with $g$,
+    /// advances $P_{i,j} = P_{i-1,\,j-1} - P_{i-1,\,r-1}\,g_j$ inside the
+    /// output, and writes the identity column last, so every row the
+    /// recurrence reads carries its parity block alone.
+    fn fill_generator(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F) {
+        let length = self.cols();
+        let redundancy = length - dimension;
+        for row in 0..self.rows() {
+            for col in 0..length {
+                self.set(row, col, zero.clone()).expect(IN_RANGE);
+            }
+        }
+        if dimension == 0 {
+            return;
+        }
+        let one = zero.one_like();
+        if redundancy == 0 {
+            for row in 0..dimension {
+                self.set(row, row, one.clone()).expect(IN_RANGE);
+            }
+            return;
+        }
+
+        for degree in 0..redundancy {
+            self.set(0, dimension + degree, generator.coeff(degree))
+                .expect(IN_RANGE);
+        }
+        for row in 1..dimension {
+            let reduce = self.get(row - 1, length - 1).expect(IN_RANGE);
+            for degree in (1..redundancy).rev() {
+                let carried = self.get(row - 1, dimension + degree - 1).expect(IN_RANGE);
+                let value = carried - reduce.clone() * generator.coeff(degree);
+                self.set(row, dimension + degree, value).expect(IN_RANGE);
+            }
+            let value = -(reduce * generator.coeff(0));
+            self.set(row, dimension, value).expect(IN_RANGE);
+        }
+
+        for row in 0..dimension {
+            self.set(row, row, one.clone()).expect(IN_RANGE);
+        }
+    }
 
     /// Writes $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$.
-    fn fill_parity_check(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F);
+    ///
+    /// The provided body reads the same recurrence on columns: column $i$ of
+    /// the leading block is $-P_i$, so the output is the only state the walk
+    /// needs.
+    fn fill_parity_check(&mut self, generator: &FieldPoly<F>, dimension: usize, zero: &F) {
+        let redundancy = self.rows();
+        let length = self.cols();
+        let one = zero.one_like();
+        for row in 0..redundancy {
+            for col in 0..length {
+                self.set(row, col, zero.clone()).expect(IN_RANGE);
+            }
+            self.set(row, dimension + row, one.clone()).expect(IN_RANGE);
+        }
+        if dimension == 0 || redundancy == 0 {
+            return;
+        }
+
+        for degree in 0..redundancy {
+            let value = -generator.coeff(degree);
+            self.set(degree, 0, value).expect(IN_RANGE);
+        }
+        for column in 1..dimension {
+            let reduce = self.get(redundancy - 1, column - 1).expect(IN_RANGE);
+            for degree in (1..redundancy).rev() {
+                let carried = self.get(degree - 1, column - 1).expect(IN_RANGE);
+                let value = carried - reduce.clone() * generator.coeff(degree);
+                self.set(degree, column, value).expect(IN_RANGE);
+            }
+            let value = -(reduce * generator.coeff(0));
+            self.set(0, column, value).expect(IN_RANGE);
+        }
+    }
 }
 
 impl MatrixFill<Fp<2>> for BitMatrix {
