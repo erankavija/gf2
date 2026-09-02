@@ -15,7 +15,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-02T05:37:11.064342696Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "1c9a0f9f-3fa5-4728-85b7-5354448af01f",
   "labels": [
     "type:task",
@@ -26,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Add delegating convenience constructors with automatic field selection",
-  "updated_at": "2026-09-02T05:29:18.001390632Z"
+  "updated_at": "2026-09-02T05:37:11.064342696Z"
 }

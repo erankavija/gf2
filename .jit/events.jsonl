@@ -10737,3 +10737,4 @@
 {"assignee":"agent:worker","id":"0fe0c5f0-59cf-437a-a598-288317070649","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","reason":"worker finished; lead takes over for merge and gates","timestamp":"2026-09-02T05:29:09.075791838Z","type":"issue_released"}
 {"from":"ready","id":"bf53d3c7-4ed7-4eda-9e37-89f2f69d455b","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-02T05:29:18.001390632Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:jit-execution-lead","id":"68a77aa5-58a2-4553-a23d-44ba9b987df6","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-02T05:29:18.001390632Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"02d296d4-ece1-4a51-bbc3-df663ae07c34","issue_id":"1c9a0f9f-3fa5-4728-85b7-5354448af01f","timestamp":"2026-09-02T05:37:11.064342696Z","type":"gate_passed","updated_by":"auto:executor"}
