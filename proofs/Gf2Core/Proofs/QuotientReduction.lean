@@ -20,9 +20,11 @@
   the same statement on the production path
   `crates/gf2-core/src/gfpn/quotient.rs`. The anchors live in that module's own
   test module and in the shared conformance harness
-  `crates/gf2-core/src/field/axiom_tests.rs`. Two of them are new with this
-  obligation: `reduction_is_invariant_under_multiples_of_the_modulus` and
-  `canonical_index_decodes_to_its_prime_coordinates`.
+  `crates/gf2-core/src/field/axiom_tests.rs`. Two of them carry claims no other
+  check decides: `reduction_is_invariant_under_multiples_of_the_modulus` pins
+  invariance of reduction under multiples of the modulus, and
+  `canonical_index_decodes_to_its_prime_coordinates` pins the canonical index
+  against the prime coordinates.
 
   Axiom footprint: this module declares no axiom and contains no `sorry`. Every
   declaration in both sections rests on `propext`, `Classical.choice` and
