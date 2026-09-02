@@ -311,6 +311,12 @@ where
     fn is_systematic(&self) -> Result<bool, CodeError> {
         self.mother.is_systematic()
     }
+
+    /// Delegates to the mother, whose coordinates keep their positions: the
+    /// zero-sum coordinate is appended after all of them.
+    fn has_canonical_message_order(&self) -> Result<bool, CodeError> {
+        self.mother.has_canonical_message_order()
+    }
 }
 
 /// Provides the canonical parity-check matrix for a zero-sum extension.
@@ -363,6 +369,33 @@ where
     }
 }
 
+/// How a [`Shortened`] value derives its code from its mother.
+///
+/// [`Shortened::derivation`] reports it, so which construction a value took
+/// is an observable property rather than something inferred from timing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ShortenedDerivation {
+    /// The mother's code restricted to the messages that are zero on the
+    /// removed message positions.
+    SystematicRestriction,
+    /// A reduced basis of the mother codewords that vanish on the removed
+    /// coordinates.
+    RankDerived,
+}
+
+/// The data one [`ShortenedDerivation`] stores.
+#[derive(Clone, Debug)]
+enum ShortenedData<F: FiniteField> {
+    /// The RREF generator of the derived code.
+    RankDerived { generator: FieldMatrix<F> },
+    /// The mother message positions the derived code keeps, in ascending
+    /// order.  Entry `i` is the mother position carrying derived message
+    /// symbol `i`.
+    SystematicRestriction {
+        kept_message_positions: Box<[usize]>,
+    },
+}
+
 /// A linear code obtained by shortening a mother code on a coordinate set.
 ///
 /// For a mother generator matrix `G` and a selected set `S`, the shortened
@@ -372,16 +405,37 @@ where
 /// { m G : (m G)[s] = 0 for every s in S }
 /// ```
 ///
-/// The constructor computes a basis of the message vectors satisfying those
-/// constraints, forms the resulting generator, and reduces it to RREF.  Its
-/// rank is the derived dimension; no dimension subtraction formula is used.
-/// The RREF pivot columns are exposed through [`Self::information_set`], so
-/// the information coordinates need not be the mother's systematic
-/// coordinates.  The stored map uses derived-to-mother positions and retains
+/// Two derivations produce that code.  [`Self::derivation`] reports which one
+/// a value holds, and both agree on every observable: coordinate map,
+/// dimension, information set, generator, parity-check matrix, and encoded
+/// codewords.  The stored map uses derived-to-mother positions and retains
 /// the original order of the remaining coordinates.
 ///
-/// `C` needs the canonical block-code and generator-matrix traits.  The
-/// resulting wrapper owns its generator and therefore encodes through the
+/// [`ShortenedDerivation::SystematicRestriction`] applies when the mother
+/// carries message symbol `i` at coordinate `i` — it reports both
+/// [`GeneratorMatrixAccess::is_systematic`] and
+/// [`GeneratorMatrixAccess::has_canonical_message_order`] — and every removed
+/// coordinate is below `k`.  Coordinate `s` of a mother codeword is then
+/// message symbol `s`, so the constraints read `m[s] = 0` and the shortened
+/// code is the mother's restricted to the messages vanishing on the removed
+/// positions.  Its dimension is `k - |S|`, its length `n - |S|`, and its
+/// information set the kept message positions in order, `0..k - |S|`.  The
+/// construction reads the mother's parameters and the coordinate set alone,
+/// so it costs O(`n`) beyond the mother's own construction: it materializes
+/// no generator, solves no nullspace, and reduces nothing to RREF.
+///
+/// [`ShortenedDerivation::RankDerived`] is the derivation for every other
+/// coordinate set and mother.  It materializes the mother generator, solves
+/// the nullspace of the removed-coordinate constraints, forms the resulting
+/// generator, and reduces it to RREF.  That rank is the derived dimension; no
+/// dimension subtraction formula is used.  The RREF pivot columns are exposed
+/// through [`Self::information_set`], so the information coordinates need not
+/// be the mother's systematic coordinates.  The construction costs the
+/// mother's `k × n` materialization and O(`k² n`) field operations, and the
+/// value retains a dense `k' × n'` generator.
+///
+/// `C` needs the canonical block-code and generator-matrix traits, and
+/// encoding needs the mother's [`BlockEncoder`].  Both derivations carry the
 /// generic symbol representation supplied by `C`, including nonbinary fields.
 /// When an extension coordinate is retained while shortening an [`Extended`]
 /// value, its map entry is preserved as a fresh (`None`) coordinate.
@@ -397,8 +451,8 @@ where
     map: CoordinateMap,
     local_map: CoordinateMap,
     removed: Box<[usize]>,
-    generator: FieldMatrix<C::Symbol>,
     information_set: Box<[usize]>,
+    data: ShortenedData<C::Symbol>,
 }
 
 impl<C> Clone for Shortened<C>
@@ -411,8 +465,8 @@ where
             map: self.map.clone(),
             local_map: self.local_map.clone(),
             removed: self.removed.clone(),
-            generator: self.generator.clone(),
             information_set: self.information_set.clone(),
+            data: self.data.clone(),
         }
     }
 }
@@ -428,8 +482,8 @@ where
             .field("mother", &self.mother)
             .field("map", &self.map)
             .field("removed", &self.removed)
-            .field("generator", &self.generator)
             .field("information_set", &self.information_set)
+            .field("data", &self.data)
             .finish()
     }
 }
@@ -443,9 +497,14 @@ where
     /// `coordinates` is an arbitrary set of positions in `mother`, not a
     /// count and not necessarily a systematic prefix.  Coordinates are
     /// sorted for the deletion map, so their input order has no semantic
-    /// effect.  The resulting generator is an RREF basis, and
-    /// [`Self::information_set`] contains its pivot columns in derived-code
-    /// coordinates.
+    /// effect.  [`Self::information_set`] contains the information
+    /// coordinates of the result in derived-code coordinates.
+    ///
+    /// The mother's [`GeneratorMatrixAccess::is_systematic`] and
+    /// [`GeneratorMatrixAccess::has_canonical_message_order`] reports and
+    /// the coordinate set select the derivation, as
+    /// [`ShortenedDerivation`] describes; the mother's generator is
+    /// materialized only for [`ShortenedDerivation::RankDerived`].
     ///
     /// # Errors
     ///
@@ -498,7 +557,10 @@ where
     ///
     /// The conventional layout is positions `0..k`; this helper is therefore
     /// a shorthand for [`Self::new`] with the set `0..count`.  It delegates to
-    /// the coordinate-set constructor, including its validation.
+    /// the coordinate-set constructor, including its validation.  Its set
+    /// lies below `k` by construction, so a mother carrying its message
+    /// symbols in coordinates `0..k` takes
+    /// [`ShortenedDerivation::SystematicRestriction`].
     pub fn shorten_first(mother: C, count: usize) -> Result<Self, CodeError> {
         let coordinates = conventional_prefix(&mother, count)?;
         Self::new(mother, coordinates)
@@ -509,7 +571,9 @@ where
     /// The conventional layout is positions `0..k`; this helper therefore
     /// is a shorthand for [`Self::new`] with the set `k-count..k`.  It
     /// delegates to the coordinate-set constructor, including its
-    /// validation.
+    /// validation.  Its set lies below `k` by construction, so a mother
+    /// carrying its message symbols in coordinates `0..k` takes
+    /// [`ShortenedDerivation::SystematicRestriction`].
     pub fn shorten_last(mother: C, count: usize) -> Result<Self, CodeError> {
         let coordinates = conventional_suffix(&mother, count)?;
         Self::new(mother, coordinates)
@@ -560,11 +624,27 @@ where
         &self.removed
     }
 
+    /// Returns the derivation this value holds.
+    ///
+    /// [`ShortenedDerivation`] describes when each one applies and what it
+    /// costs.
+    pub fn derivation(&self) -> ShortenedDerivation {
+        match &self.data {
+            ShortenedData::RankDerived { .. } => ShortenedDerivation::RankDerived,
+            ShortenedData::SystematicRestriction { .. } => {
+                ShortenedDerivation::SystematicRestriction
+            }
+        }
+    }
+
     /// Returns the derived coordinates that form an information set.
     ///
-    /// The positions are in ascending pivot order and are coordinates of the
-    /// shortened code, not positions in the mother code.  Restricting the
-    /// RREF generator to these columns gives the identity matrix.
+    /// The positions are ascending and are coordinates of the shortened
+    /// code, not positions in the mother code.  Restricting the generator to
+    /// these columns gives the identity matrix, so they are the RREF pivots
+    /// under [`ShortenedDerivation::RankDerived`] and the kept message
+    /// positions in order, `0..k()`, under
+    /// [`ShortenedDerivation::SystematicRestriction`].
     pub fn information_set(&self) -> &[usize] {
         &self.information_set
     }
@@ -577,10 +657,10 @@ where
     /// Returns a codeword in the immediate mother's coordinate space by
     /// reinserting zeroes at the shortened positions.
     ///
-    /// This is the canonical lift used by the shortening contract.  Since
-    /// the wrapper's generator was formed from message vectors satisfying
-    /// the zero constraints, the returned word is a mother-codeword and is
-    /// zero at every position in [`Self::shortened_positions`].
+    /// This is the canonical lift used by the shortening contract.  Both
+    /// derivations produce codewords of mother words that satisfy the zero
+    /// constraints, so the returned word is a mother codeword and is zero at
+    /// every position in [`Self::shortened_positions`].
     pub fn extend_codeword(&self, codeword: &C::Symbols) -> Result<C::Symbols, CodeError> {
         if codeword.len() != self.n() {
             return Err(CodeError::BufferLengthMismatch {
@@ -591,10 +671,7 @@ where
 
         let mut extended = C::Symbols::zeroed(self.mother.n(), &self.symbol_zero());
         for derived_position in 0..self.n() {
-            let mother_position = self
-                .local_map
-                .mother_position(derived_position)
-                .expect("local coordinate map was built from the derived length");
+            let mother_position = self.mother_position(derived_position);
             let symbol = codeword
                 .get(derived_position)
                 .expect("validated derived codeword length");
@@ -609,6 +686,23 @@ where
     }
 }
 
+impl<C> Shortened<C>
+where
+    C: BlockCode,
+{
+    /// Returns the immediate mother coordinate of a derived position.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `derived_position` is at or above [`BlockCode::n`], which
+    /// the deletion map covers by construction.
+    fn mother_position(&self, derived_position: usize) -> usize {
+        self.local_map
+            .mother_position(derived_position)
+            .expect("the local deletion map covers every derived position")
+    }
+}
+
 impl<C> BlockCode for Shortened<C>
 where
     C: BlockCode,
@@ -620,24 +714,38 @@ where
         self.mother.symbol_zero()
     }
 
+    /// Returns the derived dimension.
+    ///
+    /// The information set holds one coordinate per basis vector under both
+    /// derivations, so its length is the dimension.
     fn k(&self) -> usize {
-        self.generator.rows()
+        self.information_set.len()
     }
 
+    /// Returns the derived length, the number of coordinates the deletion
+    /// map keeps.
     fn n(&self) -> usize {
-        self.generator.cols()
+        self.local_map.derived_len()
     }
 }
 
 impl<C> BlockEncoder for Shortened<C>
 where
-    C: BlockCode,
+    C: BlockEncoder,
 {
-    /// Encodes a message with the shortened code's RREF generator.
+    /// Encodes a message under the value's [`ShortenedDerivation`].
+    ///
+    /// [`ShortenedDerivation::RankDerived`] multiplies the message by the
+    /// stored RREF generator.  [`ShortenedDerivation::SystematicRestriction`]
+    /// writes the message symbols at the kept message positions of an
+    /// otherwise zero mother message, encodes that with the mother, and
+    /// drops the removed coordinates.
     ///
     /// # Complexity
     ///
-    /// O(`k · n`) field operations.
+    /// O(`k · n`) field operations for the rank-derived path.  One mother
+    /// encode plus O(`n`) symbol moves for the systematic restriction, in
+    /// two buffers of the mother's size.
     fn encode_into(
         &self,
         message: &Self::Symbols,
@@ -657,15 +765,40 @@ where
         }
 
         let zero = self.symbol_zero();
-        for column in 0..self.n() {
-            let mut value = zero.zero_like();
-            for row in 0..self.k() {
-                let message_symbol = message
-                    .get(row)
-                    .expect("validated shortened message length");
-                value += self.generator.get(row, column) * message_symbol;
+        match &self.data {
+            ShortenedData::RankDerived { generator } => {
+                for column in 0..self.n() {
+                    let mut value = zero.zero_like();
+                    for row in 0..self.k() {
+                        let message_symbol = message
+                            .get(row)
+                            .expect("validated shortened message length");
+                        value += generator.get(row, column) * message_symbol;
+                    }
+                    codeword.set(column, value)?;
+                }
             }
-            codeword.set(column, value)?;
+            ShortenedData::SystematicRestriction {
+                kept_message_positions,
+            } => {
+                let mut mother_message = Self::Symbols::zeroed(self.mother.k(), &zero);
+                for (derived_index, &mother_index) in kept_message_positions.iter().enumerate() {
+                    let symbol = message
+                        .get(derived_index)
+                        .expect("validated shortened message length");
+                    mother_message.set(mother_index, symbol)?;
+                }
+                let mut mother_codeword = Self::Symbols::zeroed(self.mother.n(), &zero);
+                self.mother
+                    .encode_into(&mother_message, &mut mother_codeword)?;
+                for derived_position in 0..self.n() {
+                    let mother_position = self.mother_position(derived_position);
+                    let symbol = mother_codeword
+                        .get(mother_position)
+                        .expect("the deletion map ranges over the mother coordinates");
+                    codeword.set(derived_position, symbol)?;
+                }
+            }
         }
         Ok(())
     }
@@ -677,6 +810,25 @@ where
 {
     type GeneratorMatrix = C::GeneratorMatrix;
 
+    /// Writes the `k() × n()` generator.
+    ///
+    /// [`ShortenedDerivation::RankDerived`] copies the stored RREF
+    /// generator.  [`ShortenedDerivation::SystematicRestriction`] holds no
+    /// generator, so it materializes the mother's `k × n` matrix into one
+    /// temporary buffer of the mother's size and copies the kept rows
+    /// restricted to the kept columns out of it.  That temporary is the only
+    /// memory beyond `out`, and it is released before the call returns.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::ShapeMismatch`] when `out` is not `k() × n()`,
+    /// and propagates the mother's matrix-access errors.
+    ///
+    /// # Complexity
+    ///
+    /// O(`k · n`) symbol moves for the rank-derived path.  The mother's own
+    /// materialization plus O(`k · n`) symbol moves for the systematic
+    /// restriction.
     fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {
         if out.rows() != self.k() || out.cols() != self.n() {
             return Err(CodeError::ShapeMismatch {
@@ -687,10 +839,32 @@ where
             });
         }
 
-        for row in 0..self.k() {
-            for column in 0..self.n() {
-                let value = self.generator.get(row, column);
-                out.set(row, column, value)?;
+        match &self.data {
+            ShortenedData::RankDerived { generator } => {
+                for row in 0..self.k() {
+                    for column in 0..self.n() {
+                        let value = generator.get(row, column);
+                        out.set(row, column, value)?;
+                    }
+                }
+            }
+            ShortenedData::SystematicRestriction {
+                kept_message_positions,
+            } => {
+                let mut mother_generator = Self::GeneratorMatrix::zeroed(
+                    self.mother.k(),
+                    self.mother.n(),
+                    &self.symbol_zero(),
+                );
+                self.mother.generator_matrix_into(&mut mother_generator)?;
+                for (row, &mother_row) in kept_message_positions.iter().enumerate() {
+                    for column in 0..self.n() {
+                        let value = mother_generator
+                            .get(mother_row, self.mother_position(column))
+                            .expect("the mother generator has the mother's shape");
+                        out.set(row, column, value)?;
+                    }
+                }
             }
         }
         Ok(())
@@ -698,6 +872,102 @@ where
 
     fn is_systematic(&self) -> Result<bool, CodeError> {
         Ok(self.information_set.iter().copied().eq(0..self.k()))
+    }
+}
+
+/// Provides a parity-check matrix for a shortened code.
+///
+/// [`ShortenedDerivation::SystematicRestriction`] deletes the removed
+/// columns from the mother's check matrix.  Every derived codeword is a
+/// mother codeword that is zero on those coordinates, so the deleted columns
+/// contribute nothing to a syndrome, and the surviving rows stay independent
+/// because the removed coordinates are message coordinates while the
+/// mother's check matrix is invertible on the parity ones.  The row count is
+/// therefore the mother's.
+///
+/// [`ShortenedDerivation::RankDerived`] builds the dual of its own RREF
+/// generator: one row per non-pivot column `j`, carrying the field identity
+/// at `j` and the negated generator column `j` at the pivot coordinates.
+impl<C> ParityCheckMatrixAccess for Shortened<C>
+where
+    C: ParityCheckMatrixAccess,
+{
+    type ParityCheckMatrix = C::ParityCheckMatrix;
+
+    fn parity_check_rows(&self) -> usize {
+        match &self.data {
+            ShortenedData::RankDerived { .. } => self.redundancy(),
+            ShortenedData::SystematicRestriction { .. } => self.mother.parity_check_rows(),
+        }
+    }
+
+    /// Writes the `parity_check_rows() × n()` check matrix.
+    ///
+    /// The systematic restriction materializes the mother's check matrix
+    /// into one temporary buffer of the mother's size, `(n - k) × n`, and
+    /// copies its kept columns out of it.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::ShapeMismatch`] when `out` is not
+    /// `parity_check_rows() × n()`, and propagates the mother's
+    /// matrix-access errors, including
+    /// [`CodeError::CapabilityUnavailable`] for a mother that holds no
+    /// check matrix.
+    ///
+    /// # Complexity
+    ///
+    /// O((`n - k`) `· n`) symbol moves, plus the mother's own
+    /// materialization for the systematic restriction.
+    fn parity_check_matrix_into(&self, out: &mut Self::ParityCheckMatrix) -> Result<(), CodeError> {
+        let rows = self.parity_check_rows();
+        if out.rows() != rows || out.cols() != self.n() {
+            return Err(CodeError::ShapeMismatch {
+                expected_rows: rows,
+                expected_cols: self.n(),
+                actual_rows: out.rows(),
+                actual_cols: out.cols(),
+            });
+        }
+
+        match &self.data {
+            ShortenedData::RankDerived { generator } => {
+                let zero = self.symbol_zero();
+                let one = zero.one_like();
+                let free_columns = (0..self.n())
+                    .filter(|column| self.information_set.binary_search(column).is_err());
+                for (row, free_column) in free_columns.enumerate() {
+                    for column in 0..self.n() {
+                        let value = if column == free_column {
+                            one.clone()
+                        } else {
+                            match self.information_set.binary_search(&column) {
+                                Ok(pivot) => -generator.get(pivot, free_column),
+                                Err(_) => zero.zero_like(),
+                            }
+                        };
+                        out.set(row, column, value)?;
+                    }
+                }
+            }
+            ShortenedData::SystematicRestriction { .. } => {
+                let mut mother_check = Self::ParityCheckMatrix::zeroed(
+                    self.mother.parity_check_rows(),
+                    self.mother.n(),
+                    &self.symbol_zero(),
+                );
+                self.mother.parity_check_matrix_into(&mut mother_check)?;
+                for row in 0..rows {
+                    for column in 0..self.n() {
+                        let value = mother_check
+                            .get(row, self.mother_position(column))
+                            .expect("the mother check matrix has the mother's shape");
+                        out.set(row, column, value)?;
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -994,6 +1264,12 @@ where
     }
 }
 
+/// Builds a shortened code, selecting its [`ShortenedDerivation`].
+///
+/// The selection reads the mother's parameters and systematic reports only,
+/// so the mother's generator is materialized for
+/// [`ShortenedDerivation::RankDerived`] and never for
+/// [`ShortenedDerivation::SystematicRestriction`].
 fn build_shortened<C>(
     mother: C,
     coordinates: impl IntoIterator<Item = usize>,
@@ -1016,6 +1292,33 @@ where
     let local_map = CoordinateMap::from_permutation(mother.n(), &kept)?;
     let map = provenance.compose(&local_map)?;
 
+    // Every removed coordinate is a message coordinate of a mother that
+    // carries message symbol `i` at coordinate `i`, so the constraints read
+    // `m[s] = 0` and the derived code is the mother's restricted to the
+    // messages that vanish there.
+    let removes_message_positions_only = removed.last().is_none_or(|&last| last < mother.k());
+    if removes_message_positions_only
+        && mother.is_systematic()?
+        && mother.has_canonical_message_order()?
+    {
+        let kept_message_positions = kept
+            .iter()
+            .copied()
+            .take_while(|&position| position < mother.k())
+            .collect::<Box<[usize]>>();
+        let information_set = (0..kept_message_positions.len()).collect::<Box<[usize]>>();
+        return Ok(Shortened {
+            mother,
+            map,
+            local_map,
+            removed: removed.into_boxed_slice(),
+            information_set,
+            data: ShortenedData::SystematicRestriction {
+                kept_message_positions,
+            },
+        });
+    }
+
     let mother_generator = mother.generator_matrix()?;
     let zero = mother.symbol_zero();
     let generator = materialize_generator(&mother_generator, &zero);
@@ -1026,8 +1329,10 @@ where
         map,
         local_map,
         removed: removed.into_boxed_slice(),
-        generator: data.generator,
         information_set: data.information_set,
+        data: ShortenedData::RankDerived {
+            generator: data.generator,
+        },
     })
 }
 
@@ -1263,6 +1568,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::RankDerivedMother;
     use crate::traits::block::{
         BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess,
     };
@@ -1351,8 +1657,23 @@ mod tests {
             Ok(())
         }
 
+        /// Tests the generator's first `k` columns, the canonical layout
+        /// this fixture stores.
         fn is_systematic(&self) -> Result<bool, CodeError> {
-            Ok(false)
+            let one = self.zero.one_like();
+            for row in 0..self.k() {
+                for column in 0..self.k().min(self.n()) {
+                    let expected = if row == column {
+                        one.clone()
+                    } else {
+                        self.zero.zero_like()
+                    };
+                    if self.generator.get(row, column) != expected {
+                        return Ok(false);
+                    }
+                }
+            }
+            Ok(self.k() <= self.n())
         }
     }
 
@@ -1430,6 +1751,238 @@ mod tests {
             }
         }
         matrix
+    }
+
+    /// Returns the message carrying the field identity at `index` alone.
+    fn basis_message<C: BlockCode>(code: &C, index: usize) -> C::Symbols {
+        let zero = code.symbol_zero();
+        let mut message = C::Symbols::zeroed(code.k(), &zero);
+        message
+            .set(index, zero.one_like())
+            .expect("a basis index below the dimension");
+        message
+    }
+
+    /// Shortens `code` on `coordinates` through both derivations and asserts
+    /// that they agree on every observable the transformation contract
+    /// exposes.
+    ///
+    /// [`RankDerivedMother`] reports no systematic layout and delegates
+    /// everything else, so the second construction is the rank-derived
+    /// derivation of the same code.  Codewords are compared on the message
+    /// basis, which spans the message space of a linear code.
+    fn assert_derivations_agree<C>(code: C, coordinates: &[usize])
+    where
+        C: BlockEncoder + GeneratorMatrixAccess + Clone,
+    {
+        let fast = Shortened::new(code.clone(), coordinates.iter().copied()).unwrap();
+        let rank = Shortened::new(RankDerivedMother(code), coordinates.iter().copied()).unwrap();
+
+        assert_eq!(
+            fast.derivation(),
+            ShortenedDerivation::SystematicRestriction
+        );
+        assert_eq!(rank.derivation(), ShortenedDerivation::RankDerived);
+        assert_eq!(fast.k(), rank.k());
+        assert_eq!(fast.n(), rank.n());
+        assert_eq!(fast.information_set(), rank.information_set());
+        assert_eq!(fast.shortened_positions(), rank.shortened_positions());
+        assert_eq!(fast.is_systematic().unwrap(), rank.is_systematic().unwrap());
+        assert_eq!(
+            fast.generator_matrix().unwrap(),
+            rank.generator_matrix().unwrap()
+        );
+        for position in 0..fast.n() {
+            assert_eq!(
+                fast.coordinate_map().mother_position_opt(position),
+                rank.coordinate_map().mother_position_opt(position),
+                "coordinate {position}"
+            );
+        }
+        for index in 0..fast.k() {
+            let message = basis_message(&fast, index);
+            let fast_word = fast.encode(&message).unwrap();
+            assert_eq!(fast_word, rank.encode(&message).unwrap(), "message {index}");
+            assert_eq!(
+                fast.extend_codeword(&fast_word).unwrap(),
+                rank.extend_codeword(&fast_word).unwrap(),
+                "lift of message {index}"
+            );
+        }
+    }
+
+    /// Asserts that both derivations produce the same parity-check matrix,
+    /// and that it annihilates every generator row.
+    fn assert_parity_derivations_agree<C>(code: C, coordinates: &[usize])
+    where
+        C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,
+    {
+        let fast = Shortened::new(code.clone(), coordinates.iter().copied()).unwrap();
+        let rank = Shortened::new(RankDerivedMother(code), coordinates.iter().copied()).unwrap();
+
+        let fast_check = fast.parity_check_matrix().unwrap();
+        assert_eq!(fast.parity_check_rows(), rank.parity_check_rows());
+        assert_eq!(fast_check, rank.parity_check_matrix().unwrap());
+
+        let generator = fast.generator_matrix().unwrap();
+        let zero = fast.symbol_zero();
+        for row in 0..fast.k() {
+            for check in 0..fast.parity_check_rows() {
+                let mut sum = zero.zero_like();
+                for column in 0..fast.n() {
+                    let generator_symbol = SymbolMatrix::get(&generator, row, column)
+                        .expect("a generator entry within the derived shape");
+                    let check_symbol = SymbolMatrix::get(&fast_check, check, column)
+                        .expect("a check entry within the derived shape");
+                    sum += generator_symbol * check_symbol;
+                }
+                assert_eq!(sum, zero.zero_like(), "row {row} against check {check}");
+            }
+        }
+    }
+
+    /// Returns the mother `[I_2 | P]` over GF(2) with `k = 2` and `n = 4`.
+    fn binary_systematic_mother() -> LinearBlockCode {
+        let mut generator = BitMatrix::zeros(2, 4);
+        generator.set(0, 0, true);
+        generator.set(0, 2, true);
+        generator.set(0, 3, true);
+        generator.set(1, 1, true);
+        generator.set(1, 3, true);
+        let mut check = BitMatrix::zeros(2, 4);
+        check.set(0, 0, true);
+        check.set(0, 2, true);
+        check.set(1, 0, true);
+        check.set(1, 1, true);
+        check.set(1, 3, true);
+        LinearBlockCode::new_systematic(generator, Some(check))
+    }
+
+    /// Returns the mother `[I_2 | P]` over GF(5) with `k = 2` and `n = 5`.
+    fn nonbinary_systematic_mother() -> DenseTestCode<Fp<5>> {
+        DenseTestCode {
+            generator: fp5_matrix(2, 5, &[1, 0, 2, 3, 4, 0, 1, 1, 4, 2]),
+            zero: Fp::<5>::new(0),
+        }
+    }
+
+    #[test]
+    fn shortening_message_positions_of_a_systematic_mother_restricts_the_mother() {
+        let mother = binary_systematic_mother();
+        let shortened = Shortened::new(mother.clone(), [0]).unwrap();
+
+        assert_eq!(
+            shortened.derivation(),
+            ShortenedDerivation::SystematicRestriction
+        );
+        assert_eq!(
+            (shortened.k(), shortened.n()),
+            (mother.k() - 1, mother.n() - 1)
+        );
+        assert!(shortened.is_systematic().unwrap());
+        assert_eq!(shortened.information_set(), &[0]);
+        // Row 1 of the mother generator with column 0 deleted.
+        let generator = shortened.generator_matrix().unwrap();
+        for column in 0..shortened.n() {
+            assert_eq!(
+                generator.get(0, column),
+                mother_generator_bit(&mother, 1, column + 1)
+            );
+        }
+    }
+
+    /// Returns bit `(row, column)` of the mother's generator matrix.
+    fn mother_generator_bit(mother: &LinearBlockCode, row: usize, column: usize) -> bool {
+        BitMatrix::get(&mother.generator_matrix().unwrap(), row, column)
+    }
+
+    #[test]
+    fn shortening_a_parity_coordinate_stays_rank_derived() {
+        let mother = binary_systematic_mother();
+        let shortened = Shortened::new(mother.clone(), [mother.k()]).unwrap();
+
+        assert_eq!(shortened.derivation(), ShortenedDerivation::RankDerived);
+        assert_eq!(shortened.n(), mother.n() - 1);
+    }
+
+    #[test]
+    fn a_non_canonical_message_order_stays_rank_derived() {
+        // `LinearBlockCode::hamming` records its message coordinates at the
+        // columns of `H` that are not powers of two, so it reports
+        // `is_systematic` while coordinate 0 is a parity coordinate. The
+        // rank-derived path is then the only correct one, and it is the one
+        // the construction takes.
+        let mother = LinearBlockCode::hamming(3);
+        assert!(mother.is_systematic().unwrap());
+        assert!(!mother.has_canonical_message_order().unwrap());
+
+        let shortened = Shortened::new(mother.clone(), [0]).unwrap();
+        assert_eq!(shortened.derivation(), ShortenedDerivation::RankDerived);
+        assert_eq!(shortened.k(), mother.k() - 1);
+
+        // Every codeword of the result lifts to a mother codeword that is
+        // zero at the removed coordinate, which the message-position reading
+        // of coordinate 0 would violate.
+        for index in 0..shortened.k() {
+            let message = basis_message(&shortened, index);
+            let lifted = shortened
+                .extend_codeword(&shortened.encode(&message).unwrap())
+                .unwrap();
+            assert!(!lifted.get(0), "message {index}");
+        }
+    }
+
+    #[test]
+    fn both_derivations_agree_on_a_binary_mother() {
+        let mother = binary_systematic_mother();
+        for coordinates in [vec![], vec![0], vec![1], vec![0, 1]] {
+            assert_derivations_agree(mother.clone(), &coordinates);
+            assert_parity_derivations_agree(mother.clone(), &coordinates);
+        }
+    }
+
+    #[test]
+    fn both_derivations_agree_on_a_nonbinary_mother() {
+        let mother = nonbinary_systematic_mother();
+        for coordinates in [vec![], vec![0], vec![1], vec![0, 1]] {
+            assert_derivations_agree(mother.clone(), &coordinates);
+        }
+    }
+
+    #[test]
+    fn shortening_every_message_position_reaches_the_zero_dimensional_code() {
+        let mother = binary_systematic_mother();
+        let boundary = Shortened::new(mother.clone(), 0..mother.k()).unwrap();
+
+        assert_eq!(
+            boundary.derivation(),
+            ShortenedDerivation::SystematicRestriction
+        );
+        assert_eq!((boundary.k(), boundary.n()), (0, mother.n() - mother.k()));
+        assert!(boundary.information_set().is_empty());
+        assert!(boundary.is_systematic().unwrap());
+        assert_eq!(
+            boundary.encode(&BitVec::zeros(0)).unwrap(),
+            BitVec::zeros(boundary.n())
+        );
+        assert_derivations_agree(mother.clone(), &(0..mother.k()).collect::<Vec<_>>());
+        assert_parity_derivations_agree(mother.clone(), &(0..mother.k()).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn an_empty_coordinate_set_keeps_the_mother_parameters() {
+        let mother = binary_systematic_mother();
+        let same = Shortened::new(mother.clone(), []).unwrap();
+
+        assert_eq!(
+            same.derivation(),
+            ShortenedDerivation::SystematicRestriction
+        );
+        assert_eq!((same.k(), same.n()), (mother.k(), mother.n()));
+        assert_eq!(
+            same.generator_matrix().unwrap(),
+            mother.generator_matrix().unwrap()
+        );
     }
 
     #[test]
@@ -2176,6 +2729,54 @@ mod tests {
             let code = DenseTestCode { generator: generator.clone(), zero: Fp::<5>::new(0) };
             let punctured = Punctured::new(code, removed.clone()).unwrap();
             prop_assert_eq!(punctured.k(), direct_punctured_rank(&generator, &removed));
+        }
+
+        #[test]
+        fn binary_derivations_agree_on_random_systematic_mothers(
+            rows in 1usize..=4,
+            redundancy in 1usize..=4,
+            parity in prop::collection::vec(any::<bool>(), 16),
+            mask in any::<u8>(),
+        ) {
+            let cols = rows + redundancy;
+            let mut generator = BitMatrix::zeros(rows, cols);
+            for row in 0..rows {
+                generator.set(row, row, true);
+                for column in rows..cols {
+                    generator.set(row, column, parity[(row * redundancy + column - rows) % parity.len()]);
+                }
+            }
+            let code = LinearBlockCode::new_systematic(generator, None);
+            let removed = (0..rows)
+                .filter(|position| (mask >> (position % 8)) & 1 == 1)
+                .collect::<Vec<_>>();
+            assert_derivations_agree(code, &removed);
+        }
+
+        #[test]
+        fn nonbinary_derivations_agree_on_random_systematic_mothers(
+            rows in 1usize..=4,
+            redundancy in 1usize..=4,
+            parity in prop::collection::vec(0u8..5, 16),
+            mask in any::<u8>(),
+        ) {
+            let cols = rows + redundancy;
+            let mut values = vec![0u8; rows * cols];
+            for row in 0..rows {
+                values[row * cols + row] = 1;
+                for column in rows..cols {
+                    values[row * cols + column] =
+                        parity[(row * redundancy + column - rows) % parity.len()];
+                }
+            }
+            let code = DenseTestCode {
+                generator: fp5_matrix(rows, cols, &values),
+                zero: Fp::<5>::new(0),
+            };
+            let removed = (0..rows)
+                .filter(|position| (mask >> (position % 8)) & 1 == 1)
+                .collect::<Vec<_>>();
+            assert_derivations_agree(code, &removed);
         }
     }
 }
