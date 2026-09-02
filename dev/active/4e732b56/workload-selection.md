@@ -250,12 +250,12 @@ subsection.
 
 Two further points this amendment records rather than leaves implicit:
 
-* **Which families this consumer registers.** `poly-remainder-scalar` and
-  `table-remainder`, both under the § 7 spellings.
-  `bitslice-interleaved` belongs to `avx2-batch-kernels` (`2b6968d3`) and
-  `genmatrix-multiply` to `genmatrix-perf`; the seam's registration surface
-  admits them without rework, and § 7 fixes their names and contracts ahead
-  of that.
+* **Which families this consumer registers.** `poly-remainder-scalar`,
+  `table-remainder`, and `bitslice-interleaved`, all under the § 7 spellings;
+  `encode-dispatch` registered the first two and `avx2-batch-kernels`
+  (`2b6968d3`) the third through the seam's registration surface.
+  `genmatrix-multiply` belongs to `genmatrix-perf`, and § 7 fixes its name
+  and contract ahead of that.
 * **No selection is fixed here.** The conservative tuning section admits only
   `poly-remainder-scalar`, so the crossover § 7 leaves to `encode-dispatch`
   remains an unmeasured cell of this contract until `perf-receipts` measures
