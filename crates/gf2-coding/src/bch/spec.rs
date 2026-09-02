@@ -2088,6 +2088,62 @@ mod tests {
         assert_construction_is_consistent(&code, 9);
     }
 
+    // -- Root correctness of the derived generator -------------------------
+
+    /// Decides root correctness on one constructed code: the generator, lifted
+    /// coefficientwise into the extension field, vanishes at `root^j` exactly
+    /// for the exponents `j` the defining set holds.
+    ///
+    /// The forward half is the root-correctness property itself. The converse
+    /// half is what separates the generator from the zero polynomial and from
+    /// any multiple carrying extra roots, so both directions are asserted over
+    /// the whole exponent range, and the two nonvacuity checks keep either
+    /// direction from passing on an empty quantifier.
+    fn assert_generator_vanishes_exactly_on_the_defining_set<X, S, M>(code: &BchCode<X, S, M>)
+    where
+        X: FieldExtension,
+        S: SymbolSequence<X::Base>,
+        M: SymbolMatrix<X::Base>,
+    {
+        let lifted = lift_generator(code.extension(), code.generator());
+        let present = membership(code);
+        assert!(
+            present.iter().any(|member| *member),
+            "the defining set must be nonempty for the vanishing claim to bite"
+        );
+        assert!(
+            present.iter().any(|member| !*member),
+            "an exponent outside the defining set must exist for the converse to bite"
+        );
+        for (exponent, in_defining_set) in present.iter().enumerate() {
+            let value = lifted.eval(&code.root().pow(exponent as u64));
+            assert_eq!(
+                value.is_zero(),
+                *in_defining_set,
+                "g(root^{exponent}) vanishes exactly on the defining set"
+            );
+        }
+    }
+
+    #[test]
+    fn the_generator_vanishes_at_every_defining_set_root() {
+        assert_generator_vanishes_exactly_on_the_defining_set(&binary_narrow_sense(4, 0b10011, 5));
+
+        let prime_base = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: gf25(),
+            designed_distance: DesignedDistance::try_from(5).expect("positive"),
+        })
+        .expect("a valid GF(5) primitive spec");
+        assert_generator_vanishes_exactly_on_the_defining_set(&prime_base);
+
+        let extension_base = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: gf81_over_gf9(),
+            designed_distance: DesignedDistance::try_from(4).expect("positive"),
+        })
+        .expect("a valid GF(9) primitive spec");
+        assert_generator_vanishes_exactly_on_the_defining_set(&extension_base);
+    }
+
     // -- The arbitrary-first-root flavor -----------------------------------
 
     #[test]

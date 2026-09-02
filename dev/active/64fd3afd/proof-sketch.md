@@ -148,7 +148,7 @@ titles leave open:
   (`:1934`) are named by no downstream issue. O-4 takes "$\alpha$ has exact order
   $n$" as a hypothesis, discharged in production by
   `validate_length_divides_unit_group`
-  (`crates/gf2-coding/src/bch/spec.rs:694`) and the `has_exact_order` check
+  (`crates/gf2-coding/src/bch/spec.rs:1271`) and the `has_exact_order` check
   (`crates/gf2-core/src/field/extension.rs:1678`). Register row **A-07** tracks
   this.
 
@@ -799,23 +799,23 @@ Downstream issue `b1bd75ca`.
 
 | Item | Line | Role |
 |---|---|---|
-| `BchSpec` | 279 | the three independent-input flavors |
-| `BchCode` | 416 | the constructed code |
-| `BchCode::construct` | 483 | the only construction path: normalize, close, derive, assemble |
-| `normalize` | 578 | flavor dispatch |
-| `normalize_primitive` | 602 | primitive length, root, consecutive seeds |
-| `normalize_root_seeds` | 633 | arbitrary seed sets, reduced modulo $n$ |
-| `primitive_length` | 659 | $n = \lvert E^{*}\rvert$ |
-| `validate_length_coprime_to_characteristic` | 678 | $\gcd(n,q)=1$ via $\gcd(n,p)=1$ |
-| `validate_length_divides_unit_group` | 694 | $n \mid \lvert E^{*}\rvert$ |
-| `resolve_root` | 716 | canonical or explicit $\alpha$ of exact order $n$ |
-| `multiplicative_order` | 750 | exact order by dividing out certificate primes |
-| `consecutive_seeds` | 803 | $b, b+1, \ldots, b+\delta-2$ modulo $n$ |
-| `derive_generator` | 835 | coset minimal polynomials, `FieldPoly::lcm`, divisibility check |
-| `cyclic_polynomial` | 866 | $x^{n} - 1$ over $B$ |
-| `assemble` | 884 | dimension, sorted defining set, witnessed bound, radius |
-| `witness_longest_run` | 929 | the canonical longest cyclic run |
-| `BchDistanceBound` | 369 | the witnessed bound's accessors |
+| `BchSpec` | 305 | the three independent-input flavors |
+| `BchCode` | 553 | the constructed code |
+| `BchCode::construct` | 633 | the only construction path: normalize, close, derive, assemble |
+| `normalize` | 998 | flavor dispatch |
+| `normalize_primitive` | 1036 | primitive length, root, consecutive seeds |
+| `normalize_root_seeds` | 1115 | arbitrary seed sets, reduced modulo $n$ |
+| `primitive_length` | 1236 | $n = \lvert E^{*}\rvert$ |
+| `validate_length_coprime_to_characteristic` | 1255 | $\gcd(n,q)=1$ via $\gcd(n,p)=1$ |
+| `validate_length_divides_unit_group` | 1271 | $n \mid \lvert E^{*}\rvert$ |
+| `resolve_root` | 1320 | canonical or explicit $\alpha$ of exact order $n$ |
+| `multiplicative_order` | 1354 | exact order by dividing out certificate primes |
+| `consecutive_seeds` | 1407 | $b, b+1, \ldots, b+\delta-2$ modulo $n$ |
+| `derive_generator` | 1439 | coset minimal polynomials, `FieldPoly::lcm`, divisibility check |
+| `cyclic_polynomial` | 1470 | $x^{n} - 1$ over $B$ |
+| `assemble` | 1488 | dimension, sorted defining set, witnessed bound, radius |
+| `witness_longest_run` | 1533 | the canonical longest cyclic run |
+| `BchDistanceBound` | 506 | the witnessed bound's accessors |
 
 Supporting core functions: `minimal_polynomial`
 (`crates/gf2-core/src/field/extension.rs:2390`), `conjugates` (`:2329`),
@@ -874,12 +874,13 @@ it is what ties O-3's combinatorics to O-4's field statement, and it is where
 $\mathrm{ord}(\alpha) = n$ is used.
 
 **L4.5 (divisibility).** $g \mid T^{n} - 1$ in $B[T]$. This is the invariant
-`derive_generator` re-checks at runtime (`crates/gf2-coding/src/bch/spec.rs:855-862`) and reports as
+`derive_generator` re-checks at runtime
+(`crates/gf2-coding/src/bch/spec.rs:1459-1466`) and reports as
 `BchError::GeneratorNotDivisorOfCyclicPolynomial`.
 
 **L4.6 (degree and dimension).** $\deg g = \lvert T \rvert$ and
 $k = n - \lvert T \rvert$. Together with L4.5 this gives $0 \le k \le n$, which
-is what makes the `checked_sub` at `crates/gf2-coding/src/bch/spec.rs:901`
+is what makes the `checked_sub` at `crates/gf2-coding/src/bch/spec.rs:1505`
 total.
 
 **L4.7 (witnessed run).** `witness_longest_run` returns
@@ -915,29 +916,31 @@ epic.
 | Lemma | Refinement anchor |
 |---|---|
 | L4.1 | `assert_minimal_polynomial_properties` (`crates/gf2-core/src/field/extension.rs:4104`), driven by `prop_binary_minimal_polynomial_and_relative_laws` (`:4171`), `prop_odd_prime_...` (`:4195`), `prop_odd_tower_minimal_polynomial` (`:4208`) |
-| L4.2 | `prime_base_primitive_construction_derives_a_base_field_generator` (`crates/gf2-coding/src/bch/spec.rs:1189`), `extension_base_primitive_construction_derives_a_base_field_generator` (`:1209`) — both assert `base_field_id()` against the intended base |
-| L4.3 | **new test required**, see below |
-| L4.4 | covered indirectly by the closure assertion in `assert_construction_is_consistent` (`:1086-1092`); the new L4.3 test decides it directly |
-| L4.5 | `generator_divides_cyclic_polynomial` (`:1031`) via `assert_construction_is_consistent` (`:1059`), and `binary_generators_divide_the_cyclic_polynomial` (`:1179`) |
-| L4.6 | `assert_construction_is_consistent` (`:1067`, `:1078`) |
-| L4.7 | `assert_witnessed_run_is_maximal` (`:1098`), `the_witnessed_run_is_present_and_maximal_in_the_defining_set` (`:1353`) |
-| L4.8 | `narrow_sense_is_the_first_root_flavor_at_exponent_one` (`:1257`), `first_root_flavor_witnesses_the_run_it_actually_has` (`:1232`), `primitive_narrow_sense_agrees_with_the_current_binary_generators` (`:1147`) |
+| L4.2 | `prime_base_primitive_construction_derives_a_base_field_generator` (`crates/gf2-coding/src/bch/spec.rs:2051`), `extension_base_primitive_construction_derives_a_base_field_generator` (`:2071`) — both assert `base_field_id()` against the intended base |
+| L4.3 | `the_generator_vanishes_at_every_defining_set_root` (`crates/gf2-coding/src/bch/spec.rs:2129`), through its shared generic helper `assert_generator_vanishes_exactly_on_the_defining_set` (`:2102`) |
+| L4.4 | covered indirectly by the closure assertion in `assert_construction_is_consistent` (`:1948-1954`); the L4.3 test decides it directly |
+| L4.5 | `generator_divides_cyclic_polynomial` (`:1893`) via `assert_construction_is_consistent` (`:1921`), and `binary_generators_divide_the_cyclic_polynomial` (`:2041`) |
+| L4.6 | `assert_construction_is_consistent` (`:1929`, `:1940`) |
+| L4.7 | `assert_witnessed_run_is_maximal` (`:1960`), `the_witnessed_run_is_present_and_maximal_in_the_defining_set` (`:2646`) |
+| L4.8 | `narrow_sense_is_the_first_root_flavor_at_exponent_one` (`:2175`), `first_root_flavor_witnesses_the_run_it_actually_has` (`:2150`), `primitive_narrow_sense_agrees_with_the_current_binary_generators` (`:2009`) |
 
-**Test the Lean issue must add**, in `crates/gf2-coding/src/bch/spec.rs`'s
+**Anchor test for L4.3**, in `crates/gf2-coding/src/bch/spec.rs`'s
 `#[cfg(test)] mod tests`:
 
-> `the_generator_vanishes_at_every_defining_set_root` — for each of the binary,
-> $\mathrm{GF}(5)$, and $\mathrm{GF}(9)$-base codes the suite already builds
-> (`binary_narrow_sense` at `:999`, `gf25` at `:1017`, `gf81_over_gf9` at
-> `:1023`), lift the generator's base coefficients into $E$ with
-> `FieldExtension::embed`, build the `FieldPoly<X::Ext>`, and assert
-> `eval(root.pow(j)).is_zero()` for every $j$ in `code.defining_set()`.
-> Assert the contrapositive on at least one exponent outside the defining set,
-> so the test distinguishes the generator from the zero polynomial.
+> `the_generator_vanishes_at_every_defining_set_root` (`:2129`) runs the shared
+> generic helper `assert_generator_vanishes_exactly_on_the_defining_set`
+> (`:2102`) over the binary, $\mathrm{GF}(5)$-base and $\mathrm{GF}(9)$-base
+> codes the suite builds (`binary_narrow_sense` at `:1603`, `gf25` at `:1647`,
+> `gf81_over_gf9` at `:1653`). The helper lifts the generator's base
+> coefficients into $E$ with `FieldExtension::embed` through `lift_generator`
+> (`:1620`), builds the `FieldPoly<X::Ext>`, and asserts that
+> `eval(root.pow(j)).is_zero()` holds for exactly the exponents $j$ of
+> `code.defining_set()`. The converse half distinguishes the generator from the
+> zero polynomial, and two nonvacuity assertions keep either direction from
+> passing on an empty quantifier.
 
-This is the single most important missing check in the tree: nothing today
-decides that the constructed generator actually vanishes at the requested roots.
-`assert_construction_is_consistent` (`:1059`) decides degree, divisibility, and
+This is the check that decides the root-correctness half of the obligation.
+`assert_construction_is_consistent` (`:1921`) decides degree, divisibility, and
 exponent-set closure, all of which a wrong-but-plausible generator could
 satisfy.
 
@@ -987,7 +990,7 @@ because the rest reads as combinatorics once it is available.
   runs as maximal intervals in the cyclic order, show the scan's guard
   `present[start] && !present[start-1]` selects exactly the run starts, and that
   taking the first strict maximum yields the least tie. The $\lvert T\rvert = n$
-  and $T = \emptyset$ branches (`crates/gf2-coding/src/bch/spec.rs:930-943`) are
+  and $T = \emptyset$ branches (`crates/gf2-coding/src/bch/spec.rs:1534-1547`) are
   separate base cases because they have no run boundary.
 - **L4.8** — the consecutive seeds are in $T$ by L3.5, so the run through them
   has length at least $\delta - 1$; L4.7's maximality gives the bound.
@@ -998,19 +1001,20 @@ is a one-liner in Mathlib's finite-field API.
 
 ### 5. Assumptions
 
-- **A-01** applies; the anchor table plus the new root-vanishing test is the
-  discharge.
+- **A-01** applies; the anchor table, whose root-vanishing row cites
+  `the_generator_vanishes_at_every_defining_set_root`, is the discharge.
 - **A-07** ($\alpha$ has exact order $n$): the model takes this as a hypothesis.
-  Production discharges it through `validate_length_divides_unit_group` (`:694`)
-  plus `resolve_root` (`:716`), which either derives $\alpha$ through
+  Production discharges it through `validate_length_divides_unit_group`
+  (`:1271`) plus `resolve_root` (`:1320`), which either derives $\alpha$ through
   `element_of_exact_order` — whose result is checked by `has_exact_order`
   (`crates/gf2-core/src/field/extension.rs:1678`) — or checks a caller-supplied
-  root with `multiplicative_order` (`crates/gf2-coding/src/bch/spec.rs:750`). Determinism of the canonical
-  generator is not part of this obligation.
+  root with `multiplicative_order` (`crates/gf2-coding/src/bch/spec.rs:1354`).
+  Determinism of the canonical generator is not part of this obligation.
 - **A-09** (BCH bound out of scope), as stated above.
 - **A-10** (representation bounds): $n$ that exceeds `u64` or `usize`, and
   orders that exceed the factorization procedure's range, are rejected with
-  typed errors (`crates/gf2-coding/src/bch/spec.rs:667`, `:851`, `:894`). The model is representation-free.
+  typed errors (`crates/gf2-coding/src/bch/spec.rs:1244`, `:1455`, `:1498`).
+  The model is representation-free.
 - **A-04**, **A-05** as repository-wide rows.
 
 ---
@@ -1224,10 +1228,10 @@ tracking status. Nothing outside this table is assumed by any section above.
 | A-04 | Charon and Aeneas translate Rust to Lean faithfully | every obligation with an extracted anchor | The pipeline's foundational assumption, pre-existing and repository-wide; documented in `docs/lean4-verification-pipeline.md`. Not introduced by this sketch. |
 | A-05 | Extraction-artefact `sorry`s are tolerated; hand-written proof `sorry`s are not | every obligation | `scripts/fix-aeneas-dupes.py:276` injects `set_option warn.sorry false` into the generated `proofs/Gf2Core/Funs.lean`; `scripts/lake-build-strict.sh:47` fails the `lake-build` gate on `declaration uses 'sorry'` in `Gf2Core/Proofs/` and `Gf2Algebra/Proofs/`. All five modules of this sketch land under `Gf2Core/Proofs/`, so the filter covers each of them as landed. |
 | A-06 | The extracted base-carrier anchor for O-2 covers odd primes only | O-2 | `FpVal`'s field instance requires $P \ne 2$, inherent to Montgomery arithmetic with $R = 2^{64}$ (`proofs/README.md:13`). The abstract instantiation of the same model covers $p = 2$; only the extraction anchor is restricted. |
-| A-07 | $\alpha$ has exact multiplicative order $n$ | O-4 | Hypothesis of the model. Production discharges it through `validate_length_divides_unit_group` (`crates/gf2-coding/src/bch/spec.rs:694`), `resolve_root` (`:716`), `multiplicative_order` (`:750`), and `has_exact_order` (`crates/gf2-core/src/field/extension.rs:1678`). Determinism of `canonical_generator` (`:1867`) is named by no downstream issue and is not claimed. |
+| A-07 | $\alpha$ has exact multiplicative order $n$ | O-4 | Hypothesis of the model. Production discharges it through `validate_length_divides_unit_group` (`crates/gf2-coding/src/bch/spec.rs:1271`), `resolve_root` (`:1320`), `multiplicative_order` (`:1354`), and `has_exact_order` (`crates/gf2-core/src/field/extension.rs:1678`). Determinism of `canonical_generator` (`:1867`) is named by no downstream issue and is not claimed. |
 | A-08 | Cyclotomic parameters are in the representable range | O-3 | $n = 0$ and $n$ beyond `usize` are rejected with `FieldError::InvalidCyclotomicModulus` and `FieldError::CyclotomicModulusTooLarge` (`crates/gf2-core/src/field/extension.rs:2222-2243`). The model assumes $n \ge 1$ and is representation-free. |
-| A-09 | The classical BCH bound is out of scope | O-4 | L4.7 and L4.8 characterise the witnessed run; the step to a minimum-distance claim is a separate Vandermonde argument named by no downstream issue. `BchDistanceBound::minimum_distance_lower_bound` (`crates/gf2-coding/src/bch/spec.rs:394`) is defined as run length plus one, which the sketch does prove. The Vandermonde step is out of scope for `b1bd75ca` by lead decision and carries a tracked follow-up issue of its own. |
-| A-10 | Code parameters are in the representable range | O-4 | `CodeError::UnsupportedSize` at `crates/gf2-coding/src/bch/spec.rs:667`, `:851`, `:894`; `FieldError::UnsupportedSize` at `:663`. The model is representation-free. |
+| A-09 | The classical BCH bound is out of scope | O-4 | L4.7 and L4.8 characterise the witnessed run; the step to a minimum-distance claim is a separate Vandermonde argument named by no downstream issue. `BchDistanceBound::minimum_distance_lower_bound` (`crates/gf2-coding/src/bch/spec.rs:531`) is defined as run length plus one, which the sketch does prove. The Vandermonde step is out of scope for `b1bd75ca` by lead decision and carries a tracked follow-up issue of its own. |
+| A-10 | Code parameters are in the representable range | O-4 | `CodeError::UnsupportedSize` at `crates/gf2-coding/src/bch/spec.rs:1244`, `:1455`, `:1498`; `FieldError::UnsupportedSize` at `:1240`. The model is representation-free. |
 | A-11 | Buffer shape and symbol identity are decided outside the model | O-5 | `SystematicPlan::validate_lengths` (`crates/gf2-coding/src/bch/encode.rs:261`) and `validate_symbol_field` (`:621`) reject caller errors; the model's message is $k$ coefficients over $B$ by typing. |
 
 ## Risks and open questions
@@ -1242,7 +1246,7 @@ the delta to exactly those two files.
 **R-02 — The BCH bound is a separate obligation.** A-09 records that the step
 from the witnessed run to a minimum-distance claim is out of scope for
 `b1bd75ca`. `BchDistanceBound` names its accessor
-`minimum_distance_lower_bound` (`crates/gf2-coding/src/bch/spec.rs:394`), so the
+`minimum_distance_lower_bound` (`crates/gf2-coding/src/bch/spec.rs:531`), so the
 claim reaches the public API while the Vandermonde argument behind it stays
 unproven across these five issues. A tracked follow-up issue owns that argument,
 alongside the other follow-ups `followup-tracking` creates.
@@ -1252,12 +1256,13 @@ are `reduction_is_invariant_under_multiples_of_the_modulus` and
 `canonical_index_decodes_to_its_prime_coordinates`
 (`crates/gf2-core/src/gfpn/quotient.rs:2541`, `:2581`); O-3's is
 `base_order_mod_matches_the_hand_computed_multiplier`
-(`crates/gf2-core/src/field/extension.rs:4062`); O-4 adds
-`the_generator_vanishes_at_every_defining_set_root`. Each is small and each
+(`crates/gf2-core/src/field/extension.rs:4062`); O-4's is
+`the_generator_vanishes_at_every_defining_set_root`
+(`crates/gf2-coding/src/bch/spec.rs:2129`). Each is small and each
 belongs in the owning module's `#[cfg(test)]` block per
-`@/inv/shared-test-contracts`. The O-4 test is the most consequential: nothing
-in the tree currently decides that the constructed generator vanishes at the
-requested roots, which is half of `b1bd75ca`'s own title. The other three close
+`@/inv/shared-test-contracts`. The O-4 test is the most consequential: it is the
+only check that decides that the constructed generator vanishes at the requested
+roots, which is half of `b1bd75ca`'s own title. The other three close
 anchor gaps that research review R1 found in the first draft of this sketch —
 a canonical-index correspondence with no assertion behind it, and a
 `base_order_mod` claim whose cited evidence had $d_B = 1$.

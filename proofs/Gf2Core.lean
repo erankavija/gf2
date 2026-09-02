@@ -20,3 +20,4 @@ import Gf2Core.Proofs.Gf2mInverse
 import Gf2Core.Proofs.RelativeExtension
 import Gf2Core.Proofs.QuotientReduction
 import Gf2Core.Proofs.CyclotomicClosure
+import Gf2Core.Proofs.BchGenerator
