@@ -521,7 +521,7 @@ far too large to be explained by governor effects.
 
 gf2's `encode_batch` and a plain loop over `encode` agree within noise at every
 one of the 19 measured cells. This is not a surprise —
-`crates/gf2-coding/src/bch/core.rs:396` is a `messages.iter().map(...)` under a
+`crates/gf2-coding/src/bch/core.rs:408` is a `messages.iter().map(...)` under a
 `TODO` — but it fixes the pre-cutover baseline: there is no batch-specific
 overhead for the epic to preserve, and no existing parallelism to regress.
 
