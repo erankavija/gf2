@@ -5,7 +5,8 @@
 //! kernel-selection controls of the kernel-dispatched encode families, the
 //! basis-vector matrix oracles the canonical materialization is measured and
 //! compared against, the predeclared BCH conformance corpus with its seeded
-//! messages, and a reader for the ETSI DVB-T2 verified vectors (the
+//! messages, a mother-code wrapper that forces the rank-derived shortening
+//! derivation, and a reader for the ETSI DVB-T2 verified vectors (the
 //! `VV001-CR35_CSP/TestPoint*/...CSP.txt` files).
 //!
 //! Gated behind `cfg(any(test, feature = "test-support"))` so the helpers
@@ -24,7 +25,9 @@ use crate::bch::spec::{
 };
 use crate::error::CodeError;
 use crate::product::ExtendedBchComponent;
-use crate::traits::block::SymbolMatrix;
+use crate::traits::block::{
+    BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
+};
 use crate::transform::Extended;
 use crate::CodeRate;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension, FieldIdentity, TrivialExt};
@@ -143,6 +146,75 @@ pub fn selected_encode_kernel() -> &'static str {
 /// exercise the canonical transform traits directly.
 pub fn generic_ebch_16_11() -> Extended<BinaryBchCode> {
     ExtendedBchComponent::ebch_16_11().into_code_for_test()
+}
+
+/// A mother-code wrapper whose only difference is that it reports no
+/// systematic layout.
+///
+/// [`Shortened`](crate::transform::Shortened) reads the mother's
+/// [`is_systematic`](GeneratorMatrixAccess::is_systematic) report to select
+/// [`SystematicRestriction`](crate::transform::ShortenedDerivation::SystematicRestriction),
+/// so wrapping a systematic mother in this forces the same coordinate set
+/// onto [`RankDerived`](crate::transform::ShortenedDerivation::RankDerived).
+/// One fixture then produces both derivations of one code, which is how the
+/// suites compare them.
+///
+/// Every other method delegates, so the two mothers have the same generator,
+/// check matrix, dimensions, and codewords.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RankDerivedMother<C>(pub C);
+
+impl<C: BlockCode> BlockCode for RankDerivedMother<C> {
+    type Symbol = C::Symbol;
+    type Symbols = C::Symbols;
+
+    fn symbol_zero(&self) -> Self::Symbol {
+        self.0.symbol_zero()
+    }
+
+    fn k(&self) -> usize {
+        self.0.k()
+    }
+
+    fn n(&self) -> usize {
+        self.0.n()
+    }
+}
+
+impl<C: BlockEncoder> BlockEncoder for RankDerivedMother<C> {
+    fn encode_into(
+        &self,
+        message: &Self::Symbols,
+        codeword: &mut Self::Symbols,
+    ) -> Result<(), CodeError> {
+        self.0.encode_into(message, codeword)
+    }
+}
+
+impl<C: GeneratorMatrixAccess> GeneratorMatrixAccess for RankDerivedMother<C> {
+    type GeneratorMatrix = C::GeneratorMatrix;
+
+    fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {
+        self.0.generator_matrix_into(out)
+    }
+
+    /// Reports `false` whatever the wrapped code reports, which is what
+    /// forces the rank-derived construction.
+    fn is_systematic(&self) -> Result<bool, CodeError> {
+        Ok(false)
+    }
+}
+
+impl<C: ParityCheckMatrixAccess> ParityCheckMatrixAccess for RankDerivedMother<C> {
+    type ParityCheckMatrix = C::ParityCheckMatrix;
+
+    fn parity_check_rows(&self) -> usize {
+        self.0.parity_check_rows()
+    }
+
+    fn parity_check_matrix_into(&self, out: &mut Self::ParityCheckMatrix) -> Result<(), CodeError> {
+        self.0.parity_check_matrix_into(out)
+    }
 }
 
 /// Parses an ETSI CSP test-point file into a sequence of `BitVec` blocks.
