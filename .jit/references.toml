@@ -237,3 +237,18 @@ citation = "ETSI EN 302 755 V1.4.1 (2015-07) — Digital Video Broadcasting (DVB
 key = "KodoSteinwurf2026"
 citation = "Steinwurf — Kodo software library documentation: erasure-correcting codes including Random Linear Network Coding (RLNC)."
 url = "https://kodo.steinwurf.com/"
+
+[[references]]
+key = "SageMath2026"
+citation = "The Sage Developers — SageMath, the Sage Mathematics Software System, Version 10.9 (2026). The oracle uses codes.BCHCode and CyclicCodePolynomialEncoder from sage.coding."
+url = "https://www.sagemath.org"
+
+[[references]]
+key = "GapGroup2026"
+citation = "The GAP Group — GAP: Groups, Algorithms, and Programming, Version 4.16dev (2026)."
+url = "https://www.gap-system.org"
+
+[[references]]
+key = "Joyner2026"
+citation = "Joyner, D., Cramwinckel, J., Baart, R., Minkes, E., Ruscio, L., Boothby, T., Tjhai, C.-J. — GUAVA: a GAP package for computing with error-correcting codes, Version 3.21 (2026). The oracle uses BCHCode, GeneratorPolCode, MinimalPolynomial, and CodewordVector."
+url = "https://gap-packages.github.io/guava/"
