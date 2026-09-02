@@ -37,6 +37,20 @@
 //!    the longest cyclic run of consecutive roots, and take the correction
 //!    radius that bound implies.
 //!
+//! # Constructors
+//!
+//! [`BchCode::construct`] is the canonical validating path. The five explicit
+//! convenience families — [`BchCode::primitive_narrow_sense`],
+//! [`BchCode::primitive`], [`BchCode::consecutive_roots`],
+//! [`BchCode::from_root_seeds`], and [`BchCode::from_generator`] — accept an
+//! extension witness and their independent construction inputs, then delegate
+//! to that path. The first four also have `_auto` counterparts that accept a
+//! base witness and relative degree; they use the deterministic selection
+//! policy in [`gf2_core::field::modulus_select`].
+//!
+//! No convenience method accepts $k$, a correction radius, a closed defining
+//! set, or a generator beside roots: each is derived by construction.
+//!
 //! # Validations
 //!
 //! Stage 1 performs, in order:
@@ -99,53 +113,55 @@
 //!
 //! A binary primitive narrow-sense code over $\mathrm{GF}(2^4)$. Requesting
 //! $\delta = 5$ derives $\mathrm{BCH}(15, 7)$ with a witnessed run of four
-//! consecutive roots.
+//! consecutive roots. Automatic field selection and its explicit twin produce
+//! equal observable code values.
 //!
 //! ```
-//! use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+//! use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
 //! use gf2_coding::traits::block::BlockCode;
-//! use gf2_core::field::extension::BinaryPrimeExt;
+//! use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension};
+//! use gf2_core::field::ConstField;
+//! use gf2_core::field::modulus_select::SelectExtension;
 //! use gf2_core::gf2m::Gf2mField;
+//! use gf2_core::gfp::Fp;
 //!
-//! let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011))?;
-//! let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
-//!     extension,
-//!     designed_distance: DesignedDistance::try_from(5)?,
-//! })?;
+//! let designed_distance = DesignedDistance::try_from(5)?;
+//! let automatic = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
+//!     Fp::<2>::zero(),
+//!     4,
+//!     designed_distance,
+//! )?;
+//! let explicit_extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011))?;
+//! let explicit = BinaryBchCode::primitive_narrow_sense(explicit_extension, designed_distance)?;
 //!
-//! assert_eq!(code.n(), 15);
-//! assert_eq!(code.k(), 7);
-//! assert_eq!(BlockCode::redundancy(&code), 8);
-//! assert_eq!(code.distance_bound().consecutive_root_count(), 4);
-//! assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 5);
-//! assert_eq!(code.correction_radius(), 2);
+//! assert_eq!((automatic.n(), automatic.k(), automatic.correction_radius()), (15, 7, 2));
+//! assert_eq!(automatic.generator(), explicit.generator());
+//! assert_eq!(automatic.n(), explicit.n());
+//! assert_eq!(automatic.k(), explicit.k());
+//! assert_eq!(automatic.defining_set(), explicit.defining_set());
+//! assert_eq!(automatic.distance_bound(), explicit.distance_bound());
+//! assert_eq!(BlockCode::redundancy(&automatic), 8);
 //! # Ok::<(), gf2_coding::bch::error::BchError>(())
 //! ```
 //!
 //! The same construction over $\mathrm{GF}(5)$, with $\mathrm{GF}(25)$ as the
-//! splitting field. The closure of the requested roots also contains
-//! $\beta^5$, so the witnessed run exceeds the four roots the designed
-//! distance asked for.
+//! automatically selected splitting field has $n = 24$.
 //!
 //! ```
-//! use gf2_coding::bch::spec::{BchSpec, DenseBchCode, DesignedDistance};
-//! use gf2_core::field::{ConstField, FieldPoly};
+//! use gf2_coding::bch::spec::{DenseBchCode, DesignedDistance};
+//! use gf2_core::field::ConstField;
+//! use gf2_core::field::modulus_select::SelectExtension;
 //! use gf2_core::gfp::Fp;
 //! use gf2_core::gfpn::QuotientField;
 //!
-//! // GF(25) = GF(5)[x] / (x^2 + x + 1).
-//! let modulus = FieldPoly::new(vec![Fp::<5>::new(1), Fp::new(1), Fp::new(1)]);
-//! let extension = QuotientField::new(Fp::<5>::zero(), modulus)?;
-//! let code = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
-//!     extension,
-//!     designed_distance: DesignedDistance::try_from(5)?,
-//! })?;
+//! let code = DenseBchCode::<QuotientField<Fp<5>>>::primitive_narrow_sense_auto(
+//!     Fp::<5>::zero(),
+//!     2,
+//!     DesignedDistance::try_from(5)?,
+//! )?;
 //!
 //! assert_eq!(code.n(), 24);
-//! assert_eq!(code.k(), 16);
-//! assert_eq!(code.distance_bound().consecutive_root_count(), 5);
-//! assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 6);
-//! # Ok::<(), gf2_coding::bch::error::BchError>(())
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
 use core::marker::PhantomData;
@@ -156,6 +172,7 @@ use gf2_core::field::extension::{
     BinaryPrimeExt, CosetPartition, FieldError, FieldExtension, FieldId, FieldIdentity,
 };
 use gf2_core::field::matrix::FieldMatrix;
+use gf2_core::field::modulus_select::SelectExtension;
 use gf2_core::field::{FieldPoly, FieldVec, FiniteField, FiniteFieldExt};
 use gf2_core::{BitMatrix, BitVec};
 
@@ -632,6 +649,262 @@ where
             );
         }
         assemble(derived, &closure, generator)
+    }
+
+    /// Constructs a primitive narrow-sense BCH code from an extension witness
+    /// and a designed distance.
+    ///
+    /// The extension and designed distance are independent inputs. The
+    /// primitive length, canonical root, generator, dimension, defining set,
+    /// distance bound, and correction radius are derived by [`Self::construct`].
+    /// The designed distance is a guaranteed lower bound on minimum distance,
+    /// never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::construct`] for the complete construction error list.
+    pub fn primitive_narrow_sense(
+        extension: X,
+        designed_distance: DesignedDistance,
+    ) -> Result<Self, BchError> {
+        Self::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance,
+        })
+    }
+
+    /// Constructs a primitive BCH code from an extension witness, first-root
+    /// exponent, and designed distance.
+    ///
+    /// The extension, first-root exponent, and designed distance are
+    /// independent inputs. The primitive length, canonical root, generator,
+    /// dimension, defining set, distance bound, and correction radius are
+    /// derived by [`Self::construct`]. The designed distance is a guaranteed
+    /// lower bound on minimum distance, never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::construct`] for the complete construction error list.
+    pub fn primitive(
+        extension: X,
+        first_root: RootExponent,
+        designed_distance: DesignedDistance,
+    ) -> Result<Self, BchError> {
+        Self::construct(BchSpec::PrimitiveFirstRoot {
+            extension,
+            first_root,
+            designed_distance,
+        })
+    }
+
+    /// Constructs a non-primitive consecutive-root BCH code.
+    ///
+    /// The extension, proper code length, root selection, first-root exponent,
+    /// and designed distance are independent inputs. The selected root when
+    /// canonical, generator, dimension, defining set, distance bound, and
+    /// correction radius are derived by [`Self::construct`]. The designed
+    /// distance is a guaranteed lower bound on minimum distance, never the
+    /// minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::construct`] for the complete construction error list.
+    pub fn consecutive_roots(
+        extension: X,
+        length: BchLength,
+        root: RootSelection<X::Ext>,
+        first_root: RootExponent,
+        designed_distance: DesignedDistance,
+    ) -> Result<Self, BchError> {
+        Self::construct(BchSpec::NonPrimitiveConsecutive {
+            extension,
+            length,
+            root,
+            first_root,
+            designed_distance,
+        })
+    }
+
+    /// Constructs a BCH code from root exponents that need not be closed.
+    ///
+    /// The extension, code length, root selection, and unclosed seed set are
+    /// independent inputs. The selected root when canonical, cyclotomic
+    /// closure, generator, dimension, distance bound, and correction radius
+    /// are derived by [`Self::construct`]. The bound is a guaranteed lower
+    /// bound on minimum distance, never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::construct`] for the complete construction error list.
+    pub fn from_root_seeds(
+        extension: X,
+        length: BchLength,
+        root: RootSelection<X::Ext>,
+        seeds: impl Into<Box<[RootExponent]>>,
+    ) -> Result<Self, BchError> {
+        Self::construct(BchSpec::RootSeeds {
+            extension,
+            length,
+            root,
+            seeds: seeds.into(),
+        })
+    }
+
+    /// Constructs a BCH code from a monic generator in the splitting-field
+    /// carrier.
+    ///
+    /// The extension, code length, and generator polynomial are independent
+    /// inputs. Coefficient restriction, the canonical root, defining set,
+    /// dimension, distance bound, and correction radius are validated or
+    /// derived by [`Self::construct`]. The bound is a guaranteed lower bound on
+    /// minimum distance, never the minimum distance itself. There is no
+    /// automatic counterpart because the generator coefficients already live
+    /// in the splitting-field carrier; compose [`SelectExtension::select`]
+    /// with this method when that witness is not available yet.
+    ///
+    /// ```
+    /// use gf2_coding::bch::error::BchError;
+    /// use gf2_coding::bch::spec::{BchLength, BinaryBchCode};
+    /// use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension};
+    /// use gf2_core::field::modulus_select::SelectExtension;
+    /// use gf2_core::field::{ConstField, FieldPoly};
+    /// use gf2_core::gfp::Fp;
+    ///
+    /// let extension = <BinaryPrimeExt as SelectExtension>::select(Fp::<2>::zero(), 4)?;
+    /// let generator = FieldPoly::one_like(&extension.ext_zero());
+    /// let code = BinaryBchCode::from_generator(
+    ///     extension,
+    ///     BchLength::try_from(15)?,
+    ///     generator,
+    /// )?;
+    /// assert_eq!(code.n(), 15);
+    /// # Ok::<(), BchError>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::construct`] for the complete construction error list.
+    pub fn from_generator(
+        extension: X,
+        length: BchLength,
+        generator: FieldPoly<X::Ext>,
+    ) -> Result<Self, BchError> {
+        Self::construct(BchSpec::GeneratorPolynomial {
+            extension,
+            length,
+            generator,
+        })
+    }
+
+    /// Constructs a primitive narrow-sense BCH code after automatic extension
+    /// selection from a base witness and relative degree.
+    ///
+    /// The base witness, degree, and designed distance are independent inputs;
+    /// selection and all code quantities are delegated to the explicit
+    /// constructor. The designed distance is a guaranteed lower bound on
+    /// minimum distance, never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BchError::ModulusSelection`] when extension selection fails;
+    /// otherwise see [`Self::construct`] for the complete construction error
+    /// list.
+    pub fn primitive_narrow_sense_auto(
+        base: X::Base,
+        degree: usize,
+        designed_distance: DesignedDistance,
+    ) -> Result<Self, BchError>
+    where
+        X: SelectExtension,
+    {
+        Self::primitive_narrow_sense(X::select(base, degree)?, designed_distance)
+    }
+
+    /// Constructs a primitive BCH code after automatic extension selection.
+    ///
+    /// The base witness, degree, first-root exponent, and designed distance are
+    /// independent inputs; selection and all code quantities are delegated to
+    /// [`Self::primitive`]. The designed distance is a guaranteed lower bound
+    /// on minimum distance, never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BchError::ModulusSelection`] when extension selection fails;
+    /// otherwise see [`Self::construct`] for the complete construction error
+    /// list.
+    pub fn primitive_auto(
+        base: X::Base,
+        degree: usize,
+        first_root: RootExponent,
+        designed_distance: DesignedDistance,
+    ) -> Result<Self, BchError>
+    where
+        X: SelectExtension,
+    {
+        Self::primitive(X::select(base, degree)?, first_root, designed_distance)
+    }
+
+    /// Constructs a consecutive-root BCH code after automatic extension
+    /// selection, using the canonical order-`length` root.
+    ///
+    /// The base witness, degree, length, first-root exponent, and designed
+    /// distance are independent inputs; selection and all code quantities are
+    /// delegated to [`Self::consecutive_roots`]. The designed distance is a
+    /// guaranteed lower bound on minimum distance, never the minimum distance
+    /// itself.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BchError::ModulusSelection`] when extension selection fails;
+    /// otherwise see [`Self::construct`] for the complete construction error
+    /// list.
+    pub fn consecutive_roots_auto(
+        base: X::Base,
+        degree: usize,
+        length: BchLength,
+        first_root: RootExponent,
+        designed_distance: DesignedDistance,
+    ) -> Result<Self, BchError>
+    where
+        X: SelectExtension,
+    {
+        Self::consecutive_roots(
+            X::select(base, degree)?,
+            length,
+            RootSelection::Canonical,
+            first_root,
+            designed_distance,
+        )
+    }
+
+    /// Constructs a BCH code from root seeds after automatic extension
+    /// selection, using the canonical order-`length` root.
+    ///
+    /// The base witness, degree, length, and unclosed seeds are independent
+    /// inputs; selection and all code quantities are delegated to
+    /// [`Self::from_root_seeds`]. The distance bound is a guaranteed lower
+    /// bound on minimum distance, never the minimum distance itself.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BchError::ModulusSelection`] when extension selection fails;
+    /// otherwise see [`Self::construct`] for the complete construction error
+    /// list.
+    pub fn from_root_seeds_auto(
+        base: X::Base,
+        degree: usize,
+        length: BchLength,
+        seeds: impl Into<Box<[RootExponent]>>,
+    ) -> Result<Self, BchError>
+    where
+        X: SelectExtension,
+    {
+        Self::from_root_seeds(
+            X::select(base, degree)?,
+            length,
+            RootSelection::Canonical,
+            seeds,
+        )
     }
 
     /// Returns the extension witness the code was constructed with.
@@ -1356,6 +1629,20 @@ mod tests {
         )
     }
 
+    fn assert_same_code_observables<X, S, M>(actual: &BchCode<X, S, M>, expected: &BchCode<X, S, M>)
+    where
+        X: FieldExtension,
+        S: SymbolSequence<X::Base>,
+        M: SymbolMatrix<X::Base>,
+    {
+        assert_eq!(actual.generator(), expected.generator());
+        assert_eq!(actual.n(), expected.n());
+        assert_eq!(actual.k(), expected.k());
+        assert_eq!(actual.defining_set(), expected.defining_set());
+        assert_eq!(actual.distance_bound(), expected.distance_bound());
+        assert_eq!(actual.correction_radius(), expected.correction_radius());
+    }
+
     /// GF(25) = GF(5)[x] / (x^2 + x + 1).
     fn gf25() -> QuotientField<Fp<5>> {
         let modulus = FieldPoly::new(vec![Fp::<5>::new(1), Fp::new(1), Fp::new(1)]);
@@ -1369,6 +1656,238 @@ mod tests {
         let gf9_zero = gf9.ext_zero();
         let gf81_modulus = select_modulus(&gf9_zero, 2).expect("a relative GF(81) modulus");
         QuotientField::new(gf9_zero, gf81_modulus).expect("GF(81) over GF(9)")
+    }
+
+    #[test]
+    fn convenience_constructors_equal_explicit_spec_construction() {
+        let extension = binary_extension(4, 0b10011);
+        let designed_distance = DesignedDistance::try_from(5).expect("positive");
+        let actual = BinaryBchCode::primitive_narrow_sense(extension.clone(), designed_distance)
+            .expect("a valid primitive narrow-sense code");
+        let expected = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: extension.clone(),
+            designed_distance,
+        })
+        .expect("the equivalent primitive narrow-sense spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let first_root = RootExponent::from(2);
+        let actual = BinaryBchCode::primitive(extension.clone(), first_root, designed_distance)
+            .expect("a valid primitive code");
+        let expected = BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+            extension: extension.clone(),
+            first_root,
+            designed_distance,
+        })
+        .expect("the equivalent primitive spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let length = BchLength::try_from(5).expect("positive");
+        let first_root = RootExponent::from(1);
+        let designed_distance = DesignedDistance::try_from(3).expect("positive");
+        let actual = BinaryBchCode::consecutive_roots(
+            extension.clone(),
+            length,
+            RootSelection::Canonical,
+            first_root,
+            designed_distance,
+        )
+        .expect("a valid consecutive-root code");
+        let expected = BinaryBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+            extension: extension.clone(),
+            length,
+            root: RootSelection::Canonical,
+            first_root,
+            designed_distance,
+        })
+        .expect("the equivalent consecutive-root spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let length = BchLength::try_from(15).expect("positive");
+        let seeds = root_seeds([1, 3]);
+        let actual = BinaryBchCode::from_root_seeds(
+            extension.clone(),
+            length,
+            RootSelection::Canonical,
+            seeds.clone(),
+        )
+        .expect("a valid seed-set code");
+        let expected = BinaryBchCode::construct(BchSpec::RootSeeds {
+            extension: extension.clone(),
+            length,
+            root: RootSelection::Canonical,
+            seeds,
+        })
+        .expect("the equivalent seed-set spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let source = BinaryBchCode::from_root_seeds(
+            extension.clone(),
+            length,
+            RootSelection::Canonical,
+            root_seeds([1, 3]),
+        )
+        .expect("a generator source code");
+        let generator = lift_generator(&extension, source.generator());
+        let actual = BinaryBchCode::from_generator(extension.clone(), length, generator.clone())
+            .expect("a valid explicit generator code");
+        let expected = BinaryBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension,
+            length,
+            generator,
+        })
+        .expect("the equivalent generator spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let extension = gf81_over_gf9();
+        let designed_distance = DesignedDistance::try_from(4).expect("positive");
+        let actual = DenseBchCode::primitive_narrow_sense(extension.clone(), designed_distance)
+            .expect("a valid tower primitive narrow-sense code");
+        let expected = DenseBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension: extension.clone(),
+            designed_distance,
+        })
+        .expect("the equivalent tower primitive narrow-sense spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let first_root = RootExponent::from(2);
+        let actual = DenseBchCode::primitive(extension.clone(), first_root, designed_distance)
+            .expect("a valid tower primitive code");
+        let expected = DenseBchCode::construct(BchSpec::PrimitiveFirstRoot {
+            extension: extension.clone(),
+            first_root,
+            designed_distance,
+        })
+        .expect("the equivalent tower primitive spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let length = BchLength::try_from(16).expect("positive");
+        let first_root = RootExponent::from(1);
+        let designed_distance = DesignedDistance::try_from(3).expect("positive");
+        let actual = DenseBchCode::consecutive_roots(
+            extension.clone(),
+            length,
+            RootSelection::Canonical,
+            first_root,
+            designed_distance,
+        )
+        .expect("a valid tower consecutive-root code");
+        let expected = DenseBchCode::construct(BchSpec::NonPrimitiveConsecutive {
+            extension: extension.clone(),
+            length,
+            root: RootSelection::Canonical,
+            first_root,
+            designed_distance,
+        })
+        .expect("the equivalent tower consecutive-root spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let seeds = root_seeds([1, 3]);
+        let actual = DenseBchCode::from_root_seeds(
+            extension.clone(),
+            length,
+            RootSelection::Canonical,
+            seeds.clone(),
+        )
+        .expect("a valid tower seed-set code");
+        let expected = DenseBchCode::construct(BchSpec::RootSeeds {
+            extension: extension.clone(),
+            length,
+            root: RootSelection::Canonical,
+            seeds,
+        })
+        .expect("the equivalent tower seed-set spec");
+        assert_same_code_observables(&actual, &expected);
+
+        let source = DenseBchCode::from_root_seeds(
+            extension.clone(),
+            length,
+            RootSelection::Canonical,
+            root_seeds([1, 3]),
+        )
+        .expect("a tower generator source code");
+        let generator = lift_generator(&extension, source.generator());
+        let actual = DenseBchCode::from_generator(extension.clone(), length, generator.clone())
+            .expect("a valid tower explicit generator code");
+        let expected = DenseBchCode::construct(BchSpec::GeneratorPolynomial {
+            extension,
+            length,
+            generator,
+        })
+        .expect("the equivalent tower generator spec");
+        assert_same_code_observables(&actual, &expected);
+    }
+
+    #[test]
+    fn automatic_selection_equals_explicit_construction_on_the_registry_field() {
+        let designed_distance = DesignedDistance::try_from(9).expect("positive");
+        let automatic =
+            BinaryBchCode::primitive_narrow_sense_auto(Fp::<2>::zero(), 8, designed_distance)
+                .expect("automatic GF(256) selection");
+        let explicit = BinaryBchCode::primitive_narrow_sense(
+            binary_extension(8, 0b1_0001_1101),
+            designed_distance,
+        )
+        .expect("explicit GF(256) selection");
+        assert_same_code_observables(&automatic, &explicit);
+
+        let designed_distance = DesignedDistance::try_from(5).expect("positive");
+        let base = Fp::<5>::zero();
+        let automatic = DenseBchCode::primitive_narrow_sense_auto(base, 2, designed_distance)
+            .expect("automatic GF(25) selection");
+        let modulus = select_modulus(&base, 2).expect("the selected GF(25) modulus");
+        let extension = QuotientField::new(base, modulus).expect("explicit GF(25) extension");
+        let explicit = DenseBchCode::primitive_narrow_sense(extension, designed_distance)
+            .expect("explicit GF(25) selection");
+        assert_same_code_observables(&automatic, &explicit);
+    }
+
+    #[test]
+    fn automatic_selection_is_deterministic() {
+        let first = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
+            Fp::<2>::zero(),
+            8,
+            DesignedDistance::try_from(9).expect("positive"),
+        )
+        .expect("the first automatic construction");
+        let second = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
+            Fp::<2>::zero(),
+            8,
+            DesignedDistance::try_from(9).expect("positive"),
+        )
+        .expect("the second automatic construction");
+        assert_eq!(first.splitting_field_id(), second.splitting_field_id());
+    }
+
+    #[test]
+    fn automatic_selection_errors_are_typed() {
+        let zero_degree = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
+            Fp::<2>::zero(),
+            0,
+            DesignedDistance::try_from(1).expect("positive"),
+        )
+        .expect_err("degree zero must fail during selection");
+        assert!(matches!(zero_degree, BchError::ModulusSelection(_)));
+
+        let explicit = BinaryBchCode::primitive_narrow_sense(
+            binary_extension(4, 0b10011),
+            DesignedDistance::try_from(17).expect("positive"),
+        )
+        .expect_err("the explicit path must reject an oversized bound");
+        let automatic = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
+            Fp::<2>::zero(),
+            4,
+            DesignedDistance::try_from(17).expect("positive"),
+        )
+        .expect_err("the automatic path must use the same construction validation");
+        assert!(matches!(
+            explicit,
+            BchError::DesignedDistanceOutOfRange { .. }
+        ));
+        assert!(matches!(
+            automatic,
+            BchError::DesignedDistanceOutOfRange { .. }
+        ));
     }
 
     fn generator_divides_cyclic_polynomial<X, S, M>(code: &BchCode<X, S, M>) -> bool

@@ -345,7 +345,7 @@
           "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (session 6)"
+          "status": "re-dispatched session 7 (Opus, resume from WIP)"
         },
         {
           "key": "bch-convenience-ctors",
@@ -353,7 +353,7 @@
           "title": "Add delegating convenience constructors with automatic field selection",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched (session 6)"
+          "status": "done (session 7; all gates first-pass)"
         },
         {
           "key": "matrix-systematic-layout",
@@ -361,7 +361,7 @@
           "title": "Canonical BCH matrices use the systematic user layout",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (session 6; Part 1 of worker-bd0edfa2)"
+          "status": "re-dispatched session 7 (Opus, resume from WIP; Part 1 of worker-bd0edfa2)"
         },
         {
           "key": "genmatrix-perf",
@@ -369,7 +369,7 @@
           "title": "Optimize the reference generator-matrix materialization",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (session 6; Part 2 of worker-bd0edfa2, after 444c06bc)"
+          "status": "re-dispatched session 7 (Opus; Part 2 after 444c06bc)"
         },
         {
           "key": "lean-quotient-reduction",
@@ -377,7 +377,15 @@
           "title": "Lean proofs: quotient reduction preserves the represented element",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (session 6)"
+          "status": "re-dispatched session 7 (Opus, resume from WIP)"
+        },
+        {
+          "key": "oracle-agreement",
+          "short_id": "3f7edef1",
+          "title": "External oracle and standards-vector agreement",
+          "classification": "implementation",
+          "difficulty": "hard",
+          "status": "dispatched session 7 (Opus; late wave-10 addition per R-35)"
         }
       ]
     },
@@ -412,14 +420,6 @@
           "key": "lean-closure",
           "short_id": "d7749931",
           "title": "Lean proofs: q-cyclotomic seed closure",
-          "classification": "implementation",
-          "difficulty": "hard",
-          "status": "pending"
-        },
-        {
-          "key": "oracle-agreement",
-          "short_id": "3f7edef1",
-          "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
           "status": "pending"
@@ -649,7 +649,8 @@
     "R-31 (session 6): d54cf660's matrix.rs deviates from the approved matrix contract (bch-api-design.md §Generator and parity-check contracts: 'row i is the encoding of message basis vector i' in the user layout). Filed bug 444c06bc inside the epic as bd0edfa2's prerequisite; bd0edfa2 optimizes the corrected (systematic user-layout) reference. One Opus worker delivers both sequentially in worktree agent-bd0edfa2 with per-issue-tagged commits; gates evaluated per issue on the merged tree.",
     "R-32 (session 6): automatic field selection API for 1c9a0f9f — gf2-core gains `SelectExtension` (trait in field/modulus_select.rs: `fn select(base: Self::Base, degree: usize) -> Result<Self, ModulusSelectionError>`) implemented for QuotientField<B> and BinaryPrimeExt<V>; spec.rs adds the five design-exact explicit conveniences plus `_auto` counterparts for the four base-field-only-input variants (primitive_narrow_sense_auto, primitive_auto, consecutive_roots_auto, from_root_seeds_auto; root = Canonical); from_generator composes with select. BchError gains ModulusSelection(ModulusSelectionError). Footprint additions: crates/gf2-core/src/field/modulus_select.rs, crates/gf2-coding/src/bch/error.rs.",
     "R-33 (session 6): R-27 over-listed 32f53280's required tests — `tower_coordinates_vary_the_base_coordinate_fastest` already exists (extension.rs:3543) and is an L2.7 anchor; the proof sketch (O-2 §3) requires exactly two new tests: reduction_is_invariant_under_multiples_of_the_modulus and canonical_index_decodes_to_its_prime_coordinates. Dispatch follows the sketch.",
-    "R-34 (session 6): `jit validate` failed on two labels `enforces:@/inv/caller-trusted-fast-paths` (c3d5cea5, c9022d14): the dangling-item-link rule does not honor the `inv` alias that `jit item show` accepts. Labels normalized to `enforces:@/invariant/caller-trusted-fast-paths`; validate green. Alias defect belongs to jit (report upstream)."
+    "R-34 (session 6): `jit validate` failed on two labels `enforces:@/inv/caller-trusted-fast-paths` (c3d5cea5, c9022d14): the dangling-item-link rule does not honor the `inv` alias that `jit item show` accepts. Labels normalized to `enforces:@/invariant/caller-trusted-fast-paths`; validate green. Alias defect belongs to jit (report upstream).",
+    "R-35 (session 7): 3f7edef1 (oracle-agreement) re-slotted from wave 11 into wave 10 as a late addition once its last dependency 1c9a0f9f reached done: its footprint (new tests/bch_oracle_agreement.rs, tests/data fixtures, dev/ oracle scripts + provenance doc) is disjoint from the three running wave-10 workers, it is the longest wave-11 item (two external oracles across the corpus plus research-review), and waiting for the wave-10 close would idle it for hours. Wave 10 now closes only when it is done too. Hidden dependencies wired: 5ee83cd3 and e1e0e7ff now depend on 444c06bc (GLDPC reads G=[I|P]; the conformance suite's matrix invariants assert the systematic contract)."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
@@ -668,7 +669,8 @@
     "SendMessage teammate reports truncate around ~3KB; long worker reports need chunked retrieval (three round-trips for 230dd84d). Ask workers to lead with actionable items, details after.",
     "A doc fix that scopes a claim to 'current public variants' goes stale one wave later when the next variant lands — write doc claims against the design's END state or name the variant explicitly (37c288cf R1 was the lead's own 230dd84d fix).",
     "cargo-budget.sh:71-74 asserts workspace crates never hit across worktrees — false for pooled/hardlinked artifacts (path-baked env!(CARGO_MANIFEST_DIR) test binaries). Purge such binaries from the pool (done for gf2pow32_*); tool fix belongs upstream.",
-    "`jit validate`'s dangling-item-link rule rejects the `@/inv/` alias in `enforces:` labels even though `jit item show @/inv/...` resolves it; use the full kind name `@/invariant/` in labels (R-34)."
+    "`jit validate`'s dangling-item-link rule rejects the `@/inv/` alias in `enforces:` labels even though `jit item show @/inv/...` resolves it; use the full kind name `@/invariant/` in labels (R-34).",
+    "RESOLVED 2026-09-02: the jit gate-evaluate checker re-run defect is fixed in the installed binary (~/.cargo/bin/jit built 2026-08-31 22:34 EEST, after just-in-time commit 64473d04f 'execute a gate checker at most once per evaluation' at 22:19). Keep main's working tree clean during a gate run because the cargo-ci gate judges the tree, but a verdict is no longer discarded on input drift."
   ],
   "session_notes_s5": [
     "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
@@ -682,5 +684,10 @@
   "session_notes_s6": [
     "Session 6 (2026-09-02 00:30): resumed at wave 10; pool purged of gf2pow32_* (72 files); bug 444c06bc filed and wired; labels normalized; wave 10 claims recorded.",
     "Wave 10 dispatched 2026-09-01T21:40Z at main 6a2394fb: worktrees agent-{2b6968d3,1c9a0f9f,bd0edfa2,32f53280}; 2b6968d3/32f53280 → native Opus subagents (worker-<id>); 444c06bc+bd0edfa2 → one native Opus subagent (worker-bd0edfa2) sequentially in agent-bd0edfa2; 1c9a0f9f → codex exec gpt-5.6-luna xhigh (detached, setsid; done-file + Monitor; lead commits its tree). Snapshot /tmp/lead-pre-dispatch-20260901-214030.txt."
+  ],
+  "session_notes_s7": [
+    "Session 7 (2026-09-02 08:20 EEST): session 6 died at the Claude session limit ~25 min after wave-10 dispatch (no handoff-5); state reconstructed from progress.json, the session-6 transcript (dispatch prompts recovered), worker transcripts, and the codex rollout. Luna had finished 1c9a0f9f (report in its rollout); the three Opus workers left uncommitted early WIP. Lead committed Luna's tree (7d85e5d3) plus a lead-direct `# Errors` rustdoc addition on the four _auto constructors (af5f8d3e), merged 398bc940, claimed as lead; re-dispatched 2b6968d3, 444c06bc+bd0edfa2, 32f53280 to fresh native Opus subagents with a resume preface (review the WIP as a colleague's draft, commit early), main bc951ba3 merged into every wave-10 branch first.",
+    "codex weekly quota was at 92% at 2026-09-01T22:30Z (resets 2026-09-07 17:56 EEST); Luna dispatches may be refused — fall back to native Sonnet for easy tasks if codex errors on quota.",
+    "Environment: GAP GUAVA was not installed (LoadPackage failed; needs SONATA). Installed user-locally into ~/.gap/pkg: guava-3.21 + sonata-2.9.8 from gap-packages GitHub releases; GAP 4.16dev + GUAVA 3.21 BCHCode(15,1,7,GF(2)) agrees with SageMath 10.9 codes.BCHCode(GF(2),15,7) (g = x^10+x^8+x^5+x^4+x^2+x+1, k=5). GUAVA C binaries not compiled (only IsEquivalent-class functions unavailable)."
   ]
 }
