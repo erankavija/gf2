@@ -265,3 +265,38 @@ Two further points this amendment records rather than leaves implicit:
 Nothing in §§ 2–8 is superseded: this subsection names where the
 conformance-shaped evidence for two rows is taken, and changes no measurement
 cell.
+
+### Amendment, 2026-09-02 (`bd0edfa2`) — W2 improvement evidence at mother length
+
+`genmatrix-perf` measures the W2 workload on the canonical construction model
+(`crates/gf2-coding/src/bch/matrix.rs`, reached through the
+`GeneratorMatrixAccess` and `ParityCheckMatrixAccess` contracts of
+`crates/gf2-coding/src/traits.rs`). Two of § 2's rows are unworkable cells for
+that consumer:
+
+* The canonical model constructs a cyclic code whose length divides its
+  splitting field's unit group, so it has no presentation of T2S at 7200 or
+  T2N at 32400. `97410c80` (*Migrate the DVB-T2 BCH consumers to the canonical
+  model*) is the issue that gives it one, and it is sequenced after this
+  consumer.
+* `Shortened<C>` (`crates/gf2-coding/src/transform/mod.rs`) reaches those two
+  lengths generically, and its generator is a rank-derived dense matrix built
+  by row reduction at construction. That is a different materialization from
+  the one § 1's W2 workload names, so its cost answers a different question.
+
+`genmatrix-perf`'s REQ-02 improvement evidence therefore measures the two
+DVB-T2 rows on their **mother codes**: the primitive narrow-sense codes over
+the same mother fields and the same `prim` column at $\delta = 25$, of
+dimensions $16215 \times 16383$ and $65343 \times 65535$. § 2 already states
+that T2S and T2N carry their mother codes' generator polynomials, so the
+generator and its degree (168 and 192) are the row's, and only $n$ and $k$ are
+the mother's. The witness is
+`crates/gf2-coding/benches/bch_genmatrix.rs`, whose row table cites this
+subsection, and its receipt is `dev/bench_results/bd0edfa2/`.
+
+The measurement cells of §§ 2–8 are unchanged. `perf-receipts` (`fd9d5416`)
+and the external-baseline comparison of § 8 keep $7032 \times 7200$ and
+$32208 \times 32400$ as the W2 cells for the two DVB-T2 rows, at the shortened
+lengths § 2 fixes, on the presentation `97410c80` supplies. This subsection
+names where one consumer's improvement evidence is taken and adds no cell to
+§ 4.
