@@ -59,7 +59,7 @@ pub use core::{
     BchCode, BchDecodeOutcome, BchDecodeReport, BchDecodeWorkspace, BchDecoder, BchEncoder,
     BinaryBchDecoder, CodeRate,
 };
-pub use matrix::CachedMatrices;
+pub use matrix::{CachedMatrices, MatrixFill};
 // The canonical code type keeps its module path while `core::BchCode` still
 // occupies this name; `spec::BchCode` is reachable as `spec::DenseBchCode` or
 // `spec::BinaryBchCode` for the two standard representations.
