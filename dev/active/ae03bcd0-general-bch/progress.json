@@ -345,7 +345,7 @@
           "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (session 6)"
+          "status": "re-dispatched session 7 (Opus, resume from WIP)"
         },
         {
           "key": "bch-convenience-ctors",
@@ -353,7 +353,7 @@
           "title": "Add delegating convenience constructors with automatic field selection",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "dispatched (session 6)"
+          "status": "worker complete (Luna); merged 398bc940; gates pending (session 7)"
         },
         {
           "key": "matrix-systematic-layout",
@@ -361,7 +361,7 @@
           "title": "Canonical BCH matrices use the systematic user layout",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (session 6; Part 1 of worker-bd0edfa2)"
+          "status": "re-dispatched session 7 (Opus, resume from WIP; Part 1 of worker-bd0edfa2)"
         },
         {
           "key": "genmatrix-perf",
@@ -369,7 +369,7 @@
           "title": "Optimize the reference generator-matrix materialization",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (session 6; Part 2 of worker-bd0edfa2, after 444c06bc)"
+          "status": "re-dispatched session 7 (Opus; Part 2 after 444c06bc)"
         },
         {
           "key": "lean-quotient-reduction",
@@ -377,7 +377,7 @@
           "title": "Lean proofs: quotient reduction preserves the represented element",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "dispatched (session 6)"
+          "status": "re-dispatched session 7 (Opus, resume from WIP)"
         }
       ]
     },
@@ -668,7 +668,8 @@
     "SendMessage teammate reports truncate around ~3KB; long worker reports need chunked retrieval (three round-trips for 230dd84d). Ask workers to lead with actionable items, details after.",
     "A doc fix that scopes a claim to 'current public variants' goes stale one wave later when the next variant lands — write doc claims against the design's END state or name the variant explicitly (37c288cf R1 was the lead's own 230dd84d fix).",
     "cargo-budget.sh:71-74 asserts workspace crates never hit across worktrees — false for pooled/hardlinked artifacts (path-baked env!(CARGO_MANIFEST_DIR) test binaries). Purge such binaries from the pool (done for gf2pow32_*); tool fix belongs upstream.",
-    "`jit validate`'s dangling-item-link rule rejects the `@/inv/` alias in `enforces:` labels even though `jit item show @/inv/...` resolves it; use the full kind name `@/invariant/` in labels (R-34)."
+    "`jit validate`'s dangling-item-link rule rejects the `@/inv/` alias in `enforces:` labels even though `jit item show @/inv/...` resolves it; use the full kind name `@/invariant/` in labels (R-34).",
+    "RESOLVED 2026-09-02: the jit gate-evaluate checker re-run defect is fixed in the installed binary (~/.cargo/bin/jit built 2026-08-31 22:34 EEST, after just-in-time commit 64473d04f 'execute a gate checker at most once per evaluation' at 22:19). Keep main's working tree clean during a gate run because the cargo-ci gate judges the tree, but a verdict is no longer discarded on input drift."
   ],
   "session_notes_s5": [
     "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
@@ -682,5 +683,9 @@
   "session_notes_s6": [
     "Session 6 (2026-09-02 00:30): resumed at wave 10; pool purged of gf2pow32_* (72 files); bug 444c06bc filed and wired; labels normalized; wave 10 claims recorded.",
     "Wave 10 dispatched 2026-09-01T21:40Z at main 6a2394fb: worktrees agent-{2b6968d3,1c9a0f9f,bd0edfa2,32f53280}; 2b6968d3/32f53280 → native Opus subagents (worker-<id>); 444c06bc+bd0edfa2 → one native Opus subagent (worker-bd0edfa2) sequentially in agent-bd0edfa2; 1c9a0f9f → codex exec gpt-5.6-luna xhigh (detached, setsid; done-file + Monitor; lead commits its tree). Snapshot /tmp/lead-pre-dispatch-20260901-214030.txt."
+  ],
+  "session_notes_s7": [
+    "Session 7 (2026-09-02 08:20 EEST): session 6 died at the Claude session limit ~25 min after wave-10 dispatch (no handoff-5); state reconstructed from progress.json, the session-6 transcript (dispatch prompts recovered), worker transcripts, and the codex rollout. Luna had finished 1c9a0f9f (report in its rollout); the three Opus workers left uncommitted early WIP. Lead committed Luna's tree (7d85e5d3) plus a lead-direct `# Errors` rustdoc addition on the four _auto constructors (af5f8d3e), merged 398bc940, claimed as lead; re-dispatched 2b6968d3, 444c06bc+bd0edfa2, 32f53280 to fresh native Opus subagents with a resume preface (review the WIP as a colleague's draft, commit early), main bc951ba3 merged into every wave-10 branch first.",
+    "codex weekly quota was at 92% at 2026-09-01T22:30Z (resets 2026-09-07 17:56 EEST); Luna dispatches may be refused — fall back to native Sonnet for easy tasks if codex errors on quota."
   ]
 }
