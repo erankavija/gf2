@@ -158,7 +158,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-02T17:03:33.085036453Z",
+      "updated_at": "2026-09-02T23:10:15.998039715Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -187,5 +187,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-02T17:05:53.078159166Z"
+  "updated_at": "2026-09-02T23:10:15.998039715Z"
 }
