@@ -10931,3 +10931,4 @@
 {"assignee":"agent:worker","id":"b9d8e912-25b0-4dcf-b701-85445ff0f6ad","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","reason":"lead takes over for gates","timestamp":"2026-09-03T05:36:20.564182709Z","type":"issue_released"}
 {"from":"ready","id":"0fa217a9-02da-4aa2-82ac-0757a512b4b9","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","timestamp":"2026-09-03T05:36:29.728217621Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:jit-execution-lead","id":"c7715b40-9960-45c1-8f06-ef1d387669c6","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","timestamp":"2026-09-03T05:36:29.728217621Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"fd8f27b5-54c4-449f-a4b2-8d099f7cf99d","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-03T05:37:01.291478011Z","type":"issue_updated","updated_by":"doc-update"}

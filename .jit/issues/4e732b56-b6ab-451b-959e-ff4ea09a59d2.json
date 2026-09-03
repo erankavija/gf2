@@ -213,14 +213,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
-          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "eb0391b0d4692911de0b3d41facb2ea08756010132904e22802ff53d3a5a89d5",
           "is_shared": false,
           "mime_type": "text/markdown",
@@ -234,12 +226,20 @@
           "mime_type": "text/markdown",
           "original_path": "findings.md",
           "resolved_path": "dev/active/4e732b56/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
+          "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
         }
       ],
       "commit": null,
       "doc_type": "report",
       "format": "markdown",
-      "label": "Selected baselines and workloads (survey contract)",
+      "label": "Workload-selection contract (§9 amended by 177bdc85, 2b6968d3, 97410c80)",
       "path": "dev/active/4e732b56/workload-selection.md"
     },
     {
@@ -344,5 +344,5 @@
   "priority": "high",
   "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-03T05:36:14.749434975Z"
+  "updated_at": "2026-09-03T05:37:01.291478011Z"
 }
