@@ -32,7 +32,7 @@ use crate::traits::block::{
     BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
     SymbolSequence,
 };
-use crate::transform::{CoordinateMap, Extended, Punctured, Shortened};
+use crate::transform::{CoordinateMap, Extended, Punctured, Shortened, ShortenedDerivation};
 use crate::CodeRate;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension, FieldIdentity, TrivialExt};
 use gf2_core::field::matrix::FieldMatrix;
@@ -1050,19 +1050,21 @@ pub fn code_linearity_contract<C>(
 /// $O(k(n-k)n)$. Codes small enough for the direct triple loop also run
 /// [`crate::traits::block::conformance::generator_parity_orthogonality`].
 ///
+/// The caller selects this case from the code's own reports:
+/// [`GeneratorMatrixAccess::is_systematic`] and
+/// [`GeneratorMatrixAccess::has_canonical_message_order`] together are the
+/// leading identity block. Those two decide the generator's shape alone, so a
+/// code whose parity check is not the canonical dual of its generator — the
+/// one-symbol extension, whose extra check row carries the identity in every
+/// coordinate — runs the direct orthogonality case instead of this one.
+///
 /// # Panics
 ///
-/// Panics when either matrix departs from the layout, or when `code` does not
-/// report itself systematic.
+/// Panics when either matrix departs from the layout.
 pub fn systematic_pair_contract<C>(code: &C)
 where
     C: GeneratorMatrixAccess + ParityCheckMatrixAccess,
 {
-    assert!(
-        code.is_systematic()
-            .expect("a canonical code reports its layout"),
-        "the canonical layout puts the message coordinates first"
-    );
     let generator = code.generator_matrix().expect("the generator materializes");
     let parity = code
         .parity_check_matrix()
@@ -1303,6 +1305,10 @@ pub fn constrained_generator<F: FiniteField>(
 
 /// Returns whether every row of `candidate` lies in the row space of `space`.
 ///
+/// Two spaces of equal dimension are equal as soon as one contains the other,
+/// so a caller that already knows both dimensions needs one call rather than
+/// two.
+///
 /// # Panics
 ///
 /// Panics when the two matrices have different column counts.
@@ -1419,6 +1425,36 @@ where
     }
 }
 
+/// Returns the derivation [`Shortened`] selects for `mother` and `removed`.
+///
+/// The rule is the one [`ShortenedDerivation`] documents: a mother that
+/// reports both a systematic layout and the canonical message-coordinate
+/// order carries message symbol $s$ at coordinate $s$, so a coordinate set
+/// entirely below $k$ reads as constraints on the message and the derived
+/// code is the mother's restricted to them. Every other mother and every
+/// other coordinate set is rank-derived.
+///
+/// Stating the rule here rather than at each call site is what lets
+/// [`shortening_contract`] assert the reported derivation wherever it runs.
+///
+/// # Panics
+///
+/// Panics when `mother` cannot report its layout.
+pub fn expected_shortened_derivation<C>(mother: &C, removed: &[usize]) -> ShortenedDerivation
+where
+    C: GeneratorMatrixAccess,
+{
+    let canonical = mother.is_systematic().expect("a mother reports its layout")
+        && mother
+            .has_canonical_message_order()
+            .expect("a mother reports its message-coordinate order");
+    if canonical && removed.iter().all(|&position| position < mother.k()) {
+        ShortenedDerivation::SystematicRestriction
+    } else {
+        ShortenedDerivation::RankDerived
+    }
+}
+
 /// Asserts the shortening contract for `mother` on the coordinate set
 /// `removed`.
 ///
@@ -1429,6 +1465,11 @@ where
 /// coordinates, and every derived codeword lifts to a mother codeword that
 /// vanishes on the removed set.
 ///
+/// The value also reports the derivation
+/// [`expected_shortened_derivation`] names for this mother and coordinate
+/// set. Every statement above is asserted the same way whichever derivation
+/// that is, which is what makes one call site cover both paths.
+///
 /// # Panics
 ///
 /// Panics when any of those statements fails.
@@ -1436,7 +1477,8 @@ where
 /// # Complexity
 ///
 /// Dominated by the mother generator materialization and the two rank
-/// computations over it.
+/// computations over it, which the systematic restriction does not itself
+/// perform.
 pub fn shortening_contract<C>(mother: &C, removed: &[usize])
 where
     C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,
@@ -1448,6 +1490,11 @@ where
 
     let shortened =
         Shortened::new(mother.clone(), removed.iter().copied()).expect("a valid coordinate set");
+    assert_eq!(
+        shortened.derivation(),
+        expected_shortened_derivation(mother, removed),
+        "the derivation follows the selection rule"
+    );
     assert_eq!(
         shortened.n(),
         mother.n() - removed.len(),
@@ -1480,13 +1527,12 @@ where
 
     information_set_contract(&shortened, shortened.information_set());
     let derived_generator = generator_as_field_matrix(&shortened);
+    // The information set makes the derived generator's rank its dimension,
+    // and the dimension assertion above makes that the oracle's rank, so one
+    // containment between two spaces of equal dimension makes them equal.
     assert!(
         row_space_contains(&oracle, &derived_generator, &zero),
-        "every shortened codeword is a projected mother codeword"
-    );
-    assert!(
-        row_space_contains(&derived_generator, &oracle, &zero),
-        "every projected mother codeword is a shortened codeword"
+        "the shortened code is the mother subcode that vanishes on the removed set"
     );
 
     for row in 0..shortened.k() {
@@ -1555,13 +1601,10 @@ where
 
     information_set_contract(&punctured, punctured.information_set());
     let derived_generator = generator_as_field_matrix(&punctured);
+    // Equal dimensions again, so one containment makes the two spaces equal.
     assert!(
         row_space_contains(&oracle, &derived_generator, &zero),
-        "every punctured codeword is a projected mother codeword"
-    );
-    assert!(
-        row_space_contains(&derived_generator, &oracle, &zero),
-        "every projected mother codeword is a punctured codeword"
+        "the punctured code is the projection of the mother code"
     );
 }
 

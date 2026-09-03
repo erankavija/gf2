@@ -13,10 +13,11 @@
 //! derivations of one code and the suite compares them directly.
 //!
 //! The nonbinary rows are the conformance corpus rows N1, N2 and N3 that
-//! `gf2_coding::test_support::visit_bch_corpus` builds. They are constructed
-//! here rather than visited because the visitor hands its rows out under
-//! `SymbolMatrix`, while shortening needs the `MatrixFill` materialization
-//! contract.
+//! `gf2_coding::test_support::visit_bch_corpus` builds. Each case here names
+//! the one row it compares the two derivations on, so the rows are constructed
+//! directly rather than through the visitor, which hands out the whole corpus
+//! in one pass. `bch_conformance.rs` is where every row runs the shared
+//! shortening contract under both derivations.
 
 use gf2_coding::bch::spec::{
     BchLength, BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent,
