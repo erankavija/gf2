@@ -771,6 +771,10 @@ where
     fn is_systematic(&self) -> Result<bool, CodeError> {
         self.code.is_systematic()
     }
+
+    fn has_canonical_message_order(&self) -> Result<bool, CodeError> {
+        self.code.has_canonical_message_order()
+    }
 }
 
 impl<C> ParityCheckMatrixAccess for CachedMatrices<C>
@@ -1717,6 +1721,10 @@ mod tests {
 
         fn is_systematic(&self) -> Result<bool, CodeError> {
             self.code.is_systematic()
+        }
+
+        fn has_canonical_message_order(&self) -> Result<bool, CodeError> {
+            self.code.has_canonical_message_order()
         }
     }
 

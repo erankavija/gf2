@@ -464,13 +464,39 @@ pub mod block {
         /// A code in canonical systematic form has those coordinates at
         /// columns `0..k()`. A code that records another message-coordinate
         /// order answers for that order, which is the equivalent cheap fact
-        /// for its own layout.
+        /// for its own layout, and
+        /// [`Self::has_canonical_message_order`] separates the two cases.
         ///
         /// # Errors
         ///
         /// Returns a [`CodeError`] when the implementation cannot determine
         /// the property.
         fn is_systematic(&self) -> Result<bool, CodeError>;
+
+        /// Reports whether the code carries message symbol `i` at codeword
+        /// coordinate `i`, the canonical message-coordinate order.
+        ///
+        /// [`Self::is_systematic`] answers for whatever order the code
+        /// records for its message coordinates; this answers where that
+        /// order puts them. The two together are the statement that the
+        /// generator's first `k()` columns are the identity, which is what a
+        /// caller needs before it may read a coordinate below `k()` as a
+        /// message coordinate — a derived code restricting its mother to the
+        /// messages that vanish on chosen coordinates, for one.
+        ///
+        /// The answer is about the layout alone and says nothing about
+        /// systematicity, so a code that is not systematic still answers for
+        /// the order it would record. The default reports the canonical
+        /// order, the layout the repository's matrix contract writes; a code
+        /// that records another message-coordinate order overrides this.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`CodeError`] when the implementation cannot determine
+        /// the order.
+        fn has_canonical_message_order(&self) -> Result<bool, CodeError> {
+            Ok(true)
+        }
     }
 
     /// Provides a canonical full-rank parity-check matrix.

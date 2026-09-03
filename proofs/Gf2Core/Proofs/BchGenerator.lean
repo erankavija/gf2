@@ -34,6 +34,17 @@
   `assert_generator_vanishes_exactly_on_the_defining_set`
   (`crates/gf2-coding/src/bch/spec.rs:2102`).
 
+  The witnessed run of L4.7 and L4.8 is the one `witness_longest_run`
+  (`crates/gf2-coding/src/bch/spec.rs:1533`) returns, over all three of its
+  branches. Its two base cases carry their own anchors:
+  `a_full_defining_set_yields_the_zero_dimensional_code`
+  (`crates/gf2-coding/src/bch/spec.rs:2673`) reads first root `Some(0)`, run
+  `15`, bound `16` and radius `7` off the zero-dimensional code of length `15`,
+  and `a_designed_distance_of_one_yields_the_full_space_code` (`:2659`) reads
+  first root `None`, run `0`, bound `1` and radius `0` off the full-space code.
+  `assert_witnessed_run_is_maximal` (`:1960`) covers the scan branch and
+  re-decides the bound and radius on every constructed code.
+
   Scope: L4.7 and L4.8 characterise the witnessed run, a combinatorial property
   of `T`. The step from a run of `δ - 1` consecutive exponents to a
   minimum-distance claim is the classical Vandermonde argument, out of scope by
@@ -75,7 +86,13 @@
   * L4.7 — the sketch names `Fin n` combinatorics. `runLen` is `Nat.find` on the
     scan's own stopping condition over `ZMod n`, mirroring
     `CyclotomicClosure.cosetLen`, because the production loop computes exactly
-    that minimum (`crates/gf2-coding/src/bch/spec.rs:1560-1563`).
+    that minimum (`crates/gf2-coding/src/bch/spec.rs:1560-1563`). The scan's
+    `bestRun` and `bestStart` are that loop alone; `witnessedRun` and
+    `witnessedStart` are the reported witness, which the two early returns at
+    `crates/gf2-coding/src/bch/spec.rs:1534-1547` decide on the empty and the
+    full defining set. `reportedBound` and `correctionRadius` read off the
+    reported witness, so L4.7 and L4.8 hold on every defining set rather than
+    only on the ones that reach the scan.
 
   Every line this module cites under `crates/gf2-core/` is also the line the
   sketch cites. The `crates/gf2-coding/src/bch/spec.rs` citations have drifted by several
@@ -775,6 +792,39 @@ def runStarts : Finset (ZMod n) := Finset.univ.filter fun s => IsRunStart T s
 theorem mem_runStarts {s : ZMod n} : s ∈ runStarts T ↔ IsRunStart T s := by
   simp [runStarts]
 
+/-- Walking backwards from a present exponent reaches a run start, as long as
+some exponent is absent. This is why the scan's outer loop
+(`crates/gf2-coding/src/bch/spec.rs:1556`) loses nothing by skipping the
+exponents its guard rejects. -/
+theorem exists_backward_runStart {s : ZMod n} (hs : s ∈ T) (hne : ∃ y : ZMod n, y ∉ T) :
+    ∃ d : ℕ, IsRunStart T (s - ((d : ℕ) : ZMod n)) ∧
+      ∀ k ≤ d, s - ((k : ℕ) : ZMod n) ∈ T := by
+  obtain ⟨y, hy⟩ := hne
+  have hex : ∃ d : ℕ, s - ((d : ℕ) : ZMod n) - 1 ∉ T := by
+    refine ⟨(s - y - 1).val, ?_⟩
+    rwa [ZMod.natCast_zmod_val, show s - (s - y - 1) - 1 = y by ring]
+  have hback : ∀ k ≤ Nat.find hex, s - ((k : ℕ) : ZMod n) ∈ T := by
+    intro k hk
+    match k with
+    | 0 => simpa using hs
+    | (e + 1) =>
+      have he := Nat.find_min hex (show e < Nat.find hex by omega)
+      rw [show s - ((e + 1 : ℕ) : ZMod n) = s - ((e : ℕ) : ZMod n) - 1 by push_cast; ring]
+      exact not_not.1 he
+  exact ⟨Nat.find hex, ⟨hback _ le_rfl, Nat.find_spec hex⟩, hback⟩
+
+/-- The scan opens at least one run whenever `T` is neither empty nor the whole
+cycle. These are exactly the defining sets that reach the scan:
+`witness_longest_run` returns before it for the other two
+(`crates/gf2-coding/src/bch/spec.rs:1534-1547`). -/
+theorem runStarts_nonempty (h0 : T ≠ ∅) (hu : T ≠ Finset.univ) : (runStarts T).Nonempty := by
+  obtain ⟨x, hx⟩ := Finset.nonempty_iff_ne_empty.2 h0
+  have hne : ∃ y : ZMod n, y ∉ T := by
+    by_contra hcon
+    exact hu (Finset.eq_univ_iff_forall.2 (by simpa using hcon))
+  obtain ⟨d, hstart, -⟩ := exists_backward_runStart T hx hne
+  exact ⟨_, (mem_runStarts T).2 hstart⟩
+
 /-- The longest cyclic run of consecutive members of `T`: the `best_run` the
 scan accumulates (`crates/gf2-coding/src/bch/spec.rs:1564-1567`).
 
@@ -795,22 +845,7 @@ theorem runLen_le_bestRun (hne : ∃ y : ZMod n, y ∉ T) (s : ZMod n) :
   rcases Nat.eq_zero_or_pos (runLen T s) with h0 | hpos
   · omega
   have hsT : s ∈ T := by simpa using mem_of_lt_runLen T s hpos
-  obtain ⟨y, hy⟩ := hne
-  have hex : ∃ d : ℕ, s - ((d : ℕ) : ZMod n) - 1 ∉ T := by
-    refine ⟨(s - y - 1).val, ?_⟩
-    rwa [ZMod.natCast_zmod_val, show s - (s - y - 1) - 1 = y by ring]
-  set d := Nat.find hex with hd
-  have hback : ∀ k ≤ d, s - ((k : ℕ) : ZMod n) ∈ T := by
-    intro k hk
-    match k with
-    | 0 => simpa using hsT
-    | (e + 1) =>
-      have he := Nat.find_min hex (show e < d by omega)
-      rw [show s - ((e + 1 : ℕ) : ZMod n) = s - ((e : ℕ) : ZMod n) - 1 by push_cast; ring]
-      exact not_not.1 he
-  have hstart : IsRunStart T (s - ((d : ℕ) : ZMod n)) := by
-    refine ⟨hback d le_rfl, ?_⟩
-    exact Nat.find_spec hex
+  obtain ⟨d, hstart, hback⟩ := exists_backward_runStart T hsT hne
   have hcover : ∀ i < d + runLen T s,
       (s - ((d : ℕ) : ZMod n)) + ((i : ℕ) : ZMod n) ∈ T := by
     intro i hi
@@ -883,61 +918,209 @@ theorem bestRun_boundaries (hs : (runStarts T).Nonempty) (hlt : bestRun T < n) :
     (by rw [runLen_bestStart T hs]; exact hlt)
   rwa [runLen_bestStart T hs] at this
 
-/-- **L4.7 (base case `T = ∅`).** With no member present no exponent opens a run and every run
-length is zero, so the scan cannot name a start. This is the first early return of
-`witness_longest_run` (`crates/gf2-coding/src/bch/spec.rs:1534-1540`), which reports no
-first root, a run of `0` and a bound of `1`.
+/-- The whole cycle is a nonempty defining set, because `ZMod n` holds `0`. -/
+theorem univ_ne_empty : (Finset.univ : Finset (ZMod n)) ≠ ∅ :=
+  Finset.ne_empty_of_mem (Finset.mem_univ (0 : ZMod n))
 
-Refinement anchor: `assert_witnessed_run_is_maximal`
-(`crates/gf2-coding/src/bch/spec.rs:1973-1976`), the branch that asserts an empty defining set
-against a `None` first root. -/
-theorem run_of_empty (h : T = ∅) :
+/-- The run `witness_longest_run` reports: the whole cycle on the full defining
+set, zero on the empty one, and the scan's `best_run` otherwise. The two base
+cases are the early returns at `crates/gf2-coding/src/bch/spec.rs:1534-1547`,
+which production decides before the scan ever runs; the third branch is the
+`consecutive_root_count: best_run` of the returned witness (`:1572`).
+
+Refinement anchors: `a_full_defining_set_yields_the_zero_dimensional_code`
+(`crates/gf2-coding/src/bch/spec.rs:2673`), which reads `15` on the full set of
+a length-`15` code, and `a_designed_distance_of_one_yields_the_full_space_code`
+(`:2659`), which reads `0` on the empty one. -/
+def witnessedRun : ℕ := if T = ∅ then 0 else if T = Finset.univ then n else bestRun T
+
+/-- The first root `witness_longest_run` reports: `0` on the full defining set,
+none on the empty one, and the scan's least best start otherwise
+(`crates/gf2-coding/src/bch/spec.rs:1534-1547` and `:1571`).
+
+Refinement anchors: `a_full_defining_set_yields_the_zero_dimensional_code`
+(`crates/gf2-coding/src/bch/spec.rs:2673`), which reads `Some(RootExponent(0))`,
+and `a_designed_distance_of_one_yields_the_full_space_code` (`:2659`), which
+reads `None`. -/
+def witnessedStart : Option ℕ :=
+  if h0 : T = ∅ then none
+  else if hu : T = Finset.univ then some 0
+  else some (bestStart T (runStarts_nonempty T h0 hu))
+
+/-- The reported minimum-distance lower bound: the witnessed run plus one
+(`crates/gf2-coding/src/bch/spec.rs:531`, and the three
+`minimum_distance_lower_bound` fields at `:1538`, `:1545` and `:1573`). -/
+def reportedBound : ℕ := witnessedRun T + 1
+
+/-- The reported correction radius: half the witnessed run, the
+`consecutive_root_count / 2` of `assemble` (`crates/gf2-coding/src/bch/spec.rs:1514`). -/
+def correctionRadius : ℕ := witnessedRun T / 2
+
+/-- The empty defining set takes the first early return. -/
+theorem witnessedRun_empty (h : T = ∅) : witnessedRun T = 0 := by
+  rw [witnessedRun, if_pos h]
+
+/-- The empty defining set reports no first root. -/
+theorem witnessedStart_empty (h : T = ∅) : witnessedStart T = none := by
+  rw [witnessedStart, dif_pos h]
+
+/-- The full defining set takes the second early return. -/
+theorem witnessedRun_univ (h : T = Finset.univ) : witnessedRun T = n := by
+  have h0 : T ≠ ∅ := by rw [h]; exact univ_ne_empty
+  rw [witnessedRun, if_neg h0, if_pos h]
+
+/-- The full defining set reports exponent `0` as its first root. -/
+theorem witnessedStart_univ (h : T = Finset.univ) : witnessedStart T = some 0 := by
+  have h0 : T ≠ ∅ := by rw [h]; exact univ_ne_empty
+  rw [witnessedStart, dif_neg h0, dif_pos h]
+
+/-- Every other defining set reaches the scan, so the witnessed run is the
+scan's. -/
+theorem witnessedRun_eq_bestRun (h0 : T ≠ ∅) (hu : T ≠ Finset.univ) :
+    witnessedRun T = bestRun T := by
+  rw [witnessedRun, if_neg h0, if_neg hu]
+
+/-- Every other defining set reaches the scan, so the witnessed start is the
+scan's. -/
+theorem witnessedStart_eq_bestStart (h0 : T ≠ ∅) (hu : T ≠ Finset.univ) :
+    witnessedStart T = some (bestStart T (runStarts_nonempty T h0 hu)) := by
+  rw [witnessedStart, dif_neg h0, dif_neg hu]
+
+/-- A defining set that is not the whole cycle misses an exponent. -/
+theorem exists_notMem_of_ne_univ (hu : T ≠ Finset.univ) : ∃ y : ZMod n, y ∉ T := by
+  by_contra hcon
+  exact hu (Finset.eq_univ_iff_forall.2 (by simpa using hcon))
+
+/-- With no member present no exponent opens a run and every run length is zero, so the scan
+cannot name a start. This is why `witness_longest_run` decides the empty defining set before
+the scan (`crates/gf2-coding/src/bch/spec.rs:1534-1540`). -/
+theorem scan_of_empty (h : T = ∅) :
     runStarts T = ∅ ∧ bestRun T = 0 ∧ ∀ s : ZMod n, runLen T s = 0 := by
   subst h
   have hempty : runStarts (∅ : Finset (ZMod n)) = ∅ := by simp [runStarts, IsRunStart]
   exact ⟨hempty, by rw [bestRun, hempty, Finset.sup_empty]; rfl,
     fun s => runLen_eq_zero_of_notMem _ (by simp)⟩
 
-/-- **L4.7 (base case `|T| = n`).** With every exponent present the whole cycle is one run, so
-the canonical witness is start `0` with run `n`. No exponent opens a run, which is why the
-scan cannot reach this case and `witness_longest_run` decides it up front
-(`crates/gf2-coding/src/bch/spec.rs:1541-1547`).
-
-Refinement anchor: `assert_witnessed_run_is_maximal`
-(`crates/gf2-coding/src/bch/spec.rs:1978-1981`), which finds every witnessed exponent present.
--/
-theorem run_of_univ (h : ∀ x : ZMod n, x ∈ T) :
-    T.card = n ∧ runStarts T = ∅ ∧ bestRun T = 0 ∧
-      (∀ i < n, (0 : ZMod n) + (i : ZMod n) ∈ T) ∧ ∀ s : ZMod n, runLen T s ≤ n := by
+/-- With every exponent present no exponent opens a run either, because none has an absent
+predecessor. This is why `witness_longest_run` decides the full defining set before the scan
+(`crates/gf2-coding/src/bch/spec.rs:1541-1547`). -/
+theorem scan_of_univ (h : ∀ x : ZMod n, x ∈ T) : runStarts T = ∅ ∧ bestRun T = 0 := by
   have hempty : runStarts T = ∅ :=
     Finset.eq_empty_of_forall_notMem fun s hs => ((mem_runStarts T).1 hs).2 (h _)
-  refine ⟨?_, hempty, by rw [bestRun, hempty, Finset.sup_empty]; rfl,
-    fun i _ => h _, runLen_le T⟩
-  rw [Finset.eq_univ_iff_forall.2 h, Finset.card_univ, ZMod.card]
+  exact ⟨hempty, by rw [bestRun, hempty, Finset.sup_empty]; rfl⟩
 
-/-- **L4.8 (consecutive flavors).** A run of `δ - 1` consecutive seeds inside the defining set
-forces the witnessed run to be at least that long, so the reported bound `run + 1`
-(`crates/gf2-coding/src/bch/spec.rs:531`) is at least `δ`. The seeds are in the defining set
-by O-3's L3.5, because `consecutive_seeds` (`crates/gf2-coding/src/bch/spec.rs:1407`) feeds
-them to the closure.
+/-- **L4.7 (base case `T = ∅`).** The empty defining set reports no first root, a run of `0`,
+a bound of `1` and a radius of `0`, the first early return of `witness_longest_run`
+(`crates/gf2-coding/src/bch/spec.rs:1534-1540`).
 
-Refinement anchors: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
-(`crates/gf2-coding/src/bch/spec.rs:2009`),
-`first_root_flavor_witnesses_the_run_it_actually_has` (`:2150`) and
-`narrow_sense_is_the_first_root_flavor_at_exponent_one` (`:2175`). -/
-theorem le_bestRun_of_consecutive (hne : ∃ y : ZMod n, y ∉ T) (b : ZMod n) {m : ℕ}
-    (hm : m ≤ n) (hseeds : ∀ i < m, b + (i : ZMod n) ∈ T) : m ≤ bestRun T := by
-  have h1 := le_runLen_of_forall T hseeds
-  have h2 := runLen_le_bestRun T hne b
-  omega
+Refinement anchor: `a_designed_distance_of_one_yields_the_full_space_code`
+(`crates/gf2-coding/src/bch/spec.rs:2659`), which reads exactly those four values off the
+full-space code, and `assert_witnessed_run_is_maximal` (`:1973-1976`), the branch that asserts
+an empty defining set against a `None` first root. -/
+theorem run_of_empty (h : T = ∅) :
+    witnessedRun T = 0 ∧ witnessedStart T = none ∧ reportedBound T = 1 ∧
+      correctionRadius T = 0 := by
+  refine ⟨witnessedRun_empty T h, witnessedStart_empty T h, ?_, ?_⟩
+  · simp [reportedBound, witnessedRun_empty T h]
+  · simp [correctionRadius, witnessedRun_empty T h]
 
-/-- The reported minimum-distance lower bound: the witnessed run plus one
-(`crates/gf2-coding/src/bch/spec.rs:531`). -/
-def reportedBound : ℕ := bestRun T + 1
+/-- **L4.7 (base case `|T| = n`).** The full defining set reports first root `0`, a run of `n`,
+a bound of `n + 1` and a radius of `⌊n/2⌋`, and every exponent `0 + i` with `i < n` lies in it.
+This is the second early return of `witness_longest_run`
+(`crates/gf2-coding/src/bch/spec.rs:1541-1547`), which production takes before the scan; the
+scan itself finds no run start here, which `scan_of_univ` records.
 
-/-- The reported correction radius: half the witnessed run, the
-`consecutive_root_count / 2` of `assemble` (`crates/gf2-coding/src/bch/spec.rs:1514`). -/
-def correctionRadius : ℕ := bestRun T / 2
+Refinement anchor: `a_full_defining_set_yields_the_zero_dimensional_code`
+(`crates/gf2-coding/src/bch/spec.rs:2673`), which reads `Some(RootExponent(0))`, `15`, `16`
+and `7` off the zero-dimensional code of length `15`. -/
+theorem run_of_univ (h : ∀ x : ZMod n, x ∈ T) :
+    T.card = n ∧ witnessedRun T = n ∧ witnessedStart T = some 0 ∧
+      reportedBound T = n + 1 ∧ correctionRadius T = n / 2 ∧
+      ∀ i < n, (0 : ZMod n) + (i : ZMod n) ∈ T := by
+  have hu : T = Finset.univ := Finset.eq_univ_iff_forall.2 h
+  have hrun := witnessedRun_univ T hu
+  refine ⟨?_, hrun, witnessedStart_univ T hu, ?_, ?_, fun i _ => h _⟩
+  · rw [hu, Finset.card_univ, ZMod.card]
+  · rw [reportedBound, hrun]
+  · rw [correctionRadius, hrun]
+
+/-- **L4.7 (the witness is present).** Every exponent of the witnessed run lies in the defining
+set, on every defining set: through the scan when one is reached, and through membership itself
+on the full cycle.
+
+Refinement anchor: `assert_witnessed_run_is_maximal` (`crates/gf2-coding/src/bch/spec.rs:1981`),
+the `witnessed exponent {exponent} is absent` assertion, which runs on the reported first root
+whichever branch produced it. -/
+theorem mem_of_lt_witnessedRun {m : ℕ} (hm : witnessedStart T = some m) {i : ℕ}
+    (hi : i < witnessedRun T) : ((m : ℕ) : ZMod n) + (i : ZMod n) ∈ T := by
+  by_cases h0 : T = ∅
+  · rw [witnessedStart_empty T h0] at hm; exact absurd hm (by simp)
+  by_cases hu : T = Finset.univ
+  · rw [hu]; exact Finset.mem_univ _
+  · rw [witnessedStart_eq_bestStart T h0 hu] at hm
+    have hmv : m = bestStart T (runStarts_nonempty T h0 hu) := (Option.some_inj.1 hm).symm
+    subst hmv
+    rw [witnessedRun_eq_bestRun T h0 hu] at hi
+    exact mem_of_lt_bestRun T (runStarts_nonempty T h0 hu) hi
+
+/-- **L4.7 (the witness is maximal).** A witnessed run shorter than the whole cycle is bounded
+on both sides by absent exponents. The full defining set has no such boundary, and its run is
+the whole cycle, so the hypothesis excludes it; the empty one reports no first root.
+
+Refinement anchor: `assert_witnessed_run_is_maximal`
+(`crates/gf2-coding/src/bch/spec.rs:1983-1992`), the two `if run < n` assertions. -/
+theorem witnessedRun_boundaries {m : ℕ} (hm : witnessedStart T = some m)
+    (hlt : witnessedRun T < n) :
+    ((m : ℕ) : ZMod n) - 1 ∉ T ∧
+      ((m : ℕ) : ZMod n) + ((witnessedRun T : ℕ) : ZMod n) ∉ T := by
+  by_cases h0 : T = ∅
+  · rw [witnessedStart_empty T h0] at hm; exact absurd hm (by simp)
+  by_cases hu : T = Finset.univ
+  · rw [witnessedRun_univ T hu] at hlt; omega
+  · rw [witnessedStart_eq_bestStart T h0 hu] at hm
+    have hmv : m = bestStart T (runStarts_nonempty T h0 hu) := (Option.some_inj.1 hm).symm
+    subst hmv
+    rw [witnessedRun_eq_bestRun T h0 hu] at hlt ⊢
+    exact bestRun_boundaries T (runStarts_nonempty T h0 hu) hlt
+
+/-- **L4.7 (maximality).** No cyclic run of consecutive members of `T` is longer than the
+witnessed one, on every defining set. On the full cycle every run is `n`, which is the
+witnessed run itself.
+
+Refinement anchors: `assert_witnessed_run_is_maximal`
+(`crates/gf2-coding/src/bch/spec.rs:1994-2003`), whose closing sweep recomputes the run from
+every present exponent and rejects a longer one, and
+`the_witnessed_run_is_present_and_maximal_in_the_defining_set` (`:2646`). -/
+theorem runLen_le_witnessedRun (s : ZMod n) : runLen T s ≤ witnessedRun T := by
+  by_cases h0 : T = ∅
+  · rw [witnessedRun_empty T h0]
+    exact le_of_eq ((scan_of_empty T h0).2.2 s)
+  by_cases hu : T = Finset.univ
+  · rw [witnessedRun_univ T hu]; exact runLen_le T s
+  · rw [witnessedRun_eq_bestRun T h0 hu]
+    exact runLen_le_bestRun T (exists_notMem_of_ne_univ T hu) s
+
+/-- **L4.7 (least tie).** No smaller exponent opens a run of the witnessed length, so the
+witness is reproducible. On the full defining set the reported start is `0`, which no exponent
+undercuts.
+
+Refinement anchor: `first_root_flavor_witnesses_the_run_it_actually_has`
+(`crates/gf2-coding/src/bch/spec.rs:2150`), whose expected first root is the least start of the
+longest run rather than the requested one. -/
+theorem witnessedStart_le {m : ℕ} (hm : witnessedStart T = some m) {m' : ℕ}
+    (hstart : IsRunStart T ((m' : ℕ) : ZMod n))
+    (hrun : runLen T ((m' : ℕ) : ZMod n) = witnessedRun T) : m ≤ m' := by
+  by_cases h0 : T = ∅
+  · rw [witnessedStart_empty T h0] at hm; exact absurd hm (by simp)
+  by_cases hu : T = Finset.univ
+  · rw [witnessedStart_univ T hu] at hm
+    have hm0 : m = 0 := (Option.some_inj.1 hm).symm
+    omega
+  · rw [witnessedStart_eq_bestStart T h0 hu] at hm
+    have hmv : m = bestStart T (runStarts_nonempty T h0 hu) := (Option.some_inj.1 hm).symm
+    subst hmv
+    rw [witnessedRun_eq_bestRun T h0 hu] at hrun
+    exact bestStart_le T (runStarts_nonempty T h0 hu) hstart hrun
 
 /-- **L4.7 (bound and radius agree).** The reported radius is the one the
 reported bound supports: correcting `t` errors needs a distance of at least
@@ -953,15 +1136,52 @@ theorem two_mul_correctionRadius_lt_reportedBound :
   rw [correctionRadius, reportedBound]
   omega
 
-/-- **L4.8 (the reported bound).** A designed distance whose `δ - 1`
-consecutive seeds land in the defining set is reached by the reported bound.
+/-- **L4.8 (consecutive flavors, scan branch).** A run of `δ - 1` consecutive seeds inside a
+defining set that the scan reaches forces the scan's run to be at least that long. The seeds
+are in the defining set by O-3's L3.5, because `consecutive_seeds`
+(`crates/gf2-coding/src/bch/spec.rs:1407`) feeds them to the closure.
 
-Refinement anchor: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
+Refinement anchors: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
+(`crates/gf2-coding/src/bch/spec.rs:2009`),
+`first_root_flavor_witnesses_the_run_it_actually_has` (`:2150`) and
+`narrow_sense_is_the_first_root_flavor_at_exponent_one` (`:2175`). -/
+theorem le_bestRun_of_consecutive (hne : ∃ y : ZMod n, y ∉ T) (b : ZMod n) {m : ℕ}
+    (hm : m ≤ n) (hseeds : ∀ i < m, b + (i : ZMod n) ∈ T) : m ≤ bestRun T := by
+  have h1 := le_runLen_of_forall T hseeds
+  have h2 := runLen_le_bestRun T hne b
+  omega
+
+/-- **L4.8 (consecutive flavors).** A run of `δ - 1` consecutive seeds inside the defining set
+forces the witnessed run to be at least that long, on every defining set. The full-set case
+holds because the seeds cannot exceed the cycle and the witnessed run is the whole cycle.
+
+Refinement anchors: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
+(`crates/gf2-coding/src/bch/spec.rs:2009`) and
+`a_full_defining_set_yields_the_zero_dimensional_code` (`:2673`), whose designed distance of
+`16` on a length-`15` code closes over the full defining set. -/
+theorem le_witnessedRun_of_consecutive (b : ZMod n) {m : ℕ} (hm : m ≤ n)
+    (hseeds : ∀ i < m, b + (i : ZMod n) ∈ T) : m ≤ witnessedRun T := by
+  by_cases h0 : T = ∅
+  · rcases Nat.eq_zero_or_pos m with hm0 | hmpos
+    · omega
+    · exact absurd (hseeds 0 hmpos) (by simp [h0])
+  by_cases hu : T = Finset.univ
+  · rw [witnessedRun_univ T hu]; exact hm
+  · rw [witnessedRun_eq_bestRun T h0 hu]
+    exact le_bestRun_of_consecutive T (exists_notMem_of_ne_univ T hu) b hm hseeds
+
+/-- **L4.8 (the reported bound).** A designed distance whose `δ - 1`
+consecutive seeds land in the defining set is reached by the reported bound, on every defining
+set. At `δ = n + 1` the seeds fill the cycle, and the reported bound is `n + 1`.
+
+Refinement anchors: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
 (`crates/gf2-coding/src/bch/spec.rs:2009`), which compares the reported bound
-against the designed distance of every pinned binary parameter point. -/
-theorem le_reportedBound_of_consecutive (hne : ∃ y : ZMod n, y ∉ T) (b : ZMod n) {d : ℕ}
+against the designed distance of every pinned binary parameter point, and
+`a_full_defining_set_yields_the_zero_dimensional_code` (`:2673`), which reads `16` against a
+designed distance of `16`. -/
+theorem le_reportedBound_of_consecutive (b : ZMod n) {d : ℕ}
     (hd : d - 1 ≤ n) (hseeds : ∀ i < d - 1, b + (i : ZMod n) ∈ T) : d ≤ reportedBound T := by
-  have := le_bestRun_of_consecutive T hne b hd hseeds
+  have := le_witnessedRun_of_consecutive T b hd hseeds
   rw [reportedBound]
   omega
 
