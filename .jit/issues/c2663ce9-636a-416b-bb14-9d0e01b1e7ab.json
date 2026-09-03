@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-03T04:25:15.712389155Z",
+  "dependencies": [
+    "203ee826-87bf-469b-abaa-a9128869f645"
+  ],
+  "description": "The `traits::compat::binary_v1` interface documents `is_systematic` as \"the first k columns form the identity\", while the blanket adapter returns the canonical `GeneratorMatrixAccess::is_systematic` answer, which a code recording another message-coordinate order gives for that order. `LinearBlockCode::hamming` therefore reports `true` through the v1 interface although its identity columns are not the first `k`.\n\n## Background\n\nSurfaced by the shortening fast path (`@/issue/203ee826`), which needed `GeneratorMatrixAccess::has_canonical_message_order` to separate the two readings on the canonical trait. The v1 boundary's documentation still states the canonical-layout reading while its blanket implementation delegates the recorded-order reading.\n\n## Success Criteria\n\n- [hard] REQ-01: The `binary_v1` `is_systematic` documentation and the blanket adapter agree on one reading, and a test pins the Hamming code's answer through the v1 interface against that reading.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-03T04:25:15.712389155Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "c2663ce9-636a-416b-bb14-9d0e01b1e7ab",
+  "labels": [
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "binary_v1 is_systematic documents the canonical layout but delegates the recorded order",
+  "updated_at": "2026-09-03T04:25:34.330268592Z"
+}

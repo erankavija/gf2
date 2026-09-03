@@ -20,7 +20,7 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
+          "content_hash": "eb0391b0d4692911de0b3d41facb2ea08756010132904e22802ff53d3a5a89d5",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../ae03bcd0-general-bch/plan.md",
@@ -62,5 +62,5 @@
   "priority": "high",
   "state": "done",
   "title": "Author the formal-proof sketch for the algebraic foundations",
-  "updated_at": "2026-09-01T16:12:47.805870501Z"
+  "updated_at": "2026-09-03T04:24:29.165237308Z"
 }
