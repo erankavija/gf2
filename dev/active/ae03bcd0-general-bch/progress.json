@@ -430,7 +430,7 @@
           "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "session 10: dispatched to native Opus at 941f81db (reclassified hard: three lead rulings R-50 legacy-constructor relocation to core.rs, R-51 decode through the mother citing 1a8f6acd, R-52 layout pinned bit-for-bit against the legacy encoder); brief in the session scratchpad dispatch-97410c80.md"
+          "status": "session 10: native Opus; lead review PASS (DvbT2MotherCode declares MessageParityDescending so Shortened<DvbT2MotherCode> reproduces the standard bit for bit on all twelve configurations; DvbT2BchDecoder decodes through the mother citing 1a8f6acd; legacy BchCode::dvb_t2 relocated to core.rs with its differential tests); merged 17d511af + lead-direct survey precision e78aebcf; cargo-ci running; code-review PENDING (needs a run)"
         },
         {
           "key": "pin-baseline-receipt",
@@ -760,7 +760,8 @@
     "R-50 (session 10): BchCode::dvb_t2 (legacy) has ~40 callers migrated by wave 12, so 97410c80 relocates the legacy inherent constructor verbatim into bch/core.rs beside BchCode::new/from_generator (the surface 4a2baa12 deletes as one unit) instead of leaving a from_generator call in an inventory file (REQ-02) or breaking wave-12 callers.",
     "R-51 (session 10): generic derived-code decoding stays outside the epic (REQ-09, 1a8f6acd); the DVB-T2 outer decoder decodes through the mother (zero-filled removed leading message coordinates, BinaryBchDecoder on the mother, bbframe read from the kept message coordinates), implemented once in the DVB-T2 module as a documented composition citing @/issue/1a8f6acd as the tracked home of the generic form.",
     "R-52 (session 10): the canonical DVB-T2 code (Shortened<BinaryBchCode> via the systematic restriction) must reproduce the legacy encoder/decoder bit for bit on all twelve (frame, rate) configurations; the standards constructor declares its layout (epic REQ-07).",
-    "R-53 (session 10): 97410c80 reclassified from easy to hard (new canonical type, decoder composition, layout pinning, survey-doc prose) and dispatched to native Opus."
+    "R-53 (session 10): 97410c80 reclassified from easy to hard (new canonical type, decoder composition, layout pinning, survey-doc prose) and dispatched to native Opus.",
+    "R-54 (session 10): 97410c80 deviation accepted — the mother's default BlockEncoder layout is ascending while ETSI transmits descending, so a DvbT2MotherCode newtype declares SystematicLayout::MessageParityDescending (DVB_T2_LAYOUT) and Shortened<DvbT2MotherCode> is the DVB-T2 code (R-52 holds bit for bit); the legacy-vs-canonical differential tests live in core.rs beside the relocated legacy constructor because they need BchEncoder/BchDecoder, and vanish with 4a2baa12."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
