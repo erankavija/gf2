@@ -10921,3 +10921,7 @@
 {"gate_key":"code-review","id":"5d782605-763e-4e3f-8e07-b4f62c50afe0","issue_id":"e1e0e7ff-36f3-46e4-8bcb-db406c526bcb","timestamp":"2026-09-03T04:54:29.144075766Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"9c2b1a4d-1c3c-4c38-a641-88dc39143de0","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-03T04:54:35.106005572Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"e7911d68-0157-40b6-8a6b-53d2c47b982a","issue_id":"3f7edef1-1b3b-4aa4-a813-bf96ee78d6ee","timestamp":"2026-09-03T04:54:39.221948429Z","type":"gate_failed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"e35d2f81-1550-4754-94ef-38a02e3fe14e","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:06:43.032557363Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"5600cbcb-3832-476b-9718-d706a3c00e62","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","reason":"lead takes over for gates","timestamp":"2026-09-03T05:06:43.032557363Z","type":"issue_released"}
+{"from":"ready","id":"a73ee573-63d5-4458-8375-a434487140fa","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:06:54.382936181Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"ae991b9a-a269-42ca-a38e-ab8254a712eb","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:06:54.382936181Z","type":"issue_claimed"}
