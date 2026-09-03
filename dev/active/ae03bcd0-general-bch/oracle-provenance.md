@@ -325,14 +325,17 @@ The fixture generation runs its B4 attempt at the `ORACLE_GAP_HEAP` default,
 which keeps regeneration reproducible on an ordinary host. A larger bounded
 attempt is recorded separately, outside the fixture generation, under
 [`oracle/attempts/2026-09-02-b4-heap-50g/`](oracle/attempts/2026-09-02-b4-heap-50g/).
-It runs on `fraktaali`, the host the receipt names, through that host's `gap`,
-whose SHA-256 the receipt's **Oracle identity** section records. Its whole GAP
-program is the `-c` string of the recorded invocation, so the attempt reads no
-repository source and its outcome turns on GUAVA and the heap alone. The script
+It ran on `fraktaali`, the host the receipt names, through the `gap` on that
+host's path. The probe recorded no identity of its own for that binary, for
+GUAVA and SONATA, or for the CPU and kernel; the receipt's **Oracle identity**
+section records the identities the fixture-generation run observed on the same
+host, and D-01 rests on the attempt's recorded outcome rather than on those
+identities. Its whole GAP program is the `-c` string of the recorded
+invocation, so the attempt reads no repository source and its outcome turns on
+GUAVA and the heap alone. The script
 is the one that ran, so the `peak_rss_kib` line it prints is the fourth line of
-`gap.out`; that line is empty in this run, and the peak below comes from
-`rss.log`. Every
-figure below is read from that record.
+`gap.out`; that line is empty in this run, and the attempt's memory figures
+below are the scope's. Every figure below is read from that record.
 
 | Property | Observation | Record |
 |---|---|---|
@@ -341,12 +344,14 @@ figure below is read from that record.
 | GAP diagnostic | `Error, reached the pre-set memory limit` and `(change it with the -o command line option)` | [`gap.err`](oracle/attempts/2026-09-02-b4-heap-50g/gap.err) |
 | GAP processor time | `cpu_ms=273885` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
 | Memory free at launch, MiB | `total=64196 used=15544 avail=48651` | [`timeline.txt`](oracle/attempts/2026-09-02-b4-heap-50g/timeline.txt) |
-| Peak resident set, largest of the samples | `hwm_kib=54428680` | [`rss.log`](oracle/attempts/2026-09-02-b4-heap-50g/rss.log) |
 | Scope processor time and wall clock | `9min 14.018s CPU time over 9min 17.296s wall clock time` | [`scope.txt`](oracle/attempts/2026-09-02-b4-heap-50g/scope.txt) |
 | Scope memory and swap peaks | `52G memory peak, 15.6G memory swap peak` | [`scope.txt`](oracle/attempts/2026-09-02-b4-heap-50g/scope.txt) |
 
-`rss.log` samples `VmRSS` and `VmHWM` from `/proc/<pid>/status` every five
-seconds, and `timeline.txt` carries the attempt's start and end stamps beside
+`rss.log` samples `VmRSS` and `VmHWM` every five seconds from the first
+process `pgrep -x gap` names, without recording that process's PID, so its
+samples are not attributed to the scoped attempt and no figure above is read
+from it; the attempt's memory figures are the scope's own accounting in
+`scope.txt`. `timeline.txt` carries the attempt's start and end stamps beside
 the free-memory line.
 
 The host reported 48651 MiB available when the attempt started, so its 50 GiB
