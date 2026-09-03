@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: merged dddd121f; cargo-ci, code-review, doc-review passed; research-review R3 F1 (rss.log peak not attributable to the scoped attempt: sampler by name, no PID) + F2 advisory (probe identity borrowed from the later run) closed lead-direct 01003c2d (memory figures read from scope.txt; identity provenance stated); doc-review + research-review re-run queued (chain E)"
+          "status": "session 10: merged dddd121f; cargo-ci, code-review, doc-review passed; research-review R3 findings closed lead-direct 01003c2d; doc-review and research-review re-run PENDING (last runs recorded \"Agent produced no output\", not verdicts)"
         },
         {
           "key": "lean-closure",
@@ -414,7 +414,7 @@
           "title": "Shared property and conformance suites across field classes",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: integration merged 9672d944 (data-driven canonical-layout case via is_systematic && has_canonical_message_order; both Shortened derivations asserted through shortening_contract); cargo-ci passed; code-review queued (chain D)"
+          "status": "session 10: merged 9672d944; cargo-ci passed; code-review PENDING (last run recorded \"Agent produced no output\", not a verdict)"
         },
         {
           "key": "cutover-components",
@@ -422,7 +422,7 @@
           "title": "Migrate the component-code BCH consumers to the canonical model",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "session 10: dispatched to native Sonnet (owner choice) in worktree agent-5ee83cd3 at dddd121f"
+          "status": "session 10: native Sonnet; work complete on worktree-agent-5ee83cd3 at 7c6904cc (four commits: GLDPC, BCJR, OSD adapter evidence, crate-root re-exports), worker report pending at handoff; lead review, merge, cargo-ci, code-review next"
         },
         {
           "key": "cutover-dvbt2",
@@ -483,7 +483,7 @@
           "title": "Lean proofs: generator base-field membership and root correctness",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: rework 1 merged f6f11755; lake-build + code-review passed; doc-review R2 F1 (O-4 sketch not linked to the issue) closed lead-direct by jit doc add; doc-review re-run queued (chain C)"
+          "status": "session 10: rework 1 merged f6f11755; lake-build + code-review passed; doc-review R2 F1 closed by linking the O-4 sketch; doc-review re-run PENDING (last run recorded \"Agent produced no output\", not a verdict)"
         }
       ]
     },
@@ -787,7 +787,12 @@
     "SendMessage to a RUNNING teammate can be lost or delayed for a long time (the 3f7edef1 rework worker never received the research-review findings sent 30 min earlier while it was mid-task). For anything the worker must act on, also write it to a file the worker is told to read, and re-send the pointer when the worker's report shows the item missing.",
     "An sccache server spawned by cargo UNDER the CCX1 flock (ccx1-bench-flock.sh --full-host ... cargo-budget.sh cargo bench) inherits the lock fd and keeps /tmp/gf2-ccx1.lock held after the bench exits; the next flock -x (or cargo-budget's shared lock) blocks forever. Seen 2026-09-02 15:52Z on the 88ca7d2f re-measurement. Check `lslocks | grep ccx1` after every locked bench run and `sccache --stop-server` (or kill the holder); start sccache before taking the lock, or set CARGO_CI_NO_SCCACHE=1 for locked runs.",
     "/tmp is a 32 GB tmpfs; earlier Luna sandbox workers left ~17 GB of cargo target dirs there (gf2-target-992c6c6e, gf2-coding-981c5ae3-target, gf2-18a160f5-target, gf2-transform-target), which counted as used RAM and swap. Deleted 2026-09-02 (all four issues done). Check `du -sh /tmp/gf2-*` before any memory-heavy run and keep worker caches inside worktrees.",
-    "A lead-written reconstruction of a probe command (command.sh for the 50 GiB B4 attempt) disagreed with the real outputs (gap.out's stray peak_rss line, timeline's 48651 MiB vs the stated 48.6 GiB); the worker caught it. Commit the script that actually ran, verbatim (session-9-prompts/gap-b4-probe.sh), never a tidied rewrite."
+    "A lead-written reconstruction of a probe command (command.sh for the 50 GiB B4 attempt) disagreed with the real outputs (gap.out's stray peak_rss line, timeline's 48651 MiB vs the stated 48.6 GiB); the worker caught it. Commit the script that actually ran, verbatim (session-9-prompts/gap-b4-probe.sh), never a tidied rewrite.",
+    "An AI gate run that fails within seconds with \"ERROR: Agent produced no output\" is a checker failure, not a verdict; re-run it. A detached chain of such gates fails every link the same way; check the first result before letting the chain continue.",
+    "A lead-side probe figure sampled by process name (pgrep -x gap | head -1) without a PID is not attributable to the scoped run; research-review rejected the rss.log peak. Read memory figures from the scope's own accounting (systemd scope.txt) and say what the sampler is.",
+    "A Lean issue that amends the proof sketch (64fd3afd's doc) must also link the sketch to itself (jit doc add <lean-issue> proof-sketch.md), or doc-review fails on \"not registered on the issue\" even when 64fd3afd's link is refreshed.",
+    "A Sonnet worker that launches cargo-ci.sh in the background ends its turn waiting for the notification; if no report arrives after the run ends, nudge it with SendMessage.",
+    "jit issue create rejects --priority medium; omit the flag or use a value the command accepts."
   ],
   "session_notes_s5": [
     "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
@@ -820,6 +825,7 @@
   "session_notes_s10": [
     "Session 10 (2026-09-03 02:00 EEST): resumed at wave 11. 3f7edef1 attempt package corrected on the branch (verbatim gap-b4-probe.sh replaces command.sh), lead-reviewed (Tier 1.5 table from the worker's transcript, Tier 2.5/2.75 clean), merged dddd121f, cargo-ci passed; owner ruling on B4 applied to the issue text (R-48). Wave 11 dispatched at dddd121f: 203ee826 + e1e0e7ff native Opus, 5ee83cd3 native Sonnet (R-47); b1bd75ca rework 1 native Opus in its existing worktree fast-forwarded to main.",
     "Session 10: b1bd75ca rework merged f6f11755, lake-build passed; 203ee826 merged ecbdb8e1, cargo-ci passed; e1e0e7ff integration (merge main + has_canonical_message_order-driven suite + both derivation paths) delegated back to its worker; AI reviews run serially in detached chains (chain A: b1bd75ca code/doc, 3f7edef1 code/doc/research; chain B: 203ee826 code/doc).",
-    "Session 10 (cont.): 203ee826 done 941f81db; e1e0e7ff merged 9672d944 with cargo-ci passed; 3f7edef1 code/doc passed, research R3 closed lead-direct, re-runs queued; b1bd75ca doc-review R2 closed by linking the sketch; 97410c80 dispatched (Opus) at 941f81db; 5ee83cd3 (Sonnet) mid-cargo-ci."
+    "Session 10 (cont.): 203ee826 done 941f81db; e1e0e7ff merged 9672d944 with cargo-ci passed; 3f7edef1 code/doc passed, research R3 closed lead-direct, re-runs queued; b1bd75ca doc-review R2 closed by linking the sketch; 97410c80 dispatched (Opus) at 941f81db; 5ee83cd3 (Sonnet) mid-cargo-ci.",
+    "Session 10 handoff (2026-09-03 ~05:00Z): four AI gate runs returned \"Agent produced no output\" (b1bd75ca doc-review, e1e0e7ff code-review, 3f7edef1 doc-review + research-review); re-run them first next session. 97410c80 (Opus) in flight; 5ee83cd3 (Sonnet) complete on branch, report pending. Wave-12 briefs drafted in session-10-prompts/."
   ]
 }
