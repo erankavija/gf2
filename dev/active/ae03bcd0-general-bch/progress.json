@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: rework-2 branch lead-reviewed (attempt package corrected: verbatim probe script replaces the reconstructed command.sh, dbc9de19), merged dddd121f, cargo-ci passed; owner ruling applied (Background + REQ-01 amended, D-01 added); doc links refreshed; code-review, doc-review, research-review running"
+          "status": "session 10: merged dddd121f; cargo-ci, code-review, doc-review passed; research-review R3 F1 (rss.log peak not attributable to the scoped attempt: sampler by name, no PID) + F2 advisory (probe identity borrowed from the later run) closed lead-direct 01003c2d (memory figures read from scope.txt; identity provenance stated); doc-review + research-review re-run queued (chain E)"
         },
         {
           "key": "lean-closure",
@@ -406,7 +406,7 @@
           "title": "Systematic fast path for the generic shortening wrapper",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: native Opus, merged ecbdb8e1 (ShortenedDerivation enum + derivation() accessor; condition = removed < k && is_systematic && has_canonical_message_order (R-46); DVB-T2 witness (32400, 32208) fast-tier; tests/shortened_fast_path.rs); cargo-ci passed; code-review + doc-review queued"
+          "status": "done (session 10): native Opus, merged ecbdb8e1; cargo-ci, code-review, doc-review first-pass; R-46 has_canonical_message_order; findings filed c2663ce9, ccaed736"
         },
         {
           "key": "conformance-suites",
@@ -414,7 +414,7 @@
           "title": "Shared property and conformance suites across field classes",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: native Opus, branch 52d1bc1c reviewed (tests/bch_conformance.rs over all seven implementors; traits::block::conformance promoted pub under test-support; visitor bounds M: MatrixFill + Send + Sync); integration step in progress: merge main (203ee826), resolve test_support.rs conflict, drive the canonical-layout case by has_canonical_message_order(), assert both Shortened derivation paths"
+          "status": "session 10: integration merged 9672d944 (data-driven canonical-layout case via is_systematic && has_canonical_message_order; both Shortened derivations asserted through shortening_contract); cargo-ci passed; code-review queued (chain D)"
         },
         {
           "key": "cutover-components",
@@ -430,7 +430,7 @@
           "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "session 10: dispatched to native Opus at 941f81db (reclassified hard: three lead rulings R-50 legacy-constructor relocation to core.rs, R-51 decode through the mother citing 1a8f6acd, R-52 layout pinned bit-for-bit against the legacy encoder); brief in the session scratchpad dispatch-97410c80.md"
         },
         {
           "key": "pin-baseline-receipt",
@@ -483,7 +483,7 @@
           "title": "Lean proofs: generator base-field membership and root correctness",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: rework 1 (witnessedRun/witnessedStart model production's three branches; reportedBound and correctionRadius read the witness; L4.7/L4.8 over every T; base-case anchors 2659/2673 in header and sketch) merged f6f11755; lake-build passed; code-review + doc-review running"
+          "status": "session 10: rework 1 merged f6f11755; lake-build + code-review passed; doc-review R2 F1 (O-4 sketch not linked to the issue) closed lead-direct by jit doc add; doc-review re-run queued (chain C)"
         }
       ]
     },
@@ -756,7 +756,11 @@
     "R-46 (session 10): 203ee826's fast-path condition is removed ⊂ 0..k AND is_systematic() AND has_canonical_message_order(); the issue text names is_systematic() alone, but the trait doc (0c4d84cf) lets a code answer for a recorded order and the Background's derivation assumes the canonical [I_k | P] layout, so the literal reading builds a wrong code for LinearBlockCode::hamming. Accepted as the minimal shape (provided method, default canonical); the two findings the worker reported outside its footprint are filed as c2663ce9 (binary_v1 is_systematic doc vs blanket impl) and ccaed736 (Punctured<C> lacks ParityCheckMatrixAccess), both depending on 203ee826, outside the epic.",
     "R-47 (session 10, owner): 5ee83cd3 dispatched to native Sonnet; e1e0e7ff and 203ee826 to native Opus; b1bd75ca rework to native Opus.",
     "R-48 (session 10, owner ruling at escalation): 3f7edef1's B4 rule made binding in the issue text itself (Background sentence, REQ-01 parenthetical, D-01), not only in plan Amendment 2; the lead applied the approved wording verbatim.",
-    "R-49 (session 10): e1e0e7ff's traits.rs deviation accepted — traits::block::conformance promoted to `pub` under `#[cfg(any(test, feature = \"test-support\"))]` with rustdoc rather than duplicated into test_support.rs (convention-convergence); BchCorpusVisitor::visit bounds tightened to M: MatrixFill<X::Base> + Send + Sync and X::Base: Send + Sync + 'static (impls keep weaker bounds; the six visitor impls compile untouched). Integration with 203ee826 delegated to the same worker: conflict resolution in test_support.rs, data-driven canonical-layout case, both derivation paths asserted."
+    "R-49 (session 10): e1e0e7ff's traits.rs deviation accepted — traits::block::conformance promoted to `pub` under `#[cfg(any(test, feature = \"test-support\"))]` with rustdoc rather than duplicated into test_support.rs (convention-convergence); BchCorpusVisitor::visit bounds tightened to M: MatrixFill<X::Base> + Send + Sync and X::Base: Send + Sync + 'static (impls keep weaker bounds; the six visitor impls compile untouched). Integration with 203ee826 delegated to the same worker: conflict resolution in test_support.rs, data-driven canonical-layout case, both derivation paths asserted.",
+    "R-50 (session 10): BchCode::dvb_t2 (legacy) has ~40 callers migrated by wave 12, so 97410c80 relocates the legacy inherent constructor verbatim into bch/core.rs beside BchCode::new/from_generator (the surface 4a2baa12 deletes as one unit) instead of leaving a from_generator call in an inventory file (REQ-02) or breaking wave-12 callers.",
+    "R-51 (session 10): generic derived-code decoding stays outside the epic (REQ-09, 1a8f6acd); the DVB-T2 outer decoder decodes through the mother (zero-filled removed leading message coordinates, BinaryBchDecoder on the mother, bbframe read from the kept message coordinates), implemented once in the DVB-T2 module as a documented composition citing @/issue/1a8f6acd as the tracked home of the generic form.",
+    "R-52 (session 10): the canonical DVB-T2 code (Shortened<BinaryBchCode> via the systematic restriction) must reproduce the legacy encoder/decoder bit for bit on all twelve (frame, rate) configurations; the standards constructor declares its layout (epic REQ-07).",
+    "R-53 (session 10): 97410c80 reclassified from easy to hard (new canonical type, decoder composition, layout pinning, survey-doc prose) and dispatched to native Opus."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
@@ -815,6 +819,7 @@
   ],
   "session_notes_s10": [
     "Session 10 (2026-09-03 02:00 EEST): resumed at wave 11. 3f7edef1 attempt package corrected on the branch (verbatim gap-b4-probe.sh replaces command.sh), lead-reviewed (Tier 1.5 table from the worker's transcript, Tier 2.5/2.75 clean), merged dddd121f, cargo-ci passed; owner ruling on B4 applied to the issue text (R-48). Wave 11 dispatched at dddd121f: 203ee826 + e1e0e7ff native Opus, 5ee83cd3 native Sonnet (R-47); b1bd75ca rework 1 native Opus in its existing worktree fast-forwarded to main.",
-    "Session 10: b1bd75ca rework merged f6f11755, lake-build passed; 203ee826 merged ecbdb8e1, cargo-ci passed; e1e0e7ff integration (merge main + has_canonical_message_order-driven suite + both derivation paths) delegated back to its worker; AI reviews run serially in detached chains (chain A: b1bd75ca code/doc, 3f7edef1 code/doc/research; chain B: 203ee826 code/doc)."
+    "Session 10: b1bd75ca rework merged f6f11755, lake-build passed; 203ee826 merged ecbdb8e1, cargo-ci passed; e1e0e7ff integration (merge main + has_canonical_message_order-driven suite + both derivation paths) delegated back to its worker; AI reviews run serially in detached chains (chain A: b1bd75ca code/doc, 3f7edef1 code/doc/research; chain B: 203ee826 code/doc).",
+    "Session 10 (cont.): 203ee826 done 941f81db; e1e0e7ff merged 9672d944 with cargo-ci passed; 3f7edef1 code/doc passed, research R3 closed lead-direct, re-runs queued; b1bd75ca doc-review R2 closed by linking the sketch; 97410c80 dispatched (Opus) at 941f81db; 5ee83cd3 (Sonnet) mid-cargo-ci."
   ]
 }
