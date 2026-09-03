@@ -600,4 +600,34 @@ mod tests {
         assert!(detailed.converged);
         assert!(detailed.syndrome_check_passed);
     }
+
+    /// A canonical BCH code satisfies the decoder's legacy generator-matrix
+    /// bound through the `binary-code-v1` blanket adapter, with no
+    /// BCH-specific path in this module.
+    #[test]
+    fn accepts_a_canonical_bch_generator_matrix() {
+        use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+        use gf2_core::field::extension::BinaryPrimeExt;
+        use gf2_core::gf2m::Gf2mField;
+
+        let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())
+            .expect("a valid binary BCH extension");
+        let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(3)
+                .expect("a positive BCH designed distance"),
+        })
+        .expect("a valid binary BCH construction");
+
+        let decoder = GeneratorMatrixOsdDecoder::new(code, OsdConfig::new(2));
+        let llrs: Vec<Llr> = (0..15).map(|_| Llr::new(3.0)).collect();
+
+        let result = decoder.decode(&llrs).unwrap();
+        assert_eq!(result.work().rank(), 11);
+        assert_eq!(
+            result.decoded_bits().unwrap(),
+            &BitVec::zeros(11),
+            "uniform zero-bit-favoring LLRs decode to the all-zero message"
+        );
+    }
 }
