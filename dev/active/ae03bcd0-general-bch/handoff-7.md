@@ -57,6 +57,7 @@
 - **Do NOT leave the proof sketch unlinked on the Lean issue that amends it.** b1bd75ca's doc-review R2 failed only on that; `jit doc add <lean-issue> dev/active/64fd3afd/proof-sketch.md` alongside the 64fd3afd refresh.
 - **Do NOT dispatch a trait-widening task and a suite that consumes the trait in parallel without a merge plan.** 203ee826 and e1e0e7ff conflicted in `test_support.rs`; the working resolution was routing the suite worker through `git merge main` after the first landed and making its layout choice data-driven (`is_systematic() && has_canonical_message_order()`).
 - **Do NOT wait silently on a Sonnet worker that backgrounded cargo-ci.** It ends its turn until notified; when the host goes idle without a report, nudge it with SendMessage.
+- **Do NOT read a gate launcher's exit code as the verdict.** A `jit gate evaluate` can exit 1 with `Error: Failed to restore recovery serialization after external process` while other jit commands run concurrently (doc add, issue create); the checker never ran and the tracker shows no run. Run `jit recover` and evaluate again; never read the launcher's exit code as the gate's verdict without `jit gate status`.
 - **`jit issue create --priority medium` is rejected.** Omit the flag or use a value the command accepts.
 - **Do NOT reconstruct a run artifact** (handoff-6 trap, confirmed): the verbatim probe script with a one-line header is what the reviewers accepted.
 - All traps in handoff.md through handoff-6.md remain in force.

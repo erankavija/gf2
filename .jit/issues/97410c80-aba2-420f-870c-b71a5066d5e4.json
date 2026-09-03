@@ -15,7 +15,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-03T05:39:42.852375434Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "97410c80-aba2-420f-870c-b71a5066d5e4",
   "labels": [
     "type:task",
@@ -26,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
-  "updated_at": "2026-09-03T05:36:29.728217621Z"
+  "updated_at": "2026-09-03T05:39:42.852375434Z"
 }
