@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-03T05:38:04.703063943Z",
+  "dependencies": [
+    "97410c80-aba2-420f-870c-b71a5066d5e4"
+  ],
+  "description": "`Shortened<C>`'s systematic restriction encodes by writing the message into a mother-length buffer and encoding through the mother, and `encode_into` allocates two mother-length buffers per call (about 16 KB per normal-frame DVB-T2 encode). The wrapper has no reusable-workspace or allocation-free single-encode path.\n\n## Background\n\nSurfaced by the DVB-T2 cutover (`@/issue/97410c80`): the DVB-T2 outer encoder is `Shortened<DvbT2MotherCode>` through this path, and the survey's W1 throughput cells for the DVB-T2 rows measure it. The mother's own encoders expose allocation-free single and reusable-workspace batch methods (`@/issue/ae03bcd0/requirement/REQ-07`); the wrapper does not forward them.\n\n## Success Criteria\n\n- [hard] REQ-01: `Shortened<C>` exposes an allocation-free single-encode path with a caller-held workspace, and a reusable-workspace batch path, both equal to `encode` on every shared fixture and covered by the shared conformance cases.\n- [hard] REQ-02: The DVB-T2 W1 cells encode through the workspace path with no per-call allocation, evidenced by the allocation-count test pattern the crate already uses.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-03T05:38:04.703063943Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "a33fda32-bbba-4a30-87da-33af18b6e071",
+  "labels": [
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Shortened<C> systematic restriction lacks an allocation-free encode path",
+  "updated_at": "2026-09-03T05:38:20.287239712Z"
+}

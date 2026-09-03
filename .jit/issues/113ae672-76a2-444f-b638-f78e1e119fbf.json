@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-03T05:38:11.119063029Z",
+  "dependencies": [
+    "97410c80-aba2-420f-870c-b71a5066d5e4"
+  ],
+  "description": "`DvbT2MotherCode` (`crates/gf2-coding/src/bch/dvb_t2/mod.rs`) is a newtype over `BinaryBchCode` that presents the canonical code under `SystematicLayout::MessageParityDescending` on all four block-code traits. The capability is generic: any `BchCode<X, S, M>` under any `SystematicLayout` could be viewed the same way, and a future standards family would need the same wrapper.\n\n## Background\n\nSurfaced by the DVB-T2 cutover (`@/issue/97410c80`), whose design row assigns layout declaration to standards constructors. A generic layout-declaring view in `bch/encode.rs` (or beside `SystematicLayout`) would let every standards constructor share one mechanism (`@/invariant/convention-convergence`).\n\n## Success Criteria\n\n- [hard] REQ-01: One generic layout-declaring view over `BchCode<X, S, M>` implements the four canonical traits for a declared `SystematicLayout`, and `DvbT2MotherCode` is that view instantiated (or a thin alias of it) with its differential evidence unchanged.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-03T05:38:11.119063029Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "113ae672-76a2-444f-b638-f78e1e119fbf",
+  "labels": [
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Generalize the DVB-T2 layout-declaring view over BchCode",
+  "updated_at": "2026-09-03T05:38:29.425917507Z"
+}

@@ -690,6 +690,31 @@
       "source": "worker-e1e0e7ff sign-off",
       "finding": "transform/mod.rs test module keeps private direct_shortened_rank/direct_punctured_rank helpers duplicating test_support::constrained_generator/projected_generator",
       "disposition": "convergence candidate; fold into 4a2baa12 (cutover-removal) or a lead-direct pass at wave-11 close"
+    },
+    {
+      "source": "worker-97410c80 sign-off",
+      "finding": "Shortened<C>::encode_into allocates two mother-length buffers per call (about 16 KB per normal-frame DVB-T2 encode); the DVB-T2 W1 throughput cells encode through it",
+      "disposition": "filed as enhancement a33fda32 (depends on 97410c80); d1b4f85e measures the DVB-T2 W1 cells against the 88ca7d2f baseline first — a regression there makes a33fda32 a prerequisite of fd9d5416 (epic REQ-13 non-regression)"
+    },
+    {
+      "source": "worker-97410c80 sign-off",
+      "finding": "DvbT2MotherCode is a layout-declaring view whose mechanism is generic over BchCode<X,S,M> and SystematicLayout",
+      "disposition": "filed as enhancement 113ae672 (depends on 97410c80), outside the epic; the design assigns layout declaration to standards constructors, which 97410c80 satisfies"
+    },
+    {
+      "source": "worker-97410c80 sign-off",
+      "finding": "docs/DVB_T2.md (permanent doc, not in the design manifest) still describes the DVB-T2 BCH path on the legacy surface",
+      "disposition": "bake into f759d724 (stale-prose sweep) dispatch prompt"
+    },
+    {
+      "source": "worker-97410c80 sign-off",
+      "finding": "tests/dvb_t2_bch_verification.rs carries bare #[ignore] without the descriptive tier AGENTS.md requires",
+      "disposition": "added to the 227ac5c8 brief (session-10-prompts/dispatch-227ac5c8.md)"
+    },
+    {
+      "source": "worker-97410c80 sign-off",
+      "finding": "workload-selection.md, bd0edfa2 dated amendment, second bullet gives a reason (rank-derived dense generator) that 203ee826 made stale; the conclusion still holds for the systematic restriction (one mother-sized buffer, not the W2 materialization)",
+      "disposition": "dated record, left as written; fd9d5416/d1b4f85e prompts cite the current derivation"
     }
   ],
   "coordination": {
