@@ -41,10 +41,13 @@
 //! assert_eq!(codec.n_ldpc(), 64800); // FECFRAME size
 //! ```
 
-use crate::bch::{BchCode, BchDecoder, BchEncoder};
+use crate::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, DvbT2BchDecoder};
 use crate::ldpc::{DecoderConfig, LdpcCode, LdpcDecoder, LdpcEncoder};
 use crate::llr::Llr;
-use crate::traits::{BlockEncoder, HardDecisionDecoder};
+use crate::traits::block::{BlockCode, BlockEncoder};
+// The LDPC inner code stays on the version-1 encoder boundary; the BCH outer
+// code above uses the canonical trait of the same name.
+use crate::traits::BlockEncoder as LdpcBlockEncoder;
 use gf2_core::BitVec;
 use once_cell::sync::OnceCell;
 use std::sync::Mutex;
@@ -146,12 +149,12 @@ impl std::error::Error for ConcatError {}
 /// - First call to `encode`: O(nnz) for IRA encoder construction (no RREF on
 ///   the DVB-T2 path). Cached inside the encoder for subsequent calls.
 /// - Subsequent `encode` calls: O(nnz).
-/// - `decode_soft`: O(max_iterations × nnz) + O(k_ldpc) for BCH.
+/// - `decode_soft`: O(max_iterations × nnz) for LDPC, plus the BCH outer
+///   decode, which runs over the mother code's length.
 pub struct DvbT2Concat {
-    /// BCH encoder.
-    bch_encoder: BchEncoder,
-    /// BCH decoder.
-    bch_decoder: BchDecoder,
+    /// BCH outer code, the mother code of its frame size shortened to the
+    /// standard's `K_bch`.
+    bch_code: DvbT2BchCode,
     /// LDPC code (held to construct the encoder lazily).
     ldpc_code: LdpcCode,
     /// LDPC encoder (IRA staircase accumulator for DVB-T2), initialised on
@@ -192,13 +195,14 @@ impl DvbT2Concat {
     ///
     /// # Panics
     ///
-    /// Panics if the BCH generator polynomial cannot be constructed for the
-    /// specified parameters (indicates an invariant violation).
+    /// Panics if the standard's table row for this configuration does not
+    /// name a constructible BCH code, which is an invariant violation.
     ///
     /// # Complexity
     ///
-    /// O(nnz) for decoder graph allocation; encoder preprocessing deferred
-    /// to first [`encode`](Self::encode) call.
+    /// O(nnz) for decoder graph allocation plus the BCH mother-code
+    /// construction; encoder preprocessing deferred to first
+    /// [`encode`](Self::encode) call.
     ///
     /// # Examples
     ///
@@ -217,9 +221,10 @@ impl DvbT2Concat {
             FrameSize::Normal => BchFrameSize::Normal,
         };
 
-        let bch_code = BchCode::dvb_t2(bch_frame_size, code_rate);
-        let k_bch = bch_code.k();
-        let k_ldpc = bch_code.n(); // BCH codeword length = LDPC k
+        let bch_code = dvb_t2_bch_code(bch_frame_size, code_rate)
+            .expect("every DVB-T2 table row names a constructible BCH code");
+        let k_bch = BlockCode::k(&bch_code);
+        let k_ldpc = BlockCode::n(&bch_code); // BCH codeword length = LDPC k
 
         let ldpc_code = match frame_size {
             FrameSize::Normal => LdpcCode::dvb_t2_normal(code_rate),
@@ -234,13 +239,10 @@ impl DvbT2Concat {
             "BCH codeword length must equal LDPC k"
         );
 
-        let bch_encoder = BchEncoder::new(bch_code.clone());
-        let bch_decoder = BchDecoder::new(bch_code);
         let ldpc_decoder = LdpcDecoder::new(ldpc_code.clone());
 
         Ok(Self {
-            bch_encoder,
-            bch_decoder,
+            bch_code,
             ldpc_code,
             ldpc_encoder: OnceCell::new(),
             ldpc_decoder: Mutex::new(ldpc_decoder),
@@ -534,7 +536,8 @@ impl DvbT2Concat {
         );
 
         // Step 1: BCH outer encode — k_bch → k_ldpc bits.
-        let bch_codeword = self.bch_encoder.encode(bbframe);
+        let bch_codeword = BlockEncoder::encode(&self.bch_code, bbframe)
+            .expect("a BBFRAME of the validated length encodes");
         debug_assert_eq!(bch_codeword.len(), self.k_ldpc);
 
         // Step 2: LDPC inner encode — k_ldpc → n_ldpc bits.
@@ -694,8 +697,9 @@ impl DvbT2Concat {
     /// a GPU LDPC BP kernel that returns the full `n_ldpc`-bit hard codeword)
     /// can finish the concatenated decode on the CPU without reimplementing the
     /// systematic-extraction + BCH steps. It is the single source of truth for
-    /// "FECFRAME hard codeword → BBFRAME": [`decode_soft_counted`] calls it after
-    /// its own BP step.
+    /// "FECFRAME hard codeword → BBFRAME":
+    /// [`decode_soft_counted`](Self::decode_soft_counted) calls it after its
+    /// own BP step.
     ///
     /// The first `k_ldpc` bits of the codeword are the BCH codeword (DVB-T2 LDPC
     /// is systematic with information bits in positions `0..k_ldpc`); BCH
@@ -716,7 +720,8 @@ impl DvbT2Concat {
     ///
     /// # Complexity
     ///
-    /// O(`k_ldpc`) for the systematic extraction plus the BCH decode.
+    /// O(`k_ldpc`) for the systematic extraction, plus one
+    /// [`DvbT2BchDecoder`] construction and decode over the mother length.
     ///
     /// # Examples
     ///
@@ -750,7 +755,10 @@ impl DvbT2Concat {
         }
 
         // Step 3: BCH outer decode — k_ldpc → k_bch bits.
-        let bbframe = self.bch_decoder.decode(&bch_codeword);
+        let decoder = DvbT2BchDecoder::new(&self.bch_code);
+        let (_outcome, bbframe) = decoder
+            .decode(&bch_codeword)
+            .expect("a BCH codeword of the extracted length decodes");
         debug_assert_eq!(bbframe.len(), self.k_bch);
         bbframe
     }
