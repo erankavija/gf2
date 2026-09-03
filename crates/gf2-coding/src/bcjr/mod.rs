@@ -698,10 +698,27 @@ mod tests {
 
     #[test]
     fn test_ebch_noiseless() {
-        use crate::bch::extended::ExtendedBchCode;
+        use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+        use crate::traits::block::{
+            BlockEncoder as CanonicalBlockEncoder, ParityCheckMatrixAccess,
+        };
+        use crate::transform::Extended;
+        use gf2_core::field::extension::BinaryPrimeExt;
+        use gf2_core::gf2m::Gf2mField;
 
-        let code = ExtendedBchCode::ebch_16_11();
-        let decoder = BcjrDecoder::new(code.parity_check());
+        let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())
+            .expect("a valid binary BCH extension");
+        let base = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(3)
+                .expect("a positive BCH designed distance"),
+        })
+        .expect("a valid binary BCH construction");
+        let code = Extended::new(base).expect("an extended BCH code fits in memory");
+        let h = code
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
+        let decoder = BcjrDecoder::new(&h);
         assert_eq!(decoder.n(), 16);
         assert_eq!(decoder.k(), 11);
 
@@ -710,7 +727,7 @@ mod tests {
         for i in 0..11 {
             msg.push_bit(i % 2 == 0);
         }
-        let cw = code.encode(&msg);
+        let cw = CanonicalBlockEncoder::encode(&code, &msg).expect("valid eBCH encode");
 
         // Create high-confidence LLRs
         let input: Vec<Llr> = (0..16)
@@ -967,8 +984,32 @@ mod tests {
     #[test]
     #[ignore] // ~38s: enumerates 2^26 codewords for eBCH(32,26)
     fn test_weight_distribution_comparison() {
-        use crate::bch::extended::ExtendedBchCode;
+        use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+        use crate::traits::block::{
+            BlockCode as CanonicalBlockCode,
+            GeneratorMatrixAccess as CanonicalGeneratorMatrixAccess,
+        };
         use crate::traits::GeneratorMatrixAccess;
+        use crate::transform::Extended;
+        use gf2_core::field::extension::BinaryPrimeExt;
+        use gf2_core::gf2m::Gf2mField;
+
+        fn build_ebch(
+            degree: usize,
+            primitive_polynomial: u64,
+            designed_distance: u64,
+        ) -> Extended<BinaryBchCode> {
+            let extension =
+                BinaryPrimeExt::new(Gf2mField::new(degree, primitive_polynomial).with_tables())
+                    .expect("a valid binary BCH extension");
+            let base = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+                extension,
+                designed_distance: DesignedDistance::try_from(designed_distance)
+                    .expect("a positive BCH designed distance"),
+            })
+            .expect("a valid binary BCH construction");
+            Extended::new(base).expect("an extended BCH code fits in memory")
+        }
 
         // dRM(32,21): enumerate all 2^21 messages
         let drm = DrmCode::drm_32_21();
@@ -1001,10 +1042,11 @@ mod tests {
         );
 
         // eBCH(16,11): enumerate all 2^11 messages
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let g_ebch = ebch.generator_matrix();
-        let n_ebch = ebch.n();
-        let k_ebch = ebch.k();
+        let ebch = build_ebch(4, 0b10011, 3);
+        let g_ebch = CanonicalGeneratorMatrixAccess::generator_matrix(&ebch)
+            .expect("extended BCH generator matrix");
+        let n_ebch = CanonicalBlockCode::n(&ebch);
+        let k_ebch = CanonicalBlockCode::k(&ebch);
 
         let mut ebch_weights = [0u64; 17];
         for msg_val in 0..(1u64 << k_ebch) {
@@ -1037,10 +1079,11 @@ mod tests {
         );
 
         // Also check eBCH(32,26)
-        let ebch32 = ExtendedBchCode::ebch_32_26();
-        let g_32 = ebch32.generator_matrix();
-        let n_32 = ebch32.n();
-        let k_32 = ebch32.k();
+        let ebch32 = build_ebch(5, 0b100101, 3);
+        let g_32 = CanonicalGeneratorMatrixAccess::generator_matrix(&ebch32)
+            .expect("extended BCH generator matrix");
+        let n_32 = CanonicalBlockCode::n(&ebch32);
+        let k_32 = CanonicalBlockCode::k(&ebch32);
 
         let mut e32_weights = [0u64; 33];
         for msg_val in 0..(1u64 << k_32) {
