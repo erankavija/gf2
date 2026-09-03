@@ -1033,7 +1033,7 @@ construction and encoding use disjoint modules.
 |---|---|
 | `decoder-outcomes` → `hip-equivalence` | `crates/gf2-coding/src/bch/core.rs` serially; HIP equivalence also owns `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`. |
 | `ebch-migration` | `crates/gf2-coding/src/grand/sogrand.rs`, `crates/gf2-coding/src/grand/orbgrand.rs`, `crates/gf2-coding/src/fading.rs`, `crates/gf2-coding/src/product/mod.rs`, `crates/gf2-coding/src/product/chase_pyndiah.rs` |
-| `cutover-dvbt2` | `crates/gf2-coding/src/bch/dvb_t2/mod.rs`, `crates/gf2-coding/src/bch/dvb_t2/generators.rs`, `crates/gf2-coding/src/bch/dvb_t2/params.rs`, `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs`, `crates/gf2-coding/src/dvb_t2_bicm_harness.rs` |
+| `cutover-dvbt2` (`@/issue/97410c80`) | `crates/gf2-coding/src/bch/dvb_t2/mod.rs`, `crates/gf2-coding/src/bch/dvb_t2/generators.rs`, `crates/gf2-coding/src/bch/dvb_t2/params.rs`, `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs`, `crates/gf2-coding/src/dvb_t2_bicm_harness.rs`, plus the standards-constructor relocation in `crates/gf2-coding/src/bch/core.rs` |
 | `cutover-components` | `crates/gf2-coding/src/bcjr/mod.rs`, `crates/gf2-coding/src/gldpc/mod.rs`, `crates/gf2-coding/src/osd/generator.rs`, `crates/gf2-coding/src/simulation.rs`, `crates/gf2-coding/src/lib.rs` |
 | `cutover-bins-examples` | `crates/gf2-coding/src/bin/sim_runner.rs`, `crates/gf2-coding/src/bin/check_encoding.rs`, `crates/gf2-coding/examples/dvb_t2_bch_demo.rs`, `crates/gf2-coding/examples/block_code_intro.rs` |
 | `cutover-test-suite` | `crates/gf2-coding/tests/bch_tests.rs`, `crates/gf2-coding/tests/dvb_t2_bch_verification.rs`, `crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-coding/tests/backend_integration.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs`, `crates/gf2-coding/tests/bch_primitive_verification.rs` |
@@ -1044,8 +1044,13 @@ construction and encoding use disjoint modules.
 | `legacy-reference-sweep` | `crates/gf2-coding/README.md`, `docs/SYSTEMATIC_ENCODING_CONVENTION.md`, `docs/PARALLELIZATION.md`, `crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md` |
 
 The direct migration groups are file-disjoint and may run in parallel after
-their graph prerequisites. `cutover-removal` is the join point and owns the
-only deletion of superseded BCH types. Documentation paths not in the manifest
+their graph prerequisites, with one ordered exception: `@/issue/97410c80`
+moves the superseded DVB-T2 standards constructor into
+`crates/gf2-coding/src/bch/core.rs` beside the other superseded constructors,
+so it joins that file's chain after `hip-equivalence` and before
+`cutover-removal`, which deletes the relocated constructor with the rest of
+the surface. `cutover-removal` is the join point and owns the only deletion
+of superseded BCH types. Documentation paths not in the manifest
 are reported to the lead as footprint findings rather than edited ad hoc.
 
 ## Key decisions

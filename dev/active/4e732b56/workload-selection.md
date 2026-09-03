@@ -234,11 +234,11 @@ this contract does not name leaves the resulting receipt outside the
 model (`crates/gf2-coding/src/bch/spec.rs`, reached through
 `crates/gf2-coding/src/bch/encode.rs`). That model constructs a cyclic code
 whose length divides its splitting field's unit group, so it expresses B1, B2
-and B3 at exactly the lengths § 2 fixes and does not yet express T2S and T2N,
-whose lengths 7200 and 32400 are shortened from $2^{14}-1$ and $2^{16}-1$.
-The shortened presentations reach the canonical model with `97410c80`
-(*Migrate the DVB-T2 BCH consumers to the canonical model*), which is
-sequenced after this consumer.
+and B3 at exactly the lengths § 2 fixes, and T2S and T2N, whose lengths 7200
+and 32400 are shortened from $2^{14}-1$ and $2^{16}-1$, reach it through
+`Shortened<BinaryBchCode>` and its systematic restriction. `97410c80`
+(*Migrate the DVB-T2 BCH consumers to the canonical model*) supplies that
+presentation, and is sequenced after this consumer.
 
 The differential equivalence evidence for the two DVB-T2 rows therefore runs
 on their **mother codes**: the primitive narrow-sense codes over the same
@@ -275,10 +275,10 @@ cell.
 that consumer:
 
 * The canonical model constructs a cyclic code whose length divides its
-  splitting field's unit group, so it has no presentation of T2S at 7200 or
-  T2N at 32400. `97410c80` (*Migrate the DVB-T2 BCH consumers to the canonical
-  model*) is the issue that gives it one, and it is sequenced after this
-  consumer.
+  splitting field's unit group, so T2S at 7200 and T2N at 32400 reach it
+  through `Shortened<BinaryBchCode>` and its systematic restriction, the
+  presentation `97410c80` (*Migrate the DVB-T2 BCH consumers to the canonical
+  model*) supplies. That issue is sequenced after this consumer.
 * `Shortened<C>` (`crates/gf2-coding/src/transform/mod.rs`) reaches those two
   lengths generically, and its generator is a rank-derived dense matrix built
   by row reduction at construction. That is a different materialization from
