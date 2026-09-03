@@ -13,22 +13,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "3c95d7c913da8c70c81ccda0385a069038e57784782665e86abe2a87c8ce9766",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "oracle/gap_oracle.g",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "722348ead9f6bed44ffefbe89e0fda10e07fd5505b5de40a1998f6eb59ee4eb9",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-coding/examples/bch_oracle_messages.rs",
-          "resolved_path": "crates/gf2-coding/examples/bch_oracle_messages.rs"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "f6de3f09e5801e2e81149b8200725e23d1644afdd0fe2557c21a7720f3eb3e62",
           "is_shared": false,
           "mime_type": null,
@@ -44,12 +28,84 @@
           "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/timeline.txt"
         },
         {
-          "asset_type": "local",
-          "content_hash": "eb0391b0d4692911de0b3d41facb2ea08756010132904e22802ff53d3a5a89d5",
+          "asset_type": "directory",
+          "content_hash": null,
           "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "plan.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+          "mime_type": null,
+          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "722348ead9f6bed44ffefbe89e0fda10e07fd5505b5de40a1998f6eb59ee4eb9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/examples/bch_oracle_messages.rs",
+          "resolved_path": "crates/gf2-coding/examples/bch_oracle_messages.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4861230ac64ab7d5a3fb8f696925ecb9db0decc95c1d31529c5570022d717f52",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/sage.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/sage.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b465eaa9d1abcaa17f4bd87e09b72ec515b16b445dab04c6b8c86f75bfb09657",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/bch_oracle_agreement.rs",
+          "resolved_path": "crates/gf2-coding/tests/bch_oracle_agreement.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3c95d7c913da8c70c81ccda0385a069038e57784782665e86abe2a87c8ce9766",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "oracle/gap_oracle.g",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0a456170b6a77fe22935ff5d965310d86f159765c32bb1a1764049264e819cf9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/scope.txt",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/scope.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "654f9aa3d5d3d2a657ce2f6340f742e3088f3cf0f4a45bd8b392a9915790c73b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/gap.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/gap.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "becc4324d4be0719978fb9e6c477c2a16d63b748543fc1f3b7a72f2b73d29c25",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/gap.err",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/gap.err"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "02d195b78fe82c8cc784c79b1adf5f7b02e381d5e43de8aa7266b4a7c7f3db05",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json",
+          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/corpus.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5a967080dc92802396a0545e7f05b7402a08cb778c107b5a2541f67f8fcff85e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh"
         },
         {
           "asset_type": "local",
@@ -69,51 +125,19 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "5a967080dc92802396a0545e7f05b7402a08cb778c107b5a2541f67f8fcff85e",
+          "content_hash": "3dd7d7ef3addb690d8644ed2a6ffb2ddd3c37bef29925d2716b681be4a8bab5a",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh"
+          "original_path": "oracle/sage_oracle.py",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/sage_oracle.py"
         },
         {
           "asset_type": "local",
-          "content_hash": "4861230ac64ab7d5a3fb8f696925ecb9db0decc95c1d31529c5570022d717f52",
+          "content_hash": "eb0391b0d4692911de0b3d41facb2ea08756010132904e22802ff53d3a5a89d5",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/sage.json",
-          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/sage.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "02d195b78fe82c8cc784c79b1adf5f7b02e381d5e43de8aa7266b4a7c7f3db05",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json",
-          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/corpus.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "654f9aa3d5d3d2a657ce2f6340f742e3088f3cf0f4a45bd8b392a9915790c73b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-coding/tests/data/bch_oracle/gap.json",
-          "resolved_path": "crates/gf2-coding/tests/data/bch_oracle/gap.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "0a456170b6a77fe22935ff5d965310d86f159765c32bb1a1764049264e819cf9",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/scope.txt",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/scope.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b465eaa9d1abcaa17f4bd87e09b72ec515b16b445dab04c6b8c86f75bfb09657",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-coding/tests/bch_oracle_agreement.rs",
-          "resolved_path": "crates/gf2-coding/tests/bch_oracle_agreement.rs"
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
         },
         {
           "asset_type": "local",
@@ -122,38 +146,6 @@
           "mime_type": null,
           "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/gap.out",
           "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/gap.out"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ccd7161466bd0f0d58393531d28dbd9d84a05a6f3dca671826adfa8a742e7fe3",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/rss.log",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/rss.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "3dd7d7ef3addb690d8644ed2a6ffb2ddd3c37bef29925d2716b681be4a8bab5a",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "oracle/sage_oracle.py",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/sage_oracle.py"
-        },
-        {
-          "asset_type": "directory",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "becc4324d4be0719978fb9e6c477c2a16d63b748543fc1f3b7a72f2b73d29c25",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "oracle/attempts/2026-09-02-b4-heap-50g/gap.err",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/gap.err"
         }
       ],
       "commit": null,
@@ -218,18 +210,18 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-02T16:53:55.972965170Z",
+      "status": "passed",
+      "updated_at": "2026-09-03T04:35:00.127421358Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-09-02T17:05:53.078159166Z",
+      "updated_at": "2026-09-03T04:38:09.365722089Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-09-02T17:02:43.635257686Z",
+      "updated_at": "2026-09-03T04:46:06.193238821Z",
       "updated_by": "auto:executor"
     }
   },
@@ -243,5 +235,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-03T04:24:28.950716717Z"
+  "updated_at": "2026-09-03T04:47:46.312846045Z"
 }
