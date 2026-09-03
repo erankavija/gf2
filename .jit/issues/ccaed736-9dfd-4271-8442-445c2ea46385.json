@@ -15,7 +15,7 @@
     "type:enhancement"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Punctured<C> lacks ParityCheckMatrixAccess",
-  "updated_at": "2026-09-03T04:25:43.391608465Z"
+  "updated_at": "2026-09-03T04:52:56.370410993Z"
 }

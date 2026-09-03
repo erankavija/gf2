@@ -23,7 +23,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
-  "updated_at": "2026-09-02T11:05:28.132810131Z"
+  "updated_at": "2026-09-03T04:52:38.223472142Z"
 }

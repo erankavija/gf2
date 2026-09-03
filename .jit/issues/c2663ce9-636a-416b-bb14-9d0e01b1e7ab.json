@@ -15,7 +15,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "binary_v1 is_systematic documents the canonical layout but delegates the recorded order",
-  "updated_at": "2026-09-03T04:25:34.330268592Z"
+  "updated_at": "2026-09-03T04:52:47.302233349Z"
 }
