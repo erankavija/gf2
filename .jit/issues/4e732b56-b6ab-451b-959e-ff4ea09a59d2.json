@@ -213,19 +213,19 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "6478f1e278ef38e30d32ceae90be5633a7a324a6523ee1ea4116a26a0a1e0c57",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../ae03bcd0-general-bch/plan.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "bb5ce6c27b5c44c0c242f4ee8bab243b839540447a5119e8334822095b70f9f7",
           "is_shared": false,
           "mime_type": "text/plain",
           "original_path": "../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt",
           "resolved_path": "dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eb0391b0d4692911de0b3d41facb2ea08756010132904e22802ff53d3a5a89d5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../ae03bcd0-general-bch/plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
         },
         {
           "asset_type": "local",
@@ -237,9 +237,9 @@
         }
       ],
       "commit": null,
-      "doc_type": null,
+      "doc_type": "report",
       "format": "markdown",
-      "label": "Workload-selection contract (§9 amended by 177bdc85, 2b6968d3)",
+      "label": "Selected baselines and workloads (survey contract)",
       "path": "dev/active/4e732b56/workload-selection.md"
     },
     {
@@ -344,5 +344,5 @@
   "priority": "high",
   "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-02T16:23:42.225919883Z"
+  "updated_at": "2026-09-03T05:36:14.749434975Z"
 }

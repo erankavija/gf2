@@ -10926,3 +10926,8 @@
 {"from":"ready","id":"a73ee573-63d5-4458-8375-a434487140fa","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:06:54.382936181Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:jit-execution-lead","id":"ae991b9a-a269-42ca-a38e-ab8254a712eb","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:06:54.382936181Z","type":"issue_claimed"}
 {"gate_key":"cargo-ci","id":"866cd731-40c5-49d2-94e4-325b9a921964","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:08:39.919942395Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"fbc15b1c-b58b-4fca-8b24-ed8889bbb074","issue_id":"4e732b56-b6ab-451b-959e-ff4ea09a59d2","timestamp":"2026-09-03T05:36:14.749434975Z","type":"issue_updated","updated_by":"doc-update"}
+{"from":"in_progress","id":"9834c5e0-c4b2-4e1c-ad49-deaf6163ab78","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","timestamp":"2026-09-03T05:36:20.564182709Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"b9d8e912-25b0-4dcf-b701-85445ff0f6ad","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","reason":"lead takes over for gates","timestamp":"2026-09-03T05:36:20.564182709Z","type":"issue_released"}
+{"from":"ready","id":"0fa217a9-02da-4aa2-82ac-0757a512b4b9","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","timestamp":"2026-09-03T05:36:29.728217621Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"c7715b40-9960-45c1-8f06-ef1d387669c6","issue_id":"97410c80-aba2-420f-870c-b71a5066d5e4","timestamp":"2026-09-03T05:36:29.728217621Z","type":"issue_claimed"}
