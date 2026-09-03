@@ -215,13 +215,13 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "passed",
-      "updated_at": "2026-09-03T04:38:09.365722089Z",
+      "status": "failed",
+      "updated_at": "2026-09-03T04:54:35.106005572Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-09-03T04:46:06.193238821Z",
+      "updated_at": "2026-09-03T04:54:39.221948429Z",
       "updated_by": "auto:executor"
     }
   },
@@ -235,5 +235,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-03T04:47:46.312846045Z"
+  "updated_at": "2026-09-03T04:54:39.221948429Z"
 }

@@ -48,7 +48,7 @@
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-09-03T04:31:40.484661200Z",
+      "updated_at": "2026-09-03T04:54:18.733702988Z",
       "updated_by": "auto:executor"
     },
     "lake-build": {
@@ -68,5 +68,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Lean proofs: generator base-field membership and root correctness",
-  "updated_at": "2026-09-03T04:32:35.618197594Z"
+  "updated_at": "2026-09-03T04:54:18.733702988Z"
 }

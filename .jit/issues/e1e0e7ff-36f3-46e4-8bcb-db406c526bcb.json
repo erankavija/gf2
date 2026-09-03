@@ -22,6 +22,11 @@
       "status": "passed",
       "updated_at": "2026-09-03T04:47:46.705326198Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-03T04:54:29.144075766Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "e1e0e7ff-36f3-46e4-8bcb-db406c526bcb",
@@ -34,5 +39,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Shared property and conformance suites across field classes",
-  "updated_at": "2026-09-03T04:47:46.705326198Z"
+  "updated_at": "2026-09-03T04:54:29.144075766Z"
 }
