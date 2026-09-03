@@ -236,7 +236,8 @@ model (`crates/gf2-coding/src/bch/spec.rs`, reached through
 whose length divides its splitting field's unit group, so it expresses B1, B2
 and B3 at exactly the lengths § 2 fixes, and T2S and T2N, whose lengths 7200
 and 32400 are shortened from $2^{14}-1$ and $2^{16}-1$, reach it through
-`Shortened<BinaryBchCode>` and its systematic restriction. `97410c80`
+`Shortened<DvbT2MotherCode>` (the binary BCH mother under the standard's
+declared descending layout) and its systematic restriction. `97410c80`
 (*Migrate the DVB-T2 BCH consumers to the canonical model*) supplies that
 presentation, and is sequenced after this consumer.
 
@@ -276,7 +277,8 @@ that consumer:
 
 * The canonical model constructs a cyclic code whose length divides its
   splitting field's unit group, so T2S at 7200 and T2N at 32400 reach it
-  through `Shortened<BinaryBchCode>` and its systematic restriction, the
+  through `Shortened<DvbT2MotherCode>` (the binary BCH mother under the
+  standard's declared layout) and its systematic restriction, the
   presentation `97410c80` (*Migrate the DVB-T2 BCH consumers to the canonical
   model*) supplies. That issue is sequenced after this consumer.
 * `Shortened<C>` (`crates/gf2-coding/src/transform/mod.rs`) reaches those two
