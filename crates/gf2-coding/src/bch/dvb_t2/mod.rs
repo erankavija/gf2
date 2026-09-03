@@ -703,6 +703,58 @@ mod tests {
     }
 
     #[test]
+    fn the_declared_layout_reverses_the_mother_coordinates() {
+        for (frame_size, rate) in [
+            (FrameSize::Short, CodeRate::Rate1_2),
+            (FrameSize::Normal, CodeRate::Rate5_6),
+        ] {
+            let params = DvbBchParams::for_code(frame_size, rate);
+            let code = dvb_t2_bch_code(frame_size, rate).expect("a standard configuration");
+            let mother = code.mother();
+            let length = BlockCode::n(mother);
+
+            // User coordinate u of the mother carries the coefficient of
+            // x^{n - 1 - u}, so the kept coordinates of the shortened code are
+            // the mother's low degrees, in descending order.
+            for user in [0, 1, length / 2, length - 1] {
+                assert_eq!(
+                    mother
+                        .internal_coordinate(user)
+                        .expect("an in-range user coordinate"),
+                    length - 1 - user,
+                    "user coordinate {user} of {frame_size:?} {rate:?}"
+                );
+            }
+            assert!(matches!(
+                mother.internal_coordinate(length),
+                Err(CodeError::CoordinateOutOfRange { .. })
+            ));
+
+            let map = code.coordinate_map();
+            for derived in [0, params.k - 1, params.k, params.n - 1] {
+                let user = map.mother_position(derived).expect("a kept coordinate");
+                assert_eq!(
+                    mother
+                        .internal_coordinate(user)
+                        .expect("an in-range user coordinate"),
+                    params.n - 1 - derived,
+                    "derived coordinate {derived} of {frame_size:?} {rate:?}"
+                );
+            }
+
+            assert_eq!(
+                BlockCode::n(
+                    &DvbT2MotherCode::new(params)
+                        .expect("a mother")
+                        .into_canonical()
+                ),
+                length,
+                "the unwrapped code keeps the mother length"
+            );
+        }
+    }
+
+    #[test]
     fn the_declared_layout_matrices_agree_with_the_declared_encoder() {
         for (degree, modulus, designed_distance) in
             [(4, 0b10011, 5), (4, 0b10011, 3), (5, 0b100101, 7)]
