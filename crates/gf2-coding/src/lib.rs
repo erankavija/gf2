@@ -88,7 +88,8 @@ pub mod transform;
 pub mod tuning;
 
 // Re-export main types
-pub use bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
+pub use bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+pub use bch::CodeRate;
 pub use channel::AwgnChannel;
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
 pub use error::{Capability, CodeCapability, CodeError, RepresentationId};
