@@ -22,9 +22,10 @@
 //!   entry points report, and the equality of the opt-in cache wrapper with the
 //!   code it wraps.
 //! - **transformations** — the coordinate map's composition back to the mother
-//!   code, the rank-derived dimension of a shortened or punctured code against
-//!   a direct rank computation, membership of the derived codewords in the
-//!   mother code, and the zero symbol sum of a one-symbol extension.
+//!   code, the derived dimension of a shortened or punctured code against a
+//!   direct rank computation, the derivation each shortening selects,
+//!   membership of the derived codewords in the mother code, and the zero
+//!   symbol sum of a one-symbol extension.
 //!
 //! # Rows and codes
 //!
@@ -58,6 +59,22 @@
 //! ..."]`, well inside the nightly tier's budget. That row's construction and
 //! encoding, in both representations, stay in the fast tier.
 //!
+//! # Shortening derivations
+//!
+//! [`Shortened`] reports which of its two derivations a value holds through
+//! [`Shortened::derivation`], and the transformation group runs both against
+//! the same assertions. A set of message coordinates on a mother reporting a
+//! systematic layout and the canonical message-coordinate order selects
+//! [`ShortenedDerivation::SystematicRestriction`]; [`RankDerivedMother`] hides
+//! that layout, so the same mother and the same coordinate set select
+//! [`ShortenedDerivation::RankDerived`]; and a set reaching a parity
+//! coordinate selects it from any mother.
+//!
+//! The canonical `[message | parity]` matrix case is chosen the same way,
+//! from [`GeneratorMatrixAccess::is_systematic`] and
+//! [`GeneratorMatrixAccess::has_canonical_message_order`] together, so a code
+//! recording another message-coordinate order skips it through its own report.
+//!
 //! # Where implementation-specific tests remain
 //!
 //! This suite asserts only shared laws. Implementation-specific behavior stays
@@ -65,13 +82,10 @@
 //! counts in `bch_encode_dispatch*.rs`, the matrix materialization's
 //! allocation counts in `bch_matrix_allocation.rs`, external oracle and
 //! standards-vector agreement in `bch_oracle_agreement.rs`, the primitive
-//! search in `bch_primitive_verification.rs`, and the decoding laws of the
-//! pre-cutover binary type in its own module. None of those assert a law this
-//! suite asserts, so none is folded in here.
-//!
-//! The transformation cases are written against the canonical trait surface
-//! only, so both of `Shortened`'s derivation paths — the general rank-derived
-//! construction and a systematic fast path — run through the same assertions.
+//! search in `bch_primitive_verification.rs`, the shortening derivations'
+//! selection rule, cost and DVB-T2 rows in `shortened_fast_path.rs`, and the
+//! decoding laws of the pre-cutover binary type in its own module. None of
+//! those assert a law this suite asserts, so none is folded in here.
 
 use gf2_coding::bch::error::BchError;
 use gf2_coding::bch::spec::{
@@ -86,14 +100,14 @@ use gf2_coding::test_support::{
     cached_matrices_contract, code_linearity_contract, coordinate_map_composition_contract,
     extension_contract, generic_ebch_16_11, matrix_shape_rejection_contract, packed_matrix_layout,
     packed_sequence_layout, puncturing_contract, shortening_contract, systematic_pair_contract,
-    visit_bch_corpus, BchCorpusRow, BchCorpusVisitor,
+    visit_bch_corpus, BchCorpusRow, BchCorpusVisitor, RankDerivedMother,
 };
 use gf2_coding::traits::block::conformance::{self, RepetitionCode};
 use gf2_coding::traits::block::{
     BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix,
     SymbolSequence,
 };
-use gf2_coding::transform::{Extended, Punctured, Shortened};
+use gf2_coding::transform::{Extended, Punctured, Shortened, ShortenedDerivation};
 use gf2_coding::LinearBlockCode;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension, FieldIdentity};
 use gf2_core::field::matrix::FieldMatrix;
@@ -175,8 +189,17 @@ where
     }
 }
 
-/// Every case an implementor of all three capabilities runs, whatever
-/// message-coordinate order its layout records.
+/// Every case an implementor of all three capabilities runs.
+///
+/// The canonical `[message | parity]` layout case is selected from the code's
+/// own reports rather than from the call site: a code answers
+/// [`GeneratorMatrixAccess::is_systematic`] for whatever message-coordinate
+/// order it records, and
+/// [`GeneratorMatrixAccess::has_canonical_message_order`] says whether that
+/// order is `0..k`. Both true is the leading identity block. `LinearBlockCode`
+/// carries the Hamming systematic positions, so it answers `false` to the
+/// second and skips that one case here, through the trait rather than through
+/// a decision made at its call site.
 fn full_capability_cases<C>(code: &C, messages: &[C::Symbols])
 where
     C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,
@@ -190,8 +213,21 @@ where
     cached_matrices_contract(code.clone());
     generator_has_full_row_rank(code);
     parity_check_has_full_row_rank(code);
+    if reports_canonical_layout(code) {
+        systematic_pair_contract(code);
+    }
+}
+
+/// Returns whether `code` reports the canonical leading identity block.
+fn reports_canonical_layout<C>(code: &C) -> bool
+where
+    C: GeneratorMatrixAccess,
+{
     code.is_systematic()
-        .expect("a code reports its message-coordinate layout");
+        .expect("a code reports its message-coordinate layout")
+        && code
+            .has_canonical_message_order()
+            .expect("a code reports its message-coordinate order")
 }
 
 /// Asserts that the generator's $k$ rows are independent, so the code has the
@@ -205,22 +241,6 @@ where
         code.k(),
         "the generator has one independent row per dimension"
     );
-}
-
-/// [`full_capability_cases`] plus the canonical `[message | parity]` layout.
-///
-/// A code that records another message-coordinate order — `LinearBlockCode`
-/// carries the Hamming systematic positions, which are not `0..k` — answers
-/// [`GeneratorMatrixAccess::is_systematic`] for that order and runs the cases
-/// above without this one.
-fn canonical_layout_cases<C>(code: &C, messages: &[C::Symbols])
-where
-    C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,
-    C::GeneratorMatrix: Send + Sync,
-    C::ParityCheckMatrix: Send + Sync,
-{
-    full_capability_cases(code, messages);
-    systematic_pair_contract(code);
 }
 
 /// Asserts that the parity check has the $n - k$ independent rows its contract
@@ -270,6 +290,8 @@ where
     shortening_contract(mother, &all);
     puncturing_contract(mother, &all);
 
+    shortening_derivation_cases(mother);
+
     let shortened =
         Shortened::new(mother.clone(), removed.iter().copied()).expect("a valid coordinate set");
     let shortened_messages = basis_messages(&shortened);
@@ -301,6 +323,71 @@ where
     let repunctured = Punctured::new(extended, [length]).expect("the fresh coordinate is valid");
     assert_eq!(repunctured.n(), length, "puncturing undoes the extension");
     assert_eq!(repunctured.k(), mother.k());
+}
+
+/// Runs `Shortened` through both of its derivations on one mother and asserts
+/// which one each selects.
+///
+/// A set of message coordinates on a mother reporting both a systematic layout
+/// and the canonical message-coordinate order is the systematic restriction.
+/// [`RankDerivedMother`] reports no systematic layout and delegates everything
+/// else, so the same mother and the same coordinate set select the rank-derived
+/// construction instead. A set reaching a parity coordinate selects it from any
+/// mother. All three run [`shortening_contract`], so both derivations meet the
+/// same assertions.
+fn shortening_derivation_cases<C>(mother: &C)
+where
+    C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,
+{
+    if mother.k() == 0 {
+        return;
+    }
+    let message_coordinates = vec![mother.k() - 1];
+    let forced = RankDerivedMother(mother.clone());
+
+    shortening_contract(mother, &message_coordinates);
+    shortening_contract(&forced, &message_coordinates);
+
+    let direct = Shortened::new(mother.clone(), message_coordinates.iter().copied())
+        .expect("a valid coordinate set");
+    if reports_canonical_layout(mother) {
+        assert_eq!(
+            direct.derivation(),
+            ShortenedDerivation::SystematicRestriction,
+            "message coordinates of a canonical systematic mother restrict its messages"
+        );
+    } else {
+        assert_eq!(
+            direct.derivation(),
+            ShortenedDerivation::RankDerived,
+            "a mother without the canonical layout is rank-derived"
+        );
+    }
+
+    let hidden = Shortened::new(forced, message_coordinates.iter().copied())
+        .expect("a valid coordinate set");
+    assert_eq!(
+        hidden.derivation(),
+        ShortenedDerivation::RankDerived,
+        "hiding the mother's layout forces the rank-derived construction"
+    );
+    assert_eq!(
+        (hidden.k(), hidden.n()),
+        (direct.k(), direct.n()),
+        "the two derivations agree on the derived parameters"
+    );
+
+    // A parity coordinate is rank-derived from any mother. The full contract
+    // on a set reaching one already runs in `transformation_cases`.
+    if mother.k() < mother.n() {
+        assert_eq!(
+            Shortened::new(mother.clone(), [mother.k()])
+                .expect("a valid coordinate set")
+                .derivation(),
+            ShortenedDerivation::RankDerived,
+            "a parity coordinate is not a message constraint"
+        );
+    }
 }
 
 /// Asserts that the extension's own parity-check row checks the zero-sum
@@ -441,8 +528,13 @@ impl BchCorpusVisitor for MatrixCases {
             return;
         }
         self.visited.push(row.id.to_owned());
+        assert!(
+            reports_canonical_layout(code),
+            "{} reports the canonical [message | parity] layout",
+            row.id
+        );
         let messages = bch_corpus_message_sequences(code);
-        canonical_layout_cases(code, &messages);
+        full_capability_cases(code, &messages);
         assert_eq!(
             code.generator_matrix().expect("the generator materializes"),
             {
@@ -469,7 +561,7 @@ impl BchCorpusVisitor for MatrixCases {
 
         let twin = bch_corpus_dense_twin(row, code);
         let twin_messages = bch_corpus_message_sequences(&twin);
-        canonical_layout_cases(&twin, &twin_messages);
+        full_capability_cases(&twin, &twin_messages);
     }
 }
 
@@ -690,7 +782,7 @@ where
         .map(|_| seeded_symbols(code, code.k(), rng))
         .collect();
     bch_encoding_contract(code, &messages);
-    canonical_layout_cases(code, &messages);
+    full_capability_cases(code, &messages);
     transformation_cases(code, &messages);
 }
 
