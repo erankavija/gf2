@@ -99,25 +99,49 @@ impl BchComponentCode {
     ///
     /// Panics if the BCH code parameters are invalid.
     pub fn new(n: usize, k: usize, t: usize) -> Self {
-        use crate::bch::BchCode;
-        use crate::traits::GeneratorMatrixAccess;
-        use gf2_core::gf2m::Gf2mField;
+        use crate::bch::spec::{BinaryBchCode, DesignedDistance};
+        use crate::traits::block::{
+            BlockCode as CanonicalBlockCode,
+            GeneratorMatrixAccess as CanonicalGeneratorMatrixAccess,
+        };
+        use gf2_core::field::ConstField;
+        use gf2_core::gfp::Fp;
 
-        // Find appropriate m such that 2^m - 1 >= n
+        assert!(n > k, "Codeword length must exceed message length");
+        assert!(t > 0, "Error correction capability must be positive");
+
+        // Find the degree m of the primitive length 2^m - 1 == n.
         let m = (2usize..)
             .find(|&m| (1usize << m) > n)
             .expect("Could not find suitable extension field degree");
+        assert_eq!(
+            n,
+            (1usize << m) - 1,
+            "BCH component length must be the primitive length 2^m - 1"
+        );
 
-        // Use a standard primitive polynomial for GF(2^m)
-        let prim_poly = gf2_core::primitive_polys::PrimitivePolynomialDatabase::standard(m)
-            .expect("No primitive polynomial available for this m");
+        // The narrow-sense primitive BCH code over the auto-selected GF(2^m)
+        // uses the same standard primitive polynomial as before, and its
+        // designed distance 2t + 1 reproduces the legacy consecutive-root
+        // generator (LCM of the minimal polynomials of alpha^1..alpha^(2t)).
+        let designed_distance =
+            DesignedDistance::try_from(2 * t as u64 + 1).expect("a positive BCH designed distance");
+        let bch = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
+            Fp::<2>::zero(),
+            m,
+            designed_distance,
+        )
+        .expect("a valid binary BCH construction");
+        assert_eq!(
+            CanonicalBlockCode::k(&bch),
+            k,
+            "BCH component dimension must match the requested k"
+        );
 
-        let field = Gf2mField::new(m, prim_poly).with_tables();
-        let bch = BchCode::new(n, k, t, field);
-
-        // Compute generator matrix G (k x n), then derive H from it.
-        // For systematic G = [I_k | P], H = [-P^T | I_r] = [P^T | I_r] over GF(2).
-        let g = bch.generator_matrix();
+        // Compute generator matrix G (k x n); canonical BCH uses the
+        // systematic user layout G = [I_k | P], so H = [P^T | I_r] over GF(2).
+        let g =
+            CanonicalGeneratorMatrixAccess::generator_matrix(&bch).expect("BCH generator matrix");
         let r = n - k;
 
         // Extract parity part P from G = [I_k | P]
@@ -296,24 +320,43 @@ impl BchComponentCode {
 /// assert_eq!(comp.num_checks(), 6);
 /// ```
 pub fn extended_bch_component(n_bch: usize, k_bch: usize, t_bch: usize) -> BchComponentCode {
-    use crate::bch::BchCode;
-    use crate::traits::GeneratorMatrixAccess;
-    use gf2_core::gf2m::Gf2mField;
+    use crate::bch::spec::{BinaryBchCode, DesignedDistance};
+    use crate::traits::block::{
+        BlockCode as CanonicalBlockCode, GeneratorMatrixAccess as CanonicalGeneratorMatrixAccess,
+    };
+    use gf2_core::field::ConstField;
+    use gf2_core::gfp::Fp;
 
     let n_ext = n_bch + 1;
     let r_ext = n_ext - k_bch;
 
-    // Build the underlying BCH code
+    assert!(n_bch > k_bch, "Codeword length must exceed message length");
+    assert!(t_bch > 0, "Error correction capability must be positive");
+
+    // Build the underlying BCH code: degree m of the primitive length
+    // 2^m - 1 == n_bch.
     let m = (2usize..)
         .find(|&m| (1usize << m) > n_bch)
         .expect("Could not find suitable extension field degree");
+    assert_eq!(
+        n_bch,
+        (1usize << m) - 1,
+        "BCH component length must be the primitive length 2^m - 1"
+    );
 
-    let prim_poly = gf2_core::primitive_polys::PrimitivePolynomialDatabase::standard(m)
-        .expect("No primitive polynomial available for this m");
+    let designed_distance =
+        DesignedDistance::try_from(2 * t_bch as u64 + 1).expect("a positive BCH designed distance");
+    let bch =
+        BinaryBchCode::<u64>::primitive_narrow_sense_auto(Fp::<2>::zero(), m, designed_distance)
+            .expect("a valid binary BCH construction");
+    assert_eq!(
+        CanonicalBlockCode::k(&bch),
+        k_bch,
+        "BCH component dimension must match the requested k"
+    );
 
-    let field = Gf2mField::new(m, prim_poly).with_tables();
-    let bch = BchCode::new(n_bch, k_bch, t_bch, field);
-    let g = bch.generator_matrix();
+    // Canonical BCH uses the systematic user layout G = [I_k | P].
+    let g = CanonicalGeneratorMatrixAccess::generator_matrix(&bch).expect("BCH generator matrix");
 
     let r_bch = n_bch - k_bch;
 
@@ -1372,12 +1415,17 @@ mod tests {
 
     #[test]
     fn test_component_code_validates_bch_codewords() {
-        use crate::bch::{BchCode, BchEncoder};
-        use gf2_core::gf2m::Gf2mField;
+        use crate::bch::spec::{BinaryBchCode, DesignedDistance};
+        use crate::traits::block::BlockEncoder as CanonicalBlockEncoder;
+        use gf2_core::field::ConstField;
+        use gf2_core::gfp::Fp;
 
-        let field = Gf2mField::new(3, 0b1011).with_tables();
-        let bch = BchCode::new(7, 4, 1, field);
-        let encoder = BchEncoder::new(bch);
+        let bch = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
+            Fp::<2>::zero(),
+            3,
+            DesignedDistance::try_from(3).expect("a positive BCH designed distance"),
+        )
+        .expect("a valid binary BCH construction");
 
         let comp = BchComponentCode::new(7, 4, 1);
 
@@ -1387,7 +1435,7 @@ mod tests {
             for bit in 0..4 {
                 msg.push_bit((pattern >> bit) & 1 == 1);
             }
-            let cw = encoder.encode(&msg);
+            let cw = CanonicalBlockEncoder::encode(&bch, &msg).expect("valid BCH encode");
             assert!(
                 comp.is_valid_codeword(&cw),
                 "BCH codeword for pattern {} should be valid",
@@ -1398,16 +1446,21 @@ mod tests {
 
     #[test]
     fn test_component_code_rejects_errors() {
-        use crate::bch::{BchCode, BchEncoder};
-        use gf2_core::gf2m::Gf2mField;
+        use crate::bch::spec::{BinaryBchCode, DesignedDistance};
+        use crate::traits::block::BlockEncoder as CanonicalBlockEncoder;
+        use gf2_core::field::ConstField;
+        use gf2_core::gfp::Fp;
 
-        let field = Gf2mField::new(3, 0b1011).with_tables();
-        let bch = BchCode::new(7, 4, 1, field);
-        let encoder = BchEncoder::new(bch);
+        let bch = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
+            Fp::<2>::zero(),
+            3,
+            DesignedDistance::try_from(3).expect("a positive BCH designed distance"),
+        )
+        .expect("a valid binary BCH construction");
         let comp = BchComponentCode::new(7, 4, 1);
 
         let msg = BitVec::ones(4);
-        let cw = encoder.encode(&msg);
+        let cw = CanonicalBlockEncoder::encode(&bch, &msg).expect("valid BCH encode");
         assert!(comp.is_valid_codeword(&cw));
 
         // Flip one bit -> should fail
