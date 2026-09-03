@@ -16,7 +16,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-03T05:08:39.919942395Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "5ee83cd3-cbdf-42cb-a465-6941852016f3",
   "labels": [
     "type:task",
@@ -27,5 +33,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Migrate the component-code BCH consumers to the canonical model",
-  "updated_at": "2026-09-03T05:06:54.382936181Z"
+  "updated_at": "2026-09-03T05:08:39.919942395Z"
 }

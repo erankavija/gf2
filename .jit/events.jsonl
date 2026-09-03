@@ -10925,3 +10925,4 @@
 {"assignee":"agent:worker","id":"5600cbcb-3832-476b-9718-d706a3c00e62","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","reason":"lead takes over for gates","timestamp":"2026-09-03T05:06:43.032557363Z","type":"issue_released"}
 {"from":"ready","id":"a73ee573-63d5-4458-8375-a434487140fa","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:06:54.382936181Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:jit-execution-lead","id":"ae991b9a-a269-42ca-a38e-ab8254a712eb","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:06:54.382936181Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"866cd731-40c5-49d2-94e4-325b9a921964","issue_id":"5ee83cd3-cbdf-42cb-a465-6941852016f3","timestamp":"2026-09-03T05:08:39.919942395Z","type":"gate_passed","updated_by":"auto:executor"}
