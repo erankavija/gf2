@@ -53,9 +53,9 @@
 //! at a removed coordinate is never in error, so the mother's
 //! bounded-distance guarantee and its beyond-radius miscorrection semantics
 //! carry over unchanged. Generic decoding of derived codes through their
-//! coordinate maps is tracked as `@/issue/1a8f6acd`; until it lands this
-//! composition is the DVB-T2 outer decoder, and
-//! `@/invariant/library-first-generality` names it as the tracked exception.
+//! coordinate maps is tracked as `@/issue/1a8f6acd`. This composition is the
+//! DVB-T2 outer decoder, and `@/invariant/library-first-generality` names it
+//! as the tracked exception.
 //!
 //! # Examples
 //!
