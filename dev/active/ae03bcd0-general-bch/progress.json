@@ -422,7 +422,7 @@
           "title": "Migrate the component-code BCH consumers to the canonical model",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "session 10: native Sonnet; work complete on worktree-agent-5ee83cd3 at 7c6904cc (four commits: GLDPC, BCJR, OSD adapter evidence, crate-root re-exports), worker report pending at handoff; lead review, merge, cargo-ci, code-review next"
+          "status": "session 10: native Sonnet; lead review PASS (gldpc/bcjr migrated to canonical construction + traits::block, osd evidence test, lib.rs canonical re-exports); merged e54ad63c; cargo-ci passed; code-review PENDING (needs a run)"
         },
         {
           "key": "cutover-dvbt2",

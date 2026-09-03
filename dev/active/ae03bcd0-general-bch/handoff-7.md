@@ -7,7 +7,7 @@
 ## Current state
 
 - Epic `ae03bcd0` — state: backlog (container); claimed by agent:jit-execution-lead.
-- Wave in progress: wave 11 of 15 (`current_wave` = 11). 203ee826 done; e1e0e7ff and 3f7edef1 and b1bd75ca merged with one or two AI gates each awaiting a re-run; 5ee83cd3 complete on its branch, unreviewed; 97410c80 dispatched (native Opus) and in flight.
+- Wave in progress: wave 11 of 15 (`current_wave` = 11). 203ee826 done; e1e0e7ff and 3f7edef1 and b1bd75ca merged with one or two AI gates each awaiting a re-run; 5ee83cd3 merged with cargo-ci passed and code-review awaiting a run; 97410c80 dispatched (native Opus) and in flight.
 - Children: 44 of 59 done (5 in_progress, 0 ready, 10 backlog). Open:
   - `997f0ab9` (Create the tracked follow-up issues against the canonical in): work done (follow-ups 1642af1c, 1a8f6acd, b4d7a25d); dep 7a3a6738 now done -> claim, repo-validate gate, state done pending
   - `19fe9394` (Generic irreducibility validation with reusable certificates): merged b9311d2b; cargo-ci gate passed; code-review gate NEXT in queue
@@ -26,7 +26,7 @@
   - `f759d724` (Sweep stale prose references to the removed BCH surface): pending
   - `fd9d5416` (Committed performance receipts: non-regression, determinism,): pending
   - `4ad869d6` (Researcher-oriented rustdoc and runnable examples): pending
-- Active claims: epic, 3f7edef1, b1bd75ca, e1e0e7ff by agent:jit-execution-lead; 5ee83cd3 and 97410c80 by agent:worker.
+- Active claims: epic, 3f7edef1, b1bd75ca, e1e0e7ff, 5ee83cd3 by agent:jit-execution-lead; 97410c80 by agent:worker.
 - Open escalations: none (the 3f7edef1 B4 question is resolved by owner ruling R-48; the issue text carries D-01).
 - Progress file: `progress.json` here (rulings R-46..R-53, session-10 notes, traps, pitfalls).
 - No detached job is running at handoff; every gate record is committed.
@@ -41,9 +41,9 @@
 
 ## What to do next
 
-- [ ] Re-run, serially, with the lead's lease renewed on each issue first: `jit gate evaluate b1bd75ca doc-review`, `jit gate evaluate e1e0e7ff code-review`, `jit gate evaluate 3f7edef1 doc-review`, `jit gate evaluate 3f7edef1 research-review`. Check the first result before the next.
+- [ ] Run, serially, with the lead's lease renewed on each issue first: `jit gate evaluate b1bd75ca doc-review`, `jit gate evaluate e1e0e7ff code-review`, `jit gate evaluate 5ee83cd3 code-review`, `jit gate evaluate 3f7edef1 doc-review`, `jit gate evaluate 3f7edef1 research-review`. Check the first result before the next.
 - [ ] Done-transitions once gates pass: b1bd75ca (frees 94597a51), e1e0e7ff (frees fd9d5416's second dep), 3f7edef1 (closes wave 10). Commit `.jit` per transition.
-- [ ] 5ee83cd3: read the worker's report (or its transcript under `~/.claude/projects/-home-vkaskivuo-Projects-gf2/1c68c678-c2ed-424a-b30e-978558266cc5/subagents/`), lead-review `worktree-agent-5ee83cd3` (7c6904cc; inventory gldpc/bcjr/osd/simulation/lib.rs; REQ-02 grep must be empty), merge, cargo-ci gate, code-review gate, done.
+- [ ] 5ee83cd3: merged e54ad63c, cargo-ci passed, lead review PASS; run `jit gate evaluate 5ee83cd3 code-review` (lease held by the lead), then done. Footprint note from its worker: `bch/mod.rs` module doc still headlines `BchCode::new` (4a2baa12's cleanup).
 - [ ] 97410c80: worker in flight in `.agents/worktrees/agent-97410c80` (branch worktree-agent-97410c80, base 941f81db). If the session ended before its report, review its transcript and branch; lead-preserve uncommitted WIP; re-dispatch from the brief with a resume preface if incomplete. Gates: cargo-ci, code-review. Refresh 4e732b56's `workload-selection.md` link after merge if the worker edited § 9.
 - [ ] Wave 12 after 5ee83cd3 and 97410c80 are done: create worktrees with the dispatch script for 591a1c5e, ef8ff9c4, 0c21cb1e (native Sonnet) and 227ac5c8 (native Opus); prompt = script header + `session-10-prompts/wave12-common.md` + `session-10-prompts/dispatch-<id>.md`, with the DVB-T2 constructor and decoder names filled in from 97410c80's module doc. Disjoint file groups; one parallel wave.
 - [ ] Then d1b4f85e (after 591a1c5e), 94597a51 (Lean O-5, Opus, R-43 sketch rule, after b1bd75ca), 4a2baa12 (after wave 12), f759d724, fd9d5416, 4ad869d6 per the wave plan.
