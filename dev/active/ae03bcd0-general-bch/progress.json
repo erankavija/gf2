@@ -818,7 +818,8 @@
     "A lead-side probe figure sampled by process name (pgrep -x gap | head -1) without a PID is not attributable to the scoped run; research-review rejected the rss.log peak. Read memory figures from the scope's own accounting (systemd scope.txt) and say what the sampler is.",
     "A Lean issue that amends the proof sketch (64fd3afd's doc) must also link the sketch to itself (jit doc add <lean-issue> proof-sketch.md), or doc-review fails on \"not registered on the issue\" even when 64fd3afd's link is refreshed.",
     "A Sonnet worker that launches cargo-ci.sh in the background ends its turn waiting for the notification; if no report arrives after the run ends, nudge it with SendMessage.",
-    "jit issue create rejects --priority medium; omit the flag or use a value the command accepts."
+    "jit issue create rejects --priority medium; omit the flag or use a value the command accepts.",
+    "A `jit gate evaluate` can exit 1 with `Error: Failed to restore recovery serialization after external process` while other jit commands run concurrently (doc add, issue create); the checker never ran and the tracker shows no run. Run `jit recover` and evaluate again; never read the launcher's exit code as the gate's verdict without `jit gate status`."
   ],
   "session_notes_s5": [
     "Session 5 (2026-09-01 evening): resumed after session-4 rate-limit death mid-wave-8; no handoff-4 existed, state reconstructed from git log + gate records.",
