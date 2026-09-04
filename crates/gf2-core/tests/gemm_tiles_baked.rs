@@ -1,9 +1,9 @@
 //! Production-site witnesses for the baked GEMM row and column tiles.
 //!
 //! The measured format-2 core owner at
-//! `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
-//! cites `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md` and omits
-//! `gemm`. These extent fields therefore retain their conservative defaults,
+//! `crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json`
+//! cites `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` and omits
+//! `gemm.row_tile` and `gemm.col_tile`. These extents retain their conservative defaults,
 //! as `dev/active/3fa7c9d0/design.md` §7.1 requires.
 #![cfg(gf2_tuning_baked)]
 
@@ -50,7 +50,7 @@ support::fresh_tuning_test!(baked_tiles_reach_all_seven_blocked_loops, {
     let one = Fp::<65537>::new(1);
     let _: FieldMatrix<Fp<65537>> = ((one * a.t()) * &b + one * &c).into();
 
-    let measured = measured_format2::omitted_family_section("gemm");
+    let measured = measured_format2::omitted_fields_section("gemm", &["row_tile", "col_tile"]);
     let expected_row_tile = measured.gemm().row_tile();
     let expected_col_tile = measured.gemm().col_tile();
 

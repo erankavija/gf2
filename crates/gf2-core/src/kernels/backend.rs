@@ -94,9 +94,9 @@ const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;
 /// beneficial. The default build uses the conservative table's eight-word
 /// (64-byte) value. Building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
 /// selects the four-word value measured by
-/// `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md` in the format-2
+/// `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` in the format-2
 /// core owner at
-/// `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`.
+/// `crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json`.
 /// The flag is a declared cfg, not a Cargo feature, so `--all-features` builds
 /// keep the conservative threshold. Runtime profile installation does not
 /// govern this boundary; see `dev/active/220cab0b/design.md` (DEC-G).

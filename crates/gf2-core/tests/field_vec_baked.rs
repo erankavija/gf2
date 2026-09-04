@@ -8,8 +8,8 @@
 //! length is asserted by `field_vec_dot_chunk.rs`.
 //!
 //! The measured format-2 core owner at
-//! `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
-//! cites `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md` and omits
+//! `crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json`
+//! cites `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` and omits
 //! `field_vec`. The baked field therefore retains its conservative default, as
 //! `dev/active/3fa7c9d0/design.md` §7.1 requires.
 //!
@@ -29,7 +29,7 @@ mod support;
 
 /// Returns the default resolved from the measured owner's omission.
 fn measured_default_section() -> CoreTuning {
-    measured_format2::omitted_family_section("field_vec")
+    measured_format2::omitted_fields_section("field_vec", &["dot_chunk_len"])
 }
 
 support::fresh_tuning_test!(

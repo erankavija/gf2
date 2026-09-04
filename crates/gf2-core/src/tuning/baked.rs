@@ -10,10 +10,10 @@
 //! compile-time wiring; this module owns the values.
 
 /// Calibrated bit-backend threshold (`simd_min_words = 4`) recorded in
-/// `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`. The exact measured
+/// `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md`. The exact measured
 /// format-2 core owner is
-/// `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
-/// with SHA-256 `e1cc82ab17db7d0226d5c55ad4c029fad072edd66ac3c18b2ea74e97f2f39045`.
+/// `crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json`
+/// with SHA-256 `0296a498b2dcaf303af0dc88afba2feb708deda60c24fd94236b4533cfdc138a`.
 pub(crate) const SIMD_MIN_WORDS: usize = 4;
 
 /// Baked value for `bit_matrix.matvec_simd_min_words`, mirroring
@@ -87,7 +87,7 @@ mod tests {
     use sha2::{Digest, Sha256};
 
     const MEASURED_FORMAT2: &[u8] =
-        include_bytes!("../../data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json");
+        include_bytes!("../../data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json");
 
     #[test]
     fn default_constant_matches_conservative_table() {
@@ -101,7 +101,7 @@ mod tests {
     fn current_measured_owner_has_the_pinned_content_hash() {
         assert_eq!(
             format!("{:x}", Sha256::digest(MEASURED_FORMAT2)),
-            "e1cc82ab17db7d0226d5c55ad4c029fad072edd66ac3c18b2ea74e97f2f39045"
+            "0296a498b2dcaf303af0dc88afba2feb708deda60c24fd94236b4533cfdc138a"
         );
     }
 
