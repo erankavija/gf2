@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 27,
-  "wave_notes": "Wave 27 begins with a83583e0 claimed. High-tier preflight found that implementation and measurement require a committed exact predeclaration, especially for three compile-time baked extents and the new algebra-owned producer. The design phase must bind all twelve fields, cumulative owner evidence, argmin semantics, route witnesses, and the project campaign-execution-logging invariant before implementation.",
+  "wave_notes": "Wave 27 executes a83583e0. The exact 717-cell premeasurement protocol was independently reviewed and committed at 07090b4b. Parallel implementation is divided into the neutral campaign-support library, core production candidate/observer seams, and algebra permanent partition evidence; benchmark-mode work remains lead-only after integration gates.",
   "open_escalations": [],
   "waves": [
     {
@@ -776,7 +776,7 @@
           "classification": "implementation",
           "model": "gpt-6-astra",
           "status": "in_progress",
-          "notes": "Claimed by the execution lead after eaae1b56 closed. A read-only gpt-6-astra preflight reports GO for design/predeclaration and NO-GO for implementation or measurement until that protocol is committed and reviewed."
+          "notes": "Claimed by the execution lead after eaae1b56 closed. The exact premeasurement protocol passed independent high-tier review after corrections for structural schedule ties, permanent partition plateaus, session-bounded resume, cfg-independent GEMM conservative defaults, and observation-neutral TRSM timing. Committed and linked at 07090b4b. Implementation dispatched in non-overlapping file boundaries; no subagent receives benchmark-mode work."
         }
       ],
       "note": "Serialized measurement wave; starts only after the preceding issue is done."
