@@ -3586,9 +3586,37 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
     }
 }
 
+/// Chooses the entry protocol for a fresh tuning child.
+///
+/// The benchmark target uses its own guarded CLI. The integration-test target
+/// is a libtest executable, so its test adapter must be selected explicitly;
+/// `cargo bench` also enables `cfg(test)` for a `harness = false` target.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum FreshChildEntry {
+    BenchmarkCli,
+    LibtestAdapter,
+}
+
+impl FreshChildEntry {
+    fn arguments(self) -> &'static [&'static str] {
+        match self {
+            Self::BenchmarkCli => &["--fresh-tuning-process-child"],
+            Self::LibtestAdapter => &[
+                "--exact",
+                "tuning_calibration::tests::fresh_process_entry",
+                "--nocapture",
+            ],
+        }
+    }
+}
+
 /// Executes this harness for one guarded forced-tuning case.
-fn fresh_tuning_process(executable: &Path, case: FreshProcessCase) -> Result<ChildReport, String> {
-    if !cfg!(test)
+fn fresh_tuning_process(
+    executable: &Path,
+    case: FreshProcessCase,
+    entry: FreshChildEntry,
+) -> Result<ChildReport, String> {
+    if entry == FreshChildEntry::BenchmarkCli
         && matches!(case.spec.task, ChildTask::Measure { .. })
         && env::var(BENCH_MODE_VAR).as_deref() != Ok("1")
     {
@@ -3599,14 +3627,7 @@ fn fresh_tuning_process(executable: &Path, case: FreshProcessCase) -> Result<Chi
     let input = serde_json::to_string(&case)
         .map_err(|error| format!("cannot encode the fresh tuning case: {error}"))?;
     let mut command = Command::new(executable);
-    #[cfg(not(test))]
-    command.arg("--fresh-tuning-process-child");
-    #[cfg(test)]
-    command.args([
-        "--exact",
-        "tuning_calibration::tests::fresh_process_entry",
-        "--nocapture",
-    ]);
+    command.args(entry.arguments());
     let mut child = command
         .env(FRESH_CASE_VAR, FRESH_CASE_VALUE)
         .stdin(Stdio::piped())
@@ -3642,12 +3663,14 @@ fn fresh_tuning_process(executable: &Path, case: FreshProcessCase) -> Result<Chi
         .map_err(|_| "the fresh tuning child emitted non-UTF-8 output".to_owned())?;
     // Strip libtest's own progress lines, retaining every protocol line so
     // duplicate/malformed reports still fail the production parser.
-    #[cfg(test)]
-    let stdout = stdout
-        .lines()
-        .filter(|line| line.starts_with(FRESH_RESULT_PREFIX))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let stdout = match entry {
+        FreshChildEntry::BenchmarkCli => stdout,
+        FreshChildEntry::LibtestAdapter => stdout
+            .lines()
+            .filter(|line| line.starts_with(FRESH_RESULT_PREFIX))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    };
     parse_child_report(&stdout)
 }
 
@@ -4055,12 +4078,29 @@ fn launch_verified_child(
     protocol: &Protocol,
     executable: &Path,
 ) -> Result<ChildReport, String> {
+    launch_verified_child_with_entry(
+        spec,
+        expected_operand_digest,
+        protocol,
+        executable,
+        FreshChildEntry::BenchmarkCli,
+    )
+}
+
+fn launch_verified_child_with_entry(
+    spec: ChildSpec,
+    expected_operand_digest: &str,
+    protocol: &Protocol,
+    executable: &Path,
+    entry: FreshChildEntry,
+) -> Result<ChildReport, String> {
     let report = fresh_tuning_process(
         executable,
         FreshProcessCase {
             spec,
             protocol: protocol.clone(),
         },
+        entry,
     )?;
     verify_child_report(spec, expected_operand_digest, protocol, &report)?;
     println!("{}", child_observation_line(spec, &report)?);
@@ -7557,6 +7597,22 @@ mod tests {
         }
     }
 
+    #[test]
+    fn fresh_child_entries_have_closed_command_protocols() {
+        assert_eq!(
+            FreshChildEntry::BenchmarkCli.arguments(),
+            ["--fresh-tuning-process-child"]
+        );
+        assert_eq!(
+            FreshChildEntry::LibtestAdapter.arguments(),
+            [
+                "--exact",
+                "tuning_calibration::tests::fresh_process_entry",
+                "--nocapture",
+            ]
+        );
+    }
+
     #[allow(dead_code)] // The harness=false bench does not execute libtest helpers.
     fn real_probe_pair(field: CalibratedField) {
         let protocol = child_protocol(1);
@@ -7573,8 +7629,14 @@ mod tests {
                     arm,
                     task: ChildTask::Probe,
                 };
-                let report = launch_verified_child(spec, &operands, &protocol, &executable)
-                    .unwrap_or_else(|error| panic!("{spec}: {error}"));
+                let report = launch_verified_child_with_entry(
+                    spec,
+                    &operands,
+                    &protocol,
+                    &executable,
+                    FreshChildEntry::LibtestAdapter,
+                )
+                .unwrap_or_else(|error| panic!("{spec}: {error}"));
                 if let ChildOutcome::Unavailable { omission, .. } = &report.outcome {
                     // The validator checks the closed omission against this
                     // field, arm and observed capability. Never call it a route hit.
@@ -7657,8 +7719,15 @@ mod tests {
         };
         let operands = expected_operand_digest(field, spec.size).unwrap();
         let executable = env::current_exe().unwrap();
-        let probe = launch_verified_child(spec, &operands, &protocol, &executable).unwrap();
-        let measure = launch_verified_child(
+        let probe = launch_verified_child_with_entry(
+            spec,
+            &operands,
+            &protocol,
+            &executable,
+            FreshChildEntry::LibtestAdapter,
+        )
+        .unwrap();
+        let measure = launch_verified_child_with_entry(
             ChildSpec {
                 task: ChildTask::Measure { execution: 0 },
                 ..spec
@@ -7666,6 +7735,7 @@ mod tests {
             &operands,
             &protocol,
             &executable,
+            FreshChildEntry::LibtestAdapter,
         )
         .unwrap();
         verify_matching_evidence("real probe/measure", &probe, &measure).unwrap();
