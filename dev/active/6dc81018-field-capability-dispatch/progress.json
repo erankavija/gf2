@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 26: owner-approved CI correction is guided retry 1 after reset. Rerun the configured cargo-ci gate before clean-source build, solo calibration, and atomic measured-owner publication.",
+  "wave_notes": "Wave 26: guided retry 2 addresses the release benchmark child launcher after the first untimed probe rejected libtest arguments. No timing samples or candidate artifacts were emitted. Raw attempt files remain in /tmp/gf2-eaae1b56-20260904-211846-793665 pending receipt inclusion; benchmark restart requires corrected clean source and release-binary route verification.",
   "open_escalations": [],
   "waves": [
     {
@@ -1218,7 +1218,7 @@
     "5bdc9552": 1,
     "389aa4de": 1,
     "06ba0418": 0,
-    "eaae1b56": 1
+    "eaae1b56": 2
   },
   "surfaced_pitfalls": [
     {
