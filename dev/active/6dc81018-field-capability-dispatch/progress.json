@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 25 is complete. Wave 26 is in implementation after the owner-approved option A plan repair passed independent review. The shared sweepability rule permits the domain-clipped tiled-M4RM grid; the authoritative eaae1b56 protocol predeclares all eleven follow-on selectors, five pilot reruns, exact fixtures, fresh-child route evidence, and the one-lock campaign before implementation or measurement.",
+  "wave_notes": "Wave 26 resumed on 2026-09-04. Preserved implementation worktree updated to current main. Independent premeasurement audit found unapproved dual-binary/API changes, missing real-process witnesses, and an incomplete GEMM omission outcome. Rework 1 restores the approved single-harness protocol and fixes both behavioral gaps before integration, gates, or measurement.",
   "open_escalations": [],
   "waves": [
     {
@@ -619,7 +619,7 @@
           "classification": "implementation",
           "model": "sonnet",
           "status": "done",
-          "notes": "Seam U9 closed with zero rework. The standing design §4.3/§5 and appended amendment, epic classification §2.4/§4.3/§5, and proof-sketch current-state paragraph record the executed U5-U8 seam while preserving anchored historical evidence. Merged-tree cargo-ci passes (5212 tests) and the required doc-review passes; lead review found both hard criteria satisfied."
+          "notes": "Seam U9 closed with zero rework. The standing design \u00a74.3/\u00a75 and appended amendment, epic classification \u00a72.4/\u00a74.3/\u00a75, and proof-sketch current-state paragraph record the executed U5-U8 seam while preserving anchored historical evidence. Merged-tree cargo-ci passes (5212 tests) and the required doc-review passes; lead review found both hard criteria satisfied."
         }
       ]
     },
@@ -632,8 +632,8 @@
           "title": "Extend the calibration sweep to the follow-on threshold fields",
           "classification": "implementation",
           "model": "opus",
-      "status": "in_progress",
-      "notes": "All nine dependencies are met. The invoker selected option A and the premeasurement plan merged at 3514d75d, with JIT document pins at f7ca7550. Independent review passed after two bounded planning corrections: exact comparable-versus-uncalibrated fallback semantics, exact eight-bank fixtures, a pool-width-only SoA witness, and a deterministic no-SIMD M4RM fallback gate. The issue was claimed at c6970540. Harness and M4RM-observer implementation are isolated in non-overlapping worktrees; no measurement or publication has started."
+          "status": "in_progress",
+          "notes": "All nine dependencies are met. The invoker selected option A and the premeasurement plan merged at 3514d75d, with JIT document pins at f7ca7550. Independent review passed after two bounded planning corrections: exact comparable-versus-uncalibrated fallback semantics, exact eight-bank fixtures, a pool-width-only SoA witness, and a deterministic no-SIMD M4RM fallback gate. The issue was claimed at c6970540. Harness and M4RM-observer implementation are isolated in non-overlapping worktrees; no measurement or publication has started."
         }
       ]
     },
@@ -751,9 +751,9 @@
           "short_id": "3fa7c9d0",
           "title": "Design crate-owned typed tuning sections",
           "classification": "design",
-          "model": "gpt-5.6-sol max",
-          "status": "ready",
-          "notes": "Owner-directed architecture correction. The design direction passed independent review after strict/subset validation, freeze-site diagnostics, per-section resolution provenance, envelope assembly provenance, and explicit section-version rejection were pinned. Doc-review required before implementation."
+          "model": "gpt-6-astra",
+          "status": "in_progress",
+          "notes": "Wave 26 resumed on 2026-09-04. Preserved implementation worktree updated to current main. Independent premeasurement audit found unapproved dual-binary/API changes, missing real-process witnesses, and an incomplete GEMM omission outcome. Rework 1 restores the approved single-harness protocol and fixes both behavioral gaps before integration, gates, or measurement."
         },
         {
           "id": "b749bdfc-63e1-41c6-b8dc-65d334fdd652",
@@ -1140,7 +1140,7 @@
       "kind": "plan-contradiction",
       "issue": "eaae1b56",
       "date": "2026-09-01",
-      "decision": "OPEN BEFORE CLAIM: design §5.1 requires every sweepable field to have a grid straddling its conservative default and both arms reachable at every point, while §3.3 and the codec set m4rm.tiled_min_stride_words' admissible floor and default to 4. Values below 4 are rejected, so the field cannot satisfy the declared rule. Numeric grids and representative fixtures for all eleven are also absent. Awaiting owner choice among a boundary-clipped rule amendment, a ten-field reclassification, or a separately designed production-contract change."
+      "decision": "OPEN BEFORE CLAIM: design \u00a75.1 requires every sweepable field to have a grid straddling its conservative default and both arms reachable at every point, while \u00a73.3 and the codec set m4rm.tiled_min_stride_words' admissible floor and default to 4. Values below 4 are rejected, so the field cannot satisfy the declared rule. Numeric grids and representative fixtures for all eleven are also absent. Awaiting owner choice among a boundary-clipped rule amendment, a ten-field reclassification, or a separately designed production-contract change."
     },
     {
       "kind": "owner-decision",
@@ -1184,7 +1184,7 @@
     "5bdc9552": 1,
     "389aa4de": 1,
     "06ba0418": 0,
-    "eaae1b56": 0
+    "eaae1b56": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1273,5 +1273,17 @@
       "pitfall": "U5 cutover: per-field Winograd crossover control has no live carrier \u2014 gemm.winograd_min_dim is one host-level value; a field like Goldilocks wanting a smaller threshold cannot get one until a per-field profile axis exists. Documented in traits.rs and the strassen receipt."
     }
   ],
-  "started_at": "2026-08-18T00:00:00Z"
+  "started_at": "2026-08-18T00:00:00Z",
+  "session_dispatches": [
+    {
+      "task": "harness audit",
+      "model": "gpt-6-astra",
+      "result": "three premeasurement blockers"
+    },
+    {
+      "task": "M4RM observer audit",
+      "model": "gpt-5.6-terra",
+      "result": "pass"
+    }
+  ]
 }
