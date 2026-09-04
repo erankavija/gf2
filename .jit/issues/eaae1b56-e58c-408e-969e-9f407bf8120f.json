@@ -65,6 +65,18 @@
       "format": "markdown",
       "label": "Governing selector migration design with Amendment A7",
       "path": "dev/active/7d824b2f/design.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Untimed release startup failure: raw output",
+      "path": "dev/benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Untimed release startup failure: stderr",
+      "path": "dev/benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.stderr"
     }
   ],
   "first_ready_at": "2026-08-22T21:29:27.371031186Z",
@@ -100,5 +112,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-04T21:18:25.391030610Z"
+  "updated_at": "2026-09-04T21:21:18.407177360Z"
 }

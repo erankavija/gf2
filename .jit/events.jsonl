@@ -10948,3 +10948,5 @@
 {"id":"18d003ef-7336-4524-823c-2049ab9aa987","issue_id":"2d65e37f-28ad-4cd9-93a8-2257c27faad3","priority":"low","timestamp":"2026-09-04T21:14:15.313250323Z","title":"Repair public API documentation cross-references","type":"issue_created"}
 {"fields":["dependencies"],"id":"40298c0f-5d74-4151-b1f1-ad6bce2336a8","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-09-04T21:14:24.667872147Z","type":"issue_updated","updated_by":"dependency-add"}
 {"gate_key":"cargo-ci","id":"e408f567-1fa6-4a73-bfcd-405beb8c5f98","issue_id":"eaae1b56-e58c-408e-969e-9f407bf8120f","timestamp":"2026-09-04T21:18:25.391030610Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"c5e0db15-9ef7-4116-8b13-5c616b9c896e","issue_id":"eaae1b56-e58c-408e-969e-9f407bf8120f","timestamp":"2026-09-04T21:21:18.276820620Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"20297587-2716-420a-8e93-7651fe6464aa","issue_id":"eaae1b56-e58c-408e-969e-9f407bf8120f","timestamp":"2026-09-04T21:21:18.407177360Z","type":"issue_updated","updated_by":"doc-add"}

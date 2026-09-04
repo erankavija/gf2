@@ -1,0 +1,1 @@
+Error: "the child for simd_min_words:standard:1:conservative:probe exited with exit status: 1\nstdout:\n\nstderr:\nError: \"unknown argument: --exact\"\n"
