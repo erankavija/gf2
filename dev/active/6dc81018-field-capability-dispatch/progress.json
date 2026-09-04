@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 26 resumed after the invoker approved the effective GEMM observer correction and exact two-file protocol boundary addition. The correction is applied on main; merged-tree CI precedes a fresh clean build, untimed probes, solo locked calibration, independent evidence validation, and atomic measured-owner publication. Guided retry count remains 2.",
+  "wave_notes": "Wave 26 measurement and independent validation pass. The invoker approved the one-file publication-boundary correction for the dedicated temporary-v2 acceptance test. The validated owner, complete envelope, raw log, manifest, receipt, current-reader cutover, executed-state amendment, and v2 rejection witness are ready for the configured gates and lead review. Guided retry count remains 2.",
   "open_escalations": [],
   "waves": [
     {
@@ -1187,6 +1187,18 @@
       "issue": "eaae1b56",
       "date": "2026-09-05",
       "decision": "The invoker approved the prepared effective GEMM observation correction and the exact protocol section 8 boundary addition for crates/gf2-core/src/field/matrix.rs and crates/gf2-core/tests/tuning_profile_gemm_install.rs. Production dispatch, public interfaces, grids, fixtures, and timing parameters remain unchanged."
+    },
+    {
+      "kind": "scope-escalation",
+      "issue": "eaae1b56",
+      "date": "2026-09-05",
+      "decision": "OPEN: atomic removal of the named temporary v2 schema acceptance makes crates/gf2-core/tests/tuning_envelope_v2.rs:488 fail, but the exact protocol section 8 path list omitted that dedicated migration test. All other publication work and an exact test-only patch are prepared; awaiting invoker approval for the one-file boundary exception."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "eaae1b56",
+      "date": "2026-09-05",
+      "decision": "The invoker approved the one-file protocol section 8 boundary correction for crates/gf2-core/tests/tuning_envelope_v2.rs. The dedicated migration witness rejects tuning-calibration-v2 after PREPUBLICATION_HARNESS_SCHEMA is removed; the protocol records the postmeasurement correction explicitly."
     }
   ],
   "rework_counts": {
