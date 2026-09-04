@@ -28,6 +28,8 @@
 use crate::kernels::ops::{resolve_xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
 use crate::tuning::M4rmSelectors;
+#[cfg(any(test, feature = "test-support"))]
+use std::sync::atomic::{AtomicU8, Ordering};
 
 /// Column-word tile width for the V2 ILP Gray-table builder.
 ///
@@ -124,6 +126,63 @@ pub enum M4rmScheduleTier {
     SmallN,
     /// The byte-budgeted wide-row schedule.
     Wide,
+}
+
+/// Test-only observation of the effective M4RM C-update selected by [`multiply`].
+///
+/// This closed observation is evidence instrumentation, not a route selector or
+/// forcing mechanism. It is available only to crate tests or with the
+/// `test-support` feature and is intended for one public multiplication in a
+/// fresh, single-threaded child process. [`None`](Self::None) means no row-wise
+/// or register-tiled panel update has been selected since
+/// [`reset_m4rm_tiled_effective_observation`].
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M4rmTiledEffectiveObservation {
+    /// No panel-update implementation has been selected since the last reset.
+    None,
+    /// The row-wise panel update is the effective implementation.
+    RowWise,
+    /// The resolved SIMD register-tiled update is the effective implementation.
+    RegisterTiled,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static M4RM_TILED_EFFECTIVE_OBSERVATION: AtomicU8 = AtomicU8::new(0);
+
+#[cfg(any(test, feature = "test-support"))]
+fn record_m4rm_tiled_effective_observation(observation: M4rmTiledEffectiveObservation) {
+    let encoded = match observation {
+        M4rmTiledEffectiveObservation::None => 0,
+        M4rmTiledEffectiveObservation::RowWise => 1,
+        M4rmTiledEffectiveObservation::RegisterTiled => 2,
+    };
+    M4RM_TILED_EFFECTIVE_OBSERVATION.store(encoded, Ordering::SeqCst);
+}
+
+/// Resets the test-only effective M4RM C-update observation to `None`.
+///
+/// This resets only evidence instrumentation. It does not reset tuning,
+/// capability detection, or any production selector.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_m4rm_tiled_effective_observation() {
+    M4RM_TILED_EFFECTIVE_OBSERVATION.store(0, Ordering::SeqCst);
+}
+
+/// Reads the test-only effective M4RM C-update observation.
+///
+/// Call this after exactly one [`multiply`] in the fresh child whose call was
+/// preceded by [`reset_m4rm_tiled_effective_observation`]. Concurrent
+/// multiplications intentionally have no attribution guarantee.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn m4rm_tiled_effective_observation() -> M4rmTiledEffectiveObservation {
+    match M4RM_TILED_EFFECTIVE_OBSERVATION.load(Ordering::SeqCst) {
+        0 => M4rmTiledEffectiveObservation::None,
+        1 => M4rmTiledEffectiveObservation::RowWise,
+        2 => M4rmTiledEffectiveObservation::RegisterTiled,
+        value => panic!("invalid effective M4RM C-update observation {value}"),
+    }
 }
 
 /// The tier, Gray-code panel width, and register-tiled stride gate selected for
@@ -776,10 +835,14 @@ fn multiply_with_k_block(
 
     if use_register_tiled_schedule(tiled_min_stride_words, m, stride_words) {
         if let Some(tile8xn) = resolve_m4rm_tile8xn() {
+            #[cfg(any(test, feature = "test-support"))]
+            record_m4rm_tiled_effective_observation(M4rmTiledEffectiveObservation::RegisterTiled);
             return multiply_register_tiled(a, b, k_block, stride_words, xor, tile8xn);
         }
     }
 
+    #[cfg(any(test, feature = "test-support"))]
+    record_m4rm_tiled_effective_observation(M4rmTiledEffectiveObservation::RowWise);
     multiply_rowwise_panels(a, b, k_block, stride_words, xor)
 }
 

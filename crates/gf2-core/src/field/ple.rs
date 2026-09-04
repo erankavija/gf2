@@ -571,9 +571,6 @@ fn try_panel_base_dispatch<F: FiniteField>(
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
 ) -> Option<usize> {
-    #[cfg(any(test, feature = "test-support"))]
-    MAX_EFFECTIVE_PANEL_DISPATCH_COLS
-        .fetch_max(col_hi - col_lo, std::sync::atomic::Ordering::SeqCst);
     let (data, parent_cols, row_offset, col_offset, rows, cols) = a.raw_parts_mut();
     debug_assert_eq!(col_offset, 0, "ple panel dispatch: view col_offset != 0");
     debug_assert!(
@@ -584,7 +581,14 @@ fn try_panel_base_dispatch<F: FiniteField>(
     let row_start = row_offset * parent_cols;
     let row_end = row_start + rows * parent_cols;
     let sub = &mut data[row_start..row_end];
-    F::try_simd_ple_panel_base(sub, parent_cols, rows, col_lo, col_hi, perm, pivot_cols)
+    let result =
+        F::try_simd_ple_panel_base(sub, parent_cols, rows, col_lo, col_hi, perm, pivot_cols);
+    #[cfg(any(test, feature = "test-support"))]
+    if result.is_some() {
+        MAX_EFFECTIVE_PANEL_DISPATCH_COLS
+            .fetch_max(col_hi - col_lo, std::sync::atomic::Ordering::SeqCst);
+    }
+    result
 }
 
 /// The PLE column-width selectors resolved once per [`FieldMatrix::ple`] call
