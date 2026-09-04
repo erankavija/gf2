@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 26 is in premeasurement correction attempt 2. Independent re-review of the committed single-harness correction is complete except for a bounded convergence edit. Merged-tree CI precedes solo calibration and atomic measured-owner publication.",
+  "wave_notes": "Wave 26: owner-approved CI correction is guided retry 1 after reset. Rerun the configured cargo-ci gate before clean-source build, solo calibration, and atomic measured-owner publication.",
   "open_escalations": [],
   "waves": [
     {
@@ -1175,6 +1175,12 @@
       "issue": "eaae1b56",
       "date": "2026-09-01",
       "decision": "The invoker selected option A. Amend the shared sweepability rule at its convention source so a threshold whose conservative default equals its admissible boundary may use a domain-clipped grid beginning at that boundary when both arms remain forceable. Retain all eleven fields. Predeclare and independently review every numeric grid and representative fixture before issue claim, implementation, or measurement."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "eaae1b56",
+      "date": "2026-09-05",
+      "decision": "The invoker approved the prepared two-line shared CI feature correction and reset the retry counter. Guided retry 1 enables the existing calibration harness required features in both dedicated CI commands. Authoritative failure evidence is JIT cargo-ci run f79e23ec-5391-493a-b3a4-b15da91c9f02; review results remain in JIT gates."
     }
   ],
   "rework_counts": {
@@ -1212,7 +1218,7 @@
     "5bdc9552": 1,
     "389aa4de": 1,
     "06ba0418": 0,
-    "eaae1b56": 2
+    "eaae1b56": 1
   },
   "surfaced_pitfalls": [
     {
