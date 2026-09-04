@@ -485,12 +485,8 @@ fn selector_changes_without_reassembly_fail_the_content_digest() {
 }
 
 #[test]
-fn calibrated_core_format_two_produces_v3_and_temporarily_accepts_v2() {
-    assert_eq!(
-        CoreTuningCodec::HARNESS_SCHEMA,
-        "tuning-calibration-v3",
-        "the eaae1b56 prepublication producer emits only harness schema v3"
-    );
+fn calibrated_core_format_two_accepts_current_harness_and_rejects_others() {
+    assert_eq!(CoreTuningCodec::HARNESS_SCHEMA, "tuning-calibration-v3");
     let registry = core_registry();
     let measurement = calibrated_core_measurement();
     let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
@@ -516,18 +512,9 @@ fn calibrated_core_format_two_produces_v3_and_temporarily_accepts_v2() {
         &measurement
     );
 
-    let live_v2 = recompute_content_digest(&json.replacen(
-        CoreTuningCodec::HARNESS_SCHEMA,
-        "tuning-calibration-v2",
-        1,
-    ));
-    assert!(
-        registry.from_json(&live_v2).is_ok(),
-        "the named eaae1b56 migration boundary keeps the live 389 v2 owner readable"
-    );
-
     for rejected in [
         "tuning-calibration-v1",
+        "tuning-calibration-v2",
         "tuning-calibration-v4",
         "unknown-core-harness-v9",
     ] {
