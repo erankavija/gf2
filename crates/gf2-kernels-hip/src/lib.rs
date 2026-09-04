@@ -179,6 +179,35 @@ impl HipError {
             HipError::BlobLoad { .. } => 301,
         }
     }
+
+    /// Reports whether a caller may answer this failure with a safe fallback.
+    ///
+    /// This is the canonical split of `@/inv/accelerator-safe-fallback` over
+    /// the HIP error vocabulary, stated once here where the vocabulary lives:
+    /// an exhausted device ([`HipError::OutOfMemory`]) and an arch this build
+    /// carries no kernel blob for ([`HipError::UnsupportedArch`]) are the
+    /// recoverable resource and capability failures, so a caller substitutes
+    /// its CPU-equivalent path and continues. A missing device
+    /// ([`HipError::NoDevice`]), an unreadable blob for the active arch
+    /// ([`HipError::BlobLoad`]), and a raw driver status ([`HipError::Hip`])
+    /// are fatal and stay explicit. The `gf2-sim` boundary
+    /// (`crates/gf2-sim/src/gpu/mod.rs`) resolves the same split into its own
+    /// richer `StageError` vocabulary, and its tests hold the two together.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::HipError;
+    ///
+    /// assert!(HipError::OutOfMemory { device_id: 0, bytes_requested: 1 << 40 }.is_recoverable());
+    /// assert!(!HipError::NoDevice.is_recoverable());
+    /// ```
+    pub fn is_recoverable(&self) -> bool {
+        match self {
+            HipError::OutOfMemory { .. } | HipError::UnsupportedArch { .. } => true,
+            HipError::Hip { .. } | HipError::NoDevice | HipError::BlobLoad { .. } => false,
+        }
+    }
 }
 
 impl std::fmt::Display for HipError {

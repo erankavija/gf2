@@ -1323,6 +1323,8 @@ mod channel_model_tests {
     use super::*;
     use crate::grand::{OrbGrand, OrbGrandConfig};
     use crate::simulation::{SimulationConfig, SimulationRunner};
+    use crate::test_support::generic_ebch_16_11;
+    use crate::traits::block::ParityCheckMatrixAccess;
 
     #[test]
     fn test_qpsk_rician_channel_model_preconditions() {
@@ -1345,10 +1347,10 @@ mod channel_model_tests {
         // Use Hamming(7,4) extended to (8,4) so codeword length is even
         // Actually, use a small systematic code with even n.
         // Hamming(15,11) has n=15 (odd). Let's use eBCH(16,11) with ORBGRAND.
-        use crate::bch::extended::ExtendedBchCode;
-
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.parity_check().clone();
+        let ebch = generic_ebch_16_11();
+        let h = ebch
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
         // fig9 has frame_bits = 2 * 2 * 256 = 1024, n=16 fits
@@ -1378,6 +1380,8 @@ mod channel_model_tests {
 #[cfg(test)]
 mod modem_framework_calibration_tests {
     use super::*;
+    use crate::test_support::generic_ebch_16_11;
+    use crate::traits::block::ParityCheckMatrixAccess;
 
     /// Shared-formula calibration lock for the fading path.
     ///
@@ -1461,12 +1465,13 @@ mod modem_framework_calibration_tests {
 
     #[test]
     fn test_interleaver_still_composes() {
-        use crate::bch::extended::ExtendedBchCode;
         use crate::grand::{OrbGrand, OrbGrandConfig};
         use crate::simulation::{SimulationConfig, SimulationRunner};
 
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.parity_check().clone();
+        let ebch = generic_ebch_16_11();
+        let h = ebch
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
         let channel = QpskRicianChannelModel::new(RicianConfig::fig9());
 

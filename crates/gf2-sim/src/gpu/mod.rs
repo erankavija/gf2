@@ -360,6 +360,42 @@ mod imp {
             }
         }
 
+        /// This boundary and `HipError::is_recoverable` state the same split of
+        /// `@/inv/accelerator-safe-fallback` in two vocabularies — the
+        /// pipeline's `StageError` here, the kernel crate's predicate for
+        /// callers outside the pipeline, such as `gf2-coding`'s GPU-assisted
+        /// BCH decoding. They answer alike for every variant.
+        #[test]
+        fn test_stage_error_split_matches_the_kernel_predicate() {
+            let errors = [
+                HipError::OutOfMemory {
+                    device_id: 0,
+                    bytes_requested: 1 << 40,
+                },
+                HipError::UnsupportedArch {
+                    gcn_arch_name: "gfx908".to_string(),
+                },
+                HipError::NoDevice,
+                HipError::BlobLoad {
+                    path: std::path::PathBuf::from("/kernels/gfx1030/bcjr.co"),
+                    source: "No such file or directory (os error 2)".to_string(),
+                },
+                HipError::Hip {
+                    code: 7,
+                    context: "hipMalloc",
+                },
+            ];
+            for err in errors {
+                let recoverable = err.is_recoverable();
+                let mapped = map_hip_error(err.clone(), "split");
+                assert_eq!(
+                    matches!(mapped, StageError::Recoverable(_)),
+                    recoverable,
+                    "{err:?} maps to {mapped:?} but reports is_recoverable() == {recoverable}"
+                );
+            }
+        }
+
         /// Finding 1: a host with no GPU maps to the dedicated
         /// `DeviceUnavailable` fatal, not a generic `KernelLaunch`.
         #[test]

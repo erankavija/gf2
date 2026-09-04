@@ -1,11 +1,16 @@
 //! Binary serialization for GF(2) data structures.
 //!
 //! Provides efficient file I/O for `BitVec`, `BitMatrix`, and sparse matrices
-//! with a versioned binary format.
+//! with a versioned binary format, plus the canonical field-generic
+//! [`field_matrix`] format for `FieldMatrix` carrying field identity, element
+//! representation, and a BLAKE3 payload checksum (see that module for its
+//! own layout).
 //!
-//! # File Format Specification
+//! # File Format Specification (legacy GF2DATA formats)
 //!
-//! All files begin with a 32-byte fixed header followed by JSON metadata and binary payload.
+//! The `BitVec`/`BitMatrix`/sparse formats begin with a 32-byte fixed header
+//! followed by JSON metadata and binary payload; `field_matrix` files use
+//! their own header documented in that module.
 //!
 //! ## Header Layout (32 bytes)
 //!
@@ -109,6 +114,7 @@
 
 mod bitvec;
 mod error;
+pub mod field_matrix;
 mod format;
 mod formats;
 mod header;
@@ -116,5 +122,6 @@ mod matrix;
 mod sparse;
 
 pub use error::{IoError, Result};
+pub use field_matrix::{FIELD_MATRIX_FORMAT_VERSION, FIELD_MATRIX_HEADER_SIZE, FIELD_MATRIX_MAGIC};
 pub use format::{Flags, Header, TypeTag, FORMAT_VERSION, HEADER_SIZE, MAGIC_BYTES};
 pub use formats::SerializationFormat;

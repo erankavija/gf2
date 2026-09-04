@@ -15,9 +15,95 @@
 //! - The decoder and streaming traits ([`HardDecisionDecoder`],
 //!   [`SoftDecoder`], [`IterativeSoftDecoder`], [`StreamingEncoder`],
 //!   [`StreamingDecoder`]) together with [`DecoderResult`].
+//!
+//! # Runtime-erased handles
+//!
+//! [`ErasedBlockCode`] and its capability-specific companions are leaf
+//! adapters over fully constructed static codes. They erase the symbol field
+//! and representation so exploratory code can hold heterogeneous code values,
+//! but they do not erase construction specifications, select a field, or
+//! provide a dynamic alternative to
+//! [`FieldExtension`](gf2_core::field::extension::FieldExtension). Static
+//! trait calls remain the allocation-free, monomorphized path.
+//!
+//! A small exploratory collection can therefore retain the static encoders'
+//! semantics while choosing the code at run time:
+//!
+//! ```
+//! use gf2_coding::traits::{
+//!     block, ErasedBlockCode, ErasedBlockEncoder, ErasedSymbols,
+//! };
+//! use gf2_coding::traits::block::BlockCode;
+//! use gf2_coding::LinearBlockCode;
+//! use gf2_core::gfp::Fp;
+//! use gf2_core::BitVec;
+//!
+//! #[derive(Clone)]
+//! struct DelegatingCode(LinearBlockCode);
+//!
+//! impl block::BlockCode for DelegatingCode {
+//!     type Symbol = Fp<2>;
+//!     type Symbols = BitVec;
+//!
+//!     fn symbol_zero(&self) -> Self::Symbol {
+//!         block::BlockCode::symbol_zero(&self.0)
+//!     }
+//!
+//!     fn k(&self) -> usize {
+//!         block::BlockCode::k(&self.0)
+//!     }
+//!
+//!     fn n(&self) -> usize {
+//!         block::BlockCode::n(&self.0)
+//!     }
+//! }
+//!
+//! impl block::BlockEncoder for DelegatingCode {
+//!     fn encode_into(
+//!         &self,
+//!         message: &Self::Symbols,
+//!         codeword: &mut Self::Symbols,
+//!     ) -> Result<(), gf2_coding::CodeError> {
+//!         block::BlockEncoder::encode_into(&self.0, message, codeword)
+//!     }
+//! }
+//!
+//! let binary = LinearBlockCode::hamming(2);
+//! let wrapped = DelegatingCode(LinearBlockCode::hamming(3));
+//! let codes: Vec<ErasedBlockCode> = vec![
+//!     ErasedBlockCode::new(binary.clone()),
+//!     ErasedBlockCode::new(wrapped.clone()),
+//! ];
+//! let encoders = vec![
+//!     ErasedBlockEncoder::new(binary.clone()),
+//!     ErasedBlockEncoder::new(wrapped.clone()),
+//! ];
+//!
+//! let binary_message = BitVec::zeros(binary.k());
+//! let binary_expected = block::BlockEncoder::encode(&binary, &binary_message).unwrap();
+//! let binary_actual = encoders[0]
+//!     .encode(&ErasedSymbols::new(&binary, binary_message))
+//!     .unwrap();
+//! assert_eq!(binary_actual.downcast_ref(&binary).unwrap(), &binary_expected);
+//!
+//! let wrapped_message = BitVec::zeros(wrapped.k());
+//! let wrapped_expected = block::BlockEncoder::encode(&wrapped, &wrapped_message).unwrap();
+//! let wrapped_actual = encoders[1]
+//!     .encode(&ErasedSymbols::new(&wrapped, wrapped_message))
+//!     .unwrap();
+//! assert_eq!(wrapped_actual.downcast_ref(&wrapped).unwrap(), &wrapped_expected);
+//! assert_eq!(codes[0].n(), binary.n());
+//! assert_eq!(codes[1].n(), wrapped.n());
+//! ```
 
+use crate::error::CodeError;
+pub use crate::error::RepresentationId;
 use crate::llr::Llr;
+use gf2_core::field::extension::FieldId;
 use gf2_core::BitVec;
+use std::any::{Any, TypeId};
+use std::fmt;
+use std::sync::Arc;
 
 pub mod block {
     //! The canonical static block-code interfaces.
@@ -358,6 +444,10 @@ pub mod block {
 
         /// Materializes the generator matrix.
         ///
+        /// This default allocates a fresh matrix for every call. Matrix
+        /// access is deliberately uncached; use an explicit cache wrapper
+        /// when retaining a materialization is wanted.
+        ///
         /// # Errors
         ///
         /// Propagates the [`CodeError`] returned by
@@ -374,13 +464,39 @@ pub mod block {
         /// A code in canonical systematic form has those coordinates at
         /// columns `0..k()`. A code that records another message-coordinate
         /// order answers for that order, which is the equivalent cheap fact
-        /// for its own layout.
+        /// for its own layout, and
+        /// [`Self::has_canonical_message_order`] separates the two cases.
         ///
         /// # Errors
         ///
         /// Returns a [`CodeError`] when the implementation cannot determine
         /// the property.
         fn is_systematic(&self) -> Result<bool, CodeError>;
+
+        /// Reports whether the code carries message symbol `i` at codeword
+        /// coordinate `i`, the canonical message-coordinate order.
+        ///
+        /// [`Self::is_systematic`] answers for whatever order the code
+        /// records for its message coordinates; this answers where that
+        /// order puts them. The two together are the statement that the
+        /// generator's first `k()` columns are the identity, which is what a
+        /// caller needs before it may read a coordinate below `k()` as a
+        /// message coordinate — a derived code restricting its mother to the
+        /// messages that vanish on chosen coordinates, for one.
+        ///
+        /// The answer is about the layout alone and says nothing about
+        /// systematicity, so a code that is not systematic still answers for
+        /// the order it would record. The default reports the canonical
+        /// order, the layout the repository's matrix contract writes; a code
+        /// that records another message-coordinate order overrides this.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`CodeError`] when the implementation cannot determine
+        /// the order.
+        fn has_canonical_message_order(&self) -> Result<bool, CodeError> {
+            Ok(true)
+        }
     }
 
     /// Provides a canonical full-rank parity-check matrix.
@@ -405,6 +521,10 @@ pub mod block {
         ) -> Result<(), CodeError>;
 
         /// Materializes the parity-check matrix.
+        ///
+        /// This default allocates a fresh matrix for every call. Matrix
+        /// access is deliberately uncached; use an explicit cache wrapper
+        /// when retaining a materialization is wanted.
         ///
         /// # Errors
         ///
@@ -449,13 +569,29 @@ pub mod block {
     }
 
     /// Shared behavioral checks for canonical representations and code capabilities.
-    #[cfg(test)]
-    pub(crate) mod conformance {
+    ///
+    /// Each function is one law of the traits in this module, written once and
+    /// applied to every implementor. Crate-internal unit tests call them on
+    /// their own module's fixtures; the integration suite
+    /// `tests/bch_conformance.rs` calls the same functions over the
+    /// predeclared BCH conformance corpus and the whole implementor roster,
+    /// which is what `@/invariant/shared-test-contracts` asks of a shared
+    /// interface. Reaching the second consumer is why the module is public
+    /// under the `test-support` feature; it carries no production code.
+    #[cfg(any(test, feature = "test-support"))]
+    pub mod conformance {
         use super::*;
         use crate::error::RepresentationId;
         use crate::traits::compat::binary_v1;
 
-        pub(crate) fn symbol_sequence_contract<F, S>(zero: &F, one: &F)
+        /// Asserts the [`SymbolSequence`] storage contract for `S` at the
+        /// word-boundary lengths 0, 1, 63, 64, and 65.
+        ///
+        /// # Panics
+        ///
+        /// Panics when a length, an accessor, or an out-of-range rejection
+        /// departs from the contract.
+        pub fn symbol_sequence_contract<F, S>(zero: &F, one: &F)
         where
             F: FieldIdentity + 'static,
             S: SymbolSequence<F>,
@@ -496,7 +632,14 @@ pub mod block {
             }
         }
 
-        pub(crate) fn symbol_matrix_contract<F, M>(zero: &F, one: &F)
+        /// Asserts the [`SymbolMatrix`] storage contract for `M` at shapes
+        /// whose column counts cross the 64-bit word boundary.
+        ///
+        /// # Panics
+        ///
+        /// Panics when a shape, an accessor, or an out-of-range rejection
+        /// departs from the contract.
+        pub fn symbol_matrix_contract<F, M>(zero: &F, one: &F)
         where
             F: FieldIdentity + 'static,
             M: SymbolMatrix<F>,
@@ -551,7 +694,14 @@ pub mod block {
             }
         }
 
-        pub(crate) fn block_encoder_contract<C>(code: &C, message: &C::Symbols)
+        /// Asserts that `code` reports consistent dimensions, that
+        /// [`BlockEncoder::encode`] and [`BlockEncoder::encode_into`] write
+        /// the same codeword, and that both reject a wrong-length buffer.
+        ///
+        /// # Panics
+        ///
+        /// Panics when either path departs from the encoder contract.
+        pub fn block_encoder_contract<C>(code: &C, message: &C::Symbols)
         where
             C: BlockEncoder,
         {
@@ -568,7 +718,13 @@ pub mod block {
             assert!(code.encode_into(message, &mut wrong_output).is_err());
         }
 
-        pub(crate) fn generator_matrix_contract<C>(code: &C)
+        /// Asserts that the allocating and caller-buffer generator accessors
+        /// agree and that the result has the declared $k \times n$ shape.
+        ///
+        /// # Panics
+        ///
+        /// Panics when the two accessors disagree or the shape is wrong.
+        pub fn generator_matrix_contract<C>(code: &C)
         where
             C: GeneratorMatrixAccess,
         {
@@ -580,7 +736,13 @@ pub mod block {
             assert_eq!(actual, expected);
         }
 
-        pub(crate) fn generator_rows_encode_basis<C>(code: &C, one: &C::Symbol)
+        /// Asserts that generator row $i$ is the codeword of message basis
+        /// vector $i$, which is the matrix contract's defining statement.
+        ///
+        /// # Panics
+        ///
+        /// Panics when a row differs from the encoding of its basis vector.
+        pub fn generator_rows_encode_basis<C>(code: &C, one: &C::Symbol)
         where
             C: BlockEncoder + GeneratorMatrixAccess,
         {
@@ -595,7 +757,14 @@ pub mod block {
             }
         }
 
-        pub(crate) fn parity_check_matrix_contract<C>(code: &C)
+        /// Asserts that the allocating and caller-buffer parity-check
+        /// accessors agree, including on reporting the same missing
+        /// capability.
+        ///
+        /// # Panics
+        ///
+        /// Panics when the two accessors disagree.
+        pub fn parity_check_matrix_contract<C>(code: &C)
         where
             C: ParityCheckMatrixAccess,
         {
@@ -624,7 +793,7 @@ pub mod block {
         ///
         /// A code without a parity-check capability satisfies the law
         /// vacuously and the check returns.
-        pub(crate) fn generator_parity_orthogonality<C>(code: &C)
+        pub fn generator_parity_orthogonality<C>(code: &C)
         where
             C: GeneratorMatrixAccess + ParityCheckMatrixAccess,
         {
@@ -648,7 +817,13 @@ pub mod block {
             }
         }
 
-        pub(crate) fn binary_v1_encoder_agrees<C>(code: &C, message: &BitVec)
+        /// Asserts that the version-1 binary compatibility encoder writes the
+        /// bits the canonical encoder writes, at the same dimensions.
+        ///
+        /// # Panics
+        ///
+        /// Panics when the boundary and the canonical path disagree.
+        pub fn binary_v1_encoder_agrees<C>(code: &C, message: &BitVec)
         where
             C: BinaryBlockCode + BlockEncoder,
         {
@@ -659,18 +834,27 @@ pub mod block {
             assert_eq!(v1, canonical);
         }
 
-        pub(crate) fn symbol_representation_of<C: BlockCode>() -> RepresentationId {
+        /// Returns the process-local identity of `C`'s symbol representation.
+        pub fn symbol_representation_of<C: BlockCode>() -> RepresentationId {
             RepresentationId::of::<C::Symbols>()
         }
 
         #[derive(Clone, Debug)]
-        pub(crate) struct RepetitionCode<F: FieldIdentity + 'static> {
+        /// The length-`repetitions` repetition code over `F`, a minimal
+        /// implementor of the canonical traits for conformance coverage over
+        /// a non-BCH code.
+        pub struct RepetitionCode<F: FieldIdentity + 'static> {
             repetitions: usize,
             zero: F,
         }
 
         impl<F: FieldIdentity + 'static> RepetitionCode<F> {
-            pub(crate) fn new(repetitions: usize, zero: F) -> Self {
+            /// Creates the repetition code of length `repetitions`.
+            ///
+            /// # Panics
+            ///
+            /// Panics unless `repetitions` is positive.
+            pub fn new(repetitions: usize, zero: F) -> Self {
                 assert!(repetitions > 0);
                 Self { repetitions, zero }
             }
@@ -771,6 +955,601 @@ pub mod block {
                 Ok(())
             }
         }
+    }
+}
+
+/// The object-safe metadata vtable shared by the four erased capabilities.
+trait ErasedCodeVtable: Send + Sync {
+    fn field_id(&self) -> &FieldId;
+    fn symbol_representation(&self) -> RepresentationId;
+    fn k(&self) -> usize;
+    fn n(&self) -> usize;
+    fn code_type_id(&self) -> TypeId;
+    fn code_as_any(&self) -> &dyn Any;
+}
+
+/// A static code kept behind one or more capability-specific erased vtables.
+struct ErasedStaticCode<C> {
+    code: C,
+    field_id: FieldId,
+}
+
+impl<C> ErasedCodeVtable for ErasedStaticCode<C>
+where
+    C: block::BlockCode + Send + Sync + 'static,
+{
+    fn field_id(&self) -> &FieldId {
+        &self.field_id
+    }
+
+    fn symbol_representation(&self) -> RepresentationId {
+        RepresentationId::of::<C::Symbols>()
+    }
+
+    fn k(&self) -> usize {
+        block::BlockCode::k(&self.code)
+    }
+
+    fn n(&self) -> usize {
+        block::BlockCode::n(&self.code)
+    }
+
+    fn code_type_id(&self) -> TypeId {
+        TypeId::of::<C>()
+    }
+
+    fn code_as_any(&self) -> &dyn Any {
+        &self.code
+    }
+}
+
+/// A type-erased sequence of symbols.
+///
+/// The field and representation identities are retained beside the
+/// `Any` payload. Use [`ErasedSymbols::new`] with the static code that owns a
+/// value, then use [`ErasedSymbols::downcast_ref`] or
+/// [`ErasedSymbols::downcast`] with that code to recover it. The checked
+/// operations return [`CodeError::FieldMismatch`] before a representation
+/// check, and never coerce a value between fields or representations.
+#[derive(Clone)]
+pub struct ErasedSymbols {
+    field_id: FieldId,
+    representation: RepresentationId,
+    value: Arc<dyn Any + Send + Sync>,
+}
+
+impl fmt::Debug for ErasedSymbols {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("ErasedSymbols")
+            .field("field_id", &self.field_id)
+            .field("representation", &self.representation)
+            .finish_non_exhaustive()
+    }
+}
+
+impl ErasedSymbols {
+    /// Erases a symbol sequence owned by `code`.
+    ///
+    /// This constructor does not inspect or change the sequence. The caller
+    /// supplies the static code so the runtime field identity is retained even
+    /// for an empty sequence.
+    pub fn new<C>(code: &C, value: C::Symbols) -> Self
+    where
+        C: block::BlockCode + ?Sized,
+        C::Symbol: Send + Sync + 'static,
+        C::Symbols: Send + Sync + 'static,
+    {
+        Self {
+            field_id: code.symbol_field_id(),
+            representation: RepresentationId::of::<C::Symbols>(),
+            value: Arc::new(value),
+        }
+    }
+
+    /// Alias for [`ErasedSymbols::new`] that makes the static ownership
+    /// boundary explicit at a call site.
+    pub fn from_code<C>(code: &C, value: C::Symbols) -> Self
+    where
+        C: block::BlockCode + ?Sized,
+        C::Symbol: Send + Sync + 'static,
+        C::Symbols: Send + Sync + 'static,
+    {
+        Self::new(code, value)
+    }
+
+    /// Returns the mathematical field identity carried by this value.
+    pub fn field_id(&self) -> &FieldId {
+        &self.field_id
+    }
+
+    /// Returns the process-local identity of the symbol representation.
+    pub fn representation(&self) -> RepresentationId {
+        self.representation
+    }
+
+    /// Recovers the sequence after checking it against its static code.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::FieldMismatch`] or
+    /// [`CodeError::RepresentationMismatch`] when `code` does not own this
+    /// erased value. A representation downcast is attempted only after both
+    /// identities match.
+    pub fn downcast_ref<C>(&self, code: &C) -> Result<&C::Symbols, CodeError>
+    where
+        C: block::BlockCode + ?Sized,
+        C::Symbol: Send + Sync + 'static,
+        C::Symbols: Send + Sync + 'static,
+    {
+        let expected_field = code.symbol_field_id();
+        let expected_representation = RepresentationId::of::<C::Symbols>();
+        validate_erased_value(
+            &expected_field,
+            expected_representation,
+            &self.field_id,
+            self.representation,
+        )?;
+
+        if self.value.as_ref().type_id() != TypeId::of::<C::Symbols>() {
+            return Err(CodeError::RepresentationMismatch {
+                expected: expected_representation,
+                found: self.representation,
+            });
+        }
+        match self.value.downcast_ref::<C::Symbols>() {
+            Some(value) => Ok(value),
+            None => Err(CodeError::RepresentationMismatch {
+                expected: expected_representation,
+                found: self.representation,
+            }),
+        }
+    }
+
+    /// Recovers an owned reference-counted sequence after checked validation.
+    ///
+    /// The returned [`Arc`] shares the erased payload. This method consumes
+    /// the handle, but cloned handles remain independent owners of the same
+    /// payload.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::FieldMismatch`] or
+    /// [`CodeError::RepresentationMismatch`] when `code` does not own this
+    /// erased value.
+    pub fn downcast<C>(self, code: &C) -> Result<Arc<C::Symbols>, CodeError>
+    where
+        C: block::BlockCode + ?Sized,
+        C::Symbol: Send + Sync + 'static,
+        C::Symbols: Send + Sync + 'static,
+    {
+        let expected_field = code.symbol_field_id();
+        let expected_representation = RepresentationId::of::<C::Symbols>();
+        validate_erased_value(
+            &expected_field,
+            expected_representation,
+            &self.field_id,
+            self.representation,
+        )?;
+
+        if self.value.as_ref().type_id() != TypeId::of::<C::Symbols>() {
+            return Err(CodeError::RepresentationMismatch {
+                expected: expected_representation,
+                found: self.representation,
+            });
+        }
+        match self.value.downcast::<C::Symbols>() {
+            Ok(value) => Ok(value),
+            Err(_) => Err(CodeError::RepresentationMismatch {
+                expected: expected_representation,
+                found: self.representation,
+            }),
+        }
+    }
+}
+
+/// A type-erased matrix value.
+///
+/// As with [`ErasedSymbols`], this is a leaf adapter over a matrix already
+/// materialized by a static code. Its checked downcasts validate both the
+/// mathematical field and the process-local Rust representation identity.
+#[derive(Clone)]
+pub struct ErasedMatrix {
+    field_id: FieldId,
+    representation: RepresentationId,
+    value: Arc<dyn Any + Send + Sync>,
+}
+
+impl fmt::Debug for ErasedMatrix {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("ErasedMatrix")
+            .field("field_id", &self.field_id)
+            .field("representation", &self.representation)
+            .finish_non_exhaustive()
+    }
+}
+
+impl ErasedMatrix {
+    /// Erases a matrix whose symbols belong to `code`.
+    pub fn new<C, M>(code: &C, value: M) -> Self
+    where
+        C: block::BlockCode + ?Sized,
+        C::Symbol: Send + Sync + 'static,
+        M: block::SymbolMatrix<C::Symbol> + Send + Sync + 'static,
+    {
+        Self {
+            field_id: code.symbol_field_id(),
+            representation: RepresentationId::of::<M>(),
+            value: Arc::new(value),
+        }
+    }
+
+    /// Alias for [`ErasedMatrix::new`] that makes the static ownership
+    /// boundary explicit at a call site.
+    pub fn from_code<C, M>(code: &C, value: M) -> Self
+    where
+        C: block::BlockCode + ?Sized,
+        C::Symbol: Send + Sync + 'static,
+        M: block::SymbolMatrix<C::Symbol> + Send + Sync + 'static,
+    {
+        Self::new(code, value)
+    }
+
+    /// Returns the mathematical field identity carried by this matrix.
+    pub fn field_id(&self) -> &FieldId {
+        &self.field_id
+    }
+
+    /// Returns the process-local identity of the matrix representation.
+    pub fn representation(&self) -> RepresentationId {
+        self.representation
+    }
+
+    /// Recovers a matrix after checking it against a static code and type.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::FieldMismatch`] or
+    /// [`CodeError::RepresentationMismatch`] when the supplied field or
+    /// matrix representation differs. A matrix downcast is attempted only
+    /// after both identities match.
+    pub fn downcast_ref<C, M>(&self, code: &C) -> Result<&M, CodeError>
+    where
+        C: block::BlockCode + ?Sized,
+        C::Symbol: Send + Sync + 'static,
+        M: block::SymbolMatrix<C::Symbol> + Send + Sync + 'static,
+    {
+        let expected_field = code.symbol_field_id();
+        let expected_representation = RepresentationId::of::<M>();
+        validate_erased_value(
+            &expected_field,
+            expected_representation,
+            &self.field_id,
+            self.representation,
+        )?;
+
+        if self.value.as_ref().type_id() != TypeId::of::<M>() {
+            return Err(CodeError::RepresentationMismatch {
+                expected: expected_representation,
+                found: self.representation,
+            });
+        }
+        match self.value.downcast_ref::<M>() {
+            Some(value) => Ok(value),
+            None => Err(CodeError::RepresentationMismatch {
+                expected: expected_representation,
+                found: self.representation,
+            }),
+        }
+    }
+
+    /// Recovers an owned reference-counted matrix after checked validation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::FieldMismatch`] or
+    /// [`CodeError::RepresentationMismatch`] when the supplied field or
+    /// matrix representation differs.
+    pub fn downcast<C, M>(self, code: &C) -> Result<Arc<M>, CodeError>
+    where
+        C: block::BlockCode + ?Sized,
+        C::Symbol: Send + Sync + 'static,
+        M: block::SymbolMatrix<C::Symbol> + Send + Sync + 'static,
+    {
+        let expected_field = code.symbol_field_id();
+        let expected_representation = RepresentationId::of::<M>();
+        validate_erased_value(
+            &expected_field,
+            expected_representation,
+            &self.field_id,
+            self.representation,
+        )?;
+
+        if self.value.as_ref().type_id() != TypeId::of::<M>() {
+            return Err(CodeError::RepresentationMismatch {
+                expected: expected_representation,
+                found: self.representation,
+            });
+        }
+        match self.value.downcast::<M>() {
+            Ok(value) => Ok(value),
+            Err(_) => Err(CodeError::RepresentationMismatch {
+                expected: expected_representation,
+                found: self.representation,
+            }),
+        }
+    }
+}
+
+/// Validates the two runtime identities before an `Any` downcast.
+fn validate_erased_value(
+    expected_field: &FieldId,
+    expected_representation: RepresentationId,
+    found_field: &FieldId,
+    found_representation: RepresentationId,
+) -> Result<(), CodeError> {
+    if expected_field != found_field {
+        return Err(CodeError::FieldMismatch {
+            expected: expected_field.clone(),
+            found: found_field.clone(),
+        });
+    }
+    if expected_representation != found_representation {
+        return Err(CodeError::RepresentationMismatch {
+            expected: expected_representation,
+            found: found_representation,
+        });
+    }
+    Ok(())
+}
+
+/// A type-erased view of a static [`block::BlockCode`].
+///
+/// This is metadata only: it has no construction or encoding behavior and
+/// never chooses a field. Use [`ErasedBlockEncoder`] for the encoding
+/// capability.
+#[derive(Clone)]
+pub struct ErasedBlockCode {
+    inner: Arc<dyn ErasedCodeVtable>,
+}
+
+impl ErasedBlockCode {
+    /// Wraps a fully constructed static block code.
+    pub fn new<C>(code: C) -> Self
+    where
+        C: block::BlockCode + Send + Sync + 'static,
+        C::Symbol: Send + Sync + 'static,
+        C::Symbols: Send + Sync + 'static,
+    {
+        let field_id = code.symbol_field_id();
+        Self {
+            inner: Arc::new(ErasedStaticCode { code, field_id }),
+        }
+    }
+
+    fn from_vtable(inner: Arc<dyn ErasedCodeVtable>) -> Self {
+        Self { inner }
+    }
+
+    /// Returns the mathematical identity of the code-symbol field.
+    pub fn field_id(&self) -> &FieldId {
+        self.inner.field_id()
+    }
+
+    /// Returns the process-local identity of the symbol sequence type.
+    pub fn symbol_representation(&self) -> RepresentationId {
+        self.inner.symbol_representation()
+    }
+
+    /// Returns the message dimension `k`.
+    pub fn k(&self) -> usize {
+        self.inner.k()
+    }
+
+    /// Returns the codeword length `n`.
+    pub fn n(&self) -> usize {
+        self.inner.n()
+    }
+
+    /// Recovers the concrete static code when its type is known.
+    ///
+    /// The `TypeId` check is performed before the `Any` downcast. A mismatch
+    /// returns `None` and cannot panic or coerce one code type into another.
+    pub fn downcast_ref<C: 'static>(&self) -> Option<&C> {
+        if self.inner.code_type_id() != TypeId::of::<C>() {
+            return None;
+        }
+        self.inner.code_as_any().downcast_ref::<C>()
+    }
+}
+
+/// The object-safe encoding capability vtable.
+trait ErasedEncoderVtable: ErasedCodeVtable {
+    fn encode_erased(&self, message: &ErasedSymbols) -> Result<ErasedSymbols, CodeError>;
+}
+
+impl<C> ErasedEncoderVtable for ErasedStaticCode<C>
+where
+    C: block::BlockEncoder + Send + Sync + 'static,
+    C::Symbol: Send + Sync + 'static,
+    C::Symbols: Send + Sync + 'static,
+{
+    fn encode_erased(&self, message: &ErasedSymbols) -> Result<ErasedSymbols, CodeError> {
+        let message = message.downcast_ref(&self.code)?;
+        let codeword = block::BlockEncoder::encode(&self.code, message)?;
+        Ok(ErasedSymbols::new(&self.code, codeword))
+    }
+}
+
+/// A type-erased view of a static [`block::BlockEncoder`].
+#[derive(Clone)]
+pub struct ErasedBlockEncoder {
+    code: ErasedBlockCode,
+    inner: Arc<dyn ErasedEncoderVtable>,
+}
+
+impl ErasedBlockEncoder {
+    /// Wraps a fully constructed static encoder.
+    pub fn new<C>(encoder: C) -> Self
+    where
+        C: block::BlockEncoder + Send + Sync + 'static,
+        C::Symbol: Send + Sync + 'static,
+        C::Symbols: Send + Sync + 'static,
+    {
+        let field_id = encoder.symbol_field_id();
+        let inner = Arc::new(ErasedStaticCode {
+            code: encoder,
+            field_id,
+        });
+        let code = ErasedBlockCode::from_vtable(inner.clone());
+        let inner: Arc<dyn ErasedEncoderVtable> = inner;
+        Self { code, inner }
+    }
+
+    /// Returns the metadata view for this encoder.
+    pub fn code(&self) -> &ErasedBlockCode {
+        &self.code
+    }
+
+    /// Encodes a checked erased message.
+    ///
+    /// # Errors
+    ///
+    /// Returns field or representation mismatch errors before invoking the
+    /// static encoder, and propagates its ordinary [`CodeError`] results.
+    pub fn encode(&self, message: &ErasedSymbols) -> Result<ErasedSymbols, CodeError> {
+        self.inner.encode_erased(message)
+    }
+}
+
+/// The object-safe generator-matrix capability vtable.
+trait ErasedGeneratorVtable: ErasedCodeVtable {
+    fn matrix_representation(&self) -> RepresentationId;
+    fn generator_matrix_erased(&self) -> Result<ErasedMatrix, CodeError>;
+}
+
+impl<C> ErasedGeneratorVtable for ErasedStaticCode<C>
+where
+    C: block::GeneratorMatrixAccess + Send + Sync + 'static,
+    C::Symbol: Send + Sync + 'static,
+    C::Symbols: Send + Sync + 'static,
+    C::GeneratorMatrix: Send + Sync + 'static,
+{
+    fn matrix_representation(&self) -> RepresentationId {
+        RepresentationId::of::<C::GeneratorMatrix>()
+    }
+
+    fn generator_matrix_erased(&self) -> Result<ErasedMatrix, CodeError> {
+        let matrix = block::GeneratorMatrixAccess::generator_matrix(&self.code)?;
+        Ok(ErasedMatrix::new(&self.code, matrix))
+    }
+}
+
+/// A type-erased view of a static [`block::GeneratorMatrixAccess`].
+#[derive(Clone)]
+pub struct ErasedGeneratorMatrixAccess {
+    code: ErasedBlockCode,
+    inner: Arc<dyn ErasedGeneratorVtable>,
+}
+
+impl ErasedGeneratorMatrixAccess {
+    /// Wraps a fully constructed static generator-matrix provider.
+    pub fn new<C>(code: C) -> Self
+    where
+        C: block::GeneratorMatrixAccess + Send + Sync + 'static,
+        C::Symbol: Send + Sync + 'static,
+        C::Symbols: Send + Sync + 'static,
+        C::GeneratorMatrix: Send + Sync + 'static,
+    {
+        let field_id = code.symbol_field_id();
+        let inner = Arc::new(ErasedStaticCode { code, field_id });
+        let metadata = ErasedBlockCode::from_vtable(inner.clone());
+        let inner: Arc<dyn ErasedGeneratorVtable> = inner;
+        Self {
+            code: metadata,
+            inner,
+        }
+    }
+
+    /// Returns the metadata view for this generator provider.
+    pub fn code(&self) -> &ErasedBlockCode {
+        &self.code
+    }
+
+    /// Returns the process-local identity of the generator matrix type.
+    pub fn matrix_representation(&self) -> RepresentationId {
+        self.inner.matrix_representation()
+    }
+
+    /// Materializes and erases the canonical generator matrix.
+    pub fn generator_matrix(&self) -> Result<ErasedMatrix, CodeError> {
+        self.inner.generator_matrix_erased()
+    }
+}
+
+/// The object-safe parity-check-matrix capability vtable.
+trait ErasedParityVtable: ErasedCodeVtable {
+    fn matrix_representation(&self) -> RepresentationId;
+    fn parity_check_matrix_erased(&self) -> Result<ErasedMatrix, CodeError>;
+}
+
+impl<C> ErasedParityVtable for ErasedStaticCode<C>
+where
+    C: block::ParityCheckMatrixAccess + Send + Sync + 'static,
+    C::Symbol: Send + Sync + 'static,
+    C::Symbols: Send + Sync + 'static,
+    C::ParityCheckMatrix: Send + Sync + 'static,
+{
+    fn matrix_representation(&self) -> RepresentationId {
+        RepresentationId::of::<C::ParityCheckMatrix>()
+    }
+
+    fn parity_check_matrix_erased(&self) -> Result<ErasedMatrix, CodeError> {
+        let matrix = block::ParityCheckMatrixAccess::parity_check_matrix(&self.code)?;
+        Ok(ErasedMatrix::new(&self.code, matrix))
+    }
+}
+
+/// A type-erased view of a static [`block::ParityCheckMatrixAccess`].
+#[derive(Clone)]
+pub struct ErasedParityCheckMatrixAccess {
+    code: ErasedBlockCode,
+    inner: Arc<dyn ErasedParityVtable>,
+}
+
+impl ErasedParityCheckMatrixAccess {
+    /// Wraps a fully constructed static parity-check-matrix provider.
+    pub fn new<C>(code: C) -> Self
+    where
+        C: block::ParityCheckMatrixAccess + Send + Sync + 'static,
+        C::Symbol: Send + Sync + 'static,
+        C::Symbols: Send + Sync + 'static,
+        C::ParityCheckMatrix: Send + Sync + 'static,
+    {
+        let field_id = code.symbol_field_id();
+        let inner = Arc::new(ErasedStaticCode { code, field_id });
+        let metadata = ErasedBlockCode::from_vtable(inner.clone());
+        let inner: Arc<dyn ErasedParityVtable> = inner;
+        Self {
+            code: metadata,
+            inner,
+        }
+    }
+
+    /// Returns the metadata view for this parity-check provider.
+    pub fn code(&self) -> &ErasedBlockCode {
+        &self.code
+    }
+
+    /// Returns the process-local identity of the parity-check matrix type.
+    pub fn matrix_representation(&self) -> RepresentationId {
+        self.inner.matrix_representation()
+    }
+
+    /// Materializes and erases the canonical parity-check matrix.
+    pub fn parity_check_matrix(&self) -> Result<ErasedMatrix, CodeError> {
+        self.inner.parity_check_matrix_erased()
     }
 }
 
@@ -1629,5 +2408,160 @@ mod block_conformance_tests {
     #[allow(dead_code)]
     fn _linear_block_code_satisfies_the_static_bounds(code: &LinearBlockCode) {
         _assert_canonical_capabilities_are_statically_bound(code);
+    }
+}
+
+#[cfg(test)]
+mod erased_handle_tests {
+    use super::block::conformance::RepetitionCode;
+    use super::block::{self, BlockCode};
+    use super::*;
+    use crate::linear::LinearBlockCode;
+    use gf2_core::field::matrix::FieldMatrix;
+    use gf2_core::field::{FieldVec, FiniteField};
+    use gf2_core::gfp::Fp;
+    use gf2_core::{BitMatrix, BitVec};
+
+    #[test]
+    fn erased_binary_encoder_agrees_and_preserves_metadata() {
+        let code = LinearBlockCode::hamming(3);
+        let mut message = BitVec::zeros(code.k());
+        for index in [0, 2, 3] {
+            message.set(index, true);
+        }
+        let expected = block::BlockEncoder::encode(&code, &message).unwrap();
+        let erased_code = ErasedBlockCode::new(code.clone());
+        let encoder = ErasedBlockEncoder::new(code.clone());
+        let encoded = encoder
+            .encode(&ErasedSymbols::new(&code, message.clone()))
+            .unwrap();
+
+        assert_eq!(encoded.downcast_ref(&code).unwrap(), &expected);
+        assert_eq!(erased_code.field_id(), &code.symbol_field_id());
+        assert_eq!(
+            erased_code.symbol_representation(),
+            RepresentationId::of::<BitVec>()
+        );
+        assert_eq!(erased_code.k(), code.k());
+        assert_eq!(erased_code.n(), code.n());
+        assert_eq!(encoder.code().field_id(), erased_code.field_id());
+        assert_eq!(encoder.code().k(), code.k());
+        assert_eq!(encoder.code().n(), code.n());
+        assert!(erased_code.downcast_ref::<LinearBlockCode>().is_some());
+        assert!(erased_code
+            .downcast_ref::<RepetitionCode<Fp<7>>>()
+            .is_none());
+    }
+
+    #[test]
+    fn erased_generic_encoder_agrees_for_field_vec() {
+        let code = RepetitionCode::new(4, Fp::<7>::new(0));
+        let message = FieldVec::from(vec![code.symbol_zero().one_like()]);
+        let expected = block::BlockEncoder::encode(&code, &message).unwrap();
+        let encoded = ErasedBlockEncoder::new(code.clone())
+            .encode(&ErasedSymbols::new(&code, message.clone()))
+            .unwrap();
+
+        assert_eq!(encoded.downcast_ref(&code).unwrap(), &expected);
+        assert_eq!(encoded.field_id(), &code.symbol_field_id());
+        assert_eq!(
+            encoded.representation(),
+            RepresentationId::of::<FieldVec<Fp<7>>>()
+        );
+    }
+
+    #[test]
+    fn erased_matrix_capabilities_agree_and_preserve_representation() {
+        let code = LinearBlockCode::hamming(3);
+        let generator = block::GeneratorMatrixAccess::generator_matrix(&code).unwrap();
+        let generator_handle = ErasedGeneratorMatrixAccess::new(code.clone());
+        let generator_erased = generator_handle.generator_matrix().unwrap();
+        assert_eq!(
+            generator_erased
+                .downcast_ref::<_, BitMatrix>(&code)
+                .unwrap(),
+            &generator
+        );
+        assert_eq!(
+            generator_handle.matrix_representation(),
+            RepresentationId::of::<BitMatrix>()
+        );
+        assert_eq!(generator_erased.field_id(), &code.symbol_field_id());
+        assert_eq!(
+            generator_erased.representation(),
+            generator_handle.matrix_representation()
+        );
+
+        let parity = block::ParityCheckMatrixAccess::parity_check_matrix(&code).unwrap();
+        let parity_handle = ErasedParityCheckMatrixAccess::new(code.clone());
+        let parity_erased = parity_handle.parity_check_matrix().unwrap();
+        assert_eq!(
+            parity_erased.downcast_ref::<_, BitMatrix>(&code).unwrap(),
+            &parity
+        );
+        assert_eq!(
+            parity_handle.matrix_representation(),
+            RepresentationId::of::<BitMatrix>()
+        );
+    }
+
+    #[test]
+    fn erased_value_downcasts_validate_field_and_representation() {
+        let binary = LinearBlockCode::hamming(3);
+        let wrong_field_code = RepetitionCode::new(1, Fp::<7>::new(0));
+        let wrong_field = ErasedSymbols::new(
+            &wrong_field_code,
+            FieldVec::from(vec![wrong_field_code.symbol_zero()]),
+        );
+        let error = ErasedBlockEncoder::new(binary.clone())
+            .encode(&wrong_field)
+            .unwrap_err();
+        assert_eq!(
+            error,
+            CodeError::FieldMismatch {
+                expected: binary.symbol_field_id(),
+                found: wrong_field_code.symbol_field_id(),
+            }
+        );
+
+        let same_field_code = RepetitionCode::new(1, Fp::<2>::new(0));
+        let wrong_representation = ErasedSymbols::new(
+            &same_field_code,
+            FieldVec::from(vec![same_field_code.symbol_zero()]),
+        );
+        let error = ErasedBlockEncoder::new(binary.clone())
+            .encode(&wrong_representation)
+            .unwrap_err();
+        assert_eq!(
+            error,
+            CodeError::RepresentationMismatch {
+                expected: RepresentationId::of::<BitVec>(),
+                found: RepresentationId::of::<FieldVec<Fp<2>>>(),
+            }
+        );
+
+        let wrong_matrix = ErasedMatrix::new(
+            &binary,
+            FieldMatrix::new(binary.k(), binary.n(), Fp::<2>::new(0)),
+        );
+        let error = wrong_matrix
+            .downcast_ref::<_, BitMatrix>(&binary)
+            .unwrap_err();
+        assert_eq!(
+            error,
+            CodeError::RepresentationMismatch {
+                expected: RepresentationId::of::<BitMatrix>(),
+                found: RepresentationId::of::<FieldMatrix<Fp<2>>>(),
+            }
+        );
+    }
+
+    #[test]
+    fn erased_value_owned_downcast_returns_shared_payload() {
+        let code = LinearBlockCode::hamming(2);
+        let message = BitVec::zeros(code.k());
+        let erased = ErasedSymbols::new(&code, message.clone());
+        let recovered = erased.downcast(&code).unwrap();
+        assert_eq!(&*recovered, &message);
     }
 }

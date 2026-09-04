@@ -273,6 +273,27 @@ pub enum FieldError {
     /// An encoded identity that is truncated, over-long, or carries an
     /// unknown tag.
     MalformedEncoding,
+    /// A cyclotomic modulus must be nonzero.
+    InvalidCyclotomicModulus {
+        /// The rejected modulus.
+        modulus: u64,
+    },
+    /// The multiplier and modulus are not coprime, so multiplication by the
+    /// multiplier is not a permutation of the residue classes.
+    NonCoprimeCyclotomicParameters {
+        /// The normalized multiplier modulo `modulus`.
+        q_mod_n: u64,
+        /// The cyclotomic modulus.
+        modulus: u64,
+        /// The greatest common divisor of `q_mod_n` and `modulus`.
+        gcd: u64,
+    },
+    /// The requested cyclotomic modulus cannot be represented as an in-memory
+    /// partition on this target.
+    CyclotomicModulusTooLarge {
+        /// The rejected modulus.
+        modulus: u64,
+    },
 }
 
 impl fmt::Display for FieldError {
@@ -348,6 +369,21 @@ impl fmt::Display for FieldError {
                 write!(f, "unsupported field identity encoding version {found}")
             }
             Self::MalformedEncoding => write!(f, "malformed field identity encoding"),
+            Self::InvalidCyclotomicModulus { modulus } => {
+                write!(f, "cyclotomic modulus {modulus} must be nonzero")
+            }
+            Self::NonCoprimeCyclotomicParameters {
+                q_mod_n,
+                modulus,
+                gcd,
+            } => write!(
+                f,
+                "cyclotomic multiplier {q_mod_n} and modulus {modulus} have gcd {gcd}, expected 1"
+            ),
+            Self::CyclotomicModulusTooLarge { modulus } => write!(
+                f,
+                "cyclotomic modulus {modulus} cannot be represented on this target"
+            ),
         }
     }
 }
@@ -1672,6 +1708,22 @@ fn modular_pow(mut base: u64, mut exponent: u64, modulus: u64) -> u64 {
     result
 }
 
+/// Raises a `u64` to a `usize` power modulo `modulus`.
+fn modular_pow_usize(mut base: u64, mut exponent: usize, modulus: u64) -> u64 {
+    let mut result = 1u64 % modulus;
+    base %= modulus;
+    while exponent != 0 {
+        if exponent & 1 == 1 {
+            result = modular_mul(result, base, modulus);
+        }
+        exponent >>= 1;
+        if exponent != 0 {
+            base = modular_mul(base, base, modulus);
+        }
+    }
+    result
+}
+
 /// Returns the greatest common divisor of two `u64`s.
 fn gcd_u64(mut lhs: u64, mut rhs: u64) -> u64 {
     while rhs != 0 {
@@ -1910,6 +1962,555 @@ pub fn element_of_exact_order<X: FieldExtension>(
         });
     }
     Ok((element, certificate))
+}
+
+// ---------------------------------------------------------------------------
+// Cyclotomic cosets
+// ---------------------------------------------------------------------------
+
+/// A deterministic partition of residues modulo a cyclotomic modulus.
+///
+/// Cosets are ordered by their smallest representative. Each coset starts at
+/// that representative and then lists the orbit produced by repeated
+/// multiplication by `q` modulo `n`. A partition returned by
+/// [`cyclotomic_closure`] contains only the cosets meeting its seed set.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::cyclotomic_cosets_mod;
+///
+/// let partition = cyclotomic_cosets_mod(2, 15)?;
+/// assert_eq!(partition.cosets().len(), 5);
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CosetPartition {
+    n: u64,
+    q_mod_n: u64,
+    cosets: Vec<Vec<u64>>,
+}
+
+impl CosetPartition {
+    /// Returns the partition's cosets in deterministic order.
+    ///
+    /// The outer order is by smallest representative. The first member of
+    /// every inner vector is that representative, and later members follow
+    /// the multiplication orbit rather than numeric sorting.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`; the returned slice borrows the partition.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::extension::cyclotomic_cosets_mod;
+    ///
+    /// let partition = cyclotomic_cosets_mod(2, 15)?;
+    /// assert_eq!(partition.cosets()[2], vec![3, 6, 12, 9]);
+    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
+    /// ```
+    pub fn cosets(&self) -> &[Vec<u64>] {
+        &self.cosets
+    }
+
+    /// Returns the sorted union of all residues in the partition.
+    ///
+    /// For a full partition this is `0..n`; for a closure it is the closed
+    /// defining set selected by the supplied seeds.
+    ///
+    /// # Complexity
+    ///
+    /// `O(k log k)`, where `k` is the number of returned residues.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::extension::cyclotomic_cosets_mod;
+    ///
+    /// let partition = cyclotomic_cosets_mod(2, 15)?;
+    /// assert_eq!(partition.defining_set(), (0..15).collect::<Vec<_>>());
+    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
+    /// ```
+    pub fn defining_set(&self) -> Vec<u64> {
+        let count = self.cosets.iter().map(Vec::len).sum();
+        let mut defining_set = Vec::with_capacity(count);
+        for coset in &self.cosets {
+            defining_set.extend(coset.iter().copied());
+        }
+        defining_set.sort_unstable();
+        defining_set
+    }
+
+    /// Returns whether `exponent` belongs to the partition.
+    ///
+    /// The exponent is reduced modulo the partition's `n`, so an equivalent
+    /// representative such as `n + 3` is treated as exponent `3`.
+    ///
+    /// # Complexity
+    ///
+    /// `O(k)` in the number of stored residues.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::extension::cyclotomic_cosets_mod;
+    ///
+    /// let partition = cyclotomic_cosets_mod(2, 15)?;
+    /// assert!(partition.contains(12));
+    /// assert!(partition.contains(27));
+    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
+    /// ```
+    pub fn contains(&self, exponent: u64) -> bool {
+        let residue = exponent % self.n;
+        self.cosets.iter().any(|coset| coset.contains(&residue))
+    }
+
+    /// Returns the zero-based index of the coset containing `exponent`.
+    ///
+    /// The exponent is reduced modulo the partition's `n`. `None` means that
+    /// the residue is outside this partition, which can occur for a closure
+    /// that contains only a subset of all cosets.
+    ///
+    /// # Complexity
+    ///
+    /// `O(k)` in the number of stored residues.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::field::extension::cyclotomic_cosets_mod;
+    ///
+    /// let partition = cyclotomic_cosets_mod(2, 15)?;
+    /// assert_eq!(partition.coset_of(3), Some(2));
+    /// assert_eq!(partition.coset_of(18), Some(2));
+    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
+    /// ```
+    pub fn coset_of(&self, exponent: u64) -> Option<usize> {
+        let residue = exponent % self.n;
+        self.cosets
+            .iter()
+            .position(|coset| coset.contains(&residue))
+    }
+}
+
+/// Returns the `q`-cyclotomic cosets modulo `n`.
+///
+/// The multiplier is `q = |B| mod n`, where `B` is the base field named by
+/// `ext`. It is computed as `p^[B:F_p] mod n`, so the base-field order need
+/// not fit in a `u64` or even in `u128`. Every residue modulo `n` belongs to
+/// exactly one returned coset.
+///
+/// # Errors
+///
+/// - [`FieldError::InvalidCyclotomicModulus`] when `n` is zero.
+/// - [`FieldError::NonCoprimeCyclotomicParameters`] when `gcd(n, q) != 1`.
+/// - [`FieldError::CyclotomicModulusTooLarge`] when `n` cannot be represented
+///   as an in-memory partition on this target.
+///
+/// # Complexity
+///
+/// `O(n)` arithmetic steps and `O(n)` memory for the visited table and the
+/// returned partition.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{cyclotomic_cosets, BinaryPrimeExt};
+/// use gf2_core::gf2m::Gf2mField;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field)?;
+/// let partition = cyclotomic_cosets(&ext, 15)?;
+/// assert_eq!(partition.cosets()[1], vec![1, 2, 4, 8]);
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn cyclotomic_cosets<X: FieldExtension>(ext: &X, n: u64) -> Result<CosetPartition, FieldError> {
+    let q_mod_n = base_order_mod(ext, n)?;
+    cyclotomic_cosets_mod(q_mod_n, n)
+}
+
+/// Returns the `q`-cyclotomic closure of `seeds`, partitioned into cosets.
+///
+/// Each seed is interpreted modulo `n`. The result contains every residue
+/// reachable from a seed by repeated multiplication by `q = |B| mod n`, and
+/// no other residues. Duplicate seeds and seeds outside `[0, n)` therefore
+/// have no special effect.
+///
+/// # Errors
+///
+/// Returns the same errors as [`cyclotomic_cosets`].
+///
+/// # Complexity
+///
+/// `O(n + n s)` in the straightforward scan, where `s` is the number of
+/// supplied seeds, and `O(n)` memory for the full partition plus the result.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{cyclotomic_closure, BinaryPrimeExt};
+/// use gf2_core::gf2m::Gf2mField;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field)?;
+/// let closure = cyclotomic_closure(&ext, 15, &[3, 5])?;
+/// assert_eq!(closure.defining_set(), vec![3, 5, 6, 9, 10, 12]);
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn cyclotomic_closure<X: FieldExtension>(
+    ext: &X,
+    n: u64,
+    seeds: &[u64],
+) -> Result<CosetPartition, FieldError> {
+    let full_partition = cyclotomic_cosets(ext, n)?;
+    let CosetPartition {
+        n,
+        q_mod_n,
+        cosets: all_cosets,
+    } = full_partition;
+    let too_large = |_| FieldError::CyclotomicModulusTooLarge { modulus: n };
+
+    // Selected cosets are moved out of the owned full partition, so no
+    // element storage is reallocated; only the outer vector grows, and it
+    // grows fallibly per the too-large contract.
+    let mut cosets: Vec<Vec<u64>> = Vec::new();
+    for coset in all_cosets {
+        let selected = coset
+            .iter()
+            .any(|&member| seeds.iter().any(|&seed| seed % n == member));
+        if selected {
+            cosets.try_reserve(1).map_err(too_large)?;
+            cosets.push(coset);
+        }
+    }
+
+    Ok(CosetPartition { n, q_mod_n, cosets })
+}
+
+/// Returns the `q`-cyclotomic cosets modulo `n` from an already reduced
+/// multiplier.
+///
+/// The supplied `q_mod_n` is normalized once more modulo `n`, making the
+/// function convenient for callers that hold `q` rather than its reduced
+/// representative. The multiplication map must be a permutation, so
+/// `gcd(n, q) = 1` is required.
+///
+/// # Errors
+///
+/// - [`FieldError::InvalidCyclotomicModulus`] when `n` is zero.
+/// - [`FieldError::NonCoprimeCyclotomicParameters`] when `gcd(n, q) != 1`.
+/// - [`FieldError::CyclotomicModulusTooLarge`] when `n` cannot be represented
+///   as an in-memory partition on this target.
+///
+/// # Complexity
+///
+/// `O(n)` arithmetic steps and `O(n)` memory for the visited table and the
+/// returned partition.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::cyclotomic_cosets_mod;
+///
+/// let partition = cyclotomic_cosets_mod(2, 15)?;
+/// assert_eq!(partition.cosets()[4], vec![7, 14, 13, 11]);
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn cyclotomic_cosets_mod(q_mod_n: u64, n: u64) -> Result<CosetPartition, FieldError> {
+    if n == 0 {
+        return Err(FieldError::InvalidCyclotomicModulus { modulus: n });
+    }
+
+    let q_mod_n = q_mod_n % n;
+    let gcd = gcd_u64(q_mod_n, n);
+    if gcd != 1 {
+        return Err(FieldError::NonCoprimeCyclotomicParameters {
+            q_mod_n,
+            modulus: n,
+            gcd,
+        });
+    }
+
+    let residue_count =
+        usize::try_from(n).map_err(|_| FieldError::CyclotomicModulusTooLarge { modulus: n })?;
+    let too_large = |_| FieldError::CyclotomicModulusTooLarge { modulus: n };
+    let mut visited = Vec::new();
+    visited
+        .try_reserve_exact(residue_count)
+        .map_err(too_large)?;
+    visited.resize(residue_count, false);
+    let mut cosets: Vec<Vec<u64>> = Vec::new();
+
+    for representative in 0..residue_count {
+        if visited[representative] {
+            continue;
+        }
+
+        // First orbit pass counts the coset so its storage can be reserved
+        // fallibly; every allocation scaling with `n` reports the typed
+        // too-large error instead of aborting.
+        let mut coset_len = 0usize;
+        let mut current = representative as u64;
+        loop {
+            coset_len += 1;
+            current = modular_mul(current, q_mod_n, n);
+            if current as usize == representative {
+                break;
+            }
+        }
+
+        let mut coset = Vec::new();
+        coset.try_reserve_exact(coset_len).map_err(too_large)?;
+        let mut current = representative as u64;
+        while !visited[current as usize] {
+            visited[current as usize] = true;
+            coset.push(current);
+            current = modular_mul(current, q_mod_n, n);
+        }
+        cosets.try_reserve(1).map_err(too_large)?;
+        cosets.push(coset);
+    }
+
+    Ok(CosetPartition { n, q_mod_n, cosets })
+}
+
+/// Computes the base-field cardinality modulo `n` without materializing the
+/// cardinality itself.
+fn base_order_mod<X: FieldExtension>(ext: &X, n: u64) -> Result<u64, FieldError> {
+    if n == 0 {
+        return Err(FieldError::InvalidCyclotomicModulus { modulus: n });
+    }
+    Ok(modular_pow_usize(
+        ext.characteristic(),
+        ext.base_degree(),
+        n,
+    ))
+}
+
+// ---------------------------------------------------------------------------
+// Relative-field derived operations
+// ---------------------------------------------------------------------------
+
+/// Returns the conjugate orbit of `x` under the relative Frobenius.
+///
+/// The returned orbit starts with `x` and contains each distinct element in
+/// ascending Frobenius-step order. Its length is the degree of the minimal
+/// polynomial of `x` over the base field. The input must be an element of the
+/// extension field named by `ext`.
+///
+/// # Complexity
+///
+/// `O(r²)` equality checks and `O(r)` relative-Frobenius applications, where
+/// `r = ext.relative_degree()`; the orbit length is at most `r`.
+///
+/// # Panics
+///
+/// Panics if the relative Frobenius repeats an element other than the initial
+/// element or does not return to it within `r` steps. Either case means the
+/// `FieldExtension` witness violates its finite-field orbit contract.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{conjugates, BinaryPrimeExt, FieldExtension};
+/// use gf2_core::field::FiniteFieldExt;
+/// use gf2_core::gf2m::Gf2mField;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field.clone())?;
+/// let orbit = conjugates(&ext, &field.element(2));
+/// assert_eq!(orbit.len(), 4);
+/// assert_eq!(orbit[0], field.element(2));
+/// assert_eq!(orbit[1], field.element(2).square());
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn conjugates<X: FieldExtension>(ext: &X, x: &X::Ext) -> Vec<X::Ext> {
+    let relative_degree = ext.relative_degree();
+    let mut orbit = Vec::with_capacity(relative_degree);
+    let mut current = x.clone();
+
+    for _ in 0..=relative_degree {
+        if let Some(first_repeat) = orbit.iter().position(|conjugate| conjugate == &current) {
+            assert_eq!(
+                first_repeat, 0,
+                "FieldExtension invariant violated: relative Frobenius orbit is not cyclic"
+            );
+            return orbit;
+        }
+        orbit.push(current.clone());
+        current = ext.relative_frobenius(&current, 1);
+    }
+
+    panic!("FieldExtension invariant violated: relative Frobenius orbit exceeded relative degree");
+}
+
+/// Returns the monic minimal polynomial of `x` over the base field.
+///
+/// The polynomial is formed as
+/// `Π (T - φ_B^i(x))` over the distinct conjugate orbit and each coefficient
+/// is checked and restricted into `B`. Its degree is the relative-Frobenius
+/// orbit size, so it is minimal over the base field. The input must be an
+/// element of the extension field named by `ext`.
+///
+/// # Errors
+///
+/// Returns [`FieldError::IdentityMismatch`] when `x` does not belong to the
+/// extension field named by `ext`.
+///
+/// # Panics
+///
+/// Panics if a product coefficient cannot be restricted to the base field.
+/// Frobenius invariance makes that failure an internal `FieldExtension`
+/// invariant violation, not a recoverable algebraic result.
+///
+/// # Complexity
+///
+/// `O(r²)` extension-field operations with the generic polynomial product,
+/// plus `O(r)` checked restrictions, where `r = ext.relative_degree()`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{minimal_polynomial, BinaryPrimeExt};
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::gfp::Fp;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field.clone())?;
+/// let polynomial = minimal_polynomial(&ext, &field.element(2))?;
+/// let coefficients: Vec<_> = (0..=polynomial.degree().unwrap())
+///     .map(|i| polynomial.coeff(i))
+///     .collect();
+/// assert_eq!(coefficients, vec![Fp::<2>::new(1), Fp::<2>::new(1),
+///     Fp::<2>::new(0), Fp::<2>::new(0), Fp::<2>::new(1)]);
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn minimal_polynomial<X: FieldExtension>(
+    ext: &X,
+    x: &X::Ext,
+) -> Result<FieldPoly<X::Base>, FieldError> {
+    ensure_extension_element(ext, x)?;
+    let orbit = conjugates(ext, x);
+    let product = FieldPoly::from_roots(&orbit);
+    let coefficients = (0..=orbit.len())
+        .map(|index| restrict_invariant(ext, &product.coeff(index)))
+        .collect();
+    Ok(FieldPoly::new(coefficients))
+}
+
+/// Returns the relative field trace of `x` from `E` to `B`.
+///
+/// Computes `Tr_{E/B}(x) = Σ_{i=0}^{r-1} φ_B^i(x)`, including repeated
+/// conjugates when `x` lies in a proper intermediate subfield, and restricts
+/// the result to `B`. The input must be an element of the extension field
+/// named by `ext`.
+///
+/// # Errors
+///
+/// Returns [`FieldError::IdentityMismatch`] when `x` does not belong to the
+/// extension field named by `ext`.
+///
+/// # Panics
+///
+/// Panics if the trace is not restrictable to the base field. That is an
+/// internal `FieldExtension` invariant violation because the trace is fixed
+/// by the relative Frobenius.
+///
+/// # Complexity
+///
+/// `O(r)` relative-Frobenius applications and extension-field additions, plus
+/// one checked restriction, where `r = ext.relative_degree()`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{relative_trace, BinaryPrimeExt};
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::gfp::Fp;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field.clone())?;
+/// let trace = relative_trace(&ext, &field.element(2))?;
+/// assert_eq!(trace, Fp::<2>::new(0));
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn relative_trace<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<X::Base, FieldError> {
+    ensure_extension_element(ext, x)?;
+    let mut trace = x.zero_like();
+    let mut current = x.clone();
+    for _ in 0..ext.relative_degree() {
+        trace += current.clone();
+        current = ext.relative_frobenius(&current, 1);
+    }
+    Ok(restrict_invariant(ext, &trace))
+}
+
+/// Returns the relative field norm of `x` from `E` to `B`.
+///
+/// Computes `N_{E/B}(x) = Π_{i=0}^{r-1} φ_B^i(x)`, including repeated
+/// conjugates when `x` lies in a proper intermediate subfield, and restricts
+/// the result to `B`. The input must be an element of the extension field
+/// named by `ext`.
+///
+/// # Errors
+///
+/// Returns [`FieldError::IdentityMismatch`] when `x` does not belong to the
+/// extension field named by `ext`.
+///
+/// # Panics
+///
+/// Panics if the norm is not restrictable to the base field. That is an
+/// internal `FieldExtension` invariant violation because the norm is fixed by
+/// the relative Frobenius.
+///
+/// # Complexity
+///
+/// `O(r)` relative-Frobenius applications and extension-field multiplications,
+/// plus one checked restriction, where `r = ext.relative_degree()`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::extension::{relative_norm, BinaryPrimeExt};
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::gfp::Fp;
+///
+/// let field = Gf2mField::new(4, 0b10011);
+/// let ext = BinaryPrimeExt::new(field.clone())?;
+/// let norm = relative_norm(&ext, &field.element(2))?;
+/// assert_eq!(norm, Fp::<2>::new(1));
+/// # Ok::<(), gf2_core::field::extension::FieldError>(())
+/// ```
+pub fn relative_norm<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<X::Base, FieldError> {
+    ensure_extension_element(ext, x)?;
+    let mut norm = x.one_like();
+    let mut current = x.clone();
+    for _ in 0..ext.relative_degree() {
+        norm = norm * current.clone();
+        current = ext.relative_frobenius(&current, 1);
+    }
+    Ok(restrict_invariant(ext, &norm))
+}
+
+fn ensure_extension_element<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<(), FieldError> {
+    let expected = ext.ext_id().clone();
+    let found = x.field_id();
+    if expected == found {
+        Ok(())
+    } else {
+        Err(FieldError::IdentityMismatch { expected, found })
+    }
+}
+
+fn restrict_invariant<X: FieldExtension>(ext: &X, x: &X::Ext) -> X::Base {
+    match ext.restrict(x) {
+        Ok(value) => value,
+        Err(error) => panic!(
+            "FieldExtension invariant violated: Frobenius-fixed value is not in the base field: {error}"
+        ),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -3280,6 +3881,357 @@ mod tests {
             element_of_exact_order(&ext, 1),
             Err(FieldError::OrderFactorizationUnavailable { order: u128::MAX })
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // Relative-field derived operations
+    // -----------------------------------------------------------------------
+
+    fn assert_coset_partition_properties(partition: &CosetPartition, full: bool) {
+        let mut seen = Vec::new();
+        for pair in partition.cosets().windows(2) {
+            assert!(pair[0][0] < pair[1][0]);
+        }
+
+        for coset in partition.cosets() {
+            assert!(!coset.is_empty());
+            let representative = *coset.iter().min().unwrap();
+            assert_eq!(coset[0], representative);
+
+            for (index, &member) in coset.iter().enumerate() {
+                assert!(member < partition.n);
+                assert!(!seen.contains(&member), "cosets are not disjoint");
+                seen.push(member);
+                let successor = modular_mul(member, partition.q_mod_n, partition.n);
+                assert_eq!(successor, coset[(index + 1) % coset.len()]);
+            }
+        }
+
+        if full {
+            assert_eq!(seen.len(), partition.n as usize);
+            seen.sort_unstable();
+            assert_eq!(seen, (0..partition.n).collect::<Vec<_>>());
+        }
+    }
+
+    fn iterative_closure(q_mod_n: u64, n: u64, seeds: &[u64]) -> Vec<u64> {
+        let mut closure = seeds.iter().map(|&seed| seed % n).collect::<Vec<_>>();
+        closure.sort_unstable();
+        closure.dedup();
+
+        let mut index = 0;
+        while index < closure.len() {
+            let successor = modular_mul(closure[index], q_mod_n, n);
+            if !closure.contains(&successor) {
+                closure.push(successor);
+            }
+            index += 1;
+        }
+        closure.sort_unstable();
+        closure
+    }
+
+    #[test]
+    fn cyclotomic_cosets_match_the_worked_binary_vector_and_pure_form() {
+        let field = Gf2mField::new(4, 0b10011).with_tables();
+        let ext = BinaryPrimeExt::new(field).unwrap();
+        let from_extension = cyclotomic_cosets(&ext, 15).unwrap();
+        let from_modulus = cyclotomic_cosets_mod(2, 15).unwrap();
+
+        assert_eq!(from_extension, from_modulus);
+        assert_eq!(
+            from_extension.cosets(),
+            &[
+                vec![0],
+                vec![1, 2, 4, 8],
+                vec![3, 6, 12, 9],
+                vec![5, 10],
+                vec![7, 14, 13, 11],
+            ]
+        );
+        assert_coset_partition_properties(&from_extension, true);
+    }
+
+    #[test]
+    fn cyclotomic_closure_selects_complete_seed_cosets() {
+        let partition = cyclotomic_cosets_mod(2, 15).unwrap();
+        let closure = cyclotomic_closure(
+            &BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap(),
+            15,
+            &[3, 5, 20],
+        )
+        .unwrap();
+
+        assert_eq!(closure.cosets(), &[vec![3, 6, 12, 9], vec![5, 10]]);
+        assert_eq!(closure.defining_set(), vec![3, 5, 6, 9, 10, 12]);
+        assert_eq!(closure.coset_of(18), Some(0));
+        assert_eq!(closure.coset_of(1), None);
+        assert_eq!(partition.defining_set(), (0..15).collect::<Vec<_>>());
+    }
+
+    proptest::proptest! {
+        #![proptest_config(proptest::test_runner::Config::with_cases(64))]
+
+        #[test]
+        fn prop_binary_cyclotomic_closure_laws(
+            n in proptest::sample::select(vec![1u64, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 25, 27, 31]),
+            seeds in proptest::collection::vec(0u64..64, 0..=8),
+        ) {
+            let field = Gf2mField::new(4, 0b10011);
+            let ext = BinaryPrimeExt::new(field).unwrap();
+            let full = cyclotomic_cosets(&ext, n).unwrap();
+            let closure = cyclotomic_closure(&ext, n, &seeds).unwrap();
+            let closed_set = closure.defining_set();
+            let again = cyclotomic_closure(&ext, n, &closed_set).unwrap();
+
+            assert_coset_partition_properties(&full, true);
+            assert_coset_partition_properties(&closure, false);
+            proptest::prop_assert_eq!(&closure, &again);
+            proptest::prop_assert_eq!(
+                closure.defining_set(),
+                iterative_closure(full.q_mod_n, n, &seeds),
+            );
+        }
+
+        #[test]
+        fn prop_nonbinary_cyclotomic_closure_laws(
+            n in proptest::sample::select(vec![1u64, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 20, 24, 30, 31, 32, 40, 48]),
+            seeds in proptest::collection::vec(0u64..96, 0..=8),
+        ) {
+            let ext = ConstExt::<QuadraticExt<Gf49Config>>::new();
+            let full = cyclotomic_cosets(&ext, n).unwrap();
+            let closure = cyclotomic_closure(&ext, n, &seeds).unwrap();
+            let closed_set = closure.defining_set();
+            let again = cyclotomic_closure(&ext, n, &closed_set).unwrap();
+
+            assert_coset_partition_properties(&full, true);
+            assert_coset_partition_properties(&closure, false);
+            proptest::prop_assert_eq!(&closure, &again);
+            proptest::prop_assert_eq!(
+                closure.defining_set(),
+                iterative_closure(full.q_mod_n, n, &seeds),
+            );
+        }
+    }
+
+    #[test]
+    fn cyclotomic_cosets_reject_invalid_moduli_and_non_coprime_parameters() {
+        assert_eq!(
+            cyclotomic_cosets_mod(2, 0),
+            Err(FieldError::InvalidCyclotomicModulus { modulus: 0 })
+        );
+        assert_eq!(
+            cyclotomic_cosets_mod(2, 4),
+            Err(FieldError::NonCoprimeCyclotomicParameters {
+                q_mod_n: 2,
+                modulus: 4,
+                gcd: 2,
+            })
+        );
+
+        // A valid coprime modulus whose visited table can never be allocated
+        // reports the typed too-large error instead of aborting.
+        assert_eq!(
+            cyclotomic_cosets_mod(2, u64::MAX),
+            Err(FieldError::CyclotomicModulusTooLarge { modulus: u64::MAX })
+        );
+    }
+
+    #[test]
+    fn cyclotomic_coset_order_is_deterministic() {
+        let first = cyclotomic_cosets_mod(17, 15).unwrap();
+        let second = cyclotomic_cosets_mod(2, 15).unwrap();
+        assert_eq!(first, second);
+
+        let ext = ConstExt::<QuadraticExt<Gf49Config>>::new();
+        let from_extension = cyclotomic_cosets(&ext, 48).unwrap();
+        let from_modulus = cyclotomic_cosets_mod(7, 48).unwrap();
+        assert_eq!(from_extension, from_modulus);
+        assert_eq!(from_extension, cyclotomic_cosets(&ext, 48).unwrap());
+    }
+
+    /// Pins the multiplier `base_order_mod` derives against hand-computed
+    /// values of $q = p^{d_B} \bmod n$ for two bases of degree $d_B > 1$.
+    ///
+    /// [`CosetPartition`] carries its multiplier, so equality between the
+    /// extension-derived partition and the pure-form one decides
+    /// $\lvert B \rvert \bmod n$ itself rather than only the orbit shapes.
+    /// The GF(2^64) base is the load-bearing witness: $q = 2^{64}$ is one past
+    /// `u64::MAX`, so the multiplier exists only as a residue.
+    #[test]
+    fn base_order_mod_matches_the_hand_computed_multiplier() {
+        // GF(81) over GF(9): p = 3 and d_B = 2 give q = 9.
+        let gf81_over_gf9 = ConstExt::<Gf81>::new();
+        assert_eq!(gf81_over_gf9.characteristic(), 3);
+        assert_eq!(gf81_over_gf9.base_degree(), 2);
+        for (n, q) in [
+            (5u64, 4u64),
+            (7, 2),
+            (8, 1),
+            (11, 9),
+            (13, 9),
+            (16, 9),
+            (20, 9),
+            (35, 9),
+        ] {
+            let from_extension = cyclotomic_cosets(&gf81_over_gf9, n).unwrap();
+            assert_eq!(from_extension, cyclotomic_cosets_mod(q, n).unwrap());
+            assert_coset_partition_properties(&from_extension, true);
+        }
+
+        // GF(2^64) as its own base: p = 2 and d_B = 64 give q = 2^64.
+        let gf2_64 = TrivialExt::new(Gf2mField_::<u128>::new(64, (1u128 << 64) | 0x1b).zero());
+        assert_eq!(gf2_64.characteristic(), 2);
+        assert_eq!(gf2_64.base_degree(), 64);
+        for (n, q) in [
+            (7u64, 2u64),
+            (9, 7),
+            (11, 5),
+            (13, 3),
+            (17, 1),
+            (23, 6),
+            (25, 16),
+            (31, 16),
+            (63, 16),
+            (127, 2),
+        ] {
+            let from_extension = cyclotomic_cosets(&gf2_64, n).unwrap();
+            assert_eq!(from_extension, cyclotomic_cosets_mod(q, n).unwrap());
+            assert_coset_partition_properties(&from_extension, true);
+        }
+    }
+
+    fn assert_minimal_polynomial_properties<X: FieldExtension>(ext: &X, x: &X::Ext) {
+        let orbit = conjugates(ext, x);
+        let polynomial = minimal_polynomial(ext, x).unwrap();
+        let degree = polynomial.degree().unwrap();
+
+        // The orbit-size characterization is the minimality check: a proper
+        // base-field divisor would have smaller degree and still vanish at x.
+        assert_eq!(degree, orbit.len());
+        assert!(polynomial.leading_coeff().unwrap().is_one());
+
+        let embedded: FieldPoly<X::Ext> = FieldPoly::new(
+            (0..=degree)
+                .map(|index| ext.embed(&polynomial.coeff(index)))
+                .collect(),
+        );
+        assert!(embedded.eval(x).is_zero());
+        for conjugate in orbit {
+            assert!(embedded.eval(&conjugate).is_zero());
+        }
+
+        for index in 0..=degree {
+            let coefficient = polynomial.coeff(index);
+            assert_eq!(
+                ext.try_restrict(&ext.embed(&coefficient)),
+                Some(coefficient)
+            );
+        }
+    }
+
+    fn assert_trace_norm_laws<X: FieldExtension>(ext: &X, x: &X::Ext, y: &X::Ext) {
+        let trace_x = relative_trace(ext, x).unwrap();
+        let trace_y = relative_trace(ext, y).unwrap();
+        let norm_x = relative_norm(ext, x).unwrap();
+        let norm_y = relative_norm(ext, y).unwrap();
+
+        assert_eq!(
+            ext.try_restrict(&ext.embed(&trace_x)),
+            Some(trace_x.clone())
+        );
+        assert_eq!(
+            ext.try_restrict(&ext.embed(&trace_y)),
+            Some(trace_y.clone())
+        );
+        assert_eq!(
+            relative_trace(ext, &(x.clone() + y.clone())).unwrap(),
+            trace_x + trace_y
+        );
+        assert_eq!(
+            relative_norm(ext, &(x.clone() * y.clone())).unwrap(),
+            norm_x * norm_y
+        );
+    }
+
+    fn gf81_element(value: u64) -> Gf81 {
+        let lower = value % 9;
+        let upper = value / 9;
+        let lower = Gf9::new(Fp::new(lower % 3), Fp::new(lower / 3));
+        let upper = Gf9::new(Fp::new(upper % 3), Fp::new(upper / 3));
+        Gf81::new(lower, upper)
+    }
+
+    type Gf81 = QuadraticExt<Gf81Config>;
+
+    proptest::proptest! {
+        #![proptest_config(proptest::test_runner::Config::with_cases(64))]
+
+        #[test]
+        fn prop_binary_minimal_polynomial_and_relative_laws(
+            value in 0u64..16,
+            other in 0u64..16,
+        ) {
+            let field = Gf2mField::new(4, 0b10011);
+            let ext = BinaryPrimeExt::new(field.clone()).unwrap();
+            let x = field.element(value);
+            let y = field.element(other);
+
+            assert_minimal_polynomial_properties(&ext, &x);
+            assert_trace_norm_laws(&ext, &x, &y);
+
+            let generic = minimal_polynomial(&ext, &x).unwrap();
+            let legacy = x.minimal_polynomial();
+            proptest::prop_assert_eq!(generic.degree(), legacy.degree());
+            for index in 0..=generic.degree().unwrap() {
+                proptest::prop_assert_eq!(
+                    ext.embed(&generic.coeff(index)),
+                    legacy.coeff(index)
+                );
+            }
+        }
+
+        #[test]
+        fn prop_odd_prime_minimal_polynomial_and_relative_laws(
+            value in 0u64..49,
+            other in 0u64..49,
+        ) {
+            let ext = ConstExt::<QuadraticExt<Gf49Config>>::new();
+            let x = QuadraticExt::new(Fp::new(value % 7), Fp::new(value / 7));
+            let y = QuadraticExt::new(Fp::new(other % 7), Fp::new(other / 7));
+
+            assert_minimal_polynomial_properties(&ext, &x);
+            assert_trace_norm_laws(&ext, &x, &y);
+        }
+
+        #[test]
+        fn prop_odd_tower_minimal_polynomial(
+            value in 0u64..81,
+        ) {
+            let ext = ConstExt::<Gf81>::new();
+            let x = gf81_element(value);
+
+            assert_minimal_polynomial_properties(&ext, &x);
+        }
+    }
+
+    #[test]
+    fn derived_operations_reject_an_element_from_another_extension() {
+        let ext = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
+        let foreign = Gf2mField::new(4, 0b11001).element(2);
+
+        assert!(matches!(
+            minimal_polynomial(&ext, &foreign),
+            Err(FieldError::IdentityMismatch { .. })
+        ));
+        assert!(matches!(
+            relative_trace(&ext, &foreign),
+            Err(FieldError::IdentityMismatch { .. })
+        ));
+        assert!(matches!(
+            relative_norm(&ext, &foreign),
+            Err(FieldError::IdentityMismatch { .. })
+        ));
     }
 
     // -----------------------------------------------------------------------

@@ -1165,6 +1165,8 @@ impl Iterator for LogisticWeightPatternIter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::generic_ebch_16_11;
+    use crate::traits::block::ParityCheckMatrixAccess;
 
     // =====================================================================
     // Helper: Hamming(7,4) parity-check matrix
@@ -2057,11 +2059,12 @@ mod tests {
 
     #[test]
     fn test_decode_ebch_16_11_single_error() {
-        use crate::bch::extended::ExtendedBchCode;
         use crate::traits::BlockEncoder;
 
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.parity_check().clone();
+        let ebch = generic_ebch_16_11();
+        let h = ebch
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
 
         let config = OrbGrandConfig {
             max_queries: 10_000,
@@ -2126,11 +2129,12 @@ mod tests {
     /// and the recovered codeword must still match the transmitted one.
     #[test]
     fn test_list_bler_stop_threshold_reduces_queries_at_high_snr() {
-        use crate::bch::extended::ExtendedBchCode;
         use crate::traits::BlockEncoder;
 
-        let ebch = ExtendedBchCode::ebch_16_11();
-        let h = ebch.parity_check().clone();
+        let ebch = generic_ebch_16_11();
+        let h = ebch
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
 
         let msg = BitVec::zeros(11);
         let codeword = ebch.encode(&msg);

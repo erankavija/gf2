@@ -189,7 +189,7 @@ Fast Hadamard Transform, 81x speedup vs. naive, O(N log N) butterfly operations
 **Impact**: 
 - ✅ `Gf2mField` and `Gf2mElement` now `Send + Sync`
 - ✅ BCH/RS batch operations ready for rayon parallelism
-- ⏭ Next: gf2-coding Phase 2.2 (enable BCH parallel batch APIs)
+- ✅ gf2-coding BCH parallel batch encoding delivered (canonical `bch::encode` workspace + rayon paths)
 
 ---
 

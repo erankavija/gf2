@@ -392,10 +392,12 @@ AFF3CT's interleaved encoder over its own scalar encoder, at $B = 4096$:
 
 The advantage peaks near $\deg g = 32$ and is smaller by the DVB-T2 rows. The
 plausible mechanism is that AFF3CT's scalar inner loop auto-vectorizes better as
-the loop lengthens, but this survey did not inspect the generated code, so the
-mechanism is an open question for `avx2-batch-kernels` rather than a finding.
-What is established is the shape: **an eight-lane interleaved encoder does not
-deliver an eight-fold speedup at DVB-T2 generator degrees.**
+the loop lengthens. This survey did not inspect the generated code; the
+*Generated code* section of the `gf2_kernels_simd::bch_encode` rustdoc settles
+the question for this repository's kernels from the committed assembly
+artefact. What this survey establishes is the shape: **an eight-lane
+interleaved encoder does not deliver an eight-fold speedup at DVB-T2 generator
+degrees.**
 
 ### 6.3 `genmatrix-multiply` wins only while $G$ stays small
 
@@ -482,8 +484,13 @@ and the original ordering is recorded here rather than quietly replaced.
 The substantive lesson for `genmatrix-perf` is larger than the swap: **building
 $G$ by encoding $k$ basis vectors is the wrong algorithm.** A structured fill
 followed by four-Russians elimination is over an order of magnitude better, and
-the current gf2 implementation
-(`crates/gf2-coding/src/bch/core.rs:270-294`) uses the basis-vector route.
+the legacy gf2 implementation
+(`crates/gf2-coding/src/bch/core.rs:270-294`) uses the basis-vector route. The
+canonical model's `crates/gf2-coding/src/bch/matrix.rs` (`genmatrix-perf`,
+`bd0edfa2`) derives $G$ from the parity recurrence instead, one row shift and
+one conditional subtraction of $g$ per row, and keeps the basis-vector writer
+only as the test-support oracle its equality tests and `bch_genmatrix` bench
+compare against.
 
 ### 8.2 The predeclared M4RI output failed the layout contract
 
@@ -516,7 +523,7 @@ far too large to be explained by governor effects.
 
 gf2's `encode_batch` and a plain loop over `encode` agree within noise at every
 one of the 19 measured cells. This is not a surprise —
-`crates/gf2-coding/src/bch/core.rs:396` is a `messages.iter().map(...)` under a
+`crates/gf2-coding/src/bch/core.rs:408` is a `messages.iter().map(...)` under a
 `TODO` — but it fixes the pre-cutover baseline: there is no batch-specific
 overhead for the epic to preserve, and no existing parallelism to regress.
 
@@ -526,6 +533,14 @@ overhead for the epic to preserve, and no existing parallelism to regress.
   explained. `avx2-batch-kernels` should confirm from generated code whether
   the scalar path is auto-vectorizing before assuming an interleaved kernel
   will scale with register width at DVB-T2 generator degrees.
+  *Answered by `avx2-batch-kernels` (`2b6968d3`):* the committed artefact
+  `crates/gf2-kernels-simd/src/x86/asm/bch_encode.asm.txt` shows the portable
+  bit-sliced reduction compiling to a `mov`/`and`/`xor`/`mov` chain over
+  general-purpose registers with no vector instruction, and the packed
+  per-frame recurrence carries the same word-to-word dependence, so the
+  scalar path does not auto-vectorize; the decay is the reduction's word
+  count growing with $\deg g$ against a per-frame codeword write that does
+  not (rustdoc of `gf2_kernels_simd::bch_encode`, "Generated code").
 * **No packed-representation cell is DRAM-bound** in the fixed batch ladder;
   the largest packed working set is 31.5 MiB against a 32 MiB L3. The
   residency claim is per-representation: AFF3CT's 32-bit-per-bit storage puts

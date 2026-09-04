@@ -1,0 +1,57 @@
+# command: CARGO_CI_NO_LOCK=1 ./dev/scripts/ccx1-bench-flock.sh --full-host ./scripts/cargo-budget.sh cargo bench -p gf2-coding --bench bch_parallel -- bch_
+# started_utc: 2026-09-02T15:50:31Z
+# load_avg_start:  18:50:31 up 3 days, 18:56,  2 users,  load average: 0.31, 0.22, 0.14
+bch_batch_decode/1      time:   [34.445 µs 34.484 µs 34.528 µs]
+                        thrpt:  [28.962 Kelem/s 28.999 Kelem/s 29.032 Kelem/s]
+                 change:
+                        time:   [-0.2851% -0.1478% -0.0197%] (p = 0.03 < 0.05)
+                        thrpt:  [+0.0197% +0.1480% +0.2859%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  6 (6.00%) high mild
+  6 (6.00%) high severe
+bch_batch_decode/10     time:   [22.659 ms 22.685 ms 22.729 ms]
+                        thrpt:  [439.96  elem/s 440.82  elem/s 441.33  elem/s]
+                 change:
+                        time:   [-1.0998% -0.9159% -0.7004%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.7053% +0.9244% +1.1121%]
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+bch_batch_decode/50     time:   [123.21 ms 123.31 ms 123.44 ms]
+                        thrpt:  [405.06  elem/s 405.49  elem/s 405.82  elem/s]
+                 change:
+                        time:   [-1.0227% -0.8461% -0.6873%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.6920% +0.8533% +1.0333%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  2 (2.00%) high mild
+  10 (10.00%) high severe
+bch_batch_decode/100    time:   [248.92 ms 249.08 ms 249.28 ms]
+                        thrpt:  [401.15  elem/s 401.48  elem/s 401.73  elem/s]
+                 change:
+                        time:   [-0.9109% -0.7961% -0.6906%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.6954% +0.8025% +0.9192%]
+                        Change within noise threshold.
+Found 15 outliers among 100 measurements (15.00%)
+  2 (2.00%) high mild
+  13 (13.00%) high severe
+
+bch_single_vs_batch/single_loop
+                        time:   [123.28 ms 123.39 ms 123.52 ms]
+                        change: [-0.8761% -0.7637% -0.6396%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+bch_single_vs_batch/batch_api
+                        time:   [123.21 ms 123.26 ms 123.32 ms]
+                        change: [-0.9835% -0.8927% -0.8036%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+
+# finished_utc: 2026-09-02T15:52:20Z
+# load_avg_end:  18:52:20 up 3 days, 18:58,  2 users,  load average: 1.16, 0.55, 0.27

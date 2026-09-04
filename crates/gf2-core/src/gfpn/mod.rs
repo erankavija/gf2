@@ -1,15 +1,24 @@
-//! GF(p^n) — Tower Extension Field Arithmetic
+//! GF(p^n) — Extension Field Arithmetic
 //!
-//! This module provides algebraic extensions of prime fields using the tower
-//! construction. Elements of GF(p^n) are built by stacking quadratic and cubic
-//! extensions, each defined by an irreducible polynomial specified via
-//! [`ExtConfig`].
+//! This module provides algebraic extensions of prime fields in two forms:
+//! compile-time tower constructions, where elements of GF(p^n) are built by
+//! stacking quadratic and cubic extensions each defined by an irreducible
+//! polynomial specified via [`ExtConfig`], and runtime-configured polynomial
+//! quotient fields of arbitrary degree in [`quotient`].
 //!
 //! # Architecture
 //!
-//! - [`ExtConfig`]: Trait specifying the non-residue β for each extension level.
+//! - [`ExtConfig`]: Trait specifying the non-residue β for each tower level.
 //! - [`QuadraticExt<C>`]: Elements c₀ + c₁·u where u² = β.
 //! - [`CubicExt<C>`]: Elements c₀ + c₁·v + c₂·v² where v³ = β.
+//! - [`QuotientField`]/[`QuotientElement`]: GF(q^d) as base-field polynomials
+//!   modulo a runtime, certificate-validated irreducible modulus, with the
+//!   extension relation exposed through [`QuotientExt`].
+//! - [`ConstQuotientConfig`]/[`ConstQuotient`]: the same quotient with the base,
+//!   degree, and modulus fixed by the type, so the arithmetic monomorphizes and
+//!   no element stores a modulus; the extension relation is
+//!   [`ConstQuotientExt`]. Both quotient forms of one declaration share a single
+//!   algebraic field identity.
 //!
 //! # Wide accumulator types
 //!
@@ -57,8 +66,13 @@ pub mod batch;
 mod cubic;
 mod ext_config;
 mod quadratic;
+pub mod quotient;
 
 pub use batch::{BatchExtField, SimdKaratsubaHook};
 pub use cubic::{CubicExt, CubicExtWide};
 pub use ext_config::ExtConfig;
 pub use quadratic::{QuadraticExt, QuadraticExtWide};
+pub use quotient::{
+    ConstQuotient, ConstQuotientConfig, ConstQuotientExt, QuotientElement, QuotientExt,
+    QuotientField,
+};

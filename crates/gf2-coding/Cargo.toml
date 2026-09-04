@@ -36,6 +36,9 @@ tempfile = "3.8"
 thiserror = "1.0"
 num_cpus = "1.17.0"
 serde_json = "1.0"
+# Digests the ETSI verification streams the oracle-agreement suite reads, so
+# the run receipt carries the identity of the exact bytes that were compared.
+sha2 = "0.10"
 # Self-dev-dependency enabling `test-support` for integration tests that
 # share helpers with crate-internal unit tests (ETSI CSP test-point
 # parser, etc.). Pattern matches gf2-algebra.
@@ -55,7 +58,7 @@ llr-f64 = []
 # HIP/ROCm GPU acceleration (requires hipcc and AMD GPU). Propagates the
 # `hip` feature into gf2-kernels-hip so the BCH syndrome wrappers
 # (`GpuBchSyndrome` / `BchFieldTables`), gated behind that feature there,
-# resolve for the `compute_syndromes_batch_gpu` / `decode_batch_gpu` hook.
+# resolve for the `compute_syndromes_batch_gpu` / `correct_batch_gpu` hooks.
 hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
 # Bench-csv emitter support (jit:47698404). Pulls in `gf2-core/test-support`
 # which exposes the `bench_seed` module used by the sparse CSV harness.
@@ -70,6 +73,11 @@ sim-observability = [
     "dep:rand_chacha", "dep:blake3", "dep:ctrlc",
     "dep:tracing", "dep:tracing-subscriber",
 ]
+# Strict format-2 owner codec for coding-owned tuning. The typed selector
+# section and active accessor are always available; only JSON support is
+# gated. `serde` is already an unconditional dependency here, so this feature
+# adds only the generic profile mechanism's own optional surface.
+tuning-profile = ["gf2-core/tuning-profile"]
 # Exposes `gf2_coding::test_support` to integration tests that need to
 # share helpers with crate-internal unit tests (e.g., the ETSI CSP
 # test-point parser used by both `concat.rs` and the bit-interleaver
@@ -106,6 +114,13 @@ required-features = ["bench-csv"]
 name = "gf2pow32_smoke_emit_expected"
 required-features = ["bench-csv"]
 
+# Corpus emitter for the external BCH oracles (jit:3f7edef1). The corpus
+# construction lives in `test_support`, which both this emitter and the
+# `bch_oracle_agreement` suite consume, so the emitter needs that feature.
+[[example]]
+name = "bch_oracle_messages"
+required-features = ["test-support"]
+
 [[bench]]
 name = "linear_codes"
 harness = false
@@ -136,6 +151,10 @@ harness = false
 
 [[bench]]
 name = "bch_parallel"
+harness = false
+
+[[bench]]
+name = "bch_genmatrix"
 harness = false
 
 [[bench]]
