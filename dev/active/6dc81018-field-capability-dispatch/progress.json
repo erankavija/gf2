@@ -2,16 +2,8 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 26 publication is committed and cargo-ci passes. Code-review failed solely because implementation commits use scopes such as feat(eaae1b56) rather than the reviewer's required literal jit:eaae1b56 attribution token; it reports no code or evidence defect. The issue has already used two guided retries, so an attribution-only repair requires an invoker decision before another gate run.",
-  "open_escalations": [
-    {
-      "kind": "rework-exhausted",
-      "issue": "eaae1b56",
-      "date": "2026-09-05",
-      "question": "Choose whether to reset the retry counter and authorize a non-destructive literal-tag attribution repair, direct the lead to use a different repair, or reject the issue.",
-      "recommendation": "Reset and authorize lead takeover for an attribution-only repair that makes the existing eaae implementation patches reachable through commits containing jit:eaae1b56 without changing the shipped tree or rewriting main history. Then rerun code-review and doc-review; cargo-ci already passes at the publication HEAD."
-    }
-  ],
+  "wave_notes": "Wave 26 publication is committed and cargo-ci passes. The invoker reset the retry counter and approved the non-destructive literal-tag attribution repair. Exact tagged clones of the premeasurement-harness and measured-publication patches are reachable through two ours merges; the repository tree hash is unchanged. Guided retry 1 now reruns code-review and doc-review.",
+  "open_escalations": [],
   "waves": [
     {
       "wave_number": 1,
@@ -1213,6 +1205,12 @@
       "issue": "eaae1b56",
       "date": "2026-09-05",
       "decision": "OPEN: cargo-ci passes the complete publication tree. Code-review run 1e4a25d2-2ca5-442a-a0c1-fcfbab3d397e has one blocking attribution finding and no technical finding: the harness and publication commits use conventional scopes containing eaae1b56 but omit the literal jit:eaae1b56 token required by the review prompt, so REQ-01 through REQ-04 are outside its attributable footprint. Two guided retries were already consumed before publication; awaiting invoker choice before an attribution-only repair."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "eaae1b56",
+      "date": "2026-09-05",
+      "decision": "The invoker reset the retry counter and approved lead takeover for the validated attribution-only repair. Commits 5182356e and 6b076316 clone the exact cb08ca92 harness and 160bdcfa publication trees and parents with literal jit:eaae1b56 subjects; ours merges 3bda76d4 and 41656588 make them reachable without changing the repository tree or rewriting main history. This is guided retry 1 after the reset."
     }
   ],
   "rework_counts": {
@@ -1250,7 +1248,7 @@
     "5bdc9552": 1,
     "389aa4de": 1,
     "06ba0418": 0,
-    "eaae1b56": 2
+    "eaae1b56": 1
   },
   "surfaced_pitfalls": [
     {
