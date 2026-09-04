@@ -6,7 +6,7 @@ mod support;
 
 use gf2_core::field::matrix::{
     gemm_axpy_route, last_gemm_axpy_dispatch_route, reset_last_gemm_axpy_dispatch_route,
-    run_gemm_axpy_dispatch, FieldMatrix, GemmAxpyRoute,
+    run_gemm_axpy_dispatch_for_test, FieldMatrix, GemmAxpyRoute,
 };
 use gf2_core::gfp::Fp;
 use gf2_core::tuning::{self, CoreTuning};
@@ -35,7 +35,7 @@ support::fresh_tuning_test!(installed_gemm_profile_raises_axpy_volume_boundary, 
     let a = FieldMatrix::<Fp<65537>>::identity(16);
     let b = FieldMatrix::<Fp<65537>>::identity(16);
     let mut out = FieldMatrix::<Fp<65537>>::zeros(16, 16);
-    run_gemm_axpy_dispatch(&a, &b, &mut out);
+    run_gemm_axpy_dispatch_for_test(&a, &b, &mut out);
     assert_eq!(out, FieldMatrix::<Fp<65537>>::identity(16));
     assert_eq!(
         last_gemm_axpy_dispatch_route(),
