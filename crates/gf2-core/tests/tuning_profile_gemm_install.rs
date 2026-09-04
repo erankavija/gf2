@@ -34,7 +34,7 @@ support::fresh_tuning_test!(installed_gemm_profile_lowers_axpy_volume_boundary, 
     assert_eq!(out, FieldMatrix::<Fp<65537>>::identity(1));
     assert_eq!(
         last_gemm_axpy_dispatch_route(),
-        Some(GemmAxpyRoute::WholeGemm),
-        "the production dispatcher must consume the installed boundary"
+        Some(GemmAxpyRoute::PerCell),
+        "the unavailable whole-GEMM carrier must report its completed per-cell fallback"
     );
 });

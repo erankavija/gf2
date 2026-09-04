@@ -2,16 +2,8 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Invoker requested handoff and stop before benchmark restart. Wave 26 remains open; merged launcher CI is recorded in JIT run e596f29a-0f05-49de-a432-ca3b7937099c. No timing samples or candidate profiles exist. Prepared observer commit d4fe0edc remains unmerged pending the exact protocol file-boundary decision; see handoff-11.md. Guided retry count remains 2.",
-  "open_escalations": [
-    {
-      "kind": "scope-decision",
-      "issue": "eaae1b56",
-      "proposal_commit": "d4fe0edce990f703e81e096761cb33bb8ce5389d",
-      "decision_needed": "Approve effective GEMM test-support observation in matrix.rs and its existing installation test, adding these two paths to premeasurement protocol section 8. Prepared code and boundary patch: /tmp/eaae1b56-gemm-observer-scope.patch. No benchmark restart in the stopped session.",
-      "handoff": "dev/active/6dc81018-field-capability-dispatch/handoff-11.md"
-    }
-  ],
+  "wave_notes": "Wave 26 resumed after the invoker approved the effective GEMM observer correction and exact two-file protocol boundary addition. The correction is applied on main; merged-tree CI precedes a fresh clean build, untimed probes, solo locked calibration, independent evidence validation, and atomic measured-owner publication. Guided retry count remains 2.",
+  "open_escalations": [],
   "waves": [
     {
       "wave_number": 1,
@@ -641,7 +633,7 @@
           "classification": "implementation",
           "model": "opus",
           "status": "in_progress",
-          "notes": "Wave 26 is in premeasurement correction attempt 2. Independent re-review of the committed single-harness correction is complete except for a bounded convergence edit. Merged-tree CI precedes solo calibration and atomic measured-owner publication."
+          "notes": "The invoker approved the effective GEMM observer and protocol boundary correction. The correction is applied on main; merged-tree CI precedes a fresh clean build, untimed probes, solo locked calibration, independent evidence validation, and atomic measured-owner publication."
         }
       ]
     },
@@ -1189,6 +1181,12 @@
       "issue": "eaae1b56",
       "date": "2026-09-05",
       "decision": "The invoker approved the prepared two-line shared CI feature correction and reset the retry counter. Guided retry 1 enables the existing calibration harness required features in both dedicated CI commands. Authoritative failure evidence is JIT cargo-ci run f79e23ec-5391-493a-b3a4-b15da91c9f02; review results remain in JIT gates."
+    },
+    {
+      "kind": "owner-decision",
+      "issue": "eaae1b56",
+      "date": "2026-09-05",
+      "decision": "The invoker approved the prepared effective GEMM observation correction and the exact protocol section 8 boundary addition for crates/gf2-core/src/field/matrix.rs and crates/gf2-core/tests/tuning_profile_gemm_install.rs. Production dispatch, public interfaces, grids, fixtures, and timing parameters remain unchanged."
     }
   ],
   "rework_counts": {
