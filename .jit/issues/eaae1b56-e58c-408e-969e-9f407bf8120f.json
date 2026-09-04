@@ -192,6 +192,7 @@
       "path": "dev/reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
     }
   ],
+  "done_at": "2026-09-04T23:12:37.450546318Z",
   "first_ready_at": "2026-08-22T21:29:27.371031186Z",
   "gates_required": [
     "cargo-ci",
@@ -223,7 +224,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-04T23:11:01.709480658Z"
+  "updated_at": "2026-09-04T23:12:37.450546318Z"
 }
