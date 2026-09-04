@@ -663,9 +663,9 @@ Open questions for the epic lead:
    §7.2. (The five-row reclassification of §7.1 is executed: the
    classification's §4.2 and §4.4 carry it.)
 3. **Confirm the `permanent` family's placement** in `gf2-core`'s schema (D4).
-4. **Confirm the sweep-extension sequencing**: every sweepable follow-on field
-   depends on `389aa4de`, which is `Ready` and not yet done, so T12 cannot
-   start before it lands.
+4. **Sweep-extension sequencing is resolved**: Amendment A6 supplies the
+   completed `389aa4de` profile-steering seam, and T12/eaae1b56 consumes it
+   after the T3--T11 selector cutovers.
 
 ## 8. Implementation breakdown (REQ-04)
 

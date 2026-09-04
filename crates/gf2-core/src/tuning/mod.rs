@@ -1475,7 +1475,15 @@ impl CorePresence {
 }
 
 #[cfg(feature = "tuning-profile")]
-const CORE_HARNESS_SCHEMA: &str = "tuning-calibration-v2";
+const CORE_HARNESS_SCHEMA: &str = "tuning-calibration-v3";
+/// Temporary eaae1b56 prepublication migration boundary.
+///
+/// The live 389 measured owner still carries v2 while the eaae1b56 harness
+/// produces only v3 staging artifacts. The publication/current-reader cutover
+/// removes this constant and the v2 acceptance arm atomically with installing
+/// the authoritative v3 owner; it must not survive completion of eaae1b56.
+#[cfg(feature = "tuning-profile")]
+const PREPUBLICATION_HARNESS_SCHEMA: &str = "tuning-calibration-v2";
 
 /// Format-2 owner codec for [`CoreTuning`].
 #[cfg(feature = "tuning-profile")]
@@ -1483,7 +1491,11 @@ pub struct CoreTuningCodec;
 
 #[cfg(feature = "tuning-profile")]
 impl CoreTuningCodec {
-    /// Measurement-behavior token accepted for calibrated core sections.
+    /// Measurement-behavior token emitted by the current calibration harness.
+    ///
+    /// During the named eaae1b56 prepublication migration the codec also
+    /// accepts the live v2 owner. The publication/current-reader cutover
+    /// removes that temporary acceptance together with the v2 reader binding.
     pub const HARNESS_SCHEMA: &'static str = CORE_HARNESS_SCHEMA;
 }
 
@@ -1495,7 +1507,8 @@ impl SectionCodec<CoreTuning> for CoreTuningCodec {
         match value {
             MeasurementProvenance::Inherited => Ok(()),
             MeasurementProvenance::Calibrated { harness_schema, .. }
-                if harness_schema.as_str() == CORE_HARNESS_SCHEMA =>
+                if [CORE_HARNESS_SCHEMA, PREPUBLICATION_HARNESS_SCHEMA]
+                    .contains(&harness_schema.as_str()) =>
             {
                 Ok(())
             }

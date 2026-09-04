@@ -485,11 +485,11 @@ fn selector_changes_without_reassembly_fail_the_content_digest() {
 }
 
 #[test]
-fn calibrated_core_format_two_identity_is_exactly_tuning_calibration_v2() {
+fn calibrated_core_format_two_produces_v3_and_temporarily_accepts_v2() {
     assert_eq!(
         CoreTuningCodec::HARNESS_SCHEMA,
-        "tuning-calibration-v2",
-        "issue 389aa4de completes the first v2 evidence producer and must not bump its token"
+        "tuning-calibration-v3",
+        "the eaae1b56 prepublication producer emits only harness schema v3"
     );
     let registry = core_registry();
     let measurement = calibrated_core_measurement();
@@ -516,9 +516,19 @@ fn calibrated_core_format_two_identity_is_exactly_tuning_calibration_v2() {
         &measurement
     );
 
+    let live_v2 = recompute_content_digest(&json.replacen(
+        CoreTuningCodec::HARNESS_SCHEMA,
+        "tuning-calibration-v2",
+        1,
+    ));
+    assert!(
+        registry.from_json(&live_v2).is_ok(),
+        "the named eaae1b56 migration boundary keeps the live 389 v2 owner readable"
+    );
+
     for rejected in [
         "tuning-calibration-v1",
-        "tuning-calibration-v3",
+        "tuning-calibration-v4",
         "unknown-core-harness-v9",
     ] {
         let changed = json.replacen(CoreTuningCodec::HARNESS_SCHEMA, rejected, 1);
