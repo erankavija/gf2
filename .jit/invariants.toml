@@ -141,6 +141,12 @@ statement = "A simulation campaign is a resumable sequence of bounded runs: comp
 
 [[invariants]]
 enforced-by = "@/gate/code-review"
+id = "campaign-execution-logging"
+kind = "enforced"
+statement = "Every campaign opens a durable append-only execution log before its first bounded run, prints the canonical log path before launching work, flushes phase and cell progress plus terminal status to that file, and treats console or tail output only as a view of that authoritative record."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
 id = "behavioral-evidence-validity"
 kind = "enforced"
 statement = "Committed measurement evidence is invalidated only by a change to the producing tool's measurement behavior — sampling, evaluation, timing, or output semantics — never by a documentation, narrative, or review-artifact change; the tool pins its behavioral identity so the two are distinguishable."
