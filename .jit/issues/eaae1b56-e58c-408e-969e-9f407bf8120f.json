@@ -65,6 +65,13 @@
       "format": "markdown",
       "label": "Governing selector migration design with Amendment A7",
       "path": "dev/active/7d824b2f/design.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Premeasurement recovery review",
+      "path": "dev/active/eaae1b56/resume-review.md"
     }
   ],
   "first_ready_at": "2026-08-22T21:29:27.371031186Z",
@@ -100,5 +107,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-01T07:23:17.902848351Z"
+  "updated_at": "2026-09-04T20:53:32.302230320Z"
 }
