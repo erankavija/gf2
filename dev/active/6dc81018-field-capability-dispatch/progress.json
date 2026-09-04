@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 26 is in premeasurement correction attempt 1 after recovery of the preserved implementation. The approved single-harness protocol governs execution. Independent review and merged-tree CI precede the solo calibration campaign and atomic measured-owner publication.",
+  "wave_notes": "Wave 26 is in premeasurement correction attempt 2. Independent re-review of the committed single-harness correction is complete except for a bounded convergence edit. Merged-tree CI precedes solo calibration and atomic measured-owner publication.",
   "open_escalations": [],
   "waves": [
     {
@@ -633,7 +633,7 @@
           "classification": "implementation",
           "model": "opus",
           "status": "in_progress",
-          "notes": "Wave 26 is in premeasurement correction attempt 1 after recovery of the preserved implementation. The approved single-harness protocol governs execution. Independent review and merged-tree CI precede the solo calibration campaign and atomic measured-owner publication."
+          "notes": "Wave 26 is in premeasurement correction attempt 2. Independent re-review of the committed single-harness correction is complete except for a bounded convergence edit. Merged-tree CI precedes solo calibration and atomic measured-owner publication."
         }
       ]
     },
@@ -1212,7 +1212,7 @@
     "5bdc9552": 1,
     "389aa4de": 1,
     "06ba0418": 0,
-    "eaae1b56": 1
+    "eaae1b56": 2
   },
   "surfaced_pitfalls": [
     {
