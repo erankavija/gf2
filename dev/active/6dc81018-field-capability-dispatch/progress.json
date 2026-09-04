@@ -2,8 +2,16 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 26 measurement and independent validation pass. The invoker approved the one-file publication-boundary correction for the dedicated temporary-v2 acceptance test. The validated owner, complete envelope, raw log, manifest, receipt, current-reader cutover, executed-state amendment, and v2 rejection witness are ready for the configured gates and lead review. Guided retry count remains 2.",
-  "open_escalations": [],
+  "wave_notes": "Wave 26 publication is committed and cargo-ci passes. Code-review failed solely because implementation commits use scopes such as feat(eaae1b56) rather than the reviewer's required literal jit:eaae1b56 attribution token; it reports no code or evidence defect. The issue has already used two guided retries, so an attribution-only repair requires an invoker decision before another gate run.",
+  "open_escalations": [
+    {
+      "kind": "rework-exhausted",
+      "issue": "eaae1b56",
+      "date": "2026-09-05",
+      "question": "Choose whether to reset the retry counter and authorize a non-destructive literal-tag attribution repair, direct the lead to use a different repair, or reject the issue.",
+      "recommendation": "Reset and authorize lead takeover for an attribution-only repair that makes the existing eaae implementation patches reachable through commits containing jit:eaae1b56 without changing the shipped tree or rewriting main history. Then rerun code-review and doc-review; cargo-ci already passes at the publication HEAD."
+    }
+  ],
   "waves": [
     {
       "wave_number": 1,
@@ -1199,6 +1207,12 @@
       "issue": "eaae1b56",
       "date": "2026-09-05",
       "decision": "The invoker approved the one-file protocol section 8 boundary correction for crates/gf2-core/tests/tuning_envelope_v2.rs. The dedicated migration witness rejects tuning-calibration-v2 after PREPUBLICATION_HARNESS_SCHEMA is removed; the protocol records the postmeasurement correction explicitly."
+    },
+    {
+      "kind": "rework-exhausted",
+      "issue": "eaae1b56",
+      "date": "2026-09-05",
+      "decision": "OPEN: cargo-ci passes the complete publication tree. Code-review run 1e4a25d2-2ca5-442a-a0c1-fcfbab3d397e has one blocking attribution finding and no technical finding: the harness and publication commits use conventional scopes containing eaae1b56 but omit the literal jit:eaae1b56 token required by the review prompt, so REQ-01 through REQ-04 are outside its attributable footprint. Two guided retries were already consumed before publication; awaiting invoker choice before an attribution-only repair."
     }
   ],
   "rework_counts": {
