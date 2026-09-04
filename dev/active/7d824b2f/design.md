@@ -926,3 +926,61 @@ envelope, receipt, raw log, and manifest remain immutable historical evidence
 at their committed paths. Their bytes are not a current-codec compatibility
 alias. DEC-G's baked bit-backend threshold is supported by this campaign's
 receipt; no runtime-versus-baked classification changes.
+
+## Amendment A9 (2026-09-05, extent protocol for issue `a83583e0`)
+
+The exact extent experiment is declared in
+[`a83583e0/premeasurement-protocol.md`](../a83583e0/premeasurement-protocol.md).
+It fixes the twelve extent fields, the two owner producers, all candidate and
+operand grids, deterministic fixtures, controls, uncertainty, and publication
+behavior before measurement. This amendment specifies the interpretation of
+T13's argmin, tie, and non-monotonicity rule; the threshold crossover rule and
+the field mechanisms in §§2–4 remain unchanged.
+
+An extent curve is a sequence of distinct executed schedules, ordered by the
+candidate parameter. Adjacent candidates with the same observed schedule at
+every declared operand size form one plateau. Every raw candidate is retained;
+the plateau's representative is fixed before timing as the conservative value
+when present and otherwise the smallest candidate. That representative serves
+schedule comparison only. A winning plateau with more than one distinct raw
+candidate is a structural tie and retains the conservative value with reason
+`structural-schedule-tie`, even when the plateau excludes the conservative
+value. A plateau does not establish a performance distinction between its
+equivalent parameter values.
+
+For uncertainty-qualified comparisons, decreasing followed by increasing is
+a valid unimodal curve, including an interior U-shaped minimum. An increase
+followed by a later decrease is non-monotone. The exact predeclared comparison
+rule decides which changes qualify; unresolved changes do not become invented
+ordering evidence. A non-monotone curve, tied/uncertain minimum, or contradictory
+operand-size evidence retains the conservative value with its measured reason.
+Only a unique qualified singleton schedule minimum selects a nondefault value.
+Coupled extents need evidence for the actual published combination: the GEMM
+tiles use a full pair grid, while M4RM's conditional one-factor suggestions
+receive mandatory joint comparison and conservative-vector fallback.
+
+The three baked extents are measured through finite const-generic
+specializations of the same production bodies used by ordinary APIs. Typed
+test-support selectors bind those specializations before timing; the installed
+profile records context and does not become a runtime baked-value selector.
+Unconditional `GEMM_ROW_TILE_DEFAULT` and `GEMM_COL_TILE_DEFAULT` declarations
+supply the typed conservative section; separate cfg-selected production
+aliases supply ordinary API specializations. A nondefault selected bake does
+not change conservative values or omission semantics, as the required witness
+under both cfgs verifies.
+The TRSM experiment also removes observation cost from candidate-dependent
+recursion and panel work: its route selector is pure, public operations record
+the top-level execution once, and timed solves use a compile-time no-op
+observation specialization of the same shared solve/TRSM/GEMM bodies as the
+recorded probes. The retained triangular threshold is remeasured through that
+corrected path with its original sampling and crossover rule. No global
+observation toggle or benchmark-local algorithm copy is introduced.
+The experiment separately remeasures all retained core thresholds and the
+algebra-owned permanent extent, preserving one measurement provenance per
+owner section. It publishes only a complete validated bundle with strict owner
+reopens and exact wrapper-preserving composition. Durable append-only campaign
+logging and checkpointed resume follow the project invariants.
+The predeclared execution budget limits each outer-lock session. Exhaustion
+preserves checkpoints for a later session with the same budget and campaign
+identity; cumulative accounting retains every session and accepted result.
+Completion does not depend on an aggregate deadline or one uninterrupted hold.
