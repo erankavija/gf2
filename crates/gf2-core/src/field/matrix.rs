@@ -2676,14 +2676,18 @@ fn record_gemm_axpy_dispatch_route(route: GemmAxpyRoute) {
     LAST_GEMM_AXPY_DISPATCH_ROUTE.store(value, Ordering::Relaxed);
 }
 
-/// Clears the test-support observation of the last GEMM AXPY dispatch route.
+/// Clears the test-support observation of the last effective GEMM AXPY route.
 #[cfg(any(test, feature = "test-support"))]
 pub fn reset_last_gemm_axpy_dispatch_route() {
     LAST_GEMM_AXPY_DISPATCH_ROUTE.store(0, Ordering::Relaxed);
 }
 
-/// Returns the route consumed by the last crate-private
+/// Returns the route that completed the last crate-private
 /// `gemm_axpy_into_view` dispatch.
+///
+/// [`GemmAxpyRoute::WholeGemm`] is reported only after the whole-GEMM kernel
+/// returns successfully. A declined whole-GEMM attempt reports
+/// [`GemmAxpyRoute::PerCell`] after its per-cell fallback completes.
 #[cfg(any(test, feature = "test-support"))]
 #[must_use]
 pub fn last_gemm_axpy_dispatch_route() -> Option<GemmAxpyRoute> {
@@ -3123,9 +3127,9 @@ pub(crate) fn gemm_axpy_into_view<F>(
         out.cols()
     );
     let route = gemm_axpy_route(m, k, n);
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_axpy_dispatch_route(route);
     if m == 0 || n == 0 {
+        #[cfg(any(test, feature = "test-support"))]
+        record_gemm_axpy_dispatch_route(GemmAxpyRoute::PerCell);
         return;
     }
     if k == 0 {
@@ -3137,6 +3141,8 @@ pub(crate) fn gemm_axpy_into_view<F>(
                 out.set(i, j, v);
             }
         }
+        #[cfg(any(test, feature = "test-support"))]
+        record_gemm_axpy_dispatch_route(GemmAxpyRoute::PerCell);
         return;
     }
     let zero: F = a.get(0, 0).zero_like();
@@ -3187,6 +3193,8 @@ pub(crate) fn gemm_axpy_into_view<F>(
                     out.set(i, j, alpha.clone() * prod + beta.clone() * c_old);
                 }
             }
+            #[cfg(any(test, feature = "test-support"))]
+            record_gemm_axpy_dispatch_route(GemmAxpyRoute::WholeGemm);
             return;
         }
         // The kernel declined (e.g. shape early-out, AVX2 not
@@ -3288,6 +3296,8 @@ pub(crate) fn gemm_axpy_into_view<F>(
             }
         }
     }
+    #[cfg(any(test, feature = "test-support"))]
+    record_gemm_axpy_dispatch_route(GemmAxpyRoute::PerCell);
 }
 
 /// Runs the production GEMM AXPY dispatcher as `out ← a · b` for

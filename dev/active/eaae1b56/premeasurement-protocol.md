@@ -450,6 +450,9 @@ The source-path boundary is exact:
 - effective M4RM evidence only:
   `crates/gf2-core/src/alg/m4rm.rs` and
   `crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs`;
+- effective GEMM AXPY evidence only, preserving dispatch behavior:
+  `crates/gf2-core/src/field/matrix.rs` and
+  `crates/gf2-core/tests/tuning_profile_gemm_install.rs`;
 - current measured-owner readers and baked-value consumers:
   `crates/gf2-core/src/tuning/baked.rs`,
   `crates/gf2-core/src/kernels/backend.rs`,
