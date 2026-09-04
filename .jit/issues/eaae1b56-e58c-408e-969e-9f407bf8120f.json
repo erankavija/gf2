@@ -45,11 +45,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "7f93ba16aef30dda33c21a3e2fee82f16f663b657154b904dce5cd6cbc813b8f",
+          "content_hash": "37c6914ef2221a982a9c6a46f911b5e779fd1a6d58255a1eb360d305ba917631",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
-          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
+          "original_path": "../eaae1b56/premeasurement-protocol.md",
+          "resolved_path": "dev/active/eaae1b56/premeasurement-protocol.md"
         },
         {
           "asset_type": "local",
@@ -58,12 +58,28 @@
           "mime_type": "text/markdown",
           "original_path": "../220cab0b/design.md",
           "resolved_path": "dev/active/220cab0b/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ed7e84893338d9c2ede97efdbe8bf108f1ca24428fa55f1541d9f3e239c0c9e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../benchmarks/tuning_profiles/2026-09-01-eaae1b56.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7f93ba16aef30dda33c21a3e2fee82f16f663b657154b904dce5cd6cbc813b8f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
         }
       ],
-      "commit": "3514d75db0bdbec797f1345d8b0519c47619b472",
+      "commit": null,
       "doc_type": "design",
       "format": "markdown",
-      "label": "Governing selector migration design with Amendment A7",
+      "label": "Governing selector migration design with executed-state amendment",
       "path": "dev/active/7d824b2f/design.md"
     },
     {
@@ -77,6 +93,103 @@
       "doc_type": "benchmark",
       "label": "Untimed release startup failure: stderr",
       "path": "dev/benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.stderr"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "38a74fda3918cb2f4ed2e017f4cda003c745e53ed08a06b0b925ebaa08055b48",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json",
+          "resolved_path": "dev/reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e189214622a59b9f8bb2d2148062b058aeed82ec80c8c3bfc4005145939dec08",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-09-01-389aa4de.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0296a498b2dcaf303af0dc88afba2feb708deda60c24fd94236b4533cfdc138a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json",
+          "resolved_path": "crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2162b4b6170de3db0d0005bbad75497b2bcc881c46c712443ea451e6197b42a2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-eaae1b56.sha256",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.sha256"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5f69729e6a283f84fc1ba7dab02e6a75517cd97665d4617efc4eadd9ee09b5c3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-algebra/data/tuning-profiles/conservative.json",
+          "resolved_path": "crates/gf2-algebra/data/tuning-profiles/conservative.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d7231db8590fe526f8fbc5f3c83836503b9543b0ee29548d4477d6f2cbd0d6f2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-eaae1b56-calibration.log",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56-calibration.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "37c6914ef2221a982a9c6a46f911b5e779fd1a6d58255a1eb360d305ba917631",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../active/eaae1b56/premeasurement-protocol.md",
+          "resolved_path": "dev/active/eaae1b56/premeasurement-protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "15539c9146a92ab554d7099a03ad36afc1e1b0d90f79914c85a3cdc4d185353b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../active/7d824b2f/design.md",
+          "resolved_path": "dev/active/7d824b2f/design.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Measured selector campaign receipt",
+      "path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Measured selector campaign raw execution log",
+      "path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56-calibration.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Measured selector campaign checksum manifest",
+      "path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.sha256"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Authoritative measured core owner",
+      "path": "crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Composed measured repository envelope",
+      "path": "dev/reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
     }
   ],
   "first_ready_at": "2026-08-22T21:29:27.371031186Z",
@@ -97,9 +210,9 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:29:30.813520652Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-04T23:10:36.664578973Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "eaae1b56-e58c-408e-969e-9f407bf8120f",
@@ -112,5 +225,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-04T23:07:38.244367468Z"
+  "updated_at": "2026-09-04T23:11:01.709480658Z"
 }
