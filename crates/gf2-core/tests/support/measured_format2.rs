@@ -32,7 +32,11 @@ pub(crate) fn omitted_family_section(family: &str) -> CoreTuning {
             receipt,
             ..
         } => {
-            assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
+            assert_eq!(
+                harness_schema.as_str(),
+                "tuning-calibration-v2",
+                "the live 389 owner remains readable until the eaae1b56 publication cutover"
+            );
             assert_eq!(receipt.as_str(), MEASURED_RECEIPT);
         }
         MeasurementProvenance::Inherited => panic!("measured core section is not inherited"),
