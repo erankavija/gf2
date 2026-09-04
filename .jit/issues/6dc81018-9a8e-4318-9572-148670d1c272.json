@@ -76,6 +76,12 @@
       "format": "markdown",
       "label": "Canonical capability inventory",
       "path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Session 11: stopped before calibration restart",
+      "path": "dev/active/6dc81018-field-capability-dispatch/handoff-11.md"
     }
   ],
   "first_ready_at": "2026-08-18T18:49:20.500605671Z",
@@ -111,5 +117,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-09-04T20:53:32.577068717Z"
+  "updated_at": "2026-09-04T21:32:05.833525653Z"
 }
