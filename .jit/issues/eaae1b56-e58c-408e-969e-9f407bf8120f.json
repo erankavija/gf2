@@ -88,13 +88,13 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-04T21:50:47.124159719Z",
+      "updated_at": "2026-09-04T22:54:22.695637591Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-22T21:29:30.632360930Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-09-04T22:57:54.737449217Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "pending",
@@ -112,5 +112,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-04T21:50:47.124159719Z"
+  "updated_at": "2026-09-04T22:57:54.737449217Z"
 }
