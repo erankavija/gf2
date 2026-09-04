@@ -20,22 +20,22 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "ea4dc1bb84ed41dde5981b3e675a37739796c9c7f65ca64ddac8cbcabc2eb527",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../7d824b2f/design.md",
-          "resolved_path": "dev/active/7d824b2f/design.md"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "e189214622a59b9f8bb2d2148062b058aeed82ec80c8c3bfc4005145939dec08",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../../benchmarks/tuning_profiles/2026-09-01-389aa4de.md",
           "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ea4dc1bb84ed41dde5981b3e675a37739796c9c7f65ca64ddac8cbcabc2eb527",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../7d824b2f/design.md",
+          "resolved_path": "dev/active/7d824b2f/design.md"
         }
       ],
-      "commit": "3514d75db0bdbec797f1345d8b0519c47619b472",
+      "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Authoritative premeasurement protocol",
@@ -100,5 +100,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-04T20:56:28.551468705Z"
+  "updated_at": "2026-09-04T21:02:53.087508056Z"
 }
