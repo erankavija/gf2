@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 26 resumed on 2026-09-04. Preserved implementation worktree updated to current main. Independent premeasurement audit found unapproved dual-binary/API changes, missing real-process witnesses, and an incomplete GEMM omission outcome. Rework 1 restores the approved single-harness protocol and fixes both behavioral gaps before integration, gates, or measurement.",
+  "wave_notes": "Wave 26 is in premeasurement correction attempt 1 after recovery of the preserved implementation. The approved single-harness protocol governs execution. Independent review and merged-tree CI precede the solo calibration campaign and atomic measured-owner publication.",
   "open_escalations": [],
   "waves": [
     {
@@ -633,7 +633,7 @@
           "classification": "implementation",
           "model": "opus",
           "status": "in_progress",
-          "notes": "All nine dependencies are met. The invoker selected option A and the premeasurement plan merged at 3514d75d, with JIT document pins at f7ca7550. Independent review passed after two bounded planning corrections: exact comparable-versus-uncalibrated fallback semantics, exact eight-bank fixtures, a pool-width-only SoA witness, and a deterministic no-SIMD M4RM fallback gate. The issue was claimed at c6970540. Harness and M4RM-observer implementation are isolated in non-overlapping worktrees; no measurement or publication has started."
+          "notes": "Wave 26 is in premeasurement correction attempt 1 after recovery of the preserved implementation. The approved single-harness protocol governs execution. Independent review and merged-tree CI precede the solo calibration campaign and atomic measured-owner publication."
         }
       ]
     },
@@ -765,6 +765,34 @@
           "notes": "Blocks 389aa4de, a83583e0, and 5bdc9552. Produces the clean canonical format-2 core calibration producer; no host measurement in this issue."
         }
       ]
+    },
+    {
+      "wave_number": 27,
+      "issues": [
+        {
+          "id": "a83583e0",
+          "short_id": "a83583e0",
+          "title": "Design and implement the extent-sweep protocol",
+          "classification": "implementation",
+          "model": "gpt-6-astra",
+          "status": "pending"
+        }
+      ],
+      "note": "Serialized measurement wave; starts only after the preceding issue is done."
+    },
+    {
+      "wave_number": 28,
+      "issues": [
+        {
+          "id": "dbd8787d",
+          "short_id": "dbd8787d",
+          "title": "Extend the calibration sweep to the seam threshold fields",
+          "classification": "implementation",
+          "model": "gpt-6-astra",
+          "status": "pending"
+        }
+      ],
+      "note": "Serialized measurement wave; starts only after the preceding issue is done."
     }
   ],
   "created_during_execution": [
