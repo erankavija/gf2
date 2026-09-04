@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-04T21:14:15.313250323Z",
+  "dependencies": [],
+  "description": "Repair unresolved, private-target, and redundant intra-doc links in the workspace public API documentation.\n\n## Background\n\nThe Rust 1.95 public documentation build succeeds with cross-reference diagnostics in the core, coding, algebra, simulation, and SIMD-kernel crates. These diagnostics are reproducible at source revision deffa3d0cf0efb3f5ccecac380b615fa817bb401 with `./scripts/cargo-budget.sh cargo +1.95.0 doc --workspace --all-features --no-deps`. Representative sources include `gf2-core/src/compute/field.rs`, `gf2-core/src/field/charpoly.rs`, `gf2-core/src/field/inverse.rs`, `gf2-kernels-simd/src/transpose.rs`, and `gf2-sim/src/gpu/nr_5g_ldpc.rs` under `crates/`. They predate the calibration harness correction that exposed them.\n\n## Success Criteria\n\n- [hard] REQ-01: The workspace public documentation build on Rust 1.95 reports no unresolved, private-target, or redundant intra-doc link diagnostics.\n- [hard] REQ-02: Public cross-references resolve to the intended public item or use accurate plain text when the referenced implementation is private; library visibility and production behavior remain unchanged.\n- [hard] REQ-03: References retain their mathematical and API meaning without suppressing Rustdoc diagnostics globally.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-04T21:14:15.313250323Z",
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "2d65e37f-28ad-4cd9-93a8-2257c27faad3",
+  "labels": [
+    "epic:quality-documentation-tech-debt",
+    "component:documentation",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Repair public API documentation cross-references",
+  "updated_at": "2026-09-04T21:14:15.313250323Z"
+}
