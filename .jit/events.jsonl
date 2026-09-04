@@ -10966,3 +10966,5 @@
 {"from":"in_progress","id":"ad37838e-c727-4595-b7f0-0930ca699511","issue_id":"eaae1b56-e58c-408e-969e-9f407bf8120f","timestamp":"2026-09-04T23:12:37.450546318Z","to":"done","type":"issue_state_changed"}
 {"id":"d2506e73-a2cb-47c6-abca-55ab766f02c4","issue_id":"eaae1b56-e58c-408e-969e-9f407bf8120f","timestamp":"2026-09-04T23:12:37.450546318Z","type":"issue_completed"}
 {"from":"backlog","id":"2baa932d-c20b-49d3-aca4-db8c5a2bfba1","issue_id":"a83583e0-7cfb-4e65-9273-69631929e297","timestamp":"2026-09-04T23:12:47.193303816Z","to":"ready","type":"issue_state_changed"}
+{"from":"ready","id":"0dd3f35c-6435-45bf-88b8-244b0add0d0e","issue_id":"a83583e0-7cfb-4e65-9273-69631929e297","timestamp":"2026-09-04T23:14:29.300615280Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:jit-execution-lead","id":"d7eba78c-c9a2-46ec-814c-b253a327fe07","issue_id":"a83583e0-7cfb-4e65-9273-69631929e297","timestamp":"2026-09-04T23:14:29.300615280Z","type":"issue_claimed"}
