@@ -3,10 +3,13 @@
 //! [`BchError`] is the boundary between BCH algorithms and the lower-level
 //! error layers.  Field failures remain [`FieldError`] sources, generic code
 //! and buffer failures remain [`CodeError`] sources, and the variants in this
-//! module add only BCH mathematical validation context.
+//! module add only BCH mathematical validation context. Automatic extension
+//! selection reports its lower-level failure through [`BchError::ModulusSelection`].
 
+use crate::bch::encode::EncodeFamily;
 use crate::error::CodeError;
 use gf2_core::field::extension::FieldError;
+use gf2_core::field::modulus_select::ModulusSelectionError;
 use std::fmt;
 
 /// Failures produced while constructing or decoding a BCH code.
@@ -20,11 +23,26 @@ use std::fmt;
 pub enum BchError {
     /// A field-extension operation rejected its input or witness.
     Field(FieldError),
+    /// Deterministic splitting-field modulus selection failed.
+    ModulusSelection(ModulusSelectionError),
     /// A generic code or construction buffer validation failed.
     Code(CodeError),
     /// A BCH decoder received a buffer or erased value that failed generic
     /// code validation.
     Decode(CodeError),
+    /// A workspace was built for a different code than the one using it.
+    WorkspaceMismatch {
+        /// Fingerprint of the decoder's own code.
+        expected_stamp: u64,
+        /// Fingerprint carried by the supplied workspace.
+        actual_stamp: u64,
+    },
+    /// An explicitly named encoding family is one this code's representation
+    /// does not implement for its plan.
+    EncodeFamilyUnavailable {
+        /// The family the caller named.
+        family: EncodeFamily,
+    },
     /// A length conversion received zero, which cannot define a cyclic code.
     InvalidLength {
         /// The rejected length.
@@ -101,8 +119,23 @@ impl fmt::Display for BchError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Field(error) => write!(formatter, "BCH field operation failed: {error}"),
+            Self::ModulusSelection(error) => {
+                write!(formatter, "BCH modulus selection failed: {error}")
+            }
             Self::Code(error) => write!(formatter, "BCH code validation failed: {error}"),
             Self::Decode(error) => write!(formatter, "BCH decode input failed validation: {error}"),
+            Self::WorkspaceMismatch {
+                expected_stamp,
+                actual_stamp,
+            } => write!(
+                formatter,
+                "BCH workspace was built for a different code \
+                 (expected fingerprint {expected_stamp:#018x}, found {actual_stamp:#018x})"
+            ),
+            Self::EncodeFamilyUnavailable { family } => write!(
+                formatter,
+                "encoding family {family} is not available for this code's representation"
+            ),
             Self::InvalidLength { length } => {
                 write!(formatter, "BCH length {length} is not positive")
             }
@@ -168,6 +201,7 @@ impl std::error::Error for BchError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Field(error) => Some(error),
+            Self::ModulusSelection(error) => Some(error),
             Self::Code(error) | Self::Decode(error) => Some(error),
             _ => None,
         }
@@ -177,6 +211,12 @@ impl std::error::Error for BchError {
 impl From<FieldError> for BchError {
     fn from(error: FieldError) -> Self {
         Self::Field(error)
+    }
+}
+
+impl From<ModulusSelectionError> for BchError {
+    fn from(error: ModulusSelectionError) -> Self {
+        Self::ModulusSelection(error)
     }
 }
 
@@ -255,6 +295,9 @@ mod tests {
             BchError::GeneratorPolynomialNotMonic,
             BchError::GeneratorCoefficientNotInBase { index: 2 },
             BchError::GeneratorNotDivisorOfCyclicPolynomial { length: 15 },
+            BchError::EncodeFamilyUnavailable {
+                family: EncodeFamily::TableRemainder,
+            },
         ];
 
         for error in errors {

@@ -1,9 +1,12 @@
 //! Error-correcting codes built on `gf2-core` primitives.
 //!
-//! This crate provides implementations of error-correcting codes using the
-//! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::BitMatrix) types from
-//! the `gf2-core` library. It includes both block codes
-//! and streaming (convolutional) codes.
+//! This crate provides implementations of error-correcting codes over the
+//! field abstractions of the `gf2-core` library: the canonical trait surface
+//! is generic over the code symbol field and representation
+//! ([`FieldVec`](gf2_core::field::FieldVec)/[`FieldMatrix`](gf2_core::field::matrix::FieldMatrix)),
+//! with packed binary specializations using
+//! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::BitMatrix).
+//! It includes both block codes and streaming (convolutional) codes.
 
 #![deny(unsafe_code)]
 //!
@@ -81,9 +84,12 @@ pub mod simulation;
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;
 pub mod traits;
+pub mod transform;
+pub mod tuning;
 
 // Re-export main types
-pub use bch::{BchCode, BchDecoder, BchEncoder, CodeRate};
+pub use bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+pub use bch::CodeRate;
 pub use channel::AwgnChannel;
 pub use convolutional::{ConvolutionalDecoder, ConvolutionalEncoder};
 pub use error::{Capability, CodeCapability, CodeError, RepresentationId};

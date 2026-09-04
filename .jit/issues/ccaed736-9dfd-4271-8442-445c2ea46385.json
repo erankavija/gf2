@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-03T04:24:33.292990039Z",
+  "dependencies": [
+    "203ee826-87bf-469b-abaa-a9128869f645"
+  ],
+  "description": "`Punctured<C>` implements no `ParityCheckMatrixAccess`, while `Shortened<C>` and `Extended<C>` do, so a punctured code cannot participate in the parity-check half of the shared matrix conformance cases.\n\n## Background\n\nSurfaced by the shortening fast path (`@/issue/203ee826`), which gave `Shortened<C>` parity-check access on both derivation paths. The rank machinery the transformations share already yields the dual basis a punctured code needs.\n\n## Success Criteria\n\n- [hard] REQ-01: `Punctured<C>` implements `ParityCheckMatrixAccess` with a full-row-rank check matrix satisfying `G Hᵀ = 0`, and the shared conformance cases run it.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-03T04:24:33.292990039Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "ccaed736-9dfd-4271-8442-445c2ea46385",
+  "labels": [
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Punctured<C> lacks ParityCheckMatrixAccess",
+  "updated_at": "2026-09-03T04:52:56.370410993Z"
+}

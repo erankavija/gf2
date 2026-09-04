@@ -1094,6 +1094,17 @@ certificates are checked in CI even though they are unchecked at runtime.
 **The lead decides whether that case is in scope for
 `irreducibility-validation` or a separate tracked issue.**
 
+*Resolution for the compile-time quotient form (`quotient-ext-const`,
+recorded post-implementation):* the residual is closed there by two things
+together — a validating constructor (`ConstQuotient::extension()`) that
+decides the declared modulus with `prove_irreducible` and returns typed
+`FieldError`s, and registration of every in-tree declaration in the shared
+axiom harness *through that validating constructor*, so CI decides each
+declaration. The named trust path is `extension_unchecked()` per
+`caller-trusted-fast-paths`. The generic un-suffixed `ConstExt::new()`
+witness constructor predates the invariant and is tracked separately
+(issue `c9022d14`).
+
 **R-03 — footprint additions the manifest does not record.** Three tasks need
 files outside their recorded footprints: `extension-trait` needs
 `crates/gf2-core/src/field/axiom_tests.rs` for the extension-law cases its own

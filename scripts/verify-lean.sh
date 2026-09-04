@@ -110,6 +110,7 @@ charon cargo \
   --opaque 'gf2_core::gf2m::thread_safety_tests' \
   --opaque 'gf2_core::gf2m::barrett' \
   --opaque 'gf2_core::gfpn::batch' \
+  --opaque 'gf2_core::gfpn::quotient' \
   --opaque 'gf2_core::gfp::simd_ops' \
   --opaque 'gf2_core::gfp::specialized::batch_mul_mersenne31' \
   --opaque 'gf2_core::gfp::specialized::batch_mul_add_mersenne31' \

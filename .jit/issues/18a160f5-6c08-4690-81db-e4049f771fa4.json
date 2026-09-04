@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-01T15:13:01.417882087Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -7,11 +8,24 @@
   ],
   "description": "Extend the canonical construction path to explicit-generator `BchSpec` flavors: verify splitting-field compatibility and $g(x) \\mid x^n-1$, derive the root set, and reject incompatible generators.\n\n## Success Criteria\n\n- [hard] REQ-01: Explicit-generator specs verify compatibility and divisibility, derive the root set in the splitting field, and construct with parameters derived from that root set.\n- [hard] REQ-02: Incompatible generators — wrong field, non-divisor, coefficients outside the base field — report typed errors naming the failed check.\n",
   "documents": [],
+  "done_at": "2026-09-01T16:39:15.270751548Z",
+  "first_ready_at": "2026-09-01T15:10:31.370223058Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T16:39:09.636125846Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T16:26:48.791300509Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "18a160f5-6c08-4690-81db-e4049f771fa4",
   "labels": [
     "type:task",
@@ -21,7 +35,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Construction from explicitly supplied generator polynomials",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T16:39:15.270751548Z"
 }

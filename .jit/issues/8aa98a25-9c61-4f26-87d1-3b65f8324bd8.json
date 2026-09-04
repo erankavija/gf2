@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-01T09:58:48.254924876Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -8,11 +9,24 @@
   ],
   "description": "Implement shortening as a generic linear-code transformation over arbitrary coordinate sets: restrict to codewords zero on the chosen coordinates, delete them, derive the resulting dimension by rank, and report the resulting information-set structure.\n\n## Background\n\nDimension follows from rank, not a count formula, and the result need not stay systematic in the original positions. Count-based helpers cover the conventional systematic positions. The rank/information-set machinery built here is shared by puncturing.\n\n## Success Criteria\n\n- [hard] REQ-01: Shortening accepts arbitrary coordinate sets on any generic linear code, derives dimension by rank, reports the information-set structure, and preserves its coordinate map.\n- [hard] REQ-02: Count-based helpers delegate to the coordinate-set form, and invalid coordinate sets report the coding-general error layer.\n- [hard] REQ-03: Property tests verify dimension-by-rank against direct generator-matrix computation, including non-systematic cases, over binary and nonbinary codes.\n",
   "documents": [],
+  "done_at": "2026-09-01T11:28:27.059742724Z",
+  "first_ready_at": "2026-09-01T09:18:13.122192649Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T11:28:21.310966719Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T11:26:48.792843599Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "8aa98a25-9c61-4f26-87d1-3b65f8324bd8",
   "labels": [
     "type:task",
@@ -21,7 +35,7 @@
     "satisfies:REQ-05"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Generic shortening over arbitrary coordinate sets",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T11:28:27.059742724Z"
 }

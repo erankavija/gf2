@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-01T10:52:19.382288726Z",
+  "dependencies": [
+    "0e706bf5-2057-43e7-9aeb-ec21539c48a4"
+  ],
+  "description": "`ConstExt::<E>::new()` in crates/gf2-core/src/field/extension.rs constructs an extension witness for any `ConstSimpleExtension` without validating the declared configuration, but its name does not carry the `_unchecked` suffix the caller-trusted-fast-paths invariant prescribes for validation-skipping paths. Concrete carriers (e.g. `ConstQuotient::extension_unchecked`) follow the convention; the generic witness constructor predates the invariant (its Declared basis is owner-ratified per epic ae03bcd0 rulings R-16/R-17) and touches the QuadraticExt/CubicExt witnesses, so it was reported as a footprint finding by 0e706bf5 rather than changed in place.\n\n## Success Criteria\n\n- [hard] REQ-01: The generic validation-skipping construction path is either renamed with the `_unchecked` suffix (with a deprecation or migration for existing callers) or wrapped so the un-suffixed path validates, per the invariant; rustdoc cites the invariant either way.\n- [hard] REQ-02: All in-tree callers compile and tests pass; no behavioral change to validated paths.",
+  "documents": [],
+  "first_ready_at": "2026-09-01T10:52:19.382288726Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "c9022d14-350b-4236-a802-e206e159ad7b",
+  "labels": [
+    "component:gf2-core",
+    "type:enhancement",
+    "enforces:@/invariant/caller-trusted-fast-paths"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Name or wrap the validation-skipping ConstExt::new per caller-trusted-fast-paths",
+  "updated_at": "2026-09-01T21:39:13.807851499Z"
+}

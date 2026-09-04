@@ -425,6 +425,20 @@ impl block::GeneratorMatrixAccess for LinearBlockCode {
         }
         Ok(true)
     }
+
+    /// Reports whether the recorded message coordinates are `0..k()`.
+    ///
+    /// [`Self::new_systematic`] records that order, while [`Self::hamming`]
+    /// records the columns of `H` that are not powers of two, so a Hamming
+    /// code answers `false` here and `true` from
+    /// [`is_systematic`](block::GeneratorMatrixAccess::is_systematic).
+    ///
+    /// # Complexity
+    ///
+    /// O(k) position reads.
+    fn has_canonical_message_order(&self) -> Result<bool, CodeError> {
+        Ok(self.systematic_positions.iter().copied().eq(0..self.k))
+    }
 }
 
 impl block::ParityCheckMatrixAccess for LinearBlockCode {

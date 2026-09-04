@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-09-01T19:38:51.361510802Z",
   "context": {},
   "created_at": "2026-08-28T23:04:06.062337929Z",
   "dependencies": [
@@ -7,13 +8,30 @@
   ],
   "description": "Migrate the gf2-kernels-hip tests consuming legacy BCH constructors to the canonical model, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: The kernel-crate GPU tests build and pass on the canonical model on a HIP-capable host, self-gating where hardware is absent.\n",
   "documents": [],
+  "done_at": "2026-09-01T19:55:58.854746140Z",
   "first_ready_at": "2026-08-28T23:04:06.062337929Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "gf2-kernels-hip-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T19:52:54.022543219Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T19:55:45.065539105Z",
+      "updated_by": "auto:executor"
+    },
+    "gf2-kernels-hip-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T19:53:10.241499229Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "5cbdec87-a157-4b20-8766-6d24400b0184",
   "labels": [
     "type:task",
@@ -22,7 +40,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Migrate gf2-kernels-hip BCH test consumers",
-  "updated_at": "2026-08-28T23:04:44.874759143Z"
+  "updated_at": "2026-09-01T19:55:58.854746140Z"
 }

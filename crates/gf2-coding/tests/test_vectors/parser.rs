@@ -1,7 +1,7 @@
 use gf2_core::BitVec;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TestVector {
@@ -16,6 +16,9 @@ pub struct TestVector {
 pub struct TestVectorFile {
     pub test_point: String,
     pub config: String,
+    /// The file this stream was parsed from, so a test can report or digest
+    /// the exact bytes it consumed.
+    pub path: PathBuf,
     frames: Vec<Vec<TestVector>>,
 }
 
@@ -147,6 +150,7 @@ impl TestVectorFile {
         Ok(TestVectorFile {
             test_point,
             config,
+            path: path.to_path_buf(),
             frames,
         })
     }

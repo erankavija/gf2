@@ -1,18 +1,62 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-09-02T16:19:28.496092621Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
     "d7749931-bcf1-4e5b-bbcd-4d845ff1ede7"
   ],
   "description": "Implement the sketch's Lean obligation that the constructed generator polynomial lies in the base field and vanishes on every requested root.\n\n## Success Criteria\n\n- [hard] REQ-01: The generator-correctness lemmas are proven and `lake build` passes with no new untracked assumptions.\n- [hard] REQ-02: The obligation binds to the construction production path exactly as the approved sketch assigns, with refinement evidence landed where assigned.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "aef9f6ce1c2e57de466fc2736ac006263afb08611c83a767b197e7b7bed15560",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../ae03bcd0-general-bch/extension-design.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eb0391b0d4692911de0b3d41facb2ea08756010132904e22802ff53d3a5a89d5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../ae03bcd0-general-bch/plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Formal-proof sketch: O-4 generator base-field membership and root correctness (anchor rows)",
+      "path": "dev/active/64fd3afd/proof-sketch.md"
+    }
+  ],
+  "first_ready_at": "2026-09-02T16:17:00.030601274Z",
   "gates_required": [
     "code-review",
     "doc-review",
     "lake-build"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-03T04:28:46.538562873Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-03T04:54:18.733702988Z",
+      "updated_by": "auto:executor"
+    },
+    "lake-build": {
+      "status": "passed",
+      "updated_at": "2026-09-03T04:22:57.247711290Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "b1bd75ca-5003-4597-87c0-0f9808a7b760",
   "labels": [
     "type:task",
@@ -22,7 +66,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "in_progress",
   "title": "Lean proofs: generator base-field membership and root correctness",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-03T04:54:18.733702988Z"
 }

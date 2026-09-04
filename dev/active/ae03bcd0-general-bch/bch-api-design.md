@@ -299,6 +299,28 @@ Every convenience method above is exactly
 validation, generator construction, parameter derivation, caching, or fallback
 logic.
 
+Automatic field selection (ruling R-32) reuses those methods rather than
+adding a parallel constructor family. `gf2_core::field::modulus_select`
+declares
+
+```rust
+pub trait SelectExtension: FieldExtension + Sized {
+    fn select(base: Self::Base, degree: usize) -> Result<Self, ModulusSelectionError>;
+}
+```
+
+implemented for `QuotientField<B>` and `BinaryPrimeExt<V>` through the
+deterministic registry-then-verified-search policy of that module, and
+`BchError::ModulusSelection(ModulusSelectionError)` carries its failure. The
+four variants whose inputs lie in the base field have `_auto` counterparts
+bounded by `X: SelectExtension` that take the base witness and relative degree
+and are exactly `Self::<explicit method>(X::select(base, degree)?, ...)` with
+`RootSelection::Canonical` where a root selection is needed:
+`primitive_narrow_sense_auto`, `primitive_auto`, `consecutive_roots_auto`, and
+`from_root_seeds_auto`. `from_generator` has no automatic form because its
+generator coefficients live in the splitting-field carrier; callers compose
+`X::select` with it.
+
 The bound records the longest cyclic consecutive run in the closed defining
 set. Ties select the least starting exponent, which makes the witness
 reproducible. If the run has length $r$, the classical BCH bound is
@@ -412,15 +434,20 @@ pub type BinaryBchCode<V = u64> = BchCode<
 through `FieldVec<Fp<2>>` or `FieldMatrix<Fp<2>>`. Monomorphization selects the
 representation and encoder kernels without a virtual call. BCH uses `M` for
 both its generator and parity-check associated types; the shared traits permit
-other code families to choose distinct matrix representations.
+other code families to choose distinct matrix representations. Canonical-matrix
+access binds `M` to `MatrixFill`, the materialization contract the
+representation-contracts section fixes, whose provided bodies make an empty
+implementation a complete opt-in for any `SymbolMatrix`.
 
 Shortening, puncturing, and one-symbol extension are code wrappers, not
 `BchSpec` variants or flags:
 
 ```rust
-pub struct Shortened<C> { mother: C, map: CoordinateMap, /* rank data */ }
+pub struct Shortened<C> { mother: C, map: CoordinateMap, /* derivation data */ }
 pub struct Punctured<C> { mother: C, map: CoordinateMap, /* rank data */ }
 pub struct Extended<C> { mother: C, map: CoordinateMap }
+
+pub enum ShortenedDerivation { SystematicRestriction, RankDerived }
 ```
 
 Each wrapper implements the canonical traits with the mother code's `Symbol`
@@ -429,6 +456,39 @@ capability survives the transformation. Its coordinate map composes back to
 the mother, and its dimension comes from rank where required. These wrappers
 contain no BCH-specific logic and accept any compatible linear code, satisfying
 `@/inv/library-first-generality`.
+
+`Shortened<C>` carries two derivations of the same code, reported by
+`Shortened::derivation`. `SystematicRestriction` applies when the mother
+reports both `is_systematic` and `has_canonical_message_order` — message
+symbol $i$ is coordinate $i$ — and every removed coordinate is below $k$.
+Coordinate $s$ of a mother codeword is then message symbol $s$, so the
+shortened code is the mother's restricted to the messages that vanish on the
+removed positions: dimension $k - |S|$, length $n - |S|$, information set
+$0..k - |S|$, and a construction cost of $O(n)$ beyond the mother's own, with
+no generator materialized, no nullspace solved, and nothing reduced to RREF.
+Encoding writes the message at the kept message positions of a zero mother
+message, delegates to the mother's encoder, and deletes the removed
+coordinates, so it costs one mother encode and $O(n)$ symbol moves rather
+than the $O(kn)$ of a dense product. Matrix access materializes one
+mother-sized buffer and copies the kept rows and columns out of it. Without
+that condition the wrapper takes `RankDerived`: it materializes the mother
+generator, solves the nullspace of the removed-coordinate constraints, and
+reduces the result to RREF, whose rank is the derived dimension and whose
+pivots are the information set. The two agree on the coordinate map,
+dimension, information set, generator, and every codeword, and their
+parity-check matrices are bases of one dual space, equal whenever the
+mother's own check matrix is the canonical $[-P^{\mathsf T} \mid I]$. The
+DVB-T2 rows are constructible only through the first: their $16215 \times
+16383$ and $65343 \times 65535$ mothers put a dense generator out of reach.
+
+`has_canonical_message_order` is the layout half of the systematic report on
+`GeneratorMatrixAccess`: `is_systematic` answers for whatever message
+coordinate order a code records, and this answers whether that order is the
+canonical $0..k$. Its default reports the canonical order, so only a code
+recording another one — `LinearBlockCode::hamming`, whose message
+coordinates are the columns of $H$ that are not powers of two — implements
+it. A shortening wrapper needs both before it may read a coordinate below $k$
+as a message coordinate.
 
 ### Runtime-erased handles
 
@@ -584,6 +644,41 @@ The packed implementations preserve canonical little-endian bit indexing:
 symbol $i$ uses word $i\mathbin{\gg}6$ and mask
 $1\mathrm{u64}\ll(i\mathbin{\&}63)$, and tail padding remains zero
 (`@/inv/canonical-bit-indexing`). Shape and index failures use `CodeError`.
+
+`SymbolMatrix` describes storage; `MatrixFill` describes canonical-matrix
+materialization over that storage:
+
+```rust
+pub trait MatrixFill<F>: SymbolMatrix<F>
+where
+    F: FieldIdentity,
+{
+    /// Writes G = [I_k | P]; `dimension` is k.
+    fn fill_generator(
+        &mut self,
+        generator: &FieldPoly<F>,
+        dimension: usize,
+        zero: &F,
+    ) { /* provided */ }
+
+    /// Writes H = [-P^T | I_{n-k}].
+    fn fill_parity_check(
+        &mut self,
+        generator: &FieldPoly<F>,
+        dimension: usize,
+        zero: &F,
+    ) { /* provided */ }
+}
+```
+
+Both bodies are provided: they run the parity recurrence one coordinate at a
+time through `SymbolMatrix::get` and `SymbolMatrix::set`, so every
+representation opts in with an empty implementation. The two canonical
+implementations override them as a performance choice: `FieldMatrix<F>` with a
+row-slice path, and `BitMatrix` with the packed word-level path K-09's
+associated-type specialization names, which single-coordinate accessors cannot
+express. The caller checks the output shape, so an implementation writes only
+in-range coordinates, overwrites every coordinate, and cannot fail.
 
 ### Block-code and encoder contracts
 
@@ -890,8 +985,8 @@ dependency-ordered chain; tasks in the same wave use disjoint files.
 
 | Path | Owning task or ordered chain | Contents |
 |---|---|---|
-| `crates/gf2-coding/src/traits.rs` | `generic-traits-core` → `type-erased-handles` → `matrix-materialize` | `traits::block`, representation adapters, `BinaryBlockCode`, then erased handles, then matrix-access defaults; `traits::compat::binary_v1` and root shims live here. |
-| `crates/gf2-coding/src/linear.rs` | `generic-traits-core` | Immediate `LinearBlockCode` canonical implementations and v1-adapter coverage. |
+| `crates/gf2-coding/src/traits.rs` | `generic-traits-core` → `type-erased-handles` → `matrix-materialize` → `@/issue/203ee826` | `traits::block`, representation adapters, `BinaryBlockCode`, then erased handles, then matrix-access defaults, then the message-order report the shortening wrapper reads; `traits::compat::binary_v1` and root shims live here. |
+| `crates/gf2-coding/src/linear.rs` | `generic-traits-core` → `@/issue/203ee826` | Immediate `LinearBlockCode` canonical implementations and v1-adapter coverage, including the recorded message-coordinate order its Hamming constructor uses. |
 | `crates/gf2-coding/src/error.rs` | `coding-error-surface` | Coding-general `CodeError`, including shape, index, field, representation, unsupported-size, and capability errors. |
 | `crates/gf2-coding/src/bch/error.rs` | `coding-error-surface` | `BchError` composing `FieldError` and `CodeError` with construction-specific validation failures. |
 | `crates/gf2-coding/src/lib.rs` | `coding-error-surface`, then `cutover-components` | Declares and re-exports the coding-general error module; the later consumer cutover updates code exports after the error surface is stable. |
@@ -910,7 +1005,7 @@ letting either worker create a local error alias.
 | Path | Owning task or ordered chain | Contents |
 |---|---|---|
 | `crates/gf2-coding/src/bch/spec.rs` | `bch-construct-core` → `bch-construct-seedset` → `bch-construct-generator` → `bch-construct-nonprimitive` → `bch-convenience-ctors` | `RootSelection`, `BchSpec`, static `BchCode`, bound witness, the single pipeline, then variant support and delegating conveniences. |
-| `crates/gf2-coding/src/bch/matrix.rs` | `matrix-materialize` → `genmatrix-perf` | Uncached allocating/caller-buffer generator and parity materialization, explicit `CachedMatrices<C>` wrapper, then optimized kernels behind the same traits. |
+| `crates/gf2-coding/src/bch/matrix.rs` | `matrix-materialize` → `genmatrix-perf` → `@/issue/203ee826` | Uncached allocating/caller-buffer generator and parity materialization, explicit `CachedMatrices<C>` wrapper, then optimized kernels behind the same traits. |
 | `crates/gf2-coding/src/bch/encode.rs` | `systematic-encode` → `encode-batch-workspace` → `encode-dispatch` | Scalar systematic reference, allocation-free/workspace and ordered batch APIs, then profile-driven family selection. |
 | `crates/gf2-coding/src/bch/mod.rs` | `coding-error-surface` → `bch-construct-core` → `systematic-encode` → `cutover-removal` | Declares `bch::error`, then the spec/encoding modules and canonical re-exports, then removes superseded `core`/`extended` exports. The dependencies serialize these small edits. |
 | `crates/gf2-kernels-simd/src/bch_encode.rs` | `avx2-batch-kernels` | Safe-dispatchable BCH batch kernels with scalar equivalence; no coding-domain type enters the kernel crate. |
@@ -926,7 +1021,7 @@ addition for `coding-error-surface`; its direct dependent
 | Path | Owning task or ordered chain | Contents |
 |---|---|---|
 | `crates/gf2-coding/src/transform/coordinate_map.rs` | `coordinate-provenance` | Composable derived-to-mother coordinate maps and compact regular representations. |
-| `crates/gf2-coding/src/transform/mod.rs` | `shorten-transform` → `puncture-transform` → `extend-transform` | `Shortened<C>`, shared rank/information-set machinery, `Punctured<C>`, and `Extended<C>` in dependency order. |
+| `crates/gf2-coding/src/transform/mod.rs` | `shorten-transform` → `puncture-transform` → `extend-transform` → `@/issue/203ee826` | `Shortened<C>`, shared rank/information-set machinery, `Punctured<C>`, and `Extended<C>` in dependency order, then the `ShortenedDerivation` split that gives `Shortened<C>` its systematic restriction. |
 
 `coordinate_map.rs` is complete before `transform/mod.rs` starts. The three
 wrapper implementations share one file only along a serial chain, while BCH
@@ -938,7 +1033,7 @@ construction and encoding use disjoint modules.
 |---|---|
 | `decoder-outcomes` → `hip-equivalence` | `crates/gf2-coding/src/bch/core.rs` serially; HIP equivalence also owns `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`. |
 | `ebch-migration` | `crates/gf2-coding/src/grand/sogrand.rs`, `crates/gf2-coding/src/grand/orbgrand.rs`, `crates/gf2-coding/src/fading.rs`, `crates/gf2-coding/src/product/mod.rs`, `crates/gf2-coding/src/product/chase_pyndiah.rs` |
-| `cutover-dvbt2` | `crates/gf2-coding/src/bch/dvb_t2/mod.rs`, `crates/gf2-coding/src/bch/dvb_t2/generators.rs`, `crates/gf2-coding/src/bch/dvb_t2/params.rs`, `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs`, `crates/gf2-coding/src/dvb_t2_bicm_harness.rs` |
+| `cutover-dvbt2` (`@/issue/97410c80`) | `crates/gf2-coding/src/bch/dvb_t2/mod.rs`, `crates/gf2-coding/src/bch/dvb_t2/generators.rs`, `crates/gf2-coding/src/bch/dvb_t2/params.rs`, `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs`, `crates/gf2-coding/src/dvb_t2_bicm_harness.rs`, plus the standards-constructor relocation in `crates/gf2-coding/src/bch/core.rs` |
 | `cutover-components` | `crates/gf2-coding/src/bcjr/mod.rs`, `crates/gf2-coding/src/gldpc/mod.rs`, `crates/gf2-coding/src/osd/generator.rs`, `crates/gf2-coding/src/simulation.rs`, `crates/gf2-coding/src/lib.rs` |
 | `cutover-bins-examples` | `crates/gf2-coding/src/bin/sim_runner.rs`, `crates/gf2-coding/src/bin/check_encoding.rs`, `crates/gf2-coding/examples/dvb_t2_bch_demo.rs`, `crates/gf2-coding/examples/block_code_intro.rs` |
 | `cutover-test-suite` | `crates/gf2-coding/tests/bch_tests.rs`, `crates/gf2-coding/tests/dvb_t2_bch_verification.rs`, `crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-coding/tests/backend_integration.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs`, `crates/gf2-coding/tests/bch_primitive_verification.rs` |
@@ -949,8 +1044,13 @@ construction and encoding use disjoint modules.
 | `legacy-reference-sweep` | `crates/gf2-coding/README.md`, `docs/SYSTEMATIC_ENCODING_CONVENTION.md`, `docs/PARALLELIZATION.md`, `crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md` |
 
 The direct migration groups are file-disjoint and may run in parallel after
-their graph prerequisites. `cutover-removal` is the join point and owns the
-only deletion of superseded BCH types. Documentation paths not in the manifest
+their graph prerequisites, with one ordered exception: `@/issue/97410c80`
+moves the superseded DVB-T2 standards constructor into
+`crates/gf2-coding/src/bch/core.rs` beside the other superseded constructors,
+so it joins that file's chain after `hip-equivalence` and before
+`cutover-removal`, which deletes the relocated constructor with the rest of
+the surface. `cutover-removal` is the join point and owns the only deletion
+of superseded BCH types. Documentation paths not in the manifest
 are reported to the lead as footprint findings rather than edited ad hoc.
 
 ## Key decisions

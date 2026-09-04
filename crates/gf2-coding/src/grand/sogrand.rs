@@ -1524,10 +1524,24 @@ mod fig2_validation {
     /// Word-boundary test: exercise SOGRAND with code length near 64 bits.
     #[test]
     fn test_sogrand_near_64_bit_boundary() {
-        use crate::bch::extended::ExtendedBchCode;
+        use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+        use crate::traits::block::ParityCheckMatrixAccess;
+        use crate::transform::Extended;
+        use gf2_core::field::extension::BinaryPrimeExt;
+        use gf2_core::gf2m::Gf2mField;
 
-        let ebch = ExtendedBchCode::ebch_64_57();
-        let h = ebch.parity_check().clone();
+        let extension = BinaryPrimeExt::new(Gf2mField::new(6, 0b1000011).with_tables())
+            .expect("a valid binary BCH extension");
+        let base = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+            extension,
+            designed_distance: DesignedDistance::try_from(3)
+                .expect("a positive BCH designed distance"),
+        })
+        .expect("a valid binary BCH construction");
+        let ebch = Extended::new(base).expect("an extended BCH code fits in memory");
+        let h = ebch
+            .parity_check_matrix()
+            .expect("extended BCH parity matrix");
 
         let config = OrbGrandConfig {
             max_queries: 50_000,

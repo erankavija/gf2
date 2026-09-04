@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-01T08:27:50.555980916Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -7,12 +8,30 @@
   ],
   "description": "Implement arbitrary-degree polynomial quotient extension fields in gf2-core with a runtime-configured modulus, defining the reference semantics of the pair.\n\n## Background\n\nThe current tower types support only binomial moduli of degree two and three. The runtime form defines `quotient-extension-api`: representation, reduction, inversion, Frobenius, base embedding, and the algebraic field identity. Irreducibility validation and certificates come from the dedicated validation operation. Materialization beyond `usize`/`u128` limits returns a typed unsupported-size error.\n\n## Success Criteria\n\n- [hard] REQ-01: A runtime quotient extension over supported base fields constructs from a certificate-validated modulus and satisfies the shared field-law conformance suite.\n- [hard] REQ-02: The type implements the extension abstraction and carries the algebraic field identity fixed by the extension design.\n- [hard] REQ-03: Materialization beyond `usize`/`u128` limits reports the typed unsupported-size error.\n",
   "documents": [],
+  "done_at": "2026-09-01T09:53:29.909815327Z",
+  "first_ready_at": "2026-09-01T08:25:25.860612628Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:42:33.809506265Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:46:16.962779719Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T09:53:05.902183248Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "769c3144-318c-4c3c-9258-ba36a4f5bd80",
   "labels": [
     "type:task",
@@ -21,7 +40,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Implement runtime-configured polynomial quotient extension fields",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T09:53:29.909815327Z"
 }

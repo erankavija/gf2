@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-09-01T21:39:44.602959210Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -8,12 +9,30 @@
   ],
   "description": "Add the ergonomic constructors (`primitive_narrow_sense`, `primitive`, defining-set, non-primitive forms) that build the corresponding `BchSpec` and delegate to the canonical path, accepting either an explicit splitting-field representation or automatic selection.\n\n## Background\n\nConstructors accept only independent mathematical inputs; derived quantities are validated on request, never supplied. Automatic selection uses the deterministic registry/search policy. The designed distance is presented as a guaranteed lower bound, never as the minimum distance.\n\n## Success Criteria\n\n- [hard] REQ-01: Each convenience constructor delegates to the canonical path, accepts only independent inputs, and supports explicit and automatic field selection.\n- [hard] REQ-02: Doctests cover the concise binary primitive case deriving $(n, k, t)$ from the field and designed distance alone.\n",
   "documents": [],
+  "done_at": "2026-09-02T05:45:52.633512458Z",
+  "first_ready_at": "2026-09-01T20:02:41.969519222Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-02T05:37:11.064342696Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-02T05:41:37.489234971Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-02T05:44:12.401945662Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "1c9a0f9f-3fa5-4728-85b7-5354448af01f",
   "labels": [
     "type:task",
@@ -22,7 +41,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Add delegating convenience constructors with automatic field selection",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-02T05:45:52.633512458Z"
 }

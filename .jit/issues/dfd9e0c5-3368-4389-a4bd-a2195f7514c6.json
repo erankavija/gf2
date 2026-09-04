@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-01T12:58:59.466368877Z",
+  "dependencies": [
+    "230dd84d-de00-4d79-b74b-f1a8d244da48"
+  ],
+  "description": "bch/spec.rs (230dd84d) carries a private integer_gcd (gf2-core keeps gcd_u64 private in field/extension.rs) and a private cyclic_polynomial building x^n - 1. Promote both to public gf2-core surfaces in the FieldPoly::lcm precedent (8f51d6cf) and migrate spec.rs to them. bch-construct-generator, matrix-materialize, and systematic-encode each want the cyclic polynomial helper; gf2-core is the convergent home.\n\n## Success Criteria\n\n- [hard] REQ-01: A public gf2-core integer gcd and a public x^n - 1 constructor exist with rustdoc and tests, and bch/spec.rs uses them with its private copies deleted.\n- [hard] REQ-02: Workspace tests pass; no behavioral change.",
+  "documents": [],
+  "first_ready_at": "2026-09-01T12:58:59.466368877Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "dfd9e0c5-3368-4389-a4bd-a2195f7514c6",
+  "labels": [
+    "component:gf2-core",
+    "component:gf2-coding",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Promote integer gcd and the cyclic polynomial x^n-1 helper to gf2-core",
+  "updated_at": "2026-09-01T13:13:44.633292166Z"
+}

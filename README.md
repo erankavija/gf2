@@ -110,7 +110,7 @@ See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for the full menu
 | Crate | Feature | Default | Effect |
 |---|---|---|---|
 | `gf2-core` | `rand` | ✅ | Random bit/matrix/field generators |
-| `gf2-core` | `io` | ✅ | Serde (de)serialization |
+| `gf2-core` | `io` | ✅ | Serde (de)serialization; canonical checksummed `FieldMatrix` files |
 | `gf2-core` | `simd` | — | Routes to `gf2-kernels-simd` (AVX2/AVX-512) |
 | `gf2-core` | `parallel` | — | Rayon batch operations |
 | `gf2-core` | `visualization` | — | PNG export of matrices |

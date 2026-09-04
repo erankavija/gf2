@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-01T15:40:08.623191014Z",
+  "dependencies": [
+    "64fd3afd-98c0-4a21-b225-43c612d1ea82"
+  ],
+  "description": "The proof sketch (64fd3afd) proves the run-length characterisation behind `BchDistanceBound::minimum_distance_lower_bound`, but the classical Vandermonde argument connecting the witnessed consecutive-root run to an actual minimum-distance lower bound is named by no issue. This follow-up owns that Lean obligation: the BCH-bound theorem (a codeword with fewer than delta nonzero coordinates vanishing on delta-1 consecutive roots is zero, via Vandermonde nonsingularity), bound to the production surface per the sketch's model-plus-refinement conventions.\n\n## Success Criteria\n\n- [hard] REQ-01: A Lean proof of the classical BCH bound ties the witnessed run to the minimum-distance claim of the public API, following the proof sketch's binding conventions, and passes the repository proof gates.\n- [hard] REQ-02: The sketch's assumptions register is extended or discharged accordingly; no untracked assumption.",
+  "documents": [],
+  "first_ready_at": "2026-09-01T15:40:08.623191014Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "501cf341-7774-4747-8727-b7b6fac722da",
+  "labels": [
+    "component:gf2-coding",
+    "component:gf2-core",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Prove the Vandermonde step: witnessed BCH bound implies the minimum-distance claim",
+  "updated_at": "2026-09-01T16:13:05.778112563Z"
+}

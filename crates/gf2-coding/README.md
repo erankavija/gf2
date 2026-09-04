@@ -9,7 +9,7 @@ Error-correcting codes and coding-theory primitives built on [`gf2-core`](../gf2
 | Family | Module | Parameters | Notes |
 |---|---|---|---|
 | Hamming | `linear` | (2^r − 1, 2^r − r − 1) | Syndrome-table decoder |
-| BCH | `bch` | (n, k, t) over GF(2^m) | Berlekamp–Massey + Chien; extended BCH; DVB-T2 profiles validated against ETSI EN 302 755 (202/202) |
+| BCH | `bch` | field-generic construction over GF(2), GF(p), GF(p^r); k, distance bound, and t derived from the extension witness, the length (primitive or non-primitive with a derived or supplied order-n root), designed distance δ, and optional first root b | Canonical `BchSpec` construction (`bch::spec`); binary Berlekamp–Massey + Chien decoding; extended BCH; DVB-T2 outer codes as the mother code shortened on its leading message coordinates, in the standard's declared transmission layout, validated against ETSI EN 302 755 (202/202) |
 | LDPC | `ldpc` | quasi-cyclic (n, k) | Belief propagation; DVB-T2 (all 12 rates, 202/202) and 5G NR (BG1/BG2 with per-i_LS shift tables); Richardson–Urbanke encoding with file cache |
 | Product | `product` | N₁ × N₂ | Row/column iteration |
 | Generalized LDPC | `gldpc` | — | Chase–Pyndiah product decoder |
@@ -99,13 +99,14 @@ use gf2_coding::grand::OrbGrandDecoder;
 ## Acceleration
 
 - **SIMD** (default): bit-level and RREF-stage operations go through AVX2 / AVX-512 via `gf2-core`'s SIMD layer. Word-level (64×) × SIMD (4–8×) ≈ 256–512× over naïve Gaussian elimination for LDPC preprocessing.
+- **Batch BCH encoding**: `bch::encode` dispatches a batch among registered algorithm families, one of which bit-slices the batch and advances the shift register across 64 frames at a time through `gf2-kernels-simd`'s AVX2 kernels, falling back to portable kernels that write the same bits. Every family is bit-identical to the scalar reference; which one runs is a tuning-profile decision, and a process that installs no profile stays on the reference.
 - **Parallel** (opt-in, `--features parallel`): Rayon-backed batch encode/decode across frames.
 
   ```bash
   RAYON_NUM_THREADS=8 cargo bench -p gf2-coding --bench quick_parallel --features parallel
   ```
 
-- **GPU** (opt-in, `--features hip`): HIP/ROCm kernels on gfx1030 accelerate batched BCJR soft decoding, Gray-QAM demapping, LDPC belief propagation, and BCH syndrome evaluation (`BchDecoder::compute_syndromes_batch_gpu` / `decode_batch_gpu`: GPU Horner over GF(2^m), CPU Berlekamp-Massey + Chien). Requires `hipcc` and an AMD GPU; see [`../gf2-kernels-hip/`](../gf2-kernels-hip/). The HIP crate is excluded from the default workspace build.
+- **GPU** (opt-in, `--features hip`): HIP/ROCm kernels on gfx1030 accelerate batched BCJR soft decoding, Gray-QAM demapping, LDPC belief propagation, and BCH syndrome evaluation (`BinaryBchDecoder::{compute_syndromes_batch_gpu, correct_batch_gpu}`, with the legacy `BchDecoder::compute_syndromes_batch_gpu` retained for the throughput binary: GPU Horner over GF(2^m), CPU Berlekamp-Massey + Chien with verified typed outcomes). Requires `hipcc` and an AMD GPU; see [`../gf2-kernels-hip/`](../gf2-kernels-hip/). The HIP crate is excluded from the default workspace build.
 
 See [`docs/SIMD_PERFORMANCE_GUIDE.md`](docs/SIMD_PERFORMANCE_GUIDE.md), [`docs/PARALLELIZATION.md`](docs/PARALLELIZATION.md), and [`docs/LDPC_PERFORMANCE.md`](docs/LDPC_PERFORMANCE.md) for benchmarks and methodology.
 
@@ -160,7 +161,7 @@ Always use `--release`: debug mode is 10–100× slower on LDPC and simulation c
 - [`docs/PARALLELIZATION.md`](docs/PARALLELIZATION.md) — Rayon batch strategy
 - [`docs/LDPC_PERFORMANCE.md`](docs/LDPC_PERFORMANCE.md), [`docs/LDPC_VERIFICATION_TESTS.md`](docs/LDPC_VERIFICATION_TESTS.md)
 - [`docs/SDR_INTEGRATION.md`](docs/SDR_INTEGRATION.md) — using the modem from an SDR stack
-- [`docs/SYSTEMATIC_ENCODING_CONVENTION.md`](docs/SYSTEMATIC_ENCODING_CONVENTION.md) — bit-order and systematic form conventions
+- [`docs/SYSTEMATIC_ENCODING_CONVENTION.md`](docs/SYSTEMATIC_ENCODING_CONVENTION.md) — coordinate, layout, and systematic form conventions
 - `src/modem/mod.rs` — module-level modem-framework guide
 - Workspace overview: [`../../README.md`](../../README.md)
 

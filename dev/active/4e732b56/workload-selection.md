@@ -166,18 +166,20 @@ seed produces the same codewords at both worker counts.
 ## 7. Encoding algorithm families to register
 
 Decision D-04 requires the dispatch seam to carry at least one scalar
-reference and at least two registered families. Four are registered; the
-survey's evidence for each is in [findings.md](findings.md) § 6.
+reference and at least two registered families. The table below fixes each
+family's name and contract; where the survey measured a candidate of a
+family's shape, its evidence is in [findings.md](findings.md) § 6.
 
 | Family | Description | Role |
 |---|---|---|
 | `poly-remainder-scalar` | One message at a time, remainder of $x^{r} m(x)$ modulo $g(x)$ by the bit-serial LFSR recurrence. | **Required scalar reference.** Every other family is checked bit-identical against it. |
 | `table-remainder` | Consumes 32 message bits per step through four 256-entry remainder tables over packed bytes. | Registered. The strongest measured single-frame family. |
 | `bitslice-interleaved` | Transposes a batch into bit-slices and advances the LFSR across lanes, one register bit per frame. | Registered. Scales with register width rather than with $\deg g$. |
+| `clmul-fold` | Consumes 64 message bits per step of one frame: one Barrett quotient by carry-less multiplication with $\mu = \lfloor x^{r+64}/g \rfloor$, then $\lceil r/64 \rceil$ carry-less products with the generator's words. | Registered. Its per-step cost follows the carry-less multiplier width rather than the tap count or a table's index width, and it reduces one frame at a time, so a batch amortizes only its Barrett constant. The survey measured no candidate of this shape. |
 | `genmatrix-multiply` | Materializes $G$ (or $P$) once and encodes by dense GF(2) matrix product. | Registered. Amortizes only when one code encodes many batches; `genmatrix-perf` owns its materialization cost. |
 
 Registering a family fixes its name and its contract, not its selection: the
-crossover between them is `encode-dispatch`'s measurement to make, over the
+crossovers among them are `encode-dispatch`'s measurement to make, over the
 cells this document fixes.
 
 ## 8. Selected external baseline per workload
@@ -225,3 +227,78 @@ measuring against a different one, and records the amendment as a dated
 subsection naming the JIT issue that triggered it. Silently measuring a cell
 this contract does not name leaves the resulting receipt outside the
 `evidence-protocol`.
+
+### Amendment, 2026-09-01 (`177bdc85`) — differential corpus at mother length
+
+`encode-dispatch` registers the families of § 7 on the canonical construction
+model (`crates/gf2-coding/src/bch/spec.rs`, reached through
+`crates/gf2-coding/src/bch/encode.rs`). That model constructs a cyclic code
+whose length divides its splitting field's unit group, so it expresses B1, B2
+and B3 at exactly the lengths § 2 fixes, and T2S and T2N, whose lengths 7200
+and 32400 are shortened from $2^{14}-1$ and $2^{16}-1$, reach it through
+`Shortened<DvbT2MotherCode>` (the binary BCH mother under the standard's
+declared descending layout) and its systematic restriction. `97410c80`
+(*Migrate the DVB-T2 BCH consumers to the canonical model*) supplies that
+presentation, and is sequenced after this consumer.
+
+The differential equivalence evidence for the two DVB-T2 rows therefore runs
+on their **mother codes**: the primitive narrow-sense codes over the same
+mother fields and the same `prim` column at $\delta = 25$, of lengths 16383
+and 65535. § 2 already states that T2S and T2N carry their mother codes'
+generator polynomials, so the generator, its degree (168 and 192), and the
+reduction each family performs per message coefficient are the row's, and
+only $n$ and $k$ are the mother's. The witness is
+`crates/gf2-coding/tests/bch_encode_dispatch.rs`, whose row table cites this
+subsection.
+
+Two further points this amendment records rather than leaves implicit:
+
+* **Which families this consumer registers.** `poly-remainder-scalar`,
+  `table-remainder`, `bitslice-interleaved`, and `clmul-fold`, all through
+  the seam's registration surface and all under the § 7 spellings.
+  `genmatrix-multiply` belongs to `genmatrix-perf`, and § 7 fixes its name
+  and contract ahead of that.
+* **No selection is fixed here.** The conservative tuning section admits only
+  `poly-remainder-scalar`, so the crossover § 7 leaves to `encode-dispatch`
+  remains an unmeasured cell of this contract until `perf-receipts` measures
+  it and a calibrated profile carries the result.
+
+Nothing in §§ 2–8 is superseded: this subsection names where the
+conformance-shaped evidence for two rows is taken, and changes no measurement
+cell.
+
+### Amendment, 2026-09-02 (`bd0edfa2`) — W2 improvement evidence at mother length
+
+`genmatrix-perf` measures the W2 workload on the canonical construction model
+(`crates/gf2-coding/src/bch/matrix.rs`, reached through the
+`GeneratorMatrixAccess` and `ParityCheckMatrixAccess` contracts of
+`crates/gf2-coding/src/traits.rs`). Two of § 2's rows are unworkable cells for
+that consumer:
+
+* The canonical model constructs a cyclic code whose length divides its
+  splitting field's unit group, so T2S at 7200 and T2N at 32400 reach it
+  through `Shortened<DvbT2MotherCode>` (the binary BCH mother under the
+  standard's declared layout) and its systematic restriction, the
+  presentation `97410c80` (*Migrate the DVB-T2 BCH consumers to the canonical
+  model*) supplies. That issue is sequenced after this consumer.
+* `Shortened<C>` (`crates/gf2-coding/src/transform/mod.rs`) reaches those two
+  lengths generically, and its generator is a rank-derived dense matrix built
+  by row reduction at construction. That is a different materialization from
+  the one § 1's W2 workload names, so its cost answers a different question.
+
+`genmatrix-perf`'s REQ-02 improvement evidence therefore measures the two
+DVB-T2 rows on their **mother codes**: the primitive narrow-sense codes over
+the same mother fields and the same `prim` column at $\delta = 25$, of
+dimensions $16215 \times 16383$ and $65343 \times 65535$. § 2 already states
+that T2S and T2N carry their mother codes' generator polynomials, so the
+generator and its degree (168 and 192) are the row's, and only $n$ and $k$ are
+the mother's. The witness is
+`crates/gf2-coding/benches/bch_genmatrix.rs`, whose row table cites this
+subsection, and its receipt is `dev/bench_results/bd0edfa2/`.
+
+The measurement cells of §§ 2–8 are unchanged. `perf-receipts` (`fd9d5416`)
+and the external-baseline comparison of § 8 keep $7032 \times 7200$ and
+$32208 \times 32400$ as the W2 cells for the two DVB-T2 rows, at the shortened
+lengths § 2 fixes, on the presentation `97410c80` supplies. This subsection
+names where one consumer's improvement evidence is taken and adds no cell to
+§ 4.

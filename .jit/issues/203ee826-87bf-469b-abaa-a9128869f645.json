@@ -1,0 +1,48 @@
+{
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-09-02T23:06:51.935264953Z",
+  "context": {},
+  "created_at": "2026-09-02T11:05:08.672438303Z",
+  "dependencies": [
+    "444c06bc-7a0a-4e00-899a-c74815793fe9",
+    "8aa98a25-9c61-4f26-87d1-3b65f8324bd8"
+  ],
+  "description": "Give the generic `Shortened<C>` wrapper a systematic fast path so that shortening a systematic mother on information coordinates costs no dense generator, nullspace, or RREF work, encodes through the mother's encoder, and materializes matrices as the mother's kept rows and columns.\n\n## Background\n\n`crates/gf2-coding/src/transform/mod.rs` builds every `Shortened<C>` the same way: it materializes the whole mother generator as a dense `FieldMatrix`, solves the nullspace of the removed-coordinate constraints, multiplies a candidate of size nullity × kept × $k$, reduces it to RREF, and stores the resulting dense generator; `Shortened::encode` multiplies each message by that stored generator. That is the right general path for arbitrary coordinate sets and non-systematic mothers, and it is unusable for the DVB-T2 rows the epic's evidence protocol measures: the T2S mother is $16215 \\times 16383$ and the T2N mother $65343 \\times 65535$ (a 4.3 GB dense matrix), and per-message encoding becomes $O(kn)$ instead of the mother encoder's $O(k \\deg g)$. The approved design routes the DVB-T2 family through `Shortened<BinaryBchCode>` and keeps the wrappers free of BCH-specific logic, so the fast path is a generic property of the wrapper expressed through the canonical traits: when the mother reports `is_systematic()` and every removed coordinate lies in the mother's information positions $0..k$, the shortened code is the mother's code restricted to messages that are zero on the removed positions, its generator is the mother's $[\\,I_k \\mid P\\,]$ with the removed rows and columns deleted, its parity-check matrix is the mother's with the removed columns deleted, its dimension is $k - |\\text{removed}|$, and its information set is the kept message positions in order.\n\n## Success Criteria\n\n- [hard] REQ-01: Constructing `Shortened<C>` over a mother with `is_systematic() == true` whose removed coordinates all lie in $0..k$ materializes no dense generator, solves no nullspace, and reduces nothing to RREF; its cost beyond the mother's own is linear in $n$, and a test constructs the shortened DVB-T2 normal-frame code (mother $65343 \\times 65535$ over the canonical binary BCH model, 33135 removed leading message coordinates) inside the fast-tier budget.\n- [hard] REQ-02: On the fast path, `encode` delegates to the mother's encoder with zero symbols at the removed positions and deletes them from the codeword; `generator_matrix_into` writes the mother's kept rows restricted to kept columns and `parity_check_matrix_into` the mother's check matrix restricted to kept columns, each without materializing the full mother matrix in a second buffer beyond what the mother's own `*_matrix_into` writes; `is_systematic()` reports true and `information_set()` reports the kept message positions in order. Results equal the general path's on every shared fixture small enough to run both, including binary and nonbinary mothers and the word-boundary lengths 0, 1, 63, 64, and 65.\n- [hard] REQ-03: The general rank-derived path remains the behavior for every other coordinate set or mother, with unchanged coordinate maps, information-set reporting, derived dimension, and typed errors; the shared transformation conformance suite runs both paths through the same assertions, and the path taken is observable through a documented accessor rather than inferred from timing.\n- [hard] REQ-04: The approved design (`dev/active/ae03bcd0-general-bch/bch-api-design.md`, derived-code transformations) and the wrapper's rustdoc state the fast-path condition and its complexity in present tense, and `crates/gf2-coding/README.md` needs no change or is updated where it describes shortening.\n\n## Notes\n\nOwner-approved resolution (lead ruling R-39) of the gap surfaced while reviewing the generator-matrix optimization: the alternative BCH-owned shortened presentation was rejected as a parallel abstraction. `Punctured<C>` and `Extended<C>` are out of scope. The DVB-T2 cutover (`97410c80`) consumes this fast path; the canonical binary BCH mother reports `is_systematic()` once `444c06bc` lands.\n",
+  "documents": [],
+  "done_at": "2026-09-03T04:52:29.134297881Z",
+  "first_ready_at": "2026-09-02T11:05:08.672438303Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-03T04:25:19.492048087Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-03T04:49:56.268930136Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-03T04:51:39.581223214Z",
+      "updated_by": "auto:executor"
+    }
+  },
+  "id": "203ee826-87bf-469b-abaa-a9128869f645",
+  "labels": [
+    "epic:general-bch",
+    "component:gf2-coding",
+    "satisfies:REQ-05",
+    "satisfies:REQ-13",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "done",
+  "title": "Systematic fast path for the generic shortening wrapper",
+  "updated_at": "2026-09-03T04:52:29.134297881Z"
+}

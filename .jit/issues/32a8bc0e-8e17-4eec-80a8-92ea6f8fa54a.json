@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-01T16:15:03.087261215Z",
+  "dependencies": [
+    "8f68699b-d66a-45f2-a276-b8700bd4cc65"
+  ],
+  "description": "gf2_sim::parallel::{map_indices_in_order, worker_index_partition} is the repository's shared index-ordered parallel dispatch primitive (NonZeroUsize parallelism, per-worker state, one worker on the calling thread), but it lives in gf2-sim, above gf2-coding in the layer order, so the canonical BCH batch encoder (bch/encode.rs, 8f68699b) reimplemented its conventions locally. Lift the primitive into gf2-core's compute module and migrate both consumers.\n\n## Success Criteria\n\n- [hard] REQ-01: The primitive lives in gf2-core compute with its semantics and tests; gf2-sim re-exports or migrates its callers; bch/encode.rs's parallel batch path uses it.\n- [hard] REQ-02: Workspace tests pass; batch results stay byte-identical across worker counts.",
+  "documents": [],
+  "first_ready_at": "2026-09-01T16:15:03.087261215Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "32a8bc0e-8e17-4eec-80a8-92ea6f8fa54a",
+  "labels": [
+    "component:gf2-core",
+    "component:gf2-sim",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Lift the index-ordered parallel dispatch primitive from gf2-sim into gf2-core compute",
+  "updated_at": "2026-09-01T18:54:42.568408216Z"
+}

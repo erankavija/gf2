@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-01T12:13:23.251369030Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -7,11 +8,24 @@
   ],
   "description": "Implement puncturing as a generic linear-code transformation over arbitrary coordinate sets, reusing the rank/information-set machinery from shortening.\n\n## Success Criteria\n\n- [hard] REQ-01: Puncturing accepts arbitrary coordinate sets on any generic linear code, derives the resulting dimension by rank, reports the information-set structure, and preserves its coordinate map.\n- [hard] REQ-02: Property tests verify rank-derived dimensions against direct matrix computation, including dimension-dropping cases, over binary and nonbinary codes.\n",
   "documents": [],
+  "done_at": "2026-09-01T12:40:49.709307425Z",
+  "first_ready_at": "2026-09-01T11:28:35.960235770Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T12:37:38.444702534Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T12:40:37.340432777Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "5233867e-19bb-4b9f-a308-ee49c2578dde",
   "labels": [
     "type:task",
@@ -20,7 +34,7 @@
     "satisfies:REQ-05"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Generic puncturing over arbitrary coordinate sets",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T12:40:49.709307425Z"
 }

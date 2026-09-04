@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-09-01T15:13:23.183370985Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -8,11 +9,24 @@
   ],
   "description": "Migrate the gf2-coding library consumers of `ExtendedBchCode` — the GRAND, fading, and product paths — to the generic one-symbol extension of canonical BCH codes.\n\n## Background\n\n`ExtendedBchCode` is a binary, matrix-materializing wrapper coupled to the legacy `BchCode`. Behavioral pins: the extended parity-check agreement fixtures from the extension-transformation task and the existing eBCH reference-vector tests. The wrapper type itself is deleted in the final removal sweep once external consumers are migrated.\n\n## Success Criteria\n\n- [hard] REQ-01: The GRAND, fading, and product library paths consume the generic extension with unchanged observable results, including the eBCH reference-vector tests.\n- [hard] REQ-02: No gf2-coding library path constructs `ExtendedBchCode` any longer.\n",
   "documents": [],
+  "done_at": "2026-09-01T18:21:54.414121663Z",
+  "first_ready_at": "2026-09-01T15:11:07.235742630Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T18:18:27.951971363Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T18:21:39.205229791Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6d67e57e-0dac-44a4-afa8-b5c1eb33aff7",
   "labels": [
     "type:task",
@@ -21,7 +35,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Migrate library eBCH consumers to the generic extension",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T18:21:54.414121663Z"
 }

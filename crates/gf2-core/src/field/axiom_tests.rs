@@ -38,6 +38,12 @@ use crate::field::extension::{BinaryPrimeExt, ConstExt, TrivialExt};
 use crate::field::{ConstField, FiniteField, FiniteFieldExt};
 use crate::gf2m::{Gf2mElement, Gf2mElement_, Gf2mField, Gf2mField_, Gf2mWide, Gf2mWideConfig};
 use crate::gfp::Fp;
+#[cfg(test)]
+use crate::gfpn::quotient::{
+    ConstGf125, ConstGf16, ConstGf81, Gf125QuotientConfig, Gf16QuotientConfig, Gf81QuotientConfig,
+};
+#[cfg(test)]
+use crate::gfpn::{ConstQuotient, ConstQuotientConfig, QuotientElement, QuotientField};
 use crate::gfpn::{CubicExt, ExtConfig, QuadraticExt};
 
 /// Number of random test cases per axiom for the default entry points
@@ -1161,6 +1167,40 @@ where
         .boxed()
 }
 
+#[cfg(test)]
+fn quotient_strategy<F>(
+    field: &QuotientField<F>,
+    base: BoxedStrategy<F>,
+) -> BoxedStrategy<QuotientElement<F>>
+where
+    F: FieldIdentity + 'static,
+{
+    let field = field.clone();
+    let degree = field.relative_degree();
+    proptest::collection::vec(base, degree)
+        .prop_map(move |coefficients| {
+            field
+                .element(coefficients)
+                .expect("the strategy draws coefficients from the field's base")
+        })
+        .boxed()
+}
+
+/// The compile-time counterpart of [`quotient_strategy`]: the presentation
+/// comes from the type, so only a base-field strategy is needed.
+#[cfg(test)]
+fn const_quotient_strategy<const R: usize, C>(
+    base: BoxedStrategy<C::BaseField>,
+) -> BoxedStrategy<ConstQuotient<R, C>>
+where
+    C: ConstQuotientConfig<R> + 'static,
+    C::BaseField: 'static,
+{
+    proptest::collection::vec(base, R)
+        .prop_map(|coefficients| ConstQuotient::<R, C>::reduce(&coefficients))
+        .boxed()
+}
+
 // ---------------------------------------------------------------------------
 // Field-identity laws
 // ---------------------------------------------------------------------------
@@ -1674,8 +1714,12 @@ impl ExtConfig for Gf343Config {
 
 /// GF(3²) as GF(3)[u]/(u² + 1); the squares modulo 3 are {0, 1}, so −1 = 2 is
 /// a non-residue.
+///
+/// Visible to the crate because the compile-time quotient declarations in
+/// `gfpn::quotient` extend this same carrier, so both quotient forms of
+/// GF(3⁴) sit over one base type.
 #[cfg(test)]
-struct Gf9Config;
+pub(crate) struct Gf9Config;
 
 #[cfg(test)]
 impl ExtConfig for Gf9Config {
@@ -1684,7 +1728,7 @@ impl ExtConfig for Gf9Config {
 }
 
 #[cfg(test)]
-type Gf9 = QuadraticExt<Gf9Config>;
+pub(crate) type Gf9 = QuadraticExt<Gf9Config>;
 
 /// GF(3⁴) as GF(3²)[y]/(y² − (1 + u)), the relative tower presentation of the
 /// design's worked GF(3²) ⊂ GF(3⁴) example.
@@ -1698,6 +1742,104 @@ struct Gf81Config;
 impl ExtConfig for Gf81Config {
     type BaseField = Gf9;
     const NON_RESIDUE: Gf9 = QuadraticExt::new(Fp::<3>::new(1), Fp::<3>::new(1));
+}
+
+#[cfg(test)]
+fn quotient_gf16() -> QuotientField<Fp<2>> {
+    QuotientField::new(
+        Fp::<2>::new(0),
+        crate::field::FieldPoly::new(vec![
+            Fp::new(1),
+            Fp::new(1),
+            Fp::new(0),
+            Fp::new(0),
+            Fp::new(1),
+        ]),
+    )
+    .expect("x^4 + x + 1 is irreducible over GF(2)")
+}
+
+#[cfg(test)]
+fn quotient_gf125() -> QuotientField<Fp<5>> {
+    QuotientField::new(
+        Fp::<5>::new(0),
+        crate::field::FieldPoly::new(vec![Fp::new(1), Fp::new(1), Fp::new(0), Fp::new(1)]),
+    )
+    .expect("x^3 + x + 1 is irreducible over GF(5)")
+}
+
+#[cfg(test)]
+fn quotient_gf81() -> QuotientField<Gf9> {
+    let base = Gf9::zero();
+    let beta = Gf9::new(Fp::<3>::new(1), Fp::<3>::new(1));
+    QuotientField::new(
+        base,
+        crate::field::FieldPoly::new(vec![-beta, base, Gf9::one()]),
+    )
+    .expect("y^2 - (1 + u) is irreducible over GF(9)")
+}
+
+// ---------------------------------------------------------------------------
+// Runtime quotient field-law coverage
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_quotient_gf16_field_axioms() {
+    let field = quotient_gf16();
+    test_field_axioms(quotient_strategy(&field, fp_strategy::<2>()), 2);
+}
+
+#[test]
+fn test_quotient_gf125_field_axioms() {
+    let field = quotient_gf125();
+    test_field_axioms(quotient_strategy(&field, fp_strategy::<5>()), 5);
+}
+
+#[test]
+fn test_quotient_gf81_over_gf9_field_axioms() {
+    let field = quotient_gf81();
+    test_field_axioms(
+        quotient_strategy(&field, quadratic_strategy::<Gf9Config>(fp_strategy::<3>())),
+        3,
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Compile-time quotient field-law coverage
+//
+// Every registration here builds its witness through the validating
+// `ConstQuotient::extension` path, so each in-tree compile-time declaration is
+// decided by `prove_irreducible` in CI instead of resting on the type-level
+// declaration. A reducible declaration is never registered.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_const_quotient_gf16_const_field_axioms() {
+    ConstGf16::extension().expect("x^4 + x + 1 is irreducible over GF(2)");
+    test_const_field_axioms(
+        const_quotient_strategy::<4, Gf16QuotientConfig>(fp_strategy::<2>()),
+        2,
+    );
+}
+
+#[test]
+fn test_const_quotient_gf125_const_field_axioms() {
+    ConstGf125::extension().expect("x^3 + x + 1 is irreducible over GF(5)");
+    test_const_field_axioms(
+        const_quotient_strategy::<3, Gf125QuotientConfig>(fp_strategy::<5>()),
+        5,
+    );
+}
+
+#[test]
+fn test_const_quotient_gf81_over_gf9_const_field_axioms() {
+    ConstGf81::extension().expect("y^2 - (1 + u) is irreducible over GF(9)");
+    test_const_field_axioms(
+        const_quotient_strategy::<2, Gf81QuotientConfig>(quadratic_strategy::<Gf9Config>(
+            fp_strategy::<3>(),
+        )),
+        3,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -1788,6 +1930,50 @@ fn test_identity_laws_nested_tower_gf81() {
     >(fp_strategy::<3>())));
 }
 
+#[test]
+fn test_identity_laws_quotient_gf16() {
+    let field = quotient_gf16();
+    test_field_identity_laws(quotient_strategy(&field, fp_strategy::<2>()));
+}
+
+#[test]
+fn test_identity_laws_quotient_gf125() {
+    let field = quotient_gf125();
+    test_field_identity_laws(quotient_strategy(&field, fp_strategy::<5>()));
+}
+
+#[test]
+fn test_identity_laws_quotient_gf81_over_gf9() {
+    let field = quotient_gf81();
+    test_field_identity_laws(quotient_strategy(
+        &field,
+        quadratic_strategy::<Gf9Config>(fp_strategy::<3>()),
+    ));
+}
+
+/// The compile-time carrier answers `field_id_hint`, so the hint-agreement law
+/// is live here in a way the runtime quotient cannot exercise.
+#[test]
+fn test_identity_laws_const_quotient_gf16() {
+    test_field_identity_laws(const_quotient_strategy::<4, Gf16QuotientConfig>(
+        fp_strategy::<2>(),
+    ));
+}
+
+#[test]
+fn test_identity_laws_const_quotient_gf125() {
+    test_field_identity_laws(const_quotient_strategy::<3, Gf125QuotientConfig>(
+        fp_strategy::<5>(),
+    ));
+}
+
+#[test]
+fn test_identity_laws_const_quotient_gf81_over_gf9() {
+    test_field_identity_laws(const_quotient_strategy::<2, Gf81QuotientConfig>(
+        quadratic_strategy::<Gf9Config>(fp_strategy::<3>()),
+    ));
+}
+
 // ---------------------------------------------------------------------------
 // Extension law coverage
 // ---------------------------------------------------------------------------
@@ -1862,6 +2048,74 @@ fn test_extension_laws_gf9_in_gf81() {
         &ext,
         quadratic_strategy::<Gf9Config>(fp_strategy::<3>()),
         quadratic_strategy::<Gf81Config>(quadratic_strategy::<Gf9Config>(fp_strategy::<3>())),
+    );
+}
+
+#[test]
+fn test_extension_laws_fp2_in_quotient_gf16() {
+    let field = quotient_gf16();
+    test_extension_laws(
+        &field,
+        fp_strategy::<2>(),
+        quotient_strategy(&field, fp_strategy::<2>()),
+    );
+}
+
+#[test]
+fn test_extension_laws_fp5_in_quotient_gf125() {
+    let field = quotient_gf125();
+    test_extension_laws(
+        &field,
+        fp_strategy::<5>(),
+        quotient_strategy(&field, fp_strategy::<5>()),
+    );
+}
+
+#[test]
+fn test_extension_laws_gf9_in_quotient_gf81() {
+    let field = quotient_gf81();
+    test_extension_laws(
+        &field,
+        quadratic_strategy::<Gf9Config>(fp_strategy::<3>()),
+        quotient_strategy(&field, quadratic_strategy::<Gf9Config>(fp_strategy::<3>())),
+    );
+}
+
+/// GF(2) ⊂ GF(2⁴) through the compile-time quotient, over the same
+/// non-binomial modulus its runtime twin uses.
+#[test]
+fn test_extension_laws_fp2_in_const_quotient_gf16() {
+    let ext = ConstGf16::extension().expect("x^4 + x + 1 is irreducible over GF(2)");
+    test_extension_laws(
+        &ext,
+        fp_strategy::<2>(),
+        const_quotient_strategy::<4, Gf16QuotientConfig>(fp_strategy::<2>()),
+    );
+}
+
+#[test]
+fn test_extension_laws_fp5_in_const_quotient_gf125() {
+    let ext = ConstGf125::extension().expect("x^3 + x + 1 is irreducible over GF(5)");
+    test_extension_laws(
+        &ext,
+        fp_strategy::<5>(),
+        const_quotient_strategy::<3, Gf125QuotientConfig>(fp_strategy::<5>()),
+    );
+}
+
+/// GF(3²) ⊂ GF(3⁴) through the compile-time quotient: `base_degree() > 1`, so
+/// each relative Frobenius step takes two absolute ones.
+#[test]
+fn test_extension_laws_gf9_in_const_quotient_gf81() {
+    let ext = ConstGf81::extension().expect("y^2 - (1 + u) is irreducible over GF(9)");
+    assert_eq!(ext.base_degree(), 2);
+    assert_eq!(ext.ext_degree(), 4);
+    test_extension_laws(
+        &ext,
+        quadratic_strategy::<Gf9Config>(fp_strategy::<3>()),
+        const_quotient_strategy::<2, Gf81QuotientConfig>(quadratic_strategy::<Gf9Config>(
+            fp_strategy::<3>(),
+        )),
     );
 }
 

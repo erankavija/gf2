@@ -38,6 +38,10 @@ Hand-written proofs under `Gf2Core/Proofs/`:
 | `MontgomeryRoundtrip.lean` | Headline theorems on the Rust source: `redc_value_spec`, `montgomery_roundtrip`, `fp_add_correct`, `fp_mul_correct`, `p_inv_value_spec` |
 | `FpField.lean` | `CommRing` / `Field` instance for `FpVal P` via equivalence with `ZMod P.val` |
 | `ExtDefs.lean`, `ExtAlgebra.lean`, `QuadraticExtField.lean`, `CubicExtField.lean` | Tower extensions — ring and field structure |
+| `RelativeExtension.lean` | Relative extension `B ⊆ E`: embedding and restriction laws, the relative Frobenius and its fixed field, conjugate orbits, trace and norm |
+| `QuotientReduction.lean` | Quotient `B[X]/(f)`: reduction as the residue and its canonical stored vector, the ring-homomorphism laws with the production fold and Horner loops, inversion by Bezout, field structure and the reducible converse, canonical coordinates, the Frobenius period |
+| `CyclotomicClosure.lean` | The `q`-cyclotomic cosets behind `cyclotomic_cosets` and `cyclotomic_closure`: multiplication by `q` on `ZMod n` as a permutation, the orbit partition and its cycle shape, the two-pass scan and its determinism, the closure as the least closed superset of the seed set, the multiplier `p ^ d_B mod n`, and the partition's derived views |
+| `BchGenerator.lean` | The BCH generator behind `gf2-coding`'s `BchCode::construct`: the minimal polynomial of an element as the product over its conjugate orbit, the generator as the least common multiple of the coset minimal polynomials, its base-field membership and its vanishing at every requested root, its divisibility of `x^n - 1`, the degree and dimension identities, and the witnessed longest run of consecutive exponents |
 | `Gf2mDefs.lean`, `Gf2mAddition.lean`, `Gf2mMulRaw.lean`, `Gf2mInverse.lean` | GF(2^m) correctness (addition = XOR, multiplication spec, inverse via extended Euclidean) |
 
 Post-processing quirks are documented in [`WORKAROUNDS.md`](WORKAROUNDS.md).

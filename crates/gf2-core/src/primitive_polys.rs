@@ -11,6 +11,12 @@
 //! - Živković (1994). "Table of primitive binary polynomials, II", Math. Comp. 63, 301-306
 //! - FIPS PUB 186-4 (NIST Digital Signature Standard), Appendix D
 //!
+//! The generic automatic selector in [`crate::field::modulus_select`] treats
+//! this database as an adapter.  The GF(2^32) entry is the canonical Conway
+//! entry and is preferred before the other verified entries; the remaining
+//! entries retain their documented primitive or irreducibility-only
+//! guarantees below.
+//!
 //! ## Strength of the guarantee per range
 //!
 //! The database makes two distinct guarantees that callers MUST NOT confuse:
@@ -36,6 +42,9 @@
 //! exactly `2^m - 1`) must verify the polynomial independently. Widening
 //! `verify_primitive` to u128 storage is tracked as a future extension.
 
+use crate::field::extension::FieldId;
+use crate::field::modulus_select::{ModulusRegistry, RegistryEntry, RegistryProvenance};
+
 /// Database of well-known polynomials for GF(2^m) drawn from authoritative
 /// sources.
 ///
@@ -45,6 +54,48 @@
 /// [`Self::standard_u128_irreducibility_note`] for the exact per-range
 /// contract.
 pub struct PrimitivePolynomialDatabase;
+
+impl ModulusRegistry for PrimitivePolynomialDatabase {
+    fn conway(&self, base: &FieldId, degree: usize) -> Option<RegistryEntry> {
+        if !is_binary_prime_base(base) || degree != 32 {
+            return None;
+        }
+        Self::standard_u128(degree)
+            .map(|polynomial| binary_registry_entry(polynomial, degree, RegistryProvenance::Conway))
+    }
+
+    fn verified(&self, base: &FieldId, degree: usize) -> Option<RegistryEntry> {
+        if !is_binary_prime_base(base) || degree == 32 {
+            return None;
+        }
+        Self::standard_u128(degree).map(|polynomial| {
+            let provenance = if degree <= 16 {
+                RegistryProvenance::VerifiedPrimitive
+            } else {
+                RegistryProvenance::VerifiedIrreducible
+            };
+            binary_registry_entry(polynomial, degree, provenance)
+        })
+    }
+}
+
+fn is_binary_prime_base(base: &FieldId) -> bool {
+    match FieldId::prime(2) {
+        Ok(binary) => base == &binary,
+        Err(_) => false,
+    }
+}
+
+fn binary_registry_entry(
+    polynomial: u128,
+    degree: usize,
+    provenance: RegistryProvenance,
+) -> RegistryEntry {
+    let coefficients = (0..=degree)
+        .map(|index| ((polynomial >> index) & 1) as u64)
+        .collect();
+    RegistryEntry::new(coefficients, provenance)
+}
 
 /// Result of verifying a polynomial against the database.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

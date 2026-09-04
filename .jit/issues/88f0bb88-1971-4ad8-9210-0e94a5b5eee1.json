@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-01T13:15:25.528291172Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -7,12 +8,30 @@
   ],
   "description": "Migrate the binary BCH decoder to the canonical construction model and give it typed outcomes: `NoErrors`, `Corrected`, or `Uncorrectable`, where `Uncorrectable` means the bounded-distance procedure found no verified correction.\n\n## Background\n\nThe current decoder returns flipped message bits without post-correction verification or failure reporting. The hardened decoder verifies candidate corrections by syndrome recomputation, documents the exact bounded-distance guarantee including possible beyond-radius miscorrection, and splits a no-allocation status/count fast path from an opt-in diagnostic path exposing corrected codeword, message, positions, and count. Nonbinary and derived-code decoding stay outside the epic.\n\n## Success Criteria\n\n- [hard] REQ-01: The decoder consumes the canonical construction model and returns the typed outcome with candidate corrections verified before being reported as `Corrected`.\n- [hard] REQ-02: The fast path corrects into caller storage returning status/count without allocation; the opt-in diagnostic path returns full structured evidence.\n- [hard] REQ-03: The documented contract states the within-radius guarantee and beyond-radius miscorrection semantics in rustdoc, and error-injection tests cover all three outcomes at and beyond the radius.\n",
   "documents": [],
+  "done_at": "2026-09-01T15:10:58.352611658Z",
+  "first_ready_at": "2026-09-01T13:13:27.264842086Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-01T15:09:34.828308212Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T14:55:04.245041286Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-01T15:03:37.295473301Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "88f0bb88-1971-4ad8-9210-0e94a5b5eee1",
   "labels": [
     "type:task",
@@ -21,7 +40,7 @@
     "satisfies:REQ-09"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "done",
   "title": "Harden the binary decoder: canonical model, typed outcomes, verified corrections",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-09-01T15:10:58.352611658Z"
 }
