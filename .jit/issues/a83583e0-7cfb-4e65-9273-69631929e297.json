@@ -7,7 +7,98 @@
     "eaae1b56-e58c-408e-969e-9f407bf8120f"
   ],
   "description": "Predeclare and execute the argmin calibration protocol for the twelve extent fields under crate-owned tuning sections.\n\n## Background\n\nThe follow-on selector migration design at `dev/active/7d824b2f/design.md` fixes the extent-field set and explains why the standing crossover rule does not apply. Eleven extent fields belong to `gf2-core`; `permanent.gray_chunk_subsets` belongs to `gf2-algebra`. The crate-owned tuning design at `dev/active/3fa7c9d0/design.md` governs the two owner codecs, strict owner envelopes, fresh-process steering, and mechanical complete-envelope composition.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed predeclaration fixes, before measurement, each extent field's operand sizes, parameter grid, repetitions/stopping rule, argmin selection, tie handling, non-monotonicity handling, fallback, receipt schema, and deterministic seed/stream allocation.\n- [hard] REQ-02: The explicit benchmark action implements the protocol for all twelve extents: eleven core fields through `CoreTuningCodec` and `permanent.gray_chunk_subsets` only through the algebra-owned `AlgebraTuningCodec` and `gf2-algebra/permanent` section. Core never owns or serializes the permanent selector. Every timed route runs in a fresh child that installs the required strict owner or complete envelope and proves `Installed` resolution for every affecting section. The parents and composer never install; a nonzero exit, malformed result, `DefaultedMissing`, or `FrozenBeforeInstall` invalidates the run without publishing an artifact.\n- [hard] REQ-03: The receipt records full grids, timing samples and uncertainty, route observations, argmin selection and fallback, ties, non-monotone cases, contradictory evidence, clean source revision, seed, host, toolchain, and separate section-measurement versus envelope-assembly provenance. An unswept or invalid field remains omitted when the predeclared protocol justifies no measured claim.\n- [hard] REQ-04: The run atomically updates and strictly reopens authoritative core-owner and algebra-owner format-2 envelopes. Each owner's single section-level measurement provenance and receipt cover every retained measured selector in that section; values not covered by the run are explicitly superseded or omitted. The both-codec composer emits and strictly reopens the complete repository envelope with exact canonical wrapper identity for both owners.\n- [hard] REQ-05: One outer benchmark lock covers calibration and composition; no inner component locks, build side effects, reverse production dependency, partial-composite loader, or duplicate tuning authority are introduced.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "37c6914ef2221a982a9c6a46f911b5e779fd1a6d58255a1eb360d305ba917631",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../eaae1b56/premeasurement-protocol.md",
+          "resolved_path": "dev/active/eaae1b56/premeasurement-protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ed7e84893338d9c2ede97efdbe8bf108f1ca24428fa55f1541d9f3e239c0c9e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../benchmarks/tuning_profiles/2026-09-01-eaae1b56.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "77837584c7323d45f0aaee53223c2870c84bca2a2482fc8fdd99910cf7129741",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../3fa7c9d0/design.md",
+          "resolved_path": "dev/active/3fa7c9d0/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f981b75a52b1e59ebe174aa78f1f38437b953ea13c74d9e1bc647d3d6a4cf6a8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../7d824b2f/design.md",
+          "resolved_path": "dev/active/7d824b2f/design.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Authoritative extent premeasurement protocol",
+      "path": "dev/active/a83583e0/premeasurement-protocol.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7f93ba16aef30dda33c21a3e2fee82f16f663b657154b904dce5cd6cbc813b8f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c0cb1f00c67275e08f6c8e2cc30e610273532db6eab3a1bb6ef90edfdbdee54c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../220cab0b/design.md",
+          "resolved_path": "dev/active/220cab0b/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "37c6914ef2221a982a9c6a46f911b5e779fd1a6d58255a1eb360d305ba917631",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../eaae1b56/premeasurement-protocol.md",
+          "resolved_path": "dev/active/eaae1b56/premeasurement-protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ed7e84893338d9c2ede97efdbe8bf108f1ca24428fa55f1541d9f3e239c0c9e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../benchmarks/tuning_profiles/2026-09-01-eaae1b56.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "96bacd9e5e4b0c2d32e79a5636ed2eb61d1db4c0fa5b98ce06efb1796a14126c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../a83583e0/premeasurement-protocol.md",
+          "resolved_path": "dev/active/a83583e0/premeasurement-protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Governing selector design with extent amendment",
+      "path": "dev/active/7d824b2f/design.md"
+    }
+  ],
   "first_ready_at": "2026-08-22T21:27:08.444306766Z",
   "gates_required": [
     "cargo-ci",
@@ -42,5 +133,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-09-04T23:14:29.300615280Z"
+  "updated_at": "2026-09-04T23:41:43.774455565Z"
 }
