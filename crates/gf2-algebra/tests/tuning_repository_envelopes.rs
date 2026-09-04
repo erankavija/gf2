@@ -11,9 +11,9 @@ const ALGEBRA_OWNER: &str = include_str!("../data/tuning-profiles/conservative.j
 const COMPLETE: &str =
     include_str!("../../../dev/reference_data/tuning-profiles/conservative.json");
 const MEASURED_CORE_OWNER: &str =
-    include_str!("../../gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json");
+    include_str!("../../gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json");
 const MEASURED_COMPLETE: &str = include_str!(
-    "../../../dev/reference_data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json"
+    "../../../dev/reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
 );
 
 fn core_registry() -> ProfileRegistry {

@@ -896,3 +896,33 @@ fully comparable tie-only/no-win or non-monotone outcome is a measured outcome
 that retains the conservative default. An unreachable arm or absent comparison
 instead makes the field uncalibrated and omitted; the authoritative campaign
 does not publish. Neither dispatcher represents the other.
+
+## Amendment A8 (2026-09-05, measured issue `eaae1b56`)
+
+The campaign declared by
+[`eaae1b56/premeasurement-protocol.md`](../eaae1b56/premeasurement-protocol.md)
+is executed. Its result and reproducible evidence are recorded in
+[`2026-09-01-eaae1b56.md`](../../benchmarks/tuning_profiles/2026-09-01-eaae1b56.md).
+The receipt's basename is the predeclared artifact path; its provenance records
+the actual UTC measurement time. The core owner is
+`crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json`.
+Its section measurement covers the pilot and follow-on sweepable selectors in
+one campaign. The codec-derived complement is omitted and resolves to the
+conservative declarations. Fully comparable no-win and non-monotone outcomes
+retain their defaults under this campaign's measured provenance, as Amendment
+A7 requires; they are distinct from uncalibrated omissions.
+
+Every probe and timed execution strictly reopens and installs its forced core
+owner in a fresh child, verifies `Installed`, and checks route and result
+equivalence. Effective M4RM and GEMM observations report the completed
+production branch, including capability fallback. The parent and composer do
+not install. The complete repository envelope preserves the core wrapper and
+the inherited `gf2-algebra/permanent` wrapper byte-for-byte.
+
+The authoritative measurement-behavior token is `tuning-calibration-v3`.
+Publication removes the named prepublication v2 acceptance and cuts current
+readers and baked citations over to the v3 owner. The 389 owner, complete
+envelope, receipt, raw log, and manifest remain immutable historical evidence
+at their committed paths. Their bytes are not a current-codec compatibility
+alias. DEC-G's baked bit-backend threshold is supported by this campaign's
+receipt; no runtime-versus-baked classification changes.

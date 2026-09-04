@@ -1,9 +1,9 @@
 //! Routing witnesses for the baked bit-backend threshold.
 //!
 //! These tests assert the four-word boundary recorded by
-//! `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md` in the measured
+//! `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` in the measured
 //! format-2 core owner
-//! `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`.
+//! `crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json`.
 //! They are compiled only under the declared cfg `gf2_tuning_baked`
 //! (`RUSTFLAGS="--cfg gf2_tuning_baked"`); the default build's conservative
 //! boundary is asserted by `backend_selection.rs` and friends.
