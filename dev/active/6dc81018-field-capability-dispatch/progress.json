@@ -1,8 +1,8 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 26,
-  "wave_notes": "Wave 26 is complete. The cumulative 16-selector campaign, authoritative core owner, complete envelope, raw log, checksum manifest, receipt, current-reader cutover, and v3-only schema acceptance are published. Cargo-ci, code-review, and doc-review pass; the six-tier lead review passes after the attribution-only guided retry.",
+  "current_wave": 27,
+  "wave_notes": "Wave 27 begins with a83583e0 claimed. High-tier preflight found that implementation and measurement require a committed exact predeclaration, especially for three compile-time baked extents and the new algebra-owned producer. The design phase must bind all twelve fields, cumulative owner evidence, argmin semantics, route witnesses, and the project campaign-execution-logging invariant before implementation.",
   "open_escalations": [],
   "waves": [
     {
@@ -775,7 +775,8 @@
           "title": "Design and implement the extent-sweep protocol",
           "classification": "implementation",
           "model": "gpt-6-astra",
-          "status": "pending"
+          "status": "in_progress",
+          "notes": "Claimed by the execution lead after eaae1b56 closed. A read-only gpt-6-astra preflight reports GO for design/predeclaration and NO-GO for implementation or measurement until that protocol is committed and reviewed."
         }
       ],
       "note": "Serialized measurement wave; starts only after the preceding issue is done."
@@ -1217,6 +1218,12 @@
       "issue": "eaae1b56",
       "date": "2026-09-05",
       "decision": "PASS. Tier 1: cargo-ci, code-review, and doc-review all pass. Tier 1.5: prior F1 literal-tag attribution is closed at 5182356e and 6b076316; no regression. Tier 2: REQ-01 through REQ-04 are met by the fresh-child harness, complete recorded evidence, strict core-owner publication, and single-lock composition. Tier 2.5: zero stale forward-looking eaae/current-v3 matches. Tier 2.75: the linked governing design's open-question text is historical deliberation resolved by DEC-S, the executed classification amendments recorded at 7d824b2f closure, and DEC-W; the protocol has no deferred item. Tier 3: owner boundaries, canonical wrappers, current readers, immutable historical evidence, and documentation are coherent; no scope or citation defect remains."
+    },
+    {
+      "kind": "owner-direction",
+      "issue": "6dc81018/a83583e0",
+      "date": "2026-09-05",
+      "decision": "The invoker directed a project invariant requiring campaign execution output to remain visible through a durable file rather than only through a tailed console stream. Registry-first invariant campaign-execution-logging is enforced by code-review and projected into AGENTS.md before the a83583e0 campaign design."
     }
   ],
   "rework_counts": {
