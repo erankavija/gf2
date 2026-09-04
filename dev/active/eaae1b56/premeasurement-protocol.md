@@ -306,7 +306,7 @@ noncanonical evidence fails closed.
 
 Core owner and complete envelope reopen strictly and canonically. The
 complete envelope's `gf2-core/selectors` raw wrapper is byte-identical to the
-owner wrapper. Its typed and raw `gf2-algebra/selectors` section is byte-identical
+owner wrapper. Its typed and raw `gf2-algebra/permanent` section is byte-identical
 to `crates/gf2-algebra/data/tuning-profiles/conservative.json`. The composer
 changes assembly provenance only and never installs. The receipt records owner
 and complete wrapper/content hashes separately, source revision and clean
@@ -447,6 +447,10 @@ The source-path boundary is exact:
   `crates/gf2-core/benches/tuning_calibration.rs`,
   `crates/gf2-core/Cargo.toml`, and
   `crates/gf2-core/src/tuning/mod.rs`;
+- harness-schema acceptance witness, added by the invoker's 2026-09-05
+  publication-boundary correction after the dedicated migration test was
+  omitted from this list:
+  `crates/gf2-core/tests/tuning_envelope_v2.rs`;
 - effective M4RM evidence only:
   `crates/gf2-core/src/alg/m4rm.rs` and
   `crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs`;

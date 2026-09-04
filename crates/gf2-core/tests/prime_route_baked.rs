@@ -6,8 +6,8 @@
 //! boundaries are asserted by `prime_route_reporter.rs`.
 //!
 //! The measured format-2 core owner at
-//! `crates/gf2-core/data/tuning-profiles/gf2-389aa4de-20260901-040229-2742533.json`
-//! cites `dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md` and omits
+//! `crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json`
+//! cites `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md` and omits
 //! `prime_route`. These baked fields therefore retain their conservative
 //! defaults, as `dev/active/3fa7c9d0/design.md` §7.1 requires.
 //!
@@ -33,7 +33,10 @@ const K: usize = 64;
 
 /// Returns the defaults resolved from the measured owner's omission.
 fn measured_default_section() -> CoreTuning {
-    measured_format2::omitted_family_section("prime_route")
+    measured_format2::omitted_fields_section(
+        "prime_route",
+        &["f32_min_prime", "f32_min_cols", "f64_min_cols"],
+    )
 }
 
 #[test]
