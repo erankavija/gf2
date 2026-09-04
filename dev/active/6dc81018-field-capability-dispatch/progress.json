@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 26,
-  "wave_notes": "Wave 26 publication is committed and cargo-ci passes. The invoker reset the retry counter and approved the non-destructive literal-tag attribution repair. Exact tagged clones of the premeasurement-harness and measured-publication patches are reachable through two ours merges; the repository tree hash is unchanged. Guided retry 1 now reruns code-review and doc-review.",
+  "wave_notes": "Wave 26 is complete. The cumulative 16-selector campaign, authoritative core owner, complete envelope, raw log, checksum manifest, receipt, current-reader cutover, and v3-only schema acceptance are published. Cargo-ci, code-review, and doc-review pass; the six-tier lead review passes after the attribution-only guided retry.",
   "open_escalations": [],
   "waves": [
     {
@@ -632,8 +632,8 @@
           "title": "Extend the calibration sweep to the follow-on threshold fields",
           "classification": "implementation",
           "model": "opus",
-          "status": "in_progress",
-          "notes": "The invoker approved the effective GEMM observer and protocol boundary correction. The correction is applied on main; merged-tree CI precedes a fresh clean build, untimed probes, solo locked calibration, independent evidence validation, and atomic measured-owner publication."
+          "status": "done",
+          "notes": "Closed after a validated clean-source full-host campaign: 306 probes, 1,530 timed children, 7,650 windows, and 16 measured selectors with a 21-field omission complement. Cargo-ci passes 5,752 tests; code-review and doc-review pass with zero findings. Prior attribution finding F1 is closed by exact tagged patch clones whose ours merges leave the repository tree unchanged. Tier 2 criteria REQ-01 through REQ-04 are met; stale-narrative sweep is empty; design open-question matches map to settled DEC-S, the executed classification amendments, and DEC-W; holistic review found no issue."
         }
       ]
     },
@@ -1211,6 +1211,12 @@
       "issue": "eaae1b56",
       "date": "2026-09-05",
       "decision": "The invoker reset the retry counter and approved lead takeover for the validated attribution-only repair. Commits 5182356e and 6b076316 clone the exact cb08ca92 harness and 160bdcfa publication trees and parents with literal jit:eaae1b56 subjects; ours merges 3bda76d4 and 41656588 make them reachable without changing the repository tree or rewriting main history. This is guided retry 1 after the reset."
+    },
+    {
+      "kind": "lead-review",
+      "issue": "eaae1b56",
+      "date": "2026-09-05",
+      "decision": "PASS. Tier 1: cargo-ci, code-review, and doc-review all pass. Tier 1.5: prior F1 literal-tag attribution is closed at 5182356e and 6b076316; no regression. Tier 2: REQ-01 through REQ-04 are met by the fresh-child harness, complete recorded evidence, strict core-owner publication, and single-lock composition. Tier 2.5: zero stale forward-looking eaae/current-v3 matches. Tier 2.75: the linked governing design's open-question text is historical deliberation resolved by DEC-S, the executed classification amendments recorded at 7d824b2f closure, and DEC-W; the protocol has no deferred item. Tier 3: owner boundaries, canonical wrappers, current readers, immutable historical evidence, and documentation are coherent; no scope or citation defect remains."
     }
   ],
   "rework_counts": {
