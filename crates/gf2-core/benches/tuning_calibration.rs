@@ -40,7 +40,9 @@ use gf2_core::alg::m4rm::{
     m4rm_tiled_effective_observation, reset_m4rm_tiled_effective_observation,
     M4rmTiledEffectiveObservation,
 };
-use gf2_core::compute::field::{last_effective_soa_chunk, reset_last_effective_soa_chunk};
+use gf2_core::compute::field::{
+    last_effective_soa_chunk, reset_last_effective_soa_chunk, run_in_dedicated_parallel_pool,
+};
 use gf2_core::compute::field::{soa_parallel_route, SoaParallelRoute};
 use gf2_core::field::inverse::{inv_route, InvRoute};
 use gf2_core::field::matrix::{
@@ -1532,14 +1534,6 @@ fn bank_seed(field: CalibratedField, size: usize, role: u64, bank: usize) -> u64
 /// Partner bank for every binary fixture, predeclared as `b + 3 (mod 8)`.
 fn paired_bank(bank: usize) -> usize {
     (bank + 3) & (BIT_FIXTURES - 1)
-}
-
-fn run_in_four_thread_pool<R: Send>(f: impl FnOnce() -> R + Send) -> R {
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(4)
-        .build()
-        .expect("the predeclared four-thread calibration pool builds")
-        .install(f)
 }
 
 fn bit_matrix_from_words(rows: usize, cols: usize, seed: u64) -> BitMatrix {
@@ -3586,7 +3580,7 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
         })
     };
     if spec.field == CalibratedField::SoaParallelMinLen {
-        run_in_four_thread_pool(|| finish(&mut fixture))
+        run_in_dedicated_parallel_pool(4, || finish(&mut fixture))
     } else {
         finish(&mut fixture)
     }
