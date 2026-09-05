@@ -1566,6 +1566,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tuning-campaign-support"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "typenum"
 version = "1.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
