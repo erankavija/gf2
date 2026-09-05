@@ -486,7 +486,7 @@ fn selector_changes_without_reassembly_fail_the_content_digest() {
 
 #[test]
 fn calibrated_core_format_two_accepts_current_harness_and_rejects_others() {
-    assert_eq!(CoreTuningCodec::HARNESS_SCHEMA, "tuning-calibration-v3");
+    assert_eq!(CoreTuningCodec::HARNESS_SCHEMA, "tuning-calibration-v4");
     let registry = core_registry();
     let measurement = calibrated_core_measurement();
     let prepared = PreparedEnvelope::compiled(profile_id(), compiled_provenance())
@@ -512,10 +512,16 @@ fn calibrated_core_format_two_accepts_current_harness_and_rejects_others() {
         &measurement
     );
 
+    // The currently published v3 owner remains readable only across the named
+    // a83583e0 prepublication boundary. Publication of the v4 owner removes
+    // this assertion together with the temporary codec acceptance.
+    let prepublication = json.replacen(CoreTuningCodec::HARNESS_SCHEMA, "tuning-calibration-v3", 1);
+    let prepublication = recompute_content_digest(&prepublication);
+    assert!(registry.from_json(&prepublication).is_ok());
+
     for rejected in [
         "tuning-calibration-v1",
         "tuning-calibration-v2",
-        "tuning-calibration-v4",
         "unknown-core-harness-v9",
     ] {
         let changed = json.replacen(CoreTuningCodec::HARNESS_SCHEMA, rejected, 1);

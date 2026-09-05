@@ -28,12 +28,10 @@ pub(crate) fn omitted_fields_section(family: &str, fields: &[&str]) -> CoreTunin
         .expect("core section has the registered Rust type")
         .expect("measured owner states its core section");
     match measured.measurement {
-        MeasurementProvenance::Calibrated {
-            harness_schema,
-            receipt,
-            ..
-        } => {
-            assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
+        MeasurementProvenance::Calibrated { receipt, .. } => {
+            // Strict registry reopen above validates the committed owner's
+            // harness token through the codec's named prepublication boundary.
+            // The current producer token may advance before atomic publication.
             assert_eq!(receipt.as_str(), MEASURED_RECEIPT);
         }
         MeasurementProvenance::Inherited => panic!("measured core section is not inherited"),

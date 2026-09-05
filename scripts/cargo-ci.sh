@@ -185,8 +185,8 @@ run_step test   "$BUDGET" --test cargo nextest run --workspace $FEAT_FLAGS --car
 # format-2 authority, process lifecycle, and calibration producer unit surface
 # explicitly reachable in the fast tier. These are ordinary fast-tier tests: no
 # ignored test or benchmark/calibration action is selected.
-run_step tuning-profile-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --no-run
-run_step tuning-profile-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness
+run_step tuning-profile-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --test tuning_conservative_cfg --test tuning_extent_runtime --no-run
+run_step tuning-profile-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --test tuning_conservative_cfg --test tuning_extent_runtime
 run_step tuning-lifecycle-cargo "$BUDGET" cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
 
 # Add profile I/O to the same host-appropriate feature selection used by the
@@ -201,7 +201,7 @@ run_step fmt    "$BUDGET" cargo fmt --all -- --check
 # target here. The frozen selector non-regression harness is excluded
 # deliberately: its self-tests bracket the default configuration's threshold
 # and are expected to report a re-pinning need under the baked cfg.
-run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "$BUDGET" cargo test -p gf2-core --profile ci-test --features simd,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable
+run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "$BUDGET" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable
 
 # Format-2 artifacts are opt-in I/O surfaces rather than ordinary feature
 # defaults. Validate each explicit owner and the mechanically composed complete
