@@ -6,6 +6,8 @@
 use crate::tuning;
 use std::fmt;
 use std::ops::Mul;
+#[cfg(any(test, feature = "test-support"))]
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Conservative default definition for `bit_matrix.matvec_simd_min_words`.
 ///
@@ -68,6 +70,68 @@ pub enum TransposeRoute {
         /// Number of 64×64 blocks in each outer-loop edge.
         macro_tile_blocks: usize,
     },
+}
+
+/// Test-only observation of the route completed by [`BitMatrix::transpose`].
+///
+/// This records executed work after the transpose and its tail masking finish;
+/// it does not select a route. It is intended for one public operation in a
+/// fresh child process. Concurrent transposes have no attribution guarantee.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TransposeEffectiveObservation {
+    /// No transpose has completed since the observation was reset.
+    None,
+    /// The direct two-level block loop completed.
+    Simple,
+    /// The macro-tiled loop completed with this consumed tile extent.
+    MacroTiled {
+        /// Number of 64×64 blocks consumed along each macro-tile edge.
+        macro_tile_blocks: usize,
+    },
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static TRANSPOSE_EFFECTIVE_KIND: AtomicUsize = AtomicUsize::new(0);
+#[cfg(any(test, feature = "test-support"))]
+static TRANSPOSE_EFFECTIVE_MACRO_TILE_BLOCKS: AtomicUsize = AtomicUsize::new(0);
+
+#[cfg(any(test, feature = "test-support"))]
+fn record_transpose_effective_observation(route: TransposeRoute) {
+    match route {
+        TransposeRoute::Simple => TRANSPOSE_EFFECTIVE_KIND.store(1, Ordering::Release),
+        TransposeRoute::MacroTiled { macro_tile_blocks } => {
+            TRANSPOSE_EFFECTIVE_MACRO_TILE_BLOCKS.store(macro_tile_blocks, Ordering::Relaxed);
+            TRANSPOSE_EFFECTIVE_KIND.store(2, Ordering::Release);
+        }
+    }
+}
+
+/// Resets the test-only completed-transpose observation.
+///
+/// This changes evidence instrumentation only. It does not reset tuning or
+/// capability detection.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_transpose_effective_observation() {
+    TRANSPOSE_EFFECTIVE_MACRO_TILE_BLOCKS.store(0, Ordering::Relaxed);
+    TRANSPOSE_EFFECTIVE_KIND.store(0, Ordering::Release);
+}
+
+/// Reads the route completed by the most recent observed transpose.
+///
+/// Call this after exactly one public [`BitMatrix::transpose`] following
+/// [`reset_transpose_effective_observation`].
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn transpose_effective_observation() -> TransposeEffectiveObservation {
+    match TRANSPOSE_EFFECTIVE_KIND.load(Ordering::Acquire) {
+        0 => TransposeEffectiveObservation::None,
+        1 => TransposeEffectiveObservation::Simple,
+        2 => TransposeEffectiveObservation::MacroTiled {
+            macro_tile_blocks: TRANSPOSE_EFFECTIVE_MACRO_TILE_BLOCKS.load(Ordering::Relaxed),
+        },
+        value => panic!("invalid effective transpose observation {value}"),
+    }
 }
 
 impl TransposeRoute {
@@ -1216,7 +1280,8 @@ impl BitMatrix {
         let n_row_blocks = self.rows.div_ceil(64);
         let n_col_blocks = self.cols.div_ceil(64);
 
-        match transpose_route(n_row_blocks, n_col_blocks) {
+        let route = transpose_route(n_row_blocks, n_col_blocks);
+        match route {
             TransposeRoute::Simple => {
                 Self::transpose_inner_loop(
                     &self.data,
@@ -1268,6 +1333,8 @@ impl BitMatrix {
         // last `u64` of each output row; those must be zero per the
         // tail-mask invariant.
         out.mask_padding_bits();
+        #[cfg(any(test, feature = "test-support"))]
+        record_transpose_effective_observation(route);
         out
     }
 

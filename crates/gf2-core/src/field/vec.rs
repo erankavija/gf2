@@ -41,6 +41,17 @@ const DOT_CHUNK_LEN_SELECTED: usize = DOT_CHUNK_LEN;
 #[cfg(not(feature = "simd"))]
 const DOT_CHUNK_LEN_SELECTED: usize = DOT_CHUNK_LEN;
 
+/// Returns the compile-time dot-product chunk selected by this build.
+///
+/// Calibration evidence uses this test-support seam to distinguish the
+/// ordinary or baked compiled constant from an installed tuning candidate.
+#[cfg(any(test, feature = "test-support"))]
+#[doc(hidden)]
+#[must_use]
+pub const fn selected_dot_chunk_len() -> usize {
+    DOT_CHUNK_LEN_SELECTED
+}
+
 /// Widest chunk any SIMD dot-product walk has filled since the last reset.
 #[cfg(any(test, feature = "test-support"))]
 static MAX_EFFECTIVE_DOT_CHUNK_LEN: AtomicUsize = AtomicUsize::new(0);

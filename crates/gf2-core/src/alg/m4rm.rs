@@ -29,7 +29,7 @@ use crate::kernels::ops::{resolve_xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
 use crate::tuning::M4rmSelectors;
 #[cfg(any(test, feature = "test-support"))]
-use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 
 /// Column-word tile width for the V2 ILP Gray-table builder.
 ///
@@ -128,6 +128,19 @@ pub enum M4rmScheduleTier {
     Wide,
 }
 
+/// The selector band that supplied an M4RM panel schedule.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M4rmTableBand {
+    /// The small-output heuristic, which does not consume a byte budget.
+    SmallN,
+    /// The narrow wide-tier band consuming `default_table_bytes`.
+    Default,
+    /// The middle wide-tier band consuming `mid_table_bytes`.
+    Mid,
+    /// The widest band consuming `wide_table_bytes`.
+    Wide,
+}
+
 /// Test-only observation of the effective M4RM C-update selected by [`multiply`].
 ///
 /// This closed observation is evidence instrumentation, not a route selector or
@@ -185,11 +198,183 @@ pub fn m4rm_tiled_effective_observation() -> M4rmTiledEffectiveObservation {
     }
 }
 
+/// One completed production M4RM schedule, including every consumed extent.
+///
+/// The value is execution evidence published after [`multiply`] returns from
+/// its selected C-update. It does not participate in schedule selection.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M4rmScheduleExecution {
+    tier: M4rmScheduleTier,
+    table_band: M4rmTableBand,
+    table_bytes: Option<usize>,
+    panel_width_cap: usize,
+    panel_width: usize,
+    tiled_stride_admitted: bool,
+    c_update: M4rmTiledEffectiveObservation,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl M4rmScheduleExecution {
+    /// Returns the executed schedule tier.
+    #[must_use]
+    pub fn tier(self) -> M4rmScheduleTier {
+        self.tier
+    }
+
+    /// Returns the selector band that supplied the schedule.
+    #[must_use]
+    pub fn table_band(self) -> M4rmTableBand {
+        self.table_band
+    }
+
+    /// Returns the consumed table byte budget, or `None` for `SmallN`.
+    #[must_use]
+    pub fn table_bytes(self) -> Option<usize> {
+        self.table_bytes
+    }
+
+    /// Returns the active panel-width cap for the selected tier.
+    #[must_use]
+    pub fn panel_width_cap(self) -> usize {
+        self.panel_width_cap
+    }
+
+    /// Returns the panel width consumed by the completed multiplication.
+    #[must_use]
+    pub fn panel_width(self) -> usize {
+        self.panel_width
+    }
+
+    /// Returns whether the output stride admitted the register-tiled update.
+    #[must_use]
+    pub fn tiled_stride_admitted(self) -> bool {
+        self.tiled_stride_admitted
+    }
+
+    /// Returns the C-update implementation used by the completed operation.
+    #[must_use]
+    pub fn c_update(self) -> M4rmTiledEffectiveObservation {
+        self.c_update
+    }
+}
+
+/// Test-only observation of a fully completed production M4RM schedule.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M4rmEffectiveScheduleObservation {
+    /// No multiplication has completed since the observation was reset.
+    None,
+    /// One multiplication completed with the enclosed effective schedule.
+    Completed(M4rmScheduleExecution),
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static M4RM_EFFECTIVE_SCHEDULE_STATE: AtomicU8 = AtomicU8::new(0);
+#[cfg(any(test, feature = "test-support"))]
+static M4RM_EFFECTIVE_SCHEDULE_BAND: AtomicU8 = AtomicU8::new(0);
+#[cfg(any(test, feature = "test-support"))]
+static M4RM_EFFECTIVE_SCHEDULE_TABLE_BYTES: AtomicUsize = AtomicUsize::new(0);
+#[cfg(any(test, feature = "test-support"))]
+static M4RM_EFFECTIVE_SCHEDULE_PANEL_CAP: AtomicUsize = AtomicUsize::new(0);
+#[cfg(any(test, feature = "test-support"))]
+static M4RM_EFFECTIVE_SCHEDULE_PANEL_WIDTH: AtomicUsize = AtomicUsize::new(0);
+#[cfg(any(test, feature = "test-support"))]
+static M4RM_EFFECTIVE_SCHEDULE_TILED_ADMITTED: AtomicU8 = AtomicU8::new(0);
+#[cfg(any(test, feature = "test-support"))]
+static M4RM_EFFECTIVE_SCHEDULE_C_UPDATE: AtomicU8 = AtomicU8::new(0);
+
+#[cfg(any(test, feature = "test-support"))]
+fn record_m4rm_effective_schedule(
+    route: M4rmScheduleRoute,
+    c_update: M4rmTiledEffectiveObservation,
+) {
+    let band = match route.table_band {
+        M4rmTableBand::SmallN => 1,
+        M4rmTableBand::Default => 2,
+        M4rmTableBand::Mid => 3,
+        M4rmTableBand::Wide => 4,
+    };
+    let c_update = match c_update {
+        M4rmTiledEffectiveObservation::None => 0,
+        M4rmTiledEffectiveObservation::RowWise => 1,
+        M4rmTiledEffectiveObservation::RegisterTiled => 2,
+    };
+    M4RM_EFFECTIVE_SCHEDULE_BAND.store(band, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_TABLE_BYTES.store(route.table_bytes.unwrap_or(0), Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_PANEL_CAP.store(route.panel_width_cap, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_PANEL_WIDTH.store(route.panel_width, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_TILED_ADMITTED
+        .store(u8::from(route.tiled_stride_admitted), Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_C_UPDATE.store(c_update, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_STATE.store(1, Ordering::Release);
+}
+
+/// Resets the test-only completed-schedule observation.
+///
+/// This changes evidence instrumentation only. It does not reset tuning or
+/// capability detection. Reset the C-update observation at the same time so a
+/// later completed schedule cannot inherit evidence from an earlier call.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_m4rm_effective_schedule_observation() {
+    M4RM_EFFECTIVE_SCHEDULE_STATE.store(0, Ordering::Release);
+    M4RM_EFFECTIVE_SCHEDULE_BAND.store(0, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_TABLE_BYTES.store(0, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_PANEL_CAP.store(0, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_PANEL_WIDTH.store(0, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_TILED_ADMITTED.store(0, Ordering::Relaxed);
+    M4RM_EFFECTIVE_SCHEDULE_C_UPDATE.store(0, Ordering::Relaxed);
+    reset_m4rm_tiled_effective_observation();
+}
+
+/// Reads the effective schedule of the most recent completed multiplication.
+///
+/// Call this after exactly one [`multiply`] following
+/// [`reset_m4rm_effective_schedule_observation`]. Concurrent multiplications
+/// intentionally have no attribution guarantee.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn m4rm_effective_schedule_observation() -> M4rmEffectiveScheduleObservation {
+    if M4RM_EFFECTIVE_SCHEDULE_STATE.load(Ordering::Acquire) == 0 {
+        return M4rmEffectiveScheduleObservation::None;
+    }
+    let table_band = match M4RM_EFFECTIVE_SCHEDULE_BAND.load(Ordering::Relaxed) {
+        1 => M4rmTableBand::SmallN,
+        2 => M4rmTableBand::Default,
+        3 => M4rmTableBand::Mid,
+        4 => M4rmTableBand::Wide,
+        value => panic!("invalid effective M4RM table-band observation {value}"),
+    };
+    let c_update = match M4RM_EFFECTIVE_SCHEDULE_C_UPDATE.load(Ordering::Relaxed) {
+        0 => M4rmTiledEffectiveObservation::None,
+        1 => M4rmTiledEffectiveObservation::RowWise,
+        2 => M4rmTiledEffectiveObservation::RegisterTiled,
+        value => panic!("invalid effective M4RM C-update observation {value}"),
+    };
+    M4rmEffectiveScheduleObservation::Completed(M4rmScheduleExecution {
+        tier: if table_band == M4rmTableBand::SmallN {
+            M4rmScheduleTier::SmallN
+        } else {
+            M4rmScheduleTier::Wide
+        },
+        table_band,
+        table_bytes: (table_band != M4rmTableBand::SmallN)
+            .then(|| M4RM_EFFECTIVE_SCHEDULE_TABLE_BYTES.load(Ordering::Relaxed)),
+        panel_width_cap: M4RM_EFFECTIVE_SCHEDULE_PANEL_CAP.load(Ordering::Relaxed),
+        panel_width: M4RM_EFFECTIVE_SCHEDULE_PANEL_WIDTH.load(Ordering::Relaxed),
+        tiled_stride_admitted: M4RM_EFFECTIVE_SCHEDULE_TILED_ADMITTED.load(Ordering::Relaxed) != 0,
+        c_update,
+    })
+}
+
 /// The tier, Gray-code panel width, and register-tiled stride gate selected for
 /// one M4RM multiplication.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct M4rmScheduleRoute {
     tier: M4rmScheduleTier,
+    table_band: M4rmTableBand,
+    table_bytes: Option<usize>,
+    panel_width_cap: usize,
     panel_width: usize,
     tiled_stride_admitted: bool,
 }
@@ -199,6 +384,24 @@ impl M4rmScheduleRoute {
     #[must_use]
     pub fn tier(&self) -> M4rmScheduleTier {
         self.tier
+    }
+
+    /// Returns the selector band that supplies this schedule.
+    #[must_use]
+    pub fn table_band(&self) -> M4rmTableBand {
+        self.table_band
+    }
+
+    /// Returns the selected table byte budget, or `None` for `SmallN`.
+    #[must_use]
+    pub fn table_bytes(&self) -> Option<usize> {
+        self.table_bytes
+    }
+
+    /// Returns the active panel-width cap for the selected tier.
+    #[must_use]
+    pub fn panel_width_cap(&self) -> usize {
+        self.panel_width_cap
     }
 
     /// Returns the selected Gray-code panel width in bits (`k_block`).
@@ -237,12 +440,50 @@ pub fn m4rm_schedule_route(k: usize, n: usize) -> M4rmScheduleRoute {
     m4rm_schedule_route_resolved(crate::tuning::active().m4rm(), k, n)
 }
 
+/// Reports the production M4RM schedule for an explicit selector family.
+///
+/// Calibration harnesses use this seam to validate a candidate before it is
+/// installed globally. It calls the same pure selector logic as [`multiply`]
+/// and [`m4rm_schedule_route`].
+#[cfg(any(test, feature = "test-support"))]
+#[doc(hidden)]
+#[must_use]
+pub fn m4rm_schedule_route_for_selectors(
+    m4rm: &M4rmSelectors,
+    k: usize,
+    n: usize,
+) -> M4rmScheduleRoute {
+    m4rm_schedule_route_resolved(m4rm, k, n)
+}
+
 /// Reports the M4RM schedule against an already-resolved selector family.
 fn m4rm_schedule_route_resolved(m4rm: &M4rmSelectors, k: usize, n: usize) -> M4rmScheduleRoute {
     let stride_words = row_stride_words(n);
+    let tier = schedule_tier(m4rm.wide_tier_min_stride_words(), stride_words);
+    let (table_band, table_bytes, panel_width_cap, panel_width) = match tier {
+        M4rmScheduleTier::SmallN => (
+            M4rmTableBand::SmallN,
+            None,
+            m4rm.small_n_max_k(),
+            choose_k_block_small_n(m4rm.small_n_max_k(), k, n),
+        ),
+        M4rmScheduleTier::Wide => {
+            let band = production_table_band(stride_words);
+            let bytes = production_table_budget(m4rm, stride_words);
+            (
+                band,
+                Some(bytes),
+                m4rm.wide_max_k(),
+                choose_k_block_with_limit(k, n, bytes, m4rm.wide_max_k()),
+            )
+        }
+    };
     M4rmScheduleRoute {
-        tier: schedule_tier(m4rm.wide_tier_min_stride_words(), stride_words),
-        panel_width: choose_k_block(m4rm, k, n),
+        tier,
+        table_band,
+        table_bytes,
+        panel_width_cap,
+        panel_width,
         tiled_stride_admitted: stride_admits_tiled_schedule(
             m4rm.tiled_min_stride_words(),
             stride_words,
@@ -289,16 +530,7 @@ fn schedule_tier(wide_tier_min_stride_words: usize, stride_words: usize) -> M4rm
 ///
 /// Block size k_block (typically 6-9 on the conservative table)
 fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
-    let stride_words = row_stride_words(n);
-    match schedule_tier(m4rm.wide_tier_min_stride_words(), stride_words) {
-        M4rmScheduleTier::Wide => choose_k_block_with_limit(
-            k,
-            n,
-            production_table_budget(m4rm, stride_words),
-            m4rm.wide_max_k(),
-        ),
-        M4rmScheduleTier::SmallN => choose_k_block_small_n(m4rm.small_n_max_k(), k, n),
-    }
+    m4rm_schedule_route_resolved(m4rm, k, n).panel_width
 }
 
 /// Conservative default for `m4rm.wide_tier_min_stride_words()` in the active
@@ -341,12 +573,22 @@ fn choose_k_block_small_n(small_n_max_k: usize, k: usize, n: usize) -> usize {
 /// `m4rm.mid_table_bytes()`, or `m4rm.default_table_bytes()`.
 #[inline]
 fn production_table_budget(m4rm: &M4rmSelectors, stride_words: usize) -> usize {
+    match production_table_band(stride_words) {
+        M4rmTableBand::Wide => m4rm.wide_table_bytes(),
+        M4rmTableBand::Mid => m4rm.mid_table_bytes(),
+        M4rmTableBand::Default => m4rm.default_table_bytes(),
+        M4rmTableBand::SmallN => unreachable!("small-N has no table byte budget"),
+    }
+}
+
+#[inline]
+fn production_table_band(stride_words: usize) -> M4rmTableBand {
     if stride_words >= 64 {
-        m4rm.wide_table_bytes()
+        M4rmTableBand::Wide
     } else if stride_words >= 32 {
-        m4rm.mid_table_bytes()
+        M4rmTableBand::Mid
     } else {
-        m4rm.default_table_bytes()
+        M4rmTableBand::Default
     }
 }
 
@@ -809,7 +1051,10 @@ pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     let tuning = crate::tuning::active();
     let m4rm = tuning.m4rm();
     let route = m4rm_schedule_route_resolved(m4rm, k, n);
-    multiply_with_k_block(a, b, route.panel_width(), m4rm.tiled_min_stride_words())
+    let result = multiply_with_k_block(a, b, route.panel_width(), m4rm.tiled_min_stride_words());
+    #[cfg(any(test, feature = "test-support"))]
+    record_m4rm_effective_schedule(route, m4rm_tiled_effective_observation());
+    result
 }
 
 fn multiply_with_k_block(

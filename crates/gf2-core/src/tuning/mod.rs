@@ -1475,7 +1475,12 @@ impl CorePresence {
 }
 
 #[cfg(feature = "tuning-profile")]
-const CORE_HARNESS_SCHEMA: &str = "tuning-calibration-v3";
+const CORE_HARNESS_SCHEMA: &str = "tuning-calibration-v4";
+// Named prepublication boundary for jit:a83583e0. The repository's current
+// measured owner is v3 while the cumulative v4 campaign is prepared. Remove
+// this acceptance atomically with publication of the v4 owner envelope.
+#[cfg(feature = "tuning-profile")]
+const PREPUBLICATION_HARNESS_SCHEMA: &str = "tuning-calibration-v3";
 
 /// Format-2 owner codec for [`CoreTuning`].
 #[cfg(feature = "tuning-profile")]
@@ -1495,7 +1500,8 @@ impl SectionCodec<CoreTuning> for CoreTuningCodec {
         match value {
             MeasurementProvenance::Inherited => Ok(()),
             MeasurementProvenance::Calibrated { harness_schema, .. }
-                if harness_schema.as_str() == CORE_HARNESS_SCHEMA =>
+                if harness_schema.as_str() == CORE_HARNESS_SCHEMA
+                    || harness_schema.as_str() == PREPUBLICATION_HARNESS_SCHEMA =>
             {
                 Ok(())
             }
