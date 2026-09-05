@@ -97,6 +97,12 @@
       "format": "markdown",
       "label": "Governing selector design with extent amendments",
       "path": "dev/active/7d824b2f/design.md"
+    },
+    {
+      "commit": "ecd85315",
+      "doc_type": "implementation",
+      "label": "Producing build-input manifest",
+      "path": "dev/active/a83583e0/producing-build-inputs.json"
     }
   ],
   "first_ready_at": "2026-08-22T21:27:08.444306766Z",
@@ -133,5 +139,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-09-05T00:19:15.058243813Z"
+  "updated_at": "2026-09-05T08:40:36.058948950Z"
 }
