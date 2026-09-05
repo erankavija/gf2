@@ -984,3 +984,56 @@ The predeclared execution budget limits each outer-lock session. Exhaustion
 preserves checkpoints for a later session with the same budget and campaign
 identity; cumulative accounting retains every session and accepted result.
 Completion does not depend on an aggregate deadline or one uninterrupted hold.
+
+## Amendment A10 (2026-09-05, campaign-driver contract for `a83583e0`)
+
+The [extent protocol](../a83583e0/premeasurement-protocol.md) fixes the neutral
+driver and durable session mechanics before their implementation. The
+`publish = false`, gf2-independent `dev/tools/tuning-campaign-support` package
+contains `src/campaign.rs` and `src/bin/tuning-extent-campaign-driver.rs`.
+It owns generic scheduling, process timeouts, progress, logging, checkpointing,
+and resume. Its statistical API handles coupled GEMM pair analysis and M4RM
+conditional-vector verification using owner-supplied identities and samples;
+owner producers retain grids, fixtures, selector policy, semantic validation,
+codecs, and artifact emission. The composer retains assembly authority.
+The shell is the thin build/stage/lock/finalize launcher. This extends D2's
+shared mechanism without creating a second campaign engine or gf2 dependency.
+
+The driver modes are `prepare-session` outside the lock, `run-session` inside
+one full-host lock, and `finalize-session` after the wrapper returns. Preparation
+announces and opens the canonical durable log before bounded work; execution
+streams `GF2_TUNING_PROGRESS=` stderr records for calibration completion and
+each of five windows while stdout retains one result. Finalization truthfully
+records wrapper return separately from observed lock release, validates, then
+syncs terminal state and checksums. Clean WorkFinished plus reaped descendants
+supports release after wrapper return. An unclean run requires proof that the
+holder/descendants terminated and an independent observation that the lock is
+available or the prior hold ended; descendants can inherit its flock descriptor.
+Without that proof, interruption remains `release-unobserved` and nonterminal,
+with no invented release, terminal publication, or resumed launch. A killed
+gap becomes Interrupted after release is established. Strict session transitions and full resume identity prevent
+concurrent writers, duplicate accepted work, and cross-behavior sample reuse.
+The declared 717 cells and 4,302 accepted fresh-child results remain unchanged.
+
+Each JSONL record is buffered completely before append. Recovery preserves and
+hashes an unterminated tail and its original file/prefix identity, syncs a
+recovery intent, restores the last complete record boundary, and appends the
+recovery/Interrupted evidence idempotently. This lossless torn-append repair
+is the sole append-only exception; a complete malformed record is a hard
+failure. Pending checkpoint files occupy a separate recognized namespace;
+accepted JSON is immutable and strictly validated. Before checkpoint commit,
+the driver syncs the validated journal prefix containing that child's progress,
+exit, and result-validation evidence and binds the unit to its byte length and
+hash. It then syncs the checkpoint and finally the acceptance event. Recovery
+reconciles a durable unit only against that exact durable prefix, never against
+a checkpoint alone. File commit, cleanup, and
+recovery include the required directory syncs. The protocol specifies exact
+crash boundaries, terminal/checksum recovery, and accounting tests.
+
+Publication updates both measured baked families together: the selected GEMM
+pair and dot chunk, with their owner/receipt citations and production witnesses.
+Unconditional conservative GEMM defaults and the conservative owner section
+remain unchanged under either cfg. Behavior identity includes the neutral
+driver, campaign/statistics/transport/journal support, launcher, and validator;
+protocol prose retains its separate identity. Amendment A9's selector semantics
+and retained-threshold remeasurement requirements remain binding.

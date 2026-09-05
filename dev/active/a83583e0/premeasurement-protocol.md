@@ -43,13 +43,35 @@ to make the decisions reviewable; neither is a pending owner question.
 - **D2 — one crate-neutral development support library.** Selected:
   a small `publish = false` workspace member at
   `dev/tools/tuning-campaign-support`, used only as a dev-dependency by the
-  two owner crates. It has no gf2 dependency and owns only common child
-  transport/framing, timing windows, seed mixing, empirical statistics,
-  append-only execution logging, checkpoint I/O, and neutral atomic-file
-  helpers. Owner types and selector policy never enter it. Existing core
+  two owner crates. It also supplies `src/campaign.rs` and the neutral
+  `src/bin/tuning-extent-campaign-driver.rs` executable. It has no gf2
+  dependency and owns common child transport/framing, timing windows, seed
+  mixing, empirical statistics, generic scheduling, process timeouts,
+  append-only execution logging, checkpoint/resume, and neutral atomic-file
+  helpers. The shell launcher only builds, stages, invokes the lock wrapper,
+  and finalizes; it does not implement a parallel campaign engine. Owner
+  types, fixtures, grids, selector policy, codecs, and artifact construction
+  stay in the owner producers. Existing core
   implementations of these mechanisms move to it rather than remaining beside
   copies. A cross-owner source include would put neutral authority under one
   owner; the workspace development library gives it an explicit neutral home.
+
+The support statistics API includes the coupled two-axis GEMM analysis and
+the conditional-vector joint check in §5, parameterized by caller-supplied
+candidate identities, strata, schedules, and samples. It knows no gf2 field
+names, production values, or codec. Owners assemble and validate those inputs
+and map the decision back to their typed sections. The driver consumes an
+owner-supplied ordered work manifest with opaque case bytes, stable unit keys,
+process descriptors, and expected result identities. It delegates semantic
+result validation, analysis, and owner emission to explicit owner-process
+operations; the composer remains assembly authority. The driver validates
+generic framing, scheduling, identity, and durable acceptance, and never
+reconstructs a selector or infers an owner's route from raw values.
+The manifest fixes all phase/unit slots and counts before launch. Dependent
+M4RM combination cases are materialized by owner analysis of accepted prior
+results, then synced as a derived manifest with its input/output digests.
+Resume reconstructs and verifies that derivation before using its opaque
+cases; it cannot alter slots, accepted identities, or the 717-cell total.
 
 All production generics retain their natural field/type parameters. The finite
 candidate restriction belongs to the calibration selector, not the general
@@ -464,6 +486,12 @@ fresh-child results, and 17,925 raw timing windows. Nominal target-window time
 is 4,481.25 seconds (74 minutes 41.25 seconds). Setup, process startup,
 calibration, oracles, checkpoint writes, and strict validation add elapsed
 time; this nominal arithmetic is not a runtime prediction.
+Each accepted timed child emits one calibration-complete progress record and
+five window-complete records: 21,510 such records for a complete accepted
+campaign. Probe children emit none of those timing records. Progress from
+failed attempts is retained separately. Driver/owner planning, validation,
+analysis, and emission process invocations are separately counted orchestration
+actions, not additional probe or timed cells.
 
 Each child has a hard 120-second wall limit, followed by a 5-second kill
 grace. Each outer-lock session has a 10,800-second active budget, including
@@ -488,9 +516,34 @@ its attempt and partial diagnostics remain in the execution log. Attempt
 counts, accepted counts, and interruption records are separate; the arithmetic
 above counts accepted results exactly once.
 
+Checkpoint `units/` contains only immutable accepted JSON records with exact
+recognized names, canonical encoding, full case/result identity, and digest.
+Pending writes live separately in `checkpoints/pending/`, never among accepted
+units. Before committing a unit, the driver validates and syncs the complete
+journal prefix containing that child's start, calibration-complete and five
+window records for a timed child, exit, and successful result-validation record
+bound to the case/result digests. A probe requires its corresponding zero-window
+evidence. The unit records this durable prefix's byte length and SHA-256.
+Commit then writes and syncs the complete pending file, atomically renames it
+to an absent accepted destination, syncs both affected directories, and finally
+appends and syncs the acceptance event. The ordering is durable validated
+journal prefix → durable checkpoint unit → durable acceptance event.
+Resume strictly validates every accepted file and its bound complete prefix;
+a complete malformed record, digest mismatch, unknown accepted filename, or
+conflicting identity fails closed and is never discarded as interrupted work.
+A valid committed unit whose acceptance event was interrupted is reconciled
+once in the journal and counted once only after verifying that the bound durable
+prefix contains all required child evidence. A missing, shortened, changed,
+or inconsistent bound prefix prevents reconciliation; a checkpoint alone never
+reconstructs missing progress or validates itself. Stale pending files are never accepted;
+recovery records their identities and hashes before removing them and syncing
+the pending directory. Recognized recovery files remain outside `units/`.
+
 Resume verifies the checkpoint manifest, canonical case/result identity,
 protocol digest, immutable producing revision, executable hashes, feature and
-thread contract, host identity, and every completed unit's digest/evidence.
+thread contract, host identity, staged process descriptors and ordered work
+manifest, and every completed unit's digest/evidence. The driver/support
+behavior identity and lifecycle schema are part of that immutable identity.
 It restores the original candidate/execution ordering and seeds, including
 after a budget-exhausted session. It never
 changes an accepted sample, re-times a losing completed cell, or merges a
@@ -502,17 +555,27 @@ identity and preserve the old campaign's terminal failure evidence.
 
 ## 7. Durable execution log and host discipline
 
-The launcher creates a unique stage directory before any bounded work,
-resolves its absolute canonical path, and opens `execution.log` there with
-create-new plus append semantics. Before launching the first probe or timed
-child, it prints exactly one readily visible line:
+The neutral driver exposes exactly three session modes. The thin shell
+launcher runs `prepare-session` outside the benchmark lock, invokes
+`run-session` inside one full-host lock wrapper, then calls `finalize-session`
+after that wrapper returns. These modes share one typed session state machine
+in `src/campaign.rs`; shell traps do not implement journal or checkpoint rules.
+
+`prepare-session` creates or strictly reopens the stage, validates immutable
+resume identity and completed units, and claims the sole active session writer.
+A concurrent writer or still-live prior session/child fails closed. Recovery
+of a dead session follows the rules below before a new session is prepared.
+For a new campaign it resolves the canonical stage path and opens
+`execution.log` with create-new plus append semantics. For every session it
+prints this readily visible line before any bounded run:
 
 ```text
 GF2_CAMPAIGN_EXECUTION_LOG=/absolute/canonical/stage/execution.log
 ```
 
-It immediately appends and flushes a campaign-start record with run identity,
-source and binary identities, declared counts, and checkpoint directory. The
+It appends and flushes campaign-start for a new campaign and session-prepared
+with run/session identity, source and binary identities, declared counts, and
+checkpoint directory before returning its prepared session descriptor. The
 file is the authoritative execution record under
 `@/inv/campaign-execution-logging`. Console output, `tee`, or `tail` is only
 a view; none consumes or replaces the record. The driver never uses
@@ -525,17 +588,84 @@ composition/reopen, lock hold/release, and terminal state. Records have UTC
 timestamps, campaign/session identity, a monotonic sequence, and structured
 case identity. Progress is flushed immediately; accepted checkpoints and
 terminal records are synced to disk. A single writer at each sequential
-phase serializes records; worker threads do not write the log. Child stdout
-has exactly one canonical result; progress travels through the common
-out-of-band logging channel and never weakens result framing.
+phase serializes records; worker threads do not write the log. Every JSONL
+record is serialized completely into one byte buffer, including its terminating
+newline, before append/write-all. Normal operation never rewrites journal bytes.
 
-Normal completion appends `complete`; caught errors append `failed` with the
-cause and exit nonzero; intentional interruption appends `paused`; a spent
-session budget appends `budget-exhausted`. Resume appends to the same file, never
-truncates it, and records a new session boundary. If a prior process was
-uncatchably killed before a terminal record, recovery appends `interrupted`
-for that session before restarting unfinished work. Monitoring selects the
-current session/sequence, never an earlier terminal line.
+Child stdout has exactly one canonical result. The canonical progress channel
+is a stderr line prefixed `GF2_TUNING_PROGRESS=` followed by one canonical JSON
+record with `tuning-campaign-progress-v1`, case/execution identity, and either
+calibration-complete with its final positive call count or window-complete
+with repetition, calls, and elapsed nanoseconds. A completed timed child emits
+calibration-complete followed by repetitions 0 through 4 exactly once. Each
+event is emitted/flushed after its interval; logging is outside timing. The
+driver drains stdout and stderr concurrently and immediately appends/flushes
+progress to the authoritative journal. Non-prefixed diagnostics are preserved
+as diagnostics. Malformed, duplicated, out-of-order, wrong-identity, or
+result-inconsistent prefixed records reject the child; progress alone never
+accepts a checkpoint. This channel does not weaken single-result framing.
+
+`run-session` consumes its prepared descriptor once, verifies the inherited
+held-lock evidence, appends `LockHeld`, then performs unfinished work within
+§6's session budget. It terminates/reaps its children and syncs a work-finished
+record containing the proposed outcome before returning. It never claims
+`LockRelease` or appends the session terminal state while inside the wrapper.
+The launcher passes the observed wrapper return/exit to `finalize-session`.
+The finalizer records `WrapperReturned` as a distinct event. A clean synced
+WorkFinished with all children/descendants reaped permits observed `LockRelease`
+after wrapper return. An unclean return alone is insufficient: a descendant
+may still hold an inherited flock descriptor. Before release is recorded on
+that path, finalization/recovery must verify the prior holder and descendants
+have terminated and independently observe availability of the canonical lock
+or that its prior hold has ended. PID or wrapper exit alone is not this proof.
+If proof is unavailable, it records interruption with `release-unobserved` as
+a nonterminal state and permits no `LockRelease`, terminal/checksum publication,
+or resumed launch until the hold's end is established. `LockRelease` records
+the actual observation and evidence, never an invented kernel unlock timestamp.
+It validates journal, checkpoints, accounting, and any candidate artifacts,
+then appends and syncs the terminal record and writes/syncs checksums. A final
+`complete` requires the entire validated bundle; other terminals are `failed`,
+`paused`, or `budget-exhausted`, with the cause and accepted work preserved.
+Catchable errors still follow wrapper return and finalization and exit nonzero
+where required. A wrapper failure before `LockHeld` records no fictitious
+release; an observed return after an unclean run may record release without
+WorkFinished only with the independent proof above, and cannot complete
+successfully. These are explicit failed or
+interrupted abort transitions. Finalization does no measurement, composition,
+or owner emission.
+
+The legal ordinary lifecycle is Prepared → LockHeld → WorkFinished →
+WrapperReturned → LockRelease → Terminal. Duplicate modes, out-of-order transitions, mismatched
+session descriptors, or a terminal contradicted by work/exit evidence reject.
+If killed between any transitions, including wrapper return and finalization,
+the next preparation establishes that the prior holder and descendants are dead
+and independently observes that the prior hold has ended, then records the
+observed release and `Interrupted` before resuming. Until then it records only
+the nonterminal `release-unobserved` interruption. It never fabricates a
+historical unlock time, wrapper return, or successful terminal. Interrupted active
+duration is explicitly censored when its end was not observed; cumulative
+accounting retains that fact. Monitoring selects the current session/sequence.
+Per-session checksum manifests pin their journal prefix length and digest;
+later appended sessions do not invalidate that prefix. The final complete
+manifest covers the finished journal. A killed terminal-to-checksum gap is
+recovered by strict validation and completing the missing checksum write;
+an existing synced terminal is never rewritten or duplicated.
+
+Crash recovery treats only an unterminated final JSONL suffix as a torn append.
+Every newline-terminated record must parse canonically and satisfy journal
+sequence/lifecycle rules; even the last complete malformed line is a hard
+failure. Before removing a torn suffix, recovery preserves its exact bytes,
+original file length/hash, complete-prefix boundary/hash, and suffix hash in
+synced recovery artifacts outside accepted units, with a synced recovery intent.
+It then truncates only that uncommitted suffix to the last complete newline,
+syncs the journal, and appends a recovery record citing those artifacts followed
+by interruption evidence for the unfinished session under the release-proof
+rules above. Even parseable JSON without a
+newline is uncommitted. A crash during recovery reopens the intent and verifies
+the original or recovered prefix before idempotently finishing these steps;
+it never drops complete records or duplicates an already complete recovery or
+terminal event. Intent deletion syncs its parent directory. This byte-preserving
+torn-append repair is the sole truncation exception to append-only logging.
 
 The stage path is `/tmp/gf2-a83583e0-<UTC-stamp>-<launcher-pid>`. Stage logs
 and checkpoints survive agent/session exit and are not removed before durable
@@ -546,7 +676,8 @@ failed attempts never overwrite successful evidence.
 All Rust builds, tests, self-checks, and binary staging finish before the
 timed host reservation. They use Rust 1.95.0 and the repository Cargo budget
 wrapper. The core and algebra benchmark targets use explicit
-`parallel,simd,tuning-profile,test-support`; the composer is built `--release`.
+`parallel,simd,tuning-profile,test-support`; the composer and neutral driver
+are built `--release`.
 `cargo bench --no-run` has no redundant `--release`. Each build's
 `--message-format=json` is checked to yield exactly one executable for its
 named target. Path files are plain text, not JSON. Executables are copied
@@ -565,15 +696,18 @@ isolated process listing is not host-idle evidence. A held mutex alone is not
 host-idle evidence. The driver records these observations and requires the
 prepared host to have no competing substantial work before entry.
 
-The driver invokes `dev/scripts/ccx1-bench-flock.sh --full-host` once around
-every calibration and composition action in that session. Core, algebra,
+The shell launcher invokes `dev/scripts/ccx1-bench-flock.sh --full-host` once
+around `run-session`, covering every calibration and composition action in
+that session. Core, algebra,
 support code, and composer acquire no inner lock. There is no Cargo command
 under the lock. All directly executed binaries receive `GF2_BENCH=1`,
 `RUSTUP_TOOLCHAIN=1.95.0`, and `RAYON_NUM_THREADS=4` explicitly. The lock path
 and inherited held-lock evidence are runtime-observed and emitted. Resume
 reacquires that same outer mutex and records a new hold interval before any
 unfinished work; completed units are never replayed. Composition occurs under
-the final hold. There is no alternate lock domain or unlocked component step.
+the final hold. Preparation and post-release validation/finalization are the
+explicit untimed lifecycle modes; no owner measurement or composition runs
+outside the one lock domain.
 
 ## 8. Fresh-child, codec, and fail-closed contract
 
@@ -619,7 +753,9 @@ with their exact derivation. New campaign raw-window records use
 `raw-timing-samples-v3`; this changes representation, not the retained
 threshold sampling or decision rule. The execution journal and checkpoint
 manifest identities are `tuning-campaign-journal-v1` and
-`tuning-campaign-checkpoint-v1`.
+`tuning-campaign-checkpoint-v1`; progress uses
+`tuning-campaign-progress-v1`. These schemas include §7's session lifecycle,
+strict progress sequence, and recovery references before their first release.
 
 An owner case contains the protocol identity and constants, campaign/phase,
 typed field or joint-vector identity, stratum shape and site, exact candidate
@@ -653,10 +789,15 @@ versions remain unchanged. New owner-specific case/raw-result schema tokens
 identify their exact field shapes; no historical result is relabeled.
 
 The behavior-source manifest hashes each owner harness and every extracted
-support source module it uses, as well as the committed candidate production
+support source module it uses, including `src/campaign.rs`, the neutral driver
+entry point, progress transport, journal recovery, and coupled statistical
+analyzers, plus the shell launcher's build/lock/finalize behavior and independent
+validator. It also hashes the committed candidate production
 bodies, dot observation correction, and shared TRSM/GEMM observation-policy
 specializations. Runtime provenance records that manifest's
-digest and the executable digest in the execution log and receipt. No new
+digest and each staged owner/driver/composer executable digest in the execution
+log and receipt. The session descriptor and resume checks bind these identities
+and the exact three-mode lifecycle contract. No new
 wire field is added to the generic measurement wrapper. The support extraction therefore cannot
 change measurement behavior while retaining an unqualified harness-only source
 identity. Protocol/narrative hashes identify the declaration separately from
@@ -672,12 +813,18 @@ and v3 rejection test land together. No v3 compatibility token remains in the
 final codec. Historical eaae/389 envelopes remain immutable evidence at their
 committed paths and do not become current-codec fixtures.
 
-Publication updates the selected GEMM bake only. The unconditional
+Publication updates both measured baked families: the jointly selected
+GEMM row/column pair and the selected dot chunk in `tuning/baked.rs`, together
+with their receipt and measured-owner citations. A measured conservative
+fallback still cites this campaign's evidence. Ordinary API cfg-selected
+aliases consume both published selections. The unconditional
 `GEMM_ROW_TILE_DEFAULT`/`GEMM_COL_TILE_DEFAULT` declarations and the typed
 conservative section retain their premeasurement values in ordinary and
 `gf2_tuning_baked` builds. A cfg-independent conservative-table witness and
 the baked production-site witnesses jointly verify this distinction, including
-when the selected tile pair differs from the conservative pair.
+when the selected tile pair differs from the conservative pair. Dot's
+conservative declaration likewise remains unchanged, and its baked witness
+checks the published chunk through the ordinary production path.
 
 The run ID is `gf2-a83583e0-<UTC-stamp>-<launcher-pid>`, fixed before launch.
 Repository destinations are derived from that one ID:
@@ -740,7 +887,12 @@ before edits; it is not silently taken from another issue's completed scope.
 - Workspace/dev-only support wiring: `Cargo.toml`, `Cargo.lock`,
   `dev/tools/tuning-campaign-support/Cargo.toml`, and its
   `src/lib.rs`, `src/transport.rs`, `src/timing.rs`, `src/seed.rs`,
-  `src/statistics.rs`, `src/journal.rs`, plus focused tests within that crate.
+  `src/statistics.rs`, `src/journal.rs`, `src/campaign.rs`, and
+  `src/bin/tuning-extent-campaign-driver.rs`, plus focused tests within that
+  crate. The shared API covers opaque work manifests/process orchestration,
+  timeout/streaming progress, the three session modes and their typed lifecycle,
+  strict resume/checkpoint/recovery, and generic coupled analyses; owner
+  selector semantics remain in the owner producers.
 - Owner producers and their canonical tests:
   `crates/gf2-core/benches/tuning_calibration.rs`,
   `crates/gf2-core/tests/tuning_calibration_harness.rs`,
@@ -765,6 +917,7 @@ before edits; it is not silently taken from another issue's completed scope.
   `crates/gf2-core/src/field/inverse.rs`,
   `crates/gf2-core/src/field/ple.rs`,
   `crates/gf2-core/tests/tuning_extent_runtime.rs`,
+  `crates/gf2-core/tests/tuning_observation_quiet.rs`,
   `crates/gf2-core/tests/tuning_profile_triangular_base_install.rs`,
   `crates/gf2-core/tests/tuning_profile_triangular_base_install_above.rs`,
   `crates/gf2-algebra/src/permanent/parallel_bipedal3.rs`, and
@@ -781,7 +934,7 @@ before edits; it is not silently taken from another issue's completed scope.
   `crates/gf2-algebra/src/tuning.rs`,
   `crates/gf2-algebra/tests/tuning_section.rs`, and
   `crates/gf2-algebra/tests/tuning_repository_envelopes.rs`.
-- Driver, independent evidence validation, and CI integration:
+- Thin build/stage/lock/finalize launcher, independent validation, and CI:
   `dev/scripts/tuning-extent-campaign.sh`,
   `dev/scripts/validate-tuning-extent-campaign.py`, and
   `scripts/cargo-ci.sh`.
@@ -830,10 +983,26 @@ and control manifests, candidate and field identity, deterministic stream
 allocation, all raw-window/statistic rules, plateaus, U shapes, multiple minima,
 endpoint minima, cross-stratum conflicts, coupled GEMM selection, failed M4RM
 combination fallback, strict reopen-before-install, non-installed and malformed
-child rejection, explicit CLI/libtest modes, incomplete result/checkpoint
-recovery, budget exhaustion followed by a same-identity resumed session,
-cumulative session accounting, append-only log path announcement, terminal records, and exact
-codec-derived coverage. Existing suites receive only the changes required by
+child rejection, explicit CLI/libtest modes, and exact codec-derived coverage.
+Support tests exercise joint pair analysis rather than independent axis
+selection, vector fallback as a unit, calibration-plus-five-window stderr
+framing and streaming, and final-result/progress consistency. Session tests
+cover all three modes, truthful post-wrapper release, every legal/illegal
+lifecycle transition, concurrent-writer and resume-identity rejection,
+an exited wrapper with a descendant retaining its flock descriptor,
+release-unobserved recovery and independent release proof,
+budget exhaustion followed by a same-identity session, and distinct attempted,
+accepted, orchestration, progress, and cumulative elapsed accounting. Injected
+crashes cover partial append, the complete-malformed-line hard failure, each
+torn-tail recovery boundary, pending/accepted checkpoint boundaries and
+directory syncs, interrupted acceptance reconciliation, immutable accepted JSON,
+terminal/checksum gaps, and idempotent resume without duplicate samples.
+Checkpoint tests inject crashes before/after validated journal-prefix sync,
+pending-file sync, accepted rename and directory syncs, and acceptance-event
+sync. Reconciliation requires the exact bound prefix and complete progress,
+exit, and validation evidence; missing/truncated/changed prefixes reject.
+Both GEMM and dot publication/citation witnesses are required, as are durable
+log-path announcement and flushed progress. Existing suites receive only the changes required by
 this authorized mechanism or atomic current-reader migration.
 
 Validation runs `git diff --check`, wrapped formatting, focused release-profile
