@@ -2,8 +2,16 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 27,
-  "wave_notes": "Wave 27 executes a83583e0. The exact 717-cell premeasurement protocol was independently reviewed and committed at 07090b4b. Parallel implementation is divided into the neutral campaign-support library, core production candidate/observer seams, and algebra permanent partition evidence; benchmark-mode work remains lead-only after integration gates.",
-  "open_escalations": [],
+  "wave_notes": "Wave 27 executes a83583e0. The exact 717-cell premeasurement protocol was independently reviewed and committed at 07090b4b. Premeasurement implementation and rework 1 are committed and independently reviewed. Benchmark-mode work remains lead-only after the invoker resolves the external real-host admission artifact contract and the resulting implementation passes gates.",
+  "open_escalations": [
+    {
+      "kind": "architecture-decision",
+      "issue": "a83583e0",
+      "date": "2026-09-05",
+      "question": "Approve an explicit canonical lead-produced real-host admission JSON artifact, validated and identity-bound by the driver, to carry the protocol-required load, memory, and competing CPU/GPU observations?",
+      "recommendation": "Approve the explicit artifact contract; treating the static admission policy or sandbox process listings as sufficient would violate the reviewed protocol."
+    }
+  ],
   "waves": [
     {
       "wave_number": 1,
@@ -774,9 +782,9 @@
           "short_id": "a83583e0",
           "title": "Design and implement the extent-sweep protocol",
           "classification": "implementation",
-          "model": "gpt-6-astra",
-          "status": "in_progress",
-          "notes": "Claimed by the execution lead after eaae1b56 closed. The exact premeasurement protocol passed independent high-tier review after corrections for structural schedule ties, permanent partition plateaus, session-bounded resume, cfg-independent GEMM conservative defaults, and observation-neutral TRSM timing. Committed and linked at 07090b4b. Implementation dispatched in non-overlapping file boundaries; no subagent receives benchmark-mode work."
+          "model": "gpt-5.6-sol xhigh; gpt-5.6-terra high review/rework",
+          "status": "blocked-on-owner-decision",
+          "notes": "Claimed by the execution lead after eaae1b56 closed. The exact premeasurement protocol passed independent review and is committed at 07090b4b. Premeasurement tooling is committed at ecd85315. Rework 1 closed a driver/validator canonical staging-path mismatch and passed independent re-review. Timed work is blocked only on an explicit real-host admission evidence interface because the protocol requires unsandboxed load, memory, and competing CPU/GPU observations but predeclares no artifact schema. The user prohibited Astra-class subagents; current and future dispatch uses Sol/Terra/Luna tiers only."
         }
       ],
       "note": "Serialized measurement wave; starts only after the preceding issue is done."
@@ -1224,6 +1232,12 @@
       "issue": "6dc81018/a83583e0",
       "date": "2026-09-05",
       "decision": "The invoker directed a project invariant requiring campaign execution output to remain visible through a durable file rather than only through a tailed console stream. Registry-first invariant campaign-execution-logging is enforced by code-review and projected into AGENTS.md before the a83583e0 campaign design."
+    },
+    {
+      "kind": "architecture-escalation",
+      "issue": "a83583e0",
+      "date": "2026-09-05",
+      "decision": "OPEN: protocol section 7 requires the lead to observe actual host load, available memory, and competing CPU/GPU work and requires the driver to record and enforce those facts, while rejecting sandbox process listings and mutex ownership as sufficient. No input schema, location, or attestation semantics were predeclared. Recommend a canonical lead-produced JSON artifact supplied before preparation, validated fail-closed, hashed into immutable campaign identity, and recorded in the journal and receipt."
     }
   ],
   "rework_counts": {
@@ -1362,6 +1376,21 @@
       "task": "M4RM observer audit",
       "model": "gpt-5.6-terra",
       "result": "pass"
+    },
+    {
+      "task": "a83583e0 recovery implementation",
+      "model": "gpt-5.6-sol xhigh",
+      "result": "premeasurement tooling committed; one rework finding"
+    },
+    {
+      "task": "a83583e0 lifecycle audit and re-review",
+      "model": "gpt-5.6-terra high",
+      "result": "rework 1 passed; host-admission architecture gap isolated"
+    },
+    {
+      "task": "a83583e0 rework 1",
+      "model": "gpt-5.6-terra high",
+      "result": "canonical staging identity mismatch fixed and re-reviewed"
     }
   ]
 }
