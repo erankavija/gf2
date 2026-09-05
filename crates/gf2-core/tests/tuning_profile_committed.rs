@@ -97,7 +97,10 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
                 harness.as_str(),
                 "crates/gf2-core/benches/tuning_calibration.rs"
             );
-            assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
+            // The committed owner remains the immutable v3 measurement while
+            // the named a83583e0 prepublication codec boundary accepts it.
+            // Atomic v4 publication replaces this receipt and assertion.
+            assert_eq!(harness_schema.as_str(), "tuning-calibration-v3");
             assert_eq!(
                 binary_sha256.as_str(),
                 "282c83f10d681c78b2000f0a403ff6b27fe1d08a65712deac514c47aa65ef7bc"

@@ -87,6 +87,40 @@ fn ns(start: Instant) -> u64 {
         .max(1)
 }
 
+fn record_budget(
+    log: &mut ExecutionLog,
+    boundary: &str,
+    process: &str,
+    unit_key: Option<&Sha256Digest>,
+) -> io::Result<()> {
+    let active_elapsed_ns = SESSION_START.get().map_or(0, |start| ns(*start));
+    let may_launch = SESSION_START
+        .get()
+        .is_none_or(|_| may_launch_child(active_elapsed_ns));
+    log.append(
+        JournalEvent::DriverDiagnostic,
+        None,
+        json!({
+            "kind":"session-budget-observation",
+            "boundary":boundary,
+            "process":process,
+            "unit_key":unit_key,
+            "active_elapsed_ns":active_elapsed_ns,
+            "may_launch_child":may_launch,
+            "session_budget_seconds":SESSION_BUDGET_SECONDS,
+            "child_timeout_seconds":CHILD_TIMEOUT_SECONDS,
+            "child_kill_grace_seconds":CHILD_KILL_GRACE_SECONDS,
+        }),
+    )?;
+    if boundary == "before-launch" && !may_launch {
+        return Err(io::Error::new(
+            io::ErrorKind::TimedOut,
+            "session-budget-exhausted",
+        ));
+    }
+    Ok(())
+}
+
 struct ProcessResult {
     stdout: Vec<u8>,
     stderr: Vec<u8>,
@@ -472,6 +506,36 @@ fn require_affinity(expected: &CpuAffinity, observed: &CpuAffinity) -> io::Resul
     }
     Ok(())
 }
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct HostAdmissionPolicy {
+    required_observations: Vec<String>,
+    no_competing_substantial_work_required: bool,
+    isolated_process_listing_is_sufficient: bool,
+    held_mutex_is_sufficient: bool,
+}
+impl HostAdmissionPolicy {
+    fn declared() -> Self {
+        Self {
+            required_observations: [
+                "affinity",
+                "available-memory",
+                "competing-cpu-gpu-work",
+                "cpu-features",
+                "cpu-model",
+                "governor",
+                "load",
+                "os-kernel",
+            ]
+            .into_iter()
+            .map(str::to_owned)
+            .collect(),
+            no_competing_substantial_work_required: true,
+            isolated_process_listing_is_sufficient: false,
+            held_mutex_is_sufficient: false,
+        }
+    }
+}
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct CampaignConfig {
@@ -486,6 +550,11 @@ struct CampaignConfig {
     validator: ArtifactIdentity,
     receipt: String,
     affinity: CpuAffinity,
+    source_tree: String,
+    producing_manifest: ArtifactIdentity,
+    build_inputs: BTreeMap<String, String>,
+    preflight_reports: BTreeMap<String, ArtifactIdentity>,
+    host_admission_policy: HostAdmissionPolicy,
 }
 fn process(config: &CampaignConfig, id: &str) -> io::Result<ProcessDescriptor> {
     config
@@ -501,27 +570,33 @@ fn process_command(process: &ProcessDescriptor, args: &[String]) -> io::Result<C
     command
         .args(args)
         .current_dir(&process.working_directory)
+        .env_clear()
         .envs(&process.environment);
-    // Environment variables that select a profile or inject compiler/runtime
-    // flags are excluded from each fresh process.
-    for name in ["GF2_TUNING_PROFILE", "RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS"] {
-        command.env_remove(name);
-    }
     Ok(command)
 }
 fn operation(
     process: &ProcessDescriptor,
     request: &OwnerOperation,
-    mut log: Option<&mut ExecutionLog>,
+    log: Option<&mut ExecutionLog>,
 ) -> io::Result<OwnerResponse> {
     let input = encoded(request)?;
+    invoke_owner(process, request, &["--owner-operation".into()], &input, log)
+}
+fn invoke_owner(
+    process: &ProcessDescriptor,
+    request: &OwnerOperation,
+    arguments: &[String],
+    input: &[u8],
+    mut log: Option<&mut ExecutionLog>,
+) -> io::Result<OwnerResponse> {
     let start_sequence = log.as_ref().map(|l| l.next_sequence());
     if let Some(log) = log.as_mut() {
-        log.append(JournalEvent::OrchestrationStart,None,json!({"kind":"orchestration-start","process":process.id,"request_sha256":Sha256Digest::of(&input)}))?;
+        record_budget(log, "before-launch", process.id.as_str(), None)?;
+        log.append(JournalEvent::OrchestrationStart,None,json!({"kind":"orchestration-start","process":process.id,"request_sha256":Sha256Digest::of(input),"arguments":arguments}))?;
     }
     let result = run_process(
-        process_command(process, &["--owner-operation".into()])?,
-        &input,
+        process_command(process, arguments)?,
+        input,
         Duration::from_secs(CHILD_TIMEOUT_SECONDS),
         Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
         |_| Ok(()),
@@ -529,6 +604,7 @@ fn operation(
     )?;
     if let Some(log) = log.as_mut() {
         log.append(JournalEvent::OrchestrationExit,None,json!({"kind":"orchestration-exit","start_sequence":start_sequence,"process":process.id,"outcome":result.outcome,"stdout_sha256":Sha256Digest::of(&result.stdout),"stderr_sha256":Sha256Digest::of(&result.stderr),"stderr":result.stderr}))?;
+        record_budget(log, "after-result", process.id.as_str(), None)?;
     }
     if let OwnerOperation::EmitOwner { request } = request {
         let directory = request
@@ -547,6 +623,34 @@ fn operation(
         return Err(error);
     }
     transport::parse_result(std::str::from_utf8(&result.stdout).map_err(invalid)?).map_err(invalid)
+}
+fn verify_report_response(label: &str, response: &OwnerResponse) -> io::Result<()> {
+    let valid = match response {
+        OwnerResponse::SelfCheck { .. } => label.ends_with("self-check"),
+        OwnerResponse::ListGrid { .. } => label.ends_with("list-grid"),
+        OwnerResponse::CapabilityReport { .. } => label.ends_with("capability-report"),
+        _ => false,
+    };
+    if valid {
+        Ok(())
+    } else {
+        Err(invalid("staged CLI returned the wrong reporting mode"))
+    }
+}
+fn report_cli(
+    process: &ProcessDescriptor,
+    label: &str,
+    log: Option<&mut ExecutionLog>,
+) -> io::Result<OwnerResponse> {
+    let request = match label {
+        "self-check" => OwnerOperation::SelfCheck,
+        "list-grid" => OwnerOperation::ListGrid,
+        "capability-report" => OwnerOperation::CapabilityReport,
+        _ => return Err(invalid("unknown staged CLI reporting mode")),
+    };
+    let response = invoke_owner(process, &request, &[format!("--{label}")], b"", log)?;
+    verify_report_response(label, &response)?;
+    Ok(response)
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -615,45 +719,89 @@ fn source_state() -> io::Result<(String, String)> {
         command_text("git", &["rev-parse", "HEAD^{tree}"])?,
     ))
 }
-fn behavior_sources() -> io::Result<BTreeMap<String, String>> {
-    // Include all Rust production sources in the producing owners and isolated
-    // kernels, every support/composer source, and the launch/validation code.
-    let listing = Command::new("git")
-        .args([
-            "ls-files",
-            "-z",
-            "crates/gf2-core",
-            "crates/gf2-algebra",
-            "crates/gf2-kernels-simd",
-            "dev/tools/tuning-campaign-support",
-            "dev/tools/tuning-profile-compose",
-            "dev/scripts/tuning-extent-campaign.sh",
-            "dev/scripts/validate-tuning-extent-campaign.py",
-            "dev/scripts/ccx1-bench-flock.sh",
-            "Cargo.toml",
-            "Cargo.lock",
-            ".cargo/config.toml",
-        ])
-        .output()?;
-    if !listing.status.success() {
-        return Err(invalid("source inventory failed"));
+const PRODUCING_MANIFEST: &str = "dev/active/a83583e0/producing-build-inputs.json";
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProducingInputs {
+    schema: String,
+    behavior_sources: Vec<String>,
+    lifecycle_sources: Vec<String>,
+    build_inputs: Vec<String>,
+}
+impl ProducingInputs {
+    fn read() -> io::Result<Self> {
+        let value: Self =
+            serde_json::from_slice(&fs::read(PRODUCING_MANIFEST)?).map_err(invalid)?;
+        value.validate_at(Path::new("."))?;
+        Ok(value)
     }
-    let mut map = BTreeMap::new();
-    for path in listing.stdout.split(|b| *b == 0).filter(|b| !b.is_empty()) {
-        let path = std::str::from_utf8(path).map_err(invalid)?;
-        if path.ends_with(".rs")
-            || path.ends_with(".toml")
-            || path.ends_with(".lock")
-            || path.ends_with(".sh")
-            || path.ends_with(".py")
-        {
-            map.insert(
-                path.into(),
-                Sha256Digest::of(&fs::read(path)?).as_str().into(),
-            );
+    fn validate_at(&self, root: &Path) -> io::Result<()> {
+        if self.schema != "tuning-campaign-producing-inputs-v1" {
+            return Err(invalid("producing input manifest schema mismatch"));
         }
+        for paths in [
+            &self.behavior_sources,
+            &self.lifecycle_sources,
+            &self.build_inputs,
+        ] {
+            if paths.is_empty() || paths.windows(2).any(|pair| pair[0] >= pair[1]) {
+                return Err(invalid(
+                    "source manifest paths must be nonempty, sorted and unique",
+                ));
+            }
+            for path in paths {
+                if Path::new(path).is_absolute()
+                    || Path::new(path)
+                        .components()
+                        .any(|part| !matches!(part, std::path::Component::Normal(_)))
+                    || path.contains(['*', '?', '[', ']'])
+                {
+                    return Err(invalid(
+                        "source manifest contains a nonliteral repository path",
+                    ));
+                }
+                let metadata = fs::symlink_metadata(root.join(path))?;
+                if !metadata.file_type().is_file() || metadata.file_type().is_symlink() {
+                    return Err(invalid("source manifest path is not a regular file"));
+                }
+            }
+        }
+        if self
+            .behavior_sources
+            .iter()
+            .any(|path| !self.build_inputs.contains(path))
+            || self
+                .lifecycle_sources
+                .iter()
+                .any(|path| !self.behavior_sources.contains(path))
+        {
+            return Err(invalid(
+                "lifecycle/behavior manifest is not a subset of producing inputs",
+            ));
+        }
+        Ok(())
     }
-    Ok(map)
+    fn hashes(paths: &[String]) -> io::Result<BTreeMap<String, String>> {
+        paths
+            .iter()
+            .map(|path| {
+                Ok((
+                    path.clone(),
+                    Sha256Digest::of(&fs::read(path)?).as_str().into(),
+                ))
+            })
+            .collect()
+    }
+    fn lifecycle_digest(&self) -> io::Result<String> {
+        Ok(
+            Sha256Digest::of(&encoded(&Self::hashes(&self.lifecycle_sources)?)?)
+                .as_str()
+                .into(),
+        )
+    }
+}
+fn behavior_sources() -> io::Result<BTreeMap<String, String>> {
+    ProducingInputs::hashes(&ProducingInputs::read()?.behavior_sources)
 }
 fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     if config.schema != "tuning-extent-campaign-v1" || config.manifests.len() != 2 {
@@ -662,9 +810,21 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     config.channels.validate()?;
     require_affinity(&config.affinity, &CpuAffinity::observe()?)?;
     let (revision, tree) = source_state()?;
+    let producing = ProducingInputs::read()?;
+    let staging: StagingManifest = read_json(&config.channels.stage.join("staging-manifest.json"))?;
+    let (source_before, source_after) =
+        validate_build_source_observations(&config.channels.stage, &staging)?;
     if revision != config.identity.source_revision
+        || tree != config.source_tree
         || Sha256Digest::of(tree.as_bytes()).as_str() != config.identity.source_sha256
         || behavior_sources()? != config.identity.behavior_sha256
+        || producing.lifecycle_digest()? != config.identity.lifecycle_behavior_sha256
+        || ProducingInputs::hashes(&producing.build_inputs)? != config.build_inputs
+        || artifact(Path::new(PRODUCING_MANIFEST))? != config.producing_manifest
+        || source_before.source_revision != revision
+        || source_before.source_tree != tree
+        || source_after.source_revision != revision
+        || source_after.source_tree != tree
     {
         return Err(invalid("producing source identity changed"));
     }
@@ -725,6 +885,19 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     {
         return Err(invalid("protocol or validator changed"));
     }
+    if config.host_admission_policy != HostAdmissionPolicy::declared() {
+        return Err(invalid(
+            "host admission policy differs from the declaration",
+        ));
+    }
+    validate_preflight_identities(&config.channels.stage, &config.preflight_reports)?;
+    for (name, saved) in &config.preflight_reports {
+        if artifact(&saved.path)? != *saved {
+            return Err(invalid("saved staged CLI preflight changed"));
+        }
+        let response: OwnerResponse = read_json(&saved.path)?;
+        verify_report_response(name, &response)?;
+    }
     Ok(())
 }
 
@@ -748,7 +921,100 @@ fn session_descriptor(
 #[serde(deny_unknown_fields)]
 struct StagingManifest {
     schema: String,
+    source_before: ArtifactIdentity,
+    source_after: ArtifactIdentity,
     executables: BTreeMap<Token, ArtifactIdentity>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct BuildSourceObservation {
+    schema: String,
+    phase: String,
+    source_revision: String,
+    source_tree: String,
+    porcelain: String,
+}
+fn validate_canonical_stage_artifact(
+    stage: &Path,
+    identity: &ArtifactIdentity,
+    relative_path: &str,
+    description: &str,
+) -> io::Result<()> {
+    let stage = fs::canonicalize(stage)?;
+    let expected = stage.join(relative_path);
+    let metadata = fs::symlink_metadata(&expected)?;
+    if identity.path != expected
+        || !metadata.file_type().is_file()
+        || metadata.file_type().is_symlink()
+        || fs::canonicalize(&expected)? != expected
+    {
+        return Err(invalid(format!(
+            "{description} must be the canonical regular stage artifact"
+        )));
+    }
+    Ok(())
+}
+fn validate_build_source_observations(
+    stage: &Path,
+    staging: &StagingManifest,
+) -> io::Result<(BuildSourceObservation, BuildSourceObservation)> {
+    validate_canonical_stage_artifact(
+        stage,
+        &staging.source_before,
+        "build/source-before.json",
+        "pre-build source observation",
+    )?;
+    validate_canonical_stage_artifact(
+        stage,
+        &staging.source_after,
+        "build/source-after.json",
+        "post-build source observation",
+    )?;
+    let before: BuildSourceObservation = read_json(&staging.source_before.path)?;
+    let after: BuildSourceObservation = read_json(&staging.source_after.path)?;
+    if artifact(&staging.source_before.path)? != staging.source_before
+        || artifact(&staging.source_after.path)? != staging.source_after
+        || before.schema != "tuning-campaign-build-source-v1"
+        || after.schema != before.schema
+        || before.phase != "before-build"
+        || after.phase != "after-build"
+        || !before.porcelain.is_empty()
+        || !after.porcelain.is_empty()
+        || before.source_revision != after.source_revision
+        || before.source_tree != after.source_tree
+    {
+        return Err(invalid("build source identity changed or was dirty"));
+    }
+    Ok((before, after))
+}
+fn validate_preflight_identities(
+    stage: &Path,
+    reports: &BTreeMap<String, ArtifactIdentity>,
+) -> io::Result<()> {
+    let expected_reports: std::collections::BTreeSet<_> = ["core", "algebra"]
+        .into_iter()
+        .flat_map(|owner| {
+            ["self-check", "list-grid", "capability-report"]
+                .map(move |mode| format!("{owner}-{mode}"))
+        })
+        .collect();
+    if reports
+        .keys()
+        .cloned()
+        .collect::<std::collections::BTreeSet<_>>()
+        != expected_reports
+    {
+        return Err(invalid("saved CLI preflight coverage mismatch"));
+    }
+    for (name, saved) in reports {
+        validate_canonical_stage_artifact(
+            stage,
+            saved,
+            &format!("{name}.json"),
+            "staged CLI preflight report",
+        )?;
+    }
+    Ok(())
 }
 fn stage_executables(stage: &Path, input: &Path) -> io::Result<()> {
     use std::os::unix::fs::PermissionsExt;
@@ -763,6 +1029,7 @@ fn stage_executables(stage: &Path, input: &Path) -> io::Result<()> {
     {
         return Err(invalid("staging executable identity mismatch"));
     }
+    validate_build_source_observations(stage, &staging)?;
     let bin = stage.join("bin");
     fs::create_dir_all(&bin)?;
     File::open(stage)?.sync_all()?;
@@ -791,13 +1058,29 @@ struct BootstrapInputs {
     validator: ArtifactIdentity,
     affinity: CpuAffinity,
     staging: ArtifactIdentity,
+    producing_manifest: ArtifactIdentity,
+    build_inputs: BTreeMap<String, String>,
+    host_admission_policy: HostAdmissionPolicy,
 }
 fn bootstrap_inputs(
     channels: &SessionChannels,
     campaign_id: &Token,
 ) -> io::Result<BootstrapInputs> {
     let (revision, tree) = source_state()?;
-    let behavior = behavior_sources()?;
+    let staging: StagingManifest = read_json(&channels.stage.join("staging-manifest.json"))?;
+    let (source_before, source_after) =
+        validate_build_source_observations(&channels.stage, &staging)?;
+    if source_before.source_revision != revision
+        || source_before.source_tree != tree
+        || source_after.source_revision != revision
+        || source_after.source_tree != tree
+    {
+        return Err(invalid(
+            "build source identity differs from preparation source",
+        ));
+    }
+    let producing = ProducingInputs::read()?;
+    let behavior = ProducingInputs::hashes(&producing.behavior_sources)?;
     let receipt = format!("dev/benchmarks/tuning_profiles/{}.md", campaign_id.as_str());
     let runtime = host_runtime(&receipt)?;
     let affinity = CpuAffinity::observe()?;
@@ -830,7 +1113,39 @@ fn bootstrap_inputs(
         validator: artifact(&repository.join("dev/scripts/validate-tuning-extent-campaign.py"))?,
         affinity,
         staging: artifact(&channels.stage.join("staging-manifest.json"))?,
+        producing_manifest: artifact(Path::new(PRODUCING_MANIFEST))?,
+        build_inputs: ProducingInputs::hashes(&producing.build_inputs)?,
+        host_admission_policy: HostAdmissionPolicy::declared(),
     })
+}
+
+fn validate_campaign_stage(stage: &Path, campaign_id: &str) -> io::Result<()> {
+    let suffix = campaign_id
+        .strip_prefix("gf2-a83583e0-")
+        .ok_or_else(|| invalid("campaign ID has the wrong issue prefix"))?;
+    let (stamp, pid) = suffix
+        .rsplit_once('-')
+        .ok_or_else(|| invalid("campaign ID lacks launcher PID"))?;
+    if stamp.len() != 16
+        || stamp.as_bytes().get(8) != Some(&b'T')
+        || !stamp[..8].bytes().all(|byte| byte.is_ascii_digit())
+        || !stamp[9..15].bytes().all(|byte| byte.is_ascii_digit())
+        || !stamp.ends_with('Z')
+        || pid.starts_with('0')
+        || pid.parse::<u32>().is_err()
+    {
+        return Err(invalid("campaign ID is not the declared UTC/PID form"));
+    }
+    let expected = fs::canonicalize("/tmp")?.join(campaign_id);
+    if stage != expected {
+        return Err(invalid("campaign stage must be exactly /tmp/<campaign-id>"));
+    }
+    if let Ok(metadata) = fs::symlink_metadata(stage) {
+        if metadata.file_type().is_symlink() {
+            return Err(invalid("campaign stage cannot be a symlink"));
+        }
+    }
+    Ok(())
 }
 fn prepare(
     stage: &Path,
@@ -839,7 +1154,11 @@ fn prepare(
     lock: &Path,
     staging: Option<&Path>,
 ) -> io::Result<()> {
-    fs::create_dir_all(stage)?;
+    validate_campaign_stage(stage, campaign_id)?;
+    if !stage.exists() {
+        fs::create_dir(stage)?;
+        File::open("/tmp")?.sync_all()?;
+    }
     let channels = SessionChannels::for_stage(stage)?;
     if let Some(input) = staging {
         stage_executables(&channels.stage, input)?;
@@ -915,23 +1234,16 @@ fn prepare(
             processes: processes.clone(),
         };
         let mut manifests = Vec::new();
+        let mut preflight_reports = BTreeMap::new();
         for (i, name) in [(0, "core"), (1, "algebra")] {
             request.processes = vec![processes[i].clone()];
-            for operation_kind in [
-                OwnerOperation::SelfCheck,
-                OwnerOperation::ListGrid,
-                OwnerOperation::CapabilityReport,
-            ] {
-                let response = operation(&processes[i], &operation_kind, Some(&mut log))?;
-                let label = match operation_kind {
-                    OwnerOperation::SelfCheck => "self-check",
-                    OwnerOperation::ListGrid => "list-grid",
-                    _ => "capability-report",
-                };
-                save(
-                    &channels.stage.join(format!("{name}-{label}.json")),
-                    &response,
-                )?;
+            for label in ["self-check", "list-grid", "capability-report"] {
+                let response = report_cli(&processes[i], label, Some(&mut log))?;
+                let key = format!("{name}-{label}");
+                let saved = save(&channels.stage.join(format!("{key}.json")), &response)?;
+                if preflight_reports.insert(key, saved).is_some() {
+                    return Err(invalid("duplicate staged CLI preflight report"));
+                }
             }
             let OwnerResponse::CampaignManifest { manifest } = operation(
                 &processes[i],
@@ -949,6 +1261,10 @@ fn prepare(
             )?;
             manifests.push(*manifest);
         }
+        let producing = ProducingInputs::read()?;
+        let build_inputs = ProducingInputs::hashes(&producing.build_inputs)?;
+        let producing_manifest = artifact(Path::new(PRODUCING_MANIFEST))?;
+        let lifecycle_behavior = ProducingInputs::hashes(&producing.lifecycle_sources)?;
         let identity = ResumeIdentity {
             protocol_digest: protocol.sha256.as_str().into(),
             source_revision: revision,
@@ -968,7 +1284,9 @@ fn prepare(
                 .collect(),
             behavior_sha256: behavior.clone(),
             lifecycle_schema: LIFECYCLE_SCHEMA.into(),
-            lifecycle_behavior_sha256: Sha256Digest::of(&encoded(&behavior)?).as_str().into(),
+            lifecycle_behavior_sha256: Sha256Digest::of(&encoded(&lifecycle_behavior)?)
+                .as_str()
+                .into(),
             feature_contract: FEATURE_CONTRACT.into(),
             thread_contract: THREAD_CONTRACT.into(),
             host_identity: CpuAffinity::observe()?.host_identity()?,
@@ -985,6 +1303,11 @@ fn prepare(
             validator,
             receipt,
             affinity: affinity.clone(),
+            source_tree: tree,
+            producing_manifest,
+            build_inputs,
+            preflight_reports,
+            host_admission_policy: HostAdmissionPolicy::declared(),
         };
 
         verify_config(&config)?;
@@ -1078,6 +1401,7 @@ fn bounded_unit_with_hook(
     mut hook: impl FnMut(UnitBoundary) -> io::Result<()>,
 ) -> io::Result<AcceptedResult> {
     let process = process(config, unit.process.as_str())?;
+    record_budget(log, "before-launch", process.id.as_str(), Some(&unit.key))?;
     let attempt_token = Token::new(format!("attempt-{}", log.next_sequence()))?;
     log.append(
         JournalEvent::CellStart,
@@ -1125,6 +1449,7 @@ fn bounded_unit_with_hook(
         },
     )?;
     let (log, attempt, pending) = state.into_inner();
+    record_budget(log, "after-result", process.id.as_str(), Some(&unit.key))?;
     let raw_root = config.channels.stage.join("raw-attempts");
     fs::create_dir_all(&raw_root)?;
     File::open(&config.channels.stage)?.sync_all()?;
@@ -1456,6 +1781,7 @@ fn emit(
             None,
             json!({"request":request,"args":args,"process":composer}),
         )?;
+        record_budget(log, "before-launch", composer.id.as_str(), None)?;
         log.append(
             JournalEvent::OrchestrationStart,
             None,
@@ -1474,6 +1800,7 @@ fn emit(
             &json!({"outcome":result.outcome,"stdout":result.stdout,"stderr":result.stderr}),
         )?;
         log.append(JournalEvent::OrchestrationExit,None,json!({"kind":"orchestration-exit","process":"composer","exit":exit,"outcome":result.outcome}))?;
+        record_budget(log, "after-result", composer.id.as_str(), None)?;
         if !result.outcome.accepts_result()? {
             return Err(invalid("composition failed"));
         }
@@ -2129,6 +2456,62 @@ fn main() {
 mod tests {
     use super::*;
 
+    #[test]
+    fn staged_process_receives_only_the_declared_measurement_environment() {
+        let executable = artifact(Path::new("/usr/bin/env")).unwrap();
+        let process = ProcessDescriptor {
+            id: Token::new("environment-probe").unwrap(),
+            executable: executable.path,
+            executable_sha256: executable.sha256,
+            arguments: vec![],
+            environment: measurement_environment(),
+            working_directory: fs::canonicalize(".").unwrap(),
+        };
+        let output = process_command(&process, &[]).unwrap().output().unwrap();
+        assert!(output.status.success());
+        let actual: BTreeMap<String, String> = String::from_utf8(output.stdout)
+            .unwrap()
+            .lines()
+            .map(|line| {
+                let (key, value) = line.split_once('=').unwrap();
+                (key.to_owned(), value.to_owned())
+            })
+            .collect();
+        assert!(
+            actual == process.environment,
+            "child inherited undeclared environment"
+        );
+    }
+
+    #[test]
+    fn staged_reporting_preflights_use_their_actual_cli_flags_and_empty_stdin() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let stage = scratch("report-cli");
+        let executable = stage.join("owner");
+        fs::write(
+            &executable,
+            b"#!/bin/sh\ninput=$(cat)\ntest -z \"$input\" || exit 8\ntest \"$#\" = 1 || exit 9\ncase \"$1\" in\n  --self-check) operation=self-check ;;\n  --list-grid) operation=list-grid ;;\n  --capability-report) operation=capability-report ;;\n  *) exit 10 ;;\nesac\nprintf 'GF2_TUNING_RESULT={\"operation\":\"%s\",\"evidence\":\"{}\"}' \"$operation\"\n",
+        )
+        .unwrap();
+        fs::set_permissions(&executable, fs::Permissions::from_mode(0o755)).unwrap();
+        let executable = artifact(&executable).unwrap();
+        let process = ProcessDescriptor {
+            id: Token::new("report-owner").unwrap(),
+            executable: executable.path,
+            executable_sha256: executable.sha256,
+            arguments: vec!["--owner-operation".into()],
+            environment: measurement_environment(),
+            working_directory: fs::canonicalize(".").unwrap(),
+        };
+        for label in ["self-check", "list-grid", "capability-report"] {
+            let response = report_cli(&process, label, None).unwrap();
+            verify_report_response(label, &response).unwrap();
+        }
+        assert!(report_cli(&process, "unknown", None).is_err());
+        fs::remove_dir_all(stage).unwrap();
+    }
+
     fn scratch(name: &str) -> std::path::PathBuf {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let path = env::temp_dir().join(format!(
@@ -2142,11 +2525,42 @@ mod tests {
     #[test]
     fn incomplete_executable_staging_replays_before_campaign_config_exists() {
         let stage = scratch("staging-replay");
+        fs::create_dir(stage.join("build")).unwrap();
+        let source_revision = command_text("git", &["rev-parse", "HEAD"]).unwrap();
+        let source_tree = command_text("git", &["rev-parse", "HEAD^{tree}"]).unwrap();
+        let before_path = stage.join("build/source-before.json");
+        let after_path = stage.join("build/source-after.json");
+        fs::write(
+            &before_path,
+            encoded(&BuildSourceObservation {
+                schema: "tuning-campaign-build-source-v1".into(),
+                phase: "before-build".into(),
+                source_revision: source_revision.clone(),
+                source_tree: source_tree.clone(),
+                porcelain: String::new(),
+            })
+            .unwrap(),
+        )
+        .unwrap();
+        fs::write(
+            &after_path,
+            encoded(&BuildSourceObservation {
+                schema: "tuning-campaign-build-source-v1".into(),
+                phase: "after-build".into(),
+                source_revision,
+                source_tree,
+                porcelain: String::new(),
+            })
+            .unwrap(),
+        )
+        .unwrap();
         let source = stage.join("built-driver");
         fs::write(&source, b"unchanged staged executable").unwrap();
         let source = artifact(&source).unwrap();
         let staging = StagingManifest {
             schema: "tuning-campaign-staging-v1".into(),
+            source_before: artifact(&before_path).unwrap(),
+            source_after: artifact(&after_path).unwrap(),
             executables: ["algebra-producer", "composer", "core-producer", "driver"]
                 .into_iter()
                 .map(|name| (Token::new(name).unwrap(), source.clone()))
@@ -2174,6 +2588,49 @@ mod tests {
         stage_executables(&stage, &input).unwrap();
         fs::write(&source.path, b"changed producer").unwrap();
         assert!(stage_executables(&stage, &input).is_err());
+        fs::remove_dir_all(stage).unwrap();
+    }
+
+    #[test]
+    fn relocated_build_source_observation_is_rejected_before_campaign_work() {
+        let stage = scratch("relocated-build-source");
+        fs::create_dir(stage.join("build")).unwrap();
+        let relocated = stage.join("source-before.json");
+        fs::write(&relocated, b"{}").unwrap();
+        let expected_after = stage.join("build/source-after.json");
+        fs::write(&expected_after, b"{}").unwrap();
+        let staging = StagingManifest {
+            schema: "tuning-campaign-staging-v1".into(),
+            source_before: artifact(&relocated).unwrap(),
+            source_after: artifact(&expected_after).unwrap(),
+            executables: BTreeMap::new(),
+        };
+
+        assert!(validate_build_source_observations(&stage, &staging).is_err());
+        assert!(!stage.join("execution.log").exists());
+        assert!(!stage.join("active-session.json").exists());
+        fs::remove_dir_all(stage).unwrap();
+    }
+
+    #[test]
+    fn relocated_preflight_report_is_rejected_before_campaign_work() {
+        let stage = scratch("relocated-preflight");
+        let mut reports = BTreeMap::new();
+        for owner in ["core", "algebra"] {
+            for mode in ["self-check", "list-grid", "capability-report"] {
+                let name = format!("{owner}-{mode}");
+                let path = stage.join(format!("{name}.json"));
+                fs::write(&path, b"{}").unwrap();
+                reports.insert(name, artifact(&path).unwrap());
+            }
+        }
+        let relocated = stage.join("relocated-core-list-grid.json");
+        fs::write(&relocated, b"{}").unwrap();
+        reports.insert("core-list-grid".into(), artifact(&relocated).unwrap());
+
+        assert!(validate_preflight_identities(&stage, &reports).is_err());
+        assert!(!stage.join("execution.log").exists());
+        assert!(!stage.join("active-session.json").exists());
         fs::remove_dir_all(stage).unwrap();
     }
     #[test]
@@ -2273,9 +2730,14 @@ mod tests {
             processes: vec![descriptor],
             runtime: CanonicalJson::new("{}").unwrap(),
             protocol: executable.clone(),
-            validator: executable,
+            validator: executable.clone(),
             receipt: "test.md".into(),
             affinity: CpuAffinity::observe().unwrap(),
+            source_tree: String::new(),
+            producing_manifest: executable.clone(),
+            build_inputs: BTreeMap::new(),
+            preflight_reports: BTreeMap::new(),
+            host_admission_policy: HostAdmissionPolicy::declared(),
         };
         let mut log = ExecutionLog::create_new(&stage, campaign.as_str(), "first-session").unwrap();
         log.append(JournalEvent::CampaignStart, None, json!({}))
@@ -2612,6 +3074,48 @@ mod tests {
         assert_eq!(result.stdout, vec![b'x'; 131072]);
         assert_eq!(stderr, vec![255; 131072]);
         assert!(result.outcome.accepts_result().unwrap());
+    }
+
+    #[test]
+    fn campaign_stage_policy_rejects_non_tmp_and_mismatched_paths() {
+        let campaign = format!("gf2-a83583e0-20260905T000000Z-{}", std::process::id());
+        let expected = Path::new("/tmp").join(&campaign);
+        assert!(validate_campaign_stage(&expected, &campaign).is_ok());
+        assert!(validate_campaign_stage(Path::new("/tmp/other"), &campaign).is_err());
+        assert!(validate_campaign_stage(&expected, "gf2-a83583e0-20260905-000000-1").is_err());
+        assert!(validate_campaign_stage(
+            Path::new("/home/example/gf2-a83583e0-20260905T000000Z-1"),
+            "gf2-a83583e0-20260905T000000Z-1"
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn producing_input_manifest_rejects_authority_and_path_mutations() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../..")
+            .canonicalize()
+            .unwrap();
+        let manifest: ProducingInputs =
+            serde_json::from_slice(&fs::read(root.join(PRODUCING_MANIFEST)).unwrap()).unwrap();
+        manifest.validate_at(&root).unwrap();
+        let mut changed = manifest.clone();
+        changed.schema = "unknown".into();
+        assert!(changed.validate_at(&root).is_err());
+
+        let mut changed = manifest.clone();
+        changed.behavior_sources.swap(0, 1);
+        assert!(changed.validate_at(&root).is_err());
+
+        let mut changed = manifest.clone();
+        changed.lifecycle_sources.push("not/in/behavior.rs".into());
+        changed.lifecycle_sources.sort();
+        assert!(changed.validate_at(&root).is_err());
+
+        let mut changed = manifest;
+        changed.build_inputs[0] = "crates/*/Cargo.toml".into();
+        changed.build_inputs.sort();
+        assert!(changed.validate_at(&root).is_err());
     }
 
     #[test]

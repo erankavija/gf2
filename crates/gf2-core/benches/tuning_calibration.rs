@@ -10194,6 +10194,41 @@ mod campaign_owner {
         required_features: String,
         required_threads: String,
     }
+    impl CapabilityReport {
+        fn validate(&self) -> Result<(), String> {
+            if !self.fp251_whole_gemm {
+                return Err("required Fp251 whole-GEMM capability unavailable".to_owned());
+            }
+            if !matches!(
+                self.simd_backend.as_deref(),
+                Some("avx2" | "avx512" | "neon")
+            ) {
+                return Err("required concrete SIMD backend unavailable".to_owned());
+            }
+            if self.dedicated_pool_width != 4 {
+                return Err("required dedicated pool width is four".to_owned());
+            }
+            if self.dot.len() != DotChunkCandidate::ALL.len()
+                || self
+                    .dot
+                    .iter()
+                    .zip(DotChunkCandidate::ALL)
+                    .any(|(observed, candidate)| {
+                        observed.candidate_chunk != candidate.chunk_len()
+                            || observed.effective_chunk != candidate.chunk_len()
+                            || !observed.batch_clmul_scalar_clmul_and_barrett
+                            || !observed.scalar_equal
+                            || self.representative_dot_length <= candidate.chunk_len()
+                    })
+            {
+                return Err(
+                    "required dot candidate CLMUL/Barrett/scalar-equivalence probe unavailable"
+                        .to_owned(),
+                );
+            }
+            self.ordinary_companions.validate()
+        }
+    }
     fn capability_report() -> Result<CanonicalJson, String> {
         preflight()?;
         let field = Gf2mField::new(8, 0x11b);
@@ -10201,7 +10236,8 @@ mod campaign_owner {
             .into_iter()
             .map(|candidate| candidate.chunk_len())
             .max()
-            .ok_or("empty dot capability grid")?;
+            .ok_or("empty dot capability grid")?
+            + 1;
         let lhs = FieldVec::from(vec![field.element(3); length]);
         let rhs = FieldVec::from(vec![field.element(5); length]);
         let oracle = lhs.dot_product(&rhs);
@@ -10224,7 +10260,7 @@ mod campaign_owner {
                 4,
                 || Ok::<usize, String>(rayon::current_num_threads()),
             )?;
-        CanonicalJson::from_serializable(&CapabilityReport {
+        let report = CapabilityReport {
             scope: CapabilityScope::RepresentativePrerequisites,
             full_grid_probes: false,
             timed_children: 0,
@@ -10237,8 +10273,9 @@ mod campaign_owner {
             cpu_features: cpu_features(),
             required_features: REQUIRED_FEATURES.to_owned(),
             required_threads: REQUIRED_RAYON_THREADS.to_owned(),
-        })
-        .map_err(err)
+        };
+        report.validate()?;
+        CanonicalJson::from_serializable(&report).map_err(err)
     }
 
     fn operation(request: OwnerOperation) -> Result<OwnerResponse, String> {
@@ -10676,6 +10713,36 @@ mod campaign_owner {
                 && dot.batch_clmul_scalar_clmul_and_barrett
                     == (dot.effective_chunk == dot.candidate_chunk)));
             report.ordinary_companions.validate().unwrap();
+        }
+        #[test]
+        fn capability_preflight_rejects_every_missing_mandatory_prerequisite() {
+            let report: CapabilityReport = capability_report().unwrap().decode().unwrap();
+            let original = serde_json::to_value(&report).unwrap();
+            for (pointer, value) in [
+                ("/fp251_whole_gemm", serde_json::json!(false)),
+                ("/simd_backend", serde_json::Value::Null),
+                ("/dedicated_pool_width", serde_json::json!(1)),
+                (
+                    "/dot/0/batch_clmul_scalar_clmul_and_barrett",
+                    serde_json::json!(false),
+                ),
+                ("/dot/1/effective_chunk", serde_json::json!(0)),
+                ("/dot/2/scalar_equal", serde_json::json!(false)),
+            ] {
+                let mut changed = original.clone();
+                *changed.pointer_mut(pointer).unwrap() = value;
+                let changed: CapabilityReport = serde_json::from_value(changed).unwrap();
+                assert!(
+                    changed.validate().is_err(),
+                    "accepted unavailable {pointer}"
+                );
+            }
+            let mut report = report;
+            report.dot.pop();
+            assert!(
+                report.validate().is_err(),
+                "accepted a missing candidate probe"
+            );
         }
         #[test]
         fn owner_rejects_companion_mutation_independently_of_installed_candidate() {
