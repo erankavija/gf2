@@ -217,7 +217,15 @@ fn log(stage: &Path) -> ExecutionLog {
     log
 }
 fn complete_attempt(log: &mut ExecutionLog, unit: &LaunchUnit) -> ChildResult {
+    complete_attempt_with_streams(log, unit, false)
+}
+fn complete_attempt_with_streams(
+    log: &mut ExecutionLog,
+    unit: &LaunchUnit,
+    retain_streams: bool,
+) -> ChildResult {
     let report = result(unit);
+    let mut raw_stderr = Vec::new();
     let mut attempt = ChildAttempt::start(log, unit.clone(), token("attempt-1"), 123).unwrap();
     if !report.samples.is_empty() {
         let calibration = ProgressRecord::new(
@@ -228,6 +236,7 @@ fn complete_attempt(log: &mut ExecutionLog, unit: &LaunchUnit) -> ChildResult {
         .unwrap();
         let mut line = Vec::new();
         calibration.write_line(&mut line).unwrap();
+        raw_stderr.extend_from_slice(&line);
         attempt
             .stderr_line(
                 log,
@@ -247,6 +256,7 @@ fn complete_attempt(log: &mut ExecutionLog, unit: &LaunchUnit) -> ChildResult {
             .unwrap();
             let mut line = Vec::new();
             record.write_line(&mut line).unwrap();
+            raw_stderr.extend_from_slice(&line);
             attempt
                 .stderr_line(
                     log,
@@ -256,7 +266,31 @@ fn complete_attempt(log: &mut ExecutionLog, unit: &LaunchUnit) -> ChildResult {
         }
     }
     attempt.stderr_line(log, "owner diagnostic").unwrap();
+    raw_stderr.extend_from_slice(b"owner diagnostic\n");
     let stdout = format!("{}\n", encode_result_line(&report).unwrap());
+    if retain_streams {
+        let stage = log.path().parent().unwrap();
+        let stdout_artifact =
+            publish_artifact(stage, &stage.join("raw.stdout"), stdout.as_bytes()).unwrap();
+        let stderr_artifact =
+            publish_artifact(stage, &stage.join("raw.stderr"), &raw_stderr).unwrap();
+        let evidence = ChildCompletionEvidence::new(
+            unit,
+            token("attempt-1"),
+            ProcessOutcome::Exited {
+                pid: 123,
+                exit_code: 0,
+                elapsed_ns: 10,
+                all_descendants_reaped: true,
+            },
+            stdout_artifact,
+            stderr_artifact,
+            None,
+        )
+        .unwrap();
+        attempt.record_completion(log, &evidence).unwrap();
+        assert!(attempt.record_completion(log, &evidence).is_err());
+    }
     attempt
         .exited(
             log,
@@ -267,7 +301,11 @@ fn complete_attempt(log: &mut ExecutionLog, unit: &LaunchUnit) -> ChildResult {
                 all_descendants_reaped: true,
             },
             stdout.as_bytes(),
-            digest(),
+            if retain_streams {
+                Sha256Digest::of(&raw_stderr)
+            } else {
+                digest()
+            },
         )
         .unwrap();
     attempt
@@ -576,6 +614,7 @@ fn prelock_failure_does_not_invent_release_and_timeout_never_accepts() {
 fn descriptor(stage: &Path) -> SessionDescriptor {
     SessionDescriptor {
         schema: LIFECYCLE_SCHEMA.into(),
+        preparer: ProcessIdentity::current().unwrap(),
         campaign_id: token("campaign"),
         session_id: token("s1"),
         channels: SessionChannels::for_stage(stage).unwrap(),
@@ -583,6 +622,179 @@ fn descriptor(stage: &Path) -> SessionDescriptor {
         counts: DeclaredCounts::for_cells(2).unwrap(),
         lock_path: "/tmp/campaign.lock".into(),
     }
+}
+
+fn prelock_evidence(store: &SessionStore) -> PrelockInterruptionEvidence {
+    PrelockInterruptionEvidence {
+        writers: store
+            .writer_identities()
+            .unwrap()
+            .into_iter()
+            .map(|writer| WriterDeathEvidence {
+                writer,
+                writer_dead: true,
+            })
+            .collect(),
+        lock_path: store.descriptor().lock_path.clone(),
+        lock_available: true,
+        observed_utc: "2026-09-05T00:00:00Z".into(),
+        active_elapsed_censored: true,
+    }
+}
+
+#[test]
+fn prepared_writer_death_closes_without_fictitious_wrapper_or_release() {
+    let tmp = Scratch::new();
+    let first = descriptor(&tmp.0);
+    let mut log = log(&tmp.0);
+    let mut store = SessionStore::prepare(first.clone()).unwrap();
+    store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
+    store.consume_mode(SessionMode::RunSession).unwrap();
+    let proof = prelock_evidence(&store);
+    drop(store);
+    drop(log);
+    let mut store = SessionStore::reopen(first.clone()).unwrap();
+    let mut log = store.repair_log().unwrap();
+    for evidence in [
+        PrelockInterruptionEvidence {
+            writers: vec![],
+            ..proof.clone()
+        },
+        PrelockInterruptionEvidence {
+            lock_available: false,
+            ..proof.clone()
+        },
+        PrelockInterruptionEvidence {
+            active_elapsed_censored: false,
+            ..proof.clone()
+        },
+        PrelockInterruptionEvidence {
+            observed_utc: String::new(),
+            ..proof.clone()
+        },
+    ] {
+        assert!(store
+            .recover_transition(&mut log, SessionTransition::PrelockInterrupted { evidence })
+            .is_err());
+    }
+    let mut live = proof.clone();
+    live.writers[0].writer_dead = false;
+    assert!(store
+        .recover_transition(
+            &mut log,
+            SessionTransition::PrelockInterrupted { evidence: live }
+        )
+        .is_err());
+    let mut other = proof.clone();
+    other.writers[0].writer.start_time_ticks += 1;
+    assert!(store
+        .recover_transition(
+            &mut log,
+            SessionTransition::PrelockInterrupted { evidence: other }
+        )
+        .is_err());
+    assert!(store
+        .recover_transition(
+            &mut log,
+            SessionTransition::WrapperReturned {
+                evidence: WrapperEvidence {
+                    exit_code: Some(1),
+                    signal: None
+                }
+            }
+        )
+        .is_err());
+    assert!(store
+        .recover_transition(
+            &mut log,
+            SessionTransition::LockRelease {
+                evidence: ReleaseEvidence::Independent {
+                    evidence: IndependentReleaseEvidence {
+                        holder_dead: true,
+                        descendants_dead: true,
+                        lock_path: first.lock_path.clone(),
+                        observed_utc: proof.observed_utc.clone(),
+                        lock_available: true,
+                    }
+                }
+            }
+        )
+        .is_err());
+    store
+        .recover_transition(
+            &mut log,
+            SessionTransition::PrelockInterrupted { evidence: proof },
+        )
+        .unwrap();
+    assert_eq!(store.lifecycle().state(), SessionState::Interrupted);
+    let records =
+        ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
+    assert_eq!(records.last().unwrap().event, JournalEvent::Interrupted);
+    assert!(records.iter().all(|record| !matches!(
+        record.event,
+        JournalEvent::LockHold | JournalEvent::LockRelease | JournalEvent::WrapperReturned
+    )));
+    let pin = store.write_checksum(&mut log, vec![]).unwrap();
+    assert_eq!(pin, store.write_checksum(&mut log, vec![]).unwrap());
+    store.retire(&mut log, &pin).unwrap();
+    let mut next = first;
+    next.session_id = token("s2");
+    drop(log);
+    let next_log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+    assert_eq!(next_log.session_id(), "s2");
+    SessionStore::prepare(next).unwrap();
+}
+
+#[test]
+fn prelock_abort_rejects_any_held_or_fabricated_wrapper_evidence() {
+    for event in [
+        JournalEvent::LockHold,
+        JournalEvent::WrapperReturned,
+        JournalEvent::LockRelease,
+        JournalEvent::ChildSpawn,
+    ] {
+        let tmp = Scratch::new();
+        let first = descriptor(&tmp.0);
+        let mut log = log(&tmp.0);
+        let mut store = SessionStore::prepare(first).unwrap();
+        store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
+        let proof = prelock_evidence(&store);
+        log.append(event, None, json!({"unbound":"observation"}))
+            .unwrap();
+        assert!(store
+            .recover_transition(
+                &mut log,
+                SessionTransition::PrelockInterrupted { evidence: proof }
+            )
+            .is_err());
+        assert_eq!(store.lifecycle().state(), SessionState::Prepared);
+        assert!(!tmp.0.join("sessions/s1/transition-000000.json").exists());
+    }
+    let tmp = Scratch::new();
+    let first = descriptor(&tmp.0);
+    let mut log = log(&tmp.0);
+    let mut store = SessionStore::prepare(first.clone()).unwrap();
+    let proof = prelock_evidence(&store);
+    store.consume_mode(SessionMode::RunSession).unwrap();
+    store
+        .transition(
+            &mut log,
+            SessionTransition::LockHeld {
+                evidence: LockEvidence {
+                    lock_path: first.lock_path,
+                    holder_pid: 123,
+                    observation: token("inherited"),
+                },
+            },
+        )
+        .unwrap();
+    assert!(store
+        .recover_transition(
+            &mut log,
+            SessionTransition::PrelockInterrupted { evidence: proof }
+        )
+        .is_err());
+    assert_eq!(store.lifecycle().state(), SessionState::LockHeld);
 }
 
 #[test]
@@ -779,26 +991,6 @@ fn derived_manifests_cannot_change_reserved_slots_or_input_digest() {
     assert!(derived.validate(&request).is_err());
 }
 
-fn checksum(
-    log: &mut ExecutionLog,
-    descriptor: &SessionDescriptor,
-    path: &Path,
-) -> ArtifactIdentity {
-    let pin = SessionChecksum {
-        schema: "tuning-campaign-session-checksum-v1".into(),
-        descriptor_sha256: descriptor.digest().unwrap(),
-        journal_prefix: JournalPrefix::sync(log, &descriptor.campaign_id).unwrap(),
-        artifacts: vec![],
-    };
-    pin.validate(descriptor, log.path()).unwrap();
-    let encoded = serde_json::to_vec(&pin).unwrap();
-    tuning_campaign_support::journal::atomic_write_new(path, &encoded).unwrap();
-    ArtifactIdentity {
-        path: path.into(),
-        sha256: Sha256Digest::of(&encoded),
-    }
-}
-
 #[test]
 fn budget_terminal_checksum_gap_and_same_identity_resume_preserve_the_prefix() {
     let tmp = Scratch::new();
@@ -889,7 +1081,7 @@ fn budget_terminal_checksum_gap_and_same_identity_resume_preserve_the_prefix() {
         ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
     store.reconcile_journal(&mut log).unwrap();
     assert_eq!(log.next_sequence(), terminal_sequence);
-    let pin = checksum(&mut log, &first, &tmp.0.join("s1-checksum.json"));
+    let pin = store.write_checksum(&mut log, vec![]).unwrap();
     store.retire(&mut log, &pin).unwrap();
     drop(log);
     let mut second = first.clone();
@@ -958,7 +1150,7 @@ fn recovery_requires_release_then_censored_interruption_and_allows_resume() {
             },
         )
         .unwrap();
-    let pin = checksum(&mut log, &first, &tmp.0.join("interrupted-checksum.json"));
+    let pin = store.write_checksum(&mut log, vec![]).unwrap();
     store.retire(&mut log, &pin).unwrap();
     drop(log);
     let mut second = first;
@@ -1056,6 +1248,690 @@ fn rewrite_records(
         encoded.push(b'\n');
     }
     fs::write(log.path(), encoded).unwrap();
+}
+
+#[test]
+fn completion_intent_recovers_every_raw_exit_validation_and_checkpoint_boundary() {
+    for boundary in 0..6 {
+        let tmp = Scratch::new();
+        let m = manifest();
+        let unit = &m.ordered_units[3];
+        let first = descriptor(&tmp.0);
+        let mut log = log(&tmp.0);
+        let mut checkpoints =
+            CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
+                .unwrap();
+        let mut store = SessionStore::prepare(first.clone()).unwrap();
+        store.consume_mode(SessionMode::RunSession).unwrap();
+        store
+            .transition(
+                &mut log,
+                SessionTransition::LockHeld {
+                    evidence: LockEvidence {
+                        lock_path: first.lock_path.clone(),
+                        holder_pid: 123,
+                        observation: token("inherited"),
+                    },
+                },
+            )
+            .unwrap();
+        let report = complete_attempt_with_streams(&mut log, unit, true);
+        if boundary >= 4 {
+            accept_checkpoint(&mut log, &mut checkpoints, unit, &report).unwrap();
+        }
+        rewrite_records(&log, |records| {
+            records.retain(|record| match record.event {
+                JournalEvent::RawStreams => boundary >= 1,
+                JournalEvent::ChildExit => boundary >= 2,
+                JournalEvent::ResultValidated => boundary >= 3,
+                JournalEvent::CheckpointAccepted => boundary >= 5,
+                _ => true,
+            })
+        });
+        drop(store);
+        drop(log);
+        let mut store = SessionStore::reopen(first.clone()).unwrap();
+        let mut log = store.repair_log().unwrap();
+        let repaired = log.next_sequence();
+        repair_child_exits(&mut log).unwrap();
+        assert_eq!(log.next_sequence(), repaired);
+        let records =
+            ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
+        assert_eq!(
+            records
+                .iter()
+                .filter(|record| record.event == JournalEvent::ChildExit)
+                .count(),
+            usize::from(boundary > 0)
+        );
+        let stdout = fs::read(tmp.0.join("raw.stdout")).unwrap();
+        let stderr_digest = Sha256Digest::of(&fs::read(tmp.0.join("raw.stderr")).unwrap());
+        if boundary == 0 {
+            assert!(ChildAttempt::recover_exited(
+                &mut log,
+                unit.clone(),
+                token("attempt-1"),
+                &stdout,
+                stderr_digest.clone()
+            )
+            .is_err());
+            assert!(checkpoints.completed_keys().is_empty());
+        }
+        store
+            .recover_transition(
+                &mut log,
+                SessionTransition::LockRelease {
+                    evidence: ReleaseEvidence::Independent {
+                        evidence: IndependentReleaseEvidence {
+                            holder_dead: true,
+                            descendants_dead: true,
+                            lock_path: first.lock_path.clone(),
+                            observed_utc: "2026-09-05T00:00:00Z".into(),
+                            lock_available: true,
+                        },
+                    },
+                },
+            )
+            .unwrap();
+        store
+            .recover_transition(
+                &mut log,
+                SessionTransition::Interrupted {
+                    active_elapsed_censored: true,
+                },
+            )
+            .unwrap();
+        let pin = store.write_checksum(&mut log, vec![]).unwrap();
+        store.retire(&mut log, &pin).unwrap();
+        drop(log);
+        let mut log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+        if boundary == 0 {
+            // Raw files alone make no claim about the original exit outcome.
+            // Only the independently closed interruption permits a fresh run.
+            ChildAttempt::start(&mut log, unit.clone(), token("attempt-2"), 456).unwrap();
+            assert!(checkpoints.completed_keys().is_empty());
+        } else {
+            let mut recovered = ChildAttempt::recover_exited(
+                &mut log,
+                unit.clone(),
+                token("attempt-1"),
+                &stdout,
+                stderr_digest.clone(),
+            )
+            .unwrap();
+            assert_eq!(recovered.result(), Some(&report));
+            if !recovered.is_validated() {
+                recovered
+                    .owner_validated(
+                        &mut log,
+                        &OwnerResponse::ValidateResult {
+                            unit_key: unit.key.clone(),
+                            result_sha256: report.digest().unwrap(),
+                        },
+                    )
+                    .unwrap();
+            }
+            if boundary < 4 {
+                accept_checkpoint(&mut log, &mut checkpoints, unit, &report).unwrap();
+            }
+            assert_eq!(
+                reconcile_checkpoints(&mut log, &checkpoints, &m)
+                    .unwrap()
+                    .accepted
+                    .len(),
+                1
+            );
+            let records =
+                ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
+            for event in [
+                JournalEvent::ChildSpawn,
+                JournalEvent::RawStreams,
+                JournalEvent::ChildExit,
+                JournalEvent::ResultValidated,
+                JournalEvent::CheckpointAccepted,
+            ] {
+                assert_eq!(
+                    records
+                        .iter()
+                        .filter(|record| record.event == event)
+                        .count(),
+                    1,
+                    "boundary {boundary}, {event:?}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn pending_completion_rejects_wrong_outcome_case_artifacts_and_duplicate_intent() {
+    for mutation in 0..6 {
+        let tmp = Scratch::new();
+        let m = manifest();
+        let unit = &m.ordered_units[3];
+        let mut log = log(&tmp.0);
+        complete_attempt_with_streams(&mut log, unit, true);
+        rewrite_records(&log, |records| {
+            records.retain(|record| {
+                !matches!(
+                    record.event,
+                    JournalEvent::ChildExit | JournalEvent::ResultValidated
+                )
+            });
+            let index = records
+                .iter()
+                .position(|record| record.event == JournalEvent::RawStreams)
+                .unwrap();
+            match mutation {
+                0 => records[index].details["exit"]["outcome"]["pid"] = json!(456),
+                1 => records[index].case = Some(json!({"wrong":"case"})),
+                2 => records[index].details["exit"]["stdout_sha256"] = json!(digest()),
+                3 => records[index].details["exit"]["attempt"] = json!("other"),
+                4 => records.insert(index, records[index].clone()),
+                _ => fs::write(tmp.0.join("raw.stdout"), b"changed raw bytes").unwrap(),
+            }
+        });
+        drop(log);
+        let mut log =
+            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+        let prefix = fs::read(log.path()).unwrap();
+        assert!(repair_child_exits(&mut log).is_err());
+        assert_eq!(fs::read(log.path()).unwrap(), prefix);
+    }
+}
+
+#[test]
+fn completed_raw_result_never_overrides_failure_or_timeout_observation() {
+    for timeout in [false, true] {
+        let tmp = Scratch::new();
+        let m = manifest();
+        let unit = &m.ordered_units[3];
+        let mut log = log(&tmp.0);
+        complete_attempt_with_streams(&mut log, unit, true);
+        let outcome = if timeout {
+            ProcessOutcome::TimedOut {
+                pid: 123,
+                elapsed_ns: 120_000_000_000,
+                kill_grace_exhausted: false,
+                all_descendants_reaped: true,
+            }
+        } else {
+            ProcessOutcome::Exited {
+                pid: 123,
+                exit_code: 1,
+                elapsed_ns: 10,
+                all_descendants_reaped: true,
+            }
+        };
+        rewrite_records(&log, |records| {
+            records.retain(|record| {
+                !matches!(
+                    record.event,
+                    JournalEvent::ChildExit | JournalEvent::ResultValidated
+                )
+            });
+            records
+                .iter_mut()
+                .find(|record| record.event == JournalEvent::RawStreams)
+                .unwrap()
+                .details["exit"]["outcome"] = serde_json::to_value(&outcome).unwrap();
+        });
+        drop(log);
+        let mut log =
+            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+        repair_child_exits(&mut log).unwrap();
+        if timeout {
+            // Crash after synced ChildTimeout but before synced ChildExit.
+            rewrite_records(&log, |records| {
+                records.retain(|record| record.event != JournalEvent::ChildExit)
+            });
+            drop(log);
+            log =
+                ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+            repair_child_exits(&mut log).unwrap();
+        }
+        let sequence = log.next_sequence();
+        repair_child_exits(&mut log).unwrap();
+        assert_eq!(log.next_sequence(), sequence);
+        let records =
+            ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
+        assert_eq!(
+            records
+                .iter()
+                .filter(|record| record.event == JournalEvent::ChildTimeout)
+                .count(),
+            usize::from(timeout)
+        );
+        let exits: Vec<_> = records
+            .iter()
+            .filter(|record| record.event == JournalEvent::ChildExit)
+            .collect();
+        assert_eq!(exits.len(), 1);
+        assert_eq!(
+            exits[0].details["outcome"],
+            serde_json::to_value(outcome).unwrap()
+        );
+        assert!(ChildAttempt::recover_exited(
+            &mut log,
+            unit.clone(),
+            token("attempt-1"),
+            &fs::read(tmp.0.join("raw.stdout")).unwrap(),
+            Sha256Digest::of(&fs::read(tmp.0.join("raw.stderr")).unwrap())
+        )
+        .is_err());
+    }
+}
+
+#[test]
+fn rejected_stderr_remains_durable_across_completion_and_exit_crashes() {
+    let fixtures: &[(&[u8], Option<&str>, StderrValidation)] = &[
+        (b"unterminated", None, StderrValidation::UnterminatedStderr),
+        (b"\xff\n", None, StderrValidation::InvalidUtf8),
+        (
+            b"",
+            Some("callback rejected stream"),
+            StderrValidation::Valid,
+        ),
+        (
+            b"GF2_TUNING_PROGRESS={bad}\n",
+            Some("progress callback rejected line"),
+            StderrValidation::ProgressRejected,
+        ),
+    ];
+    for (raw_stderr, callback_error, expected) in fixtures {
+        for write_exit in [false, true] {
+            let tmp = Scratch::new();
+            let m = manifest();
+            let unit = &m.ordered_units[0];
+            assert_eq!(unit.identity.task, Task::Probe);
+            let report = result(unit);
+            let stdout = format!("{}\n", encode_result_line(&report).unwrap()).into_bytes();
+            let stderr_digest = Sha256Digest::of(raw_stderr);
+            let mut log = log(&tmp.0);
+            let mut attempt =
+                ChildAttempt::start(&mut log, unit.clone(), token("rejected"), 123).unwrap();
+            if let Ok(text) = std::str::from_utf8(raw_stderr) {
+                for line in text
+                    .split_inclusive('\n')
+                    .filter(|line| line.ends_with('\n'))
+                {
+                    let _ = attempt.stderr_line(&mut log, line.trim_end_matches('\n'));
+                }
+            }
+            let outcome = ProcessOutcome::Exited {
+                pid: 123,
+                exit_code: 0,
+                elapsed_ns: 10,
+                all_descendants_reaped: true,
+            };
+            let evidence = ChildCompletionEvidence::new(
+                unit,
+                token("rejected"),
+                outcome.clone(),
+                publish_artifact(&tmp.0, &tmp.0.join("raw.stdout"), &stdout).unwrap(),
+                publish_artifact(&tmp.0, &tmp.0.join("raw.stderr"), raw_stderr).unwrap(),
+                callback_error.map(str::to_owned),
+            )
+            .unwrap();
+            assert_eq!(&evidence.stream_validation.stderr, expected);
+            assert!(!evidence.stream_validation.accepts_result());
+            attempt.record_completion(&mut log, &evidence).unwrap();
+            if write_exit {
+                assert!(attempt
+                    .exited(&mut log, outcome, &stdout, stderr_digest.clone())
+                    .is_err());
+            }
+            drop(attempt);
+            drop(log);
+            let mut log =
+                ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+            repair_child_exits(&mut log).unwrap();
+            let sequence = log.next_sequence();
+            repair_child_exits(&mut log).unwrap();
+            assert_eq!(sequence, log.next_sequence());
+            let records =
+                ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
+            assert_eq!(
+                records
+                    .iter()
+                    .filter(|r| r.event == JournalEvent::ChildExit)
+                    .count(),
+                1
+            );
+            assert_eq!(fs::read(tmp.0.join("raw.stderr")).unwrap(), *raw_stderr);
+            assert!(ChildAttempt::recover_exited(
+                &mut log,
+                unit.clone(),
+                token("rejected"),
+                &stdout,
+                stderr_digest,
+            )
+            .is_err());
+            let mut checkpoints = CheckpointStore::create_new(
+                tmp.0.join("checkpoints"),
+                "campaign",
+                resume_identity(),
+            )
+            .unwrap();
+            assert!(accept_checkpoint(&mut log, &mut checkpoints, unit, &report).is_err());
+            assert!(checkpoints.completed_keys().is_empty());
+        }
+    }
+}
+
+#[test]
+fn completion_records_missing_callback_progress_before_rejecting_exit() {
+    let source = Scratch::new();
+    let m = manifest();
+    let unit = &m.ordered_units[3];
+    let mut source_log = log(&source.0);
+    let report = complete_attempt_with_streams(&mut source_log, unit, true);
+    let stdout = fs::read(source.0.join("raw.stdout")).unwrap();
+    let stderr = fs::read(source.0.join("raw.stderr")).unwrap();
+    let stderr_digest = Sha256Digest::of(&stderr);
+    let tmp = Scratch::new();
+    let mut log = log(&tmp.0);
+    let mut attempt = ChildAttempt::start(&mut log, unit.clone(), token("missed"), 123).unwrap();
+    let outcome = ProcessOutcome::Exited {
+        pid: 123,
+        exit_code: 0,
+        elapsed_ns: 10,
+        all_descendants_reaped: true,
+    };
+    let evidence = ChildCompletionEvidence::new(
+        unit,
+        token("missed"),
+        outcome.clone(),
+        publish_artifact(&tmp.0, &tmp.0.join("raw.stdout"), &stdout).unwrap(),
+        publish_artifact(&tmp.0, &tmp.0.join("raw.stderr"), &stderr).unwrap(),
+        None,
+    )
+    .unwrap();
+    assert_eq!(evidence.stream_validation.stderr, StderrValidation::Valid);
+    attempt.record_completion(&mut log, &evidence).unwrap();
+    let records =
+        ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
+    let durable: ChildCompletionEvidence = serde_json::from_value(
+        records
+            .iter()
+            .find(|r| r.event == JournalEvent::RawStreams)
+            .unwrap()
+            .details
+            .clone(),
+    )
+    .unwrap();
+    assert!(!durable.stream_validation.progress_matches_journal);
+    assert!(attempt
+        .exited(&mut log, outcome, &stdout, stderr_digest.clone())
+        .is_err());
+    assert!(ChildAttempt::recover_exited(
+        &mut log,
+        unit.clone(),
+        token("missed"),
+        &stdout,
+        stderr_digest,
+    )
+    .is_err());
+    let mut checkpoints =
+        CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
+            .unwrap();
+    assert!(accept_checkpoint(&mut log, &mut checkpoints, unit, &report).is_err());
+}
+
+#[test]
+fn raw_stderr_validity_and_progress_equivalence_cannot_be_mutated_into_acceptance() {
+    for mutation in [
+        "raw-validity",
+        "missing-journal-progress",
+        "missing-raw-progress",
+    ] {
+        let tmp = Scratch::new();
+        let m = manifest();
+        let unit = &m.ordered_units[3];
+        let mut log = log(&tmp.0);
+        complete_attempt_with_streams(&mut log, unit, true);
+        let stdout = fs::read(tmp.0.join("raw.stdout")).unwrap();
+        if mutation == "raw-validity" {
+            fs::write(tmp.0.join("raw.stderr"), b"\xff\n").unwrap();
+        } else if mutation == "missing-raw-progress" {
+            let raw = fs::read(tmp.0.join("raw.stderr")).unwrap();
+            let first_lf = raw.iter().position(|byte| *byte == b'\n').unwrap();
+            fs::write(tmp.0.join("raw.stderr"), &raw[first_lf + 1..]).unwrap();
+        }
+        let stderr_digest = Sha256Digest::of(&fs::read(tmp.0.join("raw.stderr")).unwrap());
+        rewrite_records(&log, |records| {
+            records.retain(|record| {
+                !(matches!(
+                    record.event,
+                    JournalEvent::ChildExit | JournalEvent::ResultValidated
+                ) || (mutation == "missing-journal-progress"
+                    && record.event == JournalEvent::ExecutionProgress))
+            });
+            let raw = records
+                .iter_mut()
+                .find(|r| r.event == JournalEvent::RawStreams)
+                .unwrap();
+            raw.details["stderr"]["sha256"] = serde_json::to_value(&stderr_digest).unwrap();
+            raw.details["exit"]["stderr_sha256"] = serde_json::to_value(&stderr_digest).unwrap();
+        });
+        drop(log);
+        let mut log =
+            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+        let before = fs::read(log.path()).unwrap();
+        if mutation == "missing-journal-progress" {
+            repair_child_exits(&mut log).unwrap();
+        } else {
+            assert!(repair_child_exits(&mut log).is_err());
+            assert_eq!(fs::read(log.path()).unwrap(), before);
+        }
+        assert!(ChildAttempt::recover_exited(
+            &mut log,
+            unit.clone(),
+            token("attempt-1"),
+            &stdout,
+            stderr_digest,
+        )
+        .is_err());
+    }
+}
+
+#[test]
+fn completed_exit_cannot_accept_after_its_retained_raw_artifact_changes() {
+    let tmp = Scratch::new();
+    let m = manifest();
+    let unit = &m.ordered_units[3];
+    let mut log = log(&tmp.0);
+    let report = complete_attempt_with_streams(&mut log, unit, true);
+    let stdout = fs::read(tmp.0.join("raw.stdout")).unwrap();
+    let stderr_digest = Sha256Digest::of(&fs::read(tmp.0.join("raw.stderr")).unwrap());
+    fs::write(tmp.0.join("raw.stderr"), b"changed retained diagnostic").unwrap();
+    assert!(ChildAttempt::recover_exited(
+        &mut log,
+        unit.clone(),
+        token("attempt-1"),
+        &stdout,
+        stderr_digest
+    )
+    .is_err());
+    let mut checkpoints =
+        CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
+            .unwrap();
+    assert!(accept_checkpoint(&mut log, &mut checkpoints, unit, &report).is_err());
+    assert!(checkpoints.completed_keys().is_empty());
+}
+
+#[test]
+fn clean_exit_recovery_reuses_timing_before_and_after_owner_validation() {
+    for validated in [false, true] {
+        let tmp = Scratch::new();
+        let m = manifest();
+        let unit = &m.ordered_units[3];
+        let first = descriptor(&tmp.0);
+        let mut log = log(&tmp.0);
+        let mut store = SessionStore::prepare(first.clone()).unwrap();
+        store.consume_mode(SessionMode::RunSession).unwrap();
+        store
+            .transition(
+                &mut log,
+                SessionTransition::LockHeld {
+                    evidence: LockEvidence {
+                        lock_path: first.lock_path.clone(),
+                        holder_pid: 123,
+                        observation: token("inherited"),
+                    },
+                },
+            )
+            .unwrap();
+        let report = complete_attempt(&mut log, unit);
+        if !validated {
+            rewrite_records(&log, |records| {
+                records.retain(|record| record.event != JournalEvent::ResultValidated)
+            });
+        }
+        drop(store);
+        drop(log);
+        let mut store = SessionStore::reopen(first.clone()).unwrap();
+        let mut log = store.repair_log().unwrap();
+        store
+            .recover_transition(
+                &mut log,
+                SessionTransition::LockRelease {
+                    evidence: ReleaseEvidence::Independent {
+                        evidence: IndependentReleaseEvidence {
+                            holder_dead: true,
+                            descendants_dead: true,
+                            lock_path: first.lock_path.clone(),
+                            observed_utc: "2026-09-05T00:00:00Z".into(),
+                            lock_available: true,
+                        },
+                    },
+                },
+            )
+            .unwrap();
+        store
+            .recover_transition(
+                &mut log,
+                SessionTransition::Interrupted {
+                    active_elapsed_censored: true,
+                },
+            )
+            .unwrap();
+        let pin = store.write_checksum(&mut log, vec![]).unwrap();
+        store.retire(&mut log, &pin).unwrap();
+        drop(log);
+        let mut log = ExecutionLog::resume(tmp.0.join("execution.log"), "campaign", "s2").unwrap();
+        let stdout = format!("{}\n", encode_result_line(&report).unwrap());
+        let count = log.next_sequence();
+        let mut recovered = ChildAttempt::recover_exited(
+            &mut log,
+            unit.clone(),
+            token("attempt-1"),
+            stdout.as_bytes(),
+            digest(),
+        )
+        .unwrap();
+        assert_eq!(recovered.result(), Some(&report));
+        assert_eq!(recovered.is_validated(), validated);
+        assert_eq!(log.next_sequence(), count);
+        for event in [
+            JournalEvent::OrchestrationStart,
+            JournalEvent::DriverDiagnostic,
+            JournalEvent::OrchestrationExit,
+        ] {
+            log.append(event, None, json!({"administrative":"retained"}))
+                .unwrap();
+        }
+        if !validated {
+            recovered
+                .owner_validated(
+                    &mut log,
+                    &OwnerResponse::ValidateResult {
+                        unit_key: unit.key.clone(),
+                        result_sha256: report.digest().unwrap(),
+                    },
+                )
+                .unwrap();
+        }
+        let mut checkpoints =
+            CheckpointStore::create_new(tmp.0.join("checkpoints"), "campaign", resume_identity())
+                .unwrap();
+        accept_checkpoint(&mut log, &mut checkpoints, unit, &report).unwrap();
+        let records =
+            ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
+        for event in [
+            JournalEvent::ChildSpawn,
+            JournalEvent::ChildExit,
+            JournalEvent::ResultValidated,
+            JournalEvent::CheckpointAccepted,
+        ] {
+            assert_eq!(
+                records
+                    .iter()
+                    .filter(|record| record.event == event)
+                    .count(),
+                1
+            );
+        }
+    }
+}
+
+#[test]
+fn clean_exit_recovery_rejects_raw_stream_and_progress_mutations() {
+    for mutation in 0..6 {
+        let tmp = Scratch::new();
+        let m = manifest();
+        let unit = &m.ordered_units[3];
+        let mut log = log(&tmp.0);
+        let report = complete_attempt(&mut log, unit);
+        let mut stdout = format!("{}\n", encode_result_line(&report).unwrap());
+        let mut stderr = digest();
+        let mut attempt = token("attempt-1");
+        match mutation {
+            0 => {
+                stdout.pop();
+            }
+            1 => {
+                stderr = Sha256Digest::of(b"other");
+            }
+            2 => {
+                attempt = token("other-attempt");
+            }
+            3 => rewrite_records(&log, |records| {
+                let index = records
+                    .iter()
+                    .position(|record| record.event == JournalEvent::WindowProgress)
+                    .unwrap();
+                records.remove(index);
+            }),
+            4 => rewrite_records(&log, |records| {
+                let index = records
+                    .iter()
+                    .position(|record| record.event == JournalEvent::ChildExit)
+                    .unwrap();
+                records.insert(index, records[index].clone());
+            }),
+            _ => rewrite_records(&log, |records| {
+                records
+                    .iter_mut()
+                    .find(|record| record.event == JournalEvent::ChildExit)
+                    .unwrap()
+                    .details["outcome"]["exit_code"] = json!(1);
+            }),
+        }
+        drop(log);
+        let mut log =
+            ExecutionLog::reopen_active(tmp.0.join("execution.log"), "campaign", "s1").unwrap();
+        let prefix = fs::read(log.path()).unwrap();
+        assert!(ChildAttempt::recover_exited(
+            &mut log,
+            unit.clone(),
+            attempt,
+            stdout.as_bytes(),
+            stderr
+        )
+        .is_err());
+        assert_eq!(fs::read(log.path()).unwrap(), prefix);
+    }
 }
 
 #[test]
@@ -1291,7 +2167,7 @@ fn active_claim_and_torn_log_recover_in_place_before_release_and_replacement() {
             },
         )
         .unwrap();
-    let pin = checksum(&mut log, &first, &tmp.0.join("repaired-checksum.json"));
+    let pin = store.write_checksum(&mut log, vec![]).unwrap();
     store.retire(&mut log, &pin).unwrap();
     drop(log);
     let store = SessionStore::prepare(second).unwrap();

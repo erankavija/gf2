@@ -1,0 +1,2676 @@
+//! Neutral, resumable owner-campaign process driver.
+//!
+//! The launcher builds and stages every executable before preparation. Each
+//! handoff names one immutable session; only run-session executes measurement
+//! or composition, under the inherited full-host flock. Finalization observes
+//! wrapper return and release before publishing terminal evidence.
+#![deny(unsafe_code)]
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::collections::BTreeMap;
+use std::env;
+use std::fs::{self, File};
+use std::io::{self, Read, Write};
+use std::os::unix::process::{CommandExt, ExitStatusExt};
+use std::path::Path;
+use std::process::{Command, Stdio};
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
+use tuning_campaign_support::campaign::*;
+use tuning_campaign_support::journal::{
+    CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity,
+};
+use tuning_campaign_support::transport;
+
+static RUNNER_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+static SESSION_START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+static ALL_REAPED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+fn check_budget() -> io::Result<()> {
+    if SESSION_START
+        .get()
+        .is_some_and(|start| !may_launch_child(ns(*start)))
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::TimedOut,
+            "session-budget-exhausted",
+        ));
+    }
+    Ok(())
+}
+fn invalid(message: impl ToString) -> io::Error {
+    io::Error::other(message.to_string())
+}
+fn encoded<T: Serialize>(value: &T) -> io::Result<Vec<u8>> {
+    serde_json::to_vec(value).map_err(invalid)
+}
+fn read_json<T: serde::de::DeserializeOwned + Serialize>(path: &Path) -> io::Result<T> {
+    transport::decode_case(&fs::read_to_string(path)?).map_err(invalid)
+}
+fn artifact_stage(path: &Path) -> io::Result<&Path> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| invalid("artifact has no parent"))?;
+    Ok(parent
+        .ancestors()
+        .find(|ancestor| ancestor.join("execution.log").is_file())
+        .unwrap_or(parent))
+}
+fn save<T: Serialize>(path: &Path, value: &T) -> io::Result<ArtifactIdentity> {
+    publish_artifact(artifact_stage(path)?, path, &encoded(value)?)
+}
+fn artifact(path: &Path) -> io::Result<ArtifactIdentity> {
+    Ok(ArtifactIdentity {
+        path: fs::canonicalize(path)?,
+        sha256: Sha256Digest::of(&fs::read(path)?),
+    })
+}
+fn utc() -> io::Result<String> {
+    command_text("date", &["-u", "+%Y-%m-%dT%H:%M:%SZ"])
+}
+fn command_text(program: &str, args: &[&str]) -> io::Result<String> {
+    let result = Command::new(program).args(args).output()?;
+    if !result.status.success() {
+        return Err(invalid(format!(
+            "{program} failed: {}",
+            String::from_utf8_lossy(&result.stderr)
+        )));
+    }
+    Ok(String::from_utf8(result.stdout)
+        .map_err(invalid)?
+        .trim()
+        .to_owned())
+}
+fn ns(start: Instant) -> u64 {
+    u64::try_from(start.elapsed().as_nanos())
+        .unwrap_or(u64::MAX)
+        .max(1)
+}
+
+struct ProcessResult {
+    stdout: Vec<u8>,
+    stderr: Vec<u8>,
+    outcome: ProcessOutcome,
+    callback_error: Option<io::Error>,
+}
+enum Stream {
+    Stdout(Vec<u8>),
+    Stderr(Vec<u8>),
+    End,
+    Error(io::Error),
+}
+fn drain(mut input: impl Read, tx: mpsc::Sender<Stream>, stderr: bool) {
+    let mut buffer = [0u8; 8192];
+    loop {
+        match input.read(&mut buffer) {
+            Ok(0) => break,
+            Ok(n) => {
+                if tx
+                    .send(if stderr {
+                        Stream::Stderr(buffer[..n].to_vec())
+                    } else {
+                        Stream::Stdout(buffer[..n].to_vec())
+                    })
+                    .is_err()
+                {
+                    return;
+                }
+            }
+            Err(e) => {
+                let _ = tx.send(Stream::Error(e));
+                break;
+            }
+        }
+    }
+    let _ = tx.send(Stream::End);
+}
+// Fresh owners do not spawn children. Process groups also contain accidental
+// descendants, which are killed before a completed process can be accepted.
+fn live_group(group: u32) -> io::Result<bool> {
+    for entry in fs::read_dir("/proc")? {
+        let path = entry?.path();
+        if path
+            .file_name()
+            .and_then(|s| s.to_str())
+            .is_none_or(|s| s.parse::<u32>().is_err())
+        {
+            continue;
+        }
+        let Ok(stat) = fs::read_to_string(path.join("stat")) else {
+            continue;
+        };
+        let Some((_, tail)) = stat.rsplit_once(") ") else {
+            continue;
+        };
+        let fields: Vec<_> = tail.split_whitespace().collect();
+        if fields.get(2).and_then(|s| s.parse::<u32>().ok()) == Some(group)
+            && fields.first() != Some(&"Z")
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+fn signal_group(group: u32, signal: rustix::process::Signal) -> io::Result<()> {
+    match rustix::process::kill_process_group(
+        rustix::process::Pid::from_raw(group as i32)
+            .ok_or_else(|| invalid("invalid process group"))?,
+        signal,
+    ) {
+        Ok(()) => Ok(()),
+        Err(rustix::io::Errno::SRCH) => Ok(()),
+        Err(error) => Err(error.into()),
+    }
+}
+fn signal_descendants(signal: rustix::process::Signal) -> io::Result<()> {
+    let mut parentage = Vec::new();
+    for entry in fs::read_dir("/proc")? {
+        let path = entry?.path();
+        let Some(pid) = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .and_then(|name| name.parse::<u32>().ok())
+        else {
+            continue;
+        };
+        let stat = match fs::read_to_string(path.join("stat")) {
+            Ok(stat) => stat,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(error),
+        };
+        let (_, tail) = stat
+            .rsplit_once(')')
+            .ok_or_else(|| invalid("invalid process stat"))?;
+        let parent = tail
+            .split_whitespace()
+            .nth(1)
+            .ok_or_else(|| invalid("missing parent pid"))?
+            .parse::<u32>()
+            .map_err(invalid)?;
+        parentage.push((pid, parent));
+    }
+    let mut descendants = std::collections::BTreeSet::from([std::process::id()]);
+    loop {
+        let before = descendants.len();
+        for (pid, parent) in &parentage {
+            if descendants.contains(parent) {
+                descendants.insert(*pid);
+            }
+        }
+        if descendants.len() == before {
+            break;
+        }
+    }
+    descendants.remove(&std::process::id());
+    for pid in descendants {
+        match rustix::process::kill_process(
+            rustix::process::Pid::from_raw(pid as i32)
+                .ok_or_else(|| invalid("invalid descendant PID"))?,
+            signal,
+        ) {
+            Ok(()) | Err(rustix::io::Errno::SRCH) => {}
+            Err(error) => return Err(error.into()),
+        }
+    }
+    Ok(())
+}
+fn reap_adopted() -> io::Result<bool> {
+    loop {
+        match rustix::process::wait(rustix::process::WaitOptions::NOHANG) {
+            Ok(Some(_)) => continue,
+            Ok(None) => return Ok(false),
+            Err(rustix::io::Errno::CHILD) => return Ok(true),
+            Err(error) => return Err(error.into()),
+        }
+    }
+}
+struct ChildGuard {
+    child: std::process::Child,
+    group: u32,
+    done: bool,
+}
+impl std::ops::Deref for ChildGuard {
+    type Target = std::process::Child;
+    fn deref(&self) -> &Self::Target {
+        &self.child
+    }
+}
+impl std::ops::DerefMut for ChildGuard {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.child
+    }
+}
+impl Drop for ChildGuard {
+    fn drop(&mut self) {
+        if self.done {
+            return;
+        }
+        let _ = signal_group(self.group, rustix::process::Signal::KILL);
+        let _ = signal_descendants(rustix::process::Signal::KILL);
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+        let start = Instant::now();
+        while start.elapsed() < Duration::from_secs(CHILD_KILL_GRACE_SECONDS) {
+            if reap_adopted().unwrap_or(false) {
+                ALL_REAPED.store(true, std::sync::atomic::Ordering::SeqCst);
+                return;
+            }
+            let _ = signal_descendants(rustix::process::Signal::KILL);
+            thread::sleep(Duration::from_millis(10));
+        }
+    }
+}
+fn run_process(
+    mut command: Command,
+    input: &[u8],
+    timeout: Duration,
+    grace: Duration,
+    mut started: impl FnMut(u32) -> io::Result<()>,
+    mut stderr_callback: impl FnMut(&[u8]) -> io::Result<()>,
+) -> io::Result<ProcessResult> {
+    let _runner = RUNNER_LOCK
+        .lock()
+        .map_err(|_| invalid("process runner lock poisoned"))?;
+    rustix::process::set_child_subreaper(Some(rustix::process::getpid()))?;
+    command
+        .process_group(0)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    let begin = Instant::now();
+    check_budget()?;
+    let child = command.spawn()?;
+    let mut child = ChildGuard {
+        group: child.id(),
+        child,
+        done: false,
+    };
+    ALL_REAPED.store(false, std::sync::atomic::Ordering::SeqCst);
+    let pid = child.id();
+    let mut callback_error = started(pid).err();
+    let stdin = child.stdin.take().ok_or_else(|| invalid("missing stdin"))?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| invalid("missing stdout"))?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| invalid("missing stderr"))?;
+    let (tx, rx) = mpsc::channel();
+    let input = input.to_vec();
+    let writer = thread::spawn(move || {
+        let mut stdin = stdin;
+        stdin.write_all(&input)
+    });
+    let out_tx = tx.clone();
+    let err_tx = tx.clone();
+    drop(tx);
+    let out_thread = thread::spawn(move || drain(stdout, out_tx, false));
+    let err_thread = thread::spawn(move || drain(stderr, err_tx, true));
+    let mut out = Vec::new();
+    let mut err = Vec::new();
+    let mut ends = 0;
+    let mut status = None;
+    let mut stopped = None;
+    let mut timed_out = false;
+    let mut killed = false;
+    loop {
+        match rx.recv_timeout(Duration::from_millis(10)) {
+            Ok(Stream::Stdout(bytes)) => out.extend_from_slice(&bytes),
+            Ok(Stream::Stderr(bytes)) => {
+                err.extend_from_slice(&bytes);
+                if callback_error.is_none() {
+                    callback_error = stderr_callback(&bytes).err();
+                }
+            }
+            Ok(Stream::End) => ends += 1,
+            Ok(Stream::Error(e)) => {
+                if callback_error.is_none() {
+                    callback_error = Some(e);
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {}
+            Err(mpsc::RecvTimeoutError::Timeout) => {}
+        }
+        if status.is_none() {
+            status = child.try_wait()?;
+        }
+        if stopped.is_none()
+            && (begin.elapsed() >= timeout
+                || callback_error.is_some()
+                || (status.is_some() && (live_group(pid)? || !reap_adopted()?)))
+        {
+            timed_out = begin.elapsed() >= timeout;
+            signal_group(pid, rustix::process::Signal::TERM)?;
+            signal_descendants(rustix::process::Signal::TERM)?;
+            stopped = Some(Instant::now());
+        }
+        if stopped.is_some_and(|s| s.elapsed() >= grace) && !killed {
+            signal_group(pid, rustix::process::Signal::KILL)?;
+            signal_descendants(rustix::process::Signal::KILL)?;
+            killed = true;
+        }
+        if stopped.is_some() {
+            signal_descendants(if killed {
+                rustix::process::Signal::KILL
+            } else {
+                rustix::process::Signal::TERM
+            })?;
+        }
+        if status.is_some() && ends == 2 && !live_group(pid)? && reap_adopted()? {
+            break;
+        }
+        if stopped.is_some_and(|s| s.elapsed() > grace + Duration::from_secs(1)) {
+            return Err(invalid(
+                "child process tree did not terminate/drain within kill grace",
+            ));
+        }
+    }
+    let status = child.wait()?;
+    writer
+        .join()
+        .map_err(|_| invalid("stdin writer panicked"))??;
+    out_thread
+        .join()
+        .map_err(|_| invalid("stdout reader panicked"))?;
+    err_thread
+        .join()
+        .map_err(|_| invalid("stderr reader panicked"))?;
+    child.done = true;
+    ALL_REAPED.store(true, std::sync::atomic::Ordering::SeqCst);
+    let elapsed_ns = ns(begin);
+    let outcome = if timed_out {
+        ProcessOutcome::TimedOut {
+            pid,
+            elapsed_ns,
+            kill_grace_exhausted: killed,
+            all_descendants_reaped: true,
+        }
+    } else if let Some(exit_code) = status.code() {
+        ProcessOutcome::Exited {
+            pid,
+            exit_code,
+            elapsed_ns,
+            all_descendants_reaped: true,
+        }
+    } else {
+        ProcessOutcome::Signaled {
+            pid,
+            signal: status
+                .signal()
+                .ok_or_else(|| invalid("unknown process termination"))?,
+            elapsed_ns,
+            all_descendants_reaped: true,
+        }
+    };
+    Ok(ProcessResult {
+        stdout: out,
+        stderr: err,
+        outcome,
+        callback_error,
+    })
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "Vec<u32>", into = "Vec<u32>")]
+struct CpuAffinity(Vec<u32>);
+impl TryFrom<Vec<u32>> for CpuAffinity {
+    type Error = io::Error;
+    fn try_from(cpus: Vec<u32>) -> io::Result<Self> {
+        if cpus.is_empty() || cpus.windows(2).any(|pair| pair[0] >= pair[1]) {
+            return Err(invalid(
+                "CPU affinity must be a nonempty increasing CPU set",
+            ));
+        }
+        Ok(Self(cpus))
+    }
+}
+impl From<CpuAffinity> for Vec<u32> {
+    fn from(value: CpuAffinity) -> Self {
+        value.0
+    }
+}
+impl CpuAffinity {
+    fn parse(list: &str) -> io::Result<Self> {
+        let mut cpus = Vec::new();
+        for part in list.split(',') {
+            if let Some((first, last)) = part.split_once('-') {
+                let first = first.parse::<u32>().map_err(invalid)?;
+                let last = last.parse::<u32>().map_err(invalid)?;
+                if first > last {
+                    return Err(invalid("reversed CPU affinity range"));
+                }
+                cpus.extend(first..=last);
+            } else {
+                cpus.push(part.parse::<u32>().map_err(invalid)?);
+            }
+        }
+        Self::try_from(cpus)
+    }
+    fn observe() -> io::Result<Self> {
+        let status = fs::read_to_string("/proc/self/status")?;
+        let list = status
+            .lines()
+            .find_map(|line| line.strip_prefix("Cpus_allowed_list:"))
+            .ok_or_else(|| invalid("OS CPU affinity unavailable"))?;
+        Self::parse(list.trim())
+    }
+    fn host_identity(&self) -> io::Result<String> {
+        Ok(format!(
+            "{};cpus={}",
+            command_text("hostname", &[])?,
+            serde_json::to_string(&self.0).map_err(invalid)?
+        ))
+    }
+}
+fn require_affinity(expected: &CpuAffinity, observed: &CpuAffinity) -> io::Result<()> {
+    if expected != observed {
+        return Err(invalid(
+            "actual CPU affinity differs from immutable preparation",
+        ));
+    }
+    Ok(())
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CampaignConfig {
+    schema: String,
+    campaign_id: Token,
+    channels: SessionChannels,
+    identity: ResumeIdentity,
+    manifests: Vec<OwnerManifest>,
+    processes: Vec<ProcessDescriptor>,
+    runtime: CanonicalJson,
+    protocol: ArtifactIdentity,
+    validator: ArtifactIdentity,
+    receipt: String,
+    affinity: CpuAffinity,
+}
+fn process(config: &CampaignConfig, id: &str) -> io::Result<ProcessDescriptor> {
+    config
+        .processes
+        .iter()
+        .find(|p| p.id.as_str() == id)
+        .cloned()
+        .ok_or_else(|| invalid("unknown staged process"))
+}
+fn process_command(process: &ProcessDescriptor, args: &[String]) -> io::Result<Command> {
+    process.verify_staged()?;
+    let mut command = Command::new(&process.executable);
+    command
+        .args(args)
+        .current_dir(&process.working_directory)
+        .envs(&process.environment);
+    // Environment variables that select a profile or inject compiler/runtime
+    // flags are excluded from each fresh process.
+    for name in ["GF2_TUNING_PROFILE", "RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS"] {
+        command.env_remove(name);
+    }
+    Ok(command)
+}
+fn operation(
+    process: &ProcessDescriptor,
+    request: &OwnerOperation,
+    mut log: Option<&mut ExecutionLog>,
+) -> io::Result<OwnerResponse> {
+    let input = encoded(request)?;
+    let start_sequence = log.as_ref().map(|l| l.next_sequence());
+    if let Some(log) = log.as_mut() {
+        log.append(JournalEvent::OrchestrationStart,None,json!({"kind":"orchestration-start","process":process.id,"request_sha256":Sha256Digest::of(&input)}))?;
+    }
+    let result = run_process(
+        process_command(process, &["--owner-operation".into()])?,
+        &input,
+        Duration::from_secs(CHILD_TIMEOUT_SECONDS),
+        Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
+        |_| Ok(()),
+        |_| Ok(()),
+    )?;
+    if let Some(log) = log.as_mut() {
+        log.append(JournalEvent::OrchestrationExit,None,json!({"kind":"orchestration-exit","start_sequence":start_sequence,"process":process.id,"outcome":result.outcome,"stdout_sha256":Sha256Digest::of(&result.stdout),"stderr_sha256":Sha256Digest::of(&result.stderr),"stderr":result.stderr}))?;
+    }
+    if let OwnerOperation::EmitOwner { request } = request {
+        let directory = request
+            .output
+            .parent()
+            .ok_or_else(|| invalid("owner output has no parent"))?;
+        save(
+            &directory.join("exit.json"),
+            &json!({"outcome":result.outcome,"stdout":result.stdout,"stderr":result.stderr}),
+        )?;
+    }
+    if !result.outcome.accepts_result()? {
+        return Err(invalid("owner orchestration failed"));
+    }
+    if let Some(error) = result.callback_error {
+        return Err(error);
+    }
+    transport::parse_result(std::str::from_utf8(&result.stdout).map_err(invalid)?).map_err(invalid)
+}
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MeasurementRuntime {
+    source_dirty: bool,
+    toolchain: String,
+    cpu_model: String,
+    cpu_features: Vec<String>,
+    os_kernel: String,
+    governor: String,
+    receipt: String,
+}
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AssemblyRuntime {
+    source_dirty: bool,
+    tool: String,
+    tool_sha256: String,
+}
+fn host_runtime(receipt: &str) -> io::Result<CanonicalJson> {
+    let cpu = fs::read_to_string("/proc/cpuinfo")?;
+    let value = |key: &str| {
+        cpu.lines()
+            .find_map(|line| {
+                let (name, value) = line.split_once(':')?;
+                (name.trim() == key).then(|| value.trim().to_owned())
+            })
+            .ok_or_else(|| invalid(format!("missing {key}")))
+    };
+    let mut governors = BTreeMap::new();
+    for cpu in fs::read_dir("/sys/devices/system/cpu")? {
+        let path = cpu?.path();
+        let file = path.join("cpufreq/scaling_governor");
+        if let Ok(governor) = fs::read_to_string(&file) {
+            governors.insert(
+                path.file_name().unwrap().to_string_lossy().into_owned(),
+                governor.trim().to_owned(),
+            );
+        }
+    }
+    if governors.is_empty() {
+        return Err(invalid("CPU governor observation unavailable"));
+    }
+    CanonicalJson::from_serializable(&MeasurementRuntime {
+        source_dirty: false,
+        toolchain: command_text("rustc", &["+1.95.0", "--version"])?,
+        cpu_model: value("model name")?,
+        cpu_features: value("flags")?
+            .split_whitespace()
+            .map(str::to_owned)
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .collect(),
+        os_kernel: command_text("uname", &["-sr"])?,
+        governor: serde_json::to_string(&governors).map_err(invalid)?,
+        receipt: receipt.into(),
+    })
+}
+fn source_state() -> io::Result<(String, String)> {
+    let dirty = command_text("git", &["status", "--porcelain", "--untracked-files=all"])?;
+    if !dirty.is_empty() {
+        return Err(invalid("measurement requires a clean source tree"));
+    }
+    Ok((
+        command_text("git", &["rev-parse", "HEAD"])?,
+        command_text("git", &["rev-parse", "HEAD^{tree}"])?,
+    ))
+}
+fn behavior_sources() -> io::Result<BTreeMap<String, String>> {
+    // Include all Rust production sources in the producing owners and isolated
+    // kernels, every support/composer source, and the launch/validation code.
+    let listing = Command::new("git")
+        .args([
+            "ls-files",
+            "-z",
+            "crates/gf2-core",
+            "crates/gf2-algebra",
+            "crates/gf2-kernels-simd",
+            "dev/tools/tuning-campaign-support",
+            "dev/tools/tuning-profile-compose",
+            "dev/scripts/tuning-extent-campaign.sh",
+            "dev/scripts/validate-tuning-extent-campaign.py",
+            "dev/scripts/ccx1-bench-flock.sh",
+            "Cargo.toml",
+            "Cargo.lock",
+            ".cargo/config.toml",
+        ])
+        .output()?;
+    if !listing.status.success() {
+        return Err(invalid("source inventory failed"));
+    }
+    let mut map = BTreeMap::new();
+    for path in listing.stdout.split(|b| *b == 0).filter(|b| !b.is_empty()) {
+        let path = std::str::from_utf8(path).map_err(invalid)?;
+        if path.ends_with(".rs")
+            || path.ends_with(".toml")
+            || path.ends_with(".lock")
+            || path.ends_with(".sh")
+            || path.ends_with(".py")
+        {
+            map.insert(
+                path.into(),
+                Sha256Digest::of(&fs::read(path)?).as_str().into(),
+            );
+        }
+    }
+    Ok(map)
+}
+fn verify_config(config: &CampaignConfig) -> io::Result<()> {
+    if config.schema != "tuning-extent-campaign-v1" || config.manifests.len() != 2 {
+        return Err(invalid("campaign schema/owner mismatch"));
+    }
+    config.channels.validate()?;
+    require_affinity(&config.affinity, &CpuAffinity::observe()?)?;
+    let (revision, tree) = source_state()?;
+    if revision != config.identity.source_revision
+        || Sha256Digest::of(tree.as_bytes()).as_str() != config.identity.source_sha256
+        || behavior_sources()? != config.identity.behavior_sha256
+    {
+        return Err(invalid("producing source identity changed"));
+    }
+    if config.affinity.host_identity()? != config.identity.host_identity
+        || host_runtime(&config.receipt)? != config.runtime
+    {
+        return Err(invalid("host/toolchain/governor identity changed"));
+    }
+    for p in &config.processes {
+        p.verify_staged()?;
+    }
+    if artifact(&env::current_exe()?)?.sha256
+        != artifact(&process(config, "driver")?.executable)?.sha256
+    {
+        return Err(invalid(
+            "executing driver differs from staged driver identity",
+        ));
+    }
+
+    for m in &config.manifests {
+        m.validate()?;
+        if m.campaign_id != config.campaign_id
+            || m.processes.len() != 1
+            || !config.processes.contains(&m.processes[0])
+        {
+            return Err(invalid("owner manifest campaign/process mismatch"));
+        }
+    }
+    let ordered = Sha256Digest::of(&encoded(
+        &config
+            .manifests
+            .iter()
+            .map(|m| &m.ordered_units)
+            .collect::<Vec<_>>(),
+    )?);
+    let descriptors = Sha256Digest::of(&encoded(&config.processes)?);
+    let executables: BTreeMap<String, String> = config
+        .processes
+        .iter()
+        .map(|p| (p.id.as_str().into(), p.executable_sha256.as_str().into()))
+        .collect();
+    if ordered.as_str() != config.identity.ordered_work_manifest_sha256
+        || descriptors.as_str() != config.identity.process_descriptors_sha256
+        || executables != config.identity.executable_sha256
+        || config.protocol.sha256.as_str() != config.identity.protocol_digest
+    {
+        return Err(invalid(
+            "campaign immutable identity disagrees with manifests/processes",
+        ));
+    }
+    if config.manifests[0].counts != DeclaredCounts::for_cells(702)?
+        || config.manifests[1].counts != DeclaredCounts::for_cells(15)?
+    {
+        return Err(invalid("campaign cell accounting changed"));
+    }
+    if artifact(&config.protocol.path)? != config.protocol
+        || artifact(&config.validator.path)? != config.validator
+    {
+        return Err(invalid("protocol or validator changed"));
+    }
+    Ok(())
+}
+
+fn session_descriptor(
+    config: &CampaignConfig,
+    session_id: &str,
+    lock: &Path,
+) -> io::Result<SessionDescriptor> {
+    Ok(SessionDescriptor {
+        schema: LIFECYCLE_SCHEMA.into(),
+        campaign_id: config.campaign_id.clone(),
+        session_id: Token::new(session_id)?,
+        preparer: ProcessIdentity::current()?,
+        channels: config.channels.clone(),
+        identity: config.identity.clone(),
+        counts: DeclaredCounts::for_cells(717)?,
+        lock_path: fs::canonicalize(lock)?,
+    })
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StagingManifest {
+    schema: String,
+    executables: BTreeMap<Token, ArtifactIdentity>,
+}
+fn stage_executables(stage: &Path, input: &Path) -> io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    let staging: StagingManifest = read_json(input)?;
+    if staging.schema != "tuning-campaign-staging-v1"
+        || staging
+            .executables
+            .keys()
+            .map(Token::as_str)
+            .collect::<Vec<_>>()
+            != ["algebra-producer", "composer", "core-producer", "driver"]
+    {
+        return Err(invalid("staging executable identity mismatch"));
+    }
+    let bin = stage.join("bin");
+    fs::create_dir_all(&bin)?;
+    File::open(stage)?.sync_all()?;
+    for (name, source) in &staging.executables {
+        if artifact(&source.path)? != *source {
+            return Err(invalid("built executable changed during staging"));
+        }
+        let target = bin.join(name.as_str());
+        publish_artifact(stage, &target, &fs::read(&source.path)?)?;
+        fs::set_permissions(&target, fs::Permissions::from_mode(0o755))?;
+        File::open(&target)?.sync_all()?;
+    }
+    save(&stage.join("staging-manifest.json"), &staging)?;
+    Ok(())
+}
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct BootstrapInputs {
+    revision: String,
+    tree: String,
+    behavior: BTreeMap<String, String>,
+    receipt: String,
+    runtime: CanonicalJson,
+    processes: Vec<ProcessDescriptor>,
+    protocol: ArtifactIdentity,
+    validator: ArtifactIdentity,
+    affinity: CpuAffinity,
+    staging: ArtifactIdentity,
+}
+fn bootstrap_inputs(
+    channels: &SessionChannels,
+    campaign_id: &Token,
+) -> io::Result<BootstrapInputs> {
+    let (revision, tree) = source_state()?;
+    let behavior = behavior_sources()?;
+    let receipt = format!("dev/benchmarks/tuning_profiles/{}.md", campaign_id.as_str());
+    let runtime = host_runtime(&receipt)?;
+    let affinity = CpuAffinity::observe()?;
+    let repository = fs::canonicalize(".")?;
+    let mut processes = Vec::new();
+    for (id, args) in [
+        ("core-producer", vec!["--fresh-tuning-process-child".into()]),
+        ("algebra-producer", vec!["--fresh-child".into()]),
+        ("composer", vec![]),
+        ("driver", vec![]),
+    ] {
+        let binary = artifact(&channels.stage.join("bin").join(id))?;
+        processes.push(ProcessDescriptor {
+            id: Token::new(id)?,
+            executable: binary.path,
+            executable_sha256: binary.sha256,
+            arguments: args,
+            environment: measurement_environment(),
+            working_directory: repository.clone(),
+        });
+    }
+    Ok(BootstrapInputs {
+        revision,
+        tree,
+        behavior,
+        receipt,
+        runtime,
+        processes,
+        protocol: artifact(&repository.join("dev/active/a83583e0/premeasurement-protocol.md"))?,
+        validator: artifact(&repository.join("dev/scripts/validate-tuning-extent-campaign.py"))?,
+        affinity,
+        staging: artifact(&channels.stage.join("staging-manifest.json"))?,
+    })
+}
+fn prepare(
+    stage: &Path,
+    campaign_id: &str,
+    session_id: &str,
+    lock: &Path,
+    staging: Option<&Path>,
+) -> io::Result<()> {
+    fs::create_dir_all(stage)?;
+    let channels = SessionChannels::for_stage(stage)?;
+    if let Some(input) = staging {
+        stage_executables(&channels.stage, input)?;
+    }
+    if channels.stage.join("campaign.json").exists() {
+        verify_config(&read_json::<CampaignConfig>(
+            &channels.stage.join("campaign.json"),
+        )?)?;
+    }
+    if let Some((store, mut checkpoints, mut log)) =
+        PreparationStore::resume_pending(&channels.stage)?
+    {
+        if store.descriptor().campaign_id.as_str() != campaign_id
+            || store.descriptor().session_id.as_str() != session_id
+        {
+            return Err(invalid("pending preparation handoff identity mismatch"));
+        }
+        let config: CampaignConfig = read_json(&channels.stage.join("campaign.json"))?;
+        verify_config(&config)?;
+        acknowledge_pending_recovery(&mut log, &mut checkpoints, &config.campaign_id)?;
+        reconcile_campaign_checkpoints(&mut log, &checkpoints, &resolved_manifests(&config)?)?;
+        store.announce_prepared(&mut log, &mut io::stdout().lock())?;
+        println!(
+            "GF2_CAMPAIGN_SESSION={}",
+            store.descriptor().session_id.as_str()
+        );
+        return Ok(());
+    }
+    if channels.stage.join("active-session.json").exists() {
+        recover(&channels.stage)?;
+    }
+    let campaign_id = Token::new(campaign_id)?;
+    let inputs = bootstrap_inputs(&channels, &campaign_id)?;
+    let preparation = PreparationStore::begin(
+        channels.clone(),
+        campaign_id.clone(),
+        Token::new(session_id)?,
+        fs::canonicalize(lock)?,
+        CanonicalJson::from_serializable(&inputs)?,
+    )?;
+    let mut log = preparation.open_log()?;
+    log.announce(io::stdout().lock())?;
+    log.append(
+        JournalEvent::DriverDiagnostic,
+        None,
+        json!({"kind":"cpu-affinity","phase":"preparation","observed":inputs.affinity}),
+    )?;
+    let BootstrapInputs {
+        revision,
+        tree,
+        behavior,
+        receipt,
+        runtime,
+        processes,
+        protocol,
+        validator,
+        affinity,
+        ..
+    } = inputs;
+    let config_path = channels.stage.join("campaign.json");
+    let config: CampaignConfig = if config_path.exists() {
+        let config: CampaignConfig = read_json(&config_path)?;
+        if config.campaign_id != campaign_id {
+            return Err(invalid("campaign identity mismatch"));
+        }
+        verify_config(&config)?;
+        config
+    } else {
+        let mut request = ManifestRequest {
+            campaign_id: campaign_id.clone(),
+            protocol_sha256: protocol.sha256.clone(),
+            channels: channels.clone(),
+            processes: processes.clone(),
+        };
+        let mut manifests = Vec::new();
+        for (i, name) in [(0, "core"), (1, "algebra")] {
+            request.processes = vec![processes[i].clone()];
+            for operation_kind in [
+                OwnerOperation::SelfCheck,
+                OwnerOperation::ListGrid,
+                OwnerOperation::CapabilityReport,
+            ] {
+                let response = operation(&processes[i], &operation_kind, Some(&mut log))?;
+                let label = match operation_kind {
+                    OwnerOperation::SelfCheck => "self-check",
+                    OwnerOperation::ListGrid => "list-grid",
+                    _ => "capability-report",
+                };
+                save(
+                    &channels.stage.join(format!("{name}-{label}.json")),
+                    &response,
+                )?;
+            }
+            let OwnerResponse::CampaignManifest { manifest } = operation(
+                &processes[i],
+                &OwnerOperation::CampaignManifest {
+                    request: request.clone(),
+                },
+                Some(&mut log),
+            )?
+            else {
+                return Err(invalid("owner did not return manifest"));
+            };
+            save(
+                &channels.stage.join(format!("{name}-manifest.json")),
+                &manifest,
+            )?;
+            manifests.push(*manifest);
+        }
+        let identity = ResumeIdentity {
+            protocol_digest: protocol.sha256.as_str().into(),
+            source_revision: revision,
+            source_sha256: Sha256Digest::of(tree.as_bytes()).as_str().into(),
+            ordered_work_manifest_sha256: Sha256Digest::of(&encoded(
+                &manifests
+                    .iter()
+                    .map(|m| &m.ordered_units)
+                    .collect::<Vec<_>>(),
+            )?)
+            .as_str()
+            .into(),
+            process_descriptors_sha256: Sha256Digest::of(&encoded(&processes)?).as_str().into(),
+            executable_sha256: processes
+                .iter()
+                .map(|p| (p.id.as_str().into(), p.executable_sha256.as_str().into()))
+                .collect(),
+            behavior_sha256: behavior.clone(),
+            lifecycle_schema: LIFECYCLE_SCHEMA.into(),
+            lifecycle_behavior_sha256: Sha256Digest::of(&encoded(&behavior)?).as_str().into(),
+            feature_contract: FEATURE_CONTRACT.into(),
+            thread_contract: THREAD_CONTRACT.into(),
+            host_identity: CpuAffinity::observe()?.host_identity()?,
+        };
+        let config = CampaignConfig {
+            schema: "tuning-extent-campaign-v1".into(),
+            campaign_id,
+            channels: channels.clone(),
+            identity,
+            manifests,
+            processes,
+            runtime,
+            protocol,
+            validator,
+            receipt,
+            affinity: affinity.clone(),
+        };
+
+        verify_config(&config)?;
+        save(&config_path, &config)?;
+        config
+    };
+    require_affinity(&config.affinity, &affinity)?;
+    let mut descriptor = session_descriptor(&config, preparation.session_id().as_str(), lock)?;
+    descriptor.preparer = preparation.preparer().clone();
+    let (store, mut checkpoints) =
+        preparation.finish(descriptor, artifact(&config_path)?, &mut log)?;
+    acknowledge_pending_recovery(&mut log, &mut checkpoints, &config.campaign_id)?;
+    reconcile_campaign_checkpoints(&mut log, &checkpoints, &resolved_manifests(&config)?)?;
+    store.announce_prepared(&mut log, &mut io::stdout().lock())?;
+    println!(
+        "GF2_CAMPAIGN_SESSION={}",
+        store.descriptor().session_id.as_str()
+    );
+    Ok(())
+}
+fn resolved_manifests(config: &CampaignConfig) -> io::Result<Vec<OwnerManifest>> {
+    let mut manifests = config.manifests.clone();
+    let stage = &config.channels.stage;
+    if stage.join("derived-manifest.json").exists() {
+        let request: DeriveManifestRequest = read_json(&stage.join("derived-request.json"))?;
+        let derived: DerivedManifest = read_json(&stage.join("derived-manifest.json"))?;
+        if artifact(&request.accepted_inputs.path)? != request.accepted_inputs {
+            return Err(invalid("derived input changed"));
+        }
+        manifests[0] = manifests[0].apply_derivation(&request, &derived)?;
+        if stage.join("core-resolved-manifest.json").exists()
+            && read_json::<OwnerManifest>(&stage.join("core-resolved-manifest.json"))?
+                != manifests[0]
+        {
+            return Err(invalid("resolved manifest differs from derivation"));
+        }
+    }
+    Ok(manifests)
+}
+fn lock_available(path: &Path) -> io::Result<bool> {
+    let file = File::options().read(true).write(true).open(path)?;
+    match file.try_lock() {
+        Ok(()) => {
+            file.unlock()?;
+            Ok(true)
+        }
+        Err(std::fs::TryLockError::WouldBlock) => Ok(false),
+        Err(std::fs::TryLockError::Error(e)) => Err(e),
+    }
+}
+fn inherited_lock(path: &Path) -> io::Result<u32> {
+    if lock_available(path)? {
+        return Err(invalid("benchmark lock is not held"));
+    }
+    let expected = fs::canonicalize(path)?;
+    let pid = std::process::id();
+    let mut inherited = false;
+    for fd in fs::read_dir(format!("/proc/{pid}/fd"))? {
+        let fd = fd?;
+        if fs::read_link(fd.path()).ok().as_ref() == Some(&expected) {
+            inherited = true;
+            break;
+        }
+    }
+    if !inherited {
+        return Err(invalid(
+            "driver has no inherited descriptor for the held lock",
+        ));
+    }
+    Ok(pid)
+}
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum UnitBoundary {
+    Completion,
+    Exit,
+    Validation,
+}
+fn bounded_unit(
+    config: &CampaignConfig,
+    unit: &LaunchUnit,
+    log: &mut ExecutionLog,
+    checkpoints: &mut CheckpointStore,
+) -> io::Result<AcceptedResult> {
+    bounded_unit_with_hook(config, unit, log, checkpoints, |_| Ok(()))
+}
+fn bounded_unit_with_hook(
+    config: &CampaignConfig,
+    unit: &LaunchUnit,
+    log: &mut ExecutionLog,
+    checkpoints: &mut CheckpointStore,
+    mut hook: impl FnMut(UnitBoundary) -> io::Result<()>,
+) -> io::Result<AcceptedResult> {
+    let process = process(config, unit.process.as_str())?;
+    let attempt_token = Token::new(format!("attempt-{}", log.next_sequence()))?;
+    log.append(
+        JournalEvent::CellStart,
+        Some(serde_json::to_value(&unit.identity).map_err(invalid)?),
+        json!({"key":unit.key,"ordinal":unit.ordinal}),
+    )?;
+    let state = std::cell::RefCell::new((log, None::<ChildAttempt>, Vec::<u8>::new()));
+    let result = run_process(
+        process_command(&process, &process.arguments)?,
+        unit.case.as_str().as_bytes(),
+        Duration::from_secs(CHILD_TIMEOUT_SECONDS),
+        Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
+        |pid| {
+            let mut state = state.borrow_mut();
+            state.1 = Some(ChildAttempt::start(
+                state.0,
+                unit.clone(),
+                attempt_token.clone(),
+                pid,
+            )?);
+            Ok(())
+        },
+        |bytes| {
+            let mut state = state.borrow_mut();
+            state.2.extend_from_slice(bytes);
+            while let Some(end) = state.2.iter().position(|b| *b == b'\n') {
+                let line: Vec<_> = state.2.drain(..=end).collect();
+                let (log, attempt, _) = &mut *state;
+                match std::str::from_utf8(&line[..line.len() - 1]) {
+                    Ok(line) => attempt
+                        .as_mut()
+                        .ok_or_else(|| invalid("stderr before spawn"))?
+                        .stderr_line(log, line)?,
+                    Err(e) => {
+                        log.append(
+                            JournalEvent::DriverDiagnostic,
+                            Some(serde_json::to_value(&unit.identity).map_err(invalid)?),
+                            json!({"attempt":attempt_token,"raw_bytes":line}),
+                        )?;
+                        return Err(invalid(e));
+                    }
+                }
+            }
+            Ok(())
+        },
+    )?;
+    let (log, attempt, pending) = state.into_inner();
+    let raw_root = config.channels.stage.join("raw-attempts");
+    fs::create_dir_all(&raw_root)?;
+    File::open(&config.channels.stage)?.sync_all()?;
+    let stdout_artifact = publish_artifact(
+        &config.channels.stage,
+        &raw_root.join(format!(
+            "{}-{}.stdout",
+            log.session_id(),
+            attempt_token.as_str()
+        )),
+        &result.stdout,
+    )?;
+    let stderr_artifact = publish_artifact(
+        &config.channels.stage,
+        &raw_root.join(format!(
+            "{}-{}.stderr",
+            log.session_id(),
+            attempt_token.as_str()
+        )),
+        &result.stderr,
+    )?;
+    let mut attempt = attempt.ok_or_else(|| invalid("missing attempt"))?;
+    let completion = ChildCompletionEvidence::new(
+        unit,
+        attempt_token.clone(),
+        result.outcome.clone(),
+        stdout_artifact,
+        stderr_artifact,
+        result.callback_error.as_ref().map(ToString::to_string),
+    )?;
+    attempt.record_completion(log, &completion)?;
+    hook(UnitBoundary::Completion)?;
+    if !pending.is_empty() {
+        log.append(
+            JournalEvent::DriverDiagnostic,
+            Some(serde_json::to_value(&unit.identity).map_err(invalid)?),
+            json!({"attempt":attempt_token,"unterminated_stderr_bytes":pending}),
+        )?;
+    }
+    let parsed = attempt
+        .exited(
+            log,
+            result.outcome,
+            &result.stdout,
+            Sha256Digest::of(&result.stderr),
+        )
+        .cloned();
+    if let Some(error) = result.callback_error {
+        return Err(error);
+    }
+    if !pending.is_empty() {
+        return Err(invalid("unterminated child stderr record"));
+    }
+    let child = parsed?;
+    hook(UnitBoundary::Exit)?;
+    let response = operation(
+        &process,
+        &OwnerOperation::ValidateResult {
+            unit: Box::new(unit.clone()),
+            result: Box::new(child.clone()),
+        },
+        Some(log),
+    )?;
+    attempt.owner_validated(log, &response)?;
+    hook(UnitBoundary::Validation)?;
+    let accepted = accept_checkpoint(log, checkpoints, unit, &child)?;
+    log.append(
+        JournalEvent::CellComplete,
+        Some(serde_json::to_value(&unit.identity).map_err(invalid)?),
+        json!({"key":unit.key,"checkpoint_sha256":accepted.sha256}),
+    )?;
+    Ok(AcceptedResult {
+        unit: unit.clone(),
+        result: child,
+        checkpoint_sha256: Sha256Digest::new(accepted.sha256)?,
+    })
+}
+fn derive(
+    config: &CampaignConfig,
+    core: &OwnerManifest,
+    bundle: &AcceptedResultsBundle,
+    log: &mut ExecutionLog,
+) -> io::Result<OwnerManifest> {
+    let stage = &config.channels.stage;
+    let input = save(&stage.join("core-derivation-input.json"), bundle)?;
+    let reserved_units = core
+        .ordered_units
+        .iter()
+        .filter(|u| u.identity.phase.as_str() == "m4rm-joint")
+        .cloned()
+        .collect::<Vec<_>>();
+    if reserved_units.len() != 144 {
+        return Err(invalid("wrong predeclared conditional slots"));
+    }
+    let request = DeriveManifestRequest {
+        campaign_id: config.campaign_id.clone(),
+        original_manifest_sha256: core.manifest_sha256.clone(),
+        reserved_units,
+        accepted_inputs: input,
+    };
+    save(&stage.join("derived-request.json"), &request)?;
+    let OwnerResponse::DeriveManifest { manifest } = operation(
+        &process(config, "core-producer")?,
+        &OwnerOperation::DeriveManifest {
+            request: request.clone(),
+        },
+        Some(log),
+    )?
+    else {
+        return Err(invalid("derivation returned wrong response"));
+    };
+    manifest.validate(&request)?;
+    save(&stage.join("derived-manifest.json"), &manifest)?;
+    let resolved = core.apply_derivation(&request, &manifest)?;
+    save(&stage.join("core-resolved-manifest.json"), &resolved)?;
+    Ok(resolved)
+}
+fn make_receipt(
+    config: &CampaignConfig,
+    bundles: &[AcceptedResultsBundle],
+    responses: &[OwnerResponse],
+) -> io::Result<()> {
+    let stage = &config.channels.stage;
+    let records = ExecutionLog::validate_prefix(
+        &fs::read(&config.channels.execution_log)?,
+        config.campaign_id.as_str(),
+    )?;
+    let counts = DeclaredCounts::for_cells(config.manifests.iter().map(|m| m.counts.cells).sum())?;
+    let attempts = records
+        .iter()
+        .filter(|r| r.event == JournalEvent::ChildSpawn)
+        .count();
+    let orchestration = records
+        .iter()
+        .filter(|r| r.details.get("kind").and_then(Value::as_str) == Some("orchestration-start"))
+        .count();
+    let sessions = records
+        .iter()
+        .filter(|r| r.event == JournalEvent::SessionPrepared)
+        .count();
+    let artifacts:Vec<_>=bundles.iter().flat_map(|b| b.accepted.iter()).map(|entry|json!({"key":entry.unit.key,"path":config.channels.checkpoints.join("units").join(format!("{}.json",Sha256Digest::of(entry.unit.key.as_str().as_bytes()).as_str())),"sha256":entry.checkpoint_sha256})).collect();
+    let proposed_projection = json!({"schema":"tuning-campaign-receipt-projection-v1","campaign_id":config.campaign_id,"protocol":config.protocol,"identity":config.identity,"runtime":config.runtime,"affinity":config.affinity,"owners":responses,"counts":counts,"attempts":attempts,"orchestration":orchestration,"sessions":sessions,"raw_artifacts":artifacts,"journal_sequence":records.last().map(|record|record.sequence),"raw_keys":bundles.iter().flat_map(|b|b.accepted.iter().map(|r|r.unit.key.clone())).collect::<Vec<_>>()});
+    let projection: Value = if stage.join("receipt-projection.json").exists() {
+        read_json(&stage.join("receipt-projection.json"))?
+    } else {
+        proposed_projection
+    };
+    let attempts = projection
+        .get("attempts")
+        .and_then(Value::as_u64)
+        .ok_or_else(|| invalid("receipt attempts missing"))?;
+    let orchestration = projection
+        .get("orchestration")
+        .and_then(Value::as_u64)
+        .ok_or_else(|| invalid("receipt orchestration missing"))?;
+    let sessions = projection
+        .get("sessions")
+        .and_then(Value::as_u64)
+        .ok_or_else(|| invalid("receipt session count missing"))?;
+    save(&stage.join("receipt-projection.json"), &projection)?;
+    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nSee `campaign.json`, owner responses and `composition.json` for runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal and checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nSee each raw result payload below.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through `receipt-projection.json` raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n## Raw result index\n\n",config.campaign_id.as_str(),config.protocol.path.display(),config.protocol.sha256.as_str(),config.identity.source_revision,serde_json::to_string_pretty(responses).map_err(invalid)?);
+    receipt.push_str(&format!("Preparation CPU affinity: `{:?}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n",config.affinity.0));
+    for manifest in &config.manifests {
+        receipt.push_str(&format!(
+            "Owner `{}` uses protocol `{}` and behavior `{}`; executable `{}`.\n\n",
+            manifest.owner.as_str(),
+            manifest.owner_protocol.as_str(),
+            manifest.behavior_token.as_str(),
+            manifest.processes[0].executable_sha256.as_str()
+        ));
+    }
+    receipt.push_str(&format!("Accepted accounting: {} cells, {} probes, {} timed children, {} accepted results, {} raw windows, {} timing progress records. Observed {} attempts, {} orchestration actions, {} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n",counts.cells,counts.probes,counts.timed_children,counts.accepted_results,counts.windows,counts.progress_records,attempts,orchestration,sessions));
+    for bundle in bundles {
+        for accepted in &bundle.accepted {
+            receipt.push_str(&format!(
+                "- `{}`: `{}` / `{}` / `{}` / `{:?}`\n",
+                accepted.unit.key.as_str(),
+                accepted.unit.identity.field.as_str(),
+                accepted.unit.identity.stratum.as_str(),
+                accepted.unit.identity.candidate.as_str(),
+                accepted.unit.identity.task
+            ));
+        }
+    }
+    let path = stage.join("receipt.md");
+    publish_artifact(stage, &path, receipt.as_bytes())?;
+    Ok(())
+}
+fn candidate_directory(
+    stage: &Path,
+    process: &str,
+    log: &ExecutionLog,
+) -> io::Result<std::path::PathBuf> {
+    let root = stage.join("candidates");
+    fs::create_dir_all(&root)?;
+    File::open(stage)?.sync_all()?;
+    let path = root.join(format!(
+        "{process}-{}-{}",
+        log.session_id(),
+        log.next_sequence()
+    ));
+    fs::create_dir(&path)?;
+    File::open(&root)?.sync_all()?;
+    Ok(path)
+}
+fn promote(source: &ArtifactIdentity, target: &Path) -> io::Result<ArtifactIdentity> {
+    if artifact(&source.path)? != *source {
+        return Err(invalid("candidate changed before promotion"));
+    }
+    let bytes = fs::read(&source.path)?;
+    publish_artifact(artifact_stage(target)?, target, &bytes)?;
+    let result = artifact(target)?;
+    if result.sha256 != source.sha256 {
+        return Err(invalid("promotion changed candidate bytes"));
+    }
+    Ok(result)
+}
+fn emit(
+    config: &CampaignConfig,
+    manifests: &[OwnerManifest],
+    bundles: &[AcceptedResultsBundle],
+    log: &mut ExecutionLog,
+    start: Instant,
+) -> io::Result<SessionOutcome> {
+    let stage = &config.channels.stage;
+    let mut responses = Vec::new();
+    for (i, name) in [(0, "core"), (1, "algebra")] {
+        if !may_launch_child(ns(start)) {
+            return Ok(SessionOutcome::BudgetExhausted);
+        }
+        bundles[i].validate(&manifests[i], true)?;
+        let input = save(&stage.join(format!("{name}-accepted.json")), &bundles[i])?;
+        let producer = process(config, &format!("{name}-producer"))?;
+        let response_path = stage.join(format!("{name}-owner-response.json"));
+        let response = if response_path.exists() {
+            read_json(&response_path)?
+        } else {
+            let directory = candidate_directory(stage, producer.id.as_str(), log)?;
+            let timestamp = utc()?;
+            let measurement = ObservedProvenance {
+                identity: config.identity.clone(),
+                process: producer.id.clone(),
+                observed_utc: timestamp.clone(),
+                runtime: config.runtime.clone(),
+            };
+            let assembly = ObservedProvenance {
+                identity: config.identity.clone(),
+                process: producer.id.clone(),
+                observed_utc: timestamp,
+                runtime: CanonicalJson::from_serializable(&AssemblyRuntime {
+                    source_dirty: false,
+                    tool: format!("crates/gf2-{name}/benches/tuning_calibration.rs"),
+                    tool_sha256: producer.executable_sha256.as_str().into(),
+                })?,
+            };
+            let request = OwnerOperation::EmitOwner {
+                request: Box::new(EmitOwnerRequest {
+                    campaign_id: config.campaign_id.clone(),
+                    manifest_sha256: manifests[i].manifest_sha256.clone(),
+                    accepted_results: input,
+                    measurement,
+                    assembly,
+                    output: directory.join("output.json"),
+                }),
+            };
+            let request_artifact = save(&directory.join("request.json"), &request)?;
+            log.append(
+                JournalEvent::OwnerWrite,
+                None,
+                json!({"owner":manifests[i].owner,"request":request_artifact}),
+            )?;
+            let response = operation(&producer, &request, Some(log))?;
+            let OwnerResponse::EmitOwner {
+                artifact: output, ..
+            } = &response
+            else {
+                return Err(invalid("owner emitted wrong response"));
+            };
+            if artifact(&directory.join("output.json"))? != *output {
+                return Err(invalid("owner candidate path/digest differs from request"));
+            }
+            File::open(&output.path)?.sync_all()?;
+            File::open(&directory)?.sync_all()?;
+            save(&directory.join("response.json"), &response)?;
+            save(&response_path, &response)?;
+            response
+        };
+        let OwnerResponse::EmitOwner {
+            artifact: owner,
+            decisions,
+        } = &response
+        else {
+            return Err(invalid("owner emission returned wrong operation"));
+        };
+        let canonical = promote(owner, &stage.join(format!("{name}-owner.json")))?;
+        log.append(JournalEvent::OwnerReopen,None,json!({"owner":manifests[i].owner,"candidate":owner,"artifact":canonical,"decisions":decisions}))?;
+        responses.push(response);
+    }
+    if !may_launch_child(ns(start)) {
+        return Ok(SessionOutcome::BudgetExhausted);
+    }
+    let composer = process(config, "composer")?;
+    let core = artifact(&stage.join("core-owner.json"))?;
+    let algebra = artifact(&stage.join("algebra-owner.json"))?;
+    let output = stage.join("complete.json");
+    let candidate_record = stage.join("composition-candidate.json");
+    let composition: Value = if candidate_record.exists() {
+        read_json(&candidate_record)?
+    } else {
+        let directory = candidate_directory(stage, "composer", log)?;
+        let candidate = directory.join("output.json");
+        let args = vec![
+            "complete".into(),
+            core.path.to_string_lossy().into_owned(),
+            algebra.path.to_string_lossy().into_owned(),
+            candidate.to_string_lossy().into_owned(),
+            config.campaign_id.as_str().into(),
+            utc()?,
+            config.identity.source_revision.clone(),
+            "false".into(),
+            composer.executable_sha256.as_str().into(),
+        ];
+        let request = save(
+            &directory.join("request.json"),
+            &json!({"schema":"tuning-campaign-composition-request-v1","process":composer,"args":args,"core":core,"algebra":algebra}),
+        )?;
+        log.append(
+            JournalEvent::Composition,
+            None,
+            json!({"request":request,"args":args,"process":composer}),
+        )?;
+        log.append(
+            JournalEvent::OrchestrationStart,
+            None,
+            json!({"kind":"orchestration-start","process":"composer","request":request}),
+        )?;
+        let result = run_process(
+            process_command(&composer, &args)?,
+            b"",
+            Duration::from_secs(CHILD_TIMEOUT_SECONDS),
+            Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
+            |_| Ok(()),
+            |_| Ok(()),
+        )?;
+        let exit = save(
+            &directory.join("exit.json"),
+            &json!({"outcome":result.outcome,"stdout":result.stdout,"stderr":result.stderr}),
+        )?;
+        log.append(JournalEvent::OrchestrationExit,None,json!({"kind":"orchestration-exit","process":"composer","exit":exit,"outcome":result.outcome}))?;
+        if !result.outcome.accepts_result()? {
+            return Err(invalid("composition failed"));
+        }
+        File::open(&candidate)?.sync_all()?;
+        File::open(&directory)?.sync_all()?;
+        let composition = json!({"schema":"tuning-campaign-composition-v1","args":args,"source_revision":config.identity.source_revision,"source_dirty":false,"tool_sha256":composer.executable_sha256,"core":core,"algebra":algebra,"candidate":artifact(&candidate)?,"request":request,"exit":exit});
+        save(&directory.join("response.json"), &composition)?;
+        save(&candidate_record, &composition)?;
+        composition
+    };
+    let candidate: ArtifactIdentity = serde_json::from_value(
+        composition
+            .get("candidate")
+            .cloned()
+            .ok_or_else(|| invalid("missing composition candidate"))?,
+    )
+    .map_err(invalid)?;
+    let canonical = promote(&candidate, &output)?;
+    let mut composition = composition;
+    composition
+        .as_object_mut()
+        .ok_or_else(|| invalid("invalid composition record"))?
+        .insert(
+            "output".into(),
+            serde_json::to_value(&canonical).map_err(invalid)?,
+        );
+    save(&stage.join("composition.json"), &composition)?;
+    log.append(
+        JournalEvent::CompositionReopen,
+        None,
+        json!({"candidate":candidate,"artifact":canonical}),
+    )?;
+    make_receipt(config, bundles, &responses)?;
+    if ns(start) > SESSION_BUDGET_SECONDS * 1_000_000_000 {
+        return Ok(SessionOutcome::BudgetExhausted);
+    }
+    Ok(SessionOutcome::Complete)
+}
+fn recover_unit(
+    config: &CampaignConfig,
+    unit: &LaunchUnit,
+    log: &mut ExecutionLog,
+    checkpoints: &mut CheckpointStore,
+    records: &[tuning_campaign_support::journal::JournalRecord],
+) -> io::Result<AcceptedResult> {
+    let exit = records
+        .iter()
+        .rev()
+        .find(|record| {
+            record.event == JournalEvent::ChildExit
+                && record.details.get("unit_key").and_then(Value::as_str) == Some(unit.key.as_str())
+        })
+        .ok_or_else(|| invalid("missing recoverable exit"))?;
+    let attempt: Token = serde_json::from_value(
+        exit.details
+            .get("attempt")
+            .cloned()
+            .ok_or_else(|| invalid("exit attempt missing"))?,
+    )
+    .map_err(invalid)?;
+    let streams = records
+        .iter()
+        .rev()
+        .find(|record| {
+            record.event == JournalEvent::RawStreams
+                && record
+                    .details
+                    .pointer("/exit/attempt")
+                    .and_then(Value::as_str)
+                    == Some(attempt.as_str())
+                && record.case == serde_json::to_value(&unit.identity).ok()
+        })
+        .ok_or_else(|| invalid("clean exit has no durable raw stream artifacts"))?;
+    let stdout: ArtifactIdentity = serde_json::from_value(
+        streams
+            .details
+            .get("stdout")
+            .cloned()
+            .ok_or_else(|| invalid("raw stdout missing"))?,
+    )
+    .map_err(invalid)?;
+    let stderr: ArtifactIdentity = serde_json::from_value(
+        streams
+            .details
+            .get("stderr")
+            .cloned()
+            .ok_or_else(|| invalid("raw stderr missing"))?,
+    )
+    .map_err(invalid)?;
+    for stream in [&stdout, &stderr] {
+        if !stream
+            .path
+            .starts_with(config.channels.stage.join("raw-attempts"))
+            || artifact(&stream.path)? != *stream
+        {
+            return Err(invalid("raw recovered stream path/digest changed"));
+        }
+    }
+    let mut recovered = ChildAttempt::recover_exited(
+        log,
+        unit.clone(),
+        attempt,
+        &fs::read(&stdout.path)?,
+        stderr.sha256,
+    )?;
+    let result = recovered
+        .result()
+        .cloned()
+        .ok_or_else(|| invalid("recovered attempt has no result"))?;
+    if !recovered.is_validated() {
+        let response = operation(
+            &process(config, unit.process.as_str())?,
+            &OwnerOperation::ValidateResult {
+                unit: Box::new(unit.clone()),
+                result: Box::new(result.clone()),
+            },
+            Some(log),
+        )?;
+        recovered.owner_validated(log, &response)?;
+    }
+    let accepted = accept_checkpoint(log, checkpoints, unit, &result)?;
+    log.append(
+        JournalEvent::CellComplete,
+        Some(serde_json::to_value(&unit.identity).map_err(invalid)?),
+        json!({"key":unit.key,"checkpoint_sha256":accepted.sha256,"recovered":true}),
+    )?;
+    Ok(AcceptedResult {
+        unit: unit.clone(),
+        result,
+        checkpoint_sha256: Sha256Digest::new(accepted.sha256)?,
+    })
+}
+fn restore_derived_projection(
+    stage: &Path,
+    original: &OwnerManifest,
+    request: &DeriveManifestRequest,
+    observed: &DerivedManifest,
+) -> io::Result<OwnerManifest> {
+    let saved: DerivedManifest = read_json(&stage.join("derived-manifest.json"))?;
+    if *observed != saved {
+        return Err(invalid("owner derivation changed on resume"));
+    }
+    let resolved = original.apply_derivation(request, observed)?;
+    save(&stage.join("core-resolved-manifest.json"), &resolved)?;
+    Ok(resolved)
+}
+fn work(
+    config: &CampaignConfig,
+    log: &mut ExecutionLog,
+    start: Instant,
+) -> io::Result<SessionOutcome> {
+    let mut manifests = resolved_manifests(config)?;
+    let mut checkpoints = CheckpointStore::resume(
+        &config.channels.checkpoints,
+        config.campaign_id.as_str(),
+        config.identity.clone(),
+    )?;
+    acknowledge_pending_recovery(log, &mut checkpoints, &config.campaign_id)?;
+    let mut bundles = reconcile_campaign_checkpoints(log, &checkpoints, &manifests)?;
+    let recovery_records = ExecutionLog::validate_prefix(
+        &log.validated_synced_prefix()?,
+        config.campaign_id.as_str(),
+    )?;
+    let recovery_keys: std::collections::BTreeSet<_> = recovery_records
+        .iter()
+        .filter(|record| record.event == JournalEvent::ChildExit)
+        .filter_map(|record| {
+            record
+                .details
+                .get("unit_key")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+        })
+        .collect();
+
+    // Re-run derivation against the immutable inputs on resume before consuming
+    // any derived opaque case; it must reproduce exactly the saved output.
+    if config.channels.stage.join("derived-manifest.json").exists() {
+        let request: DeriveManifestRequest =
+            read_json(&config.channels.stage.join("derived-request.json"))?;
+        if !may_launch_child(ns(start)) {
+            return Ok(SessionOutcome::BudgetExhausted);
+        }
+        let OwnerResponse::DeriveManifest { manifest } = operation(
+            &process(config, "core-producer")?,
+            &OwnerOperation::DeriveManifest {
+                request: request.clone(),
+            },
+            Some(log),
+        )?
+        else {
+            return Err(invalid("invalid derived response"));
+        };
+        manifests[0] = restore_derived_projection(
+            &config.channels.stage,
+            &config.manifests[0],
+            &request,
+            &manifest,
+        )?;
+        bundles[0].manifest_sha256 = manifests[0].manifest_sha256.clone();
+    }
+    for owner in 0..manifests.len() {
+        let mut phase = None::<Token>;
+        for index in 0..manifests[owner].ordered_units.len() {
+            let unit = &manifests[owner].ordered_units[index];
+            if unit.identity.phase.as_str() == "m4rm-joint"
+                && !config.channels.stage.join("derived-manifest.json").exists()
+            {
+                if !may_launch_child(ns(start)) {
+                    return Ok(SessionOutcome::BudgetExhausted);
+                }
+                manifests[owner] = derive(config, &config.manifests[owner], &bundles[owner], log)?;
+                bundles[owner].manifest_sha256 = manifests[owner].manifest_sha256.clone();
+            }
+            let unit = &manifests[owner].ordered_units[index];
+            if checkpoints.completed_unit(unit.key.as_str()).is_some() {
+                continue;
+            }
+            if !may_launch_child(ns(start)) {
+                return Ok(SessionOutcome::BudgetExhausted);
+            }
+            if phase.as_ref() != Some(&unit.identity.phase) {
+                if let Some(old) = phase.take() {
+                    log.append(JournalEvent::PhaseComplete, None, json!({"phase":old}))?;
+                }
+                phase = Some(unit.identity.phase.clone());
+                log.append(
+                    JournalEvent::PhaseStart,
+                    None,
+                    json!({"phase":phase,"owner":manifests[owner].owner}),
+                )?;
+            }
+            let accepted = if recovery_keys.contains(unit.key.as_str()) {
+                recover_unit(config, unit, log, &mut checkpoints, &recovery_records)?
+            } else {
+                bounded_unit(config, unit, log, &mut checkpoints)?
+            };
+            bundles[owner].accepted.push(accepted);
+            if !may_launch_child(ns(start)) {
+                return Ok(SessionOutcome::BudgetExhausted);
+            }
+        }
+        if let Some(old) = phase.take() {
+            log.append(JournalEvent::PhaseComplete, None, json!({"phase":old}))?;
+        }
+    }
+    emit(config, &manifests, &bundles, log, start)
+}
+fn run_session(stage: &Path, session_id: &str) -> io::Result<SessionOutcome> {
+    let start = Instant::now();
+    let config: CampaignConfig = read_json(&stage.join("campaign.json"))?;
+    let descriptor: SessionDescriptor = read_json(&stage.join("active-session.json"))?;
+    if descriptor.session_id.as_str() != session_id {
+        return Err(invalid("stale or mismatched session handoff"));
+    }
+    let mut store = SessionStore::reopen(descriptor.clone())?;
+    store.consume_mode(SessionMode::RunSession)?;
+    let mut log = store.repair_log()?;
+    store.reconcile_journal(&mut log)?;
+    let holder = inherited_lock(&descriptor.lock_path)?;
+    store.transition(
+        &mut log,
+        SessionTransition::LockHeld {
+            evidence: LockEvidence {
+                lock_path: descriptor.lock_path,
+                holder_pid: holder,
+                observation: Token::new("inherited-fd-and-independent-flock-conflict")?,
+            },
+        },
+    )?;
+    SESSION_START
+        .set(start)
+        .map_err(|_| invalid("duplicate run mode in one process"))?;
+    let result = match (|| {
+        let observed = CpuAffinity::observe()?;
+        log.append(JournalEvent::DriverDiagnostic,None,json!({"kind":"cpu-affinity","phase":"held-lock","observed":observed,"expected":config.affinity}))?;
+        require_affinity(&config.affinity, &observed)?;
+        verify_config(&config)?;
+        work(&config, &mut log, start)
+    })() {
+        Err(error) if error.kind() == io::ErrorKind::TimedOut => {
+            Ok(SessionOutcome::BudgetExhausted)
+        }
+        other => other,
+    };
+    let outcome = match &result {
+        Ok(outcome) => *outcome,
+        Err(error) => {
+            log.append(
+                JournalEvent::DriverDiagnostic,
+                None,
+                json!({"driver_error":error.to_string()}),
+            )?;
+            SessionOutcome::Failed
+        }
+    };
+    if !ALL_REAPED.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err(invalid(
+            "process cleanup not proven; finalizer must independently prove release",
+        ));
+    }
+    store.transition(
+        &mut log,
+        SessionTransition::WorkFinished {
+            evidence: WorkEvidence {
+                outcome,
+                all_descendants_reaped: true,
+                active_elapsed_ns: ns(start),
+            },
+        },
+    )?;
+    result
+}
+fn session_records(
+    log: &mut ExecutionLog,
+    descriptor: &SessionDescriptor,
+) -> io::Result<Vec<tuning_campaign_support::journal::JournalRecord>> {
+    Ok(ExecutionLog::validate_prefix(
+        &log.validated_synced_prefix()?,
+        descriptor.campaign_id.as_str(),
+    )?
+    .into_iter()
+    .filter(|r| r.session_id == descriptor.session_id.as_str())
+    .collect())
+}
+fn proof(
+    descriptor: &SessionDescriptor,
+    log: &mut ExecutionLog,
+) -> io::Result<IndependentReleaseEvidence> {
+    let records = session_records(log, descriptor)?;
+    let mut holder = None;
+    let mut groups = Vec::new();
+    for record in records {
+        if record.event == JournalEvent::LockHold {
+            if let Some(pid) = record
+                .details
+                .pointer("/session_transition/transition/evidence/holder_pid")
+                .and_then(Value::as_u64)
+            {
+                holder = Some(pid as u32);
+            }
+        }
+        if record.event == JournalEvent::ChildSpawn {
+            if let Some(pid) = record.details.get("pid").and_then(Value::as_u64) {
+                groups.push(pid as u32);
+            }
+        }
+    }
+    let holder = holder.ok_or_else(|| invalid("release proof lacks observed holder"))?;
+    Ok(IndependentReleaseEvidence {
+        holder_dead: !Path::new(&format!("/proc/{holder}")).exists(),
+        descendants_dead: groups
+            .into_iter()
+            .map(live_group)
+            .collect::<io::Result<Vec<_>>>()?
+            .iter()
+            .all(|live| !*live),
+        lock_path: descriptor.lock_path.clone(),
+        observed_utc: utc()?,
+        lock_available: lock_available(&descriptor.lock_path)?,
+    })
+}
+fn finish_checksum(store: SessionStore, log: &mut ExecutionLog) -> io::Result<()> {
+    let descriptor = store.descriptor().clone();
+    let stage = &descriptor.channels.stage;
+    fn collect(path: &Path, artifacts: &mut Vec<ArtifactIdentity>) -> io::Result<()> {
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let path = entry.path();
+            let name = entry.file_name();
+            if [
+                "execution.log",
+                "active-session.json",
+                "active-preparation.json",
+                "session-writer.lock",
+                "sessions",
+                "artifact-publications",
+            ]
+            .iter()
+            .any(|skip| name == *skip)
+            {
+                continue;
+            }
+            if entry.file_type()?.is_symlink() {
+                return Err(invalid("symlink in staged evidence"));
+            }
+            if path.is_dir() {
+                collect(&path, artifacts)?;
+            } else {
+                artifacts.push(artifact(&path)?);
+            }
+        }
+        Ok(())
+    }
+    let mut artifacts = Vec::new();
+    collect(stage, &mut artifacts)?;
+    let identity = store.write_checksum(log, artifacts)?;
+    store.retire(log, &identity)
+}
+fn validator(config: &CampaignConfig, preterminal: bool) -> io::Result<()> {
+    if artifact(&config.validator.path)? != config.validator {
+        return Err(invalid("validator identity changed"));
+    }
+    let mut command = Command::new("python3");
+    command
+        .arg(&config.validator.path)
+        .arg("--stage")
+        .arg(&config.channels.stage);
+    if preterminal {
+        command.arg("--preterminal");
+    }
+    let output = command.output()?;
+    io::stdout().write_all(&output.stdout)?;
+    io::stderr().write_all(&output.stderr)?;
+    if !output.status.success() {
+        return Err(invalid("independent validation failed"));
+    }
+    Ok(())
+}
+fn observed_failure(records: &[tuning_campaign_support::journal::JournalRecord]) -> bool {
+    records.iter().any(|record| {
+        record.details.get("driver_error").is_some()
+            || (record.event == JournalEvent::RawStreams
+                && serde_json::from_value::<ChildCompletionEvidence>(record.details.clone())
+                    .map_or(true, |evidence| {
+                        !evidence.stream_validation.accepts_result()
+                    }))
+            || (record.event == JournalEvent::WorkFinished
+                && record
+                    .details
+                    .pointer("/session_transition/transition/evidence/outcome")
+                    .and_then(Value::as_str)
+                    == Some("failed"))
+            || (record.event == JournalEvent::ChildExit
+                && record
+                    .details
+                    .get("outcome")
+                    .cloned()
+                    .and_then(|v| serde_json::from_value::<ProcessOutcome>(v).ok())
+                    .is_some_and(|outcome| !outcome.accepts_result().unwrap_or(false)))
+    })
+}
+fn finalize(stage: &Path, session_id: &str, exit_code: i32) -> io::Result<SessionOutcome> {
+    let config: CampaignConfig = read_json(&stage.join("campaign.json"))?;
+    let descriptor: SessionDescriptor = read_json(&stage.join("active-session.json"))?;
+    if descriptor.session_id.as_str() != session_id {
+        return Err(invalid("stale or mismatched session handoff"));
+    }
+    let mut store = SessionStore::reopen(descriptor.clone())?;
+    store.consume_mode(SessionMode::FinalizeSession)?;
+    let mut log = store.repair_log()?;
+    store.reconcile_journal(&mut log)?;
+    let before = store.lifecycle().state();
+    let records = session_records(&mut log, &descriptor)?;
+    let proposed = records
+        .iter()
+        .rev()
+        .find_map(|record| {
+            if record.event == JournalEvent::WorkFinished {
+                record
+                    .details
+                    .pointer("/session_transition/transition/evidence/outcome")
+                    .cloned()
+            } else {
+                None
+            }
+        })
+        .map(serde_json::from_value::<SessionOutcome>)
+        .transpose()
+        .map_err(invalid)?
+        .unwrap_or(SessionOutcome::Failed);
+    store.transition(
+        &mut log,
+        SessionTransition::WrapperReturned {
+            evidence: WrapperEvidence {
+                exit_code: Some(exit_code),
+                signal: None,
+            },
+        },
+    )?;
+    if before != SessionState::Prepared {
+        let evidence = proof(&descriptor, &mut log)?;
+        if !evidence.holder_dead || !evidence.descendants_dead || !evidence.lock_available {
+            store.transition(&mut log, SessionTransition::ReleaseUnobserved)?;
+            return Err(invalid(
+                "lock release remains unobserved; active session retained",
+            ));
+        }
+        store.transition(
+            &mut log,
+            SessionTransition::LockRelease {
+                evidence: ReleaseEvidence::Independent { evidence },
+            },
+        )?;
+    }
+    if before == SessionState::LockHeld && !observed_failure(&records) {
+        store.recover_transition(
+            &mut log,
+            SessionTransition::Interrupted {
+                active_elapsed_censored: true,
+            },
+        )?;
+        finish_checksum(store, &mut log)?;
+        return Ok(SessionOutcome::Paused);
+    }
+    let mut outcome = if exit_code == 0 {
+        proposed
+    } else {
+        SessionOutcome::Failed
+    };
+    let manifests = resolved_manifests(&config)?;
+    let mut checkpoints = CheckpointStore::resume(
+        &config.channels.checkpoints,
+        config.campaign_id.as_str(),
+        config.identity.clone(),
+    )?;
+    acknowledge_pending_recovery(&mut log, &mut checkpoints, &config.campaign_id)?;
+    let bundles = reconcile_campaign_checkpoints(&mut log, &checkpoints, &manifests)?;
+    if outcome == SessionOutcome::Complete {
+        for (bundle, manifest) in bundles.iter().zip(&manifests) {
+            bundle.validate(manifest, true)?;
+        }
+        if let Err(error) = validator(&config, true) {
+            log.append(
+                JournalEvent::DriverDiagnostic,
+                None,
+                json!({"validation_error":error.to_string()}),
+            )?;
+            outcome = SessionOutcome::Failed;
+        }
+    }
+    store.transition(&mut log, SessionTransition::Terminal { outcome })?;
+    finish_checksum(store, &mut log)?;
+    if outcome == SessionOutcome::Complete {
+        validator(&config, false)?;
+    }
+    Ok(outcome)
+}
+fn writer_dead(writer: &ProcessIdentity) -> io::Result<bool> {
+    writer.validate()?;
+    let boot = fs::read_to_string("/proc/sys/kernel/random/boot_id")?;
+    if boot.trim() != writer.boot_id.as_str() {
+        return Ok(true);
+    }
+    let stat = match fs::read_to_string(format!("/proc/{}/stat", writer.pid)) {
+        Ok(stat) => stat,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(true),
+        Err(error) => return Err(error),
+    };
+    let (_, tail) = stat
+        .rsplit_once(')')
+        .ok_or_else(|| invalid("invalid process stat"))?;
+    let ticks = tail
+        .split_whitespace()
+        .nth(19)
+        .ok_or_else(|| invalid("missing start ticks"))?
+        .parse::<u64>()
+        .map_err(invalid)?;
+    Ok(ticks != writer.start_time_ticks)
+}
+fn recover(stage: &Path) -> io::Result<()> {
+    let descriptor: SessionDescriptor = read_json(&stage.join("active-session.json"))?;
+    let mut store = SessionStore::reopen(descriptor.clone())?;
+    let mut log = store.repair_log()?;
+    store.reconcile_journal(&mut log)?;
+    let state = store.lifecycle().state();
+    if matches!(state, SessionState::Terminal | SessionState::Interrupted) {
+        return finish_checksum(store, &mut log);
+    }
+    if state == SessionState::Prepared {
+        let writers = store
+            .writer_identities()?
+            .into_iter()
+            .map(|writer| {
+                Ok(WriterDeathEvidence {
+                    writer_dead: writer_dead(&writer)?,
+                    writer,
+                })
+            })
+            .collect::<io::Result<Vec<_>>>()?;
+        let evidence = PrelockInterruptionEvidence {
+            writers,
+            lock_path: descriptor.lock_path.clone(),
+            lock_available: lock_available(&descriptor.lock_path)?,
+            observed_utc: utc()?,
+            active_elapsed_censored: true,
+        };
+        store.recover_transition(&mut log, SessionTransition::PrelockInterrupted { evidence })?;
+        return finish_checksum(store, &mut log);
+    }
+    let evidence = proof(&descriptor, &mut log)?;
+    if !evidence.holder_dead || !evidence.descendants_dead || !evidence.lock_available {
+        if state != SessionState::ReleaseUnobserved {
+            store.recover_transition(&mut log, SessionTransition::ReleaseUnobserved)?;
+        }
+        return Err(invalid(
+            "prior process/lock remains live or release unobserved",
+        ));
+    }
+    if state != SessionState::LockReleased {
+        store.recover_transition(
+            &mut log,
+            SessionTransition::LockRelease {
+                evidence: ReleaseEvidence::Independent { evidence },
+            },
+        )?;
+    }
+    if observed_failure(&session_records(&mut log, &descriptor)?) {
+        store.recover_transition(
+            &mut log,
+            SessionTransition::Terminal {
+                outcome: SessionOutcome::Failed,
+            },
+        )?;
+    } else {
+        store.recover_transition(
+            &mut log,
+            SessionTransition::Interrupted {
+                active_elapsed_censored: true,
+            },
+        )?;
+    }
+    finish_checksum(store, &mut log)
+}
+fn discover_preparation(stage: &Path) -> io::Result<()> {
+    let identity = PreparationStore::discover_pending(stage)?;
+    let mut output = io::stdout().lock();
+    serde_json::to_writer(&mut output, &identity).map_err(invalid)?;
+    writeln!(output)?;
+    output.flush()
+}
+fn main() {
+    let args: Vec<_> = env::args().skip(1).collect();
+    let result=match args.as_slice(){
+        [mode,stage] if mode=="discover-preparation"=>discover_preparation(Path::new(stage)).map(|_|SessionOutcome::Paused),
+        [mode,stage,campaign,session,lock,staging] if mode=="prepare-session"=>prepare(Path::new(stage),campaign,session,Path::new(lock),Some(Path::new(staging))).map(|_|SessionOutcome::Paused),
+        [mode,stage,campaign,session,lock] if mode=="prepare-session"=>prepare(Path::new(stage),campaign,session,Path::new(lock),None).map(|_|SessionOutcome::Paused),
+        [mode,stage,session] if mode=="run-session"=>run_session(Path::new(stage),session),
+        [mode,stage,session,status] if mode=="finalize-session"=>status.parse::<i32>().map_err(invalid).and_then(|status|finalize(Path::new(stage),session,status)),
+        _=>Err(invalid("usage: driver discover-preparation STAGE | prepare-session STAGE CAMPAIGN SESSION LOCK [STAGING_INPUT] | run-session STAGE SESSION | finalize-session STAGE SESSION WRAPPER_EXIT"))
+    };
+    match result {
+        Ok(SessionOutcome::Failed) => std::process::exit(1),
+        Ok(_) => {}
+        Err(error) => {
+            eprintln!("tuning-extent-campaign-driver: {error}");
+            std::process::exit(1);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn scratch(name: &str) -> std::path::PathBuf {
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let path = env::temp_dir().join(format!(
+            "gf2-driver-{}-{}-{name}",
+            std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        ));
+        fs::create_dir(&path).unwrap();
+        path
+    }
+    #[test]
+    fn incomplete_executable_staging_replays_before_campaign_config_exists() {
+        let stage = scratch("staging-replay");
+        let source = stage.join("built-driver");
+        fs::write(&source, b"unchanged staged executable").unwrap();
+        let source = artifact(&source).unwrap();
+        let staging = StagingManifest {
+            schema: "tuning-campaign-staging-v1".into(),
+            executables: ["algebra-producer", "composer", "core-producer", "driver"]
+                .into_iter()
+                .map(|name| (Token::new(name).unwrap(), source.clone()))
+                .collect(),
+        };
+        let input = stage.join("build-input.json");
+        fs::write(&input, encoded(&staging).unwrap()).unwrap();
+        fs::create_dir(stage.join("bin")).unwrap();
+        publish_artifact(
+            &stage,
+            &stage.join("bin/algebra-producer"),
+            &fs::read(&source.path).unwrap(),
+        )
+        .unwrap();
+        stage_executables(&stage, &input).unwrap();
+        assert!(!stage.join("campaign.json").exists());
+        for name in staging.executables.keys() {
+            assert_eq!(
+                artifact(&stage.join("bin").join(name.as_str()))
+                    .unwrap()
+                    .sha256,
+                source.sha256
+            );
+        }
+        stage_executables(&stage, &input).unwrap();
+        fs::write(&source.path, b"changed producer").unwrap();
+        assert!(stage_executables(&stage, &input).is_err());
+        fs::remove_dir_all(stage).unwrap();
+    }
+    #[test]
+    fn affinity_is_observed_from_the_current_os_mask_and_binds_resume() {
+        let affinity = CpuAffinity::observe().unwrap();
+        assert!(!affinity.0.is_empty());
+        let cpu = affinity.0[0];
+        let output=Command::new("taskset").args(["-c",&cpu.to_string(),"python3","-c","print(next(x.split(':',1)[1].strip() for x in open('/proc/self/status') if x.startswith('Cpus_allowed_list:')))"]).output().unwrap();
+        assert!(output.status.success());
+        let restricted =
+            CpuAffinity::parse(std::str::from_utf8(&output.stdout).unwrap().trim()).unwrap();
+        assert_eq!(restricted.0, vec![cpu]);
+        assert!(CpuAffinity::parse("2-1").is_err());
+        assert!(CpuAffinity::parse("").is_err());
+        let changed = CpuAffinity(vec![cpu + 1]);
+        assert!(require_affinity(&restricted, &changed).is_err());
+    }
+    fn probe_fixture(
+        stderr: &[u8],
+    ) -> (
+        CampaignConfig,
+        LaunchUnit,
+        ChildResult,
+        ExecutionLog,
+        CheckpointStore,
+    ) {
+        use std::os::unix::fs::PermissionsExt;
+        let stage = scratch("probe-checkpoint");
+        let channels = SessionChannels::for_stage(&stage).unwrap();
+        let campaign = Token::new("driver-probe-test").unwrap();
+        let unit = LaunchUnit::new(
+            0,
+            UnitIdentity {
+                protocol: Token::new("mock-protocol").unwrap(),
+                owner: Token::new("mock-owner").unwrap(),
+                campaign_id: campaign.clone(),
+                phase: Token::new("mock-phase").unwrap(),
+                field: Token::new("mock-field").unwrap(),
+                stratum: Token::new("mock-stratum").unwrap(),
+                candidate: Token::new("mock-candidate").unwrap(),
+                task: Task::Probe,
+            },
+            Token::new("core-producer").unwrap(),
+            CanonicalJson::new("{}".to_owned()).unwrap(),
+        )
+        .unwrap();
+        let expected = ChildResult {
+            schema: RESULT_SCHEMA.into(),
+            identity: unit.identity.clone(),
+            case_sha256: unit.case.digest(),
+            outcome: ChildOutcome::Complete,
+            samples: vec![],
+            payload: CanonicalJson::new("{}").unwrap(),
+        };
+        let response = OwnerResponse::ValidateResult {
+            unit_key: unit.key.clone(),
+            result_sha256: expected.digest().unwrap(),
+        };
+        let child_line = transport::encode_result_line(&expected).unwrap();
+        let owner_line = transport::encode_result_line(&response).unwrap();
+        let script = stage.join("mock-owner");
+        fs::write(&script,format!("#!/usr/bin/env python3\nimport sys\nsys.stdin.buffer.read()\nprint({} if sys.argv[1]=='--owner-operation' else {})\nif sys.argv[1]!='--owner-operation': sys.stderr.buffer.write(bytes({}))\n",serde_json::to_string(&owner_line).unwrap(),serde_json::to_string(&child_line).unwrap(),serde_json::to_string(stderr).unwrap())).unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o755)).unwrap();
+        let executable = artifact(&script).unwrap();
+        let descriptor = ProcessDescriptor {
+            id: Token::new("core-producer").unwrap(),
+            executable: executable.path.clone(),
+            executable_sha256: executable.sha256.clone(),
+            arguments: vec!["--fresh-child".into()],
+            environment: measurement_environment(),
+            working_directory: stage.clone(),
+        };
+        let digest = Sha256Digest::of(b"test identity").as_str().to_owned();
+        let identity = ResumeIdentity {
+            protocol_digest: digest.clone(),
+            source_revision: "a".repeat(40),
+            source_sha256: digest.clone(),
+            ordered_work_manifest_sha256: digest.clone(),
+            process_descriptors_sha256: digest.clone(),
+            executable_sha256: BTreeMap::from([(
+                "core-producer".into(),
+                executable.sha256.as_str().into(),
+            )]),
+            behavior_sha256: BTreeMap::from([("mock-owner".into(), digest.clone())]),
+            lifecycle_schema: LIFECYCLE_SCHEMA.into(),
+            lifecycle_behavior_sha256: digest,
+            feature_contract: FEATURE_CONTRACT.into(),
+            thread_contract: THREAD_CONTRACT.into(),
+            host_identity: "test-host".into(),
+        };
+        let config = CampaignConfig {
+            schema: "tuning-extent-campaign-v1".into(),
+            campaign_id: campaign.clone(),
+            channels: channels.clone(),
+            identity: identity.clone(),
+            manifests: vec![],
+            processes: vec![descriptor],
+            runtime: CanonicalJson::new("{}").unwrap(),
+            protocol: executable.clone(),
+            validator: executable,
+            receipt: "test.md".into(),
+            affinity: CpuAffinity::observe().unwrap(),
+        };
+        let mut log = ExecutionLog::create_new(&stage, campaign.as_str(), "first-session").unwrap();
+        log.append(JournalEvent::CampaignStart, None, json!({}))
+            .unwrap();
+        let checkpoints =
+            CheckpointStore::create_new(&channels.checkpoints, campaign.as_str(), identity)
+                .unwrap();
+        (config, unit, expected, log, checkpoints)
+    }
+    #[test]
+    fn interrupted_derived_projection_publication_is_replayed_and_bound() {
+        let (config, unit, _result, _log, _checkpoints) = probe_fixture(b"");
+        let stage = &config.channels.stage;
+        let mut units = Vec::new();
+        for (ordinal, task) in std::iter::once(Task::Probe)
+            .chain((0..5).map(|execution| Task::Measure { execution }))
+            .enumerate()
+        {
+            let mut identity = unit.identity.clone();
+            identity.task = task;
+            units.push(
+                LaunchUnit::new(
+                    ordinal as u64,
+                    identity,
+                    unit.process.clone(),
+                    CanonicalJson::new("{}").unwrap(),
+                )
+                .unwrap(),
+            );
+        }
+        let mut original = OwnerManifest {
+            schema: MANIFEST_SCHEMA.into(),
+            owner: unit.identity.owner.clone(),
+            owner_protocol: unit.identity.protocol.clone(),
+            behavior_token: Token::new("mock-behavior").unwrap(),
+            campaign_id: config.campaign_id.clone(),
+            phases: vec![unit.identity.phase.clone()],
+            candidate_blocks: vec![CandidateBlock {
+                phase: unit.identity.phase.clone(),
+                field: unit.identity.field.clone(),
+                stratum: unit.identity.stratum.clone(),
+                base_candidates: vec![unit.identity.candidate.clone()],
+            }],
+            counts: DeclaredCounts::for_cells(1).unwrap(),
+            processes: config.processes.clone(),
+            ordered_units: units.clone(),
+            manifest_sha256: Sha256Digest::of(b""),
+        };
+        original.seal().unwrap();
+        let input = save(&stage.join("mock-input.json"), &json!({})).unwrap();
+        let request = DeriveManifestRequest {
+            campaign_id: config.campaign_id.clone(),
+            original_manifest_sha256: original.manifest_sha256.clone(),
+            reserved_units: units.clone(),
+            accepted_inputs: input.clone(),
+        };
+        for unit in &mut units {
+            unit.case = CanonicalJson::new("{\"derived\":true}").unwrap();
+        }
+        let observed = DerivedManifest {
+            original_manifest_sha256: original.manifest_sha256.clone(),
+            accepted_inputs_sha256: input.sha256,
+            units,
+            derivation: CanonicalJson::new("{}").unwrap(),
+        };
+        save(&stage.join("derived-manifest.json"), &observed).unwrap();
+        let resolved = restore_derived_projection(stage, &original, &request, &observed).unwrap();
+        assert_eq!(
+            read_json::<OwnerManifest>(&stage.join("core-resolved-manifest.json")).unwrap(),
+            resolved
+        );
+        assert_eq!(
+            restore_derived_projection(stage, &original, &request, &observed).unwrap(),
+            resolved
+        );
+        let mut changed = observed;
+        changed.derivation = CanonicalJson::new("{\"changed\":true}").unwrap();
+        assert!(restore_derived_projection(stage, &original, &request, &changed).is_err());
+        fs::remove_dir_all(stage).unwrap();
+    }
+    #[test]
+    fn rejected_raw_streams_cannot_recover_after_completion_crash() {
+        for stderr in [
+            b"unterminated".as_slice(),
+            b"\xff".as_slice(),
+            b"GF2_TUNING_PROGRESS={}\n".as_slice(),
+        ] {
+            let (config, unit, _expected, mut log, mut checkpoints) = probe_fixture(stderr);
+            assert!(bounded_unit_with_hook(
+                &config,
+                &unit,
+                &mut log,
+                &mut checkpoints,
+                |boundary| if boundary == UnitBoundary::Completion {
+                    Err(invalid("injected completion crash"))
+                } else {
+                    Ok(())
+                }
+            )
+            .is_err());
+            repair_child_exits(&mut log).unwrap();
+            let records = ExecutionLog::validate_prefix(
+                &log.validated_synced_prefix().unwrap(),
+                config.campaign_id.as_str(),
+            )
+            .unwrap();
+            assert!(recover_unit(&config, &unit, &mut log, &mut checkpoints, &records).is_err());
+            assert!(checkpoints.completed_keys().is_empty());
+            fs::remove_dir_all(&config.channels.stage).unwrap();
+        }
+    }
+    #[test]
+    fn clean_completion_crashes_recover_without_fresh_child_replay() {
+        for stop in [
+            UnitBoundary::Completion,
+            UnitBoundary::Exit,
+            UnitBoundary::Validation,
+        ] {
+            let (config, unit, expected, mut log, mut checkpoints) = probe_fixture(b"");
+            assert!(bounded_unit_with_hook(
+                &config,
+                &unit,
+                &mut log,
+                &mut checkpoints,
+                |boundary| if boundary == stop {
+                    Err(invalid("injected completion crash"))
+                } else {
+                    Ok(())
+                }
+            )
+            .is_err());
+            repair_child_exits(&mut log).unwrap();
+            let records = ExecutionLog::validate_prefix(
+                &log.validated_synced_prefix().unwrap(),
+                config.campaign_id.as_str(),
+            )
+            .unwrap();
+            let recovered =
+                recover_unit(&config, &unit, &mut log, &mut checkpoints, &records).unwrap();
+            assert_eq!(recovered.result, expected);
+            let records = ExecutionLog::validate_prefix(
+                &log.validated_synced_prefix().unwrap(),
+                config.campaign_id.as_str(),
+            )
+            .unwrap();
+            assert_eq!(
+                records
+                    .iter()
+                    .filter(|r| r.event == JournalEvent::ChildSpawn)
+                    .count(),
+                1
+            );
+            fs::remove_dir_all(&config.channels.stage).unwrap();
+        }
+    }
+    #[test]
+    fn a_probe_streams_validates_and_commits_one_bound_checkpoint() {
+        let (config, unit, expected, mut log, mut checkpoints) = probe_fixture(b"");
+        let stage = config.channels.stage.clone();
+        let campaign = config.campaign_id.clone();
+        let accepted = bounded_unit(&config, &unit, &mut log, &mut checkpoints).unwrap();
+        assert_eq!(accepted.result, expected);
+        let (saved, bound): (LaunchUnit, BoundResult) =
+            checkpoints.load(unit.key.as_str()).unwrap();
+        assert_eq!(saved, unit);
+        assert_eq!(bound.result, expected);
+        let records = ExecutionLog::validate_prefix(
+            &log.validated_synced_prefix().unwrap(),
+            campaign.as_str(),
+        )
+        .unwrap();
+        assert_eq!(
+            records
+                .iter()
+                .filter(|r| r.event == JournalEvent::ChildSpawn)
+                .count(),
+            1
+        );
+        assert_eq!(
+            records
+                .iter()
+                .filter(|r| r.event == JournalEvent::RawStreams)
+                .count(),
+            1
+        );
+        assert_eq!(
+            records
+                .iter()
+                .filter(|r| r.event == JournalEvent::OrchestrationStart)
+                .count(),
+            1
+        );
+        assert!(records.iter().all(|r| !matches!(
+            r.event,
+            JournalEvent::ExecutionProgress | JournalEvent::WindowProgress
+        )));
+        fs::remove_dir_all(stage).unwrap();
+    }
+    #[test]
+    fn progress_is_delivered_before_exit() {
+        let mut command = Command::new("python3");
+        command.args([
+            "-c",
+            "import os,time; os.write(2,b'progress\\n'); time.sleep(.03); os.write(1,b'done')",
+        ]);
+        let mut order = Vec::new();
+        let result = run_process(
+            command,
+            b"",
+            Duration::from_secs(2),
+            Duration::from_millis(100),
+            |_| Ok(()),
+            |bytes| {
+                order.push(bytes.to_vec());
+                Ok(())
+            },
+        )
+        .unwrap();
+        order.push(result.stdout);
+        assert_eq!(order, vec![b"progress\n".to_vec(), b"done".to_vec()]);
+    }
+    #[test]
+    fn nonzero_exit_is_never_eligible() {
+        let mut command = Command::new("sh");
+        command.args(["-c", "printf diagnostic >&2; exit 7"]);
+        let result = run_process(
+            command,
+            b"",
+            Duration::from_secs(2),
+            Duration::from_millis(100),
+            |_| Ok(()),
+            |_| Ok(()),
+        )
+        .unwrap();
+        assert!(!result.outcome.accepts_result().unwrap());
+        assert_eq!(result.stderr, b"diagnostic");
+    }
+    #[test]
+    fn kill_grace_handles_a_child_ignoring_term() {
+        let mut command = Command::new("python3");
+        command.args([
+            "-c",
+            "import signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); time.sleep(20)",
+        ]);
+        let result = run_process(
+            command,
+            b"",
+            Duration::from_millis(100),
+            Duration::from_millis(30),
+            |_| Ok(()),
+            |_| Ok(()),
+        )
+        .unwrap();
+        assert!(matches!(
+            result.outcome,
+            ProcessOutcome::TimedOut {
+                kill_grace_exhausted: true,
+                all_descendants_reaped: true,
+                ..
+            }
+        ));
+    }
+    #[test]
+    fn timeout_reaps_an_escaped_descendant() {
+        let mut command = Command::new("python3");
+        command.args(["-c","import os,time; pid=os.fork();\nif pid==0: os.setsid(); time.sleep(20)\nelse: time.sleep(20)"]);
+        let result = run_process(
+            command,
+            b"",
+            Duration::from_millis(100),
+            Duration::from_millis(30),
+            |_| Ok(()),
+            |_| Ok(()),
+        )
+        .unwrap();
+        assert!(matches!(
+            result.outcome,
+            ProcessOutcome::TimedOut {
+                all_descendants_reaped: true,
+                ..
+            }
+        ));
+    }
+    #[test]
+    fn promotion_is_idempotent_and_rejects_different_occupied_bytes() {
+        let stage = scratch("promotion");
+        let source = stage.join("candidate.json");
+        let target = stage.join("owner.json");
+        fs::write(&source, b"canonical candidate").unwrap();
+        let source = artifact(&source).unwrap();
+        let first = promote(&source, &target).unwrap();
+        assert_eq!(promote(&source, &target).unwrap(), first);
+        fs::write(&target, b"different").unwrap();
+        assert!(promote(&source, &target).is_err());
+        fs::remove_dir_all(stage).unwrap();
+    }
+    #[test]
+    fn live_writer_and_reused_identity_are_distinguished() {
+        let mut writer = ProcessIdentity::current().unwrap();
+        assert!(!writer_dead(&writer).unwrap());
+        writer.start_time_ticks += 1;
+        assert!(writer_dead(&writer).unwrap());
+    }
+    #[test]
+    fn held_lock_requires_an_inherited_descriptor() {
+        let stage = scratch("lock");
+        let path = stage.join("host.lock");
+        let lock = File::create(&path).unwrap();
+        assert!(lock_available(&path).unwrap());
+        lock.lock().unwrap();
+        assert!(!lock_available(&path).unwrap());
+        assert_eq!(inherited_lock(&path).unwrap(), std::process::id());
+        lock.unlock().unwrap();
+        assert!(inherited_lock(&path).is_err());
+        fs::remove_dir_all(stage).unwrap();
+    }
+    #[test]
+    fn simultaneous_binary_streams_are_drained_without_loss() {
+        let mut command = Command::new("python3");
+        command.args(["-c", "import os,threading; t=threading.Thread(target=lambda: os.write(2,b'\\xff'*131072)); t.start(); os.write(1,b'x'*131072); t.join()"]);
+        let mut stderr = Vec::new();
+        let result = run_process(
+            command,
+            b"",
+            Duration::from_secs(2),
+            Duration::from_millis(100),
+            |_| Ok(()),
+            |chunk| {
+                stderr.extend_from_slice(chunk);
+                Ok(())
+            },
+        )
+        .unwrap();
+        assert_eq!(result.stdout, vec![b'x'; 131072]);
+        assert_eq!(stderr, vec![255; 131072]);
+        assert!(result.outcome.accepts_result().unwrap());
+    }
+
+    #[test]
+    fn timeout_kills_descendant_holding_pipes() {
+        let mut command = Command::new("sh");
+        command.args(["-c", "sleep 20 & wait"]);
+        let result = run_process(
+            command,
+            b"",
+            Duration::from_millis(80),
+            Duration::from_millis(100),
+            |_| Ok(()),
+            |_| Ok(()),
+        )
+        .unwrap();
+        assert!(matches!(result.outcome, ProcessOutcome::TimedOut { .. }));
+        assert!(match result.outcome {
+            ProcessOutcome::Exited {
+                all_descendants_reaped,
+                ..
+            }
+            | ProcessOutcome::Signaled {
+                all_descendants_reaped,
+                ..
+            }
+            | ProcessOutcome::TimedOut {
+                all_descendants_reaped,
+                ..
+            } => all_descendants_reaped,
+        });
+    }
+
+    #[test]
+    fn stderr_callback_failure_still_drains_and_reaps() {
+        let mut command = Command::new("sh");
+        command.args(["-c", "printf bad >&2; sleep 20"]);
+        let result = run_process(
+            command,
+            b"",
+            Duration::from_secs(2),
+            Duration::from_millis(100),
+            |_| Ok(()),
+            |_| Err(io::Error::other("bad progress")),
+        )
+        .unwrap();
+        assert!(result.callback_error.is_some());
+        assert!(match result.outcome {
+            ProcessOutcome::Exited {
+                all_descendants_reaped,
+                ..
+            }
+            | ProcessOutcome::Signaled {
+                all_descendants_reaped,
+                ..
+            }
+            | ProcessOutcome::TimedOut {
+                all_descendants_reaped,
+                ..
+            } => all_descendants_reaped,
+        });
+    }
+}

@@ -1571,6 +1571,7 @@ dependencies = [
 name = "tuning-campaign-support"
 version = "0.1.0"
 dependencies = [
+ "rustix",
  "serde",
  "serde_json",
  "sha2",
