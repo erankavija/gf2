@@ -44,6 +44,14 @@ pub enum JournalEvent {
     ChildDiagnostic,
     ChildExit,
     ChildTimeout,
+    /// Untimed owner/driver operation; separate from measurement progress.
+    OrchestrationStart,
+    /// Synced termination evidence for an untimed orchestration operation.
+    OrchestrationExit,
+    /// Driver diagnostics whose schema is independent of child stderr lines.
+    DriverDiagnostic,
+    /// Synced typed child-completion evidence with outcome and raw artifacts.
+    RawStreams,
     CheckpointAccepted,
     Omission,
     Fallback,
@@ -68,6 +76,10 @@ impl JournalEvent {
             Self::SessionStart
                 | Self::SessionPrepared
                 | Self::SessionRecovery
+                | Self::OrchestrationExit
+                | Self::RawStreams
+                | Self::ChildTimeout
+                | Self::ChildExit
                 | Self::WorkFinished
                 | Self::WrapperReturned
                 | Self::LockHold
@@ -140,6 +152,57 @@ pub struct ExecutionLog {
 }
 
 impl ExecutionLog {
+    /// Idempotently opens a preparation handoff from an already closed prior
+    /// session. Unlike ordinary resume, this never supplies a missing terminal.
+    pub fn resume_prepared(
+        path: impl AsRef<Path>,
+        campaign_id: &str,
+        session_id: &str,
+        prior_session: &str,
+    ) -> io::Result<Self> {
+        let path = fs::canonicalize(path)?;
+        if let Some((intent_path, intent)) = find_incomplete_recovery(&path)? {
+            if intent.mode == RecoveryMode::Resume
+                && intent.campaign_id == campaign_id
+                && intent.prior_session_id == prior_session
+                && intent.resume_session_id == session_id
+            {
+                return continue_log_recovery(&path, &intent_path, intent);
+            }
+            if intent.mode == RecoveryMode::RepairActive && intent.prior_session_id == session_id {
+                return Self::repair_active(&path, campaign_id, session_id);
+            }
+            return Err(invalid(
+                "preparation has a different pending journal recovery",
+            ));
+        }
+        let data = fs::read(&path)?;
+        let complete = data
+            .iter()
+            .rposition(|byte| *byte == b'\n')
+            .map_or(0, |index| index + 1);
+        let text = std::str::from_utf8(&data[..complete])
+            .map_err(|_| invalid("preparation journal prefix is not UTF-8"))?;
+        let replay = replay_journal(text, campaign_id)?;
+        if replay.current_session == session_id {
+            return Self::repair_active(path, campaign_id, session_id);
+        }
+        if replay.current_session != prior_session
+            || !matches!(
+                replay.terminal,
+                Some(
+                    JournalEvent::Paused
+                        | JournalEvent::BudgetExhausted
+                        | JournalEvent::Interrupted
+                )
+            )
+        {
+            return Err(invalid(
+                "preparation handoff lacks the exact closed prior session",
+            ));
+        }
+        Self::resume(path, campaign_id, session_id)
+    }
     /// Creates `<canonical-stage>/execution.log` without replacing any file.
     pub fn create_new(
         stage: impl AsRef<Path>,
@@ -454,6 +517,29 @@ impl ExecutionLog {
             "session_transition": transition,
         });
         let record = self.append_inner(JournalEvent::Interrupted, None, details)?;
+        self.terminal = true;
+        Ok(record)
+    }
+
+    /// Closes a prepared session after the campaign layer has durably bound
+    /// independent writer-death evidence. The journal independently rejects
+    /// any prior held-lock, wrapper, work, or child evidence in this session.
+    pub fn interrupted_before_lock(&mut self, transition: Value) -> io::Result<JournalRecord> {
+        if self.terminal {
+            return Err(invalid("session is already closed"));
+        }
+        let bytes = self.validated_synced_prefix()?;
+        let records = Self::validate_prefix(&bytes, &self.campaign_id)?;
+        validate_prelock_prefix(&records, &self.session_id)?;
+        let record = self.append_inner(
+            JournalEvent::Interrupted,
+            None,
+            serde_json::json!({
+                "session": self.session_id,
+                "cause": "prelock-writer-dead",
+                "session_transition": transition,
+            }),
+        )?;
         self.terminal = true;
         Ok(record)
     }
@@ -1119,6 +1205,11 @@ fn replay_journal(contents: &str, campaign_id: &str) -> io::Result<JournalReplay
                             })
                             .is_some_and(|prior| prior.event == JournalEvent::LockRelease)
                 }
+                ("prelock-writer-dead", None) => {
+                    pending_recovery.is_none()
+                        && details.session_transition.is_some()
+                        && validate_prelock_prefix(&records, &record.session_id).is_ok()
+                }
                 ("torn-journal-tail", Some(recovery_id)) => {
                     pending_recovery.as_ref() == Some(recovery_id)
                 }
@@ -1146,6 +1237,37 @@ fn replay_journal(contents: &str, campaign_id: &str) -> io::Result<JournalReplay
         sessions,
         records,
     })
+}
+
+pub(crate) fn validate_prelock_prefix(records: &[JournalRecord], session: &str) -> io::Result<()> {
+    let mut prepared = false;
+    for record in records.iter().filter(|record| record.session_id == session) {
+        prepared |= record.event == JournalEvent::SessionPrepared;
+        if record.event.is_terminal()
+            || matches!(
+                record.event,
+                JournalEvent::LockHold
+                    | JournalEvent::LockRelease
+                    | JournalEvent::WrapperReturned
+                    | JournalEvent::ReleaseUnobserved
+                    | JournalEvent::WorkFinished
+                    | JournalEvent::ChildSpawn
+                    | JournalEvent::ChildExit
+                    | JournalEvent::ChildDiagnostic
+                    | JournalEvent::ExecutionProgress
+                    | JournalEvent::WindowProgress
+                    | JournalEvent::Interrupted
+            )
+        {
+            return Err(invalid(
+                "prelock interruption conflicts with session execution evidence",
+            ));
+        }
+    }
+    if !prepared {
+        return Err(invalid("prelock interruption lacks session preparation"));
+    }
+    Ok(())
 }
 
 fn validate_recovery_record_details(
@@ -1322,6 +1444,46 @@ pub struct CheckpointStore {
 }
 
 impl CheckpointStore {
+    /// Creates or reopens checkpoint initialization through a caller-supplied
+    /// durable immutable publisher. Partial directory/manifest setup may replay;
+    /// a missing manifest beside any unit evidence is never reconstructed.
+    pub fn initialize_with(
+        root: impl AsRef<Path>,
+        campaign_id: impl Into<String>,
+        identity: ResumeIdentity,
+        mut publish: impl FnMut(&Path, &[u8]) -> io::Result<()>,
+    ) -> io::Result<Self> {
+        let campaign_id = checked_identity(campaign_id.into(), "campaign")?;
+        validate_resume_identity(&identity)?;
+        let root = root.as_ref();
+        fs::create_dir_all(root)?;
+        File::open(root.parent().unwrap_or_else(|| Path::new(".")))?.sync_all()?;
+        let manifest = CheckpointManifest {
+            schema: CHECKPOINT_SCHEMA.into(),
+            campaign_id: campaign_id.clone(),
+            identity: identity.clone(),
+        };
+        let expected = canonical_bytes(&manifest)?;
+        let path = root.join("manifest.json");
+        if path.try_exists()? && fs::read(&path)? != expected {
+            return Err(invalid("checkpoint initialization identity changed"));
+        }
+        for name in ["units", "pending"] {
+            let directory = root.join(name);
+            if !path.try_exists()?
+                && directory.try_exists()?
+                && fs::read_dir(&directory)?.next().is_some()
+            {
+                return Err(invalid(
+                    "checkpoint evidence exists without its initialization manifest",
+                ));
+            }
+            fs::create_dir_all(directory)?;
+        }
+        File::open(root)?.sync_all()?;
+        publish(&path, &expected)?;
+        Self::resume(root, campaign_id, identity)
+    }
     /// Creates an absent checkpoint directory and immutable manifest.
     pub fn create_new(
         root: impl AsRef<Path>,
@@ -2064,7 +2226,7 @@ fn invalid(message: impl Into<String>) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message.into())
 }
 
-fn utc_now() -> io::Result<String> {
+pub(crate) fn utc_now() -> io::Result<String> {
     let duration = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|_| invalid("system clock is before the Unix epoch"))?;
@@ -2129,6 +2291,7 @@ mod active_repair_tests {
         let hash = sha256_bytes(b"fixed");
         SessionDescriptor {
             schema: LIFECYCLE_SCHEMA.into(),
+            preparer: crate::campaign::ProcessIdentity::current().unwrap(),
             campaign_id: Token::new("campaign").unwrap(),
             session_id: Token::new("session").unwrap(),
             channels: SessionChannels::for_stage(stage).unwrap(),
