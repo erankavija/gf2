@@ -522,6 +522,7 @@ fn recovery_intent_path(stage: &std::path::Path) -> Option<std::path::PathBuf> {
 #[derive(Clone, Serialize)]
 struct InjectedRecoveryIntent {
     schema: String,
+    mode: String,
     recovery_id: String,
     campaign_id: String,
     prior_session_id: String,
@@ -650,6 +651,7 @@ fn journal_recovery_intent_is_idempotent_at_every_durable_boundary() {
     let intent_path = stage.join(format!("execution.log.recovery-intent-{recovery_id}.json"));
     let mut intent = InjectedRecoveryIntent {
         schema: "tuning-campaign-log-recovery-v1".into(),
+        mode: "resume".into(),
         recovery_id,
         campaign_id: "campaign-1".into(),
         prior_session_id: "session-1".into(),
