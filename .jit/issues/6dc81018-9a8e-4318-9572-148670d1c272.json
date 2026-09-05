@@ -89,6 +89,13 @@
       "format": "markdown",
       "label": "Session 12: host-admission decision pending",
       "path": "dev/active/6dc81018-field-capability-dispatch/handoff-12.md"
+    },
+    {
+      "commit": "4c70534c",
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Session 13: option C selected; stopped before amendment",
+      "path": "dev/active/6dc81018-field-capability-dispatch/handoff-13.md"
     }
   ],
   "first_ready_at": "2026-08-18T18:49:20.500605671Z",
@@ -124,5 +131,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-09-05T08:44:07.165136504Z"
+  "updated_at": "2026-09-05T08:49:01.422352838Z"
 }
