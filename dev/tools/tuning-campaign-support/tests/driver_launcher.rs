@@ -16,14 +16,19 @@ fn launcher_replays_preparation(complete_temporary: bool) {
         std::process::id()
     ));
     fs::create_dir(&root).unwrap();
-    let stage = root.join("stage");
+    let campaign = format!(
+        "gf2-a83583e0-19700101T00000{}Z-{}{}",
+        u8::from(complete_temporary),
+        std::process::id(),
+        u8::from(complete_temporary)
+    );
+    let stage = std::env::temp_dir().join(&campaign);
     fs::create_dir(&stage).unwrap();
-    let campaign = "original-campaign";
     let session = "original-session";
     drop(
         PreparationStore::begin(
             SessionChannels::for_stage(&stage).unwrap(),
-            Token::new(campaign).unwrap(),
+            Token::new(&campaign).unwrap(),
             Token::new(session).unwrap(),
             root.join("host.lock"),
             CanonicalJson::new("{}".to_owned()).unwrap(),
@@ -79,7 +84,7 @@ fn launcher_replays_preparation(complete_temporary: bool) {
     let build_capture = root.join("build-called");
     let result = Command::new("bash")
         .arg(&launcher)
-        .arg(&stage)
+        .arg(&campaign)
         .env(
             "PATH",
             format!("{}:{}", path_bin.display(), std::env::var("PATH").unwrap()),
@@ -101,12 +106,13 @@ fn launcher_replays_preparation(complete_temporary: bool) {
         String::from_utf8_lossy(&result.stderr)
     );
     let arguments: Vec<String> = serde_json::from_slice(&fs::read(capture).unwrap()).unwrap();
-    assert_eq!(&arguments[1..3], &[campaign, session]);
+    assert_eq!(&arguments[1..3], &[campaign.as_str(), session]);
     assert!(!build_capture.exists());
     assert_eq!(fs::read(&canonical_intent).unwrap(), original);
     assert!(!stage.join("execution.log").exists());
     assert_eq!(fs::read_dir(stage.join("preparations")).unwrap().count(), 1);
     fs::remove_dir_all(root).unwrap();
+    fs::remove_dir_all(stage).unwrap();
 }
 
 #[test]
@@ -117,4 +123,26 @@ fn launcher_discovers_publisher_intent_before_selecting_identity_or_building() {
 #[test]
 fn launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_building() {
     launcher_replays_preparation(true);
+}
+
+#[test]
+fn launcher_rejects_arbitrary_stage_paths_before_creating_them() {
+    let root =
+        std::env::temp_dir().join(format!("gf2-launcher-stage-policy-{}", std::process::id()));
+    fs::create_dir(&root).unwrap();
+    let launcher = root.join("launcher.sh");
+    fs::write(
+        &launcher,
+        include_str!("../../../scripts/tuning-extent-campaign.sh"),
+    )
+    .unwrap();
+    let forbidden = root.join("repository-adjacent-stage");
+    let result = Command::new("bash")
+        .arg(&launcher)
+        .arg(&forbidden)
+        .output()
+        .unwrap();
+    assert_eq!(result.status.code(), Some(2));
+    assert!(!forbidden.exists());
+    fs::remove_dir_all(root).unwrap();
 }
