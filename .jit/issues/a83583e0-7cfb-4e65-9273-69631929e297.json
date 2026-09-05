@@ -12,14 +12,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "37c6914ef2221a982a9c6a46f911b5e779fd1a6d58255a1eb360d305ba917631",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../eaae1b56/premeasurement-protocol.md",
-          "resolved_path": "dev/active/eaae1b56/premeasurement-protocol.md"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "9ed7e84893338d9c2ede97efdbe8bf108f1ca24428fa55f1541d9f3e239c0c9e",
           "is_shared": false,
           "mime_type": "text/markdown",
@@ -28,19 +20,27 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "813572514982015b5d579bbb095b3aad71a90f3c0f708e5e74937ee3e91c99d7",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../7d824b2f/design.md",
+          "resolved_path": "dev/active/7d824b2f/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "37c6914ef2221a982a9c6a46f911b5e779fd1a6d58255a1eb360d305ba917631",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../eaae1b56/premeasurement-protocol.md",
+          "resolved_path": "dev/active/eaae1b56/premeasurement-protocol.md"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "77837584c7323d45f0aaee53223c2870c84bca2a2482fc8fdd99910cf7129741",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../3fa7c9d0/design.md",
           "resolved_path": "dev/active/3fa7c9d0/design.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "f981b75a52b1e59ebe174aa78f1f38437b953ea13c74d9e1bc647d3d6a4cf6a8",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../7d824b2f/design.md",
-          "resolved_path": "dev/active/7d824b2f/design.md"
         }
       ],
       "commit": null,
@@ -53,19 +53,19 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "7f93ba16aef30dda33c21a3e2fee82f16f663b657154b904dce5cd6cbc813b8f",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
-          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "c0cb1f00c67275e08f6c8e2cc30e610273532db6eab3a1bb6ef90edfdbdee54c",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../220cab0b/design.md",
           "resolved_path": "dev/active/220cab0b/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7f93ba16aef30dda33c21a3e2fee82f16f663b657154b904dce5cd6cbc813b8f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
+          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
         },
         {
           "asset_type": "local",
@@ -85,7 +85,7 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "96bacd9e5e4b0c2d32e79a5636ed2eb61d1db4c0fa5b98ce06efb1796a14126c",
+          "content_hash": "328ce1688fde2b3e42d9844628b800c8409071d97b9ea13f0b83d835a728bdeb",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../a83583e0/premeasurement-protocol.md",
@@ -95,7 +95,7 @@
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
-      "label": "Governing selector design with extent amendment",
+      "label": "Governing selector design with extent amendments",
       "path": "dev/active/7d824b2f/design.md"
     }
   ],
@@ -133,5 +133,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-09-04T23:41:43.774455565Z"
+  "updated_at": "2026-09-05T00:19:15.058243813Z"
 }
