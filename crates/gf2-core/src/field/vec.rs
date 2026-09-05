@@ -38,6 +38,9 @@ const DOT_CHUNK_LEN_SELECTED: usize = crate::tuning::baked::DOT_CHUNK_LEN;
 #[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 const DOT_CHUNK_LEN_SELECTED: usize = DOT_CHUNK_LEN;
 
+#[cfg(not(feature = "simd"))]
+const DOT_CHUNK_LEN_SELECTED: usize = DOT_CHUNK_LEN;
+
 /// Widest chunk any SIMD dot-product walk has filled since the last reset.
 #[cfg(any(test, feature = "test-support"))]
 static MAX_EFFECTIVE_DOT_CHUNK_LEN: AtomicUsize = AtomicUsize::new(0);
@@ -1044,6 +1047,10 @@ impl FieldVec<Gf2mElement> {
     /// O(n) carry-less multiplications (batched) + O(n) XOR accumulation +
     /// O(1) Barrett reduction.
     pub fn simd_dot_product(&self, rhs: &Self) -> Gf2mElement {
+        self.simd_dot_product_chunked::<DOT_CHUNK_LEN_SELECTED>(rhs)
+    }
+
+    fn simd_dot_product_chunked<const CHUNK: usize>(&self, rhs: &Self) -> Gf2mElement {
         assert_eq!(
             self.len(),
             rhs.len(),
@@ -1056,7 +1063,7 @@ impl FieldVec<Gf2mElement> {
             "simd_dot_product: vectors must not be empty"
         );
 
-        self.try_simd_dot_product(rhs)
+        self.try_simd_dot_product_chunked::<CHUNK>(rhs)
             .unwrap_or_else(|| self.dot_product(rhs))
     }
 
@@ -1066,7 +1073,8 @@ impl FieldVec<Gf2mElement> {
     /// Processes the vectors in fixed-size chunks to keep scratch buffers on the
     /// stack and avoid per-call heap allocations.
     #[cfg(feature = "simd")]
-    fn try_simd_dot_product(&self, rhs: &Self) -> Option<Gf2mElement> {
+    fn try_simd_dot_product_chunked<const CHUNK: usize>(&self, rhs: &Self) -> Option<Gf2mElement> {
+        debug_assert!(CHUNK > 0, "SIMD dot-product chunk must be non-zero");
         // Grab SIMD function pointers from the first element's field params.
         let sample = &self.data[0];
         let batch_fn = sample.clmul_batch_fn()?;
@@ -1075,19 +1083,19 @@ impl FieldVec<Gf2mElement> {
 
         // Process in chunks that fit comfortably on the stack; see
         // `DOT_CHUNK_LEN_SELECTED`.
-        let mut a_buf = [0u64; DOT_CHUNK_LEN_SELECTED];
-        let mut b_buf = [0u64; DOT_CHUNK_LEN_SELECTED];
-        let mut p_buf = [0u128; DOT_CHUNK_LEN_SELECTED];
+        let mut a_buf = [0u64; CHUNK];
+        let mut b_buf = [0u64; CHUNK];
+        let mut p_buf = [0u128; CHUNK];
 
         let mut acc: u128 = 0;
         let mut offset = 0;
         let n = self.len();
+        let mut widest_executed_chunk = 0usize;
 
         while offset < n {
-            let end = (offset + DOT_CHUNK_LEN_SELECTED).min(n);
+            let end = (offset + CHUNK).min(n);
             let chunk_len = end - offset;
-            #[cfg(any(test, feature = "test-support"))]
-            MAX_EFFECTIVE_DOT_CHUNK_LEN.fetch_max(chunk_len, Ordering::Relaxed);
+            widest_executed_chunk = widest_executed_chunk.max(chunk_len);
 
             // Extract raw u64 values into stack buffers.
             for (i, (a, b)) in self.data[offset..end]
@@ -1114,6 +1122,9 @@ impl FieldVec<Gf2mElement> {
             offset = end;
         }
 
+        #[cfg(any(test, feature = "test-support"))]
+        MAX_EFFECTIVE_DOT_CHUNK_LEN.fetch_max(widest_executed_chunk, Ordering::Relaxed);
+
         // Single Barrett reduction at the very end.
         let result = reducer.reduce_with_clmul(acc, clmul_fn);
 
@@ -1121,9 +1132,63 @@ impl FieldVec<Gf2mElement> {
     }
 
     #[cfg(not(feature = "simd"))]
-    fn try_simd_dot_product(&self, _rhs: &Self) -> Option<Gf2mElement> {
+    fn try_simd_dot_product_chunked<const CHUNK: usize>(&self, _rhs: &Self) -> Option<Gf2mElement> {
+        let _ = CHUNK;
         None
     }
+}
+
+/// One admissible compile-time SIMD dot-product chunk for calibration.
+///
+/// Accessors and function resolution are constant-time and do not panic. The
+/// returned function inherits [`FieldVec::simd_dot_product`]'s length,
+/// non-empty-input, fallback, and linear-time contracts.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DotChunkCandidate {
+    /// 128 elements (4 KiB of stack scratch).
+    C128,
+    /// 256 elements (8 KiB of stack scratch).
+    C256,
+    /// 512 elements (16 KiB of stack scratch).
+    C512,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl DotChunkCandidate {
+    /// All admissible chunks in protocol order.
+    pub const ALL: [Self; 3] = [Self::C128, Self::C256, Self::C512];
+
+    /// Returns the chunk length.
+    #[must_use]
+    pub const fn chunk_len(self) -> usize {
+        match self {
+            Self::C128 => 128,
+            Self::C256 => 256,
+            Self::C512 => 512,
+        }
+    }
+
+    /// Resolves this candidate to the shared production SIMD dot body.
+    pub fn function(self) -> DotChunkCandidateFn {
+        match self {
+            Self::C128 => simd_dot_candidate::<128>,
+            Self::C256 => simd_dot_candidate::<256>,
+            Self::C512 => simd_dot_candidate::<512>,
+        }
+    }
+}
+
+/// Function-pointer type for a monomorphized SIMD dot candidate.
+#[cfg(any(test, feature = "test-support"))]
+pub type DotChunkCandidateFn = fn(&FieldVec<Gf2mElement>, &FieldVec<Gf2mElement>) -> Gf2mElement;
+
+#[cfg(any(test, feature = "test-support"))]
+fn simd_dot_candidate<const CHUNK: usize>(
+    lhs: &FieldVec<Gf2mElement>,
+    rhs: &FieldVec<Gf2mElement>,
+) -> Gf2mElement {
+    lhs.simd_dot_product_chunked::<CHUNK>(rhs)
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

@@ -144,8 +144,11 @@
 //! - [`lu`](FieldMatrix::lu): exists only when `rank == min(m, n)`;
 //!   returns `(P, L, U)` where `U = E`.
 
-use crate::field::matrix::{gemm_axpy_into_view, FieldMatrix, MatView, MatViewMut};
-use crate::field::triangular::{trsm_lower, trsm_upper};
+use crate::field::matrix::{
+    gemm_axpy_into_view, gemm_axpy_into_view_tiled, FieldMatrix, MatView, MatViewMut,
+    ObservationPolicy, RecordObservations, GEMM_COL_TILE, GEMM_ROW_TILE,
+};
+use crate::field::triangular::{trsm_lower, trsm_lower_with_policy, trsm_upper};
 use crate::field::vec::FieldVec;
 use crate::field::{FiniteField, PlePanelLane};
 use crate::tuning;
@@ -564,7 +567,12 @@ pub fn reset_max_effective_panel_dispatch_cols() {
     MAX_EFFECTIVE_PANEL_DISPATCH_COLS.store(0, std::sync::atomic::Ordering::SeqCst);
 }
 
-fn try_panel_base_dispatch<F: FiniteField>(
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn record_ple_panel_cols(cols: usize) {
+    MAX_EFFECTIVE_PANEL_DISPATCH_COLS.fetch_max(cols, std::sync::atomic::Ordering::SeqCst);
+}
+
+fn try_panel_base_dispatch<F: FiniteField, O: ObservationPolicy>(
     a: &mut MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
@@ -583,10 +591,8 @@ fn try_panel_base_dispatch<F: FiniteField>(
     let sub = &mut data[row_start..row_end];
     let result =
         F::try_simd_ple_panel_base(sub, parent_cols, rows, col_lo, col_hi, perm, pivot_cols);
-    #[cfg(any(test, feature = "test-support"))]
     if result.is_some() {
-        MAX_EFFECTIVE_PANEL_DISPATCH_COLS
-            .fetch_max(col_hi - col_lo, std::sync::atomic::Ordering::SeqCst);
+        O::ple_panel_cols(col_hi - col_lo);
     }
     result
 }
@@ -668,14 +674,14 @@ fn ple_lane_max_cols(
 /// lane's own width — exactly once and threads them by parameter through
 /// [`ple_in_place_window`]'s recursion, so no recursion node reads the
 /// profile.
-fn ple_in_place<F: FiniteField>(
+fn ple_in_place<F: FiniteField, O: ObservationPolicy>(
     mut a: MatViewMut<'_, F>,
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
 ) -> usize {
     let n = a.cols();
     let widths = PleWidths::resolve::<F>();
-    ple_in_place_window(a.reborrow(), 0, n, perm, pivot_cols, widths)
+    ple_in_place_window::<F, O>(a.reborrow(), 0, n, perm, pivot_cols, widths)
 }
 
 /// Conservative default for `ple.panel_base_max_cols()` in the active
@@ -819,7 +825,7 @@ fn ple_panel_route_resolved(
 /// `widths` contains the active profile's three PLE column widths, resolved
 /// once by [`ple_in_place`] and forwarded unchanged to every recursive call and
 /// to [`ple_panel_recursive_window`].
-fn ple_in_place_window<F: FiniteField>(
+fn ple_in_place_window<F: FiniteField, O: ObservationPolicy>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
@@ -874,11 +880,11 @@ fn ple_in_place_window<F: FiniteField>(
     // at run time.
     match ple_panel_route_resolved(widths.panel_base_max_cols, widths.panel_lane_max_cols, win) {
         PlePanelRoute::SubPanelRecursion => {
-            return ple_panel_recursive_window::<F>(a, col_lo, col_hi, perm, pivot_cols, widths);
+            return ple_panel_recursive_window::<F, O>(a, col_lo, col_hi, perm, pivot_cols, widths);
         }
         PlePanelRoute::PanelBase => {
             if let Some(rank) =
-                try_panel_base_dispatch::<F>(&mut a, col_lo, col_hi, perm, pivot_cols)
+                try_panel_base_dispatch::<F, O>(&mut a, col_lo, col_hi, perm, pivot_cols)
             {
                 return rank;
             }
@@ -896,7 +902,7 @@ fn ple_in_place_window<F: FiniteField>(
     // left-half pivots after the recursion returns (they sit at
     // `pivot_cols[pivot_cols_start..pivot_cols_start + r1]`).
     let pivot_cols_start = pivot_cols.len();
-    let r1 = ple_in_place_window(a.reborrow(), col_lo, mid, perm, pivot_cols, widths);
+    let r1 = ple_in_place_window::<F, O>(a.reborrow(), col_lo, mid, perm, pivot_cols, widths);
 
     // Steps 2 & 3 — trsm and gemm on the right half.
     //
@@ -922,7 +928,7 @@ fn ple_in_place_window<F: FiniteField>(
         // strict-lower cells from `a[0..r1, left_pivots[j]]` for j<i.
         let l1 = materialise_l1_unit_at_cols(&a.as_view(), 0, left_pivots);
         // trsm_lower: solve L1 · X = a[0..r1, mid..col_hi] in place.
-        trsm_lower(l1.submat(.., ..), a.submat_mut(0..r1, mid..col_hi));
+        trsm_lower_with_policy::<F, O>(l1.submat(.., ..), a.submat_mut(0..r1, mid..col_hi));
 
         // Step 3 — Schur complement: a[r1..m, mid..col_hi] -=
         //   L1_bot · a[0..r1, mid..col_hi].
@@ -935,7 +941,13 @@ fn ple_in_place_window<F: FiniteField>(
             let right = a.submat_mut(.., mid..col_hi);
             let (a3_mut, a4_mut) = right.split_rows_mut(r1);
             let a3_view = a3_mut.as_view();
-            gemm_axpy_into_view(neg_one, &l1_bot.submat(.., ..), &a3_view, one, a4_mut);
+            gemm_axpy_into_view_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, O>(
+                neg_one,
+                &l1_bot.submat(.., ..),
+                &a3_view,
+                one,
+                a4_mut,
+            );
         }
     }
 
@@ -950,7 +962,7 @@ fn ple_in_place_window<F: FiniteField>(
     // inputs that exhibit early-termination rank-deficiency).
     let r2 = if r1 < m && mid < col_hi {
         let (_top, a4) = a.split_rows_mut(r1);
-        ple_in_place_window(a4, mid, col_hi, &mut perm[r1..], pivot_cols, widths)
+        ple_in_place_window::<F, O>(a4, mid, col_hi, &mut perm[r1..], pivot_cols, widths)
     } else {
         0
     };
@@ -1015,7 +1027,7 @@ fn ple_in_place_window<F: FiniteField>(
 ///   along for the fallback driver. The values are resolved by [`ple_in_place`]
 ///   and forwarded through [`ple_in_place_window`], with conservative defaults
 ///   [`PLE_PANEL_RECURSIVE_BASE`] and [`PLE_SCALAR_BASE_MAX_COLS_DEFAULT`].
-fn ple_panel_recursive_window<F: FiniteField>(
+fn ple_panel_recursive_window<F: FiniteField, O: ObservationPolicy>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
@@ -1054,7 +1066,7 @@ fn ple_panel_recursive_window<F: FiniteField>(
         // propagation across the parent's full column range.
         let r_i_opt = if rank_total == 0 {
             // Fast path: no top rows to skip. Reborrow `a` for this iteration.
-            try_panel_base_dispatch::<F>(&mut a.reborrow(), col_cur, sub_hi, perm, pivot_cols)
+            try_panel_base_dispatch::<F, O>(&mut a.reborrow(), col_cur, sub_hi, perm, pivot_cols)
         } else {
             // Split off the top `rank_total` rows of a freshly reborrowed
             // view. The bottom slice sees rows [rank_total..m] of the
@@ -1063,7 +1075,7 @@ fn ple_panel_recursive_window<F: FiniteField>(
             // `raw_parts_mut`, so the bottom view's `row_offset =
             // rank_total` is reflected in the slice the kernel sees.
             let (_top, mut bot) = a.reborrow().split_rows_mut(rank_total);
-            try_panel_base_dispatch::<F>(
+            try_panel_base_dispatch::<F, O>(
                 &mut bot,
                 col_cur,
                 sub_hi,
@@ -1080,7 +1092,7 @@ fn ple_panel_recursive_window<F: FiniteField>(
             Some(r) => r,
             None => {
                 if rank_total == 0 {
-                    ple_in_place_window_no_panel::<F>(
+                    ple_in_place_window_no_panel::<F, O>(
                         a.reborrow(),
                         col_cur,
                         sub_hi,
@@ -1090,7 +1102,7 @@ fn ple_panel_recursive_window<F: FiniteField>(
                     )
                 } else {
                     let (_top, bot) = a.reborrow().split_rows_mut(rank_total);
-                    ple_in_place_window_no_panel::<F>(
+                    ple_in_place_window_no_panel::<F, O>(
                         bot,
                         col_cur,
                         sub_hi,
@@ -1117,7 +1129,7 @@ fn ple_panel_recursive_window<F: FiniteField>(
             // [rank_total .. rank_total + r_i] at the new pivot columns.
             let l1 = materialise_l1_unit_at_cols(&a.as_view(), rank_total, &new_pivots);
             // trsm_lower solves L1 · X = a[rank_total..rank_total+r_i, sub_hi..col_hi].
-            trsm_lower(
+            trsm_lower_with_policy::<F, O>(
                 l1.submat(.., ..),
                 a.submat_mut(rank_total..rank_total + r_i, sub_hi..col_hi),
             );
@@ -1136,7 +1148,13 @@ fn ple_panel_recursive_window<F: FiniteField>(
                 let right = a.submat_mut(rank_total.., sub_hi..col_hi);
                 let (a3_mut, a4_mut) = right.split_rows_mut(r_i);
                 let a3_view = a3_mut.as_view();
-                gemm_axpy_into_view(neg_one, &l1_bot.submat(.., ..), &a3_view, one, a4_mut);
+                gemm_axpy_into_view_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, O>(
+                    neg_one,
+                    &l1_bot.submat(.., ..),
+                    &a3_view,
+                    one,
+                    a4_mut,
+                );
             }
         }
 
@@ -1154,7 +1172,7 @@ fn ple_panel_recursive_window<F: FiniteField>(
 /// of `ple_in_place_window` minus the panel-base dispatch arm, so of
 /// `widths` it reads only `scalar_base_max_cols`; the rest rides along to
 /// keep one resolved value per call reaching every driver.
-fn ple_in_place_window_no_panel<F: FiniteField>(
+fn ple_in_place_window_no_panel<F: FiniteField, O: ObservationPolicy>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
     col_hi: usize,
@@ -1174,12 +1192,13 @@ fn ple_in_place_window_no_panel<F: FiniteField>(
     let h = win / 2;
     let mid = col_lo + h;
     let pivot_cols_start = pivot_cols.len();
-    let r1 = ple_in_place_window_no_panel::<F>(a.reborrow(), col_lo, mid, perm, pivot_cols, widths);
+    let r1 =
+        ple_in_place_window_no_panel::<F, O>(a.reborrow(), col_lo, mid, perm, pivot_cols, widths);
 
     if r1 > 0 && mid < col_hi {
         let left_pivots: &[usize] = &pivot_cols[pivot_cols_start..pivot_cols_start + r1];
         let l1 = materialise_l1_unit_at_cols(&a.as_view(), 0, left_pivots);
-        trsm_lower(l1.submat(.., ..), a.submat_mut(0..r1, mid..col_hi));
+        trsm_lower_with_policy::<F, O>(l1.submat(.., ..), a.submat_mut(0..r1, mid..col_hi));
         if r1 < m {
             let l1_bot = materialise_block_at_cols(&a.as_view(), r1, left_pivots, m - r1);
             let zero = a.get(0, col_lo).zero_like();
@@ -1188,13 +1207,19 @@ fn ple_in_place_window_no_panel<F: FiniteField>(
             let right = a.submat_mut(.., mid..col_hi);
             let (a3_mut, a4_mut) = right.split_rows_mut(r1);
             let a3_view = a3_mut.as_view();
-            gemm_axpy_into_view(neg_one, &l1_bot.submat(.., ..), &a3_view, one, a4_mut);
+            gemm_axpy_into_view_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, O>(
+                neg_one,
+                &l1_bot.submat(.., ..),
+                &a3_view,
+                one,
+                a4_mut,
+            );
         }
     }
 
     let r2 = if r1 < m && mid < col_hi {
         let (_top, a4) = a.split_rows_mut(r1);
-        ple_in_place_window_no_panel::<F>(a4, mid, col_hi, &mut perm[r1..], pivot_cols, widths)
+        ple_in_place_window_no_panel::<F, O>(a4, mid, col_hi, &mut perm[r1..], pivot_cols, widths)
     } else {
         0
     };
@@ -1405,6 +1430,12 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// assert_eq!(r, 2);
     /// ```
     pub fn ple(&self) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
+        self.ple_with_policy::<RecordObservations>()
+    }
+
+    pub(crate) fn ple_with_policy<O: ObservationPolicy>(
+        &self,
+    ) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
         let (m, n) = self.shape();
         if m == 0 || n == 0 {
             // Empty input: identity permutation, empty L, empty E.
@@ -1423,7 +1454,7 @@ impl<F: FiniteField> FieldMatrix<F> {
         // Run the in-place driver. Per-level allocations come from
         // materialised L1/L1_bot operands and the gemm/trsm B-transpose
         // scratches. See module rustdoc for the budget.
-        let rank = ple_in_place(working.submat_mut(.., ..), &mut perm, &mut pivot_cols);
+        let rank = ple_in_place::<F, O>(working.submat_mut(.., ..), &mut perm, &mut pivot_cols);
         // 2 allocs: split working's compact storage into owned L and E.
         // pivot_cols is already populated by ple_in_place, so split_compact
         // does no rediscovery scan.
@@ -3813,7 +3844,7 @@ mod tests {
         let mut perm: Vec<usize> = (0..m).collect();
         let max_rank = m.min(n);
         let mut pivot_cols: Vec<usize> = Vec::with_capacity(max_rank);
-        let rank = ple_in_place_window_no_panel::<F>(
+        let rank = ple_in_place_window_no_panel::<F, RecordObservations>(
             working.submat_mut(.., ..),
             0,
             n,

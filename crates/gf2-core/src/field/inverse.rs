@@ -61,12 +61,18 @@
 //! Moore–Penrose pseudo-inverse manually.
 
 use crate::field::matrix::FieldMatrix;
+#[cfg(any(test, feature = "test-support"))]
+use crate::field::matrix::QuietObservations;
+use crate::field::matrix::{ObservationPolicy, RecordObservations};
 #[cfg(test)]
 use crate::field::triangular::TRSM_BLOCKED_PANEL_SIZE;
 use crate::field::triangular::{
-    trsm_lower, trsm_lower_blocked, trsm_route_resolved, trsm_upper, trsm_upper_blocked,
-    trtri_lower, trtri_upper, trtrm, TrsmRoute,
+    trsm_lower, trsm_lower_blocked_with_policy, trsm_lower_with_policy, trsm_route_resolved,
+    trsm_upper, trsm_upper_blocked_with_policy, trsm_upper_with_policy, trtri_lower, trtri_upper,
+    trtrm, TrsmRoute,
 };
+#[cfg(test)]
+use crate::field::triangular::{trsm_lower_blocked, trsm_upper_blocked};
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
 use crate::tuning;
@@ -414,6 +420,13 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// assert_eq!(prod, b);
     /// ```
     pub fn solve_batch(&self, b: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
+        self.solve_batch_with_policy::<RecordObservations>(b)
+    }
+
+    fn solve_batch_with_policy<O: ObservationPolicy>(
+        &self,
+        b: &FieldMatrix<F>,
+    ) -> Option<FieldMatrix<F>> {
         let (m, n) = self.shape();
         assert_eq!(
             m, n,
@@ -434,7 +447,7 @@ impl<F: FiniteField> FieldMatrix<F> {
         if k == 0 {
             return Some(FieldMatrix::new_empty_like(n, 0, b));
         }
-        let (perm, l, e, rank) = self.ple();
+        let (perm, l, e, rank) = self.ple_with_policy::<O>();
         if rank < n {
             return None;
         }
@@ -459,9 +472,13 @@ impl<F: FiniteField> FieldMatrix<F> {
         if F::has_simd_gemm_classical()
             && trsm_route_resolved(trsm_blocked_min_dim, n) == TrsmRoute::Blocked
         {
-            trsm_lower_blocked(l.submat(.., ..), y.submat_mut(.., ..), trsm_panel_rows);
+            trsm_lower_blocked_with_policy::<F, O>(
+                l.submat(.., ..),
+                y.submat_mut(.., ..),
+                trsm_panel_rows,
+            );
         } else {
-            trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
+            trsm_lower_with_policy::<F, O>(l.submat(.., ..), y.submat_mut(.., ..));
         }
 
         // Solve E · X = Y' in place. E is n×n upper-triangular at full
@@ -469,12 +486,35 @@ impl<F: FiniteField> FieldMatrix<F> {
         if F::has_simd_gemm_classical()
             && trsm_route_resolved(trsm_blocked_min_dim, n) == TrsmRoute::Blocked
         {
-            trsm_upper_blocked(e.submat(.., ..), y.submat_mut(.., ..), trsm_panel_rows);
+            trsm_upper_blocked_with_policy::<F, O>(
+                e.submat(.., ..),
+                y.submat_mut(.., ..),
+                trsm_panel_rows,
+            );
         } else {
-            trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
+            trsm_upper_with_policy::<F, O>(e.submat(.., ..), y.submat_mut(.., ..));
         }
 
         Some(y)
+    }
+
+    /// Runs the complete solve body without test-support observation writes.
+    ///
+    /// Development calibration resolves this function before timing. It shares
+    /// all validation, profile reads, PLE, TRSM, and GEMM computation with
+    /// [`solve_batch`](Self::solve_batch), while its zero-sized compile-time
+    /// policy emits no route, panel, or GEMM observations.
+    ///
+    /// # Panics
+    ///
+    /// Panics under the same shape conditions as [`solve_batch`](Self::solve_batch).
+    ///
+    /// # Complexity
+    ///
+    /// `O(n³ + n² · k)` field operations, matching the recorded specialization.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn solve_batch_quiet_for_test(&self, b: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
+        self.solve_batch_with_policy::<QuietObservations>(b)
     }
 
     /// Returns the determinant `det(self)`.

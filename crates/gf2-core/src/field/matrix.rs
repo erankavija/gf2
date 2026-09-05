@@ -2502,8 +2502,10 @@ impl<F: FiniteField + fmt::Display> fmt::Display for FieldMatrix<F> {
 /// This is the compile-time selection site for the tuning-profile field
 /// `gemm.row_tile`. The default build retains the conservative value; a
 /// `gf2_tuning_baked` build uses the committed baked profile value.
+pub(crate) const GEMM_ROW_TILE_DEFAULT: usize = 32;
+
 #[cfg(not(gf2_tuning_baked))]
-pub(crate) const GEMM_ROW_TILE: usize = 32;
+pub(crate) const GEMM_ROW_TILE: usize = GEMM_ROW_TILE_DEFAULT;
 
 #[cfg(gf2_tuning_baked)]
 pub(crate) const GEMM_ROW_TILE: usize = crate::tuning::baked::GEMM_ROW_TILE;
@@ -2512,11 +2514,27 @@ pub(crate) const GEMM_ROW_TILE: usize = crate::tuning::baked::GEMM_ROW_TILE;
 ///
 /// This is the compile-time selection site for the tuning-profile field
 /// `gemm.col_tile`; see [`GEMM_ROW_TILE`] for the selection mechanism.
+pub(crate) const GEMM_COL_TILE_DEFAULT: usize = 64;
+
 #[cfg(not(gf2_tuning_baked))]
-pub(crate) const GEMM_COL_TILE: usize = 64;
+pub(crate) const GEMM_COL_TILE: usize = GEMM_COL_TILE_DEFAULT;
 
 #[cfg(gf2_tuning_baked)]
 pub(crate) const GEMM_COL_TILE: usize = crate::tuning::baked::GEMM_COL_TILE;
+
+/// Returns the unconditional conservative GEMM tile pair.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub const fn conservative_gemm_tiles() -> (usize, usize) {
+    (GEMM_ROW_TILE_DEFAULT, GEMM_COL_TILE_DEFAULT)
+}
+
+/// Returns the cfg-selected GEMM tile pair used by ordinary production APIs.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub const fn selected_gemm_tiles() -> (usize, usize) {
+    (GEMM_ROW_TILE, GEMM_COL_TILE)
+}
 
 /// Smallest work volume `m · k · n` at which [`gemm_axpy_into_view`] takes the
 /// whole-GEMM fast path.
@@ -2597,6 +2615,19 @@ pub enum GemmTileSite {
     ExprGemmTransAWithBeta,
 }
 
+#[cfg(not(any(test, feature = "test-support")))]
+#[derive(Clone, Copy)]
+#[repr(usize)]
+pub(crate) enum GemmTileSite {
+    MatrixGemm,
+    MatrixGemmIntoView,
+    MatrixGemmAxpyIntoView,
+    MatrixGemmAxpyIntoViewDiag,
+    ExprGemmWithBeta,
+    ExprGemmTransA,
+    ExprGemmTransAWithBeta,
+}
+
 #[cfg(any(test, feature = "test-support"))]
 impl GemmTileSite {
     /// Every production blocked-loop selection site, in stable display order.
@@ -2609,6 +2640,145 @@ impl GemmTileSite {
         Self::ExprGemmTransA,
         Self::ExprGemmTransAWithBeta,
     ];
+}
+
+/// Compile-time policy for test-support execution observations.
+///
+/// The computational kernels are generic over this zero-sized policy so a
+/// calibration timing adapter can instantiate the production body without
+/// candidate-dependent atomic writes. Ordinary entry points use
+/// [`RecordObservations`]; in builds without test support its methods compile
+/// to no-ops.
+pub(crate) trait ObservationPolicy {
+    #[inline(always)]
+    fn gemm_tiles(_site: GemmTileSite, _row_tile: usize, _col_tile: usize) {}
+
+    #[inline(always)]
+    fn gemm_axpy_route(_route: GemmAxpyRoute) {}
+
+    #[inline(always)]
+    fn triangular_route(_base_case_max_dim: usize, _route: usize) {}
+
+    #[inline(always)]
+    fn trsm_panel_rows(_rows: usize) {}
+
+    #[inline(always)]
+    fn ple_panel_cols(_cols: usize) {}
+}
+
+/// Observation policy used by ordinary public entry points.
+pub(crate) struct RecordObservations;
+
+impl ObservationPolicy for RecordObservations {
+    #[inline(always)]
+    fn gemm_tiles(site: GemmTileSite, row_tile: usize, col_tile: usize) {
+        #[cfg(any(test, feature = "test-support"))]
+        record_gemm_tiles(site, row_tile, col_tile);
+        #[cfg(not(any(test, feature = "test-support")))]
+        let _ = (site, row_tile, col_tile);
+    }
+
+    #[inline(always)]
+    fn gemm_axpy_route(route: GemmAxpyRoute) {
+        #[cfg(any(test, feature = "test-support"))]
+        record_gemm_axpy_dispatch_route(route);
+        #[cfg(not(any(test, feature = "test-support")))]
+        let _ = route;
+    }
+
+    #[inline(always)]
+    fn triangular_route(base_case_max_dim: usize, route: usize) {
+        #[cfg(any(test, feature = "test-support"))]
+        crate::field::triangular::record_triangular_route(base_case_max_dim, route);
+        #[cfg(not(any(test, feature = "test-support")))]
+        let _ = (base_case_max_dim, route);
+    }
+
+    #[inline(always)]
+    fn trsm_panel_rows(rows: usize) {
+        #[cfg(any(test, feature = "test-support"))]
+        crate::field::triangular::record_trsm_panel_rows(rows);
+        #[cfg(not(any(test, feature = "test-support")))]
+        let _ = rows;
+    }
+
+    #[inline(always)]
+    fn ple_panel_cols(cols: usize) {
+        #[cfg(any(test, feature = "test-support"))]
+        crate::field::ple::record_ple_panel_cols(cols);
+        #[cfg(not(any(test, feature = "test-support")))]
+        let _ = cols;
+    }
+}
+
+/// Observation-free specialization used by calibration timing adapters.
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) struct QuietObservations;
+
+#[cfg(any(test, feature = "test-support"))]
+impl ObservationPolicy for QuietObservations {}
+
+/// One admissible compile-time GEMM tile pair for calibration.
+///
+/// This closed vocabulary is available only to tests and development tools.
+/// Each value resolves to a monomorphized production body; installing a
+/// runtime tuning profile does not select one of these baked extents.
+/// Resolver methods are constant-time and do not panic. Returned functions
+/// inherit the shape, field, and complexity contracts of their named GEMM
+/// operations.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GemmTilePair {
+    /// 16 rows by 32 columns.
+    R16C32,
+    /// 16 rows by 64 columns.
+    R16C64,
+    /// 16 rows by 128 columns.
+    R16C128,
+    /// 32 rows by 32 columns.
+    R32C32,
+    /// 32 rows by 64 columns.
+    R32C64,
+    /// 32 rows by 128 columns.
+    R32C128,
+    /// 64 rows by 32 columns.
+    R64C32,
+    /// 64 rows by 64 columns.
+    R64C64,
+    /// 64 rows by 128 columns.
+    R64C128,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl GemmTilePair {
+    /// All admissible pairs in protocol order.
+    pub const ALL: [Self; 9] = [
+        Self::R16C32,
+        Self::R16C64,
+        Self::R16C128,
+        Self::R32C32,
+        Self::R32C64,
+        Self::R32C128,
+        Self::R64C32,
+        Self::R64C64,
+        Self::R64C128,
+    ];
+
+    /// Returns the `(row_tile, col_tile)` pair.
+    #[must_use]
+    pub const fn extents(self) -> (usize, usize) {
+        match self {
+            Self::R16C32 => (16, 32),
+            Self::R16C64 => (16, 64),
+            Self::R16C128 => (16, 128),
+            Self::R32C32 => (32, 32),
+            Self::R32C64 => (32, 64),
+            Self::R32C128 => (32, 128),
+            Self::R64C32 => (64, 32),
+            Self::R64C64 => (64, 64),
+            Self::R64C128 => (64, 128),
+        }
+    }
 }
 
 /// A tile pair observed at one production blocked-loop site.
@@ -2776,6 +2946,18 @@ pub fn last_gemm_axpy_dispatch_route() -> Option<GemmAxpyRoute> {
 /// assert_eq!(c.get(1, 1), Fp::<7>::new(1));
 /// ```
 pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
+    gemm_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, RecordObservations>(a, b)
+}
+
+fn gemm_tiled<
+    F: FiniteField,
+    const ROW_TILE: usize,
+    const COL_TILE: usize,
+    O: ObservationPolicy,
+>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+) -> FieldMatrix<F> {
     assert_eq!(
         a.cols, b.rows,
         "FieldMatrix::mul: inner dimensions must match ({} vs {})",
@@ -2887,12 +3069,10 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
 
     // Blocked traversal over output tiles. The inner kernel is a single
     // `dot_product_slices` call per output cell.
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_tiles(GemmTileSite::MatrixGemm, GEMM_ROW_TILE, GEMM_COL_TILE);
-    for i_blk in (0..a.rows).step_by(GEMM_ROW_TILE) {
-        let i_end = (i_blk + GEMM_ROW_TILE).min(a.rows);
-        for j_blk in (0..b.cols).step_by(GEMM_COL_TILE) {
-            let j_end = (j_blk + GEMM_COL_TILE).min(b.cols);
+    for i_blk in (0..a.rows).step_by(ROW_TILE) {
+        let i_end = (i_blk + ROW_TILE).min(a.rows);
+        for j_blk in (0..b.cols).step_by(COL_TILE) {
+            let j_end = (j_blk + COL_TILE).min(b.cols);
             for i in i_blk..i_end {
                 let a_row = &a.data.as_slice()[i * a.cols..(i + 1) * a.cols];
                 let out_row = &mut out.data.as_mut_slice()[i * out.cols..(i + 1) * out.cols];
@@ -2925,7 +3105,33 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
             }
         }
     }
+    O::gemm_tiles(GemmTileSite::MatrixGemm, ROW_TILE, COL_TILE);
     out
+}
+
+/// Function-pointer type for a monomorphized GEMM tile candidate.
+#[cfg(any(test, feature = "test-support"))]
+pub type GemmCandidateFn<F> = fn(&FieldMatrix<F>, &FieldMatrix<F>) -> FieldMatrix<F>;
+
+#[cfg(any(test, feature = "test-support"))]
+impl GemmTilePair {
+    /// Resolves this pair to the shared production GEMM body.
+    ///
+    /// Resolve once before a timing loop; the returned function contains no
+    /// runtime candidate branch.
+    pub fn gemm_fn<F: FiniteField>(self) -> GemmCandidateFn<F> {
+        match self {
+            Self::R16C32 => gemm_tiled::<F, 16, 32, RecordObservations>,
+            Self::R16C64 => gemm_tiled::<F, 16, 64, RecordObservations>,
+            Self::R16C128 => gemm_tiled::<F, 16, 128, RecordObservations>,
+            Self::R32C32 => gemm_tiled::<F, 32, 32, RecordObservations>,
+            Self::R32C64 => gemm_tiled::<F, 32, 64, RecordObservations>,
+            Self::R32C128 => gemm_tiled::<F, 32, 128, RecordObservations>,
+            Self::R64C32 => gemm_tiled::<F, 64, 32, RecordObservations>,
+            Self::R64C64 => gemm_tiled::<F, 64, 64, RecordObservations>,
+            Self::R64C128 => gemm_tiled::<F, 64, 128, RecordObservations>,
+        }
+    }
 }
 
 // ─── View-based gemm kernels (zero scratch beyond gemm's B-transpose) ─────────
@@ -2957,8 +3163,27 @@ pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatr
 ///
 /// `O(m · k · n)` field multiplications, plus the one-shot transpose of
 /// `B` for cache locality (`O(k · n)` clones).
-pub(crate) fn gemm_into_view<F, A, B>(a: &A, b: &B, mut out: MatViewMut<'_, F>)
+pub(crate) fn gemm_into_view<F, A, B>(a: &A, b: &B, out: MatViewMut<'_, F>)
 where
+    F: FiniteField,
+    A: MatrixLike<F> + ?Sized,
+    B: MatrixLike<F> + ?Sized,
+{
+    gemm_into_view_tiled::<F, A, B, GEMM_ROW_TILE, GEMM_COL_TILE, RecordObservations>(a, b, out);
+}
+
+pub(crate) fn gemm_into_view_tiled<
+    F,
+    A,
+    B,
+    const ROW_TILE: usize,
+    const COL_TILE: usize,
+    O: ObservationPolicy,
+>(
+    a: &A,
+    b: &B,
+    mut out: MatViewMut<'_, F>,
+) where
     F: FiniteField,
     A: MatrixLike<F> + ?Sized,
     B: MatrixLike<F> + ?Sized,
@@ -2998,16 +3223,10 @@ where
     // walks contiguous memory. This is the only allocation this kernel
     // performs.
     let b_t = b.transpose();
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_tiles(
-        GemmTileSite::MatrixGemmIntoView,
-        GEMM_ROW_TILE,
-        GEMM_COL_TILE,
-    );
-    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
-        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
-        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
-            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+    for i_blk in (0..m).step_by(ROW_TILE) {
+        let i_end = (i_blk + ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(COL_TILE) {
+            let j_end = (j_blk + COL_TILE).min(n);
             for i in i_blk..i_end {
                 for j in j_blk..j_end {
                     let mut acc = zero.clone();
@@ -3017,6 +3236,42 @@ where
                     out.set(i, j, acc);
                 }
             }
+        }
+    }
+    O::gemm_tiles(GemmTileSite::MatrixGemmIntoView, ROW_TILE, COL_TILE);
+}
+
+/// Function-pointer type for the view-writing GEMM candidate adapter.
+#[cfg(any(test, feature = "test-support"))]
+pub type GemmIntoViewCandidateFn<F> = fn(&FieldMatrix<F>, &FieldMatrix<F>, &mut FieldMatrix<F>);
+
+#[cfg(any(test, feature = "test-support"))]
+fn gemm_into_view_candidate<F: FiniteField, const ROW_TILE: usize, const COL_TILE: usize>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    out: &mut FieldMatrix<F>,
+) {
+    gemm_into_view_tiled::<F, _, _, ROW_TILE, COL_TILE, RecordObservations>(
+        a,
+        b,
+        out.submat_mut(.., ..),
+    );
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl GemmTilePair {
+    /// Resolves this pair to the shared view-writing GEMM body.
+    pub fn gemm_into_view_fn<F: FiniteField>(self) -> GemmIntoViewCandidateFn<F> {
+        match self {
+            Self::R16C32 => gemm_into_view_candidate::<F, 16, 32>,
+            Self::R16C64 => gemm_into_view_candidate::<F, 16, 64>,
+            Self::R16C128 => gemm_into_view_candidate::<F, 16, 128>,
+            Self::R32C32 => gemm_into_view_candidate::<F, 32, 32>,
+            Self::R32C64 => gemm_into_view_candidate::<F, 32, 64>,
+            Self::R32C128 => gemm_into_view_candidate::<F, 32, 128>,
+            Self::R64C32 => gemm_into_view_candidate::<F, 64, 32>,
+            Self::R64C64 => gemm_into_view_candidate::<F, 64, 64>,
+            Self::R64C128 => gemm_into_view_candidate::<F, 64, 128>,
         }
     }
 }
@@ -3106,6 +3361,25 @@ pub(crate) fn gemm_axpy_into_view<F>(
     a: &MatView<'_, F>,
     b: &MatView<'_, F>,
     beta: F,
+    out: MatViewMut<'_, F>,
+) where
+    F: FiniteField,
+{
+    gemm_axpy_into_view_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, RecordObservations>(
+        alpha, a, b, beta, out,
+    );
+}
+
+pub(crate) fn gemm_axpy_into_view_tiled<
+    F,
+    const ROW_TILE: usize,
+    const COL_TILE: usize,
+    O: ObservationPolicy,
+>(
+    alpha: F,
+    a: &MatView<'_, F>,
+    b: &MatView<'_, F>,
+    beta: F,
     mut out: MatViewMut<'_, F>,
 ) where
     F: FiniteField,
@@ -3128,8 +3402,7 @@ pub(crate) fn gemm_axpy_into_view<F>(
     );
     let route = gemm_axpy_route(m, k, n);
     if m == 0 || n == 0 {
-        #[cfg(any(test, feature = "test-support"))]
-        record_gemm_axpy_dispatch_route(GemmAxpyRoute::PerCell);
+        O::gemm_axpy_route(GemmAxpyRoute::PerCell);
         return;
     }
     if k == 0 {
@@ -3141,8 +3414,7 @@ pub(crate) fn gemm_axpy_into_view<F>(
                 out.set(i, j, v);
             }
         }
-        #[cfg(any(test, feature = "test-support"))]
-        record_gemm_axpy_dispatch_route(GemmAxpyRoute::PerCell);
+        O::gemm_axpy_route(GemmAxpyRoute::PerCell);
         return;
     }
     let zero: F = a.get(0, 0).zero_like();
@@ -3193,8 +3465,7 @@ pub(crate) fn gemm_axpy_into_view<F>(
                     out.set(i, j, alpha.clone() * prod + beta.clone() * c_old);
                 }
             }
-            #[cfg(any(test, feature = "test-support"))]
-            record_gemm_axpy_dispatch_route(GemmAxpyRoute::WholeGemm);
+            O::gemm_axpy_route(GemmAxpyRoute::WholeGemm);
             return;
         }
         // The kernel declined (e.g. shape early-out, AVX2 not
@@ -3255,16 +3526,10 @@ pub(crate) fn gemm_axpy_into_view<F>(
     // primitive `gemm` uses. The `β · out[i, j]` fold reads the cell
     // BEFORE writing the new value at (i, j), so the routine is safe
     // even when `out` aliases its own `C` operand.
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_tiles(
-        GemmTileSite::MatrixGemmAxpyIntoView,
-        GEMM_ROW_TILE,
-        GEMM_COL_TILE,
-    );
-    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
-        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
-        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
-            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+    for i_blk in (0..m).step_by(ROW_TILE) {
+        let i_end = (i_blk + ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(COL_TILE) {
+            let j_end = (j_blk + COL_TILE).min(n);
             for i in i_blk..i_end {
                 let a_row = a.row_slice(i);
                 debug_assert_eq!(a_row.len(), k);
@@ -3296,8 +3561,8 @@ pub(crate) fn gemm_axpy_into_view<F>(
             }
         }
     }
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_axpy_dispatch_route(GemmAxpyRoute::PerCell);
+    O::gemm_tiles(GemmTileSite::MatrixGemmAxpyIntoView, ROW_TILE, COL_TILE);
+    O::gemm_axpy_route(GemmAxpyRoute::PerCell);
 }
 
 /// Runs the production GEMM AXPY dispatcher as `out ← a · b` for
@@ -3323,6 +3588,45 @@ pub fn run_gemm_axpy_dispatch_for_test<F: FiniteField>(
     let b_view = b.submat(.., ..);
     let out_view = out.submat_mut(.., ..);
     gemm_axpy_into_view(one, &a_view, &b_view, zero, out_view);
+}
+
+/// Function-pointer type for a monomorphized fused GEMM candidate.
+#[cfg(any(test, feature = "test-support"))]
+pub type GemmAxpyCandidateFn<F> = fn(F, &FieldMatrix<F>, &FieldMatrix<F>, F, &mut FieldMatrix<F>);
+
+#[cfg(any(test, feature = "test-support"))]
+fn gemm_axpy_candidate<F: FiniteField, const ROW_TILE: usize, const COL_TILE: usize>(
+    alpha: F,
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    beta: F,
+    out: &mut FieldMatrix<F>,
+) {
+    gemm_axpy_into_view_tiled::<F, ROW_TILE, COL_TILE, RecordObservations>(
+        alpha,
+        &a.submat(.., ..),
+        &b.submat(.., ..),
+        beta,
+        out.submat_mut(.., ..),
+    );
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl GemmTilePair {
+    /// Resolves this pair to the shared fused GEMM body.
+    pub fn gemm_axpy_fn<F: FiniteField>(self) -> GemmAxpyCandidateFn<F> {
+        match self {
+            Self::R16C32 => gemm_axpy_candidate::<F, 16, 32>,
+            Self::R16C64 => gemm_axpy_candidate::<F, 16, 64>,
+            Self::R16C128 => gemm_axpy_candidate::<F, 16, 128>,
+            Self::R32C32 => gemm_axpy_candidate::<F, 32, 32>,
+            Self::R32C64 => gemm_axpy_candidate::<F, 32, 64>,
+            Self::R32C128 => gemm_axpy_candidate::<F, 32, 128>,
+            Self::R64C32 => gemm_axpy_candidate::<F, 64, 32>,
+            Self::R64C64 => gemm_axpy_candidate::<F, 64, 64>,
+            Self::R64C128 => gemm_axpy_candidate::<F, 64, 128>,
+        }
+    }
 }
 
 // ─── gemm_axpy_into_view_diag — implicit unit-diagonal variant ────────────────
@@ -3463,6 +3767,31 @@ pub(crate) fn gemm_axpy_into_view_diag<F, A, B>(
     diag_b: UnitDiag,
     b: &B,
     beta: F,
+    out: MatViewMut<'_, F>,
+) where
+    F: FiniteField,
+    A: MatrixLike<F> + ?Sized,
+    B: MatrixLike<F> + ?Sized,
+{
+    gemm_axpy_into_view_diag_tiled::<F, A, B, GEMM_ROW_TILE, GEMM_COL_TILE, RecordObservations>(
+        diag_a, alpha, a, diag_b, b, beta, out,
+    );
+}
+
+pub(crate) fn gemm_axpy_into_view_diag_tiled<
+    F,
+    A,
+    B,
+    const ROW_TILE: usize,
+    const COL_TILE: usize,
+    O: ObservationPolicy,
+>(
+    diag_a: UnitDiag,
+    alpha: F,
+    a: &A,
+    diag_b: UnitDiag,
+    b: &B,
+    beta: F,
     mut out: MatViewMut<'_, F>,
 ) where
     F: FiniteField,
@@ -3504,16 +3833,10 @@ pub(crate) fn gemm_axpy_into_view_diag<F, A, B>(
     // Inside each tile we compute the inner dot product eagerly, since a
     // unit-diagonal operand cannot expose a contiguous slice for
     // `dot_product_slices`.
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_tiles(
-        GemmTileSite::MatrixGemmAxpyIntoViewDiag,
-        GEMM_ROW_TILE,
-        GEMM_COL_TILE,
-    );
-    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
-        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
-        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
-            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+    for i_blk in (0..m).step_by(ROW_TILE) {
+        let i_end = (i_blk + ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(COL_TILE) {
+            let j_end = (j_blk + COL_TILE).min(n);
             for i in i_blk..i_end {
                 for j in j_blk..j_end {
                     let mut acc = zero.clone();
@@ -3534,6 +3857,48 @@ pub(crate) fn gemm_axpy_into_view_diag<F, A, B>(
                     out.set(i, j, alpha.clone() * acc + beta.clone() * c_old);
                 }
             }
+        }
+    }
+    O::gemm_tiles(GemmTileSite::MatrixGemmAxpyIntoViewDiag, ROW_TILE, COL_TILE);
+}
+
+/// Function-pointer type for the implicit-diagonal GEMM candidate adapter.
+#[cfg(any(test, feature = "test-support"))]
+pub type GemmDiagCandidateFn<F> = fn(F, &FieldMatrix<F>, &FieldMatrix<F>, F, &mut FieldMatrix<F>);
+
+#[cfg(any(test, feature = "test-support"))]
+fn gemm_diag_candidate<F: FiniteField, const ROW_TILE: usize, const COL_TILE: usize>(
+    alpha: F,
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    beta: F,
+    out: &mut FieldMatrix<F>,
+) {
+    gemm_axpy_into_view_diag_tiled::<F, _, _, ROW_TILE, COL_TILE, RecordObservations>(
+        UnitDiag::Implicit,
+        alpha,
+        a,
+        UnitDiag::Implicit,
+        b,
+        beta,
+        out.submat_mut(.., ..),
+    );
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl GemmTilePair {
+    /// Resolves this pair to the shared implicit-diagonal fused GEMM body.
+    pub fn gemm_diag_fn<F: FiniteField>(self) -> GemmDiagCandidateFn<F> {
+        match self {
+            Self::R16C32 => gemm_diag_candidate::<F, 16, 32>,
+            Self::R16C64 => gemm_diag_candidate::<F, 16, 64>,
+            Self::R16C128 => gemm_diag_candidate::<F, 16, 128>,
+            Self::R32C32 => gemm_diag_candidate::<F, 32, 32>,
+            Self::R32C64 => gemm_diag_candidate::<F, 32, 64>,
+            Self::R32C128 => gemm_diag_candidate::<F, 32, 128>,
+            Self::R64C32 => gemm_diag_candidate::<F, 64, 32>,
+            Self::R64C64 => gemm_diag_candidate::<F, 64, 64>,
+            Self::R64C128 => gemm_diag_candidate::<F, 64, 128>,
         }
     }
 }

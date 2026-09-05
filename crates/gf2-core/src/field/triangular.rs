@@ -232,8 +232,9 @@
 //! enough to benefit; the recursive variants remain for all other fields.
 
 use crate::field::matrix::{
-    gemm_axpy_into_view, gemm_axpy_into_view_diag, gemm_into_view, FieldMatrix, MatView,
-    MatViewMut, UnitDiag,
+    gemm_axpy_into_view, gemm_axpy_into_view_diag, gemm_axpy_into_view_tiled, gemm_into_view,
+    FieldMatrix, MatView, MatViewMut, ObservationPolicy, RecordObservations, UnitDiag,
+    GEMM_COL_TILE, GEMM_ROW_TILE,
 };
 use crate::field::FiniteField;
 use crate::tuning;
@@ -346,27 +347,19 @@ pub fn triangular_route(m: usize) -> TriangularRoute {
 /// Reports the triangular base-case arm against an already-resolved
 /// `triangular.base_case_max_dim()` value.
 fn triangular_route_resolved(base_case_max_dim: usize, m: usize) -> TriangularRoute {
-    let route = if m <= base_case_max_dim {
+    if m <= base_case_max_dim {
         TriangularRoute::BaseCase
     } else {
         TriangularRoute::Recursive
-    };
-
-    #[cfg(any(test, feature = "test-support"))]
-    if LAST_EFFECTIVE_TRIANGULAR_BASE_MAX_DIM
-        .compare_exchange(0, base_case_max_dim, Ordering::Relaxed, Ordering::Relaxed)
-        .is_ok()
-    {
-        LAST_EFFECTIVE_TRIANGULAR_ROUTE.store(
-            match route {
-                TriangularRoute::BaseCase => 1,
-                TriangularRoute::Recursive => 2,
-            },
-            Ordering::Relaxed,
-        );
     }
+}
 
-    route
+#[inline(always)]
+const fn triangular_route_code(route: TriangularRoute) -> usize {
+    match route {
+        TriangularRoute::BaseCase => 1,
+        TriangularRoute::Recursive => 2,
+    }
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -375,7 +368,18 @@ static LAST_EFFECTIVE_TRIANGULAR_BASE_MAX_DIM: AtomicUsize = AtomicUsize::new(0)
 #[cfg(any(test, feature = "test-support"))]
 static LAST_EFFECTIVE_TRIANGULAR_ROUTE: AtomicUsize = AtomicUsize::new(0);
 
-/// Clears the test-support observation of the next triangular driver route.
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn record_triangular_route(base_case_max_dim: usize, route: usize) {
+    LAST_EFFECTIVE_TRIANGULAR_BASE_MAX_DIM.store(base_case_max_dim, Ordering::Relaxed);
+    LAST_EFFECTIVE_TRIANGULAR_ROUTE.store(route, Ordering::Relaxed);
+}
+
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn record_trsm_panel_rows(rows: usize) {
+    LAST_EFFECTIVE_TRSM_PANEL_ROWS.store(rows, Ordering::Relaxed);
+}
+
+/// Clears the test-support observation of the last public triangular route.
 #[cfg(any(test, feature = "test-support"))]
 pub fn reset_last_effective_triangular_route() {
     LAST_EFFECTIVE_TRIANGULAR_ROUTE.store(0, Ordering::Relaxed);
@@ -383,11 +387,10 @@ pub fn reset_last_effective_triangular_route() {
 }
 
 /// Returns the resolved base-case threshold and top-level route observed by
-/// the next triangular recursive driver after the last reset.
+/// the most recent public triangular operation after the last reset.
 ///
-/// This test-support observation is recorded by the same resolved route
-/// function that the production drivers call, so it witnesses the active
-/// `triangular.base_case_max_dim()` value reaching their actual branch.
+/// Route reporters remain pure. Each public operation publishes once at its
+/// outer boundary, so recursive splits do not add candidate-dependent writes.
 #[cfg(any(test, feature = "test-support"))]
 #[must_use]
 pub fn last_effective_triangular_route() -> Option<(usize, TriangularRoute)> {
@@ -457,6 +460,13 @@ pub fn last_effective_triangular_route() -> Option<(usize, TriangularRoute)> {
 /// assert_eq!(b.get(0, 0), Fp::<7>::new(6));
 /// ```
 pub fn trsm_upper<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
+    trsm_upper_with_policy::<F, RecordObservations>(a, b);
+}
+
+pub(crate) fn trsm_upper_with_policy<F: FiniteField, O: ObservationPolicy>(
+    a: MatView<'_, F>,
+    b: MatViewMut<'_, F>,
+) {
     assert_eq!(
         a.rows(),
         a.cols(),
@@ -472,7 +482,9 @@ pub fn trsm_upper<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
         b.rows()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
-    trsm_upper_inner(a, b, base_case_max_dim);
+    let route = triangular_route_resolved(base_case_max_dim, a.rows());
+    trsm_upper_inner::<F, O>(a, b, base_case_max_dim);
+    O::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 /// Solves the lower-triangular linear system `A · X = B` in place,
@@ -522,6 +534,13 @@ pub fn trsm_upper<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
 /// assert_eq!(b.get(1, 0), Fp::<7>::new(5));
 /// ```
 pub fn trsm_lower<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
+    trsm_lower_with_policy::<F, RecordObservations>(a, b);
+}
+
+pub(crate) fn trsm_lower_with_policy<F: FiniteField, O: ObservationPolicy>(
+    a: MatView<'_, F>,
+    b: MatViewMut<'_, F>,
+) {
     assert_eq!(
         a.rows(),
         a.cols(),
@@ -537,7 +556,9 @@ pub fn trsm_lower<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
         b.rows()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
-    trsm_lower_inner(a, b, base_case_max_dim);
+    let route = triangular_route_resolved(base_case_max_dim, a.rows());
+    trsm_lower_inner::<F, O>(a, b, base_case_max_dim);
+    O::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 /// Solves the upper-triangular linear system `A · X = B` using a right-looking
@@ -603,8 +624,14 @@ pub fn trsm_upper_blocked<F: FiniteField>(
     b: MatViewMut<'_, F>,
     block_size: usize,
 ) {
-    #[cfg(any(test, feature = "test-support"))]
-    LAST_EFFECTIVE_TRSM_PANEL_ROWS.store(block_size, Ordering::Relaxed);
+    trsm_upper_blocked_with_policy::<F, RecordObservations>(a, b, block_size);
+}
+
+pub(crate) fn trsm_upper_blocked_with_policy<F: FiniteField, O: ObservationPolicy>(
+    a: MatView<'_, F>,
+    b: MatViewMut<'_, F>,
+    block_size: usize,
+) {
     assert_eq!(
         a.rows(),
         a.cols(),
@@ -620,7 +647,10 @@ pub fn trsm_upper_blocked<F: FiniteField>(
         b.rows()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
-    trsm_upper_blocked_inner(a, b, block_size, base_case_max_dim);
+    let route = triangular_route_resolved(base_case_max_dim, a.rows());
+    trsm_upper_blocked_inner::<F, O>(a, b, block_size, base_case_max_dim);
+    O::trsm_panel_rows(block_size);
+    O::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 /// Solves the lower-triangular linear system `A · X = B` using a right-looking
@@ -675,8 +705,14 @@ pub fn trsm_lower_blocked<F: FiniteField>(
     b: MatViewMut<'_, F>,
     block_size: usize,
 ) {
-    #[cfg(any(test, feature = "test-support"))]
-    LAST_EFFECTIVE_TRSM_PANEL_ROWS.store(block_size, Ordering::Relaxed);
+    trsm_lower_blocked_with_policy::<F, RecordObservations>(a, b, block_size);
+}
+
+pub(crate) fn trsm_lower_blocked_with_policy<F: FiniteField, O: ObservationPolicy>(
+    a: MatView<'_, F>,
+    b: MatViewMut<'_, F>,
+    block_size: usize,
+) {
     assert_eq!(
         a.rows(),
         a.cols(),
@@ -692,7 +728,10 @@ pub fn trsm_lower_blocked<F: FiniteField>(
         b.rows()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
-    trsm_lower_blocked_inner(a, b, block_size, base_case_max_dim);
+    let route = triangular_route_resolved(base_case_max_dim, a.rows());
+    trsm_lower_blocked_inner::<F, O>(a, b, block_size, base_case_max_dim);
+    O::trsm_panel_rows(block_size);
+    O::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 /// Multiplies `B ← A · B` in place for upper-triangular `A`.
@@ -754,7 +793,9 @@ pub fn trmm_upper<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
         b.rows()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
+    let route = triangular_route_resolved(base_case_max_dim, a.rows());
     trmm_upper_inner(a, b, base_case_max_dim);
+    RecordObservations::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 /// Multiplies `B ← A · B` in place for lower-triangular `A`.
@@ -814,7 +855,9 @@ pub fn trmm_lower<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
         b.rows()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
+    let route = triangular_route_resolved(base_case_max_dim, a.rows());
     trmm_lower_inner(a, b, base_case_max_dim);
+    RecordObservations::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 /// Inverts an upper-triangular matrix in place.
@@ -871,7 +914,9 @@ pub fn trtri_upper<F: FiniteField>(a: MatViewMut<'_, F>) {
         a.cols()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
+    let route = triangular_route_resolved(base_case_max_dim, a.rows());
     trtri_upper_inner(a, base_case_max_dim);
+    RecordObservations::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 /// Inverts a lower-triangular matrix in place.
@@ -926,7 +971,9 @@ pub fn trtri_lower<F: FiniteField>(a: MatViewMut<'_, F>) {
         a.cols()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
+    let route = triangular_route_resolved(base_case_max_dim, a.rows());
     trtri_lower_inner(a, base_case_max_dim);
+    RecordObservations::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 /// In-place product of an upper-triangular `U` with a unit lower-triangular
@@ -1024,12 +1071,14 @@ pub fn trtrm<F: FiniteField>(l: MatViewMut<'_, F>, u: MatView<'_, F>) {
         u.rows()
     );
     let base_case_max_dim = tuning::active().triangular().base_case_max_dim();
+    let route = triangular_route_resolved(base_case_max_dim, l.rows());
     trtrm_inner(l, u, base_case_max_dim);
+    RecordObservations::triangular_route(base_case_max_dim, triangular_route_code(route));
 }
 
 // ─── trsm_upper ─────────────────────────────────────────────────────────────
 
-fn trsm_upper_inner<F: FiniteField>(
+fn trsm_upper_inner<F: FiniteField, O: ObservationPolicy>(
     a: MatView<'_, F>,
     b: MatViewMut<'_, F>,
     base_case_max_dim: usize,
@@ -1051,7 +1100,7 @@ fn trsm_upper_inner<F: FiniteField>(
     // sub-slices so Rust's borrow checker accepts the pair.
     let (mut b1_mut, mut b2_mut) = b.split_rows_mut(h);
     // Recurse on the lower half first: A22 · X2 = B2.
-    trsm_upper_inner(a.submat(h..m, h..m), b2_mut.reborrow(), base_case_max_dim);
+    trsm_upper_inner::<F, O>(a.submat(h..m, h..m), b2_mut.reborrow(), base_case_max_dim);
     // Fold off-diagonal: B1 ← (−1) · A12 · X2 + 1 · B1 — i.e. the
     // shared `gemm_axpy_into_view` kernel writing into B1 with B1
     // itself doubling as the C operand. `b2` is the immutable view of
@@ -1062,10 +1111,16 @@ fn trsm_upper_inner<F: FiniteField>(
         let b2 = b2_mut.as_view();
         let one = a.get(0, 0).one_like();
         let neg_one = -one.clone();
-        gemm_axpy_into_view(neg_one, &a12, &b2, one, b1_mut.reborrow());
+        gemm_axpy_into_view_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, O>(
+            neg_one,
+            &a12,
+            &b2,
+            one,
+            b1_mut.reborrow(),
+        );
     }
     // Recurse on the upper half: A11 · X1 = B1.
-    trsm_upper_inner(a.submat(0..h, 0..h), b1_mut, base_case_max_dim);
+    trsm_upper_inner::<F, O>(a.submat(0..h, 0..h), b1_mut, base_case_max_dim);
 }
 
 fn trsm_upper_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>) {
@@ -1096,7 +1151,7 @@ fn trsm_upper_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>
 
 // ─── trsm_lower ─────────────────────────────────────────────────────────────
 
-fn trsm_lower_inner<F: FiniteField>(
+fn trsm_lower_inner<F: FiniteField, O: ObservationPolicy>(
     a: MatView<'_, F>,
     b: MatViewMut<'_, F>,
     base_case_max_dim: usize,
@@ -1115,7 +1170,7 @@ fn trsm_lower_inner<F: FiniteField>(
     // Split B at row h to obtain disjoint mutable views of B1 and B2.
     let (mut b1_mut, mut b2_mut) = b.split_rows_mut(h);
     // Recurse on the upper half first: A11 · X1 = B1.
-    trsm_lower_inner(a.submat(0..h, 0..h), b1_mut.reborrow(), base_case_max_dim);
+    trsm_lower_inner::<F, O>(a.submat(0..h, 0..h), b1_mut.reborrow(), base_case_max_dim);
     // Fold off-diagonal: B2 ← (−1) · A21 · X1 + 1 · B2 via the shared
     // `gemm_axpy_into_view` kernel, with `b2_mut` doubling as the
     // destination and the C operand. `b1` (read-only view of the
@@ -1125,10 +1180,16 @@ fn trsm_lower_inner<F: FiniteField>(
         let b1 = b1_mut.as_view();
         let one = a.get(0, 0).one_like();
         let neg_one = -one.clone();
-        gemm_axpy_into_view(neg_one, &a21, &b1, one, b2_mut.reborrow());
+        gemm_axpy_into_view_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, O>(
+            neg_one,
+            &a21,
+            &b1,
+            one,
+            b2_mut.reborrow(),
+        );
     }
     // Recurse on the lower half: A22 · X2 = B2.
-    trsm_lower_inner(a.submat(h..m, h..m), b2_mut, base_case_max_dim);
+    trsm_lower_inner::<F, O>(a.submat(h..m, h..m), b2_mut, base_case_max_dim);
 }
 
 fn trsm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>) {
@@ -1166,7 +1227,7 @@ fn trsm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>
 /// are updated via a single [`gemm_axpy_into_view`] whose row dimension grows
 /// with each processed panel, allowing the whole-GEMM SIMD fast path to
 /// trigger even when `b` has only one column.
-fn trsm_upper_blocked_inner<F: FiniteField>(
+fn trsm_upper_blocked_inner<F: FiniteField, O: ObservationPolicy>(
     a: MatView<'_, F>,
     mut b: MatViewMut<'_, F>,
     block_size: usize,
@@ -1179,7 +1240,7 @@ fn trsm_upper_blocked_inner<F: FiniteField>(
     }
     // Fall back to the standard recursive solve when blocking offers no benefit.
     if block_size == 0 || m <= block_size {
-        trsm_upper_inner(a, b, base_case_max_dim);
+        trsm_upper_inner::<F, O>(a, b, base_case_max_dim);
         return;
     }
     let bs = block_size;
@@ -1198,7 +1259,7 @@ fn trsm_upper_blocked_inner<F: FiniteField>(
         let (mut b_top, mut b_bot) = b.reborrow().split_rows_mut(row_start);
         // Step 1 — solve the diagonal block in b_bot's first bs_k rows.
         // A[row_start..row_end, row_start..row_end] · X = b_bot[0..bs_k, :].
-        trsm_upper_inner(
+        trsm_upper_inner::<F, O>(
             a.submat(row_start..row_end, row_start..row_end),
             b_bot.submat_mut(0..bs_k, ..),
             base_case_max_dim,
@@ -1213,7 +1274,7 @@ fn trsm_upper_blocked_inner<F: FiniteField>(
         if row_start > 0 {
             let a_off = a.submat(0..row_start, row_start..row_end);
             let x_panel = b_bot.submat(0..bs_k, ..);
-            gemm_axpy_into_view(
+            gemm_axpy_into_view_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, O>(
                 neg_one.clone(),
                 &a_off,
                 &x_panel,
@@ -1232,7 +1293,7 @@ fn trsm_upper_blocked_inner<F: FiniteField>(
 /// Processes panels of `a` from the first to the last. For each panel the
 /// diagonal block is solved with [`trsm_lower_inner`], then the rows below
 /// are updated via a single [`gemm_axpy_into_view`].
-fn trsm_lower_blocked_inner<F: FiniteField>(
+fn trsm_lower_blocked_inner<F: FiniteField, O: ObservationPolicy>(
     a: MatView<'_, F>,
     mut b: MatViewMut<'_, F>,
     block_size: usize,
@@ -1245,7 +1306,7 @@ fn trsm_lower_blocked_inner<F: FiniteField>(
     }
     // Fall back to the standard recursive solve when blocking offers no benefit.
     if block_size == 0 || m <= block_size {
-        trsm_lower_inner(a, b, base_case_max_dim);
+        trsm_lower_inner::<F, O>(a, b, base_case_max_dim);
         return;
     }
     let bs = block_size;
@@ -1261,7 +1322,7 @@ fn trsm_lower_blocked_inner<F: FiniteField>(
         let (mut b_top, mut b_bot) = b.reborrow().split_rows_mut(row_end);
         // Step 1 — solve the diagonal block: the current panel within b_top.
         // A[row_start..row_end, row_start..row_end] · X = b_top[row_start..row_end, :].
-        trsm_lower_inner(
+        trsm_lower_inner::<F, O>(
             a.submat(row_start..row_end, row_start..row_end),
             b_top.submat_mut(row_start..row_end, ..),
             base_case_max_dim,
@@ -1273,7 +1334,7 @@ fn trsm_lower_blocked_inner<F: FiniteField>(
         if row_end < m {
             let a_off = a.submat(row_end..m, row_start..row_end);
             let x_panel = b_top.submat(row_start..row_end, ..);
-            gemm_axpy_into_view(
+            gemm_axpy_into_view_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, O>(
                 neg_one.clone(),
                 &a_off,
                 &x_panel,

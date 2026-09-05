@@ -64,6 +64,10 @@ support::fresh_tuning_test!(
             TriangularRoute::BaseCase,
             "the installed threshold must move the conservative boundary"
         );
+        reset_last_effective_triangular_route();
+        let _ = triangular_route(threshold);
+        let _ = triangular_route(threshold + 1);
+        assert_eq!(last_effective_triangular_route(), None);
 
         assert_trsm_observes(threshold, threshold, TriangularRoute::BaseCase);
         assert_trsm_observes(threshold + 1, threshold, TriangularRoute::Recursive);

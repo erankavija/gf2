@@ -1287,8 +1287,8 @@ impl CoreSelectors {
             panel_u16_lane_max_cols: gf2_kernels_simd::fp_medium_ple::KC_U16,
         },
         gemm: GemmSelectors {
-            row_tile: crate::field::matrix::GEMM_ROW_TILE,
-            col_tile: crate::field::matrix::GEMM_COL_TILE,
+            row_tile: crate::field::matrix::GEMM_ROW_TILE_DEFAULT,
+            col_tile: crate::field::matrix::GEMM_COL_TILE_DEFAULT,
             axpy_fast_path_min_volume: crate::field::matrix::GEMM_AXPY_FAST_PATH_THRESHOLD,
             winograd_min_dim: crate::field::winograd::WINOGRAD_MIN_DIM_DEFAULT,
         },
