@@ -90,6 +90,71 @@ pub fn last_effective_chunk() -> usize {
     LAST_EFFECTIVE_CHUNK.load(std::sync::atomic::Ordering::SeqCst)
 }
 
+/// Executed chunk lengths and count for one completed parallel permanent walk.
+///
+/// These are facts about the effective production partition, rather than the
+/// requested chunk value reported by [`last_effective_chunk`]. For a walk over
+/// `S = 2^n - 1` non-empty subsets with requested chunk length `q`, the fields
+/// are `min(q, S)`, `ceil(S / q)`, and `S - (chunk_count - 1) * q`.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PermanentPartitionObservation {
+    /// Greatest number of subsets executed by any chunk in the walk.
+    pub maximum_chunk_len: u64,
+    /// Number of chunks executed by the completed walk.
+    pub chunk_count: u64,
+    /// Number of subsets executed by the final chunk.
+    pub last_chunk_len: u64,
+}
+
+/// Effective production partition published by the last completed non-empty
+/// parallel permanent walk.
+#[cfg(any(test, feature = "test-support"))]
+static LAST_EFFECTIVE_PARTITION: std::sync::Mutex<Option<PermanentPartitionObservation>> =
+    std::sync::Mutex::new(None);
+
+#[cfg(any(test, feature = "test-support"))]
+fn record_effective_partition(total_subsets: u64, chunk_subsets: usize) {
+    let requested = chunk_subsets as u64;
+    let chunk_count = 1 + (total_subsets - 1) / requested;
+    let observation = PermanentPartitionObservation {
+        maximum_chunk_len: requested.min(total_subsets),
+        chunk_count,
+        last_chunk_len: total_subsets - (chunk_count - 1) * requested,
+    };
+    *LAST_EFFECTIVE_PARTITION
+        .lock()
+        .expect("parallel permanent partition observation lock is not poisoned") =
+        Some(observation);
+}
+
+/// Clears the test-support observation of the effective permanent partition.
+///
+/// This resets only evidence instrumentation. It does not reset tuning or the
+/// requested-value observation returned by [`last_effective_chunk`].
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_last_effective_partition() {
+    *LAST_EFFECTIVE_PARTITION
+        .lock()
+        .expect("parallel permanent partition observation lock is not poisoned") = None;
+}
+
+/// Returns the effective partition from the last completed non-empty walk.
+///
+/// Call this after exactly one parallel permanent invocation whose call was
+/// preceded by [`reset_last_effective_partition`]. The observation is
+/// published once, after the production reduction completes. An empty `0 x 0`
+/// permanent performs no subset walk and therefore leaves this as `None`.
+/// Concurrent permanent invocations intentionally have no attribution
+/// guarantee.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn last_effective_partition() -> Option<PermanentPartitionObservation> {
+    *LAST_EFFECTIVE_PARTITION
+        .lock()
+        .expect("parallel permanent partition observation lock is not poisoned")
+}
+
 /// Compute the permanent of an `n × n` matrix over `F_3` using rayon-parallel
 /// Ryser's formula, splitting the Gray-code subset enumeration across worker
 /// threads.
@@ -252,10 +317,15 @@ pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subset
                 &columns,
                 n,
                 chunk_start,
-                (chunk_start + chunk_subsets as u64).min(total_subsets + 1),
+                chunk_start
+                    .saturating_add(chunk_subsets as u64)
+                    .min(total_subsets + 1),
             )
         })
         .reduce(|| Fp::<3>::new(0), |a, b| a + b);
+
+    #[cfg(any(test, feature = "test-support"))]
+    record_effective_partition(total_subsets, chunk_subsets);
 
     // Apply the outer (-1)^n factor from Ryser's formula, as in the serial impl.
     if n % 2 == 1 {
