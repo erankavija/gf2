@@ -27,6 +27,13 @@ const PENDING_RECOVERY_STAGING_NAME: &str = ".pending-recovery.intent";
 pub enum JournalEvent {
     CampaignStart,
     SessionStart,
+    SessionPrepared,
+    SessionRecovery,
+    WorkFinished,
+    WrapperReturned,
+    ReleaseUnobserved,
+    ResultValidated,
+    PendingRecovery,
     PhaseStart,
     PhaseComplete,
     CellStart,
@@ -34,6 +41,7 @@ pub enum JournalEvent {
     ExecutionProgress,
     WindowProgress,
     ChildSpawn,
+    ChildDiagnostic,
     ChildExit,
     ChildTimeout,
     CheckpointAccepted,
@@ -58,6 +66,15 @@ impl JournalEvent {
         matches!(
             self,
             Self::SessionStart
+                | Self::SessionPrepared
+                | Self::SessionRecovery
+                | Self::WorkFinished
+                | Self::WrapperReturned
+                | Self::LockHold
+                | Self::LockRelease
+                | Self::ReleaseUnobserved
+                | Self::ResultValidated
+                | Self::PendingRecovery
                 | Self::CheckpointAccepted
                 | Self::Recovery
                 | Self::Interrupted
@@ -137,6 +154,8 @@ impl ExecutionLog {
             .append(true)
             .create_new(true)
             .open(&path)?;
+        file.sync_all()?;
+        File::open(&stage)?.sync_all()?;
         let path = fs::canonicalize(path)?;
         Ok(Self {
             path,
@@ -175,7 +194,10 @@ impl ExecutionLog {
         let session_id = checked_identity(session_id.into(), "session")?;
         let path = fs::canonicalize(path.as_ref())?;
         if let Some((intent_path, intent)) = find_incomplete_recovery(&path)? {
-            if intent.campaign_id != campaign_id || intent.resume_session_id != session_id {
+            if intent.campaign_id != campaign_id
+                || intent.resume_session_id != session_id
+                || intent.mode != RecoveryMode::Resume
+            {
                 return Err(invalid(
                     "incomplete log recovery belongs to a different campaign or resume session",
                 ));
@@ -183,9 +205,13 @@ impl ExecutionLog {
             return continue_log_recovery(&path, &intent_path, intent);
         }
         let bytes = fs::read(&path)?;
-        if let Some((intent_path, intent)) =
-            begin_log_recovery(&path, &bytes, &campaign_id, &session_id)?
-        {
+        if let Some((intent_path, intent)) = begin_log_recovery(
+            &path,
+            &bytes,
+            &campaign_id,
+            &session_id,
+            RecoveryMode::Resume,
+        )? {
             return continue_log_recovery(&path, &intent_path, intent);
         }
         let contents = String::from_utf8(bytes)
@@ -230,9 +256,112 @@ impl ExecutionLog {
         Ok(log)
     }
 
+    /// Repairs an active session's torn final append without changing sessions.
+    ///
+    /// The caller holds the campaign sole-writer guard. Exact suffix bytes and
+    /// their original/prefix hashes are synced before truncation. Repair adds
+    /// only a synced Recovery record: it never invents release, interruption,
+    /// or a replacement session. The campaign layer obtains independent release
+    /// proof, projects LockRelease and Interrupted, then retires the old claim.
+    pub fn repair_active(
+        path: impl AsRef<Path>,
+        campaign_id: impl Into<String>,
+        session_id: impl Into<String>,
+    ) -> io::Result<Self> {
+        let campaign_id = checked_identity(campaign_id.into(), "campaign")?;
+        let session_id = checked_identity(session_id.into(), "session")?;
+        let path = fs::canonicalize(path)?;
+        if let Some((intent_path, intent)) = find_incomplete_recovery(&path)? {
+            if intent.mode != RecoveryMode::RepairActive
+                || intent.campaign_id != campaign_id
+                || intent.prior_session_id != session_id
+                || intent.resume_session_id != session_id
+            {
+                return Err(invalid(
+                    "active recovery intent belongs to another session or mode",
+                ));
+            }
+            return continue_log_recovery(&path, &intent_path, intent);
+        }
+        let bytes = fs::read(&path)?;
+        if let Some((intent_path, intent)) = begin_log_recovery(
+            &path,
+            &bytes,
+            &campaign_id,
+            &session_id,
+            RecoveryMode::RepairActive,
+        )? {
+            return continue_log_recovery(&path, &intent_path, intent);
+        }
+        Self::reopen_active(path, campaign_id, session_id)
+    }
+
+    /// Reopens the exact current session between sequential driver modes.
+    ///
+    /// The caller must hold the campaign layer's sole-writer guard. This does
+    /// not create a resume/session boundary or infer interruption/release.
+    /// Complete canonical records are mandatory; torn-tail repair belongs to
+    /// explicit recovery after the campaign layer establishes release proof.
+    pub fn reopen_active(
+        path: impl AsRef<Path>,
+        campaign_id: impl Into<String>,
+        session_id: impl Into<String>,
+    ) -> io::Result<Self> {
+        let campaign_id = checked_identity(campaign_id.into(), "campaign")?;
+        let session_id = checked_identity(session_id.into(), "session")?;
+        let path = fs::canonicalize(path)?;
+        let bytes = fs::read(&path)?;
+        let contents = std::str::from_utf8(&bytes).map_err(|_| invalid("journal is not UTF-8"))?;
+        let replay = replay_journal(contents, &campaign_id)?;
+        if replay.current_session != session_id {
+            return Err(invalid("active journal session mismatch"));
+        }
+        let file = OpenOptions::new().append(true).open(&path)?;
+        Ok(Self {
+            path,
+            file,
+            campaign_id,
+            session_id,
+            next_sequence: replay.next_sequence,
+            campaign_started: true,
+            terminal: replay.terminal.is_some(),
+        })
+    }
+
     /// Canonical path which must be announced before bounded work begins.
     pub fn path(&self) -> &Path {
         &self.path
+    }
+
+    /// Validates and syncs the exact complete current prefix before checkpoint
+    /// publication. The returned bytes are the evidence bound by the caller.
+    pub fn validated_synced_prefix(&mut self) -> io::Result<Vec<u8>> {
+        self.file.flush()?;
+        let bytes = fs::read(&self.path)?;
+        let text = std::str::from_utf8(&bytes).map_err(|_| invalid("journal is not UTF-8"))?;
+        let replay = replay_journal(text, &self.campaign_id)?;
+        if replay.next_sequence != self.next_sequence || replay.current_session != self.session_id {
+            return Err(invalid("journal changed outside its sole writer"));
+        }
+        self.file.sync_data()?;
+        Ok(bytes)
+    }
+
+    /// Validates complete canonical journal bytes with the shared replay rules.
+    pub fn validate_prefix(bytes: &[u8], campaign_id: &str) -> io::Result<Vec<JournalRecord>> {
+        let text =
+            std::str::from_utf8(bytes).map_err(|_| invalid("journal prefix is not UTF-8"))?;
+        Ok(replay_journal(text, campaign_id)?.records)
+    }
+
+    /// Immutable campaign identity of this sole journal writer.
+    pub fn campaign_id(&self) -> &str {
+        &self.campaign_id
+    }
+
+    /// Current session identity; sequential modes reopen this exact session.
+    pub fn session_id(&self) -> &str {
+        &self.session_id
     }
 
     /// Exact readily visible log-path line required by the project invariant.
@@ -296,6 +425,39 @@ impl ExecutionLog {
         Ok(record)
     }
 
+    /// Closes an interrupted session only after a durably recorded observed
+    /// release. The campaign layer supplies the immutable transition evidence.
+    pub fn interrupted_after_release(&mut self, transition: Value) -> io::Result<JournalRecord> {
+        if self.terminal {
+            return Err(invalid("session is already closed"));
+        }
+        let bytes = self.validated_synced_prefix()?;
+        let records = Self::validate_prefix(&bytes, &self.campaign_id)?;
+        if records
+            .iter()
+            .rev()
+            .find(|record| {
+                !matches!(
+                    record.event,
+                    JournalEvent::SessionRecovery | JournalEvent::Recovery
+                )
+            })
+            .is_none_or(|record| record.event != JournalEvent::LockRelease)
+        {
+            return Err(invalid(
+                "interruption requires immediately preceding observed release",
+            ));
+        }
+        let details = serde_json::json!({
+            "session": self.session_id,
+            "cause": "release-observed-recovery",
+            "session_transition": transition,
+        });
+        let record = self.append_inner(JournalEvent::Interrupted, None, details)?;
+        self.terminal = true;
+        Ok(record)
+    }
+
     fn append_inner(
         &mut self,
         event: JournalEvent,
@@ -337,10 +499,18 @@ enum RecoveryPhase {
     SessionStarted,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum RecoveryMode {
+    Resume,
+    RepairActive,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct RecoveryIntent {
     schema: String,
+    mode: RecoveryMode,
     recovery_id: String,
     campaign_id: String,
     prior_session_id: String,
@@ -361,6 +531,7 @@ struct RecoveryIntent {
 #[serde(deny_unknown_fields)]
 struct RecoveryRecordDetails {
     recovery_id: String,
+    mode: RecoveryMode,
     diagnostic_path: String,
     diagnostic_sha256: String,
     original_log_len: u64,
@@ -378,6 +549,8 @@ struct InterruptedDetails {
     cause: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     recovery_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    session_transition: Option<Value>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -393,6 +566,7 @@ fn begin_log_recovery(
     bytes: &[u8],
     campaign_id: &str,
     resume_session_id: &str,
+    mode: RecoveryMode,
 ) -> io::Result<Option<(PathBuf, RecoveryIntent)>> {
     let Some(last_newline) = bytes.iter().rposition(|byte| *byte == b'\n') else {
         return Err(invalid(
@@ -414,8 +588,14 @@ fn begin_log_recovery(
             "a complete or failed campaign cannot recover a torn tail",
         ));
     }
-    if replay.sessions.contains(resume_session_id) {
-        return Err(invalid("resume session identity was already used"));
+    match mode {
+        RecoveryMode::Resume if replay.sessions.contains(resume_session_id) => {
+            return Err(invalid("resume session identity was already used"))
+        }
+        RecoveryMode::RepairActive if replay.current_session != resume_session_id => {
+            return Err(invalid("active repair session identity mismatch"))
+        }
+        _ => {}
     }
     let suffix = &bytes[prefix_len..];
     let original_sha256 = sha256_bytes(bytes);
@@ -429,6 +609,7 @@ fn begin_log_recovery(
     let diagnostic = fs::canonicalize(diagnostic)?;
     let intent = RecoveryIntent {
         schema: RECOVERY_SCHEMA.to_owned(),
+        mode,
         recovery_id: recovery_id.clone(),
         campaign_id: campaign_id.to_owned(),
         prior_session_id: replay.current_session,
@@ -534,6 +715,19 @@ fn continue_log_recovery(
     }
     set_recovery_phase(intent_path, &mut intent, RecoveryPhase::RecoveryRecorded)?;
     replay = replay_journal(&fs::read_to_string(path)?, &intent.campaign_id)?;
+
+    if intent.mode == RecoveryMode::RepairActive {
+        if replay.current_session != intent.prior_session_id
+            || replay.next_sequence != intent.complete_prefix_records + 1
+        {
+            return Err(invalid("active repair advanced beyond its recovery record"));
+        }
+        fs::remove_file(intent_path)?;
+        File::open(intent_path.parent().unwrap_or_else(|| Path::new(".")))?.sync_all()?;
+        let mut log = log_from_replay(path, &intent.campaign_id, &replay)?;
+        log.terminal = replay.terminal.is_some();
+        return Ok(log);
+    }
 
     let needs_interrupted = intent.prefix_terminal.is_none();
     let interrupted_sequence = intent.complete_prefix_records + 1;
@@ -643,6 +837,7 @@ fn continue_log_recovery(
 fn recovery_details(intent: &RecoveryIntent) -> Value {
     serde_json::json!({
         "recovery_id": intent.recovery_id,
+        "mode": intent.mode,
         "diagnostic_path": intent.diagnostic_path,
         "diagnostic_sha256": intent.diagnostic_sha256,
         "original_log_len": intent.original_log_len,
@@ -733,6 +928,11 @@ fn validate_recovery_intent(intent: &RecoveryIntent) -> io::Result<()> {
     checked_identity(intent.campaign_id.clone(), "recovery campaign")?;
     checked_identity(intent.prior_session_id.clone(), "recovery prior session")?;
     checked_identity(intent.resume_session_id.clone(), "recovery resume session")?;
+    if (intent.mode == RecoveryMode::RepairActive)
+        != (intent.prior_session_id == intent.resume_session_id)
+    {
+        return Err(invalid("recovery mode and session identities disagree"));
+    }
     let expected_recovery_id = sha256_bytes(
         format!(
             "{}:{}:{}:{}",
@@ -894,13 +1094,31 @@ fn replay_journal(contents: &str, campaign_id: &str) -> io::Result<JournalReplay
             if !recoveries.insert(details.recovery_id.clone()) {
                 return Err(invalid("journal duplicates a recovery identity"));
             }
-            pending_recovery = Some(details.recovery_id);
+            if details.mode == RecoveryMode::Resume {
+                pending_recovery = Some(details.recovery_id);
+            }
         }
         if record.event == JournalEvent::Interrupted {
             let details: InterruptedDetails = serde_json::from_value(record.details.clone())
                 .map_err(|error| invalid(format!("invalid interrupted details: {error}")))?;
             let valid_cause = match (details.cause.as_str(), details.recovery_id.as_ref()) {
-                ("missing-terminal-record", None) => pending_recovery.is_none(),
+                ("missing-terminal-record", None) => {
+                    pending_recovery.is_none() && details.session_transition.is_none()
+                }
+                ("release-observed-recovery", None) => {
+                    pending_recovery.is_none()
+                        && details.session_transition.is_some()
+                        && records
+                            .iter()
+                            .rev()
+                            .find(|prior: &&JournalRecord| {
+                                !matches!(
+                                    prior.event,
+                                    JournalEvent::SessionRecovery | JournalEvent::Recovery
+                                )
+                            })
+                            .is_some_and(|prior| prior.event == JournalEvent::LockRelease)
+                }
                 ("torn-journal-tail", Some(recovery_id)) => {
                     pending_recovery.as_ref() == Some(recovery_id)
                 }
@@ -1114,6 +1332,7 @@ impl CheckpointStore {
         validate_resume_identity(&identity)?;
         let root = root.as_ref();
         fs::create_dir(root)?;
+        File::open(root.parent().unwrap_or_else(|| Path::new(".")))?.sync_all()?;
         fs::create_dir(root.join("units"))?;
         fs::create_dir(root.join("pending"))?;
         let manifest = CheckpointManifest {
@@ -1260,9 +1479,24 @@ impl CheckpointStore {
         Ok(completed)
     }
 
+    /// Campaign identity pinned by the immutable checkpoint manifest.
+    pub fn campaign_id(&self) -> &str {
+        &self.manifest.campaign_id
+    }
+
+    /// Full immutable resume identity pinned by the checkpoint manifest.
+    pub fn identity(&self) -> &ResumeIdentity {
+        &self.manifest.identity
+    }
+
     /// Returns completed keys in deterministic order.
     pub fn completed_keys(&self) -> Vec<&str> {
         self.completed.keys().map(String::as_str).collect()
+    }
+
+    /// Immutable accepted-file identity for journal binding and owner exports.
+    pub fn completed_unit(&self, key: &str) -> Option<&CompletedUnit> {
+        self.completed.get(key)
     }
 
     /// Entries in the durable recovery batch, or empty after acknowledgement.
@@ -1742,7 +1976,9 @@ where
     let bytes = canonical_bytes(&value)?;
     let typed: T = serde_json::from_value(value)
         .map_err(|error| invalid(format!("{name} has invalid schema: {error}")))?;
-    if canonical_bytes(&typed)? != bytes {
+    // Values use sorted object keys; owner structs use declaration order.
+    // Compare the same canonical Value representation on both sides.
+    if canonical_bytes(&serde_json::to_value(&typed)?)? != bytes {
         return Err(invalid(format!("{name} does not re-encode canonically")));
     }
     Ok(typed)
@@ -1762,7 +1998,7 @@ fn checked_identity(value: String, kind: &str) -> io::Result<String> {
     }
 }
 
-fn validate_resume_identity(identity: &ResumeIdentity) -> io::Result<()> {
+pub(crate) fn validate_resume_identity(identity: &ResumeIdentity) -> io::Result<()> {
     validate_sha256(&identity.protocol_digest, "protocol digest")?;
     validate_sha256(&identity.source_sha256, "source digest")?;
     validate_sha256(
@@ -1860,4 +2096,173 @@ fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
     let month = month_prime + if month_prime < 10 { 3 } else { -9 };
     year += i64::from(month <= 2);
     (year, month, day)
+}
+
+#[cfg(test)]
+mod active_repair_tests {
+    use super::*;
+    use crate::campaign::{
+        DeclaredCounts, LockEvidence, SessionChannels, SessionDescriptor, SessionMode,
+        SessionState, SessionStore, SessionTransition, Token, FEATURE_CONTRACT, LIFECYCLE_SCHEMA,
+        THREAD_CONTRACT,
+    };
+
+    struct Scratch(PathBuf);
+    impl Scratch {
+        fn new() -> Self {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let path = std::env::temp_dir()
+                .join(format!("active-log-repair-{}-{nonce}", std::process::id()));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    fn descriptor(stage: &Path) -> SessionDescriptor {
+        let hash = sha256_bytes(b"fixed");
+        SessionDescriptor {
+            schema: LIFECYCLE_SCHEMA.into(),
+            campaign_id: Token::new("campaign").unwrap(),
+            session_id: Token::new("session").unwrap(),
+            channels: SessionChannels::for_stage(stage).unwrap(),
+            identity: ResumeIdentity {
+                protocol_digest: hash.clone(),
+                source_revision: "a".repeat(40),
+                source_sha256: hash.clone(),
+                ordered_work_manifest_sha256: hash.clone(),
+                process_descriptors_sha256: hash.clone(),
+                executable_sha256: BTreeMap::from([("producer".into(), hash.clone())]),
+                behavior_sha256: BTreeMap::from([("producer".into(), hash.clone())]),
+                lifecycle_schema: LIFECYCLE_SCHEMA.into(),
+                lifecycle_behavior_sha256: hash,
+                feature_contract: FEATURE_CONTRACT.into(),
+                thread_contract: THREAD_CONTRACT.into(),
+                host_identity: "host".into(),
+            },
+            counts: DeclaredCounts::for_cells(1).unwrap(),
+            lock_path: "/tmp/campaign.lock".into(),
+        }
+    }
+    fn held_session(stage: &Path) -> SessionDescriptor {
+        let expected = descriptor(stage);
+        let mut log = ExecutionLog::create_new(stage, "campaign", "session").unwrap();
+        log.append(JournalEvent::CampaignStart, None, serde_json::json!({}))
+            .unwrap();
+        let mut session = SessionStore::prepare(expected.clone()).unwrap();
+        session.consume_mode(SessionMode::RunSession).unwrap();
+        session
+            .transition(
+                &mut log,
+                SessionTransition::LockHeld {
+                    evidence: LockEvidence {
+                        lock_path: expected.lock_path.clone(),
+                        holder_pid: 123,
+                        observation: Token::new("inherited").unwrap(),
+                    },
+                },
+            )
+            .unwrap();
+        expected
+    }
+
+    #[test]
+    fn active_claim_survives_every_same_session_torn_repair_boundary() {
+        for boundary in 0..5 {
+            let scratch = Scratch::new();
+            let expected = held_session(&scratch.0);
+            let path = expected.channels.execution_log.clone();
+            let suffix = b"{\"uncommitted-child\":";
+            OpenOptions::new()
+                .append(true)
+                .open(&path)
+                .unwrap()
+                .write_all(suffix)
+                .unwrap();
+            let original = fs::read(&path).unwrap();
+            let (intent_path, mut intent) = begin_log_recovery(
+                &path,
+                &original,
+                "campaign",
+                "session",
+                RecoveryMode::RepairActive,
+            )
+            .unwrap()
+            .unwrap();
+            if boundary >= 1 {
+                normalize_recovery_log(&path, &intent).unwrap();
+                set_recovery_phase(&intent_path, &mut intent, RecoveryPhase::LogTruncated).unwrap();
+            }
+            if boundary == 2 {
+                OpenOptions::new()
+                    .append(true)
+                    .open(&path)
+                    .unwrap()
+                    .write_all(b"{\"partial-recovery\":")
+                    .unwrap();
+            }
+            if boundary >= 3 {
+                let replay =
+                    replay_journal(&fs::read_to_string(&path).unwrap(), "campaign").unwrap();
+                let mut log = log_from_replay(&path, "campaign", &replay).unwrap();
+                log.append_inner(JournalEvent::Recovery, None, recovery_details(&intent))
+                    .unwrap();
+            }
+            if boundary == 4 {
+                set_recovery_phase(&intent_path, &mut intent, RecoveryPhase::RecoveryRecorded)
+                    .unwrap();
+            }
+            let session = SessionStore::reopen(expected.clone()).unwrap();
+            let log = session.repair_log().unwrap();
+            assert_eq!(session.lifecycle().state(), SessionState::LockHeld);
+            assert_eq!(log.session_id(), "session");
+            assert!(scratch.0.join("active-session.json").exists());
+            assert!(!intent_path.exists());
+            let records =
+                ExecutionLog::validate_prefix(&fs::read(&path).unwrap(), "campaign").unwrap();
+            assert_eq!(
+                records
+                    .iter()
+                    .filter(|record| record.event == JournalEvent::Recovery)
+                    .count(),
+                1
+            );
+            assert!(records.iter().all(|record| !matches!(
+                record.event,
+                JournalEvent::LockRelease | JournalEvent::Interrupted | JournalEvent::SessionStart
+            )));
+            assert_eq!(fs::read(&intent.diagnostic_path).unwrap(), suffix);
+            let sequence = log.next_sequence();
+            drop(log);
+            assert_eq!(session.repair_log().unwrap().next_sequence(), sequence);
+        }
+    }
+
+    #[test]
+    fn active_repair_preserves_complete_malformed_records_and_rejects_wrong_session() {
+        let scratch = Scratch::new();
+        let expected = held_session(&scratch.0);
+        let path = &expected.channels.execution_log;
+        OpenOptions::new()
+            .append(true)
+            .open(path)
+            .unwrap()
+            .write_all(b"not-json\n")
+            .unwrap();
+        let original = fs::read(path).unwrap();
+        let session = SessionStore::reopen(expected.clone()).unwrap();
+        assert!(session.repair_log().is_err());
+        assert_eq!(fs::read(path).unwrap(), original);
+        assert!(scratch.0.join("active-session.json").exists());
+        fs::write(path, &original[..original.len() - 1]).unwrap();
+        let torn = fs::read(path).unwrap();
+        assert!(ExecutionLog::repair_active(path, "campaign", "different-session").is_err());
+        assert_eq!(fs::read(path).unwrap(), torn);
+    }
 }

@@ -1,38 +1,25 @@
-//! Host calibration for the tuning-profile selector families.
+//! Crate-owned calibration of retained core thresholds and execution extents.
 //!
-//! This executable is the canonical format-2 core-section calibration
-//! producer. It measures the sixteen selector fields through seventeen
-//! independently reconciled sweeps and emits only harness schema
-//! `tuning-calibration-v3`. Every probe and timed execution runs in a fresh
-//! child process that strictly reopens and installs its forced core section
-//! before constructing a fixture or calling a production dispatcher.
+//! The neutral campaign driver owns scheduling, durable logging, checkpointing,
+//! and the outer host reservation. This producer owns typed cases, fixtures,
+//! installed core-only envelopes, scalar witnesses, effective execution checks,
+//! and `tuning-calibration-v4` artifact decisions. Only fresh child operations
+//! install tuning. Owner reporting, validation, analysis, and emission never do.
 //!
-//! Calibration is an explicit prepared-host benchmark action. Measurement and
-//! output require `GF2_BENCH=1`, a clean source revision, and the repository's
-//! inherited exclusive host lock. The parent and composer never install tuning
-//! state; malformed, default-resolved, frozen, unreachable, route-mismatched, or
-//! result-mismatched evidence aborts before publication. Output is validated
-//! by strict reopen and published atomically to a unique absent destination.
-//!
-//! The exact grids, fixtures, seed schedule, forcing values, route and
-//! capability witnesses, process accounting, build/run/copy procedure, and
-//! publication gates are declared once in
-//! `dev/active/eaae1b56/premeasurement-protocol.md`, especially sections 2–7.
-//! This source implements that protocol without restating its volatile command
-//! inventory.
-//!
-//! `--self-check` validates and prints protocol identities without measuring
-//! or emitting. `--list-grid` additionally prints every sweep grid and seed
-//! inventory. Neither reporting mode requires `GF2_BENCH=1`.
+//! The exact experiment is declared in
+//! `dev/active/a83583e0/premeasurement-protocol.md`, including its cumulative
+//! reference to the immutable retained threshold protocol. `--owner-operation`
+//! accepts one canonical neutral request on stdin and emits one framed response.
+//! The reporting flags perform no measurement or artifact publication.
 use std::env;
 use std::fmt;
-use std::fs::{self, OpenOptions};
+use std::fs;
 use std::hint::black_box;
 use std::io::{self, Write};
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use gf2_core::alg::gauss::{invert, invert_route, InvertRoute};
 use gf2_core::alg::m4rm::{m4rm_schedule_route, multiply as m4rm_multiply, M4rmScheduleTier};
@@ -146,6 +133,8 @@ impl ProducedCoreProfile {
         })
     }
 
+    #[cfg(test)]
+    #[allow(dead_code)]
     fn omitting(&self, omitted: &[SchemaField]) -> Result<Self, String> {
         let body = CoreTuningCodec::encode_body(&self.section)
             .map_err(|error| format!("complete core section does not encode: {error}"))?;
@@ -190,43 +179,67 @@ fn complete_selector_value(section: &CoreTuning) -> Result<serde_json::Value, St
 const BENCH_MODE_VAR: &str = "GF2_BENCH";
 const RAYON_THREADS_VAR: &str = "RAYON_NUM_THREADS";
 const REQUIRED_RAYON_THREADS: &str = "4";
-const REQUIRED_FEATURES: &str = "parallel,simd,test-support,tuning-profile";
+const REQUIRED_FEATURES: &str = tuning_campaign_support::campaign::FEATURE_CONTRACT;
 const REQUIRED_SOA_PARALLEL_CHUNK_LEN: usize = 16_384;
 const REQUIRED_PLE_BYTE_LANE_MAX_COLS: usize = 256;
 const REQUIRED_TRSM_PANEL_ROWS: usize = 64;
 /// Private guard for every forced tuning child.
-const FRESH_CASE_VAR: &str = "GF2_TUNING_FRESH_CASE";
-const FRESH_CASE_VALUE: &str = "child-v2";
-const FRESH_RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";
+const FRESH_CASE_VAR: &str = tuning_campaign_support::transport::FRESH_CASE_VAR;
+const FRESH_CASE_VALUE: &str = tuning_campaign_support::transport::FRESH_CASE_VALUE;
+const FRESH_RESULT_PREFIX: &str = tuning_campaign_support::transport::FRESH_RESULT_PREFIX;
 const CHILD_OBSERVATION_PREFIX: &str = "GF2_TUNING_CHILD_OBSERVATION=";
+#[cfg(test)]
+#[allow(dead_code)]
 const INTERPOLATION_RECONCILIATION_PREFIX: &str = "GF2_TUNING_INTERPOLATION=";
+#[cfg(test)]
+#[allow(dead_code)]
 const SAMPLE_PREFIX: &str = "GF2_TUNING_SAMPLES=";
+#[cfg(test)]
+#[allow(dead_code)]
 const SEED_PREFIX: &str = "GF2_TUNING_SEEDS=";
-const RAW_SAMPLE_SCHEMA: &str = "raw-timing-samples-v2";
+const RAW_SAMPLE_SCHEMA: &str = "raw-timing-samples-v3";
 const SEED_SCHEMA: &str = "fixture-seeds-v2";
 const SEED_DERIVATION: &str = "gf2-calibration-seed-v1";
 /// Wrapper-overridable mutex path, read only to explain a failed lock probe.
+#[cfg(test)]
+#[allow(dead_code)]
 const LOCK_PATH_VAR: &str = "GF2_CCX1_LOCK";
+#[cfg(test)]
+#[allow(dead_code)]
 const DEFAULT_LOCK_PATH: &str = "/tmp/gf2-ccx1.lock";
 const REQUIRED_RUSTUP_TOOLCHAIN: &str = "1.95.0";
-const DEFAULT_EXECUTIONS: u64 = 5;
-const DEFAULT_REPETITIONS: u64 = 5;
-const DEFAULT_TARGET_MS: u64 = 250;
+const DEFAULT_EXECUTIONS: u64 = tuning_campaign_support::timing::EXECUTIONS;
+const DEFAULT_REPETITIONS: u64 = tuning_campaign_support::timing::WINDOWS;
+const DEFAULT_TARGET_MS: u64 = tuning_campaign_support::timing::TARGET.as_millis() as u64;
+#[cfg(test)]
+#[allow(dead_code)]
 const EXPECTED_MEASURED_FIELDS: usize = 16;
 const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;
+#[cfg(test)]
+#[allow(dead_code)]
 const EXPECTED_OMITTED_FIELDS: usize = 21;
+#[cfg(test)]
+#[allow(dead_code)]
 const EXPECTED_GRID_ARM_CELLS: usize = 306;
+#[cfg(test)]
+#[allow(dead_code)]
 const EXPECTED_PROBE_CHILDREN: usize = 306;
+#[cfg(test)]
+#[allow(dead_code)]
 const EXPECTED_TIMED_CHILDREN: usize = 1_530;
+#[cfg(test)]
+#[allow(dead_code)]
 const EXPECTED_FRESH_CHILDREN: usize = 1_836;
+#[cfg(test)]
+#[allow(dead_code)]
 const EXPECTED_RAW_WINDOWS: usize = 7_650;
 /// Upper bound on the calibrated call count of one timed window.
-const MAX_CALLS: u64 = 1 << 32;
+const MAX_CALLS: u64 = tuning_campaign_support::timing::MAX_CALLS;
 /// Fixture bank depth for the bit-backend arms, matching the sibling harness.
-const BIT_FIXTURES: usize = 8;
+const BIT_FIXTURES: usize = tuning_campaign_support::timing::FIXTURE_BANKS;
 /// `u64` words per 64-byte cache line on the supported targets.
 const WORDS_PER_LINE: usize = 8;
-const SEED_ROOT: u64 = 0x5ecc_9bf8_0000_0000;
+const SEED_ROOT: u64 = tuning_campaign_support::seed::EXTENT_SEED_ROOT;
 const SEED_ROLE_BIT_DST: u64 = 0xD000_0000;
 const SEED_ROLE_BIT_SRC: u64 = 0xA000_0000;
 const SEED_ROLE_POLY_LHS: u64 = 0xA;
@@ -290,6 +303,8 @@ const FOLLOW_ON_ROLES: &[(CalibratedField, &[(&str, u64)])] = &[
         &[("coefficients", 0xa00), ("point_offset", 0xa01)],
     ),
 ];
+#[cfg(test)]
+#[allow(dead_code)]
 const GIT_STATUS_ARGS: &[&str] = &["status", "--porcelain", "--untracked-files=all"];
 /// `polynomial.karatsuba_min_degree` a child installs to force the schoolbook
 /// arm.
@@ -505,12 +520,16 @@ impl CalibratedField {
     /// Every probe and timed execution runs in a fresh process. This keeps the
     /// process-global tuning cell out of the parent and gives every arm the
     /// same strict reopen-before-install evidence.
+    #[cfg(test)]
+    #[allow(dead_code)]
     fn arm_source(self) -> ArmSource {
         let _ = self;
         ArmSource::FreshChild
     }
 
     /// The unit the grid points are measured in.
+    #[cfg(test)]
+    #[allow(dead_code)]
     fn grid_unit(self) -> &'static str {
         match self {
             Self::SimdMinWords => "buffer words",
@@ -678,12 +697,15 @@ impl fmt::Display for Arm {
 
 /// Where a field's two arms are timed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg(test)]
+#[allow(dead_code)]
 enum ArmSource {
     /// Every probe and timed execution owns a new process and installed core
     /// section.
     FreshChild,
 }
 
+#[cfg(test)]
 impl fmt::Display for ArmSource {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(match self {
@@ -710,6 +732,8 @@ impl Protocol {
     }
 
     /// Timed windows recorded per arm at one grid point.
+    #[cfg(test)]
+    #[allow(dead_code)]
     fn windows(&self) -> usize {
         (self.executions * self.repetitions) as usize
     }
@@ -717,17 +741,11 @@ impl Protocol {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Mode {
-    Calibrate {
-        out: PathBuf,
-        profile_id: Option<String>,
-        lock_wrapper: String,
-        receipt: String,
-    },
     SelfCheck,
     ListGrid,
     CapabilityReport,
-    /// Fixed private entry mode; the guarded case arrives canonically on stdin.
     FreshChild,
+    OwnerOperation,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -737,118 +755,25 @@ struct Args {
 }
 
 fn parse_args(args: impl Iterator<Item = String>) -> Result<Args, String> {
-    let mut executions = DEFAULT_EXECUTIONS;
-    let mut repetitions = DEFAULT_REPETITIONS;
-    let mut target_ms = DEFAULT_TARGET_MS;
-    let mut out: Option<PathBuf> = None;
-    let mut profile_id: Option<String> = None;
-    let mut lock_wrapper: Option<String> = None;
-    let mut receipt: Option<String> = None;
-    let mut self_check = false;
-    let mut list_grid = false;
-    let mut capability_report = false;
-    let mut fresh_child = false;
-    let mut protocol_override = false;
-    let mut iter = args;
-    while let Some(arg) = iter.next() {
-        match arg.as_str() {
-            "--executions" => {
-                executions = parse_value(&mut iter, &arg)?;
-                protocol_override = true;
-            }
-            "--repetitions" => {
-                repetitions = parse_value(&mut iter, &arg)?;
-                protocol_override = true;
-            }
-            "--target-ms" => {
-                target_ms = parse_value(&mut iter, &arg)?;
-                protocol_override = true;
-            }
-            "--out" => out = Some(PathBuf::from(next_value(&mut iter, &arg)?)),
-            "--profile-id" => profile_id = Some(next_value(&mut iter, &arg)?),
-            "--lock-wrapper" => lock_wrapper = Some(next_value(&mut iter, &arg)?),
-            "--receipt" => receipt = Some(next_value(&mut iter, &arg)?),
-            "--self-check" => self_check = true,
-            "--list-grid" => list_grid = true,
-            "--capability-report" => capability_report = true,
-            "--fresh-tuning-process-child" => {
-                if fresh_child {
-                    return Err("duplicate --fresh-tuning-process-child".to_owned());
-                }
-                fresh_child = true;
-            }
-            "--bench" => {}
-            _ => return Err(format!("unknown argument: {arg}")),
+    let mut mode = None;
+    for argument in args {
+        let selected = match argument.as_str() {
+            "--self-check" => Mode::SelfCheck,
+            "--list-grid" => Mode::ListGrid,
+            "--capability-report" => Mode::CapabilityReport,
+            "--fresh-tuning-process-child" => Mode::FreshChild,
+            "--owner-operation" => Mode::OwnerOperation,
+            "--bench" => continue,
+            _ => return Err(format!("unknown argument: {argument}")),
+        };
+        if mode.replace(selected).is_some() {
+            return Err("select exactly one explicit owner mode".to_owned());
         }
     }
-    for (flag, value) in [
-        ("--executions", executions),
-        ("--repetitions", repetitions),
-        ("--target-ms", target_ms),
-    ] {
-        if value == 0 {
-            return Err(format!("{flag} must be positive"));
-        }
-    }
-    if [self_check, list_grid, capability_report, fresh_child]
-        .into_iter()
-        .filter(|selected| *selected)
-        .count()
-        > 1
-    {
-        return Err(
-            "--self-check, --list-grid, --capability-report and --fresh-tuning-process-child are separate modes".into(),
-        );
-    }
-    let protocol = Protocol {
-        executions,
-        repetitions,
-        target_ms,
-    };
-    let mode = if self_check {
-        Mode::SelfCheck
-    } else if list_grid {
-        Mode::ListGrid
-    } else if capability_report {
-        Mode::CapabilityReport
-    } else if fresh_child {
-        if protocol_override
-            || out.is_some()
-            || profile_id.is_some()
-            || lock_wrapper.is_some()
-            || receipt.is_some()
-        {
-            return Err(
-                "the fresh tuning child accepts its complete case only on standard input".into(),
-            );
-        }
-        Mode::FreshChild
-    } else {
-        Mode::Calibrate {
-            out: out.ok_or("--out is required; name a unique absent path under /tmp")?,
-            profile_id,
-            lock_wrapper: lock_wrapper.ok_or(
-                "--lock-wrapper is required; name the wrapper this run was invoked through",
-            )?,
-            receipt: receipt
-                .ok_or("--receipt is required; name the receipt this run will be committed as")?,
-        }
-    };
-    Ok(Args { protocol, mode })
-}
-
-fn parse_value<T: std::str::FromStr>(
-    iter: &mut impl Iterator<Item = String>,
-    flag: &str,
-) -> Result<T, String> {
-    next_value(iter, flag)?
-        .parse()
-        .map_err(|_| format!("invalid value for {flag}"))
-}
-
-fn next_value(iter: &mut impl Iterator<Item = String>, flag: &str) -> Result<String, String> {
-    iter.next()
-        .ok_or_else(|| format!("missing value for {flag}"))
+    Ok(Args {
+        protocol: campaign_owner::fixed_protocol(),
+        mode: mode.ok_or("an explicit owner mode is required")?,
+    })
 }
 
 /// Resolves a path the caller gave on the command line.
@@ -929,6 +854,8 @@ struct FreshProcessCase {
 /// Everything the emitted provenance records that this run observes rather than
 /// takes from its own protocol constants.
 #[derive(Clone, Debug)]
+#[cfg(test)]
+#[allow(dead_code)]
 struct HostFacts {
     source_revision: GitRevision,
     source_dirty: bool,
@@ -951,6 +878,8 @@ fn sha256_file(path: &Path) -> Result<Sha256, String> {
         .map_err(|error| format!("cannot represent {} digest: {error}", path.display()))
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn require_unchanged_binary(path: &Path, expected: &Sha256, role: &str) -> Result<(), String> {
     let observed = sha256_file(path)?;
     if &observed != expected {
@@ -963,6 +892,8 @@ fn require_unchanged_binary(path: &Path, expected: &Sha256, role: &str) -> Resul
     Ok(())
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn command_output(program: &str, args: &[&str]) -> io::Result<String> {
     let output = Command::new(program).args(args).output()?;
     if !output.status.success() {
@@ -984,6 +915,8 @@ fn command_output(program: &str, args: &[&str]) -> io::Result<String> {
 /// repository root and this package's directory are tried and the candidate
 /// that names a real file wins; a path that names neither is an error rather
 /// than a provenance claim nobody checked.
+#[cfg(test)]
+#[allow(dead_code)]
 fn harness_path(repo_root: &Path) -> io::Result<String> {
     let package = Path::new(env!("CARGO_MANIFEST_DIR"))
         .strip_prefix(repo_root)
@@ -1009,6 +942,8 @@ fn harness_path(repo_root: &Path) -> io::Result<String> {
 /// The compiler's path for this file gains a parent segment when the
 /// `#[cfg(test)]` module below is compiled through the integration-test wrapper
 /// that includes this file from `tests/`.
+#[cfg(test)]
+#[allow(dead_code)]
 fn normalize_relative(path: &Path) -> String {
     let mut parts: Vec<&str> = Vec::new();
     for part in path.iter().filter_map(|part| part.to_str()) {
@@ -1057,6 +992,8 @@ fn cpu_features() -> Vec<String> {
 }
 
 /// The CPU list this process is allowed to run on, as `taskset` left it.
+#[cfg(test)]
+#[allow(dead_code)]
 fn cpu_affinity() -> io::Result<String> {
     let status = fs::read_to_string("/proc/self/status")?;
     status
@@ -1067,6 +1004,8 @@ fn cpu_affinity() -> io::Result<String> {
 }
 
 /// The scaling governor of the first CPU this process is pinned to.
+#[cfg(test)]
+#[allow(dead_code)]
 fn governor(affinity: &str) -> io::Result<String> {
     let first = affinity
         .split(',')
@@ -1091,6 +1030,8 @@ fn governor(affinity: &str) -> io::Result<String> {
 /// the repository mutex, rather than by some unrelated inherited lock. The
 /// lock's owning PID is the wrapper's, not ours, so the match is on device and
 /// inode rather than PID.
+#[cfg(test)]
+#[allow(dead_code)]
 fn observed_lock_file(expected_path: &Path) -> io::Result<Option<String>> {
     let mut locked: Vec<(u64, u64)> = Vec::new();
     for line in fs::read_to_string("/proc/locks")?.lines() {
@@ -1130,10 +1071,14 @@ fn observed_lock_file(expected_path: &Path) -> io::Result<Option<String>> {
 
 /// Linux `makedev` encoding, matching the `MAJOR:MINOR` pair `/proc/locks`
 /// prints against the device id `stat` reports.
+#[cfg(test)]
+#[allow(dead_code)]
 fn makedev(major: u64, minor: u64) -> u64 {
     ((major & 0xfff) << 8) | (minor & 0xff) | ((major & !0xfff) << 32) | ((minor & !0xff) << 12)
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn collect_host_facts() -> io::Result<HostFacts> {
     let repo_root = PathBuf::from(command_output("git", &["rev-parse", "--show-toplevel"])?);
     let revision = command_output("git", &["rev-parse", "HEAD"])?;
@@ -1191,6 +1136,8 @@ fn collect_host_facts() -> io::Result<HostFacts> {
 }
 
 /// Refuses to start a calibration whose named revision cannot reproduce its binary.
+#[cfg(test)]
+#[allow(dead_code)]
 fn require_clean_source(source_dirty: bool, source_revision: &GitRevision) -> Result<(), String> {
     if source_dirty {
         Err(format!(
@@ -1203,6 +1150,8 @@ fn require_clean_source(source_dirty: bool, source_revision: &GitRevision) -> Re
 }
 
 /// Formats a UTC instant in the RFC 3339 form `Rfc3339Utc::parse` accepts.
+#[cfg(test)]
+#[allow(dead_code)]
 fn rfc3339_utc(instant: SystemTime) -> io::Result<String> {
     let seconds = instant
         .duration_since(UNIX_EPOCH)
@@ -1220,6 +1169,8 @@ fn rfc3339_utc(instant: SystemTime) -> io::Result<String> {
 
 /// Civil date of the day `days` after 1970-01-01, by the shift-to-March
 /// era arithmetic that avoids a month-length table.
+#[cfg(test)]
+#[allow(dead_code)]
 fn civil_from_days(days: i64) -> (i64, i64, i64) {
     let shifted = days + 719_468;
     let era = if shifted >= 0 {
@@ -1326,19 +1277,12 @@ enum Fixture {
 }
 
 fn seed_for(field: CalibratedField, size: usize, role: u64) -> u64 {
-    let mut value = SEED_ROOT ^ role.wrapping_mul(0x9e37_79b9_7f4a_7c15);
-    for word in [field.seed_tag(), size as u64] {
-        value ^= word;
-        value = value
-            .wrapping_mul(0xbf58_476d_1ce4_e5b9)
-            .rotate_left(27)
-            .wrapping_add(0x94d0_49bb_1331_11eb);
-    }
-    value ^ (value >> 31)
+    tuning_campaign_support::seed::fixture_seed(SEED_ROOT, field.seed_tag(), size as u64, role)
 }
 
 /// One named deterministic fixture stream.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
 struct SeedStream {
     name: String,
     role: u64,
@@ -1347,6 +1291,7 @@ struct SeedStream {
 
 /// Complete seed inventory for one field/grid fixture.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
 struct SeedInventory {
     schema: String,
     derivation: String,
@@ -1418,6 +1363,8 @@ fn seed_inventory(field: CalibratedField, size: usize) -> SeedInventory {
     }
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn seed_inventory_line(field: CalibratedField, size: usize) -> Result<String, String> {
     serde_json::to_string(&seed_inventory(field, size))
         .map(|json| format!("{SEED_PREFIX}{json}"))
@@ -1644,11 +1591,14 @@ fn field_lu_parts(
     (lower, upper)
 }
 
-fn scalar_field_matmul(lhs: &FieldMatrix<Fp251>, rhs: &FieldMatrix<Fp251>) -> FieldMatrix<Fp251> {
-    let mut out = FieldMatrix::<Fp251>::zeros(lhs.rows(), rhs.cols());
+fn scalar_field_matmul<const P: u64>(
+    lhs: &FieldMatrix<Fp<P>>,
+    rhs: &FieldMatrix<Fp<P>>,
+) -> FieldMatrix<Fp<P>> {
+    let mut out = FieldMatrix::<Fp<P>>::zeros(lhs.rows(), rhs.cols());
     for row in 0..lhs.rows() {
         for col in 0..rhs.cols() {
-            let mut value = Fp251::new(0);
+            let mut value = Fp::<P>::new(0);
             for inner in 0..lhs.cols() {
                 value += lhs.get(row, inner) * rhs.get(inner, col);
             }
@@ -2291,6 +2241,13 @@ fn execute_follow_on(
             if result.transpose() != banks[bank] {
                 return Err("transpose did not round-trip".to_owned());
             }
+            for row in 0..banks[bank].rows() {
+                for col in 0..banks[bank].cols() {
+                    if result.get(col, row) != banks[bank].get(row, col) {
+                        return Err("transpose failed entrywise scalar semantics".to_owned());
+                    }
+                }
+            }
             digest_bit_matrix(&result)
         }
         (
@@ -2334,6 +2291,27 @@ fn execute_follow_on(
             reset_last_effective_soa_chunk();
             let c_square = cubic_lhs[bank].batch_square_cubic::<CubicBeta3>();
             effective.push(last_effective_soa_chunk());
+            let expected_q_mul = campaign_owner::scalar_soa_product(
+                &quadratic_lhs[bank],
+                &quadratic_rhs[paired_bank(bank)],
+            );
+            let expected_q_square =
+                campaign_owner::scalar_soa_product(&quadratic_lhs[bank], &quadratic_lhs[bank]);
+            let expected_c_mul =
+                campaign_owner::scalar_soa_product(&cubic_lhs[bank], &cubic_rhs[paired_bank(bank)]);
+            let expected_c_square =
+                campaign_owner::scalar_soa_product(&cubic_lhs[bank], &cubic_lhs[bank]);
+            if (0..2).any(|lane| {
+                q_mul.coeff(lane) != expected_q_mul.coeff(lane)
+                    || q_square.coeff(lane) != expected_q_square.coeff(lane)
+            }) || (0..3).any(|lane| {
+                c_mul.coeff(lane) != expected_c_mul.coeff(lane)
+                    || c_square.coeff(lane) != expected_c_square.coeff(lane)
+            }) {
+                return Err(
+                    "retained SoA composite differs from scalar field arithmetic".to_owned(),
+                );
+            }
             {
                 let expected = if spec.arm == Arm::Asymptotic {
                     vec![Some(REQUIRED_SOA_PARALLEL_CHUNK_LEN); 4]
@@ -2490,6 +2468,15 @@ fn execute_follow_on(
                 }
                 if scalar_field_matmul(a, &result) != *b {
                     return Err("TRSM failed A*X=B".to_owned());
+                }
+                campaign_owner::reset_solve_observations();
+                let quiet = a
+                    .solve_batch_quiet_for_test(b)
+                    .ok_or("quiet TRSM fixture became singular")?;
+                if quiet != result || !campaign_owner::quiet_solve_observations_empty() {
+                    return Err(
+                        "quiet TRSM changed semantics or published subtree observations".to_owned(),
+                    );
                 }
                 observation.effective_observation = format!("panel_rows={effective:?}");
             }
@@ -2724,7 +2711,7 @@ fn execute_follow_on_timed(spec: ChildSpec, fixture: &FollowOnFixture, logical_i
             black_box(
                 banks[bank]
                     .0
-                    .solve_batch(&banks[paired_bank(bank)].1)
+                    .solve_batch_quiet_for_test(&banks[paired_bank(bank)].1)
                     .expect("preflight proved TRSM fixture invertible"),
             );
         }
@@ -2764,26 +2751,7 @@ fn simd_backend() -> Option<&'static dyn Backend> {
 // Timing
 // ---------------------------------------------------------------------
 
-/// One timed window in acquisition order.
-///
-/// Integer call and elapsed counts are the durable observation. Nanoseconds
-/// per call and every aggregate below are derived from these fields, so a
-/// receipt can recompute the selection without recovering data from rounded
-/// display values.
-#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
-#[serde(deny_unknown_fields)]
-struct TimingSample {
-    execution: u64,
-    repetition: u64,
-    calls: u64,
-    elapsed_ns: u64,
-}
-
-impl TimingSample {
-    fn ns_per_call(&self) -> f64 {
-        self.elapsed_ns as f64 / self.calls as f64
-    }
-}
+use tuning_campaign_support::timing::TimingSample;
 
 /// Destination and source bank indices for call number `index`, offset so a
 /// call never reads and writes the same buffer.
@@ -2799,50 +2767,30 @@ fn bank_indices(index: usize) -> (usize, usize) {
 fn execution_windows(
     protocol: &Protocol,
     execution: u64,
+    timing_context: Option<&(
+        tuning_campaign_support::campaign::UnitIdentity,
+        tuning_campaign_support::campaign::Sha256Digest,
+    )>,
     mut body: impl FnMut(usize),
 ) -> Vec<TimingSample> {
-    let calls = calibrated_calls(protocol.target(), &mut body);
-    let mut samples = Vec::with_capacity(protocol.repetitions as usize);
-    for repetition in 0..protocol.repetitions {
-        let start_index =
-            ((execution * protocol.repetitions + repetition) as usize) & (BIT_FIXTURES - 1);
-        let elapsed = time_calls(calls, start_index, &mut body);
-        let elapsed_ns = u64::try_from(elapsed.as_nanos())
-            .expect("one calibration window cannot span more than u64 nanoseconds");
-        samples.push(TimingSample {
-            execution,
-            repetition,
-            calls,
-            elapsed_ns,
-        });
+    if let Some((identity, digest)) = timing_context {
+        assert_eq!(protocol, &campaign_owner::fixed_protocol());
+        return tuning_campaign_support::campaign::execution_with_progress(
+            identity,
+            digest,
+            &mut body,
+            &mut io::stderr().lock(),
+        )
+        .expect("campaign timing and progress writes must succeed");
     }
-    samples
-}
-
-fn time_calls(calls: u64, start_index: usize, mut body: impl FnMut(usize)) -> Duration {
-    let start = Instant::now();
-    for call in 0..calls {
-        body(start_index.wrapping_add(call as usize));
-    }
-    start.elapsed()
-}
-
-fn calibrated_calls(target: Duration, mut call: impl FnMut(usize)) -> u64 {
-    let probe_target = target.min(Duration::from_millis(20));
-    let mut calls = 1_u64;
-    loop {
-        let start = Instant::now();
-        for index in 0..calls {
-            call((index as usize) & (BIT_FIXTURES - 1));
-        }
-        let elapsed = start.elapsed();
-        if elapsed >= probe_target || calls >= MAX_CALLS {
-            let elapsed_ns = elapsed.as_nanos().max(1);
-            let wanted = target.as_nanos().saturating_mul(calls as u128) / elapsed_ns;
-            return wanted.clamp(1, MAX_CALLS as u128) as u64;
-        }
-        calls = calls.saturating_mul(2).min(MAX_CALLS);
-    }
+    tuning_campaign_support::timing::execution_windows_configured(
+        execution,
+        protocol.repetitions,
+        protocol.target(),
+        &mut body,
+        |_| Ok(()),
+    )
+    .expect("validated test timing protocol")
 }
 
 // ---------------------------------------------------------------------
@@ -3364,6 +3312,13 @@ fn forced_profile_digests(profile: &PreparedEnvelope) -> Result<ForcedProfileDig
 /// identity mismatch fails before the child can report a successful result.
 fn install_forced_profile(spec: ChildSpec) -> Result<InstalledEvidence, String> {
     let (profile, expected_values) = forced_profile_for(spec)?;
+    install_prepared_profile(profile, expected_values)
+}
+
+fn install_prepared_profile(
+    profile: PreparedEnvelope,
+    expected_values: Vec<ForcedValue>,
+) -> Result<InstalledEvidence, String> {
     let digests = forced_profile_digests(&profile)?;
     let identity_assembly = AssemblyProvenance {
         assembled_at: Rfc3339Utc::parse("1970-01-01T00:00:00Z").map_err(|e| e.to_string())?,
@@ -3452,7 +3407,20 @@ fn install_forced_profile(spec: ChildSpec) -> Result<InstalledEvidence, String> 
 /// so `tuning::install` cannot fail on an already-resolved profile. The arm is
 /// then read back from the production selector rather than assumed from the
 /// value installed.
+#[cfg(test)]
+#[allow(dead_code)]
 fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String> {
+    run_child_with_context(spec, protocol, None)
+}
+
+fn run_child_with_context(
+    spec: ChildSpec,
+    protocol: &Protocol,
+    timing_context: Option<&(
+        tuning_campaign_support::campaign::UnitIdentity,
+        tuning_campaign_support::campaign::Sha256Digest,
+    )>,
+) -> Result<ChildReport, String> {
     if spec.field == CalibratedField::InterpolateFastMinPoints {
         if spec.variant == SweepVariant::Standard {
             return Err("interpolation requires generic or two_adic variant".to_owned());
@@ -3464,6 +3432,15 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
         ));
     }
     let installed = install_forced_profile(spec)?;
+    let expected_full = campaign_owner::section_values(&forced_profile_for(spec)?.0)?;
+    let active_full =
+        campaign_owner::flatten_selectors(&complete_selector_value(tuning::active().section)?)?;
+    if active_full != expected_full {
+        return Err(
+            "retained child failed complete selector readback before fixture construction"
+                .to_owned(),
+        );
+    }
     enum ChildFixture {
         Direct(Fixture),
         FollowOn(FollowOnFixture),
@@ -3512,20 +3489,46 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
             &observation.effective_observation,
             &observation.capability_observation,
         )?;
+        // Check every retained bank without changing the original timed bit buffers.
+        // Polynomial fixtures are single deterministic objects, independent of bank index.
+        for bank in 1..BIT_FIXTURES {
+            let secondary = match fixture {
+                ChildFixture::Direct(Fixture::Bit { .. }) => {
+                    let mut witness = build_fixture(spec.field, spec.size);
+                    execute_direct(spec, &mut witness, bank)?
+                }
+                ChildFixture::Direct(_) => break,
+                ChildFixture::FollowOn(witness) => execute_follow_on(spec, witness, bank)?,
+            };
+            if secondary.availability != ChildAvailability::Available
+                || secondary.observed_route != expected_route
+            {
+                return Err(format!(
+                    "retained fixture bank {bank} changed route or availability"
+                ));
+            }
+            verify_probe_observations(
+                spec,
+                &secondary.effective_observation,
+                &secondary.capability_observation,
+            )?;
+        }
         let samples = if let ChildTask::Measure { execution } = spec.task {
             let samples = match fixture {
                 ChildFixture::Direct(Fixture::Bit { dst, src }) => match spec.arm {
-                    Arm::Conservative => execution_windows(protocol, execution, |index| {
-                        let (left, right) = bank_indices(index);
-                        let source: &[u64] = black_box(src.get(right));
-                        let destination: &mut [u64] = black_box(dst.get_mut(left));
-                        ScalarBackend.xor(destination, source);
-                        black_box(destination);
-                    }),
+                    Arm::Conservative => {
+                        execution_windows(protocol, execution, timing_context, |index| {
+                            let (left, right) = bank_indices(index);
+                            let source: &[u64] = black_box(src.get(right));
+                            let destination: &mut [u64] = black_box(dst.get_mut(left));
+                            ScalarBackend.xor(destination, source);
+                            black_box(destination);
+                        })
+                    }
                     Arm::Asymptotic => {
                         let backend = gf2_core::kernels::simd::maybe_simd()
                             .ok_or("the timed concrete SIMD backend is unavailable")?;
-                        execution_windows(protocol, execution, |index| {
+                        execution_windows(protocol, execution, timing_context, |index| {
                             let (left, right) = bank_indices(index);
                             let source: &[u64] = black_box(src.get(right));
                             let destination: &mut [u64] = black_box(dst.get_mut(left));
@@ -3539,7 +3542,7 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
                     let mut outputs: Vec<FieldMatrix<Fp251>> = (0..BIT_FIXTURES)
                         .map(|_| FieldMatrix::zeros(d, d))
                         .collect();
-                    execution_windows(protocol, execution, |index| {
+                    execution_windows(protocol, execution, timing_context, |index| {
                         let bank = index & (BIT_FIXTURES - 1);
                         run_gemm_axpy_dispatch_for_test(
                             &banks[bank].0,
@@ -3549,14 +3552,16 @@ fn run_child(spec: ChildSpec, protocol: &Protocol) -> Result<ChildReport, String
                         black_box(&outputs[bank]);
                     })
                 }
-                _ => execution_windows(protocol, execution, |index| match fixture {
-                    ChildFixture::Direct(fixture) => {
-                        execute_direct_timed(spec, fixture, index);
-                    }
-                    ChildFixture::FollowOn(fixture) => {
-                        execute_follow_on_timed(spec, fixture, index);
-                    }
-                }),
+                _ => {
+                    execution_windows(protocol, execution, timing_context, |index| match fixture {
+                        ChildFixture::Direct(fixture) => {
+                            execute_direct_timed(spec, fixture, index);
+                        }
+                        ChildFixture::FollowOn(fixture) => {
+                            execute_follow_on_timed(spec, fixture, index);
+                        }
+                    })
+                }
             };
             samples
         } else {
@@ -3674,61 +3679,33 @@ fn fresh_tuning_process(
     parse_child_report(&stdout)
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn decode_fresh_case(input: &str) -> Result<FreshProcessCase, String> {
-    let case: FreshProcessCase = serde_json::from_str(input)
-        .map_err(|error| format!("fresh tuning stdin is not one valid case: {error}"))?;
-    let canonical = serde_json::to_string(&case)
-        .map_err(|error| format!("cannot re-encode the fresh tuning case: {error}"))?;
-    if input != canonical {
-        return Err("fresh tuning stdin is not canonical compact JSON".to_owned());
-    }
-    Ok(case)
+    tuning_campaign_support::transport::decode_case(input)
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn read_fresh_case() -> Result<FreshProcessCase, String> {
-    match env::var(FRESH_CASE_VAR) {
-        Ok(value) if value == FRESH_CASE_VALUE => {}
-        Ok(value) => return Err(format!("invalid fresh tuning sentinel {value:?}")),
-        Err(env::VarError::NotPresent) => {
-            return Err("fresh tuning child sentinel is absent".to_owned())
-        }
-        Err(error) => return Err(format!("cannot read fresh tuning sentinel: {error}")),
-    }
-    let mut input = String::new();
-    io::Read::read_to_string(&mut io::stdin(), &mut input)
-        .map_err(|error| format!("cannot read fresh tuning stdin: {error}"))?;
-    decode_fresh_case(&input)
+    tuning_campaign_support::transport::read_guarded_case(
+        env::var(FRESH_CASE_VAR).ok().as_deref(),
+        io::stdin().lock(),
+    )
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn run_fresh_child() -> Result<(), String> {
     let case = read_fresh_case()?;
     let report = run_child(case.spec, &case.protocol)?;
-    let result = serde_json::to_string(&report)
-        .map_err(|error| format!("cannot encode the fresh tuning result: {error}"))?;
-    println!("{FRESH_RESULT_PREFIX}{result}");
-    Ok(())
+    tuning_campaign_support::transport::write_result_line(io::stdout().lock(), &report)
+        .map_err(|error| error.to_string())
 }
 
 /// Reads the one guarded structured result from a child's standard output.
 fn parse_child_report(text: &str) -> Result<ChildReport, String> {
-    let lines: Vec<&str> = text.lines().collect();
-    let [line] = lines.as_slice() else {
-        return Err(format!(
-            "the child emitted {} lines rather than one structured result",
-            lines.len()
-        ));
-    };
-    let payload = line
-        .strip_prefix(FRESH_RESULT_PREFIX)
-        .ok_or("the child result lacks the GF2_TUNING_RESULT= prefix")?;
-    let report: ChildReport = serde_json::from_str(payload)
-        .map_err(|error| format!("the child result is not valid JSON: {error}"))?;
-    let canonical = serde_json::to_string(&report)
-        .map_err(|error| format!("cannot re-encode the child result: {error}"))?;
-    if payload != canonical {
-        return Err("the child result is not canonical compact JSON".to_owned());
-    }
-    Ok(report)
+    tuning_campaign_support::transport::parse_result(text)
 }
 
 /// Checks a child's report against what the parent asked for and holds.
@@ -3835,6 +3812,14 @@ fn verify_child_report(
                 Sha256::parse(digest).map_err(|_| {
                     format!("the child for {spec} reported malformed {name} digest")
                 })?;
+            }
+            if *equivalence_digest
+                != digest_tuple(
+                    b"gf2-calibration-equivalence-v1",
+                    [report.operand_digest.clone(), result_digest.clone()],
+                )
+            {
+                return Err(format!("the child for {spec} reported an equivalence digest outside its operand/result tuple"));
             }
             let effective = effective_observation
                 .as_deref()
@@ -4072,6 +4057,8 @@ fn child_observation_line(spec: ChildSpec, report: &ChildReport) -> Result<Strin
         .map_err(|error| format!("cannot encode the verified child observation: {error}"))
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn launch_verified_child(
     spec: ChildSpec,
     expected_operand_digest: &str,
@@ -4111,6 +4098,8 @@ fn launch_verified_child_with_entry(
 /// omit a comparison. This mode performs no timed windows and writes no
 /// profile; its structured child observations are suitable for preparing the
 /// host before the authoritative campaign.
+#[cfg(test)]
+#[allow(dead_code)]
 fn run_capability_report(protocol: &Protocol) -> Result<(), String> {
     validate_campaign_accounting(protocol)?;
     print_protocol(protocol);
@@ -4164,7 +4153,7 @@ fn run_capability_report(protocol: &Protocol) -> Result<(), String> {
 
 /// One arm's timed windows at one grid point and the statistics derived from
 /// them by the selection rule.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 struct ArmStat {
     median: f64,
     /// Interquartile range relative to the median.
@@ -4174,46 +4163,32 @@ struct ArmStat {
 
 impl ArmStat {
     fn from_samples(samples: Vec<TimingSample>) -> Self {
-        let mut sorted: Vec<f64> = samples.iter().map(TimingSample::ns_per_call).collect();
-        sorted.sort_by(f64::total_cmp);
-        let median = quantile(&sorted, 0.5);
-        let spread = if median > 0.0 {
-            (quantile(&sorted, 0.75) - quantile(&sorted, 0.25)) / median
-        } else {
-            0.0
-        };
+        let summary = tuning_campaign_support::statistics::WindowStatistics::from_samples(samples)
+            .expect("validated positive timing windows");
         Self {
-            median,
-            spread,
-            samples,
+            median: summary.median,
+            spread: summary.relative_iqr,
+            samples: summary.samples,
         }
     }
 
+    #[cfg(test)]
+    #[allow(dead_code)]
     fn windows(&self) -> usize {
         self.samples.len()
     }
 }
 
-/// Nearest-rank quantile of an ascending slice, averaging the two central
-/// samples at the median of an even-length sample.
-fn quantile(sorted: &[f64], fraction: f64) -> f64 {
-    assert!(!sorted.is_empty(), "quantile of an empty sample");
-    if fraction == 0.5 && sorted.len().is_multiple_of(2) {
-        let upper = sorted.len() / 2;
-        return (sorted[upper - 1] + sorted[upper]) / 2.0;
-    }
-    let rank = (fraction * sorted.len() as f64).ceil() as usize;
-    sorted[rank.clamp(1, sorted.len()) - 1]
-}
-
 /// One grid point of one field's sweep.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 struct GridPoint {
     size: usize,
     conservative: Option<ArmStat>,
     asymptotic: Option<ArmStat>,
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 impl GridPoint {
     /// The noise band and the asymptotic arm's relative margin over the other,
     /// or `None` when the point does not offer both arms.
@@ -4288,7 +4263,7 @@ impl Selection {
 }
 
 /// One field's whole sweep.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 struct FieldSweep {
     field: CalibratedField,
     variant: SweepVariant,
@@ -4303,57 +4278,56 @@ struct FieldSweep {
 /// point. A grid point that lacks a two-arm comparison invalidates the sweep
 /// and yields the missing-comparison outcome before monotonicity is evaluated.
 fn select(field: CalibratedField, points: &[GridPoint]) -> Selection {
-    let default = field.conservative_default();
-    if points.iter().any(|point| point.comparison().is_none()) {
-        return Selection::KeptDefault {
-            value: default,
-            reason: Fallback::NoComparableGridPoint,
-        };
-    }
-    let Some(first) = points
-        .iter()
-        .position(|point| point.asymptotic_wins() == Some(true))
-    else {
-        return Selection::KeptDefault {
-            value: default,
-            reason: Fallback::NoGridPointWins,
-        };
+    use tuning_campaign_support::statistics::{
+        select_threshold, ThresholdDirection, ThresholdFallback, ThresholdPoint,
+        ThresholdSelection, WindowStatistics,
     };
-    if let Some(later) = points[first + 1..]
+    let convert = |arm: &ArmStat| WindowStatistics {
+        median: arm.median,
+        relative_iqr: arm.spread,
+        samples: arm.samples.clone(),
+    };
+    let points: Vec<_> = points
         .iter()
-        .find(|point| point.asymptotic_wins() != Some(true))
-    {
-        return Selection::KeptDefault {
-            value: default,
-            reason: Fallback::NonMonotone {
-                first_win: points[first].size,
-                later_loss: later.size,
-            },
-        };
-    }
-    let (band, margin) = points[first]
-        .comparison()
-        .expect("a winning grid point has both arms");
-    let crossover = points[first].size;
-    // A `_max_` field bounds the conservative arm from above, so its value is
-    // the largest measured grid point that still belongs to that arm. Below the
-    // first grid point there is none. The three upper-bound fields use their
-    // admissible floor: one for the PLE panel selector and zero for Karatsuba
-    // and transpose.
-    let value = if field.is_upper_bound() {
-        if first == 0 {
-            field.upper_bound_floor()
-        } else {
-            points[first - 1].size
+        .map(|point| ThresholdPoint {
+            size: point.size,
+            conservative: point.conservative.as_ref().map(convert),
+            asymptotic: point.asymptotic.as_ref().map(convert),
+        })
+        .collect();
+    let direction = if field.is_upper_bound() {
+        ThresholdDirection::UpperBound {
+            floor: field.upper_bound_floor(),
         }
     } else {
-        crossover
+        ThresholdDirection::LowerBound
     };
-    Selection::Crossover {
-        value,
-        crossover,
-        band,
-        margin,
+    match select_threshold(&points, field.conservative_default(), direction) {
+        ThresholdSelection::Crossover {
+            value,
+            crossover,
+            band,
+            margin,
+        } => Selection::Crossover {
+            value,
+            crossover,
+            band,
+            margin,
+        },
+        ThresholdSelection::KeptDefault { value, reason } => Selection::KeptDefault {
+            value,
+            reason: match reason {
+                ThresholdFallback::NoComparableGridPoint => Fallback::NoComparableGridPoint,
+                ThresholdFallback::NoGridPointWins => Fallback::NoGridPointWins,
+                ThresholdFallback::NonMonotone {
+                    first_win,
+                    later_loss,
+                } => Fallback::NonMonotone {
+                    first_win,
+                    later_loss,
+                },
+            },
+        },
     }
 }
 
@@ -4394,12 +4368,16 @@ fn reconcile_interpolation(generic: &Selection, two_adic: &Selection) -> Selecti
 }
 
 #[derive(serde::Serialize)]
+#[cfg(test)]
+#[allow(dead_code)]
 struct InterpolationReconciliation<'a> {
     generic: &'a Selection,
     two_adic: &'a Selection,
     shared: &'a Selection,
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn interpolation_reconciliation_line(
     generic: &Selection,
     two_adic: &Selection,
@@ -4436,6 +4414,8 @@ struct SelectedValues {
 }
 
 impl SelectedValues {
+    #[cfg(test)]
+    #[allow(dead_code)]
     fn from_sweeps(sweeps: &[FieldSweep]) -> Self {
         let value_of = |field: CalibratedField| {
             sweeps
@@ -4583,6 +4563,8 @@ fn build_profile(
 // Reporting and output
 // ---------------------------------------------------------------------
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn print_grid() {
     println!(
         "field\tvariant\tfamily\tdefault\tunit\tconservative_arm\tasymptotic_arm\tarm_source\tgrid"
@@ -4605,6 +4587,8 @@ fn print_grid() {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg(test)]
+#[allow(dead_code)]
 struct CampaignAccounting {
     cells: usize,
     probes: usize,
@@ -4613,6 +4597,8 @@ struct CampaignAccounting {
     windows: usize,
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn planned_campaign_accounting(protocol: &Protocol) -> CampaignAccounting {
     let cells = CalibratedField::ALL
         .into_iter()
@@ -4629,6 +4615,8 @@ fn planned_campaign_accounting(protocol: &Protocol) -> CampaignAccounting {
     }
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn validate_campaign_accounting(protocol: &Protocol) -> Result<CampaignAccounting, String> {
     let accounting = planned_campaign_accounting(protocol);
     if protocol.executions == DEFAULT_EXECUTIONS
@@ -4647,6 +4635,8 @@ fn validate_campaign_accounting(protocol: &Protocol) -> Result<CampaignAccountin
     Ok(accounting)
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn print_seed_inventory() -> Result<(), String> {
     for field in CalibratedField::ALL {
         for size in field.grid() {
@@ -4656,6 +4646,8 @@ fn print_seed_inventory() -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn print_protocol(protocol: &Protocol) {
     let accounting = planned_campaign_accounting(protocol);
     println!(
@@ -4690,6 +4682,8 @@ fn print_protocol(protocol: &Protocol) {
     );
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn print_host_facts(facts: &HostFacts) {
     println!("host: {}", facts.host);
     println!("cpu_model: {}", facts.cpu_model);
@@ -4720,6 +4714,8 @@ fn print_host_facts(facts: &HostFacts) {
 }
 
 #[derive(serde::Serialize)]
+#[cfg(test)]
+#[allow(dead_code)]
 struct SampleRecord<'a> {
     schema: &'static str,
     profile_format_version: u32,
@@ -4733,6 +4729,8 @@ struct SampleRecord<'a> {
     samples: &'a [TimingSample],
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn sample_record_line(
     field: CalibratedField,
     variant: SweepVariant,
@@ -4757,6 +4755,8 @@ fn sample_record_line(
         .map_err(|error| format!("cannot encode raw timing samples: {error}"))
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn print_sweep(sweep: &FieldSweep) -> Result<(), String> {
     let field = sweep.field;
     println!(
@@ -4839,6 +4839,8 @@ fn print_sweep(sweep: &FieldSweep) -> Result<(), String> {
 /// The inherited values are read out of the conservative table's own
 /// serialization, so the report states what the loader will resolve an absent
 /// key to rather than a figure written into this tool.
+#[cfg(test)]
+#[allow(dead_code)]
 fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), String> {
     let conservative = CoreTuningCodec::encode_body(&CoreTuning::CONSERVATIVE)
         .map_err(|error| format!("the conservative section does not encode: {error}"))?;
@@ -4880,6 +4882,8 @@ fn print_omitted(omitted: &[SchemaField], sweeps: &[FieldSweep]) -> Result<(), S
 ///
 /// These are not the whole omission set: [`omitted_fields`] adds every schema
 /// field no sweep covers, which the same rule governs for the same reason.
+#[cfg(test)]
+#[allow(dead_code)]
 fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
     sweeps
         .iter()
@@ -4902,6 +4906,8 @@ fn uncalibrated_fields(sweeps: &[FieldSweep]) -> Vec<CalibratedField> {
 /// default on a tie or a non-monotone crossover — is measured. A field with any
 /// missing predeclared comparison is not, and neither is any schema field no
 /// sweep names.
+#[cfg(test)]
+#[allow(dead_code)]
 fn measured_fields(sweeps: &[FieldSweep]) -> Vec<SchemaField> {
     let uncalibrated = uncalibrated_fields(sweeps);
     sweeps
@@ -4919,6 +4925,8 @@ fn measured_fields(sweeps: &[FieldSweep]) -> Vec<SchemaField> {
 /// schema — the staleness defect `@/inv/runtime-observed-provenance` names —
 /// and the moment it fell behind, an unswept field would be emitted with a
 /// value nothing measured.
+#[cfg(test)]
+#[allow(dead_code)]
 fn schema_fields(document: &str) -> Result<Vec<SchemaField>, String> {
     let parsed: serde_json::Value = serde_json::from_str(document)
         .map_err(|error| format!("the profile document is not JSON: {error}"))?;
@@ -4946,6 +4954,8 @@ fn schema_fields(document: &str) -> Result<Vec<SchemaField>, String> {
 /// outside the sweep, whatever the schema has grown since. Design §5 condition
 /// 5 admits an omitted field and forbids an unmeasured stated one, so the
 /// complement is the rule rather than a conservative approximation of it.
+#[cfg(test)]
+#[allow(dead_code)]
 fn omitted_fields(document: &str, sweeps: &[FieldSweep]) -> Result<Vec<SchemaField>, String> {
     let measured = measured_fields(sweeps);
     Ok(schema_fields(document)?
@@ -4955,6 +4965,8 @@ fn omitted_fields(document: &str, sweeps: &[FieldSweep]) -> Result<Vec<SchemaFie
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg(test)]
+#[allow(dead_code)]
 struct CampaignCoverage {
     measured: usize,
     omitted: usize,
@@ -4963,6 +4975,8 @@ struct CampaignCoverage {
 
 /// Rejects publication unless the codec-derived inventory is exactly the
 /// campaign's sixteen measured fields and its 21-of-37 omission complement.
+#[cfg(test)]
+#[allow(dead_code)]
 fn validate_campaign_coverage(
     complete_document: &str,
     sweeps: &[FieldSweep],
@@ -5014,6 +5028,8 @@ fn validate_campaign_coverage(
 /// records each omission, then the one registry encoder recomputes the format-2
 /// content digest. Absent fields retain their conservative dispatch semantics
 /// without making a measurement claim.
+#[cfg(test)]
+#[allow(dead_code)]
 fn calibrated_document(
     profile: &ProducedCoreProfile,
     omitted: &[SchemaField],
@@ -5032,108 +5048,30 @@ fn emit_profile(path: &Path, json: &str) -> io::Result<String> {
     if path.exists() {
         return Err(io::Error::new(
             io::ErrorKind::AlreadyExists,
-            format!(
-                "refusing to overwrite an existing path: {}; name a unique absent path",
-                path.display()
-            ),
+            "refusing to overwrite an existing tuning artifact",
         ));
     }
-    if let Some(parent) = path
-        .parent()
-        .filter(|parent| !parent.as_os_str().is_empty())
-    {
+    let profile = ProducedCoreProfile::from_json(json).map_err(io::Error::other)?;
+    if profile.to_json() != json {
+        return Err(io::Error::other("owner document is not canonical"));
+    }
+    if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-
-    let file_name = path.file_name().ok_or_else(|| {
-        io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("the output path has no file name: {}", path.display()),
-        )
-    })?;
-    let parent = path.parent().unwrap_or_else(|| Path::new("."));
-    let nonce = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or(Duration::ZERO)
-        .as_nanos();
-    let mut temporary = None;
-    for attempt in 0..128_u8 {
-        let candidate = parent.join(format!(
-            ".{}.tmp-{}-{nonce}-{attempt}",
-            file_name.to_string_lossy(),
-            std::process::id()
-        ));
-        match OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&candidate)
-        {
-            Ok(file) => {
-                temporary = Some((candidate, file));
-                break;
-            }
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
-            Err(error) => return Err(error),
-        }
+    tuning_campaign_support::journal::atomic_write_new(&path, json.as_bytes())?;
+    let written = fs::read_to_string(&path)?;
+    if ProducedCoreProfile::from_json(&written).map_err(io::Error::other)? != profile
+        || written != json
+    {
+        return Err(io::Error::other("owner artifact changed on strict reopen"));
     }
-    let (temporary_path, mut temporary_file) = temporary.ok_or_else(|| {
-        io::Error::new(
-            io::ErrorKind::AlreadyExists,
-            format!(
-                "could not reserve a temporary output beside {}",
-                path.display()
-            ),
-        )
-    })?;
-
-    let result = (|| {
-        temporary_file.write_all(json.as_bytes())?;
-        temporary_file.sync_all()?;
-        drop(temporary_file);
-
-        let written = fs::read_to_string(&temporary_path)?;
-        let reparsed = ProducedCoreProfile::from_json(&written).map_err(|error| {
-            io::Error::other(format!(
-                "the emitted document does not load back: {error}; this is a harness defect"
-            ))
-        })?;
-        if reparsed.to_json() != written {
-            return Err(io::Error::other(
-                "the emitted document does not round-trip canonically",
-            ));
-        }
-
-        fs::hard_link(&temporary_path, &path).map_err(|error| {
-            if error.kind() == io::ErrorKind::AlreadyExists {
-                io::Error::new(
-                    io::ErrorKind::AlreadyExists,
-                    format!(
-                        "refusing to overwrite an existing path: {}; name a unique absent path",
-                        path.display()
-                    ),
-                )
-            } else {
-                error
-            }
-        })?;
-        Ok(written)
-    })();
-
-    // The final path is either absent or a complete hard link to the validated
-    // bytes. A cleanup failure can leave only the hidden temporary link, never
-    // a partial final artifact, so it must not turn a successfully published
-    // artifact into an ambiguous reported failure.
-    if let Err(error) = fs::remove_file(&temporary_path) {
-        eprintln!(
-            "warning: could not remove temporary tuning artifact {}: {error}",
-            temporary_path.display()
-        );
-    }
-    result
+    Ok(written)
 }
 
 /// The profile identifier, taken from `--profile-id` or the emitted file's own
 /// basename, which is what a committed profile is named by.
+#[cfg(test)]
+#[allow(dead_code)]
 fn profile_id_for(out: &Path, explicit: Option<&str>) -> Result<ProfileId, String> {
     let candidate = match explicit {
         Some(value) => value.to_owned(),
@@ -5161,6 +5099,10 @@ fn validate_rayon_threads(value: Option<&str>) -> Result<(), String> {
 }
 
 fn require_campaign_environment() -> Result<(), String> {
+    if env::var("RUSTUP_TOOLCHAIN").as_deref() != Ok(REQUIRED_RUSTUP_TOOLCHAIN) {
+        return Err("campaign requires RUSTUP_TOOLCHAIN=1.95.0".to_owned());
+    }
+
     validate_rayon_threads(env::var(RAYON_THREADS_VAR).ok().as_deref())
 }
 
@@ -5170,300 +5112,13 @@ fn require_campaign_environment() -> Result<(), String> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = parse_args(env::args().skip(1))?;
-    let (out, profile_id, lock_wrapper, receipt) = match &args.mode {
-        Mode::ListGrid => {
-            validate_campaign_accounting(&args.protocol)?;
-            print_protocol(&args.protocol);
-            print_grid();
-            print_seed_inventory()?;
-            return Ok(());
-        }
-        Mode::SelfCheck => {
-            validate_campaign_accounting(&args.protocol)?;
-            print_protocol(&args.protocol);
-            match collect_host_facts() {
-                Ok(facts) => print_host_facts(&facts),
-                Err(error) => println!("host facts unavailable: {error}"),
-            }
-            return Ok(());
-        }
-        Mode::CapabilityReport => {
-            run_capability_report(&args.protocol)?;
-            return Ok(());
-        }
-        // The guarded case contains the complete child protocol. The parent is
-        // already behind the prepared-host gate and lock probe, so the child
-        // consults neither of those ambient inputs.
-        Mode::FreshChild => {
-            run_fresh_child()?;
-            return Ok(());
-        }
-        Mode::Calibrate {
-            out,
-            profile_id,
-            lock_wrapper,
-            receipt,
-        } => (out, profile_id, lock_wrapper, receipt),
-    };
-
-    if env::var(BENCH_MODE_VAR).as_deref() != Ok("1") {
-        eprintln!(
-            "calibration is an explicit benchmark action and did not run: set {BENCH_MODE_VAR}=1 \
-             on a prepared uncontended host and invoke through the repository lock wrapper. \
-             Nothing was measured and nothing was written."
-        );
-        return Ok(());
-    }
-    require_campaign_environment()?;
-
-    let id = profile_id_for(out, profile_id.as_deref())?;
-    let lock_wrapper_path = RepoRelPath::parse(lock_wrapper).map_err(|_| {
-        format!("--lock-wrapper `{lock_wrapper}` is not a repository-relative path")
-    })?;
-    let receipt_path = RepoRelPath::parse(receipt)
-        .map_err(|_| format!("--receipt `{receipt}` is not a repository-relative path"))?;
-    let repo_root = PathBuf::from(command_output("git", &["rev-parse", "--show-toplevel"])?);
-    if !repo_root.join(lock_wrapper_path.as_str()).is_file() {
-        return Err(format!(
-            "--lock-wrapper {} does not name a file in this repository",
-            lock_wrapper_path.as_str()
-        )
-        .into());
-    }
-    let facts = collect_host_facts()?;
-    require_clean_source(facts.source_dirty, &facts.source_revision)?;
-    let executable = env::current_exe()?;
-
-    print_protocol(&args.protocol);
-    print_host_facts(&facts);
-    println!("lock_wrapper: {}", lock_wrapper_path.as_str());
-    print_grid();
-    print_seed_inventory()?;
-
-    let measured_at = rfc3339_utc(SystemTime::now())?;
-    if args.protocol
-        != (Protocol {
-            executions: DEFAULT_EXECUTIONS,
-            repetitions: DEFAULT_REPETITIONS,
-            target_ms: DEFAULT_TARGET_MS,
-        })
-    {
-        return Err(
-            "the authoritative campaign requires exactly 5 executions x 5 repetitions x 250 ms"
-                .into(),
-        );
-    }
-    let started = Instant::now();
-    validate_campaign_accounting(&args.protocol)?;
-    let mut sweeps = Vec::with_capacity(CalibratedField::ALL.len());
-    let mut fresh_children = 0_usize;
-    let mut probe_children = 0_usize;
-    let mut timed_children = 0_usize;
-    let mut raw_windows = 0_usize;
-    let mut capability_omissions = Vec::new();
-    for field in CalibratedField::ALL {
-        let mut variant_sweeps = Vec::new();
-        for &variant in field.variants() {
-            let mut points = Vec::new();
-            for size in field.grid() {
-                let expected_operands = expected_operand_digest(field, size)?;
-                let mut probes = Vec::with_capacity(2);
-                for arm in Arm::BOTH {
-                    let report = launch_verified_child(
-                        ChildSpec {
-                            field,
-                            variant,
-                            size,
-                            arm,
-                            task: ChildTask::Probe,
-                        },
-                        &expected_operands,
-                        &args.protocol,
-                        &executable,
-                    )?;
-                    probe_children += 1;
-                    fresh_children += 1;
-                    probes.push(report);
-                }
-                let complete_pair = probes
-                    .iter()
-                    .all(|report| matches!(&report.outcome, ChildOutcome::Complete { .. }));
-                if !complete_pair {
-                    for (arm, report) in Arm::BOTH.into_iter().zip(&probes) {
-                        if let ChildOutcome::Unavailable { omission, .. } = &report.outcome {
-                            capability_omissions.push((
-                                field,
-                                variant,
-                                size,
-                                arm,
-                                omission.clone(),
-                            ));
-                        }
-                    }
-                    points.push(GridPoint {
-                        size,
-                        conservative: None,
-                        asymptotic: None,
-                    });
-                    continue;
-                }
-                verify_matching_evidence(
-                    &format!("paired probe evidence for {field}/{variant} at {size}"),
-                    &probes[0],
-                    &probes[1],
-                )?;
-                let mut conservative_samples = Vec::new();
-                let mut asymptotic_samples = Vec::new();
-                for execution in 0..args.protocol.executions {
-                    for (arm, samples, probe) in [
-                        (Arm::Conservative, &mut conservative_samples, &probes[0]),
-                        (Arm::Asymptotic, &mut asymptotic_samples, &probes[1]),
-                    ] {
-                        let report = launch_verified_child(
-                            ChildSpec {
-                                field,
-                                variant,
-                                size,
-                                arm,
-                                task: ChildTask::Measure { execution },
-                            },
-                            &expected_operands,
-                            &args.protocol,
-                            &executable,
-                        )?;
-                        timed_children += 1;
-                        fresh_children += 1;
-                        let ChildOutcome::Complete {
-                            samples: child_samples,
-                            ..
-                        } = &report.outcome
-                        else {
-                            return Err(format!(
-                                "timed child became unavailable for {field}/{variant} at {size}/{arm}/{execution}"
-                            )
-                            .into());
-                        };
-                        raw_windows += child_samples.len();
-                        verify_matching_evidence(
-                            &format!(
-                                "timed child for {field}/{variant} at {size}/{arm}/{execution}"
-                            ),
-                            probe,
-                            &report,
-                        )?;
-                        samples.extend(child_samples.iter().cloned());
-                    }
-                }
-                points.push(GridPoint {
-                    size,
-                    conservative: Some(ArmStat::from_samples(conservative_samples)),
-                    asymptotic: Some(ArmStat::from_samples(asymptotic_samples)),
-                });
-            }
-            let sweep = FieldSweep {
-                field,
-                variant,
-                selection: select(field, &points),
-                points,
-            };
-            print_sweep(&sweep)?;
-            variant_sweeps.push(sweep);
-        }
-        if field == CalibratedField::InterpolateFastMinPoints {
-            let [generic, two_adic] = variant_sweeps.as_slice() else {
-                return Err("interpolation did not produce two independent sweeps".into());
-            };
-            let selection = reconcile_interpolation(&generic.selection, &two_adic.selection);
-            println!(
-                "{}",
-                interpolation_reconciliation_line(
-                    &generic.selection,
-                    &two_adic.selection,
-                    &selection,
-                )?
-            );
-            sweeps.push(FieldSweep {
-                field,
-                variant: SweepVariant::Standard,
-                points: Vec::new(),
-                selection,
-            });
-        } else {
-            sweeps.push(variant_sweeps.pop().expect("one standard sweep"));
+    match args.mode {
+        Mode::FreshChild => campaign_owner::fresh_child()?,
+        Mode::OwnerOperation => campaign_owner::owner_operation()?,
+        Mode::SelfCheck | Mode::ListGrid | Mode::CapabilityReport => {
+            campaign_owner::report_mode(args.mode)?
         }
     }
-    let grid_arm_cells: usize = CalibratedField::ALL
-        .into_iter()
-        .map(|field| field.grid().len() * field.variants().len() * Arm::BOTH.len())
-        .sum();
-    if grid_arm_cells != EXPECTED_GRID_ARM_CELLS || probe_children != EXPECTED_PROBE_CHILDREN {
-        return Err(format!(
-            "probe campaign accounting is cells={grid_arm_cells} probes={probe_children}, expected 306/306"
-        )
-        .into());
-    }
-    if capability_omissions.is_empty()
-        && (timed_children != EXPECTED_TIMED_CHILDREN
-            || fresh_children != EXPECTED_FRESH_CHILDREN
-            || raw_windows != EXPECTED_RAW_WINDOWS)
-    {
-        return Err(format!(
-            "campaign accounting is cells={grid_arm_cells} probes={probe_children} timed={timed_children} launches={fresh_children} windows={raw_windows}, expected 306/306/1530/1836/7650"
-        ).into());
-    }
-    println!("campaign_accounting: cells={grid_arm_cells} probes={probe_children} timed={timed_children} launches={fresh_children} windows={raw_windows}");
-    require_unchanged_binary(&executable, &facts.binary_sha256, "calibration harness")?;
-    for (field, variant, size, arm, omission) in &capability_omissions {
-        println!(
-            "capability_omission: field={field} variant={variant} size={size} arm={arm} reason={omission:?}"
-        );
-    }
-    if !capability_omissions.is_empty() {
-        return Err(format!(
-            "authoritative publication aborted: {} predeclared comparisons are unavailable",
-            capability_omissions.len()
-        )
-        .into());
-    }
-    println!("\ntimed work: {:.1} s", started.elapsed().as_secs_f64());
-
-    let selected = SelectedValues::from_sweeps(&sweeps);
-    let assembled_at = Rfc3339Utc::parse(&rfc3339_utc(SystemTime::now())?)?;
-    let provenance = MeasurementProvenance::Calibrated {
-        measured_at: Rfc3339Utc::parse(&measured_at)?,
-        source_revision: facts.source_revision.clone(),
-        source_dirty: facts.source_dirty,
-        harness: facts.harness.clone(),
-        harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA)?,
-        binary_sha256: facts.binary_sha256.clone(),
-        toolchain: facts.toolchain.clone(),
-        host: facts.host.clone(),
-        cpu_model: facts.cpu_model.clone(),
-        cpu_features: facts.cpu_features.clone(),
-        os_kernel: facts.os_kernel.clone(),
-        governor: facts.governor.clone(),
-        receipt: receipt_path,
-    };
-    let profile = build_profile(
-        id,
-        provenance,
-        assembled_at,
-        &facts.binary_sha256,
-        &selected,
-    )?;
-    let complete_document = profile.to_json();
-    let omitted = omitted_fields(&complete_document, &sweeps)?;
-    let coverage = validate_campaign_coverage(&complete_document, &sweeps, &omitted)?;
-    println!(
-        "codec_coverage: measured={} omitted={} total={} derived_by=CoreTuningCodec",
-        coverage.measured, coverage.omitted, coverage.total
-    );
-    print_omitted(&omitted, &sweeps)?;
-    let document = calibrated_document(&profile, &omitted)?;
-    let json = emit_profile(out, &document)?;
-
-    println!("\nemitted and re-loaded {}", out.display());
-    println!("{json}");
     Ok(())
 }
 
@@ -5547,7 +5202,7 @@ mod tests {
     }
 
     #[allow(dead_code)]
-    fn profile_from(selected: &SelectedValues) -> ProducedCoreProfile {
+    pub(super) fn profile_from(selected: &SelectedValues) -> ProducedCoreProfile {
         build_profile(
             ProfileId::parse("test-profile").unwrap(),
             calibrated_provenance(),
@@ -6009,9 +5664,11 @@ mod tests {
 
         let error = emit_profile(&output.path, "{}")
             .expect_err("a document outside the strict owner schema must not publish");
-        assert!(error.to_string().contains("does not load back"));
+        assert_eq!(error.kind(), io::ErrorKind::Other);
         assert!(!output.path.exists());
-        assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 0);
+        if output.directory.exists() {
+            assert_eq!(fs::read_dir(&output.directory).unwrap().count(), 0);
+        }
     }
 
     #[test]
@@ -6824,7 +6481,7 @@ mod tests {
                 &samples,
             )
             .unwrap(),
-            "GF2_TUNING_SAMPLES={\"schema\":\"raw-timing-samples-v2\",\"profile_format_version\":2,\"section_id\":\"gf2-core/selectors\",\"section_schema_version\":1,\"harness_schema\":\"tuning-calibration-v3\",\"field\":\"karatsuba_min_degree\",\"variant\":\"standard\",\"size\":31,\"arm\":\"asymptotic\",\"samples\":[{\"execution\":0,\"repetition\":0,\"calls\":4,\"elapsed_ns\":40},{\"execution\":0,\"repetition\":1,\"calls\":4,\"elapsed_ns\":44}]}"
+            "GF2_TUNING_SAMPLES={\"schema\":\"raw-timing-samples-v3\",\"profile_format_version\":2,\"section_id\":\"gf2-core/selectors\",\"section_schema_version\":1,\"harness_schema\":\"tuning-calibration-v4\",\"field\":\"karatsuba_min_degree\",\"variant\":\"standard\",\"size\":31,\"arm\":\"asymptotic\",\"samples\":[{\"execution\":0,\"repetition\":0,\"calls\":4,\"elapsed_ns\":40},{\"execution\":0,\"repetition\":1,\"calls\":4,\"elapsed_ns\":44}]}"
         );
     }
 
@@ -6960,39 +6617,26 @@ mod tests {
     }
 
     #[test]
-    fn the_calibrate_mode_requires_its_output_and_provenance_paths() {
-        for missing in ["--lock-wrapper", "--receipt", "--out"] {
-            let args: Vec<String> = [
-                "--out",
-                "/tmp/x.json",
-                "--lock-wrapper",
-                "w",
-                "--receipt",
-                "r",
-            ]
-            .chunks(2)
-            .filter(|pair| pair[0] != missing)
-            .flat_map(|pair| pair.iter().map(|value| (*value).to_owned()))
-            .collect();
-            assert!(
-                parse_args(args.into_iter()).is_err(),
-                "{missing} is required"
-            );
-        }
-        let valid = parse_args(
+    fn calibration_requires_the_neutral_owner_operation() {
+        assert!(parse_args(
             [
                 "--out",
                 "/tmp/x.json",
                 "--lock-wrapper",
                 "w",
                 "--receipt",
-                "r",
+                "r"
             ]
             .map(str::to_owned)
-            .into_iter(),
+            .into_iter()
         )
-        .unwrap();
-        assert!(matches!(valid.mode, Mode::Calibrate { .. }));
+        .is_err());
+        assert_eq!(
+            parse_args(["--owner-operation".to_owned()].into_iter())
+                .unwrap()
+                .mode,
+            Mode::OwnerOperation
+        );
     }
 
     #[test]
@@ -7064,7 +6708,13 @@ mod tests {
                 effective_observation: Some(effective_observation),
                 capability_observation: Some(capability_observation),
                 result_digest: "2".repeat(64),
-                equivalence_digest: "3".repeat(64),
+                equivalence_digest: digest_tuple(
+                    b"gf2-calibration-equivalence-v1",
+                    [
+                        expected_operand_digest(spec.field, spec.size).unwrap(),
+                        "2".repeat(64),
+                    ],
+                ),
                 samples,
             },
         }
@@ -7143,7 +6793,7 @@ mod tests {
         assert!(text.contains("\"profile_format_version\":2"));
         assert!(text.contains("\"section_id\":\"gf2-core/selectors\""));
         assert!(text.contains("\"section_schema_version\":1"));
-        assert!(text.contains("\"harness_schema\":\"tuning-calibration-v3\""));
+        assert!(text.contains("\"harness_schema\":\"tuning-calibration-v4\""));
         assert!(text.contains("\"resolution\":\"installed\""));
         assert!(text.contains(
             "\"samples\":[{\"execution\":2,\"repetition\":0,\"calls\":10,\"elapsed_ns\":100}"
@@ -7492,7 +7142,7 @@ mod tests {
     }
 
     #[test]
-    fn verified_child_observation_is_one_canonical_v3_line() {
+    fn verified_child_observation_is_one_canonical_v4_line() {
         let protocol = child_protocol(2);
         let report = child_report(CHILD_SPEC, &protocol);
         verify_child_report(CHILD_SPEC, &report.operand_digest, &protocol, &report).unwrap();
@@ -7502,7 +7152,22 @@ mod tests {
         assert!(line.contains("\"observed_route\":\"karatsuba\""));
         assert!(line.contains("\"resolution\":\"installed\""));
         assert!(line.contains("\"profile_format_version\":2"));
-        assert!(line.contains("\"harness_schema\":\"tuning-calibration-v3\""));
+        assert!(line.contains("\"harness_schema\":\"tuning-calibration-v4\""));
+    }
+
+    #[test]
+    fn retained_equivalence_digest_binds_the_operand_result_tuple() {
+        let protocol = child_protocol(2);
+        let mut report = child_report(CHILD_SPEC, &protocol);
+        if let ChildOutcome::Complete {
+            equivalence_digest, ..
+        } = &mut report.outcome
+        {
+            *equivalence_digest = "f".repeat(64);
+        }
+        assert!(
+            verify_child_report(CHILD_SPEC, &report.operand_digest, &protocol, &report).is_err()
+        );
     }
 
     #[test]
@@ -7819,6 +7484,3729 @@ mod tests {
         for out_len in CalibratedField::KaratsubaMaxOutLen.grid() {
             let len = operand_len_for_product(out_len);
             assert_eq!(2 * len - 1, out_len);
+        }
+    }
+}
+
+/// Crate-owned extent cases and artifact decisions for the neutral campaign driver.
+mod campaign_owner {
+    use super::*;
+    use gf2_core::field::matrix::{GemmTilePair, GemmTileSite};
+    use gf2_core::field::vec::{DotChunkCandidate, FieldVec};
+    use gf2_core::gf2m::{Gf2mElement, Gf2mField};
+    use serde::{Deserialize, Serialize};
+    use tuning_campaign_support::{seed, statistics, transport};
+
+    const OWNER_PROTOCOL: &str = "core-tuning-campaign-v4";
+    const EXTENT_SEEDS: &str = "fixture-seeds-v3";
+    const RAW_WINDOWS: &str = "raw-timing-samples-v3";
+    const CORE_CELLS: usize = 702;
+    const CORE_FIELDS: usize = 27;
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(rename_all = "snake_case")]
+    enum ExtentField {
+        Transpose,
+        Soa,
+        M4rmDefaultBytes,
+        M4rmMidBytes,
+        M4rmWideBytes,
+        M4rmWideCap,
+        M4rmSmallCap,
+        Trsm,
+        GemmTiles,
+        Dot,
+        M4rmJoint,
+    }
+
+    impl ExtentField {
+        const ALL: [Self; 10] = [
+            Self::Transpose,
+            Self::Soa,
+            Self::M4rmDefaultBytes,
+            Self::M4rmMidBytes,
+            Self::M4rmWideBytes,
+            Self::M4rmWideCap,
+            Self::M4rmSmallCap,
+            Self::Trsm,
+            Self::GemmTiles,
+            Self::Dot,
+        ];
+
+        fn tag(self) -> u64 {
+            match self {
+                Self::Transpose => 16,
+                Self::Soa => 17,
+                Self::M4rmDefaultBytes => 18,
+                Self::M4rmMidBytes => 19,
+                Self::M4rmWideBytes => 20,
+                Self::M4rmWideCap => 21,
+                Self::M4rmSmallCap => 22,
+                Self::Trsm => 23,
+                Self::GemmTiles => 24,
+                Self::Dot => 26,
+                Self::M4rmJoint => 18,
+            }
+        }
+
+        fn paths(self) -> &'static [&'static str] {
+            match self {
+                Self::Transpose => &["bit_matrix.transpose_macro_tile_blocks"],
+                Self::Soa => &["soa_batch.parallel_chunk_len"],
+                Self::M4rmDefaultBytes => &["m4rm.default_table_bytes"],
+                Self::M4rmMidBytes => &["m4rm.mid_table_bytes"],
+                Self::M4rmWideBytes => &["m4rm.wide_table_bytes"],
+                Self::M4rmWideCap => &["m4rm.wide_max_k"],
+                Self::M4rmSmallCap => &["m4rm.small_n_max_k"],
+                Self::Trsm => &["triangular.trsm_panel_rows"],
+                Self::GemmTiles => &["gemm.row_tile", "gemm.col_tile"],
+                Self::Dot => &["field_vec.dot_chunk_len"],
+                Self::M4rmJoint => &[
+                    "m4rm.default_table_bytes",
+                    "m4rm.mid_table_bytes",
+                    "m4rm.wide_table_bytes",
+                    "m4rm.wide_max_k",
+                    "m4rm.small_n_max_k",
+                ],
+            }
+        }
+
+        fn candidates(self) -> Vec<ExtentCandidate> {
+            let scalars: &[usize] = match self {
+                Self::Transpose => &[2, 4, 8, 16, 32],
+                Self::Soa => &[4096, 8192, 16384, 32768, 65536],
+                Self::M4rmDefaultBytes => &[16384, 32768, 65536, 131072, 262144],
+                Self::M4rmMidBytes => &[32768, 65536, 131072, 262144, 524288],
+                Self::M4rmWideBytes => &[65536, 131072, 262144, 524288, 1048576],
+                Self::M4rmWideCap | Self::M4rmSmallCap => &[4, 5, 6, 7, 8, 9, 10],
+                Self::Trsm => &[8, 16, 32, 64, 128],
+                Self::Dot => &[128, 256, 512],
+                Self::GemmTiles => {
+                    return GemmTilePair::ALL
+                        .into_iter()
+                        .map(|pair| {
+                            let (row, col) = pair.extents();
+                            ExtentCandidate::Tiles { row, col }
+                        })
+                        .collect()
+                }
+                Self::M4rmJoint => return vec![self.default_candidate()],
+            };
+            scalars
+                .iter()
+                .map(|&value| ExtentCandidate::Scalar { value })
+                .collect()
+        }
+
+        fn default_candidate(self) -> ExtentCandidate {
+            if self == Self::GemmTiles {
+                let p = CoreTuning::CONSERVATIVE.gemm();
+                return ExtentCandidate::Tiles {
+                    row: p.row_tile(),
+                    col: p.col_tile(),
+                };
+            }
+            if self == Self::M4rmJoint {
+                return ExtentCandidate::Vector {
+                    proposed: false,
+                    values: M4rmVector::conservative(),
+                };
+            }
+            let body =
+                complete_selector_value(&CoreTuning::CONSERVATIVE).expect("conservative codec");
+            let pointer = format!("/{}", self.paths()[0].replace('.', "/"));
+            ExtentCandidate::Scalar {
+                value: body
+                    .pointer(&pointer)
+                    .and_then(serde_json::Value::as_u64)
+                    .expect("extent codec leaf") as usize,
+            }
+        }
+
+        fn shape_count(self) -> usize {
+            match self {
+                Self::M4rmWideCap => 9,
+                Self::M4rmJoint => 12,
+                _ => 3,
+            }
+        }
+
+        fn is_m4rm(self) -> bool {
+            matches!(
+                self,
+                Self::M4rmDefaultBytes
+                    | Self::M4rmMidBytes
+                    | Self::M4rmWideBytes
+                    | Self::M4rmWideCap
+                    | Self::M4rmSmallCap
+                    | Self::M4rmJoint
+            )
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+    #[serde(rename_all = "snake_case", tag = "kind", deny_unknown_fields)]
+    enum ExtentCandidate {
+        Scalar { value: usize },
+        Tiles { row: usize, col: usize },
+        Vector { proposed: bool, values: M4rmVector },
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct M4rmVector {
+        default_table_bytes: usize,
+        mid_table_bytes: usize,
+        wide_table_bytes: usize,
+        wide_max_k: usize,
+        small_n_max_k: usize,
+    }
+    impl M4rmVector {
+        fn conservative() -> Self {
+            let p = CoreTuning::CONSERVATIVE.m4rm();
+            Self {
+                default_table_bytes: p.default_table_bytes(),
+                mid_table_bytes: p.mid_table_bytes(),
+                wide_table_bytes: p.wide_table_bytes(),
+                wide_max_k: p.wide_max_k(),
+                small_n_max_k: p.small_n_max_k(),
+            }
+        }
+        fn values(&self) -> [usize; 5] {
+            [
+                self.default_table_bytes,
+                self.mid_table_bytes,
+                self.wide_table_bytes,
+                self.wide_max_k,
+                self.small_n_max_k,
+            ]
+        }
+        fn validate(&self) -> Result<(), String> {
+            for (field, value) in [
+                ExtentField::M4rmDefaultBytes,
+                ExtentField::M4rmMidBytes,
+                ExtentField::M4rmWideBytes,
+                ExtentField::M4rmWideCap,
+                ExtentField::M4rmSmallCap,
+            ]
+            .into_iter()
+            .zip(self.values())
+            {
+                if !field
+                    .candidates()
+                    .contains(&ExtentCandidate::Scalar { value })
+                {
+                    return Err("joint vector leaves the declared one-factor grids".to_owned());
+                }
+            }
+            Ok(())
+        }
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(rename_all = "snake_case")]
+    enum ExtentSite {
+        MatrixGemm,
+        MatrixGemmIntoView,
+        MatrixGemmAxpyIntoView,
+        MatrixGemmAxpyIntoViewDiag,
+        ExprGemmWithBeta,
+        ExprGemmTransA,
+        ExprGemmTransAWithBeta,
+    }
+    impl ExtentSite {
+        fn production(self) -> GemmTileSite {
+            match self {
+                Self::MatrixGemm => GemmTileSite::MatrixGemm,
+                Self::MatrixGemmIntoView => GemmTileSite::MatrixGemmIntoView,
+                Self::MatrixGemmAxpyIntoView => GemmTileSite::MatrixGemmAxpyIntoView,
+                Self::MatrixGemmAxpyIntoViewDiag => GemmTileSite::MatrixGemmAxpyIntoViewDiag,
+                Self::ExprGemmWithBeta => GemmTileSite::ExprGemmWithBeta,
+                Self::ExprGemmTransA => GemmTileSite::ExprGemmTransA,
+                Self::ExprGemmTransAWithBeta => GemmTileSite::ExprGemmTransAWithBeta,
+            }
+        }
+        fn all() -> Vec<Self> {
+            GemmTileSite::ALL
+                .into_iter()
+                .map(|site| match site {
+                    GemmTileSite::MatrixGemm => Self::MatrixGemm,
+                    GemmTileSite::MatrixGemmIntoView => Self::MatrixGemmIntoView,
+                    GemmTileSite::MatrixGemmAxpyIntoView => Self::MatrixGemmAxpyIntoView,
+                    GemmTileSite::MatrixGemmAxpyIntoViewDiag => Self::MatrixGemmAxpyIntoViewDiag,
+                    GemmTileSite::ExprGemmWithBeta => Self::ExprGemmWithBeta,
+                    GemmTileSite::ExprGemmTransA => Self::ExprGemmTransA,
+                    GemmTileSite::ExprGemmTransAWithBeta => Self::ExprGemmTransAWithBeta,
+                })
+                .collect()
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ExtentCell {
+        field: ExtentField,
+        shape_index: usize,
+        site: Option<ExtentSite>,
+        candidate: ExtentCandidate,
+    }
+    impl ExtentCell {
+        fn validate(&self) -> Result<(), String> {
+            if self.shape_index >= self.field.shape_count() {
+                return Err("unknown extent shape".to_owned());
+            }
+            if (self.field == ExtentField::GemmTiles) != self.site.is_some() {
+                return Err("extent site does not match field".to_owned());
+            }
+            if self.field == ExtentField::M4rmJoint {
+                match &self.candidate {
+                    ExtentCandidate::Vector { proposed, values } => {
+                        values.validate()?;
+                        if !proposed && *values != M4rmVector::conservative() {
+                            return Err("joint control must be conservative".to_owned());
+                        }
+                    }
+                    _ => return Err("joint field requires a vector".to_owned()),
+                }
+            } else if !self.field.candidates().contains(&self.candidate) {
+                return Err("unknown extent candidate".to_owned());
+            }
+            Ok(())
+        }
+
+        fn dimensions(&self) -> (usize, usize, usize) {
+            if self.field.is_m4rm() {
+                let strides = [16, 24, 31, 32, 48, 63, 64, 96, 128];
+                return match self.field {
+                    ExtentField::M4rmDefaultBytes => (64, 512, 64 * strides[self.shape_index]),
+                    ExtentField::M4rmMidBytes => (64, 512, 64 * strides[self.shape_index + 3]),
+                    ExtentField::M4rmWideBytes => (64, 512, 64 * strides[self.shape_index + 6]),
+                    ExtentField::M4rmSmallCap => (64, 2048, [512, 768, 960][self.shape_index]),
+                    ExtentField::M4rmJoint if self.shape_index >= 9 => {
+                        (64, 2048, [512, 768, 960][self.shape_index - 9])
+                    }
+                    _ => (64, 512, 64 * strides[self.shape_index]),
+                };
+            }
+            let n = match self.field {
+                ExtentField::Transpose => [32, 64, 128][self.shape_index] * 64,
+                ExtentField::Soa => [65536, 131072, 262144][self.shape_index],
+                ExtentField::Trsm => [129, 193, 257][self.shape_index],
+                ExtentField::Dot => [4097, 16385, 65537][self.shape_index],
+                ExtentField::GemmTiles => {
+                    return [(65, 64, 129), (129, 128, 257), (193, 192, 385)][self.shape_index]
+                }
+                _ => unreachable!(),
+            };
+            (n, n, n)
+        }
+        fn seed_identity(&self) -> (u64, u64) {
+            if self.field.is_m4rm() {
+                let (_, k, n) = self.dimensions();
+                (
+                    18,
+                    if k == 512 {
+                        (n / 64) as u64
+                    } else {
+                        0x10000 + n as u64
+                    },
+                )
+            } else {
+                (self.field.tag(), self.shape_index as u64)
+            }
+        }
+        fn roles(&self) -> &'static [(&'static str, u64)] {
+            match self.field {
+                ExtentField::Transpose => &[("matrix", 0x100)],
+                ExtentField::Soa => &[
+                    ("quadratic_lhs", 0x200),
+                    ("quadratic_rhs", 0x201),
+                    ("cubic_lhs", 0x202),
+                    ("cubic_rhs", 0x203),
+                ],
+                ExtentField::Trsm => {
+                    &[("unit_lower", 0x600), ("unit_upper", 0x601), ("rhs", 0x602)]
+                }
+                ExtentField::GemmTiles => &[("lhs", 0x900), ("rhs", 0x901), ("addend", 0x902)],
+                ExtentField::Dot => &[("lhs", 0xb00), ("rhs", 0xb01)],
+                _ => &[("lhs", 0x300), ("rhs", 0x301)],
+            }
+        }
+        fn seed(&self, role: u64, bank: usize) -> u64 {
+            let (tag, key) = self.seed_identity();
+            seed::fixture_seed(SEED_ROOT, tag, key, seed::bank_role(role, bank))
+        }
+        fn seed_inventory(&self) -> ExtentSeeds {
+            let (fixture_tag, shape_key) = self.seed_identity();
+            ExtentSeeds {
+                schema: EXTENT_SEEDS.to_owned(),
+                derivation: seed::SEED_DERIVATION.to_owned(),
+                seed_root: SEED_ROOT,
+                fixture_tag,
+                shape_key,
+                streams: (0..BIT_FIXTURES)
+                    .flat_map(|bank| {
+                        self.roles().iter().map(move |(name, role)| SeedStream {
+                            name: format!("{name}[{bank}]"),
+                            role: seed::bank_role(*role, bank),
+                            seed: self.seed(*role, bank),
+                        })
+                    })
+                    .collect(),
+            }
+        }
+        fn scalar(&self) -> usize {
+            match self.candidate {
+                ExtentCandidate::Scalar { value } => value,
+                _ => unreachable!("validated scalar extent"),
+            }
+        }
+        fn pair(&self) -> GemmTilePair {
+            let ExtentCandidate::Tiles { row, col } = self.candidate else {
+                unreachable!("validated GEMM pair")
+            };
+            GemmTilePair::ALL
+                .into_iter()
+                .find(|pair| pair.extents() == (row, col))
+                .expect("validated pair")
+        }
+        fn section(&self) -> Result<CoreTuning, String> {
+            self.validate()?;
+            let mut body = complete_selector_value(&CoreTuning::CONSERVATIVE)?;
+            let values = match &self.candidate {
+                ExtentCandidate::Scalar { value } => vec![*value],
+                ExtentCandidate::Tiles { row, col } => vec![*row, *col],
+                ExtentCandidate::Vector { values, .. } => values.values().to_vec(),
+            };
+            for (path, value) in self.field.paths().iter().zip(values) {
+                set_leaf(&mut body, path, value)?;
+            }
+            match self.field {
+                ExtentField::Transpose => {
+                    set_leaf(&mut body, "bit_matrix.transpose_simple_max_blocks", 0)?
+                }
+                ExtentField::Soa => set_leaf(&mut body, "soa_batch.parallel_min_len", 0)?,
+                ExtentField::Trsm => set_leaf(&mut body, "triangular.trsm_blocked_min_dim", 0)?,
+                ExtentField::GemmTiles => {
+                    set_leaf(&mut body, "gemm.axpy_fast_path_min_volume", usize::MAX)?
+                }
+                _ => {}
+            }
+            if self.field.is_m4rm() {
+                set_leaf(&mut body, "m4rm.wide_tier_min_stride_words", 16)?;
+                set_leaf(&mut body, "m4rm.tiled_min_stride_words", usize::MAX)?;
+            }
+            CoreTuningCodec::decode_body(
+                CanonicalValue::serialize(&body).map_err(|e| e.to_string())?,
+            )
+            .map_err(|e| e.to_string())
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ExtentSeeds {
+        schema: String,
+        derivation: String,
+        seed_root: u64,
+        fixture_tag: u64,
+        shape_key: u64,
+        streams: Vec<SeedStream>,
+    }
+
+    fn set_leaf(body: &mut serde_json::Value, path: &str, value: usize) -> Result<(), String> {
+        let pointer = format!("/{}", path.replace('.', "/"));
+        let leaf = body
+            .pointer_mut(&pointer)
+            .ok_or_else(|| format!("unknown codec leaf {path}"))?;
+        *leaf = serde_json::json!(value);
+        Ok(())
+    }
+
+    pub(super) fn flatten_selectors(body: &serde_json::Value) -> Result<Vec<ForcedValue>, String> {
+        let families = body.as_object().ok_or("selectors must be an object")?;
+        let mut values = Vec::new();
+        for (family, fields) in families {
+            for (field, value) in fields
+                .as_object()
+                .ok_or("selector family must be an object")?
+            {
+                values.push(ForcedValue::new(
+                    family,
+                    field,
+                    usize::try_from(
+                        value
+                            .as_u64()
+                            .ok_or("selector must be a nonnegative integer")?,
+                    )
+                    .map_err(|_| "selector exceeds usize")?,
+                ));
+            }
+        }
+        Ok(values)
+    }
+
+    fn measured_inventory() -> Result<Vec<String>, String> {
+        let all = flatten_selectors(&complete_selector_value(&CoreTuning::CONSERVATIVE)?)?;
+        let mut measured: Vec<_> = CalibratedField::ALL
+            .into_iter()
+            .map(|field| field.schema_field().to_string())
+            .chain(
+                ExtentField::ALL
+                    .into_iter()
+                    .flat_map(|field| field.paths().iter().map(|path| (*path).to_owned())),
+            )
+            .collect();
+        measured.sort();
+        measured.dedup();
+        if measured.len() != CORE_FIELDS
+            || all.len() != EXPECTED_CORE_SCHEMA_FIELDS
+            || measured.iter().any(|path| {
+                !all.iter()
+                    .any(|leaf| format!("{}.{}", leaf.family, leaf.field) == *path)
+            })
+        {
+            return Err("extent/retained coverage differs from owner codec".to_owned());
+        }
+        Ok(measured)
+    }
+
+    fn extent_cells() -> Vec<ExtentCell> {
+        let mut cells = Vec::new();
+        for field in ExtentField::ALL {
+            for shape_index in 0..field.shape_count() {
+                let sites = if field == ExtentField::GemmTiles {
+                    ExtentSite::all().into_iter().map(Some).collect()
+                } else {
+                    vec![None]
+                };
+                for site in sites {
+                    for candidate in field.candidates() {
+                        cells.push(ExtentCell {
+                            field,
+                            shape_index,
+                            site,
+                            candidate,
+                        });
+                    }
+                }
+            }
+        }
+        cells
+    }
+
+    struct TrsmBank {
+        a: FieldMatrix<Fp251>,
+        lower: FieldMatrix<Fp251>,
+        upper: FieldMatrix<Fp251>,
+        rhs: FieldMatrix<Fp251>,
+    }
+    struct GemmBank {
+        lhs: FieldMatrix<F>,
+        rhs: FieldMatrix<F>,
+        addend: FieldMatrix<F>,
+        transposed_lhs: FieldMatrix<F>,
+    }
+    enum ExtentFixture {
+        Transpose(Vec<BitMatrix>),
+        Soa {
+            quadratic_lhs: Vec<BatchExtField<F, 2>>,
+            quadratic_rhs: Vec<BatchExtField<F, 2>>,
+            cubic_lhs: Vec<BatchExtField<F, 3>>,
+            cubic_rhs: Vec<BatchExtField<F, 3>>,
+        },
+        M4rm(Vec<(BitMatrix, BitMatrix)>),
+        Trsm(Vec<TrsmBank>),
+        Gemm(Vec<GemmBank>),
+        Dot(Vec<(FieldVec<Gf2mElement>, FieldVec<Gf2mElement>)>),
+    }
+
+    fn fp_matrix<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
+        let mut rng = Lcg::new(seed);
+        let mut out = FieldMatrix::zeros(rows, cols);
+        for row in 0..rows {
+            for col in 0..cols {
+                out.set(row, col, Fp::new(rng.next_u64() % P));
+            }
+        }
+        out
+    }
+    fn scalar_fp_transpose<const P: u64>(a: &FieldMatrix<Fp<P>>) -> FieldMatrix<Fp<P>> {
+        let mut out = FieldMatrix::zeros(a.cols(), a.rows());
+        for row in 0..a.rows() {
+            for col in 0..a.cols() {
+                out.set(col, row, a.get(row, col));
+            }
+        }
+        out
+    }
+    fn digest_fp<const P: u64>(matrix: &FieldMatrix<Fp<P>>) -> String {
+        let mut h = Sha256Hasher::new();
+        h.update(b"gf2-extent-prime-matrix-v1");
+        h.update(P.to_le_bytes());
+        h.update(matrix.rows().to_le_bytes());
+        h.update(matrix.cols().to_le_bytes());
+        for row in 0..matrix.rows() {
+            for col in 0..matrix.cols() {
+                h.update(matrix.get(row, col).value().to_le_bytes());
+            }
+        }
+        format!("{:x}", h.finalize())
+    }
+    fn digest_dot(vector: &FieldVec<Gf2mElement>) -> String {
+        let mut h = Sha256Hasher::new();
+        h.update(b"gf2-extent-runtime-gf256-vector-v1");
+        h.update(vector.len().to_le_bytes());
+        for element in vector.iter() {
+            h.update(element.value().to_le_bytes());
+        }
+        format!("{:x}", h.finalize())
+    }
+    fn digest_dot_result(value: Gf2mElement) -> String {
+        let mut h = Sha256Hasher::new();
+        h.update(b"gf2-extent-runtime-gf256-element-v1");
+        h.update(value.value().to_le_bytes());
+        format!("{:x}", h.finalize())
+    }
+
+    fn build_extent_fixture(cell: &ExtentCell) -> Result<ExtentFixture, String> {
+        cell.validate()?;
+        let (m, k, n) = cell.dimensions();
+        let banks = 0..BIT_FIXTURES;
+        Ok(match cell.field {
+            ExtentField::Transpose => ExtentFixture::Transpose(
+                banks
+                    .map(|bank| bit_matrix_from_words(m, n, cell.seed(0x100, bank)))
+                    .collect(),
+            ),
+            ExtentField::Soa => ExtentFixture::Soa {
+                quadratic_lhs: banks
+                    .clone()
+                    .map(|bank| soa_batch(m, cell.seed(0x200, bank)))
+                    .collect(),
+                quadratic_rhs: banks
+                    .clone()
+                    .map(|bank| soa_batch(m, cell.seed(0x201, bank)))
+                    .collect(),
+                cubic_lhs: banks
+                    .clone()
+                    .map(|bank| soa_batch(m, cell.seed(0x202, bank)))
+                    .collect(),
+                cubic_rhs: banks
+                    .map(|bank| soa_batch(m, cell.seed(0x203, bank)))
+                    .collect(),
+            },
+            ExtentField::Trsm => ExtentFixture::Trsm(
+                banks
+                    .map(|bank| {
+                        let (lower, upper) =
+                            field_lu_parts(m, cell.seed(0x600, bank), cell.seed(0x601, bank));
+                        TrsmBank {
+                            a: scalar_field_matmul(&lower, &upper),
+                            lower,
+                            upper,
+                            rhs: filled_field_matrix(m, n, cell.seed(0x602, bank)),
+                        }
+                    })
+                    .collect(),
+            ),
+            ExtentField::GemmTiles => ExtentFixture::Gemm(
+                banks
+                    .map(|bank| {
+                        let lhs = fp_matrix(m, k, cell.seed(0x900, bank));
+                        GemmBank {
+                            transposed_lhs: scalar_fp_transpose(&lhs),
+                            lhs,
+                            rhs: fp_matrix(k, n, cell.seed(0x901, bank)),
+                            addend: fp_matrix(m, n, cell.seed(0x902, bank)),
+                        }
+                    })
+                    .collect(),
+            ),
+            ExtentField::Dot => {
+                let field = Gf2mField::gf256();
+                ExtentFixture::Dot(
+                    banks
+                        .map(|bank| {
+                            let mut lhs = Lcg::new(cell.seed(0xb00, bank));
+                            let mut rhs = Lcg::new(cell.seed(0xb01, bank));
+                            (
+                                (0..m)
+                                    .map(|_| field.element(lhs.next_u64() & 255))
+                                    .collect(),
+                                (0..m)
+                                    .map(|_| field.element(rhs.next_u64() & 255))
+                                    .collect(),
+                            )
+                        })
+                        .collect(),
+                )
+            }
+            _ => ExtentFixture::M4rm(
+                banks
+                    .map(|bank| {
+                        (
+                            bit_matrix_from_words(m, k, cell.seed(0x300, bank)),
+                            bit_matrix_from_words(k, n, cell.seed(0x301, bank)),
+                        )
+                    })
+                    .collect(),
+            ),
+        })
+    }
+
+    fn extent_operand_digest(fixture: &ExtentFixture) -> String {
+        let mut parts = Vec::new();
+        for bank in 0..BIT_FIXTURES {
+            parts.extend(match fixture {
+                ExtentFixture::Transpose(banks) => vec![digest_bit_matrix(&banks[bank])],
+                ExtentFixture::Soa {
+                    quadratic_lhs,
+                    quadratic_rhs,
+                    cubic_lhs,
+                    cubic_rhs,
+                } => vec![
+                    digest_batch(&quadratic_lhs[bank]),
+                    digest_batch(&quadratic_rhs[bank]),
+                    digest_batch(&cubic_lhs[bank]),
+                    digest_batch(&cubic_rhs[bank]),
+                ],
+                ExtentFixture::M4rm(banks) => vec![
+                    digest_bit_matrix(&banks[bank].0),
+                    digest_bit_matrix(&banks[bank].1),
+                ],
+                ExtentFixture::Trsm(banks) => {
+                    vec![digest_fp(&banks[bank].a), digest_fp(&banks[bank].rhs)]
+                }
+                ExtentFixture::Gemm(banks) => vec![
+                    digest_fp(&banks[bank].lhs),
+                    digest_fp(&banks[bank].rhs),
+                    digest_fp(&banks[bank].addend),
+                ],
+                ExtentFixture::Dot(banks) => {
+                    vec![digest_dot(&banks[bank].0), digest_dot(&banks[bank].1)]
+                }
+            });
+        }
+        digest_tuple(b"gf2-extent-operands-bank-role-tuple-v1", parts)
+    }
+
+    pub(super) fn scalar_soa_product<const N: usize>(
+        lhs: &BatchExtField<F, N>,
+        rhs: &BatchExtField<F, N>,
+    ) -> BatchExtField<F, N> {
+        let mut coefficients: [Vec<F>; N] = std::array::from_fn(|_| Vec::with_capacity(lhs.len()));
+        for element in 0..lhs.len() {
+            let mut reduced = [F::new(0); N];
+            for left in 0..N {
+                for right in 0..N {
+                    let product = lhs.coeff(left)[element] * rhs.coeff(right)[element];
+                    let degree = left + right;
+                    reduced[degree % N] += if degree >= N {
+                        F::new(3) * product
+                    } else {
+                        product
+                    };
+                }
+            }
+            for lane in 0..N {
+                coefficients[lane].push(reduced[lane]);
+            }
+        }
+        BatchExtField::new(coefficients)
+    }
+
+    fn scalar_trsm(bank: &TrsmBank, rhs: &FieldMatrix<Fp251>) -> FieldMatrix<Fp251> {
+        let n = bank.a.rows();
+        let mut out = rhs.clone();
+        for row in 0..n {
+            for col in 0..rhs.cols() {
+                let mut x = out.get(row, col);
+                for inner in 0..row {
+                    x = x - bank.lower.get(row, inner) * out.get(inner, col);
+                }
+                out.set(row, col, x);
+            }
+        }
+        for row in (0..n).rev() {
+            for col in 0..rhs.cols() {
+                let mut x = out.get(row, col);
+                for inner in row + 1..n {
+                    x = x - bank.upper.get(row, inner) * out.get(inner, col);
+                }
+                out.set(row, col, x);
+            }
+        }
+        out
+    }
+
+    fn gemm_oracle(site: ExtentSite, left: &GemmBank, right: &GemmBank) -> FieldMatrix<F> {
+        let mut a = left.lhs.clone();
+        let mut b = right.rhs.clone();
+        if site == ExtentSite::MatrixGemmAxpyIntoViewDiag {
+            for i in 0..a.rows().min(a.cols()) {
+                a.set(i, i, F::new(1));
+            }
+            for i in 0..b.rows().min(b.cols()) {
+                b.set(i, i, F::new(1));
+            }
+        }
+        let product = scalar_field_matmul(&a, &b);
+        let (alpha, beta) = match site {
+            ExtentSite::MatrixGemmAxpyIntoView
+            | ExtentSite::MatrixGemmAxpyIntoViewDiag
+            | ExtentSite::ExprGemmTransAWithBeta => (3, 5),
+            ExtentSite::ExprGemmWithBeta => (1, 5),
+            _ => return product,
+        };
+        let mut output = product.clone();
+        for row in 0..output.rows() {
+            for col in 0..output.cols() {
+                output.set(
+                    row,
+                    col,
+                    F::new(alpha) * product.get(row, col)
+                        + F::new(beta) * left.addend.get(row, col),
+                );
+            }
+        }
+        output
+    }
+
+    /// A const specialization is resolved once before any timing, including site selection.
+    enum BoundGemm {
+        Ordinary(gf2_core::field::matrix::GemmCandidateFn<F>),
+        Into(gf2_core::field::matrix::GemmIntoViewCandidateFn<F>),
+        Axpy(gf2_core::field::matrix::GemmAxpyCandidateFn<F>),
+        Diag(gf2_core::field::matrix::GemmDiagCandidateFn<F>),
+        Beta(gf2_core::field::expr::ExprGemmBetaCandidateFn<F>),
+        Trans(gf2_core::field::expr::ExprGemmTransCandidateFn<F>),
+        TransBeta(gf2_core::field::expr::ExprGemmTransBetaCandidateFn<F>),
+    }
+    impl BoundGemm {
+        fn new(cell: &ExtentCell) -> Self {
+            let pair = cell.pair();
+            match cell.site.expect("validated GEMM site") {
+                ExtentSite::MatrixGemm => Self::Ordinary(pair.gemm_fn()),
+                ExtentSite::MatrixGemmIntoView => Self::Into(pair.gemm_into_view_fn()),
+                ExtentSite::MatrixGemmAxpyIntoView => Self::Axpy(pair.gemm_axpy_fn()),
+                ExtentSite::MatrixGemmAxpyIntoViewDiag => Self::Diag(pair.gemm_diag_fn()),
+                ExtentSite::ExprGemmWithBeta => Self::Beta(pair.expr_gemm_beta_fn()),
+                ExtentSite::ExprGemmTransA => Self::Trans(pair.expr_gemm_trans_fn()),
+                ExtentSite::ExprGemmTransAWithBeta => {
+                    Self::TransBeta(pair.expr_gemm_trans_beta_fn())
+                }
+            }
+        }
+        fn call(&self, left: &GemmBank, right: &GemmBank) -> FieldMatrix<F> {
+            let (m, n) = (left.lhs.rows(), right.rhs.cols());
+            match self {
+                Self::Ordinary(f) => f(&left.lhs, &right.rhs),
+                Self::Into(f) => {
+                    let mut out = FieldMatrix::zeros(m, n);
+                    f(&left.lhs, &right.rhs, &mut out);
+                    out
+                }
+                Self::Axpy(f) => {
+                    let mut out = left.addend.clone();
+                    f(F::new(3), &left.lhs, &right.rhs, F::new(5), &mut out);
+                    out
+                }
+                Self::Diag(f) => {
+                    let mut out = left.addend.clone();
+                    f(F::new(3), &left.lhs, &right.rhs, F::new(5), &mut out);
+                    out
+                }
+                Self::Beta(f) => {
+                    let mut out = FieldMatrix::zeros(m, n);
+                    f(&left.lhs, &right.rhs, F::new(5), &left.addend, &mut out);
+                    out
+                }
+                Self::Trans(f) => {
+                    let mut out = FieldMatrix::zeros(m, n);
+                    f(&left.transposed_lhs, &right.rhs, &mut out);
+                    out
+                }
+                Self::TransBeta(f) => {
+                    let mut out = FieldMatrix::zeros(m, n);
+                    f(
+                        F::new(3),
+                        &left.transposed_lhs,
+                        &right.rhs,
+                        F::new(5),
+                        &left.addend,
+                        &mut out,
+                    );
+                    out
+                }
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(tag = "route", rename_all = "snake_case", deny_unknown_fields)]
+    enum EffectiveSchedule {
+        MacroTiled {
+            blocks: usize,
+        },
+        SoaParallel {
+            chunk: usize,
+        },
+        M4rm {
+            tier: M4rmTier,
+            panel_width: usize,
+            c_update: RowWise,
+        },
+        TrsmBlocked {
+            panel_rows: usize,
+        },
+        GemmTiles {
+            row: usize,
+            col: usize,
+            site: ExtentSite,
+        },
+        DotClmulBarrett {
+            chunk: usize,
+        },
+    }
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(rename_all = "snake_case")]
+    enum M4rmTier {
+        SmallN,
+        Wide,
+    }
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(rename_all = "snake_case")]
+    enum RowWise {
+        RowWise,
+    }
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(rename_all = "snake_case")]
+    enum BudgetBand {
+        SmallN,
+        Default,
+        Mid,
+        Wide,
+    }
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct M4rmConsumed {
+        band: BudgetBand,
+        table_bytes: Option<usize>,
+        panel_width_cap: usize,
+        tiled_stride_admitted: bool,
+    }
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ExtentObservation {
+        schedule: EffectiveSchedule,
+        m4rm_consumed: Option<M4rmConsumed>,
+        dedicated_pool_width: Option<usize>,
+        fp251_whole_gemm: Option<bool>,
+        quiet_timing: bool,
+    }
+
+    pub(super) fn reset_solve_observations() {
+        gf2_core::field::matrix::reset_gemm_tile_observations();
+        reset_last_gemm_axpy_dispatch_route();
+        gf2_core::field::triangular::reset_last_effective_triangular_route();
+        reset_last_effective_trsm_panel_rows();
+        reset_max_effective_panel_dispatch_cols();
+    }
+    pub(super) fn quiet_solve_observations_empty() -> bool {
+        gf2_core::field::matrix::gemm_tile_observations().is_empty()
+            && last_gemm_axpy_dispatch_route().is_none()
+            && gf2_core::field::triangular::last_effective_triangular_route().is_none()
+            && last_effective_trsm_panel_rows().is_none()
+            && max_effective_panel_dispatch_cols().is_none()
+    }
+    fn extent_oracle_digest(cell: &ExtentCell, fixture: &ExtentFixture) -> String {
+        let mut outputs = Vec::new();
+        for bank in 0..BIT_FIXTURES {
+            let rhs = paired_bank(bank);
+            let output = match fixture {
+                ExtentFixture::Transpose(banks) => {
+                    let a = &banks[bank];
+                    let mut result = BitMatrix::zeros(a.cols(), a.rows());
+                    for row in 0..a.rows() {
+                        for col in 0..a.cols() {
+                            result.set(col, row, a.get(row, col));
+                        }
+                    }
+                    digest_bit_matrix(&result)
+                }
+                ExtentFixture::Soa {
+                    quadratic_lhs,
+                    quadratic_rhs,
+                    cubic_lhs,
+                    cubic_rhs,
+                } => digest_tuple(
+                    b"gf2-extent-soa-four-result-v1",
+                    [
+                        digest_batch(&scalar_soa_product(
+                            &quadratic_lhs[bank],
+                            &quadratic_rhs[rhs],
+                        )),
+                        digest_batch(&scalar_soa_product(
+                            &quadratic_lhs[bank],
+                            &quadratic_lhs[bank],
+                        )),
+                        digest_batch(&scalar_soa_product(&cubic_lhs[bank], &cubic_rhs[rhs])),
+                        digest_batch(&scalar_soa_product(&cubic_lhs[bank], &cubic_lhs[bank])),
+                    ],
+                ),
+                ExtentFixture::M4rm(banks) => {
+                    digest_bit_matrix(&scalar_m4rm_oracle(&banks[bank].0, &banks[rhs].1))
+                }
+                ExtentFixture::Trsm(banks) => {
+                    digest_fp(&scalar_trsm(&banks[bank], &banks[rhs].rhs))
+                }
+                ExtentFixture::Gemm(banks) => {
+                    digest_fp(&gemm_oracle(cell.site.unwrap(), &banks[bank], &banks[rhs]))
+                }
+                ExtentFixture::Dot(banks) => {
+                    digest_dot_result(banks[bank].0.dot_product(&banks[rhs].1))
+                }
+            };
+            outputs.push(output);
+        }
+        digest_tuple(b"gf2-extent-eight-bank-results-v1", outputs)
+    }
+
+    fn probe_extent(
+        cell: &ExtentCell,
+        fixture: &ExtentFixture,
+        bound_gemm: Option<&BoundGemm>,
+        bound_dot: Option<gf2_core::field::vec::DotChunkCandidateFn>,
+    ) -> Result<(String, Vec<ExtentObservation>), String> {
+        use gf2_core::alg::m4rm::{M4rmEffectiveScheduleObservation, M4rmTableBand};
+        use gf2_core::matrix::{
+            reset_transpose_effective_observation, transpose_effective_observation,
+            TransposeEffectiveObservation,
+        };
+        let mut outputs = Vec::new();
+        let mut observations = Vec::new();
+        for bank in 0..BIT_FIXTURES {
+            let rhs = paired_bank(bank);
+            let mut consumed = None;
+            let mut pool = None;
+            let mut fp251 = None;
+            let (output, schedule) = match fixture {
+                ExtentFixture::Transpose(banks) => {
+                    reset_transpose_effective_observation();
+                    let result = banks[bank].transpose();
+                    if transpose_effective_observation()
+                        != (TransposeEffectiveObservation::MacroTiled {
+                            macro_tile_blocks: cell.scalar(),
+                        })
+                    {
+                        return Err("transpose failed consumed macro-tile observation".to_owned());
+                    }
+                    if result.transpose() != banks[bank] {
+                        return Err("transpose failed involution".to_owned());
+                    }
+                    (
+                        digest_bit_matrix(&result),
+                        EffectiveSchedule::MacroTiled {
+                            blocks: cell.scalar(),
+                        },
+                    )
+                }
+                ExtentFixture::Soa {
+                    quadratic_lhs,
+                    quadratic_rhs,
+                    cubic_lhs,
+                    cubic_rhs,
+                } => {
+                    let width = rayon::current_num_threads();
+                    if width != 4
+                        || soa_parallel_route(cell.dimensions().0) != SoaParallelRoute::Parallel
+                    {
+                        return Err("SoA required dedicated parallel route unavailable".to_owned());
+                    }
+                    pool = Some(width);
+                    reset_last_effective_soa_chunk();
+                    let a = quadratic_lhs[bank]
+                        .batch_mul_quadratic::<QuadraticBeta3>(&quadratic_rhs[rhs]);
+                    let first = last_effective_soa_chunk();
+                    reset_last_effective_soa_chunk();
+                    let b = quadratic_lhs[bank].batch_square_quadratic::<QuadraticBeta3>();
+                    let second = last_effective_soa_chunk();
+                    reset_last_effective_soa_chunk();
+                    let c = cubic_lhs[bank].batch_mul_cubic::<CubicBeta3>(&cubic_rhs[rhs]);
+                    let third = last_effective_soa_chunk();
+                    reset_last_effective_soa_chunk();
+                    let d = cubic_lhs[bank].batch_square_cubic::<CubicBeta3>();
+                    let fourth = last_effective_soa_chunk();
+                    if [first, second, third, fourth] != [Some(cell.scalar()); 4] {
+                        return Err(
+                            "SoA did not consume the candidate at all four operations".to_owned()
+                        );
+                    }
+                    (
+                        digest_tuple(
+                            b"gf2-extent-soa-four-result-v1",
+                            [
+                                digest_batch(&a),
+                                digest_batch(&b),
+                                digest_batch(&c),
+                                digest_batch(&d),
+                            ],
+                        ),
+                        EffectiveSchedule::SoaParallel {
+                            chunk: cell.scalar(),
+                        },
+                    )
+                }
+                ExtentFixture::M4rm(banks) => {
+                    let (_, k, n) = cell.dimensions();
+                    let reported = m4rm_schedule_route(k, n);
+                    gf2_core::alg::m4rm::reset_m4rm_effective_schedule_observation();
+                    let result = m4rm_multiply(&banks[bank].0, &banks[rhs].1);
+                    let M4rmEffectiveScheduleObservation::Completed(executed) =
+                        gf2_core::alg::m4rm::m4rm_effective_schedule_observation()
+                    else {
+                        return Err("M4RM missing completed schedule".to_owned());
+                    };
+                    if executed.tier() != reported.tier()
+                        || executed.panel_width() != reported.panel_width()
+                        || executed.panel_width() < 2
+                        || executed.c_update() != M4rmTiledEffectiveObservation::RowWise
+                        || executed.tiled_stride_admitted()
+                    {
+                        return Err(
+                            "M4RM executed a different schedule or bypassed RowWise panels"
+                                .to_owned(),
+                        );
+                    }
+                    let tier = match executed.tier() {
+                        M4rmScheduleTier::SmallN => M4rmTier::SmallN,
+                        M4rmScheduleTier::Wide => M4rmTier::Wide,
+                    };
+                    let band = match executed.table_band() {
+                        M4rmTableBand::SmallN => BudgetBand::SmallN,
+                        M4rmTableBand::Default => BudgetBand::Default,
+                        M4rmTableBand::Mid => BudgetBand::Mid,
+                        M4rmTableBand::Wide => BudgetBand::Wide,
+                    };
+                    consumed = Some(M4rmConsumed {
+                        band,
+                        table_bytes: executed.table_bytes(),
+                        panel_width_cap: executed.panel_width_cap(),
+                        tiled_stride_admitted: executed.tiled_stride_admitted(),
+                    });
+                    (
+                        digest_bit_matrix(&result),
+                        EffectiveSchedule::M4rm {
+                            tier,
+                            panel_width: executed.panel_width(),
+                            c_update: RowWise::RowWise,
+                        },
+                    )
+                }
+                ExtentFixture::Trsm(banks) => {
+                    let capable = <Fp251 as FiniteField>::has_simd_gemm_classical();
+                    fp251 = Some(capable);
+                    if !capable || trsm_route(cell.dimensions().0) != TrsmRoute::Blocked {
+                        return Err(
+                            "TRSM required blocked whole-GEMM capability unavailable".to_owned()
+                        );
+                    }
+                    reset_solve_observations();
+                    let result = banks[bank]
+                        .a
+                        .solve_batch(&banks[rhs].rhs)
+                        .ok_or("TRSM fixture became singular")?;
+                    if last_effective_trsm_panel_rows() != Some(cell.scalar()) {
+                        return Err("TRSM did not consume the candidate panel".to_owned());
+                    }
+                    if scalar_field_matmul(&banks[bank].a, &result) != banks[rhs].rhs {
+                        return Err("TRSM failed A*X=B".to_owned());
+                    }
+                    reset_solve_observations();
+                    let quiet = banks[bank]
+                        .a
+                        .solve_batch_quiet_for_test(&banks[rhs].rhs)
+                        .ok_or("quiet TRSM became singular")?;
+                    if quiet != result || !quiet_solve_observations_empty() {
+                        return Err(
+                            "quiet TRSM differs in semantics or publishes observations".to_owned()
+                        );
+                    }
+                    (
+                        digest_fp(&result),
+                        EffectiveSchedule::TrsmBlocked {
+                            panel_rows: cell.scalar(),
+                        },
+                    )
+                }
+                ExtentFixture::Gemm(banks) => {
+                    gf2_core::field::matrix::reset_gemm_tile_observations();
+                    let result = bound_gemm
+                        .expect("bound GEMM")
+                        .call(&banks[bank], &banks[rhs]);
+                    let observations = gf2_core::field::matrix::gemm_tile_observations();
+                    let (row, col) = cell.pair().extents();
+                    let site = cell.site.unwrap();
+                    let expected = gf2_core::field::matrix::GemmTileObservation {
+                        site: site.production(),
+                        row_tile: row,
+                        col_tile: col,
+                    };
+                    if observations != [expected] {
+                        return Err(format!(
+                            "GEMM missing exact candidate/site evidence: {observations:?}"
+                        ));
+                    }
+                    (
+                        digest_fp(&result),
+                        EffectiveSchedule::GemmTiles { row, col, site },
+                    )
+                }
+                ExtentFixture::Dot(banks) => {
+                    gf2_core::field::vec::reset_max_effective_dot_chunk_len();
+                    let result = bound_dot.expect("bound dot")(&banks[bank].0, &banks[rhs].1);
+                    let effective = gf2_core::field::vec::max_effective_dot_chunk_len();
+                    if effective != cell.scalar() {
+                        return Err(
+                            "dot did not execute required batched CLMUL/Barrett candidate"
+                                .to_owned(),
+                        );
+                    }
+                    (
+                        digest_dot_result(result),
+                        EffectiveSchedule::DotClmulBarrett { chunk: effective },
+                    )
+                }
+            };
+            let observation = ExtentObservation {
+                schedule,
+                m4rm_consumed: consumed,
+                dedicated_pool_width: pool,
+                fp251_whole_gemm: fp251,
+                quiet_timing: cell.field == ExtentField::Trsm,
+            };
+            validate_extent_observation(cell, &observation)?;
+            outputs.push(output);
+            observations.push(observation);
+        }
+        Ok((
+            digest_tuple(b"gf2-extent-eight-bank-results-v1", outputs),
+            observations,
+        ))
+    }
+
+    fn expected_m4rm_schedule(
+        cell: &ExtentCell,
+    ) -> Result<(EffectiveSchedule, M4rmConsumed), String> {
+        use gf2_core::alg::m4rm::{m4rm_schedule_route_for_selectors, M4rmTableBand};
+        let (_, k, n) = cell.dimensions();
+        let section = cell.section()?;
+        let route = m4rm_schedule_route_for_selectors(section.m4rm(), k, n);
+        if route.panel_width() < 2 || route.tiled_stride_admitted() {
+            return Err("M4RM declared controls do not select RowWise Gray-code panels".to_owned());
+        }
+        Ok((
+            EffectiveSchedule::M4rm {
+                tier: match route.tier() {
+                    M4rmScheduleTier::SmallN => M4rmTier::SmallN,
+                    M4rmScheduleTier::Wide => M4rmTier::Wide,
+                },
+                panel_width: route.panel_width(),
+                c_update: RowWise::RowWise,
+            },
+            M4rmConsumed {
+                band: match route.table_band() {
+                    M4rmTableBand::SmallN => BudgetBand::SmallN,
+                    M4rmTableBand::Default => BudgetBand::Default,
+                    M4rmTableBand::Mid => BudgetBand::Mid,
+                    M4rmTableBand::Wide => BudgetBand::Wide,
+                },
+                table_bytes: route.table_bytes(),
+                panel_width_cap: route.panel_width_cap(),
+                tiled_stride_admitted: route.tiled_stride_admitted(),
+            },
+        ))
+    }
+
+    fn validate_extent_observation(
+        cell: &ExtentCell,
+        observation: &ExtentObservation,
+    ) -> Result<(), String> {
+        let expected = match cell.field {
+            ExtentField::Transpose => EffectiveSchedule::MacroTiled {
+                blocks: cell.scalar(),
+            },
+            ExtentField::Soa => EffectiveSchedule::SoaParallel {
+                chunk: cell.scalar(),
+            },
+            ExtentField::Trsm => EffectiveSchedule::TrsmBlocked {
+                panel_rows: cell.scalar(),
+            },
+            ExtentField::GemmTiles => {
+                let (row, col) = cell.pair().extents();
+                EffectiveSchedule::GemmTiles {
+                    row,
+                    col,
+                    site: cell.site.unwrap(),
+                }
+            }
+            ExtentField::Dot => EffectiveSchedule::DotClmulBarrett {
+                chunk: cell.scalar(),
+            },
+            _ => {
+                let (schedule, consumed) = expected_m4rm_schedule(cell)?;
+                if observation.m4rm_consumed.as_ref() != Some(&consumed) {
+                    return Err("M4RM consumed selector context mismatch".to_owned());
+                }
+                schedule
+            }
+        };
+        if observation.schedule != expected
+            || observation.dedicated_pool_width
+                != if cell.field == ExtentField::Soa {
+                    Some(4)
+                } else {
+                    None
+                }
+            || observation.fp251_whole_gemm
+                != if cell.field == ExtentField::Trsm {
+                    Some(true)
+                } else {
+                    None
+                }
+            || observation.quiet_timing != (cell.field == ExtentField::Trsm)
+            || observation.m4rm_consumed.is_some() != cell.field.is_m4rm()
+        {
+            return Err("extent capability/route context mismatch".to_owned());
+        }
+        Ok(())
+    }
+
+    fn time_extent(
+        fixture: &ExtentFixture,
+        bound_gemm: Option<&BoundGemm>,
+        bound_dot: Option<gf2_core::field::vec::DotChunkCandidateFn>,
+        bank: usize,
+    ) {
+        let bank = bank & (BIT_FIXTURES - 1);
+        let rhs = paired_bank(bank);
+        match fixture {
+            ExtentFixture::Transpose(banks) => {
+                black_box(banks[bank].transpose());
+            }
+            ExtentFixture::Soa {
+                quadratic_lhs,
+                quadratic_rhs,
+                cubic_lhs,
+                cubic_rhs,
+            } => {
+                black_box(
+                    quadratic_lhs[bank].batch_mul_quadratic::<QuadraticBeta3>(&quadratic_rhs[rhs]),
+                );
+                black_box(quadratic_lhs[bank].batch_square_quadratic::<QuadraticBeta3>());
+                black_box(cubic_lhs[bank].batch_mul_cubic::<CubicBeta3>(&cubic_rhs[rhs]));
+                black_box(cubic_lhs[bank].batch_square_cubic::<CubicBeta3>());
+            }
+            ExtentFixture::M4rm(banks) => {
+                black_box(m4rm_multiply(&banks[bank].0, &banks[rhs].1));
+            }
+            ExtentFixture::Trsm(banks) => {
+                black_box(
+                    banks[bank]
+                        .a
+                        .solve_batch_quiet_for_test(&banks[rhs].rhs)
+                        .expect("verified invertible fixture"),
+                );
+            }
+            ExtentFixture::Gemm(banks) => {
+                black_box(
+                    bound_gemm
+                        .expect("bound GEMM")
+                        .call(&banks[bank], &banks[rhs]),
+                );
+            }
+            ExtentFixture::Dot(banks) => {
+                black_box(bound_dot.expect("bound dot")(&banks[bank].0, &banks[rhs].1));
+            }
+        }
+    }
+
+    use neutral::{
+        CanonicalJson, LaunchUnit, OwnerManifest, OwnerOperation, OwnerResponse, Sha256Digest,
+        Task, Token, UnitIdentity,
+    };
+    use tuning_campaign_support::campaign as neutral;
+
+    pub(super) fn fixed_protocol() -> Protocol {
+        Protocol {
+            executions: DEFAULT_EXECUTIONS,
+            repetitions: DEFAULT_REPETITIONS,
+            target_ms: DEFAULT_TARGET_MS,
+        }
+    }
+    fn err(e: impl fmt::Display) -> String {
+        e.to_string()
+    }
+    fn token(value: impl Into<String>) -> Result<Token, String> {
+        Token::new(value).map_err(err)
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(tag = "experiment", rename_all = "snake_case", deny_unknown_fields)]
+    enum OwnerCaseKind {
+        Threshold { spec: ChildSpec },
+        Extent { cell: ExtentCell },
+        ReservedM4rm { cell: ExtentCell },
+    }
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(tag = "inventory", rename_all = "snake_case", deny_unknown_fields)]
+    enum CaseSeeds {
+        Retained { seeds: SeedInventory },
+        Extent { seeds: ExtentSeeds },
+    }
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct OwnerCase {
+        schema: String,
+        protocol: Protocol,
+        identity: UnitIdentity,
+        protocol_sha256: Sha256Digest,
+        channels: neutral::SessionChannels,
+        kind: OwnerCaseKind,
+        forced_values: Vec<ForcedValue>,
+        seeds: CaseSeeds,
+    }
+
+    fn section_prepared(section: CoreTuning) -> Result<PreparedEnvelope, String> {
+        let id = ProfileId::parse(FORCED_ARM_PROFILE_ID).map_err(err)?;
+        PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
+            .insert(section)
+            .map_err(err)?
+            .build()
+            .map_err(err)
+    }
+    pub(super) fn section_values(prepared: &PreparedEnvelope) -> Result<Vec<ForcedValue>, String> {
+        let section = prepared
+            .section::<CoreTuning>()
+            .map_err(err)?
+            .ok_or("missing core section")?;
+        flatten_selectors(&complete_selector_value(section.section)?)
+    }
+    fn task_old(task: Task) -> ChildTask {
+        match task {
+            Task::Probe => ChildTask::Probe,
+            Task::Measure { execution } => ChildTask::Measure { execution },
+        }
+    }
+    fn task_neutral(task: ChildTask) -> Task {
+        match task {
+            ChildTask::Probe => Task::Probe,
+            ChildTask::Measure { execution } => Task::Measure { execution },
+        }
+    }
+    fn case_coordinates(
+        kind: &OwnerCaseKind,
+    ) -> Result<(String, String, String, String, Task), String> {
+        Ok(match kind {
+            OwnerCaseKind::Threshold { spec } => {
+                if !spec.field.grid().contains(&spec.size)
+                    || !spec.field.variants().contains(&spec.variant)
+                {
+                    return Err("unknown retained threshold shape/variant".to_owned());
+                }
+                (
+                    "retained-thresholds".to_owned(),
+                    spec.field.schema_field().to_string(),
+                    format!("size-{}-{}", spec.size, spec.variant),
+                    spec.arm.to_string(),
+                    task_neutral(spec.task),
+                )
+            }
+            OwnerCaseKind::Extent { cell } | OwnerCaseKind::ReservedM4rm { cell } => {
+                cell.validate()?;
+                let phase = if cell.field == ExtentField::M4rmJoint {
+                    "m4rm-joint"
+                } else {
+                    "core-extents"
+                };
+                let field = if cell.field == ExtentField::GemmTiles {
+                    "gemm.tiles"
+                } else if cell.field == ExtentField::M4rmJoint {
+                    "m4rm.joint"
+                } else {
+                    cell.field.paths()[0]
+                };
+                let stratum = match cell.site {
+                    Some(site) => format!("shape-{}-{site:?}", cell.shape_index),
+                    None => format!("shape-{}", cell.shape_index),
+                };
+                let candidate = match &cell.candidate {
+                    ExtentCandidate::Scalar { value } => format!("candidate-{value}"),
+                    ExtentCandidate::Tiles { row, col } => format!("row-{row}-col-{col}"),
+                    ExtentCandidate::Vector { proposed, .. } => {
+                        if *proposed {
+                            "proposed".to_owned()
+                        } else {
+                            "conservative".to_owned()
+                        }
+                    }
+                };
+                (
+                    phase.to_owned(),
+                    field.to_owned(),
+                    stratum,
+                    candidate,
+                    Task::Probe,
+                )
+            }
+        })
+    }
+    impl OwnerCase {
+        fn new(
+            request: &neutral::ManifestRequest,
+            kind: OwnerCaseKind,
+            task: Task,
+        ) -> Result<Self, String> {
+            task.validate().map_err(err)?;
+            let (phase, field, stratum, candidate, old_task) = case_coordinates(&kind)?;
+            if matches!(kind, OwnerCaseKind::Threshold { .. }) && old_task != task {
+                return Err("retained task mismatch".to_owned());
+            }
+            let (forced_values, seeds) = match &kind {
+                OwnerCaseKind::Threshold { spec } => {
+                    let (prepared, _) = forced_profile_for(*spec)?;
+                    (
+                        section_values(&prepared)?,
+                        CaseSeeds::Retained {
+                            seeds: seed_inventory(spec.field, spec.size),
+                        },
+                    )
+                }
+                OwnerCaseKind::Extent { cell } | OwnerCaseKind::ReservedM4rm { cell } => (
+                    flatten_selectors(&complete_selector_value(&cell.section()?)?)?,
+                    CaseSeeds::Extent {
+                        seeds: cell.seed_inventory(),
+                    },
+                ),
+            };
+            Ok(Self {
+                schema: OWNER_PROTOCOL.to_owned(),
+                protocol: fixed_protocol(),
+                identity: UnitIdentity {
+                    protocol: token(OWNER_PROTOCOL)?,
+                    owner: token("gf2-core")?,
+                    campaign_id: request.campaign_id.clone(),
+                    phase: token(phase)?,
+                    field: token(field)?,
+                    stratum: token(stratum)?,
+                    candidate: token(candidate)?,
+                    task,
+                },
+                protocol_sha256: request.protocol_sha256.clone(),
+                channels: request.channels.clone(),
+                kind,
+                forced_values,
+                seeds,
+            })
+        }
+        fn validate(&self, allow_reserved: bool) -> Result<(), String> {
+            self.channels.validate().map_err(err)?;
+            if !allow_reserved && matches!(self.kind, OwnerCaseKind::ReservedM4rm { .. }) {
+                return Err("reserved M4RM case has not been derived".to_owned());
+            }
+            let request = neutral::ManifestRequest {
+                campaign_id: self.identity.campaign_id.clone(),
+                protocol_sha256: self.protocol_sha256.clone(),
+                channels: self.channels.clone(),
+                processes: Vec::new(),
+            };
+            if Self::new(&request, self.kind.clone(), self.identity.task)? != *self {
+                return Err("owner case identity/protocol/controls/seeds mismatch".to_owned());
+            }
+            Ok(())
+        }
+    }
+
+    fn ordered_cases(request: &neutral::ManifestRequest) -> Result<Vec<OwnerCase>, String> {
+        let mut cases = Vec::new();
+        // Retained order is field, variant, size, two probes, then paired executions.
+        for field in CalibratedField::ALL {
+            for &variant in field.variants() {
+                for size in field.grid() {
+                    for task in std::iter::once(Task::Probe)
+                        .chain((0..DEFAULT_EXECUTIONS).map(|execution| Task::Measure { execution }))
+                    {
+                        for arm in Arm::BOTH {
+                            let spec = ChildSpec {
+                                field,
+                                variant,
+                                size,
+                                arm,
+                                task: task_old(task),
+                            };
+                            cases.push(OwnerCase::new(
+                                request,
+                                OwnerCaseKind::Threshold { spec },
+                                task,
+                            )?);
+                        }
+                    }
+                }
+            }
+        }
+        for field in ExtentField::ALL {
+            for shape_index in 0..field.shape_count() {
+                let sites = if field == ExtentField::GemmTiles {
+                    ExtentSite::all().into_iter().map(Some).collect()
+                } else {
+                    vec![None]
+                };
+                for site in sites {
+                    for task in std::iter::once(Task::Probe)
+                        .chain((0..DEFAULT_EXECUTIONS).map(|execution| Task::Measure { execution }))
+                    {
+                        let mut candidates = field.candidates();
+                        if let Task::Measure { execution } = task {
+                            let count = candidates.len();
+                            candidates.rotate_left(execution as usize % count);
+                            if execution % 2 == 1 {
+                                candidates.reverse();
+                            }
+                        }
+                        for candidate in candidates {
+                            let cell = ExtentCell {
+                                field,
+                                shape_index,
+                                site,
+                                candidate,
+                            };
+                            cases.push(OwnerCase::new(
+                                request,
+                                OwnerCaseKind::Extent { cell },
+                                task,
+                            )?);
+                        }
+                    }
+                }
+            }
+        }
+        for shape_index in 0..12 {
+            for task in std::iter::once(Task::Probe)
+                .chain((0..DEFAULT_EXECUTIONS).map(|execution| Task::Measure { execution }))
+            {
+                let mut labels = vec![false, true];
+                if let Task::Measure { execution } = task {
+                    labels.rotate_left(execution as usize % 2);
+                    if execution % 2 == 1 {
+                        labels.reverse();
+                    }
+                }
+                for proposed in labels {
+                    let cell = ExtentCell {
+                        field: ExtentField::M4rmJoint,
+                        shape_index,
+                        site: None,
+                        candidate: ExtentCandidate::Vector {
+                            proposed,
+                            values: M4rmVector::conservative(),
+                        },
+                    };
+                    cases.push(OwnerCase::new(
+                        request,
+                        OwnerCaseKind::ReservedM4rm { cell },
+                        task,
+                    )?);
+                }
+            }
+        }
+        if cases.len() != CORE_CELLS * 6 {
+            return Err("core ordered work count mismatch".to_owned());
+        }
+        Ok(cases)
+    }
+    fn manifest(request: &neutral::ManifestRequest) -> Result<OwnerManifest, String> {
+        request.channels.validate().map_err(err)?;
+        preflight()?;
+        let [process] = request.processes.as_slice() else {
+            return Err(
+                "core manifest requires exactly its own staged process descriptor".to_owned(),
+            );
+        };
+        process.validate().map_err(err)?;
+        if process.id.as_str() != "core-producer"
+            || process.arguments != ["--fresh-tuning-process-child"]
+        {
+            return Err("core process descriptor must use the fixed fresh-child entry".to_owned());
+        }
+        let cases = ordered_cases(request)?;
+        let units = cases
+            .iter()
+            .enumerate()
+            .map(|(ordinal, case)| {
+                LaunchUnit::new(
+                    ordinal as u64,
+                    case.identity.clone(),
+                    process.id.clone(),
+                    CanonicalJson::from_serializable(case).map_err(err)?,
+                )
+                .map_err(err)
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+        let mut candidate_blocks: Vec<neutral::CandidateBlock> = Vec::new();
+        for case in cases
+            .iter()
+            .filter(|case| case.identity.task == Task::Probe)
+        {
+            let id = &case.identity;
+            if let Some(block) = candidate_blocks.last_mut().filter(|block| {
+                block.phase == id.phase && block.field == id.field && block.stratum == id.stratum
+            }) {
+                block.base_candidates.push(id.candidate.clone());
+            } else {
+                candidate_blocks.push(neutral::CandidateBlock {
+                    phase: id.phase.clone(),
+                    field: id.field.clone(),
+                    stratum: id.stratum.clone(),
+                    base_candidates: vec![id.candidate.clone()],
+                });
+            }
+        }
+        let mut manifest = OwnerManifest {
+            schema: neutral::MANIFEST_SCHEMA.to_owned(),
+            owner: token("gf2-core")?,
+            owner_protocol: token(OWNER_PROTOCOL)?,
+            behavior_token: token(CoreTuningCodec::HARNESS_SCHEMA)?,
+            campaign_id: request.campaign_id.clone(),
+            phases: ["retained-thresholds", "core-extents", "m4rm-joint"]
+                .into_iter()
+                .map(token)
+                .collect::<Result<_, _>>()?,
+            counts: neutral::DeclaredCounts::for_cells(CORE_CELLS as u64).map_err(err)?,
+            processes: request.processes.clone(),
+            ordered_units: units,
+            candidate_blocks,
+            manifest_sha256: Sha256Digest::of(b""),
+        };
+        manifest.seal().map_err(err)?;
+        Ok(manifest)
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct OrdinaryCompanionConstants {
+        gemm_row_tile: usize,
+        gemm_col_tile: usize,
+        dot_chunk_len: usize,
+    }
+    impl OrdinaryCompanionConstants {
+        fn observe() -> Self {
+            let (gemm_row_tile, gemm_col_tile) = gf2_core::field::matrix::selected_gemm_tiles();
+            Self {
+                gemm_row_tile,
+                gemm_col_tile,
+                dot_chunk_len: gf2_core::field::vec::selected_dot_chunk_len(),
+            }
+        }
+        fn validate(&self) -> Result<(), String> {
+            if *self == Self::observe() {
+                Ok(())
+            } else {
+                Err("ordinary cfg-selected companion constants mismatch".to_owned())
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+    #[serde(tag = "experiment", rename_all = "snake_case", deny_unknown_fields)]
+    enum OwnerEvidence {
+        Threshold {
+            schema: String,
+            ordinary_companions: OrdinaryCompanionConstants,
+            report: Box<ChildReport>,
+            full_active_values: Vec<ForcedValue>,
+        },
+        Extent {
+            schema: String,
+            ordinary_companions: OrdinaryCompanionConstants,
+            installed: Box<InstalledEvidence>,
+            seeds: ExtentSeeds,
+            dimensions: (usize, usize, usize),
+            operands_sha256: Sha256Digest,
+            oracle_sha256: Sha256Digest,
+            result_sha256: Sha256Digest,
+            observations: Vec<ExtentObservation>,
+        },
+    }
+
+    fn run_owner_case(case: &OwnerCase) -> Result<neutral::ChildResult, String> {
+        case.validate(false)?;
+        let case_sha256 = CanonicalJson::from_serializable(case)
+            .map_err(err)?
+            .digest();
+        if matches!(case.identity.task, Task::Measure { .. }) {
+            if env::var(BENCH_MODE_VAR).as_deref() != Ok("1") {
+                return Err("timed child requires prepared-host benchmark authorization".to_owned());
+            }
+            require_campaign_environment()?;
+        }
+        let (payload, samples, outcome) = match &case.kind {
+            OwnerCaseKind::Threshold { spec } => {
+                let context = (case.identity.clone(), case_sha256.clone());
+                let report = run_child_with_context(*spec, &case.protocol, Some(&context))?;
+                let full_active_values =
+                    flatten_selectors(&complete_selector_value(tuning::active().section)?)?;
+                if full_active_values != case.forced_values {
+                    return Err("retained child failed full section readback".to_owned());
+                }
+                let (samples, outcome) = match &report.outcome {
+                    ChildOutcome::Complete { samples, .. } => {
+                        (samples.clone(), neutral::ChildOutcome::Complete)
+                    }
+                    ChildOutcome::Unavailable { .. } => {
+                        (Vec::new(), neutral::ChildOutcome::Unavailable)
+                    }
+                };
+                (
+                    OwnerEvidence::Threshold {
+                        schema: RAW_WINDOWS.to_owned(),
+                        ordinary_companions: OrdinaryCompanionConstants::observe(),
+                        report: Box::new(report),
+                        full_active_values,
+                    },
+                    samples,
+                    outcome,
+                )
+            }
+            OwnerCaseKind::Extent { cell } => {
+                let installed = install_prepared_profile(
+                    section_prepared(cell.section()?)?,
+                    case.forced_values.clone(),
+                )?;
+                let fixture = build_extent_fixture(cell)?;
+                let operands_sha256 =
+                    Sha256Digest::new(extent_operand_digest(&fixture)).map_err(err)?;
+                let oracle_sha256 =
+                    Sha256Digest::new(extent_oracle_digest(cell, &fixture)).map_err(err)?;
+                let gemm = (cell.field == ExtentField::GemmTiles).then(|| BoundGemm::new(cell));
+                let dot = (cell.field == ExtentField::Dot).then(|| {
+                    DotChunkCandidate::ALL
+                        .into_iter()
+                        .find(|candidate| candidate.chunk_len() == cell.scalar())
+                        .expect("validated dot candidate")
+                        .function()
+                });
+                let finish = || -> Result<_, String> {
+                    let (result, observations) = probe_extent(cell, &fixture, gemm.as_ref(), dot)?;
+                    let result_sha256 = Sha256Digest::new(result).map_err(err)?;
+                    if result_sha256 != oracle_sha256 {
+                        return Err(
+                            "extent outputs differ from the independent eight-bank scalar oracle"
+                                .to_owned(),
+                        );
+                    }
+                    let samples = if matches!(case.identity.task, Task::Measure { .. }) {
+                        neutral::execution_with_progress(
+                            &case.identity,
+                            &case_sha256,
+                            &mut |bank| time_extent(&fixture, gemm.as_ref(), dot, bank),
+                            &mut io::stderr().lock(),
+                        )
+                        .map_err(err)?
+                    } else {
+                        Vec::new()
+                    };
+                    Ok((
+                        OwnerEvidence::Extent {
+                            schema: RAW_WINDOWS.to_owned(),
+                            ordinary_companions: OrdinaryCompanionConstants::observe(),
+                            installed: Box::new(installed),
+                            seeds: cell.seed_inventory(),
+                            dimensions: cell.dimensions(),
+                            operands_sha256,
+                            oracle_sha256,
+                            result_sha256,
+                            observations,
+                        },
+                        samples,
+                        neutral::ChildOutcome::Complete,
+                    ))
+                };
+                if cell.field == ExtentField::Soa {
+                    run_in_dedicated_parallel_pool(4, finish)?
+                } else {
+                    finish()?
+                }
+            }
+            OwnerCaseKind::ReservedM4rm { .. } => {
+                return Err("reserved child is not executable".to_owned())
+            }
+        };
+        Ok(neutral::ChildResult {
+            schema: neutral::RESULT_SCHEMA.to_owned(),
+            identity: case.identity.clone(),
+            case_sha256,
+            outcome,
+            samples,
+            payload: CanonicalJson::from_serializable(&payload).map_err(err)?,
+        })
+    }
+
+    fn validate_result(
+        unit: &LaunchUnit,
+        result: &neutral::ChildResult,
+        reconstruct: bool,
+    ) -> Result<(), String> {
+        unit.validate().map_err(err)?;
+        let case: OwnerCase = unit.case.decode().map_err(err)?;
+        case.validate(false)?;
+        if unit.identity != case.identity
+            || result.schema != neutral::RESULT_SCHEMA
+            || result.identity != unit.identity
+            || result.case_sha256 != unit.case.digest()
+            || result.outcome != neutral::ChildOutcome::Complete
+        {
+            return Err("owner result identity/outcome mismatch".to_owned());
+        }
+        match case.identity.task {
+            Task::Probe => {
+                if !result.samples.is_empty() {
+                    return Err("probe has timing samples".to_owned());
+                }
+            }
+            Task::Measure { execution } => {
+                if result.samples.len() != 5 {
+                    return Err("timed result lacks five windows".to_owned());
+                }
+                for (repetition, sample) in result.samples.iter().enumerate() {
+                    sample.validate().map_err(err)?;
+                    if sample.execution != execution
+                        || sample.repetition != repetition as u64
+                        || sample.calls != result.samples[0].calls
+                    {
+                        return Err("timed result window ordering/call count mismatch".to_owned());
+                    }
+                }
+            }
+        }
+        let evidence: OwnerEvidence = result.payload.decode().map_err(err)?;
+        match (&case.kind, evidence) {
+            (
+                OwnerCaseKind::Threshold { spec },
+                OwnerEvidence::Threshold {
+                    schema,
+                    ordinary_companions,
+                    report,
+                    full_active_values,
+                },
+            ) => {
+                ordinary_companions.validate()?;
+                if schema != RAW_WINDOWS || full_active_values != case.forced_values {
+                    return Err("threshold result schema/full controls mismatch".to_owned());
+                }
+                let operands = if reconstruct {
+                    expected_operand_digest(spec.field, spec.size)?
+                } else {
+                    report.operand_digest.clone()
+                };
+                verify_child_report(*spec, &operands, &case.protocol, &report)?;
+                let ChildOutcome::Complete { samples, .. } = report.outcome else {
+                    return Err("threshold result unavailable".to_owned());
+                };
+                if samples != result.samples {
+                    return Err("threshold inner/outer windows mismatch".to_owned());
+                }
+            }
+            (
+                OwnerCaseKind::Extent { cell },
+                OwnerEvidence::Extent {
+                    schema,
+                    ordinary_companions,
+                    installed,
+                    seeds,
+                    dimensions,
+                    operands_sha256,
+                    oracle_sha256,
+                    result_sha256,
+                    observations,
+                },
+            ) => {
+                ordinary_companions.validate()?;
+                let prepared = section_prepared(cell.section()?)?;
+                let digests = forced_profile_digests(&prepared)?;
+                if schema != RAW_WINDOWS
+                    || seeds != cell.seed_inventory()
+                    || dimensions != cell.dimensions()
+                    || installed.profile_id != FORCED_ARM_PROFILE_ID
+                    || installed.section_id != CoreTuning::ID.as_str()
+                    || installed.resolution != ObservedResolution::Installed
+                    || installed.measurement != ObservedMeasurement::Inherited
+                    || installed.active_values != case.forced_values
+                    || installed.section_sha256 != digests.section_sha256
+                    || installed.envelope_content_sha256 != digests.envelope_content_sha256
+                    || result_sha256 != oracle_sha256
+                    || observations.len() != 8
+                {
+                    return Err("extent installed/fixture/oracle evidence mismatch".to_owned());
+                }
+                for observation in &observations {
+                    validate_extent_observation(cell, observation)?;
+                }
+                if observations.windows(2).any(|pair| pair[0] != pair[1]) {
+                    return Err("extent schedule changed between fixture banks".to_owned());
+                }
+                if reconstruct {
+                    let fixture = build_extent_fixture(cell)?;
+                    if operands_sha256.as_str() != extent_operand_digest(&fixture)
+                        || oracle_sha256.as_str() != extent_oracle_digest(cell, &fixture)
+                    {
+                        return Err("extent fixture or scalar oracle digest failed independent reconstruction".to_owned());
+                    }
+                }
+            }
+            _ => return Err("owner evidence does not match experiment".to_owned()),
+        }
+        Ok(())
+    }
+
+    pub(super) fn fresh_child() -> Result<(), String> {
+        let case: OwnerCase = transport::read_guarded_case(
+            env::var(FRESH_CASE_VAR).ok().as_deref(),
+            io::stdin().lock(),
+        )?;
+        let result = run_owner_case(&case)?;
+        transport::write_result_line(io::stdout().lock(), &result).map_err(err)
+    }
+
+    struct AnalysisInput<'a> {
+        request: neutral::ManifestRequest,
+        records: std::collections::BTreeMap<String, &'a neutral::AcceptedResult>,
+    }
+    impl<'a> AnalysisInput<'a> {
+        fn new(
+            bundle: &'a neutral::AcceptedResultsBundle,
+            campaign_id: &Token,
+            manifest_sha256: &Sha256Digest,
+            complete: bool,
+        ) -> Result<Self, String> {
+            let expected_count = if complete {
+                CORE_CELLS * 6
+            } else {
+                (CORE_CELLS - 24) * 6
+            };
+            if bundle.schema != neutral::ACCEPTED_RESULTS_SCHEMA
+                || bundle.manifest_sha256 != *manifest_sha256
+                || bundle.accepted.len() != expected_count
+            {
+                return Err("owner input manifest/accounting mismatch".to_owned());
+            }
+            let first = bundle.accepted.first().ok_or("empty owner input")?;
+            let first_case: OwnerCase = first.unit.case.decode().map_err(err)?;
+            if first_case.identity.campaign_id != *campaign_id {
+                return Err("owner input campaign mismatch".to_owned());
+            }
+            let request = neutral::ManifestRequest {
+                campaign_id: campaign_id.clone(),
+                protocol_sha256: first_case.protocol_sha256.clone(),
+                channels: first_case.channels.clone(),
+                processes: Vec::new(),
+            };
+            let expected = ordered_cases(&request)?;
+            let mut records = std::collections::BTreeMap::new();
+            for (ordinal, (entry, expected)) in bundle.accepted.iter().zip(expected).enumerate() {
+                let actual: OwnerCase = entry.unit.case.decode().map_err(err)?;
+                if entry.unit.ordinal != ordinal as u64
+                    || entry.unit.process != first.unit.process
+                    || actual.identity != expected.identity
+                    || actual.channels != expected.channels
+                    || actual.protocol_sha256 != expected.protocol_sha256
+                {
+                    return Err("owner input order/channel/slot mismatch".to_owned());
+                }
+                if let OwnerCaseKind::ReservedM4rm { .. } = &expected.kind {
+                    if !matches!(actual.kind,OwnerCaseKind::Extent{ref cell} if cell.field==ExtentField::M4rmJoint)
+                    {
+                        return Err("joint slot was not materialized".to_owned());
+                    }
+                } else if actual != expected {
+                    return Err("owner input changed a fixed case".to_owned());
+                }
+                // Per-unit owner validation reconstructed operands/oracles before durable
+                // acceptance. Analysis reopens every semantic envelope and recomputes
+                // decisions from the accepted windows; it does not execute candidates.
+                validate_result(&entry.unit, &entry.result, false)?;
+                if records
+                    .insert(entry.unit.key.as_str().to_owned(), entry)
+                    .is_some()
+                {
+                    return Err("duplicate accepted owner unit".to_owned());
+                }
+            }
+            Ok(Self { request, records })
+        }
+        fn get(
+            &self,
+            kind: OwnerCaseKind,
+            task: Task,
+        ) -> Result<&'a neutral::AcceptedResult, String> {
+            let expected = OwnerCase::new(&self.request, kind, task)?;
+            let key = expected.identity.key().map_err(err)?;
+            let entry = *self
+                .records
+                .get(key.as_str())
+                .ok_or_else(|| format!("missing accepted unit {}", key.as_str()))?;
+            let case: OwnerCase = entry.unit.case.decode().map_err(err)?;
+            if case != expected {
+                return Err(
+                    "accepted case differs from selected vector or fixed contract".to_owned(),
+                );
+            }
+            Ok(entry)
+        }
+        fn extent_series(
+            &self,
+            field: ExtentField,
+            candidates: &[ExtentCandidate],
+        ) -> Result<Vec<statistics::CandidateSeries<ExtentCandidate, EffectiveSchedule>>, String>
+        {
+            let mut series = Vec::new();
+            for candidate in candidates {
+                let mut schedules = Vec::new();
+                let mut strata = Vec::new();
+                for shape_index in 0..field.shape_count() {
+                    let sites = if field == ExtentField::GemmTiles {
+                        ExtentSite::all().into_iter().map(Some).collect()
+                    } else {
+                        vec![None]
+                    };
+                    for site in sites {
+                        let cell = ExtentCell {
+                            field,
+                            shape_index,
+                            site,
+                            candidate: candidate.clone(),
+                        };
+                        let kind = OwnerCaseKind::Extent { cell };
+                        let probe = self.get(kind.clone(), Task::Probe)?;
+                        let evidence: OwnerEvidence = probe.result.payload.decode().map_err(err)?;
+                        let OwnerEvidence::Extent { observations, .. } = evidence else {
+                            return Err("extent has threshold evidence".to_owned());
+                        };
+                        schedules.push(observations[0].schedule.clone());
+                        let mut medians = Vec::new();
+                        for execution in 0..5 {
+                            let timed = self.get(kind.clone(), Task::Measure { execution })?;
+                            if timed.result.payload != probe.result.payload {
+                                return Err("extent timed/probe evidence diverges".to_owned());
+                            }
+                            medians.push(
+                                statistics::execution_median(&timed.result.samples, execution)
+                                    .map_err(err)?,
+                            );
+                        }
+                        strata.push(medians);
+                    }
+                }
+                series.push(statistics::CandidateSeries {
+                    candidate: candidate.clone(),
+                    schedules,
+                    strata,
+                });
+            }
+            // Pairing binds common deterministic operands and mathematical answers,
+            // even where the candidate changes the effective schedule.
+            for shape_index in 0..field.shape_count() {
+                let sites = if field == ExtentField::GemmTiles {
+                    ExtentSite::all().into_iter().map(Some).collect()
+                } else {
+                    vec![None]
+                };
+                for site in sites {
+                    let mut paired = None;
+                    for candidate in candidates {
+                        let entry = self.get(
+                            OwnerCaseKind::Extent {
+                                cell: ExtentCell {
+                                    field,
+                                    shape_index,
+                                    site,
+                                    candidate: candidate.clone(),
+                                },
+                            },
+                            Task::Probe,
+                        )?;
+                        let OwnerEvidence::Extent {
+                            seeds,
+                            dimensions,
+                            operands_sha256,
+                            oracle_sha256,
+                            result_sha256,
+                            ..
+                        } = entry.result.payload.decode().map_err(err)?
+                        else {
+                            return Err("wrong pairing evidence".to_owned());
+                        };
+                        let this = (
+                            seeds,
+                            dimensions,
+                            operands_sha256,
+                            oracle_sha256,
+                            result_sha256,
+                        );
+                        if let Some(previous) = &paired {
+                            if previous != &this {
+                                return Err(
+                                    "candidate-paired operands/oracle/results differ".to_owned()
+                                );
+                            }
+                        } else {
+                            paired = Some(this);
+                        }
+                    }
+                }
+            }
+            Ok(series)
+        }
+        fn thresholds(&self) -> Result<Vec<FieldSweep>, String> {
+            let mut sweeps = Vec::new();
+            for field in CalibratedField::ALL {
+                let mut variants = Vec::new();
+                for &variant in field.variants() {
+                    let mut points = Vec::new();
+                    for size in field.grid() {
+                        let mut arms = Vec::new();
+                        let mut probes = Vec::new();
+                        for arm in Arm::BOTH {
+                            let spec = ChildSpec {
+                                field,
+                                variant,
+                                size,
+                                arm,
+                                task: ChildTask::Probe,
+                            };
+                            let entry = self.get(OwnerCaseKind::Threshold { spec }, Task::Probe)?;
+                            let OwnerEvidence::Threshold { report: probe, .. } =
+                                entry.result.payload.decode().map_err(err)?
+                            else {
+                                return Err("threshold has extent evidence".to_owned());
+                            };
+                            let mut samples = Vec::new();
+                            for execution in 0..5 {
+                                let spec = ChildSpec {
+                                    task: ChildTask::Measure { execution },
+                                    ..spec
+                                };
+                                let entry = self.get(
+                                    OwnerCaseKind::Threshold { spec },
+                                    Task::Measure { execution },
+                                )?;
+                                let OwnerEvidence::Threshold { report, .. } =
+                                    entry.result.payload.decode().map_err(err)?
+                                else {
+                                    return Err("threshold has extent evidence".to_owned());
+                                };
+                                verify_matching_evidence(
+                                    "accepted retained probe/timed evidence",
+                                    &probe,
+                                    &report,
+                                )?;
+                                samples.extend(entry.result.samples.iter().copied());
+                            }
+                            arms.push(ArmStat::from_samples(samples));
+                            probes.push(probe);
+                        }
+                        verify_matching_evidence(
+                            "accepted retained paired arms",
+                            &probes[0],
+                            &probes[1],
+                        )?;
+                        let mut arms = arms.into_iter();
+                        points.push(GridPoint {
+                            size,
+                            conservative: arms.next(),
+                            asymptotic: arms.next(),
+                        });
+                    }
+                    variants.push(FieldSweep {
+                        field,
+                        variant,
+                        selection: select(field, &points),
+                        points,
+                    });
+                }
+                if field == CalibratedField::InterpolateFastMinPoints {
+                    let selection =
+                        reconcile_interpolation(&variants[0].selection, &variants[1].selection);
+                    // Retain both independently measured input curves beside reconciliation.
+                    sweeps.extend(variants);
+                    sweeps.push(FieldSweep {
+                        field,
+                        variant: SweepVariant::Standard,
+                        points: Vec::new(),
+                        selection,
+                    });
+                } else {
+                    sweeps.extend(variants);
+                }
+            }
+            Ok(sweeps)
+        }
+    }
+
+    #[derive(Clone, Debug, PartialEq, Serialize)]
+    struct NamedExtentDecision {
+        field: ExtentField,
+        decision: statistics::ExtentDecision<ExtentCandidate>,
+    }
+    fn one_factor_decisions(input: &AnalysisInput<'_>) -> Result<Vec<NamedExtentDecision>, String> {
+        ExtentField::ALL
+            .into_iter()
+            .filter(|field| *field != ExtentField::GemmTiles)
+            .map(|field| {
+                let series = input.extent_series(field, &field.candidates())?;
+                Ok(NamedExtentDecision {
+                    field,
+                    decision: statistics::analyze_extent(&series, &field.default_candidate())
+                        .map_err(err)?,
+                })
+            })
+            .collect()
+    }
+    fn suggested_m4rm(decisions: &[NamedExtentDecision]) -> Result<M4rmVector, String> {
+        let get = |field| -> Result<usize, String> {
+            let decision = &decisions
+                .iter()
+                .find(|d| d.field == field)
+                .ok_or("missing one-factor M4RM decision")?
+                .decision;
+            match decision.selected {
+                ExtentCandidate::Scalar { value } => Ok(value),
+                _ => Err("M4RM one-factor suggestion is not scalar".to_owned()),
+            }
+        };
+        Ok(M4rmVector {
+            default_table_bytes: get(ExtentField::M4rmDefaultBytes)?,
+            mid_table_bytes: get(ExtentField::M4rmMidBytes)?,
+            wide_table_bytes: get(ExtentField::M4rmWideBytes)?,
+            wide_max_k: get(ExtentField::M4rmWideCap)?,
+            small_n_max_k: get(ExtentField::M4rmSmallCap)?,
+        })
+    }
+    fn derive_manifest(
+        request: &neutral::DeriveManifestRequest,
+    ) -> Result<neutral::DerivedManifest, String> {
+        let bundle: neutral::AcceptedResultsBundle = request.accepted_inputs.read().map_err(err)?;
+        let input = AnalysisInput::new(
+            &bundle,
+            &request.campaign_id,
+            &request.original_manifest_sha256,
+            false,
+        )?;
+        let decisions = one_factor_decisions(&input)?;
+        let proposed = suggested_m4rm(&decisions)?;
+        let ordered = ordered_cases(&input.request)?;
+        let expected = &ordered[(CORE_CELLS - 24) * 6..];
+        if request.reserved_units.len() != 144 {
+            return Err("M4RM derivation requires every fixed 24-cell slot".to_owned());
+        }
+        let mut units = Vec::new();
+        for (reserved, expected) in request.reserved_units.iter().zip(expected) {
+            let case: OwnerCase = reserved.case.decode().map_err(err)?;
+            if &case != expected
+                || reserved.identity != expected.identity
+                || reserved.ordinal != (CORE_CELLS - 24) as u64 * 6 + units.len() as u64
+            {
+                return Err("M4RM reservation differs from declared order".to_owned());
+            }
+            let OwnerCaseKind::ReservedM4rm { mut cell } = case.kind else {
+                return Err("nonreserved M4RM derivation input".to_owned());
+            };
+            if let ExtentCandidate::Vector {
+                proposed: true,
+                values,
+            } = &mut cell.candidate
+            {
+                *values = proposed.clone();
+            }
+            let derived = OwnerCase::new(
+                &input.request,
+                OwnerCaseKind::Extent { cell },
+                case.identity.task,
+            )?;
+            let mut unit = reserved.clone();
+            unit.case = CanonicalJson::from_serializable(&derived).map_err(err)?;
+            units.push(unit);
+        }
+        let derived=neutral::DerivedManifest{original_manifest_sha256:request.original_manifest_sha256.clone(),accepted_inputs_sha256:request.accepted_inputs.sha256.clone(),units,derivation:CanonicalJson::from_serializable(&serde_json::json!({"schema":"core-m4rm-conditional-vector-v1","decisions":decisions,"proposed":proposed})).map_err(err)?};
+        derived.validate(request).map_err(err)?;
+        Ok(derived)
+    }
+
+    #[derive(Clone, Debug, PartialEq, Serialize)]
+    struct OwnerDecisions {
+        schema: String,
+        retained_thresholds: Vec<FieldSweep>,
+        extents: Vec<NamedExtentDecision>,
+        gemm: statistics::GemmDecision,
+        proposed_m4rm: M4rmVector,
+        joint_m4rm: statistics::JointVectorDecision<M4rmVector>,
+        measured: Vec<String>,
+        omitted: Vec<String>,
+        counts: neutral::DeclaredCounts,
+    }
+    fn decide_owner(input: &AnalysisInput<'_>) -> Result<(CoreTuning, OwnerDecisions), String> {
+        let thresholds = input.thresholds()?;
+        let extents = one_factor_decisions(input)?;
+        let proposed = suggested_m4rm(&extents)?;
+        let gemm_series = input
+            .extent_series(ExtentField::GemmTiles, &ExtentField::GemmTiles.candidates())?
+            .into_iter()
+            .map(|series| {
+                let ExtentCandidate::Tiles { row, col } = series.candidate else {
+                    unreachable!()
+                };
+                statistics::CandidateSeries {
+                    candidate: (row, col),
+                    schedules: series.schedules,
+                    strata: series.strata,
+                }
+            })
+            .collect::<Vec<_>>();
+        let conservative_gemm = CoreTuning::CONSERVATIVE.gemm();
+        let gemm = statistics::analyze_gemm(
+            &gemm_series,
+            (conservative_gemm.row_tile(), conservative_gemm.col_tile()),
+        )
+        .map_err(err)?;
+        let joint_series = input
+            .extent_series(
+                ExtentField::M4rmJoint,
+                &[
+                    ExtentCandidate::Vector {
+                        proposed: false,
+                        values: M4rmVector::conservative(),
+                    },
+                    ExtentCandidate::Vector {
+                        proposed: true,
+                        values: proposed.clone(),
+                    },
+                ],
+            )?
+            .into_iter()
+            .map(|series| {
+                let ExtentCandidate::Vector { values, .. } = series.candidate else {
+                    unreachable!()
+                };
+                statistics::CandidateSeries {
+                    candidate: values,
+                    schedules: series.schedules,
+                    strata: series.strata,
+                }
+            })
+            .collect::<Vec<_>>();
+        let joint =
+            statistics::analyze_joint_vector(&joint_series[0], &joint_series[1]).map_err(err)?;
+        let mut body = complete_selector_value(&CoreTuning::CONSERVATIVE)?;
+        for field in CalibratedField::ALL {
+            let selection = &thresholds
+                .iter()
+                .find(|sweep| sweep.field == field && sweep.variant == SweepVariant::Standard)
+                .ok_or("missing reconciled threshold")?
+                .selection;
+            set_leaf(
+                &mut body,
+                &field.schema_field().to_string(),
+                selection.value(),
+            )?;
+        }
+        for named in &extents {
+            if !named.field.is_m4rm() {
+                let ExtentCandidate::Scalar { value } = named.decision.selected else {
+                    unreachable!()
+                };
+                set_leaf(&mut body, named.field.paths()[0], value)?;
+            }
+        }
+        set_leaf(&mut body, "gemm.row_tile", gemm.selected.0)?;
+        set_leaf(&mut body, "gemm.col_tile", gemm.selected.1)?;
+        for (path, value) in ExtentField::M4rmJoint
+            .paths()
+            .iter()
+            .zip(joint.selected.values())
+        {
+            set_leaf(&mut body, path, value)?;
+        }
+        let measured = measured_inventory()?;
+        let mut omitted = Vec::new();
+        for leaf in flatten_selectors(&body)? {
+            let path = format!("{}.{}", leaf.family, leaf.field);
+            if !measured.contains(&path) {
+                body.get_mut(&leaf.family)
+                    .and_then(serde_json::Value::as_object_mut)
+                    .ok_or("missing family")?
+                    .remove(&leaf.field);
+                omitted.push(path);
+            }
+        }
+        if omitted.len() != 10 {
+            return Err("core omission complement mismatch".to_owned());
+        }
+        let section = CoreTuningCodec::decode_body(CanonicalValue::serialize(&body).map_err(err)?)
+            .map_err(err)?;
+        Ok((
+            section,
+            OwnerDecisions {
+                schema: OWNER_PROTOCOL.to_owned(),
+                retained_thresholds: thresholds,
+                extents,
+                gemm,
+                proposed_m4rm: proposed,
+                joint_m4rm: joint,
+                measured,
+                omitted,
+                counts: neutral::DeclaredCounts::for_cells(CORE_CELLS as u64).map_err(err)?,
+            },
+        ))
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct RuntimeFacts {
+        source_dirty: bool,
+        toolchain: String,
+        cpu_model: String,
+        cpu_features: Vec<String>,
+        os_kernel: String,
+        governor: String,
+        receipt: String,
+    }
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct AssemblyRuntime {
+        source_dirty: bool,
+        tool: String,
+        tool_sha256: String,
+    }
+    fn runtime_facts(provenance: &neutral::ObservedProvenance) -> Result<RuntimeFacts, String> {
+        let facts: RuntimeFacts = provenance.runtime.decode().map_err(err)?;
+        if facts.source_dirty
+            || [
+                &facts.toolchain,
+                &facts.cpu_model,
+                &facts.os_kernel,
+                &facts.governor,
+                &provenance.identity.host_identity,
+            ]
+            .iter()
+            .any(|value| value.trim().is_empty())
+            || !facts.toolchain.contains("1.95.0")
+            || facts.cpu_features.is_empty()
+            || facts
+                .cpu_features
+                .iter()
+                .any(|s| s.is_empty() || !s.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_'))
+            || facts.cpu_features.windows(2).any(|p| p[0] >= p[1])
+        {
+            return Err("noncanonical or incomplete observed runtime facts".to_owned());
+        }
+        RepoRelPath::parse(&facts.receipt).map_err(err)?;
+        Rfc3339Utc::parse(&provenance.observed_utc).map_err(err)?;
+        if provenance.identity.feature_contract != neutral::FEATURE_CONTRACT
+            || provenance.identity.thread_contract != neutral::THREAD_CONTRACT
+            || provenance.process.as_str() != "core-producer"
+            || !provenance
+                .identity
+                .behavior_sha256
+                .contains_key("crates/gf2-core/benches/tuning_calibration.rs")
+        {
+            return Err("owner measurement feature/thread/behavior contract mismatch".to_owned());
+        }
+        Ok(facts)
+    }
+    fn emit_owner(request: &neutral::EmitOwnerRequest) -> Result<OwnerResponse, String> {
+        if env::var(BENCH_MODE_VAR).as_deref() != Ok("1") {
+            return Err("owner emission requires authorized campaign environment".to_owned());
+        }
+        require_campaign_environment()?;
+        let bundle: neutral::AcceptedResultsBundle =
+            request.accepted_results.read().map_err(err)?;
+        let input = AnalysisInput::new(
+            &bundle,
+            &request.campaign_id,
+            &request.manifest_sha256,
+            true,
+        )?;
+        if request.measurement.identity != request.assembly.identity
+            || request.measurement.process != request.assembly.process
+            || request.measurement.identity.protocol_digest
+                != input.request.protocol_sha256.as_str()
+        {
+            return Err("owner provenance differs from measured campaign identity".to_owned());
+        }
+        let parent = request
+            .output
+            .parent()
+            .ok_or("owner output lacks a parent directory")?;
+        let canonical_parent = fs::canonicalize(parent).map_err(err)?;
+        if canonical_parent != parent
+            || !canonical_parent.starts_with(&input.request.channels.stage)
+            || request.output.file_name().is_none()
+        {
+            return Err(
+                "owner publication destination must be inside the canonical campaign stage"
+                    .to_owned(),
+            );
+        }
+        let facts = runtime_facts(&request.measurement)?;
+        let assembly_runtime: AssemblyRuntime = request.assembly.runtime.decode().map_err(err)?;
+        if assembly_runtime.source_dirty
+            || assembly_runtime.tool != "crates/gf2-core/benches/tuning_calibration.rs"
+        {
+            return Err("owner assembly source/tool identity mismatch".to_owned());
+        }
+        let binary = request
+            .measurement
+            .identity
+            .executable_sha256
+            .get(request.measurement.process.as_str())
+            .ok_or("missing owner producing binary digest")?;
+        let actual = sha256_file(&env::current_exe().map_err(err)?)?;
+        if actual.as_str() != binary || assembly_runtime.tool_sha256 != *binary {
+            return Err("owner emission executable differs from producing binary".to_owned());
+        }
+        let (section, decisions) = decide_owner(&input)?;
+        let measurement = MeasurementProvenance::Calibrated {
+            measured_at: Rfc3339Utc::parse(&request.measurement.observed_utc).map_err(err)?,
+            source_revision: GitRevision::parse(&request.measurement.identity.source_revision)
+                .map_err(err)?,
+            source_dirty: false,
+            harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
+                .map_err(err)?,
+            harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA).map_err(err)?,
+            binary_sha256: actual.clone(),
+            toolchain: facts.toolchain,
+            host: request.measurement.identity.host_identity.clone(),
+            cpu_model: facts.cpu_model,
+            cpu_features: facts.cpu_features,
+            os_kernel: facts.os_kernel,
+            governor: facts.governor,
+            receipt: RepoRelPath::parse(&facts.receipt).map_err(err)?,
+        };
+        let assembly = AssemblyProvenance {
+            assembled_at: Rfc3339Utc::parse(&request.assembly.observed_utc).map_err(err)?,
+            source_revision: GitRevision::parse(&request.assembly.identity.source_revision)
+                .map_err(err)?,
+            source_dirty: false,
+            tool: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
+                .map_err(err)?,
+            tool_sha256: actual,
+        };
+        let profile = ProducedCoreProfile {
+            id: ProfileId::parse(request.campaign_id.as_str()).map_err(err)?,
+            measurement,
+            assembly,
+            section,
+        };
+        let json = profile.to_json();
+        if ProducedCoreProfile::from_json(&json)? != profile {
+            return Err("owner strict reopen changed the section or provenance".to_owned());
+        }
+        let written = emit_profile(&request.output, &json).map_err(err)?;
+        if written != json {
+            return Err("owner reopen differs from generated artifact".to_owned());
+        }
+        Ok(OwnerResponse::EmitOwner {
+            artifact: neutral::ArtifactIdentity {
+                path: fs::canonicalize(&request.output).map_err(err)?,
+                sha256: Sha256Digest::of(json.as_bytes()),
+            },
+            decisions: CanonicalJson::from_serializable(&decisions).map_err(err)?,
+        })
+    }
+
+    fn validate_extent_grid(
+        field: ExtentField,
+        candidates: &[ExtentCandidate],
+    ) -> Result<(), String> {
+        if !candidates.contains(&field.default_candidate()) {
+            return Err(format!(
+                "conservative default is absent from the declared {field:?} grid"
+            ));
+        }
+        for candidate in candidates {
+            let cell = ExtentCell {
+                field,
+                shape_index: 0,
+                site: (field == ExtentField::GemmTiles).then_some(ExtentSite::MatrixGemm),
+                candidate: candidate.clone(),
+            };
+            cell.validate()?;
+            cell.section()?;
+        }
+        Ok(())
+    }
+    fn preflight() -> Result<(), String> {
+        measured_inventory()?;
+        for field in ExtentField::ALL {
+            validate_extent_grid(field, &field.candidates())?;
+        }
+        for cell in extent_cells() {
+            cell.validate()?;
+            cell.section()?;
+            if cell.field.is_m4rm() {
+                expected_m4rm_schedule(&cell)?;
+            }
+        }
+        Ok(())
+    }
+    fn report_inventory() -> Result<CanonicalJson, String> {
+        preflight()?;
+        let extents = extent_cells();
+        let retained:Vec<_>=CalibratedField::ALL.into_iter().flat_map(|field|field.variants().iter().map(move|variant|serde_json::json!({"field":field,"variant":variant,"grid":field.grid(),"default":field.conservative_default()}))).collect();
+        CanonicalJson::from_serializable(&serde_json::json!({"owner_protocol":OWNER_PROTOCOL,"behavior_token":CoreTuningCodec::HARNESS_SCHEMA,"raw_schema":RAW_WINDOWS,"measured":measured_inventory()?,"counts":neutral::DeclaredCounts::for_cells(CORE_CELLS as u64).map_err(err)?,"retained":retained,"extents":extents,"reserved_joint_cells":24})).map_err(err)
+    }
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(rename_all = "kebab-case")]
+    enum CapabilityScope {
+        RepresentativePrerequisites,
+    }
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct DotCapability {
+        candidate_chunk: usize,
+        effective_chunk: usize,
+        batch_clmul_scalar_clmul_and_barrett: bool,
+        scalar_equal: bool,
+    }
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct CapabilityReport {
+        scope: CapabilityScope,
+        full_grid_probes: bool,
+        timed_children: u64,
+        fp251_whole_gemm: bool,
+        simd_backend: Option<String>,
+        dedicated_pool_width: usize,
+        representative_dot_length: usize,
+        dot: Vec<DotCapability>,
+        ordinary_companions: OrdinaryCompanionConstants,
+        cpu_features: Vec<String>,
+        required_features: String,
+        required_threads: String,
+    }
+    fn capability_report() -> Result<CanonicalJson, String> {
+        preflight()?;
+        let field = Gf2mField::new(8, 0x11b);
+        let length = DotChunkCandidate::ALL
+            .into_iter()
+            .map(|candidate| candidate.chunk_len())
+            .max()
+            .ok_or("empty dot capability grid")?;
+        let lhs = FieldVec::from(vec![field.element(3); length]);
+        let rhs = FieldVec::from(vec![field.element(5); length]);
+        let oracle = lhs.dot_product(&rhs);
+        let mut dot = Vec::new();
+        for candidate in DotChunkCandidate::ALL {
+            gf2_core::field::vec::reset_max_effective_dot_chunk_len();
+            let result = candidate.function()(&lhs, &rhs);
+            let effective_chunk = gf2_core::field::vec::max_effective_dot_chunk_len();
+            // The production observer is written only after obtaining the batch
+            // CLMUL, single CLMUL and Barrett reducer and completing the walk.
+            dot.push(DotCapability {
+                candidate_chunk: candidate.chunk_len(),
+                effective_chunk,
+                batch_clmul_scalar_clmul_and_barrett: effective_chunk == candidate.chunk_len(),
+                scalar_equal: result == oracle,
+            });
+        }
+        let dedicated_pool_width =
+            run_in_dedicated_parallel_pool(
+                4,
+                || Ok::<usize, String>(rayon::current_num_threads()),
+            )?;
+        CanonicalJson::from_serializable(&CapabilityReport {
+            scope: CapabilityScope::RepresentativePrerequisites,
+            full_grid_probes: false,
+            timed_children: 0,
+            fp251_whole_gemm: <Fp251 as FiniteField>::has_simd_gemm_classical(),
+            simd_backend: simd_backend().map(|backend| backend.name().to_owned()),
+            dedicated_pool_width,
+            representative_dot_length: length,
+            dot,
+            ordinary_companions: OrdinaryCompanionConstants::observe(),
+            cpu_features: cpu_features(),
+            required_features: REQUIRED_FEATURES.to_owned(),
+            required_threads: REQUIRED_RAYON_THREADS.to_owned(),
+        })
+        .map_err(err)
+    }
+
+    fn operation(request: OwnerOperation) -> Result<OwnerResponse, String> {
+        match request {
+            OwnerOperation::SelfCheck => Ok(OwnerResponse::SelfCheck {
+                evidence: report_inventory()?,
+            }),
+            OwnerOperation::ListGrid => Ok(OwnerResponse::ListGrid {
+                evidence: report_inventory()?,
+            }),
+            OwnerOperation::CapabilityReport => Ok(OwnerResponse::CapabilityReport {
+                evidence: capability_report()?,
+            }),
+            OwnerOperation::CampaignManifest { request } => Ok(OwnerResponse::CampaignManifest {
+                manifest: Box::new(manifest(&request)?),
+            }),
+            OwnerOperation::ValidateResult { unit, result } => {
+                validate_result(&unit, &result, true)?;
+                Ok(OwnerResponse::ValidateResult {
+                    unit_key: unit.key,
+                    result_sha256: result.digest().map_err(err)?,
+                })
+            }
+            OwnerOperation::DeriveManifest { request } => Ok(OwnerResponse::DeriveManifest {
+                manifest: derive_manifest(&request)?,
+            }),
+            OwnerOperation::EmitOwner { request } => emit_owner(&request),
+        }
+    }
+    pub(super) fn report_mode(mode: Mode) -> Result<(), String> {
+        let request = match mode {
+            Mode::SelfCheck => OwnerOperation::SelfCheck,
+            Mode::ListGrid => OwnerOperation::ListGrid,
+            Mode::CapabilityReport => OwnerOperation::CapabilityReport,
+            _ => return Err("not a report mode".to_owned()),
+        };
+        let response = operation(request)?;
+        transport::write_result_line(io::stdout().lock(), &response).map_err(err)
+    }
+
+    pub(super) fn owner_operation() -> Result<(), String> {
+        let mut input = String::new();
+        io::Read::read_to_string(&mut io::stdin().lock(), &mut input).map_err(err)?;
+        let request: OwnerOperation = transport::decode_case(&input)?;
+        let response = operation(request)?;
+        transport::write_result_line(io::stdout().lock(), &response).map_err(err)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        #[allow(unused_imports)] // custom bench compilation omits test entry points
+        use super::*;
+
+        #[allow(dead_code)]
+        fn request() -> neutral::ManifestRequest {
+            let stage = PathBuf::from("/tmp/gf2-core-owner-contract");
+            neutral::ManifestRequest {
+                campaign_id: token("gf2-owner-contract").unwrap(),
+                protocol_sha256: Sha256Digest::of(b"declared protocol"),
+                channels: neutral::SessionChannels {
+                    execution_log: stage.join("execution.log"),
+                    checkpoints: stage.join("checkpoints"),
+                    stage,
+                },
+                processes: vec![neutral::ProcessDescriptor {
+                    id: token("core-producer").unwrap(),
+                    executable: PathBuf::from("/tmp/core-producer"),
+                    executable_sha256: Sha256Digest::of(b"staged executable"),
+                    arguments: vec!["--fresh-tuning-process-child".to_owned()],
+                    environment: neutral::measurement_environment(),
+                    working_directory: PathBuf::from("/tmp"),
+                }],
+            }
+        }
+
+        #[allow(dead_code)]
+        fn synthetic_observation(cell: &ExtentCell) -> ExtentObservation {
+            let mut consumed = None;
+            let schedule = match cell.field {
+                ExtentField::Transpose => EffectiveSchedule::MacroTiled {
+                    blocks: cell.scalar(),
+                },
+                ExtentField::Soa => EffectiveSchedule::SoaParallel {
+                    chunk: cell.scalar(),
+                },
+                ExtentField::Trsm => EffectiveSchedule::TrsmBlocked {
+                    panel_rows: cell.scalar(),
+                },
+                ExtentField::GemmTiles => {
+                    let (row, col) = cell.pair().extents();
+                    EffectiveSchedule::GemmTiles {
+                        row,
+                        col,
+                        site: cell.site.unwrap(),
+                    }
+                }
+                ExtentField::Dot => EffectiveSchedule::DotClmulBarrett {
+                    chunk: cell.scalar(),
+                },
+                _ => {
+                    let (schedule, context) = expected_m4rm_schedule(cell).unwrap();
+                    consumed = Some(context);
+                    schedule
+                }
+            };
+            ExtentObservation {
+                schedule,
+                m4rm_consumed: consumed,
+                dedicated_pool_width: if cell.field == ExtentField::Soa {
+                    Some(4)
+                } else {
+                    None
+                },
+                fp251_whole_gemm: if cell.field == ExtentField::Trsm {
+                    Some(true)
+                } else {
+                    None
+                },
+                quiet_timing: cell.field == ExtentField::Trsm,
+            }
+        }
+        #[allow(dead_code)]
+        fn synthetic_result(case: &OwnerCase) -> neutral::ChildResult {
+            let samples = match case.identity.task {
+                Task::Probe => Vec::new(),
+                Task::Measure { execution } => (0..5)
+                    .map(|repetition| TimingSample {
+                        execution,
+                        repetition,
+                        calls: 10,
+                        elapsed_ns: 1000,
+                    })
+                    .collect(),
+            };
+            let payload = match &case.kind {
+                OwnerCaseKind::Threshold { spec } => {
+                    let (prepared, active_values) = forced_profile_for(*spec).unwrap();
+                    let digests = forced_profile_digests(&prepared).unwrap();
+                    let (mut effective, capability) = expected_observation_contract(*spec).unwrap();
+                    if effective == "panel_width" {
+                        effective = "panel_width=4".to_owned();
+                    }
+                    OwnerEvidence::Threshold {
+                        schema: RAW_WINDOWS.to_owned(),
+                        ordinary_companions: OrdinaryCompanionConstants::observe(),
+                        full_active_values: case.forced_values.clone(),
+                        report: Box::new(ChildReport {
+                            protocol: ChildProtocolIdentity::current(&fixed_protocol()),
+                            installed: InstalledEvidence {
+                                profile_id: FORCED_ARM_PROFILE_ID.to_owned(),
+                                section_id: CoreTuning::ID.as_str().to_owned(),
+                                resolution: ObservedResolution::Installed,
+                                measurement: ObservedMeasurement::Inherited,
+                                active_values,
+                                section_sha256: digests.section_sha256,
+                                envelope_content_sha256: digests.envelope_content_sha256,
+                            },
+                            fixture_shape: expected_fixture_shape(spec.field, spec.size).unwrap(),
+                            seed_inventory: seed_inventory(spec.field, spec.size),
+                            operand_digest: "a".repeat(64),
+                            outcome: ChildOutcome::Complete {
+                                requested_route: spec.field.arm_name(spec.arm).to_owned(),
+                                observed_route: spec.field.arm_name(spec.arm).to_owned(),
+                                effective_observation: Some(effective),
+                                capability_observation: Some(capability),
+                                result_digest: "b".repeat(64),
+                                equivalence_digest: digest_tuple(
+                                    b"gf2-calibration-equivalence-v1",
+                                    ["a".repeat(64), "b".repeat(64)],
+                                ),
+                                samples: samples.clone(),
+                            },
+                        }),
+                    }
+                }
+                OwnerCaseKind::Extent { cell } => {
+                    let prepared = section_prepared(cell.section().unwrap()).unwrap();
+                    let digests = forced_profile_digests(&prepared).unwrap();
+                    OwnerEvidence::Extent {
+                        schema: RAW_WINDOWS.to_owned(),
+                        ordinary_companions: OrdinaryCompanionConstants::observe(),
+                        installed: Box::new(InstalledEvidence {
+                            profile_id: FORCED_ARM_PROFILE_ID.to_owned(),
+                            section_id: CoreTuning::ID.as_str().to_owned(),
+                            resolution: ObservedResolution::Installed,
+                            measurement: ObservedMeasurement::Inherited,
+                            active_values: case.forced_values.clone(),
+                            section_sha256: digests.section_sha256,
+                            envelope_content_sha256: digests.envelope_content_sha256,
+                        }),
+                        seeds: cell.seed_inventory(),
+                        dimensions: cell.dimensions(),
+                        operands_sha256: Sha256Digest::of(b"synthetic paired operands"),
+                        oracle_sha256: Sha256Digest::of(b"synthetic paired oracle"),
+                        result_sha256: Sha256Digest::of(b"synthetic paired oracle"),
+                        observations: vec![synthetic_observation(cell); 8],
+                    }
+                }
+                OwnerCaseKind::ReservedM4rm { .. } => panic!("synthetic case must be derived"),
+            };
+            neutral::ChildResult {
+                schema: neutral::RESULT_SCHEMA.to_owned(),
+                identity: case.identity.clone(),
+                case_sha256: CanonicalJson::from_serializable(case).unwrap().digest(),
+                outcome: neutral::ChildOutcome::Complete,
+                samples,
+                payload: CanonicalJson::from_serializable(&payload).unwrap(),
+            }
+        }
+
+        #[allow(dead_code)]
+        fn synthetic_bundle(
+            proposed: &M4rmVector,
+            elapsed: impl Fn(&ExtentCell) -> u64,
+        ) -> (
+            neutral::ManifestRequest,
+            OwnerManifest,
+            neutral::AcceptedResultsBundle,
+        ) {
+            let request = request();
+            let manifest = manifest(&request).unwrap();
+            let accepted = manifest
+                .ordered_units
+                .iter()
+                .map(|original| {
+                    let mut unit = original.clone();
+                    let mut case: OwnerCase = unit.case.decode().unwrap();
+                    if let OwnerCaseKind::ReservedM4rm { mut cell } = case.kind {
+                        if let ExtentCandidate::Vector {
+                            proposed: true,
+                            values,
+                        } = &mut cell.candidate
+                        {
+                            *values = proposed.clone();
+                        }
+                        case = OwnerCase::new(
+                            &request,
+                            OwnerCaseKind::Extent { cell },
+                            case.identity.task,
+                        )
+                        .unwrap();
+                        unit.case = CanonicalJson::from_serializable(&case).unwrap();
+                    }
+                    let mut result = synthetic_result(&case);
+                    if let OwnerCaseKind::Extent { cell } = &case.kind {
+                        for sample in &mut result.samples {
+                            sample.elapsed_ns = elapsed(cell);
+                        }
+                    }
+                    neutral::AcceptedResult {
+                        unit,
+                        result,
+                        checkpoint_sha256: Sha256Digest::of(b"synthetic accepted checkpoint"),
+                    }
+                })
+                .collect();
+            let bundle = neutral::AcceptedResultsBundle {
+                schema: neutral::ACCEPTED_RESULTS_SCHEMA.to_owned(),
+                manifest_sha256: manifest.manifest_sha256.clone(),
+                accepted,
+            };
+            (request, manifest, bundle)
+        }
+        #[allow(dead_code)]
+        fn nondefault_m4rm() -> M4rmVector {
+            M4rmVector {
+                wide_max_k: 4,
+                small_n_max_k: 4,
+                ..M4rmVector::conservative()
+            }
+        }
+        #[allow(dead_code)]
+        fn m4rm_elapsed(cell: &ExtentCell, reject_joint: bool) -> u64 {
+            match cell.field {
+                ExtentField::M4rmWideCap | ExtentField::M4rmSmallCap => 100 * cell.scalar() as u64,
+                ExtentField::M4rmJoint
+                    if matches!(
+                        cell.candidate,
+                        ExtentCandidate::Vector { proposed: true, .. }
+                    ) =>
+                {
+                    if reject_joint && cell.shape_index == 0 {
+                        2000
+                    } else {
+                        500
+                    }
+                }
+                _ => 1000,
+            }
+        }
+        #[test]
+        fn accepted_owner_selects_nondefault_gemm_coordinate_and_extent() {
+            if simd_backend().is_none() {
+                return;
+            }
+            let (request, manifest, bundle) =
+                synthetic_bundle(&M4rmVector::conservative(), |cell| match cell.field {
+                    ExtentField::GemmTiles => {
+                        let (row, col) = cell.pair().extents();
+                        (row + col) as u64 * 100
+                    }
+                    ExtentField::Transpose => 100 * (cell.scalar().ilog2().abs_diff(2) as u64 + 1),
+                    _ => 1000,
+                });
+            let input = AnalysisInput::new(
+                &bundle,
+                &request.campaign_id,
+                &manifest.manifest_sha256,
+                true,
+            )
+            .unwrap();
+            let (section, decisions) = decide_owner(&input).unwrap();
+            assert_eq!(
+                (section.gemm().row_tile(), section.gemm().col_tile()),
+                (16, 32)
+            );
+            assert_eq!(
+                decisions.gemm.reason,
+                statistics::DecisionReason::SelectedNonDefault
+            );
+            assert_eq!(section.bit_matrix().transpose_macro_tile_blocks(), 4);
+            assert_eq!(
+                decisions
+                    .extents
+                    .iter()
+                    .find(|d| d.field == ExtentField::Transpose)
+                    .unwrap()
+                    .decision
+                    .reason,
+                statistics::DecisionReason::SelectedNonDefault
+            );
+        }
+        #[test]
+        fn accepted_owner_keeps_the_proposed_m4rm_vector_after_joint_validation() {
+            if simd_backend().is_none() {
+                return;
+            }
+            let proposed = nondefault_m4rm();
+            let (request, manifest, bundle) =
+                synthetic_bundle(&proposed, |cell| m4rm_elapsed(cell, false));
+            let input = AnalysisInput::new(
+                &bundle,
+                &request.campaign_id,
+                &manifest.manifest_sha256,
+                true,
+            )
+            .unwrap();
+            let (section, decisions) = decide_owner(&input).unwrap();
+            assert_eq!(decisions.proposed_m4rm, proposed);
+            assert_eq!(decisions.joint_m4rm.selected, proposed);
+            assert_eq!(section.m4rm().wide_max_k(), 4);
+            assert_eq!(section.m4rm().small_n_max_k(), 4);
+        }
+        #[test]
+        fn accepted_owner_falls_back_as_a_whole_after_one_joint_shape_fails() {
+            if simd_backend().is_none() {
+                return;
+            }
+            let proposed = nondefault_m4rm();
+            let (request, manifest, bundle) =
+                synthetic_bundle(&proposed, |cell| m4rm_elapsed(cell, true));
+            let input = AnalysisInput::new(
+                &bundle,
+                &request.campaign_id,
+                &manifest.manifest_sha256,
+                true,
+            )
+            .unwrap();
+            let (section, decisions) = decide_owner(&input).unwrap();
+            assert_eq!(decisions.proposed_m4rm, proposed);
+            assert_eq!(decisions.joint_m4rm.selected, M4rmVector::conservative());
+            assert_eq!(section.m4rm(), CoreTuning::CONSERVATIVE.m4rm());
+        }
+        #[test]
+        fn accepted_owner_rejects_a_joint_vector_inconsistent_with_one_factor_evidence() {
+            if simd_backend().is_none() {
+                return;
+            }
+            let wrong = M4rmVector {
+                wide_max_k: 5,
+                ..nondefault_m4rm()
+            };
+            let (request, manifest, bundle) =
+                synthetic_bundle(&wrong, |cell| m4rm_elapsed(cell, false));
+            let input = AnalysisInput::new(
+                &bundle,
+                &request.campaign_id,
+                &manifest.manifest_sha256,
+                true,
+            )
+            .unwrap();
+            assert!(decide_owner(&input)
+                .unwrap_err()
+                .contains("accepted case differs from selected vector"));
+        }
+        #[test]
+        fn reporting_preflight_rejects_a_default_missing_from_an_extent_grid() {
+            preflight().unwrap();
+            for field in ExtentField::ALL {
+                let candidates = field
+                    .candidates()
+                    .into_iter()
+                    .filter(|candidate| *candidate != field.default_candidate())
+                    .collect::<Vec<_>>();
+                assert!(validate_extent_grid(field, &candidates)
+                    .unwrap_err()
+                    .contains("conservative default"));
+            }
+            assert!(matches!(
+                operation(OwnerOperation::SelfCheck).unwrap(),
+                OwnerResponse::SelfCheck { .. }
+            ));
+            assert!(matches!(
+                operation(OwnerOperation::ListGrid).unwrap(),
+                OwnerResponse::ListGrid { .. }
+            ));
+        }
+        #[test]
+        fn capability_report_declares_representative_scope_and_tests_dot_prerequisites() {
+            let OwnerResponse::CapabilityReport { evidence } =
+                operation(OwnerOperation::CapabilityReport).unwrap()
+            else {
+                unreachable!()
+            };
+            let report: CapabilityReport = evidence.decode().unwrap();
+            assert!(matches!(
+                report.scope,
+                CapabilityScope::RepresentativePrerequisites
+            ));
+            assert!(!report.full_grid_probes);
+            assert_eq!(report.timed_children, 0);
+            assert_eq!(report.dedicated_pool_width, 4);
+            assert_eq!(report.dot.len(), DotChunkCandidate::ALL.len());
+            assert!(report.dot.iter().all(|dot| dot.scalar_equal
+                && dot.batch_clmul_scalar_clmul_and_barrett
+                    == (dot.effective_chunk == dot.candidate_chunk)));
+            report.ordinary_companions.validate().unwrap();
+        }
+        #[test]
+        fn owner_rejects_companion_mutation_independently_of_installed_candidate() {
+            let request = request();
+            let ordinary = OrdinaryCompanionConstants::observe();
+            let candidate = ExtentField::GemmTiles.candidates().into_iter().find(|candidate| !matches!(candidate, ExtentCandidate::Tiles { row, col } if *row == ordinary.gemm_row_tile && *col == ordinary.gemm_col_tile)).unwrap();
+            let cell = ExtentCell {
+                field: ExtentField::GemmTiles,
+                shape_index: 0,
+                site: Some(ExtentSite::MatrixGemm),
+                candidate,
+            };
+            let case =
+                OwnerCase::new(&request, OwnerCaseKind::Extent { cell }, Task::Probe).unwrap();
+            let unit = LaunchUnit::new(
+                0,
+                case.identity.clone(),
+                token("core-producer").unwrap(),
+                CanonicalJson::from_serializable(&case).unwrap(),
+            )
+            .unwrap();
+            let mut result = synthetic_result(&case);
+            validate_result(&unit, &result, false).unwrap();
+            let mut evidence: OwnerEvidence = result.payload.decode().unwrap();
+            let OwnerEvidence::Extent {
+                ordinary_companions,
+                ..
+            } = &mut evidence
+            else {
+                unreachable!()
+            };
+            ordinary_companions.gemm_row_tile += 1;
+            result.payload = CanonicalJson::from_serializable(&evidence).unwrap();
+            assert!(validate_result(&unit, &result, false)
+                .unwrap_err()
+                .contains("ordinary cfg-selected"));
+        }
+
+        #[test]
+        fn accepted_complete_experiment_measures_defaults_and_reopens_only_its_27_leaves() {
+            if simd_backend().is_none() {
+                return;
+            }
+            let request = request();
+            let manifest = manifest(&request).unwrap();
+            let mut accepted = Vec::new();
+            for original in &manifest.ordered_units {
+                let mut unit = original.clone();
+                let mut case: OwnerCase = unit.case.decode().unwrap();
+                if let OwnerCaseKind::ReservedM4rm { cell } = case.kind {
+                    case = OwnerCase::new(
+                        &request,
+                        OwnerCaseKind::Extent { cell },
+                        case.identity.task,
+                    )
+                    .unwrap();
+                    unit.case = CanonicalJson::from_serializable(&case).unwrap();
+                }
+                let result = synthetic_result(&case);
+                accepted.push(neutral::AcceptedResult {
+                    unit,
+                    result,
+                    checkpoint_sha256: Sha256Digest::of(b"synthetic accepted checkpoint"),
+                });
+            }
+            let bundle = neutral::AcceptedResultsBundle {
+                schema: neutral::ACCEPTED_RESULTS_SCHEMA.to_owned(),
+                manifest_sha256: manifest.manifest_sha256.clone(),
+                accepted,
+            };
+            let input = AnalysisInput::new(
+                &bundle,
+                &request.campaign_id,
+                &manifest.manifest_sha256,
+                true,
+            )
+            .unwrap();
+            let (section, decisions) = decide_owner(&input).unwrap();
+            assert_eq!(section.selectors(), CoreTuning::CONSERVATIVE.selectors());
+            assert_eq!(decisions.measured.len(), 27);
+            assert_eq!(decisions.omitted.len(), 10);
+            assert_eq!(
+                decisions.joint_m4rm.reason,
+                statistics::JointVectorReason::ConservativeVector
+            );
+            assert!(decisions
+                .extents
+                .iter()
+                .filter(|d| d.field.is_m4rm())
+                .all(|d| d.decision.selected == d.field.default_candidate()));
+            let mut profile = super::super::tests::profile_from(&SelectedValues::from_sweeps(&[]));
+            profile.section = section;
+            let document = profile.to_json();
+            let reopened = ProducedCoreProfile::from_json(&document).unwrap();
+            assert_eq!(profile, reopened);
+            let encoded =
+                serde_json::to_value(CoreTuningCodec::encode_body(&reopened.section).unwrap())
+                    .unwrap();
+            let present = flatten_selectors(&encoded).unwrap();
+            assert_eq!(present.len(), 27);
+            assert!(present.iter().all(|leaf| decisions
+                .measured
+                .contains(&format!("{}.{}", leaf.family, leaf.field))));
+            let temporary = env::temp_dir().join(format!(
+                "gf2-core-owner-analysis-{}-{}",
+                std::process::id(),
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            fs::create_dir(&temporary).unwrap();
+            let input_path = temporary.join("accepted-input.json");
+            let prefix = neutral::AcceptedResultsBundle {
+                schema: neutral::ACCEPTED_RESULTS_SCHEMA.to_owned(),
+                manifest_sha256: manifest.manifest_sha256.clone(),
+                accepted: bundle.accepted[..(CORE_CELLS - 24) * 6].to_vec(),
+            };
+            let prefix_bytes = serde_json::to_vec(&prefix).unwrap();
+            fs::write(&input_path, &prefix_bytes).unwrap();
+            let derivation_request = neutral::DeriveManifestRequest {
+                campaign_id: request.campaign_id.clone(),
+                original_manifest_sha256: manifest.manifest_sha256.clone(),
+                reserved_units: manifest.ordered_units[(CORE_CELLS - 24) * 6..].to_vec(),
+                accepted_inputs: neutral::ArtifactIdentity {
+                    path: input_path,
+                    sha256: Sha256Digest::of(&prefix_bytes),
+                },
+            };
+            let derived = derive_manifest(&derivation_request).unwrap();
+            derived.validate(&derivation_request).unwrap();
+            assert_eq!(
+                derived.units,
+                bundle.accepted[(CORE_CELLS - 24) * 6..]
+                    .iter()
+                    .map(|entry| entry.unit.clone())
+                    .collect::<Vec<_>>()
+            );
+            let output_path = temporary.join("owner.json");
+            assert_eq!(emit_profile(&output_path, &document).unwrap(), document);
+            assert_eq!(
+                ProducedCoreProfile::from_json(&fs::read_to_string(output_path).unwrap()).unwrap(),
+                profile
+            );
+            fs::remove_dir_all(&temporary).unwrap();
+            let mut missing = bundle.clone();
+            missing.accepted.pop();
+            assert!(AnalysisInput::new(
+                &missing,
+                &request.campaign_id,
+                &manifest.manifest_sha256,
+                true
+            )
+            .is_err());
+            let mut changed = bundle;
+            changed.accepted[0].unit.case = changed.accepted[1].unit.case.clone();
+            assert!(AnalysisInput::new(
+                &changed,
+                &request.campaign_id,
+                &manifest.manifest_sha256,
+                true
+            )
+            .is_err());
+        }
+
+        #[test]
+        fn complete_manifest_preserves_retained_order_and_rotates_extent_blocks() {
+            let request = request();
+            let manifest = manifest(&request).unwrap();
+            let encoded = serde_json::to_vec(&manifest).unwrap();
+            assert_eq!(OwnerManifest::decode(&encoded).unwrap(), manifest);
+            assert_eq!(
+                manifest.counts,
+                neutral::DeclaredCounts::for_cells(702).unwrap()
+            );
+            let cases: Vec<OwnerCase> = manifest
+                .ordered_units
+                .iter()
+                .map(|u| u.case.decode().unwrap())
+                .collect();
+            let mut expected = Vec::new();
+            for field in CalibratedField::ALL {
+                for &variant in field.variants() {
+                    for size in field.grid() {
+                        for task in std::iter::once(ChildTask::Probe)
+                            .chain((0..5).map(|execution| ChildTask::Measure { execution }))
+                        {
+                            for arm in Arm::BOTH {
+                                expected.push(ChildSpec {
+                                    field,
+                                    variant,
+                                    size,
+                                    arm,
+                                    task,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            let retained: Vec<_> = cases
+                .iter()
+                .filter_map(|case| {
+                    if let OwnerCaseKind::Threshold { spec } = case.kind {
+                        Some(spec)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            assert_eq!(retained, expected);
+            assert_eq!(retained.len(), 306 * 6);
+            let transpose:Vec<_>=cases.iter().filter(|case|matches!(&case.kind,OwnerCaseKind::Extent{cell} if cell.field==ExtentField::Transpose&&cell.shape_index==0)).collect();
+            let values: Vec<_> = transpose
+                .iter()
+                .map(|case| {
+                    let OwnerCaseKind::Extent { cell } = &case.kind else {
+                        unreachable!()
+                    };
+                    cell.scalar()
+                })
+                .collect();
+            assert_eq!(
+                values,
+                [
+                    2, 4, 8, 16, 32, 2, 4, 8, 16, 32, 2, 32, 16, 8, 4, 8, 16, 32, 2, 4, 8, 4, 2,
+                    32, 16, 32, 2, 4, 8, 16
+                ]
+            );
+            assert!(cases[cases.len() - 144..]
+                .iter()
+                .all(|case| matches!(case.kind, OwnerCaseKind::ReservedM4rm { .. })));
+            let mut malformed = manifest.clone();
+            malformed.ordered_units.swap(0, 1);
+            assert!(malformed.validate().is_err());
+            let mut other = request.clone();
+            other.channels.stage = PathBuf::from("/tmp/other");
+            assert!(super::manifest(&other).is_err());
+        }
+
+        #[test]
+        fn case_parser_rejects_extra_controls_wrong_identity_and_reserved_execution() {
+            let case = OwnerCase::new(
+                &request(),
+                OwnerCaseKind::Extent {
+                    cell: extent_cells().remove(0),
+                },
+                Task::Probe,
+            )
+            .unwrap();
+            case.validate(false).unwrap();
+            let bytes = transport::encode_case(&case).unwrap();
+            assert_eq!(transport::decode_case::<OwnerCase>(&bytes).unwrap(), case);
+            assert!(transport::decode_case::<OwnerCase>(&format!("{bytes}\n")).is_err());
+            let mut value = serde_json::to_value(&case).unwrap();
+            value["kind"]["cell"]["extra"] = serde_json::json!(true);
+            assert!(serde_json::from_value::<OwnerCase>(value).is_err());
+            let mut changed = case.clone();
+            changed.forced_values[0].value += 1;
+            assert!(changed.validate(false).is_err());
+            let mut changed = case;
+            changed.identity.owner = token("gf2-algebra").unwrap();
+            assert!(changed.validate(false).is_err());
+            let reserved = ordered_cases(&request()).unwrap().pop().unwrap();
+            assert!(reserved.validate(true).is_ok());
+            assert!(reserved.validate(false).is_err());
+        }
+
+        #[test]
+        fn fresh_owner_case_adapter() {
+            if env::var(FRESH_CASE_VAR).is_ok() {
+                fresh_child().unwrap();
+            }
+        }
+        #[allow(dead_code)]
+        fn fresh_probe(cell: ExtentCell) -> neutral::ChildResult {
+            let case =
+                OwnerCase::new(&request(), OwnerCaseKind::Extent { cell }, Task::Probe).unwrap();
+            let wire = CanonicalJson::from_serializable(&case).unwrap();
+            let unit = LaunchUnit::new(
+                0,
+                case.identity.clone(),
+                token("core-producer").unwrap(),
+                wire.clone(),
+            )
+            .unwrap();
+            let mut child = Command::new(env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "tuning_calibration::campaign_owner::tests::fresh_owner_case_adapter",
+                    "--nocapture",
+                ])
+                .env(FRESH_CASE_VAR, FRESH_CASE_VALUE)
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .unwrap();
+            child
+                .stdin
+                .take()
+                .unwrap()
+                .write_all(wire.as_str().as_bytes())
+                .unwrap();
+            let output = child.wait_with_output().unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(!String::from_utf8_lossy(&output.stderr).contains(neutral::PROGRESS_PREFIX));
+            let stdout =
+                transport::retain_libtest_result_lines(&String::from_utf8(output.stdout).unwrap());
+            let result: neutral::ChildResult = transport::parse_result(&stdout).unwrap();
+            validate_result(&unit, &result, true).unwrap();
+            let response = operation(OwnerOperation::ValidateResult {
+                unit: Box::new(unit),
+                result: Box::new(result.clone()),
+            })
+            .unwrap();
+            assert!(
+                matches!(response,OwnerResponse::ValidateResult{result_sha256,..} if result_sha256==result.digest().unwrap())
+            );
+            result
+        }
+        #[allow(dead_code)]
+        fn scalar_cell(field: ExtentField, value: usize) -> ExtentCell {
+            ExtentCell {
+                field,
+                shape_index: 0,
+                site: None,
+                candidate: ExtentCandidate::Scalar { value },
+            }
+        }
+
+        #[test]
+        fn extent_transpose_fresh_probe_proves_full_installed_and_scalar_semantics() {
+            fresh_probe(scalar_cell(ExtentField::Transpose, 2));
+        }
+        #[test]
+        fn extent_soa_fresh_probe_observes_all_four_operations() {
+            fresh_probe(scalar_cell(ExtentField::Soa, 4096));
+        }
+        #[test]
+        fn extent_m4rm_fresh_probe_proves_consumed_budget_and_rowwise_schedule() {
+            fresh_probe(scalar_cell(ExtentField::M4rmDefaultBytes, 16384));
+        }
+        #[test]
+        fn extent_m4rm_small_n_fresh_probe_uses_shared_fixture_identity() {
+            fresh_probe(scalar_cell(ExtentField::M4rmSmallCap, 4));
+        }
+        #[test]
+        fn extent_trsm_fresh_probe_proves_quiet_timing_subtree() {
+            if <Fp251 as FiniteField>::has_simd_gemm_classical() {
+                fresh_probe(scalar_cell(ExtentField::Trsm, 8));
+            }
+        }
+        #[test]
+        fn extent_dot_fresh_probe_reaches_const_clmul_chunk() {
+            #[cfg(target_arch = "x86_64")]
+            if gf2_core::kernels::x86::has_pclmulqdq() {
+                fresh_probe(scalar_cell(ExtentField::Dot, 128));
+            }
+        }
+        macro_rules! gemm_probe_test {
+            ($name:ident, $site:ident) => {
+                #[test]
+                fn $name() {
+                    fresh_probe(ExtentCell {
+                        field: ExtentField::GemmTiles,
+                        shape_index: 0,
+                        site: Some(ExtentSite::$site),
+                        candidate: ExtentCandidate::Tiles { row: 16, col: 32 },
+                    });
+                }
+            };
+        }
+        gemm_probe_test!(extent_gemm_ordinary_formula, MatrixGemm);
+        gemm_probe_test!(extent_gemm_into_formula, MatrixGemmIntoView);
+        gemm_probe_test!(extent_gemm_axpy_formula, MatrixGemmAxpyIntoView);
+        gemm_probe_test!(
+            extent_gemm_implicit_diagonal_formula,
+            MatrixGemmAxpyIntoViewDiag
+        );
+        gemm_probe_test!(extent_gemm_expression_beta_formula, ExprGemmWithBeta);
+        gemm_probe_test!(extent_gemm_expression_transpose_formula, ExprGemmTransA);
+        gemm_probe_test!(
+            extent_gemm_expression_transpose_beta_formula,
+            ExprGemmTransAWithBeta
+        );
+
+        #[test]
+        fn extent_grid_adds_exactly_the_declared_cells_and_codec_leaves() {
+            let cells = extent_cells();
+            assert_eq!(cells.len(), 372);
+            assert_eq!(
+                cells
+                    .iter()
+                    .filter(|c| c.field == ExtentField::GemmTiles)
+                    .count(),
+                189
+            );
+            assert_eq!(cells.len() + EXPECTED_GRID_ARM_CELLS + 24, CORE_CELLS);
+            let measured = measured_inventory().unwrap();
+            assert_eq!(measured.len(), CORE_FIELDS);
+            let all = complete_selector_value(&CoreTuning::CONSERVATIVE).unwrap();
+            let leaves = flatten_selectors(&all).unwrap();
+            assert_eq!(leaves.len(), 37);
+            assert_eq!(
+                leaves
+                    .iter()
+                    .filter(|v| !measured.contains(&format!("{}.{}", v.family, v.field)))
+                    .count(),
+                10
+            );
+            for field in ExtentField::ALL {
+                assert!(field.candidates().contains(&field.default_candidate()));
+            }
+        }
+
+        #[test]
+        fn extent_seeds_pair_candidates_and_gemm_sites_and_m4rm_shapes() {
+            let cells = extent_cells();
+            for field in ExtentField::ALL {
+                let same_shape: Vec<_> = cells
+                    .iter()
+                    .filter(|c| c.field == field && c.shape_index == 0)
+                    .collect();
+                let expected = same_shape[0].seed_inventory();
+                assert!(same_shape.iter().all(|c| c.seed_inventory() == expected));
+            }
+            let mut wide = cells
+                .iter()
+                .find(|c| c.field == ExtentField::M4rmWideCap)
+                .unwrap()
+                .clone();
+            let budget = cells
+                .iter()
+                .find(|c| c.field == ExtentField::M4rmDefaultBytes)
+                .unwrap();
+            assert_eq!(wide.seed_inventory(), budget.seed_inventory());
+            wide.shape_index = 3;
+            let middle = cells
+                .iter()
+                .find(|c| c.field == ExtentField::M4rmMidBytes)
+                .unwrap();
+            assert_eq!(wide.seed_inventory(), middle.seed_inventory());
+        }
+
+        #[test]
+        fn owner_rejects_every_mutated_m4rm_schedule_component() {
+            let request = request();
+            let cell = scalar_cell(ExtentField::M4rmDefaultBytes, 16384);
+            let case =
+                OwnerCase::new(&request, OwnerCaseKind::Extent { cell }, Task::Probe).unwrap();
+            let unit = LaunchUnit::new(
+                0,
+                case.identity.clone(),
+                token("core-producer").unwrap(),
+                CanonicalJson::from_serializable(&case).unwrap(),
+            )
+            .unwrap();
+            let result = synthetic_result(&case);
+            validate_result(&unit, &result, false).unwrap();
+            let mutations = [
+                ("/schedule/tier", serde_json::json!("small_n")),
+                ("/schedule/panel_width", serde_json::json!(2)),
+                ("/schedule/c_update", serde_json::json!("tiled")),
+                ("/m4rm_consumed/band", serde_json::json!("wide")),
+                ("/m4rm_consumed/table_bytes", serde_json::json!(32768)),
+                ("/m4rm_consumed/panel_width_cap", serde_json::json!(4)),
+                (
+                    "/m4rm_consumed/tiled_stride_admitted",
+                    serde_json::json!(true),
+                ),
+            ];
+            for (path, value) in mutations {
+                let mut changed = result.clone();
+                let mut payload: serde_json::Value =
+                    serde_json::from_str(changed.payload.as_str()).unwrap();
+                for observation in payload["observations"].as_array_mut().unwrap() {
+                    let target = observation.pointer_mut(path).unwrap();
+                    assert_ne!(*target, value, "mutation must change {path}");
+                    *target = value.clone();
+                }
+                match serde_json::from_value::<OwnerEvidence>(payload) {
+                    Ok(evidence) => {
+                        changed.payload = CanonicalJson::from_serializable(&evidence).unwrap();
+                        assert!(
+                            validate_result(&unit, &changed, false).is_err(),
+                            "accepted changed {path}"
+                        );
+                    }
+                    Err(_) => assert_eq!(
+                        path, "/schedule/c_update",
+                        "only the closed C-update vocabulary mutation fails decoding"
+                    ),
+                }
+            }
+        }
+
+        #[test]
+        fn m4rm_rejects_an_alternate_in_range_panel_width() {
+            let cell = scalar_cell(ExtentField::M4rmDefaultBytes, 16384);
+            let mut observation = synthetic_observation(&cell);
+            let (_, k, n) = cell.dimensions();
+            let section = cell.section().unwrap();
+            let route =
+                gf2_core::alg::m4rm::m4rm_schedule_route_for_selectors(section.m4rm(), k, n);
+            let EffectiveSchedule::M4rm { panel_width, .. } = &mut observation.schedule else {
+                unreachable!()
+            };
+            *panel_width = route.panel_width();
+            validate_extent_observation(&cell, &observation).unwrap();
+            let EffectiveSchedule::M4rm { panel_width, .. } = &mut observation.schedule else {
+                unreachable!()
+            };
+            *panel_width = if *panel_width == 2 { 3 } else { 2 };
+            assert!(*panel_width <= route.panel_width_cap());
+            assert!(validate_extent_observation(&cell, &observation).is_err());
+        }
+
+        #[test]
+        fn extent_candidate_validation_rejects_wrong_grid_site_and_controls() {
+            let mut cell = extent_cells().remove(0);
+            assert!(cell.validate().is_ok());
+            cell.candidate = ExtentCandidate::Scalar { value: 3 };
+            assert!(cell.validate().is_err());
+            cell.candidate = ExtentCandidate::Scalar { value: 2 };
+            cell.site = Some(ExtentSite::MatrixGemm);
+            assert!(cell.validate().is_err());
         }
     }
 }

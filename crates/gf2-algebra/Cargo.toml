@@ -33,6 +33,10 @@ serde = { version = "1", features = ["derive"], optional = true }
 [dev-dependencies]
 proptest = { workspace = true }
 criterion = { workspace = true }
+tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
+# Campaign probes use the canonical dedicated-pool and effective-observation
+# seams without adding either facility to gf2-algebra's production surface.
+gf2-core = { path = "../gf2-core", features = ["test-support"] }
 # Production-only validation boundary: exact algebra anchors exercise the
 # sampler and interval estimator without making algebra depend on statistics.
 gf2-stats = { path = "../gf2-stats" }
@@ -69,6 +73,11 @@ required-features = ["test-support"]
 name = "batched_f3_permanent"
 harness = false
 required-features = ["simd", "test-support"]
+
+[[bench]]
+name = "tuning_calibration"
+harness = false
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
 
 # ── Issue `96dcbec4` (epic `ae82bd73`) — paper Table 2 slope reproduction ──
 [[example]]
@@ -169,3 +178,7 @@ required-features = ["parallel", "tuning-profile"]
 [[test]]
 name = "tuning_profile_permanent_install_large_chunk"
 required-features = ["parallel", "tuning-profile"]
+
+[[test]]
+name = "tuning_calibration_harness"
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]

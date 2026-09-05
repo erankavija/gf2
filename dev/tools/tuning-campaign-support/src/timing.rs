@@ -117,24 +117,74 @@ where
     }
 }
 
+/// Completed timing interval exposed to post-interval progress callbacks.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TimingProgress {
+    /// Calibration selected this positive call count for every window.
+    CalibrationComplete { calls: u64 },
+    /// One completed untrimmed timing window.
+    WindowComplete(TimingSample),
+}
+
 /// Measures five windows for one execution, retaining acquisition order.
 pub fn execution_windows(
     execution: u64,
     body: &mut impl FnMut(usize),
 ) -> Result<Vec<TimingSample>, TimingError> {
-    if execution >= EXECUTIONS {
-        return Err(TimingError(format!(
-            "execution {execution} is outside 0..{EXECUTIONS}"
-        )));
+    execution_windows_with_progress(execution, body, |_| Ok(()))
+        .map_err(|error| TimingError(error.to_string()))
+}
+
+/// Measures the fixed protocol with callbacks strictly outside timed intervals.
+///
+/// The first callback reports calibration, followed by repetitions 0 through 4.
+/// A callback failure stops the execution and returns its I/O error; incomplete
+/// executions cannot be accepted. The callback may flush durable progress.
+pub fn execution_windows_with_progress(
+    execution: u64,
+    body: &mut impl FnMut(usize),
+    progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
+) -> std::io::Result<Vec<TimingSample>> {
+    execution_windows_configured(execution, WINDOWS, TARGET, body, progress)
+}
+
+/// Shared mechanics for an explicitly declared/test timing protocol.
+///
+/// `repetitions` must be in 1..=WINDOWS and `target` must be positive. This
+/// helper satisfies a835 only with exactly WINDOWS repetitions and TARGET;
+/// authoritative campaign callers use `execution_windows_with_progress`.
+/// Callbacks execute strictly after their interval and errors stop sampling.
+pub fn execution_windows_configured(
+    execution: u64,
+    repetitions: u64,
+    target: Duration,
+    body: &mut impl FnMut(usize),
+    mut progress: impl FnMut(TimingProgress) -> std::io::Result<()>,
+) -> std::io::Result<Vec<TimingSample>> {
+    if repetitions == 0 || repetitions > WINDOWS || target.is_zero() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "invalid declared timing protocol",
+        ));
     }
-    let calls = calibrated_calls(TARGET, body);
-    let mut samples = Vec::with_capacity(WINDOWS as usize);
-    for repetition in 0..WINDOWS {
+    if execution >= EXECUTIONS {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("execution {execution} is outside 0..{EXECUTIONS}"),
+        ));
+    }
+    let calls = calibrated_calls(target, body);
+    progress(TimingProgress::CalibrationComplete { calls })?;
+    let mut samples = Vec::with_capacity(repetitions as usize);
+    for repetition in 0..repetitions {
         let start = execution_window_start(execution, repetition);
         let elapsed = time_calls(calls, start, body);
         let elapsed_ns = u64::try_from(elapsed.as_nanos())
-            .map_err(|_| TimingError("one timing window exceeded u64 nanoseconds".to_owned()))?;
-        samples.push(TimingSample::new(execution, repetition, calls, elapsed_ns)?);
+            .map_err(|_| std::io::Error::other("one timing window exceeded u64 nanoseconds"))?;
+        let sample = TimingSample::new(execution, repetition, calls, elapsed_ns)
+            .map_err(std::io::Error::other)?;
+        progress(TimingProgress::WindowComplete(sample))?;
+        samples.push(sample);
     }
     Ok(samples)
 }

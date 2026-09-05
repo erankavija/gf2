@@ -7,6 +7,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod campaign;
 pub mod journal;
 pub mod seed;
 pub mod statistics;
