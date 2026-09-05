@@ -96,8 +96,11 @@ use std::cell::Cell;
 use std::ops::{Add, Mul, Neg, Sub};
 
 #[cfg(any(test, feature = "test-support"))]
-use crate::field::matrix::{record_gemm_tiles, GemmTileSite};
-use crate::field::matrix::{FieldMatrix, Transposed, GEMM_COL_TILE, GEMM_ROW_TILE};
+use crate::field::matrix::GemmTilePair;
+use crate::field::matrix::{
+    FieldMatrix, GemmTileSite, ObservationPolicy, RecordObservations, Transposed, GEMM_COL_TILE,
+    GEMM_ROW_TILE,
+};
 use crate::field::vec::dot_product_slices;
 use crate::field::{ConstField, FieldVec, FiniteField};
 use crate::matrix_like::MatrixLike;
@@ -455,6 +458,24 @@ fn gemm_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
     c: &LC,
     out: &mut FieldMatrix<F>,
 ) {
+    gemm_with_beta_concrete_tiled::<F, LC, GEMM_ROW_TILE, GEMM_COL_TILE, RecordObservations>(
+        a, b, beta, c, out,
+    );
+}
+
+fn gemm_with_beta_concrete_tiled<
+    F: FiniteField,
+    LC: MatrixLike<F>,
+    const ROW_TILE: usize,
+    const COL_TILE: usize,
+    O: ObservationPolicy,
+>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    beta: F,
+    c: &LC,
+    out: &mut FieldMatrix<F>,
+) {
     bump(&KC_GEMM_BETA);
     let (m, k) = (
         <FieldMatrix<F> as MatrixLike<F>>::rows(a),
@@ -504,12 +525,10 @@ fn gemm_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
     // inner write folds β · c[i, j] so the eager two-step (gemm + axpy)
     // is collapsed into one pass. `c.get(i, j)` is one extra clone per
     // cell, amortised over the k field multiplies in the dot product.
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_tiles(GemmTileSite::ExprGemmWithBeta, GEMM_ROW_TILE, GEMM_COL_TILE);
-    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
-        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
-        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
-            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+    for i_blk in (0..m).step_by(ROW_TILE) {
+        let i_end = (i_blk + ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(COL_TILE) {
+            let j_end = (j_blk + COL_TILE).min(n);
             for i in i_blk..i_end {
                 let a_row = &a.as_data_slice()[i * k..(i + 1) * k];
                 let out_row = &mut out.as_data_mut_slice()[i * out_cols..(i + 1) * out_cols];
@@ -522,6 +541,7 @@ fn gemm_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
             }
         }
     }
+    O::gemm_tiles(GemmTileSite::ExprGemmWithBeta, ROW_TILE, COL_TILE);
 }
 
 /// Kernel `out <- Aᵀ · B`. Overwrites. See design §5.4.
@@ -532,6 +552,19 @@ fn gemm_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
 /// cell is a single `dot_product_slices` call over contiguous rows of
 /// `A_t` and `B_t`.
 fn gemm_trans_a_concrete<F: FiniteField>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    out: &mut FieldMatrix<F>,
+) {
+    gemm_trans_a_concrete_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, RecordObservations>(a, b, out);
+}
+
+fn gemm_trans_a_concrete_tiled<
+    F: FiniteField,
+    const ROW_TILE: usize,
+    const COL_TILE: usize,
+    O: ObservationPolicy,
+>(
     a: &FieldMatrix<F>,
     b: &FieldMatrix<F>,
     out: &mut FieldMatrix<F>,
@@ -565,12 +598,10 @@ fn gemm_trans_a_concrete<F: FiniteField>(
     let a_t = a.transpose();
     let b_t = b.transpose();
     let out_cols = n;
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_tiles(GemmTileSite::ExprGemmTransA, GEMM_ROW_TILE, GEMM_COL_TILE);
-    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
-        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
-        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
-            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+    for i_blk in (0..m).step_by(ROW_TILE) {
+        let i_end = (i_blk + ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(COL_TILE) {
+            let j_end = (j_blk + COL_TILE).min(n);
             for i in i_blk..i_end {
                 let a_row = &a_t.as_data_slice()[i * k1..(i + 1) * k1];
                 let out_row = &mut out.as_data_mut_slice()[i * out_cols..(i + 1) * out_cols];
@@ -582,6 +613,7 @@ fn gemm_trans_a_concrete<F: FiniteField>(
             }
         }
     }
+    O::gemm_tiles(GemmTileSite::ExprGemmTransA, ROW_TILE, COL_TILE);
 }
 
 /// Kernel `out <- α · Aᵀ · B + β · C`. Overwrites. Used by the §5.4
@@ -591,6 +623,25 @@ fn gemm_trans_a_concrete<F: FiniteField>(
 /// the β = 1 case pass a one-witness via `F::one_like()` / the usual
 /// `get(0, 0).one_like()` pattern.
 fn gemm_trans_a_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
+    alpha: F,
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    beta: F,
+    c: &LC,
+    out: &mut FieldMatrix<F>,
+) {
+    gemm_trans_a_with_beta_concrete_tiled::<F, LC, GEMM_ROW_TILE, GEMM_COL_TILE, RecordObservations>(
+        alpha, a, b, beta, c, out,
+    );
+}
+
+fn gemm_trans_a_with_beta_concrete_tiled<
+    F: FiniteField,
+    LC: MatrixLike<F>,
+    const ROW_TILE: usize,
+    const COL_TILE: usize,
+    O: ObservationPolicy,
+>(
     alpha: F,
     a: &FieldMatrix<F>,
     b: &FieldMatrix<F>,
@@ -641,16 +692,10 @@ fn gemm_trans_a_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
     let a_t = a.transpose();
     let b_t = b.transpose();
     let out_cols = n;
-    #[cfg(any(test, feature = "test-support"))]
-    record_gemm_tiles(
-        GemmTileSite::ExprGemmTransAWithBeta,
-        GEMM_ROW_TILE,
-        GEMM_COL_TILE,
-    );
-    for i_blk in (0..m).step_by(GEMM_ROW_TILE) {
-        let i_end = (i_blk + GEMM_ROW_TILE).min(m);
-        for j_blk in (0..n).step_by(GEMM_COL_TILE) {
-            let j_end = (j_blk + GEMM_COL_TILE).min(n);
+    for i_blk in (0..m).step_by(ROW_TILE) {
+        let i_end = (i_blk + ROW_TILE).min(m);
+        for j_blk in (0..n).step_by(COL_TILE) {
+            let j_end = (j_blk + COL_TILE).min(n);
             for i in i_blk..i_end {
                 let a_row = &a_t.as_data_slice()[i * k1..(i + 1) * k1];
                 let out_row = &mut out.as_data_mut_slice()[i * out_cols..(i + 1) * out_cols];
@@ -661,6 +706,105 @@ fn gemm_trans_a_with_beta_concrete<F: FiniteField, LC: MatrixLike<F>>(
                     *out_cell = alpha.clone() * prod + beta.clone() * c.get(i, j);
                 }
             }
+        }
+    }
+    O::gemm_tiles(GemmTileSite::ExprGemmTransAWithBeta, ROW_TILE, COL_TILE);
+}
+
+/// Function-pointer type for a fused expression GEMM tile candidate.
+#[cfg(any(test, feature = "test-support"))]
+pub type ExprGemmBetaCandidateFn<F> =
+    fn(&FieldMatrix<F>, &FieldMatrix<F>, F, &FieldMatrix<F>, &mut FieldMatrix<F>);
+
+/// Function-pointer type for a transposed-left expression GEMM candidate.
+#[cfg(any(test, feature = "test-support"))]
+pub type ExprGemmTransCandidateFn<F> = fn(&FieldMatrix<F>, &FieldMatrix<F>, &mut FieldMatrix<F>);
+
+/// Function-pointer type for a fused transposed-left GEMM candidate.
+#[cfg(any(test, feature = "test-support"))]
+pub type ExprGemmTransBetaCandidateFn<F> =
+    fn(F, &FieldMatrix<F>, &FieldMatrix<F>, F, &FieldMatrix<F>, &mut FieldMatrix<F>);
+
+#[cfg(any(test, feature = "test-support"))]
+fn expr_gemm_beta_candidate<F: FiniteField, const ROW_TILE: usize, const COL_TILE: usize>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    beta: F,
+    c: &FieldMatrix<F>,
+    out: &mut FieldMatrix<F>,
+) {
+    gemm_with_beta_concrete_tiled::<F, _, ROW_TILE, COL_TILE, RecordObservations>(
+        a, b, beta, c, out,
+    );
+}
+
+#[cfg(any(test, feature = "test-support"))]
+fn expr_gemm_trans_candidate<F: FiniteField, const ROW_TILE: usize, const COL_TILE: usize>(
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    out: &mut FieldMatrix<F>,
+) {
+    gemm_trans_a_concrete_tiled::<F, ROW_TILE, COL_TILE, RecordObservations>(a, b, out);
+}
+
+#[cfg(any(test, feature = "test-support"))]
+fn expr_gemm_trans_beta_candidate<F: FiniteField, const ROW_TILE: usize, const COL_TILE: usize>(
+    alpha: F,
+    a: &FieldMatrix<F>,
+    b: &FieldMatrix<F>,
+    beta: F,
+    c: &FieldMatrix<F>,
+    out: &mut FieldMatrix<F>,
+) {
+    gemm_trans_a_with_beta_concrete_tiled::<F, _, ROW_TILE, COL_TILE, RecordObservations>(
+        alpha, a, b, beta, c, out,
+    );
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl GemmTilePair {
+    /// Resolves this pair to the shared fused expression GEMM body.
+    pub fn expr_gemm_beta_fn<F: FiniteField>(self) -> ExprGemmBetaCandidateFn<F> {
+        match self {
+            Self::R16C32 => expr_gemm_beta_candidate::<F, 16, 32>,
+            Self::R16C64 => expr_gemm_beta_candidate::<F, 16, 64>,
+            Self::R16C128 => expr_gemm_beta_candidate::<F, 16, 128>,
+            Self::R32C32 => expr_gemm_beta_candidate::<F, 32, 32>,
+            Self::R32C64 => expr_gemm_beta_candidate::<F, 32, 64>,
+            Self::R32C128 => expr_gemm_beta_candidate::<F, 32, 128>,
+            Self::R64C32 => expr_gemm_beta_candidate::<F, 64, 32>,
+            Self::R64C64 => expr_gemm_beta_candidate::<F, 64, 64>,
+            Self::R64C128 => expr_gemm_beta_candidate::<F, 64, 128>,
+        }
+    }
+
+    /// Resolves this pair to the shared transposed-left GEMM body.
+    pub fn expr_gemm_trans_fn<F: FiniteField>(self) -> ExprGemmTransCandidateFn<F> {
+        match self {
+            Self::R16C32 => expr_gemm_trans_candidate::<F, 16, 32>,
+            Self::R16C64 => expr_gemm_trans_candidate::<F, 16, 64>,
+            Self::R16C128 => expr_gemm_trans_candidate::<F, 16, 128>,
+            Self::R32C32 => expr_gemm_trans_candidate::<F, 32, 32>,
+            Self::R32C64 => expr_gemm_trans_candidate::<F, 32, 64>,
+            Self::R32C128 => expr_gemm_trans_candidate::<F, 32, 128>,
+            Self::R64C32 => expr_gemm_trans_candidate::<F, 64, 32>,
+            Self::R64C64 => expr_gemm_trans_candidate::<F, 64, 64>,
+            Self::R64C128 => expr_gemm_trans_candidate::<F, 64, 128>,
+        }
+    }
+
+    /// Resolves this pair to the shared fused transposed-left GEMM body.
+    pub fn expr_gemm_trans_beta_fn<F: FiniteField>(self) -> ExprGemmTransBetaCandidateFn<F> {
+        match self {
+            Self::R16C32 => expr_gemm_trans_beta_candidate::<F, 16, 32>,
+            Self::R16C64 => expr_gemm_trans_beta_candidate::<F, 16, 64>,
+            Self::R16C128 => expr_gemm_trans_beta_candidate::<F, 16, 128>,
+            Self::R32C32 => expr_gemm_trans_beta_candidate::<F, 32, 32>,
+            Self::R32C64 => expr_gemm_trans_beta_candidate::<F, 32, 64>,
+            Self::R32C128 => expr_gemm_trans_beta_candidate::<F, 32, 128>,
+            Self::R64C32 => expr_gemm_trans_beta_candidate::<F, 64, 32>,
+            Self::R64C64 => expr_gemm_trans_beta_candidate::<F, 64, 64>,
+            Self::R64C128 => expr_gemm_trans_beta_candidate::<F, 64, 128>,
         }
     }
 }
