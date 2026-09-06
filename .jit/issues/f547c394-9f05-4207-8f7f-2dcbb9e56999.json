@@ -209,6 +209,31 @@
       "format": "markdown",
       "label": "Historical review round 1",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2bf0f61a6bed68494437e9253736dae5046d634b06663c6306794fed0be0a256",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "f547c394-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cb167358c89b68e610abe5f65328316dd7a64ceeb944ff1c54342a793504c747",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../f547c394/provenance-clarification.md",
+          "resolved_path": "dev/active/f547c394/provenance-clarification.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Review round 2: frozen-record binding",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
@@ -226,7 +251,7 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-09-06T22:09:36.179861376Z",
+      "updated_at": "2026-09-06T23:34:47.374045374Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -254,5 +279,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-06T23:30:54.558037246Z"
+  "updated_at": "2026-09-06T23:35:50.828156050Z"
 }

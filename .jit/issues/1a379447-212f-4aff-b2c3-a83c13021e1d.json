@@ -76,6 +76,31 @@
       "format": "markdown",
       "label": "Content provenance review clarification",
       "path": "dev/active/f547c394/provenance-clarification.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "cb167358c89b68e610abe5f65328316dd7a64ceeb944ff1c54342a793504c747",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../f547c394/provenance-clarification.md",
+          "resolved_path": "dev/active/f547c394/provenance-clarification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2bf0f61a6bed68494437e9253736dae5046d634b06663c6306794fed0be0a256",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "f547c394-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "f547c394 review round 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -99,5 +124,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-06T22:38:41.119071070Z"
+  "updated_at": "2026-09-06T23:35:51.090090014Z"
 }
