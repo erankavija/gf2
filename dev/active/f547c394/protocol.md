@@ -290,7 +290,11 @@ The runner opens the canonical append-only execution log
 (`journal::ExecutionLog`) and prints
 `GF2_CAMPAIGN_EXECUTION_LOG=<path>` before its first bounded run, then journals
 an `execution-log-announced` record; the tool requires that record before the
-first `cell-start` (P-10). Each completed cell is accepted into the immutable
+first `cell-start` (P-10). The campaign-start record binds the exact plan,
+protocol, contract, schema, addendum, producing-input snapshot, process
+descriptors and executable digests. Resume compares these content identities;
+source-control locators and unrelated repository files do not participate.
+Each completed cell is accepted into the immutable
 checkpoint store (`journal::CheckpointStore`) under the campaign's resume
 identity; a resumed session journals an omission for every completed cell and
 never starts it again, so the log holds exactly one `cell-start` and one
@@ -321,6 +325,7 @@ Each bounded campaign writes one directory under the owning issue's
 | `plan.json` | The runner plan: arms, cells, opaque cases, seed, lock path, wrapper, budget. |
 | `receipt.json` | `zen3-benchmark-receipt-v1`: identities, source, toolchain, host observation, lock evidence, worker report, log and checkpoint digests, arms, and every cell with its raw windows, per-execution values, observed CPUs and the runner's claim. |
 | `execution.log` | The append-only journal of every session. |
+| `inputs/` | Immutable protocol, contract, schema, addendum, producing-input and referenced-receipt snapshots used by this campaign. |
 | `checkpoints/` | The immutable manifest and accepted units. |
 | `acceptance-summary.json` | `zen3-benchmark-acceptance-v1` from `benchmark-acceptance`. |
 | `acceptance-summary.md` | Markdown rendered from the summary alone. |

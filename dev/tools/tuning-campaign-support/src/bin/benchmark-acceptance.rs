@@ -1,6 +1,6 @@
 //! Independent acceptance evaluation of a Zen 3 benchmark receipt directory.
 //!
-//! `benchmark-acceptance <receipt-dir> [--repo <root>]` recomputes every
+//! `benchmark-acceptance <receipt-dir>` recomputes every
 //! digest, statistic and decision from the receipt's raw parts, writes
 //! `acceptance-summary.json` and `acceptance-summary.md` beside the receipt,
 //! and exits 0 when the receipt is accepted, 1 when it is rejected, and 2 on
@@ -16,15 +16,9 @@ use tuning_campaign_support::receipt::{
 fn main() {
     let args: Vec<String> = env::args().collect();
     let mut receipt_dir: Option<PathBuf> = None;
-    let mut repo: Option<PathBuf> = None;
     let mut iter = args.iter().skip(1);
     while let Some(arg) = iter.next() {
-        if arg == "--repo" {
-            repo = iter.next().map(PathBuf::from);
-            if repo.is_none() {
-                usage();
-            }
-        } else if receipt_dir.is_none() {
+        if receipt_dir.is_none() {
             receipt_dir = Some(PathBuf::from(arg));
         } else {
             usage();
@@ -33,7 +27,6 @@ fn main() {
     let Some(receipt_dir) = receipt_dir else {
         usage()
     };
-    let _informational_repo = repo;
     let summary = match evaluate(&receipt_dir) {
         Ok(summary) => summary,
         Err(error) => {
@@ -72,6 +65,6 @@ fn main() {
 }
 
 fn usage() -> ! {
-    eprintln!("usage: benchmark-acceptance <receipt-dir> [--repo <repository-root>]");
+    eprintln!("usage: benchmark-acceptance <receipt-dir>");
     std::process::exit(2);
 }

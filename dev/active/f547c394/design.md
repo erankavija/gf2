@@ -70,10 +70,12 @@ shared one; only the mode-claim bookkeeping is absent.
 ## Pre-existing fragility observed
 
 The a835 campaign driver consumes the shared `ProducingInputs` parser and hash
-projection, while its own protocol still checks repository revisions and tree
-state in addition to those content identities. Issue `0ba493e1` owns migration
-of that separate campaign's identity contract. This issue does not reinterpret
-or rerun its historical evidence.
+projection. Its producing-input manifest therefore includes `provenance.rs` in
+its build, behavior and lifecycle closures, so later changes to the shared
+parser cannot go unnoticed. The a835 protocol still checks repository revisions
+and tree state in addition to those content identities. Issue `0ba493e1` owns
+migration of that separate campaign's identity contract. This issue does not
+reinterpret or rerun its historical evidence.
 
 The a835 producing-input manifest lists
 `dev/tools/tuning-profile-compose/Cargo.lock` as a build input, but that file

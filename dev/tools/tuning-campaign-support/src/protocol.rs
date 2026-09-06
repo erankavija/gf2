@@ -693,7 +693,7 @@ impl FamilyAddendum {
             errors.push("resolution_evidence needs measurement_resolution".into());
         }
         if let Some(evidence) = &effect.resolution_evidence {
-            if evidence.receipt.is_empty() || evidence.receipt.starts_with('/') {
+            if validate_relative(&evidence.receipt, "resolution evidence").is_err() {
                 errors.push("resolution_evidence receipt is not repository-relative".into());
             }
             if !is_hex(&evidence.sha256, 64) {
