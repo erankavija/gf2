@@ -1,0 +1,92 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": { "id": "zen3-benchmark-protocol", "version": 1 },
+  "family": {
+    "id": "protocol-smoke",
+    "issue": "f547c394",
+    "purpose": "kernel-family",
+    "description": "Synthetic XOR-fold arms that exercise every receipt path of the protocol tooling. No cell here is a performance claim about gf2; the family exists so the pipeline is proven on this host before real families freeze their addenda."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-06T23:08:26Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.5,
+    "rationale": "The smoke candidate arm performs one pass while the doubled-work baseline performs two, so a genuine pipeline records a speedup near 2. The pilot's largest relative confidence-interval half-width was 0.0315; rounding it upward to 0.04 leaves the 1.5 threshold far above the observed resolution and far below the expected effect. This threshold is a pipeline check, not a consumer-benefit judgment.",
+    "measurement_resolution": 0.04,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json",
+      "sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf"
+    },
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "Identical arms must be declared not worse; a 10% equivalence margin exceeds the smoke resolution while still catching a pipeline that swaps arms or drops samples.",
+    "material_gap_threshold": 1.5,
+    "material_gap_rationale": "Unused by the smoke cells; declared so the addendum is complete."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "The smoke family adopts nothing; its budget is zero by construction."
+  },
+  "family_wise": { "alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": [] },
+  "search_budget": { "max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1 },
+  "holdout": { "required": false, "cells": [] },
+  "cells": [
+    {
+      "cell_id": "xor-fold-double-pass-1core",
+      "objective": "improvement",
+      "role": "confirmatory",
+      "workload": { "identity": "xor-fold", "size": { "words": 65536 }, "seed": 1 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "warm",
+      "builds": { "baseline": "conservative-portable", "candidate": "conservative-portable" },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-fold-identical-1core",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": { "identity": "xor-fold", "size": { "words": 65536 }, "seed": 2 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "warm",
+      "builds": { "baseline": "conservative-portable", "candidate": "conservative-portable" },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-fold-streaming-pilot-6core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": { "identity": "xor-fold", "size": { "words": 4194304 }, "seed": 3 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "streaming",
+      "builds": { "baseline": "conservative-portable", "candidate": "conservative-portable" },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-fold-identical-12core",
+      "objective": "non-regression",
+      "role": "confirmatory",
+      "workload": { "identity": "xor-fold", "size": { "words": 65536 }, "seed": 4 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "warm",
+      "builds": { "baseline": "conservative-portable", "candidate": "conservative-portable" },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 {
   "schema": "zen3-benchmark-acceptance-v1",
-  "receipt_sha256": "b066dd3f61e6cfb97744845df6e7dc950ef5e33ef9e65aba7c514d5c8c022055",
-  "campaign_id": "smoke-f547c394-20260906t213607z",
-  "label": "smoke",
+  "receipt_sha256": "e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344",
+  "campaign_id": "confirmation-f547c394-20260906t230920z",
+  "label": "confirmation",
   "verdict": "accepted",
   "qualifies": false,
   "family": {
@@ -14,14 +14,7 @@
   },
   "sessions": 2,
   "resumed": true,
-  "findings": [
-    {
-      "rule": "P-02",
-      "severity": "note",
-      "cell": null,
-      "message": "protocol changed in the working tree after this measurement; the pinned version governed the run"
-    }
-  ],
+  "findings": [],
   "cells": [
     {
       "cell_id": "xor-fold-double-pass-1core",
@@ -37,12 +30,12 @@
       "flagged_windows": 0,
       "total_windows": 240,
       "interval": {
-        "estimate": 2.0000399477114255,
-        "lower": 1.992644673214072,
-        "upper": 2.011325799932199,
+        "estimate": 1.999306201903797,
+        "lower": 1.9065889025987186,
+        "upper": 2.0535634964978393,
         "confidence": 0.9833333333333333,
         "resamples": 10000,
-        "seed": 9529593830585880163,
+        "seed": 4601929107371892610,
         "pairs": 24
       },
       "decision": "improved",
@@ -67,12 +60,12 @@
       "flagged_windows": 0,
       "total_windows": 240,
       "interval": {
-        "estimate": 0.997531832908309,
-        "lower": 0.9484537221898061,
-        "upper": 1.0025530342554048,
+        "estimate": 1.0371472448916095,
+        "lower": 0.9861962072217164,
+        "upper": 1.0896666667725476,
         "confidence": 0.9833333333333333,
         "resamples": 10000,
-        "seed": 10374432831382001202,
+        "seed": 18091774859665624329,
         "pairs": 24
       },
       "decision": "not-worse",
@@ -102,12 +95,12 @@
       "flagged_windows": 0,
       "total_windows": 60,
       "interval": {
-        "estimate": 0.9794288132104289,
-        "lower": 0.9626939058928089,
-        "upper": 0.997648613186732,
+        "estimate": 0.9861303904228828,
+        "lower": 0.9613273906420885,
+        "upper": 1.0107677802004174,
         "confidence": 0.9833333333333333,
         "resamples": 10000,
-        "seed": 7986823752743336379,
+        "seed": 12792100729105745411,
         "pairs": 6
       },
       "decision": "not-worse",

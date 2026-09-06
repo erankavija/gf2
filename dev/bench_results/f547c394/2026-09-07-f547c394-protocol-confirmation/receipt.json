@@ -1,9 +1,10 @@
 {
   "schema": "zen3-benchmark-receipt-v1",
-  "campaign_id": "smoke-f547c394-20260906t213607z",
+  "campaign_id": "confirmation-f547c394-20260906t230920z",
   "issue": "f547c394",
-  "label": "smoke",
-  "campaign_seed": 20260906,
+  "receipt_path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json",
+  "label": "confirmation",
+  "campaign_seed": 20260907,
   "settings": {
     "family_alpha": 0.05,
     "bootstrap_resamples": 10000,
@@ -22,32 +23,89 @@
   "settings_deviation": false,
   "protocol": {
     "path": "dev/active/f547c394/protocol.md",
-    "git_commit": "a1e513178a56073a93a0ae271ff6063812e142aa",
-    "sha256": "75f917a5f090d9798a1b2685ff3b226d75e0d679855e79da67095fcfff96f473"
+    "snapshot": "inputs/protocol.md",
+    "sha256": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48"
   },
   "contract": {
     "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
-    "git_commit": "a1e513178a56073a93a0ae271ff6063812e142aa",
-    "sha256": "452089376294b523b395fd02329dbfe8019c05819d4029361972114d121a071f"
+    "snapshot": "inputs/measurement-contract.md",
+    "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3"
   },
   "addendum_schema": {
     "path": "dev/active/f547c394/addendum.schema.json",
-    "git_commit": "a1e513178a56073a93a0ae271ff6063812e142aa",
-    "sha256": "eb86495dbdebf778a1e10d8e71978cf954587806b5703d9e6f6886e19797ce95"
+    "snapshot": "inputs/addendum.schema.json",
+    "sha256": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240"
   },
   "addendum": {
     "path": "dev/active/f547c394/addendum-protocol-smoke.json",
-    "git_commit": "a1e513178a56073a93a0ae271ff6063812e142aa",
-    "sha256": "87619287224d661e7b89ea79f7533f1ed694a48acf74c8b62be1c4248e031e0b"
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "307b6a2baf2da5025a26820ed44be55a212747440f3d9d00e09bdaf8b1d8a69c"
   },
   "source": {
-    "revision": "a1e513178a56073a93a0ae271ff6063812e142aa",
-    "tree_sha256": "155deef2e4b692a6ac01183161d149001a4c637ad7c2e0ee263b403201cf9a9b",
-    "clean": true
+    "producing": {
+      "manifest_path": "dev/active/f547c394/producing-inputs.json",
+      "manifest_sha256": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+      "behavior_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      },
+      "lifecycle_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8"
+      },
+      "build_inputs_sha256": {
+        ".cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      }
+    }
   },
   "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
   "host": {
-    "observed_utc": "2026-09-06T21:37:04.586693016Z",
+    "observed_utc": "2026-09-06T23:10:17.350493475Z",
     "hostname": "fraktaali",
     "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
     "cpu_flags": [
@@ -785,15 +843,15 @@
       "smt_active": true
     },
     "load_average": [
-      0.92,
-      0.72,
-      0.44
+      1.04,
+      1.28,
+      1.14
     ],
-    "available_memory_kib": 60597028
+    "available_memory_kib": 48136828
   },
   "lock": {
     "lock_path": "/tmp/gf2-ccx1.lock",
-    "holder_pid": 3784724,
+    "holder_pid": 4140431,
     "observation": "inherited-fd-and-independent-flock-conflict",
     "wrapper": "dev/scripts/ccx1-bench-flock.sh"
   },
@@ -803,20 +861,20 @@
   },
   "execution_log": {
     "path": "execution.log",
-    "sha256": "130b3e6d55af45006d6092198e90ca8e31ad8a59daa235186df39d1cc507fbfd",
+    "sha256": "cbfe54076c39b6d2f5f436491eb1ad6f82cfec40ee01e9f5e9613588283bbe69",
     "sessions": 2,
     "resumed": true
   },
   "checkpoints": {
     "manifest_path": "checkpoints/manifest.json",
-    "manifest_sha256": "ff849b88a01a01294e1ee042ead4b9973a671b6d10f78118216491bd762440b8"
+    "manifest_sha256": "7618c1dc74937decdd49fbfb8931030d5e48255de2e47455cefc29eef5921c74"
   },
   "arms": {
     "baseline": {
       "build": "conservative-portable",
       "description": "xor-fold, one pass per call",
       "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
-      "executable_sha256": "486883f927bd1b6e2658dc1acdb003cfb3ad78063fa6df21e61b1b006ab126dd",
+      "executable_sha256": "b9444479f89c3bb572f68609f364720fad8bd8dc4dbfa3f7d2d873afd895f1df",
       "arguments": [],
       "environment": {
         "GF2_SMOKE_PASSES": "1"
@@ -828,7 +886,7 @@
       "build": "conservative-portable",
       "description": "xor-fold, two passes per call",
       "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
-      "executable_sha256": "486883f927bd1b6e2658dc1acdb003cfb3ad78063fa6df21e61b1b006ab126dd",
+      "executable_sha256": "b9444479f89c3bb572f68609f364720fad8bd8dc4dbfa3f7d2d873afd895f1df",
       "arguments": [],
       "environment": {
         "GF2_SMOKE_PASSES": "2"
@@ -840,7 +898,7 @@
       "build": "conservative-portable",
       "description": "xor-fold, one pass per call",
       "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
-      "executable_sha256": "486883f927bd1b6e2658dc1acdb003cfb3ad78063fa6df21e61b1b006ab126dd",
+      "executable_sha256": "b9444479f89c3bb572f68609f364720fad8bd8dc4dbfa3f7d2d873afd895f1df",
       "arguments": [],
       "environment": {
         "GF2_SMOKE_PASSES": "1"
@@ -868,30 +926,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3783913,
+            "pid": 4139296,
             "windows": [
               {
-                "calls": 5262,
-                "elapsed_ns": 100304678
+                "calls": 5132,
+                "elapsed_ns": 100289129
               },
               {
-                "calls": 5262,
-                "elapsed_ns": 100473118
+                "calls": 5132,
+                "elapsed_ns": 100428200
               },
               {
-                "calls": 5262,
-                "elapsed_ns": 99727685
+                "calls": 5132,
+                "elapsed_ns": 100153678
               },
               {
-                "calls": 5262,
-                "elapsed_ns": 99779515
+                "calls": 5132,
+                "elapsed_ns": 100240338
               },
               {
-                "calls": 5262,
-                "elapsed_ns": 100646899
+                "calls": 5132,
+                "elapsed_ns": 100277649
               }
             ],
-            "ns_per_call": 19062.082478145192,
+            "ns_per_call": 19539.68219017927,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -899,34 +957,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 588292221
+            "elapsed_ns": 596004749
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3783909,
+            "pid": 4139279,
             "windows": [
               {
-                "calls": 11408,
-                "elapsed_ns": 98701879
+                "calls": 10194,
+                "elapsed_ns": 99083882
               },
               {
-                "calls": 11408,
-                "elapsed_ns": 98814349
+                "calls": 10194,
+                "elapsed_ns": 99059451
               },
               {
-                "calls": 11408,
-                "elapsed_ns": 98811710
+                "calls": 10194,
+                "elapsed_ns": 99187882
               },
               {
-                "calls": 11408,
-                "elapsed_ns": 98823729
+                "calls": 10194,
+                "elapsed_ns": 99570025
               },
               {
-                "calls": 11408,
-                "elapsed_ns": 107545787
+                "calls": 10194,
+                "elapsed_ns": 99459654
               }
             ],
-            "ns_per_call": 8661.846861851333,
+            "ns_per_call": 9730.025701392977,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -934,7 +992,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 588613393
+            "elapsed_ns": 592064625
           }
         },
         {
@@ -942,30 +1000,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3783918,
+            "pid": 4139302,
             "windows": [
               {
-                "calls": 5717,
-                "elapsed_ns": 99759705
+                "calls": 5538,
+                "elapsed_ns": 99831406
               },
               {
-                "calls": 5717,
-                "elapsed_ns": 99519893
+                "calls": 5538,
+                "elapsed_ns": 99505465
               },
               {
-                "calls": 5717,
-                "elapsed_ns": 99993176
+                "calls": 5538,
+                "elapsed_ns": 107798004
               },
               {
-                "calls": 5717,
-                "elapsed_ns": 100144837
+                "calls": 5538,
+                "elapsed_ns": 107926045
               },
               {
-                "calls": 5717,
-                "elapsed_ns": 99775485
+                "calls": 5538,
+                "elapsed_ns": 107934696
               }
             ],
-            "ns_per_call": 17452.41997551163,
+            "ns_per_call": 19465.15059588299,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -973,34 +1031,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583833228
+            "elapsed_ns": 612797481
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3783924,
+            "pid": 4139326,
             "windows": [
               {
-                "calls": 11491,
-                "elapsed_ns": 100468428
+                "calls": 11241,
+                "elapsed_ns": 101364725
               },
               {
-                "calls": 11491,
-                "elapsed_ns": 100196517
+                "calls": 11241,
+                "elapsed_ns": 107570084
               },
               {
-                "calls": 11491,
-                "elapsed_ns": 99997896
+                "calls": 11241,
+                "elapsed_ns": 107963535
               },
               {
-                "calls": 11491,
-                "elapsed_ns": 108559463
+                "calls": 11241,
+                "elapsed_ns": 107949616
               },
               {
-                "calls": 11491,
-                "elapsed_ns": 110777565
+                "calls": 11241,
+                "elapsed_ns": 108035536
               }
             ],
-            "ns_per_call": 8743.227569402141,
+            "ns_per_call": 9603.203985410551,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1008,7 +1066,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 604039487
+            "elapsed_ns": 621311492
           }
         },
         {
@@ -1016,30 +1074,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3783953,
+            "pid": 4139338,
             "windows": [
               {
-                "calls": 5722,
-                "elapsed_ns": 100456689
+                "calls": 5217,
+                "elapsed_ns": 100091168
               },
               {
-                "calls": 5722,
-                "elapsed_ns": 100305178
+                "calls": 5217,
+                "elapsed_ns": 100242268
               },
               {
-                "calls": 5722,
-                "elapsed_ns": 100417467
+                "calls": 5217,
+                "elapsed_ns": 100173539
               },
               {
-                "calls": 5722,
-                "elapsed_ns": 100252108
+                "calls": 5217,
+                "elapsed_ns": 100110188
               },
               {
-                "calls": 5722,
-                "elapsed_ns": 100419028
+                "calls": 5217,
+                "elapsed_ns": 100211098
               }
             ],
-            "ns_per_call": 17549.365082139113,
+            "ns_per_call": 19201.368410964154,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1047,34 +1105,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 586107210
+            "elapsed_ns": 593282642
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3783930,
+            "pid": 4139332,
             "windows": [
               {
-                "calls": 11483,
-                "elapsed_ns": 100383488
+                "calls": 10464,
+                "elapsed_ns": 100134938
               },
               {
-                "calls": 11483,
-                "elapsed_ns": 100648179
+                "calls": 10464,
+                "elapsed_ns": 100250919
               },
               {
-                "calls": 11483,
-                "elapsed_ns": 100307538
+                "calls": 10464,
+                "elapsed_ns": 100283939
               },
               {
-                "calls": 11483,
-                "elapsed_ns": 103942057
+                "calls": 10464,
+                "elapsed_ns": 100308189
               },
               {
-                "calls": 11483,
-                "elapsed_ns": 112358214
+                "calls": 10464,
+                "elapsed_ns": 100243149
               }
             ],
-            "ns_per_call": 8764.972481058956,
+            "ns_per_call": 9580.554185779816,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1082,7 +1140,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 601654994
+            "elapsed_ns": 594442159
           }
         },
         {
@@ -1090,30 +1148,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3783964,
+            "pid": 4139342,
             "windows": [
               {
-                "calls": 5697,
-                "elapsed_ns": 99812555
+                "calls": 5534,
+                "elapsed_ns": 103373798
               },
               {
-                "calls": 5697,
-                "elapsed_ns": 99710155
+                "calls": 5534,
+                "elapsed_ns": 107536753
               },
               {
-                "calls": 5697,
-                "elapsed_ns": 99690414
+                "calls": 5534,
+                "elapsed_ns": 107590693
               },
               {
-                "calls": 5697,
-                "elapsed_ns": 99817985
+                "calls": 5534,
+                "elapsed_ns": 107764224
               },
               {
-                "calls": 5697,
-                "elapsed_ns": 99493473
+                "calls": 5534,
+                "elapsed_ns": 107821675
               }
             ],
-            "ns_per_call": 17502.221344567315,
+            "ns_per_call": 19441.75876400434,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1121,34 +1179,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583073153
+            "elapsed_ns": 623432535
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3783970,
+            "pid": 4139348,
             "windows": [
               {
-                "calls": 11538,
-                "elapsed_ns": 100479298
+                "calls": 10369,
+                "elapsed_ns": 100511270
               },
               {
-                "calls": 11538,
-                "elapsed_ns": 100162907
+                "calls": 10369,
+                "elapsed_ns": 100242929
               },
               {
-                "calls": 11538,
-                "elapsed_ns": 100301698
+                "calls": 10369,
+                "elapsed_ns": 100076808
               },
               {
-                "calls": 11538,
-                "elapsed_ns": 100471298
+                "calls": 10369,
+                "elapsed_ns": 100103797
               },
               {
-                "calls": 11538,
-                "elapsed_ns": 100148077
+                "calls": 10369,
+                "elapsed_ns": 100108848
               }
             ],
-            "ns_per_call": 8693.161553128792,
+            "ns_per_call": 9654.628990259427,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1156,7 +1214,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585107555
+            "elapsed_ns": 595690717
           }
         },
         {
@@ -1164,30 +1222,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3783974,
+            "pid": 4139352,
             "windows": [
               {
-                "calls": 5718,
-                "elapsed_ns": 99678244
+                "calls": 5116,
+                "elapsed_ns": 100454760
               },
               {
-                "calls": 5718,
-                "elapsed_ns": 99703704
+                "calls": 5116,
+                "elapsed_ns": 100481050
               },
               {
-                "calls": 5718,
-                "elapsed_ns": 99566424
+                "calls": 5116,
+                "elapsed_ns": 100552200
               },
               {
-                "calls": 5718,
-                "elapsed_ns": 99766115
+                "calls": 5116,
+                "elapsed_ns": 100249419
               },
               {
-                "calls": 5718,
-                "elapsed_ns": 99693644
+                "calls": 5116,
+                "elapsed_ns": 100217568
               }
             ],
-            "ns_per_call": 17435.0549143057,
+            "ns_per_call": 19635.410476935107,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1195,34 +1253,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 582651521
+            "elapsed_ns": 556782981
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3783979,
+            "pid": 4139359,
             "windows": [
               {
-                "calls": 11489,
-                "elapsed_ns": 100254008
+                "calls": 10152,
+                "elapsed_ns": 98253316
               },
               {
-                "calls": 11489,
-                "elapsed_ns": 100286977
+                "calls": 10152,
+                "elapsed_ns": 98041096
               },
               {
-                "calls": 11489,
-                "elapsed_ns": 100347158
+                "calls": 10152,
+                "elapsed_ns": 98334537
               },
               {
-                "calls": 11489,
-                "elapsed_ns": 100341218
+                "calls": 10152,
+                "elapsed_ns": 98571208
               },
               {
-                "calls": 11489,
-                "elapsed_ns": 100228277
+                "calls": 10152,
+                "elapsed_ns": 98377638
               }
             ],
-            "ns_per_call": 8728.956131952302,
+            "ns_per_call": 9686.223108747045,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1230,7 +1288,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585276535
+            "elapsed_ns": 585776796
           }
         },
         {
@@ -1238,30 +1296,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3783989,
+            "pid": 4139382,
             "windows": [
               {
-                "calls": 5750,
-                "elapsed_ns": 100386318
+                "calls": 5216,
+                "elapsed_ns": 100006047
               },
               {
-                "calls": 5750,
-                "elapsed_ns": 100044587
+                "calls": 5216,
+                "elapsed_ns": 100141188
               },
               {
-                "calls": 5750,
-                "elapsed_ns": 100545349
+                "calls": 5216,
+                "elapsed_ns": 100102848
               },
               {
-                "calls": 5750,
-                "elapsed_ns": 100645769
+                "calls": 5216,
+                "elapsed_ns": 100175198
               },
               {
-                "calls": 5750,
-                "elapsed_ns": 100223357
+                "calls": 5216,
+                "elapsed_ns": 100186019
               }
             ],
-            "ns_per_call": 17458.49008695652,
+            "ns_per_call": 19198.847392638036,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1269,34 +1327,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585960529
+            "elapsed_ns": 594080997
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3783985,
+            "pid": 4139378,
             "windows": [
               {
-                "calls": 11450,
-                "elapsed_ns": 99898156
+                "calls": 11177,
+                "elapsed_ns": 100063787
               },
               {
-                "calls": 11450,
-                "elapsed_ns": 99845275
+                "calls": 11177,
+                "elapsed_ns": 100128828
               },
               {
-                "calls": 11450,
-                "elapsed_ns": 99988466
+                "calls": 11177,
+                "elapsed_ns": 99884406
               },
               {
-                "calls": 11450,
-                "elapsed_ns": 99756515
+                "calls": 11177,
+                "elapsed_ns": 99835156
               },
               {
-                "calls": 11450,
-                "elapsed_ns": 99957995
+                "calls": 11177,
+                "elapsed_ns": 100167579
               }
             ],
-            "ns_per_call": 8724.72978165939,
+            "ns_per_call": 8952.651605976558,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1304,38 +1362,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583578166
+            "elapsed_ns": 589288308
           }
         },
         {
           "index": 6,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3783995,
+            "pid": 4139392,
             "windows": [
               {
-                "calls": 5763,
-                "elapsed_ns": 100163236
+                "calls": 5611,
+                "elapsed_ns": 100468230
               },
               {
-                "calls": 5763,
-                "elapsed_ns": 100237878
+                "calls": 5611,
+                "elapsed_ns": 114238883
               },
               {
-                "calls": 5763,
-                "elapsed_ns": 100216137
+                "calls": 5611,
+                "elapsed_ns": 109439565
               },
               {
-                "calls": 5763,
-                "elapsed_ns": 100684760
+                "calls": 5611,
+                "elapsed_ns": 108860541
               },
               {
-                "calls": 5763,
-                "elapsed_ns": 100523118
+                "calls": 5611,
+                "elapsed_ns": 108025666
               }
             ],
-            "ns_per_call": 17393.350338365435,
+            "ns_per_call": 19401.272678666905,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1343,34 +1401,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585593268
+            "elapsed_ns": 629647683
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3783999,
+            "pid": 4139387,
             "windows": [
               {
-                "calls": 11494,
-                "elapsed_ns": 100324057
+                "calls": 10414,
+                "elapsed_ns": 100137848
               },
               {
-                "calls": 11494,
-                "elapsed_ns": 100364758
+                "calls": 10414,
+                "elapsed_ns": 100110388
               },
               {
-                "calls": 11494,
-                "elapsed_ns": 100063157
+                "calls": 10414,
+                "elapsed_ns": 99936307
               },
               {
-                "calls": 11494,
-                "elapsed_ns": 100123946
+                "calls": 10414,
+                "elapsed_ns": 99595205
               },
               {
-                "calls": 11494,
-                "elapsed_ns": 100319918
+                "calls": 10414,
+                "elapsed_ns": 99698835
               }
             ],
-            "ns_per_call": 8728.024882547415,
+            "ns_per_call": 9596.34213558671,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1378,38 +1436,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585265765
+            "elapsed_ns": 593252252
           }
         },
         {
           "index": 7,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784033,
+            "pid": 4139453,
             "windows": [
               {
-                "calls": 5678,
-                "elapsed_ns": 99542223
+                "calls": 5509,
+                "elapsed_ns": 99685725
               },
               {
-                "calls": 5678,
-                "elapsed_ns": 99195162
+                "calls": 5509,
+                "elapsed_ns": 100268539
               },
               {
-                "calls": 5678,
-                "elapsed_ns": 99180331
+                "calls": 5509,
+                "elapsed_ns": 101292285
               },
               {
-                "calls": 5678,
-                "elapsed_ns": 99064121
+                "calls": 5509,
+                "elapsed_ns": 101094384
               },
               {
-                "calls": 5678,
-                "elapsed_ns": 99096821
+                "calls": 5509,
+                "elapsed_ns": 100661671
               }
             ],
-            "ns_per_call": 17467.476400140895,
+            "ns_per_call": 18272.222000363043,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1417,34 +1475,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 580891311
+            "elapsed_ns": 592635068
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784005,
+            "pid": 4139459,
             "windows": [
               {
-                "calls": 11522,
-                "elapsed_ns": 100083036
+                "calls": 10419,
+                "elapsed_ns": 100106728
               },
               {
-                "calls": 11522,
-                "elapsed_ns": 100473649
+                "calls": 10419,
+                "elapsed_ns": 100114628
               },
               {
-                "calls": 11522,
-                "elapsed_ns": 100781540
+                "calls": 10419,
+                "elapsed_ns": 99864956
               },
               {
-                "calls": 11522,
-                "elapsed_ns": 100781700
+                "calls": 10419,
+                "elapsed_ns": 100883232
               },
               {
-                "calls": 11522,
-                "elapsed_ns": 100703880
+                "calls": 10419,
+                "elapsed_ns": 99989698
               }
             ],
-            "ns_per_call": 8740.13886478042,
+            "ns_per_call": 9608.093675016797,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1452,38 +1510,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 587729569
+            "elapsed_ns": 594705430
           }
         },
         {
           "index": 8,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784044,
+            "pid": 4139463,
             "windows": [
               {
-                "calls": 5764,
-                "elapsed_ns": 99977246
+                "calls": 5604,
+                "elapsed_ns": 99734475
               },
               {
-                "calls": 5764,
-                "elapsed_ns": 100025256
+                "calls": 5604,
+                "elapsed_ns": 109631346
               },
               {
-                "calls": 5764,
-                "elapsed_ns": 100106127
+                "calls": 5604,
+                "elapsed_ns": 110100478
               },
               {
-                "calls": 5764,
-                "elapsed_ns": 99908385
+                "calls": 5604,
+                "elapsed_ns": 110045148
               },
               {
-                "calls": 5764,
-                "elapsed_ns": 100263058
+                "calls": 5604,
+                "elapsed_ns": 110077459
               }
             ],
-            "ns_per_call": 17353.44482997918,
+            "ns_per_call": 19636.892933618845,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1491,34 +1549,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583923588
+            "elapsed_ns": 628016652
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784038,
+            "pid": 4139470,
             "windows": [
               {
-                "calls": 11441,
-                "elapsed_ns": 100352518
+                "calls": 10221,
+                "elapsed_ns": 100007187
               },
               {
-                "calls": 11441,
-                "elapsed_ns": 100517809
+                "calls": 10221,
+                "elapsed_ns": 100008817
               },
               {
-                "calls": 11441,
-                "elapsed_ns": 100372918
+                "calls": 10221,
+                "elapsed_ns": 99931297
               },
               {
-                "calls": 11441,
-                "elapsed_ns": 100361608
+                "calls": 10221,
+                "elapsed_ns": 99931366
               },
               {
-                "calls": 11441,
-                "elapsed_ns": 100229857
+                "calls": 10221,
+                "elapsed_ns": 100252279
               }
             ],
-            "ns_per_call": 8772.10104011887,
+            "ns_per_call": 9784.481655415322,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1526,38 +1584,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 586032710
+            "elapsed_ns": 554044054
           }
         },
         {
           "index": 9,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784048,
+            "pid": 4139500,
             "windows": [
               {
-                "calls": 5690,
-                "elapsed_ns": 99618593
+                "calls": 5184,
+                "elapsed_ns": 99573744
               },
               {
-                "calls": 5690,
-                "elapsed_ns": 99451083
+                "calls": 5184,
+                "elapsed_ns": 99339274
               },
               {
-                "calls": 5690,
-                "elapsed_ns": 99579094
+                "calls": 5184,
+                "elapsed_ns": 99621844
               },
               {
-                "calls": 5690,
-                "elapsed_ns": 99367152
+                "calls": 5184,
+                "elapsed_ns": 99658945
               },
               {
-                "calls": 5690,
-                "elapsed_ns": 99658884
+                "calls": 5184,
+                "elapsed_ns": 99243993
               }
             ],
-            "ns_per_call": 17500.719507908612,
+            "ns_per_call": 19207.89814814815,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1565,34 +1623,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 582300079
+            "elapsed_ns": 590680526
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784053,
+            "pid": 4139474,
             "windows": [
               {
-                "calls": 11471,
-                "elapsed_ns": 100165707
+                "calls": 10194,
+                "elapsed_ns": 99624695
               },
               {
-                "calls": 11471,
-                "elapsed_ns": 100001186
+                "calls": 10194,
+                "elapsed_ns": 99593944
               },
               {
-                "calls": 11471,
-                "elapsed_ns": 100319738
+                "calls": 10194,
+                "elapsed_ns": 99826026
               },
               {
-                "calls": 11471,
-                "elapsed_ns": 100377498
+                "calls": 10194,
+                "elapsed_ns": 99810276
               },
               {
-                "calls": 11471,
-                "elapsed_ns": 100188717
+                "calls": 10194,
+                "elapsed_ns": 100344589
               }
             ],
-            "ns_per_call": 8734.087437886845,
+            "ns_per_call": 9791.08063566804,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1600,38 +1658,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585055195
+            "elapsed_ns": 554660147
           }
         },
         {
           "index": 10,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784063,
+            "pid": 4139554,
             "windows": [
               {
-                "calls": 5732,
-                "elapsed_ns": 100212207
+                "calls": 5214,
+                "elapsed_ns": 99906327
               },
               {
-                "calls": 5732,
-                "elapsed_ns": 100400258
+                "calls": 5214,
+                "elapsed_ns": 99928917
               },
               {
-                "calls": 5732,
-                "elapsed_ns": 100193207
+                "calls": 5214,
+                "elapsed_ns": 100089357
               },
               {
-                "calls": 5732,
-                "elapsed_ns": 100251058
+                "calls": 5214,
+                "elapsed_ns": 100166518
               },
               {
-                "calls": 5732,
-                "elapsed_ns": 100630999
+                "calls": 5214,
+                "elapsed_ns": 100487470
               }
             ],
-            "ns_per_call": 17489.717027215633,
+            "ns_per_call": 19196.271001150748,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1639,34 +1697,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 587161685
+            "elapsed_ns": 592668809
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784057,
+            "pid": 4139580,
             "windows": [
               {
-                "calls": 11479,
-                "elapsed_ns": 100027046
+                "calls": 10361,
+                "elapsed_ns": 100170148
               },
               {
-                "calls": 11479,
-                "elapsed_ns": 99467353
+                "calls": 10361,
+                "elapsed_ns": 99974077
               },
               {
-                "calls": 11479,
-                "elapsed_ns": 99466403
+                "calls": 10361,
+                "elapsed_ns": 99746066
               },
               {
-                "calls": 11479,
-                "elapsed_ns": 99574214
+                "calls": 10361,
+                "elapsed_ns": 99901426
               },
               {
-                "calls": 11479,
-                "elapsed_ns": 99598583
+                "calls": 10361,
+                "elapsed_ns": 99770006
               }
             ],
-            "ns_per_call": 8674.467636553707,
+            "ns_per_call": 9642.06408647814,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1674,38 +1732,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 581857757
+            "elapsed_ns": 594090946
           }
         },
         {
           "index": 11,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784068,
+            "pid": 4139627,
             "windows": [
               {
-                "calls": 5730,
-                "elapsed_ns": 100130407
+                "calls": 5140,
+                "elapsed_ns": 99843576
               },
               {
-                "calls": 5730,
-                "elapsed_ns": 100405208
+                "calls": 5140,
+                "elapsed_ns": 99996947
               },
               {
-                "calls": 5730,
-                "elapsed_ns": 101263243
+                "calls": 5140,
+                "elapsed_ns": 99778726
               },
               {
-                "calls": 5730,
-                "elapsed_ns": 100182037
+                "calls": 5140,
+                "elapsed_ns": 99805356
               },
               {
-                "calls": 5730,
-                "elapsed_ns": 100055476
+                "calls": 5140,
+                "elapsed_ns": 99777826
               }
             ],
-            "ns_per_call": 17483.776090750438,
+            "ns_per_call": 19417.384435797667,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1713,34 +1771,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 587279867
+            "elapsed_ns": 593158981
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784073,
+            "pid": 4139587,
             "windows": [
               {
-                "calls": 11456,
-                "elapsed_ns": 100376538
+                "calls": 10242,
+                "elapsed_ns": 99985897
               },
               {
-                "calls": 11456,
-                "elapsed_ns": 100126757
+                "calls": 10242,
+                "elapsed_ns": 99665005
               },
               {
-                "calls": 11456,
-                "elapsed_ns": 100279867
+                "calls": 10242,
+                "elapsed_ns": 100013267
               },
               {
-                "calls": 11456,
-                "elapsed_ns": 100270088
+                "calls": 10242,
+                "elapsed_ns": 99864346
               },
               {
-                "calls": 11456,
-                "elapsed_ns": 99966226
+                "calls": 10242,
+                "elapsed_ns": 99968237
               }
             ],
-            "ns_per_call": 8752.626396648046,
+            "ns_per_call": 9760.616774067565,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1748,38 +1806,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585304506
+            "elapsed_ns": 594923762
           }
         },
         {
           "index": 12,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784079,
+            "pid": 4139638,
             "windows": [
               {
-                "calls": 5741,
-                "elapsed_ns": 100149437
+                "calls": 5098,
+                "elapsed_ns": 99575414
               },
               {
-                "calls": 5741,
-                "elapsed_ns": 100062566
+                "calls": 5098,
+                "elapsed_ns": 99395234
               },
               {
-                "calls": 5741,
-                "elapsed_ns": 100215868
+                "calls": 5098,
+                "elapsed_ns": 99625294
               },
               {
-                "calls": 5741,
-                "elapsed_ns": 110278702
+                "calls": 5098,
+                "elapsed_ns": 99877687
               },
               {
-                "calls": 5741,
-                "elapsed_ns": 110282412
+                "calls": 5098,
+                "elapsed_ns": 99978037
               }
             ],
-            "ns_per_call": 17456.169308482844,
+            "ns_per_call": 19542.034915653196,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1787,34 +1845,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 604758622
+            "elapsed_ns": 592601728
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784083,
+            "pid": 4139633,
             "windows": [
               {
-                "calls": 11474,
-                "elapsed_ns": 100002416
+                "calls": 10666,
+                "elapsed_ns": 104499055
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 99899786
+                "calls": 10666,
+                "elapsed_ns": 104154442
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 99930806
+                "calls": 10666,
+                "elapsed_ns": 104274423
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 99793585
+                "calls": 10666,
+                "elapsed_ns": 104376224
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 99823665
+                "calls": 10666,
+                "elapsed_ns": 104677945
               }
             ],
-            "ns_per_call": 8706.622450758236,
+            "ns_per_call": 9785.882617663605,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1822,38 +1880,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583468905
+            "elapsed_ns": 613023962
           }
         },
         {
           "index": 13,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784094,
+            "pid": 4139650,
             "windows": [
               {
-                "calls": 5756,
-                "elapsed_ns": 100865481
+                "calls": 5545,
+                "elapsed_ns": 101030283
               },
               {
-                "calls": 5756,
-                "elapsed_ns": 100132426
+                "calls": 5545,
+                "elapsed_ns": 100776822
               },
               {
-                "calls": 5756,
-                "elapsed_ns": 100081157
+                "calls": 5545,
+                "elapsed_ns": 100596231
               },
               {
-                "calls": 5756,
-                "elapsed_ns": 100116457
+                "calls": 5545,
+                "elapsed_ns": 99267112
               },
               {
-                "calls": 5756,
-                "elapsed_ns": 99969026
+                "calls": 5545,
+                "elapsed_ns": 99616075
               }
             ],
-            "ns_per_call": 17393.40809589993,
+            "ns_per_call": 18141.79098286745,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1861,34 +1919,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585341926
+            "elapsed_ns": 590722806
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784088,
+            "pid": 4139658,
             "windows": [
               {
-                "calls": 11541,
-                "elapsed_ns": 108750624
+                "calls": 11149,
+                "elapsed_ns": 102691873
               },
               {
-                "calls": 11541,
-                "elapsed_ns": 111051626
+                "calls": 11149,
+                "elapsed_ns": 108337668
               },
               {
-                "calls": 11541,
-                "elapsed_ns": 110739855
+                "calls": 11149,
+                "elapsed_ns": 108860661
               },
               {
-                "calls": 11541,
-                "elapsed_ns": 110455103
+                "calls": 11149,
+                "elapsed_ns": 107991325
               },
               {
-                "calls": 11541,
-                "elapsed_ns": 110438743
+                "calls": 11149,
+                "elapsed_ns": 108048696
               }
             ],
-            "ns_per_call": 9570.67004592323,
+            "ns_per_call": 9691.335187012288,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1896,38 +1954,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 635179789
+            "elapsed_ns": 625090634
           }
         },
         {
           "index": 14,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784098,
+            "pid": 4139669,
             "windows": [
               {
-                "calls": 5216,
-                "elapsed_ns": 100534839
+                "calls": 5631,
+                "elapsed_ns": 100215048
               },
               {
-                "calls": 5216,
-                "elapsed_ns": 100218588
+                "calls": 5631,
+                "elapsed_ns": 99962217
               },
               {
-                "calls": 5216,
-                "elapsed_ns": 101166652
+                "calls": 5631,
+                "elapsed_ns": 100604660
               },
               {
-                "calls": 5216,
-                "elapsed_ns": 100312917
+                "calls": 5631,
+                "elapsed_ns": 100790382
               },
               {
-                "calls": 5216,
-                "elapsed_ns": 100185457
+                "calls": 5631,
+                "elapsed_ns": 101963309
               }
             ],
-            "ns_per_call": 19231.770897239265,
+            "ns_per_call": 17866.215592257147,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1935,34 +1993,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 593405020
+            "elapsed_ns": 592102564
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784103,
+            "pid": 4139662,
             "windows": [
               {
-                "calls": 11524,
-                "elapsed_ns": 100097397
+                "calls": 11184,
+                "elapsed_ns": 104337283
               },
               {
-                "calls": 11524,
-                "elapsed_ns": 100042956
+                "calls": 11184,
+                "elapsed_ns": 107117220
               },
               {
-                "calls": 11524,
-                "elapsed_ns": 100071827
+                "calls": 11184,
+                "elapsed_ns": 107514983
               },
               {
-                "calls": 11524,
-                "elapsed_ns": 100448498
+                "calls": 11184,
+                "elapsed_ns": 107030460
               },
               {
-                "calls": 11524,
-                "elapsed_ns": 100404688
+                "calls": 11184,
+                "elapsed_ns": 107160600
               }
             ],
-            "ns_per_call": 8685.994186046511,
+            "ns_per_call": 9577.719957081545,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -1970,38 +2028,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584893204
+            "elapsed_ns": 621950866
           }
         },
         {
           "index": 15,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784134,
+            "pid": 4139694,
             "windows": [
               {
-                "calls": 5734,
-                "elapsed_ns": 109509468
+                "calls": 5533,
+                "elapsed_ns": 99877406
               },
               {
-                "calls": 5734,
-                "elapsed_ns": 110382902
+                "calls": 5533,
+                "elapsed_ns": 99804716
               },
               {
-                "calls": 5734,
-                "elapsed_ns": 109427008
+                "calls": 5533,
+                "elapsed_ns": 99987547
               },
               {
-                "calls": 5734,
-                "elapsed_ns": 109521658
+                "calls": 5533,
+                "elapsed_ns": 100046938
               },
               {
-                "calls": 5734,
-                "elapsed_ns": 109981311
+                "calls": 5533,
+                "elapsed_ns": 99668575
               }
             ],
-            "ns_per_call": 19100.393791419603,
+            "ns_per_call": 18051.22103741189,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2009,34 +2067,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 633550879
+            "elapsed_ns": 589064967
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784107,
+            "pid": 4139704,
             "windows": [
               {
-                "calls": 11531,
-                "elapsed_ns": 100162607
+                "calls": 11174,
+                "elapsed_ns": 100432869
               },
               {
-                "calls": 11531,
-                "elapsed_ns": 100427048
+                "calls": 11174,
+                "elapsed_ns": 100714452
               },
               {
-                "calls": 11531,
-                "elapsed_ns": 100495649
+                "calls": 11174,
+                "elapsed_ns": 100846672
               },
               {
-                "calls": 11531,
-                "elapsed_ns": 100023666
+                "calls": 11174,
+                "elapsed_ns": 99455064
               },
               {
-                "calls": 11531,
-                "elapsed_ns": 100061906
+                "calls": 11174,
+                "elapsed_ns": 99564684
               }
             ],
-            "ns_per_call": 8686.376463446362,
+            "ns_per_call": 8988.085645247897,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2044,7 +2102,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585065784
+            "elapsed_ns": 590511684
           }
         },
         {
@@ -2052,30 +2110,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784199,
+            "pid": 4139711,
             "windows": [
               {
-                "calls": 5722,
-                "elapsed_ns": 100139716
+                "calls": 5631,
+                "elapsed_ns": 99758686
               },
               {
-                "calls": 5722,
-                "elapsed_ns": 100167727
+                "calls": 5631,
+                "elapsed_ns": 99927467
               },
               {
-                "calls": 5722,
-                "elapsed_ns": 99995776
+                "calls": 5631,
+                "elapsed_ns": 99626854
               },
               {
-                "calls": 5722,
-                "elapsed_ns": 99926856
+                "calls": 5631,
+                "elapsed_ns": 105842793
               },
               {
-                "calls": 5722,
-                "elapsed_ns": 101451994
+                "calls": 5631,
+                "elapsed_ns": 108927371
               }
             ],
-            "ns_per_call": 17500.82418734708,
+            "ns_per_call": 17745.9540046173,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2083,34 +2141,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 586089431
+            "elapsed_ns": 602620848
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784210,
+            "pid": 4139718,
             "windows": [
               {
-                "calls": 11377,
-                "elapsed_ns": 100014706
+                "calls": 11288,
+                "elapsed_ns": 100517390
               },
               {
-                "calls": 11377,
-                "elapsed_ns": 99501743
+                "calls": 11288,
+                "elapsed_ns": 100352019
               },
               {
-                "calls": 11377,
-                "elapsed_ns": 99546434
+                "calls": 11288,
+                "elapsed_ns": 100355450
               },
               {
-                "calls": 11377,
-                "elapsed_ns": 99522224
+                "calls": 11288,
+                "elapsed_ns": 100954863
               },
               {
-                "calls": 11377,
-                "elapsed_ns": 99208511
+                "calls": 11288,
+                "elapsed_ns": 100014157
               }
             ],
-            "ns_per_call": 8747.668453898215,
+            "ns_per_call": 8890.454464918497,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2118,7 +2176,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 582571111
+            "elapsed_ns": 590070962
           }
         },
         {
@@ -2126,30 +2184,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784242,
+            "pid": 4139731,
             "windows": [
               {
-                "calls": 5742,
-                "elapsed_ns": 100421539
+                "calls": 5537,
+                "elapsed_ns": 98346177
               },
               {
-                "calls": 5742,
-                "elapsed_ns": 99717834
+                "calls": 5537,
+                "elapsed_ns": 97890944
               },
               {
-                "calls": 5742,
-                "elapsed_ns": 99734485
+                "calls": 5537,
+                "elapsed_ns": 98996351
               },
               {
-                "calls": 5742,
-                "elapsed_ns": 99721094
+                "calls": 5537,
+                "elapsed_ns": 98159966
               },
               {
-                "calls": 5742,
-                "elapsed_ns": 99710755
+                "calls": 5537,
+                "elapsed_ns": 97899794
               }
             ],
-            "ns_per_call": 17366.961685823753,
+            "ns_per_call": 17728.005418096443,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2157,34 +2215,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583019294
+            "elapsed_ns": 579209866
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784216,
+            "pid": 4139726,
             "windows": [
               {
-                "calls": 11468,
-                "elapsed_ns": 99917555
+                "calls": 11188,
+                "elapsed_ns": 100484370
               },
               {
-                "calls": 11468,
-                "elapsed_ns": 99875346
+                "calls": 11188,
+                "elapsed_ns": 100555330
               },
               {
-                "calls": 11468,
-                "elapsed_ns": 110664004
+                "calls": 11188,
+                "elapsed_ns": 99188332
               },
               {
-                "calls": 11468,
-                "elapsed_ns": 111652170
+                "calls": 11188,
+                "elapsed_ns": 98936641
               },
               {
-                "calls": 11468,
-                "elapsed_ns": 110965176
+                "calls": 11188,
+                "elapsed_ns": 100369719
               }
             ],
-            "ns_per_call": 9649.808510638299,
+            "ns_per_call": 8971.194047193421,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2192,38 +2250,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 617093289
+            "elapsed_ns": 586903472
           }
         },
         {
           "index": 18,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784255,
+            "pid": 4139736,
             "windows": [
               {
-                "calls": 5723,
-                "elapsed_ns": 99751705
+                "calls": 5688,
+                "elapsed_ns": 100172148
               },
               {
-                "calls": 5723,
-                "elapsed_ns": 99900275
+                "calls": 5688,
+                "elapsed_ns": 100860593
               },
               {
-                "calls": 5723,
-                "elapsed_ns": 99656634
+                "calls": 5688,
+                "elapsed_ns": 100771221
               },
               {
-                "calls": 5723,
-                "elapsed_ns": 99833736
+                "calls": 5688,
+                "elapsed_ns": 100707972
               },
               {
-                "calls": 5723,
-                "elapsed_ns": 99757544
+                "calls": 5688,
+                "elapsed_ns": 102086089
               }
             ],
-            "ns_per_call": 17430.987943386335,
+            "ns_per_call": 17716.459388185653,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2231,34 +2289,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583078264
+            "elapsed_ns": 591159409
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784247,
+            "pid": 4139742,
             "windows": [
               {
-                "calls": 11368,
-                "elapsed_ns": 99724335
+                "calls": 11303,
+                "elapsed_ns": 100544691
               },
               {
-                "calls": 11368,
-                "elapsed_ns": 99485923
+                "calls": 11303,
+                "elapsed_ns": 99959527
               },
               {
-                "calls": 11368,
-                "elapsed_ns": 99451983
+                "calls": 11303,
+                "elapsed_ns": 99890166
               },
               {
-                "calls": 11368,
-                "elapsed_ns": 100696140
+                "calls": 11303,
+                "elapsed_ns": 100066598
               },
               {
-                "calls": 11368,
-                "elapsed_ns": 99319112
+                "calls": 11303,
+                "elapsed_ns": 99768695
               }
             ],
-            "ns_per_call": 8751.400686136523,
+            "ns_per_call": 8843.627974873927,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2266,38 +2324,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583876708
+            "elapsed_ns": 586957633
           }
         },
         {
           "index": 19,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784261,
+            "pid": 4139764,
             "windows": [
               {
-                "calls": 5743,
-                "elapsed_ns": 100263938
+                "calls": 5533,
+                "elapsed_ns": 105918833
               },
               {
-                "calls": 5743,
-                "elapsed_ns": 100141037
+                "calls": 5533,
+                "elapsed_ns": 106124504
               },
               {
-                "calls": 5743,
-                "elapsed_ns": 100115827
+                "calls": 5533,
+                "elapsed_ns": 105635762
               },
               {
-                "calls": 5743,
-                "elapsed_ns": 100021956
+                "calls": 5533,
+                "elapsed_ns": 105564520
               },
               {
-                "calls": 5743,
-                "elapsed_ns": 99998736
+                "calls": 5533,
+                "elapsed_ns": 105987194
               }
             ],
-            "ns_per_call": 17432.67055545882,
+            "ns_per_call": 19143.110970540394,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2305,34 +2363,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585072895
+            "elapsed_ns": 617802790
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784266,
+            "pid": 4139746,
             "windows": [
               {
-                "calls": 11488,
-                "elapsed_ns": 100208177
+                "calls": 11055,
+                "elapsed_ns": 99460574
               },
               {
-                "calls": 11488,
-                "elapsed_ns": 100234978
+                "calls": 11055,
+                "elapsed_ns": 106370036
               },
               {
-                "calls": 11488,
-                "elapsed_ns": 100332607
+                "calls": 11055,
+                "elapsed_ns": 106456016
               },
               {
-                "calls": 11488,
-                "elapsed_ns": 100134377
+                "calls": 11055,
+                "elapsed_ns": 105907713
               },
               {
-                "calls": 11488,
-                "elapsed_ns": 100489069
+                "calls": 11055,
+                "elapsed_ns": 106085624
               }
             ],
-            "ns_per_call": 8725.189589136491,
+            "ns_per_call": 9596.166802351878,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2340,38 +2398,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585578697
+            "elapsed_ns": 612796860
           }
         },
         {
           "index": 20,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784270,
+            "pid": 4139774,
             "windows": [
               {
-                "calls": 5740,
-                "elapsed_ns": 105910529
+                "calls": 5127,
+                "elapsed_ns": 100119578
               },
               {
-                "calls": 5740,
-                "elapsed_ns": 110513753
+                "calls": 5127,
+                "elapsed_ns": 99908477
               },
               {
-                "calls": 5740,
-                "elapsed_ns": 110522794
+                "calls": 5127,
+                "elapsed_ns": 99862076
               },
               {
-                "calls": 5740,
-                "elapsed_ns": 110171891
+                "calls": 5127,
+                "elapsed_ns": 100152008
               },
               {
-                "calls": 5740,
-                "elapsed_ns": 110301882
+                "calls": 5127,
+                "elapsed_ns": 103025235
               }
             ],
-            "ns_per_call": 19216.35574912892,
+            "ns_per_call": 19527.906768090503,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2379,34 +2437,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 632027111
+            "elapsed_ns": 595454594
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784276,
+            "pid": 4139768,
             "windows": [
               {
-                "calls": 11397,
-                "elapsed_ns": 99517614
+                "calls": 10261,
+                "elapsed_ns": 99822355
               },
               {
-                "calls": 11397,
-                "elapsed_ns": 99738984
+                "calls": 10261,
+                "elapsed_ns": 99799286
               },
               {
-                "calls": 11397,
-                "elapsed_ns": 99808905
+                "calls": 10261,
+                "elapsed_ns": 99981587
               },
               {
-                "calls": 11397,
-                "elapsed_ns": 99606804
+                "calls": 10261,
+                "elapsed_ns": 100151868
               },
               {
-                "calls": 11397,
-                "elapsed_ns": 99652854
+                "calls": 10261,
+                "elapsed_ns": 99942137
               }
             ],
-            "ns_per_call": 8743.779415635694,
+            "ns_per_call": 9739.999707630835,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2414,38 +2472,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583285415
+            "elapsed_ns": 591095318
           }
         },
         {
           "index": 21,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784285,
+            "pid": 4139799,
             "windows": [
               {
-                "calls": 5818,
-                "elapsed_ns": 100793670
+                "calls": 5110,
+                "elapsed_ns": 99076742
               },
               {
-                "calls": 5818,
-                "elapsed_ns": 100575929
+                "calls": 5110,
+                "elapsed_ns": 101303445
               },
               {
-                "calls": 5818,
-                "elapsed_ns": 100175308
+                "calls": 5110,
+                "elapsed_ns": 100240238
               },
               {
-                "calls": 5818,
-                "elapsed_ns": 100143696
+                "calls": 5110,
+                "elapsed_ns": 100132188
               },
               {
-                "calls": 5818,
-                "elapsed_ns": 100431969
+                "calls": 5110,
+                "elapsed_ns": 99656825
               }
             ],
-            "ns_per_call": 17262.284118253694,
+            "ns_per_call": 19595.34011741683,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2453,34 +2511,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585807839
+            "elapsed_ns": 554478955
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784280,
+            "pid": 4139803,
             "windows": [
               {
-                "calls": 11535,
-                "elapsed_ns": 99985847
+                "calls": 10891,
+                "elapsed_ns": 99957827
               },
               {
-                "calls": 11535,
-                "elapsed_ns": 99909095
+                "calls": 10891,
+                "elapsed_ns": 100094138
               },
               {
-                "calls": 11535,
-                "elapsed_ns": 100040356
+                "calls": 10891,
+                "elapsed_ns": 98774889
               },
               {
-                "calls": 11535,
-                "elapsed_ns": 99969326
+                "calls": 10891,
+                "elapsed_ns": 99391213
               },
               {
-                "calls": 11535,
-                "elapsed_ns": 99909706
+                "calls": 10891,
+                "elapsed_ns": 98600259
               }
             ],
-            "ns_per_call": 8666.608235804075,
+            "ns_per_call": 9125.995133596547,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2488,38 +2546,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583572797
+            "elapsed_ns": 586770132
           }
         },
         {
           "index": 22,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784295,
+            "pid": 4139828,
             "windows": [
               {
-                "calls": 5723,
-                "elapsed_ns": 99888645
+                "calls": 5512,
+                "elapsed_ns": 109941308
               },
               {
-                "calls": 5723,
-                "elapsed_ns": 99959496
+                "calls": 5512,
+                "elapsed_ns": 108557429
               },
               {
-                "calls": 5723,
-                "elapsed_ns": 99463343
+                "calls": 5512,
+                "elapsed_ns": 108755250
               },
               {
-                "calls": 5723,
-                "elapsed_ns": 99483823
+                "calls": 5512,
+                "elapsed_ns": 108547859
               },
               {
-                "calls": 5723,
-                "elapsed_ns": 99362363
+                "calls": 5512,
+                "elapsed_ns": 108434408
               }
             ],
-            "ns_per_call": 17383.159706447666,
+            "ns_per_call": 19694.74401306241,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2527,34 +2585,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 582550330
+            "elapsed_ns": 632978902
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784291,
+            "pid": 4139832,
             "windows": [
               {
-                "calls": 11575,
-                "elapsed_ns": 100030637
+                "calls": 10056,
+                "elapsed_ns": 100067147
               },
               {
-                "calls": 11575,
-                "elapsed_ns": 100065436
+                "calls": 10056,
+                "elapsed_ns": 98662279
               },
               {
-                "calls": 11575,
-                "elapsed_ns": 100037477
+                "calls": 10056,
+                "elapsed_ns": 99070452
               },
               {
-                "calls": 11575,
-                "elapsed_ns": 100126936
+                "calls": 10056,
+                "elapsed_ns": 99159431
               },
               {
-                "calls": 11575,
-                "elapsed_ns": 100401798
+                "calls": 10056,
+                "elapsed_ns": 100180748
               }
             ],
-            "ns_per_call": 8644.962073434126,
+            "ns_per_call": 9860.723050914876,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2562,38 +2620,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584003999
+            "elapsed_ns": 551541308
           }
         },
         {
           "index": 23,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline-two-pass",
-            "pid": 3784300,
+            "pid": 4139842,
             "windows": [
               {
-                "calls": 5797,
-                "elapsed_ns": 100370128
+                "calls": 5479,
+                "elapsed_ns": 100423720
               },
               {
-                "calls": 5797,
-                "elapsed_ns": 100257357
+                "calls": 5479,
+                "elapsed_ns": 99904306
               },
               {
-                "calls": 5797,
-                "elapsed_ns": 100536849
+                "calls": 5479,
+                "elapsed_ns": 100732302
               },
               {
-                "calls": 5797,
-                "elapsed_ns": 100720310
+                "calls": 5479,
+                "elapsed_ns": 105022007
               },
               {
-                "calls": 5797,
-                "elapsed_ns": 100458079
+                "calls": 5479,
+                "elapsed_ns": 104580735
               }
             ],
-            "ns_per_call": 17329.321890633088,
+            "ns_per_call": 18385.161890855994,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2601,34 +2659,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585345307
+            "elapsed_ns": 599570149
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784304,
+            "pid": 4139838,
             "windows": [
               {
-                "calls": 11425,
-                "elapsed_ns": 99908596
+                "calls": 10933,
+                "elapsed_ns": 99644035
               },
               {
-                "calls": 11425,
-                "elapsed_ns": 99750775
+                "calls": 10933,
+                "elapsed_ns": 99568504
               },
               {
-                "calls": 11425,
-                "elapsed_ns": 99393783
+                "calls": 10933,
+                "elapsed_ns": 99427043
               },
               {
-                "calls": 11425,
-                "elapsed_ns": 99454133
+                "calls": 10933,
+                "elapsed_ns": 100137618
               },
               {
-                "calls": 11425,
-                "elapsed_ns": 99509253
+                "calls": 10933,
+                "elapsed_ns": 99748846
               }
             ],
-            "ns_per_call": 8709.781444201313,
+            "ns_per_call": 9114.06155675478,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2636,18 +2694,18 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 582755092
+            "elapsed_ns": 588430321
           }
         }
       ],
       "claimed": {
         "interval": {
-          "estimate": 2.0000399477114255,
-          "lower": 1.992644673214072,
-          "upper": 2.011325799932199,
+          "estimate": 1.999306201903797,
+          "lower": 1.9065889025987186,
+          "upper": 2.0535634964978393,
           "confidence": 0.9833333333333333,
           "resamples": 10000,
-          "seed": 9529593830585880163,
+          "seed": 4601929107371892610,
           "pairs": 24
         },
         "decision": "improved",
@@ -2657,7 +2715,7 @@
         }
       },
       "decoder_quality": null,
-      "checkpoint_sha256": "78a545224a759ee63c24942989294a1c03bc1370d489b99d63cbbea5d79dce68"
+      "checkpoint_sha256": "721700ba680442787cadc117c6fb1fa9b887d8c04591f902282ab7c6df49c9fc"
     },
     {
       "cell_id": "xor-fold-identical-1core",
@@ -2674,33 +2732,33 @@
       "pairs": [
         {
           "index": 0,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784317,
+            "pid": 4139848,
             "windows": [
               {
-                "calls": 11571,
-                "elapsed_ns": 99669384
+                "calls": 11264,
+                "elapsed_ns": 100088447
               },
               {
-                "calls": 11571,
-                "elapsed_ns": 99570274
+                "calls": 11264,
+                "elapsed_ns": 102243811
               },
               {
-                "calls": 11571,
-                "elapsed_ns": 99539033
+                "calls": 11264,
+                "elapsed_ns": 100296499
               },
               {
-                "calls": 11571,
-                "elapsed_ns": 99663985
+                "calls": 11264,
+                "elapsed_ns": 100201738
               },
               {
-                "calls": 11571,
-                "elapsed_ns": 99419482
+                "calls": 11264,
+                "elapsed_ns": 100233728
               }
             ],
-            "ns_per_call": 8605.15720335321,
+            "ns_per_call": 8898.59090909091,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2708,34 +2766,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 581590066
+            "elapsed_ns": 590422114
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784312,
+            "pid": 4139853,
             "windows": [
               {
-                "calls": 11465,
-                "elapsed_ns": 100412828
+                "calls": 11171,
+                "elapsed_ns": 100436520
               },
               {
-                "calls": 11465,
-                "elapsed_ns": 101431844
+                "calls": 11171,
+                "elapsed_ns": 99998967
               },
               {
-                "calls": 11465,
-                "elapsed_ns": 100538939
+                "calls": 11171,
+                "elapsed_ns": 100378289
               },
               {
-                "calls": 11465,
-                "elapsed_ns": 100394529
+                "calls": 11171,
+                "elapsed_ns": 99447664
               },
               {
-                "calls": 11465,
-                "elapsed_ns": 100271107
+                "calls": 11171,
+                "elapsed_ns": 99490954
               }
             ],
-            "ns_per_call": 8758.205669428697,
+            "ns_per_call": 8951.657595559933,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2743,38 +2801,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 587515249
+            "elapsed_ns": 587588507
           }
         },
         {
           "index": 1,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784322,
+            "pid": 4139863,
             "windows": [
               {
-                "calls": 11630,
-                "elapsed_ns": 100428958
+                "calls": 11065,
+                "elapsed_ns": 99820226
               },
               {
-                "calls": 11630,
-                "elapsed_ns": 99974716
+                "calls": 11065,
+                "elapsed_ns": 99943697
               },
               {
-                "calls": 11630,
-                "elapsed_ns": 100215177
+                "calls": 11065,
+                "elapsed_ns": 99814325
               },
               {
-                "calls": 11630,
-                "elapsed_ns": 100865111
+                "calls": 11065,
+                "elapsed_ns": 100058327
               },
               {
-                "calls": 11630,
-                "elapsed_ns": 100579639
+                "calls": 11065,
+                "elapsed_ns": 100230389
               }
             ],
-            "ns_per_call": 8635.336027515048,
+            "ns_per_call": 9032.417261635788,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2782,34 +2840,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 586113430
+            "elapsed_ns": 588810084
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784348,
+            "pid": 4139857,
             "windows": [
               {
-                "calls": 11605,
-                "elapsed_ns": 100027757
+                "calls": 11228,
+                "elapsed_ns": 100112848
               },
               {
-                "calls": 11605,
-                "elapsed_ns": 99885485
+                "calls": 11228,
+                "elapsed_ns": 99958086
               },
               {
-                "calls": 11605,
-                "elapsed_ns": 100009936
+                "calls": 11228,
+                "elapsed_ns": 102165220
               },
               {
-                "calls": 11605,
-                "elapsed_ns": 100313628
+                "calls": 11228,
+                "elapsed_ns": 101530967
               },
               {
-                "calls": 11605,
-                "elapsed_ns": 100355858
+                "calls": 11228,
+                "elapsed_ns": 102265110
               }
             ],
-            "ns_per_call": 8619.367255493322,
+            "ns_per_call": 9042.658265051656,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2817,7 +2875,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583841238
+            "elapsed_ns": 593710633
           }
         },
         {
@@ -2825,30 +2883,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784359,
+            "pid": 4139893,
             "windows": [
               {
-                "calls": 11456,
-                "elapsed_ns": 99642124
+                "calls": 10870,
+                "elapsed_ns": 98905460
               },
               {
-                "calls": 11456,
-                "elapsed_ns": 100654340
+                "calls": 10870,
+                "elapsed_ns": 98649079
               },
               {
-                "calls": 11456,
-                "elapsed_ns": 100166257
+                "calls": 10870,
+                "elapsed_ns": 97781063
               },
               {
-                "calls": 11456,
-                "elapsed_ns": 99849785
+                "calls": 10870,
+                "elapsed_ns": 96494266
               },
               {
-                "calls": 11456,
-                "elapsed_ns": 100286718
+                "calls": 10870,
+                "elapsed_ns": 96529366
               }
             ],
-            "ns_per_call": 8743.562936452514,
+            "ns_per_call": 8995.497976080957,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2856,34 +2914,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585174836
+            "elapsed_ns": 578521531
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784352,
+            "pid": 4139869,
             "windows": [
               {
-                "calls": 11418,
-                "elapsed_ns": 105538966
+                "calls": 10920,
+                "elapsed_ns": 99615284
               },
               {
-                "calls": 11418,
-                "elapsed_ns": 109627999
+                "calls": 10920,
+                "elapsed_ns": 100096378
               },
               {
-                "calls": 11418,
-                "elapsed_ns": 110509333
+                "calls": 10920,
+                "elapsed_ns": 100517500
               },
               {
-                "calls": 11418,
-                "elapsed_ns": 109607319
+                "calls": 10920,
+                "elapsed_ns": 99835996
               },
               {
-                "calls": 11418,
-                "elapsed_ns": 109904300
+                "calls": 10920,
+                "elapsed_ns": 99712035
               }
             ],
-            "ns_per_call": 9601.331143808022,
+            "ns_per_call": 9142.490476190476,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2891,7 +2949,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 630214041
+            "elapsed_ns": 589118226
           }
         },
         {
@@ -2899,30 +2957,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784363,
+            "pid": 4139912,
             "windows": [
               {
-                "calls": 11549,
-                "elapsed_ns": 99383593
+                "calls": 11237,
+                "elapsed_ns": 99865036
               },
               {
-                "calls": 11549,
-                "elapsed_ns": 99413213
+                "calls": 11237,
+                "elapsed_ns": 99993807
               },
               {
-                "calls": 11549,
-                "elapsed_ns": 99489863
+                "calls": 11237,
+                "elapsed_ns": 99980997
               },
               {
-                "calls": 11549,
-                "elapsed_ns": 99414973
+                "calls": 11237,
+                "elapsed_ns": 99799555
               },
               {
-                "calls": 11549,
-                "elapsed_ns": 99517653
+                "calls": 11237,
+                "elapsed_ns": 99791686
               }
             ],
-            "ns_per_call": 8608.102259935926,
+            "ns_per_call": 8887.16169796209,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2930,34 +2988,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 580624131
+            "elapsed_ns": 586704501
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784369,
+            "pid": 4139916,
             "windows": [
               {
-                "calls": 11173,
-                "elapsed_ns": 97850254
+                "calls": 11302,
+                "elapsed_ns": 100046577
               },
               {
-                "calls": 11173,
-                "elapsed_ns": 108331762
+                "calls": 11302,
+                "elapsed_ns": 99901897
               },
               {
-                "calls": 11173,
-                "elapsed_ns": 109194456
+                "calls": 11302,
+                "elapsed_ns": 100046207
               },
               {
-                "calls": 11173,
-                "elapsed_ns": 110118561
+                "calls": 11302,
+                "elapsed_ns": 99959057
               },
               {
-                "calls": 11173,
-                "elapsed_ns": 108949865
+                "calls": 11302,
+                "elapsed_ns": 100001167
               }
             ],
-            "ns_per_call": 9751.173811867895,
+            "ns_per_call": 8848.094761989028,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -2965,38 +3023,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 620166296
+            "elapsed_ns": 587547896
           }
         },
         {
           "index": 4,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784397,
+            "pid": 4139921,
             "windows": [
               {
-                "calls": 11564,
-                "elapsed_ns": 105562077
+                "calls": 11173,
+                "elapsed_ns": 100056377
               },
               {
-                "calls": 11564,
-                "elapsed_ns": 110985316
+                "calls": 11173,
+                "elapsed_ns": 99685415
               },
               {
-                "calls": 11564,
-                "elapsed_ns": 110805595
+                "calls": 11173,
+                "elapsed_ns": 99622135
               },
               {
-                "calls": 11564,
-                "elapsed_ns": 110820595
+                "calls": 11173,
+                "elapsed_ns": 99551204
               },
               {
-                "calls": 11564,
-                "elapsed_ns": 110838855
+                "calls": 11173,
+                "elapsed_ns": 100035158
               }
             ],
-            "ns_per_call": 9583.240660671048,
+            "ns_per_call": 8921.991855365613,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3004,34 +3062,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 632593705
+            "elapsed_ns": 587106794
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784393,
+            "pid": 4139925,
             "windows": [
               {
-                "calls": 11428,
-                "elapsed_ns": 99787845
+                "calls": 11034,
+                "elapsed_ns": 98343496
               },
               {
-                "calls": 11428,
-                "elapsed_ns": 99776765
+                "calls": 11034,
+                "elapsed_ns": 98265927
               },
               {
-                "calls": 11428,
-                "elapsed_ns": 99805245
+                "calls": 11034,
+                "elapsed_ns": 98715079
               },
               {
-                "calls": 11428,
-                "elapsed_ns": 100940421
+                "calls": 11034,
+                "elapsed_ns": 98773719
               },
               {
-                "calls": 11428,
-                "elapsed_ns": 100288578
+                "calls": 11034,
+                "elapsed_ns": 98294187
               }
             ],
-            "ns_per_call": 8733.395607280365,
+            "ns_per_call": 8912.769258655066,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3039,38 +3097,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584936844
+            "elapsed_ns": 580581444
           }
         },
         {
           "index": 5,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784403,
+            "pid": 4139936,
             "windows": [
               {
-                "calls": 11597,
-                "elapsed_ns": 100645279
+                "calls": 11258,
+                "elapsed_ns": 100140507
               },
               {
-                "calls": 11597,
-                "elapsed_ns": 100151037
+                "calls": 11258,
+                "elapsed_ns": 102525433
               },
               {
-                "calls": 11597,
-                "elapsed_ns": 99926456
+                "calls": 11258,
+                "elapsed_ns": 110480100
               },
               {
-                "calls": 11597,
-                "elapsed_ns": 99842695
+                "calls": 11258,
+                "elapsed_ns": 110479771
               },
               {
-                "calls": 11597,
-                "elapsed_ns": 108715734
+                "calls": 11258,
+                "elapsed_ns": 110213489
               }
             ],
-            "ns_per_call": 8635.94351987583,
+            "ns_per_call": 9789.79294723752,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3078,34 +3136,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 593135959
+            "elapsed_ns": 621111099
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784407,
+            "pid": 4139931,
             "windows": [
               {
-                "calls": 11471,
-                "elapsed_ns": 99878505
+                "calls": 11259,
+                "elapsed_ns": 100064438
               },
               {
-                "calls": 11471,
-                "elapsed_ns": 99847416
+                "calls": 11259,
+                "elapsed_ns": 100085517
               },
               {
-                "calls": 11471,
-                "elapsed_ns": 100109396
+                "calls": 11259,
+                "elapsed_ns": 100406540
               },
               {
-                "calls": 11471,
-                "elapsed_ns": 99830246
+                "calls": 11259,
+                "elapsed_ns": 100344519
               },
               {
-                "calls": 11471,
-                "elapsed_ns": 99869725
+                "calls": 11259,
+                "elapsed_ns": 100789051
               }
             ],
-            "ns_per_call": 8706.278877168512,
+            "ns_per_call": 8912.382893685051,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3113,38 +3171,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583579467
+            "elapsed_ns": 589183916
           }
         },
         {
           "index": 6,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784412,
+            "pid": 4139946,
             "windows": [
               {
-                "calls": 11412,
-                "elapsed_ns": 99688144
+                "calls": 10263,
+                "elapsed_ns": 99809466
               },
               {
-                "calls": 11412,
-                "elapsed_ns": 99456483
+                "calls": 10263,
+                "elapsed_ns": 99985217
               },
               {
-                "calls": 11412,
-                "elapsed_ns": 99693605
+                "calls": 10263,
+                "elapsed_ns": 100036837
               },
               {
-                "calls": 11412,
-                "elapsed_ns": 99825465
+                "calls": 10263,
+                "elapsed_ns": 96813637
               },
               {
-                "calls": 11412,
-                "elapsed_ns": 99370072
+                "calls": 10263,
+                "elapsed_ns": 93792759
               }
             ],
-            "ns_per_call": 8735.378899404135,
+            "ns_per_call": 9725.174510377083,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3152,34 +3210,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 582351270
+            "elapsed_ns": 584778249
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784418,
+            "pid": 4139940,
             "windows": [
               {
-                "calls": 11506,
-                "elapsed_ns": 100042496
+                "calls": 11260,
+                "elapsed_ns": 101260215
               },
               {
-                "calls": 11506,
-                "elapsed_ns": 100078227
+                "calls": 11260,
+                "elapsed_ns": 109519595
               },
               {
-                "calls": 11506,
-                "elapsed_ns": 100305938
+                "calls": 11260,
+                "elapsed_ns": 109451804
               },
               {
-                "calls": 11506,
-                "elapsed_ns": 100306427
+                "calls": 11260,
+                "elapsed_ns": 109427034
               },
               {
-                "calls": 11506,
-                "elapsed_ns": 100472059
+                "calls": 11260,
+                "elapsed_ns": 109278373
               }
             ],
-            "ns_per_call": 8717.70710933426,
+            "ns_per_call": 9718.209058614564,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3187,38 +3245,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585030605
+            "elapsed_ns": 626204501
           }
         },
         {
           "index": 7,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784427,
+            "pid": 4139950,
             "windows": [
               {
-                "calls": 11517,
-                "elapsed_ns": 99945886
+                "calls": 10268,
+                "elapsed_ns": 100046467
               },
               {
-                "calls": 11517,
-                "elapsed_ns": 100313597
+                "calls": 10268,
+                "elapsed_ns": 99518914
               },
               {
-                "calls": 11517,
-                "elapsed_ns": 100369138
+                "calls": 10268,
+                "elapsed_ns": 99705505
               },
               {
-                "calls": 11517,
-                "elapsed_ns": 100167487
+                "calls": 10268,
+                "elapsed_ns": 99837566
               },
               {
-                "calls": 11517,
-                "elapsed_ns": 108654234
+                "calls": 10268,
+                "elapsed_ns": 99682895
               }
             ],
-            "ns_per_call": 8710.04575844404,
+            "ns_per_call": 9710.314082586678,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3226,34 +3284,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 593384370
+            "elapsed_ns": 591053077
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784422,
+            "pid": 4139955,
             "windows": [
               {
-                "calls": 11531,
-                "elapsed_ns": 103827586
+                "calls": 10486,
+                "elapsed_ns": 101765138
               },
               {
-                "calls": 11531,
-                "elapsed_ns": 112408184
+                "calls": 10486,
+                "elapsed_ns": 101933019
               },
               {
-                "calls": 11531,
-                "elapsed_ns": 112700146
+                "calls": 10486,
+                "elapsed_ns": 102282590
               },
               {
-                "calls": 11531,
-                "elapsed_ns": 111952421
+                "calls": 10486,
+                "elapsed_ns": 102294521
               },
               {
-                "calls": 11531,
-                "elapsed_ns": 112038952
+                "calls": 10486,
+                "elapsed_ns": 101496776
               }
             ],
-            "ns_per_call": 9716.325730639146,
+            "ns_per_call": 9720.867728399771,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3261,38 +3319,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 636753658
+            "elapsed_ns": 600976807
           }
         },
         {
           "index": 8,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784431,
+            "pid": 4139971,
             "windows": [
               {
-                "calls": 11402,
-                "elapsed_ns": 99626854
+                "calls": 10258,
+                "elapsed_ns": 100510830
               },
               {
-                "calls": 11402,
-                "elapsed_ns": 99645824
+                "calls": 10258,
+                "elapsed_ns": 100377709
               },
               {
-                "calls": 11402,
-                "elapsed_ns": 99682675
+                "calls": 10258,
+                "elapsed_ns": 100335479
               },
               {
-                "calls": 11402,
-                "elapsed_ns": 99750924
+                "calls": 10258,
+                "elapsed_ns": 100265209
               },
               {
-                "calls": 11402,
-                "elapsed_ns": 99979876
+                "calls": 10258,
+                "elapsed_ns": 100506170
               }
             ],
-            "ns_per_call": 8742.560515699,
+            "ns_per_call": 9785.309904464808,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3300,34 +3358,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583056474
+            "elapsed_ns": 595298323
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784437,
+            "pid": 4139967,
             "windows": [
               {
-                "calls": 11370,
-                "elapsed_ns": 99728075
+                "calls": 10229,
+                "elapsed_ns": 100112618
               },
               {
-                "calls": 11370,
-                "elapsed_ns": 99197832
+                "calls": 10229,
+                "elapsed_ns": 100038017
               },
               {
-                "calls": 11370,
-                "elapsed_ns": 104485340
+                "calls": 10229,
+                "elapsed_ns": 99731226
               },
               {
-                "calls": 11370,
-                "elapsed_ns": 110037831
+                "calls": 10229,
+                "elapsed_ns": 99731655
               },
               {
-                "calls": 11370,
-                "elapsed_ns": 109969971
+                "calls": 10229,
+                "elapsed_ns": 99639394
               }
             ],
-            "ns_per_call": 9189.563764291997,
+            "ns_per_call": 9749.89295141265,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3335,38 +3393,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 607922351
+            "elapsed_ns": 592980748
           }
         },
         {
           "index": 9,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784466,
+            "pid": 4139989,
             "windows": [
               {
-                "calls": 11406,
-                "elapsed_ns": 104237690
+                "calls": 10171,
+                "elapsed_ns": 99517424
               },
               {
-                "calls": 11406,
-                "elapsed_ns": 112826056
+                "calls": 10171,
+                "elapsed_ns": 99278302
               },
               {
-                "calls": 11406,
-                "elapsed_ns": 112359663
+                "calls": 10171,
+                "elapsed_ns": 99174922
               },
               {
-                "calls": 11406,
-                "elapsed_ns": 112333844
+                "calls": 10171,
+                "elapsed_ns": 99570334
               },
               {
-                "calls": 11406,
-                "elapsed_ns": 112401164
+                "calls": 10171,
+                "elapsed_ns": 99525674
               }
             ],
-            "ns_per_call": 9850.926091530773,
+            "ns_per_call": 9784.428669747322,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3374,34 +3432,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 638313375
+            "elapsed_ns": 551392167
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784462,
+            "pid": 4139996,
             "windows": [
               {
-                "calls": 11434,
-                "elapsed_ns": 99773975
+                "calls": 11033,
+                "elapsed_ns": 98585599
               },
               {
-                "calls": 11434,
-                "elapsed_ns": 99681234
+                "calls": 11033,
+                "elapsed_ns": 98357586
               },
               {
-                "calls": 11434,
-                "elapsed_ns": 99642245
+                "calls": 11033,
+                "elapsed_ns": 98320897
               },
               {
-                "calls": 11434,
-                "elapsed_ns": 99885035
+                "calls": 11033,
+                "elapsed_ns": 98652989
               },
               {
-                "calls": 11434,
-                "elapsed_ns": 100109457
+                "calls": 11033,
+                "elapsed_ns": 98698309
               }
             ],
-            "ns_per_call": 8726.077925485395,
+            "ns_per_call": 8935.520619958306,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3409,7 +3467,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583224605
+            "elapsed_ns": 582211913
           }
         },
         {
@@ -3417,30 +3475,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784476,
+            "pid": 4140028,
             "windows": [
               {
-                "calls": 11390,
-                "elapsed_ns": 99541583
+                "calls": 11244,
+                "elapsed_ns": 107094380
               },
               {
-                "calls": 11390,
-                "elapsed_ns": 99484014
+                "calls": 11244,
+                "elapsed_ns": 109265173
               },
               {
-                "calls": 11390,
-                "elapsed_ns": 99510673
+                "calls": 11244,
+                "elapsed_ns": 109265363
               },
               {
-                "calls": 11390,
-                "elapsed_ns": 99451013
+                "calls": 11244,
+                "elapsed_ns": 109615436
               },
               {
-                "calls": 11390,
-                "elapsed_ns": 99380733
+                "calls": 11244,
+                "elapsed_ns": 109219223
               }
             ],
-            "ns_per_call": 8734.329587357332,
+            "ns_per_call": 9717.642564923515,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3448,34 +3506,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 581809978
+            "elapsed_ns": 632550459
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784472,
+            "pid": 4140002,
             "windows": [
               {
-                "calls": 11511,
-                "elapsed_ns": 101050252
+                "calls": 11277,
+                "elapsed_ns": 100533300
               },
               {
-                "calls": 11511,
-                "elapsed_ns": 100643530
+                "calls": 11277,
+                "elapsed_ns": 99965546
               },
               {
-                "calls": 11511,
-                "elapsed_ns": 110118571
+                "calls": 11277,
+                "elapsed_ns": 102399722
               },
               {
-                "calls": 11511,
-                "elapsed_ns": 113082557
+                "calls": 11277,
+                "elapsed_ns": 109454434
               },
               {
-                "calls": 11511,
-                "elapsed_ns": 113679011
+                "calls": 11277,
+                "elapsed_ns": 109137033
               }
             ],
-            "ns_per_call": 9566.377465033447,
+            "ns_per_call": 9080.404540214597,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3483,7 +3541,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 622352868
+            "elapsed_ns": 609660030
           }
         },
         {
@@ -3491,30 +3549,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784481,
+            "pid": 4140072,
             "windows": [
               {
-                "calls": 11609,
-                "elapsed_ns": 100179357
+                "calls": 10371,
+                "elapsed_ns": 100341359
               },
               {
-                "calls": 11609,
-                "elapsed_ns": 99854725
+                "calls": 10371,
+                "elapsed_ns": 100134927
               },
               {
-                "calls": 11609,
-                "elapsed_ns": 109473798
+                "calls": 10371,
+                "elapsed_ns": 99830076
               },
               {
-                "calls": 11609,
-                "elapsed_ns": 112504255
+                "calls": 10371,
+                "elapsed_ns": 99906197
               },
               {
-                "calls": 11609,
-                "elapsed_ns": 112275093
+                "calls": 10371,
+                "elapsed_ns": 99815805
               }
             ],
-            "ns_per_call": 9430.079937979153,
+            "ns_per_call": 9633.226979076271,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3522,34 +3580,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 617601693
+            "elapsed_ns": 591847322
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784487,
+            "pid": 4140078,
             "windows": [
               {
-                "calls": 11484,
-                "elapsed_ns": 99963496
+                "calls": 11079,
+                "elapsed_ns": 107335841
               },
               {
-                "calls": 11484,
-                "elapsed_ns": 100041886
+                "calls": 11079,
+                "elapsed_ns": 107098310
               },
               {
-                "calls": 11484,
-                "elapsed_ns": 100220378
+                "calls": 11079,
+                "elapsed_ns": 107393051
               },
               {
-                "calls": 11484,
-                "elapsed_ns": 100205117
+                "calls": 11079,
+                "elapsed_ns": 107503663
               },
               {
-                "calls": 11484,
-                "elapsed_ns": 100295628
+                "calls": 11079,
+                "elapsed_ns": 107338621
               }
             ],
-            "ns_per_call": 8725.628439568094,
+            "ns_per_call": 9688.47558443903,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3557,7 +3615,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584584592
+            "elapsed_ns": 626176000
           }
         },
         {
@@ -3565,30 +3623,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784496,
+            "pid": 4140112,
             "windows": [
               {
-                "calls": 11474,
-                "elapsed_ns": 100028077
+                "calls": 10456,
+                "elapsed_ns": 101610317
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 100419838
+                "calls": 10456,
+                "elapsed_ns": 101643267
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 100281318
+                "calls": 10456,
+                "elapsed_ns": 101676947
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 100184787
+                "calls": 10456,
+                "elapsed_ns": 101679757
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 99745265
+                "calls": 10456,
+                "elapsed_ns": 101628937
               }
             ],
-            "ns_per_call": 8731.461303817327,
+            "ns_per_call": 9721.04695868401,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3596,34 +3654,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584812064
+            "elapsed_ns": 599168086
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784491,
+            "pid": 4140107,
             "windows": [
               {
-                "calls": 11388,
-                "elapsed_ns": 107613138
+                "calls": 10518,
+                "elapsed_ns": 101830068
               },
               {
-                "calls": 11388,
-                "elapsed_ns": 109347767
+                "calls": 10518,
+                "elapsed_ns": 101591577
               },
               {
-                "calls": 11388,
-                "elapsed_ns": 109757860
+                "calls": 10518,
+                "elapsed_ns": 101734457
               },
               {
-                "calls": 11388,
-                "elapsed_ns": 109364647
+                "calls": 10518,
+                "elapsed_ns": 101801528
               },
               {
-                "calls": 11388,
-                "elapsed_ns": 109341357
+                "calls": 10518,
+                "elapsed_ns": 101685667
               }
             ],
-            "ns_per_call": 9602.016772040744,
+            "ns_per_call": 9672.414622551816,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3631,7 +3689,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 629885640
+            "elapsed_ns": 598616473
           }
         },
         {
@@ -3639,30 +3697,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784500,
+            "pid": 4140140,
             "windows": [
               {
-                "calls": 11452,
-                "elapsed_ns": 99670624
+                "calls": 11049,
+                "elapsed_ns": 106308985
               },
               {
-                "calls": 11452,
-                "elapsed_ns": 99747435
+                "calls": 11049,
+                "elapsed_ns": 109111282
               },
               {
-                "calls": 11452,
-                "elapsed_ns": 99734045
+                "calls": 11049,
+                "elapsed_ns": 107889045
               },
               {
-                "calls": 11452,
-                "elapsed_ns": 99976446
+                "calls": 11049,
+                "elapsed_ns": 107992556
               },
               {
-                "calls": 11452,
-                "elapsed_ns": 99854615
+                "calls": 11049,
+                "elapsed_ns": 107608033
               }
             ],
-            "ns_per_call": 8710.044970310862,
+            "ns_per_call": 9764.598153679066,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3670,34 +3728,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583036405
+            "elapsed_ns": 628315453
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784506,
+            "pid": 4140169,
             "windows": [
               {
-                "calls": 11474,
-                "elapsed_ns": 100208207
+                "calls": 11152,
+                "elapsed_ns": 99650545
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 99857466
+                "calls": 11152,
+                "elapsed_ns": 99334453
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 108001810
+                "calls": 11152,
+                "elapsed_ns": 98821970
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 111606449
+                "calls": 11152,
+                "elapsed_ns": 98931860
               },
               {
-                "calls": 11474,
-                "elapsed_ns": 111561219
+                "calls": 11152,
+                "elapsed_ns": 99059081
               }
             ],
-            "ns_per_call": 9412.742722677358,
+            "ns_per_call": 8882.629214490675,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3705,38 +3763,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 615364620
+            "elapsed_ns": 584616698
           }
         },
         {
           "index": 14,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784515,
+            "pid": 4140174,
             "windows": [
               {
-                "calls": 11418,
-                "elapsed_ns": 100038666
+                "calls": 10278,
+                "elapsed_ns": 99613375
               },
               {
-                "calls": 11418,
-                "elapsed_ns": 100186848
+                "calls": 10278,
+                "elapsed_ns": 99669855
               },
               {
-                "calls": 11418,
-                "elapsed_ns": 100047826
+                "calls": 10278,
+                "elapsed_ns": 99462683
               },
               {
-                "calls": 11418,
-                "elapsed_ns": 99760605
+                "calls": 10278,
+                "elapsed_ns": 99650655
               },
               {
-                "calls": 11418,
-                "elapsed_ns": 99786325
+                "calls": 10278,
+                "elapsed_ns": 99748355
               }
             ],
-            "ns_per_call": 8761.487651077246,
+            "ns_per_call": 9695.529772329246,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3744,34 +3802,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584006910
+            "elapsed_ns": 589602168
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784511,
+            "pid": 4140178,
             "windows": [
               {
-                "calls": 11528,
-                "elapsed_ns": 99941866
+                "calls": 10231,
+                "elapsed_ns": 99368373
               },
               {
-                "calls": 11528,
-                "elapsed_ns": 100022266
+                "calls": 10231,
+                "elapsed_ns": 99343843
               },
               {
-                "calls": 11528,
-                "elapsed_ns": 100238038
+                "calls": 10231,
+                "elapsed_ns": 99267023
               },
               {
-                "calls": 11528,
-                "elapsed_ns": 100190917
+                "calls": 10231,
+                "elapsed_ns": 99328372
               },
               {
-                "calls": 11528,
-                "elapsed_ns": 100361118
+                "calls": 10231,
+                "elapsed_ns": 99360263
               }
             ],
-            "ns_per_call": 8691.092730742539,
+            "ns_per_call": 9710.081419216109,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3779,38 +3837,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584585442
+            "elapsed_ns": 550229189
           }
         },
         {
           "index": 15,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784521,
+            "pid": 4140202,
             "windows": [
               {
-                "calls": 11515,
-                "elapsed_ns": 100066736
+                "calls": 11181,
+                "elapsed_ns": 100252678
               },
               {
-                "calls": 11515,
-                "elapsed_ns": 100299698
+                "calls": 11181,
+                "elapsed_ns": 103248747
               },
               {
-                "calls": 11515,
-                "elapsed_ns": 100436159
+                "calls": 11181,
+                "elapsed_ns": 107500682
               },
               {
-                "calls": 11515,
-                "elapsed_ns": 100080866
+                "calls": 11181,
+                "elapsed_ns": 107553013
               },
               {
-                "calls": 11515,
-                "elapsed_ns": 100809281
+                "calls": 11181,
+                "elapsed_ns": 107588223
               }
             ],
-            "ns_per_call": 8710.351541467651,
+            "ns_per_call": 9614.585636347376,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3818,34 +3876,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585414697
+            "elapsed_ns": 614773311
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784525,
+            "pid": 4140184,
             "windows": [
               {
-                "calls": 11498,
-                "elapsed_ns": 100078606
+                "calls": 11177,
+                "elapsed_ns": 100048457
               },
               {
-                "calls": 11498,
-                "elapsed_ns": 100014217
+                "calls": 11177,
+                "elapsed_ns": 104725666
               },
               {
-                "calls": 11498,
-                "elapsed_ns": 99954836
+                "calls": 11177,
+                "elapsed_ns": 106944879
               },
               {
-                "calls": 11498,
-                "elapsed_ns": 99976606
+                "calls": 11177,
+                "elapsed_ns": 107173070
               },
               {
-                "calls": 11498,
-                "elapsed_ns": 100002456
+                "calls": 11177,
+                "elapsed_ns": 107367572
               }
             ],
-            "ns_per_call": 8697.378326665506,
+            "ns_per_call": 9568.299096358594,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3853,38 +3911,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 583846249
+            "elapsed_ns": 614351138
           }
         },
         {
           "index": 16,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784557,
+            "pid": 4140271,
             "windows": [
               {
-                "calls": 11478,
-                "elapsed_ns": 100033336
+                "calls": 11250,
+                "elapsed_ns": 100675081
               },
               {
-                "calls": 11478,
-                "elapsed_ns": 100035627
+                "calls": 11250,
+                "elapsed_ns": 100941713
               },
               {
-                "calls": 11478,
-                "elapsed_ns": 100062806
+                "calls": 11250,
+                "elapsed_ns": 100048067
               },
               {
-                "calls": 11478,
-                "elapsed_ns": 109638219
+                "calls": 11250,
+                "elapsed_ns": 99929966
               },
               {
-                "calls": 11478,
-                "elapsed_ns": 112051652
+                "calls": 11250,
+                "elapsed_ns": 99920636
               }
             ],
-            "ns_per_call": 8717.79107858512,
+            "ns_per_call": 8893.161511111111,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3892,34 +3950,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 606460043
+            "elapsed_ns": 590203951
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784530,
+            "pid": 4140277,
             "windows": [
               {
-                "calls": 11475,
-                "elapsed_ns": 100003797
+                "calls": 10401,
+                "elapsed_ns": 100099627
               },
               {
-                "calls": 11475,
-                "elapsed_ns": 99817565
+                "calls": 10401,
+                "elapsed_ns": 100084198
               },
               {
-                "calls": 11475,
-                "elapsed_ns": 103199484
+                "calls": 10401,
+                "elapsed_ns": 100003367
               },
               {
-                "calls": 11475,
-                "elapsed_ns": 110778774
+                "calls": 10401,
+                "elapsed_ns": 100005886
               },
               {
-                "calls": 11475,
-                "elapsed_ns": 111207628
+                "calls": 10401,
+                "elapsed_ns": 99946777
               }
             ],
-            "ns_per_call": 8993.41908496732,
+            "ns_per_call": 9615.026055187001,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3927,38 +3985,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 609261377
+            "elapsed_ns": 594164285
           }
         },
         {
           "index": 17,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784602,
+            "pid": 4140289,
             "windows": [
               {
-                "calls": 11317,
-                "elapsed_ns": 104079288
+                "calls": 11101,
+                "elapsed_ns": 100372899
               },
               {
-                "calls": 11317,
-                "elapsed_ns": 110153042
+                "calls": 11101,
+                "elapsed_ns": 99724945
               },
               {
-                "calls": 11317,
-                "elapsed_ns": 109862460
+                "calls": 11101,
+                "elapsed_ns": 99081761
               },
               {
-                "calls": 11317,
-                "elapsed_ns": 109583678
+                "calls": 11101,
+                "elapsed_ns": 107595163
               },
               {
-                "calls": 11317,
-                "elapsed_ns": 109584579
+                "calls": 11101,
+                "elapsed_ns": 112026710
               }
             ],
-            "ns_per_call": 9683.18273394009,
+            "ns_per_call": 9041.78893793352,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -3966,34 +4024,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 628531793
+            "elapsed_ns": 607469426
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784628,
+            "pid": 4140282,
             "windows": [
               {
-                "calls": 11530,
-                "elapsed_ns": 99968995
+                "calls": 11249,
+                "elapsed_ns": 99971277
               },
               {
-                "calls": 11530,
-                "elapsed_ns": 100487719
+                "calls": 11249,
+                "elapsed_ns": 106139994
               },
               {
-                "calls": 11530,
-                "elapsed_ns": 100383199
+                "calls": 11249,
+                "elapsed_ns": 108046925
               },
               {
-                "calls": 11530,
-                "elapsed_ns": 100197777
+                "calls": 11249,
+                "elapsed_ns": 108155507
               },
               {
-                "calls": 11530,
-                "elapsed_ns": 100501849
+                "calls": 11249,
+                "elapsed_ns": 108018055
               }
             ],
-            "ns_per_call": 8706.2618386817,
+            "ns_per_call": 9602.45844075029,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4001,38 +4059,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585315346
+            "elapsed_ns": 618592944
           }
         },
         {
           "index": 18,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784635,
+            "pid": 4140299,
             "windows": [
               {
-                "calls": 11573,
-                "elapsed_ns": 100244498
+                "calls": 10883,
+                "elapsed_ns": 100475040
               },
               {
-                "calls": 11573,
-                "elapsed_ns": 99980446
+                "calls": 10883,
+                "elapsed_ns": 105289719
               },
               {
-                "calls": 11573,
-                "elapsed_ns": 99828875
+                "calls": 10883,
+                "elapsed_ns": 110545671
               },
               {
-                "calls": 11573,
-                "elapsed_ns": 99794015
+                "calls": 10883,
+                "elapsed_ns": 109695655
               },
               {
-                "calls": 11573,
-                "elapsed_ns": 108477063
+                "calls": 10883,
+                "elapsed_ns": 109519455
               }
             ],
-            "ns_per_call": 8639.112244016245,
+            "ns_per_call": 10063.351557474962,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4040,34 +4098,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 591984894
+            "elapsed_ns": 627488487
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784663,
+            "pid": 4140295,
             "windows": [
               {
-                "calls": 11552,
-                "elapsed_ns": 99900855
+                "calls": 10656,
+                "elapsed_ns": 97184390
               },
               {
-                "calls": 11552,
-                "elapsed_ns": 99563354
+                "calls": 10656,
+                "elapsed_ns": 101936039
               },
               {
-                "calls": 11552,
-                "elapsed_ns": 106015819
+                "calls": 10656,
+                "elapsed_ns": 108119786
               },
               {
-                "calls": 11552,
-                "elapsed_ns": 112261803
+                "calls": 10656,
+                "elapsed_ns": 106848058
               },
               {
-                "calls": 11552,
-                "elapsed_ns": 112175093
+                "calls": 10656,
+                "elapsed_ns": 106892269
               }
             ],
-            "ns_per_call": 9177.269650277009,
+            "ns_per_call": 10027.03246996997,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4075,38 +4133,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 613625921
+            "elapsed_ns": 613047970
           }
         },
         {
           "index": 19,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784672,
+            "pid": 4140304,
             "windows": [
               {
-                "calls": 11452,
-                "elapsed_ns": 106079189
+                "calls": 9713,
+                "elapsed_ns": 98085995
               },
               {
-                "calls": 11452,
-                "elapsed_ns": 112484865
+                "calls": 9713,
+                "elapsed_ns": 98114206
               },
               {
-                "calls": 11452,
-                "elapsed_ns": 112208593
+                "calls": 9713,
+                "elapsed_ns": 97911194
               },
               {
-                "calls": 11452,
-                "elapsed_ns": 112063702
+                "calls": 9713,
+                "elapsed_ns": 97860274
               },
               {
-                "calls": 11452,
-                "elapsed_ns": 112348533
+                "calls": 9713,
+                "elapsed_ns": 97903114
               }
             ],
-            "ns_per_call": 9798.16564792176,
+            "ns_per_call": 10080.427674251005,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4114,34 +4172,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 639396652
+            "elapsed_ns": 546444086
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784668,
+            "pid": 4140308,
             "windows": [
               {
-                "calls": 11455,
-                "elapsed_ns": 100489540
+                "calls": 10831,
+                "elapsed_ns": 96084203
               },
               {
-                "calls": 11455,
-                "elapsed_ns": 100091336
+                "calls": 10831,
+                "elapsed_ns": 96344035
               },
               {
-                "calls": 11455,
-                "elapsed_ns": 100047056
+                "calls": 10831,
+                "elapsed_ns": 96395474
               },
               {
-                "calls": 11455,
-                "elapsed_ns": 100326869
+                "calls": 10831,
+                "elapsed_ns": 96287495
               },
               {
-                "calls": 11455,
-                "elapsed_ns": 100463348
+                "calls": 10831,
+                "elapsed_ns": 96369395
               }
             ],
-            "ns_per_call": 8758.347359231777,
+            "ns_per_call": 8895.211430154188,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4149,7 +4207,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585595159
+            "elapsed_ns": 573317119
           }
         },
         {
@@ -4157,30 +4215,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784682,
+            "pid": 4140319,
             "windows": [
               {
-                "calls": 11510,
-                "elapsed_ns": 100016566
+                "calls": 11318,
+                "elapsed_ns": 100008306
               },
               {
-                "calls": 11510,
-                "elapsed_ns": 100251147
+                "calls": 11318,
+                "elapsed_ns": 100072517
               },
               {
-                "calls": 11510,
-                "elapsed_ns": 100148588
+                "calls": 11318,
+                "elapsed_ns": 105823513
               },
               {
-                "calls": 11510,
-                "elapsed_ns": 100413668
+                "calls": 11318,
+                "elapsed_ns": 110559901
               },
               {
-                "calls": 11510,
-                "elapsed_ns": 99951426
+                "calls": 11318,
+                "elapsed_ns": 110652071
               }
             ],
-            "ns_per_call": 8701.0067767159,
+            "ns_per_call": 9350.01881957943,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4188,34 +4246,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584572073
+            "elapsed_ns": 614283997
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784678,
+            "pid": 4140314,
             "windows": [
               {
-                "calls": 11411,
-                "elapsed_ns": 99823105
+                "calls": 11249,
+                "elapsed_ns": 100049957
               },
               {
-                "calls": 11411,
-                "elapsed_ns": 99660955
+                "calls": 11249,
+                "elapsed_ns": 100030797
               },
               {
-                "calls": 11411,
-                "elapsed_ns": 99651614
+                "calls": 11249,
+                "elapsed_ns": 100125297
               },
               {
-                "calls": 11411,
-                "elapsed_ns": 99370553
+                "calls": 11249,
+                "elapsed_ns": 100126628
               },
               {
-                "calls": 11411,
-                "elapsed_ns": 109507338
+                "calls": 11249,
+                "elapsed_ns": 100179947
               }
             ],
-            "ns_per_call": 8733.761721146262,
+            "ns_per_call": 8900.817583785225,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4223,7 +4281,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 592174224
+            "elapsed_ns": 588986194
           }
         },
         {
@@ -4231,30 +4289,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784693,
+            "pid": 4140323,
             "windows": [
               {
-                "calls": 11622,
-                "elapsed_ns": 100111647
+                "calls": 11298,
+                "elapsed_ns": 101266334
               },
               {
-                "calls": 11622,
-                "elapsed_ns": 99898965
+                "calls": 11298,
+                "elapsed_ns": 108102466
               },
               {
-                "calls": 11622,
-                "elapsed_ns": 99957336
+                "calls": 11298,
+                "elapsed_ns": 109926167
               },
               {
-                "calls": 11622,
-                "elapsed_ns": 99610544
+                "calls": 11298,
+                "elapsed_ns": 109889587
               },
               {
-                "calls": 11622,
-                "elapsed_ns": 99790015
+                "calls": 11298,
+                "elapsed_ns": 109909757
               }
             ],
-            "ns_per_call": 8595.677594217863,
+            "ns_per_call": 9726.46371039122,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4262,34 +4320,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 582409021
+            "elapsed_ns": 626165720
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784699,
+            "pid": 4140329,
             "windows": [
               {
-                "calls": 11437,
-                "elapsed_ns": 100035276
+                "calls": 11278,
+                "elapsed_ns": 100024847
               },
               {
-                "calls": 11437,
-                "elapsed_ns": 100015617
+                "calls": 11278,
+                "elapsed_ns": 99893346
               },
               {
-                "calls": 11437,
-                "elapsed_ns": 100077416
+                "calls": 11278,
+                "elapsed_ns": 99754495
               },
               {
-                "calls": 11437,
-                "elapsed_ns": 100277598
+                "calls": 11278,
+                "elapsed_ns": 99998397
               },
               {
-                "calls": 11437,
-                "elapsed_ns": 100401118
+                "calls": 11278,
+                "elapsed_ns": 99967746
               }
             ],
-            "ns_per_call": 8750.32053860278,
+            "ns_per_call": 8863.960453981203,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4297,7 +4355,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585106066
+            "elapsed_ns": 587264603
           }
         },
         {
@@ -4305,30 +4363,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784703,
+            "pid": 4140353,
             "windows": [
               {
-                "calls": 11485,
-                "elapsed_ns": 100582659
+                "calls": 11279,
+                "elapsed_ns": 105157037
               },
               {
-                "calls": 11485,
-                "elapsed_ns": 100308278
+                "calls": 11279,
+                "elapsed_ns": 108759890
               },
               {
-                "calls": 11485,
-                "elapsed_ns": 100182977
+                "calls": 11279,
+                "elapsed_ns": 108660910
               },
               {
-                "calls": 11485,
-                "elapsed_ns": 100390179
+                "calls": 11279,
+                "elapsed_ns": 108676589
               },
               {
-                "calls": 11485,
-                "elapsed_ns": 100129776
+                "calls": 11279,
+                "elapsed_ns": 108587019
               }
             ],
-            "ns_per_call": 8733.850936003482,
+            "ns_per_call": 9633.913467505985,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4336,34 +4394,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585524218
+            "elapsed_ns": 628885036
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784708,
+            "pid": 4140382,
             "windows": [
               {
-                "calls": 11460,
-                "elapsed_ns": 99938586
+                "calls": 10560,
+                "elapsed_ns": 102595003
               },
               {
-                "calls": 11460,
-                "elapsed_ns": 99903796
+                "calls": 10560,
+                "elapsed_ns": 102620392
               },
               {
-                "calls": 11460,
-                "elapsed_ns": 100400028
+                "calls": 10560,
+                "elapsed_ns": 102622413
               },
               {
-                "calls": 11460,
-                "elapsed_ns": 100205537
+                "calls": 10560,
+                "elapsed_ns": 103587959
               },
               {
-                "calls": 11460,
-                "elapsed_ns": 100371649
+                "calls": 10560,
+                "elapsed_ns": 103254216
               }
             ],
-            "ns_per_call": 8743.938656195462,
+            "ns_per_call": 9718.03153409091,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4371,7 +4429,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 584849135
+            "elapsed_ns": 605513654
           }
         },
         {
@@ -4379,30 +4437,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784718,
+            "pid": 4140412,
             "windows": [
               {
-                "calls": 11450,
-                "elapsed_ns": 100361708
+                "calls": 9969,
+                "elapsed_ns": 97663853
               },
               {
-                "calls": 11450,
-                "elapsed_ns": 100370658
+                "calls": 9969,
+                "elapsed_ns": 97572701
               },
               {
-                "calls": 11450,
-                "elapsed_ns": 100104227
+                "calls": 9969,
+                "elapsed_ns": 97670063
               },
               {
-                "calls": 11450,
-                "elapsed_ns": 100329538
+                "calls": 9969,
+                "elapsed_ns": 97318941
               },
               {
-                "calls": 11450,
-                "elapsed_ns": 100285788
+                "calls": 9969,
+                "elapsed_ns": 97331970
               }
             ],
-            "ns_per_call": 8762.405065502184,
+            "ns_per_call": 9787.611696258402,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4410,34 +4468,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585598479
+            "elapsed_ns": 581509888
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784712,
+            "pid": 4140408,
             "windows": [
               {
-                "calls": 11445,
-                "elapsed_ns": 100284788
+                "calls": 11224,
+                "elapsed_ns": 107639644
               },
               {
-                "calls": 11445,
-                "elapsed_ns": 100091866
+                "calls": 11224,
+                "elapsed_ns": 109608765
               },
               {
-                "calls": 11445,
-                "elapsed_ns": 100405799
+                "calls": 11224,
+                "elapsed_ns": 109853016
               },
               {
-                "calls": 11445,
-                "elapsed_ns": 100256557
+                "calls": 11224,
+                "elapsed_ns": 109474494
               },
               {
-                "calls": 11445,
-                "elapsed_ns": 100519910
+                "calls": 11224,
+                "elapsed_ns": 109378234
               }
             ],
-            "ns_per_call": 8762.323110528616,
+            "ns_per_call": 9753.607804704205,
             "cache_state_applied": "warm",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4445,18 +4503,18 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 585771519
+            "elapsed_ns": 633718386
           }
         }
       ],
       "claimed": {
         "interval": {
-          "estimate": 0.997531832908309,
-          "lower": 0.9484537221898061,
-          "upper": 1.0025530342554048,
+          "estimate": 1.0371472448916095,
+          "lower": 0.9861962072217164,
+          "upper": 1.0896666667725476,
           "confidence": 0.9833333333333333,
           "resamples": 10000,
-          "seed": 10374432831382001202,
+          "seed": 18091774859665624329,
           "pairs": 24
         },
         "decision": "not-worse",
@@ -4466,7 +4524,7 @@
         }
       },
       "decoder_quality": null,
-      "checkpoint_sha256": "b1e43d5005c4e9a991912bc6c44de092ba3fdbe82cae889407404ebfcecc533c"
+      "checkpoint_sha256": "ca5dfe98d5e1af1a8ff8b38005c507024cfcb1d06e64f18842dac57deb102b3f"
     },
     {
       "cell_id": "xor-fold-streaming-pilot-6core",
@@ -4491,30 +4549,30 @@
           "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784753,
+            "pid": 4140444,
             "windows": [
               {
-                "calls": 101,
-                "elapsed_ns": 99167861
+                "calls": 99,
+                "elapsed_ns": 99155042
               },
               {
-                "calls": 101,
-                "elapsed_ns": 99428513
+                "calls": 99,
+                "elapsed_ns": 98889579
               },
               {
-                "calls": 101,
-                "elapsed_ns": 99140672
+                "calls": 99,
+                "elapsed_ns": 100105508
               },
               {
-                "calls": 101,
-                "elapsed_ns": 99592854
+                "calls": 99,
+                "elapsed_ns": 99543734
               },
               {
-                "calls": 101,
-                "elapsed_ns": 100424168
+                "calls": 99,
+                "elapsed_ns": 102117350
               }
             ],
-            "ns_per_call": 984440.7227722772,
+            "ns_per_call": 1005492.2626262626,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4527,34 +4585,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 622104148
+            "elapsed_ns": 631127900
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784757,
+            "pid": 4140448,
             "windows": [
               {
-                "calls": 101,
-                "elapsed_ns": 104002338
+                "calls": 97,
+                "elapsed_ns": 101049173
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103489415
+                "calls": 97,
+                "elapsed_ns": 99601635
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103108704
+                "calls": 97,
+                "elapsed_ns": 100050807
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103281544
+                "calls": 97,
+                "elapsed_ns": 98267416
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103197373
+                "calls": 97,
+                "elapsed_ns": 98644709
               }
             ],
-            "ns_per_call": 1022589.5445544554,
+            "ns_per_call": 1026820.9793814434,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4567,7 +4625,7 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 641779945
+            "elapsed_ns": 624272557
           }
         },
         {
@@ -4575,30 +4633,30 @@
           "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784767,
+            "pid": 4140460,
             "windows": [
               {
                 "calls": 100,
-                "elapsed_ns": 98420047
+                "elapsed_ns": 99414773
               },
               {
                 "calls": 100,
-                "elapsed_ns": 98671209
+                "elapsed_ns": 98839490
               },
               {
                 "calls": 100,
-                "elapsed_ns": 98956171
+                "elapsed_ns": 98681379
               },
               {
                 "calls": 100,
-                "elapsed_ns": 98369307
+                "elapsed_ns": 98665148
               },
               {
                 "calls": 100,
-                "elapsed_ns": 98510328
+                "elapsed_ns": 99301073
               }
             ],
-            "ns_per_call": 985103.28,
+            "ns_per_call": 988394.9,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4611,34 +4669,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 616224656
+            "elapsed_ns": 622266426
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784763,
+            "pid": 4140455,
             "windows": [
               {
-                "calls": 101,
-                "elapsed_ns": 102053297
+                "calls": 96,
+                "elapsed_ns": 97738554
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103792127
+                "calls": 96,
+                "elapsed_ns": 97454121
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103129953
+                "calls": 96,
+                "elapsed_ns": 95769181
               },
               {
-                "calls": 101,
-                "elapsed_ns": 104754803
+                "calls": 96,
+                "elapsed_ns": 95644480
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103244474
+                "calls": 96,
+                "elapsed_ns": 96119213
               }
             ],
-            "ns_per_call": 1022222.5148514851,
+            "ns_per_call": 1001241.8020833334,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4651,38 +4709,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 641822405
+            "elapsed_ns": 614036385
           }
         },
         {
           "index": 2,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784798,
+            "pid": 4140464,
             "windows": [
               {
-                "calls": 101,
-                "elapsed_ns": 99239472
+                "calls": 99,
+                "elapsed_ns": 97883163
               },
               {
-                "calls": 101,
-                "elapsed_ns": 99871505
+                "calls": 99,
+                "elapsed_ns": 98078616
               },
               {
-                "calls": 101,
-                "elapsed_ns": 100325398
+                "calls": 99,
+                "elapsed_ns": 97784953
               },
               {
-                "calls": 101,
-                "elapsed_ns": 100092627
+                "calls": 99,
+                "elapsed_ns": 98672109
               },
               {
-                "calls": 101,
-                "elapsed_ns": 100566269
+                "calls": 99,
+                "elapsed_ns": 101941058
               }
             ],
-            "ns_per_call": 991016.1089108911,
+            "ns_per_call": 990693.0909090909,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4695,34 +4753,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 618826120
+            "elapsed_ns": 622804409
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784772,
+            "pid": 4140472,
             "windows": [
               {
-                "calls": 101,
-                "elapsed_ns": 99478333
+                "calls": 98,
+                "elapsed_ns": 99907846
               },
               {
-                "calls": 101,
-                "elapsed_ns": 100925322
+                "calls": 98,
+                "elapsed_ns": 99661325
               },
               {
-                "calls": 101,
-                "elapsed_ns": 101194742
+                "calls": 98,
+                "elapsed_ns": 96617426
               },
               {
-                "calls": 101,
-                "elapsed_ns": 104269270
+                "calls": 98,
+                "elapsed_ns": 98542878
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103766817
+                "calls": 98,
+                "elapsed_ns": 97392811
               }
             ],
-            "ns_per_call": 1001928.1386138614,
+            "ns_per_call": 1005539.5714285715,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4735,38 +4793,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 634271045
+            "elapsed_ns": 615204612
           }
         },
         {
           "index": 3,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784802,
+            "pid": 4140501,
             "windows": [
               {
                 "calls": 101,
-                "elapsed_ns": 101093292
+                "elapsed_ns": 101041803
               },
               {
                 "calls": 101,
-                "elapsed_ns": 99409214
+                "elapsed_ns": 100731641
               },
               {
                 "calls": 101,
-                "elapsed_ns": 99795615
+                "elapsed_ns": 100873152
               },
               {
                 "calls": 101,
-                "elapsed_ns": 99421253
+                "elapsed_ns": 101085523
               },
               {
                 "calls": 101,
-                "elapsed_ns": 99685684
+                "elapsed_ns": 100781622
               }
             ],
-            "ns_per_call": 986986.9702970297,
+            "ns_per_call": 998744.0792079208,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4779,34 +4837,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 623371455
+            "elapsed_ns": 625506125
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784809,
+            "pid": 4140477,
             "windows": [
               {
-                "calls": 101,
-                "elapsed_ns": 99620055
+                "calls": 100,
+                "elapsed_ns": 100380609
               },
               {
-                "calls": 101,
-                "elapsed_ns": 99673424
+                "calls": 100,
+                "elapsed_ns": 102166450
               },
               {
-                "calls": 101,
-                "elapsed_ns": 102097127
+                "calls": 100,
+                "elapsed_ns": 104072851
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103361415
+                "calls": 100,
+                "elapsed_ns": 105407170
               },
               {
-                "calls": 101,
-                "elapsed_ns": 104163169
+                "calls": 100,
+                "elapsed_ns": 103892190
               }
             ],
-            "ns_per_call": 1010862.6435643565,
+            "ns_per_call": 1038921.9,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4819,38 +4877,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 632791526
+            "elapsed_ns": 637305326
           }
         },
         {
           "index": 4,
-          "order": "baseline-first",
+          "order": "candidate-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784815,
+            "pid": 4140520,
             "windows": [
               {
-                "calls": 101,
-                "elapsed_ns": 99604614
+                "calls": 99,
+                "elapsed_ns": 101044033
               },
               {
-                "calls": 101,
-                "elapsed_ns": 99292652
+                "calls": 99,
+                "elapsed_ns": 99313443
               },
               {
-                "calls": 101,
-                "elapsed_ns": 99410223
+                "calls": 99,
+                "elapsed_ns": 99389523
               },
               {
-                "calls": 101,
-                "elapsed_ns": 100197258
+                "calls": 99,
+                "elapsed_ns": 99537414
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103933358
+                "calls": 99,
+                "elapsed_ns": 99550894
               }
             ],
-            "ns_per_call": 986184.2970297029,
+            "ns_per_call": 1005428.4242424242,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4863,34 +4921,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 626138810
+            "elapsed_ns": 621112468
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784819,
+            "pid": 4140516,
             "windows": [
               {
-                "calls": 98,
-                "elapsed_ns": 98328777
+                "calls": 99,
+                "elapsed_ns": 99544713
               },
               {
-                "calls": 98,
-                "elapsed_ns": 96818509
+                "calls": 99,
+                "elapsed_ns": 99454394
               },
               {
-                "calls": 98,
-                "elapsed_ns": 97221241
+                "calls": 99,
+                "elapsed_ns": 99674995
               },
               {
-                "calls": 98,
-                "elapsed_ns": 96873849
+                "calls": 99,
+                "elapsed_ns": 99261412
               },
               {
-                "calls": 98,
-                "elapsed_ns": 96603637
+                "calls": 99,
+                "elapsed_ns": 101560456
               }
             ],
-            "ns_per_call": 988508.6632653062,
+            "ns_per_call": 1005502.1515151515,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4903,38 +4961,38 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 610154072
+            "elapsed_ns": 622250466
           }
         },
         {
           "index": 5,
-          "order": "candidate-first",
+          "order": "baseline-first",
           "baseline": {
             "arm": "baseline",
-            "pid": 3784847,
+            "pid": 4140531,
             "windows": [
               {
                 "calls": 100,
-                "elapsed_ns": 98719959
+                "elapsed_ns": 103284897
               },
               {
                 "calls": 100,
-                "elapsed_ns": 98520099
+                "elapsed_ns": 104196603
               },
               {
                 "calls": 100,
-                "elapsed_ns": 98487338
+                "elapsed_ns": 105966922
               },
               {
                 "calls": 100,
-                "elapsed_ns": 98486307
+                "elapsed_ns": 104701475
               },
               {
                 "calls": 100,
-                "elapsed_ns": 98921271
+                "elapsed_ns": 106322055
               }
             ],
-            "ns_per_call": 985200.99,
+            "ns_per_call": 1047014.75,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4947,34 +5005,34 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 616431747
+            "elapsed_ns": 651374122
           },
           "candidate": {
             "arm": "candidate",
-            "pid": 3784843,
+            "pid": 4140562,
             "windows": [
               {
-                "calls": 101,
-                "elapsed_ns": 99598454
+                "calls": 99,
+                "elapsed_ns": 99444644
               },
               {
-                "calls": 101,
-                "elapsed_ns": 100631930
+                "calls": 99,
+                "elapsed_ns": 102550222
               },
               {
-                "calls": 101,
-                "elapsed_ns": 100483508
+                "calls": 99,
+                "elapsed_ns": 102871764
               },
               {
-                "calls": 101,
-                "elapsed_ns": 101614835
+                "calls": 99,
+                "elapsed_ns": 102511071
               },
               {
-                "calls": 101,
-                "elapsed_ns": 103841508
+                "calls": 99,
+                "elapsed_ns": 102581753
               }
             ],
-            "ns_per_call": 996355.7425742574,
+            "ns_per_call": 1035860.8282828283,
             "cache_state_applied": "streaming",
             "workers_observed": 1,
             "cpus_observed": [
@@ -4987,18 +5045,18 @@
             ],
             "selected_path": "xor-fold-scalar",
             "conversion": null,
-            "elapsed_ns": 629195527
+            "elapsed_ns": 637943091
           }
         }
       ],
       "claimed": {
         "interval": {
-          "estimate": 0.9794288132104289,
-          "lower": 0.9626939058928089,
-          "upper": 0.997648613186732,
+          "estimate": 0.9861303904228828,
+          "lower": 0.9613273906420885,
+          "upper": 1.0107677802004174,
           "confidence": 0.9833333333333333,
           "resamples": 10000,
-          "seed": 7986823752743336379,
+          "seed": 12792100729105745411,
           "pairs": 6
         },
         "decision": "not-worse",
@@ -5008,7 +5066,7 @@
         }
       },
       "decoder_quality": null,
-      "checkpoint_sha256": "edef24afd8bb5de280365a6a1bba7482e556e73b08427d0474645bf7640c4762"
+      "checkpoint_sha256": "9e3a2a15d2ed35b8fd79ae459fd998f98c50e1e39d8c14001f8f9b7474693c6e"
     },
     {
       "cell_id": "xor-fold-identical-12core",
@@ -5023,7 +5081,7 @@
       "pairs": [],
       "claimed": null,
       "decoder_quality": null,
-      "checkpoint_sha256": "475a1d67bf656b81c6b21f5282d3fef5347b21809ead81c928db6fb9bd3e0384"
+      "checkpoint_sha256": "4747d11143105b620f69c557025760cfa1b35caba7555f7a102ab8044f23f77e"
     }
   ]
 }
