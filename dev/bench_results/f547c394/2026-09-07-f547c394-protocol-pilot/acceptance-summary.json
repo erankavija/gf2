@@ -1,0 +1,84 @@
+{
+  "schema": "zen3-benchmark-acceptance-v1",
+  "receipt_sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf",
+  "campaign_id": "pilot-f547c394-20260906t230725z",
+  "label": "pilot",
+  "verdict": "accepted",
+  "qualifies": true,
+  "family": {
+    "family_id": "protocol-smoke-pilot",
+    "comparisons": 1,
+    "family_alpha": 0.05,
+    "per_comparison_confidence": 0.95,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 2,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "xor-fold-double-pass-1core",
+      "role": "exploratory",
+      "objective": "improvement",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 2.0542046625201906,
+        "lower": 1.989192806830739,
+        "upper": 2.118240030372137,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 4601929107371892610,
+        "pairs": 6
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.5,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    },
+    {
+      "cell_id": "xor-fold-identical-1core",
+      "role": "exploratory",
+      "objective": "non-regression",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "outcome": "pilot",
+      "pairs": 6,
+      "flagged_windows": 0,
+      "total_windows": 60,
+      "interval": {
+        "estimate": 1.0043242093257032,
+        "lower": 0.9958084098554143,
+        "upper": 1.0085614610544895,
+        "confidence": 0.95,
+        "resamples": 10000,
+        "seed": 18091774859665624329,
+        "pairs": 6
+      },
+      "decision": "not-worse",
+      "margins": {
+        "improvement": 1.5,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [
+        "effect.measurement_resolution"
+      ],
+      "reason": null
+    }
+  ]
+}

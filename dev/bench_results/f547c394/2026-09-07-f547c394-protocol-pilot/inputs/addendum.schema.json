@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "zen3-benchmark-addendum-v1",
+  "title": "Zen 3 benchmark protocol family addendum, version 1",
+  "description": "Independently frozen family and cell settings consumed with protocol.md. A null value in a nullable field is an unresolved setting: it makes every cell that depends on it non-confirmatory. Addenda cannot override shared protocol settings; shared values that appear here must equal the frozen ones.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "protocol", "family", "frozen", "effect", "complexity_budget", "family_wise", "search_budget", "holdout", "cells"],
+  "properties": {
+    "schema": { "const": "zen3-benchmark-addendum-v1" },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "const": "zen3-benchmark-protocol" },
+        "version": { "const": 1 }
+      }
+    },
+    "family": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "issue", "purpose", "description"],
+      "properties": {
+        "id": { "$ref": "#/$defs/kebab" },
+        "issue": { "type": "string", "minLength": 8, "maxLength": 8 },
+        "purpose": { "enum": ["kernel-family", "consumer-family", "decoder-family", "selector-calibration", "final-integration"] },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    },
+    "frozen": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Human-readable freeze time. The receipt-local addendum pin and premeasurement campaign-start record prove the exact bytes and ordering of the freeze.",
+      "required": ["frozen_utc"],
+      "properties": {
+        "frozen_utc": { "type": ["string", "null"] }
+      }
+    },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worthwhile_speedup", "rationale", "measurement_resolution", "resolution_evidence", "equivalence_margin", "equivalence_rationale", "material_gap_threshold", "material_gap_rationale"],
+      "properties": {
+        "worthwhile_speedup": { "type": ["number", "null"], "exclusiveMinimum": 1 },
+        "rationale": { "type": "string" },
+        "measurement_resolution": { "type": ["number", "null"], "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "resolution_evidence": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["receipt", "sha256"],
+              "properties": {
+                "receipt": { "type": "string", "minLength": 1 },
+                "sha256": { "$ref": "#/$defs/hex64" }
+              }
+            }
+          ]
+        },
+        "equivalence_margin": { "type": ["number", "null"], "minimum": 1 },
+        "equivalence_rationale": { "type": "string" },
+        "material_gap_threshold": { "type": ["number", "null"], "minimum": 1 },
+        "material_gap_rationale": { "type": "string" }
+      }
+    },
+    "complexity_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_new_unsafe_kernels", "max_added_source_lines", "maintenance_rationale"],
+      "properties": {
+        "max_new_unsafe_kernels": { "type": "integer", "minimum": 0 },
+        "max_added_source_lines": { "type": ["integer", "null"], "minimum": 0 },
+        "maintenance_rationale": { "type": "string", "minLength": 1 }
+      }
+    },
+    "family_wise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alpha", "prior_confirmatory_trials", "prior_trials"],
+      "properties": {
+        "alpha": { "const": 0.05 },
+        "prior_confirmatory_trials": { "type": "integer", "minimum": 0 },
+        "prior_trials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["receipt", "sha256", "outcome"],
+            "properties": {
+              "receipt": { "type": "string", "minLength": 1 },
+              "sha256": { "$ref": "#/$defs/hex64" },
+              "outcome": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "search_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_pilot_trials_per_cell", "max_confirmatory_attempts_per_candidate"],
+      "properties": {
+        "max_pilot_trials_per_cell": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "max_confirmatory_attempts_per_candidate": { "const": 1 }
+      }
+    },
+    "holdout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "cells"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "cells": { "type": "array", "items": { "$ref": "#/$defs/kebab" }, "uniqueItems": true }
+      }
+    },
+    "cells": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/cell" }
+    }
+  },
+  "$defs": {
+    "kebab": { "type": "string", "minLength": 1 },
+    "hex64": { "type": "string", "minLength": 64, "maxLength": 64 },
+    "build_identity": { "enum": ["conservative-portable", "tuned-portable", "native", "external"] },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cell_id", "objective", "role", "workload", "metric_kind", "scaling", "core_arm", "workers", "cache_state", "builds", "conversion_costs_included", "decoder"],
+      "properties": {
+        "cell_id": { "$ref": "#/$defs/kebab" },
+        "objective": { "enum": ["improvement", "non-regression", "comparator-gap"] },
+        "role": { "enum": ["exploratory", "confirmatory", "holdout"] },
+        "workload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["identity", "size", "seed"],
+          "properties": {
+            "identity": { "type": "string", "minLength": 1 },
+            "size": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+            "seed": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "metric_kind": { "enum": ["kernel-isolated", "whole-consumer"] },
+        "scaling": { "enum": ["single-core-latency", "sustained-throughput", "multicore-throughput"] },
+        "core_arm": { "enum": ["single-core", "physical-cores-6", "physical-cores-12", "logical-cpus-24"] },
+        "workers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["declared", "nested_pools_allowed"],
+          "properties": {
+            "declared": { "type": "integer", "minimum": 1 },
+            "nested_pools_allowed": { "type": "boolean" }
+          }
+        },
+        "cache_state": { "enum": ["cold", "warm", "streaming"] },
+        "builds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["baseline", "candidate"],
+          "properties": {
+            "baseline": { "$ref": "#/$defs/build_identity" },
+            "candidate": { "$ref": "#/$defs/build_identity" }
+          }
+        },
+        "conversion_costs_included": { "type": "boolean" },
+        "decoder": { "anyOf": [ { "type": "null" }, { "$ref": "#/$defs/decoder" } ] }
+      }
+    },
+    "decoder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["arm_kind", "code", "input", "precision", "schedule", "normalization", "iteration_cap", "stopping", "batching", "quality_tolerance", "rate_matching"],
+      "properties": {
+        "arm_kind": { "enum": ["matched-algorithm", "fastest-quality-compatible"] },
+        "code": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["identity", "n", "k", "h_sha256"],
+          "properties": {
+            "identity": { "type": "string", "minLength": 1 },
+            "n": { "type": "integer", "minimum": 1 },
+            "k": { "type": "integer", "minimum": 1 },
+            "h_sha256": { "$ref": "#/$defs/hex64" }
+          }
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["llr_source", "llr_sha256", "frames", "seed", "codeword_source", "snr_db"],
+          "properties": {
+            "llr_source": { "type": "string", "minLength": 1 },
+            "llr_sha256": { "type": ["string", "null"], "minLength": 64, "maxLength": 64 },
+            "frames": { "type": "integer", "minimum": 1 },
+            "seed": { "type": "integer", "minimum": 0 },
+            "codeword_source": { "enum": ["all-zero", "random", "both"] },
+            "snr_db": { "type": "number" }
+          }
+        },
+        "precision": { "enum": ["f64", "f32", "i16", "i8"] },
+        "schedule": { "enum": ["flooding", "layered", "other"] },
+        "normalization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "factor"],
+          "properties": {
+            "kind": { "enum": ["min-sum", "normalized-min-sum", "offset-min-sum", "sum-product"] },
+            "factor": { "type": ["number", "null"] }
+          }
+        },
+        "iteration_cap": { "type": "integer", "minimum": 1 },
+        "stopping": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "crc"],
+          "properties": {
+            "kind": { "enum": ["syndrome", "crc", "fixed", "none"] },
+            "crc": { "type": ["string", "null"] }
+          }
+        },
+        "batching": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["batch_size", "batch_fill_included"],
+          "properties": {
+            "batch_size": { "type": "integer", "minimum": 1 },
+            "batch_fill_included": { "type": "boolean" }
+          }
+        },
+        "quality_tolerance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fer_ratio_max", "confidence"],
+          "properties": {
+            "fer_ratio_max": { "type": "number", "minimum": 1 },
+            "confidence": { "const": 0.95 }
+          }
+        },
+        "rate_matching": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["puncturing", "fillers"],
+              "properties": {
+                "puncturing": { "type": "string" },
+                "fillers": { "type": "string" }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
