@@ -1,0 +1,43 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-06T19:59:36.095902220Z",
+  "dependencies": [
+    "1d0da41f-f366-4a81-ab1a-016f8395db94",
+    "c7113c5a-94da-462f-954e-3b7894bb95df"
+  ],
+  "description": "Determine raw-batch and dot-product crossovers and measure compatible wide polynomial operations against gf2x without conflating their semantics.\n\n## Background\n\nAfter capability-correct raw-batch dispatch is available, a full size-grid study can determine which paths actually pay. Raw independent products, dot-product accumulation and long-polynomial multiplication retain distinct comparison cells.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n- [hard] REQ-02: Measure raw batches and FieldVec dot products across the frozen small/crossover/cache/streaming grid, separating packing, accumulation, extraction and reduction costs. Use the pinned current implementation and retain the bounded predicate-fix receipt as evidence rather than assuming a speedup.\n\n- [hard] REQ-03: Compare operation-equivalent wide polynomial products against the pinned gf2x build with its observed basecase. Record raw independent-product cells without an external equivalent honestly; include composed field-reduction or representation costs where required.\n\n- [hard] REQ-04: Commit release assembly and profiler attribution of dependencies, instruction throughput, spills and conversion overhead. Evaluate bounded unrolling or fusion experiments only when the measured profile justifies them; no instruction-width-based speedup promises.\n\n- [hard] REQ-05: Publish qualifying selector/crossover recommendations with independent holdout measurements for the canonical tuning mechanism. Retain the established path in no-win domains; any additional production algorithm change has separately reviewed, tracked implementation scope.\n\n## Notes\n\nPin exact source and build identities in the family addendum. Preserve unavailable, incompatible and losing arms rather than substituting a different operation.\n\n",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Shared Zen 3 measurement contract",
+      "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    }
+  ],
+  "first_ready_at": "2026-09-06T19:59:36.095902220Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "53c5a8c0-ad93-4fdb-8319-aea18c3c257c",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-02",
+    "satisfies:REQ-06",
+    "cites:GfTwoX2026",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
+  "updated_at": "2026-09-06T20:07:50.417956318Z"
+}

@@ -288,3 +288,23 @@ url = "https://github.com/kiyo-masui/bitshuffle"
 key = "GfTwoX2026"
 citation = "Brent, R., Gaudry, P., Thomé, E., Zimmermann, P. — gf2x, a library for polynomial arithmetic over the binary field. Benchmark receipts identify the exact source revision and operation."
 url = "https://gitlab.inria.fr/gf2x/gf2x/"
+
+[[references]]
+key = "Srsran2026"
+citation = "Software Radio Systems — srsRAN Project LDPC encoder and decoder source. Comparator receipts identify the pinned revision, numerical contract and selected backend."
+url = "https://github.com/srsran/srsRAN_Project/tree/main/lib/phy/upper/channel_coding/ldpc"
+
+[[references]]
+key = "Xdsopl2026"
+citation = "xdsopl — LDPC, open-source DVB coding experiments and SIMD decoders. Comparator receipts identify the pinned revision, code tables, schedule and arithmetic."
+url = "https://github.com/xdsopl/LDPC"
+
+[[references]]
+key = "OpenAirInterface2026"
+citation = "OpenAirInterface — nrLDPC_decoder source. Candidate survey verifies the pinned build, supported code blocks, licensing and accelerated backend before admitting benchmark arms."
+url = "https://github.com/OPENAIRINTERFACE/openairinterface5g/tree/develop/openair1/PHY/CODING/nrLDPC_decoder"
+
+[[references]]
+key = "Mfourrie2026"
+citation = "Albrecht, M. R. and contributors — M4RIE, dense linear algebra over binary extension fields. Comparator receipts identify the exact source revision, field representation and operation."
+url = "https://github.com/malb/m4rie"

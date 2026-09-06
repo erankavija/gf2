@@ -1,0 +1,46 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-06T19:59:26.709153676Z",
+  "dependencies": [
+    "07ca8585-d822-49e7-96b8-18f6a3d73d4e"
+  ],
+  "description": "Complete the required feasibility and quality/performance decision for quantized, layered and QC-aware LDPC on the target host.\n\n## Background\n\nA float inter-frame decoder does not explore all available precision, schedule and code-structure choices. This mandatory bounded checkpoint evaluates those choices using the prepared canonical decoder workspace and measured profiles; shipping a new candidate is conditional, not presumed.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n- [hard] REQ-02: Produce a required candidate decision record covering int8/int16 saturation/scaling, layered min-sum schedules and QC-aware intra-frame alternatives to inter-frame batching, with a fixed exploratory and confirmatory search/stop budget. Explain any design ruled out by compatibility or feasibility evidence; no qualifying candidate is valid, skipping the evaluation is not.\n\n- [hard] REQ-03: Review numerical contracts and Rust 1.95 intrinsic feasibility before prototype implementation: signed-zero/tie rules, channel scaling, saturation/clipping, puncturing/fillers, variable-node accumulation order and per-frame termination. Use canonical safe library interfaces and isolated unsafe kernels with tested scalar reference paths.\n\n- [hard] REQ-04: Evaluate bounded prototypes of feasible candidates on the measured DVB-T2 and NR workload cells. Include throughput, single-frame latency, batch fill/transposition, memory, iteration distributions and equivalent stopping. Compare separately with matched-algorithm and fastest quality-compatible measured external arms.\n\n- [hard] REQ-05: Validate shared semantics and external conformance under each declared contract; report BER/FER counts and confidence intervals using random and all-zero codewords, punctured/filler inputs, mixed convergence and difficult frames. Predeclare quality tolerances; do not claim bit-exactness for a changed numerical contract without evidence.\n\n- [hard] REQ-06: Publish measured proceed/no-proceed decisions and limitations for every considered family. For selected production candidates, provide a reviewed design and worker-sized implementation scope before delivery fans out; experimental prototypes do not silently become the production decoder.\n\n## Notes\n\nPin exact source and build identities in the family addendum. Preserve unavailable, incompatible and losing arms rather than substituting a different operation.\n\n",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Shared Zen 3 measurement contract",
+      "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    }
+  ],
+  "first_ready_at": "2026-09-06T19:59:26.709153676Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "f63a2464-424d-4def-a740-8ff1471f0108",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "component:gf2-coding",
+    "component:gf2-kernels-simd",
+    "story:zen3-ldpc-frame-simd",
+    "satisfies:REQ-03",
+    "satisfies:REQ-06",
+    "cites:Cassagne2019",
+    "cites:Srsran2026",
+    "cites:Xdsopl2026",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Evaluate quantized layered and QC-aware LDPC candidates",
+  "updated_at": "2026-09-06T20:07:50.288829591Z"
+}

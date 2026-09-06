@@ -5,8 +5,33 @@
   "dependencies": [
     "1362381c-78c0-42eb-bdc9-4327f20bc343"
   ],
-  "description": "Maximize validated production CPU throughput on the Ryzen 9 5900X by measuring and closing AVX2-era kernel, decoder, and dispatch gaps against the strongest compatible open-source implementations.\n\n## Background\n\nThe target is the observed Zen 3 host with AVX2, PCLMULQDQ, YMM VPCLMULQDQ, POPCNT, BMI1 and BMI2. Hardware-specific optimization preserves portable scalar fallback and the existing mathematical and coding contracts. Profiling distinguishes kernel limitations from representation, allocation, dispatch and memory-traffic costs. The competitive objective applies to a frozen, justified workload set, not a claim of a universal hardware optimum.\n\n## Success Criteria\n\n- [hard] REQ-01: Provide a versioned premeasurement protocol, pinned open-source baseline survey and workload profiles covering the selected kernel and CPU coding workloads. Receipts contain runtime provenance, exact commands, uncertainty, bounded budgets, durable execution logs and resume identities.\n\n- [hard] REQ-02: Deliver measured outcomes for raw carry-less multiplication dispatch, fixed-coefficient $\\mathrm{GF}(2^8)$ region arithmetic, bit reductions, transpose/bitslice conversion, logical buffers and profiled shift/permutation consumers. Production selection includes only candidates satisfying the declared improvement and non-regression rules; record rejected candidates and their evidence.\n\n- [hard] REQ-03: Deliver a profiled, allocation-free steady-state min-sum decoder path and a reusable SIMD batch decoder with per-frame convergence, supported partial batches, and deterministic scalar equivalence under the declared numerical contract. Compare matched and fastest-compatible AFF3CT modes separately.\n\n- [hard] REQ-04: Select measured winners and crossover boundaries through the canonical offline tuning system and verify actual production dispatch. Record conservative portable, tuned portable and native-build results separately; unknown hosts retain deterministic safe fallback.\n\n- [hard] REQ-05: Publish a reproducible final competitive scorecard with per-workload throughput, latency, scaling and uncertainty, plus assembly/profiler attribution of all material remaining gaps. Reprofile after integration and give each residual gap a measured limit, preserved no-win result, or concrete tracked follow-up; thresholds and stopping rules are frozen before trials.\n\n- [hard] REQ-06: Preserve shared mathematical and standards conformance, zero tail padding, Rust 1.95 compatibility, unsafe-kernel isolation, canonical library abstractions and deterministic seeded execution. Decoder precision or schedule changes require a separately reviewed numerical contract and BER/FER evidence with sample counts and confidence intervals.\n\n- [aspirational] REQ-07: Meet or exceed the fastest compatible measured open-source implementation on each primary workload cell, with the outcome and uncertainty reported even when the target is falsified.\n\n## Notes\n\nImplementation work is CPU-focused; AVX-512, GFNI and GPU kernel expansion do not accelerate the target host. Correctness, mandatory benchmarking and honest reporting are hard requirements. External implementations remain benchmark comparators; this epic does not authorize new production dependencies on them.\n",
-  "documents": [],
+  "description": "Maximize validated production CPU throughput on the Ryzen 9 5900X by measuring and closing AVX2-era kernel, decoder, and dispatch gaps against the strongest compatible open-source implementations.\n\n## Background\n\nThe target is the observed Zen 3 host with AVX2, PCLMULQDQ, YMM VPCLMULQDQ, POPCNT, BMI1 and BMI2. Hardware-specific optimization preserves portable scalar fallback and the existing mathematical and coding contracts. Profiling distinguishes kernel limitations from representation, allocation, dispatch and memory-traffic costs. The competitive objective applies to a frozen, justified workload set, not a claim of a universal hardware optimum.\n\n## Success Criteria\n\n- [hard] REQ-01: Provide a shared versioned protocol and independent family surveys and consumer profiles satisfying the [measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md). Numeric settings and cell addenda are frozen before confirmation, with exploratory pilots excluded and independent holdout evidence retained.\n\n- [hard] REQ-02: Deliver measured outcomes for raw carry-less multiplication dispatch and polynomial crossovers, consumer-driven $\\mathrm{GF}(2^8)$ feasibility, bit reductions, transpose/bitslice conversion, logical buffers and profiled shift/permutation consumers. Production selection includes only qualifying candidates; a field feasibility study may conclude that no byte-region API or packing redesign is justified.\n\n- [hard] REQ-03: Deliver a profiled, allocation-free steady-state min-sum path and reusable SIMD batch decoding with per-frame convergence and partial batches under the declared deterministic numerical contract. Complete a mandatory bounded exploration/decision checkpoint for quantized, layered and QC-aware LDPC; ship such candidates only with reviewed contracts and qualifying throughput/latency/BER/FER evidence. Compare matched-algorithm and fastest quality-compatible measured decoders separately, including AFF3CT and applicable surveyed NR/DVB implementations.\n\n- [hard] REQ-04: Select measured winners and crossover boundaries through the canonical offline tuning system and verify actual production dispatch. Record conservative portable, tuned portable and native-build results separately; unknown hosts retain deterministic safe fallback.\n\n- [hard] REQ-05: Publish a reproducible final competitive scorecard with per-workload throughput, latency, scaling and uncertainty, plus assembly/profiler attribution of all material remaining gaps. Reprofile after integration and give each residual gap a measured limit, preserved no-win result, or concrete tracked follow-up; thresholds and stopping rules are frozen before trials.\n\n- [hard] REQ-06: Preserve shared mathematical and standards conformance, zero tail padding, Rust 1.95 compatibility, unsafe-kernel isolation, canonical library abstractions and deterministic seeded execution. Decoder precision or schedule changes require a separately reviewed numerical contract and BER/FER evidence with sample counts and confidence intervals.\n\n- [aspirational] REQ-07: Meet or exceed the fastest compatible measured open-source implementation on each primary workload cell, with the outcome and uncertainty reported even when the target is falsified.\n\n## Notes\n\nImplementation work is CPU-focused; AVX-512, GFNI and GPU kernel expansion do not accelerate the target host. Correctness, mandatory benchmarking and honest reporting are hard requirements. External implementations remain benchmark comparators; this epic does not authorize new production dependencies on them.\n\n",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Shared Zen 3 measurement contract",
+      "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "452089376294b523b395fd02329dbfe8019c05819d4029361972114d121a071f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Claude plan review and agreed resolutions",
+      "path": "dev/active/1a379447-zen3-cpu-performance/plan-review.md"
+    }
+  ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
   "gates_required": [
     "holistic-review",
@@ -28,5 +53,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-06T19:20:51.889038141Z"
+  "updated_at": "2026-09-06T20:07:50.549011766Z"
 }

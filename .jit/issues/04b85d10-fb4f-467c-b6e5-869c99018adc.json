@@ -1,0 +1,39 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-06T19:59:16.619469775Z",
+  "dependencies": [
+    "f547c394-9f05-4207-8f7f-2dcbb9e56999"
+  ],
+  "description": "Identify measured production consumers and bottlenecks for logical buffers, reductions and bit-layout transforms before selecting kernel changes.\n\n## Background\n\nPopulation counts, logical row operations and transpose/bitslice conversions can be hidden by dispatch, scratch traffic or unrelated algorithm costs. This profiling-only task provides production attribution independently of external comparator builds.\n\n## Success Criteria\n\n- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.\n\n- [hard] REQ-02: Publish current-code profiles for logical row/parity/dense-matrix consumers, count or fused-reduction consumers, and transpose/bitslice consumers including the current BCH encoding path. Identify actual public-entry-point-to-kernel routes and justify representative input sizes.\n\n- [hard] REQ-03: Quantify time shares, allocations, scratch and conversion traffic, dispatch overhead, dependencies and cache/bandwidth limits. Distinguish compiler spills from intentional scratch buffers and identify where any-nonzero semantics can replace unnecessary full counts.\n\n- [hard] REQ-04: Commit baseline receipts and ranked candidate experiments with family-specific consumer benefit/materiality hypotheses. Preserve not-material findings, and use the current pinned pre-change implementation rather than historical encoder performance as the measured baseline.\n\n- [hard] REQ-05: Limit this issue to profiles and experiment selection. Do not optimize kernels or start an independent BCH decoder/encoder campaign; reuse existing measurement and conversion harnesses.\n\n## Notes\n\nPin exact source and build identities in the family addendum. Preserve unavailable, incompatible and losing arms rather than substituting a different operation.\n\n",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Shared Zen 3 measurement contract",
+      "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    }
+  ],
+  "first_ready_at": "2026-09-06T19:59:16.619469775Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "04b85d10-fb4f-467c-b6e5-869c99018adc",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "satisfies:REQ-01",
+    "component:gf2-core",
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Profile bit-storage costs in production consumers",
+  "updated_at": "2026-09-06T20:07:50.162574750Z"
+}
