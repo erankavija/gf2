@@ -8,13 +8,16 @@
     "description": "Synthetic XOR-fold arms that exercise every receipt path of the protocol tooling. No cell here is a performance claim about gf2; the family exists so the pipeline is proven on this host before real families freeze their addenda."
   },
   "frozen": {
-    "frozen_utc": "2026-09-06T21:00:00Z"
+    "frozen_utc": "2026-09-06T23:08:26Z"
   },
   "effect": {
     "worthwhile_speedup": 1.5,
-    "rationale": "The smoke candidate arm performs one extra pass over the same buffer, so a genuine pipeline records a speedup near 2 for the doubled-work baseline cell; 1.5 sits far above the resolution and far below that expected effect, so a working pipeline passes and a broken one does not. This threshold is a pipeline check, not a consumer-benefit judgment.",
-    "measurement_resolution": null,
-    "resolution_evidence": null,
+    "rationale": "The smoke candidate arm performs one pass while the doubled-work baseline performs two, so a genuine pipeline records a speedup near 2. The pilot's largest relative confidence-interval half-width was 0.0315; rounding it upward to 0.04 leaves the 1.5 threshold far above the observed resolution and far below the expected effect. This threshold is a pipeline check, not a consumer-benefit judgment.",
+    "measurement_resolution": 0.04,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json",
+      "sha256": "6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf"
+    },
     "equivalence_margin": 1.1,
     "equivalence_rationale": "Identical arms must be declared not worse; a 10% equivalence margin exceeds the smoke resolution while still catching a pipeline that swaps arms or drops samples.",
     "material_gap_threshold": 1.5,
