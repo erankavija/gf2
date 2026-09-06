@@ -1525,6 +1525,23 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         stdout.starts_with("GF2_CAMPAIGN_EXECUTION_LOG="),
         "{stdout}"
     );
+    let unrelated_jit = repo.join(".jit/unrelated-session-record.json");
+    fs::create_dir_all(unrelated_jit.parent().unwrap()).unwrap();
+    fs::write(&unrelated_jit, b"{\"status\":\"updated\"}\n").unwrap();
+    git(&repo, &["add", ".jit/unrelated-session-record.json"]);
+    git(
+        &repo,
+        &[
+            "-c",
+            "user.name=fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-q",
+            "-m",
+            "unrelated JIT metadata",
+        ],
+    );
     // Outside the wrapper the runner refuses to measure.
     let unlocked = Command::new(runner)
         .args(["run"])
@@ -1541,6 +1558,13 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         "{}",
         String::from_utf8_lossy(&second.stderr)
     );
+    let unrelated_notes = repo.join("dev/active/unrelated-session-notes.md");
+    fs::create_dir_all(unrelated_notes.parent().unwrap()).unwrap();
+    fs::write(
+        unrelated_notes,
+        b"Unrelated working-tree notes must not change measurement identity.\n",
+    )
+    .unwrap();
     let third = run();
     assert_eq!(
         third.status.code(),
