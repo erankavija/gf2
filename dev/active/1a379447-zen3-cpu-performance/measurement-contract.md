@@ -9,17 +9,27 @@ confirmatory measurements begin. Repository engineering invariants also apply.
 ## Protocol identity and freezing
 
 Maintain one versioned protocol and independently versioned family/cell addenda.
-Every receipt pins the contract, protocol and applicable addendum by Git commit
-and content identity. Addenda specify only cell-specific choices; they cannot
-silently override the shared rules. Link the finalized artifacts from their owning
-issues so workers can discover the exact inputs.
+Every receipt pins immutable copies of the contract, protocol and applicable
+addendum by content digest. Git commits are optional navigation metadata, never
+critical provenance: Git-object availability, commit ancestry, HEAD changes and
+repository-wide clean/dirty status cannot decide acceptance, evidence validity or
+checkpoint/resume. Content identities of the producing code, executables,
+configuration and inputs establish reproducibility. Unrelated documentation, JIT
+and parallel-session changes leave those identities and existing evidence valid.
+Addenda specify only cell-specific choices; they cannot silently override the shared
+rules. Link the finalized artifacts from their owning issues so workers can discover
+the exact inputs.
 
 Exploratory pilots may inform workload selection, budgets and thresholds. Label
-them exploratory and exclude their samples from confirmation. Commit all numeric
-settings before that cell's first confirmatory trial: workload identities, warmup,
+them exploratory and exclude their samples from confirmation. Persist an immutable content-pinned snapshot of all numeric
+settings in the append-only execution record before that cell's first confirmatory trial: workload identities, warmup,
 sample minima/maxima, repetitions, confidence level, outlier policy, cache state,
 improvement and equivalence margins, material-gap threshold, search/stop budget,
-and multiple-comparison family. Protocol amendments create a new explicit version,
+and multiple-comparison family. The record binds the frozen content before the
+first measurement event; an unrelated Git commit is not a protocol amendment.
+Resolution evidence identifies a distinct pilot receipt by content digest. Commit
+the snapshots and execution evidence for durable publication. Protocol amendments
+that change experimental rules create a new explicit version,
 retain all earlier data and contradictions, and require fresh confirmation; they
 do not reclassify failed trials as pilots. Reserve independent holdout confirmation
 for calibrated selectors and final integration.
