@@ -256,3 +256,35 @@ url = "https://gap-packages.github.io/guava/"
 [[references]]
 key = "DvbVerification2010"
 citation = "DVB-T2 Verification and Validation Group — DVB-T2 modulator reference streams, configuration VV001-CR35, generated on the Common Simulation Platform (2010); distributed as DVB-T2 conformance material, copyright Digital Video Broadcasting Project. Test points TP04 (BCH input) and TP05 (BCH output) are the standards vectors the BCH conformance evidence consumes."
+
+[[references]]
+key = "IsaL2026"
+citation = "Intel — Intelligent Storage Acceleration Library (ISA-L), open-source region arithmetic, parity and CRC implementations. Benchmark receipts identify the exact source revision and enabled backend."
+url = "https://github.com/intel/isa-l"
+
+[[references]]
+key = "GfComplete2026"
+citation = "GF-Complete project — binary extension-field arithmetic library; Ceph read-only source mirror. Benchmark receipts identify the exact source revision, field representation and selected implementation."
+url = "https://github.com/ceph/gf-complete"
+
+[[references]]
+key = "Libpopcnt2026"
+citation = "Walisch, K. — libpopcnt, an open-source population-count library. Benchmark receipts identify the exact source revision and selected backend."
+url = "https://github.com/kimwalisch/libpopcnt"
+
+[[references]]
+key = "Mula2018"
+citation = "Muła, W., Kurz, N., Lemire, D. — Faster Population Counts Using AVX2 Instructions. The Computer Journal 61(1), 2018; arXiv:1611.07612. Reference implementations: WojciechMula/sse-popcount."
+arxiv = "1611.07612"
+doi = "10.1093/comjnl/bxx046"
+url = "https://github.com/WojciechMula/sse-popcount"
+
+[[references]]
+key = "Bitshuffle2026"
+citation = "Masui, K. and contributors — Bitshuffle, open-source bit-transposition filters for typed binary data. Benchmark receipts identify the source revision and exact transform layout."
+url = "https://github.com/kiyo-masui/bitshuffle"
+
+[[references]]
+key = "GfTwoX2026"
+citation = "Brent, R., Gaudry, P., Thomé, E., Zimmermann, P. — gf2x, a library for polynomial arithmetic over the binary field. Benchmark receipts identify the exact source revision and operation."
+url = "https://gitlab.inria.fr/gf2x/gf2x/"

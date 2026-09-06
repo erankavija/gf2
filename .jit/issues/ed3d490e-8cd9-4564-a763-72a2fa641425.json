@@ -1,0 +1,37 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-06T19:16:34.243787565Z",
+  "dependencies": [
+    "07ca8585-d822-49e7-96b8-18f6a3d73d4e"
+  ],
+  "description": "Provide a reusable inter-frame SIMD LDPC decoder that improves sustained CPU throughput while keeping per-frame convergence and latency explicit.\n\n## Background\n\nThe CPU decoder uses floating-point LLRs; placing equivalent message positions from independent frames in adjacent vector lanes can avoid repeated horizontal reductions. The layout must build on canonical edge indexing and prepared workspace. AFF3CT supports multiple SIMD strategies whose batching changes throughput, latency and memory footprint.\n\n## Success Criteria\n\n- [hard] REQ-01: Pass the shared behavioral and external conformance suites for every affected implementation, preserve the declared numerical contract and deterministic seeded execution, and exercise scalar fallback plus relevant empty, unaligned, partial-batch, and 0/1/63/64/65 bit-boundary cases. Compile intrinsic-bearing designs with Rust 1.95 before implementation decomposition; verify the shipped code at that MSRV.\n\n- [hard] REQ-02: Publish committed before/after and matching open-source comparison receipts, with machine-readable samples and a Markdown interpretation, under the issue's configured dev/bench_results directory. Record exact commands, source and comparator revisions, input identities and seeds, compiler flags, runtime-selected paths, and runtime-observed hardware provenance. Register external sources in the citation registry and link durable artifacts at their final paths.\n\n- [hard] REQ-03: Measure optimized release/bench builds on the Ryzen 9 5900X under the existing exclusive benchmark lock on a verified quiet host. Finish builds before measurement, record affinity, clocks/governor and SMT state, and use bounded resumable runs with an append-only execution log opened and printed before the first run.\n\n- [hard] REQ-04: Freeze workloads, sample/repetition budgets, warmup, confidence level, improvement and per-cell non-regression tolerances, material-gap threshold, and stopping rules in a versioned premeasurement protocol before optimization trials. Cover small inputs, crossover regions, cache-resident and streaming sizes, kernel-only costs, setup/conversion costs, and representative production consumers; record inapplicable cells explicitly.\n\n- [hard] REQ-05: Adopt production candidates only when the predeclared confidence-bound improvement and non-regression rules pass on their intended dispatch domain. Preserve all negative and inconclusive outcomes; retain the established implementation where no candidate qualifies. Report ratios to the fastest compatible measured external arm, without pooling incompatible operations or concealing losing cells in an aggregate.\n\n- [hard] REQ-06: Explain outcomes with committed assembly and profiler evidence for instruction mix, dependencies, spills, allocation, cache traffic, or bandwidth limits. Preserve architecture boundaries and canonical abstractions, keep unsafe code in isolated kernels, and publish a ranked explanation and tracked disposition for every material residual gap. A documented no-win result is acceptable; an unexplained skipped comparison is not.\n\n- [hard] REQ-07: Produce a reviewed design and worker-sized decomposition after profiling, specifying supported LLR precision, AVX2 lane layout, scalar reference, workspace ownership, per-frame termination, partial batches and integration points before implementation fans out.\n\n- [hard] REQ-08: Expose batch decoding as a reusable gf2-coding API with isolated kernels and thin gf2-sim consumption. Keep converged lanes inactive without altering other frames; preserve input order and results for batch sizes below, equal to and above vector width, including an incomplete final batch.\n\n- [hard] REQ-09: Match the canonical reference under the declared numerical contract across supported worker counts, scheduling, checkpoint/resume, and scalar fallback. Test mixed convergence times and difficult/nonconverging frames so lane masking cannot drop work.\n\n- [hard] REQ-10: Compare single-frame latency, batch-fill cost, sustained throughput and workspace memory against AFF3CT's supported INTRA and INTER modes. Sweep batch sizes and physical-core/SMT configurations; present matched-algorithm results separately from fastest-compatible results.\n\n- [hard] REQ-11: Do not silently introduce quantization or a different update schedule. Any such candidate has a separately reviewed numerical contract and external BER/FER validation with sample counts and confidence intervals before production adoption.\n\n",
+  "documents": [],
+  "first_ready_at": "2026-09-06T19:16:34.243787565Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review",
+    "asm-artefact-present",
+    "holistic-review",
+    "repo-validate"
+  ],
+  "gates_status": {},
+  "id": "ed3d490e-8cd9-4564-a763-72a2fa641425",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-coding",
+    "component:gf2-kernels-simd",
+    "component:gf2-sim",
+    "satisfies:REQ-03",
+    "satisfies:REQ-06",
+    "cites:Cassagne2019",
+    "story:zen3-ldpc-frame-simd",
+    "type:story"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Vectorize LDPC decoding across frames",
+  "updated_at": "2026-09-06T19:19:34.699927711Z"
+}

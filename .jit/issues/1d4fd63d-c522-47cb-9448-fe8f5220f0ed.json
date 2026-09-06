@@ -1,0 +1,38 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-06T19:17:21.023985170Z",
+  "dependencies": [
+    "f547c394-9f05-4207-8f7f-2dcbb9e56999",
+    "fd9d5416-d529-427d-a273-10e6468b9a19"
+  ],
+  "description": "Optimize measured bit transpose and bitslice conversion costs, including the layout conversion that production BCH encoding pays.\n\n## Background\n\nThe library uses a 64x64 AVX2 mask/shift/XOR transpose and retains a PSHUFB alternative. A 32x8 movemask/byte-shift candidate has different input geometry; comparisons must include tile assembly and packing. Existing BCH performance receipts and adapters provide the production evidence context.\n\n## Success Criteria\n\n- [hard] REQ-01: Pass the shared behavioral and external conformance suites for every affected implementation, preserve the declared numerical contract and deterministic seeded execution, and exercise scalar fallback plus relevant empty, unaligned, partial-batch, and 0/1/63/64/65 bit-boundary cases. Compile intrinsic-bearing designs with Rust 1.95 before implementation decomposition; verify the shipped code at that MSRV.\n\n- [hard] REQ-02: Publish committed before/after and matching open-source comparison receipts, with machine-readable samples and a Markdown interpretation, under the issue's configured dev/bench_results directory. Record exact commands, source and comparator revisions, input identities and seeds, compiler flags, runtime-selected paths, and runtime-observed hardware provenance. Register external sources in the citation registry and link durable artifacts at their final paths.\n\n- [hard] REQ-03: Measure optimized release/bench builds on the Ryzen 9 5900X under the existing exclusive benchmark lock on a verified quiet host. Finish builds before measurement, record affinity, clocks/governor and SMT state, and use bounded resumable runs with an append-only execution log opened and printed before the first run.\n\n- [hard] REQ-04: Freeze workloads, sample/repetition budgets, warmup, confidence level, improvement and per-cell non-regression tolerances, material-gap threshold, and stopping rules in a versioned premeasurement protocol before optimization trials. Cover small inputs, crossover regions, cache-resident and streaming sizes, kernel-only costs, setup/conversion costs, and representative production consumers; record inapplicable cells explicitly.\n\n- [hard] REQ-05: Adopt production candidates only when the predeclared confidence-bound improvement and non-regression rules pass on their intended dispatch domain. Preserve all negative and inconclusive outcomes; retain the established implementation where no candidate qualifies. Report ratios to the fastest compatible measured external arm, without pooling incompatible operations or concealing losing cells in an aggregate.\n\n- [hard] REQ-06: Explain outcomes with committed assembly and profiler evidence for instruction mix, dependencies, spills, allocation, cache traffic, or bandwidth limits. Preserve architecture boundaries and canonical abstractions, keep unsafe code in isolated kernels, and publish a ranked explanation and tracked disposition for every material residual gap. A documented no-win result is acceptable; an unexplained skipped comparison is not.\n\n- [hard] REQ-07: Compare the existing 64x64 transpose, its PSHUFB alternative and movemask-based candidates against M4RI and Bitshuffle only after defining an equivalent bit mapping and including adapter costs. Freeze exact tile shapes, tails and matrix dimensions in the experiment protocol.\n\n- [hard] REQ-08: Preserve the canonical relation $\\mathrm{output}[c][r] = \\mathrm{input}[r][c]$ under little-endian bit indexing, including zero-sized matrices, non-square matrices, unaligned storage and partial boundary tiles. Run shared transpose and bitslice round-trip contracts.\n\n- [hard] REQ-09: Measure isolated transform latency, bulk throughput, packing/unpacking costs, and BCH end-to-end conversion plus encoding. Use the established BCH baseline evidence and harness so kernel gains cannot conceal a slower overall encoder.\n\n- [hard] REQ-10: Attribute scratch-buffer traffic versus actual compiler spills in release assembly and profiles. Select any measured improvements through the shared transpose/bitslice abstraction and reject candidates whose complete conversion cost fails the frozen rule.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-06T19:17:21.023985170Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "1d4fd63d-c522-47cb-9448-fe8f5220f0ed",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "component:gf2-coding",
+    "satisfies:REQ-02",
+    "satisfies:REQ-06",
+    "cites:AlbrechtBard2026",
+    "cites:Bitshuffle2026",
+    "cites:Cassagne2019",
+    "cites:Djelic2011",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Optimize bit transpose and bitslice conversion",
+  "updated_at": "2026-09-06T19:20:03.593804561Z"
+}

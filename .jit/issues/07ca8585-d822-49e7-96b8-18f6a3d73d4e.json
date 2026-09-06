@@ -1,0 +1,33 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-06T19:16:24.786303643Z",
+  "dependencies": [
+    "3be770d5-779b-4a82-ad66-f9cec35057dc"
+  ],
+  "description": "Remove measured allocation and redundant message traversal costs from CPU min-sum LDPC updates while preserving the decoder's numerical contract.\n\n## Background\n\nLlr::boxplus_minsum_n currently collects a temporary Vec<f32> for accelerated calls. LdpcDecoder reconstructs all other messages for each outgoing edge and searches neighbor positions. The implementation should follow measured hot-path evidence for min-sum, normalized min-sum and offset min-sum, with reusable primitives in the owning library layer.\n\n## Success Criteria\n\n- [hard] REQ-01: Pass the shared behavioral and external conformance suites for every affected implementation, preserve the declared numerical contract and deterministic seeded execution, and exercise scalar fallback plus relevant empty, unaligned, partial-batch, and 0/1/63/64/65 bit-boundary cases. Compile intrinsic-bearing designs with Rust 1.95 before implementation decomposition; verify the shipped code at that MSRV.\n\n- [hard] REQ-02: Publish committed before/after and matching open-source comparison receipts, with machine-readable samples and a Markdown interpretation, under the issue's configured dev/bench_results directory. Record exact commands, source and comparator revisions, input identities and seeds, compiler flags, runtime-selected paths, and runtime-observed hardware provenance. Register external sources in the citation registry and link durable artifacts at their final paths.\n\n- [hard] REQ-03: Measure optimized release/bench builds on the Ryzen 9 5900X under the existing exclusive benchmark lock on a verified quiet host. Finish builds before measurement, record affinity, clocks/governor and SMT state, and use bounded resumable runs with an append-only execution log opened and printed before the first run.\n\n- [hard] REQ-04: Freeze workloads, sample/repetition budgets, warmup, confidence level, improvement and per-cell non-regression tolerances, material-gap threshold, and stopping rules in a versioned premeasurement protocol before optimization trials. Cover small inputs, crossover regions, cache-resident and streaming sizes, kernel-only costs, setup/conversion costs, and representative production consumers; record inapplicable cells explicitly.\n\n- [hard] REQ-05: Adopt production candidates only when the predeclared confidence-bound improvement and non-regression rules pass on their intended dispatch domain. Preserve all negative and inconclusive outcomes; retain the established implementation where no candidate qualifies. Report ratios to the fastest compatible measured external arm, without pooling incompatible operations or concealing losing cells in an aggregate.\n\n- [hard] REQ-06: Explain outcomes with committed assembly and profiler evidence for instruction mix, dependencies, spills, allocation, cache traffic, or bandwidth limits. Preserve architecture boundaries and canonical abstractions, keep unsafe code in isolated kernels, and publish a ranked explanation and tracked disposition for every material residual gap. A documented no-win result is acceptable; an unexplained skipped comparison is not.\n\n- [hard] REQ-07: Demonstrate with an allocation counter that repeated decoding with prepared workspace and a fixed supported configuration performs zero heap allocations in steady state. Initial construction and documented workspace growth are measured separately.\n\n- [hard] REQ-08: Use one canonical precomputed edge indexing/layout and a shared minimum, second-minimum and sign reduction so each check update visits incoming messages a bounded number of times linear in check degree, without per-output neighbor searches or repeated exclusion-buffer construction.\n\n- [hard] REQ-09: Preserve the supported scalar reference's observable behavior for ties, signed zero, finite extrema, empty/degree-one cases where supported, clipping and non-finite inputs under the declared API contract. Preserve arithmetic order where it is part of that contract; do not hide numerical changes in a performance refactor.\n\n- [hard] REQ-10: Publish matched AFF3CT comparisons for check-node updates, full iterations and full decoding on the frozen DVB-T2 and NR workloads. Include single-core and physical-core/SMT scaling, allocation counts, representative degree distributions and iteration/early-exit behavior.\n\n",
+  "documents": [],
+  "first_ready_at": "2026-09-06T19:16:24.786303643Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "07ca8585-d822-49e7-96b8-18f6a3d73d4e",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-coding",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-03",
+    "satisfies:REQ-06",
+    "cites:Cassagne2019",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Remove allocation and repeated edge traversal from LDPC updates",
+  "updated_at": "2026-09-06T19:19:25.099170621Z"
+}

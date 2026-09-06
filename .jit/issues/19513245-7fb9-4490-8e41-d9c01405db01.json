@@ -1,0 +1,34 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-06T19:16:43.729358013Z",
+  "dependencies": [
+    "f547c394-9f05-4207-8f7f-2dcbb9e56999"
+  ],
+  "description": "Add measured byte-packed fixed-coefficient multiplication and multiply-XOR for $\\mathrm{GF}(2^8)$ regions through the canonical field and packed-storage abstractions.\n\n## Background\n\nThe existing broadcast multiply/XOR path stores elements as u64 and uses carry-less multiplication. Split-nibble VPSHUFB tables can process byte-packed regions when one coefficient is reused; the same two-table method does not directly implement arbitrary independent operand-pair multiplication. The representation and polynomial must remain explicit.\n\n## Success Criteria\n\n- [hard] REQ-01: Pass the shared behavioral and external conformance suites for every affected implementation, preserve the declared numerical contract and deterministic seeded execution, and exercise scalar fallback plus relevant empty, unaligned, partial-batch, and 0/1/63/64/65 bit-boundary cases. Compile intrinsic-bearing designs with Rust 1.95 before implementation decomposition; verify the shipped code at that MSRV.\n\n- [hard] REQ-02: Publish committed before/after and matching open-source comparison receipts, with machine-readable samples and a Markdown interpretation, under the issue's configured dev/bench_results directory. Record exact commands, source and comparator revisions, input identities and seeds, compiler flags, runtime-selected paths, and runtime-observed hardware provenance. Register external sources in the citation registry and link durable artifacts at their final paths.\n\n- [hard] REQ-03: Measure optimized release/bench builds on the Ryzen 9 5900X under the existing exclusive benchmark lock on a verified quiet host. Finish builds before measurement, record affinity, clocks/governor and SMT state, and use bounded resumable runs with an append-only execution log opened and printed before the first run.\n\n- [hard] REQ-04: Freeze workloads, sample/repetition budgets, warmup, confidence level, improvement and per-cell non-regression tolerances, material-gap threshold, and stopping rules in a versioned premeasurement protocol before optimization trials. Cover small inputs, crossover regions, cache-resident and streaming sizes, kernel-only costs, setup/conversion costs, and representative production consumers; record inapplicable cells explicitly.\n\n- [hard] REQ-05: Adopt production candidates only when the predeclared confidence-bound improvement and non-regression rules pass on their intended dispatch domain. Preserve all negative and inconclusive outcomes; retain the established implementation where no candidate qualifies. Report ratios to the fastest compatible measured external arm, without pooling incompatible operations or concealing losing cells in an aggregate.\n\n- [hard] REQ-06: Explain outcomes with committed assembly and profiler evidence for instruction mix, dependencies, spills, allocation, cache traffic, or bandwidth limits. Preserve architecture boundaries and canonical abstractions, keep unsafe code in isolated kernels, and publish a ranked explanation and tracked disposition for every material residual gap. A documented no-win result is acceptable; an unexplained skipped comparison is not.\n\n- [hard] REQ-07: Provide reusable region multiply and multiply-XOR operations in the owning library, integrated with the existing field-capability/packed-lane surface and tuning mechanism. Preserve arbitrary supported field polynomials; test at least 0x11B and 0x11D, all byte coefficients, zero/one coefficients, unaligned regions and non-vector tails.\n\n- [hard] REQ-08: Validate against scalar field multiplication and the shared field-law/conformance contract, including destination accumulation and documented overlap rules. Register and cite the exact external implementations used.\n\n- [hard] REQ-09: Benchmark VPSHUFB split-nibble candidates against the established carry-less multiplication path, ISA-L and GF-Complete on mathematically identical field/representation cells. ISA-L's usual 0x11D representation must not be compared directly with 0x11B arithmetic.\n\n- [hard] REQ-10: Include table preparation, coefficient reuse counts, byte/u64 representation conversion and output conversion in region and production-consumer measurements. Keep arbitrary pairwise multiplication as a separately labeled control; select byte-packed dispatch only on domains where total measured cost qualifies.\n\n## Notes\n\nUse the existing field-capability and offline tuning abstractions; this task does not introduce a private parallel field or byte-region framework.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-06T19:16:43.729358013Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review",
+    "asm-artefact-present"
+  ],
+  "gates_status": {},
+  "id": "19513245-7fb9-4490-8e41-d9c01405db01",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-02",
+    "satisfies:REQ-06",
+    "cites:IsaL2026",
+    "cites:GfComplete2026",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Accelerate fixed-coefficient GF(2^8) region arithmetic",
+  "updated_at": "2026-09-06T19:19:44.312409094Z"
+}

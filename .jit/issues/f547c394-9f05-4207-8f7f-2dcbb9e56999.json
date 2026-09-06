@@ -1,0 +1,39 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-09-06T19:16:06.002331323Z",
+  "dependencies": [],
+  "description": "Establish the reproducible workload, comparator and measurement foundation for CPU optimization on the Ryzen 9 5900X.\n\n## Background\n\nThe repository already has CPU coding comparison runners, core tuning calibration, BCH baseline surveys, and an exclusive host benchmark lock. Extend those canonical mechanisms and preserve their producing-tool behavioral identities instead of creating a parallel measurement framework. A processor capability audit is not a throughput baseline.\n\n## Success Criteria\n\n- [hard] REQ-01: Pass the shared behavioral and external conformance suites for every affected implementation, preserve the declared numerical contract and deterministic seeded execution, and exercise scalar fallback plus relevant empty, unaligned, partial-batch, and 0/1/63/64/65 bit-boundary cases. Compile intrinsic-bearing designs with Rust 1.95 before implementation decomposition; verify the shipped code at that MSRV.\n\n- [hard] REQ-02: Publish committed before/after and matching open-source comparison receipts, with machine-readable samples and a Markdown interpretation, under the issue's configured dev/bench_results directory. Record exact commands, source and comparator revisions, input identities and seeds, compiler flags, runtime-selected paths, and runtime-observed hardware provenance. Register external sources in the citation registry and link durable artifacts at their final paths.\n\n- [hard] REQ-03: Measure optimized release/bench builds on the Ryzen 9 5900X under the existing exclusive benchmark lock on a verified quiet host. Finish builds before measurement, record affinity, clocks/governor and SMT state, and use bounded resumable runs with an append-only execution log opened and printed before the first run.\n\n- [hard] REQ-04: Freeze workloads, sample/repetition budgets, warmup, confidence level, improvement and per-cell non-regression tolerances, material-gap threshold, and stopping rules in a versioned premeasurement protocol before optimization trials. Cover small inputs, crossover regions, cache-resident and streaming sizes, kernel-only costs, setup/conversion costs, and representative production consumers; record inapplicable cells explicitly.\n\n- [hard] REQ-05: Adopt production candidates only when the predeclared confidence-bound improvement and non-regression rules pass on their intended dispatch domain. Preserve all negative and inconclusive outcomes; retain the established implementation where no candidate qualifies. Report ratios to the fastest compatible measured external arm, without pooling incompatible operations or concealing losing cells in an aggregate.\n\n- [hard] REQ-06: Explain outcomes with committed assembly and profiler evidence for instruction mix, dependencies, spills, allocation, cache traffic, or bandwidth limits. Preserve architecture boundaries and canonical abstractions, keep unsafe code in isolated kernels, and publish a ranked explanation and tracked disposition for every material residual gap. A documented no-win result is acceptable; an unexplained skipped comparison is not.\n\n- [hard] REQ-07: Commit a protocol and workload manifest under the issue's configured dev/active directory, with benchmark adapters or reusable extensions, immutable raw samples, and baseline receipts under its dev/bench_results directory. The manifest selects representative raw CLMUL/dot products, $\\mathrm{GF}(2^8)$ regions, bit reductions, transpose/BCH conversion, logical buffers, shifts/permutations, and DVB-T2 plus NR LDPC consumers, recording justification and exact identities.\n\n- [hard] REQ-08: Survey and pin the strongest compatible open-source candidates: AFF3CT for coding, ISA-L and GF-Complete for region arithmetic/parity, libpopcnt and Mula reference implementations for population count, M4RI and compatible Bitshuffle transforms for matrices/transpose, and gf2x for matching polynomial operations. Confirm the actual accelerated backend by runtime reporting or assembly. Document the mapping and any unavailable equivalent; do not substitute a different mathematical operation for a missing comparator.\n\n- [hard] REQ-09: Publish profiles identifying time shares, allocations, memory traffic and relevant instruction/latency/bandwidth limits for each selected consumer. Verify candidate intrinsics and feature predicates using Rust 1.95 before prescribing implementation decomposition.\n\n- [hard] REQ-10: Freeze paired/randomized-run statistics, numeric acceptance tolerances, per-cell sample minima and maxima, outlier rules, cache-state handling, multiple-comparison treatment, material-gap definition and bounded stopping criteria before optimization. Pilot data may choose those constants but cannot count as independent confirmation data. Include a later holdout/reconfirmation run.\n\n- [hard] REQ-11: Measure isolated one-core latency and sustained throughput separately from multicore performance. Resolve physical CPU topology at runtime; compare 1, 6, 12 physical cores and all 24 logical CPUs where meaningful, recording affinity and controlling both libraries' workers and internal thread pools.\n\n- [hard] REQ-12: Separate matched-algorithm decoder comparisons from each implementation's fastest compatible mode. Matched arms consume identical parity-check matrices and recorded input LLRs with fixed precision, schedule, normalization, iteration cap and stopping behavior. Report batching latency, memory footprint, iteration distributions, BER/FER sample counts and confidence intervals where stochastic outcomes are measured.\n\n- [hard] REQ-13: Provide a machine-readable acceptance summary that checks receipt completeness and evaluates the frozen statistical rules. Report a calibrated portable build and a native-optimized build separately, giving competitors equivalent host-targeting opportunities and accounting for all setup, packing and output-conversion costs.\n\n## Notes\n\nExternal citations identify algorithms/software, while benchmark receipts pin their actual revisions. This issue implements measurement support and establishes baselines; it does not implement production performance changes.\n",
+  "documents": [],
+  "first_ready_at": "2026-09-06T19:16:06.002331323Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "f547c394-9f05-4207-8f7f-2dcbb9e56999",
+  "labels": [
+    "epic:zen3-cpu-performance",
+    "component:benchmarks",
+    "component:gf2-core",
+    "component:gf2-coding",
+    "component:gf2-sim",
+    "satisfies:REQ-01",
+    "satisfies:REQ-05",
+    "cites:Cassagne2019",
+    "cites:IsaL2026",
+    "cites:GfComplete2026",
+    "cites:Libpopcnt2026",
+    "cites:Mula2018",
+    "cites:AlbrechtBard2026",
+    "cites:Bitshuffle2026",
+    "cites:GfTwoX2026",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Establish reproducible Zen 3 performance baselines",
+  "updated_at": "2026-09-06T19:16:06.002331323Z"
+}

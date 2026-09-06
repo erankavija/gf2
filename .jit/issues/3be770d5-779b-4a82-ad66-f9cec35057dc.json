@@ -3,9 +3,10 @@
   "context": {},
   "created_at": "2026-06-12T16:50:06.823759512Z",
   "dependencies": [
-    "18e69a1a-c86f-49dc-b381-88f62cd20aa0"
+    "18e69a1a-c86f-49dc-b381-88f62cd20aa0",
+    "f547c394-9f05-4207-8f7f-2dcbb9e56999"
   ],
-  "description": "## Goal\n\nThe E.4 comparison harness (`18e69a1a`) showed aff3ct v4.4.0 decoding\n~5-6x more frames/s than `gf2_coding::LdpcDecoder` on the CPU under\nthe committed run.sh invocations (DVB-T2: ~72-168 vs ~12-30 fps; NR:\n~152-313 vs ~29-78 fps). The fps columns were informational and the\nthread accounting was NOT normalized (our bin used 24 rayon workers;\naff3ct ran at its own threading default, never pinned). Establish the\ntrue per-core gap, find out where the time goes, and recommend the\nlevers — measurements first, no speedup promises before profiling.\n\n## Context\n\nThe project vision says 'push beyond existing implementations'. Our\nGPU LDPC stage (639 fps decode-stage on gfx1030, `a930be7f` receipt)\nalready beats aff3ct's CPU by ~4-9x on the same host; the CPU scalar\ndecoder is the slow piece. The E.4 harness\n(`dev/benchmarks/gf2-sim/comparison/`) is the ready-made measurement\nrig: `run.sh` hermetically builds aff3ct, `ldpc_bler_sweep` is the\ngf2-sim arm, `export_alist` pins the bit-identical H.\n\n## Deliverables\n\n1. Pinned-thread apples-to-apples re-measure on the E.4 configs\n   (DVB-T2 r1/2 N=64800 + NR BG1 Z=384 mother), quiet host:\n   aff3ct `-t 1` vs single-rayon-worker `ldpc_bler_sweep`, and\n   24-vs-24; per-core and per-host ratios documented.\n2. Profile of the `LdpcDecoder` NMS decode hot path (perf record or\n   equivalent): top contributors (memory layout, message storage,\n   per-iteration allocation, Llr genericity) with numbers.\n3. Evidence doc `dev/benchmarks/gf2-sim/cpu-decoder-profile.md`\n   with the measurements, flamegraph/annotated summary, and a\n   recommendation section ranking levers (e.g. compressed message\n   layout, allocation hoisting, inter-frame AVX2 SIMD batch decode)\n   by estimated ROI. Any follow-up implementation work is scoped\n   from this doc, not before it.\n\n## Success Criteria\n\n- [hard] REQ-01: Pinned-thread measurements (1-vs-1 and 24-vs-24) for both\n  E.4 configs on a verified-quiet host, committed in the evidence\n  doc with exact invocations (reproducible).\n- [hard] REQ-02: Profile identifies the top >=3 hot-path contributors with\n  percentages; claims backed by profiler output, not inspection.\n- [hard] REQ-03: Recommendation section ranks the candidate levers with\n  measured or first-principles-estimated ROI; AVX-512/VNNI/GFNI\n  work is explicitly OUT of scope here (routes to epic `7f809931`\n  per project policy).\n- [hard] REQ-04: `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- No decoder optimization implementation in this task (scoped by the\n  evidence doc afterwards).\n- No AVX-512 lane work (epic `7f809931`).\n- No GPU kernel work (covered by study `43fb19e2`'s future epic).\n",
+  "description": "Establish the normalized CPU LDPC throughput gap against AFF3CT and rank measured bottlenecks before decoder optimization.\n\n## Background\n\nThe existing comparison harness in dev/benchmarks/gf2-sim/comparison exports identical parity-check matrices for DVB-T2 rate-1/2 normal frames and the NR BG1 Z=384 mother code. Earlier throughput columns did not normalize worker counts or affinity and therefore do not establish the per-core competitive gap. This issue owns profiling and recommendations, not decoder optimization implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish pinned-thread, quiet-host comparisons for both existing configurations: one worker versus one worker, and 24 versus 24 logical-CPU workers, augmented with six- and twelve-physical-core arms. Resolve topology and record affinity, actual worker counts, nested thread pools, SMT state and source/build identities.\n\n- [hard] REQ-02: Identify at least three leading hot-path contributors with measured time shares and committed perf profiles or equivalent evidence, including allocation, edge traversal, layout, reduction and dispatch costs where present. Distinguish single-core bottlenecks from multicore saturation.\n\n- [hard] REQ-03: Rank candidate levers by measured evidence or explicitly labeled first-principles estimates, including allocation removal, canonical edge indexing, shared min-sum reductions and inter-frame AVX2. State the falsifiable experiment and relevant workload for each recommendation before implementation scope is finalized.\n\n- [hard] REQ-04: Preserve the existing numerical comparison contract: identical H, NMS alpha 0.75, flooding schedule, iteration cap 50 and syndrome early termination in matched arms; feed identical recorded LLRs where the adapter supports it. Separate fastest-compatible AFF3CT modes and report precision/schedule/batching differences, iteration distributions, and BER/FER counts and confidence intervals.\n\n- [hard] REQ-05: Pass the shared behavioral and external conformance suites for every affected implementation, preserve the declared numerical contract and deterministic seeded execution, and exercise scalar fallback plus relevant empty, unaligned, partial-batch, and 0/1/63/64/65 bit-boundary cases. Compile intrinsic-bearing designs with Rust 1.95 before implementation decomposition; verify the shipped code at that MSRV.\n\n- [hard] REQ-06: Publish committed before/after and matching open-source comparison receipts, with machine-readable samples and a Markdown interpretation, under the issue's configured dev/bench_results directory. Record exact commands, source and comparator revisions, input identities and seeds, compiler flags, runtime-selected paths, and runtime-observed hardware provenance. Register external sources in the citation registry and link durable artifacts at their final paths.\n\n- [hard] REQ-07: Measure optimized release/bench builds on the Ryzen 9 5900X under the existing exclusive benchmark lock on a verified quiet host. Finish builds before measurement, record affinity, clocks/governor and SMT state, and use bounded resumable runs with an append-only execution log opened and printed before the first run.\n\n- [hard] REQ-08: Freeze workloads, sample/repetition budgets, warmup, confidence level, improvement and per-cell non-regression tolerances, material-gap threshold, and stopping rules in a versioned premeasurement protocol before optimization trials. Cover small inputs, crossover regions, cache-resident and streaming sizes, kernel-only costs, setup/conversion costs, and representative production consumers; record inapplicable cells explicitly.\n\n- [hard] REQ-09: Adopt production candidates only when the predeclared confidence-bound improvement and non-regression rules pass on their intended dispatch domain. Preserve all negative and inconclusive outcomes; retain the established implementation where no candidate qualifies. Report ratios to the fastest compatible measured external arm, without pooling incompatible operations or concealing losing cells in an aggregate.\n\n- [hard] REQ-10: Explain outcomes with committed assembly and profiler evidence for instruction mix, dependencies, spills, allocation, cache traffic, or bandwidth limits. Preserve architecture boundaries and canonical abstractions, keep unsafe code in isolated kernels, and publish a ranked explanation and tracked disposition for every material residual gap. A documented no-win result is acceptable; an unexplained skipped comparison is not.\n\n## Notes\n\nKeep this issue profiling-only. Reuse the linked comparison harness; no AVX-512/GFNI or GPU kernel implementation is included. The evidence contains profile.md and machine-readable measurements under the issue's configured dev/bench_results directory, with durable links to the raw execution log and profiler artifacts.\n\n",
   "documents": [
     {
       "assets": [
@@ -28,7 +29,8 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "research-review"
   ],
   "gates_status": {
     "cargo-ci": {
@@ -40,16 +42,25 @@
       "status": "pending",
       "updated_at": "2026-06-12T16:50:17.105475134Z",
       "updated_by": null
+    },
+    "research-review": {
+      "status": "pending",
+      "updated_at": "2026-09-06T19:18:29.127808422Z",
+      "updated_by": null
     }
   },
   "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:competitive-benchmarking"
+    "epic:competitive-benchmarking",
+    "epic:zen3-cpu-performance",
+    "satisfies:REQ-01",
+    "satisfies:REQ-03",
+    "cites:Cassagne2019"
   ],
-  "priority": "normal",
-  "state": "ready",
+  "priority": "high",
+  "state": "backlog",
   "title": "Profile and close the CPU LDPC BP throughput gap vs aff3ct",
-  "updated_at": "2026-08-07T20:38:15.266163166Z"
+  "updated_at": "2026-09-06T19:19:05.777323051Z"
 }
