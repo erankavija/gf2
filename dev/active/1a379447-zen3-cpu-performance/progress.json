@@ -11,7 +11,7 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "dispatched",
+          "status": "merged; gates in progress",
           "dispatch": {
             "model": "fable",
             "worktree": ".agents/worktrees/agent-f547c394",
@@ -27,7 +27,8 @@
                 "action": "same worker resumed via SendMessage after limit reset; instructed to commit early"
               }
             ]
-          }
+          },
+          "merge_commit": "7a222264"
         }
       ]
     },
@@ -205,7 +206,22 @@
   "created_during_execution": [],
   "escalations": [],
   "rework_counts": {},
-  "surfaced_pitfalls": [],
+  "surfaced_pitfalls": [
+    {
+      "issue": "f547c394",
+      "subject": "a83583e0 producing-input manifest lists the untracked dev/tools/tuning-profile-compose/Cargo.lock; driver unit test producing_input_manifest_rejects_authority_and_path_mutations fails in a fresh worktree until the composer builds",
+      "origin": "pre-existing (a83583e0)",
+      "disposition": "advisory; owner a83583e0/dbd8787d; reported in dev/active/f547c394/design.md",
+      "criterion_named_by": "none in 1a379447"
+    },
+    {
+      "issue": "f547c394",
+      "subject": "campaign::SessionStore not reused by the benchmark runner; named convention-convergence exception with a recorded convergence condition in dev/active/f547c394/design.md",
+      "origin": "issue-impact, tracked exception",
+      "disposition": "advisory; convergence condition: parameterize SessionDescriptor::validate when a second consumer needs the lifecycle store",
+      "criterion_named_by": "none in 1a379447"
+    }
+  ],
   "notes": [
     "Wave numbers are dependency depth; dispatch is dependency-driven within a wave.",
     "1362381c depends on fd9d5416 (BCH epic ae03bcd0): cross-epic dependency, part of the user-approved plan (plan-review.md); revisit at wave 7.",
