@@ -16,7 +16,7 @@ use crate::host::{CoreArm, HostObservation};
 use crate::journal::{ExecutionLog, JournalEvent, JournalRecord};
 use crate::protocol::{
     is_hex, sha256_hex, ArtifactPin, BuildIdentity, CacheState, CellObjective, CellRole,
-    DecoderArmKind, FamilyAddendum, Normalization, Precision, ReceiptLabel, Schedule,
+    DecoderArmKind, FamilyAddendum, Normalization, PinSource, Precision, ReceiptLabel, Schedule,
     SharedSettings, Stopping, ACCEPTANCE_SCHEMA_ID, ADDENDUM_SCHEMA_PATH, CONTRACT_PATH,
     PROTOCOL_PATH, RECEIPT_SCHEMA_ID, SHARED_SETTINGS,
 };
@@ -460,11 +460,26 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
             }
         }
         match repo_root {
-            Some(root) => {
-                if let Err(message) = pin.verify_content(root) {
-                    e.error(rule, None, format!("{name} identity: {message}"));
+            Some(root) => match pin.verify_content(root) {
+                Err(message) => e.error(rule, None, format!("{name} identity: {message}")),
+                Ok(PinSource::WorkingTree) => e.note(
+                    rule,
+                    None,
+                    format!(
+                        "{name} verified against the working tree; commit {} is not resolvable here",
+                        pin.git_commit
+                    ),
+                ),
+                Ok(PinSource::Commit) => {
+                    if pin.working_tree_matches(root) == Some(false) {
+                        e.note(
+                            rule,
+                            None,
+                            format!("{name} changed in the working tree after this measurement; the pinned version governed the run"),
+                        );
+                    }
                 }
-            }
+            },
             None => e.note(
                 rule,
                 None,
@@ -489,7 +504,7 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
 
     // Addendum: decode from the repository when available, otherwise trust nothing beyond identity.
     let addendum = match repo_root {
-        Some(root) => match fs::read(root.join(&receipt.addendum.path)) {
+        Some(root) => match receipt.addendum.read_pinned(root).map(|(bytes, _)| bytes) {
             Ok(bytes) => match FamilyAddendum::decode(&bytes) {
                 Ok(addendum) => {
                     if let Err(errors) = addendum.validate() {
@@ -497,7 +512,7 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
                             e.error("P-03", None, format!("addendum: {message}"));
                         }
                     }
-                    if let Ok(schema_bytes) = fs::read(root.join(ADDENDUM_SCHEMA_PATH)) {
+                    if let Ok((schema_bytes, _)) = receipt.addendum_schema.read_pinned(root) {
                         match (
                             serde_json::from_slice::<Value>(&schema_bytes),
                             serde_json::from_slice::<Value>(&bytes),
@@ -530,11 +545,11 @@ pub fn evaluate(receipt_dir: &Path, repo_root: Option<&Path>) -> io::Result<Acce
                     None
                 }
             },
-            Err(error) => {
+            Err(message) => {
                 e.error(
                     "P-03",
                     None,
-                    format!("addendum {} unreadable: {error}", receipt.addendum.path),
+                    format!("addendum {} unreadable: {message}", receipt.addendum.path),
                 );
                 None
             }
