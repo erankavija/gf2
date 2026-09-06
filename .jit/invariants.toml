@@ -149,7 +149,7 @@ statement = "Every campaign opens a durable append-only execution log before its
 enforced-by = "@/gate/code-review"
 id = "behavioral-evidence-validity"
 kind = "enforced"
-statement = "Committed measurement evidence is invalidated only by a change to the producing tool's measurement behavior — sampling, evaluation, timing, or output semantics — never by a documentation, narrative, or review-artifact change; the tool pins its behavioral identity so the two are distinguishable."
+statement = "Committed measurement evidence is invalidated only by a change to the producing tool's measurement behavior — sampling, evaluation, timing, or output semantics — never by a documentation, narrative, or review-artifact change; the tool pins its behavioral identity so the two are distinguishable. Git commit IDs and repository-wide clean/dirty status are informational only; acceptance, invalidation, and checkpoint/resume depend on the content identities of producing code, executables, configuration, and inputs, so unrelated commits and parallel-session edits do not invalidate evidence."
 
 [[invariants]]
 enforced-by = "@/gate/code-review"
