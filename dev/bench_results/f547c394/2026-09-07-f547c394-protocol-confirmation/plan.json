@@ -1,9 +1,9 @@
 {
   "schema": "zen3-benchmark-plan-v1",
-  "campaign_id": "smoke-f547c394-20260906t213607z",
+  "campaign_id": "confirmation-f547c394-20260906t230920z",
   "issue": "f547c394",
-  "label": "smoke",
-  "campaign_seed": 20260906,
+  "label": "confirmation",
+  "campaign_seed": 20260907,
   "addendum": "dev/active/f547c394/addendum-protocol-smoke.json",
   "lock_path": "/tmp/gf2-ccx1.lock",
   "wrapper": "dev/scripts/ccx1-bench-flock.sh",
