@@ -16,8 +16,7 @@ use tuning_campaign_support::receipt::{
 fn main() {
     let args: Vec<String> = env::args().collect();
     let mut receipt_dir: Option<PathBuf> = None;
-    let mut iter = args.iter().skip(1);
-    while let Some(arg) = iter.next() {
+    for arg in args.iter().skip(1) {
         if receipt_dir.is_none() {
             receipt_dir = Some(PathBuf::from(arg));
         } else {

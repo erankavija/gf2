@@ -35,6 +35,25 @@ not a passing verdict on the incomplete implementation.
 
 ## Verification status
 
-The invariant, measurement contract and issue criteria record this direction.
-Implementation rework and all configured gates remain required before completion.
-The rework attempt remains the first retry under the clarified contract.
+The implementation stores and verifies receipt-local snapshots for the shared
+protocol, contract, schema, family addendum, producing-input closure and pilot
+evidence. Shared checkpoint resume compares producing content while preserving
+informational source-control locators. The tuning-campaign-support suite passes
+147 tests, including independent checkpoint provenance tests and receipt tests
+for missing or changed snapshots, metadata-independent acceptance, premeasurement
+addendum freezing and distinct pilot evidence.
+
+The durable pilot receipt at
+`dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json`
+has SHA-256
+`6ff1d8697eb7846b98702302cd258a1ccc72c0ab9575fc8f0bf74401310757bf`;
+its acceptance summary reports zero findings across two resumed sessions. The
+separately frozen confirmatory addendum cites that digest. Its confirmatory
+receipt at
+`dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json`
+has SHA-256
+`e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344`
+and is accepted with zero findings across two resumed sessions. It preserves
+the unavailable 12-core cell observed under the six-core CCX1 affinity. The
+configured issue gates remain the execution lead's completion step. This is the
+first rework attempt under the clarified contract.
