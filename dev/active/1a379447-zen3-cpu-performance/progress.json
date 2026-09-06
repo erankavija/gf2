@@ -18,7 +18,15 @@
             "branch": "worktree-agent-f547c394",
             "base": "974a21f4",
             "attempt": 1,
-            "at": "2026-09-06T20:24:54+00:00"
+            "at": "2026-09-06T20:24:54+00:00",
+            "interruptions": [
+              {
+                "at": "2026-09-06T21:04:39Z",
+                "reason": "worker session usage limit",
+                "state": "scaffold uncommitted in worktree (6 modules, 3 bins, 3 tests, dev/active/f547c394)",
+                "action": "same worker resumed via SendMessage after limit reset; instructed to commit early"
+              }
+            ]
           }
         }
       ]
@@ -201,7 +209,8 @@
   "notes": [
     "Wave numbers are dependency depth; dispatch is dependency-driven within a wave.",
     "1362381c depends on fd9d5416 (BCH epic ae03bcd0): cross-epic dependency, part of the user-approved plan (plan-review.md); revisit at wave 7.",
-    "Invocation scope: the first wave only (user instruction 2026-09-06)."
+    "Invocation scope: the first wave only (user instruction 2026-09-06).",
+    "Trap: a worker hitting its usage limit leaves uncommitted work; require an early first commit once the scaffold compiles."
   ],
   "started_at": "2026-09-06T20:22:15+00:00"
 }
