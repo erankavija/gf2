@@ -16,11 +16,14 @@ crate is the canonical home.
 
 - The protocol identity is the pair `zen3-benchmark-protocol` version 1, the
   constants `PROTOCOL_ID` and `PROTOCOL_VERSION` in `src/protocol.rs`.
-- The content identity of this document, of the addendum schema, of the
-  measurement contract and of every addendum is the SHA-256 of the exact
-  committed bytes, paired with the Git commit the file was read from
-  (`ArtifactPin`). Receipts pin all four; the acceptance tool recomputes the
-  digests from the repository it is given.
+- The content identity of this document, the addendum schema, the measurement
+  contract and every addendum is an `ArtifactPin`: its original path, its
+  receipt-local immutable snapshot path and the SHA-256 of the exact bytes.
+  The runner publishes each snapshot atomically before opening the execution
+  log. The acceptance tool reads only those portable receipt-local bytes and
+  rejects a missing snapshot or digest mismatch (P-02, P-03). Git revisions,
+  commit ancestry and whole-tree state are optional navigation metadata and do
+  not decide acceptance or resume compatibility.
 - An amendment creates version 2 with a new document; version 1 data,
   contradictions and failed trials stay committed. Confirmation under a new
   version starts from fresh samples. A version bump never reclassifies a failed
@@ -34,7 +37,7 @@ crate is the canonical home.
 | Contract clause | Protocol section | Checks |
 |---|---|---|
 | Protocol identity and freezing: one versioned protocol, independently versioned addenda, receipts pin all identities | Identity and versioning; Addenda | P-01, P-02, P-03 |
-| Freezing: exploratory pilots labelled and excluded; all numeric settings committed before the first confirmatory trial; amendments retain data | Roles and freezing; Frozen shared settings | P-04, P-13, P-15, P-22 |
+| Freezing: exploratory pilots labelled and excluded; all numeric settings committed before the first confirmatory trial; amendments retain data | Roles and freezing; Frozen shared settings | P-03, P-04, P-13, P-15, P-22 |
 | Holdout reserved for calibrated selectors and final integration | Roles and freezing | P-03 (addendum validation) |
 | Statistics: paired/interleaved/randomized A/B, resampling unit, ratio of medians, bootstrap interval, paired handling | Sampling design; Estimator and interval | P-15, P-16, P-20 |
 | Multiple comparisons within predeclared families; selection across candidate trials | Families and selection | P-20, family summary |
@@ -66,17 +69,24 @@ A confirmatory or holdout cell is confirmatory only when every required setting
 it depends on is resolved. A `null` in a nullable addendum field is an
 unresolved setting; the tool lists the unresolved names and records the cell as
 `not-confirmatory` instead of defaulting a value (P-13, P-20). The required
-settings are: `frozen.at_commit`, `effect.measurement_resolution`, the
-objective's margins (`worthwhile_speedup` and `equivalence_margin` for
+settings are: `effect.measurement_resolution`, its content-pinned
+`effect.resolution_evidence`, the objective's margins (`worthwhile_speedup` and `equivalence_margin` for
 improvement and non-regression cells, `material_gap_threshold` and
 `equivalence_margin` for comparator-gap cells) and
 `complexity_budget.max_added_source_lines` for adoptable cells.
 
-`frozen.at_commit` names a commit that exists before the first confirmatory
-trial; the receipt's addendum pin records the commit the addendum was read from
-at measurement time, so a reviewer can verify that the settings preceded the
-data. A run with a timing override records `settings_deviation: true`; the tool
-then reports every cell as `not-confirmatory` (P-04).
+The receipt's addendum pin and first `campaign-start` record are the freeze
+proof. The pin names immutable receipt-local bytes, and the runner records the
+complete pin before any `cell-start`. `frozen.frozen_utc` is descriptive
+metadata. When `measurement_resolution` is set, `resolution_evidence` names a
+repository-relative pilot `receipt.json` and its SHA-256. Before opening the
+campaign log, the runner captures that receipt at
+`inputs/resolution-evidence/receipt.json`; the acceptance tool verifies the
+snapshot's digest and `pilot` label and rejects missing, self-referential or
+non-pilot evidence (P-03). Thus the pilot evidence and all settings derived
+from it are frozen before confirmation begins. A run with a timing override
+records `settings_deviation: true`; the tool then reports every cell as
+`not-confirmatory` (P-04).
 
 Failed confirmations stay. The family ledger `family_wise.prior_trials` lists
 every earlier confirmatory receipt with its digest and recorded outcome, and
@@ -208,8 +218,9 @@ cannot express (P-03). It declares:
   `decoder-family`, `selector-calibration`, `final-integration`) and
   description;
 - the effect rule: worthwhile speedup with rationale, pilot-measured
-  measurement resolution with the receipt that observed it, equivalence margin
-  with rationale, material-gap threshold with rationale;
+  measurement resolution with the content-pinned pilot receipt path and digest that
+  observed it, equivalence margin with rationale, material-gap threshold with
+  rationale;
 - the complexity budget: new unsafe kernels allowed, added source lines
   allowed, maintenance rationale;
 - the family-wise declaration: alpha (must equal the frozen value), prior
@@ -303,7 +314,7 @@ cell passed. A rejected or non-qualifying receipt is committed like any other.
 
 Each bounded campaign writes one directory under the owning issue's
 `dev/bench_results/<issue>/` area, for example
-`dev/bench_results/f547c394/2026-09-06-f547c394-smoke/`:
+`dev/bench_results/f547c394/2026-09-07-f547c394-confirmation/`:
 
 | File | Content |
 |---|---|
@@ -315,18 +326,19 @@ Each bounded campaign writes one directory under the owning issue's
 | `acceptance-summary.md` | Markdown rendered from the summary alone. |
 
 The launcher script beside the directory records the exact commands. Receipt
-labels are `smoke`, `pilot`, `confirmation` and `holdout`; a smoke receipt
-proves the pipeline and is never cited as a performance result.
+labels are `smoke`, `pilot`, `confirmation` and `holdout`; the protocol smoke
+uses a pilot receipt to set its resolution followed by a separate confirmatory
+receipt. Neither is a performance result about gf2.
 
 ## Acceptance rules
 
 | Rule | Check |
 |---|---|
 | P-01 | Receipt schema is `zen3-benchmark-receipt-v1`. |
-| P-02 | Protocol, contract and addendum-schema pins have repository-relative paths, 40-hex commits and 64-hex digests, name the canonical paths, and match the repository content. |
-| P-03 | The addendum pin verifies, the addendum validates against the schema and the semantic rules, and its identity fields are well-formed. |
+| P-02 | Protocol, contract and addendum-schema pins name the canonical source paths, literal receipt-local snapshot paths and 64-hex digests; missing snapshots and digest mismatches reject. |
+| P-03 | The addendum matches its receipt-local snapshot, its exact pin appears in campaign-start before any cell, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt snapshot. |
 | P-04 | Receipt settings equal the frozen shared settings unless a deviation is declared; a deviation makes every cell non-confirmatory. |
-| P-05 | Source revision and tree digest are well-formed, the tree was clean, and the toolchain is recorded. |
+| P-05 | The manifest and every declared producing/build input match their receipt-local content snapshot, and the toolchain is recorded. Source-control metadata is informational. |
 | P-06 | The host observation carries model, flags, kernel, governors, affinity and topology. |
 | P-07 | Lock evidence carries an absolute lock path, the holder PID, the observation and the wrapper. |
 | P-08 | The worker report carries the runner thread count. |

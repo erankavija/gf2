@@ -8,7 +8,7 @@
 
 use std::env;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tuning_campaign_support::receipt::{
     evaluate, render_markdown, Verdict, SUMMARY_JSON_FILE, SUMMARY_MARKDOWN_FILE,
 };
@@ -33,7 +33,8 @@ fn main() {
     let Some(receipt_dir) = receipt_dir else {
         usage()
     };
-    let summary = match evaluate(&receipt_dir, repo.as_deref().map(Path::new)) {
+    let _informational_repo = repo;
+    let summary = match evaluate(&receipt_dir) {
         Ok(summary) => summary,
         Err(error) => {
             eprintln!("benchmark-acceptance: {error}");

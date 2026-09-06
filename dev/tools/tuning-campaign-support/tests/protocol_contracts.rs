@@ -21,11 +21,12 @@ use tuning_campaign_support::protocol::{
     CellObjective, CellRole, CodeIdentity, CodewordSource, ComplexityBudget, DecoderArmKind,
     DecoderCell, DecoderInput, EffectRule, FamilyAddendum, FamilyIdentity, FamilyPurpose,
     FamilyWise, Frozen, Holdout, MetricKind, Normalization, NormalizationKind, Precision,
-    ProtocolRef, QualityTolerance, ReceiptLabel, Scaling, Schedule, SearchBudget, Stopping,
-    StoppingKind, WorkerDeclaration, Workload, ADDENDUM_SCHEMA_ID, ADDENDUM_SCHEMA_PATH,
-    CONTRACT_PATH, PROTOCOL_ID, PROTOCOL_PATH, PROTOCOL_VERSION, RECEIPT_SCHEMA_ID,
-    SHARED_SETTINGS,
+    ProtocolRef, QualityTolerance, ReceiptLabel, ResolutionEvidence, Scaling, Schedule,
+    SearchBudget, Stopping, StoppingKind, WorkerDeclaration, Workload, ADDENDUM_SCHEMA_ID,
+    ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_ID, PROTOCOL_PATH, PROTOCOL_VERSION,
+    RECEIPT_SCHEMA_ID, SHARED_SETTINGS,
 };
+use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::receipt::{
     evaluate, render_markdown, ArmQuality, ArmRecord, BenchmarkReceipt, CellClaim, CellOutcome,
     CellRecord, CellStatus, CheckpointRecord, DecoderArmSettings, DecoderQualityRecord,
@@ -58,12 +59,39 @@ fn stage_repo(root: &Path) {
         fs::create_dir_all(target.parent().unwrap()).unwrap();
         fs::copy(repo_root().join(relative), target).unwrap();
     }
+    let source = "producer.rs";
+    fs::write(root.join(source), b"fn measured_behavior() {}\n").unwrap();
+    let manifest = json!({
+        "schema": "tuning-campaign-producing-inputs-v1",
+        "behavior_sources": [source],
+        "lifecycle_sources": [source],
+        "build_inputs": [source]
+    });
+    fs::write(
+        root.join("producing-inputs.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+}
+
+/// Copies the runner's declared producing-input closure into a scratch repo.
+fn stage_runner_producing(root: &Path) {
+    const MANIFEST: &str = "dev/active/f547c394/producing-inputs.json";
+    let source_root = repo_root();
+    let producing = ProducingInputs::read_at(&source_root, MANIFEST).unwrap();
+    for relative in
+        std::iter::once(MANIFEST).chain(producing.build_inputs.iter().map(String::as_str))
+    {
+        let target = root.join(relative);
+        fs::create_dir_all(target.parent().unwrap()).unwrap();
+        fs::copy(source_root.join(relative), target).unwrap();
+    }
 }
 
 fn pin(root: &Path, relative: &str) -> ArtifactPin {
     ArtifactPin {
         path: relative.to_owned(),
-        git_commit: git_output(root, &["rev-parse", "HEAD"]),
+        snapshot: format!("inputs/{}", relative.replace('/', "-")),
         sha256: sha256_hex(&fs::read(root.join(relative)).unwrap()),
     }
 }
@@ -109,14 +137,16 @@ fn addendum(cells: Vec<CellDeclaration>) -> FamilyAddendum {
             description: "deterministic fixture family".into(),
         },
         frozen: Frozen {
-            at_commit: Some(COMMIT.into()),
             frozen_utc: Some("2026-09-06T00:00:00Z".into()),
         },
         effect: EffectRule {
             worthwhile_speedup: Some(1.5),
             rationale: "fixture".into(),
             measurement_resolution: Some(0.05),
-            resolution_evidence: Some("fixture".into()),
+            resolution_evidence: Some(ResolutionEvidence {
+                receipt: "__fixture_pilot__".into(),
+                sha256: "0".repeat(64),
+            }),
             equivalence_margin: Some(1.1),
             equivalence_rationale: "fixture".into(),
             material_gap_threshold: Some(1.5),
@@ -236,7 +266,53 @@ fn identity(addendum_pin: &ArtifactPin) -> ResumeIdentity {
 
 struct Built {
     dir: PathBuf,
-    repo: PathBuf,
+}
+
+fn fixture_pilot_receipt(repo: &Path, addendum: ArtifactPin) -> BenchmarkReceipt {
+    BenchmarkReceipt {
+        schema: RECEIPT_SCHEMA_ID.into(),
+        campaign_id: "fixture-pilot".into(),
+        issue: "f547c394".into(),
+        receipt_path: "dev/bench_results/f547c394/pilot/receipt.json".into(),
+        label: ReceiptLabel::Pilot,
+        campaign_seed: CAMPAIGN_SEED,
+        settings: SHARED_SETTINGS,
+        settings_deviation: false,
+        protocol: pin(repo, PROTOCOL_PATH),
+        contract: pin(repo, CONTRACT_PATH),
+        addendum_schema: pin(repo, ADDENDUM_SCHEMA_PATH),
+        addendum,
+        source: SourceIdentity {
+            revision: COMMIT.into(),
+            tree_sha256: sha256_hex(b"pilot tree"),
+            clean: true,
+            producing: None,
+        },
+        toolchain: "rustc fixture".into(),
+        host: HostObservation::observe().unwrap(),
+        lock: LockRecord {
+            lock_path: "/tmp/gf2-ccx1.lock".into(),
+            holder_pid: 4242,
+            observation: "fixture".into(),
+            wrapper: "dev/scripts/ccx1-bench-flock.sh".into(),
+        },
+        workers: WorkerReport {
+            environment_rayon_threads: None,
+            runner_threads: 1,
+        },
+        execution_log: LogRecord {
+            path: LOG_FILE.into(),
+            sha256: sha256_hex(b"pilot log"),
+            sessions: 1,
+            resumed: false,
+        },
+        checkpoints: CheckpointRecord {
+            manifest_path: format!("{CHECKPOINT_DIR}/manifest.json"),
+            manifest_sha256: sha256_hex(b"pilot checkpoints"),
+        },
+        arms: BTreeMap::new(),
+        cells: Vec::new(),
+    }
 }
 
 /// Writes a complete receipt directory: journal, checkpoints and receipt.
@@ -251,29 +327,75 @@ fn build_receipt(
     let root = scratch(name);
     let repo = root.join("repo");
     stage_repo(&repo);
-    write_addendum(&repo, addendum);
-    git(&repo, &["init", "-q"]);
-    git(&repo, &["add", "."]);
-    git(
-        &repo,
-        &[
-            "-c",
-            "user.name=fixture",
-            "-c",
-            "user.email=fixture@example.invalid",
-            "commit",
-            "-q",
-            "-m",
-            "freeze fixture addendum",
-        ],
-    );
-    let addendum_pin = pin(&repo, "dev/active/f547c394/addendum-fixture.json");
     let dir = repo.join("dev/bench_results/f547c394/confirmation");
     fs::create_dir_all(&dir).unwrap();
+    let pilot_addendum_path = "dev/active/f547c394/addendum-fixture-pilot.json";
+    let mut pilot_addendum = addendum.clone();
+    pilot_addendum.effect.measurement_resolution = None;
+    pilot_addendum.effect.resolution_evidence = None;
+    for cell in &mut pilot_addendum.cells {
+        cell.role = CellRole::Exploratory;
+    }
+    let mut pilot_addendum_bytes = serde_json::to_vec_pretty(&pilot_addendum).unwrap();
+    pilot_addendum_bytes.push(b'\n');
+    fs::write(repo.join(pilot_addendum_path), pilot_addendum_bytes).unwrap();
+    let pilot_path = "dev/bench_results/f547c394/pilot/receipt.json";
+    let pilot = fixture_pilot_receipt(&repo, pin(&repo, pilot_addendum_path));
+    let mut pilot_bytes = serde_json::to_vec_pretty(&pilot).unwrap();
+    pilot_bytes.push(b'\n');
+    fs::create_dir_all(repo.join(pilot_path).parent().unwrap()).unwrap();
+    fs::write(repo.join(pilot_path), &pilot_bytes).unwrap();
+    let mut addendum = addendum.clone();
+    if addendum
+        .effect
+        .resolution_evidence
+        .as_ref()
+        .is_some_and(|evidence| evidence.receipt == "__fixture_pilot__")
+    {
+        addendum.effect.resolution_evidence = Some(ResolutionEvidence {
+            receipt: pilot_path.into(),
+            sha256: sha256_hex(&pilot_bytes),
+        });
+    }
+    write_addendum(&repo, &addendum);
+    let protocol_pin =
+        ArtifactPin::capture(&repo, &dir, PROTOCOL_PATH, "inputs/protocol.md").unwrap();
+    let contract_pin =
+        ArtifactPin::capture(&repo, &dir, CONTRACT_PATH, "inputs/measurement-contract.md").unwrap();
+    let schema_pin = ArtifactPin::capture(
+        &repo,
+        &dir,
+        ADDENDUM_SCHEMA_PATH,
+        "inputs/addendum.schema.json",
+    )
+    .unwrap();
+    let addendum_pin = ArtifactPin::capture(
+        &repo,
+        &dir,
+        "dev/active/f547c394/addendum-fixture.json",
+        "inputs/family-addendum.json",
+    )
+    .unwrap();
+    fs::create_dir_all(dir.join("inputs/resolution-evidence")).unwrap();
+    fs::write(
+        dir.join("inputs/resolution-evidence/receipt.json"),
+        &pilot_bytes,
+    )
+    .unwrap();
+    let producing = ProducingInputs::capture_to(
+        &repo,
+        "producing-inputs.json",
+        &dir.join("inputs/producing"),
+    )
+    .unwrap();
     let campaign = "fixture-campaign";
     let mut log = ExecutionLog::create_new(&dir, campaign, "session-1").unwrap();
-    log.append(JournalEvent::CampaignStart, None, json!({"fixture": true}))
-        .unwrap();
+    log.append(
+        JournalEvent::CampaignStart,
+        None,
+        json!({"fixture": true, "addendum": addendum_pin}),
+    )
+    .unwrap();
     log.append(
         JournalEvent::OrchestrationStart,
         None,
@@ -382,18 +504,20 @@ fn build_receipt(
         schema: RECEIPT_SCHEMA_ID.into(),
         campaign_id: campaign.into(),
         issue: "f547c394".into(),
+        receipt_path: "dev/bench_results/f547c394/confirmation/receipt.json".into(),
         label: ReceiptLabel::Confirmation,
         campaign_seed: CAMPAIGN_SEED,
         settings: SHARED_SETTINGS,
         settings_deviation: false,
-        protocol: pin(&repo, PROTOCOL_PATH),
-        contract: pin(&repo, CONTRACT_PATH),
-        addendum_schema: pin(&repo, ADDENDUM_SCHEMA_PATH),
+        protocol: protocol_pin,
+        contract: contract_pin,
+        addendum_schema: schema_pin,
         addendum: addendum_pin,
         source: SourceIdentity {
-            revision: git_output(&repo, &["rev-parse", "HEAD"]),
+            revision: COMMIT.into(),
             tree_sha256: sha256_hex(b"tree"),
             clean: true,
+            producing: Some(producing),
         },
         toolchain: "rustc fixture".into(),
         host,
@@ -443,7 +567,7 @@ fn build_receipt(
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    Built { dir, repo }
+    Built { dir }
 }
 
 fn spec(id: &'static str, speedup: f64) -> CellSpec {
@@ -499,13 +623,9 @@ fn unresolved_required_settings_make_a_cell_non_confirmatory() {
         CoreArm::SingleCore,
     )]);
     family.effect.worthwhile_speedup = None;
-    family.frozen = Frozen {
-        at_commit: None,
-        frozen_utc: None,
-    };
+    family.frozen = Frozen { frozen_utc: None };
     family.validate().unwrap();
     let unresolved = family.unresolved_settings(&family.cells[0]);
-    assert!(unresolved.contains(&"frozen.at_commit".to_owned()));
     assert!(unresolved.contains(&"effect.worthwhile_speedup".to_owned()));
     assert!(family.margins(&family.cells[0]).is_none());
     let built = build_receipt(
@@ -519,7 +639,7 @@ fn unresolved_required_settings_make_a_cell_non_confirmatory() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted);
     assert_eq!(outcome(&summary, "a"), CellOutcome::NotConfirmatory);
     assert!(!summary.qualifies);
@@ -661,7 +781,7 @@ fn acceptance_passes_a_confirmed_improvement_receipt() {
         CoreArm::SingleCore,
     )]);
     let built = build_receipt("pass", &family, &[spec("a", 2.0)], false, false, |_| {});
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "a"), CellOutcome::Pass);
     assert!(summary.qualifies);
@@ -685,7 +805,7 @@ fn acceptance_fails_a_regression_beyond_the_equivalence_margin() {
         CoreArm::SingleCore,
     )]);
     let built = build_receipt("fail", &family, &[spec("a", 0.8)], false, false, |_| {});
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "a"), CellOutcome::Fail);
     assert_eq!(summary.cells[0].decision, Some(Decision::Regressed));
@@ -712,7 +832,7 @@ fn acceptance_marks_an_interval_spanning_the_margin_inconclusive() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     let cell = &summary.cells[0];
     let interval = cell.interval.unwrap();
@@ -739,11 +859,11 @@ fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
         false,
         false,
         |receipt| {
-            receipt.protocol.git_commit = "not-a-commit".into();
+            receipt.protocol.snapshot = "inputs/missing-protocol.md".into();
             receipt.addendum.sha256 = sha256_hex(b"other");
         },
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary
         .findings
@@ -754,19 +874,14 @@ fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
         .iter()
         .any(|f| f.rule == "P-03" && f.message.contains("content digest")));
     assert!(!summary.qualifies);
-    // An otherwise intact receipt cannot be accepted without verifying its
-    // committed artifact bytes.
-    let intact = build_receipt("no-root", &family, &[spec("a", 2.0)], false, false, |_| {});
-    let summary = evaluate(&intact.dir, None).unwrap();
-    assert_eq!(summary.verdict, Verdict::Rejected);
-    assert!(summary
-        .findings
-        .iter()
-        .any(|f| f.rule == "P-02" && f.severity == Severity::Error));
+    // An intact receipt is independently verifiable without a repository.
+    let intact = build_receipt("portable", &family, &[spec("a", 2.0)], false, false, |_| {});
+    let summary = evaluate(&intact.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
 }
 
 #[test]
-fn acceptance_rejects_an_unavailable_git_object_despite_matching_working_tree_bytes() {
+fn acceptance_rejects_a_missing_snapshot_despite_matching_source_bytes() {
     let family = addendum(vec![cell(
         "a",
         CellObjective::Improvement,
@@ -774,24 +889,27 @@ fn acceptance_rejects_an_unavailable_git_object_despite_matching_working_tree_by
         CoreArm::SingleCore,
     )]);
     let built = build_receipt(
-        "missing-object",
+        "missing-snapshot",
         &family,
         &[spec("a", 2.0)],
         false,
         false,
-        |receipt| receipt.protocol.git_commit = COMMIT.into(),
+        |_| {},
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let receipt =
+        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    fs::remove_file(built.dir.join(receipt.protocol.snapshot)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
         finding.rule == "P-02"
             && finding.severity == Severity::Error
-            && finding.message.contains("pinned Git object")
+            && finding.message.contains("content snapshot")
     }));
 }
 
 #[test]
-fn acceptance_rejects_a_digest_that_does_not_match_the_pinned_commit() {
+fn acceptance_rejects_a_digest_that_does_not_match_the_snapshot() {
     let family = addendum(vec![cell(
         "a",
         CellObjective::Improvement,
@@ -799,14 +917,14 @@ fn acceptance_rejects_a_digest_that_does_not_match_the_pinned_commit() {
         CoreArm::SingleCore,
     )]);
     let built = build_receipt(
-        "commit-digest-mismatch",
+        "snapshot-digest-mismatch",
         &family,
         &[spec("a", 2.0)],
         false,
         false,
         |receipt| receipt.protocol.sha256 = sha256_hex(b"not the committed protocol"),
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
         finding.rule == "P-02"
@@ -816,7 +934,7 @@ fn acceptance_rejects_a_digest_that_does_not_match_the_pinned_commit() {
 }
 
 #[test]
-fn acceptance_rejects_an_addendum_pin_outside_the_source_history() {
+fn source_control_metadata_does_not_change_acceptance() {
     let family = addendum(vec![cell(
         "a",
         CellObjective::Improvement,
@@ -824,7 +942,7 @@ fn acceptance_rejects_an_addendum_pin_outside_the_source_history() {
         CoreArm::SingleCore,
     )]);
     let built = build_receipt(
-        "nonancestor-addendum",
+        "metadata-independent",
         &family,
         &[spec("a", 2.0)],
         false,
@@ -833,32 +951,82 @@ fn acceptance_rejects_an_addendum_pin_outside_the_source_history() {
     );
     let mut receipt =
         BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
-    let tree = git_output(&built.repo, &["rev-parse", "HEAD^{tree}"]);
-    let unrelated = git_output(
-        &built.repo,
-        &[
-            "-c",
-            "user.name=fixture",
-            "-c",
-            "user.email=fixture@example.invalid",
-            "commit-tree",
-            &tree,
-            "-m",
-            "unrelated fixture commit",
-        ],
-    );
-    receipt.addendum.git_commit = unrelated;
+    receipt.source.revision = "a rapidly changing locator".into();
+    receipt.source.tree_sha256 = String::new();
+    receipt.source.clean = false;
     fs::write(
         built.dir.join(RECEIPT_FILE),
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+}
+
+#[test]
+fn acceptance_rejects_changed_producing_input_snapshot() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "changed-producing-input",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    fs::write(
+        built.dir.join("inputs/producing/producer.rs"),
+        b"fn measured_behavior_changed() {}\n",
+    )
+    .unwrap();
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|finding| {
+        finding.rule == "P-05"
+            && finding.severity == Severity::Error
+            && finding
+                .message
+                .contains("producing-input snapshot content differs")
+    }));
+}
+
+#[test]
+fn acceptance_rejects_an_addendum_not_frozen_before_measurement() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "unfrozen-addendum",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    let receipt_path = built.dir.join(RECEIPT_FILE);
+    let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
+    let alternate = "inputs/alternate-addendum.json";
+    fs::copy(
+        built.dir.join(&receipt.addendum.snapshot),
+        built.dir.join(alternate),
+    )
+    .unwrap();
+    receipt.addendum.snapshot = alternate.into();
+    fs::write(receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
         finding.rule == "P-03"
             && finding.severity == Severity::Error
-            && finding.message.contains("ancestor")
+            && finding.message.contains("campaign-start")
     }));
 }
 
@@ -883,9 +1051,12 @@ fn acceptance_rejects_missing_and_self_referential_resolution_evidence() {
             CellRole::Confirmatory,
             CoreArm::SingleCore,
         )]);
-        family.effect.resolution_evidence = Some(evidence.into());
+        family.effect.resolution_evidence = Some(ResolutionEvidence {
+            receipt: evidence.into(),
+            sha256: "0".repeat(64),
+        });
         let built = build_receipt(name, &family, &[spec("a", 2.0)], false, false, |_| {});
-        let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+        let summary = evaluate(&built.dir).unwrap();
         assert_eq!(summary.verdict, Verdict::Rejected, "{name}");
         assert!(summary.findings.iter().any(|finding| {
             finding.rule == "P-03"
@@ -919,7 +1090,7 @@ fn acceptance_accepts_a_resumed_run_and_rejects_a_repeated_cell() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(summary.sessions, 2);
     assert!(summary.resumed);
@@ -934,7 +1105,7 @@ fn acceptance_accepts_a_resumed_run_and_rejects_a_repeated_cell() {
         true,
         |_| {},
     );
-    let summary = evaluate(&repeated.dir, Some(&repeated.repo)).unwrap();
+    let summary = evaluate(&repeated.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary
         .findings
@@ -979,7 +1150,7 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "a"), CellOutcome::NotMaterial);
     assert_eq!(outcome(&summary, "twelve"), CellOutcome::Unavailable);
@@ -994,7 +1165,7 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|f| f.rule == "P-21"));
     let markdown = render_markdown(&summary);
@@ -1130,7 +1301,7 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
             });
         },
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "matched"), CellOutcome::Pass);
     assert_eq!(
@@ -1153,7 +1324,7 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert_eq!(outcome(&summary, "matched"), CellOutcome::Invalid);
     assert_eq!(outcome(&summary, "fastest"), CellOutcome::Invalid);
@@ -1204,7 +1375,7 @@ fn acceptance_summary_markdown_renders_from_the_summary_only() {
             receipt.label = ReceiptLabel::Smoke;
         },
     );
-    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
     let markdown = render_markdown(&summary);
     assert_eq!(markdown, render_markdown(&summary));
     assert!(markdown.contains("smoke receipt"));
@@ -1225,22 +1396,13 @@ fn git(repo: &Path, args: &[&str]) {
     assert!(status.success(), "git {args:?} failed");
 }
 
-fn git_output(repo: &Path, args: &[&str]) -> String {
-    let output = Command::new("git")
-        .args(args)
-        .current_dir(repo)
-        .output()
-        .unwrap();
-    assert!(output.status.success(), "git {args:?} failed");
-    String::from_utf8(output.stdout).unwrap().trim().to_owned()
-}
-
 #[test]
 fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
     let root = scratch("runner");
     let repo = root.join("repo");
     stage_repo(&repo);
-    let family = addendum(vec![
+    stage_runner_producing(&repo);
+    let mut family = addendum(vec![
         cell(
             "first",
             CellObjective::Improvement,
@@ -1260,6 +1422,8 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
             CoreArm::PhysicalCores6,
         ),
     ]);
+    family.effect.measurement_resolution = None;
+    family.effect.resolution_evidence = None;
     write_addendum(&repo, &family);
     git(&repo, &["init", "-q"]);
     git(&repo, &["add", "."]);
@@ -1358,7 +1522,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         "{}",
         String::from_utf8_lossy(&third.stderr)
     );
-    let out = root.join("receipt");
+    let out = repo.join("dev/bench_results/f547c394/runner-contract");
     let finalize = Command::new(runner)
         .args(["finalize"])
         .arg(&stage)
@@ -1371,7 +1535,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         "{}",
         String::from_utf8_lossy(&finalize.stderr)
     );
-    let summary = evaluate(&out, Some(&repo)).unwrap();
+    let summary = evaluate(&out).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(summary.sessions, 3);
     assert!(summary.resumed);

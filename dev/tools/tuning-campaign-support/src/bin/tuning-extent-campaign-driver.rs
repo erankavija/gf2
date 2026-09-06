@@ -22,6 +22,7 @@ use tuning_campaign_support::journal::{
     CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity,
 };
 use tuning_campaign_support::process::{live_group, ProcessResult};
+use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::transport;
 
 static SESSION_START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -341,88 +342,9 @@ fn source_state() -> io::Result<(String, String)> {
     ))
 }
 const PRODUCING_MANIFEST: &str = "dev/active/a83583e0/producing-build-inputs.json";
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ProducingInputs {
-    schema: String,
-    behavior_sources: Vec<String>,
-    lifecycle_sources: Vec<String>,
-    build_inputs: Vec<String>,
-}
-impl ProducingInputs {
-    fn read() -> io::Result<Self> {
-        let value: Self =
-            serde_json::from_slice(&fs::read(PRODUCING_MANIFEST)?).map_err(invalid)?;
-        value.validate_at(Path::new("."))?;
-        Ok(value)
-    }
-    fn validate_at(&self, root: &Path) -> io::Result<()> {
-        if self.schema != "tuning-campaign-producing-inputs-v1" {
-            return Err(invalid("producing input manifest schema mismatch"));
-        }
-        for paths in [
-            &self.behavior_sources,
-            &self.lifecycle_sources,
-            &self.build_inputs,
-        ] {
-            if paths.is_empty() || paths.windows(2).any(|pair| pair[0] >= pair[1]) {
-                return Err(invalid(
-                    "source manifest paths must be nonempty, sorted and unique",
-                ));
-            }
-            for path in paths {
-                if Path::new(path).is_absolute()
-                    || Path::new(path)
-                        .components()
-                        .any(|part| !matches!(part, std::path::Component::Normal(_)))
-                    || path.contains(['*', '?', '[', ']'])
-                {
-                    return Err(invalid(
-                        "source manifest contains a nonliteral repository path",
-                    ));
-                }
-                let metadata = fs::symlink_metadata(root.join(path))?;
-                if !metadata.file_type().is_file() || metadata.file_type().is_symlink() {
-                    return Err(invalid("source manifest path is not a regular file"));
-                }
-            }
-        }
-        if self
-            .behavior_sources
-            .iter()
-            .any(|path| !self.build_inputs.contains(path))
-            || self
-                .lifecycle_sources
-                .iter()
-                .any(|path| !self.behavior_sources.contains(path))
-        {
-            return Err(invalid(
-                "lifecycle/behavior manifest is not a subset of producing inputs",
-            ));
-        }
-        Ok(())
-    }
-    fn hashes(paths: &[String]) -> io::Result<BTreeMap<String, String>> {
-        paths
-            .iter()
-            .map(|path| {
-                Ok((
-                    path.clone(),
-                    Sha256Digest::of(&fs::read(path)?).as_str().into(),
-                ))
-            })
-            .collect()
-    }
-    fn lifecycle_digest(&self) -> io::Result<String> {
-        Ok(
-            Sha256Digest::of(&encoded(&Self::hashes(&self.lifecycle_sources)?)?)
-                .as_str()
-                .into(),
-        )
-    }
-}
 fn behavior_sources() -> io::Result<BTreeMap<String, String>> {
-    ProducingInputs::hashes(&ProducingInputs::read()?.behavior_sources)
+    let producing = ProducingInputs::read_at(Path::new("."), PRODUCING_MANIFEST)?;
+    ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)
 }
 fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     if config.schema != "tuning-extent-campaign-v1" || config.manifests.len() != 2 {
@@ -431,7 +353,7 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     config.channels.validate()?;
     require_affinity(&config.affinity, &CpuAffinity::observe()?)?;
     let (revision, tree) = source_state()?;
-    let producing = ProducingInputs::read()?;
+    let producing = ProducingInputs::read_at(Path::new("."), PRODUCING_MANIFEST)?;
     let staging: StagingManifest = read_json(&config.channels.stage.join("staging-manifest.json"))?;
     let (source_before, source_after) =
         validate_build_source_observations(&config.channels.stage, &staging)?;
@@ -439,8 +361,10 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
         || tree != config.source_tree
         || Sha256Digest::of(tree.as_bytes()).as_str() != config.identity.source_sha256
         || behavior_sources()? != config.identity.behavior_sha256
-        || producing.lifecycle_digest()? != config.identity.lifecycle_behavior_sha256
-        || ProducingInputs::hashes(&producing.build_inputs)? != config.build_inputs
+        || ProducingInputs::capture(Path::new("."), PRODUCING_MANIFEST)?.lifecycle_sha256()?
+            != config.identity.lifecycle_behavior_sha256
+        || ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?
+            != config.build_inputs
         || artifact(Path::new(PRODUCING_MANIFEST))? != config.producing_manifest
         || source_before.source_revision != revision
         || source_before.source_tree != tree
@@ -700,8 +624,8 @@ fn bootstrap_inputs(
             "build source identity differs from preparation source",
         ));
     }
-    let producing = ProducingInputs::read()?;
-    let behavior = ProducingInputs::hashes(&producing.behavior_sources)?;
+    let producing = ProducingInputs::read_at(Path::new("."), PRODUCING_MANIFEST)?;
+    let behavior = ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)?;
     let receipt = format!("dev/benchmarks/tuning_profiles/{}.md", campaign_id.as_str());
     let runtime = host_runtime(&receipt)?;
     let affinity = CpuAffinity::observe()?;
@@ -735,7 +659,7 @@ fn bootstrap_inputs(
         affinity,
         staging: artifact(&channels.stage.join("staging-manifest.json"))?,
         producing_manifest: artifact(Path::new(PRODUCING_MANIFEST))?,
-        build_inputs: ProducingInputs::hashes(&producing.build_inputs)?,
+        build_inputs: ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?,
         host_admission_policy: HostAdmissionPolicy::declared(),
     })
 }
@@ -882,10 +806,11 @@ fn prepare(
             )?;
             manifests.push(*manifest);
         }
-        let producing = ProducingInputs::read()?;
-        let build_inputs = ProducingInputs::hashes(&producing.build_inputs)?;
+        let producing = ProducingInputs::read_at(Path::new("."), PRODUCING_MANIFEST)?;
+        let build_inputs = ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?;
         let producing_manifest = artifact(Path::new(PRODUCING_MANIFEST))?;
-        let lifecycle_behavior = ProducingInputs::hashes(&producing.lifecycle_sources)?;
+        let lifecycle_behavior =
+            ProducingInputs::hashes_at(Path::new("."), &producing.lifecycle_sources)?;
         let identity = ResumeIdentity {
             protocol_digest: protocol.sha256.as_str().into(),
             source_revision: revision,

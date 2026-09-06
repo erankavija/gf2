@@ -2,8 +2,8 @@
 //! family/cell addendum contract.
 //!
 //! The protocol document, the addendum schema and this module describe one
-//! protocol version. Receipts pin the document and schema by path, Git commit
-//! and content digest; the acceptance tool recomputes every digest and every
+//! protocol version. Receipts pin the document and schema by source path,
+//! receipt-local snapshot and content digest; the acceptance tool recomputes every digest and every
 //! statistic instead of trusting a receipt's own claims.
 
 use crate::abtest::Margins;
@@ -14,7 +14,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io;
 use std::path::Path;
-use std::process::Command;
+
+use crate::journal::atomic_write_new;
 
 /// Stable protocol identifier; a new version keeps the identifier.
 pub const PROTOCOL_ID: &str = "zen3-benchmark-protocol";
@@ -125,54 +126,58 @@ impl SharedSettings {
     }
 }
 
-/// Git and content identity of one committed artifact.
+/// Content identity of one receipt-local input snapshot.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArtifactPin {
-    /// Repository-relative path.
+    /// Original repository-relative source path.
     pub path: String,
-    /// Full lowercase Git commit object ID of the tree the artifact was read from.
-    pub git_commit: String,
+    /// Receipt-relative immutable snapshot path.
+    pub snapshot: String,
     /// Lowercase hex SHA-256 of the exact file bytes.
     pub sha256: String,
 }
 
 impl ArtifactPin {
-    /// Reads `relative` under `repo_root`, digests its bytes and records `HEAD`.
-    pub fn pin(repo_root: &Path, relative: &str) -> io::Result<Self> {
-        let bytes = fs::read(repo_root.join(relative))?;
-        let output = Command::new("git")
-            .args(["rev-parse", "HEAD"])
-            .current_dir(repo_root)
-            .output()?;
-        if !output.status.success() {
-            return Err(io::Error::other("git rev-parse HEAD failed"));
-        }
-        let git_commit = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    /// Captures an input into a durable stage snapshot. An existing snapshot
+    /// is retained on resume, so unrelated source-tree edits cannot rewrite a
+    /// campaign's frozen inputs.
+    pub fn capture(
+        repo_root: &Path,
+        stage_root: &Path,
+        relative: &str,
+        snapshot: &str,
+    ) -> io::Result<Self> {
+        validate_relative(relative, "artifact source")?;
+        validate_relative(snapshot, "artifact snapshot")?;
+        let destination = stage_root.join(snapshot);
+        let bytes = if destination.exists() {
+            fs::read(&destination)?
+        } else {
+            let bytes = fs::read(repo_root.join(relative))?;
+            if let Some(parent) = destination.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            atomic_write_new(&destination, &bytes)?;
+            bytes
+        };
         let pin = Self {
             path: relative.to_owned(),
-            git_commit,
+            snapshot: snapshot.to_owned(),
             sha256: sha256_hex(&bytes),
         };
         pin.validate_shape()
+            .map_err(|message| io::Error::new(io::ErrorKind::InvalidData, message))?;
+        pin.verify_content(stage_root)
             .map_err(|message| io::Error::new(io::ErrorKind::InvalidData, message))?;
         Ok(pin)
     }
 
     /// Checks the identity's syntax without touching the filesystem.
     pub fn validate_shape(&self) -> Result<(), String> {
-        if self.path.is_empty() || self.path.starts_with('/') {
-            return Err(format!(
-                "artifact path {:?} is not repository-relative",
-                self.path
-            ));
-        }
-        if !is_hex(&self.git_commit, 40) {
-            return Err(format!(
-                "artifact {} git commit is not a 40-hex object ID",
-                self.path
-            ));
-        }
+        validate_relative(&self.path, "artifact path").map_err(|error| error.to_string())?;
+        validate_relative(&self.snapshot, "artifact snapshot path")
+            .map_err(|error| error.to_string())?;
         if !is_hex(&self.sha256, 64) {
             return Err(format!(
                 "artifact {} sha256 is not 64 hex digits",
@@ -182,56 +187,45 @@ impl ArtifactPin {
         Ok(())
     }
 
-    /// Reads the artifact's bytes at the pinned commit through `git show`,
-    /// falling back to the working tree when that commit is not resolvable in
-    /// `repo_root`. Evidence is judged against the document version that
-    /// governed the run, so a later documentation edit does not invalidate it.
-    pub fn read_pinned(&self, repo_root: &Path) -> Result<(Vec<u8>, PinSource), String> {
+    /// Reads the receipt-local snapshot bytes.
+    pub fn read_pinned(&self, receipt_root: &Path) -> Result<Vec<u8>, String> {
         self.validate_shape()?;
-        let shown = Command::new("git")
-            .arg("show")
-            .arg(format!("{}:{}", self.git_commit, self.path))
-            .current_dir(repo_root)
-            .output();
-        if let Ok(output) = shown {
-            if output.status.success() {
-                return Ok((output.stdout, PinSource::Commit));
-            }
-        }
-        let bytes = fs::read(repo_root.join(&self.path))
-            .map_err(|error| format!("cannot read pinned artifact {}: {error}", self.path))?;
-        Ok((bytes, PinSource::WorkingTree))
+        fs::read(receipt_root.join(&self.snapshot)).map_err(|error| {
+            format!(
+                "cannot read pinned content snapshot {}: {error}",
+                self.snapshot
+            )
+        })
     }
 
-    /// Recomputes the content digest from the pinned bytes and reports where
-    /// they came from.
-    pub fn verify_content(&self, repo_root: &Path) -> Result<PinSource, String> {
-        let (bytes, source) = self.read_pinned(repo_root)?;
+    /// Recomputes the content digest from the pinned bytes and returns those
+    /// exact bytes on success.
+    pub fn verify_content(&self, receipt_root: &Path) -> Result<Vec<u8>, String> {
+        let bytes = self.read_pinned(receipt_root)?;
         if sha256_hex(&bytes) != self.sha256 {
             return Err(format!(
                 "pinned artifact {} content digest differs",
                 self.path
             ));
         }
-        Ok(source)
-    }
-
-    /// Whether the working-tree file still has the pinned digest; `None`
-    /// when the file cannot be read.
-    pub fn working_tree_matches(&self, repo_root: &Path) -> Option<bool> {
-        fs::read(repo_root.join(&self.path))
-            .ok()
-            .map(|bytes| sha256_hex(&bytes) == self.sha256)
+        Ok(bytes)
     }
 }
 
-/// Where a pinned artifact's bytes were read from.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PinSource {
-    /// The object at the pinned commit.
-    Commit,
-    /// The working tree; the pinned commit was not resolvable.
-    WorkingTree,
+fn validate_relative(path: &str, kind: &str) -> io::Result<()> {
+    let path = Path::new(path);
+    if path.as_os_str().is_empty()
+        || path.is_absolute()
+        || path
+            .components()
+            .any(|part| !matches!(part, std::path::Component::Normal(_)))
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("{kind} is not a literal relative path"),
+        ));
+    }
+    Ok(())
 }
 
 /// Lowercase hex SHA-256 of `bytes`.
@@ -289,12 +283,21 @@ pub struct FamilyIdentity {
     pub description: String,
 }
 
-/// Freezing record; `null` fields mean the addendum is not yet frozen.
+/// Human-readable time recorded when the addendum settings were frozen.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Frozen {
-    pub at_commit: Option<String>,
     pub frozen_utc: Option<String>,
+}
+
+/// An exploratory receipt used to set measurement resolution.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResolutionEvidence {
+    /// Repository-relative path to the pilot's `receipt.json`.
+    pub receipt: String,
+    /// SHA-256 of the exact receipt bytes.
+    pub sha256: String,
 }
 
 /// Family-declared worthwhile effect, equivalence and material-gap rules.
@@ -306,8 +309,8 @@ pub struct EffectRule {
     pub rationale: String,
     /// Pilot-observed relative half-width of the speedup interval.
     pub measurement_resolution: Option<f64>,
-    /// Receipt path that observed the resolution.
-    pub resolution_evidence: Option<String>,
+    /// Content-pinned pilot receipt that observed the resolution.
+    pub resolution_evidence: Option<ResolutionEvidence>,
     /// Largest slowdown factor still declared not worse.
     pub equivalence_margin: Option<f64>,
     pub equivalence_rationale: String,
@@ -663,16 +666,6 @@ impl FamilyAddendum {
                 ));
             }
         }
-        if let Some(commit) = &self.frozen.at_commit {
-            if !is_hex(commit, 40) {
-                errors.push("frozen.at_commit is not a 40-hex object ID".into());
-            }
-            if self.frozen.frozen_utc.is_none() {
-                errors.push("frozen.at_commit without frozen_utc".into());
-            }
-        } else if self.frozen.frozen_utc.is_some() {
-            errors.push("frozen_utc without frozen.at_commit".into());
-        }
         let effect = &self.effect;
         if let Some(value) = effect.worthwhile_speedup {
             if !(value.is_finite() && value > 1.0) {
@@ -695,6 +688,16 @@ impl FamilyAddendum {
             }
             if effect.resolution_evidence.is_none() {
                 errors.push("measurement_resolution needs resolution_evidence".into());
+            }
+        } else if effect.resolution_evidence.is_some() {
+            errors.push("resolution_evidence needs measurement_resolution".into());
+        }
+        if let Some(evidence) = &effect.resolution_evidence {
+            if evidence.receipt.is_empty() || evidence.receipt.starts_with('/') {
+                errors.push("resolution_evidence receipt is not repository-relative".into());
+            }
+            if !is_hex(&evidence.sha256, 64) {
+                errors.push("resolution_evidence sha256 is not 64 hex digits".into());
             }
         }
         if let Some(value) = effect.equivalence_margin {
@@ -814,9 +817,6 @@ impl FamilyAddendum {
     /// non-confirmatory regardless of its declared role.
     pub fn unresolved_settings(&self, cell: &CellDeclaration) -> Vec<String> {
         let mut unresolved = Vec::new();
-        if self.frozen.at_commit.is_none() {
-            unresolved.push("frozen.at_commit".into());
-        }
         if self.effect.measurement_resolution.is_none() {
             unresolved.push("effect.measurement_resolution".into());
         }

@@ -15,6 +15,7 @@ pub mod host;
 pub mod journal;
 pub mod process;
 pub mod protocol;
+pub mod provenance;
 pub mod receipt;
 pub mod schema;
 pub mod seed;
