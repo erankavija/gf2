@@ -12,6 +12,115 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "eb86495dbdebf778a1e10d8e71978cf954587806b5703d9e6f6886e19797ce95",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "452089376294b523b395fd02329dbfe8019c05819d4029361972114d121a071f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5627051a7950169f9618c18fe6187825dc815fb97875f500c840b0b3ca748da9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "design.md",
+          "resolved_path": "dev/active/f547c394/design.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "specification",
+      "format": "markdown",
+      "label": "Zen 3 benchmark protocol v1",
+      "path": "dev/active/f547c394/protocol.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Family addendum schema v1",
+      "path": "dev/active/f547c394/addendum.schema.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Frozen smoke family addendum",
+      "path": "dev/active/f547c394/addendum-protocol-smoke.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "825cda7d3f7e936e6609b3fe307bce26e19fe02ee8a0aca933f6a5bce5b5c079",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eb86495dbdebf778a1e10d8e71978cf954587806b5703d9e6f6886e19797ce95",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Canonical homes and design decisions",
+      "path": "dev/active/f547c394/design.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Smoke receipt launcher",
+      "path": "dev/bench_results/f547c394/run-smoke.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Smoke receipt: receipt.json",
+      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Smoke receipt: acceptance-summary.json",
+      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Smoke receipt: acceptance-summary.md",
+      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Smoke receipt: execution.log",
+      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Smoke receipt: launcher.log",
+      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/launcher.log"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
@@ -44,5 +153,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-06T20:24:50.394033480Z"
+  "updated_at": "2026-09-06T21:56:32.935937703Z"
 }
