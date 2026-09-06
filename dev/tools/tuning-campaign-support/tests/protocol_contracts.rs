@@ -265,6 +265,7 @@ fn identity(addendum_pin: &ArtifactPin) -> ResumeIdentity {
 }
 
 struct Built {
+    repo: PathBuf,
     dir: PathBuf,
 }
 
@@ -387,6 +388,70 @@ fn build_receipt(
     )
     .unwrap();
     let campaign = "fixture-campaign";
+    let arms: BTreeMap<String, ArmRecord> = ["baseline", "candidate"]
+        .into_iter()
+        .map(|name| {
+            (
+                name.to_owned(),
+                ArmRecord {
+                    build: BuildIdentity::ConservativePortable,
+                    description: name.into(),
+                    executable_path: "/usr/bin/true".into(),
+                    executable_sha256: sha256_hex(name.as_bytes()),
+                    arguments: Vec::new(),
+                    environment: BTreeMap::new(),
+                    rustflags: None,
+                    tuning_profile: None,
+                },
+            )
+        })
+        .collect();
+    let plan = json!({
+        "schema": "zen3-benchmark-plan-v1",
+        "campaign_id": campaign,
+        "issue": "f547c394",
+        "label": "confirmation",
+        "campaign_seed": CAMPAIGN_SEED,
+        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "lock_path": "/tmp/gf2-ccx1.lock",
+        "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+        "timing_override": null,
+        "arms": {
+            "baseline": {
+                "build": "conservative-portable",
+                "description": "baseline",
+                "executable": "/usr/bin/true",
+                "arguments": [],
+                "environment": {},
+                "rustflags": null,
+                "tuning_profile": null
+            },
+            "candidate": {
+                "build": "conservative-portable",
+                "description": "candidate",
+                "executable": "/usr/bin/true",
+                "arguments": [],
+                "environment": {},
+                "rustflags": null,
+                "tuning_profile": null
+            }
+        },
+        "cells": specs.iter().map(|spec| json!({
+            "cell_id": spec.id,
+            "baseline_arm": "baseline",
+            "candidate_arm": "candidate",
+            "case": {"fixture": spec.id},
+            "pilot_pairs": if addendum.cell(spec.id).unwrap().role == CellRole::Exploratory {
+                Some(6)
+            } else {
+                None
+            }
+        })).collect::<Vec<_>>(),
+        "max_cells_per_session": if resume_after_first { Some(1) } else { None }
+    });
+    let mut plan_bytes = serde_json::to_vec_pretty(&plan).unwrap();
+    plan_bytes.push(b'\n');
+    fs::write(dir.join("plan.json"), plan_bytes).unwrap();
     let mut log = ExecutionLog::create_new(&dir, campaign, "session-1").unwrap();
     log.append(
         JournalEvent::CampaignStart,
@@ -435,7 +500,11 @@ fn build_receipt(
         }
         let declared = addendum.cell(spec.id).unwrap();
         let key = spec.id.to_owned();
-        let case = json!({"key": key, "cell_id": spec.id});
+        let case = json!({
+            "key": key,
+            "cell_id": spec.id,
+            "case": {"fixture": spec.id}
+        });
         log.append(JournalEvent::CellStart, Some(case.clone()), json!({}))
             .unwrap();
         let mut record = CellRecord {
@@ -537,24 +606,7 @@ fn build_receipt(
             manifest_path: format!("{CHECKPOINT_DIR}/manifest.json"),
             manifest_sha256: sha256_hex(&manifest_bytes),
         },
-        arms: ["baseline", "candidate"]
-            .into_iter()
-            .map(|name| {
-                (
-                    name.to_owned(),
-                    ArmRecord {
-                        build: BuildIdentity::ConservativePortable,
-                        description: name.into(),
-                        executable_path: "/usr/bin/true".into(),
-                        executable_sha256: sha256_hex(name.as_bytes()),
-                        arguments: Vec::new(),
-                        environment: BTreeMap::new(),
-                        rustflags: None,
-                        tuning_profile: None,
-                    },
-                )
-            })
-            .collect(),
+        arms,
         cells,
     };
     mutate(&mut receipt);
@@ -563,7 +615,7 @@ fn build_receipt(
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    Built { dir }
+    Built { repo, dir }
 }
 
 fn spec(id: &'static str, speedup: f64) -> CellSpec {
@@ -1019,6 +1071,94 @@ fn acceptance_rejects_changed_producing_input_snapshot() {
                 .message
                 .contains("producing-input snapshot content differs")
     }));
+}
+
+#[test]
+fn acceptance_rejects_every_self_consistent_frozen_fact_replacement() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Exploratory,
+        CoreArm::SingleCore,
+    )]);
+    let mut accepted = Vec::new();
+    for replacement in [
+        "protocol-pin",
+        "producing-inputs",
+        "plan",
+        "settings",
+        "toolchain",
+        "arm-descriptor",
+        "checkpoint-identity",
+    ] {
+        let built = build_receipt(
+            &format!("replaced-{replacement}"),
+            &family,
+            &[spec("a", 2.0)],
+            false,
+            false,
+            |_| {},
+        );
+        let receipt_path = built.dir.join(RECEIPT_FILE);
+        let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
+        match replacement {
+            "protocol-pin" => {
+                let bytes = b"replacement protocol with a self-consistent digest\n";
+                fs::write(built.dir.join(&receipt.protocol.snapshot), bytes).unwrap();
+                receipt.protocol.sha256 = sha256_hex(bytes);
+            }
+            "producing-inputs" => {
+                fs::write(
+                    built.repo.join("producer.rs"),
+                    b"fn replacement_measured_behavior() {}\n",
+                )
+                .unwrap();
+                let snapshot_root = built.dir.join("inputs/producing");
+                fs::remove_dir_all(&snapshot_root).unwrap();
+                receipt.source.producing = ProducingInputs::capture_to(
+                    &built.repo,
+                    "producing-inputs.json",
+                    &snapshot_root,
+                )
+                .unwrap();
+            }
+            "plan" => {
+                let plan_path = built.dir.join("plan.json");
+                let mut plan: Value =
+                    serde_json::from_slice(&fs::read(&plan_path).unwrap()).unwrap();
+                plan["max_cells_per_session"] = json!(1);
+                fs::write(plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
+            }
+            "settings" => {
+                receipt.settings.window_target_ms += 1;
+                receipt.settings_deviation = true;
+            }
+            "toolchain" => receipt.toolchain = "rustc replacement".into(),
+            "arm-descriptor" => {
+                receipt.arms.get_mut("candidate").unwrap().description =
+                    "self-consistent replacement candidate".into();
+            }
+            "checkpoint-identity" => {
+                let manifest_path = built.dir.join(&receipt.checkpoints.manifest_path);
+                let mut manifest: Value =
+                    serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+                manifest["identity"]["feature_contract"] = json!("replacement-release");
+                let bytes = serde_json::to_vec(&manifest).unwrap();
+                fs::write(&manifest_path, &bytes).unwrap();
+                receipt.checkpoints.manifest_sha256 = sha256_hex(&bytes);
+            }
+            _ => unreachable!(),
+        }
+        fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+        let summary = evaluate(&built.dir).unwrap();
+        if summary.verdict == Verdict::Accepted {
+            accepted.push(replacement);
+        }
+    }
+    assert!(
+        accepted.is_empty(),
+        "acceptance trusted receipt-local replacements absent from campaign-start: {accepted:?}"
+    );
 }
 
 #[test]
