@@ -13,12 +13,14 @@ use crate::abtest::{
     PairedObservation,
 };
 use crate::host::{CoreArm, HostObservation};
-use crate::journal::{ExecutionLog, JournalEvent, JournalRecord};
+use crate::journal::{
+    CheckpointManifest, ExecutionLog, JournalEvent, JournalRecord, ResumeIdentity,
+};
 use crate::protocol::{
     is_hex, sha256_hex, ArtifactPin, BuildIdentity, CacheState, CellObjective, CellRole,
-    DecoderArmKind, FamilyAddendum, Normalization, Precision, ReceiptLabel, Schedule,
+    DecoderArmKind, FamilyAddendum, Normalization, Precision, ReceiptLabel, RunnerPlan, Schedule,
     SharedSettings, Stopping, ACCEPTANCE_SCHEMA_ID, ADDENDUM_SCHEMA_PATH, CONTRACT_PATH,
-    PROTOCOL_PATH, RECEIPT_SCHEMA_ID, SHARED_SETTINGS,
+    PROTOCOL_PATH, RECEIPT_SCHEMA_ID, RUNNER_LIFECYCLE_SCHEMA, SHARED_SETTINGS,
 };
 use crate::provenance::{ProducingInputs, ProducingSnapshot};
 use crate::schema;
@@ -40,6 +42,8 @@ pub const SUMMARY_MARKDOWN_FILE: &str = "acceptance-summary.md";
 pub const LOG_FILE: &str = "execution.log";
 /// Checkpoint directory copied beside the receipt.
 pub const CHECKPOINT_DIR: &str = "checkpoints";
+/// Exact runner plan copied beside the receipt.
+pub const PLAN_FILE: &str = "plan.json";
 
 /// Source identity at measurement time.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -50,6 +54,28 @@ pub struct SourceIdentity {
     pub revision: String,
     /// Canonical content closure of producing code and build inputs.
     pub producing: ProducingSnapshot,
+}
+
+/// Complete semantic inputs frozen in the opening campaign journal record.
+///
+/// The runner uses the same type for cross-session comparison and the
+/// independent evaluator uses it to bind every receipt field back to the facts
+/// recorded before measurement. Source-control revision strings remain
+/// informational and are excluded from semantic comparison.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct CampaignFacts {
+    pub plan_sha256: String,
+    pub identity: ResumeIdentity,
+    pub protocol: ArtifactPin,
+    pub contract: ArtifactPin,
+    pub addendum_schema: ArtifactPin,
+    pub addendum: ArtifactPin,
+    pub source: SourceIdentity,
+    pub toolchain: String,
+    pub settings: SharedSettings,
+    pub settings_deviation: bool,
+    pub arms: BTreeMap<String, ArmRecord>,
 }
 
 /// Lock evidence observed inside the wrapper.
@@ -287,6 +313,245 @@ impl BenchmarkReceipt {
     /// Decodes a receipt strictly.
     pub fn decode(bytes: &[u8]) -> Result<Self, String> {
         serde_json::from_slice(bytes).map_err(|error| format!("receipt does not decode: {error}"))
+    }
+}
+
+impl CampaignFacts {
+    /// Whether two opening records describe the same measurement behavior and
+    /// inputs. Git locators are informational at both levels.
+    pub fn resume_equivalent(&self, other: &Self) -> bool {
+        self.plan_sha256 == other.plan_sha256
+            && self.identity.resume_equivalent(&other.identity)
+            && self.protocol == other.protocol
+            && self.contract == other.contract
+            && self.addendum_schema == other.addendum_schema
+            && self.addendum == other.addendum
+            && self.source.producing == other.source.producing
+            && self.toolchain == other.toolchain
+            && self.settings == other.settings
+            && self.settings_deviation == other.settings_deviation
+            && self.arms == other.arms
+    }
+
+    /// Checks the complete receipt and saved-plan projection against the facts
+    /// recorded before measurement.
+    pub fn validate_receipt(
+        &self,
+        receipt: &BenchmarkReceipt,
+        plan: &RunnerPlan,
+        plan_bytes: &[u8],
+        addendum: &FamilyAddendum,
+        checkpoint: &CheckpointManifest,
+    ) -> Vec<String> {
+        let mut errors = Vec::new();
+        macro_rules! require {
+            ($condition:expr, $message:literal) => {
+                if !$condition {
+                    errors.push($message.to_owned());
+                }
+            };
+        }
+
+        require!(
+            self.plan_sha256 == sha256_hex(plan_bytes),
+            "saved plan digest differs from campaign-start"
+        );
+        require!(
+            self.protocol == receipt.protocol,
+            "protocol pin differs from campaign-start"
+        );
+        require!(
+            self.contract == receipt.contract,
+            "measurement-contract pin differs from campaign-start"
+        );
+        require!(
+            self.addendum_schema == receipt.addendum_schema,
+            "addendum-schema pin differs from campaign-start"
+        );
+        require!(
+            self.addendum == receipt.addendum,
+            "addendum pin differs from campaign-start"
+        );
+        require!(
+            self.source.producing == receipt.source.producing,
+            "producing-input identity differs from campaign-start"
+        );
+        require!(
+            self.toolchain == receipt.toolchain,
+            "toolchain identity differs from campaign-start"
+        );
+        require!(
+            self.settings == receipt.settings,
+            "settings differ from campaign-start"
+        );
+        require!(
+            self.settings_deviation == receipt.settings_deviation,
+            "settings-deviation flag differs from campaign-start"
+        );
+        require!(
+            self.arms == receipt.arms,
+            "arm descriptors differ from campaign-start"
+        );
+
+        require!(
+            plan.campaign_id == receipt.campaign_id,
+            "saved plan campaign differs from receipt"
+        );
+        require!(
+            plan.issue == receipt.issue,
+            "saved plan issue differs from receipt"
+        );
+        require!(
+            plan.label == receipt.label,
+            "saved plan label differs from receipt"
+        );
+        require!(
+            plan.campaign_seed == receipt.campaign_seed,
+            "saved plan seed differs from receipt"
+        );
+        require!(
+            plan.addendum == self.addendum.path,
+            "saved plan addendum path differs from campaign-start"
+        );
+        require!(
+            plan.lock_path == receipt.lock.lock_path,
+            "saved plan lock path differs from receipt lock evidence"
+        );
+        require!(
+            plan.wrapper == receipt.lock.wrapper,
+            "saved plan wrapper differs from receipt lock evidence"
+        );
+        let (plan_settings, plan_deviation) = plan.settings();
+        require!(
+            plan_settings == self.settings && plan_deviation == self.settings_deviation,
+            "saved plan timing settings differ from campaign-start"
+        );
+
+        if let Err(plan_errors) = plan.validate(addendum) {
+            errors.extend(
+                plan_errors
+                    .into_iter()
+                    .map(|message| format!("saved plan is invalid: {message}")),
+            );
+        }
+        if plan.arms.len() != self.arms.len() {
+            errors.push("saved plan arm set differs from campaign-start".into());
+        }
+        for (name, planned) in &plan.arms {
+            let Some(frozen) = self.arms.get(name) else {
+                errors.push(format!(
+                    "saved plan arm {name:?} is absent from campaign-start"
+                ));
+                continue;
+            };
+            let profile_matches = match (&planned.tuning_profile, &frozen.tuning_profile) {
+                (None, None) => true,
+                (Some(planned), Some(frozen)) => {
+                    planned.id == frozen.id && planned.sha256 == frozen.sha256
+                }
+                _ => false,
+            };
+            if planned.build != frozen.build
+                || planned.description != frozen.description
+                || planned.executable != frozen.executable_path
+                || planned.arguments != frozen.arguments
+                || planned.environment != frozen.environment
+                || planned.rustflags != frozen.rustflags
+                || !profile_matches
+            {
+                errors.push(format!(
+                    "saved plan arm {name:?} differs from its campaign-start descriptor"
+                ));
+            }
+        }
+
+        require!(
+            checkpoint.campaign_id == receipt.campaign_id,
+            "checkpoint campaign differs from receipt"
+        );
+        require!(
+            checkpoint.identity.resume_equivalent(&self.identity),
+            "checkpoint identity differs from campaign-start"
+        );
+        require!(
+            self.identity.protocol_digest == self.protocol.sha256,
+            "campaign-start protocol digest is inconsistent"
+        );
+        match self.source.producing.identity_sha256() {
+            Ok(digest) => require!(
+                self.identity.source_sha256 == digest,
+                "campaign-start source digest is inconsistent"
+            ),
+            Err(error) => errors.push(format!(
+                "campaign-start source identity cannot encode: {error}"
+            )),
+        }
+        match serde_json::to_vec(&plan.cells) {
+            Ok(bytes) => require!(
+                self.identity.ordered_work_manifest_sha256 == sha256_hex(&bytes),
+                "campaign-start work-manifest digest is inconsistent"
+            ),
+            Err(error) => errors.push(format!("saved plan cells cannot encode: {error}")),
+        }
+        match serde_json::to_vec(&self.arms) {
+            Ok(bytes) => require!(
+                self.identity.process_descriptors_sha256 == sha256_hex(&bytes),
+                "campaign-start process-descriptor digest is inconsistent"
+            ),
+            Err(error) => errors.push(format!(
+                "campaign-start arm descriptors cannot encode: {error}"
+            )),
+        }
+        let executable_sha256 = self
+            .arms
+            .iter()
+            .map(|(name, arm)| (name.clone(), arm.executable_sha256.clone()))
+            .collect();
+        require!(
+            self.identity.executable_sha256 == executable_sha256,
+            "campaign-start executable map is inconsistent"
+        );
+        require!(
+            self.identity.behavior_sha256 == self.source.producing.behavior_sha256,
+            "campaign-start behavior-source map is inconsistent"
+        );
+        match self.source.producing.lifecycle_sha256() {
+            Ok(digest) => require!(
+                self.identity.lifecycle_behavior_sha256 == digest,
+                "campaign-start lifecycle digest is inconsistent"
+            ),
+            Err(error) => errors.push(format!(
+                "campaign-start lifecycle identity cannot encode: {error}"
+            )),
+        }
+        require!(
+            self.identity.lifecycle_schema == RUNNER_LIFECYCLE_SCHEMA,
+            "campaign-start lifecycle schema is inconsistent"
+        );
+        require!(
+            self.identity.feature_contract == "release",
+            "campaign-start feature contract is inconsistent"
+        );
+        let thread_contract = format!(
+            "RAYON_NUM_THREADS={}",
+            receipt
+                .workers
+                .environment_rayon_threads
+                .as_deref()
+                .unwrap_or("unset")
+        );
+        require!(
+            self.identity.thread_contract == thread_contract,
+            "campaign-start thread contract differs from runtime worker evidence"
+        );
+        match receipt.host.affinity.host_identity() {
+            Ok(identity) => require!(
+                self.identity.host_identity == identity,
+                "campaign-start host identity differs from runtime host evidence"
+            ),
+            Err(error) => errors.push(format!("runtime host identity cannot encode: {error}")),
+        }
+        errors
     }
 }
 
@@ -557,6 +822,19 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
             addendum,
         );
     }
+    let saved_plan = match fs::read(receipt_dir.join(PLAN_FILE)) {
+        Ok(bytes) => match RunnerPlan::decode(&bytes) {
+            Ok(plan) => Some((plan, bytes)),
+            Err(message) => {
+                e.error("P-03", None, format!("saved plan: {message}"));
+                None
+            }
+        },
+        Err(error) => {
+            e.error("P-03", None, format!("saved plan is unreadable: {error}"));
+            None
+        }
+    };
     let host = &receipt.host;
     if host.cpu_model.trim().is_empty()
         || host.cpu_flags.is_empty()
@@ -592,7 +870,9 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
     let mut sessions = 0u32;
     let mut terminal = None;
     let mut cell_starts: BTreeMap<String, usize> = BTreeMap::new();
+    let mut cell_start_cases: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     let mut cell_completes: BTreeMap<String, usize> = BTreeMap::new();
+    let mut campaign_facts = None;
     let log_path = receipt_dir.join(&receipt.execution_log.path);
     match fs::read(&log_path) {
         Ok(bytes) => {
@@ -605,20 +885,20 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
             }
             match ExecutionLog::validate_prefix(&bytes, &receipt.campaign_id) {
                 Ok(records) => {
-                    let frozen_addendum = records.first().and_then(|record| {
-                        record
-                            .details
-                            .get("addendum")
-                            .cloned()
-                            .and_then(|value| serde_json::from_value::<ArtifactPin>(value).ok())
-                    });
-                    if frozen_addendum.as_ref() != Some(&receipt.addendum) {
-                        e.error(
-                            "P-03",
-                            None,
-                            "campaign-start does not freeze the receipt addendum content pin",
-                        );
-                    }
+                    campaign_facts =
+                        records.first().and_then(|record| {
+                            match serde_json::from_value::<CampaignFacts>(record.details.clone()) {
+                                Ok(facts) => Some(facts),
+                                Err(error) => {
+                                    e.error(
+                                        "P-03",
+                                        None,
+                                        format!("campaign-start facts do not decode: {error}"),
+                                    );
+                                    None
+                                }
+                            }
+                        });
                     let mut seen_cell = false;
                     for record in &records {
                         match record.event {
@@ -632,7 +912,11 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                             }
                             JournalEvent::CellStart => {
                                 seen_cell = true;
-                                *cell_starts.entry(record_key(record)).or_default() += 1;
+                                let key = record_key(record);
+                                *cell_starts.entry(key.clone()).or_default() += 1;
+                                if let Some(case) = &record.case {
+                                    cell_start_cases.entry(key).or_default().push(case.clone());
+                                }
                             }
                             JournalEvent::CellComplete => {
                                 *cell_completes.entry(record_key(record)).or_default() += 1;
@@ -707,7 +991,7 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
 
     // Checkpoints.
     let manifest_path = receipt_dir.join(&receipt.checkpoints.manifest_path);
-    match fs::read(&manifest_path) {
+    let checkpoint_manifest = match fs::read(&manifest_path) {
         Ok(bytes) => {
             if sha256_hex(&bytes) != receipt.checkpoints.manifest_sha256 {
                 e.error(
@@ -716,17 +1000,54 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                     "checkpoint manifest digest differs from the receipt",
                 );
             }
+            match serde_json::from_slice::<CheckpointManifest>(&bytes) {
+                Ok(manifest) => Some(manifest),
+                Err(error) => {
+                    e.error(
+                        "P-12",
+                        None,
+                        format!("checkpoint manifest does not decode: {error}"),
+                    );
+                    None
+                }
+            }
         }
-        Err(error) => e.error(
-            "P-12",
+        Err(error) => {
+            e.error(
+                "P-12",
+                None,
+                format!("checkpoint manifest unreadable: {error}"),
+            );
+            None
+        }
+    };
+    match (
+        campaign_facts.as_ref(),
+        saved_plan.as_ref(),
+        addendum.as_ref(),
+        checkpoint_manifest.as_ref(),
+    ) {
+        (Some(facts), Some((plan, bytes)), Some(addendum), Some(checkpoint)) => {
+            for message in facts.validate_receipt(&receipt, plan, bytes, addendum, checkpoint) {
+                e.error("P-03", None, format!("campaign-start freeze: {message}"));
+            }
+        }
+        (None, _, _, _) => e.error(
+            "P-03",
             None,
-            format!("checkpoint manifest unreadable: {error}"),
+            "complete campaign-start facts are unavailable",
         ),
+        _ => {}
     }
     let units_dir = manifest_path
         .parent()
         .map(|parent| parent.join("units"))
         .unwrap_or_else(|| receipt_dir.join(CHECKPOINT_DIR).join("units"));
+    let checkpoint_identity_sha256 = checkpoint_manifest.as_ref().and_then(|manifest| {
+        serde_json::to_vec(&manifest.identity)
+            .ok()
+            .map(|bytes| sha256_hex(&bytes))
+    });
 
     // Cells.
     let family = addendum.as_ref().map(|addendum| {
@@ -749,6 +1070,9 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
             e.error("P-13", Some(id), "cell recorded more than once");
         }
         let declaration = addendum.as_ref().and_then(|addendum| addendum.cell(id));
+        let planned = saved_plan
+            .as_ref()
+            .and_then(|(plan, _)| plan.cells.iter().find(|planned| planned.cell_id == id));
         if addendum.is_some() && declaration.is_none() {
             e.error("P-13", Some(id), "cell is not declared in the addendum");
         }
@@ -797,15 +1121,155 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
             );
             invalid = true;
         }
-        if cell_starts.get(&cell.key).copied().unwrap_or(0) != 1
-            && cell.status == CellStatus::Measured
-        {
-            e.error(
-                "P-11",
-                Some(id),
-                "measured cell has no single cell-start record",
-            );
+        match planned {
+            Some(planned)
+                if planned.baseline_arm == cell.baseline_arm
+                    && planned.candidate_arm == cell.candidate_arm => {}
+            Some(_) => {
+                e.error(
+                    "P-13",
+                    Some(id),
+                    "cell arm pairing differs from the saved plan",
+                );
+                invalid = true;
+            }
+            None => {
+                e.error("P-13", Some(id), "cell is absent from the saved plan");
+                invalid = true;
+            }
+        }
+        if let Some(planned) = planned {
+            let expected_case = serde_json::json!({
+                "key": cell.key,
+                "cell_id": cell.cell_id,
+                "case": planned.case,
+            });
+            if cell_start_cases.get(&cell.key) != Some(&vec![expected_case]) {
+                e.error(
+                    "P-11",
+                    Some(id),
+                    "cell-start input differs from the saved plan",
+                );
+                invalid = true;
+            }
+        }
+        if cell_starts.get(&cell.key).copied().unwrap_or(0) != 1 {
+            e.error("P-11", Some(id), "cell has no single cell-start record");
             invalid = true;
+        }
+        // Every planned cell, including an unavailable one, is accepted into
+        // the checkpoint store before the runner records cell completion.
+        match &cell.checkpoint_sha256 {
+            Some(expected) => {
+                let unit_path = units_dir.join(format!("{}.json", sha256_hex(cell.key.as_bytes())));
+                match fs::read(&unit_path) {
+                    Ok(bytes) if sha256_hex(&bytes) == *expected => {
+                        match serde_json::from_slice::<Value>(&bytes) {
+                            Ok(unit) => {
+                                if unit.get("schema").and_then(Value::as_str)
+                                    != Some("tuning-campaign-checkpoint-unit-v1")
+                                    || unit.get("campaign_id").and_then(Value::as_str)
+                                        != Some(receipt.campaign_id.as_str())
+                                    || unit.get("identity_sha256").and_then(Value::as_str)
+                                        != checkpoint_identity_sha256.as_deref()
+                                {
+                                    e.error(
+                                        "P-12",
+                                        Some(id),
+                                        "checkpoint unit identity differs from its manifest",
+                                    );
+                                    invalid = true;
+                                }
+                                if unit.get("key").and_then(Value::as_str)
+                                    != Some(cell.key.as_str())
+                                {
+                                    e.error(
+                                        "P-12",
+                                        Some(id),
+                                        "checkpoint unit key differs from the cell key",
+                                    );
+                                    invalid = true;
+                                }
+                                if let Some(planned) = planned {
+                                    let expected_case = serde_json::json!({
+                                        "key": cell.key,
+                                        "cell_id": cell.cell_id,
+                                        "case": planned.case,
+                                    });
+                                    if unit.get("case") != Some(&expected_case) {
+                                        e.error(
+                                            "P-12",
+                                            Some(id),
+                                            "checkpoint case differs from the saved plan",
+                                        );
+                                        invalid = true;
+                                    }
+                                }
+                                for (name, value, digest_name) in [
+                                    ("case", unit.get("case"), "case_sha256"),
+                                    ("result", unit.get("result"), "result_sha256"),
+                                ] {
+                                    let digest_matches = value
+                                        .and_then(|value| serde_json::to_vec(value).ok())
+                                        .map(|bytes| sha256_hex(&bytes))
+                                        .as_deref()
+                                        == unit.get(digest_name).and_then(Value::as_str);
+                                    if !digest_matches {
+                                        e.error(
+                                            "P-12",
+                                            Some(id),
+                                            format!(
+                                                "checkpoint unit {name} digest is inconsistent"
+                                            ),
+                                        );
+                                        invalid = true;
+                                    }
+                                }
+                                let mut checkpoint_cell = cell.clone();
+                                checkpoint_cell.checkpoint_sha256 = None;
+                                if serde_json::to_value(checkpoint_cell).ok().as_ref()
+                                    != unit.get("result")
+                                {
+                                    e.error(
+                                        "P-12",
+                                        Some(id),
+                                        "receipt cell differs from its checkpoint result",
+                                    );
+                                    invalid = true;
+                                }
+                            }
+                            Err(error) => {
+                                e.error(
+                                    "P-12",
+                                    Some(id),
+                                    format!("checkpoint unit does not decode: {error}"),
+                                );
+                                invalid = true;
+                            }
+                        }
+                    }
+                    Ok(_) => {
+                        e.error(
+                            "P-12",
+                            Some(id),
+                            "checkpoint unit digest differs from the receipt",
+                        );
+                        invalid = true;
+                    }
+                    Err(error) => {
+                        e.error(
+                            "P-12",
+                            Some(id),
+                            format!("checkpoint unit unreadable: {error}"),
+                        );
+                        invalid = true;
+                    }
+                }
+            }
+            None => {
+                e.error("P-12", Some(id), "cell has no checkpoint digest");
+                invalid = true;
+            }
         }
         match cell.status {
             CellStatus::Unavailable => {
@@ -847,46 +1311,6 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
             );
             invalid = true;
         }
-        // Checkpoint unit.
-        match &cell.checkpoint_sha256 {
-            Some(expected) => {
-                let unit_path = units_dir.join(format!("{}.json", sha256_hex(cell.key.as_bytes())));
-                match fs::read(&unit_path) {
-                    Ok(bytes) if sha256_hex(&bytes) == *expected => {
-                        if let Ok(unit) = serde_json::from_slice::<Value>(&bytes) {
-                            if unit.get("key").and_then(Value::as_str) != Some(cell.key.as_str()) {
-                                e.error(
-                                    "P-12",
-                                    Some(id),
-                                    "checkpoint unit key differs from the cell key",
-                                );
-                                invalid = true;
-                            }
-                        }
-                    }
-                    Ok(_) => {
-                        e.error(
-                            "P-12",
-                            Some(id),
-                            "checkpoint unit digest differs from the receipt",
-                        );
-                        invalid = true;
-                    }
-                    Err(error) => {
-                        e.error(
-                            "P-12",
-                            Some(id),
-                            format!("checkpoint unit unreadable: {error}"),
-                        );
-                        invalid = true;
-                    }
-                }
-            }
-            None => {
-                e.error("P-12", Some(id), "measured cell has no checkpoint digest");
-                invalid = true;
-            }
-        }
         // Sample budget and structure.
         let settings = &receipt.settings;
         let required_pairs = match cell.role {
@@ -924,6 +1348,18 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                 invalid = true;
             }
             _ => {}
+        }
+        if let Some(planned) = planned {
+            let planned_pairs = match cell.role {
+                CellRole::Exploratory => planned.pilot_pairs.map(|pairs| pairs as usize),
+                CellRole::Confirmatory | CellRole::Holdout => {
+                    Some(receipt.settings.confirmatory_pairs as usize)
+                }
+            };
+            if cell.status == CellStatus::Measured && planned_pairs != Some(cell.pairs.len()) {
+                e.error("P-15", Some(id), "pair count differs from the saved plan");
+                invalid = true;
+            }
         }
         let cell_seed = bootstrap_seed(receipt.campaign_seed, &cell.key);
         let expected_orders = pair_orders(cell_seed, cell.pairs.len());
@@ -1252,6 +1688,17 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
                     "P-22",
                     None,
                     format!("prior trial {} snapshot invalid: {message}", trial.receipt),
+                );
+            }
+        }
+    }
+    if let Some((plan, _)) = &saved_plan {
+        for planned in &plan.cells {
+            if !seen_cells.contains(&planned.cell_id) {
+                e.error(
+                    "P-13",
+                    Some(&planned.cell_id),
+                    "saved-plan cell is absent from the receipt",
                 );
             }
         }
