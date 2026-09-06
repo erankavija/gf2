@@ -76,6 +76,11 @@ fn metadata_only_revision_change_allows_resume_and_initialize_replay() {
     drop(store);
 
     let mut metadata_only = original.clone();
+    metadata_only.source_revision = "b".repeat(40);
+    CheckpointStore::resume(&root, "campaign", metadata_only.clone()).unwrap();
+    CheckpointStore::initialize_with(&root, "campaign", metadata_only, publish).unwrap();
+
+    let mut metadata_only = original.clone();
     metadata_only.source_revision.clear();
     CheckpointStore::resume(&root, "campaign", metadata_only.clone()).unwrap();
     CheckpointStore::initialize_with(&root, "campaign", metadata_only, publish).unwrap();
@@ -139,6 +144,9 @@ fn changed_producing_digest_rejects_before_mutating_checkpoint_evidence() {
     let mut changed = original;
     changed.source_sha256 = digest(b'8');
     assert!(CheckpointStore::resume(&root, "campaign", changed).is_err());
+    let mut changed = identity();
+    changed.source_sha256 = digest(b'8');
+    assert!(CheckpointStore::initialize_with(&root, "campaign", changed, publish).is_err());
     assert_eq!(
         fs::read(root.join("manifest.json")).unwrap(),
         manifest_before
