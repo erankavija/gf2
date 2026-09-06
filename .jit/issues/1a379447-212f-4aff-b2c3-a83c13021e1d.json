@@ -31,6 +31,26 @@
       "format": "markdown",
       "label": "Claude plan review and agreed resolutions",
       "path": "dev/active/1a379447-zen3-cpu-performance/plan-review.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Session 1 handoff",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "f547c394 review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Execution progress file",
+      "path": "dev/active/1a379447-zen3-cpu-performance/progress.json"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -54,5 +74,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-06T20:21:00.921173777Z"
+  "updated_at": "2026-09-06T22:14:08.769586517Z"
 }
