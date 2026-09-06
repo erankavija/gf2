@@ -101,6 +101,12 @@
       "format": "markdown",
       "label": "f547c394 review round 2",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Session 2 immediate-stop handoff",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-2.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -124,5 +130,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-06T23:35:51.090090014Z"
+  "updated_at": "2026-09-06T23:53:38.792042203Z"
 }
