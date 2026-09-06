@@ -11,22 +11,13 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "review round 1 FAIL; rework 1 pending dispatch (not sent)",
+          "status": "rework 1 dispatched",
           "dispatch": {
-            "model": "fable",
+            "model": "gpt-5.6-sol",
             "worktree": ".agents/worktrees/agent-f547c394",
             "branch": "worktree-agent-f547c394",
-            "base": "974a21f4",
-            "attempt": 1,
-            "at": "2026-09-06T20:24:54+00:00",
-            "interruptions": [
-              {
-                "at": "2026-09-06T21:04:39Z",
-                "reason": "worker session usage limit",
-                "state": "scaffold uncommitted in worktree (6 modules, 3 bins, 3 tests, dev/active/f547c394)",
-                "action": "same worker resumed via SendMessage after limit reset; instructed to commit early"
-              }
-            ]
+            "base": "613e1ac3",
+            "attempt": 2
           },
           "merge_commit": "7a222264",
           "reviews": [
@@ -246,7 +237,8 @@
     "Wave numbers are dependency depth; dispatch is dependency-driven within a wave.",
     "1362381c depends on fd9d5416 (BCH epic ae03bcd0): cross-epic dependency, part of the user-approved plan (plan-review.md); revisit at wave 7.",
     "Invocation scope: the first wave only (user instruction 2026-09-06).",
-    "Trap: a worker hitting its usage limit leaves uncommitted work; require an early first commit once the scaffold compiles."
+    "Trap: a worker hitting its usage limit leaves uncommitted work; require an early first commit once the scaffold compiles.",
+    "Invocation 2026-09-07: complete waves 1 and 2; use Sol, Terra and Luna by difficulty."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
