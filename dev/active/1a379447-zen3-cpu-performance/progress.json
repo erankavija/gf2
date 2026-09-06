@@ -11,7 +11,15 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "pending"
+          "status": "dispatched",
+          "dispatch": {
+            "model": "fable",
+            "worktree": ".agents/worktrees/agent-f547c394",
+            "branch": "worktree-agent-f547c394",
+            "base": "974a21f4",
+            "attempt": 1,
+            "at": "2026-09-06T20:24:54+00:00"
+          }
         }
       ]
     },
