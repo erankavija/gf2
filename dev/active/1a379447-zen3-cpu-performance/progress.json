@@ -11,7 +11,7 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "rework 1 dispatched (code-review F1, F2)",
+          "status": "review round 1 FAIL; rework 1 pending dispatch (not sent)",
           "dispatch": {
             "model": "fable",
             "worktree": ".agents/worktrees/agent-f547c394",
@@ -31,7 +31,13 @@
           "merge_commit": "7a222264",
           "reviews": [
             "reviews/f547c394-r1.md"
-          ]
+          ],
+          "gates": {
+            "cargo-ci": "passed@7a222264",
+            "code-review": "failed (F1 pin fallback, F2 freeze/resolution evidence)",
+            "doc-review": "passed",
+            "research-review": "failed tier-1 (8 stale cites: labels)"
+          }
         }
       ]
     },
@@ -207,7 +213,16 @@
     }
   ],
   "created_during_execution": [],
-  "escalations": [],
+  "escalations": [
+    {
+      "category": "issue scope change (labels/description)",
+      "issue": "f547c394",
+      "question": "remove eight stale cites: labels or mention the keys in the description",
+      "recommendation": "remove labels",
+      "status": "open",
+      "raised_at": "2026-09-06T21:20Z"
+    }
+  ],
   "rework_counts": {
     "f547c394": 1
   },
@@ -233,5 +248,8 @@
     "Invocation scope: the first wave only (user instruction 2026-09-06).",
     "Trap: a worker hitting its usage limit leaves uncommitted work; require an early first commit once the scaffold compiles."
   ],
-  "started_at": "2026-09-06T20:22:15+00:00"
+  "started_at": "2026-09-06T20:22:15+00:00",
+  "handoffs": [
+    "handoff.md"
+  ]
 }
