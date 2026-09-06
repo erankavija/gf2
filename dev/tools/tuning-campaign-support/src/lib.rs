@@ -14,6 +14,7 @@ pub mod campaign;
 pub mod host;
 pub mod journal;
 pub mod process;
+pub mod protocol;
 pub mod schema;
 pub mod seed;
 pub mod statistics;
