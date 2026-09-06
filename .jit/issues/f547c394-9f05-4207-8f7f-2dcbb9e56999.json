@@ -17,15 +17,7 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "eb86495dbdebf778a1e10d8e71978cf954587806b5703d9e6f6886e19797ce95",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "addendum.schema.json",
-          "resolved_path": "dev/active/f547c394/addendum.schema.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "452089376294b523b395fd02329dbfe8019c05819d4029361972114d121a071f",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
@@ -33,11 +25,19 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "5627051a7950169f9618c18fe6187825dc815fb97875f500c840b0b3ca748da9",
+          "content_hash": "32cd1bd99d6ec87c59106a61bf8ff2ec339418c0e4f198021d171dba9775091b",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "design.md",
           "resolved_path": "dev/active/f547c394/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
         }
       ],
       "commit": null,
@@ -62,7 +62,7 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "825cda7d3f7e936e6609b3fe307bce26e19fe02ee8a0aca933f6a5bce5b5c079",
+          "content_hash": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "protocol.md",
@@ -70,7 +70,7 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "eb86495dbdebf778a1e10d8e71978cf954587806b5703d9e6f6886e19797ce95",
+          "content_hash": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240",
           "is_shared": false,
           "mime_type": null,
           "original_path": "addendum.schema.json",
@@ -91,47 +91,7 @@
       "path": "dev/bench_results/f547c394/run-smoke.sh"
     },
     {
-      "commit": null,
-      "doc_type": "benchmark",
-      "label": "Smoke receipt: receipt.json",
-      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/receipt.json"
-    },
-    {
-      "commit": null,
-      "doc_type": "benchmark",
-      "label": "Smoke receipt: acceptance-summary.json",
-      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/acceptance-summary.json"
-    },
-    {
-      "commit": null,
-      "doc_type": "benchmark",
-      "format": "markdown",
-      "label": "Smoke receipt: acceptance-summary.md",
-      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/acceptance-summary.md"
-    },
-    {
-      "commit": null,
-      "doc_type": "benchmark",
-      "label": "Smoke receipt: execution.log",
-      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/execution.log"
-    },
-    {
-      "commit": null,
-      "doc_type": "benchmark",
-      "format": "markdown",
-      "label": "Smoke receipt: launcher.log",
-      "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/launcher.log"
-    },
-    {
       "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "2bf0f61a6bed68494437e9253736dae5046d634b06663c6306794fed0be0a256",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../1a379447-zen3-cpu-performance/reviews/f547c394-r1.md",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
-        },
         {
           "asset_type": "local",
           "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
@@ -139,6 +99,14 @@
           "mime_type": "text/markdown",
           "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
           "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2bf0f61a6bed68494437e9253736dae5046d634b06663c6306794fed0be0a256",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/reviews/f547c394-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
         }
       ],
       "commit": null,
@@ -146,6 +114,101 @@
       "format": "markdown",
       "label": "Invoker provenance clarification",
       "path": "dev/active/f547c394/provenance-clarification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Exploratory smoke addendum",
+      "path": "dev/active/f547c394/addendum-protocol-smoke-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "specification",
+      "label": "Producing input closure",
+      "path": "dev/active/f547c394/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol pilot: receipt.json",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol pilot: plan.json",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol pilot: execution.log",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol pilot: launcher.log",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol pilot: acceptance-summary.json",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol pilot: acceptance-summary.md",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol confirmation: receipt.json",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol confirmation: plan.json",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol confirmation: execution.log",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol confirmation: launcher.log",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "label": "Protocol confirmation: acceptance-summary.json",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "Protocol confirmation: acceptance-summary.md",
+      "path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Historical review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
@@ -158,7 +221,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-06T23:28:17.616399928Z",
+      "updated_at": "2026-09-06T23:30:10.471655105Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -191,5 +254,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-06T23:28:17.616399928Z"
+  "updated_at": "2026-09-06T23:30:54.558037246Z"
 }
