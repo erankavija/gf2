@@ -9,6 +9,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod abtest;
 pub mod campaign;
 pub mod host;
 pub mod journal;
