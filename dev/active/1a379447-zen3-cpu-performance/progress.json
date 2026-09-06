@@ -11,7 +11,7 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "rework 1 dispatched",
+          "status": "rework 1: content-based provenance under user clarification",
           "dispatch": {
             "model": "gpt-5.6-sol",
             "worktree": ".agents/worktrees/agent-f547c394",
@@ -210,8 +210,9 @@
       "issue": "f547c394",
       "question": "remove eight stale cites: labels or mention the keys in the description",
       "recommendation": "remove labels",
-      "status": "open",
-      "raised_at": "2026-09-06T21:20Z"
+      "status": "resolved",
+      "raised_at": "2026-09-06T21:20Z",
+      "resolution": "User authorized complete citation metadata repair: remove obsolete wave-1 labels and append existing comparator registry keys to six wave-2 descriptions."
     }
   ],
   "rework_counts": {
@@ -238,7 +239,9 @@
     "1362381c depends on fd9d5416 (BCH epic ae03bcd0): cross-epic dependency, part of the user-approved plan (plan-review.md); revisit at wave 7.",
     "Invocation scope: the first wave only (user instruction 2026-09-06).",
     "Trap: a worker hitting its usage limit leaves uncommitted work; require an early first commit once the scaffold compiles.",
-    "Invocation 2026-09-07: complete waves 1 and 2; use Sol, Terra and Luna by difficulty."
+    "Invocation 2026-09-07: complete waves 1 and 2; use Sol, Terra and Luna by difficulty.",
+    "User approved citation metadata repair on 2026-09-07; six survey descriptions carry existing registry keys; criteria and gates unchanged.",
+    "User instruction 2026-09-07: Git hashes shall never be critical provenance; user explicitly requests project invariant. Canonical behavioral-evidence-validity, measurement contract and f547c394 criteria are clarified for content-addressed immutable snapshots and metadata-independent resume. Prior R1 Git-object/ancestry demands are superseded; genuine missing-content/digest mismatch and pilot/freeze ordering remain required."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [

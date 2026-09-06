@@ -51,6 +51,31 @@
       "doc_type": "notes",
       "label": "Execution progress file",
       "path": "dev/active/1a379447-zen3-cpu-performance/progress.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2bf0f61a6bed68494437e9253736dae5046d634b06663c6306794fed0be0a256",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/reviews/f547c394-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Content provenance review clarification",
+      "path": "dev/active/f547c394/provenance-clarification.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -74,5 +99,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-06T22:14:08.769586517Z"
+  "updated_at": "2026-09-06T22:38:41.119071070Z"
 }

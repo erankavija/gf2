@@ -4,7 +4,7 @@
   "context": {},
   "created_at": "2026-09-06T19:16:06.002331323Z",
   "dependencies": [],
-  "description": "Provide the shared measurement protocol and acceptance-summary support that independently runnable CPU benchmark families consume.\n\n## Background\n\nThe existing coding comparison runners, offline tuning system and exclusive host lock are canonical. This task specifies reusable statistical and receipt rules; family comparator builds, baseline campaigns and consumer profiling are separate work. The measurement contract states the normative requirements without pretending that numeric experiment settings are already frozen.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish a versioned executable protocol satisfying the [measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), with an explicit schema for independently frozen cell addenda. Store the protocol and schema under the owning development directory and pin their Git/content identities in emitted receipts.\n\n- [hard] REQ-02: Define paired/interleaved A/B sampling and bootstrap confidence intervals for the ratio of medians, the resampling unit, cache-state and outlier policies, family-wise multiple-comparison treatment, independent holdout confirmation and bounded search/stop rules. Freeze shared numerical settings and require applicable family-specific settings before each confirmatory trial.\n\n- [hard] REQ-03: Define family-specific worthwhile-effect and complexity-budget fields, with justified improvement and non-regression equivalence margins. Do not impose a blanket 15% or 1.5x threshold; retain hard correctness and mandatory benchmarking. Distinguish exploratory pilots from confirmation and prevent failed confirmation data from being silently relabeled or discarded.\n\n- [hard] REQ-04: Extend the canonical receipt/acceptance tooling to check required provenance, protocol/addendum identity, sample budgets, confidence-bound decisions, unavailable cells and complete negative results. Exercise pass, fail, inconclusive, missing-identity and resumed-run cases with deterministic fixtures and a bounded release smoke receipt; no production performance change is included.\n\n- [hard] REQ-05: Verify canonical quiet-host locking, append-only execution logs, checkpoint/resume, runtime topology/affinity and worker reporting in the shared runner. Include separate kernel/whole-consumer and single-core/multicore metrics, conservative/tuned/native build identities and conversion costs in the schema without requiring all family campaigns to run here.\n\n- [hard] REQ-06: Define matched-algorithm versus fastest quality-compatible decoder cell schemas, including input/code identity, precision, schedule, stopping, batching, memory and BER/FER confidence intervals. Actual comparator compatibility and build choices remain family survey outputs.\n\n- [hard] REQ-07: Commit the reviewed protocol, schema, tooling validation and linked reproducible smoke evidence. Numeric family settings may be supplied later by addenda, but every unresolved required setting makes its cell non-confirmatory rather than implicitly defaulted.\n\n## Notes\n\nThis is measurement infrastructure only. It does not build every comparator, profile every consumer, tune production dispatch or establish a claimed speedup.\n\n",
+  "description": "Provide the shared measurement protocol and acceptance-summary support that independently runnable CPU benchmark families consume.\n\n## Background\n\nThe existing coding comparison runners, offline tuning system and exclusive host lock are canonical. This task specifies reusable statistical and receipt rules; family comparator builds, baseline campaigns and consumer profiling are separate work. The measurement contract states the normative requirements without pretending that numeric experiment settings are already frozen.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish a versioned executable protocol satisfying the [measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md), with an explicit schema for independently frozen cell addenda. Store the protocol and schema under the owning development directory and pin immutable artifact snapshots by content digest in emitted receipts; Git revisions are optional navigation metadata.\n\n- [hard] REQ-02: Define paired/interleaved A/B sampling and bootstrap confidence intervals for the ratio of medians, the resampling unit, cache-state and outlier policies, family-wise multiple-comparison treatment, independent holdout confirmation and bounded search/stop rules. Freeze shared numerical settings and require applicable family-specific settings before each confirmatory trial.\n\n- [hard] REQ-03: Define family-specific worthwhile-effect and complexity-budget fields, with justified improvement and non-regression equivalence margins. Do not impose a blanket 15% or 1.5x threshold; retain hard correctness and mandatory benchmarking. Distinguish exploratory pilots from confirmation and prevent failed confirmation data from being silently relabeled or discarded.\n\n- [hard] REQ-04: Extend the canonical receipt/acceptance tooling to check required provenance, protocol/addendum identity, sample budgets, confidence-bound decisions, unavailable cells and complete negative results. Exercise pass, fail, inconclusive, missing-content, digest-mismatch and resumed-run cases, including metadata-only Git commits and unrelated edits between sessions with deterministic fixtures and a bounded release smoke receipt; no production performance change is included.\n\n- [hard] REQ-05: Verify canonical quiet-host locking, append-only execution logs, checkpoint/resume, runtime topology/affinity and worker reporting in the shared runner. Include separate kernel/whole-consumer and single-core/multicore metrics, conservative/tuned/native build identities and conversion costs in the schema without requiring all family campaigns to run here.\n\n- [hard] REQ-06: Define matched-algorithm versus fastest quality-compatible decoder cell schemas, including input/code identity, precision, schedule, stopping, batching, memory and BER/FER confidence intervals. Actual comparator compatibility and build choices remain family survey outputs.\n\n- [hard] REQ-07: Commit the reviewed protocol, schema, tooling validation and linked reproducible smoke evidence. Numeric family settings may be supplied later by addenda, but every unresolved required setting makes its cell non-confirmatory rather than implicitly defaulted.\n\n## Notes\n\nProvenance and resume follow @/inv/behavioral-evidence-validity: content identities of producing code, executables, configuration and inputs are authoritative; Git-object availability, commit ancestry and repository-wide clean/dirty status are not acceptance conditions. Freeze the content snapshot in the append-only execution record before measurements and cite a distinct pilot receipt by digest.\n\nThis is measurement infrastructure only. It does not build every comparator, profile every consumer, tune production dispatch or establish a claimed speedup.\n\n",
   "documents": [
     {
       "commit": null,
@@ -121,6 +121,31 @@
       "format": "markdown",
       "label": "Smoke receipt: launcher.log",
       "path": "dev/bench_results/f547c394/2026-09-06-f547c394-smoke/launcher.log"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2bf0f61a6bed68494437e9253736dae5046d634b06663c6306794fed0be0a256",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/reviews/f547c394-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Invoker provenance clarification",
+      "path": "dev/active/f547c394/provenance-clarification.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:16:06.002331323Z",
@@ -161,18 +186,10 @@
     "component:gf2-sim",
     "satisfies:REQ-01",
     "satisfies:REQ-05",
-    "cites:Cassagne2019",
-    "cites:IsaL2026",
-    "cites:GfComplete2026",
-    "cites:Libpopcnt2026",
-    "cites:Mula2018",
-    "cites:AlbrechtBard2026",
-    "cites:Bitshuffle2026",
-    "cites:GfTwoX2026",
     "type:task"
   ],
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-06T22:12:08.294256289Z"
+  "updated_at": "2026-09-06T22:38:40.867738633Z"
 }
