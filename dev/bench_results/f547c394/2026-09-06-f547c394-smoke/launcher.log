@@ -1,0 +1,15 @@
+# command: dev/bench_results/f547c394/run-smoke.sh 
+# started_utc: 2026-09-06T21:36:07Z
+# gf2 revision: a1e513178a56073a93a0ae271ff6063812e142aa
+# campaign: smoke-f547c394-20260906t213607z
+# stage: /tmp/gf2-smoke-f547c394-20260906t213607z
+# load_avg_start:  00:36:07 up 3 days,  2:05,  3 users,  load average: 0.78, 0.65, 0.40
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-smoke-f547c394-20260906t213607z/execution.log
+# session 1 exit: 3 (3 = paused after max_cells_per_session)
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-smoke-f547c394-20260906t213607z/execution.log
+# session 2 exit: 0 (complete)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/f547c394/2026-09-06-f547c394-smoke/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  00:37:12 up 3 days,  2:06,  3 users,  load average: 0.93, 0.72, 0.44
+# finished_utc: 2026-09-06T21:37:12Z

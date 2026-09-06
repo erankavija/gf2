@@ -1,0 +1,1267 @@
+//! Behavioral contracts of the Zen 3 benchmark protocol tooling: addendum
+//! schema, paired bootstrap statistics, receipt acceptance on deterministic
+//! fixtures, the protocol document's frozen settings, and the shared runner.
+
+use serde_json::{json, Value};
+use std::collections::BTreeMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use tuning_campaign_support::abtest::{
+    bonferroni_confidence, bootstrap_seed, decide, pair_orders, paired_bootstrap_speedup,
+    wilson_interval_95, ArmOrder, BootstrapInterval, Decision, Margins, PairedObservation,
+    SplitMix64,
+};
+use tuning_campaign_support::host::{CoreArm, HostObservation};
+use tuning_campaign_support::journal::{
+    CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity, TerminalState,
+};
+use tuning_campaign_support::protocol::{
+    sha256_hex, ArmBuilds, ArtifactPin, Batching, BuildIdentity, CacheState, CellDeclaration,
+    CellObjective, CellRole, CodeIdentity, CodewordSource, ComplexityBudget, DecoderArmKind,
+    DecoderCell, DecoderInput, EffectRule, FamilyAddendum, FamilyIdentity, FamilyPurpose,
+    FamilyWise, Frozen, Holdout, MetricKind, Normalization, NormalizationKind, Precision,
+    ProtocolRef, QualityTolerance, ReceiptLabel, Scaling, Schedule, SearchBudget, Stopping,
+    StoppingKind, WorkerDeclaration, Workload, ADDENDUM_SCHEMA_ID, ADDENDUM_SCHEMA_PATH,
+    CONTRACT_PATH, PROTOCOL_ID, PROTOCOL_PATH, PROTOCOL_VERSION, RECEIPT_SCHEMA_ID,
+    SHARED_SETTINGS,
+};
+use tuning_campaign_support::receipt::{
+    evaluate, render_markdown, ArmQuality, ArmRecord, BenchmarkReceipt, CellClaim, CellOutcome,
+    CellRecord, CellStatus, CheckpointRecord, DecoderArmSettings, DecoderQualityRecord,
+    ExecutionRecord, IterationDistribution, LockRecord, LogRecord, PairRecord, Severity,
+    SourceIdentity, Verdict, WindowRecord, WorkerReport, CHECKPOINT_DIR, LOG_FILE, RECEIPT_FILE,
+};
+use tuning_campaign_support::schema;
+
+const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
+const CAMPAIGN_SEED: u64 = 7;
+
+fn repo_root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../..")
+        .canonicalize()
+        .unwrap()
+}
+
+fn scratch(name: &str) -> PathBuf {
+    let dir = std::env::temp_dir().join(format!("gf2-f547c394-{name}-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&dir);
+    fs::create_dir_all(&dir).unwrap();
+    dir
+}
+
+/// Copies the committed protocol documents into a scratch repository root.
+fn stage_repo(root: &Path) {
+    for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH, CONTRACT_PATH] {
+        let target = root.join(relative);
+        fs::create_dir_all(target.parent().unwrap()).unwrap();
+        fs::copy(repo_root().join(relative), target).unwrap();
+    }
+}
+
+fn pin(root: &Path, relative: &str) -> ArtifactPin {
+    ArtifactPin {
+        path: relative.to_owned(),
+        git_commit: COMMIT.to_owned(),
+        sha256: sha256_hex(&fs::read(root.join(relative)).unwrap()),
+    }
+}
+
+fn cell(id: &str, objective: CellObjective, role: CellRole, core_arm: CoreArm) -> CellDeclaration {
+    CellDeclaration {
+        cell_id: id.to_owned(),
+        objective,
+        role,
+        workload: Workload {
+            identity: "xor-fold".into(),
+            size: BTreeMap::from([("words".to_owned(), 65_536)]),
+            seed: 1,
+        },
+        metric_kind: MetricKind::KernelIsolated,
+        scaling: Scaling::SingleCoreLatency,
+        core_arm,
+        workers: WorkerDeclaration {
+            declared: 1,
+            nested_pools_allowed: false,
+        },
+        cache_state: CacheState::Warm,
+        builds: ArmBuilds {
+            baseline: BuildIdentity::ConservativePortable,
+            candidate: BuildIdentity::ConservativePortable,
+        },
+        conversion_costs_included: false,
+        decoder: None,
+    }
+}
+
+fn addendum(cells: Vec<CellDeclaration>) -> FamilyAddendum {
+    FamilyAddendum {
+        schema: ADDENDUM_SCHEMA_ID.into(),
+        protocol: ProtocolRef {
+            id: PROTOCOL_ID.into(),
+            version: PROTOCOL_VERSION,
+        },
+        family: FamilyIdentity {
+            id: "fixture-family".into(),
+            issue: "f547c394".into(),
+            purpose: FamilyPurpose::KernelFamily,
+            description: "deterministic fixture family".into(),
+        },
+        frozen: Frozen {
+            at_commit: Some(COMMIT.into()),
+            frozen_utc: Some("2026-09-06T00:00:00Z".into()),
+        },
+        effect: EffectRule {
+            worthwhile_speedup: Some(1.5),
+            rationale: "fixture".into(),
+            measurement_resolution: Some(0.05),
+            resolution_evidence: Some("fixture".into()),
+            equivalence_margin: Some(1.1),
+            equivalence_rationale: "fixture".into(),
+            material_gap_threshold: Some(1.5),
+            material_gap_rationale: "fixture".into(),
+        },
+        complexity_budget: ComplexityBudget {
+            max_new_unsafe_kernels: 0,
+            max_added_source_lines: Some(100),
+            maintenance_rationale: "fixture".into(),
+        },
+        family_wise: FamilyWise {
+            alpha: 0.05,
+            prior_confirmatory_trials: 0,
+            prior_trials: Vec::new(),
+        },
+        search_budget: SearchBudget {
+            max_pilot_trials_per_cell: 2,
+            max_confirmatory_attempts_per_candidate: 1,
+        },
+        holdout: Holdout {
+            required: false,
+            cells: Vec::new(),
+        },
+        cells,
+    }
+}
+
+fn write_addendum(root: &Path, addendum: &FamilyAddendum) -> ArtifactPin {
+    let relative = "dev/active/f547c394/addendum-fixture.json";
+    let mut bytes = serde_json::to_vec_pretty(addendum).unwrap();
+    bytes.push(b'\n');
+    fs::write(root.join(relative), bytes).unwrap();
+    pin(root, relative)
+}
+
+/// Deterministic windows: five per execution, jittered around `ns`.
+fn execution(
+    arm: &str,
+    mixer: &mut SplitMix64,
+    ns: f64,
+    jitter: f64,
+    cpus: &[u32],
+) -> ExecutionRecord {
+    let windows: Vec<WindowRecord> = (0..SHARED_SETTINGS.windows_per_execution)
+        .map(|_| {
+            let unit = (mixer.next_u64() >> 11) as f64 / (1u64 << 53) as f64;
+            let value = ns * (1.0 + jitter * (2.0 * unit - 1.0));
+            WindowRecord {
+                calls: 1000,
+                elapsed_ns: (value * 1000.0).round().max(1.0) as u64,
+            }
+        })
+        .collect();
+    let mut values: Vec<f64> = windows.iter().map(|window| window.ns_per_call()).collect();
+    values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    ExecutionRecord {
+        arm: arm.to_owned(),
+        pid: 4242,
+        ns_per_call: values[values.len() / 2],
+        windows,
+        cache_state_applied: CacheState::Warm,
+        workers_observed: 1,
+        cpus_observed: cpus.to_vec(),
+        selected_path: Some("fixture".into()),
+        conversion: None,
+        elapsed_ns: 1_000_000,
+    }
+}
+
+struct CellSpec {
+    id: &'static str,
+    speedup: f64,
+    jitter: f64,
+    unavailable: Option<&'static str>,
+    claim: bool,
+}
+
+fn pairs(spec: &CellSpec, role: CellRole, key: &str, cpus: &[u32]) -> Vec<PairRecord> {
+    let count = match role {
+        CellRole::Exploratory => SHARED_SETTINGS.pilot_min_pairs,
+        _ => SHARED_SETTINGS.confirmatory_pairs,
+    } as usize;
+    let mut mixer = SplitMix64::new(bootstrap_seed(CAMPAIGN_SEED, key) ^ 0x5eed);
+    pair_orders(bootstrap_seed(CAMPAIGN_SEED, key), count)
+        .into_iter()
+        .enumerate()
+        .map(|(index, order)| PairRecord {
+            index: index as u32,
+            order,
+            baseline: execution("baseline", &mut mixer, 200.0, spec.jitter, cpus),
+            candidate: execution(
+                "candidate",
+                &mut mixer,
+                200.0 / spec.speedup,
+                spec.jitter,
+                cpus,
+            ),
+        })
+        .collect()
+}
+
+fn identity(addendum_pin: &ArtifactPin) -> ResumeIdentity {
+    ResumeIdentity {
+        protocol_digest: sha256_hex(b"protocol"),
+        source_revision: COMMIT.into(),
+        source_sha256: sha256_hex(b"tree"),
+        ordered_work_manifest_sha256: addendum_pin.sha256.clone(),
+        process_descriptors_sha256: sha256_hex(b"arms"),
+        executable_sha256: BTreeMap::from([("baseline".to_owned(), sha256_hex(b"exe"))]),
+        behavior_sha256: BTreeMap::from([("runner".to_owned(), sha256_hex(b"runner"))]),
+        lifecycle_schema: "fixture-lifecycle-v1".into(),
+        lifecycle_behavior_sha256: sha256_hex(b"lifecycle"),
+        feature_contract: "release".into(),
+        thread_contract: "RAYON_NUM_THREADS=unset".into(),
+        host_identity: "fixture-host".into(),
+    }
+}
+
+struct Built {
+    dir: PathBuf,
+    repo: PathBuf,
+}
+
+/// Writes a complete receipt directory: journal, checkpoints and receipt.
+fn build_receipt(
+    name: &str,
+    addendum: &FamilyAddendum,
+    specs: &[CellSpec],
+    resume_after_first: bool,
+    repeat_first: bool,
+    mutate: impl FnOnce(&mut BenchmarkReceipt),
+) -> Built {
+    let root = scratch(name);
+    let repo = root.join("repo");
+    stage_repo(&repo);
+    let addendum_pin = write_addendum(&repo, addendum);
+    let dir = root.join("receipt");
+    fs::create_dir_all(&dir).unwrap();
+    let campaign = "fixture-campaign";
+    let mut log = ExecutionLog::create_new(&dir, campaign, "session-1").unwrap();
+    log.append(JournalEvent::CampaignStart, None, json!({"fixture": true}))
+        .unwrap();
+    log.append(
+        JournalEvent::OrchestrationStart,
+        None,
+        json!({"kind": "execution-log-announced", "path": log.path()}),
+    )
+    .unwrap();
+    let host = HostObservation::observe().unwrap();
+    let mut checkpoints =
+        CheckpointStore::create_new(dir.join(CHECKPOINT_DIR), campaign, identity(&addendum_pin))
+            .unwrap();
+    let cpus = vec![host.affinity.cpus()[0]];
+    let confidence = bonferroni_confidence(0.05, addendum.family_comparisons()).unwrap();
+    let mut cells = Vec::new();
+    for (index, spec) in specs.iter().enumerate() {
+        if resume_after_first && index == 1 {
+            log.terminal(TerminalState::Paused, json!({"measured_cells": 1}))
+                .unwrap();
+            log = ExecutionLog::resume(dir.join(LOG_FILE), campaign, "session-2").unwrap();
+            log.append(
+                JournalEvent::OrchestrationStart,
+                None,
+                json!({"kind": "execution-log-announced", "path": log.path()}),
+            )
+            .unwrap();
+            log.append(
+                JournalEvent::Omission,
+                Some(json!({"key": specs[0].id})),
+                json!({"kind": "completed-in-prior-session"}),
+            )
+            .unwrap();
+            if repeat_first {
+                log.append(
+                    JournalEvent::CellStart,
+                    Some(json!({"key": specs[0].id})),
+                    json!({}),
+                )
+                .unwrap();
+            }
+        }
+        let declared = addendum.cell(spec.id).unwrap();
+        let key = spec.id.to_owned();
+        let case = json!({"key": key, "cell_id": spec.id});
+        log.append(JournalEvent::CellStart, Some(case.clone()), json!({}))
+            .unwrap();
+        let mut record = CellRecord {
+            cell_id: spec.id.into(),
+            key: key.clone(),
+            role: declared.role,
+            baseline_arm: "baseline".into(),
+            candidate_arm: "candidate".into(),
+            core_arm: declared.core_arm,
+            resolved_cpus: Vec::new(),
+            status: CellStatus::Unavailable,
+            unavailable_reason: spec.unavailable.map(str::to_owned),
+            pairs: Vec::new(),
+            claimed: None,
+            decoder_quality: None,
+            checkpoint_sha256: None,
+        };
+        if spec.unavailable.is_none() {
+            record.status = CellStatus::Measured;
+            record.resolved_cpus = cpus.clone();
+            record.pairs = pairs(spec, declared.role, &key, &cpus);
+            if spec.claim {
+                let observations: Vec<_> = record
+                    .pairs
+                    .iter()
+                    .map(|pair| PairedObservation {
+                        baseline_ns_per_call: pair.baseline.ns_per_call,
+                        candidate_ns_per_call: pair.candidate.ns_per_call,
+                    })
+                    .collect();
+                let interval = paired_bootstrap_speedup(
+                    &observations,
+                    SHARED_SETTINGS.bootstrap_resamples,
+                    confidence,
+                    bootstrap_seed(CAMPAIGN_SEED, &key),
+                )
+                .unwrap();
+                let margins = addendum.margins(declared).unwrap();
+                record.claimed = Some(CellClaim {
+                    interval,
+                    decision: decide(&interval, &margins).unwrap(),
+                    margins,
+                });
+            }
+        }
+        let accepted = checkpoints.accept(&key, &case, &record).unwrap();
+        record.checkpoint_sha256 = Some(accepted.sha256);
+        log.append(
+            JournalEvent::CheckpointAccepted,
+            Some(case.clone()),
+            json!({}),
+        )
+        .unwrap();
+        log.append(JournalEvent::CellComplete, Some(case), json!({}))
+            .unwrap();
+        cells.push(record);
+    }
+    log.terminal(TerminalState::Complete, json!({})).unwrap();
+    drop(log);
+    let log_bytes = fs::read(dir.join(LOG_FILE)).unwrap();
+    let manifest_bytes = fs::read(dir.join(CHECKPOINT_DIR).join("manifest.json")).unwrap();
+    let sessions = if resume_after_first { 2 } else { 1 };
+    let mut receipt = BenchmarkReceipt {
+        schema: RECEIPT_SCHEMA_ID.into(),
+        campaign_id: campaign.into(),
+        issue: "f547c394".into(),
+        label: ReceiptLabel::Confirmation,
+        campaign_seed: CAMPAIGN_SEED,
+        settings: SHARED_SETTINGS,
+        settings_deviation: false,
+        protocol: pin(&repo, PROTOCOL_PATH),
+        contract: pin(&repo, CONTRACT_PATH),
+        addendum_schema: pin(&repo, ADDENDUM_SCHEMA_PATH),
+        addendum: addendum_pin,
+        source: SourceIdentity {
+            revision: COMMIT.into(),
+            tree_sha256: sha256_hex(b"tree"),
+            clean: true,
+        },
+        toolchain: "rustc fixture".into(),
+        host,
+        lock: LockRecord {
+            lock_path: "/tmp/gf2-ccx1.lock".into(),
+            holder_pid: 4242,
+            observation: "fixture".into(),
+            wrapper: "dev/scripts/ccx1-bench-flock.sh".into(),
+        },
+        workers: WorkerReport {
+            environment_rayon_threads: None,
+            runner_threads: 1,
+        },
+        execution_log: LogRecord {
+            path: LOG_FILE.into(),
+            sha256: sha256_hex(&log_bytes),
+            sessions,
+            resumed: sessions > 1,
+        },
+        checkpoints: CheckpointRecord {
+            manifest_path: format!("{CHECKPOINT_DIR}/manifest.json"),
+            manifest_sha256: sha256_hex(&manifest_bytes),
+        },
+        arms: ["baseline", "candidate"]
+            .into_iter()
+            .map(|name| {
+                (
+                    name.to_owned(),
+                    ArmRecord {
+                        build: BuildIdentity::ConservativePortable,
+                        description: name.into(),
+                        executable_path: "/usr/bin/true".into(),
+                        executable_sha256: sha256_hex(name.as_bytes()),
+                        arguments: Vec::new(),
+                        environment: BTreeMap::new(),
+                        rustflags: None,
+                        tuning_profile: None,
+                    },
+                )
+            })
+            .collect(),
+        cells,
+    };
+    mutate(&mut receipt);
+    fs::write(
+        dir.join(RECEIPT_FILE),
+        serde_json::to_vec_pretty(&receipt).unwrap(),
+    )
+    .unwrap();
+    Built { dir, repo }
+}
+
+fn spec(id: &'static str, speedup: f64) -> CellSpec {
+    CellSpec {
+        id,
+        speedup,
+        jitter: 0.02,
+        unavailable: None,
+        claim: true,
+    }
+}
+
+fn outcome(summary: &tuning_campaign_support::receipt::AcceptanceSummary, id: &str) -> CellOutcome {
+    summary
+        .cells
+        .iter()
+        .find(|cell| cell.cell_id == id)
+        .unwrap()
+        .outcome
+}
+
+#[test]
+fn addendum_schema_accepts_the_frozen_smoke_addendum_and_rejects_unknown_fields() {
+    let root = repo_root();
+    let schema_value: Value =
+        serde_json::from_slice(&fs::read(root.join(ADDENDUM_SCHEMA_PATH)).unwrap()).unwrap();
+    let bytes = fs::read(root.join("dev/active/f547c394/addendum-protocol-smoke.json")).unwrap();
+    let instance: Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(schema::validate(&schema_value, &instance).is_empty());
+    let smoke = FamilyAddendum::decode(&bytes).unwrap();
+    smoke.validate().unwrap();
+    assert_eq!(smoke.family.id, "protocol-smoke");
+    let mut extra = instance.clone();
+    extra["effect"]["bonus"] = json!(1);
+    let violations = schema::validate(&schema_value, &extra);
+    assert!(violations
+        .iter()
+        .any(|v| v.instance_path == "/effect/bonus" && v.message.contains("bonus")));
+    assert!(FamilyAddendum::decode(serde_json::to_vec(&extra).unwrap().as_slice()).is_err());
+    let mut wrong = instance.clone();
+    wrong["family_wise"]["alpha"] = json!(0.1);
+    assert!(!schema::validate(&schema_value, &wrong).is_empty());
+    let decoded = FamilyAddendum::decode(serde_json::to_vec(&wrong).unwrap().as_slice()).unwrap();
+    assert!(decoded.validate().is_err());
+}
+
+#[test]
+fn unresolved_required_settings_make_a_cell_non_confirmatory() {
+    let mut family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    family.effect.worthwhile_speedup = None;
+    family.frozen = Frozen {
+        at_commit: None,
+        frozen_utc: None,
+    };
+    family.validate().unwrap();
+    let unresolved = family.unresolved_settings(&family.cells[0]);
+    assert!(unresolved.contains(&"frozen.at_commit".to_owned()));
+    assert!(unresolved.contains(&"effect.worthwhile_speedup".to_owned()));
+    assert!(family.margins(&family.cells[0]).is_none());
+    let built = build_receipt(
+        "unresolved",
+        &family,
+        &[CellSpec {
+            claim: false,
+            ..spec("a", 2.0)
+        }],
+        false,
+        false,
+        |_| {},
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted);
+    assert_eq!(outcome(&summary, "a"), CellOutcome::NotConfirmatory);
+    assert!(!summary.qualifies);
+    assert_eq!(summary.cells[0].unresolved_settings, unresolved);
+}
+
+#[test]
+fn paired_bootstrap_interval_is_deterministic_and_brackets_known_ratios() {
+    let mut mixer = SplitMix64::new(3);
+    let observations: Vec<_> = (0..24)
+        .map(|_| {
+            let unit = (mixer.next_u64() >> 11) as f64 / (1u64 << 53) as f64;
+            let baseline = 100.0 * (1.0 + 0.04 * (unit - 0.5));
+            PairedObservation {
+                baseline_ns_per_call: baseline,
+                candidate_ns_per_call: baseline / 2.0,
+            }
+        })
+        .collect();
+    let first = paired_bootstrap_speedup(&observations, 2000, 0.95, 11).unwrap();
+    let second = paired_bootstrap_speedup(&observations, 2000, 0.95, 11).unwrap();
+    assert_eq!(first, second);
+    assert!(first.lower <= 2.0 && 2.0 <= first.upper, "{first:?}");
+    assert!((first.estimate - 2.0).abs() < 1e-9);
+    assert!(first.upper - first.lower < 0.2, "{first:?}");
+    assert_eq!(first.seed, 11);
+    assert!(paired_bootstrap_speedup(&observations[..1], 2000, 0.95, 1).is_err());
+}
+
+#[test]
+fn decisions_follow_confidence_bound_margins_not_significance() {
+    let margins = Margins {
+        improvement: 1.5,
+        equivalence: 1.1,
+    };
+    let interval = |lower: f64, upper: f64| BootstrapInterval {
+        estimate: (lower + upper) / 2.0,
+        lower,
+        upper,
+        confidence: 0.95,
+        resamples: 1000,
+        seed: 1,
+        pairs: 24,
+    };
+    assert_eq!(
+        decide(&interval(1.6, 1.9), &margins).unwrap(),
+        Decision::Improved
+    );
+    assert_eq!(
+        decide(&interval(1.2, 1.4), &margins).unwrap(),
+        Decision::NotWorse
+    );
+    // A "significant" 3% slowdown is still not worse under the equivalence margin.
+    assert_eq!(
+        decide(&interval(0.95, 0.99), &margins).unwrap(),
+        Decision::NotWorse
+    );
+    assert_eq!(
+        decide(&interval(0.7, 0.85), &margins).unwrap(),
+        Decision::Regressed
+    );
+    // A wide interval around 1 that crosses the equivalence floor is inconclusive.
+    assert_eq!(
+        decide(&interval(0.85, 1.3), &margins).unwrap(),
+        Decision::Inconclusive
+    );
+    assert!(decide(
+        &interval(1.0, 1.1),
+        &Margins {
+            improvement: 1.0,
+            equivalence: 1.1
+        }
+    )
+    .is_err());
+}
+
+#[test]
+fn bonferroni_level_widens_with_the_family_and_prior_trials() {
+    assert!((bonferroni_confidence(0.05, 1).unwrap() - 0.95).abs() < 1e-12);
+    assert!((bonferroni_confidence(0.05, 5).unwrap() - 0.99).abs() < 1e-12);
+    assert!(bonferroni_confidence(0.05, 0).is_err());
+    let mut family = addendum(vec![
+        cell(
+            "a",
+            CellObjective::Improvement,
+            CellRole::Confirmatory,
+            CoreArm::SingleCore,
+        ),
+        cell(
+            "b",
+            CellObjective::NonRegression,
+            CellRole::Confirmatory,
+            CoreArm::SingleCore,
+        ),
+        cell(
+            "p",
+            CellObjective::Improvement,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        ),
+    ]);
+    assert_eq!(family.family_comparisons(), 2);
+    family.family_wise.prior_confirmatory_trials = 3;
+    family.family_wise.prior_trials = (0..3)
+        .map(|index| tuning_campaign_support::protocol::PriorTrial {
+            receipt: format!("prior-{index}.json"),
+            sha256: sha256_hex(&[index]),
+            outcome: "fail".into(),
+        })
+        .collect();
+    family.validate().unwrap();
+    assert_eq!(family.family_comparisons(), 5);
+}
+
+#[test]
+fn pair_orders_are_counterbalanced_and_seed_determined() {
+    let orders = pair_orders(99, 24);
+    assert_eq!(orders, pair_orders(99, 24));
+    assert_ne!(orders, pair_orders(100, 24));
+    for block in orders.chunks(2) {
+        assert_ne!(block[0], block[1]);
+    }
+    assert_eq!(
+        orders
+            .iter()
+            .filter(|order| **order == ArmOrder::BaselineFirst)
+            .count(),
+        12
+    );
+    assert_eq!(pair_orders(5, 7).len(), 7);
+}
+
+#[test]
+fn acceptance_passes_a_confirmed_improvement_receipt() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt("pass", &family, &[spec("a", 2.0)], false, false, |_| {});
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(outcome(&summary, "a"), CellOutcome::Pass);
+    assert!(summary.qualifies);
+    let interval = summary.cells[0].interval.unwrap();
+    assert!(interval.lower >= 1.5 && interval.lower <= 2.0 && interval.upper >= 2.0);
+    assert_eq!(interval.pairs, 24);
+    assert_eq!(interval.resamples, SHARED_SETTINGS.bootstrap_resamples);
+    assert!(!summary.resumed);
+    assert!(summary
+        .findings
+        .iter()
+        .all(|finding| finding.severity == Severity::Note));
+}
+
+#[test]
+fn acceptance_fails_a_regression_beyond_the_equivalence_margin() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::NonRegression,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt("fail", &family, &[spec("a", 0.8)], false, false, |_| {});
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(outcome(&summary, "a"), CellOutcome::Fail);
+    assert_eq!(summary.cells[0].decision, Some(Decision::Regressed));
+    assert!(!summary.qualifies);
+}
+
+#[test]
+fn acceptance_marks_an_interval_spanning_the_margin_inconclusive() {
+    let mut family = addendum(vec![cell(
+        "a",
+        CellObjective::NonRegression,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    family.effect.equivalence_margin = Some(1.02);
+    let built = build_receipt(
+        "inconclusive",
+        &family,
+        &[CellSpec {
+            jitter: 0.12,
+            ..spec("a", 1.0 / 1.02)
+        }],
+        false,
+        false,
+        |_| {},
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    let cell = &summary.cells[0];
+    let interval = cell.interval.unwrap();
+    assert!(
+        interval.lower < 1.0 / 1.02 && interval.upper >= 1.0 / 1.02,
+        "{interval:?}"
+    );
+    assert_eq!(cell.outcome, CellOutcome::Inconclusive);
+    assert!(!summary.qualifies);
+}
+
+#[test]
+fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "missing-identity",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |receipt| {
+            receipt.protocol.git_commit = "not-a-commit".into();
+            receipt.addendum.sha256 = sha256_hex(b"other");
+        },
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary
+        .findings
+        .iter()
+        .any(|f| f.rule == "P-02" && f.severity == Severity::Error));
+    assert!(summary
+        .findings
+        .iter()
+        .any(|f| f.rule == "P-03" && f.message.contains("content digest")));
+    assert!(!summary.qualifies);
+    // The same receipt with intact identities and no repository root records notes, not errors.
+    let intact = build_receipt("no-root", &family, &[spec("a", 2.0)], false, false, |_| {});
+    let summary = evaluate(&intact.dir, None).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted);
+    assert!(summary
+        .findings
+        .iter()
+        .any(|f| f.rule == "P-02" && f.severity == Severity::Note));
+}
+
+#[test]
+fn acceptance_accepts_a_resumed_run_and_rejects_a_repeated_cell() {
+    let family = addendum(vec![
+        cell(
+            "a",
+            CellObjective::Improvement,
+            CellRole::Confirmatory,
+            CoreArm::SingleCore,
+        ),
+        cell(
+            "b",
+            CellObjective::NonRegression,
+            CellRole::Confirmatory,
+            CoreArm::SingleCore,
+        ),
+    ]);
+    let built = build_receipt(
+        "resumed",
+        &family,
+        &[spec("a", 2.0), spec("b", 1.0)],
+        true,
+        false,
+        |_| {},
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(summary.sessions, 2);
+    assert!(summary.resumed);
+    assert_eq!(outcome(&summary, "a"), CellOutcome::Pass);
+    assert_eq!(outcome(&summary, "b"), CellOutcome::Pass);
+    // A session that starts a completed cell again contradicts checkpoint/resume.
+    let repeated = build_receipt(
+        "repeated",
+        &family,
+        &[spec("a", 2.0), spec("b", 1.0)],
+        true,
+        true,
+        |_| {},
+    );
+    let summary = evaluate(&repeated.dir, Some(&repeated.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary
+        .findings
+        .iter()
+        .any(|f| f.rule == "P-11" && f.message.contains("started 2 times")));
+}
+
+#[test]
+fn acceptance_preserves_unavailable_and_not_material_cells() {
+    let family = addendum(vec![
+        cell(
+            "a",
+            CellObjective::Improvement,
+            CellRole::Confirmatory,
+            CoreArm::SingleCore,
+        ),
+        cell(
+            "twelve",
+            CellObjective::NonRegression,
+            CellRole::Confirmatory,
+            CoreArm::PhysicalCores12,
+        ),
+        cell(
+            "p",
+            CellObjective::Improvement,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        ),
+    ]);
+    let built = build_receipt(
+        "negative",
+        &family,
+        &[
+            spec("a", 1.05),
+            CellSpec {
+                unavailable: Some("affinity mask holds 6 physical cores, 12 required"),
+                ..spec("twelve", 1.0)
+            },
+            spec("p", 3.0),
+        ],
+        false,
+        false,
+        |_| {},
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(outcome(&summary, "a"), CellOutcome::NotMaterial);
+    assert_eq!(outcome(&summary, "twelve"), CellOutcome::Unavailable);
+    assert_eq!(outcome(&summary, "p"), CellOutcome::Pilot);
+    assert!(!summary.qualifies);
+    // Dropping a declared cell from the receipt is a rejected incomplete negative result.
+    let mut receipt =
+        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    receipt.cells.retain(|cell| cell.cell_id != "twelve");
+    fs::write(
+        built.dir.join(RECEIPT_FILE),
+        serde_json::to_vec_pretty(&receipt).unwrap(),
+    )
+    .unwrap();
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|f| f.rule == "P-21"));
+    let markdown = render_markdown(&summary);
+    assert!(markdown.contains("P-21") && markdown.contains("NotMaterial"));
+}
+
+fn decoder(arm_kind: DecoderArmKind) -> DecoderCell {
+    DecoderCell {
+        arm_kind,
+        code: CodeIdentity {
+            identity: "nr-bg1-z384-mother".into(),
+            n: 26_112,
+            k: 8_448,
+            h_sha256: sha256_hex(b"h"),
+        },
+        input: DecoderInput {
+            llr_source: "recorded".into(),
+            llr_sha256: Some(sha256_hex(b"llr")),
+            frames: 1000,
+            seed: 42,
+            codeword_source: CodewordSource::Both,
+            snr_db: 1.0,
+        },
+        precision: Precision::F32,
+        schedule: Schedule::Flooding,
+        normalization: Normalization {
+            kind: NormalizationKind::NormalizedMinSum,
+            factor: Some(0.75),
+        },
+        iteration_cap: 50,
+        stopping: Stopping {
+            kind: StoppingKind::Syndrome,
+            crc: None,
+        },
+        batching: Batching {
+            batch_size: 1,
+            batch_fill_included: true,
+        },
+        quality_tolerance: QualityTolerance {
+            fer_ratio_max: 1.1,
+            confidence: 0.95,
+        },
+        rate_matching: None,
+    }
+}
+
+fn quality(frame_errors: u64, settings: DecoderArmSettings) -> ArmQuality {
+    let frames = 1000;
+    let bits = frames * 8_448;
+    let bit_errors = frame_errors * 40;
+    let fer = wilson_interval_95(frame_errors, frames).unwrap();
+    let ber = wilson_interval_95(bit_errors, bits).unwrap();
+    ArmQuality {
+        frames,
+        frame_errors,
+        bits,
+        bit_errors,
+        fer: frame_errors as f64 / frames as f64,
+        fer_interval: [fer.0, fer.1],
+        ber: bit_errors as f64 / bits as f64,
+        ber_interval: [ber.0, ber.1],
+        interval_method: "wilson-95".into(),
+        iterations: IterationDistribution {
+            mean: 7.5,
+            p50: 7,
+            p90: 12,
+            max: 50,
+        },
+        memory_bytes: 1 << 20,
+        latency_ns_p50: 250_000,
+        settings,
+    }
+}
+
+fn matched_settings() -> DecoderArmSettings {
+    DecoderArmSettings {
+        precision: Precision::F32,
+        schedule: Schedule::Flooding,
+        normalization: Normalization {
+            kind: NormalizationKind::NormalizedMinSum,
+            factor: Some(0.75),
+        },
+        iteration_cap: 50,
+        stopping: Stopping {
+            kind: StoppingKind::Syndrome,
+            crc: None,
+        },
+        batch_size: 1,
+    }
+}
+
+#[test]
+fn decoder_cells_require_quality_intervals_and_matched_settings() {
+    let mut family = addendum(vec![
+        cell(
+            "matched",
+            CellObjective::Improvement,
+            CellRole::Confirmatory,
+            CoreArm::SingleCore,
+        ),
+        cell(
+            "fastest",
+            CellObjective::ComparatorGap,
+            CellRole::Confirmatory,
+            CoreArm::SingleCore,
+        ),
+    ]);
+    family.family.purpose = FamilyPurpose::DecoderFamily;
+    family.cells[0].decoder = Some(decoder(DecoderArmKind::MatchedAlgorithm));
+    family.cells[1].decoder = Some(decoder(DecoderArmKind::FastestQualityCompatible));
+    family.cells[1].builds.candidate = BuildIdentity::External;
+    family.validate().unwrap();
+    let built = build_receipt(
+        "decoder",
+        &family,
+        &[spec("matched", 2.0), spec("fastest", 2.0)],
+        false,
+        false,
+        |receipt| {
+            receipt.cells[0].decoder_quality = Some(DecoderQualityRecord {
+                baseline: quality(20, matched_settings()),
+                candidate: quality(20, matched_settings()),
+            });
+            receipt.cells[1].decoder_quality = Some(DecoderQualityRecord {
+                baseline: quality(20, matched_settings()),
+                candidate: quality(
+                    60,
+                    DecoderArmSettings {
+                        schedule: Schedule::Layered,
+                        ..matched_settings()
+                    },
+                ),
+            });
+        },
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(outcome(&summary, "matched"), CellOutcome::Pass);
+    assert_eq!(
+        outcome(&summary, "fastest"),
+        CellOutcome::QualityIncompatible
+    );
+    // Missing quality or diverging matched settings invalidate the cell.
+    let mut receipt =
+        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    receipt.cells[0]
+        .decoder_quality
+        .as_mut()
+        .unwrap()
+        .candidate
+        .settings
+        .iteration_cap = 20;
+    receipt.cells[1].decoder_quality = None;
+    fs::write(
+        built.dir.join(RECEIPT_FILE),
+        serde_json::to_vec_pretty(&receipt).unwrap(),
+    )
+    .unwrap();
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert_eq!(outcome(&summary, "matched"), CellOutcome::Invalid);
+    assert_eq!(outcome(&summary, "fastest"), CellOutcome::Invalid);
+    assert!(summary.findings.iter().any(|f| f.rule == "P-19"));
+    assert!(summary.findings.iter().any(|f| f.rule == "P-18"));
+}
+
+#[test]
+fn protocol_document_pins_the_frozen_shared_settings() {
+    let text = fs::read_to_string(repo_root().join(PROTOCOL_PATH)).unwrap();
+    assert!(text.contains(&format!("`{PROTOCOL_ID}` version {PROTOCOL_VERSION}")));
+    let mut found = BTreeMap::new();
+    for line in text.lines() {
+        let columns: Vec<&str> = line.split('|').map(str::trim).collect();
+        if columns.len() >= 4 && columns[1].starts_with('`') && columns[1].ends_with('`') {
+            found.insert(
+                columns[1].trim_matches('`').to_owned(),
+                columns[2].trim_matches('`').to_owned(),
+            );
+        }
+    }
+    for (name, value) in SHARED_SETTINGS.table() {
+        assert_eq!(found.get(name), Some(&value), "protocol.md row for {name}");
+    }
+    for rule in 1..=22 {
+        assert!(
+            text.contains(&format!("P-{rule:02}")),
+            "protocol.md lacks rule P-{rule:02}"
+        );
+    }
+}
+
+#[test]
+fn acceptance_summary_markdown_renders_from_the_summary_only() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "markdown",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |receipt| {
+            receipt.label = ReceiptLabel::Smoke;
+        },
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    let markdown = render_markdown(&summary);
+    assert_eq!(markdown, render_markdown(&summary));
+    assert!(markdown.contains("smoke receipt"));
+    assert!(markdown.contains(&summary.receipt_sha256));
+    assert!(markdown.contains("| `a` |"));
+    let json: Value = serde_json::to_value(&summary).unwrap();
+    assert_eq!(json["schema"], "zen3-benchmark-acceptance-v1");
+}
+
+fn git(repo: &Path, args: &[&str]) {
+    let status = Command::new("git")
+        .args(args)
+        .current_dir(repo)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .unwrap();
+    assert!(status.success(), "git {args:?} failed");
+}
+
+#[test]
+fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
+    let root = scratch("runner");
+    let repo = root.join("repo");
+    stage_repo(&repo);
+    let family = addendum(vec![
+        cell(
+            "first",
+            CellObjective::Improvement,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        ),
+        cell(
+            "second",
+            CellObjective::NonRegression,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        ),
+        cell(
+            "six",
+            CellObjective::NonRegression,
+            CellRole::Exploratory,
+            CoreArm::PhysicalCores6,
+        ),
+    ]);
+    write_addendum(&repo, &family);
+    git(&repo, &["init", "-q"]);
+    git(&repo, &["add", "."]);
+    git(
+        &repo,
+        &[
+            "-c",
+            "user.name=fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-q",
+            "-m",
+            "fixture",
+        ],
+    );
+    let lock = root.join("bench.lock");
+    fs::write(&lock, b"").unwrap();
+    let workload = env!("CARGO_BIN_EXE_ab-smoke-workload");
+    let arm = |passes: &str| {
+        json!({
+            "build": "conservative-portable",
+            "description": format!("xor-fold {passes} pass"),
+            "executable": workload,
+            "arguments": [],
+            "environment": {"GF2_SMOKE_PASSES": passes},
+            "rustflags": null,
+            "tuning_profile": null
+        })
+    };
+    let plan = json!({
+        "schema": "zen3-benchmark-plan-v1",
+        "campaign_id": "runner-contract",
+        "issue": "f547c394",
+        "label": "pilot",
+        "campaign_seed": 5,
+        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "lock_path": lock,
+        "wrapper": "flock",
+        "timing_override": {"windows_per_execution": 2, "window_target_ms": 3},
+        "arms": {"baseline": arm("2"), "candidate": arm("1")},
+        "cells": [
+            {"cell_id": "first", "baseline_arm": "baseline", "candidate_arm": "candidate", "case": {"words": 4096, "seed": 1}, "pilot_pairs": 6},
+            {"cell_id": "second", "baseline_arm": "candidate", "candidate_arm": "candidate", "case": {"words": 4096, "seed": 2}, "pilot_pairs": 6},
+            {"cell_id": "six", "baseline_arm": "candidate", "candidate_arm": "candidate", "case": {"words": 4096, "seed": 3}, "pilot_pairs": 6}
+        ],
+        "max_cells_per_session": 1
+    });
+    let plan_path = root.join("plan.json");
+    fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
+    let stage = root.join("stage");
+    let runner = env!("CARGO_BIN_EXE_benchmark-ab-runner");
+    let run = || {
+        Command::new("flock")
+            .arg("-x")
+            .arg(&lock)
+            .args(["taskset", "-c", "0-2", runner, "run"])
+            .arg(&stage)
+            .arg(&plan_path)
+            .current_dir(&repo)
+            .output()
+            .unwrap()
+    };
+    let first = run();
+    let stdout = String::from_utf8_lossy(&first.stdout);
+    assert_eq!(
+        first.status.code(),
+        Some(3),
+        "{stdout}\n{}",
+        String::from_utf8_lossy(&first.stderr)
+    );
+    assert!(
+        stdout.starts_with("GF2_CAMPAIGN_EXECUTION_LOG="),
+        "{stdout}"
+    );
+    // Outside the wrapper the runner refuses to measure.
+    let unlocked = Command::new(runner)
+        .args(["run"])
+        .arg(&stage)
+        .arg(&plan_path)
+        .current_dir(&repo)
+        .output()
+        .unwrap();
+    assert!(!unlocked.status.success());
+    let second = run();
+    assert_eq!(
+        second.status.code(),
+        Some(3),
+        "{}",
+        String::from_utf8_lossy(&second.stderr)
+    );
+    let third = run();
+    assert_eq!(
+        third.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&third.stderr)
+    );
+    let out = root.join("receipt");
+    let finalize = Command::new(runner)
+        .args(["finalize"])
+        .arg(&stage)
+        .arg(&out)
+        .current_dir(&repo)
+        .output()
+        .unwrap();
+    assert!(
+        finalize.status.success(),
+        "{}",
+        String::from_utf8_lossy(&finalize.stderr)
+    );
+    let summary = evaluate(&out, Some(&repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(summary.sessions, 3);
+    assert!(summary.resumed);
+    assert_eq!(outcome(&summary, "first"), CellOutcome::Pilot);
+    assert_eq!(outcome(&summary, "second"), CellOutcome::Pilot);
+    assert_eq!(outcome(&summary, "six"), CellOutcome::Unavailable);
+    let six = summary
+        .cells
+        .iter()
+        .find(|cell| cell.cell_id == "six")
+        .unwrap();
+    assert!(
+        six.reason
+            .as_deref()
+            .unwrap()
+            .contains("3 physical cores, 6 required"),
+        "{six:?}"
+    );
+    assert_eq!(summary.cells[0].resolved_cpus, vec![0]);
+    let receipt = BenchmarkReceipt::decode(&fs::read(out.join(RECEIPT_FILE)).unwrap()).unwrap();
+    assert!(receipt.settings_deviation);
+    assert!(receipt.lock.holder_pid > 0);
+    assert_eq!(receipt.workers.runner_threads, 1);
+    assert!(!receipt.host.topology.cpus.is_empty());
+    assert_eq!(receipt.host.affinity.cpus(), &[0, 1, 2]);
+    assert!(receipt.cells[0]
+        .pairs
+        .iter()
+        .all(|pair| pair.baseline.cpus_observed == vec![0]));
+    let records =
+        ExecutionLog::validate_prefix(&fs::read(out.join(LOG_FILE)).unwrap(), "runner-contract")
+            .unwrap();
+    let starts = records
+        .iter()
+        .filter(|record| record.event == JournalEvent::CellStart)
+        .count();
+    let omissions = records
+        .iter()
+        .filter(|record| {
+            record.event == JournalEvent::Omission
+                && record.details["kind"] == "completed-in-prior-session"
+        })
+        .count();
+    assert_eq!(starts, 3);
+    assert_eq!(omissions, 3);
+    assert!(records
+        .iter()
+        .any(|record| record.event == JournalEvent::LockHold));
+}

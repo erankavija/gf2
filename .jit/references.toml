@@ -308,3 +308,52 @@ url = "https://github.com/OPENAIRINTERFACE/openairinterface5g/tree/develop/opena
 key = "Mfourrie2026"
 citation = "Albrecht, M. R. and contributors — M4RIE, dense linear algebra over binary extension fields. Comparator receipts identify the exact source revision, field representation and operation."
 url = "https://github.com/malb/m4rie"
+
+[[references]]
+key = "Efron1979"
+citation = "Efron — Bootstrap Methods: Another Look at the Jackknife. Ann. Statist. 7(1):1–26, 1979."
+doi = "10.1214/aos/1176344552"
+
+[[references]]
+key = "EfronTibshirani1993"
+citation = "Efron, Tibshirani — An Introduction to the Bootstrap. Chapman & Hall/CRC Monographs on Statistics and Applied Probability 57, 1993."
+
+[[references]]
+key = "HoeflerBelli2015"
+citation = "Hoefler, Belli — Scientific Benchmarking of Parallel Computing Systems: Twelve Ways to Tell the Masses when Reporting Performance Results. SC '15, 2015."
+doi = "10.1145/2807591.2807644"
+
+[[references]]
+key = "KaliberaJones2013"
+citation = "Kalibera, Jones — Rigorous Benchmarking in Reasonable Time. ISMM '13, 2013."
+doi = "10.1145/2464157.2464160"
+
+[[references]]
+key = "Dunn1961"
+citation = "Dunn — Multiple Comparisons Among Means. J. Amer. Statist. Assoc. 56(293):52–64, 1961."
+doi = "10.1080/01621459.1961.10482090"
+
+[[references]]
+key = "Schuirmann1987"
+citation = "Schuirmann — A Comparison of the Two One-Sided Tests Procedure and the Power Approach for Assessing the Equivalence of Average Bioavailability. J. Pharmacokinet. Biopharm. 15(6):657–680, 1987."
+doi = "10.1007/BF01068419"
+
+[[references]]
+key = "Wilson1927"
+citation = "Wilson — Probable Inference, the Law of Succession, and Statistical Inference. J. Amer. Statist. Assoc. 22(158):209–212, 1927."
+doi = "10.1080/01621459.1927.10502953"
+
+[[references]]
+key = "BrownCaiDasGupta2001"
+citation = "Brown, Cai, DasGupta — Interval Estimation for a Binomial Proportion. Statist. Sci. 16(2):101–133, 2001."
+doi = "10.1214/ss/1009213286"
+
+[[references]]
+key = "BlackmanVigna2021"
+citation = "Blackman, Vigna — Scrambled Linear Pseudorandom Number Generators. ACM Trans. Math. Softw. 47(4):36, 2021."
+doi = "10.1145/3460772"
+
+[[references]]
+key = "Steele2014"
+citation = "Steele, Lea, Flood — Fast Splittable Pseudorandom Number Generators. OOPSLA '14, 2014."
+doi = "10.1145/2660193.2660195"
