@@ -182,19 +182,56 @@ impl ArtifactPin {
         Ok(())
     }
 
-    /// Recomputes the content digest from the file under `repo_root`.
-    pub fn verify_content(&self, repo_root: &Path) -> Result<(), String> {
+    /// Reads the artifact's bytes at the pinned commit through `git show`,
+    /// falling back to the working tree when that commit is not resolvable in
+    /// `repo_root`. Evidence is judged against the document version that
+    /// governed the run, so a later documentation edit does not invalidate it.
+    pub fn read_pinned(&self, repo_root: &Path) -> Result<(Vec<u8>, PinSource), String> {
         self.validate_shape()?;
+        let shown = Command::new("git")
+            .arg("show")
+            .arg(format!("{}:{}", self.git_commit, self.path))
+            .current_dir(repo_root)
+            .output();
+        if let Ok(output) = shown {
+            if output.status.success() {
+                return Ok((output.stdout, PinSource::Commit));
+            }
+        }
         let bytes = fs::read(repo_root.join(&self.path))
             .map_err(|error| format!("cannot read pinned artifact {}: {error}", self.path))?;
+        Ok((bytes, PinSource::WorkingTree))
+    }
+
+    /// Recomputes the content digest from the pinned bytes and reports where
+    /// they came from.
+    pub fn verify_content(&self, repo_root: &Path) -> Result<PinSource, String> {
+        let (bytes, source) = self.read_pinned(repo_root)?;
         if sha256_hex(&bytes) != self.sha256 {
             return Err(format!(
                 "pinned artifact {} content digest differs",
                 self.path
             ));
         }
-        Ok(())
+        Ok(source)
     }
+
+    /// Whether the working-tree file still has the pinned digest; `None`
+    /// when the file cannot be read.
+    pub fn working_tree_matches(&self, repo_root: &Path) -> Option<bool> {
+        fs::read(repo_root.join(&self.path))
+            .ok()
+            .map(|bytes| sha256_hex(&bytes) == self.sha256)
+    }
+}
+
+/// Where a pinned artifact's bytes were read from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PinSource {
+    /// The object at the pinned commit.
+    Commit,
+    /// The working tree; the pinned commit was not resolvable.
+    WorkingTree,
 }
 
 /// Lowercase hex SHA-256 of `bytes`.
