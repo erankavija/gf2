@@ -55,5 +55,8 @@ has SHA-256
 `e87a36d0358c3583e35125e53b9ae481a9ec6afa21949a64108b081314d35344`
 and is accepted with zero findings across two resumed sessions. It preserves
 the unavailable 12-core cell observed under the six-core CCX1 affinity. The
-configured issue gates remain the execution lead's completion step. This is the
-first rework attempt under the clarified contract.
+current acceptance CLI accepts exactly one receipt directory and preserves the
+same evaluation and output semantics as the source captured in both receipts;
+clean exports of both committed trees revalidate under the current release
+binary. The configured issue gates remain the execution lead's completion step.
+This is the first rework attempt under the clarified contract.

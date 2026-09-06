@@ -35,10 +35,11 @@ shared one; only the mode-claim bookkeeping is absent.
 ## Decisions worth knowing
 
 - **Protocol version remains 1.** No benchmark family has consumed this
-  protocol and issue `f547c394` is still incomplete, so completing content and
-  freeze verification finishes version 1 rather than amending a published
-  protocol. The first family receipt accepted after this issue closes consumes
-  the frozen version.
+  protocol to support a production performance claim. The protocol pilot and
+  confirmation exercise its infrastructure and establish version 1 with
+  content-based provenance before downstream family measurements begin. An
+  incompatible change to experimental semantics creates a later version and
+  retains version 1 evidence.
 
 - **Resampling unit.** The paired execution of two fresh children is the unit
   because it is what the runner can randomize and what removes carried-over
