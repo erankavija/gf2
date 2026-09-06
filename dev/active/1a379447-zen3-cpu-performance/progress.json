@@ -1,0 +1,199 @@
+{
+  "epic_id": "1a379447-212f-4aff-b2c3-a83c13021e1d",
+  "epic_short_id": "1a379447",
+  "current_wave": 1,
+  "waves": [
+    {
+      "wave_number": 1,
+      "issues": [
+        {
+          "id": "f547c394-9f05-4207-8f7f-2dcbb9e56999",
+          "short_id": "f547c394",
+          "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 2,
+      "issues": [
+        {
+          "id": "04b85d10-fb4f-467c-b6e5-869c99018adc",
+          "short_id": "04b85d10",
+          "title": "Profile bit-storage costs in production consumers",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "6c6b09b1-7fa8-4ec2-b37f-e3894ead9de2",
+          "short_id": "6c6b09b1",
+          "title": "Establish byte-field vector and matrix comparison arms",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "c077a88b-2d35-49ed-bfe0-6fbc7055cea1",
+          "short_id": "c077a88b",
+          "title": "Establish compatible LDPC decoder benchmark arms",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "eda07788-23a0-4852-939b-2cfcda36f9d1",
+          "short_id": "eda07788",
+          "title": "Establish compatible shift and coding-permutation baselines",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "c7113c5a-94da-462f-954e-3b7894bb95df",
+          "short_id": "c7113c5a",
+          "title": "Establish equivalent polynomial multiplication baselines",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "26465e6c-6852-44b6-9183-ba2cb5a5fca5",
+          "short_id": "26465e6c",
+          "title": "Establish population-count and fused-reduction baselines",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "6fb89a3c-f1a7-439d-a397-add1782afe2b",
+          "short_id": "6fb89a3c",
+          "title": "Establish transpose and logical-buffer comparison arms",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "1d0da41f-f366-4a81-ab1a-016f8395db94",
+          "short_id": "1d0da41f",
+          "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 3,
+      "issues": [
+        {
+          "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
+          "short_id": "3be770d5",
+          "title": "Profile the CPU LDPC throughput gap against compatible decoders",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "53c5a8c0-ad93-4fdb-8319-aea18c3c257c",
+          "short_id": "53c5a8c0",
+          "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "19513245-7fb9-4490-8e41-d9c01405db01",
+          "short_id": "19513245",
+          "title": "Assess byte-field acceleration in vector and matrix consumers",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "1d4fd63d-c522-47cb-9448-fe8f5220f0ed",
+          "short_id": "1d4fd63d",
+          "title": "Optimize bit transpose and bitslice conversion",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "5cbb6545-4496-4325-8fa9-d50aaa9fcf50",
+          "short_id": "5cbb6545",
+          "title": "Optimize population count and fused bit reductions",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "2037941f-852c-4d94-9d49-ad06a364dca8",
+          "short_id": "2037941f",
+          "title": "Profile and optimize mid-range buffer operations (8-64 words)",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
+          "short_id": "c04dd4ac",
+          "title": "Optimize arbitrary-offset shifts and coding permutations",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 4,
+      "issues": [
+        {
+          "id": "07ca8585-d822-49e7-96b8-18f6a3d73d4e",
+          "short_id": "07ca8585",
+          "title": "Remove allocation and repeated edge traversal from LDPC updates",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "63bad95d-0e69-459b-840b-c37521036f52",
+          "short_id": "63bad95d",
+          "title": "Calibrate production dispatch for the 5900X",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 5,
+      "issues": [
+        {
+          "id": "f63a2464-424d-4def-a740-8ff1471f0108",
+          "short_id": "f63a2464",
+          "title": "Evaluate quantized layered and QC-aware LDPC candidates",
+          "classification": "research",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 6,
+      "issues": [
+        {
+          "id": "ed3d490e-8cd9-4564-a763-72a2fa641425",
+          "short_id": "ed3d490e",
+          "title": "Vectorize LDPC decoding across frames",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 7,
+      "issues": [
+        {
+          "id": "1362381c-78c0-42eb-bdc9-4327f20bc343",
+          "short_id": "1362381c",
+          "title": "Publish end-to-end competitive results and remaining limits",
+          "classification": "documentation",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "created_during_execution": [],
+  "escalations": [],
+  "rework_counts": {},
+  "surfaced_pitfalls": [],
+  "notes": [
+    "Wave numbers are dependency depth; dispatch is dependency-driven within a wave.",
+    "1362381c depends on fd9d5416 (BCH epic ae03bcd0): cross-epic dependency, part of the user-approved plan (plan-review.md); revisit at wave 7.",
+    "Invocation scope: the first wave only (user instruction 2026-09-06)."
+  ],
+  "started_at": "2026-09-06T20:22:15+00:00"
+}
