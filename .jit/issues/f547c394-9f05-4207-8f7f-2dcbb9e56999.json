@@ -135,6 +135,21 @@
       "status": "passed",
       "updated_at": "2026-09-06T22:04:40.935649093Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-09-06T22:09:36.179861376Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-06T22:12:06.423241503Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-09-06T22:12:08.294256289Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "f547c394-9f05-4207-8f7f-2dcbb9e56999",
@@ -159,5 +174,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-06T22:04:40.935649093Z"
+  "updated_at": "2026-09-06T22:12:08.294256289Z"
 }
