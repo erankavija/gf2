@@ -63,7 +63,7 @@ fn stage_repo(root: &Path) {
 fn pin(root: &Path, relative: &str) -> ArtifactPin {
     ArtifactPin {
         path: relative.to_owned(),
-        git_commit: COMMIT.to_owned(),
+        git_commit: git_output(root, &["rev-parse", "HEAD"]),
         sha256: sha256_hex(&fs::read(root.join(relative)).unwrap()),
     }
 }
@@ -144,12 +144,11 @@ fn addendum(cells: Vec<CellDeclaration>) -> FamilyAddendum {
     }
 }
 
-fn write_addendum(root: &Path, addendum: &FamilyAddendum) -> ArtifactPin {
+fn write_addendum(root: &Path, addendum: &FamilyAddendum) {
     let relative = "dev/active/f547c394/addendum-fixture.json";
     let mut bytes = serde_json::to_vec_pretty(addendum).unwrap();
     bytes.push(b'\n');
     fs::write(root.join(relative), bytes).unwrap();
-    pin(root, relative)
 }
 
 /// Deterministic windows: five per execution, jittered around `ns`.
@@ -252,8 +251,24 @@ fn build_receipt(
     let root = scratch(name);
     let repo = root.join("repo");
     stage_repo(&repo);
-    let addendum_pin = write_addendum(&repo, addendum);
-    let dir = root.join("receipt");
+    write_addendum(&repo, addendum);
+    git(&repo, &["init", "-q"]);
+    git(&repo, &["add", "."]);
+    git(
+        &repo,
+        &[
+            "-c",
+            "user.name=fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-q",
+            "-m",
+            "freeze fixture addendum",
+        ],
+    );
+    let addendum_pin = pin(&repo, "dev/active/f547c394/addendum-fixture.json");
+    let dir = repo.join("dev/bench_results/f547c394/confirmation");
     fs::create_dir_all(&dir).unwrap();
     let campaign = "fixture-campaign";
     let mut log = ExecutionLog::create_new(&dir, campaign, "session-1").unwrap();
@@ -376,7 +391,7 @@ fn build_receipt(
         addendum_schema: pin(&repo, ADDENDUM_SCHEMA_PATH),
         addendum: addendum_pin,
         source: SourceIdentity {
-            revision: COMMIT.into(),
+            revision: git_output(&repo, &["rev-parse", "HEAD"]),
             tree_sha256: sha256_hex(b"tree"),
             clean: true,
         },
@@ -739,14 +754,145 @@ fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
         .iter()
         .any(|f| f.rule == "P-03" && f.message.contains("content digest")));
     assert!(!summary.qualifies);
-    // The same receipt with intact identities and no repository root records notes, not errors.
+    // An otherwise intact receipt cannot be accepted without verifying its
+    // committed artifact bytes.
     let intact = build_receipt("no-root", &family, &[spec("a", 2.0)], false, false, |_| {});
     let summary = evaluate(&intact.dir, None).unwrap();
-    assert_eq!(summary.verdict, Verdict::Accepted);
+    assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary
         .findings
         .iter()
-        .any(|f| f.rule == "P-02" && f.severity == Severity::Note));
+        .any(|f| f.rule == "P-02" && f.severity == Severity::Error));
+}
+
+#[test]
+fn acceptance_rejects_an_unavailable_git_object_despite_matching_working_tree_bytes() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "missing-object",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |receipt| receipt.protocol.git_commit = COMMIT.into(),
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|finding| {
+        finding.rule == "P-02"
+            && finding.severity == Severity::Error
+            && finding.message.contains("pinned Git object")
+    }));
+}
+
+#[test]
+fn acceptance_rejects_a_digest_that_does_not_match_the_pinned_commit() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "commit-digest-mismatch",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |receipt| receipt.protocol.sha256 = sha256_hex(b"not the committed protocol"),
+    );
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|finding| {
+        finding.rule == "P-02"
+            && finding.severity == Severity::Error
+            && finding.message.contains("content digest")
+    }));
+}
+
+#[test]
+fn acceptance_rejects_an_addendum_pin_outside_the_source_history() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "nonancestor-addendum",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    let mut receipt =
+        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    let tree = git_output(&built.repo, &["rev-parse", "HEAD^{tree}"]);
+    let unrelated = git_output(
+        &built.repo,
+        &[
+            "-c",
+            "user.name=fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit-tree",
+            &tree,
+            "-m",
+            "unrelated fixture commit",
+        ],
+    );
+    receipt.addendum.git_commit = unrelated;
+    fs::write(
+        built.dir.join(RECEIPT_FILE),
+        serde_json::to_vec_pretty(&receipt).unwrap(),
+    )
+    .unwrap();
+    let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|finding| {
+        finding.rule == "P-03"
+            && finding.severity == Severity::Error
+            && finding.message.contains("ancestor")
+    }));
+}
+
+#[test]
+fn acceptance_rejects_missing_and_self_referential_resolution_evidence() {
+    let confirmation_path = "dev/bench_results/f547c394/confirmation/receipt.json";
+    for (name, evidence, expected) in [
+        (
+            "missing-resolution-evidence",
+            "dev/bench_results/f547c394/missing-pilot/receipt.json",
+            "resolution evidence",
+        ),
+        (
+            "self-resolution-evidence",
+            confirmation_path,
+            "receipt under evaluation",
+        ),
+    ] {
+        let mut family = addendum(vec![cell(
+            "a",
+            CellObjective::Improvement,
+            CellRole::Confirmatory,
+            CoreArm::SingleCore,
+        )]);
+        family.effect.resolution_evidence = Some(evidence.into());
+        let built = build_receipt(name, &family, &[spec("a", 2.0)], false, false, |_| {});
+        let summary = evaluate(&built.dir, Some(&built.repo)).unwrap();
+        assert_eq!(summary.verdict, Verdict::Rejected, "{name}");
+        assert!(summary.findings.iter().any(|finding| {
+            finding.rule == "P-03"
+                && finding.severity == Severity::Error
+                && finding.message.contains(expected)
+        }));
+    }
 }
 
 #[test]
@@ -1077,6 +1223,16 @@ fn git(repo: &Path, args: &[&str]) {
         .status()
         .unwrap();
     assert!(status.success(), "git {args:?} failed");
+}
+
+fn git_output(repo: &Path, args: &[&str]) -> String {
+    let output = Command::new("git")
+        .args(args)
+        .current_dir(repo)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "git {args:?} failed");
+    String::from_utf8(output.stdout).unwrap().trim().to_owned()
 }
 
 #[test]
