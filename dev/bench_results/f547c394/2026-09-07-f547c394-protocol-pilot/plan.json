@@ -1,0 +1,69 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "pilot-f547c394-20260906t230725z",
+  "issue": "f547c394",
+  "label": "pilot",
+  "campaign_seed": 20260907,
+  "addendum": "dev/active/f547c394/addendum-protocol-smoke-pilot.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "baseline-two-pass": {
+      "build": "conservative-portable",
+      "description": "xor-fold, two passes per call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "2"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "baseline": {
+      "build": "conservative-portable",
+      "description": "xor-fold, one pass per call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "1"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "candidate": {
+      "build": "conservative-portable",
+      "description": "xor-fold, one pass per call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "1"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "xor-fold-double-pass-1core",
+      "baseline_arm": "baseline-two-pass",
+      "candidate_arm": "candidate",
+      "case": {
+        "words": 65536,
+        "seed": 1
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "xor-fold-identical-1core",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "case": {
+        "words": 65536,
+        "seed": 2
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 1
+}
