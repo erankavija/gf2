@@ -21,17 +21,18 @@ use tuning_campaign_support::protocol::{
     CellObjective, CellRole, CodeIdentity, CodewordSource, ComplexityBudget, DecoderArmKind,
     DecoderCell, DecoderInput, EffectRule, FamilyAddendum, FamilyIdentity, FamilyPurpose,
     FamilyWise, Frozen, Holdout, MetricKind, Normalization, NormalizationKind, Precision,
-    ProtocolRef, QualityTolerance, ReceiptLabel, ResolutionEvidence, Scaling, Schedule,
+    ProtocolRef, QualityTolerance, ReceiptLabel, ResolutionEvidence, RunnerPlan, Scaling, Schedule,
     SearchBudget, Stopping, StoppingKind, WorkerDeclaration, Workload, ADDENDUM_SCHEMA_ID,
     ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_ID, PROTOCOL_PATH, PROTOCOL_VERSION,
-    RECEIPT_SCHEMA_ID, SHARED_SETTINGS,
+    RECEIPT_SCHEMA_ID, RUNNER_LIFECYCLE_SCHEMA, SHARED_SETTINGS,
 };
 use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::receipt::{
-    evaluate, render_markdown, ArmQuality, ArmRecord, BenchmarkReceipt, CellClaim, CellOutcome,
-    CellRecord, CellStatus, CheckpointRecord, DecoderArmSettings, DecoderQualityRecord,
-    ExecutionRecord, IterationDistribution, LockRecord, LogRecord, PairRecord, Severity,
-    SourceIdentity, Verdict, WindowRecord, WorkerReport, CHECKPOINT_DIR, LOG_FILE, RECEIPT_FILE,
+    evaluate, render_markdown, ArmQuality, ArmRecord, BenchmarkReceipt, CampaignFacts, CellClaim,
+    CellOutcome, CellRecord, CellStatus, CheckpointRecord, DecoderArmSettings,
+    DecoderQualityRecord, ExecutionRecord, IterationDistribution, LockRecord, LogRecord,
+    PairRecord, Severity, SourceIdentity, Verdict, WindowRecord, WorkerReport, CHECKPOINT_DIR,
+    LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
 use tuning_campaign_support::schema;
 
@@ -223,7 +224,14 @@ struct CellSpec {
     claim: bool,
 }
 
-fn pairs(spec: &CellSpec, role: CellRole, key: &str, cpus: &[u32]) -> Vec<PairRecord> {
+fn pairs(
+    spec: &CellSpec,
+    role: CellRole,
+    key: &str,
+    cpus: &[u32],
+    baseline_arm: &str,
+    candidate_arm: &str,
+) -> Vec<PairRecord> {
     let count = match role {
         CellRole::Exploratory => SHARED_SETTINGS.pilot_min_pairs,
         _ => SHARED_SETTINGS.confirmatory_pairs,
@@ -235,9 +243,9 @@ fn pairs(spec: &CellSpec, role: CellRole, key: &str, cpus: &[u32]) -> Vec<PairRe
         .map(|(index, order)| PairRecord {
             index: index as u32,
             order,
-            baseline: execution("baseline", &mut mixer, 200.0, spec.jitter, cpus),
+            baseline: execution(baseline_arm, &mut mixer, 200.0, spec.jitter, cpus),
             candidate: execution(
-                "candidate",
+                candidate_arm,
                 &mut mixer,
                 200.0 / spec.speedup,
                 spec.jitter,
@@ -247,20 +255,39 @@ fn pairs(spec: &CellSpec, role: CellRole, key: &str, cpus: &[u32]) -> Vec<PairRe
         .collect()
 }
 
-fn identity(addendum_pin: &ArtifactPin) -> ResumeIdentity {
+fn fixture_arm_name(side: &str, build: BuildIdentity) -> String {
+    let suffix = match build {
+        BuildIdentity::ConservativePortable => "portable",
+        BuildIdentity::TunedPortable => "tuned",
+        BuildIdentity::Native => "native",
+        BuildIdentity::External => "external",
+    };
+    format!("{side}-{suffix}")
+}
+
+fn identity(
+    protocol: &ArtifactPin,
+    producing: &tuning_campaign_support::provenance::ProducingSnapshot,
+    plan: &RunnerPlan,
+    arms: &BTreeMap<String, ArmRecord>,
+    host: &HostObservation,
+) -> ResumeIdentity {
     ResumeIdentity {
-        protocol_digest: sha256_hex(b"protocol"),
+        protocol_digest: protocol.sha256.clone(),
         source_revision: COMMIT.into(),
-        source_sha256: sha256_hex(b"tree"),
-        ordered_work_manifest_sha256: addendum_pin.sha256.clone(),
-        process_descriptors_sha256: sha256_hex(b"arms"),
-        executable_sha256: BTreeMap::from([("baseline".to_owned(), sha256_hex(b"exe"))]),
-        behavior_sha256: BTreeMap::from([("runner".to_owned(), sha256_hex(b"runner"))]),
-        lifecycle_schema: "fixture-lifecycle-v1".into(),
-        lifecycle_behavior_sha256: sha256_hex(b"lifecycle"),
+        source_sha256: producing.identity_sha256().unwrap(),
+        ordered_work_manifest_sha256: sha256_hex(&serde_json::to_vec(&plan.cells).unwrap()),
+        process_descriptors_sha256: sha256_hex(&serde_json::to_vec(arms).unwrap()),
+        executable_sha256: arms
+            .iter()
+            .map(|(name, arm)| (name.clone(), arm.executable_sha256.clone()))
+            .collect(),
+        behavior_sha256: producing.behavior_sha256.clone(),
+        lifecycle_schema: RUNNER_LIFECYCLE_SCHEMA.into(),
+        lifecycle_behavior_sha256: producing.lifecycle_sha256().unwrap(),
         feature_contract: "release".into(),
         thread_contract: "RAYON_NUM_THREADS=unset".into(),
-        host_identity: "fixture-host".into(),
+        host_identity: host.affinity.host_identity().unwrap(),
     }
 }
 
@@ -388,21 +415,40 @@ fn build_receipt(
     )
     .unwrap();
     let campaign = "fixture-campaign";
-    let arms: BTreeMap<String, ArmRecord> = ["baseline", "candidate"]
-        .into_iter()
-        .map(|name| {
+    let mut arms = BTreeMap::new();
+    for spec in specs {
+        let declared = addendum.cell(spec.id).unwrap();
+        for (side, build) in [
+            ("baseline", declared.builds.baseline),
+            ("candidate", declared.builds.candidate),
+        ] {
+            let name = fixture_arm_name(side, build);
+            arms.entry(name.clone()).or_insert_with(|| ArmRecord {
+                build,
+                description: name.clone(),
+                executable_path: "/usr/bin/true".into(),
+                executable_sha256: sha256_hex(name.as_bytes()),
+                arguments: Vec::new(),
+                environment: BTreeMap::new(),
+                rustflags: None,
+                tuning_profile: None,
+            });
+        }
+    }
+    let plan_arms: BTreeMap<String, Value> = arms
+        .iter()
+        .map(|(name, arm)| {
             (
-                name.to_owned(),
-                ArmRecord {
-                    build: BuildIdentity::ConservativePortable,
-                    description: name.into(),
-                    executable_path: "/usr/bin/true".into(),
-                    executable_sha256: sha256_hex(name.as_bytes()),
-                    arguments: Vec::new(),
-                    environment: BTreeMap::new(),
-                    rustflags: None,
-                    tuning_profile: None,
-                },
+                name.clone(),
+                json!({
+                    "build": arm.build,
+                    "description": arm.description,
+                    "executable": arm.executable_path,
+                    "arguments": arm.arguments,
+                    "environment": arm.environment,
+                    "rustflags": arm.rustflags,
+                    "tuning_profile": arm.tuning_profile,
+                }),
             )
         })
         .collect();
@@ -416,59 +462,57 @@ fn build_receipt(
         "lock_path": "/tmp/gf2-ccx1.lock",
         "wrapper": "dev/scripts/ccx1-bench-flock.sh",
         "timing_override": null,
-        "arms": {
-            "baseline": {
-                "build": "conservative-portable",
-                "description": "baseline",
-                "executable": "/usr/bin/true",
-                "arguments": [],
-                "environment": {},
-                "rustflags": null,
-                "tuning_profile": null
-            },
-            "candidate": {
-                "build": "conservative-portable",
-                "description": "candidate",
-                "executable": "/usr/bin/true",
-                "arguments": [],
-                "environment": {},
-                "rustflags": null,
-                "tuning_profile": null
-            }
-        },
-        "cells": specs.iter().map(|spec| json!({
-            "cell_id": spec.id,
-            "baseline_arm": "baseline",
-            "candidate_arm": "candidate",
-            "case": {"fixture": spec.id},
-            "pilot_pairs": if addendum.cell(spec.id).unwrap().role == CellRole::Exploratory {
-                Some(6)
-            } else {
-                None
-            }
-        })).collect::<Vec<_>>(),
+        "arms": plan_arms,
+        "cells": specs.iter().map(|spec| {
+            let declared = addendum.cell(spec.id).unwrap();
+            json!({
+                "cell_id": spec.id,
+                "baseline_arm": fixture_arm_name("baseline", declared.builds.baseline),
+                "candidate_arm": fixture_arm_name("candidate", declared.builds.candidate),
+                "case": {"fixture": spec.id},
+                "pilot_pairs": if declared.role == CellRole::Exploratory {
+                    Some(6)
+                } else {
+                    None
+                }
+            })
+        }).collect::<Vec<_>>(),
         "max_cells_per_session": if resume_after_first { Some(1) } else { None }
     });
     let mut plan_bytes = serde_json::to_vec_pretty(&plan).unwrap();
     plan_bytes.push(b'\n');
-    fs::write(dir.join("plan.json"), plan_bytes).unwrap();
+    fs::write(dir.join(PLAN_FILE), &plan_bytes).unwrap();
+    let plan = RunnerPlan::decode(&plan_bytes).unwrap();
+    plan.validate(&addendum).unwrap();
+    let host = HostObservation::observe().unwrap();
+    let identity = identity(&protocol_pin, &producing, &plan, &arms, &host);
+    let facts = CampaignFacts {
+        plan_sha256: sha256_hex(&plan_bytes),
+        identity: identity.clone(),
+        protocol: protocol_pin.clone(),
+        contract: contract_pin.clone(),
+        addendum_schema: schema_pin.clone(),
+        addendum: addendum_pin.clone(),
+        source: SourceIdentity {
+            revision: COMMIT.into(),
+            producing: producing.clone(),
+        },
+        toolchain: "rustc fixture".into(),
+        settings: SHARED_SETTINGS,
+        settings_deviation: false,
+        arms: arms.clone(),
+    };
     let mut log = ExecutionLog::create_new(&dir, campaign, "session-1").unwrap();
-    log.append(
-        JournalEvent::CampaignStart,
-        None,
-        json!({"fixture": true, "addendum": addendum_pin}),
-    )
-    .unwrap();
+    log.append(JournalEvent::CampaignStart, None, json!(facts))
+        .unwrap();
     log.append(
         JournalEvent::OrchestrationStart,
         None,
         json!({"kind": "execution-log-announced", "path": log.path()}),
     )
     .unwrap();
-    let host = HostObservation::observe().unwrap();
     let mut checkpoints =
-        CheckpointStore::create_new(dir.join(CHECKPOINT_DIR), campaign, identity(&addendum_pin))
-            .unwrap();
+        CheckpointStore::create_new(dir.join(CHECKPOINT_DIR), campaign, identity).unwrap();
     let cpus = vec![host.affinity.cpus()[0]];
     let confidence = bonferroni_confidence(0.05, addendum.family_comparisons()).unwrap();
     let mut cells = Vec::new();
@@ -499,6 +543,8 @@ fn build_receipt(
             }
         }
         let declared = addendum.cell(spec.id).unwrap();
+        let baseline_arm = fixture_arm_name("baseline", declared.builds.baseline);
+        let candidate_arm = fixture_arm_name("candidate", declared.builds.candidate);
         let key = spec.id.to_owned();
         let case = json!({
             "key": key,
@@ -511,8 +557,8 @@ fn build_receipt(
             cell_id: spec.id.into(),
             key: key.clone(),
             role: declared.role,
-            baseline_arm: "baseline".into(),
-            candidate_arm: "candidate".into(),
+            baseline_arm: baseline_arm.clone(),
+            candidate_arm: candidate_arm.clone(),
             core_arm: declared.core_arm,
             resolved_cpus: Vec::new(),
             status: CellStatus::Unavailable,
@@ -525,7 +571,14 @@ fn build_receipt(
         if spec.unavailable.is_none() {
             record.status = CellStatus::Measured;
             record.resolved_cpus = cpus.clone();
-            record.pairs = pairs(spec, declared.role, &key, &cpus);
+            record.pairs = pairs(
+                spec,
+                declared.role,
+                &key,
+                &cpus,
+                &baseline_arm,
+                &candidate_arm,
+            );
             if spec.claim {
                 let observations: Vec<_> = record
                     .pairs
@@ -635,6 +688,25 @@ fn outcome(summary: &tuning_campaign_support::receipt::AcceptanceSummary, id: &s
         .find(|cell| cell.cell_id == id)
         .unwrap()
         .outcome
+}
+
+fn republish_checkpoint_results(dir: &Path, receipt: &mut BenchmarkReceipt) {
+    for cell in &mut receipt.cells {
+        let path = dir
+            .join(CHECKPOINT_DIR)
+            .join("units")
+            .join(format!("{}.json", sha256_hex(cell.key.as_bytes())));
+        let mut unit: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        let mut checkpoint_cell = cell.clone();
+        checkpoint_cell.checkpoint_sha256 = None;
+        unit["result"] = serde_json::to_value(checkpoint_cell).unwrap();
+        unit["result_sha256"] = json!(sha256_hex(
+            &serde_json::to_vec(unit.get("result").unwrap()).unwrap()
+        ));
+        let bytes = serde_json::to_vec(&unit).unwrap();
+        fs::write(path, &bytes).unwrap();
+        cell.checkpoint_sha256 = Some(sha256_hex(&bytes));
+    }
 }
 
 #[test]
@@ -1135,8 +1207,11 @@ fn acceptance_rejects_every_self_consistent_frozen_fact_replacement() {
             }
             "toolchain" => receipt.toolchain = "rustc replacement".into(),
             "arm-descriptor" => {
-                receipt.arms.get_mut("candidate").unwrap().description =
-                    "self-consistent replacement candidate".into();
+                receipt
+                    .arms
+                    .get_mut("candidate-portable")
+                    .unwrap()
+                    .description = "self-consistent replacement candidate".into();
             }
             "checkpoint-identity" => {
                 let manifest_path = built.dir.join(&receipt.checkpoints.manifest_path);
@@ -1322,15 +1397,30 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
     assert_eq!(outcome(&summary, "twelve"), CellOutcome::Unavailable);
     assert_eq!(outcome(&summary, "p"), CellOutcome::Pilot);
     assert!(!summary.qualifies);
+    // An unavailable outcome is still a durable checkpointed result. A valid
+    // alternate reason in the receipt must not replace that frozen result.
+    let receipt_path = built.dir.join(RECEIPT_FILE);
+    let original_receipt = fs::read(&receipt_path).unwrap();
+    let mut receipt = BenchmarkReceipt::decode(&original_receipt).unwrap();
+    receipt
+        .cells
+        .iter_mut()
+        .find(|cell| cell.cell_id == "twelve")
+        .unwrap()
+        .unavailable_reason = Some("another locally plausible unavailable reason".into());
+    fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|finding| {
+        finding.rule == "P-12"
+            && finding.cell.as_deref() == Some("twelve")
+            && finding.message.contains("checkpoint result")
+    }));
+    fs::write(&receipt_path, original_receipt).unwrap();
     // Dropping a declared cell from the receipt is a rejected incomplete negative result.
-    let mut receipt =
-        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
     receipt.cells.retain(|cell| cell.cell_id != "twelve");
-    fs::write(
-        built.dir.join(RECEIPT_FILE),
-        serde_json::to_vec_pretty(&receipt).unwrap(),
-    )
-    .unwrap();
+    fs::write(receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
     let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|f| f.rule == "P-21"));
@@ -1467,6 +1557,10 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
             });
         },
     );
+    let receipt_path = built.dir.join(RECEIPT_FILE);
+    let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
+    republish_checkpoint_results(&built.dir, &mut receipt);
+    fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
     let summary = evaluate(&built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "matched"), CellOutcome::Pass);
