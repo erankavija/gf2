@@ -1,0 +1,17 @@
+# command: dev/bench_results/f547c394/run-smoke.sh confirmation 2026-09-07
+# started_utc: 2026-09-06T23:09:20Z
+# gf2 revision (informational): 76f6ad1611842e07b94e7e1554fbcd1267857db6
+# mode: confirmation
+# addendum: dev/active/f547c394/addendum-protocol-smoke.json
+# campaign: confirmation-f547c394-20260906t230920z
+# stage: /tmp/gf2-confirmation-f547c394-20260906t230920z
+# load_avg_start:  02:09:20 up 3 days,  3:38,  3 users,  load average: 0.65, 1.27, 1.12
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-f547c394-20260906t230920z/execution.log
+# session 1 exit: 3 (3 = paused after max_cells_per_session)
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-confirmation-f547c394-20260906t230920z/execution.log
+# session 2 exit: 0 (complete)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
+# load_avg_end:  02:10:24 up 3 days,  3:39,  3 users,  load average: 1.04, 1.27, 1.13
+# finished_utc: 2026-09-06T23:10:24Z

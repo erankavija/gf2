@@ -107,6 +107,7 @@
     "dev/tools/tuning-campaign-support/src/campaign.rs",
     "dev/tools/tuning-campaign-support/src/journal.rs",
     "dev/tools/tuning-campaign-support/src/lib.rs",
+    "dev/tools/tuning-campaign-support/src/provenance.rs",
     "dev/tools/tuning-campaign-support/src/seed.rs",
     "dev/tools/tuning-campaign-support/src/statistics.rs",
     "dev/tools/tuning-campaign-support/src/timing.rs",
@@ -119,6 +120,7 @@
     "dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs",
     "dev/tools/tuning-campaign-support/src/campaign.rs",
     "dev/tools/tuning-campaign-support/src/journal.rs",
+    "dev/tools/tuning-campaign-support/src/provenance.rs",
     "dev/tools/tuning-campaign-support/src/transport.rs"
   ],
   "build_inputs": [
@@ -292,6 +294,7 @@
     "dev/tools/tuning-campaign-support/src/campaign.rs",
     "dev/tools/tuning-campaign-support/src/journal.rs",
     "dev/tools/tuning-campaign-support/src/lib.rs",
+    "dev/tools/tuning-campaign-support/src/provenance.rs",
     "dev/tools/tuning-campaign-support/src/seed.rs",
     "dev/tools/tuning-campaign-support/src/statistics.rs",
     "dev/tools/tuning-campaign-support/src/timing.rs",

@@ -1,0 +1,17 @@
+# command: dev/bench_results/f547c394/run-smoke.sh pilot 2026-09-07
+# started_utc: 2026-09-06T23:07:25Z
+# gf2 revision (informational): 24dfcf799f7a3860bde03e4860201278938d9fa8
+# mode: pilot
+# addendum: dev/active/f547c394/addendum-protocol-smoke-pilot.json
+# campaign: pilot-f547c394-20260906t230725z
+# stage: /tmp/gf2-pilot-f547c394-20260906t230725z
+# load_avg_start:  02:07:25 up 3 days,  3:36,  3 users,  load average: 2.22, 1.62, 1.20
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-pilot-f547c394-20260906t230725z/execution.log
+# session 1 exit: 3 (3 = paused after max_cells_per_session)
+GF2_CAMPAIGN_EXECUTION_LOG=/tmp/gf2-pilot-f547c394-20260906t230725z/execution.log
+# session 2 exit: 0 (complete)
+GF2_BENCHMARK_RECEIPT=dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+# acceptance exit: 0
+# load_avg_end:  02:07:39 up 3 days,  3:36,  3 users,  load average: 1.95, 1.59, 1.20
+# finished_utc: 2026-09-06T23:07:39Z

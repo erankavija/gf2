@@ -1,0 +1,5087 @@
+{
+  "schema": "zen3-benchmark-receipt-v1",
+  "campaign_id": "confirmation-f547c394-20260906t230920z",
+  "issue": "f547c394",
+  "receipt_path": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation/receipt.json",
+  "label": "confirmation",
+  "campaign_seed": 20260907,
+  "settings": {
+    "family_alpha": 0.05,
+    "bootstrap_resamples": 10000,
+    "confirmatory_pairs": 24,
+    "pilot_min_pairs": 6,
+    "pilot_max_pairs": 24,
+    "windows_per_execution": 5,
+    "window_target_ms": 100,
+    "flagged_window_factor": 2.0,
+    "max_flagged_fraction": 0.1,
+    "max_pilot_trials_per_cell": 8,
+    "max_confirmatory_attempts_per_candidate": 1,
+    "child_timeout_seconds": 120,
+    "quality_confidence": 0.95
+  },
+  "settings_deviation": false,
+  "protocol": {
+    "path": "dev/active/f547c394/protocol.md",
+    "snapshot": "inputs/protocol.md",
+    "sha256": "a7a1db9840d51c5860e1dbd57d741da345fcf2fb9e6f112e2085855aa2372e48"
+  },
+  "contract": {
+    "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+    "snapshot": "inputs/measurement-contract.md",
+    "sha256": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3"
+  },
+  "addendum_schema": {
+    "path": "dev/active/f547c394/addendum.schema.json",
+    "snapshot": "inputs/addendum.schema.json",
+    "sha256": "5eab7106aaae753555a21177e93be8368bdb463eb638b06d288c4471a3e8d240"
+  },
+  "addendum": {
+    "path": "dev/active/f547c394/addendum-protocol-smoke.json",
+    "snapshot": "inputs/family-addendum.json",
+    "sha256": "307b6a2baf2da5025a26820ed44be55a212747440f3d9d00e09bdaf8b1d8a69c"
+  },
+  "source": {
+    "producing": {
+      "manifest_path": "dev/active/f547c394/producing-inputs.json",
+      "manifest_sha256": "1d046407be24951ea54840face6073f95bc257c67b83e6f97c86e0977ddd716b",
+      "behavior_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      },
+      "lifecycle_sha256": {
+        "dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8"
+      },
+      "build_inputs_sha256": {
+        ".cargo/config.toml": "a41ec65f4e6322d990fb5d9afcb668029958f7e57bf7e2623211a638ec82dffb",
+        "Cargo.lock": "541e7dcc0407f6471e64540d6c2edc33286653c771d9fd940ae1b1065075e7bc",
+        "Cargo.toml": "5fa0e5e66bc896c1b009192b2e76222b9c0c2295b44b25a5ad6fd9a6564f6cf5",
+        "dev/bench_results/f547c394/run-smoke.sh": "44be6611988a99be006ed043030b8ba6e067ac427c7829806c2c36a497f414db",
+        "dev/scripts/ccx1-bench-flock.sh": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+        "dev/tools/tuning-campaign-support/Cargo.toml": "4e2a5ddb0cfbf25a3d3068804c1d6bf21a3ca28eecebfbc22ed351750110b8e8",
+        "dev/tools/tuning-campaign-support/src/abtest.rs": "5a3449ea1ca0a876ddb460eb3536bdeb2ce4932fd66b0eff0f1e92057a739c81",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs": "48d5d83d4ecdb5efee810a20fe5eb5c309062c72d23c050e78553353c8603a51",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs": "e02ebf7eab54e6fee16989c295a6d80a38fe5542867af8523a189c255295e160",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs": "6156da414049261b3348bebfa02e97af85570050b4d12b3fc95fa8c372254fe3",
+        "dev/tools/tuning-campaign-support/src/campaign.rs": "6c3088e8f197cf5e271332bb439687cbeb654879874c1e2642280553df2e4a36",
+        "dev/tools/tuning-campaign-support/src/host.rs": "3f989e5461db417eb705e34c41c803b4e8eb06da6c38089a4553c06865045507",
+        "dev/tools/tuning-campaign-support/src/journal.rs": "9edd52e94bc084560ee951703caccad98341cae46d657150bd76e134156f7b85",
+        "dev/tools/tuning-campaign-support/src/lib.rs": "9b1790f86e67ed3e442963c29912c6829b8c411d077c07e7bc95aa08531416d8",
+        "dev/tools/tuning-campaign-support/src/process.rs": "be4d88682ab62e8a70333892e1ebdcb9eb44f643194c21fd594549b062d1be05",
+        "dev/tools/tuning-campaign-support/src/protocol.rs": "b3b45cd56d1a22c5897907677dd1974b81dca3740c0da6c0f8c6184eee6d8feb",
+        "dev/tools/tuning-campaign-support/src/provenance.rs": "b559664e0c7173bc6599b43a4543a617bba853e1f2385abb7da015a742cc77ed",
+        "dev/tools/tuning-campaign-support/src/receipt.rs": "4eae42ddc8d81cddc8ed4c9b6416b99dab6e9b5d94a017d36743f7aa428130e8",
+        "dev/tools/tuning-campaign-support/src/schema.rs": "d7f4001656c265abb7fb960cdba5eacf3739d0c76ab112d6a082e9eab12bec5d",
+        "dev/tools/tuning-campaign-support/src/seed.rs": "7be49c66c0917b44e748a90e668ad16ad5fef9e8a5e76efe173bb1b602539036",
+        "dev/tools/tuning-campaign-support/src/statistics.rs": "6c574b5ecca3aae79d760325117ccee816f10980b50a559234c2fd3b00347fa7",
+        "dev/tools/tuning-campaign-support/src/timing.rs": "9d15dfe5e8400def4dca53713bc0ff89926ae43f0f2a87cbf4f0e40f55de60c8",
+        "dev/tools/tuning-campaign-support/src/transport.rs": "883f903e4c0b5d3f651347f4695a4139504856aadb8afcb77a5942435cc8995a"
+      }
+    }
+  },
+  "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "host": {
+    "observed_utc": "2026-09-06T23:10:17.350493475Z",
+    "hostname": "fraktaali",
+    "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+    "cpu_flags": [
+      "3dnowprefetch",
+      "abm",
+      "adx",
+      "aes",
+      "aperfmperf",
+      "apic",
+      "arat",
+      "avic",
+      "avx",
+      "avx2",
+      "bmi1",
+      "bmi2",
+      "bpext",
+      "cat_l3",
+      "cdp_l3",
+      "clflush",
+      "clflushopt",
+      "clwb",
+      "clzero",
+      "cmov",
+      "cmp_legacy",
+      "constant_tsc",
+      "cpb",
+      "cpuid",
+      "cqm",
+      "cqm_llc",
+      "cqm_mbm_local",
+      "cqm_mbm_total",
+      "cqm_occup_llc",
+      "cr8_legacy",
+      "cx16",
+      "cx8",
+      "de",
+      "debug_swap",
+      "decodeassists",
+      "erms",
+      "extapic",
+      "extd_apicid",
+      "f16c",
+      "flushbyasid",
+      "fma",
+      "fpu",
+      "fsgsbase",
+      "fsrm",
+      "fxsr",
+      "fxsr_opt",
+      "ht",
+      "hw_pstate",
+      "ibpb",
+      "ibrs",
+      "ibs",
+      "invpcid",
+      "irperf",
+      "lahf_lm",
+      "lbrv",
+      "lm",
+      "mba",
+      "mca",
+      "mce",
+      "misalignsse",
+      "mmx",
+      "mmxext",
+      "monitor",
+      "movbe",
+      "msr",
+      "mtrr",
+      "mwaitx",
+      "nonstop_tsc",
+      "nopl",
+      "npt",
+      "nrip_save",
+      "nx",
+      "ospke",
+      "osvw",
+      "overflow_recov",
+      "pae",
+      "pat",
+      "pausefilter",
+      "pclmulqdq",
+      "pdpe1gb",
+      "perfctr_core",
+      "perfctr_llc",
+      "perfctr_nb",
+      "pfthreshold",
+      "pge",
+      "pku",
+      "pni",
+      "popcnt",
+      "pse",
+      "pse36",
+      "rapl",
+      "rdpid",
+      "rdpru",
+      "rdrand",
+      "rdseed",
+      "rdt_a",
+      "rdtscp",
+      "rep_good",
+      "sep",
+      "sha_ni",
+      "skinit",
+      "smap",
+      "smca",
+      "smep",
+      "ssbd",
+      "sse",
+      "sse2",
+      "sse4_1",
+      "sse4_2",
+      "sse4a",
+      "ssse3",
+      "stibp",
+      "succor",
+      "svm_lock",
+      "syscall",
+      "tce",
+      "topoext",
+      "tsc",
+      "tsc_scale",
+      "umip",
+      "user_shstk",
+      "v_spec_ctrl",
+      "v_vmsave_vmload",
+      "vaes",
+      "vgif",
+      "vmcb_clean",
+      "vme",
+      "vmmcall",
+      "vpclmulqdq",
+      "wbnoinvd",
+      "wdt",
+      "x2apic",
+      "xgetbv1",
+      "xsave",
+      "xsavec",
+      "xsaveerptr",
+      "xsaveopt",
+      "xsaves",
+      "xtopology"
+    ],
+    "os_kernel": "Linux 7.2.2-arch1-1",
+    "governors": {
+      "cpu0": "powersave",
+      "cpu1": "powersave",
+      "cpu10": "powersave",
+      "cpu11": "powersave",
+      "cpu12": "powersave",
+      "cpu13": "powersave",
+      "cpu14": "powersave",
+      "cpu15": "powersave",
+      "cpu16": "powersave",
+      "cpu17": "powersave",
+      "cpu18": "powersave",
+      "cpu19": "powersave",
+      "cpu2": "powersave",
+      "cpu20": "powersave",
+      "cpu21": "powersave",
+      "cpu22": "powersave",
+      "cpu23": "powersave",
+      "cpu3": "powersave",
+      "cpu4": "powersave",
+      "cpu5": "powersave",
+      "cpu6": "powersave",
+      "cpu7": "powersave",
+      "cpu8": "powersave",
+      "cpu9": "powersave"
+    },
+    "smt_active": true,
+    "affinity": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "topology": {
+      "cpus": [
+        {
+          "cpu": 0,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 1,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 2,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 3,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 4,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 5,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 6,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 7,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 8,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 9,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 10,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 11,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 12,
+          "core_id": 0,
+          "package_id": 0,
+          "thread_siblings": [
+            0,
+            12
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 13,
+          "core_id": 1,
+          "package_id": 0,
+          "thread_siblings": [
+            1,
+            13
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 14,
+          "core_id": 2,
+          "package_id": 0,
+          "thread_siblings": [
+            2,
+            14
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 15,
+          "core_id": 3,
+          "package_id": 0,
+          "thread_siblings": [
+            3,
+            15
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 16,
+          "core_id": 4,
+          "package_id": 0,
+          "thread_siblings": [
+            4,
+            16
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 17,
+          "core_id": 5,
+          "package_id": 0,
+          "thread_siblings": [
+            5,
+            17
+          ],
+          "l3_shared": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "cpu": 18,
+          "core_id": 8,
+          "package_id": 0,
+          "thread_siblings": [
+            6,
+            18
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 19,
+          "core_id": 9,
+          "package_id": 0,
+          "thread_siblings": [
+            7,
+            19
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 20,
+          "core_id": 10,
+          "package_id": 0,
+          "thread_siblings": [
+            8,
+            20
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 21,
+          "core_id": 11,
+          "package_id": 0,
+          "thread_siblings": [
+            9,
+            21
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 22,
+          "core_id": 12,
+          "package_id": 0,
+          "thread_siblings": [
+            10,
+            22
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        },
+        {
+          "cpu": 23,
+          "core_id": 13,
+          "package_id": 0,
+          "thread_siblings": [
+            11,
+            23
+          ],
+          "l3_shared": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ]
+        }
+      ],
+      "smt_active": true
+    },
+    "load_average": [
+      1.04,
+      1.28,
+      1.14
+    ],
+    "available_memory_kib": 48136828
+  },
+  "lock": {
+    "lock_path": "/tmp/gf2-ccx1.lock",
+    "holder_pid": 4140431,
+    "observation": "inherited-fd-and-independent-flock-conflict",
+    "wrapper": "dev/scripts/ccx1-bench-flock.sh"
+  },
+  "workers": {
+    "environment_rayon_threads": null,
+    "runner_threads": 1
+  },
+  "execution_log": {
+    "path": "execution.log",
+    "sha256": "cbfe54076c39b6d2f5f436491eb1ad6f82cfec40ee01e9f5e9613588283bbe69",
+    "sessions": 2,
+    "resumed": true
+  },
+  "checkpoints": {
+    "manifest_path": "checkpoints/manifest.json",
+    "manifest_sha256": "7618c1dc74937decdd49fbfb8931030d5e48255de2e47455cefc29eef5921c74"
+  },
+  "arms": {
+    "baseline": {
+      "build": "conservative-portable",
+      "description": "xor-fold, one pass per call",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
+      "executable_sha256": "b9444479f89c3bb572f68609f364720fad8bd8dc4dbfa3f7d2d873afd895f1df",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "1"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "baseline-two-pass": {
+      "build": "conservative-portable",
+      "description": "xor-fold, two passes per call",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
+      "executable_sha256": "b9444479f89c3bb572f68609f364720fad8bd8dc4dbfa3f7d2d873afd895f1df",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "2"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "candidate": {
+      "build": "conservative-portable",
+      "description": "xor-fold, one pass per call",
+      "executable_path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-f547c394/target/release/ab-smoke-workload",
+      "executable_sha256": "b9444479f89c3bb572f68609f364720fad8bd8dc4dbfa3f7d2d873afd895f1df",
+      "arguments": [],
+      "environment": {
+        "GF2_SMOKE_PASSES": "1"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "xor-fold-double-pass-1core",
+      "key": "xor-fold-double-pass-1core",
+      "role": "confirmatory",
+      "baseline_arm": "baseline-two-pass",
+      "candidate_arm": "candidate",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139296,
+            "windows": [
+              {
+                "calls": 5132,
+                "elapsed_ns": 100289129
+              },
+              {
+                "calls": 5132,
+                "elapsed_ns": 100428200
+              },
+              {
+                "calls": 5132,
+                "elapsed_ns": 100153678
+              },
+              {
+                "calls": 5132,
+                "elapsed_ns": 100240338
+              },
+              {
+                "calls": 5132,
+                "elapsed_ns": 100277649
+              }
+            ],
+            "ns_per_call": 19539.68219017927,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 596004749
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139279,
+            "windows": [
+              {
+                "calls": 10194,
+                "elapsed_ns": 99083882
+              },
+              {
+                "calls": 10194,
+                "elapsed_ns": 99059451
+              },
+              {
+                "calls": 10194,
+                "elapsed_ns": 99187882
+              },
+              {
+                "calls": 10194,
+                "elapsed_ns": 99570025
+              },
+              {
+                "calls": 10194,
+                "elapsed_ns": 99459654
+              }
+            ],
+            "ns_per_call": 9730.025701392977,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 592064625
+          }
+        },
+        {
+          "index": 1,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139302,
+            "windows": [
+              {
+                "calls": 5538,
+                "elapsed_ns": 99831406
+              },
+              {
+                "calls": 5538,
+                "elapsed_ns": 99505465
+              },
+              {
+                "calls": 5538,
+                "elapsed_ns": 107798004
+              },
+              {
+                "calls": 5538,
+                "elapsed_ns": 107926045
+              },
+              {
+                "calls": 5538,
+                "elapsed_ns": 107934696
+              }
+            ],
+            "ns_per_call": 19465.15059588299,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 612797481
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139326,
+            "windows": [
+              {
+                "calls": 11241,
+                "elapsed_ns": 101364725
+              },
+              {
+                "calls": 11241,
+                "elapsed_ns": 107570084
+              },
+              {
+                "calls": 11241,
+                "elapsed_ns": 107963535
+              },
+              {
+                "calls": 11241,
+                "elapsed_ns": 107949616
+              },
+              {
+                "calls": 11241,
+                "elapsed_ns": 108035536
+              }
+            ],
+            "ns_per_call": 9603.203985410551,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 621311492
+          }
+        },
+        {
+          "index": 2,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139338,
+            "windows": [
+              {
+                "calls": 5217,
+                "elapsed_ns": 100091168
+              },
+              {
+                "calls": 5217,
+                "elapsed_ns": 100242268
+              },
+              {
+                "calls": 5217,
+                "elapsed_ns": 100173539
+              },
+              {
+                "calls": 5217,
+                "elapsed_ns": 100110188
+              },
+              {
+                "calls": 5217,
+                "elapsed_ns": 100211098
+              }
+            ],
+            "ns_per_call": 19201.368410964154,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 593282642
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139332,
+            "windows": [
+              {
+                "calls": 10464,
+                "elapsed_ns": 100134938
+              },
+              {
+                "calls": 10464,
+                "elapsed_ns": 100250919
+              },
+              {
+                "calls": 10464,
+                "elapsed_ns": 100283939
+              },
+              {
+                "calls": 10464,
+                "elapsed_ns": 100308189
+              },
+              {
+                "calls": 10464,
+                "elapsed_ns": 100243149
+              }
+            ],
+            "ns_per_call": 9580.554185779816,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 594442159
+          }
+        },
+        {
+          "index": 3,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139342,
+            "windows": [
+              {
+                "calls": 5534,
+                "elapsed_ns": 103373798
+              },
+              {
+                "calls": 5534,
+                "elapsed_ns": 107536753
+              },
+              {
+                "calls": 5534,
+                "elapsed_ns": 107590693
+              },
+              {
+                "calls": 5534,
+                "elapsed_ns": 107764224
+              },
+              {
+                "calls": 5534,
+                "elapsed_ns": 107821675
+              }
+            ],
+            "ns_per_call": 19441.75876400434,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 623432535
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139348,
+            "windows": [
+              {
+                "calls": 10369,
+                "elapsed_ns": 100511270
+              },
+              {
+                "calls": 10369,
+                "elapsed_ns": 100242929
+              },
+              {
+                "calls": 10369,
+                "elapsed_ns": 100076808
+              },
+              {
+                "calls": 10369,
+                "elapsed_ns": 100103797
+              },
+              {
+                "calls": 10369,
+                "elapsed_ns": 100108848
+              }
+            ],
+            "ns_per_call": 9654.628990259427,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 595690717
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139352,
+            "windows": [
+              {
+                "calls": 5116,
+                "elapsed_ns": 100454760
+              },
+              {
+                "calls": 5116,
+                "elapsed_ns": 100481050
+              },
+              {
+                "calls": 5116,
+                "elapsed_ns": 100552200
+              },
+              {
+                "calls": 5116,
+                "elapsed_ns": 100249419
+              },
+              {
+                "calls": 5116,
+                "elapsed_ns": 100217568
+              }
+            ],
+            "ns_per_call": 19635.410476935107,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 556782981
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139359,
+            "windows": [
+              {
+                "calls": 10152,
+                "elapsed_ns": 98253316
+              },
+              {
+                "calls": 10152,
+                "elapsed_ns": 98041096
+              },
+              {
+                "calls": 10152,
+                "elapsed_ns": 98334537
+              },
+              {
+                "calls": 10152,
+                "elapsed_ns": 98571208
+              },
+              {
+                "calls": 10152,
+                "elapsed_ns": 98377638
+              }
+            ],
+            "ns_per_call": 9686.223108747045,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 585776796
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139382,
+            "windows": [
+              {
+                "calls": 5216,
+                "elapsed_ns": 100006047
+              },
+              {
+                "calls": 5216,
+                "elapsed_ns": 100141188
+              },
+              {
+                "calls": 5216,
+                "elapsed_ns": 100102848
+              },
+              {
+                "calls": 5216,
+                "elapsed_ns": 100175198
+              },
+              {
+                "calls": 5216,
+                "elapsed_ns": 100186019
+              }
+            ],
+            "ns_per_call": 19198.847392638036,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 594080997
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139378,
+            "windows": [
+              {
+                "calls": 11177,
+                "elapsed_ns": 100063787
+              },
+              {
+                "calls": 11177,
+                "elapsed_ns": 100128828
+              },
+              {
+                "calls": 11177,
+                "elapsed_ns": 99884406
+              },
+              {
+                "calls": 11177,
+                "elapsed_ns": 99835156
+              },
+              {
+                "calls": 11177,
+                "elapsed_ns": 100167579
+              }
+            ],
+            "ns_per_call": 8952.651605976558,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 589288308
+          }
+        },
+        {
+          "index": 6,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139392,
+            "windows": [
+              {
+                "calls": 5611,
+                "elapsed_ns": 100468230
+              },
+              {
+                "calls": 5611,
+                "elapsed_ns": 114238883
+              },
+              {
+                "calls": 5611,
+                "elapsed_ns": 109439565
+              },
+              {
+                "calls": 5611,
+                "elapsed_ns": 108860541
+              },
+              {
+                "calls": 5611,
+                "elapsed_ns": 108025666
+              }
+            ],
+            "ns_per_call": 19401.272678666905,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 629647683
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139387,
+            "windows": [
+              {
+                "calls": 10414,
+                "elapsed_ns": 100137848
+              },
+              {
+                "calls": 10414,
+                "elapsed_ns": 100110388
+              },
+              {
+                "calls": 10414,
+                "elapsed_ns": 99936307
+              },
+              {
+                "calls": 10414,
+                "elapsed_ns": 99595205
+              },
+              {
+                "calls": 10414,
+                "elapsed_ns": 99698835
+              }
+            ],
+            "ns_per_call": 9596.34213558671,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 593252252
+          }
+        },
+        {
+          "index": 7,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139453,
+            "windows": [
+              {
+                "calls": 5509,
+                "elapsed_ns": 99685725
+              },
+              {
+                "calls": 5509,
+                "elapsed_ns": 100268539
+              },
+              {
+                "calls": 5509,
+                "elapsed_ns": 101292285
+              },
+              {
+                "calls": 5509,
+                "elapsed_ns": 101094384
+              },
+              {
+                "calls": 5509,
+                "elapsed_ns": 100661671
+              }
+            ],
+            "ns_per_call": 18272.222000363043,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 592635068
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139459,
+            "windows": [
+              {
+                "calls": 10419,
+                "elapsed_ns": 100106728
+              },
+              {
+                "calls": 10419,
+                "elapsed_ns": 100114628
+              },
+              {
+                "calls": 10419,
+                "elapsed_ns": 99864956
+              },
+              {
+                "calls": 10419,
+                "elapsed_ns": 100883232
+              },
+              {
+                "calls": 10419,
+                "elapsed_ns": 99989698
+              }
+            ],
+            "ns_per_call": 9608.093675016797,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 594705430
+          }
+        },
+        {
+          "index": 8,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139463,
+            "windows": [
+              {
+                "calls": 5604,
+                "elapsed_ns": 99734475
+              },
+              {
+                "calls": 5604,
+                "elapsed_ns": 109631346
+              },
+              {
+                "calls": 5604,
+                "elapsed_ns": 110100478
+              },
+              {
+                "calls": 5604,
+                "elapsed_ns": 110045148
+              },
+              {
+                "calls": 5604,
+                "elapsed_ns": 110077459
+              }
+            ],
+            "ns_per_call": 19636.892933618845,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 628016652
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139470,
+            "windows": [
+              {
+                "calls": 10221,
+                "elapsed_ns": 100007187
+              },
+              {
+                "calls": 10221,
+                "elapsed_ns": 100008817
+              },
+              {
+                "calls": 10221,
+                "elapsed_ns": 99931297
+              },
+              {
+                "calls": 10221,
+                "elapsed_ns": 99931366
+              },
+              {
+                "calls": 10221,
+                "elapsed_ns": 100252279
+              }
+            ],
+            "ns_per_call": 9784.481655415322,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 554044054
+          }
+        },
+        {
+          "index": 9,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139500,
+            "windows": [
+              {
+                "calls": 5184,
+                "elapsed_ns": 99573744
+              },
+              {
+                "calls": 5184,
+                "elapsed_ns": 99339274
+              },
+              {
+                "calls": 5184,
+                "elapsed_ns": 99621844
+              },
+              {
+                "calls": 5184,
+                "elapsed_ns": 99658945
+              },
+              {
+                "calls": 5184,
+                "elapsed_ns": 99243993
+              }
+            ],
+            "ns_per_call": 19207.89814814815,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 590680526
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139474,
+            "windows": [
+              {
+                "calls": 10194,
+                "elapsed_ns": 99624695
+              },
+              {
+                "calls": 10194,
+                "elapsed_ns": 99593944
+              },
+              {
+                "calls": 10194,
+                "elapsed_ns": 99826026
+              },
+              {
+                "calls": 10194,
+                "elapsed_ns": 99810276
+              },
+              {
+                "calls": 10194,
+                "elapsed_ns": 100344589
+              }
+            ],
+            "ns_per_call": 9791.08063566804,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 554660147
+          }
+        },
+        {
+          "index": 10,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139554,
+            "windows": [
+              {
+                "calls": 5214,
+                "elapsed_ns": 99906327
+              },
+              {
+                "calls": 5214,
+                "elapsed_ns": 99928917
+              },
+              {
+                "calls": 5214,
+                "elapsed_ns": 100089357
+              },
+              {
+                "calls": 5214,
+                "elapsed_ns": 100166518
+              },
+              {
+                "calls": 5214,
+                "elapsed_ns": 100487470
+              }
+            ],
+            "ns_per_call": 19196.271001150748,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 592668809
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139580,
+            "windows": [
+              {
+                "calls": 10361,
+                "elapsed_ns": 100170148
+              },
+              {
+                "calls": 10361,
+                "elapsed_ns": 99974077
+              },
+              {
+                "calls": 10361,
+                "elapsed_ns": 99746066
+              },
+              {
+                "calls": 10361,
+                "elapsed_ns": 99901426
+              },
+              {
+                "calls": 10361,
+                "elapsed_ns": 99770006
+              }
+            ],
+            "ns_per_call": 9642.06408647814,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 594090946
+          }
+        },
+        {
+          "index": 11,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139627,
+            "windows": [
+              {
+                "calls": 5140,
+                "elapsed_ns": 99843576
+              },
+              {
+                "calls": 5140,
+                "elapsed_ns": 99996947
+              },
+              {
+                "calls": 5140,
+                "elapsed_ns": 99778726
+              },
+              {
+                "calls": 5140,
+                "elapsed_ns": 99805356
+              },
+              {
+                "calls": 5140,
+                "elapsed_ns": 99777826
+              }
+            ],
+            "ns_per_call": 19417.384435797667,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 593158981
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139587,
+            "windows": [
+              {
+                "calls": 10242,
+                "elapsed_ns": 99985897
+              },
+              {
+                "calls": 10242,
+                "elapsed_ns": 99665005
+              },
+              {
+                "calls": 10242,
+                "elapsed_ns": 100013267
+              },
+              {
+                "calls": 10242,
+                "elapsed_ns": 99864346
+              },
+              {
+                "calls": 10242,
+                "elapsed_ns": 99968237
+              }
+            ],
+            "ns_per_call": 9760.616774067565,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 594923762
+          }
+        },
+        {
+          "index": 12,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139638,
+            "windows": [
+              {
+                "calls": 5098,
+                "elapsed_ns": 99575414
+              },
+              {
+                "calls": 5098,
+                "elapsed_ns": 99395234
+              },
+              {
+                "calls": 5098,
+                "elapsed_ns": 99625294
+              },
+              {
+                "calls": 5098,
+                "elapsed_ns": 99877687
+              },
+              {
+                "calls": 5098,
+                "elapsed_ns": 99978037
+              }
+            ],
+            "ns_per_call": 19542.034915653196,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 592601728
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139633,
+            "windows": [
+              {
+                "calls": 10666,
+                "elapsed_ns": 104499055
+              },
+              {
+                "calls": 10666,
+                "elapsed_ns": 104154442
+              },
+              {
+                "calls": 10666,
+                "elapsed_ns": 104274423
+              },
+              {
+                "calls": 10666,
+                "elapsed_ns": 104376224
+              },
+              {
+                "calls": 10666,
+                "elapsed_ns": 104677945
+              }
+            ],
+            "ns_per_call": 9785.882617663605,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 613023962
+          }
+        },
+        {
+          "index": 13,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139650,
+            "windows": [
+              {
+                "calls": 5545,
+                "elapsed_ns": 101030283
+              },
+              {
+                "calls": 5545,
+                "elapsed_ns": 100776822
+              },
+              {
+                "calls": 5545,
+                "elapsed_ns": 100596231
+              },
+              {
+                "calls": 5545,
+                "elapsed_ns": 99267112
+              },
+              {
+                "calls": 5545,
+                "elapsed_ns": 99616075
+              }
+            ],
+            "ns_per_call": 18141.79098286745,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 590722806
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139658,
+            "windows": [
+              {
+                "calls": 11149,
+                "elapsed_ns": 102691873
+              },
+              {
+                "calls": 11149,
+                "elapsed_ns": 108337668
+              },
+              {
+                "calls": 11149,
+                "elapsed_ns": 108860661
+              },
+              {
+                "calls": 11149,
+                "elapsed_ns": 107991325
+              },
+              {
+                "calls": 11149,
+                "elapsed_ns": 108048696
+              }
+            ],
+            "ns_per_call": 9691.335187012288,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 625090634
+          }
+        },
+        {
+          "index": 14,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139669,
+            "windows": [
+              {
+                "calls": 5631,
+                "elapsed_ns": 100215048
+              },
+              {
+                "calls": 5631,
+                "elapsed_ns": 99962217
+              },
+              {
+                "calls": 5631,
+                "elapsed_ns": 100604660
+              },
+              {
+                "calls": 5631,
+                "elapsed_ns": 100790382
+              },
+              {
+                "calls": 5631,
+                "elapsed_ns": 101963309
+              }
+            ],
+            "ns_per_call": 17866.215592257147,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 592102564
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139662,
+            "windows": [
+              {
+                "calls": 11184,
+                "elapsed_ns": 104337283
+              },
+              {
+                "calls": 11184,
+                "elapsed_ns": 107117220
+              },
+              {
+                "calls": 11184,
+                "elapsed_ns": 107514983
+              },
+              {
+                "calls": 11184,
+                "elapsed_ns": 107030460
+              },
+              {
+                "calls": 11184,
+                "elapsed_ns": 107160600
+              }
+            ],
+            "ns_per_call": 9577.719957081545,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 621950866
+          }
+        },
+        {
+          "index": 15,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139694,
+            "windows": [
+              {
+                "calls": 5533,
+                "elapsed_ns": 99877406
+              },
+              {
+                "calls": 5533,
+                "elapsed_ns": 99804716
+              },
+              {
+                "calls": 5533,
+                "elapsed_ns": 99987547
+              },
+              {
+                "calls": 5533,
+                "elapsed_ns": 100046938
+              },
+              {
+                "calls": 5533,
+                "elapsed_ns": 99668575
+              }
+            ],
+            "ns_per_call": 18051.22103741189,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 589064967
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139704,
+            "windows": [
+              {
+                "calls": 11174,
+                "elapsed_ns": 100432869
+              },
+              {
+                "calls": 11174,
+                "elapsed_ns": 100714452
+              },
+              {
+                "calls": 11174,
+                "elapsed_ns": 100846672
+              },
+              {
+                "calls": 11174,
+                "elapsed_ns": 99455064
+              },
+              {
+                "calls": 11174,
+                "elapsed_ns": 99564684
+              }
+            ],
+            "ns_per_call": 8988.085645247897,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 590511684
+          }
+        },
+        {
+          "index": 16,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139711,
+            "windows": [
+              {
+                "calls": 5631,
+                "elapsed_ns": 99758686
+              },
+              {
+                "calls": 5631,
+                "elapsed_ns": 99927467
+              },
+              {
+                "calls": 5631,
+                "elapsed_ns": 99626854
+              },
+              {
+                "calls": 5631,
+                "elapsed_ns": 105842793
+              },
+              {
+                "calls": 5631,
+                "elapsed_ns": 108927371
+              }
+            ],
+            "ns_per_call": 17745.9540046173,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 602620848
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139718,
+            "windows": [
+              {
+                "calls": 11288,
+                "elapsed_ns": 100517390
+              },
+              {
+                "calls": 11288,
+                "elapsed_ns": 100352019
+              },
+              {
+                "calls": 11288,
+                "elapsed_ns": 100355450
+              },
+              {
+                "calls": 11288,
+                "elapsed_ns": 100954863
+              },
+              {
+                "calls": 11288,
+                "elapsed_ns": 100014157
+              }
+            ],
+            "ns_per_call": 8890.454464918497,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 590070962
+          }
+        },
+        {
+          "index": 17,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139731,
+            "windows": [
+              {
+                "calls": 5537,
+                "elapsed_ns": 98346177
+              },
+              {
+                "calls": 5537,
+                "elapsed_ns": 97890944
+              },
+              {
+                "calls": 5537,
+                "elapsed_ns": 98996351
+              },
+              {
+                "calls": 5537,
+                "elapsed_ns": 98159966
+              },
+              {
+                "calls": 5537,
+                "elapsed_ns": 97899794
+              }
+            ],
+            "ns_per_call": 17728.005418096443,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 579209866
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139726,
+            "windows": [
+              {
+                "calls": 11188,
+                "elapsed_ns": 100484370
+              },
+              {
+                "calls": 11188,
+                "elapsed_ns": 100555330
+              },
+              {
+                "calls": 11188,
+                "elapsed_ns": 99188332
+              },
+              {
+                "calls": 11188,
+                "elapsed_ns": 98936641
+              },
+              {
+                "calls": 11188,
+                "elapsed_ns": 100369719
+              }
+            ],
+            "ns_per_call": 8971.194047193421,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 586903472
+          }
+        },
+        {
+          "index": 18,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139736,
+            "windows": [
+              {
+                "calls": 5688,
+                "elapsed_ns": 100172148
+              },
+              {
+                "calls": 5688,
+                "elapsed_ns": 100860593
+              },
+              {
+                "calls": 5688,
+                "elapsed_ns": 100771221
+              },
+              {
+                "calls": 5688,
+                "elapsed_ns": 100707972
+              },
+              {
+                "calls": 5688,
+                "elapsed_ns": 102086089
+              }
+            ],
+            "ns_per_call": 17716.459388185653,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 591159409
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139742,
+            "windows": [
+              {
+                "calls": 11303,
+                "elapsed_ns": 100544691
+              },
+              {
+                "calls": 11303,
+                "elapsed_ns": 99959527
+              },
+              {
+                "calls": 11303,
+                "elapsed_ns": 99890166
+              },
+              {
+                "calls": 11303,
+                "elapsed_ns": 100066598
+              },
+              {
+                "calls": 11303,
+                "elapsed_ns": 99768695
+              }
+            ],
+            "ns_per_call": 8843.627974873927,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 586957633
+          }
+        },
+        {
+          "index": 19,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139764,
+            "windows": [
+              {
+                "calls": 5533,
+                "elapsed_ns": 105918833
+              },
+              {
+                "calls": 5533,
+                "elapsed_ns": 106124504
+              },
+              {
+                "calls": 5533,
+                "elapsed_ns": 105635762
+              },
+              {
+                "calls": 5533,
+                "elapsed_ns": 105564520
+              },
+              {
+                "calls": 5533,
+                "elapsed_ns": 105987194
+              }
+            ],
+            "ns_per_call": 19143.110970540394,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 617802790
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139746,
+            "windows": [
+              {
+                "calls": 11055,
+                "elapsed_ns": 99460574
+              },
+              {
+                "calls": 11055,
+                "elapsed_ns": 106370036
+              },
+              {
+                "calls": 11055,
+                "elapsed_ns": 106456016
+              },
+              {
+                "calls": 11055,
+                "elapsed_ns": 105907713
+              },
+              {
+                "calls": 11055,
+                "elapsed_ns": 106085624
+              }
+            ],
+            "ns_per_call": 9596.166802351878,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 612796860
+          }
+        },
+        {
+          "index": 20,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139774,
+            "windows": [
+              {
+                "calls": 5127,
+                "elapsed_ns": 100119578
+              },
+              {
+                "calls": 5127,
+                "elapsed_ns": 99908477
+              },
+              {
+                "calls": 5127,
+                "elapsed_ns": 99862076
+              },
+              {
+                "calls": 5127,
+                "elapsed_ns": 100152008
+              },
+              {
+                "calls": 5127,
+                "elapsed_ns": 103025235
+              }
+            ],
+            "ns_per_call": 19527.906768090503,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 595454594
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139768,
+            "windows": [
+              {
+                "calls": 10261,
+                "elapsed_ns": 99822355
+              },
+              {
+                "calls": 10261,
+                "elapsed_ns": 99799286
+              },
+              {
+                "calls": 10261,
+                "elapsed_ns": 99981587
+              },
+              {
+                "calls": 10261,
+                "elapsed_ns": 100151868
+              },
+              {
+                "calls": 10261,
+                "elapsed_ns": 99942137
+              }
+            ],
+            "ns_per_call": 9739.999707630835,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 591095318
+          }
+        },
+        {
+          "index": 21,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139799,
+            "windows": [
+              {
+                "calls": 5110,
+                "elapsed_ns": 99076742
+              },
+              {
+                "calls": 5110,
+                "elapsed_ns": 101303445
+              },
+              {
+                "calls": 5110,
+                "elapsed_ns": 100240238
+              },
+              {
+                "calls": 5110,
+                "elapsed_ns": 100132188
+              },
+              {
+                "calls": 5110,
+                "elapsed_ns": 99656825
+              }
+            ],
+            "ns_per_call": 19595.34011741683,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 554478955
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139803,
+            "windows": [
+              {
+                "calls": 10891,
+                "elapsed_ns": 99957827
+              },
+              {
+                "calls": 10891,
+                "elapsed_ns": 100094138
+              },
+              {
+                "calls": 10891,
+                "elapsed_ns": 98774889
+              },
+              {
+                "calls": 10891,
+                "elapsed_ns": 99391213
+              },
+              {
+                "calls": 10891,
+                "elapsed_ns": 98600259
+              }
+            ],
+            "ns_per_call": 9125.995133596547,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 586770132
+          }
+        },
+        {
+          "index": 22,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139828,
+            "windows": [
+              {
+                "calls": 5512,
+                "elapsed_ns": 109941308
+              },
+              {
+                "calls": 5512,
+                "elapsed_ns": 108557429
+              },
+              {
+                "calls": 5512,
+                "elapsed_ns": 108755250
+              },
+              {
+                "calls": 5512,
+                "elapsed_ns": 108547859
+              },
+              {
+                "calls": 5512,
+                "elapsed_ns": 108434408
+              }
+            ],
+            "ns_per_call": 19694.74401306241,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 632978902
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139832,
+            "windows": [
+              {
+                "calls": 10056,
+                "elapsed_ns": 100067147
+              },
+              {
+                "calls": 10056,
+                "elapsed_ns": 98662279
+              },
+              {
+                "calls": 10056,
+                "elapsed_ns": 99070452
+              },
+              {
+                "calls": 10056,
+                "elapsed_ns": 99159431
+              },
+              {
+                "calls": 10056,
+                "elapsed_ns": 100180748
+              }
+            ],
+            "ns_per_call": 9860.723050914876,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 551541308
+          }
+        },
+        {
+          "index": 23,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline-two-pass",
+            "pid": 4139842,
+            "windows": [
+              {
+                "calls": 5479,
+                "elapsed_ns": 100423720
+              },
+              {
+                "calls": 5479,
+                "elapsed_ns": 99904306
+              },
+              {
+                "calls": 5479,
+                "elapsed_ns": 100732302
+              },
+              {
+                "calls": 5479,
+                "elapsed_ns": 105022007
+              },
+              {
+                "calls": 5479,
+                "elapsed_ns": 104580735
+              }
+            ],
+            "ns_per_call": 18385.161890855994,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 599570149
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139838,
+            "windows": [
+              {
+                "calls": 10933,
+                "elapsed_ns": 99644035
+              },
+              {
+                "calls": 10933,
+                "elapsed_ns": 99568504
+              },
+              {
+                "calls": 10933,
+                "elapsed_ns": 99427043
+              },
+              {
+                "calls": 10933,
+                "elapsed_ns": 100137618
+              },
+              {
+                "calls": 10933,
+                "elapsed_ns": 99748846
+              }
+            ],
+            "ns_per_call": 9114.06155675478,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 588430321
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 1.999306201903797,
+          "lower": 1.9065889025987186,
+          "upper": 2.0535634964978393,
+          "confidence": 0.9833333333333333,
+          "resamples": 10000,
+          "seed": 4601929107371892610,
+          "pairs": 24
+        },
+        "decision": "improved",
+        "margins": {
+          "improvement": 1.5,
+          "equivalence": 1.1
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "721700ba680442787cadc117c6fb1fa9b887d8c04591f902282ab7c6df49c9fc"
+    },
+    {
+      "cell_id": "xor-fold-identical-1core",
+      "key": "xor-fold-identical-1core",
+      "role": "confirmatory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        6
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139848,
+            "windows": [
+              {
+                "calls": 11264,
+                "elapsed_ns": 100088447
+              },
+              {
+                "calls": 11264,
+                "elapsed_ns": 102243811
+              },
+              {
+                "calls": 11264,
+                "elapsed_ns": 100296499
+              },
+              {
+                "calls": 11264,
+                "elapsed_ns": 100201738
+              },
+              {
+                "calls": 11264,
+                "elapsed_ns": 100233728
+              }
+            ],
+            "ns_per_call": 8898.59090909091,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 590422114
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139853,
+            "windows": [
+              {
+                "calls": 11171,
+                "elapsed_ns": 100436520
+              },
+              {
+                "calls": 11171,
+                "elapsed_ns": 99998967
+              },
+              {
+                "calls": 11171,
+                "elapsed_ns": 100378289
+              },
+              {
+                "calls": 11171,
+                "elapsed_ns": 99447664
+              },
+              {
+                "calls": 11171,
+                "elapsed_ns": 99490954
+              }
+            ],
+            "ns_per_call": 8951.657595559933,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 587588507
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139863,
+            "windows": [
+              {
+                "calls": 11065,
+                "elapsed_ns": 99820226
+              },
+              {
+                "calls": 11065,
+                "elapsed_ns": 99943697
+              },
+              {
+                "calls": 11065,
+                "elapsed_ns": 99814325
+              },
+              {
+                "calls": 11065,
+                "elapsed_ns": 100058327
+              },
+              {
+                "calls": 11065,
+                "elapsed_ns": 100230389
+              }
+            ],
+            "ns_per_call": 9032.417261635788,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 588810084
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139857,
+            "windows": [
+              {
+                "calls": 11228,
+                "elapsed_ns": 100112848
+              },
+              {
+                "calls": 11228,
+                "elapsed_ns": 99958086
+              },
+              {
+                "calls": 11228,
+                "elapsed_ns": 102165220
+              },
+              {
+                "calls": 11228,
+                "elapsed_ns": 101530967
+              },
+              {
+                "calls": 11228,
+                "elapsed_ns": 102265110
+              }
+            ],
+            "ns_per_call": 9042.658265051656,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 593710633
+          }
+        },
+        {
+          "index": 2,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139893,
+            "windows": [
+              {
+                "calls": 10870,
+                "elapsed_ns": 98905460
+              },
+              {
+                "calls": 10870,
+                "elapsed_ns": 98649079
+              },
+              {
+                "calls": 10870,
+                "elapsed_ns": 97781063
+              },
+              {
+                "calls": 10870,
+                "elapsed_ns": 96494266
+              },
+              {
+                "calls": 10870,
+                "elapsed_ns": 96529366
+              }
+            ],
+            "ns_per_call": 8995.497976080957,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 578521531
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139869,
+            "windows": [
+              {
+                "calls": 10920,
+                "elapsed_ns": 99615284
+              },
+              {
+                "calls": 10920,
+                "elapsed_ns": 100096378
+              },
+              {
+                "calls": 10920,
+                "elapsed_ns": 100517500
+              },
+              {
+                "calls": 10920,
+                "elapsed_ns": 99835996
+              },
+              {
+                "calls": 10920,
+                "elapsed_ns": 99712035
+              }
+            ],
+            "ns_per_call": 9142.490476190476,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 589118226
+          }
+        },
+        {
+          "index": 3,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139912,
+            "windows": [
+              {
+                "calls": 11237,
+                "elapsed_ns": 99865036
+              },
+              {
+                "calls": 11237,
+                "elapsed_ns": 99993807
+              },
+              {
+                "calls": 11237,
+                "elapsed_ns": 99980997
+              },
+              {
+                "calls": 11237,
+                "elapsed_ns": 99799555
+              },
+              {
+                "calls": 11237,
+                "elapsed_ns": 99791686
+              }
+            ],
+            "ns_per_call": 8887.16169796209,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 586704501
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139916,
+            "windows": [
+              {
+                "calls": 11302,
+                "elapsed_ns": 100046577
+              },
+              {
+                "calls": 11302,
+                "elapsed_ns": 99901897
+              },
+              {
+                "calls": 11302,
+                "elapsed_ns": 100046207
+              },
+              {
+                "calls": 11302,
+                "elapsed_ns": 99959057
+              },
+              {
+                "calls": 11302,
+                "elapsed_ns": 100001167
+              }
+            ],
+            "ns_per_call": 8848.094761989028,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 587547896
+          }
+        },
+        {
+          "index": 4,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139921,
+            "windows": [
+              {
+                "calls": 11173,
+                "elapsed_ns": 100056377
+              },
+              {
+                "calls": 11173,
+                "elapsed_ns": 99685415
+              },
+              {
+                "calls": 11173,
+                "elapsed_ns": 99622135
+              },
+              {
+                "calls": 11173,
+                "elapsed_ns": 99551204
+              },
+              {
+                "calls": 11173,
+                "elapsed_ns": 100035158
+              }
+            ],
+            "ns_per_call": 8921.991855365613,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 587106794
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139925,
+            "windows": [
+              {
+                "calls": 11034,
+                "elapsed_ns": 98343496
+              },
+              {
+                "calls": 11034,
+                "elapsed_ns": 98265927
+              },
+              {
+                "calls": 11034,
+                "elapsed_ns": 98715079
+              },
+              {
+                "calls": 11034,
+                "elapsed_ns": 98773719
+              },
+              {
+                "calls": 11034,
+                "elapsed_ns": 98294187
+              }
+            ],
+            "ns_per_call": 8912.769258655066,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 580581444
+          }
+        },
+        {
+          "index": 5,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139936,
+            "windows": [
+              {
+                "calls": 11258,
+                "elapsed_ns": 100140507
+              },
+              {
+                "calls": 11258,
+                "elapsed_ns": 102525433
+              },
+              {
+                "calls": 11258,
+                "elapsed_ns": 110480100
+              },
+              {
+                "calls": 11258,
+                "elapsed_ns": 110479771
+              },
+              {
+                "calls": 11258,
+                "elapsed_ns": 110213489
+              }
+            ],
+            "ns_per_call": 9789.79294723752,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 621111099
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139931,
+            "windows": [
+              {
+                "calls": 11259,
+                "elapsed_ns": 100064438
+              },
+              {
+                "calls": 11259,
+                "elapsed_ns": 100085517
+              },
+              {
+                "calls": 11259,
+                "elapsed_ns": 100406540
+              },
+              {
+                "calls": 11259,
+                "elapsed_ns": 100344519
+              },
+              {
+                "calls": 11259,
+                "elapsed_ns": 100789051
+              }
+            ],
+            "ns_per_call": 8912.382893685051,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 589183916
+          }
+        },
+        {
+          "index": 6,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139946,
+            "windows": [
+              {
+                "calls": 10263,
+                "elapsed_ns": 99809466
+              },
+              {
+                "calls": 10263,
+                "elapsed_ns": 99985217
+              },
+              {
+                "calls": 10263,
+                "elapsed_ns": 100036837
+              },
+              {
+                "calls": 10263,
+                "elapsed_ns": 96813637
+              },
+              {
+                "calls": 10263,
+                "elapsed_ns": 93792759
+              }
+            ],
+            "ns_per_call": 9725.174510377083,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 584778249
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139940,
+            "windows": [
+              {
+                "calls": 11260,
+                "elapsed_ns": 101260215
+              },
+              {
+                "calls": 11260,
+                "elapsed_ns": 109519595
+              },
+              {
+                "calls": 11260,
+                "elapsed_ns": 109451804
+              },
+              {
+                "calls": 11260,
+                "elapsed_ns": 109427034
+              },
+              {
+                "calls": 11260,
+                "elapsed_ns": 109278373
+              }
+            ],
+            "ns_per_call": 9718.209058614564,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 626204501
+          }
+        },
+        {
+          "index": 7,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139950,
+            "windows": [
+              {
+                "calls": 10268,
+                "elapsed_ns": 100046467
+              },
+              {
+                "calls": 10268,
+                "elapsed_ns": 99518914
+              },
+              {
+                "calls": 10268,
+                "elapsed_ns": 99705505
+              },
+              {
+                "calls": 10268,
+                "elapsed_ns": 99837566
+              },
+              {
+                "calls": 10268,
+                "elapsed_ns": 99682895
+              }
+            ],
+            "ns_per_call": 9710.314082586678,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 591053077
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139955,
+            "windows": [
+              {
+                "calls": 10486,
+                "elapsed_ns": 101765138
+              },
+              {
+                "calls": 10486,
+                "elapsed_ns": 101933019
+              },
+              {
+                "calls": 10486,
+                "elapsed_ns": 102282590
+              },
+              {
+                "calls": 10486,
+                "elapsed_ns": 102294521
+              },
+              {
+                "calls": 10486,
+                "elapsed_ns": 101496776
+              }
+            ],
+            "ns_per_call": 9720.867728399771,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 600976807
+          }
+        },
+        {
+          "index": 8,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139971,
+            "windows": [
+              {
+                "calls": 10258,
+                "elapsed_ns": 100510830
+              },
+              {
+                "calls": 10258,
+                "elapsed_ns": 100377709
+              },
+              {
+                "calls": 10258,
+                "elapsed_ns": 100335479
+              },
+              {
+                "calls": 10258,
+                "elapsed_ns": 100265209
+              },
+              {
+                "calls": 10258,
+                "elapsed_ns": 100506170
+              }
+            ],
+            "ns_per_call": 9785.309904464808,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 595298323
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139967,
+            "windows": [
+              {
+                "calls": 10229,
+                "elapsed_ns": 100112618
+              },
+              {
+                "calls": 10229,
+                "elapsed_ns": 100038017
+              },
+              {
+                "calls": 10229,
+                "elapsed_ns": 99731226
+              },
+              {
+                "calls": 10229,
+                "elapsed_ns": 99731655
+              },
+              {
+                "calls": 10229,
+                "elapsed_ns": 99639394
+              }
+            ],
+            "ns_per_call": 9749.89295141265,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 592980748
+          }
+        },
+        {
+          "index": 9,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4139989,
+            "windows": [
+              {
+                "calls": 10171,
+                "elapsed_ns": 99517424
+              },
+              {
+                "calls": 10171,
+                "elapsed_ns": 99278302
+              },
+              {
+                "calls": 10171,
+                "elapsed_ns": 99174922
+              },
+              {
+                "calls": 10171,
+                "elapsed_ns": 99570334
+              },
+              {
+                "calls": 10171,
+                "elapsed_ns": 99525674
+              }
+            ],
+            "ns_per_call": 9784.428669747322,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 551392167
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4139996,
+            "windows": [
+              {
+                "calls": 11033,
+                "elapsed_ns": 98585599
+              },
+              {
+                "calls": 11033,
+                "elapsed_ns": 98357586
+              },
+              {
+                "calls": 11033,
+                "elapsed_ns": 98320897
+              },
+              {
+                "calls": 11033,
+                "elapsed_ns": 98652989
+              },
+              {
+                "calls": 11033,
+                "elapsed_ns": 98698309
+              }
+            ],
+            "ns_per_call": 8935.520619958306,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 582211913
+          }
+        },
+        {
+          "index": 10,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140028,
+            "windows": [
+              {
+                "calls": 11244,
+                "elapsed_ns": 107094380
+              },
+              {
+                "calls": 11244,
+                "elapsed_ns": 109265173
+              },
+              {
+                "calls": 11244,
+                "elapsed_ns": 109265363
+              },
+              {
+                "calls": 11244,
+                "elapsed_ns": 109615436
+              },
+              {
+                "calls": 11244,
+                "elapsed_ns": 109219223
+              }
+            ],
+            "ns_per_call": 9717.642564923515,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 632550459
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140002,
+            "windows": [
+              {
+                "calls": 11277,
+                "elapsed_ns": 100533300
+              },
+              {
+                "calls": 11277,
+                "elapsed_ns": 99965546
+              },
+              {
+                "calls": 11277,
+                "elapsed_ns": 102399722
+              },
+              {
+                "calls": 11277,
+                "elapsed_ns": 109454434
+              },
+              {
+                "calls": 11277,
+                "elapsed_ns": 109137033
+              }
+            ],
+            "ns_per_call": 9080.404540214597,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 609660030
+          }
+        },
+        {
+          "index": 11,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140072,
+            "windows": [
+              {
+                "calls": 10371,
+                "elapsed_ns": 100341359
+              },
+              {
+                "calls": 10371,
+                "elapsed_ns": 100134927
+              },
+              {
+                "calls": 10371,
+                "elapsed_ns": 99830076
+              },
+              {
+                "calls": 10371,
+                "elapsed_ns": 99906197
+              },
+              {
+                "calls": 10371,
+                "elapsed_ns": 99815805
+              }
+            ],
+            "ns_per_call": 9633.226979076271,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 591847322
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140078,
+            "windows": [
+              {
+                "calls": 11079,
+                "elapsed_ns": 107335841
+              },
+              {
+                "calls": 11079,
+                "elapsed_ns": 107098310
+              },
+              {
+                "calls": 11079,
+                "elapsed_ns": 107393051
+              },
+              {
+                "calls": 11079,
+                "elapsed_ns": 107503663
+              },
+              {
+                "calls": 11079,
+                "elapsed_ns": 107338621
+              }
+            ],
+            "ns_per_call": 9688.47558443903,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 626176000
+          }
+        },
+        {
+          "index": 12,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140112,
+            "windows": [
+              {
+                "calls": 10456,
+                "elapsed_ns": 101610317
+              },
+              {
+                "calls": 10456,
+                "elapsed_ns": 101643267
+              },
+              {
+                "calls": 10456,
+                "elapsed_ns": 101676947
+              },
+              {
+                "calls": 10456,
+                "elapsed_ns": 101679757
+              },
+              {
+                "calls": 10456,
+                "elapsed_ns": 101628937
+              }
+            ],
+            "ns_per_call": 9721.04695868401,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 599168086
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140107,
+            "windows": [
+              {
+                "calls": 10518,
+                "elapsed_ns": 101830068
+              },
+              {
+                "calls": 10518,
+                "elapsed_ns": 101591577
+              },
+              {
+                "calls": 10518,
+                "elapsed_ns": 101734457
+              },
+              {
+                "calls": 10518,
+                "elapsed_ns": 101801528
+              },
+              {
+                "calls": 10518,
+                "elapsed_ns": 101685667
+              }
+            ],
+            "ns_per_call": 9672.414622551816,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 598616473
+          }
+        },
+        {
+          "index": 13,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140140,
+            "windows": [
+              {
+                "calls": 11049,
+                "elapsed_ns": 106308985
+              },
+              {
+                "calls": 11049,
+                "elapsed_ns": 109111282
+              },
+              {
+                "calls": 11049,
+                "elapsed_ns": 107889045
+              },
+              {
+                "calls": 11049,
+                "elapsed_ns": 107992556
+              },
+              {
+                "calls": 11049,
+                "elapsed_ns": 107608033
+              }
+            ],
+            "ns_per_call": 9764.598153679066,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 628315453
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140169,
+            "windows": [
+              {
+                "calls": 11152,
+                "elapsed_ns": 99650545
+              },
+              {
+                "calls": 11152,
+                "elapsed_ns": 99334453
+              },
+              {
+                "calls": 11152,
+                "elapsed_ns": 98821970
+              },
+              {
+                "calls": 11152,
+                "elapsed_ns": 98931860
+              },
+              {
+                "calls": 11152,
+                "elapsed_ns": 99059081
+              }
+            ],
+            "ns_per_call": 8882.629214490675,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 584616698
+          }
+        },
+        {
+          "index": 14,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140174,
+            "windows": [
+              {
+                "calls": 10278,
+                "elapsed_ns": 99613375
+              },
+              {
+                "calls": 10278,
+                "elapsed_ns": 99669855
+              },
+              {
+                "calls": 10278,
+                "elapsed_ns": 99462683
+              },
+              {
+                "calls": 10278,
+                "elapsed_ns": 99650655
+              },
+              {
+                "calls": 10278,
+                "elapsed_ns": 99748355
+              }
+            ],
+            "ns_per_call": 9695.529772329246,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 589602168
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140178,
+            "windows": [
+              {
+                "calls": 10231,
+                "elapsed_ns": 99368373
+              },
+              {
+                "calls": 10231,
+                "elapsed_ns": 99343843
+              },
+              {
+                "calls": 10231,
+                "elapsed_ns": 99267023
+              },
+              {
+                "calls": 10231,
+                "elapsed_ns": 99328372
+              },
+              {
+                "calls": 10231,
+                "elapsed_ns": 99360263
+              }
+            ],
+            "ns_per_call": 9710.081419216109,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 550229189
+          }
+        },
+        {
+          "index": 15,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140202,
+            "windows": [
+              {
+                "calls": 11181,
+                "elapsed_ns": 100252678
+              },
+              {
+                "calls": 11181,
+                "elapsed_ns": 103248747
+              },
+              {
+                "calls": 11181,
+                "elapsed_ns": 107500682
+              },
+              {
+                "calls": 11181,
+                "elapsed_ns": 107553013
+              },
+              {
+                "calls": 11181,
+                "elapsed_ns": 107588223
+              }
+            ],
+            "ns_per_call": 9614.585636347376,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 614773311
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140184,
+            "windows": [
+              {
+                "calls": 11177,
+                "elapsed_ns": 100048457
+              },
+              {
+                "calls": 11177,
+                "elapsed_ns": 104725666
+              },
+              {
+                "calls": 11177,
+                "elapsed_ns": 106944879
+              },
+              {
+                "calls": 11177,
+                "elapsed_ns": 107173070
+              },
+              {
+                "calls": 11177,
+                "elapsed_ns": 107367572
+              }
+            ],
+            "ns_per_call": 9568.299096358594,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 614351138
+          }
+        },
+        {
+          "index": 16,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140271,
+            "windows": [
+              {
+                "calls": 11250,
+                "elapsed_ns": 100675081
+              },
+              {
+                "calls": 11250,
+                "elapsed_ns": 100941713
+              },
+              {
+                "calls": 11250,
+                "elapsed_ns": 100048067
+              },
+              {
+                "calls": 11250,
+                "elapsed_ns": 99929966
+              },
+              {
+                "calls": 11250,
+                "elapsed_ns": 99920636
+              }
+            ],
+            "ns_per_call": 8893.161511111111,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 590203951
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140277,
+            "windows": [
+              {
+                "calls": 10401,
+                "elapsed_ns": 100099627
+              },
+              {
+                "calls": 10401,
+                "elapsed_ns": 100084198
+              },
+              {
+                "calls": 10401,
+                "elapsed_ns": 100003367
+              },
+              {
+                "calls": 10401,
+                "elapsed_ns": 100005886
+              },
+              {
+                "calls": 10401,
+                "elapsed_ns": 99946777
+              }
+            ],
+            "ns_per_call": 9615.026055187001,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 594164285
+          }
+        },
+        {
+          "index": 17,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140289,
+            "windows": [
+              {
+                "calls": 11101,
+                "elapsed_ns": 100372899
+              },
+              {
+                "calls": 11101,
+                "elapsed_ns": 99724945
+              },
+              {
+                "calls": 11101,
+                "elapsed_ns": 99081761
+              },
+              {
+                "calls": 11101,
+                "elapsed_ns": 107595163
+              },
+              {
+                "calls": 11101,
+                "elapsed_ns": 112026710
+              }
+            ],
+            "ns_per_call": 9041.78893793352,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 607469426
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140282,
+            "windows": [
+              {
+                "calls": 11249,
+                "elapsed_ns": 99971277
+              },
+              {
+                "calls": 11249,
+                "elapsed_ns": 106139994
+              },
+              {
+                "calls": 11249,
+                "elapsed_ns": 108046925
+              },
+              {
+                "calls": 11249,
+                "elapsed_ns": 108155507
+              },
+              {
+                "calls": 11249,
+                "elapsed_ns": 108018055
+              }
+            ],
+            "ns_per_call": 9602.45844075029,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 618592944
+          }
+        },
+        {
+          "index": 18,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140299,
+            "windows": [
+              {
+                "calls": 10883,
+                "elapsed_ns": 100475040
+              },
+              {
+                "calls": 10883,
+                "elapsed_ns": 105289719
+              },
+              {
+                "calls": 10883,
+                "elapsed_ns": 110545671
+              },
+              {
+                "calls": 10883,
+                "elapsed_ns": 109695655
+              },
+              {
+                "calls": 10883,
+                "elapsed_ns": 109519455
+              }
+            ],
+            "ns_per_call": 10063.351557474962,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 627488487
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140295,
+            "windows": [
+              {
+                "calls": 10656,
+                "elapsed_ns": 97184390
+              },
+              {
+                "calls": 10656,
+                "elapsed_ns": 101936039
+              },
+              {
+                "calls": 10656,
+                "elapsed_ns": 108119786
+              },
+              {
+                "calls": 10656,
+                "elapsed_ns": 106848058
+              },
+              {
+                "calls": 10656,
+                "elapsed_ns": 106892269
+              }
+            ],
+            "ns_per_call": 10027.03246996997,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 613047970
+          }
+        },
+        {
+          "index": 19,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140304,
+            "windows": [
+              {
+                "calls": 9713,
+                "elapsed_ns": 98085995
+              },
+              {
+                "calls": 9713,
+                "elapsed_ns": 98114206
+              },
+              {
+                "calls": 9713,
+                "elapsed_ns": 97911194
+              },
+              {
+                "calls": 9713,
+                "elapsed_ns": 97860274
+              },
+              {
+                "calls": 9713,
+                "elapsed_ns": 97903114
+              }
+            ],
+            "ns_per_call": 10080.427674251005,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 546444086
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140308,
+            "windows": [
+              {
+                "calls": 10831,
+                "elapsed_ns": 96084203
+              },
+              {
+                "calls": 10831,
+                "elapsed_ns": 96344035
+              },
+              {
+                "calls": 10831,
+                "elapsed_ns": 96395474
+              },
+              {
+                "calls": 10831,
+                "elapsed_ns": 96287495
+              },
+              {
+                "calls": 10831,
+                "elapsed_ns": 96369395
+              }
+            ],
+            "ns_per_call": 8895.211430154188,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 573317119
+          }
+        },
+        {
+          "index": 20,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140319,
+            "windows": [
+              {
+                "calls": 11318,
+                "elapsed_ns": 100008306
+              },
+              {
+                "calls": 11318,
+                "elapsed_ns": 100072517
+              },
+              {
+                "calls": 11318,
+                "elapsed_ns": 105823513
+              },
+              {
+                "calls": 11318,
+                "elapsed_ns": 110559901
+              },
+              {
+                "calls": 11318,
+                "elapsed_ns": 110652071
+              }
+            ],
+            "ns_per_call": 9350.01881957943,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 614283997
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140314,
+            "windows": [
+              {
+                "calls": 11249,
+                "elapsed_ns": 100049957
+              },
+              {
+                "calls": 11249,
+                "elapsed_ns": 100030797
+              },
+              {
+                "calls": 11249,
+                "elapsed_ns": 100125297
+              },
+              {
+                "calls": 11249,
+                "elapsed_ns": 100126628
+              },
+              {
+                "calls": 11249,
+                "elapsed_ns": 100179947
+              }
+            ],
+            "ns_per_call": 8900.817583785225,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 588986194
+          }
+        },
+        {
+          "index": 21,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140323,
+            "windows": [
+              {
+                "calls": 11298,
+                "elapsed_ns": 101266334
+              },
+              {
+                "calls": 11298,
+                "elapsed_ns": 108102466
+              },
+              {
+                "calls": 11298,
+                "elapsed_ns": 109926167
+              },
+              {
+                "calls": 11298,
+                "elapsed_ns": 109889587
+              },
+              {
+                "calls": 11298,
+                "elapsed_ns": 109909757
+              }
+            ],
+            "ns_per_call": 9726.46371039122,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 626165720
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140329,
+            "windows": [
+              {
+                "calls": 11278,
+                "elapsed_ns": 100024847
+              },
+              {
+                "calls": 11278,
+                "elapsed_ns": 99893346
+              },
+              {
+                "calls": 11278,
+                "elapsed_ns": 99754495
+              },
+              {
+                "calls": 11278,
+                "elapsed_ns": 99998397
+              },
+              {
+                "calls": 11278,
+                "elapsed_ns": 99967746
+              }
+            ],
+            "ns_per_call": 8863.960453981203,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 587264603
+          }
+        },
+        {
+          "index": 22,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140353,
+            "windows": [
+              {
+                "calls": 11279,
+                "elapsed_ns": 105157037
+              },
+              {
+                "calls": 11279,
+                "elapsed_ns": 108759890
+              },
+              {
+                "calls": 11279,
+                "elapsed_ns": 108660910
+              },
+              {
+                "calls": 11279,
+                "elapsed_ns": 108676589
+              },
+              {
+                "calls": 11279,
+                "elapsed_ns": 108587019
+              }
+            ],
+            "ns_per_call": 9633.913467505985,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 628885036
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140382,
+            "windows": [
+              {
+                "calls": 10560,
+                "elapsed_ns": 102595003
+              },
+              {
+                "calls": 10560,
+                "elapsed_ns": 102620392
+              },
+              {
+                "calls": 10560,
+                "elapsed_ns": 102622413
+              },
+              {
+                "calls": 10560,
+                "elapsed_ns": 103587959
+              },
+              {
+                "calls": 10560,
+                "elapsed_ns": 103254216
+              }
+            ],
+            "ns_per_call": 9718.03153409091,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 605513654
+          }
+        },
+        {
+          "index": 23,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140412,
+            "windows": [
+              {
+                "calls": 9969,
+                "elapsed_ns": 97663853
+              },
+              {
+                "calls": 9969,
+                "elapsed_ns": 97572701
+              },
+              {
+                "calls": 9969,
+                "elapsed_ns": 97670063
+              },
+              {
+                "calls": 9969,
+                "elapsed_ns": 97318941
+              },
+              {
+                "calls": 9969,
+                "elapsed_ns": 97331970
+              }
+            ],
+            "ns_per_call": 9787.611696258402,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 581509888
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140408,
+            "windows": [
+              {
+                "calls": 11224,
+                "elapsed_ns": 107639644
+              },
+              {
+                "calls": 11224,
+                "elapsed_ns": 109608765
+              },
+              {
+                "calls": 11224,
+                "elapsed_ns": 109853016
+              },
+              {
+                "calls": 11224,
+                "elapsed_ns": 109474494
+              },
+              {
+                "calls": 11224,
+                "elapsed_ns": 109378234
+              }
+            ],
+            "ns_per_call": 9753.607804704205,
+            "cache_state_applied": "warm",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 633718386
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 1.0371472448916095,
+          "lower": 0.9861962072217164,
+          "upper": 1.0896666667725476,
+          "confidence": 0.9833333333333333,
+          "resamples": 10000,
+          "seed": 18091774859665624329,
+          "pairs": 24
+        },
+        "decision": "not-worse",
+        "margins": {
+          "improvement": 1.5,
+          "equivalence": 1.1
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "ca5dfe98d5e1af1a8ff8b38005c507024cfcb1d06e64f18842dac57deb102b3f"
+    },
+    {
+      "cell_id": "xor-fold-streaming-pilot-6core",
+      "key": "xor-fold-streaming-pilot-6core",
+      "role": "exploratory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "core_arm": "physical-cores-6",
+      "resolved_cpus": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "measured",
+      "unavailable_reason": null,
+      "pairs": [
+        {
+          "index": 0,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140444,
+            "windows": [
+              {
+                "calls": 99,
+                "elapsed_ns": 99155042
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 98889579
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 100105508
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 99543734
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 102117350
+              }
+            ],
+            "ns_per_call": 1005492.2626262626,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 631127900
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140448,
+            "windows": [
+              {
+                "calls": 97,
+                "elapsed_ns": 101049173
+              },
+              {
+                "calls": 97,
+                "elapsed_ns": 99601635
+              },
+              {
+                "calls": 97,
+                "elapsed_ns": 100050807
+              },
+              {
+                "calls": 97,
+                "elapsed_ns": 98267416
+              },
+              {
+                "calls": 97,
+                "elapsed_ns": 98644709
+              }
+            ],
+            "ns_per_call": 1026820.9793814434,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 624272557
+          }
+        },
+        {
+          "index": 1,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140460,
+            "windows": [
+              {
+                "calls": 100,
+                "elapsed_ns": 99414773
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 98839490
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 98681379
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 98665148
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 99301073
+              }
+            ],
+            "ns_per_call": 988394.9,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 622266426
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140455,
+            "windows": [
+              {
+                "calls": 96,
+                "elapsed_ns": 97738554
+              },
+              {
+                "calls": 96,
+                "elapsed_ns": 97454121
+              },
+              {
+                "calls": 96,
+                "elapsed_ns": 95769181
+              },
+              {
+                "calls": 96,
+                "elapsed_ns": 95644480
+              },
+              {
+                "calls": 96,
+                "elapsed_ns": 96119213
+              }
+            ],
+            "ns_per_call": 1001241.8020833334,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 614036385
+          }
+        },
+        {
+          "index": 2,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140464,
+            "windows": [
+              {
+                "calls": 99,
+                "elapsed_ns": 97883163
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 98078616
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 97784953
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 98672109
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 101941058
+              }
+            ],
+            "ns_per_call": 990693.0909090909,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 622804409
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140472,
+            "windows": [
+              {
+                "calls": 98,
+                "elapsed_ns": 99907846
+              },
+              {
+                "calls": 98,
+                "elapsed_ns": 99661325
+              },
+              {
+                "calls": 98,
+                "elapsed_ns": 96617426
+              },
+              {
+                "calls": 98,
+                "elapsed_ns": 98542878
+              },
+              {
+                "calls": 98,
+                "elapsed_ns": 97392811
+              }
+            ],
+            "ns_per_call": 1005539.5714285715,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 615204612
+          }
+        },
+        {
+          "index": 3,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140501,
+            "windows": [
+              {
+                "calls": 101,
+                "elapsed_ns": 101041803
+              },
+              {
+                "calls": 101,
+                "elapsed_ns": 100731641
+              },
+              {
+                "calls": 101,
+                "elapsed_ns": 100873152
+              },
+              {
+                "calls": 101,
+                "elapsed_ns": 101085523
+              },
+              {
+                "calls": 101,
+                "elapsed_ns": 100781622
+              }
+            ],
+            "ns_per_call": 998744.0792079208,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 625506125
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140477,
+            "windows": [
+              {
+                "calls": 100,
+                "elapsed_ns": 100380609
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 102166450
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 104072851
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 105407170
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 103892190
+              }
+            ],
+            "ns_per_call": 1038921.9,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 637305326
+          }
+        },
+        {
+          "index": 4,
+          "order": "candidate-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140520,
+            "windows": [
+              {
+                "calls": 99,
+                "elapsed_ns": 101044033
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 99313443
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 99389523
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 99537414
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 99550894
+              }
+            ],
+            "ns_per_call": 1005428.4242424242,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 621112468
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140516,
+            "windows": [
+              {
+                "calls": 99,
+                "elapsed_ns": 99544713
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 99454394
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 99674995
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 99261412
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 101560456
+              }
+            ],
+            "ns_per_call": 1005502.1515151515,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 622250466
+          }
+        },
+        {
+          "index": 5,
+          "order": "baseline-first",
+          "baseline": {
+            "arm": "baseline",
+            "pid": 4140531,
+            "windows": [
+              {
+                "calls": 100,
+                "elapsed_ns": 103284897
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 104196603
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 105966922
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 104701475
+              },
+              {
+                "calls": 100,
+                "elapsed_ns": 106322055
+              }
+            ],
+            "ns_per_call": 1047014.75,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 651374122
+          },
+          "candidate": {
+            "arm": "candidate",
+            "pid": 4140562,
+            "windows": [
+              {
+                "calls": 99,
+                "elapsed_ns": 99444644
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 102550222
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 102871764
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 102511071
+              },
+              {
+                "calls": 99,
+                "elapsed_ns": 102581753
+              }
+            ],
+            "ns_per_call": 1035860.8282828283,
+            "cache_state_applied": "streaming",
+            "workers_observed": 1,
+            "cpus_observed": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "selected_path": "xor-fold-scalar",
+            "conversion": null,
+            "elapsed_ns": 637943091
+          }
+        }
+      ],
+      "claimed": {
+        "interval": {
+          "estimate": 0.9861303904228828,
+          "lower": 0.9613273906420885,
+          "upper": 1.0107677802004174,
+          "confidence": 0.9833333333333333,
+          "resamples": 10000,
+          "seed": 12792100729105745411,
+          "pairs": 6
+        },
+        "decision": "not-worse",
+        "margins": {
+          "improvement": 1.5,
+          "equivalence": 1.1
+        }
+      },
+      "decoder_quality": null,
+      "checkpoint_sha256": "9e3a2a15d2ed35b8fd79ae459fd998f98c50e1e39d8c14001f8f9b7474693c6e"
+    },
+    {
+      "cell_id": "xor-fold-identical-12core",
+      "key": "xor-fold-identical-12core",
+      "role": "confirmatory",
+      "baseline_arm": "baseline",
+      "candidate_arm": "candidate",
+      "core_arm": "physical-cores-12",
+      "resolved_cpus": [],
+      "status": "unavailable",
+      "unavailable_reason": "affinity mask holds 6 physical cores, 12 required",
+      "pairs": [],
+      "claimed": null,
+      "decoder_quality": null,
+      "checkpoint_sha256": "4747d11143105b620f69c557025760cfa1b35caba7555f7a102ab8044f23f77e"
+    }
+  ]
+}
