@@ -14,7 +14,14 @@
   },
   "sessions": 2,
   "resumed": true,
-  "findings": [],
+  "findings": [
+    {
+      "rule": "P-02",
+      "severity": "note",
+      "cell": null,
+      "message": "protocol changed in the working tree after this measurement; the pinned version governed the run"
+    }
+  ],
   "cells": [
     {
       "cell_id": "xor-fold-double-pass-1core",
