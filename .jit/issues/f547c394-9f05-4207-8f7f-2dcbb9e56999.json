@@ -161,18 +161,10 @@
     "component:gf2-sim",
     "satisfies:REQ-01",
     "satisfies:REQ-05",
-    "cites:Cassagne2019",
-    "cites:IsaL2026",
-    "cites:GfComplete2026",
-    "cites:Libpopcnt2026",
-    "cites:Mula2018",
-    "cites:AlbrechtBard2026",
-    "cites:Bitshuffle2026",
-    "cites:GfTwoX2026",
     "type:task"
   ],
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-06T22:12:08.294256289Z"
+  "updated_at": "2026-09-06T22:25:49.186747037Z"
 }
