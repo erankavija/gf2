@@ -64,8 +64,9 @@ with open(plan_path, "w") as output:
     json.dump(plan, output, indent=2)
     output.write("\n")
 PY_PLAN
-mkdir -p "$OUT"
-LAUNCH_LOG="$OUT/launcher.log"
+# The launcher log stays outside the repository while sessions run, because the
+# runner refuses a dirty source tree; it is copied beside the receipt afterwards.
+LAUNCH_LOG="$STAGE.launcher.log"
 {
   echo "# command: $0 $*"
   echo "# started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -88,6 +89,8 @@ fi
 GF2_BENCH=1 dev/scripts/ccx1-bench-flock.sh "$RUNNER" run "$STAGE" "$PLAN" | tee -a "$LAUNCH_LOG"
 echo "# session 2 exit: 0 (complete)" >>"$LAUNCH_LOG"
 "$RUNNER" finalize "$STAGE" "$OUT" | tee -a "$LAUNCH_LOG"
+cp "$LAUNCH_LOG" "$OUT/launcher.log"
+LAUNCH_LOG="$OUT/launcher.log"
 set +e
 "$ACCEPTANCE" "$OUT" --repo "$repo" | tee -a "$LAUNCH_LOG"
 verdict=${PIPESTATUS[0]}
