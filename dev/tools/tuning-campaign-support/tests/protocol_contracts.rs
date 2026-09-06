@@ -284,9 +284,7 @@ fn fixture_pilot_receipt(repo: &Path, addendum: ArtifactPin) -> BenchmarkReceipt
         addendum,
         source: SourceIdentity {
             revision: COMMIT.into(),
-            tree_sha256: sha256_hex(b"pilot tree"),
-            clean: true,
-            producing: None,
+            producing: ProducingInputs::capture(repo, "producing-inputs.json").unwrap(),
         },
         toolchain: "rustc fixture".into(),
         host: HostObservation::observe().unwrap(),
@@ -515,9 +513,7 @@ fn build_receipt(
         addendum: addendum_pin,
         source: SourceIdentity {
             revision: COMMIT.into(),
-            tree_sha256: sha256_hex(b"tree"),
-            clean: true,
-            producing: Some(producing),
+            producing,
         },
         toolchain: "rustc fixture".into(),
         host,
@@ -600,6 +596,13 @@ fn addendum_schema_accepts_the_frozen_smoke_addendum_and_rejects_unknown_fields(
     let smoke = FamilyAddendum::decode(&bytes).unwrap();
     smoke.validate().unwrap();
     assert_eq!(smoke.family.id, "protocol-smoke");
+    let pilot_bytes =
+        fs::read(root.join("dev/active/f547c394/addendum-protocol-smoke-pilot.json")).unwrap();
+    let pilot_instance: Value = serde_json::from_slice(&pilot_bytes).unwrap();
+    assert!(schema::validate(&schema_value, &pilot_instance).is_empty());
+    let pilot = FamilyAddendum::decode(&pilot_bytes).unwrap();
+    pilot.validate().unwrap();
+    assert_eq!(pilot.family.id, "protocol-smoke-pilot");
     let mut extra = instance.clone();
     extra["effect"]["bonus"] = json!(1);
     let violations = schema::validate(&schema_value, &extra);
@@ -881,6 +884,31 @@ fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
 }
 
 #[test]
+fn acceptance_rejects_a_snapshot_path_that_escapes_the_receipt() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "escaping-snapshot",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |receipt| receipt.protocol.snapshot = "inputs/../../protocol.md".into(),
+    );
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|finding| {
+        finding.rule == "P-02"
+            && finding.severity == Severity::Error
+            && finding.message.contains("literal relative path")
+    }));
+}
+
+#[test]
 fn acceptance_rejects_a_missing_snapshot_despite_matching_source_bytes() {
     let family = addendum(vec![cell(
         "a",
@@ -952,8 +980,6 @@ fn source_control_metadata_does_not_change_acceptance() {
     let mut receipt =
         BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
     receipt.source.revision = "a rapidly changing locator".into();
-    receipt.source.tree_sha256 = String::new();
-    receipt.source.clean = false;
     fs::write(
         built.dir.join(RECEIPT_FILE),
         serde_json::to_vec_pretty(&receipt).unwrap(),

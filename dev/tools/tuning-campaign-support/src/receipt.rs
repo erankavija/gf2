@@ -48,19 +48,8 @@ pub struct SourceIdentity {
     /// Informational source-control locator; never an acceptance key.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub revision: String,
-    /// Historical repository-tree digest; informational for old receipts.
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub tree_sha256: String,
-    /// Historical whole-worktree observation; informational for old receipts.
-    #[serde(default, skip_serializing_if = "is_false")]
-    pub clean: bool,
     /// Canonical content closure of producing code and build inputs.
-    #[serde(default)]
-    pub producing: Option<ProducingSnapshot>,
-}
-
-fn is_false(value: &bool) -> bool {
-    !*value
+    pub producing: ProducingSnapshot,
 }
 
 /// Lock evidence observed inside the wrapper.
@@ -553,15 +542,11 @@ pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
     if receipt.toolchain.trim().is_empty() {
         e.error("P-05", None, "toolchain identity is empty");
     }
-    match &receipt.source.producing {
-        Some(snapshot) => {
-            if let Err(error) =
-                ProducingInputs::verify_snapshot(&receipt_dir.join("inputs/producing"), snapshot)
-            {
-                e.error("P-05", None, format!("producing inputs: {error}"));
-            }
-        }
-        None => e.error("P-05", None, "receipt lacks a producing-input snapshot"),
+    if let Err(error) = ProducingInputs::verify_snapshot(
+        &receipt_dir.join("inputs/producing"),
+        &receipt.source.producing,
+    ) {
+        e.error("P-05", None, format!("producing inputs: {error}"));
     }
     if let Some(addendum) = &addendum {
         verify_resolution_evidence(

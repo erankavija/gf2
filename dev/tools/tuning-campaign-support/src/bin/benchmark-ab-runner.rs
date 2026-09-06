@@ -127,9 +127,7 @@ fn repository_root() -> io::Result<PathBuf> {
 fn source_identity(producing: ProducingSnapshot) -> SourceIdentity {
     SourceIdentity {
         revision: String::new(),
-        tree_sha256: String::new(),
-        clean: false,
-        producing: Some(producing),
+        producing,
     }
 }
 

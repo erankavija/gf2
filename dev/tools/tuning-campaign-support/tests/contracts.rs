@@ -947,11 +947,6 @@ fn checkpoint_manifest_and_temp_namespace_fail_closed() {
                 as fn(&mut ResumeIdentity),
         ),
         (
-            "bad-source",
-            (|identity: &mut ResumeIdentity| identity.source_revision = "AB".repeat(20))
-                as fn(&mut ResumeIdentity),
-        ),
-        (
             "empty-lifecycle-schema",
             (|identity: &mut ResumeIdentity| identity.lifecycle_schema.clear())
                 as fn(&mut ResumeIdentity),

@@ -135,6 +135,9 @@ impl ProducingInputs {
                         "producing snapshot marker does not decode: {error}"
                     ))
                 })?;
+            if expected.manifest_path != manifest_path {
+                return Err(invalid("producing snapshot marker names another manifest"));
+            }
             Self::verify_snapshot(snapshot_root, &expected)?;
             return Ok(expected);
         }
