@@ -11,7 +11,7 @@
           "short_id": "f547c394",
           "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
           "classification": "implementation",
-          "status": "merged; gates in progress",
+          "status": "rework 1 dispatched (code-review F1, F2)",
           "dispatch": {
             "model": "fable",
             "worktree": ".agents/worktrees/agent-f547c394",
@@ -28,7 +28,10 @@
               }
             ]
           },
-          "merge_commit": "7a222264"
+          "merge_commit": "7a222264",
+          "reviews": [
+            "reviews/f547c394-r1.md"
+          ]
         }
       ]
     },
@@ -205,7 +208,9 @@
   ],
   "created_during_execution": [],
   "escalations": [],
-  "rework_counts": {},
+  "rework_counts": {
+    "f547c394": 1
+  },
   "surfaced_pitfalls": [
     {
       "issue": "f547c394",
