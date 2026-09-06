@@ -130,7 +130,13 @@
     "doc-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-06T22:04:40.935649093Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "f547c394-9f05-4207-8f7f-2dcbb9e56999",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -153,5 +159,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-09-06T21:56:32.935937703Z"
+  "updated_at": "2026-09-06T22:04:40.935649093Z"
 }
